@@ -18,12 +18,13 @@ ext.moduleName = 'stroom.authentication.impl'
 
 dependencies {
     compile project(':stroom-authentication:stroom-authentication-common')
-    compile project(':stroom-authentication:stroom-authentication-api-swagger')
     compile project(':stroom-util-shared')
     compile project(':stroom-db-util')
+    compile project(':stroom-job:stroom-job-api')
     compile project(':stroom-util')
     compile project(':stroom-security:stroom-security-api')
     compile project(':stroom-security:stroom-security-impl')
+
     compile libs.bcrypt
     compile libs.dropwizard_auth_jwt
     compile libs.dropwizard_core
@@ -49,52 +50,6 @@ dependencies {
     testCompile libs.assertj_core
     testCompile libs.wiremock
     testCompile libs.mockito_core
-    testCompile libs.moshi
     testCompile libs.dropwizard_testing
     testCompile libs.unirest
 }
-//
-//def apiProjectRoot = "${projectDir}/../stroom-authentication-api-swagger"
-//
-//swagger {
-//    apiSource {
-//        springmvc = false //makes it search for jersey annotations
-//        outputFormats = 'json,yaml'
-//        locations = [
-//                'stroom.authentication.resources.token.v1.TokenResource',
-//                'stroom.authentication.resources.token.v1.SearchRequest',
-//                'stroom.authentication.resources.token.v1.SearchResponse',
-//                'stroom.authentication.resources.token.v1.Token',
-//                'stroom.authentication.resources.token.v1.CreateTokenRequest',
-//
-//                'stroom.authentication.resources.authentication.v1.AuthenticationResource',
-//                'stroom.authentication.resources.authentication.v1.Credentials',
-//                'stroom.authentication.resources.authentication.v1.IdTokenRequest',
-//
-//                'stroom.authentication.resources.session.v1.SessionResource',
-//
-//                'stroom.authentication.resources.v1.UserResource',
-//                'stroom.authentication.resources.v1.User',
-//                'javax.ws.rs.core.Response']
-//        schemes = [
-//                'http',
-//                'https' ]
-//        host = 'localhost:8080'
-//        basePath = '/'
-//        info {
-//            title = 'Stroom Auth API'
-//            version = 'v1'
-//            description = 'Various APIs for interacting with authentication, users, and tokens.'
-//            contact {
-//                name = 'GCHQ'
-//                url = 'https://github.com/gchq/stroom-auth'
-//            }
-//            license {
-//                url = 'http://www.apache.org/licenses/LICENSE-2.0.html'
-//                name = 'Apache 2.0'
-//            }
-//        }
-//        outputPath = "$apiProjectRoot/generated/document.html"
-//        swaggerDirectory = "./swagger"
-//    }
-//}

@@ -7,7 +7,9 @@ export interface StoreState {
 
 export interface User {
   email: string;
-  state: string;
+  enabled: boolean;
+  inactive: boolean;
+  locked: boolean;
   firstName: string;
   lastName: string;
   comments: string;

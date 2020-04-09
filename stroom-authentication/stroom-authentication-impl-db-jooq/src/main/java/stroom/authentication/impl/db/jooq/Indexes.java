@@ -12,8 +12,9 @@ import org.jooq.impl.Internal;
 
 import stroom.authentication.impl.db.jooq.tables.Account;
 import stroom.authentication.impl.db.jooq.tables.JsonWebKey;
+import stroom.authentication.impl.db.jooq.tables.OauthClient;
 import stroom.authentication.impl.db.jooq.tables.Token;
-import stroom.authentication.impl.db.jooq.tables.TokenTypes;
+import stroom.authentication.impl.db.jooq.tables.TokenType;
 
 
 /**
@@ -35,16 +36,15 @@ public class Indexes {
 
     public static final Index ACCOUNT_EMAIL = Indexes0.ACCOUNT_EMAIL;
     public static final Index ACCOUNT_PRIMARY = Indexes0.ACCOUNT_PRIMARY;
-    public static final Index JSON_WEB_KEY_KEYID = Indexes0.JSON_WEB_KEY_KEYID;
+    public static final Index JSON_WEB_KEY_JSON_WEB_KEY_FK_TOKEN_TYPE_ID = Indexes0.JSON_WEB_KEY_JSON_WEB_KEY_FK_TOKEN_TYPE_ID;
     public static final Index JSON_WEB_KEY_PRIMARY = Indexes0.JSON_WEB_KEY_PRIMARY;
-    public static final Index TOKEN_FK_ISSUED_BY_USER = Indexes0.TOKEN_FK_ISSUED_BY_USER;
-    public static final Index TOKEN_FK_ISSUED_TO = Indexes0.TOKEN_FK_ISSUED_TO;
-    public static final Index TOKEN_FK_TOKEN_TYPE_ID = Indexes0.TOKEN_FK_TOKEN_TYPE_ID;
-    public static final Index TOKEN_FK_UPDATED_BY_USER = Indexes0.TOKEN_FK_UPDATED_BY_USER;
-    public static final Index TOKEN_ID = Indexes0.TOKEN_ID;
+    public static final Index OAUTH_CLIENT_CLIENT_ID = Indexes0.OAUTH_CLIENT_CLIENT_ID;
+    public static final Index OAUTH_CLIENT_NAME = Indexes0.OAUTH_CLIENT_NAME;
+    public static final Index OAUTH_CLIENT_PRIMARY = Indexes0.OAUTH_CLIENT_PRIMARY;
     public static final Index TOKEN_PRIMARY = Indexes0.TOKEN_PRIMARY;
-    public static final Index TOKEN_TYPES_ID = Indexes0.TOKEN_TYPES_ID;
-    public static final Index TOKEN_TYPES_PRIMARY = Indexes0.TOKEN_TYPES_PRIMARY;
+    public static final Index TOKEN_TOKEN_FK_ACCOUNT_ID = Indexes0.TOKEN_TOKEN_FK_ACCOUNT_ID;
+    public static final Index TOKEN_TOKEN_FK_TOKEN_TYPE_ID = Indexes0.TOKEN_TOKEN_FK_TOKEN_TYPE_ID;
+    public static final Index TOKEN_TYPE_PRIMARY = Indexes0.TOKEN_TYPE_PRIMARY;
 
     // -------------------------------------------------------------------------
     // [#1459] distribute members to avoid static initialisers > 64kb
@@ -53,15 +53,14 @@ public class Indexes {
     private static class Indexes0 {
         public static Index ACCOUNT_EMAIL = Internal.createIndex("email", Account.ACCOUNT, new OrderField[] { Account.ACCOUNT.EMAIL }, true);
         public static Index ACCOUNT_PRIMARY = Internal.createIndex("PRIMARY", Account.ACCOUNT, new OrderField[] { Account.ACCOUNT.ID }, true);
-        public static Index JSON_WEB_KEY_KEYID = Internal.createIndex("keyId", JsonWebKey.JSON_WEB_KEY, new OrderField[] { JsonWebKey.JSON_WEB_KEY.KEYID }, true);
+        public static Index JSON_WEB_KEY_JSON_WEB_KEY_FK_TOKEN_TYPE_ID = Internal.createIndex("json_web_key_fk_token_type_id", JsonWebKey.JSON_WEB_KEY, new OrderField[] { JsonWebKey.JSON_WEB_KEY.FK_TOKEN_TYPE_ID }, false);
         public static Index JSON_WEB_KEY_PRIMARY = Internal.createIndex("PRIMARY", JsonWebKey.JSON_WEB_KEY, new OrderField[] { JsonWebKey.JSON_WEB_KEY.ID }, true);
-        public static Index TOKEN_FK_ISSUED_BY_USER = Internal.createIndex("fk_issued_by_user", Token.TOKEN, new OrderField[] { Token.TOKEN.ISSUED_BY_USER }, false);
-        public static Index TOKEN_FK_ISSUED_TO = Internal.createIndex("fk_issued_to", Token.TOKEN, new OrderField[] { Token.TOKEN.USER_ID }, false);
-        public static Index TOKEN_FK_TOKEN_TYPE_ID = Internal.createIndex("fk_token_type_id", Token.TOKEN, new OrderField[] { Token.TOKEN.TOKEN_TYPE_ID }, false);
-        public static Index TOKEN_FK_UPDATED_BY_USER = Internal.createIndex("fk_updated_by_user", Token.TOKEN, new OrderField[] { Token.TOKEN.UPDATED_BY_USER }, false);
-        public static Index TOKEN_ID = Internal.createIndex("id", Token.TOKEN, new OrderField[] { Token.TOKEN.ID }, true);
+        public static Index OAUTH_CLIENT_CLIENT_ID = Internal.createIndex("client_id", OauthClient.OAUTH_CLIENT, new OrderField[] { OauthClient.OAUTH_CLIENT.CLIENT_ID }, true);
+        public static Index OAUTH_CLIENT_NAME = Internal.createIndex("name", OauthClient.OAUTH_CLIENT, new OrderField[] { OauthClient.OAUTH_CLIENT.NAME }, true);
+        public static Index OAUTH_CLIENT_PRIMARY = Internal.createIndex("PRIMARY", OauthClient.OAUTH_CLIENT, new OrderField[] { OauthClient.OAUTH_CLIENT.ID }, true);
         public static Index TOKEN_PRIMARY = Internal.createIndex("PRIMARY", Token.TOKEN, new OrderField[] { Token.TOKEN.ID }, true);
-        public static Index TOKEN_TYPES_ID = Internal.createIndex("id", TokenTypes.TOKEN_TYPES, new OrderField[] { TokenTypes.TOKEN_TYPES.ID }, true);
-        public static Index TOKEN_TYPES_PRIMARY = Internal.createIndex("PRIMARY", TokenTypes.TOKEN_TYPES, new OrderField[] { TokenTypes.TOKEN_TYPES.ID }, true);
+        public static Index TOKEN_TOKEN_FK_ACCOUNT_ID = Internal.createIndex("token_fk_account_id", Token.TOKEN, new OrderField[] { Token.TOKEN.FK_ACCOUNT_ID }, false);
+        public static Index TOKEN_TOKEN_FK_TOKEN_TYPE_ID = Internal.createIndex("token_fk_token_type_id", Token.TOKEN, new OrderField[] { Token.TOKEN.FK_TOKEN_TYPE_ID }, false);
+        public static Index TOKEN_TYPE_PRIMARY = Internal.createIndex("PRIMARY", TokenType.TOKEN_TYPE, new OrderField[] { TokenType.TOKEN_TYPE.ID }, true);
     }
 }

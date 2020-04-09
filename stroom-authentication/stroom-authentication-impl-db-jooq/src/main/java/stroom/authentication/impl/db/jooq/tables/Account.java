@@ -4,7 +4,6 @@
 package stroom.authentication.impl.db.jooq.tables;
 
 
-import java.sql.Timestamp;
 import java.util.Arrays;
 import java.util.List;
 
@@ -16,7 +15,7 @@ import org.jooq.Identity;
 import org.jooq.Index;
 import org.jooq.Name;
 import org.jooq.Record;
-import org.jooq.Row18;
+import org.jooq.Row22;
 import org.jooq.Schema;
 import org.jooq.Table;
 import org.jooq.TableField;
@@ -43,7 +42,7 @@ import stroom.authentication.impl.db.jooq.tables.records.AccountRecord;
 @SuppressWarnings({ "all", "unchecked", "rawtypes" })
 public class Account extends TableImpl<AccountRecord> {
 
-    private static final long serialVersionUID = -1515371199;
+    private static final long serialVersionUID = 924184384;
 
     /**
      * The reference instance of <code>stroom.account</code>
@@ -64,6 +63,31 @@ public class Account extends TableImpl<AccountRecord> {
     public final TableField<AccountRecord, Integer> ID = createField(DSL.name("id"), org.jooq.impl.SQLDataType.INTEGER.nullable(false).identity(true), this, "");
 
     /**
+     * The column <code>stroom.account.version</code>.
+     */
+    public final TableField<AccountRecord, Integer> VERSION = createField(DSL.name("version"), org.jooq.impl.SQLDataType.INTEGER.nullable(false), this, "");
+
+    /**
+     * The column <code>stroom.account.create_time_ms</code>.
+     */
+    public final TableField<AccountRecord, Long> CREATE_TIME_MS = createField(DSL.name("create_time_ms"), org.jooq.impl.SQLDataType.BIGINT.nullable(false), this, "");
+
+    /**
+     * The column <code>stroom.account.create_user</code>.
+     */
+    public final TableField<AccountRecord, String> CREATE_USER = createField(DSL.name("create_user"), org.jooq.impl.SQLDataType.VARCHAR(255).nullable(false), this, "");
+
+    /**
+     * The column <code>stroom.account.update_time_ms</code>.
+     */
+    public final TableField<AccountRecord, Long> UPDATE_TIME_MS = createField(DSL.name("update_time_ms"), org.jooq.impl.SQLDataType.BIGINT.nullable(false), this, "");
+
+    /**
+     * The column <code>stroom.account.update_user</code>.
+     */
+    public final TableField<AccountRecord, String> UPDATE_USER = createField(DSL.name("update_user"), org.jooq.impl.SQLDataType.VARCHAR(255).nullable(false), this, "");
+
+    /**
      * The column <code>stroom.account.email</code>.
      */
     public final TableField<AccountRecord, String> EMAIL = createField(DSL.name("email"), org.jooq.impl.SQLDataType.VARCHAR(255).nullable(false), this, "");
@@ -74,14 +98,9 @@ public class Account extends TableImpl<AccountRecord> {
     public final TableField<AccountRecord, String> PASSWORD_HASH = createField(DSL.name("password_hash"), org.jooq.impl.SQLDataType.VARCHAR(255).nullable(false), this, "");
 
     /**
-     * The column <code>stroom.account.password_last_changed</code>.
+     * The column <code>stroom.account.password_last_changed_ms</code>.
      */
-    public final TableField<AccountRecord, Timestamp> PASSWORD_LAST_CHANGED = createField(DSL.name("password_last_changed"), org.jooq.impl.SQLDataType.TIMESTAMP, this, "");
-
-    /**
-     * The column <code>stroom.account.state</code>.
-     */
-    public final TableField<AccountRecord, String> STATE = createField(DSL.name("state"), org.jooq.impl.SQLDataType.VARCHAR(10).defaultValue(org.jooq.impl.DSL.inline("enabled", org.jooq.impl.SQLDataType.VARCHAR)), this, "");
+    public final TableField<AccountRecord, Long> PASSWORD_LAST_CHANGED_MS = createField(DSL.name("password_last_changed_ms"), org.jooq.impl.SQLDataType.BIGINT, this, "");
 
     /**
      * The column <code>stroom.account.first_name</code>.
@@ -99,39 +118,29 @@ public class Account extends TableImpl<AccountRecord> {
     public final TableField<AccountRecord, String> COMMENTS = createField(DSL.name("comments"), org.jooq.impl.SQLDataType.CLOB, this, "");
 
     /**
-     * The column <code>stroom.account.login_failures</code>.
-     */
-    public final TableField<AccountRecord, Integer> LOGIN_FAILURES = createField(DSL.name("login_failures"), org.jooq.impl.SQLDataType.INTEGER.defaultValue(org.jooq.impl.DSL.inline("0", org.jooq.impl.SQLDataType.INTEGER)), this, "");
-
-    /**
      * The column <code>stroom.account.login_count</code>.
      */
     public final TableField<AccountRecord, Integer> LOGIN_COUNT = createField(DSL.name("login_count"), org.jooq.impl.SQLDataType.INTEGER.defaultValue(org.jooq.impl.DSL.inline("0", org.jooq.impl.SQLDataType.INTEGER)), this, "");
 
     /**
-     * The column <code>stroom.account.last_login</code>.
+     * The column <code>stroom.account.login_failures</code>.
      */
-    public final TableField<AccountRecord, Timestamp> LAST_LOGIN = createField(DSL.name("last_login"), org.jooq.impl.SQLDataType.TIMESTAMP, this, "");
+    public final TableField<AccountRecord, Integer> LOGIN_FAILURES = createField(DSL.name("login_failures"), org.jooq.impl.SQLDataType.INTEGER.defaultValue(org.jooq.impl.DSL.inline("0", org.jooq.impl.SQLDataType.INTEGER)), this, "");
 
     /**
-     * The column <code>stroom.account.created_on</code>.
+     * The column <code>stroom.account.last_login_ms</code>.
      */
-    public final TableField<AccountRecord, Timestamp> CREATED_ON = createField(DSL.name("created_on"), org.jooq.impl.SQLDataType.TIMESTAMP, this, "");
+    public final TableField<AccountRecord, Long> LAST_LOGIN_MS = createField(DSL.name("last_login_ms"), org.jooq.impl.SQLDataType.BIGINT, this, "");
 
     /**
-     * The column <code>stroom.account.created_by_user</code>.
+     * The column <code>stroom.account.reactivated_ms</code>.
      */
-    public final TableField<AccountRecord, String> CREATED_BY_USER = createField(DSL.name("created_by_user"), org.jooq.impl.SQLDataType.VARCHAR(255), this, "");
+    public final TableField<AccountRecord, Long> REACTIVATED_MS = createField(DSL.name("reactivated_ms"), org.jooq.impl.SQLDataType.BIGINT, this, "");
 
     /**
-     * The column <code>stroom.account.updated_on</code>.
+     * The column <code>stroom.account.force_password_change</code>.
      */
-    public final TableField<AccountRecord, Timestamp> UPDATED_ON = createField(DSL.name("updated_on"), org.jooq.impl.SQLDataType.TIMESTAMP, this, "");
-
-    /**
-     * The column <code>stroom.account.updated_by_user</code>.
-     */
-    public final TableField<AccountRecord, String> UPDATED_BY_USER = createField(DSL.name("updated_by_user"), org.jooq.impl.SQLDataType.VARCHAR(255), this, "");
+    public final TableField<AccountRecord, Boolean> FORCE_PASSWORD_CHANGE = createField(DSL.name("force_password_change"), org.jooq.impl.SQLDataType.BIT.nullable(false), this, "");
 
     /**
      * The column <code>stroom.account.never_expires</code>.
@@ -139,14 +148,24 @@ public class Account extends TableImpl<AccountRecord> {
     public final TableField<AccountRecord, Boolean> NEVER_EXPIRES = createField(DSL.name("never_expires"), org.jooq.impl.SQLDataType.BIT.nullable(false), this, "");
 
     /**
-     * The column <code>stroom.account.reactivated_date</code>.
+     * The column <code>stroom.account.enabled</code>.
      */
-    public final TableField<AccountRecord, Timestamp> REACTIVATED_DATE = createField(DSL.name("reactivated_date"), org.jooq.impl.SQLDataType.TIMESTAMP, this, "");
+    public final TableField<AccountRecord, Boolean> ENABLED = createField(DSL.name("enabled"), org.jooq.impl.SQLDataType.BIT.nullable(false), this, "");
 
     /**
-     * The column <code>stroom.account.force_password_change</code>.
+     * The column <code>stroom.account.inactive</code>.
      */
-    public final TableField<AccountRecord, Boolean> FORCE_PASSWORD_CHANGE = createField(DSL.name("force_password_change"), org.jooq.impl.SQLDataType.BIT.nullable(false), this, "");
+    public final TableField<AccountRecord, Boolean> INACTIVE = createField(DSL.name("inactive"), org.jooq.impl.SQLDataType.BIT.nullable(false), this, "");
+
+    /**
+     * The column <code>stroom.account.locked</code>.
+     */
+    public final TableField<AccountRecord, Boolean> LOCKED = createField(DSL.name("locked"), org.jooq.impl.SQLDataType.BIT.nullable(false), this, "");
+
+    /**
+     * The column <code>stroom.account.processing_account</code>.
+     */
+    public final TableField<AccountRecord, Boolean> PROCESSING_ACCOUNT = createField(DSL.name("processing_account"), org.jooq.impl.SQLDataType.BIT.nullable(false), this, "");
 
     /**
      * Create a <code>stroom.account</code> table reference
@@ -207,6 +226,11 @@ public class Account extends TableImpl<AccountRecord> {
     }
 
     @Override
+    public TableField<AccountRecord, Integer> getRecordVersion() {
+        return VERSION;
+    }
+
+    @Override
     public Account as(String alias) {
         return new Account(DSL.name(alias), this);
     }
@@ -233,11 +257,11 @@ public class Account extends TableImpl<AccountRecord> {
     }
 
     // -------------------------------------------------------------------------
-    // Row18 type methods
+    // Row22 type methods
     // -------------------------------------------------------------------------
 
     @Override
-    public Row18<Integer, String, String, Timestamp, String, String, String, String, Integer, Integer, Timestamp, Timestamp, String, Timestamp, String, Boolean, Timestamp, Boolean> fieldsRow() {
-        return (Row18) super.fieldsRow();
+    public Row22<Integer, Integer, Long, String, Long, String, String, String, Long, String, String, String, Integer, Integer, Long, Long, Boolean, Boolean, Boolean, Boolean, Boolean, Boolean> fieldsRow() {
+        return (Row22) super.fieldsRow();
     }
 }

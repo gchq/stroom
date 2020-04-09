@@ -10,8 +10,8 @@ public class OpenIdConfig extends AbstractConfig {
     public static final String PROP_NAME_CLIENT_ID = "clientId";
     public static final String PROP_NAME_CLIENT_SECRET = "clientSecret";
 
-    private static final String ISSUER = "accounts.google.com";
-    private static final String AUTH_ENDPOINT = "https://accounts.google.com/o/oauth2/v2/auth";
+    private static final String ISSUER = "stroom";//"accounts.google.com";
+    private static final String AUTH_ENDPOINT = "http://localhost:8080/authentication/v1/noauth/authenticate";//https://accounts.google.com/o/oauth2/v2/auth";
     private static final String TOKEN_ENDPOINT = "https://accounts.google.com/o/oauth2/token";
     private static final String JWKS_URI = "https://www.googleapis.com/oauth2/v3/certs";
 

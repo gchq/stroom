@@ -17,26 +17,17 @@
 package stroom.authentication;
 
 import com.google.inject.AbstractModule;
-import stroom.authentication.resources.authentication.v1.AuthenticationResource;
-import stroom.authentication.resources.authentication.v1.AuthenticationService;
-import stroom.authentication.resources.authentication.v1.AuthenticationServiceImpl;
-import stroom.authentication.resources.token.v1.JwkResource;
-import stroom.authentication.resources.token.v1.TokenResource;
-import stroom.authentication.resources.token.v1.TokenService;
-import stroom.authentication.resources.token.v1.TokenServiceImpl;
-import stroom.authentication.resources.user.v1.UserResource;
-import stroom.util.guice.GuiceUtil;
-import stroom.util.shared.RestResource;
+import stroom.authentication.account.AccountModule;
+import stroom.authentication.authenticate.AuthenticateModule;
+import stroom.authentication.oauth2.OAuth2Module;
+import stroom.authentication.token.TokenModule;
 
 public final class AuthModule extends AbstractModule {
     @Override
     protected void configure() {
-        bind(AuthenticationService.class).to(AuthenticationServiceImpl.class);
-        bind(TokenService.class).to(TokenServiceImpl.class);
-        GuiceUtil.buildMultiBinder(binder(), RestResource.class)
-                .addBinding(UserResource.class)
-                .addBinding(AuthenticationResource.class)
-                .addBinding(TokenResource.class)
-                .addBinding(JwkResource.class);
+        install(new AccountModule());
+        install(new AuthenticateModule());
+        install(new OAuth2Module());
+        install(new TokenModule());
     }
 }

@@ -63,8 +63,6 @@ appConfig:
     changePasswordUrl: ${CHANGE_PASSWORD_URL:-https://<<<IP_ADDRESS>>>/s/changepassword}
     unauthorisedUrl: ${UNAUTHORISED_URL:-https://<<<IP_ADDRESS>>>/s/unauthorised}
     advertisedHost: ${ADVERTISED_HTTP_HOST:- https://<<<IP_ADDRESS>>>}
-    stroom:
-      clientHost: ${STROOM_CLIENT_URI:-<IP_ADDRESS>}
   apiGateway:
     hostname: ${API_GATEWAY_HOST:-<<<IP_ADDRESS>>>}
   commonDbDetails:

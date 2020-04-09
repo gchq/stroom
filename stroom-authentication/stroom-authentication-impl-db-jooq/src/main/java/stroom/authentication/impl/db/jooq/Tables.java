@@ -8,8 +8,9 @@ import javax.annotation.processing.Generated;
 
 import stroom.authentication.impl.db.jooq.tables.Account;
 import stroom.authentication.impl.db.jooq.tables.JsonWebKey;
+import stroom.authentication.impl.db.jooq.tables.OauthClient;
 import stroom.authentication.impl.db.jooq.tables.Token;
-import stroom.authentication.impl.db.jooq.tables.TokenTypes;
+import stroom.authentication.impl.db.jooq.tables.TokenType;
 
 
 /**
@@ -36,12 +37,17 @@ public class Tables {
     public static final JsonWebKey JSON_WEB_KEY = JsonWebKey.JSON_WEB_KEY;
 
     /**
+     * The table <code>stroom.oauth_client</code>.
+     */
+    public static final OauthClient OAUTH_CLIENT = OauthClient.OAUTH_CLIENT;
+
+    /**
      * The table <code>stroom.token</code>.
      */
     public static final Token TOKEN = Token.TOKEN;
 
     /**
-     * The table <code>stroom.token_types</code>.
+     * The table <code>stroom.token_type</code>.
      */
-    public static final TokenTypes TOKEN_TYPES = TokenTypes.TOKEN_TYPES;
+    public static final TokenType TOKEN_TYPE = TokenType.TOKEN_TYPE;
 }

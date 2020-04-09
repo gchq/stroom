@@ -31,18 +31,17 @@ import org.jooq.SortField;
 import org.jooq.Table;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import stroom.authentication.TokenBuilder;
-import stroom.authentication.TokenBuilderFactory;
+import stroom.authentication.token.TokenBuilder;
+import stroom.authentication.token.TokenBuilderFactory;
 import stroom.authentication.config.TokenConfig;
 import stroom.authentication.exceptions.BadRequestException;
 import stroom.authentication.exceptions.NoSuchUserException;
 import stroom.authentication.exceptions.UnsupportedFilterException;
-import stroom.authentication.impl.db.jooq.tables.Account;
-import stroom.authentication.resources.token.v1.SearchRequest;
-import stroom.authentication.resources.token.v1.SearchResponse;
-import stroom.authentication.resources.token.v1.Token;
-import stroom.authentication.dao.TokenDao;
-import stroom.authentication.resources.user.v1.User;
+import stroom.authentication.token.SearchRequest;
+import stroom.authentication.token.SearchResponse;
+import stroom.authentication.token.Token;
+import stroom.authentication.token.TokenDao;
+import stroom.authentication.account.Account;
 import stroom.db.util.JooqUtil;
 
 import javax.inject.Inject;
@@ -55,7 +54,7 @@ import java.util.Map;
 import java.util.Optional;
 
 import static stroom.authentication.impl.db.jooq.tables.Token.TOKEN;
-import static stroom.authentication.impl.db.jooq.tables.TokenTypes.TOKEN_TYPES;
+import static stroom.authentication.impl.db.jooq.tables.TokenType.TOKEN_TYPE;
 import static stroom.authentication.impl.db.jooq.tables.Account.ACCOUNT;
 
 @Singleton
@@ -83,9 +82,9 @@ class TokenDaoImpl implements TokenDao {
         Map<String, String> filters = searchRequest.getFilters();
 
         // We need these aliased tables because we're joining tokens to users twice.
-        Account issuingAccount = ACCOUNT.as("issuingAccount");
-        Account tokenOwnerAccount = ACCOUNT.as("tokenOwnerAccount");
-        Account updatingAccount = ACCOUNT.as("updatingAccount");
+        stroom.authentication.impl.db.jooq.tables.Account issuingAccount = ACCOUNT.as("issuingAccount");
+        stroom.authentication.impl.db.jooq.tables.Account tokenOwnerAccount = ACCOUNT.as("tokenOwnerAccount");
+        stroom.authentication.impl.db.jooq.tables.Account updatingAccount = ACCOUNT.as("updatingAccount");
 
         // Use a default if there's no order direction specified in the request
         if (orderDirection == null) {
@@ -160,7 +159,7 @@ class TokenDaoImpl implements TokenDao {
     }
 
     @Override
-    public Token createIdToken(String idToken, String subject, Timestamp expiresOn) {
+    public Token createIdToken(String idToken, String subject, long expiresOn) {
         Record1<Integer> userRecord = JooqUtil.contextResult(authDbConnProvider, context -> context
                 .select(ACCOUNT.ID)
                 .from(ACCOUNT)
@@ -172,19 +171,19 @@ class TokenDaoImpl implements TokenDao {
         int recipientUserId = userRecord.get(ACCOUNT.ID);
 
         int tokenTypeId = JooqUtil.contextResult(authDbConnProvider, context -> context
-                .select(TOKEN_TYPES.ID)
-                .from(TOKEN_TYPES)
-                .where(TOKEN_TYPES.TOKEN_TYPE.eq(Token.TokenType.USER.getText().toLowerCase()))
+                .select(TOKEN_TYPE.ID)
+                .from(TOKEN_TYPE)
+                .where(TOKEN_TYPE.TYPE.eq(Token.TokenType.USER.getText().toLowerCase()))
                 .fetchOne()
-                .get(TOKEN_TYPES.ID));
+                .get(TOKEN_TYPE.ID));
 
         Token tokenRecord = JooqUtil.contextResult(authDbConnProvider, context -> context
                 .insertInto((Table) TOKEN)
-                .set(TOKEN.USER_ID, recipientUserId)
-                .set(TOKEN.TOKEN_TYPE_ID, tokenTypeId)
+                .set(TOKEN.FK_ACCOUNT_ID, recipientUserId)
+                .set(TOKEN.FK_TOKEN_TYPE_ID, tokenTypeId)
                 .set(TOKEN.DATA, idToken)
-                .set(TOKEN.EXPIRES_ON, expiresOn)
-                .set(TOKEN.ISSUED_ON, Instant.now())
+                .set(TOKEN.EXPIRES_ON_MS, expiresOn)
+                .set(TOKEN.CREATE_TIME_MS, System.currentTimeMillis())
                 .set(TOKEN.ENABLED, true)
                 .set(TOKEN.COMMENTS, "This is an OpenId idToken created by the Authentication Service.")
                 .returning(new Field[]{TOKEN.ID})
@@ -245,20 +244,20 @@ class TokenDaoImpl implements TokenDao {
                 .get(ACCOUNT.ID));
 
         int tokenTypeId = JooqUtil.contextResult(authDbConnProvider, context -> context
-                .select(TOKEN_TYPES.ID)
-                .from(TOKEN_TYPES)
-                .where(TOKEN_TYPES.TOKEN_TYPE.eq(tokenType.getText().toLowerCase()))
+                .select(TOKEN_TYPE.ID)
+                .from(TOKEN_TYPE)
+                .where(TOKEN_TYPE.TYPE.eq(tokenType.getText().toLowerCase()))
                 .fetchOne()
-                .get(TOKEN_TYPES.ID));
+                .get(TOKEN_TYPE.ID));
 
         Token tokenRecord = JooqUtil.contextResult(authDbConnProvider, context -> context
-                .insertInto((Table) TOKEN)
-                .set(TOKEN.USER_ID, recipientUserId)
-                .set(TOKEN.TOKEN_TYPE_ID, tokenTypeId)
+                .insertInto(TOKEN)
+                .set(TOKEN.FK_ACCOUNT_ID, recipientUserId)
+                .set(TOKEN.FK_TOKEN_TYPE_ID, tokenTypeId)
                 .set(TOKEN.DATA, idToken)
-                .set(TOKEN.EXPIRES_ON, new Timestamp(actualExpiryDate.toEpochMilli()))
-                .set(TOKEN.ISSUED_ON, Instant.now())
-                .set(TOKEN.ISSUED_BY_USER, issuingUserId)
+                .set(TOKEN.EXPIRES_ON_MS, actualExpiryDate.toEpochMilli())
+                .set(TOKEN.CREATE_TIME_MS, System.currentTimeMillis())
+                .set(TOKEN.CREATE_USER, issuingUserEmail)
                 .set(TOKEN.ENABLED, isEnabled)
                 .set(TOKEN.COMMENTS, comment)
                 .returning()
@@ -276,7 +275,7 @@ class TokenDaoImpl implements TokenDao {
 
         JooqUtil.context(authDbConnProvider, context -> context
                 .deleteFrom(TOKEN)
-                .where(TOKEN.USER_ID.ne(adminUserId))
+                .where(TOKEN.FK_ACCOUNT_ID.ne(adminUserId))
                 .execute());
     }
 
@@ -293,9 +292,9 @@ class TokenDaoImpl implements TokenDao {
     @Override
     public Optional<Token> readById(int tokenId) {
         // We need these aliased tables because we're joining tokens to users twice.
-        Account issuingAccount = ACCOUNT.as("issuingAccount");
-        Account tokenOwnerAccount = ACCOUNT.as("tokenOwnerAccount");
-        Account updatingAccount = ACCOUNT.as("updatingAccount");
+        stroom.authentication.impl.db.jooq.tables.Account issuingAccount = ACCOUNT.as("issuingAccount");
+        stroom.authentication.impl.db.jooq.tables.Account tokenOwnerAccount = ACCOUNT.as("tokenOwnerAccount");
+        stroom.authentication.impl.db.jooq.tables.Account updatingAccount = ACCOUNT.as("updatingAccount");
 
         return JooqUtil.contextResult(authDbConnProvider, context -> {
             Field userEmail = tokenOwnerAccount.EMAIL.as("user_email");
@@ -318,24 +317,11 @@ class TokenDaoImpl implements TokenDao {
     @Override
     public Optional<Token> readByToken(String token) {
         // We need these aliased tables because we're joining tokens to users twice.
-        Account tokenOwnerAccount = ACCOUNT.as("tokenOwnerAccount");
-        Field userEmail = tokenOwnerAccount.EMAIL.as("user_email");
+        stroom.authentication.impl.db.jooq.tables.Account tokenOwnerAccount = ACCOUNT.as("tokenOwnerAccount");
+//        Field userEmail = tokenOwnerAccount.EMAIL.as("user_email");
 
-        Record tokenResult = JooqUtil.contextResult(authDbConnProvider, context -> context.select(
-                TOKEN.ID.as("id"),
-                TOKEN.ENABLED.as("enabled"),
-                TOKEN.EXPIRES_ON.as("expires_on"),
-                userEmail,
-                TOKEN.ISSUED_ON.as("issued_on"),
-                TOKEN.DATA.as("token"),
-                TOKEN_TYPES.TOKEN_TYPE.as("token_type"),
-                TOKEN.UPDATED_ON.as("updated_on"),
-                TOKEN.USER_ID.as("user_id"))
-                .from(TOKEN
-                        .join(TOKEN_TYPES)
-                        .on(TOKEN.TOKEN_TYPE_ID.eq(TOKEN_TYPES.ID))
-                        .join(tokenOwnerAccount)
-                        .on(TOKEN.USER_ID.eq(tokenOwnerAccount.ID)))
+        Record tokenResult = JooqUtil.contextResult(authDbConnProvider, context -> context
+                .selectFrom(TOKEN)
                 .where(new Condition[]{TOKEN.DATA.eq(token)})
                 .fetchOne());
 
@@ -347,12 +333,12 @@ class TokenDaoImpl implements TokenDao {
 
 
     @Override
-    public void enableOrDisableToken(int tokenId, boolean enabled, User updatingUser) {
+    public void enableOrDisableToken(int tokenId, boolean enabled, Account updatingAccount) {
         Object result = JooqUtil.contextResult(authDbConnProvider, context -> context
                 .update(TOKEN)
                 .set(TOKEN.ENABLED, enabled)
-                .set(TOKEN.UPDATED_ON, Timestamp.from(Instant.now()))
-                .set(TOKEN.UPDATED_BY_USER, updatingUser.getId())
+                .set(TOKEN.UPDATE_TIME_MS, System.currentTimeMillis())
+                .set(TOKEN.UPDATE_USER, updatingAccount.getEmail())
                 .where(TOKEN.ID.eq((tokenId)))
                 .execute());
     }
@@ -362,8 +348,8 @@ class TokenDaoImpl implements TokenDao {
      * Is this what a user would want? Maybe they want greater than or less than? This would need additional UI
      * For now we can't sensible implement anything unless we have a better idea of requirements.
      */
-    private static Optional<List<Condition>> getConditions(Map<String, String> filters, Account issuingAccount,
-                                                           Account tokenOwnerAccount, Account updatingAccount) {
+    private static Optional<List<Condition>> getConditions(Map<String, String> filters, stroom.authentication.impl.db.jooq.tables.Account issuingAccount,
+                                                           stroom.authentication.impl.db.jooq.tables.Account tokenOwnerAccount, stroom.authentication.impl.db.jooq.tables.Account updatingAccount) {
         // We need to set up conditions
         List<Condition> conditions = new ArrayList<>();
         final String unsupportedFilterMessage = "Unsupported filter: ";
@@ -392,7 +378,7 @@ class TokenDaoImpl implements TokenDao {
                         condition = TOKEN.DATA.contains(filters.get(key));
                         break;
                     case "tokenType":
-                        condition = TOKEN_TYPES.TOKEN_TYPE.contains(filters.get(key));
+                        condition = TOKEN_TYPE.TYPE.contains(filters.get(key));
                         break;
                     case "updatedByUser":
                         condition = updatingAccount.EMAIL.contains(filters.get(key));
@@ -412,7 +398,7 @@ class TokenDaoImpl implements TokenDao {
     }
 
     static SelectJoinStep<Record11<Integer, Boolean, Timestamp, String, Timestamp, String, String, String, String, Timestamp, Integer>>
-    getSelectFrom(DSLContext database, Account issuingAccount, Account tokenOwnerAccount, Account updatingAccount, Field userEmail) {
+    getSelectFrom(DSLContext database, stroom.authentication.impl.db.jooq.tables.Account issuingAccount, stroom.authentication.impl.db.jooq.tables.Account tokenOwnerAccount, stroom.authentication.impl.db.jooq.tables.Account updatingAccount, Field userEmail) {
         SelectSelectStep<Record11<Integer, Boolean, Timestamp, String, Timestamp, String, String, String, String, Timestamp, Integer>>
                 select = getSelect(database, issuingAccount, tokenOwnerAccount, updatingAccount, userEmail);
 
@@ -421,43 +407,44 @@ class TokenDaoImpl implements TokenDao {
     }
 
     static SelectSelectStep<Record11<Integer, Boolean, Timestamp, String, Timestamp, String, String, String, String, Timestamp, Integer>>
-    getSelect(DSLContext database, Account issuingAccount, Account tokenOwnerAccount, Account updatingAccount, Field userEmail) {
+    getSelect(DSLContext database, stroom.authentication.impl.db.jooq.tables.Account issuingAccount, stroom.authentication.impl.db.jooq.tables.Account tokenOwnerAccount, stroom.authentication.impl.db.jooq.tables.Account updatingAccount, Field userEmail) {
         SelectSelectStep<Record11<Integer, Boolean, Timestamp, String, Timestamp, String, String, String, String, Timestamp, Integer>>
                 select = database.select(
                 TOKEN.ID.as("id"),
                 TOKEN.ENABLED.as("enabled"),
-                TOKEN.EXPIRES_ON.as("expires_on"),
+                TOKEN.EXPIRES_ON_MS.as("expires_on"),
                 userEmail,
-                TOKEN.ISSUED_ON.as("issued_on"),
+                TOKEN.CREATE_TIME_MS.as("issued_on"),
                 issuingAccount.EMAIL.as("issued_by_user"),
                 TOKEN.DATA.as("token"),
-                TOKEN_TYPES.TOKEN_TYPE.as("token_type"),
+                TOKEN_TYPE.TYPE.as("token_type"),
                 updatingAccount.EMAIL.as("updated_by_user"),
-                TOKEN.UPDATED_ON.as("updated_on"),
-                TOKEN.USER_ID.as("user_id"));
+                TOKEN.UPDATE_TIME_MS.as("updated_on"),
+                TOKEN.FK_ACCOUNT_ID.as("user_id"));
 
         return select;
     }
 
     static SelectJoinStep
     getFrom(SelectSelectStep select,
-            Account issuingAccount, Account tokenOwnerAccount, Account updatingAccount, Field userEmail) {
+            stroom.authentication.impl.db.jooq.tables.Account issuingAccount, stroom.authentication.impl.db.jooq.tables.Account tokenOwnerAccount, stroom.authentication.impl.db.jooq.tables.Account updatingAccount, Field userEmail) {
         SelectJoinStep<Record11<Integer, Boolean, Timestamp, String, Timestamp, String, String, String, String, Timestamp, Integer>>
                 from = select.from(TOKEN
-                .join(TOKEN_TYPES)
-                .on(TOKEN.TOKEN_TYPE_ID.eq(TOKEN_TYPES.ID))
-                .join(issuingAccount)
-                .on(TOKEN.ISSUED_BY_USER.eq(issuingAccount.ID))
+                .join(TOKEN_TYPE)
+                .on(TOKEN.FK_TOKEN_TYPE_ID.eq(TOKEN_TYPE.ID))
+//                .join(issuingAccount)
+//                .on(TOKEN.CREATE_USER.eq(issuingAccount.ID))
                 .join(tokenOwnerAccount)
-                .on(TOKEN.USER_ID.eq(tokenOwnerAccount.ID))
-                .join(updatingAccount)
-                .on(TOKEN.ISSUED_BY_USER.eq(updatingAccount.ID)));
+                .on(TOKEN.FK_ACCOUNT_ID.eq(tokenOwnerAccount.ID))
+//                .join(updatingAccount)
+//                .on(TOKEN.CREATE_USER.eq(updatingAccount.ID))
+        );
 
         return from;
     }
 
     static Optional<SortField> getOrderBy(String orderBy, String orderDirection) {
-        // We might be ordering by TOKEN or ACCOUNT or TOKEN_TYPES - we join and select on all
+        // We might be ordering by TOKEN or ACCOUNT or TOKEN_TYPE - we join and select on all
         SortField orderByField;
         if (orderBy != null) {
             switch (orderBy) {
@@ -468,15 +455,15 @@ class TokenDaoImpl implements TokenDao {
                     orderByField = orderDirection.equals("asc") ? TOKEN.ENABLED.asc() : TOKEN.ENABLED.desc();
                     break;
                 case "tokenType":
-                    orderByField = orderDirection.equals("asc") ? TOKEN_TYPES.TOKEN_TYPE.asc() : TOKEN_TYPES.TOKEN_TYPE.desc();
+                    orderByField = orderDirection.equals("asc") ? TOKEN_TYPE.TYPE.asc() : TOKEN_TYPE.TYPE.desc();
                     break;
                 case "issuedOn":
                 default:
-                    orderByField = orderDirection.equals("asc") ? TOKEN.ISSUED_ON.asc() : TOKEN.ISSUED_ON.desc();
+                    orderByField = orderDirection.equals("asc") ? TOKEN.CREATE_TIME_MS.asc() : TOKEN.CREATE_TIME_MS.desc();
             }
         } else {
             // We don't have an orderBy so we'll use the default ordering
-            orderByField = TOKEN.ISSUED_ON.desc();
+            orderByField = TOKEN.CREATE_TIME_MS.desc();
         }
         return Optional.of(orderByField);
     }

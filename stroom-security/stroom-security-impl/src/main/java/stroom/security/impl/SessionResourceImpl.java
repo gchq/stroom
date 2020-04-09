@@ -2,7 +2,7 @@ package stroom.security.impl;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import stroom.authentication.service.api.OIDC;
+import stroom.authentication.api.OIDC;
 import stroom.security.api.UserIdentity;
 import stroom.security.impl.session.SessionListResponse;
 import stroom.security.impl.session.SessionListService;

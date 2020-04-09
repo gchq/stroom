@@ -6,7 +6,7 @@ import org.jose4j.jwt.MalformedClaimException;
 import org.jose4j.jwt.consumer.InvalidJwtException;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import stroom.authentication.service.api.OIDC;
+import stroom.authentication.api.OIDC;
 import stroom.security.api.UserIdentity;
 import stroom.security.impl.exception.AuthenticationException;
 import stroom.security.impl.session.UserIdentitySessionUtil;
@@ -137,9 +137,9 @@ class OpenIdManager {
                     throw new AuthenticationException("Received status " + res.getStatus() + " from " + tokenEndpoint);
                 }
 
-                final String idToken = (String) responseMap.get("id_token");
+                final String idToken = (String) responseMap.get(OIDC.ID_TOKEN);
                 if (idToken == null) {
-                    throw new AuthenticationException("'id_token' not provided in response");
+                    throw new AuthenticationException("'" + OIDC.ID_TOKEN + "' not provided in response");
                 }
 
                 final UserIdentityImpl token = createUIToken(session, state, idToken);

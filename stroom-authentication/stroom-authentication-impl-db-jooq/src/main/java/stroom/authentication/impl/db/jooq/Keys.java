@@ -13,12 +13,14 @@ import org.jooq.impl.Internal;
 
 import stroom.authentication.impl.db.jooq.tables.Account;
 import stroom.authentication.impl.db.jooq.tables.JsonWebKey;
+import stroom.authentication.impl.db.jooq.tables.OauthClient;
 import stroom.authentication.impl.db.jooq.tables.Token;
-import stroom.authentication.impl.db.jooq.tables.TokenTypes;
+import stroom.authentication.impl.db.jooq.tables.TokenType;
 import stroom.authentication.impl.db.jooq.tables.records.AccountRecord;
 import stroom.authentication.impl.db.jooq.tables.records.JsonWebKeyRecord;
+import stroom.authentication.impl.db.jooq.tables.records.OauthClientRecord;
 import stroom.authentication.impl.db.jooq.tables.records.TokenRecord;
-import stroom.authentication.impl.db.jooq.tables.records.TokenTypesRecord;
+import stroom.authentication.impl.db.jooq.tables.records.TokenTypeRecord;
 
 
 /**
@@ -41,8 +43,9 @@ public class Keys {
 
     public static final Identity<AccountRecord, Integer> IDENTITY_ACCOUNT = Identities0.IDENTITY_ACCOUNT;
     public static final Identity<JsonWebKeyRecord, Integer> IDENTITY_JSON_WEB_KEY = Identities0.IDENTITY_JSON_WEB_KEY;
+    public static final Identity<OauthClientRecord, Integer> IDENTITY_OAUTH_CLIENT = Identities0.IDENTITY_OAUTH_CLIENT;
     public static final Identity<TokenRecord, Integer> IDENTITY_TOKEN = Identities0.IDENTITY_TOKEN;
-    public static final Identity<TokenTypesRecord, Integer> IDENTITY_TOKEN_TYPES = Identities0.IDENTITY_TOKEN_TYPES;
+    public static final Identity<TokenTypeRecord, Integer> IDENTITY_TOKEN_TYPE = Identities0.IDENTITY_TOKEN_TYPE;
 
     // -------------------------------------------------------------------------
     // UNIQUE and PRIMARY KEY definitions
@@ -51,20 +54,19 @@ public class Keys {
     public static final UniqueKey<AccountRecord> KEY_ACCOUNT_PRIMARY = UniqueKeys0.KEY_ACCOUNT_PRIMARY;
     public static final UniqueKey<AccountRecord> KEY_ACCOUNT_EMAIL = UniqueKeys0.KEY_ACCOUNT_EMAIL;
     public static final UniqueKey<JsonWebKeyRecord> KEY_JSON_WEB_KEY_PRIMARY = UniqueKeys0.KEY_JSON_WEB_KEY_PRIMARY;
-    public static final UniqueKey<JsonWebKeyRecord> KEY_JSON_WEB_KEY_KEYID = UniqueKeys0.KEY_JSON_WEB_KEY_KEYID;
+    public static final UniqueKey<OauthClientRecord> KEY_OAUTH_CLIENT_PRIMARY = UniqueKeys0.KEY_OAUTH_CLIENT_PRIMARY;
+    public static final UniqueKey<OauthClientRecord> KEY_OAUTH_CLIENT_NAME = UniqueKeys0.KEY_OAUTH_CLIENT_NAME;
+    public static final UniqueKey<OauthClientRecord> KEY_OAUTH_CLIENT_CLIENT_ID = UniqueKeys0.KEY_OAUTH_CLIENT_CLIENT_ID;
     public static final UniqueKey<TokenRecord> KEY_TOKEN_PRIMARY = UniqueKeys0.KEY_TOKEN_PRIMARY;
-    public static final UniqueKey<TokenRecord> KEY_TOKEN_ID = UniqueKeys0.KEY_TOKEN_ID;
-    public static final UniqueKey<TokenTypesRecord> KEY_TOKEN_TYPES_PRIMARY = UniqueKeys0.KEY_TOKEN_TYPES_PRIMARY;
-    public static final UniqueKey<TokenTypesRecord> KEY_TOKEN_TYPES_ID = UniqueKeys0.KEY_TOKEN_TYPES_ID;
+    public static final UniqueKey<TokenTypeRecord> KEY_TOKEN_TYPE_PRIMARY = UniqueKeys0.KEY_TOKEN_TYPE_PRIMARY;
 
     // -------------------------------------------------------------------------
     // FOREIGN KEY definitions
     // -------------------------------------------------------------------------
 
-    public static final ForeignKey<TokenRecord, AccountRecord> FK_ISSUED_TO = ForeignKeys0.FK_ISSUED_TO;
-    public static final ForeignKey<TokenRecord, TokenTypesRecord> FK_TOKEN_TYPE_ID = ForeignKeys0.FK_TOKEN_TYPE_ID;
-    public static final ForeignKey<TokenRecord, AccountRecord> FK_ISSUED_BY_USER = ForeignKeys0.FK_ISSUED_BY_USER;
-    public static final ForeignKey<TokenRecord, AccountRecord> FK_UPDATED_BY_USER = ForeignKeys0.FK_UPDATED_BY_USER;
+    public static final ForeignKey<JsonWebKeyRecord, TokenTypeRecord> JSON_WEB_KEY_FK_TOKEN_TYPE_ID = ForeignKeys0.JSON_WEB_KEY_FK_TOKEN_TYPE_ID;
+    public static final ForeignKey<TokenRecord, AccountRecord> TOKEN_FK_ACCOUNT_ID = ForeignKeys0.TOKEN_FK_ACCOUNT_ID;
+    public static final ForeignKey<TokenRecord, TokenTypeRecord> TOKEN_FK_TOKEN_TYPE_ID = ForeignKeys0.TOKEN_FK_TOKEN_TYPE_ID;
 
     // -------------------------------------------------------------------------
     // [#1459] distribute members to avoid static initialisers > 64kb
@@ -73,25 +75,25 @@ public class Keys {
     private static class Identities0 {
         public static Identity<AccountRecord, Integer> IDENTITY_ACCOUNT = Internal.createIdentity(Account.ACCOUNT, Account.ACCOUNT.ID);
         public static Identity<JsonWebKeyRecord, Integer> IDENTITY_JSON_WEB_KEY = Internal.createIdentity(JsonWebKey.JSON_WEB_KEY, JsonWebKey.JSON_WEB_KEY.ID);
+        public static Identity<OauthClientRecord, Integer> IDENTITY_OAUTH_CLIENT = Internal.createIdentity(OauthClient.OAUTH_CLIENT, OauthClient.OAUTH_CLIENT.ID);
         public static Identity<TokenRecord, Integer> IDENTITY_TOKEN = Internal.createIdentity(Token.TOKEN, Token.TOKEN.ID);
-        public static Identity<TokenTypesRecord, Integer> IDENTITY_TOKEN_TYPES = Internal.createIdentity(TokenTypes.TOKEN_TYPES, TokenTypes.TOKEN_TYPES.ID);
+        public static Identity<TokenTypeRecord, Integer> IDENTITY_TOKEN_TYPE = Internal.createIdentity(TokenType.TOKEN_TYPE, TokenType.TOKEN_TYPE.ID);
     }
 
     private static class UniqueKeys0 {
         public static final UniqueKey<AccountRecord> KEY_ACCOUNT_PRIMARY = Internal.createUniqueKey(Account.ACCOUNT, "KEY_account_PRIMARY", Account.ACCOUNT.ID);
         public static final UniqueKey<AccountRecord> KEY_ACCOUNT_EMAIL = Internal.createUniqueKey(Account.ACCOUNT, "KEY_account_email", Account.ACCOUNT.EMAIL);
         public static final UniqueKey<JsonWebKeyRecord> KEY_JSON_WEB_KEY_PRIMARY = Internal.createUniqueKey(JsonWebKey.JSON_WEB_KEY, "KEY_json_web_key_PRIMARY", JsonWebKey.JSON_WEB_KEY.ID);
-        public static final UniqueKey<JsonWebKeyRecord> KEY_JSON_WEB_KEY_KEYID = Internal.createUniqueKey(JsonWebKey.JSON_WEB_KEY, "KEY_json_web_key_keyId", JsonWebKey.JSON_WEB_KEY.KEYID);
+        public static final UniqueKey<OauthClientRecord> KEY_OAUTH_CLIENT_PRIMARY = Internal.createUniqueKey(OauthClient.OAUTH_CLIENT, "KEY_oauth_client_PRIMARY", OauthClient.OAUTH_CLIENT.ID);
+        public static final UniqueKey<OauthClientRecord> KEY_OAUTH_CLIENT_NAME = Internal.createUniqueKey(OauthClient.OAUTH_CLIENT, "KEY_oauth_client_name", OauthClient.OAUTH_CLIENT.NAME);
+        public static final UniqueKey<OauthClientRecord> KEY_OAUTH_CLIENT_CLIENT_ID = Internal.createUniqueKey(OauthClient.OAUTH_CLIENT, "KEY_oauth_client_client_id", OauthClient.OAUTH_CLIENT.CLIENT_ID);
         public static final UniqueKey<TokenRecord> KEY_TOKEN_PRIMARY = Internal.createUniqueKey(Token.TOKEN, "KEY_token_PRIMARY", Token.TOKEN.ID);
-        public static final UniqueKey<TokenRecord> KEY_TOKEN_ID = Internal.createUniqueKey(Token.TOKEN, "KEY_token_id", Token.TOKEN.ID);
-        public static final UniqueKey<TokenTypesRecord> KEY_TOKEN_TYPES_PRIMARY = Internal.createUniqueKey(TokenTypes.TOKEN_TYPES, "KEY_token_types_PRIMARY", TokenTypes.TOKEN_TYPES.ID);
-        public static final UniqueKey<TokenTypesRecord> KEY_TOKEN_TYPES_ID = Internal.createUniqueKey(TokenTypes.TOKEN_TYPES, "KEY_token_types_id", TokenTypes.TOKEN_TYPES.ID);
+        public static final UniqueKey<TokenTypeRecord> KEY_TOKEN_TYPE_PRIMARY = Internal.createUniqueKey(TokenType.TOKEN_TYPE, "KEY_token_type_PRIMARY", TokenType.TOKEN_TYPE.ID);
     }
 
     private static class ForeignKeys0 {
-        public static final ForeignKey<TokenRecord, AccountRecord> FK_ISSUED_TO = Internal.createForeignKey(stroom.authentication.impl.db.jooq.Keys.KEY_ACCOUNT_PRIMARY, Token.TOKEN, "fk_issued_to", Token.TOKEN.USER_ID);
-        public static final ForeignKey<TokenRecord, TokenTypesRecord> FK_TOKEN_TYPE_ID = Internal.createForeignKey(stroom.authentication.impl.db.jooq.Keys.KEY_TOKEN_TYPES_PRIMARY, Token.TOKEN, "fk_token_type_id", Token.TOKEN.TOKEN_TYPE_ID);
-        public static final ForeignKey<TokenRecord, AccountRecord> FK_ISSUED_BY_USER = Internal.createForeignKey(stroom.authentication.impl.db.jooq.Keys.KEY_ACCOUNT_PRIMARY, Token.TOKEN, "fk_issued_by_user", Token.TOKEN.ISSUED_BY_USER);
-        public static final ForeignKey<TokenRecord, AccountRecord> FK_UPDATED_BY_USER = Internal.createForeignKey(stroom.authentication.impl.db.jooq.Keys.KEY_ACCOUNT_PRIMARY, Token.TOKEN, "fk_updated_by_user", Token.TOKEN.UPDATED_BY_USER);
+        public static final ForeignKey<JsonWebKeyRecord, TokenTypeRecord> JSON_WEB_KEY_FK_TOKEN_TYPE_ID = Internal.createForeignKey(stroom.authentication.impl.db.jooq.Keys.KEY_TOKEN_TYPE_PRIMARY, JsonWebKey.JSON_WEB_KEY, "json_web_key_fk_token_type_id", JsonWebKey.JSON_WEB_KEY.FK_TOKEN_TYPE_ID);
+        public static final ForeignKey<TokenRecord, AccountRecord> TOKEN_FK_ACCOUNT_ID = Internal.createForeignKey(stroom.authentication.impl.db.jooq.Keys.KEY_ACCOUNT_PRIMARY, Token.TOKEN, "token_fk_account_id", Token.TOKEN.FK_ACCOUNT_ID);
+        public static final ForeignKey<TokenRecord, TokenTypeRecord> TOKEN_FK_TOKEN_TYPE_ID = Internal.createForeignKey(stroom.authentication.impl.db.jooq.Keys.KEY_TOKEN_TYPE_PRIMARY, Token.TOKEN, "token_fk_token_type_id", Token.TOKEN.FK_TOKEN_TYPE_ID);
     }
 }

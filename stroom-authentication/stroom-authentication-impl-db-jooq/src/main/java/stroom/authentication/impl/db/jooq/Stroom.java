@@ -16,8 +16,9 @@ import org.jooq.impl.SchemaImpl;
 
 import stroom.authentication.impl.db.jooq.tables.Account;
 import stroom.authentication.impl.db.jooq.tables.JsonWebKey;
+import stroom.authentication.impl.db.jooq.tables.OauthClient;
 import stroom.authentication.impl.db.jooq.tables.Token;
-import stroom.authentication.impl.db.jooq.tables.TokenTypes;
+import stroom.authentication.impl.db.jooq.tables.TokenType;
 
 
 /**
@@ -33,7 +34,7 @@ import stroom.authentication.impl.db.jooq.tables.TokenTypes;
 @SuppressWarnings({ "all", "unchecked", "rawtypes" })
 public class Stroom extends SchemaImpl {
 
-    private static final long serialVersionUID = -1196014931;
+    private static final long serialVersionUID = 488724268;
 
     /**
      * The reference instance of <code>stroom</code>
@@ -51,14 +52,19 @@ public class Stroom extends SchemaImpl {
     public final JsonWebKey JSON_WEB_KEY = stroom.authentication.impl.db.jooq.tables.JsonWebKey.JSON_WEB_KEY;
 
     /**
+     * The table <code>stroom.oauth_client</code>.
+     */
+    public final OauthClient OAUTH_CLIENT = stroom.authentication.impl.db.jooq.tables.OauthClient.OAUTH_CLIENT;
+
+    /**
      * The table <code>stroom.token</code>.
      */
     public final Token TOKEN = stroom.authentication.impl.db.jooq.tables.Token.TOKEN;
 
     /**
-     * The table <code>stroom.token_types</code>.
+     * The table <code>stroom.token_type</code>.
      */
-    public final TokenTypes TOKEN_TYPES = stroom.authentication.impl.db.jooq.tables.TokenTypes.TOKEN_TYPES;
+    public final TokenType TOKEN_TYPE = stroom.authentication.impl.db.jooq.tables.TokenType.TOKEN_TYPE;
 
     /**
      * No further instances allowed
@@ -84,7 +90,8 @@ public class Stroom extends SchemaImpl {
         return Arrays.<Table<?>>asList(
             Account.ACCOUNT,
             JsonWebKey.JSON_WEB_KEY,
+            OauthClient.OAUTH_CLIENT,
             Token.TOKEN,
-            TokenTypes.TOKEN_TYPES);
+            TokenType.TOKEN_TYPE);
     }
 }

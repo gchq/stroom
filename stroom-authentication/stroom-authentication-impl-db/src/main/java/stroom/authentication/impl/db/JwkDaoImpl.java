@@ -7,7 +7,7 @@ import org.jose4j.jwk.RsaJwkGenerator;
 import org.jose4j.lang.JoseException;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import stroom.authentication.dao.JwkDao;
+import stroom.authentication.token.JwkDao;
 import stroom.authentication.impl.db.jooq.tables.records.JsonWebKeyRecord;
 import stroom.db.util.JooqUtil;
 
@@ -134,12 +134,10 @@ class JwkDaoImpl implements JwkDao {
 
                 // Persist the public key
                 JsonWebKeyRecord jwkRecord = new JsonWebKeyRecord();
-                jwkRecord.setKeyid(jwkId);
+                jwkRecord.setKeyId(jwkId);
                 jwkRecord.setJson(jwk.toJson(JsonWebKey.OutputControlLevel.INCLUDE_PRIVATE));
+                jwkRecord.setCreateTimeMs(System.currentTimeMillis());
 
-                // TODO : @66 SET THIS
-
-//                     jwkRecord.setCreateTimeMs(System.currentTimeMillis());
                 context.executeInsert(jwkRecord);
             } catch (JoseException e) {
                 LOGGER.error("Unable to create JWK!", e);
@@ -155,12 +153,9 @@ class JwkDaoImpl implements JwkDao {
             final List<JsonWebKeyRecord> list = context.selectFrom(JSON_WEB_KEY).fetch();
             for (JsonWebKeyRecord record : list) {
                 long createTime = 0;
-
-                // TODO : @66 SET THIS
-
-//                if (record.getCreateTimeMs() != null) {
-//                    createTime = record.getCreateTimeMs();
-//                }
+                if (record.getCreateTimeMs() != null) {
+                    createTime = record.getCreateTimeMs();
+                }
 
                 if (createTime < oldest) {
                     context.deleteFrom(JSON_WEB_KEY).where(JSON_WEB_KEY.ID.eq(record.getId()));

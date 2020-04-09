@@ -41,7 +41,7 @@ if (getPropertyOrDefault(propNameJooqGeneration, "false") == "true") {
                         inputSchema = 'stroom'
                         // Add anything you want included in generation below, whitespace ignored
                         // and comments allowed. Each one is a java regex
-                        includes = 'account|token|token_types|json_web_key'
+                        includes = 'account|token|token_type|json_web_key|oauth_client'
 
                         // We don't want to include flyway versioning
                         excludes = 'authentication_schema_version'
