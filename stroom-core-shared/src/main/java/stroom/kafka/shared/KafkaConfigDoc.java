@@ -27,7 +27,7 @@ import stroom.util.shared.HasData;
 import java.util.Objects;
 
 
-@JsonPropertyOrder({"type", "uuid", "name", "version", "createTime", "updateTime", "createUser", "updateUser", "description"})
+@JsonPropertyOrder({"type", "uuid", "name", "version", "createTime", "updateTime", "createUser", "updateUser", "description", "data"})
 @JsonInclude(Include.NON_EMPTY)
 public class KafkaConfigDoc extends Doc implements HasData {
 
@@ -35,8 +35,10 @@ public class KafkaConfigDoc extends Doc implements HasData {
 
     public static final String DOCUMENT_TYPE = "KafkaConfig";
 
+    @JsonProperty
     private String description = "";
 
+    @JsonProperty
     private String data = "";
 
     public KafkaConfigDoc() {
@@ -66,6 +68,7 @@ public class KafkaConfigDoc extends Doc implements HasData {
         return description;
     }
 
+    @SuppressWarnings("unused")
     public void setDescription(final String description) {
         this.description = description;
     }
