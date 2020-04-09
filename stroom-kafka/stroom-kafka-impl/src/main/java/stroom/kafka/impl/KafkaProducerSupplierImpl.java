@@ -27,6 +27,7 @@ public class KafkaProducerSupplierImpl implements KafkaProducerSupplier {
     private final KafkaProducerSupplierKey kafkaProducerSupplierKey;
     private final DocRef kafkaConfigRef;
     private final AtomicBoolean isSuperseded = new AtomicBoolean(false);
+    private final AtomicBoolean isClosed = new AtomicBoolean(false);
     private final AtomicInteger useCounter = new AtomicInteger(0);
 
     KafkaProducerSupplierImpl(final KafkaProducer<String, byte[]> kafkaProducer,
@@ -41,6 +42,9 @@ public class KafkaProducerSupplierImpl implements KafkaProducerSupplier {
 
     @Override
     public Optional<KafkaProducer<String, byte[]>> getKafkaProducer() {
+        if (isClosed.get()) {
+            throw new RuntimeException("Has been closed");
+        }
         return Optional.ofNullable(kafkaProducer);
     }
 
@@ -69,7 +73,12 @@ public class KafkaProducerSupplierImpl implements KafkaProducerSupplier {
      */
     @Override
     public void close() {
-        closeAction.accept(this);
+        if (!isClosed.getAndSet(true)) {
+            // wasn't closed so close it
+            closeAction.accept(this);
+        } else {
+            throw new RuntimeException("Already closed");
+        }
     }
 
     static KafkaProducerSupplierImpl empty() {
