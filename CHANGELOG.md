@@ -6,6 +6,9 @@ and this project adheres to [Semantic Versioning](http://semver.org/).
 
 ## [Unreleased]
 
+
+## [v6.0.36] - 2020-04-09
+
 * Fix `Expecting a real user identity` errors on auto import of content packs.
 
 * Increase wait timeout to 240s in `start.sh`.
@@ -2078,7 +2081,8 @@ and this project adheres to [Semantic Versioning](http://semver.org/).
 
 * Issue **#202** : Initial release of the new data retention policy functionality.
 
-[Unreleased]: https://github.com/gchq/stroom/compare/v6.0.35...6.0
+[Unreleased]: https://github.com/gchq/stroom/compare/v6.0.36...6.0
+[v6.0.36]: https://github.com/gchq/stroom/compare/v6.0.35...v6.0.36
 [v6.0.35]: https://github.com/gchq/stroom/compare/v6.0.34...v6.0.35
 [v6.0.34]: https://github.com/gchq/stroom/compare/v6.0.33...v6.0.34
 [v6.0.33]: https://github.com/gchq/stroom/compare/v6.0.32...v6.0.33
