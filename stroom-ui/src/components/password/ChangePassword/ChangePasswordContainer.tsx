@@ -27,7 +27,7 @@ import useServiceUrl from "startup/config/useServiceUrl";
 const ChangePasswordContainer = () => {
   const { changePassword, showChangeConfirmation } = usePassword();
   const { router } = useRouter();
-  const [redirectUrl, setRedirectUrl] = useState("");
+  const [redirectUri, setRedirectUri] = useState("");
   const [email, setEmail] = useState("");
   const { authenticationServiceUrl } = useServiceUrl();
 
@@ -35,10 +35,10 @@ const ChangePasswordContainer = () => {
     if (!!router.location) {
       const query = queryString.parse(router.location.search);
 
-      const redirectUrl: string = query.redirect_uri as string;
-      if (!!redirectUrl) {
-        const decodedRedirectUrl: string = decodeURIComponent(redirectUrl);
-        setRedirectUrl(decodedRedirectUrl);
+      const redirectUri: string = query.redirect_uri as string;
+      if (!!redirectUri) {
+        const decodedRedirectUri: string = decodeURIComponent(redirectUri);
+        setRedirectUri(decodedRedirectUri);
       }
 
       let email: string = query.email as string;
@@ -56,7 +56,7 @@ const ChangePasswordContainer = () => {
     }
 
     // Try and get the user's email from the query string, and fall back on a cookie.
-  }, [router.location, setRedirectUrl, setEmail]);
+  }, [router.location, setRedirectUri, setEmail]);
 
   const handleValidate = (
     oldPassword: string,
@@ -76,7 +76,7 @@ const ChangePasswordContainer = () => {
   return (
     <ChangePasswordForm
       onSubmit={changePassword}
-      redirectUrl={redirectUrl}
+      redirectUri={redirectUri}
       email={email}
       showChangeConfirmation={showChangeConfirmation}
       onValidate={handleValidate}

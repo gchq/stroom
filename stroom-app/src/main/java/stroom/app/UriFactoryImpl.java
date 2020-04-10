@@ -12,9 +12,11 @@ import stroom.config.common.UriConfig;
 import stroom.config.common.UriFactory;
 
 import javax.inject.Inject;
+import javax.inject.Singleton;
 import java.net.URI;
 import java.net.URISyntaxException;
 
+@Singleton
 public class UriFactoryImpl implements UriFactory {
     private static final Logger LOGGER = LoggerFactory.getLogger(UriFactoryImpl.class);
 
@@ -23,6 +25,7 @@ public class UriFactoryImpl implements UriFactory {
 
     private String localBaseUri;
     private String publicBaseUri;
+    private String uiBaseUri;
 
     @Inject
     public UriFactoryImpl(final Config config,
@@ -34,34 +37,42 @@ public class UriFactoryImpl implements UriFactory {
         LOGGER.info("Established Local URI: " + localBaseUri);
         final String publicBaseUri = getPublicBaseUri();
         LOGGER.info("Established Public URI: " + publicBaseUri);
+        final String uiBaseUri = getUiBaseUri();
+        LOGGER.info("Established UI URI: " + uiBaseUri);
     }
 
     @Override
-    public String localUriString(final String path) {
-        return buildAbsoluteUrl(getLocalBaseUri(), path);
+    public URI localUri(final String path) {
+        return toUri(buildAbsoluteUrl(getLocalBaseUri(), path));
     }
 
     @Override
-    public URI localURI(final String path) {
+    public URI publicUri(final String path) {
+        return toUri(buildAbsoluteUrl(getPublicBaseUri(), path));
+    }
+
+    @Override
+    public URI uiUri(final String path) {
+        return toUri(buildAbsoluteUrl(getUiBaseUri(), path));
+    }
+
+    private URI toUri(final String path) {
         try {
-            return new URI(localUriString(path));
+            return new URI(path);
         } catch (final URISyntaxException e) {
             throw new RuntimeException(e.getMessage(), e);
         }
     }
 
-    @Override
-    public String publicUriString(final String path) {
-        return buildAbsoluteUrl(getPublicBaseUri(), path);
-    }
-
-    @Override
-    public URI publicURI(final String path) {
-        try {
-            return new URI(publicUriString(path));
-        } catch (final URISyntaxException e) {
-            throw new RuntimeException(e.getMessage(), e);
+    private String getUiBaseUri() {
+        if (uiBaseUri == null) {
+            if (isValid(appConfig.getUiUri())) {
+                uiBaseUri = appConfig.getUiUri().toString();
+            } else {
+                uiBaseUri = getPublicBaseUri();
+            }
         }
+        return uiBaseUri;
     }
 
     private String getPublicBaseUri() {

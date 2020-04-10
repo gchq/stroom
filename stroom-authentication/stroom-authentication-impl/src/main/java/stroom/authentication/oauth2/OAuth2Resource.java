@@ -18,7 +18,6 @@ import javax.ws.rs.QueryParam;
 import javax.ws.rs.core.Context;
 import javax.ws.rs.core.MediaType;
 import javax.ws.rs.core.Response;
-import java.util.Map;
 
 @Singleton
 @Path("/oauth2/v1/noauth")
@@ -43,9 +42,7 @@ public interface OAuth2Resource extends RestResource {
     @Path("token")
     @Timed
     @ApiOperation(value = "Get a token from an access code", response = String.class, tags = {"Authentication"})
-    TokenResponse token(
-            @Context HttpServletRequest request,
-            TokenRequest tokenRequest);
+    TokenResponse token(TokenRequest tokenRequest);
 
     @ApiOperation(
             value = "Provides access to this service's current public key. " +
@@ -55,5 +52,5 @@ public interface OAuth2Resource extends RestResource {
     @GET
     @Path("certs")
     @Timed
-    Response getCerts(@Context @NotNull HttpServletRequest httpServletRequest);
+    Response certs(@Context @NotNull HttpServletRequest httpServletRequest);
 }

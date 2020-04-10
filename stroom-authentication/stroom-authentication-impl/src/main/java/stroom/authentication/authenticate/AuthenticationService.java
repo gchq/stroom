@@ -16,6 +16,7 @@ import stroom.authentication.token.TokenDao;
 import stroom.config.common.UriFactory;
 import stroom.event.logging.api.StroomEventLoggingService;
 import stroom.security.api.SecurityContext;
+import stroom.util.shared.ResourcePaths;
 
 import javax.inject.Inject;
 import javax.servlet.http.HttpServletRequest;
@@ -460,7 +461,7 @@ class AuthenticationService implements AuthSession {
 
         if (userNeedsToChangePassword) {
             final String innerRedirectUri = getPostAuthenticationCheckUrl(redirectUri);
-            result = UriBuilder.fromUri(uriFactory.publicURI(config.getChangePasswordUrl()))
+            result = UriBuilder.fromUri(uriFactory.uiUri(config.getChangePasswordUrl()))
                     .queryParam(OIDC.REDIRECT_URI, innerRedirectUri)
                     .build();
         } else {
@@ -487,7 +488,7 @@ class AuthenticationService implements AuthSession {
 
     private String getPostAuthenticationCheckUrl(final String redirectUri) {
         final URI uri = UriBuilder
-                .fromUri(uriFactory.publicURI(config.getOwnPath() + "/v1/noauth/postAuthenticationRedirect"))
+                .fromUri(uriFactory.publicUri(ResourcePaths.API_ROOT_PATH + AuthenticationResource.BASE_PATH + AuthenticationResource.PATH_POST_AUTHENTICATION_REDIRECT))
                 .queryParam(OIDC.REDIRECT_URI, redirectUri)
                 .build();
         return uri.toString();

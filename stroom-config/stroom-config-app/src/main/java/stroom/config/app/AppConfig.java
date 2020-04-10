@@ -11,6 +11,7 @@ import stroom.cluster.lock.impl.db.ClusterLockConfig;
 import stroom.cluster.task.impl.ClusterTaskConfig;
 import stroom.config.common.CommonDbConfig;
 import stroom.config.common.PublicUriConfig;
+import stroom.config.common.UriConfig;
 import stroom.core.benchmark.BenchmarkClusterConfig;
 import stroom.core.db.CoreConfig;
 import stroom.core.receive.ProxyAggregationConfig;
@@ -51,6 +52,7 @@ public class AppConfig extends AbstractConfig {
 
     public static final String PROP_NAME_NODE_URI = "nodeUri";
     public static final String PROP_NAME_PUBLIC_URI = "publicUri";
+    public static final String PROP_NAME_UI_URI = "uiUri";
     public static final String PROP_NAME_HALT_BOOT_ON_CONFIG_VALIDATION_FAILURE = "haltBootOnConfigValidationFailure";
     public static final String PROP_NAME_ACTIVITY = "activity";
     public static final String PROP_NAME_ANNOTATION = "annotation";
@@ -95,6 +97,7 @@ public class AppConfig extends AbstractConfig {
 
     private NodeUriConfig nodeUri = new NodeUriConfig();
     private PublicUriConfig publicUri = new PublicUriConfig();
+    private UriConfig uiUri = new UriConfig();
     private ActivityConfig activityConfig = new ActivityConfig();
     private AnnotationConfig annotationConfig = new AnnotationConfig();
     private AuthenticationConfig authenticationConfig = new AuthenticationConfig();
@@ -155,6 +158,16 @@ public class AppConfig extends AbstractConfig {
 
     public void setPublicUri(final PublicUriConfig publicUri) {
         this.publicUri = publicUri;
+    }
+
+    @JsonPropertyDescription("This is the URI where the UI is hosted if different to the public facing URI of the server, e.g. during development or some other deployments")
+    @JsonProperty(PROP_NAME_UI_URI)
+    public UriConfig getUiUri() {
+        return uiUri;
+    }
+
+    public void setUiUri(final UriConfig uiUri) {
+        this.uiUri = uiUri;
     }
 
     @AssertTrue(

@@ -31,7 +31,6 @@ public final class AuthenticationConfig extends AbstractConfig {
     public static final String PROP_NAME_EMAIL = "email";
     public static final String PROP_NAME_TOKEN = "token";
     public static final String PROP_NAME_PASSWORD_INTEGRITY_CHECKS = "passwordIntegrityChecks";
-    public static final String PROP_NAME_OWN_PATH = "ownPath";
 
     @Nullable
     @JsonProperty(PROP_NAME_EMAIL)
@@ -65,10 +64,6 @@ public final class AuthenticationConfig extends AbstractConfig {
     @NotNull
     @JsonProperty(PROP_NAME_PASSWORD_INTEGRITY_CHECKS)
     private PasswordIntegrityChecksConfig passwordIntegrityChecksConfig = new PasswordIntegrityChecksConfig();
-
-    @NotNull
-    @JsonProperty(PROP_NAME_OWN_PATH)
-    private String ownPath = "/api/authentication";
 
     public final String getCertificateDnPattern() {
         return this.certificateDnPattern;
@@ -120,10 +115,5 @@ public final class AuthenticationConfig extends AbstractConfig {
 
     public int getCertificateDnCaptureGroupIndex() {
         return certificateDnCaptureGroupIndex;
-    }
-
-    @JsonProperty(PROP_NAME_OWN_PATH)
-    public String getOwnPath() {
-        return ownPath;
     }
 }

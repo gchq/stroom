@@ -99,8 +99,8 @@ public class SwaggerUiServlet extends HttpServlet implements IsServlet {
     }
 
     private String getSwaggerSpecUrl() {
-        return uriFactory.publicUriString(
-                ResourcePaths.buildUnauthenticatedServletPath("swagger/swagger.json"));
+        return uriFactory.publicUri(
+                ResourcePaths.buildUnauthenticatedServletPath("swagger/swagger.json")).toString();
     }
 
 }

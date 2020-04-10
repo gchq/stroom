@@ -46,11 +46,11 @@ public class SessionResourceImpl implements SessionResource {
                 // If the session doesn't have a user ref then attempt login.
                 final Map<String, String> paramMap = UrlUtils.createParamMap(referrer);
                 final String stateId = paramMap.get(OIDC.STATE);
-                final String oidcRedirectUri = OIDC.removeOIDCParams(referrer);
+                final String postAuthRedirectUri = OIDC.removeOIDCParams(referrer);
                 if (stateId != null) {
-                    redirectUri = openIdManager.backChannelOIDC(request, stateId, oidcRedirectUri);
+                    redirectUri = openIdManager.backChannelOIDC(request, stateId, postAuthRedirectUri);
                 } else {
-                    redirectUri = openIdManager.frontChannelOIDC(request, oidcRedirectUri);
+                    redirectUri = openIdManager.frontChannelOIDC(request, postAuthRedirectUri);
                 }
             }
 

@@ -1,14 +1,19 @@
 package stroom.config.common;
 
+import com.fasterxml.jackson.annotation.JsonProperty;
+import stroom.util.config.annotations.ReadOnly;
 import stroom.util.shared.AbstractConfig;
 
+import javax.validation.constraints.Max;
+import javax.validation.constraints.Min;
+import javax.validation.constraints.Pattern;
 import java.util.Objects;
 
 public class UriConfig extends AbstractConfig {
-    public static final String PROP_NAME_SCHEME = "scheme";
-    public static final String PROP_NAME_HOSTNAME = "hostname";
-    public static final String PROP_NAME_PORT = "port";
-    public static final String PROP_NAME_PATH_PREFIX = "pathPrefix";
+    private static final String PROP_NAME_SCHEME = "scheme";
+    private static final String PROP_NAME_HOSTNAME = "hostname";
+    private static final String PROP_NAME_PORT = "port";
+    private static final String PROP_NAME_PATH_PREFIX = "pathPrefix";
 
     private String scheme;
     private String hostname;
@@ -29,6 +34,8 @@ public class UriConfig extends AbstractConfig {
         this.hostname = hostname;
     }
 
+    @Pattern(regexp = "^https?$")
+    @JsonProperty(PROP_NAME_SCHEME)
     public String getScheme() {
         return scheme;
     }
@@ -37,6 +44,8 @@ public class UriConfig extends AbstractConfig {
         this.scheme = scheme;
     }
 
+    @ReadOnly
+    @JsonProperty(PROP_NAME_HOSTNAME)
     public String getHostname() {
         return hostname;
     }
@@ -45,6 +54,9 @@ public class UriConfig extends AbstractConfig {
         this.hostname = hostname;
     }
 
+    @Min(0)
+    @Max(65535)
+    @JsonProperty(PROP_NAME_PORT)
     public Integer getPort() {
         return port;
     }
@@ -53,6 +65,8 @@ public class UriConfig extends AbstractConfig {
         this.port = port;
     }
 
+    @JsonProperty(PROP_NAME_PATH_PREFIX)
+    @Pattern(regexp = "/[^/]+")
     public String getPathPrefix() {
         return pathPrefix;
     }
@@ -81,7 +95,10 @@ public class UriConfig extends AbstractConfig {
                 sb.append("/");
             }
             sb.append(pathPrefix);
+        } else {
+            sb.append("/");
         }
+
         return sb.toString();
     }
 

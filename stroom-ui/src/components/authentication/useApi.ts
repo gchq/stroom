@@ -3,10 +3,9 @@ import * as queryString from "query-string";
 import { useCallback } from "react";
 import useHttpClient from "lib/useHttpClient";
 import useRouter from "lib/useRouter";
-import useConfig from "startup/config/useConfig";
-import { ChangePasswordResponse } from "./types";
 import {
   ChangePasswordRequest,
+  ChangePasswordResponse,
   Credentials,
   LoginResponse,
   PasswordValidationRequest,
@@ -34,23 +33,21 @@ interface Api {
 
 export const useApi = (): Api => {
   const { httpGetEmptyResponse, httpPostJsonResponse } = useHttpClient();
-  let { clientId } = useConfig();
   const { authenticationServiceUrl } = useServiceUrl();
+  let redirectUri: string;
 
-  // If we have a clientId on the URL we'll use that. It means we're logging
-  // in on behalf of a relying party so we need to identify as them.
   const { router } = useRouter();
   if (!!router && !!router.location) {
     const query = queryString.parse(router.location.search);
-    if (!!query.clientId) {
-      clientId = query.clientId + "";
+    if (!!query.redirect_uri) {
+      redirectUri = query.redirect_uri + "";
     }
   }
 
   const apiLogin = useCallback(
     (credentials: Credentials) => {
       const { email, password } = credentials;
-      const loginServiceUrl = `${authenticationServiceUrl}/noauth/authenticate`;
+      const loginServiceUrl = `${authenticationServiceUrl}/noauth/authenticate?redirect_uri=${encodeURI(redirectUri)}`;
 
       return httpPostJsonResponse(
         loginServiceUrl,
@@ -61,21 +58,20 @@ export const useApi = (): Api => {
           body: JSON.stringify({
             email,
             password,
-            requestingClientId: clientId,
           }),
         },
         true,
         false,
       );
     },
-    [authenticationServiceUrl, clientId, httpPostJsonResponse],
+    [authenticationServiceUrl, redirectUri, httpPostJsonResponse],
   );
 
   const changePassword = useCallback(
-    ({ password, oldPassword, email }: ChangePasswordRequest) =>
+    ({ email, oldPassword, newPassword }: ChangePasswordRequest) =>
       httpPostJsonResponse(
         `${authenticationServiceUrl}/noauth/changePassword/`,
-        { body: JSON.stringify({ newPassword: password, oldPassword, email }) },
+        { body: JSON.stringify({ newPassword, oldPassword, email }) },
         true,
         false,
       ),
@@ -83,9 +79,9 @@ export const useApi = (): Api => {
   );
 
   const resetPassword = useCallback(
-    ({ password }: ResetPasswordRequest) =>
+    ({ newPassword }: ResetPasswordRequest) =>
       httpPostJsonResponse(`${authenticationServiceUrl}/resetPassword/`, {
-        body: JSON.stringify({ password }),
+        body: JSON.stringify({ newPassword }),
       }),
     [authenticationServiceUrl, httpPostJsonResponse],
   );

@@ -3,11 +3,9 @@ package stroom.config.common;
 import java.net.URI;
 
 public interface UriFactory {
-    String localUriString(String path);
+    URI localUri(String path);
 
-    URI localURI(String path);
+    URI publicUri(String path);
 
-    String publicUriString(String path);
-
-    URI publicURI(String path);
+    URI uiUri(String path);
 }

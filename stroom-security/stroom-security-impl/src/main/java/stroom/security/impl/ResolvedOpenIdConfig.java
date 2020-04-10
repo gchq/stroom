@@ -32,21 +32,21 @@ public class ResolvedOpenIdConfig {
 
     public String getAuthEndpoint() {
         if (openIdConfig.isUseInternal()) {
-            return uriFactory.publicUriString(INTERNAL_AUTH_ENDPOINT);
+            return uriFactory.publicUri(INTERNAL_AUTH_ENDPOINT).toString();
         }
         return openIdConfig.getAuthEndpoint();
     }
 
     public String getTokenEndpoint() {
         if (openIdConfig.isUseInternal()) {
-            return uriFactory.localUriString(INTERNAL_TOKEN_ENDPOINT);
+            return uriFactory.localUri(INTERNAL_TOKEN_ENDPOINT).toString();
         }
         return openIdConfig.getTokenEndpoint();
     }
 
     public String getJwksUri() {
         if (openIdConfig.isUseInternal()) {
-            return uriFactory.publicUriString(INTERNAL_JWKS_URI);
+            return uriFactory.publicUri(INTERNAL_JWKS_URI).toString();
         }
         return openIdConfig.getJwksUri();
     }
@@ -60,7 +60,7 @@ public class ResolvedOpenIdConfig {
 
     public String getClientSecret() {
         if (openIdConfig.isUseInternal()) {
-            openIdClientDetails.getClientSecret();
+            return openIdClientDetails.getClientSecret();
         }
         return openIdConfig.getClientSecret();
     }

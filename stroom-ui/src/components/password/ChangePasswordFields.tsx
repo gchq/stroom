@@ -20,14 +20,14 @@ import Button from "components/Button";
 import { hasAnyProps } from "lib/lang";
 
 const ChangePasswordFields = ({
-  email,
-  redirectUrl,
-  showOldPasswordField,
-  onSubmit,
-  onValidate,
-}: {
+                                email,
+                                redirectUri,
+                                showOldPasswordField,
+                                onSubmit,
+                                onValidate,
+                              }: {
   email?: string;
-  redirectUrl?: string;
+  redirectUri?: string;
   showOldPasswordField: boolean;
   onSubmit: Function;
   onValidate: (
@@ -45,7 +45,7 @@ const ChangePasswordFields = ({
         password: "",
         verifyPassword: "",
         email: email || "",
-        redirectUrl: redirectUrl || "",
+        redirectUri: redirectUri || "",
       }}
       onSubmit={values => {
         onSubmit(values);
@@ -61,11 +61,11 @@ const ChangePasswordFields = ({
           <Form className="ChangePassword-form">
             <div style={{ display: "none" }}>
               <Field
-                className="redirectUrl-field"
-                name="redirectUrl"
+                className="redirectUri-field"
+                name="redirectUri"
                 type="hidden"
               />
-              <Field className="email-field" name="email" type="hidden" />
+              <Field className="email-field" name="email" type="hidden"/>
             </div>
 
             <div className="section__fields">
@@ -73,7 +73,7 @@ const ChangePasswordFields = ({
                 {showOldPasswordField ? (
                   <div className="field-container vertical">
                     <label>Old password</label>
-                    <Field name="oldPassword" type="password" autoFocus />
+                    <Field name="oldPassword" type="password" autoFocus/>
                     <ErrorMessage
                       name="oldPassword"
                       render={msg => (
@@ -82,14 +82,14 @@ const ChangePasswordFields = ({
                     />
                   </div>
                 ) : (
-                  <div className="field-container vertical" />
+                  <div className="field-container vertical"/>
                 )}
 
-                <div className="field-container__spacer" />
+                <div className="field-container__spacer"/>
 
                 <div className="field-container vertical">
                   <label>New password</label>
-                  <Field name="password" type="password" />
+                  <Field name="password" type="password"/>
                   <ErrorMessage
                     name="password"
                     render={msg => (
@@ -100,11 +100,11 @@ const ChangePasswordFields = ({
               </div>
 
               <div className="section__fields__row">
-                <div className="field-container vertical" />
-                <div className="field-container__spacer" />
+                <div className="field-container vertical"/>
+                <div className="field-container__spacer"/>
                 <div className="field-container vertical">
                   <label>New password again</label>
-                  <Field name="verifyPassword" type="password" />
+                  <Field name="verifyPassword" type="password"/>
                   <ErrorMessage
                     name="verifyPassword"
                     render={msg => (

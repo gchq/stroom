@@ -15,7 +15,6 @@ import stroom.config.common.UriFactory;
 import javax.annotation.Nullable;
 import javax.inject.Inject;
 import javax.servlet.http.HttpServletRequest;
-import javax.servlet.http.HttpSession;
 import javax.ws.rs.core.UriBuilder;
 import java.net.URI;
 import java.security.SecureRandom;
@@ -74,18 +73,6 @@ class OAuth2Service {
                 LOGGER.info("Relying party requested a user login page by using 'prompt=login'");
             }
 
-            // We need to make sure we record this access code request.
-            final String accessCode = createAccessCode();
-            final AccessCodeRequest accessCodeRequest = new AccessCodeRequest(
-                    scope,
-                    responseType,
-                    clientId,
-                    redirectUri,
-                    nonce,
-                    state,
-                    prompt);
-            accessCodeCache.put(accessCode, accessCodeRequest);
-
             if (requireLoginPrompt) {
                 LOGGER.debug("Login has been requested by the RP");
                 result = redirectToLoginPage(redirectUri);
@@ -96,8 +83,23 @@ class OAuth2Service {
 
                 // If we have an authenticated session then the user is logged in
                 if (optionalSubject.isPresent()) {
-                    // Check for an authenticated session
                     LOGGER.debug("User has a session, sending them back to the RP");
+
+                    // We need to make sure we record this access code request.
+                    final String accessCode = createAccessCode();
+                    final String subject = optionalSubject.get();
+                    final String token = createIdToken(clientId, subject, nonce, state);
+                    final AccessCodeRequest accessCodeRequest = new AccessCodeRequest(
+                            scope,
+                            responseType,
+                            clientId,
+                            redirectUri,
+                            nonce,
+                            state,
+                            prompt,
+                            token);
+                    accessCodeCache.put(accessCode, accessCodeRequest);
+
                     result = buildRedirectionUrl(redirectUri, accessCode, state);
 
                 } else {
@@ -108,7 +110,7 @@ class OAuth2Service {
 
         } catch (final RuntimeException e) {
             LOGGER.debug(e.getMessage());
-            result = UriBuilder.fromUri(uriFactory.publicURI(authenticationConfig.getUnauthorisedUrl())).build();
+            result = UriBuilder.fromUri(uriFactory.uiUri(authenticationConfig.getUnauthorisedUrl())).build();
         }
 
         return result;
@@ -116,7 +118,7 @@ class OAuth2Service {
 
     private URI redirectToLoginPage(final String redirectUri) {
         LOGGER.debug("Sending user to login.");
-        final UriBuilder uriBuilder = UriBuilder.fromUri(uriFactory.publicURI(authenticationConfig.getLoginUrl()))
+        final UriBuilder uriBuilder = UriBuilder.fromUri(uriFactory.uiUri(authenticationConfig.getLoginUrl()))
                 .queryParam("error", "login_required")
                 .queryParam(OIDC.REDIRECT_URI, redirectUri);
         return uriBuilder.build();
@@ -129,22 +131,12 @@ class OAuth2Service {
         return Base64.getUrlEncoder().encodeToString(bytes);
     }
 
-    public TokenResponse token(final HttpServletRequest request, final TokenRequest tokenRequest) {
+    public TokenResponse token(final TokenRequest tokenRequest) {
         final String grantType = tokenRequest.getGrantType();
         final String clientId = tokenRequest.getClientId();
         final String clientSecret = tokenRequest.getClientSecret();
         final String redirectUri = tokenRequest.getRedirectUri();
         final String code = tokenRequest.getCode();
-
-        final HttpSession httpSession = request.getSession(false);
-        if (httpSession == null) {
-            throw new BadRequestException("No HTTP session");
-        }
-
-        final Optional<String> optionalSubject = authSession.currentSubject(request);
-        if (optionalSubject.isEmpty()) {
-            throw new BadRequestException("No authenticated subject");
-        }
 
         final Optional<AccessCodeRequest> optionalAccessCodeRequest = accessCodeCache.getAndRemove(code);
         if (optionalAccessCodeRequest.isEmpty()) {
@@ -174,9 +166,7 @@ class OAuth2Service {
             throw new BadRequestException("Redirect URI is not allowed");
         }
 
-        final String subject = optionalSubject.get();
-        final String token = createIdToken(clientId, subject, accessCodeRequest.getNonce(), accessCodeRequest.getState());
-        return new TokenResponse(token);
+        return new TokenResponse(accessCodeRequest.getToken());
     }
 
     private URI buildRedirectionUrl(String redirectUri, String code, String state) {

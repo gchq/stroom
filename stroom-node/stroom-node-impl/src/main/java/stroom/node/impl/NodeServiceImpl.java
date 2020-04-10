@@ -143,7 +143,7 @@ public class NodeServiceImpl implements NodeService, Clearable, EntityEvent.Hand
                 }
             }
         } else {
-            if (!uriFactory.localUriString("").equals(thisNode.getUrl())) {
+            if (!uriFactory.localUri("").toString().equals(thisNode.getUrl())) {
                 // Endpoint url has changed in config so update the node record
                 refreshNode();
             }
@@ -156,7 +156,7 @@ public class NodeServiceImpl implements NodeService, Clearable, EntityEvent.Hand
         // Ensure the DB node record has the right endpoint url
         thisNode = nodeDao.getNode(nodeInfo.getThisNodeName());
 
-        final String endpointUrl = uriFactory.localUriString("");
+        final String endpointUrl = uriFactory.localUri("").toString();
         if (thisNode == null) {
             // This will start a new mini transaction to create the node record
             final Node node = new Node();

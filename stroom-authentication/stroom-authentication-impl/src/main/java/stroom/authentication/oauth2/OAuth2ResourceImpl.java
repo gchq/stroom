@@ -9,9 +9,7 @@ import stroom.authentication.token.JwkEventLog;
 import javax.annotation.Nullable;
 import javax.inject.Inject;
 import javax.servlet.http.HttpServletRequest;
-import javax.validation.constraints.NotNull;
 import javax.ws.rs.RedirectionException;
-import javax.ws.rs.core.Context;
 import javax.ws.rs.core.Response;
 import javax.ws.rs.core.Response.Status;
 import java.net.URI;
@@ -49,24 +47,24 @@ class OAuth2ResourceImpl implements OAuth2Resource {
     }
 
     @Override
-    public TokenResponse token(final HttpServletRequest request, final TokenRequest tokenRequest) {
-        return service.token(request, tokenRequest);
+    public TokenResponse token(final TokenRequest tokenRequest) {
+        return service.token(tokenRequest);
     }
 
     @Override
-    public Response getCerts(final HttpServletRequest httpServletRequest) {
-            final List<PublicJsonWebKey> list = jwkCache.get();
-            final List<Map<String, Object>> maps = list.stream()
-                    .map(jwk -> jwk.toParams(JsonWebKey.OutputControlLevel.PUBLIC_ONLY))
-                    .collect(Collectors.toList());
+    public Response certs(final HttpServletRequest httpServletRequest) {
+        final List<PublicJsonWebKey> list = jwkCache.get();
+        final List<Map<String, Object>> maps = list.stream()
+                .map(jwk -> jwk.toParams(JsonWebKey.OutputControlLevel.PUBLIC_ONLY))
+                .collect(Collectors.toList());
 
-            Map<String, List<Map<String, Object>>> keys = new HashMap<>();
-            keys.put("keys", maps);
+        Map<String, List<Map<String, Object>>> keys = new HashMap<>();
+        keys.put("keys", maps);
 
-            event.logging.Object object = new event.logging.Object();
-            object.setName("PublicKey");
-            ObjectOutcome objectOutcome = new ObjectOutcome();
-            objectOutcome.getObjects().add(object);
+        event.logging.Object object = new event.logging.Object();
+        object.setName("PublicKey");
+        ObjectOutcome objectOutcome = new ObjectOutcome();
+        objectOutcome.getObjects().add(object);
 //        jwkEventLog.view(
 //                "getCerts",
 //                httpServletRequest,
@@ -74,9 +72,9 @@ class OAuth2ResourceImpl implements OAuth2Resource {
 //                objectOutcome,
 //                "Read a token by the token ID.");
 
-            return Response
-                    .status(Response.Status.OK)
-                    .entity(keys)
-                    .build();
+        return Response
+                .status(Response.Status.OK)
+                .entity(keys)
+                .build();
     }
 }

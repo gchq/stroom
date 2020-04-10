@@ -6,29 +6,28 @@ export interface Credentials {
 export interface ChangePasswordRequest {
   email: string;
   oldPassword: string;
-  password: string;
-  redirectUrl: string;
+  newPassword: string;
 }
 
 export interface ChangePasswordResponse {
-  failedOn: string[];
   changeSucceeded: boolean;
+  failedOn: string[];
 }
 export interface ResetPasswordRequest {
-  password: string;
+  newPassword: string;
 }
 
 export interface LoginResponse {
   loginSuccessful: boolean;
-  redirectUrl: string;
+  redirectUri: string;
   message: string;
+  responseCode: number;
 }
 
 export interface PasswordValidationRequest {
   email: string;
-  newPassword?: string;
   oldPassword?: string;
-  verifyPassword: string;
+  newPassword?: string;
 }
 
 export interface PasswordValidationResponse {

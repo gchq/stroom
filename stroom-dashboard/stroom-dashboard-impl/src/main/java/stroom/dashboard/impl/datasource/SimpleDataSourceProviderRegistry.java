@@ -50,10 +50,10 @@ class SimpleDataSourceProviderRegistry implements DataSourceProviderRegistry {
         //if this code is kept long term then ResourcePaths needs to be mode so that is accessible to all
 
         urlMap = new HashMap<>();
-        urlMap.put("Index", () -> uriFactory.publicUriString(dataSourceUrlConfig.getIndex()));
-        urlMap.put("Searchable", () -> uriFactory.publicUriString(dataSourceUrlConfig.getSearchable()));
-        urlMap.put("SolrIndex", () -> uriFactory.publicUriString(dataSourceUrlConfig.getSolrIndex()));
-        urlMap.put("StatisticStore", () -> uriFactory.publicUriString(dataSourceUrlConfig.getStatisticStore()));
+        urlMap.put("Index", () -> uriFactory.publicUri(dataSourceUrlConfig.getIndex()).toString());
+        urlMap.put("Searchable", () -> uriFactory.publicUri(dataSourceUrlConfig.getSearchable()).toString());
+        urlMap.put("SolrIndex", () -> uriFactory.publicUri(dataSourceUrlConfig.getSolrIndex()).toString());
+        urlMap.put("StatisticStore", () -> uriFactory.publicUri(dataSourceUrlConfig.getStatisticStore()).toString());
 
         //strooom-stats is not available as a local service as if you have stroom-stats you have zookeeper so
         //you can run service discovery

@@ -46,16 +46,16 @@ class OpenIdManager {
         this.userCache = userCache;
     }
 
-    public String frontChannelOIDC(final HttpServletRequest request, final String postLoginUrl) {
+    public String frontChannelOIDC(final HttpServletRequest request, final String postAuthRedirectUri) {
         // Create a state for this authentication request.
-        final AuthenticationState state = AuthenticationStateSessionUtil.create(request, postLoginUrl);
+        final AuthenticationState state = AuthenticationStateSessionUtil.create(request, postAuthRedirectUri);
 
         // In some cases we might need to use an external URL as the current incoming one might have been proxied.
         // Use OIDC API.
         UriBuilder authenticationRequest = UriBuilder.fromUri(openIdConfig.getAuthEndpoint())
                 .queryParam(OIDC.RESPONSE_TYPE, OIDC.CODE)
                 .queryParam(OIDC.CLIENT_ID, openIdConfig.getClientId())
-                .queryParam(OIDC.REDIRECT_URI, postLoginUrl)
+                .queryParam(OIDC.REDIRECT_URI, postAuthRedirectUri)
                 .queryParam(OIDC.SCOPE, OIDC.SCOPE__OPENID + " " + OIDC.SCOPE__EMAIL)
                 .queryParam(OIDC.STATE, state.getId())
                 .queryParam(OIDC.NONCE, state.getNonce());
@@ -75,7 +75,7 @@ class OpenIdManager {
         return authenticationRequestUrl;
     }
 
-    public String backChannelOIDC(final HttpServletRequest request, final String stateId, final String oidcRedirectUri) {
+    public String backChannelOIDC(final HttpServletRequest request, final String stateId, final String postAuthRedirectUri) {
         Objects.requireNonNull(stateId, "Null state Id");
 
         boolean loggedIn = false;
@@ -102,7 +102,7 @@ class OpenIdManager {
                 params.put(OIDC.GRANT_TYPE, OIDC.GRANT_TYPE__AUTHORIZATION_CODE);
                 params.put(OIDC.CLIENT_ID, openIdConfig.getClientId());
                 params.put(OIDC.CLIENT_SECRET, openIdConfig.getClientSecret());
-                params.put(OIDC.REDIRECT_URI, oidcRedirectUri);
+                params.put(OIDC.REDIRECT_URI, postAuthRedirectUri);
                 params.put(OIDC.CODE, code);
 
                 final String tokenEndpoint = openIdConfig.getTokenEndpoint();

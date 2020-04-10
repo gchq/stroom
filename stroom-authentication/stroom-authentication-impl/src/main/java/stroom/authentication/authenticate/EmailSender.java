@@ -73,7 +73,7 @@ class EmailSender {
         final EmailConfig emailConfig = authenticationConfig.getEmailConfig();
         final String resetName = firstName == null ? "[Name not available]" : firstName + "" + lastName;
         String resetUrl = String.format(emailConfig.getPasswordResetUrl(), emailAddress, resetToken);
-        resetUrl = uriFactory.publicUriString(resetUrl);
+        resetUrl = uriFactory.publicUri(resetUrl).toString();
         final String passwordResetEmailText = String.format(emailConfig.getPasswordResetText(), resetUrl);
 
         final Email email = new Email();

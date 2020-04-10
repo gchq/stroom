@@ -26,6 +26,7 @@ class AccessCodeRequest {
     private final String nonce;
     private final String state;
     private final String prompt;
+    private final String token;
 
     AccessCodeRequest(final String scope,
                              final String responseType,
@@ -33,7 +34,8 @@ class AccessCodeRequest {
                              final String redirectUri,
                              final String nonce,
                              final String state,
-                             final String prompt) {
+                             final String prompt,
+                      final String token) {
         this.scope = scope;
         this.responseType = responseType;
         this.clientId = clientId;
@@ -41,6 +43,7 @@ class AccessCodeRequest {
         this.nonce = nonce;
         this.state = state;
         this.prompt = prompt;
+        this.token = token;
     }
 
     public String getScope() {
@@ -69,5 +72,9 @@ class AccessCodeRequest {
 
     public String getPrompt() {
         return prompt;
+    }
+
+    public String getToken() {
+        return token;
     }
 }

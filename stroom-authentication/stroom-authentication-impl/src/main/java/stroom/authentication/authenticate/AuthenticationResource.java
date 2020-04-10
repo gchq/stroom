@@ -24,6 +24,7 @@ import io.swagger.annotations.ApiOperation;
 import io.swagger.annotations.ApiParam;
 import stroom.authentication.api.OIDC;
 import stroom.authentication.exceptions.NoSuchUserException;
+import stroom.util.shared.ResourcePaths;
 import stroom.util.shared.RestResource;
 
 import javax.annotation.Nullable;
@@ -41,10 +42,13 @@ import javax.ws.rs.core.MediaType;
 import javax.ws.rs.core.Response;
 import java.net.URISyntaxException;
 
-@Path("/authentication/v1")
+@Path(AuthenticationResource.BASE_PATH)
 @Produces(MediaType.APPLICATION_JSON)
 @Api(description = "Stroom Authentication API", tags = {"Authentication"})
 public interface AuthenticationResource extends RestResource {
+    String BASE_PATH = "/authentication" + ResourcePaths.V1;
+    String PATH_POST_AUTHENTICATION_REDIRECT = "/noauth/postAuthenticationRedirect";
+
     /**
      * We expect the user to have a session if they're trying to log in.
      * If they don't then they need to be directed to an application that will submit

@@ -32,7 +32,7 @@ const resourceBuilder: ResourceBuilder = (
         sessionId,
         requestingClientId,
       });
-      res.json({ loginSuccessful: true, redirectUrl: "#" });
+      res.json({ loginSuccessful: true, redirectUri: "#" });
     });
 
   // Change Password

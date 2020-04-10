@@ -157,22 +157,22 @@ class SecurityFilter implements Filter {
                     } else {
                         // If the session doesn't have a user ref then attempt login.
                         try {
+                            final String postAuthRedirectUri = getPostAuthRedirectUri(request);
+
+                            String redirectUri = null;
+
                             // If we have completed the front channel flow then we will have a state id.
                             final String stateId = UrlUtils.getLastParam(request, OIDC.STATE);
                             if (stateId != null) {
-                                String oidcRedirectUri = UrlUtils.getFullUrl(request);
-                                oidcRedirectUri = OIDC.removeOIDCParams(oidcRedirectUri);
-                                final String redirectUri = openIdManager.backChannelOIDC(request, stateId, oidcRedirectUri);
-                                response.sendRedirect(redirectUri);
-
-                            } else {
-                                // If we're not logged in we need to start an AuthenticationRequest flow.
-                                // If this is a dispatch request then we won't try and log in. This avoids a race-condition:
-                                //   1. User logs out and a new authentication flow is started
-                                //   2. This request, not being logged in, starts a new authentication flow
-                                //   3. This new authentication flow partially over-writes the relying party data in auth.
-                                redirectToAuthService(request, response);
+                                redirectUri = openIdManager.backChannelOIDC(request, stateId, postAuthRedirectUri);
                             }
+
+                            if (redirectUri == null) {
+                                redirectUri = openIdManager.frontChannelOIDC(request, postAuthRedirectUri);
+                            }
+
+                            response.sendRedirect(redirectUri);
+
                         } catch (final RuntimeException e) {
                             LOGGER.error(e.getMessage(), e);
                             throw e;
@@ -181,6 +181,26 @@ class SecurityFilter implements Filter {
                 }
             }
         }
+    }
+
+    private String getPostAuthRedirectUri(final HttpServletRequest request) {
+        // We have a a new request so we're going to redirect with an AuthenticationRequest.
+        // Get the redirect URL for the auth service from the current request.
+        final String postAuthRedirectUri = UrlUtils.getFullUrl(request);
+
+        // When the auth service has performed authentication it will redirect
+        // back to the current URL with some additional parameters (e.g.
+        // `state` and `accessCode`). It is important that these parameters are
+        // not provided by our redirect URL else the redirect URL that the
+        // authentication service redirects back to may end up with multiple
+        // copies of these parameters which will confuse Stroom as it will not
+        // know which one of the param values to use (i.e. which were on the
+        // original redirect request and which have been added by the
+        // authentication service). For this reason we will cleanse the URL of
+        // any reserved parameters here. The authentication service should do
+        // the same to the redirect URL before adding its additional
+        // parameters.
+        return OIDC.removeOIDCParams(postAuthRedirectUri);
     }
 
     private boolean isStaticResource(final HttpServletRequest request) {
@@ -270,45 +290,43 @@ class SecurityFilter implements Filter {
 //        return false;
 //    }
 
-    private void redirectToAuthService(final HttpServletRequest request, final HttpServletResponse response) throws IOException {
-        // We have a a new request so we're going to redirect with an AuthenticationRequest.
-        // Get the redirect URL for the auth service from the current request.
-        String oidcRedirectUri = UrlUtils.getFullUrl(request);
-
-        // When the auth service has performed authentication it will redirect
-        // back to the current URL with some additional parameters (e.g.
-        // `state` and `accessCode`). It is important that these parameters are
-        // not provided by our redirect URL else the redirect URL that the
-        // authentication service redirects back to may end up with multiple
-        // copies of these parameters which will confuse Stroom as it will not
-        // know which one of the param values to use (i.e. which were on the
-        // original redirect request and which have been added by the
-        // authentication service). For this reason we will cleanse the URL of
-        // any reserved parameters here. The authentication service should do
-        // the same to the redirect URL before adding its additional
-        // parameters.
-        oidcRedirectUri = OIDC.removeOIDCParams(oidcRedirectUri);
-
-//        if (uiConfig.getUrl() != null && uiConfig.getUrl().getUi() != null && uiConfig.getUrl().getUi().trim().length() > 0) {
-//            LOGGER.debug("Using the advertised URL as the OpenID redirect URL");
-//            final URI uri = UriBuilder.fromUri(postLoginUrl).build();
-//            final UriBuilder builder = UriBuilder.fromUri(uiConfig.getUrl().getUi());
-//            if (uri.getPath() != null) {
-//                builder.path(uri.getPath());
-//            }
-//            if (uri.getFragment() != null) {
-//                builder.fragment(uri.getFragment());
-//            }
-//            if (uri.getQuery() != null) {
-//                builder.replaceQuery(uri.getQuery());
-//            }
-//            postLoginUrl = builder.build().toString();
-//        }
-
-        final String redirectUri = openIdManager.frontChannelOIDC(request, oidcRedirectUri);//openIdConfig.getRedirectUri());
-        // We want to make sure that the client has the cookie.
-        response.sendRedirect(redirectUri);
-    }
+//    private String redirectToAuthService(final HttpServletRequest request, final HttpServletResponse response) throws IOException {
+//        // We have a a new request so we're going to redirect with an AuthenticationRequest.
+//        // Get the redirect URL for the auth service from the current request.
+//        String oidcRedirectUri = UrlUtils.getFullUrl(request);
+//
+//        // When the auth service has performed authentication it will redirect
+//        // back to the current URL with some additional parameters (e.g.
+//        // `state` and `accessCode`). It is important that these parameters are
+//        // not provided by our redirect URL else the redirect URL that the
+//        // authentication service redirects back to may end up with multiple
+//        // copies of these parameters which will confuse Stroom as it will not
+//        // know which one of the param values to use (i.e. which were on the
+//        // original redirect request and which have been added by the
+//        // authentication service). For this reason we will cleanse the URL of
+//        // any reserved parameters here. The authentication service should do
+//        // the same to the redirect URL before adding its additional
+//        // parameters.
+//        oidcRedirectUri = OIDC.removeOIDCParams(oidcRedirectUri);
+//
+////        if (uiConfig.getUrl() != null && uiConfig.getUrl().getUi() != null && uiConfig.getUrl().getUi().trim().length() > 0) {
+////            LOGGER.debug("Using the advertised URL as the OpenID redirect URL");
+////            final URI uri = UriBuilder.fromUri(postLoginUrl).build();
+////            final UriBuilder builder = UriBuilder.fromUri(uiConfig.getUrl().getUi());
+////            if (uri.getPath() != null) {
+////                builder.path(uri.getPath());
+////            }
+////            if (uri.getFragment() != null) {
+////                builder.fragment(uri.getFragment());
+////            }
+////            if (uri.getQuery() != null) {
+////                builder.replaceQuery(uri.getQuery());
+////            }
+////            postLoginUrl = builder.build().toString();
+////        }
+//
+//        return openIdManager.frontChannelOIDC(request, oidcRedirectUri);//openIdConfig.getRedirectUri());
+//    }
 
     private UserIdentity loginAPI(final HttpServletRequest request, final HttpServletResponse response) {
         // Authenticate requests from an API client

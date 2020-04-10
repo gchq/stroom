@@ -7,10 +7,15 @@ appConfig:
     port: null
     pathPrefix: null
   publicUri:
-    pathPrefix: null
     scheme: null
     hostname: null
     port: null
+    pathPrefix: null
+  uiUri:
+    scheme: null
+    hostname: null
+    port: null
+    pathPrefix: null
   activity:
     db:
       connection:
@@ -85,7 +90,6 @@ appConfig:
       forcePasswordChangeOnFirstLogin: true
       passwordComplexityRegex: ".*"
       minimumPasswordLength: 0
-    ownPath: "/api/authentication"
   benchmark:
     streamCount: 1000
     recordCount: 10000
@@ -704,10 +708,6 @@ appConfig:
       \ multiple systems.</p>"
     aboutHtml: "<h1>About Stroom</h1><p>Stroom is designed to receive data from multiple\
       \ systems.</p>"
-    buildInfo:
-      upDate: "TBD"
-      buildVersion: "TBD"
-      buildDate: "TBD"
     defaultMaxResults: "1000000,100,10,1"
     process:
       defaultTimeLimit: 30

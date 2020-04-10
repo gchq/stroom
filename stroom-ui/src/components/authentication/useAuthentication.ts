@@ -23,7 +23,7 @@ const useAuthentication = (): UseAuthentication => {
         if (response.loginSuccessful) {
           // Otherwise we'll extract what we expect to be the successful login redirect URL
           Cookies.set("username", credentials.email);
-          window.location.href = response.redirectUrl;
+          window.location.href = response.redirectUri;
         } else {
           setSubmitting(false);
           setLoginResultMessage(response.message);

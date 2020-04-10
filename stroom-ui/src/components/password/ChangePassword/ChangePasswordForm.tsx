@@ -21,16 +21,16 @@ const ChangePasswordForm: React.FunctionComponent<{
   email: string;
   onSubmit: Function;
   showChangeConfirmation?: boolean;
-  redirectUrl?: string;
+  redirectUri?: string;
   onValidate: (
     oldPassword: string,
     newPassword: string,
     verifyPassword: string,
     email: string,
   ) => Promise<string>;
-}> = ({ showChangeConfirmation, redirectUrl, email, onSubmit, onValidate }) => {
+}> = ({ showChangeConfirmation, redirectUri, email, onSubmit, onValidate }) => {
   let title = "Change your password";
-  if (showChangeConfirmation && redirectUrl) {
+  if (showChangeConfirmation && redirectUri) {
     title = "Your password has been changed";
   }
 
@@ -39,13 +39,13 @@ const ChangePasswordForm: React.FunctionComponent<{
     content = (
       <ChangePasswordFields
         email={email}
-        redirectUrl={redirectUrl}
+        redirectUri={redirectUri}
         showOldPasswordField={true}
         onSubmit={onSubmit}
         onValidate={onValidate}
       />
     );
-  } else if (showChangeConfirmation && !redirectUrl) {
+  } else if (showChangeConfirmation && !redirectUri) {
     content = <p>Your password has been changed.</p>;
   }
 
