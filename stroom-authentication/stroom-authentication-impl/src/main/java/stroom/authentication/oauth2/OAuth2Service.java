@@ -10,6 +10,7 @@ import stroom.authentication.exceptions.BadRequestException;
 import stroom.authentication.token.Token;
 import stroom.authentication.token.TokenBuilder;
 import stroom.authentication.token.TokenBuilderFactory;
+import stroom.config.common.UriFactory;
 
 import javax.annotation.Nullable;
 import javax.inject.Inject;
@@ -25,23 +26,26 @@ import java.util.regex.Pattern;
 class OAuth2Service {
     private static final Logger LOGGER = LoggerFactory.getLogger(OAuth2Service.class);
 
-    private final AuthenticationConfig config;
+    private final UriFactory uriFactory;
+    private final AuthenticationConfig authenticationConfig;
     private final AccessCodeCache accessCodeCache;
     private final TokenBuilderFactory tokenBuilderFactory;
     private final AuthSession authSession;
-    private final OAuth2ClientDao clientDao;
+    private final OAuth2ClientDao dao;
 
     @Inject
-    OAuth2Service(final AuthenticationConfig config,
+    OAuth2Service(final UriFactory uriFactory,
+                  final AuthenticationConfig authenticationConfig,
                   final AccessCodeCache accessCodeCache,
                   final TokenBuilderFactory tokenBuilderFactory,
                   final AuthSession authSession,
-                  final OAuth2ClientDao clientDao) {
-        this.config = config;
+                  final OAuth2ClientDao dao) {
+        this.uriFactory = uriFactory;
+        this.authenticationConfig = authenticationConfig;
         this.accessCodeCache = accessCodeCache;
         this.tokenBuilderFactory = tokenBuilderFactory;
         this.authSession = authSession;
-        this.clientDao = clientDao;
+        this.dao = dao;
     }
 
     public URI auth(final HttpServletRequest request,
@@ -54,12 +58,12 @@ class OAuth2Service {
                     @Nullable final String prompt) {
         URI result;
         try {
-            final OAuth2Client client = clientDao.getClient(clientId);
-            if (client == null) {
+            final Optional<OAuth2Client> optionalClient = dao.getClientForClientId(clientId);
+            if (optionalClient.isEmpty()) {
                 throw new BadRequestException("Unknown client with id=" + clientId);
             }
 
-            final Pattern pattern = Pattern.compile(client.getUriPattern());
+            final Pattern pattern = Pattern.compile(optionalClient.get().getUriPattern());
             if (!pattern.matcher(redirectUri).matches()) {
                 throw new BadRequestException("Redirect URI is not allowed");
             }
@@ -104,7 +108,7 @@ class OAuth2Service {
 
         } catch (final RuntimeException e) {
             LOGGER.debug(e.getMessage());
-            result = UriBuilder.fromUri(this.config.getUnauthorisedUrl()).build();
+            result = UriBuilder.fromUri(uriFactory.publicURI(authenticationConfig.getUnauthorisedUrl())).build();
         }
 
         return result;
@@ -112,7 +116,7 @@ class OAuth2Service {
 
     private URI redirectToLoginPage(final String redirectUri) {
         LOGGER.debug("Sending user to login.");
-        final UriBuilder uriBuilder = UriBuilder.fromUri(this.config.getLoginUrl())
+        final UriBuilder uriBuilder = UriBuilder.fromUri(uriFactory.publicURI(authenticationConfig.getLoginUrl()))
                 .queryParam("error", "login_required")
                 .queryParam(OIDC.REDIRECT_URI, redirectUri);
         return uriBuilder.build();
@@ -156,16 +160,16 @@ class OAuth2Service {
             throw new BadRequestException("Unexpected redirect URI");
         }
 
-        final OAuth2Client client = clientDao.getClient(clientId);
-        if (client == null) {
+        final Optional<OAuth2Client> optionalClient = dao.getClientForClientId(clientId);
+        if (optionalClient.isEmpty()) {
             throw new BadRequestException("Unknown client with id=" + clientId);
         }
 
-        if (!Objects.equal(clientSecret, client.getClientSecret())) {
+        if (!Objects.equal(clientSecret, optionalClient.get().getClientSecret())) {
             throw new BadRequestException("Incorrect secret");
         }
 
-        final Pattern pattern = Pattern.compile(client.getUriPattern());
+        final Pattern pattern = Pattern.compile(optionalClient.get().getUriPattern());
         if (!pattern.matcher(redirectUri).matches()) {
             throw new BadRequestException("Redirect URI is not allowed");
         }

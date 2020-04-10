@@ -20,10 +20,10 @@ import com.google.inject.AbstractModule;
 import stroom.util.shared.RestResource;
 import stroom.util.guice.GuiceUtil;
 
-public class BuildInfoModule extends AbstractModule {
+public class SessionInfoModule extends AbstractModule {
     @Override
     protected void configure() {
         GuiceUtil.buildMultiBinder(binder(), RestResource.class)
-                .addBinding(BuildInfoResource.class);
+                .addBinding(SessionInfoResourceImpl.class);
     }
 }

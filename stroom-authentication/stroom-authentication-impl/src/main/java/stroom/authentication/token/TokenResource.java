@@ -43,7 +43,7 @@ import javax.ws.rs.core.Response;
 @Produces(MediaType.APPLICATION_JSON)
 @Consumes(MediaType.APPLICATION_JSON)
 @Api(description = "Stroom API Key API", tags = {"ApiKey"})
-interface TokenResource extends RestResource {
+public interface TokenResource extends RestResource {
     /**
      * Default ordering is by ISSUED_ON date, in descending order so the most recent tokens are shown first.
      * If orderBy is specified but orderDirection is not this will default to ascending.

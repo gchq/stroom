@@ -11,17 +11,14 @@ import stroom.authentication.account.AccountDao;
 
 import java.sql.Connection;
 import java.sql.SQLException;
-import java.sql.Timestamp;
 import java.time.Clock;
-import java.time.Instant;
-import java.time.Period;
-import java.time.ZoneId;
 import java.time.Duration;
+import java.time.Instant;
+import java.time.ZoneId;
 import java.time.ZonedDateTime;
 import java.util.UUID;
 
 import static org.assertj.core.api.Assertions.assertThat;
-import static org.assertj.core.api.Assertions.in;
 
 @Ignore("Temporarily ignore for auth migration")
 public class AccountDao_IT extends Database_IT {
@@ -29,7 +26,7 @@ public class AccountDao_IT extends Database_IT {
     private static final Logger LOGGER = LoggerFactory.getLogger(AccountDao_IT.class);
 
     @Test
-    public void testNewButInactiveUserIsDisabled(){
+    public void testNewButInactiveUserIsDisabled() {
         try (Connection conn = getConnection()) {
             // GIVEN...
             AccountDao accountDao = getUserDao(conn);
@@ -66,7 +63,7 @@ public class AccountDao_IT extends Database_IT {
     }
 
     @Test
-    public void testReactivatedDateIsUsedInsteadOfLastLoginForNewUsers(){
+    public void testReactivatedDateIsUsedInsteadOfLastLoginForNewUsers() {
         try (Connection conn = getConnection()) {
             // GIVEN...
             AccountDao accountDao = getUserDao(conn);
@@ -109,7 +106,7 @@ public class AccountDao_IT extends Database_IT {
     }
 
     @Test
-    public void testReactivatedDateIsUsedInsteadOfLastLogin(){
+    public void testReactivatedDateIsUsedInsteadOfLastLogin() {
         try (Connection conn = getConnection()) {
             // GIVEN...
             AccountDao accountDao = getUserDao(conn);
@@ -148,7 +145,7 @@ public class AccountDao_IT extends Database_IT {
     }
 
     @Test
-    public void testInactiveUserIsDeactivated(){
+    public void testInactiveUserIsDeactivated() {
         try (Connection conn = getConnection()) {
             // GIVEN...
             AccountDao accountDao = getUserDao(conn);
@@ -212,7 +209,7 @@ public class AccountDao_IT extends Database_IT {
             assertThat(accountDao.get(user01).get().isInactive()).isTrue();
             assertThat(accountDao.get(user02).get().isLocked()).isTrue();
 
-        } catch(SQLException e ){
+        } catch (SQLException e) {
             e.printStackTrace();
             TestCase.fail();
         }
@@ -243,14 +240,14 @@ public class AccountDao_IT extends Database_IT {
             assertThat(accountDao.get(user02).get().isEnabled()).isFalse();
 
 
-        } catch(SQLException e ){
+        } catch (SQLException e) {
             e.printStackTrace();
             TestCase.fail();
         }
     }
 
     @Test
-    public void testNeverExpiresUser(){
+    public void testNeverExpiresUser() {
         try (Connection conn = getConnection()) {
             // GIVEN...
             AccountDao accountDao = getUserDao(conn);
@@ -324,7 +321,7 @@ public class AccountDao_IT extends Database_IT {
         createUserAccount(accountDao, email, false, true, false, false);
     }
 
-    private static void createUserAccount(AccountDao accountDao, String email, boolean neverExpires){
+    private static void createUserAccount(AccountDao accountDao, String email, boolean neverExpires) {
         createUserAccount(accountDao, email, neverExpires, true, false, false);
     }
 
@@ -333,7 +330,7 @@ public class AccountDao_IT extends Database_IT {
                                           boolean neverExpires,
                                           boolean enabled,
                                           boolean inactive,
-                                          boolean locked){
+                                          boolean locked) {
         createUserAccount(accountDao, email, neverExpires, enabled, inactive, locked, null);
     }
 
@@ -343,7 +340,7 @@ public class AccountDao_IT extends Database_IT {
                                           boolean enabled,
                                           boolean inactive,
                                           boolean locked,
-                                          Long reactivatedDate){
+                                          Long reactivatedDate) {
         final Account account = new Account();
         account.setCreateTimeMs(System.currentTimeMillis());
         account.setCreateUser("UserDao_IT");
@@ -362,7 +359,7 @@ public class AccountDao_IT extends Database_IT {
         assertThat(newAccount.isLocked()).isEqualTo(locked);
     }
 
-    private AccountDao getUserDao(Connection conn){
+    private AccountDao getUserDao(Connection conn) {
         // We don't care about most config for this test, so we'll pass in null
         AccountDao accountDao = new AccountDaoImpl(null, this.authDbConnProvider);
         // We're doing tests against elapsed time so we need to be able to move the clock.

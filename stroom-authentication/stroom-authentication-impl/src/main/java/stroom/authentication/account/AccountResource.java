@@ -41,7 +41,7 @@ import javax.ws.rs.core.Response;
 @Path("/user/v1")
 @Produces({"application/json"})
 @Api(description = "Stroom User API", tags = {"User"})
-interface AccountResource extends RestResource {
+public interface AccountResource extends RestResource {
     @ApiOperation(
             value = "Get all users.",
             response = String.class,

@@ -2,42 +2,25 @@ package stroom.security.impl;
 
 import com.fasterxml.jackson.annotation.JsonProperty;
 import com.fasterxml.jackson.annotation.JsonPropertyDescription;
-import stroom.util.cache.CacheConfig;
 import stroom.util.config.annotations.ReadOnly;
-import stroom.util.config.annotations.RequiresRestart;
 import stroom.util.shared.AbstractConfig;
 import stroom.util.shared.validation.ValidRegex;
-import stroom.util.time.StroomDuration;
 
 import javax.inject.Singleton;
 import javax.validation.constraints.AssertTrue;
-import javax.validation.constraints.NotNull;
 
 @Singleton
 public class AuthenticationConfig extends AbstractConfig {
     public static final String PROP_NAME_AUTHENTICATION_REQUIRED = "authenticationRequired";
-    public static final String PROP_NAME_VERIFY_SSL = "verifySsl";
-    public static final String PROP_NAME_AUTH_SERVICES_BASE_URL = "authServicesBaseUrl";
     public static final String PROP_NAME_OPENID = "openId";
     public static final String PROP_NAME_PREVENT_LOGIN = "preventLogin";
     public static final String PROP_NAME_USER_NAME_PATTERN = "userNamePattern";
-    public static final String PROP_NAME_CLIENT_ID = "clientId";
-    public static final String PROP_NAME_CLIENT_SECRET = "clientSecret";
-    public static final String PROP_NAME_API_TOKEN_CACHE = "apiTokenCache";
-    public static final String PROP_NAME_JERSEY_CLIENT = "jerseyClient";
 
     private String authenticationServiceUrl;
     private boolean authenticationRequired = true;
-    private boolean verifySsl;
-    private String authServicesBaseUrl = "http://auth-service:8099";
     private OpenIdConfig openIdConfig = new OpenIdConfig();
     private boolean preventLogin;
     private String userNamePattern = "^[a-zA-Z0-9_-]{3,}$";
-
-    private CacheConfig apiTokenCache = new CacheConfig.Builder()
-            .maximumSize(10000L)
-            .expireAfterWrite(StroomDuration.ofMinutes(30))
-            .build();
 
     @JsonPropertyDescription("The URL of the authentication service")
     public String getAuthenticationServiceUrl() {
@@ -62,31 +45,6 @@ public class AuthenticationConfig extends AbstractConfig {
 
     public void setAuthenticationRequired(final boolean authenticationRequired) {
         this.authenticationRequired = authenticationRequired;
-    }
-
-    @ReadOnly
-    @JsonPropertyDescription("If using HTTPS should we verify the server certs")
-    @JsonProperty(PROP_NAME_VERIFY_SSL)
-    public boolean isVerifySsl() {
-        return verifySsl;
-    }
-
-    @ReadOnly
-    @JsonPropertyDescription("If using HTTPS should we verify the server certs")
-    @SuppressWarnings("unused")
-    public void setVerifySsl(final boolean verifySsl) {
-        this.verifySsl = verifySsl;
-    }
-
-    @JsonPropertyDescription("The URL of the auth service")
-    @JsonProperty(PROP_NAME_AUTH_SERVICES_BASE_URL)
-    public String getAuthServicesBaseUrl() {
-        return authServicesBaseUrl;
-    }
-
-    @SuppressWarnings("unused")
-    public void setAuthServicesBaseUrl(final String authServicesBaseUrl) {
-        this.authServicesBaseUrl = authServicesBaseUrl;
     }
 
     @JsonProperty(PROP_NAME_OPENID)
@@ -123,22 +81,11 @@ public class AuthenticationConfig extends AbstractConfig {
         this.userNamePattern = userNamePattern;
     }
 
-    @JsonProperty(PROP_NAME_API_TOKEN_CACHE)
-    public CacheConfig getApiTokenCache() {
-        return apiTokenCache;
-    }
-
-    @SuppressWarnings("unused")
-    public void setApiTokenCache(final CacheConfig apiTokenCache) {
-        this.apiTokenCache = apiTokenCache;
-    }
-
     @Override
     public String toString() {
         return "AuthenticationConfig{" +
                 "authenticationServiceUrl='" + authenticationServiceUrl + '\'' +
                 ", authenticationRequired=" + authenticationRequired +
-                ", authServicesBaseUrl='" + authServicesBaseUrl + '\'' +
                 ", preventLogin=" + preventLogin +
                 ", userNamePattern='" + userNamePattern + '\'' +
                 '}';

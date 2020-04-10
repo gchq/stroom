@@ -6,7 +6,10 @@ const getUser = (): User => {
   return {
     id: lr(1),
     email: lr(1),
-    state: "enabled",
+    enabled: true,
+    inactive: false,
+    locked: false,
+    processingAccount: false,
     firstName: lr(1),
     lastName: lr(1),
     comments: lr(20),
@@ -19,22 +22,22 @@ const getUser = (): User => {
   };
 };
 
-let newUser = getUser();
+const newUser = getUser();
 
-let wellUsedUser = getUser();
+const wellUsedUser = getUser();
 wellUsedUser.forcePasswordChange = false;
 wellUsedUser.loginCount = 99;
 wellUsedUser.updatedOn = "2019-02-02T23:01:01.111Z";
 wellUsedUser.updatedByUser = lr(1);
 wellUsedUser.lastLogin = "2019-04-03T23:01:01.222Z";
 
-let disabledUser = getUser();
-disabledUser.state = "disabled";
+const disabledUser = getUser();
+disabledUser.enabled = false;
 
-let inactiveUser = getUser();
-inactiveUser.state = "inactive";
+const inactiveUser = getUser();
+inactiveUser.inactive = true;
 
-let lockedUser = getUser();
-lockedUser.state = "locked";
+const lockedUser = getUser();
+lockedUser.locked = true;
 
 export { newUser, wellUsedUser, disabledUser, inactiveUser, lockedUser };

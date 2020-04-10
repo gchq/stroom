@@ -1,6 +1,16 @@
 ---
 appConfig:
   haltBootOnConfigValidationFailure: true
+  nodeUri:
+    scheme: null
+    hostname: null
+    port: null
+    pathPrefix: null
+  publicUri:
+    pathPrefix: null
+    scheme: null
+    hostname: null
+    port: null
   activity:
     db:
       connection:
@@ -39,28 +49,20 @@ appConfig:
     - "Closed"
     standardComments: []
     createText: "Create Annotation"
-  apiGateway:
-    hostname: null
-    scheme: "https"
-    port: null
   authentication:
     certificateDnPattern: ".*\\((.*)\\)"
     certificateDnCaptureGroupIndex: 1
-    loginUrl: "https://localhost/s/login"
-    changePasswordUrl: "https://localhost/s/changepassword"
-    advertisedHost: "https://localhost"
-    httpPort: null
-    httpsPort: null
+    loginUrl: "/s/login"
+    changePasswordUrl: "/s/changepassword"
     failedLoginLockThreshold: 3
-    unauthorisedUrl: "https://localhost/s/unauthorised"
+    unauthorisedUrl: "/s/unauthorised"
     email:
       fromAddress: "noreply@stroom"
       fromName: "Stroom User Accounts"
       passwordResetSubject: "Password reset for Stroom"
       passwordResetText: "A password reset has been requested for this email address.\
         \ Please visit the following URL to reset your password: %s."
-      passwordResetUrl: "https://localhost/s/resetPassword/?user=%s&token=%s"
-      passwordResetTokenValidityInMinutes: 600.0
+      passwordResetUrl: "/s/resetPassword/?user=%s&token=%s"
       allowPasswordResets: false
       smtp:
         host: "localhost"
@@ -75,9 +77,6 @@ appConfig:
       jwsIssuer: "stroom"
       requireExpirationTime: false
       algorithm: "RS256"
-    sessionIdCookieMaxAge: 2592000
-    userService:
-      url: "http://localhost:8080/api/appPermissions/v"
     passwordIntegrityChecks:
       neverUsedAccountDeactivationThreshold: "P30D"
       unusedAccountDeactivationThreshold: "P90D"
@@ -86,14 +85,7 @@ appConfig:
       forcePasswordChangeOnFirstLogin: true
       passwordComplexityRegex: ".*"
       minimumPasswordLength: 0
-    ownPath: "api/authentication"
-    authorisationService:
-      url: "http://localhost:8080/api/authorisation/v"
-      canManageUsersPermission: "Manage Users"
-    stroom:
-      clientId: "PZnJr8kHRKqnlJRQThSI"
-      clientSecret: "OtzHiAWLj8QWcwO2IxXmqxpzE2pyg0pMKCghR2aU"
-      clientHost: "localhost"
+    ownPath: "/api/authentication"
   benchmark:
     streamCount: 1000
     recordCount: 10000
@@ -232,12 +224,10 @@ appConfig:
         expireAfterAccess: "PT10M"
         expireAfterWrite: null
   dataSourceUrl:
-    index: "http://127.0.0.1:8080/api/stroom-index/v2"
-    solrIndex: "http://127.0.0.1:8080/api/stroom-solr-index/v2"
-    statisticStore: "http://127.0.0.1:8080/api/sqlstatistics/v2"
-    searchable: "http://127.0.0.1:8080/api/searchable/v2"
-    annotations: "http://IP_ADDRESS/annotationsService/queryApi/v1"
-    elasticIndex: "http://IP_ADDRESS/queryElasticService/queryApi/v1"
+    index: "/api/stroom-index/v2"
+    solrIndex: "/api/stroom-solr-index/v2"
+    statisticStore: "/api/sqlstatistics/v2"
+    searchable: "/api/searchable/v2"
   docstore:
     db:
       connection:
@@ -344,11 +334,6 @@ appConfig:
         minimumIdle: null
         maxPoolSize: null
     name: "tba"
-    baseEndpoint:
-      scheme: "http"
-      hostname: "localhost"
-      port: 8080
-      pathPrefix: null
     status:
       heapHistogram:
         classNameMatchRegex: "^stroom\\..*$"
@@ -507,22 +492,16 @@ appConfig:
     authentication:
       authenticationServiceUrl: null
       authenticationRequired: true
-      verifySsl: false
-      authServicesBaseUrl: "http://auth-service:8099"
       openId:
+        useInternal: true
         issuer: "accounts.google.com"
         authEndpoint: "https://accounts.google.com/o/oauth2/v2/auth"
         tokenEndpoint: "https://accounts.google.com/o/oauth2/token"
         jwksUri: "https://www.googleapis.com/oauth2/v3/certs"
-        redirectUri: "http://localhost:8080/stroom/ui"
         clientId: null
         clientSecret: null
       preventLogin: false
       userNamePattern: "^[a-zA-Z0-9_-]{3,}$"
-      apiTokenCache:
-        maximumSize: 10000
-        expireAfterAccess: null
-        expireAfterWrite: "PT30M"
     authorisation:
       userGroupsCache:
         maximumSize: 1000
@@ -769,7 +748,6 @@ appConfig:
         \ must be at least 80 characters long.\" ></textarea>Explain what the activity\
         \ is"
     url:
-      ui: "http://localhost:8080/stroom/ui"
       users: "../../../s/users"
       apiKeys: "../../../s/apiKeys"
       changepassword: "../../../s/changepassword"

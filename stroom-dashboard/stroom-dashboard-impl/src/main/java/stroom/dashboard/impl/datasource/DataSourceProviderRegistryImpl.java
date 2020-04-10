@@ -2,6 +2,7 @@ package stroom.dashboard.impl.datasource;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import stroom.config.common.UriFactory;
 import stroom.docref.DocRef;
 import stroom.security.api.SecurityContext;
 import stroom.servicediscovery.api.ServiceDiscoverer;
@@ -23,6 +24,7 @@ public class DataSourceProviderRegistryImpl implements DataSourceProviderRegistr
     @Inject
     DataSourceProviderRegistryImpl(final SecurityContext securityContext,
                                    final Provider<ServiceDiscoverer> serviceDiscovererProvider,
+                                   final UriFactory uriFactory,
                                    final DataSourceUrlConfig dataSourceUrlConfig,
                                    final Provider<Client> clientProvider) {
         final ServiceDiscoverer serviceDiscoverer = serviceDiscovererProvider.get();
@@ -36,6 +38,7 @@ public class DataSourceProviderRegistryImpl implements DataSourceProviderRegistr
             LOGGER.debug("Using local services");
             delegateDataSourceProviderRegistry = new SimpleDataSourceProviderRegistry(
                     securityContext,
+                    uriFactory,
                     dataSourceUrlConfig,
                     clientProvider);
         }

@@ -29,6 +29,7 @@ import org.slf4j.LoggerFactory;
 import stroom.authentication.config.AuthenticationConfig;
 import stroom.authentication.config.EmailConfig;
 import stroom.authentication.config.SmtpConfig;
+import stroom.config.common.UriFactory;
 
 import javax.inject.Inject;
 import javax.mail.Message;
@@ -38,37 +39,41 @@ class EmailSender {
 
     private final ServerConfig serverConfig;
     private final TransportStrategy transportStrategy;
-    private final AuthenticationConfig config;
+    private final UriFactory uriFactory;
+    private final AuthenticationConfig authenticationConfig;
 
     @Inject
-    EmailSender(final AuthenticationConfig config) {
-        this.config = config;
-        final SmtpConfig smtpConfig = Preconditions.checkNotNull(config.getEmailConfig(),
+    EmailSender(final UriFactory uriFactory,
+                final AuthenticationConfig authenticationConfig) {
+        this.uriFactory = uriFactory;
+        this.authenticationConfig = authenticationConfig;
+        final SmtpConfig smtpConfig = Preconditions.checkNotNull(authenticationConfig.getEmailConfig(),
                 "Missing 'email' section in config")
                 .getSmtpConfig();
 
         if (!Strings.isNullOrEmpty(smtpConfig.getUsername()) && !Strings.isNullOrEmpty(smtpConfig.getPassword())) {
             LOGGER.info("Sending reset email using username and password");
             serverConfig = new ServerConfig(
-                    config.getEmailConfig().getSmtpConfig().getHost(),
-                    config.getEmailConfig().getSmtpConfig().getPort(),
-                    config.getEmailConfig().getSmtpConfig().getUsername(),
-                    config.getEmailConfig().getSmtpConfig().getPassword());
+                    authenticationConfig.getEmailConfig().getSmtpConfig().getHost(),
+                    authenticationConfig.getEmailConfig().getSmtpConfig().getPort(),
+                    authenticationConfig.getEmailConfig().getSmtpConfig().getUsername(),
+                    authenticationConfig.getEmailConfig().getSmtpConfig().getPassword());
         } else {
             serverConfig = new ServerConfig(
-                    config.getEmailConfig().getSmtpConfig().getHost(),
-                    config.getEmailConfig().getSmtpConfig().getPort());
+                    authenticationConfig.getEmailConfig().getSmtpConfig().getHost(),
+                    authenticationConfig.getEmailConfig().getSmtpConfig().getPort());
         }
 
-        transportStrategy = config.getEmailConfig().getSmtpConfig().getTransportStrategy();
+        transportStrategy = authenticationConfig.getEmailConfig().getSmtpConfig().getTransportStrategy();
     }
 
     public void send(final String emailAddress, final String firstName, final String lastName, String resetToken) {
-        Preconditions.checkNotNull(config.getEmailConfig(), "Missing 'email' section in config");
+        Preconditions.checkNotNull(authenticationConfig.getEmailConfig(), "Missing 'email' section in config");
 
-        final EmailConfig emailConfig = config.getEmailConfig();
+        final EmailConfig emailConfig = authenticationConfig.getEmailConfig();
         final String resetName = firstName == null ? "[Name not available]" : firstName + "" + lastName;
-        final String resetUrl = String.format(emailConfig.getPasswordResetUrl(), emailAddress, resetToken);
+        String resetUrl = String.format(emailConfig.getPasswordResetUrl(), emailAddress, resetToken);
+        resetUrl = uriFactory.publicUriString(resetUrl);
         final String passwordResetEmailText = String.format(emailConfig.getPasswordResetText(), resetUrl);
 
         final Email email = new Email();

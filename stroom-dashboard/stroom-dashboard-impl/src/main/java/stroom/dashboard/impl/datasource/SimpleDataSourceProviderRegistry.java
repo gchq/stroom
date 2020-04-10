@@ -18,6 +18,7 @@ package stroom.dashboard.impl.datasource;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import stroom.config.common.UriFactory;
 import stroom.docref.DocRef;
 import stroom.security.api.SecurityContext;
 
@@ -38,6 +39,7 @@ class SimpleDataSourceProviderRegistry implements DataSourceProviderRegistry {
     private final Provider<Client> clientProvider;
 
     SimpleDataSourceProviderRegistry(final SecurityContext securityContext,
+                                     final UriFactory uriFactory,
                                      final DataSourceUrlConfig dataSourceUrlConfig,
                                      final Provider<Client> clientProvider) {
         this.securityContext = securityContext;
@@ -46,11 +48,12 @@ class SimpleDataSourceProviderRegistry implements DataSourceProviderRegistry {
 //        if (basePath != null && !basePath.isEmpty()) {
         //TODO the path strings are defined in ResourcePaths but this is not accessible from here
         //if this code is kept long term then ResourcePaths needs to be mode so that is accessible to all
+
         urlMap = new HashMap<>();
-        urlMap.put("Index", dataSourceUrlConfig::getIndex);
-        urlMap.put("Searchable", dataSourceUrlConfig::getSearchable);
-        urlMap.put("SolrIndex", dataSourceUrlConfig::getSolrIndex);
-        urlMap.put("StatisticStore", dataSourceUrlConfig::getStatisticStore);
+        urlMap.put("Index", () -> uriFactory.publicUriString(dataSourceUrlConfig.getIndex()));
+        urlMap.put("Searchable", () -> uriFactory.publicUriString(dataSourceUrlConfig.getSearchable()));
+        urlMap.put("SolrIndex", () -> uriFactory.publicUriString(dataSourceUrlConfig.getSolrIndex()));
+        urlMap.put("StatisticStore", () -> uriFactory.publicUriString(dataSourceUrlConfig.getStatisticStore()));
 
         //strooom-stats is not available as a local service as if you have stroom-stats you have zookeeper so
         //you can run service discovery

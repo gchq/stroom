@@ -44,7 +44,7 @@ import java.net.URISyntaxException;
 @Path("/authentication/v1")
 @Produces(MediaType.APPLICATION_JSON)
 @Api(description = "Stroom Authentication API", tags = {"Authentication"})
-interface AuthenticationResource extends RestResource {
+public interface AuthenticationResource extends RestResource {
     /**
      * We expect the user to have a session if they're trying to log in.
      * If they don't then they need to be directed to an application that will submit

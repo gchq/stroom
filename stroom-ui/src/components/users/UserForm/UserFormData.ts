@@ -2,7 +2,10 @@ interface UserFormData {
   firstName: string;
   lastName: string;
   email: string;
-  state: string;
+  enabled: boolean;
+  inactive: boolean;
+  locked: boolean;
+  processingAccount: boolean;
   password: string;
   verifyPassword: string;
   neverExpires: boolean;

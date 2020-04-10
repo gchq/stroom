@@ -21,10 +21,10 @@ import javax.ws.rs.core.Response;
 import java.util.Map;
 
 @Singleton
-@Path("/noauth/oauth2/v1")
+@Path("/oauth2/v1/noauth")
 @Produces(MediaType.APPLICATION_JSON)
 @Consumes(MediaType.APPLICATION_JSON)
-interface OAuth2Resource extends RestResource {
+public interface OAuth2Resource extends RestResource {
     @GET
     @Path("auth")
     @Timed
@@ -46,4 +46,14 @@ interface OAuth2Resource extends RestResource {
     TokenResponse token(
             @Context HttpServletRequest request,
             TokenRequest tokenRequest);
+
+    @ApiOperation(
+            value = "Provides access to this service's current public key. " +
+                    "A client may use these keys to verify JWTs issued by this service.",
+            response = String.class,
+            tags = {"ApiKey"})
+    @GET
+    @Path("certs")
+    @Timed
+    Response getCerts(@Context @NotNull HttpServletRequest httpServletRequest);
 }

@@ -9,8 +9,8 @@ import stroom.authentication.config.AuthenticationConfig;
 import stroom.cluster.api.ClusterConfig;
 import stroom.cluster.lock.impl.db.ClusterLockConfig;
 import stroom.cluster.task.impl.ClusterTaskConfig;
-import stroom.config.common.ApiGatewayConfig;
 import stroom.config.common.CommonDbConfig;
+import stroom.config.common.PublicUriConfig;
 import stroom.core.benchmark.BenchmarkClusterConfig;
 import stroom.core.db.CoreConfig;
 import stroom.core.receive.ProxyAggregationConfig;
@@ -27,6 +27,7 @@ import stroom.index.impl.selection.VolumeConfig;
 import stroom.job.impl.JobSystemConfig;
 import stroom.lifecycle.impl.LifecycleConfig;
 import stroom.node.impl.NodeConfig;
+import stroom.config.common.NodeUriConfig;
 import stroom.pipeline.PipelineConfig;
 import stroom.processor.impl.ProcessorConfig;
 import stroom.search.impl.SearchConfig;
@@ -46,13 +47,14 @@ import javax.validation.constraints.AssertTrue;
 @JsonRootName(AppConfig.NAME)
 @Singleton
 public class AppConfig extends AbstractConfig {
-
     public static final String NAME = "stroom";
 
+    public static final String PROP_NAME_NODE_URI = "nodeUri";
+    public static final String PROP_NAME_PUBLIC_URI = "publicUri";
     public static final String PROP_NAME_HALT_BOOT_ON_CONFIG_VALIDATION_FAILURE = "haltBootOnConfigValidationFailure";
     public static final String PROP_NAME_ACTIVITY = "activity";
     public static final String PROP_NAME_ANNOTATION = "annotation";
-    public static final String PROP_NAME_API_GATEWAY = "apiGateway";
+//    public static final String PROP_NAME_API_GATEWAY = "apiGateway";
     public static final String PROP_NAME_AUTHENTICATION = "authentication";
     public static final String PROP_NAME_BENCHMARK = "benchmark";
     public static final String PROP_NAME_CLUSTER = "cluster";
@@ -91,9 +93,10 @@ public class AppConfig extends AbstractConfig {
 
     private boolean haltBootOnConfigValidationFailure = true;
 
+    private NodeUriConfig nodeUri = new NodeUriConfig();
+    private PublicUriConfig publicUri = new PublicUriConfig();
     private ActivityConfig activityConfig = new ActivityConfig();
     private AnnotationConfig annotationConfig = new AnnotationConfig();
-    private ApiGatewayConfig apiGatewayConfig = new ApiGatewayConfig();
     private AuthenticationConfig authenticationConfig = new AuthenticationConfig();
     private BenchmarkClusterConfig benchmarkClusterConfig = new BenchmarkClusterConfig();
     private ClusterConfig clusterConfig = new ClusterConfig();
@@ -130,6 +133,30 @@ public class AppConfig extends AbstractConfig {
     private UiConfig uiConfig = new UiConfig();
     private VolumeConfig volumeConfig = new VolumeConfig();
 
+    @JsonPropertyDescription("This is the base endpoint of the node for all inter-node communications, " +
+            "i.e. all cluster management and node info calls. " +
+            "This endpoint will typically be hidden behind a firewall and not be publicly available. " +
+            "The address must be resolvable from all other nodes in the cluster. " +
+            "This does not need to be set for a single node cluster.")
+    @JsonProperty(PROP_NAME_NODE_URI)
+    public NodeUriConfig getNodeUri() {
+        return nodeUri;
+    }
+
+    public void setNodeUri(final NodeUriConfig nodeUri) {
+        this.nodeUri = nodeUri;
+    }
+
+    @JsonPropertyDescription("This is public facing URI of stroom which may be different from the local host if behind a proxy")
+    @JsonProperty(PROP_NAME_PUBLIC_URI)
+    public PublicUriConfig getPublicUri() {
+        return publicUri;
+    }
+
+    public void setPublicUri(final PublicUriConfig publicUri) {
+        this.publicUri = publicUri;
+    }
+
     @AssertTrue(
         message = "stroom." + PROP_NAME_HALT_BOOT_ON_CONFIG_VALIDATION_FAILURE + " is set to false. If there is " +
             "invalid configuration the system may behave in unexpected ways. This setting is not advised.",
@@ -159,15 +186,6 @@ public class AppConfig extends AbstractConfig {
 
     public void setAnnotationConfig(final AnnotationConfig annotationConfig) {
         this.annotationConfig = annotationConfig;
-    }
-
-    @JsonProperty(PROP_NAME_API_GATEWAY)
-    public ApiGatewayConfig getApiGatewayConfig() {
-        return apiGatewayConfig;
-    }
-
-    public void setApiGatewayConfig(final ApiGatewayConfig apiGatewayConfig) {
-        this.apiGatewayConfig = apiGatewayConfig;
     }
 
     @JsonProperty(PROP_NAME_AUTHENTICATION)

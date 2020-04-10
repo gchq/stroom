@@ -44,25 +44,20 @@ public final class AuthenticationConfig extends AbstractConfig {
     @NotNull
     @JsonProperty
     private int certificateDnCaptureGroupIndex = 1;
-    //TODO: change all these URLs so they exclude the actual FQDN. Just have them be the paths.
     @Valid
     @NotNull
     @JsonProperty
-    private String loginUrl = "https://localhost/s/login";
+    private String loginUrl = "/s/login";
     @Valid
     @NotNull
     @JsonProperty
-    private String changePasswordUrl = "https://localhost/s/changepassword";
-    @Valid
-    @NotNull
-    @JsonProperty
-    private String advertisedHost = "https://localhost";
+    private String changePasswordUrl = "/s/changepassword";
     @Nullable
     @JsonProperty
     private Integer failedLoginLockThreshold = 3;
     @Nullable
     @JsonProperty
-    private String unauthorisedUrl = "https://localhost/s/unauthorised";
+    private String unauthorisedUrl = "/s/unauthorised";
     @Nullable
     @JsonProperty(PROP_NAME_TOKEN)
     private TokenConfig tokenConfig = new TokenConfig();
@@ -73,7 +68,7 @@ public final class AuthenticationConfig extends AbstractConfig {
 
     @NotNull
     @JsonProperty(PROP_NAME_OWN_PATH)
-    private String ownPath = "api/authentication";
+    private String ownPath = "/api/authentication";
 
     public final String getCertificateDnPattern() {
         return this.certificateDnPattern;
@@ -85,10 +80,6 @@ public final class AuthenticationConfig extends AbstractConfig {
 
     public String getChangePasswordUrl() {
         return changePasswordUrl;
-    }
-
-    public final String getAdvertisedHost() {
-        return this.advertisedHost;
     }
 
     @JsonProperty(PROP_NAME_EMAIL)

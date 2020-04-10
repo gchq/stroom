@@ -23,7 +23,6 @@ import stroom.security.api.SecurityContext;
 import stroom.security.api.UserIdentity;
 import stroom.security.impl.session.UserIdentitySessionUtil;
 import stroom.security.shared.User;
-import stroom.ui.config.shared.UiConfig;
 import stroom.util.logging.LambdaLogger;
 import stroom.util.logging.LambdaLoggerFactory;
 import stroom.util.logging.LogUtil;
@@ -41,9 +40,8 @@ import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
 import javax.ws.rs.HttpMethod;
 import javax.ws.rs.core.Response;
-import javax.ws.rs.core.UriBuilder;
 import java.io.IOException;
-import java.net.URI;
+import java.util.Set;
 import java.util.regex.Pattern;
 
 /**
@@ -59,11 +57,10 @@ class SecurityFilter implements Filter {
     private static final String NO_AUTH_PATH = ResourcePaths.buildUnauthenticatedServletPath("/");
 
     // E.g. /api/authentication/v1/noauth/exchange
-    public static String PUBLIC_API_PATH_REGEX = ResourcePaths.API_ROOT_PATH + ".*" + ResourcePaths.NO_AUTH + "/.*";
+    private static final String PUBLIC_API_PATH_REGEX = ResourcePaths.API_ROOT_PATH + ".*" + ResourcePaths.NO_AUTH + "/.*";
+    private static final Set<String> STATIC_RESOURCE_EXTENSIONS = Set.of(".js", ".css", ".htm", ".html", ".json", ".png", ".jpg", ".gif", ".ico", ".svg", ".woff", ".woff2");
 
     private final AuthenticationConfig authenticationConfig;
-    private final OpenIdConfig openIdConfig;
-    private final UiConfig uiConfig;
     private final SecurityContext securityContext;
     private final Pattern publicApiPathPattern;
     private final OpenIdManager openIdManager;
@@ -71,13 +68,9 @@ class SecurityFilter implements Filter {
     @Inject
     SecurityFilter(
             final AuthenticationConfig authenticationConfig,
-            final OpenIdConfig openIdConfig,
-            final UiConfig uiConfig,
             final SecurityContext securityContext,
             final OpenIdManager openIdManager) {
         this.authenticationConfig = authenticationConfig;
-        this.openIdConfig = openIdConfig;
-        this.uiConfig = uiConfig;
         this.securityContext = securityContext;
         this.openIdManager = openIdManager;
 
@@ -118,9 +111,11 @@ class SecurityFilter implements Filter {
                 LogUtil.message("Filtering request uri: {},  servletPath: {}",
                         request.getRequestURI(), request.getServletPath()));
 
-        final String url = request.getRequestURL().toString();
+        final String servletPath = request.getServletPath().toLowerCase();
+        final String fullPath = request.getRequestURI().toLowerCase();
+
         if (request.getMethod().toUpperCase().equals(HttpMethod.OPTIONS) ||
-                url.toLowerCase().endsWith("manifest.json")) { // New UI - For some reason this is requested without a session cookie
+                (!isApiRequest(servletPath) && isStaticResource(request))) {
             // We need to allow CORS preflight requests
             LOGGER.debug("Passing on to next filter");
             chain.doFilter(request, response);
@@ -134,11 +129,6 @@ class SecurityFilter implements Filter {
                 // We need to distinguish between requests from an API client and from the UI.
                 // - If a request is from the UI and fails authentication then we need to redirect to the login page.
                 // - If a request is from an API client and fails authentication then we need to return HTTP 403 UNAUTHORIZED.
-                // - If a request is for clustercall.rpc then it's a back-channel stroom-to-stroom request and we want to
-                //   let it through. It is essential that port 8080 is not exposed and that any reverse-proxy
-                //   blocks requests that look like '.*clustercall.rpc$'.
-                final String servletPath = request.getServletPath().toLowerCase();
-                final String fullPath = request.getRequestURI().toLowerCase();
                 if (isPublicApiRequest(fullPath)) {
                     authenticateAsProcUser(request, response, chain, false);
                 } else if (isApiRequest(servletPath)) {
@@ -170,7 +160,9 @@ class SecurityFilter implements Filter {
                             // If we have completed the front channel flow then we will have a state id.
                             final String stateId = UrlUtils.getLastParam(request, OIDC.STATE);
                             if (stateId != null) {
-                                final String redirectUri = openIdManager.backChannelOIDC(request, stateId, openIdConfig.getRedirectUri());
+                                String oidcRedirectUri = UrlUtils.getFullUrl(request);
+                                oidcRedirectUri = OIDC.removeOIDCParams(oidcRedirectUri);
+                                final String redirectUri = openIdManager.backChannelOIDC(request, stateId, oidcRedirectUri);
                                 response.sendRedirect(redirectUri);
 
                             } else {
@@ -191,7 +183,25 @@ class SecurityFilter implements Filter {
         }
     }
 
-    private boolean isPublicApiRequest(String servletPath) {
+    private boolean isStaticResource(final HttpServletRequest request) {
+        final String url = request.getRequestURL().toString();
+
+        if (url.contains("/s/") ||
+                url.contains("/static/") ||
+                url.endsWith("manifest.json")) { // New UI - For some reason this is requested without a session cookie
+            return true;
+        }
+
+        int index = url.lastIndexOf(".");
+        if (index > 0) {
+            final String extension = url.substring(index);
+            return STATIC_RESOURCE_EXTENSIONS.contains(extension);
+        }
+
+        return false;
+    }
+
+    private boolean isPublicApiRequest(final String servletPath) {
         return publicApiPathPattern != null && publicApiPathPattern.matcher(servletPath).matches();
     }
 
@@ -250,20 +260,20 @@ class SecurityFilter implements Filter {
         }
     }
 
-    private boolean loginUI(final HttpServletRequest request, final HttpServletResponse response) throws IOException {
-        final String stateId = UrlUtils.getLastParam(request, OIDC.STATE);
-        if (stateId != null) {
-            String redirectUri = openIdManager.backChannelOIDC(request, stateId, openIdConfig.getRedirectUri());
-            response.sendRedirect(redirectUri);
-            return true;
-        }
-        return false;
-    }
+//    private boolean loginUI(final HttpServletRequest request, final HttpServletResponse response) throws IOException {
+//        final String stateId = UrlUtils.getLastParam(request, OIDC.STATE);
+//        if (stateId != null) {
+//            String redirectUri = openIdManager.backChannelOIDC(request, stateId, openIdConfig.getRedirectUri());
+//            response.sendRedirect(redirectUri);
+//            return true;
+//        }
+//        return false;
+//    }
 
     private void redirectToAuthService(final HttpServletRequest request, final HttpServletResponse response) throws IOException {
         // We have a a new request so we're going to redirect with an AuthenticationRequest.
         // Get the redirect URL for the auth service from the current request.
-        String postLoginUrl = UrlUtils.getFullUrl(request);
+        String oidcRedirectUri = UrlUtils.getFullUrl(request);
 
         // When the auth service has performed authentication it will redirect
         // back to the current URL with some additional parameters (e.g.
@@ -277,25 +287,25 @@ class SecurityFilter implements Filter {
         // any reserved parameters here. The authentication service should do
         // the same to the redirect URL before adding its additional
         // parameters.
-        postLoginUrl = OIDC.removeOIDCParams(postLoginUrl);
+        oidcRedirectUri = OIDC.removeOIDCParams(oidcRedirectUri);
 
-        if (uiConfig.getUrl() != null && uiConfig.getUrl().getUi() != null && uiConfig.getUrl().getUi().trim().length() > 0) {
-            LOGGER.debug("Using the advertised URL as the OpenID redirect URL");
-            final URI uri = UriBuilder.fromUri(postLoginUrl).build();
-            final UriBuilder builder = UriBuilder.fromUri(uiConfig.getUrl().getUi());
-            if (uri.getPath() != null) {
-                builder.path(uri.getPath());
-            }
-            if (uri.getFragment() != null) {
-                builder.fragment(uri.getFragment());
-            }
-            if (uri.getQuery() != null) {
-                builder.replaceQuery(uri.getQuery());
-            }
-            postLoginUrl = builder.build().toString();
-        }
+//        if (uiConfig.getUrl() != null && uiConfig.getUrl().getUi() != null && uiConfig.getUrl().getUi().trim().length() > 0) {
+//            LOGGER.debug("Using the advertised URL as the OpenID redirect URL");
+//            final URI uri = UriBuilder.fromUri(postLoginUrl).build();
+//            final UriBuilder builder = UriBuilder.fromUri(uiConfig.getUrl().getUi());
+//            if (uri.getPath() != null) {
+//                builder.path(uri.getPath());
+//            }
+//            if (uri.getFragment() != null) {
+//                builder.fragment(uri.getFragment());
+//            }
+//            if (uri.getQuery() != null) {
+//                builder.replaceQuery(uri.getQuery());
+//            }
+//            postLoginUrl = builder.build().toString();
+//        }
 
-        final String redirectUri = openIdManager.frontChannelOIDC(request, postLoginUrl, openIdConfig.getRedirectUri());
+        final String redirectUri = openIdManager.frontChannelOIDC(request, oidcRedirectUri);//openIdConfig.getRedirectUri());
         // We want to make sure that the client has the cookie.
         response.sendRedirect(redirectUri);
     }

@@ -2,11 +2,13 @@ package stroom.app.guice;
 
 import com.google.inject.AbstractModule;
 import io.dropwizard.setup.Environment;
+import stroom.app.UriFactoryImpl;
 import stroom.cluster.impl.ClusterModule;
 import stroom.config.app.AppConfig;
 import stroom.config.app.AppConfigModule;
 import stroom.config.app.AppConfigModule.ConfigHolder;
 import stroom.config.app.Config;
+import stroom.config.common.UriFactory;
 import stroom.db.util.DbModule;
 import stroom.dropwizard.common.LogLevelInspector;
 import stroom.lifecycle.impl.LifecycleServiceModule;
@@ -42,6 +44,7 @@ public class AppModule extends AbstractModule {
     @Override
     protected void configure() {
         bind(Config.class).toInstance(configuration);
+        bind(UriFactory.class).to(UriFactoryImpl.class);
 
         // Allows us to load up the app in the absence of a the DW jersey environment
         // e.g. for migrations

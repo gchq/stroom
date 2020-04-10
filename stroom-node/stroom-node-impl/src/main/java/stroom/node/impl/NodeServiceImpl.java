@@ -18,19 +18,20 @@ package stroom.node.impl;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import stroom.util.entityevent.EntityAction;
-import stroom.util.entityevent.EntityEvent;
-import stroom.util.entityevent.EntityEventHandler;
+import stroom.config.common.UriFactory;
+import stroom.node.api.FindNodeCriteria;
 import stroom.node.api.NodeInfo;
 import stroom.node.api.NodeService;
-import stroom.node.api.FindNodeCriteria;
 import stroom.node.shared.Node;
 import stroom.security.api.SecurityContext;
 import stroom.security.shared.PermissionNames;
 import stroom.util.AuditUtil;
-import stroom.util.shared.ResultPage;
+import stroom.util.entityevent.EntityAction;
+import stroom.util.entityevent.EntityEvent;
+import stroom.util.entityevent.EntityEventHandler;
 import stroom.util.shared.Clearable;
 import stroom.util.shared.PermissionException;
+import stroom.util.shared.ResultPage;
 
 import javax.inject.Inject;
 import javax.inject.Singleton;
@@ -45,18 +46,21 @@ public class NodeServiceImpl implements NodeService, Clearable, EntityEvent.Hand
     private final SecurityContext securityContext;
     private final NodeDao nodeDao;
     private final NodeInfo nodeInfo;
-    private NodeConfig nodeConfig;
+    private final NodeConfig nodeConfig;
+    private final UriFactory uriFactory;
     private volatile Node thisNode;
 
     @Inject
     NodeServiceImpl(final SecurityContext securityContext,
                     final NodeDao nodeDao,
                     final NodeInfo nodeInfo,
-                    final NodeConfig nodeConfig) {
+                    final NodeConfig nodeConfig,
+                    final UriFactory uriFactory) {
         this.securityContext = securityContext;
         this.nodeDao = nodeDao;
         this.nodeInfo = nodeInfo;
         this.nodeConfig = nodeConfig;
+        this.uriFactory = uriFactory;
 
         securityContext.asProcessingUser(this::ensureNodeCreated);
     }
@@ -80,10 +84,10 @@ public class NodeServiceImpl implements NodeService, Clearable, EntityEvent.Hand
     @Override
     public List<String> findNodeNames(final FindNodeCriteria criteria) {
         return find(criteria)
-            .getValues()
-            .stream()
-            .map(Node::getName)
-            .collect(Collectors.toList());
+                .getValues()
+                .stream()
+                .map(Node::getName)
+                .collect(Collectors.toList());
     }
 
     @Override
@@ -139,7 +143,7 @@ public class NodeServiceImpl implements NodeService, Clearable, EntityEvent.Hand
                 }
             }
         } else {
-            if (!nodeConfig.getBaseEndpoint().getBasePath().equals(thisNode.getUrl())) {
+            if (!uriFactory.localUriString("").equals(thisNode.getUrl())) {
                 // Endpoint url has changed in config so update the node record
                 refreshNode();
             }
@@ -152,14 +156,14 @@ public class NodeServiceImpl implements NodeService, Clearable, EntityEvent.Hand
         // Ensure the DB node record has the right endpoint url
         thisNode = nodeDao.getNode(nodeInfo.getThisNodeName());
 
-        final String endpointUrl = nodeConfig.getBaseEndpoint().getBasePath();
+        final String endpointUrl = uriFactory.localUriString("");
         if (thisNode == null) {
             // This will start a new mini transaction to create the node record
             final Node node = new Node();
             node.setName(nodeInfo.getThisNodeName());
             node.setUrl(endpointUrl);
             LOGGER.info("Creating node record for {} with endpoint url {}",
-                node.getName(), node.getUrl());
+                    node.getName(), node.getUrl());
             thisNode = nodeDao.create(node);
         } else {
             if (!endpointUrl.equals(thisNode.getUrl())) {

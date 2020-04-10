@@ -5,6 +5,7 @@ import stroom.authentication.AuthModule;
 import stroom.authentication.impl.db.AuthDbModule;
 import stroom.cache.impl.CacheResourceModule;
 import stroom.core.db.CoreDbModule;
+import stroom.core.welcome.SessionInfoModule;
 import stroom.dashboard.impl.datasource.DataSourceModule;
 import stroom.receive.common.RemoteFeedModule;
 import stroom.receive.rules.impl.ReceiveDataRuleSetModule;
@@ -32,7 +33,7 @@ public class CoreModule extends AbstractModule {
         install(new stroom.core.query.QueryModule());
         install(new stroom.core.receive.ReceiveDataModule());
         install(new stroom.core.servlet.ServletModule());
-        install(new stroom.core.welcome.BuildInfoModule());
+        install(new SessionInfoModule());
         install(new stroom.core.welcome.WelcomeModule());
         install(new stroom.dashboard.impl.DashboardModule());
         install(new DataSourceModule());

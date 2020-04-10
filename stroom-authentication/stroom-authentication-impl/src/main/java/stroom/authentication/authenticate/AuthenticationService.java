@@ -13,6 +13,7 @@ import stroom.authentication.config.AuthenticationConfig;
 import stroom.authentication.config.PasswordIntegrityChecksConfig;
 import stroom.authentication.exceptions.BadRequestException;
 import stroom.authentication.token.TokenDao;
+import stroom.config.common.UriFactory;
 import stroom.event.logging.api.StroomEventLoggingService;
 import stroom.security.api.SecurityContext;
 
@@ -45,6 +46,7 @@ class AuthenticationService implements AuthSession {
     private static final String SUCCESSFUL_LOGIN_MESSAGE = "User logged in successfully.";
     private static final String FAILED_LOGIN_MESSAGE = "User attempted to log in but failed.";
 
+    private final UriFactory uriFactory;
     private AuthenticationConfig config;
     private final TokenDao tokenDao;
     private EmailSender emailSender;
@@ -55,6 +57,7 @@ class AuthenticationService implements AuthSession {
 
     @Inject
     public AuthenticationService(
+            final UriFactory uriFactory,
             final @NotNull AuthenticationConfig config,
             final TokenDao tokenDao,
             final EmailSender emailSender,
@@ -62,6 +65,7 @@ class AuthenticationService implements AuthSession {
             final AccountService accountService,
             final StroomEventLoggingService stroomEventLoggingService,
             final SecurityContext securityContext) {
+        this.uriFactory = uriFactory;
         this.config = config;
         this.tokenDao = tokenDao;
         this.emailSender = emailSender;
@@ -353,9 +357,7 @@ class AuthenticationService implements AuthSession {
             stroomEventLoggingService.createAction("Logout", "The user has logged out.");
             setSessionUser(request.getSession(false), null);
         }
-
-        // If we have a redirect URL then we'll use that, otherwise we'll go to the advertised host.
-        return redirectUri == null || redirectUri.length() == 0 ? this.config.getAdvertisedHost() : redirectUri;
+        return redirectUri;
     }
 
     public boolean resetEmail(final String emailAddress) {
@@ -458,7 +460,7 @@ class AuthenticationService implements AuthSession {
 
         if (userNeedsToChangePassword) {
             final String innerRedirectUri = getPostAuthenticationCheckUrl(redirectUri);
-            result = UriBuilder.fromUri(this.config.getChangePasswordUrl())
+            result = UriBuilder.fromUri(uriFactory.publicURI(config.getChangePasswordUrl()))
                     .queryParam(OIDC.REDIRECT_URI, innerRedirectUri)
                     .build();
         } else {
@@ -485,8 +487,7 @@ class AuthenticationService implements AuthSession {
 
     private String getPostAuthenticationCheckUrl(final String redirectUri) {
         final URI uri = UriBuilder
-                .fromUri(this.config.getAdvertisedHost())
-                .path(config.getOwnPath() + "/v1/noauth/postAuthenticationRedirect")
+                .fromUri(uriFactory.publicURI(config.getOwnPath() + "/v1/noauth/postAuthenticationRedirect"))
                 .queryParam(OIDC.REDIRECT_URI, redirectUri)
                 .build();
         return uri.toString();

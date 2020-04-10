@@ -50,7 +50,7 @@ public class SessionResourceImpl implements SessionResource {
                 if (stateId != null) {
                     redirectUri = openIdManager.backChannelOIDC(request, stateId, oidcRedirectUri);
                 } else {
-                    redirectUri = openIdManager.frontChannelOIDC(request, oidcRedirectUri, oidcRedirectUri);
+                    redirectUri = openIdManager.frontChannelOIDC(request, oidcRedirectUri);
                 }
             }
 

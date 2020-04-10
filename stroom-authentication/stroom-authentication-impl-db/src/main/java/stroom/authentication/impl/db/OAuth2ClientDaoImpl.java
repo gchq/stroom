@@ -6,6 +6,8 @@ import stroom.db.util.JooqUtil;
 
 import javax.inject.Inject;
 
+import java.util.Optional;
+
 import static stroom.authentication.impl.db.jooq.tables.OauthClient.OAUTH_CLIENT;
 
 public class OAuth2ClientDaoImpl implements OAuth2ClientDao {
@@ -17,15 +19,6 @@ public class OAuth2ClientDaoImpl implements OAuth2ClientDao {
     }
 
     @Override
-    public OAuth2Client getClient(final String clientId) {
-        return JooqUtil.contextResult(authDbConnProvider, context -> context
-                .selectFrom(OAUTH_CLIENT)
-                .where(OAUTH_CLIENT.CLIENT_ID.eq(clientId))
-                .fetchOptional()
-                .map(record -> new OAuth2Client(record.getName(), record.getClientId(), record.getClientSecret(), record.getUriPattern()))
-                .get());
-    }
-
     public void create(final OAuth2Client client) {
         JooqUtil.context(authDbConnProvider, context -> context
                 .insertInto(OAUTH_CLIENT)
@@ -35,5 +28,23 @@ public class OAuth2ClientDaoImpl implements OAuth2ClientDao {
                 .set(OAUTH_CLIENT.URI_PATTERN, client.getUriPattern())
                 .onDuplicateKeyIgnore()
                 .execute());
+    }
+
+    @Override
+    public Optional<OAuth2Client> getClientForClientId(final String clientId) {
+        return JooqUtil.contextResult(authDbConnProvider, context -> context
+                .selectFrom(OAUTH_CLIENT)
+                .where(OAUTH_CLIENT.CLIENT_ID.eq(clientId))
+                .fetchOptional()
+                .map(record -> new OAuth2Client(record.getName(), record.getClientId(), record.getClientSecret(), record.getUriPattern())));
+    }
+
+    @Override
+    public Optional<OAuth2Client> getClientByName(final String name) {
+        return JooqUtil.contextResult(authDbConnProvider, context -> context
+                .selectFrom(OAUTH_CLIENT)
+                .where(OAUTH_CLIENT.NAME.eq(name))
+                .fetchOptional()
+                .map(record -> new OAuth2Client(record.getName(), record.getClientId(), record.getClientSecret(), record.getUriPattern())));
     }
 }

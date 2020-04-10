@@ -10,6 +10,7 @@ export interface User {
   enabled: boolean;
   inactive: boolean;
   locked: boolean;
+  processingAccount: boolean;
   firstName: string;
   lastName: string;
   comments: string;

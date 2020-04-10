@@ -58,13 +58,6 @@ logging:
     logFormat: "%-6level [%d{\"yyyy-MM-dd'T'HH:mm:ss.SSS'Z'\",UTC}] [%t] %logger - %X{code} %msg %n"
 
 appConfig:
-  authentication:
-    loginUrl: ${AUTH_UI:- https://<<<IP_ADDRESS>>>/s/login}
-    changePasswordUrl: ${CHANGE_PASSWORD_URL:-https://<<<IP_ADDRESS>>>/s/changepassword}
-    unauthorisedUrl: ${UNAUTHORISED_URL:-https://<<<IP_ADDRESS>>>/s/unauthorised}
-    advertisedHost: ${ADVERTISED_HTTP_HOST:- https://<<<IP_ADDRESS>>>}
-  apiGateway:
-    hostname: ${API_GATEWAY_HOST:-<<<IP_ADDRESS>>>}
   commonDbDetails:
     connection:
       jdbcDriverClassName: ${STROOM_JDBC_DRIVER_CLASS_NAME:-com.mysql.cj.jdbc.Driver}
@@ -76,42 +69,21 @@ appConfig:
   data:
     meta:
       metaValueConfig: null
-  dataSourceUrl:
-    index: ${STROOM_ADVERTISED_URL:-http://127.0.0.1:8080}/api/stroom-index/v2
-    solrIndex: "${STROOM_ADVERTISED_URL:-http://127.0.0.1:8080}/api/stroom-solr-index/v2"
-    statisticStore: ${STROOM_ADVERTISED_URL:-http://127.0.0.1:8080}/api/sqlstatistics/v2
-    searchable: "${STROOM_ADVERTISED_URL:-http://127.0.0.1:8080}/api/searchable/v2"
-#    annotations: ${STROOM_ADVERTISED_URL:-https://127.0.0.1:8080}/annotationsService/queryApi/v1
-#    elasticIndex: ${STROOM_ADVERTISED_URL:-https://127.0.0.1:8080}/queryElasticService/queryApi/v1
   job:
     enabled: true
     executionInterval: "10s"
   node:
     name: node1a
-    baseEndpoint:
-      hostname: <<<IP_ADDRESS>>>
-      port: ${STROOM_APP_PORT:-8080}
   path:
     temp: "/tmp/stroom"
   security:
     authentication:
-      authenticationServiceUrl: ${STROOM_AUTHENTICATION_SERVICE_URL:-https://<<<IP_ADDRESS>>>/api/authentication/v1}
       authenticationRequired: true
-      authServicesBaseUrl: ${STROOM_AUTH_SERVICES_URL:-http://<<<IP_ADDRESS>>>/api/authentication}
       preventLogin: false
   serviceDiscovery:
     zookeeperUrl: ${STROOM_SERVICE_DISCOVERY_ZOOKEEPER_URL:-localhost:2181}
-    servicesHostNameOrIpAddress: ${STROOM_ADVERTISED_URL:-localhost}
   sessionCookie:
     secure: false
-  ui:
-    # nodeName is set to appConfig.node.name in FetchUiConfigHandler
-    nodeName: null
-    url:
-      ui: ${STROOM_ADVERTISED_URL:-https://<<<IP_ADDRESS>>>}
-      users: ${STROOM_UI_URL:-../../../s/users
-      apiKeys: ${STROOM_UI_URL:-../../../s/apiKeys
-      changepassword: ${STROOM_UI_URL:-../../../s/changepassword
   volumes:
     createDefaultOnStart: false
 

@@ -26,7 +26,6 @@ public final class TokenModule extends AbstractModule {
         bind(TokenService.class).to(TokenServiceImpl.class);
 
         GuiceUtil.buildMultiBinder(binder(), RestResource.class)
-                .addBinding(JwkResourceImpl.class)
                 .addBinding(TokenResourceImpl.class);
     }
 }

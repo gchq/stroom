@@ -1,19 +1,38 @@
 package stroom.authentication.oauth2;
 
+import event.logging.ObjectOutcome;
+import org.jose4j.jwk.JsonWebKey;
+import org.jose4j.jwk.PublicJsonWebKey;
+import stroom.authentication.token.JwkCache;
+import stroom.authentication.token.JwkEventLog;
+
 import javax.annotation.Nullable;
 import javax.inject.Inject;
 import javax.servlet.http.HttpServletRequest;
+import javax.validation.constraints.NotNull;
 import javax.ws.rs.RedirectionException;
+import javax.ws.rs.core.Context;
+import javax.ws.rs.core.Response;
 import javax.ws.rs.core.Response.Status;
 import java.net.URI;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
+import java.util.stream.Collectors;
 
 // TODO : @66 Add audit logging
 class OAuth2ResourceImpl implements OAuth2Resource {
     private final OAuth2Service service;
+    private final JwkCache jwkCache;
+    private final JwkEventLog jwkEventLog;
 
     @Inject
-    OAuth2ResourceImpl(final OAuth2Service service) {
+    OAuth2ResourceImpl(final OAuth2Service service,
+                       final JwkCache jwkCache,
+                       final JwkEventLog jwkEventLog) {
         this.service = service;
+        this.jwkCache = jwkCache;
+        this.jwkEventLog = jwkEventLog;
     }
 
     @Override
@@ -32,5 +51,32 @@ class OAuth2ResourceImpl implements OAuth2Resource {
     @Override
     public TokenResponse token(final HttpServletRequest request, final TokenRequest tokenRequest) {
         return service.token(request, tokenRequest);
+    }
+
+    @Override
+    public Response getCerts(final HttpServletRequest httpServletRequest) {
+            final List<PublicJsonWebKey> list = jwkCache.get();
+            final List<Map<String, Object>> maps = list.stream()
+                    .map(jwk -> jwk.toParams(JsonWebKey.OutputControlLevel.PUBLIC_ONLY))
+                    .collect(Collectors.toList());
+
+            Map<String, List<Map<String, Object>>> keys = new HashMap<>();
+            keys.put("keys", maps);
+
+            event.logging.Object object = new event.logging.Object();
+            object.setName("PublicKey");
+            ObjectOutcome objectOutcome = new ObjectOutcome();
+            objectOutcome.getObjects().add(object);
+//        jwkEventLog.view(
+//                "getCerts",
+//                httpServletRequest,
+//                "anonymous",
+//                objectOutcome,
+//                "Read a token by the token ID.");
+
+            return Response
+                    .status(Response.Status.OK)
+                    .entity(keys)
+                    .build();
     }
 }

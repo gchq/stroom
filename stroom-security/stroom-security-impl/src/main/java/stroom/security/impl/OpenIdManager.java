@@ -31,13 +31,13 @@ class OpenIdManager {
     private static final Logger LOGGER = LoggerFactory.getLogger(OpenIdManager.class);
 
     private final WebTargetFactory webTargetFactory;
-    private final OpenIdConfig openIdConfig;
+    private final ResolvedOpenIdConfig openIdConfig;
     private final JWTService jwtService;
     private final UserCache userCache;
 
     @Inject
     public OpenIdManager(final WebTargetFactory webTargetFactory,
-                         final OpenIdConfig openIdConfig,
+                         final ResolvedOpenIdConfig openIdConfig,
                          final JWTService jwtService,
                          final UserCache userCache) {
         this.webTargetFactory = webTargetFactory;
@@ -46,14 +46,7 @@ class OpenIdManager {
         this.userCache = userCache;
     }
 
-    public String frontChannelOIDC(final HttpServletRequest request, final String postLoginUrl, final String oidcRedirectUri) {
-//        // Invalidate the current session.
-//        HttpSession session = request.getSession(false);
-//        if (session != null) {
-//            session.invalidate();
-//        }
-
-
+    public String frontChannelOIDC(final HttpServletRequest request, final String postLoginUrl) {
         // Create a state for this authentication request.
         final AuthenticationState state = AuthenticationStateSessionUtil.create(request, postLoginUrl);
 
@@ -62,7 +55,7 @@ class OpenIdManager {
         UriBuilder authenticationRequest = UriBuilder.fromUri(openIdConfig.getAuthEndpoint())
                 .queryParam(OIDC.RESPONSE_TYPE, OIDC.CODE)
                 .queryParam(OIDC.CLIENT_ID, openIdConfig.getClientId())
-                .queryParam(OIDC.REDIRECT_URI, oidcRedirectUri)
+                .queryParam(OIDC.REDIRECT_URI, postLoginUrl)
                 .queryParam(OIDC.SCOPE, OIDC.SCOPE__OPENID + " " + OIDC.SCOPE__EMAIL)
                 .queryParam(OIDC.STATE, state.getId())
                 .queryParam(OIDC.NONCE, state.getNonce());
@@ -102,18 +95,6 @@ class OpenIdManager {
             if (code != null) {
                 // Invalidate the current session.
                 HttpSession session = request.getSession(false);
-
-                // TODO: This invalidation was preventing the new UI logging in. There're no comments to
-                // indicate why we were invalidating the session. I've not seen anything fall over yet,
-                // but I'm leaving the code and this note here so we can check up on this later.
-//                    if (session != null) {
-//                        LOGGER.info("DEBUG: got session to invalidate");
-//                        session.invalidate();
-//                    }
-//
-//                    LOGGER.info("We have the following access code: {{}}", accessCode);
-//                    session = request.getSession(true);
-
                 UserAgentSessionUtil.set(request);
 
                 // Verify code.
@@ -207,20 +188,24 @@ class OpenIdManager {
         UserIdentityImpl token = null;
 
         final Optional<String> optionalJws = jwtService.getJws(request);
-        final Optional<String> optionalUserId = jwtService.getUserId(optionalJws);
+        if (optionalJws.isPresent()) {
+            final Optional<String> optionalUserId = jwtService.getUserId(optionalJws.get());
 
-        if (optionalUserId.isPresent()) {
-            String sessionId = null;
-            final HttpSession session = request.getSession(false);
-            if (session != null) {
-                sessionId = session.getId();
+            if (optionalUserId.isPresent()) {
+                String sessionId = null;
+                final HttpSession session = request.getSession(false);
+                if (session != null) {
+                    sessionId = session.getId();
+                }
+
+                final String userId = optionalUserId.get();
+                final Optional<User> optionalUser = userCache.get(userId);
+                final User user = optionalUser.orElseThrow(() -> new AuthenticationException("Unable to find user: " + userId));
+                token = new UserIdentityImpl(user, userId, optionalJws.get(), sessionId);
             }
+        }
 
-            final String userId = optionalUserId.get();
-            final Optional<User> optionalUser = userCache.get(userId);
-            final User user = optionalUser.orElseThrow(() -> new AuthenticationException("Unable to find user: " + userId));
-            token = new UserIdentityImpl(user, userId, optionalJws.get(), sessionId);
-        } else {
+        if (token == null) {
             LOGGER.error("Cannot get a valid JWS for API request!");
         }
 
