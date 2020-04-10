@@ -70,6 +70,8 @@ public abstract class AbstractMetaListPresenter extends MyPresenterWidget<DataGr
     boolean allowNoConstraint = true;
     private ResultPage<MetaRow> resultPage = null;
     private FindMetaCriteria criteria;
+    private EventBus eventBus;
+    private final boolean allowSelectAll;
 
     AbstractMetaListPresenter(final EventBus eventBus,
                               final RestFactory restFactory,
@@ -78,23 +80,9 @@ public abstract class AbstractMetaListPresenter extends MyPresenterWidget<DataGr
         super(eventBus, new DataGridViewImpl<>(true));
         this.tooltipPresenter = tooltipPresenter;
         this.restFactory = restFactory;
-
+        this.eventBus = eventBus;
+        this.allowSelectAll = allowSelectAll;
         entityIdSet.setMatchAll(false);
-
-        addColumns(allowSelectAll);
-
-        this.dataProvider = new RestDataProvider<MetaRow, ResultPage<MetaRow>>(eventBus, criteria.obtainPageRequest()) {
-            @Override
-            protected void exec(final Consumer<ResultPage<MetaRow>> dataConsumer, final Consumer<Throwable> throwableConsumer) {
-                final Rest<ResultPage<MetaRow>> rest = restFactory.create();
-                rest.onSuccess(dataConsumer).onFailure(throwableConsumer).call(META_RESOURCE).findMetaRow(criteria);
-            }
-
-            @Override
-            protected void changeData(final ResultPage<MetaRow> data) {
-                super.changeData(onProcessData(data));
-            }
-        };
     }
 
     public RestDataProvider<MetaRow, ResultPage<MetaRow>> getDataProvider() {
@@ -403,9 +391,23 @@ public abstract class AbstractMetaListPresenter extends MyPresenterWidget<DataGr
             criteria.obtainPageRequest().setLength(PageRequest.DEFAULT_PAGE_SIZE);
         }
 
+
         if (allowNoConstraint || criteria != null) {
             if (this.criteria == null) {
                 this.criteria = criteria;
+                this.dataProvider = new RestDataProvider<MetaRow, ResultPage<MetaRow>>(eventBus, criteria.obtainPageRequest()) {
+                    @Override
+                    protected void exec(final Consumer<ResultPage<MetaRow>> dataConsumer, final Consumer<Throwable> throwableConsumer) {
+                        final Rest<ResultPage<MetaRow>> rest = restFactory.create();
+                        rest.onSuccess(dataConsumer).onFailure(throwableConsumer).call(META_RESOURCE).findMetaRow(criteria);
+                    }
+
+                    @Override
+                    protected void changeData(final ResultPage<MetaRow> data) {
+                        super.changeData(onProcessData(data));
+                    }
+                };
+                addColumns(allowSelectAll);
                 dataProvider.addDataDisplay(getView().getDataDisplay());
             } else {
                 this.criteria = criteria;
