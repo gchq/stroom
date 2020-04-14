@@ -2,24 +2,26 @@ import { HttpRequest, HttpResponse } from "@pollyjs/adapter-fetch";
 
 import { Config } from "startup/config/types";
 import { ResourceBuilder } from "./types";
-import { BuildInfo } from "components/BuildInfo/api/types";
+import { SessionInfo } from "components/SessionInfo/api/types";
 
-const BUILD_INFO: BuildInfo = {
+const SESSION_INFO: SessionInfo = {
   userName: "testuser",
-  buildVersion: "1.2.3",
-  buildDate: "2019-01-01T00:00:00.000Z",
-  upDate: "2019-01-02T00:00:00.000Z",
   nodeName: "testnode",
+  buildInfo: {
+    upDate: "2019-01-02T00:00:00.000Z",
+    buildDate: "2019-01-01T00:00:00.000Z",
+    buildVersion: "1.2.3",
+  },
 };
 
 const resourceBuilder: ResourceBuilder = (
   server: any,
   { stroomBaseServiceUrl }: Config,
 ) => {
-  const resource = `${stroomBaseServiceUrl}/build-info/v1/`;
+  const resource = `${stroomBaseServiceUrl}/sessionInfo/v1/`;
 
   server.get(resource).intercept((req: HttpRequest, res: HttpResponse) => {
-    res.json(BUILD_INFO);
+    res.json(SESSION_INFO);
   });
 };
 

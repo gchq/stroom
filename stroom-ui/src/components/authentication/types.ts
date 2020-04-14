@@ -13,6 +13,7 @@ export interface ChangePasswordResponse {
   changeSucceeded: boolean;
   failedOn: string[];
 }
+
 export interface ResetPasswordRequest {
   newPassword: string;
 }

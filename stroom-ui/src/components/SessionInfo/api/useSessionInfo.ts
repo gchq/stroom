@@ -2,27 +2,29 @@
 
 import * as React from "react";
 import useApi from "./useApi";
-import { BuildInfo } from "./types";
+import { SessionInfo } from "./types";
 
-const useBuildInfo = (): BuildInfo => {
+const useSessionInfo = (): SessionInfo => {
   // Get the API object the provides the function that returns the promise
-  const { getBuildInfo } = useApi();
+  const { getSessionInfo } = useApi();
 
   // Declare the React state object to hold the response from the REST API
-  const [buildInfo, setBuildInfo] = React.useState<BuildInfo>({
+  const [sessionInfo, setSessionInfo] = React.useState<SessionInfo>({
     userName: "TBD",
-    buildVersion: "TBD",
-    buildDate: "TBD",
-    upDate: "TBD",
     nodeName: "TBD",
+    buildInfo: {
+      upDate: "TBD",
+      buildDate: "TBD",
+      buildVersion: "TBD",
+    },
   });
 
   // Use an effect to set the build info state when the component is mounted
   React.useEffect(() => {
-    getBuildInfo().then(setBuildInfo);
-  }, [setBuildInfo, getBuildInfo]);
+    getSessionInfo().then(setSessionInfo);
+  }, [setSessionInfo, getSessionInfo]);
 
-  return buildInfo;
+  return sessionInfo;
 };
 
-export default useBuildInfo;
+export default useSessionInfo;

@@ -21,7 +21,6 @@ public class PasswordValidator {
         return isPasswordComplexEnough ? Optional.empty() : Optional.of(COMPLEXITY);
     }
 
-
     static Optional<PasswordValidationFailureType> validateAuthenticity(LoginResult loginResult) {
         boolean isPasswordValid = loginResult != BAD_CREDENTIALS
                 && loginResult != DISABLED_BAD_CREDENTIALS

@@ -16,25 +16,23 @@
 
 import * as React from "react";
 
-import useBuildInfo from "./api/useBuildInfo";
+import useBuildInfo from "./api/useSessionInfo";
 
-const BuildInfo: React.FunctionComponent = () => {
+const SessionInfo: React.FunctionComponent = () => {
   const {
     userName,
-    buildVersion,
-    buildDate,
-    upDate,
     nodeName,
+    buildInfo,
   } = useBuildInfo();
   return (
-    <div className="BuildInfo">
+    <div className="SessionInfo">
       <div>User Name: {userName}</div>
-      <div>Build Version: {buildVersion}</div>
-      <div>Build Date: {buildDate}</div>
-      <div>Up Date: {upDate}</div>
+      <div>Build Version: {buildInfo.buildVersion}</div>
+      <div>Build Date: {buildInfo.buildDate}</div>
+      <div>Up Date: {buildInfo.upDate}</div>
       <div>Node Name: {nodeName}</div>
     </div>
   );
 };
 
-export default BuildInfo;
+export default SessionInfo;

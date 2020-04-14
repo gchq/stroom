@@ -4,7 +4,8 @@ import com.google.common.base.Objects;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import stroom.authentication.api.OIDC;
-import stroom.authentication.authenticate.api.AuthSession;
+import stroom.authentication.authenticate.api.AuthenticationService;
+import stroom.authentication.authenticate.api.AuthenticationService.AuthState;
 import stroom.authentication.config.AuthenticationConfig;
 import stroom.authentication.exceptions.BadRequestException;
 import stroom.authentication.token.Token;
@@ -29,7 +30,7 @@ class OAuth2Service {
     private final AuthenticationConfig authenticationConfig;
     private final AccessCodeCache accessCodeCache;
     private final TokenBuilderFactory tokenBuilderFactory;
-    private final AuthSession authSession;
+    private final AuthenticationService authenticationService;
     private final OAuth2ClientDao dao;
 
     @Inject
@@ -37,13 +38,13 @@ class OAuth2Service {
                   final AuthenticationConfig authenticationConfig,
                   final AccessCodeCache accessCodeCache,
                   final TokenBuilderFactory tokenBuilderFactory,
-                  final AuthSession authSession,
+                  final AuthenticationService authenticationService,
                   final OAuth2ClientDao dao) {
         this.uriFactory = uriFactory;
         this.authenticationConfig = authenticationConfig;
         this.accessCodeCache = accessCodeCache;
         this.tokenBuilderFactory = tokenBuilderFactory;
-        this.authSession = authSession;
+        this.authenticationService = authenticationService;
         this.dao = dao;
     }
 
@@ -75,36 +76,41 @@ class OAuth2Service {
 
             if (requireLoginPrompt) {
                 LOGGER.debug("Login has been requested by the RP");
-                result = redirectToLoginPage(redirectUri);
+                result = authenticationService.createLoginUri(redirectUri);
 
             } else {
                 // We need to make sure our understanding of the session is correct
-                final Optional<String> optionalSubject = authSession.currentSubject(request);
+                final Optional<AuthState> optionalAuthState = authenticationService.currentAuthState(request);
 
                 // If we have an authenticated session then the user is logged in
-                if (optionalSubject.isPresent()) {
-                    LOGGER.debug("User has a session, sending them back to the RP");
+                if (optionalAuthState.isPresent()) {
+                    final AuthState authState = optionalAuthState.get();
+                    if (authState.isRequirePasswordChange()) {
+                        result = authenticationService.createChangePasswordUri(redirectUri);
 
-                    // We need to make sure we record this access code request.
-                    final String accessCode = createAccessCode();
-                    final String subject = optionalSubject.get();
-                    final String token = createIdToken(clientId, subject, nonce, state);
-                    final AccessCodeRequest accessCodeRequest = new AccessCodeRequest(
-                            scope,
-                            responseType,
-                            clientId,
-                            redirectUri,
-                            nonce,
-                            state,
-                            prompt,
-                            token);
-                    accessCodeCache.put(accessCode, accessCodeRequest);
+                    } else {
+                        LOGGER.debug("User has a session, sending them back to the RP");
 
-                    result = buildRedirectionUrl(redirectUri, accessCode, state);
+                        // We need to make sure we record this access code request.
+                        final String accessCode = createAccessCode();
+                        final String token = createIdToken(clientId, authState.getSubject(), nonce, state);
+                        final AccessCodeRequest accessCodeRequest = new AccessCodeRequest(
+                                scope,
+                                responseType,
+                                clientId,
+                                redirectUri,
+                                nonce,
+                                state,
+                                prompt,
+                                token);
+                        accessCodeCache.put(accessCode, accessCodeRequest);
+
+                        result = buildRedirectionUrl(redirectUri, accessCode, state);
+                    }
 
                 } else {
                     LOGGER.debug("User has no session and no certificate - sending them to login.");
-                    result = redirectToLoginPage(redirectUri);
+                    result = authenticationService.createLoginUri(redirectUri);
                 }
             }
 
@@ -114,14 +120,6 @@ class OAuth2Service {
         }
 
         return result;
-    }
-
-    private URI redirectToLoginPage(final String redirectUri) {
-        LOGGER.debug("Sending user to login.");
-        final UriBuilder uriBuilder = UriBuilder.fromUri(uriFactory.uiUri(authenticationConfig.getLoginUrl()))
-                .queryParam("error", "login_required")
-                .queryParam(OIDC.REDIRECT_URI, redirectUri);
-        return uriBuilder.build();
     }
 
     private static String createAccessCode() {

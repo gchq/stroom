@@ -42,7 +42,7 @@ const ChangePasswordFields = ({
       enableReinitialize={true}
       initialValues={{
         oldPassword: "",
-        password: "",
+        newPassword: "",
         verifyPassword: "",
         email: email || "",
         redirectUri: redirectUri || "",
@@ -50,8 +50,8 @@ const ChangePasswordFields = ({
       onSubmit={values => {
         onSubmit(values);
       }}
-      validate={({ oldPassword, password, email, verifyPassword }) =>
-        onValidate(oldPassword, password, verifyPassword, email)
+      validate={({ oldPassword, newPassword, email, verifyPassword }) =>
+        onValidate(oldPassword, newPassword, verifyPassword, email)
       }
     >
       {({ errors, touched }) => {
@@ -89,9 +89,9 @@ const ChangePasswordFields = ({
 
                 <div className="field-container vertical">
                   <label>New password</label>
-                  <Field name="password" type="password"/>
+                  <Field name="newPassword" type="password"/>
                   <ErrorMessage
-                    name="password"
+                    name="newPassword"
                     render={msg => (
                       <div className="validation-error">{msg}</div>
                     )}

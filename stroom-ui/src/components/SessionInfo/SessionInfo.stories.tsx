@@ -17,10 +17,9 @@
 import * as React from "react";
 import { storiesOf } from "@storybook/react";
 
-import BuildInfo from "./BuildInfo";
-
 import { addThemedStories } from "testing/storybook/themedStoryGenerator";
+import SessionInfo from "./SessionInfo";
 
-const stories = storiesOf("Sections/BuildInfo", module);
+const stories = storiesOf("Sections/SessionInfo", module);
 
-addThemedStories(stories, () => <BuildInfo />);
+addThemedStories(stories, () => <SessionInfo />);
