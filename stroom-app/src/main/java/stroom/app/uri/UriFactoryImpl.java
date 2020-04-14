@@ -1,4 +1,4 @@
-package stroom.app;
+package stroom.app.uri;
 
 import io.dropwizard.jetty.ConnectorFactory;
 import io.dropwizard.jetty.HttpConnectorFactory;
@@ -17,7 +17,7 @@ import java.net.URI;
 import java.net.URISyntaxException;
 
 @Singleton
-public class UriFactoryImpl implements UriFactory {
+class UriFactoryImpl implements UriFactory {
     private static final Logger LOGGER = LoggerFactory.getLogger(UriFactoryImpl.class);
 
     private final AppConfig appConfig;
@@ -28,7 +28,7 @@ public class UriFactoryImpl implements UriFactory {
     private String uiBaseUri;
 
     @Inject
-    public UriFactoryImpl(final Config config,
+    UriFactoryImpl(final Config config,
                           final AppConfig appConfig) {
         this.config = config;
         this.appConfig = appConfig;

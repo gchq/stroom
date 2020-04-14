@@ -30,6 +30,7 @@ import javax.validation.constraints.NotNull;
 public final class AuthenticationConfig extends AbstractConfig {
     public static final String PROP_NAME_EMAIL = "email";
     public static final String PROP_NAME_TOKEN = "token";
+    public static final String PROP_NAME_OAUTH2 = "oauth2";
     public static final String PROP_NAME_PASSWORD_INTEGRITY_CHECKS = "passwordIntegrityChecks";
 
     @Nullable
@@ -60,6 +61,9 @@ public final class AuthenticationConfig extends AbstractConfig {
     @Nullable
     @JsonProperty(PROP_NAME_TOKEN)
     private TokenConfig tokenConfig = new TokenConfig();
+    @NotNull
+    @JsonProperty(PROP_NAME_OAUTH2)
+    private OAuth2Config oAuth2Config = new OAuth2Config();
 
     @NotNull
     @JsonProperty(PROP_NAME_PASSWORD_INTEGRITY_CHECKS)
@@ -97,6 +101,15 @@ public final class AuthenticationConfig extends AbstractConfig {
 
     public void setTokenConfig(TokenConfig tokenConfig) {
         this.tokenConfig = tokenConfig;
+    }
+
+    @JsonProperty(PROP_NAME_OAUTH2)
+    public OAuth2Config getOAuth2Config() {
+        return oAuth2Config;
+    }
+
+    public void setOAuth2Config(final OAuth2Config oAuth2Config) {
+        this.oAuth2Config = oAuth2Config;
     }
 
     @Nullable

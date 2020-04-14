@@ -208,6 +208,10 @@ public class AppConfigModule extends AbstractModule {
         }
     }
 
+    protected ConfigHolder getConfigHolder() {
+        return configHolder;
+    }
+
     public interface ConfigHolder {
         AppConfig getAppConfig();
 
