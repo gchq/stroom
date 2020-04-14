@@ -10,7 +10,6 @@ import javax.annotation.Nullable;
 import javax.inject.Inject;
 import javax.servlet.http.HttpServletRequest;
 import javax.ws.rs.RedirectionException;
-import javax.ws.rs.core.Response;
 import javax.ws.rs.core.Response.Status;
 import java.net.URI;
 import java.util.HashMap;
@@ -52,7 +51,7 @@ class OAuth2ResourceImpl implements OAuth2Resource {
     }
 
     @Override
-    public Response certs(final HttpServletRequest httpServletRequest) {
+    public Map<String, List<Map<String, Object>>> certs(final HttpServletRequest httpServletRequest) {
         final List<PublicJsonWebKey> list = jwkCache.get();
         final List<Map<String, Object>> maps = list.stream()
                 .map(jwk -> jwk.toParams(JsonWebKey.OutputControlLevel.PUBLIC_ONLY))
@@ -72,9 +71,6 @@ class OAuth2ResourceImpl implements OAuth2Resource {
 //                objectOutcome,
 //                "Read a token by the token ID.");
 
-        return Response
-                .status(Response.Status.OK)
-                .entity(keys)
-                .build();
+        return keys;
     }
 }

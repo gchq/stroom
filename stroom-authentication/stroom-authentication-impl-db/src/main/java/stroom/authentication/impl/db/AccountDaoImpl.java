@@ -153,7 +153,7 @@ class AccountDaoImpl implements AccountDao {
     public LoginResult areCredentialsValid(String email, String password) {
         if (Strings.isNullOrEmpty(email)
                 || Strings.isNullOrEmpty(password)) {
-            throw new BadRequestException("Please provide both email and password");
+            return LoginResult.BAD_CREDENTIALS;
         }
 
         final AccountRecord user = JooqUtil.contextResult(authDbConnProvider, context -> context

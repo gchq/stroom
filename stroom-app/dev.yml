@@ -76,14 +76,8 @@ appConfig:
     name: node1a
   path:
     temp: "/tmp/stroom"
-  security:
-    authentication:
-      authenticationRequired: true
-      preventLogin: false
   serviceDiscovery:
     zookeeperUrl: ${STROOM_SERVICE_DISCOVERY_ZOOKEEPER_URL:-localhost:2181}
-  sessionCookie:
-    secure: false
   volumes:
     createDefaultOnStart: false
 

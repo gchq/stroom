@@ -129,10 +129,10 @@ public class App extends Application<Config> {
         // Turn on Jersey logging.
         environment.jersey().register(
                 new LoggingFeature(
-                    java.util.logging.Logger.getLogger(LoggingFeature.DEFAULT_LOGGER_NAME),
-                    Level.INFO,
-                    LoggingFeature.Verbosity.PAYLOAD_ANY,
-                    LoggingFeature.DEFAULT_MAX_ENTITY_SIZE));
+                        java.util.logging.Logger.getLogger(LoggingFeature.DEFAULT_LOGGER_NAME),
+                        Level.INFO,
+                        LoggingFeature.Verbosity.PAYLOAD_ANY,
+                        LoggingFeature.DEFAULT_MAX_ENTITY_SIZE));
 
         // Check if we are running GWT Super Dev Mode
         checkForSuperDev(configuration.getAppConfig());
@@ -199,8 +199,8 @@ public class App extends Application<Config> {
     private String getNodeName(final AppConfig appConfig) {
         return appConfig != null
                 ? (appConfig.getNodeConfig() != null
-                    ? appConfig.getNodeConfig().getNodeName()
-                    : null)
+                ? appConfig.getNodeConfig().getNodeName()
+                : null)
                 : null;
     }
 
@@ -212,20 +212,20 @@ public class App extends Application<Config> {
         final ConfigValidator configValidator = injector.getInstance(ConfigValidator.class);
 
         LOGGER.info("Validating application configuration file {}",
-            configFile.toAbsolutePath().normalize().toString());
+                configFile.toAbsolutePath().normalize().toString());
 
         final ConfigValidator.Result result = configValidator.validateRecursively(appConfig);
 
         result.handleViolations(ConfigValidator::logConstraintViolation);
 
         LOGGER.info("Completed validation of application configuration, errors: {}, warnings: {}",
-            result.getErrorCount(),
-            result.getWarningCount());
+                result.getErrorCount(),
+                result.getWarningCount());
 
         if (result.hasErrors() && appConfig.isHaltBootOnConfigValidationFailure()) {
             LOGGER.error("Application configuration is invalid. Stopping Stroom. To run Stroom with invalid " +
-                    "configuration, set {} to false. This is not advised!",
-                appConfig.getFullPath(AppConfig.PROP_NAME_HALT_BOOT_ON_CONFIG_VALIDATION_FAILURE));
+                            "configuration, set {} to false. This is not advised!",
+                    appConfig.getFullPath(AppConfig.PROP_NAME_HALT_BOOT_ON_CONFIG_VALIDATION_FAILURE));
             System.exit(1);
         }
     }
@@ -244,7 +244,7 @@ public class App extends Application<Config> {
                     // local.yaml.sh
                     throw new IllegalArgumentException(LogUtil.message(
                             "YAML config file [{}] from arguments [{}] is not a valid file.\n" +
-                            "You need to supply a valid stroom configuration YAML file.",
+                                    "You need to supply a valid stroom configuration YAML file.",
                             yamlFile, Arrays.asList(args)));
                 }
             }
@@ -297,27 +297,41 @@ public class App extends Application<Config> {
     private void checkForSuperDev(final AppConfig appConfig) {
         // If sys prop gwtSuperDevMode=true then override other config props
         if (Boolean.getBoolean(GWT_SUPER_DEV_SYSTEM_PROP_NAME)) {
-            LOGGER.warn("\n" + ConsoleColour.red(
+            LOGGER.warn("" + ConsoleColour.red(
+                    "" +
+                            "\n                                      _                                  _      " +
+                            "\n                                     | |                                | |     " +
+                            "\n      ___ _   _ _ __   ___ _ __    __| | _____   __  _ __ ___   ___   __| | ___ " +
+                            "\n     / __| | | | '_ \\ / _ \\ '__|  / _` |/ _ \\ \\ / / | '_ ` _ \\ / _ \\ / _` |/ _ \\" +
+                            "\n     \\__ \\ |_| | |_) |  __/ |    | (_| |  __/\\ V /  | | | | | | (_) | (_| |  __/" +
+                            "\n     |___/\\__,_| .__/ \\___|_|     \\__,_|\\___| \\_/   |_| |_| |_|\\___/ \\__,_|\\___|" +
+                            "\n               | |                                                              " +
+                            "\n               |_|                                                              " +
+                            "\n"));
 
-                "\n                                      _                                  _      " +
-                    "\n                                     | |                                | |     " +
-                    "\n      ___ _   _ _ __   ___ _ __    __| | _____   __  _ __ ___   ___   __| | ___ " +
-                    "\n     / __| | | | '_ \\ / _ \\ '__|  / _` |/ _ \\ \\ / / | '_ ` _ \\ / _ \\ / _` |/ _ \\" +
-                    "\n     \\__ \\ |_| | |_) |  __/ |    | (_| |  __/\\ V /  | | | | | | (_) | (_| |  __/" +
-                    "\n     |___/\\__,_| .__/ \\___|_|     \\__,_|\\___| \\_/   |_| |_| |_|\\___/ \\__,_|\\___|" +
-                    "\n               | |                                                              " +
-                    "\n               |_|                                                              " +
-                    "\n" +
-                    "\n           ***************************************************************" +
-                    "\n           FOR DEVELOPER USE ONLY!  DO NOT RUN IN PRODUCTION ENVIRONMENTS!\n" +
-                    "\n                          ALL AUTHENTICATION IS DISABLED!" +
-                    "\n           ***************************************************************"));
+//            disableAuthentication(appConfig);
 
-            final AuthenticationConfig authenticationConfig = appConfig.getSecurityConfig().getAuthenticationConfig();
-            final ContentSecurityConfig contentSecurityConfig = appConfig.getSecurityConfig().getContentSecurityConfig();
+            // Super Dev Mode isn't compatible with HTTPS so ensure cookies are not secure.
+            appConfig.getSessionCookieConfig().setSecure(false);
 
-            // YAuth needs HTTPS and GWT super dev mode cannot work in HTTPS
-            String msg = new ColouredStringBuilder()
+            // The standard content security policy is incompatible with GWT super dev mode
+            disableContentSecurity(appConfig);
+        }
+    }
+
+    private void disableAuthentication(final AppConfig appConfig) {
+        LOGGER.warn("\n" + ConsoleColour.red(
+                "" +
+                        "\n           ***************************************************************" +
+                        "\n           FOR DEVELOPER USE ONLY!  DO NOT RUN IN PRODUCTION ENVIRONMENTS!" +
+                        "\n" +
+                        "\n                          ALL AUTHENTICATION IS DISABLED!" +
+                        "\n           ***************************************************************"));
+
+        final AuthenticationConfig authenticationConfig = appConfig.getSecurityConfig().getAuthenticationConfig();
+
+        // Auth needs HTTPS and GWT super dev mode cannot work in HTTPS
+        String msg = new ColouredStringBuilder()
                 .appendRed("In GWT Super Dev Mode, overriding ")
                 .appendCyan(AuthenticationConfig.PROP_NAME_AUTHENTICATION_REQUIRED)
                 .appendRed(" to ")
@@ -325,11 +339,13 @@ public class App extends Application<Config> {
                 .appendRed("in appConfig")
                 .toString();
 
-            LOGGER.warn(msg);
-            authenticationConfig.setAuthenticationRequired(false);
+        LOGGER.warn(msg);
+        authenticationConfig.setAuthenticationRequired(false);
+    }
 
-            // The standard content security policy is incompatible with GWT super dev mode
-            msg = new ColouredStringBuilder()
+    private void disableContentSecurity(final AppConfig appConfig) {
+        final ContentSecurityConfig contentSecurityConfig = appConfig.getSecurityConfig().getContentSecurityConfig();
+        final String msg = new ColouredStringBuilder()
                 .appendRed("In GWT Super Dev Mode, overriding ")
                 .appendCyan(ContentSecurityConfig.PROP_NAME_CONTENT_SECURITY_POLICY)
                 .appendRed(" to ")
@@ -337,8 +353,7 @@ public class App extends Application<Config> {
                 .appendRed("in appConfig")
                 .toString();
 
-            LOGGER.warn(msg);
-            contentSecurityConfig.setContentSecurityPolicy("");
-        }
+        LOGGER.warn(msg);
+        contentSecurityConfig.setContentSecurityPolicy("");
     }
 }

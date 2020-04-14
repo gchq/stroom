@@ -17,7 +17,8 @@ import javax.ws.rs.Produces;
 import javax.ws.rs.QueryParam;
 import javax.ws.rs.core.Context;
 import javax.ws.rs.core.MediaType;
-import javax.ws.rs.core.Response;
+import java.util.List;
+import java.util.Map;
 
 @Singleton
 @Path("/oauth2/v1/noauth")
@@ -52,5 +53,5 @@ public interface OAuth2Resource extends RestResource {
     @GET
     @Path("certs")
     @Timed
-    Response certs(@Context @NotNull HttpServletRequest httpServletRequest);
+    Map<String, List<Map<String, Object>>> certs(@Context @NotNull HttpServletRequest httpServletRequest);
 }

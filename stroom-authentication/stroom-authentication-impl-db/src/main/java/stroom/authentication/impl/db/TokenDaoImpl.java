@@ -432,12 +432,12 @@ class TokenDaoImpl implements TokenDao {
                 from = select.from(TOKEN
                 .join(TOKEN_TYPE)
                 .on(TOKEN.FK_TOKEN_TYPE_ID.eq(TOKEN_TYPE.ID))
-//                .join(issuingAccount)
-//                .on(TOKEN.CREATE_USER.eq(issuingAccount.ID))
+                .join(issuingAccount)
+                .on(TOKEN.CREATE_USER.eq(issuingAccount.EMAIL))
                 .join(tokenOwnerAccount)
                 .on(TOKEN.FK_ACCOUNT_ID.eq(tokenOwnerAccount.ID))
-//                .join(updatingAccount)
-//                .on(TOKEN.CREATE_USER.eq(updatingAccount.ID))
+                .join(updatingAccount)
+                .on(TOKEN.UPDATE_USER.eq(updatingAccount.EMAIL))
         );
 
         return from;
