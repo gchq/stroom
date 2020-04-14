@@ -67,11 +67,10 @@ public abstract class AbstractMetaListPresenter extends MyPresenterWidget<DataGr
     private final IdSet entityIdSet = new IdSet();
     private final RestFactory restFactory;
     private RestDataProvider<MetaRow, ResultPage<MetaRow>> dataProvider;
-    boolean allowNoConstraint = false;
-    private ResultPage<MetaRow> resultPage = null;
+    boolean allowNoConstraint;
+    private ResultPage<MetaRow> resultPage;
     private FindMetaCriteria criteria;
     private EventBus eventBus;
-    private final boolean allowSelectAll;
 
     AbstractMetaListPresenter(final EventBus eventBus,
                               final RestFactory restFactory,
@@ -81,8 +80,9 @@ public abstract class AbstractMetaListPresenter extends MyPresenterWidget<DataGr
         this.tooltipPresenter = tooltipPresenter;
         this.restFactory = restFactory;
         this.eventBus = eventBus;
-        this.allowSelectAll = allowSelectAll;
+
         entityIdSet.setMatchAll(false);
+        addColumns(allowSelectAll);
     }
 
     public RestDataProvider<MetaRow, ResultPage<MetaRow>> getDataProvider() {
@@ -387,10 +387,11 @@ public abstract class AbstractMetaListPresenter extends MyPresenterWidget<DataGr
     }
 
     public void setCriteria(final FindMetaCriteria criteria) {
-
         if (criteria != null && criteria.getExpression() != null) {
             this.criteria = criteria;
-            criteria.obtainPageRequest().setLength(PageRequest.DEFAULT_PAGE_SIZE);
+            this.criteria.obtainPageRequest().setLength(PageRequest.DEFAULT_PAGE_SIZE);
+
+            if (dataProvider == null) {
                 this.dataProvider = new RestDataProvider<MetaRow, ResultPage<MetaRow>>(eventBus, criteria.obtainPageRequest()) {
                     @Override
                     protected void exec(final Consumer<ResultPage<MetaRow>> dataConsumer, final Consumer<Throwable> throwableConsumer) {
@@ -403,9 +404,10 @@ public abstract class AbstractMetaListPresenter extends MyPresenterWidget<DataGr
                         super.changeData(onProcessData(data));
                     }
                 };
-                addColumns(allowSelectAll);
                 dataProvider.addDataDisplay(getView().getDataDisplay());
-
+            } else {
+                dataProvider.refresh();
+            }
         }
     }
 
