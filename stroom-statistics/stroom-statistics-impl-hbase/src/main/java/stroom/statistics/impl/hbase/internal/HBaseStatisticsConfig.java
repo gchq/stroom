@@ -31,7 +31,7 @@ public class HBaseStatisticsConfig extends AbstractConfig {
         this.kafkaTopicsConfig = kafkaTopicsConfig;
     }
 
-    @JsonPropertyDescription("The UUID of the Kafka config to use")
+    @JsonPropertyDescription("The UUID of the Kafka config document to use")
     public String getKafkaConfigUuid() {
         return kafkaConfigUuid;
     }
@@ -40,7 +40,8 @@ public class HBaseStatisticsConfig extends AbstractConfig {
         this.kafkaConfigUuid = kafkaConfigUuid;
     }
 
-    @JsonPropertyDescription("The number of internal statistic events to batch together in a single Kafka message. High numbers reduce network overhead but limit the parallelism.")
+    @JsonPropertyDescription("The number of internal statistic events to batch together in a single Kafka message. " +
+            "High numbers reduce network overhead but limit the parallelism.")
     public int getEventsPerMessage() {
         return eventsPerMessage;
     }
@@ -53,6 +54,7 @@ public class HBaseStatisticsConfig extends AbstractConfig {
     public String toString() {
         return "HBaseStatisticsConfig{" +
                 "docRefType='" + docRefType + '\'' +
+                ", kafkaTopicsConfig=" + kafkaTopicsConfig +
                 ", kafkaConfigUuid='" + kafkaConfigUuid + '\'' +
                 ", eventsPerMessage=" + eventsPerMessage +
                 '}';

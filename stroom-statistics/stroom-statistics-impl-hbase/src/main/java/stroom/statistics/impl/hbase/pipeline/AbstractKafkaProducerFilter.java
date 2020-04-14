@@ -1,12 +1,15 @@
 package stroom.statistics.impl.hbase.pipeline;
 
 import com.google.common.base.Strings;
+import org.apache.kafka.clients.producer.KafkaProducer;
 import org.apache.kafka.clients.producer.ProducerRecord;
+import org.apache.kafka.clients.producer.RecordMetadata;
 import org.xml.sax.Locator;
 import org.xml.sax.SAXException;
 import stroom.docref.DocRef;
-import stroom.kafka.pipeline.KafkaProducerFactory;
-import stroom.kafkaConfig.shared.KafkaConfigDoc;
+import stroom.kafka.api.KafkaProducerFactory;
+import stroom.kafka.api.SharedKafkaProducer;
+import stroom.kafka.shared.KafkaConfigDoc;
 import stroom.pipeline.LocationFactoryProxy;
 import stroom.pipeline.errorhandler.ErrorReceiverProxy;
 import stroom.pipeline.errorhandler.LoggedException;
@@ -19,7 +22,10 @@ import stroom.util.logging.LambdaLogger;
 import stroom.util.logging.LambdaLoggerFactory;
 import stroom.util.shared.Severity;
 
-import java.util.Collections;
+import java.util.ArrayDeque;
+import java.util.Queue;
+import java.util.concurrent.ExecutionException;
+import java.util.concurrent.Future;
 
 public abstract class AbstractKafkaProducerFilter extends AbstractSamplingFilter {
     private static final LambdaLogger LOGGER = LambdaLoggerFactory.getLogger(AbstractKafkaProducerFilter.class);
@@ -28,21 +34,24 @@ public abstract class AbstractKafkaProducerFilter extends AbstractSamplingFilter
     private DocRef kafkaConfigRef;
     private final ErrorReceiverProxy errorReceiverProxy;
     private final LocationFactoryProxy locationFactory;
-    private final KafkaProducerFactory stroomKafkaProducerFactory;
+    private final KafkaProducerFactory kafkaProducerFactory;
+    private final Queue<Future<RecordMetadata>> kafkaMetaFutures;
 
-    private org.apache.kafka.clients.producer.KafkaProducer kafkaProducer;
+    private KafkaProducer<String, byte[]> kafkaProducer;
+    private SharedKafkaProducer sharedKafkaProducer;
 
     private Locator locator;
 
     protected AbstractKafkaProducerFilter(final ErrorReceiverProxy errorReceiverProxy,
                                           final LocationFactoryProxy locationFactory,
-                                          final KafkaProducerFactory stroomKafkaProducerFactory) {
+                                          final KafkaProducerFactory kafkaProducerFactory) {
 
         super(errorReceiverProxy, locationFactory);
         this.errorReceiverProxy = errorReceiverProxy;
         this.locationFactory = locationFactory;
-        this.stroomKafkaProducerFactory = stroomKafkaProducerFactory;
+        this.kafkaProducerFactory = kafkaProducerFactory;
         this.flushOnSend = true;
+        this.kafkaMetaFutures = new ArrayDeque<>();
     }
 
     @Override
@@ -57,11 +66,6 @@ public abstract class AbstractKafkaProducerFilter extends AbstractSamplingFilter
         this.locator = locator;
     }
 
-    /*
-    Warning! This software has not been tested recently and is likely to need some rework as a number of things
-    have moved on, including the way that KafkaProducer works.
-    todo test and fix as appropriate!
-     */
     @Override
     public void startProcessing() {
         super.startProcessing();
@@ -82,29 +86,70 @@ public abstract class AbstractKafkaProducerFilter extends AbstractSamplingFilter
         }
 
         try {
-            this.kafkaProducer = stroomKafkaProducerFactory.createProducer(kafkaConfigRef).orElse(null);
+            sharedKafkaProducer = kafkaProducerFactory.getSharedProducer(kafkaConfigRef);
         } catch (final RuntimeException e) {
             String msg = "Error initialising kafka producer - " + e.getMessage();
             log(Severity.FATAL_ERROR, msg, e);
             throw new LoggedException(msg);
         }
 
-        if (kafkaProducer == null) {
+        kafkaProducer = sharedKafkaProducer.getKafkaProducer().orElseThrow(() -> {
             String msg = "No Kafka producer connector is available, check Stroom's configuration";
             log(Severity.FATAL_ERROR, msg, null);
             throw new LoggedException(msg);
-        }
+        });
     }
 
+    @Override
+    public void endProcessing() {
+        if (flushOnSend) {
+            // Ensure all msgs buffered by kafka has been sent. As the producer is
+            // shared this means waiting for other msgs from other streams however the
+            // buffer is likely small so should not be a major issue.
+            LOGGER.logDurationIfDebugEnabled(
+                    () -> kafkaProducer.flush(),
+                    "KafkaProducer flush");
+
+            // If flushOnSend was set we will have futures in the queue
+            // so call get on each one to ensure they have all completed.
+            // Not certain that we need to check the futures after the flush as I think
+            // the flush will block till everything has sent.
+            LOGGER.logDurationIfDebugEnabled(
+                    () -> {
+                        Future<RecordMetadata> future;
+                        while ((future = kafkaMetaFutures.poll()) != null) {
+                            try {
+                                future.get();
+                            } catch (final InterruptedException e) {
+                                // Continue to interrupt this thread.
+                                Thread.currentThread().interrupt();
+
+                                throw new ProcessException("Thread interrupted");
+                            } catch (ExecutionException e) {
+                                log(Severity.ERROR, "Error sending message to Kafka", e);
+                            }
+                        }
+                    },
+                    "Wait for futures to complete");
+        }
+        // Vital this happens or we leak resources
+        kafkaProducerFactory.returnSharedKafkaProducer(sharedKafkaProducer);
+        super.endProcessing();
+    }
+
+    @SuppressWarnings("unused")
     @PipelineProperty(
-            description = "Not available in this version.",
-            defaultValue = "false",
+            description = "At the end of the stream, wait for acknowledgement from the Kafka broker for all " +
+                    "the messages sent. This ensures errors are caught in the pipeline process.",
+            defaultValue = "true",
             displayPriority = 3)
     public void setFlushOnSend(final boolean flushOnSend) {
         this.flushOnSend = flushOnSend;
     }
 
-    @PipelineProperty(description = "The Kafka config to use.", displayPriority = 1)
+    @PipelineProperty(
+            description = "The Kafka config to use.",
+            displayPriority = 1)
     @PipelinePropertyDocRef(types = KafkaConfigDoc.DOCUMENT_TYPE)
     public void setKafkaConfig(final DocRef kafkaConfigRef) {
         this.kafkaConfigRef = kafkaConfigRef;
@@ -112,13 +157,18 @@ public abstract class AbstractKafkaProducerFilter extends AbstractSamplingFilter
 
     void sendOutputToKafka() {
 
-        final ProducerRecord<String, String> record = new ProducerRecord(getTopic(),
-                getRecordKey(), getOutput().getBytes(StreamUtil.DEFAULT_CHARSET));
+        // We need to serialise to byte[] with the same encoding as kafka's
+        // StringSerializer which also uses. By default kafka will use UTF8
+        final ProducerRecord<String, byte[]> record = new ProducerRecord<>(
+                getTopic(),
+                getRecordKey(),
+                getOutput().getBytes(StreamUtil.DEFAULT_CHARSET));
 
         try {
-            kafkaProducer.send(record);
+            final Future<RecordMetadata> sendFuture = kafkaProducer.send(record);
             if (flushOnSend) {
-                throw new UnsupportedOperationException("Flush on send is not available in this version of Stroom");
+                //keep hold of the future so we can wait for it at the end of processing
+                kafkaMetaFutures.add(sendFuture);
             }
         } catch (RuntimeException e) {
             error(e);
@@ -129,7 +179,7 @@ public abstract class AbstractKafkaProducerFilter extends AbstractSamplingFilter
 
     public abstract String getRecordKey();
 
-    protected void error(final RuntimeException e) {
+    protected void error(final Exception e) {
         if (locator != null) {
             errorReceiverProxy.log(Severity.ERROR,
                     locationFactory.create(locator.getLineNumber(), locator.getColumnNumber()), getElementId(),

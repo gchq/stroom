@@ -68,6 +68,8 @@ public class App extends Application<Config> {
 
     private static final String GWT_SUPER_DEV_SYSTEM_PROP_NAME = "gwtSuperDevMode";
     public static final String SESSION_COOKIE_NAME = "STROOM_SESSION_ID";
+    private static final boolean SUPER_DEV_AUTHENTICATION_REQUIRED_VALUE = false;
+    private static final String SUPER_DEV_CONTENT_SECURITY_POLICY_VALUE = "";
 
     @Inject
     private HealthChecks healthChecks;
@@ -296,6 +298,7 @@ public class App extends Application<Config> {
 
     private void checkForSuperDev(final AppConfig appConfig) {
         // If sys prop gwtSuperDevMode=true then override other config props
+        // i.e. use a run configuration with arg '-DgwtSuperDevMode=true'
         if (Boolean.getBoolean(GWT_SUPER_DEV_SYSTEM_PROP_NAME)) {
             LOGGER.warn("" + ConsoleColour.red(
                     "" +
@@ -334,13 +337,13 @@ public class App extends Application<Config> {
         String msg = new ColouredStringBuilder()
                 .appendRed("In GWT Super Dev Mode, overriding ")
                 .appendCyan(AuthenticationConfig.PROP_NAME_AUTHENTICATION_REQUIRED)
-                .appendRed(" to ")
-                .appendCyan("false ")
-                .appendRed("in appConfig")
+                .appendRed(" to [")
+                .appendCyan(Boolean.toString(SUPER_DEV_AUTHENTICATION_REQUIRED_VALUE))
+                .appendRed("] in appConfig")
                 .toString();
 
         LOGGER.warn(msg);
-        authenticationConfig.setAuthenticationRequired(false);
+        authenticationConfig.setAuthenticationRequired(SUPER_DEV_AUTHENTICATION_REQUIRED_VALUE);
     }
 
     private void disableContentSecurity(final AppConfig appConfig) {
@@ -348,12 +351,12 @@ public class App extends Application<Config> {
         final String msg = new ColouredStringBuilder()
                 .appendRed("In GWT Super Dev Mode, overriding ")
                 .appendCyan(ContentSecurityConfig.PROP_NAME_CONTENT_SECURITY_POLICY)
-                .appendRed(" to ")
-                .appendCyan("\"\" ")
-                .appendRed("in appConfig")
+                .appendRed(" to [")
+                .appendCyan(SUPER_DEV_CONTENT_SECURITY_POLICY_VALUE)
+                .appendRed("] in appConfig")
                 .toString();
 
         LOGGER.warn(msg);
-        contentSecurityConfig.setContentSecurityPolicy("");
+        contentSecurityConfig.setContentSecurityPolicy(SUPER_DEV_CONTENT_SECURITY_POLICY_VALUE);
     }
 }

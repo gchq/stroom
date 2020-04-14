@@ -13,9 +13,10 @@ plugins {
     id "com.benjaminsproule.swagger" version "1.0.8"
     //id "io.swagger.core.v3.swagger-gradle-plugin" version "2.1.1"
 }
+
 import org.reflections.*
-import org.reflections.util.*
 import org.reflections.scanners.*
+import org.reflections.util.*
 
 ext.moduleName = 'stroom.app'
 
@@ -71,7 +72,8 @@ dependencies {
     compile project(':stroom-index:stroom-index-impl-db')
     compile project(':stroom-job:stroom-job-impl')
     compile project(':stroom-job:stroom-job-impl-db')
-    compile project(':stroom-kafka:stroom-kafka')
+    compile project(':stroom-kafka:stroom-kafka-api')
+    compile project(':stroom-kafka:stroom-kafka-impl')
     compile project(':stroom-lifecycle:stroom-lifecycle-impl')
     compile project(':stroom-meta:stroom-meta-impl-db')
     compile project(':stroom-meta:stroom-meta-statistics-impl')
@@ -420,8 +422,6 @@ task copySupportingFiles(type: Copy) {
         }
     }
 }
-
-import de.undercouch.gradle.tasks.download.Download
 
 task downloadSend(type: Download) {
     src "http://raw.githubusercontent.com/gchq/stroom-clients/${sendToStroomScriptVersion}/bash/send_to_stroom.sh"
