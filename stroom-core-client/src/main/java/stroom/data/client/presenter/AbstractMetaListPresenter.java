@@ -67,7 +67,7 @@ public abstract class AbstractMetaListPresenter extends MyPresenterWidget<DataGr
     private final IdSet entityIdSet = new IdSet();
     private final RestFactory restFactory;
     private RestDataProvider<MetaRow, ResultPage<MetaRow>> dataProvider;
-    boolean allowNoConstraint = true;
+    boolean allowNoConstraint = false;
     private ResultPage<MetaRow> resultPage = null;
     private FindMetaCriteria criteria;
     private EventBus eventBus;
@@ -381,18 +381,16 @@ public abstract class AbstractMetaListPresenter extends MyPresenterWidget<DataGr
 
     @Override
     public void refresh() {
-        if (allowNoConstraint || criteria != null) {
+        if (dataProvider != null && (allowNoConstraint || criteria != null)) {
             dataProvider.refresh();
         }
     }
 
     public void setCriteria(final FindMetaCriteria criteria) {
-        if (criteria != null) {
-            criteria.obtainPageRequest().setLength(PageRequest.DEFAULT_PAGE_SIZE);
-        }
 
-        if (allowNoConstraint || criteria != null) {
+        if (criteria != null && criteria.getExpression() != null) {
             this.criteria = criteria;
+            criteria.obtainPageRequest().setLength(PageRequest.DEFAULT_PAGE_SIZE);
                 this.dataProvider = new RestDataProvider<MetaRow, ResultPage<MetaRow>>(eventBus, criteria.obtainPageRequest()) {
                     @Override
                     protected void exec(final Consumer<ResultPage<MetaRow>> dataConsumer, final Consumer<Throwable> throwableConsumer) {

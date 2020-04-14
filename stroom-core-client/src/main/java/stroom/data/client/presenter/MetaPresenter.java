@@ -63,6 +63,7 @@ import stroom.svg.client.SvgPresets;
 import stroom.util.shared.IdSet;
 import stroom.util.shared.ResourceGeneration;
 import stroom.util.shared.ResultPage;
+import stroom.util.shared.Sort;
 import stroom.widget.button.client.ButtonView;
 import stroom.widget.popup.client.event.HidePopupEvent;
 import stroom.widget.popup.client.event.ShowPopupEvent;
@@ -476,14 +477,24 @@ public class MetaPresenter extends MyPresenterWidget<MetaPresenter.StreamView>
     private void setNullCriteria() {
         showStreamListButtons(false);
         showStreamRelationListButtons(false);
-        findMetaCriteria = new FindMetaCriteria();
+
+        final ExpressionOperator.Builder builder = new ExpressionOperator.Builder(ExpressionOperator.Op.AND);
+        builder.addTerm(MetaFields.STATUS, ExpressionTerm.Condition.EQUALS, Status.UNLOCKED.getDisplayValue());
+
+        final FindMetaCriteria criteria = new FindMetaCriteria();
+        criteria.setExpression(builder.build());
+        criteria.setSort(MetaFields.CREATE_TIME.getName(), Sort.Direction.ASCENDING, false);
+
+        findMetaCriteria = criteria;
 
         initCriteria();
     }
 
     private void initCriteria() {
         metaListPresenter.setCriteria(findMetaCriteria);
-        metaRelationListPresenter.setCriteria(null);
+        final FindMetaCriteria criteria = new FindMetaCriteria();
+
+        metaRelationListPresenter.setCriteria(criteria);
     }
 
     private Meta getSelected() {
