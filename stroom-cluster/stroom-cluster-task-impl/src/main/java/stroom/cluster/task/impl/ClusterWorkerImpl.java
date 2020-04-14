@@ -105,7 +105,7 @@ public class ClusterWorkerImpl implements ClusterWorker {
                 final ClusterTaskHandler<ClusterTask<R>, R> handler = taskHandlerRegistry.findHandler(task);
                 handler.exec(task, clusterTaskRef);
             };
-            runnable = taskContextProvider.get().subTask(runnable);
+            runnable = taskContextProvider.get().sub(runnable);
 
             // Execute this task asynchronously so we don't hold on to the HTTP
             // connection.

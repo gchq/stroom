@@ -42,6 +42,7 @@ import stroom.search.solr.search.SolrSearchConfig;
 import stroom.searchable.impl.SearchableConfig;
 import stroom.security.impl.AuthenticationConfig;
 import stroom.security.impl.ContentSecurityConfig;
+import stroom.security.impl.OpenIdConfig;
 import stroom.security.impl.SecurityConfig;
 import stroom.servicediscovery.impl.ServiceDiscoveryConfig;
 import stroom.statistics.impl.InternalStatisticsConfig;
@@ -89,7 +90,6 @@ public class AppConfigModule extends AbstractModule {
 
         bindConfig(AppConfig::getActivityConfig, stroom.activity.impl.db.ActivityConfig.class);
         bindConfig(AppConfig::getAnnotationConfig, stroom.annotation.impl.AnnotationConfig.class);
-        bindConfig(AppConfig::getApiGatewayConfig, stroom.config.common.ApiGatewayConfig.class);
         bindConfig(AppConfig::getAuthenticationConfig, stroom.authentication.config.AuthenticationConfig.class);
         bindConfig(AppConfig::getBenchmarkClusterConfig, BenchmarkClusterConfig.class);
         bindConfig(AppConfig::getClusterConfig, ClusterConfig.class);
@@ -135,7 +135,8 @@ public class AppConfigModule extends AbstractModule {
         });
         bindConfig(AppConfig::getSearchableConfig, SearchableConfig.class);
         bindConfig(AppConfig::getSecurityConfig, SecurityConfig.class, securityConfig -> {
-            bindConfig(securityConfig, SecurityConfig::getAuthenticationConfig, AuthenticationConfig.class);
+            bindConfig(securityConfig, SecurityConfig::getAuthenticationConfig, AuthenticationConfig.class, c2 ->
+                    bindConfig(c2, AuthenticationConfig::getOpenIdConfig, OpenIdConfig.class));
             bindConfig(securityConfig, SecurityConfig::getContentSecurityConfig, ContentSecurityConfig.class);
         });
         bindConfig(AppConfig::getServiceDiscoveryConfig, ServiceDiscoveryConfig.class);
@@ -206,6 +207,10 @@ public class AppConfigModule extends AbstractModule {
                     clazz.getCanonicalName()),
                     e);
         }
+    }
+
+    protected ConfigHolder getConfigHolder() {
+        return configHolder;
     }
 
     public interface ConfigHolder {

@@ -17,7 +17,5 @@
 package stroom.security.impl.event;
 
 public interface PermissionChangeEventBus {
-    void addHandler(PermissionChangeEvent.Handler handler) throws Exception;
-
     void fire(PermissionChangeEvent event);
 }

@@ -19,7 +19,6 @@ package stroom.job.impl;
 
 import stroom.cluster.lock.api.ClusterLockService;
 import stroom.job.api.ScheduledJob;
-import stroom.job.api.TaskConsumer;
 import stroom.job.shared.Job;
 import stroom.job.shared.JobNode;
 import stroom.job.shared.JobNode.JobType;
@@ -50,8 +49,8 @@ class JobBootstrap {
     private final ClusterLockService clusterLockService;
     private final SecurityContext securityContext;
     private final NodeInfo nodeInfo;
-    private final Map<ScheduledJob, Provider<TaskConsumer>> scheduledJobsMap;
-    private final DistributedTaskFactoryBeanRegistry distributedTaskFactoryBeanRegistry;
+    private final Map<ScheduledJob, Provider<Runnable>> scheduledJobsMap;
+    private final DistributedTaskFactoryRegistry distributedTaskFactoryRegistry;
 
     @Inject
     JobBootstrap(final JobDao jobDao,
@@ -59,15 +58,15 @@ class JobBootstrap {
                  final ClusterLockService clusterLockService,
                  final SecurityContext securityContext,
                  final NodeInfo nodeInfo,
-                 final Map<ScheduledJob, Provider<TaskConsumer>> scheduledJobsMap,
-                 final DistributedTaskFactoryBeanRegistry distributedTaskFactoryBeanRegistry) {
+                 final Map<ScheduledJob, Provider<Runnable>> scheduledJobsMap,
+                 final DistributedTaskFactoryRegistry distributedTaskFactoryRegistry) {
         this.jobDao = jobDao;
         this.jobNodeDao = jobNodeDao;
         this.clusterLockService = clusterLockService;
         this.securityContext = securityContext;
         this.nodeInfo = nodeInfo;
         this.scheduledJobsMap = scheduledJobsMap;
-        this.distributedTaskFactoryBeanRegistry = distributedTaskFactoryBeanRegistry;
+        this.distributedTaskFactoryRegistry = distributedTaskFactoryRegistry;
     }
 
     void startup() {
@@ -131,7 +130,7 @@ class JobBootstrap {
             }
 
             // Distributed Jobs done a different way
-            distributedTaskFactoryBeanRegistry.getFactoryMap().forEach((jobName, factory) -> {
+            distributedTaskFactoryRegistry.getFactoryMap().forEach((jobName, factory) -> {
                 validJobNames.add(jobName);
 
                 // Add the job node to the DB if it isn't there already.

@@ -60,7 +60,7 @@ public class UserDataProvider implements Refreshable, ColumnSortEvent.Handler {
     public void setCriteria(final FindUserCriteria criteria) {
         this.criteria = criteria;
         if (dataProvider == null) {
-            this.dataProvider = new RestDataProvider<User, ResultPage<User>>(eventBus) {
+            this.dataProvider = new RestDataProvider<User, ResultPage<User>>(eventBus, criteria.obtainPageRequest()) {
                 @Override
                 protected void exec(final Consumer<ResultPage<User>> dataConsumer, final Consumer<Throwable> throwableConsumer) {
                     final Rest<ResultPage<User>> rest = restFactory.create();

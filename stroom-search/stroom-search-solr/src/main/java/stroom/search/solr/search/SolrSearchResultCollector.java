@@ -26,24 +26,30 @@ import stroom.query.common.v2.ResultHandler;
 import stroom.query.common.v2.Sizes;
 import stroom.query.common.v2.Store;
 import stroom.search.resultsender.NodeResult;
-import stroom.task.api.TaskCallback;
-import stroom.task.api.TaskManager;
+import stroom.task.api.TaskContext;
+import stroom.task.api.TaskContext.WrappedRunnable;
 import stroom.task.api.TaskTerminatedException;
-import stroom.task.api.VoidResult;
+import stroom.task.shared.TaskId;
 
+import javax.inject.Provider;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
+import java.util.concurrent.CompletableFuture;
+import java.util.concurrent.CompletionException;
 import java.util.concurrent.ConcurrentHashMap;
+import java.util.concurrent.Executor;
 import java.util.concurrent.TimeUnit;
 
 public class SolrSearchResultCollector implements Store {
     private static final Logger LOGGER = LoggerFactory.getLogger(SolrSearchResultCollector.class);
 
     private final Set<String> errors = Collections.newSetFromMap(new ConcurrentHashMap<>());
-    private final TaskManager taskManager;
+    private final Executor executor;
+    private final Provider<TaskContext> taskContextProvider;
+    private final Provider<SolrAsyncSearchTaskHandler> solrAsyncSearchTaskHandlerProvider;
     private final SolrAsyncSearchTask task;
     private final Set<String> highlights;
     private final ResultHandler resultHandler;
@@ -51,14 +57,20 @@ public class SolrSearchResultCollector implements Store {
     private final Sizes storeSize;
     private final CompletionState completionState;
 
-    private SolrSearchResultCollector(final TaskManager taskManager,
+    private volatile TaskId taskId;
+
+    private SolrSearchResultCollector(final Executor executor,
+                                      final Provider<TaskContext> taskContextProvider,
+                                      final Provider<SolrAsyncSearchTaskHandler> solrAsyncSearchTaskHandlerProvider,
                                       final SolrAsyncSearchTask task,
                                       final Set<String> highlights,
                                       final ResultHandler resultHandler,
                                       final Sizes defaultMaxResultsSizes,
                                       final Sizes storeSize,
                                       final CompletionState completionState) {
-        this.taskManager = taskManager;
+        this.executor = executor;
+        this.taskContextProvider = taskContextProvider;
+        this.solrAsyncSearchTaskHandlerProvider = solrAsyncSearchTaskHandlerProvider;
         this.task = task;
         this.highlights = highlights;
         this.resultHandler = resultHandler;
@@ -67,39 +79,55 @@ public class SolrSearchResultCollector implements Store {
         this.completionState = completionState;
     }
 
-    public static SolrSearchResultCollector create(final TaskManager taskManager,
+    public static SolrSearchResultCollector create(final Executor executor,
+                                                   final Provider<TaskContext> taskContextProvider,
+                                                   final Provider<SolrAsyncSearchTaskHandler> solrAsyncSearchTaskHandlerProvider,
                                                    final SolrAsyncSearchTask task,
                                                    final Set<String> highlights,
                                                    final ResultHandler resultHandler,
                                                    final Sizes defaultMaxResultsSizes,
                                                    final Sizes storeSize,
                                                    final CompletionState completionState) {
-        return new SolrSearchResultCollector(taskManager, task, highlights,
-                resultHandler, defaultMaxResultsSizes, storeSize, completionState);
+        return new SolrSearchResultCollector(executor,
+                taskContextProvider,
+                solrAsyncSearchTaskHandlerProvider,
+                task,
+                highlights,
+                resultHandler,
+                defaultMaxResultsSizes,
+                storeSize,
+                completionState);
     }
 
     public void start() {
         // Start asynchronous search execution.
-        taskManager.execAsync(task, new TaskCallback<>() {
-            @Override
-            public void onSuccess(final VoidResult result) {
-                // Do nothing here as the results go into the collector
-            }
+        final TaskContext taskContext = taskContextProvider.get();
+        final Runnable runnable = () -> {
+            final SolrAsyncSearchTaskHandler asyncSearchTaskHandler = solrAsyncSearchTaskHandlerProvider.get();
+            asyncSearchTaskHandler.exec(task, taskId);
+        };
+        final WrappedRunnable wrappedRunnable = taskContext.sub(runnable);
+        taskId = wrappedRunnable.getTaskContext().getTaskId();
+        CompletableFuture
+                .runAsync(wrappedRunnable, executor)
+                .whenComplete((result, t) -> {
+                    if (t != null) {
+                        while (t instanceof CompletionException) {
+                            t = t.getCause();
+                        }
 
-            @Override
-            public void onFailure(final Throwable t) {
-                // We can expect some tasks to throw a task terminated exception
-                // as they may be terminated before we even try to execute them.
-                if (!(t instanceof TaskTerminatedException)) {
-                    LOGGER.error(t.getMessage(), t);
-                    getErrorSet().add(t.getMessage());
-                    completionState.complete();
-                    throw new RuntimeException(t.getMessage(), t);
-                }
+                        // We can expect some tasks to throw a task terminated exception
+                        // as they may be terminated before we even try to execute them.
+                        if (!(t instanceof TaskTerminatedException)) {
+                            LOGGER.error(t.getMessage(), t);
+                            getErrorSet().add(t.getMessage());
+                            completionState.complete();
+                            throw new RuntimeException(t.getMessage(), t);
+                        }
 
-                completionState.complete();
-            }
-        });
+                        completionState.complete();
+                    }
+                });
     }
 
     @Override
@@ -109,21 +137,6 @@ public class SolrSearchResultCollector implements Store {
 
     public void complete() {
         completionState.complete();
-
-//        // We have to wrap the cluster termination task in another task or
-//        // ClusterDispatchAsyncImpl
-//        // will not execute it if the parent task is terminated.
-//        final GenericServerTask outerTask = GenericServerTask.create(null, task.getUserToken(), "Terminate: " + task.getTaskName(), "Terminating cluster tasks");
-//        outerTask.setRunnable(() -> {
-//            taskContext.info(task.getSearchName() + " - terminating child tasks");
-//            final FindTaskCriteria findTaskCriteria = new FindTaskCriteria();
-//            findTaskCriteria.addAncestorId(task.getId());
-//            final TerminateTaskClusterTask terminateTask = new TerminateTaskClusterTask(task.getUserToken(), "Terminate: " + task.getTaskName(), findTaskCriteria, false);
-//
-//            // Terminate matching tasks.
-//            dispatchHelper.execAsync(terminateTask, TargetType.ACTIVE);
-//        });
-//        taskManager.execAsync(outerTask);
     }
 
     @Override

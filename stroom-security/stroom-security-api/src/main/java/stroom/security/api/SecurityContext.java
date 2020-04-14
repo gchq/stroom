@@ -51,6 +51,13 @@ public interface SecurityContext {
     boolean isAdmin();
 
     /**
+     * Check if the current user is the processing user.
+     *
+     * @return True if the current user is the processing user.
+     */
+    boolean isProcessingUser();
+
+    /**
      * Check if the user associated with this security context has the requested
      * permission to use the specified functionality.
      *

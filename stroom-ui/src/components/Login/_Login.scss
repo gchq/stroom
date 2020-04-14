@@ -1,0 +1,66 @@
+/*
+ * Copyright 2017 Crown Copyright
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ *     http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
+
+.Login__container {
+  width: 300px;
+  padding: 15px;
+  border: thin solid lightgrey;
+}
+
+/* We need to force the width on the input otherwise it'll be a bit short */
+.LoginForm-input {
+  width: 100% !important;
+}
+
+.Login__icon-container {
+  display: flex;
+  justify-content: center;
+  margin-bottom: 15px;
+}
+
+.Login__icon-container img {
+  width: 125px;
+  height: 125px;
+  border-radius: 75px;
+}
+
+.Login__reset-password {
+  font-size: .7rem;
+}
+
+.Login__content .field-container {
+  width: 100% !important;
+}
+
+.Login__content .field-container input {
+  width: auto;
+}
+
+.Login__actions {
+  // width: 100%;
+  display: flex;
+  justify-content: flex-end;
+  padding: 15px 0 2px 0;
+}
+
+.Login__status-container {
+  display: flex;
+  justify-content: space-between;
+}
+
+.Login__status-container a {
+  align-self: flex-end;
+}

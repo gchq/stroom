@@ -16,20 +16,24 @@
 
 package stroom.util.entityevent;
 
+import com.fasterxml.jackson.annotation.JsonCreator;
+import com.fasterxml.jackson.annotation.JsonInclude;
+import com.fasterxml.jackson.annotation.JsonInclude.Include;
+import com.fasterxml.jackson.annotation.JsonProperty;
+import com.fasterxml.jackson.annotation.JsonPropertyOrder;
 import stroom.docref.DocRef;
 
-import java.io.Serializable;
+@JsonPropertyOrder({"docRef", "action"})
+@JsonInclude(Include.NON_NULL)
+public class EntityEvent {
+    @JsonProperty
+    private final DocRef docRef;
+    @JsonProperty
+    private final EntityAction action;
 
-public class EntityEvent implements Serializable {
-    private static final long serialVersionUID = -6646086368064417052L;
-
-    private DocRef docRef;
-    private EntityAction action;
-
-    public EntityEvent() {
-    }
-
-    public EntityEvent(final DocRef docRef, final EntityAction action) {
+    @JsonCreator
+    public EntityEvent(@JsonProperty("docRef") final DocRef docRef,
+                       @JsonProperty("action") final EntityAction action) {
         this.docRef = docRef;
         this.action = action;
     }

@@ -55,6 +55,7 @@ import stroom.security.api.SecurityContext;
 import stroom.security.mock.MockSecurityContext;
 import stroom.task.api.SimpleTaskContext;
 import stroom.task.api.TaskContext;
+import stroom.util.BuildInfoProvider;
 import stroom.util.guice.FilterBinder;
 import stroom.util.guice.FilterInfo;
 import stroom.util.guice.GuiceUtil;
@@ -96,6 +97,7 @@ public class ProxyModule extends AbstractModule {
         // Allow discovery of feed status from other proxies.
         install(new RemoteFeedModule());
 
+        bind(BuildInfo.class).toProvider(BuildInfoProvider.class);
         bind(BufferFactory.class).to(BufferFactoryImpl.class);
         bind(DataReceiptPolicyAttributeMapFilterFactory.class).to(DataReceiptPolicyAttributeMapFilterFactoryImpl.class);
         bind(DocumentResourceHelper.class).to(DocumentResourceHelperImpl.class);

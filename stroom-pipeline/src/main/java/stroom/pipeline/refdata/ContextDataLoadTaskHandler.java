@@ -20,6 +20,7 @@ package stroom.pipeline.refdata;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import stroom.data.shared.StreamTypeNames;
+import stroom.docref.DocRef;
 import stroom.feed.api.FeedProperties;
 import stroom.meta.shared.Meta;
 import stroom.pipeline.PipelineStore;
@@ -29,6 +30,7 @@ import stroom.pipeline.errorhandler.StoredErrorReceiver;
 import stroom.pipeline.factory.Pipeline;
 import stroom.pipeline.factory.PipelineDataCache;
 import stroom.pipeline.factory.PipelineFactory;
+import stroom.pipeline.refdata.store.RefDataStore;
 import stroom.pipeline.refdata.store.RefStreamDefinition;
 import stroom.pipeline.shared.PipelineDoc;
 import stroom.pipeline.shared.data.PipelineData;
@@ -37,18 +39,16 @@ import stroom.pipeline.state.MetaDataHolder;
 import stroom.pipeline.state.MetaHolder;
 import stroom.pipeline.task.StreamMetaDataProvider;
 import stroom.security.api.SecurityContext;
-import stroom.task.api.AbstractTaskHandler;
 import stroom.util.io.BasicStreamCloser;
 import stroom.util.io.StreamCloser;
 import stroom.util.shared.Severity;
-import stroom.task.api.VoidResult;
 
 import javax.inject.Inject;
 import java.io.IOException;
 import java.io.InputStream;
 
 
-class ContextDataLoadTaskHandler extends AbstractTaskHandler<ContextDataLoadTask, VoidResult> {
+class ContextDataLoadTaskHandler {
     private static final Logger LOGGER = LoggerFactory.getLogger(ContextDataLoadTaskHandler.class);
 
     private final PipelineFactory pipelineFactory;
@@ -87,18 +87,18 @@ class ContextDataLoadTaskHandler extends AbstractTaskHandler<ContextDataLoadTask
         this.securityContext = securityContext;
     }
 
-    @Override
-    public VoidResult exec(final ContextDataLoadTask task) {
+    public void exec(final InputStream inputStream,
+                     final Meta meta,
+                     final String feedName,
+                     final DocRef contextPipeline,
+                     final RefStreamDefinition refStreamDefinition,
+                     final RefDataStore refDataStore) {
         securityContext.secure(() -> {
             // Elevate user permissions so that inherited pipelines that the user only has 'Use' permission on can be read.
             securityContext.useAsRead(() -> {
                 final StoredErrorReceiver storedErrorReceiver = new StoredErrorReceiver();
                 errorReceiver = new ErrorReceiverIdDecorator(getClass().getSimpleName(), storedErrorReceiver);
                 errorReceiverProxy.setErrorReceiver(errorReceiver);
-
-                final InputStream inputStream = task.getInputStream();
-                final Meta meta = task.getMeta();
-                final String feedName = task.getFeedName();
 
                 if (inputStream != null) {
                     final StreamCloser streamCloser = new BasicStreamCloser();
@@ -121,7 +121,7 @@ class ContextDataLoadTaskHandler extends AbstractTaskHandler<ContextDataLoadTask
                         }
 
                         // Create the parser.
-                        final PipelineDoc pipelineDoc = pipelineStore.readDocument(task.getContextPipeline());
+                        final PipelineDoc pipelineDoc = pipelineStore.readDocument(contextPipeline);
                         final PipelineData pipelineData = pipelineDataCache.get(pipelineDoc);
                         final Pipeline pipeline = pipelineFactory.create(pipelineData);
 
@@ -140,9 +140,7 @@ class ContextDataLoadTaskHandler extends AbstractTaskHandler<ContextDataLoadTask
 //                            pipelineDoc.getVersion(),
 //                            stream.getId());
 
-                        RefStreamDefinition refStreamDefinition = task.getRefStreamDefinition();
-
-                        task.getRefDataStore().doWithLoaderUnlessComplete(
+                        refDataStore.doWithLoaderUnlessComplete(
                                 refStreamDefinition,
                                 meta.getEffectiveMs(),
                                 refDataLoader -> {
@@ -178,7 +176,6 @@ class ContextDataLoadTaskHandler extends AbstractTaskHandler<ContextDataLoadTask
 //            return loadedRefStreamDefinitions;
             });
         });
-        return VoidResult.INSTANCE;
     }
 
     private void log(final Severity severity, final String message, final Throwable e) {

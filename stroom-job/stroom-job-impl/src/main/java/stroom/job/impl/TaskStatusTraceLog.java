@@ -25,7 +25,7 @@ import java.util.List;
 class TaskStatusTraceLog {
     private static final Logger LOGGER = LoggerFactory.getLogger(TaskStatusTraceLog.class);
 
-    void sendToWorkerNode(final Class<?> clazz, final List<DistributedTask<?>> tasks, final String nodeName,
+    void sendToWorkerNode(final Class<?> clazz, final List<DistributedTask> tasks, final String nodeName,
                                  final String jobName) {
         if (LOGGER.isTraceEnabled() && tasks.size() > 0) {
             final StringBuilder sb = new StringBuilder();
@@ -42,7 +42,7 @@ class TaskStatusTraceLog {
         }
     }
 
-    void errorSendingToWorkerNode(final Class<?> clazz, final List<DistributedTask<?>> tasks, final String nodeName,
+    void errorSendingToWorkerNode(final Class<?> clazz, final List<DistributedTask> tasks, final String nodeName,
                                          final String jobName) {
         if (LOGGER.isTraceEnabled() && tasks.size() > 0) {
             final StringBuilder sb = new StringBuilder();
@@ -59,7 +59,7 @@ class TaskStatusTraceLog {
         }
     }
 
-    void receiveOnWorkerNode(final Class<?> clazz, final List<DistributedTask<?>> tasks, final String jobName) {
+    void receiveOnWorkerNode(final Class<?> clazz, final List<DistributedTask> tasks, final String jobName) {
         if (LOGGER.isTraceEnabled() && tasks.size() > 0) {
             final StringBuilder sb = new StringBuilder();
             sb.append("Worker received ");
@@ -75,9 +75,9 @@ class TaskStatusTraceLog {
     }
 
     private void appendDistributedTaskList(final StringBuilder sb,
-                                           final List<DistributedTask<?>> streamProcessorTasks) {
+                                           final List<DistributedTask> streamProcessorTasks) {
         sb.append(" ( ");
-        for (final DistributedTask<?> task : streamProcessorTasks) {
+        for (final DistributedTask task : streamProcessorTasks) {
             sb.append(task.getTraceString());
             sb.append(" ");
         }

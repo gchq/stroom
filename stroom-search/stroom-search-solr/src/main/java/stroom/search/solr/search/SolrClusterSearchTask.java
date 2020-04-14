@@ -19,15 +19,11 @@ package stroom.search.solr.search;
 import stroom.query.api.v2.Query;
 import stroom.query.common.v2.CoprocessorSettings;
 import stroom.query.common.v2.CoprocessorSettingsMap.CoprocessorKey;
-import stroom.search.resultsender.NodeResult;
 import stroom.search.solr.CachedSolrIndex;
-import stroom.task.api.ServerTask;
 
 import java.util.Map;
 
-class SolrClusterSearchTask extends ServerTask<NodeResult> {
-    private static final long serialVersionUID = -1305243739417365803L;
-
+class SolrClusterSearchTask {
     private final CachedSolrIndex cachedSolrIndex;
     private final Query query;
     private final int resultSendFrequency;

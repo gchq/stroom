@@ -24,7 +24,6 @@ import stroom.util.shared.AbstractConfig;
 import javax.validation.constraints.NotNull;
 
 public class EmailConfig extends AbstractConfig {
-
     public static final String PROP_NAME_SMTP = "smtp";
 
     @NotNull
@@ -49,12 +48,7 @@ public class EmailConfig extends AbstractConfig {
 
     @NotNull
     @JsonProperty
-    private String passwordResetUrl = "https://localhost/s/resetPassword/?user=%s&token=%s";
-
-    @NotNull
-    @JsonProperty
-    // TODO Why is this a float? Change it I think.
-    private float passwordResetTokenValidityInMinutes = 600;
+    private String passwordResetUrl = "/s/resetPassword/?user=%s&token=%s";
 
     @NotNull
     @JsonProperty
@@ -84,10 +78,6 @@ public class EmailConfig extends AbstractConfig {
 
     public String getFromName() {
         return fromName;
-    }
-
-    public float getPasswordResetTokenValidityInMinutes() {
-        return passwordResetTokenValidityInMinutes;
     }
 
     public String getPasswordResetUrl() {

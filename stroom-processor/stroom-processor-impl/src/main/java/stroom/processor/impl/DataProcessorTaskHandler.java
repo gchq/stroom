@@ -22,29 +22,29 @@ import stroom.data.store.api.Store;
 import stroom.meta.shared.Meta;
 import stroom.node.api.NodeInfo;
 import stroom.processor.api.DataProcessorTaskExecutor;
+import stroom.processor.api.ProcessorResult;
+import stroom.processor.api.ProcessorResultImpl;
 import stroom.processor.api.TaskType;
 import stroom.processor.shared.Processor;
 import stroom.processor.shared.ProcessorFilter;
 import stroom.processor.shared.ProcessorTask;
 import stroom.processor.shared.TaskStatus;
 import stroom.security.api.SecurityContext;
-import stroom.task.api.AbstractTaskHandler;
 import stroom.task.api.TaskContext;
 import stroom.util.date.DateUtil;
 import stroom.util.logging.LambdaLogUtil;
 import stroom.util.logging.LambdaLogger;
 import stroom.util.logging.LambdaLoggerFactory;
-import stroom.task.api.VoidResult;
 
 import javax.inject.Inject;
 import javax.inject.Provider;
 import java.io.IOException;
+import java.util.Collections;
 import java.util.Map;
 
-public class DataProcessorTaskHandler extends AbstractTaskHandler<DataProcessorTask, VoidResult> {
+public class DataProcessorTaskHandler {
     private static final LambdaLogger LOGGER = LambdaLoggerFactory.getLogger(DataProcessorTaskHandler.class);
-    //    private static final Set<String> FETCH_SET = new HashSet<>(
-//            Arrays.asList(Processor.ENTITY_TYPE, ProcessorFilter.ENTITY_TYPE));
+
     private final Map<TaskType, Provider<DataProcessorTaskExecutor>> executorProviders;
     private final ProcessorCache processorCache;
     private final ProcessorFilterCache processorFilterCache;
@@ -73,25 +73,26 @@ public class DataProcessorTaskHandler extends AbstractTaskHandler<DataProcessorT
         this.securityContext = securityContext;
     }
 
-    @Override
-    public VoidResult exec(final DataProcessorTask task) {
+    public ProcessorResult exec(final ProcessorTask task) {
         return securityContext.secureResult(() -> {
             // Elevate user permissions so that inherited pipelines that the user only has 'Use' permission on can be read.
             return securityContext.useAsReadResult(() -> {
+                ProcessorTask processorTask = task;
+
                 boolean complete = false;
+                ProcessorResult processorResult = new ProcessorResultImpl(0, 0, Collections.emptyMap());
                 final long startTime = System.currentTimeMillis();
-                ProcessorTask streamTask = task.getProcessorTask();
-                LOGGER.trace(LambdaLogUtil.message("Executing stream task: {}", streamTask.getId()));
+                LOGGER.trace(LambdaLogUtil.message("Executing processor task: {}", processorTask.getId()));
 
                 // Open the stream source.
-                try (Source source = streamStore.openSource(streamTask.getMetaId())) {
+                try (Source source = streamStore.openSource(processorTask.getMetaId())) {
                     if (source != null) {
                         final Meta meta = source.getMeta();
 
                         Processor destStreamProcessor = null;
                         ProcessorFilter destProcessorFilter = null;
-                        if (streamTask.getProcessorFilter() != null) {
-                            destProcessorFilter = processorFilterCache.get(streamTask.getProcessorFilter().getId()).orElse(null);
+                        if (processorTask.getProcessorFilter() != null) {
+                            destProcessorFilter = processorFilterCache.get(processorTask.getProcessorFilter().getId()).orElse(null);
                             if (destProcessorFilter != null) {
                                 destStreamProcessor = processorCache
                                         .get(destProcessorFilter.getProcessor().getId()).orElse(null);
@@ -111,25 +112,23 @@ public class DataProcessorTaskHandler extends AbstractTaskHandler<DataProcessorT
 
                         } else {
                             // Change the task status.... and save
-                            streamTask = processorTaskDao.changeTaskStatus(streamTask, nodeInfo.getThisNodeName(),
+                            processorTask = processorTaskDao.changeTaskStatus(processorTask, nodeInfo.getThisNodeName(),
                                     TaskStatus.PROCESSING, startTime, null);
                             // Avoid having to do another fetch
-                            streamTask.setProcessorFilter(destProcessorFilter);
+                            processorTask.setProcessorFilter(destProcessorFilter);
 
                             final Provider<DataProcessorTaskExecutor> executorProvider = executorProviders.get(new TaskType(destStreamProcessor.getTaskType()));
                             final DataProcessorTaskExecutor dataProcessorTaskExecutor = executorProvider.get();
 
-                            // Used as a hook for the test code
-                            task.setDataProcessorTaskExecutor(dataProcessorTaskExecutor);
-
                             try {
-                                dataProcessorTaskExecutor.exec(destStreamProcessor, destProcessorFilter, streamTask,
-                                        source);
+                                processorResult = dataProcessorTaskExecutor
+                                        .exec(destStreamProcessor, destProcessorFilter, processorTask, source);
                                 // Only record completion for this task if it was not
                                 // terminated.
                                 if (!Thread.currentThread().isInterrupted()) {
                                     complete = true;
                                 }
+
                             } catch (final RuntimeException e) {
                                 LOGGER.error(LambdaLogUtil.message("Task failed {} {}", new Object[]{destStreamProcessor, meta}, e));
                             }
@@ -139,15 +138,15 @@ public class DataProcessorTaskHandler extends AbstractTaskHandler<DataProcessorT
                     LOGGER.error(e::getMessage, e);
                 } finally {
                     if (complete) {
-                        processorTaskDao.changeTaskStatus(streamTask, nodeInfo.getThisNodeName(), TaskStatus.COMPLETE,
+                        processorTaskDao.changeTaskStatus(processorTask, nodeInfo.getThisNodeName(), TaskStatus.COMPLETE,
                                 startTime, System.currentTimeMillis());
                     } else {
-                        processorTaskDao.changeTaskStatus(streamTask, nodeInfo.getThisNodeName(), TaskStatus.FAILED, startTime,
+                        processorTaskDao.changeTaskStatus(processorTask, nodeInfo.getThisNodeName(), TaskStatus.FAILED, startTime,
                                 System.currentTimeMillis());
                     }
                 }
 
-                return new VoidResult();
+                return processorResult;
             });
         });
     }

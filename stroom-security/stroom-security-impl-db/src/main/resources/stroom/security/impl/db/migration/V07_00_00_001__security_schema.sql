@@ -47,7 +47,9 @@ CREATE TABLE IF NOT EXISTS stroom_user_group (
         REFERENCES stroom_user (uuid),
     CONSTRAINT stroom_user_group_fk_group_uuid
         FOREIGN KEY (group_uuid) 
-        REFERENCES stroom_user (uuid)
+        REFERENCES stroom_user (uuid),
+    CONSTRAINT stroom_user_group_uk_group_uuid_user_uuid
+        UNIQUE INDEX stroom_user_group_group_uuid_user_uuid_IDX (group_uuid, user_uuid)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8;
 
 CREATE TABLE IF NOT EXISTS app_permission (

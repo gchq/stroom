@@ -1,0 +1,21 @@
+.react-sweet-progress-line-inner-status-active:before {
+  // Get rid of the scrolling animation effect on the progress bar
+  animation: none;
+}
+
+.processing-list__load-more-button {
+  width: 100%;
+}
+
+.ReactTable.tracker-table .progress {
+  margin: 0;
+  padding: 0;
+}
+
+.ReactTable.tracker-table .progress-column .progress {
+  background-color: transparent;
+}
+
+.ReactTable.tracker-table .name-column .label {
+  width: 100%;
+}

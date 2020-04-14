@@ -112,7 +112,7 @@ public class SolrSearchTaskHandler {
 
         // If there is an error building the query then it will be null here.
         try {
-            final Runnable runnable = taskContext.subTask(() -> {
+            final Runnable runnable = taskContext.sub(() -> {
                 taskContext.setName("Index Searcher");
                 LOGGER.logDurationIfDebugEnabled(
                         () -> {

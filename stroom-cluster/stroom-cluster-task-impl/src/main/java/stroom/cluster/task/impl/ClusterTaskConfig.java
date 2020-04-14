@@ -9,7 +9,7 @@ import javax.inject.Singleton;
 @Singleton
 public class ClusterTaskConfig extends AbstractConfig {
     public static final String NAME = "clusterTask";
-    
+
     private CacheConfig clusterResultCollectorCache = new CacheConfig.Builder()
             .maximumSize(1000000L)
             .expireAfterAccess(StroomDuration.ofMinutes(1))
@@ -17,10 +17,6 @@ public class ClusterTaskConfig extends AbstractConfig {
 
     public CacheConfig getClusterResultCollectorCache() {
         return clusterResultCollectorCache;
-    }
-
-    public void setClusterResultCollectorCache(final CacheConfig clusterResultCollectorCache) {
-        this.clusterResultCollectorCache = clusterResultCollectorCache;
     }
 
     @Override

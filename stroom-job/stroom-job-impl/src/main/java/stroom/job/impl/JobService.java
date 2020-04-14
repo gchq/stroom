@@ -17,10 +17,8 @@
 
 package stroom.job.impl;
 
-
 import stroom.job.api.DistributedTaskFactoryDescription;
 import stroom.job.api.ScheduledJob;
-import stroom.job.api.TaskConsumer;
 import stroom.job.shared.Job;
 import stroom.security.api.SecurityContext;
 import stroom.security.shared.PermissionNames;
@@ -49,8 +47,8 @@ class JobService {
     @Inject
     JobService(final JobDao jobDao,
                final SecurityContext securityContext,
-               final Map<ScheduledJob, Provider<TaskConsumer>> scheduledJobsMap,
-               final DistributedTaskFactoryBeanRegistry distributedTaskFactoryBeanRegistry) {
+               final Map<ScheduledJob, Provider<Runnable>> scheduledJobsMap,
+               final DistributedTaskFactoryRegistry distributedTaskFactoryRegistry) {
         this.jobDao = jobDao;
         this.securityContext = securityContext;
 
@@ -62,7 +60,7 @@ class JobService {
         });
 
         // Distributed Jobs done a different way
-        distributedTaskFactoryBeanRegistry.getFactoryMap().forEach((jobName, factory) -> {
+        distributedTaskFactoryRegistry.getFactoryMap().forEach((jobName, factory) -> {
             final DistributedTaskFactoryDescription distributedTaskFactoryBean = factory.getClass().getAnnotation(DistributedTaskFactoryDescription.class);
             jobDescriptionMap.put(distributedTaskFactoryBean.jobName(), distributedTaskFactoryBean.description());
         });
@@ -72,13 +70,13 @@ class JobService {
         return securityContext.secureResult(PermissionNames.MANAGE_JOBS_PERMISSION, () -> {
             final Optional<Job> before = fetch(job.getId());
 
-                // We always want to update a job instance even if we have a stale version.
-                before.ifPresent(j -> job.setVersion(j.getVersion()));
+            // We always want to update a job instance even if we have a stale version.
+            before.ifPresent(j -> job.setVersion(j.getVersion()));
 
             AuditUtil.stamp(securityContext.getUserId(), job);
-                final Job after = jobDao.update(job);
-                return decorate(after);
-            });
+            final Job after = jobDao.update(job);
+            return decorate(after);
+        });
     }
 
     ResultPage<Job> find(final FindJobCriteria findJobCriteria) {

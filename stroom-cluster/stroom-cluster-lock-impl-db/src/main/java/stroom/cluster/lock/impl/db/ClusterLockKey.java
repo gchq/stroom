@@ -16,20 +16,29 @@
 
 package stroom.cluster.lock.impl.db;
 
+import com.fasterxml.jackson.annotation.JsonCreator;
+import com.fasterxml.jackson.annotation.JsonInclude;
+import com.fasterxml.jackson.annotation.JsonProperty;
 import stroom.util.date.DateUtil;
 import stroom.util.shared.EqualsBuilder;
 import stroom.util.shared.HashCodeBuilder;
 
 import java.io.Serializable;
+import java.util.Objects;
 
-public class ClusterLockKey implements Serializable {
-    private static final long serialVersionUID = -5425199832227725803L;
-
+@JsonInclude(JsonInclude.Include.NON_NULL)
+public class ClusterLockKey {
+    @JsonProperty
     private final String name;
+    @JsonProperty
     private final String nodeName;
+    @JsonProperty
     private final long creationTime;
 
-    public ClusterLockKey(final String name, final String nodeName, final long creationTime) {
+    @JsonCreator
+    public ClusterLockKey(@JsonProperty("name") final String name,
+                          @JsonProperty("nodeName") final String nodeName,
+                          @JsonProperty("creationTime") final long creationTime) {
         this.name = name;
         this.nodeName = nodeName;
         this.creationTime = creationTime;
@@ -48,29 +57,18 @@ public class ClusterLockKey implements Serializable {
     }
 
     @Override
-    public int hashCode() {
-        final HashCodeBuilder builder = new HashCodeBuilder();
-        builder.append(name);
-        builder.append(nodeName);
-        builder.append(creationTime);
-        return builder.toHashCode();
+    public boolean equals(final Object o) {
+        if (this == o) return true;
+        if (o == null || getClass() != o.getClass()) return false;
+        final ClusterLockKey that = (ClusterLockKey) o;
+        return creationTime == that.creationTime &&
+                Objects.equals(name, that.name) &&
+                Objects.equals(nodeName, that.nodeName);
     }
 
     @Override
-    public boolean equals(final Object o) {
-        if (o == this) {
-            return true;
-        } else if (!(o instanceof ClusterLockKey)) {
-            return false;
-        }
-
-        final ClusterLockKey clusterLockKey = (ClusterLockKey) o;
-        final EqualsBuilder builder = new EqualsBuilder();
-        builder.append(name, clusterLockKey.name);
-        builder.append(nodeName, clusterLockKey.nodeName);
-        builder.append(creationTime, clusterLockKey.creationTime);
-
-        return builder.isEquals();
+    public int hashCode() {
+        return Objects.hash(name, nodeName, creationTime);
     }
 
     @Override

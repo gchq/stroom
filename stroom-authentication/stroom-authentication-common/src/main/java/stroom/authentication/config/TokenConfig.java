@@ -25,7 +25,6 @@ import javax.validation.Valid;
 import javax.validation.constraints.NotNull;
 
 public class TokenConfig extends AbstractConfig {
-
     @Valid
     @NotNull
     @JsonProperty

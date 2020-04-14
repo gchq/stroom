@@ -39,11 +39,6 @@ public abstract class ClusterTask<R> implements Task<R>, Serializable {
     }
 
     @Override
-    public Task<?> getParentTask() {
-        return null;
-    }
-
-    @Override
     public TaskId getId() {
         if (id == null) {
             throw new UnsupportedOperationException(

@@ -8,7 +8,6 @@ import org.mockito.quality.Strictness;
 import stroom.event.logging.api.DocumentEventLog;
 import stroom.node.api.NodeInfo;
 import stroom.node.api.NodeService;
-import stroom.task.api.TaskManager;
 import stroom.task.shared.FindTaskCriteria;
 import stroom.task.shared.FindTaskProgressCriteria;
 import stroom.task.shared.FindTaskProgressRequest;
@@ -33,7 +32,7 @@ import static org.mockito.Mockito.when;
 @MockitoSettings(strictness = Strictness.LENIENT)
 class TestTaskResourceImpl extends AbstractMultiNodeResourceTest<TaskResource> {
 
-    private final Map<String, TaskManager> taskManagerMap = new HashMap<>();
+    private final Map<String, TaskManagerImpl> taskManagerMap = new HashMap<>();
     private final Map<String, DocumentEventLog> documentEventLogMap = new HashMap<>();
 
     @BeforeEach
@@ -52,16 +51,16 @@ class TestTaskResourceImpl extends AbstractMultiNodeResourceTest<TaskResource> {
         TaskProgressResponse expectedResponse = buildTaskProgressResponse("node1");
 
         doGetTest(
-            subPath,
-            TaskProgressResponse.class,
-            expectedResponse);
+                subPath,
+                TaskProgressResponse.class,
+                expectedResponse);
 
         assertThat(getRequestEvents("node1"))
-            .hasSize(1);
+                .hasSize(1);
         assertThat(getRequestEvents("node2"))
-            .hasSize(0);
+                .hasSize(0);
         assertThat(getRequestEvents("node3"))
-            .hasSize(0);
+                .hasSize(0);
     }
 
     @Test
@@ -74,16 +73,16 @@ class TestTaskResourceImpl extends AbstractMultiNodeResourceTest<TaskResource> {
         TaskProgressResponse expectedResponse = buildTaskProgressResponse("node2");
 
         doGetTest(
-            subPath,
-            TaskProgressResponse.class,
-            expectedResponse);
+                subPath,
+                TaskProgressResponse.class,
+                expectedResponse);
 
         assertThat(getRequestEvents("node1"))
-            .hasSize(1);
+                .hasSize(1);
         assertThat(getRequestEvents("node2"))
-            .hasSize(1);
+                .hasSize(1);
         assertThat(getRequestEvents("node3"))
-            .hasSize(0);
+                .hasSize(0);
     }
 
     @Test
@@ -98,17 +97,17 @@ class TestTaskResourceImpl extends AbstractMultiNodeResourceTest<TaskResource> {
         FindTaskProgressRequest findTaskProgressRequest = new FindTaskProgressRequest(new FindTaskProgressCriteria());
 
         doPostTest(
-            subPath,
-            findTaskProgressRequest,
-            TaskProgressResponse.class,
-            expectedResponse);
+                subPath,
+                findTaskProgressRequest,
+                TaskProgressResponse.class,
+                expectedResponse);
 
         assertThat(getRequestEvents("node1"))
-            .hasSize(1);
+                .hasSize(1);
         assertThat(getRequestEvents("node2"))
-            .hasSize(0);
+                .hasSize(0);
         assertThat(getRequestEvents("node3"))
-            .hasSize(0);
+                .hasSize(0);
     }
 
     @Test
@@ -123,17 +122,17 @@ class TestTaskResourceImpl extends AbstractMultiNodeResourceTest<TaskResource> {
         FindTaskProgressRequest findTaskProgressRequest = new FindTaskProgressRequest(new FindTaskProgressCriteria());
 
         doPostTest(
-            subPath,
-            findTaskProgressRequest,
-            TaskProgressResponse.class,
-            expectedResponse);
+                subPath,
+                findTaskProgressRequest,
+                TaskProgressResponse.class,
+                expectedResponse);
 
         assertThat(getRequestEvents("node1"))
-            .hasSize(1);
+                .hasSize(1);
         assertThat(getRequestEvents("node2"))
-            .hasSize(1);
+                .hasSize(1);
         assertThat(getRequestEvents("node3"))
-            .hasSize(0);
+                .hasSize(0);
     }
 
     @Test
@@ -146,16 +145,16 @@ class TestTaskResourceImpl extends AbstractMultiNodeResourceTest<TaskResource> {
         TaskProgressResponse expectedResponse = buildTaskProgressResponse("node1");
 
         doGetTest(
-            subPath,
-            TaskProgressResponse.class,
-            expectedResponse);
+                subPath,
+                TaskProgressResponse.class,
+                expectedResponse);
 
         assertThat(getRequestEvents("node1"))
-            .hasSize(1);
+                .hasSize(1);
         assertThat(getRequestEvents("node2"))
-            .hasSize(0);
+                .hasSize(0);
         assertThat(getRequestEvents("node3"))
-            .hasSize(0);
+                .hasSize(0);
     }
 
     @Test
@@ -168,16 +167,16 @@ class TestTaskResourceImpl extends AbstractMultiNodeResourceTest<TaskResource> {
         TaskProgressResponse expectedResponse = buildTaskProgressResponse("node2");
 
         doGetTest(
-            subPath,
-            TaskProgressResponse.class,
-            expectedResponse);
+                subPath,
+                TaskProgressResponse.class,
+                expectedResponse);
 
         assertThat(getRequestEvents("node1"))
-            .hasSize(1);
+                .hasSize(1);
         assertThat(getRequestEvents("node2"))
-            .hasSize(1);
+                .hasSize(1);
         assertThat(getRequestEvents("node3"))
-            .hasSize(0);
+                .hasSize(0);
     }
 
     @Test
@@ -188,21 +187,21 @@ class TestTaskResourceImpl extends AbstractMultiNodeResourceTest<TaskResource> {
         String subPath = ResourcePaths.buildPath(TaskResource.TERMINATE_PATH_PART, "node1");
 
         TerminateTaskProgressRequest terminateTaskProgressRequest = new TerminateTaskProgressRequest(
-            new FindTaskCriteria(),
-            true);
+                new FindTaskCriteria(),
+                true);
 
         doPostTest(
-            subPath,
-            terminateTaskProgressRequest,
-            Boolean.class,
-            Boolean.TRUE);
+                subPath,
+                terminateTaskProgressRequest,
+                Boolean.class,
+                Boolean.TRUE);
 
         assertThat(getRequestEvents("node1"))
-            .hasSize(1);
+                .hasSize(1);
         assertThat(getRequestEvents("node2"))
-            .hasSize(0);
+                .hasSize(0);
         assertThat(getRequestEvents("node3"))
-            .hasSize(0);
+                .hasSize(0);
     }
 
     @Test
@@ -213,21 +212,21 @@ class TestTaskResourceImpl extends AbstractMultiNodeResourceTest<TaskResource> {
         String subPath = ResourcePaths.buildPath(TaskResource.TERMINATE_PATH_PART, "node2");
 
         TerminateTaskProgressRequest terminateTaskProgressRequest = new TerminateTaskProgressRequest(
-            new FindTaskCriteria(),
-            true);
+                new FindTaskCriteria(),
+                true);
 
         doPostTest(
-            subPath,
-            terminateTaskProgressRequest,
-            Boolean.class,
-            Boolean.TRUE);
+                subPath,
+                terminateTaskProgressRequest,
+                Boolean.class,
+                Boolean.TRUE);
 
         assertThat(getRequestEvents("node1"))
-            .hasSize(1);
+                .hasSize(1);
         assertThat(getRequestEvents("node2"))
-            .hasSize(1);
+                .hasSize(1);
         assertThat(getRequestEvents("node3"))
-            .hasSize(0);
+                .hasSize(0);
     }
 
     @Override
@@ -240,46 +239,46 @@ class TestTaskResourceImpl extends AbstractMultiNodeResourceTest<TaskResource> {
                                         final List<TestNode> allNodes,
                                         final Map<String, String> baseEndPointUrls) {
 
-        final TaskManager taskManager = createNamedMock(TaskManager.class, node);
+        final TaskManagerImpl taskManager = createNamedMock(TaskManagerImpl.class, node);
 
         when(taskManager.find(any()))
-            .thenReturn(buildTaskProgressResponse(node.getNodeName()));
+                .thenReturn(buildTaskProgressResponse(node.getNodeName()));
 
         final SessionIdProvider sessionIdProvider = createNamedMock(SessionIdProvider.class, node);
 
         when(sessionIdProvider.get())
-            .thenReturn(UUID.randomUUID().toString());
+                .thenReturn(UUID.randomUUID().toString());
 
         // Set up the NodeService mock
         final NodeService nodeService = createNamedMock(NodeService.class, node);
 
         when(nodeService.isEnabled(Mockito.anyString()))
-            .then(invocation ->
-                allNodes.stream()
-                    .filter(testNode -> testNode.getNodeName().equals(invocation.getArgument(0)))
-                    .anyMatch(TestNode::isEnabled));
+                .then(invocation ->
+                        allNodes.stream()
+                                .filter(testNode -> testNode.getNodeName().equals(invocation.getArgument(0)))
+                                .anyMatch(TestNode::isEnabled));
 
         when(nodeService.getBaseEndpointUrl(Mockito.anyString()))
-            .then(invocation -> baseEndPointUrls.get((String) invocation.getArgument(0)));
+                .then(invocation -> baseEndPointUrls.get((String) invocation.getArgument(0)));
 
         // Set up the NodeInfo mock
 
         final NodeInfo nodeInfo = createNamedMock(NodeInfo.class, node);
 
         when(nodeInfo.getThisNodeName())
-            .thenReturn(node.getNodeName());
+                .thenReturn(node.getNodeName());
 
         final DocumentEventLog documentEventLog = createNamedMock(DocumentEventLog.class, node);
 
         documentEventLogMap.put(node.getNodeName(), documentEventLog);
 
         return new TaskResourceImpl(
-            taskManager,
-            sessionIdProvider,
-            nodeService,
-            nodeInfo,
-            webTargetFactory(),
-            documentEventLog);
+                taskManager,
+                sessionIdProvider,
+                nodeService,
+                nodeInfo,
+                webTargetFactory(),
+                documentEventLog);
     }
 
     private TaskProgress buildTaskProgress(final String taskId, final String nodeName) {
@@ -290,8 +289,8 @@ class TestTaskResourceImpl extends AbstractMultiNodeResourceTest<TaskResource> {
 
     private TaskProgressResponse buildTaskProgressResponse(final String nodeName) {
         return new TaskProgressResponse(List.of(
-            buildTaskProgress("task1", nodeName),
-            buildTaskProgress("task2", nodeName),
-            buildTaskProgress("task3", nodeName)));
+                buildTaskProgress("task1", nodeName),
+                buildTaskProgress("task2", nodeName),
+                buildTaskProgress("task3", nodeName)));
     }
 }

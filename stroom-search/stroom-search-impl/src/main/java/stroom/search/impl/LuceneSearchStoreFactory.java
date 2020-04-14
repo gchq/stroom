@@ -89,19 +89,14 @@ public class LuceneSearchStoreFactory implements StoreFactory {
         // Extract highlights.
         final Set<String> highlights = getHighlights(index, query.getExpression(), searchRequest.getDateTimeLocale(), nowEpochMilli);
 
-        // This is a new search so begin a new asynchronous search.
-        final String nodeName = nodeInfo.getThisNodeName();
-
         // Create a coprocessor settings map.
         final CoprocessorSettingsMap coprocessorSettingsMap = CoprocessorSettingsMap.create(searchRequest);
 
         // Create an asynchronous search task.
         final String searchName = "Search '" + searchRequest.getKey().toString() + "'";
         final AsyncSearchTask asyncSearchTask = new AsyncSearchTask(
-                null,
                 searchName,
                 query,
-                nodeName,
                 SEND_INTERACTIVE_SEARCH_RESULT_FREQUENCY,
                 coprocessorSettingsMap.getMap(),
                 searchRequest.getDateTimeLocale(),
@@ -120,7 +115,7 @@ public class LuceneSearchStoreFactory implements StoreFactory {
         // Create the search result collector.
         final ClusterSearchResultCollector searchResultCollector = clusterSearchResultCollectorFactory.create(
                 asyncSearchTask,
-                nodeName,
+                nodeInfo.getThisNodeName(),
                 highlights,
                 resultHandler,
                 defaultMaxResultsSizes,

@@ -1,0 +1,102 @@
+/*
+ * Copyright 2016 Crown Copyright
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ *     http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
+@import "themify.scss";
+
+$themes: (
+  light: (
+    scrollbar__background-color: rgba(255,255,255,0.1),
+    scrollbar-thumb__background-color: rgba(0,0,0,0.3),
+    scrollbar-thumb__background-color--hover: rgba(0,0,0,0.5),
+    scrollbar-thumb__background-color--active: rgba(0,0,0,0.8),
+  ),
+  dark: (
+    scrollbar__background-color: rgba(255,255,255,0.1),
+    scrollbar-thumb__background-color: rgba(0,0,0,0.9),
+    scrollbar-thumb__background-color--hover: rgba(0,0,0,1),
+    scrollbar-thumb__background-color--active: rgba(0,0,0,1),
+  )
+);
+
+/* Scrollbar */
+::-webkit-scrollbar {
+	width: 1rem;
+	background: #fff;
+
+	@include themify($themes) {
+		background-color: themed("scrollbar__background-color");
+	}
+}
+
+::-webkit-scrollbar:horizontal {
+	height: 1rem;
+}
+
+/* Track */
+::-webkit-scrollbar-track {
+}
+
+/* Corner */
+::-webkit-scrollbar-corner {
+	background: #fff;
+
+	@include themify($themes) {
+		background-color: themed("scrollbar__background-color");
+	}
+}
+
+/* Thumb */
+::-webkit-scrollbar-thumb {
+	border-radius: 12px;
+	border: 4px solid rgba(255,255,255,0);
+	background-clip: content-box;
+
+	background-color: rgba(0,0,0,0.3);
+	transition: background-color .5s;
+	-webkit-transition: background-color .5s;
+	-moz-transition: background-color .5s;
+	-o-transition: background-color .5s;
+	
+	min-width: 0px;
+	min-height: 28px;
+
+	@include themify($themes) {
+		background-color: themed("scrollbar-thumb__background-color");
+	}
+}
+::-webkit-scrollbar-thumb:horizontal {
+	min-width: 28px;
+	min-height: 0px;
+}
+::-webkit-scrollbar-thumb:hover {
+	background-color: rgba(0,0,0,.5);
+
+	@include themify($themes) {
+		background-color: themed("scrollbar-thumb__background-color--hover");
+	}
+}
+::-webkit-scrollbar-thumb:active {
+	background-color: rgba(0,0,0,.8);
+
+	@include themify($themes) {
+		background-color: themed("scrollbar-thumb__background-color--active");
+	}
+}
+
+/* Button */
+::-webkit-scrollbar-button {
+	width: 0;
+	height: 0;
+}

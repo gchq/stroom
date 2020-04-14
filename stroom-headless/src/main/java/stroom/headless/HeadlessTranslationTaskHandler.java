@@ -20,10 +20,10 @@ package stroom.headless;
 import stroom.data.shared.StreamTypeNames;
 import stroom.docref.DocRef;
 import stroom.feed.api.FeedProperties;
-import stroom.meta.api.AttributeMapUtil;
 import stroom.meta.api.AttributeMap;
-import stroom.meta.shared.Meta;
+import stroom.meta.api.AttributeMapUtil;
 import stroom.meta.api.StandardHeaderArguments;
+import stroom.meta.shared.Meta;
 import stroom.pipeline.ErrorWriterProxy;
 import stroom.pipeline.PipelineStore;
 import stroom.pipeline.errorhandler.ErrorReceiverProxy;
@@ -48,11 +48,9 @@ import stroom.pipeline.state.MetaHolder;
 import stroom.pipeline.state.PipelineHolder;
 import stroom.pipeline.task.StreamMetaDataProvider;
 import stroom.security.api.SecurityContext;
-import stroom.task.api.AbstractTaskHandler;
 import stroom.util.date.DateUtil;
 import stroom.util.io.IgnoreCloseInputStream;
 import stroom.util.shared.Severity;
-import stroom.task.api.VoidResult;
 
 import javax.inject.Inject;
 import java.io.IOException;
@@ -60,7 +58,7 @@ import java.io.InputStream;
 import java.util.List;
 
 
-class HeadlessTranslationTaskHandler extends AbstractTaskHandler<HeadlessTranslationTask, VoidResult> {
+class HeadlessTranslationTaskHandler {
     private final PipelineFactory pipelineFactory;
     private final FeedProperties feedProperties;
     private final PipelineStore pipelineStore;
@@ -104,18 +102,17 @@ class HeadlessTranslationTaskHandler extends AbstractTaskHandler<HeadlessTransla
         this.securityContext = securityContext;
     }
 
-    @Override
-    public VoidResult exec(final HeadlessTranslationTask task) {
-        return securityContext.secureResult(() -> {
+    public void exec(final InputStream dataStream,
+                     final InputStream metaStream,
+                     final InputStream contextStream,
+                     final HeadlessFilter headlessFilter) {
+        securityContext.secure(() -> {
             // Elevate user permissions so that inherited pipelines that the user only has 'Use' permission on can be read.
-            return securityContext.useAsReadResult(() -> {
+            securityContext.useAsRead(() -> {
                 try {
                     // Setup the error handler and receiver.
-                    errorWriterProxy.setErrorWriter(task.getHeadlessFilter());
+                    errorWriterProxy.setErrorWriter(headlessFilter);
                     errorReceiverProxy.setErrorReceiver(recordErrorReceiver);
-
-                    final InputStream dataStream = task.getDataStream();
-                    final InputStream metaStream = task.getMetaStream();
 
                     if (metaStream == null) {
                         throw new RuntimeException("No meta data found");
@@ -155,11 +152,11 @@ class HeadlessTranslationTaskHandler extends AbstractTaskHandler<HeadlessTransla
                         throw new ProcessException(
                                 "No appendable filters can be found in pipeline '" + pipelineRef.getName() + "'");
                     }
-                    ((HasTargets) lastFilter).setTarget(task.getHeadlessFilter());
+                    ((HasTargets) lastFilter).setTarget(headlessFilter);
 
                     // Output the meta data for the new stream.
                     this.metaData.putAll(metaData);
-                    task.getHeadlessFilter().changeMetaData(metaData);
+                    headlessFilter.changeMetaData(metaData);
 
                     // Set effective time.
                     Long effectiveMs = null;
@@ -180,13 +177,13 @@ class HeadlessTranslationTaskHandler extends AbstractTaskHandler<HeadlessTransla
 
                     // Add stream providers for lookups etc.
                     final BasicInputStreamProvider inputStreamProvider = new BasicInputStreamProvider();
-                    inputStreamProvider.put(null, new IgnoreCloseInputStream(task.getDataStream()), task.getDataStream().available());
-                    inputStreamProvider.put(StreamTypeNames.RAW_EVENTS, new IgnoreCloseInputStream(task.getDataStream()), task.getDataStream().available());
-                    if (task.getMetaStream() != null) {
-                        inputStreamProvider.put(StreamTypeNames.META, new IgnoreCloseInputStream(task.getMetaStream()), task.getMetaStream().available());
+                    inputStreamProvider.put(null, new IgnoreCloseInputStream(dataStream), dataStream.available());
+                    inputStreamProvider.put(StreamTypeNames.RAW_EVENTS, new IgnoreCloseInputStream(dataStream), dataStream.available());
+                    if (metaStream != null) {
+                        inputStreamProvider.put(StreamTypeNames.META, new IgnoreCloseInputStream(metaStream), metaStream.available());
                     }
-                    if (task.getContextStream() != null) {
-                        inputStreamProvider.put(StreamTypeNames.CONTEXT, new IgnoreCloseInputStream(task.getContextStream()), task.getContextStream().available());
+                    if (contextStream != null) {
+                        inputStreamProvider.put(StreamTypeNames.CONTEXT, new IgnoreCloseInputStream(contextStream), contextStream.available());
                     }
 
                     metaHolder.setMeta(meta);
@@ -200,8 +197,6 @@ class HeadlessTranslationTaskHandler extends AbstractTaskHandler<HeadlessTransla
                 } catch (final IOException | RuntimeException e) {
                     outputError(e);
                 }
-
-                return VoidResult.INSTANCE;
             });
         });
     }

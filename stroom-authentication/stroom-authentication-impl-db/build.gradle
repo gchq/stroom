@@ -25,7 +25,6 @@ dependencies {
     testCompile libs.assertj_core
     testCompile libs.wiremock
     testCompile libs.mockito_core
-    testCompile libs.moshi
     testCompile libs.dropwizard_testing
     testCompile libs.unirest
 }

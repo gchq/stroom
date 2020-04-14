@@ -20,12 +20,10 @@ package stroom.search.impl;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import stroom.cluster.task.api.ClusterDispatchAsync;
-import stroom.cluster.task.api.ClusterDispatchAsyncHelper;
+import stroom.cluster.task.api.ClusterTaskTerminator;
 import stroom.cluster.task.api.NodeNotFoundException;
 import stroom.cluster.task.api.NullClusterStateException;
 import stroom.cluster.task.api.TargetNodeSetFactory;
-import stroom.cluster.task.api.TargetType;
-import stroom.cluster.task.api.TerminateTaskClusterTask;
 import stroom.index.impl.IndexShardService;
 import stroom.index.impl.IndexStore;
 import stroom.index.shared.FindIndexShardCriteria;
@@ -35,12 +33,9 @@ import stroom.index.shared.IndexShard;
 import stroom.index.shared.IndexShard.IndexShardStatus;
 import stroom.query.api.v2.Query;
 import stroom.security.api.SecurityContext;
-import stroom.task.api.AbstractTaskHandler;
-import stroom.task.api.GenericServerTask;
 import stroom.task.api.TaskContext;
 import stroom.task.api.TaskManager;
-import stroom.task.api.VoidResult;
-import stroom.task.shared.FindTaskCriteria;
+import stroom.task.shared.TaskId;
 import stroom.util.shared.ResultPage;
 import stroom.util.shared.Sort.Direction;
 
@@ -55,40 +50,39 @@ import java.util.Map.Entry;
 import java.util.Set;
 import java.util.stream.Collectors;
 
-class AsyncSearchTaskHandler extends AbstractTaskHandler<AsyncSearchTask, VoidResult> {
+class AsyncSearchTaskHandler {
     private static final Logger LOGGER = LoggerFactory.getLogger(AsyncSearchTaskHandler.class);
 
     private final TaskContext taskContext;
     private final TargetNodeSetFactory targetNodeSetFactory;
     private final Provider<ClusterDispatchAsync> dispatchAsyncProvider;
-    private final ClusterDispatchAsyncHelper dispatchHelper;
     private final IndexStore indexStore;
     private final IndexShardService indexShardService;
     private final TaskManager taskManager;
+    private final ClusterTaskTerminator clusterTaskTerminator;
     private final SecurityContext securityContext;
 
     @Inject
     AsyncSearchTaskHandler(final TaskContext taskContext,
                            final TargetNodeSetFactory targetNodeSetFactory,
                            final Provider<ClusterDispatchAsync> dispatchAsyncProvider,
-                           final ClusterDispatchAsyncHelper dispatchHelper,
                            final IndexStore indexStore,
                            final IndexShardService indexShardService,
                            final TaskManager taskManager,
+                           final ClusterTaskTerminator clusterTaskTerminator,
                            final SecurityContext securityContext) {
         this.taskContext = taskContext;
         this.targetNodeSetFactory = targetNodeSetFactory;
         this.dispatchAsyncProvider = dispatchAsyncProvider;
-        this.dispatchHelper = dispatchHelper;
         this.indexStore = indexStore;
         this.indexShardService = indexShardService;
         this.taskManager = taskManager;
+        this.clusterTaskTerminator = clusterTaskTerminator;
         this.securityContext = securityContext;
     }
 
-    @Override
-    public VoidResult exec(final AsyncSearchTask task) {
-        return securityContext.secureResult(() -> securityContext.useAsReadResult(() -> {
+    public void exec(final AsyncSearchTask task, final TaskId taskId) {
+        securityContext.secure(() -> securityContext.useAsRead(() -> {
             final ClusterSearchResultCollector resultCollector = task.getResultCollector();
 
             if (!Thread.currentThread().isInterrupted()) {
@@ -153,11 +147,9 @@ class AsyncSearchTaskHandler extends AbstractTaskHandler<AsyncSearchTask, VoidRe
                     // Now send out distributed search tasks to each worker node.
                     filteredShardNodes.forEach((node, shards) -> {
                         final ClusterSearchTask clusterSearchTask = new ClusterSearchTask(
-                                task,
                                 "Cluster Search",
                                 query,
                                 shards,
-                                sourceNode,
                                 storedFields,
                                 task.getResultSendFrequency(),
                                 task.getCoprocessorMap(),
@@ -184,7 +176,7 @@ class AsyncSearchTaskHandler extends AbstractTaskHandler<AsyncSearchTask, VoidRe
 
                     // Make sure we try and terminate any child tasks on worker
                     // nodes if we need to.
-                    terminateTasks(task);
+                    terminateTasks(task, taskId);
 
                     // Let the result handler know search has finished.
                     resultCollector.complete();
@@ -194,29 +186,17 @@ class AsyncSearchTaskHandler extends AbstractTaskHandler<AsyncSearchTask, VoidRe
                     taskContext.info(() -> task.getSearchName() + " - staying alive for UI requests");
                 }
             }
-
-            return VoidResult.INSTANCE;
         }));
     }
 
-    private void terminateTasks(final AsyncSearchTask task) {
+    private void terminateTasks(final AsyncSearchTask task, final TaskId taskId) {
         // Terminate this task.
-        taskManager.terminate(task.getId());
+        taskManager.terminate(taskId);
 
         // We have to wrap the cluster termination task in another task or
         // ClusterDispatchAsyncImpl
         // will not execute it if the parent task is terminated.
-        final GenericServerTask outerTask = GenericServerTask.create(null, "Terminate: " + task.getTaskName(), "Terminating cluster tasks");
-        outerTask.setRunnable(() -> {
-            taskContext.info(() -> task.getSearchName() + " - terminating child tasks");
-            final FindTaskCriteria findTaskCriteria = new FindTaskCriteria();
-            findTaskCriteria.addAncestorId(task.getId());
-            final TerminateTaskClusterTask terminateTask = new TerminateTaskClusterTask("Terminate: " + task.getTaskName(), findTaskCriteria, false);
-
-            // Terminate matching tasks.
-            dispatchHelper.execAsync(terminateTask, TargetType.ACTIVE);
-        });
-        taskManager.execAsync(outerTask);
+        clusterTaskTerminator.terminate(task.getSearchName(), taskId, "AsyncSearchTask");
     }
 
     private String[] getStoredFields(final IndexDoc index) {

@@ -20,17 +20,12 @@ import stroom.node.api.NodeInfo;
 import stroom.security.api.SecurityContext;
 import stroom.security.api.UserIdentity;
 import stroom.security.shared.PermissionNames;
-import stroom.task.api.TaskCallback;
-import stroom.task.api.TaskCallbackAdaptor;
-import stroom.task.api.TaskHandler;
 import stroom.task.api.TaskManager;
 import stroom.task.api.TaskTerminatedException;
 import stroom.task.shared.FindTaskCriteria;
 import stroom.task.shared.FindTaskProgressCriteria;
-import stroom.task.shared.Task;
 import stroom.task.shared.TaskId;
 import stroom.task.shared.TaskProgress;
-import stroom.task.shared.ThreadPool;
 import stroom.util.logging.LambdaLogger;
 import stroom.util.logging.LambdaLoggerFactory;
 import stroom.util.logging.LogExecutionTime;
@@ -48,7 +43,6 @@ import java.util.List;
 import java.util.Map;
 import java.util.Set;
 import java.util.concurrent.ConcurrentHashMap;
-import java.util.concurrent.Executor;
 import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.function.Supplier;
 import java.util.stream.Collectors;
@@ -57,7 +51,6 @@ import java.util.stream.Collectors;
 class TaskManagerImpl implements TaskManager {
     private static final LambdaLogger LOGGER = LambdaLoggerFactory.getLogger(TaskManagerImpl.class);
 
-    private final TaskHandlerRegistry taskHandlerRegistry;
     private final NodeInfo nodeInfo;
     private final SessionIdProvider sessionIdProvider;
     private final SecurityContext securityContext;
@@ -67,13 +60,11 @@ class TaskManagerImpl implements TaskManager {
     private final AtomicBoolean stop = new AtomicBoolean();
 
     @Inject
-    TaskManagerImpl(final TaskHandlerRegistry taskHandlerRegistry,
-                    final NodeInfo nodeInfo,
+    TaskManagerImpl(final NodeInfo nodeInfo,
                     final SessionIdProvider sessionIdProvider,
                     final SecurityContext securityContext,
                     final PipelineScopeRunnable pipelineScopeRunnable,
                     final ExecutorProviderImpl executorProvider) {
-        this.taskHandlerRegistry = taskHandlerRegistry;
         this.nodeInfo = nodeInfo;
         this.sessionIdProvider = sessionIdProvider;
         this.securityContext = securityContext;
@@ -138,76 +129,6 @@ class TaskManagerImpl implements TaskManager {
         LOGGER.info("shutdown() - Complete");
     }
 
-    /**
-     * Execute a task synchronously.
-     *
-     * @param task The task to execute.
-     * @return The result of the task execution.
-     */
-    @Override
-    public <R> R exec(final Task<R> task) {
-        return createSupplier(task).get();
-    }
-
-    /**
-     * Execute a task asynchronously without expecting to handle any result via
-     * a callback.
-     *
-     * @param task The task to execute asynchronously.
-     */
-    @Override
-    public <R> void execAsync(final Task<R> task) {
-        execAsync(task, null, task.getThreadPool());
-    }
-
-    @Override
-    public <R> void execAsync(final Task<R> task, final ThreadPool threadPool) {
-        execAsync(task, null, threadPool);
-    }
-
-    @Override
-    public <R> void execAsync(final Task<R> task, final TaskCallback<R> callback) {
-        execAsync(task, callback, task.getThreadPool());
-    }
-
-    /**
-     * Execute a task asynchronously with a callback to receive results.
-     *
-     * @param task The task to execute asynchronously.
-     * @param c    The callback that will receive results from the task
-     *             execution.
-     */
-    @Override
-    public <R> void execAsync(final Task<R> task, TaskCallback<R> c, final ThreadPool threadPool) {
-        if (c == null) {
-            c = new AsyncTaskCallback<>();
-        }
-        final TaskCallback<R> callback = c;
-
-        try {
-            // Now we have a task scoped runnable we will execute it in a new thread.
-            final Executor executor = executorProvider.get(threadPool);
-            final Runnable taskRunnable = createRunnable(task, callback);
-            try {
-                // We might run out of threads and get a can't fork
-                // exception from the thread pool.
-                executor.execute(taskRunnable);
-
-            } catch (final Throwable t) {
-                LOGGER.error(() -> "exec() - Unexpected Exception (" + task.getClass().getSimpleName() + ")", t);
-                throw new RuntimeException(t.getMessage(), t);
-            }
-
-        } catch (final Throwable t) {
-            try {
-                callback.onFailure(t);
-            } catch (final Throwable t2) {
-                // Ignore.
-            }
-            throw t;
-        }
-    }
-
     private Set<TaskState> getAncestorTaskSet(final TaskId parentTask) {
         // Get the parent task thread if there is one.
         final Set<TaskState> ancestorTaskSet = new HashSet<>();
@@ -222,68 +143,12 @@ class TaskManagerImpl implements TaskManager {
         return ancestorTaskSet;
     }
 
-    <R> Supplier<R> createSupplier(final Task<R> task) {
-        final LogExecutionTime logExecutionTime = new LogExecutionTime();
-        final UserIdentity userIdentity = getUserIdentity();
-
-        final SyncTaskCallback<R> callback = new SyncTaskCallback<>();
-        final Supplier<R> supplier = () -> {
-            // Get the task handler that will deal with this task.
-            final TaskHandler<Task<R>, R> taskHandler = taskHandlerRegistry.findHandler(task);
-            taskHandler.exec(task, callback);
-
-            if (callback.getThrowable() != null) {
-                if (callback.getThrowable() instanceof RuntimeException) {
-                    throw (RuntimeException) callback.getThrowable();
-                }
-                throw new RuntimeException(callback.getThrowable().getMessage(), callback.getThrowable());
-            }
-
-            return callback.getResult();
-        };
-
-        return wrapSupplier(task.getId(), getTaskName(task),  userIdentity, supplier, logExecutionTime);
-    }
-
-    <R> Runnable createRunnable(final Task<R> task, TaskCallback<R> callback) {
-        final LogExecutionTime logExecutionTime = new LogExecutionTime();
-        final UserIdentity userIdentity = getUserIdentity();
-
-        final Supplier<Void> supplier = () -> {
-            // Get the task handler that will deal with this task.
-            final TaskHandler<Task<R>, R> taskHandler = taskHandlerRegistry.findHandler(task);
-            taskHandler.exec(task, callback);
-            return null;
-        };
-
-        return () -> {
-            try {
-                final Supplier<Void> wrappedSupplier = wrapSupplier(task.getId(), getTaskName(task),  userIdentity, supplier, logExecutionTime);
-                wrappedSupplier.get();
-            } catch (final Throwable t) {
-                try {
-                    callback.onFailure(t);
-                } catch (final Throwable t2) {
-                    LOGGER.debug(t2::getMessage, t2);
-                }
-            }
-        };
-    }
-
     UserIdentity getUserIdentity() {
         final UserIdentity userIdentity = securityContext.getUserIdentity();
         if (userIdentity == null) {
             throw new NullPointerException("Null user identity");
         }
         return userIdentity;
-    }
-
-    private String getTaskName(final Task<?> task) {
-        if (task.getTaskName() != null) {
-            return task.getTaskName();
-        }
-
-        return getTaskName();
     }
 
     String getTaskName() {
@@ -378,8 +243,7 @@ class TaskManagerImpl implements TaskManager {
         };
     }
 
-    @Override
-    public ResultPage<TaskProgress> terminate(final FindTaskCriteria criteria, final boolean kill) {
+    ResultPage<TaskProgress> terminate(final FindTaskCriteria criteria, final boolean kill) {
         return securityContext.secureResult(PermissionNames.MANAGE_TASKS_PERMISSION, () -> {
             // This can change a little between servers
             final long timeNowMs = System.currentTimeMillis();
@@ -517,31 +381,5 @@ class TaskManagerImpl implements TaskManager {
         }
 
         return sb.toString();
-    }
-
-    private static class AsyncTaskCallback<R> extends TaskCallbackAdaptor<R> {
-    }
-
-    private static class SyncTaskCallback<R> extends TaskCallbackAdaptor<R> {
-        private R result;
-        private Throwable throwable;
-
-        @Override
-        public void onSuccess(final R result) {
-            this.result = result;
-        }
-
-        @Override
-        public void onFailure(final Throwable throwable) {
-            this.throwable = throwable;
-        }
-
-        public R getResult() {
-            return result;
-        }
-
-        public Throwable getThrowable() {
-            return throwable;
-        }
     }
 }

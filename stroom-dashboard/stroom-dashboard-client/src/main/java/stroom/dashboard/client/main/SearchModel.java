@@ -76,6 +76,9 @@ public class SearchModel {
             resultComponent.setWantsData(false);
             resultComponent.endSearch();
         }
+
+        // Force a poll to ensure any running query is destroyed.
+        searchBus.poll();
     }
 
     /**
@@ -128,8 +131,8 @@ public class SearchModel {
                                                      final boolean storeHistory,
                                                      final String queryInfo) {
 
-        final Map<String, ComponentSettings> resultComponentMap = createResultComponentMap();
-        if (resultComponentMap != null) {
+        final Map<String, ComponentSettings> componentSettingsMap = createComponentSettingsMap();
+        if (componentSettingsMap != null) {
             final DocRef dataSourceRef = indexLoader.getLoadedDataSourceRef();
             if (dataSourceRef != null && expression != null) {
                 // Create a parameter map.
@@ -148,7 +151,7 @@ public class SearchModel {
                 currentSearch = new Search.Builder()
                         .dataSourceRef(dataSourceRef)
                         .expression(currentExpression)
-                        .componentSettingsMap(resultComponentMap)
+                        .componentSettingsMap(componentSettingsMap)
                         .paramMap(currentParameterMap)
                         .incremental(incremental)
                         .storeHistory(storeHistory)
@@ -156,7 +159,7 @@ public class SearchModel {
                         .build();
             }
         }
-        return resultComponentMap;
+        return componentSettingsMap;
     }
 
     /**
@@ -234,7 +237,7 @@ public class SearchModel {
     public void refresh(final String componentId) {
         final ResultComponent resultComponent = componentMap.get(componentId);
         if (resultComponent != null) {
-            final Map<String, ComponentSettings> resultComponentMap = createResultComponentMap();
+            final Map<String, ComponentSettings> resultComponentMap = createComponentSettingsMap();
             if (resultComponentMap != null) {
                 final DocRef dataSourceRef = indexLoader.getLoadedDataSourceRef();
                 if (dataSourceRef != null) {
@@ -262,7 +265,7 @@ public class SearchModel {
      *
      * @return A result component map.
      */
-    private Map<String, ComponentSettings> createResultComponentMap() {
+    private Map<String, ComponentSettings> createComponentSettingsMap() {
         if (componentMap.size() > 0) {
             final Map<String, ComponentSettings> resultComponentMap = new HashMap<>();
             for (final Entry<String, ResultComponent> entry : componentMap.entrySet()) {
@@ -361,15 +364,49 @@ public class SearchModel {
      * Initialises the model for passed expression and current result settings and returns
      * the corresponding {@link SearchRequest} object
      */
-    public SearchRequest buildSearchRequest(final ExpressionOperator expression,
-                                            final String params,
-                                            final boolean incremental,
-                                            final boolean storeHistory,
-                                            final String searchPurpose) {
+    public SearchRequest createDownloadQueryRequest(final ExpressionOperator expression,
+                                                    final String params,
+                                                    final boolean incremental,
+                                                    final boolean storeHistory,
+                                                    final String queryInfo) {
+        Search search = null;
+        final Map<String, ComponentSettings> resultComponentMap = createComponentSettingsMap();
+        if (resultComponentMap != null) {
+            final DocRef dataSourceRef = indexLoader.getLoadedDataSourceRef();
+            if (dataSourceRef != null && expression != null) {
+                // Create a parameter map.
+                final Map<String, String> currentParameterMap = KVMapUtil.parse(params);
 
-        initModel(expression, params, incremental, storeHistory, searchPurpose);
+                // Replace any parameters in the expression.
+                final ExpressionOperator.Builder builder = new ExpressionOperator.Builder(expression.isEnabled(), expression.getOp());
+                replaceExpressionParameters(builder, expression, currentParameterMap);
+                final ExpressionOperator currentExpression = builder.build();
 
-        return getCurrentRequest();
+                search = new Search.Builder()
+                        .dataSourceRef(dataSourceRef)
+                        .expression(currentExpression)
+                        .componentSettingsMap(resultComponentMap)
+                        .paramMap(currentParameterMap)
+                        .incremental(incremental)
+                        .storeHistory(storeHistory)
+                        .queryInfo(queryInfo)
+                        .build();
+            }
+        }
+
+        if (search == null || componentMap.size() == 0) {
+            return null;
+        }
+
+        final Map<String, ComponentResultRequest> requestMap = new HashMap<>();
+        for (final Entry<String, ResultComponent> entry : componentMap.entrySet()) {
+            final String componentId = entry.getKey();
+            final ResultComponent resultComponent = entry.getValue();
+            final ComponentResultRequest componentResultRequest = resultComponent.createDownloadQueryRequest();
+            requestMap.put(componentId, componentResultRequest);
+        }
+
+        return new SearchRequest(currentQueryKey, search, requestMap, timeZones.getTimeZone());
     }
 
     public boolean isSearching() {

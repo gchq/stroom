@@ -20,16 +20,12 @@ import com.google.inject.AbstractModule;
 import com.google.inject.multibindings.Multibinder;
 import stroom.util.entityevent.EntityEvent;
 import stroom.util.entityevent.EntityEvent.Handler;
-import stroom.task.api.TaskHandlerBinder;
 import stroom.util.guice.GuiceUtil;
 import stroom.util.shared.RestResource;
 
 public class FsDataStoreTaskHandlerModule extends AbstractModule {
     @Override
     protected void configure() {
-        TaskHandlerBinder.create(binder())
-                .bind(FsCleanSubTask.class, FsCleanSubTaskHandler.class);
-
         GuiceUtil.buildMultiBinder(binder(), RestResource.class)
                 .addBinding(FsVolumeResourceImpl.class);
 

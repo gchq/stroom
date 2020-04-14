@@ -22,6 +22,8 @@ import stroom.event.logging.api.DocumentEventLog;
 import stroom.event.logging.api.ObjectInfoProviderBinder;
 import stroom.event.logging.api.StroomEventLoggingService;
 import stroom.security.api.SecurityContext;
+import stroom.util.BuildInfoProvider;
+import stroom.util.shared.BuildInfo;
 
 public class EventLoggingModule extends AbstractModule {
     @Override
@@ -29,6 +31,7 @@ public class EventLoggingModule extends AbstractModule {
         requireBinding(CurrentActivity.class);
         requireBinding(SecurityContext.class);
 
+        bind(BuildInfo.class).toProvider(BuildInfoProvider.class);
         bind(StroomEventLoggingService.class).to(StroomEventLoggingServiceImpl.class);
         bind(DocumentEventLog.class).to(DocumentEventLogImpl.class);
 

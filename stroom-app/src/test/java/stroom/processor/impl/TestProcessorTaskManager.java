@@ -23,7 +23,7 @@ import stroom.entity.shared.ExpressionCriteria;
 import stroom.meta.shared.MetaFields;
 import stroom.node.api.NodeInfo;
 import stroom.processor.api.ProcessorTaskService;
-import stroom.processor.shared.ProcessorTask;
+import stroom.processor.shared.ProcessorTaskList;
 import stroom.processor.shared.QueryData;
 import stroom.query.api.v2.ExpressionOperator;
 import stroom.query.api.v2.ExpressionTerm;
@@ -34,7 +34,6 @@ import stroom.test.CommonTestScenarioCreator;
 import stroom.test.common.util.test.FileSystemTestUtil;
 
 import javax.inject.Inject;
-import java.util.List;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
@@ -141,14 +140,14 @@ class TestProcessorTaskManager extends AbstractCoreIntegrationTest {
         // assertThat(processorTaskManager.getProcessorTaskManagerRecentStreamDetails().hasRecentDetail()).isTrue();
 
         assertThat(getTaskCount()).isEqualTo(1000);
-        List<ProcessorTask> tasks = processorTaskManager.assignTasks(nodeName, 1000);
-        assertThat(tasks.size()).isEqualTo(1000);
+        ProcessorTaskList tasks = processorTaskManager.assignTasks(nodeName, 1000);
+        assertThat(tasks.getList().size()).isEqualTo(1000);
 
         processorTaskManager.createTasks(new SimpleTaskContext());
 //        assertThat(processorTaskManager.getProcessorTaskManagerRecentStreamDetails().hasRecentDetail()).isTrue();
         assertThat(getTaskCount()).isEqualTo(2000);
         tasks = processorTaskManager.assignTasks(nodeName, 1000);
-        assertThat(tasks.size()).isEqualTo(1000);
+        assertThat(tasks.getList().size()).isEqualTo(1000);
 
         processorConfig.setQueueSize(initialQueueSize);
         processorConfig.setFillTaskQueue(true);

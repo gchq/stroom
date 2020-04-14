@@ -25,6 +25,7 @@ import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import stroom.app.guice.CoreModule;
 import stroom.app.guice.JerseyModule;
+import stroom.app.uri.UriFactoryModule;
 import stroom.docref.DocRef;
 import stroom.feed.api.FeedStore;
 import stroom.index.VolumeTestConfigModule;
@@ -55,6 +56,7 @@ import static org.assertj.core.api.Assertions.assertThat;
 @ExtendWith(GuiceExtension.class)
 @IncludeModule(DbTestModule.class)
 @IncludeModule(AppConfigTestModule.class)
+@IncludeModule(UriFactoryModule.class)
 @IncludeModule(CoreModule.class)
 @IncludeModule(ResourceModule.class)
 @IncludeModule(stroom.cluster.impl.MockClusterModule.class)

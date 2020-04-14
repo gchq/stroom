@@ -23,7 +23,6 @@ import com.fasterxml.jackson.annotation.JsonProperty;
 import com.fasterxml.jackson.annotation.JsonPropertyDescription;
 import com.fasterxml.jackson.annotation.JsonPropertyOrder;
 import stroom.util.shared.AbstractConfig;
-import stroom.util.shared.BuildInfo;
 import stroom.util.shared.validation.ValidRegex;
 
 import javax.inject.Singleton;
@@ -39,10 +38,6 @@ public class UiConfig extends AbstractConfig {
     @JsonProperty
     @JsonPropertyDescription("HTML")
     private String aboutHtml;
-    @JsonProperty
-    private BuildInfo buildInfo;
-    @JsonProperty
-    private String nodeName;
     @JsonProperty
     @JsonPropertyDescription("Provide a warning message to users about an outage or other significant event.")
     private String maintenanceMessage;
@@ -80,8 +75,6 @@ public class UiConfig extends AbstractConfig {
     @JsonCreator
     public UiConfig(@JsonProperty("welcomeHtml") final String welcomeHtml,
                     @JsonProperty("aboutHtml") final String aboutHtml,
-                    @JsonProperty("buildInfo") final BuildInfo buildInfo,
-                    @JsonProperty("nodeName") final String nodeName,
                     @JsonProperty("maintenanceMessage") final String maintenanceMessage,
                     @JsonProperty("defaultMaxResults") final String defaultMaxResults,
                     @JsonProperty("process") final ProcessConfig process,
@@ -96,8 +89,6 @@ public class UiConfig extends AbstractConfig {
                     @JsonProperty("url") final UrlConfig url) {
         this.welcomeHtml = welcomeHtml;
         this.aboutHtml = aboutHtml;
-        this.buildInfo = buildInfo;
-        this.nodeName = nodeName;
         this.maintenanceMessage = maintenanceMessage;
         this.defaultMaxResults = defaultMaxResults;
         this.process = process;
@@ -120,9 +111,6 @@ public class UiConfig extends AbstractConfig {
         }
         if (aboutHtml == null) {
             aboutHtml = "<h1>About Stroom</h1><p>Stroom is designed to receive data from multiple systems.</p>";
-        }
-        if (buildInfo == null) {
-            buildInfo = new BuildInfo("TBD", "TBD", "TBD");
         }
         if (defaultMaxResults == null) {
             defaultMaxResults = "1000000,100,10,1";
@@ -173,22 +161,6 @@ public class UiConfig extends AbstractConfig {
 
     public void setAboutHtml(final String aboutHtml) {
         this.aboutHtml = aboutHtml;
-    }
-
-    public BuildInfo getBuildInfo() {
-        return buildInfo;
-    }
-
-    public void setBuildInfo(final BuildInfo buildInfo) {
-        this.buildInfo = buildInfo;
-    }
-
-    public String getNodeName() {
-        return nodeName;
-    }
-
-    public void setNodeName(final String nodeName) {
-        this.nodeName = nodeName;
     }
 
     public String getMaintenanceMessage() {
@@ -292,7 +264,6 @@ public class UiConfig extends AbstractConfig {
         return "UiConfig{" +
                 "welcomeHtml='" + welcomeHtml + '\'' +
                 ", aboutHtml='" + aboutHtml + '\'' +
-                ", nodeName='" + nodeName + '\'' +
                 ", maintenanceMessage='" + maintenanceMessage + '\'' +
                 ", defaultMaxResults='" + defaultMaxResults + '\'' +
                 ", helpUrl='" + helpUrl + '\'' +
@@ -308,25 +279,23 @@ public class UiConfig extends AbstractConfig {
         if (o == null || getClass() != o.getClass()) return false;
         final UiConfig uiConfig = (UiConfig) o;
         return Objects.equals(welcomeHtml, uiConfig.welcomeHtml) &&
-            Objects.equals(aboutHtml, uiConfig.aboutHtml) &&
-            Objects.equals(buildInfo, uiConfig.buildInfo) &&
-            Objects.equals(nodeName, uiConfig.nodeName) &&
-            Objects.equals(maintenanceMessage, uiConfig.maintenanceMessage) &&
-            Objects.equals(defaultMaxResults, uiConfig.defaultMaxResults) &&
-            Objects.equals(process, uiConfig.process) &&
-            Objects.equals(helpUrl, uiConfig.helpUrl) &&
-            Objects.equals(theme, uiConfig.theme) &&
-            Objects.equals(query, uiConfig.query) &&
-            Objects.equals(namePattern, uiConfig.namePattern) &&
-            Objects.equals(htmlTitle, uiConfig.htmlTitle) &&
-            Objects.equals(oncontextmenu, uiConfig.oncontextmenu) &&
-            Objects.equals(splash, uiConfig.splash) &&
-            Objects.equals(activity, uiConfig.activity) &&
-            Objects.equals(url, uiConfig.url);
+                Objects.equals(aboutHtml, uiConfig.aboutHtml) &&
+                Objects.equals(maintenanceMessage, uiConfig.maintenanceMessage) &&
+                Objects.equals(defaultMaxResults, uiConfig.defaultMaxResults) &&
+                Objects.equals(process, uiConfig.process) &&
+                Objects.equals(helpUrl, uiConfig.helpUrl) &&
+                Objects.equals(theme, uiConfig.theme) &&
+                Objects.equals(query, uiConfig.query) &&
+                Objects.equals(namePattern, uiConfig.namePattern) &&
+                Objects.equals(htmlTitle, uiConfig.htmlTitle) &&
+                Objects.equals(oncontextmenu, uiConfig.oncontextmenu) &&
+                Objects.equals(splash, uiConfig.splash) &&
+                Objects.equals(activity, uiConfig.activity) &&
+                Objects.equals(url, uiConfig.url);
     }
 
     @Override
     public int hashCode() {
-        return Objects.hash(welcomeHtml, aboutHtml, buildInfo, nodeName, maintenanceMessage, defaultMaxResults, process, helpUrl, theme, query, namePattern, htmlTitle, oncontextmenu, splash, activity, url);
+        return Objects.hash(welcomeHtml, aboutHtml, maintenanceMessage, defaultMaxResults, process, helpUrl, theme, query, namePattern, htmlTitle, oncontextmenu, splash, activity, url);
     }
 }

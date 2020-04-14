@@ -230,5 +230,3 @@ task gwtClean {
         file(tmpDir).mkdirs()
     }
 }
-
-gwtCompile.onlyIf { !project.hasProperty('skipGWT') }

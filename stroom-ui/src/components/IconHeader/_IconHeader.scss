@@ -1,0 +1,21 @@
+.icon-header {
+  display: inline-flex;
+  // padding: .36rem;
+  // padding-bottom: 0;
+  //align-items: center;
+  // height: 2.7rem;
+  font-size: large;
+  font-weight: 600;
+  flex-grow: 1;
+  align-self: flex-start;
+}
+
+.icon-header__icon {
+  padding-top: .25rem;
+}
+
+.icon-header__text {
+  // padding-right: .3rem;
+  padding-left: .3rem;
+  font-size: 1.4rem;
+}

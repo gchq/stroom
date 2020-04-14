@@ -6,6 +6,7 @@ sudo: required #to ensure we get a VM rather than a container for more memory an
 
 env:
   global:
+#    - NODE_VERSION="13.12.0"
     - DOCKER_COMPOSE_VERSION=1.22.0
     # $TAGPERM environment variable
     # generate a token at https://github.com/settings/tokens and encrypt it
@@ -18,7 +19,41 @@ env:
     #Required for curling the gh api to get the latest release sha
     - secure: "lfyHgJXGIUdZstOoMtwvyQp5UqS4A1m0lYkCgoXNpQPjWIrcloloQMWafIJ4eluJ5ro0HF8UQYkagwoWQrGX57KRQQOMHrg4bYzQGLbEFWSLciI5EABDyj1NXpPOhNN+sOViwKj+rKaDZ9DE/fo4PzsC6aDoA8zZ/Zlc34q/2YIQm6yiKp+OQWI0COeBaEZi9BW0nY44koVG7MRhB3m8RNYuWmO33rDgPKZBpsoXgnqmBi/seFBp8lJTC4ESUud1zHcHm/VfD/AO+nhWtUEFMxqGk2fHEFxmQE/jr2d1WxvGk4mmqU+lSNCTStchGQetuTbFSRE885qHmlRn7UUAxrQhYIOE18z+ZTqccCgSqvcp5EunZCTNIN8ps0HyvJHN3ewasyvyusKIJWsU/V4gRRSpGzsIWSsnlHV35RjKbJ13Er/Yt5Xp8EXW50AbOOuzFCI0pGyAf1NUpjf14dBix02OLNv+zn8/xITmcLc3wciuv0g3utkqW7xj7K1HHTKdUK9zQnk4qgN/q1zEepke0NxD39NwCtLgCdZt/BKu1X2gJzlT6xDRpn5aDB2QXpC56dmlQwEH5d1GyLSHSDrdwtxx/h0RgJ2NybMyHAlhIIhk6ACSBStwwpGjC/ya+Owyhp+aE6lFYkArq/XkcbZXBkInuDzs+avPdUYz7VlmQaU="
     - STROOM_RESOURCES_GIT_REF=cfb0fc812c196b98b43db7f7612b21c49d64c7f8
-    
+
+before_install:
+#  - wget https://raw.githubusercontent.com/creationix/nvm/v0.31.0/nvm.sh -O ~/.nvm/nvm.sh
+#  - source ~/.nvm/nvm.sh
+#  - nvm install $NODE_VERSION
+#  - node --version
+#  - yarn --version
+
+  # Repo for Yarn
+#  - sudo apt-key adv --fetch-keys http://dl.yarnpkg.com/debian/pubkey.gpg
+#  - echo "deb http://dl.yarnpkg.com/debian/ stable main" | sudo tee /etc/apt/sources.list.d/yarn.list
+#  - sudo apt-get update -qq
+#  - sudo apt-get install -y -qq yarn=1.22.4-1
+#
+#  # Install Node
+#  - curl -sL https://deb.nodesource.com/setup_13.x | sudo -E bash -
+#  - sudo apt-get install -y nodejs
+#  - node --version
+#
+#  # Install NPM
+#  - curl -L https://www.npmjs.com/install.sh | sh
+#  - npm --version
+
+  # Install NVM
+  - curl -o- https://raw.githubusercontent.com/creationix/nvm/v0.35.3/install.sh | bash
+
+  # Install Node
+  - nvm install 13.12.0
+  - node --version
+
+  # Install Yarn
+  - curl -o- -L https://yarnpkg.com/install.sh | bash -s -- --version 1.22.4
+  - export PATH="$HOME/.yarn/bin:$HOME/.config/yarn/global/node_modules/.bin:$PATH"
+  - yarn --version
+
 install: echo "skip 'gradle assemble' step to speed up build"
 
 before_script: ./travis.before_script.sh

@@ -34,10 +34,7 @@ import stroom.pipeline.state.PipelineHolder;
 import stroom.resource.api.ResourceStore;
 import stroom.security.api.SecurityContext;
 import stroom.security.shared.PermissionNames;
-import stroom.task.api.TaskManager;
 import stroom.util.HasHealthCheck;
-import stroom.util.logging.LambdaLogger;
-import stroom.util.logging.LambdaLoggerFactory;
 import stroom.util.pipeline.scope.PipelineScopeRunnable;
 import stroom.util.shared.OffsetRange;
 import stroom.util.shared.ResourceGeneration;
@@ -51,11 +48,10 @@ import java.nio.file.Path;
 import java.util.ArrayList;
 
 class DataResourceImpl implements DataResource, HasHealthCheck {
-    private static final LambdaLogger LOGGER = LambdaLoggerFactory.getLogger(DataResourceImpl.class);
-
     private final DataFetcher dataFetcher;
     private final ResourceStore resourceStore;
-    private final TaskManager taskManager;
+    private final Provider<DataUploadTaskHandler> dataUploadTaskHandlerProvider;
+    private final Provider<DataDownloadTaskHandler> dataDownloadTaskHandlerProvider;
     private final StreamEventLog streamEventLog;
     private final SecurityContext securityContext;
 
@@ -72,7 +68,8 @@ class DataResourceImpl implements DataResource, HasHealthCheck {
                      final PipelineDataCache pipelineDataCache,
                      final PipelineScopeRunnable pipelineScopeRunnable,
                      final ResourceStore resourceStore,
-                     final TaskManager taskManager,
+                     final Provider<DataUploadTaskHandler> dataUploadTaskHandlerProvider,
+                     final Provider<DataDownloadTaskHandler> dataDownloadTaskHandlerProvider,
                      final StreamEventLog streamEventLog,
                      final SecurityContext securityContext) {
         dataFetcher = new DataFetcher(streamStore,
@@ -89,7 +86,8 @@ class DataResourceImpl implements DataResource, HasHealthCheck {
                 securityContext,
                 pipelineScopeRunnable);
         this.resourceStore = resourceStore;
-        this.taskManager = taskManager;
+        this.dataUploadTaskHandlerProvider = dataUploadTaskHandlerProvider;
+        this.dataDownloadTaskHandlerProvider = dataDownloadTaskHandlerProvider;
         this.streamEventLog = streamEventLog;
         this.securityContext = securityContext;
     }
@@ -109,7 +107,7 @@ class DataResourceImpl implements DataResource, HasHealthCheck {
                 }
 
                 final DataDownloadSettings settings = new DataDownloadSettings();
-                taskManager.exec(new DataDownloadTask(criteria, file.getParent(), fileName, settings));
+                dataDownloadTaskHandlerProvider.get().downloadData(criteria, file.getParent(), fileName, settings);
 
                 streamEventLog.exportStream(criteria, null);
 
@@ -128,11 +126,16 @@ class DataResourceImpl implements DataResource, HasHealthCheck {
                 // Import file.
                 final Path file = resourceStore.getTempFile(request.getKey());
 
-                taskManager.exec(new StreamUploadTask(request.getFileName(), file, request.getFeedName(),
-                        request.getStreamTypeName(), request.getEffectiveMs(), request.getMetaData()));
+                dataUploadTaskHandlerProvider.get().uploadData(
+                        request.getFileName(),
+                        file,
+                        request.getFeedName(),
+                        request.getStreamTypeName(),
+                        request.getEffectiveMs(),
+                        request.getMetaData());
 
-            } catch (final RuntimeException e) {
-                throw e;//EntityServiceExceptionUtil.create(e);
+//            } catch (final RuntimeException e) {
+//                throw e;//EntityServiceExceptionUtil.create(e);
             } finally {
                 // Delete the import if it was successful
                 resourceStore.deleteTempFile(request.getKey());
@@ -162,7 +165,7 @@ class DataResourceImpl implements DataResource, HasHealthCheck {
 
         return securityContext.secureResult(PermissionNames.VIEW_DATA_PERMISSION, () -> {
             dataFetcher.reset();
-            AbstractFetchDataResult data = dataFetcher.getData(
+            return dataFetcher.getData(
                     streamId,
                     childStreamTypeName,
                     streamRange,
@@ -171,7 +174,6 @@ class DataResourceImpl implements DataResource, HasHealthCheck {
                     null,
                     showAsHtml,
                     expandedSeverities);
-            return data;
         });
     }
 

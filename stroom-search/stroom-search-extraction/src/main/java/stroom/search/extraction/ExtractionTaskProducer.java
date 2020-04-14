@@ -93,7 +93,7 @@ class ExtractionTaskProducer extends TaskProducer {
 
         // Start mapping streams.
         final Executor executor = executorProvider.get(ExtractionTaskExecutor.THREAD_POOL);
-        final Runnable runnable = taskContext.subTask(() -> {
+        final Runnable runnable = taskContext.sub(() -> {
 
             // Elevate permissions so users with only `Use` feed permission can `Read` streams.
             securityContext.asProcessingUser(() -> {
@@ -105,15 +105,20 @@ class ExtractionTaskProducer extends TaskProducer {
                             // Poll for the next set of values.
                             final Values values = topic.get();
                             if (values != null) {
-                                // If we have some values then map them.
-                                streamMapCreator.addEvent(streamEventMap, values.getValues());
+                                try {
+                                    // If we have some values then map them.
+                                    streamMapCreator.addEvent(streamEventMap, values.getValues());
+                                } catch (final RuntimeException e) {
+                                    LOGGER.debug(e.getMessage(), e);
+                                    receivers.values().forEach(receiver -> {
+                                        receiver.getErrorConsumer().accept(new Error(e.getMessage(), e));
+                                        receiver.getCompletionCountConsumer().accept(1L);
+                                    });
+                                }
                             }
                         } catch (final RuntimeException e) {
                             LOGGER.debug(e.getMessage(), e);
-                            receivers.values().forEach(receiver -> {
-                                receiver.getErrorConsumer().accept(new Error(e.getMessage(), e));
-                                receiver.getCompletionCountConsumer().accept(1L);
-                            });
+                            throw e;
                         } finally {
                             // Tell the supplied executor that we are ready to deliver tasks.
                             signalAvailable();

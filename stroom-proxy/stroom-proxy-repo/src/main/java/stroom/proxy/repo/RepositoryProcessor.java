@@ -355,7 +355,7 @@ public final class RepositoryProcessor {
             totalMappedFiles -= fileSet.getFiles().size();
 
             try {
-                final Runnable runnable = taskContext.subTask(() -> {
+                final Runnable runnable = taskContext.sub(() -> {
                     final FileSetProcessor fileSetProcessor = fileSetProcessorProvider.get();
                     fileSetProcessor.process(fileSet);
                 });
@@ -403,7 +403,7 @@ public final class RepositoryProcessor {
 
         public void process(final Path file) {
             try {
-                final Runnable runnable = taskContext.subTask(() -> {
+                final Runnable runnable = taskContext.sub(() -> {
                     // Process the file to extract ZipInfo
                     taskContext.setName("Fragment");
                     taskContext.info(() -> FileUtil.getCanonicalPath(file));
@@ -453,7 +453,7 @@ public final class RepositoryProcessor {
 
         public void process(final Path file, final BasicFileAttributes attrs) {
             try {
-                final Runnable runnable = taskContext.subTask(() -> {
+                final Runnable runnable = taskContext.sub(() -> {
                     // Process the file to extract ZipInfo
                     taskContext.setName("Extract Zip Info");
                     taskContext.info(() -> FileUtil.getCanonicalPath(file));

@@ -1,0 +1,95 @@
+@import "themes.scss";
+@import "themify.scss";
+
+.ReactTable {
+  width: 100%;
+  border: none;
+  border-top: thin solid rgba(0, 0, 0, 0.1);
+}
+
+.ReactTable .rt-thead.-filters input {
+  @include themify($themes) {
+    background-color: themed("control__background-color");
+    color: themed("control__text-color");
+    border-color: themed("control__border-color");
+  }
+}
+
+.ReactTable .-pagination {
+  display: grid;
+  grid-template-columns: 4rem 1fr 4rem;
+  box-shadow: 0 0 4px 0 rgba(0, 0, 0, 0.1);
+}
+
+.ReactTable .rt-thead {
+  flex: 0 0 auto; // Stop rows expanding to fit all vertical space
+}
+
+.ReactTable .rt-tbody {
+  flex: 0 1 auto; // Stop rows expanding to fit all vertical space
+}
+
+// // Style table headers
+.ReactTable .rt-th {
+  font-weight: 600;
+  text-align: left;
+}
+
+.ReactTable .rt-tr {
+  // Add invisible borders to all rows so we can change them to highlight borders when focussed without changing spacing.
+  border: solid thin transparent;
+}
+
+.ReactTable .rt-tr.-odd {
+  @include themify($themes) {
+    background-color: themed("odd-row__background-color");
+  }
+}
+
+.ReactTable .rt-td {
+  // Make the table much more compact
+  padding: 1px 5px;
+}
+
+.ReactTable .rt-tbody .rt-td {
+  border-right: none; // Clean up lines
+}
+
+.ReactTable .header {
+  // We don't need the line under the header
+  border-bottom: none;
+}
+
+.ReactTable .rt-thead.-header {
+  // box-shadow: 0 1px 0 0 rgba(0, 0, 0, 0.15) !important;
+
+  // border-bottom: 2px solid rgba(0,0,0,0.1);
+  box-shadow: 0 0 4px 0 rgba(0, 0, 0, 0.15) !important;
+}
+
+.ReactTable .rt-tbody .rt-tr-group {
+  // We don't need lines between the rows
+  border-bottom: none;
+}
+
+.table-row-dimmed {
+  color: darkgray;
+}
+
+
+
+
+
+// .ReactTable .rt-tbody .rt-tr-group {
+//   max-height: 23px;
+// }
+
+// .ReactTable .rt-th,
+// .ReactTable .rt-td {
+//   padding: 2px 2px;
+// }
+
+// .ReactTable .rt-thead.header {
+//   box-shadow: none;
+//   border-bottom: thin solid lightgrey;
+// }

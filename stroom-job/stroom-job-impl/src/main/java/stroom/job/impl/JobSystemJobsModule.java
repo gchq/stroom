@@ -1,7 +1,7 @@
 package stroom.job.impl;
 
 import stroom.job.api.ScheduledJobsModule;
-import stroom.job.api.TaskConsumer;
+import stroom.job.api.RunnableWrapper;
 
 import javax.inject.Inject;
 
@@ -19,10 +19,10 @@ public class JobSystemJobsModule extends ScheduledJobsModule {
                 .to(FetchNewTasks.class);
     }
 
-    private static class FetchNewTasks extends TaskConsumer {
+    private static class FetchNewTasks extends RunnableWrapper {
         @Inject
         FetchNewTasks(final DistributedTaskFetcher distributedTaskFetcher) {
-            super(task -> distributedTaskFetcher.execute());
+            super(distributedTaskFetcher::execute);
         }
     }
 }

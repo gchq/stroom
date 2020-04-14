@@ -35,7 +35,8 @@ import stroom.pipeline.factory.ConfigurableElement;
 import stroom.pipeline.factory.PipelineProperty;
 import stroom.pipeline.factory.PipelinePropertyDocRef;
 import stroom.pipeline.reader.BOMRemovalInputStream;
-import stroom.pipeline.reader.InvalidCharFilterReader;
+import stroom.pipeline.reader.InvalidXmlCharFilter;
+import stroom.pipeline.reader.Xml11Chars;
 import stroom.pipeline.shared.ElementIcons;
 import stroom.pipeline.shared.TextConverterDoc;
 import stroom.pipeline.shared.data.PipelineElementType;
@@ -191,7 +192,7 @@ public class CombinedParser extends AbstractParser implements SupportsCodeInject
 
             Reader inputStreamReader = new InputStreamReader(bris, charsetName);
             if (fixInvalidChars) {
-                inputStreamReader = new InvalidCharFilterReader(inputStreamReader);
+                inputStreamReader = new InvalidXmlCharFilter(inputStreamReader, new Xml11Chars());
             }
 
             final BufferedReader bufferedReader = new BufferedReader(inputStreamReader);

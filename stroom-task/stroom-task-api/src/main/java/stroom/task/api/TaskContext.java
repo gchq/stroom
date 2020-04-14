@@ -16,8 +16,10 @@
 
 package stroom.task.api;
 
+import stroom.task.shared.TaskId;
 import stroom.util.shared.HasTerminate;
 
+import java.util.function.BiConsumer;
 import java.util.function.Supplier;
 
 public interface TaskContext extends HasTerminate {
@@ -26,18 +28,65 @@ public interface TaskContext extends HasTerminate {
     void info(Supplier<String> messageSupplier);
 
     /**
+     * Get the task id of this context.
+     *
+     * @return The task id of this context.
+     */
+    TaskId getTaskId();
+
+    /**
      * Wrap a supplier in a sub task context that will be used when the supplier is executed.
      *
      * @param supplier The supplier to wrap.
      * @return A task context wrapped supplier.
      */
-    <U> Supplier<U> subTask(Supplier<U> supplier);
+    <U> WrappedSupplier<U> sub(Supplier<U> supplier);
 
     /**
-     * Wrap a runnable in a sub task context that will be used when the runnable is executed.
+     * Wrap a runnable in the task context that will be used when the runnable is executed.
      *
      * @param runnable The runnable to wrap.
      * @return A task context wrapped runnable.
      */
-    Runnable subTask(Runnable runnable);
+    WrappedRunnable sub(Runnable runnable);
+
+    class WrappedSupplier<U> implements Supplier<U> {
+        private final TaskContext taskContext;
+        private final Supplier<U> supplier;
+
+        public WrappedSupplier(final TaskContext taskContext,
+                               final Supplier<U> supplier) {
+            this.taskContext = taskContext;
+            this.supplier = supplier;
+        }
+
+        public TaskContext getTaskContext() {
+            return taskContext;
+        }
+
+        @Override
+        public U get() {
+            return supplier.get();
+        }
+    }
+
+    class WrappedRunnable implements Runnable {
+        private final TaskContext taskContext;
+        private final Runnable runnable;
+
+        public WrappedRunnable(final TaskContext taskContext,
+                               final Runnable runnable) {
+            this.taskContext = taskContext;
+            this.runnable = runnable;
+        }
+
+        public TaskContext getTaskContext() {
+            return taskContext;
+        }
+
+        @Override
+        public void run() {
+            runnable.run();
+        }
+    }
 }

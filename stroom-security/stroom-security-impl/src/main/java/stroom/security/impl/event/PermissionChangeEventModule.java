@@ -18,14 +18,20 @@ package stroom.security.impl.event;
 
 import com.google.inject.AbstractModule;
 import com.google.inject.multibindings.Multibinder;
+import stroom.util.guice.GuiceUtil;
+import stroom.util.shared.RestResource;
 
 public class PermissionChangeEventModule extends AbstractModule {
     @Override
     protected void configure() {
         bind(PermissionChangeEventBus.class).to(PermissionChangeEventBusImpl.class);
+        bind(PermissionChangeResource.class).to(PermissionChangeResourceImpl.class);
 
         // Ensure the multibinder is created.
         Multibinder.newSetBinder(binder(), PermissionChangeEvent.Handler.class);
+
+        GuiceUtil.buildMultiBinder(binder(), RestResource.class)
+                .addBinding(PermissionChangeResourceImpl.class);
     }
 
     @Override

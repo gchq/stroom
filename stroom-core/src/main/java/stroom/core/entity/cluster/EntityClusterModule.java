@@ -17,12 +17,15 @@
 package stroom.core.entity.cluster;
 
 import com.google.inject.AbstractModule;
-import stroom.cluster.task.api.ClusterTaskHandlerBinder;
+import stroom.util.guice.GuiceUtil;
+import stroom.util.shared.RestResource;
 
 public class EntityClusterModule extends AbstractModule {
     @Override
     protected void configure() {
-        ClusterTaskHandlerBinder.create(binder())
-                .bind(ClearServiceClusterTask.class, ClearServiceClusterHandler.class);
+        bind(ClearableResource.class).to(ClearableResourceImpl.class);
+
+        GuiceUtil.buildMultiBinder(binder(), RestResource.class)
+                .addBinding(ClearableResourceImpl.class);
     }
 }

@@ -20,6 +20,7 @@ import stroom.pipeline.errorhandler.ErrorReceiver;
 import stroom.pipeline.errorhandler.ErrorReceiverProxy;
 import stroom.pipeline.errorhandler.LoggingErrorReceiver;
 import stroom.pipeline.shared.SourceLocation;
+import stroom.pipeline.shared.stepping.PipelineStepRequest;
 import stroom.pipeline.shared.stepping.StepLocation;
 import stroom.pipeline.shared.stepping.StepType;
 import stroom.pipeline.state.LocationHolder;
@@ -48,7 +49,7 @@ public class SteppingController {
     private final LocationHolder locationHolder;
 
     private String streamInfo;
-    private SteppingTask request;
+    private PipelineStepRequest request;
     private StepLocation stepLocation;
     private StepLocation foundLocation;
     private RecordDetector recordDetector;
@@ -82,11 +83,11 @@ public class SteppingController {
         this.recordDetector = recordDetector;
     }
 
-    public SteppingTask getRequest() {
+    public PipelineStepRequest getRequest() {
         return request;
     }
 
-    public void setRequest(final SteppingTask request) {
+    public void setRequest(final PipelineStepRequest request) {
         this.request = request;
     }
 

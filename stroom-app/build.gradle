@@ -231,6 +231,7 @@ shadowJar {
     // We want to compile all GWT content before we build the fat jar.
     dependsOn ':stroom-app-gwt:gwtCompile'
     dependsOn ':stroom-dashboard-gwt:gwtCompile'
+    dependsOn ':stroom-ui:copyYarnBuild'
 
     // Allows us to build fat jars with lots of files
     zip64 true
@@ -247,6 +248,7 @@ shadowJar {
 // Make sure GWT compilation doesn't run before tests.
 tasks.getByPath(':stroom-app-gwt:gwtCompile').mustRunAfter test
 tasks.getByPath(':stroom-dashboard-gwt:gwtCompile').mustRunAfter test
+tasks.getByPath(':stroom-ui:copyYarnBuild').mustRunAfter test
 
 run {
     //Ensure we have the latest kafka plugin jar available for runtime

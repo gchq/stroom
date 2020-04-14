@@ -1,0 +1,126 @@
+/*
+ * Copyright 2018 Crown Copyright
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ *     http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
+@import "./ValueWidget/valueWidget";
+
+.operator__children {
+  padding-left: 2rem;
+}
+
+.operator__child {
+  display: flex;
+}
+
+.expression-term:hover {
+  //TODO: themify
+  background-color: rgba(144, 202, 249, 0.1);
+}
+
+.expression-item__row:hover {
+  //TODO: themify
+  background-color: rgba(144, 202, 249, 0.1);
+}
+
+
+/** The next two styles hide/show the buttons on expression terms */
+.expression-term .expression-term__actions {
+  visibility: hidden;
+}
+
+.operator__child:hover>div>div>.ExpressionOperator__expression>.expression-term__actions {
+  visibility: visible;
+}
+
+.ExpressionItem__buttons {
+  visibility: hidden;
+}
+
+.expression-item__row {
+  display: flex;
+}
+
+.expression-item__row:hover .ExpressionItem__buttons {
+  visibility: visible;
+}
+
+.expression-item__root:hover>div>div>div>.ExpressionOperator__gripper {
+  color: #2185d0;
+}
+
+.expression-item__root {
+  margin-right: 0.5rem;
+  margin-left: 0.75rem;
+}
+
+.expression-item {
+  width: 100%;
+  justify-content: space-between;
+  margin-right: 2em;
+}
+
+.expression-item--disabled {
+  opacity: 0.5;
+}
+
+.expression-item--disabled.expression-item--readonly {
+  text-decoration: line-through;
+  opacity: 1;
+}
+
+.ExpressionItem__buttons {
+  float: right;
+}
+
+.ExpressionOperator__circle {
+  display: flex;
+  align-items: center;
+  padding-right: 4px;
+}
+
+.ExpressionTerm__expression {
+  display: flex;
+}
+
+.ExpressionOperator__gripper {
+  color: #e4e4e4;
+}
+
+.ExpressionOperator__expression {
+  width: 20em;
+  display: grid;
+  grid-template-columns: 10em 7em 10em 10em;
+  grid-template-rows: 100%;
+}
+
+.operator__child:hover>div>div>div>div>.ExpressionOperator__gripper {
+  color: #2185d0;
+}
+
+.operator__placeholder {
+  opacity: 1;
+  margin-top: 0.5rem;
+  border-style: dashed;
+  border-color: grey;
+  height: 2.5rem;
+  border-radius: 5px;
+}
+
+.expression-term {
+  display: flex;
+}
+
+.expression-term__select {
+  width: 12rem;
+}

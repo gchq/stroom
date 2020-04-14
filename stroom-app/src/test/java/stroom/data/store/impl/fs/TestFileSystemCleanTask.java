@@ -25,7 +25,6 @@ import stroom.data.shared.StreamTypeNames;
 import stroom.data.store.api.Store;
 import stroom.data.store.api.Target;
 import stroom.data.store.api.TargetUtil;
-import stroom.job.impl.MockTask;
 import stroom.meta.api.MetaProperties;
 import stroom.meta.shared.Meta;
 import stroom.task.impl.ExecutorProviderImpl;
@@ -65,7 +64,7 @@ class TestFileSystemCleanTask extends AbstractCoreIntegrationTest {
 
     @Test
     void testCheckCleaning() throws IOException {
-        fileSystemCleanTaskExecutor.clean(new MockTask("Test"));
+        fileSystemCleanTaskExecutor.clean();
 
         waitForTaskManagerToComplete();
 
@@ -129,7 +128,7 @@ class TestFileSystemCleanTask extends AbstractCoreIntegrationTest {
             FileUtil.setLastModified(oldfileinnewdir, ZonedDateTime.now(ZoneOffset.UTC).plusDays(NEG_FOUR).toInstant().toEpochMilli());
 
             // Run the clean
-            fileSystemCleanTaskExecutor.clean(new MockTask("Test"));
+            fileSystemCleanTaskExecutor.clean();
 
             waitForTaskManagerToComplete();
 
@@ -160,7 +159,7 @@ class TestFileSystemCleanTask extends AbstractCoreIntegrationTest {
 
         assertThat(dataVolumeService.find(streamVolumeCriteria).size() >= 1).as("Must be saved to at least one volume").isTrue();
 
-        fileSystemCleanTaskExecutor.clean(new MockTask("Test"));
+        fileSystemCleanTaskExecutor.clean();
 
         files = streamMaintenanceService.findAllStreamFile(meta);
 
@@ -168,14 +167,14 @@ class TestFileSystemCleanTask extends AbstractCoreIntegrationTest {
 
         assertThat(dataVolumeService.find(streamVolumeCriteria).size() >= 1).as("Volumes should still exist as they are new").isTrue();
 
-        fileSystemCleanTaskExecutor.clean(new MockTask("Test"));
+        fileSystemCleanTaskExecutor.clean();
 
         waitForTaskManagerToComplete();
     }
 
     @Test
     void testCheckCleaningLotsOfFiles() throws IOException {
-        fileSystemCleanTaskExecutor.clean(new MockTask("Test"));
+        fileSystemCleanTaskExecutor.clean();
 
         waitForTaskManagerToComplete();
 
@@ -195,7 +194,7 @@ class TestFileSystemCleanTask extends AbstractCoreIntegrationTest {
             }
         }
 
-        fileSystemCleanTaskExecutor.clean(new MockTask("Test"));
+        fileSystemCleanTaskExecutor.clean();
 
         waitForTaskManagerToComplete();
 

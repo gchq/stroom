@@ -1,7 +1,7 @@
 package stroom.statistics.impl.sql;
 
 import stroom.job.api.ScheduledJobsModule;
-import stroom.job.api.TaskConsumer;
+import stroom.job.api.RunnableWrapper;
 
 import javax.inject.Inject;
 
@@ -30,24 +30,24 @@ public class SQLStatisticsJobsModule extends ScheduledJobsModule {
                 .to(SQLStatsAggregation.class);
     }
 
-    private static class EvictFromObjectPool extends TaskConsumer {
+    private static class EvictFromObjectPool extends RunnableWrapper {
         @Inject
         EvictFromObjectPool(final SQLStatisticEventStore sqlStatisticEventStore) {
-            super(task -> sqlStatisticEventStore.evict());
+            super(sqlStatisticEventStore::evict);
         }
     }
 
-    private static class SQLStatsFlush extends TaskConsumer {
+    private static class SQLStatsFlush extends RunnableWrapper {
         @Inject
         SQLStatsFlush(final SQLStatisticCache sqlStatisticCache) {
-            super(task -> sqlStatisticCache.execute());
+            super(sqlStatisticCache::execute);
         }
     }
 
-    private static class SQLStatsAggregation extends TaskConsumer {
+    private static class SQLStatsAggregation extends RunnableWrapper {
         @Inject
         SQLStatsAggregation(final SQLStatisticAggregationManager sqlStatisticAggregationManager) {
-            super(task -> sqlStatisticAggregationManager.aggregate());
+            super(sqlStatisticAggregationManager::aggregate);
         }
     }
 }

@@ -21,7 +21,7 @@ import com.mashape.unirest.http.Unirest;
 import com.mashape.unirest.http.exceptions.UnirestException;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import stroom.authentication.resources.user.v1.User;
+import stroom.authentication.account.Account;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
@@ -44,11 +44,11 @@ public class AuthenticationManager {
         return jwsToken;
     }
 
-    public final String logInAsUser(User user) throws UnirestException {
+    public final String logInAsUser(Account account) throws UnirestException {
         HttpResponse getJwsResponse = Unirest
                 .post(loginUrl)
                 .header("Content-Type", "application/json")
-                .body("{\"email\" : \"" + user.getEmail() + "\", \"password\" : \"testPassword\"}")
+                .body("{\"email\" : \"" + account.getEmail() + "\", \"password\" : \"testPassword\"}")
                 .asString();
         return (String) getJwsResponse.getBody();
     }
