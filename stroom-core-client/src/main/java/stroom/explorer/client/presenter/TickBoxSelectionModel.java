@@ -200,6 +200,9 @@ public class TickBoxSelectionModel extends AbstractSelectionModel<ExplorerNode> 
     }
 
     private void addChildren(final ExplorerNode parent, final List<ExplorerNode> children, final boolean select) {
+        if (children == null) {
+            return;
+        }
         for (final ExplorerNode child : children) {
             parents.put(child, parent);
 

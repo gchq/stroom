@@ -168,7 +168,7 @@ class JWTService implements HasHealthCheck {
         try {
             final JsonWebKeySet publicJsonWebKey = getJsonWebKeySet();
             if (publicJsonWebKey == null) {
-                resultBuilder.withDetail(KEY, "Cannot get stroom-authentication-service's public key!\n");
+                resultBuilder.withDetail(KEY, "Missing public key\n");
                 resultBuilder.unhealthy();
             }
         } catch (RuntimeException e) {
