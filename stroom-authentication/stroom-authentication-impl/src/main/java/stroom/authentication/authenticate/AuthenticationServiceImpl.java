@@ -8,7 +8,7 @@ import stroom.authentication.account.Account;
 import stroom.authentication.account.AccountDao;
 import stroom.authentication.account.AccountService;
 import stroom.authentication.api.OIDC;
-import stroom.authentication.authenticate.api.AuthSession;
+import stroom.authentication.authenticate.api.AuthenticationService;
 import stroom.authentication.config.AuthenticationConfig;
 import stroom.authentication.config.PasswordIntegrityChecksConfig;
 import stroom.authentication.exceptions.BadRequestException;
@@ -16,7 +16,6 @@ import stroom.authentication.token.TokenDao;
 import stroom.config.common.UriFactory;
 import stroom.event.logging.api.StroomEventLoggingService;
 import stroom.security.api.SecurityContext;
-import stroom.util.shared.ResourcePaths;
 
 import javax.inject.Inject;
 import javax.servlet.http.HttpServletRequest;
@@ -35,10 +34,10 @@ import static stroom.authentication.authenticate.PasswordValidator.validateCompl
 import static stroom.authentication.authenticate.PasswordValidator.validateLength;
 import static stroom.authentication.authenticate.PasswordValidator.validateReuse;
 
-class AuthenticationService implements AuthSession {
-    private static final Logger LOGGER = LoggerFactory.getLogger(AuthenticationService.class);
+class AuthenticationServiceImpl implements AuthenticationService {
+    private static final Logger LOGGER = LoggerFactory.getLogger(AuthenticationServiceImpl.class);
 
-    private static final String AUTHENTICATED_ACCOUNT = "AUTHENTICATED_ACCOUNT";
+    private static final String AUTH_STATE = "AUTH_STATE";
     private static final String INVALID_CREDENTIALS_MESSAGE = "Invalid credentials";
     private static final String ACCOUNT_LOCKED_MESSAGE = "This account is locked. Please contact your administrator";
     private static final String ACCOUNT_DISABLED_MESSAGE = "This account is disabled. Please contact your administrator";
@@ -57,7 +56,7 @@ class AuthenticationService implements AuthSession {
     private SecurityContext securityContext;
 
     @Inject
-    public AuthenticationService(
+    public AuthenticationServiceImpl(
             final UriFactory uriFactory,
             final @NotNull AuthenticationConfig config,
             final TokenDao tokenDao,
@@ -191,68 +190,70 @@ class AuthenticationService implements AuthSession {
 //        request.getSession(true).setAttribute(AUTHENTICATED_ACCOUNT, user);
 //    }
 
-    private void setSessionUser(final HttpSession session, final Account account) {
+    private void setAuthState(final HttpSession session, final AuthStateImpl authStateImpl) {
         if (session != null) {
-            session.setAttribute(AUTHENTICATED_ACCOUNT, account);
+            session.setAttribute(AUTH_STATE, authStateImpl);
         }
     }
 
-    private Account getSessionUser(final HttpServletRequest request) {
+    private AuthStateImpl getAuthState(final HttpServletRequest request) {
         final HttpSession session = request.getSession(false);
         if (session != null) {
-            return (Account) session.getAttribute(AUTHENTICATED_ACCOUNT);
+            return (AuthStateImpl) session.getAttribute(AUTH_STATE);
         }
         return null;
     }
 
     @Override
-    public Optional<String> currentSubject(final HttpServletRequest request) {
-        Account account = getSessionUser(request);
+    public Optional<AuthState> currentAuthState(final HttpServletRequest request) {
+        AuthStateImpl authState = getAuthState(request);
 
         // Now we can check if we're logged in somehow (session or certs) and build the response accordingly
-        if (account != null) {
-            return Optional.ofNullable(account.getEmail());
+        if (authState != null) {
+            return Optional.of(authState);
 
         } else {
-            String cn = null;
-            String dn = CertificateUtil.extractCertificateDN(request);
-            if (dn != null) {
-                cn = CertificateUtil.extractCNFromDN(dn);
-            }
+            loginWithCertificate(request);
+        }
 
-            if (cn != null) {
-                // Check for a certificate
-                LOGGER.debug("User has presented a certificate: {}", cn);
-                Optional<String> optionalSubject = getIdFromCertificate(cn);
+        return Optional.ofNullable(getAuthState(request));
+    }
 
-                if (optionalSubject.isEmpty()) {
-                    throw new RuntimeException("User is presenting a certificate but this certificate cannot be processed!");
+    private void loginWithCertificate(final HttpServletRequest request) {
+        String cn = null;
+        String dn = CertificateUtil.extractCertificateDN(request);
+        if (dn != null) {
+            cn = CertificateUtil.extractCNFromDN(dn);
+        }
+
+        if (cn != null) {
+            // Check for a certificate
+            LOGGER.debug("User has presented a certificate: {}", cn);
+            Optional<String> optionalSubject = getIdFromCertificate(cn);
+
+            if (optionalSubject.isEmpty()) {
+                throw new RuntimeException("User is presenting a certificate but this certificate cannot be processed!");
+
+            } else {
+                final String subject = optionalSubject.get();
+                final Optional<Account> optionalAccount = accountDao.get(subject);
+                if (optionalAccount.isEmpty()) {
+                    // There's no user so we can't let them have access.
+                    throw new BadRequestException("The user identified by the certificate does not exist in the auth database.");
 
                 } else {
-                    final String subject = optionalSubject.get();
-                    final Optional<Account> optionalAccount = accountDao.get(subject);
-                    if (optionalAccount.isEmpty()) {
-                        // There's no user so we can't let them have access.
-                        throw new BadRequestException("The user identified by the certificate does not exist in the auth database.");
+                    final Account account = optionalAccount.get();
+                    if (!account.isLocked() && !account.isInactive() && account.isEnabled()) {
+                        LOGGER.info("Logging user in using DN with subject {}", subject);
+                        setAuthState(request.getSession(true), new AuthStateImpl(account, false));
 
-                    } else {
-                        account = optionalAccount.get();
-                        if (!account.isLocked() && !account.isInactive() && account.isEnabled()) {
-                            LOGGER.info("Logging user in using DN with subject {}", subject);
-                            setSessionUser(request.getSession(true), account);
-
-                            stroomEventLoggingService.createAction("Logon", "User logged in successfully");
-                            // Reset last access, login failures, etc...
-                            accountDao.recordSuccessfulLogin(subject);
-
-                            return Optional.ofNullable(account.getEmail());
-                        }
+                        stroomEventLoggingService.createAction("Logon", "User logged in successfully");
+                        // Reset last access, login failures, etc...
+                        accountDao.recordSuccessfulLogin(subject);
                     }
                 }
             }
         }
-
-        return Optional.empty();
     }
 
     public LoginResponse handleLogin(final Credentials credentials,
@@ -260,7 +261,7 @@ class AuthenticationService implements AuthSession {
                                      final String redirectUri) {
         LoginResponse loginResponse;
 
-        setSessionUser(request.getSession(false), null);
+        clearSession(request);
 
         // Check the credentials
         LoginResult loginResult = accountDao.areCredentialsValid(credentials.getEmail(), credentials.getPassword());
@@ -356,7 +357,7 @@ class AuthenticationService implements AuthSession {
         final HttpSession httpSession = request.getSession(false);
         if (httpSession != null) {
             stroomEventLoggingService.createAction("Logout", "The user has logged out.");
-            setSessionUser(request.getSession(false), null);
+            clearSession(request);
         }
         return redirectUri;
     }
@@ -379,7 +380,7 @@ class AuthenticationService implements AuthSession {
         }
     }
 
-    public ChangePasswordResponse changePassword(ChangePasswordRequest changePasswordRequest) {
+    public ChangePasswordResponse changePassword(final HttpServletRequest request, final ChangePasswordRequest changePasswordRequest) {
         List<PasswordValidationFailureType> failedOn = new ArrayList<>();
         final LoginResult loginResult = accountDao.areCredentialsValid(changePasswordRequest.getEmail(), changePasswordRequest.getOldPassword());
         validateAuthenticity(loginResult).ifPresent(failedOn::add);
@@ -389,9 +390,18 @@ class AuthenticationService implements AuthSession {
 
         final ChangePasswordResponse.ChangePasswordResponseBuilder responseBuilder = new ChangePasswordResponse.ChangePasswordResponseBuilder();
         if (failedOn.size() == 0) {
-            responseBuilder.withSuccess();
             stroomEventLoggingService.createAction("ChangePassword", "User reset their password");
             accountDao.changePassword(changePasswordRequest.getEmail(), changePasswordRequest.getNewPassword());
+
+            responseBuilder.withSuccess();
+
+            // Record that the password no longer needs changing.
+            final AuthStateImpl authState = getAuthState(request);
+            if (authState != null) {
+                if (authState.getSubject().equals(changePasswordRequest.getEmail())) {
+                    setAuthState(request.getSession(true), new AuthStateImpl(authState.getAccount(), false));
+                }
+            }
         } else {
             responseBuilder.withFailedOn(failedOn);
         }
@@ -445,54 +455,85 @@ class AuthenticationService implements AuthSession {
                 .build();
     }
 
-    public URI postAuthenticationRedirect(final HttpServletRequest request, final String redirectUri) {
-        final Account account = getSessionUser(request);
-        if (account == null) {
-            throw new BadRequestException("User is not authenticated");
-        }
+//    public URI postAuthenticationRedirect(final HttpServletRequest request, final String redirectUri) {
+//        final Account account = getSessionUser(request);
+//        if (account == null) {
+//            throw new BadRequestException("User is not authenticated");
+//        }
+//
+//        final String username = account.getEmail();
+//
+//        boolean userNeedsToChangePassword = accountDao.needsPasswordChange(
+//                username, config.getPasswordIntegrityChecksConfig().getMandatoryPasswordChangeDuration().getDuration(),
+//                config.getPasswordIntegrityChecksConfig().isForcePasswordChangeOnFirstLogin());
+//
+//        URI result;
+//
+//        if (userNeedsToChangePassword) {
+//            final String innerRedirectUri = getPostAuthenticationCheckUrl(redirectUri);
+//            result = UriBuilder.fromUri(uriFactory.uiUri(config.getChangePasswordUrl()))
+//                    .queryParam(OIDC.REDIRECT_URI, innerRedirectUri)
+//                    .build();
+//        } else {
+//            result = UriBuilder.fromUri(redirectUri).build();
+//        }
+//
+//        return result;
+//    }
+
+    private String processSuccessfulLogin(final HttpServletRequest request,
+                                          final Account account,
+                                          final String redirectUri) {
+        // Make sure the session is authenticated and ready for use
+        clearSession(request);
 
         final String username = account.getEmail();
+        LOGGER.debug("Login for {} succeeded", username);
 
-        boolean userNeedsToChangePassword = accountDao.needsPasswordChange(
+        final boolean userNeedsToChangePassword = accountDao.needsPasswordChange(
                 username, config.getPasswordIntegrityChecksConfig().getMandatoryPasswordChangeDuration().getDuration(),
                 config.getPasswordIntegrityChecksConfig().isForcePasswordChangeOnFirstLogin());
 
         URI result;
 
         if (userNeedsToChangePassword) {
-            final String innerRedirectUri = getPostAuthenticationCheckUrl(redirectUri);
-            result = UriBuilder.fromUri(uriFactory.uiUri(config.getChangePasswordUrl()))
-                    .queryParam(OIDC.REDIRECT_URI, innerRedirectUri)
-                    .build();
+//            final String innerRedirectUri = getPostAuthenticationCheckUrl(redirectUri);
+            result = createChangePasswordUri(redirectUri);
         } else {
             result = UriBuilder.fromUri(redirectUri).build();
         }
 
-        return result;
-    }
-
-    private String processSuccessfulLogin(final HttpServletRequest request,
-                                          final Account account,
-                                          final String redirectUri) {
-        // Make sure the session is authenticated and ready for use
-        setSessionUser(request.getSession(false), null);
-
-        LOGGER.debug("Login for {} succeeded", account.getEmail());
-
         // Reset last access, login failures, etc...
         accountDao.recordSuccessfulLogin(account.getEmail());
-        setSessionUser(request.getSession(true), account);
+        setAuthState(request.getSession(true), new AuthStateImpl(account, userNeedsToChangePassword));
 
-        return getPostAuthenticationCheckUrl(redirectUri);
+        return result.toString();
     }
 
-    private String getPostAuthenticationCheckUrl(final String redirectUri) {
-        final URI uri = UriBuilder
-                .fromUri(uriFactory.publicUri(ResourcePaths.API_ROOT_PATH + AuthenticationResource.BASE_PATH + AuthenticationResource.PATH_POST_AUTHENTICATION_REDIRECT))
+    @Override
+    public URI createLoginUri(final String redirectUri) {
+        LOGGER.debug("Sending user to login.");
+        final UriBuilder uriBuilder = UriBuilder.fromUri(uriFactory.uiUri(config.getLoginUrl()))
+                .queryParam("error", "login_required")
+                .queryParam(OIDC.REDIRECT_URI, redirectUri);
+        return uriBuilder.build();
+    }
+
+    @Override
+    public URI createChangePasswordUri(final String redirectUri) {
+        LOGGER.debug("Sending user to change password.");
+        return UriBuilder.fromUri(uriFactory.uiUri(config.getChangePasswordUrl()))
                 .queryParam(OIDC.REDIRECT_URI, redirectUri)
                 .build();
-        return uri.toString();
     }
+
+    //    private String getPostAuthenticationCheckUrl(final String redirectUri) {
+//        final URI uri = UriBuilder
+//                .fromUri(uriFactory.publicUri(ResourcePaths.API_ROOT_PATH + AuthenticationResource.BASE_PATH + AuthenticationResource.PATH_POST_AUTHENTICATION_REDIRECT))
+//                .queryParam(OIDC.REDIRECT_URI, redirectUri)
+//                .build();
+//        return uri.toString();
+//    }
 
     private Optional<String> getIdFromCertificate(final String cn) {
         final Pattern idExtractionPattern = Pattern.compile(this.config.getCertificateDnPattern());
@@ -539,4 +580,32 @@ class AuthenticationService implements AuthSession {
 //        tokenDao.createIdToken(idToken, subject, new Timestamp(expiresOn.toEpochMilli()));
 //        return idToken;
 //    }
+
+    private void clearSession(final HttpServletRequest request) {
+        setAuthState(request.getSession(false), null);
+    }
+
+    private static class AuthStateImpl implements AuthState {
+        private final Account account;
+        private final boolean requirePasswordChange;
+
+        public AuthStateImpl(final Account account, final boolean requirePasswordChange) {
+            this.account = account;
+            this.requirePasswordChange = requirePasswordChange;
+        }
+
+        public Account getAccount() {
+            return account;
+        }
+
+        @Override
+        public String getSubject() {
+            return account.getEmail();
+        }
+
+        @Override
+        public boolean isRequirePasswordChange() {
+            return requirePasswordChange;
+        }
+    }
 }

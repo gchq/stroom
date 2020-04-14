@@ -23,7 +23,6 @@ import org.slf4j.LoggerFactory;
 import stroom.authentication.exceptions.NoSuchUserException;
 
 import javax.inject.Inject;
-import javax.inject.Singleton;
 import javax.servlet.http.HttpServletRequest;
 import javax.ws.rs.core.Response;
 import javax.ws.rs.core.Response.Status;
@@ -37,10 +36,10 @@ import static javax.ws.rs.core.Response.status;
 class AuthenticationResourceImpl implements AuthenticationResource {
     private static final Logger LOGGER = LoggerFactory.getLogger(AuthenticationResourceImpl.class);
 
-    private AuthenticationService service;
+    private AuthenticationServiceImpl service;
 
     @Inject
-    AuthenticationResourceImpl(final AuthenticationService service) {
+    AuthenticationResourceImpl(final AuthenticationServiceImpl service) {
         this.service = service;
     }
 
@@ -85,38 +84,40 @@ class AuthenticationResourceImpl implements AuthenticationResource {
     @Override
     public final Response changePassword(final HttpServletRequest request,
                                          final ChangePasswordRequest changePasswordRequest) {
-        var changePasswordResponse = service.changePassword(changePasswordRequest);
+        final ChangePasswordResponse changePasswordResponse = service.changePassword(request, changePasswordRequest);
         return Response.status(Status.OK).entity(changePasswordResponse).build();
     }
 
     @Override
     public final Response resetPassword(final ResetPasswordRequest req) {
-        var changePasswordResponse = service.resetPassword(req);
+        final ChangePasswordResponse changePasswordResponse = service.resetPassword(req);
         if (changePasswordResponse != null) {
             return Response.status(Status.OK).entity(changePasswordResponse).build();
-        } else return Response.status(Status.UNAUTHORIZED).build();
+        } else {
+            return Response.status(Status.UNAUTHORIZED).build();
+        }
     }
 
     @Override
     public final Response needsPasswordChange(final String email) {
-        var userNeedsToChangePassword = service.needsPasswordChange(email);
+        final boolean userNeedsToChangePassword = service.needsPasswordChange(email);
         return Response.status(Status.OK).entity(userNeedsToChangePassword).build();
     }
 
     @Override
     public final Response isPasswordValid(final HttpServletRequest request,
                                           final PasswordValidationRequest passwordValidationRequest) {
-        var response = service.isPasswordValid(passwordValidationRequest);
+        final PasswordValidationResponse response = service.isPasswordValid(passwordValidationRequest);
         return Response.status(Status.OK).entity(response).build();
     }
 
-    @Override
-    public final Response postAuthenticationRedirect(final HttpServletRequest request,
-                                                     final String redirectUri) {
-        final URI uri = service.postAuthenticationRedirect(request, redirectUri);
-        return seeOther(uri).build();
-    }
-
+//    @Override
+//    public final Response postAuthenticationRedirect(final HttpServletRequest request,
+//                                                     final String redirectUri) {
+//        final URI uri = service.postAuthenticationRedirect(request, redirectUri);
+//        return seeOther(uri).build();
+//    }
+//
 //    @Override
 //    public Boolean logout() {
 //        return securityContext.insecureResult(() -> {

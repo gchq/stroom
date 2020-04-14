@@ -32,6 +32,7 @@ const ChangePasswordForm: React.FunctionComponent<{
   let title = "Change your password";
   if (showChangeConfirmation && redirectUri) {
     title = "Your password has been changed";
+    window.location.href = redirectUri;
   }
 
   let content;

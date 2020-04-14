@@ -47,7 +47,7 @@ import java.net.URISyntaxException;
 @Api(description = "Stroom Authentication API", tags = {"Authentication"})
 public interface AuthenticationResource extends RestResource {
     String BASE_PATH = "/authentication" + ResourcePaths.V1;
-    String PATH_POST_AUTHENTICATION_REDIRECT = "/noauth/postAuthenticationRedirect";
+//    String PATH_POST_AUTHENTICATION_REDIRECT = "/noauth/postAuthenticationRedirect";
 
     /**
      * We expect the user to have a session if they're trying to log in.
@@ -133,19 +133,19 @@ public interface AuthenticationResource extends RestResource {
             @Context @NotNull HttpServletRequest request,
             @ApiParam("passwordValidationRequest") @NotNull PasswordValidationRequest passwordValidationRequest);
 
-    /**
-     * Checks to see if the user needs to change their password, and re-directs them accordingly if they do.
-     * If they don't it will create the redirection URL with access code as normal.
-     */
-    @GET
-    @Path("/noauth/postAuthenticationRedirect")
-    @Produces({"application/json"})
-    @Timed
-    @NotNull
-    Response postAuthenticationRedirect(
-            @Context @NotNull HttpServletRequest request,
-            @QueryParam(OIDC.REDIRECT_URI) @Nullable String redirectUri);
-
+//    /**
+//     * Checks to see if the user needs to change their password, and re-directs them accordingly if they do.
+//     * If they don't it will create the redirection URL with access code as normal.
+//     */
+//    @GET
+//    @Path("/noauth/postAuthenticationRedirect")
+//    @Produces({"application/json"})
+//    @Timed
+//    @NotNull
+//    Response postAuthenticationRedirect(
+//            @Context @NotNull HttpServletRequest request,
+//            @QueryParam(OIDC.REDIRECT_URI) @Nullable String redirectUri);
+//
 //    @GET
 //    @Path("gwt_logout")
 //    @Consumes(MediaType.APPLICATION_JSON)

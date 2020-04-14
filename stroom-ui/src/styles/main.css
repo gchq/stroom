@@ -977,7 +977,7 @@ select {
   flex-grow: 1;
   margin-left: 1rem; }
 
-.BuildInfo {
+.SessionInfo {
   position: absolute;
   right: 0;
   bottom: 0;

@@ -4,7 +4,7 @@ import activityResource from "./activityResource";
 import authenticationResource from "./authenticationResource";
 import authorisationResource from "./authorisationResource";
 import appPermissionResource from "./appPermissionResource";
-import buildInfoResource from "./buildInfoResource";
+import buildInfoResource from "./sessionInfoResource";
 import documentPermissionResource from "./documentPermissionResource";
 import elementsResource from "./elementsResource";
 import explorerResource from "./explorerResource";

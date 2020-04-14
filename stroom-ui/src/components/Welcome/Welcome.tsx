@@ -16,7 +16,7 @@
 
 import * as React from "react";
 
-import BuildInfo from "components/BuildInfo";
+import BuildInfo from "components/SessionInfo";
 import IconHeader from "components/IconHeader";
 import useWelcomeHtml from "./api/useWelcomeHtml";
 
