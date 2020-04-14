@@ -166,11 +166,6 @@ appConfig:
       expireAfterWrite: null
   data:
     meta:
-      metaValueConfig:
-        deleteAge: "P30D"
-        deleteBatchSize: 1000
-        flushBatchSize: 1000
-        addAsync: true
       metaFeedCache:
         maximumSize: 1000
         expireAfterAccess: "PT10M"
@@ -198,6 +193,11 @@ appConfig:
           maxLifetime: null
           minimumIdle: null
           maxPoolSize: null
+      metaValue:
+        deleteAge: "P30D"
+        deleteBatchSize: 1000
+        flushBatchSize: 1000
+        addAsync: true
     retention:
       deleteBatchSize: 1000
     store:

@@ -97,9 +97,6 @@ appConfig:
       jdbcDriverPassword: ${STROOM_JDBC_DRIVER_PASSWORD:-stroompassword1}
   contentPackImport:
     enabled: ${STROOM_CONTENT_PACK_IMPORT_ENABLED:-false}
-  data:
-    meta:
-      metaValueConfig: null
   job:
     enabled: true
     executionInterval: "10s"

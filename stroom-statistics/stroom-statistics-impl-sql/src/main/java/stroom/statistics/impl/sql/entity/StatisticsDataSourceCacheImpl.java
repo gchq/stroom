@@ -82,7 +82,10 @@ class StatisticsDataSourceCacheImpl implements StatisticStoreCache, EntityEvent.
 
                         // Id and key not found in cache so try pulling it from the DB
                         return securityContext.asProcessingUserResult(() -> {
-                            final List<DocRef> results = statisticStoreStore.list().stream().filter(docRef -> k.equals(docRef.getName())).collect(Collectors.toList());
+                            final List<DocRef> results = statisticStoreStore.list()
+                                    .stream()
+                                    .filter(docRef -> k.equals(docRef.getName()))
+                                    .collect(Collectors.toList());
                             if (results.size() > 1) {
                                 throw new RuntimeException(String.format(
                                         "Found multiple StatisticDataSource entities with name %s. This should not happen", k));

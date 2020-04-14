@@ -47,7 +47,14 @@ public class DBPersistence implements Persistence, Clearable {
     public Map<String, byte[]> read(final DocRef docRef) {
         final Map<String, byte[]> data = new HashMap<>();
         try (final Connection connection = dataSource.getConnection()) {
-            try (final PreparedStatement preparedStatement = connection.prepareStatement("SELECT ext, data FROM doc WHERE type = ? AND uuid = ?")) {
+            final String sql = "" +
+                    "SELECT " +
+                    "  ext, " +
+                    "  data " +
+                    "FROM doc " +
+                    "WHERE type = ? " +
+                    "AND uuid = ?";
+            try (final PreparedStatement preparedStatement = connection.prepareStatement(sql)) {
                 preparedStatement.setString(1, docRef.getType());
                 preparedStatement.setString(2, docRef.getUuid());
 
@@ -122,8 +129,12 @@ public class DBPersistence implements Persistence, Clearable {
 
     @Override
     public void delete(final DocRef docRef) {
+        final String sql = "" +
+                "DELETE FROM doc " +
+                "WHERE type = ? " +
+                "AND uuid = ?";
         try (final Connection connection = dataSource.getConnection()) {
-            try (final PreparedStatement preparedStatement = connection.prepareStatement("DELETE FROM doc WHERE type = ? AND uuid = ?")) {
+            try (final PreparedStatement preparedStatement = connection.prepareStatement(sql)) {
                 preparedStatement.setString(1, docRef.getType());
                 preparedStatement.setString(2, docRef.getUuid());
 
@@ -140,7 +151,14 @@ public class DBPersistence implements Persistence, Clearable {
         final List<DocRef> list = new ArrayList<>();
 
         try (final Connection connection = dataSource.getConnection()) {
-            try (final PreparedStatement preparedStatement = connection.prepareStatement("SELECT DISTINCT uuid, name FROM doc WHERE type = ? ORDER BY id")) {
+            final String sql = "" +
+                    "SELECT DISTINCT " +
+                    "  uuid, " +
+                    "  name " +
+                    "FROM doc " +
+                    "WHERE type = ? " +
+                    "ORDER BY id";
+            try (final PreparedStatement preparedStatement = connection.prepareStatement(sql)) {
                 preparedStatement.setString(1, type);
 
                 try (final ResultSet resultSet = preparedStatement.executeQuery()) {
@@ -165,7 +183,14 @@ public class DBPersistence implements Persistence, Clearable {
     }
 
     private Long getId(final Connection connection, final DocRef docRef) {
-        try (final PreparedStatement preparedStatement = connection.prepareStatement("SELECT id FROM doc WHERE type = ? AND uuid = ? LIMIT 1")) {
+        final String sql = "" +
+                "SELECT " +
+                "  id " +
+                "FROM doc " +
+                "WHERE type = ? " +
+                "AND uuid = ? " +
+                "LIMIT 1";
+        try (final PreparedStatement preparedStatement = connection.prepareStatement(sql)) {
             preparedStatement.setString(1, docRef.getType());
             preparedStatement.setString(2, docRef.getUuid());
 
@@ -183,7 +208,14 @@ public class DBPersistence implements Persistence, Clearable {
     }
 
     private Long getId(final Connection connection, final DocRef docRef, final String ext) {
-        try (final PreparedStatement preparedStatement = connection.prepareStatement("SELECT id FROM doc WHERE type = ? AND uuid = ? AND ext = ?")) {
+        final String sql = "" +
+                "SELECT " +
+                "  id " +
+                "FROM doc " +
+                "WHERE type = ? " +
+                "AND uuid = ? " +
+                "AND ext = ?";
+        try (final PreparedStatement preparedStatement = connection.prepareStatement(sql)) {
             preparedStatement.setString(1, docRef.getType());
             preparedStatement.setString(2, docRef.getUuid());
             preparedStatement.setString(3, ext);
@@ -202,7 +234,15 @@ public class DBPersistence implements Persistence, Clearable {
     }
 
     private void save(final Connection connection, final DocRef docRef, final String ext, final byte[] bytes) {
-        try (final PreparedStatement preparedStatement = connection.prepareStatement("INSERT INTO doc (type, uuid, name, ext, data) VALUES (?, ?, ?, ?, ?)")) {
+        final String sql = "" +
+                "INSERT INTO doc (" +
+                "  type, " +
+                "  uuid, " +
+                "  name, " +
+                "  ext, " +
+                "  data) " +
+                "VALUES (?, ?, ?, ?, ?)";
+        try (final PreparedStatement preparedStatement = connection.prepareStatement(sql)) {
             preparedStatement.setString(1, docRef.getType());
             preparedStatement.setString(2, docRef.getUuid());
             preparedStatement.setString(3, docRef.getName());
@@ -217,7 +257,16 @@ public class DBPersistence implements Persistence, Clearable {
     }
 
     private void update(final Connection connection, final Long id, final DocRef docRef, final String ext, final byte[] bytes) {
-        try (final PreparedStatement preparedStatement = connection.prepareStatement("UPDATE doc SET type = ?, uuid = ?, name = ?, ext = ?, data = ? WHERE id = ?")) {
+        final String sql = "" +
+                "UPDATE doc " +
+                "SET " +
+                "  type = ?, " +
+                "  uuid = ?, " +
+                "  name = ?, " +
+                "  ext = ?, " +
+                "  data = ? " +
+                "WHERE id = ?";
+        try (final PreparedStatement preparedStatement = connection.prepareStatement(sql)) {
             preparedStatement.setString(1, docRef.getType());
             preparedStatement.setString(2, docRef.getUuid());
             preparedStatement.setString(3, docRef.getName());

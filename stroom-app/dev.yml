@@ -66,9 +66,6 @@ appConfig:
       jdbcDriverPassword: ${STROOM_JDBC_DRIVER_PASSWORD:-stroompassword1}
   contentPackImport:
     enabled: true
-  data:
-    meta:
-      metaValueConfig: null
   job:
     enabled: true
     executionInterval: "10s"

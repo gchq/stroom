@@ -65,6 +65,7 @@ public class GlobalConfigService {
         this.configMapper = configMapper;
         this.configValidator = configValidator;
 
+        LOGGER.debug("Initialising GlobalConfigService");
         initialise();
     }
 
@@ -72,13 +73,13 @@ public class GlobalConfigService {
         // At this point the configMapper.getGlobalProperties() will contain the name, defaultValue
         // and the yamlValue. It will also contain any info gained from the config class annotations,
         // e.g. @Readonly
-        LOGGER.info("Initialising application config with global database properties");
         updateConfigFromDb(true);
+        LOGGER.info("Initialised application config with global database properties");
     }
 
     private void updateConfigFromDb() {
-        LOGGER.info("Updating application config with global database properties");
         updateConfigFromDb(false);
+        LOGGER.info("Updated application config with global database properties");
     }
 
     private void updateConfigFromDb(final boolean deleteUnknownProps) {
