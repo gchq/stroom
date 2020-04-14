@@ -53,7 +53,7 @@ wait_for_200_response() {
     fi
 
     local -r url=$1
-    local -r maxWaitSecs=120
+    local -r maxWaitSecs=240
     echo
 
     n=0

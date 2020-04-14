@@ -196,7 +196,7 @@ public class ClusterDispatchAsyncImpl implements ClusterDispatchAsync {
                 final ClusterResultCollector<R> collector = (ClusterResultCollector<R>) collectorCache.get(ref.getCollectorId());
                 if (collector == null) {
                     // There is no collector to receive this result.
-                    LOGGER.error("{}() - collector gone away - {} {}", RECEIVE_RESULT, ref.getTask().getTaskName(), ref.getSourceTaskId());
+                    LOGGER.debug("{}() - collector gone away - {} {}", RECEIVE_RESULT, ref.getTask().getTaskName(), ref.getSourceTaskId());
 
                 } else {
                     // Make sure the collector is happy to receive this result.

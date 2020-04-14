@@ -47,6 +47,10 @@ public class ClassificationWrappedDataPresenter extends ClassificationWrapperPre
         this.sourceLocation = null;
     }
 
+    public void setFormatOnLoad(final boolean formatOnLoad) {
+        dataPresenter.setFormatOnLoad(formatOnLoad);
+    }
+
     @Override
     public void beginStepping(final long streamId, final String childStreamType) {
         BeginPipelineSteppingEvent.fire(this, streamId, null, childStreamType, new StepLocation(streamId, sourceLocation.getPartNo(), sourceLocation.getRecordNo()), null);

@@ -23,8 +23,10 @@ class LinkedBlockingQueueTopic<T> implements Topic<T> {
             Thread.currentThread().interrupt();
 
             LOGGER.debug(e::getMessage, e);
+            throw new RuntimeException(e.getMessage(), e);
         } catch (final RuntimeException e) {
             LOGGER.debug(e::getMessage, e);
+            throw e;
         }
     }
 
@@ -38,8 +40,10 @@ class LinkedBlockingQueueTopic<T> implements Topic<T> {
             Thread.currentThread().interrupt();
 
             LOGGER.debug(e::getMessage, e);
+            throw new RuntimeException(e.getMessage(), e);
         } catch (final RuntimeException e) {
             LOGGER.debug(e::getMessage, e);
+            throw e;
         }
         return value;
     }
