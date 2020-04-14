@@ -6,6 +6,7 @@ import stroom.authentication.impl.db.AuthDbModule;
 import stroom.cache.impl.CacheResourceModule;
 import stroom.core.db.CoreDbModule;
 import stroom.dashboard.impl.datasource.DataSourceModule;
+import stroom.kafka.pipeline.KafkaPipelineModule;
 import stroom.receive.common.RemoteFeedModule;
 import stroom.receive.rules.impl.ReceiveDataRuleSetModule;
 import stroom.searchable.impl.SearchableModule;
@@ -63,7 +64,7 @@ public class CoreModule extends AbstractModule {
         install(new stroom.job.impl.JobSystemModule());
         install(new stroom.kafka.impl.KafkaConfigHandlerModule());
         install(new stroom.kafka.impl.KafkaConfigModule());
-        install(new stroom.kafka.pipeline.KafkaPipelineModule());
+        install(new KafkaPipelineModule());
         install(new stroom.meta.impl.db.MetaDbModule());
         install(new stroom.meta.impl.MetaModule());
         install(new stroom.meta.impl.StreamAttributeMapResourceModule());

@@ -1,0 +1,11 @@
+ext.moduleName = 'stroom.kafka.api'
+
+dependencies {
+
+    compile project(':stroom-core-shared')
+
+    compile libs.stroomDocRef
+
+    compile libs.kafka_clients
+
+}

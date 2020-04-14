@@ -22,6 +22,7 @@ import stroom.importexport.impl.ExportConfig;
 import stroom.index.impl.IndexConfig;
 import stroom.index.impl.selection.VolumeConfig;
 import stroom.job.impl.JobSystemConfig;
+import stroom.kafka.impl.KafkaConfig;
 import stroom.lifecycle.impl.LifecycleConfig;
 import stroom.meta.impl.db.MetaServiceConfig;
 import stroom.node.impl.HeapHistogramConfig;
@@ -111,6 +112,7 @@ public class AppConfigModule extends AbstractModule {
         bindConfig(AppConfig::getFeedConfig, FeedConfig.class);
         bindConfig(AppConfig::getIndexConfig, IndexConfig.class);
         bindConfig(AppConfig::getJobSystemConfig, JobSystemConfig.class);
+        bindConfig(AppConfig::getKafkaConfig, KafkaConfig.class);
         bindConfig(AppConfig::getLifecycleConfig, LifecycleConfig.class);
         bindConfig(AppConfig::getNodeConfig, NodeConfig.class, nodeConfig ->
                 bindConfig(nodeConfig, NodeConfig::getStatusConfig, StatusConfig.class, statusConfig ->
@@ -156,7 +158,6 @@ public class AppConfigModule extends AbstractModule {
             bindConfig(uiConfig, UiConfig::getUrl, UrlConfig.class);
         });
         bindConfig(AppConfig::getVolumeConfig, VolumeConfig.class);
-
     }
 
     private <T extends AbstractConfig> void bindConfig(

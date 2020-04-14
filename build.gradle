@@ -294,7 +294,7 @@ def visualisationsContentPackUrl = "http://github.com/gchq/stroom-visualisations
 
 //A set of content packs to download in the task downloadStroomContent
 ext.contentPacks = [
-        'core-xml-schemas'                : 'v2.0',
+        'core-xml-schemas'                : 'v2.2',
         'event-logging-xml-schema'        : 'v3.2.3',
         'internal-dashboards'             : 'v1.1',
         'internal-statistics-sql'         : 'v2.1',

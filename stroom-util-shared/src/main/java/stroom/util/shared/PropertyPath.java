@@ -15,6 +15,8 @@ import java.util.Objects;
 /**
  * Class for representing a path to a property in an object tree, i.e
  * stroom.node.name
+ * The aim is to break the dot delimited path strings into its parts to
+ * reduce the memory overhead of holding all the paths as many parts are similar
  */
 @JsonInclude(Include.NON_NULL)
 public class PropertyPath implements Comparable<PropertyPath> {
