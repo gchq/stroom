@@ -162,9 +162,10 @@ class SecurityFilter implements Filter {
                             String redirectUri = null;
 
                             // If we have completed the front channel flow then we will have a state id.
+                            final String code = UrlUtils.getLastParam(request, OIDC.CODE);
                             final String stateId = UrlUtils.getLastParam(request, OIDC.STATE);
-                            if (stateId != null) {
-                                redirectUri = openIdManager.backChannelOIDC(request, stateId, postAuthRedirectUri);
+                            if (code != null && stateId != null) {
+                                redirectUri = openIdManager.backChannelOIDC(request, code, stateId, postAuthRedirectUri);
                             }
 
                             if (redirectUri == null) {

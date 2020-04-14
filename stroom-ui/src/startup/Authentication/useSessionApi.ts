@@ -28,7 +28,7 @@ export const useSessionApi = (): Api => {
 
   return {
     login: (redirectUri: string) =>
-      httpGetJson(`${stroomBaseServiceUrl}/session/v1/noauth/login?redirect_uri=${encodeURI(redirectUri)}`, {}, true),
+      httpGetJson(`${stroomBaseServiceUrl}/session/v1/noauth/login?redirect_uri=${encodeURIComponent(redirectUri)}`, {}, true),
   };
 };
 

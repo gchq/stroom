@@ -75,7 +75,8 @@ class OpenIdManager {
         return authenticationRequestUrl;
     }
 
-    public String backChannelOIDC(final HttpServletRequest request, final String stateId, final String postAuthRedirectUri) {
+    public String backChannelOIDC(final HttpServletRequest request, final String code, final String stateId, final String postAuthRedirectUri) {
+        Objects.requireNonNull(code, "Null code");
         Objects.requireNonNull(stateId, "Null state Id");
 
         boolean loggedIn = false;
@@ -90,51 +91,47 @@ class OpenIdManager {
             LOGGER.warn("Unexpected state: " + stateId);
 
         } else {
-            // Use OIDC API
-            final String code = UrlUtils.getLastParam(request, OIDC.CODE);
-            if (code != null) {
-                // Invalidate the current session.
-                HttpSession session = request.getSession(false);
-                UserAgentSessionUtil.set(request);
+            // Invalidate the current session.
+            HttpSession session = request.getSession(false);
+            UserAgentSessionUtil.set(request);
 
-                // Verify code.
-                final Map<String, String> params = new HashMap<>();
-                params.put(OIDC.GRANT_TYPE, OIDC.GRANT_TYPE__AUTHORIZATION_CODE);
-                params.put(OIDC.CLIENT_ID, openIdConfig.getClientId());
-                params.put(OIDC.CLIENT_SECRET, openIdConfig.getClientSecret());
-                params.put(OIDC.REDIRECT_URI, postAuthRedirectUri);
-                params.put(OIDC.CODE, code);
+            // Verify code.
+            final Map<String, String> params = new HashMap<>();
+            params.put(OIDC.GRANT_TYPE, OIDC.GRANT_TYPE__AUTHORIZATION_CODE);
+            params.put(OIDC.CLIENT_ID, openIdConfig.getClientId());
+            params.put(OIDC.CLIENT_SECRET, openIdConfig.getClientSecret());
+            params.put(OIDC.REDIRECT_URI, postAuthRedirectUri);
+            params.put(OIDC.CODE, code);
 
-                final String tokenEndpoint = openIdConfig.getTokenEndpoint();
-                final Response res = webTargetFactory
-                        .create(tokenEndpoint)
-                        .request(MediaType.APPLICATION_JSON)
-                        .post(Entity.entity(params, MediaType.APPLICATION_JSON));
+            final String tokenEndpoint = openIdConfig.getTokenEndpoint();
+            final Response res = webTargetFactory
+                    .create(tokenEndpoint)
+                    .request(MediaType.APPLICATION_JSON)
+                    .post(Entity.entity(params, MediaType.APPLICATION_JSON));
 
-                Map responseMap;
-                if (HttpServletResponse.SC_OK == res.getStatus()) {
-                    responseMap = res.readEntity(Map.class);
-                } else {
-                    throw new AuthenticationException("Received status " + res.getStatus() + " from " + tokenEndpoint);
-                }
+            Map responseMap;
+            if (HttpServletResponse.SC_OK == res.getStatus()) {
+                responseMap = res.readEntity(Map.class);
+            } else {
+                throw new AuthenticationException("Received status " + res.getStatus() + " from " + tokenEndpoint);
+            }
 
-                final String idToken = (String) responseMap.get(OIDC.ID_TOKEN);
-                if (idToken == null) {
-                    throw new AuthenticationException("'" + OIDC.ID_TOKEN + "' not provided in response");
-                }
+            final String idToken = (String) responseMap.get(OIDC.ID_TOKEN);
+            if (idToken == null) {
+                throw new AuthenticationException("'" + OIDC.ID_TOKEN + "' not provided in response");
+            }
 
-                final UserIdentityImpl token = createUIToken(session, state, idToken);
-                if (token != null) {
-                    // Set the token in the session.
-                    UserIdentitySessionUtil.set(session, token);
-                    loggedIn = true;
-                }
+            final UserIdentityImpl token = createUIToken(session, state, idToken);
+            if (token != null) {
+                // Set the token in the session.
+                UserIdentitySessionUtil.set(session, token);
+                loggedIn = true;
+            }
 
-                // If we manage to login then redirect to the original URL held in the state.
-                if (loggedIn) {
-                    LOGGER.info("Redirecting to initiating URL: {}", state.getUrl());
-                    redirectUri = state.getUrl();
-                }
+            // If we manage to login then redirect to the original URL held in the state.
+            if (loggedIn) {
+                LOGGER.info("Redirecting to initiating URL: {}", state.getUrl());
+                redirectUri = state.getUrl();
             }
         }
 
