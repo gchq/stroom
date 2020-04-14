@@ -94,9 +94,6 @@ appConfig:
       jdbcDriverPassword: ${STROOM_JDBC_DRIVER_PASSWORD:-stroompassword1}
   contentPackImport:
     enabled: ${STROOM_CONTENT_PACK_IMPORT_ENABLED:-false}
-  data:
-    meta:
-      metaValueConfig: null
   dataSourceUrl:
     index: ${STROOM_ADVERTISED_URL:-https://127.0.0.1:8080}/api/stroom-index/v2
     solrIndex: "${STROOM_ADVERTISED_URL:-https://127.0.0.1:8080}/api/stroom-solr-index/v2"

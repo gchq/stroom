@@ -23,6 +23,7 @@ import com.fasterxml.jackson.annotation.JsonPropertyDescription;
 import com.google.common.base.CaseFormat;
 import com.google.common.base.Preconditions;
 import com.google.common.base.Splitter;
+import com.google.common.base.Strings;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import stroom.config.app.AppConfig;
@@ -50,7 +51,6 @@ import java.lang.reflect.Method;
 import java.lang.reflect.ParameterizedType;
 import java.lang.reflect.Type;
 import java.nio.file.Path;
-import java.time.Duration;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collection;
@@ -120,7 +120,7 @@ public class ConfigMapper {
 
     @Inject
     public ConfigMapper(final AppConfig appConfig) {
-        LOGGER.debug("Initialising ConfigMapper with class {}", appConfig.getClass().getName());
+        LOGGER.info("Initialising ConfigMapper with class {}", appConfig.getClass().getName());
 
         this.appConfig = appConfig;
 
@@ -131,26 +131,39 @@ public class ConfigMapper {
         // to the config UI.  Therefore create our own vanilla AppConfig tree and walk it to populate
         // globalPropertiesMap with the defaults.
         LOGGER.debug("Building globalPropertiesMap from compile-time default values and annotations");
-        try {
-            final AppConfig vanillaObject = appConfig.getClass().getDeclaredConstructor().newInstance();
-            // Pass in an empty hashmap because we are not parsing the actual guice bound appConfig. We are only
-            // populating the globalPropertiesMap so the passed hashmap is thrown away.
-            addConfigObjectMethods(
-                vanillaObject,
+
+        // Pass in an empty hashmap because we are not parsing the actual guice bound appConfig. We are only
+        // populating the globalPropertiesMap so the passed hashmap is thrown away.
+        addConfigObjectMethods(
+                getVanillaAppConfig(),
                 ROOT_PROPERTY_PATH,
                 new HashMap<>(),
                 this::defaultValuePropertyConsumer);
 
+        // Now add in any values from the yaml
+        updateConfigFromYaml(appConfig);
+
+        if (LOGGER.isDebugEnabled()) {
+            final Set<PropertyPath> onlyInGlobal = new HashSet<>(globalPropertiesMap.keySet());
+            onlyInGlobal.removeAll(propertyMap.keySet());
+            onlyInGlobal.forEach(propertyPath -> LOGGER.info("Only in globalPropertiesMap - [{}]", propertyPath));
+
+            final Set<PropertyPath> onlyInPropertyMap = new HashSet<>(propertyMap.keySet());
+            onlyInPropertyMap.removeAll(globalPropertiesMap.keySet());
+            onlyInPropertyMap.forEach(propertyPath -> LOGGER.info("Only in propertyMap -         [{}]", propertyPath));
+        }
+    }
+
+    private AppConfig getVanillaAppConfig() {
+        try {
+           return appConfig.getClass().getDeclaredConstructor().newInstance();
         } catch (InstantiationException
-            | IllegalAccessException
-            | InvocationTargetException
-            | NoSuchMethodException e) {
+                | IllegalAccessException
+                | InvocationTargetException
+                | NoSuchMethodException e) {
             throw new RuntimeException(LogUtil.message("Unable to call constructor on class {}",
                     appConfig.getClass().getName()), e);
         }
-
-        // Now add in any values from the yaml
-        updateConfigFromYaml(appConfig);
     }
 
     /**
@@ -160,6 +173,8 @@ public class ConfigMapper {
      */
     private void updateConfigFromYaml(final AppConfig newAppConfig) {
         synchronized (this) {
+            // The object will be different when we are re-reading the yaml into AppConfig
+            // as part of AppConfigMonitor
             if (System.identityHashCode(newAppConfig) != System.identityHashCode(appConfig)) {
                 // We have been passed a different object to our instance appConfig so copy all
                 // the values over.
@@ -171,7 +186,10 @@ public class ConfigMapper {
             // YAML values where present.
             LOGGER.debug("Adding yaml config values into global property map");
             addConfigObjectMethods(
-                newAppConfig, ROOT_PROPERTY_PATH, propertyMap, this::yamlPropertyConsumer);
+                    newAppConfig,
+                    ROOT_PROPERTY_PATH,
+                    propertyMap,
+                    this::yamlPropertyConsumer);
         }
     }
 
@@ -256,6 +274,8 @@ public class ConfigMapper {
     ConfigProperty decorateDbConfigProperty(final ConfigProperty dbConfigProperty) {
         Objects.requireNonNull(dbConfigProperty);
 
+        LOGGER.debug("decorateDbConfigProperty() called for {}", dbConfigProperty.getName());
+
         final PropertyPath fullPath = dbConfigProperty.getName();
 
         synchronized (this) {
@@ -265,21 +285,23 @@ public class ConfigMapper {
 
             final Prop prop = propertyMap.get(fullPath);
             if (prop != null) {
-                // Now set the new effective value on our guice bound appConfig instance
-                final Type genericType = prop.getValueType();
-                final Object typedValue = convertToObject(
-                        globalConfigProperty.getEffectiveValue().orElse(null), genericType);
-                prop.setValueOnConfigObject(typedValue);
 
                 // Update all the DB related values from the passed DB config prop
                 globalConfigProperty.setId(dbConfigProperty.getId());
-
                 globalConfigProperty.setDatabaseOverrideValue(dbConfigProperty.getDatabaseOverrideValue());
                 globalConfigProperty.setVersion(dbConfigProperty.getVersion());
                 globalConfigProperty.setCreateTimeMs(dbConfigProperty.getCreateTimeMs());
                 globalConfigProperty.setCreateUser(dbConfigProperty.getCreateUser());
                 globalConfigProperty.setUpdateTimeMs(dbConfigProperty.getUpdateTimeMs());
                 globalConfigProperty.setUpdateUser(dbConfigProperty.getUpdateUser());
+
+                // Now we have updated the globalConfigProperty with the value from the DB
+                // we can ask it what the effective value is now and set that on our
+                // guice bound appConfig instance.
+                final Type genericType = prop.getValueType();
+                final Object typedValue = convertToObject(
+                        globalConfigProperty.getEffectiveValue().orElse(null), genericType);
+                prop.setValueOnConfigObject(typedValue);
 
                 return globalConfigProperty;
             } else {
@@ -307,11 +329,10 @@ public class ConfigMapper {
             final Method getter = prop.getGetter();
 
             // The prop may have a JsonPropery annotation that defines its name
-            String specifiedName = getNameFromAnnotation(getter);
-            String name = prop.getName();
-            if (specifiedName != null) {
-                name = specifiedName;
-            }
+            final String specifiedName = getNameFromAnnotation(getter);
+            final String name = Strings.isNullOrEmpty(specifiedName)
+                    ? prop.getName()
+                    : specifiedName;
 
             final PropertyPath fullPath = path.merge(name);
 
@@ -338,7 +359,6 @@ public class ConfigMapper {
                         valueType.getName(),
                         AbstractConfig.class.getSimpleName()));
             }
-
         });
     }
 

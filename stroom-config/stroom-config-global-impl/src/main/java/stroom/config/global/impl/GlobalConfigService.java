@@ -63,6 +63,9 @@ public class GlobalConfigService {
                         final ConfigMapper configMapper,
                         final ConfigValidator configValidator,
                         final ClusterDispatchAsyncHelper dispatchHelper) {
+
+        LOGGER.debug("Initialising GlobalConfigService");
+
         this.dao = dao;
         this.securityContext = securityContext;
         this.configMapper = configMapper;
@@ -76,13 +79,13 @@ public class GlobalConfigService {
         // At this point the configMapper.getGlobalProperties() will contain the name, defaultValue
         // and the yamlValue. It will also contain any info gained from the config class annotations,
         // e.g. @Readonly
-        LOGGER.info("Initialising application config with global database properties");
         updateConfigFromDb(true);
+        LOGGER.info("Initialised application config with global database properties");
     }
 
     private void updateConfigFromDb() {
-        LOGGER.info("Updating application config with global database properties");
         updateConfigFromDb(false);
+        LOGGER.info("Updated application config with global database properties");
     }
 
     private void updateConfigFromDb(final boolean deleteUnknownProps) {
