@@ -391,10 +391,8 @@ public abstract class AbstractMetaListPresenter extends MyPresenterWidget<DataGr
             criteria.obtainPageRequest().setLength(PageRequest.DEFAULT_PAGE_SIZE);
         }
 
-
         if (allowNoConstraint || criteria != null) {
-            if (this.criteria == null) {
-                this.criteria = criteria;
+            this.criteria = criteria;
                 this.dataProvider = new RestDataProvider<MetaRow, ResultPage<MetaRow>>(eventBus, criteria.obtainPageRequest()) {
                     @Override
                     protected void exec(final Consumer<ResultPage<MetaRow>> dataConsumer, final Consumer<Throwable> throwableConsumer) {
@@ -409,10 +407,7 @@ public abstract class AbstractMetaListPresenter extends MyPresenterWidget<DataGr
                 };
                 addColumns(allowSelectAll);
                 dataProvider.addDataDisplay(getView().getDataDisplay());
-            } else {
-                this.criteria = criteria;
-                dataProvider.refresh();
-            }
+
         }
     }
 
