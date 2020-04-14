@@ -34,6 +34,12 @@ public class Sort {
     @JsonProperty
     private final SortDirection direction;
 
+    @Deprecated // Only here for legacy XML (de)serialisation
+    Sort() {
+        this.order = 1;
+        this.direction = SortDirection.ASCENDING;
+    }
+
     @JsonCreator
     public Sort(@JsonProperty("order") final Integer order,
                 @JsonProperty("direction") final SortDirection direction) {
