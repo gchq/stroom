@@ -35,6 +35,7 @@ public class PropertyPath implements Comparable<PropertyPath> {
         if (parts == null) {
             this.parts = Collections.emptyList();
         } else {
+            validateParts(parts);
             this.parts = new ArrayList<>(parts);
         }
     }
@@ -68,7 +69,16 @@ public class PropertyPath implements Comparable<PropertyPath> {
         if (parts.isEmpty()) {
             return EMPTY_INSTANCE;
         } else {
+            validateParts(parts);
             return new PropertyPath(parts);
+        }
+    }
+
+    private static void validateParts(final List<String> parts) {
+        for (final String part : parts) {
+            if (part == null || part.isEmpty()) {
+                throw new RuntimeException("Null or empty path part in " + parts.toString());
+            }
         }
     }
 
