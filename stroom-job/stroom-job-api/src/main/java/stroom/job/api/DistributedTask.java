@@ -16,10 +16,37 @@
 
 package stroom.job.api;
 
-import stroom.task.shared.Task;
+import stroom.task.shared.ThreadPool;
 
-import java.io.Serializable;
+public class DistributedTask {
+    private final String jobName;
+    private final Runnable runnable;
+    private final ThreadPool threadPool;
+    private final String traceString;
 
-public interface DistributedTask<R> extends Task<R>, Serializable {
-    String getTraceString();
+    public DistributedTask(final String jobName,
+                           final Runnable runnable,
+                           final ThreadPool threadPool,
+                           final String traceString) {
+        this.jobName = jobName;
+        this.runnable = runnable;
+        this.threadPool = threadPool;
+        this.traceString = traceString;
+    }
+
+    public String getJobName() {
+        return jobName;
+    }
+
+    public Runnable getRunnable() {
+        return runnable;
+    }
+
+    public ThreadPool getThreadPool() {
+        return threadPool;
+    }
+
+    public String getTraceString() {
+        return traceString;
+    }
 }

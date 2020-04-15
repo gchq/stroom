@@ -18,71 +18,66 @@ package stroom.cluster.lock.impl.db;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import stroom.cluster.task.api.ClusterCallEntry;
-import stroom.cluster.task.api.ClusterDispatchAsyncHelper;
-import stroom.cluster.task.api.DefaultClusterResultCollector;
-import stroom.cluster.task.api.TargetType;
+import stroom.cluster.task.api.NodeNotFoundException;
+import stroom.cluster.task.api.NullClusterStateException;
+import stroom.cluster.task.api.TargetNodeSetFactory;
 import stroom.security.api.SecurityContext;
-import stroom.task.api.AbstractTaskHandler;
 
 import javax.inject.Inject;
-import java.net.ConnectException;
-import java.net.MalformedURLException;
+import java.util.Optional;
+import java.util.function.Function;
 
 
-class ClusterLockHandler extends AbstractTaskHandler<ClusterLockTask, Boolean> {
+class ClusterLockHandler {
     private static final Logger LOGGER = LoggerFactory.getLogger(ClusterLockHandler.class);
 
-    private final ClusterDispatchAsyncHelper dispatchHelper;
+    private final ClusterLockResource clusterLockResource;
+    private final TargetNodeSetFactory targetNodeSetFactory;
     private final SecurityContext securityContext;
 
     @Inject
-    ClusterLockHandler(final ClusterDispatchAsyncHelper dispatchHelper,
+    ClusterLockHandler(final ClusterLockResource clusterLockResource,
+                       final TargetNodeSetFactory targetNodeSetFactory,
                        final SecurityContext securityContext) {
-        this.dispatchHelper = dispatchHelper;
+        this.clusterLockResource = clusterLockResource;
+        this.targetNodeSetFactory = targetNodeSetFactory;
         this.securityContext = securityContext;
     }
 
-    @Override
-    public Boolean exec(final ClusterLockTask task) {
-        return securityContext.secureResult(() -> {
-            // If the cluster state is not yet initialised then don't try and call
-            // master.
-            if (!dispatchHelper.isClusterStateInitialised()) {
-                return Boolean.FALSE;
+    Boolean tryLock(final ClusterLockKey key) {
+        return call(nodeName -> clusterLockResource.tryLock(nodeName, key));
+    }
+
+    Boolean releaseLock(final ClusterLockKey key) {
+        return call(nodeName -> clusterLockResource.releaseLock(nodeName, key));
+    }
+
+    Boolean keepLockAlive(final ClusterLockKey key) {
+        return call(nodeName -> clusterLockResource.keepLockAlive(nodeName, key));
+    }
+
+    private Boolean call(final Function<String, Boolean> function) {
+        final String masterNodeName = getMasterNodeName().orElse(null);
+        if (masterNodeName != null) {
+            try {
+                return securityContext.secureResult(() -> function.apply(masterNodeName));
+            } catch (final RuntimeException e) {
+                LOGGER.error("Error connecting to master node '" + masterNodeName + "' - " + e.getMessage(), e);
             }
+        } else {
+            LOGGER.error("No master node can be determined");
+        }
 
-            TargetType targetType = TargetType.MASTER;
+        return false;
+    }
 
-            final DefaultClusterResultCollector<Boolean> collector = dispatchHelper
-                    .execAsync(new ClusterLockClusterTask(task), TargetType.MASTER);
-            final ClusterCallEntry<Boolean> response = collector.getSingleResponse();
-
-            if (response == null) {
-                LOGGER.error("No response");
-                return Boolean.FALSE;
-            }
-            if (response.getError() != null) {
-                try {
-                    throw response.getError();
-                } catch (final MalformedURLException e) {
-                    LOGGER.warn(response.getError().getMessage());
-                } catch (final Throwable e) {
-                    if (e.getCause() != null && e.getCause() instanceof ConnectException) {
-                        LOGGER.error("Unable to connect to [{}]: {}",
-                            String.join(",", collector.getTargetNodes()),
-                            response.getError().getMessage());
-                    } else {
-                        LOGGER.error("Error connecting to [{}]: {}",
-                            String.join(",", collector.getTargetNodes()),
-                            response.getError().getMessage(), response.getError());
-                    }
-                }
-
-                return Boolean.FALSE;
-            }
-
-            return response.getResult();
-        });
+    private Optional<String> getMasterNodeName() {
+        try {
+            final String node = targetNodeSetFactory.getMasterNode();
+            return Optional.of(node);
+        } catch (final NullClusterStateException | NodeNotFoundException e) {
+            LOGGER.error(e.getMessage(), e);
+        }
+        return Optional.empty();
     }
 }

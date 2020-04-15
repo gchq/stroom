@@ -2,7 +2,7 @@ package stroom.core.servlet;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import stroom.config.common.ApiGatewayConfig;
+import stroom.config.common.UriFactory;
 import stroom.ui.config.shared.UiConfig;
 import stroom.util.io.CloseableUtil;
 import stroom.util.io.StreamUtil;
@@ -38,15 +38,15 @@ public class SwaggerUiServlet extends HttpServlet implements IsServlet {
     private static final String SWAGGER_SPEC_URL_TAG = "@SWAGGER_SPEC_URL@";
     private static final String SWAGGER_UI_REL_DIR_TAG = "@SWAGGER_UI_REL_DIR@";
 
-    private final ApiGatewayConfig apiGatewayConfig;
+    private final UriFactory uriFactory;
     private final UiConfig uiConfig;
 
     private String template;
 
     @Inject
-    public SwaggerUiServlet(final ApiGatewayConfig apiGatewayConfig,
+    public SwaggerUiServlet(final UriFactory uriFactory,
                             final UiConfig uiConfig) {
-        this.apiGatewayConfig = apiGatewayConfig;
+        this.uriFactory = uriFactory;
         this.uiConfig = uiConfig;
     }
 
@@ -99,8 +99,8 @@ public class SwaggerUiServlet extends HttpServlet implements IsServlet {
     }
 
     private String getSwaggerSpecUrl() {
-        return apiGatewayConfig.buildApiGatewayUrl(
-            ResourcePaths.buildUnauthenticatedServletPath("swagger/swagger.json"));
+        return uriFactory.publicUri(
+                ResourcePaths.buildUnauthenticatedServletPath("swagger/swagger.json")).toString();
     }
 
 }

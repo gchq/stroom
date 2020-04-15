@@ -16,40 +16,50 @@
 
 package stroom.welcome.client.presenter;
 
+import com.google.gwt.core.client.GWT;
 import com.google.gwt.user.client.ui.HasText;
 import com.google.inject.Inject;
 import com.google.web.bindery.event.shared.EventBus;
 import com.gwtplatform.mvp.client.View;
 import stroom.alert.client.event.AlertEvent;
+import stroom.config.global.shared.SessionInfoResource;
 import stroom.content.client.presenter.ContentTabPresenter;
-import stroom.security.client.api.ClientSecurityContext;
+import stroom.dispatch.client.Rest;
+import stroom.dispatch.client.RestFactory;
 import stroom.svg.client.Icon;
 import stroom.svg.client.SvgIcon;
 import stroom.ui.config.client.UiConfigCache;
 import stroom.util.shared.BuildInfo;
+import stroom.util.shared.SessionInfo;
 
 public class WelcomePresenter extends ContentTabPresenter<WelcomePresenter.WelcomeView> {
+    private static final SessionInfoResource SESSION_INFO_RESOURCE = GWT.create(SessionInfoResource.class);
+
     public static final String WELCOME = "Welcome";
 
     @Inject
-    public WelcomePresenter(final EventBus eventBus, final WelcomeView view,
-                            final UiConfigCache clientPropertyCache, final ClientSecurityContext securityContext) {
+    public WelcomePresenter(final EventBus eventBus,
+                            final WelcomeView view,
+                            final RestFactory restFactory,
+                            final UiConfigCache uiConfigCache) {
         super(eventBus, view);
 
-        clientPropertyCache.get()
-                .onSuccess(result -> {
-                    final BuildInfo buildInfo = result.getBuildInfo();
-                    view.setHTML(result.getWelcomeHtml());
+        final Rest<SessionInfo> rest = restFactory.create();
+        rest
+                .onSuccess(sessionInfo -> {
+                    final BuildInfo buildInfo = sessionInfo.getBuildInfo();
                     view.getBuildVersion().setText("Build Version: " + buildInfo.getBuildVersion());
                     view.getBuildDate().setText("Build Date: " + buildInfo.getBuildDate());
                     view.getUpDate().setText("Up Date: " + buildInfo.getUpDate());
-                    view.getNodeName().setText("Node Name: " + result.getNodeName());
-
-                    // final CurrentUser currentUser = currentUserProvider.get();
-                    view.getUserName().setText("User Name: " + securityContext.getUserId());
-                    // view.getRoleName().setText("Role Name: " +
-                    // currentUser.getUser().toUserGroupDisplayValue());
+                    view.getNodeName().setText("Node Name: " + sessionInfo.getNodeName());
+                    view.getUserName().setText("User Name: " + sessionInfo.getUserName());
                 })
+                .onFailure(caught -> AlertEvent.fireError(WelcomePresenter.this, caught.getMessage(), null))
+                .call(SESSION_INFO_RESOURCE)
+                .get();
+
+        uiConfigCache.get()
+                .onSuccess(result -> view.setHTML(result.getWelcomeHtml()))
                 .onFailure(caught -> AlertEvent.fireError(WelcomePresenter.this, caught.getMessage(), null));
     }
 

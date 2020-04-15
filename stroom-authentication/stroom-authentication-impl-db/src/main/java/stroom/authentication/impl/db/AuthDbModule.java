@@ -1,9 +1,10 @@
 package stroom.authentication.impl.db;
 
 import stroom.authentication.AuthenticationDbConfig;
-import stroom.authentication.dao.JwkDao;
-import stroom.authentication.dao.TokenDao;
-import stroom.authentication.dao.UserDao;
+import stroom.authentication.oauth2.OAuth2ClientDao;
+import stroom.authentication.token.JwkDao;
+import stroom.authentication.token.TokenDao;
+import stroom.authentication.account.AccountDao;
 import stroom.db.util.AbstractFlyWayDbModule;
 import stroom.db.util.DataSourceProxy;
 
@@ -19,8 +20,9 @@ public class AuthDbModule extends AbstractFlyWayDbModule<AuthenticationDbConfig,
         super.configure();
 
         bind(TokenDao.class).to(TokenDaoImpl.class);
-        bind(UserDao.class).to(UserDaoImpl.class);
+        bind(AccountDao.class).to(AccountDaoImpl.class);
         bind(JwkDao.class).to(JwkDaoImpl.class);
+        bind(OAuth2ClientDao.class).to(OAuth2ClientDaoImpl.class);
     }
 
     @Override

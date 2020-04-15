@@ -1,7 +1,7 @@
 package stroom.data.retention.impl;
 
 import stroom.job.api.ScheduledJobsModule;
-import stroom.job.api.TaskConsumer;
+import stroom.job.api.RunnableWrapper;
 
 import javax.inject.Inject;
 
@@ -18,10 +18,10 @@ public class DataRetentionJobsModule extends ScheduledJobsModule {
                 .to(DataRetention.class);
     }
 
-    private static class DataRetention extends TaskConsumer {
+    private static class DataRetention extends RunnableWrapper {
         @Inject
         DataRetention(final DataRetentionPolicyExecutor dataRetentionPolicyExecutor) {
-            super(task -> dataRetentionPolicyExecutor.exec());
+            super(dataRetentionPolicyExecutor::exec);
         }
     }
 }

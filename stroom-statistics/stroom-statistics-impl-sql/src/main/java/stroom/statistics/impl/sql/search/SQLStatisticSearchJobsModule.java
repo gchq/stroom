@@ -1,7 +1,7 @@
 package stroom.statistics.impl.sql.search;
 
 import stroom.job.api.ScheduledJobsModule;
-import stroom.job.api.TaskConsumer;
+import stroom.job.api.RunnableWrapper;
 
 import javax.inject.Inject;
 
@@ -18,10 +18,10 @@ public class SQLStatisticSearchJobsModule extends ScheduledJobsModule {
                 .to(EvictExpiredElements.class);
     }
 
-    private static class EvictExpiredElements extends TaskConsumer {
+    private static class EvictExpiredElements extends RunnableWrapper {
         @Inject
         EvictExpiredElements(final SqlStatisticsSearchResponseCreatorManager sqlStatisticsSearchResponseCreatorManager) {
-            super(task -> sqlStatisticsSearchResponseCreatorManager.evictExpiredElements());
+            super(sqlStatisticsSearchResponseCreatorManager::evictExpiredElements);
         }
     }
 }

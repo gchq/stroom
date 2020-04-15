@@ -19,12 +19,13 @@ package stroom.statistics.impl.sql;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.slf4j.MarkerFactory;
-import stroom.task.api.TaskCallbackAdaptor;
-import stroom.task.api.TaskManager;
-import stroom.task.api.VoidResult;
+import stroom.task.api.TaskContext;
 
 import javax.inject.Inject;
+import javax.inject.Provider;
 import javax.inject.Singleton;
+import java.util.concurrent.CompletableFuture;
+import java.util.concurrent.Executor;
 import java.util.concurrent.LinkedBlockingQueue;
 import java.util.concurrent.locks.ReentrantLock;
 
@@ -38,7 +39,9 @@ public class SQLStatisticCacheImpl implements SQLStatisticCache {
      */
     private static final int DEFAULT_MAX_SIZE = 1000000;
 
-    private final TaskManager taskManager;
+    private final Provider<SQLStatisticFlushTaskHandler> sqlStatisticFlushTaskHandlerProvider;
+    private final Executor executor;
+    private final Provider<TaskContext> taskContextProvider;
 
     private volatile SQLStatisticAggregateMap map = new SQLStatisticAggregateMap();
     private final ReentrantLock mapLock = new ReentrantLock();
@@ -48,9 +51,13 @@ public class SQLStatisticCacheImpl implements SQLStatisticCache {
     private final int maxSize;
 
     @Inject
-    public SQLStatisticCacheImpl(final TaskManager taskManager) {
+    public SQLStatisticCacheImpl(final Provider<SQLStatisticFlushTaskHandler> sqlStatisticFlushTaskHandlerProvider,
+                                 final Executor executor,
+                                 final Provider<TaskContext> taskContextProvider) {
         this.maxSize = DEFAULT_MAX_SIZE;
-        this.taskManager = taskManager;
+        this.sqlStatisticFlushTaskHandlerProvider = sqlStatisticFlushTaskHandlerProvider;
+        this.executor = executor;
+        this.taskContextProvider = taskContextProvider;
     }
 
     public SQLStatisticCacheImpl() {
@@ -59,7 +66,9 @@ public class SQLStatisticCacheImpl implements SQLStatisticCache {
 
     public SQLStatisticCacheImpl(final int maxSize) {
         this.maxSize = maxSize;
-        this.taskManager = null;
+        this.sqlStatisticFlushTaskHandlerProvider = null;
+        this.executor = null;
+        this.taskContextProvider = null;
     }
 
     @Override
@@ -90,7 +99,7 @@ public class SQLStatisticCacheImpl implements SQLStatisticCache {
     }
 
     public void flush(final boolean block) {
-        SQLStatisticAggregateMap flushMap = null;
+        SQLStatisticAggregateMap flushMap;
 
         mapLock.lock();
         try {
@@ -108,39 +117,45 @@ public class SQLStatisticCacheImpl implements SQLStatisticCache {
     }
 
     private void doFlush(final boolean block, final SQLStatisticAggregateMap flushMap) {
-        try {
-            LOGGER.debug("doFlush() - Locking {}", flushMap);
+        if (sqlStatisticFlushTaskHandlerProvider != null && taskContextProvider != null && executor != null) {
+            try {
+                LOGGER.debug("doFlush() - Locking {}", flushMap);
 
-            flushQueue.put(flushMap);
-            if (block) {
-                try {
-                    taskManager.exec(new SQLStatisticFlushTask(flushMap));
-                } finally {
-                    flushQueue.poll();
+                flushQueue.put(flushMap);
+                if (block) {
+                    try {
+                        final TaskContext taskContext = taskContextProvider.get();
+                        Runnable runnable = () -> sqlStatisticFlushTaskHandlerProvider.get().exec(flushMap);
+                        runnable = taskContext.sub(runnable);
+                        runnable.run();
+
+                    } finally {
+                        flushQueue.poll();
+                    }
+
+                } else {
+                    // Flush the original map.
+                    final TaskContext taskContext = taskContextProvider.get();
+                    Runnable runnable = () -> sqlStatisticFlushTaskHandlerProvider.get().exec(flushMap);
+                    runnable = taskContext.sub(runnable);
+                    CompletableFuture
+                            .runAsync(runnable, executor)
+                            .whenComplete((r, t) -> {
+                                if (t == null) {
+                                    LOGGER.debug("doFlush() - Unlocking");
+                                } else {
+                                    LOGGER.error("doFlush() - Unlocking", t);
+                                }
+                                flushQueue.poll();
+                            });
                 }
 
-            } else {
-                // Flush the original map.
-                taskManager.execAsync(new SQLStatisticFlushTask(flushMap), new TaskCallbackAdaptor<VoidResult>() {
-                    @Override
-                    public void onSuccess(final VoidResult result) {
-                        LOGGER.debug("doFlush() - Unlocking");
-                        flushQueue.poll();
-                    }
+            } catch (final InterruptedException e) {
+                LOGGER.error(MarkerFactory.getMarker("FATAL"), "doFlush() - Not expecting InterruptedException", e);
 
-                    @Override
-                    public void onFailure(final Throwable t) {
-                        LOGGER.error("doFlush() - Unlocking", t);
-                        flushQueue.poll();
-                    }
-                });
+                // Continue to interrupt this thread.
+                Thread.currentThread().interrupt();
             }
-
-        } catch (final InterruptedException e) {
-            LOGGER.error(MarkerFactory.getMarker("FATAL"), "doFlush() - Not expecting InterruptedException", e);
-
-            // Continue to interrupt this thread.
-            Thread.currentThread().interrupt();
         }
     }
 

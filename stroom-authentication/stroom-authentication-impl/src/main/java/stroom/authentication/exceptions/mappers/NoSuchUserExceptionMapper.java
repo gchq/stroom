@@ -18,6 +18,8 @@
 
 package stroom.authentication.exceptions.mappers;
 
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import stroom.authentication.exceptions.NoSuchUserException;
 
 import javax.inject.Singleton;
@@ -28,7 +30,7 @@ import javax.ws.rs.ext.Provider;
 @Provider
 @Singleton
 public class NoSuchUserExceptionMapper implements ExceptionMapper<NoSuchUserException> {
-    private static final org.slf4j.Logger LOGGER = org.slf4j.LoggerFactory.getLogger(NoSuchUserExceptionMapper.class);
+    private static final Logger LOGGER = LoggerFactory.getLogger(NoSuchUserExceptionMapper.class);
 
     @Override
     public Response toResponse(NoSuchUserException exception) {

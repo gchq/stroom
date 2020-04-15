@@ -31,8 +31,8 @@ import stroom.docref.DocRef;
 import stroom.docstore.shared.DocRefUtil;
 import stroom.feed.api.FeedProperties;
 import stroom.meta.api.AttributeMap;
-import stroom.meta.shared.Meta;
 import stroom.meta.api.MetaProperties;
+import stroom.meta.shared.Meta;
 import stroom.node.api.NodeInfo;
 import stroom.pipeline.DefaultErrorWriter;
 import stroom.pipeline.ErrorWriterProxy;
@@ -66,6 +66,8 @@ import stroom.pipeline.task.SupersededOutputHelper;
 import stroom.processor.api.DataProcessorTaskExecutor;
 import stroom.processor.api.InclusiveRanges;
 import stroom.processor.api.InclusiveRanges.InclusiveRange;
+import stroom.processor.api.ProcessorResult;
+import stroom.processor.api.ProcessorResultImpl;
 import stroom.processor.shared.Processor;
 import stroom.processor.shared.ProcessorFilter;
 import stroom.processor.shared.ProcessorTask;
@@ -84,7 +86,9 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.io.OutputStream;
 import java.util.Collections;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 import java.util.regex.Pattern;
 
 public class PipelineDataProcessorTaskExecutor implements DataProcessorTaskExecutor {
@@ -170,10 +174,10 @@ public class PipelineDataProcessorTaskExecutor implements DataProcessorTaskExecu
     }
 
     @Override
-    public void exec(final Processor processor,
-                     final ProcessorFilter processorFilter,
-                     final ProcessorTask processorTask,
-                     final Source streamSource) {
+    public ProcessorResult exec(final Processor processor,
+                                final ProcessorFilter processorFilter,
+                                final ProcessorTask processorTask,
+                                final Source streamSource) {
         this.streamProcessor = processor;
         this.processorFilter = processorFilter;
         this.streamTask = processorTask;
@@ -214,6 +218,18 @@ public class PipelineDataProcessorTaskExecutor implements DataProcessorTaskExecu
         } catch (final IOException e) {
             LOGGER.error(e.getMessage(), e);
         }
+
+        // Produce processing result.
+        final long read = recordCount.getRead();
+        final long written = recordCount.getWritten();
+        final Map<Severity, Long> markerCounts = new HashMap<>();
+        if (errorReceiverProxy.getErrorReceiver() instanceof ErrorStatistics) {
+            final ErrorStatistics statistics = (ErrorStatistics) errorReceiverProxy.getErrorReceiver();
+            for (final Severity sev : statistics.getSeverities()) {
+                markerCounts.put(sev, statistics.getRecords(sev));
+            }
+        }
+        return new ProcessorResultImpl(read, written, markerCounts);
     }
 
     private void process() {
@@ -306,24 +322,27 @@ public class PipelineDataProcessorTaskExecutor implements DataProcessorTaskExecu
         }
     }
 
-    public long getRead() {
-        return recordCount.getRead();
-    }
-
-    public long getWritten() {
-        return recordCount.getWritten();
-    }
-
-    public long getMarkerCount(final Severity... severity) {
-        long count = 0;
-        if (errorReceiverProxy.getErrorReceiver() instanceof ErrorStatistics) {
-            final ErrorStatistics statistics = (ErrorStatistics) errorReceiverProxy.getErrorReceiver();
-            for (final Severity sev : severity) {
-                count += statistics.getRecords(sev);
-            }
-        }
-        return count;
-    }
+//    @Override
+//    public long getRead() {
+//        return recordCount.getRead();
+//    }
+//
+//    @Override
+//    public long getWritten() {
+//        return recordCount.getWritten();
+//    }
+//
+//    @Override
+//    public long getMarkerCount(final Severity... severity) {
+//        long count = 0;
+//        if (errorReceiverProxy.getErrorReceiver() instanceof ErrorStatistics) {
+//            final ErrorStatistics statistics = (ErrorStatistics) errorReceiverProxy.getErrorReceiver();
+//            for (final Severity sev : severity) {
+//                count += statistics.getRecords(sev);
+//            }
+//        }
+//        return count;
+//    }
 
     /**
      * Processes a source and writes the result to a target.

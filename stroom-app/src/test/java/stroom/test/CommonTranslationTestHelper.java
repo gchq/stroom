@@ -16,23 +16,24 @@
 
 package stroom.test;
 
-
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import stroom.docref.DocRef;
 import stroom.meta.api.MetaService;
 import stroom.node.api.NodeInfo;
 import stroom.pipeline.shared.TextConverterDoc.TextConverterType;
-import stroom.processor.api.DataProcessorTaskExecutor;
-import stroom.processor.impl.DataProcessorTask;
+import stroom.processor.api.ProcessorResult;
+import stroom.processor.impl.DataProcessorTaskHandler;
 import stroom.processor.impl.ProcessorTaskManager;
 import stroom.processor.shared.ProcessorTask;
+import stroom.processor.shared.ProcessorTaskList;
 import stroom.task.api.SimpleTaskContext;
-import stroom.task.api.TaskManager;
+import stroom.task.api.TaskContext;
 import stroom.test.common.StroomPipelineTestFileUtil;
 import stroom.util.io.FileUtil;
 
 import javax.inject.Inject;
+import javax.inject.Provider;
 import java.io.IOException;
 import java.io.UncheckedIOException;
 import java.nio.file.Path;
@@ -41,6 +42,7 @@ import java.util.Collections;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
+import java.util.function.Supplier;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
@@ -76,38 +78,49 @@ public class CommonTranslationTestHelper {
     private final NodeInfo nodeInfo;
     private final ProcessorTaskManager processorTaskManager;
     private final StoreCreationTool storeCreationTool;
-    private final TaskManager taskManager;
+    private final Provider<TaskContext> taskContextProvider;
     private final MetaService metaService;
+    private final Provider<DataProcessorTaskHandler> dataProcessorTaskHandlerProvider;
 
     @Inject
     CommonTranslationTestHelper(final NodeInfo nodeInfo,
                                 final ProcessorTaskManager processorTaskManager,
                                 final StoreCreationTool storeCreationTool,
-                                final TaskManager taskManager,
-                                final MetaService metaService) {
+                                final Provider<TaskContext> taskContextProvider,
+                                final MetaService metaService,
+                                final Provider<DataProcessorTaskHandler> dataProcessorTaskHandlerProvider) {
         this.nodeInfo = nodeInfo;
         this.processorTaskManager = processorTaskManager;
         this.storeCreationTool = storeCreationTool;
-        this.taskManager = taskManager;
+        this.taskContextProvider = taskContextProvider;
         this.metaService = metaService;
+        this.dataProcessorTaskHandlerProvider = dataProcessorTaskHandlerProvider;
     }
 
-    public List<DataProcessorTaskExecutor> processAll() {
+    public List<ProcessorResult> processAll() {
         // Force creation of stream tasks.
         processorTaskManager.createTasks(new SimpleTaskContext());
 
-        final List<DataProcessorTaskExecutor> results = new ArrayList<>();
-        List<ProcessorTask> processorTasks = processorTaskManager.assignTasks(nodeInfo.getThisNodeName(), 100);
-        while (processorTasks.size() > 0) {
-            for (final ProcessorTask processorTask : processorTasks) {
-                final DataProcessorTask task = new DataProcessorTask(processorTask);
-                taskManager.exec(task);
-                results.add(task.getDataProcessorTaskExecutor());
+        final List<ProcessorResult> results = new ArrayList<>();
+        ProcessorTaskList processorTasks = processorTaskManager.assignTasks(nodeInfo.getThisNodeName(), 100);
+        while (processorTasks.getList().size() > 0) {
+            for (final ProcessorTask processorTask : processorTasks.getList()) {
+                results.add(process(processorTask));
             }
             processorTasks = processorTaskManager.assignTasks(nodeInfo.getThisNodeName(), 100);
         }
 
         return results;
+    }
+
+    public ProcessorResult process(final ProcessorTask processorTask) {
+        final TaskContext taskContext = taskContextProvider.get();
+        Supplier<ProcessorResult> supplier = () -> {
+            final DataProcessorTaskHandler dataProcessorTaskHandler = dataProcessorTaskHandlerProvider.get();
+            return dataProcessorTaskHandler.exec(processorTask);
+        };
+        supplier = taskContext.sub(supplier);
+        return supplier.get();
     }
 
     public void setup() {

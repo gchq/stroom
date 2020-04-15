@@ -18,62 +18,26 @@ package stroom.cluster.lock.impl.db;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import stroom.cluster.task.api.ClusterResult;
-import stroom.cluster.task.api.ClusterTaskHandler;
-import stroom.cluster.task.api.ClusterTaskRef;
-import stroom.cluster.task.api.ClusterWorker;
 import stroom.security.api.SecurityContext;
 import stroom.util.shared.ModelStringUtil;
+import stroom.util.shared.PermissionException;
 
 import javax.inject.Inject;
 import javax.inject.Singleton;
 import java.util.concurrent.ConcurrentHashMap;
 
 @Singleton
-public class ClusterLockClusterHandler implements ClusterTaskHandler<ClusterLockClusterTask, Boolean> {
+public class ClusterLockClusterHandler {
     // 10 minutes
     private static final long TEN_MINUTES = 10 * 60 * 1000;
     private static final Logger LOGGER = LoggerFactory.getLogger(ClusterLockClusterHandler.class);
     private final ConcurrentHashMap<String, Lock> lockMap = new ConcurrentHashMap<>();
 
-    private final ClusterWorker clusterWorker;
     private final SecurityContext securityContext;
 
     @Inject
-    ClusterLockClusterHandler(final ClusterWorker clusterWorker,
-                              final SecurityContext securityContext) {
-        this.clusterWorker = clusterWorker;
+    ClusterLockClusterHandler(final SecurityContext securityContext) {
         this.securityContext = securityContext;
-    }
-
-    @Override
-    public void exec(final ClusterLockClusterTask task, final ClusterTaskRef<Boolean> clusterTaskRef) {
-        try {
-            final boolean result = securityContext.secureResult(() -> {
-                boolean success = false;
-
-                final ClusterLockKey clusterLockKey = task.getKey();
-                switch (task.getLockStyle()) {
-                    case Try:
-                        success = tryLock(clusterLockKey);
-                        break;
-                    case Release:
-                        success = release(clusterLockKey);
-                        break;
-                    case KeepAlive:
-                        success = keepAlive(clusterLockKey);
-                        break;
-                }
-
-                return success;
-            });
-
-            clusterWorker.sendResult(ClusterResult.success(clusterTaskRef, result));
-
-        } catch (final RuntimeException e) {
-            LOGGER.error(e.getMessage(), e);
-            clusterWorker.sendResult(ClusterResult.failure(clusterTaskRef, e));
-        }
     }
 
     /**
@@ -84,7 +48,11 @@ public class ClusterLockClusterHandler implements ClusterTaskHandler<ClusterLock
      * return false if this lock is already owned by another
      * node/process.
      */
-    private boolean tryLock(final ClusterLockKey clusterLockKey) {
+    boolean tryLock(final ClusterLockKey clusterLockKey) {
+        if (!securityContext.isProcessingUser()) {
+            throw new PermissionException(securityContext.getUserId(), "Only the processing user is allowed to try a cluster lock");
+        }
+
         boolean success = false;
 
         try {
@@ -121,7 +89,11 @@ public class ClusterLockClusterHandler implements ClusterTaskHandler<ClusterLock
      * key, return false if no lock could be found for this key or if
      * the lock is owned by another node/process.
      */
-    private boolean release(final ClusterLockKey clusterLockKey) {
+    boolean release(final ClusterLockKey clusterLockKey) {
+        if (!securityContext.isProcessingUser()) {
+            throw new PermissionException(securityContext.getUserId(), "Only the processing user is allowed to release a cluster lock");
+        }
+
         boolean success = false;
 
         try {
@@ -163,7 +135,11 @@ public class ClusterLockClusterHandler implements ClusterTaskHandler<ClusterLock
      * key, return false if no lock could be found for this key or if
      * the lock is owned by another node/process.
      */
-    private boolean keepAlive(final ClusterLockKey clusterLockKey) {
+    boolean keepAlive(final ClusterLockKey clusterLockKey) {
+        if (!securityContext.isProcessingUser()) {
+            throw new PermissionException(securityContext.getUserId(), "Only the processing user is allowed to keep a cluster lock alive");
+        }
+
         boolean success = false;
 
         try {

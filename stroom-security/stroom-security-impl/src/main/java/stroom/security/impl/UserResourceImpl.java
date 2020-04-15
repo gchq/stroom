@@ -8,6 +8,7 @@ import stroom.util.shared.StringCriteria;
 
 import javax.inject.Inject;
 import java.util.List;
+import java.util.stream.Collectors;
 
 public class UserResourceImpl implements UserResource {
     private final UserService userService;
@@ -19,6 +20,24 @@ public class UserResourceImpl implements UserResource {
 
     @Override
     public ResultPage<User> find(final FindUserCriteria criteria) {
+        criteria.setSort(FindUserCriteria.FIELD_NAME);
+        if (criteria.getRelatedUser() != null) {
+            User userRef = criteria.getRelatedUser();
+            List<User> list;
+            if (userRef.isGroup()) {
+                list = userService.findUsersInGroup(userRef.getUuid());
+            } else {
+                list = userService.findGroupsForUser(userRef.getUuid());
+            }
+
+            if (criteria.getName() != null) {
+                list = list.stream().filter(user -> criteria.getName().isMatch(user.getName())).collect(Collectors.toList());
+            }
+
+            // Create a result list limited by the page request.
+            return ResultPage.createPageLimitedList(list, criteria.getPageRequest());
+        }
+
         return ResultPage.createUnboundedList(userService.find(criteria));
     }
 
@@ -38,20 +57,20 @@ public class UserResourceImpl implements UserResource {
         return userService.loadByUuid(userUuid);
     }
 
-    @Override
-    public List<User> findUsersInGroup(final String groupUuid) {
-        return userService.findUsersInGroup(groupUuid);
-    }
-
-    @Override
-    public List<User> findGroupsForUserName(String userName) {
-        return userService.findGroupsForUserName(userName);
-    }
-
-    @Override
-    public List<User> findGroupsForUser(final String userUuid) {
-        return userService.findGroupsForUser(userUuid);
-    }
+//    @Override
+//    public List<User> findUsersInGroup(final String groupUuid) {
+//        return userService.findUsersInGroup(groupUuid);
+//    }
+//
+//    @Override
+//    public List<User> findGroupsForUserName(String userName) {
+//        return userService.findGroupsForUserName(userName);
+//    }
+//
+//    @Override
+//    public List<User> findGroupsForUser(final String userUuid) {
+//        return userService.findGroupsForUser(userUuid);
+//    }
 
     @Override
     public User create(final String name,

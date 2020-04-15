@@ -18,10 +18,8 @@ package stroom.search.solr.search;
 
 import stroom.query.api.v2.Query;
 import stroom.search.api.EventRef;
-import stroom.search.api.EventRefs;
-import stroom.task.api.ServerTask;
 
-public class SolrEventSearchTask extends ServerTask<EventRefs> {
+public class SolrEventSearchTask {
     private final EventRef minEvent;
     private final EventRef maxEvent;
     private final long maxStreams;

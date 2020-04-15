@@ -16,12 +16,6 @@ public class BuildInfo extends AbstractConfig {
     @JsonProperty
     private final String buildVersion;
 
-    public BuildInfo() {
-        upDate = null;
-        buildDate = null;
-        buildVersion = null;
-    }
-
     @JsonCreator
     public BuildInfo(@JsonProperty("upDate") final String upDate,
                      @JsonProperty("buildVersion") final String buildVersion,
@@ -49,8 +43,8 @@ public class BuildInfo extends AbstractConfig {
         if (o == null || getClass() != o.getClass()) return false;
         final BuildInfo buildInfo = (BuildInfo) o;
         return Objects.equals(upDate, buildInfo.upDate) &&
-            Objects.equals(buildDate, buildInfo.buildDate) &&
-            Objects.equals(buildVersion, buildInfo.buildVersion);
+                Objects.equals(buildDate, buildInfo.buildDate) &&
+                Objects.equals(buildVersion, buildInfo.buildVersion);
     }
 
     @Override
@@ -61,9 +55,9 @@ public class BuildInfo extends AbstractConfig {
     @Override
     public String toString() {
         return "BuildInfo{" +
-            "upDate='" + upDate + '\'' +
-            ", buildDate='" + buildDate + '\'' +
-            ", buildVersion='" + buildVersion + '\'' +
-            '}';
+                "upDate='" + upDate + '\'' +
+                ", buildDate='" + buildDate + '\'' +
+                ", buildVersion='" + buildVersion + '\'' +
+                '}';
     }
 }

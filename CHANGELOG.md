@@ -12,7 +12,23 @@ and this project adheres to [Semantic Versioning](http://semver.org/).
 
 * Issue **#1426** : Change /logout endpoint to /noauth/logout.
 
-* Issue **#1427** : Change remote call to auth sercice to a local call.
+* Fix `Expecting a real user identity` errors on auto import of content packs.
+
+* Increase wait timeout to 240s in `start.sh`.
+
+* Issue **#1404** : Fixed issue with invalid XML character filter.
+
+* Issue **#1413* : Attempt to fix search hanging issue.
+
+* Issue **#1393** : The annotations data popup now formats content on load.
+
+* Issue **#1399** : Removed error logging for expected exceptions in TaskExecutor.
+
+* Issue **#1385** : File output param `streamId` now aliased to `sourceId` and `streamNo` is now aliased to `partNo` for consistency with new source tracking XSLT functions.
+
+* Issue **#1392** : Downloading dashboard queries now provides the current query without the need to save the dashboard.
+
+* Issue **#1427** : Change remote call to auth service to a local call.
 
 
 ## [v7.0-beta.23] - 2020-03-24

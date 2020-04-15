@@ -16,22 +16,20 @@
 
 package stroom.job.api;
 
-
-
 import java.util.List;
 
 /**
  * This interface is to be used by all classes that will create tasks for the
  * job system.
  */
-public interface DistributedTaskFactory<T extends DistributedTask<R>, R> {
+public interface DistributedTaskFactory {
     /**
      * Gets a list of tasks if available up to the number requested.
      */
-    List<T> fetch(String nodeName, int count);
+    List<DistributedTask> fetch(String nodeName, int count);
 
     /**
      * Return tasks back that could not be returned to a worker
      */
-    void abandon(String nodeName, List<T> tasks);
+    Boolean abandon(String nodeName, List<DistributedTask> tasks);
 }

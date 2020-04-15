@@ -32,7 +32,6 @@ import stroom.pipeline.shared.stepping.StepLocation;
 import stroom.pipeline.shared.stepping.SteppingResource;
 import stroom.pipeline.shared.stepping.SteppingResult;
 import stroom.security.api.SecurityContext;
-import stroom.task.api.TaskManager;
 import stroom.util.HasHealthCheck;
 
 import javax.inject.Inject;
@@ -41,19 +40,19 @@ import java.util.List;
 class SteppingResourceImpl implements SteppingResource, HasHealthCheck {
     private final MetaService metaService;
     private final PipelineStore pipelineStore;
-    private final TaskManager taskManager;
+    private final SteppingService steppingService;
     private final PipelineEventLog pipelineEventLog;
     private final SecurityContext securityContext;
 
     @Inject
     SteppingResourceImpl(final MetaService metaService,
                          final PipelineStore pipelineStore,
-                         final TaskManager taskManager,
+                         final SteppingService steppingService,
                          final PipelineEventLog pipelineEventLog,
                          final SecurityContext securityContext) {
         this.metaService = metaService;
         this.pipelineStore = pipelineStore;
-        this.taskManager = taskManager;
+        this.steppingService = steppingService;
         this.pipelineEventLog = pipelineEventLog;
         this.securityContext = securityContext;
     }
@@ -112,23 +111,8 @@ class SteppingResourceImpl implements SteppingResource, HasHealthCheck {
         StepLocation stepLocation = request.getStepLocation();
 
         try {
-            // Copy the action settings to the server task.
-            final SteppingTask task = new SteppingTask();
-            task.setCriteria(request.getCriteria());
-            task.setChildStreamType(request.getChildStreamType());
-            task.setStepLocation(request.getStepLocation());
-            task.setStepFilterMap(request.getStepFilterMap());
-            task.setStepType(request.getStepType());
-            task.setPipeline(request.getPipeline());
-            task.setCode(request.getCode());
+            result = steppingService.step(request);
 
-            // Make sure stepping can only happen on streams that are visible to
-            // the user.
-            // FIXME : Constrain available streams.
-            // folderValidator.constrainCriteria(task.getCriteria());
-
-            // Execute the stepping task.
-            result = taskManager.exec(task);
             if (result.getStepLocation() != null) {
                 stepLocation = result.getStepLocation();
             }

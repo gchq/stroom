@@ -16,10 +16,10 @@ public interface ResourcePaths {
      */
     String API_ROOT_PATH = "/api";
 
-    // TODO consider splitting all api resources into either stateful or stateless paths
-    //   to make nginx routing easier
-    String STATEFUL = "/stateful";
-    String STATELESS = "/stateless";
+    /**
+     * All static React paths containing "/s/" will be served as root and be handled by the React BrowserRouter
+     */
+    String SINGLE_PAGE_PREFIX = "/s/";
 
     /**
      * Path part for unauthenticated servlets
@@ -35,11 +35,6 @@ public interface ResourcePaths {
      * Path part for the SQL Statistics query service
      */
     String SQL_STATISTICS = "/sqlstatistics";
-
-    /**
-     * Path part for the Hessian based GWT client-server RPC comms
-     */
-    String DISPATCH_RPC = "/dispatch.rpc";
 
     /**
      * Path part for the Hessian based inter-node RPC comms

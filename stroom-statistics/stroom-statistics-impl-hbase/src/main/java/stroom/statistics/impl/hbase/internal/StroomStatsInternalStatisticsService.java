@@ -50,6 +50,8 @@ class StroomStatsInternalStatisticsService implements InternalStatisticsService 
     @Inject
     StroomStatsInternalStatisticsService(final KafkaProducerFactory stroomKafkaProducerFactory,
                                          final HBaseStatisticsConfig internalStatisticsConfig) {
+        LOGGER.debug("Initialising StroomStatsInternalStatisticsService");
+
         this.stroomKafkaProducerFactory = stroomKafkaProducerFactory;
         this.internalStatisticsConfig = internalStatisticsConfig;
         this.docRefType = internalStatisticsConfig.getDocRefType();

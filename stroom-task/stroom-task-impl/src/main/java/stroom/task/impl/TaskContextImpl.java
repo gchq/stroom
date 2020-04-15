@@ -27,16 +27,16 @@ import java.util.function.Supplier;
 
 class TaskContextImpl implements TaskContext {
     private final TaskManagerImpl taskManager;
-    private final TaskId parentTaskId;
+    private final TaskId taskId;
     private final UserIdentity userIdentity;
     private final String taskName;
 
-    TaskContextImpl(final TaskManagerImpl taskManager, final TaskId parentTaskId, final String taskName, final UserIdentity userIdentity) {
+    TaskContextImpl(final TaskManagerImpl taskManager, final TaskId taskId, final String taskName, final UserIdentity userIdentity) {
         Objects.requireNonNull(taskName, "Task has null name");
         Objects.requireNonNull(userIdentity, "Task has null user identity: " + taskName);
 
         this.taskManager = taskManager;
-        this.parentTaskId = parentTaskId;
+        this.taskId = taskId;
         this.userIdentity = userIdentity;
         this.taskName = taskName;
     }
@@ -52,28 +52,34 @@ class TaskContextImpl implements TaskContext {
     }
 
     @Override
+    public TaskId getTaskId() {
+        return taskId;
+    }
+
+    @Override
     public void terminate() {
         CurrentTaskState.terminate();
     }
 
     @Override
-    public <U> Supplier<U> subTask(final Supplier<U> supplier) {
+    public <U> WrappedSupplier<U> sub(final Supplier<U> supplier) {
         final LogExecutionTime logExecutionTime = new LogExecutionTime();
-
-        // We might need to be able to retrieve the associate task handler
-        // right away so associate it here before we execute as the task
-        // will run asynchronously.
-        final TaskId taskId = TaskIdFactory.create(parentTaskId);
-        return taskManager.wrapSupplier(taskId, taskName, userIdentity, supplier, logExecutionTime);
+        final TaskId taskId = TaskIdFactory.create(this.taskId);
+        final TaskContext subTaskContext = new TaskContextImpl(taskManager, taskId, taskName, userIdentity);
+        final Supplier<U> wrappedSupplier = taskManager.wrapSupplier(taskId, taskName, userIdentity, supplier, logExecutionTime);
+        return new WrappedSupplier<>(subTaskContext, wrappedSupplier);
     }
 
     @Override
-    public Runnable subTask(final Runnable runnable) {
+    public WrappedRunnable sub(final Runnable runnable) {
         final Supplier<Void> supplierIn = () -> {
             runnable.run();
             return null;
         };
-        final Supplier<Void> supplierOut = subTask(supplierIn);
-        return supplierOut::get;
+        final LogExecutionTime logExecutionTime = new LogExecutionTime();
+        final TaskId taskId = TaskIdFactory.create(this.taskId);
+        final TaskContext subTaskContext = new TaskContextImpl(taskManager, taskId, taskName, userIdentity);
+        final Supplier<Void> supplierOut = taskManager.wrapSupplier(taskId, taskName, userIdentity, supplierIn, logExecutionTime);
+        return new WrappedRunnable(subTaskContext, supplierOut::get);
     }
 }

@@ -1,7 +1,7 @@
 package stroom.meta.impl;
 
 import stroom.job.api.ScheduledJobsModule;
-import stroom.job.api.TaskConsumer;
+import stroom.job.api.RunnableWrapper;
 
 import javax.inject.Inject;
 
@@ -23,17 +23,17 @@ public class MetaDbJobsModule extends ScheduledJobsModule {
                 .to(DataAttributesRetention.class);
     }
 
-    private static class FlushDataMetaDb extends TaskConsumer {
+    private static class FlushDataMetaDb extends RunnableWrapper {
         @Inject
         FlushDataMetaDb(final MetaValueDao metaValueService) {
-            super(task -> metaValueService.flush());
+            super(metaValueService::flush);
         }
     }
 
-    private static class DataAttributesRetention extends TaskConsumer {
+    private static class DataAttributesRetention extends RunnableWrapper {
         @Inject
         DataAttributesRetention(final MetaValueDao metaValueService) {
-            super(task -> metaValueService.deleteOldValues());
+            super(metaValueService::deleteOldValues);
         }
     }
 }

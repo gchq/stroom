@@ -1,0 +1,159 @@
+/*
+ * Copyright 2017 Crown Copyright
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ *     http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
+
+body {
+  margin: 0;
+  padding: 0;
+  font-family: "Open Sans";
+  background-color: white;
+}
+
+h3 {
+  color: #323232;
+  margin: 5px 0 5px 0;
+}
+
+input,
+select,
+textarea {
+  padding: 0.6rem;
+  margin: 8px 0;
+  display: inline-block;
+  border: thin solid #ccc;
+  border-radius: 3px;
+  font-family: "Open Sans";
+  background-color: white;
+}
+
+input:focus,
+select:focus,
+textarea:focus {
+  outline: thin solid #1e88e5;
+}
+
+a:focus {
+  outline: none;
+}
+
+.header {
+  display: flex;
+  flex-direction: row;
+  padding: 5px;
+}
+
+.validation-error {
+  font-size: 12px;
+  color: #ff6f00;
+  padding-left: 5px;
+}
+
+.section {
+  display: flex;
+  flex-direction: column;
+  width: calc(100% - 45px);
+  border-top: thin solid lightgrey;
+  padding: 10px 5px 20px 5px;
+}
+
+@media only screen and (max-width: 820px) {
+  .section__title {
+    width: 200px;
+  }
+
+  .container {
+    width: 645px;
+  }
+}
+
+@media only screen and (max-width: 645px) {
+  .section__title {
+    width: 125px;
+  }
+
+  .container {
+    width: 600px;
+  }
+}
+
+@media only screen and (min-width: 820px) {
+  .section__title {
+    width: 300px;
+  }
+
+  .container {
+    width: 800px;
+  }
+}
+
+.section__subtitle {
+  font-size: 14px;
+}
+
+.section__fields {
+  width: 499px;
+  display: flex;
+  flex-direction: column;
+}
+
+.section__fields--copy-only {
+  width: 500px;
+  padding: 10px;
+  /*background-color: #f9f9f9;*/
+  border: none;
+  border-radius: 3px;
+  font-size: 15px;
+}
+
+.section__fields--copy-only .copy {
+  padding: 3px 0 3px 0;
+}
+
+.section__fields--copy-only.constrained {
+  width: 66%;
+  font-size: 12px;
+  word-wrap: break-word;
+}
+
+.section__fields--copy-only textarea {
+  width: 97%;
+  height: 140px;
+}
+
+.section__fields__row {
+  width: 100%;
+  display: flex;
+  flex-direction: row;
+  padding-top: 5px;
+  padding-bottom: 5px;
+}
+
+.section__fields__row.1-column * {
+  width: 100%;
+}
+
+.section__fields__comments {
+  width: 100%;
+}
+
+.footer {
+  width: calc(100% - 30px);
+  margin-left: auto;
+  margin-right: auto;
+  display: flex;
+  flex-direction: row;
+  justify-content: flex-end;
+  padding: 10px;
+}

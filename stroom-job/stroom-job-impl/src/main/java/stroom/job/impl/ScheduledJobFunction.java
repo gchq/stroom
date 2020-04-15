@@ -1,34 +1,29 @@
 package stroom.job.impl;
 
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 import stroom.job.api.ScheduledJob;
-import stroom.job.api.TaskConsumer;
-import stroom.task.shared.Task;
 
 import java.util.concurrent.atomic.AtomicBoolean;
 
-class ScheduledJobFunction {
-    private static final Logger LOGGER = LoggerFactory.getLogger(ScheduledJobFunction.class);
-
+class ScheduledJobFunction implements Runnable {
     private final AtomicBoolean running;
     private final ScheduledJob scheduledJob;
-    private final TaskConsumer consumer;
+    private final Runnable runnable;
 
-    public ScheduledJobFunction(final ScheduledJob scheduledJob, final TaskConsumer consumer, final AtomicBoolean running) {
+    public ScheduledJobFunction(final ScheduledJob scheduledJob,
+                                final Runnable runnable,
+                                final AtomicBoolean running) {
         this.scheduledJob = scheduledJob;
         this.running = running;
-        this.consumer = consumer;
+        this.runnable = runnable;
     }
 
-    public void exec(final Task<?> task) {
-        try {
-            consumer.accept(task);
-        } catch (final RuntimeException e) {
-            LOGGER.error("Error calling {}", scheduledJob.getName(), e);
-        } finally {
-            running.set(false);
-        }
+    public AtomicBoolean getRunning() {
+        return running;
+    }
+
+    @Override
+    public void run() {
+        runnable.run();
     }
 
     @Override

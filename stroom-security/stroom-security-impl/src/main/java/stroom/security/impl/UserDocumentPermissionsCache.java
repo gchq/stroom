@@ -58,18 +58,18 @@ public class UserDocumentPermissionsCache implements PermissionChangeEvent.Handl
             if (event instanceof AddPermissionEvent) {
                 final AddPermissionEvent addPermissionEvent = (AddPermissionEvent) event;
                 cache.getOptional(addPermissionEvent.getUserUuid()).ifPresent(userDocumentPermissions ->
-                        userDocumentPermissions.addPermission(addPermissionEvent.getDocUuid(), addPermissionEvent.getPermission()));
+                        userDocumentPermissions.addPermission(addPermissionEvent.getDocumentUuid(), addPermissionEvent.getPermission()));
 
             } else if (event instanceof RemovePermissionEvent) {
                 final RemovePermissionEvent removePermissionEvent = (RemovePermissionEvent) event;
                 cache.getOptional(removePermissionEvent.getUserUuid()).ifPresent(userDocumentPermissions ->
-                        userDocumentPermissions.removePermission(removePermissionEvent.getDocUuid(), removePermissionEvent.getPermission()));
+                        userDocumentPermissions.removePermission(removePermissionEvent.getDocumentUuid(), removePermissionEvent.getPermission()));
 
             } else if (event instanceof ClearDocumentPermissionsEvent) {
                 final ClearDocumentPermissionsEvent clearDocumentPermissionsEvent = (ClearDocumentPermissionsEvent) event;
                 cache.values().forEach(userDocumentPermissions -> {
                     if (userDocumentPermissions != null) {
-                        userDocumentPermissions.clearDocumentPermissions(clearDocumentPermissionsEvent.getDocUuid());
+                        userDocumentPermissions.clearDocumentPermissions(clearDocumentPermissionsEvent.getDocumentUuid());
                     }
                 });
 

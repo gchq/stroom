@@ -1,0 +1,616 @@
+@import "themes.scss";
+@import "../../styles/themify.scss";
+
+///////////////
+// Variables //
+///////////////
+$button-margin: .2rem;
+
+////////////////////
+// Inner elements //
+////////////////////
+.Button__margin {
+  margin: 0.2rem;
+}
+
+.Button__text {
+  vertical-align: middle;
+  z-index: 1;
+}
+
+.Button svg {
+  z-index: 1;
+}
+
+////////////////////////////////////////////////////////////////////////////////
+// Button container to wrap multiple buttons
+////////////////////////////////////////////////////////////////////////////////
+.Button__container {
+  display: flex;
+  flex-wrap: wrap;
+  margin: -$button-margin;
+}
+
+////////////////////////////////////////////////////////////////////////////////
+// Base for all buttons
+////////////////////////////////////////////////////////////////////////////////
+.Button--base {
+  // .jr0u89w
+  color: inherit;
+  border: 0;
+  margin: 0;
+  cursor: pointer;
+  display: inline-flex;
+  outline: none;
+  padding: 0;
+  position: relative;
+  align-items: center;
+  user-select: none;
+  border-radius: 0;
+  vertical-align: middle;
+  justify-content: center;
+  -moz-appearance: none;
+  text-decoration: none;
+  background-color: transparent;
+  -webkit-appearance: none;
+  -webkit-tap-highlight-color: transparent;
+
+  margin: $button-margin;
+  height: 30px;
+}
+
+.Button--base.Button--disabled {
+  // .jr0u89w.j1p4cocs
+  cursor: default;
+  pointer-events: none;
+}
+
+////////////////////////////////////////////////////////////////////////////////
+// General button styles
+////////////////////////////////////////////////////////////////////////////////
+.Button {
+  // .j9la4jl
+  color: rgba(0, 0, 0, 0.87);
+  padding: .375rem 1rem;
+  font-size: 0.875rem;
+  min-width: 4rem;
+  box-sizing: border-box;
+  transition: background-color 250ms cubic-bezier(0.4, 0, 0.2, 1) 0ms, box-shadow 250ms cubic-bezier(0.4, 0, 0.2, 1) 0ms, border 250ms cubic-bezier(0.4, 0, 0.2, 1) 0ms;
+  line-height: 1.75;
+  // font-family: "Roboto", "Helvetica", "Arial", sans-serif;
+  font-weight: 500;
+  border-radius: .25rem;
+  letter-spacing: 0.02857em;
+  text-transform: uppercase;
+
+  font-size: 0.7rem;
+  // background-position: center;
+  // transition: background 0.5s;
+
+  position: relative;
+  overflow: hidden;
+
+  font-family: "Open Sans";
+  font-weight: 600;
+}
+
+.Button:hover {
+  // .j9la4jl:hover
+  text-decoration: none;
+  background-color: rgba(0, 0, 0, 0.08);
+}
+
+.Button.Button--disabled {
+  // .j9la4jl.j1p4cocs {
+  color: rgba(0, 0, 0, 0.26);
+}
+
+////////////////////////////////////////////////////////////////////////////////
+// Default buttons
+////////////////////////////////////////////////////////////////////////////////
+.Button--default {
+  // .j1hrif9t
+  padding: .375rem .5rem;
+  color: #424242; // material grey 800
+
+  @include themify($themes) {
+    color: themed("button-default__color");
+  }
+}
+
+.Button--default.Button--selected {
+  background-color: rgba(158, 158, 158, 0.2); // material grey 500 20%
+
+  @include themify($themes) {
+    background-color: themed("button-default__background-color--selected");
+  }
+}
+
+.Button--default:hover {
+  background-color: rgba(158, 158, 158, 0.3); // material grey 500 30%
+
+  @include themify($themes) {
+    background-color: themed("button-default__background-color--hover");
+  }
+}
+
+.Button--default-primary {
+  // .j14bbh75
+  color: #2196f3; // material blue 500 
+
+  @include themify($themes) {
+    color: themed("button-default-primary__color");
+  }
+}
+
+.Button--default-primary.Button--selected {
+  background-color: rgba(33, 150, 243, 0.1); // material blue 500 10%
+
+  @include themify($themes) {
+    background-color: themed("button-default-primary__background-color--selected");
+  }
+}
+
+.Button--default-primary:hover {
+  // .j14bbh75:hover
+  background-color: rgba(33, 150, 243, 0.2); // material blue 500 20%
+
+  @include themify($themes) {
+    background-color: themed("button-default-primary__background-color--hover");
+  }
+}
+
+.Button--default-secondary {
+  // .j1y9307j
+  color: #e91e63; // material pink 500 
+
+  @include themify($themes) {
+    color: themed("button-default-secondary__color");
+  }
+}
+
+.Button--default-secondary.Button--selected {
+  background-color: rgba(233, 30, 99, 0.1); // material pink 500 10%
+
+  @include themify($themes) {
+    background-color: themed("button-default-secondary__background-color--selected");
+  }
+}
+
+.Button--default-secondary:hover {
+  // .j1y9307j:hover
+  background-color: rgba(233, 30, 99, 0.2); // material pink 500 20%
+
+  @include themify($themes) {
+    background-color: themed("button-default-secondary__background-color--hover");
+  }
+}
+
+.Button--default.Button--disabled {
+  color: rgba(0, 0, 0, 0.26);
+
+  @include themify($themes) {
+    color: themed("button-default__color--disabled");
+  }
+}
+
+////////////////////////////////////////////////////////////////////////////////
+// Outline buttons
+////////////////////////////////////////////////////////////////////////////////
+
+.Button--outline {
+  // .j5jkmku
+  border: thin solid;
+  padding: .3rem 1rem;
+  color: #424242; // material grey 800
+  border-color: rgba(158, 158, 158, 0.8); // material grey 500 80%
+
+  @include themify($themes) {
+    color: themed("button-outline__color");
+    border-color: themed("button-outline__border-color");
+  }
+}
+
+.Button--outline.Button--selected {
+  border-color: rgba(158, 158, 158, 1.0); // material grey 500 100%
+  background-color: rgba(158, 158, 158, 0.2); // material grey 500 20%
+
+  @include themify($themes) {
+    border-color: themed("button-outline__border-color--hover");
+    background-color: themed("button-outline__background-color--selected");
+  }
+}
+
+.Button--outline:hover {
+  border-color: rgba(158, 158, 158, 1.0); // material grey 500 100%
+  background-color: rgba(158, 158, 158, 0.3); // material grey 500 30%
+
+  @include themify($themes) {
+    border-color: themed("button-outline__border-color--hover");
+    background-color: themed("button-outline__background-color--hover");
+  }
+}
+
+.Button--outline.Button--disabled {
+  color: rgba(0, 0, 0, 0.26);
+  border-color: rgba(0, 0, 0, 0.26);
+
+  @include themify($themes) {
+    color: themed("button-outline__color--disabled");
+    border-color: themed("button-outline__border-color--disabled");
+  }
+}
+
+.Button--outline-primary {
+  // .j9ze19u
+  border: thin solid;
+  color: #2196f3; // material blue 500 
+  border-color: rgba(33, 150, 243, 0.5); // material blue 500 50%
+
+  @include themify($themes) {
+    color: themed("button-outline-primary__color");
+    border-color: themed("button-outline-primary__border-color");
+  }
+}
+
+.Button--outline-primary.Button--selected {
+  border-color: rgba(33, 150, 243, 1.0); // material blue 500 100%
+  background-color: rgba(33, 150, 243, 0.1); // material blue 500 10%
+
+  @include themify($themes) {
+    border-color: themed("button-outline-primary__border-color--hover");
+    background-color: themed("button-outline-primary__background-color--selected");
+  }
+}
+
+.Button--outline-primary:hover {
+  // .j9ze19u:hover
+  border: thin solid;
+  border-color: rgba(33, 150, 243, 1.0); // material blue 500 100%
+  background-color: rgba(33, 150, 243, 0.2); // material blue 500 20%
+
+  @include themify($themes) {
+    border-color: themed("button-outline-primary__border-color--hover");
+    background-color: themed("button-outline-primary__background-color--hover");
+  }
+}
+
+.Button--outline-primary.Button--disabled {
+  color: rgba(0, 0, 0, 0.26);
+  border-color: rgba(0, 0, 0, 0.26);
+
+  @include themify($themes) {
+    color: themed("button-outline__color--disabled");
+    border-color: themed("button-outline__border-color--disabled");
+  }
+}
+
+.Button--outline-secondary {
+  // .j1xxvqug
+  border: thin solid;
+  color: #e91e63; // material pink 500 
+  border-color: rgba(233, 30, 99, 0.5); // material pink 500 50%
+
+  @include themify($themes) {
+    color: themed("button-outline-secondary__color");
+    border-color: themed("button-outline-secondary__border-color");
+  }
+}
+
+.Button--outline-secondary.Button--selected {
+  border-color: rgba(233, 30, 99, 1.0); // material pink 500 100%
+  background-color: rgba(233, 30, 99, 0.1); // material pink 500 10%
+
+  @include themify($themes) {
+    border-color: themed("button-outline-secondary__border-color--hover");
+    background-color: themed("button-outline-secondary__background-color--selected");
+  }
+}
+
+.Button--outline-secondary:hover {
+  border: thin solid;
+  border-color: rgba(233, 30, 99, 1.0); // material pink 500 100%
+  background-color: rgba(233, 30, 99, 0.2); // material pink 500 20%
+
+  @include themify($themes) {
+    border-color: themed("button-outline-secondary__border-color--hover");
+    background-color: themed("button-outline-secondary__background-color--hover");
+  }
+}
+
+.Button--outline-secondary.Button--disabled {
+  border: thin solid;
+  color: rgba(0, 0, 0, 0.26);
+  border-color: rgba(0, 0, 0, 0.26);
+
+  @include themify($themes) {
+    color: themed("button-outline__color--disabled");
+    border-color: themed("button-outline__border-color--disabled");
+  }
+}
+
+////////////////////////////////////////////////////////////////////////////////
+// Icon buttons
+////////////////////////////////////////////////////////////////////////////////
+
+.Button--icon {
+  // .j1g2vga5
+  flex: 0 0 auto;
+  padding: .75rem;
+  overflow: visible;
+  font-size: 1.5rem;
+  text-align: center;
+  transition: background 0.5s, background-color 150ms cubic-bezier(0.4, 0, 0.2, 1) 0ms;
+  border-radius: 50%;
+
+  // Added
+  min-width: 1.81rem;
+  min-height: 1.81rem;
+  font-size: 0.7rem;
+  padding: 0.4rem;
+  overflow: hidden;
+
+  height: 1rem;
+  width: 1rem;
+
+  color: #424242; // material grey 800
+
+  @include themify($themes) {
+    color: themed("button-icon__color");
+  }
+}
+
+.Button.small {
+  height: 20px;
+  line-height: 0;
+  font-size: 0.6rem;
+}
+
+.Button--icon.small {
+  // .j1g2vga5
+  padding: 0.2rem 0.3rem 0.2rem 0.3rem;
+  height: 1rem;
+  width: 1rem;
+  min-width: 0.25rem;
+  min-height: 0.25rem;
+  padding: 0.2rem;
+}
+
+.Button.large {
+  height: 47px;
+  line-height: 0;
+  font-size: 1.2rem;
+}
+
+.Button--icon.large {
+  // .j1g2vga5
+  padding: 0.2rem 0.3rem 0.2rem 0.3rem;
+  height: 2.5rem;
+  width: 2.5rem;
+  padding: 0.2rem;
+}
+
+.Button--icon.Button--selected {
+  background-color: rgba(158, 158, 158, 0.2); // material grey 500 20%
+
+  @include themify($themes) {
+    background-color: themed("button-icon__background-color--selected");
+  }
+}
+
+.Button--icon:hover {
+  // .j1g2vga5:hover
+  background-color: rgba(158, 158, 158, 0.3); // material grey 500 30%
+
+  @include themify($themes) {
+    background: themed("button-icon__background-color--hover");
+  }
+}
+
+.Button--icon-primary {
+  // .j42ua74
+  color: #2196f3; // material blue 500 
+
+  @include themify($themes) {
+    color: themed("button-icon-primary__color");
+  }
+}
+
+.Button--icon-primary.Button--selected {
+  background-color: rgba(33, 150, 243, 0.1); // material blue 500 10%
+
+  @include themify($themes) {
+    background-color: themed("button-icon-primary__background-color--selected");
+  }
+}
+
+.Button--icon-primary:hover {
+  // .j42ua74:hover
+  background-color: rgba(33, 150, 243, 0.2); // material blue 500 20%
+
+  @include themify($themes) {
+    background: themed("button-icon-primary__background-color--hover");
+  }
+}
+
+.Button--icon-secondary {
+  // j1q4g7ue
+  color: #e91e63; // material pink 500 
+
+  @include themify($themes) {
+    color: themed("button-icon-secondary__color");
+  }
+}
+
+.Button--icon-secondary.Button--selected {
+  background-color: rgba(233, 30, 99, 0.1); // material pink 500 10%
+
+  @include themify($themes) {
+    background-color: themed("button-icon-secondary__background-color--selected");
+  }
+}
+
+.Button--icon-secondary:hover {
+  // .j1q4g7ue:hover
+  background-color: rgba(233, 30, 99, 0.2); // material pink 500 20%
+
+  @include themify($themes) {
+    background: themed("button-icon-secondary__background-color--hover");
+  }
+}
+
+.Button--icon.Button--disabled {
+  // .j1g2vga5.j1p4cocs
+  color: rgba(0, 0, 0, 0.26);
+
+  @include themify($themes) {
+    color: themed("button-icon__color--disabled");
+  }
+}
+
+////////////////////////////////////////////////////////////////////////////////
+// Contained buttons
+////////////////////////////////////////////////////////////////////////////////
+
+.Button--contained {
+  // .jpyw0mp
+  box-shadow: 0 .06rem .3rem 0 rgba(0, 0, 0, 0.2), 0 .125rem .125rem 0 rgba(0, 0, 0, 0.14), 0 .18rem .06rem -.125rem rgba(0, 0, 0, 0.12);
+  color: #424242; // material grey 800
+  background-color: #e0e0e0; // material grey 300 
+
+  @include themify($themes) {
+    color: themed("button-contained__color");
+    background-color: themed("button-contained__background-color");
+  }
+}
+
+.Button--contained.Button--selected {
+  background-color: #bdbdbd; // material grey 400 
+
+  @include themify($themes) {
+    background-color: themed("button-contained__background-color--selected");
+  }
+}
+
+.Button--contained:hover {
+  // .jpyw0mp:hover
+  background-color: #eeeeee; // material grey 200
+
+  @include themify($themes) {
+    background-color: themed("button-contained__background-color--hover");
+  }
+}
+
+.Button--contained:active {
+  // .jpyw0mp:active
+  box-shadow: 0 .3rem .3rem -.18rem rgba(0, 0, 0, 0.2), 0 .5rem .625rem .06rem rgba(0, 0, 0, 0.14), 0 .18rem .875rem .125rem rgba(0, 0, 0, 0.12);
+}
+
+.Button--contained-primary {
+  // .j1xs0a6r
+  color: #fff;
+  background-color: #2196f3; // material blue 500
+
+  @include themify($themes) {
+    color: themed("button-contained-primary__color");
+    background-color: themed("button-contained-primary__background-color");
+  }
+}
+
+.Button--contained-primary.Button--selected {
+  background-color: #1e88e5; // material blue 600
+
+  @include themify($themes) {
+    background-color: themed("button-contained-primary__background-color--selected");
+  }
+}
+
+.Button--contained-primary:hover {
+  // .j1xs0a6r:hover
+  background-color: #42a5f5; // material blue 400
+
+  @include themify($themes) {
+    background-color: themed("button-contained-primary__background-color--hover");
+  }
+}
+
+.Button--contained-secondary {
+  // .j1qgefk9
+  color: #fff;
+  background-color: #e91e63; // material pink 500 
+
+  @include themify($themes) {
+    color: themed("button-contained-secondary__color");
+    background-color: themed("button-contained-secondary__background-color");
+  }
+}
+
+.Button--contained-secondary.Button--selected {
+  background-color: #d81b60; // material pink 600
+
+  @include themify($themes) {
+    background-color: themed("button-contained-secondary__background-color--selected");
+  }
+}
+
+.Button--contained-secondary:hover {
+  // .j1qgefk9:hover
+  background-color: #ec407a; // material pink 400
+
+  @include themify($themes) {
+    background-color: themed("button-contained-secondary__background-color--hover");
+  }
+}
+
+.Button--contained.Button--disabled {
+  // .jpyw0mp.j1p4cocs
+  box-shadow: none;
+  color: rgba(0, 0, 0, 0.26);
+  background-color: rgba(0, 0, 0, 0.12);
+
+  @include themify($themes) {
+    color: themed("button-contained__color--disabled");
+    background-color: themed("button-contained__background-color--disabled");
+  }
+}
+
+////////////////////////////////////////////////////////////////////////////////
+// Ripple effect
+////////////////////////////////////////////////////////////////////////////////
+
+.ripple-container {
+  position: absolute;
+  overflow: hidden;
+  width: 100%;
+  height: 100%;
+}
+
+.ripple {
+  position: absolute;
+  border-radius: 50%;
+  background-color: rgba(0, 0, 0, 0.1);
+
+  width: 6.25rem;
+  height: 6.25rem;
+  margin-top: -3.125rem;
+  margin-left: -3.125rem;
+
+  animation: ripple 1s;
+  opacity: 0;
+
+  @include themify($themes) {
+    background-color: themed("ripple__background-color");
+  }
+}
+
+@keyframes ripple {
+  from {
+    opacity: 1;
+    transform: scale(0);
+  }
+
+  to {
+    opacity: 0;
+    transform: scale(10);
+  }
+}

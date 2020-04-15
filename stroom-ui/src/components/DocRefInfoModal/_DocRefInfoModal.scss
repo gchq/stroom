@@ -1,0 +1,40 @@
+.DocRefInfo {
+  display: grid;
+  grid-template-columns: 1fr 1fr 1fr 1fr;
+  grid-template-areas:
+    "type uuid name name"
+    "createdBy createdOn updatedBy updatedOn"
+    "otherInfo otherInfo otherInfo otherInfo";
+}
+
+.DocRefInfo__type {
+  grid-area: type;
+}
+
+.DocRefInfo__uuid {
+  grid-area: uuid;
+}
+
+.DocRefInfo__name {
+  grid-area: name;
+}
+
+.DocRefInfo__createdBy {
+  grid-area: createdBy;
+}
+
+.DocRefInfo__createdOn {
+  grid-area: createdOn;
+}
+
+.DocRefInfo__updatedBy {
+  grid-area: updatedBy;
+}
+
+.DocRefInfo__updatedOn {
+  grid-area: updatedOn;
+}
+
+.DocRefInfo__otherInfo {
+  grid-area: otherInfo;
+}

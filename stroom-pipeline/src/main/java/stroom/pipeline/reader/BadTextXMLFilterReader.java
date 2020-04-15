@@ -129,7 +129,7 @@ public class BadTextXMLFilterReader extends TransformReader {
         m_cbuf.rewind();
         switch (m_xmlState) {
             case InLeafClose:
-                m_streamModified = true;
+                modified = true;
                 patchUpLeafNonXML();
                 break;
             case InTagTail:

@@ -1,0 +1,40 @@
+.toggle-small {
+  font-size: 12px;
+  height: 12px !important;
+  width: 25px !important;
+}
+
+/*
+ * This 'low' style can be used where the reduced toggle size 
+ * needs an alignment tweak, i.e. for when it has a label.
+ */
+.toggle-small-low div div {
+  margin-top: 1px;
+}
+
+.toggle-small-high div div {
+  margin-top: -1px !important;
+}
+
+/* 
+ * This makes the toggle hole smaller
+ */
+.toggle-small div div:nth-child(1) {
+  height: 10px !important;
+  width: 25px !important;
+}
+
+/* 
+ * This makes the toggle button smaller.
+ */
+.toggle-small div div:nth-child(2) {
+  width: 15px !important;
+  height: 15px !important;
+}
+
+/* This makes the toggle button align with it's toggle hole. The selector is very specific 
+ * and is probably fragile
+ */
+.toggle-small div div[style*="margin-left: -20px"]:nth-child(2) {
+  margin-left: -13px !important;
+}

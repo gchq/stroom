@@ -19,38 +19,20 @@
 package stroom.authentication.config;
 
 import com.fasterxml.jackson.annotation.JsonProperty;
+import stroom.util.cache.CacheConfig;
 import stroom.util.shared.AbstractConfig;
+import stroom.util.time.StroomDuration;
 
 import javax.annotation.Nullable;
 import javax.validation.Valid;
 import javax.validation.constraints.NotNull;
 
 public final class AuthenticationConfig extends AbstractConfig {
-
     public static final String PROP_NAME_EMAIL = "email";
     public static final String PROP_NAME_TOKEN = "token";
-    public static final String PROP_NAME_SESSION_ID_COOKIE_MAX_AGE = "sessionIdCookieMaxAge";
-    public static final String PROP_NAME_USER_SERVICE = "userService";
+    public static final String PROP_NAME_OAUTH2 = "oauth2";
     public static final String PROP_NAME_PASSWORD_INTEGRITY_CHECKS = "passwordIntegrityChecks";
-    public static final String PROP_NAME_OWN_PATH = "ownPath";
-    public static final String PROP_NAME_AUTHORISATION_SERVICE = "authorisationService";
-    public static final String PROP_NAME_STROOM = "stroom";
 
-
-//    @Valid
-//    @NotNull
-//    @JsonProperty("database")
-//    private DataSourceFactory dataSourceFactory = new DataSourceFactory();
-
-//    @Valid
-//    @NotNull
-//    @JsonProperty("flyway")
-//    private FlywayFactory flywayFactory = new FlywayFactory();
-
-//    @Valid
-//    @NotNull
-//    @JsonProperty("jooq")
-//    private JooqFactory jooqFactory = new JooqFactory();
     @Nullable
     @JsonProperty(PROP_NAME_EMAIL)
     public EmailConfig emailConfig = new EmailConfig();
@@ -62,74 +44,30 @@ public final class AuthenticationConfig extends AbstractConfig {
     @NotNull
     @JsonProperty
     private int certificateDnCaptureGroupIndex = 1;
-    //TODO: change all these URLs so they exclude the actual FQDN. Just have them be the paths.
     @Valid
     @NotNull
     @JsonProperty
-    private String loginUrl = "https://localhost/s/login";
+    private String loginUrl = "/s/login";
     @Valid
     @NotNull
     @JsonProperty
-    private String changePasswordUrl = "https://localhost/s/changepassword";
-    @Valid
-    @NotNull
-    @JsonProperty
-    private String stroomUrl = "https://localhost/";
-    @Valid
-    @NotNull
-    @JsonProperty
-    private String advertisedHost = "https://localhost";
-    @Nullable
-    @JsonProperty
-    private Integer httpPort;
-    @Nullable
-    @JsonProperty
-    private Integer httpsPort;
+    private String changePasswordUrl = "/s/changepassword";
     @Nullable
     @JsonProperty
     private Integer failedLoginLockThreshold = 3;
     @Nullable
     @JsonProperty
-    private String unauthorisedUrl = "https://localhost/s/unauthorised";
+    private String unauthorisedUrl = "/s/unauthorised";
     @Nullable
     @JsonProperty(PROP_NAME_TOKEN)
     private TokenConfig tokenConfig = new TokenConfig();
-
-    @Nullable
-    @JsonProperty(PROP_NAME_SESSION_ID_COOKIE_MAX_AGE)
-    private int sessionIdCookieMaxAge = 2592000; // 259200 = 1 month
-
     @NotNull
-    @JsonProperty(PROP_NAME_USER_SERVICE)
-    private UserServiceConfig userServiceConfig = new UserServiceConfig();
+    @JsonProperty(PROP_NAME_OAUTH2)
+    private OAuth2Config oAuth2Config = new OAuth2Config();
 
     @NotNull
     @JsonProperty(PROP_NAME_PASSWORD_INTEGRITY_CHECKS)
     private PasswordIntegrityChecksConfig passwordIntegrityChecksConfig = new PasswordIntegrityChecksConfig();
-
-    @NotNull
-    @JsonProperty(PROP_NAME_OWN_PATH)
-    private String ownPath = "api/authentication";
-
-    @NotNull
-    @JsonProperty(PROP_NAME_AUTHORISATION_SERVICE)
-    private AuthorisationServiceConfig authorisationServiceConfig = new AuthorisationServiceConfig();
-
-    @Nullable
-    @JsonProperty(PROP_NAME_STROOM)
-    private StroomConfig stroomConfig = new StroomConfig();
-
-//    public final DataSourceFactory getDataSourceFactory() {
-//        return this.dataSourceFactory;
-//    }
-//
-//    public final FlywayFactory getFlywayFactory() {
-//        return this.flywayFactory;
-//    }
-//
-//    public final JooqFactory getJooqFactory() {
-//        return this.jooqFactory;
-//    }
 
     public final String getCertificateDnPattern() {
         return this.certificateDnPattern;
@@ -141,14 +79,6 @@ public final class AuthenticationConfig extends AbstractConfig {
 
     public String getChangePasswordUrl() {
         return changePasswordUrl;
-    }
-
-    public final String getStroomUrl() {
-        return this.stroomUrl;
-    }
-
-    public final String getAdvertisedHost() {
-        return this.advertisedHost;
     }
 
     @JsonProperty(PROP_NAME_EMAIL)
@@ -164,15 +94,6 @@ public final class AuthenticationConfig extends AbstractConfig {
         return this.failedLoginLockThreshold;
     }
 
-    @JsonProperty(PROP_NAME_USER_SERVICE)
-    public UserServiceConfig getUserServiceConfig() {
-        return userServiceConfig;
-    }
-
-    public void setUserServiceConfig(UserServiceConfig userServiceConfig) {
-        this.userServiceConfig = userServiceConfig;
-    }
-
     @JsonProperty(PROP_NAME_TOKEN)
     public TokenConfig getTokenConfig() {
         return tokenConfig;
@@ -182,9 +103,13 @@ public final class AuthenticationConfig extends AbstractConfig {
         this.tokenConfig = tokenConfig;
     }
 
-    @JsonProperty(PROP_NAME_SESSION_ID_COOKIE_MAX_AGE)
-    public int getSessionIdCookieMaxAge() {
-        return sessionIdCookieMaxAge;
+    @JsonProperty(PROP_NAME_OAUTH2)
+    public OAuth2Config getOAuth2Config() {
+        return oAuth2Config;
+    }
+
+    public void setOAuth2Config(final OAuth2Config oAuth2Config) {
+        this.oAuth2Config = oAuth2Config;
     }
 
     @Nullable
@@ -203,47 +128,5 @@ public final class AuthenticationConfig extends AbstractConfig {
 
     public int getCertificateDnCaptureGroupIndex() {
         return certificateDnCaptureGroupIndex;
-    }
-
-    @JsonProperty(PROP_NAME_OWN_PATH)
-    public String getOwnPath() {
-        return ownPath;
-    }
-
-    @JsonProperty(PROP_NAME_AUTHORISATION_SERVICE)
-    public AuthorisationServiceConfig getAuthorisationServiceConfig() {
-        return authorisationServiceConfig;
-    }
-
-    public void setAuthorisationServiceConfig(AuthorisationServiceConfig authorisationServiceConfig) {
-        this.authorisationServiceConfig = authorisationServiceConfig;
-    }
-
-//    public final Integer getHttpPort() {
-//        return getPort();
-//    }
-//
-//    public final Integer getHttpsPort() {
-//        return getPort();
-//    }
-
-//    private Integer getPort() {
-//        DefaultServerFactory serverFactory = (DefaultServerFactory) this.getServerFactory();
-//        Integer port = serverFactory.getApplicationConnectors().stream()
-//                .filter(connectorFactory -> connectorFactory instanceof HttpConnectorFactory)
-//                .map(connectorFactory -> (HttpConnectorFactory) connectorFactory)
-//                .map(HttpConnectorFactory::getPort)
-//                .findFirst()
-//                .get();
-//        return port;
-//    }
-
-    @JsonProperty(PROP_NAME_STROOM)
-    public StroomConfig getStroomConfig() {
-        return stroomConfig;
-    }
-
-    public void setStroomConfig(StroomConfig stroomConfig) {
-        this.stroomConfig = stroomConfig;
     }
 }

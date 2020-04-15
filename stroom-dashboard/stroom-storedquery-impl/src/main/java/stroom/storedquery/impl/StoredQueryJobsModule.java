@@ -1,7 +1,7 @@
 package stroom.storedquery.impl;
 
 import stroom.job.api.ScheduledJobsModule;
-import stroom.job.api.TaskConsumer;
+import stroom.job.api.RunnableWrapper;
 
 import javax.inject.Inject;
 
@@ -19,10 +19,10 @@ public class StoredQueryJobsModule extends ScheduledJobsModule {
                 .to(QueryHistoryClean.class);
     }
 
-    private static class QueryHistoryClean extends TaskConsumer {
+    private static class QueryHistoryClean extends RunnableWrapper {
         @Inject
         QueryHistoryClean(final StoredQueryHistoryCleanExecutor queryHistoryCleanExecutor) {
-            super(task -> queryHistoryCleanExecutor.exec());
+            super(queryHistoryCleanExecutor::exec);
         }
     }
 }

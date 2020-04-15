@@ -2,6 +2,7 @@ package stroom.app.guice;
 
 import com.google.inject.AbstractModule;
 import io.dropwizard.setup.Environment;
+import stroom.app.uri.UriFactoryModule;
 import stroom.cluster.impl.ClusterModule;
 import stroom.config.app.AppConfig;
 import stroom.config.app.AppConfigModule;
@@ -50,6 +51,7 @@ public class AppModule extends AbstractModule {
         }
 
         install(new AppConfigModule(configHolder));
+        install(new UriFactoryModule());
         install(new DbModule());
         install(new CoreModule());
         install(new LifecycleServiceModule());

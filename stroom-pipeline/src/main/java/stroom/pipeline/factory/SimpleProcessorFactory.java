@@ -23,11 +23,10 @@ import stroom.pipeline.errorhandler.ErrorReceiver;
 import stroom.pipeline.errorhandler.ErrorStatistics;
 import stroom.pipeline.errorhandler.FatalErrorReceiver;
 import stroom.pipeline.errorhandler.LoggedException;
-import stroom.task.api.TaskCallback;
 import stroom.util.shared.Severity;
-import stroom.task.api.VoidResult;
 
 import java.util.List;
+import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.TimeUnit;
 
@@ -70,54 +69,37 @@ public class SimpleProcessorFactory implements ProcessorFactory {
             final CountDownLatch countDownLatch = new CountDownLatch(processors.size());
 
             for (final Processor processor : processors) {
-                final TaskCallback<VoidResult> taskCallback = new TaskCallback<VoidResult>() {
-                    @Override
-                    public void onSuccess(final VoidResult result) {
-                        countDownLatch.countDown();
-                    }
+                CompletableFuture.runAsync(() -> {
+                    try {
+                        processor.process();
 
-                    @Override
-                    public void onFailure(final Throwable t) {
                         try {
-                            if (t instanceof LoggedException) {
-                                // The exception has already been logged so
-                                // ignore it.
-                                if (LOGGER.isTraceEnabled()) {
-                                    LOGGER.trace(t.getMessage(), t);
-                                }
-                            } else {
-                                outputError(t);
-                            }
-                        } finally {
                             countDownLatch.countDown();
-                        }
-                    }
-                };
-
-                final Thread thread = new Thread() {
-                    @Override
-                    public void run() {
-                        try {
-                            processor.process();
-
-                            try {
-                                taskCallback.onSuccess(VoidResult.INSTANCE);
-                            } catch (final RuntimeException e) {
-                                // Ignore any errors that come from handling success.
-                                LOGGER.trace(e.getMessage(), e);
-                            }
                         } catch (final RuntimeException e) {
+                            // Ignore any errors that come from handling success.
+                            LOGGER.trace(e.getMessage(), e);
+                        }
+                    } catch (final RuntimeException e) {
+                        try {
                             try {
-                                taskCallback.onFailure(e);
-                            } catch (final RuntimeException e2) {
-                                // Ignore any errors that come from handling failure.
-                                LOGGER.trace(e2.getMessage(), e2);
+                                if (e instanceof LoggedException) {
+                                    // The exception has already been logged so
+                                    // ignore it.
+                                    if (LOGGER.isTraceEnabled()) {
+                                        LOGGER.trace(e.getMessage(), e);
+                                    }
+                                } else {
+                                    outputError(e);
+                                }
+                            } finally {
+                                countDownLatch.countDown();
                             }
+                        } catch (final RuntimeException e2) {
+                            // Ignore any errors that come from handling failure.
+                            LOGGER.trace(e2.getMessage(), e2);
                         }
                     }
-                };
-
-                thread.start();
+                });
             }
 
             try {

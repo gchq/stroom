@@ -246,7 +246,9 @@ public class AppConfigMonitor implements Managed, HasHealthCheck {
     }
 
     private ConfigValidator.Result validateNewConfig(final AppConfig newAppConfig) {
-        // Initialise a ConfigMapper on the new config tree so it will decorate all the paths
+        // Initialise a ConfigMapper on the new config tree so it will decorate all the paths,
+        // i.e. call setBasePath on each branch in the newAppConfig tree so if we get any violations we
+        // can log their locations with full paths.
         new ConfigMapper(newAppConfig);
 
         LOGGER.info("Validating modified config file");

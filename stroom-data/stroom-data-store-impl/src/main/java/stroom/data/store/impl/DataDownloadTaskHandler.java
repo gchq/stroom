@@ -27,14 +27,13 @@ import stroom.data.zip.StroomZipEntry;
 import stroom.data.zip.StroomZipFileType;
 import stroom.data.zip.StroomZipOutputStream;
 import stroom.data.zip.StroomZipOutputStreamImpl;
+import stroom.meta.api.AttributeMap;
 import stroom.meta.api.AttributeMapUtil;
 import stroom.meta.api.MetaService;
 import stroom.meta.api.StandardHeaderArguments;
-import stroom.meta.api.AttributeMap;
 import stroom.meta.shared.FindMetaCriteria;
 import stroom.meta.shared.Meta;
 import stroom.security.api.SecurityContext;
-import stroom.task.api.AbstractTaskHandler;
 import stroom.task.api.TaskContext;
 import stroom.util.io.BufferFactory;
 import stroom.util.io.FileUtil;
@@ -51,7 +50,7 @@ import java.nio.file.Path;
 import java.util.List;
 import java.util.concurrent.atomic.AtomicLong;
 
-public class DataDownloadTaskHandler extends AbstractTaskHandler<DataDownloadTask, DataDownloadResult> {
+public class DataDownloadTaskHandler {
     private static final Logger LOGGER = LoggerFactory.getLogger(DataDownloadTaskHandler.class);
 
     private static final String AGGREGATION_DELIMITER = "_";
@@ -80,99 +79,97 @@ public class DataDownloadTaskHandler extends AbstractTaskHandler<DataDownloadTas
         this.bufferFactory = bufferFactory;
     }
 
-    @Override
-    public DataDownloadResult exec(final DataDownloadTask task) {
-        return securityContext.secureResult(() -> downloadData(task));
-    }
+    public DataDownloadResult downloadData(final FindMetaCriteria criteria,
+                                           final Path outputDir,
+                                           final String format,
+                                           final DataDownloadSettings settings) {
+        return securityContext.secureResult(() -> {
+            final List<Meta> list = metaService.find(criteria).getValues();
+            final DataDownloadResult result = new DataDownloadResult();
+            if (list.size() == 0) {
+                return result;
+            }
 
-    private DataDownloadResult downloadData(final DataDownloadTask task) {
-        final FindMetaCriteria criteria = task.getCriteria();
-        final DataDownloadSettings settings = task.getSettings();
-        final List<Meta> list = metaService.find(criteria).getValues();
-        final DataDownloadResult result = new DataDownloadResult();
-        if (list.size() == 0) {
-            return result;
-        }
+            long id = 0;
 
-        long id = 0;
+            StroomZipOutputStream stroomZipOutputStream = null;
+            try {
+                final LogItemProgress logItemProgress = new LogItemProgress(0, list.size());
+                taskContext.info(() -> "Data " + logItemProgress);
 
-        StroomZipOutputStream stroomZipOutputStream = null;
-        try {
-            final LogItemProgress logItemProgress = new LogItemProgress(0, list.size());
-            taskContext.info(() -> "Data " + logItemProgress);
-
-            for (final Meta meta : list) {
-                try {
-                    // Establish the output file name.
-                    final AttributeMap metaMap = new AttributeMap();
-                    metaMap.put(StandardHeaderArguments.FEED, meta.getFeedName());
-                    metaMap.put("streamType", meta.getTypeName());
-                    metaMap.put("streamId", String.valueOf(meta.getId()));
-                    final String possibleFilename = StroomFileNameUtil.constructFilename(null, 0, task.getFormat(), metaMap, ZIP_EXTENSION);
-                    if (stroomZipOutputStream != null && (!possibleFilename.equals(lastPossibleFileName) || !meta.getFeedName().equals(lastFeedName))) {
-                        stroomZipOutputStream.close();
-                        stroomZipOutputStream = null;
-                    }
-                    lastPossibleFileName = possibleFilename;
-                    lastFeedName = meta.getFeedName();
-
-                    // Open a zip output stream if we don't currently have one.
-                    if (stroomZipOutputStream == null) {
-                        stroomZipOutputStream = getStroomZipOutputStream(task.getOutputDir(), task.getFormat(), metaMap);
-                        id = 0;
-                    }
-
-                    // Write to the output stream.
-                    result.incrementRecordsWritten();
-                    logItemProgress.incrementProgress();
-                    id = downloadStream(taskContext, meta.getId(), stroomZipOutputStream, id,
-                            settings.getMaxFileParts());
-
-                    boolean startNewFile = false;
-                    boolean hitMaxFileSize = false;
-                    boolean hitMaxFileParts = false;
-                    if (settings.getMaxFileSize() != null
-                            && stroomZipOutputStream.getProgressSize() > settings.getMaxFileSize()) {
-                        startNewFile = true;
-                        hitMaxFileSize = true;
-                    }
-                    if (settings.getMaxFileParts() != null
-                            && stroomZipOutputStream.getEntryCount() > settings.getMaxFileParts()) {
-                        startNewFile = true;
-                        hitMaxFileParts = true;
-                    }
-                    if (startNewFile) {
-                        if (!settings.isMultipleFiles()) {
-                            // Process no more !
-                            result.setHitMaxFileParts(hitMaxFileParts);
-                            result.setHitMaxFileSize(hitMaxFileSize);
-                            break;
-                        } else {
+                for (final Meta meta : list) {
+                    try {
+                        // Establish the output file name.
+                        final AttributeMap metaMap = new AttributeMap();
+                        metaMap.put(StandardHeaderArguments.FEED, meta.getFeedName());
+                        metaMap.put("streamType", meta.getTypeName());
+                        metaMap.put("streamId", String.valueOf(meta.getId()));
+                        final String possibleFilename = StroomFileNameUtil.constructFilename(null, 0, format, metaMap, ZIP_EXTENSION);
+                        if (stroomZipOutputStream != null && (!possibleFilename.equals(lastPossibleFileName) || !meta.getFeedName().equals(lastFeedName))) {
                             stroomZipOutputStream.close();
                             stroomZipOutputStream = null;
                         }
+                        lastPossibleFileName = possibleFilename;
+                        lastFeedName = meta.getFeedName();
+
+                        // Open a zip output stream if we don't currently have one.
+                        if (stroomZipOutputStream == null) {
+                            stroomZipOutputStream = getStroomZipOutputStream(outputDir, format, metaMap);
+                            id = 0;
+                        }
+
+                        // Write to the output stream.
+                        result.incrementRecordsWritten();
+                        logItemProgress.incrementProgress();
+                        id = downloadStream(taskContext, meta.getId(), stroomZipOutputStream, id,
+                                settings.getMaxFileParts());
+
+                        boolean startNewFile = false;
+                        boolean hitMaxFileSize = false;
+                        boolean hitMaxFileParts = false;
+                        if (settings.getMaxFileSize() != null
+                                && stroomZipOutputStream.getProgressSize() > settings.getMaxFileSize()) {
+                            startNewFile = true;
+                            hitMaxFileSize = true;
+                        }
+                        if (settings.getMaxFileParts() != null
+                                && stroomZipOutputStream.getEntryCount() > settings.getMaxFileParts()) {
+                            startNewFile = true;
+                            hitMaxFileParts = true;
+                        }
+                        if (startNewFile) {
+                            if (!settings.isMultipleFiles()) {
+                                // Process no more !
+                                result.setHitMaxFileParts(hitMaxFileParts);
+                                result.setHitMaxFileSize(hitMaxFileSize);
+                                break;
+                            } else {
+                                stroomZipOutputStream.close();
+                                stroomZipOutputStream = null;
+                            }
+                        }
+                    } catch (final RuntimeException e) {
+                        LOGGER.error(e.getMessage(), e);
                     }
-                } catch (final RuntimeException e) {
-                    LOGGER.error(e.getMessage(), e);
                 }
-            }
 
-            if (stroomZipOutputStream != null) {
-                if (id == 0) {
-                    stroomZipOutputStream.closeDelete();
-                } else {
-                    stroomZipOutputStream.close();
+                if (stroomZipOutputStream != null) {
+                    if (id == 0) {
+                        stroomZipOutputStream.closeDelete();
+                    } else {
+                        stroomZipOutputStream.close();
+                    }
+                    stroomZipOutputStream = null;
                 }
-                stroomZipOutputStream = null;
-            }
 
-            return result;
-        } catch (final IOException e) {
-            throw new UncheckedIOException(e);
-        } finally {
-            closeDelete(stroomZipOutputStream);
-            taskContext.info(() -> "done");
-        }
+                return result;
+            } catch (final IOException e) {
+                throw new UncheckedIOException(e);
+            } finally {
+                closeDelete(stroomZipOutputStream);
+                taskContext.info(() -> "done");
+            }
+        });
     }
 
     private long downloadStream(final TaskContext taskContext,

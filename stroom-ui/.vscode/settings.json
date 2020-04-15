@@ -1,0 +1,48 @@
+{
+  "editor.tabSize": 2,
+  "editor.rulers": [80],
+  "javascript.validate.enable": false,
+  // Format a file on save. A formatter must be available, the file must not be auto-saved, and editor must not be shutting down.
+  "editor.formatOnSave": true,
+  // Disable formatOnSave for js, ts, jsx, tsx as eslint will handle these using
+  // prettier
+  "[javascript]": {
+    "editor.formatOnSave": false
+  },
+  "[javascriptreact]": {
+    "editor.formatOnSave": false
+  },
+  "[typescript]": {
+    "editor.formatOnSave": false
+  },
+  "[typescriptreact]": {
+    "editor.formatOnSave": false
+  },
+  "files.eol": "\n",
+  "files.insertFinalNewline": true,
+  "eslint.autoFixOnSave": true,
+  "eslint.alwaysShowStatus": false,
+  "eslint.enable": true,
+  "eslint.validate": [
+    {
+      "language": "typescript",
+      "autoFix": true
+    },
+    {
+      "language": "typescriptreact",
+      "autoFix": true
+    },
+    {
+      "language": "html",
+      "autoFix": true
+    },
+    {
+      "language": "javascript",
+      "autoFix": true
+    }
+  ],
+  "typescript.tsdk": "node_modules/typescript/lib",
+  "editor.codeActionsOnSave": {
+    "source.fixAll.eslint": true
+  }
+}

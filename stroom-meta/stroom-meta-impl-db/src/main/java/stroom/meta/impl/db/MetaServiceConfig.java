@@ -35,6 +35,7 @@ public class MetaServiceConfig extends AbstractConfig implements HasDbConfig {
         this.dbConfig = dbConfig;
     }
 
+    @JsonProperty("metaValue")
     public MetaValueConfig getMetaValueConfig() {
         return metaValueConfig;
     }

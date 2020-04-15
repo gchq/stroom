@@ -269,12 +269,13 @@ public class Headless extends AbstractCommandLineTool {
                 final InputStream dataStream = stroomZipFile.getInputStream(baseName, StroomZipFileType.Data);
                 final InputStream metaStream = stroomZipFile.getInputStream(baseName, StroomZipFileType.Meta);
                 final InputStream contextStream = stroomZipFile.getInputStream(baseName, StroomZipFileType.Context);
-
-                final HeadlessTranslationTask task = new HeadlessTranslationTask(
-                        IgnoreCloseInputStream.wrap(dataStream), IgnoreCloseInputStream.wrap(metaStream),
-                        IgnoreCloseInputStream.wrap(contextStream), headlessFilter);
+                ;
                 final HeadlessTranslationTaskHandler handler = translationTaskHandlerProvider.get();
-                handler.exec(task);
+                handler.exec(
+                        IgnoreCloseInputStream.wrap(dataStream),
+                        IgnoreCloseInputStream.wrap(metaStream),
+                        IgnoreCloseInputStream.wrap(contextStream),
+                        headlessFilter);
             }
 
             // Close the zip file.

@@ -18,13 +18,12 @@ public class CoreModule extends AbstractModule {
         install(new stroom.core.dataprocess.PipelineStreamTaskModule());
         install(new stroom.core.db.CoreDbModule());
         install(new stroom.core.entity.cluster.EntityClusterModule());
-        install(new stroom.core.entity.event.EntityClusterTaskModule());
         install(new stroom.core.entity.event.EntityEventModule());
         install(new stroom.core.entity.event.EntityEventModule());
         install(new stroom.core.query.QueryModule());
         install(new stroom.core.receive.ReceiveDataModule());
         install(new stroom.core.servlet.ServletModule());
-        install(new stroom.core.welcome.BuildInfoModule());
+        install(new stroom.core.welcome.SessionInfoModule());
         install(new stroom.core.welcome.WelcomeModule());
         install(new stroom.dashboard.impl.DashboardModule());
         install(new stroom.dashboard.impl.datasource.DataSourceModule());

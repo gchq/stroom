@@ -19,11 +19,10 @@ package stroom.data.store.util;
 import com.google.inject.Injector;
 import stroom.data.store.api.Store;
 import stroom.data.store.impl.DataDownloadSettings;
-import stroom.data.store.impl.DataDownloadTask;
 import stroom.data.store.impl.DataDownloadTaskHandler;
+import stroom.meta.api.MetaService;
 import stroom.meta.shared.FindMetaCriteria;
 import stroom.meta.shared.MetaFields;
-import stroom.meta.api.MetaService;
 import stroom.query.api.v2.ExpressionOperator;
 import stroom.query.api.v2.ExpressionOperator.Op;
 import stroom.query.api.v2.ExpressionTerm.Condition;
@@ -181,8 +180,7 @@ public class StreamDumpTool extends AbstractCommandLineTool {
         dataDownloadSettings.setMaxFileSize(ModelStringUtil.parseIECByteSizeString("2G"));
         dataDownloadSettings.setMaxFileParts(10000L);
 
-        final DataDownloadTask streamDownloadTask = new DataDownloadTask(criteria, dir, format, dataDownloadSettings);
-        dataDownloadTaskHandler.exec(streamDownloadTask);
+        dataDownloadTaskHandler.downloadData(criteria, dir, format, dataDownloadSettings);
 
 
 //        final StreamStore streamStore = appContext.getBean(StreamStore.class);

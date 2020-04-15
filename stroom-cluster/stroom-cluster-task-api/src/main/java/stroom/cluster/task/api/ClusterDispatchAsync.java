@@ -16,8 +16,6 @@
 
 package stroom.cluster.task.api;
 
-
-
 import java.util.Set;
 
 public interface ClusterDispatchAsync {
