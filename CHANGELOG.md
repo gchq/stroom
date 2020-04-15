@@ -6,6 +6,8 @@ and this project adheres to [Semantic Versioning](http://semver.org/).
 
 ## [Unreleased]
 
+* Fix issue of pipeling structure not showing when it contains a StatisticsFilter.
+
 * Update auth flow for auth-into-stroom integration
 
 * Issue **#1426** : Change /logout endpoint to /noauth/logout.
