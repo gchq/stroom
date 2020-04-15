@@ -109,6 +109,11 @@ appConfig:
     servicesHostNameOrIpAddress: ${STROOM_ADVERTISED_URL:-localhost}
   sessionCookie:
     secure: false
+  statistics:
+    hbase:
+      # UUID of the Kafka Config Doc that is created by Setup Sample Data
+      # Debatable if the doc should be added to a content pack or not
+      kafkaConfigUuid: 7cbf9153-869c-43bb-a316-1c652673e680
   ui:
     # nodeName is set to appConfig.node.name in FetchUiConfigHandler
     nodeName: null
