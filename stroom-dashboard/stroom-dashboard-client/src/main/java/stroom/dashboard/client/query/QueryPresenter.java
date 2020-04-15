@@ -310,7 +310,8 @@ public class QueryPresenter extends AbstractComponentPresenter<QueryPresenter.Qu
         final List<AbstractField> fields = new ArrayList<>();
         if (dataSourceFieldsMap != null) {
             for (final AbstractField field : dataSourceFieldsMap.values()) {
-                if (field.getQueryable()) {
+                // Protection from default values of false not being in the serialised json
+                if (field.getQueryable() != null ? field.getQueryable() : false) {
                     fields.add(field);
                 }
             }
