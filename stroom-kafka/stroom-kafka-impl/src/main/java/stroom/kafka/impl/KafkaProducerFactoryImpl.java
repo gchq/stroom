@@ -16,10 +16,13 @@
 package stroom.kafka.impl;
 
 import com.codahale.metrics.health.HealthCheck;
+import io.vavr.Tuple;
+import io.vavr.Tuple3;
 import org.apache.kafka.clients.producer.KafkaProducer;
 import org.apache.kafka.common.serialization.ByteArraySerializer;
 import org.apache.kafka.common.serialization.StringSerializer;
 import stroom.docref.DocRef;
+import stroom.docstore.shared.DocRefUtil;
 import stroom.kafka.api.KafkaProducerFactory;
 import stroom.kafka.api.SharedKafkaProducer;
 import stroom.kafka.api.SharedKafkaProducerIdentity;
@@ -79,7 +82,8 @@ class KafkaProducerFactoryImpl implements KafkaProducerFactory, HasHealthCheck {
         final Optional<KafkaConfigDoc> optKafkaConfigDoc = kafkaConfigDocCache.get(kafkaConfigDocRef);
 
         if (optKafkaConfigDoc.isPresent()) {
-            KafkaConfigDoc kafkaConfigDoc = optKafkaConfigDoc.get();
+            final KafkaConfigDoc kafkaConfigDoc = optKafkaConfigDoc.get();
+            final DocRef docRefFromDoc = DocRefUtil.create(kafkaConfigDoc);
             final SharedKafkaProducerIdentity desiredKey = new SharedKafkaProducerIdentity(kafkaConfigDoc);
 
             // Optimistically assume the map will have the latest SharedKafkaProducer
@@ -97,7 +101,7 @@ class KafkaProducerFactoryImpl implements KafkaProducerFactory, HasHealthCheck {
                             final SharedKafkaProducerImpl sharedKafkaProducer2;
                             if (existingValue == null) {
                                 // Don't have one so create a new one
-                                sharedKafkaProducer2 = createSharedProducer(kafkaConfigDoc, kafkaConfigDocRef, desiredKey);
+                                sharedKafkaProducer2 = createSharedProducer(kafkaConfigDoc, docRefFromDoc, desiredKey);
                             } else {
                                 // we already have one so check if it should be current
                                 if (desiredKey.equals(existingValue.getSharedKafkaProducerIdentity())) {
@@ -113,7 +117,7 @@ class KafkaProducerFactoryImpl implements KafkaProducerFactory, HasHealthCheck {
                                     removeRedundantSharedKafkaProducers();
 
                                     // swap out the existing current SharedKafkaProducer for our new one
-                                    sharedKafkaProducer2 = createSharedProducer(kafkaConfigDoc, kafkaConfigDocRef, desiredKey);
+                                    sharedKafkaProducer2 = createSharedProducer(kafkaConfigDoc, docRefFromDoc, desiredKey);
                                 }
                             }
                             return sharedKafkaProducer2;
@@ -236,13 +240,38 @@ class KafkaProducerFactoryImpl implements KafkaProducerFactory, HasHealthCheck {
                     map.put("isSuperseded", sharedKafkaProducer.isSuperseded());
                     map.put("createdTime", sharedKafkaProducer.getCreatedTime().toString());
                     map.put("lastAccessedTime", sharedKafkaProducer.getLastAccessedTime().toString());
+
+                    sharedKafkaProducer.getKafkaProducer().ifPresent(kafkaProducer -> {
+                        final Map<String, Map<String, Object>> metrics = kafkaProducer.metrics()
+                                .entrySet()
+                                .stream()
+                                .map(entry -> {
+                                    final String groupName = entry.getKey().group()
+                                            + " ("
+                                            + entry.getKey().tags().entrySet()
+                                                .stream()
+                                                .filter(entry2 -> !entry2.getKey().equals("client-id"))
+                                                .map(entry2 -> entry2.getKey() + "=" + entry2.getValue())
+                                                .collect(Collectors.joining(","))
+                                            + ")";
+
+                                    return Tuple.of(
+                                            groupName,
+                                            entry.getKey().name(),
+                                            entry.getValue().metricValue());
+                                })
+                                .collect(Collectors.groupingBy(Tuple3::_1, Collectors.toMap(
+                                        Tuple3::_2,
+                                        Tuple3::_3)));
+                        map.put("kafkaProducerMetrics", metrics);
+                    });
                     return map;
                 })
                 .collect(Collectors.toList());
 
         return HealthCheck.Result.builder()
                 .healthy()
-                .withDetail("producers", producerInfo)
+                .withDetail("sharedProducers", producerInfo)
                 .build();
     }
 }
