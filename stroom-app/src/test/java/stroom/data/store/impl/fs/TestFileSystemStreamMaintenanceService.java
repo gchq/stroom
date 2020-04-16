@@ -19,7 +19,6 @@ package stroom.data.store.impl.fs;
 
 import org.junit.jupiter.api.Test;
 import stroom.data.shared.StreamTypeNames;
-import stroom.job.impl.MockTask;
 import stroom.meta.shared.Meta;
 import stroom.test.AbstractCoreIntegrationTest;
 import stroom.test.CommonTestScenarioCreator;
@@ -71,7 +70,7 @@ class TestFileSystemStreamMaintenanceService extends AbstractCoreIntegrationTest
         Files.createFile(test1);
 
         assertThat(Files.exists(test1)).isTrue();
-        fileSystemCleanTaskExecutor.get().exec(new MockTask("Test"));
+        fileSystemCleanTaskExecutor.get().clean();
         assertThat(Files.exists(test1)).isFalse();
     }
 }

@@ -547,7 +547,7 @@ public class IndexShardWriterCacheImpl implements IndexShardWriterCache {
 
         @Override
         public CompletableFuture<IndexShardWriter> exec(final Supplier<IndexShardWriter> supplier) {
-            final Supplier<IndexShardWriter> wrappedSupplier = taskContextProvider.get().subTask(supplier);
+            final Supplier<IndexShardWriter> wrappedSupplier = taskContextProvider.get().sub(supplier);
             return CompletableFuture.supplyAsync(wrappedSupplier, executor);
         }
     }

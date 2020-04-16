@@ -21,7 +21,6 @@ import stroom.query.api.v2.Query;
 import stroom.query.common.v2.CoprocessorSettings;
 import stroom.query.common.v2.CoprocessorSettingsMap.CoprocessorKey;
 import stroom.search.resultsender.NodeResult;
-import stroom.task.shared.Task;
 
 import java.util.List;
 import java.util.Map;
@@ -29,45 +28,30 @@ import java.util.Map;
 public class ClusterSearchTask extends ClusterTask<NodeResult> {
     private static final long serialVersionUID = -1305243739417365803L;
 
-    private final Task<?> parentTask;
     private final Query query;
     private final List<Long> shards;
-    private final String targetNode;
     private final String[] storedFields;
     private final int resultSendFrequency;
     private final Map<CoprocessorKey, CoprocessorSettings> coprocessorMap;
     private final String dateTimeLocale;
     private final long now;
 
-    public ClusterSearchTask(final Task<?> parentTask,
-                             final String taskName,
+    public ClusterSearchTask(final String taskName,
                              final Query query,
                              final List<Long> shards,
-                             final String targetNode,
                              final String[] storedFields,
                              final int resultSendFrequency,
                              final Map<CoprocessorKey, CoprocessorSettings> coprocessorMap,
                              final String dateTimeLocale,
                              final long now) {
         super(taskName);
-        this.parentTask = parentTask;
         this.query = query;
         this.shards = shards;
-        this.targetNode = targetNode;
         this.storedFields = storedFields;
         this.resultSendFrequency = resultSendFrequency;
         this.coprocessorMap = coprocessorMap;
         this.dateTimeLocale = dateTimeLocale;
         this.now = now;
-    }
-
-    @Override
-    public Task<?> getParentTask() {
-        return parentTask;
-    }
-
-    public String getTargetNode() {
-        return targetNode;
     }
 
     public Query getQuery() {

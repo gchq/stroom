@@ -18,7 +18,7 @@
 
 package stroom.authentication.exceptions;
 
-import stroom.authentication.resources.token.v1.Token;
+import stroom.authentication.token.Token;
 
 public class TokenCreationException extends RuntimeException {
     private Token.TokenType tokenType;

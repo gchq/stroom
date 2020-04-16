@@ -138,7 +138,7 @@ public class IndexShardManager {
                             deletingShards.set(false);
                         }
                     };
-                    runnable = taskContext.subTask(runnable);
+                    runnable = taskContext.sub(runnable);
 
                     // In tests we don't have a task manager.
                     if (executor == null) {

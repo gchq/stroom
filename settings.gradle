@@ -38,7 +38,6 @@ include 'stroom-app-gwt'
 
 // Authentication
 include 'stroom-authentication:stroom-authentication-api'
-include 'stroom-authentication:stroom-authentication-api-swagger'
 include 'stroom-authentication:stroom-authentication-common'
 include 'stroom-authentication:stroom-authentication-impl'
 include 'stroom-authentication:stroom-authentication-impl-db'
@@ -152,7 +151,8 @@ include 'stroom-job:stroom-job-impl-db'
 include 'stroom-job:stroom-job-impl-db-jooq'
 
 // Kafka
-include 'stroom-kafka:stroom-kafka'
+include 'stroom-kafka:stroom-kafka-api'
+include 'stroom-kafka:stroom-kafka-impl'
 
 // Lifecycle
 include 'stroom-lifecycle:stroom-lifecycle-api'
@@ -236,6 +236,9 @@ include 'stroom-task:stroom-task-impl'
 
 // Test project
 include 'stroom-test-common'
+
+// New Stroom UI
+include 'stroom-ui'
 
 // Util
 include 'stroom-util'

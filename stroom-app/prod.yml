@@ -84,7 +84,10 @@ logging:
       #    logFormat: "%-6level [%d{\"yyyy-MM-dd\",UTC}] [%t] %logger - %X{code} %msg %n"
 
 appConfig:
-  apiGateway:
+  nodeUri:
+    hostname: ${STROOM_HOST:-<<<IP_ADDRESS>>>}
+    port: ${STROOM_APP_PORT:-8080}
+  publicUri:
     hostname: ${API_GATEWAY_HOST:-<<<IP_ADDRESS>>>}
   commonDbDetails:
     connection:
@@ -94,45 +97,18 @@ appConfig:
       jdbcDriverPassword: ${STROOM_JDBC_DRIVER_PASSWORD:-stroompassword1}
   contentPackImport:
     enabled: ${STROOM_CONTENT_PACK_IMPORT_ENABLED:-false}
-  data:
-    meta:
-      metaValueConfig: null
-  dataSourceUrl:
-    index: ${STROOM_ADVERTISED_URL:-https://127.0.0.1:8080}/api/stroom-index/v2
-    solrIndex: "${STROOM_ADVERTISED_URL:-https://127.0.0.1:8080}/api/stroom-solr-index/v2"
-    statisticStore: ${STROOM_ADVERTISED_URL:-https://127.0.0.1:8080}/api/sqlstatistics/v2
-    searchable: "${STROOM_ADVERTISED_URL:-https://127.0.0.1:8080}/api/searchable/v2"
-#    annotations: ${STROOM_ADVERTISED_URL:-https://127.0.0.1:8080}/annotationsService/queryApi/v1
-#    elasticIndex: ${STROOM_ADVERTISED_URL:-https://127.0.0.1:8080}/queryElasticService/queryApi/v1
   job:
     enabled: true
     executionInterval: "10s"
   node:
     name: ${STROOM_NODE:-node1a}
-    baseEndpoint:
-      hostname: ${STROOM_HOST:-<<<IP_ADDRESS>>>}
-      port: ${STROOM_APP_PORT:-8080}
   path:
     temp: "/tmp/stroom"
   security:
     authentication:
-      authenticationServiceUrl: ${STROOM_AUTHENTICATION_SERVICE_URL:-https://<<<IP_ADDRESS>>>/api/authentication/v1}
-      authServicesBaseUrl: ${STROOM_AUTH_SERVICES_URL:-http://<<<IP_ADDRESS>>>/api/auth}
-      preventLogin: false #TODO
-      clientId: ${STROOM_AUTH_CLIENT_ID:-PZnJr8kHRKqnlJRQThSI}
-      clientSecret: ${STROOM_AUTH_CLIENT_SECRET:-OtzHiAWLj8QWcwO2IxXmqxpzE2pyg0pMKCghR2aU}
+      preventLogin: false
   serviceDiscovery:
     enabled: ${STROOM_SERVICE_DISCOVERY_ENABLED:-false}
     zookeeperUrl: ${STROOM_SERVICE_DISCOVERY_ZOOKEEPER_URL:-localhost:2181}
-    servicesHostNameOrIpAddress: ${STROOM_ADVERTISED_URL:-localhost}
-  ui:
-    # nodeName is set to appConfig.node.name in FetchUiConfigHandler
-    nodeName: null
-    url:
-      ui: ${STROOM_ADVERTISED_URL:-https://<<<IP_ADDRESS>>>}
-      authenticationService: ${STROOM_AUTHENTICATION_SERVICE_URL:-https://<<<IP_ADDRESS>>>/api/authentication/v1}
-      users: ${STROOM_UI_URL:-https://<<<IP_ADDRESS>>>}/s/users
-      apiKeys: ${STROOM_UI_URL:-https://<<<IP_ADDRESS>>>}/s/apiKeys
-      changepassword: ${STROOM_UI_URL:-https://<<<IP_ADDRESS>>>}/s/changepassword
   volumes:
     createDefaultOnStart: false

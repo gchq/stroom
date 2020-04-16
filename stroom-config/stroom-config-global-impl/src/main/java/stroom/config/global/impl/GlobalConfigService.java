@@ -20,7 +20,6 @@ package stroom.config.global.impl;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import stroom.cluster.task.api.ClusterDispatchAsyncHelper;
 import stroom.config.global.impl.validation.ConfigValidator;
 import stroom.config.global.shared.ConfigProperty;
 import stroom.config.global.shared.ConfigPropertyValidationException;
@@ -55,20 +54,18 @@ public class GlobalConfigService {
     private final SecurityContext securityContext;
     private final ConfigMapper configMapper;
     private final ConfigValidator configValidator;
-    private final ClusterDispatchAsyncHelper dispatchHelper;
 
     @Inject
     GlobalConfigService(final ConfigPropertyDao dao,
                         final SecurityContext securityContext,
                         final ConfigMapper configMapper,
-                        final ConfigValidator configValidator,
-                        final ClusterDispatchAsyncHelper dispatchHelper) {
+                        final ConfigValidator configValidator) {
         this.dao = dao;
         this.securityContext = securityContext;
         this.configMapper = configMapper;
         this.configValidator = configValidator;
-        this.dispatchHelper = dispatchHelper;
 
+        LOGGER.debug("Initialising GlobalConfigService");
         initialise();
     }
 
@@ -76,13 +73,13 @@ public class GlobalConfigService {
         // At this point the configMapper.getGlobalProperties() will contain the name, defaultValue
         // and the yamlValue. It will also contain any info gained from the config class annotations,
         // e.g. @Readonly
-        LOGGER.info("Initialising application config with global database properties");
         updateConfigFromDb(true);
+        LOGGER.info("Initialised application config with global database properties");
     }
 
     private void updateConfigFromDb() {
-        LOGGER.info("Updating application config with global database properties");
         updateConfigFromDb(false);
+        LOGGER.info("Updated application config with global database properties");
     }
 
     private void updateConfigFromDb(final boolean deleteUnknownProps) {
@@ -95,7 +92,7 @@ public class GlobalConfigService {
         allDbProps.forEach(dbConfigProp -> {
             if (dbConfigProp.getName() == null || !configMapper.validatePropertyPath(dbConfigProp.getName())) {
                 LOGGER.debug("Property {} is in the database but not in the appConfig model",
-                    dbConfigProp.getName().toString());
+                        dbConfigProp.getName().toString());
                 if (deleteUnknownProps) {
                     deleteFromDb(dbConfigProp.getName());
                 }

@@ -25,6 +25,8 @@ public interface ResultComponent {
 
     ComponentResultRequest getResultRequest();
 
+    ComponentResultRequest createDownloadQueryRequest();
+
     void reset();
 
     void startSearch();

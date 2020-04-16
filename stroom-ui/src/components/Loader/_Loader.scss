@@ -1,0 +1,11 @@
+.loader__container {
+  display: flex;
+  flex-direction:column;
+  justify-content: center;
+  align-items: center;
+  height: 130px;
+  
+  p {
+    margin-top:40px;
+  }
+}

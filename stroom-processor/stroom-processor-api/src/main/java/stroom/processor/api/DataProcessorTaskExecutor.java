@@ -22,5 +22,5 @@ import stroom.processor.shared.ProcessorFilter;
 import stroom.processor.shared.ProcessorTask;
 
 public interface DataProcessorTaskExecutor {
-    void exec(Processor processor, ProcessorFilter processorFilter, ProcessorTask processorTask, Source source);
+    ProcessorResult exec(Processor processor, ProcessorFilter processorFilter, ProcessorTask processorTask, Source source);
 }

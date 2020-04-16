@@ -1,7 +1,7 @@
 package stroom.search.impl.shard;
 
 import stroom.job.api.ScheduledJobsModule;
-import stroom.job.api.TaskConsumer;
+import stroom.job.api.RunnableWrapper;
 
 import javax.inject.Inject;
 
@@ -18,10 +18,10 @@ public class ShardJobsModule extends ScheduledJobsModule {
                 .to(IndexSearcherCacheRefresh.class);
     }
 
-    private static class IndexSearcherCacheRefresh extends TaskConsumer {
+    private static class IndexSearcherCacheRefresh extends RunnableWrapper {
         @Inject
         IndexSearcherCacheRefresh(final IndexShardSearcherCache indexShardSearcherCache) {
-            super(task -> indexShardSearcherCache.refresh());
+            super(indexShardSearcherCache::refresh);
         }
     }
 }

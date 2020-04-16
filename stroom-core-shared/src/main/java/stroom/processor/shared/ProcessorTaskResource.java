@@ -27,17 +27,23 @@ import stroom.util.shared.ResultPage;
 import javax.ws.rs.Consumes;
 import javax.ws.rs.POST;
 import javax.ws.rs.Path;
+import javax.ws.rs.PathParam;
 import javax.ws.rs.Produces;
 import javax.ws.rs.core.MediaType;
+import java.util.List;
 
 @Api(value = "processorTask - /v1")
-@Path("/processorTask" + ResourcePaths.V1)
+@Path(ProcessorTaskResource.BASE_PATH)
+@Consumes(MediaType.APPLICATION_JSON)
 @Produces(MediaType.APPLICATION_JSON)
 public interface ProcessorTaskResource extends RestResource, DirectRestService {
+    String BASE_PATH = "/processorTask" + ResourcePaths.V1;
+    String ASSIGN_TASKS_PATH_PART = "/assign";
+    String ABANDON_TASKS_PATH_PART = "/abandon";
+    String NODE_NAME_PATH_PARAM = "/{nodeName}";
+
     @POST
     @Path("find")
-    @Consumes(MediaType.APPLICATION_JSON)
-    @Produces(MediaType.APPLICATION_JSON)
     @ApiOperation(
             value = "Finds processors tasks",
             response = ResultPage.class)
@@ -45,10 +51,20 @@ public interface ProcessorTaskResource extends RestResource, DirectRestService {
 
     @POST
     @Path("summary")
-    @Consumes(MediaType.APPLICATION_JSON)
-    @Produces(MediaType.APPLICATION_JSON)
     @ApiOperation(
             value = "Finds processor task summaries",
             response = ResultPage.class)
     ResultPage<ProcessorTaskSummary> findSummary(ExpressionCriteria expressionCriteria);
+
+    @POST
+    @Path(ASSIGN_TASKS_PATH_PART + NODE_NAME_PATH_PARAM)
+    @ApiOperation(value = "Assign some tasks",
+            response = ProcessorTaskList.class)
+    ProcessorTaskList assignTasks(@PathParam("nodeName") String nodeName, AssignTasksRequest request);
+
+    @POST
+    @Path(ABANDON_TASKS_PATH_PART + NODE_NAME_PATH_PARAM)
+    @ApiOperation(value = "Abandon some tasks",
+            response = Boolean.class)
+    Boolean abandonTasks(@PathParam("nodeName") String nodeName, ProcessorTaskList request);
 }

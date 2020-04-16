@@ -50,7 +50,7 @@ class ResultSenderImpl implements ResultSender {
 
         LOGGER.trace(() -> "sendData() called");
 
-        final Supplier<Boolean> supplier = taskContext.subTask(() -> {
+        final Supplier<Boolean> supplier = taskContext.sub(() -> {
             // Find out if searching is complete.
             final boolean complete = searchComplete.isComplete();
 

@@ -21,13 +21,10 @@ import com.google.inject.Provides;
 import stroom.cluster.lock.mock.MockClusterLockModule;
 import stroom.collection.mock.MockCollectionModule;
 import stroom.dictionary.mock.MockWordListProviderModule;
-import stroom.util.entityevent.EntityAction;
-import stroom.util.entityevent.EntityEvent;
-import stroom.util.entityevent.EntityEvent.Handler;
-import stroom.util.entityevent.EntityEventBus;
 import stroom.security.mock.MockSecurityContextModule;
 import stroom.statistics.mock.MockInternalStatisticsModule;
 import stroom.util.db.ForceCoreMigration;
+import stroom.util.entityevent.EntityEventBus;
 import stroom.util.servlet.MockServletModule;
 
 public class ToolModule extends AbstractModule {
@@ -48,19 +45,13 @@ public class ToolModule extends AbstractModule {
         install(new MockWordListProviderModule());
 
         // Not using all the DB modules so just bind to an empty anonymous class
-        bind(ForceCoreMigration.class).toInstance(new ForceCoreMigration() {});
+        bind(ForceCoreMigration.class).toInstance(new ForceCoreMigration() {
+        });
     }
 
     @Provides
     EntityEventBus entityEventBus() {
-        return new EntityEventBus() {
-            @Override
-            public void addHandler(final Handler handler, final String type, final EntityAction... action) {
-            }
-
-            @Override
-            public void fire(final EntityEvent event) {
-            }
+        return event -> {
         };
     }
 }

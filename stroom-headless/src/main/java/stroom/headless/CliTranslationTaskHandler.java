@@ -20,11 +20,10 @@ package stroom.headless;
 import stroom.data.shared.StreamTypeNames;
 import stroom.docref.DocRef;
 import stroom.feed.api.FeedProperties;
-import stroom.meta.api.AttributeMapUtil;
 import stroom.meta.api.AttributeMap;
-import stroom.meta.shared.Meta;
+import stroom.meta.api.AttributeMapUtil;
 import stroom.meta.api.StandardHeaderArguments;
-import stroom.pipeline.ErrorWriter;
+import stroom.meta.shared.Meta;
 import stroom.pipeline.ErrorWriterProxy;
 import stroom.pipeline.PipelineStore;
 import stroom.pipeline.errorhandler.ErrorReceiverProxy;
@@ -44,19 +43,18 @@ import stroom.pipeline.state.MetaHolder;
 import stroom.pipeline.state.PipelineHolder;
 import stroom.pipeline.task.StreamMetaDataProvider;
 import stroom.security.api.SecurityContext;
-import stroom.task.api.AbstractTaskHandler;
 import stroom.util.date.DateUtil;
 import stroom.util.io.IgnoreCloseInputStream;
 import stroom.util.shared.Severity;
-import stroom.task.api.VoidResult;
 
 import javax.inject.Inject;
 import java.io.IOException;
 import java.io.InputStream;
+import java.io.Writer;
 import java.util.List;
 
 
-class CliTranslationTaskHandler extends AbstractTaskHandler<CliTranslationTask, VoidResult> {
+class CliTranslationTaskHandler {
     private final PipelineFactory pipelineFactory;
     private final FeedProperties feedProperties;
     private final PipelineStore pipelineStore;
@@ -100,20 +98,17 @@ class CliTranslationTaskHandler extends AbstractTaskHandler<CliTranslationTask, 
         this.securityContext = securityContext;
     }
 
-    @Override
-    public VoidResult exec(final CliTranslationTask task) {
-        return securityContext.secureResult(() -> {
+    public void exec(final InputStream dataStream,
+                     final InputStream metaStream,
+                     final InputStream contextStream,
+                     final Writer errorWriter) {
+        securityContext.secure(() -> {
             // Elevate user permissions so that inherited pipelines that the user only has 'Use' permission on can be read.
-            return securityContext.useAsReadResult(() -> {
+            securityContext.useAsRead(() -> {
                 try {
-                    final ErrorWriter errorWriter = new CliErrorWriter(task.getErrorWriter());
-
                     // Setup the error handler and receiver.
-                    errorWriterProxy.setErrorWriter(errorWriter);
+                    errorWriterProxy.setErrorWriter(new CliErrorWriter(errorWriter));
                     errorReceiverProxy.setErrorReceiver(recordErrorReceiver);
-
-                    final InputStream dataStream = task.getDataStream();
-                    final InputStream metaStream = task.getMetaStream();
 
                     if (metaStream == null) {
                         throw new RuntimeException("No meta data found");
@@ -169,13 +164,13 @@ class CliTranslationTaskHandler extends AbstractTaskHandler<CliTranslationTask, 
 
                     // Add stream providers for lookups etc.
                     final BasicInputStreamProvider inputStreamProvider = new BasicInputStreamProvider();
-                    inputStreamProvider.put(null, new IgnoreCloseInputStream(task.getDataStream()), task.getDataStream().available());
-                    inputStreamProvider.put(StreamTypeNames.RAW_EVENTS, new IgnoreCloseInputStream(task.getDataStream()), task.getDataStream().available());
-                    if (task.getMetaStream() != null) {
-                        inputStreamProvider.put(StreamTypeNames.META, new IgnoreCloseInputStream(task.getMetaStream()), task.getMetaStream().available());
+                    inputStreamProvider.put(null, new IgnoreCloseInputStream(dataStream), dataStream.available());
+                    inputStreamProvider.put(StreamTypeNames.RAW_EVENTS, new IgnoreCloseInputStream(dataStream), dataStream.available());
+                    if (metaStream != null) {
+                        inputStreamProvider.put(StreamTypeNames.META, new IgnoreCloseInputStream(metaStream), metaStream.available());
                     }
-                    if (task.getContextStream() != null) {
-                        inputStreamProvider.put(StreamTypeNames.CONTEXT, new IgnoreCloseInputStream(task.getContextStream()), task.getContextStream().available());
+                    if (contextStream != null) {
+                        inputStreamProvider.put(StreamTypeNames.CONTEXT, new IgnoreCloseInputStream(contextStream), contextStream.available());
                     }
 
                     metaHolder.setMeta(meta);
@@ -189,8 +184,6 @@ class CliTranslationTaskHandler extends AbstractTaskHandler<CliTranslationTask, 
                 } catch (final IOException | RuntimeException e) {
                     outputError(e);
                 }
-
-                return VoidResult.INSTANCE;
             });
         });
     }

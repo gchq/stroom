@@ -16,7 +16,6 @@
 
 package stroom.task.impl;
 
-import stroom.task.shared.Task;
 import stroom.task.shared.TaskId;
 
 import java.util.ArrayDeque;

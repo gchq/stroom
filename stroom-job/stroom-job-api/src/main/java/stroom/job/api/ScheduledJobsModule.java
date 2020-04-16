@@ -6,12 +6,12 @@ import com.google.inject.multibindings.MapBinder;
 import java.util.Objects;
 
 public class ScheduledJobsModule extends AbstractModule {
-    private MapBinder<ScheduledJob, TaskConsumer> mapBinder;
+    private MapBinder<ScheduledJob, Runnable> mapBinder;
 
     @Override
     protected void configure() {
         super.configure();
-        mapBinder = MapBinder.newMapBinder(binder(), ScheduledJob.class, TaskConsumer.class);
+        mapBinder = MapBinder.newMapBinder(binder(), ScheduledJob.class, Runnable.class);
     }
 
     public Builder bindJob() {
@@ -19,7 +19,7 @@ public class ScheduledJobsModule extends AbstractModule {
     }
 
     public static final class Builder {
-        private final MapBinder<ScheduledJob, TaskConsumer> mapBinder;
+        private final MapBinder<ScheduledJob, Runnable> mapBinder;
 
         // Mandatory
         private String name;
@@ -31,7 +31,7 @@ public class ScheduledJobsModule extends AbstractModule {
         private boolean managed = true;
         private String description = "";
 
-        Builder(final MapBinder<ScheduledJob, TaskConsumer> mapBinder) {
+        Builder(final MapBinder<ScheduledJob, Runnable> mapBinder) {
             this.mapBinder = mapBinder;
         }
 
@@ -65,7 +65,7 @@ public class ScheduledJobsModule extends AbstractModule {
             return this;
         }
 
-        public <T extends TaskConsumer> void to(final Class<T> consumerClass) {
+        public <T extends Runnable> void to(final Class<T> consumerClass) {
             Objects.requireNonNull(schedule);
             Objects.requireNonNull(name);
             final ScheduledJob scheduledJob = new ScheduledJob(schedule, name, description, enabled, advanced, managed);

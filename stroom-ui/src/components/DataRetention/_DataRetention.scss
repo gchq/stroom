@@ -1,0 +1,111 @@
+input[type="radio"] {
+  width: unset;
+}
+
+.page__header {
+  border-bottom: thin solid lightgrey;
+}
+
+.DataRetentionRuleEditor__header {
+  margin: 0;
+  display: flex;
+  justify-content: space-between;
+}
+
+.DataRetentionRuleEditor__header > div > svg {
+  margin-right: 0.5em;
+  margin-bottom: 0.15em;
+  color: gray;
+}
+
+.DataRetentionRuleEditor__header:hover > div > svg {
+  color: #2185d0;
+}
+
+.DataRetentionRuleEditor__header .inline-input__not-editing {
+  padding: 0.1em;
+  border-radius: 0.3em;
+  font-size: 1.25em;
+  font-weight: bold;
+}
+
+.DataRetentionRuleEditor__header .inline-input__editing {
+  width: 15em;
+  margin-top: 0.2em;
+  margin-bottom: 0.3em;
+  height: 1.3em;
+  font-size: 1.25em;
+  font-weight: bold;
+}
+
+.DataRetentionRuleEditor__header__actions button:not(:last-child) {
+  margin-right: 0.5em;
+}
+
+.DataRetentionRuleEditor__content {
+  padding: 0.2em 1em 0.5em 1em;
+  display: flex;
+  flex-direction: row;
+}
+
+.DataRetentionRuleEditor__content > div {
+  flex-grow: 1;
+}
+
+.DataRetentionRuleEditor__content h4 {
+  margin-bottom: 0.1em;
+}
+
+.DataRetentionRuleEditor__retention {
+  padding: 0em 0em 0em 1em;
+}
+
+.DataRetentionRuleEditor__retention .inline-input__editing {
+  width: 3em;
+}
+
+.DataRetentionRuleEditor__retention label span {
+  padding-left: 0.5em;
+}
+
+.DataRetentionRuleEditor__retention__delete-after {
+  display: grid;
+  grid-template-columns: 7.5em 3em 6em;
+}
+
+.DataRetentionRuleList__content {
+  padding: 0.5em;
+  display: flex;
+  flex-wrap: wrap;
+  flex-grow: 1;
+}
+
+.DataRetentionRuleList__rule {
+  width: 99%;
+  background-color: white;
+  margin: 0.5em;
+  border-radius: 0.3em;
+  border: solid 0.1em lightgray;
+  box-shadow: 0.1em 0.1em 0.1em lightgray;
+}
+
+.DataRetentionRuleList__rule:hover {
+  border: solid 0.1em darkgrey;
+  box-shadow: 0.2em 0.2em 0.2em darkgrey;
+}
+
+.DataRetentionSection__content {
+  width: 100%;
+  height: 100%;
+}
+
+.DataRetentionRuleListDropTarget {
+  height: 1em;
+  width: 100%;
+}
+
+.DataRetentionRuleListDropTarget--highlighted {
+  height: 100%;
+  width: 100%;
+  background-color: #c1e4ff;
+}

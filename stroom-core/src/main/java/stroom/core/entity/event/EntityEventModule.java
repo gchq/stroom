@@ -20,14 +20,20 @@ import com.google.inject.AbstractModule;
 import com.google.inject.multibindings.Multibinder;
 import stroom.util.entityevent.EntityEvent;
 import stroom.util.entityevent.EntityEventBus;
+import stroom.util.guice.GuiceUtil;
+import stroom.util.shared.RestResource;
 
 public class EntityEventModule extends AbstractModule {
     @Override
     protected void configure() {
         bind(EntityEventBus.class).to(EntityEventBusImpl.class);
+        bind(EntityEventResource.class).to(EntityEventResourceImpl.class);
 
         // Ensure the multibinder is created.
         Multibinder.newSetBinder(binder(), EntityEvent.Handler.class);
+
+        GuiceUtil.buildMultiBinder(binder(), RestResource.class)
+                .addBinding(EntityEventResourceImpl.class);
     }
 
     @Override

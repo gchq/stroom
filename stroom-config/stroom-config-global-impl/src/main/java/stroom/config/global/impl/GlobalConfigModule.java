@@ -13,7 +13,6 @@ public class GlobalConfigModule extends AbstractModule {
     @Override
     protected void configure() {
         bind(AppConfigMonitor.class).asEagerSingleton();
-        bind(BuildInfo.class).toProvider(BuildInfoProvider.class);
 
         HealthCheckBinder.create(binder())
                 .bind(AppConfigMonitor.class);

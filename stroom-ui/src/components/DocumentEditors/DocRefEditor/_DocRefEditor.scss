@@ -1,0 +1,55 @@
+@import "../../../styles/themes.scss";
+@import "../../../styles/themify.scss";
+
+.DocRefEditor__focusarea {
+  outline: none;
+}
+
+.DocRefEditor__search__control {
+  border-radius: 100px !important;
+  min-height: 0 !important;
+  background-color: white;
+  @include themify($themes) {
+    background-color: themed("control__background-color");
+  }
+}
+
+.DocRefEditor__search__value-container {
+  padding: 0 8px !important;
+}
+
+.DocRefEditor__search__value-container div {
+  margin: 0;
+  padding: 0;
+  background-color: transparent;
+}
+
+.DocRefEditor__search__menu {
+  // margin: 0;
+  // padding: 0;
+  background-color: white;
+  @include themify($themes) {
+    background-color: themed("control__background-color");
+    border: thin solid themed("control__border-color");
+  }
+}
+
+.DocRefEditor__search__option {
+  // vertical-align: middle;
+  // padding: 8px 12px;
+  padding: .1rem 12px !important;
+}
+
+.DocRefEditor__search__option--is-focused {
+  @include themify($themes) {
+    color: themed("item__text-color--focus--highlighted") !important;
+    background-color: themed("item__background-color--focus--highlighted") !important;
+  }
+}
+
+.DocRefEditor__search__option--is-selected {
+  @include themify($themes) {
+    color: themed("item__text-color--focus--highlighted--selected") !important;
+    background-color: themed("item__background-color--focus--highlighted--selected") !important;
+  }
+}

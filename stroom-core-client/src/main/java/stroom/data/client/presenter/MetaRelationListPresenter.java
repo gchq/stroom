@@ -61,8 +61,10 @@ public class MetaRelationListPresenter extends AbstractMetaListPresenter {
     public void setSelectedStream(final MetaRow metaRow, final boolean fireEvents,
                                   final boolean showSystemFiles) {
         if (metaRow == null) {
-            setCriteria(null);
+            final FindMetaCriteria criteria = new FindMetaCriteria();
+            criteria.setSort(MetaFields.CREATE_TIME.getName(), Direction.ASCENDING, false);
 
+            setCriteria(criteria);
         } else {
             final ExpressionOperator.Builder builder = new ExpressionOperator.Builder(Op.AND);
             if (!showSystemFiles) {

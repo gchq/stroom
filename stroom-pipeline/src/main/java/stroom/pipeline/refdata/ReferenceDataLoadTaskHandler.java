@@ -44,9 +44,7 @@ import stroom.pipeline.state.MetaHolder;
 import stroom.pipeline.state.PipelineHolder;
 import stroom.pipeline.task.StreamMetaDataProvider;
 import stroom.security.api.SecurityContext;
-import stroom.task.api.AbstractTaskHandler;
 import stroom.util.shared.Severity;
-import stroom.task.api.VoidResult;
 
 import javax.inject.Inject;
 import java.io.IOException;
@@ -59,7 +57,7 @@ import java.io.InputStream;
  * substitutions when processing events data.
  */
 
-class ReferenceDataLoadTaskHandler extends AbstractTaskHandler<ReferenceDataLoadTask, VoidResult> {
+class ReferenceDataLoadTaskHandler {
     private static final Logger LOGGER = LoggerFactory.getLogger(ReferenceDataLoadTaskHandler.class);
 
     private final Store streamStore;
@@ -114,17 +112,15 @@ class ReferenceDataLoadTaskHandler extends AbstractTaskHandler<ReferenceDataLoad
      * Loads reference data that meets the supplied criteria into the current
      * reference data key, value maps.
      */
-    @Override
-    public VoidResult exec(final ReferenceDataLoadTask task) {
-        return securityContext.secureResult(() -> {
+    public void exec(final RefStreamDefinition refStreamDefinition) {
+        securityContext.secure(() -> {
             // Elevate user permissions so that inherited pipelines that the user only has 'Use' permission on can be read.
-            return securityContext.useAsReadResult(() -> {
+            securityContext.useAsRead(() -> {
 //            final List<RefStreamDefinition> loadedRefStreamDefinitions = new ArrayList<>();
                 final StoredErrorReceiver storedErrorReceiver = new StoredErrorReceiver();
                 errorReceiver = new ErrorReceiverIdDecorator(getClass().getSimpleName(), storedErrorReceiver);
                 errorReceiverProxy.setErrorReceiver(errorReceiver);
 
-                final RefStreamDefinition refStreamDefinition = task.getRefStreamDefinition();
                 LOGGER.debug("Loading reference data: {}", refStreamDefinition);
 
                 // Open the stream source.
@@ -154,14 +150,13 @@ class ReferenceDataLoadTaskHandler extends AbstractTaskHandler<ReferenceDataLoad
                                 source,
                                 feedName,
                                 meta.getTypeName(),
-                                task.getRefStreamDefinition());
+                                refStreamDefinition);
 
                         LOGGER.debug("Finished loading reference data: {}", refStreamDefinition);
                     }
                 } catch (final IOException | RuntimeException e) {
                     log(Severity.FATAL_ERROR, e.getMessage(), e);
                 }
-                return VoidResult.INSTANCE;
             });
         });
     }

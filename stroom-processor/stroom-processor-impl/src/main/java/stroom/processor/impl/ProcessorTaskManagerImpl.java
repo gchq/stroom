@@ -32,6 +32,7 @@ import stroom.processor.shared.ProcessorFilterDataSource;
 import stroom.processor.shared.ProcessorFilterTracker;
 import stroom.processor.shared.ProcessorTask;
 import stroom.processor.shared.ProcessorTaskDataSource;
+import stroom.processor.shared.ProcessorTaskList;
 import stroom.processor.shared.QueryData;
 import stroom.processor.shared.TaskStatus;
 import stroom.query.api.v2.ExpressionOperator;
@@ -47,15 +48,16 @@ import stroom.security.api.SecurityContext;
 import stroom.statistics.api.InternalStatisticEvent;
 import stroom.statistics.api.InternalStatisticKey;
 import stroom.statistics.api.InternalStatisticsReceiver;
-import stroom.task.api.TaskCallbackAdaptor;
+import stroom.task.api.ExecutorProvider;
+import stroom.task.api.SimpleThreadPool;
 import stroom.task.api.TaskContext;
-import stroom.task.api.TaskManager;
-import stroom.task.api.VoidResult;
+import stroom.task.shared.ThreadPool;
 import stroom.util.date.DateUtil;
 import stroom.util.logging.LambdaLogUtil;
 import stroom.util.logging.LambdaLogger;
 import stroom.util.logging.LambdaLoggerFactory;
 import stroom.util.logging.LogExecutionTime;
+import stroom.util.shared.PermissionException;
 import stroom.util.shared.Sort.Direction;
 
 import javax.inject.Inject;
@@ -70,7 +72,9 @@ import java.util.Map;
 import java.util.Map.Entry;
 import java.util.Optional;
 import java.util.Set;
+import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.ConcurrentHashMap;
+import java.util.concurrent.Executor;
 import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.concurrent.atomic.AtomicLong;
 import java.util.concurrent.atomic.AtomicReference;
@@ -88,11 +92,14 @@ class ProcessorTaskManagerImpl implements ProcessorTaskManager {
 
     private static final int POLL_INTERVAL_MS = 10000;
     private static final int DELETE_INTERVAL_MS = POLL_INTERVAL_MS * 10;
+    private static final ThreadPool THREAD_POOL = new SimpleThreadPool(3);
 
     private final ProcessorFilterService processorFilterService;
     private final ProcessorFilterTrackerDao processorFilterTrackerDao;
     private final ProcessorTaskDao processorTaskDao;
-    private final TaskManager taskManager;
+    private final ExecutorProvider executorProvider;
+    private final Provider<TaskContext> taskContextProvider;
+    private final ProcessorTaskManager processorTaskManager;
     private final NodeInfo nodeInfo;
     private final ProcessorConfig processorConfig;
     private final Provider<InternalStatisticsReceiver> internalStatisticsReceiverProvider;
@@ -141,7 +148,9 @@ class ProcessorTaskManagerImpl implements ProcessorTaskManager {
     ProcessorTaskManagerImpl(final ProcessorFilterService processorFilterService,
                              final ProcessorFilterTrackerDao processorFilterTrackerDao,
                              final ProcessorTaskDao processorTaskDao,
-                             final TaskManager taskManager,
+                             final ExecutorProvider executorProvider,
+                             final Provider<TaskContext> taskContextProvider,
+                             final ProcessorTaskManager processorTaskManager,
                              final NodeInfo nodeInfo,
                              final ProcessorConfig processorConfig,
                              final Provider<InternalStatisticsReceiver> internalStatisticsReceiverProvider,
@@ -151,7 +160,9 @@ class ProcessorTaskManagerImpl implements ProcessorTaskManager {
 
         this.processorFilterService = processorFilterService;
         this.processorFilterTrackerDao = processorFilterTrackerDao;
-        this.taskManager = taskManager;
+        this.executorProvider = executorProvider;
+        this.taskContextProvider = taskContextProvider;
+        this.processorTaskManager = processorTaskManager;
         this.nodeInfo = nodeInfo;
         this.processorTaskDao = processorTaskDao;
         this.processorConfig = processorConfig;
@@ -196,7 +207,11 @@ class ProcessorTaskManagerImpl implements ProcessorTaskManager {
      * the task to the node asking for the job
      */
     @Override
-    public List<ProcessorTask> assignTasks(final String nodeName, final int count) {
+    public ProcessorTaskList assignTasks(final String nodeName, final int count) {
+        if (!securityContext.isProcessingUser()) {
+            throw new PermissionException(securityContext.getUserId(), "Only the processing user is allowed to assign tasks");
+        }
+
         List<ProcessorTask> assignedStreamTasks = Collections.emptyList();
 
         try {
@@ -244,25 +259,31 @@ class ProcessorTaskManagerImpl implements ProcessorTaskManager {
         // Output some trace logging so we can see where tasks go.
         taskStatusTraceLog.assignTasks(ProcessorTaskManagerImpl.class, assignedStreamTasks, nodeName);
 
-        return assignedStreamTasks;
+        return new ProcessorTaskList(nodeName, assignedStreamTasks);
     }
 
     @Override
-    public void abandonTasks(final String nodeName, final List<ProcessorTask> tasks) {
-        // Output some trace logging so we can see where tasks go.
-        taskStatusTraceLog.abandonTasks(ProcessorTaskManagerImpl.class, tasks, nodeName);
-
-        for (final ProcessorTask streamTask : tasks) {
-            abandon(streamTask);
+    public Boolean abandonTasks(final ProcessorTaskList processorTaskList) {
+        if (!securityContext.isProcessingUser()) {
+            throw new PermissionException(securityContext.getUserId(), "Only the processing user is allowed to abandon tasks");
         }
+
+        // Output some trace logging so we can see where tasks go.
+        taskStatusTraceLog.abandonTasks(ProcessorTaskManagerImpl.class, processorTaskList.getList(), processorTaskList.getNodeName());
+
+        for (final ProcessorTask processorTask : processorTaskList.getList()) {
+            abandon(processorTask);
+        }
+
+        return true;
     }
 
-    private void abandon(final ProcessorTask streamTask) {
+    private void abandon(final ProcessorTask processorTask) {
         try {
-            LOGGER.warn("abandon() - {}", streamTask);
-            processorTaskDao.changeTaskStatus(streamTask, null, TaskStatus.UNPROCESSED, null, null);
+            LOGGER.warn("abandon() - {}", processorTask);
+            processorTaskDao.changeTaskStatus(processorTask, null, TaskStatus.UNPROCESSED, null, null);
         } catch (final RuntimeException e) {
-            LOGGER.error("abandon() - {}", streamTask, e);
+            LOGGER.error("abandon() - {}", processorTask, e);
         }
     }
 
@@ -319,18 +340,22 @@ class ProcessorTaskManagerImpl implements ProcessorTaskManager {
                     // See if it has been long enough since we last filled.
                     if (isScheduled()) {
                         LOGGER.debug("fillTaskStore() - Executing CreateStreamTasksTask");
-                        taskManager.execAsync(new CreateStreamTasksTask(), new TaskCallbackAdaptor<>() {
-                            @Override
-                            public void onSuccess(final VoidResult result) {
-                                scheduleNextPollMs();
-                                filling.set(false);
-                            }
 
-                            @Override
-                            public void onFailure(final Throwable t) {
-                                filling.set(false);
-                            }
-                        });
+                        final TaskContext taskContext = taskContextProvider.get();
+
+                        Runnable runnable = () ->
+                                securityContext.secure(() ->
+                                        processorTaskManager.createTasks(taskContext));
+                        runnable = taskContext.sub(runnable);
+                        final Executor executor = executorProvider.get(THREAD_POOL);
+                        CompletableFuture
+                                .runAsync(runnable, executor)
+                                .whenComplete((r, t) -> {
+                                    if (t == null) {
+                                        scheduleNextPollMs();
+                                    }
+                                    filling.set(false);
+                                });
                     } else {
                         filling.set(false);
                     }

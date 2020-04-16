@@ -18,18 +18,13 @@ package stroom.pipeline.task;
 
 
 import org.junit.jupiter.api.Test;
-import stroom.core.dataprocess.PipelineDataProcessorTaskExecutor;
 import stroom.data.shared.StreamTypeNames;
 import stroom.data.store.mock.MockStore;
 import stroom.meta.mock.MockMetaService;
 import stroom.meta.shared.Meta;
-import stroom.node.api.NodeInfo;
-import stroom.processor.api.DataProcessorTaskExecutor;
-import stroom.processor.impl.DataProcessorTask;
-import stroom.processor.impl.ProcessorTaskManager;
-import stroom.processor.shared.ProcessorTask;
-import stroom.task.api.TaskManager;
+import stroom.processor.api.ProcessorResult;
 import stroom.test.AbstractProcessIntegrationTest;
+import stroom.test.CommonTranslationTestHelper;
 import stroom.test.StoreCreationTool;
 import stroom.test.common.ComparisonHelper;
 import stroom.test.common.StroomPipelineTestFileUtil;
@@ -39,7 +34,6 @@ import javax.inject.Inject;
 import java.io.IOException;
 import java.io.OutputStream;
 import java.nio.file.Path;
-import java.util.ArrayList;
 import java.util.List;
 import java.util.Map.Entry;
 
@@ -51,17 +45,13 @@ class TestTranslationTaskWithoutTranslation extends AbstractProcessIntegrationTe
     private static final Path RESOURCE_NAME = StroomPipelineTestFileUtil.getTestResourcesFile(DIR + "TestTask.out");
 
     @Inject
+    private CommonTranslationTestHelper commonTranslationTestHelper;
+    @Inject
     private MockStore streamStore;
     @Inject
     private MockMetaService metaService;
     @Inject
-    private NodeInfo nodeInfo;
-    @Inject
-    private ProcessorTaskManager processorTaskManager;
-    @Inject
     private StoreCreationTool storeCreationTool;
-    @Inject
-    private TaskManager taskManager;
 
     /**
      * Tests Task with a valid resource and feed.
@@ -73,17 +63,16 @@ class TestTranslationTaskWithoutTranslation extends AbstractProcessIntegrationTe
         setup(FEED_NAME, RESOURCE_NAME);
         assertThat(metaService.getLockCount()).isEqualTo(0);
 
-        final List<DataProcessorTaskExecutor> results = processAll();
+        final List<ProcessorResult> results = commonTranslationTestHelper.processAll();
         assertThat(results.size()).isEqualTo(1);
 
-        for (final DataProcessorTaskExecutor result : results) {
-            final PipelineDataProcessorTaskExecutor processor = (PipelineDataProcessorTaskExecutor) result;
-            final String message = "Count = " + processor.getRead() + "," + processor.getWritten() + ","
-                    + processor.getMarkerCount(Severity.SEVERITIES);
+        for (final ProcessorResult result : results) {
+            final String message = "Count = " + result.getRead() + "," + result.getWritten() + ","
+                    + result.getMarkerCount(Severity.SEVERITIES);
 
-            assertThat(processor.getWritten() > 0).as(message).isTrue();
-            assertThat(processor.getRead() <= processor.getWritten()).as(message).isTrue();
-            assertThat(processor.getMarkerCount(Severity.SEVERITIES)).as(message).isEqualTo(0);
+            assertThat(result.getWritten() > 0).as(message).isTrue();
+            assertThat(result.getRead() <= result.getWritten()).as(message).isTrue();
+            assertThat(result.getMarkerCount(Severity.SEVERITIES)).as(message).isEqualTo(0);
         }
 
         final Path inputDir = StroomPipelineTestFileUtil.getTestResourcesDir().resolve(DIR);
@@ -106,26 +95,7 @@ class TestTranslationTaskWithoutTranslation extends AbstractProcessIntegrationTe
         }
 
         // Make sure 10 records were written.
-        assertThat(((PipelineDataProcessorTaskExecutor) results.get(0)).getWritten()).isEqualTo(10);
-    }
-
-    /**
-     * Gets the next task to be processed.
-     *
-     * @return The next task or null if there are currently no more tasks.
-     */
-    private List<DataProcessorTaskExecutor> processAll() {
-        final List<DataProcessorTaskExecutor> results = new ArrayList<>();
-        List<ProcessorTask> streamTasks = processorTaskManager.assignTasks(nodeInfo.getThisNodeName(), 100);
-        while (streamTasks.size() > 0) {
-            for (final ProcessorTask streamTask : streamTasks) {
-                final DataProcessorTask task = new DataProcessorTask(streamTask);
-                taskManager.exec(task);
-                results.add(task.getDataProcessorTaskExecutor());
-            }
-            streamTasks = processorTaskManager.assignTasks(nodeInfo.getThisNodeName(), 100);
-        }
-        return results;
+        assertThat(results.get(0).getWritten()).isEqualTo(10);
     }
 
     private void setup(final String feedName, final Path dataLocation) throws IOException {

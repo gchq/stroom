@@ -18,9 +18,9 @@ package stroom.search.impl;
 
 import stroom.query.api.v2.Query;
 import stroom.search.api.EventRef;
-import stroom.search.api.EventRefs;
 
-public class EventSearchTask extends AbstractSearchTask<EventRefs> {
+public class EventSearchTask {
+    private final Query query;
     private final EventRef minEvent;
     private final EventRef maxEvent;
     private final long maxStreams;
@@ -31,13 +31,17 @@ public class EventSearchTask extends AbstractSearchTask<EventRefs> {
 
     public EventSearchTask(final Query query, final EventRef minEvent, final EventRef maxEvent, final long maxStreams,
                            final long maxEvents, final long maxEventsPerStream, final int resultSendFrequency) {
-        super(null, query);
+        this.query = query;
         this.minEvent = minEvent;
         this.maxEvent = maxEvent;
         this.maxStreams = maxStreams;
         this.maxEvents = maxEvents;
         this.maxEventsPerStream = maxEventsPerStream;
         this.resultSendFrequency = resultSendFrequency;
+    }
+
+    public Query getQuery() {
+        return query;
     }
 
     public EventRef getMinEvent() {

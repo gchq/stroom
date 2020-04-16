@@ -101,6 +101,27 @@ public class StoreImpl<D extends Doc> implements Store<D> {
         return createDocRef(created);
     }
 
+
+    @Override
+    public final DocRef createDocument(final String name, final DocumentCreator<D> documentCreator) {
+        Objects.requireNonNull(name);
+        final long now = System.currentTimeMillis();
+        final String userId = securityContext.getUserId();
+
+        final D document = documentCreator.create(
+                type,
+                UUID.randomUUID().toString(),
+                name,
+                UUID.randomUUID().toString(),
+                now,
+                now,
+                userId,
+                userId);
+
+        final D created = create(document);
+        return createDocRef(created);
+    }
+
     @Override
     public final DocRef copyDocument(final String originalUuid,
                                      final String copyUuid,

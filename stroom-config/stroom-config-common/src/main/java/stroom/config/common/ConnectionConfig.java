@@ -25,7 +25,6 @@ import stroom.util.shared.AbstractConfig;
 import java.util.Objects;
 
 public class ConnectionConfig extends AbstractConfig {
-
     public static final String PROP_NAME_JDBC_DRIVER_CLASS_NAME = "jdbcDriverClassName";
     public static final String PROP_NAME_JDBC_DRIVER_URL = "jdbcDriverUrl";
     public static final String PROP_NAME_JDBC_DRIVER_USERNAME = "jdbcDriverUsername";

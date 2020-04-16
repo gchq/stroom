@@ -17,30 +17,25 @@
 
 package stroom.search.solr.search;
 
-import stroom.cluster.task.api.ClusterDispatchAsyncHelper;
-import stroom.cluster.task.api.TargetType;
-import stroom.cluster.task.api.TerminateTaskClusterTask;
+import stroom.cluster.task.api.ClusterTaskTerminator;
 import stroom.query.api.v2.Query;
 import stroom.search.solr.CachedSolrIndex;
 import stroom.search.solr.SolrIndexCache;
 import stroom.search.solr.shared.SolrIndexField;
 import stroom.security.api.SecurityContext;
-import stroom.task.api.AbstractTaskHandler;
-import stroom.task.api.GenericServerTask;
 import stroom.task.api.TaskContext;
 import stroom.task.api.TaskManager;
-import stroom.task.shared.FindTaskCriteria;
-import stroom.task.api.VoidResult;
+import stroom.task.shared.TaskId;
 
 import javax.inject.Inject;
 
-public class SolrAsyncSearchTaskHandler extends AbstractTaskHandler<SolrAsyncSearchTask, VoidResult> {
+public class SolrAsyncSearchTaskHandler {
     private final TaskContext taskContext;
     private final SolrIndexCache solrIndexCache;
     private final SecurityContext securityContext;
     private final SolrClusterSearchTaskHandler clusterSearchTaskHandler;
     private final TaskManager taskManager;
-    private final ClusterDispatchAsyncHelper dispatchHelper;
+    private final ClusterTaskTerminator clusterTaskTerminator;
 
     @Inject
     SolrAsyncSearchTaskHandler(final TaskContext taskContext,
@@ -48,18 +43,17 @@ public class SolrAsyncSearchTaskHandler extends AbstractTaskHandler<SolrAsyncSea
                                final SecurityContext securityContext,
                                final SolrClusterSearchTaskHandler clusterSearchTaskHandler,
                                final TaskManager taskManager,
-                               final ClusterDispatchAsyncHelper dispatchHelper) {
+                               final ClusterTaskTerminator clusterTaskTerminator) {
         this.taskContext = taskContext;
         this.solrIndexCache = solrIndexCache;
         this.securityContext = securityContext;
         this.clusterSearchTaskHandler = clusterSearchTaskHandler;
         this.taskManager = taskManager;
-        this.dispatchHelper = dispatchHelper;
+        this.clusterTaskTerminator = clusterTaskTerminator;
     }
 
-    @Override
-    public VoidResult exec(final SolrAsyncSearchTask task) {
-        return securityContext.secureResult(() -> securityContext.useAsReadResult(() -> {
+    public void exec(final SolrAsyncSearchTask task, final TaskId taskId) {
+        securityContext.secure(() -> securityContext.useAsRead(() -> {
             final SolrSearchResultCollector resultCollector = task.getResultCollector();
             if (!Thread.currentThread().isInterrupted()) {
                 try {
@@ -97,7 +91,7 @@ public class SolrAsyncSearchTaskHandler extends AbstractTaskHandler<SolrAsyncSea
 
                     // Make sure we try and terminate any child tasks on worker
                     // nodes if we need to.
-                    terminateTasks(task);
+                    terminateTasks(task, taskId);
 
                     // Let the result handler know search has finished.
                     resultCollector.complete();
@@ -107,29 +101,17 @@ public class SolrAsyncSearchTaskHandler extends AbstractTaskHandler<SolrAsyncSea
                     taskContext.info(() -> task.getSearchName() + " - staying alive for UI requests");
                 }
             }
-
-            return VoidResult.INSTANCE;
         }));
     }
 
-    private void terminateTasks(final SolrAsyncSearchTask task) {
+    private void terminateTasks(final SolrAsyncSearchTask task, final TaskId taskId) {
         // Terminate this task.
-        taskManager.terminate(task.getId());
+        taskManager.terminate(taskId);
 
         // We have to wrap the cluster termination task in another task or
         // ClusterDispatchAsyncImpl
         // will not execute it if the parent task is terminated.
-        final GenericServerTask outerTask = GenericServerTask.create(null, "Terminate: " + task.getTaskName(), "Terminating cluster tasks");
-        outerTask.setRunnable(() -> {
-            taskContext.info(() -> task.getSearchName() + " - terminating child tasks");
-            final FindTaskCriteria findTaskCriteria = new FindTaskCriteria();
-            findTaskCriteria.addAncestorId(task.getId());
-            final TerminateTaskClusterTask terminateTask = new TerminateTaskClusterTask("Terminate: " + task.getTaskName(), findTaskCriteria, false);
-
-            // Terminate matching tasks.
-            dispatchHelper.execAsync(terminateTask, TargetType.ACTIVE);
-        });
-        taskManager.execAsync(outerTask);
+        clusterTaskTerminator.terminate(task.getSearchName(), taskId, "SolrAsyncSearchTask");
     }
 
     private String[] getStoredFields(final CachedSolrIndex index) {

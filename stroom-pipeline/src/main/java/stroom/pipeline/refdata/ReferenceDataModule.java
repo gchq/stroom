@@ -18,7 +18,6 @@ package stroom.pipeline.refdata;
 
 import stroom.pipeline.factory.PipelineElementModule;
 import stroom.pipeline.refdata.store.RefDataStoreModule;
-import stroom.task.api.TaskHandlerBinder;
 import stroom.util.guice.GuiceUtil;
 import stroom.util.shared.Clearable;
 
@@ -31,10 +30,6 @@ public class ReferenceDataModule extends PipelineElementModule {
         bind(ContextDataLoader.class).to(ContextDataLoaderImpl.class);
 
         GuiceUtil.buildMultiBinder(binder(), Clearable.class).addBinding(EffectiveStreamCache.class);
-
-        TaskHandlerBinder.create(binder())
-                .bind(ContextDataLoadTask.class, ContextDataLoadTaskHandler.class)
-                .bind(ReferenceDataLoadTask.class, ReferenceDataLoadTaskHandler.class);
 
         install(new RefDataStoreModule());
     }

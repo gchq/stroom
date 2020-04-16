@@ -21,13 +21,8 @@ import com.google.inject.multibindings.Multibinder;
 import stroom.docstore.api.DocumentActionHandlerBinder;
 import stroom.importexport.api.ImportExportActionHandler;
 import stroom.search.solr.indexing.SolrIndexingElementModule;
-import stroom.search.solr.search.SolrAsyncSearchTask;
-import stroom.search.solr.search.SolrAsyncSearchTaskHandler;
-import stroom.search.solr.search.SolrEventSearchTask;
-import stroom.search.solr.search.SolrEventSearchTaskHandler;
 import stroom.search.solr.search.StroomSolrIndexQueryResource;
 import stroom.search.solr.shared.SolrIndexDoc;
-import stroom.task.api.TaskHandlerBinder;
 import stroom.util.entityevent.EntityEvent;
 import stroom.util.entityevent.EntityEvent.Handler;
 import stroom.util.guice.GuiceUtil;
@@ -48,10 +43,6 @@ public class SolrSearchModule extends AbstractModule {
                 .addBinding(SolrIndexResourceImpl.class)
                 .addBinding(NewUiSolrIndexResource.class)
                 .addBinding(StroomSolrIndexQueryResource.class);
-
-        TaskHandlerBinder.create(binder())
-                .bind(SolrAsyncSearchTask.class, SolrAsyncSearchTaskHandler.class)
-                .bind(SolrEventSearchTask.class, SolrEventSearchTaskHandler.class);
 
         final Multibinder<Handler> entityEventHandlerBinder = Multibinder.newSetBinder(binder(), EntityEvent.Handler.class);
         entityEventHandlerBinder.addBinding().to(SolrIndexCacheImpl.class);

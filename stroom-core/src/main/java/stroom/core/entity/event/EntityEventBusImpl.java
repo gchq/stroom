@@ -18,37 +18,47 @@ package stroom.core.entity.event;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import stroom.util.entityevent.EntityAction;
+import stroom.cluster.task.api.NodeNotFoundException;
+import stroom.cluster.task.api.NullClusterStateException;
+import stroom.cluster.task.api.TargetNodeSetFactory;
+import stroom.security.api.SecurityContext;
+import stroom.task.api.TaskContext;
 import stroom.util.entityevent.EntityEvent;
-import stroom.util.entityevent.EntityEvent.Handler;
 import stroom.util.entityevent.EntityEventBus;
-import stroom.util.entityevent.EntityEventHandler;
-import stroom.task.api.TaskManager;
 
 import javax.inject.Inject;
 import javax.inject.Provider;
 import javax.inject.Singleton;
-import java.util.ArrayList;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
 import java.util.Set;
+import java.util.concurrent.CompletableFuture;
+import java.util.concurrent.Executor;
 
 @Singleton
 class EntityEventBusImpl implements EntityEventBus {
     private static final Logger LOGGER = LoggerFactory.getLogger(EntityEventBusImpl.class);
-    private final Map<String, Map<EntityAction, List<Handler>>> handlers = new HashMap<>();
-    private volatile boolean initialised;
 
-    private final Provider<Set<Handler>> entityEventHandlerProvider;
-    private final TaskManager taskManager;
+    private final Executor executor;
+    private final Provider<TaskContext> taskContextProvider;
+    private final TargetNodeSetFactory targetNodeSetFactory;
+    private final SecurityContext securityContext;
+    private final EntityEventHandler entityEventHandler;
+    private final EntityEventResource entityEventResource;
 
     private volatile boolean started = false;
 
     @Inject
-    EntityEventBusImpl(final Provider<Set<Handler>> entityEventHandlerProvider, final TaskManager taskManager) {
-        this.entityEventHandlerProvider = entityEventHandlerProvider;
-        this.taskManager = taskManager;
+    EntityEventBusImpl(final Executor executor,
+                       final Provider<TaskContext> taskContextProvider,
+                       final TargetNodeSetFactory targetNodeSetFactory,
+                       final SecurityContext securityContext,
+                       final EntityEventHandler entityEventHandler,
+                       final EntityEventResource entityEventResource) {
+        this.executor = executor;
+        this.taskContextProvider = taskContextProvider;
+        this.targetNodeSetFactory = targetNodeSetFactory;
+        this.securityContext = securityContext;
+        this.entityEventHandler = entityEventHandler;
+        this.entityEventResource = entityEventResource;
     }
 
     void init() {
@@ -68,21 +78,24 @@ class EntityEventBusImpl implements EntityEventBus {
     private void fireGlobally(final EntityEvent event) {
         try {
             // Make sure there are some handlers that care about this event.
-            boolean handlerExists = handlerExists(event, event.getDocRef().getType());
+            boolean handlerExists = entityEventHandler.handlerExists(event, event.getDocRef().getType());
             if (!handlerExists) {
                 // Look for handlers that cater for all types.
-                handlerExists = handlerExists(event, "*");
+                handlerExists = entityEventHandler.handlerExists(event, "*");
             }
 
             // If there are registered handlers then go ahead and fire the event.
             if (handlerExists) {
                 // Force a local update so that changes are immediately reflected
                 // for the current user.
-                fireLocally(event);
+                entityEventHandler.fireLocally(event);
 
                 if (started) {
                     // Dispatch the entity event to all nodes in the cluster.
-                    taskManager.execAsync(new DispatchEntityEventTask(event));
+                    final TaskContext taskContext = taskContextProvider.get();
+                    Runnable runnable = () -> fireRemote(event);
+                    runnable = taskContext.sub(runnable);
+                    CompletableFuture.runAsync(runnable, executor);
                 }
             }
         } catch (final RuntimeException e) {
@@ -90,104 +103,26 @@ class EntityEventBusImpl implements EntityEventBus {
         }
     }
 
-    void fireLocally(final EntityEvent event) {
-        // Fire to type specific handlers.
-        fireEventByType(event, event.getDocRef().getType());
-        // Fire to any (*) type handlers.
-        fireEventByType(event, "*");
-    }
-
-    /**
-     * Check to see if we can find a handler for this event. If there isn't one
-     * then there is no point in firing the event.
-     */
-    private boolean handlerExists(final EntityEvent event, final String type) {
-        List<Handler> dest = null;
-
-        // Make sure there are some handlers that care about this event.
-        final Map<EntityAction, List<Handler>> map = getHandlers().get(type);
-        if (map != null) {
-            // Try and get generic handlers for this type.
-            dest = map.get(null);
-
-            // If we can't get generic handlers then try and get action specific
-            // handlers.
-            if (dest == null) {
-                dest = map.get(event.getAction());
-            }
-        }
-
-        return dest != null && dest.size() > 0;
-    }
-
-    private void fireEventByType(final EntityEvent event, final String type) {
-        final Map<EntityAction, List<Handler>> map = getHandlers().get(type);
-        if (map != null) {
-            // Fire to global action handlers.
-            fireEventByAction(map, event, null);
-
-            // Fire to specific action handlers.
-            fireEventByAction(map, event, event.getAction());
-        }
-    }
-
-    private void fireEventByAction(final Map<EntityAction, List<Handler>> map, final EntityEvent event,
-                                   final EntityAction action) {
-        final List<Handler> list = map.get(action);
-        if (list != null) {
-            for (final Handler handler : list) {
-                try {
-                    handler.onChange(event);
-                } catch (final RuntimeException e) {
-                    LOGGER.error("Unable to handle onChange event!", e);
-                }
-            }
-        }
-    }
-
-    @Override
-    public void addHandler(final Handler handler, final String type, final EntityAction... action) {
-        final Map<EntityAction, List<Handler>> map = handlers.computeIfAbsent(type, k -> new HashMap<>());
-        if (action == null || action.length == 0) {
-            addHandlerForAction(map, handler, null);
-        } else {
-            for (final EntityAction act : action) {
-                addHandlerForAction(map, handler, act);
-            }
-        }
-    }
-
-    private void addHandlerForAction(final Map<EntityAction, List<Handler>> map,
-                                     final Handler handler,
-                                     final EntityAction action) {
-        map.computeIfAbsent(action, k -> new ArrayList<>()).add(handler);
-    }
-
-    private Map<String, Map<EntityAction, List<Handler>>> getHandlers() {
-        if (!initialised) {
-            initialise();
-        }
-
-        return handlers;
-    }
-
-    private synchronized void initialise() {
-        if (!initialised) {
+    private void fireRemote(final EntityEvent entityEvent) {
+         securityContext.secure(() -> {
             try {
-                for (final Handler handler : entityEventHandlerProvider.get()) {
-                    final EntityEventHandler annotation = handler.getClass().getAnnotation(EntityEventHandler.class);
-                    if (annotation != null) {
-                        final String type = annotation.type();
-                        addHandler(handler, type, annotation.action());
-                    } else {
-                        LOGGER.error("Annotation not found");
-                    }
-                }
-            } catch (final RuntimeException e) {
-                LOGGER.error("Unable to initialise EntityEventBusImpl!", e);
-            }
+                // Get this node.
+                final String sourceNode = targetNodeSetFactory.getSourceNode();
 
-            initialised = true;
-        }
+                // Get the nodes that we are going to send the entity event to.
+                final Set<String> targetNodes = targetNodeSetFactory.getEnabledActiveTargetNodeSet();
+
+                // Only send the event to remote nodes and not this one.
+                targetNodes.stream().filter(targetNode -> !targetNode.equals(sourceNode)).forEach(targetNode -> {
+                    // Send the entity event.
+                    entityEventResource.fireEvent(targetNode, entityEvent);
+                });
+            } catch (final NullClusterStateException | NodeNotFoundException e) {
+                LOGGER.warn(e.getMessage());
+                LOGGER.debug(e.getMessage(), e);
+            } catch (final RuntimeException e) {
+                LOGGER.error(e.getMessage(), e);
+            }
+        });
     }
 }

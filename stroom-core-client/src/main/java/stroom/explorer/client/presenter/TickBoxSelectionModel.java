@@ -195,17 +195,21 @@ public class TickBoxSelectionModel extends AbstractSelectionModel<ExplorerNode> 
 
         // Once the tree structure changes ensure we auto select descendants of selected ancestors.
         if (roots != null) {
-            addChildren(null, roots, false);
+            addChildren(null, roots, false, getSelectedSet());
         }
     }
 
-    private void addChildren(final ExplorerNode parent, final List<ExplorerNode> children, final boolean select) {
+    private void addChildren(final ExplorerNode parent, final List<ExplorerNode> children, final boolean select, final Set<ExplorerNode> selected) {
+        if (children == null) {
+            return;
+        }
+
         for (final ExplorerNode child : children) {
             parents.put(child, parent);
 
-            final boolean selectChildren = select || getSelectedSet().contains(child);
+            final boolean selectChildren = select || selected.contains(parent) || selected.contains(child);
             setSelected(child, selectChildren);
-            addChildren(child, child.getChildren(), selectChildren);
+            addChildren(child, child.getChildren(), selectChildren, selected);
         }
     }
 }

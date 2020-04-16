@@ -1,0 +1,33 @@
+.BackConfirmation {
+  background-color: green;
+  position: absolute;
+  width: 550px;
+  left: 50%;
+  -webkit-transform: translateX(-50%);
+  transform: translateX(-50%);
+  top: calc(50% - 100px);
+  border: thin solid rgb(204, 204, 204);
+  background: rgb(255, 255, 255);
+  overflow: auto;
+  border-radius: 4px;
+  outline: none;
+  padding: 20px 20px 27px 20px;
+}
+
+.BackConfirmation h3 svg {
+  color: #ff6f00;
+}
+
+.BackConfirmation h3 {
+  padding: 0 0 10px 0;
+}
+
+.BackConfirmation p {
+  font-size: 14px;
+  margin: 10px 0 10px 28px !important;
+  padding: 0 0 12px 0 !important;
+}
+
+.warning {
+  color: #ff6f00;
+}

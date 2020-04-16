@@ -1,7 +1,6 @@
 package stroom.security.impl.session;
 
 import com.google.inject.AbstractModule;
-import stroom.task.api.TaskHandlerBinder;
 import stroom.util.guice.GuiceUtil;
 import stroom.util.guice.ServletBinder;
 

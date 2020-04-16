@@ -17,7 +17,5 @@
 package stroom.util.entityevent;
 
 public interface EntityEventBus {
-    void addHandler(EntityEvent.Handler handler, String type, EntityAction... action);
-
     void fire(EntityEvent event);
 }

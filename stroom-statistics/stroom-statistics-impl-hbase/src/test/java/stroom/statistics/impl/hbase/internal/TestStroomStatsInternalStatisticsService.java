@@ -1,6 +1,7 @@
 package stroom.statistics.impl.hbase.internal;
 
 
+import org.apache.kafka.clients.producer.KafkaProducer;
 import org.apache.kafka.clients.producer.ProducerRecord;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
@@ -12,7 +13,8 @@ import org.mockito.junit.jupiter.MockitoExtension;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import stroom.docref.DocRef;
-import stroom.kafka.pipeline.KafkaProducerFactory;
+import stroom.kafka.api.KafkaProducerFactory;
+import stroom.kafka.api.SharedKafkaProducer;
 import stroom.statistics.api.InternalStatisticEvent;
 import stroom.statistics.api.InternalStatisticKey;
 
@@ -35,9 +37,19 @@ class TestStroomStatsInternalStatisticsService {
     @Captor
     private ArgumentCaptor<Consumer<Throwable>> exceptionHandlerCaptor;
     @Mock
-    private org.apache.kafka.clients.producer.KafkaProducer mockKafkaProducer;
+    private SharedKafkaProducer mockSharedKafkaProducer;
+    @Mock
+    private KafkaProducer<String, byte[]> mockKafkaProducer;
     @Mock
     private KafkaProducerFactory mockStroomKafkaProducerFactory;
+
+    private void initMocks() {
+        Mockito.when(mockSharedKafkaProducer.getKafkaProducer())
+                .thenReturn(Optional.of(mockKafkaProducer));
+
+        Mockito.when(mockStroomKafkaProducerFactory.getSharedProducer(Mockito.any()))
+                .thenReturn(mockSharedKafkaProducer);
+    }
 
     @Test
     void putEvents_multipleEvents() {
@@ -45,8 +57,8 @@ class TestStroomStatsInternalStatisticsService {
         hBaseStatisticsConfig.setDocRefType(DOC_REF_TYPE_1);
         hBaseStatisticsConfig.getKafkaTopicsConfig().setCount("MyTopic");
 
-        Mockito.when(mockStroomKafkaProducerFactory.createProducer(Mockito.any()))
-                .thenReturn(Optional.of(mockKafkaProducer));
+        initMocks();
+
         StroomStatsInternalStatisticsService stroomStatsInternalStatisticsService =
                 new StroomStatsInternalStatisticsService(
                         mockStroomKafkaProducerFactory,
@@ -79,8 +91,8 @@ class TestStroomStatsInternalStatisticsService {
         hBaseStatisticsConfig.getKafkaTopicsConfig().setCount("MyTopic");
         hBaseStatisticsConfig.setEventsPerMessage(10);
 
-        Mockito.when(mockStroomKafkaProducerFactory.createProducer(Mockito.any()))
-                .thenReturn(Optional.of(mockKafkaProducer));
+        initMocks();
+
         StroomStatsInternalStatisticsService stroomStatsInternalStatisticsService =
                 new StroomStatsInternalStatisticsService(
                         mockStroomKafkaProducerFactory,

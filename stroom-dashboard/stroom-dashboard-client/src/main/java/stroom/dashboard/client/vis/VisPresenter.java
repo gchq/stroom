@@ -573,6 +573,14 @@ public class VisPresenter extends AbstractComponentPresenter<VisPresenter.VisVie
         return visResultRequest;
     }
 
+    @Override
+    public ComponentResultRequest createDownloadQueryRequest() {
+        final VisResultRequest visResultRequest = new VisResultRequest(0, MAX_RESULTS);
+        visResultRequest.setVisDashboardSettings(visSettings);
+        visResultRequest.setFetch(Fetch.ALL);
+        return visResultRequest;
+    }
+
     private JSONObject combineSettings(final JSONObject possibleSettings, final JSONObject dynamicSettings) {
         if (possibleSettings == null) {
             return dynamicSettings;

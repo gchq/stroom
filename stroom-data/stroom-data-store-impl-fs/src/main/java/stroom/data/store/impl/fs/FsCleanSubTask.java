@@ -17,28 +17,30 @@
 package stroom.data.store.impl.fs;
 
 import stroom.data.store.impl.fs.shared.FsVolume;
-import stroom.task.api.ServerTask;
-import stroom.task.shared.Task;
-import stroom.task.api.VoidResult;
+import stroom.task.api.TaskContext;
 
-class FsCleanSubTask extends ServerTask<VoidResult> {
+import java.time.Duration;
+
+class FsCleanSubTask {
     private final FsVolume volume;
     private final String path;
     private final String logPrefix;
-    private final Task<?> parentTask;
-    private final FsCleanExecutor parentHandler;
     private final FsCleanProgress taskProgress;
+    private final Duration oldAge;
+    private final boolean delete;
 
-    FsCleanSubTask(final FsCleanExecutor parentHandler, final Task<?> parentTask,
-                   final FsCleanProgress taskProgress, final FsVolume volume, final String path,
-                   final String logPrefix) {
-        super(parentTask);
+    FsCleanSubTask(final FsCleanProgress taskProgress,
+                   final FsVolume volume,
+                   final String path,
+                   final String logPrefix,
+                   final Duration oldAge,
+                           final boolean delete) {
         this.volume = volume;
         this.path = path;
         this.logPrefix = logPrefix;
-        this.parentHandler = parentHandler;
-        this.parentTask = parentTask;
         this.taskProgress = taskProgress;
+        this.oldAge = oldAge;
+        this.delete = delete;
     }
 
     FsVolume getVolume() {
@@ -53,16 +55,15 @@ class FsCleanSubTask extends ServerTask<VoidResult> {
         return logPrefix;
     }
 
-    @Override
-    public Task<?> getParentTask() {
-        return parentTask;
-    }
-
-    FsCleanExecutor getParentHandler() {
-        return parentHandler;
-    }
-
     FsCleanProgress getTaskProgress() {
         return taskProgress;
+    }
+
+    Duration getOldAge() {
+        return oldAge;
+    }
+
+    boolean isDelete() {
+        return delete;
     }
 }

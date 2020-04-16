@@ -540,11 +540,7 @@ class TestSQLStatisticAggregationManager extends AbstractCoreIntegrationTest {
 
         final SQLStatisticFlushTaskHandler taskHandler = new SQLStatisticFlushTaskHandler(
                 sqlStatisticValueBatchSaveService, new SimpleTaskContext(), securityContext);
-
-        final SQLStatisticFlushTask flushTask = new SQLStatisticFlushTask(sqlStatisticAggregateMap);
-
-        taskHandler.exec(flushTask);
-
+        taskHandler.exec(sqlStatisticAggregateMap);
     }
 
     private void runAggregation() throws SQLException {

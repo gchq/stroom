@@ -17,7 +17,6 @@
 package stroom.core.query;
 
 import com.google.inject.AbstractModule;
-import stroom.task.api.TaskHandlerBinder;
 import stroom.util.guice.GuiceUtil;
 import stroom.util.shared.RestResource;
 

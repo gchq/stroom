@@ -2,7 +2,7 @@ package stroom.cache.impl;
 
 import stroom.job.api.Schedule.ScheduleType;
 import stroom.job.api.ScheduledJobsModule;
-import stroom.job.api.TaskConsumer;
+import stroom.job.api.RunnableWrapper;
 
 import javax.inject.Inject;
 
@@ -18,10 +18,10 @@ public class CacheJobsModule extends ScheduledJobsModule {
                 .to(EvictExpiredElements.class);
     }
 
-    private static class EvictExpiredElements extends TaskConsumer {
+    private static class EvictExpiredElements extends RunnableWrapper {
         @Inject
         EvictExpiredElements(final CacheManagerService stroomCacheManager) {
-            super(task -> stroomCacheManager.evictExpiredElements());
+            super(stroomCacheManager::evictExpiredElements);
         }
     }
 }

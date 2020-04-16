@@ -1,0 +1,282 @@
+@import "../../../styles/themes.scss";
+@import "../../../styles/themify.scss";
+
+.sidebar__menu-item {
+  display: inline-flex;
+  outline: none;
+  width: 100%;
+  height: 1.8rem;
+  overflow: hidden;
+}
+
+.sidebar__menu-item.nav {
+  // padding: 0.35rem 0 0.35rem 0.1rem;
+  color: white;
+  outline: inherit;
+  white-space: nowrap;
+  cursor: pointer;
+  text-overflow: ellipsis;
+  overflow-x: hidden;
+}
+
+.sidebar__menu-item.doc {
+  color: white;
+  outline: inherit;
+  white-space: nowrap;
+  cursor: pointer;
+  text-overflow: ellipsis;
+  overflow-x: hidden;
+}
+
+// .sidebar__menu-item.doc {
+//   font-size: 0.85rem;
+// }
+
+.sidebar__menu-item.selected {
+  font-weight: 600;
+}
+
+.sidebar__menu-item.doc.dnd-over {
+  font-weight: italic;
+}
+
+.sidebar__menu-item.doc.collapsed {
+  padding: 0 0 0 0.1rem;
+}
+
+.sidebar__menu-item.child.collapsed {
+  padding-left: 0;
+}
+
+// .sidebar__menu-item.nav.collapsed {
+// }
+
+.sidebar__menu-item.doc.can-drop {
+  color: green;
+}
+.sidebar__menu-item.doc.cannot-drop {
+  color: red;
+}
+.sidebar__toggle {
+  position: absolute;
+  right: .36rem;
+  top: .4rem;
+}
+
+// .sidebar__children {
+//   margin-bottom: 0.4rem;
+// }
+
+
+// .app-chrome__sidebar_header:hover {
+//   @include themify($themes) {
+//     background-color: themed("sidebar__menu-item-background--select");
+//     color: themed("menu-item__text-color--select");
+//   }
+// }
+
+.app-chrome__sidebar {
+  @include themify($themes) {
+    background-color: themed("sidebar__background-color");
+    color: themed("menu-item__text-color");
+  }
+}
+.app-chrome__sidebar_header {
+  @include themify($themes) {
+    background-color: themed("sidebar__background-color");
+    color: themed("sidebar__header-color");
+  }
+}
+
+.sidebar__logo svg path {
+  @include themify($themes) {
+    fill: themed("sidebar__header-color");
+  }
+}
+.sidebar__menu-item {
+  @include themify($themes) {
+    background-color: themed("sidebar__background-color");
+    color: themed("menu-item__text-color");
+  }
+}
+
+// .sidebar__menu-item.selected-item {
+//   background-color: purple;
+
+//   // @include themify($themes) {
+//   //   background-color: themed("sidebar__background-color");
+//   //   color: themed("menu-item__text-color");
+//   // }
+// }
+// :focus .sidebar__menu-item.selected-item {
+//   background-color: orange;
+
+//   // @include themify($themes) {
+//   //   background-color: themed("sidebar__background-color");
+//   //   color: themed("menu-item__text-color");
+//   // }
+// }
+
+
+
+
+// // menu-item__background-color--focus--highlighted: rgba(24,94,144,0.3),
+// // menu-item__text-color--focus--highlighted: #cacbcb,
+// // menu-item__background-color--focus--highlighted--hover: rgba(24,94,144,0.3),//rgba(24,94,144,0.4),
+// // menu-item__text-color--focus--highlighted--hover: #cacbcb,
+// // menu-item__background-color--focus--selected: rgba(24,94,144,0.9),
+// // menu-item__text-color--focus--selected: #fff,
+// // menu-item__background-color--focus--highlighted--selected: rgba(24,94,144,1),
+// // menu-item__text-color--focus--highlighted--selected: #fff,
+// // menu-item__background-color--hover: rgba(255,255,255,0.1),//rgba(24,94,144,0.3),
+// // menu-item__text-color--hover: #cacbcb,
+// // menu-item__background-color--selected: rgba(255,255,255,0.2),//rgba(24,94,144,0.6),
+// // menu-item__text-color--selected: #fff,//#cacbcb,//#fff,
+// // menu-item__background-color--selected--hover: rgba(255,255,255,0.2),//rgba(24,94,144,0.7),
+// // menu-item__text-color--selected--hover: #fff,//#cacbcb,//#fff,
+
+// .sidebar__menu-item:hover {
+//   background-color: red;
+//   @include themify($themes) {
+//     background-color: themed("menu-item__background-color--hover");
+//     color: themed("menu-item__text-color--hover");
+//   }
+// }
+
+// // :focus .sidebar__menu-item:hover {
+// //   background-color: red;
+// //   @include themify($themes) {
+// //     background-color: themed("menu-item__background-color--focus--highlighted--hover");
+// //     color: themed("menu-item__text-color--focus--highlighted--hover");
+// //   }
+// // }
+
+// .sidebar__menu-item.is-active {
+//   background-color: yellow;
+//   @include themify($themes) {
+//     background-color: themed("menu-item__background-color--selected");
+//     color: themed("menu-item__text-color--selected");
+//   }
+// }
+
+// :focus .sidebar__menu-item.is-active {
+//   background-color: pink;//themed("sidebar__menu-item-background--select-hover");
+
+//   @include themify($themes) {
+//     background-color: themed("menu-item__background-color--focus--selected");
+//     color: themed("menu-item__text-color--focus--selected");
+//   }
+// }
+
+
+
+// .sidebar__menu-item.doc:hover {
+//   @include themify($themes) {
+//     background-color: themed("sidebar__menu-item-background--select");
+//     color: themed("menu-item__text-color--select");
+//   }
+// }
+
+// .sidebar__menu-item.nav:hover {
+//   @include themify($themes) {
+//     background-color: themed("sidebar__menu-item-background--select");
+//     color: themed("menu-item__text-color--select");
+//   }
+// }
+// .sidebar__menu-item.doc:hover {
+//   @include themify($themes) {
+//     background-color: themed("sidebar__menu-item-background--select");
+//     color: themed("menu-item__text-color--select");
+//   }
+// }
+
+
+
+
+
+
+
+// .sidebar__menu-item.clickable-item {
+//   cursor: pointer;
+// }
+
+.sidebar__menu-item:hover {
+  @include themify($themes) {
+    background-color: themed("menu-item__background-color--hover") !important;
+    color: themed("menu-item__text-color--hover") !important;
+  }
+}
+
+.sidebar__menu-item.selected-item {
+  background-color: orange;
+  // @include themify($themes) {
+  //   background-color: themed("menu-item__background-color--selected") !important;
+  //   color: themed("menu-item__text-color--selected") !important;
+  // }
+}
+
+.sidebar__menu-item.selected-item:hover {
+  background-color: orange;
+  // @include themify($themes) {
+  //   background-color: themed("menu-item__background-color--selected--hover") !important;
+  //   color: themed("menu-item__text-color--selected--hover") !important;
+  // }
+}
+
+.sidebar__menu-item.is-active {
+  @include themify($themes) {
+    background-color: themed("menu-item__background-color--selected") !important;
+    color: themed("menu-item__text-color--selected") !important;
+  }
+}
+
+.sidebar__menu-item.is-active:hover {
+  @include themify($themes) {
+    background-color: themed("menu-item__background-color--selected--hover") !important;
+    color: themed("menu-item__text-color--selected--hover") !important;
+  }
+}
+
+:focus .sidebar__menu-item.highlighted-item {
+  @include themify($themes) {
+    background-color: themed("menu-item__background-color--focus--highlighted") !important;
+    color: themed("menu-item__text-color--highlighted") !important;
+  }
+}
+
+:focus .sidebar__menu-item.highlighted-item:hover {
+  @include themify($themes) {
+    background-color: themed("menu-item__background-color--focus--highlighted--hover") !important;
+    color: themed("menu-item__text-color--highlighted--hover") !important;
+  }
+}
+
+:focus .sidebar__menu-item.selected-item {
+  background-color: orange;
+  // @include themify($themes) {
+  //   background-color: themed("menu-item__background-color--focus--selected") !important;
+  //   color: themed("menu-item__text-color--focus--selected") !important;
+  // }
+}
+
+:focus .sidebar__menu-item.selected-item.highlighted-item {
+  background-color: orange;
+  // @include themify($themes) {
+  //   background-color: themed("menu-item__background-color--focus--highlighted--selected") !important;
+  //   color: themed("menu-item__text-color--highlighted--focus--selected") !important;
+  // }
+}
+
+:focus .sidebar__menu-item.is-active {
+  @include themify($themes) {
+    background-color: themed("menu-item__background-color--focus--selected") !important;
+    color: themed("menu-item__text-color--focus--selected") !important;
+  }
+}
+
+:focus .sidebar__menu-item.is-active.highlighted-item {
+  @include themify($themes) {
+    background-color: themed("menu-item__background-color--focus--highlighted--selected") !important;
+    color: themed("menu-item__text-color--highlighted--focus--selected") !important;
+  }
+}

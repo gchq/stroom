@@ -16,9 +16,21 @@
 
 package stroom.security.impl.event;
 
-import java.io.Serializable;
+import com.fasterxml.jackson.annotation.JsonSubTypes;
+import com.fasterxml.jackson.annotation.JsonSubTypes.Type;
+import com.fasterxml.jackson.annotation.JsonTypeInfo;
 
-public interface PermissionChangeEvent extends Serializable {
+@JsonTypeInfo(
+        use = JsonTypeInfo.Id.NAME,
+        property = "type"
+)
+@JsonSubTypes({
+        @Type(value = ClearUserPermissionsEvent.class, name = "clearUserPermissionsEvent"),
+        @Type(value = RemovePermissionEvent.class, name = "removePermissionEvent"),
+        @Type(value = AddPermissionEvent.class, name = "addPermissionEvent"),
+        @Type(value = ClearDocumentPermissionsEvent.class, name = "clearDocumentPermissionsEvent")
+})
+public interface PermissionChangeEvent {
     interface Handler {
         void onChange(PermissionChangeEvent event);
     }

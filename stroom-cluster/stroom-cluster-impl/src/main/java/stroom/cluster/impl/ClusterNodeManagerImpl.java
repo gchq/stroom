@@ -20,25 +20,29 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import stroom.cluster.api.ClusterNodeManager;
 import stroom.cluster.api.ClusterState;
-import stroom.util.entityevent.EntityAction;
-import stroom.util.entityevent.EntityEvent;
-import stroom.util.entityevent.EntityEventHandler;
+import stroom.node.api.FindNodeCriteria;
 import stroom.node.api.NodeInfo;
 import stroom.node.api.NodeService;
 import stroom.node.shared.ClusterNodeInfo;
 import stroom.node.shared.Node;
 import stroom.security.api.SecurityContext;
-import stroom.task.api.TaskCallbackAdaptor;
-import stroom.task.api.TaskManager;
+import stroom.task.api.TaskContext;
 import stroom.util.date.DateUtil;
+import stroom.util.entityevent.EntityAction;
+import stroom.util.entityevent.EntityEvent;
+import stroom.util.entityevent.EntityEventHandler;
 import stroom.util.shared.BuildInfo;
-import stroom.task.api.VoidResult;
 
 import javax.inject.Inject;
+import javax.inject.Provider;
 import javax.inject.Singleton;
 import java.util.ArrayList;
+import java.util.Collections;
+import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
+import java.util.concurrent.CompletableFuture;
+import java.util.concurrent.Executor;
 import java.util.concurrent.atomic.AtomicBoolean;
 
 /**
@@ -63,21 +67,27 @@ public class ClusterNodeManagerImpl implements ClusterNodeManager, EntityEvent.H
     private final AtomicBoolean pendingUpdate = new AtomicBoolean();
     private final NodeInfo nodeInfo;
     private final NodeService nodeService;
-    private final TaskManager taskManager;
     private final SecurityContext securityContext;
     private final BuildInfo buildInfo;
+    private final ClusterCallServiceRemoteImpl clusterCallServiceRemote;
+    private final Executor executor;
+    private final Provider<TaskContext> taskContextProvider;
 
     @Inject
     ClusterNodeManagerImpl(final NodeInfo nodeInfo,
                            final NodeService nodeService,
-                           final TaskManager taskManager,
                            final SecurityContext securityContext,
-                           final BuildInfo buildInfo) {
+                           final BuildInfo buildInfo,
+                           final ClusterCallServiceRemoteImpl clusterCallServiceRemote,
+                           final Executor executor,
+                           final Provider<TaskContext> taskContextProvider) {
         this.nodeInfo = nodeInfo;
         this.nodeService = nodeService;
         this.securityContext = securityContext;
-        this.taskManager = taskManager;
         this.buildInfo = buildInfo;
+        this.clusterCallServiceRemote = clusterCallServiceRemote;
+        this.executor = executor;
+        this.taskContextProvider = taskContextProvider;
     }
 
     public void init() {
@@ -120,40 +130,37 @@ public class ClusterNodeManagerImpl implements ClusterNodeManager, EntityEvent.H
 
     private void doUpdate(final int taskDelay) {
         securityContext.asProcessingUser(() -> {
-            final UpdateClusterStateTask task = new UpdateClusterStateTask(clusterState, taskDelay, true);
-
             pendingUpdate.set(false);
-            taskManager.execAsync(task, new TaskCallbackAdaptor<>() {
-                @Override
-                public void onSuccess(final VoidResult result) {
-                    try {
-                        // Output some debug about the state we are about to set.
-                        outputDebug(clusterState);
+            final TaskContext taskContext = taskContextProvider.get();
+            Runnable runnable = () -> exec(clusterState, taskDelay, true);
+            runnable = taskContext.sub(runnable);
+            CompletableFuture
+                    .runAsync(runnable, executor)
+                    .whenComplete((r, t) -> {
+                        try {
+                            if (t == null) {
+                                // Output some debug about the state we are about to set.
+                                outputDebug(clusterState);
 
-                        // Re-query cluster state if we are pending an update.
-                        if (pendingUpdate.get()) {
-                            // Wait a few seconds before we query again.
-                            Thread.sleep(REQUERY_DELAY);
-                            // Query again.
-                            doUpdate(0);
+                                // Re-query cluster state if we are pending an update.
+                                if (pendingUpdate.get()) {
+                                    // Wait a few seconds before we query again.
+                                    Thread.sleep(REQUERY_DELAY);
+                                    // Query again.
+                                    doUpdate(0);
+                                }
+                            }
+                        } catch (final InterruptedException e) {
+                            LOGGER.error(e.getMessage(), e);
+
+                            // Continue to interrupt this thread.
+                            Thread.currentThread().interrupt();
+                        } catch (final RuntimeException e) {
+                            LOGGER.error(e.getMessage(), e);
+                        } finally {
+                            updatingState.set(false);
                         }
-                    } catch (final InterruptedException e) {
-                        LOGGER.error(e.getMessage(), e);
-
-                        // Continue to interrupt this thread.
-                        Thread.currentThread().interrupt();
-                    } catch (final RuntimeException e) {
-                        LOGGER.error(e.getMessage(), e);
-                    } finally {
-                        updatingState.set(false);
-                    }
-                }
-
-                @Override
-                public void onFailure(final Throwable t) {
-                    updatingState.set(false);
-                }
-            });
+                    });
         });
     }
 
@@ -198,7 +205,10 @@ public class ClusterNodeManagerImpl implements ClusterNodeManager, EntityEvent.H
             securityContext.asProcessingUser(() -> {
                 // Create a cluster state object but don't bother trying to contact
                 // remote nodes to determine active status.
-                taskManager.exec(new UpdateClusterStateTask(clusterState, 0, false));
+                final TaskContext taskContext = taskContextProvider.get();
+                Runnable runnable = () -> exec(clusterState, 0, false);
+                runnable = taskContext.sub(runnable);
+                runnable.run();
             });
         }
         return clusterState;
@@ -220,7 +230,7 @@ public class ClusterNodeManagerImpl implements ClusterNodeManager, EntityEvent.H
                 thisNodeName,
                 nodeService.getBaseEndpointUrl(thisNodeName));
 
-        if (allNodeList != null && activeNodeList != null && masterNodeName != null) {
+        if (masterNodeName != null) {
             for (final String nodeName : allNodeList) {
                 clusterNodeInfo.addItem(nodeName, activeNodeList.contains(nodeName), masterNodeName.equals(nodeName));
             }
@@ -277,5 +287,131 @@ public class ClusterNodeManagerImpl implements ClusterNodeManager, EntityEvent.H
             return 0;
         });
         return list;
+    }
+
+
+    public void exec(final ClusterState clusterState, final int delay, final boolean testActiveNodes) {
+        taskContextProvider.get().setName("Create Cluster State");
+        securityContext.secure(() -> {
+            try {
+                // We sometimes want to wait a bit before we try and establish the
+                // cluster state. This is often the case during startup when multiple
+                // nodes start to ping each other which triggers an update but we want
+                // to give other nodes some time to start also.
+                if (delay > 0) {
+                    Thread.sleep(delay);
+                }
+
+                updateState(clusterState, testActiveNodes);
+            } catch (final InterruptedException e) {
+                LOGGER.debug(e.getMessage(), e);
+
+                // Continue to interrupt this thread.
+                Thread.currentThread().interrupt();
+            }
+        });
+    }
+
+    private void updateState(final ClusterState clusterState, final boolean testActiveNodes) {
+        String thisNodeName = nodeInfo.getThisNodeName();
+
+        // Get nodes and ensure uniqueness.
+        Set<String> uniqueNodes = Collections.emptySet();
+        final List<String> nodes = nodeService.findNodeNames(new FindNodeCriteria());
+        if (nodes != null) {
+            uniqueNodes = Set.copyOf(nodes);
+        }
+        clusterState.setAllNodes(uniqueNodes);
+
+        // Get a list of enabled nodes and ensure we have the latest version of
+        // the local node, i.e. not cached.
+        final Set<String> enabledNodes = new HashSet<>();
+        for (final String nodeName : clusterState.getAllNodes()) {
+            if (nodeService.isEnabled(nodeName)) {
+                enabledNodes.add(nodeName);
+            }
+
+            // Make sure we have the most up to date copy of this node.
+            if (nodeName.equals(thisNodeName)) {
+                thisNodeName = nodeName;
+            }
+        }
+        clusterState.setEnabledNodes(enabledNodes);
+
+        // Create a set of active nodes, i.e. nodes we can contact at this
+        // time.
+        if (testActiveNodes) {
+            updateActiveNodes(clusterState, thisNodeName, enabledNodes);
+
+            // Determine which node should be the master.
+            int maxPriority = -1;
+            String masterNodeName = null;
+            for (final String nodeName : enabledNodes) {
+                final int priority = nodeService.getPriority(nodeName);
+                if (priority > maxPriority) {
+                    maxPriority = priority;
+                    masterNodeName = nodeName;
+                }
+            }
+
+            clusterState.setMasterNodeName(masterNodeName);
+        }
+
+        clusterState.setUpdateTime(System.currentTimeMillis());
+    }
+
+    private void updateActiveNodes(final ClusterState clusterState, final String thisNodeName, final Set<String> enabledNodes) {
+        // Only retain active nodes that are currently enabled.
+        retainEnabledActiveNodes(clusterState, enabledNodes);
+
+        // Now m
+        for (final String nodeName : enabledNodes) {
+            if (nodeName.equals(thisNodeName)) {
+                addEnabledActiveNode(clusterState, nodeName);
+            } else {
+                executor.execute(() -> {
+                    taskContextProvider.get().setName("Get Active Nodes");
+                    taskContextProvider.get().info(() -> "Getting active nodes");
+
+                    try {
+                        // We call the API like this rather than using the
+                        // Cluster API as the Cluster API will trigger a
+                        // discover call (cyclic dependency).
+                        // clusterCallServiceRemote will call getThisNode but
+                        // that's OK as we have worked it out above.
+                        clusterCallServiceRemote.call(thisNodeName, nodeName, securityContext.getUserIdentity(), ClusterNodeManager.SERVICE_NAME,
+                                ClusterNodeManager.PING_METHOD, new Class<?>[]{String.class},
+                                new Object[]{thisNodeName});
+                        addEnabledActiveNode(clusterState, nodeName);
+
+                    } catch (final RuntimeException e) {
+                        LOGGER.warn("discover() - unable to contact {} - {}", nodeName, e.getMessage());
+                        removeEnabledActiveNode(clusterState, nodeName);
+                    }
+                });
+            }
+        }
+    }
+
+    private synchronized void retainEnabledActiveNodes(final ClusterState clusterState, final Set<String> enabledNodes) {
+        final Set<String> enabledActiveNodes = new HashSet<>();
+        for (final String nodeName : enabledNodes) {
+            if (clusterState.getEnabledActiveNodes().contains(nodeName)) {
+                enabledActiveNodes.add(nodeName);
+            }
+        }
+        clusterState.setEnabledActiveNodes(enabledActiveNodes);
+    }
+
+    private synchronized void addEnabledActiveNode(final ClusterState clusterState, final String nodeName) {
+        final Set<String> enabledActiveNodes = new HashSet<>(clusterState.getEnabledActiveNodes());
+        enabledActiveNodes.add(nodeName);
+        clusterState.setEnabledActiveNodes(enabledActiveNodes);
+    }
+
+    private synchronized void removeEnabledActiveNode(final ClusterState clusterState, final String nodeName) {
+        final Set<String> enabledActiveNodes = new HashSet<>(clusterState.getEnabledActiveNodes());
+        enabledActiveNodes.remove(nodeName);
+        clusterState.setEnabledActiveNodes(enabledActiveNodes);
     }
 }

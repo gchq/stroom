@@ -18,30 +18,45 @@ package stroom.security.impl.event;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import stroom.security.impl.event.PermissionChangeEvent.Handler;
-import stroom.task.api.TaskManager;
+import stroom.cluster.task.api.NodeNotFoundException;
+import stroom.cluster.task.api.NullClusterStateException;
+import stroom.cluster.task.api.TargetNodeSetFactory;
+import stroom.security.api.SecurityContext;
+import stroom.task.api.TaskContext;
 
 import javax.inject.Inject;
 import javax.inject.Provider;
 import javax.inject.Singleton;
-import java.util.HashSet;
 import java.util.Set;
+import java.util.concurrent.CompletableFuture;
+import java.util.concurrent.Executor;
 
 @Singleton
 class PermissionChangeEventBusImpl implements PermissionChangeEventBus {
     private static final Logger LOGGER = LoggerFactory.getLogger(PermissionChangeEventBusImpl.class);
-    private final Set<Handler> handlers = new HashSet<>();
-    private volatile boolean initialised;
 
-    private final Provider<Set<PermissionChangeEvent.Handler>> handlerProvider;
-    private final TaskManager taskManager;
+    private final Executor executor;
+    private final Provider<TaskContext> taskContextProvider;
+    private final TargetNodeSetFactory targetNodeSetFactory;
+    private final SecurityContext securityContext;
+    private final PermissionChangeEventHandlers permissionChangeEventHandlers;
+    private final PermissionChangeResource permissionChangeResource;
 
     private volatile boolean started = false;
 
     @Inject
-    PermissionChangeEventBusImpl(final Provider<Set<Handler>> handlerProvider, final TaskManager taskManager) {
-        this.handlerProvider = handlerProvider;
-        this.taskManager = taskManager;
+    PermissionChangeEventBusImpl(final Executor executor,
+                                 final Provider<TaskContext> taskContextProvider,
+                                 final TargetNodeSetFactory targetNodeSetFactory,
+                                 final SecurityContext securityContext,
+                                 final PermissionChangeEventHandlers permissionChangeEventHandlers,
+                                 final PermissionChangeResource permissionChangeResource) {
+        this.executor = executor;
+        this.taskContextProvider = taskContextProvider;
+        this.targetNodeSetFactory = targetNodeSetFactory;
+        this.securityContext = securityContext;
+        this.permissionChangeEventHandlers = permissionChangeEventHandlers;
+        this.permissionChangeResource = permissionChangeResource;
     }
 
     void init() {
@@ -50,66 +65,49 @@ class PermissionChangeEventBusImpl implements PermissionChangeEventBus {
 
     @Override
     public void fire(final PermissionChangeEvent event) {
-        fireGlobally(event);
+        if (started) {
+            fireGlobally(event);
+        }
     }
 
-    /**
-     * Fires the entity change to all nodes in the cluster.
-     */
-    public void fireGlobally(final PermissionChangeEvent event) {
+    private void fireGlobally(final PermissionChangeEvent event) {
         try {
             // Force a local update so that changes are immediately reflected
             // for the current user.
-            fireLocally(event);
+            permissionChangeEventHandlers.fireLocally(event);
 
             if (started) {
                 // Dispatch the entity event to all nodes in the cluster.
-                taskManager.execAsync(new DispatchPermissionChangeEventTask(event));
+                final TaskContext taskContext = taskContextProvider.get();
+                Runnable runnable = () -> fireRemote(event);
+                runnable = taskContext.sub(runnable);
+                CompletableFuture.runAsync(runnable, executor);
             }
         } catch (final RuntimeException e) {
             LOGGER.error(e.getMessage(), e);
         }
     }
 
-    public void fireLocally(final PermissionChangeEvent event) {
-        try {
-            final Set<PermissionChangeEvent.Handler> set = getHandlers();
-            for (final PermissionChangeEvent.Handler handler : set) {
-                try {
-                    handler.onChange(event);
-                } catch (final Exception e) {
-                    LOGGER.error("Unable to handle onChange event!", e);
-                }
-            }
-        } catch (final RuntimeException e) {
-            LOGGER.error(e.getMessage(), e);
-        }
-    }
-
-    @Override
-    public void addHandler(final PermissionChangeEvent.Handler handler) {
-        handlers.add(handler);
-    }
-
-    private Set<PermissionChangeEvent.Handler> getHandlers() {
-        if (!initialised) {
-            initialise();
-        }
-
-        return handlers;
-    }
-
-    private synchronized void initialise() {
-        if (!initialised) {
+    private void fireRemote(final PermissionChangeEvent event) {
+        securityContext.secure(() -> {
             try {
-                for (final Handler handler : handlerProvider.get()) {
-                    addHandler(handler);
-                }
-            } catch (final RuntimeException e) {
-                LOGGER.error("Unable to initialise EntityEventBusImpl!", e);
-            }
+                // Get this node.
+                final String sourceNode = targetNodeSetFactory.getSourceNode();
 
-            initialised = true;
-        }
+                // Get the nodes that we are going to send the entity event to.
+                final Set<String> targetNodes = targetNodeSetFactory.getEnabledActiveTargetNodeSet();
+
+                // Only send the event to remote nodes and not this one.
+                targetNodes.stream().filter(targetNode -> !targetNode.equals(sourceNode)).forEach(targetNode -> {
+                    // Send the entity event.
+                    permissionChangeResource.fireChange(targetNode, new PermissionChangeRequest(event));
+                });
+            } catch (final NullClusterStateException | NodeNotFoundException e) {
+                LOGGER.warn(e.getMessage());
+                LOGGER.debug(e.getMessage(), e);
+            } catch (final RuntimeException e) {
+                LOGGER.error(e.getMessage(), e);
+            }
+        });
     }
 }

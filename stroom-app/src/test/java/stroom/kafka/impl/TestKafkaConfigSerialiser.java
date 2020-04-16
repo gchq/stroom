@@ -1,27 +1,7 @@
 package stroom.kafka.impl;
 
-import com.fasterxml.jackson.databind.exc.InvalidTypeIdException;
-import com.google.inject.AbstractModule;
-import com.google.inject.Guice;
-import com.google.inject.Injector;
-import org.apache.hadoop.hbase.util.Bytes;
-import org.assertj.core.api.Assertions;
-import org.junit.jupiter.api.BeforeEach;
-import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
-import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
-import stroom.docstore.impl.DocStoreModule;
-import stroom.docstore.impl.Persistence;
-import stroom.kafkaConfig.shared.KafkaConfigDoc;
-import stroom.security.api.SecurityContext;
-
-import javax.inject.Inject;
-import java.io.IOException;
-import java.util.Map;
-import java.util.Properties;
 
 @ExtendWith(MockitoExtension.class)
 public class TestKafkaConfigSerialiser {

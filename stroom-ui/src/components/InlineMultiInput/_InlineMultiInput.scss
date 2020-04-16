@@ -1,0 +1,18 @@
+select {
+  width: unset;
+  padding: unset !important;
+  margin: unset !important;
+}
+
+.inline-select__not-editing {
+  color: rgb(0, 83, 151);
+}
+
+.inline-select__editing {
+  color: rgb(0, 83, 151);
+  // Setting the height is necessary to stop the content below moving down
+  height:18px;
+  // Setting the font-size is necessary to stop the line itself moving down
+  font-size: 12px;
+  border: 0;
+}

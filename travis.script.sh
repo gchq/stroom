@@ -263,6 +263,11 @@ else
       buildDistribution \
       "${extraBuildArgs[@]}"
 
+# IF WE WANT TO SKIP SOME PARTS OF THE BUILD INCLUDE THESE LINES
+#      -x gwtCompile \
+#      -x copyYarnBuild \
+#      -x test \
+
     generate_file_hashes
 
     # Don't do a docker build for pull requests

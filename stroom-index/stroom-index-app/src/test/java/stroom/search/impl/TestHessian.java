@@ -82,22 +82,10 @@ class TestHessian {
         final Map<CoprocessorKey, CoprocessorSettings> coprocessorMap = new HashMap<>();
         coprocessorMap.put(coprocessorKey, coprocessorSettings);
 
-        final AsyncSearchTask asyncSearchTask = new AsyncSearchTask(
-                null,
-                "test",
-                query,
-                nodeName,
-                500,
-                coprocessorMap,
-                "locale",
-                1000);
-
         final ClusterSearchTask clusterSearchTask = new ClusterSearchTask(
-                asyncSearchTask,
                 "test",
                 query,
                 Arrays.asList(1L, 2L, 3L),
-                nodeName,
                 fields,
                 1000,
                 coprocessorMap,

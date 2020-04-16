@@ -16,6 +16,7 @@
 
 package stroom.about.client.presenter;
 
+import com.google.gwt.core.client.GWT;
 import com.google.gwt.user.client.ui.HasText;
 import com.google.inject.Inject;
 import com.google.web.bindery.event.shared.EventBus;
@@ -24,25 +25,41 @@ import com.gwtplatform.mvp.client.View;
 import com.gwtplatform.mvp.client.annotations.ProxyCodeSplit;
 import com.gwtplatform.mvp.client.proxy.Proxy;
 import stroom.alert.client.event.AlertEvent;
+import stroom.config.global.shared.SessionInfoResource;
+import stroom.dispatch.client.Rest;
+import stroom.dispatch.client.RestFactory;
 import stroom.ui.config.client.UiConfigCache;
 import stroom.util.shared.BuildInfo;
+import stroom.util.shared.SessionInfo;
 import stroom.widget.popup.client.event.ShowPopupEvent;
 import stroom.widget.popup.client.presenter.PopupView.PopupType;
 
 public class AboutPresenter extends MyPresenter<AboutPresenter.AboutView, AboutPresenter.AboutProxy> {
+    private static final SessionInfoResource SESSION_INFO_RESOURCE = GWT.create(SessionInfoResource.class);
+
     @Inject
-    public AboutPresenter(final EventBus eventBus, final AboutView view, final AboutProxy proxy,
+    public AboutPresenter(final EventBus eventBus,
+                          final AboutView view,
+                          final AboutProxy proxy,
+                          final RestFactory restFactory,
                           final UiConfigCache clientPropertyCache) {
         super(eventBus, view, proxy);
-        clientPropertyCache.get()
-                .onSuccess(result -> {
-                    final BuildInfo buildInfo = result.getBuildInfo();
-                    view.setHTML(result.getAboutHtml());
+
+        final Rest<SessionInfo> rest = restFactory.create();
+        rest
+                .onSuccess(sessionInfo -> {
+                    final BuildInfo buildInfo = sessionInfo.getBuildInfo();
                     view.getBuildVersion().setText("Build Version: " + buildInfo.getBuildVersion());
                     view.getBuildDate().setText("Build Date: " + buildInfo.getBuildDate());
                     view.getUpDate().setText("Up Date: " + buildInfo.getUpDate());
-                    view.getNodeName().setText("Node Name: " + result.getNodeName());
+                    view.getNodeName().setText("Node Name: " + sessionInfo.getNodeName());
                 })
+                .onFailure(caught -> AlertEvent.fireError(AboutPresenter.this, caught.getMessage(), null))
+                .call(SESSION_INFO_RESOURCE)
+                .get();
+
+        clientPropertyCache.get()
+                .onSuccess(result -> view.setHTML(result.getAboutHtml()))
                 .onFailure(caught -> AlertEvent.fireError(AboutPresenter.this, caught.getMessage(), null));
     }
 

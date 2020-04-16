@@ -24,39 +24,45 @@ import stroom.query.common.v2.Sizes;
 import stroom.search.api.EventRefs;
 import stroom.search.coprocessor.EventCoprocessorSettings;
 import stroom.security.api.SecurityContext;
-import stroom.task.api.AbstractTaskHandler;
-import stroom.task.api.TaskManager;
+import stroom.task.api.TaskContext;
 import stroom.ui.config.shared.UiConfig;
 import stroom.util.logging.LambdaLogger;
 import stroom.util.logging.LambdaLoggerFactory;
 import stroom.util.logging.LogUtil;
 
 import javax.inject.Inject;
+import javax.inject.Provider;
 import java.util.Arrays;
 import java.util.HashMap;
 import java.util.Map;
+import java.util.concurrent.Executor;
 import java.util.stream.Collectors;
 
-public class SolrEventSearchTaskHandler extends AbstractTaskHandler<SolrEventSearchTask, EventRefs> {
+public class SolrEventSearchTaskHandler {
     private static final LambdaLogger LOGGER = LambdaLoggerFactory.getLogger(SolrEventSearchTaskHandler.class);
 
-    private final TaskManager taskManager;
+    private final Executor executor;
+    private final Provider<TaskContext> taskContextProvider;
+    private final Provider<SolrAsyncSearchTaskHandler> solrAsyncSearchTaskHandlerProvider;
     private final SolrSearchConfig searchConfig;
     private final UiConfig clientConfig;
     private final SecurityContext securityContext;
 
     @Inject
-    SolrEventSearchTaskHandler(final TaskManager taskManager,
+    SolrEventSearchTaskHandler(final Executor executor,
+                               final Provider<TaskContext> taskContextProvider,
+                               final Provider<SolrAsyncSearchTaskHandler> solrAsyncSearchTaskHandlerProvider,
                                final SolrSearchConfig searchConfig,
                                final UiConfig clientConfig,
                                final SecurityContext securityContext) {
-        this.taskManager = taskManager;
+        this.executor = executor;
+        this.taskContextProvider = taskContextProvider;
+        this.solrAsyncSearchTaskHandlerProvider = solrAsyncSearchTaskHandlerProvider;
         this.searchConfig = searchConfig;
         this.clientConfig = clientConfig;
         this.securityContext = securityContext;
     }
 
-    @Override
     public EventRefs exec(final SolrEventSearchTask task) {
         return securityContext.secureResult(() -> {
             EventRefs eventRefs;
@@ -75,7 +81,6 @@ public class SolrEventSearchTaskHandler extends AbstractTaskHandler<SolrEventSea
             // Create an asynchronous search task.
             final String searchName = "Event Search";
             final SolrAsyncSearchTask asyncSearchTask = new SolrAsyncSearchTask(
-                    task,
                     searchName,
                     query,
                     task.getResultSendFrequency(),
@@ -89,7 +94,9 @@ public class SolrEventSearchTaskHandler extends AbstractTaskHandler<SolrEventSea
             final CompletionState completionState = new CompletionState();
             final EventSearchResultHandler resultHandler = new EventSearchResultHandler();
             final SolrSearchResultCollector searchResultCollector = SolrSearchResultCollector.create(
-                    taskManager,
+                    executor,
+                    taskContextProvider,
+                    solrAsyncSearchTaskHandlerProvider,
                     asyncSearchTask,
                     null,
                     resultHandler,

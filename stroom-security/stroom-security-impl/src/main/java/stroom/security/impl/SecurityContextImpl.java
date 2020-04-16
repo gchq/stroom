@@ -70,6 +70,20 @@ class SecurityContextImpl implements SecurityContext {
         return hasAppPermission(PermissionNames.ADMINISTRATOR);
     }
 
+    @Override
+    public boolean isProcessingUser() {
+        // Get the current user.
+        final UserIdentity userIdentity = getUserIdentity();
+
+        // If there is no logged in user then throw an exception.
+        if (userIdentity == null) {
+            throw new AuthenticationException("No user is currently logged in");
+        }
+
+        // If the user is the internal processing user then they automatically have permission.
+        return ProcessingUserIdentity.INSTANCE.equals(userIdentity);
+    }
+
     User getUser(final UserIdentity userIdentity) {
         if (!(userIdentity instanceof UserIdentityImpl)) {
             throw new AuthenticationException("Expecting a real user identity");

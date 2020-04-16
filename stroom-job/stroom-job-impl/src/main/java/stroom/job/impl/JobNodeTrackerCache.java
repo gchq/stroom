@@ -179,10 +179,6 @@ class JobNodeTrackerCache {
             }
         }
 
-        JobNodeTracker getTrackerForJobNode(final JobNode jobNode) {
-            return trackersForJobNode.get(jobNode);
-        }
-
         JobNodeTracker getTrackerForJobName(final String jobName) {
             return trackersForJobName.get(jobName);
         }

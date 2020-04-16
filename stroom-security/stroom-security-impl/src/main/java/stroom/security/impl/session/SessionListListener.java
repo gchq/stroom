@@ -161,7 +161,7 @@ class SessionListListener implements HttpSessionListener, SessionListService {
         SessionListResponse sessionList = nodeService.findNodeNames(FindNodeCriteria.allEnabled())
                 .stream()
                 .map(nodeName -> {
-                    final Supplier<SessionListResponse> listSessionsOnNodeTask = taskContext.subTask(() -> {
+                    final Supplier<SessionListResponse> listSessionsOnNodeTask = taskContext.sub(() -> {
                         taskContext.setName(LogUtil.message("Get session list on node [{}]", nodeName));
                         return listSessions(nodeName);
                     });

@@ -1,12 +1,11 @@
 package stroom.cluster.lock.impl.db;
 
 import stroom.cluster.lock.api.ClusterLockService;
-import stroom.cluster.task.api.ClusterTaskHandlerBinder;
 import stroom.db.util.AbstractFlyWayDbModule;
 import stroom.db.util.DataSourceProxy;
-import stroom.task.api.TaskHandlerBinder;
 import stroom.util.guice.GuiceUtil;
 import stroom.util.shared.Clearable;
+import stroom.util.shared.RestResource;
 
 import javax.sql.DataSource;
 
@@ -19,14 +18,12 @@ public class ClusterLockDbModule extends AbstractFlyWayDbModule<ClusterLockConfi
     protected void configure() {
         super.configure();
         bind(ClusterLockService.class).to(ClusterLockServiceImpl.class);
+        bind(ClusterLockResource.class).to(ClusterLockResourceImpl.class);
 
         GuiceUtil.buildMultiBinder(binder(), Clearable.class).addBinding(DbClusterLock.class);
 
-        TaskHandlerBinder.create(binder())
-                .bind(ClusterLockTask.class, ClusterLockHandler.class);
-
-        ClusterTaskHandlerBinder.create(binder())
-                .bind(ClusterLockClusterTask.class, ClusterLockClusterHandler.class);
+        GuiceUtil.buildMultiBinder(binder(), RestResource.class)
+                .addBinding(ClusterLockResourceImpl.class);
     }
 
     @Override

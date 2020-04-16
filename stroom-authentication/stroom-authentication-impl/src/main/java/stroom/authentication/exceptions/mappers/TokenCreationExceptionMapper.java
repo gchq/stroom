@@ -18,32 +18,32 @@
 
 package stroom.authentication.exceptions.mappers;
 
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import stroom.authentication.config.AuthenticationConfig;
 import stroom.authentication.exceptions.TokenCreationException;
+import stroom.config.common.UriFactory;
 
 import javax.inject.Inject;
 import javax.ws.rs.core.Response;
 import javax.ws.rs.ext.ExceptionMapper;
-import java.net.URI;
-import java.net.URISyntaxException;
 
-public class TokenCreationExceptionMapper implements ExceptionMapper<TokenCreationException> {
-    private static final org.slf4j.Logger LOGGER = org.slf4j.LoggerFactory.getLogger(TokenCreationExceptionMapper.class);
-    private AuthenticationConfig config;
+class TokenCreationExceptionMapper implements ExceptionMapper<TokenCreationException> {
+    private static final Logger LOGGER = LoggerFactory.getLogger(TokenCreationExceptionMapper.class);
+
+    private final UriFactory uriFactory;
+    private final AuthenticationConfig authenticationConfig;
 
     @Inject
-    public TokenCreationExceptionMapper(AuthenticationConfig config) {
-        this.config = config;
+    TokenCreationExceptionMapper(final UriFactory uriFactory,
+                                 final AuthenticationConfig authenticationConfig) {
+        this.uriFactory = uriFactory;
+        this.authenticationConfig = authenticationConfig;
     }
 
     @Override
     public Response toResponse(TokenCreationException exception) {
         LOGGER.debug("Unable to create a token for this user. Redirecting to login as a backup method.", exception);
-        try {
-            return Response.seeOther(new URI(this.config.getLoginUrl())).build();
-        } catch (URISyntaxException e) {
-            LOGGER.error("Unable to build a redirection from the login URL", e);
-            throw new RuntimeException(e);
-        }
+        return Response.seeOther(uriFactory.uiUri(authenticationConfig.getLoginUrl())).build();
     }
 }

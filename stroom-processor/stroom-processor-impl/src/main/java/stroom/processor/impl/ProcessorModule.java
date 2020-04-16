@@ -22,8 +22,9 @@ import stroom.job.api.DistributedTaskFactory;
 import stroom.processor.api.ProcessorFilterService;
 import stroom.processor.api.ProcessorService;
 import stroom.processor.api.ProcessorTaskService;
+import stroom.processor.shared.ProcessorResource;
+import stroom.processor.shared.ProcessorTaskResource;
 import stroom.searchable.api.Searchable;
-import stroom.task.api.TaskHandlerBinder;
 import stroom.util.guice.GuiceUtil;
 import stroom.util.shared.Clearable;
 import stroom.util.shared.RestResource;
@@ -34,16 +35,14 @@ public class ProcessorModule extends AbstractModule {
         bind(ProcessorTaskManager.class).to(ProcessorTaskManagerImpl.class);
         bind(ProcessorFilterService.class).to(ProcessorFilterServiceImpl.class);
         bind(ProcessorService.class).to(ProcessorServiceImpl.class);
+        bind(ProcessorResource.class).to(ProcessorResourceImpl.class);
+        bind(ProcessorTaskResource.class).to(ProcessorTaskResourceImpl.class);
         bind(ProcessorTaskService.class).to(ProcessorTaskServiceImpl.class);
 
         GuiceUtil.buildMultiBinder(binder(), RestResource.class)
                 .addBinding(ProcessorResourceImpl.class)
                 .addBinding(ProcessorFilterResourceImpl.class)
                 .addBinding(ProcessorTaskResourceImpl.class);
-
-        TaskHandlerBinder.create(binder())
-                .bind(CreateStreamTasksTask.class, CreateStreamTasksTaskHandler.class)
-                .bind(DataProcessorTask.class, DataProcessorTaskHandler.class);
 
         GuiceUtil.buildMultiBinder(binder(), DistributedTaskFactory.class)
                 .addBinding(DataProcessorTaskFactory.class);

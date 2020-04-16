@@ -139,7 +139,7 @@ public class IndexShardSearcherCacheImpl implements IndexShardSearcherCache, Cle
                 closing.incrementAndGet();
 
                 final TaskContext taskContext = taskContextProvider.get();
-                executor.execute(taskContext.subTask(() -> {
+                executor.execute(taskContext.sub(() -> {
                     try {
                         taskContext.setName("Closing searcher");
                         taskContext.info(() -> "Closing searcher for index shard " + key.indexShardId);

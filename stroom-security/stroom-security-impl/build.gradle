@@ -2,7 +2,6 @@ ext.moduleName = 'stroom.security.impl'
 
 dependencies {
     compile project(':stroom-cache:stroom-cache-api')
-    compile project(':stroom-authentication:stroom-authentication-api-swagger')
     compile project(':stroom-authentication:stroom-authentication-api')
     compile project(':stroom-cluster:stroom-cluster-task-api')
     compile project(':stroom-config:stroom-config-common')
@@ -20,6 +19,7 @@ dependencies {
 
     compile libs.caffeine
     compile libs.commons_lang
+    compile libs.dropwizard_client
     compile libs.dropwizard_metrics_healthchecks
     compile libs.eventLogging
     compile libs.guava

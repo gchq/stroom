@@ -1,7 +1,7 @@
 package stroom.processor.impl;
 
 import stroom.job.api.ScheduledJobsModule;
-import stroom.job.api.TaskConsumer;
+import stroom.job.api.RunnableWrapper;
 
 import javax.inject.Inject;
 
@@ -24,17 +24,17 @@ public class ProcessorTaskJobsModule extends ScheduledJobsModule {
                 .to(ProcessorTaskRetention.class);
     }
 
-    private static class ProcessorTaskQueueStatistics extends TaskConsumer {
+    private static class ProcessorTaskQueueStatistics extends RunnableWrapper {
         @Inject
         ProcessorTaskQueueStatistics(final ProcessorTaskManager processorTaskManager) {
-            super(task -> processorTaskManager.writeQueueStatistics());
+            super(processorTaskManager::writeQueueStatistics);
         }
     }
 
-    private static class ProcessorTaskRetention extends TaskConsumer {
+    private static class ProcessorTaskRetention extends RunnableWrapper {
         @Inject
         ProcessorTaskRetention(final ProcessorTaskDeleteExecutor processorTaskDeleteExecutor) {
-            super(task -> processorTaskDeleteExecutor.exec());
+            super(processorTaskDeleteExecutor::exec);
         }
     }
 }

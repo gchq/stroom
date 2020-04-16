@@ -1,7 +1,7 @@
 package stroom.index.impl;
 
 import stroom.job.api.ScheduledJobsModule;
-import stroom.job.api.TaskConsumer;
+import stroom.job.api.RunnableWrapper;
 
 import javax.inject.Inject;
 
@@ -18,10 +18,10 @@ public class IndexVolumeJobsModule extends ScheduledJobsModule {
                 .to(VolumeStatus.class);
     }
 
-    private static class VolumeStatus extends TaskConsumer {
+    private static class VolumeStatus extends RunnableWrapper {
         @Inject
         VolumeStatus(final IndexVolumeService volumeService) {
-            super(task -> volumeService.rescan());
+            super(volumeService::rescan);
         }
     }
 }

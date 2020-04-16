@@ -1,0 +1,55 @@
+@import "themify.scss";
+@import "themes.scss";
+
+.clickable-item {
+  cursor: pointer;
+}
+
+.hoverable-item:hover {
+  @include themify($themes) {
+    background-color: themed("item__background-color--hover") !important;
+    color: themed("item__text-color--hover") !important;
+  }
+}
+
+.selected-item {
+  @include themify($themes) {
+    background-color: themed("item__background-color--selected") !important;
+    color: themed("item__text-color--selected") !important;
+  }
+}
+
+.selected-item:hover {
+  @include themify($themes) {
+    background-color: themed("item__background-color--selected--hover") !important;
+    color: themed("item__text-color--selected--hover") !important;
+  }
+}
+
+:focus .highlighted-item {
+  @include themify($themes) {
+    background-color: themed("item__background-color--focus--highlighted") !important;
+    color: themed("item__text-color--highlighted") !important;
+  }
+}
+
+:focus .highlighted-item:hover {
+  @include themify($themes) {
+    background-color: themed("item__background-color--focus--highlighted--hover") !important;
+    color: themed("item__text-color--highlighted--hover") !important;
+  }
+}
+
+:focus .selected-item {
+  @include themify($themes) {
+    background-color: themed("item__background-color--focus--selected") !important;
+    color: themed("item__text-color--focus--selected") !important;
+  }
+}
+
+:focus .selected-item.highlighted-item {
+  @include themify($themes) {
+    background-color: themed("item__background-color--focus--highlighted--selected") !important;
+    color: themed("item__text-color--highlighted--focus--selected") !important;
+  }
+}

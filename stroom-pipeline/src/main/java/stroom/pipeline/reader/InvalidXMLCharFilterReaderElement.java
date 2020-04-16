@@ -20,7 +20,6 @@ import stroom.pipeline.errorhandler.ErrorReceiver;
 import stroom.pipeline.errorhandler.ErrorReceiverProxy;
 import stroom.pipeline.factory.ConfigurableElement;
 import stroom.pipeline.factory.PipelineProperty;
-import stroom.pipeline.reader.InvalidXMLCharFilterReader.XMLmode;
 import stroom.pipeline.shared.ElementIcons;
 import stroom.pipeline.shared.data.PipelineElementType;
 import stroom.pipeline.shared.data.PipelineElementType.Category;
@@ -38,10 +37,14 @@ import java.io.Reader;
                 PipelineElementType.VISABILITY_STEPPING},
         icon = ElementIcons.STREAM)
 public class InvalidXMLCharFilterReaderElement extends AbstractReaderElement {
+    private static final char REPLACEMENT_CHAR = 0xfffd; // The <?> symbol.
+    private static final Xml10Chars XML_10_CHARS = new Xml10Chars();
+    private static final Xml11Chars XML_11_CHARS = new Xml11Chars();
+
     private final ErrorReceiver errorReceiver;
 
-    private InvalidXMLCharFilterReader invalidXMLCharFilterReader;
-    private XMLmode mode = XMLmode.XML_1_1;
+    private InvalidXmlCharFilter invalidXmlCharFilter;
+    private XmlChars validChars = XML_11_CHARS;
 
     @Inject
     public InvalidXMLCharFilterReaderElement(final ErrorReceiverProxy errorReceiver) {
@@ -50,22 +53,25 @@ public class InvalidXMLCharFilterReaderElement extends AbstractReaderElement {
 
     @Override
     protected Reader insertFilter(final Reader reader) {
-        invalidXMLCharFilterReader = new InvalidXMLCharFilterReader(reader, mode);
-        return invalidXMLCharFilterReader;
+        invalidXmlCharFilter = new InvalidXmlCharFilter(reader, validChars, true, REPLACEMENT_CHAR);
+        return invalidXmlCharFilter;
     }
 
     @Override
     public void endStream() {
-        if (invalidXMLCharFilterReader.hasModifiedContent()) {
+        if (invalidXmlCharFilter.hasModifiedContent()) {
             errorReceiver.log(Severity.WARNING, null, getElementId(), "The content was modified", null);
         }
         super.endStream();
     }
 
-    @PipelineProperty(description = "XML version, e.g. 1.0 or 1.1", defaultValue = "1.1", displayPriority = 1)
+    @PipelineProperty(
+            description = "XML version, e.g. 1.0 or 1.1",
+            defaultValue = "1.1",
+            displayPriority = 1)
     public void setXmlVersion(final String xmlMode) {
         if ("1.0".equals(xmlMode)) {
-            mode = XMLmode.XML_1_0;
+            validChars = XML_10_CHARS;
         }
     }
 }

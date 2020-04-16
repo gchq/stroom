@@ -18,12 +18,13 @@
 package stroom.processor.impl;
 
 import stroom.entity.shared.ExpressionCriteria;
+import stroom.meta.api.MetaService;
 import stroom.meta.shared.FindMetaCriteria;
 import stroom.meta.shared.Meta;
-import stroom.meta.api.MetaService;
 import stroom.processor.api.ProcessorFilterService;
 import stroom.processor.shared.ProcessorFilter;
 import stroom.processor.shared.ProcessorTask;
+import stroom.processor.shared.ProcessorTaskList;
 import stroom.processor.shared.QueryData;
 import stroom.processor.shared.TaskStatus;
 import stroom.task.api.TaskContext;
@@ -44,7 +45,7 @@ public class MockProcessorTaskManager implements ProcessorTaskManager, Clearable
 
     @Inject
     MockProcessorTaskManager(final MetaService metaService,
-                          final ProcessorFilterService processorFilterService) {
+                             final ProcessorFilterService processorFilterService) {
         this.metaService = metaService;
         this.processorFilterService = processorFilterService;
     }
@@ -55,7 +56,7 @@ public class MockProcessorTaskManager implements ProcessorTaskManager, Clearable
     }
 
     @Override
-    public List<ProcessorTask> assignTasks(final String nodeName, final int count) {
+    public ProcessorTaskList assignTasks(final String nodeName, final int count) {
         List<ProcessorTask> taskList = Collections.emptyList();
         final ExpressionCriteria criteria = new ExpressionCriteria();
         final List<ProcessorFilter> processorFilters = processorFilterService
@@ -95,7 +96,7 @@ public class MockProcessorTaskManager implements ProcessorTaskManager, Clearable
             }
         }
 
-        return taskList;
+        return new ProcessorTaskList(nodeName, taskList);
     }
 
     @Override
@@ -126,7 +127,7 @@ public class MockProcessorTaskManager implements ProcessorTaskManager, Clearable
     }
 
     @Override
-    public void abandonTasks(final String nodeName, final List<ProcessorTask> tasks) {
-        // NA
+    public Boolean abandonTasks(final ProcessorTaskList processorTaskList) {
+        return true;
     }
 }

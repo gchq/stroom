@@ -13,9 +13,10 @@ plugins {
     id "com.benjaminsproule.swagger" version "1.0.8"
     //id "io.swagger.core.v3.swagger-gradle-plugin" version "2.1.1"
 }
+
 import org.reflections.*
-import org.reflections.util.*
 import org.reflections.scanners.*
+import org.reflections.util.*
 
 ext.moduleName = 'stroom.app'
 
@@ -71,7 +72,8 @@ dependencies {
     compile project(':stroom-index:stroom-index-impl-db')
     compile project(':stroom-job:stroom-job-impl')
     compile project(':stroom-job:stroom-job-impl-db')
-    compile project(':stroom-kafka:stroom-kafka')
+    compile project(':stroom-kafka:stroom-kafka-api')
+    compile project(':stroom-kafka:stroom-kafka-impl')
     compile project(':stroom-lifecycle:stroom-lifecycle-impl')
     compile project(':stroom-meta:stroom-meta-impl-db')
     compile project(':stroom-meta:stroom-meta-statistics-impl')
@@ -229,6 +231,7 @@ shadowJar {
     // We want to compile all GWT content before we build the fat jar.
     dependsOn ':stroom-app-gwt:gwtCompile'
     dependsOn ':stroom-dashboard-gwt:gwtCompile'
+    dependsOn ':stroom-ui:copyYarnBuild'
 
     // Allows us to build fat jars with lots of files
     zip64 true
@@ -245,6 +248,7 @@ shadowJar {
 // Make sure GWT compilation doesn't run before tests.
 tasks.getByPath(':stroom-app-gwt:gwtCompile').mustRunAfter test
 tasks.getByPath(':stroom-dashboard-gwt:gwtCompile').mustRunAfter test
+tasks.getByPath(':stroom-ui:copyYarnBuild').mustRunAfter test
 
 run {
     //Ensure we have the latest kafka plugin jar available for runtime
@@ -304,13 +308,14 @@ task copyFilesForStroomDockerBuild() {
 }
 
 // Generate the swagger spec files from the resource classes
+// For configuration see https://github.com/gigaSproule/swagger-gradle-plugin
 swagger {
     apiSource {
         springmvc = false
         outputFormats = ['json', 'yaml']
         // See prepareSwaggerClasses task
         locations = restResourceClassNames
-        schemes = ['http', 'https']
+        schemes = ['https']
         basePath = '/api'
         info {
             title = 'Stroom API'
@@ -325,6 +330,7 @@ swagger {
                 name = 'Apache 2.0'
             }
         }
+        // Define the security definitions that are available
         securityDefinition {
             // `name` can be used refer to this security schemes from elsewhere
             name = 'ApiKeyAuth'
@@ -334,6 +340,8 @@ swagger {
             // The name of the header
             keyName = 'Authorization'
         }
+        // Defing the named security definition to use for the whole API
+        security = [ [ ApiKeyAuth : [] ] ]
         swaggerDirectory = "${swaggerDir}"
     }
 }
@@ -414,8 +422,6 @@ task copySupportingFiles(type: Copy) {
         }
     }
 }
-
-import de.undercouch.gradle.tasks.download.Download
 
 task downloadSend(type: Download) {
     src "http://raw.githubusercontent.com/gchq/stroom-clients/${sendToStroomScriptVersion}/bash/send_to_stroom.sh"
