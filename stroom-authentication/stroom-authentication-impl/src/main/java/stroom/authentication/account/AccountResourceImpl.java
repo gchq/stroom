@@ -22,7 +22,6 @@ import stroom.util.shared.ResultPage;
 
 import javax.inject.Inject;
 import javax.servlet.http.HttpServletRequest;
-import javax.validation.constraints.NotNull;
 import javax.ws.rs.core.Response;
 import java.util.Optional;
 
@@ -66,7 +65,7 @@ class AccountResourceImpl implements AccountResource {
 
     @Override
     public Response updateUser(final HttpServletRequest httpServletRequest,
-                               final @NotNull Account account,
+                               final Account account,
                                final int userId) {
         service.update(account, userId);
         return Response.status(Response.Status.NO_CONTENT).build();
