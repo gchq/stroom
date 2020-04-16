@@ -6,6 +6,10 @@ and this project adheres to [Semantic Versioning](http://semver.org/).
 
 ## [Unreleased]
 
+* Remove internal statistics from setup sample data.
+
+* Fix issue of pipeling structure not showing when it contains a StatisticsFilter.
+
 * Update auth flow for auth-into-stroom integration
 
 * Issue **#1426** : Change /logout endpoint to /noauth/logout.
@@ -16,7 +20,7 @@ and this project adheres to [Semantic Versioning](http://semver.org/).
 
 * Issue **#1404** : Fixed issue with invalid XML character filter.
 
-* Issue **#1413* : Attempt to fix search hanging issue.
+* Issue **#1413** : Attempt to fix search hanging issue.
 
 * Issue **#1393** : The annotations data popup now formats content on load.
 

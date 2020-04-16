@@ -16,17 +16,20 @@
 package stroom.kafka.impl;
 
 import com.codahale.metrics.health.HealthCheck;
+import io.vavr.Tuple;
+import io.vavr.Tuple3;
 import org.apache.kafka.clients.producer.KafkaProducer;
 import org.apache.kafka.common.serialization.ByteArraySerializer;
 import org.apache.kafka.common.serialization.StringSerializer;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 import stroom.docref.DocRef;
+import stroom.docstore.shared.DocRefUtil;
 import stroom.kafka.api.KafkaProducerFactory;
 import stroom.kafka.api.SharedKafkaProducer;
 import stroom.kafka.api.SharedKafkaProducerIdentity;
 import stroom.kafka.shared.KafkaConfigDoc;
 import stroom.util.HasHealthCheck;
+import stroom.util.logging.LambdaLogger;
+import stroom.util.logging.LambdaLoggerFactory;
 import stroom.util.logging.LogUtil;
 
 import javax.inject.Inject;
@@ -53,7 +56,7 @@ import java.util.stream.Collectors;
  */
 @Singleton
 class KafkaProducerFactoryImpl implements KafkaProducerFactory, HasHealthCheck {
-    private static final Logger LOGGER = LoggerFactory.getLogger(KafkaProducerFactoryImpl.class);
+    private static final LambdaLogger LOGGER = LambdaLoggerFactory.getLogger(KafkaProducerFactoryImpl.class);
 
     private final KafkaConfigDocCache kafkaConfigDocCache;
 
@@ -79,7 +82,8 @@ class KafkaProducerFactoryImpl implements KafkaProducerFactory, HasHealthCheck {
         final Optional<KafkaConfigDoc> optKafkaConfigDoc = kafkaConfigDocCache.get(kafkaConfigDocRef);
 
         if (optKafkaConfigDoc.isPresent()) {
-            KafkaConfigDoc kafkaConfigDoc = optKafkaConfigDoc.get();
+            final KafkaConfigDoc kafkaConfigDoc = optKafkaConfigDoc.get();
+            final DocRef docRefFromDoc = DocRefUtil.create(kafkaConfigDoc);
             final SharedKafkaProducerIdentity desiredKey = new SharedKafkaProducerIdentity(kafkaConfigDoc);
 
             // Optimistically assume the map will have the latest SharedKafkaProducer
@@ -87,6 +91,7 @@ class KafkaProducerFactoryImpl implements KafkaProducerFactory, HasHealthCheck {
             if (activeSharedProducer != null
                     && desiredKey.equals(activeSharedProducer.getSharedKafkaProducerIdentity())) {
                 // This is the latest SharedKafkaProducer so use it
+                LOGGER.debug("Using latest SharedKafkaProducer");
                 sharedKafkaProducer = activeSharedProducer;
             } else {
                 // Not there or not latest so compute a new/updated one atomically
@@ -96,18 +101,23 @@ class KafkaProducerFactoryImpl implements KafkaProducerFactory, HasHealthCheck {
                             final SharedKafkaProducerImpl sharedKafkaProducer2;
                             if (existingValue == null) {
                                 // Don't have one so create a new one
-                                sharedKafkaProducer2 = createSharedProducer(kafkaConfigDoc, kafkaConfigDocRef, desiredKey);
+                                sharedKafkaProducer2 = createSharedProducer(kafkaConfigDoc, docRefFromDoc, desiredKey);
                             } else {
                                 // we already have one so check if it should be current
                                 if (desiredKey.equals(existingValue.getSharedKafkaProducerIdentity())) {
                                     // is up to date
+                                    LOGGER.debug("Existing SharedKafkaProducer is up to date");
                                     sharedKafkaProducer2 = existingValue;
                                 } else {
                                     // needs to be superseded
                                     existingValue.markSuperseded();
+                                    LOGGER.debug("Superseding existing sharedKafkaProducer {}", existingValue);
+
+                                    // If nobody is using the superseded one then we can bin it now
+                                    removeRedundantSharedKafkaProducers();
 
                                     // swap out the existing current SharedKafkaProducer for our new one
-                                    sharedKafkaProducer2 = createSharedProducer(kafkaConfigDoc, kafkaConfigDocRef, desiredKey);
+                                    sharedKafkaProducer2 = createSharedProducer(kafkaConfigDoc, docRefFromDoc, desiredKey);
                                 }
                             }
                             return sharedKafkaProducer2;
@@ -122,6 +132,19 @@ class KafkaProducerFactoryImpl implements KafkaProducerFactory, HasHealthCheck {
         return sharedKafkaProducer;
     }
 
+    private void removeRedundantSharedKafkaProducers() {
+        boolean didRemoveElements = allSharedProducersMap.values().removeIf(sharedKafkaProducer ->
+                sharedKafkaProducer.isSuperseded() && sharedKafkaProducer.getUseCount() <= 0);
+        if (LOGGER.isDebugEnabled()) {
+            if (didRemoveElements) {
+                // If removeRedundantSharedKafkaProducers is called before we add the new one then the size
+                // may be zero
+                LOGGER.debug("Removed items from allSharedProducersMap, new size {}",
+                        allSharedProducersMap.size());
+            }
+        }
+    }
+
     @Override
     public void returnSharedKafkaProducer(final SharedKafkaProducer sharedKafkaProducer) {
 
@@ -132,10 +155,13 @@ class KafkaProducerFactoryImpl implements KafkaProducerFactory, HasHealthCheck {
 
     private void returnAction(final SharedKafkaProducer sharedKafkaProducer) {
 
+        LOGGER.debug("returnAction called for {}", sharedKafkaProducer);
         if (sharedKafkaProducer != null && sharedKafkaProducer.hasKafkaProducer()) {
             if (sharedKafkaProducer instanceof SharedKafkaProducerImpl) {
                 SharedKafkaProducerImpl sharedKafkaProducerImpl = (SharedKafkaProducerImpl) sharedKafkaProducer;
                 sharedKafkaProducerImpl.decrementUseCount();
+                LOGGER.debug("superseded is {} and useCount is {} after decrement",
+                        sharedKafkaProducerImpl.isSuperseded(), sharedKafkaProducerImpl.getUseCount());
                 if (sharedKafkaProducerImpl.isSuperseded() && sharedKafkaProducerImpl.getUseCount() <= 0) {
                     allSharedProducersMap.remove(sharedKafkaProducerImpl.getSharedKafkaProducerIdentity());
                     final KafkaProducer<String, byte[]> kafkaProducer = sharedKafkaProducer.getKafkaProducer().get();
@@ -158,6 +184,7 @@ class KafkaProducerFactoryImpl implements KafkaProducerFactory, HasHealthCheck {
             // For flexibility we always use a byte[] as the msg value.  This means the same producer
             // can cope with different flavours of data and it is up to the consumer to know
             // what data is on what topic. It is also up to the use of the KP to serialise down to a byte[]
+            LOGGER.debug("Creating KafkaProducer for {}", key);
             kafkaProducer = new KafkaProducer<>(producerProperties, new StringSerializer(), new ByteArraySerializer());
         } catch (Exception e) {
             throw new RuntimeException(LogUtil.message("Error creating KafkaProducer for {} - {}: {}",
@@ -211,13 +238,40 @@ class KafkaProducerFactoryImpl implements KafkaProducerFactory, HasHealthCheck {
                     map.put("docVersion", sharedKafkaProducer.getConfigVersion());
                     map.put("useCount", sharedKafkaProducer.getUseCount());
                     map.put("isSuperseded", sharedKafkaProducer.isSuperseded());
+                    map.put("createdTime", sharedKafkaProducer.getCreatedTime().toString());
+                    map.put("lastAccessedTime", sharedKafkaProducer.getLastAccessedTime().toString());
+
+                    sharedKafkaProducer.getKafkaProducer().ifPresent(kafkaProducer -> {
+                        final Map<String, Map<String, Object>> metrics = kafkaProducer.metrics()
+                                .entrySet()
+                                .stream()
+                                .map(entry -> {
+                                    final String groupName = entry.getKey().group()
+                                            + " ("
+                                            + entry.getKey().tags().entrySet()
+                                                .stream()
+                                                .filter(entry2 -> !entry2.getKey().equals("client-id"))
+                                                .map(entry2 -> entry2.getKey() + "=" + entry2.getValue())
+                                                .collect(Collectors.joining(","))
+                                            + ")";
+
+                                    return Tuple.of(
+                                            groupName,
+                                            entry.getKey().name(),
+                                            entry.getValue().metricValue());
+                                })
+                                .collect(Collectors.groupingBy(Tuple3::_1, Collectors.toMap(
+                                        Tuple3::_2,
+                                        Tuple3::_3)));
+                        map.put("kafkaProducerMetrics", metrics);
+                    });
                     return map;
                 })
                 .collect(Collectors.toList());
 
         return HealthCheck.Result.builder()
                 .healthy()
-                .withDetail("producers", producerInfo)
+                .withDetail("sharedProducers", producerInfo)
                 .build();
     }
 }

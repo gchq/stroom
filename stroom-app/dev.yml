@@ -75,6 +75,12 @@ appConfig:
     temp: "/tmp/stroom"
   serviceDiscovery:
     zookeeperUrl: ${STROOM_SERVICE_DISCOVERY_ZOOKEEPER_URL:-localhost:2181}
+    servicesHostNameOrIpAddress: ${STROOM_ADVERTISED_URL:-localhost}
+  statistics:
+    hbase:
+      # UUID of the Kafka Config Doc that is created by Setup Sample Data
+      # Debatable if the doc should be added to a content pack or not
+      kafkaConfigUuid: 7cbf9153-869c-43bb-a316-1c652673e680
   volumes:
     createDefaultOnStart: false
 
