@@ -128,12 +128,15 @@ public class App extends Application<Config> {
     public void run(final Config configuration, final Environment environment) {
         LOGGER.info("Using application configuration file {}", configFile.toAbsolutePath().normalize());
 
-        // Turn on Jersey logging.
+        // Turn on Jersey logging of request/response payloads
+        // I can't seem to get this to work unless Level is SEVERE
+        // TODO need to establish if there is a performance hit for using the JUL to SLF bridge
+        //   see http://www.slf4j.org/legacy.html#jul-to-slf4j
         environment.jersey().register(
                 new LoggingFeature(
                         java.util.logging.Logger.getLogger(LoggingFeature.DEFAULT_LOGGER_NAME),
-                        Level.INFO,
-                        LoggingFeature.Verbosity.PAYLOAD_ANY,
+                        Level.SEVERE,
+                        LoggingFeature.Verbosity.PAYLOAD_TEXT,
                         LoggingFeature.DEFAULT_MAX_ENTITY_SIZE));
 
         // Check if we are running GWT Super Dev Mode
