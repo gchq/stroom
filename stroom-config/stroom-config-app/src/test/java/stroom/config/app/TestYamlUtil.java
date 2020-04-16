@@ -28,7 +28,8 @@ class TestYamlUtil {
 
     /**
      * *** IMPORTANT ***
-     * If the test fails it is because you have made changes to part of the IsConfig object model
+     * If the test fails it is because you have made changes to part of the
+     * {@link stroom.util.shared.AbstractConfig} object model
      * and the resulting generated yaml is different to what it was before. If you are happy that
      * the change to the yaml matches what you expect then run {@link GenerateExpectedYaml#main} to
      * re-generate the expected yaml file, then the test will pass. If you are not happy then re-think

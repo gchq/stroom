@@ -116,7 +116,7 @@ public class AppConfigMonitor implements Managed, HasHealthCheck {
             LOGGER.info("Starting config file modification watcher for {}", configFile.toAbsolutePath().normalize());
             while (true) {
                 if (Thread.currentThread().isInterrupted()) {
-                    LOGGER.debug("Thread interrupted, stopping watching directory {}", dirToWatch.toAbsolutePath());
+                    LOGGER.debug("Thread interrupted, stopping watching directory {}", dirToWatch.toAbsolutePath().normalize());
                     break;
                 }
 
@@ -270,7 +270,7 @@ public class AppConfigMonitor implements Managed, HasHealthCheck {
     @Override
     public void stop() throws Exception {
         if (isValidFile) {
-            LOGGER.info("Stopping file modification watcher for {}", configFile.toAbsolutePath());
+            LOGGER.info("Stopping file modification watcher for {}", configFile.toAbsolutePath().normalize());
 
             if (watchService != null) {
                 watchService.close();
