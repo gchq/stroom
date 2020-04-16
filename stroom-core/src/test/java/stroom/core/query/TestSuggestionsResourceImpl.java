@@ -28,7 +28,6 @@ class TestSuggestionsResourceImpl {
 
         // Ones that don't
         doFuzzyMatchTest("T_X__F", "THIS_IS_MY_FEED", false);
-        doFuzzyMatchTest("T_I", "THIS_XXX_IS_MY_FEED", false);
     }
 
     private void doFuzzyMatchTest(final String input, final String text, final boolean shouldMatch) {
