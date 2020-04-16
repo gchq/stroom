@@ -23,12 +23,12 @@ import stroom.data.store.impl.ScanVolumePathResult;
 import stroom.security.api.SecurityContext;
 import stroom.task.api.ExecutorProvider;
 import stroom.task.api.TaskContext;
+import stroom.task.api.TaskContextFactory;
 import stroom.task.api.ThreadPoolImpl;
 import stroom.task.shared.ThreadPool;
 import stroom.util.shared.ModelStringUtil;
 
 import javax.inject.Inject;
-import javax.inject.Provider;
 import java.util.List;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.CountDownLatch;
@@ -45,30 +45,28 @@ class FsCleanSubTaskHandler {
 
     private final DataStoreMaintenanceService streamMaintenanceService;
     private final ExecutorProvider executorProvider;
-    private final Provider<TaskContext> taskContextProvider;
+    private final TaskContextFactory taskContextFactory;
     private final SecurityContext securityContext;
     private final DataStoreServiceConfig config;
 
     @Inject
     FsCleanSubTaskHandler(final DataStoreMaintenanceService streamMaintenanceService,
                           final ExecutorProvider executorProvider,
-                          final Provider<TaskContext> taskContextProvider,
+                          final TaskContextFactory taskContextFactory,
                           final SecurityContext securityContext,
                           final DataStoreServiceConfig config) {
         this.streamMaintenanceService = streamMaintenanceService;
         this.executorProvider = executorProvider;
-        this.taskContextProvider = taskContextProvider;
+        this.taskContextFactory = taskContextFactory;
         this.securityContext = securityContext;
         this.config = config;
     }
 
-    public void exec(final FsCleanSubTask task, final Consumer<List<String>> deleteListConsumer) {
+    public void exec(final TaskContext taskContext, final FsCleanSubTask task, final Consumer<List<String>> deleteListConsumer) {
         securityContext.secure(() -> {
-            final TaskContext taskContext = taskContextProvider.get();
             final ThreadPool threadPool = new ThreadPoolImpl("File System Clean#", 1, 1, config.getFileSystemCleanBatchSize(), Integer.MAX_VALUE);
             final Executor executor = executorProvider.get(threadPool);
 
-            taskContext.setName("File system clean");
             taskContext.info(() -> "Cleaning: " + task.getVolume().getPath() + " - " + task.getPath());
 
             if (Thread.currentThread().isInterrupted()) {
@@ -108,8 +106,9 @@ class FsCleanSubTaskHandler {
                         final CountDownLatch countDownLatch = new CountDownLatch(result.getChildDirectoryList().size());
                         for (final String subPath : result.getChildDirectoryList()) {
                             final FsCleanSubTask subTask = new FsCleanSubTask(task.getTaskProgress(), task.getVolume(), subPath, task.getLogPrefix(), task.getOldAge(), task.isDelete());
-                            Runnable runnable = () -> exec(subTask, deleteListConsumer);
-                            runnable = taskContext.sub(runnable);
+                            final Runnable runnable = taskContextFactory.context(taskContext, "File system clean", tc -> {
+                                exec(tc, subTask, deleteListConsumer);
+                            });
                             CompletableFuture
                                     .runAsync(runnable, executor)
                                     .whenComplete((r, t) -> {

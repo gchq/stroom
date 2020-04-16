@@ -14,14 +14,14 @@ import stroom.docref.DocRef;
 import stroom.feed.api.FeedStore;
 import stroom.feed.shared.FeedDoc;
 import stroom.feed.shared.FeedDoc.FeedStatus;
+import stroom.meta.api.MetaService;
 import stroom.meta.shared.FindMetaCriteria;
 import stroom.meta.shared.Meta;
 import stroom.meta.shared.MetaExpressionUtil;
-import stroom.meta.api.MetaService;
 import stroom.meta.statistics.api.MetaStatistics;
 import stroom.proxy.repo.FileSetProcessor;
 import stroom.task.api.ExecutorProvider;
-import stroom.task.api.TaskContext;
+import stroom.task.api.TaskContextFactory;
 import stroom.test.CommonTestControl;
 import stroom.test.CommonTestScenarioCreator;
 import stroom.util.io.FileUtil;
@@ -67,7 +67,7 @@ public class ManualProxyAggregationTest {
     @Inject
     private MetaStatistics metaDataStatistic;
     @Inject
-    private TaskContext taskContext;
+    private TaskContextFactory taskContextFactory;
     @Inject
     private ExecutorProvider executorProvider;
     @Inject
@@ -277,7 +277,7 @@ public class ManualProxyAggregationTest {
                            final long maxStreamSize) {
         final ProxyAggregationExecutor proxyAggregationExecutor = new ProxyAggregationExecutor(
                 executorProvider,
-                taskContext,
+                taskContextFactory,
                 filePackProcessorProvider,
                 proxyDir,
                 10,

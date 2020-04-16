@@ -1,5 +1,5 @@
 /*
- * Copyright 2016 Crown Copyright
+ * Copyright 2018 Crown Copyright
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -14,26 +14,26 @@
  * limitations under the License.
  */
 
-package stroom.task.api;
+package stroom.task.impl;
 
-import stroom.task.shared.TaskId;
+import com.google.inject.AbstractModule;
+import stroom.task.api.TaskContextFactory;
 
-import java.util.UUID;
-
-public class TaskIdFactory {
-    public static TaskId create() {
-        return new TaskId(createUUID(), null);
+public class TaskContextModule extends AbstractModule {
+    @Override
+    protected void configure() {
+        bind(TaskContextFactory.class).to(TaskContextFactoryImpl.class);
     }
 
-    public static TaskId create(final TaskId parentTaskId) {
-        if (parentTaskId != null) {
-            return new TaskId(createUUID(), parentTaskId);
-        }
-
-        return create();
+    @Override
+    public boolean equals(final Object o) {
+        if (this == o) return true;
+        if (o == null || getClass() != o.getClass()) return false;
+        return true;
     }
 
-    private static String createUUID() {
-        return UUID.randomUUID().toString();
+    @Override
+    public int hashCode() {
+        return 0;
     }
 }

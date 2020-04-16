@@ -45,12 +45,7 @@ import stroom.pipeline.shared.stepping.PipelineStepRequest;
 import stroom.pipeline.shared.stepping.StepLocation;
 import stroom.pipeline.shared.stepping.StepType;
 import stroom.pipeline.shared.stepping.SteppingResult;
-import stroom.pipeline.state.CurrentUserHolder;
-import stroom.pipeline.state.FeedHolder;
-import stroom.pipeline.state.MetaDataHolder;
-import stroom.pipeline.state.MetaHolder;
-import stroom.pipeline.state.PipelineContext;
-import stroom.pipeline.state.PipelineHolder;
+import stroom.pipeline.state.*;
 import stroom.pipeline.task.StreamMetaDataProvider;
 import stroom.security.api.SecurityContext;
 import stroom.security.shared.PermissionNames;
@@ -59,11 +54,7 @@ import stroom.util.date.DateUtil;
 
 import javax.inject.Inject;
 import java.io.IOException;
-import java.util.ArrayList;
-import java.util.Collections;
-import java.util.HashSet;
-import java.util.List;
-import java.util.Set;
+import java.util.*;
 
 class SteppingRequestHandler {
     private static final Logger LOGGER = LoggerFactory.getLogger(SteppingRequestHandler.class);
@@ -71,7 +62,6 @@ class SteppingRequestHandler {
     private final Store streamStore;
     private final MetaService metaService;
     private final FeedProperties feedProperties;
-    private final TaskContext taskContext;
     private final FeedHolder feedHolder;
     private final MetaDataHolder metaDataHolder;
     private final PipelineHolder pipelineHolder;
@@ -102,7 +92,6 @@ class SteppingRequestHandler {
     SteppingRequestHandler(final Store streamStore,
                            final MetaService metaService,
                            final FeedProperties feedProperties,
-                           final TaskContext taskContext,
                            final FeedHolder feedHolder,
                            final MetaDataHolder metaDataHolder,
                            final PipelineHolder pipelineHolder,
@@ -120,7 +109,6 @@ class SteppingRequestHandler {
         this.streamStore = streamStore;
         this.metaService = metaService;
         this.feedProperties = feedProperties;
-        this.taskContext = taskContext;
         this.feedHolder = feedHolder;
         this.metaDataHolder = metaDataHolder;
         this.pipelineHolder = pipelineHolder;
@@ -137,7 +125,7 @@ class SteppingRequestHandler {
         this.securityContext = securityContext;
     }
 
-    public SteppingResult exec(final PipelineStepRequest request) {
+    public SteppingResult exec(final TaskContext taskContext, final PipelineStepRequest request) {
         return securityContext.secureResult(PermissionNames.STEPPING_PERMISSION, () -> {
             // Elevate user permissions so that inherited pipelines that the user only has 'Use' permission on can be read.
             return securityContext.useAsReadResult(() -> {

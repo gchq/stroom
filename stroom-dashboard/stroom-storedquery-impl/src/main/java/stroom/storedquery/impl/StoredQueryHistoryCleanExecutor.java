@@ -18,6 +18,7 @@
 package stroom.storedquery.impl;
 
 import stroom.task.api.TaskContext;
+import stroom.task.api.TaskContextFactory;
 import stroom.util.logging.LambdaLogger;
 import stroom.util.logging.LambdaLoggerFactory;
 
@@ -33,25 +34,25 @@ import java.util.function.Supplier;
 public class StoredQueryHistoryCleanExecutor {
     private static final LambdaLogger LOGGER = LambdaLoggerFactory.getLogger(StoredQueryHistoryCleanExecutor.class);
 
-    private final TaskContext taskContext;
     private final StoredQueryDao storedQueryDao;
     private final StoredQueryConfig storedQueryConfig;
+    private final TaskContextFactory taskContextFactory;
 
     @Inject
-    public StoredQueryHistoryCleanExecutor(final TaskContext taskContext,
-                                           final StoredQueryDao storedQueryDao,
-                                           final StoredQueryConfig storedQueryConfig) {
-        this.taskContext = taskContext;
+    public StoredQueryHistoryCleanExecutor(final StoredQueryDao storedQueryDao,
+                                           final StoredQueryConfig storedQueryConfig,
+                                           final TaskContextFactory taskContextFactory) {
         this.storedQueryDao = storedQueryDao;
         this.storedQueryConfig = storedQueryConfig;
+        this.taskContextFactory = taskContextFactory;
     }
 
     public void exec() {
-        clean(false);
+        taskContextFactory.context("Clean Stored History", taskContext -> clean(taskContext, false)).run();
     }
 
-    public void clean(final boolean favourite) {
-        info(() -> "Starting history clean task");
+    private void clean(final TaskContext taskContext, final boolean favourite) {
+        info(taskContext, () -> "Starting history clean task");
 
         final int historyItemsRetention = storedQueryConfig.getItemsRetention();
         final int historyDaysRetention = storedQueryConfig.getDaysRetention();
@@ -60,16 +61,16 @@ public class StoredQueryHistoryCleanExecutor {
 
         final List<String> users = storedQueryDao.getUsers(favourite);
         users.forEach(user -> {
-            info(() -> "Cleaning query history for '" + user + "'");
+            info(taskContext, () -> "Cleaning query history for '" + user + "'");
 
             final Integer oldestId = storedQueryDao.getOldestId(user, favourite, historyItemsRetention);
             storedQueryDao.clean(user, favourite, oldestId, oldestCrtMs);
         });
 
-        info(() -> "Finished history clean task");
+        info(taskContext, () -> "Finished history clean task");
     }
 
-    private void info(final Supplier<String> message) {
+    private void info(final TaskContext taskContext, final Supplier<String> message) {
         LOGGER.debug(message);
         taskContext.info(message);
     }

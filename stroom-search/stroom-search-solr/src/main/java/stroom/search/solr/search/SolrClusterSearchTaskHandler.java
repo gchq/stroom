@@ -20,13 +20,8 @@ package stroom.search.solr.search;
 import stroom.annotation.api.AnnotationDataSource;
 import stroom.pipeline.errorhandler.MessageUtil;
 import stroom.query.api.v2.ExpressionOperator;
-import stroom.search.coprocessor.CompletionState;
-import stroom.search.coprocessor.Coprocessors;
-import stroom.search.coprocessor.CoprocessorsFactory;
 import stroom.search.coprocessor.Error;
-import stroom.search.coprocessor.NewCoprocessor;
-import stroom.search.coprocessor.Receiver;
-import stroom.search.coprocessor.ReceiverImpl;
+import stroom.search.coprocessor.*;
 import stroom.search.extraction.ExpressionFilter;
 import stroom.search.extraction.ExtractionDecoratorFactory;
 import stroom.search.resultsender.NodeResult;
@@ -48,7 +43,6 @@ import java.util.function.Consumer;
 class SolrClusterSearchTaskHandler implements Consumer<Error> {
     private static final LambdaLogger LOGGER = LambdaLoggerFactory.getLogger(SolrClusterSearchTaskHandler.class);
 
-    private final TaskContext taskContext;
     private final CoprocessorsFactory coprocessorsFactory;
     private final SolrSearchFactory solrSearchFactory;
     private final ExtractionDecoratorFactory extractionDecoratorFactory;
@@ -60,13 +54,11 @@ class SolrClusterSearchTaskHandler implements Consumer<Error> {
     private SolrClusterSearchTask task;
 
     @Inject
-    SolrClusterSearchTaskHandler(final TaskContext taskContext,
-                                 final CoprocessorsFactory coprocessorsFactory,
+    SolrClusterSearchTaskHandler(final CoprocessorsFactory coprocessorsFactory,
                                  final SolrSearchFactory solrSearchFactory,
                                  final ExtractionDecoratorFactory extractionDecoratorFactory,
                                  final ResultSenderFactory resultSenderFactory,
                                  final SecurityContext securityContext) {
-        this.taskContext = taskContext;
         this.coprocessorsFactory = coprocessorsFactory;
         this.solrSearchFactory = solrSearchFactory;
         this.extractionDecoratorFactory = extractionDecoratorFactory;
@@ -74,7 +66,7 @@ class SolrClusterSearchTaskHandler implements Consumer<Error> {
         this.securityContext = securityContext;
     }
 
-    public void exec(final SolrClusterSearchTask task, final SolrSearchResultCollector callback) {
+    public void exec(final TaskContext taskContext, final SolrClusterSearchTask task, final SolrSearchResultCollector callback) {
         securityContext.useAsRead(() -> {
             final Consumer<NodeResult> resultConsumer = callback::onSuccess;
             CompletionState sendingDataCompletionState = new CompletionState();
@@ -105,11 +97,11 @@ class SolrClusterSearchTaskHandler implements Consumer<Error> {
 
                     if (coprocessors.size() > 0) {
                         // Start forwarding data to target node.
-                        final ResultSender resultSender = resultSenderFactory.create();
+                        final ResultSender resultSender = resultSenderFactory.create(taskContext);
                         sendingDataCompletionState = resultSender.sendData(coprocessors, resultConsumer, frequency, searchCompletionState, errors);
 
                         // Start searching.
-                        search(task, query, coprocessors);
+                        search(taskContext, task, query, coprocessors);
                     }
                 } catch (final RuntimeException e) {
                     try {
@@ -141,7 +133,8 @@ class SolrClusterSearchTaskHandler implements Consumer<Error> {
         });
     }
 
-    private void search(final SolrClusterSearchTask task,
+    private void search(final TaskContext taskContext,
+                        final SolrClusterSearchTask task,
                         final stroom.query.api.v2.Query query,
                         final Coprocessors coprocessors) {
         taskContext.info(() -> "Searching...");
@@ -150,7 +143,7 @@ class SolrClusterSearchTaskHandler implements Consumer<Error> {
         try {
             final AtomicLong allDocumentCount = new AtomicLong();
             final Receiver rootReceiver = new ReceiverImpl(null, this, allDocumentCount::addAndGet, null);
-            final Receiver extractionReceiver = extractionDecoratorFactory.create(rootReceiver, task.getStoredFields(), coprocessors, query);
+            final Receiver extractionReceiver = extractionDecoratorFactory.create(taskContext, rootReceiver, task.getStoredFields(), coprocessors, query);
 
             // Search all index shards.
             final ExpressionFilter expressionFilter = new ExpressionFilter.Builder()
@@ -163,7 +156,7 @@ class SolrClusterSearchTaskHandler implements Consumer<Error> {
             long extractionCount = getMinExtractions(coprocessors.getSet());
             long documentCount = allDocumentCount.get();
             while (!Thread.currentThread().isInterrupted() && extractionCount < documentCount) {
-                log(extractionCount, documentCount);
+                log(taskContext, extractionCount, documentCount);
 
                 Thread.sleep(1000);
 
@@ -182,7 +175,7 @@ class SolrClusterSearchTaskHandler implements Consumer<Error> {
         }
     }
 
-    private void log(final long extractionCount, final long documentCount) {
+    private void log(final TaskContext taskContext, final long extractionCount, final long documentCount) {
         taskContext.info(() ->
                 "Searching... " +
                         "found " + documentCount + " documents" +

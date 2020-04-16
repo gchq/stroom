@@ -39,28 +39,13 @@ import stroom.proxy.repo.ProxyLifecycle;
 import stroom.proxy.repo.ProxyRepositoryManager;
 import stroom.proxy.repo.ProxyRepositoryReader;
 import stroom.proxy.repo.StreamHandlerFactory;
-import stroom.receive.common.DataReceiptPolicyAttributeMapFilterFactory;
-import stroom.receive.common.DebugServlet;
-import stroom.receive.common.FeedStatusResource;
-import stroom.receive.common.FeedStatusService;
-import stroom.receive.common.ReceiveDataServlet;
-import stroom.receive.common.RemoteFeedModule;
-import stroom.receive.common.RequestHandler;
-import stroom.receive.rules.impl.DataReceiptPolicyAttributeMapFilterFactoryImpl;
-import stroom.receive.rules.impl.ReceiveDataRuleSetResource;
-import stroom.receive.rules.impl.ReceiveDataRuleSetResourceImpl;
-import stroom.receive.rules.impl.ReceiveDataRuleSetService;
-import stroom.receive.rules.impl.ReceiveDataRuleSetServiceImpl;
+import stroom.receive.common.*;
+import stroom.receive.rules.impl.*;
 import stroom.security.api.SecurityContext;
 import stroom.security.mock.MockSecurityContext;
-import stroom.task.api.SimpleTaskContext;
-import stroom.task.api.TaskContext;
+import stroom.task.impl.TaskContextModule;
 import stroom.util.BuildInfoProvider;
-import stroom.util.guice.FilterBinder;
-import stroom.util.guice.FilterInfo;
-import stroom.util.guice.GuiceUtil;
-import stroom.util.guice.HealthCheckBinder;
-import stroom.util.guice.ServletBinder;
+import stroom.util.guice.*;
 import stroom.util.io.BufferFactory;
 import stroom.util.shared.BuildInfo;
 import stroom.util.shared.RestResource;
@@ -97,6 +82,8 @@ public class ProxyModule extends AbstractModule {
         // Allow discovery of feed status from other proxies.
         install(new RemoteFeedModule());
 
+        install(new TaskContextModule());
+
         bind(BuildInfo.class).toProvider(BuildInfoProvider.class);
         bind(BufferFactory.class).to(BufferFactoryImpl.class);
         bind(DataReceiptPolicyAttributeMapFilterFactory.class).to(DataReceiptPolicyAttributeMapFilterFactoryImpl.class);
@@ -110,7 +97,6 @@ public class ProxyModule extends AbstractModule {
         bind(Serialiser2Factory.class).to(Serialiser2FactoryImpl.class);
         bind(StoreFactory.class).to(StoreFactoryImpl.class);
         bind(StreamHandlerFactory.class).to(ForwardStreamHandlerFactory.class);
-        bind(TaskContext.class).to(SimpleTaskContext.class);
 
         HealthCheckBinder.create(binder())
                 .bind(ContentSyncService.class)
@@ -125,8 +111,8 @@ public class ProxyModule extends AbstractModule {
 
         FilterBinder.create(binder())
                 .bind(
-                    new FilterInfo(ProxySecurityFilter.class.getSimpleName(), "/*"),
-                    ProxySecurityFilter.class);
+                        new FilterInfo(ProxySecurityFilter.class.getSimpleName(), "/*"),
+                        ProxySecurityFilter.class);
 
         ServletBinder.create(binder())
                 .bind(DebugServlet.class)
@@ -145,7 +131,7 @@ public class ProxyModule extends AbstractModule {
                 .addBinding(ProxyLifecycle.class);
 
         final Multibinder<ImportExportActionHandler> importExportActionHandlerBinder = Multibinder
-            .newSetBinder(binder(), ImportExportActionHandler.class);
+                .newSetBinder(binder(), ImportExportActionHandler.class);
 
         importExportActionHandlerBinder.addBinding().to(ReceiveDataRuleSetService.class);
         importExportActionHandlerBinder.addBinding().to(DictionaryStore.class);
@@ -167,7 +153,7 @@ public class ProxyModule extends AbstractModule {
         // on the build version
         if (!jerseyClientConfiguration.getUserAgent().isPresent()) {
             final String userAgent = PROXY_JERSEY_CLIENT_USER_AGENT_PREFIX
-                + buildInfoProvider.get().getBuildVersion();
+                    + buildInfoProvider.get().getBuildVersion();
             LOGGER.info("Setting jersey client user agent string to [{}]", userAgent);
             jerseyClientConfiguration.setUserAgent(Optional.of(userAgent));
         }

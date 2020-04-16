@@ -39,7 +39,7 @@ import stroom.meta.shared.MetaExpressionUtil;
 import stroom.meta.statistics.api.MetaStatistics;
 import stroom.proxy.repo.FileSetProcessor;
 import stroom.task.api.ExecutorProvider;
-import stroom.task.api.TaskContext;
+import stroom.task.api.TaskContextFactory;
 import stroom.test.AbstractCoreIntegrationTest;
 import stroom.test.CommonTestControl;
 import stroom.test.CommonTestScenarioCreator;
@@ -55,12 +55,7 @@ import stroom.util.shared.ResultPage;
 
 import javax.inject.Inject;
 import javax.inject.Provider;
-import java.io.BufferedOutputStream;
-import java.io.IOException;
-import java.io.InputStream;
-import java.io.OutputStream;
-import java.io.OutputStreamWriter;
-import java.io.PrintWriter;
+import java.io.*;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
@@ -89,7 +84,7 @@ class TestProxyAggregationTask extends AbstractCoreIntegrationTest {
     @Inject
     private MetaStatistics metaStatistics;
     @Inject
-    private TaskContext taskContext;
+    private TaskContextFactory taskContextFactory;
     @Inject
     private ExecutorProvider executorProvider;
     @Inject
@@ -106,7 +101,7 @@ class TestProxyAggregationTask extends AbstractCoreIntegrationTest {
                            final long maxStreamSize) {
         final ProxyAggregationExecutor proxyAggregationExecutor = new ProxyAggregationExecutor(
                 executorProvider,
-                taskContext,
+                taskContextFactory,
                 filePackProcessorProvider,
                 proxyDir,
                 10,

@@ -23,7 +23,7 @@ import org.slf4j.LoggerFactory;
 import stroom.security.api.SecurityContext;
 import stroom.statistics.impl.sql.exception.StatisticsEventValidationException;
 import stroom.statistics.impl.sql.rollup.RolledUpStatisticEvent;
-import stroom.task.api.SimpleTaskContext;
+import stroom.task.api.TaskContextFactory;
 import stroom.test.AbstractCoreIntegrationTest;
 
 import javax.inject.Inject;
@@ -47,6 +47,8 @@ class TestSQLStatisticFlushTaskHandler extends AbstractCoreIntegrationTest {
     private SQLStatisticAggregationManager sqlStatisticAggregationManager;
     @Inject
     private SecurityContext securityContext;
+    @Inject
+    private TaskContextFactory taskContextFactory;
 
     @Test
     void testExec_tenGoodRowsTwoBad() {
@@ -56,7 +58,7 @@ class TestSQLStatisticFlushTaskHandler extends AbstractCoreIntegrationTest {
             assertThat(getRowCount()).isEqualTo(0);
 
             final SQLStatisticFlushTaskHandler taskHandler = new SQLStatisticFlushTaskHandler(
-                    sqlStatisticValueBatchSaveService, new SimpleTaskContext(), securityContext);
+                    sqlStatisticValueBatchSaveService, taskContextFactory, securityContext);
 
             final SQLStatisticAggregateMap aggregateMap = new SQLStatisticAggregateMap();
 
@@ -82,7 +84,7 @@ class TestSQLStatisticFlushTaskHandler extends AbstractCoreIntegrationTest {
         assertThat(getRowCount()).isEqualTo(0);
 
         final SQLStatisticFlushTaskHandler taskHandler = new SQLStatisticFlushTaskHandler(
-                sqlStatisticValueBatchSaveService, new SimpleTaskContext(), securityContext);
+                sqlStatisticValueBatchSaveService, taskContextFactory, securityContext);
 
         final SQLStatisticAggregateMap aggregateMap = new SQLStatisticAggregateMap();
 
@@ -103,7 +105,7 @@ class TestSQLStatisticFlushTaskHandler extends AbstractCoreIntegrationTest {
             assertThat(getRowCount()).isEqualTo(0);
 
             final SQLStatisticFlushTaskHandler taskHandler = new SQLStatisticFlushTaskHandler(
-                    sqlStatisticValueBatchSaveService, new SimpleTaskContext(), securityContext);
+                    sqlStatisticValueBatchSaveService, taskContextFactory, securityContext);
 
             final SQLStatisticAggregateMap aggregateMap = new SQLStatisticAggregateMap();
 
@@ -121,7 +123,7 @@ class TestSQLStatisticFlushTaskHandler extends AbstractCoreIntegrationTest {
         assertThat(getRowCount()).isEqualTo(0);
 
         final SQLStatisticFlushTaskHandler taskHandler = new SQLStatisticFlushTaskHandler(
-                sqlStatisticValueBatchSaveService, new SimpleTaskContext(), securityContext);
+                sqlStatisticValueBatchSaveService, taskContextFactory, securityContext);
 
         final SQLStatisticAggregateMap aggregateMap = new SQLStatisticAggregateMap();
 

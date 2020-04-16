@@ -26,10 +26,9 @@ import stroom.job.shared.JobNode;
 import stroom.job.shared.JobNode.JobType;
 import stroom.security.api.SecurityContext;
 import stroom.task.api.ExecutorProvider;
-import stroom.task.api.TaskContext;
+import stroom.task.api.TaskContextFactory;
 
 import javax.inject.Inject;
-import javax.inject.Provider;
 import javax.inject.Singleton;
 import java.util.Collection;
 import java.util.Collections;
@@ -59,7 +58,7 @@ class DistributedTaskFetcher {
     private final Set<DistributedTask> runningTasks = Collections.newSetFromMap(new ConcurrentHashMap<>());
 
     private final ExecutorProvider executorProvider;
-    private final Provider<TaskContext> taskContextProvider;
+    private final TaskContextFactory taskContextFactory;
     private final JobNodeTrackerCache jobNodeTrackerCache;
     private final SecurityContext securityContext;
     private final DistributedTaskFactoryRegistry distributedTaskFactoryRegistry;
@@ -69,13 +68,13 @@ class DistributedTaskFetcher {
 
     @Inject
     DistributedTaskFetcher(final ExecutorProvider executorProvider,
-                           final Provider<TaskContext> taskContextProvider,
+                           final TaskContextFactory taskContextFactory,
                            final JobNodeTrackerCache jobNodeTrackerCache,
                            final SecurityContext securityContext,
                            final DistributedTaskFactoryRegistry distributedTaskFactoryRegistry,
                            final TargetNodeSetFactory targetNodeSetFactory) {
         this.executorProvider = executorProvider;
-        this.taskContextProvider = taskContextProvider;
+        this.taskContextFactory = taskContextFactory;
         this.jobNodeTrackerCache = jobNodeTrackerCache;
         this.securityContext = securityContext;
         this.distributedTaskFactoryRegistry = distributedTaskFactoryRegistry;
@@ -127,10 +126,8 @@ class DistributedTaskFetcher {
                     // Only allow one set of tasks to be fetched at any one time.
                     if (fetchingTasks.compareAndSet(false, true)) {
                         if (!stopping.get()) {
-                            final TaskContext taskContext = taskContextProvider.get();
-                            Runnable runnable = () -> {
+                            final Runnable runnable = taskContextFactory.context("Fetch Tasks", taskContext -> {
                                 try {
-                                    taskContext.setName("Fetch Tasks");
                                     taskContext.info(() -> "fetching tasks");
                                     LOGGER.trace("Trying to fetch tasks");
 
@@ -215,8 +212,7 @@ class DistributedTaskFetcher {
                                 } catch (final RuntimeException e) {
                                     LOGGER.error(e.getMessage(), e);
                                 }
-                            };
-                            runnable = taskContext.sub(runnable);
+                            });
                             CompletableFuture
                                     .runAsync(runnable, executorProvider.get())
                                     .whenComplete((r, t) -> afterFetch());
@@ -278,10 +274,9 @@ class DistributedTaskFetcher {
                 tracker.setLastExecutedTime(now);
 
                 if (!stopping.get()) {
+                    final Runnable runnable = taskContextFactory.context("DistributedTaskFetcher", taskContext ->
+                            task.getRunnable().run());
                     final Executor executor = executorProvider.get(task.getThreadPool());
-                    final TaskContext taskContext = taskContextProvider.get();
-                    Runnable runnable = task.getRunnable();
-                    runnable = taskContext.sub(runnable);
                     CompletableFuture
                             .runAsync(runnable, executor)
                             .whenComplete((r, t) -> {

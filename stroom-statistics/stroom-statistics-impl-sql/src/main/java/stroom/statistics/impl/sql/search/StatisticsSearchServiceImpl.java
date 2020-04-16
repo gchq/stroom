@@ -5,39 +5,23 @@ import com.google.common.collect.ImmutableMap;
 import io.reactivex.Flowable;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import stroom.dashboard.expression.v1.FieldIndexMap;
-import stroom.dashboard.expression.v1.Val;
-import stroom.dashboard.expression.v1.ValDouble;
-import stroom.dashboard.expression.v1.ValLong;
-import stroom.dashboard.expression.v1.ValNull;
-import stroom.dashboard.expression.v1.ValString;
-import stroom.statistics.impl.sql.PreparedStatementUtil;
-import stroom.statistics.impl.sql.SQLStatisticConstants;
-import stroom.statistics.impl.sql.SQLStatisticNames;
-import stroom.statistics.impl.sql.SQLStatisticsDbConnProvider;
-import stroom.statistics.impl.sql.SqlBuilder;
+import stroom.dashboard.expression.v1.*;
+import stroom.statistics.impl.sql.*;
 import stroom.statistics.impl.sql.rollup.RollUpBitMask;
 import stroom.statistics.impl.sql.shared.StatisticStoreDoc;
 import stroom.statistics.impl.sql.shared.StatisticType;
 import stroom.task.api.TaskContext;
+import stroom.task.api.TaskContextFactory;
 import stroom.util.logging.LambdaLogger;
 import stroom.util.logging.LambdaLoggerFactory;
 
 import javax.inject.Inject;
-import javax.inject.Provider;
 import javax.sql.DataSource;
 import java.sql.Connection;
 import java.sql.PreparedStatement;
 import java.sql.ResultSet;
 import java.sql.SQLException;
-import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.Collections;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
-import java.util.Optional;
-import java.util.Set;
+import java.util.*;
 import java.util.function.Function;
 import java.util.function.Supplier;
 import java.util.stream.Collectors;
@@ -58,7 +42,7 @@ class StatisticsSearchServiceImpl implements StatisticsSearchService {
 
     private final SQLStatisticsDbConnProvider SQLStatisticsDbConnProvider;
     private final SearchConfig searchConfig;
-    private final Provider<TaskContext> taskContextProvider;
+    private final TaskContextFactory taskContextFactory;
 
     //defines how the entity fields relate to the table columns
     private static final Map<String, List<String>> STATIC_FIELDS_TO_COLUMNS_MAP = ImmutableMap.<String, List<String>>builder()
@@ -72,14 +56,15 @@ class StatisticsSearchServiceImpl implements StatisticsSearchService {
     @Inject
     StatisticsSearchServiceImpl(final SQLStatisticsDbConnProvider SQLStatisticsDbConnProvider,
                                 final SearchConfig searchConfig,
-                                final Provider<TaskContext> taskContextProvider) {
+                                final TaskContextFactory taskContextFactory) {
         this.SQLStatisticsDbConnProvider = SQLStatisticsDbConnProvider;
         this.searchConfig = searchConfig;
-        this.taskContextProvider = taskContextProvider;
+        this.taskContextFactory = taskContextFactory;
     }
 
     @Override
-    public Flowable<Val[]> search(final StatisticStoreDoc statisticStoreEntity,
+    public Flowable<Val[]> search(final TaskContext parentTaskContext,
+                                  final StatisticStoreDoc statisticStoreEntity,
                                   final FindEventCriteria criteria,
                                   final FieldIndexMap fieldIndexMap) {
 
@@ -91,7 +76,7 @@ class StatisticsSearchServiceImpl implements StatisticsSearchService {
         Function<ResultSet, Val[]> resultSetMapper = buildResultSetMapper(fieldIndexMap, statisticStoreEntity);
 
         // the query will not be executed until somebody subscribes to the flowable
-        return getFlowableQueryResults(sql, resultSetMapper);
+        return getFlowableQueryResults(parentTaskContext, sql, resultSetMapper);
     }
 
     private List<String> getSelectColumns(final StatisticStoreDoc statisticStoreEntity,
@@ -352,7 +337,8 @@ class StatisticsSearchServiceImpl implements StatisticsSearchService {
         }
     }
 
-    private Flowable<Val[]> getFlowableQueryResults(final SqlBuilder sql,
+    private Flowable<Val[]> getFlowableQueryResults(final TaskContext parentContext,
+                                                    final SqlBuilder sql,
                                                     final Function<ResultSet, Val[]> resultSetMapper) {
 
         //Not thread safe as each onNext will get the same ResultSet instance, however its position
@@ -365,20 +351,20 @@ class StatisticsSearchServiceImpl implements StatisticsSearchService {
                             Preconditions.checkNotNull(factory);
                             PreparedStatement ps = factory.getPreparedStatement();
                             return Flowable.generate(
-                                    () -> {
-                                        final Supplier<String> message = () -> "Executing query " + sql.toString();
-                                        final TaskContext taskContext = taskContextProvider.get();
-                                        taskContext.setName(SqlStatisticsStore.TASK_NAME);
-                                        taskContext.info(message);
-                                        LAMBDA_LOGGER.debug(message);
+                                    () ->
+                                            taskContextFactory.contextResult(parentContext, SqlStatisticsStore.TASK_NAME, taskContext -> {
+                                                final Supplier<String> message = () -> "Executing query " + sql.toString();
+                                                taskContext.info(message);
+                                                LAMBDA_LOGGER.debug(message);
 
-                                        try {
-                                            return ps.executeQuery();
-                                        } catch (SQLException e) {
-                                            throw new RuntimeException(String.format("Error executing query %s, %s",
-                                                    ps.toString(), e.getMessage()), e);
-                                        }
-                                    },
+                                                try {
+                                                    return ps.executeQuery();
+                                                } catch (SQLException e) {
+                                                    throw new RuntimeException(String.format("Error executing query %s, %s",
+                                                            ps.toString(), e.getMessage()), e);
+                                                }
+                                            }).get()
+                                    ,
                                     (rs, emitter) -> {
                                         // The line below can be un-commented in development debugging to slow down the
                                         // return of all results to test iterative results and dashboard polling.

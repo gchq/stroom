@@ -26,7 +26,7 @@ import stroom.index.shared.IndexShard;
 import stroom.search.impl.SearchException;
 import stroom.security.api.SecurityContext;
 import stroom.task.api.ExecutorProvider;
-import stroom.task.api.TaskContext;
+import stroom.task.api.TaskContextFactory;
 import stroom.task.api.ThreadPoolImpl;
 import stroom.task.shared.ThreadPool;
 import stroom.util.logging.LambdaLogger;
@@ -35,14 +35,10 @@ import stroom.util.logging.LogExecutionTime;
 import stroom.util.shared.Clearable;
 
 import javax.inject.Inject;
-import javax.inject.Provider;
 import javax.inject.Singleton;
 import java.io.IOException;
 import java.util.Objects;
-import java.util.concurrent.Executor;
-import java.util.concurrent.Executors;
-import java.util.concurrent.ScheduledExecutorService;
-import java.util.concurrent.TimeUnit;
+import java.util.concurrent.*;
 import java.util.concurrent.atomic.AtomicLong;
 
 @Singleton
@@ -55,7 +51,7 @@ public class IndexShardSearcherCacheImpl implements IndexShardSearcherCache, Cle
     private final IndexShardWriterCache indexShardWriterCache;
     private final AtomicLong closing = new AtomicLong();
     private final Executor executor;
-    private final Provider<TaskContext> taskContextProvider;
+    private final TaskContextFactory taskContextFactory;
     private final IndexShardSearchConfig indexShardSearchConfig;
     private final SecurityContext securityContext;
 
@@ -66,13 +62,13 @@ public class IndexShardSearcherCacheImpl implements IndexShardSearcherCache, Cle
                                 final IndexShardService indexShardService,
                                 final IndexShardWriterCache indexShardWriterCache,
                                 final ExecutorProvider executorProvider,
-                                final Provider<TaskContext> taskContextProvider,
+                                final TaskContextFactory taskContextFactory,
                                 final IndexShardSearchConfig indexShardSearchConfig,
                                 final SecurityContext securityContext) {
         this.cacheManager = cacheManager;
         this.indexShardService = indexShardService;
         this.indexShardWriterCache = indexShardWriterCache;
-        this.taskContextProvider = taskContextProvider;
+        this.taskContextFactory = taskContextFactory;
         this.indexShardSearchConfig = indexShardSearchConfig;
         this.securityContext = securityContext;
 
@@ -138,17 +134,16 @@ public class IndexShardSearcherCacheImpl implements IndexShardSearcherCache, Cle
 
                 closing.incrementAndGet();
 
-                final TaskContext taskContext = taskContextProvider.get();
-                executor.execute(taskContext.sub(() -> {
+                final Runnable runnable = taskContextFactory.context("Closing searcher", taskContext -> {
                     try {
-                        taskContext.setName("Closing searcher");
                         taskContext.info(() -> "Closing searcher for index shard " + key.indexShardId);
 
                         indexShardSearcher.destroy();
                     } finally {
                         closing.decrementAndGet();
                     }
-                }));
+                });
+                CompletableFuture.runAsync(runnable, executor);
             }
         });
     }

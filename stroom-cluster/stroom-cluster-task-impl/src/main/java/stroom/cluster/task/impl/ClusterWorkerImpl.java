@@ -20,22 +20,18 @@ import org.slf4j.MarkerFactory;
 import stroom.cluster.api.ClusterCallService;
 import stroom.cluster.api.ClusterCallServiceRemote;
 import stroom.cluster.api.ServiceName;
-import stroom.cluster.task.api.ClusterResult;
-import stroom.cluster.task.api.ClusterTask;
-import stroom.cluster.task.api.ClusterTaskHandler;
-import stroom.cluster.task.api.ClusterTaskRef;
-import stroom.cluster.task.api.ClusterWorker;
-import stroom.cluster.task.api.CollectorId;
+import stroom.cluster.task.api.*;
 import stroom.node.api.NodeInfo;
 import stroom.security.api.SecurityContext;
 import stroom.task.api.TaskContext;
+import stroom.task.api.TaskContextFactory;
 import stroom.task.api.TaskTerminatedException;
+import stroom.task.impl.TaskContextImpl;
 import stroom.task.shared.TaskId;
 import stroom.util.logging.LambdaLogger;
 import stroom.util.logging.LambdaLoggerFactory;
 
 import javax.inject.Inject;
-import javax.inject.Provider;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.CompletionException;
 import java.util.concurrent.Executor;
@@ -50,7 +46,7 @@ public class ClusterWorkerImpl implements ClusterWorker {
     private static final String SEND_RESULT = "sendResult";
 
     private final Executor executor;
-    private final Provider<TaskContext> taskContextProvider;
+    private final TaskContextFactory taskContextFactory;
     private final ClusterTaskHandlerRegistry taskHandlerRegistry;
     private final NodeInfo nodeInfo;
     private final ClusterCallService clusterCallService;
@@ -58,13 +54,13 @@ public class ClusterWorkerImpl implements ClusterWorker {
 
     @Inject
     public ClusterWorkerImpl(final Executor executor,
-                             final Provider<TaskContext> taskContextProvider,
+                             final TaskContextFactory taskContextFactory,
                              final ClusterTaskHandlerRegistry taskHandlerRegistry,
                              final NodeInfo nodeInfo,
                              final ClusterCallServiceRemote clusterCallService,
                              final SecurityContext securityContext) {
         this.executor = executor;
-        this.taskContextProvider = taskContextProvider;
+        this.taskContextFactory = taskContextFactory;
         this.taskHandlerRegistry = taskHandlerRegistry;
         this.nodeInfo = nodeInfo;
         this.clusterCallService = clusterCallService;
@@ -97,15 +93,12 @@ public class ClusterWorkerImpl implements ClusterWorker {
 
             final String targetNode = nodeInfo.getThisNodeName();
 
-            // Assign the id for this worker node prior to execution.
-            task.assignId(sourceTaskId);
-
             final ClusterTaskRef<R> clusterTaskRef = new ClusterTaskRef<>(task, sourceNode, targetNode, sourceTaskId, collectorId);
-            Runnable runnable = () -> {
+            final TaskContext parentContext = new TaskContextImpl(sourceTaskId, task.getTaskName(), securityContext.getUserIdentity());
+            final Runnable runnable = taskContextFactory.context(parentContext, "Cluster Search", taskContext -> {
                 final ClusterTaskHandler<ClusterTask<R>, R> handler = taskHandlerRegistry.findHandler(task);
-                handler.exec(task, clusterTaskRef);
-            };
-            runnable = taskContextProvider.get().sub(runnable);
+                handler.exec(taskContext, task, clusterTaskRef);
+            });
 
             // Execute this task asynchronously so we don't hold on to the HTTP
             // connection.

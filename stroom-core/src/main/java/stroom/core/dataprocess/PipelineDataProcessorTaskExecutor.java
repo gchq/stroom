@@ -22,11 +22,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.slf4j.MarkerFactory;
 import stroom.data.shared.StreamTypeNames;
-import stroom.data.store.api.InputStreamProvider;
-import stroom.data.store.api.SegmentInputStream;
-import stroom.data.store.api.Source;
-import stroom.data.store.api.Store;
-import stroom.data.store.api.Target;
+import stroom.data.store.api.*;
 import stroom.docref.DocRef;
 import stroom.docstore.shared.DocRefUtil;
 import stroom.feed.api.FeedProperties;
@@ -34,11 +30,7 @@ import stroom.meta.api.AttributeMap;
 import stroom.meta.api.MetaProperties;
 import stroom.meta.shared.Meta;
 import stroom.node.api.NodeInfo;
-import stroom.pipeline.DefaultErrorWriter;
-import stroom.pipeline.ErrorWriterProxy;
-import stroom.pipeline.LocationFactoryProxy;
-import stroom.pipeline.PipelineStore;
-import stroom.pipeline.StreamLocationFactory;
+import stroom.pipeline.*;
 import stroom.pipeline.destination.Destination;
 import stroom.pipeline.destination.DestinationProvider;
 import stroom.pipeline.errorhandler.ErrorReceiverProxy;
@@ -51,14 +43,7 @@ import stroom.pipeline.factory.PipelineDataCache;
 import stroom.pipeline.factory.PipelineFactory;
 import stroom.pipeline.shared.PipelineDoc;
 import stroom.pipeline.shared.data.PipelineData;
-import stroom.pipeline.state.FeedHolder;
-import stroom.pipeline.state.MetaData;
-import stroom.pipeline.state.MetaDataHolder;
-import stroom.pipeline.state.MetaHolder;
-import stroom.pipeline.state.PipelineHolder;
-import stroom.pipeline.state.RecordCount;
-import stroom.pipeline.state.SearchIdHolder;
-import stroom.pipeline.state.StreamProcessorHolder;
+import stroom.pipeline.state.*;
 import stroom.pipeline.task.ProcessStatisticsFactory;
 import stroom.pipeline.task.ProcessStatisticsFactory.ProcessStatistics;
 import stroom.pipeline.task.StreamMetaDataProvider;
@@ -102,7 +87,6 @@ public class PipelineDataProcessorTaskExecutor implements DataProcessorTaskExecu
     private final PipelineFactory pipelineFactory;
     private final Store streamStore;
     private final PipelineStore pipelineStore;
-    private final TaskContext taskContext;
     private final PipelineHolder pipelineHolder;
     private final FeedHolder feedHolder;
     private final FeedProperties feedProperties;
@@ -132,7 +116,6 @@ public class PipelineDataProcessorTaskExecutor implements DataProcessorTaskExecu
     PipelineDataProcessorTaskExecutor(final PipelineFactory pipelineFactory,
                                       final Store store,
                                       final PipelineStore pipelineStore,
-                                      final TaskContext taskContext,
                                       final PipelineHolder pipelineHolder,
                                       final FeedHolder feedHolder,
                                       final FeedProperties feedProperties,
@@ -153,7 +136,6 @@ public class PipelineDataProcessorTaskExecutor implements DataProcessorTaskExecu
         this.pipelineFactory = pipelineFactory;
         this.streamStore = store;
         this.pipelineStore = pipelineStore;
-        this.taskContext = taskContext;
         this.pipelineHolder = pipelineHolder;
         this.feedHolder = feedHolder;
         this.feedProperties = feedProperties;
@@ -174,7 +156,8 @@ public class PipelineDataProcessorTaskExecutor implements DataProcessorTaskExecu
     }
 
     @Override
-    public ProcessorResult exec(final Processor processor,
+    public ProcessorResult exec(final TaskContext taskContext,
+                                final Processor processor,
                                 final ProcessorFilter processorFilter,
                                 final ProcessorTask processorTask,
                                 final Source streamSource) {
@@ -210,7 +193,7 @@ public class PipelineDataProcessorTaskExecutor implements DataProcessorTaskExecu
                 errorWriter.addOutputStreamProvider(processInfoOutputStreamProvider);
                 errorWriterProxy.setErrorWriter(errorWriter);
 
-                process();
+                process(taskContext);
 
             } catch (final Exception e) {
                 outputError(e);
@@ -232,7 +215,7 @@ public class PipelineDataProcessorTaskExecutor implements DataProcessorTaskExecu
         return new ProcessorResultImpl(read, written, markerCounts);
     }
 
-    private void process() {
+    private void process(final TaskContext taskContext) {
         String feedName = null;
         PipelineDoc pipelineDoc = null;
 

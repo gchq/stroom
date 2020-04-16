@@ -26,15 +26,7 @@ import stroom.meta.shared.Status;
 import stroom.node.api.NodeInfo;
 import stroom.processor.api.InclusiveRanges;
 import stroom.processor.api.ProcessorFilterService;
-import stroom.processor.shared.Limits;
-import stroom.processor.shared.ProcessorFilter;
-import stroom.processor.shared.ProcessorFilterDataSource;
-import stroom.processor.shared.ProcessorFilterTracker;
-import stroom.processor.shared.ProcessorTask;
-import stroom.processor.shared.ProcessorTaskDataSource;
-import stroom.processor.shared.ProcessorTaskList;
-import stroom.processor.shared.QueryData;
-import stroom.processor.shared.TaskStatus;
+import stroom.processor.shared.*;
 import stroom.query.api.v2.ExpressionOperator;
 import stroom.query.api.v2.ExpressionOperator.Builder;
 import stroom.query.api.v2.ExpressionOperator.Op;
@@ -51,6 +43,7 @@ import stroom.statistics.api.InternalStatisticsReceiver;
 import stroom.task.api.ExecutorProvider;
 import stroom.task.api.SimpleThreadPool;
 import stroom.task.api.TaskContext;
+import stroom.task.api.TaskContextFactory;
 import stroom.task.shared.ThreadPool;
 import stroom.util.date.DateUtil;
 import stroom.util.logging.LambdaLogUtil;
@@ -63,15 +56,8 @@ import stroom.util.shared.Sort.Direction;
 import javax.inject.Inject;
 import javax.inject.Provider;
 import javax.inject.Singleton;
-import java.util.ArrayList;
-import java.util.Collections;
-import java.util.HashMap;
-import java.util.HashSet;
-import java.util.List;
-import java.util.Map;
+import java.util.*;
 import java.util.Map.Entry;
-import java.util.Optional;
-import java.util.Set;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.Executor;
@@ -98,8 +84,7 @@ class ProcessorTaskManagerImpl implements ProcessorTaskManager {
     private final ProcessorFilterTrackerDao processorFilterTrackerDao;
     private final ProcessorTaskDao processorTaskDao;
     private final ExecutorProvider executorProvider;
-    private final Provider<TaskContext> taskContextProvider;
-    private final ProcessorTaskManager processorTaskManager;
+    private final TaskContextFactory taskContextFactory;
     private final NodeInfo nodeInfo;
     private final ProcessorConfig processorConfig;
     private final Provider<InternalStatisticsReceiver> internalStatisticsReceiverProvider;
@@ -149,8 +134,7 @@ class ProcessorTaskManagerImpl implements ProcessorTaskManager {
                              final ProcessorFilterTrackerDao processorFilterTrackerDao,
                              final ProcessorTaskDao processorTaskDao,
                              final ExecutorProvider executorProvider,
-                             final Provider<TaskContext> taskContextProvider,
-                             final ProcessorTaskManager processorTaskManager,
+                             final TaskContextFactory taskContextFactory,
                              final NodeInfo nodeInfo,
                              final ProcessorConfig processorConfig,
                              final Provider<InternalStatisticsReceiver> internalStatisticsReceiverProvider,
@@ -161,8 +145,7 @@ class ProcessorTaskManagerImpl implements ProcessorTaskManager {
         this.processorFilterService = processorFilterService;
         this.processorFilterTrackerDao = processorFilterTrackerDao;
         this.executorProvider = executorProvider;
-        this.taskContextProvider = taskContextProvider;
-        this.processorTaskManager = processorTaskManager;
+        this.taskContextFactory = taskContextFactory;
         this.nodeInfo = nodeInfo;
         this.processorTaskDao = processorTaskDao;
         this.processorConfig = processorConfig;
@@ -341,12 +324,9 @@ class ProcessorTaskManagerImpl implements ProcessorTaskManager {
                     if (isScheduled()) {
                         LOGGER.debug("fillTaskStore() - Executing CreateStreamTasksTask");
 
-                        final TaskContext taskContext = taskContextProvider.get();
-
-                        Runnable runnable = () ->
+                        final Runnable runnable = taskContextFactory.context("Fill TaskStore", taskContext ->
                                 securityContext.secure(() ->
-                                        processorTaskManager.createTasks(taskContext));
-                        runnable = taskContext.sub(runnable);
+                                        createTasks(taskContext)));
                         final Executor executor = executorProvider.get(THREAD_POOL);
                         CompletableFuture
                                 .runAsync(runnable, executor)
@@ -387,10 +367,16 @@ class ProcessorTaskManagerImpl implements ProcessorTaskManager {
     }
 
     /**
-     * Task call back
+     * For use in tests and other setup tasks
      */
     @Override
-    public void createTasks(final TaskContext taskContext) {
+    public void createTasks() {
+        taskContextFactory.context("Fill TaskStore", taskContext ->
+                securityContext.secure(() ->
+                        createTasks(taskContext))).run();
+    }
+
+    private void createTasks(final TaskContext taskContext) {
         // We need to make sure that only 1 thread at a time is allowed to
         // create tasks. This should always be the case in production but some
         // tests will call this directly while scheduled execution could also be

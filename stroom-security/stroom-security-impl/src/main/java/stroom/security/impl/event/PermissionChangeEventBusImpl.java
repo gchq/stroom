@@ -22,10 +22,9 @@ import stroom.cluster.task.api.NodeNotFoundException;
 import stroom.cluster.task.api.NullClusterStateException;
 import stroom.cluster.task.api.TargetNodeSetFactory;
 import stroom.security.api.SecurityContext;
-import stroom.task.api.TaskContext;
+import stroom.task.api.TaskContextFactory;
 
 import javax.inject.Inject;
-import javax.inject.Provider;
 import javax.inject.Singleton;
 import java.util.Set;
 import java.util.concurrent.CompletableFuture;
@@ -36,7 +35,7 @@ class PermissionChangeEventBusImpl implements PermissionChangeEventBus {
     private static final Logger LOGGER = LoggerFactory.getLogger(PermissionChangeEventBusImpl.class);
 
     private final Executor executor;
-    private final Provider<TaskContext> taskContextProvider;
+    private final TaskContextFactory taskContextFactory;
     private final TargetNodeSetFactory targetNodeSetFactory;
     private final SecurityContext securityContext;
     private final PermissionChangeEventHandlers permissionChangeEventHandlers;
@@ -46,13 +45,13 @@ class PermissionChangeEventBusImpl implements PermissionChangeEventBus {
 
     @Inject
     PermissionChangeEventBusImpl(final Executor executor,
-                                 final Provider<TaskContext> taskContextProvider,
+                                 final TaskContextFactory taskContextFactory,
                                  final TargetNodeSetFactory targetNodeSetFactory,
                                  final SecurityContext securityContext,
                                  final PermissionChangeEventHandlers permissionChangeEventHandlers,
                                  final PermissionChangeResource permissionChangeResource) {
         this.executor = executor;
-        this.taskContextProvider = taskContextProvider;
+        this.taskContextFactory = taskContextFactory;
         this.targetNodeSetFactory = targetNodeSetFactory;
         this.securityContext = securityContext;
         this.permissionChangeEventHandlers = permissionChangeEventHandlers;
@@ -78,9 +77,7 @@ class PermissionChangeEventBusImpl implements PermissionChangeEventBus {
 
             if (started) {
                 // Dispatch the entity event to all nodes in the cluster.
-                final TaskContext taskContext = taskContextProvider.get();
-                Runnable runnable = () -> fireRemote(event);
-                runnable = taskContext.sub(runnable);
+                final Runnable runnable = taskContextFactory.context("Fire Remote Permission Change", taskContext -> fireRemote(event));
                 CompletableFuture.runAsync(runnable, executor);
             }
         } catch (final RuntimeException e) {

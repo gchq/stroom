@@ -17,17 +17,12 @@
 
 package stroom.task.api;
 
-import stroom.task.shared.FindTaskProgressCriteria;
 import stroom.task.shared.TaskId;
-import stroom.task.shared.TaskProgress;
-import stroom.util.shared.ResultPage;
 
 public interface TaskManager {
     void startup();
 
     void shutdown();
-
-    ResultPage<TaskProgress> find(FindTaskProgressCriteria criteria);
 
     /**
      * Find out if the task with the given id is terminated.

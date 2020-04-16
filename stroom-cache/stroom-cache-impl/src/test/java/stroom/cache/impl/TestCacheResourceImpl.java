@@ -6,15 +6,11 @@ import org.mockito.Mock;
 import org.mockito.Mockito;
 import org.mockito.junit.jupiter.MockitoSettings;
 import org.mockito.quality.Strictness;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 import stroom.cache.shared.CacheInfo;
 import stroom.cache.shared.CacheInfoResponse;
 import stroom.cache.shared.CacheResource;
 import stroom.node.api.NodeInfo;
 import stroom.node.api.NodeService;
-import stroom.task.api.TaskContext;
-import stroom.task.api.TaskContext.WrappedSupplier;
 import stroom.test.common.util.test.AbstractMultiNodeResourceTest;
 import stroom.util.shared.ResourcePaths;
 
@@ -22,37 +18,16 @@ import java.util.Collections;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
-import java.util.function.Supplier;
 
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
 @MockitoSettings(strictness = Strictness.LENIENT)
 class TestCacheResourceImpl extends AbstractMultiNodeResourceTest<CacheResource> {
-
-    private static final Logger LOGGER = LoggerFactory.getLogger(TestCacheResourceImpl.class);
-
     @Mock
     private CacheManagerService cacheManagerService;
 
     private Map<String, CacheManagerService> cacheManagerServiceMocks = new HashMap<>();
-
-    /**
-     * Create a {@link TaskContext} that wraps the runnable/supplier with no
-     * extra functionality
-     */
-    static TaskContext getTaskContext() {
-
-        final TaskContext taskContext = Mockito.mock(TaskContext.class);
-
-        // Set up TaskContext to just return the passed runnable/supplier
-        when(taskContext.sub(Mockito.any(Runnable.class)))
-                .thenAnswer(i -> new WrappedSupplier<>(taskContext, i.getArgument(0)));
-        when(taskContext.sub(Mockito.any(Supplier.class)))
-                .thenAnswer(i -> new WrappedSupplier<>(taskContext, i.getArgument(0)));
-
-        return taskContext;
-    }
 
     @Override
     public String getResourceBasePath() {
@@ -114,7 +89,7 @@ class TestCacheResourceImpl extends AbstractMultiNodeResourceTest<CacheResource>
                 nodeInfo,
                 webTargetFactory(),
                 cacheManagerService,
-                TestCacheResourceImpl::getTaskContext);
+                null);
     }
 
     @Test

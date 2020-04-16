@@ -22,11 +22,7 @@ import stroom.data.shared.StreamTypeNames;
 import stroom.data.store.api.InputStreamProvider;
 import stroom.data.store.api.Source;
 import stroom.data.store.api.Store;
-import stroom.data.zip.StroomFileNameUtil;
-import stroom.data.zip.StroomZipEntry;
-import stroom.data.zip.StroomZipFileType;
-import stroom.data.zip.StroomZipOutputStream;
-import stroom.data.zip.StroomZipOutputStreamImpl;
+import stroom.data.zip.*;
 import stroom.meta.api.AttributeMap;
 import stroom.meta.api.AttributeMapUtil;
 import stroom.meta.api.MetaService;
@@ -35,6 +31,7 @@ import stroom.meta.shared.FindMetaCriteria;
 import stroom.meta.shared.Meta;
 import stroom.security.api.SecurityContext;
 import stroom.task.api.TaskContext;
+import stroom.task.api.TaskContextFactory;
 import stroom.util.io.BufferFactory;
 import stroom.util.io.FileUtil;
 import stroom.util.io.StreamUtil;
@@ -56,7 +53,7 @@ public class DataDownloadTaskHandler {
     private static final String AGGREGATION_DELIMITER = "_";
     private static final String ZIP_EXTENSION = ".zip";
 
-    private final TaskContext taskContext;
+    private final TaskContextFactory taskContextFactory;
     private final Store streamStore;
     private final MetaService metaService;
     private final SecurityContext securityContext;
@@ -67,12 +64,12 @@ public class DataDownloadTaskHandler {
     private String lastFeedName;
 
     @Inject
-    public DataDownloadTaskHandler(final TaskContext taskContext,
+    public DataDownloadTaskHandler(final TaskContextFactory taskContextFactory,
                                    final Store streamStore,
                                    final MetaService metaService,
                                    final SecurityContext securityContext,
                                    final BufferFactory bufferFactory) {
-        this.taskContext = taskContext;
+        this.taskContextFactory = taskContextFactory;
         this.streamStore = streamStore;
         this.metaService = metaService;
         this.securityContext = securityContext;
@@ -80,6 +77,15 @@ public class DataDownloadTaskHandler {
     }
 
     public DataDownloadResult downloadData(final FindMetaCriteria criteria,
+                                           final Path outputDir,
+                                           final String format,
+                                           final DataDownloadSettings settings) {
+        return taskContextFactory.contextResult("Download Data", taskContext ->
+                downloadData(taskContext, criteria, outputDir, format, settings)).get();
+    }
+
+    public DataDownloadResult downloadData(final TaskContext taskContext,
+                                           final FindMetaCriteria criteria,
                                            final Path outputDir,
                                            final String format,
                                            final DataDownloadSettings settings) {
@@ -114,7 +120,7 @@ public class DataDownloadTaskHandler {
 
                         // Open a zip output stream if we don't currently have one.
                         if (stroomZipOutputStream == null) {
-                            stroomZipOutputStream = getStroomZipOutputStream(outputDir, format, metaMap);
+                            stroomZipOutputStream = getStroomZipOutputStream(taskContext, outputDir, format, metaMap);
                             id = 0;
                         }
 
@@ -247,7 +253,7 @@ public class DataDownloadTaskHandler {
         }
     }
 
-    private StroomZipOutputStream getStroomZipOutputStream(final Path outputDir, final String format, final AttributeMap attributeMap)
+    private StroomZipOutputStream getStroomZipOutputStream(final TaskContext taskContext, final Path outputDir, final String format, final AttributeMap attributeMap)
             throws IOException {
         final String filename = StroomFileNameUtil.constructFilename(null, fileCount.incrementAndGet(), format,
                 attributeMap, ZIP_EXTENSION);
