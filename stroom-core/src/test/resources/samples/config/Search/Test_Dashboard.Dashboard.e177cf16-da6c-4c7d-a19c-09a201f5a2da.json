@@ -12,12 +12,15 @@
       },
       "expression" : {
         "type" : "operator",
+        "op" : "AND",
         "children" : [ {
           "type" : "term",
           "field" : "EventTime",
           "condition" : "BETWEEN",
-          "value" : "2010-01-01T00:00:00.000Z,2010-01-01T00:10:00.000Z"
-        } ]
+          "value" : "2010-01-01T00:00:00.000Z,2010-01-01T00:10:00.000Z",
+          "enabled" : true
+        } ],
+        "enabled" : true
       }
     }
   }, {

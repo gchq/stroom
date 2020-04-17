@@ -41,6 +41,7 @@ import javax.inject.Inject;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.OutputStream;
+import java.nio.charset.Charset;
 import java.nio.file.DirectoryStream;
 import java.nio.file.FileVisitOption;
 import java.nio.file.FileVisitResult;
@@ -48,6 +49,7 @@ import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.attribute.BasicFileAttributes;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.EnumSet;
 import java.util.HashMap;
 import java.util.HashSet;
@@ -69,6 +71,7 @@ class ImportExportSerializerImpl implements ImportExportSerializer {
     private final ImportExportActionHandlers importExportActionHandlers;
     private final SecurityContext securityContext;
     private final ImportExportDocumentEventLog importExportDocumentEventLog;
+    private static final byte[] LINE_END_CHAR_BYTES = "\n".getBytes(Charset.defaultCharset());
 
     @Inject
     ImportExportSerializerImpl(final ExplorerService explorerService,
@@ -378,6 +381,10 @@ class ImportExportSerializerImpl implements ImportExportSerializer {
                     try {
                         final OutputStream outputStream = Files.newOutputStream(parentDir.resolve(fileName));
                         outputStream.write(v);
+                        // POSIX standard is for all files to end with a line end (\n) so add one if not there
+                        if (!hasLineEndAtLastChar(v)) {
+                            outputStream.write(LINE_END_CHAR_BYTES);
+                        }
                         outputStream.close();
 
                     } catch (final IOException e) {
@@ -387,6 +394,15 @@ class ImportExportSerializerImpl implements ImportExportSerializer {
 
                 importExportDocumentEventLog.exportDocument(docRef, null);
             }
+        }
+    }
+
+    private boolean hasLineEndAtLastChar(final byte[] bytes) {
+        if (bytes.length >= LINE_END_CHAR_BYTES.length) {
+            byte[] lastChar = Arrays.copyOfRange(bytes, bytes.length - LINE_END_CHAR_BYTES.length, bytes.length);
+            return Arrays.equals(LINE_END_CHAR_BYTES, lastChar);
+        } else {
+            return false;
         }
     }
 

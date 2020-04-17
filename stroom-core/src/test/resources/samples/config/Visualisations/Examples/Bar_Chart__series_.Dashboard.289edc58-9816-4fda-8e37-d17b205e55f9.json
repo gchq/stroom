@@ -82,12 +82,15 @@
       },
       "expression" : {
         "type" : "operator",
+        "op" : "AND",
         "children" : [ {
           "type" : "term",
           "field" : "DataExtractDate",
           "condition" : "BETWEEN",
-          "value" : "2000-10-01T00:00:00.000Z,2018-12-14T00:00:00.000Z"
-        } ]
+          "value" : "2000-10-01T00:00:00.000Z,2018-12-14T00:00:00.000Z",
+          "enabled" : true
+        } ],
+        "enabled" : true
       },
       "automate" : {
         "open" : true,

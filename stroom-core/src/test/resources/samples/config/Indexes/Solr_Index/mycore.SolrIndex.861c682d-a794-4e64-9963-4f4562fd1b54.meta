@@ -425,12 +425,15 @@
   } ],
   "retentionExpression" : {
     "type" : "operator",
+    "op" : "AND",
     "children" : [ {
       "type" : "term",
       "field" : "EventTime",
       "condition" : "LESS_THAN",
-      "value" : "now() - 3M"
-    } ]
+      "value" : "now() - 3M",
+      "enabled" : true
+    } ],
+    "enabled" : true
   },
   "solrConnectionConfig" : {
     "useZk" : false
