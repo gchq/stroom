@@ -118,7 +118,7 @@
           } ],
           "enabled" : true
         } ],
-        "enabled"  : true
+        "enabled" : true
       },
       "automate" : {
         "open" : true,

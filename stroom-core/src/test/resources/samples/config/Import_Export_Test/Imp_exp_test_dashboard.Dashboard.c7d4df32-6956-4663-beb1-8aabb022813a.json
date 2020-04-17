@@ -40,6 +40,7 @@
       },
       "expression" : {
         "type" : "operator",
+        "op" : "AND",
         "children" : [ {
           "type" : "term",
           "field" : "New Field 0",

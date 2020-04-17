@@ -94,7 +94,7 @@
       },
       "expression" : {
         "type" : "operator",
-        "o:p" : "AND",
+        "op" : "AND",
         "children" : [ {
           "type" : "term",
           "field" : "timestamp",

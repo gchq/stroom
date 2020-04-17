@@ -80,7 +80,7 @@
           "value" : "2016-02-01T00:00:00.000Z,2016-04-01T00:00:00.000Z",
           "enabled" : true
         } ],
-        "enabled" :  true
+        "enabled" : true
       },
       "automate" : {
         "open" : true,

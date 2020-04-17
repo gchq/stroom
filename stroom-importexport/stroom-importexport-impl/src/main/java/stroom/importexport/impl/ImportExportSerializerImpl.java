@@ -382,7 +382,7 @@ class ImportExportSerializerImpl implements ImportExportSerializer {
                         final OutputStream outputStream = Files.newOutputStream(parentDir.resolve(fileName));
                         outputStream.write(v);
                         // POSIX standard is for all files to end with a line end (\n) so add one if not there
-                        if (!hasLineEndAtLastChar(v)) {
+                        if (isMissingLineEndAsLastChar(v)) {
                             outputStream.write(LINE_END_CHAR_BYTES);
                         }
                         outputStream.close();
@@ -397,12 +397,12 @@ class ImportExportSerializerImpl implements ImportExportSerializer {
         }
     }
 
-    private boolean hasLineEndAtLastChar(final byte[] bytes) {
-        if (bytes.length >= LINE_END_CHAR_BYTES.length) {
-            byte[] lastChar = Arrays.copyOfRange(bytes, bytes.length - LINE_END_CHAR_BYTES.length, bytes.length);
-            return Arrays.equals(LINE_END_CHAR_BYTES, lastChar);
-        } else {
+    private boolean isMissingLineEndAsLastChar(final byte[] bytes) {
+        if (bytes.length < LINE_END_CHAR_BYTES.length) {
             return false;
+        } else {
+            byte[] lastChar = Arrays.copyOfRange(bytes, bytes.length - LINE_END_CHAR_BYTES.length, bytes.length);
+            return !Arrays.equals(LINE_END_CHAR_BYTES, lastChar);
         }
     }
 
