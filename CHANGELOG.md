@@ -8,6 +8,8 @@ and this project adheres to [Semantic Versioning](http://semver.org/).
 
 * Issue **#1450** : Stop data tabs showing all feeds.
 
+* Issue **#1454** : Fix NPE in feed name suggestion box.
+
 * Remove internal statistics from setup sample data.
 
 * Fix issue of pipeling structure not showing when it contains a StatisticsFilter.
