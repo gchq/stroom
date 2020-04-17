@@ -31,8 +31,8 @@ import javax.ws.rs.core.MediaType;
 
 @Api(value = "cluster/lock - /v1")
 @Path(ClusterLockResource.BASE_PATH)
-@Consumes(MediaType.APPLICATION_JSON)
 @Produces(MediaType.APPLICATION_JSON)
+@Consumes(MediaType.APPLICATION_JSON)
 public interface ClusterLockResource extends RestResource, DirectRestService {
     String BASE_PATH = "/cluster/lock" + ResourcePaths.V1;
     String TRY_PATH_PART = "/try";

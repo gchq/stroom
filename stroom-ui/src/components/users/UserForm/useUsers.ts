@@ -2,14 +2,14 @@ import { useCallback } from "react";
 import useAppNavigation from "lib/useAppNavigation";
 import { useApi as useAuthorisationApi } from "components/authorisation";
 import useApi from "../api/useApi";
-import { User } from "../types";
+import { Account } from "../types";
 import useUserState from "./useUserState";
 
 /**
  * This hook connects the REST API calls to the Redux Store.
  */
 const useUsers = () => {
-  const { user, setUser, setIsCreating } = useUserState();
+  const { account, setAccount, setIsCreating } = useUserState();
 
   const {
     nav: { goToUsers },
@@ -20,7 +20,7 @@ const useUsers = () => {
    */
   const { change: updateUserUsingApi } = useApi();
   const updateUser = useCallback(
-    (user: User) => {
+    (user: Account) => {
       updateUserUsingApi(user).then(() => {
         goToUsers();
       });
@@ -32,17 +32,17 @@ const useUsers = () => {
    * Creates a user
    */
   const { createUser: createAuthorisationUser } = useAuthorisationApi();
-  const { add: createUserUsingApi } = useApi();
+  const { add: createAccountUsingApi } = useApi();
   const createUser = useCallback(
-    (user: User) => {
-      createUserUsingApi(user).then(() => {
-        createAuthorisationUser(user.email).then(() => {
+    (account: Account) => {
+      createAccountUsingApi(account).then(() => {
+        createAuthorisationUser(account.email).then(() => {
           setIsCreating(false);
           goToUsers();
         });
       });
     },
-    [goToUsers, createUserUsingApi, createAuthorisationUser, setIsCreating],
+    [goToUsers, createAccountUsingApi, createAuthorisationUser, setIsCreating],
   );
 
   /**
@@ -51,19 +51,19 @@ const useUsers = () => {
   const { fetch: fetchUserUsingApi } = useApi();
   const fetchUser = useCallback(
     (userId: string) => {
-      fetchUserUsingApi(userId).then(user => {
+      fetchUserUsingApi(userId).then(account => {
         setIsCreating(false);
-        setUser(user);
+        setAccount(account);
       });
     },
-    [fetchUserUsingApi, setIsCreating, setUser],
+    [fetchUserUsingApi, setIsCreating, setAccount],
   );
 
   return {
     updateUser,
     createUser,
     fetchUser,
-    user,
+    account: account,
   };
 };
 

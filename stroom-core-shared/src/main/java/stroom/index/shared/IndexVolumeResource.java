@@ -3,7 +3,6 @@ package stroom.index.shared;
 import io.swagger.annotations.Api;
 import io.swagger.annotations.ApiOperation;
 import org.fusesource.restygwt.client.DirectRestService;
-import stroom.datasource.api.v2.TextField;
 import stroom.entity.shared.ExpressionCriteria;
 import stroom.util.shared.ResourcePaths;
 import stroom.util.shared.RestResource;
@@ -22,8 +21,8 @@ import javax.ws.rs.core.MediaType;
 
 @Api(value = "index volume - /v2")
 @Path(IndexVolumeResource.BASE_PATH)
-@Consumes(MediaType.APPLICATION_JSON)
 @Produces(MediaType.APPLICATION_JSON)
+@Consumes(MediaType.APPLICATION_JSON)
 public interface IndexVolumeResource extends RestResource, DirectRestService {
     String BASE_PATH = "/index/volume" + ResourcePaths.V2;
     String RESCAN_SUB_PATH = "/rescan";

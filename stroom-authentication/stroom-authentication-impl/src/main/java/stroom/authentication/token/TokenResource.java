@@ -37,7 +37,6 @@ import javax.ws.rs.Produces;
 import javax.ws.rs.QueryParam;
 import javax.ws.rs.core.Context;
 import javax.ws.rs.core.MediaType;
-import javax.ws.rs.core.Response;
 
 @Path("/token/v1")
 @Produces(MediaType.APPLICATION_JSON)
@@ -57,7 +56,7 @@ public interface TokenResource extends RestResource {
             value = "Submit a search request for tokens",
             response = SearchResponse.class,
             tags = {"ApiKey"})
-    Response search(
+    SearchResponse search(
             @Context @NotNull HttpServletRequest httpServletRequest,
             @ApiParam("SearchRequest") @NotNull @Valid SearchRequest searchRequest);
 
@@ -67,7 +66,7 @@ public interface TokenResource extends RestResource {
             value = "Create a new token.",
             response = Token.class,
             tags = {"ApiKey"})
-    Response create(
+    Token create(
             @Context @NotNull HttpServletRequest httpServletRequest,
             @ApiParam("CreateTokenRequest") @NotNull CreateTokenRequest createTokenRequest);
 
@@ -77,7 +76,7 @@ public interface TokenResource extends RestResource {
             tags = {"ApiKey"})
     @DELETE
     @Timed
-    Response deleteAll(@Context @NotNull HttpServletRequest httpServletRequest);
+    Integer deleteAll(@Context @NotNull HttpServletRequest httpServletRequest);
 
     @ApiOperation(
             value = "Delete a token by ID.",
@@ -86,7 +85,7 @@ public interface TokenResource extends RestResource {
     @DELETE
     @Path("/{id}")
     @Timed
-    Response delete(
+    Integer delete(
             @Context @NotNull HttpServletRequest httpServletRequest,
             @PathParam("id") int tokenId);
 
@@ -97,7 +96,7 @@ public interface TokenResource extends RestResource {
     @DELETE
     @Path("/byToken/{token}")
     @Timed
-    Response delete(
+    Integer delete(
             @Context @NotNull HttpServletRequest httpServletRequest,
             @PathParam("token") String token);
 
@@ -108,7 +107,7 @@ public interface TokenResource extends RestResource {
     @GET
     @Path("/byToken/{token}")
     @Timed
-    Response read(
+    Token read(
             @Context @NotNull HttpServletRequest httpServletRequest,
             @PathParam("token") String token);
 
@@ -119,7 +118,7 @@ public interface TokenResource extends RestResource {
     @GET
     @Path("/{id}")
     @Timed
-    Response read(
+    Token read(
             @Context @NotNull HttpServletRequest httpServletRequest,
             @PathParam("id") int tokenId);
 
@@ -130,7 +129,7 @@ public interface TokenResource extends RestResource {
     @GET
     @Path("/{id}/state")
     @Timed
-    Response toggleEnabled(
+    Integer toggleEnabled(
             @Context @NotNull HttpServletRequest httpServletRequest,
             @NotNull @PathParam("id") int tokenId,
             @NotNull @QueryParam("enabled") boolean enabled);
@@ -143,5 +142,5 @@ public interface TokenResource extends RestResource {
     @GET
     @Path("/publickey")
     @Timed
-    Response getPublicKey(@Context @NotNull HttpServletRequest httpServletRequest);
+    String getPublicKey(@Context @NotNull HttpServletRequest httpServletRequest);
 }

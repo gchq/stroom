@@ -7,7 +7,7 @@ import java.time.Duration;
 import java.util.Optional;
 
 public interface AccountDao {
-    Account create(Account account);
+    Account create(Account account, String password);
 
     void recordSuccessfulLogin(String email);
 

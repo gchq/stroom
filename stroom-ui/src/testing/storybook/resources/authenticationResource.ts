@@ -20,7 +20,7 @@ const resourceBuilder: ResourceBuilder = (
 
   // Login
   server
-    .post(`${authenticationServiceUrl}/noauth/authenticate`)
+    .post(`${authenticationServiceUrl}/noauth/login`)
     .intercept((req: HttpRequest, res: HttpResponse) => {
       const { email, password, sessionId, requestingClientId } = JSON.parse(
         req.body,

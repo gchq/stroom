@@ -19,14 +19,14 @@ import { useEffect } from "react";
 import useAppNavigation from "lib/useAppNavigation";
 import Loader from "components/Loader";
 import useIdFromPath from "lib/useIdFromPath";
-import { User } from "../types";
+import { Account } from "../types";
 import { useUsers } from "../api";
 import { validateAsync } from "../validation";
-import UserForm from "./UserForm";
+import AccountForm from "./AccountForm";
 import useServiceUrl from "startup/config/useServiceUrl";
 
-const EditUserContainer = () => {
-  const { updateUser, fetchUser, user } = useUsers();
+const EditAccountContainer = () => {
+  const { updateUser, fetchUser, account } = useUsers();
   const userId = useIdFromPath("user/");
   const {
     nav: { goToUsers },
@@ -35,15 +35,15 @@ const EditUserContainer = () => {
   const { authenticationServiceUrl } = useServiceUrl();
 
   useEffect(() => {
-    if (!!userId && !user) fetchUser(userId);
-  }, [fetchUser, userId, user]);
+    if (!!userId && !account) fetchUser(userId);
+  }, [fetchUser, userId, account]);
 
-  if (!!user) {
+  if (!!account) {
     return (
-      <UserForm
-        user={user}
+      <AccountForm
+        account={account}
         onBack={() => goToUsers()}
-        onSubmit={(user: User) => updateUser(user)}
+        onSubmit={(a: Account) => updateUser(a)}
         onCancel={() => goToUsers()}
         onValidate={async (password, verifyPassword, email) => {
           return validateAsync(
@@ -60,4 +60,4 @@ const EditUserContainer = () => {
   }
 };
 
-export default EditUserContainer;
+export default EditAccountContainer;

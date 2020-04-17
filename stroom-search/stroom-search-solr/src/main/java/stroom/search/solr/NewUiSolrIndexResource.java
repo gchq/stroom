@@ -46,6 +46,7 @@ import java.util.Set;
         description = "Solr Index API")
 @Path(NewUiSolrIndexResource.BASE_RESOURCE_PATH)
 @Produces(MediaType.APPLICATION_JSON)
+@Consumes(MediaType.APPLICATION_JSON)
 public class NewUiSolrIndexResource implements RestResource, HasHealthCheck {
     public static final String BASE_RESOURCE_PATH = "/solr/index" + ResourcePaths.V1;
 
@@ -57,7 +58,6 @@ public class NewUiSolrIndexResource implements RestResource, HasHealthCheck {
     }
 
     @GET
-    @Produces(MediaType.APPLICATION_JSON)
     @Path("/list")
     @Timed
     @ApiOperation(
@@ -68,8 +68,6 @@ public class NewUiSolrIndexResource implements RestResource, HasHealthCheck {
     }
 
     @POST
-    @Consumes(MediaType.APPLICATION_JSON)
-    @Produces(MediaType.APPLICATION_JSON)
     @Path("/import")
     @Timed
     @ApiOperation(
@@ -82,8 +80,6 @@ public class NewUiSolrIndexResource implements RestResource, HasHealthCheck {
     }
 
     @POST
-    @Consumes(MediaType.APPLICATION_JSON)
-    @Produces(MediaType.APPLICATION_JSON)
     @Path("/export")
     @Timed
     @ApiOperation(

@@ -1,7 +1,7 @@
 import * as React from "react";
 import { ReactTableFunction, RowInfo, Column } from "react-table";
 import StateCell from "./StateCell";
-import { User } from "../types";
+import { Account } from "../types";
 import * as moment from "moment";
 import useConfig from "startup/config/useConfig";
 
@@ -15,7 +15,7 @@ interface FilterProps {
   onChange: ReactTableFunction;
 }
 
-const useColumns = (selectedUserRowId: string | undefined): Column<User>[] => {
+const useColumns = (selectedUserRowId: string | undefined): Column<Account>[] => {
   const { dateFormat } = useConfig();
   const IdCell: React.FunctionComponent<RowInfo> = React.useCallback(
     ({ row }) => (

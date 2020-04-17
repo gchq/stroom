@@ -5,7 +5,7 @@ const useServiceUrl = () => {
 
   return {
     tokenServiceUrl: `${stroomBaseServiceUrl}/token/v1`,
-    userServiceUrl: `${stroomBaseServiceUrl}/user/v1`,
+    accountServiceUrl: `${stroomBaseServiceUrl}/account/v1`,
     authenticationServiceUrl: `${stroomBaseServiceUrl}/authentication/v1`,
     loginServiceUrl: `${stroomBaseServiceUrl}/login/v1`,
     authorisationServiceUrl: `${stroomBaseServiceUrl}/authorisation/v1`,

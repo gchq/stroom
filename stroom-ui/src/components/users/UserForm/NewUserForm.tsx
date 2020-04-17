@@ -1,13 +1,12 @@
 import * as React from "react";
 import useForm from "react-hook-form";
 import Button from "components/Button";
-import { Icon, Input, Select, Switch } from "antd";
+import { Icon, Input, Switch } from "antd";
 import BackConfirmation from "../BackConfirmation";
 import EditUserFormProps from "./EditUserFormProps";
 import styled from "styled-components";
 import { MandatoryIndicator } from "components/FormComponents";
 
-const { Option } = Select;
 const { TextArea } = Input;
 
 const Row = styled.div`
@@ -45,10 +44,6 @@ const StyledInput = styled(Input)`
 const StyledPasswordInput = styled(Input.Password)`
   height: 2.5em;
   width: 27.5em;
-`;
-
-const StyledSelect = styled(Select)`
-  width: 27.5em !important;
 `;
 
 const StyledTextArea = styled(TextArea)`
@@ -165,18 +160,11 @@ const UserForm: React.FunctionComponent<EditUserFormProps> = ({
           </Row>
 
           <Row>
-            <Label>Account status:</Label>
+            <LabelForSwitch>Enabled?</LabelForSwitch>
             <InputAndValidation>
-              <StyledSelect>
-                <Option value="enabled">Active</Option>
-                <Option value="disabled">Disabled</Option>
-                <Option disabled value="inactive">
-                  Inactive (because of disuse)
-                </Option>
-                <Option disabled value="locked">
-                  Locked (because of failed logins)
-                </Option>
-              </StyledSelect>
+              <div>
+                <Switch ref={register}/>
+              </div>
             </InputAndValidation>
           </Row>
 

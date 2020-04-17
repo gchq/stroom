@@ -1,7 +1,7 @@
 import { action } from "@storybook/addon-actions";
 import { storiesOf } from "@storybook/react";
 import * as React from "react";
-import { User } from "../types";
+import { Account } from "../types";
 import {
   disabledUser,
   inactiveUser,
@@ -9,11 +9,11 @@ import {
   newUser,
   wellUsedUser,
 } from "testing/data/users";
-import UserForm from "./UserForm";
+import AccountForm from "./AccountForm";
 import { addThemedStories } from "testing/storybook/themedStoryGenerator";
 
 interface Props {
-  user: User;
+  user: Account;
 }
 
 const onValidate = (
@@ -27,8 +27,8 @@ const onValidate = (
 
 const TestHarness: React.FunctionComponent<Props> = ({ user }) => {
   return (
-    <UserForm
-      user={user}
+    <AccountForm
+      account={user}
       onBack={action("onBack")}
       onSubmit={action("onSubmit")}
       onCancel={action("onCancel")}
@@ -38,7 +38,7 @@ const TestHarness: React.FunctionComponent<Props> = ({ user }) => {
 };
 
 interface Test {
-  [s: string]: User;
+  [s: string]: Account;
 }
 
 const tests: Test = {

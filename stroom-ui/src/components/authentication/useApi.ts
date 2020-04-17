@@ -47,7 +47,7 @@ export const useApi = (): Api => {
   const apiLogin = useCallback(
     (credentials: Credentials) => {
       const { email, password } = credentials;
-      const loginServiceUrl = `${authenticationServiceUrl}/noauth/authenticate?redirect_uri=${encodeURI(redirectUri)}`;
+      const loginServiceUrl = `${authenticationServiceUrl}/noauth/login?redirect_uri=${encodeURI(redirectUri)}`;
 
       return httpPostJsonResponse(
         loginServiceUrl,

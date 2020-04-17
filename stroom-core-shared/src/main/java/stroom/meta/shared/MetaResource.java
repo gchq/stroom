@@ -37,11 +37,10 @@ import java.util.List;
 @Api(value = "meta - /v1")
 @Path("/meta" + ResourcePaths.V1)
 @Produces(MediaType.APPLICATION_JSON)
+@Consumes(MediaType.APPLICATION_JSON)
 public interface MetaResource extends RestResource, DirectRestService {
     @PUT
     @Path("update/status")
-    @Consumes(MediaType.APPLICATION_JSON)
-    @Produces(MediaType.APPLICATION_JSON)
     @ApiOperation(
             value = "Update status on matching meta data",
             response = Integer.class)
@@ -49,8 +48,6 @@ public interface MetaResource extends RestResource, DirectRestService {
 
     @POST
     @Path("find")
-    @Consumes(MediaType.APPLICATION_JSON)
-    @Produces(MediaType.APPLICATION_JSON)
     @ApiOperation(
             value = "Find matching meta data",
             response = ResourceGeneration.class)
@@ -58,8 +55,6 @@ public interface MetaResource extends RestResource, DirectRestService {
 
     @GET
     @Path("info/{id}")
-    @Consumes(MediaType.APPLICATION_JSON)
-    @Produces(MediaType.APPLICATION_JSON)
     @ApiOperation(
             value = "Find full info about some meta item",
             response = MetaInfoSection.class)

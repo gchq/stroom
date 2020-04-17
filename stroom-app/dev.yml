@@ -26,6 +26,11 @@ logging:
     stroom: INFO
     io.dropwizard: INFO
     org.eclipse.jetty: INFO
+    org.glassfish: INFO
+    org.glassfish.jersey: INFO
+    #    org.glassfish.jersey.logging.LoggingFeature: INFO
+    #    org.glassfish.jersey.server.ServerRuntime.Responder: INFO
+    #    org.glassfish.jersey.server.validation.internal.ValidationExceptionMapper: FINER
     org.flywaydb: INFO
     "event-logger":
       level: INFO
@@ -58,6 +63,10 @@ logging:
     logFormat: "%-6level [%d{\"yyyy-MM-dd'T'HH:mm:ss.SSS'Z'\",UTC}] [%t] %logger - %X{code} %msg %n"
 
 appConfig:
+  uiUri:
+    scheme: https
+    hostname: localhost
+    port: 9443
   commonDbDetails:
     connection:
       jdbcDriverClassName: ${STROOM_JDBC_DRIVER_CLASS_NAME:-com.mysql.cj.jdbc.Driver}

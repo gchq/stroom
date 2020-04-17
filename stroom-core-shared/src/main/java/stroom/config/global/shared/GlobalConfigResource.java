@@ -20,8 +20,8 @@ import javax.ws.rs.core.MediaType;
 
 @Api(value = "config - /v1")
 @Path(GlobalConfigResource.BASE_PATH)
-@Consumes(MediaType.APPLICATION_JSON)
 @Produces(MediaType.APPLICATION_JSON)
+@Consumes(MediaType.APPLICATION_JSON)
 public interface GlobalConfigResource extends RestResource, DirectRestService {
     String BASE_PATH = "/config" + ResourcePaths.V1;
     String PROPERTIES_SUB_PATH = "/properties";
@@ -59,7 +59,6 @@ public interface GlobalConfigResource extends RestResource, DirectRestService {
 
 //    @GET
 //    @Path(PROPERTIES_SUB_PATH + PROP_NAME_PATH_PARAM + YAML_OVERRIDE_VALUE_SUB_PATH)
-//    @Produces(MediaType.APPLICATION_JSON)
 //    OverrideValue<String> getYamlValueByName(final @PathParam("propertyName") String propertyName);
 
     @GET
@@ -69,8 +68,6 @@ public interface GlobalConfigResource extends RestResource, DirectRestService {
 
 //    @POST
 //    @Path("/find")
-//    @Consumes(MediaType.APPLICATION_JSON)
-//    @Produces(MediaType.APPLICATION_JSON)
 //    @ApiOperation(
 //            value = "Get global config properties",
 //            response = ResultPage.class)

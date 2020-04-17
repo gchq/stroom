@@ -1,8 +1,8 @@
-import { User } from "../types";
-import CreateUserFormProps from "./CreateUserFormProps";
+import { Account } from "../types";
+import CreateAccountFormProps from "./CreateAccountFormProps";
 
-interface EditUserFormProps extends CreateUserFormProps {
-  user: User;
+interface EditUserFormProps extends CreateAccountFormProps {
+  account: Account;
 }
 
 export default EditUserFormProps;

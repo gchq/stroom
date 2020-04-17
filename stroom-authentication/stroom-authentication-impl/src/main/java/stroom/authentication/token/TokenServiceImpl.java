@@ -10,7 +10,6 @@ import stroom.security.shared.PermissionNames;
 
 import javax.inject.Inject;
 import javax.ws.rs.BadRequestException;
-import javax.ws.rs.core.Response;
 import java.time.Instant;
 import java.util.Optional;
 
@@ -85,24 +84,24 @@ public class TokenServiceImpl implements TokenService {
     }
 
     @Override
-    public void deleteAll() {
+    public int deleteAll() {
         checkPermission();
-        dao.deleteAllTokensExceptAdmins();
         stroomEventLoggingService.createAction("DeleteAllApiTokens", "Delete all tokens");
+        return dao.deleteAllTokensExceptAdmins();
     }
 
     @Override
-    public void delete(int tokenId) {
+    public int delete(int tokenId) {
         checkPermission();
-        dao.deleteTokenById(tokenId);
         stroomEventLoggingService.createAction("DeleteApiToken", "Delete a token by ID");
+        return dao.deleteTokenById(tokenId);
     }
 
     @Override
-    public void delete(String token) {
+    public int delete(String token) {
         checkPermission();
-        dao.deleteTokenByTokenString(token);
         stroomEventLoggingService.createAction("DeleteApiToken", "Delete a token by the value of the actual token.");
+        return dao.deleteTokenByTokenString(token);
     }
 
     @Override
@@ -120,15 +119,15 @@ public class TokenServiceImpl implements TokenService {
     }
 
     @Override
-    public void toggleEnabled(int tokenId, boolean isEnabled) {
+    public int toggleEnabled(int tokenId, boolean isEnabled) {
         checkPermission();
         final String userId = securityContext.getUserId();
         stroomEventLoggingService.createAction("ToggleApiTokenEnabled", "Toggle whether a token is enabled or not.");
         Optional<Account> updatingUser = accountService.get(userId);
 
-        if (updatingUser.isPresent()) {
-            dao.enableOrDisableToken(tokenId, isEnabled, updatingUser.get());
-        }
+        return updatingUser
+                .map(account -> dao.enableOrDisableToken(tokenId, isEnabled, account))
+                .orElse(0);
     }
 
 //    @Override

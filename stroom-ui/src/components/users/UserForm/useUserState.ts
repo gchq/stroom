@@ -1,26 +1,26 @@
 import { useReducer } from "react";
-import { User } from "../types";
+import { Account } from "../types";
 
-interface UserStateApi {
-  user?: User;
+interface AccountStateApi {
+  account?: Account;
   isCreating: boolean;
-  setUser: (user: User) => void;
-  clearUser: () => void;
+  setAccount: (account: Account) => void;
+  clearAccount: () => void;
   setIsCreating: (isCreating: boolean) => void;
 }
 
-interface UsersState {
-  userBeingEdited?: User;
+interface AccountState {
+  accountBeingEdited?: Account;
   isCreating: boolean;
 }
 
-interface SetUserAction {
-  type: "set_user";
-  user?: User;
+interface SetAccountAction {
+  type: "set_account";
+  account?: Account;
 }
 
-interface ClearUserAction {
-  type: "clear_user";
+interface ClearAccountAction {
+  type: "clear_account";
 }
 
 interface SetIsCreatingAction {
@@ -29,31 +29,31 @@ interface SetIsCreatingAction {
 }
 
 const reducer = (
-  state: UsersState,
-  action: SetUserAction | ClearUserAction | SetIsCreatingAction,
+  state: AccountState,
+  action: SetAccountAction | ClearAccountAction | SetIsCreatingAction,
 ) => {
   switch (action.type) {
-    case "set_user":
-      return { ...state, userBeingEdited: action.user };
+    case "set_account":
+      return { ...state, accountBeingEdited: action.account };
     case "set_is_creating":
       return { ...state, isCreating: action.isCreating };
-    case "clear_user":
-      return { ...state, userBeingEdited: undefined };
+    case "clear_account":
+      return { ...state, accountBeingEdited: undefined };
     default:
       return state;
   }
 };
 
-const useUserState = (): UserStateApi => {
-  const [userState, dispatch] = useReducer(reducer, {
-    userBeingEdited: undefined,
+const useUserState = (): AccountStateApi => {
+  const [accountState, dispatch] = useReducer(reducer, {
+    accountBeingEdited: undefined,
     isCreating: true,
   });
   return {
-    user: userState.userBeingEdited,
-    isCreating: userState.isCreating,
-    setUser: (user: User | undefined) => dispatch({ type: "set_user", user }),
-    clearUser: () => dispatch({ type: "clear_user" }),
+    account: accountState.accountBeingEdited,
+    isCreating: accountState.isCreating,
+    setAccount: (account: Account | undefined) => dispatch({ type: "set_account", account: account }),
+    clearAccount: () => dispatch({ type: "clear_account" }),
     setIsCreating: (isCreating: boolean) =>
       dispatch({ type: "set_is_creating", isCreating }),
   };

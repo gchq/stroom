@@ -31,8 +31,7 @@ import org.jooq.SortField;
 import org.jooq.Table;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import stroom.authentication.token.TokenBuilder;
-import stroom.authentication.token.TokenBuilderFactory;
+import stroom.authentication.account.Account;
 import stroom.authentication.config.TokenConfig;
 import stroom.authentication.exceptions.BadRequestException;
 import stroom.authentication.exceptions.NoSuchUserException;
@@ -40,8 +39,9 @@ import stroom.authentication.exceptions.UnsupportedFilterException;
 import stroom.authentication.token.SearchRequest;
 import stroom.authentication.token.SearchResponse;
 import stroom.authentication.token.Token;
+import stroom.authentication.token.TokenBuilder;
+import stroom.authentication.token.TokenBuilderFactory;
 import stroom.authentication.token.TokenDao;
-import stroom.authentication.account.Account;
 import stroom.db.util.JooqUtil;
 
 import javax.inject.Inject;
@@ -53,9 +53,9 @@ import java.util.List;
 import java.util.Map;
 import java.util.Optional;
 
+import static stroom.authentication.impl.db.jooq.tables.Account.ACCOUNT;
 import static stroom.authentication.impl.db.jooq.tables.Token.TOKEN;
 import static stroom.authentication.impl.db.jooq.tables.TokenType.TOKEN_TYPE;
-import static stroom.authentication.impl.db.jooq.tables.Account.ACCOUNT;
 
 @Singleton
 class TokenDaoImpl implements TokenDao {
@@ -268,25 +268,25 @@ class TokenDaoImpl implements TokenDao {
     }
 
     @Override
-    public void deleteAllTokensExceptAdmins() {
+    public int deleteAllTokensExceptAdmins() {
         Integer adminUserId = JooqUtil.contextResult(authDbConnProvider, context -> context
                 .select(ACCOUNT.ID).from(ACCOUNT)
                 .where(ACCOUNT.EMAIL.eq("admin")).fetchOne().into(Integer.class));
 
-        JooqUtil.context(authDbConnProvider, context -> context
+        return JooqUtil.contextResult(authDbConnProvider, context -> context
                 .deleteFrom(TOKEN)
                 .where(TOKEN.FK_ACCOUNT_ID.ne(adminUserId))
                 .execute());
     }
 
     @Override
-    public void deleteTokenById(int tokenId) {
-        JooqUtil.context(authDbConnProvider, context -> context.deleteFrom(TOKEN).where(TOKEN.ID.eq(tokenId)).execute());
+    public int deleteTokenById(int tokenId) {
+        return JooqUtil.contextResult(authDbConnProvider, context -> context.deleteFrom(TOKEN).where(TOKEN.ID.eq(tokenId)).execute());
     }
 
     @Override
-    public void deleteTokenByTokenString(String token) {
-        JooqUtil.context(authDbConnProvider, context -> context.deleteFrom(TOKEN).where(TOKEN.DATA.eq(token)).execute());
+    public int deleteTokenByTokenString(String token) {
+        return JooqUtil.contextResult(authDbConnProvider, context -> context.deleteFrom(TOKEN).where(TOKEN.DATA.eq(token)).execute());
     }
 
     @Override
@@ -333,8 +333,8 @@ class TokenDaoImpl implements TokenDao {
 
 
     @Override
-    public void enableOrDisableToken(int tokenId, boolean enabled, Account updatingAccount) {
-        Object result = JooqUtil.contextResult(authDbConnProvider, context -> context
+    public int enableOrDisableToken(int tokenId, boolean enabled, Account updatingAccount) {
+        return JooqUtil.contextResult(authDbConnProvider, context -> context
                 .update(TOKEN)
                 .set(TOKEN.ENABLED, enabled)
                 .set(TOKEN.UPDATE_TIME_MS, System.currentTimeMillis())

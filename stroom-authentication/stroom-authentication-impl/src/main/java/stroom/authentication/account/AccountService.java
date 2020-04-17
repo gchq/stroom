@@ -2,10 +2,6 @@ package stroom.authentication.account;
 
 import com.google.common.base.Strings;
 import org.apache.commons.lang3.tuple.Pair;
-import org.jooq.JSONFormat;
-import org.jooq.Result;
-import org.mindrot.jbcrypt.BCrypt;
-import stroom.authentication.exceptions.ConflictException;
 import stroom.event.logging.api.StroomEventLoggingService;
 import stroom.security.api.SecurityContext;
 import stroom.security.shared.PermissionException;
@@ -14,7 +10,6 @@ import stroom.util.shared.ResultPage;
 
 import javax.inject.Inject;
 import javax.ws.rs.BadRequestException;
-import java.time.LocalDateTime;
 import java.util.ArrayList;
 import java.util.Optional;
 
@@ -90,12 +85,12 @@ public class AccountService {
                 "Delete a user by ID");
     }
 
-    public int create(Account account) {
+    public int create(final CreateAccountRequest request) {
         checkPermission();
 
         // Validate
         final String userId = securityContext.getUserId();
-        Pair<Boolean, String> validationResults = isValidForCreate(account);
+        Pair<Boolean, String> validationResults = isValidForCreate(request);
         boolean isUserValid = validationResults.getLeft();
         if (!isUserValid) {
             throw new BadRequestException(validationResults.getRight());
@@ -104,19 +99,30 @@ public class AccountService {
 //            throw new ConflictException(AccountValidationError.USER_ALREADY_EXISTS.getMessage());
 //        }
 
-        account.setCreateTimeMs(System.currentTimeMillis());
+        final long now = System.currentTimeMillis();
+
+        final Account account = new Account();
+        account.setFirstName(request.getFirstName());
+        account.setLastName(request.getLastName());
+        account.setEmail(request.getEmail());
+        account.setComments(request.getComments());
+        account.setForcePasswordChange(request.isForcePasswordChange());
+        account.setNeverExpires(request.isNeverExpires());
+        account.setCreateTimeMs(now);
         account.setCreateUser(userId);
+        account.setUpdateTimeMs(now);
+        account.setUpdateUser(userId);
         account.setLoginCount(0);
         // Set enabled by default.
         account.setEnabled(true);
 
-        int newUserId = accountDao.create(account).getId();
+        int newUserId = accountDao.create(account, request.getPassword()).getId();
 
         stroomEventLoggingService.createAction("CreateUser", "Create a user");
         return newUserId;
     }
 
-    public static Pair<Boolean, String> isValidForCreate(Account account) {
+    public static Pair<Boolean, String> isValidForCreate(CreateAccountRequest account) {
         ArrayList<AccountValidationError> validationErrors = new ArrayList<>();
 
         if (account == null) {
@@ -152,13 +158,5 @@ public class AccountService {
         if (!securityContext.hasAppPermission(PermissionNames.MANAGE_USERS_PERMISSION)) {
             throw new PermissionException(securityContext.getUserId(), "You do not have permission to manage users");
         }
-    }
-
-    /**
-     * This is not the same as getPasswordHash(). That's a getting for the model property,
-     * but this method actually creates a new hash.
-     */
-    public String createPasswordHash(final String password) {
-        return BCrypt.hashpw(password, BCrypt.gensalt());
     }
 }

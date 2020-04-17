@@ -22,7 +22,7 @@ import stroom.util.shared.ResultPage;
 
 import javax.inject.Inject;
 import javax.servlet.http.HttpServletRequest;
-import javax.ws.rs.core.Response;
+import javax.ws.rs.NotFoundException;
 import java.util.Optional;
 
 // TODO : @66 Add audit logging
@@ -35,47 +35,45 @@ class AccountResourceImpl implements AccountResource {
     }
 
     @Override
-    public ResultPage<Account> getAll(final HttpServletRequest httpServletRequest) {
+    public ResultPage<Account> list(final HttpServletRequest httpServletRequest) {
         return service.getAll();
     }
 
     @Override
-    public Response createUser(final HttpServletRequest httpServletRequest,
-                               final Account account) {
-        final int newUserId = service.create(account);
-        return Response.status(Response.Status.OK).entity(newUserId).build();
+    public Integer create(final HttpServletRequest httpServletRequest,
+                          final CreateAccountRequest request) {
+        return service.create(request);
     }
 
     @Override
-    public ResultPage<Account> searchUsers(final HttpServletRequest httpServletRequest,
-                                           final String email) {
+    public ResultPage<Account> search(final HttpServletRequest httpServletRequest,
+                                      final String email) {
         return service.search(email);
     }
 
     @Override
-    public Response getUser(final HttpServletRequest httpServletRequest,
-                            final int userId) {
+    public Account read(final HttpServletRequest httpServletRequest,
+                        final int userId) {
         final Optional<Account> optionalUser = service.get(userId);
         if (optionalUser.isPresent()) {
-            return Response.status(Response.Status.OK).entity(optionalUser.get()).build();
-        } else {
-            return Response.status(Response.Status.NOT_FOUND).build();
+            return optionalUser.get();
         }
+        throw new NotFoundException();
     }
 
     @Override
-    public Response updateUser(final HttpServletRequest httpServletRequest,
-                               final Account account,
-                               final int userId) {
+    public Boolean update(final HttpServletRequest httpServletRequest,
+                          final Account account,
+                          final int userId) {
         service.update(account, userId);
-        return Response.status(Response.Status.NO_CONTENT).build();
+        return true;
     }
 
     @Override
-    public Response deleteUser(final HttpServletRequest httpServletRequest,
-                               final int userId) {
+    public Boolean delete(final HttpServletRequest httpServletRequest,
+                          final int userId) {
         service.deleteUser(userId);
-        return Response.status(Response.Status.NO_CONTENT).build();
+        return true;
     }
 }
 

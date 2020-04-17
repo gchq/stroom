@@ -34,11 +34,10 @@ import javax.ws.rs.core.MediaType;
 @Api(value = "statistic - /v1")
 @Path("/statistic" + ResourcePaths.V1)
 @Produces(MediaType.APPLICATION_JSON)
+@Consumes(MediaType.APPLICATION_JSON)
 public interface StatisticResource extends RestResource, DirectRestService {
     @POST
     @Path("/read")
-    @Consumes(MediaType.APPLICATION_JSON)
-    @Produces(MediaType.APPLICATION_JSON)
     @ApiOperation(
             value = "Get a statistic doc",
             response = XsltDoc.class)
@@ -46,8 +45,6 @@ public interface StatisticResource extends RestResource, DirectRestService {
 
     @PUT
     @Path("/update")
-    @Consumes(MediaType.APPLICATION_JSON)
-    @Produces(MediaType.APPLICATION_JSON)
     @ApiOperation(
             value = "Update a statistic doc",
             response = StatisticStoreDoc.class)

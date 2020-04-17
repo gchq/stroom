@@ -35,11 +35,10 @@ import javax.ws.rs.core.MediaType;
 @Api(value = "xslt - /v1")
 @Path("/xslt" + ResourcePaths.V1)
 @Produces(MediaType.APPLICATION_JSON)
+@Consumes(MediaType.APPLICATION_JSON)
 public interface XsltResource extends RestResource, DirectRestService {
     @POST
     @Path("/read")
-    @Consumes(MediaType.APPLICATION_JSON)
-    @Produces(MediaType.APPLICATION_JSON)
     @ApiOperation(
             value = "Get an xslt doc",
             response = XsltDoc.class)
@@ -47,8 +46,6 @@ public interface XsltResource extends RestResource, DirectRestService {
 
     @PUT
     @Path("/update")
-    @Consumes(MediaType.APPLICATION_JSON)
-    @Produces(MediaType.APPLICATION_JSON)
     @ApiOperation(
             value = "Update an xslt doc",
             response = XsltDoc.class)
@@ -60,7 +57,6 @@ public interface XsltResource extends RestResource, DirectRestService {
 
     @POST
     @Path("/{xsltId}")
-    @Consumes(MediaType.APPLICATION_JSON)
     void save(@PathParam("xsltId") final String xsltId,
                          final XsltDTO xsltDto);
 }

@@ -20,7 +20,7 @@ package stroom.authentication.token;
 
 import javax.inject.Inject;
 import javax.servlet.http.HttpServletRequest;
-import javax.ws.rs.core.Response;
+import javax.ws.rs.NotFoundException;
 
 // TODO : @66 Add audit logging
 public class TokenResourceImpl implements TokenResource {
@@ -38,66 +38,55 @@ public class TokenResourceImpl implements TokenResource {
      * The user must have the 'Manage Users' permission to call this.
      */
     @Override
-    public final Response search(final HttpServletRequest httpServletRequest,
+    public final SearchResponse search(final HttpServletRequest httpServletRequest,
                                  final SearchRequest searchRequest) {
-        var results = service.search(searchRequest);
-        return Response.status(Response.Status.OK).entity(results).build();
+        return service.search(searchRequest);
     }
 
     @Override
-    public final Response create(final HttpServletRequest httpServletRequest,
+    public final Token create(final HttpServletRequest httpServletRequest,
                                  final CreateTokenRequest createTokenRequest) {
-        var token = service.create(createTokenRequest);
-        return Response.status(Response.Status.OK).entity(token).build();
+        return service.create(createTokenRequest);
     }
 
     @Override
-    public final Response deleteAll(final HttpServletRequest httpServletRequest) {
-        service.deleteAll();
-        return Response.status(Response.Status.OK).entity("All tokens deleted").build();
+    public final Integer deleteAll(final HttpServletRequest httpServletRequest) {
+        return service.deleteAll();
     }
 
     @Override
-    public final Response delete(final HttpServletRequest httpServletRequest,
+    public final Integer delete(final HttpServletRequest httpServletRequest,
                                  final int tokenId) {
-        service.delete(tokenId);
-        return Response.status(Response.Status.NO_CONTENT).build();
+        return service.delete(tokenId);
     }
 
     @Override
-    public final Response delete(final HttpServletRequest httpServletRequest,
+    public final Integer delete(final HttpServletRequest httpServletRequest,
                                  final String token) {
-        service.delete(token);
-        return Response.status(Response.Status.OK).entity("Deleted token").build();
+        return service.delete(token);
     }
 
     @Override
-    public final Response read(final HttpServletRequest httpServletRequest,
+    public final Token read(final HttpServletRequest httpServletRequest,
                                final String token) {
-        return service.read(token)
-                .map(tokenResult -> Response.status(Response.Status.OK).entity(tokenResult).build())
-                .orElseGet(() -> Response.status(Response.Status.NOT_FOUND).build());
+        return service.read(token).orElseThrow(NotFoundException::new);
     }
 
     @Override
-    public final Response read(final HttpServletRequest httpServletRequest,
+    public final Token read(final HttpServletRequest httpServletRequest,
                                final int tokenId) {
-        return service.read(tokenId)
-                .map(token -> Response.status(Response.Status.OK).entity(token).build())
-                .orElseGet(() -> Response.status(Response.Status.NOT_FOUND).build());
+        return service.read(tokenId).orElseThrow(NotFoundException::new);
     }
 
     @Override
-    public final Response toggleEnabled(final HttpServletRequest httpServletRequest,
+    public final Integer toggleEnabled(final HttpServletRequest httpServletRequest,
                                         final int tokenId,
                                         final boolean enabled) {
-        service.toggleEnabled(tokenId, enabled);
-        return Response.status(Response.Status.NO_CONTENT).build();
+        return service.toggleEnabled(tokenId, enabled);
     }
 
     @Override
-    public final Response getPublicKey(final HttpServletRequest httpServletRequest) {
-        String jwkAsJson = service.getPublicKey();
-        return Response.status(Response.Status.OK).entity(jwkAsJson).build();
+    public final String getPublicKey(final HttpServletRequest httpServletRequest) {
+        return service.getPublicKey();
     }
 }

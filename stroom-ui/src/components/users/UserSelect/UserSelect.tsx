@@ -17,7 +17,7 @@
 import * as React from "react";
 import { useState } from "react";
 import AsyncSelect from "react-select/async";
-import { User } from "../types";
+import { Account } from "../types";
 
 const loadOptions = (
   inputValue: string,
@@ -38,10 +38,10 @@ const loadOptions = (
     .then(response => response.json())
     .then(body => {
       const options = body
-        .sort((userA: User, userB: User) =>
+        .sort((userA: Account, userB: Account) =>
           userA.email > userB.email ? 1 : -1,
         )
-        .map((result: User) => {
+        .map((result: Account) => {
           return { value: result.id, label: result.email };
         });
       callback(options);

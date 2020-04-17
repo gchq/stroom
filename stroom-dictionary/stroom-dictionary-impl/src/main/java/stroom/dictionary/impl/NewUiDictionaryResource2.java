@@ -22,8 +22,8 @@ import io.swagger.annotations.Api;
 import io.swagger.annotations.ApiOperation;
 import io.swagger.annotations.ApiParam;
 import stroom.docref.DocRef;
-import stroom.importexport.shared.Base64EncodedDocumentData;
 import stroom.importexport.api.DocumentData;
+import stroom.importexport.shared.Base64EncodedDocumentData;
 import stroom.importexport.shared.ImportState;
 import stroom.importexport.shared.ImportState.ImportMode;
 import stroom.util.HasHealthCheck;
@@ -44,6 +44,7 @@ import java.util.Set;
 @Api(value = "dictionary - /v2")
 @Path(NewUiDictionaryResource2.BASE_RESOURCE_PATH)
 @Produces(MediaType.APPLICATION_JSON)
+@Consumes(MediaType.APPLICATION_JSON)
 public class NewUiDictionaryResource2 implements RestResource, HasHealthCheck {
     public static final String BASE_RESOURCE_PATH = "/dictionary" + ResourcePaths.V2;
 
@@ -55,7 +56,6 @@ public class NewUiDictionaryResource2 implements RestResource, HasHealthCheck {
     }
 
     @GET
-    @Produces(MediaType.APPLICATION_JSON)
     @Path("/list")
     @Timed
     @ApiOperation(
@@ -66,8 +66,6 @@ public class NewUiDictionaryResource2 implements RestResource, HasHealthCheck {
     }
 
     @POST
-    @Consumes(MediaType.APPLICATION_JSON)
-    @Produces(MediaType.APPLICATION_JSON)
     @Path("/import")
     @Timed
     @ApiOperation(
@@ -80,8 +78,6 @@ public class NewUiDictionaryResource2 implements RestResource, HasHealthCheck {
     }
 
     @POST
-    @Consumes(MediaType.APPLICATION_JSON)
-    @Produces(MediaType.APPLICATION_JSON)
     @Path("/export")
     @Timed
     @ApiOperation(

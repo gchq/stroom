@@ -15,16 +15,17 @@
  * limitations under the License.
  */
 import { useCallback } from "react";
-import { User } from "../types";
+import { Account } from "../types";
 import useHttpClient from "lib/useHttpClient";
 import useServiceUrl from "startup/config/useServiceUrl";
+import { ResultPage } from "./types";
 
 interface Api {
-  add: (user: User) => Promise<void>;
-  change: (user: User) => Promise<void>;
-  fetch: (userId: string) => Promise<User>;
-  remove: (userId: string) => Promise<void>;
-  search: (email?: string) => Promise<User[]>;
+  add: (account: Account) => Promise<void>;
+  change: (account: Account) => Promise<void>;
+  fetch: (accountId: string) => Promise<Account>;
+  remove: (accountId: string) => Promise<void>;
+  search: (email?: string) => Promise<ResultPage<Account>>;
 }
 
 export const useApi = (): Api => {
@@ -35,62 +36,64 @@ export const useApi = (): Api => {
     httpDeleteEmptyResponse,
   } = useHttpClient();
 
-  const { userServiceUrl } = useServiceUrl();
+  const { accountServiceUrl } = useServiceUrl();
 
   const change = useCallback(
-    user =>
-      httpPutEmptyResponse(`${userServiceUrl}/${user.id}`, {
+    account =>
+      httpPutEmptyResponse(`${accountServiceUrl}/${account.id}`, {
         body: JSON.stringify({
-          email: user.email,
-          password: user.password,
-          firstName: user.firstName,
-          lastName: user.lastName,
-          comments: user.comments,
-          state: user.state,
-          neverExpires: user.neverExpires,
-          forcePasswordChange: user.forcePasswordChange,
+          email: account.email,
+          password: account.password,
+          firstName: account.firstName,
+          lastName: account.lastName,
+          comments: account.comments,
+          enabled: account.enabled,
+          inactive: account.inactive,
+          locked: account.locked,
+          processingAccount: account.processingAccount,
+          neverExpires: account.neverExpires,
+          forcePasswordChange: account.forcePasswordChange,
         }),
       }),
-    [userServiceUrl, httpPutEmptyResponse],
+    [accountServiceUrl, httpPutEmptyResponse],
   );
 
   const add = useCallback(
-    user =>
-      httpPostJsonResponse(userServiceUrl, {
+    account =>
+      httpPostJsonResponse(accountServiceUrl, {
         body: JSON.stringify({
-          email: user.email,
-          password: user.password,
-          firstName: user.firstName,
-          lastName: user.lastName,
-          comments: user.comments,
-          state: user.state,
-          neverExpires: user.neverExpires,
-          forcePasswordChange: user.forcePasswordChange,
+          firstName: account.firstName,
+          lastName: account.lastName,
+          email: account.email,
+          password: account.password,
+          comments: account.comments,
+          forcePasswordChange: account.forcePasswordChange,
+          neverExpires: account.neverExpires,
         }),
       }),
-    [userServiceUrl, httpPostJsonResponse],
+    [accountServiceUrl, httpPostJsonResponse],
   );
 
   /**
    * Delete user
    */
   const remove = useCallback(
-    (userId: string) =>
-      httpDeleteEmptyResponse(`${userServiceUrl}/${userId}`, {}),
-    [userServiceUrl, httpDeleteEmptyResponse],
+    (accountId: string) =>
+      httpDeleteEmptyResponse(`${accountServiceUrl}/${accountId}`, {}),
+    [accountServiceUrl, httpDeleteEmptyResponse],
   );
 
   /**
    * Fetch a user
    */
   const fetch = useCallback(
-    (userId: string) => httpGetJson(`${userServiceUrl}/${userId}`),
-    [userServiceUrl, httpGetJson],
+    (accountId: string) => httpGetJson(`${accountServiceUrl}/${accountId}`),
+    [accountServiceUrl, httpGetJson],
   );
 
   const search = useCallback(
-    (email: string) => httpGetJson(`${userServiceUrl}`),
-    [userServiceUrl, httpGetJson],
+    (email: string) => httpGetJson(`${accountServiceUrl}`),
+    [accountServiceUrl, httpGetJson],
   );
 
   return {
