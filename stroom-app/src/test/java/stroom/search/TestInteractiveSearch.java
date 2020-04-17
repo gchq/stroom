@@ -18,6 +18,7 @@
 package stroom.search;
 
 import org.apache.hadoop.util.ThreadUtil;
+import org.junit.jupiter.api.Disabled;
 import org.junit.jupiter.api.Test;
 import stroom.annotation.api.AnnotationDataSource;
 import stroom.dictionary.impl.DictionaryStore;
@@ -25,10 +26,14 @@ import stroom.dictionary.shared.DictionaryDoc;
 import stroom.docref.DocRef;
 import stroom.index.impl.IndexStore;
 import stroom.index.shared.IndexConstants;
-import stroom.query.api.v2.*;
+import stroom.query.api.v2.ExpressionOperator;
 import stroom.query.api.v2.ExpressionOperator.Op;
 import stroom.query.api.v2.ExpressionTerm.Condition;
+import stroom.query.api.v2.Field;
 import stroom.query.api.v2.Format.Type;
+import stroom.query.api.v2.Query;
+import stroom.query.api.v2.Row;
+import stroom.query.api.v2.TableSettings;
 import stroom.query.shared.v2.ParamUtil;
 import stroom.search.api.EventRef;
 import stroom.search.api.EventRefs;
@@ -52,6 +57,7 @@ import java.util.function.Supplier;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
+@Disabled
 class TestInteractiveSearch extends AbstractSearchTest {
     @Inject
     private CommonIndexingTestHelper commonIndexingTestHelper;
