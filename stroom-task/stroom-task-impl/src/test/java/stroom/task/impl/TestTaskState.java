@@ -18,30 +18,31 @@ package stroom.task.impl;
 
 
 import org.junit.jupiter.api.Test;
+import stroom.security.api.UserIdentity;
 
 import java.util.ArrayList;
 import java.util.List;
 
-class TestTaskState {
+class TestTaskContextImpl {
     @Test
     void test_toString() {
-        final TaskState root = new TaskState(null, null);
+        final TaskContextImpl root = create();
         root.info(() -> "root");
-        final TaskState child1 = new TaskState(null, null);
+        final TaskContextImpl child1 = create();
         root.addChild(child1);
         child1.info(() -> "child1");
-        final TaskState child1child1 = new TaskState(null, null);
+        final TaskContextImpl child1child1 = create();
         child1child1.info(() -> "child1child1");
         child1.addChild(child1child1);
-        final TaskState child1child2 = new TaskState(null, null);
+        final TaskContextImpl child1child2 = create();
         child1.addChild(child1child2);
         child1child2.info(() -> "child1child2");
         child1child2.info(() -> "child1child2");
-        final TaskState child2 = new TaskState(null, null);
+        final TaskContextImpl child2 = create();
         root.addChild(child2);
         child2.info(() -> "child2");
 
-        final List<TaskState> list = new ArrayList<>();
+        final List<TaskContextImpl> list = new ArrayList<>();
         list.add(root);
         list.add(child1);
         list.add(child1child1);
@@ -51,5 +52,24 @@ class TestTaskState {
         final String tree = TaskThreadInfoUtil.getInfo(list);
 
         System.out.println(tree);
+    }
+
+    private TaskContextImpl create() {
+        return new TaskContextImpl(TaskIdFactory.create(), "test", new UserIdentity() {
+            @Override
+            public String getId() {
+                return null;
+            }
+
+            @Override
+            public String getJws() {
+                return null;
+            }
+
+            @Override
+            public String getSessionId() {
+                return null;
+            }
+        });
     }
 }

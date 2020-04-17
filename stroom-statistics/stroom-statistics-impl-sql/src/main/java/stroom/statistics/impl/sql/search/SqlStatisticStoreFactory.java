@@ -10,13 +10,12 @@ import stroom.query.common.v2.Store;
 import stroom.query.common.v2.StoreFactory;
 import stroom.statistics.impl.sql.entity.StatisticStoreCache;
 import stroom.statistics.impl.sql.shared.StatisticStoreDoc;
-import stroom.task.api.TaskContext;
+import stroom.task.api.TaskContextFactory;
 import stroom.ui.config.shared.UiConfig;
 import stroom.util.logging.LambdaLogger;
 import stroom.util.logging.LambdaLoggerFactory;
 
 import javax.inject.Inject;
-import javax.inject.Provider;
 import java.util.Arrays;
 import java.util.concurrent.Executor;
 import java.util.stream.Collectors;
@@ -28,7 +27,7 @@ public class SqlStatisticStoreFactory implements StoreFactory {
 
     private final StatisticStoreCache statisticStoreCache;
     private final StatisticsSearchService statisticsSearchService;
-    private final Provider<TaskContext> taskContextProvider;
+    private final TaskContextFactory taskContextFactory;
     private final SearchConfig searchConfig;
     private final UiConfig clientConfig;
     private final Executor executor;
@@ -36,13 +35,13 @@ public class SqlStatisticStoreFactory implements StoreFactory {
     @Inject
     public SqlStatisticStoreFactory(final StatisticStoreCache statisticStoreCache,
                                     final StatisticsSearchService statisticsSearchService,
-                                    final Provider<TaskContext> taskContextProvider,
+                                    final TaskContextFactory taskContextFactory,
                                     final Executor executor,
                                     final SearchConfig searchConfig,
                                     final UiConfig clientConfig) {
         this.statisticStoreCache = statisticStoreCache;
         this.statisticsSearchService = statisticsSearchService;
-        this.taskContextProvider = taskContextProvider;
+        this.taskContextFactory = taskContextFactory;
         this.searchConfig = searchConfig;
         this.clientConfig = clientConfig;
         this.executor = executor;
@@ -87,7 +86,7 @@ public class SqlStatisticStoreFactory implements StoreFactory {
                 storeSize,
                 resultHandlerBatchSize,
                 executor,
-                taskContextProvider.get());
+                taskContextFactory);
     }
 
     private Sizes getDefaultMaxResultsSizes() {

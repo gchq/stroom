@@ -14,8 +14,26 @@
  * limitations under the License.
  */
 
-package stroom.task.api;
+package stroom.task.impl;
 
-public class VoidResult {
-    public static final VoidResult INSTANCE = new VoidResult();
+import stroom.task.shared.TaskId;
+
+import java.util.UUID;
+
+class TaskIdFactory {
+    static TaskId create() {
+        return new TaskId(createUUID(), null);
+    }
+
+    static TaskId create(final TaskId parentTaskId) {
+        if (parentTaskId != null) {
+            return new TaskId(createUUID(), parentTaskId);
+        }
+
+        return create();
+    }
+
+    private static String createUUID() {
+        return UUID.randomUUID().toString();
+    }
 }

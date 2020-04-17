@@ -19,53 +19,58 @@ package stroom.core.benchmark;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import stroom.task.api.TaskContext;
+import stroom.task.api.TaskContextFactory;
 
 import java.util.ArrayList;
 import java.util.List;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.Executor;
+import java.util.concurrent.atomic.AtomicBoolean;
+import java.util.concurrent.atomic.AtomicLong;
 import java.util.concurrent.locks.ReentrantLock;
+import java.util.function.Consumer;
 
-class AsyncExecutorHelper<R> {
+class AsyncExecutorHelper {
     private static final Logger LOGGER = LoggerFactory.getLogger(AsyncExecutorHelper.class);
     private static final String STATUS = "Executing task {}\n{}";
     private static final String FINISHED = "Finished task {}\n{}";
-    private final TaskContext taskContext;
+    private final TaskContextFactory taskContextFactory;
     private final Executor executor;
+    private final TaskContext parentTaskContext;
     private final int concurrent;
     private final String taskInfo;
     private final ReentrantLock lock = new ReentrantLock();
-    private final List<Entry<R>> taskList = new ArrayList<>();
-    private final List<Entry<R>> executingTasks = new ArrayList<>();
-    private volatile long running;
-    private volatile long remaining;
-    private volatile long completed;
-    private volatile long total;
-    private volatile boolean busy;
+    private final List<Consumer<TaskContext>> taskList = new ArrayList<>();
+    private final List<Consumer<TaskContext>> executingTasks = new ArrayList<>();
+    private final AtomicLong running = new AtomicLong();
+    private final AtomicLong remaining = new AtomicLong();
+    private final AtomicLong completed = new AtomicLong();
+    private final AtomicLong total = new AtomicLong();
+    private final AtomicBoolean busy = new AtomicBoolean();
 
-    AsyncExecutorHelper(final String taskInfo, final TaskContext taskContext, final Executor executor,
-                               final int concurrent) {
+    AsyncExecutorHelper(final String taskInfo,
+                        final TaskContextFactory taskContextFactory,
+                        final Executor executor,
+                        final TaskContext parentTaskContext,
+                        final int concurrent) {
         this.taskInfo = taskInfo;
-        this.taskContext = taskContext;
+        this.taskContextFactory = taskContextFactory;
         this.executor = executor;
+        this.parentTaskContext = parentTaskContext;
         this.concurrent = concurrent;
         updateInfo();
     }
 
-    public void fork(final Runnable task) {
-        fork(task, null);
-    }
-
-    public void fork(final Runnable task, final TaskCallback<R> callback) {
+    public void fork(final Consumer<TaskContext> consumer) {
         // Add the task to the task list.
         lock.lock();
         try {
             if (!Thread.currentThread().isInterrupted()) {
-                total++;
+                total.incrementAndGet();
 
-                remaining++;
-                busy = true;
-                taskList.add(new Entry<>(task, callback));
+                remaining.incrementAndGet();
+                busy.set(true);
+                taskList.add(consumer);
 
                 execAsync();
                 updateInfo();
@@ -78,8 +83,8 @@ class AsyncExecutorHelper<R> {
     public void clear() {
         lock.lock();
         try {
-            remaining = 0;
-            busy = running > 0 || remaining > 0;
+            remaining.set(0);
+            busy.set(running.get() > 0 || remaining.get() > 0);
             taskList.clear();
             updateInfo();
         } finally {
@@ -90,61 +95,48 @@ class AsyncExecutorHelper<R> {
     private void execAsync() {
         lock.lock();
         try {
-            if (remaining > 0 && running < concurrent) {
-                final Entry<R> entry = taskList.remove(0);
-                final Runnable task = taskContext.sub(entry.task);
-                final TaskCallback<R> callback = entry.callback;
+            if (remaining.get() > 0 && running.get() < concurrent) {
+                final Consumer<TaskContext> consumer = taskList.remove(0);
+                final Runnable runnable = taskContextFactory.context(parentTaskContext, "Sub task", consumer);
 
                 // Execute the task.
                 if (LOGGER.isDebugEnabled()) {
-                    LOGGER.debug(STATUS, task, getStatus());
+                    LOGGER.debug(STATUS, runnable, getStatus());
                 }
 
-                running++;
-                remaining--;
-                executingTasks.add(entry);
+                running.incrementAndGet();
+                remaining.decrementAndGet();
+                executingTasks.add(consumer);
                 updateInfo();
 
                 try {
                     CompletableFuture
-                            .runAsync(task, executor)
+                            .runAsync(runnable, executor)
                             .whenComplete((r, t) -> {
-                        if (t != null) {
-                            try {
-                                if (callback != null) {
-                                    callback.onFailure(t);
+                                if (t != null) {
+                                    try {
+                                        LOGGER.error("onFailure() - Unhandled Exception", t);
+                                    } catch (final RuntimeException e) {
+                                        LOGGER.error("onFailure() - Error calling callback", e);
+                                    } finally {
+                                        // Remove the task from the task list.
+                                        recordFinish(consumer);
+
+                                        // Try and run another task.
+                                        execAsync();
+                                    }
                                 } else {
-                                    LOGGER.error("onFailure() - Unhandled Exception", t);
-                                }
-                            } catch (final RuntimeException e) {
-                                LOGGER.error("onFailure() - Error calling callback", e);
-                            } finally {
-                                // Remove the task from the task list.
-                                recordFinish(entry, task);
+                                    // Remove the task from the task list.
+                                    recordFinish(consumer);
 
-                                // Try and run another task.
-                                execAsync();
-                            }
-                        } else {
-                            try {
-                                if (callback != null) {
-                                    callback.onSuccess((R) r);
+                                    // Try and run another task.
+                                    execAsync();
                                 }
-                            } catch (final RuntimeException e) {
-                                LOGGER.error("onSuccess() - Error calling callback", e);
-                            } finally {
-                                // Remove the task from the task list.
-                                recordFinish(entry, task);
-
-                                // Try and run another task.
-                                execAsync();
-                            }
-                        }
-                    });
+                            });
 
                 } catch (final RuntimeException e) {
                     // Failed to even start
-                    recordFinish(entry, task);
+                    recordFinish(consumer);
                 }
             }
         } finally {
@@ -152,17 +144,17 @@ class AsyncExecutorHelper<R> {
         }
     }
 
-    private void recordFinish(final Entry<R> entry, final Runnable task) {
+    private void recordFinish(final Consumer<TaskContext> consumer) {
         lock.lock();
         try {
-            executingTasks.remove(entry);
-            running--;
-            completed++;
+            executingTasks.remove(consumer);
+            running.decrementAndGet();
+            completed.incrementAndGet();
 
-            busy = running > 0 || remaining > 0;
+            busy.set(running.get() > 0 || remaining.get() > 0);
 
             if (LOGGER.isDebugEnabled()) {
-                LOGGER.debug(FINISHED, task, getStatus());
+                LOGGER.debug(FINISHED, consumer, getStatus());
             }
 
             updateInfo();
@@ -189,7 +181,7 @@ class AsyncExecutorHelper<R> {
     }
 
     public boolean busy() {
-        return busy;
+        return busy.get();
     }
 
     private void updateInfo() {
@@ -197,7 +189,7 @@ class AsyncExecutorHelper<R> {
             final StringBuilder sb = new StringBuilder();
             sb.append(taskInfo);
             appendStatus(sb);
-            taskContext.info(sb::toString);
+            parentTaskContext.info(sb::toString);
         }
     }
 
@@ -217,15 +209,5 @@ class AsyncExecutorHelper<R> {
         final StringBuilder sb = new StringBuilder();
         appendStatus(sb);
         return sb.toString();
-    }
-
-    private static class Entry<R> {
-        Runnable task;
-        TaskCallback<R> callback;
-
-        public Entry(final Runnable task, final TaskCallback<R> callback) {
-            this.task = task;
-            this.callback = callback;
-        }
     }
 }

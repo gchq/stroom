@@ -22,26 +22,17 @@ import org.slf4j.MarkerFactory;
 import stroom.cluster.api.ClusterCallService;
 import stroom.cluster.api.ClusterCallServiceRemote;
 import stroom.cluster.api.ServiceName;
-import stroom.cluster.task.api.ClusterDispatchAsync;
-import stroom.cluster.task.api.ClusterResult;
-import stroom.cluster.task.api.ClusterResultCollector;
-import stroom.cluster.task.api.ClusterTask;
-import stroom.cluster.task.api.ClusterTaskRef;
-import stroom.cluster.task.api.CollectorId;
+import stroom.cluster.task.api.*;
 import stroom.security.api.SecurityContext;
-import stroom.task.api.ExecutorProvider;
-import stroom.task.api.SimpleThreadPool;
-import stroom.task.api.TaskContext;
-import stroom.task.api.TaskManager;
-import stroom.task.impl.CurrentTaskState;
-import stroom.task.shared.TaskId;
+import stroom.task.api.*;
+import stroom.task.impl.TaskContextImpl;
 import stroom.task.shared.ThreadPool;
 import stroom.util.logging.LogExecutionTime;
 import stroom.util.shared.ModelStringUtil;
 
 import javax.inject.Inject;
-import javax.inject.Provider;
 import java.util.Set;
+import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.Executor;
 import java.util.concurrent.atomic.AtomicBoolean;
 
@@ -58,7 +49,7 @@ public class ClusterDispatchAsyncImpl implements ClusterDispatchAsync {
 
     private final TaskManager taskManager;
     private final Executor executor;
-    private final Provider<TaskContext> taskContextProvider;
+    private final TaskContextFactory taskContextFactory;
     private final ClusterResultCollectorCacheImpl collectorCache;
     private final ClusterCallService clusterCallService;
     private final SecurityContext securityContext;
@@ -66,40 +57,28 @@ public class ClusterDispatchAsyncImpl implements ClusterDispatchAsync {
     @Inject
     ClusterDispatchAsyncImpl(final TaskManager taskManager,
                              final ExecutorProvider executorProvider,
-                             final Provider<TaskContext> taskContextProvider,
+                             final TaskContextFactory taskContextFactory,
                              final ClusterResultCollectorCacheImpl collectorCache,
                              final ClusterCallServiceRemote clusterCallService,
                              final SecurityContext securityContext) {
         this.taskManager = taskManager;
         this.executor = executorProvider.get(THREAD_POOL);
-        this.taskContextProvider = taskContextProvider;
+        this.taskContextFactory = taskContextFactory;
         this.collectorCache = collectorCache;
         this.clusterCallService = clusterCallService;
         this.securityContext = securityContext;
     }
 
     @Override
-    public <R> void execAsync(final ClusterTask<R> task,
+    public <R> void execAsync(final TaskContext parentContext,
+                              final ClusterTask<R> clusterTask,
                               final ClusterResultCollector<R> collector,
                               final String sourceNode,
                               final Set<String> targetNodes) {
-        final TaskId parentTaskId = CurrentTaskState.currentTaskId();
-        if (parentTaskId == null) {
-            throw new NullPointerException("A source task must be provided");
-        }
-
-        execAsync(parentTaskId, task, collector, sourceNode, targetNodes);
-    }
-
-    private <R> void execAsync(final TaskId sourceTaskId,
-                               final ClusterTask<R> clusterTask,
-                               final ClusterResultCollector<R> collector,
-                               final String sourceNode,
-                               final Set<String> targetNodes) {
-        if (sourceTaskId == null) {
+        if (parentContext == null) {
             throw new NullPointerException("Null source task id");
         }
-        if (taskManager.isTerminated(sourceTaskId)) {
+        if (taskManager.isTerminated(parentContext.getTaskId())) {
             throw new RuntimeException("Task has been terminated");
         }
         if (clusterTask == null) {
@@ -138,26 +117,22 @@ public class ClusterDispatchAsyncImpl implements ClusterDispatchAsync {
 
             // Create a runnable so we can execute the remote call
             // asynchronously.
-            final TaskContext taskContext = taskContextProvider.get();
-            Runnable runnable = () -> {
+            final Runnable runnable = taskContextFactory.context(parentContext, "Cluster Task", taskContext -> {
                 try {
-                    taskContext.setName("Cluster Task");
                     taskContext.info(() -> message);
-
                     clusterCallService.call(sourceNode, targetNode, securityContext.getUserIdentity(), ClusterWorkerImpl.SERVICE_NAME,
                             ClusterWorkerImpl.EXEC_ASYNC_METHOD, ClusterWorkerImpl.EXEC_ASYNC_METHOD_ARGS,
-                            new Object[]{clusterTask, sourceNode, sourceTaskId, collectorId});
+                            new Object[]{clusterTask, sourceNode, parentContext.getTaskId(), collectorId});
                 } catch (final RuntimeException e) {
                     LOGGER.debug(e.getMessage(), e);
                     collector.onFailure(targetNode, e);
                 }
-            };
-            runnable = taskContextProvider.get().sub(runnable);
+            });
 
             // Execute the cluster call asynchronously so we don't block calls
             // to other nodes.
             LOGGER.trace(message);
-            executor.execute(runnable);
+            CompletableFuture.runAsync(runnable, executor);
         }
     }
 
@@ -217,11 +192,13 @@ public class ClusterDispatchAsyncImpl implements ClusterDispatchAsync {
                         sb.append("'");
                         final String message = sb.toString();
 
-                        final TaskContext taskContext = taskContextProvider.get();
-                        Runnable runnable = () -> {
+                        final TaskContext parentContext = new TaskContextImpl(
+                                clusterResult.getClusterTaskRef().getSourceTaskId(),
+                                clusterResult.getClusterTaskRef().getTask().getTaskName(),
+                                securityContext.getUserIdentity());
+                        final Runnable runnable = taskContextFactory.context(parentContext, "Receive Search Result", taskContext -> {
                             final LogExecutionTime logExecutionTime = new LogExecutionTime();
                             try {
-                                taskContext.setName("Cluster result");
                                 taskContext.info(() -> message);
 
                                 if (clusterResult.isSuccess()) {
@@ -237,14 +214,13 @@ public class ClusterDispatchAsyncImpl implements ClusterDispatchAsync {
                                     LOGGER.warn("{}() - collector {} {} took {}", RECEIVE_RESULT, ref.getTask().getTaskName(), ref.getSourceTaskId(), logExecutionTime);
                                 }
                             }
-                        };
-                        runnable = taskContextProvider.get().sub(runnable);
+                        });
 
                         // Execute the task asynchronously so that we do not
                         // block the receipt of data which would hold on to the
                         // HTTP connection longer than necessary.
                         LOGGER.trace(message);
-                        executor.execute(runnable);
+                        CompletableFuture.runAsync(runnable, executor);
 
                         successfullyReceived.set(true);
                     }

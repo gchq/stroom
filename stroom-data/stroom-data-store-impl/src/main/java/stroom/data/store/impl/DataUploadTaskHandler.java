@@ -35,6 +35,7 @@ import stroom.receive.common.StreamTargetStroomStreamHandler;
 import stroom.receive.common.StroomStreamProcessor;
 import stroom.security.api.SecurityContext;
 import stroom.task.api.TaskContext;
+import stroom.task.api.TaskContextFactory;
 import stroom.util.date.DateUtil;
 import stroom.util.io.BufferFactory;
 import stroom.util.io.CloseableUtil;
@@ -56,7 +57,7 @@ public class DataUploadTaskHandler {
     private static final String FILE_SEPERATOR = ".";
     private static final String GZ = "GZ";
 
-    private final TaskContext taskContext;
+    private final TaskContextFactory taskContextFactory;
     private final Store streamStore;
     private final FeedProperties feedProperties;
     private final MetaStatistics metaStatistics;
@@ -64,13 +65,13 @@ public class DataUploadTaskHandler {
     private final BufferFactory bufferFactory;
 
     @Inject
-    DataUploadTaskHandler(final TaskContext taskContext,
+    DataUploadTaskHandler(final TaskContextFactory taskContextFactory,
                           final Store streamStore,
                           final FeedProperties feedProperties,
                           final MetaStatistics metaStatistics,
                           final SecurityContext securityContext,
                           final BufferFactory bufferFactory) {
-        this.taskContext = taskContext;
+        this.taskContextFactory = taskContextFactory;
         this.streamStore = streamStore;
         this.feedProperties = feedProperties;
         this.metaStatistics = metaStatistics;
@@ -79,6 +80,17 @@ public class DataUploadTaskHandler {
     }
 
     public void uploadData(final String fileName,
+                           final Path file,
+                           final String feedName,
+                           final String streamTypeName,
+                           final Long effectiveMs,
+                           final String metaData) {
+        taskContextFactory.context("Download Data", taskContext ->
+                uploadData(taskContext, fileName, file, feedName, streamTypeName, effectiveMs, metaData)).run();
+    }
+
+    private void uploadData(final TaskContext taskContext,
+                           final String fileName,
                            final Path file,
                            final String feedName,
                            final String streamTypeName,
@@ -149,7 +161,7 @@ public class DataUploadTaskHandler {
                 final int pos = i;
                 taskContext.info(() -> "Zip " + pos + "/" + groupedFileLists.size());
 
-                uploadData(stroomZipFile, feedName, streamTypeName, effectiveMs, attributeMap, groupedFileLists.get(i));
+                uploadData(taskContext, stroomZipFile, feedName, streamTypeName, effectiveMs, attributeMap, groupedFileLists.get(i));
 
             }
         } catch (final RuntimeException | IOException e) {
@@ -179,7 +191,8 @@ public class DataUploadTaskHandler {
         }
     }
 
-    private void uploadData(final StroomZipFile stroomZipFile,
+    private void uploadData(final TaskContext taskContext,
+                            final StroomZipFile stroomZipFile,
                             final String feedName,
                             final String streamTypeName,
                             final Long effectiveMs,

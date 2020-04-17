@@ -20,6 +20,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import stroom.cluster.lock.api.ClusterLockService;
 import stroom.task.api.TaskContext;
+import stroom.task.api.TaskContextFactory;
 import stroom.util.logging.LogExecutionTime;
 
 import javax.inject.Inject;
@@ -41,18 +42,18 @@ class SQLStatisticAggregationManager {
     private static final ReentrantLock guard = new ReentrantLock();
     private final ClusterLockService clusterLockService;
     private final SQLStatisticAggregationTransactionHelper helper;
-    private final TaskContext taskContext;
+    private final TaskContextFactory taskContextFactory;
     private int batchSize;
 
     @Inject
     SQLStatisticAggregationManager(final ClusterLockService clusterLockService,
                                    final SQLStatisticAggregationTransactionHelper helper,
-                                   final TaskContext taskContext,
+                                   final TaskContextFactory taskContextFactory,
                                    final SQLStatisticsConfig sqlStatisticsConfig) {
         this.clusterLockService = clusterLockService;
         this.helper = helper;
-        this.taskContext = taskContext;
         this.batchSize = sqlStatisticsConfig.getStatisticAggregationBatchSize();
+        this.taskContextFactory = taskContextFactory;
     }
 
     void aggregate() {
@@ -68,13 +69,17 @@ class SQLStatisticAggregationManager {
         });
     }
 
+    void aggregate(final Instant timeNow) {
+        taskContextFactory.context("Aggregate SQL Statistics", taskContext -> aggregate(taskContext, timeNow)).run();
+    }
+
     /**
      * Step 1 - Move source values into value table with precision 1<br/>
      * Step 2 - Reduce precisions possibly creating duplicates in same table
      * <br/>
      * Step 3 - Remove duplicates using temporary table<br/>
      */
-    void aggregate(final Instant timeNow) {
+    private void aggregate(final TaskContext taskContext, final Instant timeNow) {
         guard.lock();
         try {
             LOGGER.debug("aggregate() Called for SQL stats - Start timeNow = {}", timeNow);
@@ -108,7 +113,7 @@ class SQLStatisticAggregationManager {
                 throw new RuntimeException(ex.getMessage(), ex);
             } finally {
                 LOGGER.debug("aggregate() - Finished for SQL stats in {} timeNowOverride = {}",
-                    logExecutionTime, timeNow);
+                        logExecutionTime, timeNow);
             }
         } finally {
             guard.unlock();

@@ -24,14 +24,13 @@ import stroom.node.api.NodeInfo;
 import stroom.node.api.NodeService;
 import stroom.security.api.UserIdentity;
 import stroom.security.impl.SessionResource;
-import stroom.task.api.TaskContext;
+import stroom.task.api.TaskContextFactory;
 import stroom.util.jersey.WebTargetFactory;
 import stroom.util.logging.LogUtil;
 import stroom.util.servlet.UserAgentSessionUtil;
 import stroom.util.shared.ResourcePaths;
 
 import javax.inject.Inject;
-import javax.inject.Provider;
 import javax.inject.Singleton;
 import javax.servlet.http.HttpSession;
 import javax.servlet.http.HttpSessionEvent;
@@ -52,17 +51,17 @@ class SessionListListener implements HttpSessionListener, SessionListService {
 
     private final NodeInfo nodeInfo;
     private final NodeService nodeService;
-    private final Provider<TaskContext> taskContextProvider;
+    private final TaskContextFactory taskContextFactory;
     private final WebTargetFactory webTargetFactory;
 
     @Inject
     SessionListListener(final NodeInfo nodeInfo,
                         final NodeService nodeService,
-                        final Provider<TaskContext> taskContextProvider,
+                        final TaskContextFactory taskContextFactory,
                         final WebTargetFactory webTargetFactory) {
         this.nodeInfo = nodeInfo;
         this.nodeService = nodeService;
-        this.taskContextProvider = taskContextProvider;
+        this.taskContextFactory = taskContextFactory;
         this.webTargetFactory = webTargetFactory;
     }
 
@@ -137,7 +136,7 @@ class SessionListListener implements HttpSessionListener, SessionListService {
     }
 
     private SessionListResponse listSessionsOnThisNode() {
-        final SessionListResponse sessionListResponse = sessionMap.values().stream()
+        return sessionMap.values().stream()
                 .map(httpSession -> {
                     final UserIdentity userIdentity = UserIdentitySessionUtil.get(httpSession);
 
@@ -149,43 +148,34 @@ class SessionListListener implements HttpSessionListener, SessionListService {
                             nodeInfo.getThisNodeName());
                 })
                 .collect(SessionListResponse.collector(SessionListResponse::new));
-
-        return sessionListResponse;
     }
 
     public SessionListResponse listSessions() {
+        return taskContextFactory.contextResult("Get session list on all active nodes", parentTaskContext ->
+                nodeService.findNodeNames(FindNodeCriteria.allEnabled())
+                        .stream()
+                        .map(nodeName -> {
+                            final Supplier<SessionListResponse> listSessionsOnNodeTask =
+                                    taskContextFactory.contextResult(parentTaskContext, LogUtil.message("Get session list on node [{}]", nodeName), taskContext ->
+                                            listSessions(nodeName));
 
-        final TaskContext taskContext = taskContextProvider.get();
-        taskContext.setName("Get session list on all active nodes");
-
-        SessionListResponse sessionList = nodeService.findNodeNames(FindNodeCriteria.allEnabled())
-                .stream()
-                .map(nodeName -> {
-                    final Supplier<SessionListResponse> listSessionsOnNodeTask = taskContext.sub(() -> {
-                        taskContext.setName(LogUtil.message("Get session list on node [{}]", nodeName));
-                        return listSessions(nodeName);
-                    });
-
-                    LOGGER.debug("Creating async task for node {}", nodeName);
-                    return CompletableFuture
-                            .supplyAsync(listSessionsOnNodeTask)
-                            .exceptionally(throwable -> {
-                                LOGGER.error("Error getting session list for node [{}]: {}. Enable DEBUG for stacktrace",
-                                        nodeName, throwable.getMessage());
-                                LOGGER.debug("Error getting session list for node [{}]",
-                                        nodeName, throwable);
-                                // TODO do we want to silently ignore nodes that error?
-                                // If we can't talk to one node we still want to see the results from the other nodes
-                                return SessionListResponse.empty();
-                            });
-                })
-                .map(CompletableFuture::join)
-                .reduce(SessionListResponse.reducer(
-                        SessionListResponse::new,
-                        SessionDetails.class))
-                .orElse(SessionListResponse.empty());
-
-        return sessionList;
+                            LOGGER.debug("Creating async task for node {}", nodeName);
+                            return CompletableFuture
+                                    .supplyAsync(listSessionsOnNodeTask)
+                                    .exceptionally(throwable -> {
+                                        LOGGER.error("Error getting session list for node [{}]: {}. Enable DEBUG for stacktrace",
+                                                nodeName, throwable.getMessage());
+                                        LOGGER.debug("Error getting session list for node [{}]",
+                                                nodeName, throwable);
+                                        // TODO do we want to silently ignore nodes that error?
+                                        // If we can't talk to one node we still want to see the results from the other nodes
+                                        return SessionListResponse.empty();
+                                    });
+                        })
+                        .map(CompletableFuture::join)
+                        .reduce(SessionListResponse.reducer(
+                                SessionListResponse::new,
+                                SessionDetails.class))
+                        .orElse(SessionListResponse.empty())).get();
     }
-
 }

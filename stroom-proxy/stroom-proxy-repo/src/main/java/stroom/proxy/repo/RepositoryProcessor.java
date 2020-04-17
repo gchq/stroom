@@ -20,6 +20,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import stroom.task.api.ExecutorProvider;
 import stroom.task.api.TaskContext;
+import stroom.task.api.TaskContextFactory;
 import stroom.task.api.ThreadPoolImpl;
 import stroom.task.shared.ThreadPool;
 import stroom.util.date.DateUtil;
@@ -31,23 +32,16 @@ import stroom.util.shared.ModelStringUtil;
 
 import javax.inject.Provider;
 import java.io.IOException;
-import java.nio.file.FileVisitOption;
-import java.nio.file.FileVisitResult;
-import java.nio.file.Files;
-import java.nio.file.Path;
-import java.nio.file.Paths;
+import java.nio.file.*;
 import java.nio.file.attribute.BasicFileAttributes;
-import java.util.Collections;
-import java.util.Comparator;
-import java.util.EnumSet;
-import java.util.List;
-import java.util.Map;
-import java.util.Set;
+import java.util.*;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.Executor;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.function.Consumer;
+import java.util.function.Function;
+import java.util.function.Supplier;
 import java.util.stream.Collectors;
 
 /**
@@ -57,7 +51,7 @@ public final class RepositoryProcessor {
     private static final Logger LOGGER = LoggerFactory.getLogger(RepositoryProcessor.class);
 
     private final ExecutorProvider executorProvider;
-    private final TaskContext taskContext;
+    private final TaskContextFactory taskContextFactory;
     private final Provider<FileSetProcessor> fileSetProcessorProvider;
 
     private final int threadCount;
@@ -69,7 +63,7 @@ public final class RepositoryProcessor {
     private final String repoDir;
 
     public RepositoryProcessor(final ExecutorProvider executorProvider,
-                               final TaskContext taskContext,
+                               final TaskContextFactory taskContextFactory,
                                final Provider<FileSetProcessor> fileSetProcessorProvider,
                                final String proxyDir,
                                final int threadCount,
@@ -78,7 +72,7 @@ public final class RepositoryProcessor {
                                final int maxFilesPerAggregate,
                                final long maxUncompressedFileSize) {
         this.executorProvider = executorProvider;
-        this.taskContext = taskContext;
+        this.taskContextFactory = taskContextFactory;
         this.fileSetProcessorProvider = fileSetProcessorProvider;
         this.threadCount = threadCount;
         this.maxFileScan = maxFileScan;
@@ -93,162 +87,175 @@ public final class RepositoryProcessor {
      * Process the Stroom zip repository,
      */
     public void process() {
-        final LogExecutionTime logExecutionTime = new LogExecutionTime();
-        LOGGER.info("Started");
+        final Consumer<TaskContext> consumer = taskContext -> {
+            final LogExecutionTime logExecutionTime = new LogExecutionTime();
+            LOGGER.info("Started");
 
-        taskContext.info(LambdaLogUtil.message("Process started {}, maxFileScan {}, maxConcurrentMappedFiles {}, maxFilesPerAggregate {}, maxUncompressedFileSize {}",
-                DateUtil.createNormalDateTimeString(System.currentTimeMillis()),
-                ModelStringUtil.formatCsv(maxFileScan),
-                ModelStringUtil.formatCsv(maxConcurrentMappedFiles),
-                ModelStringUtil.formatCsv(maxFilesPerAggregate),
-                ModelStringUtil.formatIECByteSizeString(maxUncompressedFileSize)));
+            taskContext.info(LambdaLogUtil.message("Process started {}, maxFileScan {}, maxConcurrentMappedFiles {}, maxFilesPerAggregate {}, maxUncompressedFileSize {}",
+                    DateUtil.createNormalDateTimeString(System.currentTimeMillis()),
+                    ModelStringUtil.formatCsv(maxFileScan),
+                    ModelStringUtil.formatCsv(maxConcurrentMappedFiles),
+                    ModelStringUtil.formatCsv(maxFilesPerAggregate),
+                    ModelStringUtil.formatIECByteSizeString(maxUncompressedFileSize)));
 
-        try {
-            if (Files.isDirectory(repoPath)) {
-                if (LOGGER.isDebugEnabled()) {
-                    LOGGER.debug("Scanning " + repoDir);
+            try {
+                if (Files.isDirectory(repoPath)) {
+                    if (LOGGER.isDebugEnabled()) {
+                        LOGGER.debug("Scanning " + repoDir);
+                    }
+
+                    final ErrorReceiver errorReceiver = (path, message) ->
+                            addErrorMessage(path, message, true);
+
+                    // Keep processing until we no longer reach the maximum file scan limit.
+                    boolean reachedFileScanLimit;
+                    do {
+                        // Break down the zip repository so that all zip files only contain a single stream.
+                        // We do this so that we can form new aggregates that contain less files than the
+                        // maximum number or are smaller than the maximum size
+                        reachedFileScanLimit = fragmentZipFiles(executorProvider, taskContext, taskContextFactory, threadCount, errorReceiver);
+
+                        // Aggregate the zip files.
+                        aggregateZipFiles(executorProvider, taskContext, taskContextFactory, threadCount, errorReceiver);
+
+                    } while (reachedFileScanLimit);
+
+                    LOGGER.debug("Completed");
+
+                } else {
+                    LOGGER.debug("Repo dir " + repoDir + " not found");
                 }
-
-                final ErrorReceiver errorReceiver = (path, message) ->
-                        addErrorMessage(path, message, true);
-
-                // Keep processing until we no longer reach the maximum file scan limit.
-                boolean reachedFileScanLimit;
-                do {
-                    // Break down the zip repository so that all zip files only contain a single stream.
-                    // We do this so that we can form new aggregates that contain less files than the
-                    // maximum number or are smaller than the maximum size
-                    reachedFileScanLimit = fragmentZipFiles(executorProvider, taskContext, threadCount, errorReceiver);
-
-                    // Aggregate the zip files.
-                    aggregateZipFiles(executorProvider, taskContext, threadCount, errorReceiver);
-
-                } while (reachedFileScanLimit);
-
-                LOGGER.debug("Completed");
-
-            } else {
-                LOGGER.debug("Repo dir " + repoDir + " not found");
+            } catch (final Exception e) {
+                LOGGER.error(e.getMessage(), e);
             }
-        } catch (final Exception e) {
-            LOGGER.error(e.getMessage(), e);
-        }
 
-        LOGGER.info("Completed in {}", logExecutionTime);
+            LOGGER.info("Completed in {}", logExecutionTime);
+        };
+        final Runnable runnable = taskContextFactory.context("Proxy Repository Processor", consumer);
+        runnable.run();
     }
 
     private boolean fragmentZipFiles(final ExecutorProvider executorProvider,
-                                     final TaskContext taskContext,
+                                     final TaskContext parentContext,
+                                     final TaskContextFactory taskContextFactory,
                                      final int threadCount,
                                      final ErrorReceiver errorReceiver) {
-        taskContext.setName("Fragmenting Repository - " + repoDir);
+        final Function<TaskContext, Boolean> function = taskContext -> {
+            final ZipFragmenterFileProcessor zipFragmenter = new ZipFragmenterFileProcessor(
+                    executorProvider, taskContext, taskContextFactory, threadCount, errorReceiver);
 
-        final ZipFragmenterFileProcessor zipFragmenter = new ZipFragmenterFileProcessor(
-                executorProvider, taskContext, threadCount, errorReceiver);
-
-        final AtomicInteger fileCount = new AtomicInteger();
-        try {
-            Files.walkFileTree(repoPath, EnumSet.of(FileVisitOption.FOLLOW_LINKS), Integer.MAX_VALUE, new AbstractFileVisitor() {
-                @Override
-                public FileVisitResult preVisitDirectory(Path dir, BasicFileAttributes attrs) {
-                    if (PartsPathUtil.isPartsDir(dir)) {
-                        return FileVisitResult.SKIP_SUBTREE;
-                    }
-                    return super.preVisitDirectory(dir, attrs);
-                }
-
-                @Override
-                public FileVisitResult visitFile(final Path file, final BasicFileAttributes attrs) {
-                    taskContext.info(() -> FileUtil.getCanonicalPath(file));
-
-                    if (Thread.currentThread().isInterrupted() || fileCount.get() >= maxFileScan) {
-                        return FileVisitResult.TERMINATE;
+            final AtomicInteger fileCount = new AtomicInteger();
+            try {
+                Files.walkFileTree(repoPath, EnumSet.of(FileVisitOption.FOLLOW_LINKS), Integer.MAX_VALUE, new AbstractFileVisitor() {
+                    @Override
+                    public FileVisitResult preVisitDirectory(Path dir, BasicFileAttributes attrs) {
+                        if (PartsPathUtil.isPartsDir(dir)) {
+                            return FileVisitResult.SKIP_SUBTREE;
+                        }
+                        return super.preVisitDirectory(dir, attrs);
                     }
 
-                    // Process only raw zip repo files, i.e. files that have not already been created by the fragmenting process.
-                    final String fileName = file.getFileName().toString();
-                    if (fileName.endsWith(StroomZipRepository.ZIP_EXTENSION) &&
-                            !PartsPathUtil.isPart(file)) {
-                        fileCount.incrementAndGet();
-                        zipFragmenter.process(file);
+                    @Override
+                    public FileVisitResult visitFile(final Path file, final BasicFileAttributes attrs) {
+                        taskContext.info(() -> FileUtil.getCanonicalPath(file));
+
+                        if (Thread.currentThread().isInterrupted() || fileCount.get() >= maxFileScan) {
+                            return FileVisitResult.TERMINATE;
+                        }
+
+                        // Process only raw zip repo files, i.e. files that have not already been created by the fragmenting process.
+                        final String fileName = file.getFileName().toString();
+                        if (fileName.endsWith(StroomZipRepository.ZIP_EXTENSION) &&
+                                !PartsPathUtil.isPart(file)) {
+                            fileCount.incrementAndGet();
+                            zipFragmenter.process(file);
+                        }
+
+                        return FileVisitResult.CONTINUE;
                     }
+                });
+            } catch (final IOException | RuntimeException e) {
+                LOGGER.error(e.getMessage(), e);
+            }
 
-                    return FileVisitResult.CONTINUE;
-                }
-            });
-        } catch (final IOException | RuntimeException e) {
-            LOGGER.error(e.getMessage(), e);
-        }
+            // Wait for the fragmenter to complete.
+            zipFragmenter.await();
 
-        // Wait for the fragmenter to complete.
-        zipFragmenter.await();
-
-        // Did we reach the file scan limit?
-        return fileCount.get() >= maxFileScan;
+            // Did we reach the file scan limit?
+            return fileCount.get() >= maxFileScan;
+        };
+        final Supplier<Boolean> supplier = taskContextFactory.contextResult(parentContext, "Fragmenting Repository - " + repoDir, function);
+        return supplier.get();
     }
 
     private void aggregateZipFiles(final ExecutorProvider executorProvider,
-                                   final TaskContext taskContext,
+                                   final TaskContext parentContext,
+                                   final TaskContextFactory taskContextFactory,
                                    final int threadCount,
                                    final ErrorReceiver errorReceiver) {
-        taskContext.setName("Aggregating Repository - " + repoDir);
-        final ZipInfoConsumer zipInfoConsumer = new ZipInfoConsumer(
-                maxFilesPerAggregate,
-                maxConcurrentMappedFiles,
-                maxUncompressedFileSize,
-                errorReceiver,
-                fileSetProcessorProvider,
-                executorProvider,
-                taskContext,
-                threadCount);
-        final ZipInfoExtractor zipInfoExtractor = new ZipInfoExtractor(errorReceiver);
-        final ZipInfoExtractorFileProcessor fileProcessor = new ZipInfoExtractorFileProcessor(
-                zipInfoExtractor,
-                zipInfoConsumer,
-                executorProvider,
-                taskContext,
-                threadCount);
+        final Consumer<TaskContext> consumer = taskContext -> {
+            final ZipInfoConsumer zipInfoConsumer = new ZipInfoConsumer(
+                    maxFilesPerAggregate,
+                    maxConcurrentMappedFiles,
+                    maxUncompressedFileSize,
+                    errorReceiver,
+                    fileSetProcessorProvider,
+                    executorProvider,
+                    parentContext,
+                    taskContextFactory,
+                    threadCount);
+            final ZipInfoExtractor zipInfoExtractor = new ZipInfoExtractor(errorReceiver);
+            final ZipInfoExtractorFileProcessor fileProcessor = new ZipInfoExtractorFileProcessor(
+                    zipInfoExtractor,
+                    zipInfoConsumer,
+                    executorProvider,
+                    parentContext,
+                    taskContextFactory,
+                    threadCount);
 
-        try {
-            Files.walkFileTree(repoPath, EnumSet.of(FileVisitOption.FOLLOW_LINKS), Integer.MAX_VALUE, new AbstractFileVisitor() {
-                @Override
-                public FileVisitResult preVisitDirectory(Path dir, BasicFileAttributes attrs) {
-                    if (PartsPathUtil.isPartsDir(dir)) {
-                        final Path originalZipFile = PartsPathUtil.createParentPartsZipFile(dir);
+            try {
+                Files.walkFileTree(repoPath, EnumSet.of(FileVisitOption.FOLLOW_LINKS), Integer.MAX_VALUE, new AbstractFileVisitor() {
+                    @Override
+                    public FileVisitResult preVisitDirectory(Path dir, BasicFileAttributes attrs) {
+                        if (PartsPathUtil.isPartsDir(dir)) {
+                            final Path originalZipFile = PartsPathUtil.createParentPartsZipFile(dir);
 
-                        // Make sure the parts directory that this file is in is not a partially fragmented output directory.
-                        if (Files.exists(originalZipFile)) {
-                            return FileVisitResult.SKIP_SUBTREE;
+                            // Make sure the parts directory that this file is in is not a partially fragmented output directory.
+                            if (Files.exists(originalZipFile)) {
+                                return FileVisitResult.SKIP_SUBTREE;
+                            }
                         }
-                    }
-                    return super.preVisitDirectory(dir, attrs);
-                }
-
-                @Override
-                public FileVisitResult visitFile(final Path file, final BasicFileAttributes attrs) {
-                    taskContext.info(() -> FileUtil.getCanonicalPath(file));
-
-                    if (Thread.currentThread().isInterrupted()) {
-                        return FileVisitResult.TERMINATE;
+                        return super.preVisitDirectory(dir, attrs);
                     }
 
-                    // Process only part files, i.e. files that have been created by the fragmenting process.
-                    if (PartsPathUtil.isPart(file)) {
-                        fileProcessor.process(file, attrs);
+                    @Override
+                    public FileVisitResult visitFile(final Path file, final BasicFileAttributes attrs) {
+                        taskContext.info(() -> FileUtil.getCanonicalPath(file));
+
+                        if (Thread.currentThread().isInterrupted()) {
+                            return FileVisitResult.TERMINATE;
+                        }
+
+                        // Process only part files, i.e. files that have been created by the fragmenting process.
+                        if (PartsPathUtil.isPart(file)) {
+                            fileProcessor.process(file, attrs);
+                        }
+
+                        return FileVisitResult.CONTINUE;
                     }
+                });
+            } catch (final IOException | RuntimeException e) {
+                LOGGER.error(e.getMessage(), e);
+            }
 
-                    return FileVisitResult.CONTINUE;
-                }
-            });
-        } catch (final IOException | RuntimeException e) {
-            LOGGER.error(e.getMessage(), e);
-        }
+            // Wait for the file processor to complete.
+            fileProcessor.await();
 
-        // Wait for the file processor to complete.
-        fileProcessor.await();
-
-        // Complete processing remaining file sets.
-        zipInfoConsumer.complete();
+            // Complete processing remaining file sets.
+            zipInfoConsumer.complete();
+        };
+        final Runnable runnable = taskContextFactory.context(parentContext, "Aggregating Repository - " + repoDir, consumer);
+        runnable.run();
     }
 
     private void addErrorMessage(final Path path, final String msg, final boolean bad) {
@@ -262,10 +269,11 @@ public final class RepositoryProcessor {
         private final ErrorReceiver errorReceiver;
         private final Provider<FileSetProcessor> fileSetProcessorProvider;
         private final Executor executor;
-        private final TaskContext taskContext;
+        private final TaskContext parentContext;
+        private final TaskContextFactory taskContextFactory;
 
         private final Map<String, FileSet> fileSetMap = new ConcurrentHashMap<>();
-        private final Set<CompletableFuture> futures = Collections.newSetFromMap(new ConcurrentHashMap<>());
+        private final Set<CompletableFuture<Void>> futures = Collections.newSetFromMap(new ConcurrentHashMap<>());
 
         private int totalMappedFiles;
 
@@ -275,13 +283,16 @@ public final class RepositoryProcessor {
                         final ErrorReceiver errorReceiver,
                         final Provider<FileSetProcessor> fileSetProcessorProvider,
                         final ExecutorProvider executorProvider,
-                        final TaskContext taskContext,
+                        final TaskContext parentContext,
+                        final TaskContextFactory taskContextFactory,
                         final int threadCount) {
             this.maxFilesPerAggregate = maxFilesPerAggregate;
             this.maxConcurrentMappedFiles = maxConcurrentMappedFiles;
             this.maxUncompressedFileSize = maxUncompressedFileSize;
             this.errorReceiver = errorReceiver;
             this.fileSetProcessorProvider = fileSetProcessorProvider;
+            this.parentContext = parentContext;
+            this.taskContextFactory = taskContextFactory;
 
             final ThreadPool threadPool = new ThreadPoolImpl(
                     "File Set Processor",
@@ -290,7 +301,6 @@ public final class RepositoryProcessor {
                     threadCount,
                     2 * threadCount);
             executor = executorProvider.get(threadPool);
-            this.taskContext = taskContext;
         }
 
         @Override
@@ -355,7 +365,7 @@ public final class RepositoryProcessor {
             totalMappedFiles -= fileSet.getFiles().size();
 
             try {
-                final Runnable runnable = taskContext.sub(() -> {
+                final Runnable runnable = taskContextFactory.context(parentContext, "File Set Processor", taskContext -> {
                     final FileSetProcessor fileSetProcessor = fileSetProcessorProvider.get();
                     fileSetProcessor.process(fileSet);
                 });
@@ -383,11 +393,13 @@ public final class RepositoryProcessor {
     private static class ZipFragmenterFileProcessor {
         private final ZipFragmenter zipFragmenter;
         private final Executor executor;
-        private final TaskContext taskContext;
-        private final Set<CompletableFuture> futures = Collections.newSetFromMap(new ConcurrentHashMap<>());
+        private final TaskContext parentContext;
+        private final TaskContextFactory taskContextFactory;
+        private final Set<CompletableFuture<Void>> futures = Collections.newSetFromMap(new ConcurrentHashMap<>());
 
         ZipFragmenterFileProcessor(final ExecutorProvider executorProvider,
-                                   final TaskContext taskContext,
+                                   final TaskContext parentContext,
+                                   final TaskContextFactory taskContextFactory,
                                    final int threadCount,
                                    final ErrorReceiver errorReceiver) {
             final ThreadPool fileInspectorThreadPool = new ThreadPoolImpl(
@@ -397,15 +409,15 @@ public final class RepositoryProcessor {
                     threadCount,
                     2 * threadCount);
             this.executor = executorProvider.get(fileInspectorThreadPool);
-            this.taskContext = taskContext;
+            this.parentContext = parentContext;
+            this.taskContextFactory = taskContextFactory;
             zipFragmenter = new ZipFragmenter(errorReceiver);
         }
 
         public void process(final Path file) {
             try {
-                final Runnable runnable = taskContext.sub(() -> {
+                final Runnable runnable = taskContextFactory.context(parentContext, "Fragment", taskContext -> {
                     // Process the file to extract ZipInfo
-                    taskContext.setName("Fragment");
                     taskContext.info(() -> FileUtil.getCanonicalPath(file));
 
                     if (!Thread.currentThread().isInterrupted()) {
@@ -434,18 +446,21 @@ public final class RepositoryProcessor {
     private static class ZipInfoExtractorFileProcessor {
         private final ZipInfoExtractor zipInfoExtractor;
         private final Executor executor;
-        private final TaskContext taskContext;
+        private final TaskContext parentContext;
+        private final TaskContextFactory taskContextFactory;
         private final Consumer<ZipInfo> zipInfoConsumer;
-        private final Set<CompletableFuture> futures = Collections.newSetFromMap(new ConcurrentHashMap<>());
+        private final Set<CompletableFuture<Void>> futures = Collections.newSetFromMap(new ConcurrentHashMap<>());
 
         ZipInfoExtractorFileProcessor(final ZipInfoExtractor zipInfoExtractor,
                                       final Consumer<ZipInfo> zipInfoConsumer,
                                       final ExecutorProvider executorProvider,
-                                      final TaskContext taskContext,
+                                      final TaskContext parentContext,
+                                      final TaskContextFactory taskContextFactory,
                                       final int threadCount) {
             this.zipInfoExtractor = zipInfoExtractor;
             this.zipInfoConsumer = zipInfoConsumer;
-            this.taskContext = taskContext;
+            this.parentContext = parentContext;
+            this.taskContextFactory = taskContextFactory;
 
             final ThreadPool fileInspectorThreadPool = new ThreadPoolImpl("Proxy File Inspection", 5, 0, threadCount, 2 * threadCount);
             executor = executorProvider.get(fileInspectorThreadPool);
@@ -453,9 +468,8 @@ public final class RepositoryProcessor {
 
         public void process(final Path file, final BasicFileAttributes attrs) {
             try {
-                final Runnable runnable = taskContext.sub(() -> {
+                final Runnable runnable = taskContextFactory.context(parentContext, "Extract Zip Info", taskContext -> {
                     // Process the file to extract ZipInfo
-                    taskContext.setName("Extract Zip Info");
                     taskContext.info(() -> FileUtil.getCanonicalPath(file));
 
                     if (!Thread.currentThread().isInterrupted()) {

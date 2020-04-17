@@ -19,7 +19,7 @@ package stroom.task.impl;
 import com.google.inject.AbstractModule;
 import stroom.searchable.api.Searchable;
 import stroom.task.api.ExecutorProvider;
-import stroom.task.api.TaskContext;
+import stroom.task.api.TaskContextFactory;
 import stroom.task.api.TaskManager;
 import stroom.task.shared.TaskResource;
 import stroom.util.guice.GuiceUtil;
@@ -31,10 +31,12 @@ import java.util.concurrent.Executor;
 public class TaskModule extends AbstractModule {
     @Override
     protected void configure() {
+        install(new TaskContextModule());
+
         bind(ExecutorProvider.class).to(ExecutorProviderImpl.class);
         bind(Executor.class).toProvider(ExecutorProviderImpl.class);
+        bind(TaskContextFactory.class).to(TaskContextFactoryImpl.class);
         bind(TaskManager.class).to(TaskManagerImpl.class);
-        bind(TaskContext.class).toProvider(TaskContextProvider.class);
         bind(TaskResource.class).to(TaskResourceImpl.class);
 
         GuiceUtil.buildMultiBinder(binder(), RestResource.class)

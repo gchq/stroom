@@ -22,7 +22,6 @@ import stroom.pipeline.destination.RollingDestinationFactory;
 import stroom.pipeline.destination.RollingDestinations;
 import stroom.pipeline.errorhandler.ProcessException;
 import stroom.pipeline.factory.PipelineFactoryException;
-import stroom.task.api.TaskContext;
 import stroom.util.scheduler.SimpleCron;
 import stroom.util.shared.ModelStringUtil;
 
@@ -43,12 +42,9 @@ public abstract class AbstractRollingAppender extends AbstractDestinationProvide
     private boolean validatedSettings;
 
     private final RollingDestinations destinations;
-    private final TaskContext taskContext;
 
-    protected AbstractRollingAppender(final RollingDestinations destinations,
-                                   final TaskContext taskContext) {
+    protected AbstractRollingAppender(final RollingDestinations destinations) {
         this.destinations = destinations;
-        this.taskContext = taskContext;
         this.validatedSettings = false;
     }
 
@@ -60,7 +56,7 @@ public abstract class AbstractRollingAppender extends AbstractDestinationProvide
         final Object key = getKey();
 
         // Send off this record to be written to a destination.
-        return destinations.borrow(taskContext, key, this);
+        return destinations.borrow(key, this);
     }
 
     @Override

@@ -7,14 +7,13 @@ import stroom.cluster.task.api.NodeNotFoundException;
 import stroom.cluster.task.api.NullClusterStateException;
 import stroom.cluster.task.api.TargetNodeSetFactory;
 import stroom.security.api.SecurityContext;
-import stroom.task.api.TaskContext;
+import stroom.task.api.TaskContextFactory;
 import stroom.task.shared.FindTaskCriteria;
 import stroom.task.shared.TaskId;
 import stroom.task.shared.TaskResource;
 import stroom.task.shared.TerminateTaskProgressRequest;
 
 import javax.inject.Inject;
-import javax.inject.Provider;
 import java.util.Set;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.Executor;
@@ -23,19 +22,19 @@ public class ClusterTaskTerminatorImpl implements ClusterTaskTerminator {
     private static final Logger LOGGER = LoggerFactory.getLogger(ClusterTaskTerminatorImpl.class);
 
     private final Executor executor;
-    private final Provider<TaskContext> taskContextProvider;
+    private final TaskContextFactory taskContextFactory;
     private final TargetNodeSetFactory targetNodeSetFactory;
     private final TaskResource taskResource;
     private final SecurityContext securityContext;
 
     @Inject
     ClusterTaskTerminatorImpl(final Executor executor,
-                              final Provider<TaskContext> taskContextProvider,
+                              final TaskContextFactory taskContextFactory,
                               final TargetNodeSetFactory targetNodeSetFactory,
                               final TaskResource taskResource,
                               final SecurityContext securityContext) {
         this.executor = executor;
-        this.taskContextProvider = taskContextProvider;
+        this.taskContextFactory = taskContextFactory;
         this.targetNodeSetFactory = targetNodeSetFactory;
         this.taskResource = taskResource;
         this.securityContext = securityContext;
@@ -57,38 +56,36 @@ public class ClusterTaskTerminatorImpl implements ClusterTaskTerminator {
     private void terminate(final FindTaskCriteria findTaskCriteria, final String searchName, final String taskName) {
         final TerminateTaskProgressRequest terminateTaskProgressRequest = new TerminateTaskProgressRequest(findTaskCriteria, false);
 
-        final TaskContext taskContext = taskContextProvider.get();
-        taskContext.setName("Terminate: " + taskName);
-        taskContext.info(() -> searchName + " - terminating child tasks");
+        taskContextFactory.context("Terminate: " + taskName, parentContext -> {
+            parentContext.info(() -> searchName + " - terminating child tasks");
 
-        try {
-            // Get the nodes that we are going to send the entity event to.
-            final Set<String> targetNodes = targetNodeSetFactory.getEnabledActiveTargetNodeSet();
+            try {
+                // Get the nodes that we are going to send the entity event to.
+                final Set<String> targetNodes = targetNodeSetFactory.getEnabledActiveTargetNodeSet();
 
-            // Only send the event to remote nodes and not this one.
-            // Send the entity event.
-            targetNodes.forEach(nodeName -> {
-                Runnable runnable = () -> {
-                    try {
-                        taskContext.setName("Terminate '" + taskName + "' on node '" + nodeName + "'");
-                        final Boolean response = taskResource.terminate(nodeName, terminateTaskProgressRequest);
-                        if (!Boolean.TRUE.equals(response)) {
-                            LOGGER.warn("Failed tp terminate task '" + taskName + "'");
+                // Only send the event to remote nodes and not this one.
+                // Send the entity event.
+                targetNodes.forEach(nodeName -> {
+                    final Runnable runnable = taskContextFactory.context(parentContext, "Terminate '" + taskName + "' on node '" + nodeName + "'", taskContext -> {
+                        try {
+                            final Boolean response = taskResource.terminate(nodeName, terminateTaskProgressRequest);
+                            if (!Boolean.TRUE.equals(response)) {
+                                LOGGER.warn("Failed tp terminate task '" + taskName + "'");
+                            }
+                        } catch (final RuntimeException e) {
+                            LOGGER.warn(e.getMessage());
+                            LOGGER.debug(e.getMessage(), e);
                         }
-                    } catch (final RuntimeException e) {
-                        LOGGER.warn(e.getMessage());
-                        LOGGER.debug(e.getMessage(), e);
-                    }
-                };
-                runnable = taskContext.sub(runnable);
-                CompletableFuture.runAsync(runnable, executor);
-            });
+                    });
+                    CompletableFuture.runAsync(runnable, executor);
+                });
 
-        } catch (final NullClusterStateException | NodeNotFoundException e) {
-            LOGGER.warn(e.getMessage());
-            LOGGER.debug(e.getMessage(), e);
-        } catch (final RuntimeException e) {
-            LOGGER.error(e.getMessage(), e);
-        }
+            } catch (final NullClusterStateException | NodeNotFoundException e) {
+                LOGGER.warn(e.getMessage());
+                LOGGER.debug(e.getMessage(), e);
+            } catch (final RuntimeException e) {
+                LOGGER.error(e.getMessage(), e);
+            }
+        }).run();
     }
 }

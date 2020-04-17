@@ -26,23 +26,13 @@ import stroom.docref.DocRef;
 import stroom.entity.shared.ExpressionCriteria;
 import stroom.job.api.JobManager;
 import stroom.meta.api.MetaService;
-import stroom.meta.shared.FindMetaCriteria;
-import stroom.meta.shared.Meta;
-import stroom.meta.shared.MetaFields;
-import stroom.meta.shared.MetaRow;
-import stroom.meta.shared.Status;
+import stroom.meta.shared.*;
 import stroom.pipeline.PipelineStore;
 import stroom.processor.api.JobNames;
 import stroom.processor.api.ProcessorFilterService;
 import stroom.processor.api.ProcessorService;
 import stroom.processor.api.ProcessorTaskService;
-import stroom.processor.shared.Processor;
-import stroom.processor.shared.ProcessorExpressionUtil;
-import stroom.processor.shared.ProcessorFilter;
-import stroom.processor.shared.ProcessorTask;
-import stroom.processor.shared.ProcessorTaskDataSource;
-import stroom.processor.shared.ProcessorTaskExpressionUtil;
-import stroom.processor.shared.QueryData;
+import stroom.processor.shared.*;
 import stroom.query.api.v2.ExpressionOperator;
 import stroom.query.api.v2.ExpressionOperator.Op;
 import stroom.query.api.v2.ExpressionTerm.Condition;
@@ -50,7 +40,7 @@ import stroom.statistics.api.InternalStatisticEvent;
 import stroom.statistics.api.InternalStatisticKey;
 import stroom.statistics.api.InternalStatisticsReceiver;
 import stroom.task.api.TaskContext;
-import stroom.task.api.VoidResult;
+import stroom.task.api.TaskContextFactory;
 import stroom.util.Period;
 import stroom.util.date.DateUtil;
 import stroom.util.logging.LogExecutionTime;
@@ -81,7 +71,7 @@ public class BenchmarkClusterExecutor extends AbstractBenchmark {
     private final ClearableService clearableService;
     private final MetaService metaService;
     private final JobManager jobManager;
-    private final TaskContext taskContext;
+    private final TaskContextFactory taskContextFactory;
     private final Executor executor;
     private final InternalStatisticsReceiver statistics;
     private final BenchmarkClusterConfig benchmarkClusterConfig;
@@ -93,7 +83,7 @@ public class BenchmarkClusterExecutor extends AbstractBenchmark {
     @Inject
     BenchmarkClusterExecutor(final Store streamStore,
                              final MetaService metaService,
-                             final TaskContext taskContext,
+                             final TaskContextFactory taskContextFactory,
                              final PipelineStore pipelineStore,
                              final ProcessorService streamProcessorService,
                              final ProcessorFilterService processorFilterService,
@@ -103,7 +93,7 @@ public class BenchmarkClusterExecutor extends AbstractBenchmark {
                              final Executor executor,
                              final InternalStatisticsReceiver statistics,
                              final BenchmarkClusterConfig benchmarkClusterConfig) {
-        super(streamStore, metaService, taskContext);
+        super(streamStore, metaService);
         this.pipelineStore = pipelineStore;
         this.streamProcessorService = streamProcessorService;
         this.processorFilterService = processorFilterService;
@@ -111,64 +101,67 @@ public class BenchmarkClusterExecutor extends AbstractBenchmark {
         this.clearableService = clearableService;
         this.metaService = metaService;
         this.jobManager = jobManager;
-        this.taskContext = taskContext;
+        this.taskContextFactory = taskContextFactory;
         this.executor = executor;
         this.statistics = statistics;
         this.benchmarkClusterConfig = benchmarkClusterConfig;
     }
 
     public void exec() {
-        info(() -> "Starting benchmark");
+        final Runnable runnable = taskContextFactory.context("Benchmark", taskContext -> {
+            info(taskContext, () -> "Starting benchmark");
 
-        // Find out what translation jobs are enabled and how many tasks are
-        // possible across the cluster. If execution of no tasks are possible
-        // then we should skip this benchmark as we won't be able to process
-        // anything.
-        LOGGER.info("Using benchmark stream count of {}", benchmarkClusterConfig.getStreamCount());
-        LOGGER.info("Using benchmark record count of {}", benchmarkClusterConfig.getRecordCount());
-        LOGGER.info("Using benchmark concurrent writers of {}", benchmarkClusterConfig.getConcurrentWriters());
+            // Find out what translation jobs are enabled and how many tasks are
+            // possible across the cluster. If execution of no tasks are possible
+            // then we should skip this benchmark as we won't be able to process
+            // anything.
+            LOGGER.info("Using benchmark stream count of {}", benchmarkClusterConfig.getStreamCount());
+            LOGGER.info("Using benchmark record count of {}", benchmarkClusterConfig.getRecordCount());
+            LOGGER.info("Using benchmark concurrent writers of {}", benchmarkClusterConfig.getConcurrentWriters());
 
-        // // Remove all old benchmark data.
-        // removeOldData(folder, null);
+            // // Remove all old benchmark data.
+            // removeOldData(folder, null);
 
-        final boolean wasProcessing = jobManager.isJobEnabled(JobNames.DATA_PROCESSOR);
+            final boolean wasProcessing = jobManager.isJobEnabled(JobNames.DATA_PROCESSOR);
 
-        // Stop all translations and indexing so that data isn't translated
-        // or indexed as soon as we
-        // add it to the cluster.
-        jobManager.setJobEnabled(JobNames.DATA_PROCESSOR, false);
+            // Stop all translations and indexing so that data isn't translated
+            // or indexed as soon as we
+            // add it to the cluster.
+            jobManager.setJobEnabled(JobNames.DATA_PROCESSOR, false);
 
-        // FIXME : MAKE SURE ALL TASKS HAVE STOPPED BEFORE WE EXECUTE THE
-        // BENCHMARK.
-        // try {
-        // // Wait for all job instances to stop.
-        // int instances = jobManager.getRunningInstances(
-        // TranslationTask.JOB_NAME, true)
-        // + jobManager.getRunningInstances(IndexingTask.JOB_NAME,
-        // true);
-        // while (!isStopping() && instances > 0) {
-        // // Wait five seconds.
-        // ThreadUtil.sleep(5000);
-        // instances = jobManager.getRunningInstances(
-        // TranslationTask.JOB_NAME, true)
-        // + jobManager.getRunningInstances(
-        // IndexingTask.JOB_NAME, true);
-        // }
+            // FIXME : MAKE SURE ALL TASKS HAVE STOPPED BEFORE WE EXECUTE THE
+            // BENCHMARK.
+            // try {
+            // // Wait for all job instances to stop.
+            // int instances = jobManager.getRunningInstances(
+            // TranslationTask.JOB_NAME, true)
+            // + jobManager.getRunningInstances(IndexingTask.JOB_NAME,
+            // true);
+            // while (!isStopping() && instances > 0) {
+            // // Wait five seconds.
+            // ThreadUtil.sleep(5000);
+            // instances = jobManager.getRunningInstances(
+            // TranslationTask.JOB_NAME, true)
+            // + jobManager.getRunningInstances(
+            // IndexingTask.JOB_NAME, true);
+            // }
 
-        // Create the benchmark.
-        createBenchmark();
+            // Create the benchmark.
+            createBenchmark(taskContext);
 
-        // // Don't delete data if we were asked to stop.
-        // if (!isStopping()) {
-        // // Remove all old benchmark data.
-        // removeOldData(folder, null);
-        // }
+            // // Don't delete data if we were asked to stop.
+            // if (!isStopping()) {
+            // // Remove all old benchmark data.
+            // removeOldData(folder, null);
+            // }
 
-        // Go back to the original job state.
-        jobManager.setJobEnabled(JobNames.DATA_PROCESSOR, wasProcessing);
+            // Go back to the original job state.
+            jobManager.setJobEnabled(JobNames.DATA_PROCESSOR, wasProcessing);
+        });
+        runnable.run();
     }
 
-    private void createBenchmark() {
+    private void createBenchmark(final TaskContext taskContext) {
         try {
             if (!isTerminated()) {
                 LOGGER.info("Starting cluster benchmark");
@@ -194,14 +187,14 @@ public class BenchmarkClusterExecutor extends AbstractBenchmark {
                 final String referenceData = createReferenceData(benchmarkClusterConfig.getRecordCount());
                 final String eventData = createEventData(benchmarkClusterConfig.getRecordCount());
 
-                final Period refPeriod = writeData(BENCHMARK_REFERENCE, StreamTypeNames.RAW_REFERENCE, referenceData, benchmarkClusterConfig.getStreamCount());
+                final Period refPeriod = writeData(taskContext, BENCHMARK_REFERENCE, StreamTypeNames.RAW_REFERENCE, referenceData, benchmarkClusterConfig.getStreamCount());
 
-                processData(BENCHMARK_REFERENCE, StreamTypeNames.RAW_REFERENCE, StreamTypeNames.REFERENCE, referenceProcessor,
+                processData(taskContext, BENCHMARK_REFERENCE, StreamTypeNames.RAW_REFERENCE, StreamTypeNames.REFERENCE, referenceProcessor,
                         refPeriod);
 
-                final Period evtPeriod = writeData(BENCHMARK_EVENTS, StreamTypeNames.RAW_EVENTS, eventData, benchmarkClusterConfig.getStreamCount());
+                final Period evtPeriod = writeData(taskContext, BENCHMARK_EVENTS, StreamTypeNames.RAW_EVENTS, eventData, benchmarkClusterConfig.getStreamCount());
 
-                processData(BENCHMARK_EVENTS, StreamTypeNames.RAW_EVENTS, StreamTypeNames.EVENTS, eventsProcessor, evtPeriod);
+                processData(taskContext, BENCHMARK_EVENTS, StreamTypeNames.RAW_EVENTS, StreamTypeNames.EVENTS, eventsProcessor, evtPeriod);
 
                 // Probe.setPrefix("EVENTS");
                 // writeData(eventFeed, StreamType.RAW_EVENTS, eventData, node);
@@ -245,19 +238,18 @@ public class BenchmarkClusterExecutor extends AbstractBenchmark {
         return streamProcessor;
     }
 
-    private Period writeData(final String feedName, final String streamTypeName, final String data, final int streamCount) {
+    private Period writeData(final TaskContext parentTaskContext, final String feedName, final String streamTypeName, final String data, final int streamCount) {
         final LogExecutionTime logExecutionTime = new LogExecutionTime();
 
         if (!isTerminated()) {
             LOGGER.info("Adding {} data streams to the cluster", streamCount);
 
             LOGGER.info("Writing data");
-            final AsyncExecutorHelper<VoidResult> asyncTaskHelper = new AsyncExecutorHelper<>(
-                    "Writing test streams\n", taskContext, executor, benchmarkClusterConfig.getConcurrentWriters());
+            final AsyncExecutorHelper asyncTaskHelper = new AsyncExecutorHelper(
+                    "Writing test streams\n", taskContextFactory, executor, parentTaskContext, benchmarkClusterConfig.getConcurrentWriters());
             for (int i = 1; i <= streamCount && !isTerminated(); i++) {
                 final int count = i;
-                asyncTaskHelper.fork(() -> {
-                    taskContext.setName("WriteBenchmarkData");
+                asyncTaskHelper.fork(taskContext -> {
                     taskContext.info(() -> "Writing benchmark data");
                     final Meta meta = writeData(feedName, streamTypeName, data);
 
@@ -273,7 +265,7 @@ public class BenchmarkClusterExecutor extends AbstractBenchmark {
                         rangeLock.unlock();
                     }
 
-                    infoInterval(() -> "Written Stream " + count + "/" + streamCount);
+                    infoInterval(taskContext, () -> "Written Stream " + count + "/" + streamCount);
                 });
             }
             asyncTaskHelper.join();
@@ -288,7 +280,8 @@ public class BenchmarkClusterExecutor extends AbstractBenchmark {
         return System.currentTimeMillis() + TIME_OUT;
     }
 
-    private void processData(final String feedName,
+    private void processData(final TaskContext taskContext,
+                             final String feedName,
                              final String rawStreamType,
                              final String processedStreamType,
                              final Processor streamProcessor,
@@ -342,7 +335,7 @@ public class BenchmarkClusterExecutor extends AbstractBenchmark {
                     }
 
                     final int count = completedTaskCount;
-                    info(() -> "Completed " + count + "/" + benchmarkClusterConfig.getStreamCount() + " translation tasks");
+                    info(taskContext, () -> "Completed " + count + "/" + benchmarkClusterConfig.getStreamCount() + " translation tasks");
 
                     if (completedTaskCount >= benchmarkClusterConfig.getStreamCount()) {
                         complete = true;

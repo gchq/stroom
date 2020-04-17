@@ -19,16 +19,10 @@ package stroom.search.extraction;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import stroom.docref.DocRef;
-import stroom.search.coprocessor.CompletionState;
 import stroom.search.coprocessor.Error;
-import stroom.search.coprocessor.Receiver;
-import stroom.search.coprocessor.ReceiverImpl;
-import stroom.search.coprocessor.Values;
+import stroom.search.coprocessor.*;
 import stroom.security.api.SecurityContext;
-import stroom.task.api.ExecutorProvider;
-import stroom.task.api.TaskContext;
-import stroom.task.api.TaskExecutor;
-import stroom.task.api.TaskProducer;
+import stroom.task.api.*;
 
 import javax.inject.Provider;
 import java.util.Arrays;
@@ -41,9 +35,11 @@ import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ConcurrentLinkedQueue;
 import java.util.concurrent.Executor;
 import java.util.concurrent.atomic.AtomicInteger;
+import java.util.function.Consumer;
 
 class ExtractionTaskProducer extends TaskProducer {
     private static final Logger LOGGER = LoggerFactory.getLogger(ExtractionTaskProducer.class);
+    private static final String TASK_NAME = "Extraction";
 
     private final Receiver parentReceiver;
     private final Map<DocRef, Receiver> receivers;
@@ -61,10 +57,11 @@ class ExtractionTaskProducer extends TaskProducer {
                            final int maxStoredDataQueueSize,
                            final int maxThreadsPerTask,
                            final ExecutorProvider executorProvider,
-                           final TaskContext taskContext,
+                           final TaskContextFactory taskContextFactory,
+                           final TaskContext parentContext,
                            final Provider<ExtractionTaskHandler> handlerProvider,
                            final SecurityContext securityContext) {
-        super(taskExecutor, maxThreadsPerTask, taskContext);
+        super(taskExecutor, maxThreadsPerTask, taskContextFactory, parentContext, TASK_NAME);
         this.parentReceiver = parentReceiver;
         this.receivers = receivers;
         this.handlerProvider = handlerProvider;
@@ -92,9 +89,7 @@ class ExtractionTaskProducer extends TaskProducer {
 //        }));
 
         // Start mapping streams.
-        final Executor executor = executorProvider.get(ExtractionTaskExecutor.THREAD_POOL);
-        final Runnable runnable = taskContext.sub(() -> {
-
+        final Consumer<TaskContext> consumer = tc -> {
             // Elevate permissions so users with only `Use` feed permission can `Read` streams.
             securityContext.asProcessingUser(() -> {
                 LOGGER.debug("Starting extraction task producer");
@@ -139,8 +134,9 @@ class ExtractionTaskProducer extends TaskProducer {
                     signalAvailable();
                 }
             });
-        });
-
+        };
+        final Runnable runnable = taskContextFactory.context(parentContext, "Extraction Task Mapper", consumer);
+        final Executor executor = executorProvider.get(ExtractionTaskExecutor.THREAD_POOL);
         CompletableFuture.runAsync(runnable, executor);
     }
 
@@ -159,7 +155,7 @@ class ExtractionTaskProducer extends TaskProducer {
     }
 
     @Override
-    protected Runnable getNext() {
+    protected Consumer<TaskContext> getNext() {
         ExtractionRunnable task = null;
 
         if (!Thread.currentThread().isInterrupted()) {
@@ -229,7 +225,7 @@ class ExtractionTaskProducer extends TaskProducer {
         return eventIds;
     }
 
-    private static class ExtractionRunnable implements Runnable {
+    private static class ExtractionRunnable implements Consumer<TaskContext> {
         private final ExtractionTask task;
         private final Provider<ExtractionTaskHandler> handlerProvider;
 
@@ -239,9 +235,9 @@ class ExtractionTaskProducer extends TaskProducer {
         }
 
         @Override
-        public void run() {
+        public void accept(final TaskContext taskContext) {
             final ExtractionTaskHandler handler = handlerProvider.get();
-            handler.exec(task);
+            handler.exec(taskContext, task);
         }
 
         public ExtractionTask getTask() {

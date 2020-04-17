@@ -17,7 +17,6 @@
 package stroom.processor.impl;
 
 import stroom.processor.shared.ProcessorTaskList;
-import stroom.task.api.TaskContext;
 
 import java.util.concurrent.atomic.AtomicLong;
 
@@ -26,7 +25,7 @@ public interface ProcessorTaskManager {
 
     Boolean abandonTasks(ProcessorTaskList processorTaskList);
 
-    void createTasks(final TaskContext taskContext);
+    void createTasks();
 
     int getTaskQueueSize();
 

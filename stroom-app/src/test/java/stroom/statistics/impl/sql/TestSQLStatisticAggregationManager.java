@@ -24,7 +24,7 @@ import stroom.security.api.SecurityContext;
 import stroom.statistics.impl.sql.exception.StatisticsEventValidationException;
 import stroom.statistics.impl.sql.rollup.RolledUpStatisticEvent;
 import stroom.statistics.impl.sql.shared.StatisticType;
-import stroom.task.api.SimpleTaskContext;
+import stroom.task.api.TaskContextFactory;
 import stroom.test.AbstractCoreIntegrationTest;
 import stroom.test.CommonTestControl;
 import stroom.util.logging.LogExecutionTime;
@@ -63,6 +63,8 @@ class TestSQLStatisticAggregationManager extends AbstractCoreIntegrationTest {
     private SecurityContext securityContext;
     @Inject
     private SQLStatisticsConfig sqlStatisticsConfig;
+    @Inject
+    private TaskContextFactory taskContextFactory;
 
     @Override
     public void onBefore() {
@@ -539,7 +541,7 @@ class TestSQLStatisticAggregationManager extends AbstractCoreIntegrationTest {
         }
 
         final SQLStatisticFlushTaskHandler taskHandler = new SQLStatisticFlushTaskHandler(
-                sqlStatisticValueBatchSaveService, new SimpleTaskContext(), securityContext);
+                sqlStatisticValueBatchSaveService, taskContextFactory, securityContext);
         taskHandler.exec(sqlStatisticAggregateMap);
     }
 

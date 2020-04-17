@@ -24,7 +24,7 @@ import stroom.query.common.v2.Sizes;
 import stroom.search.api.EventRefs;
 import stroom.search.coprocessor.EventCoprocessorSettings;
 import stroom.security.api.SecurityContext;
-import stroom.task.api.TaskContext;
+import stroom.task.api.TaskContextFactory;
 import stroom.ui.config.shared.UiConfig;
 import stroom.util.logging.LambdaLogger;
 import stroom.util.logging.LambdaLoggerFactory;
@@ -42,7 +42,7 @@ public class SolrEventSearchTaskHandler {
     private static final LambdaLogger LOGGER = LambdaLoggerFactory.getLogger(SolrEventSearchTaskHandler.class);
 
     private final Executor executor;
-    private final Provider<TaskContext> taskContextProvider;
+    private final TaskContextFactory taskContextFactory;
     private final Provider<SolrAsyncSearchTaskHandler> solrAsyncSearchTaskHandlerProvider;
     private final SolrSearchConfig searchConfig;
     private final UiConfig clientConfig;
@@ -50,13 +50,13 @@ public class SolrEventSearchTaskHandler {
 
     @Inject
     SolrEventSearchTaskHandler(final Executor executor,
-                               final Provider<TaskContext> taskContextProvider,
+                               final TaskContextFactory taskContextFactory,
                                final Provider<SolrAsyncSearchTaskHandler> solrAsyncSearchTaskHandlerProvider,
                                final SolrSearchConfig searchConfig,
                                final UiConfig clientConfig,
                                final SecurityContext securityContext) {
         this.executor = executor;
-        this.taskContextProvider = taskContextProvider;
+        this.taskContextFactory = taskContextFactory;
         this.solrAsyncSearchTaskHandlerProvider = solrAsyncSearchTaskHandlerProvider;
         this.searchConfig = searchConfig;
         this.clientConfig = clientConfig;
@@ -95,7 +95,7 @@ public class SolrEventSearchTaskHandler {
             final EventSearchResultHandler resultHandler = new EventSearchResultHandler();
             final SolrSearchResultCollector searchResultCollector = SolrSearchResultCollector.create(
                     executor,
-                    taskContextProvider,
+                    taskContextFactory,
                     solrAsyncSearchTaskHandlerProvider,
                     asyncSearchTask,
                     null,

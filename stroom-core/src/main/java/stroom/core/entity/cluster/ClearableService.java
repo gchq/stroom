@@ -6,10 +6,9 @@ import stroom.cluster.task.api.NodeNotFoundException;
 import stroom.cluster.task.api.NullClusterStateException;
 import stroom.cluster.task.api.TargetNodeSetFactory;
 import stroom.security.api.SecurityContext;
-import stroom.task.api.TaskContext;
+import stroom.task.api.TaskContextFactory;
 
 import javax.inject.Inject;
-import javax.inject.Provider;
 import java.util.Set;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.Executor;
@@ -18,7 +17,7 @@ public class ClearableService {
     private static final Logger LOGGER = LoggerFactory.getLogger(ClearableService.class);
 
     private final Executor executor;
-    private final Provider<TaskContext> taskContextProvider;
+    private final TaskContextFactory taskContextFactory;
     private final TargetNodeSetFactory targetNodeSetFactory;
     private final SecurityContext securityContext;
     private final ClearEventHandler clearEventHandler;
@@ -26,13 +25,13 @@ public class ClearableService {
 
     @Inject
     ClearableService(final Executor executor,
-                     final Provider<TaskContext> taskContextProvider,
+                     final TaskContextFactory taskContextFactory,
                      final TargetNodeSetFactory targetNodeSetFactory,
                      final SecurityContext securityContext,
                      final ClearEventHandler clearEventHandler,
                      final ClearableResource clearableResource) {
         this.executor = executor;
-        this.taskContextProvider = taskContextProvider;
+        this.taskContextFactory = taskContextFactory;
         this.targetNodeSetFactory = targetNodeSetFactory;
         this.securityContext = securityContext;
         this.clearEventHandler = clearEventHandler;
@@ -46,9 +45,7 @@ public class ClearableService {
             clearEventHandler.clearLocally();
 
             // Dispatch the entity event to all nodes in the cluster.
-            final TaskContext taskContext = taskContextProvider.get();
-            Runnable runnable = this::fireRemote;
-            runnable = taskContext.sub(runnable);
+            final Runnable runnable = taskContextFactory.context("Clear All", taskContext -> fireRemote());
             CompletableFuture.runAsync(runnable, executor);
         } catch (final RuntimeException e) {
             LOGGER.error(e.getMessage(), e);

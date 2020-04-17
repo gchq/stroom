@@ -49,7 +49,7 @@ public class SolrSearchFactory {
 
             final Tracker tracker = new Tracker();
             final SolrSearchTask solrSearchTask = new SolrSearchTask(index, solrQuery, task.getStoredFields(), receiver, tracker);
-            solrSearchTaskHandler.exec(solrSearchTask);
+            solrSearchTaskHandler.exec(taskContext, solrSearchTask);
 
             // Wait until we finish.
             while (!Thread.currentThread().isInterrupted() && (!tracker.isCompleted())) {

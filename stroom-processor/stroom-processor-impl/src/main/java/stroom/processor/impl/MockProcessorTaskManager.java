@@ -22,12 +22,7 @@ import stroom.meta.api.MetaService;
 import stroom.meta.shared.FindMetaCriteria;
 import stroom.meta.shared.Meta;
 import stroom.processor.api.ProcessorFilterService;
-import stroom.processor.shared.ProcessorFilter;
-import stroom.processor.shared.ProcessorTask;
-import stroom.processor.shared.ProcessorTaskList;
-import stroom.processor.shared.QueryData;
-import stroom.processor.shared.TaskStatus;
-import stroom.task.api.TaskContext;
+import stroom.processor.shared.*;
 import stroom.util.shared.Clearable;
 
 import javax.inject.Inject;
@@ -100,7 +95,7 @@ public class MockProcessorTaskManager implements ProcessorTaskManager, Clearable
     }
 
     @Override
-    public void createTasks(TaskContext taskContext) {
+    public void createTasks() {
     }
 
     @Override

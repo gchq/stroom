@@ -17,7 +17,6 @@
 package stroom.data.store.impl.fs;
 
 import stroom.data.store.impl.fs.shared.FsVolume;
-import stroom.task.api.TaskContext;
 
 import java.time.Duration;
 
@@ -34,7 +33,7 @@ class FsCleanSubTask {
                    final String path,
                    final String logPrefix,
                    final Duration oldAge,
-                           final boolean delete) {
+                   final boolean delete) {
         this.volume = volume;
         this.path = path;
         this.logPrefix = logPrefix;

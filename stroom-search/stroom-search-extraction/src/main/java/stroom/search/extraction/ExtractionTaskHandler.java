@@ -36,11 +36,7 @@ import stroom.pipeline.filter.IdEnrichmentFilter;
 import stroom.pipeline.filter.XMLFilter;
 import stroom.pipeline.shared.PipelineDoc;
 import stroom.pipeline.shared.data.PipelineData;
-import stroom.pipeline.state.CurrentUserHolder;
-import stroom.pipeline.state.FeedHolder;
-import stroom.pipeline.state.MetaDataHolder;
-import stroom.pipeline.state.MetaHolder;
-import stroom.pipeline.state.PipelineHolder;
+import stroom.pipeline.state.*;
 import stroom.pipeline.task.StreamMetaDataProvider;
 import stroom.search.coprocessor.Error;
 import stroom.security.api.SecurityContext;
@@ -51,7 +47,6 @@ import stroom.util.logging.LambdaLogUtil;
 import stroom.util.logging.LambdaLogger;
 import stroom.util.logging.LambdaLoggerFactory;
 import stroom.util.shared.StoredError;
-import stroom.task.api.VoidResult;
 
 import javax.inject.Inject;
 import java.io.IOException;
@@ -73,7 +68,6 @@ class ExtractionTaskHandler {
     private final PipelineFactory pipelineFactory;
     private final PipelineStore pipelineStore;
     private final PipelineDataCache pipelineDataCache;
-    private final TaskContext taskContext;
     private final SecurityContext securityContext;
 
     private ExtractionTask task;
@@ -89,7 +83,6 @@ class ExtractionTaskHandler {
                           final PipelineFactory pipelineFactory,
                           final PipelineStore pipelineStore,
                           final PipelineDataCache pipelineDataCache,
-                          final TaskContext taskContext,
                           final SecurityContext securityContext) {
         this.streamStore = streamStore;
         this.feedHolder = feedHolder;
@@ -101,27 +94,22 @@ class ExtractionTaskHandler {
         this.pipelineFactory = pipelineFactory;
         this.pipelineStore = pipelineStore;
         this.pipelineDataCache = pipelineDataCache;
-        this.taskContext = taskContext;
         this.securityContext = securityContext;
     }
 
-    public VoidResult exec(final ExtractionTask task) {
+    public void exec(final TaskContext taskContext, final ExtractionTask task) {
         // Elevate user permissions so that inherited pipelines that the user only has 'Use' permission on can be read.
-        return securityContext.useAsReadResult(() -> {
-            LAMBDA_LOGGER.logDurationIfDebugEnabled(
-                    () -> {
-                        taskContext.setName("Extraction");
-                        if (!Thread.currentThread().isInterrupted()) {
-                            final String streamId = String.valueOf(task.getStreamId());
-                            taskContext.info(() -> "Extracting " + task.getEventIds().length + " records from stream " + streamId);
+        securityContext.useAsRead(() ->
+                LAMBDA_LOGGER.logDurationIfDebugEnabled(
+                        () -> {
+                            if (!Thread.currentThread().isInterrupted()) {
+                                final String streamId = String.valueOf(task.getStreamId());
+                                taskContext.info(() -> "Extracting " + task.getEventIds().length + " records from stream " + streamId);
 
-                            extract(task);
-                        }
-                    },
-                    () -> "ExtractionTaskHandler.exec()");
-
-            return VoidResult.INSTANCE;
-        });
+                                extract(task);
+                            }
+                        },
+                        () -> "ExtractionTaskHandler.exec()"));
     }
 
     private void extract(final ExtractionTask task) {

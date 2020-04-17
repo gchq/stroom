@@ -18,11 +18,9 @@ package stroom.explorer.impl;
 
 import stroom.explorer.shared.DocumentType;
 import stroom.explorer.shared.ExplorerNode;
-import stroom.task.api.ExecutorProvider;
-import stroom.task.api.TaskContext;
+import stroom.task.api.TaskContextFactory;
 
 import javax.inject.Inject;
-import javax.inject.Provider;
 import java.util.List;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.Executor;
@@ -37,7 +35,7 @@ class ExplorerTreeModel {
     private final ExplorerTreeDao explorerTreeDao;
     private final ExplorerSession explorerSession;
     private final Executor executor;
-    private final Provider<TaskContext> taskContextProvider;
+    private final TaskContextFactory taskContextFactory;
     private final ExplorerActionHandlers explorerActionHandlers;
 
     private volatile TreeModel currentModel;
@@ -48,12 +46,12 @@ class ExplorerTreeModel {
     ExplorerTreeModel(final ExplorerTreeDao explorerTreeDao,
                       final ExplorerSession explorerSession,
                       final Executor executor,
-                      final Provider<TaskContext> taskContextProvider,
+                      final TaskContextFactory taskContextFactory,
                       final ExplorerActionHandlers explorerActionHandlers) {
         this.explorerTreeDao = explorerTreeDao;
         this.explorerSession = explorerSession;
         this.executor = executor;
-        this.taskContextProvider = taskContextProvider;
+        this.taskContextFactory = taskContextFactory;
         this.explorerActionHandlers = explorerActionHandlers;
     }
 
@@ -84,8 +82,7 @@ class ExplorerTreeModel {
                 // Perform a build asynchronously if we aren't already building elsewhere.
                 if (performingRebuild.compareAndSet(0, 1)) {
                     try {
-                        Runnable runnable = this::updateModel;
-                        runnable = taskContextProvider.get().sub(runnable);
+                        final Runnable runnable = taskContextFactory.context("Update Explorer Tree Model", taskContext -> updateModel());
                         CompletableFuture
                                 .runAsync(runnable, executor)
                                 .thenRun(performingRebuild::decrementAndGet)

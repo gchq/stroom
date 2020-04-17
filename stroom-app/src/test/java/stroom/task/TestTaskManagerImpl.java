@@ -4,24 +4,14 @@ package stroom.task;
 import org.junit.jupiter.api.Test;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import stroom.task.api.ExecutorProvider;
-import stroom.task.api.TaskContext;
-import stroom.task.api.TaskManager;
-import stroom.task.api.TaskTerminatedException;
-import stroom.task.api.ThreadPoolImpl;
-import stroom.task.impl.CurrentTaskState;
+import stroom.task.api.*;
 import stroom.task.shared.TaskId;
 import stroom.task.shared.ThreadPool;
 import stroom.test.AbstractCoreIntegrationTest;
 
 import javax.inject.Inject;
-import javax.inject.Provider;
 import java.util.Queue;
-import java.util.concurrent.CompletableFuture;
-import java.util.concurrent.ConcurrentLinkedQueue;
-import java.util.concurrent.ExecutionException;
-import java.util.concurrent.Executor;
-import java.util.concurrent.RejectedExecutionException;
+import java.util.concurrent.*;
 import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.stream.IntStream;
@@ -34,7 +24,7 @@ class TestTaskManagerImpl extends AbstractCoreIntegrationTest {
     @Inject
     private ExecutorProvider executorProvider;
     @Inject
-    private Provider<TaskContext> taskContextProvider;
+    private TaskContextFactory taskContextFactory;
     @Inject
     private TaskManager taskManager;
 
@@ -48,31 +38,30 @@ class TestTaskManagerImpl extends AbstractCoreIntegrationTest {
                 poolSize);
 
         final Executor executor = executorProvider.get(threadPool);
-        final TaskContext taskContext = taskContextProvider.get();
-
-        CompletableFuture.runAsync(taskContext.sub(() ->
-                LOGGER.info("Warming up thread pool"))).get();
+        CompletableFuture.runAsync(() -> LOGGER.info("Warming up thread pool"), executor).get();
 
         AtomicInteger counter = new AtomicInteger();
         final Queue<Thread> threadsUsed = new ConcurrentLinkedQueue<>();
 
         final int taskCount = 10;
         CompletableFuture[] futures = IntStream.rangeClosed(1, taskCount)
-                .mapToObj(i ->
-                        CompletableFuture.runAsync(taskContext.sub(() -> {
-                                    try {
-                                        Thread.sleep(50);
-                                        LOGGER.info("Running task {}", i);
-                                        counter.incrementAndGet();
-                                        threadsUsed.add(Thread.currentThread());
-                                    } catch (final InterruptedException e) {
-                                        LOGGER.error(e.getMessage(), e);
+                .mapToObj(i -> {
+                    final Runnable runnable = taskContextFactory.context("Running task", taskContext -> {
+                        try {
+                            Thread.sleep(50);
+                            LOGGER.info("Running task {}", i);
+                            counter.incrementAndGet();
+                            threadsUsed.add(Thread.currentThread());
+                        } catch (final InterruptedException e) {
+                            LOGGER.error(e.getMessage(), e);
 
-                                        // Continue to interrupt this thread.
-                                        Thread.currentThread().interrupt();
-                                    }
-                                }),
-                                executor))
+                            // Continue to interrupt this thread.
+                            Thread.currentThread().interrupt();
+                        }
+                    });
+
+                    return CompletableFuture.runAsync(runnable, executor);
+                })
                 .toArray(CompletableFuture[]::new);
 
         CompletableFuture.allOf(futures).get();
@@ -101,28 +90,27 @@ class TestTaskManagerImpl extends AbstractCoreIntegrationTest {
                 poolSize);
 
         final Executor executor = executorProvider.get(threadPool);
-        final TaskContext taskContext = taskContextProvider.get();
-
         AtomicInteger counter = new AtomicInteger();
         final Queue<Thread> threadsUsed = new ConcurrentLinkedQueue<>();
 
         final int taskCount = 10;
         CompletableFuture[] futures = IntStream.rangeClosed(1, taskCount)
-                .mapToObj(i ->
-                        CompletableFuture.runAsync(taskContext.sub(() -> {
-                                    try {
-                                        Thread.sleep(50);
-                                        LOGGER.info("Running task {}", i);
-                                        counter.incrementAndGet();
-                                        threadsUsed.add(Thread.currentThread());
-                                    } catch (final InterruptedException e) {
-                                        LOGGER.error(e.getMessage(), e);
+                .mapToObj(i -> {
+                    final Runnable runnable = taskContextFactory.context("Running task", taskContext -> {
+                        try {
+                            Thread.sleep(50);
+                            LOGGER.info("Running task {}", i);
+                            counter.incrementAndGet();
+                            threadsUsed.add(Thread.currentThread());
+                        } catch (final InterruptedException e) {
+                            LOGGER.error(e.getMessage(), e);
 
-                                        // Continue to interrupt this thread.
-                                        Thread.currentThread().interrupt();
-                                    }
-                                }),
-                                executor))
+                            // Continue to interrupt this thread.
+                            Thread.currentThread().interrupt();
+                        }
+                    });
+                    return CompletableFuture.runAsync(runnable, executor);
+                })
                 .toArray(CompletableFuture[]::new);
 
         CompletableFuture.allOf(futures).get();
@@ -152,14 +140,13 @@ class TestTaskManagerImpl extends AbstractCoreIntegrationTest {
 
         try {
             final Executor executor = executorProvider.get();
-            final Runnable runnable = () -> {
+            final Runnable runnable = taskContextFactory.context("Running task", taskContext -> {
                 if (Thread.currentThread().isInterrupted()) {
                     terminated.set(true);
                 }
                 throw new RuntimeException("Expected");
-            };
-
-            CompletableFuture.runAsync(taskContextProvider.get().sub(runnable), executor)
+            });
+            CompletableFuture.runAsync(runnable, executor)
                     .thenRun(() -> completedNormally.set(true))
                     .exceptionally(t -> {
                         completedExceptionally.set(true);
@@ -194,10 +181,9 @@ class TestTaskManagerImpl extends AbstractCoreIntegrationTest {
 
         final Executor executor = executorProvider.get();
 
-        final Runnable runnable = () -> {
-        };
-
-        CompletableFuture.runAsync(taskContextProvider.get().sub(runnable), executor)
+        final Runnable runnable = taskContextFactory.context("Running task", taskContext -> {
+        });
+        CompletableFuture.runAsync(runnable, executor)
                 .thenRun(() -> completedNormally.set(true))
                 .exceptionally(t -> {
                     completedExceptionally.set(true);
@@ -216,12 +202,12 @@ class TestTaskManagerImpl extends AbstractCoreIntegrationTest {
 
         final Executor executor = executorProvider.get();
 
-        final Runnable runnable = () -> {
-            terminateCurrentTask();
+        final Runnable runnable = taskContextFactory.context("Running task", taskContext -> {
+            terminateCurrentTask(taskContext);
             testCompletedExceptionally(executorProvider, true);
-        };
+        });
 
-        CompletableFuture.runAsync(taskContextProvider.get().sub(runnable), executor)
+        CompletableFuture.runAsync(runnable, executor)
                 .thenRun(() -> completedNormally.set(true))
                 .exceptionally(t -> {
                     completedExceptionally.set(true);
@@ -238,12 +224,12 @@ class TestTaskManagerImpl extends AbstractCoreIntegrationTest {
         final AtomicBoolean completedExceptionally = new AtomicBoolean();
 
         final Executor executor = executorProviderOuter.get();
-        final Runnable runnable = () -> {
-            terminateCurrentTask();
+        final Runnable runnable = taskContextFactory.context("Running task", taskContext -> {
+            terminateCurrentTask(taskContext);
             testCompletedExceptionally(executorProviderInner, true);
-        };
+        });
 
-        CompletableFuture.runAsync(taskContextProvider.get().sub(runnable), executor)
+        CompletableFuture.runAsync(runnable, executor)
                 .thenRun(() -> completedNormally.set(true))
                 .exceptionally(t -> {
                     completedExceptionally.set(true);
@@ -261,9 +247,9 @@ class TestTaskManagerImpl extends AbstractCoreIntegrationTest {
         final AtomicBoolean completedExceptionally = new AtomicBoolean();
 
         final Executor executor = executorProvider.get();
-        final Runnable runnable = this::testCompletedNormally;
+        final Runnable runnable = taskContextFactory.context("Running task", taskContext -> testCompletedNormally());
 
-        CompletableFuture.runAsync(taskContextProvider.get().sub(runnable), executor)
+        CompletableFuture.runAsync(runnable, executor)
                 .thenRun(() -> completedNormally.set(true))
                 .exceptionally(t -> {
                     completedExceptionally.set(true);
@@ -302,8 +288,8 @@ class TestTaskManagerImpl extends AbstractCoreIntegrationTest {
         };
     }
 
-    private void terminateCurrentTask() {
-        final TaskId taskId = CurrentTaskState.currentTaskId();
+    private void terminateCurrentTask(final TaskContext taskContext) {
+        final TaskId taskId = taskContext.getTaskId();
         taskManager.terminate(taskId);
     }
 }

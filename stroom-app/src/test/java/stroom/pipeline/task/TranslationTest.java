@@ -21,11 +21,7 @@ package stroom.pipeline.task;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import stroom.data.shared.StreamTypeNames;
-import stroom.data.store.api.Source;
-import stroom.data.store.api.SourceUtil;
-import stroom.data.store.api.Store;
-import stroom.data.store.api.Target;
-import stroom.data.store.api.TargetUtil;
+import stroom.data.store.api.*;
 import stroom.docref.DocRef;
 import stroom.feed.api.FeedProperties;
 import stroom.feed.api.FeedStore;
@@ -59,7 +55,6 @@ import stroom.query.api.v2.ExpressionTerm;
 import stroom.query.api.v2.ExpressionTerm.Condition;
 import stroom.receive.common.StreamTargetStroomStreamHandler;
 import stroom.receive.common.StroomStreamProcessor;
-import stroom.task.api.SimpleTaskContext;
 import stroom.task.api.TaskManager;
 import stroom.test.AbstractCoreIntegrationTest;
 import stroom.test.CommonTranslationTestHelper;
@@ -72,21 +67,11 @@ import stroom.util.io.StreamUtil;
 import stroom.util.shared.Indicators;
 
 import javax.inject.Inject;
-import java.io.BufferedInputStream;
-import java.io.BufferedOutputStream;
-import java.io.IOException;
-import java.io.InputStream;
-import java.io.OutputStream;
-import java.io.UncheckedIOException;
+import java.io.*;
 import java.nio.file.DirectoryStream;
 import java.nio.file.Files;
 import java.nio.file.Path;
-import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.Collections;
-import java.util.Comparator;
-import java.util.HashMap;
-import java.util.List;
+import java.util.*;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.fail;
@@ -219,7 +204,7 @@ public abstract class TranslationTest extends AbstractCoreIntegrationTest {
 
         addStream(inputFile, feed);
 
-        processorTaskManager.createTasks(new SimpleTaskContext());
+        processorTaskManager.createTasks();
 
         List<ProcessorTask> tasks = getTasks();
         assertThat(tasks.size()).as("There should be one task here").isEqualTo(1);

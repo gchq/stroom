@@ -18,44 +18,27 @@ package stroom.search.impl;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import stroom.cluster.task.api.ClusterResultCollector;
-import stroom.cluster.task.api.ClusterResultCollectorCache;
-import stroom.cluster.task.api.ClusterTaskTerminator;
-import stroom.cluster.task.api.CollectorId;
-import stroom.cluster.task.api.CollectorIdFactory;
-import stroom.query.common.v2.CompletionState;
+import stroom.cluster.task.api.*;
+import stroom.query.common.v2.*;
 import stroom.query.common.v2.CoprocessorSettingsMap.CoprocessorKey;
-import stroom.query.common.v2.Data;
-import stroom.query.common.v2.Payload;
-import stroom.query.common.v2.ResultHandler;
-import stroom.query.common.v2.Sizes;
-import stroom.query.common.v2.Store;
 import stroom.search.resultsender.NodeResult;
-import stroom.task.api.TaskContext;
-import stroom.task.api.TaskContext.WrappedRunnable;
+import stroom.task.api.TaskContextFactory;
 import stroom.task.api.TaskTerminatedException;
 import stroom.task.shared.TaskId;
 import stroom.util.logging.LambdaLogger;
 import stroom.util.logging.LambdaLoggerFactory;
 
 import javax.inject.Provider;
-import java.util.ArrayList;
-import java.util.HashSet;
-import java.util.List;
-import java.util.Map;
+import java.util.*;
 import java.util.Map.Entry;
-import java.util.Set;
-import java.util.concurrent.CompletableFuture;
-import java.util.concurrent.CompletionException;
-import java.util.concurrent.ConcurrentHashMap;
-import java.util.concurrent.Executor;
-import java.util.concurrent.TimeUnit;
+import java.util.concurrent.*;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.concurrent.atomic.AtomicLong;
 
 public class ClusterSearchResultCollector implements Store, ClusterResultCollector<NodeResult> {
     private static final Logger LOGGER = LoggerFactory.getLogger(ClusterSearchResultCollector.class);
     private static final LambdaLogger LAMBDA_LOGGER = LambdaLoggerFactory.getLogger(ClusterSearchResultCollector.class);
+    private static final String TASK_NAME = "AsyncSearchTask";
 
     private final ClusterResultCollectorCache clusterResultCollectorCache;
     private final CollectorId id;
@@ -63,7 +46,7 @@ public class ClusterSearchResultCollector implements Store, ClusterResultCollect
     private final Map<String, AtomicLong> remainingNodes = new ConcurrentHashMap<>();
     private final AtomicInteger remainingNodeCount = new AtomicInteger();
     private final Executor executor;
-    private final Provider<TaskContext> taskContextProvider;
+    private final TaskContextFactory taskContextFactory;
     private final Provider<AsyncSearchTaskHandler> asyncSearchTaskHandlerProvider;
     private final ClusterTaskTerminator clusterTaskTerminator;
     private final AsyncSearchTask task;
@@ -77,7 +60,7 @@ public class ClusterSearchResultCollector implements Store, ClusterResultCollect
     private volatile TaskId taskId;
 
     ClusterSearchResultCollector(final Executor executor,
-                                 final Provider<TaskContext> taskContextProvider,
+                                 final TaskContextFactory taskContextFactory,
                                  final Provider<AsyncSearchTaskHandler> asyncSearchTaskHandlerProvider,
                                  final ClusterTaskTerminator clusterTaskTerminator,
                                  final AsyncSearchTask task,
@@ -89,7 +72,7 @@ public class ClusterSearchResultCollector implements Store, ClusterResultCollect
                                  final Sizes storeSize,
                                  final CompletionState completionState) {
         this.executor = executor;
-        this.taskContextProvider = taskContextProvider;
+        this.taskContextFactory = taskContextFactory;
         this.asyncSearchTaskHandlerProvider = asyncSearchTaskHandlerProvider;
         this.clusterTaskTerminator = clusterTaskTerminator;
         this.task = task;
@@ -108,15 +91,17 @@ public class ClusterSearchResultCollector implements Store, ClusterResultCollect
 
     public void start() {
         // Start asynchronous search execution.
-        final TaskContext taskContext = taskContextProvider.get();
-        final Runnable runnable = () -> {
-            final AsyncSearchTaskHandler asyncSearchTaskHandler = asyncSearchTaskHandlerProvider.get();
-            asyncSearchTaskHandler.exec(task, taskId);
-        };
-        final WrappedRunnable wrappedRunnable = taskContext.sub(runnable);
-        taskId = wrappedRunnable.getTaskContext().getTaskId();
+        final Runnable runnable = taskContextFactory.context(TASK_NAME, taskContext -> {
+            taskId = taskContext.getTaskId();
+
+            // Don't begin execution if we have been asked to complete already.
+            if (!completionState.isComplete()) {
+                final AsyncSearchTaskHandler asyncSearchTaskHandler = asyncSearchTaskHandlerProvider.get();
+                asyncSearchTaskHandler.exec(taskContext, task);
+            }
+        });
         CompletableFuture
-                .runAsync(wrappedRunnable, executor)
+                .runAsync(runnable, executor)
                 .whenComplete((result, t) -> {
                     if (t != null) {
                         while (t instanceof CompletionException) {
@@ -149,7 +134,9 @@ public class ClusterSearchResultCollector implements Store, ClusterResultCollect
         // We have to wrap the cluster termination task in another task or
         // ClusterDispatchAsyncImpl
         // will not execute it if the parent task is terminated.
-        clusterTaskTerminator.terminate(task.getSearchName(), taskId, "AsyncSearchTask");
+        if (taskId != null) {
+            clusterTaskTerminator.terminate(task.getSearchName(), taskId, TASK_NAME);
+        }
     }
 
     @Override
@@ -266,7 +253,7 @@ public class ClusterSearchResultCollector implements Store, ClusterResultCollect
 
     @Override
     public List<String> getErrors() {
-        if (errors == null || errors.size() == 0) {
+        if (errors.size() == 0) {
             return null;
         }
 
