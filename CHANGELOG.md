@@ -6,6 +6,8 @@ and this project adheres to [Semantic Versioning](http://semver.org/).
 
 ## [Unreleased]
 
+* Make export add new line to the end of all files to adhere to POSIX standard.
+
 * Issue **#1454** : Fix NPE in feed name suggestion box.
 
 * Update auth flow for auth-into-stroom integration.
