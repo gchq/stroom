@@ -6,6 +6,8 @@ and this project adheres to [Semantic Versioning](http://semver.org/).
 
 ## [Unreleased]
 
+* Issue **#1450** : Stop data tabs showing all feeds.
+
 * Remove internal statistics from setup sample data.
 
 * Fix issue of pipeling structure not showing when it contains a StatisticsFilter.
