@@ -45,6 +45,7 @@ import javax.inject.Inject;
 import javax.xml.bind.JAXBContext;
 import javax.xml.bind.JAXBException;
 import java.io.IOException;
+import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
@@ -238,5 +239,10 @@ public class ProcessorFilterImportExportHandlerImpl implements ImportExportActio
         final Processor processor = page.getFirst();
 
         return processor;
+    }
+
+    @Override
+    public Set<DocRef> findAssociatedNonExplorerDocRefs(DocRef docRef) {
+        return null;
     }
 }

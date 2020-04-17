@@ -28,15 +28,7 @@ import stroom.meta.shared.MetaFields;
 import stroom.pipeline.shared.PipelineDoc;
 import stroom.processor.api.ProcessorFilterService;
 import stroom.processor.api.ProcessorService;
-import stroom.processor.shared.FetchProcessorRequest;
-import stroom.processor.shared.Processor;
-import stroom.processor.shared.ProcessorDataSource;
-import stroom.processor.shared.ProcessorFilter;
-import stroom.processor.shared.ProcessorFilterRow;
-import stroom.processor.shared.ProcessorListRow;
-import stroom.processor.shared.ProcessorRow;
-import stroom.processor.shared.QueryData;
-import stroom.processor.shared.ReprocessDataInfo;
+import stroom.processor.shared.*;
 import stroom.query.api.v2.ExpressionItem;
 import stroom.query.api.v2.ExpressionOperator;
 import stroom.query.api.v2.ExpressionOperator.Builder;
@@ -338,6 +330,33 @@ class ProcessorFilterServiceImpl implements ProcessorFilterService {
 
             return ResultPage.createUnboundedList(values);
         });
+    }
+
+    @Override
+    public ResultPage<ProcessorFilter> find(final DocRef pipelineDocRef) {
+        if (pipelineDocRef == null)
+            throw new IllegalArgumentException("Supplied pipeline docref cannot be null");
+
+        if (!PipelineDoc.DOCUMENT_TYPE.equals(pipelineDocRef.getType()))
+            throw new IllegalArgumentException("Supplied pipeline docref cannot be of type " + pipelineDocRef.getType() );
+
+        //First try to find the associated processors
+        final ExpressionOperator processorExpression = new ExpressionOperator.Builder()
+                .addTerm(ProcessorDataSource.PIPELINE, Condition.IS_DOC_REF, pipelineDocRef).build();
+        ResultPage<Processor> processorResultPage = processorService.find(new ExpressionCriteria(processorExpression));
+        if (processorResultPage.size() == 0)
+            return new ResultPage<ProcessorFilter>(new ArrayList<>());
+
+        ArrayList<ProcessorFilter> filters = new ArrayList<>();
+        //Now find all the processor filters
+        for (Processor processor : processorResultPage.getValues()){
+            final ExpressionOperator filterExpression = new ExpressionOperator.Builder()
+                    .addTerm(ProcessorFilterDataSource.PROCESSOR_ID, ExpressionTerm.Condition.EQUALS, processor.getId()).build();
+            ResultPage<ProcessorFilter> filterResultPage = find(new ExpressionCriteria(processorExpression));
+            filters.addAll(filterResultPage.getValues());
+        }
+
+        return new ResultPage<>(filters);
     }
 
     private ExpressionOperator decorate(final ExpressionOperator operator) {

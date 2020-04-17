@@ -34,11 +34,7 @@ import stroom.visualisation.shared.VisualisationDoc;
 import javax.inject.Inject;
 import javax.inject.Singleton;
 import java.io.IOException;
-import java.util.Collections;
-import java.util.List;
-import java.util.Map;
-import java.util.Set;
-import java.util.UUID;
+import java.util.*;
 
 @Singleton
 class VisualisationStoreImpl implements VisualisationStore {
@@ -205,6 +201,11 @@ class VisualisationStoreImpl implements VisualisationStore {
         }
 
         return result;
+    }
+
+    @Override
+    public Set<DocRef> findAssociatedNonExplorerDocRefs(DocRef docRef) {
+        return null;
     }
 
     ////////////////////////////////////////////////////////////////////////

@@ -35,11 +35,7 @@ import stroom.util.shared.Severity;
 import javax.inject.Inject;
 import javax.inject.Singleton;
 import java.io.IOException;
-import java.util.Collections;
-import java.util.List;
-import java.util.Map;
-import java.util.Set;
-import java.util.UUID;
+import java.util.*;
 
 @Singleton
 public class StatisticStoreStoreImpl implements StatisticStoreStore {
@@ -210,6 +206,11 @@ public class StatisticStoreStoreImpl implements StatisticStoreStore {
     @Override
     public String getType() {
         return StatisticStoreDoc.DOCUMENT_TYPE;
+    }
+
+    @Override
+    public Set<DocRef> findAssociatedNonExplorerDocRefs(DocRef docRef) {
+        return null;
     }
 
     ////////////////////////////////////////////////////////////////////////

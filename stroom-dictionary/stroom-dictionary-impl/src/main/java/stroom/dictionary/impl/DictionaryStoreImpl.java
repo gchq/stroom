@@ -278,6 +278,11 @@ class DictionaryStoreImpl implements DictionaryStore, WordListProvider {
         return DictionaryDoc.ENTITY_TYPE;
     }
 
+    @Override
+    public Set<DocRef> findAssociatedNonExplorerDocRefs(DocRef docRef) {
+        return null;
+    }
+
     ////////////////////////////////////////////////////////////////////////
     // END OF ImportExportActionHandler
     ////////////////////////////////////////////////////////////////////////

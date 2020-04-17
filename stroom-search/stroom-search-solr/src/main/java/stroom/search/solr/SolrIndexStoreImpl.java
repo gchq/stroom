@@ -43,13 +43,7 @@ import stroom.util.shared.Message;
 import javax.inject.Inject;
 import javax.inject.Singleton;
 import java.io.IOException;
-import java.util.ArrayList;
-import java.util.Collections;
-import java.util.Comparator;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
-import java.util.Set;
+import java.util.*;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.function.Consumer;
 import java.util.function.Function;
@@ -372,6 +366,12 @@ public class SolrIndexStoreImpl implements SolrIndexStore {
     public String getType() {
         return SolrIndexDoc.DOCUMENT_TYPE;
     }
+
+    @Override
+    public Set<DocRef> findAssociatedNonExplorerDocRefs(DocRef docRef) {
+        return null;
+    }
+
 
     ////////////////////////////////////////////////////////////////////////
     // END OF ImportExportActionHandler

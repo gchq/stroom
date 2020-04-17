@@ -375,6 +375,10 @@ class ImportExportSerializerImpl implements ImportExportSerializer {
             if (importExportActionHandler != null) {
                 if (securityContext.hasDocumentPermission(docRef.getUuid(), DocumentPermissionNames.READ)) {
                     docRefs.add(docRef);
+
+                    Set<DocRef> associatedNonExplorerDocRefs = importExportActionHandler.findAssociatedNonExplorerDocRefs(docRef);
+                    if (associatedNonExplorerDocRefs != null)
+                        docRefs.addAll(associatedNonExplorerDocRefs);
                 }
             }
         } catch (final RuntimeException e) {

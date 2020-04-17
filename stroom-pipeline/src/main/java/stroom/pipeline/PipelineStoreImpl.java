@@ -22,39 +22,47 @@ import stroom.docref.DocRefInfo;
 import stroom.docstore.api.AuditFieldFilter;
 import stroom.docstore.api.Store;
 import stroom.docstore.api.StoreFactory;
+import stroom.entity.shared.ExpressionCriteria;
 import stroom.explorer.shared.DocumentType;
 import stroom.importexport.migration.LegacyXMLSerialiser;
 import stroom.importexport.shared.ImportState;
 import stroom.importexport.shared.ImportState.ImportMode;
 import stroom.pipeline.shared.PipelineDoc;
 import stroom.pipeline.shared.data.PipelineData;
+import stroom.processor.api.ProcessorFilterService;
+import stroom.processor.shared.ProcessorFilter;
+import stroom.processor.shared.ProcessorFilterDataSource;
+import stroom.query.api.v2.ExpressionOperator;
+import stroom.query.api.v2.ExpressionTerm;
 import stroom.security.api.SecurityContext;
 import stroom.util.shared.Message;
+import stroom.util.shared.ResultPage;
 import stroom.util.shared.Severity;
 import stroom.util.string.EncodingUtil;
 
 import javax.inject.Inject;
+import javax.inject.Provider;
 import javax.inject.Singleton;
 import java.io.IOException;
-import java.util.Collections;
-import java.util.List;
-import java.util.Map;
-import java.util.Set;
-import java.util.UUID;
+import java.util.*;
+import java.util.stream.Collectors;
 
 @Singleton
 public class PipelineStoreImpl implements PipelineStore {
     private final Store<PipelineDoc> store;
     private final SecurityContext securityContext;
     private final PipelineSerialiser serialiser;
+    private final Provider<ProcessorFilterService> processorFilterServiceProvider;
 
     @Inject
     public PipelineStoreImpl(final StoreFactory storeFactory,
                              final SecurityContext securityContext,
-                             final PipelineSerialiser serialiser) {
+                             final PipelineSerialiser serialiser,
+                             final Provider<ProcessorFilterService> processorFilterServiceProvider) {
         this.store = storeFactory.createStore(serialiser, PipelineDoc.DOCUMENT_TYPE, PipelineDoc.class);
         this.securityContext = securityContext;
         this.serialiser = serialiser;
+        this.processorFilterServiceProvider = processorFilterServiceProvider;
     }
 
     ////////////////////////////////////////////////////////////////////////
@@ -206,6 +214,22 @@ public class PipelineStoreImpl implements PipelineStore {
 
         return result;
     }
+
+    @Override
+    public Set<DocRef> findAssociatedNonExplorerDocRefs(DocRef docRef) {
+        Set <DocRef> processorFilters = new HashSet<DocRef>();
+
+        if (docRef != null && PipelineDoc.DOCUMENT_TYPE.equals(docRef.getType())) {
+            ResultPage<ProcessorFilter> filterResultPage = processorFilterServiceProvider.get().find(docRef);
+
+            List <DocRef> docRefs = filterResultPage.getValues().stream().map(v -> new DocRef(ProcessorFilter.ENTITY_TYPE, v.getUuid()))
+                    .collect(Collectors.toList());
+
+            processorFilters.addAll(docRefs);
+        }
+        return processorFilters;
+    }
+
 
     @Override
     public String getType() {

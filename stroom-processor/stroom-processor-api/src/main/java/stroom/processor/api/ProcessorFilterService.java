@@ -53,6 +53,8 @@ public interface ProcessorFilterService extends HasIntCrud<ProcessorFilter> {
 
     ResultPage<ProcessorListRow> find(FetchProcessorRequest request);
 
+    ResultPage<ProcessorFilter> find(final DocRef pipelineDocRef);
+
     void setPriority(Integer id, Integer priority);
 
     void setEnabled(Integer id, Boolean enabled);

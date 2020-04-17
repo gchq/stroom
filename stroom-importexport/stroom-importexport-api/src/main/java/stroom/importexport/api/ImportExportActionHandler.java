@@ -19,4 +19,6 @@ public interface ImportExportActionHandler {
     Map<DocRef, Set<DocRef>> getDependencies();
 
     String getType();
+
+    Set<DocRef> findAssociatedNonExplorerDocRefs(DocRef docRef);
 }

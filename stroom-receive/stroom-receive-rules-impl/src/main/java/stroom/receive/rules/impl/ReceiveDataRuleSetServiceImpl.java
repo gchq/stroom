@@ -32,6 +32,7 @@ import stroom.util.shared.Message;
 
 import javax.inject.Inject;
 import javax.inject.Singleton;
+import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
@@ -140,6 +141,11 @@ public class ReceiveDataRuleSetServiceImpl implements ReceiveDataRuleSetService 
     @Override
     public String getType() {
         return ReceiveDataRules.DOCUMENT_TYPE;
+    }
+
+    @Override
+    public Set<DocRef> findAssociatedNonExplorerDocRefs(DocRef docRef) {
+        return null;
     }
 
     ////////////////////////////////////////////////////////////////////////
