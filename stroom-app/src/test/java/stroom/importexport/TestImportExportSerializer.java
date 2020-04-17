@@ -19,6 +19,8 @@ package stroom.importexport;
 
 
 import org.junit.jupiter.api.Test;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import stroom.docref.DocRef;
 import stroom.explorer.api.ExplorerService;
 import stroom.explorer.shared.ExplorerConstants;
@@ -40,6 +42,8 @@ import stroom.test.common.StroomCoreServerTestFileUtil;
 import stroom.test.common.util.test.FileSystemTestUtil;
 import stroom.util.io.FileUtil;
 import stroom.util.io.StreamUtil;
+import stroom.util.shared.Message;
+import stroom.util.shared.Severity;
 import stroom.xmlschema.shared.XmlSchemaDoc;
 
 import javax.inject.Inject;
@@ -56,6 +60,9 @@ import java.util.Set;
 import static org.assertj.core.api.Assertions.assertThat;
 
 class TestImportExportSerializer extends AbstractCoreIntegrationTest {
+
+    private static final Logger LOGGER = LoggerFactory.getLogger(TestImportExportSerializer.class);
+
     @Inject
     private CommonTestControl commonTestControl;
     @Inject
@@ -142,6 +149,7 @@ class TestImportExportSerializer extends AbstractCoreIntegrationTest {
         allSchemas = xmlSchemaStore.list();
 
         for (final DocRef ref : allSchemas) {
+            LOGGER.info("Reading doc {}", ref);
             final XmlSchemaDoc xmlSchema = xmlSchemaStore.readDocument(ref);
             assertThat(xmlSchema.getData()).isNotSameAs("XML");
         }
@@ -196,7 +204,16 @@ class TestImportExportSerializer extends AbstractCoreIntegrationTest {
         importExportSerializer.read(inDir, null, ImportMode.IGNORE_CONFIRMATION);
 
         // Write to output.
-        importExportSerializer.write(outDir, buildFindFolderCriteria(), true, new ArrayList<>());
+        List<Message> messageList = new ArrayList<>();
+        importExportSerializer.write(outDir, buildFindFolderCriteria(), true, messageList);
+
+        messageList.forEach(message -> {
+            if (message.getSeverity().equals(Severity.ERROR)) {
+                LOGGER.error("Export error: {}", message.getMessage());
+            } else {
+                LOGGER.warn("Export warning: {}", message.getMessage());
+            }
+        });
 
         // Compare input and output directory.
         ComparisonHelper.compareDirs(inDir, outDir);
