@@ -74,6 +74,8 @@ public class ProcessorFilter implements HasAuditInfo, HasUuid {
     private String processorUuid;
     @JsonProperty
     private String pipelineUuid;
+    @JsonProperty
+    private String pipelineName;
 
     @JsonProperty
     private Processor processor;
@@ -108,7 +110,8 @@ public class ProcessorFilter implements HasAuditInfo, HasUuid {
                            @JsonProperty("priority") final int priority,
                            @JsonProperty("enabled") final boolean enabled,
                            @JsonProperty("processorUuid") final String processorUuid,
-                           @JsonProperty("pipelineUuid") final String pipelineUuid) {
+                           @JsonProperty("pipelineUuid") final String pipelineUuid,
+                           @JsonProperty("pipelineName") final String pipelineName) {
         this.id = id;
         this.version = version;
         this.createTimeMs = createTimeMs;
@@ -128,6 +131,7 @@ public class ProcessorFilter implements HasAuditInfo, HasUuid {
         }
         this.enabled = enabled;
         this.processorUuid = processorUuid;
+        this.pipelineName = pipelineName;
     }
 
     public Integer getId() {
@@ -230,12 +234,19 @@ public class ProcessorFilter implements HasAuditInfo, HasUuid {
         return pipelineUuid;
     }
 
+    public String getPipelineName(){
+        return pipelineName;
+    }
+
+    public void setPipelineName (final String s) { pipelineName = s; }
+
     public void setProcessor(final Processor processor) {
         this.processor = processor;
 
         if (processor != null) {
             processorUuid = processor.getUuid();
             pipelineUuid = processor.getPipelineUuid();
+            pipelineName = processor.getPipelineName();
         }
     }
 

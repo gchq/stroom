@@ -27,14 +27,21 @@ public interface NonExplorerDocRefProvider {
      * @return an explorer docref that is located in a suitable location for association with the supplied docref
      * (or null if no suitable explorer docref is found)
      */
-    DocRef findNearestExplorerDocRef(DocRef docref);
+    DocRef findNearestExplorerDocRef(final DocRef docref);
 
     /**
      * Allows an alternative name to be provided for a docref
      * @param docRef the non-explorer based docref known to this instance
      * @return A string that represents a suitable name for this docref.
      */
-    String findNameOfDocRef(DocRef docRef);
+    String findNameOfDocRef(final DocRef docRef);
+
+    /**
+     * The name of the nearest explorer docref when the supplied doc ref was exported.
+     * @param docRef the non-explorer based docref known to this instance
+     * @return The name that the nearest explorer doc ref had when the non-explorer based docref was exported
+     */
+    String findNameOfNearestExplorerDocRef (final DocRef docRef);
 
     /**
      * Check whether this DocRef is already known to this instance

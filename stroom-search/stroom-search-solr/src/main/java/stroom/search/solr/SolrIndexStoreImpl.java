@@ -337,7 +337,7 @@ public class SolrIndexStoreImpl implements SolrIndexStore {
     }
 
     @Override
-    public DocRef importDocument(final DocRef docRef, final Map<String, byte[]> dataMap, final ImportState importState, final ImportMode importMode) {
+    public ImpexDetails importDocument(final DocRef docRef, final Map<String, byte[]> dataMap, final ImportState importState, final ImportMode importMode) {
         return store.importDocument(docRef, dataMap, importState, importMode);
     }
 

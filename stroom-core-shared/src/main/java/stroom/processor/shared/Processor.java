@@ -55,10 +55,9 @@ public class Processor implements HasAuditInfo, HasUuid {
     @JsonProperty
     private String pipelineUuid;
     @JsonProperty
+    private String pipelineName;
+    @JsonProperty
     private boolean enabled;
-
-    //TODO do we need pipelineName?
-//    private String pipelineName;
 
     public Processor() {
         taskType = PIPELINE_STREAM_PROCESSOR_TASK_TYPE;
@@ -79,6 +78,7 @@ public class Processor implements HasAuditInfo, HasUuid {
                      @JsonProperty("uuid") final String uuid,
                      @JsonProperty("taskType") final String taskType,
                      @JsonProperty("pipelineUuid") final String pipelineUuid,
+                     @JsonProperty("pipelineName") final String pipelineName,
                      @JsonProperty("enabled") final boolean enabled) {
         this.id = id;
         this.version = version;
@@ -89,6 +89,7 @@ public class Processor implements HasAuditInfo, HasUuid {
         this.uuid = uuid;
         this.taskType = taskType;
         this.pipelineUuid = pipelineUuid;
+        this.pipelineName = pipelineName;
         this.enabled = enabled;
     }
 
@@ -165,8 +166,14 @@ public class Processor implements HasAuditInfo, HasUuid {
         return pipelineUuid;
     }
 
-    public void setPipelineUuid(final String pipelineUuid) {
-        this.pipelineUuid = pipelineUuid;
+    public void setPipelineUuid(final String uuid) { this.pipelineUuid = uuid;}
+
+    public String getPipelineName() { return pipelineName; }
+
+
+    public void setPipeline (final DocRef pipelineDocRef) {
+        this.pipelineUuid = pipelineDocRef.getUuid();
+        this.pipelineName = pipelineDocRef.getName();
     }
 
 //    public String getPipelineName() {

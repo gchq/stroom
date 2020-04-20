@@ -151,14 +151,14 @@ class DashboardStoreImpl implements DashboardStore {
     }
 
     @Override
-    public DocRef importDocument(final DocRef docRef, final Map<String, byte[]> dataMap, final ImportState importState, final ImportMode importMode) {
+    public ImpexDetails importDocument(final DocRef docRef, final Map<String, byte[]> dataMap, final ImportState importState, final ImportMode importMode) {
         // Convert legacy import format to the new format.
         final Map<String, byte[]> map = convert(docRef, dataMap, importState, importMode);
         if (map != null) {
             return store.importDocument(docRef, map, importState, importMode);
         }
 
-        return docRef;
+        return new ImpexDetails(docRef);
     }
 
     @Override

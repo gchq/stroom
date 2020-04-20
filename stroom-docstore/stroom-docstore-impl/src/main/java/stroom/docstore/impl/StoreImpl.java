@@ -26,6 +26,7 @@ import stroom.docstore.api.DocumentSerialiser2;
 import stroom.docstore.api.Store;
 import stroom.docstore.shared.Doc;
 import stroom.docstore.shared.DocRefUtil;
+import stroom.importexport.api.ImportExportActionHandler;
 import stroom.importexport.shared.ImportState;
 import stroom.importexport.shared.ImportState.ImportMode;
 import stroom.importexport.shared.ImportState.State;
@@ -277,7 +278,7 @@ public class StoreImpl<D extends Doc> implements Store<D> {
     }
 
     @Override
-    public DocRef importDocument(final DocRef docRef, final Map<String, byte[]> dataMap, final ImportState importState, final ImportMode importMode) {
+    public ImportExportActionHandler.ImpexDetails importDocument(final DocRef docRef, final Map<String, byte[]> dataMap, final ImportState importState, final ImportMode importMode) {
         Objects.requireNonNull(docRef);
         final String uuid = docRef.getUuid();
         try {
@@ -318,7 +319,7 @@ public class StoreImpl<D extends Doc> implements Store<D> {
             importState.addMessage(Severity.ERROR, e.getMessage());
         }
 
-        return docRef;
+        return new ImportExportActionHandler.ImpexDetails(docRef);
     }
 
     @Override

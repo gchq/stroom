@@ -51,7 +51,7 @@ public class ProcessorServiceImpl implements ProcessorService {
 
         final Processor processor = new Processor();
         processor.setEnabled(enabled);
-        processor.setPipelineUuid(pipelineRef.getUuid());
+        processor.setPipeline(pipelineRef);
 
         // Check the user has read permissions on the pipeline.
         if (!securityContext.hasDocumentPermission(processor.getPipelineUuid(), DocumentPermissionNames.READ)) {
@@ -80,7 +80,7 @@ public class ProcessorServiceImpl implements ProcessorService {
     public Processor create(DocRef processorDocRef, DocRef pipelineDocRef, boolean enabled) {
         final Processor processor = new Processor();
         processor.setEnabled(enabled);
-        processor.setPipelineUuid(pipelineDocRef.getUuid());
+        processor.setPipeline(pipelineDocRef);
         processor.setUuid(processorDocRef.getUuid());
 
         // Check the user has read permissions on the pipeline.

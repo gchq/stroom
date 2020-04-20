@@ -22,6 +22,7 @@ import io.swagger.annotations.Api;
 import io.swagger.annotations.ApiOperation;
 import io.swagger.annotations.ApiParam;
 import stroom.docref.DocRef;
+import stroom.importexport.api.ImportExportActionHandler;
 import stroom.importexport.shared.Base64EncodedDocumentData;
 import stroom.importexport.api.DocumentData;
 import stroom.importexport.shared.ImportState;
@@ -76,7 +77,12 @@ public class NewUiDictionaryResource2 implements RestResource, HasHealthCheck {
     public DocRef importDocument(@ApiParam("DocumentData") final Base64EncodedDocumentData encodedDocumentData) {
         final DocumentData documentData = DocumentData.fromBase64EncodedDocumentData(encodedDocumentData);
         final ImportState importState = new ImportState(documentData.getDocRef(), documentData.getDocRef().getName());
-        return dictionaryStore.importDocument(documentData.getDocRef(), documentData.getDataMap(), importState, ImportMode.IGNORE_CONFIRMATION);
+        final ImportExportActionHandler.ImpexDetails result =  dictionaryStore.importDocument(documentData.getDocRef(), documentData.getDataMap(), importState, ImportMode.IGNORE_CONFIRMATION);
+
+        if (result != null)
+            return result.getDocRef();
+        else
+            return null;
     }
 
     @POST

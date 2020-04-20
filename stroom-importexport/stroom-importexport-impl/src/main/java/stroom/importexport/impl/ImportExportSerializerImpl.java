@@ -230,8 +230,15 @@ class ImportExportSerializerImpl implements ImportExportSerializer {
                     final String parentPath = parents.stream().map(ExplorerNode::getName).collect(Collectors.joining("/"));
 
                     importState.setState(State.UPDATE);
-                    if (existingNode.isPresent())
+                    if (existingNode.isPresent()) {
                         importState.setDestPath(createPath(parentPath, existingNode.get().getName()));
+                    }
+                    else if (nonExplorerDocRef != null) {
+                        //Use dest path to indicate to user the associated explorer entity for any imported non-explorer ones
+                        final Optional<ExplorerNode> existingAltNode = explorerNodeService.getNode(explorerDocRef);
+                        if (existingAltNode.isPresent())
+                            importState.setDestPath(existingAltNode.get().getName() + "(Existing "+ explorerDocRef.getType() + ")");
+                    }
 
                     // This is a pre existing item so make sure we are allowed to update it.
                     if (!securityContext.hasDocumentPermission(explorerDocRef.getUuid(), DocumentPermissionNames.UPDATE)) {
@@ -259,7 +266,19 @@ class ImportExportSerializerImpl implements ImportExportSerializer {
                             ImportMode.CREATE_CONFIRMATION.equals(importMode) ||
                             ImportMode.IGNORE_CONFIRMATION.equals(importMode) ||
                             importState.isAction())) {
-                        final DocRef imported = importExportActionHandler.importDocument(docRef, dataMap, importState, importMode);
+                        final ImportExportActionHandler.ImpexDetails importDetails = importExportActionHandler.importDocument(docRef, dataMap, importState, importMode);
+
+                        final DocRef imported;
+                        if (importDetails != null)
+                            imported = importDetails.getDocRef();
+                        else
+                            imported = null;
+                        if (imported == null)
+                            throw new RuntimeException("Import failed - no docref returned");
+
+                        final String altDestPath = importDetails.getLocationRef();
+                        if (altDestPath != null)
+                            importState.setDestPath(altDestPath);
 
                         // Add explorer node afterwards on successful import as they won't be controlled by doc service.
                         if (importState.ok(importMode)) {

@@ -22,7 +22,6 @@ import stroom.docref.DocRefInfo;
 import stroom.docstore.api.AuditFieldFilter;
 import stroom.docstore.api.Store;
 import stroom.docstore.api.StoreFactory;
-import stroom.entity.shared.ExpressionCriteria;
 import stroom.explorer.shared.DocumentType;
 import stroom.importexport.migration.LegacyXMLSerialiser;
 import stroom.importexport.shared.ImportState;
@@ -31,9 +30,6 @@ import stroom.pipeline.shared.PipelineDoc;
 import stroom.pipeline.shared.data.PipelineData;
 import stroom.processor.api.ProcessorFilterService;
 import stroom.processor.shared.ProcessorFilter;
-import stroom.processor.shared.ProcessorFilterDataSource;
-import stroom.query.api.v2.ExpressionOperator;
-import stroom.query.api.v2.ExpressionTerm;
 import stroom.security.api.SecurityContext;
 import stroom.util.shared.Message;
 import stroom.util.shared.ResultPage;
@@ -143,14 +139,14 @@ public class PipelineStoreImpl implements PipelineStore {
     }
 
     @Override
-    public DocRef importDocument(final DocRef docRef, final Map<String, byte[]> dataMap, final ImportState importState, final ImportMode importMode) {
+    public ImpexDetails importDocument(final DocRef docRef, final Map<String, byte[]> dataMap, final ImportState importState, final ImportMode importMode) {
         // Convert legacy import format to the new format.
         final Map<String, byte[]> map = convert(docRef, dataMap, importState, importMode);
         if (map != null) {
             return store.importDocument(docRef, map, importState, importMode);
         }
 
-        return docRef;
+        return new ImpexDetails(docRef);
     }
 
     @Override
@@ -243,6 +239,12 @@ public class PipelineStoreImpl implements PipelineStore {
     @Override
     public List<DocRef> findByName(final String name) {
         return store.findByName(name);
+    }
+
+    @Override
+    public PipelineDoc find(DocRef docRef) {
+
+        return store.readDocument(docRef);
     }
 
     @Override
