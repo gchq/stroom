@@ -10,6 +10,7 @@ import stroom.config.common.CommonDbConfig;
 import stroom.config.common.ConnectionConfig;
 import stroom.config.common.HasDbConfig;
 import stroom.db.util.AbstractFlyWayDbModule;
+import stroom.util.ConsoleColour;
 import stroom.util.db.ForceCoreMigration;
 import stroom.util.logging.LambdaLogUtil;
 import stroom.util.logging.LambdaLogger;
@@ -35,11 +36,13 @@ import java.util.stream.Collectors;
 public class DbTestUtil {
     private static final LambdaLogger LOGGER = LambdaLoggerFactory.getLogger(DbTestUtil.class);
 
-    private static final String USE_TEST_CONTAINERS_ENV_VAR = "USE_TEST_CONTAINERS";
-    private static final String TEST_CONTAINERS_DB_PASSWORD = "test";
-    private static final String TEST_CONTAINERS_DB_USERNAME = "test";
+    private static final String USE_EMBEDDED_MYSQL_PROP_NAME = "useEmbeddedMySql";
+    private static final String EMBEDDED_MYSQL_DB_PASSWORD = "test";
+    private static final String EMBEDDED_MYSQL_DB_USERNAME = "test";
 
     private static ConnectionConfig currentConfig;
+
+    private static volatile boolean HAVE_ALREADY_SHOWN_DB_MSG = false;
 
     private DbTestUtil() {
     }
@@ -67,11 +70,34 @@ public class DbTestUtil {
     }
 
     static boolean isUseEmbeddedDb() {
-        String useTestContainersEnvVarVal = System.getenv(USE_TEST_CONTAINERS_ENV_VAR);
-        // This env var allows a dev to use their own stroom-resources DB instead of test containers.
-        // This is useful when debugging a test that needs to access the DB as test containers has to
+        String useTestContainersEnvVarVal = System.getProperty(USE_EMBEDDED_MYSQL_PROP_NAME);
+        // This system prop allows a dev to use their own stroom-resources DB instead of test containers.
+        // This is useful when debugging a test that needs to access the DB as the embedded DB has to
         // migrate the DB from scratch on each run which is very time consuming
-        return (useTestContainersEnvVarVal == null || !useTestContainersEnvVarVal.toLowerCase().equals("false"));
+        boolean useEmbeddedDb = (useTestContainersEnvVarVal == null
+                || !useTestContainersEnvVarVal.toLowerCase().equals("false"));
+
+        if (!HAVE_ALREADY_SHOWN_DB_MSG) {
+            if (useEmbeddedDb) {
+                String msg = "" +
+                        "\n---------------------------------------------------------------" +
+                        "\n                    Using embedded MySQL" +
+                        "\n To use an external DB for better performance add the following" +
+                        "\n   -D{}=false" +
+                        "\n to Run Configurations -> Templates -> Junit -> VM Options" +
+                        "\n You many need to restart IntelliJ for this to work" +
+                        "\n---------------------------------------------------------------";
+                LOGGER.info(ConsoleColour.green(msg), USE_EMBEDDED_MYSQL_PROP_NAME);
+            } else {
+                String msg = "" +
+                        "\n---------------------------------------------------------------" +
+                        "\n                    Using external MySQL" +
+                        "\n---------------------------------------------------------------";
+                LOGGER.info(ConsoleColour.cyan(msg));
+            }
+            HAVE_ALREADY_SHOWN_DB_MSG = true;
+        }
+        return useEmbeddedDb;
     }
 
     private static ConnectionConfig createEmbeddedDbConfig() {
@@ -100,7 +126,7 @@ public class DbTestUtil {
             final MysqldConfig config = MysqldConfig.aMysqldConfig(Version.v5_5_52)
                     .withCharset(Charset.UTF8)
                     .withFreePort()
-                    .withUser(TEST_CONTAINERS_DB_USERNAME, TEST_CONTAINERS_DB_PASSWORD)
+                    .withUser(EMBEDDED_MYSQL_DB_USERNAME, EMBEDDED_MYSQL_DB_PASSWORD)
 //                        .withTimeZone("Europe/London")
                     .withTimeout(2, TimeUnit.MINUTES)
                     .withServerVariable("max_connect_errors", 666)

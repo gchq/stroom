@@ -29,16 +29,16 @@ class UriFactoryImpl implements UriFactory {
 
     @Inject
     UriFactoryImpl(final Config config,
-                          final AppConfig appConfig) {
+                   final AppConfig appConfig) {
         this.config = config;
         this.appConfig = appConfig;
 
         final String localBaseUri = getLocalBaseUri();
-        LOGGER.info("Established Local URI: " + localBaseUri);
+        LOGGER.info("Established Local URI:  " + localBaseUri);
         final String publicBaseUri = getPublicBaseUri();
         LOGGER.info("Established Public URI: " + publicBaseUri);
         final String uiBaseUri = getUiBaseUri();
-        LOGGER.info("Established UI URI: " + uiBaseUri);
+        LOGGER.info("Established UI URI:     " + uiBaseUri);
     }
 
     @Override
