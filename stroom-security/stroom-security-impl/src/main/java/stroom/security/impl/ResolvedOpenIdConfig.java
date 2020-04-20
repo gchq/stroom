@@ -46,7 +46,7 @@ public class ResolvedOpenIdConfig {
 
     public String getJwksUri() {
         if (openIdConfig.isUseInternal()) {
-            return uriFactory.publicUri(INTERNAL_JWKS_URI).toString();
+            return uriFactory.localUri(INTERNAL_JWKS_URI).toString();
         }
         return openIdConfig.getJwksUri();
     }
