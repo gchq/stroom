@@ -388,15 +388,25 @@ public abstract class AbstractMetaListPresenter extends MyPresenterWidget<DataGr
 
     public void setCriteria(final FindMetaCriteria criteria) {
         if (criteria != null && criteria.getExpression() != null) {
-            this.criteria = criteria;
-            this.criteria.obtainPageRequest().setLength(PageRequest.DEFAULT_PAGE_SIZE);
+            if (criteria.equals(this.criteria) && this.dataProvider != null) {
+                this.dataProvider.refresh();
+            } else {
+                this.criteria = criteria;
+                this.criteria.obtainPageRequest().setLength(PageRequest.DEFAULT_PAGE_SIZE);
 
-            if (dataProvider == null) {
-                this.dataProvider = new RestDataProvider<MetaRow, ResultPage<MetaRow>>(eventBus, criteria.obtainPageRequest()) {
+                this.dataProvider = new RestDataProvider<MetaRow, ResultPage<MetaRow>>(
+                        eventBus,
+                        criteria.obtainPageRequest()) {
+
                     @Override
-                    protected void exec(final Consumer<ResultPage<MetaRow>> dataConsumer, final Consumer<Throwable> throwableConsumer) {
+                    protected void exec(final Consumer<ResultPage<MetaRow>> dataConsumer,
+                                        final Consumer<Throwable> throwableConsumer) {
                         final Rest<ResultPage<MetaRow>> rest = restFactory.create();
-                        rest.onSuccess(dataConsumer).onFailure(throwableConsumer).call(META_RESOURCE).findMetaRow(criteria);
+                        rest
+                                .onSuccess(dataConsumer)
+                                .onFailure(throwableConsumer)
+                                .call(META_RESOURCE)
+                                .findMetaRow(getCriteria());
                     }
 
                     @Override
@@ -405,8 +415,6 @@ public abstract class AbstractMetaListPresenter extends MyPresenterWidget<DataGr
                     }
                 };
                 dataProvider.addDataDisplay(getView().getDataDisplay());
-            } else {
-                dataProvider.refresh();
             }
         }
     }
@@ -423,5 +431,9 @@ public abstract class AbstractMetaListPresenter extends MyPresenterWidget<DataGr
 
     public ButtonView add(final SvgPreset preset) {
         return getView().addButton(preset);
+    }
+
+    private FindMetaCriteria getCriteria() {
+        return criteria;
     }
 }

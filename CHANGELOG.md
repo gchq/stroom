@@ -6,6 +6,8 @@ and this project adheres to [Semantic Versioning](http://semver.org/).
 
 ## [Unreleased]
 
+* Issue **#1450** : Stop data tabs showing all feeds.
+
 * Issue **#1454** : Fix NPE in feed name suggestion box.
 
 * Remove internal statistics from setup sample data.
