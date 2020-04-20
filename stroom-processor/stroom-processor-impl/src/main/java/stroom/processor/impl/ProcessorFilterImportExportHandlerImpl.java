@@ -16,6 +16,7 @@
  */
 package stroom.processor.impl;
 
+import org.jooq.SelectSeekLimitStep;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import stroom.docref.DocRef;
@@ -66,7 +67,7 @@ public class ProcessorFilterImportExportHandlerImpl implements ImportExportActio
     @Inject
     ProcessorFilterImportExportHandlerImpl(final ProcessorFilterService processorFilterService, final ProcessorService processorService,
                                            final ImportExportDocumentEventLog importExportDocumentEventLog, final Serialiser2Factory serialiser2Factory,
-                                           final PipelineStore pipelineStore){
+                                           final PipelineStore pipelineStore) {
         this.processorFilterService = processorFilterService;
         this.processorService = processorService;
         this.importExportDocumentEventLog = importExportDocumentEventLog;
@@ -80,19 +81,19 @@ public class ProcessorFilterImportExportHandlerImpl implements ImportExportActio
             throw new IllegalArgumentException("Unable to import Processor with no meta file.  Docref is " + docRef);
 
         final ProcessorFilter processorFilter;
-        try{
+        try {
             processorFilter = delegate.read(dataMap.get(META));
-        } catch (IOException ex){
+        } catch (IOException ex) {
             throw new RuntimeException("Unable to read meta file associated with processor " + docRef, ex);
         }
 
-        if (importMode != ImportState.ImportMode.CREATE_CONFIRMATION ) {
-        processorFilter.setProcessor(findProcessorForFilter(processorFilter));
+        if (importMode != ImportState.ImportMode.CREATE_CONFIRMATION) {
+            processorFilter.setProcessor(findProcessorForFilter(processorFilter));
 
             if (ImportState.State.NEW.equals(importState.getState())) {
 
                 ProcessorFilter filter = findProcessorFilter(docRef);
-                if (filter == null){
+                if (filter == null) {
                     Processor processor = findProcessor(docRef.getUuid(),
                             processorFilter.getProcessorUuid(),
                             processorFilter.getPipelineUuid(),
@@ -110,11 +111,11 @@ public class ProcessorFilterImportExportHandlerImpl implements ImportExportActio
                 }
                 processorFilterService.update(processorFilter);
             }
-       }
+        }
         return new ImpexDetails(docRef, processorFilter.getPipelineName());
     }
 
-    private ProcessorFilter findProcessorFilter (final DocRef docRef){
+    private ProcessorFilter findProcessorFilter(final DocRef docRef) {
         if (docRef == null || docRef.getUuid() == null)
             return null;
 
@@ -125,9 +126,9 @@ public class ProcessorFilterImportExportHandlerImpl implements ImportExportActio
         ResultPage<ProcessorFilter> page = processorFilterService.find(criteria);
 
         if (page != null && page.size() == 1) {
-            ProcessorFilter filter =  page.getFirst();
+            ProcessorFilter filter = page.getFirst();
 
-            if (filter.getPipelineName() == null && filter.getPipelineUuid() != null){
+            if (filter.getPipelineName() == null && filter.getPipelineUuid() != null) {
                 PipelineDoc pipeline = pipelineStore.find(new DocRef(PipelineDoc.DOCUMENT_TYPE, filter.getPipelineUuid()));
                 if (pipeline != null)
                     filter.setPipelineName(pipeline.getName());
@@ -159,8 +160,8 @@ public class ProcessorFilterImportExportHandlerImpl implements ImportExportActio
         Map<String, byte[]> data;
         try {
             data = delegate.write(processorFilter);
-        }catch (IOException ioex){
-            LOGGER.error ("Unable to create meta file for processor filter", ioex);
+        } catch (IOException ioex) {
+            LOGGER.error("Unable to create meta file for processor filter", ioex);
             importExportDocumentEventLog.exportDocument(docRef, ioex);
             throw new RuntimeException("Unable to create meta file for processor filter", ioex);
         }
@@ -187,8 +188,8 @@ public class ProcessorFilterImportExportHandlerImpl implements ImportExportActio
     }
 
     @Override
-    public DocRef findNearestExplorerDocRef(final  DocRef docref) {
-        if (docref != null && ProcessorFilter.ENTITY_TYPE.equals(docref.getType())){
+    public DocRef findNearestExplorerDocRef(final DocRef docref) {
+        if (docref != null && ProcessorFilter.ENTITY_TYPE.equals(docref.getType())) {
             ProcessorFilter processorFilter = findProcessorFilter(docref);
 
             if (processorFilter != null) {
@@ -205,13 +206,17 @@ public class ProcessorFilterImportExportHandlerImpl implements ImportExportActio
 
     @Override
     public String findNameOfDocRef(final DocRef docRef) {
-        if (docRef == null)
-            return "Processor Filter Null";
-        return "Processor Filter " + docRef.getUuid().substring(0,7);
-    }
+        if (docRef != null && ProcessorFilter.ENTITY_TYPE.equals(docRef.getType())) {
+            ProcessorFilter processorFilter = findProcessorFilter(docRef);
 
-    @Override
-    public String findNameOfNearestExplorerDocRef(final DocRef docRef) {
+            final String name = docRef.getUuid().substring(0, 7);
+
+            final String pipelineName = processorFilter.getPipelineName();
+            if (pipelineName != null)
+                return pipelineName + "(Pipeline)" + "/" + name;
+            else
+                return "Unknown Pipeline/" + name;
+        }
         return null;
     }
 
@@ -219,7 +224,7 @@ public class ProcessorFilterImportExportHandlerImpl implements ImportExportActio
     public boolean docExists(final DocRef docRef) {
         DocRef associatedExplorerDocRef = findNearestExplorerDocRef(docRef);
         if (associatedExplorerDocRef != null)
-            return findProcessorFilter(associatedExplorerDocRef) != null;
+            return true;
         else
             return findProcessorFilter(docRef) != null;
     }
