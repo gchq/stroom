@@ -91,35 +91,51 @@ class UriFactoryImpl implements UriFactory {
             if (isValid(appConfig.getNodeUri())) {
                 localBaseUri = appConfig.getNodeUri().toString();
             } else {
-                if (config.getServerFactory() instanceof DefaultServerFactory) {
-                    final DefaultServerFactory defaultServerFactory = (DefaultServerFactory) config.getServerFactory();
-                    if (defaultServerFactory.getApplicationConnectors().size() > 0) {
-                        final ConnectorFactory connectorFactory = defaultServerFactory.getApplicationConnectors().get(0);
-
-                        if (connectorFactory instanceof HttpsConnectorFactory) {
-                            final HttpsConnectorFactory httpsConnectorFactory = (HttpsConnectorFactory) connectorFactory;
-                            final UriConfig uriConfig = new UriConfig();
-                            uriConfig.setScheme("https");
-                            uriConfig.setHostname(resolveHost(httpsConnectorFactory.getBindHost()));
-                            uriConfig.setPort(httpsConnectorFactory.getPort());
-                            uriConfig.setPathPrefix(defaultServerFactory.getApplicationContextPath());
-                            localBaseUri = uriConfig.toString();
-
-                        } else if (connectorFactory instanceof HttpConnectorFactory) {
-                            final HttpConnectorFactory httpConnectorFactory = (HttpConnectorFactory) connectorFactory;
-                            final UriConfig uriConfig = new UriConfig();
-                            uriConfig.setScheme("http");
-                            uriConfig.setHostname(resolveHost(httpConnectorFactory.getBindHost()));
-                            uriConfig.setPort(httpConnectorFactory.getPort());
-                            uriConfig.setPathPrefix(defaultServerFactory.getApplicationContextPath());
-                            localBaseUri = uriConfig.toString();
-                        }
-                    }
-                }
+                localBaseUri = discoverLocalBaseUri();
 
                 if (localBaseUri == null) {
                     throw new NullPointerException("Unable to set local base URI");
                 }
+            }
+        }
+        return localBaseUri;
+    }
+
+    private String discoverLocalBaseUri() {
+        String localBaseUri = null;
+        if (config.getServerFactory() instanceof DefaultServerFactory) {
+            final DefaultServerFactory defaultServerFactory = (DefaultServerFactory) config.getServerFactory();
+            if (defaultServerFactory.getApplicationConnectors().size() > 0) {
+                final ConnectorFactory connectorFactory = defaultServerFactory.getApplicationConnectors().get(0);
+
+                final UriConfig uriConfig = new UriConfig();
+                // Allow explicit configuration of the host/port in case they differ from what will be discovered,
+                // e.g. if running inside a docker container, or there is some sort of port mapping going on.
+                uriConfig.setHostname(appConfig.getNodeUri().getHostname());
+                uriConfig.setPort(appConfig.getNodeUri().getPort());
+
+                if (connectorFactory instanceof HttpsConnectorFactory) {
+                    final HttpsConnectorFactory httpsConnectorFactory = (HttpsConnectorFactory) connectorFactory;
+                    uriConfig.setScheme("https");
+                    if (uriConfig.getHostname() == null) {
+                        uriConfig.setHostname(resolveHost(httpsConnectorFactory.getBindHost()));
+                    }
+                    if (uriConfig.getPort() == null) {
+                        uriConfig.setPort(httpsConnectorFactory.getPort());
+                    }
+
+                } else if (connectorFactory instanceof HttpConnectorFactory) {
+                    final HttpConnectorFactory httpConnectorFactory = (HttpConnectorFactory) connectorFactory;
+                    uriConfig.setScheme("http");
+                    if (uriConfig.getHostname() == null) {
+                        uriConfig.setHostname(resolveHost(httpConnectorFactory.getBindHost()));
+                    }
+                    if (uriConfig.getPort() == null) {
+                        uriConfig.setPort(httpConnectorFactory.getPort());
+                    }
+                }
+                uriConfig.setPathPrefix(defaultServerFactory.getApplicationContextPath());
+                localBaseUri = uriConfig.toString();
             }
         }
         return localBaseUri;
