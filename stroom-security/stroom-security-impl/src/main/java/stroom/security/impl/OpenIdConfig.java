@@ -25,6 +25,10 @@ public class OpenIdConfig extends AbstractConfig {
     private String clientId;
     private String clientSecret;
 
+    /**
+     * @return true if Stroom will handle the OpenId authenication, false if an external
+     * OpenId provider is used.
+     */
     public boolean isUseInternal() {
         return useInternal;
     }
