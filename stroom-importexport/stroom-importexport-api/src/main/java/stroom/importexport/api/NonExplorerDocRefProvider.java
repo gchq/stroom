@@ -37,13 +37,6 @@ public interface NonExplorerDocRefProvider {
     String findNameOfDocRef(final DocRef docRef);
 
     /**
-     * The name of the nearest explorer docref when the supplied doc ref was exported.
-     * @param docRef the non-explorer based docref known to this instance
-     * @return The name that the nearest explorer doc ref had when the non-explorer based docref was exported
-     */
-    String findNameOfNearestExplorerDocRef (final DocRef docRef);
-
-    /**
      * Check whether this DocRef is already known to this instance
      * @param docRef non-explorer based docref that might be known to this instance
      * @return true if the non-explorer based docref is known to this instance
