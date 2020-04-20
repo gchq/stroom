@@ -27,7 +27,7 @@ import java.util.Optional;
 
 // TODO : @66 Add audit logging
 class AccountResourceImpl implements AccountResource {
-    private AccountService service;
+    private final AccountService service;
 
     @Inject
     public AccountResourceImpl(final AccountService service) {

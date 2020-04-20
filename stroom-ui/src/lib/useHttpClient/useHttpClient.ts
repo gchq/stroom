@@ -10,6 +10,12 @@ import useAppNavigation from "lib/useAppNavigation";
 const useCheckStatus = (status: number) =>
   React.useCallback(
     (response: Response): Promise<any> => {
+
+//       console.log(response.headers.get("Content-Type"));
+//       console.log(response.headers.get("Date"));
+//       console.log(response.status);
+//       console.log(response.statusText);
+
       if (response.status === status) {
         return Promise.resolve(response);
       }
@@ -124,14 +130,31 @@ export const useHttpClient = (): HttpClient => {
           headers,
         })
           .then(handle200)
-          .then(r => {
-            try {
-              return r.json();
-            } catch (e) {
-              console.error(e);
-              throw e;
-            }
-          })
+          .then(r => r.json())
+//           .then(r => {
+//             try {
+//               return r.json();
+// //               console.log(r.headers.get("Content-Type"));
+// //               console.log(r.headers.get("Date"));
+// //               console.log(r.status);
+// //               console.log(r.statusText);
+// //
+// //               return r.text();
+//             } catch (e) {
+//               console.error(e);
+//               throw e;
+//             }
+//           })
+//           .then(text => {
+//             try {
+//               return JSON.parse(text);
+//             } catch (e) {
+//               console.error(e);
+//             }
+//
+//             return text;
+//
+//           })
           .catch(catchImpl);
       }
 
@@ -175,6 +198,29 @@ export const useHttpClient = (): HttpClient => {
         })
           .then(handle200)
           .then(r => r.json())
+//           .then(r => {
+//             try {
+//               console.log(r.headers.get("Content-Type"));
+//               console.log(r.headers.get("Date"));
+//               console.log(r.status);
+//               console.log(r.statusText);
+//
+//               return r.text();
+//             } catch (e) {
+//               console.error(e);
+//               throw e;
+//             }
+//           })
+//           .then(text => {
+//             try {
+//               return JSON.parse(text);
+//             } catch (e) {
+//               console.error(e);
+//             }
+//
+//             return text;
+//
+//           })
           .catch(catchImpl);
       },
       [method],

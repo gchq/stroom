@@ -30,17 +30,17 @@ interface Api {
 
 export const useApi = (): Api => {
   const {
-    httpPutEmptyResponse,
+    httpPutJsonResponse,
     httpGetJson,
     httpPostJsonResponse,
-    httpDeleteEmptyResponse,
+    httpDeleteJsonResponse,
   } = useHttpClient();
 
   const { accountServiceUrl } = useServiceUrl();
 
   const change = useCallback(
     account =>
-      httpPutEmptyResponse(`${accountServiceUrl}/${account.id}`, {
+      httpPutJsonResponse(`${accountServiceUrl}/${account.id}`, {
         body: JSON.stringify({
           email: account.email,
           password: account.password,
@@ -55,7 +55,7 @@ export const useApi = (): Api => {
           forcePasswordChange: account.forcePasswordChange,
         }),
       }),
-    [accountServiceUrl, httpPutEmptyResponse],
+    [accountServiceUrl, httpPutJsonResponse],
   );
 
   const add = useCallback(
@@ -79,8 +79,8 @@ export const useApi = (): Api => {
    */
   const remove = useCallback(
     (accountId: string) =>
-      httpDeleteEmptyResponse(`${accountServiceUrl}/${accountId}`, {}),
-    [accountServiceUrl, httpDeleteEmptyResponse],
+      httpDeleteJsonResponse(`${accountServiceUrl}/${accountId}`, {}),
+    [accountServiceUrl, httpDeleteJsonResponse],
   );
 
   /**
