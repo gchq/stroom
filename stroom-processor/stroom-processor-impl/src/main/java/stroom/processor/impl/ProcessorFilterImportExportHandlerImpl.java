@@ -92,8 +92,20 @@ public class ProcessorFilterImportExportHandlerImpl implements ImportExportActio
 
             if (ImportState.State.NEW.equals(importState.getState())) {
 
-                if (importState.getEnableTime() != null)
-                    System.out.println("Enabling filter from: " + importState.getEnableTime());
+                if (importState.getEnable() != null){
+                    if (importState.getEnable()) {
+                        if (importState.getEnableTime() != null)
+                            System.out.println("Enabling filter from: " + importState.getEnableTime());
+                        else
+                            System.out.println("Enabling filter from start of time");
+                    }
+                    else {
+                        System.out.println("Not enabling filter");
+                    }
+                } else {
+                    System.out.println ("Undefined enable state!");
+                }
+
 
                 ProcessorFilter filter = findProcessorFilter(docRef);
                 if (filter == null) {

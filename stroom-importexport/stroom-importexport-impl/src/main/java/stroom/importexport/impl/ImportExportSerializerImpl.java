@@ -230,12 +230,10 @@ class ImportExportSerializerImpl implements ImportExportSerializer {
                     // Create a parent folder for the new node.
                     // Get the root node.
                     // TODO : Allow the user to specify what the parent folder should be for the import.
-                    ExplorerNode parent = explorerNodeService.getRoot().orElse(null);
-                    parentNode = getOrCreateParentFolder(parent, path, importState.ok(importMode));
+
+
 
                 } else {
-
-
                     final List<ExplorerNode> parents = explorerNodeService.getPath(explorerDocRef);
 
                     final String parentPath = parents.stream().map(ExplorerNode::getName).collect(Collectors.joining("/"));
@@ -251,7 +249,8 @@ class ImportExportSerializerImpl implements ImportExportSerializer {
                 }
 
                 if (parentNode == null) {
-                    throw new RuntimeException("Unable to locate a parent folder to import '" + docRef + "'");
+                    ExplorerNode parent = explorerNodeService.getRoot().orElse(null);
+                    parentNode = getOrCreateParentFolder(parent, path, importState.ok(importMode));
                 }
 
                 // Check permissions on the parent folder.

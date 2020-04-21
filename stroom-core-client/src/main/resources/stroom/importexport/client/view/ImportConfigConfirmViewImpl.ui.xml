@@ -5,10 +5,14 @@
   <g:FlowPanel styleName="importConfigContainer" width="100%" height="100%">
     <g:Grid ui:field="grid" styleName="stroom-control-grid" >
       <g:row>
-        <g:cell>Processor Filter Start:</g:cell>
+      <g:customCell>
+        <g:CheckBox styleName="itemCheckList" ui:field="enableFilters" />
+      </g:customCell>
+        <g:cell>Enable Processor Filters</g:cell>
         <g:customCell>
           <c:MyDateBox ui:field="enableFrom" />
         </g:customCell>
+        <g:cell> from this date (or leave blank to process from first stream)</g:cell>
       </g:row>
     </g:Grid>
     <g:SimplePanel ui:field="dataGridView" styleName="itemCheckList" height="100%"/>

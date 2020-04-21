@@ -19,6 +19,7 @@ package stroom.importexport.client.view;
 import com.google.gwt.dom.client.Style;
 import com.google.gwt.uibinder.client.UiBinder;
 import com.google.gwt.uibinder.client.UiField;
+import com.google.gwt.user.client.ui.CheckBox;
 import com.google.gwt.user.client.ui.Grid;
 import com.google.gwt.user.client.ui.SimplePanel;
 import com.google.gwt.user.client.ui.Widget;
@@ -36,6 +37,8 @@ public class ImportConfigConfirmViewImpl extends ViewImpl implements ImportConfi
     SimplePanel dataGridView;
     @UiField
     MyDateBox enableFrom;
+    @UiField
+    CheckBox enableFilters;
 
     @Inject
     public ImportConfigConfirmViewImpl(final Binder binder) {
@@ -62,6 +65,12 @@ public class ImportConfigConfirmViewImpl extends ViewImpl implements ImportConfi
     public Long getEnableFromDate() {
         return enableFrom.getMilliseconds();
     }
+
+    @Override
+    public boolean isEnableFilters () {return  enableFilters.isEnabled();}
+
+    @Override
+    public void setEnableFilters (boolean enableFilters) {this.enableFilters.setValue(enableFilters);}
 
     public interface Binder extends UiBinder<Widget, ImportConfigConfirmViewImpl> {
     }

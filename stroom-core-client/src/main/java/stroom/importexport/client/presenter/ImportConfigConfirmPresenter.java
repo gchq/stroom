@@ -89,6 +89,7 @@ public class ImportConfigConfirmPresenter extends
                 DataGridViewImpl.MASSIVE_LIST_PAGE_SIZE);
 
         view.setDataGridView(this.dataGridView);
+        view.setEnableFilters(true);
 
         addColumns();
     }
@@ -123,7 +124,8 @@ public class ImportConfigConfirmPresenter extends
             boolean warnings = false;
             int count = 0;
             for (final ImportState importState : confirmList) {
-                importState.setEnableTime(1587457578000l);
+                importState.setEnableTime(getView().getEnableFromDate());
+                importState.setEnable(getView().isEnableFilters());
                 if (importState.isAction()) {
                     count++;
                     if (importState.getSeverity().greaterThan(Severity.INFO)) {
@@ -394,6 +396,8 @@ public class ImportConfigConfirmPresenter extends
     public interface ImportConfigConfirmView extends View {
         void setDataGridView(View view);
         Long getEnableFromDate();
+        boolean isEnableFilters();
+        void setEnableFilters (boolean enableFilters);
         Widget getDataGridViewWidget();
     }
 
