@@ -57,8 +57,10 @@ class SecurityFilter implements Filter {
     private static final String NO_AUTH_PATH = ResourcePaths.buildUnauthenticatedServletPath("/");
 
     // E.g. /api/authentication/v1/noauth/exchange
-    private static final String PUBLIC_API_PATH_REGEX = ResourcePaths.API_ROOT_PATH + ".*" + ResourcePaths.NO_AUTH + "/.*";
-    private static final Set<String> STATIC_RESOURCE_EXTENSIONS = Set.of(".js", ".css", ".htm", ".html", ".json", ".png", ".jpg", ".gif", ".ico", ".svg", ".woff", ".woff2");
+    private static final String PUBLIC_API_PATH_REGEX = ResourcePaths.API_ROOT_PATH +
+            ".*" + ResourcePaths.NO_AUTH + "/.*";
+    private static final Set<String> STATIC_RESOURCE_EXTENSIONS = Set.of(
+            ".js", ".css", ".htm", ".html", ".json", ".png", ".jpg", ".gif", ".ico", ".svg", ".woff", ".woff2");
 
     private final AuthenticationConfig authenticationConfig;
     private final SecurityContext securityContext;
