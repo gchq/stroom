@@ -60,11 +60,10 @@ logging:
     logFormat: "%-6level [%d{\"yyyy-MM-dd'T'HH:mm:ss.SSS'Z'\",UTC}] [%t] %logger - %X{code} %msg %n"
 
 appConfig:
-# Un-comment these is you are running with nginx
-#  nodeUri:
-#    hostname: ${STROOM_HOST:-<<<IP_ADDRESS>>>}
-#  publicUri:
-#    hostname: ${API_GATEWAY_HOST:-<<<IP_ADDRESS>>>}
+# Comment out the publicUri block if you are not running with nginx
+  publicUri:
+    hostname: localhost
+    port: 443
   commonDbDetails:
     connection:
       jdbcDriverClassName: ${STROOM_JDBC_DRIVER_CLASS_NAME:-com.mysql.cj.jdbc.Driver}
