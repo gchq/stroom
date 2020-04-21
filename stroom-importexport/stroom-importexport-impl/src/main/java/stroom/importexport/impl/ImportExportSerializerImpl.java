@@ -220,7 +220,7 @@ class ImportExportSerializerImpl implements ImportExportSerializer {
                         importState.setDestPath(existingAltNode.get().getName() + "(Existing "+ explorerDocRef.getType() + ")");
                 }
                 // This is a pre existing item so make sure we are allowed to update it.
-                if (!securityContext.hasDocumentPermission(explorerDocRef.getUuid(), DocumentPermissionNames.UPDATE)) {
+                if (explorerDocRef != null && !securityContext.hasDocumentPermission(explorerDocRef.getUuid(), DocumentPermissionNames.UPDATE)) {
                     throw new PermissionException(securityContext.getUserId(), "You do not have permission to update '" + docRef + "'");
                 }
                 if (!docExists) {
