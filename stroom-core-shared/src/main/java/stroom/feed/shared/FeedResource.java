@@ -35,11 +35,10 @@ import java.util.List;
 @Api(value = "feed - /v1")
 @Path("/feed" + ResourcePaths.V1)
 @Produces(MediaType.APPLICATION_JSON)
+@Consumes(MediaType.APPLICATION_JSON)
 public interface FeedResource extends RestResource, DirectRestService {
     @POST
     @Path("/read")
-    @Consumes(MediaType.APPLICATION_JSON)
-    @Produces(MediaType.APPLICATION_JSON)
     @ApiOperation(
             value = "Get a feed doc",
             response = FeedDoc.class)
@@ -47,8 +46,6 @@ public interface FeedResource extends RestResource, DirectRestService {
 
     @PUT
     @Path("/update")
-    @Consumes(MediaType.APPLICATION_JSON)
-    @Produces(MediaType.APPLICATION_JSON)
     @ApiOperation(
             value = "Update a feed doc",
             response = FeedDoc.class)
@@ -56,8 +53,6 @@ public interface FeedResource extends RestResource, DirectRestService {
 
     @GET
     @Path("/fetchSupportedEncodings")
-    @Consumes(MediaType.APPLICATION_JSON)
-    @Produces(MediaType.APPLICATION_JSON)
     @ApiOperation(
             value = "Fetch supported encodings",
             response = List.class)

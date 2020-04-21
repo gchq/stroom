@@ -1,6 +1,6 @@
 import * as React from "react";
 import useHttpClient from "lib/useHttpClient";
-import useConfig from "startup/config/useConfig";
+import useUrlFactory from "lib/useUrlFactory";
 import { FetchDataParams, AnyFetchDataResult } from "../types";
 
 interface Api {
@@ -10,12 +10,13 @@ interface Api {
 }
 
 export const useApi = (): Api => {
-  const { stroomBaseServiceUrl } = useConfig();
+  const { apiUrl } = useUrlFactory();
   const { httpGetJson } = useHttpClient();
+  const resource = apiUrl("/data/v1");
 
   const getDataForSelectedRow = React.useCallback(
     ({ pageOffset, pageSize, metaId }: FetchDataParams) => {
-      var url = new URL(`${stroomBaseServiceUrl}/data/v1/`);
+      const url = new URL(resource);
       if (!!metaId) url.searchParams.append("streamId", metaId.toString());
       url.searchParams.append("streamsOffset", "0");
       url.searchParams.append("streamsLength", "1");
@@ -24,7 +25,7 @@ export const useApi = (): Api => {
 
       return httpGetJson(url.href);
     },
-    [stroomBaseServiceUrl, httpGetJson],
+    [resource, httpGetJson],
   );
 
   return {

@@ -31,8 +31,8 @@ import javax.ws.rs.core.MediaType;
 
 @Api(value = "entityEvent - /v1")
 @Path(EntityEventResource.BASE_PATH)
-@Consumes(MediaType.APPLICATION_JSON)
 @Produces(MediaType.APPLICATION_JSON)
+@Consumes(MediaType.APPLICATION_JSON)
 public interface EntityEventResource extends RestResource {
     String BASE_PATH = "/entityEvent" + ResourcePaths.V1;
     String NODE_NAME_PATH_PARAM = "/{nodeName}";

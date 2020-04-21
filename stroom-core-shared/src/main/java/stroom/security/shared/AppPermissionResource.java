@@ -17,10 +17,9 @@ import java.util.List;
 @Api(value = "application permissions - /v1")
 @Path("/permission/app" +  ResourcePaths.V1)
 @Produces(MediaType.APPLICATION_JSON)
+@Consumes(MediaType.APPLICATION_JSON)
 public interface AppPermissionResource extends RestResource, DirectRestService {
     @GET
-    @Consumes(MediaType.APPLICATION_JSON)
-    @Produces(MediaType.APPLICATION_JSON)
     @ApiOperation(
             value = "User and app permissions for the current session",
             response = UserAndPermissions.class)
@@ -28,8 +27,6 @@ public interface AppPermissionResource extends RestResource, DirectRestService {
 
     @POST
     @Path("fetchUserAppPermissions")
-    @Consumes(MediaType.APPLICATION_JSON)
-    @Produces(MediaType.APPLICATION_JSON)
     @ApiOperation(
             value = "User and app permissions for the specified user",
             response = UserAndPermissions.class)
@@ -37,8 +34,6 @@ public interface AppPermissionResource extends RestResource, DirectRestService {
 
     @GET
     @Path("fetchAllPermissions")
-    @Consumes(MediaType.APPLICATION_JSON)
-    @Produces(MediaType.APPLICATION_JSON)
     @ApiOperation(
             value = "Get all possible permissions",
             response = List.class)
@@ -46,8 +41,6 @@ public interface AppPermissionResource extends RestResource, DirectRestService {
 
     @POST
     @Path("changeUser")
-    @Consumes(MediaType.APPLICATION_JSON)
-    @Produces(MediaType.APPLICATION_JSON)
     @ApiOperation(
             value = "User and app permissions for the current session",
             response = Boolean.class)

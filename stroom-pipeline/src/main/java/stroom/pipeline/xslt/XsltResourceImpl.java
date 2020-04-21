@@ -26,12 +26,6 @@ import stroom.security.api.SecurityContext;
 import stroom.util.HasHealthCheck;
 
 import javax.inject.Inject;
-import javax.ws.rs.Consumes;
-import javax.ws.rs.GET;
-import javax.ws.rs.POST;
-import javax.ws.rs.Path;
-import javax.ws.rs.PathParam;
-import javax.ws.rs.core.MediaType;
 
 class XsltResourceImpl implements XsltResource, HasHealthCheck {
     private final XsltStore xsltStore;
@@ -57,11 +51,7 @@ class XsltResourceImpl implements XsltResource, HasHealthCheck {
         return documentResourceHelper.update(xsltStore, doc);
     }
 
-
-
-    @GET
-    @Path("/{xsltId}")
-    public XsltDoc fetch(@PathParam("xsltId") final String xsltId) {
+    public XsltDoc fetch(final String xsltId) {
         return securityContext.secureResult(() -> {
             final XsltDoc xsltDoc = xsltStore.readDocument(getDocRef(xsltId));
             if (null != xsltDoc) {
@@ -72,10 +62,7 @@ class XsltResourceImpl implements XsltResource, HasHealthCheck {
         });
     }
 
-    @POST
-    @Path("/{xsltId}")
-    @Consumes(MediaType.APPLICATION_JSON)
-    public void save(@PathParam("xsltId") final String xsltId,
+    public void save(final String xsltId,
                      final XsltDTO xsltDto) {
         // A user should be allowed to read pipelines that they are inheriting from as long as they have 'use' permission on them.
         securityContext.useAsRead(() -> {

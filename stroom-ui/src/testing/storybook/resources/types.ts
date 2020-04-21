@@ -1,8 +1,7 @@
-import { Config } from "startup/config/types";
 import { TestCache } from "../PollyDecorator";
 
 export type ResourceBuilder = (
   server: any,
-  { stroomBaseServiceUrl }: Config,
+  apiUrl: any,
   testCache: TestCache,
 ) => any;

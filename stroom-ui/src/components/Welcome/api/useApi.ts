@@ -1,7 +1,7 @@
 import * as React from "react";
 import useHttpClient from "lib/useHttpClient";
-import useConfig from "startup/config/useConfig";
 import { WelcomeData } from "./types";
+import useUrlFactory from "lib/useUrlFactory";
 
 interface UseApi {
   getWelcomeHtml: () => Promise<WelcomeData>;
@@ -9,11 +9,13 @@ interface UseApi {
 
 const useApi = (): UseApi => {
   const { httpGetJson } = useHttpClient();
-  const { stroomBaseServiceUrl } = useConfig();
+  const { apiUrl } = useUrlFactory();
+  const resource = apiUrl("/welcome/v1");
+
   return {
     getWelcomeHtml: React.useCallback(
-      () => httpGetJson(`${stroomBaseServiceUrl}/welcome/v1`),
-      [httpGetJson, stroomBaseServiceUrl],
+      () => httpGetJson(resource),
+      [resource, httpGetJson],
     ),
   };
 };

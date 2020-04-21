@@ -9,15 +9,23 @@ import stroom.util.shared.RestResource;
 import stroom.util.shared.ResultPage;
 
 import javax.inject.Inject;
-import javax.ws.rs.*;
+import javax.ws.rs.Consumes;
+import javax.ws.rs.DELETE;
+import javax.ws.rs.GET;
+import javax.ws.rs.POST;
+import javax.ws.rs.PUT;
+import javax.ws.rs.Path;
+import javax.ws.rs.PathParam;
+import javax.ws.rs.Produces;
 import javax.ws.rs.core.MediaType;
 import javax.ws.rs.core.Response;
 
 @Api(value = "datavolumes - /v1")
 @Path("/datavolumes" + ResourcePaths.V1)
 @Produces(MediaType.APPLICATION_JSON)
+@Consumes(MediaType.APPLICATION_JSON)
 public class FsVolumeResource implements RestResource {
-    private FsVolumeService fsVolumeService;
+    private final FsVolumeService fsVolumeService;
 
     @Inject
     public FsVolumeResource(final FsVolumeService fsVolumeService){
@@ -30,7 +38,6 @@ public class FsVolumeResource implements RestResource {
      * all the data volumes.
      */
     @GET
-    @Produces(MediaType.APPLICATION_JSON)
     public Response fetchAll(){
         var findAll = new FindFsVolumeCriteria();
         findAll.getStatusSet().setMatchAll(true);
@@ -39,7 +46,6 @@ public class FsVolumeResource implements RestResource {
     }
 
     @POST
-    @Produces(MediaType.APPLICATION_JSON)
     public Response create(){
         var fsVolume = new FsVolume();
         fsVolume.setPath("");
@@ -49,7 +55,6 @@ public class FsVolumeResource implements RestResource {
 
     @DELETE
     @Path("/{id}")
-    @Produces(MediaType.APPLICATION_JSON)
     public Response delete(@PathParam("id") final int id) {
         fsVolumeService.delete(id);
         return Response.noContent().build();
@@ -57,7 +62,6 @@ public class FsVolumeResource implements RestResource {
 
     @PUT
     @Path("/{id}")
-    @Produces(MediaType.APPLICATION_JSON)
     public Response update(@PathParam("id") final int id, final FsVolume toUpdate) {
         var updated = fsVolumeService.update(toUpdate);
         return Response.ok(updated).build();

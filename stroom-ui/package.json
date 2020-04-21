@@ -84,10 +84,8 @@
   "scripts": {
     "build-css": "node-sass-chokidar src/ -o src/",
     "watch-css": "node-sass-chokidar src/ -o src/ --watch --recursive",
-    "start-js": "./config.template.sh && BROWSER=NONE PORT=9443 HTTPS=true react-scripts start",
+    "start-js": "REACT_APP_API_PATH=http://localhost:8080/api BROWSER=NONE PORT=9443 HTTPS=true react-scripts start",
     "start": "npm-run-all -p watch-css start-js",
-    "debug-js": "./config.template.sh && BROWSER=NONE PORT=9080 HTTPS=false react-scripts start",
-    "debug": "npm-run-all -p watch-css debug-js",
     "build-js": "react-scripts build",
     "build": "npm-run-all build-css build-js",
     "test": "react-scripts test --env=jsdom",

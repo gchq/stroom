@@ -1,8 +1,8 @@
 import { loremIpsum } from "lorem-ipsum";
-import { User } from "components/users/types";
+import { Account } from "components/users/types";
 
 const lr = (count: number) => loremIpsum({ count, units: "words" });
-const getUser = (): User => {
+const getUser = (): Account => {
   return {
     id: lr(1),
     email: lr(1),

@@ -37,11 +37,10 @@ import java.util.Set;
 @Api(value = "ruleset - /v2")
 @Path("/ruleset" + ResourcePaths.V2)
 @Produces(MediaType.APPLICATION_JSON)
+@Consumes(MediaType.APPLICATION_JSON)
 public interface ReceiveDataRuleSetResource extends RestResource, DirectRestService {
     @POST
     @Path("/read")
-    @Consumes(MediaType.APPLICATION_JSON)
-    @Produces(MediaType.APPLICATION_JSON)
     @ApiOperation(
             value = "Get a rules doc",
             response = ReceiveDataRules.class)
@@ -49,15 +48,12 @@ public interface ReceiveDataRuleSetResource extends RestResource, DirectRestServ
 
     @PUT
     @Path("/update")
-    @Consumes(MediaType.APPLICATION_JSON)
-    @Produces(MediaType.APPLICATION_JSON)
     @ApiOperation(
             value = "Update a rules doc",
             response = ReceiveDataRules.class)
     ReceiveDataRules update(ReceiveDataRules xslt);
 
     @GET
-    @Produces(MediaType.APPLICATION_JSON)
     @Path("/list")
     @ApiOperation(
             value = "Submit a request for a list of doc refs held by this service",
@@ -65,8 +61,6 @@ public interface ReceiveDataRuleSetResource extends RestResource, DirectRestServ
     Set<DocRef> listDocuments();
 
     @POST
-    @Consumes(MediaType.APPLICATION_JSON)
-    @Produces(MediaType.APPLICATION_JSON)
     @Path("/import")
     @ApiOperation(
             value = "Submit an import request",
@@ -74,8 +68,6 @@ public interface ReceiveDataRuleSetResource extends RestResource, DirectRestServ
     DocRef importDocument(@ApiParam("DocumentData") Base64EncodedDocumentData documentData);
 
     @POST
-    @Consumes(MediaType.APPLICATION_JSON)
-    @Produces(MediaType.APPLICATION_JSON)
     @Path("/export")
     @ApiOperation(
             value = "Submit an export request",

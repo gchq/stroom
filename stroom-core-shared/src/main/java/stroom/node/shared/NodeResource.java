@@ -33,8 +33,8 @@ import java.util.List;
 
 @Api(value = "node - /v1")
 @Path(NodeResource.BASE_PATH)
-@Consumes(MediaType.APPLICATION_JSON)
 @Produces(MediaType.APPLICATION_JSON)
+@Consumes(MediaType.APPLICATION_JSON)
 public interface NodeResource extends RestResource, DirectRestService {
     String BASE_PATH = "/node" + ResourcePaths.V1;
     String PING_PATH_PART = "/ping";

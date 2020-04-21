@@ -32,11 +32,10 @@ import javax.ws.rs.core.MediaType;
 @Api(value = "dataRetentionRules - /v1")
 @Path("/dataRetentionRules" + ResourcePaths.V1)
 @Produces(MediaType.APPLICATION_JSON)
+@Consumes(MediaType.APPLICATION_JSON)
 public interface DataRetentionRulesResource extends RestResource, DirectRestService {
     @POST
     @Path("/read")
-    @Consumes(MediaType.APPLICATION_JSON)
-    @Produces(MediaType.APPLICATION_JSON)
     @ApiOperation(
             value = "Get data retention rules",
             response = DataRetentionRules.class)
@@ -44,8 +43,6 @@ public interface DataRetentionRulesResource extends RestResource, DirectRestServ
 
     @PUT
     @Path("/update")
-    @Consumes(MediaType.APPLICATION_JSON)
-    @Produces(MediaType.APPLICATION_JSON)
     @ApiOperation(
             value = "Update data retention rules",
             response = DataRetentionRules.class)

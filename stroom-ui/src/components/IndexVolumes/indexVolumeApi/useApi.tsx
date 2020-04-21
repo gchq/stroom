@@ -1,8 +1,8 @@
 import * as React from "react";
 
 import useHttpClient from "lib/useHttpClient";
-import useConfig from "startup/config/useConfig";
 import { IndexVolume, NewIndexVolume, UpdateIndexVolumeDTO } from "./types";
+import useUrlFactory from "lib/useUrlFactory";
 
 interface Api {
   update: (indexVolume: UpdateIndexVolumeDTO) => Promise<IndexVolume>;
@@ -13,7 +13,7 @@ interface Api {
 }
 
 export const useApi = (): Api => {
-  const { stroomBaseServiceUrl } = useConfig();
+  const { apiUrl } = useUrlFactory();
   const {
     httpGetJson,
     httpDeleteEmptyResponse,
@@ -21,37 +21,36 @@ export const useApi = (): Api => {
     httpPutJsonResponse,
   } = useHttpClient();
 
+  const resource = apiUrl("/stroom-index/volume/v1");
+
   return {
     createIndexVolume: React.useCallback(
       ({ nodeName, path, indexVolumeGroupName }: NewIndexVolume) =>
-        httpPostJsonResponse(
-          `${stroomBaseServiceUrl}/stroom-index/volume/v1/`,
+        httpPostJsonResponse(resource,
           { body: JSON.stringify({ nodeName, path, indexVolumeGroupName }) },
         ),
-      [stroomBaseServiceUrl, httpPostJsonResponse],
+      [resource, httpPostJsonResponse],
     ),
     deleteIndexVolume: React.useCallback(
       (id: string) =>
-        httpDeleteEmptyResponse(
-          `${stroomBaseServiceUrl}/stroom-index/volume/v1/${id}`,
-        ),
-      [stroomBaseServiceUrl, httpDeleteEmptyResponse],
+        httpDeleteEmptyResponse(`${resource}/${id}`),
+      [resource, httpDeleteEmptyResponse],
     ),
     getIndexVolumeById: React.useCallback(
       (id: string) =>
-        httpGetJson(`${stroomBaseServiceUrl}/stroom-index/volume/v1/${id}`),
-      [stroomBaseServiceUrl, httpGetJson],
+        httpGetJson(`${resource}/${id}`),
+      [resource, httpGetJson],
     ),
     getIndexVolumes: React.useCallback(
-      () => httpGetJson(`${stroomBaseServiceUrl}/stroom-index/volume/v1`),
-      [stroomBaseServiceUrl, httpGetJson],
+      () => httpGetJson(resource),
+      [resource, httpGetJson],
     ),
     update: React.useCallback(
       (indexVolume: UpdateIndexVolumeDTO) =>
-        httpPutJsonResponse(`${stroomBaseServiceUrl}/stroom-index/volume/v1`, {
+        httpPutJsonResponse(resource, {
           body: JSON.stringify(indexVolume),
         }),
-      [stroomBaseServiceUrl, httpPutJsonResponse],
+      [resource, httpPutJsonResponse],
     ),
   };
 };

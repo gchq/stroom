@@ -1,16 +1,15 @@
 import { HttpRequest, HttpResponse } from "@pollyjs/adapter-fetch";
 
-import { Config } from "startup/config/types";
 import { ResourceBuilder } from "./types";
 import { PasswordValidationRequest } from "components/authentication/types";
 
 const resourceBuilder: ResourceBuilder = (
   server: any,
-  { stroomBaseServiceUrl }: Config,
+  apiUrl: any,
 ) => {
-  const authenticationServiceUrl = `${stroomBaseServiceUrl}/authentication/v1`;
+  const resource = apiUrl("/authentication/v1");
   server
-    .get(`${authenticationServiceUrl}/idToken`)
+    .get(`${resource}/idToken`)
     .intercept((req: HttpRequest, res: HttpResponse) => {
       const accessCode = req.params.accessCode;
       console.log("Trying access code", accessCode);
@@ -20,7 +19,7 @@ const resourceBuilder: ResourceBuilder = (
 
   // Login
   server
-    .post(`${authenticationServiceUrl}/noauth/authenticate`)
+    .post(`${resource}/noauth/login`)
     .intercept((req: HttpRequest, res: HttpResponse) => {
       const { email, password, sessionId, requestingClientId } = JSON.parse(
         req.body,
@@ -37,7 +36,7 @@ const resourceBuilder: ResourceBuilder = (
 
   // Change Password
   server
-    .post(`${authenticationServiceUrl}/noauth/changePassword/`)
+    .post(`${resource}/noauth/changePassword/`)
     .intercept((req: HttpRequest, res: HttpResponse) => {
       const { newPassword, oldPassword } = JSON.parse(req.body);
 
@@ -47,7 +46,7 @@ const resourceBuilder: ResourceBuilder = (
 
   // Reset Password
   server
-    .post(`${authenticationServiceUrl}/resetPassword/`)
+    .post(`${resource}/resetPassword/`)
     .intercept((req: HttpRequest, res: HttpResponse) => {
       const { password } = JSON.parse(req.body);
       console.log("Resetting Password, given", { password });
@@ -57,7 +56,7 @@ const resourceBuilder: ResourceBuilder = (
 
   // Submit Reset Request
   server
-    .get(`${authenticationServiceUrl}/reset/:email`)
+    .get(`${resource}/reset/:email`)
     .intercept((req: HttpRequest, res: HttpResponse) => {
       const { email } = req.params.email;
       console.log("Requesting Password Reset for ", { email });
@@ -66,7 +65,7 @@ const resourceBuilder: ResourceBuilder = (
 
   // Is Password Valid
   server
-    .post(`${authenticationServiceUrl}/noauth/isPasswordValid`)
+    .post(`${resource}/noauth/isPasswordValid`)
     .intercept((req: HttpRequest, res: HttpResponse) => {
       const validationReq: PasswordValidationRequest = JSON.parse(req.body);
       console.log("Validation Request", validationReq);

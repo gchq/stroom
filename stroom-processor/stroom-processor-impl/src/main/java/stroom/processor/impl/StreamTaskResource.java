@@ -30,9 +30,9 @@ import stroom.query.api.v2.ExpressionOperator;
 import stroom.query.api.v2.ExpressionOperator.Builder;
 import stroom.query.api.v2.ExpressionTerm.Condition;
 import stroom.security.api.SecurityContext;
+import stroom.util.logging.LogUtil;
 import stroom.util.shared.ResourcePaths;
 import stroom.util.shared.RestResource;
-import stroom.util.logging.LogUtil;
 import stroom.util.shared.ResultPage;
 import stroom.util.shared.Sort;
 import stroom.util.shared.Sort.Direction;
@@ -58,6 +58,7 @@ import static stroom.processor.impl.SearchKeywords.addSorting;
 @Api(value = "stream task - /v1")
 @Path("/streamtasks" + ResourcePaths.V1)
 @Produces(MediaType.APPLICATION_JSON)
+@Consumes(MediaType.APPLICATION_JSON)
 public class StreamTaskResource implements RestResource {
     private static final String FIELD_PROGRESS = "progress";
 
@@ -74,8 +75,6 @@ public class StreamTaskResource implements RestResource {
 
     @PATCH
     @Path("/{filterId}")
-    @Consumes(MediaType.APPLICATION_JSON)
-    @Produces(MediaType.APPLICATION_JSON)
     public Response enable(
             @PathParam("filterId") int filterId,
             StreamTaskPatch patch) {
@@ -110,8 +109,6 @@ public class StreamTaskResource implements RestResource {
     }
 
     @GET
-    @Consumes(MediaType.APPLICATION_JSON)
-    @Produces(MediaType.APPLICATION_JSON)
     public Response fetch(
             @QueryParam("offset") Integer offset,
             @QueryParam("pageSize") Integer pageSize,

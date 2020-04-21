@@ -1,7 +1,6 @@
 import { HttpRequest, HttpResponse } from "@pollyjs/adapter-fetch";
 
 import { TestCache } from "../PollyDecorator";
-import { Config } from "startup/config/types";
 import { ResourceBuilder } from "./types";
 import { IndexVolume } from "components/IndexVolumes/indexVolumeApi";
 
@@ -9,10 +8,10 @@ let nextIdToCreate = 100000;
 
 const resourceBuilder: ResourceBuilder = (
   server: any,
-  { stroomBaseServiceUrl }: Config,
+  apiUrl: any,
   testCache: TestCache,
 ) => {
-  const resource = `${stroomBaseServiceUrl}/stroom-index/volume/v1`;
+  const resource = apiUrl("/stroom-index/volume/v1");
 
   // Get All
   server.get(resource).intercept((req: HttpRequest, res: HttpResponse) => {
@@ -23,8 +22,8 @@ const resourceBuilder: ResourceBuilder = (
   server
     .get(`${resource}/:indexVolumeId`)
     .intercept((req: HttpRequest, res: HttpResponse) => {
-      let indexVolumeId: string = req.params.indexVolumeId;
-      let indexVolume = testCache.data!.indexVolumesAndGroups.volumes.find(
+      const indexVolumeId: string = req.params.indexVolumeId;
+      const indexVolume = testCache.data!.indexVolumesAndGroups.volumes.find(
         v => `${v.id}` === indexVolumeId,
       );
       if (!!indexVolume) {
@@ -37,8 +36,8 @@ const resourceBuilder: ResourceBuilder = (
   // Create
   server.post(resource).intercept((req: HttpRequest, res: HttpResponse) => {
     const { nodeName, path } = JSON.parse(req.body);
-    let now = Date.now();
-    let newIndexVolume: IndexVolume = {
+    const now = Date.now();
+    const newIndexVolume: IndexVolume = {
       nodeName,
       path,
       id: `${nextIdToCreate++}`,
@@ -68,7 +67,7 @@ const resourceBuilder: ResourceBuilder = (
   server
     .delete(`${resource}/:indexVolumeId`)
     .intercept((req: HttpRequest, res: HttpResponse) => {
-      let oldIndexVolumeId = req.params.indexVolumeId;
+      const oldIndexVolumeId = req.params.indexVolumeId;
       testCache.data!.indexVolumesAndGroups = {
         ...testCache.data!.indexVolumesAndGroups,
         volumes: testCache.data!.indexVolumesAndGroups.volumes.filter(

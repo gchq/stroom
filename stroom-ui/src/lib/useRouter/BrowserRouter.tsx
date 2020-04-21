@@ -53,8 +53,7 @@ const showChrome = (pathname: string) => {
   // If we're handling an authentication redirect then we need to get the path
   // from local storage.
   const referrer = localStorage.getItem("preAuthenticationRequestReferrer");
-  const actualPath =
-    pathname.indexOf("handleAuthenticationResponse") > -1 && referrer
+  const actualPath = referrer
       ? referrer
       : pathname;
 

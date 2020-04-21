@@ -144,8 +144,8 @@ public class App extends Application<Config> {
         environment.jersey().register(
                 new LoggingFeature(
                         java.util.logging.Logger.getLogger(LoggingFeature.DEFAULT_LOGGER_NAME),
-                        Level.SEVERE,
-                        LoggingFeature.Verbosity.PAYLOAD_TEXT,
+                        Level.INFO,
+                        LoggingFeature.Verbosity.PAYLOAD_ANY,
                         LoggingFeature.DEFAULT_MAX_ENTITY_SIZE));
 
         // Check if we are running GWT Super Dev Mode

@@ -26,9 +26,12 @@ logging:
     stroom: INFO
     io.dropwizard: INFO
     org.eclipse.jetty: INFO
+    org.glassfish: INFO
+    org.glassfish.jersey: INFO
+    #    org.glassfish.jersey.logging.LoggingFeature: INFO
+    #    org.glassfish.jersey.server.ServerRuntime.Responder: INFO
+    #    org.glassfish.jersey.server.validation.internal.ValidationExceptionMapper: FINER
     org.flywaydb: INFO
-#    Comment this out if you want logging of the REST request/responses
-    org.glassfish.jersey.logging.LoggingFeature: "OFF"
     "event-logger":
       level: INFO
       additive: false

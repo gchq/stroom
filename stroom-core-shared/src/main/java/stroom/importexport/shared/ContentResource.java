@@ -36,11 +36,10 @@ import java.util.List;
 @Api(value = "content - /v1")
 @Path("/content" + ResourcePaths.V1)
 @Produces(MediaType.APPLICATION_JSON)
+@Consumes(MediaType.APPLICATION_JSON)
 public interface ContentResource extends RestResource, DirectRestService {
     @POST
     @Path("import")
-    @Consumes(MediaType.APPLICATION_JSON)
-    @Produces(MediaType.APPLICATION_JSON)
     @ApiOperation(
             value = "Import content",
             response = ResourceGeneration.class)
@@ -48,8 +47,6 @@ public interface ContentResource extends RestResource, DirectRestService {
 
     @POST
     @Path("confirmImport")
-    @Consumes(MediaType.APPLICATION_JSON)
-    @Produces(MediaType.APPLICATION_JSON)
     @ApiOperation(
             value = "Get import confirmation state",
             response = List.class)
@@ -57,8 +54,6 @@ public interface ContentResource extends RestResource, DirectRestService {
 
     @POST
     @Path("export")
-    @Consumes(MediaType.APPLICATION_JSON)
-    @Produces(MediaType.APPLICATION_JSON)
     @ApiOperation(
             value = "Export content",
             response = ResourceGeneration.class)
@@ -66,8 +61,6 @@ public interface ContentResource extends RestResource, DirectRestService {
 
     @POST
     @Path("fetchDependencies")
-    @Consumes(MediaType.APPLICATION_JSON)
-    @Produces(MediaType.APPLICATION_JSON)
     @ApiOperation(
             value = "Fetch content dependencies",
             response = ResultPage.class)

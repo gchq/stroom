@@ -25,6 +25,7 @@ import javax.ws.rs.core.Response;
         description = "Stroom Authorisation API")
 @Path("/authorisation" + ResourcePaths.V1)
 @Produces(MediaType.APPLICATION_JSON)
+@Consumes(MediaType.APPLICATION_JSON)
 public class AuthorisationResource implements RestResource {
     private static final Logger LOGGER = LoggerFactory.getLogger(AuthorisationResource.class);
 
@@ -44,8 +45,6 @@ public class AuthorisationResource implements RestResource {
      */
     @POST
     @Path("isAuthorised")
-    @Consumes(MediaType.APPLICATION_JSON)
-    @Produces(MediaType.APPLICATION_JSON)
     @ApiOperation(
         value = "Submit a request to verify if the user has the requested permission on a 'document'",
         response = Response.class)
@@ -60,8 +59,6 @@ public class AuthorisationResource implements RestResource {
 
     @POST
     @Path("hasPermission")
-    @Consumes(MediaType.APPLICATION_JSON)
-    @Produces(MediaType.APPLICATION_JSON)
     public Response hasPermission(UserPermissionRequest userPermissionRequest) {
         // TODO what happens if the permission is bad? What's the result of this method call and how should we handle it?
         boolean result = securityContext.hasAppPermission(userPermissionRequest.getPermission());
@@ -75,8 +72,6 @@ public class AuthorisationResource implements RestResource {
      */
     @POST
     @Path("createUser")
-    @Consumes(MediaType.APPLICATION_JSON)
-    @Produces(MediaType.APPLICATION_JSON)
     public Response createUser(@QueryParam("id") String userId) {
         try{
             User existingUser = userService.getUserByName(userId);
@@ -96,8 +91,6 @@ public class AuthorisationResource implements RestResource {
      */
     @GET
     @Path("setUserStatus")
-    @Consumes(MediaType.APPLICATION_JSON)
-    @Produces(MediaType.APPLICATION_JSON)
     public Response setUserStatus(@QueryParam("userId") String userId, @QueryParam("status") String status) {
         try{
             boolean isEnabled = status.equals("active") || status.equals("enabled");

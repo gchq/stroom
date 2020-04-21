@@ -37,6 +37,7 @@ import javax.ws.rs.core.MediaType;
 @Api(value = "feedStatus - /v1")
 @Path(FeedStatusResource.BASE_RESOURCE_PATH)
 @Produces(MediaType.APPLICATION_JSON)
+@Consumes(MediaType.APPLICATION_JSON)
 public class FeedStatusResource implements RestResource, HasHealthCheck {
     public static final String BASE_RESOURCE_PATH = "/feedStatus" + ResourcePaths.V1;
 
@@ -48,8 +49,6 @@ public class FeedStatusResource implements RestResource, HasHealthCheck {
     }
 
     @POST
-    @Consumes(MediaType.APPLICATION_JSON)
-    @Produces(MediaType.APPLICATION_JSON)
     @Path("/getFeedStatus")
     @Timed
     @ApiOperation(

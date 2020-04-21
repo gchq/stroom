@@ -15,8 +15,8 @@
  */
 
 import UserSearch from "./SearchUsers";
-import UserCreate from "./UserForm/CreateUserContainer";
-import UserEdit from "./UserForm/EditUserContainer";
+import UserCreate from "./UserForm/CreateAccountContainer";
+import UserEdit from "./UserForm/EditAccountContainer";
 import AsyncUserSelect from "./UserSelect";
 
 export { UserCreate, UserEdit, UserSearch, AsyncUserSelect };

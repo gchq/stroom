@@ -15,26 +15,23 @@
  */
 import * as React from "react";
 import {Route, RouteProps} from "react-router-dom";
-import useConfig from "../config/useConfig";
 import AuthenticationRequest from "./AuthenticationRequest";
 import useAuthenticationContext from "./useAuthenticationContext";
-import useServiceUrl from "../config/useServiceUrl";
+import useUrlFactory from "../../lib/useUrlFactory";
 
 const PrivateRoute = ({render, ...rest}: RouteProps) => {
-    const {advertisedUrl} = useConfig();
-    const {loginServiceUrl} = useServiceUrl();
+  const { apiUrl } = useUrlFactory();
+  const resource = apiUrl("/login/v1");
     const {idToken} = useAuthenticationContext();
 
     if (
         !(
-            advertisedUrl !== undefined &&
-            loginServiceUrl !== undefined
+            resource !== undefined
         )
     ) {
         throw new Error(
             `Config Not Correct for Private Routes ${JSON.stringify({
-                advertisedUrl,
-                loginServiceUrl,
+                loginServiceUrl: resource,
             })}`,
         );
     }
@@ -48,8 +45,7 @@ const PrivateRoute = ({render, ...rest}: RouteProps) => {
                 ) : (
                     <AuthenticationRequest
                         referrer={window.location.href}
-                        uiUrl={advertisedUrl}
-                        loginUrl={loginServiceUrl}
+                        loginUrl={resource}
                     />
                 )
             }

@@ -11,6 +11,7 @@ import stroom.node.api.NodeCallUtil;
 import stroom.node.api.NodeInfo;
 import stroom.node.api.NodeService;
 import stroom.ui.config.shared.UiConfig;
+import stroom.ui.config.shared.UiPreferences;
 import stroom.util.HasHealthCheck;
 import stroom.util.jersey.WebTargetFactory;
 import stroom.util.logging.LogUtil;
@@ -35,6 +36,7 @@ public class GlobalConfigResourceImpl implements GlobalConfigResource, HasHealth
     private final GlobalConfigService globalConfigService;
     private final NodeService nodeService;
     private final UiConfig uiConfig;
+    private final UiPreferences uiPreferences;
     private final NodeInfo nodeInfo;
     private final WebTargetFactory webTargetFactory;
 
@@ -42,11 +44,13 @@ public class GlobalConfigResourceImpl implements GlobalConfigResource, HasHealth
     GlobalConfigResourceImpl(final GlobalConfigService globalConfigService,
                              final NodeService nodeService,
                              final UiConfig uiConfig,
+                             final UiPreferences uiPreferences,
                              final NodeInfo nodeInfo,
                              final WebTargetFactory webTargetFactory) {
         this.globalConfigService = Objects.requireNonNull(globalConfigService);
         this.nodeService = Objects.requireNonNull(nodeService);
         this.uiConfig = uiConfig;
+        this.uiPreferences = uiPreferences;
         this.nodeInfo = Objects.requireNonNull(nodeInfo);
         this.webTargetFactory = webTargetFactory;
     }
@@ -234,6 +238,11 @@ public class GlobalConfigResourceImpl implements GlobalConfigResource, HasHealth
     @Override
     public UiConfig fetchUiConfig() {
         return uiConfig;
+    }
+
+    @Override
+    public UiPreferences uiPreferences() {
+        return uiPreferences;
     }
 
     @Timed

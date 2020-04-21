@@ -19,7 +19,7 @@ import { ErrorMessage, Field, FormikErrors, FormikTouched } from "formik";
 import * as React from "react";
 import Toggle from "react-toggle";
 import "react-toggle/style.css";
-import { User } from "../types";
+import { Account } from "../types";
 import useConfig from "startup/config/useConfig";
 
 const LoginFailureCopy = ({ attemptCount }: { attemptCount: number }) => (
@@ -48,9 +48,9 @@ const UserFields = ({
   setFieldValue,
 }: {
   showCalculatedFields: boolean;
-  errors: FormikErrors<User>;
-  touched: FormikTouched<User>;
-  userBeingEdited?: User;
+  errors: FormikErrors<Account>;
+  touched: FormikTouched<Account>;
+  userBeingEdited?: Account;
   setFieldTouched: Function;
   setFieldValue: Function;
 }) => {
@@ -98,27 +98,102 @@ const UserFields = ({
           </div>
           <div className="section__fields">
             <div className="section__fields__row">
-              <div className="field-container vertical">
-                <label>Account status</label>
+
+
+
+              <div className="field-container--with-validation">
+                <label>Enabled?</label>
                 <Field
-                  name="state"
-                  component="select"
-                  onChange={(event: any) => {
-                    setFieldValue("state", event.target.value);
-                    setFieldTouched("state");
-                  }}
-                >
-                  <option value="enabled">Active</option>
-                  <option value="disabled">Disabled</option>
-                  <option disabled value="inactive">
-                    Inactive (because of disuse)
-                  </option>
-                  <option disabled value="locked">
-                    Locked (because of failed logins)
-                  </option>
-                </Field>
+                  name="enabled"
+                  label="enabled"
+                  component={CheckboxField}
+                />
+                <ErrorMessage
+                  name="enabled"
+                  render={msg => <div className="validation-error">{msg}</div>}
+                />
               </div>
-              <div className="field-container__spacer" />
+
+            </div>
+          </div>
+          <div className="section__fields">
+            <div className="section__fields__row">
+
+              <div className="field-container--with-validation">
+                <label>Inactive?</label>
+                <Field
+                  name="inactive"
+                  label="inactive"
+                  component={CheckboxField}
+                />
+                <ErrorMessage
+                  name="inactive"
+                  render={msg => <div className="validation-error">{msg}</div>}
+                />
+              </div>
+
+            </div>
+          </div>
+          <div className="section__fields">
+            <div className="section__fields__row">
+
+              <div className="field-container--with-validation">
+                <label>Locked?</label>
+                <Field
+                  name="locked"
+                  label="locked"
+                  component={CheckboxField}
+                />
+                <ErrorMessage
+                  name="locked"
+                  render={msg => <div className="validation-error">{msg}</div>}
+                />
+              </div>
+
+            </div>
+          </div>
+          <div className="section__fields">
+            <div className="section__fields__row">
+
+              <div className="field-container--with-validation">
+                <label>Processing account?</label>
+                <Field
+                  name="processingAccount"
+                  label="processingAccount"
+                  component={CheckboxField}
+                />
+                <ErrorMessage
+                  name="processingAccount"
+                  render={msg => <div className="validation-error">{msg}</div>}
+                />
+              </div>
+
+            </div>
+          </div>
+          <div className="section__fields">
+            <div className="section__fields__row">
+
+              {/*<div className="field-container vertical">*/}
+              {/*  <label>Account status</label>*/}
+              {/*  <Field*/}
+              {/*    name="state"*/}
+              {/*    component="select"*/}
+              {/*    onChange={(event: any) => {*/}
+              {/*      setFieldValue("state", event.target.value);*/}
+              {/*      setFieldTouched("state");*/}
+              {/*    }}*/}
+              {/*  >*/}
+              {/*    <option value="enabled">Active</option>*/}
+              {/*    <option value="disabled">Disabled</option>*/}
+              {/*    <option disabled value="inactive">*/}
+              {/*      Inactive (because of disuse)*/}
+              {/*    </option>*/}
+              {/*    <option disabled value="locked">*/}
+              {/*      Locked (because of failed logins)*/}
+              {/*    </option>*/}
+              {/*  </Field>*/}
+              {/*</div>*/}
+              {/*<div className="field-container__spacer" />*/}
               <div className="field-container--with-validation">
                 <label>Never expires?</label>
                 <Field

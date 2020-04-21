@@ -15,8 +15,8 @@
  */
 
 import useHttpClient from "lib/useHttpClient";
-import useConfig from "startup/config/useConfig";
 import { LoginResponse } from ".";
+import { useUrlFactory } from "lib/useUrlFactory";
 
 interface Api {
   login: (redirectUri: string) => Promise<LoginResponse>;
@@ -24,11 +24,12 @@ interface Api {
 
 export const useSessionApi = (): Api => {
   const { httpGetJson } = useHttpClient();
-  const { stroomBaseServiceUrl } = useConfig();
+  const { apiUrl } = useUrlFactory();
+  const resource = apiUrl("/session/v1");
 
   return {
     login: (redirectUri: string) =>
-      httpGetJson(`${stroomBaseServiceUrl}/session/v1/noauth/login?redirect_uri=${encodeURIComponent(redirectUri)}`, {}, true),
+      httpGetJson(`${resource}/noauth/login?redirect_uri=${encodeURIComponent(redirectUri)}`, {}, true),
   };
 };
 

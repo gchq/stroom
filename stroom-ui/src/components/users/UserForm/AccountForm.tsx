@@ -25,12 +25,12 @@ import { UserValidationSchema } from "../validation";
 import EditUserFormProps from "./EditUserFormProps";
 import UserFields from "./UserFields";
 
-const UserForm: React.FunctionComponent<EditUserFormProps> = ({
+const AccountForm: React.FunctionComponent<EditUserFormProps> = ({
   onSubmit,
   onBack,
   onCancel,
   onValidate,
-  user,
+  account,
 }) => {
   const [showBackConfirmation, setShowBackConfirmation] = useState(false);
   const handleBack = (isPristine: boolean) => {
@@ -40,14 +40,14 @@ const UserForm: React.FunctionComponent<EditUserFormProps> = ({
       setShowBackConfirmation(true);
     }
   };
-  user.password = "";
+  account.password = "";
   return (
     <Formik
       onSubmit={values => onSubmit(values)}
       initialValues={{
-        ...user,
-        verifyPassword: user.password,
-        neverExpires: user.neverExpires || false,
+        ...account,
+        verifyPassword: account.password,
+        neverExpires: account.neverExpires || false,
       }}
       validateOnBlur
       // validate={onValidate}
@@ -68,7 +68,7 @@ const UserForm: React.FunctionComponent<EditUserFormProps> = ({
             <div>
               <UserFields
                 showCalculatedFields
-                userBeingEdited={user}
+                userBeingEdited={account}
                 errors={errors}
                 touched={touched}
                 setFieldTouched={setFieldTouched}
@@ -107,4 +107,4 @@ const UserForm: React.FunctionComponent<EditUserFormProps> = ({
   );
 };
 
-export default UserForm;
+export default AccountForm;

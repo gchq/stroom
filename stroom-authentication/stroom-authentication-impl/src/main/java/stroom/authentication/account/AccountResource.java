@@ -27,6 +27,7 @@ import stroom.util.shared.ResultPage;
 
 import javax.servlet.http.HttpServletRequest;
 import javax.validation.constraints.NotNull;
+import javax.ws.rs.Consumes;
 import javax.ws.rs.DELETE;
 import javax.ws.rs.GET;
 import javax.ws.rs.POST;
@@ -36,81 +37,82 @@ import javax.ws.rs.PathParam;
 import javax.ws.rs.Produces;
 import javax.ws.rs.QueryParam;
 import javax.ws.rs.core.Context;
-import javax.ws.rs.core.Response;
+import javax.ws.rs.core.MediaType;
 
-@Path("/user/v1")
-@Produces({"application/json"})
-@Api(description = "Stroom User API", tags = {"User"})
+@Path("/account/v1")
+@Produces(MediaType.APPLICATION_JSON)
+@Consumes(MediaType.APPLICATION_JSON)
+@Api(description = "Stroom Account API", tags = {"Account"})
 public interface AccountResource extends RestResource {
     @ApiOperation(
-            value = "Get all users.",
+            value = "Get all accounts.",
             response = String.class,
-            tags = {"User"})
+            tags = {"Account"})
     @GET
     @Path("/")
     @Timed
     @NotNull
-    ResultPage<Account> getAll(@Context @NotNull HttpServletRequest httpServletRequest);
+    ResultPage<Account> list(@Context @NotNull HttpServletRequest httpServletRequest);
 
     @ApiOperation(
-            value = "Create a user.",
-            response = Integer.class,
-            tags = {"User"})
-    @POST
-    @Path("/")
-    @Timed
-    @NotNull
-    Response createUser(
-            @Context @NotNull HttpServletRequest httpServletRequest,
-            @ApiParam("user") @NotNull Account account);
-
-    @ApiOperation(
-            value = "Search for a user by email.",
+            value = "Search for an account by email.",
             response = String.class,
-            tags = {"User"})
+            tags = {"Account"})
     @GET
     @Path("search")
     @Timed
     @NotNull
-    ResultPage<Account> searchUsers(
+    ResultPage<Account> search(
             @Context @NotNull HttpServletRequest httpServletRequest,
             @QueryParam("email") String email);
 
     @ApiOperation(
-            value = "Get a user by ID.",
+            value = "Create an account.",
+            response = Integer.class,
+            tags = {"Account"})
+    @POST
+    @Path("/")
+    @Timed
+    @NotNull
+    Integer create(
+            @Context @NotNull HttpServletRequest httpServletRequest,
+            @ApiParam("account") @NotNull CreateAccountRequest request);
+
+    @ApiOperation(
+            value = "Get an account by ID.",
             response = String.class,
-            tags = {"User"})
+            tags = {"Account"})
     @GET
     @Path("{id}")
     @Timed
     @NotNull
-    Response getUser(
+    Account read(
             @Context @NotNull HttpServletRequest httpServletRequest,
-            @PathParam("id") int userId);
+            @PathParam("id") int accountId);
 
     @ApiOperation(
-            value = "Update a user.",
+            value = "Update an account.",
             response = String.class,
-            tags = {"User"})
+            tags = {"Account"})
     @PUT
     @Path("{id}")
     @Timed
     @NotNull
-    Response updateUser(
+    Boolean update(
             @Context @NotNull HttpServletRequest httpServletRequest,
-            @ApiParam("user") @NotNull Account account,
-            @PathParam("id") int userId);
+            @ApiParam("account") @NotNull Account account,
+            @PathParam("id") int accountId);
 
     @ApiOperation(
-            value = "Delete a user by ID.",
+            value = "Delete an account by ID.",
             response = String.class,
-            tags = {"User"})
+            tags = {"Account"})
     @DELETE
     @Path("{id}")
     @Timed
     @NotNull
-    Response deleteUser(
+    Boolean delete(
             @Context @NotNull HttpServletRequest httpServletRequest,
-            @PathParam("id") int userId);
+            @PathParam("id") int accountId);
 }
 

@@ -1,16 +1,15 @@
 import { HttpRequest, HttpResponse } from "@pollyjs/adapter-fetch";
 
 import { TestCache } from "../PollyDecorator";
-import { Config } from "startup/config/types";
 import { ResourceBuilder } from "./types";
 import { DocumentPermissions } from "components/AuthorisationManager/api/docPermission";
 
 const resourceBuilder: ResourceBuilder = (
   server: any,
-  { stroomBaseServiceUrl }: Config,
+  apiUrl: any,
   testCache: TestCache,
 ) => {
-  const resource = `${stroomBaseServiceUrl}/docPermissions/v1`;
+  const resource = apiUrl("/docPermissions/v1");
 
   // Get Permissions for Doc Type
   server

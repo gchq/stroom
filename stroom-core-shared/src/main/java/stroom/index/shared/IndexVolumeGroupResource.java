@@ -20,8 +20,8 @@ import javax.ws.rs.core.MediaType;
 
 @Api(value = "index volumeGroup - /v2")
 @Path("/index/volumeGroup" + ResourcePaths.V2)
-@Consumes(MediaType.APPLICATION_JSON)
 @Produces(MediaType.APPLICATION_JSON)
+@Consumes(MediaType.APPLICATION_JSON)
 public interface IndexVolumeGroupResource extends RestResource, DirectRestService {
     @POST
     @Path("find")

@@ -17,15 +17,16 @@
 import * as React from "react";
 import useAppNavigation from "lib/useAppNavigation";
 import { useUsers } from "../api";
-import { User } from "../types";
+import { Account } from "../types";
 import { validateAsync } from "../validation";
 import UserForm from "./NewUserForm";
 import UserFormData from "./UserFormData";
-import useServiceUrl from "startup/config/useServiceUrl";
+import useUrlFactory from "lib/useUrlFactory";
 
-const CreateUserContainer = () => {
+const CreateAccountContainer = () => {
   const { createUser } = useUsers();
-  const { authenticationServiceUrl } = useServiceUrl();
+  const { apiUrl } = useUrlFactory();
+  const resource = apiUrl("/authentication/v1");
 
   const {
     nav: { goToUsers },
@@ -46,8 +47,8 @@ const CreateUserContainer = () => {
   };
   return (
     <UserForm
-      user={initialValues}
-      onSubmit={(user: User) => createUser(user)}
+      account={initialValues}
+      onSubmit={(user: Account) => createUser(user)}
       onBack={() => goToUsers()}
       onCancel={() => goToUsers()}
       onValidate={async (password, verifyPassword, email) => {
@@ -55,11 +56,11 @@ const CreateUserContainer = () => {
           email,
           password,
           verifyPassword,
-          authenticationServiceUrl,
+          resource,
         );
       }}
     />
   );
 };
 
-export default CreateUserContainer;
+export default CreateAccountContainer;

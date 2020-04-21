@@ -34,11 +34,10 @@ import javax.ws.rs.core.MediaType;
 @Api(value = "storedQuery - /v1")
 @Path("/storedQuery" + ResourcePaths.V1)
 @Produces(MediaType.APPLICATION_JSON)
+@Consumes(MediaType.APPLICATION_JSON)
 public interface StoredQueryResource extends RestResource, DirectRestService {
     @POST
     @Path("/find")
-    @Consumes(MediaType.APPLICATION_JSON)
-    @Produces(MediaType.APPLICATION_JSON)
     @ApiOperation(
             value = "Find stored queries",
             response = ResultPage.class)
@@ -46,8 +45,6 @@ public interface StoredQueryResource extends RestResource, DirectRestService {
 
     @POST
     @Path("/create")
-    @Consumes(MediaType.APPLICATION_JSON)
-    @Produces(MediaType.APPLICATION_JSON)
     @ApiOperation(
             value = "Create a stored query",
             response = StoredQuery.class)
@@ -55,8 +52,6 @@ public interface StoredQueryResource extends RestResource, DirectRestService {
 
     @POST
     @Path("/read")
-    @Consumes(MediaType.APPLICATION_JSON)
-    @Produces(MediaType.APPLICATION_JSON)
     @ApiOperation(
             value = "Get a stored query",
             response = StoredQuery.class)
@@ -64,8 +59,6 @@ public interface StoredQueryResource extends RestResource, DirectRestService {
 
     @PUT
     @Path("/update")
-    @Consumes(MediaType.APPLICATION_JSON)
-    @Produces(MediaType.APPLICATION_JSON)
     @ApiOperation(
             value = "Update a stored query",
             response = StoredQuery.class)
@@ -73,8 +66,6 @@ public interface StoredQueryResource extends RestResource, DirectRestService {
 
     @DELETE
     @Path("/delete")
-    @Consumes(MediaType.APPLICATION_JSON)
-    @Produces(MediaType.APPLICATION_JSON)
     @ApiOperation(
             value = "Delete a stored query",
             response = StoredQuery.class)
@@ -82,8 +73,6 @@ public interface StoredQueryResource extends RestResource, DirectRestService {
 
 //    @POST
 //    @Path("/fetch")
-//    @Consumes(MediaType.APPLICATION_JSON)
-//    @Produces(MediaType.APPLICATION_JSON)
 //    @ApiOperation(
 //            value = "Fetch a stored query",
 //            response = ResourceGeneration.class)

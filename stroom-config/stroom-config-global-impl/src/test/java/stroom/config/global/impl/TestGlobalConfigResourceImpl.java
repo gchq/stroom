@@ -13,6 +13,7 @@ import stroom.node.api.NodeInfo;
 import stroom.node.api.NodeService;
 import stroom.test.common.util.test.AbstractMultiNodeResourceTest;
 import stroom.ui.config.shared.UiConfig;
+import stroom.ui.config.shared.UiPreferences;
 import stroom.util.shared.PageRequest;
 import stroom.util.shared.PropertyPath;
 import stroom.util.shared.ResourcePaths;
@@ -356,6 +357,7 @@ class TestGlobalConfigResourceImpl extends AbstractMultiNodeResourceTest<GlobalC
                 globalConfigService,
                 nodeService,
                 new UiConfig(),
+                new UiPreferences(),
                 nodeInfo,
                 webTargetFactory());
     }

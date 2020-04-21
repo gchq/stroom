@@ -34,6 +34,7 @@ import java.util.List;
 @Api(value = "cache - /v1")
 @Path(CacheResource.BASE_PATH)
 @Produces(MediaType.APPLICATION_JSON)
+@Consumes(MediaType.APPLICATION_JSON)
 public interface CacheResource extends RestResource, DirectRestService {
     String BASE_PATH = "/cache" + ResourcePaths.V1;
 
@@ -41,8 +42,6 @@ public interface CacheResource extends RestResource, DirectRestService {
     String INFO_PATH = BASE_PATH + INFO;
 
     @GET
-    @Consumes(MediaType.APPLICATION_JSON)
-    @Produces(MediaType.APPLICATION_JSON)
     @ApiOperation(
             value = "Lists caches",
             response = List.class)
@@ -50,16 +49,12 @@ public interface CacheResource extends RestResource, DirectRestService {
 
     @GET
     @Path(INFO)
-    @Consumes(MediaType.APPLICATION_JSON)
-    @Produces(MediaType.APPLICATION_JSON)
     @ApiOperation(
             value = "Gets cache info",
             response = CacheInfo.class)
     CacheInfoResponse info(@QueryParam("cacheName") String cacheName, @QueryParam("nodeName") String nodeName);
 
     @DELETE
-    @Consumes(MediaType.APPLICATION_JSON)
-    @Produces(MediaType.APPLICATION_JSON)
     @ApiOperation(
             value = "Clears a cache",
             response = Long.class)

@@ -41,6 +41,7 @@ import javax.ws.rs.core.MediaType;
 @Api(value = "searchable - /v2")
 @Path("/searchable" + ResourcePaths.V2)
 @Produces(MediaType.APPLICATION_JSON)
+@Consumes(MediaType.APPLICATION_JSON)
 public class SearchableResource implements RestResource {
     private static final Logger LOGGER = LoggerFactory.getLogger(SearchableResource.class);
 
@@ -52,8 +53,6 @@ public class SearchableResource implements RestResource {
     }
 
     @POST
-    @Consumes(MediaType.APPLICATION_JSON)
-    @Produces(MediaType.APPLICATION_JSON)
     @Path("/dataSource")
     @Timed
     @ApiOperation(
@@ -68,8 +67,6 @@ public class SearchableResource implements RestResource {
     }
 
     @POST
-    @Consumes(MediaType.APPLICATION_JSON)
-    @Produces(MediaType.APPLICATION_JSON)
     @Path("/search")
     @Timed
     @ApiOperation(
@@ -85,8 +82,6 @@ public class SearchableResource implements RestResource {
     }
 
     @POST
-    @Consumes(MediaType.APPLICATION_JSON)
-    @Produces(MediaType.APPLICATION_JSON)
     @Path("/destroy")
     @Timed
     @ApiOperation(

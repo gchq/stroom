@@ -25,6 +25,9 @@ public final class AccountModule extends AbstractModule {
     protected void configure() {
         install(new AccountTaskJobsModule());
 
+        bind(AccountService.class).to(AccountServiceImpl.class);
+        bind(AccountEventLog.class).to(AccountEventLogImpl.class);
+
         GuiceUtil.buildMultiBinder(binder(), RestResource.class)
                 .addBinding(AccountResourceImpl.class);
     }

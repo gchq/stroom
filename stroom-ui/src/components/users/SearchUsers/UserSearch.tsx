@@ -25,14 +25,14 @@ import "react-table/react-table.css";
 import Toggle from "react-toggle";
 import "react-toggle/style.css";
 import Button from "components/Button";
-import { User } from "../types";
+import { Account } from "../types";
 import useColumns from "./useColumns";
 import IconHeader from "components/IconHeader";
 
 interface UserSearchProps {
   onNewUserClicked: () => void;
   onUserOpen: (selectedUserId: string) => void;
-  users: User[];
+  users: Account[];
   onDeleteUser: (userId: string) => void;
 }
 
@@ -44,7 +44,7 @@ const UserSearch: React.FunctionComponent<UserSearchProps> = ({
 }) => {
   const [isFilteringEnabled, setFilteringEnabled] = useState(false);
   const [selectedUser, setSelectedUser] = useState("");
-  const columns: Column<User>[] = useColumns(selectedUser);
+  const columns: Column<Account>[] = useColumns(selectedUser);
 
   const getTrProps: ComponentPropsGetterR = React.useCallback(
     (state: any, rowInfo: RowInfo | undefined) => {

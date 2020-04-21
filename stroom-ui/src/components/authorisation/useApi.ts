@@ -16,25 +16,27 @@
 
 import { useCallback } from "react";
 import useHttpClient from "lib/useHttpClient";
-import useConfig from "startup/config/useConfig";
+import useUrlFactory from "lib/useUrlFactory";
 
 interface Api {
   createUser: (userEmail: string) => Promise<void>;
 }
 
 export const useApi = (): Api => {
-  const { httpPostJsonResponse } = useHttpClient();
-  const { stroomBaseServiceUrl } = useConfig();
-  const createUser = useCallback(
-    (userEmail: string) =>
-      httpPostJsonResponse(
-        `${stroomBaseServiceUrl}/users/v1/create/${userEmail}/false`,
-        {},
-      ),
-    [stroomBaseServiceUrl, httpPostJsonResponse],
-  );
+    const { httpPostJsonResponse } = useHttpClient();
+    const { apiUrl } = useUrlFactory();
+    const resource = apiUrl("/users/v1");
+    const createUser = useCallback(
+      (userEmail: string) =>
+        httpPostJsonResponse(
+          `${resource}/create/${userEmail}/false`,
+          {},
+        ),
+      [resource, httpPostJsonResponse],
+    );
 
-  return { createUser };
-};
+    return { createUser };
+  }
+;
 
 export default useApi;
