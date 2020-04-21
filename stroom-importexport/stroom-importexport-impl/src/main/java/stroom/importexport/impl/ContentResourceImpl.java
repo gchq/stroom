@@ -90,7 +90,8 @@ class ContentResourceImpl implements ContentResource, HasHealthCheck {
     public List<ImportState> confirmImport(final ResourceKey resourceKey) {
         return securityContext.secureResult(PermissionNames.IMPORT_CONFIGURATION, () -> {
             try {
-                return importExportService.createImportConfirmationList(resourceStore.getTempFile(resourceKey));
+                final Path tempPath = resourceStore.getTempFile(resourceKey);
+                return importExportService.createImportConfirmationList(tempPath);
             } catch (final RuntimeException rex) {
                 // In case of error delete the temp file
                 resourceStore.deleteTempFile(resourceKey);

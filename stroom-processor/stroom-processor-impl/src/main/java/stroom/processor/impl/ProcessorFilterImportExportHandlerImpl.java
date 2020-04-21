@@ -92,6 +92,9 @@ public class ProcessorFilterImportExportHandlerImpl implements ImportExportActio
 
             if (ImportState.State.NEW.equals(importState.getState())) {
 
+                if (importState.getEnableTime() != null)
+                    System.out.println("Enabling filter from: " + importState.getEnableTime());
+
                 ProcessorFilter filter = findProcessorFilter(docRef);
                 if (filter == null) {
                     Processor processor = findProcessor(docRef.getUuid(),
@@ -129,9 +132,14 @@ public class ProcessorFilterImportExportHandlerImpl implements ImportExportActio
             ProcessorFilter filter = page.getFirst();
 
             if (filter.getPipelineName() == null && filter.getPipelineUuid() != null) {
-                PipelineDoc pipeline = pipelineStore.find(new DocRef(PipelineDoc.DOCUMENT_TYPE, filter.getPipelineUuid()));
-                if (pipeline != null)
-                    filter.setPipelineName(pipeline.getName());
+                try {
+                    PipelineDoc pipeline = pipelineStore.find(new DocRef(PipelineDoc.DOCUMENT_TYPE, filter.getPipelineUuid()));
+                    if (pipeline != null)
+                        filter.setPipelineName(pipeline.getName());
+                }catch (RuntimeException ex){
+                    LOGGER.warn("Unable to find Pipeline " + filter.getPipelineUuid() +
+                            " associated with ProcessorFilter " + filter.getUuid() + " (id: " + filter.getId() +")");
+                }
             }
 
             return filter;

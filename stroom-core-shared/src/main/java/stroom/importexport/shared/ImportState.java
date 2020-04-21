@@ -48,6 +48,8 @@ public class ImportState {
     private final List<String> updatedFieldList;
     @JsonProperty
     private State state;
+    @JsonProperty
+    private Long enableTime;
 
     @JsonCreator
     public ImportState(@JsonProperty("docRef") final DocRef docRef,
@@ -56,6 +58,7 @@ public class ImportState {
                        @JsonProperty("action") final boolean action,
                        @JsonProperty("messageList") final List<Message> messageList,
                        @JsonProperty("updatedFieldList") final List<String> updatedFieldList,
+                       @JsonProperty("enableTime") final Long enableTime,
                        @JsonProperty("state") final State state) {
         this.docRef = docRef;
         this.sourcePath = sourcePath;
@@ -63,6 +66,7 @@ public class ImportState {
         this.action = action;
         this.messageList = messageList;
         this.updatedFieldList = updatedFieldList;
+        this.enableTime = enableTime;
         this.state = state;
     }
 
@@ -123,6 +127,14 @@ public class ImportState {
 
     public List<String> getUpdatedFieldList() {
         return updatedFieldList;
+    }
+
+    public Long getEnableTime(){
+        return enableTime;
+    }
+
+    public void setEnableTime(Long enableTime){
+        this.enableTime = enableTime;
     }
 
     public State getState() {

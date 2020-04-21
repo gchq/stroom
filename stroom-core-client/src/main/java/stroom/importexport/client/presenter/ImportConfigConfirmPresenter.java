@@ -20,6 +20,7 @@ import com.google.gwt.cell.client.TextCell;
 import com.google.gwt.core.shared.GWT;
 import com.google.gwt.user.cellview.client.Column;
 import com.google.gwt.user.cellview.client.Header;
+import com.google.gwt.user.client.ui.Widget;
 import com.google.inject.Inject;
 import com.google.web.bindery.event.shared.EventBus;
 import com.gwtplatform.mvp.client.MyPresenter;
@@ -67,6 +68,7 @@ public class ImportConfigConfirmPresenter extends
     private static final ContentResource CONTENT_RESOURCE = com.google.gwt.core.client.GWT.create(ContentResource.class);
 
     private final TooltipPresenter tooltipPresenter;
+    private final ImportConfigConfirmView view;
     private final DataGridView<ImportState> dataGridView;
     private final RestFactory restFactory;
     private ResourceKey resourceKey;
@@ -81,9 +83,12 @@ public class ImportConfigConfirmPresenter extends
         this.tooltipPresenter = tooltipPresenter;
         this.restFactory = restFactory;
 
+        this.view = view;
+
         this.dataGridView = new DataGridViewImpl<>(false,
                 DataGridViewImpl.MASSIVE_LIST_PAGE_SIZE);
-        view.setDataGridView(dataGridView);
+
+        view.setDataGridView(this.dataGridView);
 
         addColumns();
     }
@@ -118,6 +123,7 @@ public class ImportConfigConfirmPresenter extends
             boolean warnings = false;
             int count = 0;
             for (final ImportState importState : confirmList) {
+                importState.setEnableTime(1587457578000l);
                 if (importState.isAction()) {
                     count++;
                     if (importState.getSeverity().greaterThan(Severity.INFO)) {
@@ -387,6 +393,8 @@ public class ImportConfigConfirmPresenter extends
 
     public interface ImportConfigConfirmView extends View {
         void setDataGridView(View view);
+        Long getEnableFromDate();
+        Widget getDataGridViewWidget();
     }
 
     @ProxyCodeSplit
