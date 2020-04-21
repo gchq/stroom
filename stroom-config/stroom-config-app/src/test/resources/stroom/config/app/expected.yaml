@@ -789,6 +789,10 @@ appConfig:
       users: "../../../s/users"
       apiKeys: "../../../s/apiKeys"
       changepassword: "../../../s/changepassword"
+    uiPreferences:
+      allowPasswordResets: true
+      dateFormat: "YYYY-MM-DDTHH:mm:ss.SSSZ"
+      defaultApiKeyExpiryInMinutes: 525600
   volumes:
     resilientReplicationCount: 1
     preferLocalVolumes: false
