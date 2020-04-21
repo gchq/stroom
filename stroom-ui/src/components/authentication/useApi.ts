@@ -12,7 +12,7 @@ import {
   PasswordValidationResponse,
   ResetPasswordRequest,
 } from "./types";
-import useServiceUrl from "startup/config/useServiceUrl";
+import useUrlFactory from "lib/useUrlFactory";
 
 interface Api {
   apiLogin: (credentials: Credentials) => Promise<LoginResponse>;
@@ -33,7 +33,8 @@ interface Api {
 
 export const useApi = (): Api => {
   const { httpGetEmptyResponse, httpPostJsonResponse } = useHttpClient();
-  const { authenticationServiceUrl } = useServiceUrl();
+  const { apiUrl } = useUrlFactory();
+  const resource = apiUrl("/authentication/v1");
   let redirectUri: string;
 
   const { router } = useRouter();
@@ -47,7 +48,7 @@ export const useApi = (): Api => {
   const apiLogin = useCallback(
     (credentials: Credentials) => {
       const { email, password } = credentials;
-      const loginServiceUrl = `${authenticationServiceUrl}/noauth/login?redirect_uri=${encodeURI(redirectUri)}`;
+      const loginServiceUrl = `${resource}/noauth/login?redirect_uri=${encodeURI(redirectUri)}`;
 
       return httpPostJsonResponse(
         loginServiceUrl,
@@ -64,48 +65,48 @@ export const useApi = (): Api => {
         false,
       );
     },
-    [authenticationServiceUrl, redirectUri, httpPostJsonResponse],
+    [resource, redirectUri, httpPostJsonResponse],
   );
 
   const changePassword = useCallback(
     ({ email, oldPassword, newPassword }: ChangePasswordRequest) =>
       httpPostJsonResponse(
-        `${authenticationServiceUrl}/noauth/changePassword/`,
+        `${resource}/noauth/changePassword/`,
         { body: JSON.stringify({ newPassword, oldPassword, email }) },
         true,
         false,
       ),
-    [authenticationServiceUrl, httpPostJsonResponse],
+    [resource, httpPostJsonResponse],
   );
 
   const resetPassword = useCallback(
     ({ newPassword }: ResetPasswordRequest) =>
-      httpPostJsonResponse(`${authenticationServiceUrl}/resetPassword/`, {
+      httpPostJsonResponse(`${resource}/resetPassword/`, {
         body: JSON.stringify({ newPassword }),
       }),
-    [authenticationServiceUrl, httpPostJsonResponse],
+    [resource, httpPostJsonResponse],
   );
 
   const submitPasswordChangeRequest = useCallback(
     (formData: any) =>
       httpGetEmptyResponse(
-        `${authenticationServiceUrl}/reset/${formData.email}`,
+        `${resource}/reset/${formData.email}`,
         {},
         true,
         false,
       ),
-    [authenticationServiceUrl, httpGetEmptyResponse],
+    [resource, httpGetEmptyResponse],
   );
 
   const isPasswordValid = useCallback(
     (passwordValidationRequest: PasswordValidationRequest) =>
       httpPostJsonResponse(
-        `${authenticationServiceUrl}/noauth/isPasswordValid`,
+        `${resource}/noauth/isPasswordValid`,
         {
           body: JSON.stringify(passwordValidationRequest),
         },
       ),
-    [authenticationServiceUrl, httpPostJsonResponse],
+    [resource, httpPostJsonResponse],
   );
 
   return {

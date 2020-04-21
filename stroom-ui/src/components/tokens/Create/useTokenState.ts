@@ -37,14 +37,18 @@ const useTokenState = (): TokenStateApi => {
   const [state, dispatch] = useReducer(reducer, {
     token: {
       id: "",
-      enabled: true,
+      version: 0,
+      createTimeMs: 0,
+      updateTimeMs: 0,
+      createUser: "",
+      updateUser: "",
+
       userEmail: "",
-      expiresOn: "",
-      issuedOn: "",
-      issuedByUser: "",
-      updatedOn: "",
-      updatedByUser: "",
-      token: "",
+      tokenType: "",
+      data: "",
+      expiresOnMs: 0,
+      comments: "",
+      enabled: true,
     },
   });
   return {

@@ -2,7 +2,7 @@ import * as React from "react";
 
 import useHttpClient from "lib/useHttpClient";
 import { DocumentPermissions } from "./types";
-import useConfig from "startup/config/useConfig";
+import useUrlFactory from "lib/useUrlFactory";
 
 interface Api {
   // Server Side Constant
@@ -34,7 +34,8 @@ interface Api {
 }
 
 export const useApi = (): Api => {
-  const { stroomBaseServiceUrl } = useConfig();
+  const { apiUrl } = useUrlFactory();
+  const resource = apiUrl("/docPermissions/v1");
 
   const {
     httpGetJson,
@@ -46,18 +47,18 @@ export const useApi = (): Api => {
     getPermissionForDocType: React.useCallback(
       (docRefType: string): Promise<string[]> =>
         httpGetJson(
-          `${stroomBaseServiceUrl}/docPermissions/v1/forDocType/${docRefType}`,
+          `${resource}/forDocType/${docRefType}`,
           {},
           false,
         ),
-      [stroomBaseServiceUrl, httpGetJson],
+      [resource, httpGetJson],
     ),
     getPermissionsForDocumentForUser: React.useCallback(
       (docRefUuid: string, userUuid: string): Promise<string[]> =>
         httpGetJson(
-          `${stroomBaseServiceUrl}/docPermissions/v1/forDocForUser/${docRefUuid}/${userUuid}`,
+          `${resource}/forDocForUser/${docRefUuid}/${userUuid}`,
         ),
-      [stroomBaseServiceUrl, httpGetJson],
+      [resource, httpGetJson],
     ),
     addDocPermission: React.useCallback(
       (
@@ -66,9 +67,9 @@ export const useApi = (): Api => {
         permissionName: string,
       ): Promise<void> =>
         httpPostEmptyResponse(
-          `${stroomBaseServiceUrl}/docPermissions/v1/forDocForUser/${docRefUuid}/${userUuid}/${permissionName}`,
+          `${resource}/forDocForUser/${docRefUuid}/${userUuid}/${permissionName}`,
         ),
-      [stroomBaseServiceUrl, httpPostEmptyResponse],
+      [resource, httpPostEmptyResponse],
     ),
     removeDocPermission: React.useCallback(
       (
@@ -77,30 +78,30 @@ export const useApi = (): Api => {
         permissionName: string,
       ): Promise<void> =>
         httpDeleteEmptyResponse(
-          `${stroomBaseServiceUrl}/docPermissions/v1/forDocForUser/${docRefUuid}/${userUuid}/${permissionName}`,
+          `${resource}/forDocForUser/${docRefUuid}/${userUuid}/${permissionName}`,
         ),
-      [stroomBaseServiceUrl, httpDeleteEmptyResponse],
+      [resource, httpDeleteEmptyResponse],
     ),
     getPermissionForDoc: React.useCallback(
       (docRefUuid: string) =>
         httpGetJson(
-          `${stroomBaseServiceUrl}/docPermissions/v1/forDoc/${docRefUuid}`,
+          `${resource}/forDoc/${docRefUuid}`,
         ),
-      [stroomBaseServiceUrl, httpGetJson],
+      [resource, httpGetJson],
     ),
     clearDocPermissionsForUser: React.useCallback(
       (docRefUuid: string, userUuid: string) =>
         httpDeleteEmptyResponse(
-          `${stroomBaseServiceUrl}/docPermissions/v1/forDocForUser/${docRefUuid}/${userUuid}`,
+          `${resource}/forDocForUser/${docRefUuid}/${userUuid}`,
         ),
-      [stroomBaseServiceUrl, httpDeleteEmptyResponse],
+      [resource, httpDeleteEmptyResponse],
     ),
     clearDocPermissions: React.useCallback(
       (docRefUuid: string) =>
         httpDeleteEmptyResponse(
-          `${stroomBaseServiceUrl}/docPermissions/v1/forDoc/${docRefUuid}`,
+          `${resource}/forDoc/${docRefUuid}`,
         ),
-      [stroomBaseServiceUrl, httpDeleteEmptyResponse],
+      [resource, httpDeleteEmptyResponse],
     ),
   };
 };

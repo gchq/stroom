@@ -23,7 +23,7 @@ import { Account } from "../types";
 import { useUsers } from "../api";
 import { validateAsync } from "../validation";
 import AccountForm from "./AccountForm";
-import useServiceUrl from "startup/config/useServiceUrl";
+import useUrlFactory from "lib/useUrlFactory";
 
 const EditAccountContainer = () => {
   const { updateUser, fetchUser, account } = useUsers();
@@ -32,10 +32,13 @@ const EditAccountContainer = () => {
     nav: { goToUsers },
   } = useAppNavigation();
 
-  const { authenticationServiceUrl } = useServiceUrl();
+  const { apiUrl } = useUrlFactory();
+  const resource = apiUrl("/authentication/v1");
 
   useEffect(() => {
-    if (!!userId && !account) fetchUser(userId);
+    if (!!userId && !account) {
+      fetchUser(userId);
+    }
   }, [fetchUser, userId, account]);
 
   if (!!account) {
@@ -50,13 +53,13 @@ const EditAccountContainer = () => {
             email,
             password,
             verifyPassword,
-            authenticationServiceUrl,
+            resource,
           );
         }}
       />
     );
   } else {
-    return <Loader message="" />;
+    return <Loader message=""/>;
   }
 };
 

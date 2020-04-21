@@ -12,21 +12,25 @@
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
  * See the License for the specific language governing permissions and
  * limitations under the License.
+ *
  */
 
-package stroom.authentication.token;
+package stroom.authentication.account;
 
-import com.google.inject.AbstractModule;
-import stroom.util.guice.GuiceUtil;
-import stroom.util.shared.RestResource;
+import stroom.util.shared.ResultPage;
 
-public final class TokenModule extends AbstractModule {
-    @Override
-    protected void configure() {
-        bind(TokenService.class).to(TokenServiceImpl.class);
-        bind(TokenEventLog.class).to(TokenEventLogImpl.class);
+public interface AccountEventLog {
+    void list(ResultPage<Account> result, Throwable ex);
 
-        GuiceUtil.buildMultiBinder(binder(), RestResource.class)
-                .addBinding(TokenResourceImpl.class);
-    }
+    void search(String email, ResultPage<Account> result, Throwable ex);
+
+    void create(CreateAccountRequest request, Account result, Throwable ex);
+
+    void read(int accountId, Account result, Throwable ex);
+
+    void read(String email, Account result, Throwable ex);
+
+    void update(Account account, int accountId, Throwable ex);
+
+    void delete(int accountId, Throwable ex);
 }

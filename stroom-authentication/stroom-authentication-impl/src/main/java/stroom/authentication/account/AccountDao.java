@@ -15,6 +15,8 @@ public interface AccountDao {
 
     boolean incrementLoginFailures(String email);
 
+    Optional<Integer> getId(String email);
+
     Optional<Account> get(String email);
 
     void update(Account account);
@@ -23,7 +25,7 @@ public interface AccountDao {
 
     Optional<Account> get(int id);
 
-    ResultPage<Account> getAll();
+    ResultPage<Account> list();
 
     void changePassword(String email, String newPassword);
 
@@ -34,6 +36,4 @@ public interface AccountDao {
     int deactivateInactiveUsers(Duration unusedAccountDeactivationThreshold);
 
     ResultPage<Account> searchUsersForDisplay(String email);
-//
-//    boolean exists(String id);
 }

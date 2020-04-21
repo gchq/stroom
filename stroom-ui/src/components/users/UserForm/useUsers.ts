@@ -18,7 +18,13 @@ const useUsers = () => {
   /**
    * Updates the user
    */
-  const { change: updateUserUsingApi } = useApi();
+  const {
+    change: updateUserUsingApi,
+    add: createAccountUsingApi,
+    fetch: fetchUserUsingApi,
+  } = useApi();
+  const { createUser: createAuthorisationUser } = useAuthorisationApi();
+
   const updateUser = useCallback(
     (user: Account) => {
       updateUserUsingApi(user).then(() => {
@@ -31,8 +37,6 @@ const useUsers = () => {
   /**
    * Creates a user
    */
-  const { createUser: createAuthorisationUser } = useAuthorisationApi();
-  const { add: createAccountUsingApi } = useApi();
   const createUser = useCallback(
     (account: Account) => {
       createAccountUsingApi(account).then(() => {
@@ -48,7 +52,6 @@ const useUsers = () => {
   /**
    * Fetches a user by id/email, and puts it into the redux state.
    */
-  const { fetch: fetchUserUsingApi } = useApi();
   const fetchUser = useCallback(
     (userId: string) => {
       fetchUserUsingApi(userId).then(account => {

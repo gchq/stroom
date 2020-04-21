@@ -17,7 +17,7 @@
 import { useCallback } from "react";
 import { Filter } from "react-table";
 import useHttpClient from "lib/useHttpClient";
-import useServiceUrl from "startup/config/useServiceUrl";
+import useUrlFactory from "lib/useUrlFactory";
 import { SearchConfig, Token, TokenSearchResponse } from "./types";
 
 interface Api {
@@ -38,17 +38,18 @@ export const useApi = (): Api => {
     httpGetEmptyResponse,
   } = useHttpClient();
 
-  const { tokenServiceUrl } = useServiceUrl();
+  const { apiUrl } = useUrlFactory();
+  const resource = apiUrl("/token/v1");
 
   return {
     deleteToken: useCallback(
-      tokenId => httpDeleteEmptyResponse(`${tokenServiceUrl}/${tokenId}`),
-      [httpDeleteEmptyResponse, tokenServiceUrl],
+      tokenId => httpDeleteEmptyResponse(`${resource}/${tokenId}`),
+      [resource, httpDeleteEmptyResponse],
     ),
 
     createToken: useCallback(
       (email: string, expiryDate: string) =>
-        httpPostJsonResponse(tokenServiceUrl, {
+        httpPostJsonResponse(resource, {
           body: JSON.stringify({
             userEmail: email,
             expiryDate,
@@ -56,20 +57,20 @@ export const useApi = (): Api => {
             enabled: true,
           }),
         }),
-      [tokenServiceUrl, httpPostJsonResponse],
+      [resource, httpPostJsonResponse],
     ),
 
     fetchApiKey: useCallback(
-      (apiKeyId: string) => httpGetJson(`${tokenServiceUrl}/${apiKeyId}`),
-      [tokenServiceUrl, httpGetJson],
+      (apiKeyId: string) => httpGetJson(`${resource}/${apiKeyId}`),
+      [resource, httpGetJson],
     ),
 
     toggleState: useCallback(
       (tokenId: string, nextState: boolean) =>
         httpGetEmptyResponse(
-          `${tokenServiceUrl}/${tokenId}/state/?enabled=${nextState}`,
+          `${resource}/${tokenId}/state/?enabled=${nextState}`,
         ),
-      [httpGetEmptyResponse, tokenServiceUrl],
+      [resource, httpGetEmptyResponse],
     ),
 
     performTokenSearch: useCallback(
@@ -85,7 +86,7 @@ export const useApi = (): Api => {
           }
         }
 
-        let filters = {} as { tokenType: string };
+        const filters = {} as { tokenType: string };
         if (!!searchConfig.filters) {
           if (searchConfig.filters.length > 0) {
             searchConfig.filters.forEach((filter: Filter) => {
@@ -97,7 +98,7 @@ export const useApi = (): Api => {
         // We only want to see API keys, not user keys.
         filters.tokenType = "API";
 
-        const url = `${tokenServiceUrl}/search`;
+        const url = `${resource}/search`;
         return httpPostJsonResponse(url, {
           body: JSON.stringify({
             page: searchConfig.page,
@@ -108,7 +109,7 @@ export const useApi = (): Api => {
           }),
         });
       },
-      [httpPostJsonResponse, tokenServiceUrl],
+      [resource, httpPostJsonResponse],
     ),
   };
 };

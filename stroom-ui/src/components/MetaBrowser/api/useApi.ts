@@ -1,11 +1,8 @@
 import * as React from "react";
 import useHttpClient from "lib/useHttpClient";
-import useConfig from "startup/config/useConfig";
-import {
-  DataSourceType,
-  ExpressionOperatorType,
-} from "components/ExpressionBuilder/types";
-import { StreamAttributeMapResult, PageRequest, MetaRow } from "../types";
+import { DataSourceType, ExpressionOperatorType } from "components/ExpressionBuilder/types";
+import { MetaRow, PageRequest, StreamAttributeMapResult } from "../types";
+import useUrlFactory from "lib/useUrlFactory";
 
 interface Api {
   fetch: (props: PageRequest) => Promise<StreamAttributeMapResult>;
@@ -19,12 +16,13 @@ interface Api {
 }
 
 export const useApi = (): Api => {
-  const { stroomBaseServiceUrl } = useConfig();
+  const { apiUrl } = useUrlFactory();
   const { httpGetJson, httpPostJsonResponse } = useHttpClient();
+  const resource = apiUrl("/streamattributemap/v1");
 
   const getPageUrl = React.useCallback(
     (pageInfo: PageRequest) => {
-      var url = new URL(`${stroomBaseServiceUrl}/streamattributemap/v1/`);
+      var url = new URL(resource);
 
       if (!!pageInfo) {
         const { pageOffset, pageSize } = pageInfo;
@@ -35,27 +33,27 @@ export const useApi = (): Api => {
       }
       return url.href;
     },
-    [stroomBaseServiceUrl],
+    [resource],
   );
 
   return {
     fetchDataSource: React.useCallback(
       () =>
         httpGetJson(
-          `${stroomBaseServiceUrl}/streamattributemap/v1/dataSource`,
+          `${resource}/dataSource`,
           {},
           false,
         ),
-      [stroomBaseServiceUrl, httpGetJson],
+      [resource, httpGetJson],
     ),
     getDetailsForSelectedStream: React.useCallback(
       (metaId: number) =>
         httpGetJson(
-          `${stroomBaseServiceUrl}/streamattributemap/v1/${metaId}`,
+          `${resource}/${metaId}`,
           {},
           false,
         ),
-      [stroomBaseServiceUrl, httpGetJson],
+      [resource, httpGetJson],
     ),
     fetch: React.useCallback(
       (pageInfo: PageRequest) => httpGetJson(getPageUrl(pageInfo)),
@@ -71,9 +69,9 @@ export const useApi = (): Api => {
     getRelations: React.useCallback(
       (metaId: number, anyStatus: boolean) =>
         httpGetJson(
-          `${stroomBaseServiceUrl}/streamattributemap/v1/${metaId}/${anyStatus}/relations`,
+          `${resource}/${metaId}/${anyStatus}/relations`,
         ),
-      [stroomBaseServiceUrl, httpGetJson],
+      [resource, httpGetJson],
     ),
   };
 };

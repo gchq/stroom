@@ -16,14 +16,27 @@
 
 import * as React from "react";
 import { useResetPassword } from "../ResetPassword";
-import useConfig from "startup/config/useConfig";
 import ResetPasswordRequest from "./ResetPasswordRequest";
+import * as queryString from "query-string";
+import { useRouter } from "../../../lib/useRouter";
 
 const ResetPasswordRequestContainer = () => {
-  const { stroomUiUrl } = useConfig();
-  if (!stroomUiUrl) throw Error("Config not ready or misconfigured!");
+  let redirectUri: string;
+
+  const { router } = useRouter();
+  if (!!router && !!router.location) {
+    const query = queryString.parse(router.location.search);
+    if (!!query.redirect_uri) {
+      redirectUri = query.redirect_uri + "";
+    }
+  }
+
+  if (!redirectUri) {
+    throw Error("No redirect URI available for redirect!");
+  }
+
   const { submitPasswordChangeRequest } = useResetPassword();
-  const onBack = () => (window.location.href = stroomUiUrl);
+  const onBack = () => (window.location.href = redirectUri);
   return (
     <ResetPasswordRequest
       onBack={onBack}

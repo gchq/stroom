@@ -27,7 +27,12 @@ const useTokenSearch = () => {
     toggleEnabled,
   } = useTokenSearchState();
 
-  const { performTokenSearch: performTokenSearchApi } = useApi();
+  const {
+    performTokenSearch: performTokenSearchApi,
+    deleteToken: deleteTokenApi,
+    toggleState: toggleStateApi,
+  } = useApi();
+
   const performTokenSearch = useCallback(
     (searchConfig: SearchConfig) => {
       searchConfig.pageSize = getRowsPerPage();
@@ -66,7 +71,6 @@ const useTokenSearch = () => {
     ],
   );
 
-  const { deleteToken: deleteTokenApi } = useApi();
   const deleteSelectedToken = useCallback(
     (selectedTokenRowId?: string) => {
       if (!!selectedTokenRowId) {
@@ -84,7 +88,6 @@ const useTokenSearch = () => {
     ],
   );
 
-  const { toggleState: toggleStateApi } = useApi();
   const toggleState = useCallback(
     (tokenId: string, nextState: boolean) => {
       toggleStateApi(tokenId, nextState).then(() => toggleEnabled(tokenId));

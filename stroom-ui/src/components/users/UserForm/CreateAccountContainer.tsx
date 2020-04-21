@@ -21,11 +21,12 @@ import { Account } from "../types";
 import { validateAsync } from "../validation";
 import UserForm from "./NewUserForm";
 import UserFormData from "./UserFormData";
-import useServiceUrl from "startup/config/useServiceUrl";
+import useUrlFactory from "lib/useUrlFactory";
 
 const CreateAccountContainer = () => {
   const { createUser } = useUsers();
-  const { authenticationServiceUrl } = useServiceUrl();
+  const { apiUrl } = useUrlFactory();
+  const resource = apiUrl("/authentication/v1");
 
   const {
     nav: { goToUsers },
@@ -55,7 +56,7 @@ const CreateAccountContainer = () => {
           email,
           password,
           verifyPassword,
-          authenticationServiceUrl,
+          resource,
         );
       }}
     />

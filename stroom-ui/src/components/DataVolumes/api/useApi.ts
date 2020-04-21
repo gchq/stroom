@@ -1,8 +1,8 @@
 import * as React from "react";
 
 import useHttpClient from "lib/useHttpClient";
-import useConfig from "startup/config/useConfig";
 import FsVolume from "../types/FsVolume";
+import useUrlFactory from "lib/useUrlFactory";
 
 interface Api {
   update: (volume: FsVolume) => Promise<FsVolume>;
@@ -12,9 +12,8 @@ interface Api {
   createVolume: () => Promise<FsVolume>;
 }
 
-const PATH = "datavolumes/v1";
 export const useApi = (): Api => {
-  const { stroomBaseServiceUrl } = useConfig();
+  const { apiUrl } = useUrlFactory();
   const {
     httpGetJson,
     httpDeleteEmptyResponse,
@@ -22,33 +21,35 @@ export const useApi = (): Api => {
     httpPutJsonResponse,
   } = useHttpClient();
 
+  const resource = apiUrl("datavolumes/v1");
+
   return {
     createVolume: React.useCallback(
       () =>
-        httpPostJsonResponse(`${stroomBaseServiceUrl}/${PATH}`, {
+        httpPostJsonResponse(resource, {
           body: JSON.stringify({ todo: "TODO" }),
         }),
-      [stroomBaseServiceUrl, httpPostJsonResponse],
+      [resource, httpPostJsonResponse],
     ),
     deleteVolume: React.useCallback(
       (id: string) =>
-        httpDeleteEmptyResponse(`${stroomBaseServiceUrl}/${PATH}/${id}`),
-      [stroomBaseServiceUrl, httpDeleteEmptyResponse],
+        httpDeleteEmptyResponse(`${resource}/${id}`),
+      [resource, httpDeleteEmptyResponse],
     ),
     getVolumeById: React.useCallback(
-      (id: string) => httpGetJson(`${stroomBaseServiceUrl}/${PATH}/${id}`),
-      [stroomBaseServiceUrl, httpGetJson],
+      (id: string) => httpGetJson(`${resource}/${id}`),
+      [resource, httpGetJson],
     ),
     getVolumes: React.useCallback(
-      () => httpGetJson(`${stroomBaseServiceUrl}/${PATH}`),
-      [stroomBaseServiceUrl, httpGetJson],
+      () => httpGetJson(resource),
+      [resource, httpGetJson],
     ),
     update: React.useCallback(
       (volume: FsVolume) =>
-        httpPutJsonResponse(`${stroomBaseServiceUrl}/${PATH}/${volume.id}`, {
+        httpPutJsonResponse(`${resource}/${volume.id}`, {
           body: JSON.stringify(volume),
         }),
-      [stroomBaseServiceUrl, httpPutJsonResponse],
+      [resource, httpPutJsonResponse],
     ),
   };
 };

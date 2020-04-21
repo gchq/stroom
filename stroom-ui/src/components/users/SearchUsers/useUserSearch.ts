@@ -18,15 +18,16 @@ const useUserSearch = (): UserSearchApi => {
     setSelectedUser,
     setUsers,
   } = useUserSearchState();
-  const { search: searchApi } = useApi();
+  const {
+    search: searchApi,
+    remove: removeUserUsingApi,
+  } = useApi();
 
   React.useEffect(() => {
     searchApi().then(resultPage => {
       setUsers(resultPage.values);
     });
   }, [searchApi, setUsers]);
-
-  const { remove: removeUserUsingApi } = useApi();
 
   const remove = React.useCallback(
     (userId: string) => {

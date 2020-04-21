@@ -95,6 +95,30 @@ export const OnCopy = ({
   }
 };
 
+export const OnCopyMs = ({
+                         on,
+                         verb,
+                         dateFormat,
+                         fallbackCopy,
+                       }: {
+  on: number;
+  verb: string;
+  dateFormat: string;
+  fallbackCopy?: string;
+}) => {
+  if (on !== undefined && on !== null) {
+    const onMoment = moment().millisecond(on);
+    return (
+      <div className="copy">
+        <strong>{verb}</strong> {onMoment.from()}, at{" "}
+        {onMoment.format(dateFormat)}.{" "}
+      </div>
+    );
+  } else {
+    return <div className="copy">{fallbackCopy}</div>;
+  }
+};
+
 export const ByCopy = ({
   by,
   verb,

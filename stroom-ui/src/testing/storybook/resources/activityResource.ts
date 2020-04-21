@@ -1,6 +1,4 @@
 import { HttpRequest, HttpResponse } from "@pollyjs/adapter-fetch";
-
-import { Config } from "startup/config/types";
 import { ResourceBuilder } from "./types";
 import { Activity } from "components/Activity/api/types";
 
@@ -34,16 +32,18 @@ const ACTIVITIES: Activity[] = [ACTIVITY, ACTIVITY2];
 
 const resourceBuilder: ResourceBuilder = (
   server: any,
-  { stroomBaseServiceUrl }: Config,
+  apiUrl: any,
 ) => {
+  const resource = apiUrl("/activity/v1");
+
   server
-    .get(`${stroomBaseServiceUrl}/activity/v1/current`)
+    .get(`${resource}/current`)
     .intercept((req: HttpRequest, res: HttpResponse) => {
       res.json(ACTIVITY);
     });
 
   server
-    .get(`${stroomBaseServiceUrl}/activity/v1`)
+    .get(resource)
     .intercept((req: HttpRequest, res: HttpResponse) => {
       res.json(ACTIVITIES);
     });

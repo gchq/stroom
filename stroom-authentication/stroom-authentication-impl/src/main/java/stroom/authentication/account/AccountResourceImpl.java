@@ -28,52 +28,92 @@ import java.util.Optional;
 // TODO : @66 Add audit logging
 class AccountResourceImpl implements AccountResource {
     private final AccountService service;
+    private final AccountEventLog eventLog;
 
     @Inject
-    public AccountResourceImpl(final AccountService service) {
+    public AccountResourceImpl(final AccountService service,
+                               final AccountEventLog eventLog) {
         this.service = service;
+        this.eventLog = eventLog;
     }
 
     @Override
     public ResultPage<Account> list(final HttpServletRequest httpServletRequest) {
-        return service.getAll();
-    }
-
-    @Override
-    public Integer create(final HttpServletRequest httpServletRequest,
-                          final CreateAccountRequest request) {
-        return service.create(request);
+        try {
+            final ResultPage<Account> result = service.list();
+            eventLog.list(result, null);
+            return result;
+        } catch (final RuntimeException e) {
+            eventLog.list(null, e);
+            throw e;
+        }
     }
 
     @Override
     public ResultPage<Account> search(final HttpServletRequest httpServletRequest,
                                       final String email) {
-        return service.search(email);
+        try {
+            final ResultPage<Account> result = service.search(email);
+            eventLog.search(email, result, null);
+            return result;
+        } catch (final RuntimeException e) {
+            eventLog.search(email, null, e);
+            throw e;
+        }
+    }
+
+    @Override
+    public Integer create(final HttpServletRequest httpServletRequest,
+                          final CreateAccountRequest request) {
+        try {
+            final Account account = service.create(request);
+            eventLog.create(request, account, null);
+            return account.getId();
+        } catch (final RuntimeException e) {
+            eventLog.create(request, null, e);
+            throw e;
+        }
     }
 
     @Override
     public Account read(final HttpServletRequest httpServletRequest,
                         final int userId) {
-        final Optional<Account> optionalUser = service.get(userId);
-        if (optionalUser.isPresent()) {
-            return optionalUser.get();
+        try {
+            final Optional<Account> optionalAccount = service.read(userId);
+            final Account account = optionalAccount.orElseThrow(NotFoundException::new);
+            eventLog.read(userId, account, null);
+            return account;
+        } catch (final RuntimeException e) {
+            eventLog.read(userId, null, e);
+            throw e;
         }
-        throw new NotFoundException();
     }
 
     @Override
     public Boolean update(final HttpServletRequest httpServletRequest,
                           final Account account,
                           final int userId) {
-        service.update(account, userId);
-        return true;
+        try {
+            service.update(account, userId);
+            eventLog.update(account, userId, null);
+            return true;
+        } catch (final RuntimeException e) {
+            eventLog.update(null, userId, e);
+            throw e;
+        }
     }
 
     @Override
     public Boolean delete(final HttpServletRequest httpServletRequest,
                           final int userId) {
-        service.deleteUser(userId);
-        return true;
+        try {
+            service.delete(userId);
+            eventLog.delete(userId, null);
+            return true;
+        } catch (final RuntimeException e) {
+            eventLog.delete(userId, e);
+            throw e;
+        }
     }
 }
 

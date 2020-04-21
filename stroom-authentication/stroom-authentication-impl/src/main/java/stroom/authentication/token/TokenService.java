@@ -11,9 +11,9 @@ public interface TokenService {
 
     int delete(int tokenId);
 
-    int delete(String token);
+    int delete(String data);
 
-    Optional<Token> read(String token);
+    Optional<Token> read(String data);
 
     Optional<Token> read(int tokenId);
 

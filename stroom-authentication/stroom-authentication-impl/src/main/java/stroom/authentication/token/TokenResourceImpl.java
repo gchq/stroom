@@ -24,11 +24,14 @@ import javax.ws.rs.NotFoundException;
 
 // TODO : @66 Add audit logging
 public class TokenResourceImpl implements TokenResource {
-    private TokenService service;
+    private final TokenService service;
+    private final TokenEventLog tokenEventLog;
 
     @Inject
-    public TokenResourceImpl(final TokenService tokenService) {
+    public TokenResourceImpl(final TokenService tokenService,
+                             final TokenEventLog tokenEventLog) {
         this.service = tokenService;
+        this.tokenEventLog = tokenEventLog;
     }
 
     /**
@@ -39,54 +42,117 @@ public class TokenResourceImpl implements TokenResource {
      */
     @Override
     public final SearchResponse search(final HttpServletRequest httpServletRequest,
-                                 final SearchRequest searchRequest) {
-        return service.search(searchRequest);
+                                       final SearchRequest searchRequest) {
+        try {
+            final SearchResponse searchResponse = service.search(searchRequest);
+            tokenEventLog.search(searchRequest, searchResponse, null);
+            return searchResponse;
+        } catch (final RuntimeException e) {
+            tokenEventLog.search(searchRequest, null, e);
+            throw e;
+        }
     }
 
     @Override
     public final Token create(final HttpServletRequest httpServletRequest,
-                                 final CreateTokenRequest createTokenRequest) {
-        return service.create(createTokenRequest);
+                              final CreateTokenRequest createTokenRequest) {
+        try {
+            final Token token = service.create(createTokenRequest);
+            tokenEventLog.create(createTokenRequest, token, null);
+            return token;
+        } catch (final RuntimeException e) {
+            tokenEventLog.create(createTokenRequest, null, e);
+            throw e;
+        }
     }
 
     @Override
     public final Integer deleteAll(final HttpServletRequest httpServletRequest) {
-        return service.deleteAll();
+        try {
+            final int result = service.deleteAll();
+            tokenEventLog.deleteAll(result, null);
+            return result;
+        } catch (final RuntimeException e) {
+            tokenEventLog.deleteAll(0, e);
+            throw e;
+        }
     }
 
     @Override
     public final Integer delete(final HttpServletRequest httpServletRequest,
-                                 final int tokenId) {
-        return service.delete(tokenId);
+                                final int tokenId) {
+        try {
+            final int result = service.delete(tokenId);
+            tokenEventLog.delete(tokenId, result, null);
+            return result;
+        } catch (final RuntimeException e) {
+            tokenEventLog.delete(tokenId, 0, e);
+            throw e;
+        }
     }
 
     @Override
     public final Integer delete(final HttpServletRequest httpServletRequest,
-                                 final String token) {
-        return service.delete(token);
+                                final String data) {
+        try {
+            final int result = service.delete(data);
+            tokenEventLog.delete(data, result, null);
+            return result;
+        } catch (final RuntimeException e) {
+            tokenEventLog.delete(data, 0, e);
+            throw e;
+        }
     }
 
     @Override
     public final Token read(final HttpServletRequest httpServletRequest,
-                               final String token) {
-        return service.read(token).orElseThrow(NotFoundException::new);
+                            final String token) {
+        try {
+            final Token result = service.read(token).orElseThrow(NotFoundException::new);
+            tokenEventLog.read(token, result, null);
+            return result;
+        } catch (final RuntimeException e) {
+            tokenEventLog.read(token, null, e);
+            throw e;
+        }
     }
 
     @Override
     public final Token read(final HttpServletRequest httpServletRequest,
-                               final int tokenId) {
-        return service.read(tokenId).orElseThrow(NotFoundException::new);
+                            final int tokenId) {
+        try {
+            final Token result = service.read(tokenId).orElseThrow(NotFoundException::new);
+            tokenEventLog.read(tokenId, result, null);
+            return result;
+        } catch (final RuntimeException e) {
+            tokenEventLog.read(tokenId, null, e);
+            throw e;
+        }
     }
 
     @Override
     public final Integer toggleEnabled(final HttpServletRequest httpServletRequest,
-                                        final int tokenId,
-                                        final boolean enabled) {
-        return service.toggleEnabled(tokenId, enabled);
+                                       final int tokenId,
+                                       final boolean enabled) {
+        try {
+            final Integer result = service.toggleEnabled(tokenId, enabled);
+            tokenEventLog.toggleEnabled(tokenId, enabled, null);
+            return result;
+        } catch (final RuntimeException e) {
+            tokenEventLog.toggleEnabled(tokenId, enabled, e);
+            throw e;
+        }
     }
 
     @Override
     public final String getPublicKey(final HttpServletRequest httpServletRequest) {
-        return service.getPublicKey();
+        try {
+            final String result = service.getPublicKey();
+            tokenEventLog.getPublicKey(null);
+            return result;
+        } catch (final RuntimeException e) {
+            tokenEventLog.getPublicKey(e);
+            throw e;
+        }
     }
 }

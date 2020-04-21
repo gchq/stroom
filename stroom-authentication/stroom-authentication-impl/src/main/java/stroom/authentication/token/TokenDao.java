@@ -7,12 +7,9 @@ import java.time.Instant;
 import java.util.Optional;
 
 public interface TokenDao {
-
-    SearchResponse searchTokens(SearchRequest searchRequest);
+    Token create(Token token);
 
     String createEmailResetToken(String emailAddress, String clientId) throws NoSuchUserException;
-
-    Token createIdToken(String idToken, String subject, long expiresOn);
 
     Token createToken(
             Token.TokenType tokenType,
@@ -23,15 +20,17 @@ public interface TokenDao {
             boolean isEnabled,
             String comment) throws NoSuchUserException;
 
+    Optional<Token> readById(int tokenId);
+
+    Optional<Token> readByToken(String token);
+
+    int enableOrDisableToken(int tokenId, boolean enabled, Account updatingAccount);
+
     int deleteAllTokensExceptAdmins();
 
     int deleteTokenById(int tokenId);
 
     int deleteTokenByTokenString(String token);
 
-    Optional<Token> readById(int tokenId);
-
-    Optional<Token> readByToken(String token);
-
-    int enableOrDisableToken(int tokenId, boolean enabled, Account updatingAccount);
+    SearchResponse searchTokens(SearchRequest searchRequest);
 }

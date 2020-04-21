@@ -54,6 +54,7 @@ import stroom.ui.config.shared.QueryConfig;
 import stroom.ui.config.shared.SplashConfig;
 import stroom.ui.config.shared.ThemeConfig;
 import stroom.ui.config.shared.UiConfig;
+import stroom.ui.config.shared.UiPreferences;
 import stroom.ui.config.shared.UrlConfig;
 import stroom.util.io.PathConfig;
 import stroom.util.logging.LogUtil;
@@ -157,6 +158,7 @@ public class AppConfigModule extends AbstractModule {
             bindConfig(uiConfig, UiConfig::getSplash, SplashConfig.class);
             bindConfig(uiConfig, UiConfig::getTheme, ThemeConfig.class);
             bindConfig(uiConfig, UiConfig::getUrl, UrlConfig.class);
+            bindConfig(uiConfig, UiConfig::getUiPreferences, UiPreferences.class);
         });
         bindConfig(AppConfig::getVolumeConfig, VolumeConfig.class);
     }

@@ -278,7 +278,7 @@ class AuthenticationServiceImpl implements AuthenticationService {
                 }
                 break;
             case GOOD_CREDENTIALS:
-                final Optional<Account> optionalAccount = accountService.get(credentials.getEmail());
+                final Optional<Account> optionalAccount = accountService.read(credentials.getEmail());
                 String redirectionUrl = processSuccessfulLogin(request, optionalAccount.get(), redirectUri);
                 stroomEventLoggingService.createAction("Logon", SUCCESSFUL_LOGIN_MESSAGE);
                 loginResponse = new LoginResponse(true, "", redirectionUrl, 200);

@@ -1,16 +1,15 @@
 import { HttpRequest, HttpResponse } from "@pollyjs/adapter-fetch";
 
 import { TestCache } from "../PollyDecorator";
-import { Config } from "startup/config/types";
 import { ResourceBuilder } from "./types";
 import { onlyUnique } from "lib/formUtils";
 
 const resourceBuilder: ResourceBuilder = (
   server: any,
-  { stroomBaseServiceUrl }: Config,
+  apiUrl: any,
   testCache: TestCache,
 ) => {
-  const resource = `${stroomBaseServiceUrl}/appPermissions/v1`;
+  const resource = apiUrl("/appPermissions/v1");
 
   // Get All App Permission Names
   server.get(resource).intercept((req: HttpRequest, res: HttpResponse) => {

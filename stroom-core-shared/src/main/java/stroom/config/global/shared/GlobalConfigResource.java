@@ -4,6 +4,7 @@ import io.swagger.annotations.Api;
 import io.swagger.annotations.ApiOperation;
 import org.fusesource.restygwt.client.DirectRestService;
 import stroom.ui.config.shared.UiConfig;
+import stroom.ui.config.shared.UiPreferences;
 import stroom.util.shared.ResourcePaths;
 import stroom.util.shared.RestResource;
 
@@ -30,6 +31,7 @@ public interface GlobalConfigResource extends RestResource, DirectRestService {
     String DB_OVERRIDE_VALUE_SUB_PATH = "/dbOverrideValue";
     String CLUSTER_PROPERTIES_SUB_PATH = "/clusterProperties";
     String FETCH_UI_CONFIG_SUB_PATH = "/fetchUiConfig";
+    String UI_PREFERENCES_SUB_PATH = "/noauth/uiPreferences";
 
     String PROP_NAME_PATH_PARAM = "/{propertyName}";
     String NODE_NAME_PATH_PARAM = "/{nodeName}";
@@ -93,4 +95,11 @@ public interface GlobalConfigResource extends RestResource, DirectRestService {
             value = "Get config property",
             response = UiConfig.class)
     UiConfig fetchUiConfig();
+
+    @GET
+    @Path(UI_PREFERENCES_SUB_PATH)
+    @ApiOperation(
+            value = "Get UI preferences",
+            response = UiPreferences.class)
+    UiPreferences uiPreferences();
 }

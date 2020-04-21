@@ -24,8 +24,6 @@ import org.jooq.Condition;
 import org.jooq.Record;
 import org.jooq.Record1;
 import org.jooq.TableField;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 import stroom.authentication.account.Account;
 import stroom.authentication.account.AccountDao;
 import stroom.authentication.authenticate.LoginResult;
@@ -51,8 +49,7 @@ import static stroom.authentication.impl.db.jooq.tables.Account.ACCOUNT;
 
 @Singleton
 class AccountDaoImpl implements AccountDao {
-    private static final Logger LOGGER = LoggerFactory.getLogger(AccountDaoImpl.class);
-    private static final LambdaLogger LAMBDA_LOGGER = LambdaLoggerFactory.getLogger(AccountDaoImpl.class);
+    private static final LambdaLogger LOGGER = LambdaLoggerFactory.getLogger(AccountDaoImpl.class);
 
     private static final Function<Record, Account> RECORD_TO_ACCOUNT_MAPPER = record -> {
         final Account account = new Account();
@@ -104,13 +101,13 @@ class AccountDaoImpl implements AccountDao {
         return record;
     };
 
+    private final AuthenticationConfig config;
+    private final AuthDbConnProvider authDbConnProvider;
     private final GenericDao<AccountRecord, Account, Integer> genericDao;
 
-    private AuthDbConnProvider authDbConnProvider;
-    private AuthenticationConfig config;
-
     @Inject
-    public AccountDaoImpl(AuthenticationConfig config, AuthDbConnProvider authDbConnProvider) {
+    public AccountDaoImpl(final AuthenticationConfig config,
+                          final AuthDbConnProvider authDbConnProvider) {
         this.config = config;
         this.authDbConnProvider = authDbConnProvider;
 
@@ -122,7 +119,7 @@ class AccountDaoImpl implements AccountDao {
     @Override
     public Account create(final Account account, final String password) {
         return JooqUtil.contextResult(authDbConnProvider, context -> {
-            LAMBDA_LOGGER.debug(LambdaLogUtil.message("Creating a {}", ACCOUNT.getName()));
+            LOGGER.debug(LambdaLogUtil.message("Creating a {}", ACCOUNT.getName()));
             final AccountRecord record = ACCOUNT_TO_RECORD_MAPPER.apply(account, context.newRecord(ACCOUNT));
             record.setPasswordHash(PasswordHashUtil.hash(password));
             record.store();
@@ -229,6 +226,16 @@ class AccountDaoImpl implements AccountDao {
     }
 
     @Override
+    public Optional<Integer> getId(final String email) {
+        return JooqUtil.contextResult(authDbConnProvider, context -> context
+                .select(ACCOUNT.ID)
+                .from(ACCOUNT)
+                .where(ACCOUNT.EMAIL.eq(email))
+                .fetchOptional()
+                .map(r -> r.getValue(ACCOUNT.ID)));
+    }
+
+    @Override
     public void update(final Account account) {
         genericDao.update(account);
 
@@ -269,7 +276,7 @@ class AccountDaoImpl implements AccountDao {
     }
 
     @Override
-    public ResultPage<Account> getAll() {
+    public ResultPage<Account> list() {
         final TableField<AccountRecord, String> orderByEmailField = ACCOUNT.EMAIL;
         final List<Account> list = JooqUtil.contextResult(authDbConnProvider, context -> context
                 .selectFrom(ACCOUNT)

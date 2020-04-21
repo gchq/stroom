@@ -17,7 +17,7 @@
 import { useCallback } from "react";
 import { Account } from "../types";
 import useHttpClient from "lib/useHttpClient";
-import useServiceUrl from "startup/config/useServiceUrl";
+import useUrlFactory from "lib/useUrlFactory";
 import { ResultPage } from "./types";
 
 interface Api {
@@ -36,11 +36,12 @@ export const useApi = (): Api => {
     httpDeleteJsonResponse,
   } = useHttpClient();
 
-  const { accountServiceUrl } = useServiceUrl();
+  const { apiUrl } = useUrlFactory();
+  const resource = apiUrl("/account/v1");
 
   const change = useCallback(
     account =>
-      httpPutJsonResponse(`${accountServiceUrl}/${account.id}`, {
+      httpPutJsonResponse(`${resource}/${account.id}`, {
         body: JSON.stringify({
           email: account.email,
           password: account.password,
@@ -55,12 +56,12 @@ export const useApi = (): Api => {
           forcePasswordChange: account.forcePasswordChange,
         }),
       }),
-    [accountServiceUrl, httpPutJsonResponse],
+    [resource, httpPutJsonResponse],
   );
 
   const add = useCallback(
     account =>
-      httpPostJsonResponse(accountServiceUrl, {
+      httpPostJsonResponse(resource, {
         body: JSON.stringify({
           firstName: account.firstName,
           lastName: account.lastName,
@@ -71,7 +72,7 @@ export const useApi = (): Api => {
           neverExpires: account.neverExpires,
         }),
       }),
-    [accountServiceUrl, httpPostJsonResponse],
+    [resource, httpPostJsonResponse],
   );
 
   /**
@@ -79,21 +80,21 @@ export const useApi = (): Api => {
    */
   const remove = useCallback(
     (accountId: string) =>
-      httpDeleteJsonResponse(`${accountServiceUrl}/${accountId}`, {}),
-    [accountServiceUrl, httpDeleteJsonResponse],
+      httpDeleteJsonResponse(`${resource}/${accountId}`, {}),
+    [resource, httpDeleteJsonResponse],
   );
 
   /**
    * Fetch a user
    */
   const fetch = useCallback(
-    (accountId: string) => httpGetJson(`${accountServiceUrl}/${accountId}`),
-    [accountServiceUrl, httpGetJson],
+    (accountId: string) => httpGetJson(`${resource}/${accountId}`),
+    [resource, httpGetJson],
   );
 
   const search = useCallback(
-    (email: string) => httpGetJson(`${accountServiceUrl}`),
-    [accountServiceUrl, httpGetJson],
+    (email: string) => httpGetJson(resource),
+    [resource, httpGetJson],
   );
 
   return {
