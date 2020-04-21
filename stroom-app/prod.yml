@@ -93,14 +93,12 @@ logging:
     #    maxFileSize: "100MB"
     #    timeZone: UTC
     #    logFormat: "%-6level [%d{\"yyyy-MM-dd\",UTC}] [%t] %logger - %X{code} %msg %n"
-    timeZone: UTC
 
 appConfig:
   nodeUri:
-    hostname: ${STROOM_HOST:-<<<IP_ADDRESS>>>}
-    port: ${STROOM_APP_PORT:-8080}
+    hostname: ${STROOM_HOST:-localhost}
   publicUri:
-    hostname: ${API_GATEWAY_HOST:-<<<IP_ADDRESS>>>}
+    hostname: ${API_GATEWAY_HOST:-localhost}
   commonDbDetails:
     connection:
       jdbcDriverClassName: ${STROOM_JDBC_DRIVER_CLASS_NAME:-com.mysql.cj.jdbc.Driver}

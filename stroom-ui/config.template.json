@@ -6,6 +6,6 @@
   "defaultApiKeyExpiryInMinutes": "525600",
   "openIdConfigUrl": "https://accounts.google.com/.well-known/openid-configuration",
 
-  "stroomBaseServiceUrl": "http://IP_ADDRESS:8080/api",
+  "stroomBaseServiceUrl": "https://IP_ADDRESS/api",
   "stroomUiUrl": "https://IP_ADDRESS/stroom"
 }
