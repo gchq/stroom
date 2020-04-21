@@ -63,10 +63,10 @@ logging:
     logFormat: "%-6level [%d{\"yyyy-MM-dd'T'HH:mm:ss.SSS'Z'\",UTC}] [%t] %logger - %X{code} %msg %n"
 
 appConfig:
-  uiUri:
-    scheme: https
+# Comment out the publicUri block if you are not running with nginx
+  publicUri:
     hostname: localhost
-    port: 9443
+    port: 443
   commonDbDetails:
     connection:
       jdbcDriverClassName: ${STROOM_JDBC_DRIVER_CLASS_NAME:-com.mysql.cj.jdbc.Driver}

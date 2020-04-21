@@ -1,10 +1,16 @@
 package stroom.config.app;
 
 import com.google.inject.AbstractModule;
+import stroom.authentication.config.OAuth2Config;
+import stroom.authentication.config.PasswordIntegrityChecksConfig;
+import stroom.authentication.config.TokenConfig;
 import stroom.cluster.api.ClusterConfig;
 import stroom.cluster.lock.impl.db.ClusterLockConfig;
 import stroom.cluster.task.impl.ClusterTaskConfig;
 import stroom.config.common.CommonDbConfig;
+import stroom.config.common.NodeUriConfig;
+import stroom.config.common.PublicUriConfig;
+import stroom.config.common.UiUriConfig;
 import stroom.core.benchmark.BenchmarkClusterConfig;
 import stroom.core.db.CoreConfig;
 import stroom.core.receive.ProxyAggregationConfig;
@@ -19,12 +25,15 @@ import stroom.explorer.impl.db.ExplorerConfig;
 import stroom.feed.impl.FeedConfig;
 import stroom.importexport.impl.ContentPackImportConfig;
 import stroom.importexport.impl.ExportConfig;
+import stroom.index.impl.IndexCacheConfig;
 import stroom.index.impl.IndexConfig;
+import stroom.index.impl.IndexWriterConfig;
 import stroom.index.impl.selection.VolumeConfig;
 import stroom.job.impl.JobSystemConfig;
 import stroom.kafka.impl.KafkaConfig;
 import stroom.lifecycle.impl.LifecycleConfig;
 import stroom.meta.impl.db.MetaServiceConfig;
+import stroom.meta.impl.db.MetaValueConfig;
 import stroom.node.impl.HeapHistogramConfig;
 import stroom.node.impl.NodeConfig;
 import stroom.node.impl.StatusConfig;
@@ -41,15 +50,18 @@ import stroom.search.solr.SolrConfig;
 import stroom.search.solr.search.SolrSearchConfig;
 import stroom.searchable.impl.SearchableConfig;
 import stroom.security.impl.AuthenticationConfig;
+import stroom.security.impl.AuthorisationConfig;
 import stroom.security.impl.ContentSecurityConfig;
 import stroom.security.impl.OpenIdConfig;
 import stroom.security.impl.SecurityConfig;
 import stroom.servicediscovery.impl.ServiceDiscoveryConfig;
 import stroom.statistics.impl.InternalStatisticsConfig;
 import stroom.statistics.impl.hbase.internal.HBaseStatisticsConfig;
+import stroom.statistics.impl.hbase.internal.KafkaTopicsConfig;
 import stroom.statistics.impl.sql.SQLStatisticsConfig;
 import stroom.storedquery.impl.StoredQueryConfig;
 import stroom.ui.config.shared.ActivityConfig;
+import stroom.ui.config.shared.InfoPopupConfig;
 import stroom.ui.config.shared.QueryConfig;
 import stroom.ui.config.shared.SplashConfig;
 import stroom.ui.config.shared.ThemeConfig;
@@ -87,11 +99,21 @@ public class AppConfigModule extends AbstractModule {
         // bind each of these instances so we can inject these objects on their own.
         // This allows gradle modules to know nothing about the other modules.
         // Our bind method has the arguments in the reverse way to guice so we can
-        // more easily see the tree structure. Each config pojo must implement IsConfig
+        // more easily see the tree structure. Each config pojo must extend AbstractConfig.
+        // Some config objects are shared and thus should not be bound here and should be
+        // annotated with NotInjectableConfig
+
+        // WARNING If you don't bind the class here and then inject that config class then
+        // you will get a vanilla instance that is not linked to the config yml or db props!
+        // It is safer to bind everything to be on the safe side
 
         bindConfig(AppConfig::getActivityConfig, stroom.activity.impl.db.ActivityConfig.class);
         bindConfig(AppConfig::getAnnotationConfig, stroom.annotation.impl.AnnotationConfig.class);
-        bindConfig(AppConfig::getAuthenticationConfig, stroom.authentication.config.AuthenticationConfig.class);
+        bindConfig(AppConfig::getAuthenticationConfig, stroom.authentication.config.AuthenticationConfig.class, authenticationConfig -> {
+            bindConfig(authenticationConfig, stroom.authentication.config.AuthenticationConfig::getOAuth2Config, OAuth2Config.class);
+            bindConfig(authenticationConfig, stroom.authentication.config.AuthenticationConfig::getPasswordIntegrityChecksConfig, PasswordIntegrityChecksConfig.class);
+            bindConfig(authenticationConfig, stroom.authentication.config.AuthenticationConfig::getTokenConfig, TokenConfig.class);
+        });
         bindConfig(AppConfig::getBenchmarkClusterConfig, BenchmarkClusterConfig.class);
         bindConfig(AppConfig::getClusterConfig, ClusterConfig.class);
         bindConfig(AppConfig::getClusterLockConfig, ClusterLockConfig.class);
@@ -104,20 +126,24 @@ public class AppConfigModule extends AbstractModule {
             bindConfig(dataConfig, DataConfig::getDataRetentionConfig, DataRetentionConfig.class);
             bindConfig(dataConfig, DataConfig::getDataStoreServiceConfig, DataStoreServiceConfig.class);
             bindConfig(dataConfig, DataConfig::getFsVolumeConfig, FsVolumeConfig.class);
-            bindConfig(dataConfig, DataConfig::getMetaServiceConfig, MetaServiceConfig.class);
+            bindConfig(dataConfig, DataConfig::getMetaServiceConfig, MetaServiceConfig.class, metaServiceConfig ->
+                    bindConfig(metaServiceConfig, MetaServiceConfig::getMetaValueConfig, MetaValueConfig.class));
         });
         bindConfig(AppConfig::getDataSourceUrlConfig, DataSourceUrlConfig.class);
         bindConfig(AppConfig::getDocStoreConfig, DocStoreConfig.class);
         bindConfig(AppConfig::getExplorerConfig, ExplorerConfig.class);
         bindConfig(AppConfig::getExportConfig, ExportConfig.class);
         bindConfig(AppConfig::getFeedConfig, FeedConfig.class);
-        bindConfig(AppConfig::getIndexConfig, IndexConfig.class);
+        bindConfig(AppConfig::getIndexConfig, IndexConfig.class, indexConfig ->
+                bindConfig(indexConfig, IndexConfig::getIndexWriterConfig, IndexWriterConfig.class, indexWriterConfig ->
+                        bindConfig(indexWriterConfig, IndexWriterConfig::getIndexCacheConfig, IndexCacheConfig.class)));
         bindConfig(AppConfig::getJobSystemConfig, JobSystemConfig.class);
         bindConfig(AppConfig::getKafkaConfig, KafkaConfig.class);
         bindConfig(AppConfig::getLifecycleConfig, LifecycleConfig.class);
         bindConfig(AppConfig::getNodeConfig, NodeConfig.class, nodeConfig ->
                 bindConfig(nodeConfig, NodeConfig::getStatusConfig, StatusConfig.class, statusConfig ->
                         bindConfig(statusConfig, StatusConfig::getHeapHistogramConfig, HeapHistogramConfig.class)));
+        bindConfig(AppConfig::getNodeUri, NodeUriConfig.class);
         bindConfig(AppConfig::getPathConfig, PathConfig.class);
         bindConfig(AppConfig::getPipelineConfig, PipelineConfig.class, pipelineConfig -> {
             bindConfig(pipelineConfig, PipelineConfig::getAppenderConfig, AppenderConfig.class);
@@ -129,6 +155,7 @@ public class AppConfigModule extends AbstractModule {
         bindConfig(AppConfig::getProcessorConfig, ProcessorConfig.class);
         bindConfig(AppConfig::getPropertyServiceConfig, PropertyServiceConfig.class);
         bindConfig(AppConfig::getProxyAggregationConfig, ProxyAggregationConfig.class);
+        bindConfig(AppConfig::getPublicUri, PublicUriConfig.class);
         bindConfig(AppConfig::getReceiveDataConfig, ReceiveDataConfig.class);
         bindConfig(AppConfig::getSearchConfig, SearchConfig.class, searchConfig -> {
             bindConfig(searchConfig, SearchConfig::getExtractionConfig, ExtractionConfig.class);
@@ -139,13 +166,15 @@ public class AppConfigModule extends AbstractModule {
             bindConfig(securityConfig, SecurityConfig::getAuthenticationConfig, AuthenticationConfig.class, c2 ->
                     bindConfig(c2, AuthenticationConfig::getOpenIdConfig, OpenIdConfig.class));
             bindConfig(securityConfig, SecurityConfig::getContentSecurityConfig, ContentSecurityConfig.class);
+            bindConfig(securityConfig, SecurityConfig::getAuthorisationConfig, AuthorisationConfig.class);
         });
         bindConfig(AppConfig::getServiceDiscoveryConfig, ServiceDiscoveryConfig.class);
         bindConfig(AppConfig::getSessionCookieConfig, SessionCookieConfig.class);
         bindConfig(AppConfig::getSolrConfig, SolrConfig.class, solrConfig ->
                 bindConfig(solrConfig, SolrConfig::getSolrSearchConfig, SolrSearchConfig.class));
         bindConfig(AppConfig::getStatisticsConfig, StatisticsConfig.class, statisticsConfig -> {
-            bindConfig(statisticsConfig, StatisticsConfig::getHbaseStatisticsConfig, HBaseStatisticsConfig.class);
+            bindConfig(statisticsConfig, StatisticsConfig::getHbaseStatisticsConfig, HBaseStatisticsConfig.class, hBaseStatisticsConfig ->
+                    bindConfig(hBaseStatisticsConfig, HBaseStatisticsConfig::getKafkaTopicsConfig, KafkaTopicsConfig.class));
             bindConfig(statisticsConfig, StatisticsConfig::getInternalStatisticsConfig, InternalStatisticsConfig.class);
             bindConfig(statisticsConfig, StatisticsConfig::getSqlStatisticsConfig, SQLStatisticsConfig.class, sqlStatisticsConfig ->
                     bindConfig(sqlStatisticsConfig, SQLStatisticsConfig::getSearchConfig, stroom.statistics.impl.sql.search.SearchConfig.class));
@@ -154,12 +183,14 @@ public class AppConfigModule extends AbstractModule {
         bindConfig(AppConfig::getUiConfig, UiConfig.class, uiConfig -> {
             bindConfig(uiConfig, UiConfig::getActivity, ActivityConfig.class);
             bindConfig(uiConfig, UiConfig::getProcess, stroom.ui.config.shared.ProcessConfig.class);
-            bindConfig(uiConfig, UiConfig::getQuery, QueryConfig.class);
+            bindConfig(uiConfig, UiConfig::getQuery, QueryConfig.class, queryConfig ->
+                    bindConfig(queryConfig, QueryConfig::getInfoPopup, InfoPopupConfig.class));
             bindConfig(uiConfig, UiConfig::getSplash, SplashConfig.class);
             bindConfig(uiConfig, UiConfig::getTheme, ThemeConfig.class);
             bindConfig(uiConfig, UiConfig::getUrl, UrlConfig.class);
             bindConfig(uiConfig, UiConfig::getUiPreferences, UiPreferences.class);
         });
+        bindConfig(AppConfig::getUiUri, UiUriConfig.class);
         bindConfig(AppConfig::getVolumeConfig, VolumeConfig.class);
     }
 

@@ -7,14 +7,14 @@ appConfig:
     port: null
     pathPrefix: null
   publicUri:
-    scheme: null
+    scheme: "https"
     hostname: null
-    port: null
+    port: 443
     pathPrefix: null
   uiUri:
-    scheme: null
+    scheme: "https"
     hostname: null
-    port: null
+    port: 443
     pathPrefix: null
   activity:
     db:

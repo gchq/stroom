@@ -9,7 +9,7 @@ import javax.validation.constraints.Min;
 import javax.validation.constraints.Pattern;
 import java.util.Objects;
 
-public class UriConfig extends AbstractConfig {
+public abstract class UriConfig extends AbstractConfig {
     private static final String PROP_NAME_SCHEME = "scheme";
     private static final String PROP_NAME_HOSTNAME = "hostname";
     private static final String PROP_NAME_PORT = "port";

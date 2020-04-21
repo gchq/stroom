@@ -6,6 +6,9 @@ and this project adheres to [Semantic Versioning](http://semver.org/).
 
 ## [Unreleased]
 
+
+## [v7.0-beta.24] - 2020-04-21
+
 * Issue **#1450** : Stop data tabs showing all feeds.
 
 * Issue **#1454** : Fix NPE in feed name suggestion box.
@@ -2039,7 +2042,8 @@ Issue **gchq/stroom-expression#22** : Add `typeOf(...)` function to dashboard.
 
 * Issue **#202** : Initial release of the new data retention policy functionality.
 
-[Unreleased]: https://github.com/gchq/stroom/compare/v7.0-beta.23...HEAD
+[Unreleased]: https://github.com/gchq/stroom/compare/v7.0-beta.24...HEAD
+[v7.0-beta.24]: https://github.com/gchq/stroom/compare/v7.0-beta.23...v7.0-beta.24
 [v7.0-beta.23]: https://github.com/gchq/stroom/compare/v7.0-beta.22...v7.0-beta.23
 [v7.0-beta.22]: https://github.com/gchq/stroom/compare/v7.0-beta.21...v7.0-beta.22
 [v7.0-beta.21]: https://github.com/gchq/stroom/compare/v7.0-beta.20...v7.0-beta.21

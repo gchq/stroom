@@ -10,8 +10,9 @@ import stroom.cluster.api.ClusterConfig;
 import stroom.cluster.lock.impl.db.ClusterLockConfig;
 import stroom.cluster.task.impl.ClusterTaskConfig;
 import stroom.config.common.CommonDbConfig;
+import stroom.config.common.NodeUriConfig;
 import stroom.config.common.PublicUriConfig;
-import stroom.config.common.UriConfig;
+import stroom.config.common.UiUriConfig;
 import stroom.core.benchmark.BenchmarkClusterConfig;
 import stroom.core.db.CoreConfig;
 import stroom.core.receive.ProxyAggregationConfig;
@@ -29,7 +30,6 @@ import stroom.job.impl.JobSystemConfig;
 import stroom.kafka.impl.KafkaConfig;
 import stroom.lifecycle.impl.LifecycleConfig;
 import stroom.node.impl.NodeConfig;
-import stroom.config.common.NodeUriConfig;
 import stroom.pipeline.PipelineConfig;
 import stroom.processor.impl.ProcessorConfig;
 import stroom.search.impl.SearchConfig;
@@ -99,7 +99,7 @@ public class AppConfig extends AbstractConfig {
 
     private NodeUriConfig nodeUri = new NodeUriConfig();
     private PublicUriConfig publicUri = new PublicUriConfig();
-    private UriConfig uiUri = new UriConfig();
+    private UiUriConfig uiUri = new UiUriConfig();
     private ActivityConfig activityConfig = new ActivityConfig();
     private AnnotationConfig annotationConfig = new AnnotationConfig();
     private AuthenticationConfig authenticationConfig = new AuthenticationConfig();
@@ -165,11 +165,11 @@ public class AppConfig extends AbstractConfig {
 
     @JsonPropertyDescription("This is the URI where the UI is hosted if different to the public facing URI of the server, e.g. during development or some other deployments")
     @JsonProperty(PROP_NAME_UI_URI)
-    public UriConfig getUiUri() {
+    public UiUriConfig getUiUri() {
         return uiUri;
     }
 
-    public void setUiUri(final UriConfig uiUri) {
+    public void setUiUri(final UiUriConfig uiUri) {
         this.uiUri = uiUri;
     }
 
