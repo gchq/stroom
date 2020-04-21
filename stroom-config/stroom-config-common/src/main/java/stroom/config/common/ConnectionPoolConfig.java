@@ -19,10 +19,12 @@ package stroom.config.common;
 import com.fasterxml.jackson.annotation.JsonPropertyDescription;
 import stroom.util.config.annotations.RequiresRestart;
 import stroom.util.shared.AbstractConfig;
+import stroom.util.shared.NotInjectableConfig;
 
 import javax.validation.constraints.Min;
 import java.util.Objects;
 
+@NotInjectableConfig
 public class ConnectionPoolConfig extends AbstractConfig {
 
     public static final String COMMON_CONN_POOL_DESC = "See " +
