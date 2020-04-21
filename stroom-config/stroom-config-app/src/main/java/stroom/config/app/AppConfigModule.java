@@ -142,6 +142,7 @@ public class AppConfigModule extends AbstractModule {
         bindConfig(AppConfig::getNodeConfig, NodeConfig.class, nodeConfig ->
                 bindConfig(nodeConfig, NodeConfig::getStatusConfig, StatusConfig.class, statusConfig ->
                         bindConfig(statusConfig, StatusConfig::getHeapHistogramConfig, HeapHistogramConfig.class)));
+        bindConfig(AppConfig::getNodeUri, NodeUriConfig.class);
         bindConfig(AppConfig::getPathConfig, PathConfig.class);
         bindConfig(AppConfig::getPipelineConfig, PipelineConfig.class, pipelineConfig -> {
             bindConfig(pipelineConfig, PipelineConfig::getAppenderConfig, AppenderConfig.class);
@@ -153,6 +154,7 @@ public class AppConfigModule extends AbstractModule {
         bindConfig(AppConfig::getProcessorConfig, ProcessorConfig.class);
         bindConfig(AppConfig::getPropertyServiceConfig, PropertyServiceConfig.class);
         bindConfig(AppConfig::getProxyAggregationConfig, ProxyAggregationConfig.class);
+        bindConfig(AppConfig::getPublicUri, PublicUriConfig.class);
         bindConfig(AppConfig::getReceiveDataConfig, ReceiveDataConfig.class);
         bindConfig(AppConfig::getSearchConfig, SearchConfig.class, searchConfig -> {
             bindConfig(searchConfig, SearchConfig::getExtractionConfig, ExtractionConfig.class);
@@ -186,10 +188,8 @@ public class AppConfigModule extends AbstractModule {
             bindConfig(uiConfig, UiConfig::getTheme, ThemeConfig.class);
             bindConfig(uiConfig, UiConfig::getUrl, UrlConfig.class);
         });
-        bindConfig(AppConfig::getVolumeConfig, VolumeConfig.class);
         bindConfig(AppConfig::getUiUri, UiUriConfig.class);
-        bindConfig(AppConfig::getPublicUri, PublicUriConfig.class);
-        bindConfig(AppConfig::getNodeUri, NodeUriConfig.class);
+        bindConfig(AppConfig::getVolumeConfig, VolumeConfig.class);
     }
 
     private <T extends AbstractConfig> void bindConfig(
