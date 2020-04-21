@@ -8,6 +8,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import stroom.config.app.AppConfig;
 import stroom.config.app.Config;
+import stroom.config.common.NodeUriConfig;
 import stroom.config.common.UriConfig;
 import stroom.config.common.UriFactory;
 
@@ -108,7 +109,7 @@ class UriFactoryImpl implements UriFactory {
             if (defaultServerFactory.getApplicationConnectors().size() > 0) {
                 final ConnectorFactory connectorFactory = defaultServerFactory.getApplicationConnectors().get(0);
 
-                final UriConfig uriConfig = new UriConfig();
+                final UriConfig uriConfig = new NodeUriConfig();
                 // Allow explicit configuration of the host/port in case they differ from what will be discovered,
                 // e.g. if running inside a docker container, or there is some sort of port mapping going on.
                 uriConfig.setHostname(appConfig.getNodeUri().getHostname());
