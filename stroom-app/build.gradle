@@ -14,9 +14,12 @@ plugins {
     //id "io.swagger.core.v3.swagger-gradle-plugin" version "2.1.1"
 }
 
-import org.reflections.*
-import org.reflections.scanners.*
-import org.reflections.util.*
+
+import org.reflections.Reflections
+import org.reflections.scanners.SubTypesScanner
+import org.reflections.scanners.TypeAnnotationsScanner
+import org.reflections.util.ConfigurationBuilder
+import org.reflections.util.FilterBuilder
 
 ext.moduleName = 'stroom.app'
 
@@ -351,6 +354,7 @@ swagger {
 // to scan the classpath to find all the REST resource classes to pass to
 // the plugin to generate documentation for.
 task prepareSwaggerClasses {
+
     doLast {
         // Get all jars from the compile classpath
         def urls = project.configurations.compileClasspath.resolve()
@@ -368,7 +372,9 @@ task prepareSwaggerClasses {
         // Now filter down to just our stroom jars
         def stroomUrls = urls
             .findAll {
-                it.toString() =~ /.*stroom[a-z-]+.jar$/
+                // We need the version in there as jars are versioned
+                // when we set an explicit build version
+                it.toString() =~ /.*stroom[a-z-]+${versions.stroom}.jar$/
             }
             .sort {
                 it.toString()
@@ -490,7 +496,7 @@ rootProject.subprojects { subProj ->
 }
 
 // Ensure all projects have built their jars so swagger can see them
-tasks.generateSwaggerDocumentation.dependsOn rootProject.getTasksByName('jar', true)
+tasks.prepareSwaggerClasses.dependsOn rootProject.getTasksByName('jar', true)
 
 tasks.build.dependsOn generateSwaggerDocumentation
 tasks.build.dependsOn copyFilesForStroomDockerBuild
