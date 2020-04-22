@@ -1,4 +1,4 @@
-import { useReducer } from "react";
+import { useCallback, useReducer } from "react";
 import { Token } from "../api/types";
 
 interface TokenState {
@@ -53,8 +53,8 @@ const useTokenState = (): TokenStateApi => {
   });
   return {
     token: state.token,
-    setEnabled: (enabled: boolean) => dispatch({ type: "enabled", enabled }),
-    setToken: (token: Token) => dispatch({ type: "token", token }),
+    setEnabled: useCallback((enabled: boolean) => dispatch({ type: "enabled", enabled }), []),
+    setToken: useCallback((token: Token) => dispatch({ type: "token", token }), []),
   };
 };
 

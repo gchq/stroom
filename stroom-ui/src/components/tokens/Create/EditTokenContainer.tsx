@@ -1,5 +1,5 @@
 /*
- * Copyright 2017 Crown Copyright
+ * Copyright 2020 Crown Copyright
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -15,6 +15,7 @@
  */
 
 import * as React from "react";
+import { useEffect } from "react";
 import "react-toggle/style.css";
 import useAppNavigation from "lib/useAppNavigation";
 import useIdFromPath from "lib/useIdFromPath";
@@ -28,11 +29,11 @@ const EditTokenContainer = () => {
     nav: { goToApiKeys },
   } = useAppNavigation();
 
-  React.useEffect(() => {
-    if (!!tokenId && !token) {
+  useEffect(() => {
+    if (!!tokenId) {
       fetchApiKey(tokenId);
     }
-  }, [fetchApiKey, tokenId, token]);
+  }, [tokenId, fetchApiKey]);
 
   return (
     <EditTokenForm
