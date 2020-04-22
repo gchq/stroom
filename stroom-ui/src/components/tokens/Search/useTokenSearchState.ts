@@ -82,16 +82,18 @@ const reducer = (
   }
 };
 
+const defaultPageSize = 20;
+
 const useTokenSearchState = (): TokenSearchStateApi => {
   const [state, dispatch] = useReducer(reducer, {
     tokens: [],
     selectedTokenRowId: undefined,
     results: [],
-    totalPages: 1,
+    totalPages: 0,
     lastUsedSearchConfig: {
       filters: [],
       page: 1,
-      pageSize: 10,
+      pageSize: defaultPageSize,
       sorting: [],
     },
   });
@@ -114,4 +116,4 @@ const useTokenSearchState = (): TokenSearchStateApi => {
   };
 };
 
-export { useTokenSearchState };
+export { useTokenSearchState, defaultPageSize };

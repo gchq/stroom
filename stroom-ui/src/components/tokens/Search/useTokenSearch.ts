@@ -1,11 +1,11 @@
 import { useCallback } from "react";
 import { SearchConfig } from "../api/types";
 import useApi from "../api/useApi";
-import { useTokenSearchState } from "./useTokenSearchState";
+import { useTokenSearchState, defaultPageSize } from "./useTokenSearchState";
 
 const getRowsPerPage = () => {
   const viewport = document.getElementById("User-content");
-  let rowsInViewport = 20;
+  let rowsInViewport = defaultPageSize;
   if (viewport) {
     const viewportHeight = viewport.offsetHeight;
     const rowsHeight = viewportHeight - 60;
