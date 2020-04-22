@@ -32,16 +32,15 @@ import org.glassfish.jersey.logging.LoggingFeature;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import stroom.app.commands.DbMigrationCommand;
-import stroom.app.errors.NodeCallExceptionMapper;
 import stroom.app.guice.AppModule;
 import stroom.config.app.AppConfig;
 import stroom.config.app.Config;
 import stroom.config.global.impl.ConfigMapper;
 import stroom.config.global.impl.validation.ConfigValidator;
+import stroom.dropwizard.common.DelegatingExceptionMapper;
 import stroom.dropwizard.common.Filters;
 import stroom.dropwizard.common.HealthChecks;
 import stroom.dropwizard.common.ManagedServices;
-import stroom.dropwizard.common.PermissionExceptionMapper;
 import stroom.dropwizard.common.RestResources;
 import stroom.dropwizard.common.Servlets;
 import stroom.dropwizard.common.SessionListeners;
@@ -79,6 +78,8 @@ public class App extends Application<Config> {
     private Servlets servlets;
     @Inject
     private SessionListeners sessionListeners;
+    @Inject
+    private DelegatingExceptionMapper delegatingExceptionMapper;
     @Inject
     private RestResources restResources;
     @Inject
@@ -154,9 +155,6 @@ public class App extends Application<Config> {
         // Add useful logging setup.
         registerLogConfiguration(environment);
 
-        // Add jersey exception mappers
-        registerExceptionMappers(environment);
-
         // We want Stroom to use the root path so we need to move Dropwizard's path.
         environment.jersey().setUrlPattern(ResourcePaths.API_ROOT_PATH + "/*");
 
@@ -197,17 +195,11 @@ public class App extends Application<Config> {
         // Add all injectable rest resources.
         restResources.register();
 
-        // Map exceptions to helpful HTTP responses
-        environment.jersey().register(PermissionExceptionMapper.class);
+        // Add jersey exception mappers.
+        environment.jersey().register(delegatingExceptionMapper);
 
         // Listen to the lifecycle of the Dropwizard app.
         managedServices.register();
-    }
-
-
-    private void registerExceptionMappers(final Environment environment) {
-        // Add an exception mapper for dealing with our own NodeCallExceptions
-        environment.jersey().register(NodeCallExceptionMapper.class);
     }
 
     private String getNodeName(final AppConfig appConfig) {
