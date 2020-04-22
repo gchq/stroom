@@ -21,6 +21,7 @@ import useAppNavigation from "lib/useAppNavigation";
 import useIdFromPath from "lib/useIdFromPath";
 import useTokens from "./useTokens";
 import EditTokenForm from "./EditTokenForm";
+import CustomLoader from "../../CustomLoader";
 
 const EditTokenContainer = () => {
   const { toggleEnabledState, fetchApiKey, token } = useTokens();
@@ -34,6 +35,10 @@ const EditTokenContainer = () => {
       fetchApiKey(tokenId);
     }
   }, [tokenId, fetchApiKey]);
+
+  if (!token) {
+    return <CustomLoader title="Stroom" message="Loading. Please wait..."/>;
+  }
 
   return (
     <EditTokenForm
