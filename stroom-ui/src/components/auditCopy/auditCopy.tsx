@@ -107,7 +107,7 @@ export const OnCopyMs = ({
   fallbackCopy?: string;
 }) => {
   if (on !== undefined && on !== null) {
-    const onMoment = moment().millisecond(on);
+    const onMoment = moment(on);
     return (
       <div className="copy">
         <strong>{verb}</strong> {onMoment.from()}, at{" "}
