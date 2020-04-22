@@ -4,6 +4,7 @@ import com.fasterxml.jackson.annotation.JsonProperty;
 import stroom.util.shared.AbstractConfig;
 
 import javax.inject.Singleton;
+import javax.validation.constraints.NotNull;
 
 @Singleton
 public class OpenIdConfig extends AbstractConfig {
@@ -37,6 +38,7 @@ public class OpenIdConfig extends AbstractConfig {
         this.useInternal = useInternal;
     }
 
+    @NotNull
     public String getIssuer() {
         return issuer;
     }
@@ -45,6 +47,7 @@ public class OpenIdConfig extends AbstractConfig {
         this.issuer = issuer;
     }
 
+    @NotNull
     public String getAuthEndpoint() {
         return authEndpoint;
     }
@@ -53,6 +56,7 @@ public class OpenIdConfig extends AbstractConfig {
         this.authEndpoint = authEndpoint;
     }
 
+    @NotNull
     public String getTokenEndpoint() {
         return tokenEndpoint;
     }
@@ -61,6 +65,7 @@ public class OpenIdConfig extends AbstractConfig {
         this.tokenEndpoint = tokenEndpoint;
     }
 
+    @NotNull
     public String getJwksUri() {
         return jwksUri;
     }
@@ -69,6 +74,8 @@ public class OpenIdConfig extends AbstractConfig {
         this.jwksUri = jwksUri;
     }
 
+    // TODO Not sure we can add NotNull to this as it has no default and if useInternal is true
+    //  it doesn't need a value
     @JsonProperty(PROP_NAME_CLIENT_ID)
     public String getClientId() {
         return clientId;
@@ -78,6 +85,8 @@ public class OpenIdConfig extends AbstractConfig {
         this.clientId = clientId;
     }
 
+    // TODO Not sure we can add NotNull to this as it has no default and if useInternal is true
+    //  it doesn't need a value
     @JsonProperty(PROP_NAME_CLIENT_SECRET)
     public String getClientSecret() {
         return clientSecret;
