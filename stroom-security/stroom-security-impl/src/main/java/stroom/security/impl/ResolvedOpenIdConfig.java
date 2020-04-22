@@ -18,15 +18,15 @@ public class ResolvedOpenIdConfig {
 
     private final UriFactory uriFactory;
     private final OpenIdConfig openIdConfig;
-    private final OpenIdClientDetails openIdClientDetails;
+    private final OpenIdClientDetailsFactory openIdClientDetailsFactory;
 
     @Inject
     public ResolvedOpenIdConfig(final UriFactory uriFactory,
                                 final OpenIdConfig openIdConfig,
-                                final OpenIdClientDetails openIdClientDetails) {
+                                final OpenIdClientDetailsFactory openIdClientDetailsFactory) {
         this.uriFactory = uriFactory;
         this.openIdConfig = openIdConfig;
-        this.openIdClientDetails = openIdClientDetails;
+        this.openIdClientDetailsFactory = openIdClientDetailsFactory;
     }
 
     public String getIssuer() {
@@ -60,14 +60,14 @@ public class ResolvedOpenIdConfig {
 
     public String getClientId() {
         if (openIdConfig.isUseInternal()) {
-            return openIdClientDetails.getClientId();
+            return openIdClientDetailsFactory.getClientId();
         }
         return openIdConfig.getClientId();
     }
 
     public String getClientSecret() {
         if (openIdConfig.isUseInternal()) {
-            return openIdClientDetails.getClientSecret();
+            return openIdClientDetailsFactory.getClientSecret();
         }
         return openIdConfig.getClientSecret();
     }

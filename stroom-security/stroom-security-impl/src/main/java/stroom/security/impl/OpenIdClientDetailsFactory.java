@@ -1,6 +1,6 @@
 package stroom.security.impl;
 
-public interface OpenIdClientDetails {
+public interface OpenIdClientDetailsFactory {
     String getClientId();
 
     String getClientSecret();

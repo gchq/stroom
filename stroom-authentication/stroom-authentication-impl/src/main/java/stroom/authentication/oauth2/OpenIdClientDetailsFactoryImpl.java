@@ -1,20 +1,20 @@
 package stroom.authentication.oauth2;
 
-import stroom.security.impl.OpenIdClientDetails;
+import stroom.security.impl.OpenIdClientDetailsFactory;
 
 import javax.inject.Inject;
 import java.security.SecureRandom;
 import java.util.Base64;
 import java.util.Optional;
 
-public class OpenIdClientDetailsImpl implements OpenIdClientDetails {
+public class OpenIdClientDetailsFactoryImpl implements OpenIdClientDetailsFactory {
     private static final String INTERNAL_STROOM_CLIENT = "Stroom Client Internal";
 
     private final String clientId;
     private final String clientSecret;
 
     @Inject
-    public OpenIdClientDetailsImpl(final OAuth2ClientDao dao) {
+    public OpenIdClientDetailsFactoryImpl(final OAuth2ClientDao dao) {
         Optional<OAuth2Client> optionalClient = dao.getClientByName(INTERNAL_STROOM_CLIENT);
         if (optionalClient.isEmpty()) {
             final OAuth2Client client = new OAuth2Client(INTERNAL_STROOM_CLIENT, createRandomCode(40), createRandomCode(20), ".*");
