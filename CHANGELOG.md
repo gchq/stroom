@@ -6,6 +6,8 @@ and this project adheres to [Semantic Versioning](http://semver.org/).
 
 ## [Unreleased]
 
+* Issue **#1467** : The cluster node state node uses NodeResource to determine active nodes.
+
 * Issue **#1448** : The internal processing user now has a JWT and passes it when making calls to other nodes.
 
 
