@@ -180,7 +180,7 @@ public abstract class AbstractMultiNodeResourceTest<R extends RestResource> {
                     jerseyTest.setUp();
                 }
             } catch (Exception e) {
-                throw new RuntimeException("Error starting jersey test on " + baseEndPointUrl);
+                throw new RuntimeException("Error starting jersey test on " + baseEndPointUrl, e);
             }
         });
     }
