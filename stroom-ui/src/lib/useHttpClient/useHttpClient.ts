@@ -20,22 +20,37 @@ const useCheckStatus = (status: number) =>
         return Promise.resolve(response);
       }
 
-      console.log(
-        "Expected HTTP status " +
+      return response.text().then(text => {
+        console.log(
+          "Expected HTTP status " +
           status +
           " but received " +
           response.status +
+          " - " +
+          response.statusText,
           " (" +
           response.url +
-          ")",
-      );
+          ") " + text,
+        );
 
-      return Promise.reject(
-        new HttpError(
-          response.status,
-          response.statusText || "Incorrect HTTP Response Code",
-        ),
-      );
+        let message = text;
+        if (!message) {
+          message = response.statusText;
+        }
+        if (!message) {
+          message = "Incorrect HTTP Response Code";
+        }
+
+        return Promise.reject(
+          new HttpError(
+            response.status,
+            message,
+          ),
+        );
+
+      });
+
+
     },
     [status],
   );
