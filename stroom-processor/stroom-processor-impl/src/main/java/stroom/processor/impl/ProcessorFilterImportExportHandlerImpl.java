@@ -231,9 +231,9 @@ public class ProcessorFilterImportExportHandlerImpl implements ImportExportActio
 
             final String pipelineName = processorFilter.getPipelineName();
             if (pipelineName != null)
-                return pipelineName + "(Pipeline)" + "/" + name;
+                return pipelineName + " Pipeline-" + "Filter " + name;
             else
-                return "Unknown Pipeline/" + name;
+                return "Unknown Pipeline-Filter " + name;
         }
         return null;
     }

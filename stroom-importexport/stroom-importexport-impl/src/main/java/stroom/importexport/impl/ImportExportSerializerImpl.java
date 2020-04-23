@@ -405,25 +405,29 @@ class ImportExportSerializerImpl implements ImportExportSerializer {
         }
     }
 
-    private void performExport(final Path dir, final DocRef docRef, final boolean omitAuditFields, final List<Message> messageList) throws IOException {
-        final ImportExportActionHandler importExportActionHandler = importExportActionHandlers.getHandler(docRef.getType());
+    private void performExport(final Path dir, final DocRef initialDocRef, final boolean omitAuditFields, final List<Message> messageList) throws IOException {
+        final ImportExportActionHandler importExportActionHandler = importExportActionHandlers.getHandler(initialDocRef.getType());
         if (importExportActionHandler != null) {
 
-            LOGGER.debug("Exporting: " + docRef);
-            final Map<String, byte[]> dataMap = importExportActionHandler.exportDocument(docRef, omitAuditFields, messageList);
+            LOGGER.debug("Exporting: " + initialDocRef);
+            final Map<String, byte[]> dataMap = importExportActionHandler.exportDocument(initialDocRef, omitAuditFields, messageList);
             final DocRef explorerDocRef;
             final ExplorerNode explorerNode;
+            final DocRef docRef;
             if (importExportActionHandler instanceof NonExplorerDocRefProvider){
                 //Find the closest docref to this one to give a location to export it.
                 NonExplorerDocRefProvider docRefProvider = (NonExplorerDocRefProvider) importExportActionHandler;
-                explorerDocRef = docRefProvider.findNearestExplorerDocRef(docRef);
+                explorerDocRef = docRefProvider.findNearestExplorerDocRef(initialDocRef);
 
                 if (explorerDocRef == null)
-                    throw new RuntimeException("Unable to locate suitable location for export, whilst exporting " + docRef);
-                else
-                    explorerNode = new ExplorerNode (docRef.getType(), docRef.getUuid(), docRefProvider.findNameOfDocRef(docRef), null);
+                    throw new RuntimeException("Unable to locate suitable location for export, whilst exporting " + initialDocRef);
+
+                final String docRefName = docRefProvider.findNameOfDocRef(initialDocRef);
+                docRef = new DocRef(initialDocRef.getType(), initialDocRef.getUuid(), docRefName);
+                    explorerNode = new ExplorerNode (docRef.getType(), docRef.getUuid(), docRefName, null);
 
             } else {
+                docRef = initialDocRef;
                 explorerDocRef = docRef;
                 explorerNode = explorerNodeService.getNode(explorerDocRef).get();
             }
