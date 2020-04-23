@@ -90,20 +90,39 @@ class ProcessorFilterServiceImpl implements ProcessorFilterService {
                                   final QueryData queryData,
                                   final int priority,
                                   final boolean enabled) {
+        return create(pipelineRef, queryData, priority, enabled, null);
+    }
+
+    @Override
+    public ProcessorFilter create(final DocRef pipelineRef,
+                                  final QueryData queryData,
+                                  final int priority,
+                                  final boolean enabled,
+                                  final Long trackerStartMs) {
         // Check the user has read permissions on the pipeline.
         if (!securityContext.hasDocumentPermission(pipelineRef.getUuid(), DocumentPermissionNames.READ)) {
             throw new PermissionException("You do not have permission to create this processor filter");
         }
 
         final Processor processor = processorService.create(pipelineRef, enabled);
-        return create(processor, queryData, priority, enabled);
+        return create(processor, queryData, priority, enabled, trackerStartMs);
     }
 
     @Override
     public ProcessorFilter create(final Processor processor,
                                   final QueryData queryData,
                                   final int priority,
-                                  final boolean enabled) {
+                                  final boolean enabled){
+        return create(processor, queryData, priority, enabled, null);
+    }
+
+
+    @Override
+    public ProcessorFilter create(final Processor processor,
+                                  final QueryData queryData,
+                                  final int priority,
+                                  final boolean enabled,
+                                  final Long trackerStartMs) {
         // Check the user has read permissions on the pipeline.
         if (!securityContext.hasDocumentPermission(processor.getPipelineUuid(), DocumentPermissionNames.READ)) {
             throw new PermissionException("You do not have permission to create this processor filter");
@@ -121,7 +140,8 @@ class ProcessorFilterServiceImpl implements ProcessorFilterService {
     }
 
     @Override
-    public ProcessorFilter create(Processor processor, DocRef processorFilterDocRef, QueryData queryData, int priority, boolean enabled) {
+    public ProcessorFilter create(Processor processor, DocRef processorFilterDocRef, QueryData queryData, int priority, boolean enabled,
+                                  final Long trackerStartMs) {
         // Check the user has read permissions on the pipeline.
         if (!securityContext.hasDocumentPermission(processor.getPipelineUuid(), DocumentPermissionNames.READ)) {
             throw new PermissionException("You do not have permission to create this processor filter");
@@ -137,7 +157,20 @@ class ProcessorFilterServiceImpl implements ProcessorFilterService {
         processorFilter.setQueryData(queryData);
         if (processorFilterDocRef != null)
             processorFilter.setUuid(processorFilterDocRef.getUuid());
-        return create(processorFilter);
+
+        if (processorFilter.getQueryData().getDataSource() == null)
+            processorFilter.getQueryData().setDataSource(MetaFields.STREAM_STORE_DOC_REF);
+
+        final Long currentStreamId = metaService.getMaxDataIdWithCreationBeforePeriod(trackerStartMs);
+        final Long startStreamId;
+        if (currentStreamId != null){
+            startStreamId = currentStreamId + 1L;
+        } else {
+            startStreamId = null;
+        }
+
+        return securityContext.secureResult(PERMISSION, () ->
+                processorFilterDao.create(processorFilter, startStreamId));
     }
 
     @Override
@@ -468,7 +501,7 @@ class ProcessorFilterServiceImpl implements ProcessorFilterService {
                             submittedListSB.append(streamIdSet.size());
                             submittedListSB.append(" streams\n");
 
-                            create(streamProcessor, queryData, 10, true);
+                            create(streamProcessor, queryData, 10, true, null);
                         }
                     }
 

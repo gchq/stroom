@@ -37,6 +37,18 @@ public interface ProcessorFilterService extends HasIntCrud<ProcessorFilter> {
                            final int priority,
                            final boolean enabled);
 
+    ProcessorFilter create(final DocRef pipelineRef,
+                           final QueryData queryData,
+                           final int priority,
+                           final boolean enabled,
+                           final Long trackerStartMs);
+
+    ProcessorFilter create(final Processor processor,
+                           final QueryData queryData,
+                           final int priority,
+                           final boolean enabled,
+                           final Long trackerStartMs);
+
     ProcessorFilter create(final Processor processor,
                            final QueryData queryData,
                            final int priority,
@@ -46,7 +58,8 @@ public interface ProcessorFilterService extends HasIntCrud<ProcessorFilter> {
                            final DocRef processorFilterDocRef,
                            final QueryData queryData,
                            final int priority,
-                           final boolean enabled);
+                           final boolean enabled,
+                           final Long trackerStartMs);
 
 
     ResultPage<ProcessorFilter> find(ExpressionCriteria criteria);

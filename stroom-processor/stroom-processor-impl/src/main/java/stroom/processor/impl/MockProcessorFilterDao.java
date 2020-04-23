@@ -24,6 +24,11 @@ public class MockProcessorFilterDao implements ProcessorFilterDao, Clearable {
     }
 
     @Override
+    public ProcessorFilter create(final ProcessorFilter processorFilter, Long trackerStartMs) {
+        return create (processorFilter, null);
+    }
+
+    @Override
     public Optional<ProcessorFilter> fetch(final int id) {
         return dao.fetch(id);
     }

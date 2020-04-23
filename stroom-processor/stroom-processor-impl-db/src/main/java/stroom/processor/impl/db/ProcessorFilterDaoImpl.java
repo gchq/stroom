@@ -66,11 +66,20 @@ class ProcessorFilterDaoImpl implements ProcessorFilterDao {
 
     @Override
     public ProcessorFilter create(final ProcessorFilter processorFilter) {
+       return create (processorFilter, null);
+    }
+
+    @Override
+    public ProcessorFilter create(final ProcessorFilter processorFilter, final Long trackerStartStreamId){
         LAMBDA_LOGGER.debug(LambdaLogUtil.message("Creating a {}", PROCESSOR_FILTER.getName()));
 
         final ProcessorFilter marshalled = marshaller.marshal(processorFilter);
         return marshaller.unmarshal(JooqUtil.transactionResult(processorDbConnProvider, context -> {
-            final ProcessorFilterTrackerRecord processorFilterTrackerRecord = context.newRecord(PROCESSOR_FILTER_TRACKER, new ProcessorFilterTracker());
+            ProcessorFilterTracker tracker = new ProcessorFilterTracker();
+            if (trackerStartStreamId != null)
+                tracker.setMinMetaId(trackerStartStreamId);
+
+            final ProcessorFilterTrackerRecord processorFilterTrackerRecord = context.newRecord(PROCESSOR_FILTER_TRACKER, tracker);
             processorFilterTrackerRecord.store();
             final ProcessorFilterTracker processorFilterTracker = processorFilterTrackerRecord.into(ProcessorFilterTracker.class);
 

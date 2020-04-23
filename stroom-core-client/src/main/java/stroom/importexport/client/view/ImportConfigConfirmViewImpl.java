@@ -67,7 +67,7 @@ public class ImportConfigConfirmViewImpl extends ViewImpl implements ImportConfi
     }
 
     @Override
-    public boolean isEnableFilters () {return  enableFilters.isEnabled();}
+    public boolean isEnableFilters () {return  enableFilters.getValue();}
 
     @Override
     public void setEnableFilters (boolean enableFilters) {this.enableFilters.setValue(enableFilters);}

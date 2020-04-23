@@ -92,20 +92,16 @@ public class ProcessorFilterImportExportHandlerImpl implements ImportExportActio
 
             if (ImportState.State.NEW.equals(importState.getState())) {
 
-                if (importState.getEnable() != null){
-                    if (importState.getEnable()) {
-                        if (importState.getEnableTime() != null)
-                            System.out.println("Enabling filter from: " + importState.getEnableTime());
-                        else
-                            System.out.println("Enabling filter from start of time");
-                    }
-                    else {
-                        System.out.println("Not enabling filter");
-                    }
-                } else {
-                    System.out.println ("Undefined enable state!");
+                final boolean enable;
+                final Long trackerStartMs;
+                if (importState.getEnable() != null) {
+                    enable = importState.getEnable();
+                    trackerStartMs = importState.getEnableTime();
                 }
-
+                else {
+                    enable = processorFilter.isEnabled();
+                    trackerStartMs = null;
+                }
 
                 ProcessorFilter filter = findProcessorFilter(docRef);
                 if (filter == null) {
@@ -115,7 +111,9 @@ public class ProcessorFilterImportExportHandlerImpl implements ImportExportActio
                             processorFilter.getPipelineName());
                     processorFilterService.create(processor, new DocRef(ProcessorFilter.ENTITY_TYPE, processorFilter.getUuid(), null),
                             processorFilter.getQueryData(),
-                            processorFilter.getPriority(), processorFilter.isEnabled());
+                            processorFilter.getPriority(),
+                            enable,
+                            trackerStartMs);
                 }
 
             } else if (ImportState.State.UPDATE.equals(importState.getState())) {
