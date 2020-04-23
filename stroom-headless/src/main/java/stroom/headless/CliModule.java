@@ -25,9 +25,11 @@ import stroom.docstore.impl.DocStoreModule;
 import stroom.explorer.impl.MockExplorerModule;
 import stroom.feed.impl.FeedModule;
 import stroom.importexport.impl.ImportExportModule;
+import stroom.meta.mock.MockMetaModule;
 import stroom.meta.statistics.api.MetaStatistics;
 import stroom.node.api.NodeInfo;
 import stroom.pipeline.cache.PipelineCacheModule;
+import stroom.processor.impl.MockProcessorModule;
 import stroom.security.mock.MockSecurityContextModule;
 import stroom.statistics.api.InternalStatisticsReceiver;
 import stroom.task.api.SimpleTaskContext;
@@ -74,6 +76,7 @@ public class CliModule extends AbstractModule {
 //        install(new stroom.policy.PolicyModule());
 //        install(new stroom.properties.impl.PropertyModule());
 //        install(new stroom.pipeline.refdata.ReferenceDataModule());
+        install(new MockMetaModule());
 //        install(new stroom.resource.ResourceModule());
         install(new MockSecurityContextModule());
 //        install(new DataStoreHandlerModule());
@@ -84,6 +87,7 @@ public class CliModule extends AbstractModule {
 //        install(new stroom.task.cluster.impl.ClusterTaskModule());
 //        install(new stroom.index.impl.selection.selection.VolumeModule());
         install(new MockServletModule());
+        install (new MockProcessorModule());
 
         bind(InternalStatisticsReceiver.class).to(HeadlessInternalStatisticsReceiver.class);
         bind(StreamCloser.class).to(BasicStreamCloser.class).in(PipelineScoped.class);

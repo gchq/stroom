@@ -26,11 +26,11 @@ public class MockProcessorModule extends AbstractModule {
     @Override
     protected void configure() {
         bind(ProcessorTaskManager.class).to(MockProcessorTaskManager.class);
+        bind(ProcessorFilterService.class).to(MockProcessorFilterService.class);
         bind(ProcessorDao.class).to(MockProcessorDao.class);
         bind(ProcessorService.class).to(ProcessorServiceImpl.class);
         bind(ProcessorFilterDao.class).to(MockProcessorFilterDao.class);
         bind(ProcessorTaskDao.class).to(MockProcessorTaskDao.class);
-        bind(ProcessorFilterService.class).to(ProcessorFilterServiceImpl.class);
 
         GuiceUtil.buildMultiBinder(binder(), Clearable.class)
                 .addBinding(MockProcessorDao.class)

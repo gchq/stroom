@@ -17,6 +17,7 @@
 package stroom.processor.shared;
 
 import com.fasterxml.jackson.annotation.JsonCreator;
+import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.fasterxml.jackson.annotation.JsonInclude;
 import com.fasterxml.jackson.annotation.JsonInclude.Include;
 import com.fasterxml.jackson.annotation.JsonProperty;
@@ -170,7 +171,7 @@ public class Processor implements HasAuditInfo, HasUuid {
 
     public String getPipelineName() { return pipelineName; }
 
-
+    @JsonIgnore
     public void setPipeline (final DocRef pipelineDocRef) {
         this.pipelineUuid = pipelineDocRef.getUuid();
         this.pipelineName = pipelineDocRef.getName();
