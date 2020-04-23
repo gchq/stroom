@@ -1,5 +1,6 @@
 package stroom.security.impl;
 
+import stroom.security.api.ProcessingUserIdentityProvider;
 import stroom.security.api.SecurityContext;
 import stroom.security.api.UserIdentity;
 import stroom.security.impl.exception.AuthenticationException;
@@ -23,17 +24,20 @@ class SecurityContextImpl implements SecurityContext {
     private final UserGroupsCache userGroupsCache;
     private final UserAppPermissionsCache userAppPermissionsCache;
     private final UserCache userCache;
+    private final ProcessingUserIdentityProvider processingUserIdentityProvider;
 
     @Inject
     SecurityContextImpl(
             final UserDocumentPermissionsCache userDocumentPermissionsCache,
             final UserGroupsCache userGroupsCache,
             final UserAppPermissionsCache userAppPermissionsCache,
-            final UserCache userCache) {
+            final UserCache userCache,
+            final ProcessingUserIdentityProvider processingUserIdentityProvider) {
         this.userDocumentPermissionsCache = userDocumentPermissionsCache;
         this.userGroupsCache = userGroupsCache;
         this.userAppPermissionsCache = userAppPermissionsCache;
         this.userCache = userCache;
+        this.processingUserIdentityProvider = processingUserIdentityProvider;
     }
 
     @Override
@@ -81,7 +85,7 @@ class SecurityContextImpl implements SecurityContext {
         }
 
         // If the user is the internal processing user then they automatically have permission.
-        return ProcessingUserIdentity.INSTANCE.equals(userIdentity);
+        return processingUserIdentityProvider.get().equals(userIdentity);
     }
 
     User getUser(final UserIdentity userIdentity) {
@@ -118,7 +122,7 @@ class SecurityContextImpl implements SecurityContext {
         }
 
         // If the user is the internal processing user then they automatically have permission.
-        if (ProcessingUserIdentity.INSTANCE.equals(userIdentity)) {
+        if (processingUserIdentityProvider.get().equals(userIdentity)) {
             return true;
         }
 
@@ -255,7 +259,7 @@ class SecurityContextImpl implements SecurityContext {
         T result;
         boolean success = false;
         try {
-            pushUser(ProcessingUserIdentity.INSTANCE);
+            pushUser(processingUserIdentityProvider.get());
             success = true;
             result = supplier.get();
         } finally {
@@ -273,7 +277,7 @@ class SecurityContextImpl implements SecurityContext {
     public void asProcessingUser(final Runnable runnable) {
         boolean success = false;
         try {
-            pushUser(ProcessingUserIdentity.INSTANCE);
+            pushUser(processingUserIdentityProvider.get());
             success = true;
             runnable.run();
         } finally {

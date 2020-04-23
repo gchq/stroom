@@ -23,16 +23,11 @@ import org.jooq.Record;
 import org.jooq.Record1;
 import org.jooq.SortField;
 import stroom.authentication.account.Account;
-import stroom.authentication.account.AccountDao;
-import stroom.authentication.config.TokenConfig;
-import stroom.authentication.exceptions.NoSuchUserException;
 import stroom.authentication.exceptions.UnsupportedFilterException;
 import stroom.authentication.impl.db.jooq.tables.records.TokenRecord;
 import stroom.authentication.token.SearchRequest;
 import stroom.authentication.token.SearchResponse;
 import stroom.authentication.token.Token;
-import stroom.authentication.token.TokenBuilder;
-import stroom.authentication.token.TokenBuilderFactory;
 import stroom.authentication.token.TokenDao;
 import stroom.db.util.JooqUtil;
 import stroom.util.logging.LambdaLogUtil;
@@ -41,7 +36,6 @@ import stroom.util.logging.LambdaLoggerFactory;
 
 import javax.inject.Inject;
 import javax.inject.Singleton;
-import java.time.Instant;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
@@ -98,28 +92,15 @@ class TokenDaoImpl implements TokenDao {
         return record;
     };
 
-    private final TokenConfig config;
     private final AuthDbConnProvider authDbConnProvider;
-    private final TokenBuilderFactory tokenBuilderFactory;
-    private final AccountDao accountDao;
 
     @Inject
-    TokenDaoImpl(final TokenConfig config,
-                 final AuthDbConnProvider authDbConnProvider,
-                 final TokenBuilderFactory tokenBuilderFactory,
-                 final AccountDao accountDao) {
-        this.config = config;
+    TokenDaoImpl(final AuthDbConnProvider authDbConnProvider) {
         this.authDbConnProvider = authDbConnProvider;
-        this.tokenBuilderFactory = tokenBuilderFactory;
-        this.accountDao = accountDao;
     }
 
     @Override
-    public Token create(final Token token) {
-        final Optional<Integer> optionalAccountId = accountDao.getId(token.getUserEmail());
-        final Integer accountId = optionalAccountId.orElseThrow(() ->
-                new NoSuchUserException("Cannot find user to associate with this API key!"));
-
+    public Token create(final int accountId, final Token token) {
         final String tokenType = token.getTokenType().toLowerCase();
         final Optional<Integer> optionalTokenTypeId = getTokenTypeId(tokenType);
         final Integer tokenTypeId = optionalTokenTypeId.orElseThrow(() ->
@@ -221,20 +202,6 @@ class TokenDaoImpl implements TokenDao {
         });
     }
 
-    @Override
-    public String createEmailResetToken(String emailAddress, String clientId) throws NoSuchUserException {
-        long timeToExpiryInSeconds = this.config.getMinutesUntilExpirationForEmailResetToken() * 60;
-
-        return createToken(
-                Token.TokenType.EMAIL_RESET,
-                "authenticationResourceUser",
-                Instant.now().plusSeconds(timeToExpiryInSeconds),
-                emailAddress,
-                clientId,
-                true, "Created for password reset")
-                .getData();
-    }
-
     private Optional<Integer> getTokenTypeId(final String type) {
         return JooqUtil.contextResult(authDbConnProvider, context -> context
                 .select(TOKEN_TYPE.ID)
@@ -242,86 +209,6 @@ class TokenDaoImpl implements TokenDao {
                 .where(TOKEN_TYPE.TYPE.eq(type))
                 .fetchOptional()
                 .map(r -> r.getValue(TOKEN_TYPE.ID)));
-    }
-
-//    @Override
-//    public Token createIdToken(String idToken, String subject, long expiresOn) {
-//        final Optional<Integer> optionalAccountId = accountDao.getId(subject);
-//        final Integer accountId = optionalAccountId.orElseThrow(() ->
-//                new NoSuchUserException("Cannot find user to associate with this API key!"));
-//
-//        final Optional<Integer> optionalTokenTypeId = getTokenTypeId(Token.TokenType.USER.getText().toLowerCase());
-//        final Integer tokenTypeId = optionalTokenTypeId.orElseThrow(() ->
-//                new RuntimeException("Unknown token type: " + Token.TokenType.USER.getText().toLowerCase()));
-//
-//        return JooqUtil.contextResult(authDbConnProvider, context -> context
-//                .insertInto(TOKEN)
-//                .set(TOKEN.FK_ACCOUNT_ID, accountId)
-//                .set(TOKEN.FK_TOKEN_TYPE_ID, tokenTypeId)
-//                .set(TOKEN.DATA, idToken)
-//                .set(TOKEN.EXPIRES_ON_MS, expiresOn)
-//                .set(TOKEN.CREATE_TIME_MS, System.currentTimeMillis())
-//                .set(TOKEN.ENABLED, true)
-//                .set(TOKEN.COMMENTS, "This is an OpenId idToken created by the Authentication Service.")
-//                .returning(new Field[]{TOKEN.ID})
-//                .fetchOne()
-//                .into(Token.class));
-//    }
-
-//    public String createToken(String recipientUserEmail, String clientId) throws NoSuchUserException {
-//        return createToken(
-//                Token.TokenType.USER,
-//                "authenticationResource",
-//                recipientUserEmail,
-//                clientId,
-//                true,
-//                "Created for username/password user")
-//                .getToken();
-//    }
-
-    /**
-     * Create a token for a specific user.
-     */
-    @Override
-    public Token createToken(
-            Token.TokenType tokenType,
-            String issuingUserEmail,
-            Instant expiryDateIfApiKey,
-            String recipientUserEmail,
-            String clientId,
-            boolean isEnabled,
-            String comment) throws NoSuchUserException {
-
-        TokenBuilder tokenBuilder = tokenBuilderFactory
-                .expiryDateForApiKeys(expiryDateIfApiKey)
-                .newBuilder(tokenType)
-                .clientId(clientId)
-                .subject(recipientUserEmail);
-
-        Instant actualExpiryDate = tokenBuilder.getExpiryDate();
-        String idToken = tokenBuilder.build();
-
-        final Optional<Integer> optionalAccountId = accountDao.getId(recipientUserEmail);
-        final Integer accountId = optionalAccountId.orElseThrow(() ->
-                new NoSuchUserException("Cannot find user to associate with this API key!"));
-
-        final Optional<Integer> optionalTokenTypeId = getTokenTypeId(tokenType.getText().toLowerCase());
-        final Integer tokenTypeId = optionalTokenTypeId.orElseThrow(() ->
-                new RuntimeException("Unknown token type: " + tokenType.getText().toLowerCase()));
-
-        return JooqUtil.contextResult(authDbConnProvider, context -> context
-                .insertInto(TOKEN)
-                .set(TOKEN.FK_ACCOUNT_ID, accountId)
-                .set(TOKEN.FK_TOKEN_TYPE_ID, tokenTypeId)
-                .set(TOKEN.DATA, idToken)
-                .set(TOKEN.EXPIRES_ON_MS, actualExpiryDate.toEpochMilli())
-                .set(TOKEN.CREATE_TIME_MS, System.currentTimeMillis())
-                .set(TOKEN.CREATE_USER, issuingUserEmail)
-                .set(TOKEN.ENABLED, isEnabled)
-                .set(TOKEN.COMMENTS, comment)
-                .returning()
-                .fetchOne()
-                .map(RECORD_TO_TOKEN_MAPPER::apply));
     }
 
     @Override
@@ -346,6 +233,31 @@ class TokenDaoImpl implements TokenDao {
     @Override
     public int deleteTokenByTokenString(String token) {
         return JooqUtil.contextResult(authDbConnProvider, context -> context.deleteFrom(TOKEN).where(TOKEN.DATA.eq(token)).execute());
+    }
+
+    @Override
+    public List<Token> getTokensForAccount(final int accountId) {
+        return JooqUtil.contextResult(authDbConnProvider, context -> context
+                .select(
+                        TOKEN.ID,
+                        TOKEN.VERSION,
+                        TOKEN.CREATE_TIME_MS,
+                        TOKEN.UPDATE_TIME_MS,
+                        TOKEN.CREATE_USER,
+                        TOKEN.UPDATE_USER,
+                        ACCOUNT.EMAIL,
+                        TOKEN_TYPE.TYPE,
+                        TOKEN.DATA,
+                        TOKEN.EXPIRES_ON_MS,
+                        TOKEN.COMMENTS,
+                        TOKEN.ENABLED)
+                .from(TOKEN)
+                .join(TOKEN_TYPE).on(TOKEN.FK_TOKEN_TYPE_ID.eq(TOKEN_TYPE.ID))
+                .join(ACCOUNT).on(TOKEN.FK_ACCOUNT_ID.eq(ACCOUNT.ID))
+                .where(TOKEN.FK_ACCOUNT_ID.eq(accountId))
+                .orderBy(TOKEN.ID)
+                .fetch()
+                .map(RECORD_TO_TOKEN_MAPPER::apply));
     }
 
     @Override

@@ -2,7 +2,10 @@ package stroom.authentication.token;
 
 import org.jose4j.jwk.JsonWebKey;
 import stroom.authentication.account.Account;
+import stroom.authentication.account.AccountDao;
 import stroom.authentication.account.AccountService;
+import stroom.authentication.config.TokenConfig;
+import stroom.authentication.exceptions.NoSuchUserException;
 import stroom.security.api.SecurityContext;
 import stroom.security.shared.PermissionException;
 import stroom.security.shared.PermissionNames;
@@ -15,24 +18,27 @@ import java.util.Optional;
 public class TokenServiceImpl implements TokenService {
     private final JwkCache jwkCache;
     private final TokenDao tokenDao;
+    private final AccountDao accountDao;
     private final SecurityContext securityContext;
-    private TokenVerifier tokenVerifier;
-    private AccountService accountService;
+    private final AccountService accountService;
     private final TokenBuilderFactory tokenBuilderFactory;
+    private final TokenConfig tokenConfig;
 
     @Inject
     TokenServiceImpl(final JwkCache jwkCache,
                      final TokenDao tokenDao,
+                     final AccountDao accountDao,
                      final SecurityContext securityContext,
-                     final TokenVerifier tokenVerifier,
                      final AccountService accountService,
-                     final TokenBuilderFactory tokenBuilderFactory) {
+                     final TokenBuilderFactory tokenBuilderFactory,
+                     final TokenConfig tokenConfig) {
         this.jwkCache = jwkCache;
         this.tokenDao = tokenDao;
+        this.accountDao = accountDao;
         this.securityContext = securityContext;
-        this.tokenVerifier = tokenVerifier;
         this.accountService = accountService;
         this.tokenBuilderFactory = tokenBuilderFactory;
+        this.tokenConfig = tokenConfig;
     }
 
 
@@ -50,9 +56,7 @@ public class TokenServiceImpl implements TokenService {
                 }
             }
         }
-        SearchResponse results = tokenDao.searchTokens(searchRequest);
-
-        return results;
+        return tokenDao.searchTokens(searchRequest);
     }
 
     @Override
@@ -61,11 +65,17 @@ public class TokenServiceImpl implements TokenService {
 
         final String userId = securityContext.getUserId();
 
+        final Optional<Integer> optionalAccountId = accountDao.getId(createTokenRequest.getUserEmail());
+        final Integer accountId = optionalAccountId.orElseThrow(() ->
+                new NoSuchUserException("Cannot find user to associate with this API key!"));
+
         // Parse and validate tokenType
         final Optional<Token.TokenType> optionalTokenType = getParsedTokenType(createTokenRequest.getTokenType());
         final Token.TokenType tokenType = optionalTokenType.orElseThrow(() -> new BadRequestException("Unknown token type:" + createTokenRequest.getTokenType()));
 
         final Instant expiryInstant = createTokenRequest.getExpiryDate() == null ? null : createTokenRequest.getExpiryDate().toInstant();
+
+
 //        Token token = dao.createToken(
 //                tokenTypeToCreate.get(),
 //                userId,
@@ -151,9 +161,40 @@ public class TokenServiceImpl implements TokenService {
 //        // Set enabled by default.
 //        token.setEnabled(true);
 
-        return tokenDao.create(token);
+
+        return tokenDao.create(accountId, token);
     }
 
+
+    @Override
+    public Token createResetEmailToken(final Account account, final String clientId) {
+        final Token.TokenType tokenType = Token.TokenType.EMAIL_RESET;
+        long timeToExpiryInSeconds = tokenConfig.getMinutesUntilExpirationForEmailResetToken() * 60;
+        final TokenBuilder tokenBuilder = tokenBuilderFactory
+                .expiryDateForApiKeys(Instant.now().plusSeconds(timeToExpiryInSeconds))
+                .newBuilder(tokenType)
+                .clientId(clientId);
+
+        final Instant actualExpiryDate = tokenBuilder.getExpiryDate();
+        final String idToken = tokenBuilder.build();
+
+        final String userId = securityContext.getUserId();
+
+        final long now = System.currentTimeMillis();
+        final Token token = new Token();
+        token.setCreateTimeMs(now);
+        token.setUpdateTimeMs(now);
+        token.setCreateUser(userId);
+        token.setUpdateUser(userId);
+        token.setUserEmail(account.getEmail());
+        token.setTokenType(tokenType.getText().toLowerCase());
+        token.setData(idToken);
+        token.setExpiresOnMs(actualExpiryDate.toEpochMilli());
+        token.setComments("Created for password reset");
+        token.setEnabled(true);
+
+        return tokenDao.create(account.getId(), token);
+    }
 
     @Override
     public int deleteAll() {

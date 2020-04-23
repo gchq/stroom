@@ -14,11 +14,11 @@
  * limitations under the License.
  */
 
-package stroom.security.impl;
+package stroom.pipeline.cache;
 
 import stroom.cache.api.CacheManager;
 import stroom.cache.api.ICache;
-import stroom.security.api.DocumentPermissionCache;
+import stroom.pipeline.PipelineConfig;
 import stroom.security.api.SecurityContext;
 import stroom.security.api.UserIdentity;
 import stroom.util.shared.Clearable;
@@ -37,9 +37,9 @@ class DocumentPermissionCacheImpl implements DocumentPermissionCache, Clearable 
     @Inject
     DocumentPermissionCacheImpl(final CacheManager cacheManager,
                                 final SecurityContext securityContext,
-                                final AuthorisationConfig authorisationConfig) {
+                                final PipelineConfig pipelineConfig) {
         this.securityContext = securityContext;
-        cache = cacheManager.create(CACHE_NAME, authorisationConfig::getDocumentPermissionCache, this::create);
+        cache = cacheManager.create(CACHE_NAME, pipelineConfig::getDocumentPermissionCache, this::create);
     }
 
     private boolean create(final DocumentPermission documentPermission) {

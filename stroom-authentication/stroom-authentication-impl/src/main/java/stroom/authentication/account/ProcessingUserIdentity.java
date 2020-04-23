@@ -14,27 +14,32 @@
  * limitations under the License.
  */
 
-package stroom.security.impl;
+package stroom.authentication.account;
 
 import stroom.security.api.UserIdentity;
 
-public final class ProcessingUserIdentity implements UserIdentity {
-    private static final String INTERNAL_PROCESSING_USER = "INTERNAL_PROCESSING_USER";
+import java.util.Objects;
 
-    public static final UserIdentity INSTANCE = new ProcessingUserIdentity();
+public class ProcessingUserIdentity implements UserIdentity {
+    private String id;
+    private String jws;
 
-    private ProcessingUserIdentity() {
-        // Utility class.
+    public ProcessingUserIdentity() {
+    }
+
+    ProcessingUserIdentity(final String id, final String jws) {
+        this.id = id;
+        this.jws = jws;
     }
 
     @Override
     public String getId() {
-        return INTERNAL_PROCESSING_USER;
+        return id;
     }
 
     @Override
     public String getJws() {
-        return null;
+        return jws;
     }
 
     @Override
@@ -43,18 +48,21 @@ public final class ProcessingUserIdentity implements UserIdentity {
     }
 
     @Override
-    public String toString() {
-        return getId();
-    }
-
-    @Override
     public boolean equals(final Object o) {
         if (this == o) return true;
-        return o instanceof ProcessingUserIdentity;
+        if (!(o instanceof UserIdentity)) return false;
+        final UserIdentity that = (UserIdentity) o;
+        return Objects.equals(id, that.getId()) &&
+                Objects.equals(jws, that.getJws());
     }
 
     @Override
     public int hashCode() {
-        return 0;
+        return Objects.hash(id, jws);
+    }
+
+    @Override
+    public String toString() {
+        return getId();
     }
 }

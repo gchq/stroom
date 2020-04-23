@@ -34,7 +34,7 @@ import stroom.pipeline.refdata.store.StringValue;
 import stroom.pipeline.shared.data.PipelineReference;
 import stroom.pipeline.state.FeedHolder;
 import stroom.pipeline.state.MetaHolder;
-import stroom.security.api.DocumentPermissionCache;
+import stroom.pipeline.cache.DocumentPermissionCache;
 import stroom.security.api.SecurityContext;
 import stroom.security.shared.DocumentPermissionNames;
 import stroom.util.logging.LambdaLogUtil;

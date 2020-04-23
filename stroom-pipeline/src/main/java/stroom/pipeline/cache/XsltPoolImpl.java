@@ -32,7 +32,6 @@ import stroom.pipeline.filter.XsltConfig;
 import stroom.pipeline.shared.XsltDoc;
 import stroom.pipeline.shared.data.PipelineReference;
 import stroom.pipeline.xsltfunctions.StroomXsltFunctionLibrary;
-import stroom.security.api.DocumentPermissionCache;
 import stroom.security.api.SecurityContext;
 import stroom.util.io.StreamUtil;
 import stroom.util.shared.Severity;

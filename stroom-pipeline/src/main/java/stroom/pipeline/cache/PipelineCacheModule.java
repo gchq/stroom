@@ -30,11 +30,13 @@ public class PipelineCacheModule extends AbstractModule {
         bind(SchemaLoader.class).to(SchemaLoaderImpl.class);
         bind(ParserFactoryPool.class).to(ParserFactoryPoolImpl.class);
         bind(XsltPool.class).to(XsltPoolImpl.class);
+        bind(DocumentPermissionCache.class).to(DocumentPermissionCacheImpl.class);
 
         GuiceUtil.buildMultiBinder(binder(), Clearable.class)
                 .addBinding(SchemaPoolImpl.class)
                 .addBinding(ParserFactoryPoolImpl.class)
-                .addBinding(XsltPoolImpl.class);
+                .addBinding(XsltPoolImpl.class)
+                .addBinding(DocumentPermissionCacheImpl.class);
 
         final Multibinder<Handler> entityEventHandlerBinder = Multibinder.newSetBinder(binder(), EntityEvent.Handler.class);
         entityEventHandlerBinder.addBinding().to(ParserFactoryPoolImpl.class);
