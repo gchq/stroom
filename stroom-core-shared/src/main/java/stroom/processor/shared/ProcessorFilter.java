@@ -234,6 +234,10 @@ public class ProcessorFilter implements HasAuditInfo, HasUuid {
         return pipelineUuid;
     }
 
+    public void setPipelineUuid(String uuid){
+        pipelineUuid = uuid;
+    }
+
     public String getPipelineName(){
         return pipelineName;
     }

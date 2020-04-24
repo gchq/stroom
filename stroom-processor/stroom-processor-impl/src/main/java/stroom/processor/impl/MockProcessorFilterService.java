@@ -4,40 +4,72 @@ import stroom.docref.DocRef;
 import stroom.entity.shared.ExpressionCriteria;
 import stroom.meta.shared.FindMetaCriteria;
 import stroom.processor.api.ProcessorFilterService;
+import stroom.processor.api.ProcessorService;
 import stroom.processor.shared.*;
 import stroom.util.shared.ResultPage;
 
+import javax.inject.Inject;
+import javax.inject.Singleton;
 import java.util.List;
 import java.util.Optional;
+import java.util.Random;
 
+@Singleton
 public class MockProcessorFilterService implements ProcessorFilterService {
 
     private final MockProcessorFilterDao dao = new MockProcessorFilterDao();
 
+    private Random idRandom = new Random (0);
+
+    private final ProcessorService processorService;
+
+    @Inject
+    MockProcessorFilterService(final ProcessorService processorService){
+        this.processorService = processorService;
+    }
+
     @Override
     public ProcessorFilter create(DocRef pipelineRef, QueryData queryData, int priority, boolean enabled) {
+        ProcessorFilter filter = new ProcessorFilter();
+        filter.setPipelineUuid(pipelineRef.getUuid());
+        filter.setQueryData(queryData);
+        filter.setPriority(priority);
+        filter.setEnabled(enabled);
+        Processor processor = processorService.create(pipelineRef, enabled);
 
-        return dao.create(new ProcessorFilter());
+        filter.setProcessor(processor);
+        return dao.create(filter);
     }
 
     @Override
     public ProcessorFilter create(DocRef pipelineRef, QueryData queryData, int priority, boolean enabled, Long trackerStartMs) {
-        return dao.create(new ProcessorFilter());
+        return create (pipelineRef, queryData, priority, enabled, null);
     }
 
     @Override
     public ProcessorFilter create(Processor processor, QueryData queryData, int priority, boolean enabled, Long trackerStartMs) {
-        return dao.create(new ProcessorFilter());
+        ProcessorFilter filter = new ProcessorFilter();
+        filter.setProcessor(processor);
+        filter.setQueryData(queryData);
+        filter.setPriority(priority);
+        filter.setEnabled(enabled);
+        return dao.create(filter);
     }
 
     @Override
     public ProcessorFilter create(Processor processor, QueryData queryData, int priority, boolean enabled) {
-        return dao.create(new ProcessorFilter());
+        return create (processor, queryData, priority, enabled, null);
     }
 
     @Override
     public ProcessorFilter create(Processor processor, DocRef processorFilterDocRef, QueryData queryData, int priority, boolean enabled, Long trackerStartMs) {
-        return dao.create(new ProcessorFilter());
+        ProcessorFilter filter = new ProcessorFilter();
+        filter.setProcessor(processor);
+        filter.setQueryData(queryData);
+        filter.setPriority(priority);
+        filter.setUuid(processorFilterDocRef.getUuid());
+        filter.setEnabled(enabled);
+        return dao.create(filter);
     }
 
     @Override
