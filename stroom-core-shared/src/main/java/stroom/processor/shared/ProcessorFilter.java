@@ -242,7 +242,9 @@ public class ProcessorFilter implements HasAuditInfo, HasUuid {
         return pipelineName;
     }
 
-    public void setPipelineName (final String s) { pipelineName = s; }
+    public void setPipelineName (final String s) {
+        pipelineName = s;
+    }
 
     public void setProcessor(final Processor processor) {
         this.processor = processor;
