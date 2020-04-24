@@ -9,7 +9,7 @@ import java.net.URI;
 import java.util.Map;
 
 class WebTargetProxy implements WebTarget {
-    private final WebTarget webTarget;
+    private WebTarget webTarget;
 
     WebTargetProxy(final WebTarget webTarget) {
         this.webTarget = webTarget;
@@ -27,47 +27,56 @@ class WebTargetProxy implements WebTarget {
 
     @Override
     public WebTarget path(final String path) {
-        return webTarget.path(path);
+        webTarget = webTarget.path(path);
+        return this;
     }
 
     @Override
     public WebTarget resolveTemplate(final String name, final Object value) {
-        return webTarget.resolveTemplate(name, value);
+        webTarget = webTarget.resolveTemplate(name, value);
+        return this;
     }
 
     @Override
     public WebTarget resolveTemplate(final String name, final Object value, final boolean encodeSlashInPath) {
-        return webTarget.resolveTemplate(name, value, encodeSlashInPath);
+        webTarget = webTarget.resolveTemplate(name, value, encodeSlashInPath);
+        return this;
     }
 
     @Override
     public WebTarget resolveTemplateFromEncoded(final String name, final Object value) {
-        return webTarget.resolveTemplateFromEncoded(name, value);
+        webTarget = webTarget.resolveTemplateFromEncoded(name, value);
+        return this;
     }
 
     @Override
     public WebTarget resolveTemplates(final Map<String, Object> templateValues) {
-        return webTarget.resolveTemplates(templateValues);
+        webTarget = webTarget.resolveTemplates(templateValues);
+        return this;
     }
 
     @Override
     public WebTarget resolveTemplates(final Map<String, Object> templateValues, final boolean encodeSlashInPath) {
-        return webTarget.resolveTemplates(templateValues, encodeSlashInPath);
+        webTarget = webTarget.resolveTemplates(templateValues, encodeSlashInPath);
+        return this;
     }
 
     @Override
     public WebTarget resolveTemplatesFromEncoded(final Map<String, Object> templateValues) {
-        return webTarget.resolveTemplatesFromEncoded(templateValues);
+        webTarget = webTarget.resolveTemplatesFromEncoded(templateValues);
+        return this;
     }
 
     @Override
     public WebTarget matrixParam(final String name, final Object... values) {
-        return webTarget.matrixParam(name, values);
+        webTarget = webTarget.matrixParam(name, values);
+        return this;
     }
 
     @Override
     public WebTarget queryParam(final String name, final Object... values) {
-        return webTarget.queryParam(name, values);
+        webTarget = webTarget.queryParam(name, values);
+        return this;
     }
 
     @Override
@@ -92,46 +101,55 @@ class WebTargetProxy implements WebTarget {
 
     @Override
     public WebTarget property(final String name, final Object value) {
-        return webTarget.property(name, value);
+        webTarget = webTarget.property(name, value);
+        return this;
     }
 
     @Override
     public WebTarget register(final Class<?> componentClass) {
-        return webTarget.register(componentClass);
+        webTarget = webTarget.register(componentClass);
+        return this;
     }
 
     @Override
     public WebTarget register(final Class<?> componentClass, final int priority) {
-        return webTarget.register(componentClass, priority);
+        webTarget = webTarget.register(componentClass, priority);
+        return this;
     }
 
     @Override
     public WebTarget register(final Class<?> componentClass, final Class<?>... contracts) {
-        return webTarget.register(componentClass, contracts);
+        webTarget = webTarget.register(componentClass, contracts);
+        return this;
     }
 
     @Override
     public WebTarget register(final Class<?> componentClass, final Map<Class<?>, Integer> contracts) {
-        return webTarget.register(componentClass, contracts);
+        webTarget = webTarget.register(componentClass, contracts);
+        return this;
     }
 
     @Override
     public WebTarget register(final Object component) {
-        return webTarget.register(component);
+        webTarget = webTarget.register(component);
+        return this;
     }
 
     @Override
     public WebTarget register(final Object component, final int priority) {
-        return webTarget.register(component, priority);
+        webTarget = webTarget.register(component, priority);
+        return this;
     }
 
     @Override
     public WebTarget register(final Object component, final Class<?>... contracts) {
-        return webTarget.register(component, contracts);
+        webTarget = webTarget.register(component, contracts);
+        return this;
     }
 
     @Override
     public WebTarget register(final Object component, final Map<Class<?>, Integer> contracts) {
-        return webTarget.register(component, contracts);
+        webTarget = webTarget.register(component, contracts);
+        return this;
     }
 }
