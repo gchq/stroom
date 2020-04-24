@@ -18,15 +18,16 @@ package stroom.data.store.impl.fs;
 
 import stroom.cluster.lock.api.ClusterLockService;
 import stroom.data.store.impl.fs.DataVolumeDao.DataVolume;
+import stroom.meta.api.MetaService;
 import stroom.meta.api.PhysicalDelete;
 import stroom.meta.shared.FindMetaCriteria;
 import stroom.meta.shared.Meta;
 import stroom.meta.shared.MetaFields;
-import stroom.meta.api.MetaService;
 import stroom.meta.shared.Status;
 import stroom.query.api.v2.ExpressionOperator;
 import stroom.query.api.v2.ExpressionTerm.Condition;
 import stroom.task.api.TaskContext;
+import stroom.task.api.TaskContextFactory;
 import stroom.util.date.DateUtil;
 import stroom.util.io.FileUtil;
 import stroom.util.logging.LambdaLogUtil;
@@ -57,7 +58,7 @@ public class PhysicalDeleteExecutor {
     private final MetaService metaService;
     private final PhysicalDelete physicalDelete;
     private final DataVolumeDao dataVolumeDao;
-    private final TaskContext taskContext;
+    private final TaskContextFactory taskContextFactory;
 
     @Inject
     PhysicalDeleteExecutor(
@@ -67,21 +68,21 @@ public class PhysicalDeleteExecutor {
             final MetaService metaService,
             final PhysicalDelete physicalDelete,
             final DataVolumeDao dataVolumeDao,
-            final TaskContext taskContext) {
+            final TaskContextFactory taskContextFactory) {
         this.clusterLockService = clusterLockService;
         this.dataStoreServiceConfig = dataStoreServiceConfig;
         this.fileSystemStreamPathHelper = fileSystemStreamPathHelper;
         this.metaService = metaService;
         this.physicalDelete = physicalDelete;
         this.dataVolumeDao = dataVolumeDao;
-        this.taskContext = taskContext;
+        this.taskContextFactory = taskContextFactory;
     }
 
     public void exec() {
-        lockAndDelete();
+        taskContextFactory.context("Physically Delete Data", this::lockAndDelete).run();
     }
 
-    final void lockAndDelete() {
+    final void lockAndDelete(final TaskContext taskContext) {
         LOGGER.info(() -> TASK_NAME + " - start");
         clusterLockService.tryLock(LOCK_NAME, () -> {
             try {
@@ -89,7 +90,7 @@ public class PhysicalDeleteExecutor {
                     final LogExecutionTime logExecutionTime = new LogExecutionTime();
                     final long deleteThresholdEpochMs = getDeleteThresholdEpochMs(dataStoreServiceConfig);
                     if (deleteThresholdEpochMs > 0) {
-                        delete(deleteThresholdEpochMs);
+                        delete(taskContext, deleteThresholdEpochMs);
                     }
                     LOGGER.info(() -> TASK_NAME + " - finished in " + logExecutionTime);
                 }
@@ -99,7 +100,7 @@ public class PhysicalDeleteExecutor {
         });
     }
 
-    public void delete(final long deleteThresholdEpochMs) {
+    public void delete(final TaskContext taskContext, final long deleteThresholdEpochMs) {
         if (!Thread.currentThread().isInterrupted()) {
             long count = 0;
             long total = 0;
@@ -118,7 +119,7 @@ public class PhysicalDeleteExecutor {
                     // If we inserted some ids then try and delete this batch.
                     if (count > 0) {
                         total += count;
-                        deleteCurrentBatch(idList);
+                        deleteCurrentBatch(taskContext, idList);
                     }
                 } while (!Thread.currentThread().isInterrupted() && count >= deleteBatchSize);
             }
@@ -127,11 +128,11 @@ public class PhysicalDeleteExecutor {
         }
     }
 
-    private void deleteCurrentBatch(final List<Meta> metaList) {
+    private void deleteCurrentBatch(final TaskContext taskContext, final List<Meta> metaList) {
         try {
             // Delete all matching files.
             for (final Meta meta : metaList) {
-                info(() -> "Deleting everything associated with " + meta);
+                info(taskContext, () -> "Deleting everything associated with " + meta);
 
                 final DataVolume dataVolume = dataVolumeDao.findDataVolume(meta.getId());
                 if (dataVolume == null) {
@@ -145,7 +146,7 @@ public class PhysicalDeleteExecutor {
                     try (final DirectoryStream<Path> stream = Files.newDirectoryStream(dir, baseName + ".*")) {
                         stream.forEach(f -> {
                             try {
-                                info(() -> "Deleting file: " + FileUtil.getCanonicalPath(f));
+                                info(taskContext, () -> "Deleting file: " + FileUtil.getCanonicalPath(f));
                                 Files.deleteIfExists(f);
 
                             } catch (final InterruptedException e) {
@@ -169,11 +170,11 @@ public class PhysicalDeleteExecutor {
             final List<Long> metaIdList = metaList.stream().map(Meta::getId).collect(Collectors.toList());
 
             // Delete meta volumes.
-            info(() -> "Deleting data volumes");
+            info(taskContext, () -> "Deleting data volumes");
             dataVolumeDao.delete(metaIdList);
 
             // Physically delete meta data.
-            info(() -> "Deleting meta data");
+            info(taskContext, () -> "Deleting meta data");
             physicalDelete.cleanup(metaIdList);
 
         } catch (final InterruptedException e) {
@@ -184,7 +185,7 @@ public class PhysicalDeleteExecutor {
         }
     }
 
-    private void info(final Supplier<String> message) throws InterruptedException {
+    private void info(final TaskContext taskContext, final Supplier<String> message) throws InterruptedException {
         try {
             taskContext.info(message);
             LOGGER.debug(message);
@@ -199,13 +200,13 @@ public class PhysicalDeleteExecutor {
     private List<Meta> getDeleteIdList(final long deleteThresholdEpochMs, final int batchSize) {
         final ExpressionOperator expression = new ExpressionOperator.Builder()
                 .addTerm(
-                    MetaFields.STATUS,
-                    Condition.EQUALS,
-                    Status.DELETED.getDisplayValue())
+                        MetaFields.STATUS,
+                        Condition.EQUALS,
+                        Status.DELETED.getDisplayValue())
                 .addTerm(
-                    MetaFields.STATUS_TIME,
-                    Condition.LESS_THAN,
-                    DateUtil.createNormalDateTimeString(deleteThresholdEpochMs))
+                        MetaFields.STATUS_TIME,
+                        Condition.LESS_THAN,
+                        DateUtil.createNormalDateTimeString(deleteThresholdEpochMs))
                 .build();
 
         final FindMetaCriteria criteria = new FindMetaCriteria(expression);

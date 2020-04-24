@@ -1,5 +1,5 @@
 /*
- * Copyright 2017 Crown Copyright
+ * Copyright 2020 Crown Copyright
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -15,24 +15,30 @@
  */
 
 import * as React from "react";
+import { useEffect } from "react";
 import "react-toggle/style.css";
 import useAppNavigation from "lib/useAppNavigation";
 import useIdFromPath from "lib/useIdFromPath";
 import useTokens from "./useTokens";
 import EditTokenForm from "./EditTokenForm";
+import CustomLoader from "../../CustomLoader";
 
 const EditTokenContainer = () => {
   const { toggleEnabledState, fetchApiKey, token } = useTokens();
+  const tokenId = useIdFromPath("apikey/");
   const {
     nav: { goToApiKeys },
   } = useAppNavigation();
 
-  const tokenId = useIdFromPath("apikey/");
-  React.useEffect(() => {
+  useEffect(() => {
     if (!!tokenId) {
       fetchApiKey(tokenId);
     }
   }, [tokenId, fetchApiKey]);
+
+  if (!token) {
+    return <CustomLoader title="Stroom" message="Loading. Please wait..."/>;
+  }
 
   return (
     <EditTokenForm

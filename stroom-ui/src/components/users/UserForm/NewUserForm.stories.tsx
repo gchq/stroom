@@ -21,7 +21,7 @@ stories.add("Test", () => {
       onBack={() => console.log("TODO: onBack")}
       onCancel={() => console.log("TODO: onCancel")}
       onValidate={onValidate}
-      user={undefined}
+      account={undefined}
     />
   );
 });

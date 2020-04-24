@@ -15,11 +15,10 @@ import javax.ws.rs.core.MediaType;
 @Api(value = "authentication - /v1")
 @Path("/logout" + ResourcePaths.V1)
 @Produces(MediaType.APPLICATION_JSON)
+@Consumes(MediaType.APPLICATION_JSON)
 public interface AuthenticationResource extends RestResource, DirectRestService {
     @GET
     @Path("gwt_logout")
-    @Consumes(MediaType.APPLICATION_JSON)
-    @Produces(MediaType.APPLICATION_JSON)
     @ApiOperation(
             value = "Logout the current session",
             response = Boolean.class)

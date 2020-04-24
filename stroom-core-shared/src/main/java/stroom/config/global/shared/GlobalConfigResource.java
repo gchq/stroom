@@ -4,6 +4,7 @@ import io.swagger.annotations.Api;
 import io.swagger.annotations.ApiOperation;
 import org.fusesource.restygwt.client.DirectRestService;
 import stroom.ui.config.shared.UiConfig;
+import stroom.ui.config.shared.UiPreferences;
 import stroom.util.shared.ResourcePaths;
 import stroom.util.shared.RestResource;
 
@@ -20,8 +21,8 @@ import javax.ws.rs.core.MediaType;
 
 @Api(value = "config - /v1")
 @Path(GlobalConfigResource.BASE_PATH)
-@Consumes(MediaType.APPLICATION_JSON)
 @Produces(MediaType.APPLICATION_JSON)
+@Consumes(MediaType.APPLICATION_JSON)
 public interface GlobalConfigResource extends RestResource, DirectRestService {
     String BASE_PATH = "/config" + ResourcePaths.V1;
     String PROPERTIES_SUB_PATH = "/properties";
@@ -30,6 +31,7 @@ public interface GlobalConfigResource extends RestResource, DirectRestService {
     String DB_OVERRIDE_VALUE_SUB_PATH = "/dbOverrideValue";
     String CLUSTER_PROPERTIES_SUB_PATH = "/clusterProperties";
     String FETCH_UI_CONFIG_SUB_PATH = "/fetchUiConfig";
+    String UI_PREFERENCES_SUB_PATH = "/noauth/uiPreferences";
 
     String PROP_NAME_PATH_PARAM = "/{propertyName}";
     String NODE_NAME_PATH_PARAM = "/{nodeName}";
@@ -59,7 +61,6 @@ public interface GlobalConfigResource extends RestResource, DirectRestService {
 
 //    @GET
 //    @Path(PROPERTIES_SUB_PATH + PROP_NAME_PATH_PARAM + YAML_OVERRIDE_VALUE_SUB_PATH)
-//    @Produces(MediaType.APPLICATION_JSON)
 //    OverrideValue<String> getYamlValueByName(final @PathParam("propertyName") String propertyName);
 
     @GET
@@ -69,8 +70,6 @@ public interface GlobalConfigResource extends RestResource, DirectRestService {
 
 //    @POST
 //    @Path("/find")
-//    @Consumes(MediaType.APPLICATION_JSON)
-//    @Produces(MediaType.APPLICATION_JSON)
 //    @ApiOperation(
 //            value = "Get global config properties",
 //            response = ResultPage.class)
@@ -96,4 +95,11 @@ public interface GlobalConfigResource extends RestResource, DirectRestService {
             value = "Get config property",
             response = UiConfig.class)
     UiConfig fetchUiConfig();
+
+    @GET
+    @Path(UI_PREFERENCES_SUB_PATH)
+    @ApiOperation(
+            value = "Get UI preferences",
+            response = UiPreferences.class)
+    UiPreferences uiPreferences();
 }

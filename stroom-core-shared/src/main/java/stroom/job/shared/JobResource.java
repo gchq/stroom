@@ -34,10 +34,9 @@ import javax.ws.rs.core.MediaType;
 @Api(value = "job - /v1")
 @Path("/job" + ResourcePaths.V1)
 @Produces(MediaType.APPLICATION_JSON)
+@Consumes(MediaType.APPLICATION_JSON)
 public interface JobResource extends RestResource, DirectRestService {
     @GET
-    @Consumes(MediaType.APPLICATION_JSON)
-    @Produces(MediaType.APPLICATION_JSON)
     @ApiOperation(
             value = "Lists jobs",
             response = ResultPage.class)
@@ -45,8 +44,6 @@ public interface JobResource extends RestResource, DirectRestService {
 
     @PUT
     @Path("/{id}/enabled")
-    @Consumes(MediaType.APPLICATION_JSON)
-    @Produces(MediaType.APPLICATION_JSON)
     @ApiOperation(value = "Sets the enabled status of the job")
     void setEnabled(@PathParam("id") Integer id, Boolean enabled);
 }

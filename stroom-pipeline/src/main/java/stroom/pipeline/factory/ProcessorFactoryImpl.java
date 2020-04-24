@@ -23,32 +23,27 @@ import stroom.pipeline.errorhandler.ErrorReceiver;
 import stroom.pipeline.errorhandler.ErrorReceiverProxy;
 import stroom.pipeline.errorhandler.ErrorStatistics;
 import stroom.pipeline.errorhandler.LoggedException;
-import stroom.task.api.TaskContext;
+import stroom.task.api.TaskContextFactory;
 import stroom.util.pipeline.scope.PipelineScoped;
 import stroom.util.shared.Severity;
 
 import javax.inject.Inject;
-import javax.inject.Provider;
 import java.util.List;
-import java.util.concurrent.CompletableFuture;
-import java.util.concurrent.CompletionException;
-import java.util.concurrent.CountDownLatch;
-import java.util.concurrent.Executor;
-import java.util.concurrent.TimeUnit;
+import java.util.concurrent.*;
 
 @PipelineScoped
 class ProcessorFactoryImpl implements ProcessorFactory {
     private static final Logger LOGGER = LoggerFactory.getLogger(ProcessorFactoryImpl.class);
     private final Executor executor;
-    private final Provider<TaskContext> taskContextProvider;
+    private final TaskContextFactory taskContextFactory;
     private final ErrorReceiverProxy errorReceiverProxy;
 
     @Inject
     public ProcessorFactoryImpl(final Executor executor,
-                                final Provider<TaskContext> taskContextProvider,
+                                final TaskContextFactory taskContextFactory,
                                 final ErrorReceiverProxy errorReceiverProxy) {
         this.executor = executor;
-        this.taskContextProvider = taskContextProvider;
+        this.taskContextFactory = taskContextFactory;
         this.errorReceiverProxy = errorReceiverProxy;
     }
 
@@ -62,22 +57,22 @@ class ProcessorFactoryImpl implements ProcessorFactory {
             return processors.get(0);
         }
 
-        return new MultiWayProcessor(processors, executor, taskContextProvider, errorReceiverProxy);
+        return new MultiWayProcessor(processors, executor, taskContextFactory, errorReceiverProxy);
     }
 
     static class MultiWayProcessor implements Processor {
         private final List<Processor> processors;
         private final Executor executor;
-        private final Provider<TaskContext> taskContextProvider;
+        private final TaskContextFactory taskContextFactory;
         private final ErrorReceiver errorReceiver;
 
         MultiWayProcessor(final List<Processor> processors,
                           final Executor executor,
-                          final Provider<TaskContext> taskContextProvider,
+                          final TaskContextFactory taskContextFactory,
                           final ErrorReceiver errorReceiver) {
             this.processors = processors;
             this.executor = executor;
-            this.taskContextProvider = taskContextProvider;
+            this.taskContextFactory = taskContextFactory;
             this.errorReceiver = errorReceiver;
         }
 
@@ -85,8 +80,7 @@ class ProcessorFactoryImpl implements ProcessorFactory {
         public void process() {
             final CountDownLatch countDownLatch = new CountDownLatch(processors.size());
             for (final Processor processor : processors) {
-                final TaskContext taskContext = taskContextProvider.get();
-                final Runnable runnable = taskContext.sub(processor::process);
+                final Runnable runnable = taskContextFactory.context(taskContextFactory.currentContext(), "Process", taskContext -> processor.process());
                 CompletableFuture
                         .runAsync(runnable, executor)
                         .whenComplete((r, t) -> {

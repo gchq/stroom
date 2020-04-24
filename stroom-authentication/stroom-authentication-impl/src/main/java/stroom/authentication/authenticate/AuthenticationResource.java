@@ -23,11 +23,9 @@ import io.swagger.annotations.Api;
 import io.swagger.annotations.ApiOperation;
 import io.swagger.annotations.ApiParam;
 import stroom.authentication.api.OIDC;
-import stroom.authentication.exceptions.NoSuchUserException;
 import stroom.util.shared.ResourcePaths;
 import stroom.util.shared.RestResource;
 
-import javax.annotation.Nullable;
 import javax.servlet.http.HttpServletRequest;
 import javax.validation.constraints.NotNull;
 import javax.ws.rs.Consumes;
@@ -39,11 +37,10 @@ import javax.ws.rs.Produces;
 import javax.ws.rs.QueryParam;
 import javax.ws.rs.core.Context;
 import javax.ws.rs.core.MediaType;
-import javax.ws.rs.core.Response;
-import java.net.URISyntaxException;
 
 @Path(AuthenticationResource.BASE_PATH)
 @Produces(MediaType.APPLICATION_JSON)
+@Consumes(MediaType.APPLICATION_JSON)
 @Api(description = "Stroom Authentication API", tags = {"Authentication"})
 public interface AuthenticationResource extends RestResource {
     String BASE_PATH = "/authentication" + ResourcePaths.V1;
@@ -55,28 +52,24 @@ public interface AuthenticationResource extends RestResource {
      * an AuthenticationRequest to /authenticate.
      */
     @POST
-    @Path("/noauth/authenticate")
-    @Consumes({"application/json"})
-    @Produces({"application/json"})
+    @Path("/noauth/login")
     @Timed
     @NotNull
     @ApiOperation(value = "Handle a login request made using username and password credentials.",
             response = String.class, tags = {"Authentication"})
-    Response login(
+    LoginResponse login(
             @Context @NotNull HttpServletRequest request,
             @QueryParam(OIDC.REDIRECT_URI) final String redirectUri,
             @ApiParam("Credentials") @NotNull Credentials credentials);
 
     @GET
     @Path("/logout")
-    @Consumes({"application/json"})
-    @Produces({"application/json"})
     @Timed
     @NotNull
     @ApiOperation(value = "Log a user out of their session")
-    Response logout(
+    Boolean logout(
             @Context @NotNull HttpServletRequest request,
-            @QueryParam(OIDC.REDIRECT_URI) @NotNull String redirectUri) throws URISyntaxException;
+            @QueryParam(OIDC.REDIRECT_URI) @NotNull String redirectUri);
 
     @GET
     @Path("/noauth/reset/{email}")
@@ -84,17 +77,9 @@ public interface AuthenticationResource extends RestResource {
     @NotNull
     @ApiOperation(value = "Reset a user account using an email address.",
             response = String.class, tags = {"Authentication"})
-    Response resetEmail(
+    Boolean resetEmail(
             @Context @NotNull HttpServletRequest request,
-            @PathParam("email") String emailAddress) throws NoSuchUserException;
-
-//    @GET
-//    @Path("/noauth/verify/{token}")
-//    @Timed
-//    @NotNull
-//    @ApiOperation(value = "Verify the authenticity and current-ness of a JWS token.",
-//            response = String.class, tags = {"Authentication"})
-//    Response verifyToken(@PathParam("token") String token);
+            @PathParam("email") String emailAddress);
 
     @POST
     @Path("noauth/changePassword")
@@ -102,7 +87,7 @@ public interface AuthenticationResource extends RestResource {
     @NotNull
     @ApiOperation(value = "Change a user's password.",
             response = String.class, tags = {"Authentication"})
-    Response changePassword(
+    ChangePasswordResponse changePassword(
             @Context @NotNull HttpServletRequest request,
             @ApiParam("changePasswordRequest") @NotNull ChangePasswordRequest changePasswordRequest);
 
@@ -112,7 +97,7 @@ public interface AuthenticationResource extends RestResource {
     @NotNull
     @ApiOperation(value = "Reset an authenticated user's password.",
             response = String.class, tags = {"Authentication"})
-    Response resetPassword(
+    ChangePasswordResponse resetPassword(
             @ApiParam("changePasswordRequest") @NotNull ResetPasswordRequest req);
 
     @GET
@@ -121,7 +106,7 @@ public interface AuthenticationResource extends RestResource {
     @NotNull
     @ApiOperation(value = "Check if a user's password needs changing.",
             response = Boolean.class, tags = {"Authentication"})
-    Response needsPasswordChange(@QueryParam("email") String email);
+    Boolean needsPasswordChange(@QueryParam("email") String email);
 
     @POST
     @Path("noauth/isPasswordValid")
@@ -129,29 +114,7 @@ public interface AuthenticationResource extends RestResource {
     @NotNull
     @ApiOperation(value = "Returns the length and complexity rules.",
             response = Boolean.class, tags = {"Authentication"})
-    Response isPasswordValid(
+    PasswordValidationResponse isPasswordValid(
             @Context @NotNull HttpServletRequest request,
             @ApiParam("passwordValidationRequest") @NotNull PasswordValidationRequest passwordValidationRequest);
-
-//    /**
-//     * Checks to see if the user needs to change their password, and re-directs them accordingly if they do.
-//     * If they don't it will create the redirection URL with access code as normal.
-//     */
-//    @GET
-//    @Path("/noauth/postAuthenticationRedirect")
-//    @Produces({"application/json"})
-//    @Timed
-//    @NotNull
-//    Response postAuthenticationRedirect(
-//            @Context @NotNull HttpServletRequest request,
-//            @QueryParam(OIDC.REDIRECT_URI) @Nullable String redirectUri);
-//
-//    @GET
-//    @Path("gwt_logout")
-//    @Consumes(MediaType.APPLICATION_JSON)
-//    @Produces(MediaType.APPLICATION_JSON)
-//    @ApiOperation(
-//            value = "Logout the current session",
-//            response = Boolean.class)
-//    Boolean logout();
 }

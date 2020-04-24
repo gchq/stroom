@@ -21,14 +21,20 @@ import stroom.util.config.FieldMapper;
 import stroom.util.config.PropertyUtil;
 import stroom.util.logging.LogUtil;
 import stroom.util.shared.AbstractConfig;
+import stroom.util.shared.NotInjectableConfig;
 
 import java.io.FileNotFoundException;
 import java.io.IOException;
 import java.lang.reflect.InvocationTargetException;
+import java.lang.reflect.Modifier;
 import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.util.Arrays;
+import java.util.Comparator;
+import java.util.HashMap;
 import java.util.HashSet;
+import java.util.List;
+import java.util.Map;
 import java.util.Set;
 import java.util.function.Predicate;
 import java.util.stream.Collectors;
@@ -110,7 +116,36 @@ class TestAppConfigModule {
      */
     @Test
     void testAbstractConfigPresence() throws IOException {
-        final AppConfig appConfig = new AppConfig();
+
+        AppConfig appConfig = new AppConfig();
+        AppConfigModule appConfigModule = new AppConfigModule(new ConfigHolder() {
+            @Override
+            public AppConfig getAppConfig() {
+                return appConfig;
+            }
+
+            @Override
+            public Path getConfigFile() {
+                return Paths.get("NOT USED");
+            }
+        });
+        Injector injector = Guice.createInjector(appConfigModule);
+//        Injector injector = Guice.createInjector(new AbstractModule() {
+//            @Override
+//            protected void configure() {
+//                install(new AppConfigModule(new ConfigHolder() {
+//                    @Override
+//                    public AppConfig getAppConfig() {
+//                        return new AppConfig();
+//                    }
+//
+//                    @Override
+//                    public Path getConfigFile() {
+//                        return Paths.get("NOT USED");
+//                    }
+//                }));
+//            }
+//        });
 
         Predicate<String> packageNameFilter = name ->
                 name.startsWith(STROOM_PACKAGE_PREFIX) && !name.contains("shaded");
@@ -122,16 +157,24 @@ class TestAppConfigModule {
                 && !clazz.equals(AppConfig.class);
         };
 
-        LOGGER.info("Finding all IsConfig classes");
+        LOGGER.info("Finding all AbstractConfig classes");
 
-        // Find all classes that implement IsConfig
+        // Find all classes that extend AbstractConfig
         final ClassLoader classLoader = getClass().getClassLoader();
-        final Set<Class<?>> abstractConfigClasses = ClassPath.from(classLoader).getAllClasses()
+        final Set<Class<?>> abstractConfigConcreteClasses = ClassPath.from(classLoader)
+                .getAllClasses()
                 .stream()
                 .filter(classInfo -> packageNameFilter.test(classInfo.getPackageName()))
                 .map(ClassPath.ClassInfo::load)
                 .filter(classFilter)
                 .filter(AbstractConfig.class::isAssignableFrom)
+                .filter(clazz -> {
+                    boolean isAbstract = Modifier.isAbstract(clazz.getModifiers());
+                    if (isAbstract) {
+                        LOGGER.info("Ignoring abstract class {}", clazz.getName());
+                    }
+                    return !isAbstract;
+                }) // Ignore abstract classes, e.g. UriConfig
                 .peek(clazz -> {
                     LOGGER.debug(clazz.getSimpleName());
                 })
@@ -139,8 +182,10 @@ class TestAppConfigModule {
 
         LOGGER.info("Finding all classes in object tree");
 
+        Map<Class<?>, Integer> appConfigTreeClassToIdMap = new HashMap<>();
+
         // Find all stroom. classes in the AppConfig tree, i.e. config POJOs
-        final Set<Class<?>> configClasses = new HashSet<>();
+        final Set<Class<?>> appConfigTreeClasses = new HashSet<>();
         PropertyUtil.walkObjectTree(
                 appConfig,
                 prop -> packageNameFilter.test(prop.getValueClass().getPackageName()),
@@ -158,18 +203,62 @@ class TestAppConfigModule {
 
                     Class<?> valueClass = prop.getValueClass();
                     if (classFilter.test(valueClass)) {
-                        configClasses.add(prop.getValueClass());
+                        appConfigTreeClasses.add(prop.getValueClass());
+                        AbstractConfig propValue = (AbstractConfig) prop.getValueFromConfigObject();
+                        // Keep a record of the instance ID of the instance in the tree
+                        appConfigTreeClassToIdMap.put(valueClass, System.identityHashCode(propValue));
                     }
                 });
 
-        // Make sure all config classes implement IsConfig and all IsConfig classes are in
+        Map<Class<?>, Integer> injectedInstanceIdMap = abstractConfigConcreteClasses.stream()
+                .collect(Collectors.toMap(
+                        clazz -> clazz,
+                        clazz -> {
+                            Object object = injector.getInstance(clazz);
+                            return System.identityHashCode(object);
+                        }));
+
+        // Make sure all config classes extend AbstractConfig and all AbstractConfig classes are in
         // the AppConfig tree. If there is a mismatch then it may be due to the getter/setter not
         // being public in the config class, else the config class may not be a property in the
         // AppConfig object tree
-        Assertions.assertThat(abstractConfigClasses)
-                .containsAll(configClasses);
-        Assertions.assertThat(configClasses)
-                .containsAll(abstractConfigClasses);
+        Assertions.assertThat(abstractConfigConcreteClasses)
+                .containsAll(appConfigTreeClasses);
+
+        Assertions.assertThat(appConfigTreeClasses)
+                .containsAll(abstractConfigConcreteClasses);
+
+        // Now we know the appConfig tree contains all the concrete AbstractConfig classes
+        // check that guice will give us the right instance. This ensures
+
+        List<Class<?>> classesWithMultipleInstances = appConfigTreeClassToIdMap.entrySet()
+                .stream()
+                .filter(entry -> {
+                    Integer appConfigTreeInstanceId = entry.getValue();
+                    Integer injectedInstanceId = injectedInstanceIdMap.get(entry.getKey());
+
+                    // Some AbstractConfig classes are shared so can't be injected themselves
+                    // so filter them out
+                    boolean isInjectableClass = entry.getKey().getAnnotation(NotInjectableConfig.class) == null;
+
+                    return !injectedInstanceId.equals(appConfigTreeInstanceId) && isInjectableClass;
+                })
+                .map(Map.Entry::getKey)
+                .collect(Collectors.toList());
+
+        if (!classesWithMultipleInstances.isEmpty()) {
+            LOGGER.error("The following AbstractConfig classes have a different injected instance to the " +
+                    "instance in the AppConfig tree.\n" +
+                    "You need to add Guice bindings for them in AppConfigModule");
+            classesWithMultipleInstances.stream()
+                    .sorted(Comparator.comparing(Class::getName))
+                    .forEach(clazz -> {
+                        AbstractConfig config = (AbstractConfig) injector.getInstance(clazz);
+                        LOGGER.info("  {}", clazz.getName());
+                    });
+        }
+
+        Assertions.assertThat(classesWithMultipleInstances).isEmpty();
     }
 
 

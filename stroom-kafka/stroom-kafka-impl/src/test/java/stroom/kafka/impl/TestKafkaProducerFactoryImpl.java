@@ -200,7 +200,7 @@ public class TestKafkaProducerFactoryImpl {
 
         final HealthCheck.Result health = kafkaProducerFactory.getHealth();
         LOGGER.info(health.toString());
-        assertThat((List<?>) ( health.getDetails().get("producers") )).isEmpty();
+        assertThat((List<?>) ( health.getDetails().get("sharedProducers") )).isEmpty();
 
 
         // Now get both so the factory should be holding both
@@ -209,14 +209,14 @@ public class TestKafkaProducerFactoryImpl {
 
                 final HealthCheck.Result health2 = kafkaProducerFactory.getHealth();
                 LOGGER.info(health2.toString());
-                assertThat((List<?>)( health2.getDetails().get("producers") )).hasSize(2);
+                assertThat((List<?>)( health2.getDetails().get("sharedProducers") )).hasSize(2);
             }
         }
 
         // having released the KPSs they should still be in the factory
         final HealthCheck.Result health3 = kafkaProducerFactory.getHealth();
         LOGGER.info(health3.toString());
-        assertThat((List<?>)( health3.getDetails().get("producers") )).hasSize(2);
+        assertThat((List<?>)( health3.getDetails().get("sharedProducers") )).hasSize(2);
     }
 
     @NotNull

@@ -22,14 +22,15 @@ import { validateAsync } from "components/users/validation";
 import useRouter from "lib/useRouter";
 import ChangePasswordForm from "./ChangePasswordForm";
 import usePassword from "./useChangePassword";
-import useServiceUrl from "startup/config/useServiceUrl";
+import useUrlFactory from "lib/useUrlFactory";
 
 const ChangePasswordContainer = () => {
   const { changePassword, showChangeConfirmation } = usePassword();
   const { router } = useRouter();
   const [redirectUri, setRedirectUri] = useState("");
   const [email, setEmail] = useState("");
-  const { authenticationServiceUrl } = useServiceUrl();
+  const { apiUrl } = useUrlFactory();
+  const resource = apiUrl("/authentication/v1");
 
   useEffect(() => {
     if (!!router.location) {
@@ -68,7 +69,7 @@ const ChangePasswordContainer = () => {
       email,
       newPassword,
       verifyPassword,
-      authenticationServiceUrl,
+      resource,
       oldPassword,
     );
   };

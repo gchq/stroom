@@ -3,19 +3,21 @@ package stroom.pipeline.stepping;
 import stroom.pipeline.shared.stepping.PipelineStepRequest;
 import stroom.pipeline.shared.stepping.SteppingResult;
 import stroom.task.api.TaskContext;
+import stroom.task.api.TaskContextFactory;
 
 import javax.inject.Inject;
 import javax.inject.Provider;
+import java.util.function.Function;
 import java.util.function.Supplier;
 
 public class SteppingService {
-    private final Provider<TaskContext> taskContextProvider;
+    private final TaskContextFactory taskContextFactory;
     private final Provider<SteppingRequestHandler> steppingRequestHandlerProvider;
 
     @Inject
-    public SteppingService(final Provider<TaskContext> taskContextProvider,
+    public SteppingService(final TaskContextFactory taskContextFactory,
                            final Provider<SteppingRequestHandler> steppingRequestHandlerProvider) {
-        this.taskContextProvider = taskContextProvider;
+        this.taskContextFactory = taskContextFactory;
         this.steppingRequestHandlerProvider = steppingRequestHandlerProvider;
     }
 
@@ -26,13 +28,11 @@ public class SteppingService {
         // folderValidator.constrainCriteria(task.getCriteria());
 
         // Execute the stepping task.
-        final TaskContext taskContext = taskContextProvider.get();
-        Supplier<SteppingResult> supplier = () -> {
-            taskContext.setName("Translation stepping");
+        final Function<TaskContext, SteppingResult> function = taskContext -> {
             final SteppingRequestHandler steppingRequestHandler = steppingRequestHandlerProvider.get();
-            return steppingRequestHandler.exec(request);
+            return steppingRequestHandler.exec(taskContext, request);
         };
-        supplier = taskContext.sub(supplier);
+        final Supplier<SteppingResult> supplier = taskContextFactory.contextResult("Translation stepping", function);
         return supplier.get();
     }
 }

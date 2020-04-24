@@ -1,6 +1,4 @@
 import { HttpRequest, HttpResponse } from "@pollyjs/adapter-fetch";
-
-import { Config } from "startup/config/types";
 import { ResourceBuilder } from "./types";
 import { SessionInfo } from "components/SessionInfo/api/types";
 
@@ -16,9 +14,9 @@ const SESSION_INFO: SessionInfo = {
 
 const resourceBuilder: ResourceBuilder = (
   server: any,
-  { stroomBaseServiceUrl }: Config,
+  apiUrl: any,
 ) => {
-  const resource = `${stroomBaseServiceUrl}/sessionInfo/v1/`;
+  const resource = apiUrl("/sessionInfo/v1");
 
   server.get(resource).intercept((req: HttpRequest, res: HttpResponse) => {
     res.json(SESSION_INFO);

@@ -32,8 +32,7 @@ import stroom.pipeline.cache.PipelineCacheModule;
 import stroom.processor.impl.MockProcessorModule;
 import stroom.security.mock.MockSecurityContextModule;
 import stroom.statistics.api.InternalStatisticsReceiver;
-import stroom.task.api.SimpleTaskContext;
-import stroom.task.api.TaskContext;
+import stroom.task.impl.TaskContextModule;
 import stroom.util.io.BasicStreamCloser;
 import stroom.util.io.StreamCloser;
 import stroom.util.pipeline.scope.PipelineScopeModule;
@@ -88,10 +87,10 @@ public class CliModule extends AbstractModule {
 //        install(new stroom.index.impl.selection.selection.VolumeModule());
         install(new MockServletModule());
         install (new MockProcessorModule());
+        install(new TaskContextModule());
 
         bind(InternalStatisticsReceiver.class).to(HeadlessInternalStatisticsReceiver.class);
         bind(StreamCloser.class).to(BasicStreamCloser.class).in(PipelineScoped.class);
-        bind(TaskContext.class).to(SimpleTaskContext.class);
     }
 
     @Provides

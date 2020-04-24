@@ -1,3 +1,6 @@
+import java.net.URI
+import java.nio.file.Paths
+
 buildscript {
     repositories {
         mavenLocal()
@@ -686,6 +689,9 @@ configure(projectsToBePublished) {
 //}
 
 task clearContentPackImportDir(type: Delete) {
+    doFirst {
+        println "Clearing ${contentPackImportDir}"
+    }
     //ensure the import directory exists
     new File(contentPackImportDir).mkdirs()
 
@@ -696,6 +702,10 @@ task clearContentPackImportDir(type: Delete) {
 }
 
 task clearContentPackDownloadDir(type: Delete) {
+    doFirst {
+        println "Clearing ${contentPackDownloadDir}"
+    }
+
     //ensure the import directory exists
     new File(contentPackDownloadDir).mkdirs()
 
@@ -706,7 +716,33 @@ task clearContentPackDownloadDir(type: Delete) {
 }
 
 task downloadStroomContent() {
-    dependsOn clearContentPackDownloadDir
+
+    doFirst {
+        println "Downloading content packs to ${contentPackDownloadDir}"
+    }
+
+    def downloadPack = { url ->
+        String filename = Paths.get(new URI(url).getPath()).getFileName().toString()
+        def downloadFile = new File(contentPackDownloadDir + "/" + filename)
+        def importFile = new File(contentPackImportDir + "/" + filename)
+        if (downloadFile.exists()) {
+            println "${url} has already been downloaded"
+        } else {
+            download {
+                src url
+                dest new File(contentPackDownloadDir)
+                overwrite true
+            }
+        }
+
+        if (!importFile.exists()) {
+            copy {
+                println "Copying from ${downloadFile} to ${importFile}"
+                from downloadFile
+                into stroomContentImportDir
+            }
+        }
+    }
 
     doLast {
         //download each content pack to the contentPackImportDir ready for stroom to import on startup
@@ -714,35 +750,17 @@ task downloadStroomContent() {
             def packName = pack.key
             def packVer = pack.value
             def packUrl = "${contentReleasesUrl}${packName}-${packVer}/${packName}-${packVer}.zip"
-            download {
-                src packUrl
-                dest new File(contentPackDownloadDir)
-                overwrite true
-            }
+
+            downloadPack packUrl
+
         }
         //now get the visualisations pack from a different repo
-        download {
-            src visualisationsContentPackUrl
-            dest new File(contentPackDownloadDir)
-            overwrite true
-        }
-    }
-}
-
-task copyContentPacksToImportDir(type: Copy) {
-    dependsOn clearContentPackImportDir
-    dependsOn downloadStroomContent
-
-    doLast {
-        println "Configuring copy from ${contentPackDownloadDir} to ${contentPackImportDir}"
-
-        from "${contentPackDownloadDir}"
-        into stroomContentImportDir
+        downloadPack visualisationsContentPackUrl
     }
 }
 
 task setupSampleData() {
-    dependsOn copyContentPacksToImportDir
+    dependsOn downloadStroomContent
     dependsOn ':stroom-app:setupSampleDataApplication'
 }
 
@@ -793,4 +811,10 @@ task dependenciesPng() {
         compileDepsDot.write(dotGraph)
     }
 }
+
+task clean() {
+    dependsOn clearContentPackImportDir
+    dependsOn clearContentPackDownloadDir
+}
+
 

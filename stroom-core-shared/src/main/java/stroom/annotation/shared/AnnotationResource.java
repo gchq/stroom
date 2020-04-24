@@ -35,24 +35,19 @@ import java.util.List;
 @Api(value = "annotations - /v1")
 @Path("/annotation" + ResourcePaths.V1)
 @Produces(MediaType.APPLICATION_JSON)
+@Consumes(MediaType.APPLICATION_JSON)
 public interface AnnotationResource extends RestResource, DirectRestService {
     @GET
-    @Consumes(MediaType.APPLICATION_JSON)
-    @Produces(MediaType.APPLICATION_JSON)
     @ApiOperation(
             value = "Gets an annotation",
             response = Response.class)
     AnnotationDetail get(@QueryParam("annotationId") Long annotationId);
 
     @POST
-    @Consumes(MediaType.APPLICATION_JSON)
-    @Produces(MediaType.APPLICATION_JSON)
     AnnotationDetail createEntry(CreateEntryRequest request);
 
     @GET
     @Path("status")
-    @Consumes(MediaType.APPLICATION_JSON)
-    @Produces(MediaType.APPLICATION_JSON)
     @ApiOperation(
             value = "Gets a list of allowed statuses",
             response = Response.class)
@@ -60,8 +55,6 @@ public interface AnnotationResource extends RestResource, DirectRestService {
 
     @GET
     @Path("comment")
-    @Consumes(MediaType.APPLICATION_JSON)
-    @Produces(MediaType.APPLICATION_JSON)
     @ApiOperation(
             value = "Gets a list of predefined comments",
             response = Response.class)
@@ -69,8 +62,6 @@ public interface AnnotationResource extends RestResource, DirectRestService {
 
     @GET
     @Path("linkedEvents")
-    @Consumes(MediaType.APPLICATION_JSON)
-    @Produces(MediaType.APPLICATION_JSON)
     @ApiOperation(
             value = "Gets a list of events linked to this annotation",
             response = Response.class)
@@ -78,8 +69,6 @@ public interface AnnotationResource extends RestResource, DirectRestService {
 
     @POST
     @Path("link")
-    @Consumes(MediaType.APPLICATION_JSON)
-    @Produces(MediaType.APPLICATION_JSON)
     @ApiOperation(
             value = "Links an annotation to an event",
             response = Response.class)
@@ -87,8 +76,6 @@ public interface AnnotationResource extends RestResource, DirectRestService {
 
     @POST
     @Path("unlink")
-    @Consumes(MediaType.APPLICATION_JSON)
-    @Produces(MediaType.APPLICATION_JSON)
     @ApiOperation(
             value = "Unlinks an annotation from an event",
             response = Response.class)
@@ -96,8 +83,6 @@ public interface AnnotationResource extends RestResource, DirectRestService {
 
     @POST
     @Path("setStatus")
-    @Consumes(MediaType.APPLICATION_JSON)
-    @Produces(MediaType.APPLICATION_JSON)
     @ApiOperation(
             value = "Bulk action to set the status for several annotations",
             response = Response.class)
@@ -105,8 +90,6 @@ public interface AnnotationResource extends RestResource, DirectRestService {
 
     @POST
     @Path("setAssignedTo")
-    @Consumes(MediaType.APPLICATION_JSON)
-    @Produces(MediaType.APPLICATION_JSON)
     @ApiOperation(
             value = "Bulk action to set the assignment for several annotations",
             response = Response.class)

@@ -32,16 +32,15 @@ import org.glassfish.jersey.logging.LoggingFeature;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import stroom.app.commands.DbMigrationCommand;
-import stroom.app.errors.NodeCallExceptionMapper;
 import stroom.app.guice.AppModule;
 import stroom.config.app.AppConfig;
 import stroom.config.app.Config;
 import stroom.config.global.impl.ConfigMapper;
 import stroom.config.global.impl.validation.ConfigValidator;
+import stroom.dropwizard.common.DelegatingExceptionMapper;
 import stroom.dropwizard.common.Filters;
 import stroom.dropwizard.common.HealthChecks;
 import stroom.dropwizard.common.ManagedServices;
-import stroom.dropwizard.common.PermissionExceptionMapper;
 import stroom.dropwizard.common.RestResources;
 import stroom.dropwizard.common.Servlets;
 import stroom.dropwizard.common.SessionListeners;
@@ -80,6 +79,8 @@ public class App extends Application<Config> {
     @Inject
     private SessionListeners sessionListeners;
     @Inject
+    private DelegatingExceptionMapper delegatingExceptionMapper;
+    @Inject
     private RestResources restResources;
     @Inject
     private ManagedServices managedServices;
@@ -109,11 +110,20 @@ public class App extends Application<Config> {
                 new EnvironmentVariableSubstitutor(false)));
 
         // Add the GWT UI assets.
-        bootstrap.addBundle(new AssetsBundle("/ui", ResourcePaths.ROOT_PATH, "index.html", "ui"));
+        bootstrap.addBundle(new AssetsBundle(
+                "/ui",
+                ResourcePaths.ROOT_PATH,
+                "index.html",
+                "ui"));
 
         // Add the new React UI assets. Note that the React UI uses sub paths for navigation using the React BrowserRouter.
         // This always needs the root page to be served regardless of the path requested so we need to use a special asset bundle to achieve this.
-        bootstrap.addBundle(new BrowserRouterAssetsBundle("/new-ui", "/", "index.html", "new-ui", ResourcePaths.SINGLE_PAGE_PREFIX));
+        bootstrap.addBundle(new BrowserRouterAssetsBundle(
+                "/new-ui",
+                "/",
+                "index.html",
+                "new-ui",
+                ResourcePaths.SINGLE_PAGE_PREFIX));
 
         // Add a DW Command so we can run the full migration without running the
         // http server
@@ -128,7 +138,10 @@ public class App extends Application<Config> {
     public void run(final Config configuration, final Environment environment) {
         LOGGER.info("Using application configuration file {}", configFile.toAbsolutePath().normalize());
 
-        // Turn on Jersey logging.
+        // Turn on Jersey logging of request/response payloads
+        // I can't seem to get this to work unless Level is SEVERE
+        // TODO need to establish if there is a performance hit for using the JUL to SLF bridge
+        //   see http://www.slf4j.org/legacy.html#jul-to-slf4j
         environment.jersey().register(
                 new LoggingFeature(
                         java.util.logging.Logger.getLogger(LoggingFeature.DEFAULT_LOGGER_NAME),
@@ -141,9 +154,6 @@ public class App extends Application<Config> {
 
         // Add useful logging setup.
         registerLogConfiguration(environment);
-
-        // Add jersey exception mappers
-        registerExceptionMappers(environment);
 
         // We want Stroom to use the root path so we need to move Dropwizard's path.
         environment.jersey().setUrlPattern(ResourcePaths.API_ROOT_PATH + "/*");
@@ -185,17 +195,11 @@ public class App extends Application<Config> {
         // Add all injectable rest resources.
         restResources.register();
 
-        // Map exceptions to helpful HTTP responses
-        environment.jersey().register(PermissionExceptionMapper.class);
+        // Add jersey exception mappers.
+        environment.jersey().register(delegatingExceptionMapper);
 
         // Listen to the lifecycle of the Dropwizard app.
         managedServices.register();
-    }
-
-
-    private void registerExceptionMappers(final Environment environment) {
-        // Add an exception mapper for dealing with our own NodeCallExceptions
-        environment.jersey().register(NodeCallExceptionMapper.class);
     }
 
     private String getNodeName(final AppConfig appConfig) {
@@ -264,7 +268,8 @@ public class App extends Application<Config> {
         environment.jersey().register(SessionFactoryProvider.class);
     }
 
-    private static void configureSessionCookie(final Environment environment, final stroom.config.app.SessionCookieConfig config) {
+    private static void configureSessionCookie(final Environment environment,
+                                               final stroom.config.app.SessionCookieConfig config) {
         // Ensure the session cookie that provides JSESSIONID is secure.
         final SessionCookieConfig sessionCookieConfig = environment
                 .getApplicationContext()

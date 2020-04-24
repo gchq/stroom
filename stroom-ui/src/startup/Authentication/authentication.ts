@@ -19,56 +19,56 @@
 import {History, Location} from "history";
 // import * as queryString from "query-string";
 
-export const sendAuthenticationRequest = (
-    referrer: string,
-    uiUrl: string,
-    loginUrl: string,
-) => {
-    // We need to remember where the user was going
-    // localStorage.setItem("preAuthenticationRequestReferrer", window.location.href);
-    localStorage.setItem("preAuthenticationRequestReferrer", referrer);
-
-    // Perform a login
-    const redirectUri = `${uiUrl}/s/handleAuthenticationResponse`;
-    const authenticationRequestParams = `/login?redirectUri=${redirectUri}`;
-    const loginRequestUrl = `${loginUrl}${authenticationRequestParams}`;
-    window.location.href = loginRequestUrl;
-
-
-
-
-
-
-
-    // const redirectUri = `${uiUrl}/s/handleAuthenticationResponse`;
-    //
-    // getOpenIdConfiguration(openIdConfigUrl, openIdConfiguration => {
-    //     console.log(openIdConfiguration.issuer);
-    //     console.log(openIdConfiguration.authorization_endpoint);
-    //
-    //     const authorizationEndpoint = openIdConfiguration.authorization_endpoint;
-    //
-    //     // Create state and store
-    //     const state = createUniqueString();
-    //     localStorage.setItem("state", state);
-    //
-    //     // Create nonce and store
-    //     const nonce = createUniqueString();
-    //     localStorage.setItem("nonce", nonce);
-    //
-    //     // We need to remember where the user was going
-    //     // localStorage.setItem("preAuthenticationRequestReferrer", window.location.href);
-    //     localStorage.setItem("preAuthenticationRequestReferrer", referrer);
-    //
-    //     // Compose the new URL
-    //     const authenticationRequestParams = `?scope=openid&response_type=id_token&client_id=${clientId}&redirect_uri=${redirectUri}&state=${state}&nonce=${nonce}`;
-    //     const authenticationRequestUrl = `${authorizationEndpoint}${authenticationRequestParams}`;
-    //
-    //     // We hand off to the authenticationService.
-    //     console.log(authenticationRequestUrl);
-    //     window.location.href = authenticationRequestUrl;
-    // });
-};
+// export const sendAuthenticationRequest = (
+//     referrer: string,
+//     uiUrl: string,
+//     loginUrl: string,
+// ) => {
+//     // We need to remember where the user was going
+//     // localStorage.setItem("preAuthenticationRequestReferrer", window.location.href);
+//     localStorage.setItem("preAuthenticationRequestReferrer", referrer);
+//
+//     // Perform a login
+//     const redirectUri = `${uiUrl}/s/handleAuthenticationResponse`;
+//     const authenticationRequestParams = `/login?redirectUri=${redirectUri}`;
+//     const loginRequestUrl = `${loginUrl}${authenticationRequestParams}`;
+//     window.location.href = loginRequestUrl;
+//
+//
+//
+//
+//
+//
+//
+//     // const redirectUri = `${uiUrl}/s/handleAuthenticationResponse`;
+//     //
+//     // getOpenIdConfiguration(openIdConfigUrl, openIdConfiguration => {
+//     //     console.log(openIdConfiguration.issuer);
+//     //     console.log(openIdConfiguration.authorization_endpoint);
+//     //
+//     //     const authorizationEndpoint = openIdConfiguration.authorization_endpoint;
+//     //
+//     //     // Create state and store
+//     //     const state = createUniqueString();
+//     //     localStorage.setItem("state", state);
+//     //
+//     //     // Create nonce and store
+//     //     const nonce = createUniqueString();
+//     //     localStorage.setItem("nonce", nonce);
+//     //
+//     //     // We need to remember where the user was going
+//     //     // localStorage.setItem("preAuthenticationRequestReferrer", window.location.href);
+//     //     localStorage.setItem("preAuthenticationRequestReferrer", referrer);
+//     //
+//     //     // Compose the new URL
+//     //     const authenticationRequestParams = `?scope=openid&response_type=id_token&client_id=${clientId}&redirect_uri=${redirectUri}&state=${state}&nonce=${nonce}`;
+//     //     const authenticationRequestUrl = `${authorizationEndpoint}${authenticationRequestParams}`;
+//     //
+//     //     // We hand off to the authenticationService.
+//     //     console.log(authenticationRequestUrl);
+//     //     window.location.href = authenticationRequestUrl;
+//     // });
+// };
 
 export const handleAuthenticationResponse = (
     location: Location,

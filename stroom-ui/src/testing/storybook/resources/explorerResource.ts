@@ -10,7 +10,6 @@ import {
   iterateNodes,
 } from "lib/treeUtils/treeUtils";
 import { TestCache } from "../PollyDecorator";
-import { Config } from "startup/config/types";
 import { ResourceBuilder } from "./types";
 import {
   DocRefType,
@@ -20,11 +19,11 @@ import {
 
 const resourceBuilder: ResourceBuilder = (
   server: any,
-  { stroomBaseServiceUrl }: Config,
+  apiUrl: any,
   testCache: TestCache,
 ) => {
   const startTime = Date.now();
-  const resource = `${stroomBaseServiceUrl}/explorer/v1`;
+  const resource = apiUrl("/explorer/v1");
 
   server
     .get(`${resource}/all`)
@@ -85,7 +84,7 @@ const resourceBuilder: ResourceBuilder = (
     });
   // // Get Info
   server
-    .get(`${stroomBaseServiceUrl}/explorer/v1/info/:docRefType/:docRefUuid`)
+    .get(`${resource}/info/:docRefType/:docRefUuid`)
     .intercept((req: HttpRequest, res: HttpResponse) => {
       const { node: docRef } = findItem(
         testCache.data!.documentTree,

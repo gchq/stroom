@@ -36,11 +36,11 @@ import stroom.search.solr.shared.SolrIndexDataSourceFieldUtil;
 import stroom.search.solr.shared.SolrIndexDoc;
 import stroom.security.api.SecurityContext;
 import stroom.util.HasHealthCheck;
-import stroom.util.shared.ResourcePaths;
-import stroom.util.shared.RestResource;
 import stroom.util.logging.LambdaLogger;
 import stroom.util.logging.LambdaLoggerFactory;
 import stroom.util.logging.LogUtil;
+import stroom.util.shared.ResourcePaths;
+import stroom.util.shared.RestResource;
 
 import javax.inject.Inject;
 import javax.ws.rs.Consumes;
@@ -55,6 +55,7 @@ import java.util.stream.Collectors;
         description = "Stroom Solr Index Query API")
 @Path("/stroom-solr-index" + ResourcePaths.V2)
 @Produces(MediaType.APPLICATION_JSON)
+@Consumes(MediaType.APPLICATION_JSON)
 public class StroomSolrIndexQueryResource implements HasHealthCheck, RestResource {
     private static final LambdaLogger LOGGER = LambdaLoggerFactory.getLogger(StroomSolrIndexQueryResource.class);
 
@@ -72,8 +73,6 @@ public class StroomSolrIndexQueryResource implements HasHealthCheck, RestResourc
     }
 
     @POST
-    @Consumes(MediaType.APPLICATION_JSON)
-    @Produces(MediaType.APPLICATION_JSON)
     @Path("/dataSource")
     @Timed
     @ApiOperation(
@@ -87,8 +86,6 @@ public class StroomSolrIndexQueryResource implements HasHealthCheck, RestResourc
     }
 
     @POST
-    @Consumes(MediaType.APPLICATION_JSON)
-    @Produces(MediaType.APPLICATION_JSON)
     @Path("/search")
     @Timed
     @ApiOperation(
@@ -151,8 +148,6 @@ public class StroomSolrIndexQueryResource implements HasHealthCheck, RestResourc
     }
 
     @POST
-    @Consumes(MediaType.APPLICATION_JSON)
-    @Produces(MediaType.APPLICATION_JSON)
     @Path("/destroy")
     @Timed
     @ApiOperation(

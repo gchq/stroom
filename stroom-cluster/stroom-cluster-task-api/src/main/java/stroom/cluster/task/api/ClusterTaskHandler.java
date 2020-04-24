@@ -16,6 +16,8 @@
 
 package stroom.cluster.task.api;
 
+import stroom.task.api.TaskContext;
+
 public interface ClusterTaskHandler<T extends ClusterTask<R>, R> {
-    void exec(T task, ClusterTaskRef<R> clusterTaskRef);
+    void exec(TaskContext parentContext, T task, ClusterTaskRef<R> clusterTaskRef);
 }

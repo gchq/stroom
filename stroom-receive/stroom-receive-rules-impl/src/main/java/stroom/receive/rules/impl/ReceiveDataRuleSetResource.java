@@ -45,6 +45,7 @@ import java.util.Set;
 @Api(value = "ruleset - /v1")
 @Path(ReceiveDataRuleSetResource.BASE_RESOURCE_PATH)
 @Produces(MediaType.APPLICATION_JSON)
+@Consumes(MediaType.APPLICATION_JSON)
 public class ReceiveDataRuleSetResource implements RestResource, HasHealthCheck {
     public static final String BASE_RESOURCE_PATH = "/ruleset" + ResourcePaths.V1;
 
@@ -56,7 +57,6 @@ public class ReceiveDataRuleSetResource implements RestResource, HasHealthCheck 
     }
 
     @GET
-    @Produces(MediaType.APPLICATION_JSON)
     @Path("/list")
     @Timed
     @ApiOperation(
@@ -67,8 +67,6 @@ public class ReceiveDataRuleSetResource implements RestResource, HasHealthCheck 
     }
 
     @POST
-    @Consumes(MediaType.APPLICATION_JSON)
-    @Produces(MediaType.APPLICATION_JSON)
     @Path("/import")
     @Timed
     @ApiOperation(
@@ -87,8 +85,6 @@ public class ReceiveDataRuleSetResource implements RestResource, HasHealthCheck 
     }
 
     @POST
-    @Consumes(MediaType.APPLICATION_JSON)
-    @Produces(MediaType.APPLICATION_JSON)
     @Path("/export")
     @Timed
     @ApiOperation(

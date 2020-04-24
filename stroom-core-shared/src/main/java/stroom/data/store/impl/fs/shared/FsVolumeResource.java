@@ -37,11 +37,10 @@ import java.util.List;
 @Api(value = "fsVolume - /v1")
 @Path("/fsVolume" + ResourcePaths.V1)
 @Produces(MediaType.APPLICATION_JSON)
+@Consumes(MediaType.APPLICATION_JSON)
 public interface FsVolumeResource extends RestResource, DirectRestService {
     @POST
     @Path("/find")
-    @Consumes(MediaType.APPLICATION_JSON)
-    @Produces(MediaType.APPLICATION_JSON)
     @ApiOperation(
             value = "Finds volumes",
             response = List.class)
@@ -49,8 +48,6 @@ public interface FsVolumeResource extends RestResource, DirectRestService {
 
     @GET
     @Path("/{id}")
-    @Consumes(MediaType.APPLICATION_JSON)
-    @Produces(MediaType.APPLICATION_JSON)
     @ApiOperation(
             value = "Get a volume",
             response = FsVolume.class)
@@ -58,8 +55,6 @@ public interface FsVolumeResource extends RestResource, DirectRestService {
 
     @PUT
     @Path("/{id}")
-    @Consumes(MediaType.APPLICATION_JSON)
-    @Produces(MediaType.APPLICATION_JSON)
     @ApiOperation(
             value = "Update a volume",
             response = FsVolume.class)
@@ -67,8 +62,6 @@ public interface FsVolumeResource extends RestResource, DirectRestService {
 
     @DELETE
     @Path("/{id}")
-    @Consumes(MediaType.APPLICATION_JSON)
-    @Produces(MediaType.APPLICATION_JSON)
     @ApiOperation(
             value = "Delete a volume",
             response = Boolean.class)
@@ -76,8 +69,6 @@ public interface FsVolumeResource extends RestResource, DirectRestService {
 
     @GET
     @Path("/rescan")
-    @Consumes(MediaType.APPLICATION_JSON)
-    @Produces(MediaType.APPLICATION_JSON)
     @ApiOperation(
             value = "Rescans volumes",
             response = Boolean.class)

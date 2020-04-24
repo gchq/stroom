@@ -35,6 +35,7 @@ import javax.ws.rs.core.MediaType;
 @Api(value = "jobNode - /v1")
 @Path(JobNodeResource.BASE_PATH)
 @Produces(MediaType.APPLICATION_JSON)
+@Consumes(MediaType.APPLICATION_JSON)
 public interface JobNodeResource extends RestResource, DirectRestService {
     String BASE_PATH = "/jobNode" + ResourcePaths.V1;
     String INFO_PATH_PART = "/info";
@@ -44,8 +45,6 @@ public interface JobNodeResource extends RestResource, DirectRestService {
     String INFO_PATH = BASE_PATH + INFO_PATH_PART;
 
     @GET
-    @Consumes(MediaType.APPLICATION_JSON)
-    @Produces(MediaType.APPLICATION_JSON)
     @ApiOperation(
             value = "Lists job nodes",
             response = ResultPage.class)
@@ -54,8 +53,6 @@ public interface JobNodeResource extends RestResource, DirectRestService {
 
     @GET
     @Path(INFO_PATH_PART)
-    @Consumes(MediaType.APPLICATION_JSON)
-    @Produces(MediaType.APPLICATION_JSON)
     @ApiOperation(
             value = "Gets current info for a job node",
             response = JobNodeInfo.class)
@@ -64,22 +61,16 @@ public interface JobNodeResource extends RestResource, DirectRestService {
 
     @PUT
     @Path("/{id}" + TASK_LIMIT_PATH_PART)
-    @Consumes(MediaType.APPLICATION_JSON)
-    @Produces(MediaType.APPLICATION_JSON)
     @ApiOperation(value = "Sets the task limit for the job node")
     void setTaskLimit(@PathParam("id") Integer id, Integer taskLimit);
 
     @PUT
     @Path("/{id}" + SCHEDULE_PATH_PART)
-    @Consumes(MediaType.APPLICATION_JSON)
-    @Produces(MediaType.APPLICATION_JSON)
     @ApiOperation(value = "Sets the schedule job node")
     void setSchedule(@PathParam("id") Integer id, String schedule);
 
     @PUT
     @Path("/{id}" + ENABLED_PATH_PART)
-    @Consumes(MediaType.APPLICATION_JSON)
-    @Produces(MediaType.APPLICATION_JSON)
     @ApiOperation(value = "Sets the enabled status of the job node")
     void setEnabled(@PathParam("id") Integer id, Boolean enabled);
 }

@@ -16,8 +16,8 @@
 
 import { DataRetentionPolicy } from "./types/DataRetentionPolicy";
 import useHttpClient from "lib/useHttpClient";
-import useConfig from "startup/config/useConfig";
 import { useCallback } from "react";
+import useUrlFactory from "lib/useUrlFactory";
 
 interface Api {
   fetchPolicy: () => Promise<DataRetentionPolicy>;
@@ -25,12 +25,13 @@ interface Api {
 
 export const useApi = (): Api => {
   const { httpGetJson } = useHttpClient();
-  const { stroomBaseServiceUrl } = useConfig();
+  const { apiUrl } = useUrlFactory();
+  const resource = apiUrl("/retention/v1");
 
   return {
     fetchPolicy: useCallback(
-      () => httpGetJson(`${stroomBaseServiceUrl}/retention/v1`),
-      [httpGetJson, stroomBaseServiceUrl],
+      () => httpGetJson(resource),
+      [resource, httpGetJson],
     ),
   };
 };

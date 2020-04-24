@@ -31,7 +31,7 @@ public class BadRequestExceptionMapper implements ExceptionMapper<BadRequestExce
     private static final Logger LOGGER = LoggerFactory.getLogger(BadRequestExceptionMapper.class);
 
     @Override
-    public Response toResponse(BadRequestException exception) {
+    public Response toResponse(final BadRequestException exception) {
         LOGGER.debug(exception.getMessage());
         return Response.status(Response.Status.BAD_REQUEST).entity(exception.getMessage()).build();
     }

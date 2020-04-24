@@ -16,34 +16,30 @@
 
 package stroom.task.impl;
 
-import java.util.Collection;
-import java.util.HashMap;
-import java.util.HashSet;
-import java.util.Map;
-import java.util.Set;
+import java.util.*;
 
-public class TaskThreadInfoUtil {
-    public static String getInfo(final Collection<TaskState> taskStates) {
-        if (taskStates == null || taskStates.size() == 0) {
+class TaskThreadInfoUtil {
+    public static String getInfo(final Collection<TaskContextImpl> taskContexts) {
+        if (taskContexts == null || taskContexts.size() == 0) {
             return "";
         }
 
-        final Set<TaskState> allTaskStates = new HashSet<>();
+        final Set<TaskContextImpl> allTaskContexts = new HashSet<>();
 
         // Build a tree map.
-        final Map<TaskState, Set<TaskState>> childMap = new HashMap<>();
-        for (final TaskState taskState : taskStates) {
-            childMap.put(taskState, taskState.getChildren());
-            allTaskStates.add(taskState);
+        final Map<TaskContextImpl, Set<TaskContextImpl>> childMap = new HashMap<>();
+        for (final TaskContextImpl taskContext : taskContexts) {
+            childMap.put(taskContext, taskContext.getChildren());
+            allTaskContexts.add(taskContext);
         }
 
         final StringBuilder sb = new StringBuilder();
 
         // Get a list of taskThreads that have no parent taskThread or who have a
         // parent taskThread that no longer seems to exist.
-        final Set<TaskState> roots = new HashSet<>(allTaskStates);
-        for (final TaskState taskState : taskStates) {
-            roots.removeAll(taskState.getChildren());
+        final Set<TaskContextImpl> roots = new HashSet<>(allTaskContexts);
+        for (final TaskContextImpl taskContext : taskContexts) {
+            roots.removeAll(taskContext.getChildren());
         }
 
         // Build the tree with the root taskThreads.
@@ -52,18 +48,18 @@ public class TaskThreadInfoUtil {
         return sb.toString();
     }
 
-    private static void addLevel(final StringBuilder sb, final Map<TaskState, Set<TaskState>> map,
-                                 final Set<TaskState> list, final String prefix) {
+    private static void addLevel(final StringBuilder sb, final Map<TaskContextImpl, Set<TaskContextImpl>> map,
+                                 final Set<TaskContextImpl> list, final String prefix) {
         if (list != null && list.size() > 0) {
-            for (final TaskState taskState : list) {
+            for (final TaskContextImpl taskContext : list) {
                 // Indent the message if needed.
                 sb.append(prefix);
                 // Add the progress message.
                 sb.append("---o ");
-                sb.append(taskState.getInfo());
+                sb.append(taskContext.getInfo());
                 sb.append("\n");
 
-                final Set<TaskState> children = map.get(taskState);
+                final Set<TaskContextImpl> children = map.get(taskContext);
                 addLevel(sb, map, children, "   +" + prefix);
             }
         }

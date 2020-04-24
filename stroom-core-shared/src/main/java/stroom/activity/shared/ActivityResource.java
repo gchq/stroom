@@ -37,18 +37,15 @@ import java.util.List;
 @Api(value = "activity - /v1")
 @Path("/activity" + ResourcePaths.V1)
 @Produces(MediaType.APPLICATION_JSON)
+@Consumes(MediaType.APPLICATION_JSON)
 public interface ActivityResource extends RestResource, DirectRestService {
     @GET
-    @Consumes(MediaType.APPLICATION_JSON)
-    @Produces(MediaType.APPLICATION_JSON)
     @ApiOperation(
             value = "Lists activities",
             response = List.class)
     List<Activity> list(@QueryParam("name") String name);
 
     @POST
-    @Consumes(MediaType.APPLICATION_JSON)
-    @Produces(MediaType.APPLICATION_JSON)
     @ApiOperation(
             value = "Create an Activity",
             response = Activity.class)
@@ -56,8 +53,6 @@ public interface ActivityResource extends RestResource, DirectRestService {
 
     @GET
     @Path("/{id}")
-    @Consumes(MediaType.APPLICATION_JSON)
-    @Produces(MediaType.APPLICATION_JSON)
     @ApiOperation(
             value = "Get an Activity",
             response = Activity.class)
@@ -65,8 +60,6 @@ public interface ActivityResource extends RestResource, DirectRestService {
 
     @PUT
     @Path("/{id}")
-    @Consumes(MediaType.APPLICATION_JSON)
-    @Produces(MediaType.APPLICATION_JSON)
     @ApiOperation(
             value = "Update an Activity",
             response = Activity.class)
@@ -74,8 +67,6 @@ public interface ActivityResource extends RestResource, DirectRestService {
 
     @DELETE
     @Path("/{id}")
-    @Consumes(MediaType.APPLICATION_JSON)
-    @Produces(MediaType.APPLICATION_JSON)
     @ApiOperation(
             value = "Delete an activity",
             response = Boolean.class)
@@ -83,8 +74,6 @@ public interface ActivityResource extends RestResource, DirectRestService {
 
     @POST
     @Path("/validate")
-    @Consumes(MediaType.APPLICATION_JSON)
-    @Produces(MediaType.APPLICATION_JSON)
     @ApiOperation(
             value = "Create an Activity",
             response = ActivityValidationResult.class)
@@ -92,8 +81,6 @@ public interface ActivityResource extends RestResource, DirectRestService {
 
     @GET
     @Path("/current")
-    @Consumes(MediaType.APPLICATION_JSON)
-    @Produces(MediaType.APPLICATION_JSON)
     @ApiOperation(
             value = "Gets the current activity",
             response = Activity.class)
@@ -101,8 +88,6 @@ public interface ActivityResource extends RestResource, DirectRestService {
 
     @PUT
     @Path("/current")
-    @Consumes(MediaType.APPLICATION_JSON)
-    @Produces(MediaType.APPLICATION_JSON)
     @ApiOperation(
             value = "Gets the current activity",
             response = Activity.class)
@@ -110,8 +95,6 @@ public interface ActivityResource extends RestResource, DirectRestService {
 
     @POST
     @Path("/acknowledge")
-    @Consumes(MediaType.APPLICATION_JSON)
-    @Produces(MediaType.APPLICATION_JSON)
     @ApiOperation(
             value = "Acknowledge the slash screen",
             response = Boolean.class)

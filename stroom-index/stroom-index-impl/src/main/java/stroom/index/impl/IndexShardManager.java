@@ -24,7 +24,7 @@ import stroom.index.shared.IndexShard.IndexShardStatus;
 import stroom.node.api.NodeInfo;
 import stroom.security.api.SecurityContext;
 import stroom.security.shared.PermissionNames;
-import stroom.task.api.TaskContext;
+import stroom.task.api.TaskContextFactory;
 import stroom.util.io.FileUtil;
 import stroom.util.logging.LambdaLogger;
 import stroom.util.logging.LambdaLoggerFactory;
@@ -38,11 +38,7 @@ import java.nio.file.Files;
 import java.nio.file.Path;
 import java.time.ZoneOffset;
 import java.time.ZonedDateTime;
-import java.util.Collections;
-import java.util.HashMap;
-import java.util.Iterator;
-import java.util.Map;
-import java.util.Set;
+import java.util.*;
 import java.util.concurrent.Executor;
 import java.util.concurrent.Executors;
 import java.util.concurrent.ScheduledExecutorService;
@@ -64,7 +60,7 @@ public class IndexShardManager {
     private final Provider<IndexShardWriterCache> indexShardWriterCacheProvider;
     private final NodeInfo nodeInfo;
     private final Executor executor;
-    private final Provider<TaskContext> taskContextProvider;
+    private final TaskContextFactory taskContextFactory;
     private final SecurityContext securityContext;
 
     private final StripedLock shardUpdateLocks = new StripedLock();
@@ -78,14 +74,14 @@ public class IndexShardManager {
                       final Provider<IndexShardWriterCache> indexShardWriterCacheProvider,
                       final NodeInfo nodeInfo,
                       final Executor executor,
-                      final Provider<TaskContext> taskContextProvider,
+                      final TaskContextFactory taskContextFactory,
                       final SecurityContext securityContext) {
         this.indexStore = indexStore;
         this.indexShardService = indexShardService;
         this.indexShardWriterCacheProvider = indexShardWriterCacheProvider;
         this.nodeInfo = nodeInfo;
         this.executor = executor;
-        this.taskContextProvider = taskContextProvider;
+        this.taskContextFactory = taskContextFactory;
         this.securityContext = securityContext;
 
         // Ensure all but deleted and corrupt states can be set to closed on clean.
@@ -112,10 +108,8 @@ public class IndexShardManager {
                     criteria.getIndexShardStatusSet().add(IndexShardStatus.DELETED);
                     final ResultPage<IndexShard> shards = indexShardService.find(criteria);
 
-                    final TaskContext taskContext = taskContextProvider.get();
-                    Runnable runnable = () -> {
+                    final Runnable runnable = taskContextFactory.context("Delete Logically Deleted Shards", taskContext -> {
                         try {
-                            taskContext.setName("Delete Logically Deleted Shards");
                             taskContext.info(() -> "Deleting Logically Deleted Shards...");
 
                             final LogExecutionTime logExecutionTime = new LogExecutionTime();
@@ -137,8 +131,7 @@ public class IndexShardManager {
                         } finally {
                             deletingShards.set(false);
                         }
-                    };
-                    runnable = taskContext.sub(runnable);
+                    });
 
                     // In tests we don't have a task manager.
                     if (executor == null) {

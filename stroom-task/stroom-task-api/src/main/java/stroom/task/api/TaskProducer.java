@@ -21,6 +21,7 @@ import org.slf4j.LoggerFactory;
 
 import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.concurrent.atomic.AtomicInteger;
+import java.util.function.Consumer;
 
 public abstract class TaskProducer implements Comparable<TaskProducer> {
     private static final Logger LOGGER = LoggerFactory.getLogger(TaskProducer.class);
@@ -31,7 +32,9 @@ public abstract class TaskProducer implements Comparable<TaskProducer> {
 
     private final TaskExecutor taskExecutor;
     private final int maxThreadsPerTask;
-    private final TaskContext taskContext;
+    private final TaskContextFactory taskContextFactory;
+    private final TaskContext parentContext;
+    private final String taskName;
 
     private final AtomicBoolean finishedAddingTasks = new AtomicBoolean();
     private final AtomicInteger tasksTotal = new AtomicInteger();
@@ -39,10 +42,14 @@ public abstract class TaskProducer implements Comparable<TaskProducer> {
 
     public TaskProducer(final TaskExecutor taskExecutor,
                         final int maxThreadsPerTask,
-                        final TaskContext taskContext) {
+                        final TaskContextFactory taskContextFactory,
+                        final TaskContext parentContext,
+                        final String taskName) {
         this.taskExecutor = taskExecutor;
         this.maxThreadsPerTask = maxThreadsPerTask;
-        this.taskContext = taskContext;
+        this.taskContextFactory = taskContextFactory;
+        this.parentContext = parentContext;
+        this.taskName = taskName;
     }
 
     /**
@@ -58,7 +65,7 @@ public abstract class TaskProducer implements Comparable<TaskProducer> {
         if (count > maxThreadsPerTask) {
             threadsUsed.decrementAndGet();
         } else {
-            final Runnable task = getNext();
+            final Consumer<TaskContext> task = getNext();
             if (task == null) {
                 threadsUsed.decrementAndGet();
 
@@ -67,9 +74,9 @@ public abstract class TaskProducer implements Comparable<TaskProducer> {
                     detach();
                 }
             } else {
-                runnable = () -> {
+                final Consumer<TaskContext> consumer = tc -> {
                     try {
-                        task.run();
+                        task.accept(tc);
                     } catch (final Throwable e) {
                         LOGGER.debug(e.getMessage(), e);
                     } finally {
@@ -77,18 +84,16 @@ public abstract class TaskProducer implements Comparable<TaskProducer> {
                         incrementTasksCompleted();
                     }
                 };
-            }
-        }
 
-        // Wrap the runnable so that we get task info and execute with the right permissions etc.
-        if (runnable != null) {
-            runnable = taskContext.sub(runnable);
+                // Wrap the runnable so that we get task info and execute with the right permissions etc.
+                runnable = taskContextFactory.context(parentContext, taskName, consumer);
+            }
         }
 
         return runnable;
     }
 
-    protected abstract Runnable getNext();
+    protected abstract Consumer<TaskContext> getNext();
 
     /**
      * Test if this task producer will not issue any further tasks and that all of the tasks it has issued have completed processing.

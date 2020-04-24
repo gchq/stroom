@@ -117,8 +117,9 @@ const ChangePasswordFields = ({
               <div className="ChangePassword-controls">
                 <div className="ChangePassword-actions">
                   <Button
-                    className="ChangePassword-button primary"
                     disabled={isPristine || hasErrors}
+                    action="primary"
+                    appearance="contained"
                     type="submit"
                     icon="save"
                     text="Change password"

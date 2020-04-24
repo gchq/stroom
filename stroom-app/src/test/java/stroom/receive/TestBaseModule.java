@@ -15,8 +15,7 @@ import stroom.meta.mock.MockMetaModule;
 import stroom.meta.statistics.impl.MockMetaStatisticsModule;
 import stroom.receive.rules.impl.ReceiveDataRuleSetModule;
 import stroom.security.mock.MockSecurityContextModule;
-import stroom.task.api.SimpleTaskContext;
-import stroom.task.api.TaskContext;
+import stroom.task.impl.TaskContextModule;
 import stroom.util.pipeline.scope.PipelineScopeModule;
 
 public class TestBaseModule extends AbstractModule {
@@ -35,8 +34,8 @@ public class TestBaseModule extends AbstractModule {
         install(new ReceiveDataModule());
         install(new ReceiveDataRuleSetModule());
         install(new MockCollectionModule());
+        install(new TaskContextModule());
 
-        bind(TaskContext.class).to(SimpleTaskContext.class);
         bind(DocumentEventLog.class).toProvider(Providers.of(null));
     }
 }

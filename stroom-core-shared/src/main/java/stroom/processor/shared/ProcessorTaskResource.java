@@ -30,12 +30,11 @@ import javax.ws.rs.Path;
 import javax.ws.rs.PathParam;
 import javax.ws.rs.Produces;
 import javax.ws.rs.core.MediaType;
-import java.util.List;
 
 @Api(value = "processorTask - /v1")
 @Path(ProcessorTaskResource.BASE_PATH)
-@Consumes(MediaType.APPLICATION_JSON)
 @Produces(MediaType.APPLICATION_JSON)
+@Consumes(MediaType.APPLICATION_JSON)
 public interface ProcessorTaskResource extends RestResource, DirectRestService {
     String BASE_PATH = "/processorTask" + ResourcePaths.V1;
     String ASSIGN_TASKS_PATH_PART = "/assign";

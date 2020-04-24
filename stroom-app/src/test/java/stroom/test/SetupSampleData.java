@@ -19,6 +19,7 @@ package stroom.test;
 import com.google.inject.Guice;
 import com.google.inject.Injector;
 import stroom.db.util.DbModule;
+import stroom.importexport.impl.ContentPackImport;
 import stroom.task.api.TaskManager;
 
 /**
@@ -51,8 +52,13 @@ public final class SetupSampleData {
 
         commonTestControl.setup();
 
+        // Load the sample data and content from the 'samples' dirs
         final SetupSampleDataBean setupSampleDataBean = injector.getInstance(SetupSampleDataBean.class);
         setupSampleDataBean.run(true);
+
+        // Load the content packs that gradle should have downloaded
+        final ContentPackImport contentPackImport = injector.getInstance(ContentPackImport.class);
+        contentPackImport.startup();
 
         // Stop task manager
         injector.getInstance(TaskManager.class).shutdown();

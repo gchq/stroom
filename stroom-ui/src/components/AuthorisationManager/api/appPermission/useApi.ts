@@ -1,7 +1,7 @@
 import * as React from "react";
 
 import useHttpClient from "lib/useHttpClient";
-import useConfig from "startup/config/useConfig";
+import useUrlFactory from "lib/useUrlFactory";
 
 interface Api {
   getPermissionsForUser: (userUuid: string) => Promise<string[]>;
@@ -14,37 +14,39 @@ interface Api {
 }
 
 export const useApi = (): Api => {
-  const { stroomBaseServiceUrl } = useConfig();
+  const { apiUrl } = useUrlFactory();
   const {
     httpGetJson,
     httpPostEmptyResponse,
     httpDeleteEmptyResponse,
   } = useHttpClient();
 
+  const resource = apiUrl("/appPermissions/v1");
+
   return {
     getPermissionsForUser: React.useCallback(
       (userUuid: string): Promise<string[]> =>
-        httpGetJson(`${stroomBaseServiceUrl}/appPermissions/v1/${userUuid}`),
-      [stroomBaseServiceUrl, httpGetJson],
+        httpGetJson(`${resource}/${userUuid}`),
+      [resource, httpGetJson],
     ),
     getAllPermissionNames: React.useCallback(
       (): Promise<string[]> =>
-        httpGetJson(`${stroomBaseServiceUrl}/appPermissions/v1`),
-      [stroomBaseServiceUrl, httpGetJson],
+        httpGetJson(resource),
+      [resource, httpGetJson],
     ),
     addAppPermission: React.useCallback(
       (userUuid: string, permissionName: string): Promise<void> =>
         httpPostEmptyResponse(
-          `${stroomBaseServiceUrl}/appPermissions/v1/${userUuid}/${permissionName}`,
+          `${resource}/${userUuid}/${permissionName}`,
         ),
-      [stroomBaseServiceUrl, httpPostEmptyResponse],
+      [resource, httpPostEmptyResponse],
     ),
     removeAppPermission: React.useCallback(
       (userUuid: string, permissionName: string): Promise<void> =>
         httpDeleteEmptyResponse(
-          `${stroomBaseServiceUrl}/appPermissions/v1/${userUuid}/${permissionName}`,
+          `${resource}/${userUuid}/${permissionName}`,
         ),
-      [stroomBaseServiceUrl, httpDeleteEmptyResponse],
+      [resource, httpDeleteEmptyResponse],
     ),
   };
 };

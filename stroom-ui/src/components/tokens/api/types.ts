@@ -1,24 +1,21 @@
 import { Filter, SortingRule } from "react-table";
 
-export interface StoreState {
-  lastReadToken: any;
-  isCreating: any;
-  errorMessage: string;
-  matchingAutoCompleteResults: string[];
-  show: string;
-}
-
 export interface Token {
   id: string;
-  enabled: boolean;
+  version: number;
+  createTimeMs: number;
+  updateTimeMs: number;
+  createUser: string;
+  updateUser: string;
+
   userEmail: string;
-  expiresOn: string;
-  issuedOn: string;
-  issuedByUser: string;
-  updatedOn: string;
-  updatedByUser: string;
-  token: string;
+  tokenType: string;
+  data: string;
+  expiresOnMs: number;
+  comments: string;
+  enabled: boolean;
 }
+
 export interface SearchConfig {
   filters: Filter[];
   page: number;

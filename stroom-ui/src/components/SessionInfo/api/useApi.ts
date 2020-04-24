@@ -1,7 +1,7 @@
 import * as React from "react";
 import useHttpClient from "lib/useHttpClient";
-import useConfig from "startup/config/useConfig";
 import { SessionInfo } from "./types";
+import useUrlFactory from "lib/useUrlFactory";
 
 interface UseApi {
   getSessionInfo: () => Promise<SessionInfo>;
@@ -9,11 +9,13 @@ interface UseApi {
 
 const useApi = (): UseApi => {
   const { httpGetJson } = useHttpClient();
-  const { stroomBaseServiceUrl } = useConfig();
+  const { apiUrl } = useUrlFactory();
+  const resource = apiUrl("/sessionInfo/v1");
+
   return {
     getSessionInfo: React.useCallback(
-      () => httpGetJson(`${stroomBaseServiceUrl}/sessionInfo/v1`),
-      [httpGetJson, stroomBaseServiceUrl],
+      () => httpGetJson(resource),
+      [resource, httpGetJson],
     ),
   };
 };

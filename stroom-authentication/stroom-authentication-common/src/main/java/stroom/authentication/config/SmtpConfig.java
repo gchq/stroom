@@ -21,10 +21,13 @@ package stroom.authentication.config;
 import com.fasterxml.jackson.annotation.JsonProperty;
 import org.simplejavamail.mailer.config.TransportStrategy;
 import stroom.util.shared.AbstractConfig;
+import stroom.util.shared.NotInjectableConfig;
 
 import javax.validation.constraints.NotNull;
 
+@NotInjectableConfig
 public class SmtpConfig extends AbstractConfig {
+
     @NotNull
     @JsonProperty
     private String host = "localhost";

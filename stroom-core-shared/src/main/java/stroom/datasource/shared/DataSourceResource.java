@@ -21,7 +21,6 @@ import io.swagger.annotations.ApiOperation;
 import org.fusesource.restygwt.client.DirectRestService;
 import stroom.datasource.api.v2.AbstractField;
 import stroom.docref.DocRef;
-import stroom.query.shared.FetchSuggestionsRequest;
 import stroom.util.shared.ResourcePaths;
 import stroom.util.shared.RestResource;
 
@@ -35,11 +34,10 @@ import java.util.List;
 @Api(value = "dataSource - /v1")
 @Path("/dataSource" + ResourcePaths.V1)
 @Produces(MediaType.APPLICATION_JSON)
+@Consumes(MediaType.APPLICATION_JSON)
 public interface DataSourceResource extends RestResource, DirectRestService {
     @POST
     @Path("/fetchFields")
-    @Consumes(MediaType.APPLICATION_JSON)
-    @Produces(MediaType.APPLICATION_JSON)
     @ApiOperation(
             value = "Fetch data source fields",
             response = List.class)

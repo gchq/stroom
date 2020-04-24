@@ -33,11 +33,10 @@ import javax.ws.rs.core.MediaType;
 @Api(value = "xmlSchema - /v1")
 @Path("/xmlSchema" + ResourcePaths.V1)
 @Produces(MediaType.APPLICATION_JSON)
+@Consumes(MediaType.APPLICATION_JSON)
 public interface XmlSchemaResource extends RestResource, DirectRestService {
     @POST
     @Path("/read")
-    @Consumes(MediaType.APPLICATION_JSON)
-    @Produces(MediaType.APPLICATION_JSON)
     @ApiOperation(
             value = "Get an xml schema doc",
             response = XmlSchemaDoc.class)
@@ -45,8 +44,6 @@ public interface XmlSchemaResource extends RestResource, DirectRestService {
 
     @PUT
     @Path("/update")
-    @Consumes(MediaType.APPLICATION_JSON)
-    @Produces(MediaType.APPLICATION_JSON)
     @ApiOperation(
             value = "Update an xml schema doc",
             response = XmlSchemaDoc.class)

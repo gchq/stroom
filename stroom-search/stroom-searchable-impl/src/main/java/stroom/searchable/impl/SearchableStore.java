@@ -8,22 +8,10 @@ import stroom.entity.shared.ExpressionCriteria;
 import stroom.query.api.v2.ExpressionOperator;
 import stroom.query.api.v2.Param;
 import stroom.query.api.v2.SearchRequest;
-import stroom.query.common.v2.CompletionState;
-import stroom.query.common.v2.Coprocessor;
-import stroom.query.common.v2.CoprocessorSettings;
-import stroom.query.common.v2.CoprocessorSettingsMap;
-import stroom.query.common.v2.Data;
-import stroom.query.common.v2.Payload;
-import stroom.query.common.v2.ResultHandler;
-import stroom.query.common.v2.SearchResultHandler;
-import stroom.query.common.v2.Sizes;
-import stroom.query.common.v2.Store;
-import stroom.query.common.v2.TableCoprocessor;
-import stroom.query.common.v2.TableCoprocessorSettings;
-import stroom.query.common.v2.TablePayload;
+import stroom.query.common.v2.*;
 import stroom.searchable.api.Searchable;
-import stroom.task.api.ExecutorProvider;
 import stroom.task.api.TaskContext;
+import stroom.task.api.TaskContextFactory;
 import stroom.util.logging.LambdaLogUtil;
 import stroom.util.logging.LambdaLogger;
 import stroom.util.logging.LambdaLoggerFactory;
@@ -31,12 +19,8 @@ import stroom.util.logging.LogUtil;
 
 import java.time.Duration;
 import java.time.Instant;
-import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.Collections;
-import java.util.List;
-import java.util.Map;
-import java.util.OptionalInt;
+import java.util.*;
+import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.Executor;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicBoolean;
@@ -66,6 +50,7 @@ class SearchableStore implements Store {
                     final Sizes storeSize,
                     final int resultHandlerBatchSize,
                     final Searchable searchable,
+                    final TaskContextFactory taskContextFactory,
                     final TaskContext taskContext,
                     final SearchRequest searchRequest,
                     final Executor executor) {
@@ -74,7 +59,6 @@ class SearchableStore implements Store {
 
         searchKey = searchRequest.getKey().toString();
         LOGGER.debug(LambdaLogUtil.message("Starting search with key {}", searchKey));
-        taskContext.setName(TASK_NAME);
         taskContext.info(() -> "DB search " + searchKey + " - running query");
 
         final CoprocessorSettingsMap coprocessorSettingsMap = CoprocessorSettingsMap.create(searchRequest);
@@ -102,20 +86,30 @@ class SearchableStore implements Store {
             fieldArray[v] = field;
         });
 
-        Runnable runnable = () -> {
-            synchronized (SearchableStore.class) {
-                thread = Thread.currentThread();
-                if (terminate.get()) {
-                    return;
-                }
+        final Runnable runnable = taskContextFactory.context(taskContext, TASK_NAME, tc ->
+                searchAsync(tc, searchable, criteria, fieldArray, coprocessorMap, resultHandlerBatchSize));
+        CompletableFuture.runAsync(runnable, executor);
+    }
+
+    private void searchAsync(final TaskContext taskContext,
+                             final Searchable searchable,
+                             final ExpressionCriteria criteria,
+                             final AbstractField[] fieldArray,
+                             final Map<CoprocessorSettingsMap.CoprocessorKey, Coprocessor> coprocessorMap,
+                             final int resultHandlerBatchSize) {
+        synchronized (SearchableStore.class) {
+            thread = Thread.currentThread();
+            if (terminate.get()) {
+                return;
             }
+        }
 
-            final LongAdder counter = new LongAdder();
-            final AtomicLong nextProcessPayloadsTime = new AtomicLong(Instant.now().plus(RESULT_SEND_INTERVAL).toEpochMilli());
-            final AtomicLong countSinceLastSend = new AtomicLong(0);
-            final Instant queryStart = Instant.now();
+        final LongAdder counter = new LongAdder();
+        final AtomicLong nextProcessPayloadsTime = new AtomicLong(Instant.now().plus(RESULT_SEND_INTERVAL).toEpochMilli());
+        final AtomicLong countSinceLastSend = new AtomicLong(0);
+        final Instant queryStart = Instant.now();
 
-            searchable.search(criteria, fieldArray, data -> {
+        searchable.search(criteria, fieldArray, data -> {
 //                final Val[] data = new Val[v.length];
 //                for (int i = 0; i < v.length; i++) {
 //                    Val val = ValNull.INSTANCE;
@@ -134,46 +128,43 @@ class SearchableStore implements Store {
 //                    data[i] = val;
 //                }
 
-                counter.increment();
-                countSinceLastSend.incrementAndGet();
-                LOGGER.trace(() -> String.format("data: [%s]", Arrays.toString(data)));
+            counter.increment();
+            countSinceLastSend.incrementAndGet();
+            LOGGER.trace(() -> String.format("data: [%s]", Arrays.toString(data)));
 
-                // Give the data array to each of our coprocessors
-                coprocessorMap.values().forEach(coprocessor ->
-                        coprocessor.receive(data));
-                // Send what we have every 1s or when the batch reaches a set size
-                long now = System.currentTimeMillis();
-                if (now >= nextProcessPayloadsTime.get() ||
-                        countSinceLastSend.get() >= resultHandlerBatchSize) {
+            // Give the data array to each of our coprocessors
+            coprocessorMap.values().forEach(coprocessor ->
+                    coprocessor.receive(data));
+            // Send what we have every 1s or when the batch reaches a set size
+            long now = System.currentTimeMillis();
+            if (now >= nextProcessPayloadsTime.get() ||
+                    countSinceLastSend.get() >= resultHandlerBatchSize) {
 
-                    LOGGER.debug(LambdaLogUtil.message("{} vs {}, {} vs {}",
-                            now, nextProcessPayloadsTime,
-                            countSinceLastSend.get(), resultHandlerBatchSize));
+                LOGGER.debug(LambdaLogUtil.message("{} vs {}, {} vs {}",
+                        now, nextProcessPayloadsTime,
+                        countSinceLastSend.get(), resultHandlerBatchSize));
 
-                    processPayloads(resultHandler, coprocessorMap);
-                    taskContext.setName(TASK_NAME);
-                    taskContext.info(() -> searchKey +
-                            " - running database query (" + counter.longValue() + " rows fetched)");
-                    nextProcessPayloadsTime.set(Instant.now().plus(RESULT_SEND_INTERVAL).toEpochMilli());
-                    countSinceLastSend.set(0);
-                }
-            });
+                processPayloads(resultHandler, coprocessorMap);
+                taskContext.info(() -> searchKey +
+                        " - running database query (" + counter.longValue() + " rows fetched)");
+                nextProcessPayloadsTime.set(Instant.now().plus(RESULT_SEND_INTERVAL).toEpochMilli());
+                countSinceLastSend.set(0);
+            }
+        });
 
-            LOGGER.debug(() ->
-                    String.format("complete called, counter: %s",
-                            counter.longValue()));
-            // completed our window so create and pass on a payload for the
-            // data we have gathered so far
-            processPayloads(resultHandler, coprocessorMap);
-            taskContext.info(() -> searchKey + " - complete");
-            LOGGER.debug(() -> "completeSearch called");
-            completionState.complete();
+        LOGGER.debug(() ->
+                String.format("complete called, counter: %s",
+                        counter.longValue()));
+        // completed our window so create and pass on a payload for the
+        // data we have gathered so far
+        processPayloads(resultHandler, coprocessorMap);
+        taskContext.info(() -> searchKey + " - complete");
+        LOGGER.debug(() -> "completeSearch called");
+        completionState.complete();
 
-            LOGGER.debug(() -> "Query finished in " + Duration.between(queryStart, Instant.now()));
-        };
-        runnable = taskContext.sub(runnable);
-        executor.execute(runnable);
+        LOGGER.debug(() -> "Query finished in " + Duration.between(queryStart, Instant.now()));
     }
+
 
     private Map<String, String> getParamMap(final SearchRequest searchRequest) {
         final Map<String, String> paramMap;

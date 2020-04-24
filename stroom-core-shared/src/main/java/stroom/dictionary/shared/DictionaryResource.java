@@ -39,6 +39,7 @@ import java.util.Set;
 @Api(value = "dictionary - /v1")
 @Path("/dictionary" + ResourcePaths.V1)
 @Produces(MediaType.APPLICATION_JSON)
+@Consumes(MediaType.APPLICATION_JSON)
 public interface DictionaryResource extends RestResource, DirectRestService {
     ///////////////////////
     // GWT UI end points //
@@ -46,8 +47,6 @@ public interface DictionaryResource extends RestResource, DirectRestService {
 
     @POST
     @Path("/read")
-    @Consumes(MediaType.APPLICATION_JSON)
-    @Produces(MediaType.APPLICATION_JSON)
     @ApiOperation(
             value = "Get a dictionary doc",
             response = DictionaryDoc.class)
@@ -55,8 +54,6 @@ public interface DictionaryResource extends RestResource, DirectRestService {
 
     @PUT
     @Path("/update")
-    @Consumes(MediaType.APPLICATION_JSON)
-    @Produces(MediaType.APPLICATION_JSON)
     @ApiOperation(
             value = "Update a dictionary doc",
             response = DictionaryDoc.class)
@@ -64,8 +61,6 @@ public interface DictionaryResource extends RestResource, DirectRestService {
 
     @POST
     @Path("/download")
-    @Consumes(MediaType.APPLICATION_JSON)
-    @Produces(MediaType.APPLICATION_JSON)
     @ApiOperation(
             value = "Download a dictionary doc",
             response = ResourceGeneration.class)
@@ -78,40 +73,32 @@ public interface DictionaryResource extends RestResource, DirectRestService {
     ////////////////////////
 
     @GET
-    @Produces(MediaType.APPLICATION_JSON)
-    @javax.ws.rs.Path("/list")
+    @Path("/list")
     @ApiOperation(
             value = "Submit a request for a list of doc refs held by this service",
             response = Set.class)
     Set<DocRef> listDocuments();
 
     @POST
-    @Consumes(MediaType.APPLICATION_JSON)
-    @Produces(MediaType.APPLICATION_JSON)
-    @javax.ws.rs.Path("/import")
+    @Path("/import")
     @ApiOperation(
             value = "Submit an import request",
             response = DocRef.class)
     DocRef importDocument(@ApiParam("DocumentData") final Base64EncodedDocumentData encodedDocumentData);
 
     @POST
-    @Consumes(MediaType.APPLICATION_JSON)
-    @Produces(MediaType.APPLICATION_JSON)
-    @javax.ws.rs.Path("/export")
+    @Path("/export")
     @ApiOperation(
             value = "Submit an export request",
             response = Base64EncodedDocumentData.class)
     Base64EncodedDocumentData exportDocument(@ApiParam("DocRef") final DocRef docRef);
 
     @GET
-    @javax.ws.rs.Path("/{dictionaryUuid}")
-    @Produces(MediaType.APPLICATION_JSON)
+    @Path("/{dictionaryUuid}")
     DictionaryDTO fetch(@PathParam("dictionaryUuid") final String dictionaryUuid);
 
     @POST
-    @javax.ws.rs.Path("/{dictionaryUuid}")
-    @Produces(MediaType.APPLICATION_JSON)
-    @Consumes(MediaType.APPLICATION_JSON)
+    @Path("/{dictionaryUuid}")
     void save(@PathParam("dictionaryUuid") final String dictionaryUuid,
                          final DictionaryDTO updates);
 }

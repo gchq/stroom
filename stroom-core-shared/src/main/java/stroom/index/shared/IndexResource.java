@@ -35,8 +35,8 @@ import javax.ws.rs.core.MediaType;
 
 @Api(value = "index - /v2")
 @Path(IndexResource.BASE_PATH)
-@Consumes(MediaType.APPLICATION_JSON)
 @Produces(MediaType.APPLICATION_JSON)
+@Consumes(MediaType.APPLICATION_JSON)
 public interface IndexResource extends RestResource, DirectRestService {
     String BASE_PATH = "/index" + ResourcePaths.V2;
     String SHARD_DELETE_SUB_PATH = "/shard/delete";

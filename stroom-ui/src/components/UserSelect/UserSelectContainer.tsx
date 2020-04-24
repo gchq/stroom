@@ -16,7 +16,7 @@
 
 import * as React from "react";
 import * as Fuse from "fuse.js";
-import { User } from "components/users/types";
+import { Account } from "components/users/types";
 import UserSelect from "./UserSelect";
 import useUserSearch from "components/users/SearchUsers/useUserSearch";
 
@@ -30,7 +30,7 @@ const UserSelectContainer: React.FunctionComponent<Props> = ({
   fuzzy,
 }) => {
   const { users: initialUsers } = useUserSearch();
-  const [users, setUsers] = React.useState<User[]>(initialUsers);
+  const [users, setUsers] = React.useState<Account[]>(initialUsers);
 
   // initialUsers is [] on first render. So when the values finally
   // arrive from the api we need to setUsers.

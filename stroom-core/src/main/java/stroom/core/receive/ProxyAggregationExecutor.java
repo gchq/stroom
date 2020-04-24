@@ -22,7 +22,7 @@ import org.slf4j.LoggerFactory;
 import stroom.proxy.repo.FileSetProcessor;
 import stroom.proxy.repo.RepositoryProcessor;
 import stroom.task.api.ExecutorProvider;
-import stroom.task.api.TaskContext;
+import stroom.task.api.TaskContextFactory;
 
 import javax.inject.Inject;
 import javax.inject.Provider;
@@ -39,12 +39,12 @@ public class ProxyAggregationExecutor {
 
     @Inject
     ProxyAggregationExecutor(final ExecutorProvider executorProvider,
-                             final TaskContext taskContext,
+                             final TaskContextFactory taskContextFactory,
                              final Provider<FileSetProcessor> fileSetProcessorProvider,
                              final ProxyAggregationConfig proxyAggregationConfig) {
         this(
                 executorProvider,
-                taskContext,
+                taskContextFactory,
                 fileSetProcessorProvider,
                 proxyAggregationConfig.getProxyDir(),
                 proxyAggregationConfig.getProxyThreads(),
@@ -56,7 +56,7 @@ public class ProxyAggregationExecutor {
     }
 
     public ProxyAggregationExecutor(final ExecutorProvider executorProvider,
-                                    final TaskContext taskContext,
+                                    final TaskContextFactory taskContextFactory,
                                     final Provider<FileSetProcessor> fileSetProcessorProvider,
                                     final String proxyDir,
                                     final int threadCount,
@@ -66,7 +66,7 @@ public class ProxyAggregationExecutor {
                                     final long maxUncompressedFileSize) {
         this.repositoryProcessor = new RepositoryProcessor(
                 executorProvider,
-                taskContext,
+                taskContextFactory,
                 fileSetProcessorProvider,
                 proxyDir,
                 threadCount,

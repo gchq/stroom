@@ -18,7 +18,7 @@ import * as React from "react";
 import * as CopyToClipboard from "react-copy-to-clipboard";
 import Toggle from "react-toggle";
 import "react-toggle/style.css";
-import { ByCopy, OnCopy } from "components/auditCopy";
+import { ByCopy, OnCopyMs } from "components/auditCopy";
 import Button from "components/Button";
 import Loader from "components/Loader";
 import { Token } from "../api/types";
@@ -63,8 +63,8 @@ const EditTokenForm: React.FunctionComponent<{
                 </div>
               </div>
               <ByCopy by={token.userEmail} verb="Issued to" />
-              <OnCopy
-                on={token.expiresOn}
+              <OnCopyMs
+                on={token.expiresOnMs}
                 verb="Expires"
                 dateFormat={dateFormat}
               />
@@ -75,18 +75,18 @@ const EditTokenForm: React.FunctionComponent<{
               <h3>Audit</h3>
             </div>
             <div className="section__fields">
-              <OnCopy
-                on={token.issuedOn}
+              <OnCopyMs
+                on={token.createTimeMs}
                 verb="Issued"
                 dateFormat={dateFormat}
               />
-              <ByCopy by={token.issuedByUser} verb="Issued by" />
-              <OnCopy
-                on={token.updatedOn}
+              <ByCopy by={token.createUser} verb="Issued by" />
+              <OnCopyMs
+                on={token.updateTimeMs}
                 verb="Updated"
                 dateFormat={dateFormat}
               />
-              <ByCopy by={token.updatedByUser} verb="Updated by" />
+              <ByCopy by={token.updateUser} verb="Updated by" />
             </div>
           </div>
           <div className="section">
@@ -94,11 +94,12 @@ const EditTokenForm: React.FunctionComponent<{
               <h3>API key</h3>
             </div>
             <div className="section__fields--copy-only constrained">
-              <textarea value={token.token} disabled />
-              <CopyToClipboard text={token.token}>
+              <textarea value={token.data} disabled />
+              <CopyToClipboard text={token.data}>
                 <Button
+                  appearance="contained"
+                  action="primary"
                   type="button"
-                  className="primary"
                   icon="copy"
                   text="Copy key"
                 />

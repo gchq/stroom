@@ -5,6 +5,7 @@ import io.swagger.annotations.ApiOperation;
 import stroom.util.shared.ResourcePaths;
 import stroom.util.shared.RestResource;
 
+import javax.ws.rs.Consumes;
 import javax.ws.rs.POST;
 import javax.ws.rs.Path;
 import javax.ws.rs.PathParam;
@@ -14,6 +15,7 @@ import javax.ws.rs.core.MediaType;
 @Api(value = "application permissions - /v1")
 @Path(PermissionChangeResource.BASE_PATH)
 @Produces(MediaType.APPLICATION_JSON)
+@Consumes(MediaType.APPLICATION_JSON)
 public interface PermissionChangeResource extends RestResource {
     String BASE_PATH = "/permission/changeEvent" + ResourcePaths.V1;
     String FIRE_CHANGE_PATH_PART = "/fireChange";

@@ -5,7 +5,7 @@ export interface StoreState {
   password: string;
 }
 
-export interface User {
+export interface Account {
   email: string;
   enabled: boolean;
   inactive: boolean;

@@ -18,16 +18,12 @@ package stroom.index.impl;
 
 import org.apache.lucene.store.LockObtainFailedException;
 import stroom.docref.DocRef;
-import stroom.index.shared.FindIndexShardCriteria;
-import stroom.index.shared.IndexDoc;
-import stroom.index.shared.IndexException;
-import stroom.index.shared.IndexShard;
+import stroom.index.shared.*;
 import stroom.index.shared.IndexShard.IndexShardStatus;
-import stroom.index.shared.IndexShardKey;
 import stroom.node.api.NodeInfo;
 import stroom.security.api.SecurityContext;
 import stroom.task.api.ExecutorProvider;
-import stroom.task.api.TaskContext;
+import stroom.task.api.TaskContextFactory;
 import stroom.task.api.ThreadPoolImpl;
 import stroom.task.shared.ThreadPool;
 import stroom.util.logging.LambdaLogger;
@@ -36,24 +32,11 @@ import stroom.util.logging.LogExecutionTime;
 import stroom.util.shared.ResultPage;
 
 import javax.inject.Inject;
-import javax.inject.Provider;
 import javax.inject.Singleton;
 import java.io.IOException;
 import java.nio.file.Path;
-import java.util.Collection;
-import java.util.Collections;
-import java.util.Comparator;
-import java.util.HashSet;
-import java.util.List;
-import java.util.Map;
-import java.util.Set;
-import java.util.concurrent.CompletableFuture;
-import java.util.concurrent.ConcurrentHashMap;
-import java.util.concurrent.CountDownLatch;
-import java.util.concurrent.Executor;
-import java.util.concurrent.Executors;
-import java.util.concurrent.ScheduledExecutorService;
-import java.util.concurrent.TimeUnit;
+import java.util.*;
+import java.util.concurrent.*;
 import java.util.concurrent.atomic.AtomicLong;
 import java.util.concurrent.locks.Lock;
 import java.util.function.Supplier;
@@ -75,7 +58,7 @@ public class IndexShardWriterCacheImpl implements IndexShardWriterCache {
     private final AtomicLong closing = new AtomicLong();
     private final Runner asyncRunner;
     private final Runner syncRunner;
-    private final Provider<TaskContext> taskContextProvider;
+    private final TaskContextFactory taskContextFactory;
     private final SecurityContext securityContext;
 
     private volatile Settings settings;
@@ -87,7 +70,7 @@ public class IndexShardWriterCacheImpl implements IndexShardWriterCache {
                                      final IndexStructureCache indexStructureCache,
                                      final IndexShardManager indexShardManager,
                                      final ExecutorProvider executorProvider,
-                                     final Provider<TaskContext> taskContextProvider,
+                                     final TaskContextFactory taskContextFactory,
                                      final SecurityContext securityContext) {
         this.nodeInfo = nodeInfo;
         this.indexShardService = indexShardService;
@@ -97,10 +80,10 @@ public class IndexShardWriterCacheImpl implements IndexShardWriterCache {
 
         final ThreadPool threadPool = new ThreadPoolImpl("Index Shard Writer Cache", 3, 0, Integer.MAX_VALUE);
         final Executor executor = securityContext.asProcessingUserResult(() -> executorProvider.get(threadPool));
-        asyncRunner = new AsyncRunner(executor, taskContextProvider);
+        asyncRunner = new AsyncRunner(executor);
         syncRunner = new SyncRunner();
 
-        this.taskContextProvider = taskContextProvider;
+        this.taskContextFactory = taskContextFactory;
         this.securityContext = securityContext;
     }
 
@@ -369,10 +352,9 @@ public class IndexShardWriterCacheImpl implements IndexShardWriterCache {
     }
 
     private CompletableFuture<IndexShardWriter> flush(final IndexShardWriter indexShardWriter, final Runner exec) {
-        return exec.exec(() -> {
+        final Supplier<IndexShardWriter> supplier = taskContextFactory.contextResult("Flushing writer", taskContext -> {
             try {
-                taskContextProvider.get().setName("Flushing writer");
-                taskContextProvider.get().info(() -> "Flushing writer for index shard " + indexShardWriter.getIndexShardId());
+                taskContext.info(() -> "Flushing writer for index shard " + indexShardWriter.getIndexShardId());
 
                 // Flush the shard.
                 indexShardWriter.flush();
@@ -382,6 +364,7 @@ public class IndexShardWriterCacheImpl implements IndexShardWriterCache {
 
             return indexShardWriter;
         });
+        return exec.exec(supplier);
     }
 
     private void close(final IndexShardWriter indexShardWriter, final Runner exec) {
@@ -400,14 +383,13 @@ public class IndexShardWriterCacheImpl implements IndexShardWriterCache {
 
                 try {
                     // Close the shard.
-                    final CompletableFuture<IndexShardWriter> completableFuture = exec.exec(() -> {
+                    final Supplier<IndexShardWriter> supplier = taskContextFactory.contextResult("Closing writer", taskContext -> {
                         try {
                             try {
                                 LOGGER.debug(() -> "Closing " + indexShardId);
                                 LOGGER.trace(() -> "Closing " + indexShardId + " - " + indexShardKey.toString());
 
-                                taskContextProvider.get().setName("Closing writer");
-                                taskContextProvider.get().info(() -> "Closing writer for index shard " + indexShardId);
+                                taskContext.info(() -> "Closing writer for index shard " + indexShardId);
 
                                 // Close the shard.
                                 indexShardWriter.close();
@@ -424,6 +406,7 @@ public class IndexShardWriterCacheImpl implements IndexShardWriterCache {
 
                         return null;
                     });
+                    final CompletableFuture<IndexShardWriter> completableFuture = exec.exec(supplier);
                     completableFuture.thenRun(closing::decrementAndGet);
                     completableFuture.exceptionally(t -> {
                         LOGGER.error(t::getMessage, t);
@@ -537,18 +520,15 @@ public class IndexShardWriterCacheImpl implements IndexShardWriterCache {
     }
 
     private static class AsyncRunner implements Runner {
-        private final Provider<TaskContext> taskContextProvider;
         private final Executor executor;
 
-        AsyncRunner(final Executor executor, final Provider<TaskContext> taskContextProvider) {
+        AsyncRunner(final Executor executor) {
             this.executor = executor;
-            this.taskContextProvider = taskContextProvider;
         }
 
         @Override
         public CompletableFuture<IndexShardWriter> exec(final Supplier<IndexShardWriter> supplier) {
-            final Supplier<IndexShardWriter> wrappedSupplier = taskContextProvider.get().sub(supplier);
-            return CompletableFuture.supplyAsync(wrappedSupplier, executor);
+            return CompletableFuture.supplyAsync(supplier, executor);
         }
     }
 

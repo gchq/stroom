@@ -7,17 +7,17 @@ public interface TokenService {
 
     Token create(CreateTokenRequest createTokenRequest);
 
-    void deleteAll();
+    int deleteAll();
 
-    void delete(int tokenId);
+    int delete(int tokenId);
 
-    void delete(String token);
+    int delete(String data);
 
-    Optional<Token> read(String token);
+    Optional<Token> read(String data);
 
     Optional<Token> read(int tokenId);
 
-    void toggleEnabled(int tokenId, boolean isEnabled);
+    int toggleEnabled(int tokenId, boolean isEnabled);
 
 //    Optional<String> verifyToken(String token);
 

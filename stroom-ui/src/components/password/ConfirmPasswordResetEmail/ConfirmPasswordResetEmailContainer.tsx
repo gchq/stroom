@@ -15,16 +15,25 @@
  */
 
 import * as React from "react";
-import useConfig from "startup/config/useConfig";
 import ConfirmPasswordResetEmail from "./ConfirmPasswordResetEmail";
+import * as queryString from "query-string";
+import useRouter from "../../../lib/useRouter";
 
 const ConfirmPasswordResetEmailContainer = () => {
-  const { stroomUiUrl } = useConfig();
-  if (!stroomUiUrl) throw Error("Config not ready or misconfigured!");
+  let redirectUri: string;
+
+  const { router } = useRouter();
+  if (!!router && !!router.location) {
+    const query = queryString.parse(router.location.search);
+    if (!!query.redirect_uri) {
+      redirectUri = query.redirect_uri + "";
+    }
+  }
+
   return (
     <ConfirmPasswordResetEmail
       onBack={() => {
-        window.location.href = stroomUiUrl;
+        window.location.href = redirectUri;
       }}
     />
   );

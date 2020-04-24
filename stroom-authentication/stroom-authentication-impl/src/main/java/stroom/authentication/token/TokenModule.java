@@ -24,6 +24,7 @@ public final class TokenModule extends AbstractModule {
     @Override
     protected void configure() {
         bind(TokenService.class).to(TokenServiceImpl.class);
+        bind(TokenEventLog.class).to(TokenEventLogImpl.class);
 
         GuiceUtil.buildMultiBinder(binder(), RestResource.class)
                 .addBinding(TokenResourceImpl.class);

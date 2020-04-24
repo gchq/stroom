@@ -1,14 +1,13 @@
 import { HttpRequest, HttpResponse } from "@pollyjs/adapter-fetch";
 
 import { TestCache } from "../PollyDecorator";
-import { Config } from "startup/config/types";
 import { ResourceBuilder } from "./types";
 import { DOCUMENT_RESOURCES } from "components/DocumentEditors/useDocumentApi/types/resourceUrls";
 import { DocumentBase } from "components/DocumentEditors/useDocumentApi/types/base";
 
 const resourceBuilder: ResourceBuilder = (
   server: any,
-  { stroomBaseServiceUrl }: Config,
+  apiUrl: any,
   testCache: TestCache,
 ) => {
   Object.entries(DOCUMENT_RESOURCES)
@@ -17,7 +16,7 @@ const resourceBuilder: ResourceBuilder = (
       resourcePath: k[1],
     }))
     .forEach(({ docRefType, resourcePath }) => {
-      const resource = `${stroomBaseServiceUrl}${resourcePath}`;
+      const resource = apiUrl(resourcePath);
 
       server
         .get(`${resource}/:docRefUuid`)

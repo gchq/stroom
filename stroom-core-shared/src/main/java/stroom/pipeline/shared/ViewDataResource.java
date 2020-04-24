@@ -31,11 +31,10 @@ import javax.ws.rs.core.MediaType;
 @Api(value = "viewData - /v1")
 @Path("/viewData" + ResourcePaths.V1)
 @Produces(MediaType.APPLICATION_JSON)
+@Consumes(MediaType.APPLICATION_JSON)
 public interface ViewDataResource extends RestResource, DirectRestService {
     @POST
     @Path("fetch")
-    @Consumes(MediaType.APPLICATION_JSON)
-    @Produces(MediaType.APPLICATION_JSON)
     @ApiOperation(
             value = "Fetch matching data",
             response = AbstractFetchDataResult.class)

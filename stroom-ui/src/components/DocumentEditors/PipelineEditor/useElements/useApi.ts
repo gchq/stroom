@@ -2,7 +2,7 @@ import * as React from "react";
 
 import useHttpClient from "lib/useHttpClient";
 import { ElementDefinition, ElementPropertiesByElementIdType } from "./types";
-import useConfig from "startup/config/useConfig";
+import useUrlFactory from "lib/useUrlFactory";
 
 interface Api {
   fetchElements: () => Promise<ElementDefinition[]>;
@@ -10,22 +10,23 @@ interface Api {
 }
 
 export const useApi = (): Api => {
-  const { stroomBaseServiceUrl } = useConfig();
+  const { apiUrl } = useUrlFactory();
   const { httpGetJson } = useHttpClient();
+  const resource = apiUrl("/elements/v1");
 
   const fetchElements = React.useCallback(
     () =>
-      httpGetJson(`${stroomBaseServiceUrl}/elements/v1/elements`, {}, false),
-    [stroomBaseServiceUrl, httpGetJson],
+      httpGetJson(`${resource}/elements`, {}, false),
+    [resource, httpGetJson],
   );
   const fetchElementProperties = React.useCallback(
     () =>
       httpGetJson(
-        `${stroomBaseServiceUrl}/elements/v1/elementProperties`,
+        `${resource}/elementProperties`,
         {},
         false,
       ),
-    [stroomBaseServiceUrl, httpGetJson],
+    [resource, httpGetJson],
   );
 
   return {
