@@ -61,7 +61,7 @@ class SecurityContextImpl implements SecurityContext {
         if (optional.isEmpty()) {
             throw new AuthenticationException("Unable to find user with id=" + userId);
         }
-        return new UserIdentityImpl(optional.get(), userId, null, null);
+        return new UserIdentityImpl(optional.get().getUuid(), userId, null, null);
     }
 
     @Override
@@ -88,11 +88,11 @@ class SecurityContextImpl implements SecurityContext {
         return processingUserIdentityProvider.get().equals(userIdentity);
     }
 
-    User getUser(final UserIdentity userIdentity) {
+    String getUserUuid(final UserIdentity userIdentity) {
         if (!(userIdentity instanceof UserIdentityImpl)) {
             throw new AuthenticationException("Expecting a real user identity");
         }
-        return ((UserIdentityImpl) userIdentity).getUser();
+        return ((UserIdentityImpl) userIdentity).getUserUuid();
     }
 
     private void pushUser(final UserIdentity userIdentity) {
@@ -127,12 +127,12 @@ class SecurityContextImpl implements SecurityContext {
         }
 
         // See if the user has permission.
-        final User user = getUser(userIdentity);
-        boolean result = hasAppPermission(user.getUuid(), permission);
+        final String userUuid = getUserUuid(userIdentity);
+        boolean result = hasAppPermission(userUuid, permission);
 
         // If the user doesn't have the requested permission see if they are an admin.
         if (!result && !PermissionNames.ADMINISTRATOR.equals(permission)) {
-            result = hasAppPermission(user.getUuid(), PermissionNames.ADMINISTRATOR);
+            result = hasAppPermission(userUuid, PermissionNames.ADMINISTRATOR);
         }
 
         return result;
@@ -185,8 +185,8 @@ class SecurityContextImpl implements SecurityContext {
             perm = DocumentPermissionNames.USE;
         }
 
-        final User user = getUser(userIdentity);
-        return hasDocumentPermission(user.getUuid(), documentUuid, perm);
+        final String userUuid = getUserUuid(userIdentity);
+        return hasDocumentPermission(userUuid, documentUuid, perm);
     }
 
     private boolean hasDocumentPermission(final String userUuid, final String documentUuid, final String permission) {

@@ -127,13 +127,13 @@ public class DocumentPermissionServiceImpl implements DocumentPermissionService 
 
         // If no user is present then don't create permissions.
         if (userIdentity != null) {
-            final User user = securityContext.getUser(userIdentity);
+            final String userUuid = securityContext.getUserUuid(userIdentity);
             if (owner || securityContext.hasDocumentPermission(documentUuid, DocumentPermissionNames.OWNER)) {
                 if (owner) {
                     // Make the current user the owner of the new document.
                     try {
                         addPermission(documentUuid,
-                                user.getUuid(),
+                                userUuid,
                                 DocumentPermissionNames.OWNER);
                     } catch (final RuntimeException e) {
                         LOGGER.error(e.getMessage(), e);

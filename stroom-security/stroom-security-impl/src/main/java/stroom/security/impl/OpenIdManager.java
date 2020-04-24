@@ -155,7 +155,7 @@ class OpenIdManager {
                 final String userId = getUserId(jwtClaims);
                 final Optional<User> optionalUser = userCache.get(userId);
                 final User user = optionalUser.orElseThrow(() -> new AuthenticationException("Unable to find user: " + userId));
-                token = new UserIdentityImpl(user, userId, idToken, sessionId);
+                token = new UserIdentityImpl(user.getUuid(), userId, idToken, sessionId);
 
             } else {
                 // If the nonces don't match we need to redirect to log in again.
@@ -198,7 +198,7 @@ class OpenIdManager {
                 final String userId = optionalUserId.get();
                 final Optional<User> optionalUser = userCache.get(userId);
                 final User user = optionalUser.orElseThrow(() -> new AuthenticationException("Unable to find user: " + userId));
-                token = new UserIdentityImpl(user, userId, optionalJws.get(), sessionId);
+                token = new UserIdentityImpl(user.getUuid(), userId, optionalJws.get(), sessionId);
             }
         }
 
