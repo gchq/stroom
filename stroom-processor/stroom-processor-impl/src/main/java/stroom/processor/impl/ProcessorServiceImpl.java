@@ -19,9 +19,12 @@ package stroom.processor.impl;
 
 import stroom.docref.DocRef;
 import stroom.entity.shared.ExpressionCriteria;
+import stroom.pipeline.shared.PipelineDoc;
 import stroom.processor.api.ProcessorService;
 import stroom.processor.shared.Processor;
 import stroom.security.api.SecurityContext;
+import stroom.security.shared.DocumentPermissionNames;
+import stroom.security.shared.PermissionException;
 import stroom.security.shared.PermissionNames;
 import stroom.util.AuditUtil;
 import stroom.util.shared.ResultPage;
@@ -45,9 +48,16 @@ public class ProcessorServiceImpl implements ProcessorService {
 
     @Override
     public Processor create(final DocRef pipelineRef, final boolean enabled) {
+
         final Processor processor = new Processor();
         processor.setEnabled(enabled);
-        processor.setPipelineUuid(pipelineRef.getUuid());
+        processor.setPipeline(pipelineRef);
+
+        // Check the user has read permissions on the pipeline.
+        if (!securityContext.hasDocumentPermission(processor.getPipelineUuid(), DocumentPermissionNames.READ)) {
+            throw new PermissionException("You do not have permission to create this processor");
+        }
+
         return create(processor);
 
 //        Processor processor = null;
@@ -67,12 +77,28 @@ public class ProcessorServiceImpl implements ProcessorService {
     }
 
     @Override
+    public Processor create(DocRef processorDocRef, DocRef pipelineDocRef, boolean enabled) {
+        final Processor processor = new Processor();
+        processor.setEnabled(enabled);
+        processor.setPipeline(pipelineDocRef);
+        processor.setUuid(processorDocRef.getUuid());
+
+        // Check the user has read permissions on the pipeline.
+        if (!securityContext.hasDocumentPermission(processor.getPipelineUuid(), DocumentPermissionNames.READ)) {
+            throw new PermissionException("You do not have permission to create this processor");
+        }
+        return create(processor);
+    }
+
+
+    @Override
     public Processor create(Processor processor) {
         if (processor.getUuid() == null) {
             processor.setUuid(UUID.randomUUID().toString());
         }
 
         AuditUtil.stamp(securityContext.getUserId(), processor);
+
         return securityContext.secureResult(PERMISSION, () ->
                 processorDao.create(processor));
     }

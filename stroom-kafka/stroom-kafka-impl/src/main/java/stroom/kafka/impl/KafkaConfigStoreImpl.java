@@ -28,10 +28,7 @@ import stroom.util.shared.Message;
 
 import javax.inject.Inject;
 import javax.inject.Singleton;
-import java.util.Collections;
-import java.util.List;
-import java.util.Map;
-import java.util.Set;
+import java.util.*;
 
 @Singleton
 class KafkaConfigStoreImpl implements KafkaConfigStore {
@@ -142,7 +139,7 @@ class KafkaConfigStoreImpl implements KafkaConfigStore {
     }
 
     @Override
-    public DocRef importDocument(final DocRef docRef, final Map<String, byte[]> dataMap, final ImportState importState, final ImportMode importMode) {
+    public ImpexDetails importDocument(final DocRef docRef, final Map<String, byte[]> dataMap, final ImportState importState, final ImportMode importMode) {
 //        // Convert legacy import format to the new format.
 //        final Map<String, byte[]> map = convert(docRef, dataMap, importState, importMode);
 //        if (map != null) {
@@ -207,6 +204,11 @@ class KafkaConfigStoreImpl implements KafkaConfigStore {
 //        return result;
 //    }
 
+
+    @Override
+    public Set<DocRef> findAssociatedNonExplorerDocRefs(DocRef docRef) {
+        return null;
+    }
     ////////////////////////////////////////////////////////////////////////
     // END OF ImportExportActionHandler
     ////////////////////////////////////////////////////////////////////////

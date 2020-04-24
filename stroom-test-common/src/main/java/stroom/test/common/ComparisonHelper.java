@@ -133,7 +133,8 @@ public final class ComparisonHelper {
             }
 
             // Make sure we found the file.
-            assertThat(outFile).as("Output file not found for: " + FileUtil.getCanonicalPath(inFile)).isNotNull();
+            assertThat(outFile).as("Output file not found for: " + FileUtil.getCanonicalPath(inFile)
+                + " in directory \"" + FileUtil.getCanonicalPath(out) + "\"").isNotNull();
 
             LOGGER.debug("Comparing \"" + FileUtil.getCanonicalPath(inFile) + "\" and \"" + FileUtil.getCanonicalPath(outFile) + "\"");
 

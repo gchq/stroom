@@ -32,6 +32,7 @@ import stroom.util.shared.Message;
 
 import javax.inject.Inject;
 import javax.inject.Singleton;
+import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
@@ -125,7 +126,7 @@ class DataRetentionRulesServiceImpl implements DataRetentionRulesService {
     }
 
     @Override
-    public DocRef importDocument(final DocRef docRef, final Map<String, byte[]> dataMap, final ImportState importState, final ImportMode importMode) {
+    public ImpexDetails importDocument(final DocRef docRef, final Map<String, byte[]> dataMap, final ImportState importState, final ImportMode importMode) {
         return store.importDocument(docRef, dataMap, importState, importMode);
     }
 
@@ -140,6 +141,11 @@ class DataRetentionRulesServiceImpl implements DataRetentionRulesService {
     @Override
     public String getType() {
         return DataRetentionRules.DOCUMENT_TYPE;
+    }
+
+    @Override
+    public Set<DocRef> findAssociatedNonExplorerDocRefs(DocRef docRef) {
+        return null;
     }
 
     ////////////////////////////////////////////////////////////////////////

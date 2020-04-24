@@ -1,5 +1,6 @@
 package stroom.importexport.api;
 
+import io.vavr.Tuple2;
 import stroom.docref.DocRef;
 import stroom.importexport.shared.ImportState;
 import stroom.importexport.shared.ImportState.ImportMode;
@@ -10,7 +11,15 @@ import java.util.Map;
 import java.util.Set;
 
 public interface ImportExportActionHandler {
-    DocRef importDocument(DocRef docRef, Map<String, byte[]> dataMap, final ImportState importState, final ImportMode importMode);
+    /**
+     *
+     * @param docRef
+     * @param dataMap
+     * @param importState
+     * @param importMode
+     * @return a tuple containing the imported DocRef and a String location where it is imported to
+     */
+    ImpexDetails importDocument(DocRef docRef, Map<String, byte[]> dataMap, final ImportState importState, final ImportMode importMode);
 
     Map<String, byte[]> exportDocument(DocRef docRef, boolean omitAuditFields, List<Message> messageList);
 
@@ -19,4 +28,46 @@ public interface ImportExportActionHandler {
     Map<DocRef, Set<DocRef>> getDependencies();
 
     String getType();
+
+    Set<DocRef> findAssociatedNonExplorerDocRefs(DocRef docRef);
+
+    ///////////////////////////////////////////////
+    //End of ImportExportActionHandler interface //
+    ///////////////////////////////////////////////
+
+
+    /**
+     * Class used to represent the result of operations of ImportExportActionHandler
+     */
+    class ImpexDetails {
+        private String locationRef;
+        private DocRef docRef;
+
+        public ImpexDetails(){}
+
+        public ImpexDetails(DocRef docRef){
+            this.docRef = docRef;
+        }
+
+        public ImpexDetails(DocRef docRef, String locationRef){
+            this.docRef = docRef;
+            this.locationRef = locationRef;
+        }
+
+        public void setDocRef(DocRef docRef) {
+            this.docRef = docRef;
+        }
+
+        public void setLocationRef(String locationRef) {
+            this.locationRef = locationRef;
+        }
+
+        public String getLocationRef() {
+            return locationRef;
+        }
+
+        public DocRef getDocRef() {
+            return docRef;
+        }
+    }
 }

@@ -35,11 +35,7 @@ import stroom.util.shared.Severity;
 import javax.inject.Inject;
 import javax.inject.Singleton;
 import java.io.IOException;
-import java.util.Collections;
-import java.util.List;
-import java.util.Map;
-import java.util.Set;
-import java.util.UUID;
+import java.util.*;
 
 @Singleton
 class TextConverterStoreImpl implements TextConverterStore {
@@ -134,14 +130,14 @@ class TextConverterStoreImpl implements TextConverterStore {
     }
 
     @Override
-    public DocRef importDocument(final DocRef docRef, final Map<String, byte[]> dataMap, final ImportState importState, final ImportMode importMode) {
+    public ImpexDetails importDocument(final DocRef docRef, final Map<String, byte[]> dataMap, final ImportState importState, final ImportMode importMode) {
         // Convert legacy import format to the new format.
         final Map<String, byte[]> map = convert(docRef, dataMap, importState, importMode);
         if (map != null) {
             return store.importDocument(docRef, map, importState, importMode);
         }
 
-        return docRef;
+        return new ImpexDetails(docRef);
     }
 
     @Override
@@ -175,8 +171,8 @@ class TextConverterStoreImpl implements TextConverterStore {
                     document.setUuid(uuid);
                     document.setName(docRef.getName());
                     document.setVersion(UUID.randomUUID().toString());
-                    document.setCreateTime(now);
-                    document.setUpdateTime(now);
+                    document.setCreateTimeMs(now);
+                    document.setUpdateTimeMs(now);
                     document.setCreateUser(userId);
                     document.setUpdateUser(userId);
 
@@ -204,6 +200,11 @@ class TextConverterStoreImpl implements TextConverterStore {
     @Override
     public String getType() {
         return TextConverterDoc.DOCUMENT_TYPE;
+    }
+
+    @Override
+    public Set<DocRef> findAssociatedNonExplorerDocRefs(DocRef docRef) {
+        return null;
     }
 
     ////////////////////////////////////////////////////////////////////////

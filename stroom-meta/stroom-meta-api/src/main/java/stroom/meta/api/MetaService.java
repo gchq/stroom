@@ -54,7 +54,7 @@ public interface MetaService {
     /**
      * Change the status of the specified meta data if the current status is as specified.
      *
-     * @param data          The meta data to change the status for.
+     * @param meta          The meta data to change the status for.
      * @param currentStatus The current status.
      * @param newStatus     The new status.
      * @return The updated meta data.
@@ -73,7 +73,7 @@ public interface MetaService {
     /**
      * Add some additional attributes to meta data.
      *
-     * @param data       The meta data to add attributes to.
+     * @param meta       The meta data to add attributes to.
      * @param attributes A map of key/value attributes.
      */
     void addAttributes(Meta meta, AttributeMap attributes);
@@ -91,7 +91,7 @@ public interface MetaService {
      * Delete meta data by id with an option to delete regardless of lock status.
      * Note that this method only changes the status of meta data to be deleted and does not actually delete the meta data.
      *
-     * @param od        The id of the meta data to delete.
+     * @param id        The id of the meta data to delete.
      * @param lockCheck Choose if the service should only delete unlocked meta data records.
      * @return The number of items deleted.
      */
@@ -150,4 +150,15 @@ public interface MetaService {
      * @return the list of matches
      */
     Set<Meta> findEffectiveData(EffectiveMetaDataCriteria criteria);
+
+    /**
+     * Return the id of the meta data record that is the one before the supplied timestamp
+     *
+     * @param timestampMs the period to compare against the creation date timestamp of the streams in the store
+     * @return the id of the timestamp before the supplied timestamp, or null if
+     * timestamp is earlier than all data or null if timestamp is earlier than all data in the store
+     */
+    Long getMaxDataIdWithCreationBeforePeriod(final Long timestampMs);
+
+
 }

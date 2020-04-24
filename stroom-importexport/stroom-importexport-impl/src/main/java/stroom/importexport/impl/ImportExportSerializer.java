@@ -26,7 +26,21 @@ import java.util.List;
 import java.util.Set;
 
 public interface ImportExportSerializer {
-    void read(Path dir, List<ImportState> importStateList, ImportMode importMode);
+    /**
+     * Read all the serialized DocRef items from the supplied path
+     * @param dir directory containing serialized DocRef items, e.g. files created by ImportExportSerializer.write()
+     * @param importStateList
+     * @param importMode
+     * @return The set of all DocRef roots, typically this is the Explorer root DocRef plus any DocRefs not held in the Explorer tree.
+     */
+    Set<DocRef> read(Path dir, List<ImportState> importStateList, ImportMode importMode);
 
+    /**
+     * Walk the supplied tree of DocRefs and export all to the given path
+     * @param dir Where to serialize the DocRef items to.
+     * @param docRefs Set of the DocRefs and root folder DocRefs (as per that returned by ImportExportSerializer.read()
+     * @param omitAuditFields do not export audit fields (e.g. last update time / last update user)
+     * @param messageList
+     */
     void write(Path dir, Set<DocRef> docRefs, boolean omitAuditFields, List<Message> messageList);
 }

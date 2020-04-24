@@ -8,7 +8,8 @@ public final class ImportExportFileNameUtil {
     }
 
     public static String createFilePrefix(final DocRef docRef) {
-        return  toSafeFileName(docRef.getName(), 100) + "." + docRef.getType() + "." + docRef.getUuid();
+        return  (docRef.getName() != null ? toSafeFileName(docRef.getName(), 100)  + "." : "")
+                + docRef.getType() + "." + docRef.getUuid();
     }
 
     public static String toSafeFileName(final String string, final int maxLength) {

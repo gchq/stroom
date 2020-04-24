@@ -266,6 +266,11 @@ public class MockMetaService implements MetaService, Clearable {
     }
 
     @Override
+    public Long getMaxDataIdWithCreationBeforePeriod(Long timestampMs) {
+        return null;
+    }
+
+    @Override
     public String toString() {
         final StringBuilder sb = new StringBuilder();
         for (final long id : metaMap.keySet()) {
