@@ -11,6 +11,34 @@ import java.util.Map;
 import java.util.Set;
 
 public interface ImportExportActionHandler {
+    /**
+     *
+     * @param docRef
+     * @param dataMap
+     * @param importState
+     * @param importMode
+     * @return a tuple containing the imported DocRef and a String location where it is imported to
+     */
+    ImpexDetails importDocument(DocRef docRef, Map<String, byte[]> dataMap, final ImportState importState, final ImportMode importMode);
+
+    Map<String, byte[]> exportDocument(DocRef docRef, boolean omitAuditFields, List<Message> messageList);
+
+    Set<DocRef> listDocuments();
+
+    Map<DocRef, Set<DocRef>> getDependencies();
+
+    String getType();
+
+    Set<DocRef> findAssociatedNonExplorerDocRefs(DocRef docRef);
+
+    ///////////////////////////////////////////////
+    //End of ImportExportActionHandler interface //
+    ///////////////////////////////////////////////
+
+
+    /**
+     * Class used to represent the result of operations of ImportExportActionHandler
+     */
     class ImpexDetails {
         private String locationRef;
         private DocRef docRef;
@@ -42,23 +70,4 @@ public interface ImportExportActionHandler {
             return docRef;
         }
     }
-    /**
-     *
-     * @param docRef
-     * @param dataMap
-     * @param importState
-     * @param importMode
-     * @return a tuple containing the imported DocRef and a String location where it is imported to
-     */
-    ImpexDetails importDocument(DocRef docRef, Map<String, byte[]> dataMap, final ImportState importState, final ImportMode importMode);
-
-    Map<String, byte[]> exportDocument(DocRef docRef, boolean omitAuditFields, List<Message> messageList);
-
-    Set<DocRef> listDocuments();
-
-    Map<DocRef, Set<DocRef>> getDependencies();
-
-    String getType();
-
-    Set<DocRef> findAssociatedNonExplorerDocRefs(DocRef docRef);
 }
