@@ -46,8 +46,8 @@ public class FeedPresenter extends DocumentEditTabPresenter<LinkTabPanelView, Fe
                          final LinkTabPanelView view,
                          final ClientSecurityContext securityContext,
                          final Provider<FeedSettingsPresenter> settingsPresenterProvider,
-                         final Provider<ClassificationWrappedMetaPresenter> streamPresenterProvider,
-                         final Provider<ProcessorTaskPresenter> streamTaskPresenterProvider) {
+                         final Provider<ClassificationWrappedMetaPresenter> metaPresenterProvider,
+                         final Provider<ProcessorTaskPresenter> taskPresenterProvider) {
         super(eventBus, view, securityContext);
 
         tabContentProvider.setDirtyHandler(event -> {
@@ -60,14 +60,14 @@ public class FeedPresenter extends DocumentEditTabPresenter<LinkTabPanelView, Fe
 
         if (securityContext.hasAppPermission(PermissionNames.VIEW_DATA_PERMISSION)) {
             addTab(DATA);
-            tabContentProvider.add(DATA, streamPresenterProvider);
+            tabContentProvider.add(DATA, metaPresenterProvider);
 
             selectedTab = DATA;
         }
 
         if (securityContext.hasAppPermission(PermissionNames.MANAGE_PROCESSORS_PERMISSION)) {
             addTab(TASKS);
-            tabContentProvider.add(TASKS, streamTaskPresenterProvider);
+            tabContentProvider.add(TASKS, taskPresenterProvider);
         }
 
         addTab(SETTINGS);
