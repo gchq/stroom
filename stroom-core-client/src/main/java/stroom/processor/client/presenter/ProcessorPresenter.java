@@ -107,8 +107,8 @@ public class ProcessorPresenter extends MyPresenterWidget<ProcessorPresenter.Pro
             addButton.setTitle("Add Processor");
             editButton = processorListPresenter.getView().addButton(SvgPresets.EDIT);
             editButton.setTitle("Edit Processor");
-            removeButton = processorListPresenter.getView().addButton(SvgPresets.REMOVE);
-            removeButton.setTitle("Remove Processor");
+            removeButton = processorListPresenter.getView().addButton(SvgPresets.DELETE);
+            removeButton.setTitle("Delete Processor");
             registerHandler(addButton.addClickHandler(event -> {
                 if (allowUpdate) {
                     addProcessor();
