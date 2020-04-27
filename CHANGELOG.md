@@ -6,6 +6,8 @@ and this project adheres to [Semantic Versioning](http://semver.org/).
 
 ## [Unreleased]
 
+* Issue **#1480** : Index settings now shows index volume groups and allows selection. 
+
 * Issue **#1450** : Further attempt to improve criteria filtering on data tab.
 
 * Issue **#1467** : The cluster node state node uses NodeResource to determine active nodes.
