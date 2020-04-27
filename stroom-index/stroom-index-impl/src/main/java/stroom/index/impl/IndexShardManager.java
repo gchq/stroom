@@ -38,7 +38,12 @@ import java.nio.file.Files;
 import java.nio.file.Path;
 import java.time.ZoneOffset;
 import java.time.ZonedDateTime;
-import java.util.*;
+import java.util.Collections;
+import java.util.HashMap;
+import java.util.Iterator;
+import java.util.List;
+import java.util.Map;
+import java.util.Set;
 import java.util.concurrent.Executor;
 import java.util.concurrent.Executors;
 import java.util.concurrent.ScheduledExecutorService;
@@ -47,6 +52,7 @@ import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.concurrent.atomic.AtomicLong;
 import java.util.concurrent.locks.Lock;
+import java.util.stream.Collectors;
 
 /**
  * Pool API into open index shards.
@@ -169,19 +175,25 @@ public class IndexShardManager {
 
     public Long performAction(final FindIndexShardCriteria criteria, final IndexShardAction action) {
         return securityContext.secureResult(PermissionNames.MANAGE_INDEX_SHARDS_PERMISSION, () -> {
+            final String thisNodeName = nodeInfo.getThisNodeName();
             final ResultPage<IndexShard> shards = indexShardService.find(criteria);
-            return performAction(shards, action);
+
+            // Only perform actions on shards owned by this node.
+            final List<IndexShard> ownedShards = shards
+                    .stream()
+                    .filter(indexShard -> thisNodeName.equals(indexShard.getNodeName()))
+                    .collect(Collectors.toList());
+            return performAction(ownedShards, action);
         });
     }
 
-    private long performAction(final ResultPage<IndexShard> shards, final IndexShardAction action) {
+    private long performAction(final List<IndexShard> ownedShards, final IndexShardAction action) {
         final AtomicLong shardCount = new AtomicLong();
-
-        if (shards.size() > 0) {
+        if (ownedShards.size() > 0) {
             final IndexShardWriterCache indexShardWriterCache = indexShardWriterCacheProvider.get();
 
             // Create an atomic integer to count the number of index shard writers yet to complete the specified action.
-            final AtomicInteger remaining = new AtomicInteger(shards.size());
+            final AtomicInteger remaining = new AtomicInteger(ownedShards.size());
 
             // Create a scheduled executor for us to continually log index shard writer action progress.
             final ScheduledExecutorService executor = Executors.newSingleThreadScheduledExecutor();
@@ -189,16 +201,13 @@ public class IndexShardManager {
             executor.scheduleAtFixedRate(() -> LOGGER.info(() -> "Waiting for " + remaining.get() + " index shards to " + action.getName()), 10, 10, TimeUnit.SECONDS);
 
             // Perform action on all of the index shard writers in parallel.
-            shards.getValues().parallelStream().forEach(shard -> {
+            ownedShards.parallelStream().forEach(shard -> {
                 try {
                     switch (action) {
                         case FLUSH:
                             shardCount.incrementAndGet();
                             indexShardWriterCache.flush(shard.getId());
                             break;
-//                                case CLOSE:
-//                                    indexShardWriter.close();
-//                                    break;
                         case DELETE:
                             shardCount.incrementAndGet();
                             indexShardWriterCache.delete(shard.getId());
