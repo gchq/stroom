@@ -27,6 +27,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import stroom.docref.DocRef;
 import stroom.event.logging.api.StroomEventLoggingService;
+import stroom.importexport.api.ImportExportDocumentEventLog;
 import stroom.security.api.SecurityContext;
 
 import javax.inject.Inject;

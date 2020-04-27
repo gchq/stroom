@@ -26,5 +26,7 @@ import java.util.List;
 public interface PipelineStore extends DocumentStore<PipelineDoc> {
     List<DocRef> findByName(String name);
 
+    PipelineDoc find (DocRef docRef);
+
     List<DocRef> list();
 }

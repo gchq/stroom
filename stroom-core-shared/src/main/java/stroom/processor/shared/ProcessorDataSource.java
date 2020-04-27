@@ -17,10 +17,11 @@ public class ProcessorDataSource {
 
     public static final TextField CREATE_USER = new TextField("Create User");
     public static final DocRefField PIPELINE = new DocRefField(PipelineDoc.DOCUMENT_TYPE, "Pipeline");
-
+    public static final TextField UUID = new TextField("UUID");
     static {
         FIELDS.add(PIPELINE);
         FIELDS.add(CREATE_USER);
+        FIELDS.add(UUID);
         FIELD_MAP = FIELDS.stream().collect(Collectors.toMap(AbstractField::getName, Function.identity()));
     }
 

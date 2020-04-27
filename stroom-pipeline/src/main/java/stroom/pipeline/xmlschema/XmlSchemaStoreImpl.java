@@ -31,8 +31,8 @@ import stroom.importexport.shared.ImportState;
 import stroom.importexport.shared.ImportState.ImportMode;
 import stroom.pipeline.xmlschema.migration.OldXMLSchema;
 import stroom.security.api.SecurityContext;
-import stroom.util.shared.ResultPage;
 import stroom.util.shared.Message;
+import stroom.util.shared.ResultPage;
 import stroom.util.shared.Severity;
 import stroom.xmlschema.shared.XmlSchemaDoc;
 
@@ -141,14 +141,14 @@ public class XmlSchemaStoreImpl implements XmlSchemaStore {
     }
 
     @Override
-    public DocRef importDocument(final DocRef docRef, final Map<String, byte[]> dataMap, final ImportState importState, final ImportMode importMode) {
+    public ImpexDetails importDocument(final DocRef docRef, final Map<String, byte[]> dataMap, final ImportState importState, final ImportMode importMode) {
         // Convert legacy import format to the new format.
         final Map<String, byte[]> map = convert(docRef, dataMap, importState, importMode);
         if (map != null) {
             return store.importDocument(docRef, map, importState, importMode);
         }
 
-        return docRef;
+        return new ImpexDetails(docRef);
     }
 
     @Override
@@ -182,8 +182,8 @@ public class XmlSchemaStoreImpl implements XmlSchemaStore {
                     document.setUuid(uuid);
                     document.setName(docRef.getName());
                     document.setVersion(UUID.randomUUID().toString());
-                    document.setCreateTime(now);
-                    document.setUpdateTime(now);
+                    document.setCreateTimeMs(now);
+                    document.setUpdateTimeMs(now);
                     document.setCreateUser(userId);
                     document.setUpdateUser(userId);
                     document.setDescription(oldXmlSchema.getDescription());
@@ -211,6 +211,11 @@ public class XmlSchemaStoreImpl implements XmlSchemaStore {
     @Override
     public String getType() {
         return XmlSchemaDoc.DOCUMENT_TYPE;
+    }
+
+    @Override
+    public Set<DocRef> findAssociatedNonExplorerDocRefs(DocRef docRef) {
+        return null;
     }
 
     ////////////////////////////////////////////////////////////////////////

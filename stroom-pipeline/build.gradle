@@ -12,6 +12,7 @@ dependencies {
     compile project(':stroom-feed:stroom-feed-api')
     compile project(':stroom-lifecycle:stroom-lifecycle-api')
     compile project(':stroom-node:stroom-node-api')
+    compile project(':stroom-processor:stroom-processor-api')
     compile project(':stroom-security:stroom-security-api')
     compile project(':stroom-statistics:stroom-statistics-api')
     compile project(':stroom-util')
