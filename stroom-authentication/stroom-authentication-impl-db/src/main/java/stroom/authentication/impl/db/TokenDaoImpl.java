@@ -29,6 +29,7 @@ import stroom.authentication.token.SearchRequest;
 import stroom.authentication.token.SearchResponse;
 import stroom.authentication.token.Token;
 import stroom.authentication.token.TokenDao;
+import stroom.authentication.token.TokenTypeDao;
 import stroom.db.util.JooqUtil;
 import stroom.util.logging.LambdaLogUtil;
 import stroom.util.logging.LambdaLogger;
@@ -93,18 +94,19 @@ class TokenDaoImpl implements TokenDao {
     };
 
     private final AuthDbConnProvider authDbConnProvider;
+    private final TokenTypeDao tokenTypeDao;
 
     @Inject
-    TokenDaoImpl(final AuthDbConnProvider authDbConnProvider) {
+    TokenDaoImpl(final AuthDbConnProvider authDbConnProvider,
+                 final TokenTypeDao tokenTypeDao) {
         this.authDbConnProvider = authDbConnProvider;
+        this.tokenTypeDao = tokenTypeDao;
     }
 
     @Override
     public Token create(final int accountId, final Token token) {
         final String tokenType = token.getTokenType().toLowerCase();
-        final Optional<Integer> optionalTokenTypeId = getTokenTypeId(tokenType);
-        final Integer tokenTypeId = optionalTokenTypeId.orElseThrow(() ->
-                new RuntimeException("Unknown token type: " + tokenType));
+        final int tokenTypeId = tokenTypeDao.getTokenTypeId(tokenType);
 
         return JooqUtil.contextResult(authDbConnProvider, context -> {
             LOGGER.debug(LambdaLogUtil.message("Creating a {}", TOKEN.getName()));
@@ -200,15 +202,6 @@ class TokenDaoImpl implements TokenDao {
             searchResponse.setTotalPages(pages);
             return searchResponse;
         });
-    }
-
-    private Optional<Integer> getTokenTypeId(final String type) {
-        return JooqUtil.contextResult(authDbConnProvider, context -> context
-                .select(TOKEN_TYPE.ID)
-                .from(TOKEN_TYPE)
-                .where(TOKEN_TYPE.TYPE.eq(type))
-                .fetchOptional()
-                .map(r -> r.getValue(TOKEN_TYPE.ID)));
     }
 
     @Override

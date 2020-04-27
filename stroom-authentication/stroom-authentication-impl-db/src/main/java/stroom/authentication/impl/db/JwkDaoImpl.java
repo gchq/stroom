@@ -7,9 +7,16 @@ import org.jose4j.jwk.RsaJwkGenerator;
 import org.jose4j.lang.JoseException;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import stroom.authentication.impl.db.jooq.tables.TokenType;
+import stroom.authentication.impl.db.jooq.tables.records.AccountRecord;
 import stroom.authentication.token.JwkDao;
 import stroom.authentication.impl.db.jooq.tables.records.JsonWebKeyRecord;
+import stroom.authentication.token.Token;
+import stroom.authentication.token.TokenTypeDao;
 import stroom.db.util.JooqUtil;
+import stroom.util.logging.LambdaLogUtil;
+import stroom.util.logging.LambdaLogger;
+import stroom.util.logging.LambdaLoggerFactory;
 
 import javax.inject.Inject;
 import javax.inject.Singleton;
@@ -17,19 +24,23 @@ import java.util.List;
 import java.util.UUID;
 import java.util.stream.Collectors;
 
+import static stroom.authentication.impl.db.jooq.tables.Account.ACCOUNT;
 import static stroom.authentication.impl.db.jooq.tables.JsonWebKey.JSON_WEB_KEY;
 
 @Singleton
 class JwkDaoImpl implements JwkDao {
-    private static final Logger LOGGER = LoggerFactory.getLogger(JwkDaoImpl.class);
+    private static final LambdaLogger LOGGER = LambdaLoggerFactory.getLogger(JwkDaoImpl.class);
     private static final int MIN_KEY_AGE_MS = 1000 * 60 * 60 * 24;
     private static final int MAX_KEY_AGE_MS = 1000 * 60 * 60 * 24 * 2;
 
-    private AuthDbConnProvider authDbConnProvider;
+    private final AuthDbConnProvider authDbConnProvider;
+    private final TokenTypeDao tokenTypeDao;
 
     @Inject
-    JwkDaoImpl(final AuthDbConnProvider authDbConnProvider) {
+    JwkDaoImpl(final AuthDbConnProvider authDbConnProvider,
+               final TokenTypeDao tokenTypeDao) {
         this.authDbConnProvider = authDbConnProvider;
+        this.tokenTypeDao = tokenTypeDao;
     }
 
 //    /**
@@ -123,27 +134,62 @@ class JwkDaoImpl implements JwkDao {
     }
 
     private void addRecord() {
+        final long now = System.currentTimeMillis();
+        final String uuid = UUID.randomUUID().toString();
+        // We need to set up the jwkId so we know which JWTs were signed by which JWKs.
+        final RsaJsonWebKey jwk = createWebKey(uuid);
+        final int tokenTypeId = tokenTypeDao.getTokenTypeId(Token.TokenType.API.getText().toLowerCase());
+
         JooqUtil.context(authDbConnProvider, context -> {
-            try {
-                // We need to set up the jwkId so we know which JWTs were signed by which JWKs.
-                String jwkId = UUID.randomUUID().toString();
-                RsaJsonWebKey jwk = RsaJwkGenerator.generateJwk(2048);
-                jwk.setKeyId(jwkId);
-                jwk.setUse("sig");
-                jwk.setAlgorithm("RS256");
-
-                // Persist the public key
-                JsonWebKeyRecord jwkRecord = new JsonWebKeyRecord();
-                jwkRecord.setKeyId(jwkId);
-                jwkRecord.setJson(jwk.toJson(JsonWebKey.OutputControlLevel.INCLUDE_PRIVATE));
-                jwkRecord.setCreateTimeMs(System.currentTimeMillis());
-
-                context.executeInsert(jwkRecord);
-            } catch (JoseException e) {
-                LOGGER.error("Unable to create JWK!", e);
-                throw new RuntimeException(e);
-            }
+            LOGGER.debug(LambdaLogUtil.message("Creating a {}", JSON_WEB_KEY.getName()));
+            final JsonWebKeyRecord record = context.newRecord(JSON_WEB_KEY);
+            record.setKeyId(uuid);
+            record.setJson(jwk.toJson(JsonWebKey.OutputControlLevel.INCLUDE_PRIVATE));
+            record.setCreateTimeMs(now);
+            record.setCreateUser("admin");
+            record.setUpdateTimeMs(now);
+            record.setUpdateUser("admin");
+            record.setFkTokenTypeId(tokenTypeId);
+            record.setEnabled(true);
+            record.store();
         });
+
+
+//        JooqUtil.context(authDbConnProvider, context -> {
+//            try {
+//                // We need to set up the jwkId so we know which JWTs were signed by which JWKs.
+//                String jwkId = UUID.randomUUID().toString();
+//                RsaJsonWebKey jwk = RsaJwkGenerator.generateJwk(2048);
+//                jwk.setKeyId(jwkId);
+//                jwk.setUse("sig");
+//                jwk.setAlgorithm("RS256");
+//
+//                // Persist the public key
+//                JsonWebKeyRecord jwkRecord = new JsonWebKeyRecord();
+//                jwkRecord.setKeyId(jwkId);
+//                jwkRecord.setJson(jwk.toJson(JsonWebKey.OutputControlLevel.INCLUDE_PRIVATE));
+//                jwkRecord.setCreateTimeMs(System.currentTimeMillis());
+//
+//                context.executeInsert(jwkRecord);
+//            } catch (JoseException e) {
+//                LOGGER.error("Unable to create JWK!", e);
+//                throw new RuntimeException(e);
+//            }
+//        });
+    }
+
+    private RsaJsonWebKey createWebKey(final String uuid) {
+        try {
+        // We need to set up the jwkId so we know which JWTs were signed by which JWKs.
+        final RsaJsonWebKey jwk = RsaJwkGenerator.generateJwk(2048);
+        jwk.setKeyId(uuid);
+        jwk.setUse("sig");
+        jwk.setAlgorithm("RS256");
+        return jwk;
+        } catch (final JoseException e) {
+            LOGGER.error("Unable to create JWK!", e);
+            throw new RuntimeException(e);
+        }
     }
 
     private void deleteOldJwkRecords() {
