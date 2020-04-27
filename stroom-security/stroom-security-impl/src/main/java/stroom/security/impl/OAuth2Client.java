@@ -1,4 +1,6 @@
-package stroom.authentication.oauth2;
+package stroom.security.impl;
+
+import java.util.Objects;
 
 public class OAuth2Client {
     private final String name;
@@ -10,10 +12,10 @@ public class OAuth2Client {
                         final String clientId,
                         final String clientSecret,
                         final String uriPattern) {
-        this.name = name;
-        this.clientId = clientId;
-        this.clientSecret = clientSecret;
-        this.uriPattern = uriPattern;
+        this.name = Objects.requireNonNull(name);
+        this.clientId = Objects.requireNonNull(clientId);
+        this.clientSecret = Objects.requireNonNull(clientSecret);
+        this.uriPattern = Objects.requireNonNull(uriPattern);
     }
 
     public String getName() {
@@ -30,5 +32,15 @@ public class OAuth2Client {
 
     public String getUriPattern() {
         return uriPattern;
+    }
+
+    @Override
+    public String toString() {
+        return "OAuth2Client{" +
+                "name='" + name + '\'' +
+                ", clientId='" + clientId + '\'' +
+                ", clientSecret='" + clientSecret + '\'' +
+                ", uriPattern='" + uriPattern + '\'' +
+                '}';
     }
 }

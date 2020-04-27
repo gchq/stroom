@@ -60,14 +60,14 @@ public class ResolvedOpenIdConfig {
 
     public String getClientId() {
         if (openIdConfig.isUseInternal()) {
-            return openIdClientDetailsFactory.getClientId();
+            return openIdClientDetailsFactory.getOAuth2Client().getClientId();
         }
         return openIdConfig.getClientId();
     }
 
     public String getClientSecret() {
         if (openIdConfig.isUseInternal()) {
-            return openIdClientDetailsFactory.getClientSecret();
+            return openIdClientDetailsFactory.getOAuth2Client().getClientSecret();
         }
         return openIdConfig.getClientSecret();
     }

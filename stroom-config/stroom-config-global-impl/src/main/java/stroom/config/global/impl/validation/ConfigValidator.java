@@ -1,6 +1,6 @@
 package stroom.config.global.impl.validation;
 
-import stroom.security.impl.ValidationSeverity;
+import stroom.util.shared.validation.ValidationSeverity;
 import stroom.util.config.PropertyUtil;
 import stroom.util.logging.LambdaLogger;
 import stroom.util.logging.LambdaLoggerFactory;

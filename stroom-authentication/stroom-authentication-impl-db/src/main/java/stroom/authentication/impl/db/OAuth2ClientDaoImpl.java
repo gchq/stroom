@@ -1,6 +1,6 @@
 package stroom.authentication.impl.db;
 
-import stroom.authentication.oauth2.OAuth2Client;
+import stroom.security.impl.OAuth2Client;
 import stroom.authentication.oauth2.OAuth2ClientDao;
 import stroom.db.util.JooqUtil;
 

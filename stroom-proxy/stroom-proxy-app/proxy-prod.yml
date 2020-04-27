@@ -90,6 +90,7 @@ logging:
     #    logFormat: "%-6level [%d{\"yyyy-MM-dd\",UTC}] [%t] %logger - %X{code} %msg %n"
 
 proxyConfig:
+  useDefaultOpenIdCredentials: ${USE_DEFAULT_OPEN_ID_CREDENTIALS:-true}
   proxyContentDir: "${CONTENT_DIR:-/stroom-proxy/content}"
 
 # If you want to use a receipt policy then the RuleSet must exist

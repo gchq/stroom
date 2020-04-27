@@ -12,6 +12,8 @@ import stroom.authentication.token.Token;
 import stroom.authentication.token.TokenBuilder;
 import stroom.authentication.token.TokenBuilderFactory;
 import stroom.config.common.UriFactory;
+import stroom.security.impl.OAuth2Client;
+import stroom.security.impl.OpenIdClientDetailsFactory;
 
 import javax.annotation.Nullable;
 import javax.inject.Inject;
@@ -31,7 +33,7 @@ class OAuth2Service {
     private final AccessCodeCache accessCodeCache;
     private final TokenBuilderFactory tokenBuilderFactory;
     private final AuthenticationService authenticationService;
-    private final OAuth2ClientDao dao;
+    private final OpenIdClientDetailsFactory openIdClientDetailsFactory;
 
     @Inject
     OAuth2Service(final UriFactory uriFactory,
@@ -39,13 +41,13 @@ class OAuth2Service {
                   final AccessCodeCache accessCodeCache,
                   final TokenBuilderFactory tokenBuilderFactory,
                   final AuthenticationService authenticationService,
-                  final OAuth2ClientDao dao) {
+                  final OpenIdClientDetailsFactory openIdClientDetailsFactory) {
         this.uriFactory = uriFactory;
         this.authenticationConfig = authenticationConfig;
         this.accessCodeCache = accessCodeCache;
         this.tokenBuilderFactory = tokenBuilderFactory;
         this.authenticationService = authenticationService;
-        this.dao = dao;
+        this.openIdClientDetailsFactory = openIdClientDetailsFactory;
     }
 
     public URI auth(final HttpServletRequest request,
@@ -58,12 +60,9 @@ class OAuth2Service {
                     @Nullable final String prompt) {
         URI result;
         try {
-            final Optional<OAuth2Client> optionalClient = dao.getClientForClientId(clientId);
-            if (optionalClient.isEmpty()) {
-                throw new BadRequestException("Unknown client with id=" + clientId);
-            }
+            OAuth2Client oAuth2Client = openIdClientDetailsFactory.getOAuth2Client(clientId);
 
-            final Pattern pattern = Pattern.compile(optionalClient.get().getUriPattern());
+            final Pattern pattern = Pattern.compile(oAuth2Client.getUriPattern());
             if (!pattern.matcher(redirectUri).matches()) {
                 throw new BadRequestException("Redirect URI is not allowed");
             }
@@ -115,7 +114,7 @@ class OAuth2Service {
             }
 
         } catch (final RuntimeException e) {
-            LOGGER.debug(e.getMessage());
+            LOGGER.error("Error authenticating request {}", request.getRequestURI(), e);
             result = UriBuilder.fromUri(uriFactory.uiUri(authenticationConfig.getUnauthorisedUrl())).build();
         }
 
@@ -150,16 +149,13 @@ class OAuth2Service {
             throw new BadRequestException("Unexpected redirect URI");
         }
 
-        final Optional<OAuth2Client> optionalClient = dao.getClientForClientId(clientId);
-        if (optionalClient.isEmpty()) {
-            throw new BadRequestException("Unknown client with id=" + clientId);
-        }
+        final OAuth2Client oAuth2Client = openIdClientDetailsFactory.getOAuth2Client(clientId);
 
-        if (!Objects.equal(clientSecret, optionalClient.get().getClientSecret())) {
+        if (!Objects.equal(clientSecret, oAuth2Client.getClientSecret())) {
             throw new BadRequestException("Incorrect secret");
         }
 
-        final Pattern pattern = Pattern.compile(optionalClient.get().getUriPattern());
+        final Pattern pattern = Pattern.compile(oAuth2Client.getUriPattern());
         if (!pattern.matcher(redirectUri).matches()) {
             throw new BadRequestException("Redirect URI is not allowed");
         }

@@ -5,7 +5,7 @@ import com.google.inject.Guice;
 import com.google.inject.Injector;
 import org.assertj.core.api.Assertions;
 import org.junit.jupiter.api.Test;
-import stroom.security.impl.ValidationSeverity;
+import stroom.util.shared.validation.ValidationSeverity;
 import stroom.util.logging.LambdaLogger;
 import stroom.util.logging.LambdaLoggerFactory;
 import stroom.util.shared.AbstractConfig;

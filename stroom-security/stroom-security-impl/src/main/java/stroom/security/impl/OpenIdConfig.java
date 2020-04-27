@@ -1,6 +1,7 @@
 package stroom.security.impl;
 
 import com.fasterxml.jackson.annotation.JsonProperty;
+import com.fasterxml.jackson.annotation.JsonPropertyDescription;
 import stroom.util.shared.AbstractConfig;
 
 import javax.inject.Singleton;
@@ -30,6 +31,9 @@ public class OpenIdConfig extends AbstractConfig {
      * @return true if Stroom will handle the OpenId authenication, false if an external
      * OpenId provider is used.
      */
+    @JsonProperty
+    @JsonPropertyDescription("True if Stroom will handle OpenId authentication, false if an " +
+            "external OpenId provider is to be used.")
     public boolean isUseInternal() {
         return useInternal;
     }
@@ -39,6 +43,9 @@ public class OpenIdConfig extends AbstractConfig {
     }
 
     @NotNull
+    @JsonProperty
+    @JsonPropertyDescription("The issuer used in OpenId authentication." +
+            "Should only be set if useInternal is true.")
     public String getIssuer() {
         return issuer;
     }
@@ -48,6 +55,9 @@ public class OpenIdConfig extends AbstractConfig {
     }
 
     @NotNull
+    @JsonProperty
+    @JsonPropertyDescription("The authentication endpoint used in OpenId authentication." +
+            "Should only be set if useInternal is true.")
     public String getAuthEndpoint() {
         return authEndpoint;
     }
@@ -57,6 +67,9 @@ public class OpenIdConfig extends AbstractConfig {
     }
 
     @NotNull
+    @JsonProperty
+    @JsonPropertyDescription("The token endpoint used in OpenId authentication." +
+            "Should only be set if useInternal is true.")
     public String getTokenEndpoint() {
         return tokenEndpoint;
     }
@@ -66,6 +79,9 @@ public class OpenIdConfig extends AbstractConfig {
     }
 
     @NotNull
+    @JsonProperty
+    @JsonPropertyDescription("The URI to obtain the JSON Web Key Set from in OpenId authentication." +
+            "Should only be set if useInternal is true.")
     public String getJwksUri() {
         return jwksUri;
     }
@@ -77,6 +93,8 @@ public class OpenIdConfig extends AbstractConfig {
     // TODO Not sure we can add NotNull to this as it has no default and if useInternal is true
     //  it doesn't need a value
     @JsonProperty(PROP_NAME_CLIENT_ID)
+    @JsonPropertyDescription("The client ID used in OpenId authentication." +
+            "Should only be set if useInternal is true.")
     public String getClientId() {
         return clientId;
     }
@@ -88,6 +106,8 @@ public class OpenIdConfig extends AbstractConfig {
     // TODO Not sure we can add NotNull to this as it has no default and if useInternal is true
     //  it doesn't need a value
     @JsonProperty(PROP_NAME_CLIENT_SECRET)
+    @JsonPropertyDescription("The client secret used in OpenId authentication." +
+            "Should only be set if useInternal is true.")
     public String getClientSecret() {
         return clientSecret;
     }

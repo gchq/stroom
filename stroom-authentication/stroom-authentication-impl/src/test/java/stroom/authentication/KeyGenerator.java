@@ -42,7 +42,7 @@ public class KeyGenerator {
                 .issuer("stroom")
                 .clientId("PZnJr8kHRKqnlJRQThSI")
                 .algorithm("RS256")
-                .privateVerificationKey(jwk.getPrivateKey())
+                .privateVerificationKey(jwk)
                 .build();
         LOGGER.info(key);
     }

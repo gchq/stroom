@@ -1,10 +1,16 @@
-package stroom.security.impl;
+package stroom.util.shared.validation;
 
 import javax.validation.Payload;
 import java.util.Set;
 
 /**
- * Severities for javax.validation
+ * Severities for javax.validation.  Use it like this:
+ *
+ * <pre>
+ * {@code
+ * @AssertFalse(message = "some message if not false", payload = ValidationSeverity.Warning.class)
+ * }
+ * </pre>
  */
 public enum ValidationSeverity {
     ERROR(Error.class),

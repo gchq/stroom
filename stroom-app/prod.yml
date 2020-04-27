@@ -97,10 +97,8 @@ logging:
     #    logFormat: "%-6level [%d{\"yyyy-MM-dd\",UTC}] [%t] %logger - %X{code} %msg %n"
 
 appConfig:
-  nodeUri:
-    hostname: ${STROOM_HOST:-localhost}
-  publicUri:
-    hostname: ${API_GATEWAY_HOST:-localhost}
+  authentication:
+    useDefaultOpenIdCredentials: ${USE_DEFAULT_OPEN_ID_CREDENTIALS:-true}
   commonDbDetails:
     connection:
       jdbcDriverClassName: ${STROOM_JDBC_DRIVER_CLASS_NAME:-com.mysql.cj.jdbc.Driver}
@@ -114,8 +112,12 @@ appConfig:
     executionInterval: "10s"
   node:
     name: ${STROOM_NODE:-node1a}
+  nodeUri:
+    hostname: ${STROOM_HOST:-localhost}
   path:
     temp: "/tmp/stroom"
+  publicUri:
+    hostname: ${API_GATEWAY_HOST:-localhost}
   security:
     authentication:
       preventLogin: false

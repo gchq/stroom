@@ -8,5 +8,6 @@ dependencies {
 //    compile libs.jackson_annotations
 //    compile libs.hibernate_validator
 
+    compile libs.jose4j
     compile libs.ws_rs_api
 }

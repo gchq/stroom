@@ -18,25 +18,26 @@
 
 package stroom.authentication.token;
 
+import org.jose4j.jwk.PublicJsonWebKey;
+import org.jose4j.jws.AlgorithmIdentifiers;
 import org.jose4j.jws.JsonWebSignature;
 import org.jose4j.jwt.JwtClaims;
 import org.jose4j.jwt.NumericDate;
 import org.jose4j.lang.JoseException;
 import stroom.authentication.api.OIDC;
 
-import java.security.PrivateKey;
 import java.time.Instant;
 import java.util.Optional;
 
 public class TokenBuilder {
     private Instant expiryDate;
     private String issuer;
-    private String algorithm = "RS256";
+    private String algorithm = AlgorithmIdentifiers.RSA_USING_SHA256;
 
     private String subject;
     private Optional<String> nonce = Optional.empty();
     private Optional<String> state = Optional.empty();
-    private PrivateKey privateVerificationKey;
+    private PublicJsonWebKey publicJsonWebKey;
     private String clientId;
 
     public TokenBuilder subject(String subject) {
@@ -54,8 +55,8 @@ public class TokenBuilder {
         return this;
     }
 
-    public TokenBuilder privateVerificationKey(PrivateKey privateVerificationKey) {
-        this.privateVerificationKey = privateVerificationKey;
+    public TokenBuilder privateVerificationKey(PublicJsonWebKey publicJsonWebKey) {
+        this.publicJsonWebKey = publicJsonWebKey;
         return this;
     }
 
@@ -98,8 +99,11 @@ public class TokenBuilder {
         JsonWebSignature jws = new JsonWebSignature();
         jws.setPayload(claims.toJson());
         jws.setAlgorithmHeaderValue(this.algorithm);
-        jws.setKey(this.privateVerificationKey);
+        jws.setKey(this.publicJsonWebKey.getPrivateKey());
         jws.setDoKeyValidation(false);
+
+        // Should we set the key ID in the headers? If so, we
+//        jws.setKeyIdHeaderValue("123");
 
         try {
             return jws.getCompactSerialization();

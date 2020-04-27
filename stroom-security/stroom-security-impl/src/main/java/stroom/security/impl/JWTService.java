@@ -27,7 +27,7 @@ import java.util.Objects;
 import java.util.Optional;
 
 @Singleton
-class JWTService implements HasHealthCheck {
+public class JWTService implements HasHealthCheck {
     private static final LambdaLogger LOGGER = LambdaLoggerFactory.getLogger(JWTService.class);
 
     private static final String BEARER = "Bearer ";
@@ -61,6 +61,9 @@ class JWTService implements HasHealthCheck {
         return jsonWebKeySet;
     }
 
+    /**
+     * Verify the JSON Web Signature and then extract the user identity from it
+     */
     public Optional<String> getUserId(final String jws) {
         Objects.requireNonNull(jws, "Null JWS");
         LOGGER.debug(() -> "Found auth header in request. It looks like this: " + jws);
@@ -71,9 +74,9 @@ class JWTService implements HasHealthCheck {
             boolean isVerified = jwtClaims != null;
             boolean isRevoked = false;
 
-            // TODO : @66 Check against blacklist to see if token has been revoked. Blacklist is a list of JWI (JWT IDs) on auth service.
-            //  only tokens with `jwi` claims are API keys so only those tokens need checking against the blacklist cache.
-
+            // TODO : @66 Check against blacklist to see if token has been revoked. Blacklist
+            //  is a list of JWI (JWT IDs) on auth service. Only tokens with `jwi` claims are API
+            //  keys so only those tokens need checking against the blacklist cache.
 
 //            if (checkTokenRevocation) {
 //                LOGGER.debug(() -> "Checking token revocation status in remote auth service...");
@@ -94,6 +97,9 @@ class JWTService implements HasHealthCheck {
         return Optional.empty();
     }
 
+    /**
+     * Get the JSON Web Signature from the request headers
+     */
     public Optional<String> getJws(final ServletRequest request) {
         final Optional<String> authHeader = getAuthHeader(request);
         return authHeader.map(bearerString -> {
@@ -149,7 +155,8 @@ class JWTService implements HasHealthCheck {
                 .setExpectedAudience(openIdConfig.getClientId())
                 .setRelaxVerificationKeyValidation() // relaxes key length requirement
                 .setJwsAlgorithmConstraints( // only allow the expected signature algorithm(s) in the given context
-                        new AlgorithmConstraints(AlgorithmConstraints.ConstraintType.WHITELIST, // which is only RS256 here
+                        new AlgorithmConstraints(
+                                AlgorithmConstraints.ConstraintType.WHITELIST, // which is only RS256 here
                                 AlgorithmIdentifiers.RSA_USING_SHA256))
                 .setExpectedIssuer(openIdConfig.getIssuer());
         return builder.build();

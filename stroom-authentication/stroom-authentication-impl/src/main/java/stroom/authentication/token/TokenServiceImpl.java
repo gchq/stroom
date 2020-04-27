@@ -63,9 +63,12 @@ public class TokenServiceImpl implements TokenService {
 
         // Parse and validate tokenType
         final Optional<Token.TokenType> optionalTokenType = getParsedTokenType(createTokenRequest.getTokenType());
-        final Token.TokenType tokenType = optionalTokenType.orElseThrow(() -> new BadRequestException("Unknown token type:" + createTokenRequest.getTokenType()));
+        final Token.TokenType tokenType = optionalTokenType.orElseThrow(() ->
+                new BadRequestException("Unknown token type:" + createTokenRequest.getTokenType()));
 
-        final Instant expiryInstant = createTokenRequest.getExpiryDate() == null ? null : createTokenRequest.getExpiryDate().toInstant();
+        final Instant expiryInstant = createTokenRequest.getExpiryDate() == null
+                ? null
+                : createTokenRequest.getExpiryDate().toInstant();
 //        Token token = dao.createToken(
 //                tokenTypeToCreate.get(),
 //                userId,
@@ -213,7 +216,9 @@ public class TokenServiceImpl implements TokenService {
 
     @Override
     public String getPublicKey() {
-        return jwkCache.get().get(0).toJson(JsonWebKey.OutputControlLevel.PUBLIC_ONLY);
+        return jwkCache.get()
+                .get(0)
+                .toJson(JsonWebKey.OutputControlLevel.PUBLIC_ONLY);
     }
 
     private void checkPermission() {
@@ -223,6 +228,7 @@ public class TokenServiceImpl implements TokenService {
     }
 
     static Optional<Token.TokenType> getParsedTokenType(String tokenType) {
+        // TODO why not enums?
         switch (tokenType.toLowerCase()) {
             case "api":
                 return Optional.of(Token.TokenType.API);

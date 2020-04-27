@@ -54,16 +54,19 @@ public class TokenBuilderFactory {
         switch (tokenType) {
             case API:
                 if (expiryDateForApiKeys == null) {
-                    expiryDateForApiKeys = Instant.now().plusSeconds(config.getTokenConfig().getMinutesUntilExpirationForUserToken() * 60);
+                    expiryDateForApiKeys = Instant.now()
+                            .plusSeconds(config.getTokenConfig().getMinutesUntilExpirationForUserToken() * 60);
                 }
                 tokenBuilder.expiryDate(expiryDateForApiKeys);
                 break;
             case USER:
-                Instant expiryDateForLogin = Instant.now().plusSeconds(config.getTokenConfig().getMinutesUntilExpirationForUserToken() * 60);
+                Instant expiryDateForLogin = Instant.now()
+                        .plusSeconds(config.getTokenConfig().getMinutesUntilExpirationForUserToken() * 60);
                 tokenBuilder.expiryDate(expiryDateForLogin);
                 break;
             case EMAIL_RESET:
-                Instant expiryDateForReset = Instant.now().plusSeconds(config.getTokenConfig().getMinutesUntilExpirationForEmailResetToken() * 60);
+                Instant expiryDateForReset = Instant.now()
+                        .plusSeconds(config.getTokenConfig().getMinutesUntilExpirationForEmailResetToken() * 60);
                 tokenBuilder.expiryDate(expiryDateForReset);
                 break;
             default:
@@ -74,7 +77,7 @@ public class TokenBuilderFactory {
 
         tokenBuilder
                 .issuer(config.getTokenConfig().getJwsIssuer())
-                .privateVerificationKey(jwkCache.get().get(0).getPrivateKey())
+                .privateVerificationKey(jwkCache.get().get(0))
                 .algorithm(config.getTokenConfig().getAlgorithm());
 
         return tokenBuilder;

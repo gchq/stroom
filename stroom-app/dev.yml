@@ -63,10 +63,8 @@ logging:
     logFormat: "%-6level [%d{\"yyyy-MM-dd'T'HH:mm:ss.SSS'Z'\",UTC}] [%t] %logger - %X{code} %msg %n"
 
 appConfig:
-# Comment out the publicUri block if you are not running with nginx
-  publicUri:
-    hostname: localhost
-    port: 443
+  authentication:
+    useDefaultOpenIdCredentials: ${USE_DEFAULT_OPEN_ID_CREDENTIALS:-true}
   commonDbDetails:
     connection:
       jdbcDriverClassName: ${STROOM_JDBC_DRIVER_CLASS_NAME:-com.mysql.cj.jdbc.Driver}
@@ -82,6 +80,10 @@ appConfig:
     name: node1a
   path:
     temp: "/tmp/stroom"
+  # Comment out the publicUri block if you are not running with nginx
+  publicUri:
+    hostname: localhost
+    port: 443
   serviceDiscovery:
     zookeeperUrl: ${STROOM_SERVICE_DISCOVERY_ZOOKEEPER_URL:-localhost:2181}
     servicesHostNameOrIpAddress: ${STROOM_ADVERTISED_URL:-localhost}

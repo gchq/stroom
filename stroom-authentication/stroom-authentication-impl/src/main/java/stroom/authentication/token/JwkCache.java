@@ -19,8 +19,12 @@ package stroom.authentication.token;
 import com.github.benmanes.caffeine.cache.Caffeine;
 import com.github.benmanes.caffeine.cache.LoadingCache;
 import org.jose4j.jwk.PublicJsonWebKey;
+import stroom.authentication.api.JsonWebKeyFactory;
+import stroom.authentication.config.AuthenticationConfig;
+import stroom.util.authentication.DefaultOpenIdCredentials;
 
 import javax.inject.Inject;
+import java.util.Collections;
 import java.util.List;
 import java.util.concurrent.TimeUnit;
 
@@ -29,11 +33,24 @@ public class JwkCache {
     private final LoadingCache<String, List<PublicJsonWebKey>> cache;
 
     @Inject
-    JwkCache(final JwkDao jwkDao) {
+    JwkCache(final JwkDao jwkDao,
+             final AuthenticationConfig authenticationConfig,
+             final DefaultOpenIdCredentials defaultOpenIdCredentials,
+             final JsonWebKeyFactory jsonWebKeyFactory) {
+
         cache = Caffeine.newBuilder()
                 .maximumSize(100)
                 .refreshAfterWrite(1, TimeUnit.MINUTES)
-                .build(k -> jwkDao.readJwk());
+                .build(k -> {
+                    // Bypass the DB when we are using test default creds, i.e. in a test/demo
+                    // environment. Not for prod use.
+                    if (authenticationConfig.isUseDefaultOpenIdCredentials()) {
+                        return Collections.singletonList(
+                                jsonWebKeyFactory.fromJson(defaultOpenIdCredentials.getPublicKeyJson()));
+                    } else {
+                        return jwkDao.readJwk();
+                    }
+                });
     }
 
     public List<PublicJsonWebKey> get() {

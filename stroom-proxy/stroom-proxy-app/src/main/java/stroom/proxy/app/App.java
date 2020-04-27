@@ -85,6 +85,13 @@ public class App extends Application<Config> {
 
         LOGGER.info("Starting Stroom Proxy");
 
+        // TODO should do this via javax.validation, see AuthenticationConfig
+        if (configuration.getProxyConfig().isUseDefaultOpenIdCredentials()) {
+            LOGGER.warn("Using default OpenId authentication credentials. These should only be used " +
+                    "in test/demo environments. Set stroom.authentication.useDefaultOpenIdCredentials to false for " +
+                    "production environments.");
+        }
+
         final ProxyModule proxyModule = new ProxyModule(configuration, environment);
         final Injector injector = Guice.createInjector(proxyModule);
         injector.injectMembers(this);

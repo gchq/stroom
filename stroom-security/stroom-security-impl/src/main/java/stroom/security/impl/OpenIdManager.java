@@ -11,6 +11,7 @@ import stroom.security.api.UserIdentity;
 import stroom.security.impl.exception.AuthenticationException;
 import stroom.security.impl.session.UserIdentitySessionUtil;
 import stroom.security.shared.User;
+import stroom.util.authentication.DefaultOpenIdCredentials;
 import stroom.util.jersey.WebTargetFactory;
 import stroom.util.servlet.UserAgentSessionUtil;
 
@@ -32,16 +33,19 @@ class OpenIdManager {
 
     private final WebTargetFactory webTargetFactory;
     private final ResolvedOpenIdConfig openIdConfig;
+    private final DefaultOpenIdCredentials defaultOpenIdCredentials;
     private final JWTService jwtService;
     private final UserCache userCache;
 
     @Inject
     public OpenIdManager(final WebTargetFactory webTargetFactory,
                          final ResolvedOpenIdConfig openIdConfig,
+                         final DefaultOpenIdCredentials defaultOpenIdCredentials,
                          final JWTService jwtService,
                          final UserCache userCache) {
         this.webTargetFactory = webTargetFactory;
         this.openIdConfig = openIdConfig;
+        this.defaultOpenIdCredentials = defaultOpenIdCredentials;
         this.jwtService = jwtService;
         this.userCache = userCache;
     }
@@ -142,7 +146,9 @@ class OpenIdManager {
      * This method must create the token.
      * It does this by enacting the OpenId exchange of accessCode for idToken.
      */
-    private UserIdentityImpl createUIToken(final HttpSession session, final AuthenticationState state, final String idToken) {
+    private UserIdentityImpl createUIToken(final HttpSession session,
+                                           final AuthenticationState state,
+                                           final String idToken) {
         UserIdentityImpl token = null;
 
         try {
@@ -154,7 +160,8 @@ class OpenIdManager {
                 LOGGER.info("User is authenticated for sessionId " + sessionId);
                 final String userId = getUserId(jwtClaims);
                 final Optional<User> optionalUser = userCache.get(userId);
-                final User user = optionalUser.orElseThrow(() -> new AuthenticationException("Unable to find user: " + userId));
+                final User user = optionalUser.orElseThrow(() ->
+                        new AuthenticationException("Unable to find user: " + userId));
                 token = new UserIdentityImpl(user, userId, idToken, sessionId);
 
             } else {
@@ -182,7 +189,7 @@ class OpenIdManager {
      * This method creates a token for the API auth flow.
      */
     public UserIdentity createAPIToken(final HttpServletRequest request) {
-        UserIdentityImpl token = null;
+        UserIdentityImpl userIdentity = null;
 
         final Optional<String> optionalJws = jwtService.getJws(request);
         if (optionalJws.isPresent()) {
@@ -196,16 +203,33 @@ class OpenIdManager {
                 }
 
                 final String userId = optionalUserId.get();
-                final Optional<User> optionalUser = userCache.get(userId);
-                final User user = optionalUser.orElseThrow(() -> new AuthenticationException("Unable to find user: " + userId));
-                token = new UserIdentityImpl(user, userId, optionalJws.get(), sessionId);
+
+
+                // TODO we should really also check if isUseDefaultOpenIdCred is set
+                //   but it is currently not visible from here
+                final User user;
+                if (defaultOpenIdCredentials.getApiKeyUserEmail().equals(userId)
+                        && userId.equals(defaultOpenIdCredentials.getApiKeyUserEmail())) {
+                    // Using default creds so just fake a user
+                    // TODO Not sure if this is enough info in the user
+                    user = new User();
+                    user.setName(userId);
+                } else {
+                    final Optional<User> optionalUser = userCache.get(userId);
+                    user = optionalUser.orElseThrow(() ->
+                            new AuthenticationException("Unable to find user: " + userId));
+                }
+
+                // TODO need to create a fake user when we are using the default creds
+                //   however we can't see AuthenticationConfig from here.
+                userIdentity = new UserIdentityImpl(user, userId, optionalJws.get(), sessionId);
             }
         }
 
-        if (token == null) {
+        if (userIdentity == null) {
             LOGGER.error("Cannot get a valid JWS for API request!");
         }
 
-        return token;
+        return userIdentity;
     }
 }

@@ -1,20 +1,16 @@
 package stroom.authentication.impl.db;
 
-import org.jose4j.jwk.JsonWebKey;
 import org.jose4j.jwk.PublicJsonWebKey;
-import org.jose4j.jwk.RsaJsonWebKey;
-import org.jose4j.jwk.RsaJwkGenerator;
-import org.jose4j.lang.JoseException;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import stroom.authentication.token.JwkDao;
+import stroom.authentication.api.JsonWebKeyFactory;
 import stroom.authentication.impl.db.jooq.tables.records.JsonWebKeyRecord;
+import stroom.authentication.token.JwkDao;
 import stroom.db.util.JooqUtil;
 
 import javax.inject.Inject;
 import javax.inject.Singleton;
 import java.util.List;
-import java.util.UUID;
 import java.util.stream.Collectors;
 
 import static stroom.authentication.impl.db.jooq.tables.JsonWebKey.JSON_WEB_KEY;
@@ -25,11 +21,14 @@ class JwkDaoImpl implements JwkDao {
     private static final int MIN_KEY_AGE_MS = 1000 * 60 * 60 * 24;
     private static final int MAX_KEY_AGE_MS = 1000 * 60 * 60 * 24 * 2;
 
-    private AuthDbConnProvider authDbConnProvider;
+    private final AuthDbConnProvider authDbConnProvider;
+    private final JsonWebKeyFactory jsonWebKeyFactory;
 
     @Inject
-    JwkDaoImpl(final AuthDbConnProvider authDbConnProvider) {
+    JwkDaoImpl(final AuthDbConnProvider authDbConnProvider,
+               final JsonWebKeyFactory jsonWebKeyFactory) {
         this.authDbConnProvider = authDbConnProvider;
+        this.jsonWebKeyFactory = jsonWebKeyFactory;
     }
 
 //    /**
@@ -83,16 +82,11 @@ class JwkDaoImpl implements JwkDao {
 
         // Fetch back all records.
         final List<JsonWebKeyRecord> list = JooqUtil.contextResult(authDbConnProvider, context ->
-                context.selectFrom(JSON_WEB_KEY).fetch());
+                context
+                        .selectFrom(JSON_WEB_KEY)
+                        .fetch());
         return list.stream()
-                .map(r -> {
-                    try {
-                        return RsaJsonWebKey.Factory.newPublicJwk(r.getJson());
-                    } catch (JoseException e) {
-                        LOGGER.error("Unable to create JWK!", e);
-                        throw new RuntimeException(e);
-                    }
-                })
+                .map(jsonWebKeyRecord -> jsonWebKeyFactory.fromJson(jsonWebKeyRecord.getJson()))
                 .collect(Collectors.toList());
     }
 
@@ -103,7 +97,6 @@ class JwkDaoImpl implements JwkDao {
         if (list.size() < 1) {
             addRecord();
         }
-
 
 //        final long oldest = System.currentTimeMillis() - MIN_KEY_AGE_MS;
 //
@@ -124,25 +117,16 @@ class JwkDaoImpl implements JwkDao {
 
     private void addRecord() {
         JooqUtil.context(authDbConnProvider, context -> {
-            try {
-                // We need to set up the jwkId so we know which JWTs were signed by which JWKs.
-                String jwkId = UUID.randomUUID().toString();
-                RsaJsonWebKey jwk = RsaJwkGenerator.generateJwk(2048);
-                jwk.setKeyId(jwkId);
-                jwk.setUse("sig");
-                jwk.setAlgorithm("RS256");
+            // We need to set up the jwkId so we know which JWTs were signed by which JWKs.
+            PublicJsonWebKey publicJsonWebKey = jsonWebKeyFactory.createPublicKey();
 
-                // Persist the public key
-                JsonWebKeyRecord jwkRecord = new JsonWebKeyRecord();
-                jwkRecord.setKeyId(jwkId);
-                jwkRecord.setJson(jwk.toJson(JsonWebKey.OutputControlLevel.INCLUDE_PRIVATE));
-                jwkRecord.setCreateTimeMs(System.currentTimeMillis());
+            // Persist the public key
+            JsonWebKeyRecord jwkRecord = new JsonWebKeyRecord();
+            jwkRecord.setKeyId(publicJsonWebKey.getKeyId());
+            jwkRecord.setJson(jsonWebKeyFactory.asJson(publicJsonWebKey));
+            jwkRecord.setCreateTimeMs(System.currentTimeMillis());
 
-                context.executeInsert(jwkRecord);
-            } catch (JoseException e) {
-                LOGGER.error("Unable to create JWK!", e);
-                throw new RuntimeException(e);
-            }
+            context.executeInsert(jwkRecord);
         });
     }
 
