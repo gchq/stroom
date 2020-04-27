@@ -29,8 +29,6 @@ import stroom.util.logging.LambdaLoggerFactory;
 import stroom.util.shared.ResultPage;
 
 import javax.inject.Inject;
-import javax.ws.rs.ServerErrorException;
-import javax.ws.rs.core.Response.Status;
 import java.util.function.Consumer;
 
 class JobResourceImpl implements JobResource, HasHealthCheck {
@@ -65,7 +63,7 @@ class JobResourceImpl implements JobResource, HasHealthCheck {
             documentEventLog.search("ListJobs", query, Job.class.getSimpleName(), response.getPageResponse(), null);
         } catch (final RuntimeException e) {
             documentEventLog.search("ListJobs", query, Job.class.getSimpleName(), null, e);
-            throw new ServerErrorException(Status.INTERNAL_SERVER_ERROR, e);
+            throw e;
         }
         return response;
     }
@@ -94,7 +92,7 @@ class JobResourceImpl implements JobResource, HasHealthCheck {
 
         } catch (final RuntimeException e) {
             documentEventLog.update(before, after, e);
-            throw new ServerErrorException(Status.INTERNAL_SERVER_ERROR, e);
+            throw e;
         }
     }
 
