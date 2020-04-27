@@ -6,6 +6,9 @@ and this project adheres to [Semantic Versioning](http://semver.org/).
 
 ## [Unreleased]
 
+
+## [v7.0-beta.27] - 2020-04-27
+
 * Issue **#1480** : Index settings now shows index volume groups and allows selection. 
 
 * Issue **#1450** : Further attempt to improve criteria filtering on data tab.
@@ -2060,7 +2063,8 @@ Issue **gchq/stroom-expression#22** : Add `typeOf(...)` function to dashboard.
 
 * Issue **#202** : Initial release of the new data retention policy functionality.
 
-[Unreleased]: https://github.com/gchq/stroom/compare/v7.0-beta.26...HEAD
+[Unreleased]: https://github.com/gchq/stroom/compare/v7.0-beta.27...HEAD
+[v7.0-beta.27]: https://github.com/gchq/stroom/compare/v7.0-beta.26...v7.0-beta.27
 [v7.0-beta.26]: https://github.com/gchq/stroom/compare/v7.0-beta.25...v7.0-beta.26
 [v7.0-beta.25]: https://github.com/gchq/stroom/compare/v7.0-beta.24...v7.0-beta.25
 [v7.0-beta.24]: https://github.com/gchq/stroom/compare/v7.0-beta.23...v7.0-beta.24
