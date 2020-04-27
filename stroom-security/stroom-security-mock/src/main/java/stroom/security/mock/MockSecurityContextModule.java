@@ -17,11 +17,13 @@
 package stroom.security.mock;
 
 import com.google.inject.AbstractModule;
+import stroom.security.api.ProcessingUserIdentityProvider;
 import stroom.security.api.SecurityContext;
 
 public class MockSecurityContextModule extends AbstractModule {
     @Override
     protected void configure() {
         bind(SecurityContext.class).to(MockSecurityContext.class);
+        bind(ProcessingUserIdentityProvider.class).to(MockProcessingUserIdentityProvider.class);
     }
 }
