@@ -155,24 +155,6 @@ const UserFields = ({
           <div className="section__fields">
             <div className="section__fields__row">
 
-              <div className="field-container--with-validation">
-                <label>Processing account?</label>
-                <Field
-                  name="processingAccount"
-                  label="processingAccount"
-                  component={CheckboxField}
-                />
-                <ErrorMessage
-                  name="processingAccount"
-                  render={msg => <div className="validation-error">{msg}</div>}
-                />
-              </div>
-
-            </div>
-          </div>
-          <div className="section__fields">
-            <div className="section__fields__row">
-
               {/*<div className="field-container vertical">*/}
               {/*  <label>Account status</label>*/}
               {/*  <Field*/}

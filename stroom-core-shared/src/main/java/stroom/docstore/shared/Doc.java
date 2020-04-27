@@ -25,7 +25,6 @@ import com.fasterxml.jackson.annotation.JsonPropertyOrder;
 import stroom.util.shared.HasAuditInfo;
 import stroom.util.shared.HasUuid;
 
-
 import java.util.Objects;
 
 @JsonPropertyOrder({"type", "uuid", "name", "version", "createTime", "updateTime", "createUser", "updateUser"})

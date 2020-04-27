@@ -217,11 +217,15 @@ class ExtractionTaskHandler {
                         throw new ExtractionException("Unable to extract data from stream source with id: " + streamId + " - " + e.getMessage(),
                                 e);
                     }
+                } catch (final ExtractionException e) {
+                    throw e;
                 } catch (final IOException | RuntimeException e) {
                     // Something went wrong extracting data from this stream.
                     throw new ExtractionException("Unable to extract data from stream source with id: " + streamId + " - " + e.getMessage(), e);
                 }
             }
+        } catch (final ExtractionException e) {
+            throw e;
         } catch (final IOException | RuntimeException e) {
             // Something went wrong extracting data from this stream.
             throw new ExtractionException("Unable to extract data from stream source with id: " + streamId + " - " + e.getMessage(), e);

@@ -52,11 +52,11 @@ class AppPermissionResourceImpl implements AppPermissionResource {
         if (userIdentity == null) {
             return null;
         }
-        User user = null;
+        UserIdentityImpl identity = null;
         if (userIdentity instanceof UserIdentityImpl) {
-            user = ((UserIdentityImpl) userIdentity).getUser();
+            identity = (UserIdentityImpl) userIdentity;
         }
-        if (user == null) {
+        if (identity == null) {
             return null;
         }
 
@@ -67,12 +67,12 @@ class AppPermissionResourceImpl implements AppPermissionResource {
             }
         }
 
-        return new UserAndPermissions(user, userAndPermissionsHelper.get(user.getUuid()));
+        return new UserAndPermissions(identity.getId(), userAndPermissionsHelper.get(identity.getUserUuid()));
     }
 
     @Override
     public UserAndPermissions fetchUserAppPermissions(final User user) {
-        return new UserAndPermissions(user, userAndPermissionsHelper.get(user.getUuid()));
+        return new UserAndPermissions(user.getName(), userAndPermissionsHelper.get(user.getUuid()));
     }
 
     @Override

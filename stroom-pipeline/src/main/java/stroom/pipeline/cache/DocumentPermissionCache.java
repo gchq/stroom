@@ -1,5 +1,5 @@
 /*
- * Copyright 2018 Crown Copyright
+ * Copyright 2017 Crown Copyright
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -14,14 +14,8 @@
  * limitations under the License.
  */
 
-package stroom.security.impl;
+package stroom.pipeline.cache;
 
-import com.google.inject.AbstractModule;
-import stroom.security.api.SecurityContext;
-
-public class SecurityContextModule extends AbstractModule {
-    @Override
-    protected void configure() {
-        bind(SecurityContext.class).to(SecurityContextImpl.class);
-    }
+public interface DocumentPermissionCache {
+    boolean hasDocumentPermission(String documentUuid, String permission);
 }

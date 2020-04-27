@@ -19,7 +19,6 @@ package stroom.processor.impl;
 
 import stroom.docref.DocRef;
 import stroom.entity.shared.ExpressionCriteria;
-import stroom.pipeline.shared.PipelineDoc;
 import stroom.processor.api.ProcessorService;
 import stroom.processor.shared.Processor;
 import stroom.security.api.SecurityContext;

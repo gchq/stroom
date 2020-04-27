@@ -190,22 +190,23 @@ public class ClusterWorkerImpl implements ClusterWorker {
                     tryCount +
                     " attempts";
             LOGGER.error(message, lastException);
-        }
 
-        // If the source node rejected the result then throw an exception. This
-        // normally happens because the task has terminated on the source node.
-        if (!Boolean.TRUE.equals(ok)) {
-            final String message = "Unable to send result for task '" +
-                    ref.getTask().getTaskName() +
-                    "' back to source node '" +
-                    ref.getSourceNode() +
-                    "' because source node rejected result";
-            LOGGER.info(message);
+        } else {
+            // If the source node rejected the result then throw an exception. This
+            // normally happens because the task has terminated on the source node.
+            if (!Boolean.TRUE.equals(ok)) {
+                final String message = "Unable to send result for task '" +
+                        ref.getTask().getTaskName() +
+                        "' back to source node '" +
+                        ref.getSourceNode() +
+                        "' because source node rejected result";
+                LOGGER.info(message);
 
-            // We must throw an exception here so that any code that is trying
-            // to return a result knows that the result did not make it to the
-            // requesting node.
-            throw new RuntimeException("Unable to return result to requesting node or requesting node rejected result");
+                // We must throw an exception here so that any code that is trying
+                // to return a result knows that the result did not make it to the
+                // requesting node.
+                throw new RuntimeException("Unable to return result to requesting node or requesting node rejected result");
+            }
         }
     }
 

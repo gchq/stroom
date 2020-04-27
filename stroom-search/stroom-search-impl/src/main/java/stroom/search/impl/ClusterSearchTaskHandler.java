@@ -137,7 +137,7 @@ class ClusterSearchTaskHandler implements ClusterTaskHandler<ClusterSearchTask, 
                     while (!Thread.currentThread().isInterrupted() && !sendingDataCompletionState.isComplete()) {
                         sendingDataCompletionState.await(1, TimeUnit.SECONDS);
                     }
-                } catch (InterruptedException e) {
+                } catch (final InterruptedException e) {
                     //Don't want to reset interrupt status as this thread will go back into
                     //the executor's pool. Throwing an exception will terminate the task
                     throw new RuntimeException("Thread interrupted");

@@ -1,6 +1,6 @@
 package stroom.authentication.oauth2;
 
-import stroom.security.impl.OpenIdClientDetails;
+import stroom.authentication.api.OpenIdClientDetails;
 
 import javax.inject.Inject;
 import java.security.SecureRandom;

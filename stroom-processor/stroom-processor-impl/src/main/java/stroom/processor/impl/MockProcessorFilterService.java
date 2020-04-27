@@ -5,7 +5,12 @@ import stroom.entity.shared.ExpressionCriteria;
 import stroom.meta.shared.FindMetaCriteria;
 import stroom.processor.api.ProcessorFilterService;
 import stroom.processor.api.ProcessorService;
-import stroom.processor.shared.*;
+import stroom.processor.shared.FetchProcessorRequest;
+import stroom.processor.shared.Processor;
+import stroom.processor.shared.ProcessorFilter;
+import stroom.processor.shared.ProcessorListRow;
+import stroom.processor.shared.QueryData;
+import stroom.processor.shared.ReprocessDataInfo;
 import stroom.util.shared.ResultPage;
 
 import javax.inject.Inject;

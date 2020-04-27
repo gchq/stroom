@@ -17,6 +17,7 @@ import stroom.util.shared.ResultPage;
 import javax.inject.Inject;
 import javax.ws.rs.NotFoundException;
 import javax.ws.rs.WebApplicationException;
+import javax.ws.rs.client.Entity;
 import javax.ws.rs.core.MediaType;
 import javax.ws.rs.core.Response;
 import javax.ws.rs.core.Response.Status;
@@ -64,11 +65,6 @@ class IndexResourceImpl implements IndexResource {
         return performShardAction(nodeName, criteria, IndexResource.SHARD_DELETE_SUB_PATH, IndexShardAction.DELETE);
     }
 
-//    @Override
-//    public Long closeIndexShards(final String nodeName, final FindIndexShardCriteria criteria) {
-//        return performShardAction(nodeName, criteria, IndexResource.SHARD_CLOSE_SUB_PATH, IndexShardAction.CLOSE);
-//    }
-
     @Override
     public Long flushIndexShards(final String nodeName, final FindIndexShardCriteria criteria) {
         return performShardAction(nodeName, criteria, IndexResource.SHARD_FLUSH_SUB_PATH, IndexShardAction.FLUSH);
@@ -91,7 +87,7 @@ class IndexResourceImpl implements IndexResource {
                         .create(url)
                         .queryParam("nodeName", nodeName)
                         .request(MediaType.APPLICATION_JSON)
-                        .get();
+                        .post(Entity.json(criteria));
                 if (response.getStatus() == Status.NOT_FOUND.getStatusCode()) {
                     throw new NotFoundException(response);
                 } else if (response.getStatus() != Status.OK.getStatusCode()) {

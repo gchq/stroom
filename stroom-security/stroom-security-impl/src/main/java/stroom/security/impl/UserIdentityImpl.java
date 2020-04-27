@@ -1,30 +1,29 @@
 package stroom.security.impl;
 
 import stroom.security.api.UserIdentity;
-import stroom.security.shared.User;
 
 import java.util.Objects;
 
 class UserIdentityImpl implements UserIdentity {
-    private final User user;
-    private final String name;
+    private final String userUuid;
+    private final String id;
     private final String jws;
     private final String sessionId;
 
-    UserIdentityImpl(final User user, final String name, final String jws, final String sessionId) {
-        this.user = user;
-        this.name = name;
+    UserIdentityImpl(final String userUuid, final String id, final String jws, final String sessionId) {
+        this.userUuid = userUuid;
+        this.id = id;
         this.jws = jws;
         this.sessionId = sessionId;
     }
 
-    public User getUser() {
-        return user;
+    public String getUserUuid() {
+        return userUuid;
     }
 
     @Override
     public String getId() {
-        return name;
+        return id;
     }
 
     @Override
@@ -40,17 +39,16 @@ class UserIdentityImpl implements UserIdentity {
     @Override
     public boolean equals(final Object o) {
         if (this == o) return true;
-        if (!(o instanceof UserIdentityImpl)) return false;
-        final UserIdentityImpl that = (UserIdentityImpl) o;
-        return Objects.equals(user, that.user) &&
-                Objects.equals(name, that.name) &&
-                Objects.equals(jws, that.jws) &&
-                Objects.equals(sessionId, that.sessionId);
+        if (!(o instanceof UserIdentity)) return false;
+        final UserIdentity that = (UserIdentity) o;
+        return Objects.equals(id, that.getId()) &&
+                Objects.equals(jws, that.getJws()) &&
+                Objects.equals(sessionId, that.getSessionId());
     }
 
     @Override
     public int hashCode() {
-        return Objects.hash(user, name, jws, sessionId);
+        return Objects.hash(id, jws, sessionId);
     }
 
     @Override

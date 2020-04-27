@@ -20,6 +20,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import stroom.authentication.api.OIDC;
 import stroom.config.common.UriFactory;
+import stroom.security.api.ProcessingUserIdentityProvider;
 import stroom.security.api.SecurityContext;
 import stroom.security.api.UserIdentity;
 import stroom.security.impl.session.UserIdentitySessionUtil;
@@ -70,17 +71,20 @@ class SecurityFilter implements Filter {
     private final SecurityContext securityContext;
     private final Pattern publicApiPathPattern;
     private final OpenIdManager openIdManager;
+    private final ProcessingUserIdentityProvider processingUserIdentityProvider;
 
     @Inject
     SecurityFilter(
             final AuthenticationConfig authenticationConfig,
             final UriFactory uriFactory,
             final SecurityContext securityContext,
-            final OpenIdManager openIdManager) {
+            final OpenIdManager openIdManager,
+            final ProcessingUserIdentityProvider processingUserIdentityProvider) {
         this.authenticationConfig = authenticationConfig;
         this.uriFactory = uriFactory;
         this.securityContext = securityContext;
         this.openIdManager = openIdManager;
+        this.processingUserIdentityProvider = processingUserIdentityProvider;
 
         publicApiPathPattern = Pattern.compile(PUBLIC_API_PATH_REGEX);
     }
@@ -274,7 +278,7 @@ class SecurityFilter implements Filter {
                                         final HttpServletResponse response,
                                         final FilterChain chain,
                                         final boolean useSession) throws IOException, ServletException {
-        bypassAuthentication(request, response, chain, useSession, ProcessingUserIdentity.INSTANCE);
+        bypassAuthentication(request, response, chain, useSession, processingUserIdentityProvider.get());
     }
 
     private void bypassAuthentication(final HttpServletRequest request,

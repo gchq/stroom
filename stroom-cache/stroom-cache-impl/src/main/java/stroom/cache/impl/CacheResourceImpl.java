@@ -34,11 +34,9 @@ import stroom.util.shared.ResourcePaths;
 import stroom.util.shared.StringCriteria;
 
 import javax.inject.Inject;
-import javax.ws.rs.ServerErrorException;
 import javax.ws.rs.WebApplicationException;
 import javax.ws.rs.core.MediaType;
 import javax.ws.rs.core.Response;
-import javax.ws.rs.core.Response.Status;
 import java.util.List;
 import java.util.Objects;
 import java.util.Set;
@@ -118,14 +116,10 @@ class CacheResourceImpl implements CacheResource, HasHealthCheck {
     @Override
     public Long clear(final String cacheName, final String nodeName) {
         final Long result;
-        try {
-            if (nodeName == null) {
-                result = clearCacheOnAllNodes(cacheName);
-            } else {
-                result = clearCache(cacheName, nodeName);
-            }
-        } catch (final RuntimeException e) {
-            throw new ServerErrorException(Status.INTERNAL_SERVER_ERROR, e);
+        if (nodeName == null) {
+            result = clearCacheOnAllNodes(cacheName);
+        } else {
+            result = clearCache(cacheName, nodeName);
         }
         return result;
     }
@@ -163,9 +157,9 @@ class CacheResourceImpl implements CacheResource, HasHealthCheck {
                     .orElse(0L);
 
             if (!failedNodes.isEmpty()) {
-                throw new ServerErrorException(LogUtil.message(
+                throw new RuntimeException(LogUtil.message(
                         "Error clearing cache on node(s) [{}]. See logs for details",
-                        String.join(",", failedNodes)), Status.INTERNAL_SERVER_ERROR, exception.get());
+                        String.join(",", failedNodes)), exception.get());
             }
             return count;
         }).get();

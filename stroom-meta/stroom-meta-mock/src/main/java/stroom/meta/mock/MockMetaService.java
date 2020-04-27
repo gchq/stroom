@@ -3,15 +3,15 @@ package stroom.meta.mock;
 import stroom.expression.matcher.ExpressionMatcher;
 import stroom.meta.api.AttributeMap;
 import stroom.meta.api.EffectiveMetaDataCriteria;
+import stroom.meta.api.MetaProperties;
+import stroom.meta.api.MetaService;
 import stroom.meta.shared.FindMetaCriteria;
 import stroom.meta.shared.Meta;
 import stroom.meta.shared.MetaFields;
-import stroom.meta.api.MetaProperties;
 import stroom.meta.shared.MetaRow;
-import stroom.meta.api.MetaService;
 import stroom.meta.shared.Status;
-import stroom.util.shared.ResultPage;
 import stroom.util.shared.Clearable;
+import stroom.util.shared.ResultPage;
 
 import javax.inject.Singleton;
 import java.util.ArrayList;

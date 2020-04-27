@@ -17,7 +17,7 @@
 package stroom.authentication.oauth2;
 
 import com.google.inject.AbstractModule;
-import stroom.security.impl.OpenIdClientDetails;
+import stroom.authentication.api.OpenIdClientDetails;
 import stroom.util.guice.GuiceUtil;
 import stroom.util.shared.RestResource;
 

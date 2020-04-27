@@ -32,7 +32,6 @@ import stroom.util.shared.Message;
 
 import javax.inject.Inject;
 import javax.inject.Singleton;
-import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;

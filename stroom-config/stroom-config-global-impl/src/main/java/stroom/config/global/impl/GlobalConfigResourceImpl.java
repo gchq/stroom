@@ -23,7 +23,6 @@ import stroom.util.shared.ResourcePaths;
 import javax.inject.Inject;
 import javax.ws.rs.BadRequestException;
 import javax.ws.rs.NotFoundException;
-import javax.ws.rs.ServerErrorException;
 import javax.ws.rs.WebApplicationException;
 import javax.ws.rs.core.MediaType;
 import javax.ws.rs.core.Response;
@@ -60,19 +59,13 @@ public class GlobalConfigResourceImpl implements GlobalConfigResource, HasHealth
     public ListConfigResponse list(final String partialName,
                                    final long offset,
                                    final Integer size) {
-        try {
-            final ListConfigResponse resultList = globalConfigService.list(
-                    buildPredicate(partialName),
-                    new PageRequest(offset, size != null
-                            ? size
-                            : Integer.MAX_VALUE));
+        final ListConfigResponse resultList = globalConfigService.list(
+                buildPredicate(partialName),
+                new PageRequest(offset, size != null
+                        ? size
+                        : Integer.MAX_VALUE));
 
-            return resultList;
-        } catch (final RuntimeException e) {
-            throw new ServerErrorException(e.getMessage() != null
-                    ? e.getMessage()
-                    : e.toString(), Status.INTERNAL_SERVER_ERROR, e);
-        }
+        return resultList;
     }
 
     @Timed
@@ -133,31 +126,19 @@ public class GlobalConfigResourceImpl implements GlobalConfigResource, HasHealth
     @Override
     public ConfigProperty getPropertyByName(final String propertyPath) {
         RestUtil.requireNonNull(propertyPath, "propertyPath not supplied");
-        try {
-            final Optional<ConfigProperty> optConfigProperty = globalConfigService.fetch(
-                    PropertyPath.fromPathString(propertyPath));
-            return optConfigProperty.orElseThrow(NotFoundException::new);
-        } catch (final RuntimeException e) {
-            throw new ServerErrorException(e.getMessage() != null
-                    ? e.getMessage()
-                    : e.toString(), Status.INTERNAL_SERVER_ERROR, e);
-        }
+        final Optional<ConfigProperty> optConfigProperty = globalConfigService.fetch(
+                PropertyPath.fromPathString(propertyPath));
+        return optConfigProperty.orElseThrow(NotFoundException::new);
     }
 
     @Timed
     public OverrideValue<String> getYamlValueByName(final String propertyPath) {
         RestUtil.requireNonNull(propertyPath, "propertyPath not supplied");
-        try {
-            final Optional<ConfigProperty> optConfigProperty = globalConfigService.fetch(
-                    PropertyPath.fromPathString(propertyPath));
-            return optConfigProperty
-                    .map(ConfigProperty::getYamlOverrideValue)
-                    .orElseThrow(() -> new NotFoundException(LogUtil.message("Property {} not found", propertyPath)));
-        } catch (final RuntimeException e) {
-            throw new ServerErrorException(e.getMessage() != null
-                    ? e.getMessage()
-                    : e.toString(), Status.INTERNAL_SERVER_ERROR, e);
-        }
+        final Optional<ConfigProperty> optConfigProperty = globalConfigService.fetch(
+                PropertyPath.fromPathString(propertyPath));
+        return optConfigProperty
+                .map(ConfigProperty::getYamlOverrideValue)
+                .orElseThrow(() -> new NotFoundException(LogUtil.message("Property {} not found", propertyPath)));
     }
 
     @Timed

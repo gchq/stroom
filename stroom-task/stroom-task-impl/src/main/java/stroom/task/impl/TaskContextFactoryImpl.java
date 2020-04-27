@@ -137,7 +137,7 @@ class TaskContextFactoryImpl implements TaskContextFactory {
                         LOGGER.warn(() -> "exec() - Task killed! (" + taskName + ")");
                         LOGGER.debug(() -> "exec() (" + taskName + ")", t);
                     } else {
-                        LOGGER.error(() -> t.getMessage() + " (" + taskName + ")", t);
+                        LOGGER.debug(() -> t.getMessage() + " (" + taskName + ")", t);
                     }
 
                 } catch (final Throwable t2) {

@@ -21,7 +21,6 @@ import stroom.event.logging.api.DocumentEventLog;
 import stroom.node.api.NodeCallUtil;
 import stroom.node.api.NodeInfo;
 import stroom.node.api.NodeService;
-import stroom.task.api.TaskManager;
 import stroom.task.shared.FindTaskProgressCriteria;
 import stroom.task.shared.FindTaskProgressRequest;
 import stroom.task.shared.TaskProgress;
@@ -38,12 +37,10 @@ import stroom.util.shared.ResultPage;
 import stroom.util.shared.Sort.Direction;
 
 import javax.inject.Inject;
-import javax.ws.rs.ServerErrorException;
 import javax.ws.rs.WebApplicationException;
 import javax.ws.rs.client.Entity;
 import javax.ws.rs.core.MediaType;
 import javax.ws.rs.core.Response;
-import javax.ws.rs.core.Response.Status;
 
 // TODO : @66 add event logging
 class TaskResourceImpl implements TaskResource, HasHealthCheck {
@@ -126,7 +123,7 @@ class TaskResourceImpl implements TaskResource, HasHealthCheck {
             }
         } catch (final RuntimeException e) {
             LOGGER.error(e::getMessage, e);
-            throw new ServerErrorException(Status.INTERNAL_SERVER_ERROR, e);
+            throw e;
         }
         return null;
     }
@@ -136,11 +133,7 @@ class TaskResourceImpl implements TaskResource, HasHealthCheck {
 
         // If this is the node that was contacted then just return our local info.
         if (NodeCallUtil.shouldExecuteLocally(nodeInfo, nodeName)) {
-            try {
-                taskManager.terminate(request.getCriteria(), request.isKill());
-            } catch (Exception e) {
-                throw new ServerErrorException(Status.INTERNAL_SERVER_ERROR, e);
-            }
+            taskManager.terminate(request.getCriteria(), request.isKill());
         } else {
             final String url = NodeCallUtil.getBaseEndpointUrl(nodeService, nodeName)
                     + ResourcePaths.buildAuthenticatedApiPath(

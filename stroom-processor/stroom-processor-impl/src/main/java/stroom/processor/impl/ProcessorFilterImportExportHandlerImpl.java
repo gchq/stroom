@@ -16,7 +16,6 @@
  */
 package stroom.processor.impl;
 
-import org.jooq.SelectSeekLimitStep;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import stroom.docref.DocRef;
@@ -30,7 +29,6 @@ import stroom.importexport.api.NonExplorerDocRefProvider;
 import stroom.importexport.shared.ImportState;
 import stroom.pipeline.PipelineStore;
 import stroom.pipeline.shared.PipelineDoc;
-import stroom.pipeline.shared.data.PipelineData;
 import stroom.processor.api.ProcessorFilterService;
 import stroom.processor.api.ProcessorService;
 import stroom.processor.shared.Processor;
@@ -41,13 +39,9 @@ import stroom.query.api.v2.ExpressionOperator;
 import stroom.query.api.v2.ExpressionTerm;
 import stroom.util.shared.Message;
 import stroom.util.shared.ResultPage;
-import stroom.util.xml.XMLMarshallerUtil;
 
 import javax.inject.Inject;
-import javax.xml.bind.JAXBContext;
-import javax.xml.bind.JAXBException;
 import java.io.IOException;
-import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;

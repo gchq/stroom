@@ -24,10 +24,6 @@ public class AuthorisationConfig extends AbstractConfig {
             .maximumSize(1000L)
             .expireAfterAccess(StroomDuration.ofMinutes(10))
             .build();
-    private CacheConfig documentPermissionCache = new CacheConfig.Builder()
-            .maximumSize(1000L)
-            .expireAfterAccess(StroomDuration.ofMinutes(10))
-            .build();
 
     public CacheConfig getUserGroupsCache() {
         return userGroupsCache;
@@ -55,13 +51,5 @@ public class AuthorisationConfig extends AbstractConfig {
 
     public void setUserDocumentPermissionsCache(final CacheConfig userDocumentPermissionsCache) {
         this.userDocumentPermissionsCache = userDocumentPermissionsCache;
-    }
-
-    public CacheConfig getDocumentPermissionCache() {
-        return documentPermissionCache;
-    }
-
-    public void setDocumentPermissionCache(final CacheConfig documentPermissionCache) {
-        this.documentPermissionCache = documentPermissionCache;
     }
 }

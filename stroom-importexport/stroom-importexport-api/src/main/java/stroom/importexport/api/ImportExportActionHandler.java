@@ -1,6 +1,5 @@
 package stroom.importexport.api;
 
-import io.vavr.Tuple2;
 import stroom.docref.DocRef;
 import stroom.importexport.shared.ImportState;
 import stroom.importexport.shared.ImportState.ImportMode;

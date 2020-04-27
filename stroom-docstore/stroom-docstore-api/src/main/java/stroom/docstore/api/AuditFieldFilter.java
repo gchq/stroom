@@ -1,6 +1,5 @@
 package stroom.docstore.api;
 
-import stroom.docstore.shared.Doc;
 import stroom.util.shared.HasAuditInfo;
 
 import java.util.function.Function;

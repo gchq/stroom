@@ -485,28 +485,29 @@ public class IndexShardPresenter extends MyPresenterWidget<DataGridView<IndexSha
         nodeCache.listEnabledNodes(nodeNames -> nodeNames.forEach(nodeName -> {
             final Rest<Boolean> rest = restFactory.create();
             rest
-                    .onSuccess(result ->
-                            AlertEvent.fireInfo(IndexShardPresenter.this,
-                                    "Selected index shards will be flushed. Please be patient as this may take some time.",
-                                    this::refresh))
+                    .onSuccess(result -> refresh())
                     .call(INDEX_RESOURCE)
                     .flushIndexShards(nodeName, selectionCriteria);
         }), throwable -> {
         });
 
+        AlertEvent.fireInfo(IndexShardPresenter.this,
+                "Selected index shards will be flushed. Please be patient as this may take some time.",
+                null);
     }
 
     private void doDelete() {
         nodeCache.listEnabledNodes(nodeNames -> nodeNames.forEach(nodeName -> {
             final Rest<Boolean> rest = restFactory.create();
             rest
-                    .onSuccess(result ->
-                            AlertEvent.fireInfo(IndexShardPresenter.this,
-                                    "Selected index shards will be deleted. Please be patient as this may take some time.",
-                                    this::refresh))
+                    .onSuccess(result -> refresh())
                     .call(INDEX_RESOURCE)
                     .deleteIndexShards(nodeName, selectionCriteria);
         }), throwable -> {
         });
+
+        AlertEvent.fireInfo(IndexShardPresenter.this,
+                "Selected index shards will be deleted. Please be patient as this may take some time.",
+                null);
     }
 }

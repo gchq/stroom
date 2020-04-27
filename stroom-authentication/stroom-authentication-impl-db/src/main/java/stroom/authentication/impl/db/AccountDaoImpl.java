@@ -152,19 +152,21 @@ class AccountDaoImpl implements AccountDao {
             return LoginResult.BAD_CREDENTIALS;
         }
 
-        final AccountRecord user = JooqUtil.contextResult(authDbConnProvider, context -> context
+        final Optional<AccountRecord> optionalRecord = JooqUtil.contextResult(authDbConnProvider, context -> context
                 .selectFrom(ACCOUNT)
-                .where(new Condition[]{ACCOUNT.EMAIL.eq(email)})
-                .fetchOne());
+                .where(ACCOUNT.EMAIL.eq(email))
+                .fetchOptional());
 
-        if (user == null) {
+        if (!optionalRecord.isPresent()) {
             LOGGER.debug("Request to log in with invalid username: " + email);
             return LoginResult.USER_DOES_NOT_EXIST;
         } else {
-            boolean isPasswordCorrect = PasswordHashUtil.checkPassword(password, user.getPasswordHash());
-            boolean isDisabled = !user.getEnabled();
-            boolean isInactive = user.getInactive();
-            boolean isLocked = user.getLocked();
+            final AccountRecord record = optionalRecord.get();
+            boolean isPasswordCorrect = PasswordHashUtil.checkPassword(password, record.getPasswordHash());
+            boolean isDisabled = !record.getEnabled();
+            boolean isInactive = record.getInactive();
+            boolean isLocked = record.getLocked();
+            boolean isProcessingAccount = record.getProcessingAccount();
 
             if (isLocked) {
                 LOGGER.debug("Account {} tried to log in but it is locked.", email);
@@ -175,6 +177,9 @@ class AccountDaoImpl implements AccountDao {
             } else if (isInactive) {
                 LOGGER.debug("Account {} tried to log in but it is inactive.", email);
                 return isPasswordCorrect ? LoginResult.INACTIVE_GOOD_CREDENTIALS : LoginResult.INACTIVE_BAD_CREDENTIALS;
+            } else if (isProcessingAccount) {
+                LOGGER.debug("Account {} tried to log in but it is a processing account.", email);
+                return LoginResult.PROCESSING_ACCOUNT;
             } else {
                 return isPasswordCorrect ? LoginResult.GOOD_CREDENTIALS : LoginResult.BAD_CREDENTIALS;
             }
@@ -280,6 +285,7 @@ class AccountDaoImpl implements AccountDao {
         final TableField<AccountRecord, String> orderByEmailField = ACCOUNT.EMAIL;
         final List<Account> list = JooqUtil.contextResult(authDbConnProvider, context -> context
                 .selectFrom(ACCOUNT)
+                .where(ACCOUNT.PROCESSING_ACCOUNT.isFalse())
                 .orderBy(orderByEmailField)
                 .fetch()
                 .map(RECORD_TO_ACCOUNT_MAPPER::apply));
@@ -295,7 +301,7 @@ class AccountDaoImpl implements AccountDao {
                 .set(ACCOUNT.PASSWORD_HASH, newPasswordHash)
                 .set(ACCOUNT.PASSWORD_LAST_CHANGED_MS, System.currentTimeMillis())
                 .set(ACCOUNT.FORCE_PASSWORD_CHANGE, false)
-                .where(new Condition[]{ACCOUNT.EMAIL.eq(email)})
+                .where(ACCOUNT.EMAIL.eq(email))
                 .execute());
 
         if (count == 0) {
@@ -376,7 +382,8 @@ class AccountDaoImpl implements AccountDao {
     public ResultPage<Account> searchUsersForDisplay(final String email) {
         final List<Account> list = JooqUtil.contextResult(authDbConnProvider, context -> context
                 .selectFrom(ACCOUNT)
-                .where(new Condition[]{ACCOUNT.EMAIL.contains(email)})
+                .where(ACCOUNT.EMAIL.contains(email))
+                .and(ACCOUNT.PROCESSING_ACCOUNT.isFalse())
                 .fetch()
                 .map(RECORD_TO_ACCOUNT_MAPPER::apply));
         return ResultPage.createUnboundedList(list);

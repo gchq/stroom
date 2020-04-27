@@ -3,8 +3,8 @@ package stroom.processor.impl;
 import stroom.entity.shared.ExpressionCriteria;
 import stroom.processor.shared.ProcessorFilter;
 import stroom.processor.shared.ProcessorFilterTracker;
-import stroom.util.shared.ResultPage;
 import stroom.util.shared.Clearable;
+import stroom.util.shared.ResultPage;
 
 import javax.inject.Singleton;
 import java.util.List;

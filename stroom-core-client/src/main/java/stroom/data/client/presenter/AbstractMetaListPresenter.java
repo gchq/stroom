@@ -66,11 +66,12 @@ public abstract class AbstractMetaListPresenter extends MyPresenterWidget<DataGr
 
     private final IdSet entityIdSet = new IdSet();
     private final RestFactory restFactory;
+    private final EventBus eventBus;
+
     private RestDataProvider<MetaRow, ResultPage<MetaRow>> dataProvider;
-    boolean allowNoConstraint;
+//    boolean allowNoConstraint;
     private ResultPage<MetaRow> resultPage;
     private FindMetaCriteria criteria;
-    private EventBus eventBus;
 
     AbstractMetaListPresenter(final EventBus eventBus,
                               final RestFactory restFactory,
@@ -83,10 +84,6 @@ public abstract class AbstractMetaListPresenter extends MyPresenterWidget<DataGr
 
         entityIdSet.setMatchAll(false);
         addColumns(allowSelectAll);
-    }
-
-    public RestDataProvider<MetaRow, ResultPage<MetaRow>> getDataProvider() {
-        return dataProvider;
     }
 
     protected ResultPage<MetaRow> onProcessData(final ResultPage<MetaRow> data) {
@@ -203,7 +200,9 @@ public abstract class AbstractMetaListPresenter extends MyPresenterWidget<DataGr
                     entityIdSet.clear();
                     entityIdSet.setMatchAll(true);
                 }
-                dataProvider.updateRowData(dataProvider.getRanges()[0].getStart(), resultPage.getValues());
+                if (dataProvider != null) {
+                    dataProvider.updateRowData(dataProvider.getRanges()[0].getStart(), resultPage.getValues());
+                }
                 DataSelectionEvent.fire(AbstractMetaListPresenter.this, entityIdSet, false);
             });
 
@@ -379,25 +378,19 @@ public abstract class AbstractMetaListPresenter extends MyPresenterWidget<DataGr
         getView().addResizableColumn(column, name, size);
     }
 
-    @Override
-    public void refresh() {
-        if (dataProvider != null && (allowNoConstraint || criteria != null)) {
-            dataProvider.refresh();
-        }
+    public void setCriteria(final FindMetaCriteria criteria) {
+        this.criteria = criteria;
+        this.criteria.obtainPageRequest().setLength(PageRequest.DEFAULT_PAGE_SIZE);
+        refresh();
     }
 
-    public void setCriteria(final FindMetaCriteria criteria) {
+    @Override
+    public void refresh() {
         if (criteria != null && criteria.getExpression() != null) {
-            if (criteria.equals(this.criteria) && this.dataProvider != null) {
+            if (this.dataProvider != null) {
                 this.dataProvider.refresh();
             } else {
-                this.criteria = criteria;
-                this.criteria.obtainPageRequest().setLength(PageRequest.DEFAULT_PAGE_SIZE);
-
-                this.dataProvider = new RestDataProvider<MetaRow, ResultPage<MetaRow>>(
-                        eventBus,
-                        criteria.obtainPageRequest()) {
-
+                this.dataProvider = new RestDataProvider<MetaRow, ResultPage<MetaRow>>(eventBus, criteria.obtainPageRequest()) {
                     @Override
                     protected void exec(final Consumer<ResultPage<MetaRow>> dataConsumer,
                                         final Consumer<Throwable> throwableConsumer) {
@@ -406,7 +399,7 @@ public abstract class AbstractMetaListPresenter extends MyPresenterWidget<DataGr
                                 .onSuccess(dataConsumer)
                                 .onFailure(throwableConsumer)
                                 .call(META_RESOURCE)
-                                .findMetaRow(getCriteria());
+                                .findMetaRow(criteria);
                     }
 
                     @Override
@@ -431,9 +424,5 @@ public abstract class AbstractMetaListPresenter extends MyPresenterWidget<DataGr
 
     public ButtonView add(final SvgPreset preset) {
         return getView().addButton(preset);
-    }
-
-    private FindMetaCriteria getCriteria() {
-        return criteria;
     }
 }

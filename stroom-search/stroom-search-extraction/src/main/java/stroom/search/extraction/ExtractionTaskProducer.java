@@ -19,10 +19,17 @@ package stroom.search.extraction;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import stroom.docref.DocRef;
+import stroom.search.coprocessor.CompletionState;
 import stroom.search.coprocessor.Error;
-import stroom.search.coprocessor.*;
+import stroom.search.coprocessor.Receiver;
+import stroom.search.coprocessor.ReceiverImpl;
+import stroom.search.coprocessor.Values;
 import stroom.security.api.SecurityContext;
-import stroom.task.api.*;
+import stroom.task.api.ExecutorProvider;
+import stroom.task.api.TaskContext;
+import stroom.task.api.TaskContextFactory;
+import stroom.task.api.TaskExecutor;
+import stroom.task.api.TaskProducer;
 
 import javax.inject.Provider;
 import java.util.Arrays;
@@ -113,7 +120,6 @@ class ExtractionTaskProducer extends TaskProducer {
                             }
                         } catch (final RuntimeException e) {
                             LOGGER.debug(e.getMessage(), e);
-                            throw e;
                         } finally {
                             // Tell the supplied executor that we are ready to deliver tasks.
                             signalAvailable();

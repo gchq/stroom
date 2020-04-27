@@ -27,6 +27,10 @@ public class PipelineConfig extends AbstractConfig {
             .maximumSize(1000L)
             .expireAfterAccess(StroomDuration.ofMinutes(10))
             .build();
+    private CacheConfig documentPermissionCache = new CacheConfig.Builder()
+            .maximumSize(1000L)
+            .expireAfterAccess(StroomDuration.ofMinutes(10))
+            .build();
 
     @JsonProperty("appender")
     public AppenderConfig getAppenderConfig() {
@@ -87,5 +91,13 @@ public class PipelineConfig extends AbstractConfig {
 
     public void setPipelineDataCache(final CacheConfig pipelineDataCache) {
         this.pipelineDataCache = pipelineDataCache;
+    }
+
+    public CacheConfig getDocumentPermissionCache() {
+        return documentPermissionCache;
+    }
+
+    public void setDocumentPermissionCache(final CacheConfig documentPermissionCache) {
+        this.documentPermissionCache = documentPermissionCache;
     }
 }

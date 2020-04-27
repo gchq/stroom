@@ -31,15 +31,20 @@ import stroom.importexport.shared.ImportState;
 import stroom.importexport.shared.ImportState.ImportMode;
 import stroom.pipeline.xmlschema.migration.OldXMLSchema;
 import stroom.security.api.SecurityContext;
-import stroom.util.shared.ResultPage;
 import stroom.util.shared.Message;
+import stroom.util.shared.ResultPage;
 import stroom.util.shared.Severity;
 import stroom.xmlschema.shared.XmlSchemaDoc;
 
 import javax.inject.Inject;
 import javax.inject.Singleton;
 import java.io.IOException;
-import java.util.*;
+import java.util.ArrayList;
+import java.util.Collections;
+import java.util.List;
+import java.util.Map;
+import java.util.Set;
+import java.util.UUID;
 
 @Singleton
 public class XmlSchemaStoreImpl implements XmlSchemaStore {

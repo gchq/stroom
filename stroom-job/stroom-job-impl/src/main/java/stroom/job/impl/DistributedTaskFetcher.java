@@ -179,35 +179,6 @@ class DistributedTaskFetcher {
                                             // Remember the last fetch time.
                                             lastFetch = now;
                                         }
-
-//                                        // Perform a fetch from the master node.
-//                                        final ClusterDispatchAsyncHelper dispatchHelper = clusterDispatchAsyncHelperProvider.get();
-//                                            final DefaultClusterResultCollector<DistributedTaskRequestResult> collector = dispatchHelper
-//                                                    .execAsync(request, WAIT_TIME, TimeUnit.MINUTES, TargetType.MASTER);
-//
-//                                            final ClusterCallEntry<DistributedTaskRequestResult> response = collector.getSingleResponse();
-//
-//                                            if (response == null) {
-//                                                LOGGER.error("No response from master while trying to fetch tasks");
-//                                            } else if (response.getError() != null) {
-//                                                try {
-//                                                    throw response.getError();
-//                                                } catch (final MalformedURLException e) {
-//                                                    LOGGER.warn(response.getError().getMessage());
-//                                                } catch (final ConnectException | HessianRuntimeException e) {
-//                                                    LOGGER.error(response.getError().getMessage());
-//                                                } catch (final Throwable e) {
-//                                                    LOGGER.error(response.getError().getMessage(), response.getError());
-//                                                }
-//                                            } else {
-//                                                final DistributedTaskRequestResult taskRequestResult = response.getResult();
-//                                                if (taskRequestResult == null) {
-//                                                    LOGGER.error("No response object received from master while trying to fetch tasks");
-//                                                } else {
-//                                                    handleResult(request, taskRequestResult);
-//                                                }
-//                                            }
-//                                        }
                                     }
                                 } catch (final RuntimeException e) {
                                     LOGGER.error(e.getMessage(), e);
@@ -267,32 +238,32 @@ class DistributedTaskFetcher {
             final JobNodeTracker tracker = trackers.getTrackerForJobName(jobName);
             taskStatusTraceLog.receiveOnWorkerNode(DistributedTaskFetcher.class, tasks, jobName);
 
-            // Try and get more tasks.
-            tasks.stream().filter(task -> !stopping.get()).forEach(task -> {
-                runningTasks.add(task);
-                tracker.incrementTaskCount();
-                tracker.setLastExecutedTime(now);
+            if (!stopping.get()) {
+                // Try and get more tasks.
+                tasks.forEach(task -> {
+                    runningTasks.add(task);
+                    tracker.incrementTaskCount();
+                    tracker.setLastExecutedTime(now);
 
-                if (!stopping.get()) {
-                    final Runnable runnable = taskContextFactory.context("DistributedTaskFetcher", taskContext ->
-                            task.getRunnable().run());
-                    final Executor executor = executorProvider.get(task.getThreadPool());
-                    CompletableFuture
-                            .runAsync(runnable, executor)
-                            .whenComplete((r, t) -> {
-                                runningTasks.remove(task);
-                                tracker.decrementTaskCount();
+                    if (!stopping.get()) {
+                        final Executor executor = executorProvider.get(task.getThreadPool());
+                        CompletableFuture
+                                .runAsync(task.getRunnable(), executor)
+                                .whenComplete((r, t) -> {
+                                    runningTasks.remove(task);
+                                    tracker.decrementTaskCount();
 
-                                if (t == null) {
-                                    // Try and get more tasks.
-                                    fetch();
-                                }
-                            });
-                } else {
-                    runningTasks.remove(task);
-                    tracker.decrementTaskCount();
-                }
-            });
+                                    if (t == null) {
+                                        // Try and get more tasks.
+                                        fetch();
+                                    }
+                                });
+                    } else {
+                        runningTasks.remove(task);
+                        tracker.decrementTaskCount();
+                    }
+                });
+            }
         } catch (final RuntimeException e) {
             LOGGER.error(e.getMessage(), e);
         }
