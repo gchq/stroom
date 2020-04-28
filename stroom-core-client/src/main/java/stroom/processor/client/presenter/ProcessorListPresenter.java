@@ -273,18 +273,34 @@ public class ProcessorListPresenter extends MyPresenterWidget<DataGridView<Proce
                 if (row instanceof ProcessorFilterRow) {
                     final ProcessorFilterRow processorFilterRow = (ProcessorFilterRow) row;
                     final ProcessorFilter processorFilter = processorFilterRow.getProcessorFilter();
-                    final Processor processor = processorFilter.getProcessor();
-                    if (processor != null) {
-                        final String pipelineUuid = processor.getPipelineUuid();
-                        if (pipelineUuid != null) {
-                            name = pipelineUuid;
+                    name = processorFilter.getPipelineName();
+                    if (name == null){
+                        final Processor processor = processorFilter.getProcessor();
+                        if (processor != null) {
+                            final String pipelineName = processor.getPipelineName();
+                            if (pipelineName != null) {
+                                name = pipelineName;
+                            } else {
+                                final String pipelineUuid = processor.getPipelineUuid();
+                                if (pipelineUuid != null) {
+                                    name = pipelineUuid;
+                                }
+                            }
                         }
                     }
                 } else if (row instanceof ProcessorRow) {
                     final ProcessorRow processorRow = (ProcessorRow) row;
-                    final String pipelineUuid = processorRow.getProcessor().getPipelineUuid();
-                    if (pipelineUuid != null) {
-                        name = pipelineUuid;
+                    final Processor processor = processorRow.getProcessor();
+                    if (processor != null) {
+                        final String pipelineName = processor.getPipelineName();
+                        if (pipelineName != null) {
+                            name = pipelineName;
+                        } else {
+                            final String pipelineUuid = processor.getPipelineUuid();
+                            if (pipelineUuid != null) {
+                                name = pipelineUuid;
+                            }
+                        }
                     }
                 }
 

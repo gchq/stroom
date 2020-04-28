@@ -6,6 +6,8 @@ and this project adheres to [Semantic Versioning](http://semver.org/).
 
 ## [Unreleased]
 
+* Issue **#1471** : Pipeline name not shown on processors/filters in UI.
+
 * Issue **#1491** : Download stream feature failing. 
 
 * Issue **#1433** : StandardKafkaProducer failed when writing XML kafka payloads. 
