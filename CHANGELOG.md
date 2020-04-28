@@ -6,6 +6,8 @@ and this project adheres to [Semantic Versioning](http://semver.org/).
 
 ## [Unreleased]
 
+* Issue **#1455** : Fix interactive search.
+
 * Issue **#1471** : Pipeline name not shown on processors/filters in UI.
 
 * Issue **#1491** : Download stream feature failing. 

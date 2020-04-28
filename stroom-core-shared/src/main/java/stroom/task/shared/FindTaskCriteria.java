@@ -92,20 +92,33 @@ public class FindTaskCriteria implements HasIsConstrained {
     }
 
     public boolean isMatch(final TaskId taskId, final String sessionId) {
-        if (ancestorIdSet != null && ancestorIdSet.size() > 0) {
-            for (final TaskId ancestorId : ancestorIdSet) {
-                if (taskId.isOrHasAncestor(ancestorId)) {
-                    return true;
-                }
-            }
+        return (isAncestorIdSetMatch(taskId) && isIdSetMatch(taskId)) || isSessionIdMatch(sessionId);
+    }
+
+    private boolean isAncestorIdSetMatch(final TaskId taskId) {
+        if (ancestorIdSet == null) {
+            return true;
         }
-        if (idSet != null && idSet.size() > 0) {
-            if (idSet.contains(taskId)) {
+        for (final TaskId ancestorId : ancestorIdSet) {
+            if (taskId.isOrHasAncestor(ancestorId)) {
                 return true;
             }
         }
+        return false;
+    }
 
-        return this.sessionId == null || this.sessionId.equals(sessionId);
+    private boolean isIdSetMatch(final TaskId taskId) {
+        if (idSet == null) {
+            return true;
+        }
+        return idSet.contains(taskId);
+    }
+
+    private boolean isSessionIdMatch(final String sessionId) {
+        if (this.sessionId != null) {
+            return this.sessionId.equals(sessionId);
+        }
+        return false;
     }
 
     @Override
