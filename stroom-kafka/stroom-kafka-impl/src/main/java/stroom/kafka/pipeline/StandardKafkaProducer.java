@@ -29,6 +29,7 @@ import stroom.kafka.api.SharedKafkaProducer;
 import stroom.kafka.api.KafkaProducerFactory;
 import stroom.kafka.shared.KafkaConfigDoc;
 import stroom.pipeline.LocationFactoryProxy;
+import stroom.pipeline.errorhandler.ErrorListenerAdaptor;
 import stroom.pipeline.errorhandler.ErrorReceiverProxy;
 import stroom.pipeline.errorhandler.LoggedException;
 import stroom.pipeline.errorhandler.ProcessException;
@@ -38,12 +39,22 @@ import stroom.pipeline.factory.PipelinePropertyDocRef;
 import stroom.pipeline.filter.AbstractXMLFilter;
 import stroom.pipeline.shared.ElementIcons;
 import stroom.pipeline.shared.data.PipelineElementType;
+import stroom.util.io.ByteArrayBufferedOutputStream;
 import stroom.util.io.StreamUtil;
 import stroom.util.logging.LambdaLogger;
 import stroom.util.logging.LambdaLoggerFactory;
 import stroom.util.shared.Severity;
+import stroom.util.xml.XMLUtil;
 
 import javax.inject.Inject;
+import javax.xml.transform.ErrorListener;
+import javax.xml.transform.TransformerConfigurationException;
+import javax.xml.transform.TransformerException;
+import javax.xml.transform.sax.TransformerHandler;
+import javax.xml.transform.stream.StreamResult;
+import java.io.ByteArrayOutputStream;
+import java.nio.charset.Charset;
+import java.nio.charset.StandardCharsets;
 import java.time.Instant;
 import java.time.format.DateTimeParseException;
 import java.util.ArrayDeque;
@@ -89,6 +100,10 @@ class StandardKafkaProducer extends AbstractXMLFilter {
     private KafkaMessageState state = null;
     private boolean flushOnSend = true;
 
+    private TransformerHandler xmlValueHandler;
+    private ByteArrayOutputStream outputStream;
+    private int xmlValueDepth = -1;
+
     @Inject
     StandardKafkaProducer(final ErrorReceiverProxy errorReceiverProxy,
                           final LocationFactoryProxy locationFactory,
@@ -115,6 +130,7 @@ class StandardKafkaProducer extends AbstractXMLFilter {
      */
     @Override
     public void startProcessing() {
+
         try {
             if (configRef == null) {
                 log(Severity.FATAL_ERROR, "KafkaConfig has not been set", null);
@@ -129,8 +145,9 @@ class StandardKafkaProducer extends AbstractXMLFilter {
             });
         } catch (KafkaException ex) {
             log(Severity.FATAL_ERROR, "Unable to create Kafka Producer using config " + configRef.getUuid(), ex);
+        } finally {
+            super.startProcessing();
         }
-        super.startProcessing();
     }
 
 
@@ -186,39 +203,79 @@ class StandardKafkaProducer extends AbstractXMLFilter {
     public void startElement(final String uri, final String localName, final String qName, final Attributes atts)
             throws SAXException {
 
-        if (RECORD_ELEMENT_LOCAL_NAME.equals(localName)) {
-            state = new KafkaMessageState();
-
-            for (int i = 0; i < atts.getLength(); i++) {
-                String attName = atts.getLocalName(i);
-
-                if (TOPIC_ATTRIBUTE_LOCAL_NAME.equals(attName)) {
-                    state.topic = atts.getValue(i);
-                } else if (TIMESTAMP_ATTRIBUTE_LOCAL_NAME.equals(attName)) {
-                    Long timestamp = createTimestamp (atts.getValue(i));
-                    if (timestamp == null) {
-                        log (Severity.ERROR, "Kafka timestamp must be in ISO 8601 format.  Got " + atts.getValue(i), null);
-                    }else{
-                        state.timestamp = timestamp;
+        if (state != null && VALUE_ELEMENT_LOCAL_NAME.equals (state.lastElement) && !state.inHeader) {
+            //This is an XML value element
+            if (xmlValueDepth == -1){
+                final ErrorListener errorListener = new ErrorListener(){
+                    @Override
+                    public void warning(TransformerException exception) throws TransformerException {
+                        errorReceiverProxy.log(Severity.WARNING, locationFactory.create(locator), getElementId(),
+                                "Kafka XML value parse error", exception);
                     }
-                } else if (PARTITION_ATTRIBUTE_LOCAL_NAME.equals(attName)) {
-                    try {
-                        state.partition = Integer.parseInt(atts.getValue(i));
-                    }catch (NumberFormatException ex) {
-                        log (Severity.ERROR, "Kafka partition must be an integer.  Got " + atts.getValue(i), null);
+
+                    @Override
+                    public void error(TransformerException exception) throws TransformerException {
+                        errorReceiverProxy.log(Severity.ERROR, locationFactory.create(locator), getElementId(),
+                                "Kafka XML value parse error", exception);
+                    }
+
+                    @Override
+                    public void fatalError(TransformerException exception) throws TransformerException {
+                        errorReceiverProxy.log(Severity.FATAL_ERROR, locationFactory.create(locator), getElementId(),
+                                "Kafka XML value parse error", exception);
+                    }
+                };
+
+                try {
+                    this.xmlValueHandler = XMLUtil.createTransformerHandler(errorListener, false);
+                    outputStream = new ByteArrayOutputStream();
+                    xmlValueHandler.setResult(new StreamResult(outputStream));
+                    xmlValueHandler.startDocument();
+                    xmlValueDepth = 0;
+                }catch (final TransformerConfigurationException e) {
+                    errorReceiverProxy.log(Severity.FATAL_ERROR,
+                            locationFactory.create(e.getLocator().getLineNumber(), e.getLocator().getColumnNumber()),
+                            getElementId(), e.getMessage(), e);
+                    log(Severity.ERROR, "Unable to create XML value handler ", null );
+                }
+            }
+            xmlValueHandler.startElement(uri,localName,qName,atts);
+            xmlValueDepth++;
+        }
+        else {
+            if (RECORD_ELEMENT_LOCAL_NAME.equals(localName)) {
+                state = new KafkaMessageState();
+
+                for (int i = 0; i < atts.getLength(); i++) {
+                    String attName = atts.getLocalName(i);
+
+                    if (TOPIC_ATTRIBUTE_LOCAL_NAME.equals(attName)) {
+                        state.topic = atts.getValue(i);
+                    } else if (TIMESTAMP_ATTRIBUTE_LOCAL_NAME.equals(attName)) {
+                        Long timestamp = createTimestamp(atts.getValue(i));
+                        if (timestamp == null) {
+                            log(Severity.ERROR, "Kafka timestamp must be in ISO 8601 format.  Got " + atts.getValue(i), null);
+                        } else {
+                            state.timestamp = timestamp;
+                        }
+                    } else if (PARTITION_ATTRIBUTE_LOCAL_NAME.equals(attName)) {
+                        try {
+                            state.partition = Integer.parseInt(atts.getValue(i));
+                        } catch (NumberFormatException ex) {
+                            log(Severity.ERROR, "Kafka partition must be an integer.  Got " + atts.getValue(i), null);
+                        }
                     }
                 }
             }
-        }
 
-        if (HEADER_ELEMENT_LOCAL_NAME.equals(localName)) {
-            state.inHeader = true;
-        }
+            if (HEADER_ELEMENT_LOCAL_NAME.equals(localName)) {
+                state.inHeader = true;
+            }
 
-        if (state != null) {
-            state.lastElement = localName;
+            if (state != null) {
+                state.lastElement = localName;
+            }
         }
-
 
 
         super.startElement(uri, localName, qName, atts);
@@ -237,28 +294,45 @@ class StandardKafkaProducer extends AbstractXMLFilter {
         } else if (VALUE_ELEMENT_LOCAL_NAME.equals (element)) {
             if (state.inHeader) {
                 state.headerVals.add(val);
-            }
-            else {
-                state.messageValue = val;
+            } else if (xmlValueDepth >= 0) {
+                xmlValueHandler.characters(ch, start, length);
+            } else {
+                state.messageValue = val.getBytes(StandardCharsets.UTF_8);
             }
         }
-
         super.characters(ch, start, length);
     }
 
 
     @Override
     public void endElement(final String uri, final String localName, final String qName) throws SAXException {
-        if (state != null)
-            state.lastElement = null;
 
-        if (HEADER_ELEMENT_LOCAL_NAME.equals(localName)) {
-            state.inHeader = false;
-        } else if (RECORD_ELEMENT_LOCAL_NAME.equals(localName)) {
-            createKafkaMessage (state);
-            state = null;
+        if (xmlValueDepth == 0) {
+            if (VALUE_ELEMENT_LOCAL_NAME.equals (localName)){
+                //Create the val from the contents of XML handler buffer
+                xmlValueHandler.endDocument();
+                state.messageValue = outputStream.toByteArray();
+                xmlValueDepth = -1;
+            } else {
+                throw new SAXException("Unexpected tag " + localName + " in kafka message value.");
+            }
         }
+        else if (xmlValueDepth > 0) {
+            //Closing an XML value element
+            xmlValueHandler.endElement(uri, localName, qName);
+            xmlValueDepth --;
+        }
+        else {
+            if (state != null)
+                state.lastElement = null;
 
+            if (HEADER_ELEMENT_LOCAL_NAME.equals(localName)) {
+                state.inHeader = false;
+            } else if (RECORD_ELEMENT_LOCAL_NAME.equals(localName)) {
+                createKafkaMessage(state);
+                state = null;
+            }
+        }
         super.endElement(uri, localName, qName);
     }
 
@@ -274,13 +348,13 @@ class StandardKafkaProducer extends AbstractXMLFilter {
                     state.partition,
                     state.timestamp,
                     state.key,
-                    state.messageValue.getBytes(StreamUtil.DEFAULT_CHARSET));
+                    state.messageValue);
 
             Headers headers = record.headers();
             for (int i = 0; i < state.headerNames.size(); i++) {
                 headers.add(
                         state.headerNames.get(i),
-                        state.headerVals.get(i).getBytes(StreamUtil.DEFAULT_CHARSET));
+                        state.headerVals.get(i).getBytes(StandardCharsets.UTF_8));
             }
 //            logState(state);
             final Future<RecordMetadata> sendFuture = kafkaProducer.send(record);
@@ -356,7 +430,7 @@ class StandardKafkaProducer extends AbstractXMLFilter {
         public List<String> headerNames = new ArrayList<>();
         public List<String> headerVals = new ArrayList<>();
         public Long timestamp = null;
-        public String messageValue = null;
+        public byte[] messageValue = null;
         public boolean inHeader = false;
         public String lastElement = null;
 
