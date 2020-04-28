@@ -9,6 +9,7 @@ import org.jose4j.jwk.RsaJwkGenerator;
 import org.jose4j.jws.AlgorithmIdentifiers;
 import org.jose4j.jws.JsonWebSignature;
 import org.jose4j.jwt.JwtClaims;
+import org.jose4j.jwt.MalformedClaimException;
 import org.jose4j.jwt.consumer.InvalidJwtException;
 import org.jose4j.jwt.consumer.JwtConsumer;
 import org.jose4j.jwt.consumer.JwtConsumerBuilder;
@@ -27,6 +28,8 @@ import java.util.Arrays;
 import java.util.Collections;
 import java.util.List;
 
+import static org.assertj.core.api.Assertions.assertThat;
+
 @ExtendWith(MockitoExtension.class)
 class TestJWTService {
 
@@ -36,13 +39,13 @@ class TestJWTService {
     private OpenIdPublicKeysSupplier openIdPublicKeysSupplier;
     @Mock
     private ResolvedOpenIdConfig resolvedOpenIdConfig;
-
     private DefaultOpenIdCredentials defaultOpenIdCredentials = new DefaultOpenIdCredentials();
 
-
-
+    /**
+     * Make sure the hard coded token in {@link DefaultOpenIdCredentials} can be verified
+     */
     @Test
-    void verifyToken() throws InvalidJwtException, JoseException {
+    void verifyDefaultApiToken() throws JoseException {
         // Verify the hard coded default token
 
         final JWTService jwtService = new JWTService(resolvedOpenIdConfig, openIdPublicKeysSupplier);
@@ -55,8 +58,23 @@ class TestJWTService {
         Mockito.when(resolvedOpenIdConfig.getClientId())
                 .thenReturn(defaultOpenIdCredentials.getOauth2ClientId());
 
-        jwtService.verifyToken(apiKey);
+        final JwtClaims jwtClaims;
+        try {
+            jwtClaims= jwtService.verifyToken(apiKey);
+        } catch (InvalidJwtException e) {
+            throw new RuntimeException("Token failed verification", e);
+        }
 
+        try {
+            LOGGER.info("Claims: \n{}", jwtClaims.toJson());
+
+            assertThat(jwtClaims.getSubject())
+                    .isEqualTo(defaultOpenIdCredentials.getApiKeyUserEmail());
+            assertThat(jwtClaims.getAudience())
+                    .contains(defaultOpenIdCredentials.getOauth2ClientId());
+        } catch (MalformedClaimException e) {
+            e.printStackTrace();
+        }
     }
 
     @Test
@@ -78,7 +96,7 @@ class TestJWTService {
     /**
      * Copied from https://bitbucket.org/b_c/jose4j/wiki/JWT Examples
      *
-     * Not really a test
+     * Not really a test, just a handy reference for how to create a token and verify it in jose4j
      */
     @Test
     void testJose4jExample() throws InvalidJwtException, JoseException {
@@ -178,19 +196,6 @@ class TestJWTService {
 
         final List<PublicJsonWebKey> publicJsonWebKeys = Collections.singletonList(publicJsonWebKey);
 
-//        final List<Map<String, Object>> maps = list.stream()
-//                .map(jwk -> jwk.toParams(JsonWebKey.OutputControlLevel.PUBLIC_ONLY))
-//                .collect(Collectors.toList());
-//
-//        Map<String, List<Map<String, Object>>> keys = new HashMap<>();
-//        keys.put("keys", maps);
-
-//        String publicKeysJson = JsonUtil.toJson(keys);
-//
-//        LOGGER.info("publicKeysJson \n{}", publicJsonWebKey);
-
-        JsonWebKeySet jsonWebKeySet = new JsonWebKeySet(publicJsonWebKeys);
-
-        return jsonWebKeySet;
+        return new JsonWebKeySet(publicJsonWebKeys);
     }
 }

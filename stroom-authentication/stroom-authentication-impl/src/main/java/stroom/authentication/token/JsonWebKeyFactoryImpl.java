@@ -31,6 +31,7 @@ public class JsonWebKeyFactoryImpl implements JsonWebKeyFactory {
             jwk.setKeyId(jwkId);
             jwk.setUse(Use.SIGNATURE);
             jwk.setAlgorithm(AlgorithmIdentifiers.RSA_USING_SHA256);
+            LOGGER.info("keyId: {}", jwk.getKeyId());
             return jwk;
         } catch (JoseException e) {
             throw new RuntimeException(LogUtil.message("Error generating JWK of {} bits", BITS), e);

@@ -38,7 +38,7 @@ public class TokenBuilderFactory {
     private Instant expiryDateForApiKeys;
 
     @Inject
-    TokenBuilderFactory(final AuthenticationConfig config,
+    public TokenBuilderFactory(final AuthenticationConfig config,
                         final JwkCache jwkCache) {
         this.config = config;
         this.jwkCache = jwkCache;

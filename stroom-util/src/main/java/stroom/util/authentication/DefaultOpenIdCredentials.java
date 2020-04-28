@@ -17,18 +17,26 @@ public class DefaultOpenIdCredentials {
     public DefaultOpenIdCredentials() {
     }
 
+
+
+
+
+
+
+
+
     // ------------------------------------------------------------------------------------------------
-    // The values between the lines were generated using stroom.authentication.oauth2.GenerateTestOpenIdDetails
-    // at 2020-04-28T13:54:40.517614Z
-    // The dashed lines are important don't remove them!
-    private static final String OAUTH2_CLIENT_ID = "ewFj-MZHG8NWiA_evSIzoYVdXA4N9l3VSQlA8lYdRSuBtnVDb2Lgxw==";
+    // The content between these dashed lines was generated using stroom.authentication.oauth2.GenerateTestOpenIdDetails
+    // at 2020-04-28T15:00:28.303958Z
+    // The dashed lines are important, don't remove them!
+    private static final String OAUTH2_CLIENT_ID = "61MTRa0xETLSVme9bE5WU2_MM6Ccd52VqYccjcEVj3tWHGGs1gcCfw==";
     private static final String OAUTH2_CLIENT_NAME = "Stroom Client Internal (TEST ONLY)";
-    private static final String OAUTH2_CLIENT_SECRET = "-B7xkRsF1FqskhHASjrs2ICxc9Q=";
+    private static final String OAUTH2_CLIENT_SECRET = "uHzcvWFX5MnK-tmhCsZM7vjQK3w=";
     private static final String OAUTH2_CLIENT_URI_PATTERN = ".*";
-    private static final String PUBLIC_KEY_ID = "26608955-82d6-4c93-9b55-41ea152c517b";
-    private static final String PUBLIC_KEY_JSON = "{\"kty\":\"RSA\",\"kid\":\"26608955-82d6-4c93-9b55-41ea152c517b\",\"use\":\"sig\",\"alg\":\"RS256\",\"n\":\"10OnMLkiIjShvWjvVF8HRzK_h1C7ug0d-2tYtKU2mbv0tasA6ib8YWZ-eM_wHoX_8vcXvjkbzrmKUsfm-k0_Es6pknGCJ6Bk78yOCApIYUIZ0dxEd4ibSQCIaV0DGNEzpsf6yGvgPKOAuXdPAHR43cT52AHqJUPQgGRZOkTbtloVxzHk7jyJb_Ubwvxywnd1Ml4-yH8WXre1PLfGZ_fJ4m5kSvh_kG_nq5NB5f9kM-l21C4A2fQMwpZIFmqUwMGmNTV__pdpJxdEMs1WPAi8SgIlB-D8ovKLje9ZZEMB7xhUkI_E-d2iaTiVAMZcwBi4C8xihi8eYr5SnZVOgBXZfw\",\"e\":\"AQAB\",\"d\":\"CzGpcA8whzbVclQSngCTEFDDRPYdzP8BoCFk63_r5vKvNwM9eO-uECKUURP_GJc_SBMxWOL_XzCm0Mc0a6-4p_G3P7ZHXmgo1497k091lBkr3o3lwZGJAbLVZSVBE_lNBk8_60wwzPZzqzFZGlz0LBQiKelvk6CDJyoQucb65fCQ2WD0fmFN6ZexjKF0oqAk4YHXMCm0RdjSlQnvpcQAeVcjlJ-i5MqsKjVDNmsV29Fabz7yA_jNKeQgO1ww6Hm8Kk5qQ53XKWyGeK8bGOBd7Au_xo5IXOEiKLsVurTY4QtQttHY46XnumZAKA9t6wxFJYfy_r0eIqa5tkS9bPBiAQ\",\"p\":\"-tkZGrqPGr-e8GRtdH085CKrzffj9IWKx5RUnqgmCW0J6hrqpF0P3LQudXRAWDQKh_b_MVr8-2WahdhRp3rYm6QRXJzj84qTzDpUjBCPmo7-ARGk69QrLn_l65dH3RY_IFZgLqiLrQp8161XNBlGMhfO3jmzB7mmN0zId1rO2i8\",\"q\":\"2692sjbY-n1vxhY4XOmG7EeuLo-jNlBhLYSXr5V6v3TSFFitJC7AHwgc4TNgYNB0srmfsTrY74IlEGc63BikL4WHjP6JyTJ4qNs1M1XhLzh8pGPAWnxWdY2kljrCYub0txJU3gR9kssN4E6oZly-E6OuwReX923WRs8dFrgSMbE\",\"dp\":\"iRih-dPAZpQX37Zjg-j2oJC6aSV0Nq3NvWo6HUQ1Fa28X3A6kX4zLyJiydqxWAOJReoeavEZlqRfIYuqhOhE_jtbKcytYOt5_4JZtvtOIODJvffQtPsOZqmMFYhmxFRmR9wtURLY08gJly6rnFO746DTdO0ABdbXGx4h6el9aA0\",\"dq\":\"HUfKu0AiNWjIoA9QHdomWJHJPn14lIGsIiP9D7MNtDz-zyVullcA1mH_b2ionN7L3xJsnXOpfGrNQ91uc-143Ligc4Ntm_p1KJRnB9uXcvLFcie1eJn_8BUb7cYRKJt93HS-CQVyM0GLLO1u9o2_6-AyJ5xcbece2zs5tlB8ZFE\",\"qi\":\"C-xKJ4n2PxOhReOGP8YoKGL3uw6ujYKOWSkO40CQSdXuWhzlh1ve7rJ1HG1euYytn3N7kv1JZMguXB38qt60eoUx0Plqh3JLUUbGOI7Eu0HXiRpaFU2IZDQL6cvDp6VMI_qpBhey6gi8N7clwbIBx9n4oqcHcqvgrF-tp3lWBnQ\"}";
+    private static final String PUBLIC_KEY_ID = "fc5ab791-a5fe-40e8-abd7-b039a440fef7";
+    private static final String PUBLIC_KEY_JSON = "{\"kty\":\"RSA\",\"kid\":\"fc5ab791-a5fe-40e8-abd7-b039a440fef7\",\"use\":\"sig\",\"alg\":\"RS256\",\"n\":\"07fILnPNRNJodkEo8SCLH5SX81y4d5cMKqfT5cZEs1lNcDJMTqxl-rHy_gxqdakzS-ykQqpBFpKs57HpxXmh1QQjOu7mMSmzu7HzqxLL5v62-cDWqFI_W3UoYa8Dp0cpxhLdlP_-b47stQA6SlmoRGx79HAqdCSNhBgzeDr-AJkEJ_JtS3cuwmPrQIbt0fZ8QNLWDtqyYvC_BKlhZ6IS5j_PO4V6UUvWVlXAQDHrL7tlw665BXD4m4UIDpYakWDN00nbw7PK-MvVpF7YwlH_RsFyfxsXwW0wY9IDylv_wEZtzWXNr6O7D_s4fBy5a9pV0behmEflLAXAY0jrRvtPmQ\",\"e\":\"AQAB\",\"d\":\"sa5mcR28osqW4s_SpXLzb2CMmbAyHCOHEXFh80-PLpl-1O9RfSFQQLIBRVZ0LiT_KPQD8vLhxyj3tUdp8tIekCB11KrUQ2RFM_unjOYse8M_GqHNRNwp0f6kEj8IKOYfV91TWw3wof1oCIuVX_qYrjwBV2afKnPW1Ipe_8M6kpJRHZFLb3CMOxAbXHzsVi_huXrBCjLCTGdAsE6Qh3a8nUZq56TJVhzuC7-dBGZcpEUJIuGm7kcCjU05_UWFdOKVATtkVepHquQSHASqn1cWhCqyu1enAGP7D745PbP_IQwlVd8upmYnaLe_JFmeftXbDu8lKSYZcVxaWjXNqExslQ\",\"p\":\"92rW2nZYGJhkd9BxGRq1FM7nzJFTm-wOso0GTBlRnpYkH0C9pwp-_XrYu5hUYmV4bt2ZsKgIBG4Dtx_9eYFeVTdNFYeAWG_gf_KDwPhXi7ZPs02wNCQAQf2Nhn4GVObGT8pr334rKPwm5yQmb47RPt9aq8tWemMBzZCXJ-hpZrc\",\"q\":\"2w_q_-WmRbOuDT8SjhRIfkTPO8qUHP-dUgyF03frVMdlrbU8LEZk3Z7RrLNH72PcO-RoVGx7PMIKEUeqjzTFOT1dceK2IMO00lrRhmgoKK1sCBmuwkUq7vy7IIfMhkPtlp9h49pdGKJE5CUUouaxHu4bpfh01USQe2Q_emfWLC8\",\"dp\":\"nCenURyOP3-3MVOyfgi4L1jjPd6fKXLUV-bgCZmVRQU36S3ARTQ_sBYfwk7DO5MVbsuYG8IBxWH2IFclcNGwyxHrKeJqo-aAh-B1PY7AGmLHbMBkrJPoQb4Y28CgmGdK1MNKUDVeYjC7EPlk9NXrxMXNgU4F15qzYZ2XeU2bcIM\",\"dq\":\"ywVrpBHwEXU-_-POjILb1Lps3VsX_fAgm2QjuyLOpVnPMDhhNh9fZ83DQS0-o-yGtbMvxd5sMJkcv3sN5X7gsfXfXqbgaGk4ciPdP5XUci6XisJSppV3_tmXi8SPlnfp_8hi7sr3sNbixhZfk8H9sU63rRAhJ25OAS2dbxJA-d0\",\"qi\":\"vQthPgLdaaI8d6q7EgazoTgwVGyahF31h5lli9HjRO1srCSnOdtQwlOqvU1PSz1zqhrq5_CCbtci-76BM4SXxObHJM4ZNxpnBfsd8rU_mANU7Sk1G-ARsu4KWrJFJmJSANbH7RjvKgclQoBgIwNBkFw9hCqs_T3Ca4liiz-sVJo\"}";
     private static final String API_KEY_USER_EMAIL = "default-test-only-api-key-user";
-    private static final String API_KEY = "eyJhbGciOiJSUzI1NiIsImtpZCI6ImJiMzlhYTc1LWRlYjYtNDA1YS04ODc1LTE2MDk2YWNmODIxYSJ9.eyJleHAiOjIyMTkyMzQwODAsInN1YiI6ImRlZmF1bHQtdGVzdC1vbmx5LWFwaS1rZXktdXNlciIsImlzcyI6InN0cm9vbSIsImF1ZCI6ImV3RmotTVpIRzhOV2lBX2V2U0l6b1lWZFhBNE45bDNWU1FsQThsWWRSU3VCdG5WRGIyTGd4dz09In0.BJFI8FQTwFg6gXRIJZWsiQ5gq0Svrxwo7qsKoDxXik_IgfHpl4EIJ9xhg5XujAXTWtCp9xYqUsodMiPjwyIIlo4q_UTtZjs2STdfaiGHkqGV-ScB8JMZXBQ_Vmw_Jqj1GIdktqbrKdAvBTJl08Xln24VdPrFdLkUdT7RGKxttzi8VNIUcPNluQlTVORq0ILnvFxsXUWz1U7nBBvx52iQQ8ZMZDMIuvt23xSdRTKBZNUhwp2JX3rYspM-FZBhmLgECPt0_yBcindGUuBpqzYPHcx0k0zQnwhypqJui88-fU__Zc3waG97frTVL9RIdy9POAppoG-suiaWduADFn-tCQ";
+    private static final String API_KEY = "eyJhbGciOiJSUzI1NiIsImtpZCI6ImZjNWFiNzkxLWE1ZmUtNDBlOC1hYmQ3LWIwMzlhNDQwZmVmNyJ9.eyJleHAiOjIyMTkyMzgwMjgsInN1YiI6ImRlZmF1bHQtdGVzdC1vbmx5LWFwaS1rZXktdXNlciIsImlzcyI6InN0cm9vbSIsImF1ZCI6IjYxTVRSYTB4RVRMU1ZtZTliRTVXVTJfTU02Q2NkNTJWcVljY2pjRVZqM3RXSEdHczFnY0Nmdz09In0.NLfYziQj_QRAZjBnfzWpdmtiZQaVDeUycimke7dP96mD_k4EEPRudQ2Nmhu73G_tju6nY5afldl7Og0izeRqYZCm1b9EjrjtkDiDmcQelgotYkHrgz0VPoCgBCO8AJnY5msG4XLJVAynWK1lVSBipwcAgaC8LjRFJ4da9mwEnCOMooW1aMr-RJ7FbS6nt75-e6u_RMRtj9KO840kNEGDWhI3AY6rE1Jh1OPc-apyXTqouiqzqOjK5CpoNmC-cZymdWBoKLY7lPvdaJ7tz62zvtWwSPsFQKBnhWn-3JjQHEaFBM7XoAaQ4b6MhEy1gTyZJn_NOSfDloy-X654gDJn3Q";
     // ------------------------------------------------------------------------------------------------
 
     public String getOauth2ClientId() {

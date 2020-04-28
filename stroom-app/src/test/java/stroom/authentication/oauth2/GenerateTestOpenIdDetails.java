@@ -1,29 +1,23 @@
 package stroom.authentication.oauth2;
 
-import com.google.inject.Guice;
-import com.google.inject.Inject;
-import com.google.inject.Injector;
-import org.jose4j.jwk.PublicJsonWebKey;
-import org.jose4j.jwk.RsaJsonWebKey;
-import org.jose4j.lang.JoseException;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
-
-import stroom.authentication.account.Account;
-import stroom.authentication.account.AccountService;
-import stroom.authentication.account.CreateAccountRequest;
 import stroom.authentication.api.JsonWebKeyFactory;
 import stroom.authentication.api.OAuth2Client;
-import stroom.authentication.token.CreateTokenRequest;
+import stroom.authentication.config.AuthenticationConfig;
+import stroom.authentication.token.JsonWebKeyFactoryImpl;
+import stroom.authentication.token.JwkCache;
 import stroom.authentication.token.Token;
-import stroom.authentication.token.TokenService;
-import stroom.test.CommonTestControl;
-import stroom.test.CoreTestModule;
-import stroom.test.IntegrationTestSetupUtil;
-import stroom.test.common.util.db.DbTestModule;
+import stroom.authentication.token.TokenBuilder;
+import stroom.authentication.token.TokenBuilderFactory;
 import stroom.util.ConsoleColour;
 import stroom.util.authentication.DefaultOpenIdCredentials;
 import stroom.util.logging.LogUtil;
+
+import org.jose4j.jwk.PublicJsonWebKey;
+import org.jose4j.jwk.RsaJsonWebKey;
+import org.jose4j.lang.JoseException;
+import org.mockito.Mockito;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import java.io.File;
 import java.io.IOException;
@@ -37,7 +31,7 @@ import java.time.ZoneOffset;
 import java.time.ZonedDateTime;
 import java.time.temporal.ChronoUnit;
 import java.util.Arrays;
-import java.util.Date;
+import java.util.Collections;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
@@ -46,6 +40,7 @@ import java.util.regex.Pattern;
  * API key so that stroom-proxy can connect to stroom on first boot.
  * ONLY intended for test/demo purposes.
  */
+
 public class GenerateTestOpenIdDetails {
 
     private static final Logger LOGGER = LoggerFactory.getLogger(GenerateTestOpenIdDetails.class);
@@ -54,75 +49,50 @@ public class GenerateTestOpenIdDetails {
     private static final String API_KEY_USER_EMAIL = "default-test-only-api-key-user";
 
     private final JsonWebKeyFactory jsonWebKeyFactory;
-    private final TokenService tokenService;
-    private final AccountService accountService;
-    private final CommonTestControl commonTestControl;
-    private final IntegrationTestSetupUtil integrationTestSetupUtil;
+    private final JwkCache jwkCache;
 
-    @Inject
-    public GenerateTestOpenIdDetails(final JsonWebKeyFactory jsonWebKeyFactory,
-                                     final TokenService tokenService,
-                                     final AccountService accountService,
-                                     final CommonTestControl commonTestControl,
-                                     final IntegrationTestSetupUtil integrationTestSetupUtil) {
-        this.jsonWebKeyFactory = jsonWebKeyFactory;
-        this.tokenService = tokenService;
-        this.accountService = accountService;
-        this.commonTestControl = commonTestControl;
-        this.integrationTestSetupUtil = integrationTestSetupUtil;
+    private PublicJsonWebKey publicJsonWebKey;
+
+    public GenerateTestOpenIdDetails() {
+        jwkCache = Mockito.mock(JwkCache.class);
+        Mockito.when(jwkCache.get())
+                .thenAnswer(invocation -> {
+                    return Collections.singletonList(publicJsonWebKey);
+                });
+        jsonWebKeyFactory = new JsonWebKeyFactoryImpl();
     }
 
-
     public static void main(String[] args) throws JoseException {
-        Injector injector = Guice.createInjector(
-                new DbTestModule(),
-                new CoreTestModule());
-
-        injector.getInstance(GenerateTestOpenIdDetails.class).run();
+        new GenerateTestOpenIdDetails().run();
     }
 
     private void run() throws JoseException {
-
-        try {
-            integrationTestSetupUtil.clean(true);
-            generateCode();
-        } finally {
-        }
+        generateCode();
+        System.exit(0);
     }
 
     private void generateCode() throws JoseException {
 
         // Create a public key
-        final PublicJsonWebKey publicJsonWebKey = jsonWebKeyFactory.createPublicKey();
+        publicJsonWebKey = jsonWebKeyFactory.createPublicKey();
+
         final String publicKeyAsJsonStr = jsonWebKeyFactory.asJson(publicJsonWebKey);
 
         final OAuth2Client oAuth2Client = OpenIdClientDetailsFactoryImpl.createRandomisedOAuth2Client(CLIENT_NAME);
 
-        // Create an account to satisfy the create token call lower down
-        final Account account = accountService.read(API_KEY_USER_EMAIL)
-                .orElseGet(() -> {
-                    CreateAccountRequest createAccountRequest = new CreateAccountRequest(
-                            "-",
-                            "-",
-                            API_KEY_USER_EMAIL,
-                            null,
-                            "password",
-                            false,
-                            true);
-                    return accountService.create(createAccountRequest);
-                });
+        final TokenBuilderFactory tokenBuilderFactory = new TokenBuilderFactory(
+                new AuthenticationConfig(),
+                jwkCache);
 
+        final TokenBuilder tokenBuilder = tokenBuilderFactory
+                .expiryDateForApiKeys(ZonedDateTime.now(ZoneId.from(ZoneOffset.UTC)).plus(20, ChronoUnit.YEARS)
+                        .toInstant())
+                .newBuilder(Token.TokenType.API)
+                .clientId(oAuth2Client.getClientId())
+                .subject(API_KEY_USER_EMAIL);
 
-        final CreateTokenRequest tokenRequest = new CreateTokenRequest(
-            oAuth2Client.getClientId(),
-                API_KEY_USER_EMAIL,
-                "api",
-                true,
-                null,
-                Date.from(ZonedDateTime.now(ZoneId.from(ZoneOffset.UTC)).plus(20, ChronoUnit.YEARS)
-                        .toInstant()));
+        final String apiKey = tokenBuilder.build();
 
-        final Token token = tokenService.create(tokenRequest);
 
         final String escapedPublicKeyAsJsonStr = publicKeyAsJsonStr.replace("\"", "\\\"");
 
@@ -157,18 +127,13 @@ public class GenerateTestOpenIdDetails {
                 "\n    private static final String PUBLIC_KEY_JSON = \"" + escapedPublicKeyAsJsonStr + "\";" +
 
                 "\n    private static final String API_KEY_USER_EMAIL = \"" + API_KEY_USER_EMAIL + "\";" +
-                "\n    private static final String API_KEY = \"" + token.getData() + "\";" +
+                "\n    private static final String API_KEY = \"" + apiKey + "\";" +
                 "\n    // ------------------------------------------------------------------------------------------------";
 
         LOGGER.info(ConsoleColour.red(msg) + ConsoleColour.green(generatedCode));
 
         // write the generated code to the class
         updateFile(generatedCode);
-
-
-        // Delete the DB records created.
-//        tokenService.delete(token.getId());
-//        accountService.delete(account.getId());
     }
 
     private void updateFile(final String generatedCode) {
