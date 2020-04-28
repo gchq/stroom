@@ -11,10 +11,9 @@ import org.jose4j.jwt.consumer.JwtConsumer;
 import org.jose4j.jwt.consumer.JwtConsumerBuilder;
 import org.jose4j.keys.resolvers.JwksVerificationKeyResolver;
 import org.jose4j.keys.resolvers.VerificationKeyResolver;
-import org.jose4j.lang.JoseException;
+
 import stroom.security.impl.exception.AuthenticationException;
 import stroom.util.HasHealthCheck;
-import stroom.util.jersey.WebTargetFactory;
 import stroom.util.logging.LambdaLogger;
 import stroom.util.logging.LambdaLoggerFactory;
 
@@ -22,7 +21,6 @@ import javax.inject.Inject;
 import javax.inject.Singleton;
 import javax.servlet.ServletRequest;
 import javax.servlet.http.HttpServletRequest;
-import javax.ws.rs.core.Response;
 import java.util.Objects;
 import java.util.Optional;
 
@@ -34,31 +32,13 @@ public class JWTService implements HasHealthCheck {
     private static final String AUTHORIZATION_HEADER = "Authorization";
 
     private final ResolvedOpenIdConfig openIdConfig;
-    private final WebTargetFactory webTargetFactory;
-
-    private JsonWebKeySet jsonWebKeySet;
+    private final OpenIdPublicKeysSupplier openIdPublicKeysSupplier;
 
     @Inject
     JWTService(final ResolvedOpenIdConfig openIdConfig,
-               final WebTargetFactory webTargetFactory) {
+               final OpenIdPublicKeysSupplier openIdPublicKeysSupplier) {
         this.openIdConfig = openIdConfig;
-        this.webTargetFactory = webTargetFactory;
-    }
-
-    private JsonWebKeySet getJsonWebKeySet() {
-        if (jsonWebKeySet == null) {
-            try {
-                final Response res = webTargetFactory
-                        .create(openIdConfig.getJwksUri())
-                        .request()
-                        .get();
-                final String json = res.readEntity(String.class);
-                jsonWebKeySet = new JsonWebKeySet(json);
-            } catch (JoseException e) {
-                LOGGER.error(() -> "Unable to fetch the remote authentication service's public key!", e);
-            }
-        }
-        return jsonWebKeySet;
+        this.openIdPublicKeysSupplier = openIdPublicKeysSupplier;
     }
 
     /**
@@ -143,7 +123,7 @@ public class JWTService implements HasHealthCheck {
         // If we don't have a JWK we can't create a consumer to verify anything.
         // Why might we not have one? If the remote authentication service was down when Stroom started
         // then we wouldn't. It might not be up now but we're going to try and fetch it.
-        final JsonWebKeySet publicJsonWebKey = getJsonWebKeySet();
+        final JsonWebKeySet publicJsonWebKey = openIdPublicKeysSupplier.get();
 
         final VerificationKeyResolver verificationKeyResolver = new JwksVerificationKeyResolver(
                 publicJsonWebKey.getJsonWebKeys());
@@ -173,7 +153,7 @@ public class JWTService implements HasHealthCheck {
     private void checkHealthForJwkRetrieval(HealthCheck.ResultBuilder resultBuilder) {
         final String KEY = "public_key_retrieval";
         try {
-            final JsonWebKeySet publicJsonWebKey = getJsonWebKeySet();
+            final JsonWebKeySet publicJsonWebKey = openIdPublicKeysSupplier.get();
             if (publicJsonWebKey == null) {
                 resultBuilder.withDetail(KEY, "Missing public key\n");
                 resultBuilder.unhealthy();
