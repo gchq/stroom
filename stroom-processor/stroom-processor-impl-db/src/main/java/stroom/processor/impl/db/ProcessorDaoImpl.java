@@ -33,6 +33,7 @@ class ProcessorDaoImpl implements ProcessorDao {
         expressionMapper = expressionMapperFactory.create();
         expressionMapper.map(ProcessorDataSource.CREATE_USER, PROCESSOR_FILTER.CREATE_USER, value -> value);
         expressionMapper.map(ProcessorDataSource.PIPELINE, PROCESSOR.PIPELINE_UUID, value -> value);
+        expressionMapper.map(ProcessorDataSource.UUID, PROCESSOR.UUID, value -> value);
     }
 
     @Override

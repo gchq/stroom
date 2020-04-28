@@ -35,7 +35,7 @@ public class NodeCallExceptionMapper implements ExceptionMapper<NodeCallExceptio
     private static final Logger LOGGER = LoggerFactory.getLogger(NodeCallExceptionMapper.class);
 
     @Override
-    public Response toResponse(NodeCallException nodeCallException) {
+    public Response toResponse(final NodeCallException nodeCallException) {
 
         // Inter-node comms failure is not very exceptional so we don't want a big stack
         // every time.

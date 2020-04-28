@@ -23,7 +23,7 @@ import stroom.pipeline.shared.PipelineDataMerger;
 import stroom.pipeline.shared.PipelineDoc;
 import stroom.pipeline.shared.PipelineModelException;
 import stroom.pipeline.shared.data.PipelineData;
-import stroom.security.api.DocumentPermissionCache;
+import stroom.pipeline.cache.DocumentPermissionCache;
 import stroom.security.api.SecurityContext;
 import stroom.security.shared.DocumentPermissionNames;
 import stroom.util.shared.Clearable;

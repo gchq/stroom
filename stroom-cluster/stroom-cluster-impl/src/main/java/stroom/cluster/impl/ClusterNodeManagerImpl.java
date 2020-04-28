@@ -25,6 +25,7 @@ import stroom.node.api.NodeInfo;
 import stroom.node.api.NodeService;
 import stroom.node.shared.ClusterNodeInfo;
 import stroom.node.shared.Node;
+import stroom.node.shared.NodeResource;
 import stroom.security.api.SecurityContext;
 import stroom.task.api.TaskContext;
 import stroom.task.api.TaskContextFactory;
@@ -33,10 +34,15 @@ import stroom.util.entityevent.EntityAction;
 import stroom.util.entityevent.EntityEvent;
 import stroom.util.entityevent.EntityEventHandler;
 import stroom.util.shared.BuildInfo;
+import stroom.util.shared.ModelStringUtil;
 
 import javax.inject.Inject;
 import javax.inject.Singleton;
-import java.util.*;
+import java.util.ArrayList;
+import java.util.Collections;
+import java.util.HashSet;
+import java.util.List;
+import java.util.Set;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.Executor;
 import java.util.concurrent.atomic.AtomicBoolean;
@@ -65,7 +71,7 @@ public class ClusterNodeManagerImpl implements ClusterNodeManager, EntityEvent.H
     private final NodeService nodeService;
     private final SecurityContext securityContext;
     private final BuildInfo buildInfo;
-    private final ClusterCallServiceRemoteImpl clusterCallServiceRemote;
+    private final NodeResource nodeResource;
     private final Executor executor;
     private final TaskContextFactory taskContextFactory;
 
@@ -74,14 +80,14 @@ public class ClusterNodeManagerImpl implements ClusterNodeManager, EntityEvent.H
                            final NodeService nodeService,
                            final SecurityContext securityContext,
                            final BuildInfo buildInfo,
-                           final ClusterCallServiceRemoteImpl clusterCallServiceRemote,
+                           final NodeResource nodeResource,
                            final Executor executor,
                            final TaskContextFactory taskContextFactory) {
         this.nodeInfo = nodeInfo;
         this.nodeService = nodeService;
         this.securityContext = securityContext;
         this.buildInfo = buildInfo;
-        this.clusterCallServiceRemote = clusterCallServiceRemote;
+        this.nodeResource = nodeResource;
         this.executor = executor;
         this.taskContextFactory = taskContextFactory;
     }
@@ -365,14 +371,8 @@ public class ClusterNodeManagerImpl implements ClusterNodeManager, EntityEvent.H
                 final Runnable runnable = taskContextFactory.context(parentContext, "Get Active Nodes", taskContext -> {
                     taskContext.info(() -> "Getting active nodes");
                     try {
-                        // We call the API like this rather than using the
-                        // Cluster API as the Cluster API will trigger a
-                        // discover call (cyclic dependency).
-                        // clusterCallServiceRemote will call getThisNode but
-                        // that's OK as we have worked it out above.
-                        clusterCallServiceRemote.call(thisNodeName, nodeName, securityContext.getUserIdentity(), ClusterNodeManager.SERVICE_NAME,
-                                ClusterNodeManager.PING_METHOD, new Class<?>[]{String.class},
-                                new Object[]{thisNodeName});
+                        final Long responseMs = nodeResource.ping(nodeName);
+                        LOGGER.debug("Got ping response in " + ModelStringUtil.formatDurationString(responseMs));
                         addEnabledActiveNode(clusterState, nodeName);
 
                     } catch (final RuntimeException e) {

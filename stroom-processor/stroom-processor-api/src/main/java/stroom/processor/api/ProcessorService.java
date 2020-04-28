@@ -18,14 +18,15 @@
 package stroom.processor.api;
 
 import stroom.docref.DocRef;
-
 import stroom.entity.shared.ExpressionCriteria;
 import stroom.processor.shared.Processor;
-import stroom.util.shared.ResultPage;
 import stroom.util.shared.HasIntCrud;
+import stroom.util.shared.ResultPage;
 
 public interface ProcessorService extends HasIntCrud<Processor> {
     Processor create(DocRef pipelineRef, boolean enabled);
+
+    Processor create(DocRef processorDocRef, DocRef pipelineDocRef, boolean enabled);
 
 //    Optional<Processor> fetchByUuid(final String uuid);
 //

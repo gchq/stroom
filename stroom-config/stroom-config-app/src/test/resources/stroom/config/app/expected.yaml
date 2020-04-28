@@ -383,6 +383,10 @@ appConfig:
       maximumSize: 1000
       expireAfterAccess: "PT10M"
       expireAfterWrite: null
+    documentPermissionCache:
+      maximumSize: 1000
+      expireAfterAccess: "PT10M"
+      expireAfterWrite: null
     appender:
       maxActiveDestinations: 100
     parser:
@@ -554,10 +558,6 @@ appConfig:
         expireAfterAccess: "PT30M"
         expireAfterWrite: null
       userDocumentPermissionsCache:
-        maximumSize: 1000
-        expireAfterAccess: "PT10M"
-        expireAfterWrite: null
-      documentPermissionCache:
         maximumSize: 1000
         expireAfterAccess: "PT10M"
         expireAfterWrite: null

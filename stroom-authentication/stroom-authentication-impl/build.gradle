@@ -17,15 +17,18 @@
 ext.moduleName = 'stroom.authentication.impl'
 
 dependencies {
+    compile project(':stroom-authentication:stroom-authentication-api')
     compile project(':stroom-authentication:stroom-authentication-common')
-    compile project(':stroom-util-shared')
+    compile project(':stroom-cache:stroom-cache-api')
     compile project(':stroom-db-util')
+    compile project(':stroom-event-logging:stroom-event-logging-api')
     compile project(':stroom-job:stroom-job-api')
-    compile project(':stroom-util')
     compile project(':stroom-security:stroom-security-api')
-    compile project(':stroom-security:stroom-security-impl')
+    compile project(':stroom-util')
+    compile project(':stroom-util-shared')
 
     compile libs.bcrypt
+    compile libs.caffeine
     compile libs.dropwizard_auth_jwt
     compile libs.dropwizard_core
     compile libs.dropwizard_flyway

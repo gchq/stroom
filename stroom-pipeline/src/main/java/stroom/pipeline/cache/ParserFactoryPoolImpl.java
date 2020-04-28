@@ -30,7 +30,6 @@ import stroom.pipeline.shared.TextConverterDoc;
 import stroom.pipeline.shared.TextConverterDoc.TextConverterType;
 import stroom.pipeline.xml.converter.ParserFactory;
 import stroom.pipeline.xml.converter.xmlfragment.XMLFragmentParserFactory;
-import stroom.security.api.DocumentPermissionCache;
 import stroom.security.api.SecurityContext;
 import stroom.util.io.StreamUtil;
 import stroom.util.shared.Severity;

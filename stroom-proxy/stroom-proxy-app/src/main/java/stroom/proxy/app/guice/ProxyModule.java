@@ -24,6 +24,7 @@ import stroom.docstore.impl.Serialiser2FactoryImpl;
 import stroom.docstore.impl.StoreFactoryImpl;
 import stroom.docstore.impl.fs.FSPersistence;
 import stroom.dropwizard.common.LogLevelInspector;
+import stroom.dropwizard.common.PermissionExceptionMapper;
 import stroom.importexport.api.ImportExportActionHandler;
 import stroom.proxy.app.BufferFactoryImpl;
 import stroom.proxy.app.Config;
@@ -39,19 +40,34 @@ import stroom.proxy.repo.ProxyLifecycle;
 import stroom.proxy.repo.ProxyRepositoryManager;
 import stroom.proxy.repo.ProxyRepositoryReader;
 import stroom.proxy.repo.StreamHandlerFactory;
-import stroom.receive.common.*;
-import stroom.receive.rules.impl.*;
+import stroom.receive.common.DataReceiptPolicyAttributeMapFilterFactory;
+import stroom.receive.common.DebugServlet;
+import stroom.receive.common.FeedStatusResource;
+import stroom.receive.common.FeedStatusService;
+import stroom.receive.common.ReceiveDataServlet;
+import stroom.receive.common.RemoteFeedModule;
+import stroom.receive.common.RequestHandler;
+import stroom.receive.rules.impl.DataReceiptPolicyAttributeMapFilterFactoryImpl;
+import stroom.receive.rules.impl.ReceiveDataRuleSetResource;
+import stroom.receive.rules.impl.ReceiveDataRuleSetResourceImpl;
+import stroom.receive.rules.impl.ReceiveDataRuleSetService;
+import stroom.receive.rules.impl.ReceiveDataRuleSetServiceImpl;
 import stroom.security.api.SecurityContext;
 import stroom.security.mock.MockSecurityContext;
 import stroom.task.impl.TaskContextModule;
 import stroom.util.BuildInfoProvider;
-import stroom.util.guice.*;
+import stroom.util.guice.FilterBinder;
+import stroom.util.guice.FilterInfo;
+import stroom.util.guice.GuiceUtil;
+import stroom.util.guice.HealthCheckBinder;
+import stroom.util.guice.ServletBinder;
 import stroom.util.io.BufferFactory;
 import stroom.util.shared.BuildInfo;
 import stroom.util.shared.RestResource;
 
 import javax.inject.Provider;
 import javax.ws.rs.client.Client;
+import javax.ws.rs.ext.ExceptionMapper;
 import java.nio.file.Paths;
 import java.util.Optional;
 
@@ -129,6 +145,9 @@ public class ProxyModule extends AbstractModule {
         GuiceUtil.buildMultiBinder(binder(), Managed.class)
                 .addBinding(ContentSyncService.class)
                 .addBinding(ProxyLifecycle.class);
+
+        GuiceUtil.buildMultiBinder(binder(), ExceptionMapper.class)
+                .addBinding(PermissionExceptionMapper.class);
 
         final Multibinder<ImportExportActionHandler> importExportActionHandlerBinder = Multibinder
                 .newSetBinder(binder(), ImportExportActionHandler.class);

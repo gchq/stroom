@@ -21,8 +21,8 @@ import org.slf4j.LoggerFactory;
 import stroom.data.store.api.DataException;
 import stroom.data.store.api.InputStreamProvider;
 import stroom.data.store.api.Source;
-import stroom.meta.api.AttributeMapUtil;
 import stroom.meta.api.AttributeMap;
+import stroom.meta.api.AttributeMapUtil;
 import stroom.meta.shared.Meta;
 import stroom.meta.shared.Status;
 import stroom.util.io.FileUtil;
@@ -30,6 +30,7 @@ import stroom.util.io.FileUtil;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.UncheckedIOException;
+import java.nio.channels.ClosedByInterruptException;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.HashMap;
@@ -231,7 +232,11 @@ final class FsSource implements InternalSource, SegmentInputStreamProviderFactor
         if (inputStream == null) {
             try {
                 inputStream = fileSystemStreamPathHelper.getInputStream(streamType, getFile());
-            } catch (IOException ioEx) {
+            } catch (final ClosedByInterruptException ioEx) {
+                // Sometimes we deliberately interrupt reading so don't log the error here.
+                throw new RuntimeException(ioEx);
+
+            } catch (final IOException ioEx) {
                 // Don't log this as an error if we expect this stream to have been deleted or be locked.
                 if (meta == null || Status.UNLOCKED.equals(meta.getStatus())) {
                     LOGGER.error("getInputStream", ioEx);

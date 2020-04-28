@@ -1,11 +1,10 @@
 package stroom.authentication.impl.db;
 
-import stroom.security.impl.OAuth2Client;
+import stroom.authentication.api.OAuth2Client;
 import stroom.authentication.oauth2.OAuth2ClientDao;
 import stroom.db.util.JooqUtil;
 
 import javax.inject.Inject;
-
 import java.util.Optional;
 
 import static stroom.authentication.impl.db.jooq.tables.OauthClient.OAUTH_CLIENT;

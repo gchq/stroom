@@ -1,5 +1,6 @@
 package stroom.security.impl;
 
+import stroom.authentication.api.OpenIdClientDetailsFactory;
 import stroom.config.common.UriFactory;
 import stroom.util.shared.ResourcePaths;
 

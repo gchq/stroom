@@ -59,8 +59,8 @@ class TestFeedStoreImpl extends AbstractCoreIntegrationTest {
         final List<DocRef> list = feedStore.findByName(feedName);
         assertThat(list.size()).isEqualTo(1);
         feedDoc = feedStore.readDocument(list.get(0));
-        assertThat(feedDoc.getCreateTime()).isNotNull();
-        assertThat(feedDoc.getUpdateTime()).isNotNull();
+        assertThat(feedDoc.getCreateTimeMs()).isNotNull();
+        assertThat(feedDoc.getUpdateTimeMs()).isNotNull();
         assertThat(feedDoc.getStreamType()).isNotNull();
 
         feedStore.deleteDocument(list.get(0).getUuid());

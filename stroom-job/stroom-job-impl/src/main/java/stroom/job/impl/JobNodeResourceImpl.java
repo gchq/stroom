@@ -30,8 +30,6 @@ import stroom.node.api.NodeInfo;
 import stroom.node.api.NodeService;
 import stroom.util.HasHealthCheck;
 import stroom.util.jersey.WebTargetFactory;
-import stroom.util.logging.LambdaLogger;
-import stroom.util.logging.LambdaLoggerFactory;
 import stroom.util.shared.ResourcePaths;
 
 import javax.inject.Inject;
@@ -41,8 +39,6 @@ import javax.ws.rs.core.Response;
 import java.util.function.Consumer;
 
 class JobNodeResourceImpl implements JobNodeResource, HasHealthCheck {
-    private static final LambdaLogger LOGGER = LambdaLoggerFactory.getLogger(JobNodeResourceImpl.class);
-
     private final JobNodeService jobNodeService;
     private final NodeService nodeService;
     private final NodeInfo nodeInfo;
@@ -91,9 +87,9 @@ class JobNodeResourceImpl implements JobNodeResource, HasHealthCheck {
 
     @Override
     public JobNodeInfo info(final String jobName, final String nodeName) {
-        JobNodeInfo jobNodeInfo = null;
+        JobNodeInfo jobNodeInfo;
         final String url = NodeCallUtil.getBaseEndpointUrl(nodeService, nodeName)
-            + ResourcePaths.buildAuthenticatedApiPath(JobNodeResource.INFO_PATH);
+                + ResourcePaths.buildAuthenticatedApiPath(JobNodeResource.INFO_PATH);
         try {
             // If this is the node that was contacted then just return our local info.
             if (nodeInfo.getThisNodeName().equals(nodeName)) {
@@ -138,7 +134,7 @@ class JobNodeResourceImpl implements JobNodeResource, HasHealthCheck {
     }
 
     private void modifyJobNode(final int id, final Consumer<JobNode> mutation) {
-        JobNode jobNode = null;
+        JobNode jobNode;
         JobNode before = null;
         JobNode after = null;
 

@@ -5,8 +5,11 @@ import com.google.inject.Provides;
 import com.google.inject.Singleton;
 import org.glassfish.jersey.client.ClientConfig;
 import org.glassfish.jersey.logging.LoggingFeature;
+import stroom.app.errors.NodeCallExceptionMapper;
+import stroom.dropwizard.common.PermissionExceptionMapper;
 import stroom.security.api.ClientSecurityUtil;
 import stroom.security.api.SecurityContext;
+import stroom.util.guice.GuiceUtil;
 import stroom.util.jersey.WebTargetFactory;
 import stroom.util.shared.BuildInfo;
 
@@ -16,6 +19,7 @@ import javax.ws.rs.client.ClientBuilder;
 import javax.ws.rs.client.Invocation.Builder;
 import javax.ws.rs.client.WebTarget;
 import javax.ws.rs.core.MediaType;
+import javax.ws.rs.ext.ExceptionMapper;
 
 public class JerseyModule extends AbstractModule {
 //    private static final Logger LOGGER = LoggerFactory.getLogger(JerseyModule.class);
@@ -31,6 +35,14 @@ public class JerseyModule extends AbstractModule {
 //        this.environment = environment;
 //        this.jerseyClientConfiguration = jerseyClientConfiguration;
 //    }
+
+
+    @Override
+    protected void configure() {
+        GuiceUtil.buildMultiBinder(binder(), ExceptionMapper.class)
+                .addBinding(NodeCallExceptionMapper.class)
+                .addBinding(PermissionExceptionMapper.class);
+    }
 
     @Provides
     @Singleton
@@ -70,14 +82,14 @@ public class JerseyModule extends AbstractModule {
 
                 @Override
                 public Builder request(final String... acceptedResponseTypes) {
-                    final Builder builder =  super.request(acceptedResponseTypes);
+                    final Builder builder = super.request(acceptedResponseTypes);
                     ClientSecurityUtil.addAuthorisationHeader(builder, securityContext);
                     return builder;
                 }
 
                 @Override
                 public Builder request(final MediaType... acceptedResponseTypes) {
-                    final Builder builder =  super.request(acceptedResponseTypes);
+                    final Builder builder = super.request(acceptedResponseTypes);
                     ClientSecurityUtil.addAuthorisationHeader(builder, securityContext);
                     return builder;
                 }

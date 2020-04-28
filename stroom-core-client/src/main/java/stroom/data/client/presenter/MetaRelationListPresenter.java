@@ -55,7 +55,6 @@ public class MetaRelationListPresenter extends AbstractMetaListPresenter {
                                      final RestFactory restFactory,
                                      final TooltipPresenter tooltipPresenter) {
         super(eventBus, restFactory, tooltipPresenter, false);
-        allowNoConstraint = false;
     }
 
     public void setSelectedStream(final MetaRow metaRow, final boolean fireEvents,

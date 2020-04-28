@@ -1,4 +1,4 @@
-package stroom.security.impl;
+package stroom.authentication.api;
 
 public interface OpenIdClientDetailsFactory {
 //    String getClientId();

@@ -13,10 +13,10 @@ import stroom.authentication.account.Account;
 import stroom.authentication.account.AccountService;
 import stroom.authentication.account.CreateAccountRequest;
 import stroom.authentication.api.JsonWebKeyFactory;
+import stroom.authentication.api.OAuth2Client;
 import stroom.authentication.token.CreateTokenRequest;
 import stroom.authentication.token.Token;
 import stroom.authentication.token.TokenService;
-import stroom.security.impl.OAuth2Client;
 import stroom.test.CommonTestControl;
 import stroom.test.CoreTestModule;
 import stroom.test.IntegrationTestSetupUtil;
@@ -32,8 +32,10 @@ import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.time.Instant;
-import java.time.LocalDate;
 import java.time.ZoneId;
+import java.time.ZoneOffset;
+import java.time.ZonedDateTime;
+import java.time.temporal.ChronoUnit;
 import java.util.Arrays;
 import java.util.Date;
 import java.util.regex.Matcher;
@@ -85,7 +87,6 @@ public class GenerateTestOpenIdDetails {
             integrationTestSetupUtil.clean(true);
             generateCode();
         } finally {
-            //
         }
     }
 
@@ -118,9 +119,8 @@ public class GenerateTestOpenIdDetails {
                 "api",
                 true,
                 null,
-                Date.from(
-                        LocalDate.of(3001, 12, 12).atStartOfDay(ZoneId.systemDefault())
-                                .toInstant()));
+                Date.from(ZonedDateTime.now(ZoneId.from(ZoneOffset.UTC)).plus(20, ChronoUnit.YEARS)
+                        .toInstant()));
 
         final Token token = tokenService.create(tokenRequest);
 
@@ -144,19 +144,21 @@ public class GenerateTestOpenIdDetails {
                 "\n";
 
         final String generatedCode = "\n" +
-                "\n// The values between the lines were generated using " + this.getClass().getName() + " on " + Instant.now().toString() +
-                "\n// ------------------------------------------------------------------------------------------------" +
-                "\nprivate static final String OAUTH2_CLIENT_ID = \"" + oAuth2Client.getClientId() + "\";" +
-                "\nprivate static final String OAUTH2_CLIENT_NAME = \"" + oAuth2Client.getName() + "\";" +
-                "\nprivate static final String OAUTH2_CLIENT_SECRET = \"" + oAuth2Client.getClientSecret() + "\";" +
-                "\nprivate static final String OAUTH2_CLIENT_URI_PATTERN = \"" + oAuth2Client.getUriPattern() + "\";" +
+                "\n    // ------------------------------------------------------------------------------------------------" +
+                "\n    // The content between these dashed lines was generated using " + this.getClass().getName() +
+                "\n    // at " + Instant.now().toString() +
+                "\n    // The dashed lines are important, don't remove them!" +
+                "\n    private static final String OAUTH2_CLIENT_ID = \"" + oAuth2Client.getClientId() + "\";" +
+                "\n    private static final String OAUTH2_CLIENT_NAME = \"" + oAuth2Client.getName() + "\";" +
+                "\n    private static final String OAUTH2_CLIENT_SECRET = \"" + oAuth2Client.getClientSecret() + "\";" +
+                "\n    private static final String OAUTH2_CLIENT_URI_PATTERN = \"" + oAuth2Client.getUriPattern() + "\";" +
 
-                "\nprivate static final String PUBLIC_KEY_ID = \"" + publicJsonWebKey.getKeyId() + "\";" +
-                "\nprivate static final String PUBLIC_KEY_JSON = \"" + escapedPublicKeyAsJsonStr + "\";" +
+                "\n    private static final String PUBLIC_KEY_ID = \"" + publicJsonWebKey.getKeyId() + "\";" +
+                "\n    private static final String PUBLIC_KEY_JSON = \"" + escapedPublicKeyAsJsonStr + "\";" +
 
-                "\nprivate static final String API_KEY_USER_EMAIL = \"" + API_KEY_USER_EMAIL + "\";" +
-                "\nprivate static final String API_KEY = \"" + token.getData() + "\";" +
-                "\n// ------------------------------------------------------------------------------------------------";
+                "\n    private static final String API_KEY_USER_EMAIL = \"" + API_KEY_USER_EMAIL + "\";" +
+                "\n    private static final String API_KEY = \"" + token.getData() + "\";" +
+                "\n    // ------------------------------------------------------------------------------------------------";
 
         LOGGER.info(ConsoleColour.red(msg) + ConsoleColour.green(generatedCode));
 
@@ -172,7 +174,7 @@ public class GenerateTestOpenIdDetails {
     private void updateFile(final String generatedCode) {
         Path pwd = Paths.get(".").toAbsolutePath().normalize();
 
-        LOGGER.info("PWD: {}", pwd.toString());
+        LOGGER.debug("PWD: {}", pwd.toString());
 
         Path defaultCredsFile = pwd.resolve("stroom-util/src/main/java")
                 .resolve(DefaultOpenIdCredentials.class.getName().replace(".", File.separator) + ".java")

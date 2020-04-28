@@ -25,6 +25,7 @@ import stroom.docref.DocRef;
 import stroom.docstore.api.DocumentResourceHelper;
 import stroom.event.logging.api.DocumentEventLog;
 import stroom.importexport.api.DocumentData;
+import stroom.importexport.api.ImportExportActionHandler;
 import stroom.importexport.shared.Base64EncodedDocumentData;
 import stroom.importexport.shared.ImportState;
 import stroom.resource.api.ResourceStore;
@@ -114,7 +115,12 @@ class DictionaryResourceImpl implements DictionaryResource, HasHealthCheck {
     public DocRef importDocument(@ApiParam("DocumentData") final Base64EncodedDocumentData encodedDocumentData) {
         final DocumentData documentData = DocumentData.fromBase64EncodedDocumentData(encodedDocumentData);
         final ImportState importState = new ImportState(documentData.getDocRef(), documentData.getDocRef().getName());
-        return dictionaryStore.importDocument(documentData.getDocRef(), documentData.getDataMap(), importState, ImportState.ImportMode.IGNORE_CONFIRMATION);
+
+        final ImportExportActionHandler.ImpexDetails result =  dictionaryStore.importDocument(documentData.getDocRef(), documentData.getDataMap(), importState, ImportState.ImportMode.IGNORE_CONFIRMATION);
+        if (result != null)
+            return result.getDocRef();
+        else
+            return null;
     }
 
     public Base64EncodedDocumentData exportDocument(@ApiParam("DocRef") final DocRef docRef) {

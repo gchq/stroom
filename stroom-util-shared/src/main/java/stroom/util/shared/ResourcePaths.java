@@ -39,7 +39,7 @@ public interface ResourcePaths {
     /**
      * Path part for the Hessian based inter-node RPC comms
      */
-    String CLUSTER_CALL_RPC = "/clustercall.rpc";
+    String CLUSTER_CALL_RPC = NO_AUTH + "/clustercall.rpc";
 
     String XSRF_TOKEN_RPC_PATH = "/xsrf";
 

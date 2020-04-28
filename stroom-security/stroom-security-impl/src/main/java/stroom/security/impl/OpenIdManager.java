@@ -162,7 +162,7 @@ class OpenIdManager {
                 final Optional<User> optionalUser = userCache.get(userId);
                 final User user = optionalUser.orElseThrow(() ->
                         new AuthenticationException("Unable to find user: " + userId));
-                token = new UserIdentityImpl(user, userId, idToken, sessionId);
+                token = new UserIdentityImpl(user.getUuid(), userId, idToken, sessionId);
 
             } else {
                 // If the nonces don't match we need to redirect to log in again.
@@ -203,8 +203,6 @@ class OpenIdManager {
                 }
 
                 final String userId = optionalUserId.get();
-
-
                 // TODO we should really also check if isUseDefaultOpenIdCred is set
                 //   but it is currently not visible from here
                 final User user;
@@ -222,7 +220,7 @@ class OpenIdManager {
 
                 // TODO need to create a fake user when we are using the default creds
                 //   however we can't see AuthenticationConfig from here.
-                userIdentity = new UserIdentityImpl(user, userId, optionalJws.get(), sessionId);
+                userIdentity = new UserIdentityImpl(user.getUuid(), userId, optionalJws.get(), sessionId);
             }
         }
 

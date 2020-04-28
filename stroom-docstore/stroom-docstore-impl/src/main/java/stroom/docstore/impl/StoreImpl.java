@@ -26,6 +26,7 @@ import stroom.docstore.api.DocumentSerialiser2;
 import stroom.docstore.api.Store;
 import stroom.docstore.shared.Doc;
 import stroom.docstore.shared.DocRefUtil;
+import stroom.importexport.api.ImportExportActionHandler;
 import stroom.importexport.shared.ImportState;
 import stroom.importexport.shared.ImportState.ImportMode;
 import stroom.importexport.shared.ImportState.State;
@@ -92,8 +93,8 @@ public class StoreImpl<D extends Doc> implements Store<D> {
 
         final D document = create(type, UUID.randomUUID().toString(), name);
         document.setVersion(UUID.randomUUID().toString());
-        document.setCreateTime(now);
-        document.setUpdateTime(now);
+        document.setCreateTimeMs(now);
+        document.setUpdateTimeMs(now);
         document.setCreateUser(userId);
         document.setUpdateUser(userId);
 
@@ -136,8 +137,8 @@ public class StoreImpl<D extends Doc> implements Store<D> {
         document.setUuid(copyUuid);
         document.setName(document.getName());
         document.setVersion(UUID.randomUUID().toString());
-        document.setCreateTime(now);
-        document.setUpdateTime(now);
+        document.setCreateTimeMs(now);
+        document.setUpdateTimeMs(now);
         document.setCreateUser(userId);
         document.setUpdateUser(userId);
 
@@ -200,9 +201,9 @@ public class StoreImpl<D extends Doc> implements Store<D> {
                         .uuid(document.getUuid())
                         .name(document.getName())
                         .build())
-                .createTime(document.getCreateTime())
+                .createTime(document.getCreateTimeMs())
                 .createUser(document.getCreateUser())
-                .updateTime(document.getUpdateTime())
+                .updateTime(document.getUpdateTimeMs())
                 .updateUser(document.getUpdateUser())
                 .build();
     }
@@ -277,7 +278,7 @@ public class StoreImpl<D extends Doc> implements Store<D> {
     }
 
     @Override
-    public DocRef importDocument(final DocRef docRef, final Map<String, byte[]> dataMap, final ImportState importState, final ImportMode importMode) {
+    public ImportExportActionHandler.ImpexDetails importDocument(final DocRef docRef, final Map<String, byte[]> dataMap, final ImportState importState, final ImportMode importMode) {
         Objects.requireNonNull(docRef);
         final String uuid = docRef.getUuid();
         try {
@@ -318,7 +319,7 @@ public class StoreImpl<D extends Doc> implements Store<D> {
             importState.addMessage(Severity.ERROR, e.getMessage());
         }
 
-        return docRef;
+        return new ImportExportActionHandler.ImpexDetails(docRef);
     }
 
     @Override
@@ -475,7 +476,7 @@ public class StoreImpl<D extends Doc> implements Store<D> {
             final String userId = securityContext.getUserId();
 
             document.setVersion(UUID.randomUUID().toString());
-            document.setUpdateTime(now);
+            document.setUpdateTimeMs(now);
             document.setUpdateUser(userId);
 
             final Map<String, byte[]> newData = serialiser.write(document);

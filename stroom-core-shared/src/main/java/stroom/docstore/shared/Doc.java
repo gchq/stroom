@@ -22,13 +22,14 @@ import com.fasterxml.jackson.annotation.JsonInclude;
 import com.fasterxml.jackson.annotation.JsonInclude.Include;
 import com.fasterxml.jackson.annotation.JsonProperty;
 import com.fasterxml.jackson.annotation.JsonPropertyOrder;
-
+import stroom.util.shared.HasAuditInfo;
+import stroom.util.shared.HasUuid;
 
 import java.util.Objects;
 
 @JsonPropertyOrder({"type", "uuid", "name", "version", "createTime", "updateTime", "createUser", "updateUser"})
 @JsonInclude(Include.NON_NULL)
-public abstract class Doc {
+public abstract class Doc implements HasAuditInfo, HasUuid {
     @JsonProperty
     private String type;
     @JsonProperty
@@ -82,6 +83,7 @@ public abstract class Doc {
         this.type = type;
     }
 
+    @Override
     public String getUuid() {
         return uuid;
     }
@@ -106,34 +108,42 @@ public abstract class Doc {
         this.version = version;
     }
 
-    public Long getCreateTime() {
+    @Override
+    public Long getCreateTimeMs() {
         return createTime;
     }
 
-    public void setCreateTime(final Long createTime) {
+    @Override
+    public void setCreateTimeMs(final Long createTime) {
         this.createTime = createTime;
     }
 
-    public Long getUpdateTime() {
+    @Override
+    public Long getUpdateTimeMs() {
         return updateTime;
     }
 
-    public void setUpdateTime(final Long updateTime) {
+    @Override
+    public void setUpdateTimeMs(final Long updateTime) {
         this.updateTime = updateTime;
     }
 
+    @Override
     public String getCreateUser() {
         return createUser;
     }
 
+    @Override
     public void setCreateUser(final String createUser) {
         this.createUser = createUser;
     }
 
+    @Override
     public String getUpdateUser() {
         return updateUser;
     }
 
+    @Override
     public void setUpdateUser(final String updateUser) {
         this.updateUser = updateUser;
     }

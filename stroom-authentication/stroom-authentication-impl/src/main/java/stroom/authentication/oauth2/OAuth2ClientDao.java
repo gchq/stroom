@@ -1,6 +1,7 @@
 package stroom.authentication.oauth2;
 
-import stroom.security.impl.OAuth2Client;
+
+import stroom.authentication.api.OAuth2Client;
 
 import java.util.Optional;
 

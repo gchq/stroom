@@ -104,7 +104,7 @@ public class TokenBuilder {
         jws.setDoKeyValidation(false);
 
         // TODO need to pass this in as it may not be the default one
-//        jws.setKeyIdHeaderValue(new DefaultOpenIdCredentials().getPublicKeyId());
+        jws.setKeyIdHeaderValue(publicJsonWebKey.getKeyId());
 
         try {
             return jws.getCompactSerialization();

@@ -1,6 +1,5 @@
 package stroom.authentication.authenticate;
 
-import com.google.common.base.Preconditions;
 import org.apache.commons.lang3.NotImplementedException;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -8,13 +7,14 @@ import stroom.authentication.account.Account;
 import stroom.authentication.account.AccountDao;
 import stroom.authentication.account.AccountService;
 import stroom.authentication.api.OIDC;
+import stroom.authentication.api.OpenIdClientDetailsFactory;
 import stroom.authentication.authenticate.api.AuthenticationService;
 import stroom.authentication.config.AuthenticationConfig;
 import stroom.authentication.config.PasswordIntegrityChecksConfig;
 import stroom.authentication.exceptions.BadRequestException;
-import stroom.authentication.token.TokenDao;
+import stroom.authentication.token.Token;
+import stroom.authentication.token.TokenService;
 import stroom.config.common.UriFactory;
-import stroom.event.logging.api.StroomEventLoggingService;
 import stroom.security.api.SecurityContext;
 
 import javax.inject.Inject;
@@ -42,37 +42,34 @@ class AuthenticationServiceImpl implements AuthenticationService {
     private static final String ACCOUNT_LOCKED_MESSAGE = "This account is locked. Please contact your administrator";
     private static final String ACCOUNT_DISABLED_MESSAGE = "This account is disabled. Please contact your administrator";
     private static final String ACCOUNT_INACTIVE_MESSAGE = "This account is marked as inactive. Please contact your administrator";
-    //    private static final String NO_SESSION_MESSAGE = "You have no session. Please make an AuthenticationRequest to the Authentication Service.";
-    private static final String SUCCESSFUL_LOGIN_MESSAGE = "User logged in successfully.";
-    private static final String FAILED_LOGIN_MESSAGE = "User attempted to log in but failed.";
 
     private final UriFactory uriFactory;
-    private AuthenticationConfig config;
-    private final TokenDao tokenDao;
-    private EmailSender emailSender;
+    private final AuthenticationConfig config;
+    private final TokenService tokenService;
+    private final EmailSender emailSender;
     private final AccountDao accountDao;
     private final AccountService accountService;
-    private StroomEventLoggingService stroomEventLoggingService;
-    private SecurityContext securityContext;
+    private final SecurityContext securityContext;
+    private final OpenIdClientDetailsFactory openIdClientDetailsFactory;
 
     @Inject
     public AuthenticationServiceImpl(
             final UriFactory uriFactory,
             final @NotNull AuthenticationConfig config,
-            final TokenDao tokenDao,
+            final TokenService tokenService,
             final EmailSender emailSender,
             final AccountDao accountDao,
             final AccountService accountService,
-            final StroomEventLoggingService stroomEventLoggingService,
-            final SecurityContext securityContext) {
+            final SecurityContext securityContext,
+            final OpenIdClientDetailsFactory openIdClientDetailsFactory) {
         this.uriFactory = uriFactory;
         this.config = config;
-        this.tokenDao = tokenDao;
+        this.tokenService = tokenService;
         this.emailSender = emailSender;
         this.accountDao = accountDao;
         this.accountService = accountService;
-        this.stroomEventLoggingService = stroomEventLoggingService;
         this.securityContext = securityContext;
+        this.openIdClientDetailsFactory = openIdClientDetailsFactory;
     }
 
 //    @Override
@@ -247,7 +244,6 @@ class AuthenticationServiceImpl implements AuthenticationService {
                         LOGGER.info("Logging user in using DN with subject {}", subject);
                         setAuthState(request.getSession(true), new AuthStateImpl(account, false));
 
-                        stroomEventLoggingService.createAction("Logon", "User logged in successfully");
                         // Reset last access, login failures, etc...
                         accountDao.recordSuccessfulLogin(subject);
                     }
@@ -269,7 +265,6 @@ class AuthenticationServiceImpl implements AuthenticationService {
             case BAD_CREDENTIALS:
                 LOGGER.debug("Password for {} is incorrect", credentials.getEmail());
                 boolean shouldLock = accountDao.incrementLoginFailures(credentials.getEmail());
-                stroomEventLoggingService.createAction("Logon", FAILED_LOGIN_MESSAGE);
 
                 if (shouldLock) {
                     loginResponse = new LoginResponse(false, ACCOUNT_LOCKED_MESSAGE, null, 200);
@@ -280,51 +275,33 @@ class AuthenticationServiceImpl implements AuthenticationService {
             case GOOD_CREDENTIALS:
                 final Optional<Account> optionalAccount = accountService.read(credentials.getEmail());
                 String redirectionUrl = processSuccessfulLogin(request, optionalAccount.get(), redirectUri);
-                stroomEventLoggingService.createAction("Logon", SUCCESSFUL_LOGIN_MESSAGE);
                 loginResponse = new LoginResponse(true, "", redirectionUrl, 200);
                 break;
             case USER_DOES_NOT_EXIST:
                 // We don't want to let the user know the account they tried to log in with doesn't exist.
                 // If we did we'd be revealing the presence or absence of an account or email address and
                 // we don't want to do this.
-                stroomEventLoggingService.createAction("Logon", SUCCESSFUL_LOGIN_MESSAGE);
                 loginResponse = new LoginResponse(false, INVALID_CREDENTIALS_MESSAGE, null, 200);
                 break;
             case LOCKED_BAD_CREDENTIALS:
-                stroomEventLoggingService.createAction("Logon", FAILED_LOGIN_MESSAGE);
                 loginResponse = new LoginResponse(false, ACCOUNT_LOCKED_MESSAGE, null, 200);
                 break;
             case LOCKED_GOOD_CREDENTIALS:
                 // If the credentials are bad we don't want to reveal the status of the account to the user.
-                stroomEventLoggingService.createAction(
-                        "Logon",
-                        "User attempted to log in but failed because the account is locked.");
                 loginResponse = new LoginResponse(false, ACCOUNT_LOCKED_MESSAGE, null, 200);
                 break;
             case DISABLED_BAD_CREDENTIALS:
                 // If the credentials are bad we don't want to reveal the status of the account to the user.
-                stroomEventLoggingService.createAction(
-                        "Logon",
-                        "User attempted to log in but failed because the account is disabled.");
                 loginResponse = new LoginResponse(false, INVALID_CREDENTIALS_MESSAGE, null, 200);
                 break;
             case DISABLED_GOOD_CREDENTIALS:
-                stroomEventLoggingService.createAction(
-                        "Logon",
-                        "User attempted to log in but failed because the account is disabled.");
                 loginResponse = new LoginResponse(false, ACCOUNT_DISABLED_MESSAGE, null, 200);
                 break;
             case INACTIVE_BAD_CREDENTIALS:
                 // If the credentials are bad we don't want to reveal the status of the account to the user.
-                stroomEventLoggingService.createAction(
-                        "Logon",
-                        "User attempted to log in but failed because the account is inactive.");
                 loginResponse = new LoginResponse(false, INVALID_CREDENTIALS_MESSAGE, null, 200);
                 break;
             case INACTIVE_GOOD_CREDENTIALS:
-                stroomEventLoggingService.createAction(
-                        "Logon",
-                        "User attempted to log in but failed because the account is inactive.");
                 loginResponse = new LoginResponse(false, ACCOUNT_INACTIVE_MESSAGE, null, 200);
                 break;
             default:
@@ -356,28 +333,17 @@ class AuthenticationServiceImpl implements AuthenticationService {
     public String logout(final HttpServletRequest request, final String redirectUri) {
         final HttpSession httpSession = request.getSession(false);
         if (httpSession != null) {
-            stroomEventLoggingService.createAction("Logout", "The user has logged out.");
             clearSession(request);
         }
         return redirectUri;
     }
 
     public boolean resetEmail(final String emailAddress) {
-        stroomEventLoggingService.createAction("ResetPassword", "User reset their password");
-        Optional<Account> optionalAccount = accountDao.get(emailAddress);
-        if (optionalAccount.isPresent()) {
-            final Account account = optionalAccount.get();
-            final String email = account.getEmail();
-            final String firstName = account.getFirstName();
-            final String lastName = account.getLastName();
-            final String resetToken = tokenDao.createEmailResetToken(email, "stroom");
-
-            Preconditions.checkNotNull(emailAddress, String.format("User %s has no email address", account));
-            emailSender.send(emailAddress, firstName, lastName, resetToken);
-            return true;
-        } else {
-            return false;
-        }
+        final Account account = accountService.read(emailAddress).orElseThrow(() -> new RuntimeException("Account not found for email: " + emailAddress));
+        final Token token = tokenService.createResetEmailToken(account, openIdClientDetailsFactory.getOAuth2Client().getClientId());
+        final String resetToken = token.getData();
+        emailSender.send(emailAddress, account.getFirstName(), account.getLastName(), resetToken);
+        return true;
     }
 
     public ChangePasswordResponse changePassword(final HttpServletRequest request, final ChangePasswordRequest changePasswordRequest) {
@@ -390,7 +356,6 @@ class AuthenticationServiceImpl implements AuthenticationService {
 
         final ChangePasswordResponse.ChangePasswordResponseBuilder responseBuilder = new ChangePasswordResponse.ChangePasswordResponseBuilder();
         if (failedOn.size() == 0) {
-            stroomEventLoggingService.createAction("ChangePassword", "User reset their password");
             accountDao.changePassword(changePasswordRequest.getEmail(), changePasswordRequest.getNewPassword());
 
             responseBuilder.withSuccess();
@@ -410,26 +375,27 @@ class AuthenticationServiceImpl implements AuthenticationService {
     }
 
     public ChangePasswordResponse resetPassword(ResetPasswordRequest request) {
-        if (securityContext.isLoggedIn()) {
-            final String loggedInUser = securityContext.getUserId();
-            List<PasswordValidationFailureType> failedOn = new ArrayList<>();
-            PasswordIntegrityChecksConfig conf = config.getPasswordIntegrityChecksConfig();
+        if (!securityContext.isLoggedIn()) {
+            throw new RuntimeException("No user is currently logged in.");
+        }
 
-            validateLength(request.getNewPassword(), conf.getMinimumPasswordLength()).ifPresent(failedOn::add);
-            validateComplexity(request.getNewPassword(), conf.getPasswordComplexityRegex()).ifPresent(failedOn::add);
+        final String loggedInUser = securityContext.getUserId();
+        List<PasswordValidationFailureType> failedOn = new ArrayList<>();
+        PasswordIntegrityChecksConfig conf = config.getPasswordIntegrityChecksConfig();
 
-            final ChangePasswordResponse.ChangePasswordResponseBuilder responseBuilder = new ChangePasswordResponse.ChangePasswordResponseBuilder();
+        validateLength(request.getNewPassword(), conf.getMinimumPasswordLength()).ifPresent(failedOn::add);
+        validateComplexity(request.getNewPassword(), conf.getPasswordComplexityRegex()).ifPresent(failedOn::add);
 
-            if (responseBuilder.failedOn.size() == 0) {
-                responseBuilder.withSuccess();
-                stroomEventLoggingService.createAction("ChangePassword", "User reset their password");
-                accountDao.changePassword(loggedInUser, request.getNewPassword());
-            } else {
-                responseBuilder.withFailedOn(failedOn);
-            }
+        final ChangePasswordResponse.ChangePasswordResponseBuilder responseBuilder = new ChangePasswordResponse.ChangePasswordResponseBuilder();
 
-            return responseBuilder.build();
-        } else return null;
+        if (responseBuilder.failedOn.size() == 0) {
+            responseBuilder.withSuccess();
+            accountDao.changePassword(loggedInUser, request.getNewPassword());
+        } else {
+            responseBuilder.withFailedOn(failedOn);
+        }
+
+        return responseBuilder.build();
     }
 
     public boolean needsPasswordChange(String email) {

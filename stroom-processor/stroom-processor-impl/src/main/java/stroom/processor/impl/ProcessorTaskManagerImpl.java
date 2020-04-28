@@ -324,7 +324,7 @@ class ProcessorTaskManagerImpl implements ProcessorTaskManager {
                     if (isScheduled()) {
                         LOGGER.debug("fillTaskStore() - Executing CreateStreamTasksTask");
 
-                        final Runnable runnable = taskContextFactory.context("Fill TaskStore", taskContext ->
+                        final Runnable runnable = taskContextFactory.context("Fill Task Store", taskContext ->
                                 securityContext.secure(() ->
                                         createTasks(taskContext)));
                         final Executor executor = executorProvider.get(THREAD_POOL);
@@ -371,7 +371,7 @@ class ProcessorTaskManagerImpl implements ProcessorTaskManager {
      */
     @Override
     public void createTasks() {
-        taskContextFactory.context("Fill TaskStore", taskContext ->
+        taskContextFactory.context("Create Tasks", taskContext ->
                 securityContext.secure(() ->
                         createTasks(taskContext))).run();
     }

@@ -97,8 +97,9 @@ const EditTokenForm: React.FunctionComponent<{
               <textarea value={token.data} disabled />
               <CopyToClipboard text={token.data}>
                 <Button
+                  appearance="contained"
+                  action="primary"
                   type="button"
-                  className="primary"
                   icon="copy"
                   text="Copy key"
                 />

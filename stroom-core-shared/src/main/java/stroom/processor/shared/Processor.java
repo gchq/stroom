@@ -17,6 +17,7 @@
 package stroom.processor.shared;
 
 import com.fasterxml.jackson.annotation.JsonCreator;
+import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.fasterxml.jackson.annotation.JsonInclude;
 import com.fasterxml.jackson.annotation.JsonInclude.Include;
 import com.fasterxml.jackson.annotation.JsonProperty;
@@ -24,10 +25,13 @@ import stroom.docref.DocRef;
 import stroom.util.shared.HasAuditInfo;
 import stroom.util.shared.HasUuid;
 
+import javax.xml.bind.annotation.XmlRootElement;
 import java.util.Objects;
 
 @JsonInclude(Include.NON_NULL)
+@XmlRootElement(name = "parameters")
 public class Processor implements HasAuditInfo, HasUuid {
+    public static final String ENTITY_TYPE = "Processor";
     private static final String PIPELINE_STREAM_PROCESSOR_TASK_TYPE = "pipelineStreamProcessor";
 
     // standard id, OCC and audit fields
@@ -52,10 +56,9 @@ public class Processor implements HasAuditInfo, HasUuid {
     @JsonProperty
     private String pipelineUuid;
     @JsonProperty
+    private String pipelineName;
+    @JsonProperty
     private boolean enabled;
-
-    //TODO do we need pipelineName?
-//    private String pipelineName;
 
     public Processor() {
         taskType = PIPELINE_STREAM_PROCESSOR_TASK_TYPE;
@@ -76,6 +79,7 @@ public class Processor implements HasAuditInfo, HasUuid {
                      @JsonProperty("uuid") final String uuid,
                      @JsonProperty("taskType") final String taskType,
                      @JsonProperty("pipelineUuid") final String pipelineUuid,
+                     @JsonProperty("pipelineName") final String pipelineName,
                      @JsonProperty("enabled") final boolean enabled) {
         this.id = id;
         this.version = version;
@@ -86,6 +90,7 @@ public class Processor implements HasAuditInfo, HasUuid {
         this.uuid = uuid;
         this.taskType = taskType;
         this.pipelineUuid = pipelineUuid;
+        this.pipelineName = pipelineName;
         this.enabled = enabled;
     }
 
@@ -162,8 +167,14 @@ public class Processor implements HasAuditInfo, HasUuid {
         return pipelineUuid;
     }
 
-    public void setPipelineUuid(final String pipelineUuid) {
-        this.pipelineUuid = pipelineUuid;
+    public void setPipelineUuid(final String uuid) { this.pipelineUuid = uuid;}
+
+    public String getPipelineName() { return pipelineName; }
+
+    @JsonIgnore
+    public void setPipeline (final DocRef pipelineDocRef) {
+        this.pipelineUuid = pipelineDocRef.getUuid();
+        this.pipelineName = pipelineDocRef.getName();
     }
 
 //    public String getPipelineName() {
@@ -202,7 +213,7 @@ public class Processor implements HasAuditInfo, HasUuid {
         if (this == o) return true;
         if (o == null || getClass() != o.getClass()) return false;
         final Processor processor = (Processor) o;
-        return Objects.equals(id, processor.id);
+        return Objects.equals(id, processor.id)  || Objects.equals(uuid, processor.uuid) ;
     }
 
     @Override

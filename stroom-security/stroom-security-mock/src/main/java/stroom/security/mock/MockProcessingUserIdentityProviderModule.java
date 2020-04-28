@@ -1,5 +1,5 @@
 /*
- * Copyright 2017 Crown Copyright
+ * Copyright 2018 Crown Copyright
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -14,8 +14,14 @@
  * limitations under the License.
  */
 
-package stroom.security.api;
+package stroom.security.mock;
 
-public interface DocumentPermissionCache {
-    boolean hasDocumentPermission(String documentUuid, String permission);
+import com.google.inject.AbstractModule;
+import stroom.security.api.ProcessingUserIdentityProvider;
+
+public class MockProcessingUserIdentityProviderModule extends AbstractModule {
+    @Override
+    protected void configure() {
+        bind(ProcessingUserIdentityProvider.class).to(MockProcessingUserIdentityProvider.class);
+    }
 }

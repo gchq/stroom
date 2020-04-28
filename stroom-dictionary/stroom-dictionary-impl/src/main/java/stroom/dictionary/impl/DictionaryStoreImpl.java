@@ -191,14 +191,14 @@ class DictionaryStoreImpl implements DictionaryStore, WordListProvider {
     }
 
     @Override
-    public DocRef importDocument(final DocRef docRef, final Map<String, byte[]> dataMap, final ImportState importState, final ImportMode importMode) {
+    public ImpexDetails importDocument(final DocRef docRef, final Map<String, byte[]> dataMap, final ImportState importState, final ImportMode importMode) {
         // Convert legacy import format to the new format.
         final Map<String, byte[]> map = convert(docRef, dataMap, importState, importMode);
         if (map != null) {
             return store.importDocument(docRef, map, importState, importMode);
         }
 
-        return docRef;
+        return new ImpexDetails(docRef);
     }
 
     @Override
@@ -223,8 +223,8 @@ class DictionaryStoreImpl implements DictionaryStore, WordListProvider {
 
                     final DictionaryDoc document = new DictionaryDoc();
                     document.setVersion(oldDocument.getVersion());
-                    document.setCreateTime(oldDocument.getCreateTime());
-                    document.setUpdateTime(oldDocument.getUpdateTime());
+                    document.setCreateTimeMs(oldDocument.getCreateTimeMs());
+                    document.setUpdateTimeMs(oldDocument.getUpdateTimeMs());
                     document.setCreateUser(oldDocument.getCreateUser());
                     document.setUpdateUser(oldDocument.getUpdateUser());
                     document.setType(oldDocument.getType());
@@ -252,8 +252,8 @@ class DictionaryStoreImpl implements DictionaryStore, WordListProvider {
                         document.setUuid(docRef.getUuid());
                         document.setName(docRef.getName());
                         document.setVersion(UUID.randomUUID().toString());
-                        document.setCreateTime(now);
-                        document.setUpdateTime(now);
+                        document.setCreateTimeMs(now);
+                        document.setUpdateTimeMs(now);
                         document.setCreateUser(userId);
                         document.setUpdateUser(userId);
                     }
@@ -276,6 +276,11 @@ class DictionaryStoreImpl implements DictionaryStore, WordListProvider {
     @Override
     public String getType() {
         return DictionaryDoc.ENTITY_TYPE;
+    }
+
+    @Override
+    public Set<DocRef> findAssociatedNonExplorerDocRefs(DocRef docRef) {
+        return null;
     }
 
     ////////////////////////////////////////////////////////////////////////

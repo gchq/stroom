@@ -4,6 +4,8 @@ import org.jose4j.jwk.JsonWebKey;
 import org.jose4j.jwk.PublicJsonWebKey;
 import org.jose4j.jwk.RsaJsonWebKey;
 import org.jose4j.jwk.RsaJwkGenerator;
+import org.jose4j.jwk.Use;
+import org.jose4j.jws.AlgorithmIdentifiers;
 import org.jose4j.lang.JoseException;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -24,10 +26,11 @@ public class JsonWebKeyFactoryImpl implements JsonWebKeyFactory {
         String jwkId = UUID.randomUUID().toString();
         try {
             RsaJsonWebKey jwk = RsaJwkGenerator.generateJwk(BITS);
-            LOGGER.info("Generating RSA key pair with ID: {}", jwkId);
+            LOGGER.info("Generating RSA key pair for JSON Web Tokens with ID: {}", jwkId);
+
             jwk.setKeyId(jwkId);
-            jwk.setUse("sig");
-            jwk.setAlgorithm("RS256");
+            jwk.setUse(Use.SIGNATURE);
+            jwk.setAlgorithm(AlgorithmIdentifiers.RSA_USING_SHA256);
             return jwk;
         } catch (JoseException e) {
             throw new RuntimeException(LogUtil.message("Error generating JWK of {} bits", BITS), e);

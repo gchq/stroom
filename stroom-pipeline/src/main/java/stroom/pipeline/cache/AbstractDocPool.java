@@ -18,7 +18,6 @@ package stroom.pipeline.cache;
 
 import stroom.cache.api.CacheManager;
 import stroom.docstore.shared.Doc;
-import stroom.security.api.DocumentPermissionCache;
 import stroom.security.api.SecurityContext;
 import stroom.security.shared.DocumentPermissionNames;
 import stroom.util.cache.CacheConfig;

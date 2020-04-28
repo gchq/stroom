@@ -29,9 +29,17 @@ import stroom.importexport.impl.ImportExportSerializer;
 import stroom.importexport.shared.ImportState;
 import stroom.importexport.shared.ImportState.ImportMode;
 import stroom.importexport.shared.ImportState.State;
+import stroom.meta.shared.MetaFields;
 import stroom.pipeline.PipelineStore;
 import stroom.pipeline.shared.PipelineDoc;
 import stroom.pipeline.xmlschema.XmlSchemaStore;
+import stroom.processor.api.ProcessorFilterService;
+import stroom.processor.api.ProcessorService;
+import stroom.processor.shared.Processor;
+import stroom.processor.shared.ProcessorFilter;
+import stroom.processor.shared.QueryData;
+import stroom.query.api.v2.ExpressionOperator;
+import stroom.query.api.v2.ExpressionTerm;
 import stroom.test.AbstractCoreIntegrationTest;
 import stroom.test.CommonTestControl;
 import stroom.test.CommonTestScenarioCreator;
@@ -70,6 +78,10 @@ class TestImportExportSerializer extends AbstractCoreIntegrationTest {
     private PipelineStore pipelineStore;
     @Inject
     private ExplorerService explorerService;
+    @Inject
+    private ProcessorService processorService;
+    @Inject
+    private ProcessorFilterService processorFilterService;
 
     private Set<DocRef> buildFindFolderCriteria() {
         final Set<DocRef> criteria = new HashSet<>();
@@ -150,6 +162,43 @@ class TestImportExportSerializer extends AbstractCoreIntegrationTest {
     }
 
     @Test
+    void testPipelineWithProcessorFilter() throws IOException {
+        final DocRef folder = explorerService.create(ExplorerConstants.FOLDER, FileSystemTestUtil.getUniqueTestString(), null, null);
+        final DocRef pipelineRef = explorerService.create(PipelineDoc.DOCUMENT_TYPE, "TestPipeline", folder, null);
+
+        final PipelineDoc pipeline = pipelineStore.readDocument(pipelineRef);
+
+
+
+        final ExpressionOperator expression = new ExpressionOperator.Builder()
+                .addTerm(MetaFields.FEED_NAME,ExpressionTerm.Condition.EQUALS, "TEST-FEED-EVENTS")
+                .addTerm(MetaFields.FIELD_TYPE,ExpressionTerm.Condition.EQUALS, "Raw Events")
+                .build();
+        QueryData filterConstraints = new QueryData();
+        filterConstraints.setExpression(expression);
+
+        Processor processor = processorService.create(pipelineRef, true);
+
+        ProcessorFilter filter = processorFilterService.create(processor,filterConstraints, 10, true);
+
+        HashSet<DocRef> forExport = new HashSet<DocRef>();
+
+//        forExport.add (new DocRef(Processor.ENTITY_TYPE,processor.getUuid()));
+        forExport.add (new DocRef(ProcessorFilter.ENTITY_TYPE,filter.getUuid()));
+
+        final Path testDataDir = getCurrentTestDir().resolve("ExportTest");
+
+
+        System.err.println ("Exporting to " + testDataDir);
+        importExportSerializer.write(testDataDir, forExport, true, new ArrayList<>());
+
+
+        importExportSerializer.read(testDataDir, null, ImportMode.IGNORE_CONFIRMATION);
+
+        System.out.println ("Exported to " + testDataDir);
+    }
+
+    @Test
     void testPipeline() throws IOException {
         final DocRef folder = explorerService.create(ExplorerConstants.FOLDER, FileSystemTestUtil.getUniqueTestString(), null, null);
         final DocRef parentPipelineRef = explorerService.create(PipelineDoc.DOCUMENT_TYPE, "Parent", folder, null);
@@ -184,6 +233,8 @@ class TestImportExportSerializer extends AbstractCoreIntegrationTest {
         assertThat(pipelineStore.list().size()).isEqualTo(2);
     }
 
+
+
     @Test
     void test() throws IOException {
         final Path inDir = StroomCoreServerTestFileUtil.getTestResourcesDir().resolve("samples/config");
@@ -193,10 +244,10 @@ class TestImportExportSerializer extends AbstractCoreIntegrationTest {
         Files.createDirectories(outDir);
 
         // Read input.
-        importExportSerializer.read(inDir, null, ImportMode.IGNORE_CONFIRMATION);
+        Set<DocRef> exported = importExportSerializer.read(inDir, null, ImportMode.IGNORE_CONFIRMATION);
 
         // Write to output.
-        importExportSerializer.write(outDir, buildFindFolderCriteria(), true, new ArrayList<>());
+        importExportSerializer.write(outDir, exported, true, new ArrayList<>());
 
         // Compare input and output directory.
         ComparisonHelper.compareDirs(inDir, outDir);

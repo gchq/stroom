@@ -383,6 +383,19 @@ public class MetaServiceImpl implements MetaService, Searchable {
     }
 
     @Override
+    public Long getMaxDataIdWithCreationBeforePeriod(final Long timestampMs){
+        if (timestampMs == null)
+            return null;
+        final ExpressionOperator expression = new ExpressionOperator.Builder(Op.AND)
+                .addTerm(MetaFields.CREATE_TIME, ExpressionTerm.Condition.LESS_THAN_OR_EQUAL_TO, DateUtil.createNormalDateTimeString(timestampMs))
+                .addTerm(MetaFields.STATUS, ExpressionTerm.Condition.EQUALS, Status.UNLOCKED.getDisplayValue())
+                .build();
+
+        final ExpressionOperator secureExpression = addPermissionConstraints(expression, DocumentPermissionNames.READ);
+        return metaDao.getMaxId(new FindMetaCriteria(secureExpression)).get();
+    }
+
+    @Override
     public List<String> getFeeds() {
         return metaFeedDao.list();
     }

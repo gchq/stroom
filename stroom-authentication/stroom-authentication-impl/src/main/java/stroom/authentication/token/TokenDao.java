@@ -4,25 +4,17 @@ import stroom.authentication.account.Account;
 import stroom.authentication.exceptions.NoSuchUserException;
 
 import java.time.Instant;
+import java.util.List;
 import java.util.Optional;
 
 public interface TokenDao {
-    Token create(Token token);
-
-    String createEmailResetToken(String emailAddress, String clientId) throws NoSuchUserException;
-
-    Token createToken(
-            Token.TokenType tokenType,
-            String issuingUserEmail,
-            Instant expiryDateIfApiKey,
-            String recipientUserEmail,
-            String clientId,
-            boolean isEnabled,
-            String comment) throws NoSuchUserException;
+    Token create(int accountId, Token token);
 
     Optional<Token> readById(int tokenId);
 
     Optional<Token> readByToken(String token);
+
+    List<Token> getTokensForAccount(int accountId);
 
     int enableOrDisableToken(int tokenId, boolean enabled, Account updatingAccount);
 

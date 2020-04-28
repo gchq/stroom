@@ -1,11 +1,15 @@
 package stroom.authentication.token;
 
+import stroom.authentication.account.Account;
+
 import java.util.Optional;
 
 public interface TokenService {
     SearchResponse search(SearchRequest searchRequest);
 
     Token create(CreateTokenRequest createTokenRequest);
+
+    Token createResetEmailToken(Account account, String clientId);
 
     int deleteAll();
 
@@ -22,5 +26,4 @@ public interface TokenService {
 //    Optional<String> verifyToken(String token);
 
     String getPublicKey();
-
 }

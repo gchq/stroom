@@ -3,7 +3,10 @@ package stroom.authentication.oauth2;
 import com.google.common.base.Objects;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+
+import stroom.authentication.api.OAuth2Client;
 import stroom.authentication.api.OIDC;
+import stroom.authentication.api.OpenIdClientDetailsFactory;
 import stroom.authentication.authenticate.api.AuthenticationService;
 import stroom.authentication.authenticate.api.AuthenticationService.AuthState;
 import stroom.authentication.config.AuthenticationConfig;
@@ -12,8 +15,6 @@ import stroom.authentication.token.Token;
 import stroom.authentication.token.TokenBuilder;
 import stroom.authentication.token.TokenBuilderFactory;
 import stroom.config.common.UriFactory;
-import stroom.security.impl.OAuth2Client;
-import stroom.security.impl.OpenIdClientDetailsFactory;
 
 import javax.annotation.Nullable;
 import javax.inject.Inject;

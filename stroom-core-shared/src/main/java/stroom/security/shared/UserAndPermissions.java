@@ -26,19 +26,19 @@ import java.util.Set;
 @JsonInclude(Include.NON_NULL)
 public class UserAndPermissions {
     @JsonProperty
-    private final User user;
+    private final String userId;
     @JsonProperty
     private final Set<String> permissions;
 
     @JsonCreator
-    public UserAndPermissions(@JsonProperty("user") final User user,
+    public UserAndPermissions(@JsonProperty("userId") final String userId,
                               @JsonProperty("permissions") final Set<String> permissions) {
-        this.user = user;
+        this.userId = userId;
         this.permissions = permissions;
     }
 
-    public User getUser() {
-        return user;
+    public String getUserId() {
+        return userId;
     }
 
     public Set<String> getPermissions() {

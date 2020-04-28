@@ -1,4 +1,4 @@
-package stroom.security.impl;
+package stroom.authentication.api;
 
 import java.util.Objects;
 

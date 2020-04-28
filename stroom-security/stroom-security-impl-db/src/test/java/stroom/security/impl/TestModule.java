@@ -2,6 +2,7 @@ package stroom.security.impl;
 
 import com.google.inject.AbstractModule;
 import stroom.cache.impl.CacheModule;
+import stroom.security.mock.MockProcessingUserIdentityProviderModule;
 import stroom.util.entityevent.EntityEventBus;
 import stroom.explorer.api.ExplorerService;
 import stroom.security.impl.db.SecurityDbModule;
@@ -18,6 +19,7 @@ public class TestModule extends AbstractModule {
         install(new CacheModule());
         install(new SecurityDbModule());
         install(new MockSecurityContextModule());
+        install(new MockProcessingUserIdentityProviderModule());
 
         bind(UserService.class).to(UserServiceImpl.class);
         bind(ExplorerService.class).toInstance(mock(ExplorerService.class));

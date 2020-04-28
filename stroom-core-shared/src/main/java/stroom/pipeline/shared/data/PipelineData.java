@@ -22,19 +22,21 @@ import com.fasterxml.jackson.annotation.JsonInclude;
 import com.fasterxml.jackson.annotation.JsonInclude.Include;
 import com.fasterxml.jackson.annotation.JsonProperty;
 import com.fasterxml.jackson.annotation.JsonPropertyOrder;
+import stroom.processor.shared.Processor;
 
 import javax.xml.bind.annotation.XmlAccessType;
 import javax.xml.bind.annotation.XmlAccessorType;
 import javax.xml.bind.annotation.XmlElement;
 import javax.xml.bind.annotation.XmlRootElement;
 import javax.xml.bind.annotation.XmlType;
+import java.util.ArrayList;
 import java.util.List;
 
 @XmlAccessorType(XmlAccessType.FIELD)
-@XmlType(name = "Pipeline", propOrder = {"elements", "properties", "pipelineReferences", "links"})
+@XmlType(name = "Pipeline", propOrder = {"elements", "properties", "pipelineReferences", "links", "processors"})
 @XmlRootElement(name = "pipeline")
 @JsonInclude(Include.NON_NULL)
-@JsonPropertyOrder({"elements", "properties", "pipelineReferences", "links"})
+@JsonPropertyOrder({"elements", "properties", "pipelineReferences", "links", "processors"})
 public class PipelineData {
     @XmlElement(name = "elements")
     @JsonProperty
@@ -48,6 +50,9 @@ public class PipelineData {
     @XmlElement(name = "links")
     @JsonProperty
     private PipelineLinks links = new PipelineLinks();
+    @XmlElement(name = "processors")
+    @JsonProperty
+    private List<Processor> processors = new ArrayList<>();
 
     public PipelineData() {
     }
@@ -56,11 +61,13 @@ public class PipelineData {
     public PipelineData(@JsonProperty("elements") final PipelineElements elements,
                         @JsonProperty("properties") final PipelineProperties properties,
                         @JsonProperty("pipelineReferences") final PipelineReferences pipelineReferences,
-                        @JsonProperty("links") final PipelineLinks links) {
+                        @JsonProperty("links") final PipelineLinks links,
+                        @JsonProperty("processors") final List<Processor> processors) {
         this.elements = elements;
         this.properties = properties;
         this.pipelineReferences = pipelineReferences;
         this.links = links;
+        this.processors = processors;
     }
 
     public PipelineElements getElements() {
@@ -215,4 +222,7 @@ public class PipelineData {
     public List<PipelineLink> getRemovedLinks() {
         return links.getRemove();
     }
+
+    @JsonIgnore
+    public List<Processor> getProcessors(){return processors;}
 }

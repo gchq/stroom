@@ -1,9 +1,10 @@
 package stroom.authentication.oauth2;
 
 import org.apache.commons.codec.binary.Hex;
+
+import stroom.authentication.api.OAuth2Client;
+import stroom.authentication.api.OpenIdClientDetailsFactory;
 import stroom.authentication.config.AuthenticationConfig;
-import stroom.security.impl.OAuth2Client;
-import stroom.security.impl.OpenIdClientDetailsFactory;
 import stroom.util.authentication.DefaultOpenIdCredentials;
 import stroom.util.logging.LogUtil;
 

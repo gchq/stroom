@@ -11,7 +11,7 @@ public class TestSecurityContextImpl {
     @Test
     void test() {
         assertThatThrownBy(() -> {
-            final SecurityContext securityContext = new SecurityContextImpl(null, null, null, null);
+            final SecurityContext securityContext = new SecurityContextImpl(null, null, null, null, null);
             securityContext.secure(Assertions::fail);
         }).isInstanceOf(AuthenticationException.class);
     }

@@ -75,13 +75,10 @@ public class DataProcessorTaskHandler {
     }
 
     public ProcessorResult exec(final ProcessorTask task) {
-        // Ensure processing occurs with a current user.
-        return securityContext.secureResult(() -> {
-            // Elevate user permissions so that inherited pipelines that the user only has 'Use' permission on can be read.
-            return securityContext.useAsReadResult(() -> {
-                // Execute with a task context.
-                return taskContextFactory.contextResult("Data Processor", taskContext -> exec(taskContext, task)).get();
-            });
+        // Perform processing as the processing user.
+        return securityContext.asProcessingUserResult(() -> {
+            // Execute with a task context.
+            return taskContextFactory.contextResult("Data Processor", taskContext -> exec(taskContext, task)).get();
         });
     }
 
