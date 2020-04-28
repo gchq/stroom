@@ -1,5 +1,7 @@
 package stroom.security.impl;
 
+import stroom.util.authentication.DefaultOpenIdCredentials;
+
 import org.jose4j.base64url.Base64;
 import org.jose4j.jwa.AlgorithmConstraints;
 import org.jose4j.jwk.JsonWebKeySet;
@@ -22,8 +24,10 @@ import org.mockito.junit.jupiter.MockitoExtension;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import stroom.util.authentication.DefaultOpenIdCredentials;
-
+import java.time.Instant;
+import java.time.LocalDateTime;
+import java.time.Period;
+import java.time.ZoneOffset;
 import java.util.Arrays;
 import java.util.Collections;
 import java.util.List;
@@ -72,6 +76,13 @@ class TestJWTService {
                     .isEqualTo(defaultOpenIdCredentials.getApiKeyUserEmail());
             assertThat(jwtClaims.getAudience())
                     .contains(defaultOpenIdCredentials.getOauth2ClientId());
+            LocalDateTime expiryTime = LocalDateTime.ofInstant(
+                    Instant.ofEpochMilli(jwtClaims.getExpirationTime().getValueInMillis()),
+                    ZoneOffset.UTC);
+
+            // Can't be sure when the token was created so just ensure there is a year left on it.
+            assertThat(Period.between(LocalDateTime.now().toLocalDate(), expiryTime.toLocalDate()).getYears())
+                    .isGreaterThan(1);
         } catch (MalformedClaimException e) {
             e.printStackTrace();
         }

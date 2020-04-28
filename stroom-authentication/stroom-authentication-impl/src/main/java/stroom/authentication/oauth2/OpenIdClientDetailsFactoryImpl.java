@@ -1,12 +1,12 @@
 package stroom.authentication.oauth2;
 
-import org.apache.commons.codec.binary.Hex;
-
 import stroom.authentication.api.OAuth2Client;
 import stroom.authentication.api.OpenIdClientDetailsFactory;
 import stroom.authentication.config.AuthenticationConfig;
 import stroom.util.authentication.DefaultOpenIdCredentials;
 import stroom.util.logging.LogUtil;
+
+import org.apache.commons.codec.binary.Hex;
 
 import javax.inject.Inject;
 import java.security.SecureRandom;
@@ -15,10 +15,10 @@ import java.util.Objects;
 
 public class OpenIdClientDetailsFactoryImpl implements OpenIdClientDetailsFactory {
     private static final String INTERNAL_STROOM_CLIENT = "Stroom Client Internal";
-//    private static final String CLIENT_ID_SUFFIX = ".client-id.apps.stroom-idp";
-//    private static final String CLIENT_SECRET_SUFFIX = ".client-secret.apps.stroom-idp";
-    private static final String CLIENT_ID_SUFFIX = "";
-    private static final String CLIENT_SECRET_SUFFIX = "";
+    private static final String CLIENT_ID_SUFFIX = ".client-id.apps.stroom-idp";
+    private static final String CLIENT_SECRET_SUFFIX = ".client-secret.apps.stroom-idp";
+//    private static final String CLIENT_ID_SUFFIX = "";
+//    private static final String CLIENT_SECRET_SUFFIX = "";
 
 
     private final AuthenticationConfig authenticationConfig;

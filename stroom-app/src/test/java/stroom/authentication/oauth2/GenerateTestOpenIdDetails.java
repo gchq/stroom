@@ -113,8 +113,8 @@ public class GenerateTestOpenIdDetails {
                 "\nThe following lines have been substituted into " + DefaultOpenIdCredentials.class.getName() +
                 "\n";
 
-        final String generatedCode = "\n" +
-                "\n    // ------------------------------------------------------------------------------------------------" +
+        final String generatedCode = "" +
+                "    // ------------------------------------------------------------------------------------------------" +
                 "\n    // The content between these dashed lines was generated using " + this.getClass().getName() +
                 "\n    // at " + Instant.now().toString() +
                 "\n    // The dashed lines are important, don't remove them!" +
