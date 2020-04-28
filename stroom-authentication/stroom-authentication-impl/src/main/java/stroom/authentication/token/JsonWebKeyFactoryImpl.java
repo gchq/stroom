@@ -24,6 +24,7 @@ public class JsonWebKeyFactoryImpl implements JsonWebKeyFactory {
         String jwkId = UUID.randomUUID().toString();
         try {
             RsaJsonWebKey jwk = RsaJwkGenerator.generateJwk(BITS);
+            LOGGER.info("Generating RSA key pair with ID: {}", jwkId);
             jwk.setKeyId(jwkId);
             jwk.setUse("sig");
             jwk.setAlgorithm("RS256");
