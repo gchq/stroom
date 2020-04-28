@@ -25,6 +25,7 @@ import stroom.meta.api.MetaService;
 import stroom.meta.shared.FindMetaCriteria;
 import stroom.meta.shared.Meta;
 import stroom.meta.shared.MetaFields;
+import stroom.pipeline.PipelineStore;
 import stroom.pipeline.shared.PipelineDoc;
 import stroom.processor.api.ProcessorFilterService;
 import stroom.processor.api.ProcessorService;
@@ -80,18 +81,21 @@ class ProcessorFilterServiceImpl implements ProcessorFilterService {
     private final MetaService metaService;
     private final SecurityContext securityContext;
     private final ExplorerService explorerService;
+    private final PipelineStore pipelineStore;
 
     @Inject
     ProcessorFilterServiceImpl(final ProcessorService processorService,
                                final ProcessorFilterDao processorFilterDao,
                                final MetaService metaService,
                                final SecurityContext securityContext,
-                               final ExplorerService explorerService) {
+                               final ExplorerService explorerService,
+                               final PipelineStore pipelineStore) {
         this.processorService = processorService;
         this.processorFilterDao = processorFilterDao;
         this.metaService = metaService;
         this.securityContext = securityContext;
         this.explorerService = explorerService;
+        this.pipelineStore = pipelineStore;
     }
 
     @Override
@@ -346,6 +350,18 @@ class ProcessorFilterServiceImpl implements ProcessorFilterService {
 
             for (final Processor processor : sorted) {
                 final Expander processorExpander = new Expander(0, false, false);
+                if (processor.getPipelineName() == null && processor.getPipelineUuid() != null){
+                    try {
+                        PipelineDoc pipeline = pipelineStore.find(new DocRef(PipelineDoc.DOCUMENT_TYPE, processor.getPipelineUuid()));
+                        if (pipeline != null) {
+                            processor.setPipelineName(pipeline.getName());
+                        }
+                    }catch (RuntimeException ex){
+                        LOGGER.warn("Unable to find Pipeline " + processor.getPipelineUuid() +
+                                " associated with Processor " + processor.getUuid() + " (id: " + processor.getId() +")" +
+                                " Has it been deleted?");
+                    }
+                }
                 final ProcessorRow processorRow = new ProcessorRow(processorExpander,
                         processor);
                 values.add(processorRow);
@@ -363,7 +379,26 @@ class ProcessorFilterServiceImpl implements ProcessorFilterService {
                                 queryData.setExpression(decorate(queryData.getExpression()));
                             }
 
-                            final ProcessorFilterRow processorFilterRow = new ProcessorFilterRow(processorFilter);
+                            ProcessorFilter filter = processorFilter;
+                            if (filter.getPipelineName() == null){
+                                if (processor.getPipelineName() != null) {
+                                    filter.setPipelineName(processor.getPipelineName());
+                                } else {
+
+                                    try {
+                                        PipelineDoc pipeline = pipelineStore.find(new DocRef(PipelineDoc.DOCUMENT_TYPE, filter.getPipelineUuid()));
+                                        if (pipeline != null) {
+                                            filter.setPipelineName(pipeline.getName());
+                                            processor.setPipelineName(pipeline.getName());
+                                        }
+                                    } catch (RuntimeException ex) {
+                                        LOGGER.warn("Unable to find Pipeline " + filter.getPipelineUuid() +
+                                                " associated with ProcessorFilter " + filter.getUuid() + " (id: " + filter.getId() + ")" +
+                                                " Has it been deleted?");
+                                    }
+                                }
+                            }
+                            final ProcessorFilterRow processorFilterRow = new ProcessorFilterRow(filter);
                             values.add(processorFilterRow);
                         }
                     }
