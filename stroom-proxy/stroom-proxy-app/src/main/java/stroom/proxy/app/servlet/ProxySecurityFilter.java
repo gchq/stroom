@@ -16,14 +16,17 @@
 
 package stroom.proxy.app.servlet;
 
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 import stroom.proxy.app.ContentSyncConfig;
+import stroom.proxy.app.ProxyConfig;
 import stroom.proxy.app.handler.FeedStatusConfig;
 import stroom.receive.common.FeedStatusResource;
 import stroom.receive.rules.impl.ReceiveDataRuleSetResource;
-import stroom.util.shared.ResourcePaths;
+import stroom.util.authentication.DefaultOpenIdCredentials;
 import stroom.util.logging.LogUtil;
+import stroom.util.shared.ResourcePaths;
+
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import javax.inject.Inject;
 import javax.servlet.Filter;
@@ -53,14 +56,20 @@ public class ProxySecurityFilter implements Filter {
 
     private final ContentSyncConfig contentSyncConfig;
     private final FeedStatusConfig feedStatusConfig;
+    private final ProxyConfig proxyConfig;
+    private final DefaultOpenIdCredentials defaultOpenIdCredentials;
 
     private Pattern pattern = null;
 
     @Inject
     public ProxySecurityFilter(final ContentSyncConfig contentSyncConfig,
-                               final FeedStatusConfig feedStatusConfig) {
+                               final FeedStatusConfig feedStatusConfig,
+                               final ProxyConfig proxyConfig,
+                               final DefaultOpenIdCredentials defaultOpenIdCredentials) {
         this.contentSyncConfig = contentSyncConfig;
         this.feedStatusConfig = feedStatusConfig;
+        this.proxyConfig = proxyConfig;
+        this.defaultOpenIdCredentials = defaultOpenIdCredentials;
     }
 
     @Override
@@ -138,7 +147,9 @@ public class ProxySecurityFilter implements Filter {
     private String getConfiguredApiKey(final String requestUri) {
         // TODO it could be argued that we should have a single API key to use for all of these resources.
         final String apiKey;
-        if (requestUri.startsWith(ResourcePaths.API_ROOT_PATH + FeedStatusResource.BASE_RESOURCE_PATH)) {
+        if (proxyConfig.isUseDefaultOpenIdCredentials()) {
+            apiKey = defaultOpenIdCredentials.getApiKey();
+        } else if (requestUri.startsWith(ResourcePaths.API_ROOT_PATH + FeedStatusResource.BASE_RESOURCE_PATH)) {
             apiKey = feedStatusConfig.getApiKey();
         } else if (requestUri.startsWith(ResourcePaths.API_ROOT_PATH + ReceiveDataRuleSetResource.BASE_RESOURCE_PATH)) {
             apiKey = contentSyncConfig.getApiKey();

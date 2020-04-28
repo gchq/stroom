@@ -28,7 +28,7 @@ logging:
     org.eclipse.jetty: INFO
     org.glassfish: INFO
     org.glassfish.jersey: INFO
-    #    org.glassfish.jersey.logging.LoggingFeature: INFO
+    org.glassfish.jersey.logging.LoggingFeature: "OFF"
     #    org.glassfish.jersey.server.ServerRuntime.Responder: INFO
     #    org.glassfish.jersey.server.validation.internal.ValidationExceptionMapper: FINER
     org.flywaydb: INFO
