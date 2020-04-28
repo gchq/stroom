@@ -24,6 +24,7 @@ import org.jose4j.jws.JsonWebSignature;
 import org.jose4j.jwt.JwtClaims;
 import org.jose4j.jwt.NumericDate;
 import org.jose4j.lang.JoseException;
+
 import stroom.authentication.api.OIDC;
 
 import java.time.Instant;
@@ -85,7 +86,7 @@ public class TokenBuilder {
     }
 
     public String build() {
-        JwtClaims claims = new JwtClaims();
+        final JwtClaims claims = new JwtClaims();
         if (expiryDate != null) {
             claims.setExpirationTime(NumericDate.fromSeconds(expiryDate.getEpochSecond()));
         }
@@ -102,8 +103,8 @@ public class TokenBuilder {
         jws.setKey(this.publicJsonWebKey.getPrivateKey());
         jws.setDoKeyValidation(false);
 
-        // Should we set the key ID in the headers? If so, we
-//        jws.setKeyIdHeaderValue("123");
+        // TODO need to pass this in as it may not be the default one
+//        jws.setKeyIdHeaderValue(new DefaultOpenIdCredentials().getPublicKeyId());
 
         try {
             return jws.getCompactSerialization();
