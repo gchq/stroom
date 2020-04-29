@@ -1,5 +1,10 @@
 package stroom.security.impl;
 
+import stroom.security.impl.exception.AuthenticationException;
+import stroom.util.HasHealthCheck;
+import stroom.util.logging.LambdaLogger;
+import stroom.util.logging.LambdaLoggerFactory;
+
 import com.codahale.metrics.health.HealthCheck;
 import com.google.common.base.Strings;
 import org.jose4j.jwa.AlgorithmConstraints;
@@ -11,11 +16,6 @@ import org.jose4j.jwt.consumer.JwtConsumer;
 import org.jose4j.jwt.consumer.JwtConsumerBuilder;
 import org.jose4j.keys.resolvers.JwksVerificationKeyResolver;
 import org.jose4j.keys.resolvers.VerificationKeyResolver;
-
-import stroom.security.impl.exception.AuthenticationException;
-import stroom.util.HasHealthCheck;
-import stroom.util.logging.LambdaLogger;
-import stroom.util.logging.LambdaLoggerFactory;
 
 import javax.inject.Inject;
 import javax.inject.Singleton;
@@ -44,7 +44,7 @@ public class JWTService implements HasHealthCheck {
     /**
      * Verify the JSON Web Signature and then extract the user identity from it
      */
-    public Optional<String> getUserId(final String jws) {
+    public Optional<JwtClaims> getJwtClaims(final String jws) {
         Objects.requireNonNull(jws, "Null JWS");
         LOGGER.debug(() -> "Found auth header in request. It looks like this: " + jws);
 
@@ -65,7 +65,7 @@ public class JWTService implements HasHealthCheck {
 //            }
 
             if (isVerified && !isRevoked) {
-                return Optional.ofNullable(jwtClaims.getSubject());
+                return Optional.ofNullable(jwtClaims);
             }
 
         } catch (Exception e) {

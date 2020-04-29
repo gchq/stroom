@@ -1,11 +1,5 @@
 package stroom.security.impl;
 
-import com.google.common.base.Strings;
-import org.jose4j.jwt.JwtClaims;
-import org.jose4j.jwt.MalformedClaimException;
-import org.jose4j.jwt.consumer.InvalidJwtException;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 import stroom.authentication.api.OIDC;
 import stroom.security.api.UserIdentity;
 import stroom.security.impl.exception.AuthenticationException;
@@ -14,6 +8,13 @@ import stroom.security.shared.User;
 import stroom.util.authentication.DefaultOpenIdCredentials;
 import stroom.util.jersey.WebTargetFactory;
 import stroom.util.servlet.UserAgentSessionUtil;
+
+import com.google.common.base.Strings;
+import org.jose4j.jwt.JwtClaims;
+import org.jose4j.jwt.MalformedClaimException;
+import org.jose4j.jwt.consumer.InvalidJwtException;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import javax.inject.Inject;
 import javax.servlet.http.HttpServletRequest;
@@ -27,6 +28,7 @@ import java.util.HashMap;
 import java.util.Map;
 import java.util.Objects;
 import java.util.Optional;
+import java.util.UUID;
 
 class OpenIdManager {
     private static final Logger LOGGER = LoggerFactory.getLogger(OpenIdManager.class);
@@ -192,40 +194,45 @@ class OpenIdManager {
         UserIdentityImpl userIdentity = null;
 
         final Optional<String> optionalJws = jwtService.getJws(request);
-        if (optionalJws.isPresent()) {
-            final Optional<String> optionalUserId = jwtService.getUserId(optionalJws.get());
 
-            if (optionalUserId.isPresent()) {
+        if (optionalJws.isPresent()) {
+            final Optional<JwtClaims> optJwtClaims = jwtService.getJwtClaims(optionalJws.get());
+
+            if (optJwtClaims.isPresent()) {
+                JwtClaims jwtClaims = optJwtClaims.get();
                 String sessionId = null;
                 final HttpSession session = request.getSession(false);
                 if (session != null) {
                     sessionId = session.getId();
                 }
 
-                final String userId = optionalUserId.get();
-                // TODO we should really also check if isUseDefaultOpenIdCred is set
-                //   but it is currently not visible from here
-                final User user;
-                if (defaultOpenIdCredentials.getApiKeyUserEmail().equals(userId)
-                        && userId.equals(defaultOpenIdCredentials.getApiKeyUserEmail())) {
-                    // Using default creds so just fake a user
-                    // TODO Not sure if this is enough info in the user
-                    user = new User();
-                    user.setName(userId);
-                } else {
-                    final Optional<User> optionalUser = userCache.get(userId);
-                    user = optionalUser.orElseThrow(() ->
-                            new AuthenticationException("Unable to find user: " + userId));
-                }
+                try {
+                    final String userId = jwtClaims.getSubject();
 
-                // TODO need to create a fake user when we are using the default creds
-                //   however we can't see AuthenticationConfig from here.
-                userIdentity = new UserIdentityImpl(user.getUuid(), userId, optionalJws.get(), sessionId);
+                    final User user;
+                    if (jwtClaims.getAudience().contains(defaultOpenIdCredentials.getOauth2ClientId())
+                            && userId.equals(defaultOpenIdCredentials.getApiKeyUserEmail())) {
+                        LOGGER.warn("Authenticating using default API key. For production use, set up an API key in Stroom!");
+                        // Using default creds so just fake a user
+                        // TODO Not sure if this is enough info in the user
+                        user = new User();
+                        user.setName(userId);
+                        user.setUuid(UUID.randomUUID().toString());
+                    } else {
+                        user = userCache.get(userId).orElseThrow(() ->
+                                new AuthenticationException("Unable to find user: " + userId));
+                    }
+
+                    userIdentity = new UserIdentityImpl(user.getUuid(), userId, optionalJws.get(), sessionId);
+
+                } catch (MalformedClaimException e) {
+                    LOGGER.error("Error extracting claims from token in request " + request.getRequestURI());
+                }
             }
         }
 
         if (userIdentity == null) {
-            LOGGER.error("Cannot get a valid JWS for API request!");
+            LOGGER.error("Cannot get a valid JWS for API request to " + request.getRequestURI());
         }
 
         return userIdentity;
