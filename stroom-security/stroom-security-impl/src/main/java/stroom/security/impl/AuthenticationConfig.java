@@ -5,6 +5,7 @@ import com.fasterxml.jackson.annotation.JsonPropertyDescription;
 import stroom.util.config.annotations.ReadOnly;
 import stroom.util.shared.AbstractConfig;
 import stroom.util.shared.validation.ValidRegex;
+import stroom.util.shared.validation.ValidationSeverity;
 
 import javax.inject.Singleton;
 import javax.validation.constraints.AssertTrue;

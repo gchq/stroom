@@ -73,8 +73,8 @@ logging:
     logFormat: "%-6level [%d{\"yyyy-MM-dd'T'HH:mm:ss.SSS'Z'\",UTC}] [%t] %logger - %X{code} %msg %n"
 
 proxyConfig:
-  proxyContentDir: "/tmp/stroom-proxy/
-  config"
+  proxyContentDir: "/tmp/stroom-proxy/config"
+  useDefaultOpenIdCredentials: true
 
 # If you want to use a receipt policy then the RuleSet must exist
 # in Stroom and have the UUID as specified below in receiptPolicyUuid
@@ -82,7 +82,6 @@ proxyConfig:
     receiptPolicyUuid:
   feedStatus:
     url: "https://localhost/api/feedStatus/v1"
-    apiKey: "eyJhbGciOiJSUzI1NiJ9.eyJzdWIiOiJhZG1pbiIsImlzcyI6InN0cm9vbSIsImF1ZCI6IlBabkpyOGtIUktxbmxKUlFUaFNJIn0.qT5jdPWBpN9me0L3OqUT0VFT2mvVX9mCp0gPFyTVg8DkFTPLLYIuXjOslvrllJDBbqefEtqS9OwQs3RmRnZxror676stTP6JHN76YqJWj2yJYyJGuggbXjZnfTiZGO3SOxl5FP4nmRRvPxA3XqV9kippKBpHfqm5RuTpFTU8uses2iaHFm7lY4zXmKDmwVizXybBQBtpxrBNQkeQjQyg7UFkpsRO8-PmIdbTldRhGlud5VpntwI1_ahwOzK-einUJQOWrcOBmXAMPRYBI6tSLT1xS_c5XpFX1Rxoj3FGjI-Myqp_2Nt_lZuQ3h-0Qh8WkZMnWQ76G7CKawXzRAwd7Q"
   forwardStreamConfig:
     forwardingEnabled: true
     forwardDestinations:

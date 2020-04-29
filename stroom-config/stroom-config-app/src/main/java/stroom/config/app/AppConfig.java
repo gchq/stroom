@@ -36,7 +36,7 @@ import stroom.search.impl.SearchConfig;
 import stroom.search.solr.SolrConfig;
 import stroom.searchable.impl.SearchableConfig;
 import stroom.security.impl.SecurityConfig;
-import stroom.security.impl.ValidationSeverity;
+import stroom.util.shared.validation.ValidationSeverity;
 import stroom.servicediscovery.impl.ServiceDiscoveryConfig;
 import stroom.storedquery.impl.StoredQueryConfig;
 import stroom.ui.config.shared.UiConfig;
@@ -51,13 +51,8 @@ import javax.validation.constraints.AssertTrue;
 public class AppConfig extends AbstractConfig {
     public static final String NAME = "stroom";
 
-    public static final String PROP_NAME_NODE_URI = "nodeUri";
-    public static final String PROP_NAME_PUBLIC_URI = "publicUri";
-    public static final String PROP_NAME_UI_URI = "uiUri";
-    public static final String PROP_NAME_HALT_BOOT_ON_CONFIG_VALIDATION_FAILURE = "haltBootOnConfigValidationFailure";
     public static final String PROP_NAME_ACTIVITY = "activity";
     public static final String PROP_NAME_ANNOTATION = "annotation";
-//    public static final String PROP_NAME_API_GATEWAY = "apiGateway";
     public static final String PROP_NAME_AUTHENTICATION = "authentication";
     public static final String PROP_NAME_BENCHMARK = "benchmark";
     public static final String PROP_NAME_CLUSTER = "cluster";
@@ -73,16 +68,19 @@ public class AppConfig extends AbstractConfig {
     public static final String PROP_NAME_EXPLORER = "explorer";
     public static final String PROP_NAME_EXPORT = "export";
     public static final String PROP_NAME_FEED = "feed";
+    public static final String PROP_NAME_HALT_BOOT_ON_CONFIG_VALIDATION_FAILURE = "haltBootOnConfigValidationFailure";
     public static final String PROP_NAME_INDEX = "index";
     public static final String PROP_NAME_JOB = "job";
     public static final String PROP_NAME_KAFKA = "kafka";
     public static final String PROP_NAME_LIFECYCLE = "lifecycle";
     public static final String PROP_NAME_NODE = "node";
+    public static final String PROP_NAME_NODE_URI = "nodeUri";
     public static final String PROP_NAME_PATH = "path";
     public static final String PROP_NAME_PIPELINE = "pipeline";
     public static final String PROP_NAME_PROCESSOR = "processor";
     public static final String PROP_NAME_PROPERTIES = "properties";
     public static final String PROP_NAME_PROXY_AGGREGATION = "proxyAggregation";
+    public static final String PROP_NAME_PUBLIC_URI = "publicUri";
     public static final String PROP_NAME_QUERY_HISTORY = "queryHistory";
     public static final String PROP_NAME_RECEIVE = "receive";
     public static final String PROP_NAME_SEARCH = "search";
@@ -93,13 +91,11 @@ public class AppConfig extends AbstractConfig {
     public static final String PROP_NAME_SOLR = "solr";
     public static final String PROP_NAME_STATISTICS = "statistics";
     public static final String PROP_NAME_UI = "ui";
+    public static final String PROP_NAME_UI_URI = "uiUri";
     public static final String PROP_NAME_VOLUMES = "volumes";
 
     private boolean haltBootOnConfigValidationFailure = true;
 
-    private NodeUriConfig nodeUri = new NodeUriConfig();
-    private PublicUriConfig publicUri = new PublicUriConfig();
-    private UiUriConfig uiUri = new UiUriConfig();
     private ActivityConfig activityConfig = new ActivityConfig();
     private AnnotationConfig annotationConfig = new AnnotationConfig();
     private AuthenticationConfig authenticationConfig = new AuthenticationConfig();
@@ -122,11 +118,13 @@ public class AppConfig extends AbstractConfig {
     private KafkaConfig kafkaConfig = new KafkaConfig();
     private LifecycleConfig lifecycleConfig = new LifecycleConfig();
     private NodeConfig nodeConfig = new NodeConfig();
+    private NodeUriConfig nodeUri = new NodeUriConfig();
     private PathConfig pathConfig = new PathConfig();
     private PipelineConfig pipelineConfig = new PipelineConfig();
     private ProcessorConfig processorConfig = new ProcessorConfig();
     private PropertyServiceConfig propertyServiceConfig = new PropertyServiceConfig();
     private ProxyAggregationConfig proxyAggregationConfig = new ProxyAggregationConfig();
+    private PublicUriConfig publicUri = new PublicUriConfig();
     private ReceiveDataConfig receiveDataConfig = new ReceiveDataConfig();
     private SearchConfig searchConfig = new SearchConfig();
     private SearchableConfig searchableConfig = new SearchableConfig();
@@ -137,41 +135,11 @@ public class AppConfig extends AbstractConfig {
     private StatisticsConfig statisticsConfig = new StatisticsConfig();
     private StoredQueryConfig storedQueryConfig = new StoredQueryConfig();
     private UiConfig uiConfig = new UiConfig();
+    private UiUriConfig uiUri = new UiUriConfig();
     private VolumeConfig volumeConfig = new VolumeConfig();
 
-    @JsonPropertyDescription("This is the base endpoint of the node for all inter-node communications, " +
-            "i.e. all cluster management and node info calls. " +
-            "This endpoint will typically be hidden behind a firewall and not be publicly available. " +
-            "The address must be resolvable from all other nodes in the cluster. " +
-            "This does not need to be set for a single node cluster.")
-    @JsonProperty(PROP_NAME_NODE_URI)
-    public NodeUriConfig getNodeUri() {
-        return nodeUri;
-    }
 
-    public void setNodeUri(final NodeUriConfig nodeUri) {
-        this.nodeUri = nodeUri;
-    }
 
-    @JsonPropertyDescription("This is public facing URI of stroom which may be different from the local host if behind a proxy")
-    @JsonProperty(PROP_NAME_PUBLIC_URI)
-    public PublicUriConfig getPublicUri() {
-        return publicUri;
-    }
-
-    public void setPublicUri(final PublicUriConfig publicUri) {
-        this.publicUri = publicUri;
-    }
-
-    @JsonPropertyDescription("This is the URI where the UI is hosted if different to the public facing URI of the server, e.g. during development or some other deployments")
-    @JsonProperty(PROP_NAME_UI_URI)
-    public UiUriConfig getUiUri() {
-        return uiUri;
-    }
-
-    public void setUiUri(final UiUriConfig uiUri) {
-        this.uiUri = uiUri;
-    }
 
     @AssertTrue(
         message = "stroom." + PROP_NAME_HALT_BOOT_ON_CONFIG_VALIDATION_FAILURE + " is set to false. If there is " +
@@ -411,6 +379,20 @@ public class AppConfig extends AbstractConfig {
         this.nodeConfig = nodeConfig;
     }
 
+    @JsonPropertyDescription("This is the base endpoint of the node for all inter-node communications, " +
+            "i.e. all cluster management and node info calls. " +
+            "This endpoint will typically be hidden behind a firewall and not be publicly available. " +
+            "The address must be resolvable from all other nodes in the cluster. " +
+            "This does not need to be set for a single node cluster.")
+    @JsonProperty(PROP_NAME_NODE_URI)
+    public NodeUriConfig getNodeUri() {
+        return nodeUri;
+    }
+
+    public void setNodeUri(final NodeUriConfig nodeUri) {
+        this.nodeUri = nodeUri;
+    }
+
     @JsonProperty(PROP_NAME_PATH)
     public PathConfig getPathConfig() {
         return pathConfig;
@@ -460,6 +442,16 @@ public class AppConfig extends AbstractConfig {
     @SuppressWarnings("unused")
     public void setProxyAggregationConfig(final ProxyAggregationConfig proxyAggregationConfig) {
         this.proxyAggregationConfig = proxyAggregationConfig;
+    }
+
+    @JsonPropertyDescription("This is public facing URI of stroom which may be different from the local host if behind a proxy")
+    @JsonProperty(PROP_NAME_PUBLIC_URI)
+    public PublicUriConfig getPublicUri() {
+        return publicUri;
+    }
+
+    public void setPublicUri(final PublicUriConfig publicUri) {
+        this.publicUri = publicUri;
     }
 
     @JsonProperty(PROP_NAME_QUERY_HISTORY)
@@ -561,6 +553,16 @@ public class AppConfig extends AbstractConfig {
     @SuppressWarnings("unused")
     public void setUiConfig(final UiConfig uiConfig) {
         this.uiConfig = uiConfig;
+    }
+
+    @JsonPropertyDescription("This is the URI where the UI is hosted if different to the public facing URI of the server, e.g. during development or some other deployments")
+    @JsonProperty(PROP_NAME_UI_URI)
+    public UiUriConfig getUiUri() {
+        return uiUri;
+    }
+
+    public void setUiUri(final UiUriConfig uiUri) {
+        this.uiUri = uiUri;
     }
 
     @JsonProperty(PROP_NAME_VOLUMES)

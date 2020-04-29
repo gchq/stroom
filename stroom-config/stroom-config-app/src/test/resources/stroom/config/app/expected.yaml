@@ -1,21 +1,6 @@
 ---
 appConfig:
   haltBootOnConfigValidationFailure: true
-  nodeUri:
-    scheme: null
-    hostname: null
-    port: null
-    pathPrefix: null
-  publicUri:
-    scheme: "https"
-    hostname: null
-    port: 443
-    pathPrefix: null
-  uiUri:
-    scheme: "https"
-    hostname: null
-    port: 443
-    pathPrefix: null
   activity:
     db:
       connection:
@@ -55,12 +40,9 @@ appConfig:
     standardComments: []
     createText: "Create Annotation"
   authentication:
-    certificateDnPattern: ".*\\((.*)\\)"
     certificateDnCaptureGroupIndex: 1
-    loginUrl: "/s/login"
+    certificateDnPattern: ".*\\((.*)\\)"
     changePasswordUrl: "/s/changepassword"
-    failedLoginLockThreshold: 3
-    unauthorisedUrl: "/s/unauthorised"
     email:
       fromAddress: "noreply@stroom"
       fromName: "Stroom User Accounts"
@@ -76,25 +58,29 @@ appConfig:
         username: "username"
         password: "password"
         transportStrategy: "SMTP_PLAIN"
-    token:
-      minutesUntilExpirationForUserToken: 43200
-      minutesUntilExpirationForEmailResetToken: 5
-      jwsIssuer: "stroom"
-      requireExpirationTime: false
-      algorithm: "RS256"
+    failedLoginLockThreshold: 3
+    loginUrl: "/s/login"
     oauth2:
       accessCodeCache:
         maximumSize: 1000
         expireAfterAccess: "PT10M"
         expireAfterWrite: null
     passwordIntegrityChecks:
-      neverUsedAccountDeactivationThreshold: "P30D"
-      unusedAccountDeactivationThreshold: "P90D"
-      mandatoryPasswordChangeDuration: "P90D"
       durationBetweenChecks: "PT2M"
       forcePasswordChangeOnFirstLogin: true
-      passwordComplexityRegex: ".*"
+      mandatoryPasswordChangeDuration: "P90D"
       minimumPasswordLength: 0
+      neverUsedAccountDeactivationThreshold: "P30D"
+      passwordComplexityRegex: ".*"
+      unusedAccountDeactivationThreshold: "P90D"
+    token:
+      minutesUntilExpirationForUserToken: 43200
+      minutesUntilExpirationForEmailResetToken: 5
+      jwsIssuer: "stroom"
+      requireExpirationTime: false
+      algorithm: "RS256"
+    unauthorisedUrl: "/s/unauthorised"
+    useDefaultOpenIdCredentials: true
   benchmark:
     streamCount: 1000
     recordCount: 10000
@@ -381,6 +367,11 @@ appConfig:
         classNameMatchRegex: "^stroom\\..*$"
         classNameReplacementRegex: "((?<=\\$Proxy)[0-9]+|(?<=\\$\\$)[0-9a-f]+|(?<=\\\
           $\\$Lambda\\$)[0-9]+\\/[0-9]+)"
+  nodeUri:
+    scheme: null
+    hostname: null
+    port: null
+    pathPrefix: null
   path:
     temp: "/tmp"
   pipeline:
@@ -488,6 +479,11 @@ appConfig:
     maxFilesPerAggregate: 10000
     maxUncompressedFileSize: "1G"
     buffferSize: 8192
+  publicUri:
+    scheme: "https"
+    hostname: null
+    port: 443
+    pathPrefix: null
   receive:
     receiptPolicyUuid: null
     bufferSize: 8192
@@ -793,6 +789,11 @@ appConfig:
       allowPasswordResets: true
       dateFormat: "YYYY-MM-DDTHH:mm:ss.SSSZ"
       defaultApiKeyExpiryInMinutes: 525600
+  uiUri:
+    scheme: "https"
+    hostname: null
+    port: 443
+    pathPrefix: null
   volumes:
     resilientReplicationCount: 1
     preferLocalVolumes: false
