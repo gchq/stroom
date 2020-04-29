@@ -191,44 +191,18 @@ class OpenIdManager {
      * This method creates a token for the API auth flow.
      */
     public UserIdentity createAPIToken(final HttpServletRequest request) {
-        UserIdentityImpl userIdentity = null;
 
         final Optional<String> optionalJws = jwtService.getJws(request);
+        UserIdentityImpl userIdentity = null;
 
         if (optionalJws.isPresent()) {
-            final Optional<JwtClaims> optJwtClaims = jwtService.getJwtClaims(optionalJws.get());
-
-            if (optJwtClaims.isPresent()) {
-                JwtClaims jwtClaims = optJwtClaims.get();
-                String sessionId = null;
-                final HttpSession session = request.getSession(false);
-                if (session != null) {
-                    sessionId = session.getId();
-                }
-
-                try {
-                    final String userId = jwtClaims.getSubject();
-
-                    final User user;
-                    if (jwtClaims.getAudience().contains(defaultOpenIdCredentials.getOauth2ClientId())
-                            && userId.equals(defaultOpenIdCredentials.getApiKeyUserEmail())) {
-                        LOGGER.warn("Authenticating using default API key. For production use, set up an API key in Stroom!");
-                        // Using default creds so just fake a user
-                        // TODO Not sure if this is enough info in the user
-                        user = new User();
-                        user.setName(userId);
-                        user.setUuid(UUID.randomUUID().toString());
-                    } else {
-                        user = userCache.get(userId).orElseThrow(() ->
-                                new AuthenticationException("Unable to find user: " + userId));
-                    }
-
-                    userIdentity = new UserIdentityImpl(user.getUuid(), userId, optionalJws.get(), sessionId);
-
-                } catch (MalformedClaimException e) {
-                    LOGGER.error("Error extracting claims from token in request " + request.getRequestURI());
-                }
-            }
+            String jws = optionalJws.get();
+            userIdentity = optionalJws
+                    .flatMap(jwtService::getJwtClaims)
+                    .flatMap(jwtClaims -> {
+                        return getUserIdentity(request, jws, jwtClaims);
+                    })
+                    .orElse(null);
         }
 
         if (userIdentity == null) {
@@ -236,5 +210,37 @@ class OpenIdManager {
         }
 
         return userIdentity;
+    }
+
+    private Optional<UserIdentityImpl> getUserIdentity(HttpServletRequest request, String jws, JwtClaims jwtClaims) {
+        String sessionId = null;
+        final HttpSession session = request.getSession(false);
+        if (session != null) {
+            sessionId = session.getId();
+        }
+
+        try {
+            final String userId = jwtClaims.getSubject();
+
+            final User user;
+            if (jwtClaims.getAudience().contains(defaultOpenIdCredentials.getOauth2ClientId())
+                    && userId.equals(defaultOpenIdCredentials.getApiKeyUserEmail())) {
+                LOGGER.warn("Authenticating using default API key. For production use, set up an API key in Stroom!");
+                // Using default creds so just fake a user
+                // TODO Not sure if this is enough info in the user
+                user = new User();
+                user.setName(userId);
+                user.setUuid(UUID.randomUUID().toString());
+            } else {
+                user = userCache.get(userId).orElseThrow(() ->
+                        new AuthenticationException("Unable to find user: " + userId));
+            }
+
+            return Optional.of(new UserIdentityImpl(user.getUuid(), userId, jws, sessionId));
+
+        } catch (MalformedClaimException e) {
+            LOGGER.error("Error extracting claims from token in request " + request.getRequestURI());
+            return Optional.empty();
+        }
     }
 }
