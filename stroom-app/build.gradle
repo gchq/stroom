@@ -217,8 +217,6 @@ dependencies {
 }
 
 jar {
-    //we need to first generate the swagger spec files so they can be added in to the jar
-//    mustRunAfter generateSwaggerDocumentation
     manifest {
         attributes(
                 "Implementation-Title": "Stroom",
@@ -236,7 +234,10 @@ shadowJar {
     // We want to compile all GWT content before we build the fat jar.
     dependsOn ':stroom-app-gwt:gwtCompile'
     dependsOn ':stroom-dashboard-gwt:gwtCompile'
+    // We need the React UI artifacts
     dependsOn ':stroom-ui:copyYarnBuild'
+    // The jar needs to include the swagger.(json|yaml) files that swagger gen produces
+    dependsOn generateSwaggerDocumentation
 
     // Allows us to build fat jars with lots of files
     zip64 true
@@ -365,6 +366,9 @@ swagger {
 // A task to fix the classpath for running the swagger plugin and
 // to scan the classpath to find all the REST resource classes to pass to
 // the plugin to generate documentation for.
+// It is a chicken/egg problem as we can't really use the stroom-app jar as
+// that is where we need to put the generated swagger.json file. Thus
+// abuse the build classpath so we can see all the sub projects.
 task prepareSwaggerClasses {
 
     doLast {

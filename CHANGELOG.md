@@ -6,6 +6,8 @@ and this project adheres to [Semantic Versioning](http://semver.org/).
 
 ## [Unreleased]
 
+* Issue **#1495** : Speculative fix for missing swagger.json file in the fat jar.
+
 
 ## [v7.0-beta.28] - 2020-04-29
 
