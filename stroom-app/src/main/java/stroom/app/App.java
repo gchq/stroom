@@ -16,21 +16,6 @@
 
 package stroom.app;
 
-import com.google.inject.Guice;
-import com.google.inject.Injector;
-import io.dropwizard.Application;
-import io.dropwizard.assets.AssetsBundle;
-import io.dropwizard.configuration.EnvironmentVariableSubstitutor;
-import io.dropwizard.configuration.SubstitutingSourceProvider;
-import io.dropwizard.jersey.sessions.SessionFactoryProvider;
-import io.dropwizard.servlets.tasks.LogConfigurationTask;
-import io.dropwizard.setup.Bootstrap;
-import io.dropwizard.setup.Environment;
-import org.eclipse.jetty.server.session.SessionHandler;
-import org.eclipse.jetty.servlets.CrossOriginFilter;
-import org.glassfish.jersey.logging.LoggingFeature;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 import stroom.app.commands.DbMigrationCommand;
 import stroom.app.guice.AppModule;
 import stroom.config.app.AppConfig;
@@ -48,8 +33,25 @@ import stroom.security.impl.AuthenticationConfig;
 import stroom.security.impl.ContentSecurityConfig;
 import stroom.util.ColouredStringBuilder;
 import stroom.util.ConsoleColour;
+import stroom.util.authentication.DefaultOpenIdCredentials;
 import stroom.util.logging.LogUtil;
 import stroom.util.shared.ResourcePaths;
+
+import com.google.inject.Guice;
+import com.google.inject.Injector;
+import io.dropwizard.Application;
+import io.dropwizard.assets.AssetsBundle;
+import io.dropwizard.configuration.EnvironmentVariableSubstitutor;
+import io.dropwizard.configuration.SubstitutingSourceProvider;
+import io.dropwizard.jersey.sessions.SessionFactoryProvider;
+import io.dropwizard.servlets.tasks.LogConfigurationTask;
+import io.dropwizard.setup.Bootstrap;
+import io.dropwizard.setup.Environment;
+import org.eclipse.jetty.server.session.SessionHandler;
+import org.eclipse.jetty.servlets.CrossOriginFilter;
+import org.glassfish.jersey.logging.LoggingFeature;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import javax.inject.Inject;
 import javax.servlet.DispatcherType;
@@ -200,6 +202,27 @@ public class App extends Application<Config> {
 
         // Listen to the lifecycle of the Dropwizard app.
         managedServices.register();
+
+        warnAboutDefaultOpenIdCreds(configuration, injector);
+    }
+
+    private void warnAboutDefaultOpenIdCreds(Config configuration, Injector injector) {
+        if (configuration.getAppConfig().getAuthenticationConfig().isUseDefaultOpenIdCredentials()) {
+            DefaultOpenIdCredentials defaultOpenIdCredentials = injector.getInstance(DefaultOpenIdCredentials.class);
+            String propPath = configuration.getAppConfig().getAuthenticationConfig().getFullPath("useDefaultOpenIdCredentials");
+            LOGGER.warn("" +
+                    "\n  ---------------------------------------------------------------------------------------" +
+                    "\n  " +
+                    "\n                                        WARNING!" +
+                    "\n  " +
+                    "\n   Using default and publicly available Open ID authentication credentials. " +
+                    "\n   These should only be used in test/demo environments. " +
+                    "\n   Set " + propPath + " to false for production environments. The API key in use is:" +
+                    "\n" +
+                    "\n   " + defaultOpenIdCredentials.getApiKey() +
+                    "\n  ---------------------------------------------------------------------------------------" +
+                    "");
+        }
     }
 
     private String getNodeName(final AppConfig appConfig) {
@@ -214,7 +237,10 @@ public class App extends Application<Config> {
 
         // Inject this way rather than using injectMembers so we can avoid instantiating
         // too many classes before running our validation
-        final ConfigMapper configMapper = injector.getInstance(ConfigMapper.class);
+
+        // We need to get an unused instance of ConfigMapper so it decorates the AppConfig tree.
+        injector.getInstance(ConfigMapper.class);
+
         final ConfigValidator configValidator = injector.getInstance(ConfigValidator.class);
 
         LOGGER.info("Validating application configuration file {}",

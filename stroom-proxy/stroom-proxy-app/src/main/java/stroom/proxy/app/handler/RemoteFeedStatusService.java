@@ -1,8 +1,5 @@
 package stroom.proxy.app.handler;
 
-import com.codahale.metrics.health.HealthCheck;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 import stroom.proxy.app.ProxyConfig;
 import stroom.proxy.feed.remote.GetFeedStatusRequest;
 import stroom.proxy.feed.remote.GetFeedStatusResponse;
@@ -11,6 +8,10 @@ import stroom.util.HasHealthCheck;
 import stroom.util.HealthCheckUtils;
 import stroom.util.authentication.DefaultOpenIdCredentials;
 import stroom.util.logging.LogUtil;
+
+import com.codahale.metrics.health.HealthCheck;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import javax.inject.Inject;
 import javax.ws.rs.client.Client;
@@ -113,7 +114,7 @@ public class RemoteFeedStatusService implements FeedStatusService, HasHealthChec
         }
 
     private GetFeedStatusResponse sendRequest(final GetFeedStatusRequest request,
-                             final Function<Response, GetFeedStatusResponse> responseConsumer) {
+                                              final Function<Response, GetFeedStatusResponse> responseConsumer) {
         LOGGER.debug("Sending request {}", request);
         try {
             final Response response = feedStatusWebTarget

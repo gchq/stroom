@@ -149,6 +149,7 @@ public class ProxySecurityFilter implements Filter {
         final String apiKey;
         if (proxyConfig.isUseDefaultOpenIdCredentials()) {
             apiKey = defaultOpenIdCredentials.getApiKey();
+            LOGGER.warn("Authenticating using default API key. For production use, set up an API key in Stroom!");
         } else if (requestUri.startsWith(ResourcePaths.API_ROOT_PATH + FeedStatusResource.BASE_RESOURCE_PATH)) {
             apiKey = feedStatusConfig.getApiKey();
         } else if (requestUri.startsWith(ResourcePaths.API_ROOT_PATH + ReceiveDataRuleSetResource.BASE_RESOURCE_PATH)) {
