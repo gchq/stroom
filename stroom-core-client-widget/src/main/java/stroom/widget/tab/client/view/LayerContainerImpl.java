@@ -40,6 +40,7 @@ public class LayerContainerImpl extends Composite implements LayerContainer, Req
     private boolean fade;
     private TransitionTimer transitionTimer;
     private Layer selectedLayer;
+
     public LayerContainerImpl() {
         if (resources == null) {
             resources = GWT.create(Resources.class);

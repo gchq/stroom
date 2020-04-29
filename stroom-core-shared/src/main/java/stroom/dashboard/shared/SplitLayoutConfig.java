@@ -79,17 +79,12 @@ public class SplitLayoutConfig extends LayoutConfig {
         return preferredSize;
     }
 
-    @Override
-    public void setPreferredSize(final Size preferredSize) {
-        this.preferredSize = preferredSize;
-    }
-
     public int getDimension() {
         return dimension;
     }
 
-    public void setDimension(final int dimension) {
-        this.dimension = dimension;
+    public List<LayoutConfig> getChildren() {
+        return children;
     }
 
     public LayoutConfig get(final int index) {

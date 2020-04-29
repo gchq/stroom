@@ -211,18 +211,18 @@ public class DashboardPresenter extends DocumentEditPresenter<DashboardView, Das
             components.clear();
             LayoutConfig layoutData = null;
 
-            final DashboardConfig dashboardData = dashboard.getDashboardConfig();
-            if (dashboardData != null) {
+            final DashboardConfig dashboardConfig = dashboard.getDashboardConfig();
+            if (dashboardConfig != null) {
                 if (null == currentParams) {
                     currentParams = "";
-                    if (dashboardData.getParameters() != null && dashboardData.getParameters().trim().length() > 0) {
-                        currentParams = dashboardData.getParameters().trim();
+                    if (dashboardConfig.getParameters() != null && dashboardConfig.getParameters().trim().length() > 0) {
+                        currentParams = dashboardConfig.getParameters().trim();
                     }
                 }
                 getView().setParams(currentParams);
 
-                layoutData = dashboardData.getLayout();
-                final List<ComponentConfig> componentDataList = dashboardData.getComponents();
+                layoutData = dashboardConfig.getLayout();
+                final List<ComponentConfig> componentDataList = dashboardConfig.getComponents();
                 if (componentDataList != null) {
                     for (final ComponentConfig componentData : componentDataList) {
                         addComponent(componentData.getType(), componentData);
@@ -332,12 +332,12 @@ public class DashboardPresenter extends DocumentEditPresenter<DashboardView, Das
             componentDataList.add(componentData);
         }
 
-        final DashboardConfig dashboardData = new DashboardConfig();
-        dashboardData.setParameters(params);
-        dashboardData.setComponents(componentDataList);
-        dashboardData.setLayout(layoutPresenter.getLayoutData());
-        dashboardData.setTabVisibility(TabVisibility.SHOW_ALL);
-        dashboard.setDashboardConfig(dashboardData);
+        final DashboardConfig dashboardConfig = new DashboardConfig();
+        dashboardConfig.setParameters(params);
+        dashboardConfig.setComponents(componentDataList);
+        dashboardConfig.setLayout(layoutPresenter.getLayoutData());
+        dashboardConfig.setTabVisibility(TabVisibility.SHOW_ALL);
+        dashboard.setDashboardConfig(dashboardConfig);
     }
 
     @Override

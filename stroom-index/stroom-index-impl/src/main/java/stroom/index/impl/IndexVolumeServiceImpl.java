@@ -85,6 +85,9 @@ public class IndexVolumeServiceImpl implements IndexVolumeService {
         indexVolume.setIndexVolumeGroupId(updateVolumeDTO.getIndexVolumeGroupId());
         indexVolume.setPath((updateVolumeDTO.getPath()));
         indexVolume.setNodeName(updateVolumeDTO.getNodeName());
+        indexVolume.setBytesLimit(updateVolumeDTO.getBytesLimit());
+        indexVolume.setState(updateVolumeDTO.getState());
+
 
         AuditUtil.stamp(securityContext.getUserId(), indexVolume);
         return securityContext.secureResult(PermissionNames.MANAGE_VOLUMES_PERMISSION,

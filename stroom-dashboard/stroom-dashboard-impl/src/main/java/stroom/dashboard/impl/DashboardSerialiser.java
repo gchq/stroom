@@ -45,7 +45,7 @@ public class DashboardSerialiser implements DocumentSerialiser2<DashboardDoc> {
         final byte[] jsonData = data.get(JSON);
         if (jsonData != null) {
             try {
-                final DashboardConfig dashboardConfig = dashboardConfigSerialiser.read(jsonData);
+                final DashboardConfig dashboardConfig = getDashboardConfigFromJson(jsonData);
                 document.setDashboardConfig(dashboardConfig);
             } catch (final RuntimeException e) {
                 LOGGER.error("Unable to unmarshal dashboard config", e);
@@ -71,6 +71,10 @@ public class DashboardSerialiser implements DocumentSerialiser2<DashboardDoc> {
 
 
         return data;
+    }
+
+    public DashboardConfig getDashboardConfigFromJson(final byte[] jsonData) throws IOException {
+        return dashboardConfigSerialiser.read(jsonData);
     }
 
     public DashboardConfig getDashboardConfigFromLegacyXML(final String xml) {
