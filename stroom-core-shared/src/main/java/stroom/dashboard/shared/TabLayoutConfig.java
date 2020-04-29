@@ -87,11 +87,6 @@ public class TabLayoutConfig extends LayoutConfig {
         return preferredSize;
     }
 
-    @Override
-    public void setPreferredSize(final Size preferredSize) {
-        this.preferredSize = preferredSize;
-    }
-
     private List<TabConfig> getVisibleTabs() {
         if (tabs == null) {
             return Collections.emptyList();
