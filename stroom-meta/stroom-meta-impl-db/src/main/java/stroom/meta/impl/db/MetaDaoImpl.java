@@ -256,10 +256,11 @@ class MetaDaoImpl implements MetaDao {
         int offset = 0;
         int numberOfRows = 1000000;
 
-        if (pageRequest != null) {
+        if (pageRequest != null && pageRequest.getOffset() != null)
             offset = pageRequest.getOffset().intValue();
+        if (pageRequest != null && pageRequest.getLength() != null)
             numberOfRows = pageRequest.getLength();
-        }
+
 
         final List<Meta> list = find(condition, orderFields, offset, numberOfRows);
         return ResultPage.createPageResultList(list, criteria.getPageRequest(), null);

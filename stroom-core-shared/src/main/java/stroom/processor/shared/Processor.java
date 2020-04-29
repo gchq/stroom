@@ -167,9 +167,15 @@ public class Processor implements HasAuditInfo, HasUuid {
         return pipelineUuid;
     }
 
-    public void setPipelineUuid(final String uuid) { this.pipelineUuid = uuid;}
+    public void setPipelineUuid(final String uuid) {
+        this.pipelineUuid = uuid;
+    }
 
     public String getPipelineName() { return pipelineName; }
+
+    public void setPipelineName (final String pipelineName){
+        this.pipelineName = pipelineName;
+    }
 
     @JsonIgnore
     public void setPipeline (final DocRef pipelineDocRef) {
