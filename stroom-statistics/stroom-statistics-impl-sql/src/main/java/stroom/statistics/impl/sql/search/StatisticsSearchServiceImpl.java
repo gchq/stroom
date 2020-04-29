@@ -1,12 +1,16 @@
 package stroom.statistics.impl.sql.search;
 
-import com.google.common.base.Preconditions;
-import com.google.common.collect.ImmutableMap;
-import io.reactivex.Flowable;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
-import stroom.dashboard.expression.v1.*;
-import stroom.statistics.impl.sql.*;
+import stroom.dashboard.expression.v1.FieldIndexMap;
+import stroom.dashboard.expression.v1.Val;
+import stroom.dashboard.expression.v1.ValDouble;
+import stroom.dashboard.expression.v1.ValLong;
+import stroom.dashboard.expression.v1.ValNull;
+import stroom.dashboard.expression.v1.ValString;
+import stroom.statistics.impl.sql.PreparedStatementUtil;
+import stroom.statistics.impl.sql.SQLStatisticConstants;
+import stroom.statistics.impl.sql.SQLStatisticNames;
+import stroom.statistics.impl.sql.SQLStatisticsDbConnProvider;
+import stroom.statistics.impl.sql.SqlBuilder;
 import stroom.statistics.impl.sql.rollup.RollUpBitMask;
 import stroom.statistics.impl.sql.shared.StatisticStoreDoc;
 import stroom.statistics.impl.sql.shared.StatisticType;
@@ -15,13 +19,26 @@ import stroom.task.api.TaskContextFactory;
 import stroom.util.logging.LambdaLogger;
 import stroom.util.logging.LambdaLoggerFactory;
 
+import com.google.common.base.Preconditions;
+import com.google.common.collect.ImmutableMap;
+import io.reactivex.Flowable;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+
 import javax.inject.Inject;
 import javax.sql.DataSource;
 import java.sql.Connection;
 import java.sql.PreparedStatement;
 import java.sql.ResultSet;
 import java.sql.SQLException;
-import java.util.*;
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.Collections;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
+import java.util.Optional;
+import java.util.Set;
 import java.util.function.Function;
 import java.util.function.Supplier;
 import java.util.stream.Collectors;
@@ -342,8 +359,8 @@ class StatisticsSearchServiceImpl implements StatisticsSearchService {
                                                     final Function<ResultSet, Val[]> resultSetMapper) {
 
         //Not thread safe as each onNext will get the same ResultSet instance, however its position
-        // will have mode on each time.
-        Flowable<Val[]> resultSetFlowable = Flowable
+        // will have moved on each time.
+        return Flowable
                 .using(
                         () -> new PreparedStatementResourceHolder(SQLStatisticsDbConnProvider, sql, searchConfig),
                         factory -> {
@@ -351,27 +368,13 @@ class StatisticsSearchServiceImpl implements StatisticsSearchService {
                             Preconditions.checkNotNull(factory);
                             PreparedStatement ps = factory.getPreparedStatement();
                             return Flowable.generate(
-                                    () ->
-                                            taskContextFactory.contextResult(parentContext, SqlStatisticsStore.TASK_NAME, taskContext -> {
-                                                final Supplier<String> message = () -> "Executing query " + sql.toString();
-                                                taskContext.info(message);
-                                                LAMBDA_LOGGER.debug(message);
-
-                                                try {
-                                                    return ps.executeQuery();
-                                                } catch (SQLException e) {
-                                                    throw new RuntimeException(String.format("Error executing query %s, %s",
-                                                            ps.toString(), e.getMessage()), e);
-                                                }
-                                            }).get()
-                                    ,
+                                    () -> executeQuery(parentContext, sql, ps),
                                     (rs, emitter) -> {
                                         // The line below can be un-commented in development debugging to slow down the
                                         // return of all results to test iterative results and dashboard polling.
                                         // LockSupport.parkNanos(200_000);
 
                                         //advance the resultSet, if it is a row emit it, else finish the flow
-                                        // TODO prob needs to change in 6.1
                                         if (Thread.currentThread().isInterrupted()) {
                                             LOGGER.debug("Task is terminated/interrupted, calling onComplete");
                                             emitter.onComplete();
@@ -388,8 +391,25 @@ class StatisticsSearchServiceImpl implements StatisticsSearchService {
                                     });
                         },
                         PreparedStatementResourceHolder::dispose);
+    }
 
-        return resultSetFlowable;
+    private ResultSet executeQuery(TaskContext parentContext, SqlBuilder sql, PreparedStatement ps) {
+        return taskContextFactory.contextResult(
+                parentContext,
+                SqlStatisticsStore.TASK_NAME,
+                taskContext -> {
+                    final Supplier<String> message = () -> "Executing query " + sql.toString();
+                    taskContext.info(message);
+                    LAMBDA_LOGGER.debug(message);
+
+                    try {
+                        return ps.executeQuery();
+                    } catch (SQLException e) {
+                        throw new RuntimeException(String.format("Error executing query %s, %s",
+                                ps.toString(), e.getMessage()), e);
+                    }
+                })
+                .get();
     }
 
     /**
