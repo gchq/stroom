@@ -1,5 +1,10 @@
 package stroom.security.impl;
 
+import stroom.security.impl.exception.AuthenticationException;
+import stroom.util.HasHealthCheck;
+import stroom.util.logging.LambdaLogger;
+import stroom.util.logging.LambdaLoggerFactory;
+
 import com.codahale.metrics.health.HealthCheck;
 import com.google.common.base.Strings;
 import org.jose4j.jwa.AlgorithmConstraints;
@@ -11,57 +16,35 @@ import org.jose4j.jwt.consumer.JwtConsumer;
 import org.jose4j.jwt.consumer.JwtConsumerBuilder;
 import org.jose4j.keys.resolvers.JwksVerificationKeyResolver;
 import org.jose4j.keys.resolvers.VerificationKeyResolver;
-import org.jose4j.lang.JoseException;
-import stroom.security.impl.exception.AuthenticationException;
-import stroom.util.HasHealthCheck;
-import stroom.util.jersey.WebTargetFactory;
-import stroom.util.logging.LambdaLogger;
-import stroom.util.logging.LambdaLoggerFactory;
 
 import javax.inject.Inject;
 import javax.inject.Singleton;
 import javax.servlet.ServletRequest;
 import javax.servlet.http.HttpServletRequest;
-import javax.ws.rs.core.Response;
 import java.util.Objects;
 import java.util.Optional;
 
 @Singleton
-class JWTService implements HasHealthCheck {
+public class JWTService implements HasHealthCheck {
     private static final LambdaLogger LOGGER = LambdaLoggerFactory.getLogger(JWTService.class);
 
     private static final String BEARER = "Bearer ";
     private static final String AUTHORIZATION_HEADER = "Authorization";
 
     private final ResolvedOpenIdConfig openIdConfig;
-    private final WebTargetFactory webTargetFactory;
-
-    private JsonWebKeySet jsonWebKeySet;
+    private final OpenIdPublicKeysSupplier openIdPublicKeysSupplier;
 
     @Inject
     JWTService(final ResolvedOpenIdConfig openIdConfig,
-               final WebTargetFactory webTargetFactory) {
+               final OpenIdPublicKeysSupplier openIdPublicKeysSupplier) {
         this.openIdConfig = openIdConfig;
-        this.webTargetFactory = webTargetFactory;
+        this.openIdPublicKeysSupplier = openIdPublicKeysSupplier;
     }
 
-    private JsonWebKeySet getJsonWebKeySet() {
-        if (jsonWebKeySet == null) {
-            try {
-                final Response res = webTargetFactory
-                        .create(openIdConfig.getJwksUri())
-                        .request()
-                        .get();
-                final String json = res.readEntity(String.class);
-                jsonWebKeySet = new JsonWebKeySet(json);
-            } catch (JoseException e) {
-                LOGGER.error(() -> "Unable to fetch the remote authentication service's public key!", e);
-            }
-        }
-        return jsonWebKeySet;
-    }
-
-    public Optional<String> getUserId(final String jws) {
+    /**
+     * Verify the JSON Web Signature and then extract the user identity from it
+     */
+    public Optional<JwtClaims> getJwtClaims(final String jws) {
         Objects.requireNonNull(jws, "Null JWS");
         LOGGER.debug(() -> "Found auth header in request. It looks like this: " + jws);
 
@@ -71,9 +54,9 @@ class JWTService implements HasHealthCheck {
             boolean isVerified = jwtClaims != null;
             boolean isRevoked = false;
 
-            // TODO : @66 Check against blacklist to see if token has been revoked. Blacklist is a list of JWI (JWT IDs) on auth service.
-            //  only tokens with `jwi` claims are API keys so only those tokens need checking against the blacklist cache.
-
+            // TODO : @66 Check against blacklist to see if token has been revoked. Blacklist
+            //  is a list of JWI (JWT IDs) on auth service. Only tokens with `jwi` claims are API
+            //  keys so only those tokens need checking against the blacklist cache.
 
 //            if (checkTokenRevocation) {
 //                LOGGER.debug(() -> "Checking token revocation status in remote auth service...");
@@ -82,7 +65,7 @@ class JWTService implements HasHealthCheck {
 //            }
 
             if (isVerified && !isRevoked) {
-                return Optional.ofNullable(jwtClaims.getSubject());
+                return Optional.ofNullable(jwtClaims);
             }
 
         } catch (Exception e) {
@@ -94,6 +77,9 @@ class JWTService implements HasHealthCheck {
         return Optional.empty();
     }
 
+    /**
+     * Get the JSON Web Signature from the request headers
+     */
     public Optional<String> getJws(final ServletRequest request) {
         final Optional<String> authHeader = getAuthHeader(request);
         return authHeader.map(bearerString -> {
@@ -137,7 +123,7 @@ class JWTService implements HasHealthCheck {
         // If we don't have a JWK we can't create a consumer to verify anything.
         // Why might we not have one? If the remote authentication service was down when Stroom started
         // then we wouldn't. It might not be up now but we're going to try and fetch it.
-        final JsonWebKeySet publicJsonWebKey = getJsonWebKeySet();
+        final JsonWebKeySet publicJsonWebKey = openIdPublicKeysSupplier.get();
 
         final VerificationKeyResolver verificationKeyResolver = new JwksVerificationKeyResolver(
                 publicJsonWebKey.getJsonWebKeys());
@@ -149,7 +135,8 @@ class JWTService implements HasHealthCheck {
                 .setExpectedAudience(openIdConfig.getClientId())
                 .setRelaxVerificationKeyValidation() // relaxes key length requirement
                 .setJwsAlgorithmConstraints( // only allow the expected signature algorithm(s) in the given context
-                        new AlgorithmConstraints(AlgorithmConstraints.ConstraintType.WHITELIST, // which is only RS256 here
+                        new AlgorithmConstraints(
+                                AlgorithmConstraints.ConstraintType.WHITELIST, // which is only RS256 here
                                 AlgorithmIdentifiers.RSA_USING_SHA256))
                 .setExpectedIssuer(openIdConfig.getIssuer());
         return builder.build();
@@ -166,7 +153,7 @@ class JWTService implements HasHealthCheck {
     private void checkHealthForJwkRetrieval(HealthCheck.ResultBuilder resultBuilder) {
         final String KEY = "public_key_retrieval";
         try {
-            final JsonWebKeySet publicJsonWebKey = getJsonWebKeySet();
+            final JsonWebKeySet publicJsonWebKey = openIdPublicKeysSupplier.get();
             if (publicJsonWebKey == null) {
                 resultBuilder.withDetail(KEY, "Missing public key\n");
                 resultBuilder.unhealthy();

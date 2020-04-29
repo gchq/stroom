@@ -503,7 +503,7 @@ class ProcessorFilterServiceImpl implements ProcessorFilterService {
                         // We can only reprocess streams that have a stream processor and a parent stream id.
                         if (meta.getProcessorUuid() != null && meta.getParentMetaId() != null) {
                             final ExpressionCriteria findProcessorCriteria = new ExpressionCriteria(new ExpressionOperator.Builder()
-                                    .addTerm(ProcessorDataSource.PIPELINE, Condition.EQUALS, new DocRef(PipelineDoc.DOCUMENT_TYPE, meta.getPipelineUuid()))
+                                    .addTerm(ProcessorDataSource.PIPELINE, Condition.IS_DOC_REF, new DocRef(PipelineDoc.DOCUMENT_TYPE, meta.getPipelineUuid()))
                                     .build());
 //                            findProcessorCriteria.obtainPipelineUuidCriteria().setString(meta.getPipelineUuid());
                             final Processor processor = processorService.find(findProcessorCriteria).getFirst();

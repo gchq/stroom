@@ -1,14 +1,17 @@
 package stroom.proxy.app.handler;
 
-import com.codahale.metrics.health.HealthCheck;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
+import stroom.proxy.app.ProxyConfig;
 import stroom.proxy.feed.remote.GetFeedStatusRequest;
 import stroom.proxy.feed.remote.GetFeedStatusResponse;
 import stroom.receive.common.FeedStatusService;
 import stroom.util.HasHealthCheck;
 import stroom.util.HealthCheckUtils;
+import stroom.util.authentication.DefaultOpenIdCredentials;
 import stroom.util.logging.LogUtil;
+
+import com.codahale.metrics.health.HealthCheck;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import javax.inject.Inject;
 import javax.ws.rs.client.Client;
@@ -19,6 +22,7 @@ import javax.ws.rs.core.MediaType;
 import javax.ws.rs.core.Response;
 import javax.ws.rs.core.Response.Status;
 import java.util.Map;
+import java.util.Objects;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.function.Function;
 
@@ -35,10 +39,20 @@ public class RemoteFeedStatusService implements FeedStatusService, HasHealthChec
     private final WebTarget feedStatusWebTarget;
 
     @Inject
-    RemoteFeedStatusService(final FeedStatusConfig feedStatusConfig,
-                            final Client jerseyClient) {
+    RemoteFeedStatusService(final ProxyConfig proxyConfig,
+                            final FeedStatusConfig feedStatusConfig,
+                            final Client jerseyClient,
+                            final DefaultOpenIdCredentials defaultOpenIdCredentials) {
         this.url = feedStatusConfig.getFeedStatusUrl();
-        this.apiKey = feedStatusConfig.getApiKey();
+
+        // Allows us to use hard-coded open id creds / token to authenticate with stroom
+        // out of the box. ONLY for use in test/demo environments.
+        if (proxyConfig.isUseDefaultOpenIdCredentials()) {
+            LOGGER.info("Using default authentication token, should only be used in test/demo environments.");
+            this.apiKey = Objects.requireNonNull(defaultOpenIdCredentials.getApiKey());
+        } else {
+            this.apiKey = feedStatusConfig.getApiKey();
+        }
 
         this.feedStatusWebTarget = jerseyClient
                 .target(url)
@@ -100,7 +114,7 @@ public class RemoteFeedStatusService implements FeedStatusService, HasHealthChec
         }
 
     private GetFeedStatusResponse sendRequest(final GetFeedStatusRequest request,
-                             final Function<Response, GetFeedStatusResponse> responseConsumer) {
+                                              final Function<Response, GetFeedStatusResponse> responseConsumer) {
         LOGGER.debug("Sending request {}", request);
         try {
             final Response response = feedStatusWebTarget
@@ -125,7 +139,7 @@ public class RemoteFeedStatusService implements FeedStatusService, HasHealthChec
     public HealthCheck.Result getHealth() {
         LOGGER.debug("getHealth called");
         final HealthCheck.ResultBuilder resultBuilder = HealthCheck.Result.builder();
-        resultBuilder.withDetail("url", url);
+        resultBuilder.withDetail("url", feedStatusWebTarget.getUri().toString());
 
         if (url == null || url.trim().length() == 0) {
             // If no url is configured then no feed status checking is required so we consider this healthy

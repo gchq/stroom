@@ -7,7 +7,7 @@ import stroom.authentication.account.Account;
 import stroom.authentication.account.AccountDao;
 import stroom.authentication.account.AccountService;
 import stroom.authentication.api.OIDC;
-import stroom.authentication.api.OpenIdClientDetails;
+import stroom.authentication.api.OpenIdClientDetailsFactory;
 import stroom.authentication.authenticate.api.AuthenticationService;
 import stroom.authentication.config.AuthenticationConfig;
 import stroom.authentication.config.PasswordIntegrityChecksConfig;
@@ -50,7 +50,7 @@ class AuthenticationServiceImpl implements AuthenticationService {
     private final AccountDao accountDao;
     private final AccountService accountService;
     private final SecurityContext securityContext;
-    private final OpenIdClientDetails openIdClientDetails;
+    private final OpenIdClientDetailsFactory openIdClientDetailsFactory;
 
     @Inject
     public AuthenticationServiceImpl(
@@ -61,7 +61,7 @@ class AuthenticationServiceImpl implements AuthenticationService {
             final AccountDao accountDao,
             final AccountService accountService,
             final SecurityContext securityContext,
-            final OpenIdClientDetails openIdClientDetails) {
+            final OpenIdClientDetailsFactory openIdClientDetailsFactory) {
         this.uriFactory = uriFactory;
         this.config = config;
         this.tokenService = tokenService;
@@ -69,7 +69,7 @@ class AuthenticationServiceImpl implements AuthenticationService {
         this.accountDao = accountDao;
         this.accountService = accountService;
         this.securityContext = securityContext;
-        this.openIdClientDetails = openIdClientDetails;
+        this.openIdClientDetailsFactory = openIdClientDetailsFactory;
     }
 
 //    @Override
@@ -340,7 +340,7 @@ class AuthenticationServiceImpl implements AuthenticationService {
 
     public boolean resetEmail(final String emailAddress) {
         final Account account = accountService.read(emailAddress).orElseThrow(() -> new RuntimeException("Account not found for email: " + emailAddress));
-        final Token token = tokenService.createResetEmailToken(account, openIdClientDetails.getClientId());
+        final Token token = tokenService.createResetEmailToken(account, openIdClientDetailsFactory.getOAuth2Client().getClientId());
         final String resetToken = token.getData();
         emailSender.send(emailAddress, account.getFirstName(), account.getLastName(), resetToken);
         return true;

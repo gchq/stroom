@@ -1,6 +1,6 @@
 package stroom.authentication.account;
 
-import stroom.authentication.api.OpenIdClientDetails;
+import stroom.authentication.api.OpenIdClientDetailsFactory;
 import stroom.authentication.token.Token;
 import stroom.authentication.token.TokenBuilder;
 import stroom.authentication.token.TokenBuilderFactory;
@@ -26,7 +26,7 @@ class ProcessingUserIdentityProviderImpl implements ProcessingUserIdentityProvid
     private final AccountDao accountDao;
     private final TokenDao tokenDao;
     private final TokenBuilderFactory tokenBuilderFactory;
-    private final OpenIdClientDetails openIdClientDetails;
+    private final OpenIdClientDetailsFactory openIdClientDetailsFactory;
 
     private volatile UserIdentity userIdentity;
 
@@ -34,11 +34,11 @@ class ProcessingUserIdentityProviderImpl implements ProcessingUserIdentityProvid
     ProcessingUserIdentityProviderImpl(final AccountDao accountDao,
                                        final TokenDao tokenDao,
                                        final TokenBuilderFactory tokenBuilderFactory,
-                                       final OpenIdClientDetails openIdClientDetails) {
+                                       final OpenIdClientDetailsFactory openIdClientDetailsFactory) {
         this.accountDao = accountDao;
         this.tokenDao = tokenDao;
         this.tokenBuilderFactory = tokenBuilderFactory;
-        this.openIdClientDetails = openIdClientDetails;
+        this.openIdClientDetailsFactory = openIdClientDetailsFactory;
     }
 
     @Override
@@ -98,7 +98,7 @@ class ProcessingUserIdentityProviderImpl implements ProcessingUserIdentityProvid
             final TokenBuilder tokenBuilder = tokenBuilderFactory
                     .expiryDateForApiKeys(timeToExpiryInSeconds)
                     .newBuilder(tokenType)
-                    .clientId(openIdClientDetails.getClientId())
+                    .clientId(openIdClientDetailsFactory.getOAuth2Client().getClientId())
                     .subject(INTERNAL_PROCESSING_USER);
 
             final Instant actualExpiryDate = tokenBuilder.getExpiryDate();
