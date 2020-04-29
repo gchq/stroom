@@ -6,6 +6,8 @@ and this project adheres to [Semantic Versioning](http://semver.org/).
 
 ## [Unreleased]
 
+* Issue **#1465** : Add default Open ID credentials to allow proxy to be able to authenticate out of the box.
+
 
 ## [v7.0-beta.27] - 2020-04-27
 
