@@ -5,12 +5,13 @@ import io.dropwizard.lifecycle.Managed;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import stroom.docref.DocRef;
-import stroom.importexport.api.ImportExportActionHandler;
 import stroom.importexport.api.DocumentData;
+import stroom.importexport.api.ImportExportActionHandler;
 import stroom.importexport.shared.ImportState;
 import stroom.importexport.shared.ImportState.ImportMode;
 import stroom.security.api.ClientSecurityUtil;
 import stroom.util.HasHealthCheck;
+import stroom.util.authentication.DefaultOpenIdCredentials;
 import stroom.util.logging.LogUtil;
 
 import javax.inject.Inject;
@@ -24,6 +25,7 @@ import javax.ws.rs.core.Response;
 import javax.ws.rs.core.Response.Status;
 import java.util.HashMap;
 import java.util.Map;
+import java.util.Objects;
 import java.util.Set;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.Executors;
@@ -34,20 +36,26 @@ import java.util.concurrent.atomic.AtomicBoolean;
 public class ContentSyncService implements Managed, HasHealthCheck {
     private static final Logger LOGGER = LoggerFactory.getLogger(ContentSyncService.class);
 
+    private final ProxyConfig proxyConfig;
     private final ContentSyncConfig contentSyncConfig;
+    private final DefaultOpenIdCredentials defaultOpenIdCredentials;
     private final Set<ImportExportActionHandler> importExportActionHandlers;
     private final Provider<Client> clientProvider;
 
     private volatile ScheduledExecutorService scheduledExecutorService;
 
     @Inject
-    public ContentSyncService(final ContentSyncConfig contentSyncConfig,
+    public ContentSyncService(final ProxyConfig proxyConfig,
+                              final ContentSyncConfig contentSyncConfig,
+                              final DefaultOpenIdCredentials defaultOpenIdCredentials,
                               final Set<ImportExportActionHandler> importExportActionHandlers,
                               final Provider<Client> clientProvider) {
         this.contentSyncConfig = contentSyncConfig;
         this.importExportActionHandlers = importExportActionHandlers;
         this.clientProvider = clientProvider;
+        this.proxyConfig = proxyConfig;
         contentSyncConfig.validateConfiguration();
+        this.defaultOpenIdCredentials = defaultOpenIdCredentials;
     }
 
     @Override
@@ -107,8 +115,20 @@ public class ContentSyncService implements Managed, HasHealthCheck {
         final Client client = clientProvider.get();
         final WebTarget webTarget = client.target(url).path(path);
         final Invocation.Builder invocationBuilder = webTarget.request(MediaType.APPLICATION_JSON);
-        ClientSecurityUtil.addAuthorisationHeader(invocationBuilder, contentSyncConfig.getApiKey());
+        ClientSecurityUtil.addAuthorisationHeader(invocationBuilder, getApiKey());
         return invocationBuilder;
+    }
+
+    private String getApiKey() {
+
+        // Allows us to use hard-coded open id creds / token to authenticate with stroom
+        // out of the box. ONLY for use in test/demo environments.
+        if (proxyConfig.isUseDefaultOpenIdCredentials()) {
+            LOGGER.info("Using default authentication token, should only be used in test/demo environments.");
+            return Objects.requireNonNull(defaultOpenIdCredentials.getApiKey());
+        } else {
+            return contentSyncConfig.getApiKey();
+        }
     }
 
     @Override

@@ -6,6 +6,8 @@ and this project adheres to [Semantic Versioning](http://semver.org/).
 
 ## [Unreleased]
 
+* Issue **#1465** : Add default Open ID credentials to allow proxy to be able to authenticate out of the box.
+
 * Issue **#1455** : Fix interactive search.
 
 * Issue **#1471** : Pipeline name not shown on processors/filters in UI.
@@ -13,6 +15,7 @@ and this project adheres to [Semantic Versioning](http://semver.org/).
 * Issue **#1491** : Download stream feature failing. 
 
 * Issue **#1433** : StandardKafkaProducer failed when writing XML kafka payloads. 
+
 
 ## [v7.0-beta.27] - 2020-04-27
 

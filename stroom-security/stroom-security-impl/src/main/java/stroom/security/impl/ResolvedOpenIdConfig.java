@@ -1,6 +1,6 @@
 package stroom.security.impl;
 
-import stroom.authentication.api.OpenIdClientDetails;
+import stroom.authentication.api.OpenIdClientDetailsFactory;
 import stroom.config.common.UriFactory;
 import stroom.util.shared.ResourcePaths;
 
@@ -19,15 +19,15 @@ public class ResolvedOpenIdConfig {
 
     private final UriFactory uriFactory;
     private final OpenIdConfig openIdConfig;
-    private final OpenIdClientDetails openIdClientDetails;
+    private final OpenIdClientDetailsFactory openIdClientDetailsFactory;
 
     @Inject
     public ResolvedOpenIdConfig(final UriFactory uriFactory,
                                 final OpenIdConfig openIdConfig,
-                                final OpenIdClientDetails openIdClientDetails) {
+                                final OpenIdClientDetailsFactory openIdClientDetailsFactory) {
         this.uriFactory = uriFactory;
         this.openIdConfig = openIdConfig;
-        this.openIdClientDetails = openIdClientDetails;
+        this.openIdClientDetailsFactory = openIdClientDetailsFactory;
     }
 
     public String getIssuer() {
@@ -61,14 +61,14 @@ public class ResolvedOpenIdConfig {
 
     public String getClientId() {
         if (openIdConfig.isUseInternal()) {
-            return openIdClientDetails.getClientId();
+            return openIdClientDetailsFactory.getOAuth2Client().getClientId();
         }
         return openIdConfig.getClientId();
     }
 
     public String getClientSecret() {
         if (openIdConfig.isUseInternal()) {
-            return openIdClientDetails.getClientSecret();
+            return openIdClientDetailsFactory.getOAuth2Client().getClientSecret();
         }
         return openIdConfig.getClientSecret();
     }

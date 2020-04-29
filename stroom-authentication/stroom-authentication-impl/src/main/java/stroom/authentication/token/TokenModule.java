@@ -17,6 +17,7 @@
 package stroom.authentication.token;
 
 import com.google.inject.AbstractModule;
+import stroom.authentication.api.JsonWebKeyFactory;
 import stroom.util.guice.GuiceUtil;
 import stroom.util.shared.RestResource;
 
@@ -25,6 +26,7 @@ public final class TokenModule extends AbstractModule {
     protected void configure() {
         bind(TokenService.class).to(TokenServiceImpl.class);
         bind(TokenEventLog.class).to(TokenEventLogImpl.class);
+        bind(JsonWebKeyFactory.class).to(JsonWebKeyFactoryImpl.class);
 
         GuiceUtil.buildMultiBinder(binder(), RestResource.class)
                 .addBinding(TokenResourceImpl.class);

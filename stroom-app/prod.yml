@@ -10,15 +10,15 @@ server:
 
   requestLog:
     appenders:
-      - type: file
-        currentLogFilename: logs/access/access.log
-        threshold: ALL
-        queueSize: 256
-        discardingThreshold: 0
-        archive: true
-        archivedLogFilenamePattern: logs/access/access-%d{yyyy-MM-dd'T'HH:mm}.log
-        archivedFileCount: 100
-        timeZone: UTC
+    - type: file
+      currentLogFilename: logs/access/access.log
+      threshold: ALL
+      queueSize: 256
+      discardingThreshold: 0
+      archive: true
+      archivedLogFilenamePattern: logs/access/access-%d{yyyy-MM-dd'T'HH:mm}.log.gz
+      archivedFileCount: 100
+      timeZone: UTC
 
 logging:
   level: ${STROOM_LOGGING_LEVEL:- WARN}
@@ -28,7 +28,7 @@ logging:
     org.eclipse.jetty: INFO
     org.glassfish: INFO
     org.glassfish.jersey: INFO
-    #    org.glassfish.jersey.logging.LoggingFeature: INFO
+    org.glassfish.jersey.logging.LoggingFeature: "OFF"
     #    org.glassfish.jersey.server.ServerRuntime.Responder: INFO
     #    org.glassfish.jersey.server.validation.internal.ValidationExceptionMapper: FINER
     org.flywaydb: INFO
@@ -68,6 +68,7 @@ logging:
     # Comment out for non-dockered environments
   - type: console
     logFormat: "%highlight(%-6level) [%d{\"yyyy-MM-dd'T'HH:mm:ss.SSS'Z'\",UTC}] [%green(%t)] %cyan(%logger) - %X{code} %msg %n"
+    timeZone: UTC
 
     # Minute rolled files for stroom/datafeed, will be curl'd/deleted by stroom-log-sender
   - type: file
@@ -97,10 +98,8 @@ logging:
     #    logFormat: "%-6level [%d{\"yyyy-MM-dd\",UTC}] [%t] %logger - %X{code} %msg %n"
 
 appConfig:
-  nodeUri:
-    hostname: ${STROOM_HOST:-localhost}
-  publicUri:
-    hostname: ${API_GATEWAY_HOST:-localhost}
+  authentication:
+    useDefaultOpenIdCredentials: ${USE_DEFAULT_OPEN_ID_CREDENTIALS:-true}
   commonDbDetails:
     connection:
       jdbcDriverClassName: ${STROOM_JDBC_DRIVER_CLASS_NAME:-com.mysql.cj.jdbc.Driver}
@@ -114,8 +113,12 @@ appConfig:
     executionInterval: "10s"
   node:
     name: ${STROOM_NODE:-node1a}
+  nodeUri:
+    hostname: ${STROOM_HOST:-localhost}
   path:
     temp: "/tmp/stroom"
+  publicUri:
+    hostname: ${API_GATEWAY_HOST:-localhost}
   security:
     authentication:
       preventLogin: false
