@@ -6,6 +6,8 @@ and this project adheres to [Semantic Versioning](http://semver.org/).
 
 ## [Unreleased]
 
+* Issue **#1447** : Fix SQL stat queries failing due to null identity.
+
 
 ## [v7.0-beta.28] - 2020-04-29
 
