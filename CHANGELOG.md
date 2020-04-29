@@ -8,6 +8,8 @@ and this project adheres to [Semantic Versioning](http://semver.org/).
 
 * Issue **#1503** : Fixed Dashboard serialisation and JSON template.
 
+* Issue **#1479** : Unable to set index volume limits.
+
 
 ## [v7.0-beta.28] - 2020-04-29
 
