@@ -6,8 +6,17 @@ and this project adheres to [Semantic Versioning](http://semver.org/).
 
 ## [Unreleased]
 
+* Issue **#1455** : Fix interactive search.
+
+* Issue **#1471** : Pipeline name not shown on processors/filters in UI.
+
+* Issue **#1491** : Download stream feature failing. 
+
+* Issue **#1433** : StandardKafkaProducer failed when writing XML kafka payloads. 
 
 ## [v7.0-beta.27] - 2020-04-27
+
+* Issue **#1417** : Allow processor filters to be exported with Pipelines. 
 
 * Issue **#1480** : Index settings now shows index volume groups and allows selection. 
 
@@ -73,6 +82,8 @@ and this project adheres to [Semantic Versioning](http://semver.org/).
 ## [v7.0-beta.22] - 2020-03-10
 
 * Brought stroom-auth-service into stroom
+
+* Issue **#563** : Kafka producer improvements - StandardKafkaProducer
 
 * Issue **#1399** : Removed error logging for expected exceptions in TaskExecutor. 
 
