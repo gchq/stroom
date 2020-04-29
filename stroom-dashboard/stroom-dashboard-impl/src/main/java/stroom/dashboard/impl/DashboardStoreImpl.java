@@ -17,6 +17,8 @@
 
 package stroom.dashboard.impl;
 
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import stroom.dashboard.shared.DashboardConfig;
 import stroom.dashboard.shared.DashboardDoc;
 import stroom.docref.DocRef;
@@ -29,8 +31,6 @@ import stroom.importexport.migration.LegacyXMLSerialiser;
 import stroom.importexport.shared.ImportState;
 import stroom.importexport.shared.ImportState.ImportMode;
 import stroom.security.api.SecurityContext;
-import stroom.util.io.CloseableUtil;
-import stroom.util.io.StreamUtil;
 import stroom.util.shared.Message;
 import stroom.util.shared.Severity;
 
@@ -46,6 +46,8 @@ import java.util.UUID;
 
 @Singleton
 class DashboardStoreImpl implements DashboardStore {
+    private static final Logger LOGGER = LoggerFactory.getLogger(DashboardStoreImpl.class);
+
     private final Store<DashboardDoc> store;
     private final SecurityContext securityContext;
     private final DashboardSerialiser serialiser;
@@ -63,10 +65,12 @@ class DashboardStoreImpl implements DashboardStore {
 
     private DashboardConfig getTemplate() {
         if (template == null) {
-            final InputStream is = getClass().getResourceAsStream("DashboardTemplate.data.xml");
-            final String xml = StreamUtil.streamToString(is);
-            template = serialiser.getDashboardConfigFromLegacyXML(xml);
-            CloseableUtil.closeLogAndIgnoreException(is);
+            try (final InputStream is = getClass().getResourceAsStream("DashboardTemplate.json")) {
+                final byte[] bytes = is.readAllBytes();
+                template = serialiser.getDashboardConfigFromJson(bytes);
+            } catch (final IOException e) {
+                LOGGER.error("Error reading dashboard template from file", e);
+            }
         }
         return template;
     }

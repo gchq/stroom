@@ -20,7 +20,6 @@ import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.fasterxml.jackson.annotation.JsonSubTypes;
 import com.fasterxml.jackson.annotation.JsonTypeInfo;
 
-
 import javax.xml.bind.annotation.XmlAccessType;
 import javax.xml.bind.annotation.XmlAccessorType;
 import javax.xml.bind.annotation.XmlSeeAlso;
@@ -42,8 +41,6 @@ public abstract class LayoutConfig {
     private transient SplitLayoutConfig parent;
 
     public abstract Size getPreferredSize();
-
-    public abstract void setPreferredSize(Size preferredSize);
 
     @JsonIgnore
     public SplitLayoutConfig getParent() {
