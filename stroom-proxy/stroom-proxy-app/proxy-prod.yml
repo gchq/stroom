@@ -61,7 +61,7 @@ logging:
     # stdout for docker
     # Comment out for non-dockered environments
   - type: console
-    logFormat: "%highlight(%-5level) [%d{\"yyyy-MM-dd'T'HH:mm:ss.SSS'Z'\",UTC}] [%thread] %-20logger{0} %gray(%msg) %n"
+    logFormat: "%highlight(%-6level) [%d{\"yyyy-MM-dd'T'HH:mm:ss.SSS'Z'\",UTC}] [%green(%t)] %cyan(%logger) - %X{code} %msg %n"
     timeZone: UTC
     # Minute rolled files for stroom/datafeed, will be curl'd/deleted by stroom-log-sender
   - type: file
