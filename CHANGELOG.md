@@ -6,6 +6,7 @@ and this project adheres to [Semantic Versioning](http://semver.org/).
 
 ## [Unreleased]
 
+* Issue **#1479** : Unable to set index volume limits.
 
 ## [v7.0-beta.28] - 2020-04-29
 
