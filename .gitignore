@@ -33,6 +33,7 @@ local3.yml*
 */out/
 *.iml
 .idea/*
+!/.idea/codeStyles
 !/.idea/runConfigurations
 # END OF IntelliJ
 
