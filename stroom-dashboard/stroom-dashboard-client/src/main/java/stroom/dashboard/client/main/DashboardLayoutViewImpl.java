@@ -35,6 +35,7 @@ import stroom.dashboard.shared.TabConfig;
 public class DashboardLayoutViewImpl extends ViewImpl implements DashboardLayoutView {
     private static Resources resources;
     private final Widget widget;
+
     @UiField
     FlexLayout layout;
 

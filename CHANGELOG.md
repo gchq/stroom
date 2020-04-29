@@ -8,8 +8,14 @@ and this project adheres to [Semantic Versioning](http://semver.org/).
 
 * Issue **#1495** : Speculative fix for missing swagger.json file in the fat jar.
 
+* Issue **#1503** : Fixed Dashboard serialisation and JSON template.
+
+* Issue **#1479** : Unable to set index volume limits.
+
 
 ## [v7.0-beta.28] - 2020-04-29
+
+* Issue **#1489** : Reprocess streams feature failing.
 
 * Issue **#1465** : Add default Open ID credentials to allow proxy to be able to authenticate out of the box.
 
