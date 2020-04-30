@@ -1,13 +1,14 @@
 package stroom.statistics.impl;
 
-import com.fasterxml.jackson.annotation.JsonIgnore;
-import com.fasterxml.jackson.annotation.JsonProperty;
-import com.google.common.base.Preconditions;
 import stroom.docref.DocRef;
 import stroom.statistics.api.InternalStatisticKey;
 import stroom.statistics.impl.hbase.shared.StroomStatsStoreDoc;
 import stroom.statistics.impl.sql.shared.StatisticStoreDoc;
 import stroom.util.shared.AbstractConfig;
+
+import com.fasterxml.jackson.annotation.JsonIgnore;
+import com.fasterxml.jackson.annotation.JsonProperty;
+import com.google.common.base.Preconditions;
 
 import javax.inject.Singleton;
 import java.util.EnumMap;
@@ -27,28 +28,40 @@ public class InternalStatisticsConfig extends AbstractConfig {
     private static void populateGetterMap() {
         // A set of mappings from the internal stat key to the getter to get the docRefs for it.
         // Each InternalStatisticKey must have a corresponding getter in this class
+        // i.e "Stream Task Queue Size" => getStreamTaskQueueSizeDocRefs()
         KEY_TO_DOC_REFS_GETTER_MAP.put(
-                InternalStatisticKey.BENCHMARK_CLUSTER, InternalStatisticsConfig::getBenchmarkClusterDocRefs);
+                InternalStatisticKey.BENCHMARK_CLUSTER,
+                InternalStatisticsConfig::getBenchmarkClusterDocRefs);
         KEY_TO_DOC_REFS_GETTER_MAP.put(
-                InternalStatisticKey.CPU, InternalStatisticsConfig::getCpuDocRefs);
+                InternalStatisticKey.CPU,
+                InternalStatisticsConfig::getCpuDocRefs);
         KEY_TO_DOC_REFS_GETTER_MAP.put(
-                InternalStatisticKey.EVENTS_PER_SECOND, InternalStatisticsConfig::getEventsPerSecondDocRefs);
+                InternalStatisticKey.EVENTS_PER_SECOND,
+                InternalStatisticsConfig::getEventsPerSecondDocRefs);
         KEY_TO_DOC_REFS_GETTER_MAP.put(
-                InternalStatisticKey.HEAP_HISTOGRAM_BYTES, InternalStatisticsConfig::getHeapHistogramBytesDocRefs);
+                InternalStatisticKey.HEAP_HISTOGRAM_BYTES,
+                InternalStatisticsConfig::getHeapHistogramBytesDocRefs);
         KEY_TO_DOC_REFS_GETTER_MAP.put(
-                InternalStatisticKey.HEAP_HISTOGRAM_INSTANCES, InternalStatisticsConfig::getHeapHistogramInstancesDocRefs);
+                InternalStatisticKey.HEAP_HISTOGRAM_INSTANCES,
+                InternalStatisticsConfig::getHeapHistogramInstancesDocRefs);
         KEY_TO_DOC_REFS_GETTER_MAP.put(
-                InternalStatisticKey.MEMORY, InternalStatisticsConfig::getMemoryDocRefs);
+                InternalStatisticKey.MEMORY,
+                InternalStatisticsConfig::getMemoryDocRefs);
         KEY_TO_DOC_REFS_GETTER_MAP.put(
-                InternalStatisticKey.METADATA_STREAM_SIZE, InternalStatisticsConfig::getMetaDataStreamSizeDocRefs);
+                InternalStatisticKey.METADATA_STREAM_SIZE,
+                InternalStatisticsConfig::getMetaDataStreamSizeDocRefs);
         KEY_TO_DOC_REFS_GETTER_MAP.put(
-                InternalStatisticKey.METADATA_STREAMS_RECEIVED, InternalStatisticsConfig::getMetaDataStreamsReceivedDocRefs);
+                InternalStatisticKey.METADATA_STREAMS_RECEIVED,
+                InternalStatisticsConfig::getMetaDataStreamsReceivedDocRefs);
         KEY_TO_DOC_REFS_GETTER_MAP.put(
-                InternalStatisticKey.PIPELINE_STREAM_PROCESSOR, InternalStatisticsConfig::getPipelineStreamProcessorDocRefs);
+                InternalStatisticKey.PIPELINE_STREAM_PROCESSOR,
+                InternalStatisticsConfig::getPipelineStreamProcessorDocRefs);
         KEY_TO_DOC_REFS_GETTER_MAP.put(
-                InternalStatisticKey.STREAM_TASK_QUEUE_SIZE, InternalStatisticsConfig::getStreamTaskQueueSizeDocRefs);
+                InternalStatisticKey.STREAM_TASK_QUEUE_SIZE,
+                InternalStatisticsConfig::getStreamTaskQueueSizeDocRefs);
         KEY_TO_DOC_REFS_GETTER_MAP.put(
-                InternalStatisticKey.VOLUMES, InternalStatisticsConfig::getVolumesDocRefs);
+                InternalStatisticKey.VOLUMES,
+                InternalStatisticsConfig::getVolumesDocRefs);
     }
 
     private List<DocRef> benchmarkClusterDocRefs;
@@ -65,7 +78,6 @@ public class InternalStatisticsConfig extends AbstractConfig {
 
     public InternalStatisticsConfig() {
         // Assign the default docrefs for all the internal stats
-
 
         benchmarkClusterDocRefs = List.of(
                 new DocRef(
@@ -183,7 +195,7 @@ public class InternalStatisticsConfig extends AbstractConfig {
      * Get the list of DocRefs that correspond to a particular key
      */
     @JsonIgnore
-    public List<DocRef> get(final InternalStatisticKey internalStatisticKey) {
+    public List<DocRef> getDocRefs(final InternalStatisticKey internalStatisticKey) {
         Function<InternalStatisticsConfig, List<DocRef>> func = KEY_TO_DOC_REFS_GETTER_MAP.get(internalStatisticKey);
         Preconditions.checkNotNull(func, "Key %s is not known", internalStatisticKey);
         return func.apply(this);

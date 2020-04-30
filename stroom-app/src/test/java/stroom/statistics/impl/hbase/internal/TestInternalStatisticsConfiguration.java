@@ -36,7 +36,7 @@ class TestInternalStatisticsConfiguration extends AbstractCoreIntegrationTest {
 
         Arrays.stream(InternalStatisticKey.values()).forEach(key -> {
             LOGGER.info("Checking docRefs for key {}", key);
-            List<DocRef> docRefs = internalStatisticsConfig.get(key);
+            List<DocRef> docRefs = internalStatisticsConfig.getDocRefs(key);
 
             assertThat(docRefs).isNotNull();
             assertThat(docRefs).hasSize(2);
