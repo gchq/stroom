@@ -264,7 +264,6 @@ public class ProcessorFilter implements HasAuditInfo, HasUuid {
         this.processorFilterTracker = processorFilterTracker;
     }
 
-    @XmlTransient
     public QueryData getQueryData() {
         return queryData;
     }
