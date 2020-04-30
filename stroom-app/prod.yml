@@ -125,5 +125,10 @@ appConfig:
   serviceDiscovery:
     enabled: ${STROOM_SERVICE_DISCOVERY_ENABLED:-false}
     zookeeperUrl: ${STROOM_SERVICE_DISCOVERY_ZOOKEEPER_URL:-localhost:2181}
+  statistics:
+    hbase:
+      kafkaConfigUuid:
+    internal:
+      enabledStoreTypes: ${STROOM_ENABLED_STAT_STORE_TYPES:-[ "StatisticStore" ]}
   volumes:
     createDefaultOnStart: false
