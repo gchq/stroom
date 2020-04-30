@@ -45,7 +45,7 @@ public class Selection<T> implements Iterable<T>, Copyable<Selection<T>>, Matche
     }
 
     public static <T> Selection<T> selectNone() {
-        return new Selection<>(true, new HashSet<>());
+        return new Selection<>(false, new HashSet<>());
     }
 
     @JsonCreator
