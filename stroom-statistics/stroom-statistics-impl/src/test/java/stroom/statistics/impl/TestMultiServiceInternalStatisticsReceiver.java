@@ -63,15 +63,15 @@ class TestMultiServiceInternalStatisticsReceiver {
     void putEvents() {
 
         //keyA has a docRef for both services
-        Mockito.when(internalStatisticsConfig.getDocRefs(Mockito.eq(STAT_KEY_A)))
+        Mockito.when(internalStatisticsConfig.getEnabledDocRefs(Mockito.eq(STAT_KEY_A)))
                 .thenReturn(Arrays.asList(DOC_REF_A1, DOC_REF_A2));
-        assertThat(internalStatisticsConfig.getDocRefs(STAT_KEY_A))
+        assertThat(internalStatisticsConfig.getEnabledDocRefs(STAT_KEY_A))
                 .containsExactly(DOC_REF_A1, DOC_REF_A2);
 
         //keyB only has a docref for service1
-        Mockito.when(internalStatisticsConfig.getDocRefs(Mockito.eq(STAT_KEY_B)))
+        Mockito.when(internalStatisticsConfig.getEnabledDocRefs(Mockito.eq(STAT_KEY_B)))
                 .thenReturn(Arrays.asList(DOC_REF_B1));
-        assertThat(internalStatisticsConfig.getDocRefs(STAT_KEY_B))
+        assertThat(internalStatisticsConfig.getEnabledDocRefs(STAT_KEY_B))
                 .containsExactly(DOC_REF_B1);
 
         //service1 supports docRefType1, etc.

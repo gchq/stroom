@@ -17,12 +17,12 @@
 
 package stroom.core.dataprocess;
 
-import com.google.common.collect.ImmutableMap;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
-import org.slf4j.MarkerFactory;
 import stroom.data.shared.StreamTypeNames;
-import stroom.data.store.api.*;
+import stroom.data.store.api.InputStreamProvider;
+import stroom.data.store.api.SegmentInputStream;
+import stroom.data.store.api.Source;
+import stroom.data.store.api.Store;
+import stroom.data.store.api.Target;
 import stroom.docref.DocRef;
 import stroom.docstore.shared.DocRefUtil;
 import stroom.feed.api.FeedProperties;
@@ -30,7 +30,11 @@ import stroom.meta.api.AttributeMap;
 import stroom.meta.api.MetaProperties;
 import stroom.meta.shared.Meta;
 import stroom.node.api.NodeInfo;
-import stroom.pipeline.*;
+import stroom.pipeline.DefaultErrorWriter;
+import stroom.pipeline.ErrorWriterProxy;
+import stroom.pipeline.LocationFactoryProxy;
+import stroom.pipeline.PipelineStore;
+import stroom.pipeline.StreamLocationFactory;
 import stroom.pipeline.destination.Destination;
 import stroom.pipeline.destination.DestinationProvider;
 import stroom.pipeline.errorhandler.ErrorReceiverProxy;
@@ -43,7 +47,14 @@ import stroom.pipeline.factory.PipelineDataCache;
 import stroom.pipeline.factory.PipelineFactory;
 import stroom.pipeline.shared.PipelineDoc;
 import stroom.pipeline.shared.data.PipelineData;
-import stroom.pipeline.state.*;
+import stroom.pipeline.state.FeedHolder;
+import stroom.pipeline.state.MetaData;
+import stroom.pipeline.state.MetaDataHolder;
+import stroom.pipeline.state.MetaHolder;
+import stroom.pipeline.state.PipelineHolder;
+import stroom.pipeline.state.RecordCount;
+import stroom.pipeline.state.SearchIdHolder;
+import stroom.pipeline.state.StreamProcessorHolder;
 import stroom.pipeline.task.ProcessStatisticsFactory;
 import stroom.pipeline.task.ProcessStatisticsFactory.ProcessStatistics;
 import stroom.pipeline.task.StreamMetaDataProvider;
@@ -65,6 +76,11 @@ import stroom.util.io.PreviewInputStream;
 import stroom.util.io.WrappedOutputStream;
 import stroom.util.shared.ModelStringUtil;
 import stroom.util.shared.Severity;
+
+import com.google.common.collect.ImmutableMap;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+import org.slf4j.MarkerFactory;
 
 import javax.inject.Inject;
 import java.io.IOException;
@@ -290,7 +306,7 @@ public class PipelineDataProcessorTaskExecutor implements DataProcessorTaskExecu
 
     private void recordStats(final String feedName, final PipelineDoc pipelineDoc) {
         try {
-            InternalStatisticEvent event = InternalStatisticEvent.createPlusOneCountStat(
+            final InternalStatisticEvent event = InternalStatisticEvent.createPlusOneCountStat(
                     InternalStatisticKey.PIPELINE_STREAM_PROCESSOR,
                     System.currentTimeMillis(),
                     ImmutableMap.of(
