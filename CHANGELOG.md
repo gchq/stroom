@@ -8,6 +8,12 @@ and this project adheres to [Semantic Versioning](http://semver.org/).
 
 * Issue **#1500** : Fixed data delete/restore behaviour.
 
+* Issue **#1515** : Fix proxyDir default when running in a stack.
+
+* Issue **#1509** : Unable to update processor filter.
+
+* Issue **#1495** : Speculative fix for missing swagger.json file in the fat jar.
+
 * Issue **#1503** : Fixed Dashboard serialisation and JSON template.
 
 * Issue **#1479** : Unable to set index volume limits.
