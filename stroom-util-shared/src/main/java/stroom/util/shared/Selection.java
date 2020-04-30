@@ -40,8 +40,12 @@ public class Selection<T> implements Iterable<T>, Copyable<Selection<T>>, Matche
     @JsonProperty
     private Set<T> set;
 
-    public Selection() {
-        this(true, new HashSet<>());
+    public static <T> Selection<T> selectAll() {
+        return new Selection<>(true, new HashSet<>());
+    }
+
+    public static <T> Selection<T> selectNone() {
+        return new Selection<>(true, new HashSet<>());
     }
 
     @JsonCreator
@@ -71,7 +75,6 @@ public class Selection<T> implements Iterable<T>, Copyable<Selection<T>>, Matche
 //    }
 
     @Override
-    @JsonIgnore
     public boolean isMatch(final T item) {
         if (matchAll) {
             return true;
@@ -84,7 +87,7 @@ public class Selection<T> implements Iterable<T>, Copyable<Selection<T>>, Matche
             return null;
         }
 
-        final Selection<OUT> out = new Selection<>();
+        final Selection<OUT> out = Selection.selectNone();
         out.matchAll = in.matchAll;
         if (in.set != null) {
             out.set = in.set.stream().map(converter).collect(Collectors.toSet());
@@ -104,21 +107,12 @@ public class Selection<T> implements Iterable<T>, Copyable<Selection<T>>, Matche
         if (id == null) {
             throw new IllegalArgumentException("CriteriaSet does not allow adding null - use setMatchNull if required");
         }
+        matchAll = false;
         set.add(id);
     }
 
-//    @JsonIgnore
-//    public T getSingleItem() {
-//        if (!isConstrained()) {
-//            return null;
-//        }
-//        if (set == null || set.size() != 1) {
-//            return null;
-//        }
-//        return set.iterator().next();
-//    }
-
     public void addAll(final Collection<T> set) {
+        matchAll = false;
         this.set.addAll(set);
     }
 

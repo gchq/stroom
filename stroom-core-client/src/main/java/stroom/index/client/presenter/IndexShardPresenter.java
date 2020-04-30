@@ -16,14 +16,6 @@
 
 package stroom.index.client.presenter;
 
-import com.google.gwt.cell.client.TextCell;
-import com.google.gwt.core.shared.GWT;
-import com.google.gwt.dom.client.NativeEvent;
-import com.google.gwt.user.cellview.client.Column;
-import com.google.gwt.user.cellview.client.Header;
-import com.google.inject.Inject;
-import com.google.web.bindery.event.shared.EventBus;
-import com.gwtplatform.mvp.client.MyPresenterWidget;
 import stroom.alert.client.event.AlertEvent;
 import stroom.alert.client.event.ConfirmEvent;
 import stroom.cell.info.client.InfoColumn;
@@ -59,6 +51,15 @@ import stroom.widget.popup.client.presenter.PopupView.PopupType;
 import stroom.widget.tooltip.client.presenter.TooltipPresenter;
 import stroom.widget.tooltip.client.presenter.TooltipUtil;
 
+import com.google.gwt.cell.client.TextCell;
+import com.google.gwt.core.shared.GWT;
+import com.google.gwt.dom.client.NativeEvent;
+import com.google.gwt.user.cellview.client.Column;
+import com.google.gwt.user.cellview.client.Header;
+import com.google.inject.Inject;
+import com.google.web.bindery.event.shared.EventBus;
+import com.gwtplatform.mvp.client.MyPresenterWidget;
+
 import java.util.HashSet;
 import java.util.Set;
 import java.util.function.Consumer;
@@ -73,8 +74,8 @@ public class IndexShardPresenter extends MyPresenterWidget<DataGridView<IndexSha
     private final ClientSecurityContext securityContext;
     private RestDataProvider<IndexShard, ResultPage<IndexShard>> dataProvider;
     private ResultPage<IndexShard> resultList = null;
-    private final FindIndexShardCriteria selectionCriteria = new FindIndexShardCriteria();
-    private final FindIndexShardCriteria queryCriteria = new FindIndexShardCriteria();
+    private final FindIndexShardCriteria selectionCriteria = FindIndexShardCriteria.matchNone();
+    private final FindIndexShardCriteria queryCriteria = FindIndexShardCriteria.matchNone();
 
     private ButtonView buttonFlush;
     private ButtonView buttonDelete;

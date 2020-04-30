@@ -16,7 +16,6 @@
 
 package stroom.processor.impl;
 
-import com.google.common.base.Strings;
 import stroom.docref.DocRef;
 import stroom.docref.DocRefInfo;
 import stroom.entity.shared.ExpressionCriteria;
@@ -52,10 +51,12 @@ import stroom.security.shared.PermissionNames;
 import stroom.util.AuditUtil;
 import stroom.util.logging.LambdaLogger;
 import stroom.util.logging.LambdaLoggerFactory;
-import stroom.util.shared.Selection;
 import stroom.util.shared.Expander;
 import stroom.util.shared.ResultPage;
+import stroom.util.shared.Selection;
 import stroom.util.shared.Severity;
+
+import com.google.common.base.Strings;
 
 import javax.inject.Inject;
 import javax.inject.Singleton;
@@ -125,7 +126,7 @@ class ProcessorFilterServiceImpl implements ProcessorFilterService {
     public ProcessorFilter create(final Processor processor,
                                   final QueryData queryData,
                                   final int priority,
-                                  final boolean enabled){
+                                  final boolean enabled) {
         return create(processor, queryData, priority, enabled, null);
     }
 
@@ -176,7 +177,7 @@ class ProcessorFilterServiceImpl implements ProcessorFilterService {
 
         final Long currentStreamId = metaService.getMaxDataIdWithCreationBeforePeriod(trackerStartMs);
         final Long startStreamId;
-        if (currentStreamId != null){
+        if (currentStreamId != null) {
             startStreamId = currentStreamId + 1L;
         } else {
             startStreamId = null;
@@ -350,15 +351,15 @@ class ProcessorFilterServiceImpl implements ProcessorFilterService {
 
             for (final Processor processor : sorted) {
                 final Expander processorExpander = new Expander(0, false, false);
-                if (processor.getPipelineName() == null && processor.getPipelineUuid() != null){
+                if (processor.getPipelineName() == null && processor.getPipelineUuid() != null) {
                     try {
                         PipelineDoc pipeline = pipelineStore.find(new DocRef(PipelineDoc.DOCUMENT_TYPE, processor.getPipelineUuid()));
                         if (pipeline != null) {
                             processor.setPipelineName(pipeline.getName());
                         }
-                    }catch (RuntimeException ex){
+                    } catch (RuntimeException ex) {
                         LOGGER.warn("Unable to find Pipeline " + processor.getPipelineUuid() +
-                                " associated with Processor " + processor.getUuid() + " (id: " + processor.getId() +")" +
+                                " associated with Processor " + processor.getUuid() + " (id: " + processor.getId() + ")" +
                                 " Has it been deleted?");
                     }
                 }
@@ -380,7 +381,7 @@ class ProcessorFilterServiceImpl implements ProcessorFilterService {
                             }
 
                             ProcessorFilter filter = processorFilter;
-                            if (filter.getPipelineName() == null){
+                            if (filter.getPipelineName() == null) {
                                 if (processor.getPipelineName() != null) {
                                     filter.setPipelineName(processor.getPipelineName());
                                 } else {
@@ -415,7 +416,7 @@ class ProcessorFilterServiceImpl implements ProcessorFilterService {
             throw new IllegalArgumentException("Supplied pipeline docref cannot be null");
 
         if (!PipelineDoc.DOCUMENT_TYPE.equals(pipelineDocRef.getType()))
-            throw new IllegalArgumentException("Supplied pipeline docref cannot be of type " + pipelineDocRef.getType() );
+            throw new IllegalArgumentException("Supplied pipeline docref cannot be of type " + pipelineDocRef.getType());
 
         //First try to find the associated processors
         final ExpressionOperator processorExpression = new ExpressionOperator.Builder()
@@ -426,7 +427,7 @@ class ProcessorFilterServiceImpl implements ProcessorFilterService {
 
         ArrayList<ProcessorFilter> filters = new ArrayList<>();
         //Now find all the processor filters
-        for (Processor processor : processorResultPage.getValues()){
+        for (Processor processor : processorResultPage.getValues()) {
             final ExpressionOperator filterExpression = new ExpressionOperator.Builder()
                     .addTerm(ProcessorFilterDataSource.PROCESSOR_ID, ExpressionTerm.Condition.EQUALS, processor.getId()).build();
             ResultPage<ProcessorFilter> filterResultPage = find(new ExpressionCriteria(processorExpression));
@@ -507,7 +508,7 @@ class ProcessorFilterServiceImpl implements ProcessorFilterService {
                                     .build());
 //                            findProcessorCriteria.obtainPipelineUuidCriteria().setString(meta.getPipelineUuid());
                             final Processor processor = processorService.find(findProcessorCriteria).getFirst();
-                            streamToProcessorSet.computeIfAbsent(processor, k -> new Selection<>()).add(meta.getParentMetaId());
+                            streamToProcessorSet.computeIfAbsent(processor, k -> Selection.selectNone()).add(meta.getParentMetaId());
                         } else {
                             skippingCount++;
                         }

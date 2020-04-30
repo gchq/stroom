@@ -147,7 +147,7 @@ public class FsVolumeDaoImpl implements FsVolumeDao {
     }
 
     private Optional<Condition> volumeStatusCriteriaSetToCondition(final TableField<FsVolumeRecord, Byte> field, final Selection<VolumeUseStatus> selection) {
-        final Selection<Byte> set = new Selection<>();
+        final Selection<Byte> set = Selection.selectNone();
         set.setMatchAll(selection.isMatchAll());
         set.setSet(selection.getSet().stream().map(VolumeUseStatus::getPrimitiveValue).collect(Collectors.toSet()));
         return JooqUtil.getSetCondition(field, set);

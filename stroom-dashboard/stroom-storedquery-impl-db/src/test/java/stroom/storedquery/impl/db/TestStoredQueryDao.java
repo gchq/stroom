@@ -141,8 +141,10 @@ class TestStoredQueryDao {
                 "      \"type\" : \"term\",\n" +
                 "      \"field\" : \"Some field\",\n" +
                 "      \"condition\" : \"EQUALS\",\n" +
-                "      \"value\" : \"Some value\"\n" +
-                "    } ]\n" +
+                "      \"value\" : \"Some value\",\n" +
+                "      \"enabled\" : true\n" +
+                "    } ],\n" +
+                "    \"enabled\" : true\n" +
                 "  }\n" +
                 "}";
         assertThat(actual).isEqualTo(expected);

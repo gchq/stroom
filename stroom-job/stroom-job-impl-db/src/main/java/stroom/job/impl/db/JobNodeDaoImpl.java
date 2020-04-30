@@ -138,7 +138,7 @@ public class JobNodeDaoImpl implements JobNodeDao, HasIntCrud<JobNode> {
                 JooqUtil.getStringCondition(JOB.NAME, criteria.getJobName()),
                 JooqUtil.getStringCondition(JOB_NODE.NODE_NAME, criteria.getNodeName()));
 
-        final OrderField<?>[] orderFields = JooqUtil.getOrderFields(FIELD_MAP, criteria);
+        final Collection<OrderField<?>> orderFields = JooqUtil.getOrderFields(FIELD_MAP, criteria);
 
         final List<JobNode> list = JooqUtil.contextResult(jobDbConnProvider, context -> context
                 .select()

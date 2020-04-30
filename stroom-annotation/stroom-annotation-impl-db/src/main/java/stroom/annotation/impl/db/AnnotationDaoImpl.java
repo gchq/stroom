@@ -1,13 +1,5 @@
 package stroom.annotation.impl.db;
 
-import org.jooq.Condition;
-import org.jooq.Cursor;
-import org.jooq.Field;
-import org.jooq.OrderField;
-import org.jooq.Record;
-import org.jooq.Result;
-import org.jooq.SelectJoinStep;
-import org.jooq.impl.DSL;
 import stroom.annotation.api.AnnotationDataSource;
 import stroom.annotation.impl.AnnotationDao;
 import stroom.annotation.impl.db.jooq.tables.records.AnnotationRecord;
@@ -31,17 +23,28 @@ import stroom.db.util.ValueMapper;
 import stroom.db.util.ValueMapper.Mapper;
 import stroom.entity.shared.ExpressionCriteria;
 import stroom.query.api.v2.ExpressionOperator;
-import stroom.util.shared.PageRequest;
-import stroom.util.shared.Sort;
 import stroom.query.common.v2.DateExpressionParser;
 import stroom.util.logging.LambdaLogger;
 import stroom.util.logging.LambdaLoggerFactory;
+import stroom.util.shared.PageRequest;
+import stroom.util.shared.Sort;
+
+import org.jooq.Condition;
+import org.jooq.Cursor;
+import org.jooq.Field;
+import org.jooq.OrderField;
+import org.jooq.Record;
+import org.jooq.Result;
+import org.jooq.SelectJoinStep;
+import org.jooq.impl.DSL;
 
 import javax.inject.Inject;
 import java.time.ZoneOffset;
 import java.time.ZonedDateTime;
 import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.Collection;
+import java.util.Collections;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -450,10 +453,10 @@ class AnnotationDaoImpl implements AnnotationDao {
         final List<AbstractField> fieldList = Arrays.asList(fields);
 
         final PageRequest pageRequest = criteria.getPageRequest();
-        final Condition condition = createCondition(criteria.getExpression());
-        final OrderField[] orderFields = createOrderFields(criteria);
+        final Collection<Condition> conditions = createCondition(criteria.getExpression());
+        final Collection<OrderField<?>> orderFields = createOrderFields(criteria);
         final List<Field<?>> dbFields = new ArrayList<>(valueMapper.getFields(fieldList));
-        final Mapper[] mappers = valueMapper.getMappers(fields);
+        final Mapper<?>[] mappers = valueMapper.getMappers(fields);
 
         JooqUtil.context(connectionProvider, context -> {
             int offset = 0;
@@ -466,7 +469,7 @@ class AnnotationDaoImpl implements AnnotationDao {
 
             SelectJoinStep<?> select = context.select(dbFields).from(ANNOTATION);
             try (final Cursor<?> cursor = select
-                    .where(condition)
+                    .where(conditions)
                     .orderBy(orderFields)
                     .limit(offset, numberOfRows)
                     .fetchLazy()) {
@@ -490,17 +493,17 @@ class AnnotationDaoImpl implements AnnotationDao {
         });
     }
 
-    private Condition createCondition(final ExpressionOperator expression) {
+    private Collection<Condition> createCondition(final ExpressionOperator expression) {
         return expressionMapper.apply(expression);
     }
 
-    private OrderField[] createOrderFields(final ExpressionCriteria criteria) {
+    private Collection<OrderField<?>> createOrderFields(final ExpressionCriteria criteria) {
         if (criteria.getSortList() == null || criteria.getSortList().size() == 0) {
-            return new OrderField[]{ANNOTATION.ID};
+            return Collections.singleton(ANNOTATION.ID);
         }
 
         return criteria.getSortList().stream().map(sort -> {
-            Field field;
+            Field<?> field;
             if (AnnotationDataSource.CREATED_ON.equals(sort.getField())) {
                 field = ANNOTATION.CREATE_TIME_MS;
             } else if (AnnotationDataSource.CREATED_BY.equals(sort.getField())) {
@@ -525,12 +528,12 @@ class AnnotationDaoImpl implements AnnotationDao {
                 field = ANNOTATION.ID;
             }
 
-            OrderField orderField = field;
+            OrderField<?> orderField = field;
             if (Sort.Direction.DESCENDING.equals(sort.getDirection())) {
                 orderField = field.desc();
             }
 
             return orderField;
-        }).toArray(OrderField[]::new);
+        }).collect(Collectors.toList());
     }
 }

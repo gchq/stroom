@@ -1,8 +1,5 @@
 package stroom.meta.impl.db;
 
-import org.jooq.Condition;
-import org.jooq.Field;
-import org.jooq.impl.DSL;
 import stroom.collection.api.CollectionService;
 import stroom.datasource.api.v2.AbstractField;
 import stroom.db.util.ExpressionMapper.TermHandler;
@@ -12,18 +9,21 @@ import stroom.query.api.v2.ExpressionItem;
 import stroom.query.api.v2.ExpressionOperator;
 import stroom.query.api.v2.ExpressionTerm;
 
-import java.util.Arrays;
+import org.jooq.Condition;
+import org.jooq.Field;
+import org.jooq.impl.DSL;
+
+import java.util.Collection;
+import java.util.Collections;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
-import java.util.Objects;
 import java.util.function.Function;
+import java.util.stream.Collectors;
 
-import static org.jooq.impl.DSL.and;
-import static org.jooq.impl.DSL.not;
 import static org.jooq.impl.DSL.or;
 
-class MetaExpressionMapper implements Function<ExpressionItem, Condition> {
+class MetaExpressionMapper implements Function<ExpressionItem, Collection<Condition>> {
     private final MetaKeyDao metaKeyDao;
     private final Field<Integer> keyField;
     private final Field<Long> valueField;
@@ -57,55 +57,51 @@ class MetaExpressionMapper implements Function<ExpressionItem, Condition> {
     }
 
     @Override
-    public Condition apply(final ExpressionItem item) {
-        if (item == null || !item.isEnabled()) {
-            return null;
-        }
+    public Collection<Condition> apply(final ExpressionItem item) {
+        Collection<Condition> result = Collections.emptyList();
 
-        if (item instanceof ExpressionTerm) {
-            final ExpressionTerm term = (ExpressionTerm) item;
-            final MetaTermHandler termHandler = termHandlers.get(term.getField());
-            if (termHandler == null) {
-//                throw new RuntimeException("No term handler supplied for term '" + term.getField() + "'");
-                return null;
-            }
+        if (item != null && item.isEnabled()) {
+            if (item instanceof ExpressionTerm) {
+                final ExpressionTerm term = (ExpressionTerm) item;
+                final MetaTermHandler termHandler = termHandlers.get(term.getField());
+                if (termHandler != null) {
+                    result = Collections.singleton(termHandler.apply(term));
+                }
 
-            return termHandler.apply(term);
+            } else if (item instanceof ExpressionOperator) {
+                final ExpressionOperator operator = (ExpressionOperator) item;
 
-        } else if (item instanceof ExpressionOperator) {
-            final ExpressionOperator operator = (ExpressionOperator) item;
+                final Collection<Condition> children = operator.getChildren()
+                        .stream()
+                        .map(this)
+                        .flatMap(Collection::stream)
+                        .collect(Collectors.toList());
 
-            final Condition[] children = operator.getChildren().stream()
-                    .map(this)
-                    .filter(Objects::nonNull)
-                    .toArray(Condition[]::new);
-
-            if (children.length > 0) {
-                switch (operator.getOp()) {
-                    case AND:
-                        return and(children);
-                    case OR:
-                        return or(children);
-                    case NOT:
-
-                        if (children.length == 1) {
-                            // A single child, just apply the 'not' to that first item
-                            return not(children[0]);
-                        } else {
-                            // If there are multiple children, apply an 'and' around them all
-                            return and(Arrays.stream(children)
+                if (children.size() > 0) {
+                    switch (operator.getOp()) {
+                        case AND:
+                            result = children;
+                            break;
+                        case OR:
+                            if (children.size() == 1) {
+                                result = children;
+                            } else {
+                                result = Collections.singleton(or(children));
+                            }
+                            break;
+                        case NOT:
+                            result = children
+                                    .stream()
                                     .map(DSL::not)
-                                    .toArray(Condition[]::new));
-                        }
-                    default:
-                        // Fall through to null if there aren't any children
-                        break;
+                                    .collect(Collectors.toList());
+                    }
                 }
             }
         }
 
-        return null;
+        return result;
     }
+
 
     static class MetaTermHandler {
         private final MetaKeyDao metaKeyDao;

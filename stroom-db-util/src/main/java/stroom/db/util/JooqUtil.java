@@ -23,6 +23,7 @@ import javax.sql.DataSource;
 import java.sql.Connection;
 import java.sql.SQLException;
 import java.util.Collection;
+import java.util.Collections;
 import java.util.Map;
 import java.util.Optional;
 import java.util.function.Consumer;
@@ -34,7 +35,6 @@ public final class JooqUtil {
     private static final Logger LOGGER = LoggerFactory.getLogger(JooqUtil.class);
 
     private static final String DEFAULT_ID_FIELD_NAME = "id";
-    private static final OrderField<?>[] EMPTY_ORDER_FIELDS = new OrderField[0];
     private static final Boolean RENDER_SCHEMA = false;
 
     private JooqUtil() {
@@ -308,16 +308,17 @@ public final class JooqUtil {
         return condition.or(() -> Optional.of(field.isNotNull()));
     }
 
-    public static OrderField<?>[] getOrderFields(final Map<String, Field<?>> fieldMap, final BaseCriteria criteria) {
+    public static Collection<OrderField<?>> getOrderFields(final Map<String, Field<?>> fieldMap, final BaseCriteria criteria) {
         if (criteria.getSortList() == null) {
-            return EMPTY_ORDER_FIELDS;
+            return Collections.emptyList();
         }
 
-        return criteria.getSortList().stream()
+        return criteria.getSortList()
+                .stream()
                 .map(s -> getOrderField(fieldMap, s))
                 .filter(Optional::isPresent)
                 .map(Optional::get)
-                .toArray(OrderField[]::new);
+                .collect(Collectors.toList());
     }
 
     private static Optional<OrderField<?>> getOrderField(final Map<String, Field<?>> fieldMap, final Sort sort) {

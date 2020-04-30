@@ -24,7 +24,7 @@ import static org.assertj.core.api.Assertions.assertThat;
 class TestSelection {
     @Test
     void testSimple() {
-        final Selection<Integer> selection = new Selection<>();
+        final Selection<Integer> selection = Selection.selectAll();
         assertThat(selection.isMatch(1)).isTrue();
 
         selection.clear();
@@ -36,8 +36,7 @@ class TestSelection {
 
     @Test
     void testFlags() {
-        final Selection<Long> selection = new Selection<>();
-        selection.setMatchAll(false);
+        final Selection<Long> selection = Selection.selectNone();
         assertThat(selection.isMatchNothing()).isTrue();
     }
 }

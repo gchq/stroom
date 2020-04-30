@@ -176,16 +176,17 @@ class FsDataStoreMaintenanceService implements DataStoreMaintenanceService {
             if (matchingStreams.size() > 0) {
                 // OK we have built up a list of files located in the directory
                 // Now see what is there as per the database.
-                final FindDataVolumeCriteria criteria = new FindDataVolumeCriteria();
+                final FindDataVolumeCriteria criteria = FindDataVolumeCriteria.matchNone();
 
                 final Map<Long, Meta> streamMap = new HashMap<>();
-                final Selection<Long> streamIdSet = criteria.obtainMetaIdSet();
+                final Selection<Long> metaIdSet = criteria.obtainMetaIdSet();
                 matchingStreams.forEach(stream -> {
                     final long id = stream.getId();
                     streamMap.put(id, stream);
-                    streamIdSet.add(id);
+                    metaIdSet.add(id);
                 });
-                criteria.obtainVolumeIdSet().add(volume.getId());
+                final Selection<Integer> volumeIdSet = criteria.obtainVolumeIdSet();
+                volumeIdSet.add(volume.getId());
 
                 final List<DataVolume> matches = dataVolumeService.find(criteria).getValues();
                 for (final DataVolume streamVolume : matches) {

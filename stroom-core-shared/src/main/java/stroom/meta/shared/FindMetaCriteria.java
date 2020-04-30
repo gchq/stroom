@@ -51,15 +51,15 @@ public class FindMetaCriteria extends ExpressionCriteria implements Copyable<Fin
     }
 
     public static FindMetaCriteria createFromId(final long id) {
-        return new FindMetaCriteria(MetaExpressionUtil.createDataIdExpression(id));
+        return new FindMetaCriteria(MetaExpressionUtil.createDataIdExpression(id, Status.UNLOCKED));
     }
 
     public static FindMetaCriteria createFromMeta(final Meta meta) {
-        return new FindMetaCriteria(MetaExpressionUtil.createDataIdExpression(meta.getId()));
+        return new FindMetaCriteria(MetaExpressionUtil.createDataIdExpression(meta.getId(), Status.UNLOCKED));
     }
 
     public static FindMetaCriteria createWithType(final String typeName) {
-        return new FindMetaCriteria(MetaExpressionUtil.createTypeExpression(typeName));
+        return new FindMetaCriteria(MetaExpressionUtil.createTypeExpression(typeName, Status.UNLOCKED));
     }
 
     public void setFetchRelationships(final boolean fetchRelationships) {

@@ -296,7 +296,7 @@ class TestFileSystemStreamStore extends AbstractCoreIntegrationTest {
 
         assertThat(deleted).isEqualTo(1L);
 
-        findMetaCriteria = FindMetaCriteria.createFromMeta(meta);
+        findMetaCriteria = new FindMetaCriteria(MetaExpressionUtil.createDataIdExpression(meta.getId()));
         assertThat(metaService.find(findMetaCriteria).size()).isEqualTo(1L);
 
         findMetaCriteria.setExpression(MetaExpressionUtil.createStatusExpression(Status.UNLOCKED));
@@ -403,9 +403,7 @@ class TestFileSystemStreamStore extends AbstractCoreIntegrationTest {
                 .build();
         assertThat(metaService.find(new FindMetaCriteria(expression)).size() >= 1).as("Expecting to find at least 1 with UNLOCKED criteria").isTrue();
 
-        final FindDataVolumeCriteria volumeCriteria = new FindDataVolumeCriteria();
-//        volumeCriteria.obtainStreamStatusSet().add(StreamStatus.UNLOCKED);
-        volumeCriteria.obtainMetaIdSet().add(exactMetaData.getId());
+        final FindDataVolumeCriteria volumeCriteria = FindDataVolumeCriteria.create(exactMetaData);
         assertThat(dataVolumeService.find(volumeCriteria).size() >= 1).as("Expecting to find at least 1 with day old criteria").isTrue();
     }
 

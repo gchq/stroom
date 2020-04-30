@@ -1,14 +1,5 @@
 package stroom.meta.impl.db;
 
-import org.jooq.Condition;
-import org.jooq.Cursor;
-import org.jooq.DSLContext;
-import org.jooq.Field;
-import org.jooq.OrderField;
-import org.jooq.Record;
-import org.jooq.Record1;
-import org.jooq.Result;
-import org.jooq.SelectConditionStep;
 import stroom.collection.api.CollectionService;
 import stroom.dashboard.expression.v1.Val;
 import stroom.dashboard.expression.v1.ValInteger;
@@ -40,10 +31,22 @@ import stroom.util.shared.PageRequest;
 import stroom.util.shared.ResultPage;
 import stroom.util.shared.Sort;
 
+import org.jooq.Condition;
+import org.jooq.Cursor;
+import org.jooq.DSLContext;
+import org.jooq.Field;
+import org.jooq.OrderField;
+import org.jooq.Record;
+import org.jooq.Record1;
+import org.jooq.Result;
+import org.jooq.SelectConditionStep;
+
 import javax.inject.Inject;
 import javax.inject.Singleton;
 import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.Collection;
+import java.util.Collections;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -53,6 +56,8 @@ import java.util.Set;
 import java.util.function.Consumer;
 import java.util.function.Function;
 import java.util.function.Predicate;
+import java.util.stream.Collectors;
+import java.util.stream.Stream;
 
 import static org.jooq.impl.DSL.max;
 import static org.jooq.impl.DSL.selectDistinct;
@@ -214,7 +219,10 @@ class MetaDaoImpl implements MetaDao {
     }
 
     @Override
-    public int updateStatus(final FindMetaCriteria criteria, final Status currentStatus, final Status newStatus, final long statusTime) {
+    public int updateStatus(final FindMetaCriteria criteria,
+                            final Status currentStatus,
+                            final Status newStatus,
+                            final long statusTime) {
         Objects.requireNonNull(newStatus, "New status is null");
         if (Objects.equals(newStatus, currentStatus)) {
             // The status is not being updated.
@@ -223,17 +231,21 @@ class MetaDaoImpl implements MetaDao {
 
         final byte newStatusId = MetaStatusId.getPrimitiveValue(newStatus);
 
-        Condition condition = expressionMapper.apply(criteria.getExpression());
+        Collection<Condition> conditions = expressionMapper.apply(criteria.getExpression());
 
         // Add a condition if we should check current status.
         if (currentStatus != null) {
             final byte currentStatusId = MetaStatusId.getPrimitiveValue(currentStatus);
-            condition = condition.and(meta.STATUS.eq(currentStatusId));
+            conditions = Stream
+                    .concat(conditions.stream(), Stream.of(meta.STATUS.eq(currentStatusId)))
+                    .collect(Collectors.toList());
         } else {
-            condition = condition.and(meta.STATUS.ne(newStatusId));
+            conditions = Stream
+                    .concat(conditions.stream(), Stream.of(meta.STATUS.ne(newStatusId)))
+                    .collect(Collectors.toList());
         }
 
-        final Condition c = condition;
+        final Collection<Condition> c = conditions;
 
         return JooqUtil.contextResult(metaDbConnProvider, context -> context
                 .update(meta)
@@ -243,26 +255,26 @@ class MetaDaoImpl implements MetaDao {
                 .execute());
     }
 
-    private SelectConditionStep<Record1<Long>> getMetaCondition(final ExpressionOperator expression) {
+    private Optional<SelectConditionStep<Record1<Long>>> getMetaCondition(final ExpressionOperator expression) {
         if (expression == null) {
-            return null;
+            return Optional.empty();
         }
 
-        final Condition condition = metaExpressionMapper.apply(expression);
-        if (condition == null) {
-            return null;
+        final Collection<Condition> conditions = metaExpressionMapper.apply(expression);
+        if (conditions.size() == 0) {
+            return Optional.empty();
         }
 
-        return selectDistinct(metaVal.META_ID)
+        return Optional.of(selectDistinct(metaVal.META_ID)
                 .from(metaVal)
-                .where(condition);
+                .where(conditions));
     }
 
     @Override
     public ResultPage<Meta> find(final FindMetaCriteria criteria) {
         final PageRequest pageRequest = criteria.getPageRequest();
-        final Condition condition = createCondition(criteria);
-        final OrderField<?>[] orderFields = createOrderFields(criteria);
+        final Collection<Condition> conditions = createCondition(criteria);
+        final Collection<OrderField<?>> orderFields = createOrderFields(criteria);
 
         int offset = 0;
         int numberOfRows = 1000000;
@@ -273,11 +285,14 @@ class MetaDaoImpl implements MetaDao {
             numberOfRows = pageRequest.getLength();
 
 
-        final List<Meta> list = find(condition, orderFields, offset, numberOfRows);
+        final List<Meta> list = find(conditions, orderFields, offset, numberOfRows);
         return ResultPage.createPageResultList(list, criteria.getPageRequest(), null);
     }
 
-    private List<Meta> find(final Condition condition, final OrderField<?>[] orderFields, final int offset, final int numberOfRows) {
+    private List<Meta> find(final Collection<Condition> conditions,
+                            final Collection<OrderField<?>> orderFields,
+                            final int offset,
+                            final int numberOfRows) {
         return JooqUtil.contextResult(metaDbConnProvider, context -> context
                 .select(
                         meta.ID,
@@ -295,7 +310,7 @@ class MetaDaoImpl implements MetaDao {
                 .join(metaFeed).on(meta.FEED_ID.eq(metaFeed.ID))
                 .join(metaType).on(meta.TYPE_ID.eq(metaType.ID))
                 .leftOuterJoin(metaProcessor).on(meta.PROCESSOR_ID.eq(metaProcessor.ID))
-                .where(condition)
+                .where(conditions)
                 .orderBy(orderFields)
                 .limit(offset, numberOfRows)
                 .fetch()
@@ -315,10 +330,10 @@ class MetaDaoImpl implements MetaDao {
         final boolean extendedValuesExist = fieldList.stream().anyMatch(MetaFields.getExtendedFields()::contains);
 
         final PageRequest pageRequest = criteria.getPageRequest();
-        final Condition condition = createCondition(criteria.getExpression());
-        final OrderField[] orderFields = createOrderFields(criteria);
+        final Collection<Condition> conditions = createCondition(criteria.getExpression());
+        final Collection<OrderField<?>> orderFields = createOrderFields(criteria);
         final List<Field<?>> dbFields = new ArrayList<>(valueMapper.getFields(fieldList));
-        final Mapper[] mappers = valueMapper.getMappers(fields);
+        final Mapper<?>[] mappers = valueMapper.getMappers(fields);
 
         // Deal with extended fields.
         final int[] extendedFieldKeys = new int[fields.length];
@@ -366,7 +381,7 @@ class MetaDaoImpl implements MetaDao {
             }
 
             try (final Cursor<?> cursor = select
-                    .where(condition)
+                    .where(conditions)
                     .orderBy(orderFields)
                     .limit(offset, numberOfRows)
                     .fetchLazy()) {
@@ -409,7 +424,10 @@ class MetaDaoImpl implements MetaDao {
         });
     }
 
-    private void fillExtendedFieldValueMap(final DSLContext context, final List<Long> idList, final List<Integer> extendedFieldKeyIdList, final Map<Long, Map<Integer, Long>> extendedFieldValueMap) {
+    private void fillExtendedFieldValueMap(final DSLContext context,
+                                           final List<Long> idList,
+                                           final List<Integer> extendedFieldKeyIdList,
+                                           final Map<Long, Map<Integer, Long>> extendedFieldValueMap) {
         extendedFieldValueMap.clear();
         context
                 .select(
@@ -450,12 +468,12 @@ class MetaDaoImpl implements MetaDao {
 
     @Override
     public Optional<Long> getMaxId(final FindMetaCriteria criteria) {
-        final Condition condition = expressionMapper.apply(criteria.getExpression());
+        final Collection<Condition> conditions = expressionMapper.apply(criteria.getExpression());
 
         return JooqUtil.contextResult(metaDbConnProvider, context -> context
                 .select(max(meta.ID))
                 .from(meta)
-                .where(condition)
+                .where(conditions)
                 .fetchOptional()
                 .map(Record1::value1));
     }
@@ -478,12 +496,12 @@ class MetaDaoImpl implements MetaDao {
                 .execute());
     }
 
-    private Condition createCondition(final FindMetaCriteria criteria) {
+    private Collection<Condition> createCondition(final FindMetaCriteria criteria) {
         return createCondition(criteria.getExpression());
     }
 
-    private Condition createCondition(final ExpressionOperator expression) {
-        Condition condition = expressionMapper.apply(expression);
+    private Collection<Condition> createCondition(final ExpressionOperator expression) {
+        Collection<Condition> conditions = expressionMapper.apply(expression);
 
 //        // If we aren't being asked to match everything then add constraints to the expression.
 //        if (idSet != null && (idSet.getMatchAll() == null || !idSet.getMatchAll())) {
@@ -491,27 +509,19 @@ class MetaDaoImpl implements MetaDao {
 //        }
 
         // Get additional selection criteria based on meta data attributes;
-        final SelectConditionStep<Record1<Long>> metaConditionStep = getMetaCondition(expression);
-        if (metaConditionStep != null) {
-            condition = and(condition, meta.ID.in(metaConditionStep));
+        final Optional<SelectConditionStep<Record1<Long>>> metaConditionStep = getMetaCondition(expression);
+        if (metaConditionStep.isPresent()) {
+            conditions = Stream
+                    .concat(conditions.stream(), Stream.of(meta.ID.in(metaConditionStep.get())))
+                    .collect(Collectors.toList());
         }
 
-        return condition;
+        return conditions;
     }
 
-    private Condition and(final Condition c1, final Condition c2) {
-        if (c1 == null) {
-            return c2;
-        }
-        if (c2 == null) {
-            return c1;
-        }
-        return c1.and(c2);
-    }
-
-    private OrderField<?>[] createOrderFields(final ExpressionCriteria criteria) {
+    private Collection<OrderField<?>> createOrderFields(final ExpressionCriteria criteria) {
         if (criteria.getSortList() == null || criteria.getSortList().size() == 0) {
-            return new OrderField[]{meta.ID};
+            return Collections.singleton(meta.ID);
         }
 
         return criteria.getSortList().stream().map(sort -> {
@@ -534,6 +544,6 @@ class MetaDaoImpl implements MetaDao {
             }
 
             return orderField;
-        }).toArray(OrderField[]::new);
+        }).collect(Collectors.toList());
     }
 }

@@ -16,15 +16,16 @@
 
 package stroom.data.store.impl.fs.shared;
 
-import com.fasterxml.jackson.annotation.JsonCreator;
-import com.fasterxml.jackson.annotation.JsonInclude;
-import com.fasterxml.jackson.annotation.JsonInclude.Include;
-import com.fasterxml.jackson.annotation.JsonProperty;
 import stroom.data.store.impl.fs.shared.FsVolume.VolumeUseStatus;
 import stroom.util.shared.BaseCriteria;
 import stroom.util.shared.PageRequest;
 import stroom.util.shared.Selection;
 import stroom.util.shared.Sort;
+
+import com.fasterxml.jackson.annotation.JsonCreator;
+import com.fasterxml.jackson.annotation.JsonInclude;
+import com.fasterxml.jackson.annotation.JsonInclude.Include;
+import com.fasterxml.jackson.annotation.JsonProperty;
 
 import java.util.List;
 
@@ -35,8 +36,18 @@ public class FindFsVolumeCriteria extends BaseCriteria {
     @JsonProperty
     private final Selection<VolumeUseStatus> selection;
 
-    public FindFsVolumeCriteria() {
-        selection = new Selection<>();
+    public static FindFsVolumeCriteria matchAll() {
+        return new FindFsVolumeCriteria(
+                null,
+                null,
+                Selection.selectAll());
+    }
+
+    public static FindFsVolumeCriteria matchNone() {
+        return new FindFsVolumeCriteria(
+                null,
+                null,
+                Selection.selectNone());
     }
 
     @JsonCreator

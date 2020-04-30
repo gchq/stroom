@@ -17,8 +17,6 @@
 
 package stroom.data.store.impl.fs;
 
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 import stroom.data.store.impl.fs.shared.FindFsVolumeCriteria;
 import stroom.data.store.impl.fs.shared.FsVolume;
 import stroom.task.api.ExecutorProvider;
@@ -29,6 +27,9 @@ import stroom.task.shared.ThreadPool;
 import stroom.util.io.FileUtil;
 import stroom.util.io.StreamUtil;
 import stroom.util.logging.LogExecutionTime;
+
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import javax.inject.Inject;
 import javax.inject.Provider;
@@ -86,7 +87,7 @@ class FsCleanExecutor {
 
             final LogExecutionTime logExecutionTime = new LogExecutionTime();
 
-            final List<FsVolume> volumeList = volumeService.find(new FindFsVolumeCriteria()).getValues();
+            final List<FsVolume> volumeList = volumeService.find(FindFsVolumeCriteria.matchAll()).getValues();
             if (volumeList != null && volumeList.size() > 0) {
                 // Add to the task steps remaining.
                 final ThreadPool threadPool = new ThreadPoolImpl("File System Clean#", 1, 1, config.getFileSystemCleanBatchSize(), Integer.MAX_VALUE);

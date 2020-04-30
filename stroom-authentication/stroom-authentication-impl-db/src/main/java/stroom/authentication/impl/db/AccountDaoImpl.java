@@ -131,7 +131,7 @@ class AccountDaoImpl implements AccountDao {
     public void recordSuccessfulLogin(final String email) {
         AccountRecord user = JooqUtil.contextResult(authDbConnProvider, context -> context
                 .selectFrom(ACCOUNT)
-                .where(new Condition[]{ACCOUNT.EMAIL.eq(email)})
+                .where(ACCOUNT.EMAIL.eq(email))
                 .fetchOne());
 
         // We reset the failed login count if we have a successful login
@@ -142,7 +142,8 @@ class AccountDaoImpl implements AccountDao {
         JooqUtil.context(authDbConnProvider, context -> context
                 .update(ACCOUNT)
                 .set(user)
-                .where(new Condition[]{ACCOUNT.EMAIL.eq(user.getEmail())}).execute());
+                .where(ACCOUNT.EMAIL.eq(user.getEmail()))
+                .execute());
     }
 
     //    @Override
@@ -253,7 +254,7 @@ class AccountDaoImpl implements AccountDao {
 //        JooqUtil.contextResult(authDbConnProvider, context -> context
 //                .update(ACCOUNT)
 //                .set(usersRecord)
-//                .where(new Condition[]{ACCOUNT.ID.eq(account.getId())}).execute());
+//                .where(ACCOUNT.ID.eq(account.getId())}.execute());
     }
 
     @Override
@@ -262,7 +263,7 @@ class AccountDaoImpl implements AccountDao {
 
 //        JooqUtil.context(authDbConnProvider, context -> context
 //                .deleteFrom(ACCOUNT)
-//                .where(new Condition[]{ACCOUNT.ID.eq(id)}).execute());
+//                .where(ACCOUNT.ID.eq(id)).execute());
     }
 
     @Override
@@ -315,7 +316,7 @@ class AccountDaoImpl implements AccountDao {
 
         final AccountRecord user = JooqUtil.contextResult(authDbConnProvider, context -> context
                 .selectFrom(ACCOUNT)
-                .where(new Condition[]{ACCOUNT.EMAIL.eq(email)})
+                .where(ACCOUNT.EMAIL.eq(email))
                 .fetchOne());
 
         if (user == null) {

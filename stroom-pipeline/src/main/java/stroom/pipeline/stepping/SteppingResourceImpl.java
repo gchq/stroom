@@ -23,6 +23,7 @@ import stroom.meta.api.MetaService;
 import stroom.meta.shared.FindMetaCriteria;
 import stroom.meta.shared.Meta;
 import stroom.meta.shared.MetaExpressionUtil;
+import stroom.meta.shared.Status;
 import stroom.pipeline.PipelineEventLog;
 import stroom.pipeline.PipelineStore;
 import stroom.pipeline.shared.PipelineDoc;
@@ -151,7 +152,7 @@ class SteppingResourceImpl implements SteppingResource, HasHealthCheck {
         }
 
         return securityContext.asProcessingUserResult(() -> {
-            final FindMetaCriteria criteria = new FindMetaCriteria(MetaExpressionUtil.createParentIdExpression(id));
+            final FindMetaCriteria criteria = new FindMetaCriteria(MetaExpressionUtil.createParentIdExpression(id, Status.UNLOCKED));
             return metaService.find(criteria).getFirst();
         });
     }

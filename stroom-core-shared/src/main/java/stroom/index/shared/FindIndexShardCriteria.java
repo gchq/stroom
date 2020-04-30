@@ -51,33 +51,30 @@ public class FindIndexShardCriteria extends BaseCriteria {
     @JsonProperty
     private StringCriteria partition;
 
-    public FindIndexShardCriteria() {
-        documentCountRange = new Range<>();
-        nodeNameSet = new Selection<>();
-        volumeIdSet = new Selection<>();
-        indexUuidSet = new Selection<>();
-        indexShardIdSet = new Selection<>();
-        indexShardStatusSet = new Selection<>();
-        partition = new StringCriteria();
+    public static FindIndexShardCriteria matchAll() {
+        return new FindIndexShardCriteria(
+                null,
+                null,
+                new Range<>(),
+                Selection.selectAll(),
+                Selection.selectAll(),
+                Selection.selectAll(),
+                Selection.selectAll(),
+                Selection.selectAll(),
+                new StringCriteria());
     }
 
-    public FindIndexShardCriteria(final FindIndexShardCriteria criteria) {
-        // Copy constructor.
-        documentCountRange = new Range<>();
-        nodeNameSet = new Selection<>();
-        volumeIdSet = new Selection<>();
-        indexUuidSet = new Selection<>();
-        indexShardIdSet = new Selection<>();
-        indexShardStatusSet = new Selection<>();
-        partition = new StringCriteria();
-
-        nodeNameSet.copyFrom(criteria.nodeNameSet);
-        volumeIdSet.copyFrom(criteria.volumeIdSet);
-        documentCountRange = criteria.documentCountRange;
-        indexUuidSet.copyFrom(criteria.indexUuidSet);
-        indexShardIdSet.copyFrom(criteria.indexShardIdSet);
-        indexShardStatusSet.copyFrom(criteria.indexShardStatusSet);
-        partition.copyFrom(criteria.partition);
+    public static FindIndexShardCriteria matchNone() {
+        return new FindIndexShardCriteria(
+                null,
+                null,
+                new Range<>(),
+                Selection.selectNone(),
+                Selection.selectNone(),
+                Selection.selectNone(),
+                Selection.selectNone(),
+                Selection.selectNone(),
+                new StringCriteria());
     }
 
     @JsonCreator

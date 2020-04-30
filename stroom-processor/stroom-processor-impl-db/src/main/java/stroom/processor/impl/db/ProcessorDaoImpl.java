@@ -13,6 +13,7 @@ import stroom.processor.shared.ProcessorDataSource;
 import stroom.util.shared.ResultPage;
 
 import javax.inject.Inject;
+import java.util.Collection;
 import java.util.List;
 import java.util.Optional;
 
@@ -96,15 +97,12 @@ class ProcessorDaoImpl implements ProcessorDao {
 
     @Override
     public ResultPage<Processor> find(final ExpressionCriteria criteria) {
-        final Condition condition = expressionMapper.apply(criteria.getExpression());
-
-//        final Collection<Condition> conditions = JooqUtil.conditions(
-//                JooqUtil.getStringCondition(PROCESSOR.PIPELINE_UUID, criteria.getPipelineUuidCriteria()));
+        final Collection<Condition> conditions = expressionMapper.apply(criteria.getExpression());
 
         final List<Processor> list = JooqUtil.contextResult(processorDbConnProvider, context -> context
                 .select()
                 .from(PROCESSOR)
-                .where(condition)
+                .where(conditions)
                 .limit(JooqUtil.getLimit(criteria.getPageRequest()))
                 .offset(JooqUtil.getOffset(criteria.getPageRequest()))
                 .fetch()

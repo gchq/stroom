@@ -147,7 +147,7 @@ class IndexShardDaoImpl implements IndexShardDao {
                 JooqUtil.getStringCondition(INDEX_SHARD.PARTITION_NAME, criteria.getPartition())
         );
 
-        final OrderField<?>[] orderFields = JooqUtil.getOrderFields(FIELD_MAP, criteria);
+        final Collection<OrderField<?>> orderFields = JooqUtil.getOrderFields(FIELD_MAP, criteria);
 
         final List<IndexShard> list = JooqUtil.contextResult(indexDbConnProvider, context ->
                 context

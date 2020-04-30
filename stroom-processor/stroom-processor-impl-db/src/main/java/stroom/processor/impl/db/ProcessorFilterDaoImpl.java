@@ -23,6 +23,7 @@ import stroom.util.logging.LambdaLoggerFactory;
 import stroom.util.shared.ResultPage;
 
 import javax.inject.Inject;
+import java.util.Collection;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
@@ -153,16 +154,16 @@ class ProcessorFilterDaoImpl implements ProcessorFilterDao {
     }
 
     private ResultPage<ProcessorFilter> find(final DSLContext context, final ExpressionCriteria criteria) {
-        final Condition condition = expressionMapper.apply(criteria.getExpression());
+        final Collection<Condition> conditions = expressionMapper.apply(criteria.getExpression());
 
-        final OrderField<?>[] orderFields = JooqUtil.getOrderFields(FIELD_MAP, criteria);
+        final Collection<OrderField<?>> orderFields = JooqUtil.getOrderFields(FIELD_MAP, criteria);
 
         final List<ProcessorFilter> list = context
                 .select()
                 .from(PROCESSOR_FILTER)
                 .join(PROCESSOR_FILTER_TRACKER).on(PROCESSOR_FILTER.FK_PROCESSOR_FILTER_TRACKER_ID.eq(PROCESSOR_FILTER_TRACKER.ID))
                 .join(PROCESSOR).on(PROCESSOR_FILTER.FK_PROCESSOR_ID.eq(PROCESSOR.ID))
-                .where(condition)
+                .where(conditions)
                 .orderBy(orderFields)
                 .fetch()
                 .map(record -> {
