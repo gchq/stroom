@@ -6,6 +6,8 @@ and this project adheres to [Semantic Versioning](http://semver.org/).
 
 ## [Unreleased]
 
+* Issue **#1515** : Fix proxyDir default when running in a stack.
+
 * Issue **#1509** : Unable to update processor filter.
 
 * Issue **#1495** : Speculative fix for missing swagger.json file in the fat jar.
