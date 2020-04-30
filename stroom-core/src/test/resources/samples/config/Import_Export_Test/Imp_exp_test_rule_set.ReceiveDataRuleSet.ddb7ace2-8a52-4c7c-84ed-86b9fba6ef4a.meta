@@ -26,12 +26,15 @@
     "enabled" : true,
     "expression" : {
       "type" : "operator",
+      "op" : "AND",
       "children" : [ {
         "type" : "term",
         "field" : "One",
         "condition" : "EQUALS",
-        "value" : "xxx"
-      } ]
+        "value" : "xxx",
+        "enabled" : true
+      } ],
+      "enabled" : true
     },
     "action" : "DROP"
   }, {
@@ -41,12 +44,15 @@
     "enabled" : true,
     "expression" : {
       "type" : "operator",
+      "op" : "AND",
       "children" : [ {
         "type" : "term",
         "field" : "One",
         "condition" : "EQUALS",
-        "value" : "abc"
-      } ]
+        "value" : "abc",
+        "enabled" : true
+      } ],
+      "enabled" : true
     },
     "action" : "RECEIVE"
   }, {
@@ -56,17 +62,21 @@
     "enabled" : true,
     "expression" : {
       "type" : "operator",
+      "op" : "AND",
       "children" : [ {
         "type" : "term",
         "field" : "Two",
         "condition" : "EQUALS",
-        "value" : "true"
+        "value" : "true",
+        "enabled" : true
       }, {
         "type" : "term",
         "field" : "Three",
         "condition" : "EQUALS",
-        "value" : "123"
-      } ]
+        "value" : "123",
+        "enabled" : true
+      } ],
+      "enabled" : true
     },
     "action" : "REJECT"
   } ]

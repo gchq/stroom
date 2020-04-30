@@ -94,12 +94,15 @@
       },
       "expression" : {
         "type" : "operator",
+        "op" : "AND",
         "children" : [ {
           "type" : "term",
           "field" : "timestamp",
           "condition" : "BETWEEN",
-          "value" : "2016-04-01T00:00:00.000Z,2016-04-20T00:00:00.000Z"
-        } ]
+          "value" : "2016-04-01T00:00:00.000Z,2016-04-20T00:00:00.000Z",
+          "enabled" : true
+        } ],
+        "enabled" : true
       },
       "automate" : {
         "open" : true,

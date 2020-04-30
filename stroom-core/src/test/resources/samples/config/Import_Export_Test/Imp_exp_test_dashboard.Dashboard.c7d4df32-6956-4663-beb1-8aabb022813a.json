@@ -40,11 +40,13 @@
       },
       "expression" : {
         "type" : "operator",
+        "op" : "AND",
         "children" : [ {
           "type" : "term",
           "field" : "New Field 0",
           "condition" : "EQUALS",
-          "value" : "xxxx"
+          "value" : "xxxx",
+          "enabled" : true
         }, {
           "type" : "operator",
           "op" : "OR",
@@ -52,14 +54,18 @@
             "type" : "term",
             "field" : "New Field 0",
             "condition" : "EQUALS",
-            "value" : "yyyy"
+            "value" : "yyyy",
+            "enabled" : true
           }, {
             "type" : "term",
             "field" : "New Field 1",
             "condition" : "EQUALS",
-            "value" : "123"
-          } ]
-        } ]
+            "value" : "123",
+            "enabled" : true
+          } ],
+          "enabled" : true
+        } ],
+        "enabled" : true
       },
       "automate" : {
         "open" : false,
