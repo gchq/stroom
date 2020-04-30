@@ -24,34 +24,20 @@ import static org.assertj.core.api.Assertions.assertThat;
 class TestSelection {
     @Test
     void testSimple() {
-        final Selection<Integer> testCase = new Selection<>();
+        final Selection<Integer> selection = new Selection<>();
+        assertThat(selection.isMatch(1)).isTrue();
 
-//        assertThat(testCase.isConstrained()).isFalse();
-        assertThat(testCase.isMatch(1)).isTrue();
+        selection.clear();
+        assertThat(selection.isMatch(1)).isFalse();
 
-//        assertThat(testCase.isConstrained()).isTrue();
-        assertThat(testCase.isMatch(1)).isFalse();
-        assertThat(testCase.isMatch(null)).isTrue();
-
-        testCase.add(1);
-        assertThat(testCase.isMatch(1)).isTrue();
+        selection.setMatchAll(true);
+        assertThat(selection.isMatch(1)).isTrue();
     }
 
     @Test
     void testFlags() {
-        final Selection<Long> totalFolderIdSet = new Selection<>();
-        totalFolderIdSet.setMatchAll(false);
-
-//        assertThat(totalFolderIdSet.isConstrained()).isTrue();
-        assertThat(totalFolderIdSet.isMatchNothing()).isTrue();
-
-    }
-
-    @Test
-    void testNullMatches() {
-        final Selection<Long> totalFolderIdSet = new Selection<>();
-        totalFolderIdSet.add(1L);
-        assertThat(totalFolderIdSet.isMatch((Long) null)).isFalse();
-        assertThat(totalFolderIdSet.isMatch((Long) null)).isTrue();
+        final Selection<Long> selection = new Selection<>();
+        selection.setMatchAll(false);
+        assertThat(selection.isMatchNothing()).isTrue();
     }
 }
