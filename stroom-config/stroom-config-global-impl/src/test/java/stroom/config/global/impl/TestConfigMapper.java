@@ -1,5 +1,15 @@
 package stroom.config.global.impl;
 
+import stroom.config.app.AppConfig;
+import stroom.config.global.shared.ConfigProperty;
+import stroom.config.global.shared.OverrideValue;
+import stroom.docref.DocRef;
+import stroom.util.io.ByteSize;
+import stroom.util.logging.LogUtil;
+import stroom.util.shared.AbstractConfig;
+import stroom.util.shared.PropertyPath;
+import stroom.util.time.StroomDuration;
+
 import com.fasterxml.jackson.annotation.JsonProperty;
 import io.dropwizard.Configuration;
 import io.dropwizard.configuration.ConfigurationException;
@@ -15,15 +25,6 @@ import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.Test;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import stroom.config.app.AppConfig;
-import stroom.config.global.shared.ConfigProperty;
-import stroom.config.global.shared.OverrideValue;
-import stroom.docref.DocRef;
-import stroom.util.io.ByteSize;
-import stroom.util.logging.LogUtil;
-import stroom.util.shared.AbstractConfig;
-import stroom.util.shared.PropertyPath;
-import stroom.util.time.StroomDuration;
 
 import java.io.IOException;
 import java.nio.file.Path;
@@ -215,6 +216,25 @@ class TestConfigMapper {
 
         configProperties.forEach(configProperty ->
                 LOGGER.debug("{} - {}", configProperty.getName(), configProperty.getEffectiveValue().orElse(null)));
+    }
+
+    @Test
+    void testFindPropsWithNoDefault() {
+        TestConfig testConfig = new TestConfig();
+
+        ConfigMapper configMapper = new ConfigMapper(testConfig);
+
+        Collection<ConfigProperty> configProperties = configMapper.getGlobalProperties();
+
+        LOGGER.info("Properties with no default value");
+        configProperties.forEach(configProperty -> {
+            if (configProperty.getDefaultValue().isEmpty()
+                    && !configProperty.getName().toString().contains("Pool")
+                    && !configProperty.getName().toString().contains("expireAfterWrite")
+                    && !configProperty.getName().toString().contains("db.connection")) {
+                LOGGER.info("{}", configProperty.getName());
+            }
+        });
     }
 
 
