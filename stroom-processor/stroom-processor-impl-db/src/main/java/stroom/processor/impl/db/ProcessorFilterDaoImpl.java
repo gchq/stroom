@@ -66,15 +66,15 @@ class ProcessorFilterDaoImpl implements ProcessorFilterDao {
 
     @Override
     public ProcessorFilter create(final ProcessorFilter processorFilter) {
-       return create (processorFilter, null);
+        return create(processorFilter, null);
     }
 
     @Override
-    public ProcessorFilter create(final ProcessorFilter processorFilter, final Long trackerStartStreamId){
+    public ProcessorFilter create(final ProcessorFilter processorFilter, final Long trackerStartStreamId) {
         LAMBDA_LOGGER.debug(LambdaLogUtil.message("Creating a {}", PROCESSOR_FILTER.getName()));
 
         final ProcessorFilter marshalled = marshaller.marshal(processorFilter);
-        return marshaller.unmarshal(JooqUtil.transactionResult(processorDbConnProvider, context -> {
+        final ProcessorFilter stored = JooqUtil.transactionResult(processorDbConnProvider, context -> {
             ProcessorFilterTracker tracker = new ProcessorFilterTracker();
             if (trackerStartStreamId != null)
                 tracker.setMinMetaId(trackerStartStreamId);
@@ -96,13 +96,14 @@ class ProcessorFilterDaoImpl implements ProcessorFilterDao {
             result.setProcessor(result.getProcessor());
 
             return result;
-        }));
+        });
+        return marshaller.unmarshal(stored);
     }
 
     @Override
     public ProcessorFilter update(final ProcessorFilter processorFilter) {
         final ProcessorFilter marshalled = marshaller.marshal(processorFilter);
-        return marshaller.unmarshal(JooqUtil.contextResultWithOptimisticLocking(processorDbConnProvider, context -> {
+        final ProcessorFilter stored = JooqUtil.contextResultWithOptimisticLocking(processorDbConnProvider, context -> {
             final ProcessorFilterRecord processorFilterRecord =
                     context.newRecord(PROCESSOR_FILTER, marshalled);
 
@@ -115,7 +116,8 @@ class ProcessorFilterDaoImpl implements ProcessorFilterDao {
             result.setProcessor(marshalled.getProcessor());
 
             return result;
-        }));
+        });
+        return marshaller.unmarshal(stored);
     }
 
     @Override

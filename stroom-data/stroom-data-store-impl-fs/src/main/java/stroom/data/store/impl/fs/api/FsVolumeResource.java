@@ -40,7 +40,7 @@ public class FsVolumeResource implements RestResource {
     @GET
     public Response fetchAll(){
         var findAll = new FindFsVolumeCriteria();
-        findAll.getStatusSet().setMatchAll(true);
+        findAll.getSelection().setMatchAll(true);
         ResultPage<FsVolume> volumes = fsVolumeService.find(findAll);
         return Response.ok(volumes).build();
     }

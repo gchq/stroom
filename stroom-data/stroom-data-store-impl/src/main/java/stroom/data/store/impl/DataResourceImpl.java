@@ -107,9 +107,13 @@ class DataResourceImpl implements DataResource, HasHealthCheck {
                 }
 
                 final DataDownloadSettings settings = new DataDownloadSettings();
-                dataDownloadTaskHandlerProvider.get().downloadData(criteria, file.getParent(), fileName, settings);
+                final DataDownloadResult result = dataDownloadTaskHandlerProvider.get().downloadData(criteria, file.getParent(), fileName, settings);
 
                 streamEventLog.exportStream(criteria, null);
+
+                if (result.getRecordsWritten() == 0) {
+                    return null;
+                }
 
             } catch (final RuntimeException e) {
                 streamEventLog.exportStream(criteria, e);

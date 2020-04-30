@@ -21,17 +21,15 @@ import org.junit.jupiter.api.Test;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
-class TestCriteriaSet {
+class TestSelection {
     @Test
     void testSimple() {
-        final CriteriaSet<Integer> testCase = new CriteriaSet<>();
+        final Selection<Integer> testCase = new Selection<>();
 
-        assertThat(testCase.isConstrained()).isFalse();
+//        assertThat(testCase.isConstrained()).isFalse();
         assertThat(testCase.isMatch(1)).isTrue();
 
-        testCase.setMatchNull(true);
-
-        assertThat(testCase.isConstrained()).isTrue();
+//        assertThat(testCase.isConstrained()).isTrue();
         assertThat(testCase.isMatch(1)).isFalse();
         assertThat(testCase.isMatch(null)).isTrue();
 
@@ -41,20 +39,19 @@ class TestCriteriaSet {
 
     @Test
     void testFlags() {
-        final CriteriaSet<Long> totalFolderIdSet = new CriteriaSet<>();
+        final Selection<Long> totalFolderIdSet = new Selection<>();
         totalFolderIdSet.setMatchAll(false);
 
-        assertThat(totalFolderIdSet.isConstrained()).isTrue();
+//        assertThat(totalFolderIdSet.isConstrained()).isTrue();
         assertThat(totalFolderIdSet.isMatchNothing()).isTrue();
 
     }
 
     @Test
     void testNullMatches() {
-        final CriteriaSet<Long> totalFolderIdSet = new CriteriaSet<>();
+        final Selection<Long> totalFolderIdSet = new Selection<>();
         totalFolderIdSet.add(1L);
         assertThat(totalFolderIdSet.isMatch((Long) null)).isFalse();
-        totalFolderIdSet.setMatchNull(Boolean.TRUE);
         assertThat(totalFolderIdSet.isMatch((Long) null)).isTrue();
     }
 }

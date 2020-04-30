@@ -13,7 +13,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import stroom.util.logging.LogUtil;
 import stroom.util.shared.BaseCriteria;
-import stroom.util.shared.CriteriaSet;
+import stroom.util.shared.Selection;
 import stroom.util.shared.PageRequest;
 import stroom.util.shared.Range;
 import stroom.util.shared.Sort;
@@ -255,19 +255,11 @@ public final class JooqUtil {
      */
     public static <T> Optional<Condition> getSetCondition(
             final Field<T> field,
-            final CriteriaSet<T> criteria) {
-        if (criteria == null || !criteria.isConstrained()) {
+            final Selection<T> criteria) {
+        if (criteria == null || criteria.isMatchAll()) {
             return Optional.empty();
         }
-
-        final Optional<Condition> setCondition;
-        if (criteria.size() > 0) {
-            setCondition = Optional.of(field.in(criteria.getSet()));
-        } else {
-            setCondition = Optional.empty();
-        }
-
-        return convertMatchNull(field, criteria.getMatchNull(), setCondition);
+        return Optional.of(field.in(criteria.getSet()));
     }
 
     /**

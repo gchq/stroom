@@ -6,6 +6,8 @@ and this project adheres to [Semantic Versioning](http://semver.org/).
 
 ## [Unreleased]
 
+* Issue **#1500** : Fixed data delete/restore behaviour.
+
 * Issue **#1503** : Fixed Dashboard serialisation and JSON template.
 
 * Issue **#1479** : Unable to set index volume limits.

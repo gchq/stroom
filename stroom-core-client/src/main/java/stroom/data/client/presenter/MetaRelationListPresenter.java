@@ -21,10 +21,10 @@ import com.google.gwt.user.cellview.client.Column;
 import com.google.inject.Inject;
 import com.google.web.bindery.event.shared.EventBus;
 import stroom.cell.expander.client.ExpanderCell;
+import stroom.core.client.LocationManager;
 import stroom.data.grid.client.EndColumn;
 import stroom.dispatch.client.RestFactory;
 import stroom.meta.shared.DataRetentionFields;
-import stroom.meta.shared.FindMetaCriteria;
 import stroom.meta.shared.Meta;
 import stroom.meta.shared.MetaFields;
 import stroom.meta.shared.MetaRow;
@@ -53,17 +53,18 @@ public class MetaRelationListPresenter extends AbstractMetaListPresenter {
     @Inject
     public MetaRelationListPresenter(final EventBus eventBus,
                                      final RestFactory restFactory,
-                                     final TooltipPresenter tooltipPresenter) {
-        super(eventBus, restFactory, tooltipPresenter, false);
+                                     final TooltipPresenter tooltipPresenter,
+                                     final LocationManager locationManager) {
+        super(eventBus, restFactory, tooltipPresenter, locationManager, false);
     }
 
     public void setSelectedStream(final MetaRow metaRow, final boolean fireEvents,
                                   final boolean showSystemFiles) {
         if (metaRow == null) {
-            final FindMetaCriteria criteria = new FindMetaCriteria();
-            criteria.setSort(MetaFields.CREATE_TIME.getName(), Direction.ASCENDING, false);
+            getCriteria().setExpression(null);
+            getCriteria().setSort(MetaFields.CREATE_TIME.getName(), Direction.ASCENDING, false);
+            refresh();
 
-            setCriteria(criteria);
         } else {
             final ExpressionOperator.Builder builder = new ExpressionOperator.Builder(Op.AND);
             if (!showSystemFiles) {
@@ -71,12 +72,10 @@ public class MetaRelationListPresenter extends AbstractMetaListPresenter {
             }
             builder.addTerm(MetaFields.ID, Condition.EQUALS, metaRow.getMeta().getId());
 
-            final FindMetaCriteria criteria = new FindMetaCriteria();
-            criteria.setExpression(builder.build());
-            criteria.setSort(MetaFields.CREATE_TIME.getName(), Direction.ASCENDING, false);
-            criteria.setFetchRelationships(true);
-
-            setCriteria(criteria);
+            getCriteria().setExpression(builder.build());
+            getCriteria().setSort(MetaFields.CREATE_TIME.getName(), Direction.ASCENDING, false);
+            getCriteria().setFetchRelationships(true);
+            refresh();
         }
 
         getSelectionModel().setSelected(metaRow);

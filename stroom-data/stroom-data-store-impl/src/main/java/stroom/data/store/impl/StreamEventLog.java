@@ -38,7 +38,6 @@ import org.slf4j.LoggerFactory;
 import stroom.docref.DocRef;
 import stroom.event.logging.api.StroomEventLoggingService;
 import stroom.meta.shared.FindMetaCriteria;
-import stroom.meta.shared.MetaFields;
 import stroom.query.api.v2.ExpressionItem;
 import stroom.query.api.v2.ExpressionOperator;
 import stroom.query.api.v2.ExpressionTerm;
@@ -200,25 +199,25 @@ public class StreamEventLog {
 //
 
 
-        if (findMetaCriteria.getSelectedIdSet() != null && findMetaCriteria.getSelectedIdSet().size() > 0) {
-            final BaseAdvancedQueryOperator and = new And();
-            items.add(and);
-
-            BaseAdvancedQueryOperator idSetOp = and;
-            if (findMetaCriteria.getSelectedIdSet().size() > 1) {
-                idSetOp = new Or();
-                and.getAdvancedQueryItems().add(idSetOp);
-            }
-
-            for (long id : findMetaCriteria.getSelectedIdSet()) {
-                idSetOp.getAdvancedQueryItems().add(EventLoggingUtil.createTerm(MetaFields.ID.getName(), TermCondition.EQUALS, String.valueOf(id)));
-            }
-
-            appendOperator(and.getAdvancedQueryItems(), findMetaCriteria.getExpression());
-
-        } else {
+//        if (findMetaCriteria.getSelectedIdSet() != null && findMetaCriteria.getSelectedIdSet().size() > 0) {
+//            final BaseAdvancedQueryOperator and = new And();
+//            items.add(and);
+//
+//            BaseAdvancedQueryOperator idSetOp = and;
+//            if (findMetaCriteria.getSelectedIdSet().size() > 1) {
+//                idSetOp = new Or();
+//                and.getAdvancedQueryItems().add(idSetOp);
+//            }
+//
+//            for (long id : findMetaCriteria.getSelectedIdSet()) {
+//                idSetOp.getAdvancedQueryItems().add(EventLoggingUtil.createTerm(MetaFields.ID.getName(), TermCondition.EQUALS, String.valueOf(id)));
+//            }
+//
+//            appendOperator(and.getAdvancedQueryItems(), findMetaCriteria.getExpression());
+//
+//        } else {
             appendOperator(items, findMetaCriteria.getExpression());
-        }
+//        }
     }
 
     private void appendOperator(final List<BaseAdvancedQueryItem> items, final ExpressionOperator expressionOperator) {

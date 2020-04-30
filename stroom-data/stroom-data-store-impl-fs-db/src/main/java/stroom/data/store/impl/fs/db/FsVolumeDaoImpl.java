@@ -14,7 +14,7 @@ import stroom.db.util.JooqUtil;
 import stroom.util.logging.LambdaLogUtil;
 import stroom.util.logging.LambdaLogger;
 import stroom.util.logging.LambdaLoggerFactory;
-import stroom.util.shared.CriteriaSet;
+import stroom.util.shared.Selection;
 
 import javax.inject.Inject;
 import javax.inject.Singleton;
@@ -40,26 +40,26 @@ public class FsVolumeDaoImpl implements FsVolumeDao {
     @Override
     public FsVolume create(final FsVolume fileVolume) {
         return JooqUtil.contextResultWithOptimisticLocking(fsDataStoreDbConnProvider, (context) -> {
-                    final FsVolumeRecord record = context.newRecord(FS_VOLUME, fileVolume);
-                    volumeToRecord(fileVolume, record);
-                    record.store();
-                    return recordToVolume(record, fileVolume.getVolumeState());
-                });
+            final FsVolumeRecord record = context.newRecord(FS_VOLUME, fileVolume);
+            volumeToRecord(fileVolume, record);
+            record.store();
+            return recordToVolume(record, fileVolume.getVolumeState());
+        });
     }
 
     @Override
     public FsVolume update(final FsVolume fileVolume) {
         final FsVolume result = JooqUtil.contextResultWithOptimisticLocking(fsDataStoreDbConnProvider, (context) -> {
-                final FsVolumeRecord record = context.newRecord(FS_VOLUME, fileVolume);
-                volumeToRecord(fileVolume, record);
-                // This depends on there being a field named 'id' that is what we expect it to be.
-                // I'd rather this was implicit/opinionated than forced into place with an interface.
-                LOGGER.debug(LambdaLogUtil.message("Updating a {} with id {}", FS_VOLUME.getName(), record.getValue("id")));
-                record.update();
-                return recordToVolume(record, fileVolume.getVolumeState());
-            });
-            result.setVolumeState(fileVolume.getVolumeState());
-            return result;
+            final FsVolumeRecord record = context.newRecord(FS_VOLUME, fileVolume);
+            volumeToRecord(fileVolume, record);
+            // This depends on there being a field named 'id' that is what we expect it to be.
+            // I'd rather this was implicit/opinionated than forced into place with an interface.
+            LOGGER.debug(LambdaLogUtil.message("Updating a {} with id {}", FS_VOLUME.getName(), record.getValue("id")));
+            record.update();
+            return recordToVolume(record, fileVolume.getVolumeState());
+        });
+        result.setVolumeState(fileVolume.getVolumeState());
+        return result;
     }
 
     @Override
@@ -101,7 +101,7 @@ public class FsVolumeDaoImpl implements FsVolumeDao {
     @Override
     public List<FsVolume> find(final FindFsVolumeCriteria criteria) {
         final Collection<Condition> conditions = JooqUtil.conditions(
-                volumeStatusCriteriaSetToCondition(FS_VOLUME.STATUS, criteria.getStatusSet()));
+                volumeStatusCriteriaSetToCondition(FS_VOLUME.STATUS, criteria.getSelection()));
 
         return JooqUtil.contextResult(fsDataStoreDbConnProvider, context -> context
                 .select()
@@ -146,11 +146,10 @@ public class FsVolumeDaoImpl implements FsVolumeDao {
         return fileVolume;
     }
 
-    private Optional<Condition> volumeStatusCriteriaSetToCondition(final TableField<FsVolumeRecord, Byte> field, final CriteriaSet<VolumeUseStatus> criteriaSet) {
-        final CriteriaSet<Byte> set = new CriteriaSet<>();
-        set.setMatchAll(criteriaSet.getMatchAll());
-        set.setMatchNull(criteriaSet.getMatchNull());
-        set.setSet(criteriaSet.getSet().stream().map(VolumeUseStatus::getPrimitiveValue).collect(Collectors.toSet()));
+    private Optional<Condition> volumeStatusCriteriaSetToCondition(final TableField<FsVolumeRecord, Byte> field, final Selection<VolumeUseStatus> selection) {
+        final Selection<Byte> set = new Selection<>();
+        set.setMatchAll(selection.isMatchAll());
+        set.setSet(selection.getSet().stream().map(VolumeUseStatus::getPrimitiveValue).collect(Collectors.toSet()));
         return JooqUtil.getSetCondition(field, set);
     }
 }

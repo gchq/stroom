@@ -47,9 +47,9 @@ import stroom.util.date.DateUtil;
 import stroom.util.logging.LambdaLogUtil;
 import stroom.util.logging.LambdaLogger;
 import stroom.util.logging.LambdaLoggerFactory;
-import stroom.util.shared.CriteriaSet;
 import stroom.util.shared.PageRequest;
 import stroom.util.shared.ResultPage;
+import stroom.util.shared.Selection;
 
 import javax.inject.Inject;
 import java.time.Duration;
@@ -239,12 +239,12 @@ class ProcessorTaskDaoImpl implements ProcessorTaskDao {
                     TaskStatus.UNPROCESSED.getPrimitiveValue(),
                     TaskStatus.ASSIGNED.getPrimitiveValue(),
                     TaskStatus.PROCESSING.getPrimitiveValue());
-            final CriteriaSet<Byte> criteriaSet = new CriteriaSet<>();
-            criteriaSet.setSet(statusSet);
+            final Selection<Byte> selection = new Selection<>();
+            selection.setSet(statusSet);
 
             final Collection<Condition> conditions = JooqUtil.conditions(
                     Optional.of(PROCESSOR_TASK.FK_PROCESSOR_NODE_ID.eq(nodeId)),
-                    JooqUtil.getSetCondition(PROCESSOR_TASK.STATUS, criteriaSet));
+                    JooqUtil.getSetCondition(PROCESSOR_TASK.STATUS, selection));
 
             final int results = JooqUtil.contextResult(processorDbConnProvider, context -> context
                     .update(PROCESSOR_TASK)
@@ -879,6 +879,8 @@ class ProcessorTaskDaoImpl implements ProcessorTaskDao {
                 .join(PROCESSOR).on(PROCESSOR_FILTER.FK_PROCESSOR_ID.eq(PROCESSOR.ID))
                 .where(condition)
                 .orderBy(orderFields)
+                .limit(JooqUtil.getLimit(criteria.getPageRequest()))
+                .offset(JooqUtil.getOffset(criteria.getPageRequest()))
                 .fetch()
                 .map(record -> {
                     final Integer processorFilterId = record.get(PROCESSOR_TASK.FK_PROCESSOR_FILTER_ID);
@@ -924,6 +926,8 @@ class ProcessorTaskDaoImpl implements ProcessorTaskDao {
                 .where(condition)
                 .groupBy(PROCESSOR.PIPELINE_UUID, PROCESSOR_FILTER.PRIORITY, PROCESSOR_TASK.STATUS)
                 .orderBy(orderFields)
+                .limit(JooqUtil.getLimit(criteria.getPageRequest()))
+                .offset(JooqUtil.getOffset(criteria.getPageRequest()))
                 .fetch()
                 .map(record -> {
                     final String feed = record.get(PROCESSOR_FEED.NAME);

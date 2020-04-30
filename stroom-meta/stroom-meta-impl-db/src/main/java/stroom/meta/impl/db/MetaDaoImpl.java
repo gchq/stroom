@@ -36,7 +36,6 @@ import stroom.meta.shared.Status;
 import stroom.query.api.v2.ExpressionOperator;
 import stroom.query.api.v2.ExpressionUtil;
 import stroom.util.date.DateUtil;
-import stroom.util.shared.IdSet;
 import stroom.util.shared.PageRequest;
 import stroom.util.shared.ResultPage;
 import stroom.util.shared.Sort;
@@ -48,6 +47,7 @@ import java.util.Arrays;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.Objects;
 import java.util.Optional;
 import java.util.Set;
 import java.util.function.Consumer;
@@ -214,19 +214,30 @@ class MetaDaoImpl implements MetaDao {
     }
 
     @Override
-    public int updateStatus(final FindMetaCriteria criteria, final Status newStatus, final Status currentStatus, final long statusTime) {
+    public int updateStatus(final FindMetaCriteria criteria, final Status currentStatus, final Status newStatus, final long statusTime) {
+        Objects.requireNonNull(newStatus, "New status is null");
+        if (Objects.equals(newStatus, currentStatus)) {
+            // The status is not being updated.
+            throw new RuntimeException("New and current status are equal");
+        }
+
+        final byte newStatusId = MetaStatusId.getPrimitiveValue(newStatus);
+
         Condition condition = expressionMapper.apply(criteria.getExpression());
 
         // Add a condition if we should check current status.
         if (currentStatus != null) {
-            condition = condition.and(meta.STATUS.eq(MetaStatusId.getPrimitiveValue(currentStatus)));
+            final byte currentStatusId = MetaStatusId.getPrimitiveValue(currentStatus);
+            condition = condition.and(meta.STATUS.eq(currentStatusId));
+        } else {
+            condition = condition.and(meta.STATUS.ne(newStatusId));
         }
 
         final Condition c = condition;
 
         return JooqUtil.contextResult(metaDbConnProvider, context -> context
                 .update(meta)
-                .set(meta.STATUS, MetaStatusId.getPrimitiveValue(newStatus))
+                .set(meta.STATUS, newStatusId)
                 .set(meta.STATUS_TIME, statusTime)
                 .where(c)
                 .execute());
@@ -304,7 +315,7 @@ class MetaDaoImpl implements MetaDao {
         final boolean extendedValuesExist = fieldList.stream().anyMatch(MetaFields.getExtendedFields()::contains);
 
         final PageRequest pageRequest = criteria.getPageRequest();
-        final Condition condition = createCondition(criteria.getExpression(), null);
+        final Condition condition = createCondition(criteria.getExpression());
         final OrderField[] orderFields = createOrderFields(criteria);
         final List<Field<?>> dbFields = new ArrayList<>(valueMapper.getFields(fieldList));
         final Mapper[] mappers = valueMapper.getMappers(fields);
@@ -468,16 +479,16 @@ class MetaDaoImpl implements MetaDao {
     }
 
     private Condition createCondition(final FindMetaCriteria criteria) {
-        return createCondition(criteria.getExpression(), criteria.getSelectedIdSet());
+        return createCondition(criteria.getExpression());
     }
 
-    private Condition createCondition(final ExpressionOperator expression, final IdSet idSet) {
+    private Condition createCondition(final ExpressionOperator expression) {
         Condition condition = expressionMapper.apply(expression);
 
-        // If we aren't being asked to match everything then add constraints to the expression.
-        if (idSet != null && (idSet.getMatchAll() == null || !idSet.getMatchAll())) {
-            condition = and(condition, meta.ID.in(idSet.getSet()));
-        }
+//        // If we aren't being asked to match everything then add constraints to the expression.
+//        if (idSet != null && (idSet.getMatchAll() == null || !idSet.getMatchAll())) {
+//            condition = and(condition, meta.ID.in(idSet.getSet()));
+//        }
 
         // Get additional selection criteria based on meta data attributes;
         final SelectConditionStep<Record1<Long>> metaConditionStep = getMetaCondition(expression);
@@ -505,11 +516,13 @@ class MetaDaoImpl implements MetaDao {
 
         return criteria.getSortList().stream().map(sort -> {
             Field<?> field;
-            if (MetaFields.FIELD_ID.equals(sort.getField())) {
+            if (MetaFields.ID.getName().equals(sort.getField())) {
                 field = meta.ID;
-            } else if (MetaFields.FIELD_FEED.equals(sort.getField())) {
+            } else if (MetaFields.CREATE_TIME.getName().equals(sort.getField())) {
+                field = meta.CREATE_TIME;
+            } else if (MetaFields.FEED_NAME.getName().equals(sort.getField())) {
                 field = metaFeed.NAME;
-            } else if (MetaFields.FIELD_TYPE.equals(sort.getField())) {
+            } else if (MetaFields.TYPE_NAME.getName().equals(sort.getField())) {
                 field = metaType.NAME;
             } else {
                 field = meta.ID;

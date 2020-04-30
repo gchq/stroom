@@ -180,7 +180,7 @@ public class DataRetentionPolicyExecutor {
 
         int count = -1;
         while (count != 0 && !Thread.currentThread().isInterrupted()) {
-            count = metaService.updateStatus(findMetaCriteria, Status.DELETED);
+            count = metaService.updateStatus(findMetaCriteria, null, Status.DELETED);
             final String message = "Marked " + count + " items as deleted";
             LOGGER.info(() -> message);
         }

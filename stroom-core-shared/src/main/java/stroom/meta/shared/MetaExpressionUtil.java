@@ -7,14 +7,16 @@ import stroom.query.api.v2.ExpressionOperator.Op;
 import stroom.query.api.v2.ExpressionTerm.Condition;
 import stroom.query.api.v2.ExpressionUtil;
 
+import java.util.Set;
+
 public final class MetaExpressionUtil {
     private MetaExpressionUtil() {
         // Utility class.
     }
 
-    public static ExpressionOperator createSimpleExpression() {
-        return ExpressionUtil.equals(MetaFields.STATUS, Status.UNLOCKED.getDisplayValue());
-    }
+//    public static ExpressionOperator createSimpleExpression() {
+//        return ExpressionUtil.equals(MetaFields.STATUS, Status.UNLOCKED.getDisplayValue());
+//    }
 
     public static ExpressionOperator createSimpleExpression(final AbstractField field, final Condition condition, final String value) {
         return new ExpressionOperator.Builder(Op.AND)
@@ -26,20 +28,33 @@ public final class MetaExpressionUtil {
         return ExpressionUtil.equals(MetaFields.STATUS, status.getDisplayValue());
     }
 
+    public static ExpressionOperator createDataIdSetExpression(final Set<Long> idSet) {
+        final ExpressionOperator.Builder builder = new ExpressionOperator.Builder(Op.OR);
+        for (final Long id : idSet) {
+            builder    .addTerm(MetaFields.ID, Condition.EQUALS, id);
+        }
+
+//                .addTerm(MetaFields.STATUS, Condition.EQUALS, status.getDisplayValue())
+                return builder.build();
+    }
+
     public static ExpressionOperator createDataIdExpression(final long id) {
-        final ExpressionOperator expression = new ExpressionOperator.Builder(Op.AND)
-                .addTerm(MetaFields.ID, Condition.EQUALS, id)
-                .addTerm(MetaFields.STATUS, Condition.EQUALS, Status.UNLOCKED.getDisplayValue())
-                .build();
-        return expression;
+        return ExpressionUtil.equals(MetaFields.ID, id);
+//
+//
+//        return new ExpressionOperator.Builder(Op.AND)
+//                .addTerm(MetaFields.ID, Condition.EQUALS, id)
+////                .addTerm(MetaFields.STATUS, Condition.EQUALS, status.getDisplayValue())
+//                .build();
     }
 
     public static ExpressionOperator createParentIdExpression(final long parentId) {
-        final ExpressionOperator expression = new ExpressionOperator.Builder(Op.AND)
-                .addTerm(MetaFields.PARENT_ID, Condition.EQUALS, parentId)
-                .addTerm(MetaFields.STATUS, Condition.EQUALS, Status.UNLOCKED.getDisplayValue())
-                .build();
-        return expression;
+        return ExpressionUtil.equals(MetaFields.PARENT_ID, parentId);
+//
+//        return new ExpressionOperator.Builder(Op.AND)
+//                .addTerm(MetaFields.PARENT_ID, Condition.EQUALS, parentId)
+////                .addTerm(MetaFields.STATUS, Condition.EQUALS, Status.UNLOCKED.getDisplayValue())
+//                .build();
     }
 
     public static ExpressionOperator createTypeExpression(final String typeName) {

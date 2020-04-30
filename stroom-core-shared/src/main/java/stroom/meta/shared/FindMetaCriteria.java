@@ -23,7 +23,6 @@ import stroom.entity.shared.ExpressionCriteria;
 import stroom.query.api.v2.ExpressionOperator;
 import stroom.query.api.v2.ExpressionUtil;
 import stroom.util.shared.Copyable;
-import stroom.util.shared.IdSet;
 import stroom.util.shared.PageRequest;
 import stroom.util.shared.Sort;
 
@@ -32,8 +31,6 @@ import java.util.Objects;
 
 @JsonInclude(JsonInclude.Include.NON_NULL)
 public class FindMetaCriteria extends ExpressionCriteria implements Copyable<FindMetaCriteria> {
-    @JsonProperty
-    private IdSet selectedIdSet;
     @JsonProperty
     private boolean fetchRelationships;
 
@@ -48,46 +45,21 @@ public class FindMetaCriteria extends ExpressionCriteria implements Copyable<Fin
     public FindMetaCriteria(@JsonProperty("pageRequest") final PageRequest pageRequest,
                             @JsonProperty("sortList") final List<Sort> sortList,
                             @JsonProperty("expression") final ExpressionOperator expression,
-                            @JsonProperty("selectedIdSet") final IdSet selectedIdSet,
                             @JsonProperty("fetchRelationships") final boolean fetchRelationships) {
         super(pageRequest, sortList, expression);
-        this.selectedIdSet = selectedIdSet;
         this.fetchRelationships = fetchRelationships;
     }
 
     public static FindMetaCriteria createFromId(final long id) {
-        final FindMetaCriteria criteria = new FindMetaCriteria();
-        criteria.setExpression(MetaExpressionUtil.createSimpleExpression());
-        criteria.obtainSelectedIdSet().add(id);
-        return criteria;
+        return new FindMetaCriteria(MetaExpressionUtil.createDataIdExpression(id));
     }
 
     public static FindMetaCriteria createFromMeta(final Meta meta) {
-        final FindMetaCriteria criteria = new FindMetaCriteria();
-        criteria.setExpression(MetaExpressionUtil.createSimpleExpression());
-        criteria.obtainSelectedIdSet().add(meta.getId());
-        return criteria;
+        return new FindMetaCriteria(MetaExpressionUtil.createDataIdExpression(meta.getId()));
     }
 
     public static FindMetaCriteria createWithType(final String typeName) {
-        final FindMetaCriteria criteria = new FindMetaCriteria();
-        criteria.setExpression(MetaExpressionUtil.createTypeExpression(typeName));
-        return criteria;
-    }
-
-    public IdSet getSelectedIdSet() {
-        return selectedIdSet;
-    }
-
-    public void setSelectedIdSet(final IdSet selectedIdSet) {
-        this.selectedIdSet = selectedIdSet;
-    }
-
-    public IdSet obtainSelectedIdSet() {
-        if (selectedIdSet == null) {
-            selectedIdSet = new IdSet();
-        }
-        return selectedIdSet;
+        return new FindMetaCriteria(MetaExpressionUtil.createTypeExpression(typeName));
     }
 
     public void setFetchRelationships(final boolean fetchRelationships) {
@@ -108,11 +80,6 @@ public class FindMetaCriteria extends ExpressionCriteria implements Copyable<Fin
         super.copyFrom(other);
         if (other != null) {
             this.setExpression(ExpressionUtil.copyOperator(other.getExpression()));
-            if (other.selectedIdSet == null) {
-                this.selectedIdSet = null;
-            } else {
-                this.obtainSelectedIdSet().copyFrom(other.selectedIdSet);
-            }
             this.fetchRelationships = other.fetchRelationships;
         }
     }
@@ -123,12 +90,11 @@ public class FindMetaCriteria extends ExpressionCriteria implements Copyable<Fin
         if (!(o instanceof FindMetaCriteria)) return false;
         if (!super.equals(o)) return false;
         final FindMetaCriteria that = (FindMetaCriteria) o;
-        return fetchRelationships == that.fetchRelationships &&
-                Objects.equals(selectedIdSet, that.selectedIdSet);
+        return fetchRelationships == that.fetchRelationships;
     }
 
     @Override
     public int hashCode() {
-        return Objects.hash(super.hashCode(), selectedIdSet, fetchRelationships);
+        return Objects.hash(super.hashCode(), fetchRelationships);
     }
 }

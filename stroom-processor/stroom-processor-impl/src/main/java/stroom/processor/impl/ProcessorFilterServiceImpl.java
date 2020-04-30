@@ -52,7 +52,7 @@ import stroom.security.shared.PermissionNames;
 import stroom.util.AuditUtil;
 import stroom.util.logging.LambdaLogger;
 import stroom.util.logging.LambdaLoggerFactory;
-import stroom.util.shared.CriteriaSet;
+import stroom.util.shared.Selection;
 import stroom.util.shared.Expander;
 import stroom.util.shared.ResultPage;
 import stroom.util.shared.Severity;
@@ -497,7 +497,7 @@ class ProcessorFilterServiceImpl implements ProcessorFilterService {
                     final StringBuilder unableListSB = new StringBuilder();
                     final StringBuilder submittedListSB = new StringBuilder();
 
-                    final Map<Processor, CriteriaSet<Long>> streamToProcessorSet = new HashMap<>();
+                    final Map<Processor, Selection<Long>> streamToProcessorSet = new HashMap<>();
 
                     for (final Meta meta : metaList.getValues()) {
                         // We can only reprocess streams that have a stream processor and a parent stream id.
@@ -507,7 +507,7 @@ class ProcessorFilterServiceImpl implements ProcessorFilterService {
                                     .build());
 //                            findProcessorCriteria.obtainPipelineUuidCriteria().setString(meta.getPipelineUuid());
                             final Processor processor = processorService.find(findProcessorCriteria).getFirst();
-                            streamToProcessorSet.computeIfAbsent(processor, k -> new CriteriaSet<>()).add(meta.getParentMetaId());
+                            streamToProcessorSet.computeIfAbsent(processor, k -> new Selection<>()).add(meta.getParentMetaId());
                         } else {
                             skippingCount++;
                         }
@@ -520,10 +520,10 @@ class ProcessorFilterServiceImpl implements ProcessorFilterService {
                         final QueryData queryData = new QueryData();
                         final ExpressionOperator.Builder operator = new ExpressionOperator.Builder(ExpressionOperator.Op.AND);
 
-                        final CriteriaSet<Long> streamIdSet = streamToProcessorSet.get(streamProcessor);
+                        final Selection<Long> streamIdSet = streamToProcessorSet.get(streamProcessor);
                         if (streamIdSet != null && streamIdSet.size() > 0) {
                             if (streamIdSet.size() == 1) {
-                                operator.addTerm(MetaFields.ID, ExpressionTerm.Condition.EQUALS, streamIdSet.getSingleItem());
+                                operator.addTerm(MetaFields.ID, ExpressionTerm.Condition.EQUALS, streamIdSet.iterator().next());
                             } else {
                                 final ExpressionOperator.Builder streamIdTerms = new ExpressionOperator.Builder(ExpressionOperator.Op.OR);
                                 streamIdSet.forEach(streamId -> streamIdTerms.addTerm(MetaFields.ID, ExpressionTerm.Condition.EQUALS, streamId));

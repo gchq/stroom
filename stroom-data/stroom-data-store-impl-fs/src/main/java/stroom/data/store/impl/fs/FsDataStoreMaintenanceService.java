@@ -34,7 +34,7 @@ import stroom.security.api.SecurityContext;
 import stroom.security.shared.PermissionNames;
 import stroom.util.io.FileUtil;
 import stroom.util.shared.ResultPage;
-import stroom.util.shared.CriteriaSet;
+import stroom.util.shared.Selection;
 import stroom.util.shared.PageRequest;
 
 import javax.inject.Inject;
@@ -179,7 +179,7 @@ class FsDataStoreMaintenanceService implements DataStoreMaintenanceService {
                 final FindDataVolumeCriteria criteria = new FindDataVolumeCriteria();
 
                 final Map<Long, Meta> streamMap = new HashMap<>();
-                final CriteriaSet<Long> streamIdSet = criteria.obtainMetaIdSet();
+                final Selection<Long> streamIdSet = criteria.obtainMetaIdSet();
                 matchingStreams.forEach(stream -> {
                     final long id = stream.getId();
                     streamMap.put(id, stream);

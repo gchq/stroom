@@ -12,6 +12,7 @@ import stroom.query.api.v2.ExpressionItem;
 import stroom.query.api.v2.ExpressionOperator;
 import stroom.query.api.v2.ExpressionTerm;
 
+import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collections;
 import java.util.HashMap;
@@ -142,10 +143,10 @@ public class ExpressionMapper implements Function<ExpressionItem, Condition> {
         private final boolean useName;
 
         public TermHandler(final AbstractField dataSourceField,
-                    final Field<T> field,
-                    final MultiConverter<T> converter,
-                    final WordListProvider wordListProvider,
-                    final CollectionService collectionService) {
+                           final Field<T> field,
+                           final MultiConverter<T> converter,
+                           final WordListProvider wordListProvider,
+                           final CollectionService collectionService) {
             this(dataSourceField, field, converter, wordListProvider, collectionService, false);
         }
 
@@ -262,7 +263,11 @@ public class ExpressionMapper implements Function<ExpressionItem, Condition> {
         private Condition isInDictionary(final DocRef docRef) {
             final String[] lines = loadWords(docRef);
             if (lines != null) {
-                final List<T> values = Arrays.stream(lines).map(this::getSingleValue).collect(Collectors.toList());
+                final List<T> values = new ArrayList<>();
+                for (final String line : lines) {
+                    final List<T> list = converter.apply(line);
+                    values.addAll(list);
+                }
                 return field.in(values);
             }
 
@@ -279,18 +284,16 @@ public class ExpressionMapper implements Function<ExpressionItem, Condition> {
                     if (descendants == null || descendants.size() == 0) {
                         condition = field.in(Collections.emptySet());
                     } else {
+                        final Set<T> set = new HashSet<>();
                         for (final DocRef descendant : descendants) {
                             String value = descendant.getUuid();
                             if (useName) {
                                 value = descendant.getName();
                             }
-
-                            if (condition == null) {
-                                condition = field.equal(getSingleValue(value));
-                            } else {
-                                condition = condition.or(field.equal(getSingleValue(value)));
-                            }
+                            final List<T> list = converter.apply(value);
+                            set.addAll(list);
                         }
+                        condition = field.in(set);
                     }
                 }
             }

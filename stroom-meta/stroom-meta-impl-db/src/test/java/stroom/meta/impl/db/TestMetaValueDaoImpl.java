@@ -25,14 +25,14 @@ import stroom.cache.impl.CacheModule;
 import stroom.cluster.lock.mock.MockClusterLockModule;
 import stroom.collection.mock.MockCollectionModule;
 import stroom.dictionary.mock.MockWordListProviderModule;
+import stroom.meta.api.AttributeMap;
+import stroom.meta.api.MetaProperties;
 import stroom.meta.impl.MetaModule;
 import stroom.meta.impl.MetaServiceImpl;
-import stroom.meta.api.AttributeMap;
 import stroom.meta.shared.FindMetaCriteria;
 import stroom.meta.shared.Meta;
-import stroom.meta.shared.MetaExpressionUtil;
 import stroom.meta.shared.MetaFields;
-import stroom.meta.api.MetaProperties;
+import stroom.query.api.v2.ExpressionOperator;
 import stroom.query.api.v2.ExpressionTerm.Condition;
 import stroom.security.mock.MockSecurityContextModule;
 import stroom.test.common.util.db.DbTestModule;
@@ -81,28 +81,32 @@ class TestMetaValueDaoImpl {
 
         metaService.addAttributes(meta, createAttributes());
 
-        FindMetaCriteria criteria = new FindMetaCriteria();
-        criteria.obtainSelectedIdSet().add(meta.getId());
-        criteria.setExpression(MetaExpressionUtil.createSimpleExpression(MetaFields.CREATE_TIME, Condition.EQUALS, DateUtil.createNormalDateTimeString(meta.getCreateMs())));
-
+        ExpressionOperator expression = new ExpressionOperator.Builder()
+                .addTerm(MetaFields.ID, Condition.EQUALS, meta.getId())
+                .addTerm(MetaFields.CREATE_TIME, Condition.EQUALS, DateUtil.createNormalDateTimeString(meta.getCreateMs()))
+                .build();
+        FindMetaCriteria criteria = new FindMetaCriteria(expression);
         assertThat(metaService.find(criteria).size()).isEqualTo(1);
 
-        criteria = new FindMetaCriteria();
-        criteria.obtainSelectedIdSet().add(meta.getId());
-        criteria.setExpression(MetaExpressionUtil.createSimpleExpression(MetaFields.CREATE_TIME, Condition.EQUALS, DateUtil.createNormalDateTimeString(0L)));
-
+        expression = new ExpressionOperator.Builder()
+                .addTerm(MetaFields.ID, Condition.EQUALS, meta.getId())
+                .addTerm(MetaFields.CREATE_TIME, Condition.EQUALS, DateUtil.createNormalDateTimeString(0L))
+                .build();
+        criteria = new FindMetaCriteria(expression);
         assertThat(metaService.find(criteria).size()).isEqualTo(0);
 
-        criteria = new FindMetaCriteria();
-        criteria.obtainSelectedIdSet().add(meta.getId());
-        criteria.setExpression(MetaExpressionUtil.createSimpleExpression(MetaFields.FILE_SIZE, Condition.GREATER_THAN, "0"));
-
+        expression = new ExpressionOperator.Builder()
+                .addTerm(MetaFields.ID, Condition.EQUALS, meta.getId())
+                .addTerm(MetaFields.FILE_SIZE, Condition.GREATER_THAN, 0)
+                .build();
+        criteria = new FindMetaCriteria(expression);
         assertThat(metaService.find(criteria).size()).isEqualTo(1);
 
-        criteria = new FindMetaCriteria();
-        criteria.obtainSelectedIdSet().add(meta.getId());
-        criteria.setExpression(MetaExpressionUtil.createSimpleExpression(MetaFields.FILE_SIZE, Condition.BETWEEN, "0,1000000"));
-
+        expression = new ExpressionOperator.Builder()
+                .addTerm(MetaFields.ID, Condition.EQUALS, meta.getId())
+                .addTerm(MetaFields.FILE_SIZE.getName(), Condition.BETWEEN, "0,1000000")
+                .build();
+        criteria = new FindMetaCriteria(expression);
         assertThat(metaService.find(criteria).size()).isEqualTo(1);
     }
 
@@ -112,36 +116,41 @@ class TestMetaValueDaoImpl {
 
         metaService.addAttributes(meta, createAttributes());
 
-        FindMetaCriteria criteria = new FindMetaCriteria();
-        criteria.obtainSelectedIdSet().add(meta.getId());
-        criteria.setExpression(MetaExpressionUtil.createSimpleExpression(MetaFields.CREATE_TIME, Condition.EQUALS, DateUtil.createNormalDateTimeString(meta.getCreateMs())));
-
+        ExpressionOperator expression = new ExpressionOperator.Builder()
+                .addTerm(MetaFields.ID, Condition.EQUALS, meta.getId())
+                .addTerm(MetaFields.CREATE_TIME, Condition.EQUALS, DateUtil.createNormalDateTimeString(meta.getCreateMs()))
+                .build();
+        FindMetaCriteria criteria = new FindMetaCriteria(expression);
         assertThat(metaService.find(criteria).size()).isEqualTo(1);
 
-        criteria = new FindMetaCriteria();
-        criteria.obtainSelectedIdSet().add(meta.getId());
-        criteria.setExpression(MetaExpressionUtil.createSimpleExpression(MetaFields.CREATE_TIME, Condition.EQUALS, DateUtil.createNormalDateTimeString(0L)));
-
+        expression = new ExpressionOperator.Builder()
+                .addTerm(MetaFields.ID, Condition.EQUALS, meta.getId())
+                .addTerm(MetaFields.CREATE_TIME, Condition.EQUALS, DateUtil.createNormalDateTimeString(0L))
+                .build();
+        criteria = new FindMetaCriteria(expression);
         assertThat(metaService.find(criteria).size()).isEqualTo(0);
 
-        criteria = new FindMetaCriteria();
-        criteria.obtainSelectedIdSet().add(meta.getId());
-        criteria.setExpression(MetaExpressionUtil.createSimpleExpression(MetaFields.FILE_SIZE, Condition.GREATER_THAN, "0"));
-
+        expression = new ExpressionOperator.Builder()
+                .addTerm(MetaFields.ID, Condition.EQUALS, meta.getId())
+                .addTerm(MetaFields.FILE_SIZE, Condition.GREATER_THAN, 0)
+                .build();
+        criteria = new FindMetaCriteria(expression);
         assertThat(metaService.find(criteria).size()).isEqualTo(1);
 
-        criteria = new FindMetaCriteria();
-        criteria.obtainSelectedIdSet().add(meta.getId());
-        criteria.setExpression(MetaExpressionUtil.createSimpleExpression(MetaFields.FILE_SIZE, Condition.BETWEEN, "0,1000000"));
-
+        expression = new ExpressionOperator.Builder()
+                .addTerm(MetaFields.ID, Condition.EQUALS, meta.getId())
+                .addTerm(MetaFields.FILE_SIZE.getName(), Condition.BETWEEN, "0,1000000")
+                .build();
+        criteria = new FindMetaCriteria(expression);
         assertThat(metaService.find(criteria).size()).isEqualTo(1);
 
         metaValueDao.deleteOldValues();
 
-        criteria = new FindMetaCriteria();
-        criteria.obtainSelectedIdSet().add(meta.getId());
-        criteria.setExpression(MetaExpressionUtil.createSimpleExpression(MetaFields.FILE_SIZE, Condition.BETWEEN, "0,1000000"));
-
+        expression = new ExpressionOperator.Builder()
+                .addTerm(MetaFields.ID, Condition.EQUALS, meta.getId())
+                .addTerm(MetaFields.FILE_SIZE.getName(), Condition.BETWEEN, "0,1000000")
+                .build();
+        criteria = new FindMetaCriteria(expression);
         assertThat(metaService.find(criteria).size()).isEqualTo(0);
     }
 
