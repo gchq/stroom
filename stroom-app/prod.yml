@@ -117,6 +117,8 @@ appConfig:
     hostname: ${STROOM_HOST:-localhost}
   path:
     temp: "/tmp/stroom"
+  proxyAggregation:
+    proxyDir: ${STROOM_PROXY_DIR:-/tmp/stroom/proxy}
   publicUri:
     hostname: ${API_GATEWAY_HOST:-localhost}
   security:

@@ -8,6 +8,10 @@ and this project adheres to [Semantic Versioning](http://semver.org/).
 
 * Add stroom.statistics.internal.enabledStoreTypes and make internal stat processing respect it.
 
+* Issue **#1515** : Fix proxyDir default when running in a stack.
+
+* Issue **#1509** : Unable to update processor filter.
+
 * Issue **#1495** : Speculative fix for missing swagger.json file in the fat jar.
 
 * Issue **#1503** : Fixed Dashboard serialisation and JSON template.
