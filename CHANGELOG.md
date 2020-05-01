@@ -10,6 +10,8 @@ and this project adheres to [Semantic Versioning](http://semver.org/).
 
 * Improve SQL stats shutdown processing so all in memory stats are flushed.
 
+* Issue **#1521** : Dashboards with missing datasources break entirely.
+
 * Issue **#1477** : Disable edit button on stream processor.
 
 * Issue **#1497** : Fixed data list result paging.
