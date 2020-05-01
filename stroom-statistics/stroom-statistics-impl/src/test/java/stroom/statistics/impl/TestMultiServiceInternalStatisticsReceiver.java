@@ -1,5 +1,9 @@
 package stroom.statistics.impl;
 
+import stroom.docref.DocRef;
+import stroom.statistics.api.InternalStatisticEvent;
+import stroom.statistics.api.InternalStatisticKey;
+
 import com.google.common.collect.ImmutableMap;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
@@ -10,9 +14,6 @@ import org.mockito.Mockito;
 import org.mockito.junit.jupiter.MockitoExtension;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import stroom.docref.DocRef;
-import stroom.statistics.api.InternalStatisticEvent;
-import stroom.statistics.api.InternalStatisticKey;
 
 import java.util.Arrays;
 import java.util.List;
@@ -44,7 +45,7 @@ class TestMultiServiceInternalStatisticsReceiver {
     private static final InternalStatisticEvent EVENT_B703 = createEvent(STAT_KEY_B, 703L);
 
     @Mock
-    private InternalStatisticDocRefCache internalStatisticDocRefCache;
+    private InternalStatisticsConfig internalStatisticsConfig;
     @Mock
     private InternalStatisticsService internalStatisticsService1;
     @Mock
@@ -62,15 +63,15 @@ class TestMultiServiceInternalStatisticsReceiver {
     void putEvents() {
 
         //keyA has a docRef for both services
-        Mockito.when(internalStatisticDocRefCache.getDocRefs(Mockito.eq(STAT_KEY_A)))
+        Mockito.when(internalStatisticsConfig.getEnabledDocRefs(Mockito.eq(STAT_KEY_A)))
                 .thenReturn(Arrays.asList(DOC_REF_A1, DOC_REF_A2));
-        assertThat(internalStatisticDocRefCache.getDocRefs(STAT_KEY_A))
+        assertThat(internalStatisticsConfig.getEnabledDocRefs(STAT_KEY_A))
                 .containsExactly(DOC_REF_A1, DOC_REF_A2);
 
         //keyB only has a docref for service1
-        Mockito.when(internalStatisticDocRefCache.getDocRefs(Mockito.eq(STAT_KEY_B)))
+        Mockito.when(internalStatisticsConfig.getEnabledDocRefs(Mockito.eq(STAT_KEY_B)))
                 .thenReturn(Arrays.asList(DOC_REF_B1));
-        assertThat(internalStatisticDocRefCache.getDocRefs(STAT_KEY_B))
+        assertThat(internalStatisticsConfig.getEnabledDocRefs(STAT_KEY_B))
                 .containsExactly(DOC_REF_B1);
 
         //service1 supports docRefType1, etc.
@@ -79,8 +80,8 @@ class TestMultiServiceInternalStatisticsReceiver {
                 DOC_REF_TYPE_2, internalStatisticsService2); //i.e. docRefA2
 
         MultiServiceInternalStatisticsReceiver facade = new MultiServiceInternalStatisticsReceiver(
-                internalStatisticDocRefCache,
-                docRefTypeToServiceMap);
+                docRefTypeToServiceMap,
+                internalStatisticsConfig);
 
         //fire 6 events at the facade, 3 for each key
         facade.putEvents(Arrays.asList(

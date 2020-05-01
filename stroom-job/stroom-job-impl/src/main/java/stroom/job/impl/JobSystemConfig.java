@@ -1,15 +1,16 @@
 package stroom.job.impl;
 
-import com.fasterxml.jackson.annotation.JsonIgnore;
-import com.fasterxml.jackson.annotation.JsonProperty;
-import com.fasterxml.jackson.annotation.JsonPropertyDescription;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 import stroom.config.common.DbConfig;
 import stroom.config.common.HasDbConfig;
 import stroom.util.config.annotations.RequiresRestart;
 import stroom.util.shared.AbstractConfig;
 import stroom.util.shared.ModelStringUtil;
+
+import com.fasterxml.jackson.annotation.JsonIgnore;
+import com.fasterxml.jackson.annotation.JsonProperty;
+import com.fasterxml.jackson.annotation.JsonPropertyDescription;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import javax.inject.Singleton;
 
@@ -29,12 +30,14 @@ public class JobSystemConfig extends AbstractConfig implements HasDbConfig {
         return dbConfig;
     }
 
+    @SuppressWarnings("unused")
     public void setDbConfig(final DbConfig dbConfig) {
         this.dbConfig = dbConfig;
     }
 
     @RequiresRestart(RequiresRestart.RestartScope.SYSTEM)
-    @JsonPropertyDescription("Set this to false for development and testing purposes otherwise the Stroom will " +
+    @JsonPropertyDescription("Enables/disables the job system that executes Stroom's enabled scheduled jobs. " +
+            "Set this to false for development and testing purposes otherwise the Stroom will " +
             "try and process files automatically outside of test cases.")
     public boolean isEnabled() {
         return enabled;
@@ -45,11 +48,13 @@ public class JobSystemConfig extends AbstractConfig implements HasDbConfig {
     }
 
     @RequiresRestart(RequiresRestart.RestartScope.SYSTEM)
-    @JsonPropertyDescription("How frequently should the lifecycle service attempt execution.")
+    @JsonPropertyDescription("How frequently should the lifecycle service attempt to execute any jobs that " +
+            "are ready (by their frequency or schedule) to be executed.")
     public String getExecutionInterval() {
         return executionInterval;
     }
 
+    @SuppressWarnings("unused")
     public void setExecutionInterval(final String executionInterval) {
         this.executionInterval = executionInterval;
     }

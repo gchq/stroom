@@ -28,6 +28,7 @@ dependencies {
     testCompile libs.junit_jupiter_api
     testCompile libs.mockito_core
     testCompile libs.mockito_junit_jupiter
+    testCompile libs.guice_extension
 
     // The following logging libs are needed when running junits outside dropwizard
     testRuntimeOnly libs.javax_activation

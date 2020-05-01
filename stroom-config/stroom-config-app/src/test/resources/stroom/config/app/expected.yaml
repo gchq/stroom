@@ -642,6 +642,8 @@ appConfig:
         count: "statisticEvents-Count"
         value: "statisticEvents-Value"
     internal:
+      enabledStoreTypes:
+      - "StatisticStore"
       benchmarkCluster:
       - type: "StatisticStore"
         uuid: "946a88c6-a59a-11e6-bdc4-0242ac110002"
