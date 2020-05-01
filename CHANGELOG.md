@@ -6,6 +6,8 @@ and this project adheres to [Semantic Versioning](http://semver.org/).
 
 ## [Unreleased]
 
+* Issue **#1477** : Disable edit button on stream processor.
+
 * Issue **#1497** : Fixed data list result paging.
 
 * Issue **#1492** : Fixed data list result paging.
