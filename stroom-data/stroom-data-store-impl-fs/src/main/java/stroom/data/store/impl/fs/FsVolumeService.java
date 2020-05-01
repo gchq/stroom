@@ -180,7 +180,7 @@ public class FsVolumeService implements EntityEvent.Handler, Clearable, Flushabl
     }
 
     private ResultPage<FsVolume> doFind(final FindFsVolumeCriteria criteria) {
-        return ResultPage.createCriterialBasedList(fsVolumeDao.find(criteria), criteria);
+        return fsVolumeDao.find(criteria);
     }
 
     FsVolume getVolume() {

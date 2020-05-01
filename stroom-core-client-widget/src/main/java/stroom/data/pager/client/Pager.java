@@ -16,6 +16,9 @@
 
 package stroom.data.pager.client;
 
+import stroom.svg.client.SvgPresets;
+import stroom.widget.button.client.SvgButton;
+
 import com.google.gwt.core.client.GWT;
 import com.google.gwt.dom.client.Style;
 import com.google.gwt.event.dom.client.BlurEvent;
@@ -35,8 +38,6 @@ import com.google.gwt.user.client.ui.Widget;
 import com.google.gwt.view.client.HasRows;
 import com.google.gwt.view.client.Range;
 import com.google.gwt.view.client.RangeChangeEvent;
-import stroom.svg.client.SvgPresets;
-import stroom.widget.button.client.SvgButton;
 
 import java.util.HashSet;
 import java.util.Set;
@@ -320,7 +321,10 @@ public class Pager extends AbstractPager {
         final int dataSize = display.getRowCount();
         int endIndex = Math.min(dataSize, pageStart + pageSize - 1);
         endIndex = Math.max(pageStart, endIndex);
-        final boolean exact = display.isRowCountExact();
+
+        final boolean isRowCountExact = display.isRowCountExact();
+        final boolean hasPreviousPage = hasPreviousPage();
+        final boolean hasNextPage = hasNextPage();
 
         // If we aren't currently editing from or to values then turn editing off.
         if (focussed.size() == 0) {
@@ -329,36 +333,19 @@ public class Pager extends AbstractPager {
 
         lblFrom.setText(formatter.format(pageStart));
         lblTo.setText(formatter.format(endIndex));
-        if (exact) {
+        if (isRowCountExact) {
             lblOf.setText(formatter.format(dataSize));
         } else {
             lblOf.setText("?");
         }
 
-        // Update the prev and first buttons.
-        first.setEnabled(hasPreviousPage());
-        prev.setEnabled(hasPreviousPage());
+        // Update the buttons.
+        first.setEnabled(hasPreviousPage);
+        prev.setEnabled(hasPreviousPage);
+        next.setEnabled(hasNextPage);
+        last.setEnabled(hasNextPage && isRowCountExact);
 
-        // Update the next and last buttons.
-        if (isRangeLimited() || !display.isRowCountExact()) {
-            next.setEnabled(hasNextPage());
-            last.setEnabled(hasNextPage() && display.isRowCountExact());
-        }
         refresh.setEnabled(true);
-    }
-
-    /**
-     * Check if the next button is enabled. Visible for testing.
-     */
-    boolean isNextButtonEnabled() {
-        return next.isEnabled();
-    }
-
-    /**
-     * Check if the previous button is enabled. Visible for testing.
-     */
-    boolean isPreviousButtonEnabled() {
-        return prev.isEnabled();
     }
 
     public void setRefreshing(final boolean refreshing) {

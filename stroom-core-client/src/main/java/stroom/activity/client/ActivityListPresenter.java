@@ -16,14 +16,6 @@
 
 package stroom.activity.client;
 
-import com.google.gwt.cell.client.SafeHtmlCell;
-import com.google.gwt.core.client.GWT;
-import com.google.gwt.safehtml.shared.SafeHtml;
-import com.google.gwt.safehtml.shared.SafeHtmlBuilder;
-import com.google.gwt.user.cellview.client.Column;
-import com.google.inject.Inject;
-import com.google.web.bindery.event.shared.EventBus;
-import com.gwtplatform.mvp.client.MyPresenterWidget;
 import stroom.activity.shared.Activity;
 import stroom.activity.shared.Activity.Prop;
 import stroom.activity.shared.ActivityResource;
@@ -39,7 +31,15 @@ import stroom.util.shared.ResultPage;
 import stroom.widget.button.client.ButtonView;
 import stroom.widget.util.client.MultiSelectionModel;
 
-import java.util.List;
+import com.google.gwt.cell.client.SafeHtmlCell;
+import com.google.gwt.core.client.GWT;
+import com.google.gwt.safehtml.shared.SafeHtml;
+import com.google.gwt.safehtml.shared.SafeHtmlBuilder;
+import com.google.gwt.user.cellview.client.Column;
+import com.google.inject.Inject;
+import com.google.web.bindery.event.shared.EventBus;
+import com.gwtplatform.mvp.client.MyPresenterWidget;
+
 import java.util.function.Consumer;
 
 public class ActivityListPresenter
@@ -87,9 +87,9 @@ public class ActivityListPresenter
         dataProvider = new RestDataProvider<Activity, ResultPage<Activity>>(eventBus) {
             @Override
             protected void exec(final Consumer<ResultPage<Activity>> dataConsumer, final Consumer<Throwable> throwableConsumer) {
-                final Rest<List<Activity>> rest = restFactory.create();
+                final Rest<ResultPage<Activity>> rest = restFactory.create();
                 rest
-                        .onSuccess(list -> dataConsumer.accept(new ResultPage<>(list)))
+                        .onSuccess(dataConsumer)
                         .onFailure(throwableConsumer)
                         .call(ACTIVITY_RESOURCE).list(name);
             }

@@ -175,8 +175,8 @@ class IndexVolumeDaoImpl implements IndexVolumeDao {
             numberOfRows = pageRequest.getLength();
         }
 
-        final List<IndexVolume> list = find(conditions, orderFields, offset, numberOfRows);
-        return ResultPage.createPageResultList(list, criteria.getPageRequest(), null);
+        final List<IndexVolume> list = find(conditions, orderFields, offset, numberOfRows + 1);
+        return ResultPage.createCriterialBasedList(list, criteria);
     }
 
     private List<IndexVolume> find(final Collection<Condition> conditions, final Collection<OrderField<?>> orderFields, final int offset, final int numberOfRows) {

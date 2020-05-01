@@ -146,7 +146,7 @@ public class JobNodeDaoImpl implements JobNodeDao, HasIntCrud<JobNode> {
                 .join(JOB).on(JOB_NODE.JOB_ID.eq(JOB.ID))
                 .where(conditions)
                 .orderBy(orderFields)
-                .limit(JooqUtil.getLimit(criteria.getPageRequest()))
+                .limit(JooqUtil.getLimit(criteria.getPageRequest(), true))
                 .offset(JooqUtil.getOffset(criteria.getPageRequest()))
                 .fetch(record -> {
                     final Job job = RECORD_TO_JOB_MAPPER.apply(record);

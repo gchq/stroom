@@ -171,7 +171,7 @@ public class ProcessorPresenter extends MyPresenterWidget<ProcessorPresenter.Pro
             setData(null);
 
         } else if (selectedProcessor instanceof ProcessorRow) {
-            enableButtons(true);
+            enableButtons(false);
             setData(null);
 
         } else if (selectedProcessor instanceof ProcessorFilterRow) {
