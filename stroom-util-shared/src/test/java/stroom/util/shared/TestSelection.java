@@ -16,6 +16,27 @@
 
 package stroom.util.shared;
 
-public interface HasTerminate {
-    void terminate();
+
+import org.junit.jupiter.api.Test;
+
+import static org.assertj.core.api.Assertions.assertThat;
+
+class TestSelection {
+    @Test
+    void testSimple() {
+        final Selection<Integer> selection = Selection.selectAll();
+        assertThat(selection.isMatch(1)).isTrue();
+
+        selection.clear();
+        assertThat(selection.isMatch(1)).isFalse();
+
+        selection.setMatchAll(true);
+        assertThat(selection.isMatch(1)).isTrue();
+    }
+
+    @Test
+    void testFlags() {
+        final Selection<Long> selection = Selection.selectNone();
+        assertThat(selection.isMatchNothing()).isTrue();
+    }
 }

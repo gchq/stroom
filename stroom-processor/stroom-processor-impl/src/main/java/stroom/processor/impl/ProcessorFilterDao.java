@@ -7,5 +7,6 @@ import stroom.util.shared.ResultPage;
 
 public interface ProcessorFilterDao extends HasIntCrud<ProcessorFilter> {
     ResultPage<ProcessorFilter> find(final ExpressionCriteria criteria);
+
     ProcessorFilter create(final ProcessorFilter processorFilter, final Long trackerMinStreamId);
 }

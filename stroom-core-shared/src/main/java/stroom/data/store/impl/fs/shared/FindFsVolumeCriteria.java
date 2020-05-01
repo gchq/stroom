@@ -16,15 +16,16 @@
 
 package stroom.data.store.impl.fs.shared;
 
+import stroom.data.store.impl.fs.shared.FsVolume.VolumeUseStatus;
+import stroom.util.shared.BaseCriteria;
+import stroom.util.shared.PageRequest;
+import stroom.util.shared.Selection;
+import stroom.util.shared.Sort;
+
 import com.fasterxml.jackson.annotation.JsonCreator;
 import com.fasterxml.jackson.annotation.JsonInclude;
 import com.fasterxml.jackson.annotation.JsonInclude.Include;
 import com.fasterxml.jackson.annotation.JsonProperty;
-import stroom.data.store.impl.fs.shared.FsVolume.VolumeUseStatus;
-import stroom.util.shared.BaseCriteria;
-import stroom.util.shared.CriteriaSet;
-import stroom.util.shared.PageRequest;
-import stroom.util.shared.Sort;
 
 import java.util.List;
 
@@ -33,21 +34,31 @@ public class FindFsVolumeCriteria extends BaseCriteria {
     public static final String FIELD_ID = "Id";
 
     @JsonProperty
-    private final CriteriaSet<VolumeUseStatus> statusSet;
+    private final Selection<VolumeUseStatus> selection;
 
-    public FindFsVolumeCriteria() {
-        statusSet = new CriteriaSet<>();
+    public static FindFsVolumeCriteria matchAll() {
+        return new FindFsVolumeCriteria(
+                null,
+                null,
+                Selection.selectAll());
+    }
+
+    public static FindFsVolumeCriteria matchNone() {
+        return new FindFsVolumeCriteria(
+                null,
+                null,
+                Selection.selectNone());
     }
 
     @JsonCreator
     public FindFsVolumeCriteria(@JsonProperty("pageRequest") final PageRequest pageRequest,
                                 @JsonProperty("sortList") final List<Sort> sortList,
-                                @JsonProperty("statusSet") final CriteriaSet<VolumeUseStatus> statusSet) {
+                                @JsonProperty("selection") final Selection<VolumeUseStatus> selection) {
         super(pageRequest, sortList);
-        this.statusSet = statusSet;
+        this.selection = selection;
     }
 
-    public CriteriaSet<VolumeUseStatus> getStatusSet() {
-        return statusSet;
+    public Selection<VolumeUseStatus> getSelection() {
+        return selection;
     }
 }

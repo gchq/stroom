@@ -26,11 +26,11 @@ import stroom.datasource.api.v2.DocRefField;
 import stroom.feed.shared.FeedDoc;
 import stroom.meta.api.MetaService;
 import stroom.meta.shared.FindMetaCriteria;
+import stroom.meta.shared.MetaExpressionUtil;
 import stroom.meta.shared.MetaRow;
 import stroom.query.api.v2.ExpressionOperator;
 import stroom.query.api.v2.ExpressionTerm;
 import stroom.security.api.SecurityContext;
-import stroom.util.shared.IdSet;
 import stroom.util.shared.PageRequest;
 import stroom.util.shared.PageResponse;
 import stroom.util.shared.ResourcePaths;
@@ -155,12 +155,8 @@ public class StreamAttributeMapResource implements RestResource {
     public Response search(@PathParam("id") Long id) {
         return securityContext.secureResult(() -> {
             // Configure default criteria
-            FindMetaCriteria criteria = new FindMetaCriteria();
-            IdSet idSet = new IdSet();
-            idSet.add(id);
-            criteria.setSelectedIdSet(idSet);
-
-            ResultPage<MetaRow> results = dataMetaService.findRows(criteria);
+            final FindMetaCriteria criteria = FindMetaCriteria.createFromId(id);
+            final ResultPage<MetaRow> results = dataMetaService.findRows(criteria);
             if (results.size() == 0) {
                 return Response.status(Response.Status.NOT_FOUND).build();
             }

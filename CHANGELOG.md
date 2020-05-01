@@ -8,6 +8,12 @@ and this project adheres to [Semantic Versioning](http://semver.org/).
 
 * Add stroom.statistics.internal.enabledStoreTypes and make internal stat processing respect it.
 
+* Improve SQL stats shutdown processing so all in memory stats are flushed.
+
+* Issue **#1513** : You can now view data in folders.
+
+* Issue **#1500** : Fixed data delete/restore behaviour.
+
 * Issue **#1515** : Fix proxyDir default when running in a stack.
 
 * Issue **#1509** : Unable to update processor filter.

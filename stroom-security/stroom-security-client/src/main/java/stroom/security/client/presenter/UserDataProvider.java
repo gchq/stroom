@@ -17,7 +17,6 @@
 package stroom.security.client.presenter;
 
 import com.google.gwt.core.client.GWT;
-import com.google.gwt.user.cellview.client.ColumnSortEvent;
 import com.google.web.bindery.event.shared.EventBus;
 import stroom.data.client.presenter.RestDataProvider;
 import stroom.data.grid.client.DataGridView;
@@ -29,25 +28,35 @@ import stroom.security.shared.FindUserCriteria;
 import stroom.security.shared.User;
 import stroom.security.shared.UserResource;
 import stroom.util.shared.ResultPage;
-import stroom.util.shared.Sort.Direction;
+import stroom.util.shared.Sort;
 
 import java.util.function.Consumer;
 
-public class UserDataProvider implements Refreshable, ColumnSortEvent.Handler {
+public class UserDataProvider implements Refreshable {
     private static final UserResource USER_RESOURCE = GWT.create(UserResource.class);
 
     private final EventBus eventBus;
     private final RestFactory restFactory;
     private final DataGridView<User> view;
     private RestDataProvider<User, ResultPage<User>> dataProvider;
-    //    private Boolean allowNoConstraint = null;
     private FindUserCriteria criteria = new FindUserCriteria();
 
     public UserDataProvider(final EventBus eventBus, final RestFactory restFactory, final DataGridView<User> view) {
         this.eventBus = eventBus;
         this.restFactory = restFactory;
         this.view = view;
-        view.addColumnSortHandler(this);
+
+        view.addColumnSortHandler(event -> {
+            if (event.getColumn() instanceof OrderByColumn<?, ?>) {
+                final OrderByColumn<?, ?> orderByColumn = (OrderByColumn<?, ?>) event.getColumn();
+                if (event.isSortAscending()) {
+                    criteria.setSort(orderByColumn.getField(), Sort.Direction.ASCENDING, orderByColumn.isIgnoreCase());
+                } else {
+                    criteria.setSort(orderByColumn.getField(), Sort.Direction.DESCENDING, orderByColumn.isIgnoreCase());
+                }
+                dataProvider.refresh();
+            }
+        });
     }
 
 //    public FindUserCriteria getCriteria() {
@@ -98,32 +107,6 @@ public class UserDataProvider implements Refreshable, ColumnSortEvent.Handler {
     protected ResultPage<User> processData(final ResultPage<User> data) {
         return data;
     }
-
-//    public void setAllowNoConstraint(final boolean allowNoConstraint) {
-//        this.allowNoConstraint = allowNoConstraint;
-//        if (dataProvider != null) {
-//            dataProvider.setAllowNoConstraint(allowNoConstraint);
-//        }
-//    }
-
-    @Override
-    public void onColumnSort(final ColumnSortEvent event) {
-        if (event.getColumn() instanceof OrderByColumn<?, ?>) {
-            final OrderByColumn<?, ?> orderByColumn = (OrderByColumn<?, ?>) event.getColumn();
-            if (criteria != null) {
-                if (event.isSortAscending()) {
-                    criteria.setSort(orderByColumn.getField(), Direction.ASCENDING, orderByColumn.isIgnoreCase());
-                } else {
-                    criteria.setSort(orderByColumn.getField(), Direction.DESCENDING, orderByColumn.isIgnoreCase());
-                }
-                refresh();
-            }
-        }
-    }
-
-//    public ActionDataProvider<User> getDataProvider() {
-//        return dataProvider;
-//    }
 
     @Override
     public void refresh() {

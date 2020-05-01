@@ -381,9 +381,7 @@ public abstract class TranslationTest extends AbstractCoreIntegrationTest {
                         .build())
                 .build();
 
-        final FindMetaCriteria findMetaCriteria = new FindMetaCriteria();
-        findMetaCriteria.setExpression(expression);
-        findMetaCriteria.obtainSelectedIdSet().setMatchAll(Boolean.TRUE);
+        final FindMetaCriteria findMetaCriteria = new FindMetaCriteria(expression);
 
         final PipelineStepRequest action = new PipelineStepRequest();
         action.setPipeline(pipelineRef);

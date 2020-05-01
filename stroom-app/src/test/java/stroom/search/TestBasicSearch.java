@@ -98,7 +98,7 @@ class TestBasicSearch extends AbstractCoreIntegrationTest {
 
         indexShardWriterCache.flushAll();
 
-        final FindIndexShardCriteria criteria = new FindIndexShardCriteria();
+        final FindIndexShardCriteria criteria = FindIndexShardCriteria.matchAll();
         criteria.getIndexUuidSet().add(indexRef.getUuid());
         final ResultPage<IndexShard> shards = indexShardService.find(criteria);
 

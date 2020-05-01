@@ -75,17 +75,21 @@
       },
       "expression" : {
         "type" : "operator",
+        "op" : "AND",
         "children" : [ {
           "type" : "term",
           "field" : "timestamp",
           "condition" : "BETWEEN",
-          "value" : "2017-01-01T00:00:00.000Z,2018-01-01T00:00:00.000Z"
+          "value" : "2017-01-01T00:00:00.000Z,2018-01-01T00:00:00.000Z",
+          "enabled" : true
         }, {
           "type" : "term",
           "field" : "isp_user",
           "condition" : "EQUALS",
-          "value" : "*"
-        } ]
+          "value" : "*",
+          "enabled" : true
+        } ],
+        "enabled" : true
       },
       "automate" : {
         "open" : true,

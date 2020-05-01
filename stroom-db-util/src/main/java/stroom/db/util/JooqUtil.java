@@ -13,7 +13,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import stroom.util.logging.LogUtil;
 import stroom.util.shared.BaseCriteria;
-import stroom.util.shared.CriteriaSet;
+import stroom.util.shared.Selection;
 import stroom.util.shared.PageRequest;
 import stroom.util.shared.Range;
 import stroom.util.shared.Sort;
@@ -23,6 +23,7 @@ import javax.sql.DataSource;
 import java.sql.Connection;
 import java.sql.SQLException;
 import java.util.Collection;
+import java.util.Collections;
 import java.util.Map;
 import java.util.Optional;
 import java.util.function.Consumer;
@@ -34,7 +35,6 @@ public final class JooqUtil {
     private static final Logger LOGGER = LoggerFactory.getLogger(JooqUtil.class);
 
     private static final String DEFAULT_ID_FIELD_NAME = "id";
-    private static final OrderField<?>[] EMPTY_ORDER_FIELDS = new OrderField[0];
     private static final Boolean RENDER_SCHEMA = false;
 
     private JooqUtil() {
@@ -255,19 +255,11 @@ public final class JooqUtil {
      */
     public static <T> Optional<Condition> getSetCondition(
             final Field<T> field,
-            final CriteriaSet<T> criteria) {
-        if (criteria == null || !criteria.isConstrained()) {
+            final Selection<T> criteria) {
+        if (criteria == null || criteria.isMatchAll()) {
             return Optional.empty();
         }
-
-        final Optional<Condition> setCondition;
-        if (criteria.size() > 0) {
-            setCondition = Optional.of(field.in(criteria.getSet()));
-        } else {
-            setCondition = Optional.empty();
-        }
-
-        return convertMatchNull(field, criteria.getMatchNull(), setCondition);
+        return Optional.of(field.in(criteria.getSet()));
     }
 
     /**
@@ -316,16 +308,17 @@ public final class JooqUtil {
         return condition.or(() -> Optional.of(field.isNotNull()));
     }
 
-    public static OrderField<?>[] getOrderFields(final Map<String, Field<?>> fieldMap, final BaseCriteria criteria) {
+    public static Collection<OrderField<?>> getOrderFields(final Map<String, Field<?>> fieldMap, final BaseCriteria criteria) {
         if (criteria.getSortList() == null) {
-            return EMPTY_ORDER_FIELDS;
+            return Collections.emptyList();
         }
 
-        return criteria.getSortList().stream()
+        return criteria.getSortList()
+                .stream()
                 .map(s -> getOrderField(fieldMap, s))
                 .filter(Optional::isPresent)
                 .map(Optional::get)
-                .toArray(OrderField[]::new);
+                .collect(Collectors.toList());
     }
 
     private static Optional<OrderField<?>> getOrderField(final Map<String, Field<?>> fieldMap, final Sort sort) {

@@ -24,6 +24,13 @@ public abstract class OrderByColumn<T, C> extends Column<T, C> implements HasDis
     private final String field;
     private final boolean ignoreCase;
 
+    public OrderByColumn(final Cell<C> cell, final HasDisplayValue field) {
+        super(cell);
+        setSortable(true);
+        this.field = field.getDisplayValue();
+        this.ignoreCase = false;
+    }
+
     public OrderByColumn(final Cell<C> cell, final String field, final boolean ignoreCase) {
         super(cell);
         setSortable(true);

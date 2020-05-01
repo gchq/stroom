@@ -65,10 +65,11 @@ public interface MetaService {
      * Change the status of meta data records that match the supplied criteria.
      *
      * @param criteria The criteria to match meta data records with.
+     * @param currentStatus The current status.
      * @param status   The new status.
      * @return The number of meta data records that are updated.
      */
-    int updateStatus(FindMetaCriteria criteria, Status status);
+    int updateStatus(FindMetaCriteria criteria, Status currentStatus, Status status);
 
     /**
      * Add some additional attributes to meta data.

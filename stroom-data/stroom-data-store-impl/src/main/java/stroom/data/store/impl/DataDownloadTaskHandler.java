@@ -125,10 +125,10 @@ public class DataDownloadTaskHandler {
                         }
 
                         // Write to the output stream.
-                        result.incrementRecordsWritten();
-                        logItemProgress.incrementProgress();
                         id = downloadStream(taskContext, meta.getId(), stroomZipOutputStream, id,
                                 settings.getMaxFileParts());
+                        result.incrementRecordsWritten();
+                        logItemProgress.incrementProgress();
 
                         boolean startNewFile = false;
                         boolean hitMaxFileSize = false;

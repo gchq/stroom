@@ -18,6 +18,7 @@ package stroom.data.client.presenter;
 
 import com.google.gwt.cell.client.TextCell;
 import com.google.gwt.core.client.GWT;
+import com.google.gwt.user.cellview.client.ColumnSortEvent;
 import com.google.inject.Inject;
 import com.google.web.bindery.event.shared.EventBus;
 import com.gwtplatform.mvp.client.MyPresenterWidget;
@@ -34,6 +35,7 @@ import stroom.entity.shared.ExpressionCriteria;
 import stroom.explorer.shared.ExplorerConstants;
 import stroom.meta.shared.FindMetaCriteria;
 import stroom.meta.shared.Meta;
+import stroom.meta.shared.MetaExpressionUtil;
 import stroom.meta.shared.MetaResource;
 import stroom.meta.shared.MetaRow;
 import stroom.pipeline.shared.PipelineDoc;
@@ -43,6 +45,7 @@ import stroom.processor.shared.ProcessorTaskExpressionUtil;
 import stroom.processor.shared.ProcessorTaskResource;
 import stroom.query.api.v2.ExpressionOperator;
 import stroom.util.shared.ResultPage;
+import stroom.util.shared.Sort;
 import stroom.widget.customdatebox.client.ClientDateUtil;
 import stroom.widget.popup.client.event.ShowPopupEvent;
 import stroom.widget.popup.client.presenter.PopupPosition;
@@ -174,6 +177,18 @@ public class ProcessorTaskListPresenter extends MyPresenterWidget<DataGridView<P
             }
         };
         dataProvider.addDataDisplay(getView().getDataDisplay());
+
+        getView().addColumnSortHandler(event -> {
+            if (event.getColumn() instanceof OrderByColumn<?, ?>) {
+                final OrderByColumn<?, ?> orderByColumn = (OrderByColumn<?, ?>) event.getColumn();
+                if (event.isSortAscending()) {
+                    criteria.setSort(orderByColumn.getField(), Sort.Direction.ASCENDING, orderByColumn.isIgnoreCase());
+                } else {
+                    criteria.setSort(orderByColumn.getField(), Sort.Direction.DESCENDING, orderByColumn.isIgnoreCase());
+                }
+                dataProvider.refresh();
+            }
+        });
     }
 
     private void showTooltip(final int x, final int y, final ProcessorTask processorTask, final MetaRow metaRow) {

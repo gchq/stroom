@@ -76,16 +76,19 @@
       },
       "expression" : {
         "type" : "operator",
+        "op" : "AND",
         "children" : [ {
           "type" : "term",
           "field" : "timestamp",
           "condition" : "BETWEEN",
-          "value" : "2016-02-01T00:00:00.000Z,2016-04-01T00:00:00.000Z"
+          "value" : "2016-02-01T00:00:00.000Z,2016-04-01T00:00:00.000Z",
+          "enabled" : true
         }, {
           "type" : "term",
           "field" : "isp_user",
           "condition" : "EQUALS",
-          "value" : "*"
+          "value" : "*",
+          "enabled" : true
         }, {
           "type" : "operator",
           "op" : "NOT",
@@ -96,20 +99,26 @@
               "type" : "term",
               "field" : "isp_user",
               "condition" : "EQUALS",
-              "value" : "comcast"
+              "value" : "comcast",
+              "enabled" : true
             }, {
               "type" : "term",
               "field" : "isp_user",
               "condition" : "EQUALS",
-              "value" : "centurylink"
+              "value" : "centurylink",
+              "enabled" : true
             }, {
               "type" : "term",
               "field" : "isp_user",
               "condition" : "EQUALS",
-              "value" : "unknown"
-            } ]
-          } ]
-        } ]
+              "value" : "unknown",
+              "enabled" : true
+            } ],
+            "enabled" : true
+          } ],
+          "enabled" : true
+        } ],
+        "enabled" : true
       },
       "automate" : {
         "open" : true,

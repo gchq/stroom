@@ -17,12 +17,6 @@
 package stroom.data.store.impl.fs.db;
 
 
-import org.junit.jupiter.api.BeforeEach;
-import org.junit.jupiter.api.Test;
-import org.junit.jupiter.api.extension.ExtendWith;
-import org.mockito.junit.jupiter.MockitoExtension;
-import org.mockito.junit.jupiter.MockitoSettings;
-import org.mockito.quality.Strictness;
 import stroom.data.store.impl.fs.DataStoreServiceConfig;
 import stroom.data.store.impl.fs.FsVolumeConfig;
 import stroom.data.store.impl.fs.FsVolumeDao;
@@ -36,6 +30,13 @@ import stroom.security.mock.MockSecurityContext;
 import stroom.test.common.util.db.DbTestUtil;
 import stroom.test.common.util.test.StroomUnitTest;
 import stroom.util.io.FileUtil;
+
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.extension.ExtendWith;
+import org.mockito.junit.jupiter.MockitoExtension;
+import org.mockito.junit.jupiter.MockitoSettings;
+import org.mockito.quality.Strictness;
 
 import java.nio.file.Path;
 import java.util.List;
@@ -99,10 +100,10 @@ class TestFileSystemVolumeServiceImpl extends StroomUnitTest {
 
     @Test
     void test() {
-        List<FsVolume> list = volumeService.find(new FindFsVolumeCriteria()).getValues();
+        List<FsVolume> list = volumeService.find(FindFsVolumeCriteria.matchAll()).getValues();
         list.forEach(v -> volumeService.delete(v.getId()));
 
-        list = volumeService.find(new FindFsVolumeCriteria()).getValues();
+        list = volumeService.find(FindFsVolumeCriteria.matchAll()).getValues();
         assertThat(list.size()).isZero();
 
         // Create
@@ -113,7 +114,7 @@ class TestFileSystemVolumeServiceImpl extends StroomUnitTest {
         fileVolume = volumeService.update(fileVolume);
 
         // Find
-        list = volumeService.find(new FindFsVolumeCriteria()).getValues();
+        list = volumeService.find(FindFsVolumeCriteria.matchAll()).getValues();
         assertThat(list.size()).isOne();
         assertThat(list.get(0)).isEqualTo(fileVolume);
 
@@ -123,7 +124,7 @@ class TestFileSystemVolumeServiceImpl extends StroomUnitTest {
         // Delete
         final int count = volumeService.delete(fileVolume.getId());
         assertThat(count).isOne();
-        list = volumeService.find(new FindFsVolumeCriteria()).getValues();
+        list = volumeService.find(FindFsVolumeCriteria.matchAll()).getValues();
         assertThat(list.size()).isZero();
     }
 

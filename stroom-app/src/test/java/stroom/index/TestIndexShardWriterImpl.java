@@ -70,7 +70,7 @@ class TestIndexShardWriterImpl extends AbstractCoreIntegrationTest {
 
     @Test
     void testSingle() throws IOException {
-        assertThat(indexShardService.find(new FindIndexShardCriteria()).size()).isZero();
+        assertThat(indexShardService.find(FindIndexShardCriteria.matchAll()).size()).isZero();
 
         // Do some work.
         final FieldType fieldType = FieldTypeFactory.createBasic();
@@ -87,11 +87,9 @@ class TestIndexShardWriterImpl extends AbstractCoreIntegrationTest {
         final IndexShardWriter writer1 = indexShardWriterCache.getWriterByShardKey(indexShardKey1);
 
         // Assert that there is 1 writer in the pool.
-        assertThat(indexShardService.find(new FindIndexShardCriteria()).size()).isEqualTo(1);
+        assertThat(indexShardService.find(FindIndexShardCriteria.matchAll()).size()).isEqualTo(1);
 
-        final FindIndexShardCriteria criteria = new FindIndexShardCriteria();
-        criteria.getIndexUuidSet().setMatchAll(true);
-
+        final FindIndexShardCriteria criteria = FindIndexShardCriteria.matchAll();
         checkDocCount(0, writer1);
         checkDocCount(0, writer1.getIndexShardId());
         writer1.addDocument(document);
@@ -121,7 +119,7 @@ class TestIndexShardWriterImpl extends AbstractCoreIntegrationTest {
 
     @Test
     void testSimple() throws IOException {
-        assertThat(indexShardService.find(new FindIndexShardCriteria()).size()).isZero();
+        assertThat(indexShardService.find(FindIndexShardCriteria.matchAll()).size()).isZero();
 
         // Do some work.
         final FieldType fieldType = FieldTypeFactory.createBasic();
@@ -142,10 +140,9 @@ class TestIndexShardWriterImpl extends AbstractCoreIntegrationTest {
         final IndexShardWriter writer2 = indexShardWriterCache.getWriterByShardKey(indexShardKey2);
 
         // Assert that there are 2 writers in the pool.
-        assertThat(indexShardService.find(new FindIndexShardCriteria()).size()).isEqualTo(2);
+        assertThat(indexShardService.find(FindIndexShardCriteria.matchAll()).size()).isEqualTo(2);
 
-        final FindIndexShardCriteria criteria = new FindIndexShardCriteria();
-        criteria.getIndexUuidSet().setMatchAll(true);
+        final FindIndexShardCriteria criteria = FindIndexShardCriteria.matchAll();
 
         checkDocCount(0, writer1);
         checkDocCount(0, writer1.getIndexShardId());

@@ -12,11 +12,13 @@
       },
       "expression" : {
         "type" : "operator",
+        "op" : "AND",
         "children" : [ {
           "type" : "term",
           "field" : "EventTime",
           "condition" : "BETWEEN",
-          "value" : "2010-01-01T00:01:00.000Z,2010-02-01T00:00:00.000Z"
+          "value" : "2010-01-01T00:01:00.000Z,2010-02-01T00:00:00.000Z",
+          "enabled" : true
         }, {
           "type" : "term",
           "field" : "UserId",
@@ -25,8 +27,10 @@
             "type" : "Dictionary",
             "uuid" : "352082ae-5b7c-4105-8d34-39ec7c713523",
             "name" : "Test Dictionary"
-          }
-        } ]
+          },
+          "enabled" : true
+        } ],
+        "enabled" : true
       }
     }
   }, {

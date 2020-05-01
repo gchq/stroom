@@ -42,7 +42,7 @@ public class IndexShardSearcherSimpleClient extends AbstractCommandLineTool {
 //        final IndexShardService indexShardService = appContext.getInstance(IndexShardService.class);
 //        final StreamStore streamStore = appContext.getInstance(StreamStore.class);
 //
-//        final FindIndexShardCriteria findIndexShardCriteria = new FindIndexShardCriteria();
+//        final FindIndexShardCriteria findIndexShardCriteria = FindIndexShardCriteria.matchAll();
 //        findIndexShardCriteria.getIndexShardStatusSet().addAll(IndexShard.READABLE_INDEX_SHARD_STATUS);
 //        final List<IndexShard> indexShardList = indexShardService.find(findIndexShardCriteria);
 //

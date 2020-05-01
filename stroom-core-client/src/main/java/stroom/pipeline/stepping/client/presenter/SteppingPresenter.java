@@ -41,6 +41,7 @@ import stroom.document.client.event.HasDirtyHandlers;
 import stroom.editor.client.view.IndicatorLines;
 import stroom.meta.shared.FindMetaCriteria;
 import stroom.meta.shared.Meta;
+import stroom.meta.shared.MetaExpressionUtil;
 import stroom.pipeline.shared.PipelineModelException;
 import stroom.pipeline.shared.PipelineResource;
 import stroom.pipeline.shared.SharedElementData;
@@ -56,6 +57,7 @@ import stroom.pipeline.shared.stepping.SteppingResource;
 import stroom.pipeline.shared.stepping.SteppingResult;
 import stroom.pipeline.structure.client.presenter.PipelineModel;
 import stroom.pipeline.structure.client.presenter.PipelineTreePresenter;
+import stroom.query.api.v2.ExpressionOperator;
 import stroom.svg.client.SvgPreset;
 import stroom.svg.client.SvgPresets;
 import stroom.task.client.TaskEndEvent;
@@ -296,8 +298,7 @@ public class SteppingPresenter extends MyPresenterWidget<SteppingPresenter.Stepp
         request.setPipeline(pipeline);
 
         // Set the stream id on the stepping action.
-        final FindMetaCriteria findMetaCriteria = new FindMetaCriteria();
-        findMetaCriteria.obtainSelectedIdSet().add(meta.getId());
+        final FindMetaCriteria findMetaCriteria = FindMetaCriteria.createFromMeta(meta);
         request.setCriteria(findMetaCriteria);
         request.setChildStreamType(childStreamType);
 

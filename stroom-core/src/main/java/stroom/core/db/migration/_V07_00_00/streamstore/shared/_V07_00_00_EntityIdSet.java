@@ -17,7 +17,6 @@
 package stroom.core.db.migration._V07_00_00.streamstore.shared;
 
 import stroom.core.db.migration._V07_00_00.entity.shared._V07_00_00_BaseEntity;
-import stroom.util.shared.CriteriaSet;
 
 import javax.xml.bind.annotation.XmlRootElement;
 import javax.xml.bind.annotation.XmlTransient;
@@ -29,7 +28,7 @@ import java.util.TreeSet;
  * Hold id criteria
  */
 @XmlRootElement(name = "EntityIdSet")
-public class _V07_00_00_EntityIdSet<T extends _V07_00_00_BaseEntity> extends CriteriaSet<Long> {
+public class _V07_00_00_EntityIdSet<T extends _V07_00_00_BaseEntity> extends _V07_00_00_CriteriaSet<Long> {
     private static final long serialVersionUID = 1L;
 
     public _V07_00_00_EntityIdSet() {

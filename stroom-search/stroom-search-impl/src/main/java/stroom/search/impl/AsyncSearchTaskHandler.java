@@ -17,8 +17,6 @@
 
 package stroom.search.impl;
 
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 import stroom.cluster.task.api.ClusterDispatchAsync;
 import stroom.cluster.task.api.ClusterTaskTerminator;
 import stroom.cluster.task.api.NodeNotFoundException;
@@ -38,6 +36,9 @@ import stroom.task.api.TaskManager;
 import stroom.task.shared.TaskId;
 import stroom.util.shared.ResultPage;
 import stroom.util.shared.Sort.Direction;
+
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import javax.inject.Inject;
 import javax.inject.Provider;
@@ -103,7 +104,7 @@ class AsyncSearchTaskHandler {
                     final String[] storedFields = getStoredFields(index);
 
                     // Get a list of search index shards to look through.
-                    final FindIndexShardCriteria findIndexShardCriteria = new FindIndexShardCriteria();
+                    final FindIndexShardCriteria findIndexShardCriteria = FindIndexShardCriteria.matchAll();
                     findIndexShardCriteria.getIndexUuidSet().add(query.getDataSource().getUuid());
                     // Only non deleted indexes.
                     findIndexShardCriteria.getIndexShardStatusSet().addAll(IndexShard.NON_DELETED_INDEX_SHARD_STATUS);
