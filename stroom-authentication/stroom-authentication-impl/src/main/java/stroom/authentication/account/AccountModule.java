@@ -17,6 +17,7 @@
 package stroom.authentication.account;
 
 import com.google.inject.AbstractModule;
+import stroom.security.api.ProcessingUserIdentityProvider;
 import stroom.util.guice.GuiceUtil;
 import stroom.util.shared.RestResource;
 
@@ -24,6 +25,10 @@ public final class AccountModule extends AbstractModule {
     @Override
     protected void configure() {
         install(new AccountTaskJobsModule());
+
+        bind(AccountService.class).to(AccountServiceImpl.class);
+        bind(AccountEventLog.class).to(AccountEventLogImpl.class);
+        bind(ProcessingUserIdentityProvider.class).to(ProcessingUserIdentityProviderImpl.class);
 
         GuiceUtil.buildMultiBinder(binder(), RestResource.class)
                 .addBinding(AccountResourceImpl.class);

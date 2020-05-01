@@ -24,7 +24,7 @@ import stroom.index.shared.IndexShard.IndexShardStatus;
 import stroom.node.api.NodeInfo;
 import stroom.security.api.SecurityContext;
 import stroom.security.shared.PermissionNames;
-import stroom.task.api.TaskContext;
+import stroom.task.api.TaskContextFactory;
 import stroom.util.io.FileUtil;
 import stroom.util.logging.LambdaLogger;
 import stroom.util.logging.LambdaLoggerFactory;
@@ -41,6 +41,7 @@ import java.time.ZonedDateTime;
 import java.util.Collections;
 import java.util.HashMap;
 import java.util.Iterator;
+import java.util.List;
 import java.util.Map;
 import java.util.Set;
 import java.util.concurrent.Executor;
@@ -51,6 +52,7 @@ import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.concurrent.atomic.AtomicLong;
 import java.util.concurrent.locks.Lock;
+import java.util.stream.Collectors;
 
 /**
  * Pool API into open index shards.
@@ -64,7 +66,7 @@ public class IndexShardManager {
     private final Provider<IndexShardWriterCache> indexShardWriterCacheProvider;
     private final NodeInfo nodeInfo;
     private final Executor executor;
-    private final Provider<TaskContext> taskContextProvider;
+    private final TaskContextFactory taskContextFactory;
     private final SecurityContext securityContext;
 
     private final StripedLock shardUpdateLocks = new StripedLock();
@@ -78,14 +80,14 @@ public class IndexShardManager {
                       final Provider<IndexShardWriterCache> indexShardWriterCacheProvider,
                       final NodeInfo nodeInfo,
                       final Executor executor,
-                      final Provider<TaskContext> taskContextProvider,
+                      final TaskContextFactory taskContextFactory,
                       final SecurityContext securityContext) {
         this.indexStore = indexStore;
         this.indexShardService = indexShardService;
         this.indexShardWriterCacheProvider = indexShardWriterCacheProvider;
         this.nodeInfo = nodeInfo;
         this.executor = executor;
-        this.taskContextProvider = taskContextProvider;
+        this.taskContextFactory = taskContextFactory;
         this.securityContext = securityContext;
 
         // Ensure all but deleted and corrupt states can be set to closed on clean.
@@ -107,15 +109,13 @@ public class IndexShardManager {
                 try {
                     final IndexShardWriterCache indexShardWriterCache = indexShardWriterCacheProvider.get();
 
-                    final FindIndexShardCriteria criteria = new FindIndexShardCriteria();
+                    final FindIndexShardCriteria criteria = FindIndexShardCriteria.matchAll();
                     criteria.getNodeNameSet().add(nodeInfo.getThisNodeName());
                     criteria.getIndexShardStatusSet().add(IndexShardStatus.DELETED);
                     final ResultPage<IndexShard> shards = indexShardService.find(criteria);
 
-                    final TaskContext taskContext = taskContextProvider.get();
-                    Runnable runnable = () -> {
+                    final Runnable runnable = taskContextFactory.context("Delete Logically Deleted Shards", taskContext -> {
                         try {
-                            taskContext.setName("Delete Logically Deleted Shards");
                             taskContext.info(() -> "Deleting Logically Deleted Shards...");
 
                             final LogExecutionTime logExecutionTime = new LogExecutionTime();
@@ -137,8 +137,7 @@ public class IndexShardManager {
                         } finally {
                             deletingShards.set(false);
                         }
-                    };
-                    runnable = taskContext.sub(runnable);
+                    });
 
                     // In tests we don't have a task manager.
                     if (executor == null) {
@@ -176,19 +175,25 @@ public class IndexShardManager {
 
     public Long performAction(final FindIndexShardCriteria criteria, final IndexShardAction action) {
         return securityContext.secureResult(PermissionNames.MANAGE_INDEX_SHARDS_PERMISSION, () -> {
+            final String thisNodeName = nodeInfo.getThisNodeName();
             final ResultPage<IndexShard> shards = indexShardService.find(criteria);
-            return performAction(shards, action);
+
+            // Only perform actions on shards owned by this node.
+            final List<IndexShard> ownedShards = shards
+                    .stream()
+                    .filter(indexShard -> thisNodeName.equals(indexShard.getNodeName()))
+                    .collect(Collectors.toList());
+            return performAction(ownedShards, action);
         });
     }
 
-    private long performAction(final ResultPage<IndexShard> shards, final IndexShardAction action) {
+    private long performAction(final List<IndexShard> ownedShards, final IndexShardAction action) {
         final AtomicLong shardCount = new AtomicLong();
-
-        if (shards.size() > 0) {
+        if (ownedShards.size() > 0) {
             final IndexShardWriterCache indexShardWriterCache = indexShardWriterCacheProvider.get();
 
             // Create an atomic integer to count the number of index shard writers yet to complete the specified action.
-            final AtomicInteger remaining = new AtomicInteger(shards.size());
+            final AtomicInteger remaining = new AtomicInteger(ownedShards.size());
 
             // Create a scheduled executor for us to continually log index shard writer action progress.
             final ScheduledExecutorService executor = Executors.newSingleThreadScheduledExecutor();
@@ -196,16 +201,13 @@ public class IndexShardManager {
             executor.scheduleAtFixedRate(() -> LOGGER.info(() -> "Waiting for " + remaining.get() + " index shards to " + action.getName()), 10, 10, TimeUnit.SECONDS);
 
             // Perform action on all of the index shard writers in parallel.
-            shards.getValues().parallelStream().forEach(shard -> {
+            ownedShards.parallelStream().forEach(shard -> {
                 try {
                     switch (action) {
                         case FLUSH:
                             shardCount.incrementAndGet();
                             indexShardWriterCache.flush(shard.getId());
                             break;
-//                                case CLOSE:
-//                                    indexShardWriter.close();
-//                                    break;
                         case DELETE:
                             shardCount.incrementAndGet();
                             indexShardWriterCache.delete(shard.getId());
@@ -229,7 +231,7 @@ public class IndexShardManager {
 
     public void checkRetention() {
         securityContext.secure(PermissionNames.MANAGE_INDEX_SHARDS_PERMISSION, () -> {
-            final FindIndexShardCriteria criteria = new FindIndexShardCriteria();
+            final FindIndexShardCriteria criteria = FindIndexShardCriteria.matchAll();
             criteria.getNodeNameSet().add(nodeInfo.getThisNodeName());
             final ResultPage<IndexShard> shards = indexShardService.find(criteria);
             for (final IndexShard shard : shards.getValues()) {

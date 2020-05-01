@@ -123,7 +123,7 @@ class ProcessorTaskResourceImpl implements ProcessorTaskResource, HasHealthCheck
                 final Response response = webTargetFactory
                         .create(url)
                         .request(MediaType.APPLICATION_JSON)
-                        .put(Entity.json(request));
+                        .post(Entity.json(request));
                 if (response.getStatus() != 200) {
                     throw new WebApplicationException(response);
                 }

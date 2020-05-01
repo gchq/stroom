@@ -25,16 +25,18 @@ import stroom.node.api.NodeInfo;
 import stroom.node.api.NodeService;
 import stroom.node.shared.ClusterNodeInfo;
 import stroom.node.shared.Node;
+import stroom.node.shared.NodeResource;
 import stroom.security.api.SecurityContext;
 import stroom.task.api.TaskContext;
+import stroom.task.api.TaskContextFactory;
 import stroom.util.date.DateUtil;
 import stroom.util.entityevent.EntityAction;
 import stroom.util.entityevent.EntityEvent;
 import stroom.util.entityevent.EntityEventHandler;
 import stroom.util.shared.BuildInfo;
+import stroom.util.shared.ModelStringUtil;
 
 import javax.inject.Inject;
-import javax.inject.Provider;
 import javax.inject.Singleton;
 import java.util.ArrayList;
 import java.util.Collections;
@@ -69,25 +71,25 @@ public class ClusterNodeManagerImpl implements ClusterNodeManager, EntityEvent.H
     private final NodeService nodeService;
     private final SecurityContext securityContext;
     private final BuildInfo buildInfo;
-    private final ClusterCallServiceRemoteImpl clusterCallServiceRemote;
+    private final NodeResource nodeResource;
     private final Executor executor;
-    private final Provider<TaskContext> taskContextProvider;
+    private final TaskContextFactory taskContextFactory;
 
     @Inject
     ClusterNodeManagerImpl(final NodeInfo nodeInfo,
                            final NodeService nodeService,
                            final SecurityContext securityContext,
                            final BuildInfo buildInfo,
-                           final ClusterCallServiceRemoteImpl clusterCallServiceRemote,
+                           final NodeResource nodeResource,
                            final Executor executor,
-                           final Provider<TaskContext> taskContextProvider) {
+                           final TaskContextFactory taskContextFactory) {
         this.nodeInfo = nodeInfo;
         this.nodeService = nodeService;
         this.securityContext = securityContext;
         this.buildInfo = buildInfo;
-        this.clusterCallServiceRemote = clusterCallServiceRemote;
+        this.nodeResource = nodeResource;
         this.executor = executor;
-        this.taskContextProvider = taskContextProvider;
+        this.taskContextFactory = taskContextFactory;
     }
 
     public void init() {
@@ -131,9 +133,8 @@ public class ClusterNodeManagerImpl implements ClusterNodeManager, EntityEvent.H
     private void doUpdate(final int taskDelay) {
         securityContext.asProcessingUser(() -> {
             pendingUpdate.set(false);
-            final TaskContext taskContext = taskContextProvider.get();
-            Runnable runnable = () -> exec(clusterState, taskDelay, true);
-            runnable = taskContext.sub(runnable);
+            final Runnable runnable = taskContextFactory.context("Create Cluster State", taskContext ->
+                    exec(taskContext, clusterState, taskDelay, true));
             CompletableFuture
                     .runAsync(runnable, executor)
                     .whenComplete((r, t) -> {
@@ -205,9 +206,8 @@ public class ClusterNodeManagerImpl implements ClusterNodeManager, EntityEvent.H
             securityContext.asProcessingUser(() -> {
                 // Create a cluster state object but don't bother trying to contact
                 // remote nodes to determine active status.
-                final TaskContext taskContext = taskContextProvider.get();
-                Runnable runnable = () -> exec(clusterState, 0, false);
-                runnable = taskContext.sub(runnable);
+                final Runnable runnable = taskContextFactory.context("Create Cluster State", taskContext ->
+                        exec(taskContext, clusterState, 0, false));
                 runnable.run();
             });
         }
@@ -290,8 +290,7 @@ public class ClusterNodeManagerImpl implements ClusterNodeManager, EntityEvent.H
     }
 
 
-    public void exec(final ClusterState clusterState, final int delay, final boolean testActiveNodes) {
-        taskContextProvider.get().setName("Create Cluster State");
+    public void exec(final TaskContext taskContext, final ClusterState clusterState, final int delay, final boolean testActiveNodes) {
         securityContext.secure(() -> {
             try {
                 // We sometimes want to wait a bit before we try and establish the
@@ -302,7 +301,7 @@ public class ClusterNodeManagerImpl implements ClusterNodeManager, EntityEvent.H
                     Thread.sleep(delay);
                 }
 
-                updateState(clusterState, testActiveNodes);
+                updateState(taskContext, clusterState, testActiveNodes);
             } catch (final InterruptedException e) {
                 LOGGER.debug(e.getMessage(), e);
 
@@ -312,7 +311,7 @@ public class ClusterNodeManagerImpl implements ClusterNodeManager, EntityEvent.H
         });
     }
 
-    private void updateState(final ClusterState clusterState, final boolean testActiveNodes) {
+    private void updateState(final TaskContext taskContext, final ClusterState clusterState, final boolean testActiveNodes) {
         String thisNodeName = nodeInfo.getThisNodeName();
 
         // Get nodes and ensure uniqueness.
@@ -341,7 +340,7 @@ public class ClusterNodeManagerImpl implements ClusterNodeManager, EntityEvent.H
         // Create a set of active nodes, i.e. nodes we can contact at this
         // time.
         if (testActiveNodes) {
-            updateActiveNodes(clusterState, thisNodeName, enabledNodes);
+            updateActiveNodes(taskContext, clusterState, thisNodeName, enabledNodes);
 
             // Determine which node should be the master.
             int maxPriority = -1;
@@ -360,7 +359,7 @@ public class ClusterNodeManagerImpl implements ClusterNodeManager, EntityEvent.H
         clusterState.setUpdateTime(System.currentTimeMillis());
     }
 
-    private void updateActiveNodes(final ClusterState clusterState, final String thisNodeName, final Set<String> enabledNodes) {
+    private void updateActiveNodes(final TaskContext parentContext, final ClusterState clusterState, final String thisNodeName, final Set<String> enabledNodes) {
         // Only retain active nodes that are currently enabled.
         retainEnabledActiveNodes(clusterState, enabledNodes);
 
@@ -369,19 +368,11 @@ public class ClusterNodeManagerImpl implements ClusterNodeManager, EntityEvent.H
             if (nodeName.equals(thisNodeName)) {
                 addEnabledActiveNode(clusterState, nodeName);
             } else {
-                executor.execute(() -> {
-                    taskContextProvider.get().setName("Get Active Nodes");
-                    taskContextProvider.get().info(() -> "Getting active nodes");
-
+                final Runnable runnable = taskContextFactory.context(parentContext, "Get Active Nodes", taskContext -> {
+                    taskContext.info(() -> "Getting active nodes");
                     try {
-                        // We call the API like this rather than using the
-                        // Cluster API as the Cluster API will trigger a
-                        // discover call (cyclic dependency).
-                        // clusterCallServiceRemote will call getThisNode but
-                        // that's OK as we have worked it out above.
-                        clusterCallServiceRemote.call(thisNodeName, nodeName, securityContext.getUserIdentity(), ClusterNodeManager.SERVICE_NAME,
-                                ClusterNodeManager.PING_METHOD, new Class<?>[]{String.class},
-                                new Object[]{thisNodeName});
+                        final Long responseMs = nodeResource.ping(nodeName);
+                        LOGGER.debug("Got ping response in " + ModelStringUtil.formatDurationString(responseMs));
                         addEnabledActiveNode(clusterState, nodeName);
 
                     } catch (final RuntimeException e) {
@@ -389,6 +380,7 @@ public class ClusterNodeManagerImpl implements ClusterNodeManager, EntityEvent.H
                         removeEnabledActiveNode(clusterState, nodeName);
                     }
                 });
+                CompletableFuture.runAsync(runnable, executor);
             }
         }
     }

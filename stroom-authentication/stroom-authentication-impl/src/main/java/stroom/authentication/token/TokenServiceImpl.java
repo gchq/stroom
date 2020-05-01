@@ -2,39 +2,43 @@ package stroom.authentication.token;
 
 import org.jose4j.jwk.JsonWebKey;
 import stroom.authentication.account.Account;
+import stroom.authentication.account.AccountDao;
 import stroom.authentication.account.AccountService;
-import stroom.event.logging.api.StroomEventLoggingService;
+import stroom.authentication.config.TokenConfig;
+import stroom.authentication.exceptions.NoSuchUserException;
 import stroom.security.api.SecurityContext;
 import stroom.security.shared.PermissionException;
 import stroom.security.shared.PermissionNames;
 
 import javax.inject.Inject;
 import javax.ws.rs.BadRequestException;
-import javax.ws.rs.core.Response;
 import java.time.Instant;
 import java.util.Optional;
 
 public class TokenServiceImpl implements TokenService {
     private final JwkCache jwkCache;
-    private final TokenDao dao;
+    private final TokenDao tokenDao;
+    private final AccountDao accountDao;
     private final SecurityContext securityContext;
-    private TokenVerifier tokenVerifier;
-    private AccountService accountService;
-    private final StroomEventLoggingService stroomEventLoggingService;
+    private final AccountService accountService;
+    private final TokenBuilderFactory tokenBuilderFactory;
+    private final TokenConfig tokenConfig;
 
     @Inject
     TokenServiceImpl(final JwkCache jwkCache,
-                     final TokenDao dao,
+                     final TokenDao tokenDao,
+                     final AccountDao accountDao,
                      final SecurityContext securityContext,
-                     final TokenVerifier tokenVerifier,
                      final AccountService accountService,
-                     final StroomEventLoggingService stroomEventLoggingService) {
+                     final TokenBuilderFactory tokenBuilderFactory,
+                     final TokenConfig tokenConfig) {
         this.jwkCache = jwkCache;
-        this.dao = dao;
+        this.tokenDao = tokenDao;
+        this.accountDao = accountDao;
         this.securityContext = securityContext;
-        this.tokenVerifier = tokenVerifier;
         this.accountService = accountService;
-        this.stroomEventLoggingService = stroomEventLoggingService;
+        this.tokenBuilderFactory = tokenBuilderFactory;
+        this.tokenConfig = tokenConfig;
     }
 
 
@@ -52,83 +56,192 @@ public class TokenServiceImpl implements TokenService {
                 }
             }
         }
-        SearchResponse results = dao.searchTokens(searchRequest);
-        stroomEventLoggingService.createAction("SearchTokens", "The user searched for an API token");
-        return results;
+        return tokenDao.searchTokens(searchRequest);
     }
 
     @Override
-    public Token create(CreateTokenRequest createTokenRequest) {
+    public Token create(final CreateTokenRequest createTokenRequest) {
         checkPermission();
 
         final String userId = securityContext.getUserId();
 
+        final Optional<Integer> optionalAccountId = accountDao.getId(createTokenRequest.getUserEmail());
+        final Integer accountId = optionalAccountId.orElseThrow(() ->
+                new NoSuchUserException("Cannot find user to associate with this API key!"));
+
         // Parse and validate tokenType
-        Optional<Token.TokenType> tokenTypeToCreate = getParsedTokenType(createTokenRequest.getTokenType());
-        if (!tokenTypeToCreate.isPresent()) {
-            throw new BadRequestException("Unknown token type:" + createTokenRequest.getTokenType());
-        }
+        final Optional<Token.TokenType> optionalTokenType = getParsedTokenType(createTokenRequest.getTokenType());
+        final Token.TokenType tokenType = optionalTokenType.orElseThrow(() ->
+                new BadRequestException("Unknown token type:" + createTokenRequest.getTokenType()));
 
-        Instant expiryInstant = createTokenRequest.getExpiryDate() == null ? null : createTokenRequest.getExpiryDate().toInstant();
-        Token token = dao.createToken(
-                tokenTypeToCreate.get(),
-                userId,
-                expiryInstant,
-                createTokenRequest.getUserEmail(),
-                createTokenRequest.getClientId(),
-                createTokenRequest.isEnabled(),
-                createTokenRequest.getComments());
+        final Instant expiryInstant = createTokenRequest.getExpiryDate() == null
+                ? null :
+                createTokenRequest.getExpiryDate().toInstant();
+//        Token token = dao.createToken(
+//                tokenTypeToCreate.get(),
+//                userId,
+//                expiryInstant,
+//                createTokenRequest.getUserEmail(),
+//                createTokenRequest.getClientId(),
+//                createTokenRequest.isEnabled(),
+//                createTokenRequest.getComments());
+//
+//        stroomEventLoggingService.createAction("CreateApiToken", "Create a token");
+//
+//
+//        account.setCreateTimeMs(now);
+//        account.setCreateUser(userId);
+//        account.setUpdateTimeMs(now);
+//        account.setUpdateUser(userId);
+//        account.setFirstName(request.getFirstName());
+//        account.setLastName(request.getLastName());
+//        account.setEmail(request.getEmail());
+//        account.setComments(request.getComments());
+//        account.setForcePasswordChange(request.isForcePasswordChange());
+//        account.setNeverExpires(request.isNeverExpires());
+//        account.setLoginCount(0);
+//        // Set enabled by default.
+//        account.setEnabled(true);
+//
+//        id                        int(11) NOT NULL AUTO_INCREMENT,
+//                version                   int(11) NOT NULL,
+//        create_time_ms bigint (20) NOT NULL,
+//        create_user varchar (255) NOT NULL,
+//        update_time_ms bigint (20) NOT NULL,
+//        update_user varchar (255) NOT NULL,
+//        fk_account_id             int(11) NOT NULL,
+//        fk_token_type_id          int(11) NOT NULL,
+//        data longtext,
+//        expires_on_ms bigint (20) DEFAULT NULL,
+//        comments longtext,
+//        enabled bit (1) NOT NULL,
 
-        stroomEventLoggingService.createAction("CreateApiToken", "Create a token");
 
-        return token;
+        final long now = System.currentTimeMillis();
+
+        final TokenBuilder tokenBuilder = tokenBuilderFactory
+                .expiryDateForApiKeys(expiryInstant)
+                .newBuilder(tokenType)
+                .clientId(createTokenRequest.getClientId())
+                .subject(createTokenRequest.getUserEmail());
+
+        final Instant actualExpiryDate = tokenBuilder.getExpiryDate();
+        final String data = tokenBuilder.build();
+
+        final Token token = new Token();
+        token.setCreateTimeMs(now);
+        token.setCreateUser(userId);
+        token.setUpdateTimeMs(now);
+        token.setUpdateUser(userId);
+        token.setUserEmail(createTokenRequest.getUserEmail());
+        token.setTokenType(tokenType.getText());
+        token.setData(data);
+        token.setExpiresOnMs(actualExpiryDate.toEpochMilli());
+        token.setComments(createTokenRequest.getComments());
+        token.setEnabled(createTokenRequest.isEnabled());
+
+//
+//                token.setToken(idToken);
+//        token.setTokenType(tokenTypeToCreate.get().getText());
+//        token.setEnabled(createTokenRequest.isEnabled());
+//        token.setExpiresOn();
+//        token.setIssuedByUser();
+//        token.setIssuedOn();
+//        token.setUpdatedByUser();
+//        token.setUpdatedOn();
+//        token.setUserEmail();
+//
+//        token.setComments(request.getComments());
+//        token.setForcePasswordChange(request.isForcePasswordChange());
+//        token.setNeverExpires(request.isNeverExpires());
+//        token.setCreateTimeMs(now);
+//        token.setCreateUser(userId);
+//        token.setUpdateTimeMs(now);
+//        token.setUpdateUser(userId);
+//        token.setLoginCount(0);
+//        // Set enabled by default.
+//        token.setEnabled(true);
+
+
+        return tokenDao.create(accountId, token);
+    }
+
+
+    @Override
+    public Token createResetEmailToken(final Account account, final String clientId) {
+        final Token.TokenType tokenType = Token.TokenType.EMAIL_RESET;
+        long timeToExpiryInSeconds = tokenConfig.getMinutesUntilExpirationForEmailResetToken() * 60;
+        final TokenBuilder tokenBuilder = tokenBuilderFactory
+                .expiryDateForApiKeys(Instant.now().plusSeconds(timeToExpiryInSeconds))
+                .newBuilder(tokenType)
+                .clientId(clientId);
+
+        final Instant actualExpiryDate = tokenBuilder.getExpiryDate();
+        final String idToken = tokenBuilder.build();
+
+        final String userId = securityContext.getUserId();
+
+        final long now = System.currentTimeMillis();
+        final Token token = new Token();
+        token.setCreateTimeMs(now);
+        token.setUpdateTimeMs(now);
+        token.setCreateUser(userId);
+        token.setUpdateUser(userId);
+        token.setUserEmail(account.getEmail());
+        token.setTokenType(tokenType.getText().toLowerCase());
+        token.setData(idToken);
+        token.setExpiresOnMs(actualExpiryDate.toEpochMilli());
+        token.setComments("Created for password reset");
+        token.setEnabled(true);
+
+        return tokenDao.create(account.getId(), token);
     }
 
     @Override
-    public void deleteAll() {
+    public int deleteAll() {
         checkPermission();
-        dao.deleteAllTokensExceptAdmins();
-        stroomEventLoggingService.createAction("DeleteAllApiTokens", "Delete all tokens");
+
+        return tokenDao.deleteAllTokensExceptAdmins();
     }
 
     @Override
-    public void delete(int tokenId) {
+    public int delete(int tokenId) {
         checkPermission();
-        dao.deleteTokenById(tokenId);
-        stroomEventLoggingService.createAction("DeleteApiToken", "Delete a token by ID");
+
+        return tokenDao.deleteTokenById(tokenId);
     }
 
     @Override
-    public void delete(String token) {
+    public int delete(String token) {
         checkPermission();
-        dao.deleteTokenByTokenString(token);
-        stroomEventLoggingService.createAction("DeleteApiToken", "Delete a token by the value of the actual token.");
+
+        return tokenDao.deleteTokenByTokenString(token);
     }
 
     @Override
     public Optional<Token> read(String token) {
         checkPermission();
-        stroomEventLoggingService.createAction("ReadApiToken", "Read a token by the string value of the token.");
-        return dao.readByToken(token);
+
+        return tokenDao.readByToken(token);
     }
 
     @Override
     public Optional<Token> read(int tokenId) {
         checkPermission();
-        stroomEventLoggingService.createAction("ReadApiToken", "Read a token by the token ID.");
-        return dao.readById(tokenId);
+
+        return tokenDao.readById(tokenId);
     }
 
     @Override
-    public void toggleEnabled(int tokenId, boolean isEnabled) {
+    public int toggleEnabled(int tokenId, boolean isEnabled) {
         checkPermission();
         final String userId = securityContext.getUserId();
-        stroomEventLoggingService.createAction("ToggleApiTokenEnabled", "Toggle whether a token is enabled or not.");
-        Optional<Account> updatingUser = accountService.get(userId);
 
-        if (updatingUser.isPresent()) {
-            dao.enableOrDisableToken(tokenId, isEnabled, updatingUser.get());
-        }
+        Optional<Account> updatingUser = accountService.read(userId);
+
+        return updatingUser
+                .map(account -> tokenDao.enableOrDisableToken(tokenId, isEnabled, account))
+                .orElse(0);
     }
 
 //    @Override
@@ -142,9 +255,9 @@ public class TokenServiceImpl implements TokenService {
 
     @Override
     public String getPublicKey() {
-        String jwkAsJson = jwkCache.get().get(0).toJson(JsonWebKey.OutputControlLevel.PUBLIC_ONLY);
-        stroomEventLoggingService.createAction("GetPublicApiKey", "Read a token by the token ID.");
-        return jwkAsJson;
+        return jwkCache.get()
+                .get(0)
+                .toJson(JsonWebKey.OutputControlLevel.PUBLIC_ONLY);
     }
 
     private void checkPermission() {
@@ -154,6 +267,7 @@ public class TokenServiceImpl implements TokenService {
     }
 
     static Optional<Token.TokenType> getParsedTokenType(String tokenType) {
+        // TODO why not enums?
         switch (tokenType.toLowerCase()) {
             case "api":
                 return Optional.of(Token.TokenType.API);

@@ -14,13 +14,9 @@
  * limitations under the License.
  */
 import { Polly } from "@pollyjs/core";
-import FetchAdapter, {
-  HttpRequest,
-  HttpResponse,
-} from "@pollyjs/adapter-fetch";
+import FetchAdapter from "@pollyjs/adapter-fetch";
 
 import { useHttpClient } from "lib/useHttpClient";
-import { Config } from "startup/config/types";
 import { TestData } from "../testTypes";
 
 import resources from "./resources";
@@ -29,12 +25,8 @@ import * as React from "react";
 // Register the fetch adapter so its accessible by all future polly instances
 Polly.register(FetchAdapter);
 
-const testConfig: Config = {
-  advertisedUrl: "/",
-  allowPasswordResets: true,
-  clientId: "stroom-ui",
-  stroomBaseServiceUrl: "http://localhost:9001",
-  stroomUiUrl: "http://localhost:8080/stroom",
+const apiUrl = (path: string) => {
+  return "/api" + path;
 };
 
 // The server is created as a singular thing for the whole app
@@ -56,13 +48,8 @@ const testCache: TestCache = {};
 // Hot loading should pass through
 server.get("*.hot-update.json").passthrough();
 
-// This is normally deployed as part of the server
-server.get("/config.json").intercept((req: HttpRequest, res: HttpResponse) => {
-  res.json(testConfig);
-});
-
 // Build all the resources
-resources.forEach(r => r(server, testConfig, testCache));
+resources.forEach(r => r(server, apiUrl, testCache));
 
 export interface Props {
   testData: TestData;

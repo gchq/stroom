@@ -1,12 +1,6 @@
 ext.moduleName = 'stroom.authentication.api'
 
 dependencies {
-//    compile project(':stroom-util')
-//    compile project(':stroom-util-shared')
-//
-//    compile libs.simple_java_mail
-//    compile libs.jackson_annotations
-//    compile libs.hibernate_validator
-
+    compile libs.jose4j
     compile libs.ws_rs_api
 }

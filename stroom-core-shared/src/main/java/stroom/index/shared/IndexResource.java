@@ -25,7 +25,6 @@ import stroom.util.shared.RestResource;
 import stroom.util.shared.ResultPage;
 
 import javax.ws.rs.Consumes;
-import javax.ws.rs.DELETE;
 import javax.ws.rs.POST;
 import javax.ws.rs.PUT;
 import javax.ws.rs.Path;
@@ -35,12 +34,11 @@ import javax.ws.rs.core.MediaType;
 
 @Api(value = "index - /v2")
 @Path(IndexResource.BASE_PATH)
-@Consumes(MediaType.APPLICATION_JSON)
 @Produces(MediaType.APPLICATION_JSON)
+@Consumes(MediaType.APPLICATION_JSON)
 public interface IndexResource extends RestResource, DirectRestService {
     String BASE_PATH = "/index" + ResourcePaths.V2;
     String SHARD_DELETE_SUB_PATH = "/shard/delete";
-    //    String SHARD_CLOSE_SUB_PATH = "/shard/close";
     String SHARD_FLUSH_SUB_PATH = "/shard/flush";
 
     @POST
@@ -64,21 +62,14 @@ public interface IndexResource extends RestResource, DirectRestService {
             response = ResultPage.class)
     ResultPage<IndexShard> findIndexShards(FindIndexShardCriteria criteria);
 
-    @DELETE
+    @POST
     @Path(SHARD_DELETE_SUB_PATH)
     @ApiOperation(
             value = "Delete matching index shards",
             response = Integer.class)
     Long deleteIndexShards(@QueryParam("nodeName") String nodeName, FindIndexShardCriteria criteria);
 
-//    @PUT
-//    @Path(SHARD_CLOSE_SUB_PATH)
-//    @ApiOperation(
-//            value = "Close matching index shards",
-//            response = Integer.class)
-//    Long closeIndexShards(@QueryParam("nodeName") String nodeName, FindIndexShardCriteria criteria);
-
-    @PUT
+    @POST
     @Path(SHARD_FLUSH_SUB_PATH)
     @ApiOperation(
             value = "Flush matching index shards",

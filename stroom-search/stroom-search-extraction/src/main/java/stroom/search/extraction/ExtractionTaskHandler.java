@@ -51,7 +51,6 @@ import stroom.util.logging.LambdaLogUtil;
 import stroom.util.logging.LambdaLogger;
 import stroom.util.logging.LambdaLoggerFactory;
 import stroom.util.shared.StoredError;
-import stroom.task.api.VoidResult;
 
 import javax.inject.Inject;
 import java.io.IOException;
@@ -73,7 +72,6 @@ class ExtractionTaskHandler {
     private final PipelineFactory pipelineFactory;
     private final PipelineStore pipelineStore;
     private final PipelineDataCache pipelineDataCache;
-    private final TaskContext taskContext;
     private final SecurityContext securityContext;
 
     private ExtractionTask task;
@@ -89,7 +87,6 @@ class ExtractionTaskHandler {
                           final PipelineFactory pipelineFactory,
                           final PipelineStore pipelineStore,
                           final PipelineDataCache pipelineDataCache,
-                          final TaskContext taskContext,
                           final SecurityContext securityContext) {
         this.streamStore = streamStore;
         this.feedHolder = feedHolder;
@@ -101,27 +98,22 @@ class ExtractionTaskHandler {
         this.pipelineFactory = pipelineFactory;
         this.pipelineStore = pipelineStore;
         this.pipelineDataCache = pipelineDataCache;
-        this.taskContext = taskContext;
         this.securityContext = securityContext;
     }
 
-    public VoidResult exec(final ExtractionTask task) {
+    public void exec(final TaskContext taskContext, final ExtractionTask task) {
         // Elevate user permissions so that inherited pipelines that the user only has 'Use' permission on can be read.
-        return securityContext.useAsReadResult(() -> {
-            LAMBDA_LOGGER.logDurationIfDebugEnabled(
-                    () -> {
-                        taskContext.setName("Extraction");
-                        if (!Thread.currentThread().isInterrupted()) {
-                            final String streamId = String.valueOf(task.getStreamId());
-                            taskContext.info(() -> "Extracting " + task.getEventIds().length + " records from stream " + streamId);
+        securityContext.useAsRead(() ->
+                LAMBDA_LOGGER.logDurationIfDebugEnabled(
+                        () -> {
+                            if (!Thread.currentThread().isInterrupted()) {
+                                final String streamId = String.valueOf(task.getStreamId());
+                                taskContext.info(() -> "Extracting " + task.getEventIds().length + " records from stream " + streamId);
 
-                            extract(task);
-                        }
-                    },
-                    () -> "ExtractionTaskHandler.exec()");
-
-            return VoidResult.INSTANCE;
-        });
+                                extract(task);
+                            }
+                        },
+                        () -> "ExtractionTaskHandler.exec()"));
     }
 
     private void extract(final ExtractionTask task) {
@@ -229,11 +221,15 @@ class ExtractionTaskHandler {
                         throw new ExtractionException("Unable to extract data from stream source with id: " + streamId + " - " + e.getMessage(),
                                 e);
                     }
+                } catch (final ExtractionException e) {
+                    throw e;
                 } catch (final IOException | RuntimeException e) {
                     // Something went wrong extracting data from this stream.
                     throw new ExtractionException("Unable to extract data from stream source with id: " + streamId + " - " + e.getMessage(), e);
                 }
             }
+        } catch (final ExtractionException e) {
+            throw e;
         } catch (final IOException | RuntimeException e) {
             // Something went wrong extracting data from this stream.
             throw new ExtractionException("Unable to extract data from stream source with id: " + streamId + " - " + e.getMessage(), e);

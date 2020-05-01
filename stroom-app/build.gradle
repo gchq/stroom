@@ -14,9 +14,14 @@ plugins {
     //id "io.swagger.core.v3.swagger-gradle-plugin" version "2.1.1"
 }
 
-import org.reflections.*
-import org.reflections.scanners.*
-import org.reflections.util.*
+
+import org.reflections.Reflections
+import org.reflections.scanners.SubTypesScanner
+import org.reflections.scanners.TypeAnnotationsScanner
+import org.reflections.util.ConfigurationBuilder
+import org.reflections.util.FilterBuilder
+import java.nio.file.Paths
+import java.nio.file.Files
 
 ext.moduleName = 'stroom.app'
 
@@ -212,8 +217,6 @@ dependencies {
 }
 
 jar {
-    //we need to first generate the swagger spec files so they can be added in to the jar
-//    mustRunAfter generateSwaggerDocumentation
     manifest {
         attributes(
                 "Implementation-Title": "Stroom",
@@ -231,7 +234,10 @@ shadowJar {
     // We want to compile all GWT content before we build the fat jar.
     dependsOn ':stroom-app-gwt:gwtCompile'
     dependsOn ':stroom-dashboard-gwt:gwtCompile'
+    // We need the React UI artifacts
     dependsOn ':stroom-ui:copyYarnBuild'
+    // The jar needs to include the swagger.(json|yaml) files that swagger gen produces
+    dependsOn generateSwaggerDocumentation
 
     // Allows us to build fat jars with lots of files
     zip64 true
@@ -309,6 +315,16 @@ task copyFilesForStroomDockerBuild() {
 
 // Generate the swagger spec files from the resource classes
 // For configuration see https://github.com/gigaSproule/swagger-gradle-plugin
+// 
+// If you see big stack traces like:
+//   could not create Dir using jarFile from url file:/home/dev/git_work/stroom/stroom-task/stroom-task-api/build/libs/stroom-task-api-v9.9.9.jar. skipping.
+//   java.lang.NullPointerException
+//   could not create Vfs.Dir from url. ignoring the exception and continuing
+//   org.reflections.ReflectionsException: Could not open url connection
+// it may be caused by running a versioned build (-Pversion=v9.9.9) and then a non-versioned
+// or vice versa.  The gradle daemon seems to hold references to jars from previous builds
+// somewhere so swagger then looks for classes that don't exist. You can either do
+// ./gradlew --stop to stop the daemon or run a build with --no-daemon
 swagger {
     apiSource {
         springmvc = false
@@ -350,7 +366,11 @@ swagger {
 // A task to fix the classpath for running the swagger plugin and
 // to scan the classpath to find all the REST resource classes to pass to
 // the plugin to generate documentation for.
+// It is a chicken/egg problem as we can't really use the stroom-app jar as
+// that is where we need to put the generated swagger.json file. Thus
+// abuse the build classpath so we can see all the sub projects.
 task prepareSwaggerClasses {
+
     doLast {
         // Get all jars from the compile classpath
         def urls = project.configurations.compileClasspath.resolve()
@@ -362,21 +382,32 @@ task prepareSwaggerClasses {
         // so the swagger plugin can see them all.
         // https://github.com/gigaSproule/swagger-gradle-plugin/issues/158#issuecomment-585823379
         urls.each { 
+            //println "classpath url ${it}"
             buildscript.classLoader.addURL it 
         }
 
         // Now filter down to just our stroom jars
         def stroomUrls = urls
             .findAll {
-                it.toString() =~ /.*stroom[a-z-]+.jar$/
+                // We need the version in there as jars are versioned
+                // when we set an explicit build version
+                boolean isStroomJar = it.toString() =~ /.*stroom[a-z-]+(-${versions.stroom})?.jar$/
+                //if (isStroomJar) {
+                    //println it.toString()
+                //}
+                return isStroomJar
+            }
+            .findAll {
+                // ensure it exists - it should really
+                Files.isRegularFile(Paths.get(it.toURI()))
             }
             .sort {
                 it.toString()
             }
             .unique();
 
-        // Scan all the stroom pks in the stroom jars
-        // Filter should be redundant if we only look in stroom jars
+        // Scan all the stroom pkgs in the stroom jars
+        // Filter should be redundant if we only look in stroom jars, but what the heck
         ConfigurationBuilder configBuilder = new ConfigurationBuilder()
              .filterInputsBy(new FilterBuilder().includePackage("stroom"))
              .setUrls(stroomUrls)
@@ -490,7 +521,7 @@ rootProject.subprojects { subProj ->
 }
 
 // Ensure all projects have built their jars so swagger can see them
-tasks.generateSwaggerDocumentation.dependsOn rootProject.getTasksByName('jar', true)
+tasks.prepareSwaggerClasses.dependsOn rootProject.getTasksByName('jar', true)
 
 tasks.build.dependsOn generateSwaggerDocumentation
 tasks.build.dependsOn copyFilesForStroomDockerBuild

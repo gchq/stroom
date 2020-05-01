@@ -22,29 +22,43 @@ import com.google.gwt.user.cellview.client.Column;
 import com.google.gwt.user.cellview.client.Header;
 import com.google.web.bindery.event.shared.EventBus;
 import com.gwtplatform.mvp.client.MyPresenterWidget;
+import stroom.alert.client.event.AlertEvent;
+import stroom.alert.client.event.ConfirmEvent;
 import stroom.cell.info.client.InfoColumn;
 import stroom.cell.tickbox.client.TickBoxCell;
 import stroom.cell.tickbox.shared.TickBoxState;
+import stroom.core.client.LocationManager;
 import stroom.data.client.event.DataSelectionEvent;
 import stroom.data.client.event.DataSelectionEvent.DataSelectionHandler;
 import stroom.data.client.event.HasDataSelectionHandlers;
 import stroom.data.grid.client.DataGridView;
 import stroom.data.grid.client.DataGridViewImpl;
+import stroom.data.grid.client.OrderByColumn;
+import stroom.data.shared.DataResource;
 import stroom.data.table.client.Refreshable;
 import stroom.datasource.api.v2.AbstractField;
+import stroom.dispatch.client.ExportFileCompleteUtil;
 import stroom.dispatch.client.Rest;
 import stroom.dispatch.client.RestFactory;
 import stroom.meta.shared.FindMetaCriteria;
 import stroom.meta.shared.Meta;
+import stroom.meta.shared.MetaExpressionUtil;
+import stroom.meta.shared.MetaFields;
 import stroom.meta.shared.MetaInfoSection;
 import stroom.meta.shared.MetaResource;
 import stroom.meta.shared.MetaRow;
 import stroom.meta.shared.Status;
+import stroom.meta.shared.UpdateStatusRequest;
+import stroom.processor.shared.ProcessorFilterResource;
+import stroom.processor.shared.ReprocessDataInfo;
+import stroom.query.api.v2.ExpressionOperator;
 import stroom.svg.client.SvgPreset;
 import stroom.svg.client.SvgPresets;
-import stroom.util.shared.IdSet;
 import stroom.util.shared.PageRequest;
+import stroom.util.shared.ResourceGeneration;
 import stroom.util.shared.ResultPage;
+import stroom.util.shared.Selection;
+import stroom.util.shared.Sort;
 import stroom.widget.button.client.ButtonView;
 import stroom.widget.customdatebox.client.ClientDateUtil;
 import stroom.widget.popup.client.event.ShowPopupEvent;
@@ -54,39 +68,81 @@ import stroom.widget.tooltip.client.presenter.TooltipPresenter;
 import stroom.widget.tooltip.client.presenter.TooltipUtil;
 import stroom.widget.util.client.MultiSelectionModel;
 
+import java.util.Collections;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
 import java.util.function.Consumer;
 import java.util.function.Function;
 
-public abstract class AbstractMetaListPresenter extends MyPresenterWidget<DataGridView<MetaRow>> implements HasDataSelectionHandlers<IdSet>, Refreshable {
-    private static final MetaResource META_RESOURCE = com.google.gwt.core.client.GWT.create(MetaResource.class);
+public abstract class AbstractMetaListPresenter extends MyPresenterWidget<DataGridView<MetaRow>> implements HasDataSelectionHandlers<Selection<Long>>, Refreshable {
+    private static final MetaResource META_RESOURCE = GWT.create(MetaResource.class);
+    private static final DataResource DATA_RESOURCE = GWT.create(DataResource.class);
+    private static final ProcessorFilterResource PROCESSOR_FILTER_RESOURCE = GWT.create(ProcessorFilterResource.class);
+
     private final TooltipPresenter tooltipPresenter;
 
-    private final IdSet entityIdSet = new IdSet();
+    private final Selection<Long> selection = new Selection<>(false, new HashSet<>());
     private final RestFactory restFactory;
-    private RestDataProvider<MetaRow, ResultPage<MetaRow>> dataProvider;
-    boolean allowNoConstraint;
+    private final LocationManager locationManager;
+    private final FindMetaCriteria criteria;
+    private final RestDataProvider<MetaRow, ResultPage<MetaRow>> dataProvider;
+
     private ResultPage<MetaRow> resultPage;
-    private FindMetaCriteria criteria;
-    private EventBus eventBus;
+    private boolean initialised;
 
     AbstractMetaListPresenter(final EventBus eventBus,
                               final RestFactory restFactory,
                               final TooltipPresenter tooltipPresenter,
+                              final LocationManager locationManager,
                               final boolean allowSelectAll) {
         super(eventBus, new DataGridViewImpl<>(true));
         this.tooltipPresenter = tooltipPresenter;
         this.restFactory = restFactory;
-        this.eventBus = eventBus;
+        this.locationManager = locationManager;
 
-        entityIdSet.setMatchAll(false);
+        selection.setMatchAll(false);
         addColumns(allowSelectAll);
-    }
 
-    public RestDataProvider<MetaRow, ResultPage<MetaRow>> getDataProvider() {
-        return dataProvider;
+        criteria = new FindMetaCriteria();
+        criteria.setSort(MetaFields.CREATE_TIME.getName(), Sort.Direction.ASCENDING, false);
+
+        final PageRequest pageRequest = criteria.obtainPageRequest();
+        pageRequest.setOffset(0L);
+        pageRequest.setLength(PageRequest.DEFAULT_PAGE_SIZE);
+        dataProvider = new RestDataProvider<MetaRow, ResultPage<MetaRow>>(eventBus, pageRequest) {
+            @Override
+            protected void exec(final Consumer<ResultPage<MetaRow>> dataConsumer,
+                                final Consumer<Throwable> throwableConsumer) {
+                if (criteria.getExpression() != null) {
+                    final Rest<ResultPage<MetaRow>> rest = restFactory.create();
+                    rest
+                            .onSuccess(dataConsumer)
+                            .onFailure(throwableConsumer)
+                            .call(META_RESOURCE)
+                            .findMetaRow(criteria);
+                } else {
+                    dataConsumer.accept(new ResultPage<>(Collections.emptyList()));
+                }
+            }
+
+            @Override
+            protected void changeData(final ResultPage<MetaRow> data) {
+                super.changeData(onProcessData(data));
+            }
+        };
+
+        getView().addColumnSortHandler(event -> {
+            if (event.getColumn() instanceof OrderByColumn<?, ?>) {
+                final OrderByColumn<?, ?> orderByColumn = (OrderByColumn<?, ?>) event.getColumn();
+                if (event.isSortAscending()) {
+                    criteria.setSort(orderByColumn.getField(), Sort.Direction.ASCENDING, orderByColumn.isIgnoreCase());
+                } else {
+                    criteria.setSort(orderByColumn.getField(), Sort.Direction.DESCENDING, orderByColumn.isIgnoreCase());
+                }
+                refresh();
+            }
+        });
     }
 
     protected ResultPage<MetaRow> onProcessData(final ResultPage<MetaRow> data) {
@@ -123,37 +179,26 @@ public abstract class AbstractMetaListPresenter extends MyPresenterWidget<DataGr
 
         this.resultPage = data;
 
-        // List changed in any way ... fire a refresh
         if (!equalsList) {
-            // entityIdSet.clear();
-            // entityIdSet.setMatchAll(masterEntityIdSet.getMatchAll());
-            // if (masterEntityIdSet.getIdSet() != null &&
-            // masterEntityIdSet.getIdSet().size() > 0) {
-            // for (final StreamAttributeMap map : data) {
-            // final long id = map.getMeta().getId();
-            // if (masterEntityIdSet.contains(id)) {
-            // entityIdSet.add(id);
-            // }
-            // }
-            // }
-
-            if (entityIdSet.getSet() != null && entityIdSet.getSet().size() > 0) {
-                final Boolean oldMatchAll = entityIdSet.getMatchAll();
-                final Set<Long> oldIdSet = new HashSet<>(entityIdSet.getSet());
-                entityIdSet.clear();
-                entityIdSet.setMatchAll(oldMatchAll);
-                if (data != null) {
+            if (selection.getSet() != null && selection.getSet().size() > 0) {
+                final boolean matchAll = selection.isMatchAll();
+                final Set<Long> oldIdSet = new HashSet<>(selection.getSet());
+                selection.clear();
+                if (matchAll) {
+                    selection.setMatchAll(matchAll);
+                } else if (data != null && oldIdSet.size() > 0) {
                     for (final MetaRow map : data.getValues()) {
                         final long id = map.getMeta().getId();
                         if (oldIdSet.contains(id)) {
-                            entityIdSet.add(id);
+                            selection.add(id);
                         }
                     }
                 }
             }
-
-            DataSelectionEvent.fire(AbstractMetaListPresenter.this, entityIdSet, false);
         }
+
+        // There might have been a selection change so fire a data selection event.
+        DataSelectionEvent.fire(AbstractMetaListPresenter.this, selection, false);
 
         MetaRow selected = getView().getSelectionModel().getSelected();
         if (selected != null) {
@@ -175,7 +220,7 @@ public abstract class AbstractMetaListPresenter extends MyPresenterWidget<DataGr
                 TickBoxCell.create(tickBoxAppearance, false, false)) {
             @Override
             public TickBoxState getValue(final MetaRow object) {
-                return TickBoxState.fromBoolean(entityIdSet.isMatch(object.getMeta().getId()));
+                return TickBoxState.fromBoolean(selection.isMatch(object.getMeta().getId()));
             }
         };
         if (allowSelectAll) {
@@ -183,10 +228,10 @@ public abstract class AbstractMetaListPresenter extends MyPresenterWidget<DataGr
                     TickBoxCell.create(tickBoxAppearance, false, false)) {
                 @Override
                 public TickBoxState getValue() {
-                    if (Boolean.TRUE.equals(entityIdSet.getMatchAll())) {
+                    if (selection.isMatchAll()) {
                         return TickBoxState.TICK;
                     }
-                    if (entityIdSet.getSet().size() > 0) {
+                    if (selection.size() > 0) {
                         return TickBoxState.HALF_TICK;
                     }
                     return TickBoxState.UNTICK;
@@ -196,15 +241,17 @@ public abstract class AbstractMetaListPresenter extends MyPresenterWidget<DataGr
 
             header.setUpdater(value -> {
                 if (value.equals(TickBoxState.UNTICK)) {
-                    entityIdSet.clear();
-                    entityIdSet.setMatchAll(false);
+                    selection.clear();
+                    selection.setMatchAll(false);
                 }
                 if (value.equals(TickBoxState.TICK)) {
-                    entityIdSet.clear();
-                    entityIdSet.setMatchAll(true);
+                    selection.clear();
+                    selection.setMatchAll(true);
                 }
-                dataProvider.updateRowData(dataProvider.getRanges()[0].getStart(), resultPage.getValues());
-                DataSelectionEvent.fire(AbstractMetaListPresenter.this, entityIdSet, false);
+                if (dataProvider != null) {
+                    dataProvider.updateRowData(dataProvider.getRanges()[0].getStart(), resultPage.getValues());
+                }
+                DataSelectionEvent.fire(AbstractMetaListPresenter.this, selection, false);
             });
 
         } else {
@@ -214,20 +261,20 @@ public abstract class AbstractMetaListPresenter extends MyPresenterWidget<DataGr
         // Add Handlers
         column.setFieldUpdater((index, row, value) -> {
             if (value.toBoolean()) {
-                entityIdSet.add(row.getMeta().getId());
+                selection.add(row.getMeta().getId());
 
             } else {
                 // De-selecting one and currently matching all ?
-                if (Boolean.TRUE.equals(entityIdSet.getMatchAll())) {
-                    entityIdSet.setMatchAll(false);
+                if (selection.isMatchAll()) {
+                    selection.setMatchAll(false);
 
                     final Set<Long> resultStreamIdSet = getResultStreamIdSet();
-                    entityIdSet.addAll(resultStreamIdSet);
+                    selection.addAll(resultStreamIdSet);
                 }
-                entityIdSet.remove(row.getMeta().getId());
+                selection.remove(row.getMeta().getId());
             }
             getView().redrawHeaders();
-            DataSelectionEvent.fire(AbstractMetaListPresenter.this, entityIdSet, false);
+            DataSelectionEvent.fire(AbstractMetaListPresenter.this, selection, false);
         });
     }
 
@@ -277,7 +324,7 @@ public abstract class AbstractMetaListPresenter extends MyPresenterWidget<DataGr
 
     void addCreatedColumn() {
         // Created.
-        getView().addResizableColumn(new Column<MetaRow, String>(new TextCell()) {
+        getView().addResizableColumn(new OrderByColumn<MetaRow, String>(new TextCell(), MetaFields.CREATE_TIME) {
             @Override
             public String getValue(final MetaRow row) {
                 return ClientDateUtil.toISOString(row.getMeta().getCreateMs());
@@ -297,7 +344,7 @@ public abstract class AbstractMetaListPresenter extends MyPresenterWidget<DataGr
 
     void addFeedColumn() {
         // if (securityContext.hasAppPermission(Feed.DOCUMENT_TYPE, DocumentPermissionNames.READ)) {
-        getView().addResizableColumn(new Column<MetaRow, String>(new TextCell()) {
+        getView().addResizableColumn(new OrderByColumn<MetaRow, String>(new TextCell(), MetaFields.FEED_NAME) {
             @Override
             public String getValue(final MetaRow row) {
                 if (row != null && row.getMeta() != null && row.getMeta().getFeedName() != null) {
@@ -311,7 +358,7 @@ public abstract class AbstractMetaListPresenter extends MyPresenterWidget<DataGr
 
     void addStreamTypeColumn() {
         // if (securityContext.hasAppPermission(StreamType.DOCUMENT_TYPE, DocumentPermissionNames.READ)) {
-        getView().addResizableColumn(new Column<MetaRow, String>(new TextCell()) {
+        getView().addResizableColumn(new OrderByColumn<MetaRow, String>(new TextCell(), MetaFields.TYPE_NAME) {
             @Override
             public String getValue(final MetaRow row) {
                 if (row != null && row.getMeta() != null && row.getMeta().getTypeName() != null) {
@@ -346,8 +393,8 @@ public abstract class AbstractMetaListPresenter extends MyPresenterWidget<DataGr
         return getView().getSelectionModel();
     }
 
-    IdSet getSelectedEntityIdSet() {
-        return entityIdSet;
+    Selection<Long> getSelection() {
+        return selection;
     }
 
     private Set<Long> getResultStreamIdSet() {
@@ -379,43 +426,142 @@ public abstract class AbstractMetaListPresenter extends MyPresenterWidget<DataGr
         getView().addResizableColumn(column, name, size);
     }
 
-    @Override
-    public void refresh() {
-        if (dataProvider != null && (allowNoConstraint || criteria != null)) {
-            dataProvider.refresh();
+    public void setExpression(final ExpressionOperator expression) {
+        this.criteria.setExpression(expression);
+        this.criteria.obtainPageRequest().setOffset(0L);
+        this.criteria.obtainPageRequest().setLength(PageRequest.DEFAULT_PAGE_SIZE);
+        refresh();
+    }
+
+    public void download() {
+        action("download", this::doDownload);
+    }
+
+    public void reprocess() {
+        action("reprocess", this::doReprocess);
+    }
+
+    public void delete() {
+        action("delete", () -> doUpdate("Deleted", null, Status.DELETED));
+    }
+
+    public void restore() {
+        action("restore", () -> doUpdate("Restored", Status.DELETED, Status.UNLOCKED));
+    }
+
+    private void doDownload() {
+        final FindMetaCriteria criteria = createSelectionCriteria();
+        final Rest<ResourceGeneration> rest = restFactory.create();
+        rest
+                .onSuccess(result -> ExportFileCompleteUtil.onSuccess(locationManager, null, result))
+                .call(DATA_RESOURCE)
+                .download(criteria);
+    }
+
+    private void doReprocess() {
+        final FindMetaCriteria criteria = createSelectionCriteria();
+        final Rest<List<ReprocessDataInfo>> rest = restFactory.create();
+        rest
+                .onSuccess(result -> {
+                    if (result != null && result.size() > 0) {
+                        for (final ReprocessDataInfo info : result) {
+                            switch (info.getSeverity()) {
+                                case INFO:
+                                    AlertEvent.fireInfo(AbstractMetaListPresenter.this, info.getMessage(),
+                                            info.getDetails(), null);
+                                    break;
+                                case WARNING:
+                                    AlertEvent.fireWarn(AbstractMetaListPresenter.this, info.getMessage(),
+                                            info.getDetails(), null);
+                                    break;
+                                case ERROR:
+                                    AlertEvent.fireError(AbstractMetaListPresenter.this, info.getMessage(),
+                                            info.getDetails(), null);
+                                    break;
+                                case FATAL_ERROR:
+                                    AlertEvent.fireError(AbstractMetaListPresenter.this, info.getMessage(),
+                                            info.getDetails(), null);
+                                    break;
+                            }
+                        }
+                    }
+                })
+                .call(PROCESSOR_FILTER_RESOURCE)
+                .reprocess(criteria);
+
+    }
+
+    private void doUpdate(final String text, final Status currentStatus, final Status newStatus) {
+        final FindMetaCriteria criteria = createSelectionCriteria();
+        final Rest<Integer> rest = restFactory.create();
+        rest
+                .onSuccess(result ->
+                        AlertEvent.fireInfo(AbstractMetaListPresenter.this,
+                                text + " " + result + " record" + ((result.longValue() > 1) ? "s" : ""), this::refresh))
+                .call(META_RESOURCE)
+                .updateStatus(new UpdateStatusRequest(criteria, currentStatus, newStatus));
+    }
+
+    private void action(final String actionType, final Runnable runnable) {
+        final Selection<Long> selection = getSelection();
+        if (!selection.isMatchNothing()) {
+            ConfirmEvent.fire(this,
+                    "Are you sure you want to " + actionType + " the selected items?",
+                    confirm -> {
+                        if (confirm) {
+                            if (selection.isMatchAll()) {
+                                ConfirmEvent.fireWarn(AbstractMetaListPresenter.this,
+                                        "You have selected all items.  Are you sure you want to " + actionType + " all the selected items?",
+                                        confirm1 -> {
+                                            if (confirm1) {
+                                                runnable.run();
+                                            }
+                                        });
+
+                            } else {
+                                runnable.run();
+                            }
+                        }
+                    });
         }
     }
 
-    public void setCriteria(final FindMetaCriteria criteria) {
-        if (criteria != null && criteria.getExpression() != null) {
-            if (criteria.equals(this.criteria) && this.dataProvider != null) {
-                this.dataProvider.refresh();
-            } else {
-                this.criteria = criteria;
-                this.criteria.obtainPageRequest().setLength(PageRequest.DEFAULT_PAGE_SIZE);
+    private FindMetaCriteria createSelectionCriteria() {
+        final Selection<Long> selection = getSelection();
+        // First make sure there is some sort of selection, either
+        // individual streams have been selected or all streams have been
+        // selected.
+        // Only use match all if we are allowed to use criteria.
+        if (selection.isMatchAll()) {
+            final FindMetaCriteria criteria = new FindMetaCriteria();
+            criteria.copyFrom(this.criteria);
+            // Paging is NA
+            criteria.obtainPageRequest().setLength(null);
+            criteria.obtainPageRequest().setOffset(null);
+            return criteria;
 
-                this.dataProvider = new RestDataProvider<MetaRow, ResultPage<MetaRow>>(
-                        eventBus,
-                        criteria.obtainPageRequest()) {
+        } else if (selection.size() > 0) {
+            // If we aren't matching all then create a criteria that
+            // only includes the selected streams.
+            final FindMetaCriteria criteria = new FindMetaCriteria(MetaExpressionUtil
+                    .createDataIdSetExpression(selection.getSet()));
 
-                    @Override
-                    protected void exec(final Consumer<ResultPage<MetaRow>> dataConsumer,
-                                        final Consumer<Throwable> throwableConsumer) {
-                        final Rest<ResultPage<MetaRow>> rest = restFactory.create();
-                        rest
-                                .onSuccess(dataConsumer)
-                                .onFailure(throwableConsumer)
-                                .call(META_RESOURCE)
-                                .findMetaRow(getCriteria());
-                    }
+            // Paging is NA
+            criteria.obtainPageRequest().setLength(null);
+            criteria.obtainPageRequest().setOffset(null);
+            return criteria;
+        }
 
-                    @Override
-                    protected void changeData(final ResultPage<MetaRow> data) {
-                        super.changeData(onProcessData(data));
-                    }
-                };
-                dataProvider.addDataDisplay(getView().getDataDisplay());
-            }
+        return null;
+    }
+
+    @Override
+    public void refresh() {
+        if (!initialised) {
+            initialised = true;
+            dataProvider.addDataDisplay(getView().getDataDisplay());
+        } else {
+            dataProvider.refresh();
         }
     }
 
@@ -425,7 +571,7 @@ public abstract class AbstractMetaListPresenter extends MyPresenterWidget<DataGr
 
     @Override
     public com.google.web.bindery.event.shared.HandlerRegistration addDataSelectionHandler(
-            final DataSelectionHandler<IdSet> handler) {
+            final DataSelectionHandler<Selection<Long>> handler) {
         return addHandlerToSource(DataSelectionEvent.getType(), handler);
     }
 
@@ -433,7 +579,7 @@ public abstract class AbstractMetaListPresenter extends MyPresenterWidget<DataGr
         return getView().addButton(preset);
     }
 
-    private FindMetaCriteria getCriteria() {
+    public FindMetaCriteria getCriteria() {
         return criteria;
     }
 }

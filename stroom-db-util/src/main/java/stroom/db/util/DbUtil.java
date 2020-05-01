@@ -1,10 +1,11 @@
 package stroom.db.util;
 
+import stroom.config.common.ConnectionConfig;
+import stroom.util.logging.LogUtil;
+
 import com.google.common.base.Preconditions;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import stroom.config.common.ConnectionConfig;
-import stroom.util.logging.LogUtil;
 
 import java.sql.Connection;
 import java.sql.DatabaseMetaData;
@@ -61,7 +62,7 @@ public class DbUtil {
         LOGGER.info("Ensuring database connection to {} with username {} and driver class {}",
                 jdbcUrl, username, connectionConfig.getJdbcDriverClassName());
 
-        long sleepMs = 100;
+        long sleepMs = 500;
         Throwable lastThrowable = null;
 
         while (true) {

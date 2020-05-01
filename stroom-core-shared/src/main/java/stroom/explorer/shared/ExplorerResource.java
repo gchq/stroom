@@ -38,11 +38,10 @@ import java.util.Set;
 @Api(value = "explorer - /v2")
 @Path("/explorer" + ResourcePaths.V2)
 @Produces(MediaType.APPLICATION_JSON)
+@Consumes(MediaType.APPLICATION_JSON)
 public interface ExplorerResource extends RestResource, DirectRestService {
     @POST
     @Path("/create")
-    @Consumes(MediaType.APPLICATION_JSON)
-    @Produces(MediaType.APPLICATION_JSON)
     @ApiOperation(
             value = "Create explorer item",
             response = DocRef.class)
@@ -50,8 +49,6 @@ public interface ExplorerResource extends RestResource, DirectRestService {
 
     @DELETE
     @Path("/delete")
-    @Consumes(MediaType.APPLICATION_JSON)
-    @Produces(MediaType.APPLICATION_JSON)
     @ApiOperation(
             value = "Delete explorer items",
             response = BulkActionResult.class)
@@ -59,8 +56,6 @@ public interface ExplorerResource extends RestResource, DirectRestService {
 
     @POST
     @Path("/copy")
-    @Consumes(MediaType.APPLICATION_JSON)
-    @Produces(MediaType.APPLICATION_JSON)
     @ApiOperation(
             value = "Copy explorer items",
             response = BulkActionResult.class)
@@ -68,8 +63,6 @@ public interface ExplorerResource extends RestResource, DirectRestService {
 
     @PUT
     @Path("/move")
-    @Consumes(MediaType.APPLICATION_JSON)
-    @Produces(MediaType.APPLICATION_JSON)
     @ApiOperation(
             value = "Move explorer items",
             response = BulkActionResult.class)
@@ -77,8 +70,6 @@ public interface ExplorerResource extends RestResource, DirectRestService {
 
     @PUT
     @Path("/rename")
-    @Consumes(MediaType.APPLICATION_JSON)
-    @Produces(MediaType.APPLICATION_JSON)
     @ApiOperation(
             value = "Rename explorer items",
             response = DocRef.class)
@@ -86,8 +77,6 @@ public interface ExplorerResource extends RestResource, DirectRestService {
 
     @POST
     @Path("/info")
-    @Consumes(MediaType.APPLICATION_JSON)
-    @Produces(MediaType.APPLICATION_JSON)
     @ApiOperation(
             value = "Get document info",
             response = DocRefInfo.class)
@@ -95,8 +84,6 @@ public interface ExplorerResource extends RestResource, DirectRestService {
 
     @POST
     @Path("/fetchDocRefs")
-    @Consumes(MediaType.APPLICATION_JSON)
-    @Produces(MediaType.APPLICATION_JSON)
     @ApiOperation(
             value = "Fetch document references",
             response = Set.class)
@@ -104,8 +91,6 @@ public interface ExplorerResource extends RestResource, DirectRestService {
 
     @GET
     @Path("/fetchDocumentTypes")
-    @Consumes(MediaType.APPLICATION_JSON)
-    @Produces(MediaType.APPLICATION_JSON)
     @ApiOperation(
             value = "Fetch document types",
             response = DocumentTypes.class)
@@ -113,8 +98,6 @@ public interface ExplorerResource extends RestResource, DirectRestService {
 
     @POST
     @Path("/fetchExplorerPermissions")
-    @Consumes(MediaType.APPLICATION_JSON)
-    @Produces(MediaType.APPLICATION_JSON)
     @ApiOperation(
             value = "Fetch permissions for explorer items",
             response = Map.class)
@@ -122,8 +105,6 @@ public interface ExplorerResource extends RestResource, DirectRestService {
 
     @POST
     @Path("/fetchExplorerNodes")
-    @Consumes(MediaType.APPLICATION_JSON)
-    @Produces(MediaType.APPLICATION_JSON)
     @ApiOperation(
             value = "Fetch explorer nodes",
             response = FetchExplorerNodeResult.class)

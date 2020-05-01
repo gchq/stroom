@@ -16,8 +16,10 @@
 
 package stroom.cluster.task.api;
 
+import stroom.task.api.TaskContext;
+
 import java.util.Set;
 
 public interface ClusterDispatchAsync {
-    <R> void execAsync(ClusterTask<R> task, ClusterResultCollector<R> collector, String sourceNode, Set<String> targetNodes);
+    <R> void execAsync(TaskContext parentContext, ClusterTask<R> task, ClusterResultCollector<R> collector, String sourceNode, Set<String> targetNodes);
 }

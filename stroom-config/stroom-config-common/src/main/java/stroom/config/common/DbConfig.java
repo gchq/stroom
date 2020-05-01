@@ -2,9 +2,11 @@ package stroom.config.common;
 
 import com.fasterxml.jackson.annotation.JsonProperty;
 import stroom.util.shared.AbstractConfig;
+import stroom.util.shared.NotInjectableConfig;
 
 import java.util.Objects;
 
+@NotInjectableConfig
 public class DbConfig extends AbstractConfig {
 
     public static final String PROP_NAME_CONNECTION = "connection";

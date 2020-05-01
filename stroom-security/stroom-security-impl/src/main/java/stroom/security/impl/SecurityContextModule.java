@@ -17,17 +17,11 @@
 package stroom.security.impl;
 
 import com.google.inject.AbstractModule;
-import stroom.security.api.DocumentPermissionCache;
 import stroom.security.api.SecurityContext;
-import stroom.util.guice.GuiceUtil;
-import stroom.util.shared.Clearable;
 
 public class SecurityContextModule extends AbstractModule {
     @Override
     protected void configure() {
         bind(SecurityContext.class).to(SecurityContextImpl.class);
-        bind(DocumentPermissionCache.class).to(DocumentPermissionCacheImpl.class);
-
-        GuiceUtil.buildMultiBinder(binder(), Clearable.class).addBinding(DocumentPermissionCacheImpl.class);
     }
 }

@@ -7,7 +7,12 @@ import useAppNavigation from "lib/useAppNavigation";
 const useTokens = () => {
   const { token, setEnabled, setToken } = useTokenState();
 
-  const { toggleState: toggleStateApi } = useApi();
+  const {
+    toggleState: toggleStateApi,
+    fetchApiKey: fetchApiKeyApi,
+    createToken: createTokenApi,
+  } = useApi();
+
   const toggleEnabledState = useCallback(
     (tokenId: string, nextState: boolean) => {
       toggleStateApi(tokenId, nextState).then(() => setEnabled(nextState));
@@ -15,7 +20,6 @@ const useTokens = () => {
     [toggleStateApi, setEnabled],
   );
 
-  const { fetchApiKey: fetchApiKeyApi } = useApi();
   const fetchApiKey = useCallback(
     (tokenId: string) => {
       fetchApiKeyApi(tokenId).then((apiKey: Token) => {
@@ -25,14 +29,13 @@ const useTokens = () => {
     [fetchApiKeyApi, setToken],
   );
 
-  const { createToken: createTokenApi } = useApi();
   const {
     nav: { goToApiKey },
   } = useAppNavigation();
   const createToken = useCallback(
     (email: string, expiryDate: string) => {
       createTokenApi(email, expiryDate).then((newToken: Token) => {
-        goToApiKey(newToken.id);
+        goToApiKey(newToken.id + "");
       });
     },
     [createTokenApi, goToApiKey],

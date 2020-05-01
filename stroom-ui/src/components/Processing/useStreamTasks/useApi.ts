@@ -3,8 +3,8 @@ import * as React from "react";
 import useHttpClient from "lib/useHttpClient";
 
 import { FetchParameters } from "./types";
-import useConfig from "startup/config/useConfig";
 import { StreamTasksResponseType } from "../types";
+import useUrlFactory from "lib/useUrlFactory";
 
 interface Api {
   fetchTrackers: (params: FetchParameters) => Promise<StreamTasksResponseType>;
@@ -13,18 +13,19 @@ interface Api {
 }
 
 export const useApi = (): Api => {
-  const { stroomBaseServiceUrl } = useConfig();
+  const { apiUrl } = useUrlFactory();
   const { httpGetJson, httpPatchEmptyResponse } = useHttpClient();
+  const resource = apiUrl("/streamtasks/v1");
 
   const fetchTrackers = React.useCallback(
     ({
-      pageSize,
-      pageOffset,
-      sortBy,
-      sortDirection,
-      searchCriteria,
-    }: FetchParameters): Promise<StreamTasksResponseType> => {
-      let url = `${stroomBaseServiceUrl}/streamtasks/v1/?`;
+       pageSize,
+       pageOffset,
+       sortBy,
+       sortDirection,
+       searchCriteria,
+     }: FetchParameters): Promise<StreamTasksResponseType> => {
+      let url = `${resource}/?`;
       url += `pageSize=${pageSize}`;
       url += `&offset=${pageOffset}`;
       if (sortBy !== undefined) {
@@ -38,20 +39,20 @@ export const useApi = (): Api => {
 
       return httpGetJson(url);
     },
-    [stroomBaseServiceUrl, httpGetJson],
+    [resource, httpGetJson],
   );
 
   const fetchMore = React.useCallback(
     ({
-      pageSize,
-      pageOffset,
-      sortBy,
-      sortDirection,
-      searchCriteria,
-    }: FetchParameters): Promise<StreamTasksResponseType> => {
+       pageSize,
+       pageOffset,
+       sortBy,
+       sortDirection,
+       searchCriteria,
+     }: FetchParameters): Promise<StreamTasksResponseType> => {
       const nextPageOffset = pageOffset + 1;
 
-      let url = `${stroomBaseServiceUrl}/streamtasks/v1/?`;
+      let url = `${resource}/?`;
       url += `pageSize=${pageSize}`;
       url += `&offset=${nextPageOffset}`;
       if (sortBy !== undefined) {
@@ -65,12 +66,12 @@ export const useApi = (): Api => {
 
       return httpGetJson(url);
     },
-    [stroomBaseServiceUrl, httpGetJson],
+    [resource, httpGetJson],
   );
 
   const setEnabled = React.useCallback(
     (filterId: number, enabled: boolean) => {
-      const url = `${stroomBaseServiceUrl}/streamtasks/v1/${filterId}`;
+      const url = `${resource}/${filterId}`;
       const body = JSON.stringify({
         op: "replace",
         path: "enabled",
@@ -79,7 +80,7 @@ export const useApi = (): Api => {
 
       return httpPatchEmptyResponse(url, { body });
     },
-    [stroomBaseServiceUrl, httpPatchEmptyResponse],
+    [resource, httpPatchEmptyResponse],
   );
 
   return {

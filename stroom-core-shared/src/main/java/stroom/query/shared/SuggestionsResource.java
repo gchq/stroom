@@ -32,10 +32,9 @@ import java.util.List;
 @Api(value = "suggest - /v1")
 @Path("/suggest" + ResourcePaths.V1)
 @Produces(MediaType.APPLICATION_JSON)
+@Consumes(MediaType.APPLICATION_JSON)
 public interface SuggestionsResource extends RestResource, DirectRestService {
     @POST
-    @Consumes(MediaType.APPLICATION_JSON)
-    @Produces(MediaType.APPLICATION_JSON)
     @ApiOperation(
             value = "Fetch some suggestions",
             response = List.class)

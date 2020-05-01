@@ -33,8 +33,6 @@ import stroom.util.logging.LambdaLoggerFactory;
 import stroom.util.shared.ResultPage;
 
 import javax.inject.Inject;
-import javax.ws.rs.ServerErrorException;
-import javax.ws.rs.core.Response.Status;
 import java.util.List;
 
 // TODO : @66 add event logging
@@ -53,75 +51,43 @@ class ProcessorFilterResourceImpl implements ProcessorFilterResource, HasHealthC
 
     @Override
     public ProcessorFilter create(final CreateProcessorFilterRequest request) {
-        try {
-            return processorFilterService.create(request.getPipeline(), request.getQueryData(), request.getPriority(), request.isEnabled());
-        } catch (final RuntimeException e) {
-            throw new ServerErrorException(Status.INTERNAL_SERVER_ERROR, e);
-        }
+        return processorFilterService.create(request.getPipeline(), request.getQueryData(), request.getPriority(), request.isEnabled());
     }
 
     @Override
     public ProcessorFilter read(final Integer id) {
-        try {
-            return processorFilterService.fetch(id).orElse(null);
-        } catch (final RuntimeException e) {
-            throw new ServerErrorException(Status.INTERNAL_SERVER_ERROR, e);
-        }
+        return processorFilterService.fetch(id).orElse(null);
     }
 
     @Override
     public ProcessorFilter update(final Integer id, final ProcessorFilter processorFilter) {
-        try {
-            return processorFilterService.update(processorFilter);
-        } catch (final RuntimeException e) {
-            throw new ServerErrorException(Status.INTERNAL_SERVER_ERROR, e);
-        }
+        return processorFilterService.update(processorFilter);
     }
 
     @Override
     public void delete(final Integer id) {
-        try {
-            processorFilterService.delete(id);
-        } catch (final RuntimeException e) {
-            throw new ServerErrorException(Status.INTERNAL_SERVER_ERROR, e);
-        }
+        processorFilterService.delete(id);
     }
 
     @Override
     public void setPriority(final Integer id, final Integer priority) {
-        try {
-            processorFilterService.setPriority(id, priority);
-        } catch (final RuntimeException e) {
-            throw new ServerErrorException(Status.INTERNAL_SERVER_ERROR, e);
-        }
+        processorFilterService.setPriority(id, priority);
     }
 
     @Override
     public void setEnabled(final Integer id, final Boolean enabled) {
-        try {
-            processorFilterService.setEnabled(id, enabled);
-        } catch (final RuntimeException e) {
-            throw new ServerErrorException(Status.INTERNAL_SERVER_ERROR, e);
-        }
+        processorFilterService.setEnabled(id, enabled);
     }
 
     @Override
     public ProcessorListRowResultPage find(final FetchProcessorRequest request) {
-        try {
-            final ResultPage<ProcessorListRow> resultPage = processorFilterService.find(request);
-            return new ProcessorListRowResultPage(resultPage.getValues(), resultPage.getPageResponse());
-        } catch (final RuntimeException e) {
-            throw new ServerErrorException(Status.INTERNAL_SERVER_ERROR, e);
-        }
+        final ResultPage<ProcessorListRow> resultPage = processorFilterService.find(request);
+        return new ProcessorListRowResultPage(resultPage.getValues(), resultPage.getPageResponse());
     }
 
     @Override
     public List<ReprocessDataInfo> reprocess(final FindMetaCriteria criteria) {
-        try {
-            return processorFilterService.reprocess(criteria);
-        } catch (final RuntimeException e) {
-            throw new ServerErrorException(Status.INTERNAL_SERVER_ERROR, e);
-        }
+        return processorFilterService.reprocess(criteria);
     }
 
     @Override

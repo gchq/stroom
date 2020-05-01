@@ -22,61 +22,98 @@ import stroom.util.shared.ResultPage;
 
 import javax.inject.Inject;
 import javax.servlet.http.HttpServletRequest;
-import javax.validation.constraints.NotNull;
-import javax.ws.rs.core.Response;
+import javax.ws.rs.NotFoundException;
 import java.util.Optional;
 
 // TODO : @66 Add audit logging
 class AccountResourceImpl implements AccountResource {
-    private AccountService service;
+    private final AccountService service;
+    private final AccountEventLog eventLog;
 
     @Inject
-    public AccountResourceImpl(final AccountService service) {
+    public AccountResourceImpl(final AccountService service,
+                               final AccountEventLog eventLog) {
         this.service = service;
+        this.eventLog = eventLog;
     }
 
     @Override
-    public ResultPage<Account> getAll(final HttpServletRequest httpServletRequest) {
-        return service.getAll();
-    }
-
-    @Override
-    public Response createUser(final HttpServletRequest httpServletRequest,
-                               final Account account) {
-        final int newUserId = service.create(account);
-        return Response.status(Response.Status.OK).entity(newUserId).build();
-    }
-
-    @Override
-    public ResultPage<Account> searchUsers(final HttpServletRequest httpServletRequest,
-                                           final String email) {
-        return service.search(email);
-    }
-
-    @Override
-    public Response getUser(final HttpServletRequest httpServletRequest,
-                            final int userId) {
-        final Optional<Account> optionalUser = service.get(userId);
-        if (optionalUser.isPresent()) {
-            return Response.status(Response.Status.OK).entity(optionalUser.get()).build();
-        } else {
-            return Response.status(Response.Status.NOT_FOUND).build();
+    public ResultPage<Account> list(final HttpServletRequest httpServletRequest) {
+        try {
+            final ResultPage<Account> result = service.list();
+            eventLog.list(result, null);
+            return result;
+        } catch (final RuntimeException e) {
+            eventLog.list(null, e);
+            throw e;
         }
     }
 
     @Override
-    public Response updateUser(final HttpServletRequest httpServletRequest,
-                               final @NotNull Account account,
-                               final int userId) {
-        service.update(account, userId);
-        return Response.status(Response.Status.NO_CONTENT).build();
+    public ResultPage<Account> search(final HttpServletRequest httpServletRequest,
+                                      final String email) {
+        try {
+            final ResultPage<Account> result = service.search(email);
+            eventLog.search(email, result, null);
+            return result;
+        } catch (final RuntimeException e) {
+            eventLog.search(email, null, e);
+            throw e;
+        }
     }
 
     @Override
-    public Response deleteUser(final HttpServletRequest httpServletRequest,
-                               final int userId) {
-        service.deleteUser(userId);
-        return Response.status(Response.Status.NO_CONTENT).build();
+    public Integer create(final HttpServletRequest httpServletRequest,
+                          final CreateAccountRequest request) {
+        try {
+            final Account account = service.create(request);
+            eventLog.create(request, account, null);
+            return account.getId();
+        } catch (final RuntimeException e) {
+            eventLog.create(request, null, e);
+            throw e;
+        }
+    }
+
+    @Override
+    public Account read(final HttpServletRequest httpServletRequest,
+                        final int userId) {
+        try {
+            final Optional<Account> optionalAccount = service.read(userId);
+            final Account account = optionalAccount.orElseThrow(NotFoundException::new);
+            eventLog.read(userId, account, null);
+            return account;
+        } catch (final RuntimeException e) {
+            eventLog.read(userId, null, e);
+            throw e;
+        }
+    }
+
+    @Override
+    public Boolean update(final HttpServletRequest httpServletRequest,
+                          final Account account,
+                          final int userId) {
+        try {
+            service.update(account, userId);
+            eventLog.update(account, userId, null);
+            return true;
+        } catch (final RuntimeException e) {
+            eventLog.update(null, userId, e);
+            throw e;
+        }
+    }
+
+    @Override
+    public Boolean delete(final HttpServletRequest httpServletRequest,
+                          final int userId) {
+        try {
+            service.delete(userId);
+            eventLog.delete(userId, null);
+            return true;
+        } catch (final RuntimeException e) {
+            eventLog.delete(userId, e);
+            throw e;
+        }
     }
 }
 

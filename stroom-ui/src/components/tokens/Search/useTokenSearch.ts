@@ -1,11 +1,11 @@
 import { useCallback } from "react";
 import { SearchConfig } from "../api/types";
 import useApi from "../api/useApi";
-import { useTokenSearchState } from "./useTokenSearchState";
+import { useTokenSearchState, defaultPageSize } from "./useTokenSearchState";
 
 const getRowsPerPage = () => {
   const viewport = document.getElementById("User-content");
-  let rowsInViewport = 20;
+  let rowsInViewport = defaultPageSize;
   if (viewport) {
     const viewportHeight = viewport.offsetHeight;
     const rowsHeight = viewportHeight - 60;
@@ -27,7 +27,12 @@ const useTokenSearch = () => {
     toggleEnabled,
   } = useTokenSearchState();
 
-  const { performTokenSearch: performTokenSearchApi } = useApi();
+  const {
+    performTokenSearch: performTokenSearchApi,
+    deleteToken: deleteTokenApi,
+    toggleState: toggleStateApi,
+  } = useApi();
+
   const performTokenSearch = useCallback(
     (searchConfig: SearchConfig) => {
       searchConfig.pageSize = getRowsPerPage();
@@ -66,7 +71,6 @@ const useTokenSearch = () => {
     ],
   );
 
-  const { deleteToken: deleteTokenApi } = useApi();
   const deleteSelectedToken = useCallback(
     (selectedTokenRowId?: string) => {
       if (!!selectedTokenRowId) {
@@ -84,7 +88,6 @@ const useTokenSearch = () => {
     ],
   );
 
-  const { toggleState: toggleStateApi } = useApi();
   const toggleState = useCallback(
     (tokenId: string, nextState: boolean) => {
       toggleStateApi(tokenId, nextState).then(() => toggleEnabled(tokenId));

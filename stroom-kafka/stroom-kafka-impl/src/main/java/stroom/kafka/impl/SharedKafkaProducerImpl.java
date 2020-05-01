@@ -5,6 +5,7 @@ import stroom.docref.DocRef;
 import stroom.kafka.api.SharedKafkaProducer;
 import stroom.kafka.api.SharedKafkaProducerIdentity;
 
+import java.time.Instant;
 import java.util.Optional;
 import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.concurrent.atomic.AtomicInteger;
@@ -18,6 +19,8 @@ public class SharedKafkaProducerImpl implements SharedKafkaProducer {
     private final DocRef kafkaConfigRef;
     private final AtomicBoolean isSuperseded = new AtomicBoolean(false);
     private final AtomicInteger useCounter = new AtomicInteger(0);
+    private final Instant createdTime;
+    private volatile Instant lastAccessedTime;
 
     SharedKafkaProducerImpl(final KafkaProducer<String, byte[]> kafkaProducer,
                             final Consumer<SharedKafkaProducer> closeAction,
@@ -27,10 +30,13 @@ public class SharedKafkaProducerImpl implements SharedKafkaProducer {
         this.closeAction = closeAction;
         this.sharedKafkaProducerIdentity = sharedKafkaProducerIdentity;
         this.kafkaConfigRef = kafkaConfigRef;
+        this.createdTime = Instant.now();
+        this.lastAccessedTime = createdTime;
     }
 
     @Override
     public Optional<KafkaProducer<String, byte[]>> getKafkaProducer() {
+        lastAccessedTime = Instant.now();
         return Optional.ofNullable(kafkaProducer);
     }
 
@@ -91,5 +97,22 @@ public class SharedKafkaProducerImpl implements SharedKafkaProducer {
 
     int getUseCount() {
         return useCounter.get();
+    }
+
+    Instant getCreatedTime() {
+        return createdTime;
+    }
+
+    Instant getLastAccessedTime() {
+        return lastAccessedTime;
+    }
+
+    @Override
+    public String toString() {
+        return "SharedKafkaProducerImpl{" +
+                "sharedKafkaProducerIdentity=" + sharedKafkaProducerIdentity +
+                ", isSuperseded=" + isSuperseded +
+                ", useCounter=" + useCounter +
+                '}';
     }
 }

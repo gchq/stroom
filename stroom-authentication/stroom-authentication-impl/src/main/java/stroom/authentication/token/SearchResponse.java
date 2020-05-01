@@ -21,7 +21,6 @@ package stroom.authentication.token;
 import java.util.List;
 
 public class SearchResponse {
-
     private List<Token> tokens;
 
     private int totalPages;

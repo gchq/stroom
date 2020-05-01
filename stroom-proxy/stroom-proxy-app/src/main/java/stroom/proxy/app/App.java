@@ -16,6 +16,16 @@
 
 package stroom.proxy.app;
 
+import stroom.dropwizard.common.DelegatingExceptionMapper;
+import stroom.dropwizard.common.Filters;
+import stroom.dropwizard.common.HealthChecks;
+import stroom.dropwizard.common.ManagedServices;
+import stroom.dropwizard.common.RestResources;
+import stroom.dropwizard.common.Servlets;
+import stroom.proxy.app.guice.ProxyModule;
+import stroom.util.authentication.DefaultOpenIdCredentials;
+import stroom.util.shared.ResourcePaths;
+
 import com.google.inject.Guice;
 import com.google.inject.Injector;
 import io.dropwizard.Application;
@@ -28,14 +38,6 @@ import org.eclipse.jetty.server.session.SessionHandler;
 import org.eclipse.jetty.servlets.CrossOriginFilter;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import stroom.dropwizard.common.Filters;
-import stroom.dropwizard.common.HealthChecks;
-import stroom.dropwizard.common.ManagedServices;
-import stroom.dropwizard.common.PermissionExceptionMapper;
-import stroom.dropwizard.common.RestResources;
-import stroom.dropwizard.common.Servlets;
-import stroom.proxy.app.guice.ProxyModule;
-import stroom.util.shared.ResourcePaths;
 
 import javax.inject.Inject;
 import javax.servlet.DispatcherType;
@@ -55,6 +57,8 @@ public class App extends Application<Config> {
     private RestResources restResources;
     @Inject
     private ManagedServices managedServices;
+    @Inject
+    private DelegatingExceptionMapper delegatingExceptionMapper;
 
     public static void main(final String[] args) throws Exception {
         new App().run(args);
@@ -101,11 +105,32 @@ public class App extends Application<Config> {
         // Add all injectable rest resources.
         restResources.register();
 
-        // Map exceptions to helpful HTTP responses
-        environment.jersey().register(PermissionExceptionMapper.class);
+        // Add jersey exception mappers.
+        environment.jersey().register(delegatingExceptionMapper);
 
         // Listen to the lifecycle of the Dropwizard app.
         managedServices.register();
+
+        warnAboutDefaultOpenIdCreds(configuration, injector);
+
+    }
+
+    private void warnAboutDefaultOpenIdCreds(Config configuration, Injector injector) {
+        if (configuration.getProxyConfig().isUseDefaultOpenIdCredentials()) {
+            DefaultOpenIdCredentials defaultOpenIdCredentials = injector.getInstance(DefaultOpenIdCredentials.class);
+            LOGGER.warn("" +
+                    "\n  ---------------------------------------------------------------------------------------" +
+                    "\n  " +
+                    "\n                                        WARNING!" +
+                    "\n  " +
+                    "\n   Using default and publicly available Open ID authentication credentials. " +
+                    "\n   These should only be used in test/demo environments. " +
+                    "\n   Set useDefaultOpenIdCredentials to false for production environments. The API key in use is:" +
+                    "\n" +
+                    "\n   " + defaultOpenIdCredentials.getApiKey() +
+                    "\n  ---------------------------------------------------------------------------------------" +
+                    "");
+        }
     }
 
     private static void configureCors(io.dropwizard.setup.Environment environment) {

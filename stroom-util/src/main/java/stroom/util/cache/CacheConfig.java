@@ -3,10 +3,12 @@ package stroom.util.cache;
 import com.fasterxml.jackson.annotation.JsonProperty;
 import com.fasterxml.jackson.annotation.JsonPropertyDescription;
 import stroom.util.shared.AbstractConfig;
+import stroom.util.shared.NotInjectableConfig;
 import stroom.util.time.StroomDuration;
 
 import javax.validation.constraints.Min;
 
+@NotInjectableConfig
 public class CacheConfig extends AbstractConfig {
 
     public static final String PROP_NAME_MAXIMUM_SIZE = "maximumSize";

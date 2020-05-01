@@ -37,11 +37,10 @@ import javax.ws.rs.core.MediaType;
 @Api(value = "data - /v1")
 @Path("/data" + ResourcePaths.V1)
 @Produces(MediaType.APPLICATION_JSON)
+@Consumes(MediaType.APPLICATION_JSON)
 public interface DataResource extends RestResource, DirectRestService {
     @POST
     @Path("download")
-    @Consumes(MediaType.APPLICATION_JSON)
-    @Produces(MediaType.APPLICATION_JSON)
     @ApiOperation(
             value = "Download matching data",
             response = ResourceGeneration.class)
@@ -49,15 +48,12 @@ public interface DataResource extends RestResource, DirectRestService {
 
     @POST
     @Path("upload")
-    @Consumes(MediaType.APPLICATION_JSON)
-    @Produces(MediaType.APPLICATION_JSON)
     @ApiOperation(
             value = "Upload data",
             response = ResourceGeneration.class)
     ResourceKey upload(UploadDataRequest request);
 
     @GET
-    @Produces(MediaType.APPLICATION_JSON)
     AbstractFetchDataResult fetchData(
             final @QueryParam("streamId") Long streamId,
             final @QueryParam("streamsOffset") Long streamsOffset,

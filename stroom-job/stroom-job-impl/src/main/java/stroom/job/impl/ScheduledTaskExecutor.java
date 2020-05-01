@@ -22,7 +22,7 @@ import org.slf4j.MarkerFactory;
 import stroom.job.api.ScheduledJob;
 import stroom.job.shared.JobNode;
 import stroom.security.api.SecurityContext;
-import stroom.task.api.TaskContext;
+import stroom.task.api.TaskContextFactory;
 import stroom.util.logging.LogExecutionTime;
 import stroom.util.scheduler.FrequencyScheduler;
 import stroom.util.scheduler.Scheduler;
@@ -34,12 +34,7 @@ import javax.inject.Inject;
 import javax.inject.Provider;
 import javax.inject.Singleton;
 import java.util.Map;
-import java.util.concurrent.CompletableFuture;
-import java.util.concurrent.ConcurrentHashMap;
-import java.util.concurrent.Executor;
-import java.util.concurrent.Executors;
-import java.util.concurrent.ScheduledExecutorService;
-import java.util.concurrent.TimeUnit;
+import java.util.concurrent.*;
 import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.concurrent.atomic.AtomicReference;
 import java.util.concurrent.locks.ReentrantLock;
@@ -56,7 +51,7 @@ class ScheduledTaskExecutor {
     private final Map<ScheduledJob, Provider<Runnable>> scheduledJobsMap;
     private final JobNodeTrackerCache jobNodeTrackerCache;
     private final Executor executor;
-    private final Provider<TaskContext> taskContextProvider;
+    private final TaskContextFactory taskContextFactory;
     private final SecurityContext securityContext;
 
     private final AtomicReference<ScheduledExecutorService> scheduledExecutorService = new AtomicReference<>();
@@ -67,13 +62,13 @@ class ScheduledTaskExecutor {
     ScheduledTaskExecutor(final Map<ScheduledJob, Provider<Runnable>> scheduledJobsMap,
                           final JobNodeTrackerCache jobNodeTrackerCache,
                           final Executor executor,
-                          final Provider<TaskContext> taskContextProvider,
+                          final TaskContextFactory taskContextFactory,
                           final JobSystemConfig jobSystemConfig,
                           final SecurityContext securityContext) {
         this.scheduledJobsMap = scheduledJobsMap;
         this.jobNodeTrackerCache = jobNodeTrackerCache;
         this.executor = executor;
-        this.taskContextProvider = taskContextProvider;
+        this.taskContextFactory = taskContextFactory;
         this.securityContext = securityContext;
         this.enabled = jobSystemConfig.isEnabled();
         this.executionInterval = jobSystemConfig.getExecutionIntervalMs();
@@ -139,10 +134,8 @@ class ScheduledTaskExecutor {
                 final String taskName = scheduledJob.getName();
                 final ScheduledJobFunction function = create(scheduledJob);
                 if (function != null) {
-                    final TaskContext taskContext = taskContextProvider.get();
-                    Runnable runnable = () -> {
+                    final Runnable runnable = taskContextFactory.context(taskName, taskContext -> {
                         try {
-                            taskContext.setName(taskName);
                             final LogExecutionTime logExecutionTime = new LogExecutionTime();
                             LOGGER.debug("exec() - >>> {}", taskName);
                             function.run();
@@ -150,8 +143,7 @@ class ScheduledTaskExecutor {
                         } catch (final RuntimeException e) {
                             LOGGER.error("Error calling {}", taskName, e);
                         }
-                    };
-                    runnable = taskContext.sub(runnable);
+                    });
                     CompletableFuture
                             .runAsync(runnable, executor)
                             .whenComplete((r, t) -> function.getRunning().set(false));
@@ -197,12 +189,11 @@ class ScheduledTaskExecutor {
                 if (enabled && scheduler != null && scheduler.execute()) {
                     //TODO log trace
 //                    LOGGER.trace("Returning runnable for method: {} - {} - {}", methodReference, enabled, scheduler);
+                    final Provider<Runnable> consumerProvider = scheduledJobsMap.get(scheduledJob);
                     if (jobNodeTracker != null) {
-                        final Provider<Runnable> consumerProvider = scheduledJobsMap.get(scheduledJob);
                         function = new JobNodeTrackedFunction(scheduledJob, consumerProvider.get(), running,
                                 jobNodeTracker);
                     } else {
-                        final Provider<Runnable> consumerProvider = scheduledJobsMap.get(scheduledJob);
                         function = new ScheduledJobFunction(scheduledJob, consumerProvider.get(), running);
                     }
                 } else {

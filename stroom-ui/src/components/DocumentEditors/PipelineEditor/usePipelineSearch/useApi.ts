@@ -16,12 +16,11 @@
 import * as React from "react";
 
 import useHttpClient from "lib/useHttpClient";
-
-import useConfig from "startup/config/useConfig";
 import {
   PipelineSearchCriteriaType,
   PipelineSearchResultType,
 } from "components/DocumentEditors/useDocumentApi/types/pipelineDoc";
+import useUrlFactory from "lib/useUrlFactory";
 
 interface Api {
   searchPipelines: (
@@ -30,13 +29,14 @@ interface Api {
 }
 
 export const useApi = (): Api => {
-  const { stroomBaseServiceUrl } = useConfig();
   const { httpGetJson } = useHttpClient();
+  const { apiUrl } = useUrlFactory();
+  const resource = apiUrl("/pipelines/v1");
 
   return {
     searchPipelines: React.useCallback(
       ({ filter, pageSize, pageOffset }: PipelineSearchCriteriaType) => {
-        let url = `${stroomBaseServiceUrl}/pipelines/v1/?`;
+        let url = `${resource}/?`;
 
         if (filter !== undefined && filter !== "") {
           url += `&filter=${filter}`;
@@ -49,7 +49,7 @@ export const useApi = (): Api => {
         const forceGet = true;
         return httpGetJson(url, {}, forceGet);
       },
-      [stroomBaseServiceUrl, httpGetJson],
+      [resource, httpGetJson],
     ),
   };
 };

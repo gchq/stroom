@@ -39,6 +39,7 @@ import stroom.processor.shared.ProcessorTaskSummary;
 import stroom.task.shared.TaskExpressionUtil;
 import stroom.util.shared.ModelStringUtil;
 import stroom.util.shared.ResultPage;
+import stroom.util.shared.Sort;
 import stroom.widget.popup.client.event.ShowPopupEvent;
 import stroom.widget.popup.client.presenter.PopupPosition;
 import stroom.widget.popup.client.presenter.PopupView.PopupType;
@@ -146,6 +147,18 @@ public class ProcessorTaskSummaryPresenter extends MyPresenterWidget<DataGridVie
             }
         };
         dataProvider.addDataDisplay(getView().getDataDisplay());
+
+        getView().addColumnSortHandler(event -> {
+            if (event.getColumn() instanceof OrderByColumn<?, ?>) {
+                final OrderByColumn<?, ?> orderByColumn = (OrderByColumn<?, ?>) event.getColumn();
+                if (event.isSortAscending()) {
+                    criteria.setSort(orderByColumn.getField(), Sort.Direction.ASCENDING, orderByColumn.isIgnoreCase());
+                } else {
+                    criteria.setSort(orderByColumn.getField(), Sort.Direction.DESCENDING, orderByColumn.isIgnoreCase());
+                }
+                dataProvider.refresh();
+            }
+        });
     }
 
     public MultiSelectionModel<ProcessorTaskSummary> getSelectionModel() {

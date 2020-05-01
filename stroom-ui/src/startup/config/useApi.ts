@@ -16,6 +16,7 @@
 import useHttpClient from "lib/useHttpClient";
 import * as React from "react";
 import { Config } from "./types";
+import { useUrlFactory } from "../../lib/useUrlFactory";
 
 export interface Api {
   fetchConfig: () => Promise<Config>;
@@ -23,10 +24,12 @@ export interface Api {
 
 const useApi = (): Api => {
   const { httpGetJson } = useHttpClient();
+  const { apiUrl } = useUrlFactory();
+  const resource = apiUrl("/config/v1");
 
   const fetchConfig = React.useCallback(() => {
-    return httpGetJson("/config.json", {}, false);
-  }, [httpGetJson]);
+    return httpGetJson(`${resource}/noauth/uiPreferences`, {}, false);
+  }, [resource, httpGetJson, resource]);
 
   return { fetchConfig };
 };

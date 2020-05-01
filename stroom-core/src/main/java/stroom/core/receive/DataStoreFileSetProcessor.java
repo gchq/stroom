@@ -27,7 +27,7 @@ import stroom.proxy.repo.FileSet;
 import stroom.proxy.repo.FileSetProcessor;
 import stroom.proxy.repo.ProxyFileHandler;
 import stroom.receive.common.StreamTargetStroomStreamHandler;
-import stroom.task.api.TaskContext;
+import stroom.task.api.TaskContextFactory;
 import stroom.util.io.BufferFactory;
 import stroom.util.logging.LambdaLogUtil;
 import stroom.util.logging.LambdaLogger;
@@ -60,19 +60,19 @@ public final class DataStoreFileSetProcessor implements FileSetProcessor {
     private final FeedProperties feedProperties;
     private final MetaStatistics metaStatistics;
     private final boolean aggregate = true;
-    private final TaskContext taskContext;
+    private final TaskContextFactory taskContextFactory;
     private final ProxyFileHandler proxyFileHandler;
 
     @Inject
     DataStoreFileSetProcessor(final Store store,
                               final FeedProperties feedProperties,
                               final MetaStatistics metaStatistics,
-                              final TaskContext taskContext,
+                              final TaskContextFactory taskContextFactory,
                               final BufferFactory bufferFactory) {
         this.store = store;
         this.feedProperties = feedProperties;
         this.metaStatistics = metaStatistics;
-        this.taskContext = taskContext;
+        this.taskContextFactory = taskContextFactory;
 
         proxyFileHandler = new ProxyFileHandler(bufferFactory);
     }
@@ -83,57 +83,58 @@ public final class DataStoreFileSetProcessor implements FileSetProcessor {
             final LogExecutionTime logExecutionTime = new LogExecutionTime();
 
             final String feedName = fileSet.getFeed();
-            taskContext.setName("Processing set - " + feedName);
-            LOGGER.info(LambdaLogUtil.message("processFeedFiles() - Started {} ({} Files)", feedName, fileSet.getFiles().size()));
+            taskContextFactory.context("Processing set - " + feedName, taskContext -> {
+                LOGGER.info(LambdaLogUtil.message("processFeedFiles() - Started {} ({} Files)", feedName, fileSet.getFiles().size()));
 
-            // Sort the files in the file set so there is some consistency to processing.
-            fileSet.getFiles().sort(Comparator.comparing(p -> p.getFileName().toString()));
-            LOGGER.debug(LambdaLogUtil.message("process() - {} {}", feedName, fileSet.getFiles()));
+                // Sort the files in the file set so there is some consistency to processing.
+                fileSet.getFiles().sort(Comparator.comparing(p -> p.getFileName().toString()));
+                LOGGER.debug(LambdaLogUtil.message("process() - {} {}", feedName, fileSet.getFiles()));
 
-            // We don't want to aggregate reference feeds.
-            final boolean oneByOne = feedProperties.isReference(feedName) || !aggregate;
+                // We don't want to aggregate reference feeds.
+                final boolean oneByOne = feedProperties.isReference(feedName) || !aggregate;
 
-            List<StreamTargetStroomStreamHandler> handlers = openStreamHandlers(feedName);
-            List<Path> deleteFileList = new ArrayList<>();
+                List<StreamTargetStroomStreamHandler> handlers = openStreamHandlers(feedName);
+                List<Path> deleteFileList = new ArrayList<>();
 
-            long sequence = 1;
-            long count = 0;
+                long sequence = 1;
+                long count = 0;
 
-            final StreamProgressMonitor streamProgressMonitor = new StreamProgressMonitor("ProxyAggregationTask");
+                final StreamProgressMonitor streamProgressMonitor = new StreamProgressMonitor("ProxyAggregationTask");
 
-            for (final Path file : fileSet.getFiles()) {
-                count++;
-                final long c = count;
-                taskContext.info(() -> "File " + c + " of " + fileSet.getFiles().size());
+                for (final Path file : fileSet.getFiles()) {
+                    count++;
+                    final long c = count;
+                    taskContext.info(() -> "File " + c + " of " + fileSet.getFiles().size());
 
-                if (Thread.currentThread().isInterrupted()) {
-                    break;
-                }
-                try {
-                    if (sequence > 1 && oneByOne) {
-                        // Close off this unit
-                        handlers = closeStreamHandlers(handlers);
-
-                        // Delete the done files
-                        cleanup(deleteFileList);
-
-                        // Start new batch
-                        deleteFileList = new ArrayList<>();
-                        handlers = openStreamHandlers(feedName);
-                        sequence = 1;
+                    if (Thread.currentThread().isInterrupted()) {
+                        break;
                     }
+                    try {
+                        if (sequence > 1 && oneByOne) {
+                            // Close off this unit
+                            handlers = closeStreamHandlers(handlers);
 
-                    sequence = proxyFileHandler.processFeedFile(handlers, file, streamProgressMonitor, sequence);
-                    deleteFileList.add(file);
+                            // Delete the done files
+                            cleanup(deleteFileList);
 
-                } catch (final IOException | RuntimeException e) {
-                    LOGGER.error(e::getMessage, e);
-                    handlers = closeDeleteStreamHandlers(handlers);
+                            // Start new batch
+                            deleteFileList = new ArrayList<>();
+                            handlers = openStreamHandlers(feedName);
+                            sequence = 1;
+                        }
+
+                        sequence = proxyFileHandler.processFeedFile(handlers, file, streamProgressMonitor, sequence);
+                        deleteFileList.add(file);
+
+                    } catch (final IOException | RuntimeException e) {
+                        LOGGER.error(e::getMessage, e);
+                        handlers = closeDeleteStreamHandlers(handlers);
+                    }
                 }
-            }
-            closeStreamHandlers(handlers);
-            cleanup(deleteFileList);
-            LOGGER.info(LambdaLogUtil.message("processFeedFiles() - Completed {} in {}", feedName, logExecutionTime));
+                closeStreamHandlers(handlers);
+                cleanup(deleteFileList);
+                LOGGER.info(LambdaLogUtil.message("processFeedFiles() - Completed {} in {}", feedName, logExecutionTime));
+            }).run();
         }
     }
 

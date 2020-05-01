@@ -30,6 +30,7 @@ import stroom.meta.shared.FindMetaCriteria;
 import stroom.meta.shared.MetaFields;
 import stroom.meta.shared.Status;
 import stroom.task.api.TaskContext;
+import stroom.task.api.TaskContextFactory;
 import stroom.util.Period;
 import stroom.util.date.DateUtil;
 import stroom.util.io.FileUtil;
@@ -40,30 +41,10 @@ import stroom.util.logging.LogExecutionTime;
 
 import javax.inject.Inject;
 import javax.inject.Provider;
-import javax.xml.bind.JAXBContext;
-import javax.xml.bind.JAXBException;
-import javax.xml.bind.annotation.XmlAccessType;
-import javax.xml.bind.annotation.XmlAccessorType;
-import javax.xml.bind.annotation.XmlElement;
-import javax.xml.bind.annotation.XmlRootElement;
-import javax.xml.bind.annotation.XmlTransient;
-import javax.xml.bind.annotation.XmlType;
-import java.io.BufferedInputStream;
-import java.io.BufferedOutputStream;
-import java.io.IOException;
-import java.io.InputStream;
-import java.io.OutputStream;
+import java.io.*;
 import java.nio.file.Files;
 import java.nio.file.Path;
-import java.util.ArrayList;
-import java.util.Collections;
-import java.util.Comparator;
-import java.util.HashMap;
-import java.util.HashSet;
-import java.util.List;
-import java.util.Map;
-import java.util.Objects;
-import java.util.Set;
+import java.util.*;
 import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.function.Supplier;
 import java.util.stream.Collectors;
@@ -73,35 +54,37 @@ public class DataRetentionPolicyExecutor {
 
     private static final String LOCK_NAME = "DataRetentionExecutor";
 
-    private final TaskContext taskContext;
     private final ClusterLockService clusterLockService;
     private final Provider<DataRetentionRules> dataRetentionRulesProvider;
     private final DataRetentionConfig policyConfig;
     private final MetaService metaService;
+    private final TaskContextFactory taskContextFactory;
     private final AtomicBoolean running = new AtomicBoolean();
 
     @Inject
-    DataRetentionPolicyExecutor(final TaskContext taskContext,
-                                final ClusterLockService clusterLockService,
+    DataRetentionPolicyExecutor(final ClusterLockService clusterLockService,
                                 final Provider<DataRetentionRules> dataRetentionRulesProvider,
                                 final DataRetentionConfig policyConfig,
-                                final MetaService metaService) {
-        this.taskContext = taskContext;
+                                final MetaService metaService,
+                                final TaskContextFactory taskContextFactory) {
         this.clusterLockService = clusterLockService;
         this.dataRetentionRulesProvider = dataRetentionRulesProvider;
         this.policyConfig = policyConfig;
         this.metaService = metaService;
+        this.taskContextFactory = taskContextFactory;
     }
 
     public void exec() {
         if (running.compareAndSet(false, true)) {
             try {
-                info(() -> "Starting data retention process");
                 clusterLockService.tryLock(LOCK_NAME, () -> {
                     try {
-                        final LogExecutionTime logExecutionTime = new LogExecutionTime();
-                        process();
-                        info(() -> "Finished data retention process in " + logExecutionTime);
+                        taskContextFactory.context("Data Retention", taskContext -> {
+                            info(taskContext, () -> "Starting data retention process");
+                            final LogExecutionTime logExecutionTime = new LogExecutionTime();
+                            process(taskContext);
+                            info(taskContext, () -> "Finished data retention process in " + logExecutionTime);
+                        }).run();
                     } catch (final RuntimeException e) {
                         LOGGER.error(e::getMessage, e);
                     }
@@ -112,7 +95,7 @@ public class DataRetentionPolicyExecutor {
         }
     }
 
-    private synchronized void process() {
+    private synchronized void process(final TaskContext taskContext) {
         final DataRetentionRules dataRetentionRules = dataRetentionRulesProvider.get();
         if (dataRetentionRules != null) {
             final List<DataRetentionRule> rules = dataRetentionRules.getRules();
@@ -170,7 +153,7 @@ public class DataRetentionPolicyExecutor {
 
                     // Skip if we have terminated processing.
                     if (!Thread.currentThread().isInterrupted()) {
-                        processPeriod(period, sortedRules, batchSize);
+                        processPeriod(taskContext, period, sortedRules, batchSize);
                         if (!Thread.currentThread().isInterrupted()) {
                             allSuccessful.set(false);
                         }
@@ -185,8 +168,8 @@ public class DataRetentionPolicyExecutor {
         }
     }
 
-    private void processPeriod(final Period period, final List<DataRetentionRule> rules, final int batchSize) {
-        info(() -> "" +
+    private void processPeriod(final TaskContext taskContext, final Period period, final List<DataRetentionRule> rules, final int batchSize) {
+        info(taskContext, () -> "" +
                 "Considering stream retention for streams created " +
                 "between " +
                 DateUtil.createNormalDateTimeString(period.getFromMs()) +
@@ -197,7 +180,7 @@ public class DataRetentionPolicyExecutor {
 
         int count = -1;
         while (count != 0 && !Thread.currentThread().isInterrupted()) {
-            count = metaService.updateStatus(findMetaCriteria, Status.DELETED);
+            count = metaService.updateStatus(findMetaCriteria, null, Status.DELETED);
             final String message = "Marked " + count + " items as deleted";
             LOGGER.info(() -> message);
         }
@@ -262,7 +245,7 @@ public class DataRetentionPolicyExecutor {
 //        }
 //    }
 
-    private void info(final Supplier<String> messageSupplier) {
+    private void info(final TaskContext taskContext, final Supplier<String> messageSupplier) {
         LOGGER.info(messageSupplier);
         taskContext.info(messageSupplier);
     }
@@ -292,9 +275,9 @@ public class DataRetentionPolicyExecutor {
 
         @JsonCreator
         Tracker(@JsonProperty("lastRun") final Long lastRun,
-                       @JsonProperty("dataRetentionRules") final DataRetentionRules dataRetentionRules,
-                       @JsonProperty("rulesVersion") final String rulesVersion,
-                       @JsonProperty("rulesHash") final int rulesHash) {
+                @JsonProperty("dataRetentionRules") final DataRetentionRules dataRetentionRules,
+                @JsonProperty("rulesVersion") final String rulesVersion,
+                @JsonProperty("rulesHash") final int rulesHash) {
             this.lastRun = lastRun;
             this.dataRetentionRules = dataRetentionRules;
             this.rulesVersion = rulesVersion;

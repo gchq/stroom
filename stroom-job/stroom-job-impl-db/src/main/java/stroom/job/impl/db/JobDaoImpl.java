@@ -89,7 +89,7 @@ public class JobDaoImpl implements JobDao, HasIntCrud<Job> {
         final Collection<Condition> conditions = JooqUtil.conditions(
                 JooqUtil.getStringCondition(JOB.NAME, criteria.getName()));
 
-        final OrderField<?>[] orderFields = JooqUtil.getOrderFields(FIELD_MAP, criteria);
+        final Collection<OrderField<?>> orderFields = JooqUtil.getOrderFields(FIELD_MAP, criteria);
 
         final List<Job> list = JooqUtil.contextResult(jobDbConnProvider, context -> context
                 .select()

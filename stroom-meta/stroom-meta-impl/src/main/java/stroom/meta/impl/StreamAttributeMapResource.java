@@ -24,18 +24,18 @@ import io.swagger.annotations.Api;
 import stroom.datasource.api.v2.DataSource;
 import stroom.datasource.api.v2.DocRefField;
 import stroom.feed.shared.FeedDoc;
-import stroom.meta.shared.FindMetaCriteria;
-import stroom.meta.shared.MetaRow;
 import stroom.meta.api.MetaService;
+import stroom.meta.shared.FindMetaCriteria;
+import stroom.meta.shared.MetaExpressionUtil;
+import stroom.meta.shared.MetaRow;
 import stroom.query.api.v2.ExpressionOperator;
 import stroom.query.api.v2.ExpressionTerm;
 import stroom.security.api.SecurityContext;
+import stroom.util.shared.PageRequest;
+import stroom.util.shared.PageResponse;
 import stroom.util.shared.ResourcePaths;
 import stroom.util.shared.RestResource;
 import stroom.util.shared.ResultPage;
-import stroom.util.shared.IdSet;
-import stroom.util.shared.PageRequest;
-import stroom.util.shared.PageResponse;
 import stroom.util.shared.Sort;
 
 import javax.ws.rs.Consumes;
@@ -54,9 +54,10 @@ import static stroom.query.api.v2.ExpressionTerm.Condition;
 @Api(value = "stream attribute map - /v1")
 @Path("/streamattributemap" + ResourcePaths.V1)
 @Produces(MediaType.APPLICATION_JSON)
+@Consumes(MediaType.APPLICATION_JSON)
 public class StreamAttributeMapResource implements RestResource {
-    private MetaService dataMetaService;
-    private SecurityContext securityContext;
+    private final MetaService dataMetaService;
+    private final SecurityContext securityContext;
 
     @Inject
     public StreamAttributeMapResource(final MetaService dataMetaService,
@@ -66,7 +67,6 @@ public class StreamAttributeMapResource implements RestResource {
     }
 
     @GET
-    @Produces(MediaType.APPLICATION_JSON)
     public Response page(@QueryParam("pageOffset") Long pageOffset,
                          @QueryParam("pageSize") Integer pageSize) {
         return securityContext.secureResult(() -> {
@@ -98,8 +98,6 @@ public class StreamAttributeMapResource implements RestResource {
     }
 
     @POST
-    @Produces(MediaType.APPLICATION_JSON)
-    @Consumes(MediaType.APPLICATION_JSON)
     public Response search(@QueryParam("pageOffset") Long pageOffset,
                            @QueryParam("pageSize") Integer pageSize,
                            final ExpressionOperator expression) {
@@ -137,7 +135,6 @@ public class StreamAttributeMapResource implements RestResource {
 
     @GET
     @Path("/dataSource")
-    @Produces(MediaType.APPLICATION_JSON)
     public Response dataSource() {
         final DataSource dataSource = new DataSource(ImmutableList.of(new DocRefField(FeedDoc.DOCUMENT_TYPE, "Feed")));
         return Response.ok(dataSource).build();
@@ -155,16 +152,11 @@ public class StreamAttributeMapResource implements RestResource {
 
     @GET
     @Path("/{id}")
-    @Produces(MediaType.APPLICATION_JSON)
     public Response search(@PathParam("id") Long id) {
         return securityContext.secureResult(() -> {
             // Configure default criteria
-            FindMetaCriteria criteria = new FindMetaCriteria();
-            IdSet idSet = new IdSet();
-            idSet.add(id);
-            criteria.setSelectedIdSet(idSet);
-
-            ResultPage<MetaRow> results = dataMetaService.findRows(criteria);
+            final FindMetaCriteria criteria = FindMetaCriteria.createFromId(id);
+            final ResultPage<MetaRow> results = dataMetaService.findRows(criteria);
             if (results.size() == 0) {
                 return Response.status(Response.Status.NOT_FOUND).build();
             }

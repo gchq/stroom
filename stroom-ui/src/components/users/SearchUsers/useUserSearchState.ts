@@ -1,9 +1,9 @@
 import * as React from "react";
-import { User } from "../types";
+import { Account } from "../types";
 
 interface UserSearchStateApi {
-  users: User[];
-  setUsers: (users: User[]) => void;
+  users: Account[];
+  setUsers: (users: Account[]) => void;
   totalPages: number;
   setTotalPages: (totalPages: number) => void;
   selectedUser: string;
@@ -11,14 +11,14 @@ interface UserSearchStateApi {
 }
 
 interface UserSearchState {
-  users: User[];
+  users: Account[];
   totalPages: number;
   selectedUser: string;
 }
 
 interface SetUsersAction {
   type: "set_user";
-  users: User[];
+  users: Account[];
 }
 
 interface SetTotalPagesAction {
@@ -54,7 +54,7 @@ const useUserSearchState = (): UserSearchStateApi => {
     selectedUser: "",
   });
   const setUsers = React.useCallback(
-    (users: User[]) => dispatch({ type: "set_user", users }),
+    (users: Account[]) => dispatch({ type: "set_user", users }),
     [dispatch],
   );
   const setTotalPages = React.useCallback(

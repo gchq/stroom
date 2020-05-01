@@ -19,6 +19,7 @@ package stroom.search.impl.shard;
 import stroom.search.coprocessor.Receiver;
 import stroom.search.impl.shard.IndexShardSearchTask.IndexShardQueryFactory;
 import stroom.task.api.TaskContext;
+import stroom.task.api.TaskContextFactory;
 import stroom.task.api.TaskExecutor;
 import stroom.task.api.TaskProducer;
 import stroom.util.logging.LambdaLogger;
@@ -29,9 +30,11 @@ import java.util.List;
 import java.util.Queue;
 import java.util.concurrent.ConcurrentLinkedQueue;
 import java.util.concurrent.atomic.AtomicInteger;
+import java.util.function.Consumer;
 
 class IndexShardSearchTaskProducer extends TaskProducer {
     private static final LambdaLogger LOGGER = LambdaLoggerFactory.getLogger(IndexShardSearchTaskProducer.class);
+    private static final String TASK_NAME = "Search Index Shard";
 
     private final Queue<IndexShardSearchRunnable> taskQueue = new ConcurrentLinkedQueue<>();
     private final AtomicInteger tasksRequested = new AtomicInteger();
@@ -44,10 +47,11 @@ class IndexShardSearchTaskProducer extends TaskProducer {
                                  final IndexShardQueryFactory queryFactory,
                                  final String[] fieldNames,
                                  final int maxThreadsPerTask,
-                                 final TaskContext taskContext,
+                                 final TaskContextFactory taskContextFactory,
+                                 final TaskContext parentContext,
                                  final Provider<IndexShardSearchTaskHandler> handlerProvider,
                                  final Tracker tracker) {
-        super(taskExecutor, maxThreadsPerTask, taskContext);
+        super(taskExecutor, maxThreadsPerTask, taskContextFactory, parentContext, TASK_NAME);
         this.tracker = tracker;
 
         for (final Long shard : shards) {
@@ -76,7 +80,7 @@ class IndexShardSearchTaskProducer extends TaskProducer {
     }
 
     @Override
-    protected Runnable getNext() {
+    protected Consumer<TaskContext> getNext() {
         IndexShardSearchRunnable task = null;
 
         if (!Thread.currentThread().isInterrupted()) {
@@ -107,7 +111,7 @@ class IndexShardSearchTaskProducer extends TaskProducer {
         }
     }
 
-    private static class IndexShardSearchRunnable implements Runnable {
+    private static class IndexShardSearchRunnable implements Consumer<TaskContext> {
         private final IndexShardSearchTask task;
         private final Provider<IndexShardSearchTaskHandler> handlerProvider;
 
@@ -117,9 +121,9 @@ class IndexShardSearchTaskProducer extends TaskProducer {
         }
 
         @Override
-        public void run() {
+        public void accept(final TaskContext taskContext) {
             final IndexShardSearchTaskHandler handler = handlerProvider.get();
-            handler.exec(task);
+            handler.exec(taskContext, task);
         }
 
         public IndexShardSearchTask getTask() {

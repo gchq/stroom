@@ -23,6 +23,7 @@ import io.swagger.annotations.ApiOperation;
 import io.swagger.annotations.ApiParam;
 import stroom.docref.DocRef;
 import stroom.importexport.api.DocumentData;
+import stroom.importexport.api.ImportExportActionHandler;
 import stroom.importexport.shared.Base64EncodedDocumentData;
 import stroom.importexport.shared.ImportState;
 import stroom.importexport.shared.ImportState.ImportMode;
@@ -44,6 +45,7 @@ import java.util.Set;
 @Api(value = "ruleset - /v1")
 @Path(ReceiveDataRuleSetResource.BASE_RESOURCE_PATH)
 @Produces(MediaType.APPLICATION_JSON)
+@Consumes(MediaType.APPLICATION_JSON)
 public class ReceiveDataRuleSetResource implements RestResource, HasHealthCheck {
     public static final String BASE_RESOURCE_PATH = "/ruleset" + ResourcePaths.V1;
 
@@ -55,7 +57,6 @@ public class ReceiveDataRuleSetResource implements RestResource, HasHealthCheck 
     }
 
     @GET
-    @Produces(MediaType.APPLICATION_JSON)
     @Path("/list")
     @Timed
     @ApiOperation(
@@ -66,8 +67,6 @@ public class ReceiveDataRuleSetResource implements RestResource, HasHealthCheck 
     }
 
     @POST
-    @Consumes(MediaType.APPLICATION_JSON)
-    @Produces(MediaType.APPLICATION_JSON)
     @Path("/import")
     @Timed
     @ApiOperation(
@@ -76,15 +75,16 @@ public class ReceiveDataRuleSetResource implements RestResource, HasHealthCheck 
     public DocRef importDocument(@ApiParam("DocumentData") final Base64EncodedDocumentData encodedDocumentData) {
         final DocumentData documentData = DocumentData.fromBase64EncodedDocumentData(encodedDocumentData);
         final ImportState importState = new ImportState(documentData.getDocRef(), documentData.getDocRef().getName());
-        if (documentData.getDataMap() == null) {
-            return ruleSetService.importDocument(documentData.getDocRef(), null, importState, ImportMode.IGNORE_CONFIRMATION);
-        }
-        return ruleSetService.importDocument(documentData.getDocRef(), documentData.getDataMap(), importState, ImportMode.IGNORE_CONFIRMATION);
+
+        final ImportExportActionHandler.ImpexDetails result =  ruleSetService.importDocument(documentData.getDocRef(), documentData.getDataMap(), importState, ImportMode.IGNORE_CONFIRMATION);
+
+        if (result != null)
+            return result.getDocRef();
+        else
+            return null;
     }
 
     @POST
-    @Consumes(MediaType.APPLICATION_JSON)
-    @Produces(MediaType.APPLICATION_JSON)
     @Path("/export")
     @Timed
     @ApiOperation(

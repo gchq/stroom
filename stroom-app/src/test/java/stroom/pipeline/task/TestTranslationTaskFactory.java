@@ -31,7 +31,6 @@ import stroom.pipeline.shared.XsltDoc;
 import stroom.pipeline.xslt.XsltStore;
 import stroom.processor.api.ProcessorResult;
 import stroom.processor.impl.ProcessorTaskManager;
-import stroom.task.api.SimpleTaskContext;
 import stroom.test.AbstractProcessIntegrationTest;
 import stroom.test.CommonTranslationTestHelper;
 import stroom.test.StoreCreationTool;
@@ -322,7 +321,7 @@ class TestTranslationTaskFactory extends AbstractProcessIntegrationTest {
             }
 
             // Force creation of stream tasks.
-            processorTaskManager.createTasks(new SimpleTaskContext());
+            processorTaskManager.createTasks();
 
         } catch (final IOException e) {
             e.printStackTrace();

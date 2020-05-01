@@ -32,11 +32,10 @@ import java.util.List;
 @Api(value = "statistic/rollUp - /v1")
 @Path("/statistic/rollUp" + ResourcePaths.V1)
 @Produces(MediaType.APPLICATION_JSON)
+@Consumes(MediaType.APPLICATION_JSON)
 public interface StatisticRollupResource extends RestResource, DirectRestService {
     @POST
     @Path("/bitMaskPermGeneration")
-    @Consumes(MediaType.APPLICATION_JSON)
-    @Produces(MediaType.APPLICATION_JSON)
     @ApiOperation(
             value = "Create rollup bit mask",
             response = List.class)
@@ -44,8 +43,6 @@ public interface StatisticRollupResource extends RestResource, DirectRestService
 
     @POST
     @Path("/bitMaskConversion")
-    @Consumes(MediaType.APPLICATION_JSON)
-    @Produces(MediaType.APPLICATION_JSON)
     @ApiOperation(
             value = "Get rollup bit mask",
             response = List.class)
@@ -53,8 +50,6 @@ public interface StatisticRollupResource extends RestResource, DirectRestService
 
     @POST
     @Path("/dataSourceFieldChange")
-    @Consumes(MediaType.APPLICATION_JSON)
-    @Produces(MediaType.APPLICATION_JSON)
     @ApiOperation(
             value = "Change fields",
             response = StatisticsDataSourceData.class)

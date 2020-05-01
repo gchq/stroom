@@ -17,8 +17,6 @@
 
 package stroom.search.impl;
 
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 import stroom.cluster.task.api.ClusterDispatchAsync;
 import stroom.cluster.task.api.ClusterTaskTerminator;
 import stroom.cluster.task.api.NodeNotFoundException;
@@ -39,6 +37,9 @@ import stroom.task.shared.TaskId;
 import stroom.util.shared.ResultPage;
 import stroom.util.shared.Sort.Direction;
 
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+
 import javax.inject.Inject;
 import javax.inject.Provider;
 import java.util.ArrayList;
@@ -53,7 +54,6 @@ import java.util.stream.Collectors;
 class AsyncSearchTaskHandler {
     private static final Logger LOGGER = LoggerFactory.getLogger(AsyncSearchTaskHandler.class);
 
-    private final TaskContext taskContext;
     private final TargetNodeSetFactory targetNodeSetFactory;
     private final Provider<ClusterDispatchAsync> dispatchAsyncProvider;
     private final IndexStore indexStore;
@@ -63,15 +63,13 @@ class AsyncSearchTaskHandler {
     private final SecurityContext securityContext;
 
     @Inject
-    AsyncSearchTaskHandler(final TaskContext taskContext,
-                           final TargetNodeSetFactory targetNodeSetFactory,
+    AsyncSearchTaskHandler(final TargetNodeSetFactory targetNodeSetFactory,
                            final Provider<ClusterDispatchAsync> dispatchAsyncProvider,
                            final IndexStore indexStore,
                            final IndexShardService indexShardService,
                            final TaskManager taskManager,
                            final ClusterTaskTerminator clusterTaskTerminator,
                            final SecurityContext securityContext) {
-        this.taskContext = taskContext;
         this.targetNodeSetFactory = targetNodeSetFactory;
         this.dispatchAsyncProvider = dispatchAsyncProvider;
         this.indexStore = indexStore;
@@ -81,7 +79,7 @@ class AsyncSearchTaskHandler {
         this.securityContext = securityContext;
     }
 
-    public void exec(final AsyncSearchTask task, final TaskId taskId) {
+    public void exec(final TaskContext taskContext, final AsyncSearchTask task) {
         securityContext.secure(() -> securityContext.useAsRead(() -> {
             final ClusterSearchResultCollector resultCollector = task.getResultCollector();
 
@@ -106,7 +104,7 @@ class AsyncSearchTaskHandler {
                     final String[] storedFields = getStoredFields(index);
 
                     // Get a list of search index shards to look through.
-                    final FindIndexShardCriteria findIndexShardCriteria = new FindIndexShardCriteria();
+                    final FindIndexShardCriteria findIndexShardCriteria = FindIndexShardCriteria.matchAll();
                     findIndexShardCriteria.getIndexUuidSet().add(query.getDataSource().getUuid());
                     // Only non deleted indexes.
                     findIndexShardCriteria.getIndexShardStatusSet().addAll(IndexShard.NON_DELETED_INDEX_SHARD_STATUS);
@@ -156,7 +154,7 @@ class AsyncSearchTaskHandler {
                                 task.getDateTimeLocale(),
                                 task.getNow());
                         LOGGER.debug("Dispatching clusterSearchTask to node {}", node);
-                        dispatchAsyncProvider.get().execAsync(clusterSearchTask, resultCollector, sourceNode,
+                        dispatchAsyncProvider.get().execAsync(taskContext, clusterSearchTask, resultCollector, sourceNode,
                                 Collections.singleton(node));
                     });
                     taskContext.info(() -> task.getSearchName() + " - searching...");
@@ -176,7 +174,7 @@ class AsyncSearchTaskHandler {
 
                     // Make sure we try and terminate any child tasks on worker
                     // nodes if we need to.
-                    terminateTasks(task, taskId);
+                    terminateTasks(task, taskContext.getTaskId());
 
                     // Let the result handler know search has finished.
                     resultCollector.complete();

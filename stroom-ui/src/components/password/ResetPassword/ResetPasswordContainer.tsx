@@ -19,11 +19,12 @@ import { validateAsync } from "components/users/validation";
 import ResetPassword from "./ResetPassword";
 import useResetPassword from "./useResetPassword";
 import { useTokenValidityCheck } from "./useTokenValidityCheck";
-import useServiceUrl from "startup/config/useServiceUrl";
+import useUrlFactory from "lib/useUrlFactory";
 
 const ResetPasswordContainer = () => {
   const { resetPassword } = useResetPassword();
-  const { authenticationServiceUrl } = useServiceUrl();
+  const { apiUrl } = useUrlFactory();
+  const resource = apiUrl("/authentication/v1");
 
   const {
     isTokenMissing,
@@ -41,7 +42,7 @@ const ResetPasswordContainer = () => {
       email,
       password,
       verifyPassword,
-      authenticationServiceUrl,
+      resource,
       oldPassword,
     );
   };

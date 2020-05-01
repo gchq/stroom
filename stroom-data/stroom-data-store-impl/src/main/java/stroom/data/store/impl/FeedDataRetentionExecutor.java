@@ -21,7 +21,6 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import stroom.cluster.lock.api.ClusterLockService;
 import stroom.meta.api.MetaService;
-import stroom.task.api.TaskContext;
 
 import javax.inject.Inject;
 
@@ -34,15 +33,12 @@ public class FeedDataRetentionExecutor {
     private static final int DELETE_STREAM_BATCH_SIZE = 1000;
 
     private final MetaService metaService;
-    private final TaskContext taskContext;
     private final ClusterLockService clusterLockService;
 
     @Inject
     FeedDataRetentionExecutor(final MetaService metaService,
-                              final TaskContext taskContext,
                               final ClusterLockService clusterLockService) {
         this.metaService = metaService;
-        this.taskContext = taskContext;
         this.clusterLockService = clusterLockService;
     }
 

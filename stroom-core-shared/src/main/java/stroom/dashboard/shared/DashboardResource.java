@@ -37,11 +37,10 @@ import java.util.Set;
 @Api(value = "dashboard - /v1")
 @Path("/dashboard" + ResourcePaths.V1)
 @Produces(MediaType.APPLICATION_JSON)
+@Consumes(MediaType.APPLICATION_JSON)
 public interface DashboardResource extends RestResource, DirectRestService {
     @POST
     @Path("/read")
-    @Consumes(MediaType.APPLICATION_JSON)
-    @Produces(MediaType.APPLICATION_JSON)
     @ApiOperation(
             value = "Get a dashboard doc",
             response = DashboardDoc.class)
@@ -49,8 +48,6 @@ public interface DashboardResource extends RestResource, DirectRestService {
 
     @PUT
     @Path("/update")
-    @Consumes(MediaType.APPLICATION_JSON)
-    @Produces(MediaType.APPLICATION_JSON)
     @ApiOperation(
             value = "Update a dashboard doc",
             response = DashboardDoc.class)
@@ -58,8 +55,6 @@ public interface DashboardResource extends RestResource, DirectRestService {
 
     @POST
     @Path("/validateExpression")
-    @Consumes(MediaType.APPLICATION_JSON)
-    @Produces(MediaType.APPLICATION_JSON)
     @ApiOperation(
             value = "Validate an expression",
             response = ValidateExpressionResult.class)
@@ -67,8 +62,6 @@ public interface DashboardResource extends RestResource, DirectRestService {
 
     @POST
     @Path("/downloadQuery")
-    @Consumes(MediaType.APPLICATION_JSON)
-    @Produces(MediaType.APPLICATION_JSON)
     @ApiOperation(
             value = "Download a query",
             response = ResourceGeneration.class)
@@ -76,8 +69,6 @@ public interface DashboardResource extends RestResource, DirectRestService {
 
     @POST
     @Path("/downloadSearchResults")
-    @Consumes(MediaType.APPLICATION_JSON)
-    @Produces(MediaType.APPLICATION_JSON)
     @ApiOperation(
             value = "Download search results",
             response = ResourceGeneration.class)
@@ -85,8 +76,6 @@ public interface DashboardResource extends RestResource, DirectRestService {
 
     @POST
     @Path("/poll")
-    @Consumes(MediaType.APPLICATION_JSON)
-    @Produces(MediaType.APPLICATION_JSON)
     @ApiOperation(
             value = "Poll for new search results",
             response = Set.class)
@@ -94,8 +83,6 @@ public interface DashboardResource extends RestResource, DirectRestService {
 
     @GET
     @Path("/fetchTimeZones")
-    @Consumes(MediaType.APPLICATION_JSON)
-    @Produces(MediaType.APPLICATION_JSON)
     @ApiOperation(
             value = "Fetch time zone data from the server",
             response = List.class)

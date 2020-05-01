@@ -29,6 +29,7 @@ public class ProcessorFilterDataSource {
     public static final BooleanField PROCESSOR_ENABLED = new BooleanField("Processor Enabled");
     public static final BooleanField PROCESSOR_FILTER_ENABLED = new BooleanField("Processor Filter Enabled");
     public static final IdField PROCESSOR_ID = new IdField("Processor Id");
+    public static final TextField UUID = new TextField("UUID");
 
     static {
         FIELDS.add(CREATE_USER);
@@ -39,6 +40,7 @@ public class ProcessorFilterDataSource {
         FIELDS.add(PROCESSOR_ENABLED);
         FIELDS.add(PROCESSOR_FILTER_ENABLED);
         FIELDS.add(PROCESSOR_ID);
+        FIELDS.add(UUID);
         FIELD_MAP = FIELDS.stream().collect(Collectors.toMap(AbstractField::getName, Function.identity()));
     }
 

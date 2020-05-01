@@ -63,7 +63,7 @@ class TestMetaServiceImpl {
 
         assertThat(list.size()).isEqualTo(1);
 
-        int deleted = metaService.updateStatus(new FindMetaCriteria(), Status.DELETED);
+        int deleted = metaService.updateStatus(new FindMetaCriteria(), null, Status.DELETED);
         assertThat(deleted).isEqualTo(2);
     }
 

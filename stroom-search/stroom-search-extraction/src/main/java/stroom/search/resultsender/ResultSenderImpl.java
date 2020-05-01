@@ -5,6 +5,7 @@ import stroom.query.common.v2.Payload;
 import stroom.search.coprocessor.CompletionState;
 import stroom.search.coprocessor.Coprocessors;
 import stroom.task.api.TaskContext;
+import stroom.task.api.TaskContextFactory;
 import stroom.util.logging.LambdaLogger;
 import stroom.util.logging.LambdaLoggerFactory;
 
@@ -22,12 +23,16 @@ class ResultSenderImpl implements ResultSender {
     private static final LambdaLogger LOGGER = LambdaLoggerFactory.getLogger(ResultSenderImpl.class);
 
     private final Executor executor;
-    private final TaskContext taskContext;
+    private final TaskContextFactory taskContextFactory;
+    private final TaskContext parentTaskContext;
     private final CompletionState sendingData = new CompletionState();
 
-    ResultSenderImpl(final Executor executor, final TaskContext taskContext) {
+    ResultSenderImpl(final Executor executor,
+                     final TaskContextFactory taskContextFactory,
+                     final TaskContext parentTaskContext) {
         this.executor = executor;
-        this.taskContext = taskContext;
+        this.taskContextFactory = taskContextFactory;
+        this.parentTaskContext = parentTaskContext;
     }
 
     @Override
@@ -50,12 +55,11 @@ class ResultSenderImpl implements ResultSender {
 
         LOGGER.trace(() -> "sendData() called");
 
-        final Supplier<Boolean> supplier = taskContext.sub(() -> {
+        final Supplier<Boolean> supplier = taskContextFactory.contextResult(parentTaskContext, "Search Result Sender", taskContext -> {
             // Find out if searching is complete.
             final boolean complete = searchComplete.isComplete();
 
             if (!isTerminated()) {
-                taskContext.setName("Search Result Sender");
                 taskContext.info(() -> "Creating search result");
 
                 // Produce payloads for each coprocessor.

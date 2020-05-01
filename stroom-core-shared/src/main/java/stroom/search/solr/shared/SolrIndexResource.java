@@ -20,7 +20,6 @@ import io.swagger.annotations.Api;
 import io.swagger.annotations.ApiOperation;
 import org.fusesource.restygwt.client.DirectRestService;
 import stroom.docref.DocRef;
-import stroom.receive.rules.shared.ReceiveDataRules;
 import stroom.util.shared.ResourcePaths;
 import stroom.util.shared.RestResource;
 
@@ -35,11 +34,10 @@ import java.util.List;
 @Api(value = "solrIndex - /v1")
 @Path("/solrIndex" + ResourcePaths.V1)
 @Produces(MediaType.APPLICATION_JSON)
+@Consumes(MediaType.APPLICATION_JSON)
 public interface SolrIndexResource extends RestResource, DirectRestService {
     @POST
     @Path("/read")
-    @Consumes(MediaType.APPLICATION_JSON)
-    @Produces(MediaType.APPLICATION_JSON)
     @ApiOperation(
             value = "Get a solr index doc",
             response = SolrIndexDoc.class)
@@ -47,8 +45,6 @@ public interface SolrIndexResource extends RestResource, DirectRestService {
 
     @PUT
     @Path("/update")
-    @Consumes(MediaType.APPLICATION_JSON)
-    @Produces(MediaType.APPLICATION_JSON)
     @ApiOperation(
             value = "Update a solr index doc",
             response = SolrIndexDoc.class)
@@ -56,8 +52,6 @@ public interface SolrIndexResource extends RestResource, DirectRestService {
 
     @POST
     @Path("/fetchSolrTypes")
-    @Consumes(MediaType.APPLICATION_JSON)
-    @Produces(MediaType.APPLICATION_JSON)
     @ApiOperation(
             value = "Fetch Solr types",
             response = List.class)
@@ -65,8 +59,6 @@ public interface SolrIndexResource extends RestResource, DirectRestService {
 
     @POST
     @Path("/solrConnectionTest")
-    @Consumes(MediaType.APPLICATION_JSON)
-    @Produces(MediaType.APPLICATION_JSON)
     @ApiOperation(
             value = "Test connection to Solr",
             response = String.class)

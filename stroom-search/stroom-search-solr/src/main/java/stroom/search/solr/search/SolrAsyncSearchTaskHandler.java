@@ -30,7 +30,6 @@ import stroom.task.shared.TaskId;
 import javax.inject.Inject;
 
 public class SolrAsyncSearchTaskHandler {
-    private final TaskContext taskContext;
     private final SolrIndexCache solrIndexCache;
     private final SecurityContext securityContext;
     private final SolrClusterSearchTaskHandler clusterSearchTaskHandler;
@@ -38,13 +37,11 @@ public class SolrAsyncSearchTaskHandler {
     private final ClusterTaskTerminator clusterTaskTerminator;
 
     @Inject
-    SolrAsyncSearchTaskHandler(final TaskContext taskContext,
-                               final SolrIndexCache solrIndexCache,
+    SolrAsyncSearchTaskHandler(final SolrIndexCache solrIndexCache,
                                final SecurityContext securityContext,
                                final SolrClusterSearchTaskHandler clusterSearchTaskHandler,
                                final TaskManager taskManager,
                                final ClusterTaskTerminator clusterTaskTerminator) {
-        this.taskContext = taskContext;
         this.solrIndexCache = solrIndexCache;
         this.securityContext = securityContext;
         this.clusterSearchTaskHandler = clusterSearchTaskHandler;
@@ -52,7 +49,7 @@ public class SolrAsyncSearchTaskHandler {
         this.clusterTaskTerminator = clusterTaskTerminator;
     }
 
-    public void exec(final SolrAsyncSearchTask task, final TaskId taskId) {
+    public void exec(final TaskContext taskContext, final SolrAsyncSearchTask task) {
         securityContext.secure(() -> securityContext.useAsRead(() -> {
             final SolrSearchResultCollector resultCollector = task.getResultCollector();
             if (!Thread.currentThread().isInterrupted()) {
@@ -72,9 +69,7 @@ public class SolrAsyncSearchTaskHandler {
 
                     final SolrClusterSearchTask clusterSearchTask = new SolrClusterSearchTask(index, query, task.getResultSendFrequency(), storedFields,
                             task.getCoprocessorMap(), task.getDateTimeLocale(), task.getNow());
-                    clusterSearchTaskHandler.exec(clusterSearchTask, resultCollector);
-
-                    taskContext.info(() -> task.getSearchName() + " - searching...");
+                    clusterSearchTaskHandler.exec(taskContext, clusterSearchTask, resultCollector);
 
                     // Await completion.
                     resultCollector.awaitCompletion();
@@ -91,7 +86,7 @@ public class SolrAsyncSearchTaskHandler {
 
                     // Make sure we try and terminate any child tasks on worker
                     // nodes if we need to.
-                    terminateTasks(task, taskId);
+                    terminateTasks(task, taskContext.getTaskId());
 
                     // Let the result handler know search has finished.
                     resultCollector.complete();

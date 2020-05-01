@@ -8,9 +8,70 @@ and this project adheres to [Semantic Versioning](http://semver.org/).
 
 * Make export add new line to the end of all files to adhere to POSIX standard.
 
+* Issue **#1513** : You can now view data in folders.
+
+* Issue **#1500** : Fixed data delete/restore behaviour.
+
+* Issue **#1515** : Fix proxyDir default when running in a stack.
+
+* Issue **#1509** : Unable to update processor filter.
+
+* Issue **#1495** : Speculative fix for missing swagger.json file in the fat jar.
+
+* Issue **#1503** : Fixed Dashboard serialisation and JSON template.
+
+* Issue **#1479** : Unable to set index volume limits.
+
+
+## [v7.0-beta.28] - 2020-04-29
+
+* Issue **#1489** : Reprocess streams feature failing.
+
+* Issue **#1465** : Add default Open ID credentials to allow proxy to be able to authenticate out of the box.
+
+* Issue **#1455** : Fix interactive search.
+
+* Issue **#1471** : Pipeline name not shown on processors/filters in UI.
+
+* Issue **#1491** : Download stream feature failing. 
+
+* Issue **#1433** : StandardKafkaProducer failed when writing XML kafka payloads. 
+
+
+## [v7.0-beta.27] - 2020-04-27
+
+* Issue **#1417** : Allow processor filters to be exported with Pipelines. 
+
+* Issue **#1480** : Index settings now shows index volume groups and allows selection. 
+
+* Issue **#1450** : Further attempt to improve criteria filtering on data tab.
+
+* Issue **#1467** : The cluster node state node uses NodeResource to determine active nodes.
+
+* Issue **#1448** : The internal processing user now has a JWT and passes it when making calls to other nodes.
+
+
+## [v7.0-beta.26] - 2020-04-22
+
+* Fix gradle build for versioned builds
+
+
+## [v7.0-beta.25] - 2020-04-22
+
+* Assorted fixes to the new React UI pages.
+
+
+## [v7.0-beta.24] - 2020-04-21
+
+* Issue **#1450** : Stop data tabs showing all feeds.
+
 * Issue **#1454** : Fix NPE in feed name suggestion box.
 
-* Update auth flow for auth-into-stroom integration.
+* Remove internal statistics from setup sample data.
+
+* Fix issue of pipeling structure not showing when it contains a StatisticsFilter.
+
+* Update auth flow for auth-into-stroom integration
 
 * Issue **#1426** : Change /logout endpoint to /noauth/logout.
 
@@ -45,6 +106,8 @@ and this project adheres to [Semantic Versioning](http://semver.org/).
 ## [v7.0-beta.22] - 2020-03-10
 
 * Brought stroom-auth-service into stroom
+
+* Issue **#563** : Kafka producer improvements - StandardKafkaProducer
 
 * Issue **#1399** : Removed error logging for expected exceptions in TaskExecutor. 
 
@@ -2035,7 +2098,12 @@ Issue **gchq/stroom-expression#22** : Add `typeOf(...)` function to dashboard.
 
 * Issue **#202** : Initial release of the new data retention policy functionality.
 
-[Unreleased]: https://github.com/gchq/stroom/compare/v7.0-beta.23...HEAD
+[Unreleased]: https://github.com/gchq/stroom/compare/v7.0-beta.28...HEAD
+[v7.0-beta.28]: https://github.com/gchq/stroom/compare/v7.0-beta.27...v7.0-beta.28
+[v7.0-beta.27]: https://github.com/gchq/stroom/compare/v7.0-beta.26...v7.0-beta.27
+[v7.0-beta.26]: https://github.com/gchq/stroom/compare/v7.0-beta.25...v7.0-beta.26
+[v7.0-beta.25]: https://github.com/gchq/stroom/compare/v7.0-beta.24...v7.0-beta.25
+[v7.0-beta.24]: https://github.com/gchq/stroom/compare/v7.0-beta.23...v7.0-beta.24
 [v7.0-beta.23]: https://github.com/gchq/stroom/compare/v7.0-beta.22...v7.0-beta.23
 [v7.0-beta.22]: https://github.com/gchq/stroom/compare/v7.0-beta.21...v7.0-beta.22
 [v7.0-beta.21]: https://github.com/gchq/stroom/compare/v7.0-beta.20...v7.0-beta.21

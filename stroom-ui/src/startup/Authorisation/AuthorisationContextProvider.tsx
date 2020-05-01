@@ -2,7 +2,7 @@ import * as React from "react";
 import { useAuthenticationContext } from "startup/Authentication";
 import { AppPermissions } from "./types";
 import AuthorisationContext from "./AuthorisationContext";
-import useServiceUrl from "startup/config/useServiceUrl";
+import useUrlFactory from "lib/useUrlFactory";
 
 const AuthorisationContextProvider: React.FunctionComponent = ({
   children,
@@ -11,8 +11,8 @@ const AuthorisationContextProvider: React.FunctionComponent = ({
     {},
   );
   const { idToken } = useAuthenticationContext();
-
-  const { authorisationServiceUrl } = useServiceUrl();
+  const { apiUrl } = useUrlFactory();
+  const resource = apiUrl("/authorisation/v1");
 
   const setHasAppPermission = React.useCallback(
     (permissionName: string, hasPermission: boolean) => {
@@ -26,7 +26,7 @@ const AuthorisationContextProvider: React.FunctionComponent = ({
 
   const fetchAppPermission = React.useCallback(
     (permissionName: string) => {
-      return fetch(`${authorisationServiceUrl}/hasAppPermission`, {
+      return fetch(`${resource}/hasAppPermission`, {
         headers: {
           Accept: "application/json",
           "Content-Type": "application/json",
@@ -49,7 +49,7 @@ const AuthorisationContextProvider: React.FunctionComponent = ({
         }
       });
     },
-    [idToken, authorisationServiceUrl, setHasAppPermission],
+    [idToken, resource, setHasAppPermission],
   );
 
   return (

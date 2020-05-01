@@ -38,19 +38,16 @@ import java.util.List;
 @Api(value = "processorFilter - /v1")
 @Path("/processorFilter" + ResourcePaths.V1)
 @Produces(MediaType.APPLICATION_JSON)
+@Consumes(MediaType.APPLICATION_JSON)
 public interface ProcessorFilterResource extends RestResource, DirectRestService {
     @POST
     @Path("find")
-    @Consumes(MediaType.APPLICATION_JSON)
-    @Produces(MediaType.APPLICATION_JSON)
     @ApiOperation(
             value = "Finds processors and filters matching request",
             response = ResultPage.class)
     ProcessorListRowResultPage find(FetchProcessorRequest request);
 
     @POST
-    @Consumes(MediaType.APPLICATION_JSON)
-    @Produces(MediaType.APPLICATION_JSON)
     @ApiOperation(
             value = "Creates a filter",
             response = ProcessorFilter.class)
@@ -58,8 +55,6 @@ public interface ProcessorFilterResource extends RestResource, DirectRestService
 
     @GET
     @Path("/{id}")
-    @Consumes(MediaType.APPLICATION_JSON)
-    @Produces(MediaType.APPLICATION_JSON)
     @ApiOperation(
             value = "Gets a filter",
             response = ProcessorFilter.class)
@@ -67,8 +62,6 @@ public interface ProcessorFilterResource extends RestResource, DirectRestService
 
     @PUT
     @Path("/{id}")
-    @Consumes(MediaType.APPLICATION_JSON)
-    @Produces(MediaType.APPLICATION_JSON)
     @ApiOperation(
             value = "Updates a filter",
             response = ProcessorFilter.class)
@@ -76,8 +69,6 @@ public interface ProcessorFilterResource extends RestResource, DirectRestService
 
     @DELETE
     @Path("/{id}")
-    @Consumes(MediaType.APPLICATION_JSON)
-    @Produces(MediaType.APPLICATION_JSON)
     @ApiOperation(
             value = "Deletes a filter",
             response = ProcessorFilter.class)
@@ -85,22 +76,16 @@ public interface ProcessorFilterResource extends RestResource, DirectRestService
 
     @PUT
     @Path("/{id}/priority")
-    @Consumes(MediaType.APPLICATION_JSON)
-    @Produces(MediaType.APPLICATION_JSON)
     @ApiOperation(value = "Sets the priority for a filter")
     void setPriority(@PathParam("id") Integer id, Integer priority);
 
     @PUT
     @Path("/{id}/enabled")
-    @Consumes(MediaType.APPLICATION_JSON)
-    @Produces(MediaType.APPLICATION_JSON)
     @ApiOperation(value = "Sets the enabled/disabled state for a filter")
     void setEnabled(@PathParam("id") Integer id, Boolean enabled);
 
     @POST
     @Path("/reprocess")
-    @Consumes(MediaType.APPLICATION_JSON)
-    @Produces(MediaType.APPLICATION_JSON)
     @ApiOperation(value = "Create a filter to reprocess data")
     List<ReprocessDataInfo> reprocess(FindMetaCriteria criteria);
 }

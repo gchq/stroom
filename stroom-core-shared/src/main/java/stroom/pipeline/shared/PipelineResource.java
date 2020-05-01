@@ -36,11 +36,10 @@ import java.util.List;
 @Api(value = "pipeline - /v1")
 @Path("/pipeline" + ResourcePaths.V1)
 @Produces(MediaType.APPLICATION_JSON)
+@Consumes(MediaType.APPLICATION_JSON)
 public interface PipelineResource extends RestResource, DirectRestService {
     @POST
     @Path("/read")
-    @Consumes(MediaType.APPLICATION_JSON)
-    @Produces(MediaType.APPLICATION_JSON)
     @ApiOperation(
             value = "Get a pipeline doc",
             response = PipelineDoc.class)
@@ -48,8 +47,6 @@ public interface PipelineResource extends RestResource, DirectRestService {
 
     @PUT
     @Path("/update")
-    @Consumes(MediaType.APPLICATION_JSON)
-    @Produces(MediaType.APPLICATION_JSON)
     @ApiOperation(
             value = "Update a pipeline doc",
             response = PipelineDoc.class)
@@ -57,8 +54,6 @@ public interface PipelineResource extends RestResource, DirectRestService {
 
     @PUT
     @Path("/savePipelineXml")
-    @Consumes(MediaType.APPLICATION_JSON)
-    @Produces(MediaType.APPLICATION_JSON)
     @ApiOperation(
             value = "Update a pipeline doc with XML directly",
             response = Boolean.class)
@@ -66,8 +61,6 @@ public interface PipelineResource extends RestResource, DirectRestService {
 
     @POST
     @Path("/fetchPipelineXml")
-    @Consumes(MediaType.APPLICATION_JSON)
-    @Produces(MediaType.APPLICATION_JSON)
     @ApiOperation(
             value = "Fetch the XML for a pipeline",
             response = FetchPipelineXmlResponse.class)
@@ -75,8 +68,6 @@ public interface PipelineResource extends RestResource, DirectRestService {
 
     @POST
     @Path("/fetchPipelineData")
-    @Consumes(MediaType.APPLICATION_JSON)
-    @Produces(MediaType.APPLICATION_JSON)
     @ApiOperation(
             value = "Fetch data for a pipeline",
             response = List.class)
@@ -84,8 +75,6 @@ public interface PipelineResource extends RestResource, DirectRestService {
 
     @GET
     @Path("/propertyTypes")
-    @Consumes(MediaType.APPLICATION_JSON)
-    @Produces(MediaType.APPLICATION_JSON)
     @ApiOperation(
             value = "Get pipeline property types",
             response = List.class)

@@ -3,13 +3,18 @@ package stroom.config.common;
 import com.fasterxml.jackson.annotation.JsonPropertyDescription;
 
 public class PublicUriConfig extends UriConfig {
+
+    public PublicUriConfig() {
+        super("https", null, 443);
+    }
+
     @JsonPropertyDescription("The scheme to use when passing requests to the API gateway, " +
             " i.e. https")
     public String getScheme() {
         return super.getScheme();
     }
 
-    @JsonPropertyDescription("The hostname, DNS name or IP address of the " +
+    @JsonPropertyDescription("The hostname, FQDN or IP address of the public facing " +
             "Stroom API gateway, i.e. Nginx.")
     public String getHostname() {
         return super.getHostname();

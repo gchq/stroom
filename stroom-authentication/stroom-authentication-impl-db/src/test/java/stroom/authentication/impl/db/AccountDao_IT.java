@@ -352,7 +352,7 @@ public class AccountDao_IT extends Database_IT {
         account.setLocked(locked);
         account.setNeverExpires(neverExpires);
         account.setReactivatedMs(reactivatedDate);
-        accountDao.create(account);
+        accountDao.create(account, "test");
         final Account newAccount = accountDao.get(email).get();
         assertThat(newAccount.isEnabled()).isEqualTo(enabled);
         assertThat(newAccount.isInactive()).isEqualTo(inactive);

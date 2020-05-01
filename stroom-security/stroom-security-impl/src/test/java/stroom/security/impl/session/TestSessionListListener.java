@@ -15,15 +15,12 @@ import stroom.node.api.NodeService;
 import stroom.security.impl.AuthenticationEventLog;
 import stroom.security.impl.SessionResource;
 import stroom.security.impl.SessionResourceImpl;
-import stroom.task.api.TaskContext;
-import stroom.task.api.TaskContext.WrappedRunnable;
-import stroom.task.api.TaskContext.WrappedSupplier;
+import stroom.task.api.SimpleTaskContextFactory;
 import stroom.test.common.util.test.AbstractMultiNodeResourceTest;
 
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
-import java.util.function.Supplier;
 
 import static org.mockito.Mockito.when;
 
@@ -55,13 +52,13 @@ class TestSessionListListener extends AbstractMultiNodeResourceTest<SessionResou
 
         // We call method on node1, so no requests
         Assertions.assertThat(getRequestEvents("node1"))
-            .hasSize(0);
+                .hasSize(0);
         // Node is remote so one call
         Assertions.assertThat(getRequestEvents("node2"))
-            .hasSize(1);
+                .hasSize(1);
         // Node is disabled, so no requests
         Assertions.assertThat(getRequestEvents("node3"))
-            .hasSize(0);
+                .hasSize(0);
     }
 
     @Test
@@ -76,30 +73,13 @@ class TestSessionListListener extends AbstractMultiNodeResourceTest<SessionResou
 
         // We call method on node1, so no requests
         Assertions.assertThat(getRequestEvents("node1"))
-            .hasSize(0);
+                .hasSize(0);
         // Node is remote so one call
         Assertions.assertThat(getRequestEvents("node2"))
-            .hasSize(1);
+                .hasSize(1);
         // Node is disabled, so no requests
         Assertions.assertThat(getRequestEvents("node3"))
-            .hasSize(0);
-    }
-
-    /**
-     * Create a {@link TaskContext} that wraps the runnable/supplier with no
-     * extra functionality
-     */
-    static TaskContext getTaskContext() {
-
-        final TaskContext taskContext = Mockito.mock(TaskContext.class);
-
-        // Set up TaskContext to just return the passed runnable/supplier
-        when(taskContext.sub(Mockito.any(Runnable.class)))
-                .thenAnswer(i -> new WrappedRunnable(taskContext, i.getArgument(0)));
-        when(taskContext.sub(Mockito.any(Supplier.class)))
-                .thenAnswer(i -> new WrappedSupplier<>(taskContext, i.getArgument(0)));
-
-        return taskContext;
+                .hasSize(0);
     }
 
     @Override
@@ -113,33 +93,33 @@ class TestSessionListListener extends AbstractMultiNodeResourceTest<SessionResou
                                            final Map<String, String> baseEndPointUrls) {
         // Set up the NodeService mock
         final NodeService nodeService = Mockito.mock(NodeService.class,
-            NodeService.class.getName() + "_" + node.getNodeName());
+                NodeService.class.getName() + "_" + node.getNodeName());
 
         when(nodeService.isEnabled(Mockito.anyString()))
-            .thenAnswer(invocation ->
-                allNodes.stream()
-                    .filter(testNode -> testNode.getNodeName().equals(invocation.getArgument(0)))
-                    .anyMatch(TestNode::isEnabled));
+                .thenAnswer(invocation ->
+                        allNodes.stream()
+                                .filter(testNode -> testNode.getNodeName().equals(invocation.getArgument(0)))
+                                .anyMatch(TestNode::isEnabled));
 
         when(nodeService.getBaseEndpointUrl(Mockito.anyString()))
-            .thenAnswer(invocation -> baseEndPointUrls.get((String) invocation.getArgument(0)));
+                .thenAnswer(invocation -> baseEndPointUrls.get((String) invocation.getArgument(0)));
 
         when(nodeService.findNodeNames(Mockito.any(FindNodeCriteria.class)))
-            .thenReturn(List.of("node1", "node2"));
+                .thenReturn(List.of("node1", "node2"));
 
         // Set up the NodeInfo mock
 
         final NodeInfo nodeInfo = Mockito.mock(NodeInfo.class,
-            NodeInfo.class.getName() + "_" + node.getNodeName());
+                NodeInfo.class.getName() + "_" + node.getNodeName());
 
         when(nodeInfo.getThisNodeName())
-            .thenReturn(node.getNodeName());
+                .thenReturn(node.getNodeName());
 
         final SessionListService sessionListService = new SessionListListener(
-            nodeInfo,
-            nodeService,
-            TestSessionListListener::getTaskContext,
-            webTargetFactory());
+                nodeInfo,
+                nodeService,
+                new SimpleTaskContextFactory(),
+                webTargetFactory());
 
         sessionListServiceMap.put(node.getNodeName(), sessionListService);
 

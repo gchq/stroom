@@ -29,7 +29,7 @@ import javax.inject.Singleton;
 import java.util.Objects;
 
 @Singleton
-@JsonPropertyOrder({"welcomeHtml", "aboutHtml", "buildInfo", "nodeName", "maintenanceMessage", "defaultMaxResults", "process", "helpUrl", "theme", "query", "namePattern", "htmlTitle", "oncontextmenu", "splash", "activity", "url"})
+@JsonPropertyOrder({"welcomeHtml", "aboutHtml", "buildInfo", "nodeName", "maintenanceMessage", "defaultMaxResults", "process", "helpUrl", "theme", "query", "namePattern", "htmlTitle", "oncontextmenu", "splash", "activity", "url", "uiPreferences"})
 @JsonInclude(Include.NON_NULL)
 public class UiConfig extends AbstractConfig {
     @JsonProperty
@@ -67,6 +67,8 @@ public class UiConfig extends AbstractConfig {
     private ActivityConfig activity;
     @JsonProperty
     private UrlConfig url;
+    @JsonProperty
+    private UiPreferences uiPreferences;
 
     public UiConfig() {
         setDefaults();
@@ -86,7 +88,8 @@ public class UiConfig extends AbstractConfig {
                     @JsonProperty("oncontextmenu") final String oncontextmenu,
                     @JsonProperty("splash") final SplashConfig splash,
                     @JsonProperty("activity") final ActivityConfig activity,
-                    @JsonProperty("url") final UrlConfig url) {
+                    @JsonProperty("url") final UrlConfig url,
+                    @JsonProperty("uiPreferences") final UiPreferences uiPreferences) {
         this.welcomeHtml = welcomeHtml;
         this.aboutHtml = aboutHtml;
         this.maintenanceMessage = maintenanceMessage;
@@ -144,6 +147,9 @@ public class UiConfig extends AbstractConfig {
         }
         if (url == null) {
             url = new UrlConfig();
+        }
+        if (uiPreferences == null) {
+            uiPreferences = new UiPreferences();
         }
     }
 
@@ -259,6 +265,14 @@ public class UiConfig extends AbstractConfig {
         this.oncontextmenu = oncontextmenu;
     }
 
+    public UiPreferences getUiPreferences() {
+        return uiPreferences;
+    }
+
+    public void setUiPreferences(final UiPreferences uiPreferences) {
+        this.uiPreferences = uiPreferences;
+    }
+
     @Override
     public String toString() {
         return "UiConfig{" +
@@ -266,10 +280,17 @@ public class UiConfig extends AbstractConfig {
                 ", aboutHtml='" + aboutHtml + '\'' +
                 ", maintenanceMessage='" + maintenanceMessage + '\'' +
                 ", defaultMaxResults='" + defaultMaxResults + '\'' +
+                ", process=" + process +
                 ", helpUrl='" + helpUrl + '\'' +
+                ", theme=" + theme +
+                ", query=" + query +
                 ", namePattern='" + namePattern + '\'' +
                 ", htmlTitle='" + htmlTitle + '\'' +
                 ", oncontextmenu='" + oncontextmenu + '\'' +
+                ", splash=" + splash +
+                ", activity=" + activity +
+                ", url=" + url +
+                ", uiPreferences=" + uiPreferences +
                 '}';
     }
 
@@ -291,11 +312,12 @@ public class UiConfig extends AbstractConfig {
                 Objects.equals(oncontextmenu, uiConfig.oncontextmenu) &&
                 Objects.equals(splash, uiConfig.splash) &&
                 Objects.equals(activity, uiConfig.activity) &&
-                Objects.equals(url, uiConfig.url);
+                Objects.equals(url, uiConfig.url) &&
+                Objects.equals(uiPreferences, uiConfig.uiPreferences);
     }
 
     @Override
     public int hashCode() {
-        return Objects.hash(welcomeHtml, aboutHtml, maintenanceMessage, defaultMaxResults, process, helpUrl, theme, query, namePattern, htmlTitle, oncontextmenu, splash, activity, url);
+        return Objects.hash(welcomeHtml, aboutHtml, maintenanceMessage, defaultMaxResults, process, helpUrl, theme, query, namePattern, htmlTitle, oncontextmenu, splash, activity, url, uiPreferences);
     }
 }

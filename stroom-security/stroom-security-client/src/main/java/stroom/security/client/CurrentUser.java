@@ -74,7 +74,7 @@ public class CurrentUser implements ClientSecurityContext, HasHandlers {
     public void setUserAndPermissions(final UserAndPermissions userAndPermissions, final boolean fireUserChangedEvent) {
         clear();
         if (userAndPermissions != null) {
-            this.userId = userAndPermissions.getUser().getName();
+            this.userId = userAndPermissions.getUserId();
             this.permissions = userAndPermissions.getPermissions();
         }
 

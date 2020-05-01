@@ -125,7 +125,7 @@ public class ReceiveDataRuleSetServiceImpl implements ReceiveDataRuleSetService 
     }
 
     @Override
-    public DocRef importDocument(final DocRef docRef, final Map<String, byte[]> dataMap, final ImportState importState, final ImportMode importMode) {
+    public ImpexDetails importDocument(final DocRef docRef, final Map<String, byte[]> dataMap, final ImportState importState, final ImportMode importMode) {
         return store.importDocument(docRef, dataMap, importState, importMode);
     }
 
@@ -140,6 +140,11 @@ public class ReceiveDataRuleSetServiceImpl implements ReceiveDataRuleSetService 
     @Override
     public String getType() {
         return ReceiveDataRules.DOCUMENT_TYPE;
+    }
+
+    @Override
+    public Set<DocRef> findAssociatedNonExplorerDocRefs(DocRef docRef) {
+        return null;
     }
 
     ////////////////////////////////////////////////////////////////////////

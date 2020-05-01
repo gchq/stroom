@@ -54,7 +54,6 @@ class ClusterSearchTaskHandler implements ClusterTaskHandler<ClusterSearchTask, 
     private static final LambdaLogger LOGGER = LambdaLoggerFactory.getLogger(ClusterSearchTaskHandler.class);
 
     private final ClusterWorker clusterWorker;
-    private final TaskContext taskContext;
     private final CoprocessorsFactory coprocessorsFactory;
     private final IndexShardSearchFactory indexShardSearchFactory;
     private final ExtractionDecoratorFactory extractionDecoratorFactory;
@@ -67,14 +66,12 @@ class ClusterSearchTaskHandler implements ClusterTaskHandler<ClusterSearchTask, 
 
     @Inject
     ClusterSearchTaskHandler(final ClusterWorker clusterWorker,
-                             final TaskContext taskContext,
                              final CoprocessorsFactory coprocessorsFactory,
                              final IndexShardSearchFactory indexShardSearchFactory,
                              final ExtractionDecoratorFactory extractionDecoratorFactory,
                              final ResultSenderFactory resultSenderFactory,
                              final SecurityContext securityContext) {
         this.clusterWorker = clusterWorker;
-        this.taskContext = taskContext;
         this.coprocessorsFactory = coprocessorsFactory;
         this.indexShardSearchFactory = indexShardSearchFactory;
         this.extractionDecoratorFactory = extractionDecoratorFactory;
@@ -83,7 +80,7 @@ class ClusterSearchTaskHandler implements ClusterTaskHandler<ClusterSearchTask, 
     }
 
     @Override
-    public void exec(final ClusterSearchTask task, final ClusterTaskRef<NodeResult> clusterTaskRef) {
+    public void exec(final TaskContext taskContext, final ClusterSearchTask task, final ClusterTaskRef<NodeResult> clusterTaskRef) {
         securityContext.useAsRead(() -> {
             final Consumer<NodeResult> resultConsumer = result ->
                     clusterWorker.sendResult(ClusterResult.success(clusterTaskRef, result));
@@ -116,11 +113,11 @@ class ClusterSearchTaskHandler implements ClusterTaskHandler<ClusterSearchTask, 
 
                     if (coprocessors.size() > 0) {
                         // Start forwarding data to target node.
-                        final ResultSender resultSender = resultSenderFactory.create();
+                        final ResultSender resultSender = resultSenderFactory.create(taskContext);
                         sendingDataCompletionState = resultSender.sendData(coprocessors, resultConsumer, frequency, searchCompletionState, errors);
 
                         // Start searching.
-                        search(task, query, coprocessors);
+                        search(taskContext, task, query, coprocessors);
                     }
                 } catch (final RuntimeException e) {
                     try {
@@ -145,7 +142,7 @@ class ClusterSearchTaskHandler implements ClusterTaskHandler<ClusterSearchTask, 
                     while (!Thread.currentThread().isInterrupted() && !sendingDataCompletionState.isComplete()) {
                         sendingDataCompletionState.await(1, TimeUnit.SECONDS);
                     }
-                } catch (InterruptedException e) {
+                } catch (final InterruptedException e) {
                     //Don't want to reset interrupt status as this thread will go back into
                     //the executor's pool. Throwing an exception will terminate the task
                     throw new RuntimeException("Thread interrupted");
@@ -154,7 +151,8 @@ class ClusterSearchTaskHandler implements ClusterTaskHandler<ClusterSearchTask, 
         });
     }
 
-    private void search(final ClusterSearchTask task,
+    private void search(final TaskContext taskContext,
+                        final ClusterSearchTask task,
                         final stroom.query.api.v2.Query query,
                         final Coprocessors coprocessors) {
         taskContext.info(() -> "Searching...");
@@ -164,20 +162,20 @@ class ClusterSearchTaskHandler implements ClusterTaskHandler<ClusterSearchTask, 
             if (task.getShards().size() > 0) {
                 final AtomicLong allDocumentCount = new AtomicLong();
                 final Receiver rootReceiver = new ReceiverImpl(null, this, allDocumentCount::addAndGet, null);
-                final Receiver extractionReceiver = extractionDecoratorFactory.create(rootReceiver, task.getStoredFields(), coprocessors, query);
+                final Receiver extractionReceiver = extractionDecoratorFactory.create(taskContext, rootReceiver, task.getStoredFields(), coprocessors, query);
 
                 // Search all index shards.
                 final ExpressionFilter expressionFilter = new ExpressionFilter.Builder()
                         .addPrefixExcludeFilter(AnnotationDataSource.ANNOTATION_FIELD_PREFIX)
                         .build();
                 final ExpressionOperator expression = expressionFilter.copy(task.getQuery().getExpression());
-                indexShardSearchFactory.search(task, expression, extractionReceiver, taskContext);
+                indexShardSearchFactory.search(taskContext, task, expression, extractionReceiver);
 
                 // Wait for index search completion.
                 long extractionCount = getMinExtractions(coprocessors.getSet());
                 long documentCount = allDocumentCount.get();
                 while (!Thread.currentThread().isInterrupted() && extractionCount < documentCount) {
-                    log(documentCount, extractionCount);
+                    log(taskContext, documentCount, extractionCount);
 
                     Thread.sleep(1000);
 
@@ -197,7 +195,7 @@ class ClusterSearchTaskHandler implements ClusterTaskHandler<ClusterSearchTask, 
         }
     }
 
-    private void log(final long documentCount, final long extractionCount) {
+    private void log(final TaskContext taskContext, final long documentCount, final long extractionCount) {
         taskContext.info(() ->
                 "Searching... " +
                         "found " + documentCount + " documents" +

@@ -19,6 +19,8 @@ package stroom.security.impl;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import stroom.authentication.api.OIDC;
+import stroom.config.common.UriFactory;
+import stroom.security.api.ProcessingUserIdentityProvider;
 import stroom.security.api.SecurityContext;
 import stroom.security.api.UserIdentity;
 import stroom.security.impl.session.UserIdentitySessionUtil;
@@ -38,9 +40,11 @@ import javax.servlet.ServletRequest;
 import javax.servlet.ServletResponse;
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
+import javax.servlet.http.HttpSession;
 import javax.ws.rs.HttpMethod;
 import javax.ws.rs.core.Response;
 import java.io.IOException;
+import java.util.Optional;
 import java.util.Set;
 import java.util.regex.Pattern;
 
@@ -57,22 +61,30 @@ class SecurityFilter implements Filter {
     private static final String NO_AUTH_PATH = ResourcePaths.buildUnauthenticatedServletPath("/");
 
     // E.g. /api/authentication/v1/noauth/exchange
-    private static final String PUBLIC_API_PATH_REGEX = ResourcePaths.API_ROOT_PATH + ".*" + ResourcePaths.NO_AUTH + "/.*";
-    private static final Set<String> STATIC_RESOURCE_EXTENSIONS = Set.of(".js", ".css", ".htm", ".html", ".json", ".png", ".jpg", ".gif", ".ico", ".svg", ".woff", ".woff2");
+    private static final String PUBLIC_API_PATH_REGEX = ResourcePaths.API_ROOT_PATH +
+            ".*" + ResourcePaths.NO_AUTH + "/.*";
+    private static final Set<String> STATIC_RESOURCE_EXTENSIONS = Set.of(
+            ".js", ".css", ".htm", ".html", ".json", ".png", ".jpg", ".gif", ".ico", ".svg", ".woff", ".woff2");
 
     private final AuthenticationConfig authenticationConfig;
+    private final UriFactory uriFactory;
     private final SecurityContext securityContext;
     private final Pattern publicApiPathPattern;
     private final OpenIdManager openIdManager;
+    private final ProcessingUserIdentityProvider processingUserIdentityProvider;
 
     @Inject
     SecurityFilter(
             final AuthenticationConfig authenticationConfig,
+            final UriFactory uriFactory,
             final SecurityContext securityContext,
-            final OpenIdManager openIdManager) {
+            final OpenIdManager openIdManager,
+            final ProcessingUserIdentityProvider processingUserIdentityProvider) {
         this.authenticationConfig = authenticationConfig;
+        this.uriFactory = uriFactory;
         this.securityContext = securityContext;
         this.openIdManager = openIdManager;
+        this.processingUserIdentityProvider = processingUserIdentityProvider;
 
         publicApiPathPattern = Pattern.compile(PUBLIC_API_PATH_REGEX);
     }
@@ -120,6 +132,15 @@ class SecurityFilter implements Filter {
             LOGGER.debug("Passing on to next filter");
             chain.doFilter(request, response);
         } else {
+
+            LAMBDA_LOGGER.debug(() -> LogUtil.message("Session ID {}, request URI {}",
+                    Optional.ofNullable(request.getSession(false))
+                            .map(HttpSession::getId)
+                            .orElse("-"),
+                    request.getRequestURI() + Optional.ofNullable(request.getQueryString())
+                            .map(str -> "/" + str)
+                            .orElse("")));
+
             // See if we have an authenticated session.
             final UserIdentity userIdentity = UserIdentitySessionUtil.get(request.getSession(false));
             if (userIdentity != null) {
@@ -159,6 +180,8 @@ class SecurityFilter implements Filter {
                         try {
                             final String postAuthRedirectUri = getPostAuthRedirectUri(request);
 
+                            LOGGER.debug("Using postAuthRedirectUri: {}", postAuthRedirectUri);
+
                             String redirectUri = null;
 
                             // If we have completed the front channel flow then we will have a state id.
@@ -187,7 +210,14 @@ class SecurityFilter implements Filter {
     private String getPostAuthRedirectUri(final HttpServletRequest request) {
         // We have a a new request so we're going to redirect with an AuthenticationRequest.
         // Get the redirect URL for the auth service from the current request.
-        final String postAuthRedirectUri = UrlUtils.getFullUrl(request);
+        String originalPath = request.getRequestURI() + Optional.ofNullable(request.getQueryString())
+                .map(queryStr -> "?" + queryStr)
+                .orElse("");
+
+        // Dropwiz is likely sat behind Nginx with requests reverse proxied to it
+        // so we need to append just the path/query part to the public URI defined in config
+        // rather than using the full url of the request
+        final String postAuthRedirectUri = uriFactory.publicUri(originalPath).toString();
 
         // When the auth service has performed authentication it will redirect
         // back to the current URL with some additional parameters (e.g.
@@ -201,6 +231,7 @@ class SecurityFilter implements Filter {
         // any reserved parameters here. The authentication service should do
         // the same to the redirect URL before adding its additional
         // parameters.
+        LOGGER.debug("postAuthRedirectUri before param removal: {}", postAuthRedirectUri);
         return OIDC.removeOIDCParams(postAuthRedirectUri);
     }
 
@@ -247,7 +278,7 @@ class SecurityFilter implements Filter {
                                         final HttpServletResponse response,
                                         final FilterChain chain,
                                         final boolean useSession) throws IOException, ServletException {
-        bypassAuthentication(request, response, chain, useSession, ProcessingUserIdentity.INSTANCE);
+        bypassAuthentication(request, response, chain, useSession, processingUserIdentityProvider.get());
     }
 
     private void bypassAuthentication(final HttpServletRequest request,

@@ -23,6 +23,7 @@ import stroom.util.logging.LambdaLoggerFactory;
 import stroom.util.shared.ResultPage;
 
 import javax.inject.Inject;
+import java.util.Collection;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
@@ -61,15 +62,25 @@ class ProcessorFilterDaoImpl implements ProcessorFilterDao {
         expressionMapper.map(ProcessorFilterDataSource.PROCESSOR_ENABLED, PROCESSOR.ENABLED, Boolean::valueOf);
         expressionMapper.map(ProcessorFilterDataSource.PROCESSOR_FILTER_ENABLED, PROCESSOR_FILTER.ENABLED, Boolean::valueOf);
         expressionMapper.map(ProcessorFilterDataSource.CREATE_USER, PROCESSOR_FILTER.CREATE_USER, value -> value);
+        expressionMapper.map(ProcessorFilterDataSource.UUID, PROCESSOR_FILTER.UUID, value -> value);
     }
 
     @Override
     public ProcessorFilter create(final ProcessorFilter processorFilter) {
+        return create(processorFilter, null);
+    }
+
+    @Override
+    public ProcessorFilter create(final ProcessorFilter processorFilter, final Long trackerStartStreamId) {
         LAMBDA_LOGGER.debug(LambdaLogUtil.message("Creating a {}", PROCESSOR_FILTER.getName()));
 
         final ProcessorFilter marshalled = marshaller.marshal(processorFilter);
-        return marshaller.unmarshal(JooqUtil.transactionResult(processorDbConnProvider, context -> {
-            final ProcessorFilterTrackerRecord processorFilterTrackerRecord = context.newRecord(PROCESSOR_FILTER_TRACKER, new ProcessorFilterTracker());
+        final ProcessorFilter stored = JooqUtil.transactionResult(processorDbConnProvider, context -> {
+            ProcessorFilterTracker tracker = new ProcessorFilterTracker();
+            if (trackerStartStreamId != null)
+                tracker.setMinMetaId(trackerStartStreamId);
+
+            final ProcessorFilterTrackerRecord processorFilterTrackerRecord = context.newRecord(PROCESSOR_FILTER_TRACKER, tracker);
             processorFilterTrackerRecord.store();
             final ProcessorFilterTracker processorFilterTracker = processorFilterTrackerRecord.into(ProcessorFilterTracker.class);
 
@@ -86,18 +97,19 @@ class ProcessorFilterDaoImpl implements ProcessorFilterDao {
             result.setProcessor(result.getProcessor());
 
             return result;
-        }));
+        });
+        return marshaller.unmarshal(stored);
     }
 
     @Override
     public ProcessorFilter update(final ProcessorFilter processorFilter) {
         final ProcessorFilter marshalled = marshaller.marshal(processorFilter);
-        return marshaller.unmarshal(JooqUtil.contextResultWithOptimisticLocking(processorDbConnProvider, context -> {
+        final ProcessorFilter stored = JooqUtil.contextResultWithOptimisticLocking(processorDbConnProvider, context -> {
             final ProcessorFilterRecord processorFilterRecord =
                     context.newRecord(PROCESSOR_FILTER, marshalled);
 
-            processorFilterRecord.setFkProcessorFilterTrackerId(marshalled.getProcessorFilterTracker().getId());
-            processorFilterRecord.setFkProcessorId(marshalled.getProcessor().getId());
+//            processorFilterRecord.setFkProcessorFilterTrackerId(marshalled.getProcessorFilterTracker().getId());
+//            processorFilterRecord.setFkProcessorId(marshalled.getProcessor().getId());
             processorFilterRecord.update();
 
             final ProcessorFilter result = processorFilterRecord.into(ProcessorFilter.class);
@@ -105,7 +117,8 @@ class ProcessorFilterDaoImpl implements ProcessorFilterDao {
             result.setProcessor(marshalled.getProcessor());
 
             return result;
-        }));
+        });
+        return marshaller.unmarshal(stored);
     }
 
     @Override
@@ -141,16 +154,16 @@ class ProcessorFilterDaoImpl implements ProcessorFilterDao {
     }
 
     private ResultPage<ProcessorFilter> find(final DSLContext context, final ExpressionCriteria criteria) {
-        final Condition condition = expressionMapper.apply(criteria.getExpression());
+        final Collection<Condition> conditions = expressionMapper.apply(criteria.getExpression());
 
-        final OrderField<?>[] orderFields = JooqUtil.getOrderFields(FIELD_MAP, criteria);
+        final Collection<OrderField<?>> orderFields = JooqUtil.getOrderFields(FIELD_MAP, criteria);
 
         final List<ProcessorFilter> list = context
                 .select()
                 .from(PROCESSOR_FILTER)
                 .join(PROCESSOR_FILTER_TRACKER).on(PROCESSOR_FILTER.FK_PROCESSOR_FILTER_TRACKER_ID.eq(PROCESSOR_FILTER_TRACKER.ID))
                 .join(PROCESSOR).on(PROCESSOR_FILTER.FK_PROCESSOR_ID.eq(PROCESSOR.ID))
-                .where(condition)
+                .where(conditions)
                 .orderBy(orderFields)
                 .fetch()
                 .map(record -> {

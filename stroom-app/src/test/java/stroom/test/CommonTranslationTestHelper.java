@@ -27,8 +27,6 @@ import stroom.processor.impl.DataProcessorTaskHandler;
 import stroom.processor.impl.ProcessorTaskManager;
 import stroom.processor.shared.ProcessorTask;
 import stroom.processor.shared.ProcessorTaskList;
-import stroom.task.api.SimpleTaskContext;
-import stroom.task.api.TaskContext;
 import stroom.test.common.StroomPipelineTestFileUtil;
 import stroom.util.io.FileUtil;
 
@@ -37,12 +35,7 @@ import javax.inject.Provider;
 import java.io.IOException;
 import java.io.UncheckedIOException;
 import java.nio.file.Path;
-import java.util.ArrayList;
-import java.util.Collections;
-import java.util.HashSet;
-import java.util.List;
-import java.util.Set;
-import java.util.function.Supplier;
+import java.util.*;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
@@ -78,7 +71,6 @@ public class CommonTranslationTestHelper {
     private final NodeInfo nodeInfo;
     private final ProcessorTaskManager processorTaskManager;
     private final StoreCreationTool storeCreationTool;
-    private final Provider<TaskContext> taskContextProvider;
     private final MetaService metaService;
     private final Provider<DataProcessorTaskHandler> dataProcessorTaskHandlerProvider;
 
@@ -86,20 +78,18 @@ public class CommonTranslationTestHelper {
     CommonTranslationTestHelper(final NodeInfo nodeInfo,
                                 final ProcessorTaskManager processorTaskManager,
                                 final StoreCreationTool storeCreationTool,
-                                final Provider<TaskContext> taskContextProvider,
                                 final MetaService metaService,
                                 final Provider<DataProcessorTaskHandler> dataProcessorTaskHandlerProvider) {
         this.nodeInfo = nodeInfo;
         this.processorTaskManager = processorTaskManager;
         this.storeCreationTool = storeCreationTool;
-        this.taskContextProvider = taskContextProvider;
         this.metaService = metaService;
         this.dataProcessorTaskHandlerProvider = dataProcessorTaskHandlerProvider;
     }
 
     public List<ProcessorResult> processAll() {
         // Force creation of stream tasks.
-        processorTaskManager.createTasks(new SimpleTaskContext());
+        processorTaskManager.createTasks();
 
         final List<ProcessorResult> results = new ArrayList<>();
         ProcessorTaskList processorTasks = processorTaskManager.assignTasks(nodeInfo.getThisNodeName(), 100);
@@ -114,13 +104,8 @@ public class CommonTranslationTestHelper {
     }
 
     public ProcessorResult process(final ProcessorTask processorTask) {
-        final TaskContext taskContext = taskContextProvider.get();
-        Supplier<ProcessorResult> supplier = () -> {
-            final DataProcessorTaskHandler dataProcessorTaskHandler = dataProcessorTaskHandlerProvider.get();
-            return dataProcessorTaskHandler.exec(processorTask);
-        };
-        supplier = taskContext.sub(supplier);
-        return supplier.get();
+        final DataProcessorTaskHandler dataProcessorTaskHandler = dataProcessorTaskHandlerProvider.get();
+        return dataProcessorTaskHandler.exec(processorTask);
     }
 
     public void setup() {

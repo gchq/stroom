@@ -26,7 +26,6 @@ import stroom.security.api.SecurityContext;
 import stroom.security.shared.DocumentPermissionNames;
 import stroom.security.shared.PermissionNames;
 import stroom.util.date.DateUtil;
-import stroom.util.shared.IdSet;
 import stroom.util.shared.PageRequest;
 import stroom.util.shared.ResultPage;
 import stroom.util.shared.Sort.Direction;
@@ -104,7 +103,7 @@ public class MetaServiceImpl implements MetaService, Searchable {
         Objects.requireNonNull(meta, "Null data");
 
         final long now = System.currentTimeMillis();
-        final int result = updateStatus(meta.getId(), newStatus, currentStatus, now, DocumentPermissionNames.UPDATE);
+        final int result = updateStatus(meta.getId(), currentStatus, newStatus, now, DocumentPermissionNames.UPDATE);
         if (result > 0) {
             return new Meta.Builder(meta)
                     .status(newStatus)
@@ -128,25 +127,25 @@ public class MetaServiceImpl implements MetaService, Searchable {
         }
     }
 
-    private int updateStatus(final long id, final Status newStatus, final Status currentStatus, final long statusTime, final String permission) {
+    private int updateStatus(final long id, final Status currentStatus, final Status newStatus, final long statusTime, final String permission) {
         final ExpressionOperator expression = getIdExpression(id, true);
         final ExpressionOperator secureExpression = addPermissionConstraints(expression, permission);
         final FindMetaCriteria criteria = new FindMetaCriteria(secureExpression);
-        return metaDao.updateStatus(criteria, newStatus, currentStatus, statusTime);
+        return metaDao.updateStatus(criteria, currentStatus, newStatus, statusTime);
     }
 
     @Override
-    public int updateStatus(final FindMetaCriteria criteria, final Status status) {
+    public int updateStatus(final FindMetaCriteria criteria, final Status currentStatus, final Status newStatus) {
         // Decide which permission is needed for this update as logical deletes require delete permissions.
         String permission = DocumentPermissionNames.UPDATE;
-        if (Status.DELETED.equals(status)) {
+        if (Status.DELETED.equals(newStatus)) {
             permission = DocumentPermissionNames.DELETE;
         }
 
         final ExpressionOperator expression = addPermissionConstraints(criteria.getExpression(), permission);
         criteria.setExpression(expression);
 
-        return metaDao.updateStatus(criteria, status, null, System.currentTimeMillis());
+        return metaDao.updateStatus(criteria, currentStatus, newStatus, System.currentTimeMillis());
     }
 
     @Override
@@ -181,7 +180,7 @@ public class MetaServiceImpl implements MetaService, Searchable {
 
         // Ensure the user has permission to delete this data.
         final long now = System.currentTimeMillis();
-        return updateStatus(id, Status.DELETED, null, now, DocumentPermissionNames.DELETE);
+        return updateStatus(id, null, Status.DELETED, now, DocumentPermissionNames.DELETE);
     }
 
     @Override
@@ -209,11 +208,11 @@ public class MetaServiceImpl implements MetaService, Searchable {
             criteria.setPageRequest(null);
         }
 
-        final IdSet idSet = criteria.getSelectedIdSet();
-        // If for some reason we have been asked to match nothing then return nothing.
-        if (idSet != null && idSet.getMatchNull() != null && idSet.getMatchNull()) {
-            return ResultPage.createPageResultList(Collections.emptyList(), criteria.getPageRequest(), null);
-        }
+//        final IdSet idSet = criteria.getSelectedIdSet();
+//        // If for some reason we have been asked to match nothing then return nothing.
+//        if (idSet != null && idSet.getMatchNull() != null && idSet.getMatchNull()) {
+//            return ResultPage.createPageResultList(Collections.emptyList(), criteria.getPageRequest(), null);
+//        }
 
         ResultPage<Meta> resultPage = secureFind(criteria);
 
@@ -330,12 +329,6 @@ public class MetaServiceImpl implements MetaService, Searchable {
         return builder;
     }
 
-//    public int delete(final FindMetaCriteria criteria) {
-//        final ExpressionOperator secureExpression = addPermissionConstraints(criteria.getExpression(), DocumentPermissionNames.DELETE);
-//        criteria.setExpression(secureExpression);
-//        return metaDao.delete(criteria);
-//    }
-
     @Override
     public Set<Meta> findEffectiveData(final EffectiveMetaDataCriteria criteria) {
         // See if we can find a data that exists before the earliest specified time.
@@ -383,6 +376,19 @@ public class MetaServiceImpl implements MetaService, Searchable {
     }
 
     @Override
+    public Long getMaxDataIdWithCreationBeforePeriod(final Long timestampMs) {
+        if (timestampMs == null)
+            return null;
+        final ExpressionOperator expression = new ExpressionOperator.Builder(Op.AND)
+                .addTerm(MetaFields.CREATE_TIME, ExpressionTerm.Condition.LESS_THAN_OR_EQUAL_TO, DateUtil.createNormalDateTimeString(timestampMs))
+                .addTerm(MetaFields.STATUS, ExpressionTerm.Condition.EQUALS, Status.UNLOCKED.getDisplayValue())
+                .build();
+
+        final ExpressionOperator secureExpression = addPermissionConstraints(expression, DocumentPermissionNames.READ);
+        return metaDao.getMaxId(new FindMetaCriteria(secureExpression)).orElseThrow(() -> new NullPointerException("No current id exists"));
+    }
+
+    @Override
     public List<String> getFeeds() {
         return metaFeedDao.list();
     }
@@ -403,14 +409,14 @@ public class MetaServiceImpl implements MetaService, Searchable {
             // Cache Call
 
 
-            final FindMetaCriteria findMetaCriteria = new FindMetaCriteria();
-            findMetaCriteria.copyFrom(criteria);
-            findMetaCriteria.setSort(MetaFields.CREATE_TIME.getName(), Direction.DESCENDING, false);
+//            final FindMetaCriteria findMetaCriteria = new FindMetaCriteria();
+//            findMetaCriteria.copyFrom(criteria);
+//            findMetaCriteria.setSort(MetaFields.CREATE_TIME.getName(), Direction.DESCENDING, false);
 
 //            findDataCriteria.setFetchSet(new HashSet<>());
 
             // Share the page criteria
-            final ResultPage<Meta> list = find(findMetaCriteria);
+            final ResultPage<Meta> list = find(criteria);
             List<MetaRow> result = Collections.emptyList();
             if (list.size() > 0) {
 //                // We need to decorate data with retention rules as a processing user.

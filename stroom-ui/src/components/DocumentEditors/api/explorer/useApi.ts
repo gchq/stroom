@@ -2,12 +2,8 @@ import * as React from "react";
 
 import useHttpClient from "lib/useHttpClient";
 import { SearchProps } from "./types";
-import useConfig from "startup/config/useConfig";
-import {
-  DocRefTree,
-  DocRefType,
-  DocRefInfoType,
-} from "components/DocumentEditors/useDocumentApi/types/base";
+import { DocRefInfoType, DocRefTree, DocRefType } from "components/DocumentEditors/useDocumentApi/types/base";
+import useUrlFactory from "lib/useUrlFactory";
 
 const stripDocRef = (docRef: DocRefType) => ({
   uuid: docRef.uuid,
@@ -41,7 +37,8 @@ interface Api {
 }
 
 export const useApi = (): Api => {
-  const { stroomBaseServiceUrl } = useConfig();
+  const { apiUrl } = useUrlFactory();
+  const resource = apiUrl("/explorer/v1");
 
   const {
     httpGetJson,
@@ -52,31 +49,27 @@ export const useApi = (): Api => {
 
   return {
     fetchDocTree: React.useCallback(
-      () => httpGetJson(`${stroomBaseServiceUrl}/explorer/v1/all`),
-      [stroomBaseServiceUrl, httpGetJson],
+      () => httpGetJson(`${resource}/all`),
+      [resource, httpGetJson],
     ),
 
     fetchDocRefTypes: React.useCallback(
-      () => httpGetJson(`${stroomBaseServiceUrl}/explorer/v1/docRefTypes`),
-      [stroomBaseServiceUrl, httpGetJson],
+      () => httpGetJson(`${resource}/docRefTypes`),
+      [resource, httpGetJson],
     ),
     fetchDocInfo: React.useCallback(
       (docRef: DocRefType) =>
-        httpGetJson(
-          `${stroomBaseServiceUrl}/explorer/v1/info/${docRef.type}/${
-            docRef.uuid
-          }`,
-        ),
-      [stroomBaseServiceUrl, httpGetJson],
+        httpGetJson(`${resource}/info/${docRef.type}/${docRef.uuid}`),
+      [resource, httpGetJson],
     ),
     searchApp: React.useCallback(
       ({ term = "", docRefType = "", pageOffset = 0, pageSize = 10 }) => {
         const params = `searchTerm=${term}&docRefType=${docRefType}&pageOffset=${pageOffset}&pageSize=${pageSize}`;
-        const url = `${stroomBaseServiceUrl}/explorer/v1/search?${params}`;
+        const url = `${resource}/search?${params}`;
 
         return httpGetJson(url);
       },
-      [stroomBaseServiceUrl, httpGetJson],
+      [resource, httpGetJson],
     ),
     createDocument: React.useCallback(
       (
@@ -85,7 +78,7 @@ export const useApi = (): Api => {
         destinationFolderRef: DocRefType,
         permissionInheritance: string,
       ) =>
-        httpPostJsonResponse(`${stroomBaseServiceUrl}/explorer/v1/create`, {
+        httpPostJsonResponse(`${resource}/create`, {
           body: JSON.stringify({
             docRefType,
             docRefName,
@@ -93,17 +86,17 @@ export const useApi = (): Api => {
             permissionInheritance,
           }),
         }),
-      [stroomBaseServiceUrl, httpPostJsonResponse],
+      [resource, httpPostJsonResponse],
     ),
     renameDocument: React.useCallback(
       (docRef: DocRefType, name: string) =>
-        httpPutJsonResponse(`${stroomBaseServiceUrl}/explorer/v1/rename`, {
+        httpPutJsonResponse(`${resource}/rename`, {
           body: JSON.stringify({
             docRef: stripDocRef(docRef),
             name,
           }),
         }),
-      [stroomBaseServiceUrl, httpPutJsonResponse],
+      [resource, httpPutJsonResponse],
     ),
     copyDocuments: React.useCallback(
       (
@@ -111,14 +104,14 @@ export const useApi = (): Api => {
         destination: DocRefType,
         permissionInheritance: string,
       ) =>
-        httpPostJsonResponse(`${stroomBaseServiceUrl}/explorer/v1/copy`, {
+        httpPostJsonResponse(`${resource}/copy`, {
           body: JSON.stringify({
             docRefs: docRefs.map(stripDocRef),
             destinationFolderRef: stripDocRef(destination),
             permissionInheritance,
           }),
         }),
-      [stroomBaseServiceUrl, httpPostJsonResponse],
+      [resource, httpPostJsonResponse],
     ),
     moveDocuments: React.useCallback(
       (
@@ -126,21 +119,21 @@ export const useApi = (): Api => {
         destination: DocRefType,
         permissionInheritance: string,
       ) =>
-        httpPutJsonResponse(`${stroomBaseServiceUrl}/explorer/v1/move`, {
+        httpPutJsonResponse(`${resource}/v1/move`, {
           body: JSON.stringify({
             docRefs: docRefs.map(stripDocRef),
             destinationFolderRef: stripDocRef(destination),
             permissionInheritance,
           }),
         }),
-      [stroomBaseServiceUrl, httpPutJsonResponse],
+      [resource, httpPutJsonResponse],
     ),
     deleteDocuments: React.useCallback(
       (docRefs: DocRefType[]) =>
-        httpDeleteJsonResponse(`${stroomBaseServiceUrl}/explorer/v1/delete`, {
+        httpDeleteJsonResponse(`${resource}/delete`, {
           body: JSON.stringify(docRefs.map(stripDocRef)),
         }),
-      [stroomBaseServiceUrl, httpDeleteJsonResponse],
+      [resource, httpDeleteJsonResponse],
     ),
   };
 };

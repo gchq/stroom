@@ -18,6 +18,7 @@ package stroom.node.impl;
 
 import com.google.inject.AbstractModule;
 import com.google.inject.multibindings.Multibinder;
+import stroom.node.shared.NodeResource;
 import stroom.util.entityevent.EntityEvent;
 import stroom.util.entityevent.EntityEvent.Handler;
 import stroom.event.logging.api.ObjectInfoProviderBinder;
@@ -33,6 +34,7 @@ public class NodeModule extends AbstractModule {
     protected void configure() {
         bind(NodeInfo.class).to(NodeInfoImpl.class);
         bind(NodeService.class).to(NodeServiceImpl.class);
+        bind(NodeResource.class).to(NodeResourceImpl.class);
 
         GuiceUtil.buildMultiBinder(binder(), Clearable.class).addBinding(NodeServiceImpl.class);
 

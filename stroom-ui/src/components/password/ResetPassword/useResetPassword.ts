@@ -1,12 +1,9 @@
 import { FormikBag } from "formik";
 import { useCallback } from "react";
-import {
-  ChangePasswordResponse,
-  ResetPasswordRequest,
-} from "components/authentication/types";
+import { ChangePasswordResponse, ResetPasswordRequest } from "components/authentication/types";
 import useApi from "components/authentication";
 import { useRouter } from "lib/useRouter";
-import useConfig from "startup/config/useConfig";
+import * as queryString from "query-string";
 
 const useResetPassword = (): {
   submitPasswordChangeRequest: (
@@ -29,17 +26,28 @@ const useResetPassword = (): {
     [history, submitPasswordChangeRequestUsingApi],
   );
 
-  const { stroomUiUrl } = useConfig();
+  const { router } = useRouter();
   const resetPassword = useCallback(
     (resetPasswordRequest: ResetPasswordRequest) => {
       resetPasswordUsingApi(resetPasswordRequest).then(
         (response: ChangePasswordResponse) => {
           if (response.changeSucceeded) {
-            if (stroomUiUrl !== undefined) {
-              window.location.href = stroomUiUrl;
-            } else {
-              console.error("No stroom UI url available for redirect!");
+
+            let redirectUri: string;
+
+            if (!!router && !!router.location) {
+              const query = queryString.parse(router.location.search);
+              if (!!query.redirect_uri) {
+                redirectUri = query.redirect_uri + "";
+              }
             }
+
+            if (redirectUri !== undefined) {
+              window.location.href = redirectUri;
+            } else {
+              console.error("No redirect URI available for redirect!");
+            }
+
           } else {
             const errorMessage = [];
             if (response.failedOn.includes("COMPLEXITY")) {
@@ -54,7 +62,7 @@ const useResetPassword = (): {
         },
       );
     },
-    [resetPasswordUsingApi, stroomUiUrl],
+    [resetPasswordUsingApi, router],
   );
 
   return { submitPasswordChangeRequest, resetPassword };

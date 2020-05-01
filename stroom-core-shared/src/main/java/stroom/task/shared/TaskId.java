@@ -17,7 +17,6 @@
 package stroom.task.shared;
 
 import com.fasterxml.jackson.annotation.JsonCreator;
-import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.fasterxml.jackson.annotation.JsonInclude;
 import com.fasterxml.jackson.annotation.JsonInclude.Include;
 import com.fasterxml.jackson.annotation.JsonProperty;
@@ -65,8 +64,8 @@ public class TaskId implements Serializable {
         this.parentId = parentId;
     }
 
-    public boolean isOrHasAncestor(final TaskId id) {
-        return recursiveEquals(id, this);
+    public boolean isOrHasAncestor(final TaskId ancestorId) {
+        return recursiveEquals(this, ancestorId);
     }
 
     private boolean recursiveEquals(final TaskId id, final TaskId ancestorId) {
@@ -76,7 +75,7 @@ public class TaskId implements Serializable {
             return true;
         }
 
-        return recursiveEquals(id, ancestorId.getParentId());
+        return recursiveEquals(id.getParentId(), ancestorId);
     }
 
     @Override

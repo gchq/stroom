@@ -20,9 +20,11 @@ package stroom.authentication.config;
 
 import com.fasterxml.jackson.annotation.JsonProperty;
 import stroom.util.shared.AbstractConfig;
+import stroom.util.shared.NotInjectableConfig;
 
 import javax.validation.constraints.NotNull;
 
+@NotInjectableConfig
 public class EmailConfig extends AbstractConfig {
     public static final String PROP_NAME_SMTP = "smtp";
 

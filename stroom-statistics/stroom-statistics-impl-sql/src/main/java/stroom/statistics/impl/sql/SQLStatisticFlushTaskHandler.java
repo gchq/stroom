@@ -20,6 +20,7 @@ import org.apache.commons.lang3.mutable.MutableLong;
 import stroom.security.api.SecurityContext;
 import stroom.statistics.impl.sql.shared.StatisticType;
 import stroom.task.api.TaskContext;
+import stroom.task.api.TaskContextFactory;
 import stroom.util.logging.LambdaLogUtil;
 import stroom.util.logging.LambdaLogger;
 import stroom.util.logging.LambdaLoggerFactory;
@@ -42,7 +43,7 @@ public class SQLStatisticFlushTaskHandler {
     private static final int BATCH_SIZE = 5000;
     private static final LambdaLogger LOGGER = LambdaLoggerFactory.getLogger(SQLStatisticFlushTaskHandler.class);
     private final SQLStatisticValueBatchSaveService sqlStatisticValueBatchSaveService;
-    private final TaskContext taskContext;
+    private final TaskContextFactory taskContextFactory;
     private final SecurityContext securityContext;
 
     private LogExecutionTime logExecutionTime;
@@ -52,18 +53,22 @@ public class SQLStatisticFlushTaskHandler {
 
     @Inject
     public SQLStatisticFlushTaskHandler(final SQLStatisticValueBatchSaveService sqlStatisticValueBatchSaveService,
-                                        final TaskContext taskContext,
+                                        final TaskContextFactory taskContextFactory,
                                         final SecurityContext securityContext) {
         this.sqlStatisticValueBatchSaveService = sqlStatisticValueBatchSaveService;
-        this.taskContext = taskContext;
+        this.taskContextFactory = taskContextFactory;
         this.securityContext = securityContext;
     }
 
     public void exec(final SQLStatisticAggregateMap map) {
-        securityContext.secure(() -> flush(map));
+        taskContextFactory.context("Flush SQL Statistics", taskContext -> exec(taskContext, map)).run();
     }
 
-    private void flush(final SQLStatisticAggregateMap map) {
+    private void exec(final TaskContext taskContext, final SQLStatisticAggregateMap map) {
+        securityContext.secure(() -> flush(taskContext, map));
+    }
+
+    private void flush(final TaskContext taskContext, final SQLStatisticAggregateMap map) {
         if (map != null) {
             logExecutionTime = new LogExecutionTime();
             count = 0;
@@ -95,7 +100,7 @@ public class SQLStatisticFlushTaskHandler {
                     count++;
 
                     if (batchInsert.size() >= batchSizetoUse) {
-                        doSaveBatch(batchInsert);
+                        doSaveBatch(taskContext, batchInsert);
                     }
                 }
             }
@@ -116,20 +121,20 @@ public class SQLStatisticFlushTaskHandler {
                     count++;
 
                     if (batchInsert.size() >= batchSizetoUse) {
-                        doSaveBatch(batchInsert);
+                        doSaveBatch(taskContext, batchInsert);
                     }
                 }
             }
 
             if (!Thread.currentThread().isInterrupted()) {
                 if (batchInsert.size() > 0) {
-                    doSaveBatch(batchInsert);
+                    doSaveBatch(taskContext, batchInsert);
                 }
             }
         }
     }
 
-    private void doSaveBatch(final List<SQLStatisticValueSourceDO> batchInsert) {
+    private void doSaveBatch(final TaskContext taskContext, final List<SQLStatisticValueSourceDO> batchInsert) {
         try {
             final int seconds = (int) (logExecutionTime.getDuration() / 1000L);
 

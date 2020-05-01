@@ -17,19 +17,11 @@
 package stroom.core.benchmark;
 
 import stroom.data.shared.StreamTypeNames;
-import stroom.data.store.api.Source;
-import stroom.data.store.api.SourceUtil;
-import stroom.data.store.api.Store;
-import stroom.data.store.api.Target;
-import stroom.data.store.api.TargetUtil;
+import stroom.data.store.api.*;
 import stroom.feed.shared.FeedDoc;
-import stroom.meta.shared.FindMetaCriteria;
-import stroom.meta.shared.Meta;
-import stroom.meta.shared.MetaExpressionUtil;
-import stroom.meta.shared.MetaFields;
 import stroom.meta.api.MetaProperties;
 import stroom.meta.api.MetaService;
-import stroom.meta.shared.Status;
+import stroom.meta.shared.*;
 import stroom.query.api.v2.ExpressionOperator;
 import stroom.query.api.v2.ExpressionOperator.Op;
 import stroom.query.api.v2.ExpressionTerm.Condition;
@@ -51,14 +43,11 @@ public abstract class AbstractBenchmark {
 
     private final Store streamStore;
     private final MetaService metaService;
-    private final TaskContext taskContext;
 
     AbstractBenchmark(final Store streamStore,
-                      final MetaService metaService,
-                      final TaskContext taskContext) {
+                      final MetaService metaService) {
         this.streamStore = streamStore;
         this.metaService = metaService;
-        this.taskContext = taskContext;
     }
 
     public static int getRandomSkewed() {
@@ -73,12 +62,12 @@ public abstract class AbstractBenchmark {
         Thread.currentThread().interrupt();
     }
 
-    protected void info(final Supplier<String> messageSupplier) {
+    protected void info(final TaskContext taskContext, final Supplier<String> messageSupplier) {
         taskContext.info(messageSupplier);
         LOGGER.info(messageSupplier);
     }
 
-    protected void infoInterval(final Supplier<String> messageSupplier) {
+    protected void infoInterval(final TaskContext taskContext, final Supplier<String> messageSupplier) {
         taskContext.info(messageSupplier);
         LOGGER.info(messageSupplier);
     }
@@ -162,7 +151,7 @@ public abstract class AbstractBenchmark {
     protected void deleteData(final String... feedNames) {
         final FindMetaCriteria criteria = new FindMetaCriteria();
         criteria.setExpression(MetaExpressionUtil.createFeedsExpression(feedNames));
-        metaService.updateStatus(criteria, Status.DELETED);
+        metaService.updateStatus(criteria, null, Status.DELETED);
     }
 
     protected String createReferenceData(final int recordCount) {

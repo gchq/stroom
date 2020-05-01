@@ -16,6 +16,27 @@
 
 package stroom.app;
 
+import stroom.app.commands.DbMigrationCommand;
+import stroom.app.guice.AppModule;
+import stroom.config.app.AppConfig;
+import stroom.config.app.Config;
+import stroom.config.global.impl.ConfigMapper;
+import stroom.config.global.impl.validation.ConfigValidator;
+import stroom.dropwizard.common.DelegatingExceptionMapper;
+import stroom.dropwizard.common.Filters;
+import stroom.dropwizard.common.HealthChecks;
+import stroom.dropwizard.common.ManagedServices;
+import stroom.dropwizard.common.RestResources;
+import stroom.dropwizard.common.Servlets;
+import stroom.dropwizard.common.SessionListeners;
+import stroom.security.impl.AuthenticationConfig;
+import stroom.security.impl.ContentSecurityConfig;
+import stroom.util.ColouredStringBuilder;
+import stroom.util.ConsoleColour;
+import stroom.util.authentication.DefaultOpenIdCredentials;
+import stroom.util.logging.LogUtil;
+import stroom.util.shared.ResourcePaths;
+
 import com.google.inject.Guice;
 import com.google.inject.Injector;
 import io.dropwizard.Application;
@@ -31,26 +52,6 @@ import org.eclipse.jetty.servlets.CrossOriginFilter;
 import org.glassfish.jersey.logging.LoggingFeature;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import stroom.app.commands.DbMigrationCommand;
-import stroom.app.errors.NodeCallExceptionMapper;
-import stroom.app.guice.AppModule;
-import stroom.config.app.AppConfig;
-import stroom.config.app.Config;
-import stroom.config.global.impl.ConfigMapper;
-import stroom.config.global.impl.validation.ConfigValidator;
-import stroom.dropwizard.common.Filters;
-import stroom.dropwizard.common.HealthChecks;
-import stroom.dropwizard.common.ManagedServices;
-import stroom.dropwizard.common.PermissionExceptionMapper;
-import stroom.dropwizard.common.RestResources;
-import stroom.dropwizard.common.Servlets;
-import stroom.dropwizard.common.SessionListeners;
-import stroom.security.impl.AuthenticationConfig;
-import stroom.security.impl.ContentSecurityConfig;
-import stroom.util.ColouredStringBuilder;
-import stroom.util.ConsoleColour;
-import stroom.util.logging.LogUtil;
-import stroom.util.shared.ResourcePaths;
 
 import javax.inject.Inject;
 import javax.servlet.DispatcherType;
@@ -79,6 +80,8 @@ public class App extends Application<Config> {
     private Servlets servlets;
     @Inject
     private SessionListeners sessionListeners;
+    @Inject
+    private DelegatingExceptionMapper delegatingExceptionMapper;
     @Inject
     private RestResources restResources;
     @Inject
@@ -109,11 +112,20 @@ public class App extends Application<Config> {
                 new EnvironmentVariableSubstitutor(false)));
 
         // Add the GWT UI assets.
-        bootstrap.addBundle(new AssetsBundle("/ui", ResourcePaths.ROOT_PATH, "index.html", "ui"));
+        bootstrap.addBundle(new AssetsBundle(
+                "/ui",
+                ResourcePaths.ROOT_PATH,
+                "index.html",
+                "ui"));
 
         // Add the new React UI assets. Note that the React UI uses sub paths for navigation using the React BrowserRouter.
         // This always needs the root page to be served regardless of the path requested so we need to use a special asset bundle to achieve this.
-        bootstrap.addBundle(new BrowserRouterAssetsBundle("/new-ui", "/", "index.html", "new-ui", ResourcePaths.SINGLE_PAGE_PREFIX));
+        bootstrap.addBundle(new BrowserRouterAssetsBundle(
+                "/new-ui",
+                "/",
+                "index.html",
+                "new-ui",
+                ResourcePaths.SINGLE_PAGE_PREFIX));
 
         // Add a DW Command so we can run the full migration without running the
         // http server
@@ -144,9 +156,6 @@ public class App extends Application<Config> {
 
         // Add useful logging setup.
         registerLogConfiguration(environment);
-
-        // Add jersey exception mappers
-        registerExceptionMappers(environment);
 
         // We want Stroom to use the root path so we need to move Dropwizard's path.
         environment.jersey().setUrlPattern(ResourcePaths.API_ROOT_PATH + "/*");
@@ -188,17 +197,32 @@ public class App extends Application<Config> {
         // Add all injectable rest resources.
         restResources.register();
 
-        // Map exceptions to helpful HTTP responses
-        environment.jersey().register(PermissionExceptionMapper.class);
+        // Add jersey exception mappers.
+        environment.jersey().register(delegatingExceptionMapper);
 
         // Listen to the lifecycle of the Dropwizard app.
         managedServices.register();
+
+        warnAboutDefaultOpenIdCreds(configuration, injector);
     }
 
-
-    private void registerExceptionMappers(final Environment environment) {
-        // Add an exception mapper for dealing with our own NodeCallExceptions
-        environment.jersey().register(NodeCallExceptionMapper.class);
+    private void warnAboutDefaultOpenIdCreds(Config configuration, Injector injector) {
+        if (configuration.getAppConfig().getAuthenticationConfig().isUseDefaultOpenIdCredentials()) {
+            DefaultOpenIdCredentials defaultOpenIdCredentials = injector.getInstance(DefaultOpenIdCredentials.class);
+            String propPath = configuration.getAppConfig().getAuthenticationConfig().getFullPath("useDefaultOpenIdCredentials");
+            LOGGER.warn("" +
+                    "\n  ---------------------------------------------------------------------------------------" +
+                    "\n  " +
+                    "\n                                        WARNING!" +
+                    "\n  " +
+                    "\n   Using default and publicly available Open ID authentication credentials. " +
+                    "\n   These should only be used in test/demo environments. " +
+                    "\n   Set " + propPath + " to false for production environments. The API key in use is:" +
+                    "\n" +
+                    "\n   " + defaultOpenIdCredentials.getApiKey() +
+                    "\n  ---------------------------------------------------------------------------------------" +
+                    "");
+        }
     }
 
     private String getNodeName(final AppConfig appConfig) {
@@ -213,7 +237,10 @@ public class App extends Application<Config> {
 
         // Inject this way rather than using injectMembers so we can avoid instantiating
         // too many classes before running our validation
-        final ConfigMapper configMapper = injector.getInstance(ConfigMapper.class);
+
+        // We need to get an unused instance of ConfigMapper so it decorates the AppConfig tree.
+        injector.getInstance(ConfigMapper.class);
+
         final ConfigValidator configValidator = injector.getInstance(ConfigValidator.class);
 
         LOGGER.info("Validating application configuration file {}",
@@ -267,7 +294,8 @@ public class App extends Application<Config> {
         environment.jersey().register(SessionFactoryProvider.class);
     }
 
-    private static void configureSessionCookie(final Environment environment, final stroom.config.app.SessionCookieConfig config) {
+    private static void configureSessionCookie(final Environment environment,
+                                               final stroom.config.app.SessionCookieConfig config) {
         // Ensure the session cookie that provides JSESSIONID is secure.
         final SessionCookieConfig sessionCookieConfig = environment
                 .getApplicationContext()

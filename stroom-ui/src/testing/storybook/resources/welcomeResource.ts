@@ -1,6 +1,4 @@
 import { HttpRequest, HttpResponse } from "@pollyjs/adapter-fetch";
-
-import { Config } from "startup/config/types";
 import { ResourceBuilder } from "./types";
 import { WelcomeData } from "components/Welcome/api/types";
 
@@ -11,9 +9,9 @@ const ABOUT_HTML: WelcomeData = {
 
 const resourceBuilder: ResourceBuilder = (
   server: any,
-  { stroomBaseServiceUrl }: Config,
+  apiUrl: any,
 ) => {
-  const resource = `${stroomBaseServiceUrl}/welcome/v1/`;
+  const resource = apiUrl("/welcome/v1");
 
   server.get(resource).intercept((req: HttpRequest, res: HttpResponse) => {
     res.json(ABOUT_HTML);

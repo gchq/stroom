@@ -1,5 +1,7 @@
 package stroom.authentication.token;
 
+import stroom.authentication.account.Account;
+
 import java.util.Optional;
 
 public interface TokenService {
@@ -7,20 +9,21 @@ public interface TokenService {
 
     Token create(CreateTokenRequest createTokenRequest);
 
-    void deleteAll();
+    Token createResetEmailToken(Account account, String clientId);
 
-    void delete(int tokenId);
+    int deleteAll();
 
-    void delete(String token);
+    int delete(int tokenId);
 
-    Optional<Token> read(String token);
+    int delete(String data);
+
+    Optional<Token> read(String data);
 
     Optional<Token> read(int tokenId);
 
-    void toggleEnabled(int tokenId, boolean isEnabled);
+    int toggleEnabled(int tokenId, boolean isEnabled);
 
 //    Optional<String> verifyToken(String token);
 
     String getPublicKey();
-
 }

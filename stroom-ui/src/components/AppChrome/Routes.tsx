@@ -17,7 +17,6 @@
 import * as React from "react";
 import { Route, RouteComponentProps, Switch } from "react-router";
 import {
-  HandleAuthenticationResponse,
   PrivateRoute,
 } from "startup/Authentication";
 import AuthorisationManager, {
@@ -70,11 +69,6 @@ const Routes: React.FunctionComponent = () => {
   const { urlGenerator } = useAppNavigation();
   return (
     <Switch>
-      <Route
-        exact
-        path={`${singlePagePrefix}/handleAuthenticationResponse`}
-        render={() => <HandleAuthenticationResponse />}
-      />
       <Route exact path={`${singlePagePrefix}/error`} component={ErrorPage} />
       <Route
         exact

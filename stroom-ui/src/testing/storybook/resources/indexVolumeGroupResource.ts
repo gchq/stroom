@@ -1,15 +1,14 @@
 import { HttpRequest, HttpResponse } from "@pollyjs/adapter-fetch";
 
 import { TestCache } from "../PollyDecorator";
-import { Config } from "startup/config/types";
 import { ResourceBuilder } from "./types";
 
 const resourceBuilder: ResourceBuilder = (
   server: any,
-  { stroomBaseServiceUrl }: Config,
+  apiUrl: any,
   testCache: TestCache,
 ) => {
-  const resource = `${stroomBaseServiceUrl}/stroom-index/volumeGroup/v1`;
+  const resource = apiUrl("/stroom-index/volumeGroup/v1");
 
   // Get All
   server.get(resource).intercept((req: HttpRequest, res: HttpResponse) => {
@@ -27,7 +26,7 @@ const resourceBuilder: ResourceBuilder = (
   server
     .get(`${resource}/:name`)
     .intercept((req: HttpRequest, res: HttpResponse) => {
-      let group = testCache.data!.indexVolumesAndGroups.groups.find(
+      const group = testCache.data!.indexVolumesAndGroups.groups.find(
         g => g.name === req.params.name,
       );
       if (!!group) {
@@ -41,9 +40,9 @@ const resourceBuilder: ResourceBuilder = (
   server
     .post(`${resource}/:name`)
     .intercept((req: HttpRequest, res: HttpResponse) => {
-      let name = req.params.name;
-      let now = Date.now();
-      let newIndexVolumeGroup = {
+      const name = req.params.name;
+      const now = Date.now();
+      const newIndexVolumeGroup = {
         id: "-1",
         name,
         createTimeMs: now,
@@ -63,9 +62,9 @@ const resourceBuilder: ResourceBuilder = (
 
   // Delete
   server
-    .delete(`${stroomBaseServiceUrl}/stroom-index/volumeGroup/v1/:name`)
+    .delete(`${resource}/:name`)
     .intercept((req: HttpRequest, res: HttpResponse) => {
-      let oldName = req.params.name;
+      const oldName = req.params.name;
       testCache.data!.indexVolumesAndGroups = {
         ...testCache.data!.indexVolumesAndGroups,
         groups: testCache.data!.indexVolumesAndGroups.groups.filter(

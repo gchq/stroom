@@ -16,7 +16,7 @@
 
 import * as React from "react";
 import { useState } from "react";
-import ReactTable, { RowInfo, Column } from "react-table";
+import ReactTable, { Column, RowInfo } from "react-table";
 import "react-table/react-table.css";
 import Toggle from "react-toggle";
 import "react-toggle/style.css";
@@ -45,15 +45,24 @@ const TokenSearch = () => {
   } = useAppNavigation();
   const [isFilteringEnabled, setFilteringEnabled] = useState(false);
   const noTokenSelected = !selectedTokenRowId;
+  const onFetchData = (state: any) => {
+    return performTokenSearch({
+      pageSize: state.pageSize,
+      page: state.page,
+      sorting: state.sorted,
+      filters: state.filtered,
+    });
+  };
+
   return (
     <div className="page">
       <div className="page__header">
-        <IconHeader icon="key" text={`API Keys`} />
+        <IconHeader icon="key" text={`API Keys`}/>
         <div className="page__buttons Button__container">
-          <Button onClick={() => goToNewApiKey()} icon="plus" text="Create" />
+          <Button onClick={() => goToNewApiKey()} icon="plus" text="Create"/>
 
           {noTokenSelected ? (
-            <Button disabled={noTokenSelected} icon="edit" text="View/edit" />
+            <Button disabled={noTokenSelected} icon="edit" text="View/edit"/>
           ) : (
             <Button
               disabled={noTokenSelected}
@@ -111,14 +120,7 @@ const TokenSearch = () => {
               className,
             };
           }}
-          onFetchData={state => {
-            performTokenSearch({
-              pageSize: state.pageSize,
-              page: state.page,
-              sorting: state.sorted,
-              filters: state.filtered,
-            });
-          }}
+          onFetchData={onFetchData}
         />
       </div>
     </div>

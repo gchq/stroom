@@ -23,19 +23,14 @@ import stroom.dictionary.api.WordListProvider;
 import stroom.query.api.v2.ExpressionOperator;
 import stroom.query.api.v2.Query;
 import stroom.query.api.v2.SearchRequest;
-import stroom.query.common.v2.CompletionState;
-import stroom.query.common.v2.CoprocessorSettingsMap;
-import stroom.query.common.v2.SearchResultHandler;
-import stroom.query.common.v2.Sizes;
-import stroom.query.common.v2.Store;
-import stroom.query.common.v2.StoreFactory;
+import stroom.query.common.v2.*;
 import stroom.search.solr.CachedSolrIndex;
 import stroom.search.solr.SolrIndexCache;
 import stroom.search.solr.search.SearchExpressionQueryBuilder.SearchExpressionQuery;
 import stroom.search.solr.shared.SolrIndexDoc;
 import stroom.search.solr.shared.SolrIndexField;
 import stroom.security.api.SecurityContext;
-import stroom.task.api.TaskContext;
+import stroom.task.api.TaskContextFactory;
 import stroom.ui.config.shared.UiConfig;
 
 import javax.inject.Inject;
@@ -59,7 +54,7 @@ class SolrSearchStoreFactory implements StoreFactory {
     private final SolrIndexCache solrIndexCache;
     private final WordListProvider wordListProvider;
     private final Executor executor;
-    private final Provider<TaskContext> taskContextProvider;
+    private final TaskContextFactory taskContextFactory;
     private final Provider<SolrAsyncSearchTaskHandler> solrAsyncSearchTaskHandlerProvider;
     private final SolrSearchConfig searchConfig;
     private final UiConfig clientConfig;
@@ -69,7 +64,7 @@ class SolrSearchStoreFactory implements StoreFactory {
     public SolrSearchStoreFactory(final SolrIndexCache solrIndexCache,
                                   final WordListProvider wordListProvider,
                                   final Executor executor,
-                                  final Provider<TaskContext> taskContextProvider,
+                                  final TaskContextFactory taskContextFactory,
                                   final Provider<SolrAsyncSearchTaskHandler> solrAsyncSearchTaskHandlerProvider,
                                   final SolrSearchConfig searchConfig,
                                   final UiConfig clientConfig,
@@ -77,7 +72,7 @@ class SolrSearchStoreFactory implements StoreFactory {
         this.solrIndexCache = solrIndexCache;
         this.wordListProvider = wordListProvider;
         this.executor = executor;
-        this.taskContextProvider = taskContextProvider;
+        this.taskContextFactory = taskContextFactory;
         this.solrAsyncSearchTaskHandlerProvider = solrAsyncSearchTaskHandlerProvider;
         this.searchConfig = searchConfig;
         this.clientConfig = clientConfig;
@@ -124,7 +119,7 @@ class SolrSearchStoreFactory implements StoreFactory {
         // Create the search result collector.
         final SolrSearchResultCollector searchResultCollector = SolrSearchResultCollector.create(
                 executor,
-                taskContextProvider,
+                taskContextFactory,
                 solrAsyncSearchTaskHandlerProvider,
                 asyncSearchTask,
                 highlights,

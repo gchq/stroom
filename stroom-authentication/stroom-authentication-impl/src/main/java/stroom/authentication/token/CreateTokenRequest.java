@@ -30,12 +30,14 @@ public class CreateTokenRequest {
     @NotNull
     private String userEmail;
 
+    // TODO should be an enum really
     @NotNull
     @Pattern(
             regexp = "^user$|^api$|^email_reset$",
             message = "tokenType must be one of: 'user', 'api', 'email_reset'")
     private String tokenType;
 
+    // TODO why are we using java.util.Date
     @Nullable
     private Date expiryDate;
 

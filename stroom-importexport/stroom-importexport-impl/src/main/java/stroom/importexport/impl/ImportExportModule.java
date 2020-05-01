@@ -17,6 +17,7 @@
 package stroom.importexport.impl;
 
 import com.google.inject.AbstractModule;
+import stroom.importexport.api.ImportExportDocumentEventLog;
 
 public class ImportExportModule extends AbstractModule {
     @Override

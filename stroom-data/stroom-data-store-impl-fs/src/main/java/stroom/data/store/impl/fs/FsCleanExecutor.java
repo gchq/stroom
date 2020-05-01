@@ -17,17 +17,19 @@
 
 package stroom.data.store.impl.fs;
 
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 import stroom.data.store.impl.fs.shared.FindFsVolumeCriteria;
 import stroom.data.store.impl.fs.shared.FsVolume;
 import stroom.task.api.ExecutorProvider;
 import stroom.task.api.TaskContext;
+import stroom.task.api.TaskContextFactory;
 import stroom.task.api.ThreadPoolImpl;
 import stroom.task.shared.ThreadPool;
 import stroom.util.io.FileUtil;
 import stroom.util.io.StreamUtil;
 import stroom.util.logging.LogExecutionTime;
+
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import javax.inject.Inject;
 import javax.inject.Provider;
@@ -55,19 +57,19 @@ class FsCleanExecutor {
 
     private final Provider<FsCleanSubTaskHandler> fsCleanSubTaskHandlerProvider;
     private final ExecutorProvider executorProvider;
-    private final Provider<TaskContext> taskContextProvider;
+    private final TaskContextFactory taskContextFactory;
     private final DataStoreServiceConfig config;
 
     @Inject
     FsCleanExecutor(final FsVolumeService volumeService,
                     final Provider<FsCleanSubTaskHandler> fsCleanSubTaskHandlerProvider,
                     final ExecutorProvider executorProvider,
-                    final Provider<TaskContext> taskContextProvider,
+                    final TaskContextFactory taskContextFactory,
                     final DataStoreServiceConfig config) {
         this.volumeService = volumeService;
         this.fsCleanSubTaskHandlerProvider = fsCleanSubTaskHandlerProvider;
         this.executorProvider = executorProvider;
-        this.taskContextProvider = taskContextProvider;
+        this.taskContextFactory = taskContextFactory;
         this.config = config;
 
         Duration age;
@@ -80,32 +82,33 @@ class FsCleanExecutor {
     }
 
     public void clean() {
-        final TaskContext taskContext = taskContextProvider.get();
-        taskContext.info(() -> "Starting file system clean task. oldAge = " + oldAge);
+        taskContextFactory.context("File System Clean#", parentContext -> {
+            parentContext.info(() -> "Starting file system clean task. oldAge = " + oldAge);
 
-        final LogExecutionTime logExecutionTime = new LogExecutionTime();
+            final LogExecutionTime logExecutionTime = new LogExecutionTime();
 
-        final List<FsVolume> volumeList = volumeService.find(new FindFsVolumeCriteria()).getValues();
-        if (volumeList != null && volumeList.size() > 0) {
-            // Add to the task steps remaining.
-            final ThreadPool threadPool = new ThreadPoolImpl("File System Clean#", 1, 1, config.getFileSystemCleanBatchSize(), Integer.MAX_VALUE);
-            final Executor executor = executorProvider.get(threadPool);
+            final List<FsVolume> volumeList = volumeService.find(FindFsVolumeCriteria.matchAll()).getValues();
+            if (volumeList != null && volumeList.size() > 0) {
+                // Add to the task steps remaining.
+                final ThreadPool threadPool = new ThreadPoolImpl("File System Clean#", 1, 1, config.getFileSystemCleanBatchSize(), Integer.MAX_VALUE);
+                final Executor executor = executorProvider.get(threadPool);
 
-            final CompletableFuture<?>[] completableFutures = new CompletableFuture<?>[volumeList.size()];
-            int i = 0;
-            for (final FsVolume volume : volumeList) {
-                Runnable runnable = () -> cleanVolume(volume);
-                runnable = taskContext.sub(runnable);
-                final CompletableFuture<Void> completableFuture = CompletableFuture.runAsync(runnable, executor);
-                completableFutures[i++] = completableFuture;
+                final CompletableFuture<?>[] completableFutures = new CompletableFuture<?>[volumeList.size()];
+                int i = 0;
+                for (final FsVolume volume : volumeList) {
+                    final Runnable runnable = taskContextFactory.context(parentContext, "Cleaning: " + volume.getPath(), taskContext ->
+                            cleanVolume(taskContext, volume));
+                    final CompletableFuture<Void> completableFuture = CompletableFuture.runAsync(runnable, executor);
+                    completableFutures[i++] = completableFuture;
+                }
+                CompletableFuture.allOf(completableFutures).join();
             }
-            CompletableFuture.allOf(completableFutures).join();
-        }
 
-        taskContext.info(() -> "start() - Completed file system clean task in " + logExecutionTime);
+            parentContext.info(() -> "start() - Completed file system clean task in " + logExecutionTime);
+        }).run();
     }
 
-    private void cleanVolume(final FsVolume volume) {
+    private void cleanVolume(final TaskContext taskContext, final FsVolume volume) {
         final FsCleanProgress taskProgress = new FsCleanProgress();
         if (deleteOut) {
             final Path dir = Paths.get(volume.getPath());
@@ -122,7 +125,7 @@ class FsCleanExecutor {
                         };
 
                         final FsCleanSubTask subTask = new FsCleanSubTask(taskProgress, volume, "", "", oldAge, false);
-                        fsCleanSubTaskHandlerProvider.get().exec(subTask, deleteListConsumer);
+                        fsCleanSubTaskHandlerProvider.get().exec(taskContext, subTask, deleteListConsumer);
                     }
                 } catch (final IOException e) {
                     LOGGER.error("exec() - Error writing " + DELETE_OUT, e);
@@ -130,7 +133,7 @@ class FsCleanExecutor {
             }
         } else {
             final FsCleanSubTask subTask = new FsCleanSubTask(taskProgress, volume, "", "", oldAge, true);
-            fsCleanSubTaskHandlerProvider.get().exec(subTask, null);
+            fsCleanSubTaskHandlerProvider.get().exec(taskContext, subTask, null);
         }
     }
 }

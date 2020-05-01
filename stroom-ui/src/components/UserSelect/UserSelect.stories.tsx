@@ -21,7 +21,7 @@ import JsonDebug from "testing/JsonDebug";
 import * as Fuse from "fuse.js";
 
 import { useCallback } from "react";
-import { User } from "components/users/types";
+import { Account } from "components/users/types";
 
 import {
   disabledUser,
@@ -49,14 +49,14 @@ const TestHarness: React.FunctionComponent = () => {
     wellUsedUser,
   ];
 
-  const [users, setUsers] = React.useState<User[]>(initialUsers);
-  const [selectedUser, setSelectedUser] = React.useState<User>();
+  const [users, setUsers] = React.useState<Account[]>(initialUsers);
+  const [selectedUser, setSelectedUser] = React.useState<Account>();
   const handleFuzzySearch = useCallback(
     (criteria: string) => {
       var fuse = new Fuse(initialUsers, {
         keys: [{ name: "email", weight: 1 }],
       });
-      const searchResults: User[] = fuse.search(criteria);
+      const searchResults: Account[] = fuse.search(criteria);
       setUsers(searchResults);
     },
     [users, setUsers],

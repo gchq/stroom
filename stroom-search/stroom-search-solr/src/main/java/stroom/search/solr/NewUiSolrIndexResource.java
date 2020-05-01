@@ -23,6 +23,7 @@ import io.swagger.annotations.ApiOperation;
 import io.swagger.annotations.ApiParam;
 import stroom.docref.DocRef;
 import stroom.importexport.api.DocumentData;
+import stroom.importexport.api.ImportExportActionHandler;
 import stroom.importexport.shared.Base64EncodedDocumentData;
 import stroom.importexport.shared.ImportState;
 import stroom.importexport.shared.ImportState.ImportMode;
@@ -46,6 +47,7 @@ import java.util.Set;
         description = "Solr Index API")
 @Path(NewUiSolrIndexResource.BASE_RESOURCE_PATH)
 @Produces(MediaType.APPLICATION_JSON)
+@Consumes(MediaType.APPLICATION_JSON)
 public class NewUiSolrIndexResource implements RestResource, HasHealthCheck {
     public static final String BASE_RESOURCE_PATH = "/solr/index" + ResourcePaths.V1;
 
@@ -57,7 +59,6 @@ public class NewUiSolrIndexResource implements RestResource, HasHealthCheck {
     }
 
     @GET
-    @Produces(MediaType.APPLICATION_JSON)
     @Path("/list")
     @Timed
     @ApiOperation(
@@ -68,8 +69,6 @@ public class NewUiSolrIndexResource implements RestResource, HasHealthCheck {
     }
 
     @POST
-    @Consumes(MediaType.APPLICATION_JSON)
-    @Produces(MediaType.APPLICATION_JSON)
     @Path("/import")
     @Timed
     @ApiOperation(
@@ -78,12 +77,14 @@ public class NewUiSolrIndexResource implements RestResource, HasHealthCheck {
     public DocRef importDocument(@ApiParam("DocumentData") final Base64EncodedDocumentData base64EncodedDocumentData) {
         final DocumentData documentData = DocumentData.fromBase64EncodedDocumentData(base64EncodedDocumentData);
         final ImportState importState = new ImportState(documentData.getDocRef(), documentData.getDocRef().getName());
-        return solrIndexStore.importDocument(documentData.getDocRef(), documentData.getDataMap(), importState, ImportMode.IGNORE_CONFIRMATION);
+        final ImportExportActionHandler.ImpexDetails result = solrIndexStore.importDocument(documentData.getDocRef(), documentData.getDataMap(), importState, ImportMode.IGNORE_CONFIRMATION);
+        if (result != null)
+            return result.getDocRef();
+        else
+            return null;
     }
 
     @POST
-    @Consumes(MediaType.APPLICATION_JSON)
-    @Produces(MediaType.APPLICATION_JSON)
     @Path("/export")
     @Timed
     @ApiOperation(

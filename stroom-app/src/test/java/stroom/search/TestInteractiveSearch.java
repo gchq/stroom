@@ -18,7 +18,6 @@
 package stroom.search;
 
 import org.apache.hadoop.util.ThreadUtil;
-import org.junit.jupiter.api.Disabled;
 import org.junit.jupiter.api.Test;
 import stroom.annotation.api.AnnotationDataSource;
 import stroom.dictionary.impl.DictionaryStore;
@@ -39,7 +38,7 @@ import stroom.search.api.EventRef;
 import stroom.search.api.EventRefs;
 import stroom.search.impl.EventSearchTask;
 import stroom.search.impl.EventSearchTaskHandler;
-import stroom.task.api.TaskContext;
+import stroom.task.api.TaskContextFactory;
 import stroom.task.impl.ExecutorProviderImpl;
 
 import javax.inject.Inject;
@@ -57,7 +56,6 @@ import java.util.function.Supplier;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
-@Disabled
 class TestInteractiveSearch extends AbstractSearchTest {
     @Inject
     private CommonIndexingTestHelper commonIndexingTestHelper;
@@ -68,7 +66,7 @@ class TestInteractiveSearch extends AbstractSearchTest {
     @Inject
     private Executor executor;
     @Inject
-    private Provider<TaskContext> taskContextProvider;
+    private TaskContextFactory taskContextFactory;
     @Inject
     private Provider<EventSearchTaskHandler> eventSearchTaskHandlerProvider;
     @Inject
@@ -460,12 +458,10 @@ class TestInteractiveSearch extends AbstractSearchTest {
                 new EventRef(1, 1), new EventRef(Long.MAX_VALUE, Long.MAX_VALUE), 1000, 1000, 1000, 100);
         final AtomicReference<EventRefs> results = new AtomicReference<>();
 
-        final TaskContext taskContext = taskContextProvider.get();
-        Supplier<EventRefs> supplier = () -> {
+        final Supplier<EventRefs> supplier = taskContextFactory.contextResult("Translate", taskContext -> {
             final EventSearchTaskHandler eventSearchTaskHandler = eventSearchTaskHandlerProvider.get();
             return eventSearchTaskHandler.exec(eventSearchTask);
-        };
-        supplier = taskContext.sub(supplier);
+        });
         CompletableFuture
                 .supplyAsync(supplier, executor)
                 .whenComplete((r, t) -> {

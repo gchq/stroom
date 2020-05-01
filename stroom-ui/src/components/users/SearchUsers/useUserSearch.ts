@@ -1,10 +1,10 @@
 import * as React from "react";
 import { useApi } from "../api";
-import { User } from "../types";
+import { Account } from "../types";
 import { useUserSearchState } from "./useUserSearchState";
 
 interface UserSearchApi {
-  users: User[];
+  users: Account[];
   selectedUser: string;
   remove: (userId: string) => void;
   changeSelectedUser: (userId: string) => void;
@@ -18,20 +18,21 @@ const useUserSearch = (): UserSearchApi => {
     setSelectedUser,
     setUsers,
   } = useUserSearchState();
-  const { search: searchApi } = useApi();
+  const {
+    search: searchApi,
+    remove: removeUserUsingApi,
+  } = useApi();
 
   React.useEffect(() => {
-    searchApi().then(users => {
-      setUsers(users);
+    searchApi().then(resultPage => {
+      setUsers(resultPage.values);
     });
   }, [searchApi, setUsers]);
-
-  const { remove: removeUserUsingApi } = useApi();
 
   const remove = React.useCallback(
     (userId: string) => {
       removeUserUsingApi(userId).then(() =>
-        searchApi().then(users => setUsers(users)),
+        searchApi().then(resultPage => setUsers(resultPage.values)),
       );
     },
     [removeUserUsingApi, searchApi, setUsers],
@@ -39,7 +40,7 @@ const useUserSearch = (): UserSearchApi => {
 
   const search = React.useCallback(
     (userId: string) => {
-      searchApi(userId).then(users => setUsers(users));
+      searchApi(userId).then(resultPage => setUsers(resultPage.values));
     },
     [searchApi, setUsers],
   );

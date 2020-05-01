@@ -32,11 +32,10 @@ import javax.ws.rs.core.MediaType;
 @Api(value = "stepping - /v1")
 @Path("/stepping" + ResourcePaths.V1)
 @Produces(MediaType.APPLICATION_JSON)
+@Consumes(MediaType.APPLICATION_JSON)
 public interface SteppingResource extends RestResource, DirectRestService {
     @POST
     @Path("/getPipelineForStepping")
-    @Consumes(MediaType.APPLICATION_JSON)
-    @Produces(MediaType.APPLICATION_JSON)
     @ApiOperation(
             value = "Get a pipeline for stepping",
             response = DocRef.class)
@@ -44,8 +43,6 @@ public interface SteppingResource extends RestResource, DirectRestService {
 
     @POST
     @Path("/step")
-    @Consumes(MediaType.APPLICATION_JSON)
-    @Produces(MediaType.APPLICATION_JSON)
     @ApiOperation(
             value = "Step a pipeline",
             response = SteppingResult.class)

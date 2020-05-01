@@ -101,19 +101,25 @@ public abstract class AbstractSearchTest extends AbstractCoreIntegrationTest {
         final SearchRequest searchRequest = new SearchRequest(queryKey, query, resultRequests, ZoneOffset.UTC.getId(), false);
         final SearchResponse searchResponse = AbstractSearchTest.search(searchRequest, searchResponseCreatorManager);
 
+        assertThat(searchResponse).as("Search response is null").isNotNull();
+        if (searchResponse.getErrors() != null && searchResponse.getErrors().size() > 0) {
+            final String errors = String.join(", ", searchResponse.getErrors());
+            assertThat(errors).as("Found errors: " + errors).isBlank();
+        }
+        assertThat(searchResponse.complete()).as("Search is not complete").isTrue();
+        assertThat(searchResponse.getResults()).as("Search response has null results").isNotNull();
+
         final Map<String, List<Row>> rows = new HashMap<>();
-        if (searchResponse != null && searchResponse.getResults() != null) {
-            for (final Result result : searchResponse.getResults()) {
-                final String componentId = result.getComponentId();
-                final TableResult tableResult = (TableResult) result;
+        for (final Result result : searchResponse.getResults()) {
+            final String componentId = result.getComponentId();
+            final TableResult tableResult = (TableResult) result;
 
-                if (tableResult.getResultRange() != null && tableResult.getRows() != null) {
-                    final stroom.query.api.v2.OffsetRange range = tableResult.getResultRange();
+            if (tableResult.getResultRange() != null && tableResult.getRows() != null) {
+                final stroom.query.api.v2.OffsetRange range = tableResult.getResultRange();
 
-                    for (long i = range.getOffset(); i < range.getLength(); i++) {
-                        final List<Row> values = rows.computeIfAbsent(componentId, k -> new ArrayList<>());
-                        values.add(tableResult.getRows().get((int) i));
-                    }
+                for (long i = range.getOffset(); i < range.getLength(); i++) {
+                    final List<Row> values = rows.computeIfAbsent(componentId, k -> new ArrayList<>());
+                    values.add(tableResult.getRows().get((int) i));
                 }
             }
         }
@@ -122,6 +128,9 @@ public abstract class AbstractSearchTest extends AbstractCoreIntegrationTest {
             assertThat(rows).isEmpty();
         } else {
             assertThat(rows).hasSize(componentIds.size());
+
+            int count = rows.values().iterator().next().size();
+            assertThat(count).as("Correct number of results found").isEqualTo(expectResultCount);
         }
         resultMapConsumer.accept(rows);
     }

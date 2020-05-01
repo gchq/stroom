@@ -16,14 +16,6 @@
 
 package stroom.index.client.presenter;
 
-import com.google.gwt.cell.client.TextCell;
-import com.google.gwt.core.shared.GWT;
-import com.google.gwt.dom.client.NativeEvent;
-import com.google.gwt.user.cellview.client.Column;
-import com.google.gwt.user.cellview.client.Header;
-import com.google.inject.Inject;
-import com.google.web.bindery.event.shared.EventBus;
-import com.gwtplatform.mvp.client.MyPresenterWidget;
 import stroom.alert.client.event.AlertEvent;
 import stroom.alert.client.event.ConfirmEvent;
 import stroom.cell.info.client.InfoColumn;
@@ -59,6 +51,15 @@ import stroom.widget.popup.client.presenter.PopupView.PopupType;
 import stroom.widget.tooltip.client.presenter.TooltipPresenter;
 import stroom.widget.tooltip.client.presenter.TooltipUtil;
 
+import com.google.gwt.cell.client.TextCell;
+import com.google.gwt.core.shared.GWT;
+import com.google.gwt.dom.client.NativeEvent;
+import com.google.gwt.user.cellview.client.Column;
+import com.google.gwt.user.cellview.client.Header;
+import com.google.inject.Inject;
+import com.google.web.bindery.event.shared.EventBus;
+import com.gwtplatform.mvp.client.MyPresenterWidget;
+
 import java.util.HashSet;
 import java.util.Set;
 import java.util.function.Consumer;
@@ -73,8 +74,8 @@ public class IndexShardPresenter extends MyPresenterWidget<DataGridView<IndexSha
     private final ClientSecurityContext securityContext;
     private RestDataProvider<IndexShard, ResultPage<IndexShard>> dataProvider;
     private ResultPage<IndexShard> resultList = null;
-    private final FindIndexShardCriteria selectionCriteria = new FindIndexShardCriteria();
-    private final FindIndexShardCriteria queryCriteria = new FindIndexShardCriteria();
+    private final FindIndexShardCriteria selectionCriteria = FindIndexShardCriteria.matchNone();
+    private final FindIndexShardCriteria queryCriteria = FindIndexShardCriteria.matchNone();
 
     private ButtonView buttonFlush;
     private ButtonView buttonDelete;
@@ -122,7 +123,7 @@ public class IndexShardPresenter extends MyPresenterWidget<DataGridView<IndexSha
     }
 
     private void enableButtons() {
-        final boolean enabled = !readOnly && (selectionCriteria.getIndexShardIdSet().size() > 0 || Boolean.TRUE.equals(selectionCriteria.getIndexShardIdSet().getMatchAll()));
+        final boolean enabled = !readOnly && !selectionCriteria.getIndexShardIdSet().isMatchNothing();
         if (buttonFlush != null) {
             if (readOnly) {
                 buttonFlush.setTitle("Flush is not available as index is read only");
@@ -168,8 +169,7 @@ public class IndexShardPresenter extends MyPresenterWidget<DataGridView<IndexSha
                 TickBoxCell.create(tickBoxAppearance, false, false)) {
             @Override
             public TickBoxState getValue(final IndexShard indexShard) {
-                final boolean match = Boolean.TRUE.equals(selectionCriteria.getIndexShardIdSet().getMatchAll())
-                        || selectionCriteria.getIndexShardIdSet().contains(indexShard.getId());
+                final boolean match = selectionCriteria.getIndexShardIdSet().isMatch(indexShard.getId());
                 return TickBoxState.fromBoolean(match);
             }
 
@@ -177,7 +177,7 @@ public class IndexShardPresenter extends MyPresenterWidget<DataGridView<IndexSha
         final Header<TickBoxState> header = new Header<TickBoxState>(TickBoxCell.create(tickBoxAppearance, false, false)) {
             @Override
             public TickBoxState getValue() {
-                if (Boolean.TRUE.equals(selectionCriteria.getIndexShardIdSet().getMatchAll())) {
+                if (selectionCriteria.getIndexShardIdSet().isMatchAll()) {
                     return TickBoxState.TICK;
                 } else if (selectionCriteria.getIndexShardIdSet().size() > 0) {
                     return TickBoxState.HALF_TICK;
@@ -208,7 +208,7 @@ public class IndexShardPresenter extends MyPresenterWidget<DataGridView<IndexSha
                 selectionCriteria.getIndexShardIdSet().add(row.getId());
             } else {
                 // De-selecting one and currently matching all ?
-                if (Boolean.TRUE.equals(selectionCriteria.getIndexShardIdSet().getMatchAll())) {
+                if (selectionCriteria.getIndexShardIdSet().isMatchAll()) {
                     selectionCriteria.getIndexShardIdSet().setMatchAll(false);
                     selectionCriteria.getIndexShardIdSet().addAll(getResultStreamIdSet());
                 }
@@ -422,7 +422,7 @@ public class IndexShardPresenter extends MyPresenterWidget<DataGridView<IndexSha
     private void onChangeData(final ResultPage<IndexShard> data) {
         resultList = data;
 
-        if (!Boolean.TRUE.equals(selectionCriteria.getIndexShardIdSet().getMatchAll())) {
+        if (!selectionCriteria.getIndexShardIdSet().isMatchAll()) {
             if (selectionCriteria.getIndexShardIdSet().getSet().retainAll(getResultStreamIdSet())) {
                 enableButtons();
             }
@@ -430,8 +430,8 @@ public class IndexShardPresenter extends MyPresenterWidget<DataGridView<IndexSha
     }
 
     private void flush() {
-        if (Boolean.TRUE.equals(selectionCriteria.getIndexShardIdSet().getMatchAll())) {
-            ConfirmEvent.fire(this, "Are you sure you want to flush the selected index shards?", result -> {
+        if (selectionCriteria.getIndexShardIdSet().isMatchAll()) {
+            ConfirmEvent.fire(this, "Are you sure you want to flush all index shards?", result -> {
                 if (result) {
                     ConfirmEvent.fire(IndexShardPresenter.this,
                             "You have selected to flush all filtered index shards! Are you absolutely sure you want to do this?",
@@ -442,7 +442,7 @@ public class IndexShardPresenter extends MyPresenterWidget<DataGridView<IndexSha
                             });
                 }
             });
-        } else if (selectionCriteria.getIndexShardIdSet().isConstrained()) {
+        } else if (selectionCriteria.getIndexShardIdSet().size() > 0) {
             ConfirmEvent.fire(this, "Are you sure you want to flush the selected index shards?", result -> {
                 if (result) {
                     doFlush();
@@ -455,8 +455,8 @@ public class IndexShardPresenter extends MyPresenterWidget<DataGridView<IndexSha
     }
 
     private void delete() {
-        if (Boolean.TRUE.equals(selectionCriteria.getIndexShardIdSet().getMatchAll())) {
-            ConfirmEvent.fire(this, "Are you sure you want to delete the selected index shards?",
+        if (selectionCriteria.getIndexShardIdSet().isMatchAll()) {
+            ConfirmEvent.fire(this, "Are you sure you want to delete all index shards?",
                     result -> {
                         if (result) {
                             ConfirmEvent.fire(IndexShardPresenter.this,
@@ -468,7 +468,7 @@ public class IndexShardPresenter extends MyPresenterWidget<DataGridView<IndexSha
                                     });
                         }
                     });
-        } else if (selectionCriteria.getIndexShardIdSet().isConstrained()) {
+        } else if (selectionCriteria.getIndexShardIdSet().size() > 0) {
             ConfirmEvent.fire(this, "Are you sure you want to delete the selected index shards?",
                     result -> {
                         if (result) {
@@ -485,28 +485,29 @@ public class IndexShardPresenter extends MyPresenterWidget<DataGridView<IndexSha
         nodeCache.listEnabledNodes(nodeNames -> nodeNames.forEach(nodeName -> {
             final Rest<Boolean> rest = restFactory.create();
             rest
-                    .onSuccess(result ->
-                            AlertEvent.fireInfo(IndexShardPresenter.this,
-                                    "Selected index shards will be flushed. Please be patient as this may take some time.",
-                                    this::refresh))
+                    .onSuccess(result -> refresh())
                     .call(INDEX_RESOURCE)
                     .flushIndexShards(nodeName, selectionCriteria);
         }), throwable -> {
         });
 
+        AlertEvent.fireInfo(IndexShardPresenter.this,
+                "Selected index shards will be flushed. Please be patient as this may take some time.",
+                null);
     }
 
     private void doDelete() {
         nodeCache.listEnabledNodes(nodeNames -> nodeNames.forEach(nodeName -> {
             final Rest<Boolean> rest = restFactory.create();
             rest
-                    .onSuccess(result ->
-                            AlertEvent.fireInfo(IndexShardPresenter.this,
-                                    "Selected index shards will be deleted. Please be patient as this may take some time.",
-                                    this::refresh))
+                    .onSuccess(result -> refresh())
                     .call(INDEX_RESOURCE)
                     .deleteIndexShards(nodeName, selectionCriteria);
         }), throwable -> {
         });
+
+        AlertEvent.fireInfo(IndexShardPresenter.this,
+                "Selected index shards will be deleted. Please be patient as this may take some time.",
+                null);
     }
 }

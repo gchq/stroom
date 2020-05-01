@@ -17,6 +17,7 @@
 
 package stroom.index.client.presenter;
 
+import com.google.gwt.core.shared.GWT;
 import com.google.gwt.event.dom.client.KeyDownEvent;
 import com.google.gwt.event.dom.client.KeyDownHandler;
 import com.google.gwt.user.client.ui.TextArea;
@@ -25,23 +26,38 @@ import com.google.web.bindery.event.shared.EventBus;
 import com.gwtplatform.mvp.client.HasUiHandlers;
 import com.gwtplatform.mvp.client.View;
 import stroom.core.client.event.DirtyKeyDownHander;
+import stroom.dispatch.client.Rest;
+import stroom.dispatch.client.RestFactory;
 import stroom.docref.DocRef;
 import stroom.entity.client.presenter.DocumentSettingsPresenter;
 import stroom.entity.client.presenter.ReadOnlyChangeHandler;
+import stroom.entity.shared.ExpressionCriteria;
 import stroom.feed.client.presenter.SupportedRetentionAge;
 import stroom.index.client.presenter.IndexSettingsPresenter.IndexSettingsView;
 import stroom.index.shared.IndexDoc;
 import stroom.index.shared.IndexDoc.PartitionBy;
+import stroom.index.shared.IndexVolumeGroup;
+import stroom.index.shared.IndexVolumeGroupResource;
 import stroom.item.client.ItemListBox;
 import stroom.item.client.StringListBox;
+import stroom.util.shared.ResultPage;
+
+import java.util.List;
+import java.util.stream.Collectors;
 
 public class IndexSettingsPresenter extends DocumentSettingsPresenter<IndexSettingsView, IndexDoc> implements IndexSettingsUiHandlers {
+    private static final IndexVolumeGroupResource INDEX_VOLUME_GROUP_RESOURCE = GWT.create(IndexVolumeGroupResource.class);
+
+    private final RestFactory restFactory;
+
     @Inject
-    public IndexSettingsPresenter(final EventBus eventBus, final IndexSettingsView view) {
+    public IndexSettingsPresenter(final EventBus eventBus,
+                                  final IndexSettingsView view,
+                                  final RestFactory restFactory) {
         super(eventBus, view);
+        this.restFactory = restFactory;
 
         view.setUiHandlers(this);
-        view.getRetentionAge().addItems(SupportedRetentionAge.values());
     }
 
     @Override
@@ -72,8 +88,8 @@ public class IndexSettingsPresenter extends DocumentSettingsPresenter<IndexSetti
         getView().setShardsPerPartition(index.getShardsPerPartition());
         getView().setPartitionBy(index.getPartitionBy());
         getView().setPartitionSize(index.getPartitionSize());
-        getView().getRetentionAge().setSelectedItem(SupportedRetentionAge.get(index.getRetentionDayAge()));
-        getView().getVolumeGroups().setSelected(index.getVolumeGroupName());
+        updateRetentionAge(SupportedRetentionAge.get(index.getRetentionDayAge()));
+        updateGroupList(index.getVolumeGroupName());
     }
 
     @Override
@@ -85,6 +101,33 @@ public class IndexSettingsPresenter extends DocumentSettingsPresenter<IndexSetti
         index.setPartitionSize(getView().getPartitionSize());
         index.setRetentionDayAge(getView().getRetentionAge().getSelectedItem().getDays());
         index.setVolumeGroupName(getView().getVolumeGroups().getSelected());
+    }
+
+    private void updateRetentionAge(final SupportedRetentionAge selected) {
+        getView().getRetentionAge().clear();
+        getView().getRetentionAge().addItems(SupportedRetentionAge.values());
+        getView().getRetentionAge().setSelectedItem(selected);
+    }
+
+    private void updateGroupList(final String selected) {
+        final Rest<ResultPage<IndexVolumeGroup>> rest = restFactory.create();
+        rest
+                .onSuccess(result -> {
+                    final List<String> volumeGroupNames = result
+                            .getValues()
+                            .stream()
+                            .map(IndexVolumeGroup::getName)
+                            .collect(Collectors.toList());
+
+                    StringListBox listBox = getView().getVolumeGroups();
+                    listBox.clear();
+                    listBox.addItems(volumeGroupNames);
+                    if (selected != null && !selected.isEmpty()) {
+                        listBox.setSelected(selected);
+                    }
+                })
+                .call(INDEX_VOLUME_GROUP_RESOURCE)
+                .find(new ExpressionCriteria());
     }
 
     public interface IndexSettingsView extends View, ReadOnlyChangeHandler, HasUiHandlers<IndexSettingsUiHandlers> {

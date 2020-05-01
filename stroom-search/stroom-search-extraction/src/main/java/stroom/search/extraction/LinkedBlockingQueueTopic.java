@@ -32,7 +32,7 @@ class LinkedBlockingQueueTopic<T> implements Topic<T> {
 
     @Override
     public T get() {
-        T value = null;
+        T value;
         try {
             value = queue.take();
         } catch (final InterruptedException e) {

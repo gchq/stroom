@@ -20,6 +20,7 @@ package stroom.data.store.impl.fs;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
+import org.lmdbjava.Stat;
 import stroom.data.shared.StreamTypeNames;
 import stroom.data.store.api.InputStreamProvider;
 import stroom.data.store.api.Source;
@@ -222,7 +223,7 @@ class TestFileSystemStreamStore extends AbstractCoreIntegrationTest {
     }
 
     private void testCriteria(final FindMetaCriteria criteria, final int expectedStreams) throws IOException {
-        metaService.updateStatus(new FindMetaCriteria(), Status.DELETED);
+        metaService.updateStatus(new FindMetaCriteria(), null, Status.DELETED);
 
         createMeta(FEED1, null);
         createMeta(FEED2, null);
@@ -232,7 +233,7 @@ class TestFileSystemStreamStore extends AbstractCoreIntegrationTest {
         final ResultPage<Meta> streams = metaService.find(criteria);
         assertThat(streams.size()).isEqualTo(expectedStreams);
 
-        metaService.updateStatus(new FindMetaCriteria(), Status.DELETED);
+        metaService.updateStatus(new FindMetaCriteria(), null, Status.DELETED);
     }
 
     @Test
@@ -290,14 +291,12 @@ class TestFileSystemStreamStore extends AbstractCoreIntegrationTest {
     void testFindDeleteAndUndelete() throws IOException {
         final Meta meta = createMeta(FEED1, null);
 
-        FindMetaCriteria findMetaCriteria = new FindMetaCriteria();
-        findMetaCriteria.obtainSelectedIdSet().add(meta.getId());
-        final long deleted = metaService.updateStatus(findMetaCriteria, Status.DELETED);
+        FindMetaCriteria findMetaCriteria = FindMetaCriteria.createFromMeta(meta);
+        final long deleted = metaService.updateStatus(findMetaCriteria, Status.UNLOCKED, Status.DELETED);
 
         assertThat(deleted).isEqualTo(1L);
 
-        findMetaCriteria = new FindMetaCriteria();
-        findMetaCriteria.obtainSelectedIdSet().add(meta.getId());
+        findMetaCriteria = new FindMetaCriteria(MetaExpressionUtil.createDataIdExpression(meta.getId()));
         assertThat(metaService.find(findMetaCriteria).size()).isEqualTo(1L);
 
         findMetaCriteria.setExpression(MetaExpressionUtil.createStatusExpression(Status.UNLOCKED));
@@ -311,7 +310,7 @@ class TestFileSystemStreamStore extends AbstractCoreIntegrationTest {
 
         // This will undelete
         findMetaCriteria.setExpression(MetaExpressionUtil.createStatusExpression(Status.DELETED));
-        assertThat(metaService.updateStatus(findMetaCriteria, Status.UNLOCKED)).isEqualTo(1L);
+        assertThat(metaService.updateStatus(findMetaCriteria, Status.DELETED, Status.UNLOCKED)).isEqualTo(1L);
 
         findMetaCriteria.setExpression(MetaExpressionUtil.createStatusExpression(Status.UNLOCKED));
         assertThat(metaService.find(findMetaCriteria).size()).isEqualTo(1L);
@@ -404,9 +403,7 @@ class TestFileSystemStreamStore extends AbstractCoreIntegrationTest {
                 .build();
         assertThat(metaService.find(new FindMetaCriteria(expression)).size() >= 1).as("Expecting to find at least 1 with UNLOCKED criteria").isTrue();
 
-        final FindDataVolumeCriteria volumeCriteria = new FindDataVolumeCriteria();
-//        volumeCriteria.obtainStreamStatusSet().add(StreamStatus.UNLOCKED);
-        volumeCriteria.obtainMetaIdSet().add(exactMetaData.getId());
+        final FindDataVolumeCriteria volumeCriteria = FindDataVolumeCriteria.create(exactMetaData);
         assertThat(dataVolumeService.find(volumeCriteria).size() >= 1).as("Expecting to find at least 1 with day old criteria").isTrue();
     }
 
@@ -565,8 +562,7 @@ class TestFileSystemStreamStore extends AbstractCoreIntegrationTest {
             }
         }
 
-        final FindMetaCriteria criteria = new FindMetaCriteria();
-        criteria.obtainSelectedIdSet().add(reloadMetaData.getId());
+        final FindMetaCriteria criteria = FindMetaCriteria.createFromMeta(reloadMetaData);
 
 //        streamAttributeValueFlush.flush();
         final MetaRow metaRow = metaService.findRows(criteria).getFirst();

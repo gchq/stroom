@@ -38,6 +38,7 @@ import java.util.stream.Collectors;
 @Api(value = "pipeline - /v1")
 @Path("/pipelines" + ResourcePaths.V1)
 @Produces(MediaType.APPLICATION_JSON)
+@Consumes(MediaType.APPLICATION_JSON)
 public class NewUiPipelineResource implements RestResource {
     private final PipelineStore pipelineStore;
     private final PipelineStackLoader pipelineStackLoader;
@@ -124,7 +125,6 @@ public class NewUiPipelineResource implements RestResource {
     }
 
     @GET
-    @Produces(MediaType.APPLICATION_JSON)
     public Response search(@QueryParam("offset") Integer offset,
                            @QueryParam("pageSize") Integer pageSize,
                            @QueryParam("filter") String filter) {
@@ -169,7 +169,6 @@ public class NewUiPipelineResource implements RestResource {
 
     @GET
     @Path("/{pipelineId}")
-    @Produces(MediaType.APPLICATION_JSON)
     public Response fetch(@PathParam("pipelineId") final String pipelineId) {
         return securityContext.secureResult(() -> pipelineScopeRunnable.scopeResult(() -> {
             // A user should be allowed to read pipelines that they are inheriting from as long as they have 'use' permission on them.
@@ -204,7 +203,6 @@ public class NewUiPipelineResource implements RestResource {
 
     @POST
     @Path("/{parentPipelineId}/inherit")
-    @Produces(MediaType.APPLICATION_JSON)
     public Response createInherited(@PathParam("parentPipelineId") final String pipelineId,
                                     final DocRef parentPipeline) {
 
@@ -225,8 +223,6 @@ public class NewUiPipelineResource implements RestResource {
 
     @POST
     @Path("/{pipelineId}")
-    @Produces(MediaType.APPLICATION_JSON)
-    @Consumes(MediaType.APPLICATION_JSON)
     public Response save(@PathParam("pipelineId") final String pipelineId,
                          final PipelineDTO pipelineDocUpdates) {
         pipelineScopeRunnable.scopeRunnable(() -> {

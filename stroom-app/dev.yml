@@ -26,6 +26,11 @@ logging:
     stroom: INFO
     io.dropwizard: INFO
     org.eclipse.jetty: INFO
+    org.glassfish: INFO
+    org.glassfish.jersey: INFO
+    #    org.glassfish.jersey.logging.LoggingFeature: INFO
+    #    org.glassfish.jersey.server.ServerRuntime.Responder: INFO
+    #    org.glassfish.jersey.server.validation.internal.ValidationExceptionMapper: FINER
     org.flywaydb: INFO
 #    Comment this out if you want logging of the REST request/responses
     org.glassfish.jersey.logging.LoggingFeature: "OFF"
@@ -60,6 +65,8 @@ logging:
     logFormat: "%-6level [%d{\"yyyy-MM-dd'T'HH:mm:ss.SSS'Z'\",UTC}] [%t] %logger - %X{code} %msg %n"
 
 appConfig:
+  authentication:
+    useDefaultOpenIdCredentials: ${USE_DEFAULT_OPEN_ID_CREDENTIALS:-true}
   commonDbDetails:
     connection:
       jdbcDriverClassName: ${STROOM_JDBC_DRIVER_CLASS_NAME:-com.mysql.cj.jdbc.Driver}
@@ -75,8 +82,18 @@ appConfig:
     name: node1a
   path:
     temp: "/tmp/stroom"
+  # Comment out the publicUri block if you are not running with nginx
+  publicUri:
+    hostname: localhost
+    port: 443
   serviceDiscovery:
     zookeeperUrl: ${STROOM_SERVICE_DISCOVERY_ZOOKEEPER_URL:-localhost:2181}
+    servicesHostNameOrIpAddress: ${STROOM_ADVERTISED_URL:-localhost}
+  statistics:
+    hbase:
+      # UUID of the Kafka Config Doc that is created by Setup Sample Data
+      # Debatable if the doc should be added to a content pack or not
+      kafkaConfigUuid: 7cbf9153-869c-43bb-a316-1c652673e680
   volumes:
     createDefaultOnStart: false
 

@@ -20,7 +20,6 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import stroom.pipeline.errorhandler.ProcessException;
 import stroom.pipeline.errorhandler.TerminatedException;
-import stroom.task.api.TaskContext;
 
 import javax.inject.Inject;
 import javax.inject.Singleton;
@@ -43,9 +42,9 @@ public class RollingDestinations {
         this.appenderConfig = appenderConfig;
     }
 
-    public RollingDestination borrow(final TaskContext taskContext, final Object key,
+    public RollingDestination borrow(final Object key,
                                      final RollingDestinationFactory destinationFactory) throws IOException {
-        if (taskContext != null && Thread.currentThread().isInterrupted()) {
+        if (Thread.currentThread().isInterrupted()) {
             throw new TerminatedException();
         }
 

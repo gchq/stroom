@@ -1,15 +1,14 @@
 import { HttpRequest, HttpResponse } from "@pollyjs/adapter-fetch";
 
 import { TestCache } from "../PollyDecorator";
-import { Config } from "startup/config/types";
 import { ResourceBuilder } from "./types";
 
 const resourceBuilder: ResourceBuilder = (
   server: any,
-  { stroomBaseServiceUrl }: Config,
+  apiUrl: any,
   testCache: TestCache,
 ) => {
-  const resource = `${stroomBaseServiceUrl}/streamattributemap/v1`;
+  const resource = apiUrl("/streamattributemap/v1");
 
   /**
    * The StreamAttributeMap resource supports expression-based search.

@@ -1,26 +1,33 @@
 package stroom.security.impl;
 
+import stroom.authentication.api.OpenIdClientDetailsFactory;
 import stroom.config.common.UriFactory;
+import stroom.util.shared.ResourcePaths;
 
 import javax.inject.Inject;
 
 public class ResolvedOpenIdConfig {
     public static final String INTERNAL_ISSUER = "stroom";
-    public static final String INTERNAL_AUTH_ENDPOINT = "/api/oauth2/v1/noauth/auth";
-    public static final String INTERNAL_TOKEN_ENDPOINT = "/api/oauth2/v1/noauth/token";
-    public static final String INTERNAL_JWKS_URI = "/api/oauth2/v1/noauth/certs";
+    // These paths must tally up with those in stroom.authentication.oauth2.OAuth2Resource
+    private static final String OAUTH2_BASE_PATH = "/oauth2/v1/noauth";
+    public static final String INTERNAL_AUTH_ENDPOINT = ResourcePaths.buildAuthenticatedApiPath(
+            OAUTH2_BASE_PATH, "/auth");
+    public static final String INTERNAL_TOKEN_ENDPOINT = ResourcePaths.buildAuthenticatedApiPath(
+            OAUTH2_BASE_PATH, "/token");
+    public static final String INTERNAL_JWKS_URI = ResourcePaths.buildAuthenticatedApiPath(
+            OAUTH2_BASE_PATH, "/certs");
 
     private final UriFactory uriFactory;
     private final OpenIdConfig openIdConfig;
-    private final OpenIdClientDetails openIdClientDetails;
+    private final OpenIdClientDetailsFactory openIdClientDetailsFactory;
 
     @Inject
     public ResolvedOpenIdConfig(final UriFactory uriFactory,
                                 final OpenIdConfig openIdConfig,
-                                final OpenIdClientDetails openIdClientDetails) {
+                                final OpenIdClientDetailsFactory openIdClientDetailsFactory) {
         this.uriFactory = uriFactory;
         this.openIdConfig = openIdConfig;
-        this.openIdClientDetails = openIdClientDetails;
+        this.openIdClientDetailsFactory = openIdClientDetailsFactory;
     }
 
     public String getIssuer() {
@@ -32,6 +39,7 @@ public class ResolvedOpenIdConfig {
 
     public String getAuthEndpoint() {
         if (openIdConfig.isUseInternal()) {
+            // This needs to be the public Uri as it will be used in the browser
             return uriFactory.publicUri(INTERNAL_AUTH_ENDPOINT).toString();
         }
         return openIdConfig.getAuthEndpoint();
@@ -46,21 +54,21 @@ public class ResolvedOpenIdConfig {
 
     public String getJwksUri() {
         if (openIdConfig.isUseInternal()) {
-            return uriFactory.publicUri(INTERNAL_JWKS_URI).toString();
+            return uriFactory.localUri(INTERNAL_JWKS_URI).toString();
         }
         return openIdConfig.getJwksUri();
     }
 
     public String getClientId() {
         if (openIdConfig.isUseInternal()) {
-            return openIdClientDetails.getClientId();
+            return openIdClientDetailsFactory.getOAuth2Client().getClientId();
         }
         return openIdConfig.getClientId();
     }
 
     public String getClientSecret() {
         if (openIdConfig.isUseInternal()) {
-            return openIdClientDetails.getClientSecret();
+            return openIdClientDetailsFactory.getOAuth2Client().getClientSecret();
         }
         return openIdConfig.getClientSecret();
     }

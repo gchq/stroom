@@ -15,14 +15,14 @@
  */
 
 import * as React from "react";
-import { User } from "components/users/types";
+import { Account } from "components/users/types";
 import { Select } from "antd";
 import styled from "styled-components";
 
 interface Props {
   onChange: (user: string) => void;
   onSearch: (search: string) => void;
-  options: User[];
+  options: Account[];
 }
 
 const { Option } = Select;

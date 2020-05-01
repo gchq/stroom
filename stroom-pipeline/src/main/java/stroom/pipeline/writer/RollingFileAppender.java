@@ -25,7 +25,6 @@ import stroom.pipeline.factory.PipelineProperty;
 import stroom.pipeline.shared.ElementIcons;
 import stroom.pipeline.shared.data.PipelineElementType;
 import stroom.pipeline.shared.data.PipelineElementType.Category;
-import stroom.task.api.TaskContext;
 import stroom.util.io.FileUtil;
 
 import javax.inject.Inject;
@@ -59,9 +58,8 @@ public class RollingFileAppender extends AbstractRollingAppender {
 
     @Inject
     RollingFileAppender(final RollingDestinations destinations,
-                        final TaskContext taskContext,
                         final PathCreator pathCreator) {
-        super(destinations, taskContext);
+        super(destinations);
         this.pathCreator = pathCreator;
     }
 

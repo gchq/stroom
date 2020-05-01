@@ -20,14 +20,12 @@ import useAuthenticationContext from "./useAuthenticationContext";
 
 interface Props {
   referrer: string;
-  uiUrl: string;
   loginUrl: string;
 }
 
 const AuthenticationRequest: React.FunctionComponent<Props> =
   ({
      referrer,
-     uiUrl,
      loginUrl,
    }) => {
     const { login } = useSessionApi();
@@ -47,7 +45,7 @@ const AuthenticationRequest: React.FunctionComponent<Props> =
       //     uiUrl,
       //     loginUrl,
       // );
-    }, [login, setIdToken, referrer, uiUrl, loginUrl]);
+    }, [login, setIdToken, referrer, loginUrl]);
 
     return null;
   };
