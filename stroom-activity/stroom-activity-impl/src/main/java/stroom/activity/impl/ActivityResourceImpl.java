@@ -1,16 +1,5 @@
 package stroom.activity.impl;
 
-import event.logging.Banner;
-import event.logging.BaseAdvancedQueryOperator.And;
-import event.logging.Event;
-import event.logging.Event.EventDetail.Update;
-import event.logging.MultiObject;
-import event.logging.Object;
-import event.logging.ObjectOutcome;
-import event.logging.Query;
-import event.logging.Query.Advanced;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 import stroom.activity.api.ActivityService;
 import stroom.activity.api.CurrentActivity;
 import stroom.activity.api.FindActivityCriteria;
@@ -22,11 +11,22 @@ import stroom.event.logging.api.DocumentEventLog;
 import stroom.event.logging.api.PurposeUtil;
 import stroom.event.logging.api.StroomEventLoggingService;
 import stroom.security.api.SecurityContext;
-import stroom.util.shared.StringCriteria;
+import stroom.util.shared.ResultPage;
 import stroom.util.shared.StringCriteria.MatchStyle;
 
+import event.logging.Banner;
+import event.logging.BaseAdvancedQueryOperator.And;
+import event.logging.Event;
+import event.logging.Event.EventDetail.Update;
+import event.logging.MultiObject;
+import event.logging.Object;
+import event.logging.ObjectOutcome;
+import event.logging.Query;
+import event.logging.Query.Advanced;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+
 import javax.inject.Inject;
-import java.util.List;
 
 class ActivityResourceImpl implements ActivityResource {
     private static final Logger LOGGER = LoggerFactory.getLogger(ActivityResourceImpl.class);
@@ -51,7 +51,7 @@ class ActivityResourceImpl implements ActivityResource {
     }
 
     @Override
-    public List<Activity> list(final String name) {
+    public ResultPage<Activity> list(final String name) {
         final FindActivityCriteria criteria = new FindActivityCriteria();
 
 //        String filter = name;
@@ -75,7 +75,7 @@ class ActivityResourceImpl implements ActivityResource {
 //        }
 
         return securityContext.secureResult(() -> {
-            List<Activity> result;
+            ResultPage<Activity> result;
 
             final Query query = new Query();
             final Advanced advanced = new Advanced();

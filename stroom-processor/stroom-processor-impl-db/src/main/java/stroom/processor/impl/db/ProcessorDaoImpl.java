@@ -103,11 +103,11 @@ class ProcessorDaoImpl implements ProcessorDao {
                 .select()
                 .from(PROCESSOR)
                 .where(conditions)
-                .limit(JooqUtil.getLimit(criteria.getPageRequest()))
+                .limit(JooqUtil.getLimit(criteria.getPageRequest(), true))
                 .offset(JooqUtil.getOffset(criteria.getPageRequest()))
                 .fetch()
                 .into(Processor.class));
 
-        return ResultPage.createUnboundedList(list);
+        return ResultPage.createCriterialBasedList(list, criteria);
     }
 }

@@ -165,6 +165,8 @@ class ProcessorFilterDaoImpl implements ProcessorFilterDao {
                 .join(PROCESSOR).on(PROCESSOR_FILTER.FK_PROCESSOR_ID.eq(PROCESSOR.ID))
                 .where(conditions)
                 .orderBy(orderFields)
+                .limit(JooqUtil.getLimit(criteria.getPageRequest(), true))
+                .offset(JooqUtil.getOffset(criteria.getPageRequest()))
                 .fetch()
                 .map(record -> {
                     final Processor processor = RECORD_TO_PROCESSOR_MAPPER.apply(record);

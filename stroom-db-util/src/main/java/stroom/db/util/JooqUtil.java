@@ -178,10 +178,14 @@ public final class JooqUtil {
         return idField;
     }
 
-    public static int getLimit(final PageRequest pageRequest) {
+    public static int getLimit(final PageRequest pageRequest, final boolean oneLarger) {
         if (pageRequest != null) {
             if (pageRequest.getLength() != null) {
-                return pageRequest.getLength();
+                if (oneLarger) {
+                    return pageRequest.getLength() + 1;
+                } else {
+                    return pageRequest.getLength();
+                }
             }
         }
 
