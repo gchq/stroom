@@ -879,7 +879,7 @@ class ProcessorTaskDaoImpl implements ProcessorTaskDao {
                 .join(PROCESSOR).on(PROCESSOR_FILTER.FK_PROCESSOR_ID.eq(PROCESSOR.ID))
                 .where(conditions)
                 .orderBy(orderFields)
-                .limit(JooqUtil.getLimit(criteria.getPageRequest()))
+                .limit(JooqUtil.getLimit(criteria.getPageRequest(), true))
                 .offset(JooqUtil.getOffset(criteria.getPageRequest()))
                 .fetch()
                 .map(record -> {
@@ -925,7 +925,7 @@ class ProcessorTaskDaoImpl implements ProcessorTaskDao {
                 .where(conditions)
                 .groupBy(PROCESSOR.PIPELINE_UUID, PROCESSOR_FILTER.PRIORITY, PROCESSOR_TASK.STATUS)
                 .orderBy(orderFields)
-                .limit(JooqUtil.getLimit(criteria.getPageRequest()))
+                .limit(JooqUtil.getLimit(criteria.getPageRequest(), true))
                 .offset(JooqUtil.getOffset(criteria.getPageRequest()))
                 .fetch()
                 .map(record -> {
@@ -937,7 +937,7 @@ class ProcessorTaskDaoImpl implements ProcessorTaskDao {
                     return new ProcessorTaskSummary(new DocRef("Pipeline", pipelineUuid), feed, priority, status, count);
                 }));
 
-        return ResultPage.createUnboundedList(list);
+        return ResultPage.createCriterialBasedList(list, criteria);
     }
 
     @Override

@@ -1,8 +1,5 @@
 package stroom.data.store.impl.fs.db;
 
-import org.jooq.Condition;
-import org.jooq.Record;
-import org.jooq.TableField;
 import stroom.data.store.impl.fs.FsVolumeDao;
 import stroom.data.store.impl.fs.FsVolumeService;
 import stroom.data.store.impl.fs.db.jooq.tables.records.FsVolumeRecord;
@@ -14,7 +11,12 @@ import stroom.db.util.JooqUtil;
 import stroom.util.logging.LambdaLogUtil;
 import stroom.util.logging.LambdaLogger;
 import stroom.util.logging.LambdaLoggerFactory;
+import stroom.util.shared.ResultPage;
 import stroom.util.shared.Selection;
+
+import org.jooq.Condition;
+import org.jooq.Record;
+import org.jooq.TableField;
 
 import javax.inject.Inject;
 import javax.inject.Singleton;
@@ -99,20 +101,21 @@ public class FsVolumeDaoImpl implements FsVolumeDao {
     }
 
     @Override
-    public List<FsVolume> find(final FindFsVolumeCriteria criteria) {
+    public ResultPage<FsVolume> find(final FindFsVolumeCriteria criteria) {
         final Collection<Condition> conditions = JooqUtil.conditions(
                 volumeStatusCriteriaSetToCondition(FS_VOLUME.STATUS, criteria.getSelection()));
 
-        return JooqUtil.contextResult(fsDataStoreDbConnProvider, context -> context
+        final List<FsVolume> list = JooqUtil.contextResult(fsDataStoreDbConnProvider, context -> context
                 .select()
                 .from(FS_VOLUME)
                 .join(FS_VOLUME_STATE)
                 .on(FS_VOLUME_STATE.ID.eq(FS_VOLUME.FK_FS_VOLUME_STATE_ID))
                 .where(conditions)
-                .limit(JooqUtil.getLimit(criteria.getPageRequest()))
+                .limit(JooqUtil.getLimit(criteria.getPageRequest(), true))
                 .offset(JooqUtil.getOffset(criteria.getPageRequest()))
                 .fetch()
                 .map(this::recordToVolume));
+        return ResultPage.createCriterialBasedList(list, criteria);
     }
 
     private void volumeToRecord(final FsVolume fileVolume, final FsVolumeRecord record) {

@@ -81,7 +81,7 @@ public class NodeDaoImpl implements NodeDao {
                         .selectFrom(NODE)
                         .where(conditions)
                         .orderBy(orderFields)
-                        .limit(JooqUtil.getLimit(criteria.getPageRequest()))
+                        .limit(JooqUtil.getLimit(criteria.getPageRequest(), true))
                         .offset(JooqUtil.getOffset(criteria.getPageRequest()))
                         .fetch()
                         .map(r -> r.into(Node.class)));
