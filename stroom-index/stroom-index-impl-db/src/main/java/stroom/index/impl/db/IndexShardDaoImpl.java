@@ -156,7 +156,7 @@ class IndexShardDaoImpl implements IndexShardDao {
                         .join(INDEX_VOLUME).on(INDEX_VOLUME.ID.eq(INDEX_SHARD.FK_VOLUME_ID))
                         .where(conditions)
                         .orderBy(orderFields)
-                        .limit(JooqUtil.getLimit(criteria.getPageRequest()))
+                        .limit(JooqUtil.getLimit(criteria.getPageRequest(), true))
                         .offset(JooqUtil.getOffset(criteria.getPageRequest()))
                         .fetch()
                         .map(r -> {

@@ -285,8 +285,8 @@ class MetaDaoImpl implements MetaDao {
             numberOfRows = pageRequest.getLength();
 
 
-        final List<Meta> list = find(conditions, orderFields, offset, numberOfRows);
-        return ResultPage.createPageResultList(list, criteria.getPageRequest(), null);
+        final List<Meta> list = find(conditions, orderFields, offset, numberOfRows + 1);
+        return ResultPage.createCriterialBasedList(list, criteria);
     }
 
     private List<Meta> find(final Collection<Condition> conditions,

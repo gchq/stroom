@@ -142,50 +142,45 @@ public class ResultPage<T> implements Serializable {
     /**
      * Used for filter queries (maybe bounded).
      */
-    public static <T> ResultPage<T> createPageResultList(final List<T> realList,
+    private static <T> ResultPage<T> createPageResultList(final List<T> realList,
                                                          final PageRequest pageRequest,
                                                          final Long totalSize) {
-        final boolean limited = pageRequest != null
-                && pageRequest.getLength() != null;
+        final boolean limited = pageRequest != null && pageRequest.getLength() != null;
         boolean moreToFollow = false;
         Long calulatedTotalSize = totalSize;
         long offset = 0;
         if (pageRequest != null && pageRequest.getOffset() != null) {
             offset = pageRequest.getOffset();
         }
-        if (limited) {
-            if (realList.size() > (pageRequest.getLength() + 1)) {
-                // Here we check that if the query was supposed to be limited
-                // make sure we have
-                // get to process more that 1 + that limit. If this fails it
-                // will be a coding error
-                // or not applying the limit.
-                throw new IllegalStateException(
-                        "For some reason we returned more rows that we were limited to. Did you apply the restriction criteria?");
-            }
-        }
 
-        // If we have not been given the total size see if we can work it out
-        // based on hitting the end
-        if (totalSize == null && limited) {
+        if (limited) {
             // All our queries are + 1 on the limit so that we know there is
             // more to come
-            moreToFollow = realList.size() > pageRequest.getLength();
-            if (!moreToFollow) {
+            final int overflow = realList.size() - pageRequest.getLength();
+            moreToFollow = overflow > 0;
+
+            if (moreToFollow) {
+                if (overflow > 1) {
+                    // Here we check that if the query was supposed to be limited
+                    // make sure we have
+                    // get to process more that 1 + that limit. If this fails it
+                    // will be a coding error
+                    // or not applying the limit.
+                    throw new IllegalStateException(
+                            "For some reason we returned more rows that we were limited to. Did you apply the restriction criteria?");
+                }
+
+                // All our queries are + 1 to we need to remove the last element
+                realList.remove(realList.size() - 1);
+
+            } else if (totalSize == null) {
+                // If we have not been given the total size see if we can work it out
+                // based on hitting the end
                 calulatedTotalSize = pageRequest.getOffset() + realList.size();
             }
         }
 
-        PageResponse pageResponse = new PageResponse(offset, realList.size(), calulatedTotalSize, !moreToFollow);
-
-        if (moreToFollow) {
-            // All our queries are + 1 to we need to remove the last element
-            realList.remove(realList.size() - 1);
-            pageResponse = new PageResponse(pageResponse.getOffset(),
-                    pageResponse.getLength() - 1, pageResponse.getTotal(),
-                    pageResponse.isExact());
-        }
-
+        final PageResponse pageResponse = new PageResponse(offset, realList.size(), calulatedTotalSize, !moreToFollow);
         return new ResultPage<>(realList, pageResponse);
     }
 

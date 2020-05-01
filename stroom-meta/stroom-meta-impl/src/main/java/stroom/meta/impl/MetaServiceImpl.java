@@ -1,7 +1,5 @@
 package stroom.meta.impl;
 
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 import stroom.dashboard.expression.v1.Val;
 import stroom.datasource.api.v2.AbstractField;
 import stroom.datasource.api.v2.DataSource;
@@ -28,7 +26,9 @@ import stroom.security.shared.PermissionNames;
 import stroom.util.date.DateUtil;
 import stroom.util.shared.PageRequest;
 import stroom.util.shared.ResultPage;
-import stroom.util.shared.Sort.Direction;
+
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import javax.inject.Inject;
 import javax.inject.Singleton;
