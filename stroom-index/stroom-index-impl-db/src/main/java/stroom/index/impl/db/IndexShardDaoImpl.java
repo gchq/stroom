@@ -16,7 +16,7 @@ import stroom.index.shared.IndexShard;
 import stroom.index.shared.IndexShard.IndexShardStatus;
 import stroom.index.shared.IndexShardKey;
 import stroom.index.shared.IndexVolume;
-import stroom.util.shared.CriteriaSet;
+import stroom.util.shared.Selection;
 import stroom.util.shared.ResultPage;
 
 import javax.inject.Inject;
@@ -143,11 +143,11 @@ class IndexShardDaoImpl implements IndexShardDao {
                 JooqUtil.getSetCondition(INDEX_SHARD.FK_VOLUME_ID, criteria.getVolumeIdSet()),
                 JooqUtil.getSetCondition(INDEX_SHARD.ID, criteria.getIndexShardIdSet()),
                 JooqUtil.getSetCondition(INDEX_SHARD.INDEX_UUID, criteria.getIndexUuidSet()),
-                JooqUtil.getSetCondition(INDEX_SHARD.STATUS, CriteriaSet.convert(criteria.getIndexShardStatusSet(), IndexShard.IndexShardStatus::getPrimitiveValue)),
+                JooqUtil.getSetCondition(INDEX_SHARD.STATUS, Selection.convert(criteria.getIndexShardStatusSet(), IndexShard.IndexShardStatus::getPrimitiveValue)),
                 JooqUtil.getStringCondition(INDEX_SHARD.PARTITION_NAME, criteria.getPartition())
         );
 
-        final OrderField<?>[] orderFields = JooqUtil.getOrderFields(FIELD_MAP, criteria);
+        final Collection<OrderField<?>> orderFields = JooqUtil.getOrderFields(FIELD_MAP, criteria);
 
         final List<IndexShard> list = JooqUtil.contextResult(indexDbConnProvider, context ->
                 context

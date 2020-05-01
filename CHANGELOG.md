@@ -6,6 +6,10 @@ and this project adheres to [Semantic Versioning](http://semver.org/).
 
 ## [Unreleased]
 
+* Issue **#1513** : You can now view data in folders.
+
+* Issue **#1500** : Fixed data delete/restore behaviour.
+
 * Issue **#1515** : Fix proxyDir default when running in a stack.
 
 * Issue **#1509** : Unable to update processor filter.

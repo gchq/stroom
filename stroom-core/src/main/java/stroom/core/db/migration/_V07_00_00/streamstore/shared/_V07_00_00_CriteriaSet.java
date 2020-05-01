@@ -1,26 +1,15 @@
-/*
- * Copyright 2016 Crown Copyright
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- *     http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
-
-package stroom.util.shared;
+package stroom.core.db.migration._V07_00_00.streamstore.shared;
 
 import com.fasterxml.jackson.annotation.JsonCreator;
 import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.fasterxml.jackson.annotation.JsonInclude;
-import com.fasterxml.jackson.annotation.JsonInclude.Include;
 import com.fasterxml.jackson.annotation.JsonProperty;
+import stroom.util.shared.Clearable;
+import stroom.util.shared.Copyable;
+import stroom.util.shared.EqualsBuilder;
+import stroom.util.shared.HasIsConstrained;
+import stroom.util.shared.HashCodeBuilder;
+import stroom.util.shared.Matcher;
 
 import java.util.Collection;
 import java.util.HashSet;
@@ -36,9 +25,9 @@ import java.util.stream.Collectors;
  * By default when created it has no criteria i.e. match anything. As soon as
  * you update it it will be restrictive until you setMatchAll
  */
-@JsonInclude(Include.NON_NULL)
-public class CriteriaSet<T>
-        implements Iterable<T>, Copyable<CriteriaSet<T>>, HasIsConstrained, Matcher<T>, Clearable {
+@JsonInclude(JsonInclude.Include.NON_NULL)
+public class _V07_00_00_CriteriaSet<T>
+        implements Iterable<T>, Copyable<_V07_00_00_CriteriaSet<T>>, HasIsConstrained, Matcher<T>, Clearable {
     /**
      * By default the criteria will match anything. NULL matchAll implies match
      * anything when nothing is in the set or we are to not matchNull. By
@@ -51,18 +40,18 @@ public class CriteriaSet<T>
     @JsonProperty
     private Set<T> set;
 
-    public CriteriaSet() {
+    public _V07_00_00_CriteriaSet() {
         this(new HashSet<>());
     }
 
-    public CriteriaSet(final Set<T> set) {
+    public _V07_00_00_CriteriaSet(final Set<T> set) {
         this.set = set;
     }
 
     @JsonCreator
-    public CriteriaSet(@JsonProperty("matchAll") final Boolean matchAll,
-                       @JsonProperty("matchNull") final Boolean matchNull,
-                       @JsonProperty("set") final Set<T> set) {
+    public _V07_00_00_CriteriaSet(@JsonProperty("matchAll") final Boolean matchAll,
+                                  @JsonProperty("matchNull") final Boolean matchNull,
+                                  @JsonProperty("set") final Set<T> set) {
         this.matchAll = matchAll;
         this.matchNull = matchNull;
         this.set = set;
@@ -112,12 +101,12 @@ public class CriteriaSet<T>
         return set.contains(item);
     }
 
-    public static <IN, OUT> CriteriaSet<OUT> convert(final CriteriaSet<IN> in, final Function<IN, OUT> converter) {
+    public static <IN, OUT> _V07_00_00_CriteriaSet<OUT> convert(final _V07_00_00_CriteriaSet<IN> in, final Function<IN, OUT> converter) {
         if (in == null) {
             return null;
         }
 
-        final CriteriaSet<OUT> out = new CriteriaSet<>();
+        final _V07_00_00_CriteriaSet<OUT> out = new _V07_00_00_CriteriaSet<>();
         out.matchAll = in.matchAll;
         out.matchNull = in.matchNull;
         if (in.set != null) {
@@ -128,7 +117,7 @@ public class CriteriaSet<T>
     }
 
     @Override
-    public void copyFrom(final CriteriaSet<T> other) {
+    public void copyFrom(final _V07_00_00_CriteriaSet<T> other) {
         this.set.clear();
         this.set.addAll(other.set);
         this.matchNull = other.matchNull;
@@ -197,11 +186,11 @@ public class CriteriaSet<T>
         if (obj == this) {
             return true;
         }
-        if (obj == null || !(obj instanceof CriteriaSet)) {
+        if (obj == null || !(obj instanceof _V07_00_00_CriteriaSet)) {
             return false;
         }
 
-        @SuppressWarnings("unchecked") final CriteriaSet<T> criteriaSet = (CriteriaSet<T>) obj;
+        @SuppressWarnings("unchecked") final _V07_00_00_CriteriaSet<T> criteriaSet = (_V07_00_00_CriteriaSet<T>) obj;
 
         final EqualsBuilder builder = new EqualsBuilder();
         builder.append(this.matchNull, criteriaSet.matchNull);

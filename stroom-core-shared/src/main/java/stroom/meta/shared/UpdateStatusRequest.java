@@ -10,17 +10,25 @@ public class UpdateStatusRequest {
     @JsonProperty
     private final FindMetaCriteria criteria;
     @JsonProperty
+    private final Status currentStatus;
+    @JsonProperty
     private final Status newStatus;
 
     @JsonCreator
     public UpdateStatusRequest(@JsonProperty("criteria") final FindMetaCriteria criteria,
+                               @JsonProperty("currentStatus") final Status currentStatus,
                                @JsonProperty("newStatus") final Status newStatus) {
         this.criteria = criteria;
+        this.currentStatus = currentStatus;
         this.newStatus = newStatus;
     }
 
     public FindMetaCriteria getCriteria() {
         return criteria;
+    }
+
+    public Status getCurrentStatus() {
+        return currentStatus;
     }
 
     public Status getNewStatus() {

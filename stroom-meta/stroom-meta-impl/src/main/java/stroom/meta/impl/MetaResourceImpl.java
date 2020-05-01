@@ -63,7 +63,7 @@ class MetaResourceImpl implements MetaResource, HasHealthCheck {
 
     @Override
     public Integer updateStatus(final UpdateStatusRequest request) {
-        return securityContext.secureResult(() -> metaService.updateStatus(request.getCriteria(), request.getNewStatus()));
+        return securityContext.secureResult(() -> metaService.updateStatus(request.getCriteria(), request.getCurrentStatus(), request.getNewStatus()));
     }
 
     @Override

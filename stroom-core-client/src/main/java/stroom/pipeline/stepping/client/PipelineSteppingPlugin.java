@@ -29,6 +29,7 @@ import stroom.docref.DocRef;
 import stroom.explorer.client.presenter.EntityChooser;
 import stroom.meta.shared.FindMetaCriteria;
 import stroom.meta.shared.Meta;
+import stroom.meta.shared.MetaExpressionUtil;
 import stroom.meta.shared.MetaResource;
 import stroom.meta.shared.MetaRow;
 import stroom.pipeline.shared.PipelineDoc;
@@ -37,6 +38,7 @@ import stroom.pipeline.shared.stepping.StepLocation;
 import stroom.pipeline.shared.stepping.SteppingResource;
 import stroom.pipeline.stepping.client.event.BeginPipelineSteppingEvent;
 import stroom.pipeline.stepping.client.presenter.SteppingContentTabPresenter;
+import stroom.query.api.v2.ExpressionOperator;
 import stroom.security.shared.DocumentPermissionNames;
 import stroom.util.shared.ResultPage;
 
@@ -90,9 +92,7 @@ public class PipelineSteppingPlugin extends Plugin implements BeginPipelineStepp
         chooser.addDataSelectionHandler(event -> {
             final DocRef pipeline = chooser.getSelectedEntityReference();
             if (pipeline != null) {
-                final FindMetaCriteria findMetaCriteria = new FindMetaCriteria();
-                findMetaCriteria.obtainSelectedIdSet().add(stepLocation.getId());
-
+                final FindMetaCriteria findMetaCriteria = FindMetaCriteria.createFromId(stepLocation.getId());
                 final Rest<ResultPage<MetaRow>> rest = restFactory.create();
                 rest
                         .onSuccess(result -> {

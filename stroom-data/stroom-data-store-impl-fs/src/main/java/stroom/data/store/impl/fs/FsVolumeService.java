@@ -1,30 +1,31 @@
 package stroom.data.store.impl.fs;
 
-import com.google.common.collect.ImmutableMap;
 import stroom.cluster.lock.api.ClusterLockService;
 import stroom.data.store.impl.fs.shared.FindFsVolumeCriteria;
 import stroom.data.store.impl.fs.shared.FsVolume;
 import stroom.data.store.impl.fs.shared.FsVolume.VolumeUseStatus;
 import stroom.data.store.impl.fs.shared.FsVolumeState;
 import stroom.docref.DocRef;
-import stroom.util.entityevent.EntityAction;
-import stroom.util.entityevent.EntityEvent;
-import stroom.util.entityevent.EntityEventBus;
-import stroom.util.entityevent.EntityEventHandler;
 import stroom.security.api.SecurityContext;
 import stroom.security.shared.PermissionNames;
 import stroom.statistics.api.InternalStatisticEvent;
 import stroom.statistics.api.InternalStatisticKey;
 import stroom.statistics.api.InternalStatisticsReceiver;
 import stroom.util.AuditUtil;
+import stroom.util.entityevent.EntityAction;
+import stroom.util.entityevent.EntityEvent;
+import stroom.util.entityevent.EntityEventBus;
+import stroom.util.entityevent.EntityEventHandler;
 import stroom.util.io.FileUtil;
 import stroom.util.logging.LambdaLogUtil;
 import stroom.util.logging.LambdaLogger;
 import stroom.util.logging.LambdaLoggerFactory;
-import stroom.util.shared.ResultPage;
 import stroom.util.shared.Clearable;
 import stroom.util.shared.Flushable;
+import stroom.util.shared.ResultPage;
 import stroom.util.shared.Sort.Direction;
+
+import com.google.common.collect.ImmutableMap;
 
 import javax.inject.Inject;
 import javax.inject.Provider;
@@ -296,7 +297,7 @@ public class FsVolumeService implements EntityEvent.Handler, Clearable, Flushabl
         final long now = System.currentTimeMillis();
         final List<FsVolume> volumes = new ArrayList<>();
 
-        final FindFsVolumeCriteria findVolumeCriteria = new FindFsVolumeCriteria();
+        final FindFsVolumeCriteria findVolumeCriteria = FindFsVolumeCriteria.matchAll();
         findVolumeCriteria.addSort(FindFsVolumeCriteria.FIELD_ID, Direction.ASCENDING, false);
         final List<FsVolume> volumeList = find(findVolumeCriteria).getValues();
         for (final FsVolume volume : volumeList) {
@@ -412,7 +413,7 @@ public class FsVolumeService implements EntityEvent.Handler, Clearable, Flushabl
                 securityContext.insecure(() -> {
                     final boolean isEnabled = volumeConfig.isCreateDefaultOnStart();
                     if (isEnabled) {
-                        final FindFsVolumeCriteria findVolumeCriteria = new FindFsVolumeCriteria();
+                        final FindFsVolumeCriteria findVolumeCriteria = FindFsVolumeCriteria.matchAll();
                         findVolumeCriteria.addSort(FindFsVolumeCriteria.FIELD_ID, Direction.ASCENDING, false);
                         final List<FsVolume> existingVolumes = doFind(findVolumeCriteria).getValues();
                         if (existingVolumes.size() == 0) {

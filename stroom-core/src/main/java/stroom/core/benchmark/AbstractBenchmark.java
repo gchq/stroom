@@ -151,7 +151,7 @@ public abstract class AbstractBenchmark {
     protected void deleteData(final String... feedNames) {
         final FindMetaCriteria criteria = new FindMetaCriteria();
         criteria.setExpression(MetaExpressionUtil.createFeedsExpression(feedNames));
-        metaService.updateStatus(criteria, Status.DELETED);
+        metaService.updateStatus(criteria, null, Status.DELETED);
     }
 
     protected String createReferenceData(final int recordCount) {

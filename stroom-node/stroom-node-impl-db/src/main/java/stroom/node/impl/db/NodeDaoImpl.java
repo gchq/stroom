@@ -74,7 +74,7 @@ public class NodeDaoImpl implements NodeDao {
         final Collection<Condition> conditions = JooqUtil.conditions(
                 JooqUtil.getStringCondition(NODE.NAME, criteria.getName()));
 
-        final OrderField<?>[] orderFields = JooqUtil.getOrderFields(FIELD_MAP, criteria);
+        final Collection<OrderField<?>> orderFields = JooqUtil.getOrderFields(FIELD_MAP, criteria);
 
         final List<Node> list = JooqUtil.contextResult(nodeDbConnProvider, context ->
                 context

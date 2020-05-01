@@ -76,7 +76,7 @@ class StoredQueryDaoImpl implements StoredQueryDao {
                     Optional.ofNullable(criteria.getComponentId()).map(QUERY.COMPONENT_ID::eq),
                     Optional.ofNullable(criteria.getFavourite()).map(QUERY.FAVOURITE::eq));
 
-            final OrderField<?>[] orderFields = JooqUtil.getOrderFields(FIELD_MAP, criteria);
+            final Collection<OrderField<?>> orderFields = JooqUtil.getOrderFields(FIELD_MAP, criteria);
 
             return context
                     .select()

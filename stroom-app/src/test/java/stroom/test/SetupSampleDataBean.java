@@ -36,6 +36,7 @@ import stroom.pipeline.PipelineStore;
 import stroom.processor.api.ProcessorFilterService;
 import stroom.processor.api.ProcessorService;
 import stroom.processor.shared.Processor;
+import stroom.processor.shared.ProcessorFilter;
 import stroom.processor.shared.QueryData;
 import stroom.query.api.v2.ExpressionOperator;
 import stroom.query.api.v2.ExpressionTerm;
@@ -215,7 +216,8 @@ public final class SetupSampleDataBean {
                                 .build())
                         .build();
                 final Processor processor = processorService.create(pipeline, true);
-                processorFilterService.create(processor, criteria, 10, true);
+                final ProcessorFilter processorFilter = processorFilterService.create(processor, criteria, 10, true);
+                LOGGER.debug(processorFilter.toString());
             }
         }
 
@@ -257,7 +259,8 @@ public final class SetupSampleDataBean {
                     .build();
 
             final Processor processor = processorService.create(pipeline, true);
-            processorFilterService.create(processor, criteria, 10, true);
+            final ProcessorFilter processorFilter = processorFilterService.create(processor, criteria, 10, true);
+            LOGGER.debug(processorFilter.toString());
         }
     }
 

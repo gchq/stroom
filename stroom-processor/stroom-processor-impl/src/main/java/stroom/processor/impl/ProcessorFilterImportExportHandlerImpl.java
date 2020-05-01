@@ -85,7 +85,6 @@ public class ProcessorFilterImportExportHandlerImpl implements ImportExportActio
             processorFilter.setProcessor(findProcessorForFilter(processorFilter));
 
             if (ImportState.State.NEW.equals(importState.getState())) {
-
                 final boolean enable;
                 final Long trackerStartMs;
                 if (importState.getEnable() != null) {
@@ -99,11 +98,13 @@ public class ProcessorFilterImportExportHandlerImpl implements ImportExportActio
 
                 ProcessorFilter filter = findProcessorFilter(docRef);
                 if (filter == null) {
-                    Processor processor = findProcessor(docRef.getUuid(),
+                    final Processor processor = findProcessor(docRef.getUuid(),
                             processorFilter.getProcessorUuid(),
                             processorFilter.getPipelineUuid(),
                             processorFilter.getPipelineName());
-                    processorFilterService.create(processor, new DocRef(ProcessorFilter.ENTITY_TYPE, processorFilter.getUuid(), null),
+
+                    processorFilterService.create(processor,
+                            new DocRef(ProcessorFilter.ENTITY_TYPE, processorFilter.getUuid(), null),
                             processorFilter.getQueryData(),
                             processorFilter.getPriority(),
                             enable,

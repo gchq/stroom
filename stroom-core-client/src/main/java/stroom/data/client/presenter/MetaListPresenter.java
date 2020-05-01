@@ -18,6 +18,7 @@ package stroom.data.client.presenter;
 
 import com.google.inject.Inject;
 import com.google.web.bindery.event.shared.EventBus;
+import stroom.core.client.LocationManager;
 import stroom.data.grid.client.EndColumn;
 import stroom.dispatch.client.RestFactory;
 import stroom.meta.shared.DataRetentionFields;
@@ -29,9 +30,11 @@ import java.util.function.Function;
 
 public class MetaListPresenter extends AbstractMetaListPresenter {
     @Inject
-    public MetaListPresenter(final EventBus eventBus, final RestFactory restFactory,
-                             final TooltipPresenter tooltipPresenter) {
-        super(eventBus, restFactory, tooltipPresenter, true);
+    public MetaListPresenter(final EventBus eventBus,
+                             final RestFactory restFactory,
+                             final TooltipPresenter tooltipPresenter,
+                             final LocationManager locationManager) {
+        super(eventBus, restFactory, tooltipPresenter, locationManager, true);
     }
 
     @Override

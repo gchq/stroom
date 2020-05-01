@@ -1,8 +1,5 @@
 package stroom.db.util;
 
-import org.jooq.Condition;
-import org.jooq.Field;
-import org.jooq.impl.DSL;
 import stroom.collection.api.CollectionService;
 import stroom.datasource.api.v2.AbstractField;
 import stroom.datasource.api.v2.DocRefField;
@@ -12,22 +9,25 @@ import stroom.query.api.v2.ExpressionItem;
 import stroom.query.api.v2.ExpressionOperator;
 import stroom.query.api.v2.ExpressionTerm;
 
+import org.jooq.Condition;
+import org.jooq.Field;
+import org.jooq.impl.DSL;
+
+import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.Collection;
 import java.util.Collections;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
-import java.util.Objects;
 import java.util.Set;
 import java.util.function.Function;
 import java.util.stream.Collectors;
 
-import static org.jooq.impl.DSL.and;
-import static org.jooq.impl.DSL.not;
 import static org.jooq.impl.DSL.or;
 
-public class ExpressionMapper implements Function<ExpressionItem, Condition> {
+public class ExpressionMapper implements Function<ExpressionItem, Collection<Condition>> {
     private final Map<String, TermHandler<?>> termHandlers = new HashMap<>();
     private final Set<String> ignoredFields = new HashSet<>();
     private final WordListProvider wordListProvider;
@@ -56,56 +56,52 @@ public class ExpressionMapper implements Function<ExpressionItem, Condition> {
     }
 
     @Override
-    public Condition apply(final ExpressionItem item) {
-        if (item == null || !item.isEnabled()) {
-            return null;
-        }
+    public Collection<Condition> apply(final ExpressionItem item) {
+        Collection<Condition> result = Collections.emptyList();
 
-        if (item instanceof ExpressionTerm) {
-            final ExpressionTerm term = (ExpressionTerm) item;
-            final TermHandler<?> termHandler = termHandlers.get(term.getField());
-            if (termHandler == null) {
-                if (ignoredFields.contains(term.getField())) {
-                    return null;
+        if (item != null && item.isEnabled()) {
+            if (item instanceof ExpressionTerm) {
+                final ExpressionTerm term = (ExpressionTerm) item;
+                final TermHandler<?> termHandler = termHandlers.get(term.getField());
+                if (termHandler != null) {
+                    result = Collections.singleton(termHandler.apply(term));
+
+                } else if (!ignoredFields.contains(term.getField())) {
+                    throw new RuntimeException("No term handler supplied for term '" + term.getField() + "'");
                 }
-                throw new RuntimeException("No term handler supplied for term '" + term.getField() + "'");
-            }
 
-            return termHandler.apply(term);
+            } else if (item instanceof ExpressionOperator) {
+                final ExpressionOperator operator = (ExpressionOperator) item;
 
-        } else if (item instanceof ExpressionOperator) {
-            final ExpressionOperator operator = (ExpressionOperator) item;
+                final Collection<Condition> children = operator.getChildren()
+                        .stream()
+                        .map(this)
+                        .flatMap(Collection::stream)
+                        .collect(Collectors.toList());
 
-            final Condition[] children = operator.getChildren().stream()
-                    .map(this)
-                    .filter(Objects::nonNull)
-                    .toArray(Condition[]::new);
-
-            if (children.length > 0) {
-                switch (operator.getOp()) {
-                    case AND:
-                        return and(children);
-                    case OR:
-                        return or(children);
-                    case NOT:
-
-                        if (children.length == 1) {
-                            // A single child, just apply the 'not' to that first item
-                            return not(children[0]);
-                        } else {
-                            // If there are multiple children, apply an 'and' around them all
-                            return and(Arrays.stream(children)
+                if (children.size() > 0) {
+                    switch (operator.getOp()) {
+                        case AND:
+                            result = children;
+                            break;
+                        case OR:
+                            if (children.size() == 1) {
+                                result = children;
+                            } else {
+                                result = Collections.singleton(or(children));
+                            }
+                            break;
+                        case NOT:
+                            result = children
+                                    .stream()
                                     .map(DSL::not)
-                                    .toArray(Condition[]::new));
-                        }
-                    default:
-                        // Fall through to null if there aren't any children
-                        break;
+                                    .collect(Collectors.toList());
+                    }
                 }
             }
         }
 
-        return null;
+        return result;
     }
 
     public interface Converter<T> {
@@ -142,10 +138,10 @@ public class ExpressionMapper implements Function<ExpressionItem, Condition> {
         private final boolean useName;
 
         public TermHandler(final AbstractField dataSourceField,
-                    final Field<T> field,
-                    final MultiConverter<T> converter,
-                    final WordListProvider wordListProvider,
-                    final CollectionService collectionService) {
+                           final Field<T> field,
+                           final MultiConverter<T> converter,
+                           final WordListProvider wordListProvider,
+                           final CollectionService collectionService) {
             this(dataSourceField, field, converter, wordListProvider, collectionService, false);
         }
 
@@ -262,7 +258,11 @@ public class ExpressionMapper implements Function<ExpressionItem, Condition> {
         private Condition isInDictionary(final DocRef docRef) {
             final String[] lines = loadWords(docRef);
             if (lines != null) {
-                final List<T> values = Arrays.stream(lines).map(this::getSingleValue).collect(Collectors.toList());
+                final List<T> values = new ArrayList<>();
+                for (final String line : lines) {
+                    final List<T> list = converter.apply(line);
+                    values.addAll(list);
+                }
                 return field.in(values);
             }
 
@@ -279,18 +279,16 @@ public class ExpressionMapper implements Function<ExpressionItem, Condition> {
                     if (descendants == null || descendants.size() == 0) {
                         condition = field.in(Collections.emptySet());
                     } else {
+                        final Set<T> set = new HashSet<>();
                         for (final DocRef descendant : descendants) {
                             String value = descendant.getUuid();
                             if (useName) {
                                 value = descendant.getName();
                             }
-
-                            if (condition == null) {
-                                condition = field.equal(getSingleValue(value));
-                            } else {
-                                condition = condition.or(field.equal(getSingleValue(value)));
-                            }
+                            final List<T> list = converter.apply(value);
+                            set.addAll(list);
                         }
+                        condition = field.in(set);
                     }
                 }
             }

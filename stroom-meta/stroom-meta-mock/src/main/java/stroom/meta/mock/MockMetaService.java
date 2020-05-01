@@ -102,7 +102,7 @@ public class MockMetaService implements MetaService, Clearable {
     }
 
     @Override
-    public int updateStatus(final FindMetaCriteria criteria, final Status status) {
+    public int updateStatus(final FindMetaCriteria criteria, final Status currentStatus, final Status newStatus) {
         return 0;
     }
 
