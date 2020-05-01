@@ -8,6 +8,12 @@ and this project adheres to [Semantic Versioning](http://semver.org/).
 
 * Make export add new line to the end of all files to adhere to POSIX standard.
 
+* Issue **#1477** : Disable edit button on stream processor.
+
+* Issue **#1497** : Fixed data list result paging.
+
+* Issue **#1492** : Fixed data list result paging.
+
 * Issue **#1513** : You can now view data in folders.
 
 * Issue **#1500** : Fixed data delete/restore behaviour.

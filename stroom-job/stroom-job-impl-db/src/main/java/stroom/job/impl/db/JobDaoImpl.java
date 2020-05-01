@@ -96,12 +96,12 @@ public class JobDaoImpl implements JobDao, HasIntCrud<Job> {
                 .from(JOB)
                 .where(conditions)
                 .orderBy(orderFields)
-                .limit(JooqUtil.getLimit(criteria.getPageRequest()))
+                .limit(JooqUtil.getLimit(criteria.getPageRequest(), true))
                 .offset(JooqUtil.getOffset(criteria.getPageRequest()))
                 .fetch()
                 .into(Job.class));
 
-        return ResultPage.createUnboundedList(list);
+        return ResultPage.createCriterialBasedList(list, criteria);
     }
 
     @Override
