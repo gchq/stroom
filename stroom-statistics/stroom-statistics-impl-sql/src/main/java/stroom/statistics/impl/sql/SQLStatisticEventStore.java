@@ -16,15 +16,8 @@
 
 package stroom.statistics.impl.sql;
 
-import com.google.common.base.Preconditions;
-import org.apache.commons.pool2.BasePooledObjectFactory;
-import org.apache.commons.pool2.PooledObject;
-import org.apache.commons.pool2.impl.DefaultPooledObject;
-import org.apache.commons.pool2.impl.GenericObjectPool;
-import org.apache.commons.pool2.impl.GenericObjectPoolConfig;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 import stroom.datasource.api.v2.AbstractField;
+import stroom.security.api.SecurityContext;
 import stroom.statistics.impl.sql.entity.StatisticStoreCache;
 import stroom.statistics.impl.sql.entity.StatisticStoreValidator;
 import stroom.statistics.impl.sql.exception.StatisticsEventValidationException;
@@ -34,7 +27,19 @@ import stroom.statistics.impl.sql.shared.CustomRollUpMask;
 import stroom.statistics.impl.sql.shared.StatisticRollUpType;
 import stroom.statistics.impl.sql.shared.StatisticStore;
 import stroom.statistics.impl.sql.shared.StatisticStoreDoc;
+import stroom.util.HasHealthCheck;
 import stroom.util.time.TimeUtils;
+
+import com.codahale.metrics.health.HealthCheck;
+import com.google.common.base.Preconditions;
+import org.apache.commons.pool2.BasePooledObjectFactory;
+import org.apache.commons.pool2.PooledObject;
+import org.apache.commons.pool2.impl.DefaultPooledObject;
+import org.apache.commons.pool2.impl.DefaultPooledObjectInfo;
+import org.apache.commons.pool2.impl.GenericObjectPool;
+import org.apache.commons.pool2.impl.GenericObjectPoolConfig;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import javax.inject.Inject;
 import javax.inject.Singleton;
@@ -45,11 +50,12 @@ import java.util.List;
 import java.util.Optional;
 import java.util.Set;
 import java.util.concurrent.TimeUnit;
+import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.function.Predicate;
 import java.util.stream.Collectors;
 
 @Singleton
-public class SQLStatisticEventStore implements Statistics {
+public class SQLStatisticEventStore implements Statistics, HasHealthCheck {
     public static final Logger LOGGER = LoggerFactory.getLogger(SQLStatisticEventStore.class);
 
     private static final int DEFAULT_POOL_SIZE = 10;
@@ -63,6 +69,8 @@ public class SQLStatisticEventStore implements Statistics {
     private final StatisticStoreCache statisticsDataSourceCache;
     private final SQLStatisticCache statisticCache;
     private final SQLStatisticsConfig config;
+    private final SecurityContext securityContext;
+
     /**
      * SQL for testing querying the stat/tag names
      * <p>
@@ -84,28 +92,32 @@ public class SQLStatisticEventStore implements Statistics {
     private long aggregatorSizeThreshold = DEFAULT_SIZE_THRESHOLD;
     private int poolSize = DEFAULT_POOL_SIZE;
     private GenericObjectPool<SQLStatisticAggregateMap> objectPool;
+    private AtomicBoolean isShutdown = new AtomicBoolean(false);
 
     @Inject
     SQLStatisticEventStore(final StatisticStoreValidator statisticsDataSourceValidator,
                            final StatisticStoreCache statisticsDataSourceCache,
                            final SQLStatisticCache statisticCache,
-                           final SQLStatisticsConfig config) {
+                           final SQLStatisticsConfig config,
+                           final SecurityContext securityContext) {
 
         this.statisticsDataSourceValidator = statisticsDataSourceValidator;
         this.config = config;
         this.statisticsDataSourceCache = statisticsDataSourceCache;
         this.statisticCache = statisticCache;
+        this.securityContext = securityContext;
 
         initPool(getObjectPoolConfig());
     }
 
     SQLStatisticEventStore(final int poolSize,
-                                  final long aggregatorSizeThreshold,
-                                  final long poolAgeMsThreshold,
-                                  final StatisticStoreValidator statisticsDataSourceValidator,
-                                  final StatisticStoreCache statisticsDataSourceCache,
-                                  final SQLStatisticCache statisticCache,
-                                  final SQLStatisticsConfig config) {
+                           final long aggregatorSizeThreshold,
+                           final long poolAgeMsThreshold,
+                           final StatisticStoreValidator statisticsDataSourceValidator,
+                           final StatisticStoreCache statisticsDataSourceCache,
+                           final SQLStatisticCache statisticCache,
+                           final SQLStatisticsConfig config,
+                           final SecurityContext securityContext) {
         this.statisticsDataSourceValidator = statisticsDataSourceValidator;
         this.statisticsDataSourceCache = statisticsDataSourceCache;
         this.statisticCache = statisticCache;
@@ -113,6 +125,7 @@ public class SQLStatisticEventStore implements Statistics {
         this.poolAgeMsThreshold = poolAgeMsThreshold;
         this.poolSize = poolSize;
         this.config = config;
+        this.securityContext = securityContext;
 
         initPool(getObjectPoolConfig());
     }
@@ -179,8 +192,8 @@ public class SQLStatisticEventStore implements Statistics {
         return BLACK_LISTED_INDEX_FIELDS;
     }
 
-    private GenericObjectPoolConfig getObjectPoolConfig() {
-        final GenericObjectPoolConfig config = new GenericObjectPoolConfig();
+    private GenericObjectPoolConfig<SQLStatisticAggregateMap> getObjectPoolConfig() {
+        final GenericObjectPoolConfig<SQLStatisticAggregateMap> config = new GenericObjectPoolConfig<>();
         // Max number of idle items .... same as our pool size
         config.setMaxIdle(poolSize);
         // Pool size
@@ -210,9 +223,8 @@ public class SQLStatisticEventStore implements Statistics {
         }
     }
 
-    private void initPool(final GenericObjectPoolConfig config) {
+    private void initPool(final GenericObjectPoolConfig<SQLStatisticAggregateMap> config) {
         objectPool = new GenericObjectPool<>(new ObjectFactory(), config);
-
     }
 
     /**
@@ -248,7 +260,7 @@ public class SQLStatisticEventStore implements Statistics {
 
         // validate the first stat in the batch to check we have a statistic
         // data source for it.
-        if (validateStatisticDataSource(statisticEvents.iterator().next(), entity) == false) {
+        if (!validateStatisticDataSource(statisticEvents.iterator().next(), entity)) {
             // no StatisticsDataSource entity so don't record the stat as we
             // will have no way of querying the stat
             throw new RuntimeException(String.format("Invalid or missing statistic data source with name %s",
@@ -316,10 +328,10 @@ public class SQLStatisticEventStore implements Statistics {
             } catch (final InterruptedException e) {
                 Thread.currentThread().interrupt();
                 LOGGER.error("putEvent()", e);
-                throw new RuntimeException(String.format("Exception adding statistics to the aggregateMap"), e);
+                throw new RuntimeException("Exception adding statistics to the aggregateMap", e);
             } catch (final Exception e) {
                 LOGGER.error("putEvent()", e);
-                throw new RuntimeException(String.format("Exception adding statistics to the aggregateMap"), e);
+                throw new RuntimeException("Exception adding statistics to the aggregateMap", e);
             }
         }
     }
@@ -432,6 +444,30 @@ public class SQLStatisticEventStore implements Statistics {
         }
     }
 
+    public void shutdown() {
+        isShutdown.set(true);
+        securityContext.asProcessingUser(() -> {
+            objectPool.close();
+        });
+    }
+
+    @Override
+    public HealthCheck.Result getHealth() {
+        final List<String> poolDetails;
+        if (objectPool == null) {
+            poolDetails = null;
+        } else {
+            poolDetails = objectPool.listAllObjects()
+                    .stream()
+                    .map(DefaultPooledObjectInfo::getPooledObjectToString)
+                    .collect(Collectors.toList());
+        }
+
+        return HealthCheck.Result.builder()
+                .healthy()
+                .withDetail("poolObjects", poolDetails)
+                .build();
+    }
 
     private class ObjectFactory extends BasePooledObjectFactory<SQLStatisticAggregateMap> {
         @Override
