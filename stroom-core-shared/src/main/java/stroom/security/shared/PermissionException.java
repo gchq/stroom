@@ -16,6 +16,7 @@
 
 package stroom.security.shared;
 
+@Deprecated // see stroom.util.shared.PermissionException
 public class PermissionException extends RuntimeException {
     private static final long serialVersionUID = -7671344466028839328L;
 
@@ -28,7 +29,7 @@ public class PermissionException extends RuntimeException {
         super(message);
     }
 
-    public PermissionException(final String message, final String user) {
+    public PermissionException(final String user, final String message) {
         super(message);
         this.user = user;
     }

@@ -23,9 +23,9 @@ import stroom.processor.api.ProcessorService;
 import stroom.processor.shared.Processor;
 import stroom.security.api.SecurityContext;
 import stroom.security.shared.DocumentPermissionNames;
-import stroom.security.shared.PermissionException;
 import stroom.security.shared.PermissionNames;
 import stroom.util.AuditUtil;
+import stroom.util.shared.PermissionException;
 import stroom.util.shared.ResultPage;
 
 import javax.inject.Inject;
@@ -53,8 +53,12 @@ public class ProcessorServiceImpl implements ProcessorService {
         processor.setPipeline(pipelineRef);
 
         // Check the user has read permissions on the pipeline.
-        if (!securityContext.hasDocumentPermission(processor.getPipelineUuid(), DocumentPermissionNames.READ)) {
-            throw new PermissionException("You do not have permission to create this processor");
+        if (!securityContext.hasDocumentPermission(
+                processor.getPipelineUuid(),
+                DocumentPermissionNames.READ)) {
+
+            throw new PermissionException(securityContext.getUserId(),
+                    "You do not have permission to create this processor");
         }
 
         return create(processor);
@@ -83,8 +87,11 @@ public class ProcessorServiceImpl implements ProcessorService {
         processor.setUuid(processorDocRef.getUuid());
 
         // Check the user has read permissions on the pipeline.
-        if (!securityContext.hasDocumentPermission(processor.getPipelineUuid(), DocumentPermissionNames.READ)) {
-            throw new PermissionException("You do not have permission to create this processor");
+        if (!securityContext.hasDocumentPermission(
+                processor.getPipelineUuid(),
+                DocumentPermissionNames.READ)) {
+            throw new PermissionException(securityContext.getUserId(),
+                    "You do not have permission to create this processor");
         }
         return create(processor);
     }

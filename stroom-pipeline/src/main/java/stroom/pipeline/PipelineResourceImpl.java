@@ -16,11 +16,9 @@
 
 package stroom.pipeline;
 
-import com.codahale.metrics.health.HealthCheck.Result;
 import stroom.docref.DocRef;
 import stroom.docstore.api.DocumentResourceHelper;
 import stroom.docstore.shared.DocRefUtil;
-import stroom.document.shared.PermissionException;
 import stroom.pipeline.factory.ElementRegistryFactory;
 import stroom.pipeline.factory.PipelineDataValidator;
 import stroom.pipeline.factory.PipelineStackLoader;
@@ -34,6 +32,9 @@ import stroom.pipeline.shared.data.PipelineData;
 import stroom.pipeline.shared.data.PipelineElementType;
 import stroom.security.api.SecurityContext;
 import stroom.util.HasHealthCheck;
+import stroom.util.shared.PermissionException;
+
+import com.codahale.metrics.health.HealthCheck.Result;
 
 import javax.inject.Inject;
 import java.util.ArrayList;
