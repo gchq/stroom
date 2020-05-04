@@ -24,42 +24,28 @@ public class SystemInfoResult {
     private final String description;
 
     @JsonProperty("details")
-    private final Map<String, Object> detailsMap;
+    private final Map<String, Object> details;
 
     @JsonCreator
     public SystemInfoResult(@JsonProperty("name") final String name,
                             @JsonProperty("description") final String description,
-                            @JsonProperty("details") final Map<String, Object> detailsMap) {
+                            @JsonProperty("details") final Map<String, Object> details) {
         this.name = name;
         this.description = description;
-        this.detailsMap = Objects.requireNonNull(detailsMap);
+        this.details = Objects.requireNonNull(details);
     }
 
     public Map<String, Object> getDetails() {
-        return detailsMap;
+        return details;
     }
 
     public String getName() {
         return name;
     }
 
-//        public static SystemInfoResult merge(final String name,
-//                                             final Collection<SystemInfoResult> systemInfoResults) {
-//        long distinctNames = systemInfoResults.stream()
-//                .map(SystemInfoResult::getName)
-//                .distinct()
-//                .count();
-//
-//        if (systemInfoResults.size() != distinctNames) {
-//            throw new RuntimeException("Non unique names found");
-//        }
-//
-//        final Builder builder = SystemInfoResult.builder(name);
-//        systemInfoResults.forEach(systemInfoResult -> {
-//            builder.withDetail(systemInfoResult.getName(), systemInfoResult);
-//        });
-//        return builder.build();
-//    }
+    public String getDescription() {
+        return description;
+    }
 
     public static Builder builder(final String name) {
         return new Builder(name);
@@ -70,7 +56,7 @@ public class SystemInfoResult {
         return "SystemInfoResult{" +
                 "name='" + name + '\'' +
                 ", description='" + description + '\'' +
-                ", detailMap=" + detailsMap +
+                ", details=" + details +
                 '}';
     }
 
@@ -81,12 +67,12 @@ public class SystemInfoResult {
         final SystemInfoResult that = (SystemInfoResult) o;
         return name.equals(that.name) &&
                 Objects.equals(description, that.description) &&
-                detailsMap.equals(that.detailsMap);
+                details.equals(that.details);
     }
 
     @Override
     public int hashCode() {
-        return Objects.hash(name, description, detailsMap);
+        return Objects.hash(name, description, details);
     }
 
     public static class Builder {
