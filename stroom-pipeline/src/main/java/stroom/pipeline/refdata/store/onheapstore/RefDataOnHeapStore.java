@@ -1,8 +1,5 @@
 package stroom.pipeline.refdata.store.onheapstore;
 
-import com.codahale.metrics.health.HealthCheck;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 import stroom.pipeline.refdata.store.AbstractRefDataStore;
 import stroom.pipeline.refdata.store.MapDefinition;
 import stroom.pipeline.refdata.store.ProcessingState;
@@ -17,6 +14,9 @@ import stroom.util.logging.LambdaLogger;
 import stroom.util.logging.LambdaLoggerFactory;
 import stroom.util.logging.LogUtil;
 import stroom.util.shared.Range;
+
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import javax.annotation.concurrent.NotThreadSafe;
 import java.util.HashMap;
@@ -232,11 +232,6 @@ public class RefDataOnHeapStore extends AbstractRefDataStore {
             v.forEach((subKey, subValue) ->
                     logEntryConsumer.accept(LogUtil.message("   {} => {}", subKey, subValue)));
         });
-    }
-
-    @Override
-    public HealthCheck.Result getHealth() {
-        return null;
     }
 
     /**

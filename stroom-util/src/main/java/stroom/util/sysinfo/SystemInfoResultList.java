@@ -1,12 +1,17 @@
 package stroom.util.sysinfo;
 
 import com.fasterxml.jackson.annotation.JsonCreator;
+import com.fasterxml.jackson.annotation.JsonInclude;
+import com.fasterxml.jackson.annotation.JsonInclude.Include;
 import com.fasterxml.jackson.annotation.JsonProperty;
+import com.fasterxml.jackson.annotation.JsonPropertyOrder;
 
 import java.util.List;
 import java.util.Objects;
 
 // Wraps a list to avoid json ser/deser issues with generic types
+@JsonInclude(Include.NON_DEFAULT)
+@JsonPropertyOrder(alphabetic = true)
 public class SystemInfoResultList {
 
     @JsonProperty("results")

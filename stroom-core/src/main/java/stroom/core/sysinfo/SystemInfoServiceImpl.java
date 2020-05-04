@@ -1,9 +1,10 @@
-package stroom.app.sysinfo;
+package stroom.core.sysinfo;
 
 import stroom.util.sysinfo.HasSystemInfo;
 import stroom.util.sysinfo.SystemInfoResult;
 
 import javax.inject.Inject;
+import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
@@ -17,7 +18,7 @@ public class SystemInfoServiceImpl implements SystemInfoService {
     @Inject
     public SystemInfoServiceImpl(final Set<HasSystemInfo> systemInfoSuppliers) {
         this.systemInfoSuppliers = systemInfoSuppliers.stream()
-                .collect(Collectors.toMap(HasSystemInfo::getName, Function.identity()));
+                .collect(Collectors.toMap(HasSystemInfo::getSystemInfoName, Function.identity()));
     }
 
     @Override
@@ -26,6 +27,11 @@ public class SystemInfoServiceImpl implements SystemInfoService {
         return systemInfoSuppliers.values().stream()
                 .map(HasSystemInfo::getSystemInfo)
                 .collect(Collectors.toList());
+    }
+
+    @Override
+    public Set<String> getNames() {
+        return systemInfoSuppliers.keySet();
     }
 
     @Override

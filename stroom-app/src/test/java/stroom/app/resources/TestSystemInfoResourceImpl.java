@@ -1,8 +1,8 @@
 package stroom.app.resources;
 
-import stroom.app.sysinfo.SystemInfoResource;
-import stroom.app.sysinfo.SystemInfoResourceImpl;
-import stroom.app.sysinfo.SystemInfoService;
+import stroom.core.sysinfo.SystemInfoResource;
+import stroom.core.sysinfo.SystemInfoResourceImpl;
+import stroom.core.sysinfo.SystemInfoService;
 import stroom.test.common.util.test.AbstractResourceTest;
 import stroom.util.sysinfo.HasSystemInfo;
 import stroom.util.sysinfo.SystemInfoResult;
@@ -81,7 +81,7 @@ class TestSystemInfoResourceImpl extends AbstractResourceTest<SystemInfoResource
 
         return new HasSystemInfo() {
             @Override
-            public String getName() {
+            public String getSystemInfoName() {
                 return systemInfoResult.getName();
             }
             @Override

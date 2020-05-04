@@ -1,7 +1,10 @@
 package stroom.util.sysinfo;
 
 import com.fasterxml.jackson.annotation.JsonCreator;
+import com.fasterxml.jackson.annotation.JsonInclude;
+import com.fasterxml.jackson.annotation.JsonInclude.Include;
 import com.fasterxml.jackson.annotation.JsonProperty;
+import com.fasterxml.jackson.annotation.JsonPropertyOrder;
 
 import javax.validation.constraints.NotNull;
 import java.util.Collections;
@@ -9,6 +12,8 @@ import java.util.HashMap;
 import java.util.Map;
 import java.util.Objects;
 
+@JsonInclude(Include.NON_DEFAULT)
+@JsonPropertyOrder(alphabetic = true)
 public class SystemInfoResult {
 
     @NotNull
@@ -102,6 +107,13 @@ public class SystemInfoResult {
         public Builder withDetail(final String key, final Object value) {
             Objects.requireNonNull(key);
             detailMap.put(key, value);
+            return this;
+        }
+
+        public Builder withError(final Throwable error) {
+            Objects.requireNonNull(error);
+            detailMap.put("error", error.getMessage());
+
             return this;
         }
 

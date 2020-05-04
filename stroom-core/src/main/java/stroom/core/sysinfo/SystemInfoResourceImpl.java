@@ -1,12 +1,12 @@
-package stroom.app.sysinfo;
+package stroom.core.sysinfo;
 
+import stroom.event.logging.api.StroomEventLoggingService;
 import stroom.util.logging.LogUtil;
 import stroom.util.shared.ResourcePaths;
 import stroom.util.sysinfo.SystemInfoResult;
 import stroom.util.sysinfo.SystemInfoResultList;
 
 import event.logging.Event;
-import event.logging.EventLoggingService;
 import event.logging.ObjectOutcome;
 import event.logging.Resource;
 import event.logging.util.EventLoggingUtil;
@@ -14,17 +14,19 @@ import event.logging.util.EventLoggingUtil;
 import javax.inject.Inject;
 import javax.ws.rs.BadRequestException;
 import javax.ws.rs.NotFoundException;
+import java.util.ArrayList;
+import java.util.List;
 
 public class SystemInfoResourceImpl implements SystemInfoResource {
 
     private final SystemInfoService systemInfoService;
-    private final EventLoggingService eventLoggingService;
+    private final StroomEventLoggingService stroomEventLoggingService;
 
     @Inject
     public SystemInfoResourceImpl(final SystemInfoService systemInfoService,
-                                  final EventLoggingService eventLoggingService) {
+                                  final StroomEventLoggingService stroomEventLoggingService) {
         this.systemInfoService = systemInfoService;
-        this.eventLoggingService = eventLoggingService;
+        this.stroomEventLoggingService = stroomEventLoggingService;
     }
 
     @Override
@@ -38,6 +40,15 @@ public class SystemInfoResourceImpl implements SystemInfoResource {
         return SystemInfoResultList.of(systemInfoService.getAll());
     }
 
+    @Override
+    public List<String> getNames() {
+        logViewResourceEvent(
+                "getAllSystemInfo",
+                "Getting all system info result names",
+                NAMES_PATH_PART);
+
+        return new ArrayList<>(systemInfoService.getNames());
+    }
 
     @Override
     public SystemInfoResult get(final String name) {
@@ -63,7 +74,7 @@ public class SystemInfoResourceImpl implements SystemInfoResource {
                                       final String description,
                                       final String subPath) {
 
-        final Event event = eventLoggingService.createEvent();
+        final Event event = stroomEventLoggingService.createEvent();
         final Event.EventDetail eventDetail = EventLoggingUtil.createEventDetail(typeId, description);
         final Resource resource = new Resource();
         resource.setURL(ResourcePaths.buildAuthenticatedApiPath(SystemInfoResource.BASE_PATH, subPath));
@@ -71,6 +82,6 @@ public class SystemInfoResourceImpl implements SystemInfoResource {
         objectOutcome.getObjects().add(resource);
         eventDetail.setView(objectOutcome);
         event.setEventDetail(eventDetail);
-        eventLoggingService.log(event);
+        stroomEventLoggingService.log(event);
     }
 }
