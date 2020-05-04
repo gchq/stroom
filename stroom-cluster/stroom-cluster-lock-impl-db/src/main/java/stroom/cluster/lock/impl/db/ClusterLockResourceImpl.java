@@ -16,11 +16,9 @@
 
 package stroom.cluster.lock.impl.db;
 
-import com.codahale.metrics.health.HealthCheck.Result;
 import stroom.node.api.NodeCallUtil;
 import stroom.node.api.NodeInfo;
 import stroom.node.api.NodeService;
-import stroom.util.HasHealthCheck;
 import stroom.util.jersey.WebTargetFactory;
 import stroom.util.shared.ResourcePaths;
 
@@ -30,7 +28,7 @@ import javax.ws.rs.client.Entity;
 import javax.ws.rs.core.MediaType;
 import javax.ws.rs.core.Response;
 
-class ClusterLockResourceImpl implements ClusterLockResource, HasHealthCheck {
+class ClusterLockResourceImpl implements ClusterLockResource {
     private final NodeService nodeService;
     private final NodeInfo nodeInfo;
     private final WebTargetFactory webTargetFactory;
@@ -93,10 +91,5 @@ class ClusterLockResourceImpl implements ClusterLockResource, HasHealthCheck {
         } catch (Throwable e) {
             throw NodeCallUtil.handleExceptionsOnNodeCall(nodeName, url, e);
         }
-    }
-
-    @Override
-    public Result getHealth() {
-        return Result.healthy();
     }
 }

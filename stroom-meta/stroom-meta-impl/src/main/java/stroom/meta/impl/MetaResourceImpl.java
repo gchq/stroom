@@ -16,7 +16,6 @@
 
 package stroom.meta.impl;
 
-import com.codahale.metrics.health.HealthCheck.Result;
 import stroom.meta.api.AttributeMapFactory;
 import stroom.meta.api.MetaService;
 import stroom.meta.shared.DataRetentionFields;
@@ -28,7 +27,6 @@ import stroom.meta.shared.MetaResource;
 import stroom.meta.shared.MetaRow;
 import stroom.meta.shared.UpdateStatusRequest;
 import stroom.security.api.SecurityContext;
-import stroom.util.HasHealthCheck;
 import stroom.util.date.DateUtil;
 import stroom.util.logging.LambdaLogger;
 import stroom.util.logging.LambdaLoggerFactory;
@@ -42,7 +40,7 @@ import java.util.Map;
 import java.util.Optional;
 import java.util.stream.Collectors;
 
-class MetaResourceImpl implements MetaResource, HasHealthCheck {
+class MetaResourceImpl implements MetaResource {
     private static final LambdaLogger LOGGER = LambdaLoggerFactory.getLogger(MetaResourceImpl.class);
 
     private final MetaService metaService;
@@ -136,10 +134,5 @@ class MetaResourceImpl implements MetaResource, HasHealthCheck {
         entries.add(new Entry(DataRetentionFields.RETENTION_RULE, attributeMap.get(DataRetentionFields.RETENTION_RULE)));
 
         return entries;
-    }
-
-    @Override
-    public Result getHealth() {
-        return Result.healthy();
     }
 }

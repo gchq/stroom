@@ -16,24 +16,23 @@
 
 package stroom.data.store.impl.fs;
 
-import com.codahale.metrics.health.HealthCheck.Result;
-import event.logging.BaseAdvancedQueryOperator.And;
-import event.logging.Query;
-import event.logging.Query.Advanced;
 import stroom.data.store.impl.fs.shared.FindFsVolumeCriteria;
 import stroom.data.store.impl.fs.shared.FsVolume;
 import stroom.data.store.impl.fs.shared.FsVolumeResource;
 import stroom.event.logging.api.DocumentEventLog;
 import stroom.security.api.SecurityContext;
-import stroom.util.HasHealthCheck;
 import stroom.util.logging.LambdaLogger;
 import stroom.util.logging.LambdaLoggerFactory;
 import stroom.util.shared.ResultPage;
 
+import event.logging.BaseAdvancedQueryOperator.And;
+import event.logging.Query;
+import event.logging.Query.Advanced;
+
 import javax.inject.Inject;
 
 // TODO : @66 add event logging
-class FsVolumeResourceImpl implements FsVolumeResource, HasHealthCheck {
+class FsVolumeResourceImpl implements FsVolumeResource {
     private static final LambdaLogger LOGGER = LambdaLoggerFactory.getLogger(FsVolumeResourceImpl.class);
 
     private final FsVolumeService volumeService;
@@ -141,10 +140,5 @@ class FsVolumeResourceImpl implements FsVolumeResource, HasHealthCheck {
     public Boolean rescan() {
         volumeService.flush();
         return true;
-    }
-
-    @Override
-    public Result getHealth() {
-        return Result.healthy();
     }
 }

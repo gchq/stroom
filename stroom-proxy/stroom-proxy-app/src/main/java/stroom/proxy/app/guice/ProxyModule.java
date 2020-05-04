@@ -120,15 +120,12 @@ public class ProxyModule extends AbstractModule {
                 .bind(FeedStatusResource.class)
                 .bind(ForwardStreamHandlerFactory.class)
                 .bind(LogLevelInspector.class)
-                .bind(NewUiDictionaryResource2.class)
                 .bind(ProxyConfigHealthCheck.class)
                 .bind(ProxyRepositoryManager.class)
-                .bind(RemoteFeedStatusService.class)
-                .bind(ReceiveDataRuleSetResource.class);
+                .bind(RemoteFeedStatusService.class);
 
         FilterBinder.create(binder())
-                .bind(
-                        new FilterInfo(ProxySecurityFilter.class.getSimpleName(), "/*"),
+                .bind(new FilterInfo(ProxySecurityFilter.class.getSimpleName(), "/*"),
                         ProxySecurityFilter.class);
 
         ServletBinder.create(binder())

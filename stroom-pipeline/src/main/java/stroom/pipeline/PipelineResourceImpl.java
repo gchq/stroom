@@ -31,10 +31,7 @@ import stroom.pipeline.shared.SavePipelineXmlRequest;
 import stroom.pipeline.shared.data.PipelineData;
 import stroom.pipeline.shared.data.PipelineElementType;
 import stroom.security.api.SecurityContext;
-import stroom.util.HasHealthCheck;
 import stroom.util.shared.PermissionException;
-
-import com.codahale.metrics.health.HealthCheck.Result;
 
 import javax.inject.Inject;
 import java.util.ArrayList;
@@ -42,7 +39,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.stream.Collectors;
 
-class PipelineResourceImpl implements PipelineResource, HasHealthCheck {
+class PipelineResourceImpl implements PipelineResource {
     private final PipelineStore pipelineStore;
     private final DocumentResourceHelper documentResourceHelper;
     private final PipelineStackLoader pipelineStackLoader;
@@ -132,7 +129,9 @@ class PipelineResourceImpl implements PipelineResource, HasHealthCheck {
                     return result;
                 });
             } catch (final PermissionException e) {
-                throw new PermissionException(e.getUser(), e.getMessage().replaceAll("permission to read", "permission to use"));
+                throw new PermissionException(
+                        e.getUser(),
+                        e.getMessage().replaceAll("permission to read", "permission to use"));
             }
         });
     }
@@ -140,14 +139,11 @@ class PipelineResourceImpl implements PipelineResource, HasHealthCheck {
     @Override
     public List<FetchPropertyTypesResult> getPropertyTypes() {
         return securityContext.secureResult(() ->
-                pipelineElementRegistryFactory.get().getPropertyTypes().entrySet()
+                pipelineElementRegistryFactory.get().getPropertyTypes()
+                        .entrySet()
                         .stream()
-                        .map(entry -> new FetchPropertyTypesResult(entry.getKey(), entry.getValue()))
+                        .map(entry ->
+                                new FetchPropertyTypesResult(entry.getKey(), entry.getValue()))
                         .collect(Collectors.toList()));
-    }
-
-    @Override
-    public Result getHealth() {
-        return Result.healthy();
     }
 }

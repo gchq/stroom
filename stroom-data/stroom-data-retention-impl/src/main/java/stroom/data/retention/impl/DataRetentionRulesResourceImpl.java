@@ -16,15 +16,13 @@
 
 package stroom.data.retention.impl;
 
-import com.codahale.metrics.health.HealthCheck.Result;
 import stroom.data.retention.shared.DataRetentionRules;
 import stroom.data.retention.shared.DataRetentionRulesResource;
 import stroom.security.api.SecurityContext;
-import stroom.util.HasHealthCheck;
 
 import javax.inject.Inject;
 
-class DataRetentionRulesResourceImpl implements DataRetentionRulesResource, HasHealthCheck {
+class DataRetentionRulesResourceImpl implements DataRetentionRulesResource {
     private final DataRetentionRulesService dataRetentionRulesService;
     private final SecurityContext securityContext;
 
@@ -43,10 +41,5 @@ class DataRetentionRulesResourceImpl implements DataRetentionRulesResource, HasH
     @Override
     public DataRetentionRules update(final DataRetentionRules dataRetentionRules) {
         return securityContext.secureResult(() -> dataRetentionRulesService.writeDocument(dataRetentionRules));
-    }
-
-    @Override
-    public Result getHealth() {
-        return Result.healthy();
     }
 }

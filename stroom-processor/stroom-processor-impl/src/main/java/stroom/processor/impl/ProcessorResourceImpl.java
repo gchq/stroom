@@ -16,18 +16,16 @@
 
 package stroom.processor.impl;
 
-import com.codahale.metrics.health.HealthCheck.Result;
 import stroom.event.logging.api.DocumentEventLog;
 import stroom.processor.api.ProcessorService;
 import stroom.processor.shared.ProcessorResource;
-import stroom.util.HasHealthCheck;
 import stroom.util.logging.LambdaLogger;
 import stroom.util.logging.LambdaLoggerFactory;
 
 import javax.inject.Inject;
 
 // TODO : @66 add event logging
-class ProcessorResourceImpl implements ProcessorResource, HasHealthCheck {
+class ProcessorResourceImpl implements ProcessorResource {
     private static final LambdaLogger LOGGER = LambdaLoggerFactory.getLogger(ProcessorResourceImpl.class);
 
     private final ProcessorService processorService;
@@ -48,10 +46,5 @@ class ProcessorResourceImpl implements ProcessorResource, HasHealthCheck {
     @Override
     public void setEnabled(final Integer id, final Boolean enabled) {
         processorService.setEnabled(id, enabled);
-    }
-
-    @Override
-    public Result getHealth() {
-        return Result.healthy();
     }
 }

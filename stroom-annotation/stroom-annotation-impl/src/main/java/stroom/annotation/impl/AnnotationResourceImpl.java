@@ -16,7 +16,6 @@
 
 package stroom.annotation.impl;
 
-import com.codahale.metrics.health.HealthCheck.Result;
 import stroom.annotation.shared.AnnotationDetail;
 import stroom.annotation.shared.AnnotationResource;
 import stroom.annotation.shared.CreateEntryRequest;
@@ -25,7 +24,6 @@ import stroom.annotation.shared.EventLink;
 import stroom.annotation.shared.SetAssignedToRequest;
 import stroom.annotation.shared.SetStatusRequest;
 import stroom.event.logging.api.DocumentEventLog;
-import stroom.util.HasHealthCheck;
 import stroom.util.logging.LambdaLogger;
 import stroom.util.logging.LambdaLoggerFactory;
 
@@ -33,7 +31,7 @@ import javax.inject.Inject;
 import java.util.List;
 import java.util.stream.Collectors;
 
-class AnnotationResourceImpl implements AnnotationResource, HasHealthCheck {
+class AnnotationResourceImpl implements AnnotationResource {
     private static final LambdaLogger LOGGER = LambdaLoggerFactory.getLogger(AnnotationResourceImpl.class);
 
     private final AnnotationService annotationService;
@@ -142,10 +140,5 @@ class AnnotationResourceImpl implements AnnotationResource, HasHealthCheck {
     @Override
     public Integer setAssignedTo(final SetAssignedToRequest request) {
         return annotationService.setAssignedTo(request);
-    }
-
-    @Override
-    public Result getHealth() {
-        return Result.healthy();
     }
 }

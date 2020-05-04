@@ -16,16 +16,14 @@
 
 package stroom.pipeline.xmlschema;
 
-import com.codahale.metrics.health.HealthCheck.Result;
 import stroom.docref.DocRef;
 import stroom.docstore.api.DocumentResourceHelper;
-import stroom.util.HasHealthCheck;
 import stroom.xmlschema.shared.XmlSchemaDoc;
 import stroom.xmlschema.shared.XmlSchemaResource;
 
 import javax.inject.Inject;
 
-class XmlSchemaResourceImpl implements XmlSchemaResource, HasHealthCheck {
+class XmlSchemaResourceImpl implements XmlSchemaResource {
     private final XmlSchemaStore xmlSchemaStore;
     private final DocumentResourceHelper documentResourceHelper;
 
@@ -44,10 +42,5 @@ class XmlSchemaResourceImpl implements XmlSchemaResource, HasHealthCheck {
     @Override
     public XmlSchemaDoc update(final XmlSchemaDoc doc) {
         return documentResourceHelper.update(xmlSchemaStore, doc);
-    }
-
-    @Override
-    public Result getHealth() {
-        return Result.healthy();
     }
 }
