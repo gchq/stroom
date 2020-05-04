@@ -6,6 +6,8 @@ and this project adheres to [Semantic Versioning](http://semver.org/).
 
 ## [Unreleased]
 
+* Issue **#1496** : Fixed paging of processed data.
+
 * Add stroom.statistics.internal.enabledStoreTypes and make internal stat processing respect it.
 
 * Improve SQL stats shutdown processing so all in memory stats are flushed.

@@ -16,14 +16,14 @@
 
 package stroom.pipeline.stepping;
 
+import stroom.util.guice.RestResourcesBinder;
+
 import com.google.inject.AbstractModule;
-import stroom.util.guice.GuiceUtil;
-import stroom.util.shared.RestResource;
 
 public class PipelineSteppingModule extends AbstractModule {
     @Override
     protected void configure() {
-        GuiceUtil.buildMultiBinder(binder(), RestResource.class)
-                .addBinding(SteppingResourceImpl.class);
+        RestResourcesBinder.create(binder())
+                .bindResource(SteppingResourceImpl.class);
     }
 }

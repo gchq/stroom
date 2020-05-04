@@ -16,13 +16,14 @@
 
 package stroom.pipeline.xslt;
 
-import com.google.inject.AbstractModule;
 import stroom.docstore.api.DocumentActionHandlerBinder;
 import stroom.explorer.api.ExplorerActionHandler;
 import stroom.importexport.api.ImportExportActionHandler;
 import stroom.pipeline.shared.XsltDoc;
 import stroom.util.guice.GuiceUtil;
-import stroom.util.shared.RestResource;
+import stroom.util.guice.RestResourcesBinder;
+
+import com.google.inject.AbstractModule;
 
 import javax.xml.transform.URIResolver;
 
@@ -41,7 +42,7 @@ public class XsltModule extends AbstractModule {
         DocumentActionHandlerBinder.create(binder())
                 .bind(XsltDoc.DOCUMENT_TYPE, XsltStoreImpl.class);
 
-        GuiceUtil.buildMultiBinder(binder(), RestResource.class)
-                .addBinding(XsltResourceImpl.class);
+        RestResourcesBinder.create(binder())
+                .bindResource(XsltResourceImpl.class);
     }
 }

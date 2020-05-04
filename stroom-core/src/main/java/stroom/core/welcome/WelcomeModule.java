@@ -16,14 +16,14 @@
 
 package stroom.core.welcome;
 
+import stroom.util.guice.RestResourcesBinder;
+
 import com.google.inject.AbstractModule;
-import stroom.util.shared.RestResource;
-import stroom.util.guice.GuiceUtil;
 
 public class WelcomeModule extends AbstractModule {
     @Override
     protected void configure() {
-        GuiceUtil.buildMultiBinder(binder(), RestResource.class)
-                .addBinding(WelcomeResource.class);
+        RestResourcesBinder.create(binder())
+                .bindResource(WelcomeResource.class);
     }
 }

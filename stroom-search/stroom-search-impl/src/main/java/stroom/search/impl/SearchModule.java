@@ -16,13 +16,14 @@
 
 package stroom.search.impl;
 
-import com.google.inject.AbstractModule;
 import stroom.cluster.task.api.ClusterTaskHandlerBinder;
 import stroom.search.api.EventSearch;
 import stroom.search.extraction.ExtractionModule;
 import stroom.util.guice.GuiceUtil;
+import stroom.util.guice.RestResourcesBinder;
 import stroom.util.shared.Clearable;
-import stroom.util.shared.RestResource;
+
+import com.google.inject.AbstractModule;
 
 public class SearchModule extends AbstractModule {
     @Override
@@ -33,8 +34,8 @@ public class SearchModule extends AbstractModule {
 
         GuiceUtil.buildMultiBinder(binder(), Clearable.class).addBinding(LuceneSearchResponseCreatorManager.class);
 
-        GuiceUtil.buildMultiBinder(binder(), RestResource.class)
-                .addBinding(StroomIndexQueryResourceImpl.class);
+        RestResourcesBinder.create(binder())
+                .bindResource(StroomIndexQueryResourceImpl.class);
 
         ClusterTaskHandlerBinder.create(binder())
                 .bind(ClusterSearchTask.class, ClusterSearchTaskHandler.class);

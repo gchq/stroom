@@ -16,16 +16,16 @@
 
 package stroom.pipeline.xmlschema;
 
-import com.google.inject.AbstractModule;
-import com.google.inject.multibindings.Multibinder;
 import stroom.docstore.api.DocumentActionHandlerBinder;
-import stroom.util.entityevent.EntityEvent;
-import stroom.util.entityevent.EntityEvent.Handler;
 import stroom.explorer.api.ExplorerActionHandler;
 import stroom.importexport.api.ImportExportActionHandler;
-import stroom.util.guice.GuiceUtil;
-import stroom.util.shared.RestResource;
+import stroom.util.entityevent.EntityEvent;
+import stroom.util.entityevent.EntityEvent.Handler;
+import stroom.util.guice.RestResourcesBinder;
 import stroom.xmlschema.shared.XmlSchemaDoc;
+
+import com.google.inject.AbstractModule;
+import com.google.inject.multibindings.Multibinder;
 
 public class XmlSchemaModule extends AbstractModule {
     @Override
@@ -44,7 +44,7 @@ public class XmlSchemaModule extends AbstractModule {
         DocumentActionHandlerBinder.create(binder())
                 .bind(XmlSchemaDoc.DOCUMENT_TYPE, XmlSchemaStoreImpl.class);
 
-        GuiceUtil.buildMultiBinder(binder(), RestResource.class)
-                .addBinding(XmlSchemaResourceImpl.class);
+        RestResourcesBinder.create(binder())
+                .bindResource(XmlSchemaResourceImpl.class);
     }
 }

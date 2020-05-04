@@ -16,19 +16,20 @@
 
 package stroom.security.impl;
 
-import com.google.inject.AbstractModule;
-import com.google.inject.multibindings.Multibinder;
-import stroom.util.entityevent.EntityEvent;
 import stroom.security.api.DocumentPermissionService;
 import stroom.security.impl.event.PermissionChangeEvent;
 import stroom.security.impl.event.PermissionChangeEventLifecycleModule;
 import stroom.security.impl.event.PermissionChangeEventModule;
+import stroom.util.entityevent.EntityEvent;
 import stroom.util.guice.FilterBinder;
 import stroom.util.guice.FilterInfo;
 import stroom.util.guice.GuiceUtil;
 import stroom.util.guice.HealthCheckBinder;
+import stroom.util.guice.RestResourcesBinder;
 import stroom.util.shared.Clearable;
-import stroom.util.shared.RestResource;
+
+import com.google.inject.AbstractModule;
+import com.google.inject.multibindings.Multibinder;
 
 import javax.servlet.http.HttpSessionListener;
 
@@ -69,14 +70,14 @@ public class SecurityModule extends AbstractModule {
         HealthCheckBinder.create(binder())
                 .bind(JWTService.class);
 
-        GuiceUtil.buildMultiBinder(binder(), RestResource.class)
-                .addBinding(AppPermissionResourceImpl.class)
-                .addBinding(AuthenticationResourceImpl.class)
-                .addBinding(AuthorisationResource.class)
-                .addBinding(DocPermissionResourceImpl.class)
-                .addBinding(DocumentPermissionResourceImpl.class)
-                .addBinding(SessionResourceImpl.class)
-                .addBinding(UserAppPermissionResourceImpl.class)
-                .addBinding(UserResourceImpl.class);
+        RestResourcesBinder.create(binder())
+                .bindResource(AppPermissionResourceImpl.class)
+                .bindResource(AuthenticationResourceImpl.class)
+                .bindResource(AuthorisationResource.class)
+                .bindResource(DocPermissionResourceImpl.class)
+                .bindResource(DocumentPermissionResourceImpl.class)
+                .bindResource(SessionResourceImpl.class)
+                .bindResource(UserAppPermissionResourceImpl.class)
+                .bindResource(UserResourceImpl.class);
     }
 }

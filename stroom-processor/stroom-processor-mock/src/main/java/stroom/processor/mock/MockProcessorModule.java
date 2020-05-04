@@ -16,8 +16,9 @@
 
 package stroom.processor.mock;
 
-import com.google.inject.AbstractModule;
 import stroom.processor.api.ProcessorTaskService;
+
+import com.google.inject.AbstractModule;
 
 public class MockProcessorModule extends AbstractModule {
     @Override
@@ -43,8 +44,8 @@ public class MockProcessorModule extends AbstractModule {
 //                .addBinding(ProcessorCache.class)
 //                .addBinding(ProcessorFilterCache.class);
 //
-//        GuiceUtil.buildMultiBinder(binder(), RestResource.class)
-//                .addBinding(StreamTaskResource.class);
+//        RestResourcesBinder.create(binder())
+//                .bindResource(StreamTaskResource.class);
 //
 //        GuiceUtil.buildMultiBinder(binder(), Searchable.class)
 //                .addBinding(ProcessorTaskServiceImpl.class);
