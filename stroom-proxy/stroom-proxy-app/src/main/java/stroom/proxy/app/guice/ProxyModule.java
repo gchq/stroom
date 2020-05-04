@@ -1,16 +1,5 @@
 package stroom.proxy.app.guice;
 
-import com.google.inject.AbstractModule;
-import com.google.inject.Provides;
-import com.google.inject.Singleton;
-import com.google.inject.multibindings.Multibinder;
-import io.dropwizard.client.JerseyClientBuilder;
-import io.dropwizard.client.JerseyClientConfiguration;
-import io.dropwizard.lifecycle.Managed;
-import io.dropwizard.setup.Environment;
-import org.glassfish.jersey.logging.LoggingFeature;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 import stroom.collection.mock.MockCollectionModule;
 import stroom.dictionary.impl.DictionaryModule;
 import stroom.dictionary.impl.DictionaryStore;
@@ -60,10 +49,22 @@ import stroom.util.guice.FilterBinder;
 import stroom.util.guice.FilterInfo;
 import stroom.util.guice.GuiceUtil;
 import stroom.util.guice.HealthCheckBinder;
+import stroom.util.guice.RestResourcesBinder;
 import stroom.util.guice.ServletBinder;
 import stroom.util.io.BufferFactory;
 import stroom.util.shared.BuildInfo;
-import stroom.util.shared.RestResource;
+
+import com.google.inject.AbstractModule;
+import com.google.inject.Provides;
+import com.google.inject.Singleton;
+import com.google.inject.multibindings.Multibinder;
+import io.dropwizard.client.JerseyClientBuilder;
+import io.dropwizard.client.JerseyClientConfiguration;
+import io.dropwizard.lifecycle.Managed;
+import io.dropwizard.setup.Environment;
+import org.glassfish.jersey.logging.LoggingFeature;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import javax.inject.Provider;
 import javax.ws.rs.client.Client;
@@ -136,11 +137,11 @@ public class ProxyModule extends AbstractModule {
                 .bind(ProxyWelcomeServlet.class)
                 .bind(ReceiveDataServlet.class);
 
-        GuiceUtil.buildMultiBinder(binder(), RestResource.class)
-                .addBinding(NewUiDictionaryResource2.class)
-                .addBinding(ReceiveDataRuleSetResource.class)
-                .addBinding(ReceiveDataRuleSetResourceImpl.class)
-                .addBinding(FeedStatusResource.class);
+        RestResourcesBinder.create(binder())
+                .bindResource(NewUiDictionaryResource2.class)
+                .bindResource(ReceiveDataRuleSetResource.class)
+                .bindResource(ReceiveDataRuleSetResourceImpl.class)
+                .bindResource(FeedStatusResource.class);
 
         GuiceUtil.buildMultiBinder(binder(), Managed.class)
                 .addBinding(ContentSyncService.class)

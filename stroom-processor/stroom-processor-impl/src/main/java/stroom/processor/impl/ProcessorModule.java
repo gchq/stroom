@@ -16,7 +16,6 @@
 
 package stroom.processor.impl;
 
-import com.google.inject.AbstractModule;
 import stroom.importexport.api.ImportExportActionHandler;
 import stroom.job.api.DistributedTaskFactory;
 import stroom.processor.api.ProcessorFilterService;
@@ -26,8 +25,10 @@ import stroom.processor.shared.ProcessorResource;
 import stroom.processor.shared.ProcessorTaskResource;
 import stroom.searchable.api.Searchable;
 import stroom.util.guice.GuiceUtil;
+import stroom.util.guice.RestResourcesBinder;
 import stroom.util.shared.Clearable;
-import stroom.util.shared.RestResource;
+
+import com.google.inject.AbstractModule;
 
 public class ProcessorModule extends AbstractModule {
     @Override
@@ -39,10 +40,11 @@ public class ProcessorModule extends AbstractModule {
         bind(ProcessorTaskResource.class).to(ProcessorTaskResourceImpl.class);
         bind(ProcessorTaskService.class).to(ProcessorTaskServiceImpl.class);
 
-        GuiceUtil.buildMultiBinder(binder(), RestResource.class)
-                .addBinding(ProcessorResourceImpl.class)
-                .addBinding(ProcessorFilterResourceImpl.class)
-                .addBinding(ProcessorTaskResourceImpl.class);
+        RestResourcesBinder.create(binder())
+                .bindResource(ProcessorResourceImpl.class)
+                .bindResource(ProcessorFilterResourceImpl.class)
+                .bindResource(ProcessorTaskResourceImpl.class)
+                .bindResource(StreamTaskResource.class);
 
         GuiceUtil.buildMultiBinder(binder(), DistributedTaskFactory.class)
                 .addBinding(DataProcessorTaskFactory.class);
@@ -50,9 +52,6 @@ public class ProcessorModule extends AbstractModule {
         GuiceUtil.buildMultiBinder(binder(), Clearable.class)
                 .addBinding(ProcessorCache.class)
                 .addBinding(ProcessorFilterCache.class);
-
-        GuiceUtil.buildMultiBinder(binder(), RestResource.class)
-                .addBinding(StreamTaskResource.class);
 
         GuiceUtil.buildMultiBinder(binder(), Searchable.class)
                 .addBinding(ProcessorTaskServiceImpl.class);

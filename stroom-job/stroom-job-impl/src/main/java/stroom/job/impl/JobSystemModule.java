@@ -16,14 +16,14 @@
 
 package stroom.job.impl;
 
-import com.google.inject.AbstractModule;
 import stroom.event.logging.api.ObjectInfoProviderBinder;
 import stroom.job.api.JobManager;
 import stroom.job.api.ScheduledJobsModule;
 import stroom.job.shared.Job;
 import stroom.job.shared.JobNode;
-import stroom.util.guice.GuiceUtil;
-import stroom.util.shared.RestResource;
+import stroom.util.guice.RestResourcesBinder;
+
+import com.google.inject.AbstractModule;
 
 public class JobSystemModule extends AbstractModule {
     @Override
@@ -33,10 +33,10 @@ public class JobSystemModule extends AbstractModule {
 
         bind(JobManager.class).to(JobManagerImpl.class);
 
-        GuiceUtil.buildMultiBinder(binder(), RestResource.class)
-                .addBinding(JobResourceImpl.class)
-                .addBinding(JobNodeResourceImpl.class)
-                .addBinding(ScheduledTimeResourceImpl.class);
+        RestResourcesBinder.create(binder())
+                .bindResource(JobResourceImpl.class)
+                .bindResource(JobNodeResourceImpl.class)
+                .bindResource(ScheduledTimeResourceImpl.class);
 
         // Provide object info to the logging service.
         ObjectInfoProviderBinder.create(binder())

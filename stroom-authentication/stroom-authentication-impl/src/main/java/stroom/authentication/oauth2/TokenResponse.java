@@ -7,7 +7,7 @@ import com.fasterxml.jackson.annotation.JsonProperty;
 import stroom.authentication.api.OIDC;
 
 @JsonInclude(Include.NON_NULL)
-class TokenResponse {
+public class TokenResponse {
     @JsonProperty(OIDC.ID_TOKEN)
     private final String idToken;
 

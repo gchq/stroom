@@ -16,15 +16,15 @@
 
 package stroom.dashboard.impl.script;
 
-import com.google.inject.AbstractModule;
-import com.google.inject.multibindings.Multibinder;
 import stroom.docstore.api.DocumentActionHandlerBinder;
 import stroom.explorer.api.ExplorerActionHandler;
 import stroom.importexport.api.ImportExportActionHandler;
 import stroom.script.shared.ScriptDoc;
-import stroom.util.guice.GuiceUtil;
+import stroom.util.guice.RestResourcesBinder;
 import stroom.util.guice.ServletBinder;
-import stroom.util.shared.RestResource;
+
+import com.google.inject.AbstractModule;
+import com.google.inject.multibindings.Multibinder;
 
 public class ScriptModule extends AbstractModule {
     @Override
@@ -43,7 +43,7 @@ public class ScriptModule extends AbstractModule {
         DocumentActionHandlerBinder.create(binder())
                 .bind(ScriptDoc.DOCUMENT_TYPE, ScriptStoreImpl.class);
 
-        GuiceUtil.buildMultiBinder(binder(), RestResource.class)
-                .addBinding(ScriptResourceImpl.class);
+        RestResourcesBinder.create(binder())
+                .bindResource(ScriptResourceImpl.class);
     }
 }

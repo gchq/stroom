@@ -7,7 +7,7 @@ import com.fasterxml.jackson.annotation.JsonProperty;
 import stroom.authentication.api.OIDC;
 
 @JsonInclude(Include.NON_NULL)
-class TokenRequest {
+public class TokenRequest {
     @JsonProperty(OIDC.GRANT_TYPE)
     private final String grantType;
 

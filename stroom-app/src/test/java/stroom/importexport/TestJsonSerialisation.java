@@ -1,5 +1,8 @@
 package stroom.importexport;
 
+import stroom.util.json.JsonUtil;
+import stroom.util.shared.RestResource;
+
 import com.fasterxml.jackson.annotation.JsonCreator;
 import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.fasterxml.jackson.annotation.JsonInclude;
@@ -14,8 +17,6 @@ import org.fusesource.restygwt.client.DirectRestService;
 import org.junit.jupiter.api.Test;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import stroom.util.json.JsonUtil;
-import stroom.util.shared.RestResource;
 
 import java.lang.reflect.Constructor;
 import java.lang.reflect.Field;
@@ -142,6 +143,31 @@ class TestJsonSerialisation {
     }
 
     /**
+     * Tests that all objects used by resources are public as they need to be accessible to Java proxies for use by RestResources.
+     */
+    @Test
+    void testPublicClasses() {
+        final Map<String, String> classErrors = new HashMap<>();
+        for (final Class<?> clazz : getResourceRelatedClasses()) {
+            final String className = clazz.getName();
+            LOGGER.info(className);
+
+            try {
+                // Test class is public as it is used in a Java proxy by RestResources.
+                if (!Modifier.isPublic(clazz.getModifiers())) {
+                    throw new RuntimeException("Class is not public");
+                }
+            } catch (final Exception e) {
+                classErrors.put(className, e.getMessage());
+            }
+        }
+
+        dumpErrors(classErrors);
+
+        assertThat(classErrors.size()).isZero();
+    }
+
+    /**
      * Test that all objects that will be serialised as JSON and contain maps do not use anything other than String as
      * map keys as this isn't serialisable.
      */
@@ -252,7 +278,7 @@ class TestJsonSerialisation {
 
     private void dumpErrors(final Map<String, String> classErrors) {
         classErrors.forEach((className, msg) ->
-            LOGGER.error("Class {} has error: {}", className, msg));
+                LOGGER.error("Class {} has error: {}", className, msg));
     }
 
     /**

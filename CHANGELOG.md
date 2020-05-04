@@ -6,6 +6,8 @@ and this project adheres to [Semantic Versioning](http://semver.org/).
 
 ## [Unreleased]
 
+* Issue **#1496** : Fixed paging of processed data.
+
 * Issue **#1497** : Fixed data list result paging.
 
 * Issue **#1492** : Fixed data list result paging.

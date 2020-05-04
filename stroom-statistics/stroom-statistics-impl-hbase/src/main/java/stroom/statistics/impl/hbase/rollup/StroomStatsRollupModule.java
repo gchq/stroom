@@ -16,14 +16,14 @@
 
 package stroom.statistics.impl.hbase.rollup;
 
+import stroom.util.guice.RestResourcesBinder;
+
 import com.google.inject.AbstractModule;
-import stroom.util.guice.GuiceUtil;
-import stroom.util.shared.RestResource;
 
 public class StroomStatsRollupModule extends AbstractModule {
     @Override
     protected void configure() {
-        GuiceUtil.buildMultiBinder(binder(), RestResource.class)
-                .addBinding(StatStoreRollupResourceImpl.class);
+        RestResourcesBinder.create(binder())
+                .bindResource(StatStoreRollupResourceImpl.class);
     }
 }

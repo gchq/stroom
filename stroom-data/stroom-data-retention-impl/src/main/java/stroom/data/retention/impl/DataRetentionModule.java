@@ -16,12 +16,12 @@
 
 package stroom.data.retention.impl;
 
-import com.google.inject.AbstractModule;
-import com.google.inject.Provides;
 import stroom.data.retention.shared.DataRetentionRules;
 import stroom.docref.DocRef;
-import stroom.util.guice.GuiceUtil;
-import stroom.util.shared.RestResource;
+import stroom.util.guice.RestResourcesBinder;
+
+import com.google.inject.AbstractModule;
+import com.google.inject.Provides;
 
 import java.util.Set;
 
@@ -30,8 +30,8 @@ public class DataRetentionModule extends AbstractModule {
     protected void configure() {
         bind(DataRetentionRulesService.class).to(DataRetentionRulesServiceImpl.class);
 
-        GuiceUtil.buildMultiBinder(binder(), RestResource.class)
-                .addBinding(DataRetentionRulesResourceImpl.class);
+        RestResourcesBinder.create(binder())
+                .bindResource(DataRetentionRulesResourceImpl.class);
     }
 
     @Provides

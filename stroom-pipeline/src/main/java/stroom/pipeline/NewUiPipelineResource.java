@@ -47,7 +47,7 @@ public class NewUiPipelineResource implements RestResource {
     private final PipelineScopeRunnable pipelineScopeRunnable;
 
     @JsonInclude(Include.NON_NULL)
-    private static class PipelineDTO {
+    public static class PipelineDTO {
         @JsonProperty
         private DocRef docRef;
         @JsonProperty

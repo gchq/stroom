@@ -1,11 +1,11 @@
 package stroom.util.guice;
 
-import com.google.inject.Binder;
-import com.google.inject.multibindings.Multibinder;
 import stroom.util.shared.IsServlet;
 
+import com.google.inject.Binder;
+import com.google.inject.multibindings.Multibinder;
+
 public class ServletBinder {
-//    private final MapBinder<ServletInfo, Servlet> mapBinder;
     private final Multibinder<IsServlet> multibinder;
 
     private ServletBinder(final Binder binder) {

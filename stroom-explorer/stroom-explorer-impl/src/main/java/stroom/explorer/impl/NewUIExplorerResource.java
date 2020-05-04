@@ -136,7 +136,7 @@ public class NewUIExplorerResource implements RestResource {
     }
 
     @JsonInclude(Include.NON_NULL)
-    static class CreateOp {
+    public static class CreateOp {
         @JsonProperty
         private String docRefType;
         @JsonProperty
@@ -183,7 +183,7 @@ public class NewUIExplorerResource implements RestResource {
     }
 
     @JsonInclude(Include.NON_NULL)
-    static class CopyOp {
+    public static class CopyOp {
         @JsonProperty
         private List<DocRef> docRefs;
         @JsonProperty
@@ -225,7 +225,7 @@ public class NewUIExplorerResource implements RestResource {
     }
 
     @JsonInclude(Include.NON_NULL)
-    static class MoveOp {
+    public static class MoveOp {
         @JsonProperty
         private List<DocRef> docRefs;
         @JsonProperty
@@ -267,7 +267,7 @@ public class NewUIExplorerResource implements RestResource {
     }
 
     @JsonInclude(Include.NON_NULL)
-    static class RenameOp {
+    public static class RenameOp {
         @JsonProperty
         private DocRef docRef;
         @JsonProperty

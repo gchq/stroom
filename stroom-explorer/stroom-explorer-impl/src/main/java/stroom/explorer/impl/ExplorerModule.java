@@ -16,13 +16,14 @@
 
 package stroom.explorer.impl;
 
-import com.google.inject.AbstractModule;
 import stroom.collection.api.CollectionService;
 import stroom.explorer.api.ExplorerActionHandler;
 import stroom.explorer.api.ExplorerNodeService;
 import stroom.explorer.api.ExplorerService;
 import stroom.util.guice.GuiceUtil;
-import stroom.util.shared.RestResource;
+import stroom.util.guice.RestResourcesBinder;
+
+import com.google.inject.AbstractModule;
 
 public class ExplorerModule extends AbstractModule {
     @Override
@@ -37,8 +38,8 @@ public class ExplorerModule extends AbstractModule {
                 .addBinding(FolderExplorerActionHandler.class)
                 .addBinding(SystemExplorerActionHandler.class);
 
-        GuiceUtil.buildMultiBinder(binder(), RestResource.class)
-                .addBinding(ExplorerResourceImpl.class)
-                .addBinding(NewUIExplorerResource.class);
+        RestResourcesBinder.create(binder())
+                .bindResource(ExplorerResourceImpl.class)
+                .bindResource(NewUIExplorerResource.class);
     }
 }
