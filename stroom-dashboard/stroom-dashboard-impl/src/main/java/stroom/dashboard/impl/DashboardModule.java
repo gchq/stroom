@@ -16,15 +16,16 @@
 
 package stroom.dashboard.impl;
 
-import com.google.inject.AbstractModule;
-import com.google.inject.multibindings.Multibinder;
 import stroom.dashboard.shared.DashboardDoc;
 import stroom.docstore.api.DocumentActionHandlerBinder;
 import stroom.explorer.api.ExplorerActionHandler;
 import stroom.importexport.api.ImportExportActionHandler;
 import stroom.util.guice.GuiceUtil;
+import stroom.util.guice.RestResourcesBinder;
 import stroom.util.shared.Clearable;
-import stroom.util.shared.RestResource;
+
+import com.google.inject.AbstractModule;
+import com.google.inject.multibindings.Multibinder;
 
 public class DashboardModule extends AbstractModule {
     @Override
@@ -42,7 +43,7 @@ public class DashboardModule extends AbstractModule {
         DocumentActionHandlerBinder.create(binder())
                 .bind(DashboardDoc.DOCUMENT_TYPE, DashboardStoreImpl.class);
 
-        GuiceUtil.buildMultiBinder(binder(), RestResource.class)
-                .addBinding(DashboardResourceImpl.class);
+        RestResourcesBinder.create(binder())
+                .bindResource(DashboardResourceImpl.class);
     }
 }

@@ -16,17 +16,17 @@
 
 package stroom.authentication.authenticate;
 
-import com.google.inject.AbstractModule;
 import stroom.authentication.authenticate.api.AuthenticationService;
-import stroom.util.guice.GuiceUtil;
-import stroom.util.shared.RestResource;
+import stroom.util.guice.RestResourcesBinder;
+
+import com.google.inject.AbstractModule;
 
 public final class AuthenticateModule extends AbstractModule {
     @Override
     protected void configure() {
         bind(AuthenticationService.class).to(AuthenticationServiceImpl.class);
 
-        GuiceUtil.buildMultiBinder(binder(), RestResource.class)
-                .addBinding(AuthenticationResourceImpl.class);
+        RestResourcesBinder.create(binder())
+                .bindResource(AuthenticationResourceImpl.class);
     }
 }

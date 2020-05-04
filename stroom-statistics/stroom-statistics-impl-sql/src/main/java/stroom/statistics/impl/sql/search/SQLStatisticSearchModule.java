@@ -16,11 +16,12 @@
 
 package stroom.statistics.impl.sql.search;
 
-import com.google.inject.AbstractModule;
 import stroom.statistics.impl.sql.StatisticsQueryService;
-import stroom.util.shared.RestResource;
 import stroom.util.guice.GuiceUtil;
+import stroom.util.guice.RestResourcesBinder;
 import stroom.util.shared.Clearable;
+
+import com.google.inject.AbstractModule;
 
 public class SQLStatisticSearchModule extends AbstractModule {
     @Override
@@ -31,7 +32,7 @@ public class SQLStatisticSearchModule extends AbstractModule {
         GuiceUtil.buildMultiBinder(binder(), Clearable.class)
                 .addBinding(SqlStatisticsSearchResponseCreatorManager.class);
 
-        GuiceUtil.buildMultiBinder(binder(), RestResource.class)
-                .addBinding(SqlStatisticsQueryResource.class);
+        RestResourcesBinder.create(binder())
+                .bindResource(SqlStatisticsQueryResource.class);
     }
 }

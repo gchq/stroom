@@ -16,16 +16,16 @@
 
 package stroom.dashboard.impl.datasource;
 
+import stroom.util.guice.RestResourcesBinder;
+
 import com.google.inject.AbstractModule;
-import stroom.util.guice.GuiceUtil;
-import stroom.util.shared.RestResource;
 
 public class DataSourceModule extends AbstractModule {
     @Override
     protected void configure() {
         bind(DataSourceProviderRegistry.class).to(DataSourceProviderRegistryImpl.class);
 
-        GuiceUtil.buildMultiBinder(binder(), RestResource.class)
-                .addBinding(DataSourceResourceImpl.class);
+        RestResourcesBinder.create(binder())
+                .bindResource(DataSourceResourceImpl.class);
     }
 }

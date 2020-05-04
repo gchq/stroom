@@ -16,10 +16,10 @@
 
 package stroom.authentication.account;
 
-import com.google.inject.AbstractModule;
 import stroom.security.api.ProcessingUserIdentityProvider;
-import stroom.util.guice.GuiceUtil;
-import stroom.util.shared.RestResource;
+import stroom.util.guice.RestResourcesBinder;
+
+import com.google.inject.AbstractModule;
 
 public final class AccountModule extends AbstractModule {
     @Override
@@ -30,7 +30,7 @@ public final class AccountModule extends AbstractModule {
         bind(AccountEventLog.class).to(AccountEventLogImpl.class);
         bind(ProcessingUserIdentityProvider.class).to(ProcessingUserIdentityProviderImpl.class);
 
-        GuiceUtil.buildMultiBinder(binder(), RestResource.class)
-                .addBinding(AccountResourceImpl.class);
+        RestResourcesBinder.create(binder())
+                .bindResource(AccountResourceImpl.class);
     }
 }

@@ -16,14 +16,14 @@
 
 package stroom.statistics.impl.hbase.entity;
 
-import com.google.inject.AbstractModule;
-import com.google.inject.multibindings.Multibinder;
 import stroom.docstore.api.DocumentActionHandlerBinder;
 import stroom.explorer.api.ExplorerActionHandler;
 import stroom.importexport.api.ImportExportActionHandler;
 import stroom.statistics.impl.hbase.shared.StroomStatsStoreDoc;
-import stroom.util.guice.GuiceUtil;
-import stroom.util.shared.RestResource;
+import stroom.util.guice.RestResourcesBinder;
+
+import com.google.inject.AbstractModule;
+import com.google.inject.multibindings.Multibinder;
 
 public class StroomStatsStoreModule extends AbstractModule {
     @Override
@@ -39,7 +39,7 @@ public class StroomStatsStoreModule extends AbstractModule {
         DocumentActionHandlerBinder.create(binder())
                 .bind(StroomStatsStoreDoc.DOCUMENT_TYPE, StroomStatsStoreStoreImpl.class);
 
-        GuiceUtil.buildMultiBinder(binder(), RestResource.class)
-                .addBinding(StatsStoreResourceImpl.class);
+        RestResourcesBinder.create(binder())
+                .bindResource(StatsStoreResourceImpl.class);
     }
 }

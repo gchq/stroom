@@ -16,6 +16,16 @@
 
 package stroom.core.db;
 
+import stroom.db.util.DataSourceFactory;
+import stroom.db.util.DataSourceProxy;
+import stroom.db.util.DbUtil;
+import stroom.util.db.ForceCoreMigration;
+import stroom.util.guice.GuiceUtil;
+import stroom.util.guice.RestResourcesBinder;
+import stroom.util.logging.LambdaLogger;
+import stroom.util.logging.LambdaLoggerFactory;
+import stroom.util.shared.Version;
+
 import com.google.inject.AbstractModule;
 import com.google.inject.Provides;
 import org.flywaydb.core.Flyway;
@@ -23,15 +33,6 @@ import org.flywaydb.core.api.FlywayException;
 import org.flywaydb.core.api.configuration.FluentConfiguration;
 import org.jetbrains.annotations.NotNull;
 import org.slf4j.MarkerFactory;
-import stroom.db.util.DataSourceFactory;
-import stroom.db.util.DataSourceProxy;
-import stroom.db.util.DbUtil;
-import stroom.util.db.ForceCoreMigration;
-import stroom.util.guice.GuiceUtil;
-import stroom.util.logging.LambdaLogger;
-import stroom.util.logging.LambdaLoggerFactory;
-import stroom.util.shared.RestResource;
-import stroom.util.shared.Version;
 
 import javax.inject.Inject;
 import javax.inject.Provider;
@@ -79,8 +80,8 @@ public class CoreDbModule extends AbstractModule {
         GuiceUtil.buildMultiBinder(binder(), DataSource.class)
                 .addBinding(CoreDbConnProvider.class);
 
-        GuiceUtil.buildMultiBinder(binder(), RestResource.class)
-                .addBinding(DbStatusResourceImpl.class);
+        RestResourcesBinder.create(binder())
+                .bindResource(DbStatusResourceImpl.class);
     }
 
     @Provides

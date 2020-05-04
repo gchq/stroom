@@ -16,18 +16,19 @@
 
 package stroom.node.impl;
 
-import com.google.inject.AbstractModule;
-import com.google.inject.multibindings.Multibinder;
-import stroom.node.shared.NodeResource;
-import stroom.util.entityevent.EntityEvent;
-import stroom.util.entityevent.EntityEvent.Handler;
 import stroom.event.logging.api.ObjectInfoProviderBinder;
 import stroom.node.api.NodeInfo;
 import stroom.node.api.NodeService;
 import stroom.node.shared.Node;
+import stroom.node.shared.NodeResource;
+import stroom.util.entityevent.EntityEvent;
+import stroom.util.entityevent.EntityEvent.Handler;
 import stroom.util.guice.GuiceUtil;
+import stroom.util.guice.RestResourcesBinder;
 import stroom.util.shared.Clearable;
-import stroom.util.shared.RestResource;
+
+import com.google.inject.AbstractModule;
+import com.google.inject.multibindings.Multibinder;
 
 public class NodeModule extends AbstractModule {
     @Override
@@ -41,8 +42,8 @@ public class NodeModule extends AbstractModule {
         final Multibinder<Handler> entityEventHandlerBinder = Multibinder.newSetBinder(binder(), EntityEvent.Handler.class);
         entityEventHandlerBinder.addBinding().to(NodeServiceImpl.class);
 
-        GuiceUtil.buildMultiBinder(binder(), RestResource.class)
-                .addBinding(NodeResourceImpl.class);
+        RestResourcesBinder.create(binder())
+                .bindResource(NodeResourceImpl.class);
 
         // Provide object info to the logging service.
         ObjectInfoProviderBinder.create(binder())
