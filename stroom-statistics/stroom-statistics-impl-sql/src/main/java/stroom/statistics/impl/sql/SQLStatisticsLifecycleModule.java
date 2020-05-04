@@ -25,13 +25,18 @@ public class SQLStatisticsLifecycleModule extends AbstractLifecycleModule {
     @Override
     protected void configure() {
         super.configure();
-        bindShutdown().to(SQLStatisticCacheShutdown.class);
+
+        // We need it to shutdown quite late so anything that is generating stats has had
+        // a chance to finish generating
+        bindShutdown()
+                .priority(100_000)
+                .to(SQLStatisticShutdown.class);
     }
 
-    private static class SQLStatisticCacheShutdown extends RunnableWrapper {
+    private static class SQLStatisticShutdown extends RunnableWrapper {
         @Inject
-        SQLStatisticCacheShutdown(final SQLStatisticCacheImpl sqlStatisticCache) {
-            super(sqlStatisticCache::shutdown);
+        SQLStatisticShutdown(final Statistics statistics) {
+            super(statistics::flushAllEvents);
         }
     }
 }

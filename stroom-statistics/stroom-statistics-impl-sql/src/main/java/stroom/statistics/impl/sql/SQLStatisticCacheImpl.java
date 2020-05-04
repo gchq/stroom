@@ -16,10 +16,13 @@
 
 package stroom.statistics.impl.sql;
 
+import stroom.task.api.TaskContextFactory;
+import stroom.util.HasHealthCheck;
+
+import com.codahale.metrics.health.HealthCheck;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.slf4j.MarkerFactory;
-import stroom.task.api.TaskContextFactory;
 
 import javax.inject.Inject;
 import javax.inject.Provider;
@@ -30,7 +33,7 @@ import java.util.concurrent.LinkedBlockingQueue;
 import java.util.concurrent.locks.ReentrantLock;
 
 @Singleton
-public class SQLStatisticCacheImpl implements SQLStatisticCache {
+public class SQLStatisticCacheImpl implements SQLStatisticCache, HasHealthCheck {
     private static final Logger LOGGER = LoggerFactory.getLogger(SQLStatisticCacheImpl.class);
 
     /**
@@ -123,8 +126,10 @@ public class SQLStatisticCacheImpl implements SQLStatisticCache {
 
                 flushQueue.put(flushMap);
 
-                final Runnable runnable = taskContextFactory.context("Flush SQL Statistic Cache", taskContext ->
-                        sqlStatisticFlushTaskHandlerProvider.get().exec(flushMap));
+                final Runnable runnable = taskContextFactory.context(
+                        "Flush SQL Statistic Cache",
+                        taskContext ->
+                                sqlStatisticFlushTaskHandlerProvider.get().exec(flushMap));
 
                 if (block) {
                     try {
@@ -158,11 +163,22 @@ public class SQLStatisticCacheImpl implements SQLStatisticCache {
 
     void shutdown() {
         // Do a final blocking flush.
+        //TODO run as proc user
         flush(true);
     }
 
     public void execute() {
         // Kick off a flush
         flush(false);
+    }
+
+    @Override
+    public HealthCheck.Result getHealth() {
+        return HealthCheck.Result.builder()
+                .healthy()
+                .withDetail("mapAge", map.getAge().toString())
+                .withDetail("countMapSize", map.countEntrySet().size())
+                .withDetail("valueMapSize", map.valueEntrySet().size())
+                .build();
     }
 }

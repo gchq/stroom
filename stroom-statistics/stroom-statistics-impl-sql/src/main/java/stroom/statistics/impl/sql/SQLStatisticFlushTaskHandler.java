@@ -16,7 +16,6 @@
 
 package stroom.statistics.impl.sql;
 
-import org.apache.commons.lang3.mutable.MutableLong;
 import stroom.security.api.SecurityContext;
 import stroom.statistics.impl.sql.shared.StatisticType;
 import stroom.task.api.TaskContext;
@@ -26,6 +25,8 @@ import stroom.util.logging.LambdaLogger;
 import stroom.util.logging.LambdaLoggerFactory;
 import stroom.util.logging.LogExecutionTime;
 import stroom.util.shared.ModelStringUtil;
+
+import org.apache.commons.lang3.mutable.MutableLong;
 
 import javax.inject.Inject;
 import java.sql.BatchUpdateException;
@@ -61,7 +62,8 @@ public class SQLStatisticFlushTaskHandler {
     }
 
     public void exec(final SQLStatisticAggregateMap map) {
-        taskContextFactory.context("Flush SQL Statistics", taskContext -> exec(taskContext, map)).run();
+        taskContextFactory.context("Flush SQL Statistics", taskContext -> exec(taskContext, map))
+                .run();
     }
 
     private void exec(final TaskContext taskContext, final SQLStatisticAggregateMap map) {
@@ -75,33 +77,26 @@ public class SQLStatisticFlushTaskHandler {
             savedCount = 0;
             total = map.size();
 
-            final int batchSizetoUse = BATCH_SIZE;
+            final int mapSize = map.size();
 
-            final Supplier<String> messageSupplier = () -> "Flushing statistics (batch size=" + batchSizetoUse + ")";
+            final Supplier<String> messageSupplier = () ->
+                    "Flushing " + mapSize + " statistics with batch size " + BATCH_SIZE;
             LOGGER.info(messageSupplier);
             taskContext.info(messageSupplier);
 
             final List<SQLStatisticValueSourceDO> batchInsert = new ArrayList<>();
             // Store all aggregated entries.
             for (final Entry<SQLStatKey, MutableLong> entry : map.countEntrySet()) {
+                StatisticType statisticType = StatisticType.COUNT;
+
                 if (!Thread.currentThread().isInterrupted()) {
                     final long ms = entry.getKey().getMs();
                     final String name = entry.getKey().getName();
                     final long value = entry.getValue().longValue();
 
-                    final SQLStatisticValueSourceDO insert = new SQLStatisticValueSourceDO();
-                    insert.setCreateMs(ms);
-                    insert.setName(name);
-                    insert.setType(StatisticType.COUNT);
-                    insert.setValue(value);
-
-                    batchInsert.add(insert);
-
-                    count++;
-
-                    if (batchInsert.size() >= batchSizetoUse) {
-                        doSaveBatch(taskContext, batchInsert);
-                    }
+                    addEntry(taskContext, batchInsert, statisticType, ms, name, value);
+                } else {
+                    LOGGER.warn("Thread interrupted");
                 }
             }
             for (final Entry<SQLStatKey, Double> entry : map.valueEntrySet()) {
@@ -110,19 +105,9 @@ public class SQLStatisticFlushTaskHandler {
                     final String name = entry.getKey().getName();
                     final long value = entry.getValue().longValue();
 
-                    final SQLStatisticValueSourceDO insert = new SQLStatisticValueSourceDO();
-                    insert.setCreateMs(ms);
-                    insert.setName(name);
-                    insert.setType(StatisticType.VALUE);
-                    insert.setValue(value);
-
-                    batchInsert.add(insert);
-
-                    count++;
-
-                    if (batchInsert.size() >= batchSizetoUse) {
-                        doSaveBatch(taskContext, batchInsert);
-                    }
+                    addEntry(taskContext, batchInsert, StatisticType.VALUE, ms, name, value);
+                } else {
+                    LOGGER.warn("Thread interrupted");
                 }
             }
 
@@ -134,15 +119,40 @@ public class SQLStatisticFlushTaskHandler {
         }
     }
 
+    private void addEntry(final TaskContext taskContext,
+                          final List<SQLStatisticValueSourceDO> batchInsert,
+                          final StatisticType statisticType,
+                          final long ms,
+                          final String name,
+                          final long value) {
+        final SQLStatisticValueSourceDO insert = new SQLStatisticValueSourceDO();
+
+        insert.setCreateMs(ms);
+        insert.setName(name);
+        insert.setType(statisticType);
+        insert.setValue(value);
+
+        batchInsert.add(insert);
+
+        count++;
+
+        if (batchInsert.size() >= BATCH_SIZE) {
+            doSaveBatch(taskContext, batchInsert);
+        }
+    }
+
     private void doSaveBatch(final TaskContext taskContext, final List<SQLStatisticValueSourceDO> batchInsert) {
         try {
             final int seconds = (int) (logExecutionTime.getDuration() / 1000L);
 
             if (seconds > 0) {
-                taskContext.info(LambdaLogUtil.message("Saving {}/{} ({} ps)", ModelStringUtil.formatCsv(count),
-                        ModelStringUtil.formatCsv(total), ModelStringUtil.formatCsv(savedCount / seconds)));
+                taskContext.info(LambdaLogUtil.message("Saving {}/{} ({}/sec)",
+                        ModelStringUtil.formatCsv(count),
+                        ModelStringUtil.formatCsv(total),
+                        ModelStringUtil.formatCsv(savedCount / seconds)));
             } else {
-                taskContext.info(LambdaLogUtil.message("Saving {}/{} (? ps)", ModelStringUtil.formatCsv(count),
+                taskContext.info(LambdaLogUtil.message("Saving {}/{} (? ps)",
+                        ModelStringUtil.formatCsv(count),
                         ModelStringUtil.formatCsv(total)));
 
             }
@@ -152,7 +162,8 @@ public class SQLStatisticFlushTaskHandler {
             savedCount += batchInsert.size();
         } catch (final RuntimeException e) {
             LOGGER.debug(e::getMessage, e);
-            LOGGER.warn(LambdaLogUtil.message("doSaveBatch() - Failed to insert {} records will try slower PreparedStatement method - {}",
+            LOGGER.warn(LambdaLogUtil.message(
+                    "doSaveBatch() - Failed to insert {} records will try slower PreparedStatement method - {}",
                     batchInsert.size(), e.getMessage()));
 
             try {
@@ -178,7 +189,9 @@ public class SQLStatisticFlushTaskHandler {
                 }
 
                 LOGGER.error(LambdaLogUtil.message(
-                        "doSaveBatch() - Failed to insert {} records out of a batch size of {} using PreparedStatement (though succeeded in inserting {}), will try much slower IndividualPreparedStatements method",
+                        "doSaveBatch() - Failed to insert {} records out of a batch size of {} using " +
+                                "PreparedStatement (though succeeded in inserting {}), will try much slower " +
+                                "IndividualPreparedStatements method",
                         batchInsert.size() - successCount, batchInsert.size(), successCount), e2);
 
                 final int insertedCount = sqlStatisticValueBatchSaveService
