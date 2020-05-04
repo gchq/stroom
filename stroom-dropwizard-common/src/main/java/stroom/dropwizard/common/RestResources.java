@@ -10,14 +10,12 @@ import stroom.util.shared.RestResource;
 
 import io.dropwizard.setup.Environment;
 import org.apache.commons.lang3.StringUtils;
+import org.glassfish.hk2.api.Factory;
+import org.glassfish.hk2.utilities.binding.AbstractBinder;
 
 import javax.inject.Inject;
 import javax.inject.Provider;
 import javax.ws.rs.Path;
-import java.lang.reflect.InvocationHandler;
-import java.lang.reflect.InvocationTargetException;
-import java.lang.reflect.Method;
-import java.lang.reflect.Proxy;
 import java.util.Arrays;
 import java.util.Comparator;
 import java.util.HashSet;
@@ -67,46 +65,50 @@ public class RestResources {
                 .filter(resourceProvider -> filter(maxNameLength, allPaths, resourceProvider))
                 .collect(Collectors.toList());
 
-        resourceProviders.forEach(resourceProvider -> {
-            final Object proxy = Proxy.newProxyInstance(
-                    resourceProvider.resourceClass.getClassLoader(),
-                    resourceProvider.resourceClass.getInterfaces(),
-                    new RestResourceInvocationHandler(resourceProvider));
+//        resourceProviders.forEach(resourceProvider -> {
+//            final Object proxy = Proxy.newProxyInstance(
+//                    resourceProvider.resourceClass.getClassLoader(),
+//                    resourceProvider.resourceClass.getInterfaces(),
+//                    new RestResourceInvocationHandler(resourceProvider));
+//
+//            environment.jersey().register(proxy);
+//        });
 
-            environment.jersey().register(proxy);
-        });
+        environment.jersey().register(new HK2toGuiceModule(resourceProviders));
+        resourceProviders.forEach(resourceProvider ->
+                environment.jersey().register(resourceProvider.getResourceClass()));
     }
 
-    private static class RestResourceInvocationHandler implements InvocationHandler {
-        private static final LambdaLogger LOGGER = LambdaLoggerFactory.getLogger(
-                RestResourceInvocationHandler.class);
-
-        private final ResourceProvider resourceProvider;
-
-        public RestResourceInvocationHandler(final ResourceProvider resourceProvider) {
-            this.resourceProvider = resourceProvider;
-        }
-
-        @Override
-        public Object invoke(final Object proxy, final Method method, final Object[] args) throws Throwable {
-            try {
-                final long start = System.nanoTime();
-                final Object target = resourceProvider.getProvider().get();
-                final Object result = method.invoke(target, args);
-                final long elapsed = System.nanoTime() - start;
-
-                LOGGER.trace(() -> "Executing " + method.getName() + " finished in " + elapsed + "ns");
-
-                return result;
-            } catch (final InvocationTargetException e) {
-                LOGGER.trace(e::getMessage, e);
-                throw e.getTargetException();
-            } catch (final Throwable e) {
-                LOGGER.error(e::getMessage, e);
-                throw e;
-            }
-        }
-    }
+//    private static class RestResourceInvocationHandler implements InvocationHandler {
+//        private static final LambdaLogger LOGGER = LambdaLoggerFactory.getLogger(
+//                RestResourceInvocationHandler.class);
+//
+//        private final ResourceProvider resourceProvider;
+//
+//        public RestResourceInvocationHandler(final ResourceProvider resourceProvider) {
+//            this.resourceProvider = resourceProvider;
+//        }
+//
+//        @Override
+//        public Object invoke(final Object proxy, final Method method, final Object[] args) throws Throwable {
+//            try {
+//                final long start = System.nanoTime();
+//                final Object target = resourceProvider.getProvider().get();
+//                final Object result = method.invoke(target, args);
+//                final long elapsed = System.nanoTime() - start;
+//
+//                LOGGER.trace(() -> "Executing " + method.getName() + " finished in " + elapsed + "ns");
+//
+//                return result;
+//            } catch (final InvocationTargetException e) {
+//                LOGGER.trace(e::getMessage, e);
+//                throw e.getTargetException();
+//            } catch (final Throwable e) {
+//                LOGGER.error(e::getMessage, e);
+//                throw e;
+//            }
+//        }
+//    }
 
     private Optional<String> getResourcePath(final Class<?> restResourceClass) {
         final Path pathAnnotation = restResourceClass.getAnnotation(Path.class);
@@ -139,6 +141,38 @@ public class RestResources {
 
         allPaths.add(resourceProvider.getResourcePath());
         return true;
+    }
+
+    private static class HK2toGuiceModule extends AbstractBinder {
+        private final List<ResourceProvider> resourceProviders;
+
+        public HK2toGuiceModule(final List<ResourceProvider> resourceProviders) {
+            this.resourceProviders = resourceProviders;
+        }
+
+        @Override
+        protected void configure() {
+            resourceProviders.forEach(resourceProvider ->
+                    bindFactory(new ServiceFactory<>(resourceProvider.getProvider()))
+                            .to(resourceProvider.getResourceClass()));
+        }
+
+        private static class ServiceFactory<T> implements Factory<T> {
+            private final Provider<T> provider;
+
+            ServiceFactory(final Provider<T> provider) {
+                this.provider = provider;
+            }
+
+            @Override
+            public T provide() {
+                return provider.get();
+            }
+
+            @Override
+            public void dispose(T versionResource) {
+            }
+        }
     }
 
     private static class ResourceProvider {
