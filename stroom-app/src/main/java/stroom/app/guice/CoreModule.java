@@ -6,6 +6,7 @@ public class CoreModule extends AbstractModule {
     @Override
     protected void configure() {
         install(new stroom.activity.impl.db.ActivityDbModule());
+        install(new stroom.alert.impl.AlertModule());
         install(new stroom.annotation.impl.db.AnnotationDbModule());
         install(new stroom.annotation.pipeline.AnnotationPipelineModule());
         install(new stroom.authentication.AuthModule());

@@ -1,0 +1,7 @@
+ext.moduleName = 'stroom.alert.api'
+
+dependencies {
+    compile libs.lucene_analyzers_common
+    compile libs.lucene_core
+    compile libs.lucene_queryparser
+}

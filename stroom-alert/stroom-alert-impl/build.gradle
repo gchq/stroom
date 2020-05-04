@@ -1,0 +1,8 @@
+ext.moduleName = 'stroom.alert.impl'
+
+dependencies {
+    compile project(':stroom-alert:stroom-alert-api')
+
+    compile libs.guice4
+    compile libs.lucene_memory
+}

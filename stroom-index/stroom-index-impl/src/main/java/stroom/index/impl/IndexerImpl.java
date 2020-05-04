@@ -23,6 +23,7 @@ import stroom.index.shared.IndexShard.IndexShardStatus;
 import stroom.index.shared.IndexShardKey;
 import stroom.util.logging.LambdaLogger;
 import stroom.util.logging.LambdaLoggerFactory;
+import stroom.alert.api.AlertManager;
 
 import javax.inject.Inject;
 import javax.inject.Singleton;
@@ -39,14 +40,17 @@ public class IndexerImpl implements Indexer {
 
     private final IndexShardWriterCache indexShardWriterCache;
     private final IndexShardManager indexShardManager;
+    private final AlertManager alertManager;
 
     private final StripedLock keyLocks = new StripedLock();
 
     @Inject
     public IndexerImpl(final IndexShardWriterCache indexShardWriterCache,
-                final IndexShardManager indexShardManager) {
+                final IndexShardManager indexShardManager,
+                       final AlertManager alertManager) {
         this.indexShardWriterCache = indexShardWriterCache;
         this.indexShardManager = indexShardManager;
+        this.alertManager = alertManager;
     }
 
     @Override
@@ -56,6 +60,7 @@ public class IndexerImpl implements Indexer {
             boolean success = false;
             try {
                 final IndexShardWriter indexShardWriter = indexShardWriterCache.getWriterByShardKey(indexShardKey);
+                alertManager.createAlerts(document);
                 indexShardWriter.addDocument(document);
                 success = true;
             } catch (final IOException | RuntimeException e) {

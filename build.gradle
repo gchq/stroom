@@ -251,6 +251,7 @@ ext.libs = [
         lucene_analyzers_common        : "org.apache.lucene:lucene-analyzers-common:$versions.lucene",
         lucene_backward_codecs         : "org.apache.lucene:lucene-backward-codecs:$versions.lucene",
         lucene_core                    : "org.apache.lucene:lucene-core:$versions.lucene",
+        lucene_memory                  : "org.apache.lucene:lucene-memory:$versions.lucene",
         lucene_queryparser             : "org.apache.lucene:lucene-queryparser:$versions.lucene",
         mbknor_jackson_jsonSchema      : "com.kjetland:mbknor-jackson-jsonschema_2.12:1.0.36",
         mockito_core                   : "org.mockito:mockito-core:$versions.mockito",

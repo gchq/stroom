@@ -24,6 +24,10 @@ include 'stroom-activity:stroom-activity-impl-db'
 include 'stroom-activity:stroom-activity-impl-db-jooq'
 include 'stroom-activity:stroom-activity-mock'
 
+// Alert
+include 'stroom-alert:stroom-alert-api'
+include 'stroom-alert:stroom-alert-impl'
+
 // Annotations project.
 include 'stroom-annotation:stroom-annotation-api'
 include 'stroom-annotation:stroom-annotation-impl'
