@@ -767,7 +767,8 @@ public class RefDataOffHeapStore extends AbstractRefDataStore implements RefData
     @Override
     public SystemInfoResult getSystemInfo() {
         try {
-            Tuple2<Instant, Instant> lastAccessedTimeRange = processingInfoDb.getLastAccessedTimeRange();
+            Tuple2<Optional<Instant>, Optional<Instant>> lastAccessedTimeRange = processingInfoDb.getLastAccessedTimeRange();
+
             SystemInfoResult.Builder builder = SystemInfoResult.builder(getSystemInfoName())
                     .withDetail("Path", dbDir.toAbsolutePath().toString())
                     .withDetail("Environment max size", maxSize)
@@ -776,8 +777,12 @@ public class RefDataOffHeapStore extends AbstractRefDataStore implements RefData
                     .withDetail("Purge cut off", TimeUtils.durationToThreshold(referenceDataConfig.getPurgeAge()).toString())
                     .withDetail("Max readers", maxReaders)
                     .withDetail("Current buffer pool size", byteBufferPool.getCurrentPoolSize())
-                    .withDetail("Earliest lastAccessedTime", lastAccessedTimeRange._1().toString())
-                    .withDetail("Latest lastAccessedTime", lastAccessedTimeRange._2().toString());
+                    .withDetail("Earliest lastAccessedTime", lastAccessedTimeRange._1()
+                            .map(Instant::toString)
+                            .orElse(null))
+                    .withDetail("Latest lastAccessedTime", lastAccessedTimeRange._2()
+                            .map(Instant::toString)
+                            .orElse(null));
 
             LmdbUtils.doWithReadTxn(lmdbEnvironment, txn -> {
                 builder.withDetail("Database entry counts", databaseMap.entrySet().stream()

@@ -23,20 +23,20 @@ public class SystemInfoResult {
     @JsonProperty("description")
     private final String description;
 
-    @JsonProperty("detail")
-    private final Map<String, Object> detailMap;
+    @JsonProperty("details")
+    private final Map<String, Object> detailsMap;
 
     @JsonCreator
     public SystemInfoResult(@JsonProperty("name") final String name,
                             @JsonProperty("description") final String description,
-                            @JsonProperty("detail") final Map<String, Object> detailMap) {
+                            @JsonProperty("detail") final Map<String, Object> detailsMap) {
         this.name = name;
         this.description = description;
-        this.detailMap = Objects.requireNonNull(detailMap);
+        this.detailsMap = Objects.requireNonNull(detailsMap);
     }
 
-    public Map<String, Object> getDetail() {
-        return detailMap;
+    public Map<String, Object> getDetails() {
+        return detailsMap;
     }
 
     public String getName() {
@@ -70,7 +70,7 @@ public class SystemInfoResult {
         return "SystemInfoResult{" +
                 "name='" + name + '\'' +
                 ", description='" + description + '\'' +
-                ", detailMap=" + detailMap +
+                ", detailMap=" + detailsMap +
                 '}';
     }
 
@@ -81,12 +81,12 @@ public class SystemInfoResult {
         final SystemInfoResult that = (SystemInfoResult) o;
         return name.equals(that.name) &&
                 Objects.equals(description, that.description) &&
-                detailMap.equals(that.detailMap);
+                detailsMap.equals(that.detailsMap);
     }
 
     @Override
     public int hashCode() {
-        return Objects.hash(name, description, detailMap);
+        return Objects.hash(name, description, detailsMap);
     }
 
     public static class Builder {

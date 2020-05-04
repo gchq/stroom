@@ -17,11 +17,13 @@
 
 package stroom.pipeline.refdata.util;
 
-import com.codahale.metrics.health.HealthCheck;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 import stroom.util.HasHealthCheck;
 import stroom.util.shared.Clearable;
+import stroom.util.sysinfo.HasSystemInfo;
+import stroom.util.sysinfo.SystemInfoResult;
+
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import javax.inject.Singleton;
 import java.nio.ByteBuffer;
@@ -70,7 +72,7 @@ import java.util.stream.Collectors;
  * As this pool is un-bounded it could grow very large under high contention
  */
 @Singleton
-public class ByteBufferPool implements Clearable, HasHealthCheck {
+public class ByteBufferPool implements Clearable, HasSystemInfo {
 
     private static final Logger LOGGER = LoggerFactory.getLogger(ByteBufferPool.class);
 
@@ -183,12 +185,9 @@ public class ByteBufferPool implements Clearable, HasHealthCheck {
     }
 
     @Override
-    public HealthCheck.Result getHealth() {
-
+    public SystemInfoResult getSystemInfo() {
         try {
-            HealthCheck.ResultBuilder builder = HealthCheck.Result.builder();
-            builder
-                    .healthy()
+            SystemInfoResult.Builder builder = SystemInfoResult.builder(getSystemInfoName())
                     .withDetail("Size", getCurrentPoolSize());
 
             SortedMap<Integer, Long> capacityCountsMap = null;
@@ -216,8 +215,8 @@ public class ByteBufferPool implements Clearable, HasHealthCheck {
 
             return builder.build();
         } catch (RuntimeException e) {
-            return HealthCheck.Result.builder()
-                    .unhealthy(e)
+            return SystemInfoResult.builder(getSystemInfoName())
+                    .withError(e)
                     .build();
         }
     }

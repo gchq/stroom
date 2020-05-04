@@ -3,13 +3,13 @@ package stroom.app.resources;
 import stroom.core.sysinfo.SystemInfoResource;
 import stroom.core.sysinfo.SystemInfoResourceImpl;
 import stroom.core.sysinfo.SystemInfoService;
+import stroom.event.logging.api.StroomEventLoggingService;
 import stroom.test.common.util.test.AbstractResourceTest;
 import stroom.util.sysinfo.HasSystemInfo;
 import stroom.util.sysinfo.SystemInfoResult;
 import stroom.util.sysinfo.SystemInfoResultList;
 
 import event.logging.Event;
-import event.logging.EventLoggingService;
 import org.jetbrains.annotations.NotNull;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
@@ -31,20 +31,20 @@ class TestSystemInfoResourceImpl extends AbstractResourceTest<SystemInfoResource
     @Mock
     private SystemInfoService systemInfoService;
     @Mock
-    private EventLoggingService eventLoggingService;
+    private StroomEventLoggingService stroomEventLoggingService;
 
     @BeforeEach
     void setUp() {
         LOGGER.info("Setup");
         
-        when(eventLoggingService.createEvent())
+        when(stroomEventLoggingService.createEvent())
                 .thenReturn(new Event());
 
         doAnswer(invocation -> {
                     LOGGER.info("log() called for {}", invocation.getArguments()[0]);
                     return null;
                 })
-                .when(eventLoggingService).log(Mockito.any());
+                .when(stroomEventLoggingService).log(Mockito.any());
     }
 
     @Test
@@ -93,7 +93,7 @@ class TestSystemInfoResourceImpl extends AbstractResourceTest<SystemInfoResource
 
     @Override
     public SystemInfoResource getRestResource() {
-        return new SystemInfoResourceImpl(systemInfoService, eventLoggingService);
+        return new SystemInfoResourceImpl(systemInfoService, stroomEventLoggingService);
     }
 
     @Override

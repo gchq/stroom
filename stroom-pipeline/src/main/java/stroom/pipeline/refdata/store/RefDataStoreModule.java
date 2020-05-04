@@ -33,7 +33,6 @@ import stroom.pipeline.refdata.store.onheapstore.OnHeapRefDataValueProxyConsumer
 import stroom.pipeline.refdata.store.onheapstore.StringValueConsumer;
 import stroom.pipeline.refdata.util.ByteBufferPool;
 import stroom.pipeline.refdata.util.PooledByteBufferOutputStream;
-import stroom.util.guice.HealthCheckBinder;
 import stroom.util.guice.SystemInfoBinder;
 
 import com.google.inject.AbstractModule;
@@ -66,10 +65,8 @@ public class RefDataStoreModule extends AbstractModule {
         install(new FactoryModuleBuilder().build(PooledByteBufferOutputStream.Factory.class));
         install(new FactoryModuleBuilder().build(RefDataValueProxyConsumerFactory.Factory.class));
 
-        HealthCheckBinder.create(binder())
-                .bind(ByteBufferPool.class);
-
         SystemInfoBinder.create(binder())
+                .bind(ByteBufferPool.class)
                 .bind(RefDataOffHeapStore.class);
     }
 }

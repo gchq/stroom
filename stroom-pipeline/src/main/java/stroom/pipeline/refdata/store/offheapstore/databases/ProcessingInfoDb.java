@@ -1,14 +1,5 @@
 package stroom.pipeline.refdata.store.offheapstore.databases;
 
-import com.google.inject.assistedinject.Assisted;
-import io.vavr.Tuple;
-import io.vavr.Tuple2;
-import org.lmdbjava.CursorIterator;
-import org.lmdbjava.Env;
-import org.lmdbjava.KeyRange;
-import org.lmdbjava.Txn;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 import stroom.pipeline.refdata.store.ProcessingState;
 import stroom.pipeline.refdata.store.RefDataProcessingInfo;
 import stroom.pipeline.refdata.store.RefStreamDefinition;
@@ -22,6 +13,16 @@ import stroom.pipeline.refdata.util.PooledByteBufferPair;
 import stroom.util.logging.LambdaLogUtil;
 import stroom.util.logging.LambdaLogger;
 import stroom.util.logging.LambdaLoggerFactory;
+
+import com.google.inject.assistedinject.Assisted;
+import io.vavr.Tuple;
+import io.vavr.Tuple2;
+import org.lmdbjava.CursorIterator;
+import org.lmdbjava.Env;
+import org.lmdbjava.KeyRange;
+import org.lmdbjava.Txn;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import javax.inject.Inject;
 import java.nio.ByteBuffer;
@@ -136,24 +137,30 @@ public class ProcessingInfoDb extends AbstractLmdbDb<RefStreamDefinition, RefDat
         return optMatchedEntry;
     }
 
-    public Tuple2<Instant, Instant> getLastAccessedTimeRange() {
+    public Tuple2<Optional<Instant>, Optional<Instant>> getLastAccessedTimeRange() {
 
-        final LongAccumulator earliestLastAccessedTime = new LongAccumulator(Long::min, Long.MAX_VALUE);
-        final LongAccumulator latestLastAccessedTime = new LongAccumulator(Long::max, 0);
+        long earliestInitialValue = Long.MAX_VALUE;
+        long latestInitialValue = 0;
+        final LongAccumulator earliestLastAccessedTime = new LongAccumulator(Long::min, earliestInitialValue);
+        final LongAccumulator latestLastAccessedTime = new LongAccumulator(Long::max, latestInitialValue);
 
         LmdbUtils.doWithReadTxn(getLmdbEnvironment(), txn ->
                 forEachEntryAsBytes(txn, KeyRange.all(), keyVal -> {
                     // It would be quicker to keep a copy of the earliest/latest times in there byte
                     // form and do the comparison on that but as this is only intended for use
-                    // in a health check it is probably ok as is.
+                    // in a sys info check it is probably ok as is.
                     long lastAccessedTime = valueSerde.extractLastAccessedTimeMs(keyVal.val());
                     earliestLastAccessedTime.accumulate(lastAccessedTime);
                     latestLastAccessedTime.accumulate(lastAccessedTime);
                 }));
 
         return Tuple.of(
-                Instant.ofEpochMilli(earliestLastAccessedTime.get()),
-                Instant.ofEpochMilli(latestLastAccessedTime.get()));
+                earliestLastAccessedTime.get() == earliestInitialValue
+                        ? Optional.empty()
+                        : Optional.of(Instant.ofEpochMilli(earliestLastAccessedTime.get())),
+                latestLastAccessedTime.get() == latestInitialValue
+                        ? Optional.empty()
+                        : Optional.of(Instant.ofEpochMilli(latestLastAccessedTime.get())));
     }
 
     public interface Factory {
