@@ -29,7 +29,7 @@ public class SystemInfoResult {
     @JsonCreator
     public SystemInfoResult(@JsonProperty("name") final String name,
                             @JsonProperty("description") final String description,
-                            @JsonProperty("detail") final Map<String, Object> detailsMap) {
+                            @JsonProperty("details") final Map<String, Object> detailsMap) {
         this.name = name;
         this.description = description;
         this.detailsMap = Objects.requireNonNull(detailsMap);
