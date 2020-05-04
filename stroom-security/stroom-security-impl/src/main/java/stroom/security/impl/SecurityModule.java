@@ -16,19 +16,20 @@
 
 package stroom.security.impl;
 
-import com.google.inject.AbstractModule;
-import com.google.inject.multibindings.Multibinder;
-import stroom.util.entityevent.EntityEvent;
 import stroom.security.api.DocumentPermissionService;
 import stroom.security.impl.event.PermissionChangeEvent;
 import stroom.security.impl.event.PermissionChangeEventLifecycleModule;
 import stroom.security.impl.event.PermissionChangeEventModule;
+import stroom.util.entityevent.EntityEvent;
 import stroom.util.guice.FilterBinder;
 import stroom.util.guice.FilterInfo;
 import stroom.util.guice.GuiceUtil;
-import stroom.util.guice.HealthCheckBinder;
+import stroom.util.guice.HasHealthCheckBinder;
 import stroom.util.shared.Clearable;
 import stroom.util.shared.RestResource;
+
+import com.google.inject.AbstractModule;
+import com.google.inject.multibindings.Multibinder;
 
 import javax.servlet.http.HttpSessionListener;
 
@@ -66,7 +67,7 @@ public class SecurityModule extends AbstractModule {
         final Multibinder<PermissionChangeEvent.Handler> permissionChangeEventHandlerBinder = Multibinder.newSetBinder(binder(), PermissionChangeEvent.Handler.class);
         permissionChangeEventHandlerBinder.addBinding().to(UserDocumentPermissionsCache.class);
 
-        HealthCheckBinder.create(binder())
+        HasHealthCheckBinder.create(binder())
                 .bind(JWTService.class);
 
         GuiceUtil.buildMultiBinder(binder(), RestResource.class)

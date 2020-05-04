@@ -1,20 +1,19 @@
 package stroom.config.global.impl;
 
+import stroom.config.global.impl.validation.ValidationModule;
+import stroom.util.guice.GuiceUtil;
+import stroom.util.guice.HasHealthCheckBinder;
+import stroom.util.shared.RestResource;
+
 import com.google.inject.AbstractModule;
 import io.dropwizard.lifecycle.Managed;
-import stroom.config.global.impl.validation.ValidationModule;
-import stroom.util.BuildInfoProvider;
-import stroom.util.guice.GuiceUtil;
-import stroom.util.guice.HealthCheckBinder;
-import stroom.util.shared.BuildInfo;
-import stroom.util.shared.RestResource;
 
 public class GlobalConfigModule extends AbstractModule {
     @Override
     protected void configure() {
         bind(AppConfigMonitor.class).asEagerSingleton();
 
-        HealthCheckBinder.create(binder())
+        HasHealthCheckBinder.create(binder())
                 .bind(AppConfigMonitor.class);
 
         GuiceUtil.buildMultiBinder(binder(), Managed.class)

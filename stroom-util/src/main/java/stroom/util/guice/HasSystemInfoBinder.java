@@ -5,18 +5,18 @@ import stroom.util.sysinfo.HasSystemInfo;
 import com.google.inject.Binder;
 import com.google.inject.multibindings.Multibinder;
 
-public class SystemInfoBinder {
+public class HasSystemInfoBinder {
     private final Multibinder<HasSystemInfo> multibinder;
 
-    private SystemInfoBinder(final Binder binder) {
+    private HasSystemInfoBinder(final Binder binder) {
         multibinder = Multibinder.newSetBinder(binder, HasSystemInfo.class);
     }
 
-    public static SystemInfoBinder create(final Binder binder) {
-        return new SystemInfoBinder(binder);
+    public static HasSystemInfoBinder create(final Binder binder) {
+        return new HasSystemInfoBinder(binder);
     }
 
-    public <H extends HasSystemInfo> SystemInfoBinder bind(final Class<H> hasSystemInfoClass) {
+    public <H extends HasSystemInfo> HasSystemInfoBinder bind(final Class<H> hasSystemInfoClass) {
         multibinder.addBinding().to(hasSystemInfoClass);
         return this;
     }

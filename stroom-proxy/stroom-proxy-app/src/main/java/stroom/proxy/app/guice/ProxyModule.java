@@ -1,16 +1,5 @@
 package stroom.proxy.app.guice;
 
-import com.google.inject.AbstractModule;
-import com.google.inject.Provides;
-import com.google.inject.Singleton;
-import com.google.inject.multibindings.Multibinder;
-import io.dropwizard.client.JerseyClientBuilder;
-import io.dropwizard.client.JerseyClientConfiguration;
-import io.dropwizard.lifecycle.Managed;
-import io.dropwizard.setup.Environment;
-import org.glassfish.jersey.logging.LoggingFeature;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 import stroom.collection.mock.MockCollectionModule;
 import stroom.dictionary.impl.DictionaryModule;
 import stroom.dictionary.impl.DictionaryStore;
@@ -59,11 +48,23 @@ import stroom.util.BuildInfoProvider;
 import stroom.util.guice.FilterBinder;
 import stroom.util.guice.FilterInfo;
 import stroom.util.guice.GuiceUtil;
-import stroom.util.guice.HealthCheckBinder;
+import stroom.util.guice.HasHealthCheckBinder;
 import stroom.util.guice.ServletBinder;
 import stroom.util.io.BufferFactory;
 import stroom.util.shared.BuildInfo;
 import stroom.util.shared.RestResource;
+
+import com.google.inject.AbstractModule;
+import com.google.inject.Provides;
+import com.google.inject.Singleton;
+import com.google.inject.multibindings.Multibinder;
+import io.dropwizard.client.JerseyClientBuilder;
+import io.dropwizard.client.JerseyClientConfiguration;
+import io.dropwizard.lifecycle.Managed;
+import io.dropwizard.setup.Environment;
+import org.glassfish.jersey.logging.LoggingFeature;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import javax.inject.Provider;
 import javax.ws.rs.client.Client;
@@ -114,12 +115,12 @@ public class ProxyModule extends AbstractModule {
         bind(StoreFactory.class).to(StoreFactoryImpl.class);
         bind(StreamHandlerFactory.class).to(ForwardStreamHandlerFactory.class);
 
-        HealthCheckBinder.create(binder())
+        HasHealthCheckBinder.create(binder())
                 .bind(ContentSyncService.class)
-                .bind(NewUiDictionaryResource2.class)
                 .bind(FeedStatusResource.class)
                 .bind(ForwardStreamHandlerFactory.class)
                 .bind(LogLevelInspector.class)
+                .bind(NewUiDictionaryResource2.class)
                 .bind(ProxyConfigHealthCheck.class)
                 .bind(ProxyRepositoryManager.class)
                 .bind(RemoteFeedStatusService.class)

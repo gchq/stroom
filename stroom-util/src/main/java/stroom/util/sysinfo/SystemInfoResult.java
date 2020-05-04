@@ -117,6 +117,13 @@ public class SystemInfoResult {
             return this;
         }
 
+        public Builder withError(final String error) {
+            Objects.requireNonNull(error);
+            detailMap.put("error", error);
+
+            return this;
+        }
+
         public SystemInfoResult build() {
             if (detailMap.isEmpty()) {
                 return new SystemInfoResult(name, description, Collections.emptyMap());

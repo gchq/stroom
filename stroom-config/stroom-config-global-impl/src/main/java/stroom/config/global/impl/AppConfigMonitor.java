@@ -1,9 +1,5 @@
 package stroom.config.global.impl;
 
-import com.codahale.metrics.health.HealthCheck;
-import io.dropwizard.lifecycle.Managed;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 import stroom.config.app.AppConfig;
 import stroom.config.app.ConfigLocation;
 import stroom.config.app.YamlUtil;
@@ -12,6 +8,11 @@ import stroom.util.HasHealthCheck;
 import stroom.util.config.FieldMapper;
 import stroom.util.logging.LogUtil;
 import stroom.util.shared.AbstractConfig;
+
+import com.codahale.metrics.health.HealthCheck;
+import io.dropwizard.lifecycle.Managed;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import javax.inject.Inject;
 import javax.inject.Singleton;
@@ -294,6 +295,7 @@ public class AppConfigMonitor implements Managed, HasHealthCheck {
     public HealthCheck.Result getHealth() {
         HealthCheck.ResultBuilder resultBuilder = HealthCheck.Result.builder();
 
+        // isRunning will only be true if the file is also present and valid
         if (isRunning.get()) {
             resultBuilder.healthy();
         } else {

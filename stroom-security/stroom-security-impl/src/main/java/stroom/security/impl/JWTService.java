@@ -145,8 +145,12 @@ public class JWTService implements HasHealthCheck {
     @Override
     public HealthCheck.Result getHealth() {
         // Defaults to healthy
-        HealthCheck.ResultBuilder resultBuilder = HealthCheck.Result.builder().healthy();
+        HealthCheck.ResultBuilder resultBuilder = HealthCheck.Result
+                .builder()
+                .healthy();
+        // Will set healthy to false if it can't get the public key
         this.checkHealthForJwkRetrieval(resultBuilder);
+
         return resultBuilder.build();
     }
 
