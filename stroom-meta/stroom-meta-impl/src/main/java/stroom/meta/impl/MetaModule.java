@@ -1,16 +1,17 @@
 package stroom.meta.impl;
 
-import com.google.inject.AbstractModule;
-import com.google.inject.multibindings.OptionalBinder;
 import stroom.event.logging.api.ObjectInfoProviderBinder;
 import stroom.meta.api.AttributeMapFactory;
-import stroom.meta.api.PhysicalDelete;
-import stroom.meta.shared.Meta;
 import stroom.meta.api.MetaSecurityFilter;
 import stroom.meta.api.MetaService;
+import stroom.meta.api.PhysicalDelete;
+import stroom.meta.shared.Meta;
 import stroom.searchable.api.Searchable;
 import stroom.util.guice.GuiceUtil;
-import stroom.util.shared.RestResource;
+import stroom.util.guice.RestResourcesBinder;
+
+import com.google.inject.AbstractModule;
+import com.google.inject.multibindings.OptionalBinder;
 
 public class MetaModule extends AbstractModule {
     @Override
@@ -28,8 +29,8 @@ public class MetaModule extends AbstractModule {
         GuiceUtil.buildMultiBinder(binder(), Searchable.class)
                 .addBinding(MetaServiceImpl.class);
 
-        GuiceUtil.buildMultiBinder(binder(), RestResource.class)
-                .addBinding(MetaResourceImpl.class);
+        RestResourcesBinder.create(binder())
+                .bindResource(MetaResourceImpl.class);
     }
 
     @Override

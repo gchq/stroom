@@ -1,17 +1,17 @@
 package stroom.storedquery.impl;
 
-import com.google.inject.AbstractModule;
 import stroom.storedquery.api.StoredQueryService;
-import stroom.util.guice.GuiceUtil;
-import stroom.util.shared.RestResource;
+import stroom.util.guice.RestResourcesBinder;
+
+import com.google.inject.AbstractModule;
 
 public class StoredQueryModule extends AbstractModule {
     @Override
     protected void configure() {
         bind(StoredQueryService.class).to(StoredQueryServiceImpl.class);
 
-        GuiceUtil.buildMultiBinder(binder(), RestResource.class)
-                .addBinding(StoredQueryResourceImpl.class);
+        RestResourcesBinder.create(binder())
+                .bindResource(StoredQueryResourceImpl.class);
     }
 
     @Override

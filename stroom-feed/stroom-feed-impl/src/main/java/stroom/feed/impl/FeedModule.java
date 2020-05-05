@@ -16,8 +16,6 @@
 
 package stroom.feed.impl;
 
-import com.google.inject.AbstractModule;
-import com.google.inject.multibindings.Multibinder;
 import stroom.docstore.api.DocumentActionHandlerBinder;
 import stroom.event.logging.api.ObjectInfoProviderBinder;
 import stroom.explorer.api.ExplorerActionHandler;
@@ -27,8 +25,11 @@ import stroom.feed.shared.FeedDoc;
 import stroom.importexport.api.ImportExportActionHandler;
 import stroom.meta.api.MetaSecurityFilter;
 import stroom.util.guice.GuiceUtil;
+import stroom.util.guice.RestResourcesBinder;
 import stroom.util.shared.Clearable;
-import stroom.util.shared.RestResource;
+
+import com.google.inject.AbstractModule;
+import com.google.inject.multibindings.Multibinder;
 
 public class FeedModule extends AbstractModule {
     @Override
@@ -52,7 +53,7 @@ public class FeedModule extends AbstractModule {
         ObjectInfoProviderBinder.create(binder())
                 .bind(FeedDoc.class, FeedDocObjectInfoProvider.class);
 
-        GuiceUtil.buildMultiBinder(binder(), RestResource.class)
-                .addBinding(FeedResourceImpl.class);
+        RestResourcesBinder.create(binder())
+                .bindResource(FeedResourceImpl.class);
     }
 }

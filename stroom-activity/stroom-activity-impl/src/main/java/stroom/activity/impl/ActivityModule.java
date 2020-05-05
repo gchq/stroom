@@ -1,10 +1,10 @@
 package stroom.activity.impl;
 
-import com.google.inject.AbstractModule;
 import stroom.activity.api.ActivityService;
 import stroom.activity.api.CurrentActivity;
-import stroom.util.guice.GuiceUtil;
-import stroom.util.shared.RestResource;
+import stroom.util.guice.RestResourcesBinder;
+
+import com.google.inject.AbstractModule;
 
 public class ActivityModule extends AbstractModule {
     @Override
@@ -12,8 +12,8 @@ public class ActivityModule extends AbstractModule {
         bind(ActivityService.class).to(ActivityServiceImpl.class);
         bind(CurrentActivity.class).to(CurrentActivityImpl.class);
 
-        GuiceUtil.buildMultiBinder(binder(), RestResource.class)
-                .addBinding(ActivityResourceImpl.class);
+        RestResourcesBinder.create(binder())
+                .bindResource(ActivityResourceImpl.class);
     }
 
     @Override

@@ -16,14 +16,14 @@
 
 package stroom.pipeline.textconverter;
 
-import com.google.inject.AbstractModule;
-import com.google.inject.multibindings.Multibinder;
 import stroom.docstore.api.DocumentActionHandlerBinder;
 import stroom.explorer.api.ExplorerActionHandler;
 import stroom.importexport.api.ImportExportActionHandler;
 import stroom.pipeline.shared.TextConverterDoc;
-import stroom.util.guice.GuiceUtil;
-import stroom.util.shared.RestResource;
+import stroom.util.guice.RestResourcesBinder;
+
+import com.google.inject.AbstractModule;
+import com.google.inject.multibindings.Multibinder;
 
 public class TextConverterModule extends AbstractModule {
     @Override
@@ -39,7 +39,7 @@ public class TextConverterModule extends AbstractModule {
         DocumentActionHandlerBinder.create(binder())
                 .bind(TextConverterDoc.DOCUMENT_TYPE, TextConverterStoreImpl.class);
 
-        GuiceUtil.buildMultiBinder(binder(), RestResource.class)
-                .addBinding(TextConverterResourceImpl.class);
+        RestResourcesBinder.create(binder())
+                .bindResource(TextConverterResourceImpl.class);
     }
 }

@@ -6,9 +6,16 @@ and this project adheres to [Semantic Versioning](http://semver.org/).
 
 ## [Unreleased]
 
+
+## [v7.0-beta.29] - 2020-05-04
+
+* Issue **#1496** : Fixed paging of processed data.
+
 * Add stroom.statistics.internal.enabledStoreTypes and make internal stat processing respect it.
 
 * Improve SQL stats shutdown processing so all in memory stats are flushed.
+
+* Issue **#1521** : Dashboards with missing datasources break entirely.
 
 * Issue **#1477** : Disable edit button on stream processor.
 
@@ -2106,7 +2113,8 @@ Issue **gchq/stroom-expression#22** : Add `typeOf(...)` function to dashboard.
 
 * Issue **#202** : Initial release of the new data retention policy functionality.
 
-[Unreleased]: https://github.com/gchq/stroom/compare/v7.0-beta.28...HEAD
+[Unreleased]: https://github.com/gchq/stroom/compare/v7.0-beta.29...HEAD
+[v7.0-beta.29]: https://github.com/gchq/stroom/compare/v7.0-beta.28...v7.0-beta.29
 [v7.0-beta.28]: https://github.com/gchq/stroom/compare/v7.0-beta.27...v7.0-beta.28
 [v7.0-beta.27]: https://github.com/gchq/stroom/compare/v7.0-beta.26...v7.0-beta.27
 [v7.0-beta.26]: https://github.com/gchq/stroom/compare/v7.0-beta.25...v7.0-beta.26

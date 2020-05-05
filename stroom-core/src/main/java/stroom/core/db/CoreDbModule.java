@@ -22,9 +22,9 @@ import stroom.db.util.DbUtil;
 import stroom.util.db.ForceCoreMigration;
 import stroom.util.guice.GuiceUtil;
 import stroom.util.guice.HasHealthCheckBinder;
+import stroom.util.guice.RestResourcesBinder;
 import stroom.util.logging.LambdaLogger;
 import stroom.util.logging.LambdaLoggerFactory;
-import stroom.util.shared.RestResource;
 import stroom.util.shared.Version;
 
 import com.google.inject.AbstractModule;
@@ -81,8 +81,8 @@ public class CoreDbModule extends AbstractModule {
         GuiceUtil.buildMultiBinder(binder(), DataSource.class)
                 .addBinding(CoreDbConnProvider.class);
 
-        GuiceUtil.buildMultiBinder(binder(), RestResource.class)
-                .addBinding(DbStatusResourceImpl.class);
+        RestResourcesBinder.create(binder())
+                .bindResource(DbStatusResourceImpl.class);
 
         HasHealthCheckBinder.create(binder())
                 .bind(DbHealthCheck.class);
