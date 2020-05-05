@@ -32,8 +32,6 @@ logging:
     #    org.glassfish.jersey.server.ServerRuntime.Responder: INFO
     #    org.glassfish.jersey.server.validation.internal.ValidationExceptionMapper: FINER
     org.flywaydb: INFO
-#    Comment this out if you want logging of the REST request/responses
-    org.glassfish.jersey.logging.LoggingFeature: "OFF"
     "event-logger":
       level: INFO
       additive: false
