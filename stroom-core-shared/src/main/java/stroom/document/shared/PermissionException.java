@@ -18,6 +18,7 @@ package stroom.document.shared;
 
 import stroom.util.shared.EntityServiceException;
 
+@Deprecated // see stroom.util.shared.PermissionException
 public class PermissionException extends EntityServiceException {
     private static final long serialVersionUID = -7671344466028839328L;
 

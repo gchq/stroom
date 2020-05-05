@@ -2,7 +2,7 @@ package stroom.config.global.impl;
 
 import stroom.config.global.impl.validation.ValidationModule;
 import stroom.util.guice.GuiceUtil;
-import stroom.util.guice.HealthCheckBinder;
+import stroom.util.guice.HasHealthCheckBinder;
 import stroom.util.guice.RestResourcesBinder;
 
 import com.google.inject.AbstractModule;
@@ -13,7 +13,7 @@ public class GlobalConfigModule extends AbstractModule {
     protected void configure() {
         bind(AppConfigMonitor.class).asEagerSingleton();
 
-        HealthCheckBinder.create(binder())
+        HasHealthCheckBinder.create(binder())
                 .bind(AppConfigMonitor.class);
 
         GuiceUtil.buildMultiBinder(binder(), Managed.class)

@@ -16,7 +16,6 @@
 
 package stroom.task.impl;
 
-import com.codahale.metrics.health.HealthCheck.Result;
 import stroom.event.logging.api.DocumentEventLog;
 import stroom.node.api.NodeCallUtil;
 import stroom.node.api.NodeInfo;
@@ -27,7 +26,6 @@ import stroom.task.shared.TaskProgress;
 import stroom.task.shared.TaskProgressResponse;
 import stroom.task.shared.TaskResource;
 import stroom.task.shared.TerminateTaskProgressRequest;
-import stroom.util.HasHealthCheck;
 import stroom.util.jersey.WebTargetFactory;
 import stroom.util.logging.LambdaLogger;
 import stroom.util.logging.LambdaLoggerFactory;
@@ -43,7 +41,7 @@ import javax.ws.rs.core.MediaType;
 import javax.ws.rs.core.Response;
 
 // TODO : @66 add event logging
-class TaskResourceImpl implements TaskResource, HasHealthCheck {
+class TaskResourceImpl implements TaskResource {
     private static final LambdaLogger LOGGER = LambdaLoggerFactory.getLogger(TaskResourceImpl.class);
 
     private final TaskManagerImpl taskManager;
@@ -155,10 +153,5 @@ class TaskResourceImpl implements TaskResource, HasHealthCheck {
         }
 
         return true;
-    }
-
-    @Override
-    public Result getHealth() {
-        return Result.healthy();
     }
 }

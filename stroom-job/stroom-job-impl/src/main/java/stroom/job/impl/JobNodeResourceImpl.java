@@ -16,10 +16,6 @@
 
 package stroom.job.impl;
 
-import com.codahale.metrics.health.HealthCheck.Result;
-import event.logging.BaseAdvancedQueryOperator.And;
-import event.logging.Query;
-import event.logging.Query.Advanced;
 import stroom.event.logging.api.DocumentEventLog;
 import stroom.job.shared.JobNode;
 import stroom.job.shared.JobNodeInfo;
@@ -28,9 +24,12 @@ import stroom.job.shared.JobNodeResource;
 import stroom.node.api.NodeCallUtil;
 import stroom.node.api.NodeInfo;
 import stroom.node.api.NodeService;
-import stroom.util.HasHealthCheck;
 import stroom.util.jersey.WebTargetFactory;
 import stroom.util.shared.ResourcePaths;
+
+import event.logging.BaseAdvancedQueryOperator.And;
+import event.logging.Query;
+import event.logging.Query.Advanced;
 
 import javax.inject.Inject;
 import javax.ws.rs.WebApplicationException;
@@ -38,7 +37,7 @@ import javax.ws.rs.core.MediaType;
 import javax.ws.rs.core.Response;
 import java.util.function.Consumer;
 
-class JobNodeResourceImpl implements JobNodeResource, HasHealthCheck {
+class JobNodeResourceImpl implements JobNodeResource {
     private final JobNodeService jobNodeService;
     private final NodeService nodeService;
     private final NodeInfo nodeInfo;
@@ -154,10 +153,5 @@ class JobNodeResourceImpl implements JobNodeResource, HasHealthCheck {
             documentEventLog.update(before, after, e);
             throw e;
         }
-    }
-
-    @Override
-    public Result getHealth() {
-        return Result.healthy();
     }
 }

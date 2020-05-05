@@ -16,7 +16,6 @@
 
 package stroom.data.store.impl;
 
-import com.codahale.metrics.health.HealthCheck.Result;
 import stroom.data.store.api.Store;
 import stroom.feed.api.FeedProperties;
 import stroom.pipeline.PipelineStore;
@@ -32,13 +31,12 @@ import stroom.pipeline.state.MetaHolder;
 import stroom.pipeline.state.PipelineHolder;
 import stroom.security.api.SecurityContext;
 import stroom.security.shared.PermissionNames;
-import stroom.util.HasHealthCheck;
 import stroom.util.pipeline.scope.PipelineScopeRunnable;
 
 import javax.inject.Inject;
 import javax.inject.Provider;
 
-class ViewDataResourceImpl implements ViewDataResource, HasHealthCheck {
+class ViewDataResourceImpl implements ViewDataResource {
     private final SecurityContext securityContext;
     private final DataFetcher dataFetcher;
 
@@ -99,10 +97,5 @@ class ViewDataResourceImpl implements ViewDataResource, HasHealthCheck {
                 return null;
             });
         }
-    }
-
-    @Override
-    public Result getHealth() {
-        return Result.healthy();
     }
 }

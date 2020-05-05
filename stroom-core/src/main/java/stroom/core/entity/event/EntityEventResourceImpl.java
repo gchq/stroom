@@ -16,11 +16,9 @@
 
 package stroom.core.entity.event;
 
-import com.codahale.metrics.health.HealthCheck.Result;
 import stroom.node.api.NodeCallUtil;
 import stroom.node.api.NodeInfo;
 import stroom.node.api.NodeService;
-import stroom.util.HasHealthCheck;
 import stroom.util.entityevent.EntityEvent;
 import stroom.util.jersey.WebTargetFactory;
 import stroom.util.shared.ResourcePaths;
@@ -32,7 +30,7 @@ import javax.ws.rs.core.MediaType;
 import javax.ws.rs.core.Response;
 import java.util.Objects;
 
-class EntityEventResourceImpl implements EntityEventResource, HasHealthCheck {
+class EntityEventResourceImpl implements EntityEventResource {
     private final NodeService nodeService;
     private final NodeInfo nodeInfo;
     private final WebTargetFactory webTargetFactory;
@@ -76,10 +74,5 @@ class EntityEventResourceImpl implements EntityEventResource, HasHealthCheck {
                 throw NodeCallUtil.handleExceptionsOnNodeCall(nodeName, url, e);
             }
         }
-    }
-
-    @Override
-    public Result getHealth() {
-        return Result.healthy();
     }
 }

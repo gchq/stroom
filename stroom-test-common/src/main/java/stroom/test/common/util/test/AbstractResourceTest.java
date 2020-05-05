@@ -1,5 +1,9 @@
 package stroom.test.common.util.test;
 
+import stroom.util.jersey.WebTargetFactory;
+import stroom.util.logging.LogUtil;
+import stroom.util.shared.RestResource;
+
 import io.dropwizard.testing.junit5.DropwizardExtensionsSupport;
 import io.dropwizard.testing.junit5.ResourceExtension;
 import org.assertj.core.api.Assertions;
@@ -10,9 +14,6 @@ import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.junit.jupiter.MockitoExtension;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import stroom.util.jersey.WebTargetFactory;
-import stroom.util.logging.LogUtil;
-import stroom.util.shared.RestResource;
 
 import javax.ws.rs.client.ClientBuilder;
 import javax.ws.rs.client.Entity;
@@ -30,7 +31,10 @@ public abstract class AbstractResourceTest<R extends RestResource> {
     // Need to add resources as suppliers so they can be fully mocked by mocktio before being used
     @Rule
     private final ResourceExtension resources = ResourceExtension.builder()
-        .addResource(this::getRestResource)
+        .addResource(() -> {
+            LOGGER.info("Calling getRestResource()");
+            return getRestResource();
+        })
         .build();
 
     private static final WebTargetFactory WEB_TARGET_FACTORY = url -> ClientBuilder.newClient(
@@ -161,6 +165,10 @@ public abstract class AbstractResourceTest<R extends RestResource> {
             throw new RuntimeException(LogUtil.message("Error: {} {}",
                 response.getStatus(), response));
         }
+
+//        String json = response.readEntity(String.class);
+//
+//        LOGGER.info("json:\n{}", json);
 
         T_RESP entity = response.readEntity(responseType);
 

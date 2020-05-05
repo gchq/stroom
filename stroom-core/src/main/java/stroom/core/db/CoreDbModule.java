@@ -21,6 +21,7 @@ import stroom.db.util.DataSourceProxy;
 import stroom.db.util.DbUtil;
 import stroom.util.db.ForceCoreMigration;
 import stroom.util.guice.GuiceUtil;
+import stroom.util.guice.HasHealthCheckBinder;
 import stroom.util.guice.RestResourcesBinder;
 import stroom.util.logging.LambdaLogger;
 import stroom.util.logging.LambdaLoggerFactory;
@@ -82,6 +83,9 @@ public class CoreDbModule extends AbstractModule {
 
         RestResourcesBinder.create(binder())
                 .bindResource(DbStatusResourceImpl.class);
+
+        HasHealthCheckBinder.create(binder())
+                .bind(DbHealthCheck.class);
     }
 
     @Provides

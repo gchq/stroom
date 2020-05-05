@@ -45,6 +45,7 @@ public final class PermissionNames {
     public static final String MANAGE_DB_PERMISSION = "Manage DB";
     public static final String IMPORT_CONFIGURATION = "Import Configuration";
     public static final String EXPORT_CONFIGURATION = "Export Configuration";
+    public static final String VIEW_SYSTEM_INFO_PERMISSION = "View System Information";
 
     public static final String[] PERMISSIONS = new String[]{
             ADMINISTRATOR,
@@ -68,7 +69,8 @@ public final class PermissionNames {
             MANAGE_VOLUMES_PERMISSION,
             MANAGE_DB_PERMISSION,
             IMPORT_CONFIGURATION,
-            EXPORT_CONFIGURATION
+            EXPORT_CONFIGURATION,
+            VIEW_SYSTEM_INFO_PERMISSION
     };
 
     private PermissionNames() {

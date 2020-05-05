@@ -16,16 +16,14 @@
 
 package stroom.job.impl;
 
-import com.codahale.metrics.health.HealthCheck.Result;
 import stroom.job.shared.GetScheduledTimesRequest;
 import stroom.job.shared.ScheduledTimeResource;
 import stroom.job.shared.ScheduledTimes;
 import stroom.security.api.SecurityContext;
-import stroom.util.HasHealthCheck;
 
 import javax.inject.Inject;
 
-public class ScheduledTimeResourceImpl implements ScheduledTimeResource, HasHealthCheck {
+public class ScheduledTimeResourceImpl implements ScheduledTimeResource {
     private final ScheduleService scheduleService;
     private final SecurityContext securityContext;
 
@@ -44,10 +42,5 @@ public class ScheduledTimeResourceImpl implements ScheduledTimeResource, HasHeal
                         request.getScheduleReferenceTime(),
                         request.getLastExecutedTime(),
                         request.getSchedule()));
-    }
-
-    @Override
-    public Result getHealth() {
-        return Result.healthy();
     }
 }

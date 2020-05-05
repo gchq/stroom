@@ -16,10 +16,6 @@
 
 package stroom.node.impl;
 
-import com.codahale.metrics.health.HealthCheck.Result;
-import event.logging.BaseAdvancedQueryOperator.And;
-import event.logging.Query;
-import event.logging.Query.Advanced;
 import stroom.cluster.api.ClusterNodeManager;
 import stroom.event.logging.api.DocumentEventLog;
 import stroom.node.api.FindNodeCriteria;
@@ -30,11 +26,14 @@ import stroom.node.shared.FetchNodeStatusResponse;
 import stroom.node.shared.Node;
 import stroom.node.shared.NodeResource;
 import stroom.node.shared.NodeStatusResult;
-import stroom.util.HasHealthCheck;
 import stroom.util.jersey.WebTargetFactory;
 import stroom.util.logging.LambdaLogger;
 import stroom.util.logging.LambdaLoggerFactory;
 import stroom.util.shared.ResourcePaths;
+
+import event.logging.BaseAdvancedQueryOperator.And;
+import event.logging.Query;
+import event.logging.Query.Advanced;
 
 import javax.inject.Inject;
 import javax.ws.rs.WebApplicationException;
@@ -47,7 +46,7 @@ import java.util.function.Consumer;
 import java.util.stream.Collectors;
 
 // TODO : @66 add event logging
-class NodeResourceImpl implements NodeResource, HasHealthCheck {
+class NodeResourceImpl implements NodeResource {
     private static final LambdaLogger LOGGER = LambdaLoggerFactory.getLogger(NodeResourceImpl.class);
 
     private final NodeServiceImpl nodeService;
@@ -232,10 +231,5 @@ class NodeResourceImpl implements NodeResource, HasHealthCheck {
             documentEventLog.update(before, after, e);
             throw e;
         }
-    }
-
-    @Override
-    public Result getHealth() {
-        return Result.healthy();
     }
 }

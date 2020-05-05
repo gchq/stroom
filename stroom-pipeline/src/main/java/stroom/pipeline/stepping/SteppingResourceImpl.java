@@ -16,7 +16,6 @@
 
 package stroom.pipeline.stepping;
 
-import com.codahale.metrics.health.HealthCheck.Result;
 import stroom.docref.DocRef;
 import stroom.docstore.shared.DocRefUtil;
 import stroom.meta.api.MetaService;
@@ -33,12 +32,11 @@ import stroom.pipeline.shared.stepping.StepLocation;
 import stroom.pipeline.shared.stepping.SteppingResource;
 import stroom.pipeline.shared.stepping.SteppingResult;
 import stroom.security.api.SecurityContext;
-import stroom.util.HasHealthCheck;
 
 import javax.inject.Inject;
 import java.util.List;
 
-class SteppingResourceImpl implements SteppingResource, HasHealthCheck {
+class SteppingResourceImpl implements SteppingResource {
     private final MetaService metaService;
     private final PipelineStore pipelineStore;
     private final SteppingService steppingService;
@@ -174,10 +172,5 @@ class SteppingResourceImpl implements SteppingResource, HasHealthCheck {
         }
 
         return docRef;
-    }
-
-    @Override
-    public Result getHealth() {
-        return Result.healthy();
     }
 }

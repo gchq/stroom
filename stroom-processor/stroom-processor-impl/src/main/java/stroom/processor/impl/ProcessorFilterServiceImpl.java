@@ -46,7 +46,7 @@ import stroom.query.api.v2.ExpressionTerm;
 import stroom.query.api.v2.ExpressionTerm.Condition;
 import stroom.security.api.SecurityContext;
 import stroom.security.shared.DocumentPermissionNames;
-import stroom.security.shared.PermissionException;
+import stroom.util.shared.PermissionException;
 import stroom.security.shared.PermissionNames;
 import stroom.util.AuditUtil;
 import stroom.util.logging.LambdaLogger;
@@ -115,7 +115,8 @@ class ProcessorFilterServiceImpl implements ProcessorFilterService {
                                   final Long trackerStartMs) {
         // Check the user has read permissions on the pipeline.
         if (!securityContext.hasDocumentPermission(pipelineRef.getUuid(), DocumentPermissionNames.READ)) {
-            throw new PermissionException("You do not have permission to create this processor filter");
+            throw new PermissionException(securityContext.getUserId(),
+                    "You do not have permission to create this processor filter");
         }
 
         final Processor processor = processorService.create(pipelineRef, enabled);
@@ -139,7 +140,8 @@ class ProcessorFilterServiceImpl implements ProcessorFilterService {
                                   final Long trackerStartMs) {
         // Check the user has read permissions on the pipeline.
         if (!securityContext.hasDocumentPermission(processor.getPipelineUuid(), DocumentPermissionNames.READ)) {
-            throw new PermissionException("You do not have permission to create this processor filter");
+            throw new PermissionException(securityContext.getUserId(),
+                    "You do not have permission to create this processor filter");
         }
 
         // now create the filter and tracker
@@ -158,7 +160,8 @@ class ProcessorFilterServiceImpl implements ProcessorFilterService {
                                   final Long trackerStartMs) {
         // Check the user has read permissions on the pipeline.
         if (!securityContext.hasDocumentPermission(processor.getPipelineUuid(), DocumentPermissionNames.READ)) {
-            throw new PermissionException("You do not have permission to create this processor filter");
+            throw new PermissionException(securityContext.getUserId(),
+                    "You do not have permission to create this processor filter");
         }
 
         // now create the filter and tracker
@@ -216,8 +219,12 @@ class ProcessorFilterServiceImpl implements ProcessorFilterService {
     @Override
     public ProcessorFilter update(final ProcessorFilter processorFilter) {
         // Check the user has update permissions on the pipeline.
-        if (!securityContext.hasDocumentPermission(processorFilter.getProcessor().getPipelineUuid(), DocumentPermissionNames.UPDATE)) {
-            throw new PermissionException("You do not have permission to update this processor filter");
+        if (!securityContext.hasDocumentPermission(
+                processorFilter.getProcessor().getPipelineUuid(),
+                DocumentPermissionNames.UPDATE)) {
+
+            throw new PermissionException(securityContext.getUserId(),
+                    "You do not have permission to update this processor filter");
         }
 
         if (processorFilter.getUuid() == null) {

@@ -16,11 +16,6 @@
 
 package stroom.search.solr.search;
 
-import com.codahale.metrics.annotation.Timed;
-import com.codahale.metrics.health.HealthCheck.Result;
-import io.swagger.annotations.Api;
-import io.swagger.annotations.ApiOperation;
-import io.swagger.annotations.ApiParam;
 import stroom.datasource.api.v2.DataSource;
 import stroom.docref.DocRef;
 import stroom.query.api.v2.FlatResult;
@@ -35,12 +30,16 @@ import stroom.search.solr.SolrIndexStore;
 import stroom.search.solr.shared.SolrIndexDataSourceFieldUtil;
 import stroom.search.solr.shared.SolrIndexDoc;
 import stroom.security.api.SecurityContext;
-import stroom.util.HasHealthCheck;
 import stroom.util.logging.LambdaLogger;
 import stroom.util.logging.LambdaLoggerFactory;
 import stroom.util.logging.LogUtil;
 import stroom.util.shared.ResourcePaths;
 import stroom.util.shared.RestResource;
+
+import com.codahale.metrics.annotation.Timed;
+import io.swagger.annotations.Api;
+import io.swagger.annotations.ApiOperation;
+import io.swagger.annotations.ApiParam;
 
 import javax.inject.Inject;
 import javax.ws.rs.Consumes;
@@ -56,7 +55,7 @@ import java.util.stream.Collectors;
 @Path("/stroom-solr-index" + ResourcePaths.V2)
 @Produces(MediaType.APPLICATION_JSON)
 @Consumes(MediaType.APPLICATION_JSON)
-public class StroomSolrIndexQueryResource implements HasHealthCheck, RestResource {
+public class StroomSolrIndexQueryResource implements RestResource {
     private static final LambdaLogger LOGGER = LambdaLoggerFactory.getLogger(StroomSolrIndexQueryResource.class);
 
     private final SearchResponseCreatorManager searchResponseCreatorManager;
@@ -156,10 +155,5 @@ public class StroomSolrIndexQueryResource implements HasHealthCheck, RestResourc
     public Boolean destroy(@ApiParam("QueryKey") final QueryKey queryKey) {
         searchResponseCreatorManager.remove(new SearchResponseCreatorCache.Key(queryKey));
         return Boolean.TRUE;
-    }
-
-    @Override
-    public Result getHealth() {
-        return Result.healthy();
     }
 }

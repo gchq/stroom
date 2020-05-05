@@ -1,14 +1,15 @@
 package stroom.authentication.token;
 
-import org.jose4j.jwk.JsonWebKey;
 import stroom.authentication.account.Account;
 import stroom.authentication.account.AccountDao;
 import stroom.authentication.account.AccountService;
 import stroom.authentication.config.TokenConfig;
 import stroom.authentication.exceptions.NoSuchUserException;
 import stroom.security.api.SecurityContext;
-import stroom.security.shared.PermissionException;
+import stroom.util.shared.PermissionException;
 import stroom.security.shared.PermissionNames;
+
+import org.jose4j.jwk.JsonWebKey;
 
 import javax.inject.Inject;
 import javax.ws.rs.BadRequestException;
