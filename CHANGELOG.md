@@ -6,6 +6,8 @@ and this project adheres to [Semantic Versioning](http://semver.org/).
 
 ## [Unreleased]
 
+* Issue **#1532** : Fixed index shard criteria in UI.
+
 
 ## [v7.0-beta.29] - 2020-05-04
 
