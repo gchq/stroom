@@ -17,10 +17,11 @@
 package stroom.explorer.impl;
 
 import stroom.docref.DocRef;
+import stroom.docref.DocRefInfo;
+import stroom.docrefinfo.api.DocRefInfoService;
 import stroom.explorer.api.ExplorerNodeService;
 import stroom.explorer.api.ExplorerService;
 import stroom.explorer.shared.BulkActionResult;
-import stroom.explorer.shared.DocRefInfo;
 import stroom.explorer.shared.DocumentType;
 import stroom.explorer.shared.DocumentTypes;
 import stroom.explorer.shared.ExplorerConstants;
@@ -42,6 +43,7 @@ import stroom.util.logging.LambdaLoggerFactory;
 import javax.inject.Inject;
 import java.util.HashSet;
 import java.util.List;
+import java.util.Optional;
 import java.util.Set;
 
 // TODO : @66 add event logging
@@ -50,14 +52,17 @@ class ExplorerResourceImpl implements ExplorerResource {
 
     private final ExplorerService explorerService;
     private final ExplorerNodeService explorerNodeService;
+    private final DocRefInfoService docRefInfoService;
     private final SecurityContext securityContext;
 
     @Inject
     ExplorerResourceImpl(final ExplorerService explorerService,
                          final ExplorerNodeService explorerNodeService,
+                         final DocRefInfoService docRefInfoService,
                          final SecurityContext securityContext) {
         this.explorerService = explorerService;
         this.explorerNodeService = explorerNodeService;
+        this.docRefInfoService = docRefInfoService;
         this.securityContext = securityContext;
     }
 
@@ -89,18 +94,8 @@ class ExplorerResourceImpl implements ExplorerResource {
 
     @Override
     public DocRefInfo info(final DocRef docRef) {
-        return securityContext.secureResult(() -> {
-            final stroom.docref.DocRefInfo docRefInfo = explorerService.info(docRef);
-
-            return new DocRefInfo.Builder()
-                    .docRef(docRefInfo.getDocRef())
-                    .otherInfo(docRefInfo.getOtherInfo())
-                    .createTime(docRefInfo.getCreateTime())
-                    .createUser(docRefInfo.getCreateUser())
-                    .updateTime(docRefInfo.getUpdateTime())
-                    .updateUser(docRefInfo.getUpdateUser())
-                    .build();
-        });
+        return securityContext.secureResult(() ->
+                docRefInfoService.info(docRef).orElse(null));
     }
 
     @Override

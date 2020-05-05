@@ -6,6 +6,8 @@ and this project adheres to [Semantic Versioning](http://semver.org/).
 
 ## [Unreleased]
 
+* Issue **#1511** : Data pages now show pipeline names rather than pipeline UUIDs.
+
 * Issue **#1532** : Fixed index shard criteria in UI.
 
 * Change SecurityFilter to return a 401 on authentication exceptions.

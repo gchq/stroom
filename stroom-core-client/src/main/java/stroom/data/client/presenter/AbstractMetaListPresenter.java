@@ -376,8 +376,8 @@ public abstract class AbstractMetaListPresenter extends MyPresenterWidget<DataGr
             @Override
             public String getValue(final MetaRow row) {
                 if (row.getMeta().getProcessorUuid() != null) {
-                    if (row.getMeta().getPipelineUuid() != null) {
-                        return row.getMeta().getPipelineUuid();
+                    if (row.getPipelineName() != null) {
+                        return row.getPipelineName();
                     } else {
                         return "Not visible";
                     }

@@ -120,6 +120,7 @@ include 'stroom-event-logging:stroom-event-logging-impl'
 // Explorer
 include 'stroom-explorer:stroom-collection-api'
 include 'stroom-explorer:stroom-collection-mock'
+include 'stroom-explorer:stroom-docrefinfo-api'
 include 'stroom-explorer:stroom-explorer-api'
 include 'stroom-explorer:stroom-explorer-impl'
 include 'stroom-explorer:stroom-explorer-impl-db'
