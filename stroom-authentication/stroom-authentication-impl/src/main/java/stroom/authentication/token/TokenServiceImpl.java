@@ -3,6 +3,7 @@ package stroom.authentication.token;
 import stroom.authentication.account.Account;
 import stroom.authentication.account.AccountDao;
 import stroom.authentication.account.AccountService;
+import stroom.authentication.api.OpenIdClientDetailsFactory;
 import stroom.authentication.config.TokenConfig;
 import stroom.authentication.exceptions.NoSuchUserException;
 import stroom.security.api.SecurityContext;
@@ -24,6 +25,7 @@ public class TokenServiceImpl implements TokenService {
     private final AccountService accountService;
     private final TokenBuilderFactory tokenBuilderFactory;
     private final TokenConfig tokenConfig;
+    private final OpenIdClientDetailsFactory openIdClientDetailsFactory;
 
     @Inject
     TokenServiceImpl(final JwkCache jwkCache,
@@ -32,7 +34,8 @@ public class TokenServiceImpl implements TokenService {
                      final SecurityContext securityContext,
                      final AccountService accountService,
                      final TokenBuilderFactory tokenBuilderFactory,
-                     final TokenConfig tokenConfig) {
+                     final TokenConfig tokenConfig,
+                     final OpenIdClientDetailsFactory openIdClientDetailsFactory) {
         this.jwkCache = jwkCache;
         this.tokenDao = tokenDao;
         this.accountDao = accountDao;
@@ -40,6 +43,7 @@ public class TokenServiceImpl implements TokenService {
         this.accountService = accountService;
         this.tokenBuilderFactory = tokenBuilderFactory;
         this.tokenConfig = tokenConfig;
+        this.openIdClientDetailsFactory = openIdClientDetailsFactory;
     }
 
 
@@ -78,52 +82,17 @@ public class TokenServiceImpl implements TokenService {
         final Instant expiryInstant = createTokenRequest.getExpiryDate() == null
                 ? null :
                 createTokenRequest.getExpiryDate().toInstant();
-//        Token token = dao.createToken(
-//                tokenTypeToCreate.get(),
-//                userId,
-//                expiryInstant,
-//                createTokenRequest.getUserEmail(),
-//                createTokenRequest.getClientId(),
-//                createTokenRequest.isEnabled(),
-//                createTokenRequest.getComments());
-//
-//        stroomEventLoggingService.createAction("CreateApiToken", "Create a token");
-//
-//
-//        account.setCreateTimeMs(now);
-//        account.setCreateUser(userId);
-//        account.setUpdateTimeMs(now);
-//        account.setUpdateUser(userId);
-//        account.setFirstName(request.getFirstName());
-//        account.setLastName(request.getLastName());
-//        account.setEmail(request.getEmail());
-//        account.setComments(request.getComments());
-//        account.setForcePasswordChange(request.isForcePasswordChange());
-//        account.setNeverExpires(request.isNeverExpires());
-//        account.setLoginCount(0);
-//        // Set enabled by default.
-//        account.setEnabled(true);
-//
-//        id                        int(11) NOT NULL AUTO_INCREMENT,
-//                version                   int(11) NOT NULL,
-//        create_time_ms bigint (20) NOT NULL,
-//        create_user varchar (255) NOT NULL,
-//        update_time_ms bigint (20) NOT NULL,
-//        update_user varchar (255) NOT NULL,
-//        fk_account_id             int(11) NOT NULL,
-//        fk_token_type_id          int(11) NOT NULL,
-//        data longtext,
-//        expires_on_ms bigint (20) DEFAULT NULL,
-//        comments longtext,
-//        enabled bit (1) NOT NULL,
-
 
         final long now = System.currentTimeMillis();
+
+        // TODO This assumes we have only one clientId. In theory we may have multiple
+        //   and then the UI would need to manage the client IDs in use
+        final String clientId = openIdClientDetailsFactory.getOAuth2Client().getClientId();
 
         final TokenBuilder tokenBuilder = tokenBuilderFactory
                 .expiryDateForApiKeys(expiryInstant)
                 .newBuilder(tokenType)
-                .clientId(createTokenRequest.getClientId())
+                .clientId(clientId)
                 .subject(createTokenRequest.getUserEmail());
 
         final Instant actualExpiryDate = tokenBuilder.getExpiryDate();
@@ -140,29 +109,6 @@ public class TokenServiceImpl implements TokenService {
         token.setExpiresOnMs(actualExpiryDate.toEpochMilli());
         token.setComments(createTokenRequest.getComments());
         token.setEnabled(createTokenRequest.isEnabled());
-
-//
-//                token.setToken(idToken);
-//        token.setTokenType(tokenTypeToCreate.get().getText());
-//        token.setEnabled(createTokenRequest.isEnabled());
-//        token.setExpiresOn();
-//        token.setIssuedByUser();
-//        token.setIssuedOn();
-//        token.setUpdatedByUser();
-//        token.setUpdatedOn();
-//        token.setUserEmail();
-//
-//        token.setComments(request.getComments());
-//        token.setForcePasswordChange(request.isForcePasswordChange());
-//        token.setNeverExpires(request.isNeverExpires());
-//        token.setCreateTimeMs(now);
-//        token.setCreateUser(userId);
-//        token.setUpdateTimeMs(now);
-//        token.setUpdateUser(userId);
-//        token.setLoginCount(0);
-//        // Set enabled by default.
-//        token.setEnabled(true);
-
 
         return tokenDao.create(accountId, token);
     }
