@@ -18,6 +18,9 @@ package stroom.index.impl;
 
 import org.apache.lucene.document.Document;
 import org.apache.lucene.store.AlreadyClosedException;
+import stroom.alert.api.AlertProcessor;
+import stroom.docref.DocRef;
+import stroom.explorer.shared.ExplorerConstants;
 import stroom.index.shared.IndexException;
 import stroom.index.shared.IndexShard.IndexShardStatus;
 import stroom.index.shared.IndexShardKey;
@@ -60,7 +63,10 @@ public class IndexerImpl implements Indexer {
             boolean success = false;
             try {
                 final IndexShardWriter indexShardWriter = indexShardWriterCache.getWriterByShardKey(indexShardKey);
-                alertManager.createAlerts(document);
+
+                final DocRef folderRef = new DocRef(ExplorerConstants.FOLDER, "7bba5868-9218-45d6-ac0f-eeb03342a8ed", null);
+                final AlertProcessor processor = alertManager.createAlertProcessor(folderRef);
+                processor.createAlerts(document);
                 indexShardWriter.addDocument(document);
                 success = true;
             } catch (final IOException | RuntimeException e) {

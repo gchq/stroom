@@ -1,8 +1,8 @@
 package stroom.alert.api;
 
 import org.apache.lucene.document.Document;
+import stroom.docref.DocRef;
 
 public interface AlertManager {
-
-    void createAlerts(final Document document);
+    AlertProcessor createAlertProcessor (DocRef rulesFolderRef);
 }

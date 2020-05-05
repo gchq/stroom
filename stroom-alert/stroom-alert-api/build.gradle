@@ -1,6 +1,11 @@
 ext.moduleName = 'stroom.alert.api'
 
 dependencies {
+    compile project(':stroom-core-shared')
+    compile project(':stroom-util-shared')
+
+    compile libs.stroomDocRef
+
     compile libs.lucene_analyzers_common
     compile libs.lucene_core
     compile libs.lucene_queryparser

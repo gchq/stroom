@@ -4,14 +4,16 @@ import org.apache.lucene.document.Document;
 import stroom.alert.api.AlertManager;
 
 import org.apache.lucene.index.memory.MemoryIndex;
+import stroom.alert.api.AlertProcessor;
+import stroom.docref.DocRef;
 
+import javax.inject.Singleton;
+
+@Singleton
 public class AlertManagerImpl implements AlertManager {
+
     @Override
-    public void createAlerts(Document document) {
-        System.out.println("Alerting " + document);
-    }
-
-    public void loadRules(){
-
+    public AlertProcessor createAlertProcessor(DocRef rulesFolderRef) {
+        return new AlertProcessorImpl(rulesFolderRef);
     }
 }
