@@ -255,6 +255,10 @@ appConfig:
         maxLifetime: null
         minimumIdle: null
         maxPoolSize: null
+    docRefInfoCache:
+      maximumSize: 1000
+      expireAfterAccess: "PT10M"
+      expireAfterWrite: null
   export:
     enabled: false
   feed:
