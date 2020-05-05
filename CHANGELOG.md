@@ -10,6 +10,8 @@ and this project adheres to [Semantic Versioning](http://semver.org/).
 
 * Remove healthchecks from rest resources and servlets that never give an unhealthy result.
 
+* Add error info to AppConfigMonitor health check.
+
 
 ## [v7.0-beta.29] - 2020-05-04
 

@@ -24,6 +24,8 @@ import java.nio.file.StandardWatchEventKinds;
 import java.nio.file.WatchEvent;
 import java.nio.file.WatchKey;
 import java.nio.file.WatchService;
+import java.util.ArrayList;
+import java.util.List;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
@@ -52,6 +54,7 @@ public class AppConfigMonitor implements Managed, HasHealthCheck {
     private AtomicBoolean isRunning = new AtomicBoolean(false);
     private final boolean isValidFile;
     private final AtomicBoolean isFileReadScheduled = new AtomicBoolean(false);
+    private final List<String> errors = new ArrayList<>();
 
     private static final long DELAY_BEFORE_FILE_READ_MS = 1_000;
 
@@ -93,6 +96,7 @@ public class AppConfigMonitor implements Managed, HasHealthCheck {
                 startWatcher();
             } catch (Exception e) {
                 // Swallow and log as we don't want to stop the app from starting just for this
+                errors.add(e.getMessage());
                 LOGGER.error("Unable to start config file monitor due to [{}]. Changes to {} will not be monitored.",
                         e.getMessage(), configFile.toAbsolutePath().normalize(), e);
             }
@@ -299,7 +303,9 @@ public class AppConfigMonitor implements Managed, HasHealthCheck {
         if (isRunning.get()) {
             resultBuilder.healthy();
         } else {
-            resultBuilder.unhealthy();
+            resultBuilder
+                    .unhealthy()
+                    .withDetail("errors", errors);
         }
 
         return resultBuilder
