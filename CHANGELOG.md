@@ -6,6 +6,8 @@ and this project adheres to [Semantic Versioning](http://semver.org/).
 
 ## [Unreleased]
 
+* Change SecurityFilter to return a 401 on authentication exceptions.
+
 * Move some health checks into SystemInfoResource.
 
 * Remove healthchecks from rest resources and servlets that never give an unhealthy result.
