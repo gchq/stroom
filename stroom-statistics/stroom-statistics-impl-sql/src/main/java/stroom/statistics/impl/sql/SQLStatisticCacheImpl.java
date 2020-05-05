@@ -17,9 +17,9 @@
 package stroom.statistics.impl.sql;
 
 import stroom.task.api.TaskContextFactory;
-import stroom.util.HasHealthCheck;
+import stroom.util.sysinfo.HasSystemInfo;
+import stroom.util.sysinfo.SystemInfoResult;
 
-import com.codahale.metrics.health.HealthCheck;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.slf4j.MarkerFactory;
@@ -33,7 +33,7 @@ import java.util.concurrent.LinkedBlockingQueue;
 import java.util.concurrent.locks.ReentrantLock;
 
 @Singleton
-public class SQLStatisticCacheImpl implements SQLStatisticCache, HasHealthCheck {
+public class SQLStatisticCacheImpl implements SQLStatisticCache, HasSystemInfo {
     private static final Logger LOGGER = LoggerFactory.getLogger(SQLStatisticCacheImpl.class);
 
     /**
@@ -173,9 +173,8 @@ public class SQLStatisticCacheImpl implements SQLStatisticCache, HasHealthCheck 
     }
 
     @Override
-    public HealthCheck.Result getHealth() {
-        return HealthCheck.Result.builder()
-                .healthy()
+    public SystemInfoResult getSystemInfo() {
+        return SystemInfoResult.builder(getSystemInfoName())
                 .withDetail("mapAge", map.getAge().toString())
                 .withDetail("countMapSize", map.countEntrySet().size())
                 .withDetail("valueMapSize", map.valueEntrySet().size())

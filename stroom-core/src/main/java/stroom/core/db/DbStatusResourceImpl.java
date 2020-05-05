@@ -16,17 +16,15 @@
 
 package stroom.core.db;
 
-import com.codahale.metrics.health.HealthCheck.Result;
 import stroom.node.shared.DBTableStatus;
 import stroom.node.shared.DbStatusResource;
 import stroom.node.shared.FindDBTableCriteria;
-import stroom.util.HasHealthCheck;
 import stroom.util.shared.ResultPage;
 
 import javax.inject.Inject;
 
 // TODO : @66 add event logging
-class DbStatusResourceImpl implements DbStatusResource, HasHealthCheck {
+class DbStatusResourceImpl implements DbStatusResource {
     private final DBTableService dbTableService;
 
     @Inject
@@ -42,10 +40,5 @@ class DbStatusResourceImpl implements DbStatusResource, HasHealthCheck {
     @Override
     public ResultPage<DBTableStatus> findSystemTableStatus(final FindDBTableCriteria criteria) {
         return dbTableService.findSystemTableStatus(criteria);
-    }
-
-    @Override
-    public Result getHealth() {
-        return Result.healthy();
     }
 }

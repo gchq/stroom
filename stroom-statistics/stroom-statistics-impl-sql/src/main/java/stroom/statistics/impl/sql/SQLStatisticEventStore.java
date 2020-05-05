@@ -27,10 +27,10 @@ import stroom.statistics.impl.sql.shared.CustomRollUpMask;
 import stroom.statistics.impl.sql.shared.StatisticRollUpType;
 import stroom.statistics.impl.sql.shared.StatisticStore;
 import stroom.statistics.impl.sql.shared.StatisticStoreDoc;
-import stroom.util.HasHealthCheck;
+import stroom.util.sysinfo.HasSystemInfo;
+import stroom.util.sysinfo.SystemInfoResult;
 import stroom.util.time.TimeUtils;
 
-import com.codahale.metrics.health.HealthCheck;
 import org.apache.commons.pool2.BasePooledObjectFactory;
 import org.apache.commons.pool2.PooledObject;
 import org.apache.commons.pool2.impl.DefaultPooledObject;
@@ -55,7 +55,7 @@ import java.util.function.Predicate;
 import java.util.stream.Collectors;
 
 @Singleton
-public class SQLStatisticEventStore implements Statistics, HasHealthCheck {
+public class SQLStatisticEventStore implements Statistics, HasSystemInfo {
     public static final Logger LOGGER = LoggerFactory.getLogger(SQLStatisticEventStore.class);
 
     private static final int DEFAULT_POOL_SIZE = 10;
@@ -495,7 +495,7 @@ public class SQLStatisticEventStore implements Statistics, HasHealthCheck {
     }
 
     @Override
-    public HealthCheck.Result getHealth() {
+    public SystemInfoResult getSystemInfo() {
         final List<String> poolDetails;
         if (objectPool == null) {
             poolDetails = null;
@@ -506,8 +506,7 @@ public class SQLStatisticEventStore implements Statistics, HasHealthCheck {
                     .collect(Collectors.toList());
         }
 
-        return HealthCheck.Result.builder()
-                .healthy()
+        return SystemInfoResult.builder(getSystemInfoName())
                 .withDetail("poolObjects", poolDetails)
                 .build();
     }

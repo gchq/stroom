@@ -1,7 +1,5 @@
 package stroom.config.global.impl;
 
-import com.codahale.metrics.annotation.Timed;
-import com.codahale.metrics.health.HealthCheck;
 import stroom.config.global.shared.ConfigProperty;
 import stroom.config.global.shared.ConfigPropertyValidationException;
 import stroom.config.global.shared.GlobalConfigResource;
@@ -12,13 +10,14 @@ import stroom.node.api.NodeInfo;
 import stroom.node.api.NodeService;
 import stroom.ui.config.shared.UiConfig;
 import stroom.ui.config.shared.UiPreferences;
-import stroom.util.HasHealthCheck;
 import stroom.util.jersey.WebTargetFactory;
 import stroom.util.logging.LogUtil;
 import stroom.util.rest.RestUtil;
 import stroom.util.shared.PageRequest;
 import stroom.util.shared.PropertyPath;
 import stroom.util.shared.ResourcePaths;
+
+import com.codahale.metrics.annotation.Timed;
 
 import javax.inject.Inject;
 import javax.ws.rs.BadRequestException;
@@ -31,7 +30,7 @@ import java.util.Objects;
 import java.util.Optional;
 import java.util.function.Predicate;
 
-public class GlobalConfigResourceImpl implements GlobalConfigResource, HasHealthCheck {
+public class GlobalConfigResourceImpl implements GlobalConfigResource {
     private final GlobalConfigService globalConfigService;
     private final NodeService nodeService;
     private final UiConfig uiConfig;
@@ -224,11 +223,5 @@ public class GlobalConfigResourceImpl implements GlobalConfigResource, HasHealth
     @Override
     public UiPreferences uiPreferences() {
         return uiPreferences;
-    }
-
-    @Timed
-    @Override
-    public HealthCheck.Result getHealth() {
-        return HealthCheck.Result.healthy();
     }
 }

@@ -16,9 +16,6 @@
 
 package stroom.dashboard.impl;
 
-import com.codahale.metrics.health.HealthCheck.Result;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 import stroom.dashboard.expression.v1.Expression;
 import stroom.dashboard.expression.v1.ExpressionParser;
 import stroom.dashboard.expression.v1.FieldIndexMap;
@@ -56,11 +53,13 @@ import stroom.security.api.SecurityContext;
 import stroom.security.shared.PermissionNames;
 import stroom.storedquery.api.StoredQueryService;
 import stroom.util.EntityServiceExceptionUtil;
-import stroom.util.HasHealthCheck;
 import stroom.util.json.JsonUtil;
 import stroom.util.shared.EntityServiceException;
 import stroom.util.shared.ResourceGeneration;
 import stroom.util.shared.ResourceKey;
+
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import javax.inject.Inject;
 import java.io.BufferedOutputStream;
@@ -81,7 +80,7 @@ import java.util.Set;
 import java.util.regex.Pattern;
 import java.util.stream.Collectors;
 
-class DashboardResourceImpl implements DashboardResource, HasHealthCheck {
+class DashboardResourceImpl implements DashboardResource {
     private static final Logger LOGGER = LoggerFactory.getLogger(DashboardResourceImpl.class);
 
     private static final Pattern NON_BASIC_CHARS = Pattern.compile("[^A-Za-z0-9-_ ]");
@@ -477,10 +476,5 @@ class DashboardResourceImpl implements DashboardResource, HasHealthCheck {
         final List<String> ids = new ArrayList<>(ZoneId.getAvailableZoneIds());
         ids.sort(Comparator.naturalOrder());
         return ids;
-    }
-
-    @Override
-    public Result getHealth() {
-        return Result.healthy();
     }
 }

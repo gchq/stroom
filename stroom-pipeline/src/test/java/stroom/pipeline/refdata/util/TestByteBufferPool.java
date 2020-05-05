@@ -17,7 +17,8 @@
 
 package stroom.pipeline.refdata.util;
 
-import com.codahale.metrics.health.HealthCheck;
+import stroom.util.sysinfo.SystemInfoResult;
+
 import com.google.common.util.concurrent.Striped;
 import org.junit.jupiter.api.Disabled;
 import org.junit.jupiter.api.Test;
@@ -146,7 +147,7 @@ class TestByteBufferPool {
     }
 
     @Test
-    void testGetHealthCheck() {
+    void testGetSystemInfo() {
         final ByteBufferPool byteBufferPool = new ByteBufferPool();
 
         PooledByteBuffer buffer1 = byteBufferPool.getPooledByteBuffer(1);
@@ -172,10 +173,10 @@ class TestByteBufferPool {
 
         assertThat(byteBufferPool.getCurrentPoolSize()).isEqualTo(6);
 
-        HealthCheck.Result result = byteBufferPool.getHealth();
-        LOGGER.info("health: {}", result);
+        SystemInfoResult systemInfoResult = byteBufferPool.getSystemInfo();
+        LOGGER.info("health: {}", systemInfoResult);
 
-        Map<Integer, Long> counts = (Map<Integer, Long>) result.getDetails().get("Buffer capacity counts");
+        Map<Integer, Long> counts = (Map<Integer, Long>) systemInfoResult.getDetails().get("Buffer capacity counts");
 
         assertThat(counts).containsExactly(
                 entry(1, 2L),

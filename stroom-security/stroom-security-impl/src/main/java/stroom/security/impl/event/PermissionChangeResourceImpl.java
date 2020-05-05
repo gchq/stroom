@@ -16,11 +16,9 @@
 
 package stroom.security.impl.event;
 
-import com.codahale.metrics.health.HealthCheck.Result;
 import stroom.node.api.NodeCallUtil;
 import stroom.node.api.NodeInfo;
 import stroom.node.api.NodeService;
-import stroom.util.HasHealthCheck;
 import stroom.util.jersey.WebTargetFactory;
 import stroom.util.shared.ResourcePaths;
 
@@ -29,7 +27,7 @@ import javax.ws.rs.WebApplicationException;
 import javax.ws.rs.core.MediaType;
 import javax.ws.rs.core.Response;
 
-class PermissionChangeResourceImpl implements PermissionChangeResource, HasHealthCheck {
+class PermissionChangeResourceImpl implements PermissionChangeResource {
     private final NodeService nodeService;
     private final NodeInfo nodeInfo;
     private final PermissionChangeEventHandlers permissionChangeEventHandlers;
@@ -72,10 +70,5 @@ class PermissionChangeResourceImpl implements PermissionChangeResource, HasHealt
         }
 
         return result;
-    }
-
-    @Override
-    public Result getHealth() {
-        return Result.healthy();
     }
 }

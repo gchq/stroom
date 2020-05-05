@@ -8,6 +8,14 @@ and this project adheres to [Semantic Versioning](http://semver.org/).
 
 * Issue **#1532** : Fixed index shard criteria in UI.
 
+* Change SecurityFilter to return a 401 on authentication exceptions.
+
+* Move some health checks into SystemInfoResource.
+
+* Remove healthchecks from rest resources and servlets that never give an unhealthy result.
+
+* Add error info to AppConfigMonitor health check.
+
 
 ## [v7.0-beta.29] - 2020-05-04
 

@@ -18,7 +18,8 @@ package stroom.statistics.impl.sql;
 
 import stroom.db.util.AbstractFlyWayDbModule;
 import stroom.db.util.DataSourceProxy;
-import stroom.util.guice.HealthCheckBinder;
+import stroom.util.guice.HasHealthCheckBinder;
+import stroom.util.guice.HasSystemInfoBinder;
 
 import javax.sql.DataSource;
 
@@ -33,9 +34,10 @@ public class SQLStatisticsModule extends AbstractFlyWayDbModule<SQLStatisticsCon
         bind(SQLStatisticCache.class).to(SQLStatisticCacheImpl.class);
         bind(Statistics.class).to(SQLStatisticEventStore.class);
 
-        HealthCheckBinder.create(binder())
+        HasSystemInfoBinder.create(binder())
                 .bind(SQLStatisticCacheImpl.class)
                 .bind(SQLStatisticEventStore.class);
+
     }
 
     @Override

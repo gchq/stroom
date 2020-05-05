@@ -1,14 +1,12 @@
 package stroom.kafka.impl;
 
-import com.codahale.metrics.health.HealthCheck;
 import stroom.docref.DocRef;
 import stroom.docstore.api.DocumentResourceHelper;
 import stroom.event.logging.api.DocumentEventLog;
 import stroom.kafka.shared.KafkaConfigDoc;
 import stroom.kafka.shared.KafkaConfigResource;
-import stroom.security.api.SecurityContext;
 import stroom.resource.api.ResourceStore;
-import stroom.util.HasHealthCheck;
+import stroom.security.api.SecurityContext;
 import stroom.util.io.StreamUtil;
 import stroom.util.shared.EntityServiceException;
 import stroom.util.shared.ResourceGeneration;
@@ -21,7 +19,7 @@ import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.ArrayList;
 
-public class KafkaConfigResourceImpl implements KafkaConfigResource, HasHealthCheck {
+public class KafkaConfigResourceImpl implements KafkaConfigResource {
     private final KafkaConfigStore kafkaConfigStore;
     private final DocumentResourceHelper documentResourceHelper;
     private final ResourceStore resourceStore;
@@ -72,10 +70,5 @@ public class KafkaConfigResourceImpl implements KafkaConfigResource, HasHealthCh
                 throw new UncheckedIOException(e);
             }
         });
-    }
-
-    @Override
-    public HealthCheck.Result getHealth() {
-        return HealthCheck.Result.healthy();
     }
 }

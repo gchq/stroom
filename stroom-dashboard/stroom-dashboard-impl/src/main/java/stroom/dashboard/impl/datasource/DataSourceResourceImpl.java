@@ -16,18 +16,16 @@
 
 package stroom.dashboard.impl.datasource;
 
-import com.codahale.metrics.health.HealthCheck.Result;
 import stroom.datasource.api.v2.AbstractField;
 import stroom.datasource.shared.DataSourceResource;
 import stroom.docref.DocRef;
 import stroom.meta.shared.MetaFields;
 import stroom.security.api.SecurityContext;
-import stroom.util.HasHealthCheck;
 
 import javax.inject.Inject;
 import java.util.List;
 
-class DataSourceResourceImpl implements DataSourceResource, HasHealthCheck {
+class DataSourceResourceImpl implements DataSourceResource {
     private final DataSourceProviderRegistry dataSourceProviderRegistry;
     private final SecurityContext securityContext;
 
@@ -50,10 +48,5 @@ class DataSourceResourceImpl implements DataSourceResource, HasHealthCheck {
                     .map(provider -> provider.getDataSource(dataSourceRef).getFields())
                     .orElse(null));
         });
-    }
-
-    @Override
-    public Result getHealth() {
-        return Result.healthy();
     }
 }
