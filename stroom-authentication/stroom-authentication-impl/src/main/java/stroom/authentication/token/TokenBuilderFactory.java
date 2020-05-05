@@ -18,11 +18,12 @@
 
 package stroom.authentication.token;
 
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 import stroom.authentication.config.AuthenticationConfig;
 import stroom.authentication.exceptions.TokenCreationException;
 import stroom.authentication.token.Token.TokenType;
+
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import javax.inject.Inject;
 import javax.inject.Singleton;
