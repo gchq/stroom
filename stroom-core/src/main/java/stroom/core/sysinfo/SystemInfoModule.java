@@ -1,7 +1,6 @@
 package stroom.core.sysinfo;
 
-import stroom.util.guice.GuiceUtil;
-import stroom.util.shared.RestResource;
+import stroom.util.guice.RestResourcesBinder;
 
 import com.google.inject.AbstractModule;
 
@@ -11,7 +10,7 @@ public class SystemInfoModule extends AbstractModule {
     protected void configure() {
         bind(SystemInfoService.class).to(SystemInfoServiceImpl.class);
 
-        GuiceUtil.buildMultiBinder(binder(), RestResource.class)
-                .addBinding(SystemInfoResourceImpl.class);
+        RestResourcesBinder.create(binder())
+                .bindResource(SystemInfoResourceImpl.class);
     }
 }
