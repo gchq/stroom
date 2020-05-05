@@ -776,6 +776,7 @@ public class RefDataOffHeapStore extends AbstractRefDataStore implements RefData
                     .withDetail("Purge age", referenceDataConfig.getPurgeAge())
                     .withDetail("Purge cut off", TimeUtils.durationToThreshold(referenceDataConfig.getPurgeAge()).toString())
                     .withDetail("Max readers", maxReaders)
+                    .withDetail("Read-ahead enabled", referenceDataConfig.isReadAheadEnabled())
                     .withDetail("Current buffer pool size", byteBufferPool.getCurrentPoolSize())
                     .withDetail("Earliest lastAccessedTime", lastAccessedTimeRange._1()
                             .map(Instant::toString)
