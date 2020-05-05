@@ -16,16 +16,14 @@
 
 package stroom.pipeline.textconverter;
 
-import com.codahale.metrics.health.HealthCheck.Result;
 import stroom.docref.DocRef;
 import stroom.docstore.api.DocumentResourceHelper;
 import stroom.pipeline.shared.TextConverterDoc;
 import stroom.pipeline.shared.TextConverterResource;
-import stroom.util.HasHealthCheck;
 
 import javax.inject.Inject;
 
-class TextConverterResourceImpl implements TextConverterResource, HasHealthCheck {
+class TextConverterResourceImpl implements TextConverterResource {
     private final TextConverterStore textConverterStore;
     private final DocumentResourceHelper documentResourceHelper;
 
@@ -44,10 +42,5 @@ class TextConverterResourceImpl implements TextConverterResource, HasHealthCheck
     @Override
     public TextConverterDoc update(final TextConverterDoc doc) {
         return documentResourceHelper.update(textConverterStore, doc);
-    }
-
-    @Override
-    public Result getHealth() {
-        return Result.healthy();
     }
 }

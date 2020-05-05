@@ -1,12 +1,15 @@
 package stroom.proxy.app;
 
-import com.codahale.metrics.health.HealthCheck.Result;
 import stroom.util.HasHealthCheck;
 import stroom.util.HealthCheckUtils;
+
+import com.codahale.metrics.health.HealthCheck.Result;
 
 import javax.inject.Inject;
 import java.util.Map;
 
+// TODO should not be a healthcheck, should be HasSystemInfo if we can get it to
+//   work on the admin port as there is no auth in proxy
 public class ProxyConfigHealthCheck implements HasHealthCheck {
     private final ProxyConfig proxyConfig;
 

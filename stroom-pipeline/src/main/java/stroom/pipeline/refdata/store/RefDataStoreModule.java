@@ -17,8 +17,6 @@
 
 package stroom.pipeline.refdata.store;
 
-import com.google.inject.AbstractModule;
-import com.google.inject.assistedinject.FactoryModuleBuilder;
 import stroom.pipeline.refdata.store.offheapstore.FastInfosetByteBufferConsumer;
 import stroom.pipeline.refdata.store.offheapstore.OffHeapRefDataValueProxyConsumer;
 import stroom.pipeline.refdata.store.offheapstore.RefDataOffHeapStore;
@@ -35,7 +33,10 @@ import stroom.pipeline.refdata.store.onheapstore.OnHeapRefDataValueProxyConsumer
 import stroom.pipeline.refdata.store.onheapstore.StringValueConsumer;
 import stroom.pipeline.refdata.util.ByteBufferPool;
 import stroom.pipeline.refdata.util.PooledByteBufferOutputStream;
-import stroom.util.guice.HealthCheckBinder;
+import stroom.util.guice.HasSystemInfoBinder;
+
+import com.google.inject.AbstractModule;
+import com.google.inject.assistedinject.FactoryModuleBuilder;
 
 public class RefDataStoreModule extends AbstractModule {
     @Override
@@ -64,8 +65,8 @@ public class RefDataStoreModule extends AbstractModule {
         install(new FactoryModuleBuilder().build(PooledByteBufferOutputStream.Factory.class));
         install(new FactoryModuleBuilder().build(RefDataValueProxyConsumerFactory.Factory.class));
 
-        HealthCheckBinder.create(binder())
-                .bind(RefDataOffHeapStore.class)
-                .bind(ByteBufferPool.class);
+        HasSystemInfoBinder.create(binder())
+                .bind(ByteBufferPool.class)
+                .bind(RefDataOffHeapStore.class);
     }
 }

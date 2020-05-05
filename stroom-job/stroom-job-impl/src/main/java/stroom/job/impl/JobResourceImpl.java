@@ -16,22 +16,21 @@
 
 package stroom.job.impl;
 
-import com.codahale.metrics.health.HealthCheck.Result;
-import event.logging.BaseAdvancedQueryOperator.And;
-import event.logging.Query;
-import event.logging.Query.Advanced;
 import stroom.event.logging.api.DocumentEventLog;
 import stroom.job.shared.Job;
 import stroom.job.shared.JobResource;
-import stroom.util.HasHealthCheck;
 import stroom.util.logging.LambdaLogger;
 import stroom.util.logging.LambdaLoggerFactory;
 import stroom.util.shared.ResultPage;
 
+import event.logging.BaseAdvancedQueryOperator.And;
+import event.logging.Query;
+import event.logging.Query.Advanced;
+
 import javax.inject.Inject;
 import java.util.function.Consumer;
 
-class JobResourceImpl implements JobResource, HasHealthCheck {
+class JobResourceImpl implements JobResource {
     private static final LambdaLogger LOGGER = LambdaLoggerFactory.getLogger(JobResourceImpl.class);
 
     private final JobService jobService;
@@ -94,10 +93,5 @@ class JobResourceImpl implements JobResource, HasHealthCheck {
             documentEventLog.update(before, after, e);
             throw e;
         }
-    }
-
-    @Override
-    public Result getHealth() {
-        return Result.healthy();
     }
 }

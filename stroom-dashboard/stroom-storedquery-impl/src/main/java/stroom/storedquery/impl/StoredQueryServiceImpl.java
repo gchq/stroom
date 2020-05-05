@@ -3,9 +3,9 @@ package stroom.storedquery.impl;
 import stroom.dashboard.shared.FindStoredQueryCriteria;
 import stroom.dashboard.shared.StoredQuery;
 import stroom.security.api.SecurityContext;
-import stroom.security.shared.PermissionException;
 import stroom.storedquery.api.StoredQueryService;
 import stroom.util.AuditUtil;
+import stroom.util.shared.PermissionException;
 import stroom.util.shared.ResultPage;
 
 import javax.annotation.Nonnull;
@@ -37,9 +37,13 @@ public class StoredQueryServiceImpl implements StoredQueryService {
     }
 
     StoredQuery fetch(int id) {
-        final StoredQuery storedQuery = securityContext.secureResult(() -> dao.fetch(id)).orElse(null);
-        if (storedQuery != null && !storedQuery.getUpdateUser().equals(securityContext.getUserId())) {
-            throw new PermissionException("This retrieved stored query belongs to another user");
+        final StoredQuery storedQuery = securityContext.secureResult(() ->
+                dao.fetch(id)).orElse(null);
+
+        if (storedQuery != null
+                && !storedQuery.getUpdateUser().equals(securityContext.getUserId())) {
+            throw new PermissionException(securityContext.getUserId(),
+                    "This retrieved stored query belongs to another user");
         }
         return storedQuery;
     }

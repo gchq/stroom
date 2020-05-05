@@ -16,10 +16,6 @@
 
 package stroom.processor.impl;
 
-import com.codahale.metrics.health.HealthCheck.Result;
-import event.logging.BaseAdvancedQueryOperator.And;
-import event.logging.Query;
-import event.logging.Query.Advanced;
 import stroom.entity.shared.ExpressionCriteria;
 import stroom.event.logging.api.DocumentEventLog;
 import stroom.node.api.NodeCallUtil;
@@ -31,10 +27,13 @@ import stroom.processor.shared.ProcessorTask;
 import stroom.processor.shared.ProcessorTaskList;
 import stroom.processor.shared.ProcessorTaskResource;
 import stroom.processor.shared.ProcessorTaskSummary;
-import stroom.util.HasHealthCheck;
 import stroom.util.jersey.WebTargetFactory;
 import stroom.util.shared.ResourcePaths;
 import stroom.util.shared.ResultPage;
+
+import event.logging.BaseAdvancedQueryOperator.And;
+import event.logging.Query;
+import event.logging.Query.Advanced;
 
 import javax.inject.Inject;
 import javax.ws.rs.WebApplicationException;
@@ -42,7 +41,7 @@ import javax.ws.rs.client.Entity;
 import javax.ws.rs.core.MediaType;
 import javax.ws.rs.core.Response;
 
-class ProcessorTaskResourceImpl implements ProcessorTaskResource, HasHealthCheck {
+class ProcessorTaskResourceImpl implements ProcessorTaskResource {
     private final ProcessorTaskService processorTaskService;
     private final DocumentEventLog documentEventLog;
     private final NodeService nodeService;
@@ -159,10 +158,5 @@ class ProcessorTaskResourceImpl implements ProcessorTaskResource, HasHealthCheck
                 throw NodeCallUtil.handleExceptionsOnNodeCall(nodeName, url, e);
             }
         }
-    }
-
-    @Override
-    public Result getHealth() {
-        return Result.healthy();
     }
 }

@@ -93,7 +93,7 @@ class FolderExplorerActionHandler implements ExplorerActionHandler {
         }
 
         if (!securityContext.hasDocumentPermission(uuid, DocumentPermissionNames.READ)) {
-            throw new stroom.document.shared.PermissionException(securityContext.getUserId(), "You do not have permission to read (" + FOLDER + ")");
+            throw new PermissionException(securityContext.getUserId(), "You do not have permission to read (" + FOLDER + ")");
         }
 
         return new DocRefInfo.Builder()

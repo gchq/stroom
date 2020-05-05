@@ -17,18 +17,6 @@
 
 package stroom.pipeline.refdata.store.offheapstore;
 
-import com.codahale.metrics.health.HealthCheck;
-import com.google.common.util.concurrent.Striped;
-import io.vavr.Tuple;
-import io.vavr.Tuple2;
-import io.vavr.Tuple3;
-import io.vavr.Tuple4;
-import org.apache.hadoop.hbase.util.Bytes;
-import org.lmdbjava.Env;
-import org.lmdbjava.EnvFlags;
-import org.lmdbjava.Txn;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 import stroom.pipeline.refdata.ReferenceDataConfig;
 import stroom.pipeline.refdata.store.AbstractRefDataStore;
 import stroom.pipeline.refdata.store.MapDefinition;
@@ -61,7 +49,21 @@ import stroom.util.logging.LambdaLogger;
 import stroom.util.logging.LambdaLoggerFactory;
 import stroom.util.logging.LogUtil;
 import stroom.util.shared.ModelStringUtil;
+import stroom.util.sysinfo.HasSystemInfo;
+import stroom.util.sysinfo.SystemInfoResult;
 import stroom.util.time.TimeUtils;
+
+import com.google.common.util.concurrent.Striped;
+import io.vavr.Tuple;
+import io.vavr.Tuple2;
+import io.vavr.Tuple3;
+import io.vavr.Tuple4;
+import org.apache.hadoop.hbase.util.Bytes;
+import org.lmdbjava.Env;
+import org.lmdbjava.EnvFlags;
+import org.lmdbjava.Txn;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import javax.inject.Inject;
 import javax.inject.Singleton;
@@ -89,7 +91,7 @@ import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
 @Singleton
-public class RefDataOffHeapStore extends AbstractRefDataStore implements RefDataStore {
+public class RefDataOffHeapStore extends AbstractRefDataStore implements RefDataStore, HasSystemInfo {
     private static final Logger LOGGER = LoggerFactory.getLogger(RefDataOffHeapStore.class);
     private static final LambdaLogger LAMBDA_LOGGER = LambdaLoggerFactory.getLogger(RefDataOffHeapStore.class);
 
@@ -763,22 +765,25 @@ public class RefDataOffHeapStore extends AbstractRefDataStore implements RefData
     }
 
     @Override
-    public HealthCheck.Result getHealth() {
-
+    public SystemInfoResult getSystemInfo() {
         try {
-            Tuple2<Instant, Instant> lastAccessedTimeRange = processingInfoDb.getLastAccessedTimeRange();
-            HealthCheck.ResultBuilder builder = HealthCheck.Result.builder();
-            builder
-                    .healthy()
+            Tuple2<Optional<Instant>, Optional<Instant>> lastAccessedTimeRange = processingInfoDb.getLastAccessedTimeRange();
+
+            SystemInfoResult.Builder builder = SystemInfoResult.builder(getSystemInfoName())
                     .withDetail("Path", dbDir.toAbsolutePath().toString())
                     .withDetail("Environment max size", maxSize)
                     .withDetail("Environment current size", ModelStringUtil.formatIECByteSizeString(getEnvironmentDiskUsage()))
                     .withDetail("Purge age", referenceDataConfig.getPurgeAge())
                     .withDetail("Purge cut off", TimeUtils.durationToThreshold(referenceDataConfig.getPurgeAge()).toString())
                     .withDetail("Max readers", maxReaders)
+                    .withDetail("Read-ahead enabled", referenceDataConfig.isReadAheadEnabled())
                     .withDetail("Current buffer pool size", byteBufferPool.getCurrentPoolSize())
-                    .withDetail("Earliest lastAccessedTime", lastAccessedTimeRange._1().toString())
-                    .withDetail("Latest lastAccessedTime", lastAccessedTimeRange._2().toString());
+                    .withDetail("Earliest lastAccessedTime", lastAccessedTimeRange._1()
+                            .map(Instant::toString)
+                            .orElse(null))
+                    .withDetail("Latest lastAccessedTime", lastAccessedTimeRange._2()
+                            .map(Instant::toString)
+                            .orElse(null));
 
             LmdbUtils.doWithReadTxn(lmdbEnvironment, txn -> {
                 builder.withDetail("Database entry counts", databaseMap.entrySet().stream()
@@ -788,8 +793,8 @@ public class RefDataOffHeapStore extends AbstractRefDataStore implements RefData
             });
             return builder.build();
         } catch (RuntimeException e) {
-            return HealthCheck.Result.builder()
-                    .unhealthy(e)
+            return SystemInfoResult.builder(getSystemInfoName())
+                    .withError(e)
                     .build();
         }
     }

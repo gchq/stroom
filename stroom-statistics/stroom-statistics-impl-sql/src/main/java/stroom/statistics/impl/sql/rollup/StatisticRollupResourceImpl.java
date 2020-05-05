@@ -16,14 +16,12 @@
 
 package stroom.statistics.impl.sql.rollup;
 
-import com.codahale.metrics.health.HealthCheck.Result;
 import stroom.statistics.impl.sql.shared.CustomRollUpMask;
 import stroom.statistics.impl.sql.shared.CustomRollUpMaskFields;
 import stroom.statistics.impl.sql.shared.StatisticField;
 import stroom.statistics.impl.sql.shared.StatisticRollupResource;
 import stroom.statistics.impl.sql.shared.StatisticsDataSourceData;
 import stroom.statistics.impl.sql.shared.StatisticsDataSourceFieldChangeRequest;
-import stroom.util.HasHealthCheck;
 
 import java.util.ArrayList;
 import java.util.Collections;
@@ -32,7 +30,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.Set;
 
-class StatisticRollupResourceImpl implements StatisticRollupResource, HasHealthCheck {
+class StatisticRollupResourceImpl implements StatisticRollupResource {
     @Override
     public List<CustomRollUpMask> bitMaskPermGeneration(final Integer fieldCount) {
         final Set<List<Integer>> perms = RollUpBitMask.getRollUpPermutationsAsPositions(fieldCount);
@@ -86,10 +84,5 @@ class StatisticRollupResourceImpl implements StatisticRollupResource, HasHealthC
         }
 
         return copy;
-    }
-
-    @Override
-    public Result getHealth() {
-        return Result.healthy();
     }
 }

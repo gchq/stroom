@@ -48,11 +48,23 @@ import stroom.util.BuildInfoProvider;
 import stroom.util.guice.FilterBinder;
 import stroom.util.guice.FilterInfo;
 import stroom.util.guice.GuiceUtil;
-import stroom.util.guice.HealthCheckBinder;
+import stroom.util.guice.HasHealthCheckBinder;
 import stroom.util.guice.RestResourcesBinder;
 import stroom.util.guice.ServletBinder;
 import stroom.util.io.BufferFactory;
 import stroom.util.shared.BuildInfo;
+
+import com.google.inject.AbstractModule;
+import com.google.inject.Provides;
+import com.google.inject.Singleton;
+import com.google.inject.multibindings.Multibinder;
+import io.dropwizard.client.JerseyClientBuilder;
+import io.dropwizard.client.JerseyClientConfiguration;
+import io.dropwizard.lifecycle.Managed;
+import io.dropwizard.setup.Environment;
+import org.glassfish.jersey.logging.LoggingFeature;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import com.google.inject.AbstractModule;
 import com.google.inject.Provides;
@@ -115,20 +127,17 @@ public class ProxyModule extends AbstractModule {
         bind(StoreFactory.class).to(StoreFactoryImpl.class);
         bind(StreamHandlerFactory.class).to(ForwardStreamHandlerFactory.class);
 
-        HealthCheckBinder.create(binder())
+        HasHealthCheckBinder.create(binder())
                 .bind(ContentSyncService.class)
-                .bind(NewUiDictionaryResource2.class)
                 .bind(FeedStatusResource.class)
                 .bind(ForwardStreamHandlerFactory.class)
                 .bind(LogLevelInspector.class)
                 .bind(ProxyConfigHealthCheck.class)
                 .bind(ProxyRepositoryManager.class)
-                .bind(RemoteFeedStatusService.class)
-                .bind(ReceiveDataRuleSetResource.class);
+                .bind(RemoteFeedStatusService.class);
 
         FilterBinder.create(binder())
-                .bind(
-                        new FilterInfo(ProxySecurityFilter.class.getSimpleName(), "/*"),
+                .bind(new FilterInfo(ProxySecurityFilter.class.getSimpleName(), "/*"),
                         ProxySecurityFilter.class);
 
         ServletBinder.create(binder())

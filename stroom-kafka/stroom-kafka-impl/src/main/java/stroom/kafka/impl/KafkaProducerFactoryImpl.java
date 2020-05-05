@@ -15,22 +15,23 @@
  */
 package stroom.kafka.impl;
 
-import com.codahale.metrics.health.HealthCheck;
-import io.vavr.Tuple;
-import io.vavr.Tuple3;
-import org.apache.kafka.clients.producer.KafkaProducer;
-import org.apache.kafka.common.serialization.ByteArraySerializer;
-import org.apache.kafka.common.serialization.StringSerializer;
 import stroom.docref.DocRef;
 import stroom.docstore.shared.DocRefUtil;
 import stroom.kafka.api.KafkaProducerFactory;
 import stroom.kafka.api.SharedKafkaProducer;
 import stroom.kafka.api.SharedKafkaProducerIdentity;
 import stroom.kafka.shared.KafkaConfigDoc;
-import stroom.util.HasHealthCheck;
 import stroom.util.logging.LambdaLogger;
 import stroom.util.logging.LambdaLoggerFactory;
 import stroom.util.logging.LogUtil;
+import stroom.util.sysinfo.HasSystemInfo;
+import stroom.util.sysinfo.SystemInfoResult;
+
+import io.vavr.Tuple;
+import io.vavr.Tuple3;
+import org.apache.kafka.clients.producer.KafkaProducer;
+import org.apache.kafka.common.serialization.ByteArraySerializer;
+import org.apache.kafka.common.serialization.StringSerializer;
 
 import javax.inject.Inject;
 import javax.inject.Singleton;
@@ -55,7 +56,7 @@ import java.util.stream.Collectors;
  * latest config. {@link KafkaProducer}
  */
 @Singleton
-class KafkaProducerFactoryImpl implements KafkaProducerFactory, HasHealthCheck {
+class KafkaProducerFactoryImpl implements KafkaProducerFactory, HasSystemInfo {
     private static final LambdaLogger LOGGER = LambdaLoggerFactory.getLogger(KafkaProducerFactoryImpl.class);
 
     private final KafkaConfigDocCache kafkaConfigDocCache;
@@ -228,7 +229,7 @@ class KafkaProducerFactoryImpl implements KafkaProducerFactory, HasHealthCheck {
     }
 
     @Override
-    public HealthCheck.Result getHealth() {
+    public SystemInfoResult getSystemInfo() {
 
         final List<Map<String,Object>> producerInfo = allSharedProducersMap.values().stream()
                 .map(sharedKafkaProducer -> {
@@ -269,8 +270,7 @@ class KafkaProducerFactoryImpl implements KafkaProducerFactory, HasHealthCheck {
                 })
                 .collect(Collectors.toList());
 
-        return HealthCheck.Result.builder()
-                .healthy()
+        return SystemInfoResult.builder(getSystemInfoName())
                 .withDetail("sharedProducers", producerInfo)
                 .build();
     }

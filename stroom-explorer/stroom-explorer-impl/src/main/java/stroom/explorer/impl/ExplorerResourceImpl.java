@@ -16,7 +16,6 @@
 
 package stroom.explorer.impl;
 
-import com.codahale.metrics.health.HealthCheck.Result;
 import stroom.docref.DocRef;
 import stroom.explorer.api.ExplorerNodeService;
 import stroom.explorer.api.ExplorerService;
@@ -37,7 +36,6 @@ import stroom.explorer.shared.FetchExplorerNodeResult;
 import stroom.explorer.shared.FindExplorerNodeCriteria;
 import stroom.security.api.SecurityContext;
 import stroom.security.shared.DocumentPermissionNames;
-import stroom.util.HasHealthCheck;
 import stroom.util.logging.LambdaLogger;
 import stroom.util.logging.LambdaLoggerFactory;
 
@@ -47,7 +45,7 @@ import java.util.List;
 import java.util.Set;
 
 // TODO : @66 add event logging
-class ExplorerResourceImpl implements ExplorerResource, HasHealthCheck {
+class ExplorerResourceImpl implements ExplorerResource {
     private static final LambdaLogger LOGGER = LambdaLoggerFactory.getLogger(ExplorerResourceImpl.class);
 
     private final ExplorerService explorerService;
@@ -182,10 +180,5 @@ class ExplorerResourceImpl implements ExplorerResource, HasHealthCheck {
     @Override
     public FetchExplorerNodeResult fetch(final FindExplorerNodeCriteria request) {
         return securityContext.secureResult(() -> explorerService.getData(request));
-    }
-
-    @Override
-    public Result getHealth() {
-        return Result.healthy();
     }
 }

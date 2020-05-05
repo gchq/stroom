@@ -5,9 +5,9 @@ import stroom.security.api.SecurityContext;
 import stroom.security.api.UserIdentity;
 import stroom.security.impl.exception.AuthenticationException;
 import stroom.security.shared.DocumentPermissionNames;
-import stroom.security.shared.PermissionException;
 import stroom.security.shared.PermissionNames;
 import stroom.security.shared.User;
+import stroom.util.shared.PermissionException;
 
 import javax.inject.Inject;
 import javax.inject.Singleton;
@@ -481,7 +481,8 @@ class SecurityContextImpl implements SecurityContext {
             // Don't check any further permissions.
             checkTypeThreadLocal.set(Boolean.FALSE);
             if (!hasAppPermission(permission)) {
-                throw new PermissionException("User does not have the required permission (" + permission + ")", getUserId());
+                throw new PermissionException(getUserId(),
+                        "User does not have the required permission (" + permission + ")");
             }
         } finally {
             checkTypeThreadLocal.set(currentCheckType);
@@ -494,7 +495,9 @@ class SecurityContextImpl implements SecurityContext {
             // Don't check any further permissions.
             checkTypeThreadLocal.set(Boolean.FALSE);
             if (!isLoggedIn()) {
-                throw new PermissionException("A user must be logged in to call service");
+                throw new PermissionException(
+                        getUserId(),
+                        "A user must be logged in to call service");
             }
         } finally {
             checkTypeThreadLocal.set(currentCheckType);

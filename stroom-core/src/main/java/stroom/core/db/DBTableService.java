@@ -16,8 +16,6 @@
 
 package stroom.core.db;
 
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 import stroom.node.shared.DBTableStatus;
 import stroom.node.shared.FindDBTableCriteria;
 import stroom.security.api.SecurityContext;
@@ -25,6 +23,9 @@ import stroom.security.shared.PermissionNames;
 import stroom.util.shared.BaseCriteria;
 import stroom.util.shared.CompareUtil;
 import stroom.util.shared.ResultPage;
+
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import javax.inject.Inject;
 import javax.sql.DataSource;
