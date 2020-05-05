@@ -6,6 +6,10 @@ and this project adheres to [Semantic Versioning](http://semver.org/).
 
 ## [Unreleased]
 
+* Move some health checks into SystemInfoResource.
+
+* Remove healthchecks from rest resources and servlets that never give an unhealthy result.
+
 
 ## [v7.0-beta.29] - 2020-05-04
 
