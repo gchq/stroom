@@ -68,12 +68,6 @@ public class Selection<T> implements Iterable<T>, Copyable<Selection<T>>, Matche
         return !matchAll && set.isEmpty();
     }
 
-//    @Override
-//    @JsonIgnore
-//    public boolean isConstrained() {
-//        return !matchAll;
-//    }
-
     @Override
     public boolean isMatch(final T item) {
         if (matchAll) {
