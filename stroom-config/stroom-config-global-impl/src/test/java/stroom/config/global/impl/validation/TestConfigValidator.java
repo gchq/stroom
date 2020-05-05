@@ -1,16 +1,17 @@
 package stroom.config.global.impl.validation;
 
-import com.fasterxml.jackson.annotation.JsonProperty;
-import com.google.inject.Guice;
-import com.google.inject.Injector;
-import org.assertj.core.api.Assertions;
-import org.junit.jupiter.api.Test;
-import stroom.util.shared.validation.ValidationSeverity;
 import stroom.util.logging.LambdaLogger;
 import stroom.util.logging.LambdaLoggerFactory;
 import stroom.util.shared.AbstractConfig;
 import stroom.util.shared.validation.ValidRegex;
 import stroom.util.shared.validation.ValidSimpleCron;
+import stroom.util.shared.validation.ValidationSeverity;
+
+import com.fasterxml.jackson.annotation.JsonProperty;
+import com.google.inject.Guice;
+import com.google.inject.Injector;
+import org.assertj.core.api.Assertions;
+import org.junit.jupiter.api.Test;
 
 import javax.inject.Inject;
 import javax.validation.constraints.AssertTrue;
@@ -38,8 +39,10 @@ public class TestConfigValidator {
             LOGGER.info("{}, {}", validationSeverity, constraintViolation);
         });
 
-        Assertions.assertThat(result.getErrorCount()).isEqualTo(0);
-        Assertions.assertThat(result.getWarningCount()).isEqualTo(0);
+        Assertions.assertThat(result.getErrorCount())
+                .isEqualTo(0);
+        Assertions.assertThat(result.getWarningCount())
+                .isEqualTo(0);
     }
 
     @Test

@@ -16,16 +16,16 @@
 
 package stroom.receive.common;
 
-import com.google.inject.AbstractModule;
-import stroom.util.shared.RestResource;
-import stroom.util.guice.GuiceUtil;
+import stroom.util.guice.RestResourcesBinder;
 import stroom.util.guice.ServletBinder;
+
+import com.google.inject.AbstractModule;
 
 public class RemoteFeedModule extends AbstractModule {
     @Override
     protected void configure() {
-        GuiceUtil.buildMultiBinder(binder(), RestResource.class)
-                .addBinding(FeedStatusResource.class);
+        RestResourcesBinder.create(binder())
+                .bindResource(FeedStatusResource.class);
 
         ServletBinder.create(binder())
                 .bind(RemoteFeedServiceRPC.class);

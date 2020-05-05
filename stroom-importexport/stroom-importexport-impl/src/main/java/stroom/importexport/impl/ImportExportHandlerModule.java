@@ -16,16 +16,16 @@
 
 package stroom.importexport.impl;
 
+import stroom.util.guice.RestResourcesBinder;
+
 import com.google.inject.AbstractModule;
-import stroom.util.guice.GuiceUtil;
-import stroom.util.shared.RestResource;
 
 public class ImportExportHandlerModule extends AbstractModule {
     @Override
     protected void configure() {
         bind(DependencyService.class).to(DependencyServiceImpl.class);
 
-        GuiceUtil.buildMultiBinder(binder(), RestResource.class)
-                .addBinding(ContentResourceImpl.class);
+        RestResourcesBinder.create(binder())
+                .bindResource(ContentResourceImpl.class);
     }
 }

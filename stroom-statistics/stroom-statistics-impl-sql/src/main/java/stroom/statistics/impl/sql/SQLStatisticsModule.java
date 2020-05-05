@@ -18,6 +18,7 @@ package stroom.statistics.impl.sql;
 
 import stroom.db.util.AbstractFlyWayDbModule;
 import stroom.db.util.DataSourceProxy;
+import stroom.util.guice.HealthCheckBinder;
 
 import javax.sql.DataSource;
 
@@ -31,6 +32,10 @@ public class SQLStatisticsModule extends AbstractFlyWayDbModule<SQLStatisticsCon
         super.configure();
         bind(SQLStatisticCache.class).to(SQLStatisticCacheImpl.class);
         bind(Statistics.class).to(SQLStatisticEventStore.class);
+
+        HealthCheckBinder.create(binder())
+                .bind(SQLStatisticCacheImpl.class)
+                .bind(SQLStatisticEventStore.class);
     }
 
     @Override

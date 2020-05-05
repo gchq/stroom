@@ -16,12 +16,13 @@
 
 package stroom.node.impl;
 
-import com.google.common.collect.ImmutableMap;
 import stroom.node.api.NodeInfo;
 import stroom.pipeline.state.RecordCountService;
 import stroom.statistics.api.InternalStatisticEvent;
 import stroom.statistics.api.InternalStatisticKey;
 import stroom.util.io.StreamUtil;
+
+import com.google.common.collect.ImmutableMap;
 
 import javax.inject.Inject;
 import javax.inject.Singleton;
@@ -42,9 +43,6 @@ import java.util.regex.Pattern;
  */
 @Singleton
  class NodeStatusServiceUtil {
-    private static final String INTERNAL_STAT_KEY_MEMORY = "memory";
-    private static final String INTERNAL_STAT_KEY_CPU = "cpu";
-    private static final String INTERNAL_STAT_KEY_EVENTS_PER_SECOND = "eventsPerSecond";
 
     private final NodeInfo nodeInfo;
     private final RecordCountService recordCountService;

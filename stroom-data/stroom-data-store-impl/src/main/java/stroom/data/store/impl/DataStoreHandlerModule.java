@@ -16,10 +16,10 @@
 
 package stroom.data.store.impl;
 
-import com.google.inject.AbstractModule;
-import stroom.util.guice.GuiceUtil;
+import stroom.util.guice.RestResourcesBinder;
 import stroom.util.guice.ServletBinder;
-import stroom.util.shared.RestResource;
+
+import com.google.inject.AbstractModule;
 
 public class DataStoreHandlerModule extends AbstractModule {
     @Override
@@ -28,8 +28,8 @@ public class DataStoreHandlerModule extends AbstractModule {
                 .bind(ImportFileServlet.class);
 
         // TODO probably not the right place for this binding
-        GuiceUtil.buildMultiBinder(binder(), RestResource.class)
-                .addBinding(DataResourceImpl.class)
-                .addBinding(ViewDataResourceImpl.class);
+        RestResourcesBinder.create(binder())
+                .bindResource(DataResourceImpl.class)
+                .bindResource(ViewDataResourceImpl.class);
     }
 }

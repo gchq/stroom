@@ -1,13 +1,13 @@
 package stroom.kafka.impl;
 
-import com.google.inject.AbstractModule;
-import com.google.inject.multibindings.Multibinder;
 import stroom.docstore.api.DocumentActionHandlerBinder;
 import stroom.explorer.api.ExplorerActionHandler;
 import stroom.importexport.api.ImportExportActionHandler;
 import stroom.kafka.shared.KafkaConfigDoc;
-import stroom.util.guice.GuiceUtil;
-import stroom.util.shared.RestResource;
+import stroom.util.guice.RestResourcesBinder;
+
+import com.google.inject.AbstractModule;
+import com.google.inject.multibindings.Multibinder;
 
 public class KafkaConfigHandlerModule extends AbstractModule {
     @Override
@@ -21,7 +21,7 @@ public class KafkaConfigHandlerModule extends AbstractModule {
         DocumentActionHandlerBinder.create(binder())
                 .bind(KafkaConfigDoc.DOCUMENT_TYPE, KafkaConfigStoreImpl.class);
 
-        GuiceUtil.buildMultiBinder(binder(), RestResource.class)
-                .addBinding(KafkaConfigResourceImpl.class);
+        RestResourcesBinder.create(binder())
+                .bindResource(KafkaConfigResourceImpl.class);
     }
 }

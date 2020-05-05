@@ -35,6 +35,9 @@ public abstract class AbstractLifecycleModule extends AbstractModule {
             this.mapBinder = mapBinder;
         }
 
+        /**
+         * @param priority Higher value will start earlier
+         */
         public StartupBuilder priority(int priority) {
             this.priority = priority;
             return this;
@@ -56,6 +59,9 @@ public abstract class AbstractLifecycleModule extends AbstractModule {
             this.mapBinder = mapBinder;
         }
 
+        /**
+         * @param priority Higher value will shutdown later
+         */
         public ShutdownBuilder priority(int priority) {
             this.priority = priority;
             return this;

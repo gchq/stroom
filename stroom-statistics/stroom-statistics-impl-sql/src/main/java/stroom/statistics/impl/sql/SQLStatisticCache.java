@@ -19,6 +19,8 @@ package stroom.statistics.impl.sql;
 public interface SQLStatisticCache {
     void add(SQLStatisticAggregateMap aggregateMap);
 
+    void flush(final boolean block);
+
     void flush();
 
     void execute();

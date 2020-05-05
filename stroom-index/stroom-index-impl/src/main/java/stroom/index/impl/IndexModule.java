@@ -16,15 +16,16 @@
 
 package stroom.index.impl;
 
-import com.google.inject.AbstractModule;
 import stroom.docstore.api.DocumentActionHandlerBinder;
 import stroom.explorer.api.ExplorerActionHandler;
 import stroom.importexport.api.ImportExportActionHandler;
 import stroom.index.shared.IndexDoc;
 import stroom.util.entityevent.EntityEvent;
 import stroom.util.guice.GuiceUtil;
+import stroom.util.guice.RestResourcesBinder;
 import stroom.util.shared.Clearable;
-import stroom.util.shared.RestResource;
+
+import com.google.inject.AbstractModule;
 
 public class IndexModule extends AbstractModule {
     @Override
@@ -51,13 +52,13 @@ public class IndexModule extends AbstractModule {
         GuiceUtil.buildMultiBinder(binder(), ImportExportActionHandler.class)
                 .addBinding(IndexStoreImpl.class);
 
-        GuiceUtil.buildMultiBinder(binder(), RestResource.class)
-                .addBinding(NewUIIndexResourceImpl.class)
-                .addBinding(NewUIIndexVolumeGroupResourceImpl.class)
-                .addBinding(NewUIIndexVolumeResourceImpl.class)
-                .addBinding(IndexResourceImpl.class)
-                .addBinding(IndexVolumeGroupResourceImpl.class)
-                .addBinding(IndexVolumeResourceImpl.class);
+        RestResourcesBinder.create(binder())
+                .bindResource(NewUIIndexResourceImpl.class)
+                .bindResource(NewUIIndexVolumeGroupResourceImpl.class)
+                .bindResource(NewUIIndexVolumeResourceImpl.class)
+                .bindResource(IndexResourceImpl.class)
+                .bindResource(IndexVolumeGroupResourceImpl.class)
+                .bindResource(IndexVolumeResourceImpl.class);
 
         DocumentActionHandlerBinder.create(binder())
                 .bind(IndexDoc.DOCUMENT_TYPE, IndexStoreImpl.class);

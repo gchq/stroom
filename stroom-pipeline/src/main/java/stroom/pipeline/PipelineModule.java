@@ -16,7 +16,6 @@
 
 package stroom.pipeline;
 
-import com.google.inject.AbstractModule;
 import stroom.docstore.api.DocumentActionHandlerBinder;
 import stroom.docstore.shared.Doc;
 import stroom.event.logging.api.ObjectInfoProviderBinder;
@@ -26,8 +25,10 @@ import stroom.pipeline.shared.PipelineDoc;
 import stroom.pipeline.textconverter.TextConverterModule;
 import stroom.pipeline.xmlschema.XmlSchemaModule;
 import stroom.pipeline.xslt.XsltModule;
-import stroom.util.shared.RestResource;
 import stroom.util.guice.GuiceUtil;
+import stroom.util.guice.RestResourcesBinder;
+
+import com.google.inject.AbstractModule;
 
 public class PipelineModule extends AbstractModule {
     @Override
@@ -45,9 +46,9 @@ public class PipelineModule extends AbstractModule {
         GuiceUtil.buildMultiBinder(binder(), ImportExportActionHandler.class)
                 .addBinding(PipelineStoreImpl.class);
 
-        GuiceUtil.buildMultiBinder(binder(), RestResource.class)
-                .addBinding(PipelineResourceImpl.class)
-                .addBinding(NewUiPipelineResource.class);
+        RestResourcesBinder.create(binder())
+                .bindResource(PipelineResourceImpl.class)
+                .bindResource(NewUiPipelineResource.class);
 
         DocumentActionHandlerBinder.create(binder())
                 .bind(PipelineDoc.DOCUMENT_TYPE, PipelineStoreImpl.class);
