@@ -105,7 +105,7 @@ public abstract class AbstractMetaListPresenter extends MyPresenterWidget<DataGr
         addColumns(allowSelectAll);
 
         criteria = new FindMetaCriteria();
-        criteria.setSort(MetaFields.CREATE_TIME.getName(), Sort.Direction.ASCENDING, false);
+        criteria.setSort(MetaFields.CREATE_TIME.getName(), Sort.Direction.DESCENDING, false);
 
         final PageRequest pageRequest = criteria.obtainPageRequest();
         pageRequest.setOffset(0L);
