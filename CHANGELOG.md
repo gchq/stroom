@@ -6,6 +6,8 @@ and this project adheres to [Semantic Versioning](http://semver.org/).
 
 ## [Unreleased]
 
+* Add missing guice binding for SystemInfoResource.
+
 * Make export add new line to the end of all files to adhere to POSIX standard.
 
 * Issue **#1532** : Fixed index shard criteria in UI.
