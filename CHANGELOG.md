@@ -6,6 +6,8 @@ and this project adheres to [Semantic Versioning](http://semver.org/).
 
 ## [Unreleased]
 
+* Issue **#1532** : Fixed index shard criteria in UI.
+
 * Change SecurityFilter to return a 401 on authentication exceptions.
 
 * Move some health checks into SystemInfoResource.

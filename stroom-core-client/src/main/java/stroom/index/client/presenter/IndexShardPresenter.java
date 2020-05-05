@@ -74,8 +74,8 @@ public class IndexShardPresenter extends MyPresenterWidget<DataGridView<IndexSha
     private final ClientSecurityContext securityContext;
     private RestDataProvider<IndexShard, ResultPage<IndexShard>> dataProvider;
     private ResultPage<IndexShard> resultList = null;
-    private final FindIndexShardCriteria selectionCriteria = FindIndexShardCriteria.matchNone();
-    private final FindIndexShardCriteria queryCriteria = FindIndexShardCriteria.matchNone();
+    private final FindIndexShardCriteria selectionCriteria = FindIndexShardCriteria.matchAll();
+    private final FindIndexShardCriteria queryCriteria = FindIndexShardCriteria.matchAll();
 
     private ButtonView buttonFlush;
     private ButtonView buttonDelete;
@@ -386,8 +386,9 @@ public class IndexShardPresenter extends MyPresenterWidget<DataGridView<IndexSha
     public void read(final DocRef docRef, final IndexDoc index) {
         if (index != null) {
             this.index = index;
-            selectionCriteria.getIndexUuidSet().add(docRef.getUuid());
             queryCriteria.getIndexUuidSet().add(docRef.getUuid());
+            selectionCriteria.getIndexUuidSet().add(docRef.getUuid());
+            selectionCriteria.getIndexShardIdSet().clear();
 
             if (dataProvider == null) {
                 dataProvider = new RestDataProvider<IndexShard, ResultPage<IndexShard>>(getEventBus(), queryCriteria.obtainPageRequest()) {
