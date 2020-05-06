@@ -18,7 +18,6 @@
 package stroom.processor.impl;
 
 
-import org.junit.jupiter.api.Test;
 import stroom.data.shared.StreamTypeNames;
 import stroom.docref.DocRef;
 import stroom.entity.shared.ExpressionCriteria;
@@ -36,6 +35,8 @@ import stroom.query.api.v2.ExpressionTerm.Condition;
 import stroom.test.AbstractCoreIntegrationTest;
 import stroom.test.common.util.test.FileSystemTestUtil;
 import stroom.util.shared.ResultPage;
+
+import org.junit.jupiter.api.Test;
 
 import javax.inject.Inject;
 import java.util.List;
@@ -161,20 +162,16 @@ class TestProcessorFilterService extends AbstractCoreIntegrationTest {
                 "      <name>StreamStore</name>\n" +
                 "   </dataSource>\n" +
                 "   <expression>\n" +
-                "      <enabled>true</enabled>\n" +
-                "      <op>AND</op>\n" +
                 "      <children>\n";
 
         if (include != null && include.length > 0) {
             xml += "" +
                     "         <operator>\n" +
-                    "            <enabled>true</enabled>\n" +
                     "            <op>OR</op>\n" +
                     "            <children>\n";
             for (final String feed : include) {
                 xml += "" +
                         "               <term>\n" +
-                        "                  <enabled>true</enabled>\n" +
                         "                  <field>" + MetaFields.FEED_NAME + "</field>\n" +
                         "                  <condition>EQUALS</condition>\n" +
                         "                  <value>" + feed + "</value>\n" +
@@ -189,17 +186,14 @@ class TestProcessorFilterService extends AbstractCoreIntegrationTest {
 
         xml += "" +
                 "         <operator>\n" +
-                "            <enabled>true</enabled>\n" +
                 "            <op>OR</op>\n" +
                 "            <children>\n" +
                 "               <term>\n" +
-                "                  <enabled>true</enabled>\n" +
                 "                  <field>" + MetaFields.TYPE_NAME + "</field>\n" +
                 "                  <condition>EQUALS</condition>\n" +
                 "                  <value>Raw Events</value>\n" +
                 "               </term>\n" +
                 "               <term>\n" +
-                "                  <enabled>true</enabled>\n" +
                 "                  <field>" + MetaFields.TYPE_NAME + "</field>\n" +
                 "                  <condition>EQUALS</condition>\n" +
                 "                  <value>Raw Reference</value>\n" +

@@ -58,15 +58,12 @@
       },
       "expression" : {
         "type" : "operator",
-        "op" : "AND",
         "children" : [ {
           "type" : "term",
           "field" : "Date Time",
           "condition" : "BETWEEN",
-          "value" : "now()-1d,now()",
-          "enabled" : true
-        } ],
-        "enabled" : true
+          "value" : "now()-1d,now()"
+        } ]
       },
       "automate" : {
         "open" : true,
@@ -100,15 +97,12 @@
       },
       "expression" : {
         "type" : "operator",
-        "op" : "AND",
         "children" : [ {
           "type" : "term",
           "field" : "Date Time",
           "condition" : "BETWEEN",
-          "value" : "now()-1d,now()",
-          "enabled" : true
-        } ],
-        "enabled" : true
+          "value" : "now()-1d,now()"
+        } ]
       },
       "automate" : {
         "open" : true,
@@ -188,15 +182,12 @@
       },
       "expression" : {
         "type" : "operator",
-        "op" : "AND",
         "children" : [ {
           "type" : "term",
           "field" : "Date Time",
           "condition" : "BETWEEN",
-          "value" : "now()-1d,now()",
-          "enabled" : true
-        } ],
-        "enabled" : true
+          "value" : "now()-1d,now()"
+        } ]
       },
       "automate" : {
         "open" : true,
@@ -276,15 +267,12 @@
       },
       "expression" : {
         "type" : "operator",
-        "op" : "AND",
         "children" : [ {
           "type" : "term",
           "field" : "Date Time",
           "condition" : "BETWEEN",
-          "value" : "now()-1d,now()",
-          "enabled" : true
-        } ],
-        "enabled" : true
+          "value" : "now()-1d,now()"
+        } ]
       },
       "automate" : {
         "open" : true,

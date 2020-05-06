@@ -1,7 +1,5 @@
 package stroom.statistics.impl.sql.search;
 
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 import stroom.query.api.v2.ExpressionItem;
 import stroom.query.api.v2.ExpressionOperator;
 import stroom.query.api.v2.ExpressionTerm;
@@ -12,6 +10,9 @@ import stroom.statistics.impl.sql.shared.StatisticRollUpType;
 import stroom.statistics.impl.sql.shared.StatisticStoreDoc;
 import stroom.util.Period;
 import stroom.util.shared.Range;
+
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import java.time.ZonedDateTime;
 import java.util.ArrayList;
@@ -38,7 +39,7 @@ public class StatStoreCriteriaBuilder {
 
         final ExpressionOperator topLevelExpressionOperator = search.getQuery().getExpression();
 
-        if (topLevelExpressionOperator == null || topLevelExpressionOperator.getOp() == null) {
+        if (topLevelExpressionOperator == null || topLevelExpressionOperator.op() == null) {
             throw new IllegalArgumentException(
                     "The top level operator for the query must be one of [" + ExpressionOperator.Op.values() + "]");
         }
@@ -58,7 +59,7 @@ public class StatStoreCriteriaBuilder {
         ExpressionTerm dateTerm = null;
         if (childExpressions != null) {
             for (final ExpressionItem expressionItem : childExpressions) {
-                if (expressionItem.isEnabled()) {
+                if (expressionItem.enabled()) {
                     if (expressionItem instanceof ExpressionTerm) {
                         final ExpressionTerm expressionTerm = (ExpressionTerm) expressionItem;
 
@@ -75,7 +76,7 @@ public class StatStoreCriteriaBuilder {
                             }
                         }
                     } else if (expressionItem instanceof ExpressionOperator) {
-                        if (((ExpressionOperator) expressionItem).getOp() == null) {
+                        if (((ExpressionOperator) expressionItem).op() == null) {
                             throw new IllegalArgumentException(
                                 "An operator in the query is missing a type, it should be one of " + ExpressionOperator.Op.values());
                         }
@@ -158,7 +159,7 @@ public class StatStoreCriteriaBuilder {
      */
     private static void findAllTermNodes(final ExpressionItem node, final List<ExpressionTerm> termsFound) {
         // Don't go any further down this branch if this node is disabled.
-        if (node.isEnabled()) {
+        if (node.enabled()) {
             if (node instanceof ExpressionTerm) {
                 final ExpressionTerm termNode = (ExpressionTerm) node;
 

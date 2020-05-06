@@ -41,36 +41,39 @@ public class TabConfig {
 
     @XmlElement(name = "visible")
     @JsonProperty("visible")
-    private boolean visible;
+    private Boolean visible;
 
     @JsonIgnore
     private transient TabLayoutConfig parent;
 
     public TabConfig() {
-        visible = true;
     }
 
     @JsonCreator
     public TabConfig(@JsonProperty("id") final String id,
                      @JsonProperty("visible") final Boolean visible) {
         this.id = id;
-        if (visible != null) {
-            this.visible = visible;
-        } else {
-            this.visible = true;
-        }
+        this.visible = visible;
     }
 
     public String getId() {
         return id;
     }
 
-    public boolean isVisible() {
+    public Boolean getVisible() {
         return visible;
     }
 
-    public void setVisible(final boolean visible) {
-        this.visible = visible;
+    public void setVisible(final Boolean visible) {
+        if (visible == null || Boolean.TRUE.equals(visible)) {
+            this.visible = null;
+        } else {
+            this.visible = visible;
+        }
+    }
+
+    public boolean visible() {
+        return visible == null || visible;
     }
 
     @JsonIgnore

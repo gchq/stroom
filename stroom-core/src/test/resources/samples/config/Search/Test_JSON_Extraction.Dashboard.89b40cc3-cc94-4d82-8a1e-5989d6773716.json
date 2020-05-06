@@ -63,15 +63,12 @@
       },
       "expression" : {
         "type" : "operator",
-        "op" : "AND",
         "children" : [ {
           "type" : "term",
           "field" : "EventTime",
           "condition" : "LESS_THAN",
-          "value" : "2019-09-11T00:00:00.000Z",
-          "enabled" : true
-        } ],
-        "enabled" : true
+          "value" : "2019-09-11T00:00:00.000Z"
+        } ]
       },
       "automate" : {
         "open" : false,
