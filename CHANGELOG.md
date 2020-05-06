@@ -6,6 +6,8 @@ and this project adheres to [Semantic Versioning](http://semver.org/).
 
 ## [Unreleased]
 
+* Fix NPE in SystemInfoResource.get().
+
 * Issue **#1527** : Fixed missing aud in API eky tokens.
 
 * Add missing guice binding for SystemInfoResource.

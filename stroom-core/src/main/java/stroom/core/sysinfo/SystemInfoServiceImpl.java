@@ -7,12 +7,15 @@ import stroom.util.sysinfo.HasSystemInfo;
 import stroom.util.sysinfo.SystemInfoResult;
 
 import javax.inject.Inject;
+import javax.inject.Singleton;
 import java.util.List;
 import java.util.Map;
+import java.util.Optional;
 import java.util.Set;
 import java.util.function.Function;
 import java.util.stream.Collectors;
 
+@Singleton
 public class SystemInfoServiceImpl implements SystemInfoService {
 
     private final Map<String, HasSystemInfo> systemInfoSuppliers;
@@ -42,13 +45,14 @@ public class SystemInfoServiceImpl implements SystemInfoService {
     }
 
     @Override
-    public SystemInfoResult get(final String name) {
+    public Optional<SystemInfoResult> get(final String name) {
         checkPermission();
 
         // We should have a user in context as this is coming from an authenticated rest api
         final HasSystemInfo systemInfoSupplier = systemInfoSuppliers.get(name);
 
-        return systemInfoSupplier.getSystemInfo();
+        return Optional.ofNullable(systemInfoSupplier)
+                .map(HasSystemInfo::getSystemInfo);
     }
 
     private void checkPermission() {
