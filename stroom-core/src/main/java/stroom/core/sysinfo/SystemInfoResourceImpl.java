@@ -64,12 +64,9 @@ public class SystemInfoResourceImpl implements SystemInfoResource {
                 "Getting system info results for " + name,
                 "/" + name);
 
-        final SystemInfoResult systemInfoResult = systemInfoService.get(name);
-
-        if (systemInfoResult == null) {
-            throw new NotFoundException(LogUtil.message("Name {} not found", name));
-        }
-        return systemInfoResult;
+        return systemInfoService.get(name)
+                .orElseThrow(() ->
+                        new NotFoundException(LogUtil.message("Name {} not found", name)));
     }
 
     private void logViewResourceEvent(final String typeId,
