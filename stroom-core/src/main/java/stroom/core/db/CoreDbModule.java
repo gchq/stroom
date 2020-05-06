@@ -82,7 +82,7 @@ public class CoreDbModule extends AbstractModule {
                 .addBinding(CoreDbConnProvider.class);
 
         RestResourcesBinder.create(binder())
-                .bindResource(DbStatusResourceImpl.class);
+                .bind(DbStatusResourceImpl.class);
 
         HasHealthCheckBinder.create(binder())
                 .bind(DbHealthCheck.class);

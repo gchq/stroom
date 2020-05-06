@@ -28,6 +28,6 @@ public final class OAuth2Module extends AbstractModule {
         bind(OpenIdClientDetailsFactory.class).to(OpenIdClientDetailsFactoryImpl.class);
 
         RestResourcesBinder.create(binder())
-                .bindResource(OAuth2ResourceImpl.class);
+                .bind(OAuth2ResourceImpl.class);
     }
 }

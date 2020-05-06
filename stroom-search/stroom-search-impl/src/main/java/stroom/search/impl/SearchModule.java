@@ -35,7 +35,7 @@ public class SearchModule extends AbstractModule {
         GuiceUtil.buildMultiBinder(binder(), Clearable.class).addBinding(LuceneSearchResponseCreatorManager.class);
 
         RestResourcesBinder.create(binder())
-                .bindResource(StroomIndexQueryResourceImpl.class);
+                .bind(StroomIndexQueryResourceImpl.class);
 
         ClusterTaskHandlerBinder.create(binder())
                 .bind(ClusterSearchTask.class, ClusterSearchTaskHandler.class);

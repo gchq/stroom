@@ -31,7 +31,7 @@ public class DataRetentionModule extends AbstractModule {
         bind(DataRetentionRulesService.class).to(DataRetentionRulesServiceImpl.class);
 
         RestResourcesBinder.create(binder())
-                .bindResource(DataRetentionRulesResourceImpl.class);
+                .bind(DataRetentionRulesResourceImpl.class);
     }
 
     @Provides

@@ -16,11 +16,12 @@
 
 package stroom.pipeline.xmlschema;
 
-import com.google.inject.AbstractModule;
-import com.google.inject.multibindings.Multibinder;
 import stroom.docstore.api.DocumentActionHandlerBinder;
 import stroom.importexport.api.ImportExportActionHandler;
+import stroom.util.guice.GuiceUtil;
 import stroom.xmlschema.shared.XmlSchemaDoc;
+
+import com.google.inject.AbstractModule;
 
 // TODO: What's this doing in main? I think it should be in test in stroom-app.
 public class MockXmlSchemaModule extends AbstractModule {
@@ -28,22 +29,10 @@ public class MockXmlSchemaModule extends AbstractModule {
     protected void configure() {
         bind(XmlSchemaStore.class).to(XmlSchemaStoreImpl.class);
 
-//        final Multibinder<Handler> entityEventHandlerBinder = Multibinder.newSetBinder(binder(), Handler.class);
-//        entityEventHandlerBinder.addBinding().to(XMLSchemaCache.class);
-//
-//        final Multibinder<ExplorerActionHandler> explorerActionHandlerBinder = Multibinder.newSetBinder(binder(), ExplorerActionHandler.class);
-//        explorerActionHandlerBinder.addBinding().to(XmlSchemaStoreImpl.class);
-
-//        final Multibinder<Clearable> clearableBinder = Multibinder.newSetBinder(binder(), Clearable.class);
-//        clearableBinder.addBinding().to(XmlSchemaStoreImpl.class);
-
-        final Multibinder<ImportExportActionHandler> importExportActionHandlerBinder = Multibinder.newSetBinder(binder(), ImportExportActionHandler.class);
-        importExportActionHandlerBinder.addBinding().to(XmlSchemaStoreImpl.class);
+        GuiceUtil.buildMultiBinder(binder(), ImportExportActionHandler.class)
+                .addBinding(XmlSchemaStoreImpl.class);
 
         DocumentActionHandlerBinder.create(binder())
                 .bind(XmlSchemaDoc.DOCUMENT_TYPE, XmlSchemaStoreImpl.class);
-
-//        final Multibinder<FindService> findServiceBinder = Multibinder.newSetBinder(binder(), FindService.class);
-//        findServiceBinder.addBinding().to(XmlSchemaStoreImpl.class);
     }
 }

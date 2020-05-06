@@ -24,6 +24,6 @@ public class CacheResourceModule extends AbstractModule {
     @Override
     protected void configure() {
         RestResourcesBinder.create(binder())
-                .bindResource(CacheResourceImpl.class);
+                .bind(CacheResourceImpl.class);
     }
 }

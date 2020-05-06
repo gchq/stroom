@@ -6,6 +6,8 @@ and this project adheres to [Semantic Versioning](http://semver.org/).
 
 ## [Unreleased]
 
+* Issue **#1511** : Data pages now show pipeline names rather than pipeline UUIDs.
+
 * Issue **#1529** : Fix error when selecting datasource in new dashboard.
 
 * Fix NPE in SystemInfoResource.get().

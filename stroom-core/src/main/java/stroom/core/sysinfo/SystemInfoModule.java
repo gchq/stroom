@@ -11,6 +11,6 @@ public class SystemInfoModule extends AbstractModule {
         bind(SystemInfoService.class).to(SystemInfoServiceImpl.class);
 
         RestResourcesBinder.create(binder())
-                .bindResource(SystemInfoResourceImpl.class);
+                .bind(SystemInfoResourceImpl.class);
     }
 }

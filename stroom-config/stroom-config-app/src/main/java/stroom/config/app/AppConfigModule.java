@@ -21,7 +21,7 @@ import stroom.data.retention.impl.DataRetentionConfig;
 import stroom.data.store.impl.fs.DataStoreServiceConfig;
 import stroom.data.store.impl.fs.FsVolumeConfig;
 import stroom.docstore.impl.db.DocStoreConfig;
-import stroom.explorer.impl.db.ExplorerConfig;
+import stroom.explorer.impl.ExplorerConfig;
 import stroom.feed.impl.FeedConfig;
 import stroom.importexport.impl.ContentPackImportConfig;
 import stroom.importexport.impl.ExportConfig;

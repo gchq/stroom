@@ -26,6 +26,6 @@ public class DataSourceModule extends AbstractModule {
         bind(DataSourceProviderRegistry.class).to(DataSourceProviderRegistryImpl.class);
 
         RestResourcesBinder.create(binder())
-                .bindResource(DataSourceResourceImpl.class);
+                .bind(DataSourceResourceImpl.class);
     }
 }

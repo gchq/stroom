@@ -16,6 +16,15 @@
 
 package stroom.dashboard.impl.logging;
 
+import stroom.collection.api.CollectionService;
+import stroom.dictionary.api.WordListProvider;
+import stroom.docref.DocRef;
+import stroom.docref.DocRefInfo;
+import stroom.docrefinfo.api.DocRefInfoService;
+import stroom.event.logging.api.StroomEventLoggingService;
+import stroom.query.api.v2.ExpressionOperator;
+import stroom.security.api.SecurityContext;
+
 import event.logging.Criteria;
 import event.logging.Criteria.DataSources;
 import event.logging.Event;
@@ -28,14 +37,6 @@ import event.logging.Search;
 import event.logging.util.EventLoggingUtil;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import stroom.collection.api.CollectionService;
-import stroom.dictionary.api.WordListProvider;
-import stroom.docref.DocRef;
-import stroom.docref.DocRefInfo;
-import stroom.event.logging.api.StroomEventLoggingService;
-import stroom.explorer.api.ExplorerService;
-import stroom.query.api.v2.ExpressionOperator;
-import stroom.security.api.SecurityContext;
 
 import javax.inject.Inject;
 
@@ -46,19 +47,19 @@ public class SearchEventLogImpl implements SearchEventLog {
     private final SecurityContext securityContext;
     private final WordListProvider wordListProvider;
     private final CollectionService collectionService;
-    private final ExplorerService explorerService;
+    private final DocRefInfoService docRefInfoService;
 
     @Inject
     public SearchEventLogImpl(final StroomEventLoggingService eventLoggingService,
                               final SecurityContext securityContext,
                               final WordListProvider wordListProvider,
                               final CollectionService collectionService,
-                              final ExplorerService explorerService) {
+                              final DocRefInfoService docRefInfoService) {
         this.eventLoggingService = eventLoggingService;
         this.securityContext = securityContext;
         this.wordListProvider = wordListProvider;
         this.collectionService = collectionService;
-        this.explorerService = explorerService;
+        this.docRefInfoService = docRefInfoService;
     }
 
     @Override
@@ -180,10 +181,8 @@ public class SearchEventLogImpl implements SearchEventLog {
         }
 
         try {
-            final DocRefInfo docRefInfo = explorerService.info(docRef);
-            if (docRefInfo != null) {
-                return docRefInfo.getDocRef().getName();
-            }
+            return docRefInfoService.name(docRef)
+                    .orElse(docRef.getName());
         } catch (final RuntimeException e) {
             // We might not have an explorer handler capable of getting info.
             LOGGER.debug(e.getMessage(), e);

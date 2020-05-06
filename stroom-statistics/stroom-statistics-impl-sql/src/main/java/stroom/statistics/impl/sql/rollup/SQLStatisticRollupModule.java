@@ -24,6 +24,6 @@ public class SQLStatisticRollupModule extends AbstractModule {
     @Override
     protected void configure() {
         RestResourcesBinder.create(binder())
-                .bindResource(StatisticRollupResourceImpl.class);
+                .bind(StatisticRollupResourceImpl.class);
     }
 }

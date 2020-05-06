@@ -20,7 +20,7 @@ import stroom.core.receive.ReceiveDataConfig;
 import stroom.dashboard.impl.DashboardConfig;
 import stroom.dashboard.impl.datasource.DataSourceUrlConfig;
 import stroom.docstore.impl.db.DocStoreConfig;
-import stroom.explorer.impl.db.ExplorerConfig;
+import stroom.explorer.impl.ExplorerConfig;
 import stroom.feed.impl.FeedConfig;
 import stroom.importexport.impl.ContentPackImportConfig;
 import stroom.importexport.impl.ExportConfig;

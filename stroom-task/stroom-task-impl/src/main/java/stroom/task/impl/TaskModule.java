@@ -41,7 +41,7 @@ public class TaskModule extends AbstractModule {
         bind(TaskResource.class).to(TaskResourceImpl.class);
 
         RestResourcesBinder.create(binder())
-                .bindResource(TaskResourceImpl.class);
+                .bind(TaskResourceImpl.class);
 
         GuiceUtil.buildMultiBinder(binder(), HttpSessionListener.class)
                 .addBinding(TaskManagerSessionListener.class);

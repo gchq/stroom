@@ -34,9 +34,9 @@ public class JobSystemModule extends AbstractModule {
         bind(JobManager.class).to(JobManagerImpl.class);
 
         RestResourcesBinder.create(binder())
-                .bindResource(JobResourceImpl.class)
-                .bindResource(JobNodeResourceImpl.class)
-                .bindResource(ScheduledTimeResourceImpl.class);
+                .bind(JobResourceImpl.class)
+                .bind(JobNodeResourceImpl.class)
+                .bind(ScheduledTimeResourceImpl.class);
 
         // Provide object info to the logging service.
         ObjectInfoProviderBinder.create(binder())

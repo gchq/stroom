@@ -23,7 +23,7 @@ public class ClusterLockDbModule extends AbstractFlyWayDbModule<ClusterLockConfi
         GuiceUtil.buildMultiBinder(binder(), Clearable.class).addBinding(DbClusterLock.class);
 
         RestResourcesBinder.create(binder())
-                .bindResource(ClusterLockResourceImpl.class);
+                .bind(ClusterLockResourceImpl.class);
     }
 
     @Override

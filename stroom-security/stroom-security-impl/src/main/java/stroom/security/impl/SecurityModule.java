@@ -30,7 +30,6 @@ import stroom.util.guice.RestResourcesBinder;
 import stroom.util.shared.Clearable;
 
 import com.google.inject.AbstractModule;
-import com.google.inject.multibindings.Multibinder;
 
 import javax.servlet.http.HttpSessionListener;
 
@@ -62,24 +61,24 @@ public class SecurityModule extends AbstractModule {
         GuiceUtil.buildMultiBinder(binder(), HttpSessionListener.class)
                 .addBinding(SessionMap.class);
 
-        final Multibinder<EntityEvent.Handler> entityEventHandlerBinder = Multibinder.newSetBinder(binder(), EntityEvent.Handler.class);
-        entityEventHandlerBinder.addBinding().to(UserGroupsCache.class);
-        entityEventHandlerBinder.addBinding().to(UserAppPermissionsCache.class);
+        GuiceUtil.buildMultiBinder(binder(), EntityEvent.Handler.class)
+                .addBinding(UserGroupsCache.class)
+                .addBinding(UserAppPermissionsCache.class);
 
-        final Multibinder<PermissionChangeEvent.Handler> permissionChangeEventHandlerBinder = Multibinder.newSetBinder(binder(), PermissionChangeEvent.Handler.class);
-        permissionChangeEventHandlerBinder.addBinding().to(UserDocumentPermissionsCache.class);
+        GuiceUtil.buildMultiBinder(binder(), PermissionChangeEvent.Handler.class)
+            .addBinding(UserDocumentPermissionsCache.class);
 
         HasHealthCheckBinder.create(binder())
                 .bind(JWTService.class);
 
         RestResourcesBinder.create(binder())
-                .bindResource(AppPermissionResourceImpl.class)
-                .bindResource(AuthenticationResourceImpl.class)
-                .bindResource(AuthorisationResource.class)
-                .bindResource(DocPermissionResourceImpl.class)
-                .bindResource(DocumentPermissionResourceImpl.class)
-                .bindResource(SessionResourceImpl.class)
-                .bindResource(UserAppPermissionResourceImpl.class)
-                .bindResource(UserResourceImpl.class);
+                .bind(AppPermissionResourceImpl.class)
+                .bind(AuthenticationResourceImpl.class)
+                .bind(AuthorisationResource.class)
+                .bind(DocPermissionResourceImpl.class)
+                .bind(DocumentPermissionResourceImpl.class)
+                .bind(SessionResourceImpl.class)
+                .bind(UserAppPermissionResourceImpl.class)
+                .bind(UserResourceImpl.class);
     }
 }

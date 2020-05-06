@@ -12,6 +12,7 @@ dependencies {
     compile project(':stroom-data:stroom-data-store-impl-fs-db')
     compile project(':stroom-dictionary:stroom-dictionary-mock')
     compile project(':stroom-explorer:stroom-collection-mock')
+    compile project(':stroom-explorer:stroom-docrefinfo-mock')
     compile project(':stroom-meta:stroom-meta-api')
     compile project(':stroom-meta:stroom-meta-impl')
     compile project(':stroom-meta:stroom-meta-impl-db')

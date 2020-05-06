@@ -34,7 +34,7 @@ public class AnnotationModule extends AbstractModule {
         bind(AnnotationsDecoratorFactory.class).to(AnnotationReceiverDecoratorFactory.class);
 
         RestResourcesBinder.create(binder())
-                .bindResource(AnnotationResourceImpl.class);
+                .bind(AnnotationResourceImpl.class);
 
         // Provide object info to the logging service.
         ObjectInfoProviderBinder.create(binder())

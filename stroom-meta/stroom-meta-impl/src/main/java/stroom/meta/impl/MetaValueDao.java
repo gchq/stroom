@@ -23,11 +23,12 @@ import stroom.util.shared.Clearable;
 import stroom.util.shared.Flushable;
 
 import java.util.List;
+import java.util.Map;
 
 public interface MetaValueDao extends Clearable, Flushable {
     void addAttributes(Meta meta, AttributeMap attributes);
 
-    List<MetaRow> decorateDataWithAttributes(List<Meta> list);
+    Map<Long, Map<String, String>> getAttributes(List<Meta> list);
 
     void deleteOldValues();
 

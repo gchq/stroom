@@ -18,7 +18,6 @@
 package stroom.explorer.api;
 
 import stroom.docref.DocRef;
-import stroom.docref.DocRefInfo;
 import stroom.explorer.shared.BulkActionResult;
 import stroom.explorer.shared.DocumentType;
 import stroom.explorer.shared.FetchExplorerNodeResult;
@@ -40,8 +39,6 @@ public interface ExplorerService extends Clearable {
     DocRef rename(DocRef docRef, String docName);
 
     BulkActionResult delete(List<DocRef> docRefs);
-
-    DocRefInfo info(DocRef docRef);
 
     void rebuildTree();
 

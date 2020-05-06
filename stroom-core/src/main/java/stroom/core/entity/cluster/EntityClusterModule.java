@@ -26,6 +26,6 @@ public class EntityClusterModule extends AbstractModule {
         bind(ClearableResource.class).to(ClearableResourceImpl.class);
 
         RestResourcesBinder.create(binder())
-                .bindResource(ClearableResourceImpl.class);
+                .bind(ClearableResourceImpl.class);
     }
 }

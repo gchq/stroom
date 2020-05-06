@@ -45,6 +45,7 @@ import stroom.security.api.SecurityContext;
 import stroom.security.mock.MockSecurityContext;
 import stroom.task.impl.TaskContextModule;
 import stroom.util.BuildInfoProvider;
+import stroom.util.entityevent.EntityEventBus;
 import stroom.util.guice.FilterBinder;
 import stroom.util.guice.FilterInfo;
 import stroom.util.guice.GuiceUtil;
@@ -57,19 +58,6 @@ import stroom.util.shared.BuildInfo;
 import com.google.inject.AbstractModule;
 import com.google.inject.Provides;
 import com.google.inject.Singleton;
-import com.google.inject.multibindings.Multibinder;
-import io.dropwizard.client.JerseyClientBuilder;
-import io.dropwizard.client.JerseyClientConfiguration;
-import io.dropwizard.lifecycle.Managed;
-import io.dropwizard.setup.Environment;
-import org.glassfish.jersey.logging.LoggingFeature;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
-
-import com.google.inject.AbstractModule;
-import com.google.inject.Provides;
-import com.google.inject.Singleton;
-import com.google.inject.multibindings.Multibinder;
 import io.dropwizard.client.JerseyClientBuilder;
 import io.dropwizard.client.JerseyClientConfiguration;
 import io.dropwizard.lifecycle.Managed;
@@ -147,10 +135,10 @@ public class ProxyModule extends AbstractModule {
                 .bind(ReceiveDataServlet.class);
 
         RestResourcesBinder.create(binder())
-                .bindResource(NewUiDictionaryResource2.class)
-                .bindResource(ReceiveDataRuleSetResource.class)
-                .bindResource(ReceiveDataRuleSetResourceImpl.class)
-                .bindResource(FeedStatusResource.class);
+                .bind(NewUiDictionaryResource2.class)
+                .bind(ReceiveDataRuleSetResource.class)
+                .bind(ReceiveDataRuleSetResourceImpl.class)
+                .bind(FeedStatusResource.class);
 
         GuiceUtil.buildMultiBinder(binder(), Managed.class)
                 .addBinding(ContentSyncService.class)
@@ -159,11 +147,9 @@ public class ProxyModule extends AbstractModule {
         GuiceUtil.buildMultiBinder(binder(), ExceptionMapper.class)
                 .addBinding(PermissionExceptionMapper.class);
 
-        final Multibinder<ImportExportActionHandler> importExportActionHandlerBinder = Multibinder
-                .newSetBinder(binder(), ImportExportActionHandler.class);
-
-        importExportActionHandlerBinder.addBinding().to(ReceiveDataRuleSetService.class);
-        importExportActionHandlerBinder.addBinding().to(DictionaryStore.class);
+        GuiceUtil.buildMultiBinder(binder(), ImportExportActionHandler.class)
+                .addBinding(ReceiveDataRuleSetService.class)
+                .addBinding(DictionaryStore.class);
     }
 
     @Provides
@@ -192,5 +178,11 @@ public class ProxyModule extends AbstractModule {
                 .using(jerseyClientConfiguration)
                 .build(PROXY_JERSEY_CLIENT_NAME)
                 .register(LoggingFeature.class);
+    }
+
+    @Provides
+    EntityEventBus entityEventBus() {
+        return event -> {
+        };
     }
 }

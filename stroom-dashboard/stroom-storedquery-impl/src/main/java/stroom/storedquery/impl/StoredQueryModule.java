@@ -11,7 +11,7 @@ public class StoredQueryModule extends AbstractModule {
         bind(StoredQueryService.class).to(StoredQueryServiceImpl.class);
 
         RestResourcesBinder.create(binder())
-                .bindResource(StoredQueryResourceImpl.class);
+                .bind(StoredQueryResourceImpl.class);
     }
 
     @Override

@@ -28,17 +28,25 @@ public class MetaRow {
     @JsonProperty
     private final Meta meta;
     @JsonProperty
+    private final String pipelineName;
+    @JsonProperty
     private final Map<String, String> attributes;
 
     @JsonCreator
     public MetaRow(@JsonProperty("meta") final Meta meta,
+                   @JsonProperty("pipelineName") final String pipelineName,
                    @JsonProperty("attributes") final Map<String, String> attributes) {
         this.meta = meta;
+        this.pipelineName = pipelineName;
         this.attributes = attributes;
     }
 
     public Meta getMeta() {
         return meta;
+    }
+
+    public String getPipelineName() {
+        return pipelineName;
     }
 
     public Map<String, String> getAttributes() {

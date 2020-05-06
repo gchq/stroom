@@ -19,14 +19,12 @@ package stroom.explorer.impl;
 
 import stroom.collection.api.CollectionService;
 import stroom.docref.DocRef;
-import stroom.docref.DocRefInfo;
 import stroom.explorer.api.ExplorerActionHandler;
 import stroom.explorer.api.ExplorerDecorator;
 import stroom.explorer.api.ExplorerNodeService;
 import stroom.explorer.api.ExplorerService;
 import stroom.explorer.shared.BulkActionResult;
 import stroom.explorer.shared.DocumentType;
-import stroom.explorer.shared.ExplorerConstants;
 import stroom.explorer.shared.ExplorerNode;
 import stroom.explorer.shared.ExplorerNode.NodeState;
 import stroom.explorer.shared.ExplorerTreeFilter;
@@ -675,13 +673,6 @@ class ExplorerServiceImpl implements ExplorerService, CollectionService {
                 }
             }
         });
-    }
-
-    @Override
-    public DocRefInfo info(final DocRef docRef) {
-        final ExplorerActionHandler handler = explorerActionHandlers.getHandler(docRef.getType());
-
-        return handler.info(docRef.getUuid());
     }
 
     @Override
