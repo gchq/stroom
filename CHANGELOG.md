@@ -6,6 +6,8 @@ and this project adheres to [Semantic Versioning](http://semver.org/).
 
 ## [Unreleased]
 
+* Issue **#1529** : Fix error when selecting datasource in new dashboard.
+
 * Fix NPE in SystemInfoResource.get().
 
 * Issue **#1527** : Fixed missing aud in API eky tokens.
