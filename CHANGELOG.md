@@ -6,6 +6,8 @@ and this project adheres to [Semantic Versioning](http://semver.org/).
 
 ## [Unreleased]
 
+* Issue **#1527** : Fixed missing aud in API eky tokens.
+
 * Add missing guice binding for SystemInfoResource.
 
 * Make export add new line to the end of all files to adhere to POSIX standard.
