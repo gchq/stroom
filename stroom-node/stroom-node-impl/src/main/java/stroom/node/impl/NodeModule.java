@@ -22,13 +22,11 @@ import stroom.node.api.NodeService;
 import stroom.node.shared.Node;
 import stroom.node.shared.NodeResource;
 import stroom.util.entityevent.EntityEvent;
-import stroom.util.entityevent.EntityEvent.Handler;
 import stroom.util.guice.GuiceUtil;
 import stroom.util.guice.RestResourcesBinder;
 import stroom.util.shared.Clearable;
 
 import com.google.inject.AbstractModule;
-import com.google.inject.multibindings.Multibinder;
 
 public class NodeModule extends AbstractModule {
     @Override
@@ -39,8 +37,8 @@ public class NodeModule extends AbstractModule {
 
         GuiceUtil.buildMultiBinder(binder(), Clearable.class).addBinding(NodeServiceImpl.class);
 
-        final Multibinder<Handler> entityEventHandlerBinder = Multibinder.newSetBinder(binder(), EntityEvent.Handler.class);
-        entityEventHandlerBinder.addBinding().to(NodeServiceImpl.class);
+        GuiceUtil.buildMultiBinder(binder(), EntityEvent.Handler.class)
+                .addBinding(NodeServiceImpl.class);
 
         RestResourcesBinder.create(binder())
                 .bind(NodeResourceImpl.class);

@@ -18,10 +18,10 @@ package stroom.pipeline.xmlschema;
 
 import stroom.docstore.api.DocumentActionHandlerBinder;
 import stroom.importexport.api.ImportExportActionHandler;
+import stroom.util.guice.GuiceUtil;
 import stroom.xmlschema.shared.XmlSchemaDoc;
 
 import com.google.inject.AbstractModule;
-import com.google.inject.multibindings.Multibinder;
 
 // TODO: What's this doing in main? I think it should be in test in stroom-app.
 public class MockXmlSchemaModule extends AbstractModule {
@@ -29,8 +29,8 @@ public class MockXmlSchemaModule extends AbstractModule {
     protected void configure() {
         bind(XmlSchemaStore.class).to(XmlSchemaStoreImpl.class);
 
-        final Multibinder<ImportExportActionHandler> importExportActionHandlerBinder = Multibinder.newSetBinder(binder(), ImportExportActionHandler.class);
-        importExportActionHandlerBinder.addBinding().to(XmlSchemaStoreImpl.class);
+        GuiceUtil.buildMultiBinder(binder(), ImportExportActionHandler.class)
+                .addBinding(XmlSchemaStoreImpl.class);
 
         DocumentActionHandlerBinder.create(binder())
                 .bind(XmlSchemaDoc.DOCUMENT_TYPE, XmlSchemaStoreImpl.class);

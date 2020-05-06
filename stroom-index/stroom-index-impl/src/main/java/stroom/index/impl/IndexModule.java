@@ -17,7 +17,7 @@
 package stroom.index.impl;
 
 import stroom.docstore.api.DocumentActionHandlerBinder;
-import stroom.explorer.api.ExplorerActionHandlerBinder;
+import stroom.explorer.api.ExplorerActionHandler;
 import stroom.importexport.api.ImportExportActionHandler;
 import stroom.index.shared.IndexDoc;
 import stroom.util.entityevent.EntityEvent;
@@ -46,8 +46,8 @@ public class IndexModule extends AbstractModule {
         GuiceUtil.buildMultiBinder(binder(), EntityEvent.Handler.class)
                 .addBinding(IndexConfigCacheEntityEventHandler.class);
 
-        ExplorerActionHandlerBinder.create(binder())
-                .bind(IndexStoreImpl.class);
+        GuiceUtil.buildMultiBinder(binder(), ExplorerActionHandler.class)
+                .addBinding(IndexStoreImpl.class);
 
         GuiceUtil.buildMultiBinder(binder(), ImportExportActionHandler.class)
                 .addBinding(IndexStoreImpl.class);

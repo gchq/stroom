@@ -17,11 +17,10 @@
 package stroom.data.store.impl.fs;
 
 import stroom.util.entityevent.EntityEvent;
-import stroom.util.entityevent.EntityEvent.Handler;
+import stroom.util.guice.GuiceUtil;
 import stroom.util.guice.RestResourcesBinder;
 
 import com.google.inject.AbstractModule;
-import com.google.inject.multibindings.Multibinder;
 
 public class FsDataStoreTaskHandlerModule extends AbstractModule {
     @Override
@@ -29,8 +28,8 @@ public class FsDataStoreTaskHandlerModule extends AbstractModule {
         RestResourcesBinder.create(binder())
                 .bind(FsVolumeResourceImpl.class);
 
-        final Multibinder<Handler> entityEventHandlerBinder = Multibinder.newSetBinder(binder(), EntityEvent.Handler.class);
-        entityEventHandlerBinder.addBinding().to(FsVolumeService.class);
+        GuiceUtil.buildMultiBinder(binder(), EntityEvent.Handler.class)
+                .addBinding(FsVolumeService.class);
     }
 
     @Override

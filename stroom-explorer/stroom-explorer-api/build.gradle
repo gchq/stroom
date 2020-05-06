@@ -6,7 +6,6 @@ dependencies {
     
     compile libs.stroomDocRef
 
-    compile libs.guice4
     compile libs.jaxb_api
     
     testRuntimeOnly libs.javax_activation

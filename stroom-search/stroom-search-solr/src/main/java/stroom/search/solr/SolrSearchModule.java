@@ -17,19 +17,17 @@
 package stroom.search.solr;
 
 import stroom.docstore.api.DocumentActionHandlerBinder;
-import stroom.explorer.api.ExplorerActionHandlerBinder;
+import stroom.explorer.api.ExplorerActionHandler;
 import stroom.importexport.api.ImportExportActionHandler;
 import stroom.search.solr.indexing.SolrIndexingElementModule;
 import stroom.search.solr.search.StroomSolrIndexQueryResource;
 import stroom.search.solr.shared.SolrIndexDoc;
 import stroom.util.entityevent.EntityEvent;
-import stroom.util.entityevent.EntityEvent.Handler;
 import stroom.util.guice.GuiceUtil;
 import stroom.util.guice.RestResourcesBinder;
 import stroom.util.shared.Clearable;
 
 import com.google.inject.AbstractModule;
-import com.google.inject.multibindings.Multibinder;
 
 public class SolrSearchModule extends AbstractModule {
     @Override
@@ -41,15 +39,15 @@ public class SolrSearchModule extends AbstractModule {
         bind(SolrIndexClientCache.class).to(SolrIndexClientCacheImpl.class);
         bind(SolrIndexStore.class).to(SolrIndexStoreImpl.class);
 
-        final Multibinder<Handler> entityEventHandlerBinder = Multibinder.newSetBinder(binder(), EntityEvent.Handler.class);
-        entityEventHandlerBinder.addBinding().to(SolrIndexCacheImpl.class);
+        GuiceUtil.buildMultiBinder(binder(), EntityEvent.Handler.class)
+                .addBinding(SolrIndexCacheImpl.class);
 
         GuiceUtil.buildMultiBinder(binder(), Clearable.class)
                 .addBinding(SolrIndexCacheImpl.class)
                 .addBinding(SolrIndexClientCacheImpl.class);
 
-        ExplorerActionHandlerBinder.create(binder())
-                .bind(SolrIndexStoreImpl.class);
+        GuiceUtil.buildMultiBinder(binder(), ExplorerActionHandler.class)
+                .addBinding(SolrIndexStoreImpl.class);
 
         GuiceUtil.buildMultiBinder(binder(), ImportExportActionHandler.class)
                 .addBinding(SolrIndexStoreImpl.class);

@@ -58,7 +58,6 @@ import stroom.util.shared.BuildInfo;
 import com.google.inject.AbstractModule;
 import com.google.inject.Provides;
 import com.google.inject.Singleton;
-import com.google.inject.multibindings.Multibinder;
 import io.dropwizard.client.JerseyClientBuilder;
 import io.dropwizard.client.JerseyClientConfiguration;
 import io.dropwizard.lifecycle.Managed;
@@ -148,11 +147,9 @@ public class ProxyModule extends AbstractModule {
         GuiceUtil.buildMultiBinder(binder(), ExceptionMapper.class)
                 .addBinding(PermissionExceptionMapper.class);
 
-        final Multibinder<ImportExportActionHandler> importExportActionHandlerBinder = Multibinder
-                .newSetBinder(binder(), ImportExportActionHandler.class);
-
-        importExportActionHandlerBinder.addBinding().to(ReceiveDataRuleSetService.class);
-        importExportActionHandlerBinder.addBinding().to(DictionaryStore.class);
+        GuiceUtil.buildMultiBinder(binder(), ImportExportActionHandler.class)
+                .addBinding(ReceiveDataRuleSetService.class)
+                .addBinding(DictionaryStore.class);
     }
 
     @Provides

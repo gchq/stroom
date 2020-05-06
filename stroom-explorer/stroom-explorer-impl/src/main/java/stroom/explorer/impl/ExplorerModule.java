@@ -18,14 +18,14 @@ package stroom.explorer.impl;
 
 import stroom.collection.api.CollectionService;
 import stroom.docrefinfo.api.DocRefInfoService;
-import stroom.explorer.api.ExplorerActionHandlerBinder;
+import stroom.explorer.api.ExplorerActionHandler;
 import stroom.explorer.api.ExplorerNodeService;
 import stroom.explorer.api.ExplorerService;
 import stroom.util.entityevent.EntityEvent;
+import stroom.util.guice.GuiceUtil;
 import stroom.util.guice.RestResourcesBinder;
 
 import com.google.inject.AbstractModule;
-import com.google.inject.multibindings.Multibinder;
 
 public class ExplorerModule extends AbstractModule {
     @Override
@@ -37,15 +37,15 @@ public class ExplorerModule extends AbstractModule {
         bind(CollectionService.class).to(ExplorerServiceImpl.class);
         bind(DocRefInfoService.class).to(DocRefInfoServiceImpl.class);
 
-        ExplorerActionHandlerBinder.create(binder())
-                .bind(FolderExplorerActionHandler.class)
-                .bind(SystemExplorerActionHandler.class);
+        GuiceUtil.buildMultiBinder(binder(), ExplorerActionHandler.class)
+                .addBinding(FolderExplorerActionHandler.class)
+                .addBinding(SystemExplorerActionHandler.class);
 
         RestResourcesBinder.create(binder())
                 .bind(ExplorerResourceImpl.class)
                 .bind(NewUIExplorerResource.class);
 
-        final Multibinder<EntityEvent.Handler> entityEventHandlerBinder = Multibinder.newSetBinder(binder(), EntityEvent.Handler.class);
-        entityEventHandlerBinder.addBinding().to(DocRefInfoCache.class);
+        GuiceUtil.buildMultiBinder(binder(), EntityEvent.Handler.class)
+                .addBinding(DocRefInfoCache.class);
     }
 }

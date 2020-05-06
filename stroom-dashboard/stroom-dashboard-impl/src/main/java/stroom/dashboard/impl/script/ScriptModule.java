@@ -17,14 +17,14 @@
 package stroom.dashboard.impl.script;
 
 import stroom.docstore.api.DocumentActionHandlerBinder;
-import stroom.explorer.api.ExplorerActionHandlerBinder;
+import stroom.explorer.api.ExplorerActionHandler;
 import stroom.importexport.api.ImportExportActionHandler;
 import stroom.script.shared.ScriptDoc;
+import stroom.util.guice.GuiceUtil;
 import stroom.util.guice.RestResourcesBinder;
 import stroom.util.guice.ServletBinder;
 
 import com.google.inject.AbstractModule;
-import com.google.inject.multibindings.Multibinder;
 
 public class ScriptModule extends AbstractModule {
     @Override
@@ -34,11 +34,11 @@ public class ScriptModule extends AbstractModule {
         ServletBinder.create(binder())
                 .bind(ScriptServlet.class);
 
-        ExplorerActionHandlerBinder.create(binder())
-                .bind(ScriptStoreImpl.class);
+        GuiceUtil.buildMultiBinder(binder(), ExplorerActionHandler.class)
+                .addBinding(ScriptStoreImpl.class);
 
-        final Multibinder<ImportExportActionHandler> importExportActionHandlerBinder = Multibinder.newSetBinder(binder(), ImportExportActionHandler.class);
-        importExportActionHandlerBinder.addBinding().to(ScriptStoreImpl.class);
+        GuiceUtil.buildMultiBinder(binder(), ImportExportActionHandler.class)
+                .addBinding(ScriptStoreImpl.class);
 
         DocumentActionHandlerBinder.create(binder())
                 .bind(ScriptDoc.DOCUMENT_TYPE, ScriptStoreImpl.class);

@@ -17,24 +17,24 @@
 package stroom.dashboard.impl.visualisation;
 
 import stroom.docstore.api.DocumentActionHandlerBinder;
-import stroom.explorer.api.ExplorerActionHandlerBinder;
+import stroom.explorer.api.ExplorerActionHandler;
 import stroom.importexport.api.ImportExportActionHandler;
+import stroom.util.guice.GuiceUtil;
 import stroom.util.guice.RestResourcesBinder;
 import stroom.visualisation.shared.VisualisationDoc;
 
 import com.google.inject.AbstractModule;
-import com.google.inject.multibindings.Multibinder;
 
 public class VisualisationModule extends AbstractModule {
     @Override
     protected void configure() {
         bind(VisualisationStore.class).to(VisualisationStoreImpl.class);
 
-        ExplorerActionHandlerBinder.create(binder())
-                .bind(VisualisationStoreImpl.class);
+        GuiceUtil.buildMultiBinder(binder(), ExplorerActionHandler.class)
+                .addBinding(VisualisationStoreImpl.class);
 
-        final Multibinder<ImportExportActionHandler> importExportActionHandlerBinder = Multibinder.newSetBinder(binder(), ImportExportActionHandler.class);
-        importExportActionHandlerBinder.addBinding().to(VisualisationStoreImpl.class);
+        GuiceUtil.buildMultiBinder(binder(), ImportExportActionHandler.class)
+                .addBinding(VisualisationStoreImpl.class);
 
         DocumentActionHandlerBinder.create(binder())
                 .bind(VisualisationDoc.DOCUMENT_TYPE, VisualisationStoreImpl.class);

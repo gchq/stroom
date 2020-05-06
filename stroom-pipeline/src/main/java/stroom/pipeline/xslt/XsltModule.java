@@ -17,7 +17,7 @@
 package stroom.pipeline.xslt;
 
 import stroom.docstore.api.DocumentActionHandlerBinder;
-import stroom.explorer.api.ExplorerActionHandlerBinder;
+import stroom.explorer.api.ExplorerActionHandler;
 import stroom.importexport.api.ImportExportActionHandler;
 import stroom.pipeline.shared.XsltDoc;
 import stroom.util.guice.GuiceUtil;
@@ -33,8 +33,8 @@ public class XsltModule extends AbstractModule {
         bind(XsltStore.class).to(XsltStoreImpl.class);
         bind(URIResolver.class).to(CustomURIResolver.class);
 
-        ExplorerActionHandlerBinder.create(binder())
-                .bind(XsltStoreImpl.class);
+        GuiceUtil.buildMultiBinder(binder(), ExplorerActionHandler.class)
+                .addBinding(XsltStoreImpl.class);
 
         GuiceUtil.buildMultiBinder(binder(), ImportExportActionHandler.class)
                 .addBinding(XsltStoreImpl.class);

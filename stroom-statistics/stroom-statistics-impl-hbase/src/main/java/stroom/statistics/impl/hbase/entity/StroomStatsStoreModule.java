@@ -17,24 +17,24 @@
 package stroom.statistics.impl.hbase.entity;
 
 import stroom.docstore.api.DocumentActionHandlerBinder;
-import stroom.explorer.api.ExplorerActionHandlerBinder;
+import stroom.explorer.api.ExplorerActionHandler;
 import stroom.importexport.api.ImportExportActionHandler;
 import stroom.statistics.impl.hbase.shared.StroomStatsStoreDoc;
+import stroom.util.guice.GuiceUtil;
 import stroom.util.guice.RestResourcesBinder;
 
 import com.google.inject.AbstractModule;
-import com.google.inject.multibindings.Multibinder;
 
 public class StroomStatsStoreModule extends AbstractModule {
     @Override
     protected void configure() {
         bind(StroomStatsStoreStore.class).to(StroomStatsStoreStoreImpl.class);
 
-        ExplorerActionHandlerBinder.create(binder())
-                .bind(StroomStatsStoreStoreImpl.class);
+        GuiceUtil.buildMultiBinder(binder(), ExplorerActionHandler.class)
+                .addBinding(StroomStatsStoreStoreImpl.class);
 
-        final Multibinder<ImportExportActionHandler> importExportActionHandlerBinder = Multibinder.newSetBinder(binder(), ImportExportActionHandler.class);
-        importExportActionHandlerBinder.addBinding().to(StroomStatsStoreStoreImpl.class);
+        GuiceUtil.buildMultiBinder(binder(), ImportExportActionHandler.class)
+                .addBinding(StroomStatsStoreStoreImpl.class);
 
         DocumentActionHandlerBinder.create(binder())
                 .bind(StroomStatsStoreDoc.DOCUMENT_TYPE, StroomStatsStoreStoreImpl.class);
