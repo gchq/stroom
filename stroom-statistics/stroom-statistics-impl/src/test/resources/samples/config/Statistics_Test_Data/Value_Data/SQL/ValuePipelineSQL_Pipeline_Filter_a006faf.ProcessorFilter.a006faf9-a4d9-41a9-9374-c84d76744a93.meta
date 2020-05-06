@@ -1,5 +1,5 @@
 {
-  "uuid" : "9d6810ff-2eea-43bd-8c45-2f25a642c88b",
+  "uuid" : "a006faf9-a4d9-41a9-9374-c84d76744a93",
   "queryData" : {
     "dataSource" : {
       "type" : "StreamStore",
@@ -27,7 +27,7 @@
   },
   "priority" : 10,
   "enabled" : true,
-  "processorUuid" : "a57348ee-4a46-4ea6-b6a0-e3cdb9d0e2a9",
-  "pipelineUuid" : "9c8d9b1b-c1e4-4615-90ae-b85db8227543",
-  "pipelineName" : "ValueStatisticsStroomStats"
+  "processorUuid" : "096dcee5-ea3a-46c7-91ee-027bebd41bf2",
+  "pipelineUuid" : "a5b76a2e-7689-4f5d-9316-e994710423f9",
+  "pipelineName" : "ValuePipelineSQL"
 }

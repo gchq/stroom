@@ -1,9 +1,9 @@
 <?xml version="1.0" encoding="UTF-8" ?>
 <xsl:stylesheet xpath-default-namespace="" xmlns="statistics:2" xmlns:xsl="http://www.w3.org/1999/XSL/Transform" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" version="2.0">
   <xsl:template match="data">
-    <Statistics xsi:schemaLocation="statistics:2 file://statistics-v2.0.xsd" Version="2.0">
+    <statistics xsi:schemaLocation="statistics:2 file://statistics-v2.0.xsd">
       <xsl:apply-templates />
-    </Statistics>
+    </statistics>
   </xsl:template>
   <xsl:template match="event">
     <statistic>
