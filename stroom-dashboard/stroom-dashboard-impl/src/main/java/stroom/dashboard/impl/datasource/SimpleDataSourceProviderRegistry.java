@@ -71,6 +71,9 @@ class SimpleDataSourceProviderRegistry implements DataSourceProviderRegistry {
      * into a supplier of something like http://localhost:8080/api/stroom-index/v2
      */
     private Supplier<String> getUriSupplier(final Supplier<String> pathSupplier) {
+        // We need to go via the local URI as dropwiz has no client ssl certs to
+        // be able to go via nginx. A node calling itself is fine as we know the
+        // node is available.
         return () ->
                 uriFactory.localUri(pathSupplier.get())
                         .toString();
