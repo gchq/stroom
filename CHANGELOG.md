@@ -8,6 +8,10 @@ and this project adheres to [Semantic Versioning](http://semver.org/).
 
 * Issue **#1503** : Further fix for enabled/disabled expression items and dashboard tab visibility.
 
+* Issue **#1529** : Fix error when selecting datasource in new dashboard.
+
+* Fix NPE in SystemInfoResource.get().
+
 * Issue **#1527** : Fixed missing aud in API eky tokens.
 
 * Add missing guice binding for SystemInfoResource.
