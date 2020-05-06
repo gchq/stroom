@@ -13,7 +13,7 @@ public class ActivityModule extends AbstractModule {
         bind(CurrentActivity.class).to(CurrentActivityImpl.class);
 
         RestResourcesBinder.create(binder())
-                .bindResource(ActivityResourceImpl.class);
+                .bind(ActivityResourceImpl.class);
     }
 
     @Override

@@ -25,7 +25,7 @@ public class RemoteFeedModule extends AbstractModule {
     @Override
     protected void configure() {
         RestResourcesBinder.create(binder())
-                .bindResource(FeedStatusResource.class);
+                .bind(FeedStatusResource.class);
 
         ServletBinder.create(binder())
                 .bind(RemoteFeedServiceRPC.class);

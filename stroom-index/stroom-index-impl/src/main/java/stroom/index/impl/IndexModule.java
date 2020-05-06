@@ -53,12 +53,12 @@ public class IndexModule extends AbstractModule {
                 .addBinding(IndexStoreImpl.class);
 
         RestResourcesBinder.create(binder())
-                .bindResource(NewUIIndexResourceImpl.class)
-                .bindResource(NewUIIndexVolumeGroupResourceImpl.class)
-                .bindResource(NewUIIndexVolumeResourceImpl.class)
-                .bindResource(IndexResourceImpl.class)
-                .bindResource(IndexVolumeGroupResourceImpl.class)
-                .bindResource(IndexVolumeResourceImpl.class);
+                .bind(NewUIIndexResourceImpl.class)
+                .bind(NewUIIndexVolumeGroupResourceImpl.class)
+                .bind(NewUIIndexVolumeResourceImpl.class)
+                .bind(IndexResourceImpl.class)
+                .bind(IndexVolumeGroupResourceImpl.class)
+                .bind(IndexVolumeResourceImpl.class);
 
         DocumentActionHandlerBinder.create(binder())
                 .bind(IndexDoc.DOCUMENT_TYPE, IndexStoreImpl.class);

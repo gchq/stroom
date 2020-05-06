@@ -20,7 +20,7 @@ public class GlobalConfigModule extends AbstractModule {
                 .addBinding(AppConfigMonitor.class);
 
         RestResourcesBinder.create(binder())
-                .bindResource(GlobalConfigResourceImpl.class);
+                .bind(GlobalConfigResourceImpl.class);
 
         install(new ValidationModule());
     }

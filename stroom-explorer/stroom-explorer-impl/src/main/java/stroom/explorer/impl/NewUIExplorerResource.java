@@ -1,12 +1,8 @@
 package stroom.explorer.impl;
 
-import com.fasterxml.jackson.annotation.JsonCreator;
-import com.fasterxml.jackson.annotation.JsonInclude;
-import com.fasterxml.jackson.annotation.JsonInclude.Include;
-import com.fasterxml.jackson.annotation.JsonProperty;
-import io.swagger.annotations.Api;
 import stroom.docref.DocRef;
 import stroom.docref.DocRefInfo;
+import stroom.docrefinfo.api.DocRefInfoService;
 import stroom.explorer.api.ExplorerService;
 import stroom.explorer.shared.BulkActionResult;
 import stroom.explorer.shared.ExplorerNode;
@@ -17,6 +13,12 @@ import stroom.security.api.SecurityContext;
 import stroom.security.shared.DocumentPermissionNames;
 import stroom.util.shared.ResourcePaths;
 import stroom.util.shared.RestResource;
+
+import com.fasterxml.jackson.annotation.JsonCreator;
+import com.fasterxml.jackson.annotation.JsonInclude;
+import com.fasterxml.jackson.annotation.JsonInclude.Include;
+import com.fasterxml.jackson.annotation.JsonProperty;
+import io.swagger.annotations.Api;
 
 import javax.inject.Inject;
 import javax.ws.rs.Consumes;
@@ -42,14 +44,17 @@ import java.util.stream.Collectors;
 @Consumes(MediaType.APPLICATION_JSON)
 public class NewUIExplorerResource implements RestResource {
     private final ExplorerService explorerService;
+    private final DocRefInfoService docRefInfoService;
     private final ExplorerTreeModel explorerTreeModel;
     private final SecurityContext securityContext;
 
     @Inject
     public NewUIExplorerResource(final ExplorerService explorerService,
+                                 final DocRefInfoService docRefInfoService,
                                  final ExplorerTreeModel explorerTreeModel,
                                  final SecurityContext securityContext) {
         this.explorerService = explorerService;
+        this.docRefInfoService = docRefInfoService;
         this.explorerTreeModel = explorerTreeModel;
         this.securityContext = securityContext;
     }
@@ -106,14 +111,13 @@ public class NewUIExplorerResource implements RestResource {
 
     @GET
     @Path("/info/{type}/{uuid}")
-    public Response getDocInfo(@PathParam("type") final String type,
-                               @PathParam("uuid") final String uuid) {
-        final DocRefInfo info = explorerService.info(new DocRef.Builder()
+    public DocRefInfo getDocInfo(@PathParam("type") final String type,
+                                 @PathParam("uuid") final String uuid) {
+        return docRefInfoService.info(new DocRef.Builder()
                 .type(type)
                 .uuid(uuid)
-                .build());
-
-        return Response.ok(info).build();
+                .build())
+                .orElse(null);
     }
 
     /**

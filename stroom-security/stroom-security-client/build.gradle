@@ -1,12 +1,9 @@
 ext.moduleName = 'stroom.security.client'
 
 dependencies {
-    compile project(':stroom-activity:stroom-activity-api')
     compile project(':stroom-core-client')
     compile project(':stroom-core-client-widget')
     compile project(':stroom-core-shared')
-    compile project(':stroom-explorer:stroom-explorer-api')
-    compile project(':stroom-security:stroom-security-api')
     compile project(':stroom-security:stroom-security-client-api')
     compile project(':stroom-util-shared')
 

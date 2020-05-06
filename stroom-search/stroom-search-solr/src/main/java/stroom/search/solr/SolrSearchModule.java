@@ -23,13 +23,11 @@ import stroom.search.solr.indexing.SolrIndexingElementModule;
 import stroom.search.solr.search.StroomSolrIndexQueryResource;
 import stroom.search.solr.shared.SolrIndexDoc;
 import stroom.util.entityevent.EntityEvent;
-import stroom.util.entityevent.EntityEvent.Handler;
 import stroom.util.guice.GuiceUtil;
 import stroom.util.guice.RestResourcesBinder;
 import stroom.util.shared.Clearable;
 
 import com.google.inject.AbstractModule;
-import com.google.inject.multibindings.Multibinder;
 
 public class SolrSearchModule extends AbstractModule {
     @Override
@@ -41,8 +39,8 @@ public class SolrSearchModule extends AbstractModule {
         bind(SolrIndexClientCache.class).to(SolrIndexClientCacheImpl.class);
         bind(SolrIndexStore.class).to(SolrIndexStoreImpl.class);
 
-        final Multibinder<Handler> entityEventHandlerBinder = Multibinder.newSetBinder(binder(), EntityEvent.Handler.class);
-        entityEventHandlerBinder.addBinding().to(SolrIndexCacheImpl.class);
+        GuiceUtil.buildMultiBinder(binder(), EntityEvent.Handler.class)
+                .addBinding(SolrIndexCacheImpl.class);
 
         GuiceUtil.buildMultiBinder(binder(), Clearable.class)
                 .addBinding(SolrIndexCacheImpl.class)
@@ -58,8 +56,8 @@ public class SolrSearchModule extends AbstractModule {
                 .bind(SolrIndexDoc.DOCUMENT_TYPE, SolrIndexStoreImpl.class);
 
         RestResourcesBinder.create(binder())
-                .bindResource(SolrIndexResourceImpl.class)
-                .bindResource(NewUiSolrIndexResource.class)
-                .bindResource(StroomSolrIndexQueryResource.class);
+                .bind(SolrIndexResourceImpl.class)
+                .bind(NewUiSolrIndexResource.class)
+                .bind(StroomSolrIndexQueryResource.class);
     }
 }

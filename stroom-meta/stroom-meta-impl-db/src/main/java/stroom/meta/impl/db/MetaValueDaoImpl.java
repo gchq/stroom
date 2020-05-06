@@ -16,8 +16,6 @@
 
 package stroom.meta.impl.db;
 
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 import stroom.cluster.lock.api.ClusterLockService;
 import stroom.db.util.JooqUtil;
 import stroom.meta.api.AttributeMap;
@@ -25,8 +23,10 @@ import stroom.meta.impl.MetaKeyDao;
 import stroom.meta.impl.MetaValueDao;
 import stroom.meta.impl.db.jooq.tables.records.MetaValRecord;
 import stroom.meta.shared.Meta;
-import stroom.meta.shared.MetaRow;
 import stroom.util.logging.LogExecutionTime;
+
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import javax.inject.Inject;
 import javax.inject.Singleton;
@@ -296,7 +296,7 @@ class MetaValueDaoImpl implements MetaValueDao {
      * Convert a basic data list to a list of meta data using data attribute keys and values.
      */
     @Override
-    public List<MetaRow> decorateDataWithAttributes(final List<Meta> list) {
+    public Map<Long, Map<String, String>> getAttributes(final List<Meta> list) {
         final Map<Long, Map<String, String>> attributeMap = new HashMap<>();
 
         // Get a list of valid data ids.
@@ -323,14 +323,7 @@ class MetaValueDaoImpl implements MetaValueDao {
                 })
         );
 
-        final List<MetaRow> dataRows = new ArrayList<>();
-        for (final Meta meta : list) {
-            final Map<String, String> attributes = attributeMap.getOrDefault(meta.getId(), new HashMap<>());
-            dataRows.add(new MetaRow(meta, attributes));
-        }
-
-        return dataRows;
-
+        return attributeMap;
 
 //        final SqlBuilder sql = new SqlBuilder();
 //        sql.append("SELECT ");

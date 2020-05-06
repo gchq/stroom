@@ -37,7 +37,7 @@ public class FsDataStoreModule extends AbstractModule {
         GuiceUtil.buildMultiBinder(binder(), Clearable.class).addBinding(FsVolumeService.class);
 
         RestResourcesBinder.create(binder())
-                .bindResource(FsVolumeResource.class);
+                .bind(FsVolumeResource.class);
 
         ServletBinder.create(binder())
                 .bind(EchoServlet.class);

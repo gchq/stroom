@@ -30,7 +30,7 @@ public class MetaModule extends AbstractModule {
                 .addBinding(MetaServiceImpl.class);
 
         RestResourcesBinder.create(binder())
-                .bindResource(MetaResourceImpl.class);
+                .bind(MetaResourceImpl.class);
     }
 
     @Override

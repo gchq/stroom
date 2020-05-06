@@ -55,7 +55,6 @@ public class TokenServiceImpl implements TokenService, HasHealthCheck {
         this.tokenVerifier = tokenVerifier;
     }
 
-
     @Override
     public SearchResponse search(SearchRequest searchRequest) {
         checkPermission();

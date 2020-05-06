@@ -24,6 +24,6 @@ public class SessionInfoModule extends AbstractModule {
     @Override
     protected void configure() {
         RestResourcesBinder.create(binder())
-                .bindResource(SessionInfoResourceImpl.class);
+                .bind(SessionInfoResourceImpl.class);
     }
 }

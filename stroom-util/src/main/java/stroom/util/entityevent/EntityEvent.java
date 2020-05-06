@@ -16,12 +16,13 @@
 
 package stroom.util.entityevent;
 
+import stroom.docref.DocRef;
+
 import com.fasterxml.jackson.annotation.JsonCreator;
 import com.fasterxml.jackson.annotation.JsonInclude;
 import com.fasterxml.jackson.annotation.JsonInclude.Include;
 import com.fasterxml.jackson.annotation.JsonProperty;
 import com.fasterxml.jackson.annotation.JsonPropertyOrder;
-import stroom.docref.DocRef;
 
 @JsonPropertyOrder({"docRef", "action"})
 @JsonInclude(Include.NON_NULL)
@@ -38,9 +39,12 @@ public class EntityEvent {
         this.action = action;
     }
 
-    public static void fire(final EntityEventBus eventBus, final DocRef docRef,
+    public static void fire(final EntityEventBus eventBus,
+                            final DocRef docRef,
                             final EntityAction action) {
-        eventBus.fire(new EntityEvent(docRef, action));
+        if (eventBus != null) {
+            eventBus.fire(new EntityEvent(docRef, action));
+        }
     }
 
     public DocRef getDocRef() {

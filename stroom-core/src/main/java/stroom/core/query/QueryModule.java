@@ -24,6 +24,6 @@ public class QueryModule extends AbstractModule {
     @Override
     protected void configure() {
         RestResourcesBinder.create(binder())
-                .bindResource(SuggestionsResourceImpl.class);
+                .bind(SuggestionsResourceImpl.class);
     }
 }

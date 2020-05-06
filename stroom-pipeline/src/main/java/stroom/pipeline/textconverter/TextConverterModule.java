@@ -20,26 +20,26 @@ import stroom.docstore.api.DocumentActionHandlerBinder;
 import stroom.explorer.api.ExplorerActionHandler;
 import stroom.importexport.api.ImportExportActionHandler;
 import stroom.pipeline.shared.TextConverterDoc;
+import stroom.util.guice.GuiceUtil;
 import stroom.util.guice.RestResourcesBinder;
 
 import com.google.inject.AbstractModule;
-import com.google.inject.multibindings.Multibinder;
 
 public class TextConverterModule extends AbstractModule {
     @Override
     protected void configure() {
         bind(TextConverterStore.class).to(TextConverterStoreImpl.class);
 
-        final Multibinder<ExplorerActionHandler> explorerActionHandlerBinder = Multibinder.newSetBinder(binder(), ExplorerActionHandler.class);
-        explorerActionHandlerBinder.addBinding().to(TextConverterStoreImpl.class);
+        GuiceUtil.buildMultiBinder(binder(), ExplorerActionHandler.class)
+                .addBinding(TextConverterStoreImpl.class);
 
-        final Multibinder<ImportExportActionHandler> importExportActionHandlerBinder = Multibinder.newSetBinder(binder(), ImportExportActionHandler.class);
-        importExportActionHandlerBinder.addBinding().to(TextConverterStoreImpl.class);
+        GuiceUtil.buildMultiBinder(binder(), ImportExportActionHandler.class)
+                .addBinding(TextConverterStoreImpl.class);
 
         DocumentActionHandlerBinder.create(binder())
                 .bind(TextConverterDoc.DOCUMENT_TYPE, TextConverterStoreImpl.class);
 
         RestResourcesBinder.create(binder())
-                .bindResource(TextConverterResourceImpl.class);
+                .bind(TextConverterResourceImpl.class);
     }
 }

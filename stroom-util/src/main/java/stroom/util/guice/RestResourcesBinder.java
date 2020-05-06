@@ -24,7 +24,7 @@ import com.google.inject.multibindings.MapBinder;
 import java.util.Objects;
 
 public final class RestResourcesBinder {
-    private MapBinder<ResourceType, RestResource> mapBinder;
+    private final MapBinder<ResourceType, RestResource> mapBinder;
 
     private RestResourcesBinder(final Binder binder) {
         mapBinder = MapBinder.newMapBinder(binder, ResourceType.class, RestResource.class);
@@ -34,7 +34,7 @@ public final class RestResourcesBinder {
         return new RestResourcesBinder(binder);
     }
 
-    public <T extends RestResource> RestResourcesBinder bindResource(final Class<T> resourceClass) {
+    public <T extends RestResource> RestResourcesBinder bind(final Class<T> resourceClass) {
         mapBinder.addBinding(new ResourceType(resourceClass)).to(resourceClass);
         return this;
     }

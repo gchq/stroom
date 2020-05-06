@@ -27,6 +27,6 @@ public final class AuthenticateModule extends AbstractModule {
         bind(AuthenticationService.class).to(AuthenticationServiceImpl.class);
 
         RestResourcesBinder.create(binder())
-                .bindResource(AuthenticationResourceImpl.class);
+                .bind(AuthenticationResourceImpl.class);
     }
 }

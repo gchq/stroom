@@ -10,6 +10,6 @@ public class StreamAttributeMapResourceModule extends AbstractModule {
         super.configure();
 
         RestResourcesBinder.create(binder())
-                .bindResource(StreamAttributeMapResource.class);
+                .bind(StreamAttributeMapResource.class);
     }
 }

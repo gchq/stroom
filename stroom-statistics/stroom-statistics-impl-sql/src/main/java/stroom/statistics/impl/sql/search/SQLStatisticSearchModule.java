@@ -33,6 +33,6 @@ public class SQLStatisticSearchModule extends AbstractModule {
                 .addBinding(SqlStatisticsSearchResponseCreatorManager.class);
 
         RestResourcesBinder.create(binder())
-                .bindResource(SqlStatisticsQueryResource.class);
+                .bind(SqlStatisticsQueryResource.class);
     }
 }
