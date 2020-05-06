@@ -1,5 +1,7 @@
 package stroom.security.impl;
 
+import stroom.security.api.TokenException;
+import stroom.security.api.TokenVerifier;
 import stroom.security.impl.exception.AuthenticationException;
 import stroom.util.HasHealthCheck;
 import stroom.util.logging.LambdaLogger;
@@ -11,6 +13,8 @@ import org.jose4j.jwa.AlgorithmConstraints;
 import org.jose4j.jwk.JsonWebKeySet;
 import org.jose4j.jws.AlgorithmIdentifiers;
 import org.jose4j.jwt.JwtClaims;
+import org.jose4j.jwt.MalformedClaimException;
+import org.jose4j.jwt.NumericDate;
 import org.jose4j.jwt.consumer.InvalidJwtException;
 import org.jose4j.jwt.consumer.JwtConsumer;
 import org.jose4j.jwt.consumer.JwtConsumerBuilder;
@@ -21,11 +25,13 @@ import javax.inject.Inject;
 import javax.inject.Singleton;
 import javax.servlet.ServletRequest;
 import javax.servlet.http.HttpServletRequest;
+import java.time.Instant;
+import java.util.List;
 import java.util.Objects;
 import java.util.Optional;
 
 @Singleton
-public class JWTService implements HasHealthCheck {
+public class JWTService implements HasHealthCheck, TokenVerifier {
     private static final LambdaLogger LOGGER = LambdaLoggerFactory.getLogger(JWTService.class);
 
     private static final String BEARER = "Bearer ";
@@ -50,7 +56,7 @@ public class JWTService implements HasHealthCheck {
 
         try {
             LOGGER.debug(() -> "Verifying token...");
-            final JwtClaims jwtClaims = verifyToken(jws);
+            final JwtClaims jwtClaims = extractTokenClaims(jws);
             boolean isVerified = jwtClaims != null;
             boolean isRevoked = false;
 
@@ -95,12 +101,47 @@ public class JWTService implements HasHealthCheck {
         });
     }
 
-    public JwtClaims verifyToken(final String token) throws InvalidJwtException {
+    public JwtClaims extractTokenClaims(final String token) throws InvalidJwtException {
         try {
             return toClaims(token);
         } catch (InvalidJwtException e) {
             LOGGER.warn(() -> "Unable to verify token!");
             throw e;
+        }
+    }
+
+    @Override
+    public void verifyToken(final String token, final String clientId) throws TokenException {
+        // Will throw if invalid, e.g. if it doesn't match our public key
+        final JwtClaims jwtClaims;
+
+        try {
+            jwtClaims = toClaims(token);
+        } catch (InvalidJwtException e) {
+            throw new TokenException("Invalid token: " + e.getMessage(), e);
+        }
+
+        // TODO : Check against blacklist to see if token has been revoked. Blacklist
+        //  is a list of JWI (JWT IDs) on auth service. Only tokens with `jwi` claims are API
+        //  keys so only those tokens need checking against the blacklist cache.
+
+        if (jwtClaims == null) {
+            throw new TokenException("Could not extract claims from token");
+        } else {
+            try {
+                if (jwtClaims.getExpirationTime() != null
+                        && jwtClaims.getExpirationTime().isBefore(NumericDate.now())){
+                    throw new TokenException("Token expired on: " +
+                            Instant.ofEpochSecond(jwtClaims.getExpirationTime().getValueInMillis()).toString());
+                }
+
+                List<String> audience = jwtClaims.getAudience();
+                if (!audience.contains(clientId)) {
+                    throw new TokenException("Token audience does not contain clientId: " + clientId);
+                }
+            } catch (MalformedClaimException e) {
+                throw new TokenException("Invalid token claims: " + e.getMessage(), e);
+            }
         }
     }
 
@@ -145,29 +186,28 @@ public class JWTService implements HasHealthCheck {
     @Override
     public HealthCheck.Result getHealth() {
         // Defaults to healthy
-        HealthCheck.ResultBuilder resultBuilder = HealthCheck.Result
-                .builder()
-                .healthy();
-        // Will set healthy to false if it can't get the public key
-        this.checkHealthForJwkRetrieval(resultBuilder);
-
-        return resultBuilder.build();
-    }
-
-    private void checkHealthForJwkRetrieval(HealthCheck.ResultBuilder resultBuilder) {
+        HealthCheck.ResultBuilder resultBuilder = HealthCheck.Result.builder();
         final String KEY = "public_key_retrieval";
+        boolean isUnhealthy = false;
         try {
             final JsonWebKeySet publicJsonWebKey = openIdPublicKeysSupplier.get();
             if (publicJsonWebKey == null) {
                 resultBuilder.withDetail(KEY, "Missing public key\n");
-                resultBuilder.unhealthy();
             }
         } catch (RuntimeException e) {
             resultBuilder.withDetail(KEY, "Error fetching our identity provider's public key! " +
                     "This means we cannot verify clients' authentication tokens ourselves. " +
                     "This might mean the authentication service is down or unavailable. " +
                     "The error was: [" + e.getMessage() + "]");
-            resultBuilder.unhealthy();
         }
+        if (isUnhealthy) {
+            resultBuilder
+                    .withDetail("publicKeysUri", openIdConfig.getJwksUri())
+                    .unhealthy();
+        } else {
+            resultBuilder.healthy()
+                    .withMessage("Open ID public keys found");
+        }
+        return resultBuilder.build();
     }
 }

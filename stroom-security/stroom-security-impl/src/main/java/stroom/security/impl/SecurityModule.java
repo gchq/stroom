@@ -17,6 +17,7 @@
 package stroom.security.impl;
 
 import stroom.security.api.DocumentPermissionService;
+import stroom.security.api.TokenVerifier;
 import stroom.security.impl.event.PermissionChangeEvent;
 import stroom.security.impl.event.PermissionChangeEventLifecycleModule;
 import stroom.security.impl.event.PermissionChangeEventModule;
@@ -43,6 +44,7 @@ public class SecurityModule extends AbstractModule {
 
         bind(DocumentPermissionService.class).to(DocumentPermissionServiceImpl.class);
         bind(UserService.class).to(UserServiceImpl.class);
+        bind(TokenVerifier.class).to(JWTService.class);
 
         FilterBinder.create(binder())
                 .bind(new FilterInfo(ContentSecurityFilter.class.getSimpleName(), MATCH_ALL_PATHS),

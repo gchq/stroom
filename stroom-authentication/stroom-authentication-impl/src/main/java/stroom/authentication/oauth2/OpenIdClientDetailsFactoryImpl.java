@@ -6,22 +6,18 @@ import stroom.authentication.config.AuthenticationConfig;
 import stroom.util.authentication.DefaultOpenIdCredentials;
 import stroom.util.logging.LogUtil;
 
-import org.apache.commons.codec.binary.Hex;
-
 import javax.inject.Inject;
 import java.security.SecureRandom;
-import java.util.Base64;
 import java.util.Objects;
 
 public class OpenIdClientDetailsFactoryImpl implements OpenIdClientDetailsFactory {
     private static final String INTERNAL_STROOM_CLIENT = "Stroom Client Internal";
     private static final String CLIENT_ID_SUFFIX = ".client-id.apps.stroom-idp";
     private static final String CLIENT_SECRET_SUFFIX = ".client-secret.apps.stroom-idp";
-//    private static final String CLIENT_ID_SUFFIX = "";
-//    private static final String CLIENT_SECRET_SUFFIX = "";
+    private static final char[] ALLOWED_CHARS = "abcdefghijklmnopqrstuvwxyzABCDEFGJKLMNPRSTUVWXYZ0123456789"
+            .toCharArray();
+    private static final int ALLOWED_CHARS_COUNT = ALLOWED_CHARS.length;
 
-
-    private final AuthenticationConfig authenticationConfig;
     private final DefaultOpenIdCredentials defaultOpenIdCredentials;
     private final OAuth2Client oAuth2Client;
 
@@ -29,7 +25,6 @@ public class OpenIdClientDetailsFactoryImpl implements OpenIdClientDetailsFactor
     public OpenIdClientDetailsFactoryImpl(final OAuth2ClientDao dao,
                                           final AuthenticationConfig authenticationConfig,
                                           final DefaultOpenIdCredentials defaultOpenIdCredentials) {
-        this.authenticationConfig = authenticationConfig;
         this.defaultOpenIdCredentials = defaultOpenIdCredentials;
 
         // TODO The way this is implemented means we are limited to a single client when using our
@@ -50,7 +45,6 @@ public class OpenIdClientDetailsFactoryImpl implements OpenIdClientDetailsFactor
                     .orElseThrow(() ->
                             new NullPointerException("Unable to get or create internal client details"));
         }
-
         this.oAuth2Client = oAuth2Client;
     }
 
@@ -79,21 +73,17 @@ public class OpenIdClientDetailsFactoryImpl implements OpenIdClientDetailsFactor
         return new OAuth2Client(
                 name,
                 createRandomCode(40) + CLIENT_ID_SUFFIX,
-                createRandomCode(20) + CLIENT_SECRET_SUFFIX,
+                createRandomCode(40) + CLIENT_SECRET_SUFFIX,
                 ".*");
     }
 
     private static String createRandomCode(final int length) {
         final SecureRandom secureRandom = new SecureRandom();
-        final byte[] bytes = new byte[length];
-        secureRandom.nextBytes(bytes);
-        return Base64.getUrlEncoder().encodeToString(bytes);
-    }
+        final StringBuilder stringBuilder = new StringBuilder();
 
-    private static String createRandomHexCode(final int length) {
-        final SecureRandom secureRandom = new SecureRandom();
-        final byte[] bytes = new byte[length];
-        secureRandom.nextBytes(bytes);
-        return Hex.encodeHexString(bytes, true);
+        for (int i = 0; i < length; i++) {
+            stringBuilder.append(ALLOWED_CHARS[secureRandom.nextInt(ALLOWED_CHARS_COUNT)]);
+        }
+        return stringBuilder.toString();
     }
 }

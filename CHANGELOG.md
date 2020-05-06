@@ -6,7 +6,15 @@ and this project adheres to [Semantic Versioning](http://semver.org/).
 
 ## [Unreleased]
 
+<<<<<<< HEAD
 * Issue **#1511** : Data pages now show pipeline names rather than pipeline UUIDs.
+=======
+* Issue **#1527** : Fixed missing aud in API eky tokens.
+
+* Add missing guice binding for SystemInfoResource.
+
+* Make export add new line to the end of all files to adhere to POSIX standard.
+>>>>>>> d42697f33382e19121444e87e34cdfc1550ab29b
 
 * Issue **#1532** : Fixed index shard criteria in UI.
 

@@ -17,6 +17,7 @@
 package stroom.authentication.token;
 
 import stroom.authentication.api.JsonWebKeyFactory;
+import stroom.util.guice.HasHealthCheckBinder;
 import stroom.util.guice.RestResourcesBinder;
 
 import com.google.inject.AbstractModule;
@@ -29,6 +30,13 @@ public final class TokenModule extends AbstractModule {
         bind(JsonWebKeyFactory.class).to(JsonWebKeyFactoryImpl.class);
 
         RestResourcesBinder.create(binder())
+<<<<<<< HEAD
                 .bind(TokenResourceImpl.class);
+=======
+                .bindResource(TokenResourceImpl.class);
+
+        HasHealthCheckBinder.create(binder())
+                .bind(TokenServiceImpl.class);
+>>>>>>> d42697f33382e19121444e87e34cdfc1550ab29b
     }
 }

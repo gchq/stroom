@@ -28,6 +28,8 @@ logging:
     org.eclipse.jetty: INFO
     org.glassfish: INFO
     org.glassfish.jersey: INFO
+    # Comment this out if you want logging of the REST request/responses
+    # NOT recommended for production environments as it is very verbose
     org.glassfish.jersey.logging.LoggingFeature: "OFF"
     #    org.glassfish.jersey.server.ServerRuntime.Responder: INFO
     #    org.glassfish.jersey.server.validation.internal.ValidationExceptionMapper: FINER

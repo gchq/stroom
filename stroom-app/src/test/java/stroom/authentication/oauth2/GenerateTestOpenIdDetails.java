@@ -110,13 +110,13 @@ public class GenerateTestOpenIdDetails {
 
         final String msg = "\n" +
                 "\n" +
-                "\nThe following lines have been substituted into " + DefaultOpenIdCredentials.class.getName() +
+                "\n  The following lines have been substituted into " + DefaultOpenIdCredentials.class.getName() +
                 "\n";
 
         final String generatedCode = "" +
-                "    // ------------------------------------------------------------------------------------------------" +
-                "\n    // The content between these dashed lines was generated using " + this.getClass().getName() +
-                "\n    // at " + Instant.now().toString() +
+                "    // ==--==--==--==--==--==--==--==--==--==--==--==--==--==--==--==--==--==--==--==--==--==--==--" +
+                "\n    // ALL the content between these dashed lines was generated inserted using" +
+                "\n    // " + this.getClass().getName() + " at " + Instant.now().toString() +
                 "\n    // The dashed lines are important, don't remove them!" +
                 "\n    private static final String OAUTH2_CLIENT_ID = \"" + oAuth2Client.getClientId() + "\";" +
                 "\n    private static final String OAUTH2_CLIENT_NAME = \"" + oAuth2Client.getName() + "\";" +
@@ -128,7 +128,7 @@ public class GenerateTestOpenIdDetails {
 
                 "\n    private static final String API_KEY_USER_EMAIL = \"" + API_KEY_USER_EMAIL + "\";" +
                 "\n    private static final String API_KEY = \"" + apiKey + "\";" +
-                "\n    // ------------------------------------------------------------------------------------------------";
+                "\n    // ==--==--==--==--==--==--==--==--==--==--==--==--==--==--==--==--==--==--==--==--==--==--==--";
 
         LOGGER.info(ConsoleColour.red(msg) + ConsoleColour.green(generatedCode));
 
@@ -160,11 +160,16 @@ public class GenerateTestOpenIdDetails {
 
             // match some thing like:
 
-            //   // ----------------------
+            //   // ==--==--==--==--==--==--==--==--==--==--==--
             //   thisIsSomeCode......
-            //   // ----------------------
+            //   // ==--==--==--==--==--==--==--==--==--==--==--
 
-            final Pattern generatedBlockPattern = Pattern.compile("[ ]*//[ ]*---+.+?[ ]*//[ ]*---+", Pattern.DOTALL);
+            final Pattern generatedBlockPattern = Pattern.compile(
+                    "[ ]*//[ ]*(==--)+.+?[ ]*//[ ]*(==--)+",
+                    Pattern.DOTALL);
+//            final Pattern generatedBlockPattern = Pattern.compile(
+//                    "[ ]*//[ ]*---+.+?[ ]*//[ ]*---+",
+//                    Pattern.DOTALL);
 
             LOGGER.debug("\n{}", fileContent);
             Matcher matcher = generatedBlockPattern.matcher(fileContent);
