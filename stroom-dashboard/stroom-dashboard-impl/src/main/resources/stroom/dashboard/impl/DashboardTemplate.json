@@ -17,8 +17,7 @@
       "type" : "query",
       "expression" : {
         "type" : "operator",
-        "children" : [ ],
-        "enabled" : true
+        "children" : [ ]
       },
       "automate" : {
         "open" : false,
@@ -41,8 +40,7 @@
         "height" : 200
       },
       "tabs" : [ {
-        "id" : "query-JT8D7",
-        "visible" : true
+        "id" : "query-JT8D7"
       } ],
       "selected" : 0
     }, {
@@ -52,8 +50,7 @@
         "height" : 200
       },
       "tabs" : [ {
-        "id" : "table-IIO1T",
-        "visible" : true
+        "id" : "table-IIO1T"
       } ],
       "selected" : 0
     } ]

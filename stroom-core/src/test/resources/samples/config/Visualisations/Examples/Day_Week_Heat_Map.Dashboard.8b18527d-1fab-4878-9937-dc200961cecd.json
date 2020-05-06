@@ -70,15 +70,12 @@
       },
       "expression" : {
         "type" : "operator",
-        "op" : "AND",
         "children" : [ {
           "type" : "term",
           "field" : "timestamp",
           "condition" : "BETWEEN",
-          "value" : "2016-02-01T00:00:00.000Z,2016-08-01T00:00:00.000Z",
-          "enabled" : true
-        } ],
-        "enabled" : true
+          "value" : "2016-02-01T00:00:00.000Z,2016-08-01T00:00:00.000Z"
+        } ]
       },
       "automate" : {
         "open" : true,

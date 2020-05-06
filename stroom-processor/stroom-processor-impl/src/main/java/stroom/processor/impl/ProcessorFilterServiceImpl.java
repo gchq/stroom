@@ -434,8 +434,8 @@ class ProcessorFilterServiceImpl implements ProcessorFilterService {
 
     private ExpressionOperator decorate(final ExpressionOperator operator) {
         final ExpressionOperator.Builder builder = new Builder()
-                .op(operator.getOp())
-                .enabled(operator.isEnabled());
+                .op(operator.op())
+                .enabled(operator.enabled());
 
         if (operator.getChildren() != null) {
             for (final ExpressionItem child : operator.getChildren()) {
@@ -451,7 +451,7 @@ class ProcessorFilterServiceImpl implements ProcessorFilterService {
                             final Optional<DocRefInfo> optionalDocRefInfo = docRefInfoService.info(docRef);
                             if (optionalDocRefInfo.isPresent()) {
                                 term = new ExpressionTerm.Builder()
-                                        .enabled(term.isEnabled())
+                                        .enabled(term.enabled())
                                         .field(term.getField())
                                         .condition(term.getCondition())
                                         .value(term.getValue())
