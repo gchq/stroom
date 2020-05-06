@@ -43,7 +43,7 @@ public class NodeModule extends AbstractModule {
         entityEventHandlerBinder.addBinding().to(NodeServiceImpl.class);
 
         RestResourcesBinder.create(binder())
-                .bindResource(NodeResourceImpl.class);
+                .bind(NodeResourceImpl.class);
 
         // Provide object info to the logging service.
         ObjectInfoProviderBinder.create(binder())

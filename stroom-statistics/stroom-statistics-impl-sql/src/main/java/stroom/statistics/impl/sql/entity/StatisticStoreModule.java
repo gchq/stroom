@@ -17,7 +17,7 @@
 package stroom.statistics.impl.sql.entity;
 
 import stroom.docstore.api.DocumentActionHandlerBinder;
-import stroom.explorer.api.ExplorerActionHandler;
+import stroom.explorer.api.ExplorerActionHandlerBinder;
 import stroom.importexport.api.ImportExportActionHandler;
 import stroom.statistics.impl.sql.shared.StatisticStoreDoc;
 import stroom.util.entityevent.EntityEvent;
@@ -42,8 +42,8 @@ public class StatisticStoreModule extends AbstractModule {
         final Multibinder<Handler> entityEventHandlerBinder = Multibinder.newSetBinder(binder(), EntityEvent.Handler.class);
         entityEventHandlerBinder.addBinding().to(StatisticsDataSourceCacheImpl.class);
 
-        final Multibinder<ExplorerActionHandler> explorerActionHandlerBinder = Multibinder.newSetBinder(binder(), ExplorerActionHandler.class);
-        explorerActionHandlerBinder.addBinding().to(StatisticStoreStoreImpl.class);
+        ExplorerActionHandlerBinder.create(binder())
+                .bind(StatisticStoreStoreImpl.class);
 
         final Multibinder<ImportExportActionHandler> importExportActionHandlerBinder = Multibinder.newSetBinder(binder(), ImportExportActionHandler.class);
         importExportActionHandlerBinder.addBinding().to(StatisticStoreStoreImpl.class);
@@ -52,6 +52,6 @@ public class StatisticStoreModule extends AbstractModule {
                 .bind(StatisticStoreDoc.DOCUMENT_TYPE, StatisticStoreStoreImpl.class);
 
         RestResourcesBinder.create(binder())
-                .bindResource(StatisticResourceImpl.class);
+                .bind(StatisticResourceImpl.class);
     }
 }

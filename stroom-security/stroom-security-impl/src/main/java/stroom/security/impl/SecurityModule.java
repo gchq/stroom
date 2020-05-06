@@ -31,9 +31,6 @@ import stroom.util.shared.Clearable;
 import com.google.inject.AbstractModule;
 import com.google.inject.multibindings.Multibinder;
 
-import com.google.inject.AbstractModule;
-import com.google.inject.multibindings.Multibinder;
-
 import javax.servlet.http.HttpSessionListener;
 
 public class SecurityModule extends AbstractModule {
@@ -74,13 +71,13 @@ public class SecurityModule extends AbstractModule {
                 .bind(JWTService.class);
 
         RestResourcesBinder.create(binder())
-                .bindResource(AppPermissionResourceImpl.class)
-                .bindResource(AuthenticationResourceImpl.class)
-                .bindResource(AuthorisationResource.class)
-                .bindResource(DocPermissionResourceImpl.class)
-                .bindResource(DocumentPermissionResourceImpl.class)
-                .bindResource(SessionResourceImpl.class)
-                .bindResource(UserAppPermissionResourceImpl.class)
-                .bindResource(UserResourceImpl.class);
+                .bind(AppPermissionResourceImpl.class)
+                .bind(AuthenticationResourceImpl.class)
+                .bind(AuthorisationResource.class)
+                .bind(DocPermissionResourceImpl.class)
+                .bind(DocumentPermissionResourceImpl.class)
+                .bind(SessionResourceImpl.class)
+                .bind(UserAppPermissionResourceImpl.class)
+                .bind(UserResourceImpl.class);
     }
 }

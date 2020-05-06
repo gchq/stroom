@@ -24,6 +24,6 @@ public class StroomStatsRollupModule extends AbstractModule {
     @Override
     protected void configure() {
         RestResourcesBinder.create(binder())
-                .bindResource(StatStoreRollupResourceImpl.class);
+                .bind(StatStoreRollupResourceImpl.class);
     }
 }

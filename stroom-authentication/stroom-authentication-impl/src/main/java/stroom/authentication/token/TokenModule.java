@@ -29,6 +29,6 @@ public final class TokenModule extends AbstractModule {
         bind(JsonWebKeyFactory.class).to(JsonWebKeyFactoryImpl.class);
 
         RestResourcesBinder.create(binder())
-                .bindResource(TokenResourceImpl.class);
+                .bind(TokenResourceImpl.class);
     }
 }

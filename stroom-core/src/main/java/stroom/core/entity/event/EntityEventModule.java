@@ -33,7 +33,7 @@ public class EntityEventModule extends AbstractModule {
         Multibinder.newSetBinder(binder(), EntityEvent.Handler.class);
 
         RestResourcesBinder.create(binder())
-                .bindResource(EntityEventResourceImpl.class);
+                .bind(EntityEventResourceImpl.class);
     }
 
     @Override

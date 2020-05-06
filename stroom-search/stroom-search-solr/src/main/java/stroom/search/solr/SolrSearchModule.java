@@ -17,7 +17,7 @@
 package stroom.search.solr;
 
 import stroom.docstore.api.DocumentActionHandlerBinder;
-import stroom.explorer.api.ExplorerActionHandler;
+import stroom.explorer.api.ExplorerActionHandlerBinder;
 import stroom.importexport.api.ImportExportActionHandler;
 import stroom.search.solr.indexing.SolrIndexingElementModule;
 import stroom.search.solr.search.StroomSolrIndexQueryResource;
@@ -48,8 +48,8 @@ public class SolrSearchModule extends AbstractModule {
                 .addBinding(SolrIndexCacheImpl.class)
                 .addBinding(SolrIndexClientCacheImpl.class);
 
-        GuiceUtil.buildMultiBinder(binder(), ExplorerActionHandler.class)
-                .addBinding(SolrIndexStoreImpl.class);
+        ExplorerActionHandlerBinder.create(binder())
+                .bind(SolrIndexStoreImpl.class);
 
         GuiceUtil.buildMultiBinder(binder(), ImportExportActionHandler.class)
                 .addBinding(SolrIndexStoreImpl.class);
@@ -58,8 +58,8 @@ public class SolrSearchModule extends AbstractModule {
                 .bind(SolrIndexDoc.DOCUMENT_TYPE, SolrIndexStoreImpl.class);
 
         RestResourcesBinder.create(binder())
-                .bindResource(SolrIndexResourceImpl.class)
-                .bindResource(NewUiSolrIndexResource.class)
-                .bindResource(StroomSolrIndexQueryResource.class);
+                .bind(SolrIndexResourceImpl.class)
+                .bind(NewUiSolrIndexResource.class)
+                .bind(StroomSolrIndexQueryResource.class);
     }
 }

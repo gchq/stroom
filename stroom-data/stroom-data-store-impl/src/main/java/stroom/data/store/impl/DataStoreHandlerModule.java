@@ -29,7 +29,7 @@ public class DataStoreHandlerModule extends AbstractModule {
 
         // TODO probably not the right place for this binding
         RestResourcesBinder.create(binder())
-                .bindResource(DataResourceImpl.class)
-                .bindResource(ViewDataResourceImpl.class);
+                .bind(DataResourceImpl.class)
+                .bind(ViewDataResourceImpl.class);
     }
 }

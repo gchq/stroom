@@ -18,7 +18,7 @@ package stroom.dictionary.impl;
 
 import stroom.dictionary.shared.DictionaryDoc;
 import stroom.docstore.api.DocumentActionHandlerBinder;
-import stroom.explorer.api.ExplorerActionHandler;
+import stroom.explorer.api.ExplorerActionHandlerBinder;
 import stroom.importexport.api.ImportExportActionHandler;
 import stroom.util.guice.RestResourcesBinder;
 
@@ -28,8 +28,8 @@ import com.google.inject.multibindings.Multibinder;
 public class DictionaryHandlerModule extends AbstractModule {
     @Override
     protected void configure() {
-        final Multibinder<ExplorerActionHandler> explorerActionHandlerBinder = Multibinder.newSetBinder(binder(), ExplorerActionHandler.class);
-        explorerActionHandlerBinder.addBinding().to(DictionaryStoreImpl.class);
+        ExplorerActionHandlerBinder.create(binder())
+                .bind(DictionaryStoreImpl.class);
 
         final Multibinder<ImportExportActionHandler> importExportActionHandlerBinder = Multibinder.newSetBinder(binder(), ImportExportActionHandler.class);
         importExportActionHandlerBinder.addBinding().to(DictionaryStoreImpl.class);
@@ -38,7 +38,7 @@ public class DictionaryHandlerModule extends AbstractModule {
                 .bind(DictionaryDoc.ENTITY_TYPE, DictionaryStoreImpl.class);
 
         RestResourcesBinder.create(binder())
-                .bindResource(NewUiDictionaryResource2.class)
-                .bindResource(DictionaryResourceImpl.class);
+                .bind(NewUiDictionaryResource2.class)
+                .bind(DictionaryResourceImpl.class);
     }
 }

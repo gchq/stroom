@@ -17,7 +17,7 @@
 package stroom.kafka.impl;
 
 import stroom.docstore.api.DocumentActionHandlerBinder;
-import stroom.explorer.api.ExplorerActionHandler;
+import stroom.explorer.api.ExplorerActionHandlerBinder;
 import stroom.importexport.api.ImportExportActionHandler;
 import stroom.kafka.api.KafkaProducerFactory;
 import stroom.kafka.shared.KafkaConfigDoc;
@@ -33,8 +33,8 @@ public class KafkaConfigModule extends AbstractModule {
         bind(KafkaProducerFactory.class).to(KafkaProducerFactoryImpl.class);
         bind(KafkaConfigStore.class).to(KafkaConfigStoreImpl.class);
 
-        GuiceUtil.buildMultiBinder(binder(), ExplorerActionHandler.class)
-                .addBinding(KafkaConfigStoreImpl.class);
+        ExplorerActionHandlerBinder.create(binder())
+                .bind(KafkaConfigStoreImpl.class);
 
         GuiceUtil.buildMultiBinder(binder(), ImportExportActionHandler.class)
                 .addBinding(KafkaConfigStoreImpl.class);

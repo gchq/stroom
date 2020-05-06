@@ -17,7 +17,7 @@
 package stroom.pipeline.textconverter;
 
 import stroom.docstore.api.DocumentActionHandlerBinder;
-import stroom.explorer.api.ExplorerActionHandler;
+import stroom.explorer.api.ExplorerActionHandlerBinder;
 import stroom.importexport.api.ImportExportActionHandler;
 import stroom.pipeline.shared.TextConverterDoc;
 import stroom.util.guice.RestResourcesBinder;
@@ -30,8 +30,8 @@ public class TextConverterModule extends AbstractModule {
     protected void configure() {
         bind(TextConverterStore.class).to(TextConverterStoreImpl.class);
 
-        final Multibinder<ExplorerActionHandler> explorerActionHandlerBinder = Multibinder.newSetBinder(binder(), ExplorerActionHandler.class);
-        explorerActionHandlerBinder.addBinding().to(TextConverterStoreImpl.class);
+        ExplorerActionHandlerBinder.create(binder())
+                .bind(TextConverterStoreImpl.class);
 
         final Multibinder<ImportExportActionHandler> importExportActionHandlerBinder = Multibinder.newSetBinder(binder(), ImportExportActionHandler.class);
         importExportActionHandlerBinder.addBinding().to(TextConverterStoreImpl.class);
@@ -40,6 +40,6 @@ public class TextConverterModule extends AbstractModule {
                 .bind(TextConverterDoc.DOCUMENT_TYPE, TextConverterStoreImpl.class);
 
         RestResourcesBinder.create(binder())
-                .bindResource(TextConverterResourceImpl.class);
+                .bind(TextConverterResourceImpl.class);
     }
 }

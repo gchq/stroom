@@ -17,7 +17,7 @@
 package stroom.dashboard.impl.visualisation;
 
 import stroom.docstore.api.DocumentActionHandlerBinder;
-import stroom.explorer.api.ExplorerActionHandler;
+import stroom.explorer.api.ExplorerActionHandlerBinder;
 import stroom.importexport.api.ImportExportActionHandler;
 import stroom.util.guice.RestResourcesBinder;
 import stroom.visualisation.shared.VisualisationDoc;
@@ -30,8 +30,8 @@ public class VisualisationModule extends AbstractModule {
     protected void configure() {
         bind(VisualisationStore.class).to(VisualisationStoreImpl.class);
 
-        final Multibinder<ExplorerActionHandler> explorerActionHandlerBinder = Multibinder.newSetBinder(binder(), ExplorerActionHandler.class);
-        explorerActionHandlerBinder.addBinding().to(VisualisationStoreImpl.class);
+        ExplorerActionHandlerBinder.create(binder())
+                .bind(VisualisationStoreImpl.class);
 
         final Multibinder<ImportExportActionHandler> importExportActionHandlerBinder = Multibinder.newSetBinder(binder(), ImportExportActionHandler.class);
         importExportActionHandlerBinder.addBinding().to(VisualisationStoreImpl.class);
@@ -40,6 +40,6 @@ public class VisualisationModule extends AbstractModule {
                 .bind(VisualisationDoc.DOCUMENT_TYPE, VisualisationStoreImpl.class);
 
         RestResourcesBinder.create(binder())
-                .bindResource(VisualisationResourceImpl.class);
+                .bind(VisualisationResourceImpl.class);
     }
 }

@@ -28,6 +28,6 @@ public class SearchableModule extends AbstractModule {
         bind(SearchableProvider.class).to(SearchableProviderImpl.class);
         bind(ExplorerDecorator.class).to(SearchableProviderImpl.class);
         RestResourcesBinder.create(binder())
-                .bindResource(SearchableResource.class);
+                .bind(SearchableResource.class);
     }
 }

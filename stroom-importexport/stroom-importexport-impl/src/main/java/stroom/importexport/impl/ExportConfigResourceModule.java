@@ -26,6 +26,6 @@ public class ExportConfigResourceModule extends AbstractModule {
         // This module is separate to ImportExportModule so that headless can import
         // ImportExportModule without dragging in the ExportConfigResource
         RestResourcesBinder.create(binder())
-                .bindResource(ExportConfigResource.class);
+                .bind(ExportConfigResource.class);
     }
 }

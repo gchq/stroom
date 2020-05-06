@@ -19,7 +19,7 @@ package stroom.pipeline;
 import stroom.docstore.api.DocumentActionHandlerBinder;
 import stroom.docstore.shared.Doc;
 import stroom.event.logging.api.ObjectInfoProviderBinder;
-import stroom.explorer.api.ExplorerActionHandler;
+import stroom.explorer.api.ExplorerActionHandlerBinder;
 import stroom.importexport.api.ImportExportActionHandler;
 import stroom.pipeline.shared.PipelineDoc;
 import stroom.pipeline.textconverter.TextConverterModule;
@@ -40,15 +40,15 @@ public class PipelineModule extends AbstractModule {
         bind(PipelineStore.class).to(PipelineStoreImpl.class);
         bind(LocationFactory.class).to(LocationFactoryProxy.class);
 
-        GuiceUtil.buildMultiBinder(binder(), ExplorerActionHandler.class)
-                .addBinding(PipelineStoreImpl.class);
+        ExplorerActionHandlerBinder.create(binder())
+                .bind(PipelineStoreImpl.class);
 
         GuiceUtil.buildMultiBinder(binder(), ImportExportActionHandler.class)
                 .addBinding(PipelineStoreImpl.class);
 
         RestResourcesBinder.create(binder())
-                .bindResource(PipelineResourceImpl.class)
-                .bindResource(NewUiPipelineResource.class);
+                .bind(PipelineResourceImpl.class)
+                .bind(NewUiPipelineResource.class);
 
         DocumentActionHandlerBinder.create(binder())
                 .bind(PipelineDoc.DOCUMENT_TYPE, PipelineStoreImpl.class);

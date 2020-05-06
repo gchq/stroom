@@ -18,7 +18,7 @@ package stroom.feed.impl;
 
 import stroom.docstore.api.DocumentActionHandlerBinder;
 import stroom.event.logging.api.ObjectInfoProviderBinder;
-import stroom.explorer.api.ExplorerActionHandler;
+import stroom.explorer.api.ExplorerActionHandlerBinder;
 import stroom.feed.api.FeedProperties;
 import stroom.feed.api.FeedStore;
 import stroom.feed.shared.FeedDoc;
@@ -38,8 +38,8 @@ public class FeedModule extends AbstractModule {
         bind(FeedProperties.class).to(FeedPropertiesImpl.class);
         bind(MetaSecurityFilter.class).to(MetaSecurityFilterImpl.class);
 
-        final Multibinder<ExplorerActionHandler> explorerActionHandlerBinder = Multibinder.newSetBinder(binder(), ExplorerActionHandler.class);
-        explorerActionHandlerBinder.addBinding().to(FeedStoreImpl.class);
+        ExplorerActionHandlerBinder.create(binder())
+                .bind(FeedStoreImpl.class);
 
         final Multibinder<ImportExportActionHandler> importExportActionHandlerBinder = Multibinder.newSetBinder(binder(), ImportExportActionHandler.class);
         importExportActionHandlerBinder.addBinding().to(FeedStoreImpl.class);
@@ -54,6 +54,6 @@ public class FeedModule extends AbstractModule {
                 .bind(FeedDoc.class, FeedDocObjectInfoProvider.class);
 
         RestResourcesBinder.create(binder())
-                .bindResource(FeedResourceImpl.class);
+                .bind(FeedResourceImpl.class);
     }
 }

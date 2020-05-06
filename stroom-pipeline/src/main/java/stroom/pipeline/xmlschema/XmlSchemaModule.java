@@ -17,7 +17,7 @@
 package stroom.pipeline.xmlschema;
 
 import stroom.docstore.api.DocumentActionHandlerBinder;
-import stroom.explorer.api.ExplorerActionHandler;
+import stroom.explorer.api.ExplorerActionHandlerBinder;
 import stroom.importexport.api.ImportExportActionHandler;
 import stroom.util.entityevent.EntityEvent;
 import stroom.util.entityevent.EntityEvent.Handler;
@@ -35,8 +35,8 @@ public class XmlSchemaModule extends AbstractModule {
         final Multibinder<Handler> entityEventHandlerBinder = Multibinder.newSetBinder(binder(), EntityEvent.Handler.class);
         entityEventHandlerBinder.addBinding().to(XmlSchemaCache.class);
 
-        final Multibinder<ExplorerActionHandler> explorerActionHandlerBinder = Multibinder.newSetBinder(binder(), ExplorerActionHandler.class);
-        explorerActionHandlerBinder.addBinding().to(XmlSchemaStoreImpl.class);
+        ExplorerActionHandlerBinder.create(binder())
+                .bind(XmlSchemaStoreImpl.class);
 
         final Multibinder<ImportExportActionHandler> importExportActionHandlerBinder = Multibinder.newSetBinder(binder(), ImportExportActionHandler.class);
         importExportActionHandlerBinder.addBinding().to(XmlSchemaStoreImpl.class);
@@ -45,6 +45,6 @@ public class XmlSchemaModule extends AbstractModule {
                 .bind(XmlSchemaDoc.DOCUMENT_TYPE, XmlSchemaStoreImpl.class);
 
         RestResourcesBinder.create(binder())
-                .bindResource(XmlSchemaResourceImpl.class);
+                .bind(XmlSchemaResourceImpl.class);
     }
 }

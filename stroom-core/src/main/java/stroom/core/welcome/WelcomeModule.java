@@ -24,6 +24,6 @@ public class WelcomeModule extends AbstractModule {
     @Override
     protected void configure() {
         RestResourcesBinder.create(binder())
-                .bindResource(WelcomeResource.class);
+                .bind(WelcomeResource.class);
     }
 }

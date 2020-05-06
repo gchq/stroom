@@ -31,6 +31,6 @@ public final class AccountModule extends AbstractModule {
         bind(ProcessingUserIdentityProvider.class).to(ProcessingUserIdentityProviderImpl.class);
 
         RestResourcesBinder.create(binder())
-                .bindResource(AccountResourceImpl.class);
+                .bind(AccountResourceImpl.class);
     }
 }

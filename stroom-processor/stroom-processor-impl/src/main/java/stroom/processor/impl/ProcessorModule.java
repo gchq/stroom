@@ -41,10 +41,10 @@ public class ProcessorModule extends AbstractModule {
         bind(ProcessorTaskService.class).to(ProcessorTaskServiceImpl.class);
 
         RestResourcesBinder.create(binder())
-                .bindResource(ProcessorResourceImpl.class)
-                .bindResource(ProcessorFilterResourceImpl.class)
-                .bindResource(ProcessorTaskResourceImpl.class)
-                .bindResource(StreamTaskResource.class);
+                .bind(ProcessorResourceImpl.class)
+                .bind(ProcessorFilterResourceImpl.class)
+                .bind(ProcessorTaskResourceImpl.class)
+                .bind(StreamTaskResource.class);
 
         GuiceUtil.buildMultiBinder(binder(), DistributedTaskFactory.class)
                 .addBinding(DataProcessorTaskFactory.class);

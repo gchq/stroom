@@ -27,7 +27,7 @@ public class FsDataStoreTaskHandlerModule extends AbstractModule {
     @Override
     protected void configure() {
         RestResourcesBinder.create(binder())
-                .bindResource(FsVolumeResourceImpl.class);
+                .bind(FsVolumeResourceImpl.class);
 
         final Multibinder<Handler> entityEventHandlerBinder = Multibinder.newSetBinder(binder(), EntityEvent.Handler.class);
         entityEventHandlerBinder.addBinding().to(FsVolumeService.class);

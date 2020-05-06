@@ -24,6 +24,6 @@ public class PipelineSteppingModule extends AbstractModule {
     @Override
     protected void configure() {
         RestResourcesBinder.create(binder())
-                .bindResource(SteppingResourceImpl.class);
+                .bind(SteppingResourceImpl.class);
     }
 }

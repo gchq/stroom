@@ -31,7 +31,7 @@ public class PermissionChangeEventModule extends AbstractModule {
         Multibinder.newSetBinder(binder(), PermissionChangeEvent.Handler.class);
 
         RestResourcesBinder.create(binder())
-                .bindResource(PermissionChangeResourceImpl.class);
+                .bind(PermissionChangeResourceImpl.class);
     }
 
     @Override
