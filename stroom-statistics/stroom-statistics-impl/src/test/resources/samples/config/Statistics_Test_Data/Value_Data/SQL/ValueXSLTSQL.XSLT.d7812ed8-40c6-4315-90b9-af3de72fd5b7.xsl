@@ -1,16 +1,10 @@
 <?xml version="1.0" encoding="UTF-8" ?>
-<xsl:stylesheet 
-  xmlns="statistics:4" 
-  xmlns:xsl="http://www.w3.org/1999/XSL/Transform" 
-  xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" 
-  version="2.0">
-  
+<xsl:stylesheet xpath-default-namespace="" xmlns="statistics:2" xmlns:xsl="http://www.w3.org/1999/XSL/Transform" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" version="2.0">
   <xsl:template match="data">
-    <statistics version="4.0.0">
+    <Statistics xsi:schemaLocation="statistics:2 file://statistics-v2.0.xsd" Version="2.0">
       <xsl:apply-templates />
-    </statistics>
+    </Statistics>
   </xsl:template>
-  
   <xsl:template match="event">
     <statistic>
       <time>

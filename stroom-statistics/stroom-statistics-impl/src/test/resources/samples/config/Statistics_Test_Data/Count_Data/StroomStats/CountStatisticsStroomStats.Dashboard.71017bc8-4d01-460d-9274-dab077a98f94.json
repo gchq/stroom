@@ -9,43 +9,38 @@
       "fields" : [ {
         "name" : "Date Time",
         "expression" : "${Date Time}",
-        "format" : {
-          "type" : "DATE_TIME"
-        },
+        "format" : { },
         "width" : 200,
-        "visible" : true
+        "visible" : true,
+        "special" : false
       }, {
         "name" : "Precision",
         "expression" : "${Precision}",
-        "format" : {
-          "type" : "GENERAL"
-        },
+        "format" : { },
         "width" : 200,
-        "visible" : true
+        "visible" : true,
+        "special" : false
       }, {
         "name" : "state",
         "expression" : "${state}",
-        "format" : {
-          "type" : "GENERAL"
-        },
+        "format" : { },
         "width" : 200,
-        "visible" : true
+        "visible" : true,
+        "special" : false
       }, {
         "name" : "user",
         "expression" : "${user}",
-        "format" : {
-          "type" : "GENERAL"
-        },
+        "format" : { },
         "width" : 200,
-        "visible" : true
+        "visible" : true,
+        "special" : false
       }, {
         "name" : "Statistic Name",
         "expression" : "${Statistic Name}",
-        "format" : {
-          "type" : "GENERAL"
-        },
+        "format" : { },
         "width" : 246,
-        "visible" : true
+        "visible" : true,
+        "special" : false
       } ],
       "maxResults" : [ 1000000 ]
     }
@@ -117,7 +112,8 @@
         "height" : 200
       },
       "tabs" : [ {
-        "id" : "query-JT8D7"
+        "id" : "query-JT8D7",
+        "visible" : true
       } ],
       "selected" : 0
     }, {
@@ -127,7 +123,8 @@
         "height" : 200
       },
       "tabs" : [ {
-        "id" : "table-IIO1T"
+        "id" : "table-IIO1T",
+        "visible" : true
       } ],
       "selected" : 0
     } ]

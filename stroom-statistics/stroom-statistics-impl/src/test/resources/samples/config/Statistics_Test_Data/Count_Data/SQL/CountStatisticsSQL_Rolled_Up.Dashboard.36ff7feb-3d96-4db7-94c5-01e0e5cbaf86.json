@@ -17,16 +17,33 @@
           "type" : "term",
           "field" : "Date Time",
           "condition" : "BETWEEN",
-          "value" : "2016-10-19T00:00:00.000Z,2016-10-19T00:05:00.000Z",
+          "value" : "now()-3w,now()+1w",
           "enabled" : true
         }, {
           "type" : "term",
           "field" : "user",
           "condition" : "EQUALS",
-          "value" : "user1",
+          "value" : "*",
+          "enabled" : true
+        }, {
+          "type" : "term",
+          "field" : "state",
+          "condition" : "EQUALS",
+          "value" : "*",
+          "enabled" : true
+        }, {
+          "type" : "term",
+          "field" : "colour",
+          "condition" : "EQUALS",
+          "value" : "*",
           "enabled" : true
         } ],
         "enabled" : true
+      },
+      "automate" : {
+        "open" : false,
+        "refresh" : false,
+        "refreshInterval" : "10s"
       }
     }
   }, {
@@ -37,45 +54,39 @@
       "type" : "table",
       "queryId" : "query-NZU2J",
       "fields" : [ {
+        "id" : "table-Q0DWW|BES8C",
         "name" : "Date Time",
         "expression" : "${Date Time}",
+        "sort" : {
+          "order" : 0,
+          "direction" : "ASCENDING"
+        },
         "format" : {
           "type" : "DATE_TIME"
         },
         "width" : 200,
-        "visible" : true
+        "visible" : true,
+        "special" : false
       }, {
-        "name" : "colour",
-        "expression" : "${colour}",
+        "id" : "table-Q0DWW|I91WR",
+        "name" : "Precision ms",
+        "expression" : "${Precision ms}",
         "format" : {
-          "type" : "GENERAL"
+          "type" : "NUMBER"
         },
         "width" : 200,
-        "visible" : true
+        "visible" : true,
+        "special" : false
       }, {
-        "name" : "state",
-        "expression" : "${state}",
-        "format" : {
-          "type" : "GENERAL"
-        },
-        "width" : 200,
-        "visible" : true
-      }, {
-        "name" : "user",
-        "expression" : "${user}",
-        "format" : {
-          "type" : "GENERAL"
-        },
-        "width" : 200,
-        "visible" : true
-      }, {
+        "id" : "table-Q0DWW|ID60B",
         "name" : "Statistic Count",
         "expression" : "${Statistic Count}",
         "format" : {
           "type" : "NUMBER"
         },
         "width" : 200,
-        "visible" : true
+        "visible" : true,
+        "special" : false
       } ],
       "maxResults" : [ 1000000 ]
     }
@@ -94,7 +105,8 @@
         "height" : 200
       },
       "tabs" : [ {
-        "id" : "query-NZU2J"
+        "id" : "query-NZU2J",
+        "visible" : true
       } ],
       "selected" : 0
     }, {
@@ -104,7 +116,8 @@
         "height" : 200
       },
       "tabs" : [ {
-        "id" : "table-Q0DWW"
+        "id" : "table-Q0DWW",
+        "visible" : true
       } ],
       "selected" : 0
     } ]

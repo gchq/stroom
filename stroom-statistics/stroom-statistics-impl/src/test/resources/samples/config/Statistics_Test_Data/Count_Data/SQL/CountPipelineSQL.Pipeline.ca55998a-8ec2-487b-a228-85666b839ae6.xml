@@ -78,12 +78,7 @@
             </value>
          </property>
       </add>
-      <remove/>
    </properties>
-   <pipelineReferences>
-      <add/>
-      <remove/>
-   </pipelineReferences>
    <links>
       <add>
          <link>
