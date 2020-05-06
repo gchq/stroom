@@ -1,0 +1,33 @@
+{
+  "uuid" : "9d6810ff-2eea-43bd-8c45-2f25a642c88b",
+  "queryData" : {
+    "dataSource" : {
+      "type" : "StreamStore",
+      "uuid" : "0",
+      "name" : "StreamStore"
+    },
+    "expression" : {
+      "type" : "operator",
+      "op" : "AND",
+      "children" : [ {
+        "type" : "term",
+        "field" : "Feed Name",
+        "condition" : "EQUALS",
+        "value" : "VALUE_FEED_LARGE",
+        "enabled" : true
+      }, {
+        "type" : "term",
+        "field" : "Type",
+        "condition" : "EQUALS",
+        "value" : "Raw Events",
+        "enabled" : true
+      } ],
+      "enabled" : true
+    }
+  },
+  "priority" : 10,
+  "enabled" : true,
+  "processorUuid" : "a57348ee-4a46-4ea6-b6a0-e3cdb9d0e2a9",
+  "pipelineUuid" : "9c8d9b1b-c1e4-4615-90ae-b85db8227543",
+  "pipelineName" : "ValueStatisticsStroomStats"
+}
