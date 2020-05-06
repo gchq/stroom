@@ -17,6 +17,7 @@
 package stroom.security.impl;
 
 import stroom.security.api.DocumentPermissionService;
+import stroom.security.api.TokenVerifier;
 import stroom.security.impl.event.PermissionChangeEvent;
 import stroom.security.impl.event.PermissionChangeEventLifecycleModule;
 import stroom.security.impl.event.PermissionChangeEventModule;
@@ -27,9 +28,6 @@ import stroom.util.guice.GuiceUtil;
 import stroom.util.guice.HasHealthCheckBinder;
 import stroom.util.guice.RestResourcesBinder;
 import stroom.util.shared.Clearable;
-
-import com.google.inject.AbstractModule;
-import com.google.inject.multibindings.Multibinder;
 
 import com.google.inject.AbstractModule;
 import com.google.inject.multibindings.Multibinder;
@@ -46,6 +44,7 @@ public class SecurityModule extends AbstractModule {
 
         bind(DocumentPermissionService.class).to(DocumentPermissionServiceImpl.class);
         bind(UserService.class).to(UserServiceImpl.class);
+        bind(TokenVerifier.class).to(JWTService.class);
 
         FilterBinder.create(binder())
                 .bind(new FilterInfo(ContentSecurityFilter.class.getSimpleName(), MATCH_ALL_PATHS),

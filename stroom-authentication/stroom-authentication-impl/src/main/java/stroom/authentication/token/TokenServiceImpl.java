@@ -7,17 +7,23 @@ import stroom.authentication.api.OpenIdClientDetailsFactory;
 import stroom.authentication.config.TokenConfig;
 import stroom.authentication.exceptions.NoSuchUserException;
 import stroom.security.api.SecurityContext;
-import stroom.util.shared.PermissionException;
+import stroom.security.api.TokenException;
+import stroom.security.api.TokenVerifier;
 import stroom.security.shared.PermissionNames;
+import stroom.util.HasHealthCheck;
+import stroom.util.shared.PermissionException;
 
+import com.codahale.metrics.health.HealthCheck;
 import org.jose4j.jwk.JsonWebKey;
 
 import javax.inject.Inject;
 import javax.ws.rs.BadRequestException;
 import java.time.Instant;
+import java.util.HashMap;
+import java.util.Map;
 import java.util.Optional;
 
-public class TokenServiceImpl implements TokenService {
+public class TokenServiceImpl implements TokenService, HasHealthCheck {
     private final JwkCache jwkCache;
     private final TokenDao tokenDao;
     private final AccountDao accountDao;
@@ -26,6 +32,7 @@ public class TokenServiceImpl implements TokenService {
     private final TokenBuilderFactory tokenBuilderFactory;
     private final TokenConfig tokenConfig;
     private final OpenIdClientDetailsFactory openIdClientDetailsFactory;
+    private final TokenVerifier tokenVerifier;
 
     @Inject
     TokenServiceImpl(final JwkCache jwkCache,
@@ -35,7 +42,8 @@ public class TokenServiceImpl implements TokenService {
                      final AccountService accountService,
                      final TokenBuilderFactory tokenBuilderFactory,
                      final TokenConfig tokenConfig,
-                     final OpenIdClientDetailsFactory openIdClientDetailsFactory) {
+                     final OpenIdClientDetailsFactory openIdClientDetailsFactory,
+                     final TokenVerifier tokenVerifier) {
         this.jwkCache = jwkCache;
         this.tokenDao = tokenDao;
         this.accountDao = accountDao;
@@ -44,6 +52,7 @@ public class TokenServiceImpl implements TokenService {
         this.tokenBuilderFactory = tokenBuilderFactory;
         this.tokenConfig = tokenConfig;
         this.openIdClientDetailsFactory = openIdClientDetailsFactory;
+        this.tokenVerifier = tokenVerifier;
     }
 
 
@@ -227,5 +236,50 @@ public class TokenServiceImpl implements TokenService {
         }
     }
 
+    // It could be argued that the validity of the token should be a prop in Token
+    // and the API Keys page could display the validity.
+    @Override
+    public HealthCheck.Result getHealth() {
+        // Check all our enabled tokens are valid
+        final SearchResponse searchResponse = tokenDao.searchTokens(
+                new SearchRequest.SearchRequestBuilder()
+                        .limit(Integer.MAX_VALUE)
+                        .build());
 
+        final HealthCheck.ResultBuilder builder = HealthCheck.Result.builder();
+
+        boolean isHealthy = true;
+
+        final Map<String, Object> invalidTokenDetails = new HashMap<>();
+        for (final Token token : searchResponse.getTokens()) {
+            if (token.isEnabled()) {
+                try {
+                    tokenVerifier.verifyToken(
+                            token.getData(),
+                            openIdClientDetailsFactory.getOAuth2Client().getClientId());
+                } catch (TokenException e) {
+                    isHealthy = false;
+                    final Map<String, String> details = new HashMap<>();
+                    details.put("expiry", token.getExpiresOnMs() != null
+                            ? Instant.ofEpochMilli(token.getExpiresOnMs()).toString()
+                            : null);
+                    details.put("error", e.getMessage());
+                    invalidTokenDetails.put(token.getId().toString(), details);
+                }
+            }
+        }
+
+        if (isHealthy) {
+            builder
+                    .healthy()
+                    .withMessage("All enabled API key tokens are valid");
+        } else {
+            builder
+                    .unhealthy()
+                    .withMessage("Some enabled API key tokens are invalid")
+                    .withDetail("invalidTokens", invalidTokenDetails);
+        }
+
+        return builder.build();
+    }
 }
