@@ -78,15 +78,12 @@
       },
       "expression" : {
         "type" : "operator",
-        "op" : "AND",
         "children" : [ {
           "type" : "term",
           "field" : "timestamp",
           "condition" : "GREATER_THAN",
-          "value" : "2000-10-01T00:00:00.000Z",
-          "enabled" : true
-        } ],
-        "enabled" : true
+          "value" : "2000-10-01T00:00:00.000Z"
+        } ]
       },
       "automate" : {
         "open" : true,

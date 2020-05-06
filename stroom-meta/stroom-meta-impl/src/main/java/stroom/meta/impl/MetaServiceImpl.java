@@ -312,7 +312,7 @@ public class MetaServiceImpl implements MetaService, Searchable {
     }
 
     private Builder copyExpression(final ExpressionOperator expressionOperator, final Set<String> excludedFields) {
-        final Builder builder = new Builder(expressionOperator.isEnabled(), expressionOperator.getOp());
+        final Builder builder = new Builder(expressionOperator.enabled(), expressionOperator.op());
         if (expressionOperator.getChildren() != null) {
             expressionOperator.getChildren().forEach(expressionItem -> {
                 if (expressionItem instanceof ExpressionTerm) {

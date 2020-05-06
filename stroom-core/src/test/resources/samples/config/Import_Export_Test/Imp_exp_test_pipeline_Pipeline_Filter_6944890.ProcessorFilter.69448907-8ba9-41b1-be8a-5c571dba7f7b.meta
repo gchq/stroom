@@ -8,21 +8,17 @@
     },
     "expression" : {
       "type" : "operator",
-      "op" : "AND",
       "children" : [ {
         "type" : "term",
         "field" : "Feed Name",
         "condition" : "EQUALS",
-        "value" : "IMP_EXP_TEST_FEED",
-        "enabled" : true
+        "value" : "IMP_EXP_TEST_FEED"
       }, {
         "type" : "term",
         "field" : "Type",
         "condition" : "EQUALS",
-        "value" : "Raw Reference",
-        "enabled" : true
-      } ],
-      "enabled" : true
+        "value" : "Raw Reference"
+      } ]
     }
   },
   "priority" : 10,

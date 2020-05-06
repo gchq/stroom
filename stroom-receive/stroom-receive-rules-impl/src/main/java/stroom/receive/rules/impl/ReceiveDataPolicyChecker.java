@@ -17,8 +17,6 @@
 
 package stroom.receive.rules.impl;
 
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 import stroom.datasource.api.v2.AbstractField;
 import stroom.datasource.api.v2.FieldTypes;
 import stroom.docref.DocRef;
@@ -29,6 +27,9 @@ import stroom.query.api.v2.ExpressionUtil;
 import stroom.receive.rules.shared.ReceiveDataRule;
 import stroom.receive.rules.shared.ReceiveDataRules;
 import stroom.receive.rules.shared.RuleAction;
+
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import java.util.ArrayList;
 import java.util.HashMap;
@@ -90,7 +91,7 @@ class ReceiveDataPolicyChecker {
                 final Set<String> fieldSet = new HashSet<>();
                 final List<ReceiveDataRule> activeRules = new ArrayList<>();
                 dataReceiptPolicy.getRules().forEach(rule -> {
-                    if (rule.isEnabled() && rule.getExpression() != null && rule.getExpression().isEnabled()) {
+                    if (rule.isEnabled() && rule.getExpression() != null && rule.getExpression().enabled()) {
                         final Set<String> set = new HashSet<>();
                         addToFieldSet(rule, set);
                         if (set.size() > 0) {

@@ -46,12 +46,12 @@ import stroom.query.api.v2.ExpressionTerm;
 import stroom.query.api.v2.ExpressionTerm.Condition;
 import stroom.security.api.SecurityContext;
 import stroom.security.shared.DocumentPermissionNames;
-import stroom.util.shared.PermissionException;
 import stroom.security.shared.PermissionNames;
 import stroom.util.AuditUtil;
 import stroom.util.logging.LambdaLogger;
 import stroom.util.logging.LambdaLoggerFactory;
 import stroom.util.shared.Expander;
+import stroom.util.shared.PermissionException;
 import stroom.util.shared.ResultPage;
 import stroom.util.shared.Selection;
 import stroom.util.shared.Severity;
@@ -446,8 +446,8 @@ class ProcessorFilterServiceImpl implements ProcessorFilterService {
 
     private ExpressionOperator decorate(final ExpressionOperator operator) {
         final ExpressionOperator.Builder builder = new Builder()
-                .op(operator.getOp())
-                .enabled(operator.isEnabled());
+                .op(operator.op())
+                .enabled(operator.enabled());
 
         if (operator.getChildren() != null) {
             for (final ExpressionItem child : operator.getChildren()) {
@@ -463,7 +463,7 @@ class ProcessorFilterServiceImpl implements ProcessorFilterService {
                             final DocRefInfo docRefInfo = explorerService.info(docRef);
                             if (docRefInfo != null) {
                                 term = new ExpressionTerm.Builder()
-                                        .enabled(term.isEnabled())
+                                        .enabled(term.enabled())
                                         .field(term.getField())
                                         .condition(term.getCondition())
                                         .value(term.getValue())

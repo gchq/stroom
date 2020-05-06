@@ -16,13 +16,6 @@
 
 package stroom.data.client.presenter;
 
-import com.google.gwt.dom.client.NativeEvent;
-import com.google.inject.Inject;
-import com.google.inject.Provider;
-import com.google.web.bindery.event.shared.EventBus;
-import com.google.web.bindery.event.shared.HandlerRegistration;
-import com.gwtplatform.mvp.client.MyPresenterWidget;
-import com.gwtplatform.mvp.client.View;
 import stroom.alert.client.event.ConfirmEvent;
 import stroom.data.client.event.DataSelectionEvent.DataSelectionHandler;
 import stroom.data.client.event.HasDataSelectionHandlers;
@@ -54,6 +47,14 @@ import stroom.widget.popup.client.presenter.DefaultPopupUiHandlers;
 import stroom.widget.popup.client.presenter.PopupSize;
 import stroom.widget.popup.client.presenter.PopupUiHandlers;
 import stroom.widget.popup.client.presenter.PopupView.PopupType;
+
+import com.google.gwt.dom.client.NativeEvent;
+import com.google.inject.Inject;
+import com.google.inject.Provider;
+import com.google.web.bindery.event.shared.EventBus;
+import com.google.web.bindery.event.shared.HandlerRegistration;
+import com.gwtplatform.mvp.client.MyPresenterWidget;
+import com.gwtplatform.mvp.client.View;
 
 import java.util.Arrays;
 import java.util.HashSet;
@@ -380,9 +381,9 @@ public class MetaPresenter extends MyPresenterWidget<MetaPresenter.StreamView>
     }
 
     private static void getTerms(final ExpressionOperator expressionOperator, final AbstractField field, final Set<String> terms) {
-        if (expressionOperator.isEnabled()) {
+        if (expressionOperator.enabled()) {
             for (final ExpressionItem item : expressionOperator.getChildren()) {
-                if (item.isEnabled()) {
+                if (item.enabled()) {
                     if (item instanceof ExpressionTerm) {
                         if (field.getName().equals(((ExpressionTerm) item).getField())) {
                             terms.add(((ExpressionTerm) item).getValue());

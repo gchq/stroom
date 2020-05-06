@@ -49,7 +49,7 @@ public final class CommonExpressionMapper implements Function<ExpressionItem, Co
     public Collection<Condition> apply(final ExpressionItem item) {
         Collection<Condition> result = Collections.emptyList();
 
-        if (item != null && item.isEnabled()) {
+        if (item != null && item.enabled()) {
             if (item instanceof ExpressionTerm) {
                 final ExpressionTerm term = (ExpressionTerm) item;
                 final Function<ExpressionTerm, Condition> termHandler = termHandlers.get(term.getField());
@@ -70,7 +70,7 @@ public final class CommonExpressionMapper implements Function<ExpressionItem, Co
                         .collect(Collectors.toList());
 
                 if (children.size() > 0) {
-                    switch (operator.getOp()) {
+                    switch (operator.op()) {
                         case AND:
                             result = Collections.singleton(and(children));
                             break;

@@ -290,7 +290,7 @@ class ProcessorTaskDaoImpl implements ProcessorTaskDao {
 //        ExpressionOperator.Builder builder;
 //
 //        if (expression != null) {
-//            builder = new ExpressionOperator.Builder(expression.getOp());
+//            builder = new ExpressionOperator.Builder(expression.op());
 //
 //            if (expression.enabled() && expression.getChildren() != null) {
 //                addChildren(builder, expression);

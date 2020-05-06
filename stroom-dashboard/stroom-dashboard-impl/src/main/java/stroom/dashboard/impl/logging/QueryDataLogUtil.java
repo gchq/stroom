@@ -17,13 +17,6 @@
 
 package stroom.dashboard.impl.logging;
 
-import event.logging.BaseAdvancedQueryItem;
-import event.logging.BaseAdvancedQueryOperator;
-import event.logging.BaseAdvancedQueryOperator.And;
-import event.logging.BaseAdvancedQueryOperator.Not;
-import event.logging.BaseAdvancedQueryOperator.Or;
-import event.logging.TermCondition;
-import event.logging.util.EventLoggingUtil;
 import stroom.collection.api.CollectionService;
 import stroom.dictionary.api.WordListProvider;
 import stroom.docref.DocRef;
@@ -31,6 +24,14 @@ import stroom.query.api.v2.ExpressionItem;
 import stroom.query.api.v2.ExpressionOperator;
 import stroom.query.api.v2.ExpressionOperator.Op;
 import stroom.query.api.v2.ExpressionTerm;
+
+import event.logging.BaseAdvancedQueryItem;
+import event.logging.BaseAdvancedQueryOperator;
+import event.logging.BaseAdvancedQueryOperator.And;
+import event.logging.BaseAdvancedQueryOperator.Not;
+import event.logging.BaseAdvancedQueryOperator.Or;
+import event.logging.TermCondition;
+import event.logging.util.EventLoggingUtil;
 
 import java.util.List;
 import java.util.Set;
@@ -45,7 +46,7 @@ public class QueryDataLogUtil {
             return;
         }
 
-        if (item.isEnabled()) {
+        if (item.enabled()) {
             if (item instanceof ExpressionOperator) {
                 appendOperator(items, wordListProvider, collectionService, (ExpressionOperator) item);
             } else {
@@ -109,10 +110,11 @@ public class QueryDataLogUtil {
                         if (collectionService != null) {
                             final Set<DocRef> docRefs = collectionService.getDescendants(expressionTerm.getDocRef(), expressionTerm.getField());
                             if (docRefs != null && docRefs.size() > 0) {
-                                final String words = docRefs.stream().map(DocRef::getUuid).collect(Collectors.joining(","));
-                                if (words != null) {
-                                    value += " (" + words + ")";
-                                }
+                                final String words = docRefs
+                                        .stream()
+                                        .map(DocRef::getUuid)
+                                        .collect(Collectors.joining(","));
+                                value += " (" + words + ")";
                                 appendTerm(items, field, TermCondition.EQUALS, value);
 
                             } else {
@@ -140,9 +142,9 @@ public class QueryDataLogUtil {
                                        final CollectionService collectionService,
                                        final ExpressionOperator exp) {
         BaseAdvancedQueryOperator operator;
-        if (exp.getOp() == Op.NOT) {
+        if (exp.op() == Op.NOT) {
             operator = new Not();
-        } else if (exp.getOp() == Op.OR) {
+        } else if (exp.op() == Op.OR) {
             operator = new Or();
         } else {
             operator = new And();
