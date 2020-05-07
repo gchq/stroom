@@ -31,6 +31,8 @@ import stroom.alert.api.AlertManager;
 import javax.inject.Inject;
 import javax.inject.Singleton;
 import java.io.IOException;
+import java.util.Arrays;
+import java.util.List;
 import java.util.concurrent.locks.Lock;
 
 /**
@@ -62,11 +64,13 @@ public class IndexerImpl implements Indexer {
             // Try and add the document silently without locking.
             boolean success = false;
             try {
-                final IndexShardWriter indexShardWriter = indexShardWriterCache.getWriterByShardKey(indexShardKey);
+                final String [] path = {"Analytic Demonstrator","Sample Dashboards"};
+                final List<String> folderPath = Arrays.asList(path);
 
-                final DocRef folderRef = new DocRef(ExplorerConstants.FOLDER, "7bba5868-9218-45d6-ac0f-eeb03342a8ed", null);
-                final AlertProcessor processor = alertManager.createAlertProcessor(folderRef);
+                final AlertProcessor processor = alertManager.createAlertProcessor(folderPath);
                 processor.createAlerts(document);
+
+                final IndexShardWriter indexShardWriter = indexShardWriterCache.getWriterByShardKey(indexShardKey);
                 indexShardWriter.addDocument(document);
                 success = true;
             } catch (final IOException | RuntimeException e) {
