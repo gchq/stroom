@@ -13,7 +13,7 @@
         "type" : "term",
         "field" : "Feed Name",
         "condition" : "EQUALS",
-        "value" : "COUNT_FEED_LARGE",
+        "value" : "COUNT_FEED_SMALL",
         "enabled" : true
       }, {
         "type" : "term",
