@@ -17,6 +17,8 @@
 package stroom.search.impl;
 
 import stroom.cluster.task.api.ClusterTaskHandlerBinder;
+import stroom.job.api.RunnableWrapper;
+import stroom.job.api.ScheduledJobsBinder;
 import stroom.search.api.EventSearch;
 import stroom.search.extraction.ExtractionModule;
 import stroom.util.guice.GuiceUtil;
@@ -24,6 +26,10 @@ import stroom.util.guice.RestResourcesBinder;
 import stroom.util.shared.Clearable;
 
 import com.google.inject.AbstractModule;
+
+import javax.inject.Inject;
+
+import static stroom.job.api.Schedule.ScheduleType.PERIODIC;
 
 public class SearchModule extends AbstractModule {
     @Override
@@ -39,5 +45,18 @@ public class SearchModule extends AbstractModule {
 
         ClusterTaskHandlerBinder.create(binder())
                 .bind(ClusterSearchTask.class, ClusterSearchTaskHandler.class);
+
+        ScheduledJobsBinder.create(binder())
+                .bindJobTo(EvictExpiredElements.class, builder -> builder
+                        .withName("Evict expired elements")
+                        .withManagedState(false)
+                        .withSchedule(PERIODIC, "10s"));
+    }
+
+    private static class EvictExpiredElements extends RunnableWrapper {
+        @Inject
+        EvictExpiredElements(final LuceneSearchResponseCreatorManager luceneSearchResponseCreatorManager) {
+            super(luceneSearchResponseCreatorManager::evictExpiredElements);
+        }
     }
 }
