@@ -12,7 +12,12 @@ public class ScheduledJob {
     private Schedule schedule;
     private String name;
 
-    ScheduledJob(Schedule schedule, String name, String description, boolean enabled, boolean advanced, boolean managed) {
+    private ScheduledJob(final Schedule schedule,
+                         final String name,
+                         final String description,
+                         final boolean enabled,
+                         final boolean advanced,
+                         final boolean managed) {
         this.schedule = schedule;
         this.name = name;
         this.description = description;
@@ -82,6 +87,10 @@ public class ScheduledJob {
             return this;
         }
 
+        /**
+         * See {@link stroom.util.scheduler.SimpleCronScheduler} or
+         * {@link stroom.util.scheduler.FrequencyScheduler} for schedule string format.
+         */
         public Builder withSchedule(Schedule.ScheduleType scheduleType, String schedule) {
             this.schedule = new Schedule(scheduleType, schedule);
             return this;
