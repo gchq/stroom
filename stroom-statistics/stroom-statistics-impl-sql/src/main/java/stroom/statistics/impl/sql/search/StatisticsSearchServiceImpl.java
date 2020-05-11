@@ -393,7 +393,9 @@ class StatisticsSearchServiceImpl implements StatisticsSearchService {
                         PreparedStatementResourceHolder::dispose);
     }
 
-    private ResultSet executeQuery(TaskContext parentContext, SqlBuilder sql, PreparedStatement ps) {
+    private ResultSet executeQuery(final TaskContext parentContext,
+                                   final SqlBuilder sql,
+                                   final PreparedStatement ps) {
         return taskContextFactory.contextResult(
                 parentContext,
                 SqlStatisticsStore.TASK_NAME,
