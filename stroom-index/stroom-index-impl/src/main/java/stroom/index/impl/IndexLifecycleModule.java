@@ -16,17 +16,21 @@
 
 package stroom.index.impl;
 
-import stroom.lifecycle.api.AbstractLifecycleModule;
-import stroom.lifecycle.api.RunnableWrapper;
+import stroom.lifecycle.api.LifecycleBinder;
+import stroom.util.RunnableWrapper;
+
+import com.google.inject.AbstractModule;
 
 import javax.inject.Inject;
 
-public class IndexLifecycleModule extends AbstractLifecycleModule {
+public class IndexLifecycleModule extends AbstractModule {
     @Override
     protected void configure() {
         super.configure();
-        bindStartup().to(IndexShardWriterCacheStartup.class);
-        bindShutdown().to(IndexShardWriterCacheShutdown.class);
+
+        LifecycleBinder.create(binder())
+                .bindStartupTaskTo(IndexShardWriterCacheStartup.class)
+                .bindShutdownTaskTo(IndexShardWriterCacheShutdown.class);
     }
 
     private static class IndexShardWriterCacheStartup extends RunnableWrapper {

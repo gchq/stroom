@@ -18,7 +18,7 @@ package stroom.statistics.impl.sql;
 
 import stroom.db.util.AbstractFlyWayDbModule;
 import stroom.db.util.DataSourceProxy;
-import stroom.job.api.RunnableWrapper;
+import stroom.util.RunnableWrapper;
 import stroom.job.api.ScheduledJobsBinder;
 import stroom.util.guice.HasSystemInfoBinder;
 

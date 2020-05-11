@@ -16,16 +16,20 @@
 
 package stroom.core.entity.event;
 
-import stroom.lifecycle.api.AbstractLifecycleModule;
-import stroom.lifecycle.api.RunnableWrapper;
+import stroom.lifecycle.api.LifecycleBinder;
+import stroom.util.RunnableWrapper;
+
+import com.google.inject.AbstractModule;
 
 import javax.inject.Inject;
 
-public class EntityEventLifecycleModule extends AbstractLifecycleModule {
+public class EntityEventLifecycleModule extends AbstractModule {
+
     @Override
     protected void configure() {
-        super.configure();
-        bindStartup().to(EntityEventBusInit.class);
+
+        LifecycleBinder.create(binder())
+                .bindStartupTaskTo(EntityEventBusInit.class);
     }
 
     private static class EntityEventBusInit extends RunnableWrapper {

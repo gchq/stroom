@@ -16,16 +16,19 @@
 
 package stroom.importexport.impl;
 
-import stroom.lifecycle.api.AbstractLifecycleModule;
-import stroom.lifecycle.api.RunnableWrapper;
+import stroom.lifecycle.api.LifecycleBinder;
+import stroom.util.RunnableWrapper;
+
+import com.google.inject.AbstractModule;
 
 import javax.inject.Inject;
 
-public class ImportExportLifecycleModule extends AbstractLifecycleModule {
+public class ImportExportLifecycleModule extends AbstractModule {
     @Override
     protected void configure() {
-        super.configure();
-        bindStartup().priority(-1000).to(ContentPackImportStartup.class);
+
+        LifecycleBinder.create(binder())
+                .bindStartupTaskTo(ContentPackImportStartup.class, -1_000);
     }
 
     private static class ContentPackImportStartup extends RunnableWrapper {

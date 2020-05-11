@@ -16,16 +16,21 @@
 
 package stroom.cache.impl;
 
-import stroom.lifecycle.api.AbstractLifecycleModule;
-import stroom.lifecycle.api.RunnableWrapper;
+
+import stroom.lifecycle.api.LifecycleBinder;
+import stroom.util.RunnableWrapper;
+
+import com.google.inject.AbstractModule;
 
 import javax.inject.Inject;
 
-public class CacheManagerLifecycleModule extends AbstractLifecycleModule {
+public class CacheManagerLifecycleModule extends AbstractModule {
     @Override
     protected void configure() {
         super.configure();
-        bindShutdown().to(CacheManagerClose.class);
+
+        LifecycleBinder.create(binder())
+                .bindStartupTaskTo(CacheManagerClose.class);
     }
 
     private static class CacheManagerClose extends RunnableWrapper {

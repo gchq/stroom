@@ -16,17 +16,21 @@
 
 package stroom.resource.impl;
 
-import stroom.lifecycle.api.AbstractLifecycleModule;
-import stroom.lifecycle.api.RunnableWrapper;
+import stroom.lifecycle.api.LifecycleBinder;
+import stroom.util.RunnableWrapper;
+
+import com.google.inject.AbstractModule;
 
 import javax.inject.Inject;
 
-public class ResourceLifecycleModule extends AbstractLifecycleModule {
+public class ResourceLifecycleModule extends AbstractModule {
+
     @Override
     protected void configure() {
-        super.configure();
-        bindStartup().to(ResourceStoreStartup.class);
-        bindShutdown().to(ResourceStoreShutdown.class);
+
+        LifecycleBinder.create(binder())
+                .bindStartupTaskTo(ResourceStoreStartup.class)
+                .bindShutdownTaskTo(ResourceStoreShutdown.class);
     }
 
     private static class ResourceStoreStartup extends RunnableWrapper {

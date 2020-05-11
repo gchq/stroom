@@ -16,16 +16,20 @@
 
 package stroom.search.impl.shard;
 
-import stroom.lifecycle.api.AbstractLifecycleModule;
-import stroom.lifecycle.api.RunnableWrapper;
+import stroom.lifecycle.api.LifecycleBinder;
+import stroom.util.RunnableWrapper;
+
+import com.google.inject.AbstractModule;
 
 import javax.inject.Inject;
 
-public class SearchLifecycleModule extends AbstractLifecycleModule {
+public class SearchLifecycleModule extends AbstractModule {
+
     @Override
     protected void configure() {
-        super.configure();
-        bindShutdown().to(IndexShardSearchTaskExecutorShutdown.class);
+
+        LifecycleBinder.create(binder())
+                .bindShutdownTaskTo(IndexShardSearchTaskExecutorShutdown.class);
     }
 
     private static class IndexShardSearchTaskExecutorShutdown extends RunnableWrapper {

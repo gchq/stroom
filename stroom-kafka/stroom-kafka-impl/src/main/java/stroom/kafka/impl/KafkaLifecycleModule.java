@@ -16,16 +16,19 @@
 
 package stroom.kafka.impl;
 
-import stroom.lifecycle.api.AbstractLifecycleModule;
-import stroom.lifecycle.api.RunnableWrapper;
+import stroom.lifecycle.api.LifecycleBinder;
+import stroom.util.RunnableWrapper;
+
+import com.google.inject.AbstractModule;
 
 import javax.inject.Inject;
 
-public class KafkaLifecycleModule extends AbstractLifecycleModule {
+public class KafkaLifecycleModule extends AbstractModule {
     @Override
     protected void configure() {
-        super.configure();
-        bindShutdown().to(KafkaProducerFactoryShutdown.class);
+
+        LifecycleBinder.create(binder())
+                .bindShutdownTaskTo(KafkaProducerFactoryShutdown.class);
     }
 
     private static class KafkaProducerFactoryShutdown extends RunnableWrapper {

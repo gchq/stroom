@@ -18,7 +18,7 @@ package stroom.processor.impl;
 
 import stroom.importexport.api.ImportExportActionHandler;
 import stroom.job.api.DistributedTaskFactory;
-import stroom.job.api.RunnableWrapper;
+import stroom.util.RunnableWrapper;
 import stroom.job.api.ScheduledJobsBinder;
 import stroom.processor.api.ProcessorFilterService;
 import stroom.processor.api.ProcessorService;

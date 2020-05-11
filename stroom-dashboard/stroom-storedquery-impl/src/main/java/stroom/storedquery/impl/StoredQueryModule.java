@@ -1,6 +1,6 @@
 package stroom.storedquery.impl;
 
-import stroom.job.api.RunnableWrapper;
+import stroom.util.RunnableWrapper;
 import stroom.job.api.ScheduledJobsBinder;
 import stroom.storedquery.api.StoredQueryService;
 import stroom.util.guice.RestResourcesBinder;

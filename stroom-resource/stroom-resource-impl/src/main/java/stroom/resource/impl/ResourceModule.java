@@ -16,7 +16,7 @@
 
 package stroom.resource.impl;
 
-import stroom.job.api.RunnableWrapper;
+import stroom.util.RunnableWrapper;
 import stroom.job.api.ScheduledJobsBinder;
 import stroom.resource.api.ResourceStore;
 

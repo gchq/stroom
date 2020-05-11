@@ -1,15 +1,18 @@
 package stroom.meta.impl.db;
 
-import stroom.lifecycle.api.AbstractLifecycleModule;
-import stroom.lifecycle.api.RunnableWrapper;
+import stroom.lifecycle.api.LifecycleBinder;
+import stroom.util.RunnableWrapper;
+
+import com.google.inject.AbstractModule;
 
 import javax.inject.Inject;
 
-public class MetaDbLifecycleModule extends AbstractLifecycleModule {
+public class MetaDbLifecycleModule extends AbstractModule {
     @Override
     protected void configure() {
-        super.configure();
-        bindShutdown().to(MetaValueServiceFlush.class);
+
+        LifecycleBinder.create(binder())
+                .bindShutdownTaskTo(MetaValueServiceFlush.class);
     }
 
     private static class MetaValueServiceFlush extends RunnableWrapper {

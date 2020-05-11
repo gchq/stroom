@@ -16,20 +16,22 @@
 
 package stroom.task.impl;
 
-import stroom.lifecycle.api.AbstractLifecycleModule;
-import stroom.lifecycle.api.RunnableWrapper;
+import stroom.lifecycle.api.LifecycleBinder;
 import stroom.task.api.TaskManager;
+import stroom.util.RunnableWrapper;
+
+import com.google.inject.AbstractModule;
 
 import javax.inject.Inject;
 
-public class TaskManagerLifecycleModule extends AbstractLifecycleModule {
+public class TaskManagerLifecycleModule extends AbstractModule {
     @Override
     protected void configure() {
-        super.configure();
 
         // Make sure the first thing to start and the last thing to stop is the task manager.
-        bindStartup().priority(Integer.MAX_VALUE).to(TaskManagerStartup.class);
-        bindShutdown().priority(Integer.MAX_VALUE).to(TaskManagerShutdown.class);
+        LifecycleBinder.create(binder())
+                .bindStartupTaskTo(TaskManagerStartup.class, Integer.MAX_VALUE)
+                .bindShutdownTaskTo(TaskManagerShutdown.class, Integer.MAX_VALUE);
     }
 
     private static class TaskManagerStartup extends RunnableWrapper {

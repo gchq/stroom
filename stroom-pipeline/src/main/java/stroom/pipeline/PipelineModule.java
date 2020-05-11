@@ -21,7 +21,7 @@ import stroom.docstore.shared.Doc;
 import stroom.event.logging.api.ObjectInfoProviderBinder;
 import stroom.explorer.api.ExplorerActionHandler;
 import stroom.importexport.api.ImportExportActionHandler;
-import stroom.job.api.RunnableWrapper;
+import stroom.util.RunnableWrapper;
 import stroom.job.api.ScheduledJobsBinder;
 import stroom.pipeline.destination.RollingDestinations;
 import stroom.pipeline.shared.PipelineDoc;

@@ -16,16 +16,20 @@
 
 package stroom.cluster.impl;
 
-import stroom.lifecycle.api.AbstractLifecycleModule;
-import stroom.lifecycle.api.RunnableWrapper;
+import stroom.lifecycle.api.LifecycleBinder;
+import stroom.util.RunnableWrapper;
+
+import com.google.inject.AbstractModule;
 
 import javax.inject.Inject;
 
-public class ClusterLifecycleModule extends AbstractLifecycleModule {
+public class ClusterLifecycleModule extends AbstractModule {
     @Override
     protected void configure() {
         super.configure();
-        bindStartup().to(ClusterNodeManagerInit.class);
+
+        LifecycleBinder.create(binder())
+                .bindStartupTaskTo(ClusterNodeManagerInit.class);
     }
 
     private static class ClusterNodeManagerInit extends RunnableWrapper {

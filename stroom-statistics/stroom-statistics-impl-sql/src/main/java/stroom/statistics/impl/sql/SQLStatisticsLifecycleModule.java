@@ -16,21 +16,21 @@
 
 package stroom.statistics.impl.sql;
 
-import stroom.lifecycle.api.AbstractLifecycleModule;
-import stroom.lifecycle.api.RunnableWrapper;
+import stroom.lifecycle.api.LifecycleBinder;
+import stroom.util.RunnableWrapper;
+
+import com.google.inject.AbstractModule;
 
 import javax.inject.Inject;
 
-public class SQLStatisticsLifecycleModule extends AbstractLifecycleModule {
+public class SQLStatisticsLifecycleModule extends AbstractModule {
     @Override
     protected void configure() {
-        super.configure();
 
         // We need it to shutdown quite late so anything that is generating stats has had
         // a chance to finish generating
-        bindShutdown()
-                .priority(100_000)
-                .to(SQLStatisticShutdown.class);
+        LifecycleBinder.create(binder())
+                .bindShutdownTaskTo(SQLStatisticShutdown.class, 100_000);
     }
 
     private static class SQLStatisticShutdown extends RunnableWrapper {

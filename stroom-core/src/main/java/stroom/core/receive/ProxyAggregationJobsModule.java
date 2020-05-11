@@ -1,6 +1,6 @@
 package stroom.core.receive;
 
-import stroom.job.api.RunnableWrapper;
+import stroom.util.RunnableWrapper;
 import stroom.job.api.ScheduledJobsBinder;
 
 import com.google.inject.AbstractModule;

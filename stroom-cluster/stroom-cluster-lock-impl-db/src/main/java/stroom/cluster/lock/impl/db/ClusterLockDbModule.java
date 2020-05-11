@@ -3,7 +3,7 @@ package stroom.cluster.lock.impl.db;
 import stroom.cluster.lock.api.ClusterLockService;
 import stroom.db.util.AbstractFlyWayDbModule;
 import stroom.db.util.DataSourceProxy;
-import stroom.job.api.RunnableWrapper;
+import stroom.util.RunnableWrapper;
 import stroom.job.api.ScheduledJobsBinder;
 import stroom.util.guice.GuiceUtil;
 import stroom.util.guice.RestResourcesBinder;

@@ -1,16 +1,20 @@
 package stroom.processor.impl;
 
-import stroom.lifecycle.api.AbstractLifecycleModule;
-import stroom.lifecycle.api.RunnableWrapper;
+import stroom.lifecycle.api.LifecycleBinder;
+import stroom.util.RunnableWrapper;
+
+import com.google.inject.AbstractModule;
 
 import javax.inject.Inject;
 
-public class StreamTaskLifecycleModule extends AbstractLifecycleModule {
+public class StreamTaskLifecycleModule extends AbstractModule {
+
     @Override
     protected void configure() {
-        super.configure();
-        bindStartup().to(ProcessorTaskManagerStartup.class);
-        bindShutdown().to(ProcessorTaskManagerShutdown.class);
+
+        LifecycleBinder.create(binder())
+                .bindStartupTaskTo(ProcessorTaskManagerStartup.class)
+                .bindShutdownTaskTo(ProcessorTaskManagerShutdown.class);
     }
 
     private static class ProcessorTaskManagerStartup extends RunnableWrapper {

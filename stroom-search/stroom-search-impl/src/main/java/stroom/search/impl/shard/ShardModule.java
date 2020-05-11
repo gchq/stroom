@@ -16,7 +16,7 @@
 
 package stroom.search.impl.shard;
 
-import stroom.job.api.RunnableWrapper;
+import stroom.util.RunnableWrapper;
 import stroom.job.api.ScheduledJobsBinder;
 import stroom.util.guice.GuiceUtil;
 import stroom.util.shared.Clearable;

@@ -16,16 +16,20 @@
 
 package stroom.statistics.impl;
 
-import stroom.lifecycle.api.AbstractLifecycleModule;
-import stroom.lifecycle.api.RunnableWrapper;
+
+import stroom.lifecycle.api.LifecycleBinder;
+import stroom.util.RunnableWrapper;
+
+import com.google.inject.AbstractModule;
 
 import javax.inject.Inject;
 
-public class InternalStatisticsLifecycleModule extends AbstractLifecycleModule {
+public class InternalStatisticsLifecycleModule extends AbstractModule {
     @Override
     protected void configure() {
-        super.configure();
-        bindStartup().priority(100).to(InternalStatisticsReceiverInit.class);
+
+        LifecycleBinder.create(binder())
+                .bindStartupTaskTo(InternalStatisticsReceiverInit.class, 100);
     }
 
     private static class InternalStatisticsReceiverInit extends RunnableWrapper {

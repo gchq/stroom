@@ -16,16 +16,20 @@
 
 package stroom.pipeline.destination;
 
-import stroom.lifecycle.api.AbstractLifecycleModule;
-import stroom.lifecycle.api.RunnableWrapper;
+import stroom.lifecycle.api.LifecycleBinder;
+import stroom.util.RunnableWrapper;
+
+import com.google.inject.AbstractModule;
 
 import javax.inject.Inject;
 
-public class RollingDestinationsLifecycleModule extends AbstractLifecycleModule {
+public class RollingDestinationsLifecycleModule extends AbstractModule {
+
     @Override
     protected void configure() {
-        super.configure();
-        bindShutdown().to(RollingDestinationsForceRoll.class);
+
+        LifecycleBinder.create(binder())
+                .bindShutdownTaskTo(RollingDestinationsForceRoll.class);
     }
 
     private static class RollingDestinationsForceRoll extends RunnableWrapper {

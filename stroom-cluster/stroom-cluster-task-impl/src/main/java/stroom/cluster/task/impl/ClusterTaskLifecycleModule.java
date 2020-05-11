@@ -16,16 +16,20 @@
 
 package stroom.cluster.task.impl;
 
-import stroom.lifecycle.api.AbstractLifecycleModule;
-import stroom.lifecycle.api.RunnableWrapper;
+import stroom.lifecycle.api.LifecycleBinder;
+import stroom.util.RunnableWrapper;
+
+import com.google.inject.AbstractModule;
 
 import javax.inject.Inject;
 
-public class ClusterTaskLifecycleModule extends AbstractLifecycleModule {
+public class ClusterTaskLifecycleModule extends AbstractModule {
     @Override
     protected void configure() {
         super.configure();
-        bindShutdown().to(ClusterResultCollectorCacheShutdown.class);
+
+        LifecycleBinder.create(binder())
+                .bindShutdownTaskTo(ClusterResultCollectorCacheShutdown.class);
     }
 
     private static class ClusterResultCollectorCacheShutdown extends RunnableWrapper {
