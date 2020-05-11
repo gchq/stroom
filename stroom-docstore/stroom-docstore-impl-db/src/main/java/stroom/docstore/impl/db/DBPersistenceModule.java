@@ -16,10 +16,10 @@
 
 package stroom.docstore.impl.db;
 
-import com.google.inject.multibindings.Multibinder;
 import stroom.db.util.AbstractFlyWayDbModule;
 import stroom.db.util.DataSourceProxy;
 import stroom.docstore.impl.Persistence;
+import stroom.util.guice.GuiceUtil;
 import stroom.util.shared.Clearable;
 
 import javax.sql.DataSource;
@@ -35,8 +35,8 @@ public class DBPersistenceModule extends AbstractFlyWayDbModule<DocStoreConfig, 
 
         bind(Persistence.class).to(DBPersistence.class);
 
-        Multibinder.newSetBinder(binder(), Clearable.class)
-                .addBinding().to(DBPersistence.class);
+        GuiceUtil.buildMultiBinder(binder(), Clearable.class)
+                .addBinding(DBPersistence.class);
     }
 
     @Override

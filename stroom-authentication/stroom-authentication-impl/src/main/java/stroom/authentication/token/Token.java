@@ -18,12 +18,9 @@
 
 package stroom.authentication.token;
 
-/**
- * This POJO binds to the response from the database, and to the JSON.
- * <p>
- * The names are database-style to reduce mapping code. This looks weird in Java but it's sensible for the database
- * and it's sensible for the json.
- */
+// TODO make this immutable with a builder for the optional stuff
+//   and a JsonCreator on the ctor, then get rid of as many boxed primitives as
+//   possible
 public class Token {
     private Integer id;
     private Integer version;

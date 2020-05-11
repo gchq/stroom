@@ -17,8 +17,6 @@
 
 package stroom.docstore.impl;
 
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 import stroom.docref.DocRef;
 import stroom.docref.DocRefInfo;
 import stroom.docstore.api.AuditFieldFilter;
@@ -32,10 +30,16 @@ import stroom.importexport.shared.ImportState.ImportMode;
 import stroom.importexport.shared.ImportState.State;
 import stroom.security.api.SecurityContext;
 import stroom.security.shared.DocumentPermissionNames;
+import stroom.util.entityevent.EntityAction;
+import stroom.util.entityevent.EntityEvent;
+import stroom.util.entityevent.EntityEventBus;
 import stroom.util.logging.LogUtil;
 import stroom.util.shared.Message;
 import stroom.util.shared.PermissionException;
 import stroom.util.shared.Severity;
+
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import javax.inject.Inject;
 import java.io.IOException;
@@ -57,8 +61,9 @@ import java.util.stream.Stream;
 public class StoreImpl<D extends Doc> implements Store<D> {
     private static final Logger LOGGER = LoggerFactory.getLogger(StoreImpl.class);
 
-    private final SecurityContext securityContext;
     private final Persistence persistence;
+    private final EntityEventBus entityEventBus;
+    private final SecurityContext securityContext;
 
     private DocumentSerialiser2<D> serialiser;
     private String type;
@@ -70,11 +75,13 @@ public class StoreImpl<D extends Doc> implements Store<D> {
 
     @Inject
     StoreImpl(final Persistence persistence,
+              final EntityEventBus entityEventBus,
               final SecurityContext securityContext,
               final DocumentSerialiser2<D> serialiser,
               final String type,
               final Class<D> clazz) {
         this.persistence = persistence;
+        this.entityEventBus = entityEventBus;
         this.securityContext = securityContext;
         this.serialiser = serialiser;
         this.type = type;
@@ -186,7 +193,9 @@ public class StoreImpl<D extends Doc> implements Store<D> {
         }
 
         persistence.getLockFactory().lock(uuid, () -> {
-            persistence.delete(new DocRef(type, uuid));
+            final DocRef docRef = new DocRef(type, uuid);
+            persistence.delete(docRef);
+            EntityEvent.fire(entityEventBus, docRef, EntityAction.DELETE);
             dirty.set(true);
         });
     }
@@ -308,7 +317,9 @@ public class StoreImpl<D extends Doc> implements Store<D> {
                 persistence.getLockFactory().lock(uuid, () -> {
                     try {
                         persistence.write(docRef, exists, dataMap);
+                        EntityEvent.fire(entityEventBus, docRef, EntityAction.CREATE);
                         dirty.set(true);
+
                     } catch (final IOException e) {
                         throw new UncheckedIOException(e);
                     }
@@ -408,6 +419,7 @@ public class StoreImpl<D extends Doc> implements Store<D> {
             persistence.getLockFactory().lock(document.getUuid(), () -> {
                 try {
                     persistence.write(docRef, false, data);
+                    EntityEvent.fire(entityEventBus, docRef, EntityAction.CREATE);
                     dirty.set(true);
                 } catch (final IOException e) {
                     throw new UncheckedIOException(e);
@@ -499,6 +511,7 @@ public class StoreImpl<D extends Doc> implements Store<D> {
                     }
 
                     persistence.write(docRef, true, newData);
+                    EntityEvent.fire(entityEventBus, docRef, EntityAction.UPDATE);
                     dirty.set(true);
                 } catch (final IOException e) {
                     throw new UncheckedIOException(e);

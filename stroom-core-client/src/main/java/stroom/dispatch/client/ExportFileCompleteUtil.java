@@ -35,16 +35,18 @@ public final class ExportFileCompleteUtil {
             HidePopupEvent.fire(parent, parent, false, false);
         }
 
-        final String message = getMessage(result);
-        if (message != null) {
-            AlertEvent.fireWarn(parent, message, () -> {
+        if (result != null) {
+            final String message = getMessage(result);
+            if (message != null) {
+                AlertEvent.fireWarn(parent, message, () -> {
+                    // Change the browser location to download the zip file.
+                    download(locationManager, result);
+                });
+
+            } else {
                 // Change the browser location to download the zip file.
                 download(locationManager, result);
-            });
-
-        } else {
-            // Change the browser location to download the zip file.
-            download(locationManager, result);
+            }
         }
     }
 

@@ -16,7 +16,6 @@
 
 package stroom.data.store.impl;
 
-import com.codahale.metrics.health.HealthCheck.Result;
 import stroom.data.shared.DataResource;
 import stroom.data.shared.UploadDataRequest;
 import stroom.data.store.api.Store;
@@ -34,7 +33,6 @@ import stroom.pipeline.state.PipelineHolder;
 import stroom.resource.api.ResourceStore;
 import stroom.security.api.SecurityContext;
 import stroom.security.shared.PermissionNames;
-import stroom.util.HasHealthCheck;
 import stroom.util.pipeline.scope.PipelineScopeRunnable;
 import stroom.util.shared.OffsetRange;
 import stroom.util.shared.ResourceGeneration;
@@ -47,7 +45,7 @@ import javax.ws.rs.QueryParam;
 import java.nio.file.Path;
 import java.util.ArrayList;
 
-class DataResourceImpl implements DataResource, HasHealthCheck {
+class DataResourceImpl implements DataResource {
     private final DataFetcher dataFetcher;
     private final ResourceStore resourceStore;
     private final Provider<DataUploadTaskHandler> dataUploadTaskHandlerProvider;
@@ -107,9 +105,13 @@ class DataResourceImpl implements DataResource, HasHealthCheck {
                 }
 
                 final DataDownloadSettings settings = new DataDownloadSettings();
-                dataDownloadTaskHandlerProvider.get().downloadData(criteria, file.getParent(), fileName, settings);
+                final DataDownloadResult result = dataDownloadTaskHandlerProvider.get().downloadData(criteria, file.getParent(), fileName, settings);
 
                 streamEventLog.exportStream(criteria, null);
+
+                if (result.getRecordsWritten() == 0) {
+                    return null;
+                }
 
             } catch (final RuntimeException e) {
                 streamEventLog.exportStream(criteria, e);
@@ -175,10 +177,5 @@ class DataResourceImpl implements DataResource, HasHealthCheck {
                     showAsHtml,
                     expandedSeverities);
         });
-    }
-
-    @Override
-    public Result getHealth() {
-        return Result.healthy();
     }
 }

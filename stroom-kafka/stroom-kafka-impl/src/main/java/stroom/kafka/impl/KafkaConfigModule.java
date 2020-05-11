@@ -16,15 +16,16 @@
 
 package stroom.kafka.impl;
 
-import com.google.inject.AbstractModule;
 import stroom.docstore.api.DocumentActionHandlerBinder;
 import stroom.explorer.api.ExplorerActionHandler;
 import stroom.importexport.api.ImportExportActionHandler;
 import stroom.kafka.api.KafkaProducerFactory;
 import stroom.kafka.shared.KafkaConfigDoc;
 import stroom.util.guice.GuiceUtil;
-import stroom.util.guice.HealthCheckBinder;
+import stroom.util.guice.HasSystemInfoBinder;
 import stroom.util.shared.Clearable;
+
+import com.google.inject.AbstractModule;
 
 public class KafkaConfigModule extends AbstractModule {
     @Override
@@ -41,7 +42,7 @@ public class KafkaConfigModule extends AbstractModule {
         DocumentActionHandlerBinder.create(binder())
                 .bind(KafkaConfigDoc.DOCUMENT_TYPE, KafkaConfigStoreImpl.class);
 
-        HealthCheckBinder.create(binder())
+        HasSystemInfoBinder.create(binder())
                 .bind(KafkaProducerFactoryImpl.class);
 
         GuiceUtil.buildMultiBinder(binder(), Clearable.class)

@@ -16,10 +16,16 @@
 
 package stroom.cache.impl;
 
-import com.google.inject.AbstractModule;
 import stroom.cache.api.CacheManager;
+import stroom.job.api.RunnableWrapper;
+import stroom.job.api.Schedule;
+import stroom.job.api.ScheduledJobsBinder;
 import stroom.util.guice.GuiceUtil;
 import stroom.util.shared.Clearable;
+
+import com.google.inject.AbstractModule;
+
+import javax.inject.Inject;
 
 public class CacheModule extends AbstractModule {
     @Override
@@ -29,5 +35,19 @@ public class CacheModule extends AbstractModule {
 
         GuiceUtil.buildMultiBinder(binder(), Clearable.class)
                 .addBinding(CacheManagerServiceImpl.class);
+
+        ScheduledJobsBinder.create(binder())
+                .bindJobTo(EvictExpiredElements.class, builder -> builder
+                        .withName("Evict expired elements")
+                        .withDescription("Evicts expired cache entries")
+                        .withManagedState(false)
+                        .withSchedule(Schedule.ScheduleType.PERIODIC, "1m"));
+    }
+
+    private static class EvictExpiredElements extends RunnableWrapper {
+        @Inject
+        EvictExpiredElements(final CacheManagerService stroomCacheManager) {
+            super(stroomCacheManager::evictExpiredElements);
+        }
     }
 }

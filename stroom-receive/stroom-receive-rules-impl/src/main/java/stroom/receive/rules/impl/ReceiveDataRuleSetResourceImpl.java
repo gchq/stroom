@@ -16,7 +16,6 @@
 
 package stroom.receive.rules.impl;
 
-import com.codahale.metrics.health.HealthCheck.Result;
 import stroom.docref.DocRef;
 import stroom.docstore.api.DocumentResourceHelper;
 import stroom.importexport.api.DocumentData;
@@ -26,14 +25,13 @@ import stroom.importexport.shared.ImportState;
 import stroom.importexport.shared.ImportState.ImportMode;
 import stroom.receive.rules.shared.ReceiveDataRuleSetResource;
 import stroom.receive.rules.shared.ReceiveDataRules;
-import stroom.util.HasHealthCheck;
 
 import javax.inject.Inject;
 import java.util.ArrayList;
 import java.util.Map;
 import java.util.Set;
 
-public class ReceiveDataRuleSetResourceImpl implements ReceiveDataRuleSetResource, HasHealthCheck {
+public class ReceiveDataRuleSetResourceImpl implements ReceiveDataRuleSetResource {
     private final ReceiveDataRuleSetService ruleSetService;
     private final DocumentResourceHelper documentResourceHelper;
 
@@ -62,8 +60,14 @@ public class ReceiveDataRuleSetResourceImpl implements ReceiveDataRuleSetResourc
     @Override
     public DocRef importDocument(final Base64EncodedDocumentData encodedDocumentData) {
         final DocumentData documentData = DocumentData.fromBase64EncodedDocumentData(encodedDocumentData);
-        final ImportState importState = new ImportState(documentData.getDocRef(), documentData.getDocRef().getName());
-        final ImportExportActionHandler.ImpexDetails result = ruleSetService.importDocument(documentData.getDocRef(), documentData.getDataMap(), importState, ImportMode.IGNORE_CONFIRMATION);
+        final ImportState importState = new ImportState
+                (documentData.getDocRef(),
+                        documentData.getDocRef().getName());
+        final ImportExportActionHandler.ImpexDetails result = ruleSetService.importDocument(
+                documentData.getDocRef(),
+                documentData.getDataMap(),
+                importState,
+                ImportMode.IGNORE_CONFIRMATION);
         if (result != null)
             return result.getDocRef();
         else
@@ -72,12 +76,10 @@ public class ReceiveDataRuleSetResourceImpl implements ReceiveDataRuleSetResourc
 
     @Override
     public Base64EncodedDocumentData exportDocument(final DocRef docRef) {
-        final Map<String, byte[]> map = ruleSetService.exportDocument(docRef, true, new ArrayList<>());
+        final Map<String, byte[]> map = ruleSetService.exportDocument(
+                docRef,
+                true,
+                new ArrayList<>());
         return DocumentData.toBase64EncodedDocumentData(new DocumentData(docRef, map));
-    }
-
-    @Override
-    public Result getHealth() {
-        return Result.healthy();
     }
 }

@@ -16,14 +16,15 @@
 
 package stroom.statistics.impl.hbase.internal;
 
-import com.google.inject.AbstractModule;
-import com.google.inject.multibindings.Multibinder;
 import stroom.statistics.impl.InternalStatisticsService;
+import stroom.util.guice.GuiceUtil;
+
+import com.google.inject.AbstractModule;
 
 public class InternalModule extends AbstractModule {
     @Override
     protected void configure() {
-        final Multibinder<InternalStatisticsService> multibinder = Multibinder.newSetBinder(binder(), InternalStatisticsService.class);
-        multibinder.addBinding().to(StroomStatsInternalStatisticsService.class);
+        GuiceUtil.buildMultiBinder(binder(), InternalStatisticsService.class)
+                .addBinding(StroomStatsInternalStatisticsService.class);
     }
 }

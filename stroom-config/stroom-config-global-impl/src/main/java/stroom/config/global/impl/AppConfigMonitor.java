@@ -1,9 +1,5 @@
 package stroom.config.global.impl;
 
-import com.codahale.metrics.health.HealthCheck;
-import io.dropwizard.lifecycle.Managed;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 import stroom.config.app.AppConfig;
 import stroom.config.app.ConfigLocation;
 import stroom.config.app.YamlUtil;
@@ -12,6 +8,11 @@ import stroom.util.HasHealthCheck;
 import stroom.util.config.FieldMapper;
 import stroom.util.logging.LogUtil;
 import stroom.util.shared.AbstractConfig;
+
+import com.codahale.metrics.health.HealthCheck;
+import io.dropwizard.lifecycle.Managed;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import javax.inject.Inject;
 import javax.inject.Singleton;
@@ -23,6 +24,8 @@ import java.nio.file.StandardWatchEventKinds;
 import java.nio.file.WatchEvent;
 import java.nio.file.WatchKey;
 import java.nio.file.WatchService;
+import java.util.ArrayList;
+import java.util.List;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
@@ -51,6 +54,7 @@ public class AppConfigMonitor implements Managed, HasHealthCheck {
     private AtomicBoolean isRunning = new AtomicBoolean(false);
     private final boolean isValidFile;
     private final AtomicBoolean isFileReadScheduled = new AtomicBoolean(false);
+    private final List<String> errors = new ArrayList<>();
 
     private static final long DELAY_BEFORE_FILE_READ_MS = 1_000;
 
@@ -92,6 +96,7 @@ public class AppConfigMonitor implements Managed, HasHealthCheck {
                 startWatcher();
             } catch (Exception e) {
                 // Swallow and log as we don't want to stop the app from starting just for this
+                errors.add(e.getMessage());
                 LOGGER.error("Unable to start config file monitor due to [{}]. Changes to {} will not be monitored.",
                         e.getMessage(), configFile.toAbsolutePath().normalize(), e);
             }
@@ -294,10 +299,13 @@ public class AppConfigMonitor implements Managed, HasHealthCheck {
     public HealthCheck.Result getHealth() {
         HealthCheck.ResultBuilder resultBuilder = HealthCheck.Result.builder();
 
+        // isRunning will only be true if the file is also present and valid
         if (isRunning.get()) {
             resultBuilder.healthy();
         } else {
-            resultBuilder.unhealthy();
+            resultBuilder
+                    .unhealthy()
+                    .withDetail("errors", errors);
         }
 
         return resultBuilder

@@ -16,17 +16,16 @@
 
 package stroom.importexport.impl;
 
+import stroom.util.guice.RestResourcesBinder;
+
 import com.google.inject.AbstractModule;
-import stroom.util.shared.RestResource;
-import stroom.util.guice.GuiceUtil;
 
 public class ExportConfigResourceModule extends AbstractModule {
     @Override
     protected void configure() {
-
         // This module is separate to ImportExportModule so that headless can import
         // ImportExportModule without dragging in the ExportConfigResource
-        GuiceUtil.buildMultiBinder(binder(), RestResource.class)
-                .addBinding(ExportConfigResource.class);
+        RestResourcesBinder.create(binder())
+                .bind(ExportConfigResource.class);
     }
 }

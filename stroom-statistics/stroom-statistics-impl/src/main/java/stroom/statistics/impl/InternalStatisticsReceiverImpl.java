@@ -1,10 +1,11 @@
 package stroom.statistics.impl;
 
+import stroom.statistics.api.InternalStatisticEvent;
+import stroom.statistics.api.InternalStatisticsReceiver;
+
 import com.google.common.base.Preconditions;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import stroom.statistics.api.InternalStatisticEvent;
-import stroom.statistics.api.InternalStatisticsReceiver;
 
 import javax.inject.Inject;
 import javax.inject.Provider;
@@ -21,15 +22,15 @@ public class InternalStatisticsReceiverImpl implements InternalStatisticsReceive
     private static final Logger LOGGER = LoggerFactory.getLogger(InternalStatisticsReceiverImpl.class);
 
     private final Collection<Provider<InternalStatisticsService>> providers;
-    private final InternalStatisticDocRefCache internalStatisticDocRefCache;
+    private final InternalStatisticsConfig internalStatisticsConfig;
 
     private volatile InternalStatisticsReceiver internalStatisticsReceiver = new DoNothingInternalStatisticsReceiver();
 
     @Inject
     InternalStatisticsReceiverImpl(final Collection<Provider<InternalStatisticsService>> providers,
-                                   final InternalStatisticDocRefCache internalStatisticDocRefCache) {
+                                   final InternalStatisticsConfig internalStatisticsConfig) {
         this.providers = providers;
-        this.internalStatisticDocRefCache = internalStatisticDocRefCache;
+        this.internalStatisticsConfig = internalStatisticsConfig;
     }
 
     void initStatisticEventStore() {
@@ -44,7 +45,9 @@ public class InternalStatisticsReceiverImpl implements InternalStatisticsReceive
                     internalStatisticsService);
         });
 
-        internalStatisticsReceiver = new MultiServiceInternalStatisticsReceiver(internalStatisticDocRefCache, docRefTypeToServiceMap);
+        internalStatisticsReceiver = new MultiServiceInternalStatisticsReceiver(
+                docRefTypeToServiceMap,
+                internalStatisticsConfig);
     }
 
     @Override

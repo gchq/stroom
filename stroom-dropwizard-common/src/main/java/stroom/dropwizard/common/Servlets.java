@@ -1,5 +1,12 @@
 package stroom.dropwizard.common;
 
+import stroom.util.ConsoleColour;
+import stroom.util.HasHealthCheck;
+import stroom.util.logging.LogUtil;
+import stroom.util.shared.IsServlet;
+import stroom.util.shared.ResourcePaths;
+import stroom.util.shared.Unauthenticated;
+
 import com.codahale.metrics.health.HealthCheck;
 import com.codahale.metrics.health.HealthCheckRegistry;
 import io.dropwizard.setup.Environment;
@@ -10,12 +17,6 @@ import org.eclipse.jetty.servlet.ServletContextHandler;
 import org.eclipse.jetty.servlet.ServletHolder;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import stroom.util.ConsoleColour;
-import stroom.util.HasHealthCheck;
-import stroom.util.logging.LogUtil;
-import stroom.util.shared.IsServlet;
-import stroom.util.shared.ResourcePaths;
-import stroom.util.shared.Unauthenticated;
 
 import javax.inject.Inject;
 import javax.servlet.Servlet;
@@ -181,16 +182,7 @@ public class Servlets {
                 }
             });
         } else {
-            // Servlet doesn't have a health check so create a noddy one that shows the path
-            healthCheckRegistry.register(name, new HealthCheck() {
-                @Override
-                protected Result check() {
-                    return Result.builder()
-                            .healthy()
-                            .withDetail(SERVLET_PATH_KEY, fullPathSpec)
-                            .build();
-                }
-            });
+            // Servlet doesn't have a health check
         }
     }
 }

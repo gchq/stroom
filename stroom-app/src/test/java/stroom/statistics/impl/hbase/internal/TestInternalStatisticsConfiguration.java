@@ -1,14 +1,15 @@
 package stroom.statistics.impl.hbase.internal;
 
-import org.junit.jupiter.api.Test;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 import stroom.docref.DocRef;
 import stroom.statistics.api.InternalStatisticKey;
 import stroom.statistics.impl.InternalStatisticsConfig;
 import stroom.statistics.impl.hbase.shared.StroomStatsStoreDoc;
 import stroom.statistics.impl.sql.shared.StatisticStoreDoc;
 import stroom.test.AbstractCoreIntegrationTest;
+
+import org.junit.jupiter.api.Test;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import javax.inject.Inject;
 import java.util.Arrays;
@@ -31,21 +32,57 @@ class TestInternalStatisticsConfiguration extends AbstractCoreIntegrationTest {
      * in dev.yml
      */
     @Test
-    void testGet() {
+    void testGetEnabledDocRefs_one() {
         assertThat(internalStatisticsConfig).isNotNull();
+
+        internalStatisticsConfig.setEnabledStoreTypes(List.of(
+                StatisticStoreDoc.DOCUMENT_TYPE));
+
+        List<String> enabledStoreTypes = internalStatisticsConfig.getEnabledStoreTypes();
 
         Arrays.stream(InternalStatisticKey.values()).forEach(key -> {
             LOGGER.info("Checking docRefs for key {}", key);
-            List<DocRef> docRefs = internalStatisticsConfig.get(key);
+            List<DocRef> docRefs = internalStatisticsConfig.getEnabledDocRefs(key);
 
-            assertThat(docRefs).isNotNull();
-            assertThat(docRefs).hasSize(2);
+            assertThat(docRefs)
+                    .isNotNull();
+
+            assertThat(docRefs)
+                    .hasSize(enabledStoreTypes.size());
+
             assertThat(docRefs.stream()
                     .map(DocRef::getType)
                     .collect(Collectors.toList())
             ).containsExactlyInAnyOrder(
-                    StroomStatsStoreDoc.DOCUMENT_TYPE,
-                    StatisticStoreDoc.DOCUMENT_TYPE);
+                    enabledStoreTypes.toArray(new String[]{ }));
+        });
+    }
+
+    @Test
+    void testGetEnabledDocRefs_both() {
+        assertThat(internalStatisticsConfig).isNotNull();
+
+        internalStatisticsConfig.setEnabledStoreTypes(List.of(
+                StatisticStoreDoc.DOCUMENT_TYPE,
+                StroomStatsStoreDoc.DOCUMENT_TYPE));
+
+        List<String> enabledStoreTypes = internalStatisticsConfig.getEnabledStoreTypes();
+
+        Arrays.stream(InternalStatisticKey.values()).forEach(key -> {
+            LOGGER.info("Checking docRefs for key {}", key);
+            List<DocRef> docRefs = internalStatisticsConfig.getEnabledDocRefs(key);
+
+            assertThat(docRefs)
+                    .isNotNull();
+
+            assertThat(docRefs)
+                    .hasSize(enabledStoreTypes.size());
+
+            assertThat(docRefs.stream()
+                    .map(DocRef::getType)
+                    .collect(Collectors.toList())
+            ).containsExactlyInAnyOrder(
+                    enabledStoreTypes.toArray(new String[]{ }));
         });
     }
 }

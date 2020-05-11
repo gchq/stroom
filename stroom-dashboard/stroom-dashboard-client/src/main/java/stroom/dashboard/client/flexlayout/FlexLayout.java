@@ -16,19 +16,6 @@
 
 package stroom.dashboard.client.flexlayout;
 
-import com.google.gwt.core.client.Scheduler;
-import com.google.gwt.core.shared.GWT;
-import com.google.gwt.dom.client.Element;
-import com.google.gwt.dom.client.NativeEvent;
-import com.google.gwt.dom.client.Style.Position;
-import com.google.gwt.dom.client.Style.Unit;
-import com.google.gwt.resources.client.ClientBundle;
-import com.google.gwt.resources.client.CssResource;
-import com.google.gwt.user.client.Event;
-import com.google.gwt.user.client.ui.Composite;
-import com.google.gwt.user.client.ui.FlowPanel;
-import com.google.gwt.user.client.ui.ProvidesResize;
-import com.google.gwt.user.client.ui.RequiresResize;
 import stroom.dashboard.client.flexlayout.Splitter.SplitInfo;
 import stroom.dashboard.client.main.Component;
 import stroom.dashboard.client.main.Components;
@@ -43,6 +30,20 @@ import stroom.data.grid.client.Glass;
 import stroom.widget.tab.client.presenter.TabData;
 import stroom.widget.tab.client.view.LinkTab;
 import stroom.widget.tab.client.view.LinkTabBar;
+
+import com.google.gwt.core.client.Scheduler;
+import com.google.gwt.core.shared.GWT;
+import com.google.gwt.dom.client.Element;
+import com.google.gwt.dom.client.NativeEvent;
+import com.google.gwt.dom.client.Style.Position;
+import com.google.gwt.dom.client.Style.Unit;
+import com.google.gwt.resources.client.ClientBundle;
+import com.google.gwt.resources.client.CssResource;
+import com.google.gwt.user.client.Event;
+import com.google.gwt.user.client.ui.Composite;
+import com.google.gwt.user.client.ui.FlowPanel;
+import com.google.gwt.user.client.ui.ProvidesResize;
+import com.google.gwt.user.client.ui.RequiresResize;
 
 import java.util.ArrayList;
 import java.util.HashMap;
@@ -247,7 +248,7 @@ public class FlexLayout extends Composite implements RequiresResize, ProvidesRes
                     // Add all invisible tabs so we can move them all together if this is the only tab.
                     if (currentParent.getVisibleTabCount() == 1) {
                         for (final TabConfig tabConfig : currentParent.getTabs()) {
-                            if (!tabConfig.isVisible()) {
+                            if (!tabConfig.visible()) {
                                 tabGroup.add(tabConfig);
                             }
                         }
@@ -819,7 +820,7 @@ public class FlexLayout extends Composite implements RequiresResize, ProvidesRes
                     int visibleTabIndex = 0;
                     for (int i = 0; i < tabConfigList.size(); i++) {
                         final TabConfig tabConfig = tabConfigList.get(i);
-                        if (tabConfig.isVisible()) {
+                        if (tabConfig.visible()) {
 
                             final TabData tabData = tabBar.getTabs().get(visibleTabIndex);
                             final LinkTab slideTab = (LinkTab) tabBar.getTab(tabData);
@@ -1116,7 +1117,7 @@ public class FlexLayout extends Composite implements RequiresResize, ProvidesRes
                     tabLayout = new TabLayout(tabLayoutConfig, changeHandler);
                     if (tabLayoutConfig.getAllTabCount() > 0) {
                         for (final TabConfig tabConfig : tabLayoutConfig.getTabs()) {
-                            if (tabConfig.isVisible()) {
+                            if (tabConfig.visible()) {
                                 final Component component = components.get(tabConfig.getId());
                                 if (component != null) {
                                     tabLayout.addTab(tabConfig, component);

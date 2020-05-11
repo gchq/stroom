@@ -16,12 +16,12 @@
 
 package stroom.core.entity.event;
 
-import com.google.inject.AbstractModule;
-import com.google.inject.multibindings.Multibinder;
 import stroom.util.entityevent.EntityEvent;
 import stroom.util.entityevent.EntityEventBus;
 import stroom.util.guice.GuiceUtil;
-import stroom.util.shared.RestResource;
+import stroom.util.guice.RestResourcesBinder;
+
+import com.google.inject.AbstractModule;
 
 public class EntityEventModule extends AbstractModule {
     @Override
@@ -30,10 +30,10 @@ public class EntityEventModule extends AbstractModule {
         bind(EntityEventResource.class).to(EntityEventResourceImpl.class);
 
         // Ensure the multibinder is created.
-        Multibinder.newSetBinder(binder(), EntityEvent.Handler.class);
+        GuiceUtil.buildMultiBinder(binder(), EntityEvent.Handler.class);
 
-        GuiceUtil.buildMultiBinder(binder(), RestResource.class)
-                .addBinding(EntityEventResourceImpl.class);
+        RestResourcesBinder.create(binder())
+                .bind(EntityEventResourceImpl.class);
     }
 
     @Override

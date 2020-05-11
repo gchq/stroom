@@ -89,19 +89,19 @@ public class JobDaoImpl implements JobDao, HasIntCrud<Job> {
         final Collection<Condition> conditions = JooqUtil.conditions(
                 JooqUtil.getStringCondition(JOB.NAME, criteria.getName()));
 
-        final OrderField<?>[] orderFields = JooqUtil.getOrderFields(FIELD_MAP, criteria);
+        final Collection<OrderField<?>> orderFields = JooqUtil.getOrderFields(FIELD_MAP, criteria);
 
         final List<Job> list = JooqUtil.contextResult(jobDbConnProvider, context -> context
                 .select()
                 .from(JOB)
                 .where(conditions)
                 .orderBy(orderFields)
-                .limit(JooqUtil.getLimit(criteria.getPageRequest()))
+                .limit(JooqUtil.getLimit(criteria.getPageRequest(), true))
                 .offset(JooqUtil.getOffset(criteria.getPageRequest()))
                 .fetch()
                 .into(Job.class));
 
-        return ResultPage.createUnboundedList(list);
+        return ResultPage.createCriterialBasedList(list, criteria);
     }
 
     @Override

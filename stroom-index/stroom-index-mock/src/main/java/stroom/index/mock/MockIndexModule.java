@@ -16,8 +16,6 @@
 
 package stroom.index.mock;
 
-import com.google.inject.AbstractModule;
-import com.google.inject.multibindings.Multibinder;
 import stroom.docstore.api.DocumentActionHandlerBinder;
 import stroom.importexport.api.ImportExportActionHandler;
 import stroom.index.impl.IndexElementModule;
@@ -34,12 +32,13 @@ import stroom.index.shared.IndexDoc;
 import stroom.util.guice.GuiceUtil;
 import stroom.util.shared.Clearable;
 
+import com.google.inject.AbstractModule;
+
 public class MockIndexModule extends AbstractModule {
     @Override
     protected void configure() {
         install(new IndexElementModule());
 
-//        bind(IndexShardManager.class).to(MockIndexShardManagerImpl.class);
         bind(IndexShardWriterCache.class).to(MockIndexShardWriterCache.class);
         bind(IndexStructureCache.class).to(IndexStructureCacheImpl.class);
         bind(IndexStore.class).to(IndexStoreImpl.class);
@@ -47,29 +46,13 @@ public class MockIndexModule extends AbstractModule {
         bind(IndexVolumeGroupService.class).to(MockIndexVolumeGroupService.class);
         bind(IndexShardService.class).to(MockIndexShardService.class);
         bind(Indexer.class).to(MockIndexer.class);
-//
-//        TaskHandlerBinder.create(binder())
-//        .bind(CloseIndexShardActionHandler.class);
-//        .bind(DeleteIndexShardActionHandler.class);
-//        .bind(FlushIndexShardActionHandler.class);
-//
-//        final Multibinder<EntityEvent.Handler> entityEventHandlerBinder = Multibinder.newSetBinder(binder(), EntityEvent.Handler.class);
-//        entityEventHandlerBinder.addBinding().to(IndexConfigCacheEntityEventHandler.class);
-//
 
         GuiceUtil.buildMultiBinder(binder(), Clearable.class).addBinding(MockIndexShardService.class);
 
-//
-//        final Multibinder<ExplorerActionHandler> explorerActionHandlerBinder = Multibinder.newSetBinder(binder(), ExplorerActionHandler.class);
-//        explorerActionHandlerBinder.addBinding().to(IndexStoreImpl.class);
-
-        final Multibinder<ImportExportActionHandler> importExportActionHandlerBinder = Multibinder.newSetBinder(binder(), ImportExportActionHandler.class);
-        importExportActionHandlerBinder.addBinding().to(IndexStoreImpl.class);
+        GuiceUtil.buildMultiBinder(binder(), ImportExportActionHandler.class)
+                .addBinding(IndexStoreImpl.class);
 
         DocumentActionHandlerBinder.create(binder())
                 .bind(IndexDoc.DOCUMENT_TYPE, IndexStoreImpl.class);
-
-//        final Multibinder<FindService> findServiceBinder = Multibinder.newSetBinder(binder(), FindService.class);
-//        findServiceBinder.addBinding().to(IndexStoreImpl.class);
     }
 }

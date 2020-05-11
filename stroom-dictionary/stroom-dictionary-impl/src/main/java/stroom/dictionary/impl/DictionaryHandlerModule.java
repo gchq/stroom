@@ -16,29 +16,29 @@
 
 package stroom.dictionary.impl;
 
-import com.google.inject.AbstractModule;
-import com.google.inject.multibindings.Multibinder;
 import stroom.dictionary.shared.DictionaryDoc;
 import stroom.docstore.api.DocumentActionHandlerBinder;
 import stroom.explorer.api.ExplorerActionHandler;
 import stroom.importexport.api.ImportExportActionHandler;
 import stroom.util.guice.GuiceUtil;
-import stroom.util.shared.RestResource;
+import stroom.util.guice.RestResourcesBinder;
+
+import com.google.inject.AbstractModule;
 
 public class DictionaryHandlerModule extends AbstractModule {
     @Override
     protected void configure() {
-        final Multibinder<ExplorerActionHandler> explorerActionHandlerBinder = Multibinder.newSetBinder(binder(), ExplorerActionHandler.class);
-        explorerActionHandlerBinder.addBinding().to(DictionaryStoreImpl.class);
+        GuiceUtil.buildMultiBinder(binder(), ExplorerActionHandler.class)
+                .addBinding(DictionaryStoreImpl.class);
 
-        final Multibinder<ImportExportActionHandler> importExportActionHandlerBinder = Multibinder.newSetBinder(binder(), ImportExportActionHandler.class);
-        importExportActionHandlerBinder.addBinding().to(DictionaryStoreImpl.class);
+        GuiceUtil.buildMultiBinder(binder(), ImportExportActionHandler.class)
+                .addBinding(DictionaryStoreImpl.class);
 
         DocumentActionHandlerBinder.create(binder())
                 .bind(DictionaryDoc.ENTITY_TYPE, DictionaryStoreImpl.class);
 
-        GuiceUtil.buildMultiBinder(binder(), RestResource.class)
-                .addBinding(NewUiDictionaryResource2.class)
-                .addBinding(DictionaryResourceImpl.class);
+        RestResourcesBinder.create(binder())
+                .bind(NewUiDictionaryResource2.class)
+                .bind(DictionaryResourceImpl.class);
     }
 }

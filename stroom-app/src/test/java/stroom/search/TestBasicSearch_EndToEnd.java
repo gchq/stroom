@@ -142,7 +142,7 @@ class TestBasicSearch_EndToEnd extends AbstractCoreIntegrationTest {
     }
 
     private void test(final ExpressionOperator.Builder expression, final long expectedStreams, final long expectedEvents) {
-        final ResultPage<IndexShard> resultPage = indexShardService.find(new FindIndexShardCriteria());
+        final ResultPage<IndexShard> resultPage = indexShardService.find(FindIndexShardCriteria.matchAll());
         for (final IndexShard indexShard : resultPage.getValues()) {
             System.out.println("Using index " + IndexShardUtil.getIndexPath(indexShard));
         }

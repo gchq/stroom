@@ -16,14 +16,14 @@
 
 package stroom.statistics.impl.sql.rollup;
 
+import stroom.util.guice.RestResourcesBinder;
+
 import com.google.inject.AbstractModule;
-import stroom.util.guice.GuiceUtil;
-import stroom.util.shared.RestResource;
 
 public class SQLStatisticRollupModule extends AbstractModule {
     @Override
     protected void configure() {
-        GuiceUtil.buildMultiBinder(binder(), RestResource.class)
-                .addBinding(StatisticRollupResourceImpl.class);
+        RestResourcesBinder.create(binder())
+                .bind(StatisticRollupResourceImpl.class);
     }
 }

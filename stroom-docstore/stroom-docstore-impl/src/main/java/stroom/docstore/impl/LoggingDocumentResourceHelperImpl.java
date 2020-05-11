@@ -21,7 +21,7 @@ import stroom.docstore.api.DocumentActionHandler;
 import stroom.docstore.api.DocumentResourceHelper;
 import stroom.docstore.shared.Doc;
 import stroom.docstore.shared.DocRefUtil;
-import stroom.document.shared.PermissionException;
+import stroom.util.shared.PermissionException;
 import stroom.event.logging.api.DocumentEventLog;
 import stroom.security.api.SecurityContext;
 import stroom.util.logging.LambdaLogger;

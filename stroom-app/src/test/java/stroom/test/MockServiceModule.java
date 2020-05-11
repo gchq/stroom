@@ -1,7 +1,5 @@
 package stroom.test;
 
-import com.google.inject.AbstractModule;
-import org.mockito.stubbing.Answer;
 import stroom.activity.mock.MockActivityModule;
 import stroom.cache.impl.CacheModule;
 import stroom.core.dataprocess.PipelineStreamTaskModule;
@@ -21,8 +19,13 @@ import stroom.security.mock.MockSecurityContextModule;
 import stroom.security.shared.User;
 import stroom.statistics.mock.MockInternalStatisticsModule;
 import stroom.task.impl.MockTaskModule;
+import stroom.util.entityevent.EntityEventBus;
 import stroom.util.pipeline.scope.PipelineScopeModule;
 import stroom.util.servlet.MockServletModule;
+
+import com.google.inject.AbstractModule;
+import com.google.inject.Provides;
+import org.mockito.stubbing.Answer;
 
 import java.util.List;
 import java.util.UUID;
@@ -97,5 +100,11 @@ public class MockServiceModule extends AbstractModule {
             return mockUserService.update(user);
         });
         bind(UserService.class).toInstance(mockUserService);
+    }
+
+    @Provides
+    EntityEventBus entityEventBus() {
+        return event -> {
+        };
     }
 }

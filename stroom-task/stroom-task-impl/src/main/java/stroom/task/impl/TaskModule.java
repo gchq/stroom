@@ -16,14 +16,15 @@
 
 package stroom.task.impl;
 
-import com.google.inject.AbstractModule;
 import stroom.searchable.api.Searchable;
 import stroom.task.api.ExecutorProvider;
 import stroom.task.api.TaskContextFactory;
 import stroom.task.api.TaskManager;
 import stroom.task.shared.TaskResource;
 import stroom.util.guice.GuiceUtil;
-import stroom.util.shared.RestResource;
+import stroom.util.guice.RestResourcesBinder;
+
+import com.google.inject.AbstractModule;
 
 import javax.servlet.http.HttpSessionListener;
 import java.util.concurrent.Executor;
@@ -39,8 +40,8 @@ public class TaskModule extends AbstractModule {
         bind(TaskManager.class).to(TaskManagerImpl.class);
         bind(TaskResource.class).to(TaskResourceImpl.class);
 
-        GuiceUtil.buildMultiBinder(binder(), RestResource.class)
-                .addBinding(TaskResourceImpl.class);
+        RestResourcesBinder.create(binder())
+                .bind(TaskResourceImpl.class);
 
         GuiceUtil.buildMultiBinder(binder(), HttpSessionListener.class)
                 .addBinding(TaskManagerSessionListener.class);

@@ -18,7 +18,6 @@
 package stroom.explorer.impl;
 
 import stroom.docref.DocRef;
-import stroom.docref.DocRefInfo;
 import stroom.explorer.api.ExplorerService;
 import stroom.explorer.shared.BulkActionResult;
 import stroom.explorer.shared.DocumentType;
@@ -56,11 +55,6 @@ class MockExplorerService implements ExplorerService {
 
     @Override
     public BulkActionResult delete(final List<DocRef> docRefs) {
-        return null;
-    }
-
-    @Override
-    public DocRefInfo info(final DocRef docRef) {
         return null;
     }
 

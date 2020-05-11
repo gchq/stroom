@@ -33,7 +33,6 @@ import java.util.Optional;
 
 @JsonTypeInfo(
         use = JsonTypeInfo.Id.NAME,
-        include = JsonTypeInfo.As.PROPERTY,
         property = "type"
 )
 @JsonSubTypes({
@@ -77,8 +76,8 @@ public abstract class _V07_00_00_ExpressionItem implements Serializable {
     public boolean equals(Object o) {
         if (this == o) return true;
         if (o == null || getClass() != o.getClass()) return false;
-        stroom.query.api.v2.ExpressionItem that = (stroom.query.api.v2.ExpressionItem) o;
-        return Objects.equals(getEnabled(), that.isEnabled());
+        _V07_00_00_ExpressionItem that = (_V07_00_00_ExpressionItem) o;
+        return Objects.equals(getEnabled(), that.getEnabled());
     }
 
     @Override
@@ -117,7 +116,6 @@ public abstract class _V07_00_00_ExpressionItem implements Serializable {
 
         /**
          * @param value Sets the terms state to enabled if true or null, disabled if false
-         *
          * @return The Builder Builder, enabling method chaining
          */
         public CHILD_CLASS enabled(final Boolean value) {

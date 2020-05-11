@@ -16,20 +16,18 @@
 
 package stroom.feed.impl;
 
-import com.codahale.metrics.health.HealthCheck.Result;
 import stroom.docref.DocRef;
 import stroom.docstore.api.DocumentResourceHelper;
 import stroom.feed.api.FeedStore;
 import stroom.feed.shared.FeedDoc;
 import stroom.feed.shared.FeedResource;
-import stroom.util.HasHealthCheck;
 
 import javax.inject.Inject;
 import java.nio.charset.Charset;
 import java.util.ArrayList;
 import java.util.List;
 
-class FeedResourceImpl implements FeedResource, HasHealthCheck {
+class FeedResourceImpl implements FeedResource {
     private static final List<String> SUPPORTED_ENCODINGS;
 
     static {
@@ -70,10 +68,5 @@ class FeedResourceImpl implements FeedResource, HasHealthCheck {
     @Override
     public List<String> fetchSupportedEncodings() {
         return SUPPORTED_ENCODINGS;
-    }
-
-    @Override
-    public Result getHealth() {
-        return Result.healthy();
     }
 }

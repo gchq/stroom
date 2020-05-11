@@ -16,7 +16,6 @@
 
 package stroom.processor.impl;
 
-import com.codahale.metrics.health.HealthCheck.Result;
 import stroom.event.logging.api.DocumentEventLog;
 import stroom.meta.shared.FindMetaCriteria;
 import stroom.processor.api.ProcessorFilterService;
@@ -27,7 +26,6 @@ import stroom.processor.shared.ProcessorFilterResource;
 import stroom.processor.shared.ProcessorListRow;
 import stroom.processor.shared.ProcessorListRowResultPage;
 import stroom.processor.shared.ReprocessDataInfo;
-import stroom.util.HasHealthCheck;
 import stroom.util.logging.LambdaLogger;
 import stroom.util.logging.LambdaLoggerFactory;
 import stroom.util.shared.ResultPage;
@@ -36,7 +34,7 @@ import javax.inject.Inject;
 import java.util.List;
 
 // TODO : @66 add event logging
-class ProcessorFilterResourceImpl implements ProcessorFilterResource, HasHealthCheck {
+class ProcessorFilterResourceImpl implements ProcessorFilterResource {
     private static final LambdaLogger LOGGER = LambdaLoggerFactory.getLogger(ProcessorFilterResourceImpl.class);
 
     private final ProcessorFilterService processorFilterService;
@@ -51,7 +49,11 @@ class ProcessorFilterResourceImpl implements ProcessorFilterResource, HasHealthC
 
     @Override
     public ProcessorFilter create(final CreateProcessorFilterRequest request) {
-        return processorFilterService.create(request.getPipeline(), request.getQueryData(), request.getPriority(), request.isEnabled());
+        return processorFilterService.create(
+                request.getPipeline(),
+                request.getQueryData(),
+                request.getPriority(),
+                request.isEnabled());
     }
 
     @Override
@@ -88,10 +90,5 @@ class ProcessorFilterResourceImpl implements ProcessorFilterResource, HasHealthC
     @Override
     public List<ReprocessDataInfo> reprocess(final FindMetaCriteria criteria) {
         return processorFilterService.reprocess(criteria);
-    }
-
-    @Override
-    public Result getHealth() {
-        return Result.healthy();
     }
 }

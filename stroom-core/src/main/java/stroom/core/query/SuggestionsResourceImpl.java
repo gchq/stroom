@@ -16,9 +16,6 @@
 
 package stroom.core.query;
 
-import com.codahale.metrics.health.HealthCheck.Result;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 import stroom.docref.DocRef;
 import stroom.meta.api.MetaService;
 import stroom.meta.shared.MetaFields;
@@ -27,7 +24,9 @@ import stroom.pipeline.PipelineStore;
 import stroom.query.shared.FetchSuggestionsRequest;
 import stroom.query.shared.SuggestionsResource;
 import stroom.security.api.SecurityContext;
-import stroom.util.HasHealthCheck;
+
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import javax.inject.Inject;
 import java.util.Arrays;
@@ -38,7 +37,7 @@ import java.util.Objects;
 import java.util.regex.Pattern;
 import java.util.stream.Collectors;
 
-class SuggestionsResourceImpl implements SuggestionsResource, HasHealthCheck {
+class SuggestionsResourceImpl implements SuggestionsResource {
     private static final Logger LOGGER = LoggerFactory.getLogger(SuggestionsResourceImpl.class);
     private static final int LIMIT = 20;
 
@@ -172,10 +171,5 @@ class SuggestionsResourceImpl implements SuggestionsResource, HasHealthCheck {
             }
             return hasMatched;
         }
-    }
-
-    @Override
-    public Result getHealth() {
-        return Result.healthy();
     }
 }

@@ -87,7 +87,7 @@ class TestIndexShardServiceImpl extends AbstractCoreIntegrationTest {
 //        assertThat(call3).isNotNull();
 //        assertThat(call4).isNotNull();
 //
-//        final FindIndexShardCriteria criteria = new FindIndexShardCriteria();
+//        final FindIndexShardCriteria criteria = FindIndexShardCriteria.matchAll();
 //        // Find all index shards.
 //        assertThat(indexShardService.find(criteria).size()).isEqualTo(4);
 //
@@ -136,7 +136,7 @@ class TestIndexShardServiceImpl extends AbstractCoreIntegrationTest {
 //        createShard(index, nodeName, "2011-01-01T00:00:00.000Z", 9);
 //        createShard(index, nodeName, "2011-02-01T00:00:00.000Z", 10);
 //
-//        final FindIndexShardCriteria findIndexShardCriteria = new FindIndexShardCriteria();
+//        final FindIndexShardCriteria findIndexShardCriteria = FindIndexShardCriteria.matchAll();
 //        // Order by partition name and key.
 //        findIndexShardCriteria.addSort(FindIndexShardCriteria.FIELD_PARTITION, Direction.DESCENDING, false);
 //        findIndexShardCriteria.addSort(FindIndexShardCriteria.FIELD_ID, Direction.DESCENDING, false);

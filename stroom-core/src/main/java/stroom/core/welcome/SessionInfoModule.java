@@ -16,14 +16,14 @@
 
 package stroom.core.welcome;
 
+import stroom.util.guice.RestResourcesBinder;
+
 import com.google.inject.AbstractModule;
-import stroom.util.shared.RestResource;
-import stroom.util.guice.GuiceUtil;
 
 public class SessionInfoModule extends AbstractModule {
     @Override
     protected void configure() {
-        GuiceUtil.buildMultiBinder(binder(), RestResource.class)
-                .addBinding(SessionInfoResourceImpl.class);
+        RestResourcesBinder.create(binder())
+                .bind(SessionInfoResourceImpl.class);
     }
 }

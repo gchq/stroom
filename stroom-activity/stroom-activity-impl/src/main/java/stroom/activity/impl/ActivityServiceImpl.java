@@ -16,7 +16,6 @@
 
 package stroom.activity.impl;
 
-import com.google.common.base.Strings;
 import stroom.activity.api.ActivityService;
 import stroom.activity.api.FindActivityCriteria;
 import stroom.activity.shared.Activity;
@@ -24,6 +23,9 @@ import stroom.activity.shared.ActivityValidationResult;
 import stroom.security.api.SecurityContext;
 import stroom.util.AuditUtil;
 import stroom.util.shared.EntityServiceException;
+import stroom.util.shared.ResultPage;
+
+import com.google.common.base.Strings;
 
 import javax.inject.Inject;
 import java.util.ArrayList;
@@ -96,7 +98,7 @@ public class ActivityServiceImpl implements ActivityService {
     }
 
     @Override
-    public List<Activity> find(final FindActivityCriteria criteria) {
+    public ResultPage<Activity> find(final FindActivityCriteria criteria) {
         if (!securityContext.isLoggedIn()) {
             throw new EntityServiceException("No user is logged in");
         }

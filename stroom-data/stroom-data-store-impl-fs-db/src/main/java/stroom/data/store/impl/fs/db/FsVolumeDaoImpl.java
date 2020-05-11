@@ -1,8 +1,5 @@
 package stroom.data.store.impl.fs.db;
 
-import org.jooq.Condition;
-import org.jooq.Record;
-import org.jooq.TableField;
 import stroom.data.store.impl.fs.FsVolumeDao;
 import stroom.data.store.impl.fs.FsVolumeService;
 import stroom.data.store.impl.fs.db.jooq.tables.records.FsVolumeRecord;
@@ -14,7 +11,12 @@ import stroom.db.util.JooqUtil;
 import stroom.util.logging.LambdaLogUtil;
 import stroom.util.logging.LambdaLogger;
 import stroom.util.logging.LambdaLoggerFactory;
-import stroom.util.shared.CriteriaSet;
+import stroom.util.shared.ResultPage;
+import stroom.util.shared.Selection;
+
+import org.jooq.Condition;
+import org.jooq.Record;
+import org.jooq.TableField;
 
 import javax.inject.Inject;
 import javax.inject.Singleton;
@@ -40,26 +42,26 @@ public class FsVolumeDaoImpl implements FsVolumeDao {
     @Override
     public FsVolume create(final FsVolume fileVolume) {
         return JooqUtil.contextResultWithOptimisticLocking(fsDataStoreDbConnProvider, (context) -> {
-                    final FsVolumeRecord record = context.newRecord(FS_VOLUME, fileVolume);
-                    volumeToRecord(fileVolume, record);
-                    record.store();
-                    return recordToVolume(record, fileVolume.getVolumeState());
-                });
+            final FsVolumeRecord record = context.newRecord(FS_VOLUME, fileVolume);
+            volumeToRecord(fileVolume, record);
+            record.store();
+            return recordToVolume(record, fileVolume.getVolumeState());
+        });
     }
 
     @Override
     public FsVolume update(final FsVolume fileVolume) {
         final FsVolume result = JooqUtil.contextResultWithOptimisticLocking(fsDataStoreDbConnProvider, (context) -> {
-                final FsVolumeRecord record = context.newRecord(FS_VOLUME, fileVolume);
-                volumeToRecord(fileVolume, record);
-                // This depends on there being a field named 'id' that is what we expect it to be.
-                // I'd rather this was implicit/opinionated than forced into place with an interface.
-                LOGGER.debug(LambdaLogUtil.message("Updating a {} with id {}", FS_VOLUME.getName(), record.getValue("id")));
-                record.update();
-                return recordToVolume(record, fileVolume.getVolumeState());
-            });
-            result.setVolumeState(fileVolume.getVolumeState());
-            return result;
+            final FsVolumeRecord record = context.newRecord(FS_VOLUME, fileVolume);
+            volumeToRecord(fileVolume, record);
+            // This depends on there being a field named 'id' that is what we expect it to be.
+            // I'd rather this was implicit/opinionated than forced into place with an interface.
+            LOGGER.debug(LambdaLogUtil.message("Updating a {} with id {}", FS_VOLUME.getName(), record.getValue("id")));
+            record.update();
+            return recordToVolume(record, fileVolume.getVolumeState());
+        });
+        result.setVolumeState(fileVolume.getVolumeState());
+        return result;
     }
 
     @Override
@@ -99,20 +101,21 @@ public class FsVolumeDaoImpl implements FsVolumeDao {
     }
 
     @Override
-    public List<FsVolume> find(final FindFsVolumeCriteria criteria) {
+    public ResultPage<FsVolume> find(final FindFsVolumeCriteria criteria) {
         final Collection<Condition> conditions = JooqUtil.conditions(
-                volumeStatusCriteriaSetToCondition(FS_VOLUME.STATUS, criteria.getStatusSet()));
+                volumeStatusCriteriaSetToCondition(FS_VOLUME.STATUS, criteria.getSelection()));
 
-        return JooqUtil.contextResult(fsDataStoreDbConnProvider, context -> context
+        final List<FsVolume> list = JooqUtil.contextResult(fsDataStoreDbConnProvider, context -> context
                 .select()
                 .from(FS_VOLUME)
                 .join(FS_VOLUME_STATE)
                 .on(FS_VOLUME_STATE.ID.eq(FS_VOLUME.FK_FS_VOLUME_STATE_ID))
                 .where(conditions)
-                .limit(JooqUtil.getLimit(criteria.getPageRequest()))
+                .limit(JooqUtil.getLimit(criteria.getPageRequest(), true))
                 .offset(JooqUtil.getOffset(criteria.getPageRequest()))
                 .fetch()
                 .map(this::recordToVolume));
+        return ResultPage.createCriterialBasedList(list, criteria);
     }
 
     private void volumeToRecord(final FsVolume fileVolume, final FsVolumeRecord record) {
@@ -146,11 +149,10 @@ public class FsVolumeDaoImpl implements FsVolumeDao {
         return fileVolume;
     }
 
-    private Optional<Condition> volumeStatusCriteriaSetToCondition(final TableField<FsVolumeRecord, Byte> field, final CriteriaSet<VolumeUseStatus> criteriaSet) {
-        final CriteriaSet<Byte> set = new CriteriaSet<>();
-        set.setMatchAll(criteriaSet.getMatchAll());
-        set.setMatchNull(criteriaSet.getMatchNull());
-        set.setSet(criteriaSet.getSet().stream().map(VolumeUseStatus::getPrimitiveValue).collect(Collectors.toSet()));
+    private Optional<Condition> volumeStatusCriteriaSetToCondition(final TableField<FsVolumeRecord, Byte> field, final Selection<VolumeUseStatus> selection) {
+        final Selection<Byte> set = Selection.selectNone();
+        set.setMatchAll(selection.isMatchAll());
+        set.setSet(selection.getSet().stream().map(VolumeUseStatus::getPrimitiveValue).collect(Collectors.toSet()));
         return JooqUtil.getSetCondition(field, set);
     }
 }

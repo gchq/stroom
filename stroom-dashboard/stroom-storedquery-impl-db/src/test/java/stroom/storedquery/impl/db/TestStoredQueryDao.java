@@ -18,14 +18,6 @@
 package stroom.storedquery.impl.db;
 
 
-import org.junit.jupiter.api.BeforeEach;
-import org.junit.jupiter.api.Test;
-import org.junit.jupiter.api.extension.ExtendWith;
-import org.mockito.Mock;
-import org.mockito.Mockito;
-import org.mockito.junit.jupiter.MockitoExtension;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 import stroom.dashboard.shared.FindStoredQueryCriteria;
 import stroom.dashboard.shared.StoredQuery;
 import stroom.docref.DocRef;
@@ -42,6 +34,15 @@ import stroom.test.common.util.db.DbTestUtil;
 import stroom.util.AuditUtil;
 import stroom.util.shared.ResultPage;
 import stroom.util.shared.Sort.Direction;
+
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.extension.ExtendWith;
+import org.mockito.Mock;
+import org.mockito.Mockito;
+import org.mockito.junit.jupiter.MockitoExtension;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import java.sql.SQLException;
 import java.util.Collections;
@@ -128,7 +129,8 @@ class TestStoredQueryDao {
         assertThat(root.getChildren().size()).isEqualTo(1);
 
         final String actual = query.getData();
-        final String expected = "{\n" +
+        final String expected = "" +
+                "{\n" +
                 "  \"dataSource\" : {\n" +
                 "    \"type\" : \"Index\",\n" +
                 "    \"uuid\" : \"4a085071-1d1b-4c96-8567-82f6954584a4\",\n" +

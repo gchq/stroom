@@ -1,11 +1,12 @@
 package stroom.authentication.account;
 
-import com.google.common.base.Strings;
-import org.apache.commons.lang3.tuple.Pair;
 import stroom.security.api.SecurityContext;
-import stroom.security.shared.PermissionException;
+import stroom.util.shared.PermissionException;
 import stroom.security.shared.PermissionNames;
 import stroom.util.shared.ResultPage;
+
+import com.google.common.base.Strings;
+import org.apache.commons.lang3.tuple.Pair;
 
 import javax.inject.Inject;
 import javax.ws.rs.BadRequestException;

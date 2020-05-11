@@ -16,14 +16,12 @@
 
 package stroom.dashboard.impl.script;
 
-import com.codahale.metrics.health.HealthCheck.Result;
 import stroom.docref.DocRef;
 import stroom.docstore.api.DocumentResourceHelper;
 import stroom.script.shared.FetchLinkedScriptRequest;
 import stroom.script.shared.ScriptDoc;
 import stroom.script.shared.ScriptResource;
 import stroom.security.api.SecurityContext;
-import stroom.util.HasHealthCheck;
 
 import javax.inject.Inject;
 import java.util.ArrayList;
@@ -31,7 +29,7 @@ import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
 
-class ScriptResourceImpl implements ScriptResource, HasHealthCheck {
+class ScriptResourceImpl implements ScriptResource {
     private final ScriptStore scriptStore;
     private final SecurityContext securityContext;
     private final DocumentResourceHelper documentResourceHelper;
@@ -96,10 +94,5 @@ class ScriptResourceImpl implements ScriptResource, HasHealthCheck {
                 }
             }
         }
-    }
-
-    @Override
-    public Result getHealth() {
-        return Result.healthy();
     }
 }

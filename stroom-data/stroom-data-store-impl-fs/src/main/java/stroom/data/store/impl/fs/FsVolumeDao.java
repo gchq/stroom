@@ -2,8 +2,7 @@ package stroom.data.store.impl.fs;
 
 import stroom.data.store.impl.fs.shared.FindFsVolumeCriteria;
 import stroom.data.store.impl.fs.shared.FsVolume;
-
-import java.util.List;
+import stroom.util.shared.ResultPage;
 
 public interface FsVolumeDao {
     FsVolume create(FsVolume fileVolume);
@@ -14,5 +13,5 @@ public interface FsVolumeDao {
 
     int delete(int id);
 
-    List<FsVolume> find(FindFsVolumeCriteria criteria);
+    ResultPage<FsVolume> find(FindFsVolumeCriteria criteria);
 }

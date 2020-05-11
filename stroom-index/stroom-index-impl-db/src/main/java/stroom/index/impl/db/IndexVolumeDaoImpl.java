@@ -1,9 +1,5 @@
 package stroom.index.impl.db;
 
-import org.jooq.Condition;
-import org.jooq.Field;
-import org.jooq.OrderField;
-import org.jooq.Record;
 import stroom.db.util.ExpressionMapper;
 import stroom.db.util.ExpressionMapperFactory;
 import stroom.db.util.GenericDao;
@@ -19,11 +15,19 @@ import stroom.util.shared.PageRequest;
 import stroom.util.shared.ResultPage;
 import stroom.util.shared.Sort;
 
+import org.jooq.Condition;
+import org.jooq.Field;
+import org.jooq.OrderField;
+import org.jooq.Record;
+
 import javax.inject.Inject;
+import java.util.Collection;
+import java.util.Collections;
 import java.util.List;
 import java.util.Optional;
 import java.util.function.BiFunction;
 import java.util.function.Function;
+import java.util.stream.Collectors;
 
 import static stroom.index.impl.db.jooq.tables.IndexVolume.INDEX_VOLUME;
 import static stroom.index.impl.db.jooq.tables.IndexVolumeGroup.INDEX_VOLUME_GROUP;
@@ -160,8 +164,8 @@ class IndexVolumeDaoImpl implements IndexVolumeDao {
     @Override
     public ResultPage<IndexVolume> find(final ExpressionCriteria criteria) {
         final PageRequest pageRequest = criteria.getPageRequest();
-        final Condition condition = createCondition(criteria);
-        final OrderField<?>[] orderFields = createOrderFields(criteria);
+        final Collection<Condition> conditions = createCondition(criteria);
+        final Collection<OrderField<?>> orderFields = createOrderFields(criteria);
 
         int offset = 0;
         int numberOfRows = 1000000;
@@ -171,32 +175,32 @@ class IndexVolumeDaoImpl implements IndexVolumeDao {
             numberOfRows = pageRequest.getLength();
         }
 
-        final List<IndexVolume> list = find(condition, orderFields, offset, numberOfRows);
-        return ResultPage.createPageResultList(list, criteria.getPageRequest(), null);
+        final List<IndexVolume> list = find(conditions, orderFields, offset, numberOfRows + 1);
+        return ResultPage.createCriterialBasedList(list, criteria);
     }
 
-    private List<IndexVolume> find(final Condition condition, final OrderField<?>[] orderFields, final int offset, final int numberOfRows) {
+    private List<IndexVolume> find(final Collection<Condition> conditions, final Collection<OrderField<?>> orderFields, final int offset, final int numberOfRows) {
         return JooqUtil.contextResult(indexDbConnProvider, context -> context
                 .select()
                 .from(INDEX_VOLUME)
-                .where(condition)
+                .where(conditions)
                 .orderBy(orderFields)
                 .limit(offset, numberOfRows)
                 .fetch()
                 .map(RECORD_TO_INDEX_VOLUME_MAPPER::apply));
     }
 
-    private Condition createCondition(final ExpressionCriteria criteria) {
+    private Collection<Condition> createCondition(final ExpressionCriteria criteria) {
         return createCondition(criteria.getExpression());
     }
 
-    private Condition createCondition(final ExpressionOperator expression) {
+    private Collection<Condition> createCondition(final ExpressionOperator expression) {
         return expressionMapper.apply(expression);
     }
 
-    private OrderField<?>[] createOrderFields(final ExpressionCriteria criteria) {
+    private Collection<OrderField<?>> createOrderFields(final ExpressionCriteria criteria) {
         if (criteria.getSortList() == null || criteria.getSortList().size() == 0) {
-            return new OrderField[]{INDEX_VOLUME.ID};
+            return Collections.singleton(INDEX_VOLUME.ID);
         }
 
         return criteria.getSortList().stream().map(sort -> {
@@ -215,6 +219,6 @@ class IndexVolumeDaoImpl implements IndexVolumeDao {
             }
 
             return orderField;
-        }).toArray(OrderField[]::new);
+        }).collect(Collectors.toList());
     }
 }

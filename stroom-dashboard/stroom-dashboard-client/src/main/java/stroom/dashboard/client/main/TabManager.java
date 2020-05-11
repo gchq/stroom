@@ -16,10 +16,6 @@
 
 package stroom.dashboard.client.main;
 
-import com.google.gwt.dom.client.Element;
-import com.google.gwt.user.client.Timer;
-import com.google.gwt.user.client.ui.Widget;
-import com.google.inject.Provider;
 import stroom.alert.client.event.AlertEvent;
 import stroom.dashboard.client.flexlayout.FlexLayout;
 import stroom.dashboard.client.flexlayout.TabLayout;
@@ -37,6 +33,11 @@ import stroom.widget.popup.client.presenter.PopupPosition;
 import stroom.widget.popup.client.presenter.PopupPosition.VerticalLocation;
 import stroom.widget.popup.client.presenter.PopupUiHandlers;
 import stroom.widget.popup.client.presenter.PopupView.PopupType;
+
+import com.google.gwt.dom.client.Element;
+import com.google.gwt.user.client.Timer;
+import com.google.gwt.user.client.ui.Widget;
+import com.google.inject.Provider;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -193,7 +194,7 @@ public class TabManager {
 
         int i = 0;
         for (final TabConfig tc : tabLayoutConfig.getTabs()) {
-            if (!tc.isVisible()) {
+            if (!tc.visible()) {
                 final Component component = components.get(tc.getId());
                 if (component != null) {
                     final Item item2 = new IconMenuItem(i++, SvgPresets.SHOW, SvgPresets.SHOW, component.getComponentConfig().getName(), null, true,

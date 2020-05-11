@@ -1,6 +1,6 @@
 server:
   applicationContextPath: ${APPLICATION_CONTEXT_PATH:- /}
-  adminContextPath: ${ADMIN_CONTEXT_PATH:- /admin}
+  adminContextPath: ${ADMIN_CONTEXT_PATH:- /stroomAdmin}
   applicationConnectors:
     - type: http
       port: ${STROOM_APP_PORT:-8080}
@@ -92,6 +92,9 @@ appConfig:
       # UUID of the Kafka Config Doc that is created by Setup Sample Data
       # Debatable if the doc should be added to a content pack or not
       kafkaConfigUuid: 7cbf9153-869c-43bb-a316-1c652673e680
+    internal:
+      enabledStoreTypes: ${STROOM_ENABLED_STAT_STORE_TYPES:-[ "StatisticStore" ]}
+#      enabledStoreTypes: ${STROOM_ENABLED_STAT_STORE_TYPES:-[ "StatisticStore", "StroomStatsStore" ]}
   volumes:
     createDefaultOnStart: false
 

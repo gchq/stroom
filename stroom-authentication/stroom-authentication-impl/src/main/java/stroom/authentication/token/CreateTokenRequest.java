@@ -24,8 +24,6 @@ import javax.validation.constraints.Pattern;
 import java.util.Date;
 
 public class CreateTokenRequest {
-    @NotNull
-    private String clientId;
 
     @NotNull
     private String userEmail;
@@ -51,12 +49,10 @@ public class CreateTokenRequest {
     public CreateTokenRequest() {
     }
 
-    public CreateTokenRequest(final String clientId,
-                              final String userEmail,
+    public CreateTokenRequest(final String userEmail,
                               final String tokenType,
                               final boolean enabled,
                               final String comments) {
-        this.clientId = clientId;
         this.userEmail = userEmail;
         this.tokenType = tokenType;
         this.enabled = enabled;
@@ -69,20 +65,11 @@ public class CreateTokenRequest {
                               final boolean enabled,
                               final String comments,
                               final Date expiryDate) {
-        this.clientId = clientId;
         this.userEmail = userEmail;
         this.tokenType = tokenType;
         this.enabled = enabled;
         this.comments = comments;
         this.expiryDate = expiryDate;
-    }
-
-    public String getClientId() {
-        return clientId;
-    }
-
-    public void setClientId(final String clientId) {
-        this.clientId = clientId;
     }
 
     @Nullable

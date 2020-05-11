@@ -16,14 +16,14 @@
 
 package stroom.core.query;
 
+import stroom.util.guice.RestResourcesBinder;
+
 import com.google.inject.AbstractModule;
-import stroom.util.guice.GuiceUtil;
-import stroom.util.shared.RestResource;
 
 public class QueryModule extends AbstractModule {
     @Override
     protected void configure() {
-        GuiceUtil.buildMultiBinder(binder(), RestResource.class)
-                .addBinding(SuggestionsResourceImpl.class);
+        RestResourcesBinder.create(binder())
+                .bind(SuggestionsResourceImpl.class);
     }
 }

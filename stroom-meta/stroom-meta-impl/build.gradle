@@ -5,6 +5,7 @@ dependencies {
     compile project(':stroom-cluster:stroom-cluster-lock-mock')
     compile project(':stroom-config:stroom-config-common')
     compile project(':stroom-core-shared')
+    compile project(':stroom-explorer:stroom-docrefinfo-api')
     compile project(':stroom-meta:stroom-meta-api')
     compile project(':stroom-event-logging:stroom-event-logging-api')
     compile project(':stroom-lifecycle:stroom-lifecycle-api')
