@@ -18,11 +18,12 @@
 package stroom.util.config;
 
 
+import stroom.util.logging.LogUtil;
+
 import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.google.common.base.CaseFormat;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import stroom.util.logging.LogUtil;
 
 import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Method;
