@@ -17,13 +17,13 @@
 
 package stroom.dashboard.impl.script;
 
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 import stroom.docref.DocRef;
 import stroom.docref.DocRefInfo;
 import stroom.docstore.api.AuditFieldFilter;
+import stroom.docstore.api.DependencyRemapper;
 import stroom.docstore.api.Store;
 import stroom.docstore.api.StoreFactory;
+import stroom.docstore.api.UniqueNameUtil;
 import stroom.explorer.shared.DocumentType;
 import stroom.importexport.migration.LegacyXMLSerialiser;
 import stroom.importexport.shared.ImportState;
@@ -33,17 +33,18 @@ import stroom.security.api.SecurityContext;
 import stroom.util.shared.Message;
 import stroom.util.shared.Severity;
 
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+
 import javax.inject.Inject;
 import javax.inject.Singleton;
 import java.io.IOException;
 import java.util.ArrayList;
-import java.util.Collections;
-import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
 import java.util.UUID;
-import java.util.function.Function;
+import java.util.function.BiConsumer;
 import java.util.stream.Collectors;
 
 @Singleton
@@ -73,10 +74,9 @@ class ScriptStoreImpl implements ScriptStore {
     }
 
     @Override
-    public DocRef copyDocument(final String originalUuid,
-                               final String copyUuid,
-                               final Map<String, String> otherCopiesByOriginalUuid) {
-        return store.copyDocument(originalUuid, copyUuid, otherCopiesByOriginalUuid);
+    public DocRef copyDocument(final DocRef docRef, final Set<String> existingNames) {
+        final String newName = UniqueNameUtil.getCopyName(docRef.getName(), existingNames);
+        return store.copyDocument(docRef.getUuid(), newName);
     }
 
     @Override
@@ -109,6 +109,41 @@ class ScriptStoreImpl implements ScriptStore {
     ////////////////////////////////////////////////////////////////////////
 
     ////////////////////////////////////////////////////////////////////////
+    // START OF HasDependencies
+    ////////////////////////////////////////////////////////////////////////
+
+    @Override
+    public Map<DocRef, Set<DocRef>> getDependencies() {
+        return store.getDependencies(createMapper());
+    }
+
+    @Override
+    public Set<DocRef> getDependencies(final DocRef docRef) {
+        return store.getDependencies(docRef, createMapper());
+    }
+
+    @Override
+    public void remapDependencies(final DocRef docRef,
+                                  final Map<DocRef, DocRef> remappings) {
+        store.remapDependencies(docRef, remappings, createMapper());
+    }
+
+    private BiConsumer<ScriptDoc, DependencyRemapper> createMapper() {
+        return (doc, dependencyRemapper) -> {
+            if (doc.getDependencies() != null) {
+                doc.setDependencies(doc.getDependencies()
+                        .stream()
+                        .map(dependencyRemapper::remap)
+                        .collect(Collectors.toList()));
+            }
+        };
+    }
+
+    ////////////////////////////////////////////////////////////////////////
+    // END OF HasDependencies
+    ////////////////////////////////////////////////////////////////////////
+
+    ////////////////////////////////////////////////////////////////////////
     // START OF DocumentActionHandler
     ////////////////////////////////////////////////////////////////////////
 
@@ -133,26 +168,6 @@ class ScriptStoreImpl implements ScriptStore {
     @Override
     public Set<DocRef> listDocuments() {
         return store.listDocuments();
-    }
-
-    @Override
-    public Map<DocRef, Set<DocRef>> getDependencies() {
-        final Set<DocRef> docs = listDocuments();
-        return docs.stream().collect(Collectors.toMap(Function.identity(), this::getDependencies));
-    }
-
-    private Set<DocRef> getDependencies(final DocRef docRef) {
-        try {
-            final ScriptDoc script = readDocument(docRef);
-            if (script != null && script.getDependencies() != null) {
-                return new HashSet<>(script.getDependencies());
-            }
-            return Collections.emptySet();
-        } catch (final Exception e) {
-            LOGGER.error(e.getMessage(), e);
-        }
-
-        return Collections.emptySet();
     }
 
     @Override
