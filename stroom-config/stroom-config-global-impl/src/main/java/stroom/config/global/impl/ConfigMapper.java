@@ -444,29 +444,38 @@ public class ConfigMapper {
         // Editable by default unless found otherwise below
         configProperty.setEditable(true);
 
-        for (final Annotation declaredAnnotation : prop.getGetter().getDeclaredAnnotations()) {
-            Class<? extends Annotation> annotationType = declaredAnnotation.annotationType();
+        prop.getAnnotation(JsonPropertyDescription.class)
+                .ifPresent(jsonPropertyDescription -> {
+                    configProperty.setDescription(jsonPropertyDescription.value());
+                });
 
-            if (annotationType.equals(JsonPropertyDescription.class)) {
-                configProperty.setDescription(((JsonPropertyDescription) declaredAnnotation).value());
-            } else if (annotationType.equals(ReadOnly.class)) {
-                configProperty.setEditable(false);
-            } else if (annotationType.equals(Password.class)) {
-                configProperty.setPassword(true);
-            } else if (annotationType.equals(RequiresRestart.class)) {
-                RequiresRestart.RestartScope scope = ((RequiresRestart) declaredAnnotation).value();
-                switch (scope) {
-                    case SYSTEM:
-                        configProperty.setRequireRestart(true);
-                        break;
-                    case UI:
-                        configProperty.setRequireUiRestart(true);
-                        break;
-                    default:
-                        throw new RuntimeException("Should never get here");
-                }
-            }
+        if (prop.hasAnnotation(JsonPropertyDescription.class)) {
+            configProperty.setPassword(true);
         }
+
+        if (prop.hasAnnotation(ReadOnly.class)) {
+            configProperty.setEditable(false);
+        }
+
+        if (prop.hasAnnotation(Password.class)) {
+            configProperty.setPassword(true);
+        }
+
+        prop.getAnnotation(RequiresRestart.class)
+                .ifPresent(requiresRestart -> {
+                    RequiresRestart.RestartScope scope = requiresRestart.value();
+                    switch (scope) {
+                        case SYSTEM:
+                            configProperty.setRequireRestart(true);
+                            break;
+                        case UI:
+                            configProperty.setRequireUiRestart(true);
+                            break;
+                        default:
+                            throw new RuntimeException("Should never get here");
+                    }
+                });
+
         configProperty.setDataTypeName(getDataTypeName(prop.getValueType()));
     }
 

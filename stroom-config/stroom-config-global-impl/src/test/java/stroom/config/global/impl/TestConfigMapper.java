@@ -258,7 +258,6 @@ class TestConfigMapper {
                 .isEmpty();
     }
 
-
     @Test
     void updateValues() {
         doUpdateValueTest(

@@ -64,7 +64,6 @@ appConfig:
         expireAfterAccess: "PT10M"
         expireAfterWrite: null
     passwordIntegrityChecks:
-      durationBetweenChecks: "PT2M"
       forcePasswordChangeOnFirstLogin: true
       mandatoryPasswordChangeDuration: "P90D"
       minimumPasswordLength: 0
