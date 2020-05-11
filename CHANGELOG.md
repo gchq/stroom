@@ -6,6 +6,8 @@ and this project adheres to [Semantic Versioning](http://semver.org/).
 
 ## [Unreleased]
 
+* Issue **#1508** : Tidy up property descriptions.
+
 * Issue **#1495** : Speculative fix for missing swagger.json file in the fat jar.
 
 * Issue **#1503** : Fixed Dashboard serialisation and JSON template.
