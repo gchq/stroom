@@ -220,11 +220,9 @@ class TestConfigMapper {
 
     @Test
     void testFindPropsWithNoDefault() {
-        TestConfig testConfig = new TestConfig();
+        final ConfigMapper configMapper = new ConfigMapper(new AppConfig());
 
-        ConfigMapper configMapper = new ConfigMapper(testConfig);
-
-        Collection<ConfigProperty> configProperties = configMapper.getGlobalProperties();
+        final Collection<ConfigProperty> configProperties = configMapper.getGlobalProperties();
 
         LOGGER.info("Properties with no default value");
         configProperties.forEach(configProperty -> {
@@ -237,6 +235,27 @@ class TestConfigMapper {
                 LOGGER.info("{}", configProperty.getName());
             }
         });
+    }
+
+    @Test
+    void testFindPropsWithNoDescription() {
+        final ConfigMapper configMapper = new ConfigMapper(new AppConfig());
+
+        final Collection<ConfigProperty> configProperties = configMapper.getGlobalProperties();
+
+        LOGGER.info("Properties with no description");
+        final List<String> propsWithNoDesc = configProperties.stream()
+                .filter(configProperty ->
+                        configProperty.getDescription() == null || configProperty.getDescription().isEmpty())
+                .map(ConfigProperty::getName)
+                .map(PropertyPath::toString)
+                .sorted()
+                .peek(name ->
+                        LOGGER.info("{}", name))
+                .collect(Collectors.toList());
+
+        org.assertj.core.api.Assertions.assertThat(propsWithNoDesc)
+                .isEmpty();
     }
 
 
