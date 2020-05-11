@@ -18,15 +18,6 @@
 package stroom.config.global.impl;
 
 
-import com.fasterxml.jackson.annotation.JsonProperty;
-import com.fasterxml.jackson.annotation.JsonPropertyDescription;
-import com.google.common.base.CaseFormat;
-import com.google.common.base.Preconditions;
-import com.google.common.base.Splitter;
-import io.dropwizard.client.JerseyClientConfiguration;
-import com.google.common.base.Strings;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 import stroom.config.app.AppConfig;
 import stroom.config.global.shared.ConfigProperty;
 import stroom.config.global.shared.ConfigPropertyValidationException;
@@ -43,6 +34,16 @@ import stroom.util.logging.LogUtil;
 import stroom.util.shared.AbstractConfig;
 import stroom.util.shared.PropertyPath;
 import stroom.util.time.StroomDuration;
+
+import com.fasterxml.jackson.annotation.JsonProperty;
+import com.fasterxml.jackson.annotation.JsonPropertyDescription;
+import com.google.common.base.CaseFormat;
+import com.google.common.base.Preconditions;
+import com.google.common.base.Splitter;
+import com.google.common.base.Strings;
+import io.dropwizard.client.JerseyClientConfiguration;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import javax.inject.Inject;
 import javax.inject.Singleton;
@@ -438,7 +439,8 @@ public class ConfigMapper {
         return isSupported;
     }
 
-    private void updatePropertyFromConfigAnnotations(final ConfigProperty configProperty, final Prop prop) {
+    private void updatePropertyFromConfigAnnotations(final ConfigProperty configProperty,
+                                                     final Prop prop) {
         // Editable by default unless found otherwise below
         configProperty.setEditable(true);
 
