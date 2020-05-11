@@ -26,15 +26,11 @@ import stroom.explorer.shared.DocumentType;
 import stroom.importexport.migration.LegacyXMLSerialiser;
 import stroom.importexport.shared.ImportState;
 import stroom.importexport.shared.ImportState.ImportMode;
-import stroom.meta.shared.MetaFields;
 import stroom.pipeline.shared.PipelineDoc;
 import stroom.pipeline.shared.data.PipelineData;
 import stroom.processor.api.ProcessorFilterService;
-import stroom.processor.api.ProcessorFilterUtilities;
+import stroom.processor.api.ProcessorFilterUtil;
 import stroom.processor.shared.ProcessorFilter;
-import stroom.query.api.v2.ExpressionItem;
-import stroom.query.api.v2.ExpressionOperator;
-import stroom.query.api.v2.ExpressionTerm;
 import stroom.security.api.SecurityContext;
 import stroom.util.shared.Message;
 import stroom.util.shared.ResultPage;
@@ -229,7 +225,7 @@ public class PipelineStoreImpl implements PipelineStore {
             ResultPage<ProcessorFilter> filterResultPage = processorFilterServiceProvider.get().find(docRef);
 
             List <DocRef> docRefs = filterResultPage.getValues().stream()
-                    .filter(v -> ProcessorFilterUtilities.shouldExport(v))
+                    .filter(v -> ProcessorFilterUtil.shouldExport(v))
                     .map(v -> new DocRef(ProcessorFilter.ENTITY_TYPE, v.getUuid()))
                     .collect(Collectors.toList());
 

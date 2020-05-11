@@ -9,9 +9,9 @@ import stroom.query.api.v2.ExpressionTerm;
 /**
  * Collection of utility methods relating to processor filters
  */
-public final class ProcessorFilterUtilities {
+public final class ProcessorFilterUtil {
 
-    private ProcessorFilterUtilities(){}
+    private ProcessorFilterUtil(){}
 
     public static boolean shouldImport (final ProcessorFilter processorFilter){
         if (processorFilter == null || processorFilter.getQueryData() == null ||

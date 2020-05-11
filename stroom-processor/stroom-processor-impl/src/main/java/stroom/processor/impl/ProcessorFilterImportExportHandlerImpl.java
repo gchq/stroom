@@ -26,18 +26,14 @@ import stroom.importexport.api.ImportExportActionHandler;
 import stroom.importexport.api.ImportExportDocumentEventLog;
 import stroom.importexport.api.NonExplorerDocRefProvider;
 import stroom.importexport.shared.ImportState;
-import stroom.meta.shared.MetaFields;
 import stroom.pipeline.shared.PipelineDoc;
-import stroom.pipeline.shared.data.PipelineData;
 import stroom.processor.api.ProcessorFilterService;
-import stroom.processor.api.ProcessorFilterUtilities;
+import stroom.processor.api.ProcessorFilterUtil;
 import stroom.processor.api.ProcessorService;
 import stroom.processor.shared.Processor;
 import stroom.processor.shared.ProcessorDataSource;
 import stroom.processor.shared.ProcessorFilter;
 import stroom.processor.shared.ProcessorFilterDataSource;
-import stroom.processor.shared.QueryData;
-import stroom.query.api.v2.ExpressionItem;
 import stroom.query.api.v2.ExpressionOperator;
 import stroom.query.api.v2.ExpressionTerm;
 import stroom.util.shared.Message;
@@ -88,7 +84,7 @@ public class ProcessorFilterImportExportHandlerImpl implements ImportExportActio
             throw new RuntimeException("Unable to read meta file associated with processor " + docRef, ex);
         }
 
-        boolean ignore = ProcessorFilterUtilities.shouldImport (processorFilter);
+        boolean ignore = ProcessorFilterUtil.shouldImport (processorFilter);
 
         if (ignore)
             LOGGER.warn("Not importing processor filter " + docRef.getUuid() + " because it contains id fields");
