@@ -19,8 +19,6 @@ package stroom.data.store.impl.fs;
 import stroom.data.store.api.Store;
 import stroom.data.store.impl.DataStoreMaintenanceService;
 import stroom.data.store.impl.fs.api.FsVolumeResource;
-import stroom.job.api.RunnableWrapper;
-import stroom.job.api.ScheduledJobsBinder;
 import stroom.meta.api.AttributeMapFactory;
 import stroom.util.guice.GuiceUtil;
 import stroom.util.guice.RestResourcesBinder;
@@ -28,10 +26,6 @@ import stroom.util.guice.ServletBinder;
 import stroom.util.shared.Clearable;
 
 import com.google.inject.AbstractModule;
-
-import javax.inject.Inject;
-
-import static stroom.job.api.Schedule.ScheduleType.CRON;
 
 public class FsDataStoreModule extends AbstractModule {
     @Override
@@ -47,19 +41,6 @@ public class FsDataStoreModule extends AbstractModule {
 
         ServletBinder.create(binder())
                 .bind(EchoServlet.class);
-
-        ScheduledJobsBinder.create(binder())
-                .bindJobTo(FileSystemClean.class, builder -> builder
-                        .withName("File System Clean")
-                        .withDescription("Job to process a volume deleting files that are no " +
-                                "longer indexed (maybe the retention period has past or they have been deleted)")
-                        .withSchedule(CRON, "0 0 *")
-                        .withAdvancedState(false))
-                .bindJobTo(MetaDelete.class, builder -> builder
-                        .withName("Meta Delete")
-                        .withDescription("Physically delete streams that have been logically deleted " +
-                                "based on age of delete (stroom.data.store.deletePurgeAge)")
-                        .withSchedule(CRON, "0 0 *"));
     }
 
     @Override
@@ -72,19 +53,5 @@ public class FsDataStoreModule extends AbstractModule {
     @Override
     public int hashCode() {
         return 0;
-    }
-
-    private static class FileSystemClean extends RunnableWrapper {
-        @Inject
-        FileSystemClean(final FsCleanExecutor fileSystemCleanExecutor) {
-            super(fileSystemCleanExecutor::clean);
-        }
-    }
-
-    private static class MetaDelete extends RunnableWrapper {
-        @Inject
-        MetaDelete(final PhysicalDeleteExecutor physicalDeleteExecutor) {
-            super(physicalDeleteExecutor::exec);
-        }
     }
 }
