@@ -231,7 +231,9 @@ class TestConfigMapper {
             if (configProperty.getDefaultValue().isEmpty()
                     && !configProperty.getName().toString().contains("Pool")
                     && !configProperty.getName().toString().contains("expireAfterWrite")
-                    && !configProperty.getName().toString().contains("db.connection")) {
+                    && !configProperty.getName().toString().contains("expireAfterAccess")
+                    && !configProperty.getName().toString().contains("db.connection")
+                    && !configProperty.getName().toString().contains("Uri.")) {
                 LOGGER.info("{}", configProperty.getName());
             }
         });
