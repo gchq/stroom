@@ -16,15 +16,20 @@
 
 package stroom.authentication.account;
 
+import stroom.job.api.RunnableWrapper;
+import stroom.job.api.ScheduledJobsBinder;
 import stroom.security.api.ProcessingUserIdentityProvider;
 import stroom.util.guice.RestResourcesBinder;
 
 import com.google.inject.AbstractModule;
 
+import javax.inject.Inject;
+
+import static stroom.job.api.Schedule.ScheduleType.PERIODIC;
+
 public final class AccountModule extends AbstractModule {
     @Override
     protected void configure() {
-        install(new AccountTaskJobsModule());
 
         bind(AccountService.class).to(AccountServiceImpl.class);
         bind(AccountEventLog.class).to(AccountEventLogImpl.class);
@@ -32,5 +37,19 @@ public final class AccountModule extends AbstractModule {
 
         RestResourcesBinder.create(binder())
                 .bind(AccountResourceImpl.class);
+
+        ScheduledJobsBinder.create(binder())
+                .bindJobTo(AccountMaintenance.class, jobBuilder -> jobBuilder
+                        .withName("Account Maintenance")
+                        .withDescription("Maintain user accounts such as disabling unused ones.")
+                        .withSchedule(PERIODIC, "1d"));
+    }
+
+    private static class AccountMaintenance extends RunnableWrapper {
+
+        @Inject
+        AccountMaintenance(final AccountMaintenanceTask accountMaintenanceTask) {
+            super(accountMaintenanceTask::exec);
+        }
     }
 }

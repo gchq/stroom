@@ -12,6 +12,8 @@ and this project adheres to [Semantic Versioning](http://semver.org/).
 
 * Issue **#1112** : As part of fixing dependencies when copying items, the dependencies screen now works correctly and now also shows processor filters. 
 
+* Issue **#1545** : Add property `enableDistributedJobsOnBootstrap` to enable/disable processing on first boot.
+
 
 ## [v7.0-beta.30] - 2020-05-06
 

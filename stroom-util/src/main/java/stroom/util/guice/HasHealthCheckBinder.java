@@ -4,6 +4,7 @@ import stroom.util.HasHealthCheck;
 
 import com.google.inject.Binder;
 import com.google.inject.multibindings.Multibinder;
+import com.google.inject.multibindings.ProvidesIntoSet;
 
 public class HasHealthCheckBinder {
     private final Multibinder<HasHealthCheck> multibinder;
@@ -16,6 +17,7 @@ public class HasHealthCheckBinder {
         return new HasHealthCheckBinder(binder);
     }
 
+    @ProvidesIntoSet
     public <H extends HasHealthCheck> HasHealthCheckBinder bind(final Class<H> healthCheckClass) {
         multibinder.addBinding().to(healthCheckClass);
         return this;

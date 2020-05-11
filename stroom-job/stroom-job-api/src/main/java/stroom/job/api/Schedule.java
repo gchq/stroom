@@ -4,7 +4,7 @@ public class Schedule {
     private String schedule;
     private ScheduleType scheduleType;
 
-    public Schedule(ScheduleType scheduleType, String schedule){
+    public Schedule(final ScheduleType scheduleType, final String schedule){
         this.schedule = schedule;
         this.scheduleType = scheduleType;
     }
