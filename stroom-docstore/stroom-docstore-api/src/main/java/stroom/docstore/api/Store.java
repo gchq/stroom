@@ -10,6 +10,7 @@ import stroom.util.shared.Message;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
+import java.util.function.BiConsumer;
 import java.util.function.Function;
 
 public interface Store<D extends Doc> extends DocumentActionHandler<D> {
@@ -20,8 +21,7 @@ public interface Store<D extends Doc> extends DocumentActionHandler<D> {
     DocRef createDocument(String name);
 
     DocRef copyDocument(String originalUuid,
-                        String copyUuid,
-                        Map<String, String> otherCopiesByOriginalUuid);
+                        String newName);
 
     DocRef moveDocument(String uuid);
 
@@ -35,6 +35,20 @@ public interface Store<D extends Doc> extends DocumentActionHandler<D> {
     // END OF ExplorerActionHandler
     ////////////////////////////////////////////////////////////////////////
 
+    ////////////////////////////////////////////////////////////////////////
+    // START OF HasDependencies
+    ////////////////////////////////////////////////////////////////////////
+
+    Map<DocRef, Set<DocRef>> getDependencies(BiConsumer<D, DependencyRemapper> mapper);
+
+    Set<DocRef> getDependencies(DocRef docRef, BiConsumer<D, DependencyRemapper> mapper);
+
+    void remapDependencies(DocRef docRef, Map<DocRef, DocRef> remappings, BiConsumer<D, DependencyRemapper> mapper);
+
+    ////////////////////////////////////////////////////////////////////////
+    // END OF HasDependencies
+    ////////////////////////////////////////////////////////////////////////
+
     /**
      * Creates the named document, using the supplied {@link DocumentCreator} to
      * provide the initial document skeleton. This allows doc store implementors
@@ -45,8 +59,6 @@ public interface Store<D extends Doc> extends DocumentActionHandler<D> {
     boolean exists(DocRef docRef);
 
     Set<DocRef> listDocuments();
-
-    Map<DocRef, Set<DocRef>> getDependencies();
 
     ImportExportActionHandler.ImpexDetails importDocument(
             DocRef docRef,

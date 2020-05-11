@@ -17,15 +17,21 @@
 
 package stroom.dashboard.impl;
 
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
+import stroom.dashboard.shared.ComponentConfig;
+import stroom.dashboard.shared.ComponentSettings;
 import stroom.dashboard.shared.DashboardConfig;
 import stroom.dashboard.shared.DashboardDoc;
+import stroom.dashboard.shared.QueryComponentSettings;
+import stroom.dashboard.shared.TableComponentSettings;
+import stroom.dashboard.shared.TextComponentSettings;
+import stroom.dashboard.shared.VisComponentSettings;
 import stroom.docref.DocRef;
 import stroom.docref.DocRefInfo;
 import stroom.docstore.api.AuditFieldFilter;
+import stroom.docstore.api.DependencyRemapper;
 import stroom.docstore.api.Store;
 import stroom.docstore.api.StoreFactory;
+import stroom.docstore.api.UniqueNameUtil;
 import stroom.explorer.shared.DocumentType;
 import stroom.importexport.migration.LegacyXMLSerialiser;
 import stroom.importexport.shared.ImportState;
@@ -34,15 +40,18 @@ import stroom.security.api.SecurityContext;
 import stroom.util.shared.Message;
 import stroom.util.shared.Severity;
 
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+
 import javax.inject.Inject;
 import javax.inject.Singleton;
 import java.io.IOException;
 import java.io.InputStream;
-import java.util.Collections;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
 import java.util.UUID;
+import java.util.function.BiConsumer;
 
 @Singleton
 class DashboardStoreImpl implements DashboardStore {
@@ -91,10 +100,9 @@ class DashboardStoreImpl implements DashboardStore {
     }
 
     @Override
-    public DocRef copyDocument(final String originalUuid,
-                               final String copyUuid,
-                               final Map<String, String> otherCopiesByOriginalUuid) {
-        return store.copyDocument(originalUuid, copyUuid, otherCopiesByOriginalUuid);
+    public DocRef copyDocument(final DocRef docRef, final Set<String> existingNames) {
+        final String newName = UniqueNameUtil.getCopyName(docRef.getName(), existingNames);
+        return store.copyDocument(docRef.getUuid(), newName);
     }
 
     @Override
@@ -127,6 +135,85 @@ class DashboardStoreImpl implements DashboardStore {
     ////////////////////////////////////////////////////////////////////////
 
     ////////////////////////////////////////////////////////////////////////
+    // START OF HasDependencies
+    ////////////////////////////////////////////////////////////////////////
+
+    @Override
+    public Map<DocRef, Set<DocRef>> getDependencies() {
+        return store.getDependencies(createMapper());
+    }
+
+    @Override
+    public Set<DocRef> getDependencies(final DocRef docRef) {
+        return store.getDependencies(docRef, createMapper());
+    }
+
+    @Override
+    public void remapDependencies(final DocRef docRef,
+                                  final Map<DocRef, DocRef> remappings) {
+        store.remapDependencies(docRef, remappings, createMapper());
+    }
+
+    private BiConsumer<DashboardDoc, DependencyRemapper> createMapper() {
+        return (doc, dependencyRemapper) -> {
+            if (doc.getDashboardConfig() != null) {
+                final List<ComponentConfig> components = doc.getDashboardConfig().getComponents();
+                if (components != null && components.size() > 0) {
+                    components.forEach(componentConfig -> {
+                        final ComponentSettings componentSettings = componentConfig.getSettings();
+                        if (componentSettings != null) {
+                            if (componentSettings instanceof QueryComponentSettings) {
+                                final QueryComponentSettings queryComponentSettings = (QueryComponentSettings) componentSettings;
+                                remapQueryComponentSettings(queryComponentSettings, dependencyRemapper);
+
+                            } else if (componentSettings instanceof TableComponentSettings) {
+                                final TableComponentSettings tableComponentSettings = (TableComponentSettings) componentSettings;
+                                remapTableComponentSettings(tableComponentSettings, dependencyRemapper);
+
+                            } else if (componentSettings instanceof VisComponentSettings) {
+                                final VisComponentSettings visComponentSettings = (VisComponentSettings) componentSettings;
+                                remapVisComponentSettings(visComponentSettings, dependencyRemapper);
+
+                            } else if (componentSettings instanceof TextComponentSettings) {
+                                final TextComponentSettings textComponentSettings = (TextComponentSettings) componentSettings;
+                                remapTextComponentSettings(textComponentSettings, dependencyRemapper);
+                            }
+                        }
+                    });
+                }
+            }
+        };
+    }
+
+    private void remapQueryComponentSettings(final QueryComponentSettings queryComponentSettings, final DependencyRemapper dependencyRemapper) {
+        queryComponentSettings.setDataSource(dependencyRemapper.remap(queryComponentSettings.getDataSource()));
+
+        if (queryComponentSettings.getExpression() != null) {
+            dependencyRemapper.remapExpression(queryComponentSettings.getExpression());
+        }
+    }
+
+    private void remapTableComponentSettings(final TableComponentSettings tableComponentSettings, final DependencyRemapper dependencyRemapper) {
+        tableComponentSettings.setExtractionPipeline(dependencyRemapper.remap(tableComponentSettings.getExtractionPipeline()));
+    }
+
+    private void remapVisComponentSettings(final VisComponentSettings visComponentSettings, final DependencyRemapper dependencyRemapper) {
+        visComponentSettings.setVisualisation(dependencyRemapper.remap(visComponentSettings.getVisualisation()));
+
+        if (visComponentSettings.getTableSettings() != null) {
+            remapTableComponentSettings(visComponentSettings.getTableSettings(), dependencyRemapper);
+        }
+    }
+
+    private void remapTextComponentSettings(final TextComponentSettings textComponentSettings, final DependencyRemapper dependencyRemapper) {
+        textComponentSettings.setPipeline(dependencyRemapper.remap(textComponentSettings.getPipeline()));
+    }
+
+    ////////////////////////////////////////////////////////////////////////
+    // END OF HasDependencies
+    ////////////////////////////////////////////////////////////////////////
+
+    ////////////////////////////////////////////////////////////////////////
     // START OF DocumentActionHandler
     ////////////////////////////////////////////////////////////////////////
 
@@ -151,11 +238,6 @@ class DashboardStoreImpl implements DashboardStore {
     @Override
     public Set<DocRef> listDocuments() {
         return store.listDocuments();
-    }
-
-    @Override
-    public Map<DocRef, Set<DocRef>> getDependencies() {
-        return Collections.emptyMap();
     }
 
     @Override

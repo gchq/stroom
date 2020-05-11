@@ -20,8 +20,10 @@ package stroom.dashboard.impl.visualisation;
 import stroom.docref.DocRef;
 import stroom.docref.DocRefInfo;
 import stroom.docstore.api.AuditFieldFilter;
+import stroom.docstore.api.DependencyRemapper;
 import stroom.docstore.api.Store;
 import stroom.docstore.api.StoreFactory;
+import stroom.docstore.api.UniqueNameUtil;
 import stroom.explorer.shared.DocumentType;
 import stroom.importexport.migration.LegacyXMLSerialiser;
 import stroom.importexport.shared.ImportState;
@@ -31,17 +33,22 @@ import stroom.util.shared.Message;
 import stroom.util.shared.Severity;
 import stroom.visualisation.shared.VisualisationDoc;
 
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+
 import javax.inject.Inject;
 import javax.inject.Singleton;
 import java.io.IOException;
-import java.util.Collections;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
 import java.util.UUID;
+import java.util.function.BiConsumer;
 
 @Singleton
 class VisualisationStoreImpl implements VisualisationStore {
+    private static final Logger LOGGER = LoggerFactory.getLogger(VisualisationStoreImpl.class);
+
     private final Store<VisualisationDoc> store;
     private final SecurityContext securityContext;
     private final VisualisationSerialiser serialiser;
@@ -65,10 +72,9 @@ class VisualisationStoreImpl implements VisualisationStore {
     }
 
     @Override
-    public DocRef copyDocument(final String originalUuid,
-                               final String copyUuid,
-                               final Map<String, String> otherCopiesByOriginalUuid) {
-        return store.copyDocument(originalUuid, copyUuid, otherCopiesByOriginalUuid);
+    public DocRef copyDocument(final DocRef docRef, final Set<String> existingNames) {
+        final String newName = UniqueNameUtil.getCopyName(docRef.getName(), existingNames);
+        return store.copyDocument(docRef.getUuid(), newName);
     }
 
     @Override
@@ -101,6 +107,35 @@ class VisualisationStoreImpl implements VisualisationStore {
     ////////////////////////////////////////////////////////////////////////
 
     ////////////////////////////////////////////////////////////////////////
+    // START OF HasDependencies
+    ////////////////////////////////////////////////////////////////////////
+
+    @Override
+    public Map<DocRef, Set<DocRef>> getDependencies() {
+        return store.getDependencies(createMapper());
+    }
+
+    @Override
+    public Set<DocRef> getDependencies(final DocRef docRef) {
+        return store.getDependencies(docRef, createMapper());
+    }
+
+    @Override
+    public void remapDependencies(final DocRef docRef,
+                                  final Map<DocRef, DocRef> remappings) {
+        store.remapDependencies(docRef, remappings, createMapper());
+    }
+
+    private BiConsumer<VisualisationDoc, DependencyRemapper> createMapper() {
+        return (doc, dependencyRemapper) ->
+                doc.setScriptRef(dependencyRemapper.remap(doc.getScriptRef()));
+    }
+
+    ////////////////////////////////////////////////////////////////////////
+    // END OF HasDependencies
+    ////////////////////////////////////////////////////////////////////////
+
+    ////////////////////////////////////////////////////////////////////////
     // START OF DocumentActionHandler
     ////////////////////////////////////////////////////////////////////////
 
@@ -125,11 +160,6 @@ class VisualisationStoreImpl implements VisualisationStore {
     @Override
     public Set<DocRef> listDocuments() {
         return store.listDocuments();
-    }
-
-    @Override
-    public Map<DocRef, Set<DocRef>> getDependencies() {
-        return Collections.emptyMap();
     }
 
     @Override
