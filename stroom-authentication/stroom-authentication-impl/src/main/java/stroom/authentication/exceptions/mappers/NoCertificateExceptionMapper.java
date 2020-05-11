@@ -19,22 +19,26 @@
 package stroom.authentication.exceptions.mappers;
 
 
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
+import stroom.authentication.authenticate.api.AuthenticationService;
 import stroom.authentication.config.AuthenticationConfig;
 import stroom.authentication.exceptions.NoCertificateException;
 import stroom.config.common.UriFactory;
+
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import javax.inject.Inject;
 import javax.ws.rs.core.Response;
 import javax.ws.rs.ext.ExceptionMapper;
 
+@SuppressWarnings("unused")
 class NoCertificateExceptionMapper implements ExceptionMapper<NoCertificateException> {
     private static final Logger LOGGER = LoggerFactory.getLogger(NoCertificateExceptionMapper.class);
 
     private final UriFactory uriFactory;
     private final AuthenticationConfig authenticationConfig;
 
+    @SuppressWarnings("unused")
     @Inject
     NoCertificateExceptionMapper(final UriFactory uriFactory,
                                  final AuthenticationConfig authenticationConfig) {
@@ -45,6 +49,6 @@ class NoCertificateExceptionMapper implements ExceptionMapper<NoCertificateExcep
     @Override
     public Response toResponse(NoCertificateException exception) {
         LOGGER.debug("Unable to create a token for this user. Redirecting to login as a backup method.", exception);
-        return Response.seeOther(uriFactory.uiUri(authenticationConfig.getLoginUrl())).build();
+        return Response.seeOther(uriFactory.uiUri(AuthenticationService.LOGIN_URL_PATH)).build();
     }
 }

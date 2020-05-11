@@ -1,8 +1,5 @@
 package stroom.authentication.authenticate;
 
-import org.apache.commons.lang3.NotImplementedException;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 import stroom.authentication.account.Account;
 import stroom.authentication.account.AccountDao;
 import stroom.authentication.account.AccountService;
@@ -17,6 +14,10 @@ import stroom.authentication.token.TokenService;
 import stroom.config.common.UriFactory;
 import stroom.security.api.SecurityContext;
 
+import org.apache.commons.lang3.NotImplementedException;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+
 import javax.inject.Inject;
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpSession;
@@ -29,10 +30,6 @@ import java.util.Optional;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
-import static stroom.authentication.authenticate.PasswordValidator.validateAuthenticity;
-import static stroom.authentication.authenticate.PasswordValidator.validateComplexity;
-import static stroom.authentication.authenticate.PasswordValidator.validateLength;
-import static stroom.authentication.authenticate.PasswordValidator.validateReuse;
 
 class AuthenticationServiceImpl implements AuthenticationService {
     private static final Logger LOGGER = LoggerFactory.getLogger(AuthenticationServiceImpl.class);
@@ -346,13 +343,27 @@ class AuthenticationServiceImpl implements AuthenticationService {
         return true;
     }
 
-    public ChangePasswordResponse changePassword(final HttpServletRequest request, final ChangePasswordRequest changePasswordRequest) {
+    public ChangePasswordResponse changePassword(final HttpServletRequest request,
+                                                 final ChangePasswordRequest changePasswordRequest) {
         List<PasswordValidationFailureType> failedOn = new ArrayList<>();
-        final LoginResult loginResult = accountDao.areCredentialsValid(changePasswordRequest.getEmail(), changePasswordRequest.getOldPassword());
-        validateAuthenticity(loginResult).ifPresent(failedOn::add);
-        validateReuse(changePasswordRequest.getOldPassword(), changePasswordRequest.getNewPassword()).ifPresent(failedOn::add);
-        validateLength(changePasswordRequest.getNewPassword(), config.getPasswordIntegrityChecksConfig().getMinimumPasswordLength()).ifPresent(failedOn::add);
-        validateComplexity(changePasswordRequest.getNewPassword(), config.getPasswordIntegrityChecksConfig().getPasswordComplexityRegex()).ifPresent(failedOn::add);
+        final LoginResult loginResult = accountDao.areCredentialsValid(
+                changePasswordRequest.getEmail(),
+                changePasswordRequest.getOldPassword());
+
+        PasswordValidator.validateAuthenticity(loginResult)
+                .ifPresent(failedOn::add);
+        PasswordValidator.validateReuse(
+                changePasswordRequest.getOldPassword(),
+                changePasswordRequest.getNewPassword())
+                .ifPresent(failedOn::add);
+        PasswordValidator.validateLength(
+                changePasswordRequest.getNewPassword(),
+                config.getPasswordIntegrityChecksConfig().getMinimumPasswordLength())
+                .ifPresent(failedOn::add);
+        PasswordValidator.validateComplexity(
+                changePasswordRequest.getNewPassword(),
+                config.getPasswordIntegrityChecksConfig().getPasswordComplexityRegex())
+                .ifPresent(failedOn::add);
 
         final ChangePasswordResponse.ChangePasswordResponseBuilder responseBuilder = new ChangePasswordResponse.ChangePasswordResponseBuilder();
         if (failedOn.size() == 0) {
@@ -383,8 +394,14 @@ class AuthenticationServiceImpl implements AuthenticationService {
         List<PasswordValidationFailureType> failedOn = new ArrayList<>();
         PasswordIntegrityChecksConfig conf = config.getPasswordIntegrityChecksConfig();
 
-        validateLength(request.getNewPassword(), conf.getMinimumPasswordLength()).ifPresent(failedOn::add);
-        validateComplexity(request.getNewPassword(), conf.getPasswordComplexityRegex()).ifPresent(failedOn::add);
+        PasswordValidator.validateLength(
+                request.getNewPassword(),
+                conf.getMinimumPasswordLength())
+                .ifPresent(failedOn::add);
+        PasswordValidator.validateComplexity(
+                request.getNewPassword(),
+                conf.getPasswordComplexityRegex())
+                .ifPresent(failedOn::add);
 
         final ChangePasswordResponse.ChangePasswordResponseBuilder responseBuilder = new ChangePasswordResponse.ChangePasswordResponseBuilder();
 
@@ -409,12 +426,22 @@ class AuthenticationServiceImpl implements AuthenticationService {
 
         if (passwordValidationRequest.getOldPassword() != null) {
             final LoginResult loginResult = accountDao.areCredentialsValid(passwordValidationRequest.getEmail(), passwordValidationRequest.getOldPassword());
-            validateAuthenticity(loginResult).ifPresent(failedOn::add);
-            validateReuse(passwordValidationRequest.getOldPassword(), passwordValidationRequest.getNewPassword()).ifPresent(failedOn::add);
+            PasswordValidator.validateAuthenticity(loginResult)
+                    .ifPresent(failedOn::add);
+            PasswordValidator.validateReuse(
+                    passwordValidationRequest.getOldPassword(),
+                    passwordValidationRequest.getNewPassword())
+                    .ifPresent(failedOn::add);
         }
 
-        validateLength(passwordValidationRequest.getNewPassword(), config.getPasswordIntegrityChecksConfig().getMinimumPasswordLength()).ifPresent(failedOn::add);
-        validateComplexity(passwordValidationRequest.getNewPassword(), config.getPasswordIntegrityChecksConfig().getPasswordComplexityRegex()).ifPresent(failedOn::add);
+        PasswordValidator.validateLength(
+                passwordValidationRequest.getNewPassword(),
+                config.getPasswordIntegrityChecksConfig().getMinimumPasswordLength())
+                .ifPresent(failedOn::add);
+        PasswordValidator.validateComplexity(
+                passwordValidationRequest.getNewPassword(),
+                config.getPasswordIntegrityChecksConfig().getPasswordComplexityRegex())
+                .ifPresent(failedOn::add);
 
         return new PasswordValidationResponse.PasswordValidationResponseBuilder()
                 .withFailedOn(failedOn.toArray(new PasswordValidationFailureType[0]))
@@ -479,7 +506,7 @@ class AuthenticationServiceImpl implements AuthenticationService {
     @Override
     public URI createLoginUri(final String redirectUri) {
         LOGGER.debug("Sending user to login.");
-        final UriBuilder uriBuilder = UriBuilder.fromUri(uriFactory.uiUri(config.getLoginUrl()))
+        final UriBuilder uriBuilder = UriBuilder.fromUri(uriFactory.uiUri(AuthenticationService.LOGIN_URL_PATH))
                 .queryParam("error", "login_required")
                 .queryParam(OIDC.REDIRECT_URI, redirectUri);
         return uriBuilder.build();
@@ -488,7 +515,7 @@ class AuthenticationServiceImpl implements AuthenticationService {
     @Override
     public URI createChangePasswordUri(final String redirectUri) {
         LOGGER.debug("Sending user to change password.");
-        return UriBuilder.fromUri(uriFactory.uiUri(config.getChangePasswordUrl()))
+        return UriBuilder.fromUri(uriFactory.uiUri(AuthenticationService.CHANGE_PASSWORD_URL_PATH))
                 .queryParam(OIDC.REDIRECT_URI, redirectUri)
                 .build();
     }
@@ -502,10 +529,10 @@ class AuthenticationServiceImpl implements AuthenticationService {
 //    }
 
     private Optional<String> getIdFromCertificate(final String cn) {
-        final Pattern idExtractionPattern = Pattern.compile(this.config.getCertificateDnPattern());
+        final Pattern idExtractionPattern = Pattern.compile(this.config.getCertificateCnPattern());
         final Matcher idExtractionMatcher = idExtractionPattern.matcher(cn);
         if (idExtractionMatcher.find()) {
-            final int captureGroupIndex = this.config.getCertificateDnCaptureGroupIndex();
+            final int captureGroupIndex = this.config.getCertificateCnCaptureGroupIndex();
             try {
                 if (idExtractionMatcher.groupCount() >= captureGroupIndex) {
                     final String id = idExtractionMatcher.group(captureGroupIndex);
@@ -513,7 +540,7 @@ class AuthenticationServiceImpl implements AuthenticationService {
                 }
             } catch (final IllegalStateException ex) {
                 LOGGER.error("Unable to extract user ID from CN. CN was {} and pattern was {}", cn,
-                        this.config.getCertificateDnPattern());
+                        this.config.getCertificateCnPattern());
             }
         }
 

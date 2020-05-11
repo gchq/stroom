@@ -1,9 +1,5 @@
 package stroom.authentication.oauth2;
 
-import com.google.common.base.Objects;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
-
 import stroom.authentication.api.OAuth2Client;
 import stroom.authentication.api.OIDC;
 import stroom.authentication.api.OpenIdClientDetailsFactory;
@@ -16,6 +12,10 @@ import stroom.authentication.token.TokenBuilder;
 import stroom.authentication.token.TokenBuilderFactory;
 import stroom.config.common.UriFactory;
 
+import com.google.common.base.Objects;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+
 import javax.annotation.Nullable;
 import javax.inject.Inject;
 import javax.servlet.http.HttpServletRequest;
@@ -26,8 +26,10 @@ import java.util.Base64;
 import java.util.Optional;
 import java.util.regex.Pattern;
 
+
 class OAuth2Service {
     private static final Logger LOGGER = LoggerFactory.getLogger(OAuth2Service.class);
+
 
     private final UriFactory uriFactory;
     private final AuthenticationConfig authenticationConfig;
@@ -116,7 +118,7 @@ class OAuth2Service {
 
         } catch (final RuntimeException e) {
             LOGGER.error("Error authenticating request {}", request.getRequestURI(), e);
-            result = UriBuilder.fromUri(uriFactory.uiUri(authenticationConfig.getUnauthorisedUrl())).build();
+            result = UriBuilder.fromUri(uriFactory.uiUri(AuthenticationService.UNAUTHORISED_URL_PATH)).build();
         }
 
         return result;
