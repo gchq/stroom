@@ -10,4 +10,6 @@ public class StartupTask {
     public int getPriority() {
         return priority;
     }
+
+    // No equals/hashcode as guice MultiBinder will use object identity
 }
