@@ -2,11 +2,13 @@ package stroom.util.time;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.SerializationFeature;
+import org.assertj.core.api.Assertions;
 import org.junit.jupiter.api.Test;
 
 import java.io.IOException;
 import java.io.StringWriter;
 import java.time.Duration;
+import java.time.Instant;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
@@ -78,6 +80,17 @@ class TestStroomDuration {
             final StroomDuration stroomDuration2 = objectMapper.readValue(json, StroomDuration.class);
 
             assertThat(stroomDuration).isEqualTo(stroomDuration2);
+    }
+
+    @Test
+    void testPlus() {
+        final Instant now = Instant.now();
+        final StroomDuration duration = StroomDuration.ofMinutes(5);
+
+        final Instant nowPlus = now.plus(duration);
+
+        Assertions.assertThat(Duration.between(now, nowPlus))
+                .isEqualTo(duration.getDuration());
     }
 
     void doParseTest(final String modelStringUtilInput, final String isoInput, final Duration expectedDuration) {
