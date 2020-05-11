@@ -255,6 +255,10 @@ appConfig:
         maxLifetime: null
         minimumIdle: null
         maxPoolSize: null
+    docRefInfoCache:
+      maximumSize: 1000
+      expireAfterAccess: "PT10M"
+      expireAfterWrite: null
   export:
     enabled: false
   feed:
@@ -310,6 +314,7 @@ appConfig:
         maxLifetime: null
         minimumIdle: null
         maxPoolSize: null
+    enableDistributedJobsOnBootstrap: true
   kafka:
     skeletonConfigContent: "# The following properties are taken from the v2.2 documentation\n\
       # for the Kafka Producer and can be uncommented and set as required.\n# NOTE\
@@ -361,12 +366,12 @@ appConfig:
         maxLifetime: null
         minimumIdle: null
         maxPoolSize: null
-    name: "tba"
     status:
       heapHistogram:
         classNameMatchRegex: "^stroom\\..*$"
         classNameReplacementRegex: "((?<=\\$Proxy)[0-9]+|(?<=\\$\\$)[0-9a-f]+|(?<=\\\
           $\\$Lambda\\$)[0-9]+\\/[0-9]+)"
+    name: "tba"
   nodeUri:
     scheme: null
     hostname: null
@@ -642,6 +647,8 @@ appConfig:
         count: "statisticEvents-Count"
         value: "statisticEvents-Value"
     internal:
+      enabledStoreTypes:
+      - "StatisticStore"
       benchmarkCluster:
       - type: "StatisticStore"
         uuid: "946a88c6-a59a-11e6-bdc4-0242ac110002"

@@ -1,0 +1,59 @@
+{
+  "components" : [ {
+    "type" : "table",
+    "id" : "table-IIO1T",
+    "name" : "Table",
+    "settings" : {
+      "type" : "table",
+      "queryId" : "query-JT8D7",
+      "fields" : [ ],
+      "maxResults" : [ 1000000 ]
+    }
+  }, {
+    "type" : "query",
+    "id" : "query-JT8D7",
+    "name" : "Query",
+    "settings" : {
+      "type" : "query",
+      "expression" : {
+        "type" : "operator",
+        "children" : [ ]
+      },
+      "automate" : {
+        "open" : false,
+        "refresh" : false,
+        "refreshInterval" : "10s"
+      }
+    }
+  } ],
+  "layout" : {
+    "type" : "splitLayout",
+    "preferredSize" : {
+      "width" : 200,
+      "height" : 200
+    },
+    "dimension" : 1,
+    "children" : [ {
+      "type" : "tabLayout",
+      "preferredSize" : {
+        "width" : 200,
+        "height" : 200
+      },
+      "tabs" : [ {
+        "id" : "query-JT8D7"
+      } ],
+      "selected" : 0
+    }, {
+      "type" : "tabLayout",
+      "preferredSize" : {
+        "width" : 200,
+        "height" : 200
+      },
+      "tabs" : [ {
+        "id" : "table-IIO1T"
+      } ],
+      "selected" : 0
+    } ]
+  },
+  "tabVisibility" : "SHOW_ALL"
+}

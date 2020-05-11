@@ -19,7 +19,6 @@ package stroom.task.client.presenter;
 import com.google.gwt.cell.client.TextCell;
 import com.google.gwt.core.client.GWT;
 import com.google.gwt.user.cellview.client.Column;
-import com.google.gwt.user.cellview.client.ColumnSortEvent;
 import com.google.gwt.user.client.Timer;
 import com.google.inject.Inject;
 import com.google.web.bindery.event.shared.EventBus;
@@ -56,6 +55,7 @@ import stroom.task.shared.TerminateTaskProgressRequest;
 import stroom.util.shared.Expander;
 import stroom.util.shared.ModelStringUtil;
 import stroom.util.shared.ResultPage;
+import stroom.util.shared.Sort;
 import stroom.util.shared.Sort.Direction;
 import stroom.widget.button.client.ButtonView;
 import stroom.widget.customdatebox.client.ClientDateUtil;
@@ -75,7 +75,7 @@ import java.util.function.Consumer;
 
 public class TaskManagerListPresenter
         extends MyPresenterWidget<DataGridView<TaskProgress>>
-        implements HasDataSelectionHandlers<Set<String>>, Refreshable, ColumnSortEvent.Handler {
+        implements HasDataSelectionHandlers<Set<String>>, Refreshable {
     private static final TaskResource TASK_RESOURCE = GWT.create(TaskResource.class);
 
     private final FindTaskProgressCriteria criteria = new FindTaskProgressCriteria();
@@ -106,8 +106,6 @@ public class TaskManagerListPresenter
         terminateButton.addClickHandler(event -> endSelectedTask());
         terminateButton.setEnabled(true);
 
-        getView().addColumnSortHandler(this);
-
         initTableColumns();
 
         dataProvider = new RestDataProvider<TaskProgress, TaskProgressResponse>(eventBus) {
@@ -120,6 +118,18 @@ public class TaskManagerListPresenter
 
         // Handle use of the expander column.
         dataProvider.setTreeRowHandler(new TreeRowHandler<TaskProgress>(request, getView(), expanderColumn));
+
+        getView().addColumnSortHandler(event -> {
+            if (event.getColumn() instanceof OrderByColumn<?, ?>) {
+                final OrderByColumn<?, ?> orderByColumn = (OrderByColumn<?, ?>) event.getColumn();
+                if (event.isSortAscending()) {
+                    criteria.setSort(orderByColumn.getField(), Sort.Direction.ASCENDING, orderByColumn.isIgnoreCase());
+                } else {
+                    criteria.setSort(orderByColumn.getField(), Sort.Direction.DESCENDING, orderByColumn.isIgnoreCase());
+                }
+                dataProvider.refresh();
+            }
+        });
     }
 
     /**
@@ -353,19 +363,6 @@ public class TaskManagerListPresenter
     @Override
     public HandlerRegistration addDataSelectionHandler(final DataSelectionHandler<Set<String>> handler) {
         return addHandlerToSource(DataSelectionEvent.getType(), handler);
-    }
-
-    @Override
-    public void onColumnSort(final ColumnSortEvent event) {
-        if (event.getColumn() instanceof OrderByColumn<?, ?>) {
-            final OrderByColumn<?, ?> orderByColumn = (OrderByColumn<?, ?>) event.getColumn();
-            if (event.isSortAscending()) {
-                request.getCriteria().setSort(orderByColumn.getField(), Direction.ASCENDING, orderByColumn.isIgnoreCase());
-            } else {
-                request.getCriteria().setSort(orderByColumn.getField(), Direction.DESCENDING, orderByColumn.isIgnoreCase());
-            }
-            refresh();
-        }
     }
 
     private class NameFilterTimer extends Timer {

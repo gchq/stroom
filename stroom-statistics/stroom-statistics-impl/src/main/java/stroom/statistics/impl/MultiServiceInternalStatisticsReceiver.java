@@ -1,16 +1,18 @@
 package stroom.statistics.impl;
 
-import com.google.common.base.Preconditions;
-import io.vavr.Tuple3;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 import stroom.docref.DocRef;
 import stroom.statistics.api.InternalStatisticEvent;
 import stroom.statistics.api.InternalStatisticsReceiver;
 
+import io.vavr.Tuple;
+import io.vavr.Tuple3;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+
 import java.util.Collections;
 import java.util.List;
 import java.util.Map;
+import java.util.Objects;
 import java.util.stream.Collectors;
 
 /**
@@ -22,13 +24,13 @@ class MultiServiceInternalStatisticsReceiver implements InternalStatisticsReceiv
     private static final Logger LOGGER = LoggerFactory.getLogger(MultiServiceInternalStatisticsReceiver.class);
 
     private final Map<String, InternalStatisticsService> docRefTypeToServiceMap;
-    private final InternalStatisticDocRefCache internalStatisticDocRefCache;
+    private final InternalStatisticsConfig internalStatisticsConfig;
 
-    MultiServiceInternalStatisticsReceiver(final InternalStatisticDocRefCache internalStatisticDocRefCache,
-                                           final Map<String, InternalStatisticsService> docRefTypeToServiceMap) {
+    MultiServiceInternalStatisticsReceiver(final Map<String, InternalStatisticsService> docRefTypeToServiceMap,
+                                           final InternalStatisticsConfig internalStatisticsConfig) {
 
-        this.docRefTypeToServiceMap = Preconditions.checkNotNull(docRefTypeToServiceMap);
-        this.internalStatisticDocRefCache = Preconditions.checkNotNull(internalStatisticDocRefCache);
+        this.docRefTypeToServiceMap = Objects.requireNonNull(docRefTypeToServiceMap);
+        this.internalStatisticsConfig = Objects.requireNonNull(internalStatisticsConfig);
     }
 
     @Override
@@ -43,12 +45,14 @@ class MultiServiceInternalStatisticsReceiver implements InternalStatisticsReceiv
             Map<InternalStatisticsService, Map<DocRef, List<InternalStatisticEvent>>> serviceToEventsMapMap =
                     statisticEvents.stream()
                             .flatMap(event ->
-                                    internalStatisticDocRefCache.getDocRefs(event.getKey()).stream()
+                                    internalStatisticsConfig.getEnabledDocRefs(event.getKey())
+                                            .stream()
                                             .map(docRef ->
-                                                    new Tuple3<>(docRefTypeToServiceMap.get(docRef.getType()),
+                                                    Tuple.of(getServiceForType(docRef.getType()),
                                                             docRef,
                                                             event))
-                                            .filter(tuple3 -> tuple3._1() != null))
+                                            .filter(serviceDocRefEventTuple3 ->
+                                                    serviceDocRefEventTuple3._1() != null)) // ignore ones with no svc
                             .collect(Collectors.groupingBy(
                                     Tuple3::_1, //service
                                     Collectors.groupingBy(
@@ -68,6 +72,14 @@ class MultiServiceInternalStatisticsReceiver implements InternalStatisticsReceiv
         } catch (final RuntimeException e) {
             LOGGER.error("Error sending internal stats", e);
         }
+    }
+
+    private InternalStatisticsService getServiceForType(final String type) {
+        InternalStatisticsService service = docRefTypeToServiceMap.get(type);
+        if (service == null) {
+            LOGGER.warn("No InternalStatisticsService for type {}", type);
+        }
+        return service;
     }
 
     private void putEvents(final InternalStatisticsService service,

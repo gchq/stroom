@@ -18,7 +18,6 @@
 package stroom.index.impl;
 
 import stroom.docref.DocRef;
-import stroom.document.shared.PermissionException;
 import stroom.index.shared.FindIndexShardCriteria;
 import stroom.index.shared.IndexDoc;
 import stroom.index.shared.IndexShard;
@@ -29,6 +28,7 @@ import stroom.security.shared.PermissionNames;
 import stroom.util.logging.LambdaLogger;
 import stroom.util.logging.LambdaLoggerFactory;
 import stroom.util.shared.ModelStringUtil;
+import stroom.util.shared.PermissionException;
 import stroom.util.shared.ResultPage;
 
 import javax.inject.Inject;

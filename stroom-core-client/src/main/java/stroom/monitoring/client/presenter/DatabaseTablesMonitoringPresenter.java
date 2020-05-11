@@ -18,7 +18,6 @@ package stroom.monitoring.client.presenter;
 
 import com.google.gwt.cell.client.TextCell;
 import com.google.gwt.core.client.GWT;
-import com.google.gwt.user.cellview.client.ColumnSortEvent;
 import com.google.inject.Inject;
 import com.google.web.bindery.event.shared.EventBus;
 import stroom.content.client.presenter.ContentTabPresenter;
@@ -36,13 +35,12 @@ import stroom.svg.client.Icon;
 import stroom.svg.client.SvgPresets;
 import stroom.util.shared.ModelStringUtil;
 import stroom.util.shared.ResultPage;
-import stroom.util.shared.Sort.Direction;
+import stroom.util.shared.Sort;
 
 import java.util.function.Consumer;
 
 public class DatabaseTablesMonitoringPresenter
-    extends ContentTabPresenter<DataGridView<DBTableStatus>>
-    implements ColumnSortEvent.Handler {
+        extends ContentTabPresenter<DataGridView<DBTableStatus>> {
 
     private static final DbStatusResource DB_STATUS_RESOURCE = GWT.create(DbStatusResource.class);
 
@@ -54,7 +52,7 @@ public class DatabaseTablesMonitoringPresenter
         super(eventBus, new DataGridViewImpl<>(false, 1000));
 
         getView().addResizableColumn(new OrderByColumn<DBTableStatus, String>(
-            new TextCell(), DBTableStatus.FIELD_DATABASE, true) {
+                new TextCell(), DBTableStatus.FIELD_DATABASE, true) {
             @Override
             public String getValue(final DBTableStatus row) {
                 return row.getDb();
@@ -62,7 +60,7 @@ public class DatabaseTablesMonitoringPresenter
         }, DBTableStatus.FIELD_DATABASE, 200);
 
         getView().addResizableColumn(new OrderByColumn<DBTableStatus, String>(
-            new TextCell(), DBTableStatus.FIELD_TABLE, true) {
+                new TextCell(), DBTableStatus.FIELD_TABLE, true) {
             @Override
             public String getValue(final DBTableStatus row) {
                 return row.getTable();
@@ -70,7 +68,7 @@ public class DatabaseTablesMonitoringPresenter
         }, DBTableStatus.FIELD_TABLE, 200);
 
         getView().addResizableColumn(new OrderByColumn<DBTableStatus, String>(
-            new TextCell(), DBTableStatus.FIELD_ROW_COUNT, false) {
+                new TextCell(), DBTableStatus.FIELD_ROW_COUNT, false) {
             @Override
             public String getValue(final DBTableStatus row) {
                 return ModelStringUtil.formatCsv(row.getCount());
@@ -78,7 +76,7 @@ public class DatabaseTablesMonitoringPresenter
         }, DBTableStatus.FIELD_ROW_COUNT, 100);
 
         getView().addResizableColumn(new OrderByColumn<DBTableStatus, String>(
-            new TextCell(), DBTableStatus.FIELD_DATA_SIZE, false) {
+                new TextCell(), DBTableStatus.FIELD_DATA_SIZE, false) {
             @Override
             public String getValue(final DBTableStatus row) {
                 return ModelStringUtil.formatIECByteSizeString(row.getDataSize());
@@ -86,7 +84,7 @@ public class DatabaseTablesMonitoringPresenter
         }, DBTableStatus.FIELD_DATA_SIZE, 100);
 
         getView().addResizableColumn(new OrderByColumn<DBTableStatus, String>(
-            new TextCell(), DBTableStatus.FIELD_INDEX_SIZE, false) {
+                new TextCell(), DBTableStatus.FIELD_INDEX_SIZE, false) {
             @Override
             public String getValue(final DBTableStatus row) {
                 return ModelStringUtil.formatIECByteSizeString(row.getIndexSize());
@@ -95,8 +93,6 @@ public class DatabaseTablesMonitoringPresenter
 
         getView().addEndColumn(new EndColumn<>());
 
-        getView().addColumnSortHandler(this);
-
         criteria = new FindDBTableCriteria();
         dataProvider = new RestDataProvider<DBTableStatus, ResultPage<DBTableStatus>>(eventBus, criteria.obtainPageRequest()) {
             @Override
@@ -104,35 +100,27 @@ public class DatabaseTablesMonitoringPresenter
                                 final Consumer<Throwable> throwableConsumer) {
                 final Rest<ResultPage<DBTableStatus>> rest = restFactory.create();
                 rest
-                    .onSuccess(dataConsumer)
-                    .onFailure(throwableConsumer)
-                    .call(DB_STATUS_RESOURCE)
-                    .findSystemTableStatus(criteria);
+                        .onSuccess(dataConsumer)
+                        .onFailure(throwableConsumer)
+                        .call(DB_STATUS_RESOURCE)
+                        .findSystemTableStatus(criteria);
             }
         };
         dataProvider.addDataDisplay(getView().getDataDisplay());
 //        dataProvider.refresh();
-    }
 
-    @Override
-    public void onColumnSort(final ColumnSortEvent event) {
-        if (event.getColumn() instanceof OrderByColumn<?, ?>) {
-            final OrderByColumn<?, ?> orderByColumn = (OrderByColumn<?, ?>) event.getColumn();
-            if (criteria != null) {
+
+        getView().addColumnSortHandler(event -> {
+            if (event.getColumn() instanceof OrderByColumn<?, ?>) {
+                final OrderByColumn<?, ?> orderByColumn = (OrderByColumn<?, ?>) event.getColumn();
                 if (event.isSortAscending()) {
-                    criteria.setSort(
-                        orderByColumn.getField(),
-                        Direction.ASCENDING,
-                        orderByColumn.isIgnoreCase());
+                    criteria.setSort(orderByColumn.getField(), Sort.Direction.ASCENDING, orderByColumn.isIgnoreCase());
                 } else {
-                    criteria.setSort(
-                        orderByColumn.getField(),
-                        Direction.DESCENDING,
-                        orderByColumn.isIgnoreCase());
+                    criteria.setSort(orderByColumn.getField(), Sort.Direction.DESCENDING, orderByColumn.isIgnoreCase());
                 }
                 dataProvider.refresh();
             }
-        }
+        });
     }
 
     @Override

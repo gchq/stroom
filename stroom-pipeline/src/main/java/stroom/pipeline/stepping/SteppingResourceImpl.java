@@ -16,13 +16,13 @@
 
 package stroom.pipeline.stepping;
 
-import com.codahale.metrics.health.HealthCheck.Result;
 import stroom.docref.DocRef;
 import stroom.docstore.shared.DocRefUtil;
 import stroom.meta.api.MetaService;
 import stroom.meta.shared.FindMetaCriteria;
 import stroom.meta.shared.Meta;
 import stroom.meta.shared.MetaExpressionUtil;
+import stroom.meta.shared.Status;
 import stroom.pipeline.PipelineEventLog;
 import stroom.pipeline.PipelineStore;
 import stroom.pipeline.shared.PipelineDoc;
@@ -32,12 +32,11 @@ import stroom.pipeline.shared.stepping.StepLocation;
 import stroom.pipeline.shared.stepping.SteppingResource;
 import stroom.pipeline.shared.stepping.SteppingResult;
 import stroom.security.api.SecurityContext;
-import stroom.util.HasHealthCheck;
 
 import javax.inject.Inject;
 import java.util.List;
 
-class SteppingResourceImpl implements SteppingResource, HasHealthCheck {
+class SteppingResourceImpl implements SteppingResource {
     private final MetaService metaService;
     private final PipelineStore pipelineStore;
     private final SteppingService steppingService;
@@ -135,7 +134,7 @@ class SteppingResourceImpl implements SteppingResource, HasHealthCheck {
         }
 
         return securityContext.asProcessingUserResult(() -> {
-            final FindMetaCriteria criteria = new FindMetaCriteria(MetaExpressionUtil.createDataIdExpression(id));
+            final FindMetaCriteria criteria = FindMetaCriteria.createFromId(id);
             final List<Meta> streamList = metaService.find(criteria).getValues();
             if (streamList != null && streamList.size() > 0) {
                 return streamList.get(0);
@@ -151,7 +150,7 @@ class SteppingResourceImpl implements SteppingResource, HasHealthCheck {
         }
 
         return securityContext.asProcessingUserResult(() -> {
-            final FindMetaCriteria criteria = new FindMetaCriteria(MetaExpressionUtil.createParentIdExpression(id));
+            final FindMetaCriteria criteria = new FindMetaCriteria(MetaExpressionUtil.createParentIdExpression(id, Status.UNLOCKED));
             return metaService.find(criteria).getFirst();
         });
     }
@@ -173,10 +172,5 @@ class SteppingResourceImpl implements SteppingResource, HasHealthCheck {
         }
 
         return docRef;
-    }
-
-    @Override
-    public Result getHealth() {
-        return Result.healthy();
     }
 }

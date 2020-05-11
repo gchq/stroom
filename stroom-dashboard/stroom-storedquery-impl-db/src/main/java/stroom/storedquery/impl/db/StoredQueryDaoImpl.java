@@ -76,21 +76,21 @@ class StoredQueryDaoImpl implements StoredQueryDao {
                     Optional.ofNullable(criteria.getComponentId()).map(QUERY.COMPONENT_ID::eq),
                     Optional.ofNullable(criteria.getFavourite()).map(QUERY.FAVOURITE::eq));
 
-            final OrderField<?>[] orderFields = JooqUtil.getOrderFields(FIELD_MAP, criteria);
+            final Collection<OrderField<?>> orderFields = JooqUtil.getOrderFields(FIELD_MAP, criteria);
 
             return context
                     .select()
                     .from(QUERY)
                     .where(conditions)
                     .orderBy(orderFields)
-                    .limit(JooqUtil.getLimit(criteria.getPageRequest()))
+                    .limit(JooqUtil.getLimit(criteria.getPageRequest(), true))
                     .offset(JooqUtil.getOffset(criteria.getPageRequest()))
                     .fetch()
                     .into(StoredQuery.class);
         });
 
         list = list.stream().map(StoredQuerySerialiser::deserialise).collect(Collectors.toList());
-        return ResultPage.createUnboundedList(list);
+        return ResultPage.createCriterialBasedList(list, criteria);
     }
 
     @Override

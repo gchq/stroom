@@ -25,7 +25,7 @@ public interface MetaDao extends Clearable {
 
     Optional<Long> getMaxId(FindMetaCriteria criteria);
 
-    int updateStatus(FindMetaCriteria criteria, Status newStatus, Status currentStatus, long statusTime);
+    int updateStatus(FindMetaCriteria criteria, Status currentStatus, Status newStatus, long statusTime);
 
     int delete(List<Long> metaIdList);
 

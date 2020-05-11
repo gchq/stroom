@@ -16,13 +16,15 @@
 
 package stroom.activity.impl.db;
 
-import org.jooq.Condition;
 import stroom.activity.api.FindActivityCriteria;
 import stroom.activity.impl.ActivityDao;
 import stroom.activity.impl.db.jooq.tables.records.ActivityRecord;
 import stroom.activity.shared.Activity;
 import stroom.db.util.GenericDao;
 import stroom.db.util.JooqUtil;
+import stroom.util.shared.ResultPage;
+
+import org.jooq.Condition;
 
 import javax.inject.Inject;
 import java.util.Collection;
@@ -64,7 +66,7 @@ public class ActivityDaoImpl implements ActivityDao {
     }
 
     @Override
-    public List<Activity> find(final FindActivityCriteria criteria) {
+    public ResultPage<Activity> find(final FindActivityCriteria criteria) {
         List<Activity> list = JooqUtil.contextResult(activityDbConnProvider, context -> {
             final Collection<Condition> conditions = JooqUtil.conditions(
                     Optional.ofNullable(criteria.getUserId()).map(ACTIVITY.USER_ID::eq),
@@ -74,7 +76,7 @@ public class ActivityDaoImpl implements ActivityDao {
                     .select()
                     .from(ACTIVITY)
                     .where(conditions)
-                    .limit(JooqUtil.getLimit(criteria.getPageRequest()))
+                    .limit(JooqUtil.getLimit(criteria.getPageRequest(), true))
                     .offset(JooqUtil.getOffset(criteria.getPageRequest()))
                     .fetch()
                     .into(Activity.class)
@@ -84,6 +86,6 @@ public class ActivityDaoImpl implements ActivityDao {
         });
 
         list = list.stream().map(ActivitySerialiser::deserialise).collect(Collectors.toList());
-        return list;
+        return ResultPage.createCriterialBasedList(list, criteria);
     }
 }

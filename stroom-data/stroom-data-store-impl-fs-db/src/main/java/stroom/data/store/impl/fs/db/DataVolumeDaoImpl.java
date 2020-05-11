@@ -33,7 +33,7 @@ public class DataVolumeDaoImpl implements DataVolumeDao {
                     .from(FS_META_VOLUME)
                     .join(FS_VOLUME).on(FS_VOLUME.ID.eq(FS_META_VOLUME.FS_VOLUME_ID))
                     .where(conditions)
-                    .limit(JooqUtil.getLimit(criteria.getPageRequest()))
+                    .limit(JooqUtil.getLimit(criteria.getPageRequest(), true))
                     .offset(JooqUtil.getOffset(criteria.getPageRequest()))
                     .fetch()
                     .map(r -> new DataVolumeImpl(r.get(FS_META_VOLUME.META_ID), r.get(FS_VOLUME.PATH)));

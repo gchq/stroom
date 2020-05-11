@@ -17,6 +17,19 @@
 
 package stroom.search.impl;
 
+import stroom.dictionary.api.WordListProvider;
+import stroom.docref.DocRef;
+import stroom.index.impl.analyzer.AnalyzerFactory;
+import stroom.index.shared.AnalyzerType;
+import stroom.index.shared.IndexField;
+import stroom.index.shared.IndexFieldType;
+import stroom.index.shared.IndexFieldsMap;
+import stroom.query.api.v2.ExpressionItem;
+import stroom.query.api.v2.ExpressionOperator;
+import stroom.query.api.v2.ExpressionTerm;
+import stroom.query.api.v2.ExpressionTerm.Condition;
+import stroom.query.common.v2.DateExpressionParser;
+
 import org.apache.lucene.analysis.Analyzer;
 import org.apache.lucene.index.Term;
 import org.apache.lucene.queryparser.flexible.core.QueryNodeException;
@@ -30,18 +43,6 @@ import org.apache.lucene.search.Query;
 import org.apache.lucene.search.TermQuery;
 import org.apache.lucene.search.WildcardQuery;
 import org.apache.lucene.util.Version;
-import stroom.dictionary.api.WordListProvider;
-import stroom.docref.DocRef;
-import stroom.index.impl.analyzer.AnalyzerFactory;
-import stroom.index.shared.AnalyzerType;
-import stroom.index.shared.IndexField;
-import stroom.index.shared.IndexFieldType;
-import stroom.index.shared.IndexFieldsMap;
-import stroom.query.api.v2.ExpressionItem;
-import stroom.query.api.v2.ExpressionOperator;
-import stroom.query.api.v2.ExpressionTerm;
-import stroom.query.api.v2.ExpressionTerm.Condition;
-import stroom.query.common.v2.DateExpressionParser;
 
 import java.util.ArrayList;
 import java.util.Collections;
@@ -91,7 +92,7 @@ public class SearchExpressionQueryBuilder {
     }
 
     private Query getQuery(final Version matchVersion, final ExpressionItem item, final Set<String> terms) {
-        if (item.isEnabled()) {
+        if (item.enabled()) {
             if (item instanceof ExpressionTerm) {
                 // Create queries for single terms.
                 final ExpressionTerm term = (ExpressionTerm) item;
@@ -606,38 +607,34 @@ public class SearchExpressionQueryBuilder {
     private Query getDictionary(final String fieldName, final DocRef docRef,
                                 final IndexField indexField, final Version matchVersion, final Set<String> terms) {
         final String[] wordArr = loadWords(docRef);
-        if (wordArr != null) {
-            final Builder builder = new Builder();
-            for (final String val : wordArr) {
-                Query query;
+        final Builder builder = new Builder();
+        for (final String val : wordArr) {
+            Query query;
 
-                if (IndexFieldType.INTEGER_FIELD.equals(indexField.getFieldType())) {
-                    query = getIntIn(fieldName, val);
-                } else if (IndexFieldType.LONG_FIELD.equals(indexField.getFieldType())) {
-                    query = getLongIn(fieldName, val);
-                } else if (IndexFieldType.FLOAT_FIELD.equals(indexField.getFieldType())) {
-                    query = getFloatIn(fieldName, val);
-                } else if (IndexFieldType.DOUBLE_FIELD.equals(indexField.getFieldType())) {
-                    query = getDoubleIn(fieldName, val);
-                } else if (IndexFieldType.DATE_FIELD.equals(indexField.getFieldType())) {
-                    query = getDateIn(fieldName, val);
-                } else if (indexField.getFieldType().isNumeric()) {
-                    query = getLongIn(fieldName, val);
-                } else {
-                    query = getSubQuery(matchVersion, indexField, val, terms, false);
-                }
-
-                if (query != null) {
-                    // DictionaryDocument terms on one line must all exist in the
-                    // matching documents so change to must.
-                    query = modifyOccurrence(query, Occur.MUST);
-                    builder.add(query, Occur.SHOULD);
-                }
+            if (IndexFieldType.INTEGER_FIELD.equals(indexField.getFieldType())) {
+                query = getIntIn(fieldName, val);
+            } else if (IndexFieldType.LONG_FIELD.equals(indexField.getFieldType())) {
+                query = getLongIn(fieldName, val);
+            } else if (IndexFieldType.FLOAT_FIELD.equals(indexField.getFieldType())) {
+                query = getFloatIn(fieldName, val);
+            } else if (IndexFieldType.DOUBLE_FIELD.equals(indexField.getFieldType())) {
+                query = getDoubleIn(fieldName, val);
+            } else if (IndexFieldType.DATE_FIELD.equals(indexField.getFieldType())) {
+                query = getDateIn(fieldName, val);
+            } else if (indexField.getFieldType().isNumeric()) {
+                query = getLongIn(fieldName, val);
+            } else {
+                query = getSubQuery(matchVersion, indexField, val, terms, false);
             }
-            return builder.build();
-        }
 
-        return null;
+            if (query != null) {
+                // DictionaryDocument terms on one line must all exist in the
+                // matching documents so change to must.
+                query = modifyOccurrence(query, Occur.MUST);
+                builder.add(query, Occur.SHOULD);
+            }
+        }
+        return builder.build();
     }
 
     private String[] loadWords(final DocRef docRef) {
@@ -650,18 +647,14 @@ public class SearchExpressionQueryBuilder {
     }
 
     private Occur getOccur(final ExpressionOperator operator) {
-        if (operator.getOp() != null) {
-            switch (operator.getOp()) {
-                case AND:
-                    return Occur.MUST;
-                case OR:
-                    return Occur.SHOULD;
-                case NOT:
-                    return Occur.MUST_NOT;
-            }
+        switch (operator.op()) {
+            case OR:
+                return Occur.SHOULD;
+            case NOT:
+                return Occur.MUST_NOT;
+            default:
+                return Occur.MUST;
         }
-
-        return Occur.MUST;
     }
 
     private Query getSubQuery(final Version matchVersion, final IndexField field, final String value,
@@ -728,9 +721,9 @@ public class SearchExpressionQueryBuilder {
     }
 
     private boolean hasChildren(final ExpressionOperator operator) {
-        if (operator != null && operator.isEnabled() && operator.getChildren() != null) {
+        if (operator != null && operator.enabled() && operator.getChildren() != null) {
             for (final ExpressionItem child : operator.getChildren()) {
-                if (child.isEnabled()) {
+                if (child.enabled()) {
                     if (child instanceof ExpressionOperator) {
                         final ExpressionOperator childOperator = (ExpressionOperator) child;
                         if (hasChildren(childOperator)) {
@@ -748,8 +741,10 @@ public class SearchExpressionQueryBuilder {
 
     private long getDate(final String fieldName, final String value) {
         try {
-            //empty optional will be caught below
-            return DateExpressionParser.parse(value, timeZoneId, nowEpochMilli).get().toInstant().toEpochMilli();
+            return DateExpressionParser.parse(value, timeZoneId, nowEpochMilli)
+                    .map(dt -> dt.toInstant().toEpochMilli())
+                    .orElseThrow(() -> new SearchException("Expected a standard date value for field \"" + fieldName
+                            + "\" but was given string \"" + value + "\""));
         } catch (final RuntimeException e) {
             throw new SearchException("Expected a standard date value for field \"" + fieldName
                     + "\" but was given string \"" + value + "\"");

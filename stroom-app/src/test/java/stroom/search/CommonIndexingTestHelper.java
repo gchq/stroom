@@ -105,12 +105,11 @@ public class CommonIndexingTestHelper {
         }
 
         // Flush all newly created index shards.
-        indexShardManager.performAction(new FindIndexShardCriteria(), IndexShardAction.FLUSH);
+        indexShardManager.performAction(FindIndexShardCriteria.matchAll(), IndexShardAction.FLUSH);
     }
 
     public int flushIndex() {
-        final FindIndexShardCriteria criteria = new FindIndexShardCriteria();
-        criteria.getIndexUuidSet().setMatchAll(true);
+        final FindIndexShardCriteria criteria = FindIndexShardCriteria.matchAll();
         indexShardManager.performAction(criteria, IndexShardAction.FLUSH);
 
         return 1;

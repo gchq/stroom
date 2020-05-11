@@ -16,16 +16,14 @@
 
 package stroom.statistics.impl.sql.entity;
 
-import com.codahale.metrics.health.HealthCheck.Result;
 import stroom.docref.DocRef;
 import stroom.docstore.api.DocumentResourceHelper;
 import stroom.statistics.impl.sql.shared.StatisticResource;
 import stroom.statistics.impl.sql.shared.StatisticStoreDoc;
-import stroom.util.HasHealthCheck;
 
 import javax.inject.Inject;
 
-class StatisticResourceImpl implements StatisticResource, HasHealthCheck {
+class StatisticResourceImpl implements StatisticResource {
     private final StatisticStoreStore statisticStoreStore;
     private final DocumentResourceHelper documentResourceHelper;
 
@@ -44,10 +42,5 @@ class StatisticResourceImpl implements StatisticResource, HasHealthCheck {
     @Override
     public StatisticStoreDoc update(final StatisticStoreDoc doc) {
         return documentResourceHelper.update(statisticStoreStore, doc);
-    }
-
-    @Override
-    public Result getHealth() {
-        return Result.healthy();
     }
 }

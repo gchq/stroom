@@ -16,16 +16,18 @@
 
 package stroom.data.store.util;
 
-import com.google.inject.AbstractModule;
-import com.google.inject.Provides;
 import stroom.cluster.lock.mock.MockClusterLockModule;
 import stroom.collection.mock.MockCollectionModule;
 import stroom.dictionary.mock.MockWordListProviderModule;
+import stroom.docrefinfo.mock.MockDocRefInfoModule;
 import stroom.security.mock.MockSecurityContextModule;
 import stroom.statistics.mock.MockInternalStatisticsModule;
 import stroom.util.db.ForceCoreMigration;
 import stroom.util.entityevent.EntityEventBus;
 import stroom.util.servlet.MockServletModule;
+
+import com.google.inject.AbstractModule;
+import com.google.inject.Provides;
 
 public class ToolModule extends AbstractModule {
     @Override
@@ -42,6 +44,7 @@ public class ToolModule extends AbstractModule {
         install(new MockInternalStatisticsModule());
         install(new MockServletModule());
         install(new MockCollectionModule());
+        install(new MockDocRefInfoModule());
         install(new MockWordListProviderModule());
 
         // Not using all the DB modules so just bind to an empty anonymous class

@@ -74,14 +74,14 @@ public class NodeDaoImpl implements NodeDao {
         final Collection<Condition> conditions = JooqUtil.conditions(
                 JooqUtil.getStringCondition(NODE.NAME, criteria.getName()));
 
-        final OrderField<?>[] orderFields = JooqUtil.getOrderFields(FIELD_MAP, criteria);
+        final Collection<OrderField<?>> orderFields = JooqUtil.getOrderFields(FIELD_MAP, criteria);
 
         final List<Node> list = JooqUtil.contextResult(nodeDbConnProvider, context ->
                 context
                         .selectFrom(NODE)
                         .where(conditions)
                         .orderBy(orderFields)
-                        .limit(JooqUtil.getLimit(criteria.getPageRequest()))
+                        .limit(JooqUtil.getLimit(criteria.getPageRequest(), true))
                         .offset(JooqUtil.getOffset(criteria.getPageRequest()))
                         .fetch()
                         .map(r -> r.into(Node.class)));

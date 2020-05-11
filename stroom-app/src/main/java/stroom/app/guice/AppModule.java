@@ -1,7 +1,5 @@
 package stroom.app.guice;
 
-import com.google.inject.AbstractModule;
-import io.dropwizard.setup.Environment;
 import stroom.app.uri.UriFactoryModule;
 import stroom.cluster.impl.ClusterModule;
 import stroom.config.app.AppConfig;
@@ -14,7 +12,10 @@ import stroom.lifecycle.impl.LifecycleServiceModule;
 import stroom.meta.statistics.impl.MetaStatisticsModule;
 import stroom.resource.impl.SessionResourceModule;
 import stroom.security.impl.SecurityContextModule;
-import stroom.util.guice.HealthCheckBinder;
+import stroom.util.guice.HasSystemInfoBinder;
+
+import com.google.inject.AbstractModule;
+import io.dropwizard.setup.Environment;
 
 import java.nio.file.Path;
 
@@ -64,7 +65,7 @@ public class AppModule extends AbstractModule {
         install(new SessionResourceModule());
         install(new JerseyModule());
 
-        HealthCheckBinder.create(binder())
+        HasSystemInfoBinder.create(binder())
                 .bind(LogLevelInspector.class);
     }
 

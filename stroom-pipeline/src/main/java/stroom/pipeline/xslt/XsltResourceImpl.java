@@ -16,18 +16,16 @@
 
 package stroom.pipeline.xslt;
 
-import com.codahale.metrics.health.HealthCheck.Result;
 import stroom.docref.DocRef;
 import stroom.docstore.api.DocumentResourceHelper;
 import stroom.pipeline.shared.XsltDTO;
 import stroom.pipeline.shared.XsltDoc;
 import stroom.pipeline.shared.XsltResource;
 import stroom.security.api.SecurityContext;
-import stroom.util.HasHealthCheck;
 
 import javax.inject.Inject;
 
-class XsltResourceImpl implements XsltResource, HasHealthCheck {
+class XsltResourceImpl implements XsltResource {
     private final XsltStore xsltStore;
     private final DocumentResourceHelper documentResourceHelper;
     private SecurityContext securityContext;
@@ -75,11 +73,6 @@ class XsltResourceImpl implements XsltResource, HasHealthCheck {
             }
         });
     }
-    
-    @Override
-    public Result getHealth() {
-        return Result.healthy();
-    }
 
     private DocRef getDocRef(final String xsltId) {
         return new DocRef.Builder()
@@ -87,5 +80,4 @@ class XsltResourceImpl implements XsltResource, HasHealthCheck {
                 .type(XsltDoc.DOCUMENT_TYPE)
                 .build();
     }
-
 }

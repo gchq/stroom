@@ -16,8 +16,6 @@
 
 package stroom.dictionary.impl;
 
-import com.codahale.metrics.health.HealthCheck.Result;
-import io.swagger.annotations.ApiParam;
 import stroom.dictionary.shared.DictionaryDTO;
 import stroom.dictionary.shared.DictionaryDoc;
 import stroom.dictionary.shared.DictionaryResource;
@@ -30,11 +28,12 @@ import stroom.importexport.shared.Base64EncodedDocumentData;
 import stroom.importexport.shared.ImportState;
 import stroom.resource.api.ResourceStore;
 import stroom.security.api.SecurityContext;
-import stroom.util.HasHealthCheck;
 import stroom.util.io.StreamUtil;
 import stroom.util.shared.EntityServiceException;
 import stroom.util.shared.ResourceGeneration;
 import stroom.util.shared.ResourceKey;
+
+import io.swagger.annotations.ApiParam;
 
 import javax.inject.Inject;
 import javax.ws.rs.PathParam;
@@ -46,7 +45,7 @@ import java.util.ArrayList;
 import java.util.Map;
 import java.util.Set;
 
-class DictionaryResourceImpl implements DictionaryResource, HasHealthCheck {
+class DictionaryResourceImpl implements DictionaryResource {
     private final DictionaryStore dictionaryStore;
     private final DocumentResourceHelper documentResourceHelper;
     private final ResourceStore resourceStore;
@@ -160,11 +159,5 @@ class DictionaryResourceImpl implements DictionaryResource, HasHealthCheck {
                 dictionaryStore.writeDocument(doc);
             }
         });
-    }
-
-
-    @Override
-    public Result getHealth() {
-        return Result.healthy();
     }
 }

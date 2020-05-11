@@ -138,7 +138,7 @@ public class JobNodeDaoImpl implements JobNodeDao, HasIntCrud<JobNode> {
                 JooqUtil.getStringCondition(JOB.NAME, criteria.getJobName()),
                 JooqUtil.getStringCondition(JOB_NODE.NODE_NAME, criteria.getNodeName()));
 
-        final OrderField<?>[] orderFields = JooqUtil.getOrderFields(FIELD_MAP, criteria);
+        final Collection<OrderField<?>> orderFields = JooqUtil.getOrderFields(FIELD_MAP, criteria);
 
         final List<JobNode> list = JooqUtil.contextResult(jobDbConnProvider, context -> context
                 .select()
@@ -146,7 +146,7 @@ public class JobNodeDaoImpl implements JobNodeDao, HasIntCrud<JobNode> {
                 .join(JOB).on(JOB_NODE.JOB_ID.eq(JOB.ID))
                 .where(conditions)
                 .orderBy(orderFields)
-                .limit(JooqUtil.getLimit(criteria.getPageRequest()))
+                .limit(JooqUtil.getLimit(criteria.getPageRequest(), true))
                 .offset(JooqUtil.getOffset(criteria.getPageRequest()))
                 .fetch(record -> {
                     final Job job = RECORD_TO_JOB_MAPPER.apply(record);

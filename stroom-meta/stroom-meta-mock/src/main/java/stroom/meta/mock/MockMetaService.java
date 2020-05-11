@@ -8,6 +8,7 @@ import stroom.meta.api.MetaService;
 import stroom.meta.shared.FindMetaCriteria;
 import stroom.meta.shared.Meta;
 import stroom.meta.shared.MetaFields;
+import stroom.meta.shared.MetaInfoSection;
 import stroom.meta.shared.MetaRow;
 import stroom.meta.shared.Status;
 import stroom.util.shared.Clearable;
@@ -102,7 +103,7 @@ public class MockMetaService implements MetaService, Clearable {
     }
 
     @Override
-    public int updateStatus(final FindMetaCriteria criteria, final Status status) {
+    public int updateStatus(final FindMetaCriteria criteria, final Status currentStatus, final Status newStatus) {
         return 0;
     }
 
@@ -234,6 +235,11 @@ public class MockMetaService implements MetaService, Clearable {
     }
 
     @Override
+    public ResultPage<MetaRow> findMetaRow(final FindMetaCriteria criteria) {
+        return null;
+    }
+
+    @Override
     public List<MetaRow> findRelatedData(final long id, final boolean anyStatus) {
         return null;
     }
@@ -287,6 +293,11 @@ public class MockMetaService implements MetaService, Clearable {
         types.clear();
         metaMap.clear();
         currentId = 0;
+    }
+
+    @Override
+    public List<MetaInfoSection> fetchFullMetaInfo(final long id) {
+        return null;
     }
 
     public Map<Long, Meta> getMetaMap() {

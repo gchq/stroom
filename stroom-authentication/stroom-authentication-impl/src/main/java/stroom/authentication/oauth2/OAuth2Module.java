@@ -16,11 +16,10 @@
 
 package stroom.authentication.oauth2;
 
-import com.google.inject.AbstractModule;
-
 import stroom.authentication.api.OpenIdClientDetailsFactory;
-import stroom.util.guice.GuiceUtil;
-import stroom.util.shared.RestResource;
+import stroom.util.guice.RestResourcesBinder;
+
+import com.google.inject.AbstractModule;
 
 public final class OAuth2Module extends AbstractModule {
     @Override
@@ -28,7 +27,7 @@ public final class OAuth2Module extends AbstractModule {
 
         bind(OpenIdClientDetailsFactory.class).to(OpenIdClientDetailsFactoryImpl.class);
 
-        GuiceUtil.buildMultiBinder(binder(), RestResource.class)
-                .addBinding(OAuth2ResourceImpl.class);
+        RestResourcesBinder.create(binder())
+                .bind(OAuth2ResourceImpl.class);
     }
 }

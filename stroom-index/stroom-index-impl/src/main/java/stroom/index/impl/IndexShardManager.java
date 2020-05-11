@@ -109,7 +109,7 @@ public class IndexShardManager {
                 try {
                     final IndexShardWriterCache indexShardWriterCache = indexShardWriterCacheProvider.get();
 
-                    final FindIndexShardCriteria criteria = new FindIndexShardCriteria();
+                    final FindIndexShardCriteria criteria = FindIndexShardCriteria.matchAll();
                     criteria.getNodeNameSet().add(nodeInfo.getThisNodeName());
                     criteria.getIndexShardStatusSet().add(IndexShardStatus.DELETED);
                     final ResultPage<IndexShard> shards = indexShardService.find(criteria);
@@ -231,7 +231,7 @@ public class IndexShardManager {
 
     public void checkRetention() {
         securityContext.secure(PermissionNames.MANAGE_INDEX_SHARDS_PERMISSION, () -> {
-            final FindIndexShardCriteria criteria = new FindIndexShardCriteria();
+            final FindIndexShardCriteria criteria = FindIndexShardCriteria.matchAll();
             criteria.getNodeNameSet().add(nodeInfo.getThisNodeName());
             final ResultPage<IndexShard> shards = indexShardService.find(criteria);
             for (final IndexShard shard : shards.getValues()) {

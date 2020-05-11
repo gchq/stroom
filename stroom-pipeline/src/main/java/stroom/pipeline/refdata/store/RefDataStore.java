@@ -18,12 +18,11 @@
 package stroom.pipeline.refdata.store;
 
 import stroom.pipeline.refdata.store.offheapstore.TypedByteBuffer;
-import stroom.util.HasHealthCheck;
 
 import java.util.Optional;
 import java.util.function.Consumer;
 
-public interface RefDataStore extends HasHealthCheck {
+public interface RefDataStore {
 
     /**
      * Returns the {@link RefDataProcessingInfo} for the passed {@link MapDefinition}, or an empty

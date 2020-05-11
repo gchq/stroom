@@ -33,7 +33,6 @@ import stroom.security.impl.AuthenticationConfig;
 import stroom.security.impl.ContentSecurityConfig;
 import stroom.util.ColouredStringBuilder;
 import stroom.util.ConsoleColour;
-import stroom.util.authentication.DefaultOpenIdCredentials;
 import stroom.util.logging.LogUtil;
 import stroom.util.shared.ResourcePaths;
 
@@ -67,6 +66,7 @@ import java.util.logging.Level;
 public class App extends Application<Config> {
     private static final Logger LOGGER = LoggerFactory.getLogger(App.class);
 
+    private static final String APP_NAME = "Stroom";
     private static final String GWT_SUPER_DEV_SYSTEM_PROP_NAME = "gwtSuperDevMode";
     public static final String SESSION_COOKIE_NAME = "STROOM_SESSION_ID";
     private static final boolean SUPER_DEV_AUTHENTICATION_REQUIRED_VALUE = false;
@@ -105,6 +105,11 @@ public class App extends Application<Config> {
     }
 
     @Override
+    public String getName() {
+        return APP_NAME;
+    }
+
+    @Override
     public void initialize(final Bootstrap<Config> bootstrap) {
         // This allows us to use templating in the YAML configuration.
         bootstrap.setConfigurationSourceProvider(new SubstitutingSourceProvider(
@@ -135,6 +140,8 @@ public class App extends Application<Config> {
         // then we will need to do something with bootstrap.setValidatorFactory()
         // and our CustomConstraintValidatorFactory
     }
+
+
 
     @Override
     public void run(final Config configuration, final Environment environment) {
@@ -203,25 +210,23 @@ public class App extends Application<Config> {
         // Listen to the lifecycle of the Dropwizard app.
         managedServices.register();
 
-        warnAboutDefaultOpenIdCreds(configuration, injector);
+        warnAboutDefaultOpenIdCreds(configuration);
     }
 
-    private void warnAboutDefaultOpenIdCreds(Config configuration, Injector injector) {
+    private void warnAboutDefaultOpenIdCreds(Config configuration) {
         if (configuration.getAppConfig().getAuthenticationConfig().isUseDefaultOpenIdCredentials()) {
-            DefaultOpenIdCredentials defaultOpenIdCredentials = injector.getInstance(DefaultOpenIdCredentials.class);
             String propPath = configuration.getAppConfig().getAuthenticationConfig().getFullPath("useDefaultOpenIdCredentials");
-            LOGGER.warn("" +
-                    "\n  ---------------------------------------------------------------------------------------" +
+            LOGGER.warn("\n" +
+                    "\n  -----------------------------------------------------------------------------" +
                     "\n  " +
                     "\n                                        WARNING!" +
                     "\n  " +
                     "\n   Using default and publicly available Open ID authentication credentials. " +
-                    "\n   These should only be used in test/demo environments. " +
-                    "\n   Set " + propPath + " to false for production environments. The API key in use is:" +
+                    "\n   This is insecure! These should only be used in test/demo environments. " +
+                    "\n   Set " + propPath + " to false for production environments." +
                     "\n" +
-                    "\n   " + defaultOpenIdCredentials.getApiKey() +
-                    "\n  ---------------------------------------------------------------------------------------" +
-                    "");
+                    "\n  -----------------------------------------------------------------------------" +
+                    "\n");
         }
     }
 

@@ -7,6 +7,7 @@ import com.google.common.base.Preconditions;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import javax.sql.DataSource;
 import java.sql.Connection;
 import java.sql.DatabaseMetaData;
 import java.sql.DriverManager;
@@ -106,6 +107,19 @@ public class DbUtil {
             if (sleepMs >= MAX_SLEEP_TIME_MS) {
                 sleepMs = MAX_SLEEP_TIME_MS;
             }
+        }
+    }
+
+    public static boolean validateConnection(DataSource dataSource) {
+        try (Connection connection = dataSource.getConnection()) {
+            return true;
+        } catch (SQLException e) {
+            final Throwable cause = e.getCause();
+            final String errorMsg = cause != null ? cause.getMessage() : e.getMessage();
+            final int vendorCode = e.getErrorCode();
+            throw new RuntimeException(LogUtil.message(
+                    "Unable to establish database connection due to error: [{}] and vendorCode [{}].",
+                    errorMsg, vendorCode));
         }
     }
 

@@ -16,15 +16,15 @@
 
 package stroom.dashboard.impl;
 
-import com.google.inject.AbstractModule;
-import com.google.inject.multibindings.Multibinder;
 import stroom.dashboard.shared.DashboardDoc;
 import stroom.docstore.api.DocumentActionHandlerBinder;
 import stroom.explorer.api.ExplorerActionHandler;
 import stroom.importexport.api.ImportExportActionHandler;
 import stroom.util.guice.GuiceUtil;
+import stroom.util.guice.RestResourcesBinder;
 import stroom.util.shared.Clearable;
-import stroom.util.shared.RestResource;
+
+import com.google.inject.AbstractModule;
 
 public class DashboardModule extends AbstractModule {
     @Override
@@ -33,16 +33,16 @@ public class DashboardModule extends AbstractModule {
 
         GuiceUtil.buildMultiBinder(binder(), Clearable.class).addBinding(ActiveQueriesManager.class);
 
-        final Multibinder<ExplorerActionHandler> explorerActionHandlerBinder = Multibinder.newSetBinder(binder(), ExplorerActionHandler.class);
-        explorerActionHandlerBinder.addBinding().to(DashboardStoreImpl.class);
+        GuiceUtil.buildMultiBinder(binder(), ExplorerActionHandler.class)
+                .addBinding(DashboardStoreImpl.class);
 
-        final Multibinder<ImportExportActionHandler> importExportActionHandlerBinder = Multibinder.newSetBinder(binder(), ImportExportActionHandler.class);
-        importExportActionHandlerBinder.addBinding().to(DashboardStoreImpl.class);
+        GuiceUtil.buildMultiBinder(binder(), ImportExportActionHandler.class)
+                .addBinding(DashboardStoreImpl.class);
 
         DocumentActionHandlerBinder.create(binder())
                 .bind(DashboardDoc.DOCUMENT_TYPE, DashboardStoreImpl.class);
 
-        GuiceUtil.buildMultiBinder(binder(), RestResource.class)
-                .addBinding(DashboardResourceImpl.class);
+        RestResourcesBinder.create(binder())
+                .bind(DashboardResourceImpl.class);
     }
 }

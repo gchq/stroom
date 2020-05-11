@@ -2,8 +2,10 @@ package stroom.meta.api;
 
 import stroom.meta.shared.FindMetaCriteria;
 import stroom.meta.shared.Meta;
+import stroom.meta.shared.MetaInfoSection;
 import stroom.meta.shared.MetaRow;
 import stroom.meta.shared.Status;
+import stroom.meta.shared.UpdateStatusRequest;
 import stroom.util.shared.ResultPage;
 
 import java.util.List;
@@ -42,15 +44,6 @@ public interface MetaService {
      */
     Meta getMeta(long id, boolean anyStatus);
 
-//    /**
-//     * Change the status of the specified meta data unconditionally.
-//     *
-//     * @param data   The meta data to change the status for.
-//     * @param newStatus The new status.
-//     * @return The updated meta data.
-//     */
-//    Meta updateStatus(Meta meta, Status newStatus);
-
     /**
      * Change the status of the specified meta data if the current status is as specified.
      *
@@ -65,10 +58,11 @@ public interface MetaService {
      * Change the status of meta data records that match the supplied criteria.
      *
      * @param criteria The criteria to match meta data records with.
+     * @param currentStatus The current status.
      * @param status   The new status.
      * @return The number of meta data records that are updated.
      */
-    int updateStatus(FindMetaCriteria criteria, Status status);
+    int updateStatus(FindMetaCriteria criteria, Status currentStatus, Status status);
 
     /**
      * Add some additional attributes to meta data.
@@ -134,6 +128,8 @@ public interface MetaService {
      */
     ResultPage<MetaRow> findRows(FindMetaCriteria criteria);
 
+    ResultPage<MetaRow> findMetaRow(FindMetaCriteria criteria);
+
     /**
      * Find meta data records and attributes that are related to the supplied record id.
      *
@@ -160,5 +156,12 @@ public interface MetaService {
      */
     Long getMaxDataIdWithCreationBeforePeriod(final Long timestampMs);
 
+
+
+
+
+
+
+    List<MetaInfoSection> fetchFullMetaInfo(long id) ;
 
 }

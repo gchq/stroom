@@ -1,0 +1,10 @@
+ext.moduleName = 'stroom.docrefinfo.mock'
+
+dependencies {
+    compile project(':stroom-explorer:stroom-docrefinfo-api')
+    
+    compile libs.guice4
+    compile libs.jackson_annotations
+    compile libs.jaxb_api
+    compile libs.stroomDocRef
+}

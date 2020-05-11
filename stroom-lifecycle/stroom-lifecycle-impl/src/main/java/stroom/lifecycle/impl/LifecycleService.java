@@ -16,12 +16,13 @@
 
 package stroom.lifecycle.impl;
 
-import io.dropwizard.lifecycle.Managed;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 import stroom.lifecycle.api.ShutdownTask;
 import stroom.lifecycle.api.StartupTask;
 import stroom.util.logging.LogExecutionTime;
+
+import io.dropwizard.lifecycle.Managed;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import javax.inject.Inject;
 import javax.inject.Provider;
@@ -63,6 +64,7 @@ class LifecycleService implements Managed {
                 .sorted(Comparator.comparingInt(e -> e.getKey().getPriority()))
                 .map(Entry::getValue)
                 .collect(Collectors.toCollection(ConcurrentLinkedDeque::new));
+
         stopPending = shutdownTaskMap.entrySet()
                 .stream()
                 .sorted(Comparator.comparingInt(e -> e.getKey().getPriority()))
@@ -130,7 +132,7 @@ class LifecycleService implements Managed {
             final Provider<Runnable> runnableProvider = startPending.pollLast();
             if (runnableProvider != null) {
                 final Runnable runnable = runnableProvider.get();
-                LOGGER.info("Lifecycle " + runnable.getClass().getSimpleName());
+                LOGGER.info("Lifecycle " + runnable.getClass().getSimpleName() + " starting up");
                 CompletableFuture
                         .runAsync(runnable)
                         .whenComplete((r, t) -> {
@@ -178,7 +180,7 @@ class LifecycleService implements Managed {
         final Provider<Runnable> runnableProvider = stopPending.pollFirst();
         if (runnableProvider != null) {
             final Runnable runnable = runnableProvider.get();
-            LOGGER.info("Lifecycle " + runnable.getClass().getSimpleName());
+            LOGGER.info("Lifecycle " + runnable.getClass().getSimpleName() + " shutting down");
             CompletableFuture
                     .runAsync(runnable)
                     .whenComplete((r, t) -> {

@@ -365,12 +365,12 @@ class SteppingRequestHandler {
         if (filteredStreamIdList == null) {
             List<Long> filteredList = Collections.emptyList();
 
-            if (criteria.getSelectedIdSet() == null || Boolean.TRUE.equals(criteria.getSelectedIdSet().getMatchAll())) {
-                // Don't get back more than 1000 streams or we might run out of
-                // memory.
-                criteria.obtainPageRequest().setOffset(0L);
-                criteria.obtainPageRequest().setLength(1000);
-            }
+//            if (criteria.getSelectedIdSet() == null || Boolean.TRUE.equals(criteria.getSelectedIdSet().getMatchAll())) {
+//                // Don't get back more than 1000 streams or we might run out of
+//                // memory.
+//                criteria.obtainPageRequest().setOffset(0L);
+//                criteria.obtainPageRequest().setLength(1000);
+//            }
 
             // Find streams.
             final List<Meta> allStreamList = metaService.find(criteria).getValues();
@@ -379,23 +379,24 @@ class SteppingRequestHandler {
                 allStreamIdList.add(meta.getId());
             }
 
-            if (criteria.getSelectedIdSet() == null || Boolean.TRUE.equals(criteria.getSelectedIdSet().getMatchAll())) {
+//            if (criteria.getSelectedIdSet() == null || Boolean.TRUE.equals(criteria.getSelectedIdSet().getMatchAll())) {
                 // If we are including all tasks then don't filter the list.
                 filteredList = new ArrayList<>(allStreamList.size());
                 for (final Meta meta : allStreamList) {
                     filteredList.add(meta.getId());
                 }
 
-            } else if (criteria.getSelectedIdSet() != null && criteria.getSelectedIdSet().getSet() != null
-                    && criteria.getSelectedIdSet().getSet().size() > 0) {
-                // Otherwise filter the list to just selected tasks.
-                filteredList = new ArrayList<>(criteria.getSelectedIdSet().getSet().size());
-                for (final Meta meta : allStreamList) {
-                    if (criteria.getSelectedIdSet().isMatch(meta.getId())) {
-                        filteredList.add(meta.getId());
-                    }
-                }
-            }
+//            }
+//            else if (criteria.getSelectedIdSet() != null && criteria.getSelectedIdSet().getSet() != null
+//                    && criteria.getSelectedIdSet().getSet().size() > 0) {
+//                // Otherwise filter the list to just selected tasks.
+//                filteredList = new ArrayList<>(criteria.getSelectedIdSet().getSet().size());
+//                for (final Meta meta : allStreamList) {
+//                    if (criteria.getSelectedIdSet().isMatch(meta.getId())) {
+//                        filteredList.add(meta.getId());
+//                    }
+//                }
+//            }
 
             filteredStreamIdList = filteredList;
         }

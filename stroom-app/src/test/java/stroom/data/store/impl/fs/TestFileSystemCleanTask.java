@@ -154,8 +154,7 @@ class TestFileSystemCleanTask extends AbstractCoreIntegrationTest {
             assertThat(FileUtil.delete(file)).isTrue();
         }
 
-        final FindDataVolumeCriteria streamVolumeCriteria = new FindDataVolumeCriteria();
-        streamVolumeCriteria.obtainMetaIdSet().add(meta.getId());
+        final FindDataVolumeCriteria streamVolumeCriteria = FindDataVolumeCriteria.create(meta);
 
         assertThat(dataVolumeService.find(streamVolumeCriteria).size() >= 1).as("Must be saved to at least one volume").isTrue();
 

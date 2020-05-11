@@ -17,6 +17,14 @@
 
 package stroom.data.store.impl;
 
+import stroom.docref.DocRef;
+import stroom.event.logging.api.StroomEventLoggingService;
+import stroom.meta.shared.FindMetaCriteria;
+import stroom.query.api.v2.ExpressionItem;
+import stroom.query.api.v2.ExpressionOperator;
+import stroom.query.api.v2.ExpressionTerm;
+import stroom.security.api.SecurityContext;
+
 import event.logging.BaseAdvancedQueryItem;
 import event.logging.BaseAdvancedQueryOperator;
 import event.logging.BaseAdvancedQueryOperator.And;
@@ -35,14 +43,6 @@ import event.logging.TermCondition;
 import event.logging.util.EventLoggingUtil;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import stroom.docref.DocRef;
-import stroom.event.logging.api.StroomEventLoggingService;
-import stroom.meta.shared.FindMetaCriteria;
-import stroom.meta.shared.MetaFields;
-import stroom.query.api.v2.ExpressionItem;
-import stroom.query.api.v2.ExpressionOperator;
-import stroom.query.api.v2.ExpressionTerm;
-import stroom.security.api.SecurityContext;
 
 import javax.inject.Inject;
 import java.util.List;
@@ -200,31 +200,31 @@ public class StreamEventLog {
 //
 
 
-        if (findMetaCriteria.getSelectedIdSet() != null && findMetaCriteria.getSelectedIdSet().size() > 0) {
-            final BaseAdvancedQueryOperator and = new And();
-            items.add(and);
-
-            BaseAdvancedQueryOperator idSetOp = and;
-            if (findMetaCriteria.getSelectedIdSet().size() > 1) {
-                idSetOp = new Or();
-                and.getAdvancedQueryItems().add(idSetOp);
-            }
-
-            for (long id : findMetaCriteria.getSelectedIdSet()) {
-                idSetOp.getAdvancedQueryItems().add(EventLoggingUtil.createTerm(MetaFields.ID.getName(), TermCondition.EQUALS, String.valueOf(id)));
-            }
-
-            appendOperator(and.getAdvancedQueryItems(), findMetaCriteria.getExpression());
-
-        } else {
+//        if (findMetaCriteria.getSelectedIdSet() != null && findMetaCriteria.getSelectedIdSet().size() > 0) {
+//            final BaseAdvancedQueryOperator and = new And();
+//            items.add(and);
+//
+//            BaseAdvancedQueryOperator idSetOp = and;
+//            if (findMetaCriteria.getSelectedIdSet().size() > 1) {
+//                idSetOp = new Or();
+//                and.getAdvancedQueryItems().add(idSetOp);
+//            }
+//
+//            for (long id : findMetaCriteria.getSelectedIdSet()) {
+//                idSetOp.getAdvancedQueryItems().add(EventLoggingUtil.createTerm(MetaFields.ID.getName(), TermCondition.EQUALS, String.valueOf(id)));
+//            }
+//
+//            appendOperator(and.getAdvancedQueryItems(), findMetaCriteria.getExpression());
+//
+//        } else {
             appendOperator(items, findMetaCriteria.getExpression());
-        }
+//        }
     }
 
     private void appendOperator(final List<BaseAdvancedQueryItem> items, final ExpressionOperator expressionOperator) {
-        if (expressionOperator != null && expressionOperator.isEnabled()) {
+        if (expressionOperator != null && expressionOperator.enabled()) {
             BaseAdvancedQueryOperator operator = null;
-            switch (expressionOperator.getOp()) {
+            switch (expressionOperator.op()) {
                 case AND:
                     operator = new And();
                     break;
@@ -240,7 +240,7 @@ public class StreamEventLog {
 
             if (expressionOperator.getChildren() != null) {
                 for (final ExpressionItem item : expressionOperator.getChildren()) {
-                    if (item.isEnabled()) {
+                    if (item.enabled()) {
                         if (item instanceof ExpressionOperator) {
                             appendOperator(operator.getAdvancedQueryItems(), (ExpressionOperator) item);
                         } else if (item instanceof ExpressionTerm) {

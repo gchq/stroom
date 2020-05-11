@@ -16,8 +16,6 @@
 
 package stroom.headless;
 
-import com.google.inject.AbstractModule;
-import com.google.inject.Provides;
 import stroom.activity.mock.MockActivityModule;
 import stroom.cache.impl.CacheModule;
 import stroom.dictionary.impl.DictionaryModule;
@@ -33,11 +31,15 @@ import stroom.processor.impl.MockProcessorModule;
 import stroom.security.mock.MockSecurityContextModule;
 import stroom.statistics.api.InternalStatisticsReceiver;
 import stroom.task.impl.TaskContextModule;
+import stroom.util.entityevent.EntityEventBus;
 import stroom.util.io.BasicStreamCloser;
 import stroom.util.io.StreamCloser;
 import stroom.util.pipeline.scope.PipelineScopeModule;
 import stroom.util.pipeline.scope.PipelineScoped;
 import stroom.util.servlet.MockServletModule;
+
+import com.google.inject.AbstractModule;
+import com.google.inject.Provides;
 
 import java.util.concurrent.Executor;
 import java.util.concurrent.Executors;
@@ -86,7 +88,7 @@ public class CliModule extends AbstractModule {
 //        install(new stroom.task.cluster.impl.ClusterTaskModule());
 //        install(new stroom.index.impl.selection.selection.VolumeModule());
         install(new MockServletModule());
-        install (new MockProcessorModule());
+        install(new MockProcessorModule());
         install(new TaskContextModule());
 
         bind(InternalStatisticsReceiver.class).to(HeadlessInternalStatisticsReceiver.class);
@@ -107,5 +109,11 @@ public class CliModule extends AbstractModule {
     @Provides
     public NodeInfo nodeInfo() {
         return () -> null;
+    }
+
+    @Provides
+    EntityEventBus entityEventBus() {
+        return event -> {
+        };
     }
 }

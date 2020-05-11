@@ -123,7 +123,7 @@ public class IndexShardWriterCacheImpl implements IndexShardWriterCache {
      */
     private IndexShardWriter openExistingShard(final IndexShardKey indexShardKey) {
         // Get all index shards that are owned by this node.
-        final FindIndexShardCriteria criteria = new FindIndexShardCriteria();
+        final FindIndexShardCriteria criteria = FindIndexShardCriteria.matchAll();
         criteria.getNodeNameSet().add(nodeInfo.getThisNodeName());
         criteria.getIndexUuidSet().add(indexShardKey.getIndexUuid());
         criteria.getPartition().setString(indexShardKey.getPartition());
@@ -433,7 +433,7 @@ public class IndexShardWriterCacheImpl implements IndexShardWriterCache {
             final LogExecutionTime logExecutionTime = new LogExecutionTime();
 
             // Make sure all open shards are marked as closed.
-            final FindIndexShardCriteria criteria = new FindIndexShardCriteria();
+            final FindIndexShardCriteria criteria = FindIndexShardCriteria.matchAll();
             criteria.getNodeNameSet().add(nodeInfo.getThisNodeName());
             criteria.getIndexShardStatusSet().add(IndexShardStatus.OPEN);
             criteria.getIndexShardStatusSet().add(IndexShardStatus.OPENING);

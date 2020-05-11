@@ -17,6 +17,16 @@
 package stroom.statistics.impl.sql;
 
 
+import stroom.docref.DocRef;
+import stroom.security.api.SecurityContext;
+import stroom.security.mock.MockSecurityContext;
+import stroom.statistics.impl.sql.entity.StatisticStoreCache;
+import stroom.statistics.impl.sql.shared.StatisticStoreDoc;
+import stroom.test.common.util.test.StroomUnitTest;
+import stroom.util.concurrent.AtomicSequence;
+import stroom.util.concurrent.SimpleExecutor;
+import stroom.util.time.StroomDuration;
+
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
@@ -25,13 +35,6 @@ import org.mockito.Captor;
 import org.mockito.Mock;
 import org.mockito.Mockito;
 import org.mockito.junit.jupiter.MockitoExtension;
-import stroom.docref.DocRef;
-import stroom.statistics.impl.sql.entity.StatisticStoreCache;
-import stroom.statistics.impl.sql.shared.StatisticStoreDoc;
-import stroom.test.common.util.test.StroomUnitTest;
-import stroom.util.concurrent.AtomicSequence;
-import stroom.util.concurrent.SimpleExecutor;
-import stroom.util.time.StroomDuration;
 
 import java.util.List;
 import java.util.concurrent.TimeUnit;
@@ -46,6 +49,8 @@ class TestSQLStatisticEventStore extends StroomUnitTest {
     private final AtomicLong eventCount = new AtomicLong();
     private final AtomicSequence atomicSequence = new AtomicSequence(10);
     private final SQLStatisticsConfig sqlStatisticsConfig = new SQLStatisticsConfig();
+    private final SecurityContext securityContext = new MockSecurityContext();
+
     private final StatisticStoreCache mockStatisticsDataSourceCache = new StatisticStoreCache() {
         @Override
         public StatisticStoreDoc getStatisticsDataSource(final String statisticName) {
@@ -61,6 +66,7 @@ class TestSQLStatisticEventStore extends StroomUnitTest {
             return null;
         }
     };
+
     @Mock
     private SQLStatisticCache mockSqlStatisticCache;
     @Captor
@@ -88,7 +94,7 @@ class TestSQLStatisticEventStore extends StroomUnitTest {
         // Max Pool size of 5 with 10 items in the pool Add 1000 and we should
         // expect APROX the below
         final SQLStatisticEventStore store = new SQLStatisticEventStore(5, 10, 10000, null,
-                mockStatisticsDataSourceCache, null, sqlStatisticsConfig) {
+                mockStatisticsDataSourceCache, null, sqlStatisticsConfig, securityContext) {
             @Override
             public SQLStatisticAggregateMap createAggregateMap() {
                 createCount.incrementAndGet();
@@ -120,7 +126,7 @@ class TestSQLStatisticEventStore extends StroomUnitTest {
         // Max Pool size of 5 with 10 items in the pool Add 1000 and we should
         // expect APROX the below
         final SQLStatisticEventStore store = new SQLStatisticEventStore(10, 10, 100, null,
-                mockStatisticsDataSourceCache, null, sqlStatisticsConfig) {
+                mockStatisticsDataSourceCache, null, sqlStatisticsConfig, securityContext) {
             @Override
             public SQLStatisticAggregateMap createAggregateMap() {
                 createCount.incrementAndGet();
@@ -196,7 +202,7 @@ class TestSQLStatisticEventStore extends StroomUnitTest {
     private void processEvents(final int eventCount, final int expectedProcessedCount, final long firstEventTimeMs,
                                final long eventTimeDeltaMs) {
         final SQLStatisticEventStore store = new SQLStatisticEventStore(1, 1, 10000, null,
-                mockStatisticsDataSourceCache, mockSqlStatisticCache, sqlStatisticsConfig);
+                mockStatisticsDataSourceCache, mockSqlStatisticCache, sqlStatisticsConfig, securityContext);
 
         for (int i = 0; i < eventCount; i++) {
             store.putEvent(createEvent(firstEventTimeMs + (i * eventTimeDeltaMs)));

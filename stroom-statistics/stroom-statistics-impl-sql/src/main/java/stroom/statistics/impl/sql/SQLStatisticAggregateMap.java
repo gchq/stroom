@@ -16,11 +16,14 @@
 
 package stroom.statistics.impl.sql;
 
-import org.apache.commons.lang3.mutable.MutableLong;
 import stroom.statistics.impl.sql.exception.StatisticsEventValidationException;
 import stroom.statistics.impl.sql.rollup.RolledUpStatisticEvent;
 import stroom.statistics.impl.sql.shared.StatisticType;
 
+import org.apache.commons.lang3.mutable.MutableLong;
+
+import java.time.Duration;
+import java.time.Instant;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.Map.Entry;
@@ -29,6 +32,11 @@ import java.util.Set;
 public class SQLStatisticAggregateMap {
     private final Map<SQLStatKey, MutableLong> countMap = new HashMap<>();
     private final Map<SQLStatKey, Double> valueMap = new HashMap<>();
+    private final Instant createTime;
+
+    public SQLStatisticAggregateMap() {
+        createTime = Instant.now();
+    }
 
     public void addRolledUpEvent(final RolledUpStatisticEvent rolledUpStatisticEvent, long precisionMs)
             throws StatisticsEventValidationException {
@@ -96,8 +104,15 @@ public class SQLStatisticAggregateMap {
         return countMap.size() + valueMap.size();
     }
 
+    public Duration getAge() {
+        return Duration.between(createTime, Instant.now());
+    }
+
     @Override
     public String toString() {
-        return "AggregateMap size=" + size();
+        return "" +
+                "countMapSize=" + countMap.size() +
+                ", valueMapSize=" + valueMap.size() +
+                ", age=" + getAge().toString();
     }
 }

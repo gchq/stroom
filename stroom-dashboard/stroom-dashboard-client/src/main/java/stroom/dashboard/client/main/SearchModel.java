@@ -139,7 +139,7 @@ public class SearchModel {
                 currentParameterMap = KVMapUtil.parse(params);
 
                 // Replace any parameters in the expression.
-                final ExpressionOperator.Builder builder = new ExpressionOperator.Builder(expression.isEnabled(), expression.getOp());
+                final ExpressionOperator.Builder builder = new ExpressionOperator.Builder(expression.enabled(), expression.op());
                 replaceExpressionParameters(builder, expression, currentParameterMap);
                 currentExpression = builder.build();
 
@@ -211,8 +211,8 @@ public class SearchModel {
             for (ExpressionItem child : operator.getChildren()) {
                 if (child instanceof ExpressionOperator) {
                     final ExpressionOperator childOperator = (ExpressionOperator) child;
-                    final ExpressionOperator.Builder childBuilder = new ExpressionOperator.Builder(childOperator.getOp())
-                            .enabled(childOperator.isEnabled());
+                    final ExpressionOperator.Builder childBuilder = new ExpressionOperator.Builder(childOperator.op())
+                            .enabled(childOperator.enabled());
                     builder.addOperator(childBuilder.build());
                     replaceExpressionParameters(childBuilder, childOperator, paramMap);
                 } else if (child instanceof ExpressionTerm) {
@@ -220,7 +220,7 @@ public class SearchModel {
                     final String value = term.getValue();
                     final String replaced = KVMapUtil.replaceParameters(value, paramMap);
                     builder.addTerm(new ExpressionTerm.Builder()
-                            .enabled(term.isEnabled())
+                            .enabled(term.enabled())
                             .field(term.getField())
                             .condition(term.getCondition())
                             .value(replaced)
@@ -378,7 +378,7 @@ public class SearchModel {
                 final Map<String, String> currentParameterMap = KVMapUtil.parse(params);
 
                 // Replace any parameters in the expression.
-                final ExpressionOperator.Builder builder = new ExpressionOperator.Builder(expression.isEnabled(), expression.getOp());
+                final ExpressionOperator.Builder builder = new ExpressionOperator.Builder(expression.enabled(), expression.op());
                 replaceExpressionParameters(builder, expression, currentParameterMap);
                 final ExpressionOperator currentExpression = builder.build();
 

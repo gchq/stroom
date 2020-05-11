@@ -4,10 +4,11 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import stroom.data.store.api.Target;
 import stroom.entity.shared.ExpressionCriteria;
+import stroom.meta.api.MetaService;
 import stroom.meta.shared.FindMetaCriteria;
 import stroom.meta.shared.Meta;
+import stroom.meta.shared.MetaExpressionUtil;
 import stroom.meta.shared.MetaFields;
-import stroom.meta.api.MetaService;
 import stroom.meta.shared.Status;
 import stroom.pipeline.task.SupersededOutputHelper;
 import stroom.processor.api.ProcessorTaskService;
@@ -115,14 +116,11 @@ public class SupersededOutputHelperImpl implements SupersededOutputHelper {
                 }
 
                 // Loop around all the streams found above looking for ones to delete
-                final FindMetaCriteria findDeleteMetaCriteria = new FindMetaCriteria();
-                for (final Meta meta : streamList) {
-                    findDeleteMetaCriteria.obtainSelectedIdSet().add(meta.getId());
-                }
-
-                // If we have found any to delete then delete them now.
-                if (findDeleteMetaCriteria.obtainSelectedIdSet().isConstrained()) {
-                    final long deleteCount = dataMetaService.updateStatus(findDeleteMetaCriteria, Status.DELETED);
+                final Set<Long> idSet = streamList.stream().map(Meta::getId).collect(Collectors.toSet());
+                if (idSet.size() > 0) {
+                    // If we have found any to delete then delete them now.
+                    final FindMetaCriteria findDeleteMetaCriteria = new FindMetaCriteria(MetaExpressionUtil.createDataIdSetExpression(idSet));
+                    final long deleteCount = dataMetaService.updateStatus(findDeleteMetaCriteria, null, Status.DELETED);
                     LOGGER.info("checkSuperseded() - Removed {}", deleteCount);
                 }
             }

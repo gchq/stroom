@@ -28,6 +28,8 @@ logging:
     org.eclipse.jetty: INFO
     org.glassfish: INFO
     org.glassfish.jersey: INFO
+    # Comment this out if you want logging of the REST request/responses
+    # NOT recommended for production environments as it is very verbose
     org.glassfish.jersey.logging.LoggingFeature: "OFF"
     #    org.glassfish.jersey.server.ServerRuntime.Responder: INFO
     #    org.glassfish.jersey.server.validation.internal.ValidationExceptionMapper: FINER
@@ -110,6 +112,7 @@ appConfig:
     enabled: ${STROOM_CONTENT_PACK_IMPORT_ENABLED:-false}
   job:
     enabled: true
+    enableDistributedJobsOnBootstrap: ${STROOM_DISTRIBUTED_JOBS_ENABLED_ON_BOOTSTRAP:-true}
     executionInterval: "10s"
   node:
     name: ${STROOM_NODE:-node1a}
@@ -117,6 +120,8 @@ appConfig:
     hostname: ${STROOM_HOST:-localhost}
   path:
     temp: "/tmp/stroom"
+  proxyAggregation:
+    proxyDir: ${STROOM_PROXY_DIR:-/tmp/stroom/proxy}
   publicUri:
     hostname: ${API_GATEWAY_HOST:-localhost}
   security:
@@ -125,5 +130,10 @@ appConfig:
   serviceDiscovery:
     enabled: ${STROOM_SERVICE_DISCOVERY_ENABLED:-false}
     zookeeperUrl: ${STROOM_SERVICE_DISCOVERY_ZOOKEEPER_URL:-localhost:2181}
+  statistics:
+    hbase:
+      kafkaConfigUuid:
+    internal:
+      enabledStoreTypes: ${STROOM_ENABLED_STAT_STORE_TYPES:-[ "StatisticStore" ]}
   volumes:
     createDefaultOnStart: false

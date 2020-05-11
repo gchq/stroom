@@ -16,21 +16,22 @@
 
 package stroom.statistics.impl.sql.entity;
 
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 import stroom.cache.api.CacheManager;
 import stroom.cache.api.ICache;
 import stroom.docref.DocRef;
 import stroom.docstore.shared.DocRefUtil;
+import stroom.security.api.SecurityContext;
+import stroom.security.shared.DocumentPermissionNames;
+import stroom.util.shared.PermissionException;
+import stroom.statistics.impl.sql.SQLStatisticsConfig;
+import stroom.statistics.impl.sql.shared.StatisticStoreDoc;
 import stroom.util.entityevent.EntityAction;
 import stroom.util.entityevent.EntityEvent;
 import stroom.util.entityevent.EntityEventHandler;
-import stroom.security.api.SecurityContext;
-import stroom.security.shared.DocumentPermissionNames;
-import stroom.security.shared.PermissionException;
-import stroom.statistics.impl.sql.SQLStatisticsConfig;
-import stroom.statistics.impl.sql.shared.StatisticStoreDoc;
 import stroom.util.shared.Clearable;
+
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import javax.inject.Inject;
 import javax.inject.Singleton;
