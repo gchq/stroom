@@ -54,15 +54,16 @@ public class Keys {
     public static final UniqueKey<StroomUserRecord> KEY_STROOM_USER_NAME = UniqueKeys0.KEY_STROOM_USER_NAME;
     public static final UniqueKey<StroomUserRecord> KEY_STROOM_USER_STROOM_USER_UUID_INDEX = UniqueKeys0.KEY_STROOM_USER_STROOM_USER_UUID_INDEX;
     public static final UniqueKey<StroomUserGroupRecord> KEY_STROOM_USER_GROUP_PRIMARY = UniqueKeys0.KEY_STROOM_USER_GROUP_PRIMARY;
+    public static final UniqueKey<StroomUserGroupRecord> KEY_STROOM_USER_GROUP_STROOM_USER_GROUP_GROUP_UUID_USER_UUID_IDX = UniqueKeys0.KEY_STROOM_USER_GROUP_STROOM_USER_GROUP_GROUP_UUID_USER_UUID_IDX;
 
     // -------------------------------------------------------------------------
     // FOREIGN KEY definitions
     // -------------------------------------------------------------------------
 
-    public static final ForeignKey<AppPermissionRecord, StroomUserRecord> APP_PERMISSION_IBFK_1 = ForeignKeys0.APP_PERMISSION_IBFK_1;
-    public static final ForeignKey<DocPermissionRecord, StroomUserRecord> DOC_PERMISSION_IBFK_1 = ForeignKeys0.DOC_PERMISSION_IBFK_1;
-    public static final ForeignKey<StroomUserGroupRecord, StroomUserRecord> STROOM_USER_GROUP_IBFK_1 = ForeignKeys0.STROOM_USER_GROUP_IBFK_1;
-    public static final ForeignKey<StroomUserGroupRecord, StroomUserRecord> STROOM_USER_GROUP_IBFK_2 = ForeignKeys0.STROOM_USER_GROUP_IBFK_2;
+    public static final ForeignKey<AppPermissionRecord, StroomUserRecord> APP_PERMISSION_FK_USER_UUID = ForeignKeys0.APP_PERMISSION_FK_USER_UUID;
+    public static final ForeignKey<DocPermissionRecord, StroomUserRecord> DOC_PERMISSION_FK_USER_UUID = ForeignKeys0.DOC_PERMISSION_FK_USER_UUID;
+    public static final ForeignKey<StroomUserGroupRecord, StroomUserRecord> STROOM_USER_GROUP_FK_USER_UUID = ForeignKeys0.STROOM_USER_GROUP_FK_USER_UUID;
+    public static final ForeignKey<StroomUserGroupRecord, StroomUserRecord> STROOM_USER_GROUP_FK_GROUP_UUID = ForeignKeys0.STROOM_USER_GROUP_FK_GROUP_UUID;
 
     // -------------------------------------------------------------------------
     // [#1459] distribute members to avoid static initialisers > 64kb
@@ -82,12 +83,13 @@ public class Keys {
         public static final UniqueKey<StroomUserRecord> KEY_STROOM_USER_NAME = Internal.createUniqueKey(StroomUser.STROOM_USER, "KEY_stroom_user_name", StroomUser.STROOM_USER.NAME, StroomUser.STROOM_USER.IS_GROUP);
         public static final UniqueKey<StroomUserRecord> KEY_STROOM_USER_STROOM_USER_UUID_INDEX = Internal.createUniqueKey(StroomUser.STROOM_USER, "KEY_stroom_user_stroom_user_uuid_index", StroomUser.STROOM_USER.UUID);
         public static final UniqueKey<StroomUserGroupRecord> KEY_STROOM_USER_GROUP_PRIMARY = Internal.createUniqueKey(StroomUserGroup.STROOM_USER_GROUP, "KEY_stroom_user_group_PRIMARY", StroomUserGroup.STROOM_USER_GROUP.ID);
+        public static final UniqueKey<StroomUserGroupRecord> KEY_STROOM_USER_GROUP_STROOM_USER_GROUP_GROUP_UUID_USER_UUID_IDX = Internal.createUniqueKey(StroomUserGroup.STROOM_USER_GROUP, "KEY_stroom_user_group_stroom_user_group_group_uuid_user_uuid_IDX", StroomUserGroup.STROOM_USER_GROUP.GROUP_UUID, StroomUserGroup.STROOM_USER_GROUP.USER_UUID);
     }
 
     private static class ForeignKeys0 {
-        public static final ForeignKey<AppPermissionRecord, StroomUserRecord> APP_PERMISSION_IBFK_1 = Internal.createForeignKey(stroom.security.impl.db.jooq.Keys.KEY_STROOM_USER_STROOM_USER_UUID_INDEX, AppPermission.APP_PERMISSION, "app_permission_ibfk_1", AppPermission.APP_PERMISSION.USER_UUID);
-        public static final ForeignKey<DocPermissionRecord, StroomUserRecord> DOC_PERMISSION_IBFK_1 = Internal.createForeignKey(stroom.security.impl.db.jooq.Keys.KEY_STROOM_USER_STROOM_USER_UUID_INDEX, DocPermission.DOC_PERMISSION, "doc_permission_ibfk_1", DocPermission.DOC_PERMISSION.USER_UUID);
-        public static final ForeignKey<StroomUserGroupRecord, StroomUserRecord> STROOM_USER_GROUP_IBFK_1 = Internal.createForeignKey(stroom.security.impl.db.jooq.Keys.KEY_STROOM_USER_STROOM_USER_UUID_INDEX, StroomUserGroup.STROOM_USER_GROUP, "stroom_user_group_ibfk_1", StroomUserGroup.STROOM_USER_GROUP.USER_UUID);
-        public static final ForeignKey<StroomUserGroupRecord, StroomUserRecord> STROOM_USER_GROUP_IBFK_2 = Internal.createForeignKey(stroom.security.impl.db.jooq.Keys.KEY_STROOM_USER_STROOM_USER_UUID_INDEX, StroomUserGroup.STROOM_USER_GROUP, "stroom_user_group_ibfk_2", StroomUserGroup.STROOM_USER_GROUP.GROUP_UUID);
+        public static final ForeignKey<AppPermissionRecord, StroomUserRecord> APP_PERMISSION_FK_USER_UUID = Internal.createForeignKey(stroom.security.impl.db.jooq.Keys.KEY_STROOM_USER_STROOM_USER_UUID_INDEX, AppPermission.APP_PERMISSION, "app_permission_fk_user_uuid", AppPermission.APP_PERMISSION.USER_UUID);
+        public static final ForeignKey<DocPermissionRecord, StroomUserRecord> DOC_PERMISSION_FK_USER_UUID = Internal.createForeignKey(stroom.security.impl.db.jooq.Keys.KEY_STROOM_USER_STROOM_USER_UUID_INDEX, DocPermission.DOC_PERMISSION, "doc_permission_fk_user_uuid", DocPermission.DOC_PERMISSION.USER_UUID);
+        public static final ForeignKey<StroomUserGroupRecord, StroomUserRecord> STROOM_USER_GROUP_FK_USER_UUID = Internal.createForeignKey(stroom.security.impl.db.jooq.Keys.KEY_STROOM_USER_STROOM_USER_UUID_INDEX, StroomUserGroup.STROOM_USER_GROUP, "stroom_user_group_fk_user_uuid", StroomUserGroup.STROOM_USER_GROUP.USER_UUID);
+        public static final ForeignKey<StroomUserGroupRecord, StroomUserRecord> STROOM_USER_GROUP_FK_GROUP_UUID = Internal.createForeignKey(stroom.security.impl.db.jooq.Keys.KEY_STROOM_USER_STROOM_USER_UUID_INDEX, StroomUserGroup.STROOM_USER_GROUP, "stroom_user_group_fk_group_uuid", StroomUserGroup.STROOM_USER_GROUP.GROUP_UUID);
     }
 }
