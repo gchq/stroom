@@ -18,18 +18,21 @@ package stroom.job.impl;
 
 import stroom.event.logging.api.ObjectInfoProviderBinder;
 import stroom.job.api.JobManager;
-import stroom.job.api.ScheduledJobsModule;
+import stroom.job.api.RunnableWrapper;
+import stroom.job.api.ScheduledJobsBinder;
 import stroom.job.shared.Job;
 import stroom.job.shared.JobNode;
 import stroom.util.guice.RestResourcesBinder;
 
 import com.google.inject.AbstractModule;
 
+import javax.inject.Inject;
+
+import static stroom.job.api.Schedule.ScheduleType.PERIODIC;
+
 public class JobSystemModule extends AbstractModule {
     @Override
     protected void configure() {
-        // Ensure the scheduled jobs binder is present even if we don't bind actual jobs.
-        install(new ScheduledJobsModule());
 
         bind(JobManager.class).to(JobManagerImpl.class);
 
@@ -42,5 +45,22 @@ public class JobSystemModule extends AbstractModule {
         ObjectInfoProviderBinder.create(binder())
                 .bind(Job.class, JobObjectInfoProvider.class)
                 .bind(JobNode.class, JobNodeObjectInfoProvider.class);
+
+
+        // Ensure the scheduled jobs binder is present even if we don't bind actual jobs.
+        ScheduledJobsBinder.create(binder())
+                .bindJobTo(FetchNewTasks.class, builder -> builder
+                        .withName("Fetch new tasks")
+                        .withDescription("Every 10 seconds the Stroom lifecycle service will try and " +
+                                "fetch new tasks for execution.")
+                        .withManagedState(false)
+                        .withSchedule(PERIODIC, "10s"));
+    }
+
+    private static class FetchNewTasks extends RunnableWrapper {
+        @Inject
+        FetchNewTasks(final DistributedTaskFetcher distributedTaskFetcher) {
+            super(distributedTaskFetcher::execute);
+        }
     }
 }
