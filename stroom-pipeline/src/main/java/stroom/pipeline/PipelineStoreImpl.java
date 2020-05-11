@@ -26,10 +26,14 @@ import stroom.explorer.shared.DocumentType;
 import stroom.importexport.migration.LegacyXMLSerialiser;
 import stroom.importexport.shared.ImportState;
 import stroom.importexport.shared.ImportState.ImportMode;
+import stroom.meta.shared.MetaFields;
 import stroom.pipeline.shared.PipelineDoc;
 import stroom.pipeline.shared.data.PipelineData;
 import stroom.processor.api.ProcessorFilterService;
 import stroom.processor.shared.ProcessorFilter;
+import stroom.query.api.v2.ExpressionItem;
+import stroom.query.api.v2.ExpressionOperator;
+import stroom.query.api.v2.ExpressionTerm;
 import stroom.security.api.SecurityContext;
 import stroom.util.shared.Message;
 import stroom.util.shared.ResultPage;
@@ -223,7 +227,9 @@ public class PipelineStoreImpl implements PipelineStore {
         if (docRef != null && PipelineDoc.DOCUMENT_TYPE.equals(docRef.getType())) {
             ResultPage<ProcessorFilter> filterResultPage = processorFilterServiceProvider.get().find(docRef);
 
-            List <DocRef> docRefs = filterResultPage.getValues().stream().map(v -> new DocRef(ProcessorFilter.ENTITY_TYPE, v.getUuid()))
+            List <DocRef> docRefs = filterResultPage.getValues().stream()
+                    .filter(v -> !shouldIgnore(v))
+                    .map(v -> new DocRef(ProcessorFilter.ENTITY_TYPE, v.getUuid()))
                     .collect(Collectors.toList());
 
             processorFilters.addAll(docRefs);
@@ -231,6 +237,35 @@ public class PipelineStoreImpl implements PipelineStore {
         return processorFilters;
     }
 
+    private boolean shouldIgnore (final ProcessorFilter processorFilter){
+        if (processorFilter == null || processorFilter.getQueryData() == null ||
+                processorFilter.getQueryData().getExpression() == null)
+            return true;
+
+        ExpressionOperator expression = processorFilter.getQueryData().getExpression();
+
+        return containsIdField (expression);
+    }
+
+    private boolean containsIdField (ExpressionOperator expression){
+        if (expression == null)
+            return false;
+        for (ExpressionItem item : expression.getChildren()){
+            if (item instanceof ExpressionTerm){
+                ExpressionTerm term = (ExpressionTerm) item;
+                if (MetaFields.ID.getName().equals(term.getField()))
+                    return true;
+                if (MetaFields.PARENT_ID.getName().equals(term.getField()))
+                    return true;
+                if (MetaFields.PROCESSOR_ID.getName().equals(term.getField()))
+                    return true;
+            } else if (item instanceof ExpressionOperator){
+                if (containsIdField((ExpressionOperator) item))
+                    return true;
+            }
+        }
+        return false;
+    }
 
     @Override
     public String getType() {

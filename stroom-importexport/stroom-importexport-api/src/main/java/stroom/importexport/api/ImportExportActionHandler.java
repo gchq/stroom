@@ -41,6 +41,7 @@ public interface ImportExportActionHandler {
     class ImpexDetails {
         private String locationRef;
         private DocRef docRef;
+        private boolean ignore;
 
         public ImpexDetails(){}
 
@@ -48,13 +49,23 @@ public interface ImportExportActionHandler {
             this.docRef = docRef;
         }
 
-        public ImpexDetails(DocRef docRef, String locationRef){
+        public ImpexDetails(final DocRef docRef, final String locationRef){
             this.docRef = docRef;
             this.locationRef = locationRef;
         }
 
+        public ImpexDetails(final DocRef docRef, final String locationRef, final boolean ignore){
+            this.docRef = docRef;
+            this.locationRef = locationRef;
+            this.ignore = ignore;
+        }
+
         public void setDocRef(DocRef docRef) {
             this.docRef = docRef;
+        }
+
+        public void setIgnore(boolean ignore) {
+            this.ignore = ignore;
         }
 
         public void setLocationRef(String locationRef) {
@@ -67,6 +78,10 @@ public interface ImportExportActionHandler {
 
         public DocRef getDocRef() {
             return docRef;
+        }
+
+        public boolean isIgnore () {
+            return ignore;
         }
     }
 }

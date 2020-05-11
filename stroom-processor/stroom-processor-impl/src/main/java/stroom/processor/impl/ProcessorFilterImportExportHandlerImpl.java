@@ -26,13 +26,17 @@ import stroom.importexport.api.ImportExportActionHandler;
 import stroom.importexport.api.ImportExportDocumentEventLog;
 import stroom.importexport.api.NonExplorerDocRefProvider;
 import stroom.importexport.shared.ImportState;
+import stroom.meta.shared.MetaFields;
 import stroom.pipeline.shared.PipelineDoc;
+import stroom.pipeline.shared.data.PipelineData;
 import stroom.processor.api.ProcessorFilterService;
 import stroom.processor.api.ProcessorService;
 import stroom.processor.shared.Processor;
 import stroom.processor.shared.ProcessorDataSource;
 import stroom.processor.shared.ProcessorFilter;
 import stroom.processor.shared.ProcessorFilterDataSource;
+import stroom.processor.shared.QueryData;
+import stroom.query.api.v2.ExpressionItem;
 import stroom.query.api.v2.ExpressionOperator;
 import stroom.query.api.v2.ExpressionTerm;
 import stroom.util.shared.Message;
@@ -83,6 +87,11 @@ public class ProcessorFilterImportExportHandlerImpl implements ImportExportActio
             throw new RuntimeException("Unable to read meta file associated with processor " + docRef, ex);
         }
 
+        boolean ignore = shouldIgnore (processorFilter);
+
+        if (ignore)
+            LOGGER.warn("Not importing processor filter " + docRef.getUuid() + " because it contains id fields");
+
         if (importMode != ImportState.ImportMode.CREATE_CONFIRMATION) {
             processorFilter.setProcessor(findProcessorForFilter(processorFilter));
 
@@ -121,7 +130,37 @@ public class ProcessorFilterImportExportHandlerImpl implements ImportExportActio
                 processorFilterService.update(processorFilter);
             }
         }
-        return new ImpexDetails(docRef, processorFilter.getPipelineName());
+        return new ImpexDetails(docRef, processorFilter.getPipelineName(),ignore);
+    }
+
+    private boolean shouldIgnore (final ProcessorFilter processorFilter){
+        if (processorFilter == null || processorFilter.getQueryData() == null ||
+                processorFilter.getQueryData().getExpression() == null)
+            return true;
+
+        ExpressionOperator expression = processorFilter.getQueryData().getExpression();
+
+        return containsIdField (expression);
+    }
+
+    private boolean containsIdField (ExpressionOperator expression){
+        if (expression == null)
+            return false;
+        for (ExpressionItem item : expression.getChildren()){
+            if (item instanceof  ExpressionTerm){
+                ExpressionTerm term = (ExpressionTerm) item;
+                if (MetaFields.ID.getName().equals(term.getField()))
+                    return true;
+                if (MetaFields.PARENT_ID.getName().equals(term.getField()))
+                    return true;
+                if (MetaFields.PROCESSOR_ID.getName().equals(term.getField()))
+                    return true;
+            } else if (item instanceof ExpressionOperator){
+                if (containsIdField((ExpressionOperator) item))
+                    return true;
+            }
+        }
+        return false;
     }
 
     private ProcessorFilter findProcessorFilter(final DocRef docRef) {
