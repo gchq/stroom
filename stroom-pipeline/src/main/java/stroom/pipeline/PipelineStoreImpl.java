@@ -30,6 +30,7 @@ import stroom.meta.shared.MetaFields;
 import stroom.pipeline.shared.PipelineDoc;
 import stroom.pipeline.shared.data.PipelineData;
 import stroom.processor.api.ProcessorFilterService;
+import stroom.processor.api.ProcessorFilterUtilities;
 import stroom.processor.shared.ProcessorFilter;
 import stroom.query.api.v2.ExpressionItem;
 import stroom.query.api.v2.ExpressionOperator;
@@ -228,50 +229,13 @@ public class PipelineStoreImpl implements PipelineStore {
             ResultPage<ProcessorFilter> filterResultPage = processorFilterServiceProvider.get().find(docRef);
 
             List <DocRef> docRefs = filterResultPage.getValues().stream()
-                    .filter(v -> !shouldIgnore(v))
+                    .filter(v -> ProcessorFilterUtilities.shouldExport(v))
                     .map(v -> new DocRef(ProcessorFilter.ENTITY_TYPE, v.getUuid()))
                     .collect(Collectors.toList());
 
             processorFilters.addAll(docRefs);
         }
         return processorFilters;
-    }
-
-    /**
-     * Whether to export this filter
-     * N.B. This function and containsIdField also exists in ProcessorFilterImportExportHandlerImpl (used for import)
-     * If you update this, you should probably update the other version
-     * @param processorFilter
-     * @return
-     */
-    private boolean shouldIgnore (final ProcessorFilter processorFilter){
-        if (processorFilter == null || processorFilter.getQueryData() == null ||
-                processorFilter.getQueryData().getExpression() == null)
-            return true;
-
-        ExpressionOperator expression = processorFilter.getQueryData().getExpression();
-
-        return containsIdField (expression);
-    }
-
-    private boolean containsIdField (ExpressionOperator expression){
-        if (expression == null)
-            return false;
-        for (ExpressionItem item : expression.getChildren()){
-            if (item instanceof ExpressionTerm){
-                ExpressionTerm term = (ExpressionTerm) item;
-                if (MetaFields.ID.getName().equals(term.getField()))
-                    return true;
-                if (MetaFields.PARENT_ID.getName().equals(term.getField()))
-                    return true;
-                if (MetaFields.PROCESSOR_ID.getName().equals(term.getField()))
-                    return true;
-            } else if (item instanceof ExpressionOperator){
-                if (containsIdField((ExpressionOperator) item))
-                    return true;
-            }
-        }
-        return false;
     }
 
     @Override
