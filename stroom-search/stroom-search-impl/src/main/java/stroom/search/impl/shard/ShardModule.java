@@ -16,8 +16,9 @@
 
 package stroom.search.impl.shard;
 
-import stroom.util.RunnableWrapper;
 import stroom.job.api.ScheduledJobsBinder;
+import stroom.lifecycle.api.LifecycleBinder;
+import stroom.util.RunnableWrapper;
 import stroom.util.guice.GuiceUtil;
 import stroom.util.shared.Clearable;
 
@@ -40,12 +41,22 @@ public class ShardModule extends AbstractModule {
                         .withName("Index Searcher Cache Refresh")
                         .withDescription("Job to refresh index shard searchers in the cache")
                         .withSchedule(PERIODIC, "10m"));
+
+        LifecycleBinder.create(binder())
+                .bindShutdownTaskTo(IndexShardSearchTaskExecutorShutdown.class);
     }
 
     private static class IndexSearcherCacheRefresh extends RunnableWrapper {
         @Inject
         IndexSearcherCacheRefresh(final IndexShardSearcherCache indexShardSearcherCache) {
             super(indexShardSearcherCache::refresh);
+        }
+    }
+
+    private static class IndexShardSearchTaskExecutorShutdown extends RunnableWrapper {
+        @Inject
+        IndexShardSearchTaskExecutorShutdown(final IndexShardSearchTaskExecutor indexShardSearchTaskExecutor) {
+            super(indexShardSearchTaskExecutor::shutdown);
         }
     }
 }

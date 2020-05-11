@@ -16,12 +16,16 @@
 
 package stroom.core.entity.event;
 
+import stroom.lifecycle.api.LifecycleBinder;
+import stroom.util.RunnableWrapper;
 import stroom.util.entityevent.EntityEvent;
 import stroom.util.entityevent.EntityEventBus;
 import stroom.util.guice.GuiceUtil;
 import stroom.util.guice.RestResourcesBinder;
 
 import com.google.inject.AbstractModule;
+
+import javax.inject.Inject;
 
 public class EntityEventModule extends AbstractModule {
     @Override
@@ -34,6 +38,9 @@ public class EntityEventModule extends AbstractModule {
 
         RestResourcesBinder.create(binder())
                 .bind(EntityEventResourceImpl.class);
+
+        LifecycleBinder.create(binder())
+                .bindStartupTaskTo(EntityEventBusInit.class);
     }
 
     @Override
@@ -46,5 +53,12 @@ public class EntityEventModule extends AbstractModule {
     @Override
     public int hashCode() {
         return 0;
+    }
+
+    private static class EntityEventBusInit extends RunnableWrapper {
+        @Inject
+        EntityEventBusInit(final EntityEventBusImpl entityEventBus) {
+            super(entityEventBus::init);
+        }
     }
 }
