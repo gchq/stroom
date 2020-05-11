@@ -6,7 +6,7 @@ and this project adheres to [Semantic Versioning](http://semver.org/).
 
 ## [Unreleased]
 
-* Issue **#1508** : Tidy up property descriptions.
+* Issue **#1508** : Tidy up property descriptions, change connection pool props to use Stroom Duration type.
 
 * Issue **#1545** : Add property `enableDistributedJobsOnBootstrap` to enable/disable processing on first boot.
 
