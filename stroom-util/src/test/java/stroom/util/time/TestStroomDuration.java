@@ -32,6 +32,7 @@ class TestStroomDuration {
         // Whole number of days so we render it as days
         doInstantiateTest(StroomDuration.ofDays(1), Duration.ofDays(1), "P1D");
         doInstantiateTest(StroomDuration.ofDays(30), Duration.ofDays(30), "P30D");
+        doInstantiateTest(StroomDuration.ofDays(90), Duration.ofDays(90), "P90D");
     }
 
     @Test
