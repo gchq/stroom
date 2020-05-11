@@ -1,10 +1,12 @@
 package stroom.authentication.config;
 
-import com.fasterxml.jackson.annotation.JsonProperty;
-import com.fasterxml.jackson.annotation.JsonPropertyOrder;
 import stroom.util.shared.AbstractConfig;
 import stroom.util.shared.validation.ValidRegex;
 import stroom.util.time.StroomDuration;
+
+import com.fasterxml.jackson.annotation.JsonProperty;
+import com.fasterxml.jackson.annotation.JsonPropertyDescription;
+import com.fasterxml.jackson.annotation.JsonPropertyOrder;
 
 import javax.validation.constraints.Min;
 import javax.validation.constraints.NotNull;
@@ -14,26 +16,26 @@ public class PasswordIntegrityChecksConfig extends AbstractConfig {
 
     @NotNull
     @JsonProperty
-    private StroomDuration neverUsedAccountDeactivationThreshold = StroomDuration.parse("P30D");
+    private StroomDuration neverUsedAccountDeactivationThreshold = StroomDuration.ofDays(30);
 
     @NotNull
     @JsonProperty
-    private StroomDuration unusedAccountDeactivationThreshold = StroomDuration.parse("P90D");
+    private StroomDuration unusedAccountDeactivationThreshold = StroomDuration.ofDays(90);
 
     @NotNull
     @JsonProperty
-    private StroomDuration mandatoryPasswordChangeDuration = StroomDuration.parse("P90D");
+    private StroomDuration mandatoryPasswordChangeDuration = StroomDuration.ofDays(90);
 
-    @NotNull
-    @JsonProperty
-    private StroomDuration durationBetweenChecks = StroomDuration.parse("PT2M");
+//    @NotNull
+//    @JsonProperty
+//    private StroomDuration durationBetweenChecks = StroomDuration.ofMinutes(2);
 
-    @NotNull
     @JsonProperty
     private boolean forcePasswordChangeOnFirstLogin = true;
 
     @ValidRegex
     @JsonProperty
+    @JsonPropertyDescription("A regex pattern that new passwords must match")
     // The default is to let everything through
     private String passwordComplexityRegex = ".*";
 
@@ -46,6 +48,7 @@ public class PasswordIntegrityChecksConfig extends AbstractConfig {
         return neverUsedAccountDeactivationThreshold;
     }
 
+    @SuppressWarnings("unused")
     public void setNeverUsedAccountDeactivationThreshold(final StroomDuration neverUsedAccountDeactivationThreshold) {
         this.neverUsedAccountDeactivationThreshold = neverUsedAccountDeactivationThreshold;
     }
@@ -54,6 +57,7 @@ public class PasswordIntegrityChecksConfig extends AbstractConfig {
         return unusedAccountDeactivationThreshold;
     }
 
+    @SuppressWarnings("unused")
     public void setUnusedAccountDeactivationThreshold(final StroomDuration unusedAccountDeactivationThreshold) {
         this.unusedAccountDeactivationThreshold = unusedAccountDeactivationThreshold;
     }
@@ -62,22 +66,25 @@ public class PasswordIntegrityChecksConfig extends AbstractConfig {
         return mandatoryPasswordChangeDuration;
     }
 
+    @SuppressWarnings("unused")
     public void setMandatoryPasswordChangeDuration(final StroomDuration mandatoryPasswordChangeDuration) {
         this.mandatoryPasswordChangeDuration = mandatoryPasswordChangeDuration;
     }
 
-    public StroomDuration getDurationBetweenChecks() {
-        return durationBetweenChecks;
-    }
-
-    public void setDurationBetweenChecks(final StroomDuration durationBetweenChecks) {
-        this.durationBetweenChecks = durationBetweenChecks;
-    }
+//    public StroomDuration getDurationBetweenChecks() {
+//        return durationBetweenChecks;
+//    }
+//
+//    @SuppressWarnings("unused")
+//    public void setDurationBetweenChecks(final StroomDuration durationBetweenChecks) {
+//        this.durationBetweenChecks = durationBetweenChecks;
+//    }
 
     public boolean isForcePasswordChangeOnFirstLogin() {
         return forcePasswordChangeOnFirstLogin;
     }
 
+    @SuppressWarnings("unused")
     public void setForcePasswordChangeOnFirstLogin(final boolean forcePasswordChangeOnFirstLogin) {
         this.forcePasswordChangeOnFirstLogin = forcePasswordChangeOnFirstLogin;
     }
@@ -86,6 +93,7 @@ public class PasswordIntegrityChecksConfig extends AbstractConfig {
         return passwordComplexityRegex;
     }
 
+    @SuppressWarnings("unused")
     public void setPasswordComplexityRegex(final String passwordComplexityRegex) {
         this.passwordComplexityRegex = passwordComplexityRegex;
     }
@@ -94,6 +102,7 @@ public class PasswordIntegrityChecksConfig extends AbstractConfig {
         return minimumPasswordLength;
     }
 
+    @SuppressWarnings("unused")
     public void setMinimumPasswordLength(final int minimumPasswordLength) {
         this.minimumPasswordLength = minimumPasswordLength;
     }
