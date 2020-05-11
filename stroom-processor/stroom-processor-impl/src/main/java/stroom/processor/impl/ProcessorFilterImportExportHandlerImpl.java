@@ -133,6 +133,13 @@ public class ProcessorFilterImportExportHandlerImpl implements ImportExportActio
         return new ImpexDetails(docRef, processorFilter.getPipelineName(),ignore);
     }
 
+    /**
+     * Whether to import this filter
+     * N.B. This function and containsIdField also exists in PipelineStoreImpl (used for export)
+     * If you update this, you should probably update the other version
+     * @param processorFilter
+     * @return
+     */
     private boolean shouldIgnore (final ProcessorFilter processorFilter){
         if (processorFilter == null || processorFilter.getQueryData() == null ||
                 processorFilter.getQueryData().getExpression() == null)

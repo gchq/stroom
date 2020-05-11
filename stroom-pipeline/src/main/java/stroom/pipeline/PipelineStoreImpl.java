@@ -237,6 +237,13 @@ public class PipelineStoreImpl implements PipelineStore {
         return processorFilters;
     }
 
+    /**
+     * Whether to export this filter
+     * N.B. This function and containsIdField also exists in ProcessorFilterImportExportHandlerImpl (used for import)
+     * If you update this, you should probably update the other version
+     * @param processorFilter
+     * @return
+     */
     private boolean shouldIgnore (final ProcessorFilter processorFilter){
         if (processorFilter == null || processorFilter.getQueryData() == null ||
                 processorFilter.getQueryData().getExpression() == null)
