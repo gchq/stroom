@@ -19,40 +19,40 @@
 package stroom.authentication.config;
 
 import stroom.util.shared.AbstractConfig;
+import stroom.util.time.StroomDuration;
 
 import com.fasterxml.jackson.annotation.JsonProperty;
 
-import javax.validation.constraints.Min;
 import javax.validation.constraints.NotNull;
 
 public class TokenConfig extends AbstractConfig {
 
-    private int minutesUntilExpirationForUserToken = 43200;
-    private int minutesUntilExpirationForEmailResetToken = 5;
+    private StroomDuration timeUntilExpirationForUserToken = StroomDuration.ofDays(30);
+    private StroomDuration timeUntilExpirationForEmailResetToken = StroomDuration.ofMinutes(5);
     private String jwsIssuer = "stroom";
     private boolean requireExpirationTime = false;
     private String algorithm = "RS256";
 
-    @Min(0)
+    @NotNull
     @JsonProperty
-    public int getMinutesUntilExpirationForUserToken() {
-        return minutesUntilExpirationForUserToken;
+    public StroomDuration getTimeUntilExpirationForUserToken() {
+        return timeUntilExpirationForUserToken;
     }
 
     @SuppressWarnings("unused")
-    public void setMinutesUntilExpirationForUserToken(int minutesUntilExpirationForUserToken) {
-        this.minutesUntilExpirationForUserToken = minutesUntilExpirationForUserToken;
+    public void setTimeUntilExpirationForUserToken(final StroomDuration timeUntilExpirationForUserToken) {
+        this.timeUntilExpirationForUserToken = timeUntilExpirationForUserToken;
     }
 
-    @Min(0)
+    @NotNull
     @JsonProperty
-    public int getMinutesUntilExpirationForEmailResetToken() {
-        return minutesUntilExpirationForEmailResetToken;
+    public StroomDuration getTimeUntilExpirationForEmailResetToken() {
+        return timeUntilExpirationForEmailResetToken;
     }
 
     @SuppressWarnings("unused")
-    public void setMinutesUntilExpirationForEmailResetToken(int minutesUntilExpirationForEmailResetToken) {
-        this.minutesUntilExpirationForEmailResetToken = minutesUntilExpirationForEmailResetToken;
+    public void setTimeUntilExpirationForEmailResetToken(final StroomDuration timeUntilExpirationForEmailResetToken) {
+        this.timeUntilExpirationForEmailResetToken = timeUntilExpirationForEmailResetToken;
     }
 
     @NotNull

@@ -7,9 +7,9 @@ import stroom.authentication.authenticate.api.AuthenticationService;
 import stroom.authentication.authenticate.api.AuthenticationService.AuthState;
 import stroom.authentication.config.AuthenticationConfig;
 import stroom.authentication.exceptions.BadRequestException;
-import stroom.authentication.token.Token;
 import stroom.authentication.token.TokenBuilder;
 import stroom.authentication.token.TokenBuilderFactory;
+import stroom.authentication.token.TokenType;
 import stroom.config.common.UriFactory;
 
 import com.google.common.base.Objects;
@@ -179,7 +179,7 @@ class OAuth2Service {
                                  final String nonce,
                                  final String state) {
         final TokenBuilder tokenBuilder = tokenBuilderFactory
-                .newBuilder(Token.TokenType.USER)
+                .newBuilder(TokenType.USER)
                 .clientId(clientId)
                 .subject(subject)
                 .nonce(nonce)

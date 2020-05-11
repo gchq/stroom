@@ -5,9 +5,9 @@ import stroom.authentication.api.OAuth2Client;
 import stroom.authentication.config.AuthenticationConfig;
 import stroom.authentication.token.JsonWebKeyFactoryImpl;
 import stroom.authentication.token.JwkCache;
-import stroom.authentication.token.Token;
 import stroom.authentication.token.TokenBuilder;
 import stroom.authentication.token.TokenBuilderFactory;
+import stroom.authentication.token.TokenType;
 import stroom.util.ConsoleColour;
 import stroom.util.authentication.DefaultOpenIdCredentials;
 import stroom.util.logging.LogUtil;
@@ -95,7 +95,7 @@ public class GenerateTestOpenIdDetails {
         final TokenBuilder tokenBuilder = tokenBuilderFactory
                 .expiryDateForApiKeys(ZonedDateTime.now(ZoneId.from(ZoneOffset.UTC)).plus(20, ChronoUnit.YEARS)
                         .toInstant())
-                .newBuilder(Token.TokenType.API)
+                .newBuilder(TokenType.API)
                 .clientId(oAuth2Client.getClientId())
                 .subject(API_KEY_USER_EMAIL);
 

@@ -5,6 +5,7 @@ import stroom.authentication.token.Token;
 import stroom.authentication.token.TokenBuilder;
 import stroom.authentication.token.TokenBuilderFactory;
 import stroom.authentication.token.TokenDao;
+import stroom.authentication.token.TokenType;
 import stroom.security.api.ProcessingUserIdentityProvider;
 import stroom.security.api.UserIdentity;
 import stroom.util.logging.LambdaLogger;
@@ -93,7 +94,7 @@ class ProcessingUserIdentityProviderImpl implements ProcessingUserIdentityProvid
         try {
             final long now = System.currentTimeMillis();
             final Instant timeToExpiryInSeconds = LocalDateTime.now().plusYears(1).toInstant(ZoneOffset.UTC);
-            final Token.TokenType tokenType = Token.TokenType.API;
+            final TokenType tokenType = TokenType.API;
 
             final TokenBuilder tokenBuilder = tokenBuilderFactory
                     .expiryDateForApiKeys(timeToExpiryInSeconds)
