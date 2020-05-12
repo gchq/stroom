@@ -16,12 +16,13 @@
 
 package stroom.statistics.impl.sql;
 
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 import stroom.cluster.lock.api.ClusterLockService;
 import stroom.task.api.TaskContext;
 import stroom.task.api.TaskContextFactory;
 import stroom.util.logging.LogExecutionTime;
+
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import javax.inject.Inject;
 import java.sql.SQLException;
@@ -70,7 +71,10 @@ class SQLStatisticAggregationManager {
     }
 
     void aggregate(final Instant timeNow) {
-        taskContextFactory.context("Aggregate SQL Statistics", taskContext -> aggregate(taskContext, timeNow)).run();
+        taskContextFactory.context(
+                "Aggregate SQL Statistics",
+                taskContext -> aggregate(taskContext, timeNow))
+                .run();
     }
 
     /**
