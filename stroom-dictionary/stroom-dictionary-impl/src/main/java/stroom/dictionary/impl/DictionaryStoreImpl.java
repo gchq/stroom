@@ -17,22 +17,21 @@
 
 package stroom.dictionary.impl;
 
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 import stroom.dictionary.api.WordListProvider;
 import stroom.dictionary.shared.DictionaryDoc;
 import stroom.docref.DocRef;
 import stroom.docref.DocRefInfo;
 import stroom.docstore.api.AuditFieldFilter;
+import stroom.docstore.api.DependencyRemapper;
 import stroom.docstore.api.DocumentSerialiser2;
 import stroom.docstore.api.Serialiser2Factory;
 import stroom.docstore.api.Store;
 import stroom.docstore.api.StoreFactory;
+import stroom.docstore.api.UniqueNameUtil;
 import stroom.explorer.shared.DocumentType;
 import stroom.importexport.shared.ImportState;
 import stroom.importexport.shared.ImportState.ImportMode;
 import stroom.security.api.SecurityContext;
-import stroom.security.shared.DocumentPermissionNames;
 import stroom.util.shared.Message;
 import stroom.util.shared.Severity;
 import stroom.util.string.EncodingUtil;
@@ -40,19 +39,16 @@ import stroom.util.string.EncodingUtil;
 import javax.inject.Inject;
 import javax.inject.Singleton;
 import java.io.IOException;
-import java.util.Collections;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
-import java.util.Optional;
 import java.util.Set;
 import java.util.UUID;
+import java.util.function.BiConsumer;
 import java.util.stream.Collectors;
 
 @Singleton
 class DictionaryStoreImpl implements DictionaryStore, WordListProvider {
-    private static final Logger LOGGER = LoggerFactory.getLogger(DictionaryStoreImpl.class);
-
     private final Store<DictionaryDoc> store;
     private final SecurityContext securityContext;
     private final DocumentSerialiser2<DictionaryDoc> serialiser;
@@ -79,29 +75,9 @@ class DictionaryStoreImpl implements DictionaryStore, WordListProvider {
     }
 
     @Override
-    public DocRef copyDocument(final String originalUuid,
-                               final String copyUuid,
-                               final Map<String, String> otherCopiesByOriginalUuid) {
-        final DocRef docRef = store.copyDocument(originalUuid, copyUuid, otherCopiesByOriginalUuid);
-
-        final DictionaryDoc doc = readDocument(docRef);
-
-        if (null != doc.getImports()) {
-            final List<DocRef> replacedDocRefImports = doc.getImports().stream()
-                    .map(docRefImport -> Optional.ofNullable(otherCopiesByOriginalUuid.get(docRefImport.getUuid())) // if there is a copy
-                            .map(u -> new DocRef.Builder() // build a new Doc Ref
-                                    .type(docRefImport.getType())
-                                    .name(docRefImport.getName())
-                                    .uuid(u)
-                                    .build())
-                            .orElse(docRefImport)) // otherwise just leave it as is
-                    .collect(Collectors.toList());
-
-            doc.setImports(replacedDocRefImports);
-            writeDocument(doc);
-        }
-
-        return docRef;
+    public DocRef copyDocument(final DocRef docRef, final Set<String> existingNames) {
+        final String newName = UniqueNameUtil.getCopyName(docRef.getName(), existingNames);
+        return store.copyDocument(docRef.getUuid(), newName);
     }
 
     @Override
@@ -134,6 +110,43 @@ class DictionaryStoreImpl implements DictionaryStore, WordListProvider {
     ////////////////////////////////////////////////////////////////////////
 
     ////////////////////////////////////////////////////////////////////////
+    // START OF HasDependencies
+    ////////////////////////////////////////////////////////////////////////
+
+    @Override
+    public Map<DocRef, Set<DocRef>> getDependencies() {
+        return store.getDependencies(createMapper());
+    }
+
+    @Override
+    public Set<DocRef> getDependencies(final DocRef docRef) {
+        return store.getDependencies(docRef, createMapper());
+    }
+
+    @Override
+    public void remapDependencies(final DocRef docRef,
+                                  final Map<DocRef, DocRef> remappings) {
+        store.remapDependencies(docRef, remappings, createMapper());
+    }
+
+    private BiConsumer<DictionaryDoc, DependencyRemapper> createMapper() {
+        return (doc, dependencyRemapper) -> {
+            if (doc.getImports() != null) {
+                final List<DocRef> replacedDocRefImports = doc
+                        .getImports()
+                        .stream()
+                        .map(dependencyRemapper::remap)
+                        .collect(Collectors.toList());
+                doc.setImports(replacedDocRefImports);
+            }
+        };
+    }
+
+    ////////////////////////////////////////////////////////////////////////
+    // END OF HasDependencies
+    ////////////////////////////////////////////////////////////////////////
+
+    ////////////////////////////////////////////////////////////////////////
     // START OF DocumentActionHandler
     ////////////////////////////////////////////////////////////////////////
 
@@ -158,36 +171,6 @@ class DictionaryStoreImpl implements DictionaryStore, WordListProvider {
     @Override
     public Set<DocRef> listDocuments() {
         return store.listDocuments();
-    }
-
-    @Override
-    public Map<DocRef, Set<DocRef>> getDependencies() {
-        final List<DocRef> list = list();
-        return list.stream()
-                .filter(docRef -> securityContext.hasDocumentPermission(docRef.getUuid(), DocumentPermissionNames.READ))
-                .map(d -> {
-                    // We need to read the document to get the name and imports.
-                    DictionaryDoc doc = null;
-                    try {
-                        doc = readDocument(d);
-                    } catch (final RuntimeException e) {
-                        LOGGER.debug(e.getMessage(), e);
-                    }
-                    return Optional.ofNullable(doc);
-                })
-                .filter(Optional::isPresent)
-                .map(Optional::get)
-                .collect(Collectors.toMap(doc -> new DocRef(doc.getType(), doc.getUuid(), doc.getName()), doc -> {
-                    try {
-                        if (doc.getImports() != null && doc.getImports() != null) {
-                            return Collections.unmodifiableSet(new HashSet<>(doc.getImports()));
-                        }
-                    } catch (final RuntimeException e) {
-                        LOGGER.debug(e.getMessage(), e);
-                    }
-
-                    return Collections.emptySet();
-                }));
     }
 
     @Override

@@ -16,7 +16,7 @@
 
 package stroom.authentication.account;
 
-import stroom.job.api.RunnableWrapper;
+import stroom.util.RunnableWrapper;
 import stroom.job.api.ScheduledJobsBinder;
 import stroom.security.api.ProcessingUserIdentityProvider;
 import stroom.util.guice.RestResourcesBinder;
