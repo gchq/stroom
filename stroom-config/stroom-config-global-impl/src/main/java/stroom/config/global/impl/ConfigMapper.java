@@ -445,13 +445,8 @@ public class ConfigMapper {
         configProperty.setEditable(true);
 
         prop.getAnnotation(JsonPropertyDescription.class)
-                .ifPresent(jsonPropertyDescription -> {
-                    configProperty.setDescription(jsonPropertyDescription.value());
-                });
-
-        if (prop.hasAnnotation(JsonPropertyDescription.class)) {
-            configProperty.setPassword(true);
-        }
+                .ifPresent(jsonPropertyDescription ->
+                        configProperty.setDescription(jsonPropertyDescription.value()));
 
         if (prop.hasAnnotation(ReadOnly.class)) {
             configProperty.setEditable(false);
