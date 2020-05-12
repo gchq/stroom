@@ -16,11 +16,6 @@
 
 package stroom.data.client.presenter;
 
-import com.google.gwt.cell.client.TextCell;
-import com.google.gwt.core.client.GWT;
-import com.google.inject.Inject;
-import com.google.web.bindery.event.shared.EventBus;
-import com.gwtplatform.mvp.client.MyPresenterWidget;
 import stroom.cell.info.client.InfoColumn;
 import stroom.data.grid.client.DataGridView;
 import stroom.data.grid.client.DataGridViewImpl;
@@ -47,6 +42,13 @@ import stroom.widget.tooltip.client.presenter.TooltipPresenter;
 import stroom.widget.tooltip.client.presenter.TooltipUtil;
 import stroom.widget.util.client.MultiSelectionModel;
 
+import com.google.gwt.cell.client.TextCell;
+import com.google.gwt.core.client.GWT;
+import com.google.gwt.user.cellview.client.Column;
+import com.google.inject.Inject;
+import com.google.web.bindery.event.shared.EventBus;
+import com.gwtplatform.mvp.client.MyPresenterWidget;
+
 import java.util.function.Consumer;
 
 public class ProcessorTaskSummaryPresenter extends MyPresenterWidget<DataGridView<ProcessorTaskSummary>>
@@ -69,7 +71,10 @@ public class ProcessorTaskSummaryPresenter extends MyPresenterWidget<DataGridVie
                 final StringBuilder html = new StringBuilder();
 
                 TooltipUtil.addHeading(html, "Key Data");
-                TooltipUtil.addRowData(html, "Pipeline", row.getPipeline());
+                final DocRef pipeline = row.getPipeline();
+                if (pipeline != null && pipeline.getName() != null) {
+                    TooltipUtil.addRowData(html, "Pipeline", pipeline.getName() + " {" + pipeline.getUuid() + "}");
+                }
                 TooltipUtil.addRowData(html, "Feed", row.getFeed());
                 TooltipUtil.addRowData(html, "Priority", row.getPriority());
                 TooltipUtil.addRowData(html, "Status", row.getStatus());
@@ -83,13 +88,12 @@ public class ProcessorTaskSummaryPresenter extends MyPresenterWidget<DataGridVie
         };
         getView().addColumn(infoColumn, "<br/>", ColumnSizeConstants.ICON_COL);
 
-        getView().addResizableColumn(new OrderByColumn<ProcessorTaskSummary, String>(new TextCell(),
-                ProcessorTaskDataSource.FIELD_PIPELINE, true) {
+        getView().addResizableColumn(new Column<ProcessorTaskSummary, String>(new TextCell()) {
             @Override
             public String getValue(final ProcessorTaskSummary row) {
                 return row.getPipeline().getName();
             }
-        }, "Pipeline", 250);
+        }, "Pipeline", ColumnSizeConstants.BIG_COL);
 
         getView().addResizableColumn(
                 new OrderByColumn<ProcessorTaskSummary, String>(new TextCell(), ProcessorTaskDataSource.FIELD_FEED, true) {
@@ -97,7 +101,7 @@ public class ProcessorTaskSummaryPresenter extends MyPresenterWidget<DataGridVie
                     public String getValue(final ProcessorTaskSummary row) {
                         return row.getFeed();
                     }
-                }, "Feed", 250);
+                }, "Feed", ColumnSizeConstants.BIG_COL);
 
         getView().addResizableColumn(
                 new OrderByColumn<ProcessorTaskSummary, String>(new TextCell(), ProcessorTaskDataSource.FIELD_PRIORITY, false) {
@@ -105,7 +109,7 @@ public class ProcessorTaskSummaryPresenter extends MyPresenterWidget<DataGridVie
                     public String getValue(final ProcessorTaskSummary row) {
                         return String.valueOf(row.getPriority());
                     }
-                }, "Priority", 100);
+                }, "Priority", 60);
 
         getView().addResizableColumn(
                 new OrderByColumn<ProcessorTaskSummary, String>(new TextCell(), ProcessorTaskDataSource.FIELD_STATUS, false) {
@@ -113,7 +117,7 @@ public class ProcessorTaskSummaryPresenter extends MyPresenterWidget<DataGridVie
                     public String getValue(final ProcessorTaskSummary row) {
                         return row.getStatus().getDisplayValue();
                     }
-                }, "Status", 100);
+                }, "Status", ColumnSizeConstants.SMALL_COL);
 
         getView().addResizableColumn(
                 new OrderByColumn<ProcessorTaskSummary, String>(new TextCell(), ProcessorTaskDataSource.FIELD_COUNT, false) {
@@ -121,7 +125,7 @@ public class ProcessorTaskSummaryPresenter extends MyPresenterWidget<DataGridVie
                     public String getValue(final ProcessorTaskSummary row) {
                         return ModelStringUtil.formatCsv(row.getCount());
                     }
-                }, "Count", 100);
+                }, "Count", ColumnSizeConstants.SMALL_COL);
 
         getView().addEndColumn(new EndColumn<>());
 

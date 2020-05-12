@@ -8,6 +8,12 @@ and this project adheres to [Semantic Versioning](http://semver.org/).
 
 * Issue **#1508** : Tidy up property descriptions, change connection pool props to use Stroom Duration type.
 
+* Issue **#1494** : Scrollbars now have a white background unless used in a readonly text area.
+
+* Issue **#1547** : Added pipeline names to processor task screens.
+
+* Issue **#1543** : Prevent import/export of processor filters with id fields
+
 * Issue **#1112** : You can now copy feeds along with other items and copies are named appropriately.
 
 * Issue **#1112** : When copying a selection of several items, the dependencies between the items are altered in the resulting copies so that the copied items work together as a new set of content.
