@@ -6,6 +6,8 @@ and this project adheres to [Semantic Versioning](http://semver.org/).
 
 ## [Unreleased]
 
+* Issue **#1546** : Fixed opening and editing of data retention rules.
+
 * Issue **#1543** : Prevent import/export of processor filters with id fields
 
 * Issue **#1112** : You can now copy feeds along with other items and copies are named appropriately.
