@@ -2,6 +2,9 @@ package stroom.config.common;
 
 import com.fasterxml.jackson.annotation.JsonPropertyDescription;
 
+import javax.inject.Singleton;
+
+@Singleton
 public class UiUriConfig extends UriConfig {
 
     public UiUriConfig() {

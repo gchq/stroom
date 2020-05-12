@@ -1,18 +1,19 @@
 package stroom.ui.config.shared;
 
+import stroom.util.shared.AbstractConfig;
+
 import com.fasterxml.jackson.annotation.JsonCreator;
 import com.fasterxml.jackson.annotation.JsonInclude;
 import com.fasterxml.jackson.annotation.JsonInclude.Include;
 import com.fasterxml.jackson.annotation.JsonProperty;
 import com.fasterxml.jackson.annotation.JsonPropertyDescription;
 import com.fasterxml.jackson.annotation.JsonPropertyOrder;
-import stroom.util.shared.AbstractConfig;
 
 import javax.inject.Singleton;
 import java.util.Objects;
 
 @Singleton
-@JsonPropertyOrder({"defaultTimeLimit", "defaultRecordLimit"})
+@JsonPropertyOrder(alphabetic = true)
 @JsonInclude(Include.NON_NULL)
 public class ProcessConfig extends AbstractConfig {
     private static final long DEFAULT_TIME_LIMIT = 30L;
@@ -21,6 +22,8 @@ public class ProcessConfig extends AbstractConfig {
     @JsonProperty
     @JsonPropertyDescription("The default number of minutes that batch search processing will be limited by.")
     private volatile long defaultTimeLimit;
+
+    // Would be nice to make this a StroomDuration but it is used by a UI control which can only deal in whole minutes
     @JsonProperty
     @JsonPropertyDescription("The default number of records that batch search processing will be limited by.")
     private volatile long defaultRecordLimit;

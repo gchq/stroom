@@ -6,6 +6,8 @@ and this project adheres to [Semantic Versioning](http://semver.org/).
 
 ## [Unreleased]
 
+* Issue **#1508** : Tidy up property descriptions, change connection pool props to use Stroom Duration type.
+
 
 ## [v7.0-beta.31] - 2020-05-12
 

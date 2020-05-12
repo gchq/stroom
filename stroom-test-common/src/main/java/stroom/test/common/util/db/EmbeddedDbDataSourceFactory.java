@@ -1,6 +1,7 @@
 package stroom.test.common.util.db;
 
 import stroom.config.common.CommonDbConfig;
+import stroom.config.common.ConnectionConfig;
 import stroom.config.common.DbConfig;
 import stroom.db.util.DataSourceFactoryImpl;
 import stroom.util.config.FieldMapper;
@@ -25,10 +26,10 @@ class EmbeddedDbDataSourceFactory extends DataSourceFactoryImpl {
 //        mergedConfig.getConnectionPoolConfig().setMaxPoolSize(2);
 
         if (DbTestUtil.isUseEmbeddedDb()) {
-            FieldMapper.copy(
-                DbTestUtil.getOrCreateEmbeddedConnectionConfig(),
-                mergedConfig.getConnectionConfig(),
-                FieldMapper.CopyOption.DONT_COPY_NULLS);
+            FieldMapper.copyNonDefaults(
+                    DbTestUtil.getOrCreateEmbeddedConnectionConfig(),
+                    mergedConfig.getConnectionConfig(),
+                    new ConnectionConfig());
         }
 
         return mergedConfig;

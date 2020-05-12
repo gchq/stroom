@@ -19,44 +19,64 @@
 package stroom.authentication.config;
 
 import stroom.util.shared.AbstractConfig;
+import stroom.util.time.StroomDuration;
 
 import com.fasterxml.jackson.annotation.JsonProperty;
+import com.fasterxml.jackson.annotation.JsonPropertyDescription;
+import com.fasterxml.jackson.annotation.JsonPropertyOrder;
 
-import javax.validation.constraints.Min;
+import javax.inject.Singleton;
 import javax.validation.constraints.NotNull;
 
+@Singleton
+@JsonPropertyOrder(alphabetic = true)
 public class TokenConfig extends AbstractConfig {
-
-    private int minutesUntilExpirationForUserToken = 43200;
-    private int minutesUntilExpirationForEmailResetToken = 5;
-    private String jwsIssuer = "stroom";
-    private boolean requireExpirationTime = false;
-    private String algorithm = "RS256";
-
-    @Min(0)
-    @JsonProperty
-    public int getMinutesUntilExpirationForUserToken() {
-        return minutesUntilExpirationForUserToken;
-    }
-
-    @SuppressWarnings("unused")
-    public void setMinutesUntilExpirationForUserToken(int minutesUntilExpirationForUserToken) {
-        this.minutesUntilExpirationForUserToken = minutesUntilExpirationForUserToken;
-    }
-
-    @Min(0)
-    @JsonProperty
-    public int getMinutesUntilExpirationForEmailResetToken() {
-        return minutesUntilExpirationForEmailResetToken;
-    }
-
-    @SuppressWarnings("unused")
-    public void setMinutesUntilExpirationForEmailResetToken(int minutesUntilExpirationForEmailResetToken) {
-        this.minutesUntilExpirationForEmailResetToken = minutesUntilExpirationForEmailResetToken;
-    }
 
     @NotNull
     @JsonProperty
+    @JsonPropertyDescription("The time before a user token will expire.")
+    private StroomDuration timeUntilExpirationForUserToken = StroomDuration.ofDays(30);
+
+    @NotNull
+    @JsonProperty
+    @JsonPropertyDescription("The time before an email reset token will expire.")
+    private StroomDuration timeUntilExpirationForEmailResetToken = StroomDuration.ofMinutes(5);
+
+    @NotNull
+    @JsonProperty
+    @JsonPropertyDescription("The Issuer value used in Json Web Tokens.")
+    private String jwsIssuer = "stroom";
+
+    // TODO is this needed?
+//    @NotNull
+//    @JsonProperty
+//    @JsonPropertyDescription("The Issuer value used in Json Web Tokens.")
+//    private boolean requireExpirationTime = false;
+
+    @NotNull
+    @JsonProperty
+    @JsonPropertyDescription("The cryptographic algorithm used in the Json Web Signatures. " +
+            "Valid values can be found at https://openid.net/specs/draft-jones-json-web-signature-04.html#Signing")
+    private String algorithm = "RS256";
+
+    public StroomDuration getTimeUntilExpirationForUserToken() {
+        return timeUntilExpirationForUserToken;
+    }
+
+    @SuppressWarnings("unused")
+    public void setTimeUntilExpirationForUserToken(final StroomDuration timeUntilExpirationForUserToken) {
+        this.timeUntilExpirationForUserToken = timeUntilExpirationForUserToken;
+    }
+
+    public StroomDuration getTimeUntilExpirationForEmailResetToken() {
+        return timeUntilExpirationForEmailResetToken;
+    }
+
+    @SuppressWarnings("unused")
+    public void setTimeUntilExpirationForEmailResetToken(final StroomDuration timeUntilExpirationForEmailResetToken) {
+        this.timeUntilExpirationForEmailResetToken = timeUntilExpirationForEmailResetToken;
+    }
+
     public String getJwsIssuer() {
         return jwsIssuer;
     }
@@ -66,20 +86,15 @@ public class TokenConfig extends AbstractConfig {
         this.jwsIssuer = jwsIssuer;
     }
 
-    @NotNull
-    @JsonProperty
-    @SuppressWarnings("unused")
-    public boolean isRequireExpirationTime() {
-        return requireExpirationTime;
-    }
+//    public boolean isRequireExpirationTime() {
+//        return requireExpirationTime;
+//    }
 
-    @SuppressWarnings("unused")
-    public void setRequireExpirationTime(boolean requireExpirationTime) {
-        this.requireExpirationTime = requireExpirationTime;
-    }
+//    @SuppressWarnings("unused")
+//    public void setRequireExpirationTime(boolean requireExpirationTime) {
+//        this.requireExpirationTime = requireExpirationTime;
+//    }
 
-    @NotNull
-    @JsonProperty
     public String getAlgorithm() {
         return algorithm;
     }

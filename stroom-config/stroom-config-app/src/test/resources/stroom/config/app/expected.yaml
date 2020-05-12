@@ -9,14 +9,14 @@ appConfig:
         jdbcDriverUsername: null
         jdbcDriverPassword: null
       connectionPool:
-        cachePrepStmts: null
-        prepStmtCacheSize: null
-        prepStmtCacheSqlLimit: null
-        connectionTimeout: null
-        idleTimeout: null
-        maxLifetime: null
-        minimumIdle: null
-        maxPoolSize: null
+        cachePrepStmts: false
+        prepStmtCacheSize: 25
+        prepStmtCacheSqlLimit: 256
+        connectionTimeout: "PT30S"
+        idleTimeout: "PT10M"
+        maxLifetime: "PT30M"
+        minimumIdle: 10
+        maxPoolSize: 10
   annotation:
     db:
       connection:
@@ -25,14 +25,14 @@ appConfig:
         jdbcDriverUsername: null
         jdbcDriverPassword: null
       connectionPool:
-        cachePrepStmts: null
-        prepStmtCacheSize: null
-        prepStmtCacheSqlLimit: null
-        connectionTimeout: null
-        idleTimeout: null
-        maxLifetime: null
-        minimumIdle: null
-        maxPoolSize: null
+        cachePrepStmts: false
+        prepStmtCacheSize: 25
+        prepStmtCacheSqlLimit: 256
+        connectionTimeout: "PT30S"
+        idleTimeout: "PT10M"
+        maxLifetime: "PT30M"
+        minimumIdle: 10
+        maxPoolSize: 10
     statusValues:
     - "New"
     - "Assigned"
@@ -40,9 +40,8 @@ appConfig:
     standardComments: []
     createText: "Create Annotation"
   authentication:
-    certificateDnCaptureGroupIndex: 1
-    certificateDnPattern: ".*\\((.*)\\)"
-    changePasswordUrl: "/s/changepassword"
+    certificateCnCaptureGroupIndex: 1
+    certificateCnPattern: ".*\\((.*)\\)"
     email:
       fromAddress: "noreply@stroom"
       fromName: "Stroom User Accounts"
@@ -59,14 +58,12 @@ appConfig:
         password: "password"
         transportStrategy: "SMTP_PLAIN"
     failedLoginLockThreshold: 3
-    loginUrl: "/s/login"
     oauth2:
       accessCodeCache:
         maximumSize: 1000
         expireAfterAccess: "PT10M"
         expireAfterWrite: null
     passwordIntegrityChecks:
-      durationBetweenChecks: "PT2M"
       forcePasswordChangeOnFirstLogin: true
       mandatoryPasswordChangeDuration: "P90D"
       minimumPasswordLength: 0
@@ -74,12 +71,10 @@ appConfig:
       passwordComplexityRegex: ".*"
       unusedAccountDeactivationThreshold: "P90D"
     token:
-      minutesUntilExpirationForUserToken: 43200
-      minutesUntilExpirationForEmailResetToken: 5
-      jwsIssuer: "stroom"
-      requireExpirationTime: false
       algorithm: "RS256"
-    unauthorisedUrl: "/s/unauthorised"
+      jwsIssuer: "stroom"
+      timeUntilExpirationForEmailResetToken: "PT5M"
+      timeUntilExpirationForUserToken: "P30D"
     useDefaultOpenIdCredentials: true
   benchmark:
     streamCount: 1000
@@ -98,14 +93,14 @@ appConfig:
         jdbcDriverUsername: null
         jdbcDriverPassword: null
       connectionPool:
-        cachePrepStmts: null
-        prepStmtCacheSize: null
-        prepStmtCacheSqlLimit: null
-        connectionTimeout: null
-        idleTimeout: null
-        maxLifetime: null
-        minimumIdle: null
-        maxPoolSize: null
+        cachePrepStmts: false
+        prepStmtCacheSize: 25
+        prepStmtCacheSqlLimit: 256
+        connectionTimeout: "PT30S"
+        idleTimeout: "PT10M"
+        maxLifetime: "PT30M"
+        minimumIdle: 10
+        maxPoolSize: 10
   clusterTask:
     clusterResultCollectorCache:
       maximumSize: 1000000
@@ -118,14 +113,14 @@ appConfig:
       jdbcDriverUsername: "stroomuser"
       jdbcDriverPassword: "stroompassword1"
     connectionPool:
-      cachePrepStmts: null
-      prepStmtCacheSize: null
-      prepStmtCacheSqlLimit: null
-      connectionTimeout: null
-      idleTimeout: null
-      maxLifetime: null
-      minimumIdle: null
-      maxPoolSize: null
+      cachePrepStmts: false
+      prepStmtCacheSize: 25
+      prepStmtCacheSqlLimit: 256
+      connectionTimeout: "PT30S"
+      idleTimeout: "PT10M"
+      maxLifetime: "PT30M"
+      minimumIdle: 10
+      maxPoolSize: 10
   contentPackImport:
     enabled: false
     importDirectory: null
@@ -137,14 +132,14 @@ appConfig:
         jdbcDriverUsername: null
         jdbcDriverPassword: null
       connectionPool:
-        cachePrepStmts: null
-        prepStmtCacheSize: null
-        prepStmtCacheSqlLimit: null
-        connectionTimeout: null
-        idleTimeout: null
-        maxLifetime: null
-        minimumIdle: null
-        maxPoolSize: null
+        cachePrepStmts: false
+        prepStmtCacheSize: 25
+        prepStmtCacheSqlLimit: 256
+        connectionTimeout: "PT30S"
+        idleTimeout: "PT10M"
+        maxLifetime: "PT30M"
+        minimumIdle: 10
+        maxPoolSize: 10
   dashboard:
     activeQueriesCache:
       maximumSize: 100
@@ -171,19 +166,19 @@ appConfig:
           jdbcDriverUsername: null
           jdbcDriverPassword: null
         connectionPool:
-          cachePrepStmts: null
-          prepStmtCacheSize: null
-          prepStmtCacheSqlLimit: null
-          connectionTimeout: null
-          idleTimeout: null
-          maxLifetime: null
-          minimumIdle: null
-          maxPoolSize: null
+          cachePrepStmts: false
+          prepStmtCacheSize: 25
+          prepStmtCacheSqlLimit: 256
+          connectionTimeout: "PT30S"
+          idleTimeout: "PT10M"
+          maxLifetime: "PT30M"
+          minimumIdle: 10
+          maxPoolSize: 10
       metaValue:
+        addAsync: true
         deleteAge: "P30D"
         deleteBatchSize: 1000
         flushBatchSize: 1000
-        addAsync: true
     retention:
       deleteBatchSize: 1000
     store:
@@ -199,14 +194,14 @@ appConfig:
           jdbcDriverUsername: null
           jdbcDriverPassword: null
         connectionPool:
-          cachePrepStmts: null
-          prepStmtCacheSize: null
-          prepStmtCacheSqlLimit: null
-          connectionTimeout: null
-          idleTimeout: null
-          maxLifetime: null
-          minimumIdle: null
-          maxPoolSize: null
+          cachePrepStmts: false
+          prepStmtCacheSize: 25
+          prepStmtCacheSqlLimit: 256
+          connectionTimeout: "PT30S"
+          idleTimeout: "PT10M"
+          maxLifetime: "PT30M"
+          minimumIdle: 10
+          maxPoolSize: 10
     filesystemVolume:
       volumeSelector: "RoundRobin"
       createDefaultOnStart: true
@@ -231,14 +226,14 @@ appConfig:
         jdbcDriverUsername: null
         jdbcDriverPassword: null
       connectionPool:
-        cachePrepStmts: null
-        prepStmtCacheSize: null
-        prepStmtCacheSqlLimit: null
-        connectionTimeout: null
-        idleTimeout: null
-        maxLifetime: null
-        minimumIdle: null
-        maxPoolSize: null
+        cachePrepStmts: false
+        prepStmtCacheSize: 25
+        prepStmtCacheSqlLimit: 256
+        connectionTimeout: "PT30S"
+        idleTimeout: "PT10M"
+        maxLifetime: "PT30M"
+        minimumIdle: 10
+        maxPoolSize: 10
   explorer:
     db:
       connection:
@@ -247,14 +242,14 @@ appConfig:
         jdbcDriverUsername: null
         jdbcDriverPassword: null
       connectionPool:
-        cachePrepStmts: null
-        prepStmtCacheSize: null
-        prepStmtCacheSqlLimit: null
-        connectionTimeout: null
-        idleTimeout: null
-        maxLifetime: null
-        minimumIdle: null
-        maxPoolSize: null
+        cachePrepStmts: false
+        prepStmtCacheSize: 25
+        prepStmtCacheSqlLimit: 256
+        connectionTimeout: "PT30S"
+        idleTimeout: "PT10M"
+        maxLifetime: "PT30M"
+        minimumIdle: 10
+        maxPoolSize: 10
     docRefInfoCache:
       maximumSize: 1000
       expireAfterAccess: "PT10M"
@@ -281,18 +276,18 @@ appConfig:
         jdbcDriverUsername: null
         jdbcDriverPassword: null
       connectionPool:
-        cachePrepStmts: null
-        prepStmtCacheSize: null
-        prepStmtCacheSqlLimit: null
-        connectionTimeout: null
-        idleTimeout: null
-        maxLifetime: null
-        minimumIdle: null
-        maxPoolSize: null
+        cachePrepStmts: false
+        prepStmtCacheSize: 25
+        prepStmtCacheSqlLimit: 256
+        connectionTimeout: "PT30S"
+        idleTimeout: "PT10M"
+        maxLifetime: "PT30M"
+        minimumIdle: 10
+        maxPoolSize: 10
     writer:
       cache:
-        timeToLive: null
-        timeToIdle: null
+        timeToLive: "PT0S"
+        timeToIdle: "PT0S"
         minItems: 0
         coreItems: 50
         maxItems: 100
@@ -306,14 +301,14 @@ appConfig:
         jdbcDriverUsername: null
         jdbcDriverPassword: null
       connectionPool:
-        cachePrepStmts: null
-        prepStmtCacheSize: null
-        prepStmtCacheSqlLimit: null
-        connectionTimeout: null
-        idleTimeout: null
-        maxLifetime: null
-        minimumIdle: null
-        maxPoolSize: null
+        cachePrepStmts: false
+        prepStmtCacheSize: 25
+        prepStmtCacheSqlLimit: 256
+        connectionTimeout: "PT30S"
+        idleTimeout: "PT10M"
+        maxLifetime: "PT30M"
+        minimumIdle: 10
+        maxPoolSize: 10
     enableDistributedJobsOnBootstrap: true
   kafka:
     skeletonConfigContent: "# The following properties are taken from the v2.2 documentation\n\
@@ -358,14 +353,14 @@ appConfig:
         jdbcDriverUsername: null
         jdbcDriverPassword: null
       connectionPool:
-        cachePrepStmts: null
-        prepStmtCacheSize: null
-        prepStmtCacheSqlLimit: null
-        connectionTimeout: null
-        idleTimeout: null
-        maxLifetime: null
-        minimumIdle: null
-        maxPoolSize: null
+        cachePrepStmts: false
+        prepStmtCacheSize: 25
+        prepStmtCacheSqlLimit: 256
+        connectionTimeout: "PT30S"
+        idleTimeout: "PT10M"
+        maxLifetime: "PT30M"
+        minimumIdle: 10
+        maxPoolSize: 10
     status:
       heapHistogram:
         classNameMatchRegex: "^stroom\\..*$"
@@ -452,14 +447,14 @@ appConfig:
         jdbcDriverUsername: null
         jdbcDriverPassword: null
       connectionPool:
-        cachePrepStmts: null
-        prepStmtCacheSize: null
-        prepStmtCacheSqlLimit: null
-        connectionTimeout: null
-        idleTimeout: null
-        maxLifetime: null
-        minimumIdle: null
-        maxPoolSize: null
+        cachePrepStmts: false
+        prepStmtCacheSize: 25
+        prepStmtCacheSqlLimit: 256
+        connectionTimeout: "PT30S"
+        idleTimeout: "PT10M"
+        maxLifetime: "PT30M"
+        minimumIdle: 10
+        maxPoolSize: 10
   properties:
     db:
       connection:
@@ -468,14 +463,14 @@ appConfig:
         jdbcDriverUsername: null
         jdbcDriverPassword: null
       connectionPool:
-        cachePrepStmts: null
-        prepStmtCacheSize: null
-        prepStmtCacheSqlLimit: null
-        connectionTimeout: null
-        idleTimeout: null
-        maxLifetime: null
-        minimumIdle: null
-        maxPoolSize: null
+        cachePrepStmts: false
+        prepStmtCacheSize: 25
+        prepStmtCacheSqlLimit: 256
+        connectionTimeout: "PT30S"
+        idleTimeout: "PT10M"
+        maxLifetime: "PT30M"
+        minimumIdle: 10
+        maxPoolSize: 10
   proxyAggregation:
     proxyDir: "${stroom.temp}/proxy"
     proxyThreads: 10
@@ -528,16 +523,15 @@ appConfig:
         jdbcDriverUsername: null
         jdbcDriverPassword: null
       connectionPool:
-        cachePrepStmts: null
-        prepStmtCacheSize: null
-        prepStmtCacheSqlLimit: null
-        connectionTimeout: null
-        idleTimeout: null
-        maxLifetime: null
-        minimumIdle: null
-        maxPoolSize: null
+        cachePrepStmts: false
+        prepStmtCacheSize: 25
+        prepStmtCacheSqlLimit: 256
+        connectionTimeout: "PT30S"
+        idleTimeout: "PT10M"
+        maxLifetime: "PT30M"
+        minimumIdle: 10
+        maxPoolSize: 10
     authentication:
-      authenticationServiceUrl: null
       authenticationRequired: true
       openId:
         useInternal: true
@@ -583,8 +577,8 @@ appConfig:
     curatorMaxRetries: 100
     zookeeperBasePath: "/stroom-services"
   sessionCookie:
-    secure: true
     httpOnly: true
+    secure: true
   solr:
     indexClientCache:
       maximumSize: 100
@@ -622,14 +616,14 @@ appConfig:
           jdbcDriverUsername: null
           jdbcDriverPassword: null
         connectionPool:
-          cachePrepStmts: null
-          prepStmtCacheSize: null
-          prepStmtCacheSqlLimit: null
-          connectionTimeout: null
-          idleTimeout: null
-          maxLifetime: null
-          minimumIdle: null
-          maxPoolSize: null
+          cachePrepStmts: false
+          prepStmtCacheSize: 25
+          prepStmtCacheSqlLimit: 256
+          connectionTimeout: "PT30S"
+          idleTimeout: "PT10M"
+          maxLifetime: "PT30M"
+          minimumIdle: 10
+          maxPoolSize: 10
       search:
         storeSize: "1000000,100,10,1"
         resultHandlerBatchSize: 5000
@@ -736,48 +730,17 @@ appConfig:
         jdbcDriverUsername: null
         jdbcDriverPassword: null
       connectionPool:
-        cachePrepStmts: null
-        prepStmtCacheSize: null
-        prepStmtCacheSqlLimit: null
-        connectionTimeout: null
-        idleTimeout: null
-        maxLifetime: null
-        minimumIdle: null
-        maxPoolSize: null
+        cachePrepStmts: false
+        prepStmtCacheSize: 25
+        prepStmtCacheSqlLimit: 256
+        connectionTimeout: "PT30S"
+        idleTimeout: "PT10M"
+        maxLifetime: "PT30M"
+        minimumIdle: 10
+        maxPoolSize: 10
   ui:
-    welcomeHtml: "<h1>About Stroom</h1><p>Stroom is designed to receive data from\
-      \ multiple systems.</p>"
     aboutHtml: "<h1>About Stroom</h1><p>Stroom is designed to receive data from multiple\
       \ systems.</p>"
-    defaultMaxResults: "1000000,100,10,1"
-    process:
-      defaultTimeLimit: 30
-      defaultRecordLimit: 1000000
-    helpUrl: "https://gchq.github.io/stroom-docs"
-    theme:
-      backgroundAttachment: "scroll"
-      backgroundColor: "#1E88E5"
-      backgroundImage: "none"
-      backgroundPosition: "0 0"
-      backgroundRepeat: "repeat"
-      backgroundOpacity: "0"
-      tubeVisible: "hidden"
-      tubeOpacity: "0.6"
-      labelColours: "TEST1=#FF0000,TEST2=#FF9900"
-    query:
-      infoPopup:
-        enabled: false
-        title: "Please Provide Query Info"
-        validationRegex: "^[\\s\\S]{3,}$"
-    namePattern: "^[a-zA-Z0-9_\\- \\.\\(\\)]{1,}$"
-    htmlTitle: "Stroom"
-    oncontextmenu: "return false;"
-    splash:
-      enabled: false
-      title: "Splash Screen"
-      body: "<h1>About Stroom</h1><p>Stroom is designed to receive data from multiple\
-        \ systems.</p>"
-      version: "v0.1"
     activity:
       enabled: false
       chooseOnStartup: false
@@ -788,14 +751,45 @@ appConfig:
         description\" validation=\".{80,}\" validationMessage=\"The activity description\
         \ must be at least 80 characters long.\" ></textarea>Explain what the activity\
         \ is"
-    url:
-      users: "../../../s/users"
-      apiKeys: "../../../s/apiKeys"
-      changepassword: "../../../s/changepassword"
+    defaultMaxResults: "1000000,100,10,1"
+    helpUrl: "https://gchq.github.io/stroom-docs"
+    htmlTitle: "Stroom"
+    namePattern: "^[a-zA-Z0-9_\\- \\.\\(\\)]{1,}$"
+    oncontextmenu: "return false;"
+    process:
+      defaultRecordLimit: 1000000
+      defaultTimeLimit: 30
+    query:
+      infoPopup:
+        enabled: false
+        title: "Please Provide Query Info"
+        validationRegex: "^[\\s\\S]{3,}$"
+    splash:
+      enabled: false
+      title: "Splash Screen"
+      body: "<h1>About Stroom</h1><p>Stroom is designed to receive data from multiple\
+        \ systems.</p>"
+      version: "v0.1"
+    theme:
+      backgroundAttachment: "scroll"
+      backgroundColor: "#1E88E5"
+      backgroundImage: "none"
+      backgroundPosition: "0 0"
+      backgroundRepeat: "repeat"
+      backgroundOpacity: "0"
+      tubeVisible: "hidden"
+      tubeOpacity: "0.6"
+      labelColours: "TEST1=#FF0000,TEST2=#FF9900"
     uiPreferences:
       allowPasswordResets: true
       dateFormat: "YYYY-MM-DDTHH:mm:ss.SSSZ"
       defaultApiKeyExpiryInMinutes: 525600
+    url:
+      apiKeys: "../../../s/apiKeys"
+      changepassword: "../../../s/changepassword"
+      users: "../../../s/users"
+    welcomeHtml: "<h1>About Stroom</h1><p>Stroom is designed to receive data from\
+      \ multiple systems.</p>"
   uiUri:
     scheme: "https"
     hostname: null

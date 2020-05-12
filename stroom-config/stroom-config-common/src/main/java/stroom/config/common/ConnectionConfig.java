@@ -16,12 +16,14 @@
 
 package stroom.config.common;
 
-import com.fasterxml.jackson.annotation.JsonProperty;
-import com.fasterxml.jackson.annotation.JsonPropertyDescription;
+import stroom.util.config.annotations.Password;
 import stroom.util.config.annotations.ReadOnly;
 import stroom.util.config.annotations.RequiresRestart;
 import stroom.util.shared.AbstractConfig;
 import stroom.util.shared.NotInjectableConfig;
+
+import com.fasterxml.jackson.annotation.JsonProperty;
+import com.fasterxml.jackson.annotation.JsonPropertyDescription;
 
 import java.util.Objects;
 
@@ -80,6 +82,7 @@ public class ConnectionConfig extends AbstractConfig {
         this.jdbcDriverUsername = jdbcDriverUsername;
     }
 
+    @Password
     @ReadOnly
     @RequiresRestart(RequiresRestart.RestartScope.SYSTEM)
     @JsonPropertyDescription("The password to connect to the database with. "

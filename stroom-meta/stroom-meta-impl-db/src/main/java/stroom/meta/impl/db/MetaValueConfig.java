@@ -1,23 +1,40 @@
 package stroom.meta.impl.db;
 
-import com.fasterxml.jackson.annotation.JsonProperty;
-import com.fasterxml.jackson.annotation.JsonPropertyDescription;
 import stroom.util.shared.AbstractConfig;
 import stroom.util.time.StroomDuration;
+
+import com.fasterxml.jackson.annotation.JsonProperty;
+import com.fasterxml.jackson.annotation.JsonPropertyDescription;
+import com.fasterxml.jackson.annotation.JsonPropertyOrder;
 
 import javax.inject.Singleton;
 import java.util.Objects;
 
 @Singleton
+@JsonPropertyOrder(alphabetic = true)
 public class MetaValueConfig extends AbstractConfig {
-    private StroomDuration deleteAge = StroomDuration.ofDays(30);
-    private int deleteBatchSize = 1000;
-    private int flushBatchSize = 1000;
-    private boolean addAsync = true;
 
     @JsonProperty
     @JsonPropertyDescription("The age of streams that we store meta data in the database for. " +
-        "In ISO-8601 duration format, e.g. 'P1DT12H'")
+            "In ISO-8601 duration format, e.g. 'P1DT12H'")
+    private StroomDuration deleteAge = StroomDuration.ofDays(30);
+
+    @JsonProperty
+    @JsonPropertyDescription("How many stream attributes we want to try and delete in a single batch.")
+    private int deleteBatchSize = 1000;
+
+    @JsonProperty
+    @JsonPropertyDescription("The number of stream attributes to queue before flushing to the database. " +
+            "Only applicable if property 'addAsync' is true.")
+    private int flushBatchSize = 1000;
+
+    @JsonProperty
+    @JsonPropertyDescription("If true, stream attributes will be queued in memory until the queue " +
+            "reaches 'flushBatchSize'. If false, stream attributes will be written to the database " +
+            "immediately and synchronously.")
+    private boolean addAsync = true;
+
+
     public StroomDuration getDeleteAge() {
         return deleteAge;
     }
@@ -27,8 +44,6 @@ public class MetaValueConfig extends AbstractConfig {
         this.deleteAge = deleteAge;
     }
 
-    @JsonProperty
-    @JsonPropertyDescription("How many stream attributes we want to try and delete in a single batch")
     public int getDeleteBatchSize() {
         return deleteBatchSize;
     }
@@ -38,7 +53,6 @@ public class MetaValueConfig extends AbstractConfig {
         this.deleteBatchSize = deleteBatchSize;
     }
 
-    @JsonProperty
     public int getFlushBatchSize() {
         return flushBatchSize;
     }
@@ -48,11 +62,11 @@ public class MetaValueConfig extends AbstractConfig {
         this.flushBatchSize = flushBatchSize;
     }
 
-    @JsonProperty
     public boolean isAddAsync() {
         return addAsync;
     }
 
+    @SuppressWarnings("unused")
     public void setAddAsync(final boolean addAsync) {
         this.addAsync = addAsync;
     }

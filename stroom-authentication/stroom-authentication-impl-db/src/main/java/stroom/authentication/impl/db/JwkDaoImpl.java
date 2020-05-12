@@ -5,7 +5,7 @@ import org.jose4j.jwk.PublicJsonWebKey;
 import stroom.authentication.api.JsonWebKeyFactory;
 import stroom.authentication.impl.db.jooq.tables.records.JsonWebKeyRecord;
 import stroom.authentication.token.JwkDao;
-import stroom.authentication.token.Token;
+import stroom.authentication.token.TokenType;
 import stroom.authentication.token.TokenTypeDao;
 import stroom.db.util.JooqUtil;
 import stroom.util.logging.LambdaLogUtil;
@@ -128,7 +128,7 @@ class JwkDaoImpl implements JwkDao {
         final String uuid = UUID.randomUUID().toString();
         // We need to set up the jwkId so we know which JWTs were signed by which JWKs.
         final PublicJsonWebKey publicJsonWebKey = jsonWebKeyFactory.createPublicKey();
-        final int tokenTypeId = tokenTypeDao.getTokenTypeId(Token.TokenType.API.getText().toLowerCase());
+        final int tokenTypeId = tokenTypeDao.getTokenTypeId(TokenType.API.getText().toLowerCase());
 
         JooqUtil.context(authDbConnProvider, context -> {
             LOGGER.debug(LambdaLogUtil.message("Creating a {}", JSON_WEB_KEY.getName()));

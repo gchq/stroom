@@ -18,15 +18,6 @@
 package stroom.config.global.impl;
 
 
-import com.fasterxml.jackson.annotation.JsonProperty;
-import com.fasterxml.jackson.annotation.JsonPropertyDescription;
-import com.google.common.base.CaseFormat;
-import com.google.common.base.Preconditions;
-import com.google.common.base.Splitter;
-import io.dropwizard.client.JerseyClientConfiguration;
-import com.google.common.base.Strings;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 import stroom.config.app.AppConfig;
 import stroom.config.global.shared.ConfigProperty;
 import stroom.config.global.shared.ConfigPropertyValidationException;
@@ -43,6 +34,16 @@ import stroom.util.logging.LogUtil;
 import stroom.util.shared.AbstractConfig;
 import stroom.util.shared.PropertyPath;
 import stroom.util.time.StroomDuration;
+
+import com.fasterxml.jackson.annotation.JsonProperty;
+import com.fasterxml.jackson.annotation.JsonPropertyDescription;
+import com.google.common.base.CaseFormat;
+import com.google.common.base.Preconditions;
+import com.google.common.base.Splitter;
+import com.google.common.base.Strings;
+import io.dropwizard.client.JerseyClientConfiguration;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import javax.inject.Inject;
 import javax.inject.Singleton;
@@ -438,33 +439,38 @@ public class ConfigMapper {
         return isSupported;
     }
 
-    private void updatePropertyFromConfigAnnotations(final ConfigProperty configProperty, final Prop prop) {
+    private void updatePropertyFromConfigAnnotations(final ConfigProperty configProperty,
+                                                     final Prop prop) {
         // Editable by default unless found otherwise below
         configProperty.setEditable(true);
 
-        for (final Annotation declaredAnnotation : prop.getGetter().getDeclaredAnnotations()) {
-            Class<? extends Annotation> annotationType = declaredAnnotation.annotationType();
+        prop.getAnnotation(JsonPropertyDescription.class)
+                .ifPresent(jsonPropertyDescription ->
+                        configProperty.setDescription(jsonPropertyDescription.value()));
 
-            if (annotationType.equals(JsonPropertyDescription.class)) {
-                configProperty.setDescription(((JsonPropertyDescription) declaredAnnotation).value());
-            } else if (annotationType.equals(ReadOnly.class)) {
-                configProperty.setEditable(false);
-            } else if (annotationType.equals(Password.class)) {
-                configProperty.setPassword(true);
-            } else if (annotationType.equals(RequiresRestart.class)) {
-                RequiresRestart.RestartScope scope = ((RequiresRestart) declaredAnnotation).value();
-                switch (scope) {
-                    case SYSTEM:
-                        configProperty.setRequireRestart(true);
-                        break;
-                    case UI:
-                        configProperty.setRequireUiRestart(true);
-                        break;
-                    default:
-                        throw new RuntimeException("Should never get here");
-                }
-            }
+        if (prop.hasAnnotation(ReadOnly.class)) {
+            configProperty.setEditable(false);
         }
+
+        if (prop.hasAnnotation(Password.class)) {
+            configProperty.setPassword(true);
+        }
+
+        prop.getAnnotation(RequiresRestart.class)
+                .ifPresent(requiresRestart -> {
+                    RequiresRestart.RestartScope scope = requiresRestart.value();
+                    switch (scope) {
+                        case SYSTEM:
+                            configProperty.setRequireRestart(true);
+                            break;
+                        case UI:
+                            configProperty.setRequireUiRestart(true);
+                            break;
+                        default:
+                            throw new RuntimeException("Should never get here");
+                    }
+                });
+
         configProperty.setDataTypeName(getDataTypeName(prop.getValueType()));
     }
 
