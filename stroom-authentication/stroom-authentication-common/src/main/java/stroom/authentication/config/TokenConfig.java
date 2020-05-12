@@ -22,21 +22,43 @@ import stroom.util.shared.AbstractConfig;
 import stroom.util.time.StroomDuration;
 
 import com.fasterxml.jackson.annotation.JsonProperty;
+import com.fasterxml.jackson.annotation.JsonPropertyDescription;
+import com.fasterxml.jackson.annotation.JsonPropertyOrder;
 
+import javax.inject.Singleton;
 import javax.validation.constraints.NotNull;
 
 @Singleton
 @JsonPropertyOrder(alphabetic = true)
 public class TokenConfig extends AbstractConfig {
 
+    @NotNull
+    @JsonProperty
+    @JsonPropertyDescription("The time before a user token will expire.")
     private StroomDuration timeUntilExpirationForUserToken = StroomDuration.ofDays(30);
-    private StroomDuration timeUntilExpirationForEmailResetToken = StroomDuration.ofMinutes(5);
-    private String jwsIssuer = "stroom";
-    private boolean requireExpirationTime = false;
-    private String algorithm = "RS256";
 
     @NotNull
     @JsonProperty
+    @JsonPropertyDescription("The time before an email reset token will expire.")
+    private StroomDuration timeUntilExpirationForEmailResetToken = StroomDuration.ofMinutes(5);
+
+    @NotNull
+    @JsonProperty
+    @JsonPropertyDescription("The Issuer value used in Json Web Tokens.")
+    private String jwsIssuer = "stroom";
+
+    // TODO is this needed?
+//    @NotNull
+//    @JsonProperty
+//    @JsonPropertyDescription("The Issuer value used in Json Web Tokens.")
+//    private boolean requireExpirationTime = false;
+
+    @NotNull
+    @JsonProperty
+    @JsonPropertyDescription("The cryptographic algorithm used in the Json Web Signatures. " +
+            "Valid values can be found at https://openid.net/specs/draft-jones-json-web-signature-04.html#Signing")
+    private String algorithm = "RS256";
+
     public StroomDuration getTimeUntilExpirationForUserToken() {
         return timeUntilExpirationForUserToken;
     }
@@ -46,8 +68,6 @@ public class TokenConfig extends AbstractConfig {
         this.timeUntilExpirationForUserToken = timeUntilExpirationForUserToken;
     }
 
-    @NotNull
-    @JsonProperty
     public StroomDuration getTimeUntilExpirationForEmailResetToken() {
         return timeUntilExpirationForEmailResetToken;
     }
@@ -57,8 +77,6 @@ public class TokenConfig extends AbstractConfig {
         this.timeUntilExpirationForEmailResetToken = timeUntilExpirationForEmailResetToken;
     }
 
-    @NotNull
-    @JsonProperty
     public String getJwsIssuer() {
         return jwsIssuer;
     }
@@ -68,20 +86,15 @@ public class TokenConfig extends AbstractConfig {
         this.jwsIssuer = jwsIssuer;
     }
 
-    @NotNull
-    @JsonProperty
-    @SuppressWarnings("unused")
-    public boolean isRequireExpirationTime() {
-        return requireExpirationTime;
-    }
+//    public boolean isRequireExpirationTime() {
+//        return requireExpirationTime;
+//    }
 
-    @SuppressWarnings("unused")
-    public void setRequireExpirationTime(boolean requireExpirationTime) {
-        this.requireExpirationTime = requireExpirationTime;
-    }
+//    @SuppressWarnings("unused")
+//    public void setRequireExpirationTime(boolean requireExpirationTime) {
+//        this.requireExpirationTime = requireExpirationTime;
+//    }
 
-    @NotNull
-    @JsonProperty
     public String getAlgorithm() {
         return algorithm;
     }
