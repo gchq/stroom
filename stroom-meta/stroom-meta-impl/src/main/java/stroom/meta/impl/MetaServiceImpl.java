@@ -35,6 +35,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import javax.inject.Inject;
+import javax.inject.Provider;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.Comparator;
@@ -58,7 +59,7 @@ public class MetaServiceImpl implements MetaService, Searchable {
     private final MetaTypeDao metaTypeDao;
     private final MetaValueDao metaValueDao;
     private final DocRefInfoService docRefInfoService;
-    private final StreamAttributeMapRetentionRuleDecorator ruleDecorator;
+    private final Provider<StreamAttributeMapRetentionRuleDecorator> decoratorProvider;
     private final Optional<AttributeMapFactory> attributeMapFactory;
     private final Optional<MetaSecurityFilter> metaSecurityFilter;
     private final SecurityContext securityContext;
@@ -69,7 +70,7 @@ public class MetaServiceImpl implements MetaService, Searchable {
                     final MetaTypeDao metaTypeDao,
                     final MetaValueDao metaValueDao,
                     final DocRefInfoService docRefInfoService,
-                    final StreamAttributeMapRetentionRuleDecorator ruleDecorator,
+                    final Provider<StreamAttributeMapRetentionRuleDecorator> decoratorProvider,
                     final Optional<AttributeMapFactory> attributeMapFactory,
                     final Optional<MetaSecurityFilter> metaSecurityFilter,
                     final SecurityContext securityContext) {
@@ -78,7 +79,7 @@ public class MetaServiceImpl implements MetaService, Searchable {
         this.metaTypeDao = metaTypeDao;
         this.metaValueDao = metaValueDao;
         this.docRefInfoService = docRefInfoService;
-        this.ruleDecorator = ruleDecorator;
+        this.decoratorProvider = decoratorProvider;
         this.attributeMapFactory = attributeMapFactory;
         this.metaSecurityFilter = metaSecurityFilter;
         this.securityContext = securityContext;
@@ -469,8 +470,9 @@ public class MetaServiceImpl implements MetaService, Searchable {
     public ResultPage<MetaRow> findMetaRow(final FindMetaCriteria criteria) {
         try {
             final ResultPage<MetaRow> list = findRows(criteria);
+            final StreamAttributeMapRetentionRuleDecorator decorator = decoratorProvider.get();
             list.getValues().forEach(metaRow ->
-                    ruleDecorator.addMatchingRetentionRuleInfo(metaRow.getMeta(), metaRow.getAttributes()));
+                    decorator.addMatchingRetentionRuleInfo(metaRow.getMeta(), metaRow.getAttributes()));
 
             return list;
         } catch (final RuntimeException e) {
@@ -652,7 +654,8 @@ public class MetaServiceImpl implements MetaService, Searchable {
         final List<MetaInfoSection.Entry> entries = new ArrayList<>();
 
         // Add additional data retention information.
-        ruleDecorator.addMatchingRetentionRuleInfo(meta, attributeMap);
+        final StreamAttributeMapRetentionRuleDecorator decorator = decoratorProvider.get();
+        decorator.addMatchingRetentionRuleInfo(meta, attributeMap);
 
         entries.add(new MetaInfoSection.Entry(DataRetentionFields.RETENTION_AGE, attributeMap.get(DataRetentionFields.RETENTION_AGE)));
         entries.add(new MetaInfoSection.Entry(DataRetentionFields.RETENTION_UNTIL, attributeMap.get(DataRetentionFields.RETENTION_UNTIL)));
