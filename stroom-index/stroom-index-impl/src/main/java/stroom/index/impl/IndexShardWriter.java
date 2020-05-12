@@ -16,6 +16,7 @@
 
 package stroom.index.impl;
 
+import org.apache.lucene.analysis.Analyzer;
 import org.apache.lucene.document.Document;
 import org.apache.lucene.index.IndexWriter;
 import org.apache.lucene.store.AlreadyClosedException;
@@ -23,6 +24,7 @@ import stroom.index.shared.IndexException;
 import stroom.index.shared.IndexShardKey;
 
 import java.io.IOException;
+import java.util.Map;
 
 public interface IndexShardWriter {
     IndexShardKey getIndexShardKey();
@@ -44,4 +46,7 @@ public interface IndexShardWriter {
     long getCreationTime();
 
     long getLastUsedTime();
+
+    //todo remove this method (temporary only)
+    Map<String, Analyzer> getFieldAnalyzers();
 }

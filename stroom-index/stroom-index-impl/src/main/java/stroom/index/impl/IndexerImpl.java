@@ -21,6 +21,7 @@ import org.apache.lucene.store.AlreadyClosedException;
 import stroom.alert.api.AlertProcessor;
 import stroom.docref.DocRef;
 import stroom.explorer.shared.ExplorerConstants;
+import stroom.index.shared.IndexDoc;
 import stroom.index.shared.IndexException;
 import stroom.index.shared.IndexShard.IndexShardStatus;
 import stroom.index.shared.IndexShardKey;
@@ -46,16 +47,19 @@ public class IndexerImpl implements Indexer {
     private final IndexShardWriterCache indexShardWriterCache;
     private final IndexShardManager indexShardManager;
     private final AlertManager alertManager;
+    private final IndexStore indexStore;
 
     private final StripedLock keyLocks = new StripedLock();
 
     @Inject
-    public IndexerImpl(final IndexShardWriterCache indexShardWriterCache,
+    public IndexerImpl(final IndexStore indexStore,
+                       final IndexShardWriterCache indexShardWriterCache,
                 final IndexShardManager indexShardManager,
                        final AlertManager alertManager) {
         this.indexShardWriterCache = indexShardWriterCache;
         this.indexShardManager = indexShardManager;
         this.alertManager = alertManager;
+        this.indexStore = indexStore;
     }
 
     @Override
@@ -64,14 +68,22 @@ public class IndexerImpl implements Indexer {
             // Try and add the document silently without locking.
             boolean success = false;
             try {
-                final String [] path = {"Analytic Demonstrator","Sample Dashboards"};
+                final String [] path = {"Rules","Active"};
                 final List<String> folderPath = Arrays.asList(path);
 
-                final AlertProcessor processor = alertManager.createAlertProcessor(folderPath);
-                processor.createAlerts(document);
-
                 final IndexShardWriter indexShardWriter = indexShardWriterCache.getWriterByShardKey(indexShardKey);
+
+
+                final AlertProcessor processor = alertManager.createAlertProcessor(folderPath);
+                processor.setFieldAnalyzers(indexShardWriter.getFieldAnalyzers());
+
+                final IndexDoc index = indexStore.readDocument(new DocRef(IndexDoc.DOCUMENT_TYPE,
+                        indexShardKey.getIndexUuid()));
+
+                processor.createAlerts(document, index);
+
                 indexShardWriter.addDocument(document);
+
                 success = true;
             } catch (final IOException | RuntimeException e) {
                 LOGGER.trace(e::getMessage, e);
