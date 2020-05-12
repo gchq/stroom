@@ -49,7 +49,7 @@ public final class CommonExpressionMapper implements Function<ExpressionItem, Co
     public Collection<Condition> apply(final ExpressionItem item) {
         Collection<Condition> result = Collections.emptyList();
 
-        if (item != null && item.isEnabled()) {
+        if (item != null && item.enabled()) {
             if (item instanceof ExpressionTerm) {
                 final ExpressionTerm term = (ExpressionTerm) item;
                 final Function<ExpressionTerm, Condition> termHandler = termHandlers.get(term.getField());
@@ -62,26 +62,27 @@ public final class CommonExpressionMapper implements Function<ExpressionItem, Co
 
             } else if (item instanceof ExpressionOperator) {
                 final ExpressionOperator operator = (ExpressionOperator) item;
+                if (operator.getChildren() != null) {
+                    final Collection<Condition> children = operator.getChildren()
+                            .stream()
+                            .map(this)
+                            .flatMap(Collection::stream)
+                            .collect(Collectors.toList());
 
-                final Collection<Condition> children = operator.getChildren()
-                        .stream()
-                        .map(this)
-                        .flatMap(Collection::stream)
-                        .collect(Collectors.toList());
-
-                if (children.size() > 0) {
-                    switch (operator.getOp()) {
-                        case AND:
-                            result = Collections.singleton(and(children));
-                            break;
-                        case OR:
-                            result = Collections.singleton(or(children));
-                            break;
-                        case NOT:
-                            result = children
-                                    .stream()
-                                    .map(DSL::not)
-                                    .collect(Collectors.toList());
+                    if (children.size() > 0) {
+                        switch (operator.op()) {
+                            case AND:
+                                result = Collections.singleton(and(children));
+                                break;
+                            case OR:
+                                result = Collections.singleton(or(children));
+                                break;
+                            case NOT:
+                                result = children
+                                        .stream()
+                                        .map(DSL::not)
+                                        .collect(Collectors.toList());
+                        }
                     }
                 }
             }

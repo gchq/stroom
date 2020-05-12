@@ -16,16 +16,18 @@
 
 package stroom.docstore.impl.memory;
 
-import com.google.inject.AbstractModule;
-import com.google.inject.multibindings.Multibinder;
 import stroom.docstore.impl.Persistence;
+import stroom.util.guice.GuiceUtil;
 import stroom.util.shared.Clearable;
+
+import com.google.inject.AbstractModule;
 
 public class MemoryPersistenceModule extends AbstractModule {
     @Override
     protected void configure() {
         bind(Persistence.class).to(MemoryPersistence.class);
 
-        Multibinder.newSetBinder(binder(), Clearable.class).addBinding().to(MemoryPersistence.class);
+        GuiceUtil.buildMultiBinder(binder(), Clearable.class)
+                .addBinding(MemoryPersistence.class);
     }
 }

@@ -16,18 +16,27 @@
 
 package stroom.pipeline;
 
-import com.google.inject.AbstractModule;
 import stroom.docstore.api.DocumentActionHandlerBinder;
 import stroom.docstore.shared.Doc;
 import stroom.event.logging.api.ObjectInfoProviderBinder;
 import stroom.explorer.api.ExplorerActionHandler;
 import stroom.importexport.api.ImportExportActionHandler;
+import stroom.job.api.ScheduledJobsBinder;
+import stroom.lifecycle.api.LifecycleBinder;
+import stroom.pipeline.destination.RollingDestinations;
 import stroom.pipeline.shared.PipelineDoc;
 import stroom.pipeline.textconverter.TextConverterModule;
 import stroom.pipeline.xmlschema.XmlSchemaModule;
 import stroom.pipeline.xslt.XsltModule;
-import stroom.util.shared.RestResource;
+import stroom.util.RunnableWrapper;
 import stroom.util.guice.GuiceUtil;
+import stroom.util.guice.RestResourcesBinder;
+
+import com.google.inject.AbstractModule;
+
+import javax.inject.Inject;
+
+import static stroom.job.api.Schedule.ScheduleType.PERIODIC;
 
 public class PipelineModule extends AbstractModule {
     @Override
@@ -45,9 +54,9 @@ public class PipelineModule extends AbstractModule {
         GuiceUtil.buildMultiBinder(binder(), ImportExportActionHandler.class)
                 .addBinding(PipelineStoreImpl.class);
 
-        GuiceUtil.buildMultiBinder(binder(), RestResource.class)
-                .addBinding(PipelineResourceImpl.class)
-                .addBinding(NewUiPipelineResource.class);
+        RestResourcesBinder.create(binder())
+                .bind(PipelineResourceImpl.class)
+                .bind(NewUiPipelineResource.class);
 
         DocumentActionHandlerBinder.create(binder())
                 .bind(PipelineDoc.DOCUMENT_TYPE, PipelineStoreImpl.class);
@@ -56,5 +65,28 @@ public class PipelineModule extends AbstractModule {
         ObjectInfoProviderBinder.create(binder())
                 .bind(Doc.class, DocObjectInfoProvider.class)
                 .bind(PipelineDoc.class, PipelineDocObjectInfoProvider.class);
+
+        ScheduledJobsBinder.create(binder())
+                .bindJobTo(PipelineDestinationRoll.class, builder -> builder
+                        .withName("Pipeline Destination Roll")
+                        .withDescription("Roll any destinations based on their roll settings")
+                        .withSchedule(PERIODIC, "1m"));
+
+        LifecycleBinder.create(binder())
+                .bindShutdownTaskTo(RollingDestinationsForceRoll.class);
+   }
+
+    private static class PipelineDestinationRoll extends RunnableWrapper {
+        @Inject
+        PipelineDestinationRoll(final RollingDestinations rollingDestinations) {
+            super(rollingDestinations::roll);
+        }
+    }
+
+    private static class RollingDestinationsForceRoll extends RunnableWrapper {
+        @Inject
+        RollingDestinationsForceRoll(final RollingDestinations rollingDestinations) {
+            super(rollingDestinations::forceRoll);
+        }
     }
 }

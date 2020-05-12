@@ -16,16 +16,14 @@
 
 package stroom.dashboard.impl.visualisation;
 
-import com.codahale.metrics.health.HealthCheck.Result;
 import stroom.docref.DocRef;
 import stroom.docstore.api.DocumentResourceHelper;
-import stroom.util.HasHealthCheck;
 import stroom.visualisation.shared.VisualisationDoc;
 import stroom.visualisation.shared.VisualisationResource;
 
 import javax.inject.Inject;
 
-class VisualisationResourceImpl implements VisualisationResource, HasHealthCheck {
+class VisualisationResourceImpl implements VisualisationResource {
     private final VisualisationStore visualisationStore;
     private final DocumentResourceHelper documentResourceHelper;
 
@@ -44,10 +42,5 @@ class VisualisationResourceImpl implements VisualisationResource, HasHealthCheck
     @Override
     public VisualisationDoc update(final VisualisationDoc doc) {
         return documentResourceHelper.update(visualisationStore, doc);
-    }
-
-    @Override
-    public Result getHealth() {
-        return Result.healthy();
     }
 }

@@ -16,11 +16,6 @@
 
 package stroom.data.retention.impl;
 
-import com.fasterxml.jackson.annotation.JsonCreator;
-import com.fasterxml.jackson.annotation.JsonInclude;
-import com.fasterxml.jackson.annotation.JsonInclude.Include;
-import com.fasterxml.jackson.annotation.JsonProperty;
-import com.fasterxml.jackson.annotation.JsonPropertyOrder;
 import stroom.cluster.lock.api.ClusterLockService;
 import stroom.data.retention.shared.DataRetentionRule;
 import stroom.data.retention.shared.DataRetentionRules;
@@ -39,12 +34,30 @@ import stroom.util.logging.LambdaLogger;
 import stroom.util.logging.LambdaLoggerFactory;
 import stroom.util.logging.LogExecutionTime;
 
+import com.fasterxml.jackson.annotation.JsonCreator;
+import com.fasterxml.jackson.annotation.JsonInclude;
+import com.fasterxml.jackson.annotation.JsonInclude.Include;
+import com.fasterxml.jackson.annotation.JsonProperty;
+import com.fasterxml.jackson.annotation.JsonPropertyOrder;
+
 import javax.inject.Inject;
 import javax.inject.Provider;
-import java.io.*;
+import java.io.BufferedInputStream;
+import java.io.BufferedOutputStream;
+import java.io.IOException;
+import java.io.InputStream;
+import java.io.OutputStream;
 import java.nio.file.Files;
 import java.nio.file.Path;
-import java.util.*;
+import java.util.ArrayList;
+import java.util.Collections;
+import java.util.Comparator;
+import java.util.HashMap;
+import java.util.HashSet;
+import java.util.List;
+import java.util.Map;
+import java.util.Objects;
+import java.util.Set;
 import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.function.Supplier;
 import java.util.stream.Collectors;
@@ -104,7 +117,7 @@ public class DataRetentionPolicyExecutor {
             // Also make sure we create a list of rules that are enabled and have at least one enabled term.
             if (rules != null) {
                 rules.forEach(rule -> {
-                    if (rule.isEnabled() && rule.getExpression() != null && rule.getExpression().isEnabled()) {
+                    if (rule.isEnabled() && rule.getExpression() != null && rule.getExpression().enabled()) {
 //                        final Set<String> fields = new HashSet<>();
 //                        addToFieldSet(rule, fields);
 //                        if (fields.size() > 0) {
@@ -332,7 +345,7 @@ public class DataRetentionPolicyExecutor {
 
             // Also make sure we create a list of rules that are enabled and have at least one enabled term.
             rules.forEach(rule -> {
-                if (rule.isEnabled() && rule.getExpression() != null && rule.getExpression().isEnabled()) {
+                if (rule.isEnabled() && rule.getExpression() != null && rule.getExpression().enabled()) {
                     final Set<AbstractField> fields = new HashSet<>();
 //                    addToFieldSet(rule, fields);
                     if (fields.size() > 0) {

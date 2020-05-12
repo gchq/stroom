@@ -29,20 +29,20 @@ import stroom.pipeline.errorhandler.ErrorReceiverProxy;
 import stroom.pipeline.filter.SchemaFilter;
 import stroom.pipeline.state.PipelineContext;
 import stroom.pipeline.xml.converter.ds3.DS3ParserFactory;
+import stroom.pipeline.xmlschema.FindXMLSchemaCriteria;
 import stroom.pipeline.xmlschema.XmlSchemaCache;
 import stroom.pipeline.xmlschema.XmlSchemaSerialiser;
 import stroom.pipeline.xmlschema.XmlSchemaStore;
 import stroom.pipeline.xmlschema.XmlSchemaStoreImpl;
 import stroom.security.api.SecurityContext;
 import stroom.security.mock.MockSecurityContext;
-import stroom.pipeline.xmlschema.FindXMLSchemaCriteria;
 
 public class SchemaFilterFactory {
     private final SecurityContext securityContext = new MockSecurityContext();
     private final Persistence persistence = new MemoryPersistence();
     private final XmlSchemaSerialiser serialiser = new XmlSchemaSerialiser(new Serialiser2FactoryImpl());
     private final XmlSchemaStore xmlSchemaStore = new XmlSchemaStoreImpl(
-            new StoreFactoryImpl(securityContext, persistence), securityContext, serialiser);
+            new StoreFactoryImpl(persistence, null, securityContext), securityContext, serialiser);
     private final XmlSchemaCache xmlSchemaCache = new XmlSchemaCache(xmlSchemaStore);
     private final SchemaLoaderImpl schemaLoader = new SchemaLoaderImpl(xmlSchemaCache);
 
@@ -73,8 +73,11 @@ public class SchemaFilterFactory {
         return schemaFilter;
     }
 
-    private void loadXMLSchema(final String schemaGroup, final String schemaName, final String namespaceURI,
-                               final String systemId, final String fileName) {
+    private void loadXMLSchema(final String schemaGroup,
+                               final String schemaName,
+                               final String namespaceURI,
+                               final String systemId,
+                               final String fileName) {
 //        final Path dir = FileSystemTestUtil.getConfigXSDDir();
 //
 //        final Path file = dir.resolve(fileName);

@@ -16,12 +16,52 @@
 
 package stroom.resource.impl;
 
-import com.google.inject.AbstractModule;
+import stroom.job.api.ScheduledJobsBinder;
+import stroom.lifecycle.api.LifecycleBinder;
 import stroom.resource.api.ResourceStore;
+import stroom.util.RunnableWrapper;
+
+import com.google.inject.AbstractModule;
+
+import javax.inject.Inject;
+
+import static stroom.job.api.Schedule.ScheduleType.PERIODIC;
 
 public class ResourceModule extends AbstractModule {
     @Override
     protected void configure() {
         bind(ResourceStore.class).to(ResourceStoreImpl.class);
+
+        ScheduledJobsBinder.create(binder())
+                .bindJobTo(DeleteTempFile.class, builder -> builder
+                        .withName("Delete temp file")
+                        .withDescription("Deletes the resource store temporary file.")
+                        .withManagedState(false)
+                        .withSchedule(PERIODIC, "1h"));
+
+        LifecycleBinder.create(binder())
+                .bindStartupTaskTo(ResourceStoreStartup.class)
+                .bindShutdownTaskTo(ResourceStoreShutdown.class);
+    }
+
+    private static class DeleteTempFile extends RunnableWrapper {
+        @Inject
+        DeleteTempFile(final ResourceStoreImpl resourceStore) {
+            super(resourceStore::execute);
+        }
+    }
+
+    private static class ResourceStoreStartup extends RunnableWrapper {
+        @Inject
+        ResourceStoreStartup(final ResourceStoreImpl resourceStore) {
+            super(resourceStore::startup);
+        }
+    }
+
+    private static class ResourceStoreShutdown extends RunnableWrapper {
+        @Inject
+        ResourceStoreShutdown(final ResourceStoreImpl resourceStore) {
+            super(resourceStore::shutdown);
+        }
     }
 }

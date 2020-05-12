@@ -17,8 +17,6 @@
 
 package stroom.meta.impl;
 
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 import stroom.data.retention.shared.DataRetentionRule;
 import stroom.data.retention.shared.DataRetentionRules;
 import stroom.expression.matcher.ExpressionMatcher;
@@ -27,6 +25,9 @@ import stroom.meta.shared.DataRetentionFields;
 import stroom.meta.shared.Meta;
 import stroom.meta.shared.MetaFields;
 import stroom.util.date.DateUtil;
+
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import javax.inject.Inject;
 import javax.inject.Provider;
@@ -102,7 +103,7 @@ class StreamAttributeMapRetentionRuleDecorator {
             try {
                 final DataRetentionRule rule = rules.get(i);
                 // We will ignore rules that are not enabled or have no enabled expression.
-                if (rule.isEnabled() && rule.getExpression() != null && rule.getExpression().isEnabled()) {
+                if (rule.isEnabled() && rule.getExpression() != null && rule.getExpression().enabled()) {
                     if (expressionMatcher.match(attributeMap, rule.getExpression())) {
                         return i;
                     }

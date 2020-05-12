@@ -16,16 +16,16 @@
 
 package stroom.core.entity.cluster;
 
+import stroom.util.guice.RestResourcesBinder;
+
 import com.google.inject.AbstractModule;
-import stroom.util.guice.GuiceUtil;
-import stroom.util.shared.RestResource;
 
 public class EntityClusterModule extends AbstractModule {
     @Override
     protected void configure() {
         bind(ClearableResource.class).to(ClearableResourceImpl.class);
 
-        GuiceUtil.buildMultiBinder(binder(), RestResource.class)
-                .addBinding(ClearableResourceImpl.class);
+        RestResourcesBinder.create(binder())
+                .bind(ClearableResourceImpl.class);
     }
 }

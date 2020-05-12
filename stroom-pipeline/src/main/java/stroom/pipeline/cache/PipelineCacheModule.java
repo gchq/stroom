@@ -16,12 +16,11 @@
 
 package stroom.pipeline.cache;
 
-import com.google.inject.AbstractModule;
-import com.google.inject.multibindings.Multibinder;
 import stroom.util.entityevent.EntityEvent;
-import stroom.util.entityevent.EntityEvent.Handler;
 import stroom.util.guice.GuiceUtil;
 import stroom.util.shared.Clearable;
+
+import com.google.inject.AbstractModule;
 
 public class PipelineCacheModule extends AbstractModule {
     @Override
@@ -38,8 +37,8 @@ public class PipelineCacheModule extends AbstractModule {
                 .addBinding(XsltPoolImpl.class)
                 .addBinding(DocumentPermissionCacheImpl.class);
 
-        final Multibinder<Handler> entityEventHandlerBinder = Multibinder.newSetBinder(binder(), EntityEvent.Handler.class);
-        entityEventHandlerBinder.addBinding().to(ParserFactoryPoolImpl.class);
-        entityEventHandlerBinder.addBinding().to(SchemaPoolImpl.class);
+        GuiceUtil.buildMultiBinder(binder(), EntityEvent.Handler.class)
+                .addBinding(ParserFactoryPoolImpl.class)
+                .addBinding(SchemaPoolImpl.class);
     }
 }

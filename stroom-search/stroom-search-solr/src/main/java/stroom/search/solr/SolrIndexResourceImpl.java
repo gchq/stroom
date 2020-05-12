@@ -16,18 +16,17 @@
 
 package stroom.search.solr;
 
-import com.codahale.metrics.health.HealthCheck.Result;
+import stroom.docref.DocRef;
+import stroom.docstore.api.DocumentResourceHelper;
+import stroom.search.solr.shared.SolrIndexDoc;
+import stroom.search.solr.shared.SolrIndexResource;
+import stroom.util.shared.ModelStringUtil;
+
 import org.apache.solr.client.solrj.SolrClient;
 import org.apache.solr.client.solrj.SolrServerException;
 import org.apache.solr.client.solrj.request.schema.SchemaRequest.FieldTypes;
 import org.apache.solr.client.solrj.response.SolrPingResponse;
 import org.apache.solr.client.solrj.response.schema.SchemaResponse.FieldTypesResponse;
-import stroom.docref.DocRef;
-import stroom.docstore.api.DocumentResourceHelper;
-import stroom.search.solr.shared.SolrIndexDoc;
-import stroom.search.solr.shared.SolrIndexResource;
-import stroom.util.HasHealthCheck;
-import stroom.util.shared.ModelStringUtil;
 
 import javax.inject.Inject;
 import java.io.IOException;
@@ -35,7 +34,7 @@ import java.util.List;
 import java.util.Optional;
 import java.util.stream.Collectors;
 
-class SolrIndexResourceImpl implements SolrIndexResource, HasHealthCheck {
+class SolrIndexResourceImpl implements SolrIndexResource {
     private final SolrIndexStore solrIndexStore;
     private final DocumentResourceHelper documentResourceHelper;
 
@@ -59,11 +58,14 @@ class SolrIndexResourceImpl implements SolrIndexResource, HasHealthCheck {
     @Override
     public List<String> fetchSolrTypes(final SolrIndexDoc solrIndexDoc) {
         try {
-            final SolrClient solrClient = new SolrClientFactory().create(solrIndexDoc.getSolrConnectionConfig());
-            final FieldTypesResponse response = new FieldTypes().process(solrClient, solrIndexDoc.getCollection());
+            final SolrClient solrClient = new SolrClientFactory().create(
+                    solrIndexDoc.getSolrConnectionConfig());
+            final FieldTypesResponse response = new FieldTypes().process(
+                    solrClient, solrIndexDoc.getCollection());
             return response.getFieldTypes()
                     .stream()
-                    .map(fieldTypeRepresentation -> Optional.ofNullable(fieldTypeRepresentation.getAttributes()))
+                    .map(fieldTypeRepresentation ->
+                            Optional.ofNullable(fieldTypeRepresentation.getAttributes()))
                     .filter(Optional::isPresent)
                     .map(optional -> Optional.ofNullable(optional.get().get("name")))
                     .filter(Optional::isPresent)
@@ -77,7 +79,8 @@ class SolrIndexResourceImpl implements SolrIndexResource, HasHealthCheck {
     @Override
     public String solrConnectionTest(final SolrIndexDoc solrIndexDoc) {
         try {
-            final SolrClient solrClient = new SolrClientFactory().create(solrIndexDoc.getSolrConnectionConfig());
+            final SolrClient solrClient = new SolrClientFactory().create(
+                    solrIndexDoc.getSolrConnectionConfig());
 //            final SolrPingResponse response = new SolrPing().process(solrClient, action.getSolrIndex().getCollection());
             final SolrPingResponse response = solrClient.ping();
 
@@ -105,10 +108,5 @@ class SolrIndexResourceImpl implements SolrIndexResource, HasHealthCheck {
         } catch (final IOException | SolrServerException e) {
             throw new RuntimeException(e.getMessage(), e);
         }
-    }
-
-    @Override
-    public Result getHealth() {
-        return Result.healthy();
     }
 }

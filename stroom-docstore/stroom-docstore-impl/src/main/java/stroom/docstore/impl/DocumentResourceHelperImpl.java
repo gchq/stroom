@@ -20,7 +20,7 @@ import stroom.docref.DocRef;
 import stroom.docstore.api.DocumentActionHandler;
 import stroom.docstore.api.DocumentResourceHelper;
 import stroom.docstore.shared.Doc;
-import stroom.document.shared.PermissionException;
+import stroom.util.shared.PermissionException;
 import stroom.security.api.SecurityContext;
 import stroom.util.logging.LambdaLogger;
 import stroom.util.logging.LambdaLoggerFactory;

@@ -42,7 +42,7 @@ import stroom.security.impl.db.jooq.tables.records.AppPermissionRecord;
 @SuppressWarnings({ "all", "unchecked", "rawtypes" })
 public class AppPermission extends TableImpl<AppPermissionRecord> {
 
-    private static final long serialVersionUID = -1416781827;
+    private static final long serialVersionUID = -1711610651;
 
     /**
      * The reference instance of <code>stroom.app_permission</code>
@@ -112,7 +112,7 @@ public class AppPermission extends TableImpl<AppPermissionRecord> {
 
     @Override
     public List<Index> getIndexes() {
-        return Arrays.<Index>asList(Indexes.APP_PERMISSION_PRIMARY, Indexes.APP_PERMISSION_USER_UUID);
+        return Arrays.<Index>asList(Indexes.APP_PERMISSION_APP_PERMISSION_FK_USER_UUID, Indexes.APP_PERMISSION_PRIMARY);
     }
 
     @Override
@@ -132,11 +132,11 @@ public class AppPermission extends TableImpl<AppPermissionRecord> {
 
     @Override
     public List<ForeignKey<AppPermissionRecord, ?>> getReferences() {
-        return Arrays.<ForeignKey<AppPermissionRecord, ?>>asList(Keys.APP_PERMISSION_IBFK_1);
+        return Arrays.<ForeignKey<AppPermissionRecord, ?>>asList(Keys.APP_PERMISSION_FK_USER_UUID);
     }
 
     public StroomUser stroomUser() {
-        return new StroomUser(this, Keys.APP_PERMISSION_IBFK_1);
+        return new StroomUser(this, Keys.APP_PERMISSION_FK_USER_UUID);
     }
 
     @Override

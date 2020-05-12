@@ -155,7 +155,7 @@ class OpenIdManager {
 
         try {
             String sessionId = session.getId();
-            final JwtClaims jwtClaims = jwtService.verifyToken(idToken);
+            final JwtClaims jwtClaims = jwtService.extractTokenClaims(idToken);
             final String nonce = (String) jwtClaims.getClaimsMap().get(OIDC.NONCE);
             final boolean match = nonce.equals(state.getNonce());
             if (match) {

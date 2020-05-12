@@ -39,6 +39,16 @@ import java.util.regex.Pattern;
  * Used for generating a set of OpenId Connect credentials and a corresponding
  * API key so that stroom-proxy can connect to stroom on first boot.
  * ONLY intended for test/demo purposes.
+ *
+ * !!!!!!!!!! WARNING !!!!!!!!!!
+ *
+ * If you run this and commit the new creds it will break any existing api keys
+ * in any existing test environments that are upgrading and use these default creds.
+ * If that happens you will need to delete any user API keys in the UI and recreate them.
+ * There is an API key for INTERNAL_PROCESSING_USER which is system generated. You will also
+ * need to delete that and reboot so stroom can recreated it.
+ *
+ * !!!!!!!!!! WARNING !!!!!!!!!!
  */
 
 public class GenerateTestOpenIdDetails {
@@ -56,9 +66,7 @@ public class GenerateTestOpenIdDetails {
     public GenerateTestOpenIdDetails() {
         jwkCache = Mockito.mock(JwkCache.class);
         Mockito.when(jwkCache.get())
-                .thenAnswer(invocation -> {
-                    return Collections.singletonList(publicJsonWebKey);
-                });
+                .thenAnswer(invocation -> Collections.singletonList(publicJsonWebKey));
         jsonWebKeyFactory = new JsonWebKeyFactoryImpl();
     }
 
@@ -110,13 +118,13 @@ public class GenerateTestOpenIdDetails {
 
         final String msg = "\n" +
                 "\n" +
-                "\nThe following lines have been substituted into " + DefaultOpenIdCredentials.class.getName() +
+                "\n  The following lines have been substituted into " + DefaultOpenIdCredentials.class.getName() +
                 "\n";
 
         final String generatedCode = "" +
-                "    // ------------------------------------------------------------------------------------------------" +
-                "\n    // The content between these dashed lines was generated using " + this.getClass().getName() +
-                "\n    // at " + Instant.now().toString() +
+                "    // ==--==--==--==--==--==--==--==--==--==--==--==--==--==--==--==--==--==--==--==--==--==--==--" +
+                "\n    // ALL the content between these dashed lines was generated inserted using" +
+                "\n    // " + this.getClass().getName() + " at " + Instant.now().toString() +
                 "\n    // The dashed lines are important, don't remove them!" +
                 "\n    private static final String OAUTH2_CLIENT_ID = \"" + oAuth2Client.getClientId() + "\";" +
                 "\n    private static final String OAUTH2_CLIENT_NAME = \"" + oAuth2Client.getName() + "\";" +
@@ -128,7 +136,7 @@ public class GenerateTestOpenIdDetails {
 
                 "\n    private static final String API_KEY_USER_EMAIL = \"" + API_KEY_USER_EMAIL + "\";" +
                 "\n    private static final String API_KEY = \"" + apiKey + "\";" +
-                "\n    // ------------------------------------------------------------------------------------------------";
+                "\n    // ==--==--==--==--==--==--==--==--==--==--==--==--==--==--==--==--==--==--==--==--==--==--==--";
 
         LOGGER.info(ConsoleColour.red(msg) + ConsoleColour.green(generatedCode));
 
@@ -160,11 +168,16 @@ public class GenerateTestOpenIdDetails {
 
             // match some thing like:
 
-            //   // ----------------------
+            //   // ==--==--==--==--==--==--==--==--==--==--==--
             //   thisIsSomeCode......
-            //   // ----------------------
+            //   // ==--==--==--==--==--==--==--==--==--==--==--
 
-            final Pattern generatedBlockPattern = Pattern.compile("[ ]*//[ ]*---+.+?[ ]*//[ ]*---+", Pattern.DOTALL);
+            final Pattern generatedBlockPattern = Pattern.compile(
+                    "[ ]*//[ ]*(==--)+.+?[ ]*//[ ]*(==--)+",
+                    Pattern.DOTALL);
+//            final Pattern generatedBlockPattern = Pattern.compile(
+//                    "[ ]*//[ ]*---+.+?[ ]*//[ ]*---+",
+//                    Pattern.DOTALL);
 
             LOGGER.debug("\n{}", fileContent);
             Matcher matcher = generatedBlockPattern.matcher(fileContent);

@@ -1,8 +1,12 @@
 package stroom.docstore.impl.fs;
 
-import org.junit.jupiter.api.Test;
 import stroom.docref.DocRef;
 import stroom.docstore.impl.Persistence;
+import stroom.docstore.shared.Doc;
+
+import com.fasterxml.jackson.databind.DeserializationFeature;
+import com.fasterxml.jackson.databind.ObjectMapper;
+import org.junit.jupiter.api.Test;
 
 import java.io.IOException;
 import java.nio.charset.Charset;
@@ -31,9 +35,16 @@ class TestFSPersistence {
             persistence.delete(docRef);
         }
 
+        final GenericDoc doc = new GenericDoc();
+        doc.setType(docRef.getType());
+        doc.setUuid(docRef.getUuid());
+        doc.setName(docRef.getName());
+        ObjectMapper mapper = createMapper();
+        byte[] bytes = mapper.writeValueAsBytes(doc);
+
         // Create
         Map<String, byte[]> data = new HashMap<>();
-        data.put("meta", uuid1.getBytes(CHARSET));
+        data.put("meta", bytes);
         persistence.write(docRef, false, data);
 
         // Exists
@@ -41,23 +52,45 @@ class TestFSPersistence {
 
         // Read
         data = persistence.read(docRef);
-        assertThat(new String(data.get("meta"), CHARSET)).isEqualTo(uuid1);
+        assertThat(data.get("meta")).isEqualTo(bytes);
+
+        // List
+        List<DocRef> refs = persistence.list(docRef.getType());
+        assertThat(refs.size()).isEqualTo(1);
+        assertThat(refs.get(0)).isEqualTo(docRef);
+        assertThat(refs.get(0).getType()).isEqualTo(docRef.getType());
+        assertThat(refs.get(0).getUuid()).isEqualTo(docRef.getUuid());
+        assertThat(refs.get(0).getName()).isEqualTo(docRef.getName());
 
         // Update
+        doc.setName("New Name");
+        bytes = mapper.writeValueAsBytes(doc);
         data = new HashMap<>();
-        data.put("meta", uuid2.getBytes(CHARSET));
+        data.put("meta", bytes);
         persistence.write(docRef, true, data);
 
         // Read
         data = persistence.read(docRef);
-        assertThat(new String(data.get("meta"), CHARSET)).isEqualTo(uuid2);
+        assertThat(data.get("meta")).isEqualTo(bytes);
 
         // List
-        final List<DocRef> refs = persistence.list(docRef.getType());
+        refs = persistence.list(docRef.getType());
         assertThat(refs.size()).isEqualTo(1);
         assertThat(refs.get(0)).isEqualTo(docRef);
+        assertThat(refs.get(0).getType()).isEqualTo(docRef.getType());
+        assertThat(refs.get(0).getUuid()).isEqualTo(docRef.getUuid());
+        assertThat(refs.get(0).getName()).isEqualTo("New Name");
 
         // Delete
         persistence.delete(docRef);
+    }
+
+    private ObjectMapper createMapper() {
+        final ObjectMapper mapper = new ObjectMapper();
+        mapper.configure(DeserializationFeature.FAIL_ON_UNKNOWN_PROPERTIES, false);
+        return mapper;
+    }
+
+    private static class GenericDoc extends Doc {
     }
 }

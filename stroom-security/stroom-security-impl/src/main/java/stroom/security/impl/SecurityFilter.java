@@ -16,19 +16,21 @@
 
 package stroom.security.impl;
 
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 import stroom.authentication.api.OIDC;
 import stroom.config.common.UriFactory;
 import stroom.security.api.ProcessingUserIdentityProvider;
 import stroom.security.api.SecurityContext;
 import stroom.security.api.UserIdentity;
+import stroom.security.impl.exception.AuthenticationException;
 import stroom.security.impl.session.UserIdentitySessionUtil;
 import stroom.security.shared.User;
 import stroom.util.logging.LambdaLogger;
 import stroom.util.logging.LambdaLoggerFactory;
 import stroom.util.logging.LogUtil;
 import stroom.util.shared.ResourcePaths;
+
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import javax.inject.Inject;
 import javax.inject.Singleton;
@@ -112,7 +114,12 @@ class SecurityFilter implements Filter {
         }
         final HttpServletRequest httpServletRequest = (HttpServletRequest) request;
 
-        filter(httpServletRequest, httpServletResponse, chain);
+        try {
+            filter(httpServletRequest, httpServletResponse, chain);
+        } catch (AuthenticationException e) {
+            // Return a sensible HTTP code for auth failures
+            httpServletResponse.sendError(HttpServletResponse.SC_UNAUTHORIZED, e.getMessage());
+        }
     }
 
     private void filter(final HttpServletRequest request,

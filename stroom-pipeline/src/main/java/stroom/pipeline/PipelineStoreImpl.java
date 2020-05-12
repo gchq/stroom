@@ -20,15 +20,20 @@ package stroom.pipeline;
 import stroom.docref.DocRef;
 import stroom.docref.DocRefInfo;
 import stroom.docstore.api.AuditFieldFilter;
+import stroom.docstore.api.DependencyRemapper;
 import stroom.docstore.api.Store;
 import stroom.docstore.api.StoreFactory;
+import stroom.docstore.api.UniqueNameUtil;
 import stroom.explorer.shared.DocumentType;
 import stroom.importexport.migration.LegacyXMLSerialiser;
 import stroom.importexport.shared.ImportState;
 import stroom.importexport.shared.ImportState.ImportMode;
 import stroom.pipeline.shared.PipelineDoc;
 import stroom.pipeline.shared.data.PipelineData;
+import stroom.pipeline.shared.data.PipelineProperty;
+import stroom.pipeline.shared.data.PipelineReference;
 import stroom.processor.api.ProcessorFilterService;
+import stroom.processor.api.ProcessorFilterUtil;
 import stroom.processor.shared.ProcessorFilter;
 import stroom.security.api.SecurityContext;
 import stroom.util.shared.Message;
@@ -40,12 +45,12 @@ import javax.inject.Inject;
 import javax.inject.Provider;
 import javax.inject.Singleton;
 import java.io.IOException;
-import java.util.Collections;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
 import java.util.UUID;
+import java.util.function.BiConsumer;
 import java.util.stream.Collectors;
 
 @Singleton
@@ -76,10 +81,9 @@ public class PipelineStoreImpl implements PipelineStore {
     }
 
     @Override
-    public DocRef copyDocument(final String originalUuid,
-                               final String copyUuid,
-                               final Map<String, String> otherCopiesByOriginalUuid) {
-        return store.copyDocument(originalUuid, copyUuid, otherCopiesByOriginalUuid);
+    public DocRef copyDocument(final DocRef docRef, final Set<String> existingNames) {
+        final String newName = UniqueNameUtil.getCopyName(docRef.getName(), existingNames);
+        return store.copyDocument(docRef.getUuid(), newName);
     }
 
     @Override
@@ -112,6 +116,66 @@ public class PipelineStoreImpl implements PipelineStore {
     ////////////////////////////////////////////////////////////////////////
 
     ////////////////////////////////////////////////////////////////////////
+    // START OF HasDependencies
+    ////////////////////////////////////////////////////////////////////////
+
+    @Override
+    public Map<DocRef, Set<DocRef>> getDependencies() {
+        return store.getDependencies(createMapper());
+    }
+
+    @Override
+    public Set<DocRef> getDependencies(final DocRef docRef) {
+        return store.getDependencies(docRef, createMapper());
+    }
+
+    @Override
+    public void remapDependencies(final DocRef docRef,
+                                  final Map<DocRef, DocRef> remappings) {
+        store.remapDependencies(docRef, remappings, createMapper());
+    }
+
+    private BiConsumer<PipelineDoc, DependencyRemapper> createMapper() {
+        return (doc, dependencyRemapper) -> {
+            if (doc.getParentPipeline() != null) {
+                doc.setParentPipeline(dependencyRemapper.remap(doc.getParentPipeline()));
+            }
+
+            final PipelineData pipelineData = doc.getPipelineData();
+            if (pipelineData != null) {
+                remapPipelineReferences(pipelineData.getAddedPipelineReferences(), dependencyRemapper);
+                remapPipelineReferences(pipelineData.getRemovedPipelineReferences(), dependencyRemapper);
+                remapPipelineProperties(pipelineData.getAddedProperties(), dependencyRemapper);
+                remapPipelineProperties(pipelineData.getRemovedProperties(), dependencyRemapper);
+            }
+        };
+    }
+
+    public void remapPipelineProperties(final List<PipelineProperty> pipelineProperties, final DependencyRemapper dependencyRemapper) {
+        if (pipelineProperties != null) {
+            pipelineProperties.forEach(pipelineProperty -> {
+                if (pipelineProperty.getValue() != null) {
+                    pipelineProperty.getValue().setEntity(dependencyRemapper.remap(pipelineProperty.getValue().getEntity()));
+                }
+            });
+        }
+    }
+
+    public void remapPipelineReferences(final List<PipelineReference> pipelineReferences, final DependencyRemapper dependencyRemapper) {
+        if (pipelineReferences != null) {
+            pipelineReferences.forEach(pipelineReference -> {
+                pipelineReference.setFeed(dependencyRemapper.remap(pipelineReference.getFeed()));
+                pipelineReference.setPipeline(dependencyRemapper.remap(pipelineReference.getPipeline()));
+                pipelineReference.setSourcePipeline(dependencyRemapper.remap(pipelineReference.getSourcePipeline()));
+            });
+        }
+    }
+
+    ////////////////////////////////////////////////////////////////////////
+    // END OF HasDependencies
+    ////////////////////////////////////////////////////////////////////////
+
+    ////////////////////////////////////////////////////////////////////////
     // START OF DocumentActionHandler
     ////////////////////////////////////////////////////////////////////////
 
@@ -136,11 +200,6 @@ public class PipelineStoreImpl implements PipelineStore {
     @Override
     public Set<DocRef> listDocuments() {
         return store.listDocuments();
-    }
-
-    @Override
-    public Map<DocRef, Set<DocRef>> getDependencies() {
-        return Collections.emptyMap();
     }
 
     @Override
@@ -218,19 +277,20 @@ public class PipelineStoreImpl implements PipelineStore {
 
     @Override
     public Set<DocRef> findAssociatedNonExplorerDocRefs(DocRef docRef) {
-        Set <DocRef> processorFilters = new HashSet<DocRef>();
+        Set<DocRef> processorFilters = new HashSet<DocRef>();
 
         if (docRef != null && PipelineDoc.DOCUMENT_TYPE.equals(docRef.getType())) {
             ResultPage<ProcessorFilter> filterResultPage = processorFilterServiceProvider.get().find(docRef);
 
-            List <DocRef> docRefs = filterResultPage.getValues().stream().map(v -> new DocRef(ProcessorFilter.ENTITY_TYPE, v.getUuid()))
+            List <DocRef> docRefs = filterResultPage.getValues().stream()
+                    .filter(v -> ProcessorFilterUtil.shouldExport(v))
+                    .map(v -> new DocRef(ProcessorFilter.ENTITY_TYPE, v.getUuid()))
                     .collect(Collectors.toList());
 
             processorFilters.addAll(docRefs);
         }
         return processorFilters;
     }
-
 
     @Override
     public String getType() {

@@ -16,10 +16,10 @@
  */
 package stroom.processor.impl;
 
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 import stroom.docref.DocRef;
+import stroom.docrefinfo.api.DocRefInfoService;
 import stroom.docstore.api.AuditFieldFilter;
+import stroom.docstore.api.DependencyRemapper;
 import stroom.docstore.api.Serialiser2;
 import stroom.docstore.api.Serialiser2Factory;
 import stroom.entity.shared.ExpressionCriteria;
@@ -27,9 +27,9 @@ import stroom.importexport.api.ImportExportActionHandler;
 import stroom.importexport.api.ImportExportDocumentEventLog;
 import stroom.importexport.api.NonExplorerDocRefProvider;
 import stroom.importexport.shared.ImportState;
-import stroom.pipeline.PipelineStore;
 import stroom.pipeline.shared.PipelineDoc;
 import stroom.processor.api.ProcessorFilterService;
+import stroom.processor.api.ProcessorFilterUtil;
 import stroom.processor.api.ProcessorService;
 import stroom.processor.shared.Processor;
 import stroom.processor.shared.ProcessorDataSource;
@@ -40,10 +40,15 @@ import stroom.query.api.v2.ExpressionTerm;
 import stroom.util.shared.Message;
 import stroom.util.shared.ResultPage;
 
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+
 import javax.inject.Inject;
 import java.io.IOException;
+import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.Optional;
 import java.util.Set;
 
 public class ProcessorFilterImportExportHandlerImpl implements ImportExportActionHandler, NonExplorerDocRefProvider {
@@ -51,7 +56,7 @@ public class ProcessorFilterImportExportHandlerImpl implements ImportExportActio
     private final ImportExportDocumentEventLog importExportDocumentEventLog;
     private final ProcessorFilterService processorFilterService;
     private final ProcessorService processorService;
-    private final PipelineStore pipelineStore;
+    private final DocRefInfoService docRefInfoService;
 
     private static final String XML = "xml";
     private static final String META = "meta";
@@ -61,12 +66,12 @@ public class ProcessorFilterImportExportHandlerImpl implements ImportExportActio
     @Inject
     ProcessorFilterImportExportHandlerImpl(final ProcessorFilterService processorFilterService, final ProcessorService processorService,
                                            final ImportExportDocumentEventLog importExportDocumentEventLog, final Serialiser2Factory serialiser2Factory,
-                                           final PipelineStore pipelineStore) {
+                                           final DocRefInfoService docRefInfoService) {
         this.processorFilterService = processorFilterService;
         this.processorService = processorService;
         this.importExportDocumentEventLog = importExportDocumentEventLog;
         this.delegate = serialiser2Factory.createSerialiser(ProcessorFilter.class);
-        this.pipelineStore = pipelineStore;
+        this.docRefInfoService = docRefInfoService;
     }
 
     @Override
@@ -81,6 +86,11 @@ public class ProcessorFilterImportExportHandlerImpl implements ImportExportActio
             throw new RuntimeException("Unable to read meta file associated with processor " + docRef, ex);
         }
 
+        boolean ignore = ProcessorFilterUtil.shouldImport (processorFilter);
+
+        if (ignore)
+            LOGGER.warn("Not importing processor filter " + docRef.getUuid() + " because it contains id fields");
+
         if (importMode != ImportState.ImportMode.CREATE_CONFIRMATION) {
             processorFilter.setProcessor(findProcessorForFilter(processorFilter));
 
@@ -90,8 +100,7 @@ public class ProcessorFilterImportExportHandlerImpl implements ImportExportActio
                 if (importState.getEnable() != null) {
                     enable = importState.getEnable();
                     trackerStartMs = importState.getEnableTime();
-                }
-                else {
+                } else {
                     enable = processorFilter.isEnabled();
                     trackerStartMs = null;
                 }
@@ -120,7 +129,7 @@ public class ProcessorFilterImportExportHandlerImpl implements ImportExportActio
                 processorFilterService.update(processorFilter);
             }
         }
-        return new ImpexDetails(docRef, processorFilter.getPipelineName());
+        return new ImpexDetails(docRef, processorFilter.getPipelineName(),ignore);
     }
 
     private ProcessorFilter findProcessorFilter(final DocRef docRef) {
@@ -137,13 +146,11 @@ public class ProcessorFilterImportExportHandlerImpl implements ImportExportActio
             ProcessorFilter filter = page.getFirst();
 
             if (filter.getPipelineName() == null && filter.getPipelineUuid() != null) {
-                try {
-                    PipelineDoc pipeline = pipelineStore.find(new DocRef(PipelineDoc.DOCUMENT_TYPE, filter.getPipelineUuid()));
-                    if (pipeline != null)
-                        filter.setPipelineName(pipeline.getName());
-                }catch (RuntimeException ex){
+                final Optional<String> optional = docRefInfoService.name(new DocRef(PipelineDoc.DOCUMENT_TYPE, filter.getPipelineUuid()));
+                filter.setPipelineName(optional.orElse(null));
+                if (filter.getPipelineName() == null) {
                     LOGGER.warn("Unable to find Pipeline " + filter.getPipelineUuid() +
-                            " associated with ProcessorFilter " + filter.getUuid() + " (id: " + filter.getId() +")");
+                            " associated with ProcessorFilter " + filter.getUuid() + " (id: " + filter.getId() + ")");
                 }
             }
 
@@ -191,11 +198,6 @@ public class ProcessorFilterImportExportHandlerImpl implements ImportExportActio
     }
 
     @Override
-    public Map<DocRef, Set<DocRef>> getDependencies() {
-        return null;
-    }
-
-    @Override
     public String getType() {
         return ProcessorFilter.ENTITY_TYPE;
     }
@@ -207,10 +209,7 @@ public class ProcessorFilterImportExportHandlerImpl implements ImportExportActio
 
             if (processorFilter != null) {
                 Processor processor = findProcessorForFilter(processorFilter);
-
-                DocRef pipelineDocRef = new DocRef(PipelineDoc.DOCUMENT_TYPE, processor.getPipelineUuid());
-
-                return pipelineDocRef;
+                return new DocRef(PipelineDoc.DOCUMENT_TYPE, processor.getPipelineUuid());
             }
         }
 
@@ -242,7 +241,7 @@ public class ProcessorFilterImportExportHandlerImpl implements ImportExportActio
             return findProcessorFilter(docRef) != null;
     }
 
-    private Processor findProcessorForFilter (final ProcessorFilter filter){
+    private Processor findProcessorForFilter(final ProcessorFilter filter) {
         Processor processor = filter.getProcessor();
         if (processor == null) {
             processor = findProcessor(filter.getUuid(), filter.getProcessorUuid(), filter.getPipelineUuid(), filter.getPipelineName());
@@ -252,9 +251,10 @@ public class ProcessorFilterImportExportHandlerImpl implements ImportExportActio
         return processor;
     }
 
-    private Processor findProcessor (final String filterUuid, final String processorUuid, final String pipelineUuid, final String pipelineName){
-        if (filterUuid == null)
+    private Processor findProcessor(final String filterUuid, final String processorUuid, final String pipelineUuid, final String pipelineName) {
+        if (filterUuid == null) {
             return null;
+        }
 
         final ExpressionOperator expression = new ExpressionOperator.Builder()
                 .addTerm(ProcessorDataSource.UUID, ExpressionTerm.Condition.EQUALS, processorUuid).build();
@@ -263,29 +263,78 @@ public class ProcessorFilterImportExportHandlerImpl implements ImportExportActio
         ResultPage<Processor> page = processorService.find(criteria);
 
         RuntimeException ex = null;
-        if (page.size() == 0){
+        if (page.size() == 0) {
             if (pipelineUuid != null) {
                 //Create the missing processor
-                processorService.create(new DocRef(Processor.ENTITY_TYPE, processorUuid), new DocRef(PipelineDoc.DOCUMENT_TYPE,pipelineUuid, pipelineName), true);
+                processorService.create(new DocRef(Processor.ENTITY_TYPE, processorUuid), new DocRef(PipelineDoc.DOCUMENT_TYPE, pipelineUuid, pipelineName), true);
             } else {
                 throw new RuntimeException("Unable to find processor for filter " + filterUuid);
             }
         }
 
-        if (page.size() > 1)
+        if (page.size() > 1) {
             ex = new IllegalStateException("Multiple processors with DocRef " + filterUuid + " found.");
+        }
 
         if (ex != null) {
             LOGGER.error("Unable to export processor", ex);
             throw ex;
         }
-        final Processor processor = page.getFirst();
 
-        return processor;
+        return page.getFirst();
     }
 
     @Override
     public Set<DocRef> findAssociatedNonExplorerDocRefs(final DocRef docRef) {
         return null;
     }
+
+    ////////////////////////////////////////////////////////////////////////
+    // START OF HasDependencies
+    ////////////////////////////////////////////////////////////////////////
+
+    @Override
+    public Map<DocRef, Set<DocRef>> getDependencies() {
+        final Map<DocRef, Set<DocRef>> dependencies = new HashMap<>();
+        final ResultPage<ProcessorFilter> page = processorFilterService.find(new ExpressionCriteria());
+
+        if (page != null && page.getValues() != null) {
+            page.getValues().forEach(processorFilter -> {
+                final DependencyRemapper dependencyRemapper = new DependencyRemapper();
+                if (processorFilter.getQueryData() != null && processorFilter.getQueryData().getExpression() != null) {
+                    dependencyRemapper.remapExpression(processorFilter.getQueryData().getExpression());
+                }
+                final DocRef docRef = new DocRef(ProcessorFilter.ENTITY_TYPE, processorFilter.getUuid());
+                dependencies.put(docRef, dependencyRemapper.getDependencies());
+            });
+        }
+
+        return dependencies;
+    }
+
+    @Override
+    public Set<DocRef> getDependencies(final DocRef docRef) {
+        final DependencyRemapper dependencyRemapper = new DependencyRemapper();
+        final ExpressionOperator expression = new ExpressionOperator.Builder()
+                .addTerm(ProcessorFilterDataSource.UUID, ExpressionTerm.Condition.EQUALS, docRef.getUuid()).build();
+        final ExpressionCriteria criteria = new ExpressionCriteria(expression);
+        final ResultPage<ProcessorFilter> page = processorFilterService.find(criteria);
+        if (page != null && page.getValues() != null) {
+            page.getValues().forEach(processorFilter -> {
+                if (processorFilter.getQueryData() != null && processorFilter.getQueryData().getExpression() != null) {
+                    dependencyRemapper.remapExpression(processorFilter.getQueryData().getExpression());
+                }
+            });
+        }
+        return dependencyRemapper.getDependencies();
+    }
+
+    @Override
+    public void remapDependencies(final DocRef docRef,
+                                  final Map<DocRef, DocRef> remappings) {
+    }
+
+    ////////////////////////////////////////////////////////////////////////
+    // END OF HasDependencies
+    ////////////////////////////////////////////////////////////////////////
 }

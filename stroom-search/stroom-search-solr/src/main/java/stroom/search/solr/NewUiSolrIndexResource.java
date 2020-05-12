@@ -16,20 +16,19 @@
 
 package stroom.search.solr;
 
-import com.codahale.metrics.annotation.Timed;
-import com.codahale.metrics.health.HealthCheck.Result;
-import io.swagger.annotations.Api;
-import io.swagger.annotations.ApiOperation;
-import io.swagger.annotations.ApiParam;
 import stroom.docref.DocRef;
 import stroom.importexport.api.DocumentData;
 import stroom.importexport.api.ImportExportActionHandler;
 import stroom.importexport.shared.Base64EncodedDocumentData;
 import stroom.importexport.shared.ImportState;
 import stroom.importexport.shared.ImportState.ImportMode;
-import stroom.util.HasHealthCheck;
 import stroom.util.shared.ResourcePaths;
 import stroom.util.shared.RestResource;
+
+import com.codahale.metrics.annotation.Timed;
+import io.swagger.annotations.Api;
+import io.swagger.annotations.ApiOperation;
+import io.swagger.annotations.ApiParam;
 
 import javax.inject.Inject;
 import javax.ws.rs.Consumes;
@@ -48,7 +47,7 @@ import java.util.Set;
 @Path(NewUiSolrIndexResource.BASE_RESOURCE_PATH)
 @Produces(MediaType.APPLICATION_JSON)
 @Consumes(MediaType.APPLICATION_JSON)
-public class NewUiSolrIndexResource implements RestResource, HasHealthCheck {
+public class NewUiSolrIndexResource implements RestResource {
     public static final String BASE_RESOURCE_PATH = "/solr/index" + ResourcePaths.V1;
 
     private final SolrIndexStore solrIndexStore;
@@ -93,10 +92,5 @@ public class NewUiSolrIndexResource implements RestResource, HasHealthCheck {
     public Base64EncodedDocumentData exportDocument(@ApiParam("DocRef") final DocRef docRef) {
         final Map<String, byte[]> map = solrIndexStore.exportDocument(docRef, true, new ArrayList<>());
         return DocumentData.toBase64EncodedDocumentData(new DocumentData(docRef, map));
-    }
-
-    @Override
-    public Result getHealth() {
-        return Result.healthy();
     }
 }

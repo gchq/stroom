@@ -17,14 +17,11 @@
 
 package stroom.meta.impl.db;
 
-import com.google.inject.Guice;
-import org.junit.jupiter.api.AfterEach;
-import org.junit.jupiter.api.BeforeEach;
-import org.junit.jupiter.api.Test;
 import stroom.cache.impl.CacheModule;
 import stroom.cluster.lock.mock.MockClusterLockModule;
 import stroom.collection.mock.MockCollectionModule;
 import stroom.dictionary.mock.MockWordListProviderModule;
+import stroom.docrefinfo.mock.MockDocRefInfoModule;
 import stroom.meta.api.AttributeMap;
 import stroom.meta.api.MetaProperties;
 import stroom.meta.impl.MetaModule;
@@ -37,6 +34,11 @@ import stroom.query.api.v2.ExpressionTerm.Condition;
 import stroom.security.mock.MockSecurityContextModule;
 import stroom.test.common.util.db.DbTestModule;
 import stroom.util.date.DateUtil;
+
+import com.google.inject.Guice;
+import org.junit.jupiter.api.AfterEach;
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Test;
 
 import javax.inject.Inject;
 
@@ -60,6 +62,7 @@ class TestMetaValueDaoImpl {
                 new MockClusterLockModule(),
                 new MockSecurityContextModule(),
                 new MockCollectionModule(),
+                new MockDocRefInfoModule(),
                 new MockWordListProviderModule(),
                 new CacheModule(),
                 new DbTestModule(),

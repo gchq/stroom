@@ -16,10 +16,11 @@
 
 package stroom.authentication.token;
 
-import com.google.inject.AbstractModule;
 import stroom.authentication.api.JsonWebKeyFactory;
-import stroom.util.guice.GuiceUtil;
-import stroom.util.shared.RestResource;
+import stroom.util.guice.HasHealthCheckBinder;
+import stroom.util.guice.RestResourcesBinder;
+
+import com.google.inject.AbstractModule;
 
 public final class TokenModule extends AbstractModule {
     @Override
@@ -28,7 +29,10 @@ public final class TokenModule extends AbstractModule {
         bind(TokenEventLog.class).to(TokenEventLogImpl.class);
         bind(JsonWebKeyFactory.class).to(JsonWebKeyFactoryImpl.class);
 
-        GuiceUtil.buildMultiBinder(binder(), RestResource.class)
-                .addBinding(TokenResourceImpl.class);
+        RestResourcesBinder.create(binder())
+                .bind(TokenResourceImpl.class);
+
+        HasHealthCheckBinder.create(binder())
+                .bind(TokenServiceImpl.class);
     }
 }

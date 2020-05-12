@@ -16,19 +16,20 @@
 
 package stroom.security.impl;
 
-import com.google.inject.AbstractModule;
-import com.google.inject.multibindings.Multibinder;
-import stroom.util.entityevent.EntityEvent;
 import stroom.security.api.DocumentPermissionService;
+import stroom.security.api.TokenVerifier;
 import stroom.security.impl.event.PermissionChangeEvent;
 import stroom.security.impl.event.PermissionChangeEventLifecycleModule;
 import stroom.security.impl.event.PermissionChangeEventModule;
+import stroom.util.entityevent.EntityEvent;
 import stroom.util.guice.FilterBinder;
 import stroom.util.guice.FilterInfo;
 import stroom.util.guice.GuiceUtil;
-import stroom.util.guice.HealthCheckBinder;
+import stroom.util.guice.HasHealthCheckBinder;
+import stroom.util.guice.RestResourcesBinder;
 import stroom.util.shared.Clearable;
-import stroom.util.shared.RestResource;
+
+import com.google.inject.AbstractModule;
 
 import javax.servlet.http.HttpSessionListener;
 
@@ -42,6 +43,7 @@ public class SecurityModule extends AbstractModule {
 
         bind(DocumentPermissionService.class).to(DocumentPermissionServiceImpl.class);
         bind(UserService.class).to(UserServiceImpl.class);
+        bind(TokenVerifier.class).to(JWTService.class);
 
         FilterBinder.create(binder())
                 .bind(new FilterInfo(ContentSecurityFilter.class.getSimpleName(), MATCH_ALL_PATHS),
@@ -59,24 +61,24 @@ public class SecurityModule extends AbstractModule {
         GuiceUtil.buildMultiBinder(binder(), HttpSessionListener.class)
                 .addBinding(SessionMap.class);
 
-        final Multibinder<EntityEvent.Handler> entityEventHandlerBinder = Multibinder.newSetBinder(binder(), EntityEvent.Handler.class);
-        entityEventHandlerBinder.addBinding().to(UserGroupsCache.class);
-        entityEventHandlerBinder.addBinding().to(UserAppPermissionsCache.class);
+        GuiceUtil.buildMultiBinder(binder(), EntityEvent.Handler.class)
+                .addBinding(UserGroupsCache.class)
+                .addBinding(UserAppPermissionsCache.class);
 
-        final Multibinder<PermissionChangeEvent.Handler> permissionChangeEventHandlerBinder = Multibinder.newSetBinder(binder(), PermissionChangeEvent.Handler.class);
-        permissionChangeEventHandlerBinder.addBinding().to(UserDocumentPermissionsCache.class);
+        GuiceUtil.buildMultiBinder(binder(), PermissionChangeEvent.Handler.class)
+            .addBinding(UserDocumentPermissionsCache.class);
 
-        HealthCheckBinder.create(binder())
+        HasHealthCheckBinder.create(binder())
                 .bind(JWTService.class);
 
-        GuiceUtil.buildMultiBinder(binder(), RestResource.class)
-                .addBinding(AppPermissionResourceImpl.class)
-                .addBinding(AuthenticationResourceImpl.class)
-                .addBinding(AuthorisationResource.class)
-                .addBinding(DocPermissionResourceImpl.class)
-                .addBinding(DocumentPermissionResourceImpl.class)
-                .addBinding(SessionResourceImpl.class)
-                .addBinding(UserAppPermissionResourceImpl.class)
-                .addBinding(UserResourceImpl.class);
+        RestResourcesBinder.create(binder())
+                .bind(AppPermissionResourceImpl.class)
+                .bind(AuthenticationResourceImpl.class)
+                .bind(AuthorisationResource.class)
+                .bind(DocPermissionResourceImpl.class)
+                .bind(DocumentPermissionResourceImpl.class)
+                .bind(SessionResourceImpl.class)
+                .bind(UserAppPermissionResourceImpl.class)
+                .bind(UserResourceImpl.class);
     }
 }

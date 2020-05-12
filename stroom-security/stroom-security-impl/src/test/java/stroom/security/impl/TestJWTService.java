@@ -64,7 +64,7 @@ class TestJWTService {
 
         final JwtClaims jwtClaims;
         try {
-            jwtClaims= jwtService.verifyToken(apiKey);
+            jwtClaims= jwtService.extractTokenClaims(apiKey);
         } catch (InvalidJwtException e) {
             throw new RuntimeException("Token failed verification", e);
         }

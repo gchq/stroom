@@ -2,6 +2,7 @@ package stroom.explorer.impl;
 
 import stroom.docref.DocRef;
 import stroom.docref.DocRefInfo;
+import stroom.docstore.api.UniqueNameUtil;
 import stroom.explorer.api.ExplorerActionHandler;
 import stroom.explorer.shared.DocumentType;
 import stroom.explorer.shared.ExplorerConstants;
@@ -10,7 +11,9 @@ import stroom.security.shared.DocumentPermissionNames;
 import stroom.util.shared.PermissionException;
 
 import javax.inject.Inject;
+import java.util.Collections;
 import java.util.Map;
+import java.util.Set;
 import java.util.UUID;
 
 class FolderExplorerActionHandler implements ExplorerActionHandler {
@@ -33,18 +36,18 @@ class FolderExplorerActionHandler implements ExplorerActionHandler {
     }
 
     @Override
-    public DocRef copyDocument(final String originalUuid,
-                               final String copyUuid,
-                               final Map<String, String> otherCopiesByOriginalUuid) {
-        final ExplorerTreeNode explorerTreeNode = explorerTreeDao.findByUUID(originalUuid);
+    public DocRef copyDocument(final DocRef docRef, final Set<String> existingNames) {
+        final ExplorerTreeNode explorerTreeNode = explorerTreeDao.findByUUID(docRef.getUuid());
         if (explorerTreeNode == null) {
             throw new RuntimeException("Unable to find tree node to copy");
         }
 
-        if (!securityContext.hasDocumentPermission(originalUuid, DocumentPermissionNames.READ)) {
+        if (!securityContext.hasDocumentPermission(docRef.getUuid(), DocumentPermissionNames.READ)) {
             throw new PermissionException(securityContext.getUserId(), "You do not have permission to read (" + FOLDER + ")");
         }
-        return new DocRef(FOLDER, copyUuid, explorerTreeNode.getName());
+
+        final String newName = UniqueNameUtil.getCopyName(explorerTreeNode.getName(), existingNames);
+        return new DocRef(FOLDER, UUID.randomUUID().toString(), newName);
     }
 
     @Override
@@ -93,7 +96,7 @@ class FolderExplorerActionHandler implements ExplorerActionHandler {
         }
 
         if (!securityContext.hasDocumentPermission(uuid, DocumentPermissionNames.READ)) {
-            throw new stroom.document.shared.PermissionException(securityContext.getUserId(), "You do not have permission to read (" + FOLDER + ")");
+            throw new PermissionException(securityContext.getUserId(), "You do not have permission to read (" + FOLDER + ")");
         }
 
         return new DocRefInfo.Builder()
@@ -110,4 +113,26 @@ class FolderExplorerActionHandler implements ExplorerActionHandler {
     public DocumentType getDocumentType() {
         return new DocumentType(1, FolderExplorerActionHandler.FOLDER, FolderExplorerActionHandler.FOLDER);
     }
+
+    ////////////////////////////////////////////////////////////////////////
+    // START OF HasDependencies
+    ////////////////////////////////////////////////////////////////////////
+
+    @Override
+    public Map<DocRef, Set<DocRef>> getDependencies() {
+        return Collections.emptyMap();
+    }
+
+    @Override
+    public Set<DocRef> getDependencies(final DocRef docRef) {
+        return Collections.emptySet();
+    }
+
+    @Override
+    public void remapDependencies(final DocRef docRef, final Map<DocRef, DocRef> remappings) {
+    }
+
+    ////////////////////////////////////////////////////////////////////////
+    // END OF HasDependencies
+    ////////////////////////////////////////////////////////////////////////
 }

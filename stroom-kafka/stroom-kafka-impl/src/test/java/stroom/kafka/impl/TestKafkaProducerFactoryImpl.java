@@ -1,6 +1,12 @@
 package stroom.kafka.impl;
 
-import com.codahale.metrics.health.HealthCheck;
+import stroom.docref.DocRef;
+import stroom.docstore.shared.DocRefUtil;
+import stroom.kafka.api.KafkaProducerFactory;
+import stroom.kafka.api.SharedKafkaProducer;
+import stroom.kafka.shared.KafkaConfigDoc;
+import stroom.util.sysinfo.SystemInfoResult;
+
 import org.apache.kafka.clients.producer.KafkaProducer;
 import org.jetbrains.annotations.NotNull;
 import org.junit.jupiter.api.Test;
@@ -10,11 +16,6 @@ import org.mockito.Mockito;
 import org.mockito.junit.jupiter.MockitoExtension;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import stroom.docref.DocRef;
-import stroom.docstore.shared.DocRefUtil;
-import stroom.kafka.api.KafkaProducerFactory;
-import stroom.kafka.api.SharedKafkaProducer;
-import stroom.kafka.shared.KafkaConfigDoc;
 
 import java.util.List;
 import java.util.Optional;
@@ -198,25 +199,25 @@ public class TestKafkaProducerFactoryImpl {
         Mockito.when(kafkaConfigDocCache.get(Mockito.eq(docRef2)))
                 .thenReturn(Optional.of(kafkaConfigDoc2));
 
-        final HealthCheck.Result health = kafkaProducerFactory.getHealth();
-        LOGGER.info(health.toString());
-        assertThat((List<?>) ( health.getDetails().get("sharedProducers") )).isEmpty();
+        final SystemInfoResult systemInfoResult = kafkaProducerFactory.getSystemInfo();
+        LOGGER.info(systemInfoResult.toString());
+        assertThat((List<?>) ( systemInfoResult.getDetails().get("sharedProducers") )).isEmpty();
 
 
         // Now get both so the factory should be holding both
         try (final SharedKafkaProducer sharedKafkaProducer1 = kafkaProducerFactory.getSharedProducer(docRef1)) {
             try (final SharedKafkaProducer sharedKafkaProducer2 = kafkaProducerFactory.getSharedProducer(docRef2)) {
 
-                final HealthCheck.Result health2 = kafkaProducerFactory.getHealth();
-                LOGGER.info(health2.toString());
-                assertThat((List<?>)( health2.getDetails().get("sharedProducers") )).hasSize(2);
+                final SystemInfoResult systemInfoResult2 = kafkaProducerFactory.getSystemInfo();
+                LOGGER.info(systemInfoResult2.toString());
+                assertThat((List<?>)( systemInfoResult2.getDetails().get("sharedProducers") )).hasSize(2);
             }
         }
 
         // having released the KPSs they should still be in the factory
-        final HealthCheck.Result health3 = kafkaProducerFactory.getHealth();
-        LOGGER.info(health3.toString());
-        assertThat((List<?>)( health3.getDetails().get("sharedProducers") )).hasSize(2);
+        final SystemInfoResult systemInfoResult3 = kafkaProducerFactory.getSystemInfo();
+        LOGGER.info(systemInfoResult3.toString());
+        assertThat((List<?>)( systemInfoResult3.getDetails().get("sharedProducers") )).hasSize(2);
     }
 
     @NotNull

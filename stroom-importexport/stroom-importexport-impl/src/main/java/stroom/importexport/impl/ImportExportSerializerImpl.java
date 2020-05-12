@@ -43,6 +43,7 @@ import javax.inject.Inject;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.OutputStream;
+import java.nio.charset.Charset;
 import java.nio.file.DirectoryStream;
 import java.nio.file.FileVisitOption;
 import java.nio.file.FileVisitResult;
@@ -50,6 +51,7 @@ import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.attribute.BasicFileAttributes;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.EnumSet;
 import java.util.HashMap;
 import java.util.HashSet;
@@ -71,6 +73,7 @@ class ImportExportSerializerImpl implements ImportExportSerializer {
     private final ImportExportActionHandlers importExportActionHandlers;
     private final SecurityContext securityContext;
     private final ImportExportDocumentEventLog importExportDocumentEventLog;
+    private static final byte[] LINE_END_CHAR_BYTES = "\n".getBytes(Charset.defaultCharset());
 
     @Inject
     ImportExportSerializerImpl(final ExplorerService explorerService,
@@ -267,25 +270,31 @@ class ImportExportSerializerImpl implements ImportExportSerializer {
                             importState.isAction())) {
                         final ImportExportActionHandler.ImpexDetails importDetails = importExportActionHandler.importDocument(docRef, dataMap, importState, importMode);
 
-                        final DocRef imported;
-                        if (importDetails != null)
-                            imported = importDetails.getDocRef();
-                        else
-                            imported = null;
-                        if (imported == null)
-                            throw new RuntimeException("Import failed - no docref returned");
+                        if (importDetails.isIgnore()) {
+                            // Should skip this item so remove it from the map.
+                            confirmMap.remove(docRef);
+                        }
+                        else {
+                            final DocRef imported;
+                            if (importDetails != null)
+                                imported = importDetails.getDocRef();
+                            else
+                                imported = null;
+                            if (imported == null)
+                                throw new RuntimeException("Import failed - no docref returned");
 
-                        final String altDestPath = importDetails.getLocationRef();
-                        if (altDestPath != null)
-                            importState.setDestPath(altDestPath);
+                            final String altDestPath = importDetails.getLocationRef();
+                            if (altDestPath != null)
+                                importState.setDestPath(altDestPath);
 
-                        // Add explorer node afterwards on successful import as they won't be controlled by doc service.
-                        if (importState.ok(importMode)) {
-                            if (existingNode.isEmpty() && !(importExportActionHandler instanceof NonExplorerDocRefProvider)) {
-                                explorerNodeService.createNode(imported, folderRef, PermissionInheritance.DESTINATION);
+                            // Add explorer node afterwards on successful import as they won't be controlled by doc service.
+                            if (importState.ok(importMode)) {
+                                if (existingNode.isEmpty() && !(importExportActionHandler instanceof NonExplorerDocRefProvider)) {
+                                    explorerNodeService.createNode(imported, folderRef, PermissionInheritance.DESTINATION);
+                                }
+
+                                importExportDocumentEventLog.importDocument(type, imported.getUuid(), name, null);
                             }
-
-                            importExportDocumentEventLog.importDocument(type, imported.getUuid(), name, null);
                         }
                     } else {
                         // We can't import this item so remove it from the map.
@@ -460,6 +469,10 @@ class ImportExportSerializerImpl implements ImportExportSerializer {
                     try {
                         final OutputStream outputStream = Files.newOutputStream(parentDir.resolve(fileName));
                         outputStream.write(v);
+                        // POSIX standard is for all files to end with a line end (\n) so add one if not there
+                        if (isMissingLineEndAsLastChar(v)) {
+                            outputStream.write(LINE_END_CHAR_BYTES);
+                        }
                         outputStream.close();
 
                     } catch (final IOException e) {
@@ -472,6 +485,14 @@ class ImportExportSerializerImpl implements ImportExportSerializer {
         }
     }
 
+    private boolean isMissingLineEndAsLastChar(final byte[] bytes) {
+        if (bytes.length < LINE_END_CHAR_BYTES.length) {
+            return false;
+        } else {
+            byte[] lastChar = Arrays.copyOfRange(bytes, bytes.length - LINE_END_CHAR_BYTES.length, bytes.length);
+            return !Arrays.equals(LINE_END_CHAR_BYTES, lastChar);
+        }
+    }
 
     private void writeNodeProperties(final ExplorerNode explorerNode, final List<String> pathElements, final Path parentDir, final String filePrefix, final List<Message> messageList) {
         final String fileName = filePrefix + ".node";

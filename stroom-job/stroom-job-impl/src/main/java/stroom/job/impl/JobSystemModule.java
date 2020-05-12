@@ -16,31 +16,87 @@
 
 package stroom.job.impl;
 
-import com.google.inject.AbstractModule;
 import stroom.event.logging.api.ObjectInfoProviderBinder;
 import stroom.job.api.JobManager;
-import stroom.job.api.ScheduledJobsModule;
+import stroom.job.api.ScheduledJobsBinder;
 import stroom.job.shared.Job;
 import stroom.job.shared.JobNode;
-import stroom.util.guice.GuiceUtil;
-import stroom.util.shared.RestResource;
+import stroom.lifecycle.api.LifecycleBinder;
+import stroom.util.RunnableWrapper;
+import stroom.util.guice.RestResourcesBinder;
+
+import com.google.inject.AbstractModule;
+
+import javax.inject.Inject;
+
+import static stroom.job.api.Schedule.ScheduleType.PERIODIC;
 
 public class JobSystemModule extends AbstractModule {
     @Override
     protected void configure() {
-        // Ensure the scheduled jobs binder is present even if we don't bind actual jobs.
-        install(new ScheduledJobsModule());
 
         bind(JobManager.class).to(JobManagerImpl.class);
 
-        GuiceUtil.buildMultiBinder(binder(), RestResource.class)
-                .addBinding(JobResourceImpl.class)
-                .addBinding(JobNodeResourceImpl.class)
-                .addBinding(ScheduledTimeResourceImpl.class);
+        RestResourcesBinder.create(binder())
+                .bind(JobResourceImpl.class)
+                .bind(JobNodeResourceImpl.class)
+                .bind(ScheduledTimeResourceImpl.class);
 
         // Provide object info to the logging service.
         ObjectInfoProviderBinder.create(binder())
                 .bind(Job.class, JobObjectInfoProvider.class)
                 .bind(JobNode.class, JobNodeObjectInfoProvider.class);
+
+
+        // Ensure the scheduled jobs binder is present even if we don't bind actual jobs.
+        ScheduledJobsBinder.create(binder())
+                .bindJobTo(FetchNewTasks.class, builder -> builder
+                        .withName("Fetch new tasks")
+                        .withDescription("Every 10 seconds the Stroom lifecycle service will try and " +
+                                "fetch new tasks for execution.")
+                        .withManagedState(false)
+                        .withSchedule(PERIODIC, "10s"));
+
+        // Make sure the last thing to start and the first thing to stop is the scheduled task executor.
+        LifecycleBinder.create(binder())
+                .bindStartupTaskTo(JobBootstrapStartup.class)
+                .bindShutdownTaskTo(DistributedTaskFetcherShutdown.class, 999)
+                .bindStartupTaskTo(ScheduledTaskExecutorStartup.class, Integer.MIN_VALUE)
+                .bindShutdownTaskTo(ScheduledTaskExecutorShutdown.class, Integer.MIN_VALUE);
+    }
+
+    private static class FetchNewTasks extends RunnableWrapper {
+        @Inject
+        FetchNewTasks(final DistributedTaskFetcher distributedTaskFetcher) {
+            super(distributedTaskFetcher::execute);
+        }
+    }
+
+    private static class JobBootstrapStartup extends RunnableWrapper {
+        @Inject
+        JobBootstrapStartup(final JobBootstrap jobBootstrap) {
+            super(jobBootstrap::startup);
+        }
+    }
+
+    private static class DistributedTaskFetcherShutdown extends RunnableWrapper {
+        @Inject
+        DistributedTaskFetcherShutdown(final DistributedTaskFetcher distributedTaskFetcher) {
+            super(distributedTaskFetcher::shutdown);
+        }
+    }
+
+    private static class ScheduledTaskExecutorStartup extends RunnableWrapper {
+        @Inject
+        ScheduledTaskExecutorStartup(final ScheduledTaskExecutor scheduledTaskExecutor) {
+            super(scheduledTaskExecutor::startup);
+        }
+    }
+
+    private static class ScheduledTaskExecutorShutdown extends RunnableWrapper {
+        @Inject
+        ScheduledTaskExecutorShutdown(final ScheduledTaskExecutor scheduledTaskExecutor) {
+            super(scheduledTaskExecutor::shutdown);
+        }
     }
 }

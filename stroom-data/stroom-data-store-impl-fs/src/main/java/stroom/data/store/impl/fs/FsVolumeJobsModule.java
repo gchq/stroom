@@ -1,21 +1,24 @@
 package stroom.data.store.impl.fs;
 
-import stroom.job.api.ScheduledJobsModule;
-import stroom.job.api.RunnableWrapper;
+import stroom.util.RunnableWrapper;
+import stroom.job.api.ScheduledJobsBinder;
+
+import com.google.inject.AbstractModule;
 
 import javax.inject.Inject;
 
 import static stroom.job.api.Schedule.ScheduleType.PERIODIC;
 
-public class FsVolumeJobsModule extends ScheduledJobsModule {
+public class FsVolumeJobsModule extends AbstractModule {
     @Override
     protected void configure() {
         super.configure();
-        bindJob()
-                .name("File System Volume Status")
-                .description("Update the usage status of file system volumes")
-                .schedule(PERIODIC, "5m")
-                .to(FileVolumeStatus.class);
+
+        ScheduledJobsBinder.create(binder())
+                .bindJobTo(FileVolumeStatus.class, builder -> builder
+                        .withName("File System Volume Status")
+                        .withDescription("Update the usage status of file system volumes")
+                        .withSchedule(PERIODIC, "5m"));
     }
 
     private static class FileVolumeStatus extends RunnableWrapper {

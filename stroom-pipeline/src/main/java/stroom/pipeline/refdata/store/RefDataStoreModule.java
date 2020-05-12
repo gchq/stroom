@@ -17,8 +17,8 @@
 
 package stroom.pipeline.refdata.store;
 
-import com.google.inject.AbstractModule;
-import com.google.inject.assistedinject.FactoryModuleBuilder;
+import stroom.util.RunnableWrapper;
+import stroom.job.api.ScheduledJobsBinder;
 import stroom.pipeline.refdata.store.offheapstore.FastInfosetByteBufferConsumer;
 import stroom.pipeline.refdata.store.offheapstore.OffHeapRefDataValueProxyConsumer;
 import stroom.pipeline.refdata.store.offheapstore.RefDataOffHeapStore;
@@ -35,7 +35,14 @@ import stroom.pipeline.refdata.store.onheapstore.OnHeapRefDataValueProxyConsumer
 import stroom.pipeline.refdata.store.onheapstore.StringValueConsumer;
 import stroom.pipeline.refdata.util.ByteBufferPool;
 import stroom.pipeline.refdata.util.PooledByteBufferOutputStream;
-import stroom.util.guice.HealthCheckBinder;
+import stroom.util.guice.HasSystemInfoBinder;
+
+import com.google.inject.AbstractModule;
+import com.google.inject.assistedinject.FactoryModuleBuilder;
+
+import javax.inject.Inject;
+
+import static stroom.job.api.Schedule.ScheduleType.CRON;
 
 public class RefDataStoreModule extends AbstractModule {
     @Override
@@ -64,8 +71,21 @@ public class RefDataStoreModule extends AbstractModule {
         install(new FactoryModuleBuilder().build(PooledByteBufferOutputStream.Factory.class));
         install(new FactoryModuleBuilder().build(RefDataValueProxyConsumerFactory.Factory.class));
 
-        HealthCheckBinder.create(binder())
-                .bind(RefDataOffHeapStore.class)
-                .bind(ByteBufferPool.class);
+        HasSystemInfoBinder.create(binder())
+                .bind(ByteBufferPool.class)
+                .bind(RefDataOffHeapStore.class);
+
+        ScheduledJobsBinder.create(binder())
+                .bindJobTo(RefDataPurge.class, builder -> builder
+                        .withName("Ref Data Off-heap Store Purge")
+                        .withDescription("Purge old reference data from the off heap store as configured")
+                        .withSchedule(CRON, "0 2 *"));
+    }
+
+    private static class RefDataPurge extends RunnableWrapper {
+        @Inject
+        RefDataPurge(final RefDataStoreFactory refDataStoreFactory) {
+            super(refDataStoreFactory::purgeOldData);
+        }
     }
 }

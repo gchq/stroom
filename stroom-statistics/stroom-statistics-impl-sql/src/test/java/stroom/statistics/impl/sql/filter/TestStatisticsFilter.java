@@ -43,6 +43,7 @@ import stroom.statistics.impl.sql.shared.StatisticStoreDoc;
 import stroom.statistics.impl.sql.shared.StatisticType;
 import stroom.statistics.impl.sql.shared.StatisticsDataSourceData;
 import stroom.util.date.DateUtil;
+import stroom.util.entityevent.EntityEventBus;
 
 import java.io.ByteArrayInputStream;
 import java.util.ArrayList;
@@ -455,7 +456,7 @@ class TestStatisticsFilter implements Statistics {
         final SecurityContext securityContext = new MockSecurityContext();
 
         return new StatisticStoreStoreImpl(
-                new StoreFactoryImpl(securityContext, persistence),
+                new StoreFactoryImpl(persistence, null, securityContext),
                 securityContext,
                 new StatisticStoreSerialiser(new Serialiser2FactoryImpl()));
     }

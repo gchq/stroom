@@ -16,14 +16,19 @@
 
 package stroom.cluster.impl;
 
-import com.google.inject.AbstractModule;
-import com.google.inject.multibindings.Multibinder;
 import stroom.cluster.api.ClusterCallServiceLocal;
 import stroom.cluster.api.ClusterCallServiceRemote;
 import stroom.cluster.api.ClusterNodeManager;
 import stroom.cluster.api.ClusterServiceBinder;
+import stroom.lifecycle.api.LifecycleBinder;
+import stroom.util.RunnableWrapper;
 import stroom.util.entityevent.EntityEvent;
+import stroom.util.guice.GuiceUtil;
 import stroom.util.guice.ServletBinder;
+
+import com.google.inject.AbstractModule;
+
+import javax.inject.Inject;
 
 public class ClusterModule extends AbstractModule {
     @Override
@@ -38,8 +43,11 @@ public class ClusterModule extends AbstractModule {
         ClusterServiceBinder.create(binder())
                 .bind(ClusterNodeManager.SERVICE_NAME, ClusterNodeManagerImpl.class);
 
-        final Multibinder<EntityEvent.Handler> entityEventHandlerBinder = Multibinder.newSetBinder(binder(), EntityEvent.Handler.class);
-        entityEventHandlerBinder.addBinding().to(ClusterNodeManagerImpl.class);
+        GuiceUtil.buildMultiBinder(binder(), EntityEvent.Handler.class)
+                .addBinding(ClusterNodeManagerImpl.class);
+
+        LifecycleBinder.create(binder())
+                .bindStartupTaskTo(ClusterNodeManagerInit.class);
     }
 
     @Override
@@ -52,5 +60,12 @@ public class ClusterModule extends AbstractModule {
     @Override
     public int hashCode() {
         return 0;
+    }
+
+    private static class ClusterNodeManagerInit extends RunnableWrapper {
+        @Inject
+        ClusterNodeManagerInit(final ClusterNodeManagerImpl clusterNodeManager) {
+            super(clusterNodeManager::init);
+        }
     }
 }

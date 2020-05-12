@@ -40,6 +40,8 @@ plugins {
 //    id 'java-library'
 
 //    id 'nebula.lint' version '10.4.2'
+
+//    id "com.vanniktech.dependency.graph.generator" version "0.5.0"
 }
 
 wrapper {
@@ -48,6 +50,7 @@ wrapper {
 
 apply plugin: 'ca.cutterslade.analyze'
 apply plugin: 'de.undercouch.download'
+//apply plugin: 'com.vanniktech.dependency.graph.generator'
 
 if (!JavaVersion.current().isJava12()) {
     throw new GradleException("This build must be run with Java 12 (current = " + JavaVersion.current() + ")")
@@ -90,7 +93,7 @@ ext.versions = [
         hadoopHdfsShaded  : 'v2.6.4-4',
         stroomAuth        : 'v7.0-beta.4', // Needed for the correct version of the client API
         stroomExpression  : 'v3.0.3',
-        stroomQuery       : 'v4.0-beta.65', // same version for stroom-docref, stroom-query-api and stroom-query-common
+        stroomQuery       : 'v4.0-beta.68', // same version for stroom-docref, stroom-query-api and stroom-query-common
         stroomStats       : 'v0.6.0-alpha.2',
 
         // NOTE: Curator relies on zookeeper and we are pegged to zookeeper 3.4.5 server by the cloudera stack.
@@ -817,5 +820,28 @@ task clean() {
     dependsOn clearContentPackImportDir
     dependsOn clearContentPackDownloadDir
 }
+
+
+
+
+
+
+//import com.vanniktech.dependency.graph.generator.DependencyGraphGeneratorPlugin
+//import com.vanniktech.dependency.graph.generator.DependencyGraphGeneratorExtension.Generator
+//import guru.nidi.graphviz.attribute.Color
+//import guru.nidi.graphviz.attribute.Style
+//
+//plugins.apply(DependencyGraphGeneratorPlugin)
+//
+//def stroomGenerator = new Generator(
+//        "stroomLibraries", // Suffix for our Gradle task.
+//        { dependency -> dependency.getModuleGroup().startsWith("stroom") }, // Only want stroom.
+//        { dependency -> false }, // Include transitive dependencies.
+//        { node, dependency -> node.add(Style.FILLED, Color.rgb("#ff6f00")) }, // Give them some stroom color.
+//)
+//
+//dependencyGraphGenerator {
+//    generators = [ stroomGenerator ]
+//}
 
 

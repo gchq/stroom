@@ -91,7 +91,7 @@ public class TabLayoutConfig extends LayoutConfig {
         if (tabs == null) {
             return Collections.emptyList();
         }
-        return tabs.stream().filter(TabConfig::isVisible).collect(Collectors.toList());
+        return tabs.stream().filter(TabConfig::visible).collect(Collectors.toList());
     }
 
     public TabConfig get(final int index) {

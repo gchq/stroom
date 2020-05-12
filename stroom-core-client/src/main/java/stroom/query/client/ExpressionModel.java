@@ -53,8 +53,8 @@ public class ExpressionModel {
                 final ExpressionOperator expressionOperator = (ExpressionOperator) expressionItem;
 
                 final Operator operator = new Operator();
-                operator.setOp(expressionOperator.getOp());
-                operator.setEnabled(expressionOperator.isEnabled());
+                operator.setOp(expressionOperator.op());
+                operator.setEnabled(expressionOperator.enabled());
                 return operator;
 
             } else if (expressionItem instanceof ExpressionTerm) {
@@ -65,7 +65,7 @@ public class ExpressionModel {
                 term.setCondition(expressionTerm.getCondition());
                 term.setValue(expressionTerm.getValue());
                 term.setDocRef(expressionTerm.getDocRef());
-                term.setEnabled(expressionTerm.isEnabled());
+                term.setEnabled(expressionTerm.enabled());
 
                 return term;
             }

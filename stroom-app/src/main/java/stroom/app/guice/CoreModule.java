@@ -24,6 +24,7 @@ public class CoreModule extends AbstractModule {
         install(new stroom.core.query.QueryModule());
         install(new stroom.core.receive.ReceiveDataModule());
         install(new stroom.core.servlet.ServletModule());
+        install(new stroom.core.sysinfo.SystemInfoModule());
         install(new stroom.core.welcome.SessionInfoModule());
         install(new stroom.core.welcome.WelcomeModule());
         install(new stroom.dashboard.impl.DashboardModule());
@@ -70,7 +71,6 @@ public class CoreModule extends AbstractModule {
         install(new stroom.pipeline.xsltfunctions.CommonXsltFunctionModule());
         install(new stroom.pipeline.xsltfunctions.DataStoreXsltFunctionModule());
         install(new stroom.processor.impl.ProcessorModule());
-        install(new stroom.processor.impl.StreamTaskLifecycleModule());
         install(new stroom.processor.impl.db.ProcessorDbModule());
         install(new stroom.receive.common.RemoteFeedModule());
         install(new stroom.receive.rules.impl.ReceiveDataRuleSetModule());

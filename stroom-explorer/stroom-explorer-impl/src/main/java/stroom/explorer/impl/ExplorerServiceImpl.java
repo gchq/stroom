@@ -19,14 +19,12 @@ package stroom.explorer.impl;
 
 import stroom.collection.api.CollectionService;
 import stroom.docref.DocRef;
-import stroom.docref.DocRefInfo;
 import stroom.explorer.api.ExplorerActionHandler;
 import stroom.explorer.api.ExplorerDecorator;
 import stroom.explorer.api.ExplorerNodeService;
 import stroom.explorer.api.ExplorerService;
 import stroom.explorer.shared.BulkActionResult;
 import stroom.explorer.shared.DocumentType;
-import stroom.explorer.shared.ExplorerConstants;
 import stroom.explorer.shared.ExplorerNode;
 import stroom.explorer.shared.ExplorerNode.NodeState;
 import stroom.explorer.shared.ExplorerTreeFilter;
@@ -51,10 +49,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.Optional;
 import java.util.Set;
-import java.util.UUID;
-import java.util.function.BiConsumer;
 import java.util.stream.Collectors;
-import java.util.stream.Stream;
 
 @Singleton
 class ExplorerServiceImpl implements ExplorerService, CollectionService {
@@ -394,118 +389,89 @@ class ExplorerServiceImpl implements ExplorerService, CollectionService {
                         .map(ExplorerNode::getDocRef)
                         .orElseThrow(() -> new RuntimeException("Cannot copy into null destination")));
 
-        final List<DocRef> resultDocRefs = new ArrayList<>();
         final StringBuilder resultMessage = new StringBuilder();
 
-        final Map<DocRef, List<ExplorerNode>> childNodesByParent = new HashMap<>();
-        recurseGetNodes(docRefs.stream(), childNodesByParent::put);
+        // Create a map to store source to destination document references.
+        final Map<DocRef, DocRef> remappings = new HashMap<>();
 
-        // TODO : @66 Change the way this works so that copy allows the underlying service to create it's own UUIDs and then subsequently remap references in all copied items (see gh-899)
-        // Create the UUID's of the copies up front
-        final Map<String, String> copiesByOriginalUuid = childNodesByParent.keySet().stream()
-                .collect(Collectors.toMap(DocRef::getUuid, (d) -> UUID.randomUUID().toString()));
+        // Discover all affected folder children.
+        final Map<DocRef, List<DocRef>> childMap = new HashMap<>();
+        createChildMap(docRefs, childMap);
 
-        docRefs.forEach(sourceDocRef ->
-                explorerNodeService.getParent(sourceDocRef)
-                        .map(ExplorerNode::getDocRef)
-                        .ifPresent(sourceParent -> recurseCopy(sourceParent,
-                                sourceDocRef,
-                                destinationFolderRef,
-                                permissionInheritance,
-                                resultDocRefs,
-                                resultMessage,
-                                copiesByOriginalUuid,
-                                childNodesByParent)
-                        )
-        );
+        // Perform a copy on the selected items.
+        docRefs.forEach(sourceDocRef -> copy(sourceDocRef,
+                destinationFolderRef,
+                permissionInheritance,
+                resultMessage,
+                remappings));
+
+        // Recursively copy any selected folders.
+        docRefs.forEach(sourceDocRef -> recurseCopy(sourceDocRef,
+                permissionInheritance,
+                resultMessage,
+                remappings,
+                childMap));
+
+        // Remap all dependencies for the copied items.
+        remappings.values().forEach(newDocRef -> {
+            final ExplorerActionHandler handler = explorerActionHandlers.getHandler(newDocRef.getType());
+            if (handler != null) {
+                handler.remapDependencies(newDocRef, remappings);
+            }
+        });
 
         // Make sure the tree model is rebuilt.
         rebuildTree();
 
-        return new BulkActionResult(resultDocRefs, resultMessage.toString());
+        return new BulkActionResult(new ArrayList<>(remappings.values()), resultMessage.toString());
     }
 
     /**
-     * This traverses the explorer tree and creates a cache of child Explorer Nodes by their parent Doc Ref.
-     * This will be used to pre-choose UUID's for all the copies to be made, and then used as a cache for executing
-     * the copy.
+     * Copy an item into a destination folder.
      *
-     * @param docRefs          The source doc refs being copied
-     * @param childNodesByUuid The map of children by parent being built
+     * @param sourceDocRef          The doc ref for the item being copied
+     * @param destinationFolderRef  The doc ref for the destination folder
+     * @param permissionInheritance The mode of permission inheritance being used for the whole operation
+     * @param resultMessage         Allow contribution to result message
+     * @param remappings            A map to store source to destination document references
      */
-    private void recurseGetNodes(final Stream<DocRef> docRefs,
-                                 final BiConsumer<DocRef, List<ExplorerNode>> childNodesByUuid) {
-        docRefs.forEach(sourceDocRef -> {
-            final List<ExplorerNode> sourceDescendants = explorerNodeService.getChildren(sourceDocRef);
-            childNodesByUuid.accept(sourceDocRef, sourceDescendants);
-
-            sourceDescendants.stream()
-                    .map(ExplorerNode::getDocRef)
-                    .map(Stream::of)
-                    .forEach(l -> recurseGetNodes(l, childNodesByUuid));
-        });
-    }
-
-    /**
-     * Copy the contents of a folder recursively
-     *
-     * @param sourceDirectoryFolderRef The doc ref of the folder that the source belongs to
-     * @param sourceDocRef             The doc ref for the folder being copied
-     * @param destinationFolderRef     The doc ref for the destination folder
-     * @param permissionInheritance    The mode of permission inheritance being used for the whole operation
-     * @param resultDocRefs            Allow contribution to result doc refs
-     * @param resultMessage            Allow contribution to result message
-     * @param copiesByOriginalUuid     UUID's of the intended copies by their original UUID
-     * @param childNodesByParent       A cached version of the explorer node tree
-     */
-    private void recurseCopy(final DocRef sourceDirectoryFolderRef,
-                             final DocRef sourceDocRef,
-                             final DocRef destinationFolderRef,
-                             final PermissionInheritance permissionInheritance,
-                             final List<DocRef> resultDocRefs,
-                             final StringBuilder resultMessage,
-                             final Map<String, String> copiesByOriginalUuid,
-                             final Map<DocRef, List<ExplorerNode>> childNodesByParent) {
-        final String destinationUuid = copiesByOriginalUuid.get(sourceDocRef.getUuid());
-        if (null == destinationUuid) return;
-
-        final ExplorerActionHandler handler = explorerActionHandlers.getHandler(sourceDocRef.getType());
+    private void copy(final DocRef sourceDocRef,
+                      final DocRef destinationFolderRef,
+                      final PermissionInheritance permissionInheritance,
+                      final StringBuilder resultMessage,
+                      final Map<DocRef, DocRef> remappings) {
 
         try {
-            // Check that the user is allowed to create an item of this type in the destination folder.
-            checkCreatePermission(getUUID(destinationFolderRef), sourceDocRef.getType());
-            // Copy the item to the destination folder.
-            DocRef destinationDocRef = handler.copyDocument(sourceDocRef.getUuid(),
-                    destinationUuid,
-                    copiesByOriginalUuid);
-            explorerEventLog.copy(sourceDocRef, destinationFolderRef, permissionInheritance, null);
+            // Ensure we haven't already copied this item as part of a folder copy.
+            if (!remappings.containsKey(sourceDocRef)) {
+                // Get a handler to performt he copy.
+                final ExplorerActionHandler handler = explorerActionHandlers.getHandler(sourceDocRef.getType());
 
-            // Create the explorer node
-            if (destinationDocRef != null) {
-                explorerNodeService.copyNode(sourceDocRef, destinationDocRef, destinationFolderRef, permissionInheritance);
+                // Check that the user is allowed to create an item of this type in the destination folder.
+                checkCreatePermission(getUUID(destinationFolderRef), sourceDocRef.getType());
 
-                // If the source directory and destination directory are the same, rename it with 'copy of'
-                if (sourceDirectoryFolderRef.getUuid().equals(destinationFolderRef.getUuid())) {
-                    final String copyName = getCopyName(destinationFolderRef, destinationDocRef);
-                    destinationDocRef = rename(handler, destinationDocRef, copyName);
+                // Find out names of other items in the destination folder.
+                final Set<String> otherDestinationChildrenNames = explorerNodeService.getChildren(destinationFolderRef)
+                        .stream()
+                        .map(ExplorerNode::getDocRef)
+                        .filter(docRef -> docRef.getType().equals(sourceDocRef.getType()))
+                        .map(DocRef::getName)
+                        .collect(Collectors.toSet());
+
+                // Copy the item to the destination folder.
+                final DocRef destinationDocRef = handler.copyDocument(sourceDocRef, otherDestinationChildrenNames);
+                explorerEventLog.copy(sourceDocRef, destinationFolderRef, permissionInheritance, null);
+
+                // Create the explorer node
+                if (destinationDocRef != null) {
+                    // Copy the explorer node.
+                    explorerNodeService.copyNode(sourceDocRef, destinationDocRef, destinationFolderRef, permissionInheritance);
+
+                    // Record where the document got copied from -> to.
+                    remappings.put(sourceDocRef, destinationDocRef);
                 }
             }
-            resultDocRefs.add(destinationDocRef);
 
-            // Handle recursion
-            final DocRef finalDestination = destinationDocRef;
-            childNodesByParent.get(sourceDocRef)
-                    .forEach(sourceDescendant ->
-                            recurseCopy(sourceDocRef,
-                                    sourceDescendant.getDocRef(),
-                                    finalDestination,
-                                    permissionInheritance,
-                                    resultDocRefs,
-                                    resultMessage,
-                                    copiesByOriginalUuid,
-                                    childNodesByParent
-                            )
-                    );
         } catch (final RuntimeException e) {
             explorerEventLog.copy(sourceDocRef, destinationFolderRef, permissionInheritance, e);
             resultMessage.append("Unable to copy '");
@@ -516,25 +482,48 @@ class ExplorerServiceImpl implements ExplorerService, CollectionService {
         }
     }
 
-    private String getCopyName(final DocRef destinationFolderDocRef,
-                               final DocRef destinationDocRef) {
-
-        final List<String> otherDestinationChildrenNames = explorerNodeService.getChildren(destinationFolderDocRef)
-                .stream()
-                .map(ExplorerNode::getDocRef)
-                .map(DocRef::getName)
-                .collect(Collectors.toList());
-
-        int copyIndex = 0;
-        String copyName = String.format("%s - Copy", destinationDocRef.getName());
-
-        while (otherDestinationChildrenNames.contains(copyName)) {
-            copyIndex++;
-            copyName = String.format("%s - Copy %d", destinationDocRef.getName(), copyIndex);
+    /**
+     * Copy the contents of a folder recursively
+     *
+     * @param sourceFolderRef       The doc ref for the folder being copied
+     * @param permissionInheritance The mode of permission inheritance being used for the whole operation
+     * @param resultMessage         Allow contribution to result message
+     * @param remappings            A map to store source to destination document references
+     * @param childMap              A map of folders and their child items.
+     */
+    private void recurseCopy(final DocRef sourceFolderRef,
+                             final PermissionInheritance permissionInheritance,
+                             final StringBuilder resultMessage,
+                             final Map<DocRef, DocRef> remappings,
+                             final Map<DocRef, List<DocRef>> childMap) {
+        final DocRef destinationFolderRef = remappings.get(sourceFolderRef);
+        if (destinationFolderRef != null) {
+            final List<DocRef> children = childMap.get(sourceFolderRef);
+            if (children != null && children.size() > 0) {
+                children.forEach(child -> {
+                    copy(child, destinationFolderRef, permissionInheritance, resultMessage, remappings);
+                    recurseCopy(child, permissionInheritance, resultMessage, remappings, childMap);
+                });
+            }
         }
+    }
 
-
-        return copyName;
+    /**
+     * Create a map of folders and their child items.
+     */
+    private void createChildMap(final List<DocRef> docRefs,
+                                final Map<DocRef, List<DocRef>> childMap) {
+        docRefs.forEach(docRef -> {
+            final List<ExplorerNode> children = explorerNodeService.getChildren(docRef);
+            if (children != null && children.size() > 0) {
+                final List<DocRef> childDocRefs = children
+                        .stream()
+                        .map(ExplorerNode::getDocRef)
+                        .collect(Collectors.toList());
+                childMap.put(docRef, childDocRefs);
+                createChildMap(childDocRefs, childMap);
+            }
+        });
     }
 
     @Override
@@ -675,13 +664,6 @@ class ExplorerServiceImpl implements ExplorerService, CollectionService {
                 }
             }
         });
-    }
-
-    @Override
-    public DocRefInfo info(final DocRef docRef) {
-        final ExplorerActionHandler handler = explorerActionHandlers.getHandler(docRef.getType());
-
-        return handler.info(docRef.getUuid());
     }
 
     @Override

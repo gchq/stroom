@@ -46,6 +46,7 @@ class JobBootstrap {
 
     private final JobDao jobDao;
     private final JobNodeDao jobNodeDao;
+    private final JobSystemConfig jobSystemConfig;
     private final ClusterLockService clusterLockService;
     private final SecurityContext securityContext;
     private final NodeInfo nodeInfo;
@@ -55,6 +56,7 @@ class JobBootstrap {
     @Inject
     JobBootstrap(final JobDao jobDao,
                  final JobNodeDao jobNodeDao,
+                 final JobSystemConfig jobSystemConfig,
                  final ClusterLockService clusterLockService,
                  final SecurityContext securityContext,
                  final NodeInfo nodeInfo,
@@ -62,6 +64,7 @@ class JobBootstrap {
                  final DistributedTaskFactoryRegistry distributedTaskFactoryRegistry) {
         this.jobDao = jobDao;
         this.jobNodeDao = jobNodeDao;
+        this.jobSystemConfig = jobSystemConfig;
         this.clusterLockService = clusterLockService;
         this.securityContext = securityContext;
         this.nodeInfo = nodeInfo;
@@ -114,7 +117,10 @@ class JobBootstrap {
                 // Add the job node to the DB if it isn't there already.
                 JobNode existingJobNode = existingJobMap.get(scheduledJob.getName());
                 if (existingJobNode == null) {
-                    LOGGER.info(() -> "Adding JobNode '" + newJobNode.getJob().getName() + "' for node '" + newJobNode.getNodeName() + "'");
+                    LOGGER.info(() -> "Adding JobNode '" + newJobNode.getJob().getName() +
+                            "' for node '" + newJobNode.getNodeName() + "' (state: " +
+                            (newJobNode.isEnabled() ? "ENABLED" : "DISABLED") + ")");
+
                     AuditUtil.stamp(securityContext.getUserId(), newJobNode);
                     jobNodeDao.create(newJobNode);
                     existingJobMap.put(newJobNode.getJob().getName(), newJobNode);
@@ -136,19 +142,23 @@ class JobBootstrap {
                 // Add the job node to the DB if it isn't there already.
                 final JobNode existingJobNode = existingJobMap.get(jobName);
                 if (existingJobNode == null) {
-                    // Get the actual job.
+                    // Get or create the actual parent job record
                     Job job = new Job();
                     job.setName(jobName);
-                    job.setEnabled(false);
+                    job.setEnabled(jobSystemConfig.isEnableDistributedJobsOnBootstrap());
                     job = getOrCreateJob(job);
 
+                    // Now create the jobNode record for this node
                     final JobNode newJobNode = new JobNode();
                     newJobNode.setJob(job);
                     newJobNode.setNodeName(nodeName);
-                    newJobNode.setEnabled(false);
+                    newJobNode.setEnabled(jobSystemConfig.isEnableDistributedJobsOnBootstrap());
                     newJobNode.setJobType(JobType.DISTRIBUTED);
 
-                    LOGGER.info(() -> "Adding JobNode '" + newJobNode.getJob().getName() + "' for node '" + newJobNode.getNodeName() + "'");
+                    LOGGER.info(() -> "Adding JobNode '" + newJobNode.getJob().getName() +
+                            "' for node '" + newJobNode.getNodeName() + "' (state: " +
+                            (newJobNode.isEnabled() ? "ENABLED" : "DISABLED") + ")");
+
                     AuditUtil.stamp(securityContext.getUserId(), newJobNode);
                     jobNodeDao.create(newJobNode);
                     existingJobMap.put(newJobNode.getJob().getName(), newJobNode);
@@ -174,7 +184,6 @@ class JobBootstrap {
             }
         }));
     }
-
 
 //    public JobNode update(final JobNode jobNode) {
 //        // We always want to update a job instance even if we have a stale

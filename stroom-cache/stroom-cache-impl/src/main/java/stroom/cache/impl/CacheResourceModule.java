@@ -16,15 +16,14 @@
 
 package stroom.cache.impl;
 
+import stroom.util.guice.RestResourcesBinder;
+
 import com.google.inject.AbstractModule;
-import stroom.util.guice.GuiceUtil;
-import stroom.util.shared.Clearable;
-import stroom.util.shared.RestResource;
 
 public class CacheResourceModule extends AbstractModule {
     @Override
     protected void configure() {
-        GuiceUtil.buildMultiBinder(binder(), RestResource.class)
-                .addBinding(CacheResourceImpl.class);
+        RestResourcesBinder.create(binder())
+                .bind(CacheResourceImpl.class);
     }
 }

@@ -16,17 +16,16 @@
 
 package stroom.statistics.impl.sql.entity;
 
-import com.google.inject.AbstractModule;
-import com.google.inject.multibindings.Multibinder;
 import stroom.docstore.api.DocumentActionHandlerBinder;
-import stroom.util.entityevent.EntityEvent;
-import stroom.util.entityevent.EntityEvent.Handler;
 import stroom.explorer.api.ExplorerActionHandler;
 import stroom.importexport.api.ImportExportActionHandler;
 import stroom.statistics.impl.sql.shared.StatisticStoreDoc;
+import stroom.util.entityevent.EntityEvent;
 import stroom.util.guice.GuiceUtil;
+import stroom.util.guice.RestResourcesBinder;
 import stroom.util.shared.Clearable;
-import stroom.util.shared.RestResource;
+
+import com.google.inject.AbstractModule;
 
 public class StatisticStoreModule extends AbstractModule {
     @Override
@@ -38,19 +37,19 @@ public class StatisticStoreModule extends AbstractModule {
 
         GuiceUtil.buildMultiBinder(binder(), Clearable.class).addBinding(StatisticsDataSourceCacheImpl.class);
 
-        final Multibinder<Handler> entityEventHandlerBinder = Multibinder.newSetBinder(binder(), EntityEvent.Handler.class);
-        entityEventHandlerBinder.addBinding().to(StatisticsDataSourceCacheImpl.class);
+        GuiceUtil.buildMultiBinder(binder(), EntityEvent.Handler.class)
+                .addBinding(StatisticsDataSourceCacheImpl.class);
 
-        final Multibinder<ExplorerActionHandler> explorerActionHandlerBinder = Multibinder.newSetBinder(binder(), ExplorerActionHandler.class);
-        explorerActionHandlerBinder.addBinding().to(StatisticStoreStoreImpl.class);
+        GuiceUtil.buildMultiBinder(binder(), ExplorerActionHandler.class)
+                .addBinding(StatisticStoreStoreImpl.class);
 
-        final Multibinder<ImportExportActionHandler> importExportActionHandlerBinder = Multibinder.newSetBinder(binder(), ImportExportActionHandler.class);
-        importExportActionHandlerBinder.addBinding().to(StatisticStoreStoreImpl.class);
+        GuiceUtil.buildMultiBinder(binder(), ImportExportActionHandler.class)
+                .addBinding(StatisticStoreStoreImpl.class);
 
         DocumentActionHandlerBinder.create(binder())
                 .bind(StatisticStoreDoc.DOCUMENT_TYPE, StatisticStoreStoreImpl.class);
 
-        GuiceUtil.buildMultiBinder(binder(), RestResource.class)
-                .addBinding(StatisticResourceImpl.class);
+        RestResourcesBinder.create(binder())
+                .bind(StatisticResourceImpl.class);
     }
 }

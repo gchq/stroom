@@ -16,7 +16,6 @@
 
 package stroom.cache.impl;
 
-import com.codahale.metrics.health.HealthCheck.Result;
 import stroom.cache.shared.CacheInfo;
 import stroom.cache.shared.CacheInfoResponse;
 import stroom.cache.shared.CacheResource;
@@ -25,7 +24,6 @@ import stroom.node.api.NodeCallUtil;
 import stroom.node.api.NodeInfo;
 import stroom.node.api.NodeService;
 import stroom.task.api.TaskContextFactory;
-import stroom.util.HasHealthCheck;
 import stroom.util.jersey.WebTargetFactory;
 import stroom.util.logging.LambdaLogger;
 import stroom.util.logging.LambdaLoggerFactory;
@@ -46,7 +44,7 @@ import java.util.concurrent.atomic.AtomicReference;
 import java.util.function.Supplier;
 
 // TODO : @66 add event logging
-class CacheResourceImpl implements CacheResource, HasHealthCheck {
+class CacheResourceImpl implements CacheResource {
     private static final LambdaLogger LOGGER = LambdaLoggerFactory.getLogger(CacheResourceImpl.class);
 
     private final NodeService nodeService;
@@ -196,11 +194,5 @@ class CacheResourceImpl implements CacheResource, HasHealthCheck {
             }
         }
         return result;
-    }
-
-
-    @Override
-    public Result getHealth() {
-        return Result.healthy();
     }
 }

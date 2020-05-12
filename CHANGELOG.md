@@ -6,6 +6,47 @@ and this project adheres to [Semantic Versioning](http://semver.org/).
 
 ## [Unreleased]
 
+* Issue **#1543** : Prevent import/export of processor filters with id fields
+
+* Issue **#1112** : You can now copy feeds along with other items and copies are named appropriately.
+
+* Issue **#1112** : When copying a selection of several items, the dependencies between the items are altered in the resulting copies so that the copied items work together as a new set of content.
+
+* Issue **#1112** : As part of fixing dependencies when copying items, the dependencies screen now works correctly and now also shows processor filters. 
+
+* Issue **#1545** : Add property `enableDistributedJobsOnBootstrap` to enable/disable processing on first boot.
+
+## [v7.0-beta.30] - 2020-05-06
+
+* Issue **#1503** : Further fix for enabled/disabled expression items and dashboard tab visibility.
+
+* Issue **#1511** : Data pages now show pipeline names rather than pipeline UUIDs.
+
+* Issue **#1529** : Fix error when selecting datasource in new dashboard.
+
+* Fix NPE in SystemInfoResource.get().
+
+* Issue **#1527** : Fixed missing aud in API eky tokens.
+
+* Add missing guice binding for SystemInfoResource.
+
+* Make export add new line to the end of all files to adhere to POSIX standard.
+
+* Issue **#1532** : Fixed index shard criteria in UI.
+
+* Change SecurityFilter to return a 401 on authentication exceptions.
+
+* Move some health checks into SystemInfoResource.
+
+* Remove healthchecks from rest resources and servlets that never give an unhealthy result.
+
+* Add error info to AppConfigMonitor health check.
+
+
+## [v7.0-beta.29] - 2020-05-04
+
+* Issue **#1496** : Fixed paging of processed data.
+
 * Add stroom.statistics.internal.enabledStoreTypes and make internal stat processing respect it.
 
 * Improve SQL stats shutdown processing so all in memory stats are flushed.
@@ -2108,7 +2149,9 @@ Issue **gchq/stroom-expression#22** : Add `typeOf(...)` function to dashboard.
 
 * Issue **#202** : Initial release of the new data retention policy functionality.
 
-[Unreleased]: https://github.com/gchq/stroom/compare/v7.0-beta.28...HEAD
+[Unreleased]: https://github.com/gchq/stroom/compare/v7.0-beta.30...HEAD
+[v7.0-beta.30]: https://github.com/gchq/stroom/compare/v7.0-beta.29...v7.0-beta.30
+[v7.0-beta.29]: https://github.com/gchq/stroom/compare/v7.0-beta.28...v7.0-beta.29
 [v7.0-beta.28]: https://github.com/gchq/stroom/compare/v7.0-beta.27...v7.0-beta.28
 [v7.0-beta.27]: https://github.com/gchq/stroom/compare/v7.0-beta.26...v7.0-beta.27
 [v7.0-beta.26]: https://github.com/gchq/stroom/compare/v7.0-beta.25...v7.0-beta.26

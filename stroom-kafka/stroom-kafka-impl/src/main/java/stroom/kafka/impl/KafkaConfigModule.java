@@ -16,15 +16,20 @@
 
 package stroom.kafka.impl;
 
-import com.google.inject.AbstractModule;
 import stroom.docstore.api.DocumentActionHandlerBinder;
 import stroom.explorer.api.ExplorerActionHandler;
 import stroom.importexport.api.ImportExportActionHandler;
 import stroom.kafka.api.KafkaProducerFactory;
 import stroom.kafka.shared.KafkaConfigDoc;
+import stroom.lifecycle.api.LifecycleBinder;
+import stroom.util.RunnableWrapper;
 import stroom.util.guice.GuiceUtil;
-import stroom.util.guice.HealthCheckBinder;
+import stroom.util.guice.HasSystemInfoBinder;
 import stroom.util.shared.Clearable;
+
+import com.google.inject.AbstractModule;
+
+import javax.inject.Inject;
 
 public class KafkaConfigModule extends AbstractModule {
     @Override
@@ -41,10 +46,20 @@ public class KafkaConfigModule extends AbstractModule {
         DocumentActionHandlerBinder.create(binder())
                 .bind(KafkaConfigDoc.DOCUMENT_TYPE, KafkaConfigStoreImpl.class);
 
-        HealthCheckBinder.create(binder())
+        HasSystemInfoBinder.create(binder())
                 .bind(KafkaProducerFactoryImpl.class);
 
         GuiceUtil.buildMultiBinder(binder(), Clearable.class)
                 .addBinding(KafkaConfigDocCache.class);
+
+        LifecycleBinder.create(binder())
+                .bindShutdownTaskTo(KafkaProducerFactoryShutdown.class);
+    }
+
+    private static class KafkaProducerFactoryShutdown extends RunnableWrapper {
+        @Inject
+        KafkaProducerFactoryShutdown(final KafkaProducerFactoryImpl kafkaProducerFactory) {
+            super(kafkaProducerFactory::shutdown);
+        }
     }
 }

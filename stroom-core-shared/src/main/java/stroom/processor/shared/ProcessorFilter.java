@@ -16,14 +16,14 @@
 
 package stroom.processor.shared;
 
+import stroom.util.shared.HasAuditInfo;
+import stroom.util.shared.HasUuid;
+
 import com.fasterxml.jackson.annotation.JsonCreator;
 import com.fasterxml.jackson.annotation.JsonInclude;
 import com.fasterxml.jackson.annotation.JsonInclude.Include;
 import com.fasterxml.jackson.annotation.JsonProperty;
-import stroom.util.shared.HasAuditInfo;
-import stroom.util.shared.HasUuid;
 
-import javax.xml.bind.annotation.XmlTransient;
 import java.util.Comparator;
 import java.util.Objects;
 
@@ -225,8 +225,8 @@ public class ProcessorFilter implements HasAuditInfo, HasUuid {
         return processorUuid;
     }
 
-    public String getPipelineUuid(){
-        if (pipelineUuid == null){
+    public String getPipelineUuid() {
+        if (pipelineUuid == null) {
             Processor processor = getProcessor();
             if (processor != null)
                 pipelineUuid = processor.getPipelineUuid();
@@ -234,16 +234,16 @@ public class ProcessorFilter implements HasAuditInfo, HasUuid {
         return pipelineUuid;
     }
 
-    public void setPipelineUuid(String uuid){
-        pipelineUuid = uuid;
+    public void setPipelineUuid(final String pipelineUuid) {
+        this.pipelineUuid = pipelineUuid;
     }
 
-    public String getPipelineName(){
+    public String getPipelineName() {
         return pipelineName;
     }
 
-    public void setPipelineName (final String s) {
-        pipelineName = s;
+    public void setPipelineName(final String pipelineName) {
+        this.pipelineName = pipelineName;
     }
 
     public void setProcessor(final Processor processor) {

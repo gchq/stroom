@@ -1,6 +1,6 @@
 server:
   applicationContextPath: ${APPLICATION_CONTEXT_PATH:- /}
-  adminContextPath: ${ADMIN_CONTEXT_PATH:- /admin}
+  adminContextPath: ${ADMIN_CONTEXT_PATH:- /stroomAdmin}
   applicationConnectors:
     - type: http
       port: ${STROOM_APP_PORT:-8080}

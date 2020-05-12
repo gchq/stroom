@@ -16,16 +16,20 @@
 
 package stroom.security.impl.event;
 
-import stroom.lifecycle.api.AbstractLifecycleModule;
-import stroom.lifecycle.api.RunnableWrapper;
+import stroom.lifecycle.api.LifecycleBinder;
+import stroom.util.RunnableWrapper;
+
+import com.google.inject.AbstractModule;
 
 import javax.inject.Inject;
 
-public class PermissionChangeEventLifecycleModule extends AbstractLifecycleModule {
+public class PermissionChangeEventLifecycleModule extends AbstractModule {
+
     @Override
     protected void configure() {
-        super.configure();
-        bindStartup().to(PermissionChangeEventBusInit.class);
+
+        LifecycleBinder.create(binder())
+                .bindStartupTaskTo(PermissionChangeEventBusInit.class);
     }
 
     private static class PermissionChangeEventBusInit extends RunnableWrapper {

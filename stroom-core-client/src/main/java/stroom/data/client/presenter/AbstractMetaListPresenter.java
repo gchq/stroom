@@ -105,7 +105,7 @@ public abstract class AbstractMetaListPresenter extends MyPresenterWidget<DataGr
         addColumns(allowSelectAll);
 
         criteria = new FindMetaCriteria();
-        criteria.setSort(MetaFields.CREATE_TIME.getName(), Sort.Direction.ASCENDING, false);
+        criteria.setSort(MetaFields.CREATE_TIME.getName(), Sort.Direction.DESCENDING, false);
 
         final PageRequest pageRequest = criteria.obtainPageRequest();
         pageRequest.setOffset(0L);
@@ -376,8 +376,8 @@ public abstract class AbstractMetaListPresenter extends MyPresenterWidget<DataGr
             @Override
             public String getValue(final MetaRow row) {
                 if (row.getMeta().getProcessorUuid() != null) {
-                    if (row.getMeta().getPipelineUuid() != null) {
-                        return row.getMeta().getPipelineUuid();
+                    if (row.getPipelineName() != null) {
+                        return row.getPipelineName();
                     } else {
                         return "Not visible";
                     }

@@ -16,21 +16,20 @@
 
 package stroom.storedquery.impl;
 
-import com.codahale.metrics.health.HealthCheck.Result;
-import event.logging.BaseAdvancedQueryOperator.And;
-import event.logging.Query;
-import event.logging.Query.Advanced;
 import stroom.dashboard.shared.FindStoredQueryCriteria;
 import stroom.dashboard.shared.StoredQuery;
 import stroom.dashboard.shared.StoredQueryResource;
 import stroom.event.logging.api.DocumentEventLog;
 import stroom.security.api.SecurityContext;
-import stroom.util.HasHealthCheck;
 import stroom.util.shared.ResultPage;
+
+import event.logging.BaseAdvancedQueryOperator.And;
+import event.logging.Query;
+import event.logging.Query.Advanced;
 
 import javax.inject.Inject;
 
-class StoredQueryResourceImpl implements StoredQueryResource, HasHealthCheck {
+class StoredQueryResourceImpl implements StoredQueryResource {
     private final StoredQueryServiceImpl storedQueryService;
     private final DocumentEventLog documentEventLog;
     private final SecurityContext securityContext;
@@ -125,10 +124,5 @@ class StoredQueryResourceImpl implements StoredQueryResource, HasHealthCheck {
             throw e;
         }
         return true;
-    }
-
-    @Override
-    public Result getHealth() {
-        return Result.healthy();
     }
 }

@@ -3,13 +3,14 @@ package stroom.importexport.api;
 import stroom.docref.DocRef;
 import stroom.importexport.shared.ImportState;
 import stroom.importexport.shared.ImportState.ImportMode;
+import stroom.util.shared.HasDependencies;
 import stroom.util.shared.Message;
 
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
 
-public interface ImportExportActionHandler {
+public interface ImportExportActionHandler extends HasDependencies {
     /**
      *
      * @param docRef
@@ -23,8 +24,6 @@ public interface ImportExportActionHandler {
     Map<String, byte[]> exportDocument(DocRef docRef, boolean omitAuditFields, List<Message> messageList);
 
     Set<DocRef> listDocuments();
-
-    Map<DocRef, Set<DocRef>> getDependencies();
 
     String getType();
 
@@ -41,6 +40,7 @@ public interface ImportExportActionHandler {
     class ImpexDetails {
         private String locationRef;
         private DocRef docRef;
+        private boolean ignore;
 
         public ImpexDetails(){}
 
@@ -48,13 +48,23 @@ public interface ImportExportActionHandler {
             this.docRef = docRef;
         }
 
-        public ImpexDetails(DocRef docRef, String locationRef){
+        public ImpexDetails(final DocRef docRef, final String locationRef){
             this.docRef = docRef;
             this.locationRef = locationRef;
         }
 
+        public ImpexDetails(final DocRef docRef, final String locationRef, final boolean ignore){
+            this.docRef = docRef;
+            this.locationRef = locationRef;
+            this.ignore = ignore;
+        }
+
         public void setDocRef(DocRef docRef) {
             this.docRef = docRef;
+        }
+
+        public void setIgnore(boolean ignore) {
+            this.ignore = ignore;
         }
 
         public void setLocationRef(String locationRef) {
@@ -67,6 +77,10 @@ public interface ImportExportActionHandler {
 
         public DocRef getDocRef() {
             return docRef;
+        }
+
+        public boolean isIgnore () {
+            return ignore;
         }
     }
 }
