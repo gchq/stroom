@@ -33,15 +33,22 @@ import stroom.importexport.shared.ImportState;
 import stroom.importexport.shared.ImportState.ImportMode;
 import stroom.util.shared.Message;
 
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+
 import javax.inject.Inject;
 import javax.inject.Singleton;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
 import java.util.function.BiConsumer;
+import java.util.stream.Collectors;
 
 @Singleton
 class DataRetentionRulesServiceImpl implements DataRetentionRulesService {
+    private static final Logger LOGGER = LoggerFactory.getLogger(DataRetentionRulesServiceImpl.class);
+    private static final String POLICY_NAME = "Data Retention";
+
     private final Store<DataRetentionRules> store;
 
     @Inject
@@ -185,4 +192,34 @@ class DataRetentionRulesServiceImpl implements DataRetentionRulesService {
     ////////////////////////////////////////////////////////////////////////
     // END OF ImportExportActionHandler
     ////////////////////////////////////////////////////////////////////////
+
+    @Override
+    public DataRetentionRules getOrCreate() {
+        final Set<DocRef> docRefs = listDocuments();
+        final Set<DocRef> filtered = docRefs
+                .stream()
+                .filter(docRef -> POLICY_NAME.equals(docRef.getName()) || POLICY_NAME.equals(docRef.getUuid()))
+                .collect(Collectors.toSet());
+
+        if (filtered.size() > 0) {
+            if (filtered.size() > 1) {
+                LOGGER.warn("Found more than one matching set of data retention rules.");
+            }
+
+            final DocRef docRef = filtered.iterator().next();
+            return readDocument(docRef);
+        }
+
+        if (docRefs.size() > 0) {
+            if (docRefs.size() > 1) {
+                LOGGER.warn("Found more than one matching set of data retention rules.");
+            }
+
+            final DocRef docRef = docRefs.iterator().next();
+            return readDocument(docRef);
+        }
+
+        final DocRef docRef = createDocument(POLICY_NAME);
+        return readDocument(docRef);
+    }
 }

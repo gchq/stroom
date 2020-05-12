@@ -2,9 +2,9 @@
   "type" : "StatisticStore",
   "uuid" : "a5b76a2e-7689-4f5d-9316-e948140423f9",
   "name" : "ValueStatisticSQL",
-  "version" : "d8d6354c-2079-4240-a507-b8304891222a",
+  "version" : "3ebb7116-6c00-4ae6-a74f-1bf66a643ce6",
   "description" : "Volumes",
-  "statisticType" : "COUNT",
+  "statisticType" : "VALUE",
   "rollUpType" : "ALL",
   "precision" : 60000,
   "enabled" : true,
@@ -16,6 +16,8 @@
     }, {
       "fieldName" : "state"
     } ],
-    "customRollUpMasks" : [ { } ]
+    "customRollUpMasks" : [ {
+      "rolledUpTagPosition" : [ ]
+    } ]
   }
 }
