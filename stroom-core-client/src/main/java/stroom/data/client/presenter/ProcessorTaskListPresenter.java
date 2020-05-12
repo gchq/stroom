@@ -16,12 +16,6 @@
 
 package stroom.data.client.presenter;
 
-import com.google.gwt.cell.client.TextCell;
-import com.google.gwt.core.client.GWT;
-import com.google.gwt.user.cellview.client.ColumnSortEvent;
-import com.google.inject.Inject;
-import com.google.web.bindery.event.shared.EventBus;
-import com.gwtplatform.mvp.client.MyPresenterWidget;
 import stroom.cell.info.client.InfoColumn;
 import stroom.data.grid.client.DataGridView;
 import stroom.data.grid.client.DataGridViewImpl;
@@ -35,7 +29,6 @@ import stroom.entity.shared.ExpressionCriteria;
 import stroom.explorer.shared.ExplorerConstants;
 import stroom.meta.shared.FindMetaCriteria;
 import stroom.meta.shared.Meta;
-import stroom.meta.shared.MetaExpressionUtil;
 import stroom.meta.shared.MetaResource;
 import stroom.meta.shared.MetaRow;
 import stroom.pipeline.shared.PipelineDoc;
@@ -52,6 +45,13 @@ import stroom.widget.popup.client.presenter.PopupPosition;
 import stroom.widget.popup.client.presenter.PopupView.PopupType;
 import stroom.widget.tooltip.client.presenter.TooltipPresenter;
 import stroom.widget.tooltip.client.presenter.TooltipUtil;
+
+import com.google.gwt.cell.client.TextCell;
+import com.google.gwt.core.client.GWT;
+import com.google.gwt.user.cellview.client.Column;
+import com.google.inject.Inject;
+import com.google.web.bindery.event.shared.EventBus;
+import com.gwtplatform.mvp.client.MyPresenterWidget;
 
 import java.util.ArrayList;
 import java.util.function.Consumer;
@@ -105,7 +105,7 @@ public class ProcessorTaskListPresenter extends MyPresenterWidget<DataGridView<P
                 }, "Status", 80);
 
         getView()
-                .addColumn(new OrderByColumn<ProcessorTask, String>(new TextCell(), ProcessorTaskDataSource.FIELD_NODE, true) {
+                .addResizableColumn(new OrderByColumn<ProcessorTask, String>(new TextCell(), ProcessorTaskDataSource.FIELD_NODE, true) {
                     @Override
                     public String getValue(final ProcessorTask row) {
                         if (row.getNodeName() != null) {
@@ -114,9 +114,9 @@ public class ProcessorTaskListPresenter extends MyPresenterWidget<DataGridView<P
                             return "";
                         }
                     }
-                }, "Node", 100);
+                }, "Node", ColumnSizeConstants.MEDIUM_COL);
         getView()
-                .addColumn(new OrderByColumn<ProcessorTask, String>(new TextCell(), ProcessorTaskDataSource.FIELD_FEED, true) {
+                .addResizableColumn(new OrderByColumn<ProcessorTask, String>(new TextCell(), ProcessorTaskDataSource.FIELD_FEED, true) {
                     @Override
                     public String getValue(final ProcessorTask row) {
                         if (row.getFeedName() != null) {
@@ -125,8 +125,8 @@ public class ProcessorTaskListPresenter extends MyPresenterWidget<DataGridView<P
                             return "";
                         }
                     }
-                }, "Feed", 100);
-        getView().addColumn(new OrderByColumn<ProcessorTask, String>(new TextCell(), ProcessorTaskDataSource.FIELD_PRIORITY, false) {
+                }, "Feed", ColumnSizeConstants.BIG_COL);
+        getView().addResizableColumn(new OrderByColumn<ProcessorTask, String>(new TextCell(), ProcessorTaskDataSource.FIELD_PRIORITY, false) {
             @Override
             public String getValue(final ProcessorTask row) {
                 if (row.getProcessorFilter() != null) {
@@ -135,22 +135,20 @@ public class ProcessorTaskListPresenter extends MyPresenterWidget<DataGridView<P
 
                 return "";
             }
-        }, "Priority", 100);
+        }, "Priority", 60);
         getView().addResizableColumn(
-                new OrderByColumn<ProcessorTask, String>(new TextCell(), ProcessorTaskDataSource.FIELD_PIPELINE, true) {
+                new Column<ProcessorTask, String>(new TextCell()) {
                     @Override
                     public String getValue(final ProcessorTask row) {
                         if (row.getProcessorFilter() != null) {
-                            if (row.getProcessorFilter().getProcessor() != null) {
-                                if (row.getProcessorFilter().getProcessor().getPipelineUuid() != null) {
-                                    return row.getProcessorFilter().getProcessor().getPipelineUuid();
-                                }
+                            if (row.getProcessorFilter().getPipelineName() != null) {
+                                return row.getProcessorFilter().getPipelineName();
                             }
                         }
                         return "";
 
                     }
-                }, "Pipeline", 200);
+                }, "Pipeline", ColumnSizeConstants.BIG_COL);
         getView().addResizableColumn(
                 new OrderByColumn<ProcessorTask, String>(new TextCell(), ProcessorTaskDataSource.FIELD_START_TIME, false) {
                     @Override
@@ -229,7 +227,10 @@ public class ProcessorTaskListPresenter extends MyPresenterWidget<DataGridView<P
                             processorTask.getProcessorFilter().getId());
                     if (processorTask.getProcessorFilter().getProcessor().getPipelineUuid() != null) {
                         TooltipUtil.addRowData(html, "Stream Processor Pipeline",
-                                processorTask.getProcessorFilter().getProcessor().getPipelineUuid());
+                                processorTask.getProcessorFilter().getPipelineName() +
+                                        " {" +
+                                        processorTask.getProcessorFilter().getPipelineUuid() +
+                                        "}");
                     }
                 }
             }

@@ -6,6 +6,8 @@ and this project adheres to [Semantic Versioning](http://semver.org/).
 
 ## [Unreleased]
 
+* Issue **#1547** : Added pipeline names to processor task screens.
+
 * Issue **#1112** : You can now copy feeds along with other items and copies are named appropriately.
 
 * Issue **#1112** : When copying a selection of several items, the dependencies between the items are altered in the resulting copies so that the copied items work together as a new set of content.

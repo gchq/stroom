@@ -16,12 +16,6 @@
 
 package stroom.data.client.presenter;
 
-import com.google.gwt.cell.client.TextCell;
-import com.google.gwt.core.shared.GWT;
-import com.google.gwt.user.cellview.client.Column;
-import com.google.gwt.user.cellview.client.Header;
-import com.google.web.bindery.event.shared.EventBus;
-import com.gwtplatform.mvp.client.MyPresenterWidget;
 import stroom.alert.client.event.AlertEvent;
 import stroom.alert.client.event.ConfirmEvent;
 import stroom.cell.info.client.InfoColumn;
@@ -67,6 +61,13 @@ import stroom.widget.popup.client.presenter.PopupView.PopupType;
 import stroom.widget.tooltip.client.presenter.TooltipPresenter;
 import stroom.widget.tooltip.client.presenter.TooltipUtil;
 import stroom.widget.util.client.MultiSelectionModel;
+
+import com.google.gwt.cell.client.TextCell;
+import com.google.gwt.core.shared.GWT;
+import com.google.gwt.user.cellview.client.Column;
+import com.google.gwt.user.cellview.client.Header;
+import com.google.web.bindery.event.shared.EventBus;
+import com.gwtplatform.mvp.client.MyPresenterWidget;
 
 import java.util.Collections;
 import java.util.HashSet;
@@ -305,10 +306,14 @@ public abstract class AbstractMetaListPresenter extends MyPresenterWidget<DataGr
                         .onSuccess(result -> {
                             final StringBuilder html = new StringBuilder();
 
-                            result.forEach(section -> {
+                            for (int i = 0; i < result.size(); i++) {
+                                final MetaInfoSection section = result.get(i);
                                 TooltipUtil.addHeading(html, section.getTitle());
                                 section.getEntries().forEach(entry -> TooltipUtil.addRowData(html, entry.getKey(), entry.getValue()));
-                            });
+                                if (i < result.size() - 1) {
+                                    TooltipUtil.addBreak(html);
+                                }
+                            }
 
                             tooltipPresenter.setHTML(html.toString());
                             final PopupPosition popupPosition = new PopupPosition(x, y);
