@@ -33,6 +33,7 @@ import stroom.pipeline.shared.data.PipelineData;
 import stroom.pipeline.shared.data.PipelineProperty;
 import stroom.pipeline.shared.data.PipelineReference;
 import stroom.processor.api.ProcessorFilterService;
+import stroom.processor.api.ProcessorFilterUtil;
 import stroom.processor.shared.ProcessorFilter;
 import stroom.security.api.SecurityContext;
 import stroom.util.shared.Message;
@@ -281,14 +282,15 @@ public class PipelineStoreImpl implements PipelineStore {
         if (docRef != null && PipelineDoc.DOCUMENT_TYPE.equals(docRef.getType())) {
             ResultPage<ProcessorFilter> filterResultPage = processorFilterServiceProvider.get().find(docRef);
 
-            List<DocRef> docRefs = filterResultPage.getValues().stream().map(v -> new DocRef(ProcessorFilter.ENTITY_TYPE, v.getUuid()))
+            List <DocRef> docRefs = filterResultPage.getValues().stream()
+                    .filter(v -> ProcessorFilterUtil.shouldExport(v))
+                    .map(v -> new DocRef(ProcessorFilter.ENTITY_TYPE, v.getUuid()))
                     .collect(Collectors.toList());
 
             processorFilters.addAll(docRefs);
         }
         return processorFilters;
     }
-
 
     @Override
     public String getType() {
