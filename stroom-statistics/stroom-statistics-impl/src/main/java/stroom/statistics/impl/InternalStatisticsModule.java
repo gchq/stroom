@@ -16,12 +16,28 @@
 
 package stroom.statistics.impl;
 
-import com.google.inject.AbstractModule;
+import stroom.lifecycle.api.LifecycleBinder;
 import stroom.statistics.api.InternalStatisticsReceiver;
+import stroom.util.RunnableWrapper;
+
+import com.google.inject.AbstractModule;
+
+import javax.inject.Inject;
 
 public class InternalStatisticsModule extends AbstractModule {
+
     @Override
     protected void configure() {
         bind(InternalStatisticsReceiver.class).to(InternalStatisticsReceiverImpl.class);
+
+        LifecycleBinder.create(binder())
+                .bindStartupTaskTo(InternalStatisticsReceiverInit.class, 100);
+    }
+
+    private static class InternalStatisticsReceiverInit extends RunnableWrapper {
+        @Inject
+        InternalStatisticsReceiverInit(final InternalStatisticsReceiverImpl internalStatisticsReceiver) {
+            super(internalStatisticsReceiver::initStatisticEventStore);
+        }
     }
 }

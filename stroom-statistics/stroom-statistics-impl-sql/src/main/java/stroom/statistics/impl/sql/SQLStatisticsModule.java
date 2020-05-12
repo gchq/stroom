@@ -18,8 +18,9 @@ package stroom.statistics.impl.sql;
 
 import stroom.db.util.AbstractFlyWayDbModule;
 import stroom.db.util.DataSourceProxy;
-import stroom.job.api.RunnableWrapper;
 import stroom.job.api.ScheduledJobsBinder;
+import stroom.lifecycle.api.LifecycleBinder;
+import stroom.util.RunnableWrapper;
 import stroom.util.guice.HasSystemInfoBinder;
 
 import javax.inject.Inject;
@@ -57,6 +58,11 @@ public class SQLStatisticsModule extends AbstractFlyWayDbModule<SQLStatisticsCon
                         .withName("SQL Stats Database Aggregation")
                         .withDescription("Run SQL stats database aggregation")
                         .withSchedule(CRON, "5,15,25,35,45,55 * *"));
+
+        // We need it to shutdown quite late so anything that is generating stats has had
+        // a chance to finish generating
+        LifecycleBinder.create(binder())
+                .bindShutdownTaskTo(SQLStatisticShutdown.class, 100_000);
     }
 
     @Override
@@ -108,6 +114,13 @@ public class SQLStatisticsModule extends AbstractFlyWayDbModule<SQLStatisticsCon
         @Inject
         SQLStatsAggregation(final SQLStatisticAggregationManager sqlStatisticAggregationManager) {
             super(sqlStatisticAggregationManager::aggregate);
+        }
+    }
+
+    private static class SQLStatisticShutdown extends RunnableWrapper {
+        @Inject
+        SQLStatisticShutdown(final Statistics statistics) {
+            super(statistics::flushAllEvents);
         }
     }
 }

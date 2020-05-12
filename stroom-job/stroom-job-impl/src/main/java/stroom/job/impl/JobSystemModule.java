@@ -18,10 +18,11 @@ package stroom.job.impl;
 
 import stroom.event.logging.api.ObjectInfoProviderBinder;
 import stroom.job.api.JobManager;
-import stroom.job.api.RunnableWrapper;
 import stroom.job.api.ScheduledJobsBinder;
 import stroom.job.shared.Job;
 import stroom.job.shared.JobNode;
+import stroom.lifecycle.api.LifecycleBinder;
+import stroom.util.RunnableWrapper;
 import stroom.util.guice.RestResourcesBinder;
 
 import com.google.inject.AbstractModule;
@@ -55,12 +56,47 @@ public class JobSystemModule extends AbstractModule {
                                 "fetch new tasks for execution.")
                         .withManagedState(false)
                         .withSchedule(PERIODIC, "10s"));
+
+        // Make sure the last thing to start and the first thing to stop is the scheduled task executor.
+        LifecycleBinder.create(binder())
+                .bindStartupTaskTo(JobBootstrapStartup.class)
+                .bindShutdownTaskTo(DistributedTaskFetcherShutdown.class, 999)
+                .bindStartupTaskTo(ScheduledTaskExecutorStartup.class, Integer.MIN_VALUE)
+                .bindShutdownTaskTo(ScheduledTaskExecutorShutdown.class, Integer.MIN_VALUE);
     }
 
     private static class FetchNewTasks extends RunnableWrapper {
         @Inject
         FetchNewTasks(final DistributedTaskFetcher distributedTaskFetcher) {
             super(distributedTaskFetcher::execute);
+        }
+    }
+
+    private static class JobBootstrapStartup extends RunnableWrapper {
+        @Inject
+        JobBootstrapStartup(final JobBootstrap jobBootstrap) {
+            super(jobBootstrap::startup);
+        }
+    }
+
+    private static class DistributedTaskFetcherShutdown extends RunnableWrapper {
+        @Inject
+        DistributedTaskFetcherShutdown(final DistributedTaskFetcher distributedTaskFetcher) {
+            super(distributedTaskFetcher::shutdown);
+        }
+    }
+
+    private static class ScheduledTaskExecutorStartup extends RunnableWrapper {
+        @Inject
+        ScheduledTaskExecutorStartup(final ScheduledTaskExecutor scheduledTaskExecutor) {
+            super(scheduledTaskExecutor::startup);
+        }
+    }
+
+    private static class ScheduledTaskExecutorShutdown extends RunnableWrapper {
+        @Inject
+        ScheduledTaskExecutorShutdown(final ScheduledTaskExecutor scheduledTaskExecutor) {
+            super(scheduledTaskExecutor::shutdown);
         }
     }
 }

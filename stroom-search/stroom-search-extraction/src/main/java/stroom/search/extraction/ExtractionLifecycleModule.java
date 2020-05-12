@@ -16,16 +16,20 @@
 
 package stroom.search.extraction;
 
-import stroom.lifecycle.api.AbstractLifecycleModule;
-import stroom.lifecycle.api.RunnableWrapper;
+import stroom.lifecycle.api.LifecycleBinder;
+import stroom.util.RunnableWrapper;
+
+import com.google.inject.AbstractModule;
 
 import javax.inject.Inject;
 
-class ExtractionLifecycleModule extends AbstractLifecycleModule {
+class ExtractionLifecycleModule extends AbstractModule {
+
     @Override
     protected void configure() {
-        super.configure();
-        bindShutdown().to(ExtractionTaskExecutorShutdown.class);
+
+        LifecycleBinder.create(binder())
+                .bindShutdownTaskTo(ExtractionTaskExecutorShutdown.class);
     }
 
     private static class ExtractionTaskExecutorShutdown extends RunnableWrapper {

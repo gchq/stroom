@@ -17,7 +17,7 @@
 package stroom.node.impl;
 
 import stroom.event.logging.api.ObjectInfoProviderBinder;
-import stroom.job.api.RunnableWrapper;
+import stroom.util.RunnableWrapper;
 import stroom.job.api.Schedule;
 import stroom.job.api.ScheduledJobsBinder;
 import stroom.node.api.NodeInfo;
