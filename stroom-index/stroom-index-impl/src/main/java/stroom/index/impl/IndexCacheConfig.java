@@ -7,8 +7,10 @@ import stroom.util.time.StroomDuration;
 
 import com.fasterxml.jackson.annotation.JsonPropertyDescription;
 
+import javax.inject.Singleton;
 import javax.validation.constraints.NotNull;
 
+@Singleton
 public class IndexCacheConfig extends AbstractConfig {
     private static final LambdaLogger LOGGER = LambdaLoggerFactory.getLogger(IndexCacheConfig.class);
 

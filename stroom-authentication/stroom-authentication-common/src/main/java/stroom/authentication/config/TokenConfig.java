@@ -25,6 +25,8 @@ import com.fasterxml.jackson.annotation.JsonProperty;
 
 import javax.validation.constraints.NotNull;
 
+@Singleton
+@JsonPropertyOrder(alphabetic = true)
 public class TokenConfig extends AbstractConfig {
 
     private StroomDuration timeUntilExpirationForUserToken = StroomDuration.ofDays(30);

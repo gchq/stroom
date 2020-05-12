@@ -1,10 +1,14 @@
 package stroom.authentication.config;
 
-import com.fasterxml.jackson.annotation.JsonProperty;
 import stroom.util.cache.CacheConfig;
 import stroom.util.shared.AbstractConfig;
 import stroom.util.time.StroomDuration;
 
+import com.fasterxml.jackson.annotation.JsonProperty;
+
+import javax.inject.Singleton;
+
+@Singleton
 public class OAuth2Config extends AbstractConfig {
     public static final String PROP_NAME_ACCESS_CODE_CACHE = "accessCodeCache";
 
