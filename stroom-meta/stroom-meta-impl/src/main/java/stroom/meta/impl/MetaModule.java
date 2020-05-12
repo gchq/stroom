@@ -1,6 +1,8 @@
 package stroom.meta.impl;
 
 import stroom.event.logging.api.ObjectInfoProviderBinder;
+import stroom.util.RunnableWrapper;
+import stroom.job.api.ScheduledJobsBinder;
 import stroom.meta.api.AttributeMapFactory;
 import stroom.meta.api.MetaSecurityFilter;
 import stroom.meta.api.MetaService;
@@ -12,6 +14,10 @@ import stroom.util.guice.RestResourcesBinder;
 
 import com.google.inject.AbstractModule;
 import com.google.inject.multibindings.OptionalBinder;
+
+import javax.inject.Inject;
+
+import static stroom.job.api.Schedule.ScheduleType.PERIODIC;
 
 public class MetaModule extends AbstractModule {
     @Override
@@ -31,6 +37,16 @@ public class MetaModule extends AbstractModule {
 
         RestResourcesBinder.create(binder())
                 .bind(MetaResourceImpl.class);
+
+        ScheduledJobsBinder.create(binder())
+                .bindJobTo(FlushDataMetaDb.class, builder -> builder
+                        .withName("Flush DataMetaDb")
+                        .withManagedState(false)
+                        .withSchedule(PERIODIC, "10s"))
+                .bindJobTo(DataAttributesRetention.class, builder -> builder
+                        .withName("Data Attributes Retention")
+                        .withDescription("Delete attributes older than system property stroom.meta.deleteAge")
+                        .withSchedule(PERIODIC, "1d"));
     }
 
     @Override
@@ -43,5 +59,19 @@ public class MetaModule extends AbstractModule {
     @Override
     public int hashCode() {
         return 0;
+    }
+
+    private static class FlushDataMetaDb extends RunnableWrapper {
+        @Inject
+        FlushDataMetaDb(final MetaValueDao metaValueService) {
+            super(metaValueService::flush);
+        }
+    }
+
+    private static class DataAttributesRetention extends RunnableWrapper {
+        @Inject
+        DataAttributesRetention(final MetaValueDao metaValueService) {
+            super(metaValueService::deleteOldValues);
+        }
     }
 }

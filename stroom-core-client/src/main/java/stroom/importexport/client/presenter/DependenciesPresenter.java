@@ -16,11 +16,6 @@
 
 package stroom.importexport.client.presenter;
 
-import com.google.gwt.cell.client.TextCell;
-import com.google.gwt.core.client.GWT;
-import com.google.gwt.user.cellview.client.ColumnSortEvent;
-import com.google.inject.Inject;
-import com.google.web.bindery.event.shared.EventBus;
 import stroom.content.client.presenter.ContentTabPresenter;
 import stroom.data.client.presenter.RestDataProvider;
 import stroom.data.grid.client.DataGridView;
@@ -37,6 +32,12 @@ import stroom.svg.client.Icon;
 import stroom.svg.client.SvgPresets;
 import stroom.util.shared.ResultPage;
 import stroom.util.shared.Sort.Direction;
+
+import com.google.gwt.cell.client.TextCell;
+import com.google.gwt.core.client.GWT;
+import com.google.gwt.user.cellview.client.ColumnSortEvent;
+import com.google.inject.Inject;
+import com.google.web.bindery.event.shared.EventBus;
 
 import java.util.function.Consumer;
 
@@ -83,7 +84,11 @@ public class DependenciesPresenter extends ContentTabPresenter<DataGridView<Depe
             @Override
             protected void exec(final Consumer<ResultPage<Dependency>> dataConsumer, final Consumer<Throwable> throwableConsumer) {
                 final Rest<ResultPage<Dependency>> rest = restFactory.create();
-                rest.onSuccess(dataConsumer).onFailure(throwableConsumer).call(CONTENT_RESOURCE).fetchDependencies(criteria);
+                rest
+                        .onSuccess(dataConsumer)
+                        .onFailure(throwableConsumer)
+                        .call(CONTENT_RESOURCE)
+                        .fetchDependencies(criteria);
             }
         };
         dataProvider.addDataDisplay(getView().getDataDisplay());
@@ -91,7 +96,17 @@ public class DependenciesPresenter extends ContentTabPresenter<DataGridView<Depe
     }
 
     private String docRefToString(final DocRef docRef) {
-        return docRef.getType() + ": " + docRef.getName() + " {" + docRef.getUuid() + "}";
+        final StringBuilder sb = new StringBuilder();
+        sb.append(docRef.getType());
+        sb.append(":");
+        if (docRef.getName() != null) {
+            sb.append(": ");
+            sb.append(docRef.getName());
+        }
+        sb.append(" {");
+        sb.append(docRef.getUuid());
+        sb.append("}");
+        return (sb.toString());
     }
 
     @Override

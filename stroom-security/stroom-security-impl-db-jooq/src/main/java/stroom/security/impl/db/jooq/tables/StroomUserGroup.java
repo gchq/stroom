@@ -42,7 +42,7 @@ import stroom.security.impl.db.jooq.tables.records.StroomUserGroupRecord;
 @SuppressWarnings({ "all", "unchecked", "rawtypes" })
 public class StroomUserGroup extends TableImpl<StroomUserGroupRecord> {
 
-    private static final long serialVersionUID = -1741452494;
+    private static final long serialVersionUID = 1239648678;
 
     /**
      * The reference instance of <code>stroom.stroom_user_group</code>
@@ -112,7 +112,7 @@ public class StroomUserGroup extends TableImpl<StroomUserGroupRecord> {
 
     @Override
     public List<Index> getIndexes() {
-        return Arrays.<Index>asList(Indexes.STROOM_USER_GROUP_GROUP_UUID, Indexes.STROOM_USER_GROUP_PRIMARY, Indexes.STROOM_USER_GROUP_USER_UUID);
+        return Arrays.<Index>asList(Indexes.STROOM_USER_GROUP_PRIMARY, Indexes.STROOM_USER_GROUP_STROOM_USER_GROUP_FK_USER_UUID, Indexes.STROOM_USER_GROUP_STROOM_USER_GROUP_GROUP_UUID_USER_UUID_IDX);
     }
 
     @Override
@@ -127,20 +127,20 @@ public class StroomUserGroup extends TableImpl<StroomUserGroupRecord> {
 
     @Override
     public List<UniqueKey<StroomUserGroupRecord>> getKeys() {
-        return Arrays.<UniqueKey<StroomUserGroupRecord>>asList(Keys.KEY_STROOM_USER_GROUP_PRIMARY);
+        return Arrays.<UniqueKey<StroomUserGroupRecord>>asList(Keys.KEY_STROOM_USER_GROUP_PRIMARY, Keys.KEY_STROOM_USER_GROUP_STROOM_USER_GROUP_GROUP_UUID_USER_UUID_IDX);
     }
 
     @Override
     public List<ForeignKey<StroomUserGroupRecord, ?>> getReferences() {
-        return Arrays.<ForeignKey<StroomUserGroupRecord, ?>>asList(Keys.STROOM_USER_GROUP_IBFK_1, Keys.STROOM_USER_GROUP_IBFK_2);
+        return Arrays.<ForeignKey<StroomUserGroupRecord, ?>>asList(Keys.STROOM_USER_GROUP_FK_USER_UUID, Keys.STROOM_USER_GROUP_FK_GROUP_UUID);
     }
 
-    public StroomUser stroomUserGroupIbfk_1() {
-        return new StroomUser(this, Keys.STROOM_USER_GROUP_IBFK_1);
+    public StroomUser stroomUserGroupFkUserUuid() {
+        return new StroomUser(this, Keys.STROOM_USER_GROUP_FK_USER_UUID);
     }
 
-    public StroomUser stroomUserGroupIbfk_2() {
-        return new StroomUser(this, Keys.STROOM_USER_GROUP_IBFK_2);
+    public StroomUser stroomUserGroupFkGroupUuid() {
+        return new StroomUser(this, Keys.STROOM_USER_GROUP_FK_GROUP_UUID);
     }
 
     @Override

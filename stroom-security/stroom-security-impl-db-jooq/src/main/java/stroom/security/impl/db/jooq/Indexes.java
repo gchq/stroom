@@ -33,31 +33,31 @@ public class Indexes {
     // INDEX definitions
     // -------------------------------------------------------------------------
 
+    public static final Index APP_PERMISSION_APP_PERMISSION_FK_USER_UUID = Indexes0.APP_PERMISSION_APP_PERMISSION_FK_USER_UUID;
     public static final Index APP_PERMISSION_PRIMARY = Indexes0.APP_PERMISSION_PRIMARY;
-    public static final Index APP_PERMISSION_USER_UUID = Indexes0.APP_PERMISSION_USER_UUID;
+    public static final Index DOC_PERMISSION_DOC_PERMISSION_FK_USER_UUID = Indexes0.DOC_PERMISSION_DOC_PERMISSION_FK_USER_UUID;
     public static final Index DOC_PERMISSION_PRIMARY = Indexes0.DOC_PERMISSION_PRIMARY;
-    public static final Index DOC_PERMISSION_USER_UUID = Indexes0.DOC_PERMISSION_USER_UUID;
     public static final Index STROOM_USER_NAME = Indexes0.STROOM_USER_NAME;
     public static final Index STROOM_USER_PRIMARY = Indexes0.STROOM_USER_PRIMARY;
     public static final Index STROOM_USER_STROOM_USER_UUID_INDEX = Indexes0.STROOM_USER_STROOM_USER_UUID_INDEX;
-    public static final Index STROOM_USER_GROUP_GROUP_UUID = Indexes0.STROOM_USER_GROUP_GROUP_UUID;
     public static final Index STROOM_USER_GROUP_PRIMARY = Indexes0.STROOM_USER_GROUP_PRIMARY;
-    public static final Index STROOM_USER_GROUP_USER_UUID = Indexes0.STROOM_USER_GROUP_USER_UUID;
+    public static final Index STROOM_USER_GROUP_STROOM_USER_GROUP_FK_USER_UUID = Indexes0.STROOM_USER_GROUP_STROOM_USER_GROUP_FK_USER_UUID;
+    public static final Index STROOM_USER_GROUP_STROOM_USER_GROUP_GROUP_UUID_USER_UUID_IDX = Indexes0.STROOM_USER_GROUP_STROOM_USER_GROUP_GROUP_UUID_USER_UUID_IDX;
 
     // -------------------------------------------------------------------------
     // [#1459] distribute members to avoid static initialisers > 64kb
     // -------------------------------------------------------------------------
 
     private static class Indexes0 {
+        public static Index APP_PERMISSION_APP_PERMISSION_FK_USER_UUID = Internal.createIndex("app_permission_fk_user_uuid", AppPermission.APP_PERMISSION, new OrderField[] { AppPermission.APP_PERMISSION.USER_UUID }, false);
         public static Index APP_PERMISSION_PRIMARY = Internal.createIndex("PRIMARY", AppPermission.APP_PERMISSION, new OrderField[] { AppPermission.APP_PERMISSION.ID }, true);
-        public static Index APP_PERMISSION_USER_UUID = Internal.createIndex("user_uuid", AppPermission.APP_PERMISSION, new OrderField[] { AppPermission.APP_PERMISSION.USER_UUID }, false);
+        public static Index DOC_PERMISSION_DOC_PERMISSION_FK_USER_UUID = Internal.createIndex("doc_permission_fk_user_uuid", DocPermission.DOC_PERMISSION, new OrderField[] { DocPermission.DOC_PERMISSION.USER_UUID }, false);
         public static Index DOC_PERMISSION_PRIMARY = Internal.createIndex("PRIMARY", DocPermission.DOC_PERMISSION, new OrderField[] { DocPermission.DOC_PERMISSION.ID }, true);
-        public static Index DOC_PERMISSION_USER_UUID = Internal.createIndex("user_uuid", DocPermission.DOC_PERMISSION, new OrderField[] { DocPermission.DOC_PERMISSION.USER_UUID }, false);
         public static Index STROOM_USER_NAME = Internal.createIndex("name", StroomUser.STROOM_USER, new OrderField[] { StroomUser.STROOM_USER.NAME, StroomUser.STROOM_USER.IS_GROUP }, true);
         public static Index STROOM_USER_PRIMARY = Internal.createIndex("PRIMARY", StroomUser.STROOM_USER, new OrderField[] { StroomUser.STROOM_USER.ID }, true);
         public static Index STROOM_USER_STROOM_USER_UUID_INDEX = Internal.createIndex("stroom_user_uuid_index", StroomUser.STROOM_USER, new OrderField[] { StroomUser.STROOM_USER.UUID }, true);
-        public static Index STROOM_USER_GROUP_GROUP_UUID = Internal.createIndex("group_uuid", StroomUserGroup.STROOM_USER_GROUP, new OrderField[] { StroomUserGroup.STROOM_USER_GROUP.GROUP_UUID }, false);
         public static Index STROOM_USER_GROUP_PRIMARY = Internal.createIndex("PRIMARY", StroomUserGroup.STROOM_USER_GROUP, new OrderField[] { StroomUserGroup.STROOM_USER_GROUP.ID }, true);
-        public static Index STROOM_USER_GROUP_USER_UUID = Internal.createIndex("user_uuid", StroomUserGroup.STROOM_USER_GROUP, new OrderField[] { StroomUserGroup.STROOM_USER_GROUP.USER_UUID }, false);
+        public static Index STROOM_USER_GROUP_STROOM_USER_GROUP_FK_USER_UUID = Internal.createIndex("stroom_user_group_fk_user_uuid", StroomUserGroup.STROOM_USER_GROUP, new OrderField[] { StroomUserGroup.STROOM_USER_GROUP.USER_UUID }, false);
+        public static Index STROOM_USER_GROUP_STROOM_USER_GROUP_GROUP_UUID_USER_UUID_IDX = Internal.createIndex("stroom_user_group_group_uuid_user_uuid_IDX", StroomUserGroup.STROOM_USER_GROUP, new OrderField[] { StroomUserGroup.STROOM_USER_GROUP.GROUP_UUID, StroomUserGroup.STROOM_USER_GROUP.USER_UUID }, true);
     }
 }

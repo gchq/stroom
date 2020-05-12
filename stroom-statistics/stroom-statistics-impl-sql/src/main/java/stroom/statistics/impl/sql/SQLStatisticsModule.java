@@ -18,10 +18,16 @@ package stroom.statistics.impl.sql;
 
 import stroom.db.util.AbstractFlyWayDbModule;
 import stroom.db.util.DataSourceProxy;
-import stroom.util.guice.HasHealthCheckBinder;
+import stroom.job.api.ScheduledJobsBinder;
+import stroom.lifecycle.api.LifecycleBinder;
+import stroom.util.RunnableWrapper;
 import stroom.util.guice.HasSystemInfoBinder;
 
+import javax.inject.Inject;
 import javax.sql.DataSource;
+
+import static stroom.job.api.Schedule.ScheduleType.CRON;
+import static stroom.job.api.Schedule.ScheduleType.PERIODIC;
 
 public class SQLStatisticsModule extends AbstractFlyWayDbModule<SQLStatisticsConfig, SQLStatisticsDbConnProvider> {
     private static final String MODULE = "stroom-statistics";
@@ -38,6 +44,25 @@ public class SQLStatisticsModule extends AbstractFlyWayDbModule<SQLStatisticsCon
                 .bind(SQLStatisticCacheImpl.class)
                 .bind(SQLStatisticEventStore.class);
 
+        ScheduledJobsBinder.create(binder())
+                .bindJobTo(EvictFromObjectPool.class, builder -> builder
+                        .withName("Evict from object pool")
+                        .withDescription("Evict from SQL Statistics event store object pool")
+                        .withManagedState(false)
+                        .withSchedule(PERIODIC, "1m"))
+                .bindJobTo(SQLStatsFlush.class, builder -> builder
+                        .withName("SQL Stats In Memory Flush")
+                        .withDescription("SQL Stats In Memory Flush (Cache to DB)")
+                        .withSchedule(CRON, "0,10,20,30,40,50 * *"))
+                .bindJobTo(SQLStatsAggregation.class, builder -> builder
+                        .withName("SQL Stats Database Aggregation")
+                        .withDescription("Run SQL stats database aggregation")
+                        .withSchedule(CRON, "5,15,25,35,45,55 * *"));
+
+        // We need it to shutdown quite late so anything that is generating stats has had
+        // a chance to finish generating
+        LifecycleBinder.create(binder())
+                .bindShutdownTaskTo(SQLStatisticShutdown.class, 100_000);
     }
 
     @Override
@@ -68,6 +93,34 @@ public class SQLStatisticsModule extends AbstractFlyWayDbModule<SQLStatisticsCon
     private static class DataSourceImpl extends DataSourceProxy implements SQLStatisticsDbConnProvider {
         private DataSourceImpl(final DataSource dataSource) {
             super(dataSource);
+        }
+    }
+
+    private static class EvictFromObjectPool extends RunnableWrapper {
+        @Inject
+        EvictFromObjectPool(final SQLStatisticEventStore sqlStatisticEventStore) {
+            super(sqlStatisticEventStore::evict);
+        }
+    }
+
+    private static class SQLStatsFlush extends RunnableWrapper {
+        @Inject
+        SQLStatsFlush(final SQLStatisticCache sqlStatisticCache) {
+            super(sqlStatisticCache::execute);
+        }
+    }
+
+    private static class SQLStatsAggregation extends RunnableWrapper {
+        @Inject
+        SQLStatsAggregation(final SQLStatisticAggregationManager sqlStatisticAggregationManager) {
+            super(sqlStatisticAggregationManager::aggregate);
+        }
+    }
+
+    private static class SQLStatisticShutdown extends RunnableWrapper {
+        @Inject
+        SQLStatisticShutdown(final Statistics statistics) {
+            super(statistics::flushAllEvents);
         }
     }
 }

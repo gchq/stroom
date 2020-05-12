@@ -20,12 +20,20 @@ import stroom.docstore.api.DocumentActionHandlerBinder;
 import stroom.explorer.api.ExplorerActionHandler;
 import stroom.importexport.api.ImportExportActionHandler;
 import stroom.index.shared.IndexDoc;
+import stroom.job.api.ScheduledJobsBinder;
+import stroom.lifecycle.api.LifecycleBinder;
+import stroom.util.RunnableWrapper;
 import stroom.util.entityevent.EntityEvent;
 import stroom.util.guice.GuiceUtil;
 import stroom.util.guice.RestResourcesBinder;
 import stroom.util.shared.Clearable;
 
 import com.google.inject.AbstractModule;
+
+import javax.inject.Inject;
+
+import static stroom.job.api.Schedule.ScheduleType.CRON;
+import static stroom.job.api.Schedule.ScheduleType.PERIODIC;
 
 public class IndexModule extends AbstractModule {
     @Override
@@ -62,5 +70,80 @@ public class IndexModule extends AbstractModule {
 
         DocumentActionHandlerBinder.create(binder())
                 .bind(IndexDoc.DOCUMENT_TYPE, IndexStoreImpl.class);
+
+        ScheduledJobsBinder.create(binder())
+                .bindJobTo(IndexShardDelete.class, builder -> builder
+                        .withName("Index Shard Delete")
+                        .withDescription("Job to delete index shards from disk that have been marked as deleted")
+                        .withSchedule(CRON, "0 0 *"))
+                .bindJobTo(IndexShardRetention.class, builder -> builder
+                        .withName("Index Shard Retention")
+                        .withDescription("Job to set index shards to have a status of deleted that have past their retention period")
+                        .withSchedule(PERIODIC, "10m"))
+                .bindJobTo(IndexWriterCacheSweep.class, builder -> builder
+                        .withName("Index Writer Cache Sweep")
+                        .withDescription("Job to remove old index shard writers from the cache")
+                        .withSchedule(PERIODIC, "10m"))
+                .bindJobTo(IndexWriterFlush.class, builder -> builder
+                        .withName("Index Writer Flush")
+                        .withDescription("Job to flush index shard data to disk")
+                        .withSchedule(PERIODIC, "10m"))
+                .bindJobTo(VolumeStatus.class, builder -> builder
+                        .withName("Index Volume Status")
+                        .withDescription("Update the usage status of volumes owned by the node")
+                        .withSchedule(PERIODIC, "5m"));
+
+        LifecycleBinder.create(binder())
+                .bindStartupTaskTo(IndexShardWriterCacheStartup.class)
+                .bindShutdownTaskTo(IndexShardWriterCacheShutdown.class);
+    }
+
+    private static class IndexShardDelete extends RunnableWrapper {
+        @Inject
+        IndexShardDelete(final IndexShardManager indexShardManager) {
+            super(indexShardManager::deleteFromDisk);
+        }
+    }
+
+    private static class IndexShardRetention extends RunnableWrapper {
+        @Inject
+        IndexShardRetention(final IndexShardManager indexShardManager) {
+            super(indexShardManager::checkRetention);
+        }
+    }
+
+    private static class IndexWriterCacheSweep extends RunnableWrapper {
+        @Inject
+        IndexWriterCacheSweep(final IndexShardWriterCache indexShardWriterCache) {
+            super(indexShardWriterCache::sweep);
+        }
+    }
+
+    private static class IndexWriterFlush extends RunnableWrapper {
+        @Inject
+        IndexWriterFlush(final IndexShardWriterCache indexShardWriterCache) {
+            super(indexShardWriterCache::flushAll);
+        }
+    }
+
+    private static class VolumeStatus extends RunnableWrapper {
+        @Inject
+        VolumeStatus(final IndexVolumeService volumeService) {
+            super(volumeService::rescan);
+        }
+    }
+
+    private static class IndexShardWriterCacheStartup extends RunnableWrapper {
+        @Inject
+        IndexShardWriterCacheStartup(final IndexShardWriterCacheImpl indexShardWriterCache) {
+            super(indexShardWriterCache::startup);
+        }
+    }
+
+    private static class IndexShardWriterCacheShutdown extends RunnableWrapper {
+        @Inject
+        IndexShardWriterCacheShutdown(final IndexShardWriterCacheImpl indexShardWriterCache) {
+            super(indexShardWriterCache::shutdown);
+        }
     }
 }

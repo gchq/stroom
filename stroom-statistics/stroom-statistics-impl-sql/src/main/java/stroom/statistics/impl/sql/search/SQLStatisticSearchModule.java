@@ -16,12 +16,18 @@
 
 package stroom.statistics.impl.sql.search;
 
+import stroom.util.RunnableWrapper;
+import stroom.job.api.ScheduledJobsBinder;
 import stroom.statistics.impl.sql.StatisticsQueryService;
 import stroom.util.guice.GuiceUtil;
 import stroom.util.guice.RestResourcesBinder;
 import stroom.util.shared.Clearable;
 
 import com.google.inject.AbstractModule;
+
+import javax.inject.Inject;
+
+import static stroom.job.api.Schedule.ScheduleType.PERIODIC;
 
 public class SQLStatisticSearchModule extends AbstractModule {
     @Override
@@ -34,5 +40,18 @@ public class SQLStatisticSearchModule extends AbstractModule {
 
         RestResourcesBinder.create(binder())
                 .bind(SqlStatisticsQueryResource.class);
+
+        ScheduledJobsBinder.create(binder())
+                .bindJobTo(EvictExpiredElements.class, builder -> builder
+                        .withName("Evict expired elements")
+                        .withSchedule(PERIODIC, "10s")
+                        .withManagedState(false));
+    }
+
+    private static class EvictExpiredElements extends RunnableWrapper {
+        @Inject
+        EvictExpiredElements(final SqlStatisticsSearchResponseCreatorManager sqlStatisticsSearchResponseCreatorManager) {
+            super(sqlStatisticsSearchResponseCreatorManager::evictExpiredElements);
+        }
     }
 }

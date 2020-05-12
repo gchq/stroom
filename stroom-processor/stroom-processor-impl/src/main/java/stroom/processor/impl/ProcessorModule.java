@@ -18,17 +18,24 @@ package stroom.processor.impl;
 
 import stroom.importexport.api.ImportExportActionHandler;
 import stroom.job.api.DistributedTaskFactory;
+import stroom.job.api.ScheduledJobsBinder;
+import stroom.lifecycle.api.LifecycleBinder;
 import stroom.processor.api.ProcessorFilterService;
 import stroom.processor.api.ProcessorService;
 import stroom.processor.api.ProcessorTaskService;
 import stroom.processor.shared.ProcessorResource;
 import stroom.processor.shared.ProcessorTaskResource;
 import stroom.searchable.api.Searchable;
+import stroom.util.RunnableWrapper;
 import stroom.util.guice.GuiceUtil;
 import stroom.util.guice.RestResourcesBinder;
 import stroom.util.shared.Clearable;
 
 import com.google.inject.AbstractModule;
+
+import javax.inject.Inject;
+
+import static stroom.job.api.Schedule.ScheduleType.PERIODIC;
 
 public class ProcessorModule extends AbstractModule {
     @Override
@@ -58,5 +65,48 @@ public class ProcessorModule extends AbstractModule {
 
         GuiceUtil.buildMultiBinder(binder(), ImportExportActionHandler.class)
                 .addBinding(ProcessorFilterImportExportHandlerImpl.class);
+
+        ScheduledJobsBinder.create(binder())
+                .bindJobTo(ProcessorTaskQueueStatistics.class, builder -> builder
+                        .withName("Processor Task Queue Statistics")
+                        .withDescription("Write statistics about the size of the task queue")
+                        .withSchedule(PERIODIC, "1m"))
+                .bindJobTo(ProcessorTaskRetention.class, builder -> builder
+                        .withName("Processor Task Retention")
+                        .withDescription("Physically delete processor tasks that have been logically " +
+                                "deleted or complete based on age (stroom.process.deletePurgeAge)")
+                        .withSchedule(PERIODIC, "1m"));
+
+        LifecycleBinder.create(binder())
+                .bindStartupTaskTo(ProcessorTaskManagerStartup.class)
+                .bindShutdownTaskTo(ProcessorTaskManagerShutdown.class);
+    }
+
+    private static class ProcessorTaskQueueStatistics extends RunnableWrapper {
+        @Inject
+        ProcessorTaskQueueStatistics(final ProcessorTaskManager processorTaskManager) {
+            super(processorTaskManager::writeQueueStatistics);
+        }
+    }
+
+    private static class ProcessorTaskRetention extends RunnableWrapper {
+        @Inject
+        ProcessorTaskRetention(final ProcessorTaskDeleteExecutor processorTaskDeleteExecutor) {
+            super(processorTaskDeleteExecutor::exec);
+        }
+    }
+
+    private static class ProcessorTaskManagerStartup extends RunnableWrapper {
+        @Inject
+        ProcessorTaskManagerStartup(final ProcessorTaskManagerImpl processorTaskManager) {
+            super(processorTaskManager::startup);
+        }
+    }
+
+    private static class ProcessorTaskManagerShutdown extends RunnableWrapper {
+        @Inject
+        ProcessorTaskManagerShutdown(final ProcessorTaskManagerImpl processorTaskManager) {
+            super(processorTaskManager::shutdown);
+        }
     }
 }

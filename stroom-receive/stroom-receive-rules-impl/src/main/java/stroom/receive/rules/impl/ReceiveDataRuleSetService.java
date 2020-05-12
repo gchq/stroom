@@ -17,8 +17,12 @@
 
 package stroom.receive.rules.impl;
 
+import stroom.docref.DocRef;
 import stroom.docstore.api.DocumentStore;
 import stroom.receive.rules.shared.ReceiveDataRules;
 
+import java.util.List;
+
 public interface ReceiveDataRuleSetService extends DocumentStore<ReceiveDataRules> {
+    List<DocRef> list();
 }

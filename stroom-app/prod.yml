@@ -112,6 +112,7 @@ appConfig:
     enabled: ${STROOM_CONTENT_PACK_IMPORT_ENABLED:-false}
   job:
     enabled: true
+    enableDistributedJobsOnBootstrap: ${STROOM_DISTRIBUTED_JOBS_ENABLED_ON_BOOTSTRAP:-true}
     executionInterval: "10s"
   node:
     name: ${STROOM_NODE:-node1a}
