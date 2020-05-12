@@ -29,6 +29,7 @@ import stroom.importexport.api.NonExplorerDocRefProvider;
 import stroom.importexport.shared.ImportState;
 import stroom.pipeline.shared.PipelineDoc;
 import stroom.processor.api.ProcessorFilterService;
+import stroom.processor.api.ProcessorFilterUtil;
 import stroom.processor.api.ProcessorService;
 import stroom.processor.shared.Processor;
 import stroom.processor.shared.ProcessorDataSource;
@@ -85,6 +86,11 @@ public class ProcessorFilterImportExportHandlerImpl implements ImportExportActio
             throw new RuntimeException("Unable to read meta file associated with processor " + docRef, ex);
         }
 
+        boolean ignore = ProcessorFilterUtil.shouldImport (processorFilter);
+
+        if (ignore)
+            LOGGER.warn("Not importing processor filter " + docRef.getUuid() + " because it contains id fields");
+
         if (importMode != ImportState.ImportMode.CREATE_CONFIRMATION) {
             processorFilter.setProcessor(findProcessorForFilter(processorFilter));
 
@@ -123,7 +129,7 @@ public class ProcessorFilterImportExportHandlerImpl implements ImportExportActio
                 processorFilterService.update(processorFilter);
             }
         }
-        return new ImpexDetails(docRef, processorFilter.getPipelineName());
+        return new ImpexDetails(docRef, processorFilter.getPipelineName(),ignore);
     }
 
     private ProcessorFilter findProcessorFilter(final DocRef docRef) {

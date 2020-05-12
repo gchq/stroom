@@ -6,6 +6,8 @@ and this project adheres to [Semantic Versioning](http://semver.org/).
 
 ## [Unreleased]
 
+* Issue **#1543** : Prevent import/export of processor filters with id fields
+
 * Issue **#1112** : You can now copy feeds along with other items and copies are named appropriately.
 
 * Issue **#1112** : When copying a selection of several items, the dependencies between the items are altered in the resulting copies so that the copied items work together as a new set of content.
@@ -13,7 +15,6 @@ and this project adheres to [Semantic Versioning](http://semver.org/).
 * Issue **#1112** : As part of fixing dependencies when copying items, the dependencies screen now works correctly and now also shows processor filters. 
 
 * Issue **#1545** : Add property `enableDistributedJobsOnBootstrap` to enable/disable processing on first boot.
-
 
 ## [v7.0-beta.30] - 2020-05-06
 
