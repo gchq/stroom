@@ -417,7 +417,8 @@ class AuthenticationServiceImpl implements AuthenticationService {
 
     public boolean needsPasswordChange(String email) {
         return accountDao.needsPasswordChange(
-                email, config.getPasswordIntegrityChecksConfig().getMandatoryPasswordChangeDuration().getDuration(),
+                email,
+                config.getPasswordIntegrityChecksConfig().getMandatoryPasswordChangeDuration().getDuration(),
                 config.getPasswordIntegrityChecksConfig().isForcePasswordChangeOnFirstLogin());
     }
 
@@ -425,9 +426,13 @@ class AuthenticationServiceImpl implements AuthenticationService {
         List<PasswordValidationFailureType> failedOn = new ArrayList<>();
 
         if (passwordValidationRequest.getOldPassword() != null) {
-            final LoginResult loginResult = accountDao.areCredentialsValid(passwordValidationRequest.getEmail(), passwordValidationRequest.getOldPassword());
+            final LoginResult loginResult = accountDao.areCredentialsValid(
+                    passwordValidationRequest.getEmail(),
+                    passwordValidationRequest.getOldPassword());
+
             PasswordValidator.validateAuthenticity(loginResult)
                     .ifPresent(failedOn::add);
+
             PasswordValidator.validateReuse(
                     passwordValidationRequest.getOldPassword(),
                     passwordValidationRequest.getNewPassword())
@@ -484,7 +489,8 @@ class AuthenticationServiceImpl implements AuthenticationService {
         LOGGER.debug("Login for {} succeeded", username);
 
         final boolean userNeedsToChangePassword = accountDao.needsPasswordChange(
-                username, config.getPasswordIntegrityChecksConfig().getMandatoryPasswordChangeDuration().getDuration(),
+                username,
+                config.getPasswordIntegrityChecksConfig().getMandatoryPasswordChangeDuration().getDuration(),
                 config.getPasswordIntegrityChecksConfig().isForcePasswordChangeOnFirstLogin());
 
         URI result;

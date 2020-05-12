@@ -16,14 +16,22 @@ public class PasswordIntegrityChecksConfig extends AbstractConfig {
 
     @NotNull
     @JsonProperty
+    @JsonPropertyDescription("Unused user accounts with a duration since account creation greater than this " +
+            "value will be locked. The frequency of checks is " +
+            "controlled by the job 'Account Maintenance'.")
     private StroomDuration neverUsedAccountDeactivationThreshold = StroomDuration.ofDays(30);
 
     @NotNull
     @JsonProperty
+    @JsonPropertyDescription("User accounts with a duration since last login greater than this " +
+            "value will be locked. The frequency of checks is " +
+            "controlled by the job 'Account Maintenance'.")
     private StroomDuration unusedAccountDeactivationThreshold = StroomDuration.ofDays(90);
 
     @NotNull
     @JsonProperty
+    @JsonPropertyDescription("The age after which a password will have to be changed. The frequency of checks is " +
+            "controlled by the job 'Account Maintenance'.")
     private StroomDuration mandatoryPasswordChangeDuration = StroomDuration.ofDays(90);
 
 //    @NotNull
@@ -31,6 +39,7 @@ public class PasswordIntegrityChecksConfig extends AbstractConfig {
 //    private StroomDuration durationBetweenChecks = StroomDuration.ofMinutes(2);
 
     @JsonProperty
+    @JsonPropertyDescription("If true, on first login the user will be forced to change their password.")
     private boolean forcePasswordChangeOnFirstLogin = true;
 
     @ValidRegex
@@ -42,6 +51,7 @@ public class PasswordIntegrityChecksConfig extends AbstractConfig {
     @Min(0)
     @NotNull
     @JsonProperty
+    @JsonPropertyDescription("The minimum number of characters that new passwords need to contain.")
     private int minimumPasswordLength;
 
     public StroomDuration getNeverUsedAccountDeactivationThreshold() {
