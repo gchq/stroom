@@ -71,11 +71,10 @@ appConfig:
       passwordComplexityRegex: ".*"
       unusedAccountDeactivationThreshold: "P90D"
     token:
-      timeUntilExpirationForUserToken: "P30D"
-      timeUntilExpirationForEmailResetToken: "PT5M"
-      jwsIssuer: "stroom"
-      requireExpirationTime: false
       algorithm: "RS256"
+      jwsIssuer: "stroom"
+      timeUntilExpirationForEmailResetToken: "PT5M"
+      timeUntilExpirationForUserToken: "P30D"
     useDefaultOpenIdCredentials: true
   benchmark:
     streamCount: 1000
@@ -176,10 +175,10 @@ appConfig:
           minimumIdle: 10
           maxPoolSize: 10
       metaValue:
+        addAsync: true
         deleteAge: "P30D"
         deleteBatchSize: 1000
         flushBatchSize: 1000
-        addAsync: true
     retention:
       deleteBatchSize: 1000
     store:
@@ -578,8 +577,8 @@ appConfig:
     curatorMaxRetries: 100
     zookeeperBasePath: "/stroom-services"
   sessionCookie:
-    secure: true
     httpOnly: true
+    secure: true
   solr:
     indexClientCache:
       maximumSize: 100
@@ -740,39 +739,8 @@ appConfig:
         minimumIdle: 10
         maxPoolSize: 10
   ui:
-    welcomeHtml: "<h1>About Stroom</h1><p>Stroom is designed to receive data from\
-      \ multiple systems.</p>"
     aboutHtml: "<h1>About Stroom</h1><p>Stroom is designed to receive data from multiple\
       \ systems.</p>"
-    defaultMaxResults: "1000000,100,10,1"
-    process:
-      defaultTimeLimit: 30
-      defaultRecordLimit: 1000000
-    helpUrl: "https://gchq.github.io/stroom-docs"
-    theme:
-      backgroundAttachment: "scroll"
-      backgroundColor: "#1E88E5"
-      backgroundImage: "none"
-      backgroundPosition: "0 0"
-      backgroundRepeat: "repeat"
-      backgroundOpacity: "0"
-      tubeVisible: "hidden"
-      tubeOpacity: "0.6"
-      labelColours: "TEST1=#FF0000,TEST2=#FF9900"
-    query:
-      infoPopup:
-        enabled: false
-        title: "Please Provide Query Info"
-        validationRegex: "^[\\s\\S]{3,}$"
-    namePattern: "^[a-zA-Z0-9_\\- \\.\\(\\)]{1,}$"
-    htmlTitle: "Stroom"
-    oncontextmenu: "return false;"
-    splash:
-      enabled: false
-      title: "Splash Screen"
-      body: "<h1>About Stroom</h1><p>Stroom is designed to receive data from multiple\
-        \ systems.</p>"
-      version: "v0.1"
     activity:
       enabled: false
       chooseOnStartup: false
@@ -783,14 +751,45 @@ appConfig:
         description\" validation=\".{80,}\" validationMessage=\"The activity description\
         \ must be at least 80 characters long.\" ></textarea>Explain what the activity\
         \ is"
-    url:
-      users: "../../../s/users"
-      apiKeys: "../../../s/apiKeys"
-      changepassword: "../../../s/changepassword"
+    defaultMaxResults: "1000000,100,10,1"
+    helpUrl: "https://gchq.github.io/stroom-docs"
+    htmlTitle: "Stroom"
+    namePattern: "^[a-zA-Z0-9_\\- \\.\\(\\)]{1,}$"
+    oncontextmenu: "return false;"
+    process:
+      defaultRecordLimit: 1000000
+      defaultTimeLimit: 30
+    query:
+      infoPopup:
+        enabled: false
+        title: "Please Provide Query Info"
+        validationRegex: "^[\\s\\S]{3,}$"
+    splash:
+      enabled: false
+      title: "Splash Screen"
+      body: "<h1>About Stroom</h1><p>Stroom is designed to receive data from multiple\
+        \ systems.</p>"
+      version: "v0.1"
+    theme:
+      backgroundAttachment: "scroll"
+      backgroundColor: "#1E88E5"
+      backgroundImage: "none"
+      backgroundPosition: "0 0"
+      backgroundRepeat: "repeat"
+      backgroundOpacity: "0"
+      tubeVisible: "hidden"
+      tubeOpacity: "0.6"
+      labelColours: "TEST1=#FF0000,TEST2=#FF9900"
     uiPreferences:
       allowPasswordResets: true
       dateFormat: "YYYY-MM-DDTHH:mm:ss.SSSZ"
       defaultApiKeyExpiryInMinutes: 525600
+    url:
+      apiKeys: "../../../s/apiKeys"
+      changepassword: "../../../s/changepassword"
+      users: "../../../s/users"
+    welcomeHtml: "<h1>About Stroom</h1><p>Stroom is designed to receive data from\
+      \ multiple systems.</p>"
   uiUri:
     scheme: "https"
     hostname: null

@@ -6,20 +6,27 @@ import com.fasterxml.jackson.annotation.JsonCreator;
 import com.fasterxml.jackson.annotation.JsonInclude;
 import com.fasterxml.jackson.annotation.JsonInclude.Include;
 import com.fasterxml.jackson.annotation.JsonProperty;
+import com.fasterxml.jackson.annotation.JsonPropertyDescription;
 import com.fasterxml.jackson.annotation.JsonPropertyOrder;
 
 import javax.inject.Singleton;
 import java.util.Objects;
 
 @Singleton
-@JsonPropertyOrder({"users", "apiKeys", "changepassword"})
+@JsonPropertyOrder(alphabetic = true)
 @JsonInclude(Include.NON_NULL)
 public class UrlConfig extends AbstractConfig {
+
     @JsonProperty
+    @JsonPropertyDescription("The path to the Users screen.")
     private String users = "../../../s/users";
+
     @JsonProperty
+    @JsonPropertyDescription("The path to the API Keys screen.")
     private String apiKeys = "../../../s/apiKeys";
+
     @JsonProperty
+    @JsonPropertyDescription("The path to the Change Password screen.")
     private String changepassword = "../../../s/changepassword";
 
     public UrlConfig() {
