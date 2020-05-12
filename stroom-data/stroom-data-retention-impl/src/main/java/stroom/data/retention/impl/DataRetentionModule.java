@@ -18,7 +18,7 @@ package stroom.data.retention.impl;
 
 import stroom.data.retention.shared.DataRetentionRules;
 import stroom.docref.DocRef;
-import stroom.job.api.RunnableWrapper;
+import stroom.util.RunnableWrapper;
 import stroom.job.api.ScheduledJobsBinder;
 import stroom.util.guice.RestResourcesBinder;
 

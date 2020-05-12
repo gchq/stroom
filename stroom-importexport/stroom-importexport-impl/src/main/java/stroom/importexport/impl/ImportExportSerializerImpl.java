@@ -270,25 +270,31 @@ class ImportExportSerializerImpl implements ImportExportSerializer {
                             importState.isAction())) {
                         final ImportExportActionHandler.ImpexDetails importDetails = importExportActionHandler.importDocument(docRef, dataMap, importState, importMode);
 
-                        final DocRef imported;
-                        if (importDetails != null)
-                            imported = importDetails.getDocRef();
-                        else
-                            imported = null;
-                        if (imported == null)
-                            throw new RuntimeException("Import failed - no docref returned");
+                        if (importDetails.isIgnore()) {
+                            // Should skip this item so remove it from the map.
+                            confirmMap.remove(docRef);
+                        }
+                        else {
+                            final DocRef imported;
+                            if (importDetails != null)
+                                imported = importDetails.getDocRef();
+                            else
+                                imported = null;
+                            if (imported == null)
+                                throw new RuntimeException("Import failed - no docref returned");
 
-                        final String altDestPath = importDetails.getLocationRef();
-                        if (altDestPath != null)
-                            importState.setDestPath(altDestPath);
+                            final String altDestPath = importDetails.getLocationRef();
+                            if (altDestPath != null)
+                                importState.setDestPath(altDestPath);
 
-                        // Add explorer node afterwards on successful import as they won't be controlled by doc service.
-                        if (importState.ok(importMode)) {
-                            if (existingNode.isEmpty() && !(importExportActionHandler instanceof NonExplorerDocRefProvider)) {
-                                explorerNodeService.createNode(imported, folderRef, PermissionInheritance.DESTINATION);
+                            // Add explorer node afterwards on successful import as they won't be controlled by doc service.
+                            if (importState.ok(importMode)) {
+                                if (existingNode.isEmpty() && !(importExportActionHandler instanceof NonExplorerDocRefProvider)) {
+                                    explorerNodeService.createNode(imported, folderRef, PermissionInheritance.DESTINATION);
+                                }
+
+                                importExportDocumentEventLog.importDocument(type, imported.getUuid(), name, null);
                             }
-
-                            importExportDocumentEventLog.importDocument(type, imported.getUuid(), name, null);
                         }
                     } else {
                         // We can't import this item so remove it from the map.

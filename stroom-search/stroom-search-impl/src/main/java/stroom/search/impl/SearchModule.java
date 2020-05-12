@@ -17,7 +17,7 @@
 package stroom.search.impl;
 
 import stroom.cluster.task.api.ClusterTaskHandlerBinder;
-import stroom.job.api.RunnableWrapper;
+import stroom.util.RunnableWrapper;
 import stroom.job.api.ScheduledJobsBinder;
 import stroom.search.api.EventSearch;
 import stroom.search.extraction.ExtractionModule;

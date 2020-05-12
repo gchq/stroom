@@ -16,7 +16,7 @@
 
 package stroom.statistics.impl.sql.search;
 
-import stroom.job.api.RunnableWrapper;
+import stroom.util.RunnableWrapper;
 import stroom.job.api.ScheduledJobsBinder;
 import stroom.statistics.impl.sql.StatisticsQueryService;
 import stroom.util.guice.GuiceUtil;

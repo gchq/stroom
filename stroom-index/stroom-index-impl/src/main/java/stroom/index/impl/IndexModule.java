@@ -20,8 +20,9 @@ import stroom.docstore.api.DocumentActionHandlerBinder;
 import stroom.explorer.api.ExplorerActionHandler;
 import stroom.importexport.api.ImportExportActionHandler;
 import stroom.index.shared.IndexDoc;
-import stroom.job.api.RunnableWrapper;
 import stroom.job.api.ScheduledJobsBinder;
+import stroom.lifecycle.api.LifecycleBinder;
+import stroom.util.RunnableWrapper;
 import stroom.util.entityevent.EntityEvent;
 import stroom.util.guice.GuiceUtil;
 import stroom.util.guice.RestResourcesBinder;
@@ -91,6 +92,10 @@ public class IndexModule extends AbstractModule {
                         .withName("Index Volume Status")
                         .withDescription("Update the usage status of volumes owned by the node")
                         .withSchedule(PERIODIC, "5m"));
+
+        LifecycleBinder.create(binder())
+                .bindStartupTaskTo(IndexShardWriterCacheStartup.class)
+                .bindShutdownTaskTo(IndexShardWriterCacheShutdown.class);
     }
 
     private static class IndexShardDelete extends RunnableWrapper {
@@ -125,6 +130,20 @@ public class IndexModule extends AbstractModule {
         @Inject
         VolumeStatus(final IndexVolumeService volumeService) {
             super(volumeService::rescan);
+        }
+    }
+
+    private static class IndexShardWriterCacheStartup extends RunnableWrapper {
+        @Inject
+        IndexShardWriterCacheStartup(final IndexShardWriterCacheImpl indexShardWriterCache) {
+            super(indexShardWriterCache::startup);
+        }
+    }
+
+    private static class IndexShardWriterCacheShutdown extends RunnableWrapper {
+        @Inject
+        IndexShardWriterCacheShutdown(final IndexShardWriterCacheImpl indexShardWriterCache) {
+            super(indexShardWriterCache::shutdown);
         }
     }
 }
