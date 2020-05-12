@@ -6,6 +6,8 @@ and this project adheres to [Semantic Versioning](http://semver.org/).
 
 ## [Unreleased]
 
+* Issue **#1494** : Scrollbars now have a white background unless used in a readonly text area.
+
 * Issue **#1547** : Added pipeline names to processor task screens.
 
 * Issue **#1543** : Prevent import/export of processor filters with id fields
