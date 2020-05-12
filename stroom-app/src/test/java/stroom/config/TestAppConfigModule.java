@@ -1,5 +1,18 @@
 package stroom.config;
 
+import stroom.config.app.AppConfig;
+import stroom.config.app.AppConfigModule;
+import stroom.config.app.AppConfigModule.ConfigHolder;
+import stroom.config.app.Config;
+import stroom.config.app.YamlUtil;
+import stroom.config.common.CommonDbConfig;
+import stroom.config.common.DbConfig;
+import stroom.config.common.HasDbConfig;
+import stroom.util.config.PropertyUtil;
+import stroom.util.logging.LogUtil;
+import stroom.util.shared.AbstractConfig;
+import stroom.util.shared.NotInjectableConfig;
+
 import com.google.common.reflect.ClassPath;
 import com.google.inject.AbstractModule;
 import com.google.inject.Guice;
@@ -9,19 +22,6 @@ import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.Test;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import stroom.config.app.AppConfig;
-import stroom.config.app.AppConfigModule;
-import stroom.config.app.AppConfigModule.ConfigHolder;
-import stroom.config.app.Config;
-import stroom.config.app.YamlUtil;
-import stroom.config.common.CommonDbConfig;
-import stroom.config.common.DbConfig;
-import stroom.config.common.HasDbConfig;
-import stroom.util.config.FieldMapper;
-import stroom.util.config.PropertyUtil;
-import stroom.util.logging.LogUtil;
-import stroom.util.shared.AbstractConfig;
-import stroom.util.shared.NotInjectableConfig;
 
 import java.io.FileNotFoundException;
 import java.io.IOException;
@@ -57,7 +57,7 @@ class TestAppConfigModule {
 
         // Modify the value on the common connection pool so it gets applied to all other config objects
         final Config modifiedConfig = YamlUtil.readConfig(devYamlPath);
-        modifiedConfig.getAppConfig().getCommonDbConfig().getConnectionPoolConfig().setPrepStmtCacheSize(250);
+//        modifiedConfig.getAppConfig().getCommonDbConfig().getConnectionPoolConfig().setPrepStmtCacheSize(250);
         int currentValue = modifiedConfig.getAppConfig().getCommonDbConfig().getConnectionPoolConfig().getPrepStmtCacheSize();
         int newValue = currentValue + 1000;
 
@@ -98,14 +98,14 @@ class TestAppConfigModule {
                     }
                 })
                 .forEach(hasDbConfig -> {
-                    final DbConfig mergedConfig = new DbConfig();
-                    FieldMapper.copy(commonDbConfig, mergedConfig, FieldMapper.CopyOption.DONT_COPY_NULLS);
-                    FieldMapper.copy(hasDbConfig.getDbConfig(), mergedConfig, FieldMapper.CopyOption.DONT_COPY_NULLS);
+                    final DbConfig mergedConfig = commonDbConfig.mergeConfig(hasDbConfig.getDbConfig());
 
                     Assertions.assertThat(mergedConfig.getConnectionConfig())
                             .isEqualTo(commonDbConfig.getConnectionConfig());
+
                     Assertions.assertThat(mergedConfig.getConnectionPoolConfig())
                             .isEqualTo(commonDbConfig.getConnectionPoolConfig());
+
                     Assertions.assertThat(mergedConfig.getConnectionPoolConfig().getPrepStmtCacheSize())
                             .isEqualTo(newValue);
                 });

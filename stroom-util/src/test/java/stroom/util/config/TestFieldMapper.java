@@ -81,7 +81,7 @@ class TestFieldMapper {
 
         MyObject copy = new MyObject();
         copy.setString("copy");
-        FieldMapper.copy(original, copy, FieldMapper.CopyOption.DONT_COPY_NULLS);
+        FieldMapper.copyNonNulls(original, copy);
 
         // we requested not to copy nulls so value is unchanged.
         assertThat(copy.getString())
@@ -188,7 +188,7 @@ class TestFieldMapper {
         System.out.println("parent1: " + parent1);
         System.out.println("parent2: " + parent2);
 
-        FieldMapper.copy(parent2, parent1, FieldMapper.CopyOption.DONT_COPY_NULLS);
+        FieldMapper.copyNonNulls(parent2, parent1);
         System.out.println("parent1: " + parent1);
         System.out.println("parent2: " + parent2);
 
@@ -215,6 +215,75 @@ class TestFieldMapper {
                 .isEqualTo(parent1Id);
         assertThat(System.identityHashCode(parent1.child))
                 .isEqualTo(parent1ChildId);
+    }
+
+    @Test
+    void testDeepCopyDontCopyNullsOrDefaults() throws NoSuchFieldException, IllegalAccessException {
+        // The dest
+        final MyParent destParent = new MyParent();
+        // make values non default
+        final int nonDefaultIntValue = destParent.getChild().getMyInt() + 10;
+        final String nonDefaultStrValue = destParent.getMyString() + "_nonDefault";
+
+        destParent.getChild().setMyInt(nonDefaultIntValue);
+        destParent.setMyString(nonDefaultStrValue);
+
+        System.out.println("parent1       " + System.identityHashCode(destParent));
+        System.out.println("parent1 child " + System.identityHashCode(destParent.child));
+
+        int destParentId = System.identityHashCode(destParent);
+        int destParentChildId = System.identityHashCode(destParent.child);
+
+        final MyParent sourceParent = new MyParent();
+        sourceParent.getChild().setMyString("nonDefault");
+
+        assertThat(destParent)
+                .isNotEqualTo(sourceParent);
+        assertThat(destParent.getChild())
+                .isNotEqualTo(sourceParent.getChild());
+
+        System.out.println("parent2       " + System.identityHashCode(sourceParent));
+        System.out.println("parent2 child " + System.identityHashCode(sourceParent.child));
+
+        assertThat(System.identityHashCode(destParent))
+                .isNotEqualTo(System.identityHashCode(sourceParent));
+
+        System.out.println("parent1: " + destParent);
+        System.out.println("parent2: " + sourceParent);
+
+        FieldMapper.copyNonDefaults(
+                sourceParent,
+                destParent,
+                new MyParent());
+
+        System.out.println("parent1: " + destParent);
+        System.out.println("parent2: " + sourceParent);
+
+        System.out.println();
+        System.out.println("parent1       " + System.identityHashCode(destParent));
+        System.out.println("parent1 child " + System.identityHashCode(destParent.child));
+        System.out.println("parent2       " + System.identityHashCode(sourceParent));
+        System.out.println("parent2 child " + System.identityHashCode(sourceParent.child));
+
+        assertThat(System.identityHashCode(destParent))
+                .isNotEqualTo(System.identityHashCode(sourceParent));
+
+        assertThat(System.identityHashCode(destParent.child))
+                .isNotEqualTo(System.identityHashCode(sourceParent.child));
+
+        assertThat(destParent.myInt)
+                .isEqualTo(sourceParent.myInt);
+        assertThat(destParent.myString)
+                .isEqualTo(nonDefaultStrValue);
+        assertThat(destParent.child.myInt)
+                .isEqualTo(nonDefaultIntValue);
+        assertThat(destParent.child.myString)
+                .isEqualTo(sourceParent.child.myString);
+
+        assertThat(System.identityHashCode(destParent))
+                .isEqualTo(destParentId);
+        assertThat(System.identityHashCode(destParent.child))
+                .isEqualTo(destParentChildId);
     }
 
     private static class MyObject {
