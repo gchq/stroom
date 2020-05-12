@@ -21,10 +21,14 @@ import stroom.cache.api.ICache;
 import stroom.docref.DocRef;
 import stroom.docref.DocRefInfo;
 import stroom.explorer.api.ExplorerActionHandler;
+import stroom.security.api.SecurityContext;
 import stroom.util.entityevent.EntityAction;
 import stroom.util.entityevent.EntityEvent;
 import stroom.util.entityevent.EntityEventHandler;
 import stroom.util.shared.Clearable;
+
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import javax.inject.Inject;
 import javax.inject.Singleton;
@@ -33,6 +37,7 @@ import java.util.Optional;
 @Singleton
 @EntityEventHandler(action = {EntityAction.CREATE, EntityAction.UPDATE})
 class DocRefInfoCache implements EntityEvent.Handler, Clearable {
+    private static final Logger LOGGER = LoggerFactory.getLogger(DocRefInfoCache.class);
     private static final String CACHE_NAME = "Doc Ref Info Cache";
 
     private final ICache<DocRef, Optional<DocRefInfo>> cache;
@@ -40,14 +45,24 @@ class DocRefInfoCache implements EntityEvent.Handler, Clearable {
     @Inject
     DocRefInfoCache(final CacheManager cacheManager,
                     final ExplorerActionHandlers explorerActionHandlers,
-                    final ExplorerConfig explorerConfig) {
+                    final ExplorerConfig explorerConfig,
+                    final SecurityContext securityContext) {
         cache = cacheManager.create(CACHE_NAME, explorerConfig::getDocRefInfoCache, docRef -> {
-            final ExplorerActionHandler handler = explorerActionHandlers.getHandler(docRef.getType());
-            if (handler == null) {
-                return Optional.empty();
+            DocRefInfo docRefInfo = null;
+
+            try {
+                docRefInfo = securityContext.asProcessingUserResult(() -> {
+                    final ExplorerActionHandler handler = explorerActionHandlers.getHandler(docRef.getType());
+                    if (handler == null) {
+                        return null;
+                    }
+                    return handler.info(docRef.getUuid());
+                });
+            } catch (final RuntimeException e) {
+                LOGGER.debug(e.getMessage(), e);
             }
 
-            return Optional.ofNullable(handler.info(docRef.getUuid()));
+            return Optional.ofNullable(docRefInfo);
         });
     }
 
