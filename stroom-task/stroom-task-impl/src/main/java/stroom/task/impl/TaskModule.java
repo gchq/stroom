@@ -16,16 +16,19 @@
 
 package stroom.task.impl;
 
+import stroom.lifecycle.api.LifecycleBinder;
 import stroom.searchable.api.Searchable;
 import stroom.task.api.ExecutorProvider;
 import stroom.task.api.TaskContextFactory;
 import stroom.task.api.TaskManager;
 import stroom.task.shared.TaskResource;
+import stroom.util.RunnableWrapper;
 import stroom.util.guice.GuiceUtil;
 import stroom.util.guice.RestResourcesBinder;
 
 import com.google.inject.AbstractModule;
 
+import javax.inject.Inject;
 import javax.servlet.http.HttpSessionListener;
 import java.util.concurrent.Executor;
 
@@ -48,6 +51,11 @@ public class TaskModule extends AbstractModule {
 
         GuiceUtil.buildMultiBinder(binder(), Searchable.class)
                 .addBinding(SearchableTaskProgress.class);
+
+        // Make sure the first thing to start and the last thing to stop is the task manager.
+        LifecycleBinder.create(binder())
+                .bindStartupTaskTo(TaskManagerStartup.class, Integer.MAX_VALUE)
+                .bindShutdownTaskTo(TaskManagerShutdown.class, Integer.MAX_VALUE);
     }
 
     @Override
@@ -60,5 +68,19 @@ public class TaskModule extends AbstractModule {
     @Override
     public int hashCode() {
         return 0;
+    }
+
+    private static class TaskManagerStartup extends RunnableWrapper {
+        @Inject
+        TaskManagerStartup(final TaskManager taskManager) {
+            super(taskManager::startup);
+        }
+    }
+
+    private static class TaskManagerShutdown extends RunnableWrapper {
+        @Inject
+        TaskManagerShutdown(final TaskManager taskManager) {
+            super(taskManager::shutdown);
+        }
     }
 }

@@ -1,15 +1,21 @@
 package stroom.docstore.impl.fs;
 
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 import stroom.docref.DocRef;
 import stroom.docstore.api.RWLockFactory;
 import stroom.docstore.impl.Persistence;
+import stroom.docstore.shared.Doc;
 import stroom.util.shared.Clearable;
+import stroom.util.string.EncodingUtil;
+
+import com.fasterxml.jackson.databind.DeserializationFeature;
+import com.fasterxml.jackson.databind.ObjectMapper;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import javax.inject.Inject;
 import javax.inject.Singleton;
 import java.io.IOException;
+import java.io.StringReader;
 import java.io.UncheckedIOException;
 import java.nio.file.DirectoryStream;
 import java.nio.file.FileVisitResult;
@@ -24,6 +30,7 @@ import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.Optional;
 
 @Singleton
 public class FSPersistence implements Persistence, Clearable {
@@ -33,6 +40,7 @@ public class FSPersistence implements Persistence, Clearable {
 
     private final RWLockFactory lockFactory = new StripedLockFactory();
     private final Path dir;
+    private final ObjectMapper objectMapper;
 
     @Inject
     FSPersistence(final FSPersistenceConfig config) {
@@ -43,6 +51,8 @@ public class FSPersistence implements Persistence, Clearable {
         } catch (final IOException e) {
             throw new UncheckedIOException(e);
         }
+
+        objectMapper = createMapper();
     }
 
     public FSPersistence(final Path dir) {
@@ -52,6 +62,8 @@ public class FSPersistence implements Persistence, Clearable {
         } catch (final IOException e) {
             throw new UncheckedIOException(e);
         }
+
+        objectMapper = createMapper();
     }
 
     @Override
@@ -90,7 +102,7 @@ public class FSPersistence implements Persistence, Clearable {
     }
 
     @Override
-    public void write(final DocRef docRef, final boolean update, final Map<String, byte[]> data) throws IOException {
+    public void write(final DocRef docRef, final boolean update, final Map<String, byte[]> data) {
         final Path filePath = getPath(docRef, META);
         if (update) {
             if (!Files.isRegularFile(filePath)) {
@@ -132,8 +144,8 @@ public class FSPersistence implements Persistence, Clearable {
                 final String fileName = file.getFileName().toString();
                 final int index = fileName.indexOf(".");
                 final String uuid = fileName.substring(0, index);
-                // TODO : @66 gh-1151  We need to return doc refs that include names to support DictionaryStoreImpl.findByName() or find another way of implementing.
-                list.add(new DocRef(type, uuid));
+                final Optional<String> name = getName(file);
+                list.add(new DocRef(type, uuid, name.orElse(null)));
             });
         } catch (final IOException e) {
             throw new UncheckedIOException(e);
@@ -196,5 +208,27 @@ public class FSPersistence implements Persistence, Clearable {
         } catch (final IOException e) {
             LOGGER.debug(e.getMessage(), e);
         }
+    }
+
+    private Optional<String> getName(final Path metaFile) {
+        try {
+            final byte[] data = Files.readAllBytes(metaFile);
+            final GenericDoc genericDoc = objectMapper.readValue(new StringReader(EncodingUtil.asString(data)), GenericDoc.class);
+            return Optional.ofNullable(genericDoc.getName());
+
+        } catch (final IOException | RuntimeException e) {
+            LOGGER.error(e.getMessage(), e);
+        }
+
+        return Optional.empty();
+    }
+
+    private ObjectMapper createMapper() {
+        final ObjectMapper mapper = new ObjectMapper();
+        mapper.configure(DeserializationFeature.FAIL_ON_UNKNOWN_PROPERTIES, false);
+        return mapper;
+    }
+
+    private static class GenericDoc extends Doc {
     }
 }

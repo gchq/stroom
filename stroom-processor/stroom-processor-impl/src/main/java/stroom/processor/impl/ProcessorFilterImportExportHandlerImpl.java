@@ -19,6 +19,7 @@ package stroom.processor.impl;
 import stroom.docref.DocRef;
 import stroom.docrefinfo.api.DocRefInfoService;
 import stroom.docstore.api.AuditFieldFilter;
+import stroom.docstore.api.DependencyRemapper;
 import stroom.docstore.api.Serialiser2;
 import stroom.docstore.api.Serialiser2Factory;
 import stroom.entity.shared.ExpressionCriteria;
@@ -43,6 +44,7 @@ import org.slf4j.LoggerFactory;
 
 import javax.inject.Inject;
 import java.io.IOException;
+import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
@@ -190,11 +192,6 @@ public class ProcessorFilterImportExportHandlerImpl implements ImportExportActio
     }
 
     @Override
-    public Map<DocRef, Set<DocRef>> getDependencies() {
-        return null;
-    }
-
-    @Override
     public String getType() {
         return ProcessorFilter.ENTITY_TYPE;
     }
@@ -285,4 +282,53 @@ public class ProcessorFilterImportExportHandlerImpl implements ImportExportActio
     public Set<DocRef> findAssociatedNonExplorerDocRefs(final DocRef docRef) {
         return null;
     }
+
+    ////////////////////////////////////////////////////////////////////////
+    // START OF HasDependencies
+    ////////////////////////////////////////////////////////////////////////
+
+    @Override
+    public Map<DocRef, Set<DocRef>> getDependencies() {
+        final Map<DocRef, Set<DocRef>> dependencies = new HashMap<>();
+        final ResultPage<ProcessorFilter> page = processorFilterService.find(new ExpressionCriteria());
+
+        if (page != null && page.getValues() != null) {
+            page.getValues().forEach(processorFilter -> {
+                final DependencyRemapper dependencyRemapper = new DependencyRemapper();
+                if (processorFilter.getQueryData() != null && processorFilter.getQueryData().getExpression() != null) {
+                    dependencyRemapper.remapExpression(processorFilter.getQueryData().getExpression());
+                }
+                final DocRef docRef = new DocRef(ProcessorFilter.ENTITY_TYPE, processorFilter.getUuid());
+                dependencies.put(docRef, dependencyRemapper.getDependencies());
+            });
+        }
+
+        return dependencies;
+    }
+
+    @Override
+    public Set<DocRef> getDependencies(final DocRef docRef) {
+        final DependencyRemapper dependencyRemapper = new DependencyRemapper();
+        final ExpressionOperator expression = new ExpressionOperator.Builder()
+                .addTerm(ProcessorFilterDataSource.UUID, ExpressionTerm.Condition.EQUALS, docRef.getUuid()).build();
+        final ExpressionCriteria criteria = new ExpressionCriteria(expression);
+        final ResultPage<ProcessorFilter> page = processorFilterService.find(criteria);
+        if (page != null && page.getValues() != null) {
+            page.getValues().forEach(processorFilter -> {
+                if (processorFilter.getQueryData() != null && processorFilter.getQueryData().getExpression() != null) {
+                    dependencyRemapper.remapExpression(processorFilter.getQueryData().getExpression());
+                }
+            });
+        }
+        return dependencyRemapper.getDependencies();
+    }
+
+    @Override
+    public void remapDependencies(final DocRef docRef,
+                                  final Map<DocRef, DocRef> remappings) {
+    }
+
+    ////////////////////////////////////////////////////////////////////////
+    // END OF HasDependencies
+    ////////////////////////////////////////////////////////////////////////
 }

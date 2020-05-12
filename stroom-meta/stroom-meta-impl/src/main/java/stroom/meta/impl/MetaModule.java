@@ -1,7 +1,7 @@
 package stroom.meta.impl;
 
 import stroom.event.logging.api.ObjectInfoProviderBinder;
-import stroom.job.api.RunnableWrapper;
+import stroom.util.RunnableWrapper;
 import stroom.job.api.ScheduledJobsBinder;
 import stroom.meta.api.AttributeMapFactory;
 import stroom.meta.api.MetaSecurityFilter;

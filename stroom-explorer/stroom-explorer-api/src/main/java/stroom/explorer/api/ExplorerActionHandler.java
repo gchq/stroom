@@ -19,16 +19,15 @@ package stroom.explorer.api;
 
 import stroom.docref.DocRef;
 import stroom.docref.DocRefInfo;
+import stroom.util.shared.HasDependencies;
 
-import java.util.Collections;
-import java.util.Map;
-import java.util.UUID;
+import java.util.Set;
 
 /**
  * This interface is intended to be used by the explorer for document store operations that need not know much about the
  * documents that are stored just how to create, copy, move and delete them.
  */
-public interface ExplorerActionHandler extends HasDocumentType {
+public interface ExplorerActionHandler extends HasDocumentType, HasDependencies {
     /**
      * Called to create a new item in this document store.
      *
@@ -40,26 +39,12 @@ public interface ExplorerActionHandler extends HasDocumentType {
     /**
      * Copy an existing document identified by uuid, to the specified location.
      *
-     * @param originalUuid              The uuid of the document you want to copy.
-     * @param copyUuid                  The uuid of the intended copy
-     * @param otherCopiesByOriginalUUid For bulk copy operations, this contains all other copies being made.
-     *                                  This allows the sub service to repoint dependencies on this copy to other copies being made.
+     * @param docRef        The docref of the document you want to copy.
+     * @param existingNames Names of documents that already exist in the destination folder.
      * @return A doc ref for the new document copy.
      */
-    DocRef copyDocument(String originalUuid,
-                        String copyUuid,
-                        Map<String, String> otherCopiesByOriginalUUid);
-
-    /**
-     * Default form of the copy function, allow clients to let a UUID be made for them.
-     * Assumes singular copy, no bulk repointing will happen
-     *
-     * @param uuid The uuid of the document you want to copy.
-     * @return
-     */
-    default DocRef copyDocument(String uuid) {
-        return copyDocument(uuid, UUID.randomUUID().toString(), Collections.emptyMap());
-    }
+    DocRef copyDocument(DocRef docRef,
+                        Set<String> existingNames);
 
     /**
      * Move an existing document identified by uuid, to the specified location.

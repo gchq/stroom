@@ -20,10 +20,10 @@ package stroom.docstore.impl;
 import stroom.docref.DocRef;
 import stroom.docref.DocRefInfo;
 import stroom.docstore.api.AuditFieldFilter;
+import stroom.docstore.api.DependencyRemapper;
 import stroom.docstore.api.DocumentSerialiser2;
 import stroom.docstore.api.Store;
 import stroom.docstore.shared.Doc;
-import stroom.docstore.shared.DocRefUtil;
 import stroom.importexport.api.ImportExportActionHandler;
 import stroom.importexport.shared.ImportState;
 import stroom.importexport.shared.ImportState.ImportMode;
@@ -50,13 +50,12 @@ import java.util.Collections;
 import java.util.List;
 import java.util.Map;
 import java.util.Objects;
-import java.util.Optional;
 import java.util.Set;
 import java.util.UUID;
 import java.util.concurrent.atomic.AtomicBoolean;
+import java.util.function.BiConsumer;
 import java.util.function.Function;
 import java.util.stream.Collectors;
-import java.util.stream.Stream;
 
 public class StoreImpl<D extends Doc> implements Store<D> {
     private static final Logger LOGGER = LoggerFactory.getLogger(StoreImpl.class);
@@ -65,13 +64,11 @@ public class StoreImpl<D extends Doc> implements Store<D> {
     private final EntityEventBus entityEventBus;
     private final SecurityContext securityContext;
 
-    private DocumentSerialiser2<D> serialiser;
-    private String type;
-    private Class<D> clazz;
+    private final DocumentSerialiser2<D> serialiser;
+    private final String type;
+    private final Class<D> clazz;
 
     private final AtomicBoolean dirty = new AtomicBoolean();
-//    private volatile List<DocRef> cached = Collections.emptyList();
-//    private volatile long lastUpdate;
 
     @Inject
     StoreImpl(final Persistence persistence,
@@ -109,7 +106,6 @@ public class StoreImpl<D extends Doc> implements Store<D> {
         return createDocRef(created);
     }
 
-
     @Override
     public final DocRef createDocument(final String name, final DocumentCreator<D> documentCreator) {
         Objects.requireNonNull(name);
@@ -131,18 +127,18 @@ public class StoreImpl<D extends Doc> implements Store<D> {
     }
 
     @Override
-    public final DocRef copyDocument(final String originalUuid,
-                                     final String copyUuid,
-                                     final Map<String, String> otherCopiesByOriginalUuid) {
+    public DocRef copyDocument(final String originalUuid,
+                               final String newName) {
         Objects.requireNonNull(originalUuid);
-        Objects.requireNonNull(copyUuid);
+        Objects.requireNonNull(newName);
+
         final long now = System.currentTimeMillis();
         final String userId = securityContext.getUserId();
 
         final D document = read(originalUuid);
         document.setType(type);
-        document.setUuid(copyUuid);
-        document.setName(document.getName());
+        document.setUuid(UUID.randomUUID().toString());
+        document.setName(newName);
         document.setVersion(UUID.randomUUID().toString());
         document.setCreateTimeMs(now);
         document.setUpdateTimeMs(now);
@@ -222,6 +218,61 @@ public class StoreImpl<D extends Doc> implements Store<D> {
     ////////////////////////////////////////////////////////////////////////
 
     ////////////////////////////////////////////////////////////////////////
+    // START OF HasDependencies
+    ////////////////////////////////////////////////////////////////////////
+
+    @Override
+    public Map<DocRef, Set<DocRef>> getDependencies(final BiConsumer<D, DependencyRemapper> mapper) {
+        return list()
+                .stream()
+                .filter(this::canRead)
+                .collect(Collectors.toMap(docRef -> docRef, docRef ->
+                        getDependencies(docRef, mapper)));
+    }
+
+    @Override
+    public Set<DocRef> getDependencies(final DocRef docRef,
+                                       final BiConsumer<D, DependencyRemapper> mapper) {
+        if (mapper != null) {
+            try {
+                final D doc = readDocument(docRef);
+                if (doc != null) {
+                    final DependencyRemapper dependencyRemapper = new DependencyRemapper();
+                    mapper.accept(doc, dependencyRemapper);
+                    return dependencyRemapper.getDependencies();
+                }
+            } catch (final RuntimeException e) {
+                LOGGER.error(e.getMessage(), e);
+            }
+        }
+        return Collections.emptySet();
+    }
+
+    @Override
+    public void remapDependencies(final DocRef docRef,
+                                  final Map<DocRef, DocRef> remappings,
+                                  final BiConsumer<D, DependencyRemapper> mapper) {
+        if (mapper != null) {
+            try {
+                final D doc = readDocument(docRef);
+                if (doc != null) {
+                    final DependencyRemapper dependencyRemapper = new DependencyRemapper(remappings);
+                    mapper.accept(doc, dependencyRemapper);
+                    if (dependencyRemapper.isChanged()) {
+                        writeDocument(doc);
+                    }
+                }
+            } catch (final RuntimeException e) {
+                LOGGER.error(e.getMessage(), e);
+            }
+        }
+    }
+
+    ////////////////////////////////////////////////////////////////////////
+    // END OF HasDependencies
+    ////////////////////////////////////////////////////////////////////////
+
+    ////////////////////////////////////////////////////////////////////////
     // START OF DocumentActionHandler
     ////////////////////////////////////////////////////////////////////////
 
@@ -258,27 +309,6 @@ public class StoreImpl<D extends Doc> implements Store<D> {
         return list.stream()
                 .filter(this::canRead)
                 .collect(Collectors.toSet());
-    }
-
-    @Override
-    public Map<DocRef, Set<DocRef>> getDependencies() {
-        final List<DocRef> list = list();
-        return list.stream()
-                .filter(this::canRead)
-                .map(d -> {
-                    // We need to read the document to get the name.
-                    DocRef docRef = null;
-                    try {
-                        final D doc = readDocument(d);
-                        docRef = new DocRef(doc.getType(), doc.getUuid(), doc.getName());
-                    } catch (final RuntimeException e) {
-                        LOGGER.debug(e.getMessage(), e);
-                    }
-                    return Optional.ofNullable(docRef);
-                })
-                .filter(Optional::isPresent)
-                .map(Optional::get)
-                .collect(Collectors.toMap(Function.identity(), d -> Collections.emptySet()));
     }
 
     private boolean canRead(final DocRef docRef) {
@@ -343,7 +373,7 @@ public class StoreImpl<D extends Doc> implements Store<D> {
 
         try {
             // Check that the user has permission to read this item.
-            if (!securityContext.hasDocumentPermission(uuid, DocumentPermissionNames.READ)) {
+            if (!canRead(docRef)) {
                 throw new PermissionException(securityContext.getUserId(), "You are not authorised to read this document " + docRef);
             } else {
                 D document = read(uuid);
@@ -526,22 +556,11 @@ public class StoreImpl<D extends Doc> implements Store<D> {
 
     @Override
     public List<DocRef> list() {
-        return createDocRefList();
-
-//        final long now = System.currentTimeMillis();
-//        if (lastUpdate + 60000 < now) {
-//            dirty.set(true);
-//        }
-//
-//        if (dirty.get()) {
-//            synchronized(this) {
-//                if (dirty.compareAndSet(true, false)) {
-//                    lastUpdate = now;
-//                    cached = createList();
-//                }
-//            }
-//        }
-//        return cached;
+        return persistence
+                .list(type)
+                .stream()
+                .filter(this::canRead)
+                .collect(Collectors.toList());
     }
 
     @Override
@@ -549,27 +568,9 @@ public class StoreImpl<D extends Doc> implements Store<D> {
         if (name == null) {
             return Collections.emptyList();
         }
-        return list().stream().filter(docRef -> name.equals(docRef.getName())).collect(Collectors.toList());
-    }
-
-    private List<DocRef> createDocRefList() {
-        final Stream<Optional<DocRef>> refs = persistence.list(type)
+        return list()
                 .stream()
-                .map(docRef -> {
-                    try {
-                        final D doc = read(docRef.getUuid());
-                        if (doc != null) {
-                            return Optional.of(DocRefUtil.create(doc));
-                        }
-                    } catch (final RuntimeException e) {
-                        LOGGER.debug(e.getMessage(), e);
-                    }
-
-                    return Optional.empty();
-                });
-        return refs.filter(Optional::isPresent)
-                .map(Optional::get)
-                .sorted()
+                .filter(docRef -> name.equals(docRef.getName()))
                 .collect(Collectors.toList());
     }
 }
