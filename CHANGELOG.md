@@ -6,8 +6,9 @@ and this project adheres to [Semantic Versioning](http://semver.org/).
 
 ## [Unreleased]
 
-* Issue **#1545** : Add property `enableDistributedJobsOnBootstrap` to enable/disable processing on first boot.
+* Issue **#1543** : Prevent import/export of processor filters with id fields
 
+* Issue **#1545** : Add property `enableDistributedJobsOnBootstrap` to enable/disable processing on first boot.
 
 ## [v7.0-beta.30] - 2020-05-06
 
