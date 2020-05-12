@@ -1,6 +1,7 @@
 package stroom.test.common.util.db;
 
 import stroom.config.common.CommonDbConfig;
+import stroom.config.common.ConnectionConfig;
 import stroom.config.common.DbConfig;
 import stroom.db.util.DataSourceFactoryImpl;
 import stroom.util.config.FieldMapper;
@@ -28,7 +29,7 @@ class EmbeddedDbDataSourceFactory extends DataSourceFactoryImpl {
             FieldMapper.copyNonDefaults(
                     DbTestUtil.getOrCreateEmbeddedConnectionConfig(),
                     mergedConfig.getConnectionConfig(),
-                    new DbConfig());
+                    new ConnectionConfig());
         }
 
         return mergedConfig;
