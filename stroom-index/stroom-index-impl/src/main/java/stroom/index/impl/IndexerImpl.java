@@ -65,22 +65,20 @@ public class IndexerImpl implements Indexer {
     @Override
     public void addDocument(final IndexShardKey indexShardKey, final Document document) {
         if (document != null) {
+            //First create any alerts
+            try {
+                final AlertProcessor processor = alertManager.createAlertProcessor(
+                        new DocRef(IndexDoc.DOCUMENT_TYPE,
+                                indexShardKey.getIndexUuid()));
+                processor.createAlerts(document);
+            } catch (RuntimeException ex){
+                LOGGER.error(ex::getMessage, ex);
+            }
+
             // Try and add the document silently without locking.
             boolean success = false;
             try {
-                final String [] path = {"Rules","Active"};
-                final List<String> folderPath = Arrays.asList(path);
-
                 final IndexShardWriter indexShardWriter = indexShardWriterCache.getWriterByShardKey(indexShardKey);
-
-
-                final AlertProcessor processor = alertManager.createAlertProcessor(folderPath);
-                processor.setFieldAnalyzers(indexShardWriter.getFieldAnalyzers());
-
-                final IndexDoc index = indexStore.readDocument(new DocRef(IndexDoc.DOCUMENT_TYPE,
-                        indexShardKey.getIndexUuid()));
-
-                processor.createAlerts(document, index);
 
                 indexShardWriter.addDocument(document);
 

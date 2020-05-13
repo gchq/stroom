@@ -198,11 +198,6 @@ public class IndexShardWriterImpl implements IndexShardWriter {
     }
 
     @Override
-    public final Map <String, Analyzer> getFieldAnalyzers(){
-        return fieldAnalyzers;
-    }
-
-    @Override
     public void addDocument(final Document document) throws IOException, IndexException, AlreadyClosedException {
         adding.incrementAndGet();
         try {
