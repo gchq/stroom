@@ -88,13 +88,6 @@ class SQLStatisticAggregationManager {
         try {
             LOGGER.debug("aggregate() Called for SQL stats - Start timeNow = {}", timeNow);
             final LogExecutionTime logExecutionTime = new LogExecutionTime();
-
-            // TODO delete any rows in SQL_STAT_VAL that have a data older
-            // than
-            // (now minus maxProcessingAge) rounded
-            // to the most coarse precision. Needs to be done first so we
-            // don't
-            // have to aggregate any old data
             try {
                 helper.deleteOldStats(timeNow, taskContext);
 
@@ -104,14 +97,19 @@ class SQLStatisticAggregationManager {
                 // that
                 // was not a full batch
                 do {
-                    processedCount = helper.aggregateConfigStage1(taskContext, "Iteration: " + ++iteration + "",
-                            batchSize, timeNow);
+                    processedCount = helper.aggregateConfigStage1(
+                            taskContext,
+                            "Iteration: " + ++iteration + "",
+                            batchSize,
+                            timeNow);
 
                 } while (processedCount == batchSize && !Thread.currentThread().isInterrupted());
 
                 if (!Thread.currentThread().isInterrupted()) {
                     helper.aggregateConfigStage2(taskContext, "Final Reduce", timeNow);
                 }
+
+                helper.deleteUnusedKeys(taskContext);
 
             } catch (final SQLException ex) {
                 throw new RuntimeException(ex.getMessage(), ex);
