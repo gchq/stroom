@@ -20,25 +20,26 @@ import stroom.statistics.impl.sql.exception.StatisticsEventValidationException;
 import stroom.statistics.impl.sql.rollup.RolledUpStatisticEvent;
 import stroom.statistics.impl.sql.shared.StatisticType;
 
-import org.apache.commons.lang3.mutable.MutableLong;
-
 import java.time.Duration;
 import java.time.Instant;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.Map.Entry;
 import java.util.Set;
+import java.util.concurrent.atomic.DoubleAdder;
+import java.util.concurrent.atomic.LongAdder;
 
 public class SQLStatisticAggregateMap {
-    private final Map<SQLStatKey, MutableLong> countMap = new HashMap<>();
-    private final Map<SQLStatKey, Double> valueMap = new HashMap<>();
+    private final Map<SQLStatKey, LongAdder> countMap = new HashMap<>();
+    private final Map<SQLStatKey, ValueStatValue> valueMap = new HashMap<>();
     private final Instant createTime;
 
     public SQLStatisticAggregateMap() {
         createTime = Instant.now();
     }
 
-    public void addRolledUpEvent(final RolledUpStatisticEvent rolledUpStatisticEvent, long precisionMs)
+    public void addRolledUpEvent(final RolledUpStatisticEvent rolledUpStatisticEvent,
+                                 long precisionMs)
             throws StatisticsEventValidationException {
         // Round the number of milliseconds to supplied precision.
         long roundedMs = rolledUpStatisticEvent.getTimeMs();
@@ -54,23 +55,18 @@ public class SQLStatisticAggregateMap {
 
             if (SQLStatisticsEventValidator.isKeyToLong(key.getName())) {
                 throw new StatisticsEventValidationException(
-                        String.format("Statistic event key [%s] is too long to store. Length is [%s]", key.getName(),
+                        String.format("Statistic event key [%s] is too long to store. Length is [%s]",
+                                key.getName(),
                                 key.getName().length()));
             }
 
             if (StatisticType.COUNT == rolledUpStatisticEvent.getType()) {
                 // Try and get the value
-                final MutableLong v = countMap.get(key);
-                if (v == null) {
-                    countMap.put(key, new MutableLong(rolledUpStatisticEvent.getCount()));
-                } else {
-                    v.add(rolledUpStatisticEvent.getCount());
-                }
+                countMap.computeIfAbsent(key, k -> new LongAdder())
+                        .add(rolledUpStatisticEvent.getCount());
             } else {
-                //TODO this is flawed. If we get multiple stats with the same key at the same time
-                //(a certainty with rollups) only the last one will be included.
-                //see https://github.com/gchq/stroom/issues/473
-                valueMap.put(key, rolledUpStatisticEvent.getValue());
+                valueMap.computeIfAbsent(key, k -> new ValueStatValue())
+                        .add(rolledUpStatisticEvent.getValue());
             }
         }
     }
@@ -81,22 +77,20 @@ public class SQLStatisticAggregateMap {
      * @param aggregateMap
      */
     public void add(final SQLStatisticAggregateMap aggregateMap) {
-        for (final Entry<SQLStatKey, MutableLong> entry : aggregateMap.countEntrySet()) {
-            final MutableLong v = countMap.get(entry.getKey());
-            if (v == null) {
-                countMap.put(entry.getKey(), entry.getValue());
-            } else {
-                v.add(entry.getValue());
-            }
-        }
-        valueMap.putAll(aggregateMap.valueMap);
+        aggregateMap.countEntrySet().forEach(entry ->
+                countMap.computeIfAbsent(entry.getKey(), k -> new LongAdder())
+                        .add(entry.getValue().longValue()));
+
+        aggregateMap.valueEntrySet().forEach(entry ->
+                valueMap.computeIfAbsent(entry.getKey(), k -> new ValueStatValue())
+                        .add(entry.getValue()));
     }
 
-    public Set<Entry<SQLStatKey, MutableLong>> countEntrySet() {
+    public Set<Entry<SQLStatKey, LongAdder>> countEntrySet() {
         return countMap.entrySet();
     }
 
-    public Set<Entry<SQLStatKey, Double>> valueEntrySet() {
+    public Set<Entry<SQLStatKey, ValueStatValue>> valueEntrySet() {
         return valueMap.entrySet();
     }
 
@@ -114,5 +108,49 @@ public class SQLStatisticAggregateMap {
                 "countMapSize=" + countMap.size() +
                 ", valueMapSize=" + valueMap.size() +
                 ", age=" + getAge().toString();
+    }
+
+    public static class ValueStatValue {
+        // We are basically storing the sum of values and the count so
+        // we can compute the mean
+        private final DoubleAdder value;
+        private final LongAdder count;
+
+        public ValueStatValue() {
+            this.value = new DoubleAdder();
+            this.count = new LongAdder();
+        }
+
+        public ValueStatValue(final Double value) {
+            this();
+            this.value.add(value);
+            this.count.add(1);
+        }
+
+        public void add(final Double value) {
+            this.value.add(value);
+            this.count.add(1);
+        }
+
+        public void add(final ValueStatValue other) {
+            this.value.add(other.getValue());
+            this.count.add(other.getCount());
+        }
+
+        public double getValue() {
+            return value.doubleValue();
+        }
+
+        public long getCount() {
+            return count.longValue();
+        }
+
+        @Override
+        public String toString() {
+            return "ValueStatValue{" +
+                    "value=" + value +
+                    ", count=" + count +
+                    '}';
+        }
     }
 }

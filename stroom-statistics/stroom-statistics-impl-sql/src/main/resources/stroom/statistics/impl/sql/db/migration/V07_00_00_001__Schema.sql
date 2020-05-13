@@ -58,6 +58,7 @@ CALL statistics_create_index_v1(
     false,
     'TIME_MS');
 
+
 --
 -- Table structure for table sql_stat_val_src
 --
@@ -66,6 +67,7 @@ CREATE TABLE IF NOT EXISTS SQL_STAT_VAL_SRC (
   NAME 				varchar(766) NOT NULL,
   VAL_TP 			tinyint(4) NOT NULL,
   VAL				bigint(20) NOT NULL,
+  CT				bigint(20) NOT NULL,
   PROCESSING        bit(1) NOT NULL DEFAULT 0
 ) ENGINE=InnoDB DEFAULT CHARSET=latin1;
 
@@ -74,5 +76,37 @@ CALL statistics_create_index_v1(
     'SQL_STAT_VAL_SRC_PROCESSING_TIME_MS',
     false,
     'PROCESSING, TIME_MS');
+
+--
+-- Copy data into the job node table
+--
+DROP PROCEDURE IF EXISTS add_col_to_stat_val_src;
+DELIMITER //
+CREATE PROCEDURE add_col_to_stat_val_src ()
+BEGIN
+    IF NOT EXISTS (
+            SELECT NULL
+            FROM INFORMATION_SCHEMA.COLUMNS
+            WHERE TABLE_NAME = 'SQL_STAT_VAL_SRC'
+            AND COLUMN_NAME = 'CT') THEN
+
+        -- We are missing the CT col so add it
+        ALTER TABLE SQL_STAT_VAL_SRC
+        ADD COLUMN CT BIGINT(20) AFTER VAL;
+
+    END IF;
+
+    -- Populate values (idempotent)
+    UPDATE SQL_STAT_VAL_SRC
+    SET CT = VAL;
+
+    -- Now make it not null (idempotent)
+    ALTER TABLE SQL_STAT_VAL_SRC
+    MODIFY COLUMN CT BIGINT(20) NOT NULL;
+
+END//
+DELIMITER ;
+CALL add_col_to_stat_val_src();
+DROP PROCEDURE add_col_to_stat_val_src;
 
 SET SQL_NOTES=@OLD_SQL_NOTES;

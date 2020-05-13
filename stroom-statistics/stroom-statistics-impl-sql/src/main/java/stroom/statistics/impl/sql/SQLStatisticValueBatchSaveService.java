@@ -16,9 +16,10 @@
 
 package stroom.statistics.impl.sql;
 
+import stroom.util.logging.LogExecutionTime;
+
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import stroom.util.logging.LogExecutionTime;
 
 import javax.inject.Inject;
 import java.sql.Connection;
@@ -48,7 +49,9 @@ class SQLStatisticValueBatchSaveService {
         sql.append(SQLStatisticNames.VALUE_TYPE);
         sql.append(",");
         sql.append(SQLStatisticNames.VALUE);
-        sql.append(") VALUES ( ?, ?, ?, ?) ");
+        sql.append(",");
+        sql.append(SQLStatisticNames.COUNT);
+        sql.append(") VALUES ( ?, ?, ?, ?, ?) ");
         SAVE_CALL = sql.toString();
     }
 
@@ -60,7 +63,7 @@ class SQLStatisticValueBatchSaveService {
     }
 
     @SuppressWarnings("SQL_NONCONSTANT_STRING_PASSED_TO_EXECUTE")
-    void saveBatchStatisticValueSource_String(final List<SQLStatisticValueSourceDO> batch) {
+    void saveBatchStatisticValueSource_String(final List<SQLStatValSourceDO> batch) {
         final LogExecutionTime logExecutionTime = new LogExecutionTime();
 
         try (final Connection connection = getConnection()) {
@@ -75,9 +78,11 @@ class SQLStatisticValueBatchSaveService {
             sql.append(SQLStatisticNames.VALUE_TYPE);
             sql.append(",");
             sql.append(SQLStatisticNames.VALUE);
+            sql.append(",");
+            sql.append(SQLStatisticNames.COUNT);
             sql.append(") VALUES ");
             boolean doneOne = false;
-            for (final SQLStatisticValueSourceDO item : batch) {
+            for (final SQLStatValSourceDO item : batch) {
                 if (doneOne) {
                     sql.append(",");
                 }
@@ -90,6 +95,8 @@ class SQLStatisticValueBatchSaveService {
                 sql.append(item.getType().getPrimitiveValue());
                 sql.append(",");
                 sql.append(item.getValue());
+                sql.append(",");
+                sql.append(item.getCount());
                 sql.append(")");
                 doneOne = true;
             }
@@ -105,17 +112,18 @@ class SQLStatisticValueBatchSaveService {
         }
     }
 
-    void saveBatchStatisticValueSource_PreparedStatement(final List<SQLStatisticValueSourceDO> batch)
+    void saveBatchStatisticValueSource_PreparedStatement(final List<SQLStatValSourceDO> batch)
             throws SQLException {
         final LogExecutionTime logExecutionTime = new LogExecutionTime();
 
         try (final Connection connection = getConnection()) {
             try (final PreparedStatement preparedStatement = connection.prepareStatement(SAVE_CALL)) {
-                for (final SQLStatisticValueSourceDO item : batch) {
+                for (final SQLStatValSourceDO item : batch) {
                     preparedStatement.setLong(1, item.getCreateMs());
                     preparedStatement.setString(2, item.getName());
                     preparedStatement.setByte(3, item.getType().getPrimitiveValue());
                     preparedStatement.setLong(4, item.getValue());
+                    preparedStatement.setLong(5, item.getCount());
                     preparedStatement.addBatch();
                     preparedStatement.clearParameters();
                 }
@@ -133,7 +141,7 @@ class SQLStatisticValueBatchSaveService {
      * slow as it is inserting them one by one. Any failures will be logged and
      * processing will carry on hopefully some records will get through
      */
-    int saveBatchStatisticValueSource_IndividualPreparedStatements(final List<SQLStatisticValueSourceDO> batch) {
+    int saveBatchStatisticValueSource_IndividualPreparedStatements(final List<SQLStatValSourceDO> batch) {
         final LogExecutionTime logExecutionTime = new LogExecutionTime();
 
         int savedCount = 0;
@@ -141,11 +149,12 @@ class SQLStatisticValueBatchSaveService {
 
         try (final Connection connection = getConnection()) {
             try (final PreparedStatement preparedStatement = connection.prepareStatement(SAVE_CALL)) {
-                for (final SQLStatisticValueSourceDO item : batch) {
+                for (final SQLStatValSourceDO item : batch) {
                     preparedStatement.setLong(1, item.getCreateMs());
                     preparedStatement.setString(2, item.getName());
                     preparedStatement.setByte(3, item.getType().getPrimitiveValue());
                     preparedStatement.setLong(4, item.getValue());
+                    preparedStatement.setLong(5, item.getCount());
 
                     try {
                         preparedStatement.execute();
@@ -154,9 +163,9 @@ class SQLStatisticValueBatchSaveService {
                         // log the error and carry on with the rest
                         LOGGER.error(
                                 "Error while tyring to insert a SQL statistic record.  SQL: [{}], createMs: [{}], name: [{}], "
-                                        + "typePrimValue: [{}], type: [{}], value: [{}]",
+                                        + "typePrimValue: [{}], type: [{}], value: [{}], count: [{}]",
                                 SAVE_CALL, item.getCreateMs(), item.getName(), item.getType().getPrimitiveValue(),
-                                item.getType().name(), item.getValue(), e);
+                                item.getType().name(), item.getValue(), item.getCount(), e);
                         failedCount++;
                     }
                     preparedStatement.clearParameters();
