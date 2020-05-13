@@ -141,7 +141,8 @@ public class SQLStatisticFlushTaskHandler {
         }
     }
 
-    private void doSaveBatch(final TaskContext taskContext, final List<SQLStatisticValueSourceDO> batchInsert) {
+    private void doSaveBatch(final TaskContext taskContext,
+                             final List<SQLStatisticValueSourceDO> batchInsert) {
         try {
             final int seconds = (int) (logExecutionTime.getDuration() / 1000L);
 
@@ -154,7 +155,6 @@ public class SQLStatisticFlushTaskHandler {
                 taskContext.info(LambdaLogUtil.message("Saving {}/{} (? ps)",
                         ModelStringUtil.formatCsv(count),
                         ModelStringUtil.formatCsv(total)));
-
             }
 
             sqlStatisticValueBatchSaveService.saveBatchStatisticValueSource_String(batchInsert);

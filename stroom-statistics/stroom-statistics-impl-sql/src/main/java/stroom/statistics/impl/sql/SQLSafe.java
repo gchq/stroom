@@ -41,7 +41,8 @@ class SQLSafe {
         // replace ' with \'
 
         return value.replaceAll("\\\\", Matcher.quoteReplacement("\\\\"))
-                .replaceAll("\\\"", Matcher.quoteReplacement("\\\"")).replaceAll("'", Matcher.quoteReplacement("\\'"));
+                .replaceAll("\\\"", Matcher.quoteReplacement("\\\""))
+                .replaceAll("'", Matcher.quoteReplacement("\\'"));
     }
 
     static String cleanWhiteSpace(final String value) {
