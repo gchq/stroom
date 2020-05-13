@@ -18,23 +18,22 @@ package stroom.statistics.impl.sql;
 
 import stroom.statistics.impl.sql.rollup.RollUpBitMask;
 import stroom.statistics.impl.sql.rollup.RollUpBitMaskUtil;
-import stroom.util.shared.EqualsBuilder;
 
 import java.util.List;
+import java.util.Objects;
 
 public class SQLStatKey {
     private final long ms;
     private final String name;
     private final int hashCode;
 
-    public SQLStatKey(final long ms, final String statName, final List<StatisticTag> tags) {
+    public SQLStatKey(final long ms,
+                      final String statName,
+                      final List<StatisticTag> tags) {
         this.ms = ms;
         this.name = buildKeyString(statName, tags);
 
-        int code = 31;
-        code = code * 31 + (int) ms;
-        code = code * 31 + name.hashCode();
-        hashCode = code;
+        hashCode = Objects.hash(ms, name);;
     }
 
     /**
@@ -58,6 +57,7 @@ public class SQLStatKey {
      * bit mask
      */
     private String buildKeyString(final String statName, final List<StatisticTag> tags) {
+        Objects.requireNonNull(statName);
         final StringBuilder keyStringBuilder = new StringBuilder();
 
         keyStringBuilder.append(cleanText(statName));
@@ -104,23 +104,17 @@ public class SQLStatKey {
     }
 
     @Override
-    public int hashCode() {
-        return hashCode;
+    public boolean equals(final Object o) {
+        if (this == o) return true;
+        if (o == null || getClass() != o.getClass()) return false;
+        final SQLStatKey that = (SQLStatKey) o;
+        return ms == that.ms &&
+                name.equals(that.name);
     }
 
     @Override
-    public boolean equals(final Object o) {
-        if (o == this) {
-            return true;
-        } else if (!(o instanceof SQLStatKey)) {
-            return false;
-        }
-
-        final SQLStatKey statKey = (SQLStatKey) o;
-        final EqualsBuilder builder = new EqualsBuilder();
-        builder.append(this.ms, statKey.ms);
-        builder.append(this.name, statKey.name);
-        return builder.isEquals();
+    public int hashCode() {
+        return hashCode;
     }
 
     @Override

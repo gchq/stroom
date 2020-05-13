@@ -94,7 +94,7 @@ class SQLStatisticValueBatchSaveService {
                 sql.append("',");
                 sql.append(item.getType().getPrimitiveValue());
                 sql.append(",");
-                sql.append(item.getValue());
+                sql.append(item.getValueSum().orElse(0));
                 sql.append(",");
                 sql.append(item.getCount());
                 sql.append(")");
@@ -119,11 +119,7 @@ class SQLStatisticValueBatchSaveService {
         try (final Connection connection = getConnection()) {
             try (final PreparedStatement preparedStatement = connection.prepareStatement(SAVE_CALL)) {
                 for (final SQLStatValSourceDO item : batch) {
-                    preparedStatement.setLong(1, item.getCreateMs());
-                    preparedStatement.setString(2, item.getName());
-                    preparedStatement.setByte(3, item.getType().getPrimitiveValue());
-                    preparedStatement.setLong(4, item.getValue());
-                    preparedStatement.setLong(5, item.getCount());
+                    buildPreparedStatement(preparedStatement, item);
                     preparedStatement.addBatch();
                     preparedStatement.clearParameters();
                 }
@@ -134,6 +130,15 @@ class SQLStatisticValueBatchSaveService {
                         logExecutionTime);
             }
         }
+    }
+
+    private void buildPreparedStatement(final PreparedStatement preparedStatement,
+                                        final SQLStatValSourceDO item) throws SQLException {
+        preparedStatement.setLong(1, item.getCreateMs());
+        preparedStatement.setString(2, item.getName());
+        preparedStatement.setByte(3, item.getType().getPrimitiveValue());
+        preparedStatement.setDouble(4, item.getValueSum().orElse(0));
+        preparedStatement.setLong(5, item.getCount());
     }
 
     /**
@@ -150,11 +155,7 @@ class SQLStatisticValueBatchSaveService {
         try (final Connection connection = getConnection()) {
             try (final PreparedStatement preparedStatement = connection.prepareStatement(SAVE_CALL)) {
                 for (final SQLStatValSourceDO item : batch) {
-                    preparedStatement.setLong(1, item.getCreateMs());
-                    preparedStatement.setString(2, item.getName());
-                    preparedStatement.setByte(3, item.getType().getPrimitiveValue());
-                    preparedStatement.setLong(4, item.getValue());
-                    preparedStatement.setLong(5, item.getCount());
+                    buildPreparedStatement(preparedStatement, item);
 
                     try {
                         preparedStatement.execute();
@@ -165,7 +166,7 @@ class SQLStatisticValueBatchSaveService {
                                 "Error while tyring to insert a SQL statistic record.  SQL: [{}], createMs: [{}], name: [{}], "
                                         + "typePrimValue: [{}], type: [{}], value: [{}], count: [{}]",
                                 SAVE_CALL, item.getCreateMs(), item.getName(), item.getType().getPrimitiveValue(),
-                                item.getType().name(), item.getValue(), item.getCount(), e);
+                                item.getType().name(), item.getValueSum(), item.getCount(), e);
                         failedCount++;
                     }
                     preparedStatement.clearParameters();

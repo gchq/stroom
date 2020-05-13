@@ -109,6 +109,7 @@ class SQLStatisticAggregationManager {
                     helper.aggregateConfigStage2(taskContext, "Final Reduce", timeNow);
                 }
 
+                // We hold the cluster lock so can safely deleted orphaned stat keys
                 helper.deleteUnusedKeys(taskContext);
 
             } catch (final SQLException ex) {

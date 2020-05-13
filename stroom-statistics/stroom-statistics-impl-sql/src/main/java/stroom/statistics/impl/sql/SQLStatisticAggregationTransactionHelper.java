@@ -19,12 +19,12 @@ package stroom.statistics.impl.sql;
 import stroom.statistics.impl.sql.shared.StatisticType;
 import stroom.task.api.TaskContext;
 import stroom.util.date.DateUtil;
+import stroom.util.logging.LambdaLogger;
+import stroom.util.logging.LambdaLoggerFactory;
 import stroom.util.logging.LogExecutionTime;
+import stroom.util.logging.LogUtil;
 import stroom.util.shared.ModelStringUtil;
 import stroom.util.time.StroomDuration;
-
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 
 import javax.inject.Inject;
 import javax.inject.Singleton;
@@ -66,7 +66,7 @@ public class SQLStatisticAggregationTransactionHelper {
     public static final byte MONTH_PRECISION = (byte) Math.floor(Math.log10(MS_MONTH));
     public static final byte DAY_PRECISION = (byte) Math.floor(Math.log10(MS_DAY));
     public static final byte HOUR_PRECISION = (byte) Math.floor(Math.log10(MS_HOUR));
-    private static final Logger LOGGER = LoggerFactory.getLogger(SQLStatisticAggregationTransactionHelper.class);
+    private static final LambdaLogger LOGGER = LambdaLoggerFactory.getLogger(SQLStatisticAggregationTransactionHelper.class);
     private static final String AGGREGATE = "AGGREGATE";
 
     private static final String AGGREGATE_COUNT = "" +
@@ -78,11 +78,11 @@ public class SQLStatisticAggregationTransactionHelper {
             "WHERE TIME_MS < ? ";
 
     private static final String DELETE_UNUSED_KEYS = "" +
-            "delete from sql_stat_key ssk " +
-            "where not exists ( " +
-            "        select null " +
-            "        from sql_stat_val ssv " +
-            "        where ssv.name = ssk.name " +
+            "DELETE FROM SQL_STAT_KEY " +
+            "WHERE NOT EXISTS ( " +
+            "        SELECT null " +
+            "        FROM SQL_STAT_VAL " +
+            "        WHERE FK_SQL_STAT_KEY_ID = SQL_STAT_KEY.ID " +
             ")";
 
     // Mark a batch of n records as 'processing' so we can work on them in
@@ -203,7 +203,8 @@ public class SQLStatisticAggregationTransactionHelper {
 
         final int count = ConnectionUtil.executeUpdate(connection, sql, args);
 
-        logDebug("doAggretateSQL - {} - {} in {} - {}", prefix, ModelStringUtil.formatCsv(count), time, trace);
+        LOGGER.debug(() -> LogUtil.message("doAggretateSQL - {} - {} in {} - {}",
+                prefix, ModelStringUtil.formatCsv(count), time, trace));
         return count;
     }
 
@@ -216,7 +217,7 @@ public class SQLStatisticAggregationTransactionHelper {
 
         final long result = ConnectionUtil.executeQueryLongResult(connection, sql, args);
 
-        logDebug("doAggretateSQL - {} - {} in {} - {}", prefix, ModelStringUtil.formatCsv(result), time, trace);
+        LOGGER.debug("doAggretateSQL - {} - {} in {} - {}", prefix, ModelStringUtil.formatCsv(result), time, trace);
         return result;
     }
 
@@ -303,15 +304,11 @@ public class SQLStatisticAggregationTransactionHelper {
                     DELETE_UNUSED_KEYS,
                     Collections.emptyList());
 
-            logDebug("deleteUnusedKeys - {} in {} - {}",
-                    ModelStringUtil.formatCsv(count), time, sql);
+            LOGGER.debug(() -> LogUtil.message("deleteUnusedKeys - {} in {} - {}",
+                    ModelStringUtil.formatCsv(count), time, cleanSqlForLogs(sql)));
 
             return count;
         }
-    }
-
-    protected void logDebug(final Object... args) {
-        Arrays.asList(args).forEach(arg -> LOGGER.debug(arg.toString()));
     }
 
     public long aggregateConfigStage1(final TaskContext taskContext,
@@ -321,7 +318,7 @@ public class SQLStatisticAggregationTransactionHelper {
         long processCount = 0;
 
         try (final Connection connection = sqlStatisticsDbConnProvider.getConnection()) {
-            // mark a set of records in STATVAL_SRC as being processed so all
+            // mark a set of records in STAT_VAL_SRC as being processed so all
             // DML below can filter by them
             // records are chosen at random to avoid overhead of a sort
             processCount = doAggregateSQL_Update(
@@ -411,7 +408,7 @@ public class SQLStatisticAggregationTransactionHelper {
         final LogExecutionTime time = new LogExecutionTime();
         taskContext.info(() -> prefix + "\n " + SPROC_STAGE1_UPSERT);
 
-        LOGGER.debug(">>> {}", SPROC_STAGE1_UPSERT);
+        LOGGER.debug(() -> ">>> " + cleanSqlForLogs(SPROC_STAGE1_UPSERT));
         try (final CallableStatement stmt = connection.prepareCall(SPROC_STAGE1_UPSERT)) {
             // Set IN parameters
             stmt.setByte(1, sqlPrecision);
@@ -432,8 +429,7 @@ public class SQLStatisticAggregationTransactionHelper {
             throw sqlException;
         }
 
-        logDebug("callUpsert1 - {} - {} in {}",
-                prefix, ModelStringUtil.formatCsv(count), time);
+        LOGGER.debug("callUpsert1 - {} - {} in {}", prefix, ModelStringUtil.formatCsv(count), time);
         return count;
     }
 
@@ -449,7 +445,7 @@ public class SQLStatisticAggregationTransactionHelper {
         final LogExecutionTime time = new LogExecutionTime();
         taskContext.info(() -> prefix + "\n " + SPROC_STAGE2_UPSERT);
 
-        LOGGER.debug(">>> {}", SPROC_STAGE2_UPSERT);
+        LOGGER.debug(">>> " + cleanSqlForLogs(SPROC_STAGE2_UPSERT));
         try (final CallableStatement stmt = connection.prepareCall(SPROC_STAGE2_UPSERT)) {
             // Set IN parameters
             stmt.setByte(1, targetPrecision);
@@ -471,7 +467,7 @@ public class SQLStatisticAggregationTransactionHelper {
             throw sqlException;
         }
 
-        logDebug("callUpsert2 - {} - {} in {}", prefix, ModelStringUtil.formatCsv(count), time);
+        LOGGER.debug("callUpsert2 - {} - {} in {}", prefix, ModelStringUtil.formatCsv(count), time);
         return count;
     }
 
@@ -580,12 +576,21 @@ public class SQLStatisticAggregationTransactionHelper {
         for (int i = 0; i < sql.length(); i++) {
             final char c = sql.charAt(i);
             if (c == '?') {
-                sqlString.append(args.get(arg++));
+                try {
+                    sqlString.append(args.get(arg++));
+                } catch (IndexOutOfBoundsException e) {
+                    LOGGER.warn("Mismatch between '?' and args. sql: {}, args: {}", sql, args);
+                    sqlString.append(c);
+                }
             } else {
                 sqlString.append(c);
             }
         }
-        return sqlString.toString();
+        return cleanSqlForLogs(sqlString.toString());
+    }
+
+    private static String cleanSqlForLogs(final String sql) {
+        return sql.replaceAll("\\s+", " ");
     }
 
     public static class AggregateConfig {

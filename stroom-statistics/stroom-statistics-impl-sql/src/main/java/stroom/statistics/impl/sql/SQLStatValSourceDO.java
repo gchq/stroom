@@ -19,48 +19,50 @@ package stroom.statistics.impl.sql;
 import stroom.statistics.impl.sql.shared.StatisticType;
 
 import java.io.Serializable;
+import java.util.Objects;
+import java.util.OptionalDouble;
 
 public class SQLStatValSourceDO implements Serializable {
     private static final long serialVersionUID = -4956231944878929284L;
 
     private long createMs;
     private String name;
-    private long value;
+    private double valueSum;
     private long count;
     private StatisticType type;
 
     private SQLStatValSourceDO(final long createMs,
                               final String name,
-                              final long value,
+                              final double valueSum,
                               final long count,
                               final StatisticType type) {
         this.createMs = createMs;
-        this.name = name;
-        this.value = value;
+        this.name = Objects.requireNonNull(name);
+        this.valueSum = valueSum;
         this.count = count;
-        this.type = type;
+        this.type = Objects.requireNonNull(type);
     }
 
     public static SQLStatValSourceDO createCountStat(final long createMs,
                                                      final String name,
                                                      final long count) {
-        // count is used for both value and count
+        // valueSum is not used for COUNT stats
         return new SQLStatValSourceDO(
                 createMs,
                 name,
-                count,
+                0,
                 count,
                 StatisticType.COUNT);
     }
 
     public static SQLStatValSourceDO createValueStat(final long createMs,
                                                      final String name,
-                                                     final long value,
+                                                     final double valueSum,
                                                      final long count) {
         return new SQLStatValSourceDO(
                 createMs,
                 name,
-                value,
+                valueSum,
                 count,
                 StatisticType.VALUE);
     }
@@ -73,10 +75,22 @@ public class SQLStatValSourceDO implements Serializable {
         return name;
     }
 
-    public long getValue() {
-        return value;
+    /**
+     * @return The sum of all stat event values for this time bucket.
+     * Only applicable to VALUE stats
+     */
+    public OptionalDouble getValueSum() {
+        if (StatisticType.COUNT.equals(type)) {
+            return OptionalDouble.empty();
+        } else {
+            return OptionalDouble.of(valueSum);
+        }
     }
 
+    /**
+     * @return The count aggregate for a COUNT stat, or the count of stat
+     * events for a VALUE stat.
+     */
     public long getCount() {
         return count;
     }

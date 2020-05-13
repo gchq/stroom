@@ -25,8 +25,8 @@ BEGIN
                 ROUND(SSVS.TIME_MS, p_sqlPrecision) AS TIME_MS_RND,
                 p_precision as PRES,
                 p_valueType as VAL_TP,
-                SUM(SSVS.VAL) as VAL,
-                SUM(CASE SSVS.VAL_TP WHEN 1 THEN SSVS.VAL ELSE 1 END) as CT,
+                SUM(COALESCE(SSVS.VAL,0)) as VAL,
+                SUM(COALESCE(SSVS.CT,0)) as CT,
                 SSK.ID as FK_SQL_STAT_KEY_ID
             FROM SQL_STAT_VAL_SRC SSVS
             JOIN SQL_STAT_KEY SSK ON (SSK.NAME = SSVS.NAME)
@@ -62,7 +62,7 @@ BEGIN
         TEMP_AGG.VAL,
         TEMP_AGG.CT
     FROM TEMP_AGG
-    WHERE TEMP_AGG.CT > 0
+    WHERE TEMP_AGG.CT > 0 OR TEMP_AGG.VAL > 0
     ON DUPLICATE KEY UPDATE
        VAL = TEMP_AGG.VAL,
        CT = TEMP_AGG.CT;
