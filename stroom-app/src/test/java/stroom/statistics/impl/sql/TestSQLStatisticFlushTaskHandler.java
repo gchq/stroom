@@ -131,7 +131,7 @@ class TestSQLStatisticFlushTaskHandler extends AbstractCoreIntegrationTest {
         final SQLStatisticFlushTaskHandler taskHandler = new SQLStatisticFlushTaskHandler(
                 sqlStatisticValueBatchSaveService, taskContextFactory, securityContext);
 
-        final SQLStatisticAggregateMap aggregateMap = new SQLStatisticAggregateMap();
+        SQLStatisticAggregateMap aggregateMap = new SQLStatisticAggregateMap();
 
         aggregateMap.addRolledUpEvent(
                 buildCustomCountEvent(1, 66666666666L), 1000);
@@ -143,6 +143,10 @@ class TestSQLStatisticFlushTaskHandler extends AbstractCoreIntegrationTest {
 
         sqlStatisticAggregationManager.aggregate(Instant.now());
 
+        assertThat(getRowCount())
+                .isEqualTo(0);
+
+        aggregateMap = new SQLStatisticAggregateMap();
         aggregateMap.addRolledUpEvent(
                 buildCustomCountEvent(1, 66666666666L), 1000);
 
