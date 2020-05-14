@@ -25,41 +25,26 @@ import stroom.docstore.api.Store;
 import stroom.docstore.api.StoreFactory;
 import stroom.docstore.api.UniqueNameUtil;
 import stroom.explorer.shared.DocumentType;
-import stroom.importexport.migration.LegacyXMLSerialiser;
 import stroom.importexport.shared.ImportState;
 import stroom.importexport.shared.ImportState.ImportMode;
-import stroom.security.api.SecurityContext;
 import stroom.util.shared.Message;
-import stroom.util.shared.Severity;
 import stroom.visualisation.shared.VisualisationDoc;
-
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 
 import javax.inject.Inject;
 import javax.inject.Singleton;
-import java.io.IOException;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
-import java.util.UUID;
 import java.util.function.BiConsumer;
 
 @Singleton
 class VisualisationStoreImpl implements VisualisationStore {
-    private static final Logger LOGGER = LoggerFactory.getLogger(VisualisationStoreImpl.class);
-
     private final Store<VisualisationDoc> store;
-    private final SecurityContext securityContext;
-    private final VisualisationSerialiser serialiser;
 
     @Inject
     VisualisationStoreImpl(final StoreFactory storeFactory,
-                           final SecurityContext securityContext,
                            final VisualisationSerialiser serialiser) {
         this.store = storeFactory.createStore(serialiser, VisualisationDoc.DOCUMENT_TYPE, VisualisationDoc.class);
-        this.securityContext = securityContext;
-        this.serialiser = serialiser;
     }
 
     ////////////////////////////////////////////////////////////////////////
@@ -164,13 +149,7 @@ class VisualisationStoreImpl implements VisualisationStore {
 
     @Override
     public ImpexDetails importDocument(final DocRef docRef, final Map<String, byte[]> dataMap, final ImportState importState, final ImportMode importMode) {
-        // Convert legacy import format to the new format.
-        final Map<String, byte[]> map = convert(docRef, dataMap, importState, importMode);
-        if (map != null) {
-            return store.importDocument(docRef, map, importState, importMode);
-        }
-
-        return new ImpexDetails(docRef);
+        return store.importDocument(docRef, dataMap, importState, importMode);
     }
 
     @Override
@@ -184,57 +163,6 @@ class VisualisationStoreImpl implements VisualisationStore {
     @Override
     public String getType() {
         return VisualisationDoc.DOCUMENT_TYPE;
-    }
-
-    private Map<String, byte[]> convert(final DocRef docRef, final Map<String, byte[]> dataMap, final ImportState importState, final ImportMode importMode) {
-        Map<String, byte[]> result = dataMap;
-        if (dataMap.size() > 0 && !dataMap.containsKey("meta")) {
-            final String uuid = docRef.getUuid();
-            try {
-                final boolean exists = store.exists(docRef);
-                VisualisationDoc document;
-                if (exists) {
-                    document = readDocument(docRef);
-
-                } else {
-                    final OldVisualisation oldVisualisation = new OldVisualisation();
-                    final LegacyXMLSerialiser legacySerialiser = new LegacyXMLSerialiser();
-                    legacySerialiser.performImport(oldVisualisation, dataMap);
-
-                    final long now = System.currentTimeMillis();
-                    final String userId = securityContext.getUserId();
-
-                    document = new VisualisationDoc();
-                    document.setType(docRef.getType());
-                    document.setUuid(uuid);
-                    document.setName(docRef.getName());
-                    document.setVersion(UUID.randomUUID().toString());
-                    document.setCreateTimeMs(now);
-                    document.setUpdateTimeMs(now);
-                    document.setCreateUser(userId);
-                    document.setUpdateUser(userId);
-                    document.setDescription(oldVisualisation.getDescription());
-                    document.setFunctionName(oldVisualisation.getFunctionName());
-                    document.setSettings(oldVisualisation.getSettings());
-
-                    final DocRef scriptRef = serialiser.getDocRefFromLegacyXML(oldVisualisation.getScriptRefXML());
-                    if (scriptRef != null) {
-                        document.setScriptRef(scriptRef);
-                    }
-                }
-
-                result = serialiser.write(document);
-                if (dataMap.containsKey("settings.json")) {
-                    result.put("json", dataMap.remove("settings.json"));
-                }
-
-            } catch (final IOException | RuntimeException e) {
-                importState.addMessage(Severity.ERROR, e.getMessage());
-                result = null;
-            }
-        }
-
-        return result;
     }
 
     @Override

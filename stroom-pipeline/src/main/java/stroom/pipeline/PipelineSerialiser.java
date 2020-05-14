@@ -1,8 +1,5 @@
 package stroom.pipeline;
 
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
-import stroom.docref.DocRef;
 import stroom.docstore.api.DocumentSerialiser2;
 import stroom.docstore.api.Serialiser2;
 import stroom.docstore.api.Serialiser2Factory;
@@ -10,6 +7,9 @@ import stroom.pipeline.shared.PipelineDoc;
 import stroom.pipeline.shared.data.PipelineData;
 import stroom.util.string.EncodingUtil;
 import stroom.util.xml.XMLMarshallerUtil;
+
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import javax.inject.Inject;
 import javax.xml.bind.JAXBContext;
@@ -95,19 +95,6 @@ public class PipelineSerialiser implements DocumentSerialiser2<PipelineDoc> {
                 return XMLMarshallerUtil.marshal(jaxbContext, XMLMarshallerUtil.removeEmptyCollections(pipelineData));
             } catch (final JAXBException | RuntimeException e) {
                 LOGGER.error("Unable to marshal pipeline config", e);
-            }
-        }
-
-        return null;
-    }
-
-    public DocRef getDocRefFromLegacyXML(final String xml) {
-        if (xml != null) {
-            try {
-                final JAXBContext jaxbContext = JAXBContext.newInstance(DocRef.class);
-                return XMLMarshallerUtil.unmarshal(jaxbContext, DocRef.class, xml);
-            } catch (final JAXBException | RuntimeException e) {
-                LOGGER.error("Unable to unmarshal dashboard config", e);
             }
         }
 

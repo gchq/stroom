@@ -28,45 +28,6 @@ CREATE TABLE IF NOT EXISTS explorer_path (
     PRIMARY KEY    (ancestor,descendant)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8;
 
---
--- Copy data into the explorer table
---
-DROP PROCEDURE IF EXISTS copy_explorer;
-DELIMITER //
-CREATE PROCEDURE copy_explorer ()
-BEGIN
-    IF EXISTS (
-            SELECT NULL
-            FROM INFORMATION_SCHEMA.TABLES
-            WHERE TABLE_NAME = 'explorerTreePath') THEN
-
-        RENAME TABLE explorerTreePath TO OLD_explorertreepath;
-    END IF;
-
-    -- Check again so it is idempotent
-    IF EXISTS (
-            SELECT NULL
-            FROM INFORMATION_SCHEMA.TABLES
-            WHERE TABLE_NAME = 'OLD_explorerTreePath') THEN
-
-        INSERT INTO explorer_path (
-            ancestor, 
-            descendant, 
-            depth, 
-            order_index)
-        SELECT 
-            ancestor, 
-            descendant, 
-            depth, 
-            orderIndex
-        FROM OLD_explorerTreePath;
-    END IF;
-
-END//
-DELIMITER ;
-CALL copy_explorer();
-DROP PROCEDURE copy_explorer;
-
 SET SQL_NOTES=@OLD_SQL_NOTES;
 
 -- vim: set tabstop=4 shiftwidth=4 expandtab:

@@ -12,7 +12,6 @@ import stroom.config.common.NodeUriConfig;
 import stroom.config.common.PublicUriConfig;
 import stroom.config.common.UiUriConfig;
 import stroom.core.benchmark.BenchmarkClusterConfig;
-import stroom.core.db.CoreConfig;
 import stroom.core.receive.ProxyAggregationConfig;
 import stroom.core.receive.ReceiveDataConfig;
 import stroom.dashboard.impl.DashboardConfig;
@@ -31,6 +30,7 @@ import stroom.index.impl.IndexWriterConfig;
 import stroom.index.impl.selection.VolumeConfig;
 import stroom.job.impl.JobSystemConfig;
 import stroom.kafka.impl.KafkaConfig;
+import stroom.legacy.db.LegacyDbConfig;
 import stroom.lifecycle.impl.LifecycleConfig;
 import stroom.meta.impl.db.MetaServiceConfig;
 import stroom.meta.impl.db.MetaValueConfig;
@@ -120,7 +120,7 @@ public class AppConfigModule extends AbstractModule {
         bindConfig(AppConfig::getClusterTaskConfig, ClusterTaskConfig.class);
         bindConfig(AppConfig::getCommonDbConfig, CommonDbConfig.class);
         bindConfig(AppConfig::getContentPackImportConfig, ContentPackImportConfig.class);
-        bindConfig(AppConfig::getCoreConfig, CoreConfig.class);
+        bindConfig(AppConfig::getLegacyDbConfig, LegacyDbConfig.class);
         bindConfig(AppConfig::getDashboardConfig, DashboardConfig.class);
         bindConfig(AppConfig::getDataConfig, DataConfig.class, dataConfig -> {
             bindConfig(dataConfig, DataConfig::getDataRetentionConfig, DataRetentionConfig.class);

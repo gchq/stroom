@@ -12,7 +12,6 @@ dependencies {
     compile project(':stroom-explorer:stroom-explorer-api')
     compile project(':stroom-event-logging:stroom-event-logging-api')
     compile project(':stroom-importexport:stroom-importexport-api')
-    compile project(':stroom-importexport:stroom-importexport-migration')
     compile project(':stroom-resource:stroom-resource-api')
     compile project(':stroom-security:stroom-security-api')
     compile project(':stroom-servicediscovery:stroom-servicediscovery-api')

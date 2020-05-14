@@ -217,7 +217,7 @@ public class PipelineFactory {
                 if (value != null) {
                     final Class<?> paramType = method.getParameterTypes()[0];
                     if (boolean.class.isAssignableFrom(paramType) || Boolean.class.isAssignableFrom(paramType)) {
-                        obj = value.isBoolean();
+                        obj = value.getBoolean();
                     } else if (int.class.isAssignableFrom(paramType) || Integer.class.isAssignableFrom(paramType)) {
                         obj = value.getInteger();
                     } else if (long.class.isAssignableFrom(paramType) || Long.class.isAssignableFrom(paramType)) {

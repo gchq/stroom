@@ -161,13 +161,7 @@ class KafkaConfigStoreImpl implements KafkaConfigStore {
 
     @Override
     public ImpexDetails importDocument(final DocRef docRef, final Map<String, byte[]> dataMap, final ImportState importState, final ImportMode importMode) {
-//        // Convert legacy import format to the new format.
-//        final Map<String, byte[]> map = convert(docRef, dataMap, importState, importMode);
-//        if (map != null) {
         return store.importDocument(docRef, dataMap, importState, importMode);
-//        }
-//
-//        return docRef;
     }
 
     @Override
@@ -182,49 +176,6 @@ class KafkaConfigStoreImpl implements KafkaConfigStore {
     public String getType() {
         return KafkaConfigDoc.DOCUMENT_TYPE;
     }
-
-//    private Map<String, byte[]> convert(final DocRef docRef, final Map<String, byte[]> dataMap, final ImportState importState, final ImportMode importMode) {
-//        Map<String, byte[]> result = dataMap;
-//        if (!dataMap.containsKey("meta")) {
-//            final String uuid = docRef.getUuid();
-//            try {
-//                final boolean exists = persistence.exists(docRef);
-//                KafkaConfigDoc document;
-//                if (exists) {
-//                    document = readDocument(docRef);
-//
-//                } else {
-//                    final OldXslt oldXslt = new OldXslt();
-//                    final LegacyXMLSerialiser legacySerialiser = new LegacyXMLSerialiser();
-//                    legacySerialiser.performImport(oldXslt, dataMap);
-//
-//                    final long now = System.currentTimeMillis();
-//                    final String userId = securityContext.getUserId();
-//
-//                    document = new KafkaConfigDoc();
-//                    document.setType(docRef.getType());
-//                    document.setUuid(uuid);
-//                    document.setName(docRef.getName());
-//                    document.setVersion(UUID.randomUUID().toString());
-//                    document.setCreateTime(now);
-//                    document.setUpdateTime(now);
-//                    document.setCreateUser(userId);
-//                    document.setUpdateUser(userId);
-//                    document.setDescription(oldXslt.getDescription());
-//
-//                }
-//
-//                result = serialiser.write(document);
-//
-//            } catch (final IOException | RuntimeException e) {
-//                importState.addMessage(Severity.ERROR, e.getMessage());
-//                result = null;
-//            }
-//        }
-//
-//        return result;
-//    }
-
 
     @Override
     public Set<DocRef> findAssociatedNonExplorerDocRefs(DocRef docRef) {

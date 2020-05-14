@@ -28,52 +28,6 @@ CREATE TABLE IF NOT EXISTS meta_key (
     UNIQUE KEY   name (name)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8;
 
---
--- Copy data into the meta_key table
---
-DROP PROCEDURE IF EXISTS copy_meta_key;
-DELIMITER //
-CREATE PROCEDURE copy_meta_key ()
-BEGIN
-    -- Can be run by multiple scripts
-    IF EXISTS (
-            SELECT NULL
-            FROM INFORMATION_SCHEMA.TABLES
-            WHERE TABLE_NAME = 'STRM_ATR_KEY') THEN
-
-        RENAME TABLE STRM_ATR_KEY TO OLD_STRM_ATR_KEY;
-    END IF;
-
-    IF EXISTS (
-            SELECT NULL 
-            FROM INFORMATION_SCHEMA.TABLES 
-            WHERE TABLE_NAME = 'OLD_STRM_ATR_KEY') THEN
-
-        INSERT INTO meta_key (
-            id, 
-            name, 
-            field_type)
-        SELECT 
-            ID, 
-            NAME, 
-            FLD_TP
-        FROM OLD_STRM_ATR_KEY
-        WHERE ID > (SELECT COALESCE(MAX(id), 0) FROM meta_key)
-        ORDER BY ID;
-
-        -- Work out what to set our auto_increment start value to
-        SELECT CONCAT('ALTER TABLE meta_key AUTO_INCREMENT = ', COALESCE(MAX(id) + 1, 1))
-        INTO @alter_table_sql
-        FROM meta_key;
-
-        PREPARE alter_table_stmt FROM @alter_table_sql;
-        EXECUTE alter_table_stmt;
-    END IF;
-END//
-DELIMITER ;
-CALL copy_meta_key();
-DROP PROCEDURE copy_meta_key;
-
 SET SQL_NOTES=@OLD_SQL_NOTES;
 
 -- vim: set tabstop=4 shiftwidth=4 expandtab:

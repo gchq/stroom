@@ -24,36 +24,25 @@ import stroom.docstore.api.Store;
 import stroom.docstore.api.StoreFactory;
 import stroom.docstore.api.UniqueNameUtil;
 import stroom.explorer.shared.DocumentType;
-import stroom.importexport.migration.LegacyXMLSerialiser;
 import stroom.importexport.shared.ImportState;
 import stroom.importexport.shared.ImportState.ImportMode;
 import stroom.index.shared.IndexDoc;
-import stroom.index.shared.IndexFields;
-import stroom.security.api.SecurityContext;
 import stroom.util.shared.Message;
-import stroom.util.shared.Severity;
 
 import javax.inject.Inject;
 import javax.inject.Singleton;
-import java.io.IOException;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
-import java.util.UUID;
 
 @Singleton
 public class IndexStoreImpl implements IndexStore {
     private final Store<IndexDoc> store;
-    private final SecurityContext securityContext;
-    private final IndexSerialiser serialiser;
 
     @Inject
     IndexStoreImpl(final StoreFactory storeFactory,
-                   final SecurityContext securityContext,
                    final IndexSerialiser serialiser) {
         this.store = storeFactory.createStore(serialiser, IndexDoc.DOCUMENT_TYPE, IndexDoc.class);
-        this.securityContext = securityContext;
-        this.serialiser = serialiser;
     }
 
     ////////////////////////////////////////////////////////////////////////
@@ -153,13 +142,7 @@ public class IndexStoreImpl implements IndexStore {
 
     @Override
     public ImpexDetails importDocument(final DocRef docRef, final Map<String, byte[]> dataMap, final ImportState importState, final ImportMode importMode) {
-        // Convert legacy import format to the new format.
-        final Map<String, byte[]> map = convert(docRef, dataMap, importState, importMode);
-        if (map != null) {
-            return store.importDocument(docRef, map, importState, importMode);
-        }
-
-        return new ImpexDetails(docRef);
+        return store.importDocument(docRef, dataMap, importState, importMode);
     }
 
     @Override
@@ -173,62 +156,6 @@ public class IndexStoreImpl implements IndexStore {
     @Override
     public String getType() {
         return IndexDoc.DOCUMENT_TYPE;
-    }
-
-    private Map<String, byte[]> convert(final DocRef docRef, final Map<String, byte[]> dataMap, final ImportState importState, final ImportMode importMode) {
-        Map<String, byte[]> result = dataMap;
-        if (dataMap.size() > 0 && !dataMap.containsKey("meta")) {
-            final String uuid = docRef.getUuid();
-            try {
-                final boolean exists = store.exists(docRef);
-                IndexDoc document;
-                if (exists) {
-                    document = readDocument(docRef);
-
-                } else {
-                    final OldIndex oldIndex = new OldIndex();
-                    final LegacyXMLSerialiser legacySerialiser = new LegacyXMLSerialiser();
-                    legacySerialiser.performImport(oldIndex, dataMap);
-
-                    final long now = System.currentTimeMillis();
-                    final String userId = securityContext.getUserId();
-
-                    document = new IndexDoc();
-                    document.setType(docRef.getType());
-                    document.setUuid(uuid);
-                    document.setName(docRef.getName());
-                    document.setVersion(UUID.randomUUID().toString());
-                    document.setCreateTimeMs(now);
-                    document.setUpdateTimeMs(now);
-                    document.setCreateUser(userId);
-                    document.setUpdateUser(userId);
-                    document.setDescription(oldIndex.getDescription());
-                    document.setMaxDocsPerShard(oldIndex.getMaxDocsPerShard());
-                    if (oldIndex.getPartitionBy() != null) {
-                        document.setPartitionBy(IndexDoc.PartitionBy.valueOf(oldIndex.getPartitionBy().name()));
-                    }
-                    document.setPartitionSize(oldIndex.getPartitionSize());
-                    document.setShardsPerPartition(oldIndex.getShardsPerPartition());
-                    document.setRetentionDayAge(oldIndex.getRetentionDayAge());
-
-                    final IndexFields indexFields = serialiser.getIndexFieldsFromLegacyXML(oldIndex.getIndexFields());
-                    if (indexFields != null) {
-                        document.setFields(indexFields.getIndexFields());
-                    }
-                }
-
-                result = serialiser.write(document);
-//                    if (dataMap.containsKey("resource.js")) {
-//                        result.put("js", dataMap.remove("resource.js"));
-//                    }
-
-            } catch (final IOException | RuntimeException e) {
-                importState.addMessage(Severity.ERROR, e.getMessage());
-                result = null;
-            }
-        }
-
-        return result;
     }
 
     @Override

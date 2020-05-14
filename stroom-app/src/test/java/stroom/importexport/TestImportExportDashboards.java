@@ -145,7 +145,7 @@ class TestImportExportDashboards extends AbstractCoreIntegrationTest {
         indexStore.writeDocument(index);
         assertThat(indexStore.list().size()).isEqualTo(1);
 
-        final DocRef dictionaryRef = explorerService.create(DictionaryDoc.ENTITY_TYPE, "Test Dictionary", folder1, null);
+        final DocRef dictionaryRef = explorerService.create(DictionaryDoc.DOCUMENT_TYPE, "Test Dictionary", folder1, null);
         final DictionaryDoc dictionary = dictionaryStore.readDocument(dictionaryRef);
         dictionaryStore.writeDocument(dictionary);
         assertThat(dictionaryStore.list().size()).isEqualTo(1);

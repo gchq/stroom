@@ -26,39 +26,29 @@ import stroom.docstore.api.UniqueNameUtil;
 import stroom.explorer.shared.DocumentType;
 import stroom.feed.api.FeedStore;
 import stroom.feed.shared.FeedDoc;
-import stroom.importexport.migration.LegacyXMLSerialiser;
 import stroom.importexport.shared.ImportState;
 import stroom.importexport.shared.ImportState.ImportMode;
-import stroom.security.api.SecurityContext;
 import stroom.util.shared.EntityServiceException;
 import stroom.util.shared.Message;
-import stroom.util.shared.Severity;
 
 import javax.inject.Inject;
 import javax.inject.Singleton;
-import java.io.IOException;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
-import java.util.UUID;
 import java.util.stream.Collectors;
 
 @Singleton
 public class FeedStoreImpl implements FeedStore {
     private final Store<FeedDoc> store;
-    private final SecurityContext securityContext;
     private final FeedNameValidator feedNameValidator;
-    private final FeedSerialiser serialiser;
 
     @Inject
     public FeedStoreImpl(final StoreFactory storeFactory,
-                         final SecurityContext securityContext,
                          final FeedNameValidator feedNameValidator,
                          final FeedSerialiser serialiser) {
         this.store = storeFactory.createStore(serialiser, FeedDoc.DOCUMENT_TYPE, FeedDoc.class);
-        this.securityContext = securityContext;
         this.feedNameValidator = feedNameValidator;
-        this.serialiser = serialiser;
     }
 
     ////////////////////////////////////////////////////////////////////////
@@ -181,20 +171,14 @@ public class FeedStoreImpl implements FeedStore {
 
     @Override
     public ImpexDetails importDocument(final DocRef docRef, final Map<String, byte[]> dataMap, final ImportState importState, final ImportMode importMode) {
-        // Convert legacy import format to the new format.
-        final Map<String, byte[]> map = convert(docRef, dataMap, importState, importMode);
-        if (map != null) {
-            DocRef newDocRef = docRef;
+        DocRef newDocRef = docRef;
 
-            if (ImportState.State.NEW.equals(importState.getState())) {
-                final String newName = createUniqueName(docRef.getName());
-                newDocRef = new DocRef(docRef.getType(), docRef.getUuid(), newName);
-            }
-
-            return store.importDocument(newDocRef, map, importState, importMode);
+        if (ImportState.State.NEW.equals(importState.getState())) {
+            final String newName = createUniqueName(docRef.getName());
+            newDocRef = new DocRef(docRef.getType(), docRef.getUuid(), newName);
         }
 
-        return new ImpexDetails(docRef);
+        return store.importDocument(newDocRef, dataMap, importState, importMode);
     }
 
     @Override
@@ -203,58 +187,6 @@ public class FeedStoreImpl implements FeedStore {
             return store.exportDocument(docRef, messageList, new AuditFieldFilter<>());
         }
         return store.exportDocument(docRef, messageList, d -> d);
-    }
-
-    private Map<String, byte[]> convert(final DocRef docRef, final Map<String, byte[]> dataMap, final ImportState importState, final ImportMode importMode) {
-        Map<String, byte[]> result = dataMap;
-        if (dataMap.size() > 0 && !dataMap.containsKey("meta")) {
-            final String uuid = docRef.getUuid();
-            try {
-                final boolean exists = store.exists(docRef);
-                FeedDoc document;
-                if (exists) {
-                    document = readDocument(docRef);
-
-                } else {
-                    final OldFeed oldFeed = new OldFeed();
-                    final LegacyXMLSerialiser legacySerialiser = new LegacyXMLSerialiser();
-                    legacySerialiser.performImport(oldFeed, dataMap);
-
-                    final long now = System.currentTimeMillis();
-                    final String userId = securityContext.getUserId();
-
-                    document = new FeedDoc();
-                    document.setType(docRef.getType());
-                    document.setUuid(uuid);
-                    document.setName(docRef.getName());
-                    document.setVersion(UUID.randomUUID().toString());
-                    document.setCreateTimeMs(now);
-                    document.setUpdateTimeMs(now);
-                    document.setCreateUser(userId);
-                    document.setUpdateUser(userId);
-                    document.setDescription(oldFeed.getDescription());
-                    document.setClassification(oldFeed.getClassification());
-                    document.setEncoding(oldFeed.getEncoding());
-                    document.setContextEncoding(oldFeed.getContextEncoding());
-                    document.setRetentionDayAge(oldFeed.getRetentionDayAge());
-                    document.setReference(oldFeed.isReference());
-                    if (oldFeed.getStreamType() != null) {
-                        document.setStreamType(oldFeed.getStreamType().getName());
-                    }
-                    if (oldFeed.getStatus() != null) {
-                        document.setStatus(FeedDoc.FeedStatus.valueOf(oldFeed.getStatus().name()));
-                    }
-
-                    result = serialiser.write(document);
-                }
-
-            } catch (final IOException | RuntimeException e) {
-                importState.addMessage(Severity.ERROR, e.getMessage());
-                result = null;
-            }
-        }
-
-        return result;
     }
 
     @Override
