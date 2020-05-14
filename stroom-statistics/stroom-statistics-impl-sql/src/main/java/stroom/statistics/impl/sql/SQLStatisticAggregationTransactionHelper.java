@@ -34,6 +34,7 @@ import java.sql.SQLException;
 import java.sql.Statement;
 import java.sql.Types;
 import java.time.Instant;
+import java.time.temporal.ChronoUnit;
 import java.util.Arrays;
 import java.util.Collections;
 import java.util.List;
@@ -45,10 +46,14 @@ public class SQLStatisticAggregationTransactionHelper {
     // table on each pass
     //
     // private static final int AGGREGATE_INCREMENT = 10000;
-    public static final byte DEFAULT_PRECISION = 0;
-    public static final long MS_HOUR = 1000 * 60 * 60;
-    public static final long MS_DAY = MS_HOUR * 24;
+    public static final long MS_HOUR = ChronoUnit.HOURS.getDuration().toMillis();
+    public static final long MS_DAY = ChronoUnit.DAYS.getDuration().toMillis();
     public static final long MS_MONTH = 31 * MS_DAY;
+
+    public static final byte DEFAULT_PRECISION = 0;
+    public static final byte MONTH_PRECISION = (byte) Math.floor(Math.log10(MS_MONTH)); // 9
+    public static final byte DAY_PRECISION = (byte) Math.floor(Math.log10(MS_DAY)); // 7
+    public static final byte HOUR_PRECISION = (byte) Math.floor(Math.log10(MS_HOUR)); // 6
 
     public static final String AGGREGATE_MAX_ID = "" +
             "SELECT MAX(" +
@@ -63,9 +68,8 @@ public class SQLStatisticAggregationTransactionHelper {
             SQLStatisticNames.SQL_STATISTIC_VALUE_SOURCE_TABLE_NAME;
     public static final String TRUNCATE_TABLE_SQL = "TRUNCATE TABLE ";
     public static final String CLEAR_TABLE_SQL = "DELETE FROM ";
-    public static final byte MONTH_PRECISION = (byte) Math.floor(Math.log10(MS_MONTH));
-    public static final byte DAY_PRECISION = (byte) Math.floor(Math.log10(MS_DAY));
-    public static final byte HOUR_PRECISION = (byte) Math.floor(Math.log10(MS_HOUR));
+
+
     private static final LambdaLogger LOGGER = LambdaLoggerFactory.getLogger(SQLStatisticAggregationTransactionHelper.class);
     private static final String AGGREGATE = "AGGREGATE";
 
@@ -341,6 +345,11 @@ public class SQLStatisticAggregationTransactionHelper {
             // at the correct precision for their age.
             for (final AggregateConfig level : aggregateConfig) {
                 if (level.getLastPrecision() == 0) {
+                    // precision => bucket size
+                    // DEFAULT: 0 => 1 ms
+                    // HOUR:    6 => 1_000_000 ms (true hour: 3_600_000 ms)
+                    // DAY:     7 => 10_000_000 ms (true day: 86_400_000 ms)
+                    // MONTH:   9 => 1_000_000_000 ms (true 31day month = 2_678_400_000 ms)
                     final long bucketSize = (long) Math.pow(10, level.getPrecision());
                     final String bucketSizeStr = ModelStringUtil.formatDurationString(bucketSize);
                     final long aggregateToMs = level.getAggregateToMs(timeNow);
