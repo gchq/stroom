@@ -1,10 +1,12 @@
 -- Stop NOTE level warnings about objects (not)? existing
 SET @OLD_SQL_NOTES=@@SQL_NOTES, SQL_NOTES=0;
 
+-- Some handy views for viewing the stats data, not used by the app
+
 CREATE OR REPLACE VIEW v_stat_val_src AS
 SELECT
 	ssvs.NAME,
-	FROM_UNIXTIME(ssvs.TIME_MS / 1000),
+	FROM_UNIXTIME(ssvs.TIME_MS / 1000) TIME,
 	ssvs.CT STAT_COUNT,
 	ssvs.VAL STAT_VALUE_SUM,
 	if(

@@ -40,23 +40,15 @@ END $$
 
 -- --------------------------------------------------
 
-DROP PROCEDURE IF EXISTS statistics_create_index_v1$$
+DROP PROCEDURE IF EXISTS statistics_create_unique_index_v1$$
 
 CREATE PROCEDURE statistics_create_index_v1 (
     p_table_name varchar(64),
     p_index_name varchar(64),
-    p_is_unique_index boolean,
     p_index_columns varchar(64)
 )
 BEGIN
     DECLARE object_count integer;
-    DECLARE unique_modifier varchar(20);
-
-    IF (p_is_unique_index = 'T') THEN
-        SET unique_modifier = 'unique ';
-    ELSE
-        SET unique_modifier = '';
-    END IF;
 
     SELECT COUNT(1)
     INTO object_count
@@ -67,7 +59,43 @@ BEGIN
 
     IF object_count = 0 THEN
         CALL statistics_run_sql_v1(CONCAT(
-            'create ', unique_modifier, 'index ', p_index_name,
+            'create unique index ', p_index_name,
+            ' on ', database(), '.', p_table_name,
+            ' (', p_index_columns, ')'));
+    ELSE
+        SELECT CONCAT(
+            'Index ',
+            p_index_name,
+            ' already exists on table ',
+            database(),
+            '.',
+            p_table_name);
+    END IF;
+END $$
+
+
+-- --------------------------------------------------
+
+DROP PROCEDURE IF EXISTS statistics_create_index_v1$$
+
+CREATE PROCEDURE statistics_create_non_unique_index_v1 (
+    p_table_name varchar(64),
+    p_index_name varchar(64),
+    p_index_columns varchar(64)
+)
+BEGIN
+    DECLARE object_count integer;
+
+    SELECT COUNT(1)
+    INTO object_count
+    FROM information_schema.statistics
+    WHERE table_schema = database()
+    AND table_name = p_table_name
+    AND index_name = p_index_name;
+
+    IF object_count = 0 THEN
+        CALL statistics_run_sql_v1(CONCAT(
+            'create index ', p_index_name,
             ' on ', database(), '.', p_table_name,
             ' (', p_index_columns, ')'));
     ELSE

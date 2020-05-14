@@ -52,17 +52,10 @@ CREATE TABLE IF NOT EXISTS SQL_STAT_VAL (
       REFERENCES SQL_STAT_KEY (ID)
 ) ENGINE=InnoDB DEFAULT CHARSET=latin1;
 
-CALL statistics_create_index_v1(
+-- 'f' == false, obvs
+CALL statistics_create_non_unique_index_v1(
     'SQL_STAT_VAL',
     'SQL_STAT_VAL_TIME_MS',
-    false,
-    'TIME_MS');
-
--- enforce data integrity as we should never have multiple rows for these four columns
-CALL statistics_create_index_v1(
-    'SQL_STAT_VAL',
-    'SQL_STAT_VAL_FK_SQL_STAT_KEY_ID_TIME_MS_VAL_TP_PRES',
-    false,
     'TIME_MS');
 
 -- Ensure VAL is a nullable double (idempotent)
@@ -83,10 +76,9 @@ CREATE TABLE IF NOT EXISTS SQL_STAT_VAL_SRC (
 ) ENGINE=InnoDB DEFAULT CHARSET=latin1;
 
 -- used for deletions of old data where the FK is not involved
-CALL statistics_create_index_v1(
+CALL statistics_create_non_unique_index_v1(
     'SQL_STAT_VAL_SRC',
     'SQL_STAT_VAL_SRC_PROCESSING_TIME_MS',
-    false,
     'PROCESSING, TIME_MS');
 
 -- Ensure VAL is a nullable double (idempotent)

@@ -53,7 +53,7 @@ public class SQLStatisticAggregateMap {
             final SQLStatKey key = new SQLStatKey(roundedMs, rolledUpStatisticEvent.getName(),
                     timeAgnosticStatisticEvent.getTagList());
 
-            if (SQLStatisticsEventValidator.isKeyToLong(key.getName())) {
+            if (SQLStatisticsEventValidator.isKeyTooLong(key.getName())) {
                 throw new StatisticsEventValidationException(
                         String.format("Statistic event key [%s] is too long to store. Length is [%s]",
                                 key.getName(),
@@ -121,13 +121,7 @@ public class SQLStatisticAggregateMap {
             this.count = new LongAdder();
         }
 
-        public ValueStatValue(final Double value) {
-            this();
-            this.value.add(value);
-            this.count.add(1);
-        }
-
-        public void add(final Double value) {
+        public void add(final double value) {
             this.value.add(value);
             this.count.add(1);
         }

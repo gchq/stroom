@@ -105,7 +105,7 @@ class TestSQLStatisticsEventValidator {
             stringBuilder.append("x");
         }
 
-        assertThat(SQLStatisticsEventValidator.isKeyToLong(stringBuilder.toString())).isTrue();
+        assertThat(SQLStatisticsEventValidator.isKeyTooLong(stringBuilder.toString())).isTrue();
 
     }
 
@@ -115,6 +115,6 @@ class TestSQLStatisticsEventValidator {
 
         stringBuilder.append("x");
 
-        assertThat(SQLStatisticsEventValidator.isKeyToLong(stringBuilder.toString())).isFalse();
+        assertThat(SQLStatisticsEventValidator.isKeyTooLong(stringBuilder.toString())).isFalse();
     }
 }

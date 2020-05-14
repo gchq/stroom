@@ -17,8 +17,6 @@
 
 package stroom.statistics.impl.sql.filter;
 
-import org.junit.jupiter.api.BeforeEach;
-import org.junit.jupiter.api.Test;
 import stroom.datasource.api.v2.AbstractField;
 import stroom.docref.DocRef;
 import stroom.docstore.impl.Persistence;
@@ -43,7 +41,9 @@ import stroom.statistics.impl.sql.shared.StatisticStoreDoc;
 import stroom.statistics.impl.sql.shared.StatisticType;
 import stroom.statistics.impl.sql.shared.StatisticsDataSourceData;
 import stroom.util.date.DateUtil;
-import stroom.util.entityevent.EntityEventBus;
+
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Test;
 
 import java.io.ByteArrayInputStream;
 import java.util.ArrayList;
@@ -123,7 +123,7 @@ class TestStatisticsFilter implements Statistics {
         assertThat(testEvents.get(0).getTagList().get(0).getValue()).isEqualTo("1tag1value");
         assertThat(testEvents.get(0).getTagList().get(1).getTag()).isEqualTo("tag2name");
         assertThat(testEvents.get(0).getTagList().get(1).getValue()).isEqualTo("1tag2value");
-        assertThat(testEvents.get(0).getCount().longValue()).isEqualTo(1L);
+        assertThat(testEvents.get(0).getCount()).isEqualTo(1L);
         assertThat(testEvents.get(0).getValue()).isNull();
 
         assertThat(testEvents.get(1).getTimeMs()).isEqualTo(DateUtil.parseNormalDateTimeString("2000-01-02T00:00:00.000Z"));
@@ -133,7 +133,7 @@ class TestStatisticsFilter implements Statistics {
         assertThat(testEvents.get(1).getTagList().get(0).getValue()).isEqualTo("2tag1value");
         assertThat(testEvents.get(1).getTagList().get(1).getTag()).isEqualTo("tag2name");
         assertThat(testEvents.get(1).getTagList().get(1).getValue()).isEqualTo("2tag2value");
-        assertThat(testEvents.get(1).getCount().longValue()).isEqualTo(1L);
+        assertThat(testEvents.get(1).getCount()).isEqualTo(1L);
         assertThat(testEvents.get(1).getValue()).isNull();
         // assertThat(testEvents.get(1).getCount()).isNull();
         // assertThat(testEvents.get(1).getValue().longValue()).isEqualTo(1L);
@@ -197,7 +197,7 @@ class TestStatisticsFilter implements Statistics {
         assertThat(testEvents.get(0).getTagList().get(0).getValue()).isEqualTo("1tag1value");
         assertThat(testEvents.get(0).getTagList().get(1).getTag()).isEqualTo("tag2name");
         assertThat(testEvents.get(0).getTagList().get(1).getValue()).isEqualTo("1tag2value");
-        assertThat(testEvents.get(0).getValue().doubleValue()).isCloseTo(1.5, within(JUNIT_DOUBLE_TOLLERANCE));
+        assertThat(testEvents.get(0).getValue()).isCloseTo(1.5, within(JUNIT_DOUBLE_TOLLERANCE));
         assertThat(testEvents.get(0).getCount()).isNull();
 
         assertThat(testEvents.get(1).getTimeMs()).isEqualTo(DateUtil.parseNormalDateTimeString("2000-01-02T00:00:00.000Z"));
@@ -207,7 +207,7 @@ class TestStatisticsFilter implements Statistics {
         assertThat(testEvents.get(1).getTagList().get(0).getValue()).isEqualTo("2tag1value");
         assertThat(testEvents.get(1).getTagList().get(1).getTag()).isEqualTo("tag2name");
         assertThat(testEvents.get(1).getTagList().get(1).getValue()).isEqualTo("2tag2value");
-        assertThat(testEvents.get(1).getValue().doubleValue()).isCloseTo(3.9, within(JUNIT_DOUBLE_TOLLERANCE));
+        assertThat(testEvents.get(1).getValue()).isCloseTo(3.9, within(JUNIT_DOUBLE_TOLLERANCE));
         assertThat(testEvents.get(1).getCount()).isNull();
 
     }
@@ -271,7 +271,7 @@ class TestStatisticsFilter implements Statistics {
 
         assertThat(testEvents.size()).as("Expecting 1 event").isEqualTo(1);
 
-        assertThat(testEvents.get(0).getCount().longValue()).isEqualTo(1L);
+        assertThat(testEvents.get(0).getCount()).isEqualTo(1L);
     }
 
     @Test
@@ -394,7 +394,7 @@ class TestStatisticsFilter implements Statistics {
 
         assertThat(testEvents.size()).as("Expecting 1 event").isEqualTo(1);
 
-        assertThat(testEvents.get(0).getCount().longValue()).isEqualTo(1L);
+        assertThat(testEvents.get(0).getCount()).isEqualTo(1L);
     }
 
     @Test
