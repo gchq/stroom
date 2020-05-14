@@ -323,9 +323,9 @@ public class StoreImpl<D extends Doc> implements Store<D> {
     @Override
     public ImportExportActionHandler.ImpexDetails importDocument(final DocRef docRef, final Map<String, byte[]> dataMap, final ImportState importState, final ImportMode importMode) {
         // Convert legacy import format to the new format if necessary.
-        final Map<String, byte[]> map = importConverter.convert(docRef, dataMap, importState, importMode, securityContext.getUserId());
+        final Map<String, byte[]> convertedDataMap = importConverter.convert(docRef, dataMap, importState, importMode, securityContext.getUserId());
 
-        if (map != null) {
+        if (convertedDataMap != null) {
             Objects.requireNonNull(docRef);
             final String uuid = docRef.getUuid();
             try {
@@ -337,7 +337,7 @@ public class StoreImpl<D extends Doc> implements Store<D> {
                         importState.setState(State.NEW);
                     } else {
                         final List<String> updatedFields = importState.getUpdatedFieldList();
-                        checkForUpdatedFields(docRef, dataMap, new AuditFieldFilter<>(), updatedFields);
+                        checkForUpdatedFields(docRef, convertedDataMap, new AuditFieldFilter<>(), updatedFields);
                         if (updatedFields.size() == 0) {
                             importState.setState(State.EQUAL);
                         }
@@ -354,7 +354,7 @@ public class StoreImpl<D extends Doc> implements Store<D> {
 
                     persistence.getLockFactory().lock(uuid, () -> {
                         try {
-                            persistence.write(docRef, exists, dataMap);
+                            persistence.write(docRef, exists, convertedDataMap);
                             EntityEvent.fire(entityEventBus, docRef, EntityAction.CREATE);
                             dirty.set(true);
 

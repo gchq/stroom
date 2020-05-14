@@ -16,8 +16,6 @@
 
 package stroom.legacy.db;
 
-
-import stroom.legacy.db.EntityReferenceReplacer;
 import stroom.util.io.StreamUtil;
 
 import org.junit.jupiter.api.Test;
