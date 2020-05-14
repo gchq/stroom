@@ -1,13 +1,17 @@
 package stroom.util.time;
 
-import com.fasterxml.jackson.annotation.JsonCreator;
-import com.fasterxml.jackson.annotation.JsonValue;
 import stroom.util.shared.ModelStringUtil;
+
+import com.fasterxml.jackson.annotation.JsonCreator;
+import com.fasterxml.jackson.annotation.JsonIgnore;
+import com.fasterxml.jackson.annotation.JsonValue;
 
 import javax.annotation.Nullable;
 import java.time.Duration;
+import java.time.temporal.Temporal;
 import java.time.temporal.TemporalAmount;
 import java.time.temporal.TemporalUnit;
+import java.util.List;
 import java.util.Objects;
 
 /**
@@ -20,10 +24,14 @@ import java.util.Objects;
  *
  * If {@link StroomDuration} is created from a string then the original string representation
  * is held and used for later serialisation. This avoids java's desire to serialise P30D as P720H.
+ *
+ * Delegates most methods of {@link Duration} so can be used anywhere a Duration can.
  */
-public class StroomDuration implements Comparable<StroomDuration> {
+public class StroomDuration implements Comparable<StroomDuration>, TemporalAmount {
 
     @Nullable
+    // Allows us to hold the original serialised form of the duration as a duration can have more
+    // than one serialised form. Can be null.
     private final String valueAsStr;
 
     private final Duration duration;
@@ -79,38 +87,45 @@ public class StroomDuration implements Comparable<StroomDuration> {
         return new StroomDuration(value, parseToDuration(value));
     }
 
+    @JsonIgnore
     public static StroomDuration of(final TemporalAmount temporalAmount) {
         return new StroomDuration(temporalAmount);
     }
 
+    @JsonIgnore
     public static StroomDuration of(final long amount, final TemporalUnit unit) {
         return new StroomDuration(Duration.of(amount, unit));
     }
 
+    @JsonIgnore
     public static StroomDuration ofDays(final long days) {
         return new StroomDuration(Duration.ofDays(days));
     }
 
+    @JsonIgnore
     public static StroomDuration ofHours(final long hours) {
         return new StroomDuration(Duration.ofHours(hours));
     }
 
+    @JsonIgnore
     public static StroomDuration ofMinutes(final long minutes) {
         return new StroomDuration(Duration.ofMinutes(minutes));
     }
 
+    @JsonIgnore
     public static StroomDuration ofSeconds(final long seconds) {
         return new StroomDuration(Duration.ofSeconds(seconds));
     }
 
+    @JsonIgnore
     public static StroomDuration ofMillis(final long millis) {
         return new StroomDuration(Duration.ofMillis(millis));
     }
 
+    @JsonIgnore
     public static StroomDuration ofNanos(final long nanos) {
         return new StroomDuration(Duration.ofNanos(nanos));
     }
-
 
     @SuppressWarnings("unused")
     @JsonValue
@@ -124,6 +139,7 @@ public class StroomDuration implements Comparable<StroomDuration> {
         return duration;
     }
 
+    @JsonIgnore
     private static Duration parseToDuration(final String value) {
         if (value == null) {
             return null;
@@ -138,14 +154,17 @@ public class StroomDuration implements Comparable<StroomDuration> {
         }
     }
 
+    @JsonIgnore
     public long toMillis() {
         return duration.toMillis();
     }
 
+    @JsonIgnore
     public long toNanos() {
         return duration.toNanos();
     }
 
+    @JsonIgnore
     public boolean isZero() {
         return duration.isZero();
     }
@@ -168,8 +187,33 @@ public class StroomDuration implements Comparable<StroomDuration> {
         return Objects.hash(duration);
     }
 
+    @JsonIgnore
     @Override
     public int compareTo(final StroomDuration o) {
         return duration.compareTo(o.duration);
+    }
+
+    @JsonIgnore
+    @Override
+    public long get(final TemporalUnit unit) {
+        return duration.get(unit);
+    }
+
+    @JsonIgnore
+    @Override
+    public List<TemporalUnit> getUnits() {
+        return duration.getUnits();
+    }
+
+    @JsonIgnore
+    @Override
+    public Temporal addTo(final Temporal temporal) {
+        return duration.addTo(temporal);
+    }
+
+    @JsonIgnore
+    @Override
+    public Temporal subtractFrom(final Temporal temporal) {
+        return duration.subtractFrom(temporal);
     }
 }

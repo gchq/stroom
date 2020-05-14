@@ -26,10 +26,36 @@
             <id>statisticsFilter</id>
             <type>StatisticsFilter</type>
          </element>
+         <element>
+            <id>Source</id>
+            <type>Source</type>
+         </element>
+         <element>
+            <id>schemaFilter</id>
+            <type>SchemaFilter</type>
+         </element>
       </add>
    </elements>
    <properties>
       <add>
+         <property>
+            <element>splitFilter</element>
+            <name>splitCount</name>
+            <value>
+               <integer>1000</integer>
+            </value>
+         </property>
+         <property>
+            <element>xsltFilter</element>
+            <name>xslt</name>
+            <value>
+               <entity>
+                  <type>XSLT</type>
+                  <uuid>d7812ed8-40c6-4315-90b9-af3de72fd5b7</uuid>
+                  <name>ValueXSLTSQL</name>
+               </entity>
+            </value>
+         </property>
          <property>
             <element>streamAppender</element>
             <name>streamType</name>
@@ -49,21 +75,10 @@
             </value>
          </property>
          <property>
-            <element>xsltFilter</element>
-            <name>xslt</name>
+            <element>schemaFilter</element>
+            <name>schemaGroup</name>
             <value>
-               <entity>
-                  <type>XSLT</type>
-                  <uuid>d7812ed8-40c6-4315-90b9-af3de72fd5b7</uuid>
-                  <name>ValueXSLT</name>
-               </entity>
-            </value>
-         </property>
-         <property>
-            <element>splitFilter</element>
-            <name>splitCount</name>
-            <value>
-               <integer>1000</integer>
+               <string>STATISTICS</string>
             </value>
          </property>
          <property>
@@ -78,12 +93,7 @@
             </value>
          </property>
       </add>
-      <remove/>
    </properties>
-   <pipelineReferences>
-      <add/>
-      <remove/>
-   </pipelineReferences>
    <links>
       <add>
          <link>
@@ -91,20 +101,28 @@
             <to>splitFilter</to>
          </link>
          <link>
+            <from>splitFilter</from>
+            <to>xsltFilter</to>
+         </link>
+         <link>
+            <from>xsltFilter</from>
+            <to>schemaFilter</to>
+         </link>
+         <link>
             <from>xmlWriter</from>
             <to>streamAppender</to>
          </link>
          <link>
-            <from>xsltFilter</from>
-            <to>xmlWriter</to>
-         </link>
-         <link>
-            <from>xsltFilter</from>
+            <from>schemaFilter</from>
             <to>statisticsFilter</to>
          </link>
          <link>
-            <from>splitFilter</from>
-            <to>xsltFilter</to>
+            <from>schemaFilter</from>
+            <to>xmlWriter</to>
+         </link>
+         <link>
+            <from>Source</from>
+            <to>combinedParser</to>
          </link>
       </add>
    </links>

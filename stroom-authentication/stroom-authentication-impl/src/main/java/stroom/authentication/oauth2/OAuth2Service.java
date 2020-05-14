@@ -1,9 +1,5 @@
 package stroom.authentication.oauth2;
 
-import com.google.common.base.Objects;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
-
 import stroom.authentication.api.OAuth2Client;
 import stroom.authentication.api.OIDC;
 import stroom.authentication.api.OpenIdClientDetailsFactory;
@@ -11,10 +7,14 @@ import stroom.authentication.authenticate.api.AuthenticationService;
 import stroom.authentication.authenticate.api.AuthenticationService.AuthState;
 import stroom.authentication.config.AuthenticationConfig;
 import stroom.authentication.exceptions.BadRequestException;
-import stroom.authentication.token.Token;
 import stroom.authentication.token.TokenBuilder;
 import stroom.authentication.token.TokenBuilderFactory;
+import stroom.authentication.token.TokenType;
 import stroom.config.common.UriFactory;
+
+import com.google.common.base.Objects;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import javax.annotation.Nullable;
 import javax.inject.Inject;
@@ -26,8 +26,10 @@ import java.util.Base64;
 import java.util.Optional;
 import java.util.regex.Pattern;
 
+
 class OAuth2Service {
     private static final Logger LOGGER = LoggerFactory.getLogger(OAuth2Service.class);
+
 
     private final UriFactory uriFactory;
     private final AuthenticationConfig authenticationConfig;
@@ -116,7 +118,7 @@ class OAuth2Service {
 
         } catch (final RuntimeException e) {
             LOGGER.error("Error authenticating request {}", request.getRequestURI(), e);
-            result = UriBuilder.fromUri(uriFactory.uiUri(authenticationConfig.getUnauthorisedUrl())).build();
+            result = UriBuilder.fromUri(uriFactory.uiUri(AuthenticationService.UNAUTHORISED_URL_PATH)).build();
         }
 
         return result;
@@ -177,7 +179,7 @@ class OAuth2Service {
                                  final String nonce,
                                  final String state) {
         final TokenBuilder tokenBuilder = tokenBuilderFactory
-                .newBuilder(Token.TokenType.USER)
+                .newBuilder(TokenType.USER)
                 .clientId(clientId)
                 .subject(subject)
                 .nonce(nonce)

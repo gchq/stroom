@@ -132,22 +132,7 @@ public class Token {
         this.enabled = enabled;
     }
 
-    public enum TokenType {
-        USER("user"),
-        API("api"),
-        EMAIL_RESET("email_reset");
-
-        private String tokenTypeText;
-
-        TokenType(String tokenTypeText) {
-            this.tokenTypeText = tokenTypeText;
-        }
-
-        public String getText() {
-            return this.tokenTypeText;
-        }
-    }
-//
+    //
 //    public static final class TokenBuilder {
 //        private Integer id;
 //        private Integer version;

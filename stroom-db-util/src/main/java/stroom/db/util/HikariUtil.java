@@ -1,9 +1,11 @@
 package stroom.db.util;
 
-import com.zaxxer.hikari.HikariConfig;
 import stroom.config.common.ConnectionConfig;
 import stroom.config.common.ConnectionPoolConfig;
 import stroom.config.common.DbConfig;
+import stroom.util.time.StroomDuration;
+
+import com.zaxxer.hikari.HikariConfig;
 
 import java.util.function.Consumer;
 import java.util.function.Function;
@@ -31,9 +33,9 @@ public class HikariUtil {
         final HikariConfig config = new HikariConfig();
 
         // Pool properties
-        copyAndMapProp(connectionPoolConfig::getConnectionTimeout, config::setConnectionTimeout, Long::longValue);
-        copyAndMapProp(connectionPoolConfig::getIdleTimeout, config::setIdleTimeout, Long::longValue);
-        copyAndMapProp(connectionPoolConfig::getMaxLifetime, config::setMaxLifetime, Long::longValue);
+        copyAndMapProp(connectionPoolConfig::getConnectionTimeout, config::setConnectionTimeout, StroomDuration::toMillis);
+        copyAndMapProp(connectionPoolConfig::getIdleTimeout, config::setIdleTimeout, StroomDuration::toMillis);
+        copyAndMapProp(connectionPoolConfig::getMaxLifetime, config::setMaxLifetime, StroomDuration::toMillis);
         copyAndMapProp(connectionPoolConfig::getMinimumIdle, config::setMinimumIdle, Integer::intValue);
         copyAndMapProp(connectionPoolConfig::getMaxPoolSize, config::setMaximumPoolSize, Integer::intValue);
 

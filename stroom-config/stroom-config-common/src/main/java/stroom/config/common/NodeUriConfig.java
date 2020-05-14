@@ -2,6 +2,9 @@ package stroom.config.common;
 
 import com.fasterxml.jackson.annotation.JsonPropertyDescription;
 
+import javax.inject.Singleton;
+
+@Singleton
 public class NodeUriConfig extends UriConfig {
 
     @JsonPropertyDescription("The scheme, i.e. http or https. If not set, Stroom will attempt to determine this.")

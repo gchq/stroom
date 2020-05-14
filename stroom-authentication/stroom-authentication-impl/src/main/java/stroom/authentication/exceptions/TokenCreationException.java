@@ -18,10 +18,10 @@
 
 package stroom.authentication.exceptions;
 
-import stroom.authentication.token.Token;
+import stroom.authentication.token.TokenType;
 
 public class TokenCreationException extends RuntimeException {
-    private Token.TokenType tokenType;
+    private TokenType tokenType;
     private String errorMessage;
 
     public TokenCreationException(Exception e) {
@@ -32,7 +32,7 @@ public class TokenCreationException extends RuntimeException {
         this.errorMessage = errorMessage;
     }
 
-    public TokenCreationException(Token.TokenType tokenType, String errorMessage) {
+    public TokenCreationException(TokenType tokenType, String errorMessage) {
         this.tokenType = tokenType;
         this.errorMessage = errorMessage;
     }

@@ -16,10 +16,13 @@
 
 package stroom.index.impl;
 
-import org.apache.lucene.store.LockObtainFailedException;
 import stroom.docref.DocRef;
-import stroom.index.shared.*;
+import stroom.index.shared.FindIndexShardCriteria;
+import stroom.index.shared.IndexDoc;
+import stroom.index.shared.IndexException;
+import stroom.index.shared.IndexShard;
 import stroom.index.shared.IndexShard.IndexShardStatus;
+import stroom.index.shared.IndexShardKey;
 import stroom.node.api.NodeInfo;
 import stroom.security.api.SecurityContext;
 import stroom.task.api.ExecutorProvider;
@@ -31,12 +34,26 @@ import stroom.util.logging.LambdaLoggerFactory;
 import stroom.util.logging.LogExecutionTime;
 import stroom.util.shared.ResultPage;
 
+import org.apache.lucene.store.LockObtainFailedException;
+
 import javax.inject.Inject;
 import javax.inject.Singleton;
 import java.io.IOException;
 import java.nio.file.Path;
-import java.util.*;
-import java.util.concurrent.*;
+import java.util.Collection;
+import java.util.Collections;
+import java.util.Comparator;
+import java.util.HashSet;
+import java.util.List;
+import java.util.Map;
+import java.util.Set;
+import java.util.concurrent.CompletableFuture;
+import java.util.concurrent.ConcurrentHashMap;
+import java.util.concurrent.CountDownLatch;
+import java.util.concurrent.Executor;
+import java.util.concurrent.Executors;
+import java.util.concurrent.ScheduledExecutorService;
+import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicLong;
 import java.util.concurrent.locks.Lock;
 import java.util.function.Supplier;
@@ -505,10 +522,14 @@ public class IndexShardWriterCacheImpl implements IndexShardWriterCache {
     }
 
     private Settings getSettings() {
-        if (settings == null || settings.creationTime < (System.currentTimeMillis() - 60000)) {
+        if (settings == null || settings.creationTime < (System.currentTimeMillis() - 60_000)) {
             final IndexCacheConfig indexCacheConfig = indexConfig.getIndexWriterConfig().getIndexCacheConfig();
-            final long timeToLive = Math.max(0, indexCacheConfig.getTimeToLiveMs());
-            final long timeToIdle = Math.max(0, indexCacheConfig.getTimeToIdleMs());
+            final long timeToLive = indexCacheConfig.getTimeToLive() != null
+                    ? indexCacheConfig.getTimeToLive().toMillis()
+                    : 0L;
+            final long timeToIdle = indexCacheConfig.getTimeToIdle() != null
+                    ? indexCacheConfig.getTimeToIdle().toMillis()
+                    : 0L;
             final long minItems = Math.max(0, indexCacheConfig.getMinItems());
             final long coreItems = Math.max(minItems, indexCacheConfig.getCoreItems());
             final long maxItems = Math.max(coreItems, indexCacheConfig.getMaxItems());

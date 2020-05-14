@@ -35,7 +35,7 @@ class DataRetentionRulesResourceImpl implements DataRetentionRulesResource {
 
     @Override
     public DataRetentionRules read() {
-        return securityContext.secureResult(() -> dataRetentionRulesService.readDocument(null));
+        return securityContext.secureResult(dataRetentionRulesService::getOrCreate);
     }
 
     @Override

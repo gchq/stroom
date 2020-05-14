@@ -1,8 +1,10 @@
 package stroom.config.common;
 
-import com.fasterxml.jackson.annotation.JsonProperty;
 import stroom.util.config.annotations.ReadOnly;
 import stroom.util.shared.AbstractConfig;
+
+import com.fasterxml.jackson.annotation.JsonProperty;
+import com.fasterxml.jackson.annotation.JsonPropertyDescription;
 
 import javax.validation.constraints.Max;
 import javax.validation.constraints.Min;
@@ -35,7 +37,6 @@ public abstract class UriConfig extends AbstractConfig {
     }
 
     @Pattern(regexp = "^https?$")
-    @JsonProperty(PROP_NAME_SCHEME)
     public String getScheme() {
         return scheme;
     }
@@ -67,6 +68,8 @@ public abstract class UriConfig extends AbstractConfig {
 
     @JsonProperty(PROP_NAME_PATH_PREFIX)
     @Pattern(regexp = "/[^/]+")
+    @JsonPropertyDescription("Any prefix to be added to the beginning of paths for this UIR. " +
+            "This may be needed if there is some form of gateway in front of Stroom that requires different paths.")
     public String getPathPrefix() {
         return pathPrefix;
     }

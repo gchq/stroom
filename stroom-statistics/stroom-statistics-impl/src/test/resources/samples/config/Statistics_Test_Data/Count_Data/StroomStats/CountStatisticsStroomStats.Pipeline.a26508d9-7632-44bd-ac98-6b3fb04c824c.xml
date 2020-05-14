@@ -36,7 +36,6 @@
             <value>
                <entity>
                   <type>XSLT</type>
-                  <id>18</id>
                   <uuid>9ad1ef02-a474-4832-879e-563e5c8475ef</uuid>
                   <name>CountXSLTStroomStats</name>
                </entity>
@@ -48,7 +47,6 @@
             <value>
                <entity>
                   <type>StroomStatsStore</type>
-                  <id>10</id>
                   <uuid>c5dd1e72-5484-41c9-8e7a-f9429f648f3e</uuid>
                   <name>CountStatisticsStroomStats</name>
                </entity>

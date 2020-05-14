@@ -1,8 +1,10 @@
 package stroom.authentication.account;
 
+import stroom.authentication.config.PasswordIntegrityChecksConfig;
+import stroom.util.time.StroomDuration;
+
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import stroom.authentication.config.PasswordIntegrityChecksConfig;
 
 import javax.inject.Inject;
 import javax.inject.Singleton;
@@ -24,13 +26,15 @@ class AccountMaintenanceTask {
     public void exec() {
         LOGGER.info("Checking for accounts that are not being used.");
 
-        int numberOfInactiveNewAccounts = accountDao.deactivateNewInactiveUsers(passwordIntegrityChecksConfig.getNeverUsedAccountDeactivationThreshold().getDuration());
-        LOGGER.info("Deactivated {} new user account(s) that have been inactive for duration of {} or more.",
-                numberOfInactiveNewAccounts, passwordIntegrityChecksConfig.getNeverUsedAccountDeactivationThreshold());
+        final StroomDuration neverUsedAgeThreshold = passwordIntegrityChecksConfig.getNeverUsedAccountDeactivationThreshold();
+        int numberOfInactiveNewAccounts = accountDao.deactivateNewInactiveUsers(neverUsedAgeThreshold.getDuration());
+        LOGGER.info("Deactivated {} new user account(s) that have been inactive for {} or more.",
+                numberOfInactiveNewAccounts, neverUsedAgeThreshold);
 
-        int numberOfInactiveAccounts = accountDao.deactivateInactiveUsers(passwordIntegrityChecksConfig.getUnusedAccountDeactivationThreshold().getDuration());
-        LOGGER.info("Deactivated {} user account(s) that have been inactive for  duration of {} days or more.",
-                numberOfInactiveAccounts, passwordIntegrityChecksConfig.getUnusedAccountDeactivationThreshold());
+        final StroomDuration unusedAgeThreshold = passwordIntegrityChecksConfig.getUnusedAccountDeactivationThreshold();
+        int numberOfInactiveAccounts = accountDao.deactivateInactiveUsers(unusedAgeThreshold.getDuration());
+        LOGGER.info("Deactivated {} user account(s) that have been inactive for {} or more.",
+                numberOfInactiveAccounts, unusedAgeThreshold);
 
         // TODO password change checks
     }

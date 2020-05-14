@@ -145,6 +145,8 @@ public class AppConfig extends AbstractConfig {
                     "invalid configuration the system may behave in unexpected ways. This setting is not advised.",
             payload = ValidationSeverity.Warning.class)
     @JsonProperty(PROP_NAME_HALT_BOOT_ON_CONFIG_VALIDATION_FAILURE)
+    @JsonPropertyDescription("If true, Stroom will halt on start up if any errors are found in the YAML " +
+            "configuration file. If false, the errors will simply be logged. Setting this to false is not advised.")
     public boolean isHaltBootOnConfigValidationFailure() {
         return haltBootOnConfigValidationFailure;
     }

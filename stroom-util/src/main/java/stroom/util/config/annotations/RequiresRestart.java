@@ -10,7 +10,7 @@ import java.lang.annotation.Target;
  * the system to be restarted for the change to take effect.
  */
 @Retention(RetentionPolicy.RUNTIME)
-@Target(ElementType.METHOD)
+@Target({ElementType.METHOD, ElementType.FIELD})
 public @interface RequiresRestart {
 
     enum RestartScope {

@@ -1,5 +1,9 @@
 package stroom.config.common;
 
+import stroom.util.config.FieldMapper;
+
+import com.fasterxml.jackson.annotation.JsonIgnore;
+
 import javax.inject.Singleton;
 
 @Singleton
@@ -17,4 +21,19 @@ public class CommonDbConfig extends DbConfig {
         connectionConfig.setJdbcDriverUsername(DEFAULT_JDBC_DRIVER_USERNAME);
         connectionConfig.setJdbcDriverPassword(DEFAULT_JDBC_DRIVER_PASSWORD);
     }
+
+    /**
+     * Creates a new {@link DbConfig} then deep copies in the values of
+     * this, followed by the non-default values of otherDbConfig.
+     * Thus allowing otherDbConfig to override values in this {@link CommonDbConfig}
+     */
+    @JsonIgnore
+    public DbConfig mergeConfig(final DbConfig otherDbConfig) {
+        final DbConfig mergedConfig = new DbConfig();
+        final DbConfig vanillaConfig = new DbConfig();
+        FieldMapper.copy(this, mergedConfig);
+        FieldMapper.copyNonDefaults(otherDbConfig, mergedConfig, vanillaConfig);
+        return mergedConfig;
+    }
+
 }
