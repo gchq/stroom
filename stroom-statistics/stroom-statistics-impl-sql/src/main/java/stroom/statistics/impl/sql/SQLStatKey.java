@@ -33,7 +33,8 @@ public class SQLStatKey {
         this.ms = ms;
         this.name = buildKeyString(statName, tags);
 
-        hashCode = Objects.hash(ms, name);;
+        // name includes statName and tags
+        hashCode = Objects.hash(ms, name);
     }
 
     /**

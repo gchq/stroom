@@ -324,7 +324,8 @@ public class SQLStatisticAggregationTransactionHelper {
             processCount = doAggregateSQL_Update(
                     connection,
                     taskContext,
-                    AGGREGATE, STAGE1_MARK_PROCESSING,
+                    AGGREGATE,
+                    STAGE1_MARK_PROCESSING,
                     Collections.singletonList(batchSize));
 
             // Fill the STAT_KEY table with any new Keys
