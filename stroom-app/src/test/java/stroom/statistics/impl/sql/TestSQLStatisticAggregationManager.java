@@ -99,7 +99,9 @@ class TestSQLStatisticAggregationManager extends AbstractCoreIntegrationTest {
         // final long startDateMs =
         // DateUtil.parseNormalDateTimeString("2015-01-01T00:00:00.000Z");
         //Use a fixed start date to avoid any oddities caused by the power of 10 rounding
-        final Instant startDate = LocalDateTime.of(2016, 12, 13, 11, 59, 3).toInstant(ZoneOffset.UTC);
+        final Instant startDate = LocalDateTime.of(
+                2016, 12, 13, 11, 59, 3)
+                .toInstant(ZoneOffset.UTC);
         final int statNameCount = 4;
         final int timesCount = 10;
         final int numberOfDifferentPrecisions = 4;
@@ -109,7 +111,6 @@ class TestSQLStatisticAggregationManager extends AbstractCoreIntegrationTest {
         final long expectedValueTotalByPrecision = statNameCount * timesCount * STAT_VALUE;
 
         final long expectedCountTotal = expectedCountTotalByPrecision * numberOfDifferentPrecisions;
-        final long expectedValueTotal = expectedValueTotalByPrecision * numberOfDifferentPrecisions;
 
         final LogExecutionTime time = new LogExecutionTime();
 
@@ -121,32 +122,22 @@ class TestSQLStatisticAggregationManager extends AbstractCoreIntegrationTest {
 
         assertThat(getAggregateTotal(COL_NAME_CNT))
                 .isEqualTo(expectedCountTotal);
+
+        // val col meaningless for count stats
         assertThat(getAggregateTotal(COL_NAME_VAL))
-                .isEqualTo(expectedValueTotal);
-
-        assertThat(getAggregateByPrecision(COL_NAME_VAL, SQLStatisticAggregationTransactionHelper.DEFAULT_PRECISION))
-                .isEqualTo(expectedValueTotalByPrecision);
-
-        assertThat(getAggregateByPrecision(COL_NAME_VAL, SQLStatisticAggregationTransactionHelper.HOUR_PRECISION))
-                .isEqualTo(expectedValueTotalByPrecision);
-
-        assertThat(getAggregateByPrecision(COL_NAME_VAL, SQLStatisticAggregationTransactionHelper.DAY_PRECISION))
-                .isEqualTo(expectedValueTotalByPrecision);
-
-        assertThat(getAggregateByPrecision(COL_NAME_VAL, SQLStatisticAggregationTransactionHelper.MONTH_PRECISION))
-                .isEqualTo(expectedValueTotalByPrecision);
+                .isZero();
 
         assertThat(getAggregateByPrecision(COL_NAME_CNT, SQLStatisticAggregationTransactionHelper.DEFAULT_PRECISION))
-                .isEqualTo(expectedCountTotalByPrecision);
+                .isEqualTo(expectedValueTotalByPrecision);
 
         assertThat(getAggregateByPrecision(COL_NAME_CNT, SQLStatisticAggregationTransactionHelper.HOUR_PRECISION))
-                .isEqualTo(expectedCountTotalByPrecision);
+                .isEqualTo(expectedValueTotalByPrecision);
 
         assertThat(getAggregateByPrecision(COL_NAME_CNT, SQLStatisticAggregationTransactionHelper.DAY_PRECISION))
-                .isEqualTo(expectedCountTotalByPrecision);
+                .isEqualTo(expectedValueTotalByPrecision);
 
         assertThat(getAggregateByPrecision(COL_NAME_CNT, SQLStatisticAggregationTransactionHelper.MONTH_PRECISION))
-                .isEqualTo(expectedCountTotalByPrecision);
+                .isEqualTo(expectedValueTotalByPrecision);
 
         LOGGER.info("run aggregation again with no new data in SVS");
         runAggregation(startDate);
@@ -154,31 +145,19 @@ class TestSQLStatisticAggregationManager extends AbstractCoreIntegrationTest {
         assertThat(getAggregateTotal(COL_NAME_CNT))
                 .isEqualTo(expectedCountTotal);
         assertThat(getAggregateTotal(COL_NAME_VAL))
-                .isEqualTo(expectedValueTotal);
-
-        assertThat(getAggregateByPrecision(COL_NAME_VAL, SQLStatisticAggregationTransactionHelper.DEFAULT_PRECISION))
-                .isEqualTo(expectedValueTotalByPrecision);
-
-        assertThat(getAggregateByPrecision(COL_NAME_VAL, SQLStatisticAggregationTransactionHelper.HOUR_PRECISION))
-                .isEqualTo(expectedValueTotalByPrecision);
-
-        assertThat(getAggregateByPrecision(COL_NAME_VAL, SQLStatisticAggregationTransactionHelper.DAY_PRECISION))
-                .isEqualTo(expectedValueTotalByPrecision);
-
-        assertThat(getAggregateByPrecision(COL_NAME_VAL, SQLStatisticAggregationTransactionHelper.MONTH_PRECISION))
-                .isEqualTo(expectedValueTotalByPrecision);
+                .isZero();
 
         assertThat(getAggregateByPrecision(COL_NAME_CNT, SQLStatisticAggregationTransactionHelper.DEFAULT_PRECISION))
-                .isEqualTo(expectedCountTotalByPrecision);
+                .isEqualTo(expectedValueTotalByPrecision);
 
         assertThat(getAggregateByPrecision(COL_NAME_CNT, SQLStatisticAggregationTransactionHelper.HOUR_PRECISION))
-                .isEqualTo(expectedCountTotalByPrecision);
+                .isEqualTo(expectedValueTotalByPrecision);
 
         assertThat(getAggregateByPrecision(COL_NAME_CNT, SQLStatisticAggregationTransactionHelper.DAY_PRECISION))
-                .isEqualTo(expectedCountTotalByPrecision);
+                .isEqualTo(expectedValueTotalByPrecision);
 
         assertThat(getAggregateByPrecision(COL_NAME_CNT, SQLStatisticAggregationTransactionHelper.MONTH_PRECISION))
-                .isEqualTo(expectedCountTotalByPrecision);
+                .isEqualTo(expectedValueTotalByPrecision);
 
         LOGGER.info(
                 "run aggregation again but pretend we are 2hrs in the future so it rolls up the zero precision");
@@ -193,31 +172,19 @@ class TestSQLStatisticAggregationManager extends AbstractCoreIntegrationTest {
         assertThat(getAggregateTotal(COL_NAME_CNT))
                 .isEqualTo(expectedCountTotal * 2);
         assertThat(getAggregateTotal(COL_NAME_VAL))
-                .isEqualTo(expectedValueTotal * 2);
-
-        assertThat(getAggregateByPrecision(COL_NAME_VAL, SQLStatisticAggregationTransactionHelper.DEFAULT_PRECISION))
-                .isEqualTo(expectedValueTotalByPrecision * 1);
-
-        assertThat(getAggregateByPrecision(COL_NAME_VAL, SQLStatisticAggregationTransactionHelper.HOUR_PRECISION))
-                .isEqualTo(expectedValueTotalByPrecision * 3);
-
-        assertThat(getAggregateByPrecision(COL_NAME_VAL, SQLStatisticAggregationTransactionHelper.DAY_PRECISION))
-                .isEqualTo(expectedValueTotalByPrecision * 2);
-
-        assertThat(getAggregateByPrecision(COL_NAME_VAL, SQLStatisticAggregationTransactionHelper.MONTH_PRECISION))
-                .isEqualTo(expectedValueTotalByPrecision * 2);
+                .isZero();
 
         assertThat(getAggregateByPrecision(COL_NAME_CNT, SQLStatisticAggregationTransactionHelper.DEFAULT_PRECISION))
-                .isEqualTo(expectedCountTotalByPrecision * 1);
+                .isEqualTo(expectedValueTotalByPrecision * 1);
 
         assertThat(getAggregateByPrecision(COL_NAME_CNT, SQLStatisticAggregationTransactionHelper.HOUR_PRECISION))
-                .isEqualTo(expectedCountTotalByPrecision * 3);
+                .isEqualTo(expectedValueTotalByPrecision * 3);
 
         assertThat(getAggregateByPrecision(COL_NAME_CNT, SQLStatisticAggregationTransactionHelper.DAY_PRECISION))
-                .isEqualTo(expectedCountTotalByPrecision * 2);
+                .isEqualTo(expectedValueTotalByPrecision * 2);
 
         assertThat(getAggregateByPrecision(COL_NAME_CNT, SQLStatisticAggregationTransactionHelper.MONTH_PRECISION))
-                .isEqualTo(expectedCountTotalByPrecision * 2);
+                .isEqualTo(expectedValueTotalByPrecision * 2);
 
         LOGGER.info("run aggregation again but pretend we are 2days in the future");
         futureDate = startDate.plus(2, ChronoUnit.DAYS);
@@ -232,31 +199,19 @@ class TestSQLStatisticAggregationManager extends AbstractCoreIntegrationTest {
         assertThat(getAggregateTotal(COL_NAME_CNT))
                 .isEqualTo(expectedCountTotal * 3);
         assertThat(getAggregateTotal(COL_NAME_VAL))
-                .isEqualTo(expectedValueTotal * 3);
-
-        assertThat(getAggregateByPrecision(COL_NAME_VAL, SQLStatisticAggregationTransactionHelper.DEFAULT_PRECISION))
-                .isEqualTo(expectedValueTotalByPrecision * 1);
-
-        assertThat(getAggregateByPrecision(COL_NAME_VAL, SQLStatisticAggregationTransactionHelper.HOUR_PRECISION))
-                .isEqualTo(expectedValueTotalByPrecision * 1);
-
-        assertThat(getAggregateByPrecision(COL_NAME_VAL, SQLStatisticAggregationTransactionHelper.DAY_PRECISION))
-                .isEqualTo(expectedValueTotalByPrecision * 7);
-
-        assertThat(getAggregateByPrecision(COL_NAME_VAL, SQLStatisticAggregationTransactionHelper.MONTH_PRECISION))
-                .isEqualTo(expectedValueTotalByPrecision * 3);
+                .isZero();
 
         assertThat(getAggregateByPrecision(COL_NAME_CNT, SQLStatisticAggregationTransactionHelper.DEFAULT_PRECISION))
-                .isEqualTo(expectedCountTotalByPrecision * 1);
+                .isEqualTo(expectedValueTotalByPrecision * 1);
 
         assertThat(getAggregateByPrecision(COL_NAME_CNT, SQLStatisticAggregationTransactionHelper.HOUR_PRECISION))
-                .isEqualTo(expectedCountTotalByPrecision * 1);
+                .isEqualTo(expectedValueTotalByPrecision * 1);
 
         assertThat(getAggregateByPrecision(COL_NAME_CNT, SQLStatisticAggregationTransactionHelper.DAY_PRECISION))
-                .isEqualTo(expectedCountTotalByPrecision * 7);
+                .isEqualTo(expectedValueTotalByPrecision * 7);
 
         assertThat(getAggregateByPrecision(COL_NAME_CNT, SQLStatisticAggregationTransactionHelper.MONTH_PRECISION))
-                .isEqualTo(expectedCountTotalByPrecision * 3);
+                .isEqualTo(expectedValueTotalByPrecision * 3);
 
         LOGGER.info("run aggregation again but pretend we are 32days in the future");
         futureDate = startDate.plus(65, ChronoUnit.DAYS);
@@ -270,31 +225,19 @@ class TestSQLStatisticAggregationManager extends AbstractCoreIntegrationTest {
         assertThat(getAggregateTotal(COL_NAME_CNT))
                 .isEqualTo(expectedCountTotal * 4);
         assertThat(getAggregateTotal(COL_NAME_VAL))
-                .isEqualTo(expectedValueTotal * 4);
-
-        assertThat(getAggregateByPrecision(COL_NAME_VAL, SQLStatisticAggregationTransactionHelper.DEFAULT_PRECISION))
-                .isEqualTo(expectedValueTotalByPrecision * 1);
-
-        assertThat(getAggregateByPrecision(COL_NAME_VAL, SQLStatisticAggregationTransactionHelper.HOUR_PRECISION))
-                .isEqualTo(expectedValueTotalByPrecision * 1);
-
-        assertThat(getAggregateByPrecision(COL_NAME_VAL, SQLStatisticAggregationTransactionHelper.DAY_PRECISION))
-                .isEqualTo(expectedValueTotalByPrecision * 2);
-
-        assertThat(getAggregateByPrecision(COL_NAME_VAL, SQLStatisticAggregationTransactionHelper.MONTH_PRECISION))
-                .isEqualTo(expectedValueTotalByPrecision * 12);
+                .isZero();
 
         assertThat(getAggregateByPrecision(COL_NAME_CNT, SQLStatisticAggregationTransactionHelper.DEFAULT_PRECISION))
-                .isEqualTo(expectedCountTotalByPrecision * 1);
+                .isEqualTo(expectedValueTotalByPrecision * 1);
 
         assertThat(getAggregateByPrecision(COL_NAME_CNT, SQLStatisticAggregationTransactionHelper.HOUR_PRECISION))
-                .isEqualTo(expectedCountTotalByPrecision * 1);
+                .isEqualTo(expectedValueTotalByPrecision * 1);
 
         assertThat(getAggregateByPrecision(COL_NAME_CNT, SQLStatisticAggregationTransactionHelper.DAY_PRECISION))
-                .isEqualTo(expectedCountTotalByPrecision * 2);
+                .isEqualTo(expectedValueTotalByPrecision * 2);
 
         assertThat(getAggregateByPrecision(COL_NAME_CNT, SQLStatisticAggregationTransactionHelper.MONTH_PRECISION))
-                .isEqualTo(expectedCountTotalByPrecision * 12);
+                .isEqualTo(expectedValueTotalByPrecision * 12);
 
         LOGGER.info("run aggregation again with no new data so day data can roll up to month");
         LOGGER.info("futureDate: " + futureDate);
@@ -303,31 +246,19 @@ class TestSQLStatisticAggregationManager extends AbstractCoreIntegrationTest {
         assertThat(getAggregateTotal(COL_NAME_CNT))
                 .isEqualTo(expectedCountTotal * 4);
         assertThat(getAggregateTotal(COL_NAME_VAL))
-                .isEqualTo(expectedValueTotal * 4);
-
-        assertThat(getAggregateByPrecision(COL_NAME_VAL, SQLStatisticAggregationTransactionHelper.DEFAULT_PRECISION))
-                .isEqualTo(expectedValueTotalByPrecision * 1);
-
-        assertThat(getAggregateByPrecision(COL_NAME_VAL, SQLStatisticAggregationTransactionHelper.HOUR_PRECISION))
-                .isEqualTo(expectedValueTotalByPrecision * 1);
-
-        assertThat(getAggregateByPrecision(COL_NAME_VAL, SQLStatisticAggregationTransactionHelper.DAY_PRECISION))
-                .isEqualTo(expectedValueTotalByPrecision * 1);
-
-        assertThat(getAggregateByPrecision(COL_NAME_VAL, SQLStatisticAggregationTransactionHelper.MONTH_PRECISION))
-                .isEqualTo(expectedValueTotalByPrecision * 13);
+                .isZero();
 
         assertThat(getAggregateByPrecision(COL_NAME_CNT, SQLStatisticAggregationTransactionHelper.DEFAULT_PRECISION))
-                .isEqualTo(expectedCountTotalByPrecision * 1);
+                .isEqualTo(expectedValueTotalByPrecision * 1);
 
         assertThat(getAggregateByPrecision(COL_NAME_CNT, SQLStatisticAggregationTransactionHelper.HOUR_PRECISION))
-                .isEqualTo(expectedCountTotalByPrecision * 1);
+                .isEqualTo(expectedValueTotalByPrecision * 1);
 
         assertThat(getAggregateByPrecision(COL_NAME_CNT, SQLStatisticAggregationTransactionHelper.DAY_PRECISION))
-                .isEqualTo(expectedCountTotalByPrecision * 1);
+                .isEqualTo(expectedValueTotalByPrecision * 1);
 
         assertThat(getAggregateByPrecision(COL_NAME_CNT, SQLStatisticAggregationTransactionHelper.MONTH_PRECISION))
-                .isEqualTo(expectedCountTotalByPrecision * 13);
+                .isEqualTo(expectedValueTotalByPrecision * 13);
 
         LOGGER.info("Test ran in {}", time);
     }
@@ -680,7 +611,8 @@ class TestSQLStatisticAggregationManager extends AbstractCoreIntegrationTest {
         int count;
 
         try (final Connection connection = sqlStatisticsDbConnProvider.getConnection()) {
-            try (final PreparedStatement preparedStatement = connection.prepareStatement("select count(*) from " + tableName)) {
+            try (final PreparedStatement preparedStatement = connection.prepareStatement(
+                    "select count(*) from " + tableName)) {
                 try (final ResultSet resultSet = preparedStatement.executeQuery()) {
                     resultSet.next();
                     count = resultSet.getInt(1);
@@ -693,7 +625,10 @@ class TestSQLStatisticAggregationManager extends AbstractCoreIntegrationTest {
     private int getAggregateByPrecision(final String colName, final byte precision) throws SQLException {
         int count;
         try (final Connection connection = sqlStatisticsDbConnProvider.getConnection()) {
-            try (final PreparedStatement preparedStatement = connection.prepareStatement("select sum(" + colName + ") from " + SQLStatisticNames.SQL_STATISTIC_VALUE_TABLE_NAME + " where PRES = " + precision)) {
+            try (final PreparedStatement preparedStatement = connection.prepareStatement(
+                    "select sum(coalesce(" + colName + ",0)) " +
+                            "from " + SQLStatisticNames.SQL_STATISTIC_VALUE_TABLE_NAME + " " +
+                            "where PRES = " + precision)) {
                 try (final ResultSet resultSet = preparedStatement.executeQuery()) {
                     resultSet.next();
                     count = resultSet.getInt(1);
@@ -706,7 +641,9 @@ class TestSQLStatisticAggregationManager extends AbstractCoreIntegrationTest {
     private int getAggregateTotal(final String colName) throws SQLException {
         int count;
         try (final Connection connection = sqlStatisticsDbConnProvider.getConnection()) {
-            try (final PreparedStatement preparedStatement = connection.prepareStatement("select sum(" + colName + ") from " + SQLStatisticNames.SQL_STATISTIC_VALUE_TABLE_NAME)) {
+            try (final PreparedStatement preparedStatement = connection.prepareStatement(
+                    "select sum(coalesce(" + colName + ",0)) " +
+                            "from " + SQLStatisticNames.SQL_STATISTIC_VALUE_TABLE_NAME)) {
                 try (final ResultSet resultSet = preparedStatement.executeQuery()) {
                     resultSet.next();
                     count = resultSet.getInt(1);
