@@ -42,7 +42,7 @@ END $$
 
 DROP PROCEDURE IF EXISTS statistics_create_unique_index_v1$$
 
-CREATE PROCEDURE statistics_create_index_v1 (
+CREATE PROCEDURE statistics_create_unique_index_v1 (
     p_table_name varchar(64),
     p_index_name varchar(64),
     p_index_columns varchar(64)
@@ -76,7 +76,7 @@ END $$
 
 -- --------------------------------------------------
 
-DROP PROCEDURE IF EXISTS statistics_create_index_v1$$
+DROP PROCEDURE IF EXISTS statistics_create_non_unique_index_v1$$
 
 CREATE PROCEDURE statistics_create_non_unique_index_v1 (
     p_table_name varchar(64),

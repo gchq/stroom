@@ -11,8 +11,8 @@ SELECT
 	ssvs.CT STAT_COUNT,
 	ssvs.VAL STAT_VALUE_SUM,
     if(
-        ssv.VAL_TP = 2,
-        ssv.VAL / ssv.CT,
+        ssvs.VAL_TP = 2,
+        ssvs.VAL / ssvs.CT,
         null) STAT_VALUE_AVG,
 	if(
 		ssvs.VAL_TP = 1,
