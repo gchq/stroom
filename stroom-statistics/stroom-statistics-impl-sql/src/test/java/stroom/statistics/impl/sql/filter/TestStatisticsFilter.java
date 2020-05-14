@@ -124,7 +124,8 @@ class TestStatisticsFilter implements Statistics {
         assertThat(testEvents.get(0).getTagList().get(1).getTag()).isEqualTo("tag2name");
         assertThat(testEvents.get(0).getTagList().get(1).getValue()).isEqualTo("1tag2value");
         assertThat(testEvents.get(0).getCount()).isEqualTo(1L);
-        assertThat(testEvents.get(0).getValue()).isNull();
+        assertThatThrownBy(() -> testEvents.get(0)
+                .getValue()).isInstanceOf(RuntimeException.class);
 
         assertThat(testEvents.get(1).getTimeMs()).isEqualTo(DateUtil.parseNormalDateTimeString("2000-01-02T00:00:00.000Z"));
         assertThat(testEvents.get(1).getName()).isEqualTo(STAT_NAME);
@@ -134,7 +135,8 @@ class TestStatisticsFilter implements Statistics {
         assertThat(testEvents.get(1).getTagList().get(1).getTag()).isEqualTo("tag2name");
         assertThat(testEvents.get(1).getTagList().get(1).getValue()).isEqualTo("2tag2value");
         assertThat(testEvents.get(1).getCount()).isEqualTo(1L);
-        assertThat(testEvents.get(1).getValue()).isNull();
+        assertThatThrownBy(() -> testEvents.get(1)
+                .getValue()).isInstanceOf(RuntimeException.class);
         // assertThat(testEvents.get(1).getCount()).isNull();
         // assertThat(testEvents.get(1).getValue().longValue()).isEqualTo(1L);
 
@@ -198,7 +200,8 @@ class TestStatisticsFilter implements Statistics {
         assertThat(testEvents.get(0).getTagList().get(1).getTag()).isEqualTo("tag2name");
         assertThat(testEvents.get(0).getTagList().get(1).getValue()).isEqualTo("1tag2value");
         assertThat(testEvents.get(0).getValue()).isCloseTo(1.5, within(JUNIT_DOUBLE_TOLLERANCE));
-        assertThat(testEvents.get(0).getCount()).isNull();
+        assertThatThrownBy(() -> testEvents.get(0)
+                .getCount()).isInstanceOf(RuntimeException.class);
 
         assertThat(testEvents.get(1).getTimeMs()).isEqualTo(DateUtil.parseNormalDateTimeString("2000-01-02T00:00:00.000Z"));
         assertThat(testEvents.get(1).getName()).isEqualTo(STAT_NAME);
@@ -208,7 +211,8 @@ class TestStatisticsFilter implements Statistics {
         assertThat(testEvents.get(1).getTagList().get(1).getTag()).isEqualTo("tag2name");
         assertThat(testEvents.get(1).getTagList().get(1).getValue()).isEqualTo("2tag2value");
         assertThat(testEvents.get(1).getValue()).isCloseTo(3.9, within(JUNIT_DOUBLE_TOLLERANCE));
-        assertThat(testEvents.get(1).getCount()).isNull();
+        assertThatThrownBy(() -> testEvents.get(0)
+                .getCount()).isInstanceOf(RuntimeException.class);
 
     }
 
