@@ -13,7 +13,7 @@ SELECT
     if(
         ssv.VAL_TP = 2,
         ssv.VAL / ssv.CT,
-        null) STAT_VALUE_AVG
+        null) STAT_VALUE_AVG,
 	if(
 		ssvs.VAL_TP = 1,
 		"COUNT",
