@@ -19,7 +19,7 @@ SET @OLD_SQL_NOTES=@@SQL_NOTES, SQL_NOTES=0;
 
 -- NOTE This is pretty much a copy of V4_0_60 in stroom v6, but as schema_version has
 -- been renamed to statistics_schema_history, flyway will know nothing of the previous
--- schema. Thus we can start afresh with everything written to copy with the object already
+-- schema. Thus we can start afresh with everything written to cope with the object already
 -- existing. Renamed to V7_00_00_001 to avoid the confusion of a V4 script running in
 -- a v6 ==> v7 migration.
 
