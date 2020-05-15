@@ -31,8 +31,12 @@ public class Indexes {
     // INDEX definitions
     // -------------------------------------------------------------------------
 
+    public static final Index EXPLORER_NODE_EXPLORER_NODE_TYPE_UUID = Indexes0.EXPLORER_NODE_EXPLORER_NODE_TYPE_UUID;
     public static final Index EXPLORER_NODE_PRIMARY = Indexes0.EXPLORER_NODE_PRIMARY;
-    public static final Index EXPLORER_NODE_TYPE = Indexes0.EXPLORER_NODE_TYPE;
+    public static final Index EXPLORER_PATH_EXPLORER_PATH_ANCESTOR_DEPTH_ORDER_INDEX = Indexes0.EXPLORER_PATH_EXPLORER_PATH_ANCESTOR_DEPTH_ORDER_INDEX;
+    public static final Index EXPLORER_PATH_EXPLORER_PATH_DEPTH = Indexes0.EXPLORER_PATH_EXPLORER_PATH_DEPTH;
+    public static final Index EXPLORER_PATH_EXPLORER_PATH_DESCENDANT = Indexes0.EXPLORER_PATH_EXPLORER_PATH_DESCENDANT;
+    public static final Index EXPLORER_PATH_EXPLORER_PATH_DESCENDANT_DEPTH = Indexes0.EXPLORER_PATH_EXPLORER_PATH_DESCENDANT_DEPTH;
     public static final Index EXPLORER_PATH_PRIMARY = Indexes0.EXPLORER_PATH_PRIMARY;
 
     // -------------------------------------------------------------------------
@@ -40,8 +44,12 @@ public class Indexes {
     // -------------------------------------------------------------------------
 
     private static class Indexes0 {
+        public static Index EXPLORER_NODE_EXPLORER_NODE_TYPE_UUID = Internal.createIndex("explorer_node_type_uuid", ExplorerNode.EXPLORER_NODE, new OrderField[] { ExplorerNode.EXPLORER_NODE.TYPE, ExplorerNode.EXPLORER_NODE.UUID }, true);
         public static Index EXPLORER_NODE_PRIMARY = Internal.createIndex("PRIMARY", ExplorerNode.EXPLORER_NODE, new OrderField[] { ExplorerNode.EXPLORER_NODE.ID }, true);
-        public static Index EXPLORER_NODE_TYPE = Internal.createIndex("type", ExplorerNode.EXPLORER_NODE, new OrderField[] { ExplorerNode.EXPLORER_NODE.TYPE, ExplorerNode.EXPLORER_NODE.UUID }, true);
+        public static Index EXPLORER_PATH_EXPLORER_PATH_ANCESTOR_DEPTH_ORDER_INDEX = Internal.createIndex("explorer_path_ancestor_depth_order_index", ExplorerPath.EXPLORER_PATH, new OrderField[] { ExplorerPath.EXPLORER_PATH.ANCESTOR, ExplorerPath.EXPLORER_PATH.DEPTH, ExplorerPath.EXPLORER_PATH.ORDER_INDEX }, false);
+        public static Index EXPLORER_PATH_EXPLORER_PATH_DEPTH = Internal.createIndex("explorer_path_depth", ExplorerPath.EXPLORER_PATH, new OrderField[] { ExplorerPath.EXPLORER_PATH.DEPTH }, false);
+        public static Index EXPLORER_PATH_EXPLORER_PATH_DESCENDANT = Internal.createIndex("explorer_path_descendant", ExplorerPath.EXPLORER_PATH, new OrderField[] { ExplorerPath.EXPLORER_PATH.DESCENDANT }, false);
+        public static Index EXPLORER_PATH_EXPLORER_PATH_DESCENDANT_DEPTH = Internal.createIndex("explorer_path_descendant_depth", ExplorerPath.EXPLORER_PATH, new OrderField[] { ExplorerPath.EXPLORER_PATH.DESCENDANT, ExplorerPath.EXPLORER_PATH.DEPTH }, false);
         public static Index EXPLORER_PATH_PRIMARY = Internal.createIndex("PRIMARY", ExplorerPath.EXPLORER_PATH, new OrderField[] { ExplorerPath.EXPLORER_PATH.ANCESTOR, ExplorerPath.EXPLORER_PATH.DESCENDANT }, true);
     }
 }

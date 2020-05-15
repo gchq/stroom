@@ -15,7 +15,7 @@ import org.jooq.Identity;
 import org.jooq.Index;
 import org.jooq.Name;
 import org.jooq.Record;
-import org.jooq.Row10;
+import org.jooq.Row11;
 import org.jooq.Schema;
 import org.jooq.Table;
 import org.jooq.TableField;
@@ -42,7 +42,7 @@ import stroom.processor.impl.db.jooq.tables.records.ProcessorRecord;
 @SuppressWarnings({ "all", "unchecked", "rawtypes" })
 public class Processor extends TableImpl<ProcessorRecord> {
 
-    private static final long serialVersionUID = -1628435879;
+    private static final long serialVersionUID = -660799387;
 
     /**
      * The reference instance of <code>stroom.processor</code>
@@ -105,7 +105,12 @@ public class Processor extends TableImpl<ProcessorRecord> {
     /**
      * The column <code>stroom.processor.enabled</code>.
      */
-    public final TableField<ProcessorRecord, Boolean> ENABLED = createField(DSL.name("enabled"), org.jooq.impl.SQLDataType.BIT.nullable(false), this, "");
+    public final TableField<ProcessorRecord, Boolean> ENABLED = createField(DSL.name("enabled"), org.jooq.impl.SQLDataType.BIT.defaultValue(org.jooq.impl.DSL.inline("b'0'", org.jooq.impl.SQLDataType.BIT)), this, "");
+
+    /**
+     * The column <code>stroom.processor.deleted</code>.
+     */
+    public final TableField<ProcessorRecord, Boolean> DELETED = createField(DSL.name("deleted"), org.jooq.impl.SQLDataType.BIT.defaultValue(org.jooq.impl.DSL.inline("b'0'", org.jooq.impl.SQLDataType.BIT)), this, "");
 
     /**
      * Create a <code>stroom.processor</code> table reference
@@ -147,7 +152,7 @@ public class Processor extends TableImpl<ProcessorRecord> {
 
     @Override
     public List<Index> getIndexes() {
-        return Arrays.<Index>asList(Indexes.PROCESSOR_PIPELINE_UUID, Indexes.PROCESSOR_PRIMARY, Indexes.PROCESSOR_UUID);
+        return Arrays.<Index>asList(Indexes.PROCESSOR_PRIMARY, Indexes.PROCESSOR_PROCESSOR_PIPELINE_UUID, Indexes.PROCESSOR_PROCESSOR_UUID);
     }
 
     @Override
@@ -162,7 +167,7 @@ public class Processor extends TableImpl<ProcessorRecord> {
 
     @Override
     public List<UniqueKey<ProcessorRecord>> getKeys() {
-        return Arrays.<UniqueKey<ProcessorRecord>>asList(Keys.KEY_PROCESSOR_PRIMARY, Keys.KEY_PROCESSOR_UUID, Keys.KEY_PROCESSOR_PIPELINE_UUID);
+        return Arrays.<UniqueKey<ProcessorRecord>>asList(Keys.KEY_PROCESSOR_PRIMARY, Keys.KEY_PROCESSOR_PROCESSOR_UUID, Keys.KEY_PROCESSOR_PROCESSOR_PIPELINE_UUID);
     }
 
     @Override
@@ -197,11 +202,11 @@ public class Processor extends TableImpl<ProcessorRecord> {
     }
 
     // -------------------------------------------------------------------------
-    // Row10 type methods
+    // Row11 type methods
     // -------------------------------------------------------------------------
 
     @Override
-    public Row10<Integer, Integer, Long, String, Long, String, String, String, String, Boolean> fieldsRow() {
-        return (Row10) super.fieldsRow();
+    public Row11<Integer, Integer, Long, String, Long, String, String, String, String, Boolean, Boolean> fieldsRow() {
+        return (Row11) super.fieldsRow();
     }
 }

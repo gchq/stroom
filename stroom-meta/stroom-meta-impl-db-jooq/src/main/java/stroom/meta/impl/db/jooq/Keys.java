@@ -58,7 +58,7 @@ public class Keys {
     public static final UniqueKey<MetaFeedRecord> KEY_META_FEED_PRIMARY = UniqueKeys0.KEY_META_FEED_PRIMARY;
     public static final UniqueKey<MetaFeedRecord> KEY_META_FEED_NAME = UniqueKeys0.KEY_META_FEED_NAME;
     public static final UniqueKey<MetaKeyRecord> KEY_META_KEY_PRIMARY = UniqueKeys0.KEY_META_KEY_PRIMARY;
-    public static final UniqueKey<MetaKeyRecord> KEY_META_KEY_NAME = UniqueKeys0.KEY_META_KEY_NAME;
+    public static final UniqueKey<MetaKeyRecord> KEY_META_KEY_META_KEY_NAME = UniqueKeys0.KEY_META_KEY_META_KEY_NAME;
     public static final UniqueKey<MetaProcessorRecord> KEY_META_PROCESSOR_PRIMARY = UniqueKeys0.KEY_META_PROCESSOR_PRIMARY;
     public static final UniqueKey<MetaProcessorRecord> KEY_META_PROCESSOR_PROCESSOR_UUID = UniqueKeys0.KEY_META_PROCESSOR_PROCESSOR_UUID;
     public static final UniqueKey<MetaTypeRecord> KEY_META_TYPE_PRIMARY = UniqueKeys0.KEY_META_TYPE_PRIMARY;
@@ -91,7 +91,7 @@ public class Keys {
         public static final UniqueKey<MetaFeedRecord> KEY_META_FEED_PRIMARY = Internal.createUniqueKey(MetaFeed.META_FEED, "KEY_meta_feed_PRIMARY", MetaFeed.META_FEED.ID);
         public static final UniqueKey<MetaFeedRecord> KEY_META_FEED_NAME = Internal.createUniqueKey(MetaFeed.META_FEED, "KEY_meta_feed_name", MetaFeed.META_FEED.NAME);
         public static final UniqueKey<MetaKeyRecord> KEY_META_KEY_PRIMARY = Internal.createUniqueKey(MetaKey.META_KEY, "KEY_meta_key_PRIMARY", MetaKey.META_KEY.ID);
-        public static final UniqueKey<MetaKeyRecord> KEY_META_KEY_NAME = Internal.createUniqueKey(MetaKey.META_KEY, "KEY_meta_key_name", MetaKey.META_KEY.NAME);
+        public static final UniqueKey<MetaKeyRecord> KEY_META_KEY_META_KEY_NAME = Internal.createUniqueKey(MetaKey.META_KEY, "KEY_meta_key_meta_key_name", MetaKey.META_KEY.NAME);
         public static final UniqueKey<MetaProcessorRecord> KEY_META_PROCESSOR_PRIMARY = Internal.createUniqueKey(MetaProcessor.META_PROCESSOR, "KEY_meta_processor_PRIMARY", MetaProcessor.META_PROCESSOR.ID);
         public static final UniqueKey<MetaProcessorRecord> KEY_META_PROCESSOR_PROCESSOR_UUID = Internal.createUniqueKey(MetaProcessor.META_PROCESSOR, "KEY_meta_processor_processor_uuid", MetaProcessor.META_PROCESSOR.PROCESSOR_UUID);
         public static final UniqueKey<MetaTypeRecord> KEY_META_TYPE_PRIMARY = Internal.createUniqueKey(MetaType.META_TYPE, "KEY_meta_type_PRIMARY", MetaType.META_TYPE.ID);

@@ -41,7 +41,7 @@ import stroom.explorer.impl.db.jooq.tables.records.ExplorerPathRecord;
 @SuppressWarnings({ "all", "unchecked", "rawtypes" })
 public class ExplorerPath extends TableImpl<ExplorerPathRecord> {
 
-    private static final long serialVersionUID = -1739900231;
+    private static final long serialVersionUID = -257334687;
 
     /**
      * The reference instance of <code>stroom.explorer_path</code>
@@ -116,7 +116,7 @@ public class ExplorerPath extends TableImpl<ExplorerPathRecord> {
 
     @Override
     public List<Index> getIndexes() {
-        return Arrays.<Index>asList(Indexes.EXPLORER_PATH_PRIMARY);
+        return Arrays.<Index>asList(Indexes.EXPLORER_PATH_EXPLORER_PATH_ANCESTOR_DEPTH_ORDER_INDEX, Indexes.EXPLORER_PATH_EXPLORER_PATH_DEPTH, Indexes.EXPLORER_PATH_EXPLORER_PATH_DESCENDANT, Indexes.EXPLORER_PATH_EXPLORER_PATH_DESCENDANT_DEPTH, Indexes.EXPLORER_PATH_PRIMARY);
     }
 
     @Override

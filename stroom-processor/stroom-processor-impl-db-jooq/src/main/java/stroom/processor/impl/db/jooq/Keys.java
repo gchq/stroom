@@ -55,15 +55,15 @@ public class Keys {
     // -------------------------------------------------------------------------
 
     public static final UniqueKey<ProcessorRecord> KEY_PROCESSOR_PRIMARY = UniqueKeys0.KEY_PROCESSOR_PRIMARY;
-    public static final UniqueKey<ProcessorRecord> KEY_PROCESSOR_UUID = UniqueKeys0.KEY_PROCESSOR_UUID;
-    public static final UniqueKey<ProcessorRecord> KEY_PROCESSOR_PIPELINE_UUID = UniqueKeys0.KEY_PROCESSOR_PIPELINE_UUID;
+    public static final UniqueKey<ProcessorRecord> KEY_PROCESSOR_PROCESSOR_UUID = UniqueKeys0.KEY_PROCESSOR_PROCESSOR_UUID;
+    public static final UniqueKey<ProcessorRecord> KEY_PROCESSOR_PROCESSOR_PIPELINE_UUID = UniqueKeys0.KEY_PROCESSOR_PROCESSOR_PIPELINE_UUID;
     public static final UniqueKey<ProcessorFeedRecord> KEY_PROCESSOR_FEED_PRIMARY = UniqueKeys0.KEY_PROCESSOR_FEED_PRIMARY;
-    public static final UniqueKey<ProcessorFeedRecord> KEY_PROCESSOR_FEED_NAME = UniqueKeys0.KEY_PROCESSOR_FEED_NAME;
+    public static final UniqueKey<ProcessorFeedRecord> KEY_PROCESSOR_FEED_PROCESSOR_FEED_NAME = UniqueKeys0.KEY_PROCESSOR_FEED_PROCESSOR_FEED_NAME;
     public static final UniqueKey<ProcessorFilterRecord> KEY_PROCESSOR_FILTER_PRIMARY = UniqueKeys0.KEY_PROCESSOR_FILTER_PRIMARY;
     public static final UniqueKey<ProcessorFilterRecord> KEY_PROCESSOR_FILTER_UUID = UniqueKeys0.KEY_PROCESSOR_FILTER_UUID;
     public static final UniqueKey<ProcessorFilterTrackerRecord> KEY_PROCESSOR_FILTER_TRACKER_PRIMARY = UniqueKeys0.KEY_PROCESSOR_FILTER_TRACKER_PRIMARY;
     public static final UniqueKey<ProcessorNodeRecord> KEY_PROCESSOR_NODE_PRIMARY = UniqueKeys0.KEY_PROCESSOR_NODE_PRIMARY;
-    public static final UniqueKey<ProcessorNodeRecord> KEY_PROCESSOR_NODE_NAME = UniqueKeys0.KEY_PROCESSOR_NODE_NAME;
+    public static final UniqueKey<ProcessorNodeRecord> KEY_PROCESSOR_NODE_PROCESSOR_NODE_NAME = UniqueKeys0.KEY_PROCESSOR_NODE_PROCESSOR_NODE_NAME;
     public static final UniqueKey<ProcessorTaskRecord> KEY_PROCESSOR_TASK_PRIMARY = UniqueKeys0.KEY_PROCESSOR_TASK_PRIMARY;
 
     // -------------------------------------------------------------------------
@@ -91,15 +91,15 @@ public class Keys {
 
     private static class UniqueKeys0 {
         public static final UniqueKey<ProcessorRecord> KEY_PROCESSOR_PRIMARY = Internal.createUniqueKey(Processor.PROCESSOR, "KEY_processor_PRIMARY", Processor.PROCESSOR.ID);
-        public static final UniqueKey<ProcessorRecord> KEY_PROCESSOR_UUID = Internal.createUniqueKey(Processor.PROCESSOR, "KEY_processor_uuid", Processor.PROCESSOR.UUID);
-        public static final UniqueKey<ProcessorRecord> KEY_PROCESSOR_PIPELINE_UUID = Internal.createUniqueKey(Processor.PROCESSOR, "KEY_processor_pipeline_uuid", Processor.PROCESSOR.PIPELINE_UUID);
+        public static final UniqueKey<ProcessorRecord> KEY_PROCESSOR_PROCESSOR_UUID = Internal.createUniqueKey(Processor.PROCESSOR, "KEY_processor_processor_uuid", Processor.PROCESSOR.UUID);
+        public static final UniqueKey<ProcessorRecord> KEY_PROCESSOR_PROCESSOR_PIPELINE_UUID = Internal.createUniqueKey(Processor.PROCESSOR, "KEY_processor_processor_pipeline_uuid", Processor.PROCESSOR.PIPELINE_UUID);
         public static final UniqueKey<ProcessorFeedRecord> KEY_PROCESSOR_FEED_PRIMARY = Internal.createUniqueKey(ProcessorFeed.PROCESSOR_FEED, "KEY_processor_feed_PRIMARY", ProcessorFeed.PROCESSOR_FEED.ID);
-        public static final UniqueKey<ProcessorFeedRecord> KEY_PROCESSOR_FEED_NAME = Internal.createUniqueKey(ProcessorFeed.PROCESSOR_FEED, "KEY_processor_feed_name", ProcessorFeed.PROCESSOR_FEED.NAME);
+        public static final UniqueKey<ProcessorFeedRecord> KEY_PROCESSOR_FEED_PROCESSOR_FEED_NAME = Internal.createUniqueKey(ProcessorFeed.PROCESSOR_FEED, "KEY_processor_feed_processor_feed_name", ProcessorFeed.PROCESSOR_FEED.NAME);
         public static final UniqueKey<ProcessorFilterRecord> KEY_PROCESSOR_FILTER_PRIMARY = Internal.createUniqueKey(ProcessorFilter.PROCESSOR_FILTER, "KEY_processor_filter_PRIMARY", ProcessorFilter.PROCESSOR_FILTER.ID);
         public static final UniqueKey<ProcessorFilterRecord> KEY_PROCESSOR_FILTER_UUID = Internal.createUniqueKey(ProcessorFilter.PROCESSOR_FILTER, "KEY_processor_filter_uuid", ProcessorFilter.PROCESSOR_FILTER.UUID);
         public static final UniqueKey<ProcessorFilterTrackerRecord> KEY_PROCESSOR_FILTER_TRACKER_PRIMARY = Internal.createUniqueKey(ProcessorFilterTracker.PROCESSOR_FILTER_TRACKER, "KEY_processor_filter_tracker_PRIMARY", ProcessorFilterTracker.PROCESSOR_FILTER_TRACKER.ID);
         public static final UniqueKey<ProcessorNodeRecord> KEY_PROCESSOR_NODE_PRIMARY = Internal.createUniqueKey(ProcessorNode.PROCESSOR_NODE, "KEY_processor_node_PRIMARY", ProcessorNode.PROCESSOR_NODE.ID);
-        public static final UniqueKey<ProcessorNodeRecord> KEY_PROCESSOR_NODE_NAME = Internal.createUniqueKey(ProcessorNode.PROCESSOR_NODE, "KEY_processor_node_name", ProcessorNode.PROCESSOR_NODE.NAME);
+        public static final UniqueKey<ProcessorNodeRecord> KEY_PROCESSOR_NODE_PROCESSOR_NODE_NAME = Internal.createUniqueKey(ProcessorNode.PROCESSOR_NODE, "KEY_processor_node_processor_node_name", ProcessorNode.PROCESSOR_NODE.NAME);
         public static final UniqueKey<ProcessorTaskRecord> KEY_PROCESSOR_TASK_PRIMARY = Internal.createUniqueKey(ProcessorTask.PROCESSOR_TASK, "KEY_processor_task_PRIMARY", ProcessorTask.PROCESSOR_TASK.ID);
     }
 
