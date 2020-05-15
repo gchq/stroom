@@ -34,10 +34,9 @@ CALL core_add_column_v1(
 UPDATE doc
 SET ext = "meta";
 
-CALL core_create_index_v1(
+CALL core_create_unique_index_v1(
     'doc',
     'doc_type_uuid_ext_idx',
-    true,
     'type, uuid, ext');
 
 -- Reset to the original value
