@@ -6,6 +6,8 @@ and this project adheres to [Semantic Versioning](http://semver.org/).
 
 ## [Unreleased]
 
+* Issue **#1574** : Make feed suggestions return all feeds, not just ones with meta.
+
 * Fix index creation stored procedure.
 
 * Issue **#1508** : Tidy up property descriptions, change connection pool props to use Stroom Duration type.
