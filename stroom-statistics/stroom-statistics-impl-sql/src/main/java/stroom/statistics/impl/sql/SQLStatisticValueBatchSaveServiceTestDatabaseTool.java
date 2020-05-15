@@ -16,11 +16,11 @@
 
 package stroom.statistics.impl.sql;
 
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
-import stroom.statistics.impl.sql.shared.StatisticType;
 import stroom.util.DatabaseTool;
 import stroom.util.logging.LogExecutionTime;
+
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import java.sql.Connection;
 import java.sql.SQLException;
@@ -50,13 +50,17 @@ public class SQLStatisticValueBatchSaveServiceTestDatabaseTool extends DatabaseT
             };
 
             for (int l = 0; l < 100; l++) {
-                final List<SQLStatisticValueSourceDO> batch = new ArrayList<>();
+                final List<SQLStatValSourceDO> batch = new ArrayList<>();
                 for (int i = 0; i < 1000; i++) {
-                    final SQLStatisticValueSourceDO statisticValueSource = new SQLStatisticValueSourceDO();
-                    statisticValueSource.setCreateMs(System.currentTimeMillis());
-                    statisticValueSource.setName("BATCHTEST" + i);
-                    statisticValueSource.setType(StatisticType.VALUE);
-                    statisticValueSource.setValue(System.currentTimeMillis());
+                    long value = System.currentTimeMillis();
+                    long count = 100;
+
+                    final SQLStatValSourceDO statisticValueSource = SQLStatValSourceDO.createValueStat(
+                            System.currentTimeMillis(),
+                            "BATCHTEST" + i,
+                            value,
+                            count);
+
                     batch.add(statisticValueSource);
                 }
 

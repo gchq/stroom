@@ -101,7 +101,11 @@ import java.util.regex.Pattern;
         }
     }
 
-    private InternalStatisticEvent buildStatisticEvent(InternalStatisticKey key, long timeMs, Map<String, String> tags, String typeTagValue, double value) {
+    private InternalStatisticEvent buildStatisticEvent(final InternalStatisticKey key,
+                                                       final long timeMs,
+                                                       final Map<String, String> tags,
+                                                       final String typeTagValue,
+                                                       final double value) {
         // These stat events are being generated every minute so use a precision
         // of 60s
         final Map<String, String> newTags = new HashMap<>(tags);

@@ -57,7 +57,7 @@ public class SQLStatisticsEventValidator {
         }
     }
 
-    public static boolean isKeyToLong(final String statisticKey) {
+    public static boolean isKeyTooLong(final String statisticKey) {
         return statisticKey.length() > SQLStatisticConstants.STAT_VAL_SRC_NAME_COLUMN_LENGTH;
     }
 }
