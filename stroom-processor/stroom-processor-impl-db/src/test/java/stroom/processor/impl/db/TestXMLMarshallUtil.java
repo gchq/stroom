@@ -16,17 +16,20 @@
 
 package stroom.processor.impl.db;
 
-import org.junit.jupiter.api.Test;
 import stroom.meta.shared.MetaFields;
 import stroom.processor.shared.ProcessorFilter;
 import stroom.processor.shared.QueryData;
 import stroom.query.api.v2.ExpressionOperator;
 import stroom.query.api.v2.ExpressionTerm;
 
+import org.junit.jupiter.api.Test;
+
+import javax.xml.bind.JAXBException;
+
 import static org.assertj.core.api.Assertions.assertThat;
 
 class TestXMLMarshallUtil {
-    private static final ProcessorFilterMarshaller MARSHALLER = new ProcessorFilterMarshaller();
+    private static ProcessorFilterMarshaller marshaller;
 
     @Test
     void testSimple() {
@@ -51,11 +54,11 @@ class TestXMLMarshallUtil {
         // Test Writing
         ProcessorFilter processorFilter = new ProcessorFilter();
         processorFilter.setQueryData(queryData1);
-        processorFilter = MARSHALLER.marshal(processorFilter);
+        processorFilter = getMarshaller().marshal(processorFilter);
         final String xml1 = processorFilter.getData();
 
-        processorFilter = MARSHALLER.unmarshal(processorFilter);
-        processorFilter = MARSHALLER.marshal(processorFilter);
+        processorFilter = getMarshaller().unmarshal(processorFilter);
+        processorFilter = getMarshaller().marshal(processorFilter);
         final String xml2 = processorFilter.getData();
 
         assertThat(xml1.contains("999")).isTrue();
@@ -67,9 +70,20 @@ class TestXMLMarshallUtil {
         ProcessorFilter processorFilter = new ProcessorFilter();
         processorFilter.setData(
                 "<?xml version=\"1.0\" encoding=\"UTF-8\" standalone=\"yes\"?><QueryData></QueryData>");
-        processorFilter = MARSHALLER.unmarshal(processorFilter);
+        processorFilter = getMarshaller().unmarshal(processorFilter);
 
         final QueryData queryData = processorFilter.getQueryData();
         assertThat(queryData).isNotNull();
+    }
+
+    private ProcessorFilterMarshaller getMarshaller() {
+        if (marshaller == null) {
+            try {
+                marshaller = new ProcessorFilterMarshaller();
+            } catch (final JAXBException e) {
+                throw new RuntimeException(e.getMessage(), e);
+            }
+        }
+        return marshaller;
     }
 }

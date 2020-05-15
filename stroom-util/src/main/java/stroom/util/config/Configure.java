@@ -48,6 +48,7 @@ public class Configure extends AbstractCommandLineTool {
 
     private List<Path> processFile = new ArrayList<>();
     private ParameterFile parameterFile;
+    private final JAXBContext jaxbContext;
 
     public static void printUsage() {
         System.out.println(
@@ -56,6 +57,14 @@ public class Configure extends AbstractCommandLineTool {
 
     public static void main(String[] args) {
         new Configure().doMain(args);
+    }
+
+    public Configure() {
+        try {
+            jaxbContext = JAXBContext.newInstance(ParameterFile.class, Parameter.class);
+        } catch (final JAXBException e) {
+            throw new RuntimeException(e.getMessage(), e);
+        }
     }
 
     public void setParameterFile(String parameterFile) {
@@ -76,7 +85,6 @@ public class Configure extends AbstractCommandLineTool {
 
     public void marshal(ParameterFile data, OutputStream outputStream) {
         try {
-            JAXBContext jaxbContext = JAXBContext.newInstance(ParameterFile.class, Parameter.class);
             Marshaller marshaller = jaxbContext.createMarshaller();
             marshaller.setProperty(Marshaller.JAXB_FORMATTED_OUTPUT, true);
             marshaller.marshal(data, outputStream);
@@ -87,7 +95,6 @@ public class Configure extends AbstractCommandLineTool {
 
     public ParameterFile unmarshal(InputStream inputStream) {
         try {
-            JAXBContext jaxbContext = JAXBContext.newInstance(ParameterFile.class, Parameter.class);
             Unmarshaller unmarshaller = jaxbContext.createUnmarshaller();
             ParameterFile parameterFile = (ParameterFile) unmarshaller.unmarshal(inputStream);
 

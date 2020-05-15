@@ -29,6 +29,7 @@ CREATE TABLE IF NOT EXISTS processor (
     task_type             varchar(255) DEFAULT NULL,
     pipeline_uuid         varchar(255) NOT NULL,
     enabled               bit(1) NOT NULL,
+    deleted               bit(1) DEFAULT 0,
     PRIMARY KEY           (id),
     UNIQUE KEY            uuid (uuid),
     UNIQUE KEY            pipeline_uuid (pipeline_uuid)

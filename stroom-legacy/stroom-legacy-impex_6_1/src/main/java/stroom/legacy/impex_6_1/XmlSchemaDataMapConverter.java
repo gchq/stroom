@@ -7,10 +7,12 @@ import stroom.util.shared.Severity;
 import stroom.xmlschema.shared.XmlSchemaDoc;
 
 import javax.inject.Inject;
+import javax.inject.Singleton;
 import java.io.IOException;
 import java.util.Map;
 import java.util.UUID;
 
+@Singleton
 class XmlSchemaDataMapConverter implements DataMapConverter {
     private final XmlSchemaSerialiser serialiser;
 

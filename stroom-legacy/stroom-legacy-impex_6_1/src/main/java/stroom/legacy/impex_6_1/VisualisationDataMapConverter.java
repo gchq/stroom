@@ -8,10 +8,12 @@ import stroom.util.shared.Severity;
 import stroom.visualisation.shared.VisualisationDoc;
 
 import javax.inject.Inject;
+import javax.inject.Singleton;
 import java.io.IOException;
 import java.util.Map;
 import java.util.UUID;
 
+@Singleton
 class VisualisationDataMapConverter implements DataMapConverter {
     private final VisualisationSerialiser serialiser;
 

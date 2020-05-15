@@ -28,17 +28,17 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import javax.xml.bind.JAXBContext;
-import javax.xml.bind.JAXBException;
 import java.sql.PreparedStatement;
 import java.sql.ResultSet;
 import java.sql.SQLException;
 
 public class V07_00_00_2002__query extends BaseJavaMigration {
     private static final Logger LOGGER = LoggerFactory.getLogger(V07_00_00_2002__query.class);
-    private JAXBContext jaxbContext;
 
     @Override
     public void migrate(final Context context) throws Exception {
+        final JAXBContext jaxbContext = JAXBContext.newInstance(Query.class);
+
         try (final PreparedStatement preparedStatement = context.getConnection().prepareStatement(
                 "SELECT " +
                         "  id, " +
@@ -51,7 +51,7 @@ public class V07_00_00_2002__query extends BaseJavaMigration {
                         final String data = resultSet.getString(2);
 
                         if (data != null) {
-                            final stroom.legacy.model_6_1.Query query = XMLMarshallerUtil.unmarshal(getContext(), stroom.legacy.model_6_1.Query.class, data);
+                            final stroom.legacy.model_6_1.Query query = XMLMarshallerUtil.unmarshal(jaxbContext, stroom.legacy.model_6_1.Query.class, data);
                             final stroom.query.api.v2.Query mapped = MappingUtil.map(query);
 
                             final StoredQuery storedQuery = new StoredQuery();
@@ -77,18 +77,5 @@ public class V07_00_00_2002__query extends BaseJavaMigration {
                 }
             }
         }
-    }
-
-    private JAXBContext getContext() {
-        if (jaxbContext == null) {
-            try {
-                jaxbContext = JAXBContext.newInstance(Query.class);
-            } catch (final JAXBException e) {
-                LOGGER.error(e.getMessage(), e);
-                throw new RuntimeException(e.getMessage());
-            }
-        }
-
-        return jaxbContext;
     }
 }

@@ -23,6 +23,7 @@ public class PipelineSerialiser implements DocumentSerialiser2<PipelineDoc> {
     private static final String XML = "xml";
 
     private final Serialiser2<PipelineDoc> delegate;
+    private static JAXBContext jaxbContext;
 
     @Inject
     public PipelineSerialiser(final Serialiser2Factory serialiser2Factory) {
@@ -78,9 +79,8 @@ public class PipelineSerialiser implements DocumentSerialiser2<PipelineDoc> {
     public PipelineData getPipelineDataFromXml(final String xml) {
         if (xml != null) {
             try {
-                final JAXBContext jaxbContext = JAXBContext.newInstance(PipelineData.class);
-                return XMLMarshallerUtil.unmarshal(jaxbContext, PipelineData.class, xml);
-            } catch (final JAXBException | RuntimeException e) {
+                return XMLMarshallerUtil.unmarshal(getJAXBContext(), PipelineData.class, xml);
+            } catch (final RuntimeException e) {
                 LOGGER.error("Unable to unmarshal pipeline config", e);
             }
         }
@@ -91,13 +91,23 @@ public class PipelineSerialiser implements DocumentSerialiser2<PipelineDoc> {
     public String getXmlFromPipelineData(final PipelineData pipelineData) {
         if (pipelineData != null) {
             try {
-                final JAXBContext jaxbContext = JAXBContext.newInstance(PipelineData.class);
-                return XMLMarshallerUtil.marshal(jaxbContext, XMLMarshallerUtil.removeEmptyCollections(pipelineData));
-            } catch (final JAXBException | RuntimeException e) {
+                return XMLMarshallerUtil.marshal(getJAXBContext(), XMLMarshallerUtil.removeEmptyCollections(pipelineData));
+            } catch (final RuntimeException e) {
                 LOGGER.error("Unable to marshal pipeline config", e);
             }
         }
 
         return null;
+    }
+
+    public static JAXBContext getJAXBContext() {
+        if (jaxbContext == null) {
+            try {
+                jaxbContext = JAXBContext.newInstance(PipelineData.class);
+            } catch (final JAXBException e) {
+                throw new RuntimeException(e.getMessage(), e);
+            }
+        }
+        return jaxbContext;
     }
 }

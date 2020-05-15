@@ -9,13 +9,13 @@ import stroom.legacy.model_6_1.DashboardMarshaller;
 import stroom.util.shared.Severity;
 
 import javax.inject.Inject;
+import javax.inject.Singleton;
 import java.io.IOException;
 import java.util.Map;
 import java.util.UUID;
 
+@Singleton
 class DashboardDataMapConverter implements DataMapConverter {
-//    private static final Logger LOGGER = LoggerFactory.getLogger(DashboardDataMapConverter.class);
-
     private final DashboardSerialiser serialiser;
 
     @Inject
@@ -59,17 +59,4 @@ class DashboardDataMapConverter implements DataMapConverter {
 
         return result;
     }
-
-//    public stroom.legacy.model_6_1.DashboardConfig getDashboardConfigFromLegacyXML(final String xml) {
-//        if (xml != null) {
-//            try {
-//                final JAXBContext jaxbContext = JAXBContext.newInstance(stroom.legacy.model_6_1.DashboardConfig.class);
-//                return XMLMarshallerUtil.unmarshal(jaxbContext, stroom.legacy.model_6_1.DashboardConfig.class, xml);
-//            } catch (final JAXBException | RuntimeException e) {
-//                LOGGER.error("Unable to unmarshal dashboard config", e);
-//            }
-//        }
-//
-//        return null;
-//    }
 }

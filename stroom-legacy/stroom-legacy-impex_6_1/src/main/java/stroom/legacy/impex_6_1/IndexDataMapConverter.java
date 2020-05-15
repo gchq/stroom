@@ -7,9 +7,11 @@ import stroom.index.shared.IndexDoc;
 import stroom.util.shared.Severity;
 
 import javax.inject.Inject;
+import javax.inject.Singleton;
 import java.io.IOException;
 import java.util.Map;
 
+@Singleton
 class IndexDataMapConverter implements DataMapConverter {
     private final IndexSerialiser serialiser;
 

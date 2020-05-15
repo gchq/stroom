@@ -11,10 +11,12 @@ import stroom.statistics.impl.sql.shared.StatisticType;
 import stroom.util.shared.Severity;
 
 import javax.inject.Inject;
+import javax.inject.Singleton;
 import java.io.IOException;
 import java.util.Map;
 import java.util.UUID;
 
+@Singleton
 class StatisticDataMapConverter implements DataMapConverter {
 //    private static final Logger LOGGER = LoggerFactory.getLogger(StatisticDataMapConverter.class);
 
@@ -57,11 +59,6 @@ class StatisticDataMapConverter implements DataMapConverter {
 
                 document.setConfig(MappingUtil.map(oldStatisticStore.getStatisticDataSourceDataObject()));
 
-//                final StatisticsDataSourceData statisticsDataSourceData = getDataFromLegacyXML(oldStatisticStore.getData());
-//                if (statisticsDataSourceData != null) {
-//                    document.setConfig(statisticsDataSourceData);
-//                }
-
                 result = serialiser.write(document);
 
             } catch (final IOException | RuntimeException e) {
@@ -72,17 +69,4 @@ class StatisticDataMapConverter implements DataMapConverter {
 
         return result;
     }
-
-//    public stroom.legacy.model_6_1.StatisticsDataSourceData getDataFromLegacyXML(final String xml) {
-//        if (xml != null) {
-//            try {
-//                final JAXBContext jaxbContext = JAXBContext.newInstance(stroom.legacy.model_6_1.StatisticsDataSourceData.class);
-//                return XMLMarshallerUtil.unmarshal(jaxbContext, stroom.legacy.model_6_1.StatisticsDataSourceData.class, xml);
-//            } catch (final JAXBException | RuntimeException e) {
-//                LOGGER.error("Unable to unmarshal dashboard config", e);
-//            }
-//        }
-//
-//        return null;
-//    }
 }

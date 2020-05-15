@@ -39,6 +39,11 @@ import java.util.Set;
 public class LegacyXmlSerialiser {
     private static final Logger LOGGER = LoggerFactory.getLogger(LegacyXmlSerialiser.class);
 
+    private static final JAXBContext PIPELINEDATA_JAXB_CONTEXT = createJAXBContext(stroom.legacy.model_6_1.PipelineData.class);
+    private static final JAXBContext DOCREF_JAXB_CONTEXT = createJAXBContext(stroom.legacy.model_6_1.DocRef.class);
+    private static final JAXBContext INDEXFIELDS_JAXB_CONTEXT = createJAXBContext(stroom.legacy.model_6_1.IndexFields.class);
+    private static final JAXBContext DOCREFS_JAXB_CONTEXT = createJAXBContext(stroom.legacy.model_6_1.DocRefs.class);
+
     public static <E extends DocumentEntity> void performImport(final E entity, final Map<String, byte[]> dataMap) {
         try {
             final List<Property> propertyList = BeanPropertyUtil.getPropertyList(entity.getClass(), false);
@@ -102,8 +107,8 @@ public class LegacyXmlSerialiser {
     }
 
     private static void updateProperty(final Object object,
-                                final Property property,
-                                final List<Object> values) {
+                                       final Property property,
+                                       final List<Object> values) {
         try {
             if (AuditedEntity.class.isAssignableFrom(property.getType())) {
                 AuditedEntity entity = (AuditedEntity) object;
@@ -159,7 +164,7 @@ public class LegacyXmlSerialiser {
     public static stroom.legacy.model_6_1.PipelineData getPipelineDataFromLegacyXml(final String xml) {
         if (xml != null) {
             try {
-                return XMLMarshallerUtil.unmarshal(createContext(stroom.legacy.model_6_1.PipelineData.class), stroom.legacy.model_6_1.PipelineData.class, xml);
+                return XMLMarshallerUtil.unmarshal(PIPELINEDATA_JAXB_CONTEXT, stroom.legacy.model_6_1.PipelineData.class, xml);
             } catch (final RuntimeException e) {
                 LOGGER.error("Unable to unmarshal pipeline config", e);
             }
@@ -171,7 +176,7 @@ public class LegacyXmlSerialiser {
     public static stroom.legacy.model_6_1.DocRef getDocRefFromLegacyXml(final String xml) {
         if (xml != null) {
             try {
-                return XMLMarshallerUtil.unmarshal(createContext(stroom.legacy.model_6_1.DocRef.class), stroom.legacy.model_6_1.DocRef.class, xml);
+                return XMLMarshallerUtil.unmarshal(DOCREF_JAXB_CONTEXT, stroom.legacy.model_6_1.DocRef.class, xml);
             } catch (final RuntimeException e) {
                 LOGGER.error("Unable to unmarshal dashboard config", e);
             }
@@ -183,7 +188,7 @@ public class LegacyXmlSerialiser {
     public static stroom.legacy.model_6_1.IndexFields getIndexFieldsFromLegacyXml(final String xml) {
         if (xml != null) {
             try {
-                return stroom.util.xml.XMLMarshallerUtil.unmarshal(createContext(stroom.legacy.model_6_1.IndexFields.class), stroom.legacy.model_6_1.IndexFields.class, xml);
+                return stroom.util.xml.XMLMarshallerUtil.unmarshal(INDEXFIELDS_JAXB_CONTEXT, stroom.legacy.model_6_1.IndexFields.class, xml);
             } catch (final RuntimeException e) {
                 LOGGER.error("Unable to unmarshal index fields", e);
             }
@@ -195,7 +200,7 @@ public class LegacyXmlSerialiser {
     public static stroom.legacy.model_6_1.DocRefs getDocRefsFromLegacyXml(final String xml) {
         if (xml != null) {
             try {
-                return stroom.util.xml.XMLMarshallerUtil.unmarshal(createContext(stroom.legacy.model_6_1.DocRefs.class), stroom.legacy.model_6_1.DocRefs.class, xml);
+                return stroom.util.xml.XMLMarshallerUtil.unmarshal(DOCREFS_JAXB_CONTEXT, stroom.legacy.model_6_1.DocRefs.class, xml);
             } catch (final RuntimeException e) {
                 LOGGER.error("Unable to unmarshal docrefs", e);
             }
@@ -204,11 +209,10 @@ public class LegacyXmlSerialiser {
         return null;
     }
 
-    private static JAXBContext createContext(final Class<?> clazz) {
+    private static JAXBContext createJAXBContext(final Class<?> clazz) {
         try {
             return JAXBContext.newInstance(clazz);
         } catch (final JAXBException e) {
-            LOGGER.error(e.getMessage(), e);
             throw new RuntimeException(e.getMessage(), e);
         }
     }

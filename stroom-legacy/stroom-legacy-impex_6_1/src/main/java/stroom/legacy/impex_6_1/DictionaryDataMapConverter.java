@@ -11,10 +11,12 @@ import stroom.util.shared.Severity;
 import stroom.util.string.EncodingUtil;
 
 import javax.inject.Inject;
+import javax.inject.Singleton;
 import java.io.IOException;
 import java.util.Map;
 import java.util.UUID;
 
+@Singleton
 class DictionaryDataMapConverter implements DataMapConverter {
     private final DocumentSerialiser2<DictionaryDoc> serialiser;
     private final DocumentSerialiser2<OldDictionaryDoc> oldSerialiser;

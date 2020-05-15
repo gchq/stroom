@@ -19,8 +19,16 @@ package stroom.processor.impl.db;
 import stroom.processor.shared.ProcessorFilter;
 import stroom.processor.shared.QueryData;
 
+import org.slf4j.MarkerFactory;
+
+import javax.inject.Singleton;
+import javax.xml.bind.JAXBContext;
+import javax.xml.bind.JAXBException;
+
+@Singleton
 class ProcessorFilterMarshaller extends AbstractEntityMarshaller<ProcessorFilter, QueryData> {
-    ProcessorFilterMarshaller() {
+    ProcessorFilterMarshaller() throws JAXBException {
+        super(JAXBContext.newInstance(QueryData.class));
     }
 
     @Override

@@ -33,6 +33,7 @@ CREATE TABLE IF NOT EXISTS processor_filter (
     data                              longtext NOT NULL,
     priority                          int(11) NOT NULL,
     enabled                           bit(1) NOT NULL,
+    deleted                           bit(1) DEFAULT 0,
     PRIMARY KEY                       (id),
     UNIQUE KEY                        uuid (uuid),
     KEY processor_filter_fk_processor_id (fk_processor_id),

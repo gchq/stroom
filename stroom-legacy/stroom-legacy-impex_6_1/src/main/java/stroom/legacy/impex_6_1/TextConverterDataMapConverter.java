@@ -8,10 +8,12 @@ import stroom.pipeline.textconverter.TextConverterSerialiser;
 import stroom.util.shared.Severity;
 
 import javax.inject.Inject;
+import javax.inject.Singleton;
 import java.io.IOException;
 import java.util.Map;
 import java.util.UUID;
 
+@Singleton
 class TextConverterDataMapConverter implements DataMapConverter {
     private final TextConverterSerialiser serialiser;
 

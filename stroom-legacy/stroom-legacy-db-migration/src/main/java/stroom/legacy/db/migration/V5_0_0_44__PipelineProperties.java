@@ -26,7 +26,6 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import javax.xml.bind.JAXBContext;
-import javax.xml.bind.JAXBException;
 import java.sql.Connection;
 import java.sql.PreparedStatement;
 import java.sql.ResultSet;
@@ -35,7 +34,6 @@ import java.util.List;
 
 public class V5_0_0_44__PipelineProperties extends BaseJavaMigration {
     private static final Logger LOGGER = LoggerFactory.getLogger(V5_0_0_44__PipelineProperties.class);
-    private JAXBContext jaxbContext;
 
     @Override
     public void migrate(final Context flywayContext) throws Exception {
@@ -43,6 +41,8 @@ public class V5_0_0_44__PipelineProperties extends BaseJavaMigration {
     }
 
     private void migrate(final Connection connection) throws Exception {
+        final JAXBContext jaxbContext = JAXBContext.newInstance(PipelineData.class);
+
         try (final Statement statement = connection.createStatement()) {
             try (final ResultSet resultSet = statement.executeQuery("SELECT ID, NAME, DAT FROM PIPE;")) {
                 while (resultSet.next()) {
@@ -56,11 +56,11 @@ public class V5_0_0_44__PipelineProperties extends BaseJavaMigration {
                         LOGGER.info("Incomplete configuration found");
 
                     } else {
-                        final PipelineData object = XMLMarshallerUtil.unmarshal(getContext(), PipelineData.class, data);
+                        final PipelineData object = XMLMarshallerUtil.unmarshal(jaxbContext, PipelineData.class, data);
                         if (object != null) {
                             modifyProperties(object.getAddedProperties());
                             modifyProperties(object.getRemovedProperties());
-                            final String newData = XMLMarshallerUtil.marshal(getContext(), XMLMarshallerUtil.removeEmptyCollections(object));
+                            final String newData = XMLMarshallerUtil.marshal(jaxbContext, XMLMarshallerUtil.removeEmptyCollections(object));
 
                             if (!newData.equals(data)) {
                                 LOGGER.info("Modifying pipeline");
@@ -86,18 +86,5 @@ public class V5_0_0_44__PipelineProperties extends BaseJavaMigration {
         if (properties != null && properties.size() > 0) {
             properties.removeIf(property -> "usePool".equalsIgnoreCase(property.getName()));
         }
-    }
-
-    private JAXBContext getContext() {
-        if (jaxbContext == null) {
-            try {
-                jaxbContext = JAXBContext.newInstance(PipelineData.class);
-            } catch (final JAXBException e) {
-                LOGGER.error(e.getMessage(), e);
-                throw new RuntimeException(e.getMessage());
-            }
-        }
-
-        return jaxbContext;
     }
 }

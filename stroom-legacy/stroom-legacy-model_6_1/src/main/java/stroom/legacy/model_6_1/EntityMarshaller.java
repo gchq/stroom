@@ -21,7 +21,6 @@ import org.slf4j.LoggerFactory;
 import org.slf4j.MarkerFactory;
 
 import javax.xml.bind.JAXBContext;
-import javax.xml.bind.JAXBException;
 
 public abstract class EntityMarshaller<E extends BaseEntity, O> implements Marshaller<E, O> {
     private static final Logger LOGGER = LoggerFactory.getLogger(EntityMarshaller.class);
@@ -30,8 +29,8 @@ public abstract class EntityMarshaller<E extends BaseEntity, O> implements Marsh
 
     public EntityMarshaller() {
         try {
-            jaxbContext = JAXBContext.newInstance(getObjectType());
-        } catch (final JAXBException e) {
+            jaxbContext = JAXBContextCache.get(getObjectType());
+        } catch (final RuntimeException e) {
             LOGGER.error(MarkerFactory.getMarker("FATAL"), "Unable to create new JAXBContext for object type!", e);
             throw new RuntimeException(e.getMessage());
         }
