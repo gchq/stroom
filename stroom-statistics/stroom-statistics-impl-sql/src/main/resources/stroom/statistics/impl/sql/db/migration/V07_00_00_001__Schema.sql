@@ -29,50 +29,79 @@ SET @OLD_SQL_NOTES=@@SQL_NOTES, SQL_NOTES=0;
 --
 -- Table structure for table sql_stat_key
 --
-CREATE TABLE IF NOT EXISTS SQL_STAT_KEY (
-  ID 				bigint(20) auto_increment PRIMARY KEY,
-  VER 				tinyint(4) NOT NULL,
-  NAME 				varchar(766) NOT NULL,
-  UNIQUE 			(NAME)
-) ENGINE=InnoDB DEFAULT CHARSET=latin1;
-
+--CREATE TABLE IF NOT EXISTS SQL_STAT_KEY (
+--  ID 				bigint(20) auto_increment PRIMARY KEY,
+--  VER 				tinyint(4) NOT NULL,
+--  NAME 				varchar(766) NOT NULL,
+--  UNIQUE 			(NAME)
+--) ENGINE=InnoDB DEFAULT CHARSET=latin1;
+--
 --
 -- Table structure for table sql_stat_val
 --
-CREATE TABLE IF NOT EXISTS SQL_STAT_VAL (
-  TIME_MS				bigint(20) NOT NULL,
-  PRES					tinyint(4) NOT NULL,
-  VAL_TP 				tinyint(4) NOT NULL,
-  VAL					bigint(20) NOT NULL,
-  CT					bigint(20) NOT NULL,
-  FK_SQL_STAT_KEY_ID	bigint(20) NOT NULL,
-  PRIMARY KEY (FK_SQL_STAT_KEY_ID, TIME_MS, VAL_TP, PRES),
-  CONSTRAINT 			SQL_STAT_VAL_FK_STAT_KEY_ID
-      FOREIGN KEY (FK_SQL_STAT_KEY_ID)
-      REFERENCES SQL_STAT_KEY (ID)
-) ENGINE=InnoDB DEFAULT CHARSET=latin1;
-
-CALL statistics_create_index_v1(
-    'SQL_STAT_VAL',
-    'SQL_STAT_VAL_TIME_MS',
-    false,
-    'TIME_MS');
-
+--CREATE TABLE IF NOT EXISTS SQL_STAT_VAL (
+--  TIME_MS				bigint(20) NOT NULL,
+--  PRES					tinyint(4) NOT NULL,
+--  VAL_TP 				tinyint(4) NOT NULL,
+--  VAL					bigint(20) NOT NULL,
+--  CT					bigint(20) NOT NULL,
+--  FK_SQL_STAT_KEY_ID	bigint(20) NOT NULL,
+--  PRIMARY KEY (FK_SQL_STAT_KEY_ID, TIME_MS, VAL_TP, PRES),
+--  CONSTRAINT 			SQL_STAT_VAL_FK_STAT_KEY_ID
+--      FOREIGN KEY (FK_SQL_STAT_KEY_ID)
+--      REFERENCES SQL_STAT_KEY (ID)
+--) ENGINE=InnoDB DEFAULT CHARSET=latin1;
+--
+--CALL statistics_create_index_v1(
+--    'SQL_STAT_VAL',
+--    'SQL_STAT_VAL_TIME_MS',
+--    false,
+--    'TIME_MS');
+--
 --
 -- Table structure for table sql_stat_val_src
 --
-CREATE TABLE IF NOT EXISTS SQL_STAT_VAL_SRC (
-  TIME_MS			bigint(20) NOT NULL,
-  NAME 				varchar(766) NOT NULL,
-  VAL_TP 			tinyint(4) NOT NULL,
-  VAL				bigint(20) NOT NULL,
-  PROCESSING        bit(1) NOT NULL DEFAULT 0
+--CREATE TABLE IF NOT EXISTS SQL_STAT_VAL_SRC (
+--  TIME_MS			bigint(20) NOT NULL,
+--  NAME 				varchar(766) NOT NULL,
+--  VAL_TP 			tinyint(4) NOT NULL,
+--  VAL				bigint(20) NOT NULL,
+--  PROCESSING        bit(1) NOT NULL DEFAULT 0
+--) ENGINE=InnoDB DEFAULT CHARSET=latin1;
+--
+--CALL statistics_create_index_v1(
+--    'SQL_STAT_VAL_SRC',
+--    'SQL_STAT_VAL_SRC_PROCESSING_TIME_MS',
+--    false,
+--    'PROCESSING, TIME_MS');
+
+CREATE TABLE IF NOT EXISTS `SQL_STAT_KEY` (
+  `ID` bigint(20) NOT NULL AUTO_INCREMENT,
+  `VER` tinyint(4) NOT NULL,
+  `NAME` varchar(766) NOT NULL,
+  PRIMARY KEY (`ID`),
+  UNIQUE KEY `NAME` (`NAME`)
+) ENGINE=InnoDB AUTO_INCREMENT=19 DEFAULT CHARSET=latin1;
+
+CREATE TABLE IF NOT EXISTS `SQL_STAT_VAL` (
+  `TIME_MS` bigint(20) NOT NULL,
+  `PRES` tinyint(4) NOT NULL,
+  `VAL_TP` tinyint(4) NOT NULL,
+  `VAL` bigint(20) NOT NULL,
+  `CT` bigint(20) NOT NULL,
+  `FK_SQL_STAT_KEY_ID` bigint(20) NOT NULL,
+  PRIMARY KEY (`FK_SQL_STAT_KEY_ID`,`TIME_MS`,`VAL_TP`,`PRES`),
+  KEY `SQL_STAT_VAL_TIME_MS` (`TIME_MS`),
+  CONSTRAINT `SQL_STAT_VAL_FK_STAT_KEY_ID` FOREIGN KEY (`FK_SQL_STAT_KEY_ID`) REFERENCES `SQL_STAT_KEY` (`ID`)
 ) ENGINE=InnoDB DEFAULT CHARSET=latin1;
 
-CALL statistics_create_index_v1(
-    'SQL_STAT_VAL_SRC',
-    'SQL_STAT_VAL_SRC_PROCESSING_TIME_MS',
-    false,
-    'PROCESSING, TIME_MS');
+CREATE TABLE IF NOT EXISTS `SQL_STAT_VAL_SRC` (
+  `TIME_MS` bigint(20) NOT NULL,
+  `NAME` varchar(766) NOT NULL,
+  `VAL_TP` tinyint(4) NOT NULL,
+  `VAL` bigint(20) NOT NULL,
+  `PROCESSING` bit(1) NOT NULL DEFAULT b'0',
+  KEY `SQL_STAT_VAL_SRC_PROCESSING_TIME_MS` (`PROCESSING`,`TIME_MS`)
+) ENGINE=InnoDB DEFAULT CHARSET=latin1;
 
 SET SQL_NOTES=@OLD_SQL_NOTES;

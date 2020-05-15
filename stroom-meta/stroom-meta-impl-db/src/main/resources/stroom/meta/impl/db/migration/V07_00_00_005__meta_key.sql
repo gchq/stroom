@@ -20,12 +20,12 @@ SET @OLD_SQL_NOTES=@@SQL_NOTES, SQL_NOTES=0;
 --
 -- Create the meta_key table
 --
-CREATE TABLE IF NOT EXISTS meta_key (
-    id           int(11) NOT NULL AUTO_INCREMENT,
-    name         varchar(100) NOT NULL,
-    field_type   tinyint(4) NOT NULL,
-    PRIMARY KEY  (id),
-    UNIQUE KEY   name (name)
+CREATE TABLE IF NOT EXISTS `meta_key` (
+  `id` int(11) NOT NULL AUTO_INCREMENT,
+  `name` varchar(100) NOT NULL,
+  `field_type` tinyint(4) NOT NULL,
+  PRIMARY KEY (`id`),
+  UNIQUE KEY `meta_key_name` (`name`)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8;
 
 SET SQL_NOTES=@OLD_SQL_NOTES;

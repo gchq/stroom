@@ -20,12 +20,16 @@ SET @OLD_SQL_NOTES=@@SQL_NOTES, SQL_NOTES=0;
 --
 -- Create the explorer_path table
 --
-CREATE TABLE IF NOT EXISTS explorer_path (
-    ancestor       int(11) NOT NULL,
-    descendant     int(11) NOT NULL,
-    depth          int(11) NOT NULL,
-    order_index    int(11) NOT NULL,
-    PRIMARY KEY    (ancestor,descendant)
+CREATE TABLE IF NOT EXISTS `explorer_path` (
+  `ancestor` int(11) NOT NULL,
+  `descendant` int(11) NOT NULL,
+  `depth` int(11) NOT NULL,
+  `order_index` int(11) NOT NULL,
+  PRIMARY KEY (`ancestor`,`descendant`),
+  KEY `explorer_path_descendant` (`descendant`),
+  KEY `explorer_path_descendant_depth` (`descendant`,`depth`),
+  KEY `explorer_path_ancestor_depth_order_index` (`ancestor`,`depth`,`order_index`),
+  KEY `explorer_path_depth` (`depth`)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8;
 
 --

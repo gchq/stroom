@@ -14,23 +14,21 @@
 -- limitations under the License.
 -- ------------------------------------------------------------------------
 
--- Stop NOTE level warnings about objects (not)? existing
-SET @OLD_SQL_NOTES=@@SQL_NOTES, SQL_NOTES=0;
+-- stop note level warnings about objects (not)? existing
+set @old_sql_notes=@@sql_notes, sql_notes=0;
 
---
--- Create the meta_val table
---
-CREATE TABLE IF NOT EXISTS `meta_val` (
+CREATE TABLE IF NOT EXISTS `doc` (
   `id` bigint(20) NOT NULL AUTO_INCREMENT,
-  `create_time` bigint(20) NOT NULL,
-  `meta_id` bigint(20) NOT NULL,
-  `meta_key_id` int(11) NOT NULL,
-  `val` bigint(20) NOT NULL,
+  `type` varchar(255) NOT NULL,
+  `uuid` varchar(255) NOT NULL,
+  `name` varchar(255) NOT NULL,
+  `data` longblob,
+  `ext` varchar(255) DEFAULT NULL,
   PRIMARY KEY (`id`),
-  KEY `meta_val_create_time` (`create_time`),
-  KEY `meta_val_meta_id` (`meta_id`)
+  KEY `doc_type_uuid_idx` (`type`,`uuid`),
+  KEY `doc_uuid_idx` (`uuid`),
+  KEY `doc_type_uuid_ext_idx` (`type`,`uuid`,`ext`)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8;
 
+-- Reset to the original value
 SET SQL_NOTES=@OLD_SQL_NOTES;
-
--- vim: set tabstop=4 shiftwidth=4 expandtab:

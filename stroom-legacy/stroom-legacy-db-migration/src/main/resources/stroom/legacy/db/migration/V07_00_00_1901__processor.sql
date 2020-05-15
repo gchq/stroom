@@ -33,21 +33,21 @@ SET @OLD_SQL_NOTES=@@SQL_NOTES, SQL_NOTES=0;
 --) ENGINE=InnoDB DEFAULT CHARSET=latin1
 
 -- Create the table
-CREATE TABLE IF NOT EXISTS processor (
-    id                    int(11) NOT NULL AUTO_INCREMENT,
-    version               int(11) NOT NULL,
-    create_time_ms        bigint(20) NOT NULL,
-    create_user           varchar(255) NOT NULL,
-    update_time_ms        bigint(20) NOT NULL,
-    update_user           varchar(255) NOT NULL,
-    uuid                  varchar(255) NOT NULL,
-    task_type             varchar(255) DEFAULT NULL,
-    pipeline_uuid         varchar(255) NOT NULL,
-    enabled               bit(1) DEFAULT 0,
-    deleted               bit(1) DEFAULT 0,
-    PRIMARY KEY           (id),
-    UNIQUE KEY            uuid (uuid),
-    UNIQUE KEY            pipeline_uuid (pipeline_uuid)
+CREATE TABLE IF NOT EXISTS `processor` (
+  `id` int(11) NOT NULL AUTO_INCREMENT,
+  `version` int(11) NOT NULL,
+  `create_time_ms` bigint(20) NOT NULL,
+  `create_user` varchar(255) NOT NULL,
+  `update_time_ms` bigint(20) NOT NULL,
+  `update_user` varchar(255) NOT NULL,
+  `uuid` varchar(255) NOT NULL,
+  `task_type` varchar(255) DEFAULT NULL,
+  `pipeline_uuid` varchar(255) NOT NULL,
+  `enabled` bit(1) DEFAULT b'0',
+  `deleted` bit(1) DEFAULT b'0',
+  PRIMARY KEY (`id`),
+  UNIQUE KEY `processor_uuid` (`uuid`),
+  UNIQUE KEY `processor_pipeline_uuid` (`pipeline_uuid`)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8;
 
 DROP PROCEDURE IF EXISTS copy_processor;
@@ -122,3 +122,5 @@ CALL copy_processor();
 DROP PROCEDURE copy_processor;
 
 SET SQL_NOTES=@OLD_SQL_NOTES;
+
+-- vim: set shiftwidth=4 tabstop=4 expandtab:

@@ -20,26 +20,27 @@ SET @OLD_SQL_NOTES=@@SQL_NOTES, SQL_NOTES=0;
 --
 -- Create the meta table
 --
-CREATE TABLE IF NOT EXISTS meta (
-    id                bigint(20) NOT NULL AUTO_INCREMENT,
-    create_time       bigint(20) NOT NULL,
-    effective_time    bigint(20) DEFAULT NULL,
-    parent_id         bigint(20) DEFAULT NULL,
-    status            tinyint(4) NOT NULL,
-    status_time       bigint(20) DEFAULT NULL,
-    feed_id           int(11) NOT NULL,
-    type_id           int(11) NOT NULL,
-    processor_id      int(11) DEFAULT NULL,
-    PRIMARY KEY       (id),
-    CONSTRAINT meta_feed_id 
-        FOREIGN KEY (feed_id) 
-        REFERENCES meta_feed (id),
-    CONSTRAINT meta_type_id 
-        FOREIGN KEY (type_id) 
-        REFERENCES meta_type (id),
-    CONSTRAINT meta_processor_id 
-        FOREIGN KEY (processor_id) 
-        REFERENCES meta_processor (id)
+CREATE TABLE IF NOT EXISTS `meta` (
+  `id` bigint(20) NOT NULL AUTO_INCREMENT,
+  `create_time` bigint(20) NOT NULL,
+  `effective_time` bigint(20) DEFAULT NULL,
+  `parent_id` bigint(20) DEFAULT NULL,
+  `status` tinyint(4) NOT NULL,
+  `status_time` bigint(20) DEFAULT NULL,
+  `feed_id` int(11) NOT NULL,
+  `type_id` int(11) NOT NULL,
+  `processor_id` int(11) DEFAULT NULL,
+  PRIMARY KEY (`id`),
+  KEY `meta_create_time` (`create_time`),
+  KEY `meta_feed_id_create_time` (`feed_id`,`create_time`),
+  KEY `meta_feed_id_effective_time` (`feed_id`,`effective_time`),
+  KEY `meta_processor_id_create_time` (`processor_id`,`create_time`),
+  KEY `meta_parent_id` (`parent_id`),
+  KEY `meta_status` (`status`),
+  KEY `meta_type_id` (`type_id`),
+  CONSTRAINT `meta_feed_id` FOREIGN KEY (`feed_id`) REFERENCES `meta_feed` (`id`),
+  CONSTRAINT `meta_processor_id` FOREIGN KEY (`processor_id`) REFERENCES `meta_processor` (`id`),
+  CONSTRAINT `meta_type_id` FOREIGN KEY (`type_id`) REFERENCES `meta_type` (`id`)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8;
 
 --

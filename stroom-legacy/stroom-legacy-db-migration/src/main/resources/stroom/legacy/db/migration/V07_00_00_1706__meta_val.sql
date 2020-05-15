@@ -20,15 +20,15 @@ SET @OLD_SQL_NOTES=@@SQL_NOTES, SQL_NOTES=0;
 --
 -- Create the meta_val table
 --
-CREATE TABLE IF NOT EXISTS meta_val (
-    id                        bigint(20) NOT NULL AUTO_INCREMENT,
-    create_time               bigint(20) NOT NULL,
-    meta_id                   bigint(20) NOT NULL,
-    meta_key_id               int(11) NOT NULL,
-    val                       bigint(20) NOT NULL,
-    PRIMARY KEY               (id),
-    KEY                       meta_val_create_time_idx (create_time),
-    KEY                       meta_val_meta_id_idx (meta_id)
+CREATE TABLE IF NOT EXISTS `meta_val` (
+  `id` bigint(20) NOT NULL AUTO_INCREMENT,
+  `create_time` bigint(20) NOT NULL,
+  `meta_id` bigint(20) NOT NULL,
+  `meta_key_id` int(11) NOT NULL,
+  `val` bigint(20) NOT NULL,
+  PRIMARY KEY (`id`),
+  KEY `meta_val_create_time` (`create_time`),
+  KEY `meta_val_meta_id` (`meta_id`)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8;
 
 --

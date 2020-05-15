@@ -34,20 +34,20 @@ SET @OLD_SQL_NOTES=@@SQL_NOTES, SQL_NOTES=0;
 --) ENGINE=InnoDB DEFAULT CHARSET=latin1
 
 -- Create the table
-CREATE TABLE IF NOT EXISTS processor_filter_tracker (
-    id                    int(11) NOT NULL AUTO_INCREMENT,
-    version               int(11) NOT NULL,
-    min_meta_id           bigint(20) NOT NULL,
-    min_event_id          bigint(20) NOT NULL,
-    min_meta_create_ms    bigint(20) DEFAULT NULL,
-    max_meta_create_ms    bigint(20) DEFAULT NULL,
-    meta_create_ms        bigint(20) DEFAULT NULL,
-    last_poll_ms          bigint(20) DEFAULT NULL,
-    last_poll_task_count  int(11) DEFAULT NULL,
-    status                varchar(255) DEFAULT NULL,
-    meta_count            bigint(20) DEFAULT NULL,
-    event_count           bigint(20) DEFAULT NULL,
-    PRIMARY KEY (id)
+CREATE TABLE IF NOT EXISTS `processor_filter_tracker` (
+  `id` int(11) NOT NULL AUTO_INCREMENT,
+  `version` int(11) NOT NULL,
+  `min_meta_id` bigint(20) NOT NULL,
+  `min_event_id` bigint(20) NOT NULL,
+  `min_meta_create_ms` bigint(20) DEFAULT NULL,
+  `max_meta_create_ms` bigint(20) DEFAULT NULL,
+  `meta_create_ms` bigint(20) DEFAULT NULL,
+  `last_poll_ms` bigint(20) DEFAULT NULL,
+  `last_poll_task_count` int(11) DEFAULT NULL,
+  `status` varchar(255) DEFAULT NULL,
+  `meta_count` bigint(20) DEFAULT NULL,
+  `event_count` bigint(20) DEFAULT NULL,
+  PRIMARY KEY (`id`)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8;
 
 DROP PROCEDURE IF EXISTS copy_processor_filter_tracker;

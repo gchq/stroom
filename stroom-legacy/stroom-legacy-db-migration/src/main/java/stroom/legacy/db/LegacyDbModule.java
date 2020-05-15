@@ -225,37 +225,40 @@ public class LegacyDbModule extends AbstractModule {
                 () -> LOGGER.info("This is a new installation. Legacy migrations won't be applied")
         );
 
-        Optional<String> optBaselineVersionAsString = optVersion.flatMap(version -> {
-            if (!isDbUsingFlyWay.get()) {
-                if (version.getMajor() == 4 && version.getMinor() == 0 && version.getPatch() >= 60) {
-                    // If Stroom is currently at v4.0.60+ then tell FlyWay to baseline at that version.
-                    return Optional.of("4.0.60");
+        // Only apply legacy migrations if this is an old DB.
+        if (optVersion.isPresent()) {
+            Optional<String> optBaselineVersionAsString = optVersion.flatMap(version -> {
+                if (!isDbUsingFlyWay.get()) {
+                    if (version.getMajor() == 4 && version.getMinor() == 0 && version.getPatch() >= 60) {
+                        // If Stroom is currently at v4.0.60+ then tell FlyWay to baseline at that version.
+                        return Optional.of("4.0.60");
+                    } else {
+                        final String message =
+                                "The current Stroom version cannot be upgraded to v5+. " +
+                                        "You must be on v4.0.60 or later.";
+                        LOGGER.error(MarkerFactory.getMarker("FATAL"), message);
+                        throw new RuntimeException(message);
+                    }
                 } else {
-                    final String message =
-                            "The current Stroom version cannot be upgraded to v5+. " +
-                                    "You must be on v4.0.60 or later.";
-                    LOGGER.error(MarkerFactory.getMarker("FATAL"), message);
-                    throw new RuntimeException(message);
+                    return Optional.empty();
                 }
-            } else {
-                return Optional.empty();
-            }
-        });
+            });
 
-        final FluentConfiguration configuration = Flyway.configure()
-                .dataSource(dataSource)
-                .locations(FLYWAY_LOCATIONS)
-                .table(FLYWAY_TABLE)
-                .baselineOnMigrate(true);
+            final FluentConfiguration configuration = Flyway.configure()
+                    .dataSource(dataSource)
+                    .locations(FLYWAY_LOCATIONS)
+                    .table(FLYWAY_TABLE)
+                    .baselineOnMigrate(true);
 
-        optBaselineVersionAsString.ifPresent(configuration::baselineVersion);
+            optBaselineVersionAsString.ifPresent(configuration::baselineVersion);
 
-        final Flyway flyway = configuration.load();
+            final Flyway flyway = configuration.load();
 
-        optBaselineVersionAsString.ifPresent(ver ->
-                flyway.baseline());
+            optBaselineVersionAsString.ifPresent(ver ->
+                    flyway.baseline());
 
-        migrateDatabase(flyway);
+            migrateDatabase(flyway);
+        }
     }
 
     @NotNull
