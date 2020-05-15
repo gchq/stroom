@@ -199,7 +199,7 @@ class TestStatisticsFilter implements Statistics {
         assertThat(testEvents.get(0).getTagList().get(0).getValue()).isEqualTo("1tag1value");
         assertThat(testEvents.get(0).getTagList().get(1).getTag()).isEqualTo("tag2name");
         assertThat(testEvents.get(0).getTagList().get(1).getValue()).isEqualTo("1tag2value");
-        assertThat(testEvents.get(0).getValue()).isCloseTo(1.5, within(JUNIT_DOUBLE_TOLLERANCE));
+        assertThat(testEvents.get(0).getValue()).isCloseTo(1.5, within(JUNIT_DOUBLE_TOLERANCE));
         assertThatThrownBy(() -> testEvents.get(0)
                 .getCount()).isInstanceOf(RuntimeException.class);
 
@@ -210,7 +210,7 @@ class TestStatisticsFilter implements Statistics {
         assertThat(testEvents.get(1).getTagList().get(0).getValue()).isEqualTo("2tag1value");
         assertThat(testEvents.get(1).getTagList().get(1).getTag()).isEqualTo("tag2name");
         assertThat(testEvents.get(1).getTagList().get(1).getValue()).isEqualTo("2tag2value");
-        assertThat(testEvents.get(1).getValue()).isCloseTo(3.9, within(JUNIT_DOUBLE_TOLLERANCE));
+        assertThat(testEvents.get(1).getValue()).isCloseTo(3.9, within(JUNIT_DOUBLE_TOLERANCE));
         assertThatThrownBy(() -> testEvents.get(0)
                 .getCount()).isInstanceOf(RuntimeException.class);
 
