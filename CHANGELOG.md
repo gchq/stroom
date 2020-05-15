@@ -6,6 +6,8 @@ and this project adheres to [Semantic Versioning](http://semver.org/).
 
 ## [Unreleased]
 
+* Fix index creation stored procedure.
+
 * Issue **#1508** : Tidy up property descriptions, change connection pool props to use Stroom Duration type.
 
 * Issue **#473** : Fix value stats being ignored during in memroy stat aggregation.

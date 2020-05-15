@@ -5,7 +5,7 @@ DELIMITER $$
 
 DROP PROCEDURE IF EXISTS core_run_sql_v1 $$
 
-DROP PROCEDURE IF EXISTS core_create_index_v1 $$
+DROP PROCEDURE IF EXISTS core_create_non_unique_index_v1 $$
 
 DROP PROCEDURE IF EXISTS core_add_column_v1 $$
 
