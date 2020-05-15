@@ -519,6 +519,102 @@ class TestSQLStatisticAggregationManager extends AbstractCoreIntegrationTest {
                 .isEqualTo(expectedCountTotalByPrecision);
     }
 
+
+    @Test
+    void testKeyDeletion() throws SQLException {
+        final StatisticType statisticType = StatisticType.VALUE;
+        //Use a fixed start date to avoid any oddities caused by the power of 10 rounding
+        final Instant startDate = LocalDateTime.of(
+                2016, 12, 13, 11, 59, 3)
+                .toInstant(ZoneOffset.UTC);
+        //the number of different satst names to use in the test
+        final int statNameCount = 4;
+        //the number of different data points per stat name
+        final int timesCount = 100;
+        final int numberOfDifferentPrecisions = 3 + 1;
+
+        final long expectedCountTotalByPrecision = statNameCount * timesCount
+                * (statisticType.equals(StatisticType.COUNT) ? STAT_VALUE : 1);
+        final long expectedValueTotalByPrecision = statNameCount * timesCount * STAT_VALUE;
+
+        final long expectedCountTotal = expectedCountTotalByPrecision * numberOfDifferentPrecisions;
+        final long expectedValueTotal = expectedValueTotalByPrecision * numberOfDifferentPrecisions;
+
+        final LogExecutionTime time = new LogExecutionTime();
+
+        //put the data into SQL_STAT_VAL_SRC
+        loadData(startDate, statNameCount, timesCount, statisticType);
+
+        final Instant newStartDate = startDate.minus(200, ChronoUnit.DAYS);
+        LOGGER.info("Adding stats working back from: " + newStartDate);
+        //Put some very old data in to SQL_STAT_VAL_SRC so that it will get deleted
+        fillStatValSrc(newStartDate, statNameCount, timesCount, statisticType);
+
+        LOGGER.info("First aggregation run");
+        LOGGER.info("startDate: " + startDate);
+        runAggregation(startDate);
+
+        assertThat(getAggregateTotal(COL_NAME_CNT))
+                .isEqualTo(expectedCountTotal);
+        assertThat(getAggregateTotal(COL_NAME_VAL))
+                .isEqualTo(expectedValueTotal);
+
+        assertThat(getAggregateByPrecision(COL_NAME_VAL, SQLStatisticAggregationTransactionHelper.DEFAULT_PRECISION))
+                .isEqualTo(expectedValueTotalByPrecision);
+
+        assertThat(getAggregateByPrecision(COL_NAME_VAL, SQLStatisticAggregationTransactionHelper.DAY_PRECISION))
+                .isEqualTo(expectedValueTotalByPrecision);
+
+        assertThat(getAggregateByPrecision(COL_NAME_VAL, SQLStatisticAggregationTransactionHelper.MONTH_PRECISION))
+                .isEqualTo(expectedValueTotalByPrecision * 2);
+
+
+        assertThat(getAggregateByPrecision(COL_NAME_CNT, SQLStatisticAggregationTransactionHelper.DEFAULT_PRECISION))
+                .isEqualTo(expectedCountTotalByPrecision);
+
+        assertThat(getAggregateByPrecision(COL_NAME_CNT, SQLStatisticAggregationTransactionHelper.DAY_PRECISION))
+                .isEqualTo(expectedCountTotalByPrecision);
+
+        assertThat(getAggregateByPrecision(COL_NAME_CNT, SQLStatisticAggregationTransactionHelper.MONTH_PRECISION))
+                .isEqualTo(expectedCountTotalByPrecision * 2);
+
+        assertThat(getRowCount("SQL_STAT_KEY"))
+                .isEqualTo(statNameCount);
+
+        // TODO now move time a long way into future and set the max
+        // processing age so stuff gets deleted on next
+        // aggregation
+        // run aggregation and check the right amount of stats are left
+
+        final Instant futureDate = startDate.plus(300, ChronoUnit.DAYS);
+
+        sqlStatisticsConfig.setMaxProcessingAge(StroomDuration.ofDays(2));
+
+        runAggregation(futureDate);
+
+        assertThat(getAggregateByPrecision(COL_NAME_VAL, SQLStatisticAggregationTransactionHelper.DEFAULT_PRECISION))
+                .isZero();
+
+        assertThat(getAggregateByPrecision(COL_NAME_VAL, SQLStatisticAggregationTransactionHelper.DAY_PRECISION))
+                .isZero();
+
+        assertThat(getAggregateByPrecision(COL_NAME_VAL, SQLStatisticAggregationTransactionHelper.MONTH_PRECISION))
+                .isZero();
+
+        assertThat(getAggregateByPrecision(COL_NAME_CNT, SQLStatisticAggregationTransactionHelper.DEFAULT_PRECISION))
+                .isZero();
+
+        assertThat(getAggregateByPrecision(COL_NAME_CNT, SQLStatisticAggregationTransactionHelper.DAY_PRECISION))
+                .isZero();
+
+        assertThat(getAggregateByPrecision(COL_NAME_CNT, SQLStatisticAggregationTransactionHelper.MONTH_PRECISION))
+                .isZero();
+
+        // All the stat data has been deleted due to being too old so the orphaned keys should have gone too.
+        assertThat(getRowCount("SQL_STAT_KEY"))
+                .isZero();
+    }
+
     private void loadData(final Instant startDate, final int statNameCount, final int timesCount,
                           final StatisticType statisticType) throws SQLException {
         int iteration = 0;
