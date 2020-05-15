@@ -12,7 +12,11 @@ public class InternalStatisticEvent {
     private final Map<String, String> tags;
     private final Object value;
 
-    private InternalStatisticEvent(final InternalStatisticKey key, final Type type, final long timeMs, final Map<String, String> tags, final Object value) {
+    private InternalStatisticEvent(final InternalStatisticKey key,
+                                   final Type type,
+                                   final long timeMs,
+                                   final Map<String, String> tags,
+                                   final Object value) {
         Preconditions.checkArgument(timeMs >= 0);
         this.key = Preconditions.checkNotNull(key);
         this.type = Preconditions.checkNotNull(type);
@@ -21,15 +25,23 @@ public class InternalStatisticEvent {
         this.value = Preconditions.checkNotNull(value);
     }
 
-    public static InternalStatisticEvent createPlusOneCountStat(final InternalStatisticKey key, final long timeMs, final Map<String, String> tags) {
+    public static InternalStatisticEvent createPlusOneCountStat(final InternalStatisticKey key,
+                                                                final long timeMs,
+                                                                final Map<String, String> tags) {
         return new InternalStatisticEvent(key, Type.COUNT, timeMs, tags, 1L);
     }
 
-    public static InternalStatisticEvent createPlusNCountStat(final InternalStatisticKey key, final long timeMs, final Map<String, String> tags, final long count) {
+    public static InternalStatisticEvent createPlusNCountStat(final InternalStatisticKey key,
+                                                              final long timeMs,
+                                                              final Map<String, String> tags,
+                                                              final long count) {
         return new InternalStatisticEvent(key, Type.COUNT, timeMs, tags, count);
     }
 
-    public static InternalStatisticEvent createValueStat(final InternalStatisticKey key, final long timeMs, final Map<String, String> tags, final double value) {
+    public static InternalStatisticEvent createValueStat(final InternalStatisticKey key,
+                                                         final long timeMs,
+                                                         final Map<String, String> tags,
+                                                         final double value) {
         return new InternalStatisticEvent(key, Type.VALUE, timeMs, tags, value);
     }
 

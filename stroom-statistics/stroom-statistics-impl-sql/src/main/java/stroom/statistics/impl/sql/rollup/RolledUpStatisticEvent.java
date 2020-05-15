@@ -35,7 +35,8 @@ public class RolledUpStatisticEvent implements Iterable<TimeAgnosticStatisticEve
     private final StatisticEvent originalStatisticEvent;
     private final List<List<StatisticTag>> tagListPermutations;
 
-    public RolledUpStatisticEvent(StatisticEvent originalStatisticEvent, List<List<StatisticTag>> tagListPermutations) {
+    public RolledUpStatisticEvent(final StatisticEvent originalStatisticEvent,
+                                  final List<List<StatisticTag>> tagListPermutations) {
         this.originalStatisticEvent = originalStatisticEvent;
         this.tagListPermutations = tagListPermutations;
     }
@@ -43,7 +44,7 @@ public class RolledUpStatisticEvent implements Iterable<TimeAgnosticStatisticEve
     /**
      * To be used when no roll ups are required
      */
-    public RolledUpStatisticEvent(StatisticEvent originalStatisticEvent) {
+    public RolledUpStatisticEvent(final StatisticEvent originalStatisticEvent) {
         this.originalStatisticEvent = originalStatisticEvent;
         this.tagListPermutations = new ArrayList<>();
         this.tagListPermutations.add(originalStatisticEvent.getTagList());
@@ -65,11 +66,11 @@ public class RolledUpStatisticEvent implements Iterable<TimeAgnosticStatisticEve
         return originalStatisticEvent.getName();
     }
 
-    public Double getValue() {
+    public double getValue() {
         return originalStatisticEvent.getValue();
     }
 
-    public Long getCount() {
+    public long getCount() {
         return originalStatisticEvent.getCount();
     }
 

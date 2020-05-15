@@ -8,7 +8,13 @@ and this project adheres to [Semantic Versioning](http://semver.org/).
 
 * Issue **#1396** : Completely changed DB migration and import/export compatibility code.
 
+* Fix index creation stored procedure.
+
 * Issue **#1508** : Tidy up property descriptions, change connection pool props to use Stroom Duration type.
+
+* Issue **#473** : Fix value stats being ignored during in memroy stat aggregation.
+
+* Issue **#1141** : Make SQL stats aggregation delete unused stat keys at the end.
 
 
 ## [v7.0-beta.31] - 2020-05-12

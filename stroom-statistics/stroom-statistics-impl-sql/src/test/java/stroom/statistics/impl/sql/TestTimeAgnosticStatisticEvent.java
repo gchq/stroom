@@ -17,6 +17,7 @@
 package stroom.statistics.impl.sql;
 
 import org.apache.commons.lang3.SerializationUtils;
+import org.junit.jupiter.api.Disabled;
 import org.junit.jupiter.api.Test;
 
 import java.util.ArrayList;
@@ -24,6 +25,7 @@ import java.util.List;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
+@Disabled // TODO no idea why we would want to serialise this class
 class TestTimeAgnosticStatisticEvent {
     @Test
     void serialiseTest() {

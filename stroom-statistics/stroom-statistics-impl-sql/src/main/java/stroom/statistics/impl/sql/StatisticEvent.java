@@ -28,7 +28,8 @@ public class StatisticEvent {
     private final long timeMs;
     private final TimeAgnosticStatisticEvent timeAgnosticStatisticEvent;
 
-    private StatisticEvent(final long timeMs, final TimeAgnosticStatisticEvent timeAgnosticStatisticEvent) {
+    private StatisticEvent(final long timeMs,
+                           final TimeAgnosticStatisticEvent timeAgnosticStatisticEvent) {
         this.timeMs = timeMs;
         this.timeAgnosticStatisticEvent = timeAgnosticStatisticEvent;
     }
@@ -42,7 +43,10 @@ public class StatisticEvent {
      *                ordered by tag name. Can be null.
      * @param count   the count of the event, e.g. the number of desktop logons
      */
-    public static StatisticEvent createCount(final long timeMs, final String name, final List<StatisticTag> tagList, final long count) {
+    public static StatisticEvent createCount(final long timeMs,
+                                             final String name,
+                                             final List<StatisticTag> tagList,
+                                             final long count) {
         return new StatisticEvent(timeMs, TimeAgnosticStatisticEvent.createCount(name, tagList, count));
     }
 
@@ -56,7 +60,10 @@ public class StatisticEvent {
      * @param value   the value of the event, e.g. the heap size in MB, bytes read,
      *                etc.
      */
-    public static StatisticEvent createValue(final long timeMs, final String name, final List<StatisticTag> tagList, final double value) {
+    public static StatisticEvent createValue(final long timeMs,
+                                             final String name,
+                                             final List<StatisticTag> tagList,
+                                             final double value) {
         return new StatisticEvent(timeMs, TimeAgnosticStatisticEvent.createValue(name, tagList, value));
     }
 
@@ -79,11 +86,11 @@ public class StatisticEvent {
         return timeAgnosticStatisticEvent.getName();
     }
 
-    public Double getValue() {
+    public double getValue() {
         return timeAgnosticStatisticEvent.getValue();
     }
 
-    public Long getCount() {
+    public long getCount() {
         return timeAgnosticStatisticEvent.getCount();
     }
 

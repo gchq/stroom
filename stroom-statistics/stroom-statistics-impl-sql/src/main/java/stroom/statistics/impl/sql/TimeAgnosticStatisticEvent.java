@@ -24,6 +24,9 @@ import java.util.Collections;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.Objects;
+import java.util.function.DoubleSupplier;
+import java.util.function.LongSupplier;
 
 public class TimeAgnosticStatisticEvent implements Serializable {
     private static final long serialVersionUID = 6308709037286356273L;
@@ -37,14 +40,34 @@ public class TimeAgnosticStatisticEvent implements Serializable {
     private final Map<String, Integer> tagPositionMap;
     private final int hashCode;
 
-    private TimeAgnosticStatisticEvent(final String name, final List<StatisticTag> tagList, final Long count, final Double value, final StatisticType statisticType) {
+    private final LongSupplier countSupplier;
+    private final DoubleSupplier valueSupplier;
+
+    private TimeAgnosticStatisticEvent(final String name,
+                                       final List<StatisticTag> tagList,
+                                       final Long count,
+                                       final Double value,
+                                       final StatisticType statisticType) {
         this.name = name;
         this.tagList = buildTagList(tagList);
         this.count = count;
         this.value = value;
-        this.statisticType = statisticType;
+        this.statisticType = Objects.requireNonNull(statisticType);
         this.tagPositionMap = buildTagPositionMap();
         this.hashCode = buildHashCode();
+
+        // Hold the getters to save having to check each time
+        if (StatisticType.COUNT.equals(statisticType)) {
+           countSupplier = () -> count;
+           valueSupplier = () -> {
+               throw new UnsupportedOperationException("getValue() not supported for a COUNT stat");
+           };
+        } else {
+            countSupplier = () -> {
+                throw new UnsupportedOperationException("getCount() not supported for a VALUE stat");
+            };
+            valueSupplier = () -> value;
+        }
     }
 
     /**
@@ -52,7 +75,9 @@ public class TimeAgnosticStatisticEvent implements Serializable {
      * @param tagList Must be ordered by tag name. Can be null.
      * @param count
      */
-    public static TimeAgnosticStatisticEvent createCount(final String name, final List<StatisticTag> tagList, final Long count) {
+    public static TimeAgnosticStatisticEvent createCount(final String name,
+                                                         final List<StatisticTag> tagList,
+                                                         final Long count) {
         if (count == null) {
             throw new IllegalArgumentException("Statistic must have a count");
         }
@@ -64,7 +89,9 @@ public class TimeAgnosticStatisticEvent implements Serializable {
      * @param tagList Must be ordered by tag name. Can be null.
      * @param value
      */
-    public static TimeAgnosticStatisticEvent createValue(final String name, final List<StatisticTag> tagList, final Double value) {
+    public static TimeAgnosticStatisticEvent createValue(final String name,
+                                                         final List<StatisticTag> tagList,
+                                                         final Double value) {
         if (value == null) {
             throw new IllegalArgumentException("Statistic must have a value");
         }
@@ -110,12 +137,12 @@ public class TimeAgnosticStatisticEvent implements Serializable {
         return name;
     }
 
-    public Double getValue() {
-        return value;
+    public double getValue() {
+        return valueSupplier.getAsDouble();
     }
 
-    public Long getCount() {
-        return count;
+    public long getCount() {
+        return countSupplier.getAsLong();
     }
 
     public StatisticType getStatisticType() {
