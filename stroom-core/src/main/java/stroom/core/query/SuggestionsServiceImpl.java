@@ -37,7 +37,8 @@ import java.util.stream.Stream;
 public class SuggestionsServiceImpl implements SuggestionsService {
 
     private static final Logger LOGGER = LoggerFactory.getLogger(SuggestionsServiceImpl.class);
-    private static final Pattern SEPARATOR_PATTERN = Pattern.compile("[_\\-]");
+    private static final Pattern SEPARATOR_PATTERN = Pattern.compile("[ _\\-]");
+    private static final Pattern CASE_INSENS_WORD_LETTER_PATTERN = Pattern.compile("[a-z0-9]");
     private static final int LIMIT = 20;
 
     private final MetaService metaService;
@@ -149,9 +150,7 @@ public class SuggestionsServiceImpl implements SuggestionsService {
                     .thenCombine(docFeedsFuture, (metaFeedNames, docFeedNames) ->
                             Stream.concat(metaFeedNames.stream(), docFeedNames.stream())
                                     .parallel()
-                                    .filter(createCaseInsensitiveContainsPredicate(userInput))
-//                                    .filter(feedName ->
-//                                            feedName == null || userInput == null || feedName.startsWith(userInput))
+                                    .filter(createFuzzyMatchPredicate(userInput))
                                     .sorted(Comparator.naturalOrder())
                                     .distinct()
                                     .limit(LIMIT)
@@ -182,7 +181,6 @@ public class SuggestionsServiceImpl implements SuggestionsService {
         // TODO this seems pretty inefficient as each call hits the db to get ALL feeds
         //   then limits/filters in java.  Needs to work off a cached feed name list
 
-        // TODO consider using isFuzzyMatch below
         return metaService.getTypes()
                 .parallelStream()
                 .filter(typeName -> typeName == null || userInput == null || typeName.startsWith(userInput))
@@ -192,55 +190,117 @@ public class SuggestionsServiceImpl implements SuggestionsService {
     }
 
     static Predicate<String> createFuzzyMatchPredicate(final String userInput) {
-        // TODO break out each predicate bit into a method
         if (userInput == null || userInput.isEmpty()) {
             LOGGER.debug("Null input predicate");
             // No input so get everything
             return stringUnderTest -> true;
         } else if (userInput.startsWith("^") && userInput.endsWith("$")) {
-            LOGGER.debug("Case insensitive exact match predicate");
-            final String lowerCaseInput = userInput.substring(1)
-                    .substring(0, userInput.length() - 2);
-            return stringUnderTest -> {
-                return stringUnderTest == null
-                        || stringUnderTest.toLowerCase().equalsIgnoreCase(lowerCaseInput);
-            };
+            return createCaseInsensitiveExactMatchPredicate(userInput);
         } else if (userInput.endsWith("$")) {
-            LOGGER.debug("Case insensitive ends with predicate");
-            // remove the ^ marker char
-            final String lowerCaseInput = userInput.substring(0, userInput.length() - 1)
-                    .toLowerCase();
-            return stringUnderTest -> {
-                return stringUnderTest == null
-                        || stringUnderTest.toLowerCase().endsWith(lowerCaseInput);
-            };
+            return createCaseInsensitiveEndsWithPredicate(userInput);
         } else if (userInput.startsWith("^")) {
-            LOGGER.debug("Case insensitive starts with predicate");
-            // remove the ^ marker char
-            final String lowerCaseInput = userInput.substring(1).toLowerCase();
-            return stringUnderTest -> {
-                return stringUnderTest == null
-                        || stringUnderTest.toLowerCase().startsWith(lowerCaseInput);
-            };
+            return createCaseInsensitiveStartsWithPredicate(userInput);
         } else if (isAllLowerCase(userInput)) {
-            LOGGER.debug("Chars appear anywhere in correct order predicate");
-            // All lower case so match on each char appearing somewhere in the text
-            // in the correct order
-            final StringBuilder patternBuilder = new StringBuilder();
-            for (int i = 0; i < userInput.length(); i++) {
-                    patternBuilder.append(".*?")
-                            .append(userInput.charAt(i));
-            }
-            patternBuilder.append(".*?");
-            final Pattern pattern = Pattern.compile(patternBuilder.toString(), Pattern.CASE_INSENSITIVE);
-            return pattern.asPredicate();
+            return createCharsAnywherePredicate(userInput);
         } else {
-            LOGGER.debug("Word boundary predicate");
-            // Has some uppercase so use word boundaries
-            // TODO change this to just do word boundary matching
-            //  i.e. ThIsMyFe/TIMF matches THIS_IS_MY_FEED/this-is-my-feed/this is my feed
-            return stringUnderTest -> isFuzzyMatch(userInput, stringUnderTest);
+            return createWordBoundaryPredicate(userInput);
         }
+    }
+
+    @NotNull
+    private static Predicate<String> createWordBoundaryPredicate(final String userInput) {
+        LOGGER.debug("Word boundary predicate");
+        // Has some uppercase so use word boundaries
+        // An upper case letter means the start of a word
+        // a lower case letter means the continuation of a word
+
+        final StringBuilder patternBuilder = new StringBuilder();
+        for (int i = 0; i < userInput.length(); i++) {
+            char chr = userInput.charAt(i);
+            char lastChr = 0;
+
+            if (Character.isUpperCase(chr)) {
+                if (i == 0) {
+                    // First letter so is either preceded by ^ or by a separator
+                    patternBuilder
+                            .append("(^|")
+                            .append(SEPARATOR_PATTERN)
+                            .append(")");
+                } else {
+                    // Not the first letter so need the end of the previous word
+                    // and a word separator
+                    patternBuilder
+                            .append(CASE_INSENS_WORD_LETTER_PATTERN)
+                            .append("*")
+                            .append(SEPARATOR_PATTERN);
+                }
+                // Start of a word
+                patternBuilder.append(chr);
+            } else {
+                // Continuation of a word
+                patternBuilder.append(chr);
+            }
+        }
+        final Pattern pattern = Pattern.compile(patternBuilder.toString(), Pattern.CASE_INSENSITIVE);
+        LOGGER.debug("Pattern: {}", pattern);
+        return toNullSafePredicate(pattern.asPredicate());
+    }
+
+    @NotNull
+    private static Predicate<String> createCharsAnywherePredicate(final String userInput) {
+        LOGGER.debug("Chars appear anywhere in correct order predicate");
+        // All lower case so match on each char appearing somewhere in the text
+        // in the correct order
+        final StringBuilder patternBuilder = new StringBuilder();
+        for (int i = 0; i < userInput.length(); i++) {
+                patternBuilder.append(".*?")
+                        .append(userInput.charAt(i));
+        }
+        patternBuilder.append(".*?");
+        final Pattern pattern = Pattern.compile(patternBuilder.toString(), Pattern.CASE_INSENSITIVE);
+        LOGGER.debug("Pattern: {}", pattern);
+        return toNullSafePredicate(pattern.asPredicate());
+    }
+
+    @NotNull
+    private static Predicate<String> createCaseInsensitiveStartsWithPredicate(final String userInput) {
+        LOGGER.debug("Case insensitive starts with predicate");
+        // remove the ^ marker char
+        final String lowerCaseInput = userInput.substring(1).toLowerCase();
+        return toNullSafePredicate(stringUnderTest ->
+                stringUnderTest.toLowerCase().startsWith(lowerCaseInput));
+    }
+
+    @NotNull
+    private static Predicate<String> createCaseInsensitiveEndsWithPredicate(final String userInput) {
+        LOGGER.debug("Case insensitive ends with predicate");
+        // remove the ^ marker char
+        final String lowerCaseInput = userInput.substring(0, userInput.length() - 1)
+                .toLowerCase();
+        return toNullSafePredicate(stringUnderTest ->
+                stringUnderTest.toLowerCase().endsWith(lowerCaseInput));
+    }
+
+    @NotNull
+    private static Predicate<String> createCaseInsensitiveExactMatchPredicate(final String userInput) {
+        LOGGER.debug("Case insensitive exact match predicate");
+        final String lowerCaseInput = userInput.substring(1)
+                .substring(0, userInput.length() - 2);
+        return toNullSafePredicate(stringUnderTest ->
+                stringUnderTest.toLowerCase().equalsIgnoreCase(lowerCaseInput));
+    }
+
+    /**
+     * Wraps the passes {@link Predicate} with one that returns false if the value under test is null
+     */
+    private static Predicate<String> toNullSafePredicate(final Predicate<String> predicate) {
+        return str -> {
+            if (str == null) {
+                return false;
+            } else {
+                return predicate.test(str);
+            }
+        };
     }
 
     private static boolean isAllLowerCase(final String text) {

@@ -7,6 +7,8 @@ import org.junit.jupiter.api.TestFactory;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import java.util.Arrays;
+import java.util.Collections;
 import java.util.List;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
@@ -34,10 +36,45 @@ class TestSuggestionsServiceImpl {
                         List.of("THIS_IS_MY_FEED", "this_is_my_feed"),
                         List.of("NOT_THIS_IS_MY_FEED", "NOT_THIS_IS_MY_FEED_NOT", "THIS_IS_MY_FEED_NOT")),
 
-                makeDynamicTest("Chars anywhere",
+                makeDynamicTest("Chars anywhere 1",
                         "timf",
                         List.of("THIS_IS_MY_FEED", "this_is_my_feed", "SO_IS_THIS_IS_MY_FEED", "timf", "TIMF"),
-                        List.of("NOT_THIS_IS_MY_XEED", "fmit", "FMIT"))
+                        List.of("NOT_THIS_IS_MY_XEED", "fmit", "FMIT")),
+
+                makeDynamicTest("Chars anywhere 2",
+                        "t_i_m_f",
+                        List.of("THIS_IS_MY_FEED", "this_is_my_feed", "SO_IS_THIS_IS_MY_FEED"),
+                        List.of("NOT_THIS_IS_MY_XEED", "timf")),
+
+                makeDynamicTest("Word boundary match 1",
+                        "TIMF",
+                        List.of("THIS_IS_MY_FEED", "THIS-IS-MY-FEED", "THIS IS MY FEED", "this_is_my_feed", "SO_IS_THIS_IS_MY_FEED"),
+                        List.of("timf", "TIMF")),
+
+                makeDynamicTest("Word boundary match 2",
+                        "ThIsMF",
+                        List.of("THIS_IS_MY_FEED", "THIS-IS-MY-FEED", "THIS IS MY FEED", "this_is_my_feed", "SO_IS_THIS_IS_MY_FEED"),
+                        List.of("TXHIS_IS_MY_FEED", "timf", "TIMF")),
+
+                makeDynamicTest("Single letter (lower case)",
+                        "b",
+                        List.of("B", "BCD", "ABC", "b", "bcd", "abc"),
+                        List.of("A", "C")),
+
+                makeDynamicTest("Single letter (upper case)",
+                        "B",
+                        List.of("B", "BCD", "XX_BCD"),
+                        List.of("A", "C", "AB")),
+
+                makeDynamicTest("No user input",
+                        "",
+                        List.of("B", "BCD", "XX_BCD"),
+                        Collections.emptyList()),
+
+                makeDynamicTest("Null/empty items",
+                        "a",
+                        List.of("A", "ABCD", "abcd", "dcba"),
+                        Arrays.asList("", null))
 
                 // TODO migrate cases from below into here
         );
@@ -47,18 +84,6 @@ class TestSuggestionsServiceImpl {
     @Test
     void fuzzyMatcher() {
         // Ones that match
-        doFuzzyMatchTest("^this_", "THIS_IS_MY_FEED", true);
-
-        doFuzzyMatchTest("^this_",
-                List.of("THIS_IS_MY_FEED", "this_is_my_feed"),
-                List.of("NOT_THIS_IS_MY_FEED"));
-
-        doFuzzyMatchTest("^this_is_my_feed$",
-                List.of("THIS_IS_MY_FEED", "this_is_my_feed"),
-                List.of("NOT_THIS_IS_MY_FEED", "NOT_THIS_IS_MY_FEED_NOT", "THIS_IS_MY_FEED_NOT"));
-
-        doFuzzyMatchTest("^this_is_my_feed$", "THIS_IS_MY_FEED", true);
-        doFuzzyMatchTest("feed$", "THIS_IS_MY_FEED", true);
 
         doFuzzyMatchTest("THIS_", "THIS_IS_MY_FEED", true);
         doFuzzyMatchTest("MY_FEED", "THIS_IS_MY_FEED", true);
