@@ -24,36 +24,25 @@ import stroom.docstore.api.Store;
 import stroom.docstore.api.StoreFactory;
 import stroom.docstore.api.UniqueNameUtil;
 import stroom.explorer.shared.DocumentType;
-import stroom.importexport.migration.LegacyXMLSerialiser;
 import stroom.importexport.shared.ImportState;
 import stroom.importexport.shared.ImportState.ImportMode;
-import stroom.security.api.SecurityContext;
 import stroom.statistics.impl.sql.shared.StatisticStoreDoc;
-import stroom.statistics.impl.sql.shared.StatisticsDataSourceData;
 import stroom.util.shared.Message;
-import stroom.util.shared.Severity;
 
 import javax.inject.Inject;
 import javax.inject.Singleton;
-import java.io.IOException;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
-import java.util.UUID;
 
 @Singleton
 public class StatisticStoreStoreImpl implements StatisticStoreStore {
     private final Store<StatisticStoreDoc> store;
-    private final SecurityContext securityContext;
-    private final StatisticStoreSerialiser serialiser;
 
     @Inject
     public StatisticStoreStoreImpl(final StoreFactory storeFactory,
-                                   final SecurityContext securityContext,
                                    final StatisticStoreSerialiser serialiser) {
         this.store = storeFactory.createStore(serialiser, StatisticStoreDoc.DOCUMENT_TYPE, StatisticStoreDoc.class);
-        this.securityContext = securityContext;
-        this.serialiser = serialiser;
     }
 
     ////////////////////////////////////////////////////////////////////////
@@ -157,13 +146,7 @@ public class StatisticStoreStoreImpl implements StatisticStoreStore {
 
     @Override
     public ImpexDetails importDocument(final DocRef docRef, final Map<String, byte[]> dataMap, final ImportState importState, final ImportMode importMode) {
-        // Convert legacy import format to the new format.
-        final Map<String, byte[]> map = convert(docRef, dataMap, importState, importMode);
-        if (map != null) {
-            return store.importDocument(docRef, map, importState, importMode);
-        }
-
-        return new ImpexDetails(docRef);
+        return store.importDocument(docRef, dataMap, importState, importMode);
     }
 
     @Override
@@ -172,57 +155,6 @@ public class StatisticStoreStoreImpl implements StatisticStoreStore {
             return store.exportDocument(docRef, messageList, new AuditFieldFilter<>());
         }
         return store.exportDocument(docRef, messageList, d -> d);
-    }
-
-    private Map<String, byte[]> convert(final DocRef docRef, final Map<String, byte[]> dataMap, final ImportState importState, final ImportMode importMode) {
-        Map<String, byte[]> result = dataMap;
-        if (dataMap.size() > 0 && !dataMap.containsKey("meta")) {
-            final String uuid = docRef.getUuid();
-            try {
-                final boolean exists = store.exists(docRef);
-                StatisticStoreDoc document;
-                if (exists) {
-                    document = readDocument(docRef);
-
-                } else {
-                    final OldStatisticStoreEntity oldStatisticStore = new OldStatisticStoreEntity();
-                    final LegacyXMLSerialiser legacySerialiser = new LegacyXMLSerialiser();
-                    legacySerialiser.performImport(oldStatisticStore, dataMap);
-
-                    final long now = System.currentTimeMillis();
-                    final String userId = securityContext.getUserId();
-
-                    document = new StatisticStoreDoc();
-                    document.setType(docRef.getType());
-                    document.setUuid(uuid);
-                    document.setName(docRef.getName());
-                    document.setVersion(UUID.randomUUID().toString());
-                    document.setCreateTimeMs(now);
-                    document.setUpdateTimeMs(now);
-                    document.setCreateUser(userId);
-                    document.setUpdateUser(userId);
-
-                    document.setDescription(oldStatisticStore.getDescription());
-                    document.setStatisticType(oldStatisticStore.getStatisticType());
-                    document.setRollUpType(oldStatisticStore.getRollUpType());
-                    document.setPrecision(oldStatisticStore.getPrecision());
-                    document.setEnabled(oldStatisticStore.isEnabled());
-
-                    final StatisticsDataSourceData statisticsDataSourceData = serialiser.getDataFromLegacyXML(oldStatisticStore.getData());
-                    if (statisticsDataSourceData != null) {
-                        document.setConfig(statisticsDataSourceData);
-                    }
-
-                    result = serialiser.write(document);
-                }
-
-            } catch (final IOException | RuntimeException e) {
-                importState.addMessage(Severity.ERROR, e.getMessage());
-                result = null;
-            }
-        }
-
-        return result;
     }
 
     @Override

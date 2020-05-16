@@ -35,20 +35,24 @@ public class Indexes {
     // INDEX definitions
     // -------------------------------------------------------------------------
 
-    public static final Index META_META_FEED_ID = Indexes0.META_META_FEED_ID;
-    public static final Index META_META_PROCESSOR_ID = Indexes0.META_META_PROCESSOR_ID;
+    public static final Index META_META_CREATE_TIME = Indexes0.META_META_CREATE_TIME;
+    public static final Index META_META_FEED_ID_CREATE_TIME = Indexes0.META_META_FEED_ID_CREATE_TIME;
+    public static final Index META_META_FEED_ID_EFFECTIVE_TIME = Indexes0.META_META_FEED_ID_EFFECTIVE_TIME;
+    public static final Index META_META_PARENT_ID = Indexes0.META_META_PARENT_ID;
+    public static final Index META_META_PROCESSOR_ID_CREATE_TIME = Indexes0.META_META_PROCESSOR_ID_CREATE_TIME;
+    public static final Index META_META_STATUS = Indexes0.META_META_STATUS;
     public static final Index META_META_TYPE_ID = Indexes0.META_META_TYPE_ID;
     public static final Index META_PRIMARY = Indexes0.META_PRIMARY;
     public static final Index META_FEED_NAME = Indexes0.META_FEED_NAME;
     public static final Index META_FEED_PRIMARY = Indexes0.META_FEED_PRIMARY;
-    public static final Index META_KEY_NAME = Indexes0.META_KEY_NAME;
+    public static final Index META_KEY_META_KEY_NAME = Indexes0.META_KEY_META_KEY_NAME;
     public static final Index META_KEY_PRIMARY = Indexes0.META_KEY_PRIMARY;
     public static final Index META_PROCESSOR_PRIMARY = Indexes0.META_PROCESSOR_PRIMARY;
     public static final Index META_PROCESSOR_PROCESSOR_UUID = Indexes0.META_PROCESSOR_PROCESSOR_UUID;
     public static final Index META_TYPE_NAME = Indexes0.META_TYPE_NAME;
     public static final Index META_TYPE_PRIMARY = Indexes0.META_TYPE_PRIMARY;
-    public static final Index META_VAL_META_VAL_CREATE_TIME_IDX = Indexes0.META_VAL_META_VAL_CREATE_TIME_IDX;
-    public static final Index META_VAL_META_VAL_META_ID_IDX = Indexes0.META_VAL_META_VAL_META_ID_IDX;
+    public static final Index META_VAL_META_VAL_CREATE_TIME = Indexes0.META_VAL_META_VAL_CREATE_TIME;
+    public static final Index META_VAL_META_VAL_META_ID = Indexes0.META_VAL_META_VAL_META_ID;
     public static final Index META_VAL_PRIMARY = Indexes0.META_VAL_PRIMARY;
 
     // -------------------------------------------------------------------------
@@ -56,20 +60,24 @@ public class Indexes {
     // -------------------------------------------------------------------------
 
     private static class Indexes0 {
-        public static Index META_META_FEED_ID = Internal.createIndex("meta_feed_id", Meta.META, new OrderField[] { Meta.META.FEED_ID }, false);
-        public static Index META_META_PROCESSOR_ID = Internal.createIndex("meta_processor_id", Meta.META, new OrderField[] { Meta.META.PROCESSOR_ID }, false);
+        public static Index META_META_CREATE_TIME = Internal.createIndex("meta_create_time", Meta.META, new OrderField[] { Meta.META.CREATE_TIME }, false);
+        public static Index META_META_FEED_ID_CREATE_TIME = Internal.createIndex("meta_feed_id_create_time", Meta.META, new OrderField[] { Meta.META.FEED_ID, Meta.META.CREATE_TIME }, false);
+        public static Index META_META_FEED_ID_EFFECTIVE_TIME = Internal.createIndex("meta_feed_id_effective_time", Meta.META, new OrderField[] { Meta.META.FEED_ID, Meta.META.EFFECTIVE_TIME }, false);
+        public static Index META_META_PARENT_ID = Internal.createIndex("meta_parent_id", Meta.META, new OrderField[] { Meta.META.PARENT_ID }, false);
+        public static Index META_META_PROCESSOR_ID_CREATE_TIME = Internal.createIndex("meta_processor_id_create_time", Meta.META, new OrderField[] { Meta.META.PROCESSOR_ID, Meta.META.CREATE_TIME }, false);
+        public static Index META_META_STATUS = Internal.createIndex("meta_status", Meta.META, new OrderField[] { Meta.META.STATUS }, false);
         public static Index META_META_TYPE_ID = Internal.createIndex("meta_type_id", Meta.META, new OrderField[] { Meta.META.TYPE_ID }, false);
         public static Index META_PRIMARY = Internal.createIndex("PRIMARY", Meta.META, new OrderField[] { Meta.META.ID }, true);
         public static Index META_FEED_NAME = Internal.createIndex("name", MetaFeed.META_FEED, new OrderField[] { MetaFeed.META_FEED.NAME }, true);
         public static Index META_FEED_PRIMARY = Internal.createIndex("PRIMARY", MetaFeed.META_FEED, new OrderField[] { MetaFeed.META_FEED.ID }, true);
-        public static Index META_KEY_NAME = Internal.createIndex("name", MetaKey.META_KEY, new OrderField[] { MetaKey.META_KEY.NAME }, true);
+        public static Index META_KEY_META_KEY_NAME = Internal.createIndex("meta_key_name", MetaKey.META_KEY, new OrderField[] { MetaKey.META_KEY.NAME }, true);
         public static Index META_KEY_PRIMARY = Internal.createIndex("PRIMARY", MetaKey.META_KEY, new OrderField[] { MetaKey.META_KEY.ID }, true);
         public static Index META_PROCESSOR_PRIMARY = Internal.createIndex("PRIMARY", MetaProcessor.META_PROCESSOR, new OrderField[] { MetaProcessor.META_PROCESSOR.ID }, true);
         public static Index META_PROCESSOR_PROCESSOR_UUID = Internal.createIndex("processor_uuid", MetaProcessor.META_PROCESSOR, new OrderField[] { MetaProcessor.META_PROCESSOR.PROCESSOR_UUID }, true);
         public static Index META_TYPE_NAME = Internal.createIndex("name", MetaType.META_TYPE, new OrderField[] { MetaType.META_TYPE.NAME }, true);
         public static Index META_TYPE_PRIMARY = Internal.createIndex("PRIMARY", MetaType.META_TYPE, new OrderField[] { MetaType.META_TYPE.ID }, true);
-        public static Index META_VAL_META_VAL_CREATE_TIME_IDX = Internal.createIndex("meta_val_create_time_idx", MetaVal.META_VAL, new OrderField[] { MetaVal.META_VAL.CREATE_TIME }, false);
-        public static Index META_VAL_META_VAL_META_ID_IDX = Internal.createIndex("meta_val_meta_id_idx", MetaVal.META_VAL, new OrderField[] { MetaVal.META_VAL.META_ID }, false);
+        public static Index META_VAL_META_VAL_CREATE_TIME = Internal.createIndex("meta_val_create_time", MetaVal.META_VAL, new OrderField[] { MetaVal.META_VAL.CREATE_TIME }, false);
+        public static Index META_VAL_META_VAL_META_ID = Internal.createIndex("meta_val_meta_id", MetaVal.META_VAL, new OrderField[] { MetaVal.META_VAL.META_ID }, false);
         public static Index META_VAL_PRIMARY = Internal.createIndex("PRIMARY", MetaVal.META_VAL, new OrderField[] { MetaVal.META_VAL.ID }, true);
     }
 }

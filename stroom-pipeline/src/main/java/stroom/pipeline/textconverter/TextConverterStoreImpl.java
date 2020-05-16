@@ -24,36 +24,25 @@ import stroom.docstore.api.Store;
 import stroom.docstore.api.StoreFactory;
 import stroom.docstore.api.UniqueNameUtil;
 import stroom.explorer.shared.DocumentType;
-import stroom.importexport.migration.LegacyXMLSerialiser;
 import stroom.importexport.shared.ImportState;
 import stroom.importexport.shared.ImportState.ImportMode;
 import stroom.pipeline.shared.TextConverterDoc;
-import stroom.pipeline.shared.TextConverterDoc.TextConverterType;
-import stroom.security.api.SecurityContext;
 import stroom.util.shared.Message;
-import stroom.util.shared.Severity;
 
 import javax.inject.Inject;
 import javax.inject.Singleton;
-import java.io.IOException;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
-import java.util.UUID;
 
 @Singleton
 class TextConverterStoreImpl implements TextConverterStore {
     private final Store<TextConverterDoc> store;
-    private final SecurityContext securityContext;
-    private final TextConverterSerialiser serialiser;
 
     @Inject
     TextConverterStoreImpl(final StoreFactory storeFactory,
-                           final SecurityContext securityContext,
                            final TextConverterSerialiser serialiser) {
         this.store = storeFactory.createStore(serialiser, TextConverterDoc.DOCUMENT_TYPE, TextConverterDoc.class);
-        this.securityContext = securityContext;
-        this.serialiser = serialiser;
     }
 
     ////////////////////////////////////////////////////////////////////////
@@ -153,13 +142,7 @@ class TextConverterStoreImpl implements TextConverterStore {
 
     @Override
     public ImpexDetails importDocument(final DocRef docRef, final Map<String, byte[]> dataMap, final ImportState importState, final ImportMode importMode) {
-        // Convert legacy import format to the new format.
-        final Map<String, byte[]> map = convert(docRef, dataMap, importState, importMode);
-        if (map != null) {
-            return store.importDocument(docRef, map, importState, importMode);
-        }
-
-        return new ImpexDetails(docRef);
+        return store.importDocument(docRef, dataMap, importState, importMode);
     }
 
     @Override
@@ -168,55 +151,6 @@ class TextConverterStoreImpl implements TextConverterStore {
             return store.exportDocument(docRef, messageList, new AuditFieldFilter<>());
         }
         return store.exportDocument(docRef, messageList, d -> d);
-    }
-
-    private Map<String, byte[]> convert(final DocRef docRef, final Map<String, byte[]> dataMap, final ImportState importState, final ImportMode importMode) {
-        Map<String, byte[]> result = dataMap;
-        if (dataMap.size() > 1 && !dataMap.containsKey("meta") && dataMap.containsKey("xml")) {
-            final String uuid = docRef.getUuid();
-            try {
-                final boolean exists = store.exists(docRef);
-                TextConverterDoc document;
-                if (exists) {
-                    document = readDocument(docRef);
-
-                } else {
-                    final OldTextConverter oldTextConverter = new OldTextConverter();
-                    final LegacyXMLSerialiser legacySerialiser = new LegacyXMLSerialiser();
-                    legacySerialiser.performImport(oldTextConverter, dataMap);
-
-                    final long now = System.currentTimeMillis();
-                    final String userId = securityContext.getUserId();
-
-                    document = new TextConverterDoc();
-                    document.setType(docRef.getType());
-                    document.setUuid(uuid);
-                    document.setName(docRef.getName());
-                    document.setVersion(UUID.randomUUID().toString());
-                    document.setCreateTimeMs(now);
-                    document.setUpdateTimeMs(now);
-                    document.setCreateUser(userId);
-                    document.setUpdateUser(userId);
-
-                    document.setDescription(oldTextConverter.getDescription());
-
-                    if (oldTextConverter.getConverterType() != null) {
-                        document.setConverterType(TextConverterType.valueOf(oldTextConverter.getConverterType().name()));
-                    }
-                }
-
-                result = serialiser.write(document);
-                if (dataMap.containsKey("data.xml")) {
-                    result.put("xml", dataMap.remove("data.xml"));
-                }
-
-            } catch (final IOException | RuntimeException e) {
-                importState.addMessage(Severity.ERROR, e.getMessage());
-                result = null;
-            }
-        }
-
-        return result;
     }
 
     @Override

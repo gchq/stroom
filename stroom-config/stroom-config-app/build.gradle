@@ -27,6 +27,7 @@ dependencies {
     compile project(':stroom-job:stroom-job-impl')
     compile project(':stroom-job:stroom-job-impl-db')
     compile project(':stroom-kafka:stroom-kafka-impl')
+    compile project(':stroom-legacy:stroom-legacy-db-migration')
     compile project(':stroom-lifecycle:stroom-lifecycle-impl')
     compile project(':stroom-meta:stroom-meta-impl')
     compile project(':stroom-meta:stroom-meta-impl-db')

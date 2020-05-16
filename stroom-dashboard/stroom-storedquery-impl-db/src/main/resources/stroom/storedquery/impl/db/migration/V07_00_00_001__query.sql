@@ -18,32 +18,6 @@
 SET @OLD_SQL_NOTES=@@SQL_NOTES, SQL_NOTES=0;
 
 --
--- Rename the old QUERY table, idempotent
--- MUST BE DONE HERE DUE TO NAME CLASH
---
-DROP PROCEDURE IF EXISTS rename_query;
-DELIMITER //
-CREATE PROCEDURE rename_query ()
-BEGIN
-    IF NOT EXISTS (
-        SELECT TABLE_NAME
-        FROM INFORMATION_SCHEMA.TABLES
-        WHERE TABLE_NAME = 'OLD_QUERY') THEN
-
-        IF EXISTS (
-            SELECT TABLE_NAME
-            FROM INFORMATION_SCHEMA.TABLES
-            WHERE TABLE_NAME = 'QUERY') THEN
-
-            RENAME TABLE QUERY TO OLD_QUERY;
-        END IF;
-    END IF;
-END//
-DELIMITER ;
-CALL rename_query();
-DROP PROCEDURE rename_query;
-
---
 -- Create the query table
 -- MUST BE DONE HERE DUE TO NAME CLASH
 --
@@ -61,63 +35,6 @@ CREATE TABLE IF NOT EXISTS query (
     favourite             bit(1) NOT NULL,
     PRIMARY KEY           (id)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8;
-
---
--- Copy data into the query table
--- MUST BE DONE HERE DUE TO NAME CLASH
---
-DROP PROCEDURE IF EXISTS copy_query;
-DELIMITER //
-CREATE PROCEDURE copy_query ()
-BEGIN
-    IF EXISTS (
-        SELECT TABLE_NAME
-        FROM INFORMATION_SCHEMA.TABLES
-        WHERE TABLE_NAME = 'OLD_QUERY') THEN
-
-        INSERT INTO query (
-            id,
-            version,
-            create_time_ms,
-            create_user,
-            update_time_ms,
-            update_user,
-            dashboard_uuid,
-            component_id,
-            name,
-            data,
-            favourite)
-        SELECT
-            ID,
-            1,
-            IFNULL(CRT_MS,  0),
-            IFNULL(CRT_USER,  'UNKNOWN'),
-            IFNULL(UPD_MS,  0),
-            IFNULL(UPD_USER,  'UNKNOWN'),
-            DASH_UUID,
-            QUERY_ID,
-            NAME,
-            DAT,
-            FAVOURITE
-        FROM OLD_QUERY
-        WHERE ID > (SELECT COALESCE(MAX(id), 0) FROM query)
-        AND DASH_UUID IS NOT NULL
-        AND QUERY_ID IS NOT NULL
-        AND NAME IS NOT NULL
-        ORDER BY ID;
-
-        -- Work out what to set our auto_increment start value to
-        SELECT CONCAT('ALTER TABLE query AUTO_INCREMENT = ', COALESCE(MAX(id) + 1, 1))
-        INTO @alter_table_sql
-        FROM query;
-
-        PREPARE alter_table_stmt FROM @alter_table_sql;
-        EXECUTE alter_table_stmt;
-    END IF;
-END//
-DELIMITER ;
-CALL copy_query();
-DROP PROCEDURE copy_query;
 
 SET SQL_NOTES=@OLD_SQL_NOTES;
 

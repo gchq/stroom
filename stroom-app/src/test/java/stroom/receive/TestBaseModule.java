@@ -12,6 +12,7 @@ import stroom.docstore.impl.DocStoreModule;
 import stroom.docstore.impl.memory.MemoryPersistenceModule;
 import stroom.event.logging.api.DocumentEventLog;
 import stroom.feed.impl.FeedModule;
+import stroom.legacy.impex_6_1.LegacyImpexModule;
 import stroom.meta.mock.MockMetaModule;
 import stroom.meta.statistics.impl.MockMetaStatisticsModule;
 import stroom.receive.rules.impl.ReceiveDataRuleSetModule;
@@ -27,6 +28,7 @@ public class TestBaseModule extends AbstractModule {
         install(new DictionaryModule());
         install(new DocStoreModule());
         install(new FeedModule());
+        install(new LegacyImpexModule());
         install(new MemoryPersistenceModule());
         install(new MockMetaModule());
         install(new MockMetaStatisticsModule());

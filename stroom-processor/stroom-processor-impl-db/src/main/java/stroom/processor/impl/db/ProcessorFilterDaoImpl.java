@@ -49,9 +49,11 @@ class ProcessorFilterDaoImpl implements ProcessorFilterDao {
     private final ExpressionMapper expressionMapper;
 
     @Inject
-    ProcessorFilterDaoImpl(final ProcessorDbConnProvider processorDbConnProvider, final ExpressionMapperFactory expressionMapperFactory) {
+    ProcessorFilterDaoImpl(final ProcessorDbConnProvider processorDbConnProvider,
+                           final ExpressionMapperFactory expressionMapperFactory,
+                           final ProcessorFilterMarshaller marshaller) {
         this.processorDbConnProvider = processorDbConnProvider;
-        this.marshaller = new ProcessorFilterMarshaller();
+        this.marshaller = marshaller;
         this.genericDao = new GenericDao<>(PROCESSOR_FILTER, PROCESSOR_FILTER.ID, ProcessorFilter.class, processorDbConnProvider);
 
         expressionMapper = expressionMapperFactory.create();

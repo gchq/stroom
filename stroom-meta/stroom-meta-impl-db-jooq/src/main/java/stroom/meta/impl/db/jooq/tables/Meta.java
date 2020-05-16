@@ -42,7 +42,7 @@ import stroom.meta.impl.db.jooq.tables.records.MetaRecord;
 @SuppressWarnings({ "all", "unchecked", "rawtypes" })
 public class Meta extends TableImpl<MetaRecord> {
 
-    private static final long serialVersionUID = 1084751372;
+    private static final long serialVersionUID = -410724514;
 
     /**
      * The reference instance of <code>stroom.meta</code>
@@ -142,7 +142,7 @@ public class Meta extends TableImpl<MetaRecord> {
 
     @Override
     public List<Index> getIndexes() {
-        return Arrays.<Index>asList(Indexes.META_META_FEED_ID, Indexes.META_META_PROCESSOR_ID, Indexes.META_META_TYPE_ID, Indexes.META_PRIMARY);
+        return Arrays.<Index>asList(Indexes.META_META_CREATE_TIME, Indexes.META_META_FEED_ID_CREATE_TIME, Indexes.META_META_FEED_ID_EFFECTIVE_TIME, Indexes.META_META_PARENT_ID, Indexes.META_META_PROCESSOR_ID_CREATE_TIME, Indexes.META_META_STATUS, Indexes.META_META_TYPE_ID, Indexes.META_PRIMARY);
     }
 
     @Override

@@ -1,24 +1,16 @@
 package stroom.dashboard.impl.visualisation;
 
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
-import stroom.docref.DocRef;
 import stroom.docstore.api.DocumentSerialiser2;
 import stroom.docstore.api.Serialiser2;
 import stroom.docstore.api.Serialiser2Factory;
 import stroom.util.string.EncodingUtil;
-import stroom.util.xml.XMLMarshallerUtil;
 import stroom.visualisation.shared.VisualisationDoc;
 
 import javax.inject.Inject;
-import javax.xml.bind.JAXBContext;
-import javax.xml.bind.JAXBException;
 import java.io.IOException;
 import java.util.Map;
 
 public class VisualisationSerialiser implements DocumentSerialiser2<VisualisationDoc> {
-    private static final Logger LOGGER = LoggerFactory.getLogger(VisualisationSerialiser.class);
-
     private static final String JSON = "json";
 
     private final Serialiser2<VisualisationDoc> delegate;
@@ -52,18 +44,5 @@ public class VisualisationSerialiser implements DocumentSerialiser2<Visualisatio
         }
 
         return data;
-    }
-
-    public DocRef getDocRefFromLegacyXML(final String xml) {
-        if (xml != null) {
-            try {
-                final JAXBContext jaxbContext = JAXBContext.newInstance(DocRef.class);
-                return XMLMarshallerUtil.unmarshal(jaxbContext, DocRef.class, xml);
-            } catch (final JAXBException | RuntimeException e) {
-                LOGGER.error("Unable to unmarshal dashboard config", e);
-            }
-        }
-
-        return null;
     }
 }

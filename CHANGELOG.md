@@ -6,6 +6,8 @@ and this project adheres to [Semantic Versioning](http://semver.org/).
 
 ## [Unreleased]
 
+* Issue **#1396** : Completely changed DB migration and import/export compatibility code.
+
 * Fix index creation stored procedure.
 
 * Issue **#1508** : Tidy up property descriptions, change connection pool props to use Stroom Duration type.

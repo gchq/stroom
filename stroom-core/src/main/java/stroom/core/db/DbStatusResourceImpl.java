@@ -22,23 +22,24 @@ import stroom.node.shared.FindDBTableCriteria;
 import stroom.util.shared.ResultPage;
 
 import javax.inject.Inject;
+import javax.inject.Provider;
 
 // TODO : @66 add event logging
 class DbStatusResourceImpl implements DbStatusResource {
-    private final DBTableService dbTableService;
+    private final Provider<DBTableService> dbTableServiceProvider;
 
     @Inject
-    DbStatusResourceImpl(final DBTableService dbTableService) {
-        this.dbTableService = dbTableService;
+    DbStatusResourceImpl(final Provider<DBTableService> dbTableServiceProvider) {
+        this.dbTableServiceProvider = dbTableServiceProvider;
     }
 
     @Override
     public ResultPage<DBTableStatus> getSystemTableStatus() {
-        return dbTableService.getSystemTableStatus();
+        return dbTableServiceProvider.get().getSystemTableStatus();
     }
 
     @Override
     public ResultPage<DBTableStatus> findSystemTableStatus(final FindDBTableCriteria criteria) {
-        return dbTableService.findSystemTableStatus(criteria);
+        return dbTableServiceProvider.get().findSystemTableStatus(criteria);
     }
 }

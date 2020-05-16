@@ -6,6 +6,7 @@ import stroom.docstore.api.Store;
 import stroom.docstore.api.StoreFactory;
 import stroom.docstore.shared.Doc;
 import stroom.event.logging.api.DocumentEventLog;
+import stroom.importexport.api.ImportConverter;
 import stroom.security.api.SecurityContext;
 import stroom.util.entityevent.EntityEventBus;
 
@@ -42,6 +43,7 @@ class TestDocStoreModule {
                 bind(EntityEventBus.class).toInstance(entityEventBus);
                 bind(SecurityContext.class).toInstance(securityContextMock);
                 bind(DocumentEventLog.class).toProvider(Providers.of(null));
+                bind(ImportConverter.class).toProvider(Providers.of((docRef, dataMap, importState, importMode, userId) -> dataMap));
                 install(new DocStoreModule());
             }
         });

@@ -16,7 +16,7 @@
 
 package stroom.test;
 
-import stroom.core.db.CoreDbConnProvider;
+import stroom.legacy.db.LegacyDbConnProvider;
 import stroom.test.common.util.db.DbTestUtil;
 
 import javax.inject.Inject;
@@ -29,15 +29,15 @@ import java.sql.SQLException;
  * </p>
  */
 class DatabaseCommonTestControlTransactionHelper {
-    private final CoreDbConnProvider coreDbConnProvider;
+    private final LegacyDbConnProvider legacyDbConnProvider;
 
     @Inject
-    DatabaseCommonTestControlTransactionHelper(final CoreDbConnProvider coreDbConnProvider) {
-        this.coreDbConnProvider = coreDbConnProvider;
+    DatabaseCommonTestControlTransactionHelper(final LegacyDbConnProvider legacyDbConnProvider) {
+        this.legacyDbConnProvider = legacyDbConnProvider;
     }
 
     void clearAllTables() {
-        try (final Connection connection = coreDbConnProvider.getConnection()) {
+        try (final Connection connection = legacyDbConnProvider.getConnection()) {
             DbTestUtil.clearAllTables(connection);
         } catch (final SQLException e) {
             throw new RuntimeException(e.getMessage(), e);

@@ -15,7 +15,7 @@ import org.jooq.Identity;
 import org.jooq.Index;
 import org.jooq.Name;
 import org.jooq.Record;
-import org.jooq.Row12;
+import org.jooq.Row13;
 import org.jooq.Schema;
 import org.jooq.Table;
 import org.jooq.TableField;
@@ -42,7 +42,7 @@ import stroom.processor.impl.db.jooq.tables.records.ProcessorFilterRecord;
 @SuppressWarnings({ "all", "unchecked", "rawtypes" })
 public class ProcessorFilter extends TableImpl<ProcessorFilterRecord> {
 
-    private static final long serialVersionUID = -422566393;
+    private static final long serialVersionUID = 1971537396;
 
     /**
      * The reference instance of <code>stroom.processor_filter</code>
@@ -115,7 +115,12 @@ public class ProcessorFilter extends TableImpl<ProcessorFilterRecord> {
     /**
      * The column <code>stroom.processor_filter.enabled</code>.
      */
-    public final TableField<ProcessorFilterRecord, Boolean> ENABLED = createField(DSL.name("enabled"), org.jooq.impl.SQLDataType.BIT.nullable(false), this, "");
+    public final TableField<ProcessorFilterRecord, Boolean> ENABLED = createField(DSL.name("enabled"), org.jooq.impl.SQLDataType.BIT.defaultValue(org.jooq.impl.DSL.inline("b'0'", org.jooq.impl.SQLDataType.BIT)), this, "");
+
+    /**
+     * The column <code>stroom.processor_filter.deleted</code>.
+     */
+    public final TableField<ProcessorFilterRecord, Boolean> DELETED = createField(DSL.name("deleted"), org.jooq.impl.SQLDataType.BIT.defaultValue(org.jooq.impl.DSL.inline("b'0'", org.jooq.impl.SQLDataType.BIT)), this, "");
 
     /**
      * Create a <code>stroom.processor_filter</code> table reference
@@ -220,11 +225,11 @@ public class ProcessorFilter extends TableImpl<ProcessorFilterRecord> {
     }
 
     // -------------------------------------------------------------------------
-    // Row12 type methods
+    // Row13 type methods
     // -------------------------------------------------------------------------
 
     @Override
-    public Row12<Integer, Integer, Long, String, Long, String, String, Integer, Integer, String, Integer, Boolean> fieldsRow() {
-        return (Row12) super.fieldsRow();
+    public Row13<Integer, Integer, Long, String, Long, String, String, Integer, Integer, String, Integer, Boolean, Boolean> fieldsRow() {
+        return (Row13) super.fieldsRow();
     }
 }

@@ -42,7 +42,7 @@ import stroom.meta.impl.db.jooq.tables.records.MetaKeyRecord;
 @SuppressWarnings({ "all", "unchecked", "rawtypes" })
 public class MetaKey extends TableImpl<MetaKeyRecord> {
 
-    private static final long serialVersionUID = -1563428411;
+    private static final long serialVersionUID = -1857627843;
 
     /**
      * The reference instance of <code>stroom.meta_key</code>
@@ -112,7 +112,7 @@ public class MetaKey extends TableImpl<MetaKeyRecord> {
 
     @Override
     public List<Index> getIndexes() {
-        return Arrays.<Index>asList(Indexes.META_KEY_NAME, Indexes.META_KEY_PRIMARY);
+        return Arrays.<Index>asList(Indexes.META_KEY_META_KEY_NAME, Indexes.META_KEY_PRIMARY);
     }
 
     @Override
@@ -127,7 +127,7 @@ public class MetaKey extends TableImpl<MetaKeyRecord> {
 
     @Override
     public List<UniqueKey<MetaKeyRecord>> getKeys() {
-        return Arrays.<UniqueKey<MetaKeyRecord>>asList(Keys.KEY_META_KEY_PRIMARY, Keys.KEY_META_KEY_NAME);
+        return Arrays.<UniqueKey<MetaKeyRecord>>asList(Keys.KEY_META_KEY_PRIMARY, Keys.KEY_META_KEY_META_KEY_NAME);
     }
 
     @Override

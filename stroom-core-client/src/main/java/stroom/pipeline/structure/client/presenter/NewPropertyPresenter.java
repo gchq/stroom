@@ -190,8 +190,8 @@ public class NewPropertyPresenter extends MyPresenterWidget<NewPropertyPresenter
         }
 
         currentBoolean = Boolean.FALSE;
-        if (property.getValue() != null && property.getValue().isBoolean() != null) {
-            currentBoolean = property.getValue().isBoolean();
+        if (property.getValue() != null && property.getValue().getBoolean() != null) {
+            currentBoolean = property.getValue().getBoolean();
         }
 
         setBoolean(currentBoolean);

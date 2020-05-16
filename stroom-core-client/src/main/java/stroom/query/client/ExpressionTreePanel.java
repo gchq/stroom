@@ -68,7 +68,7 @@ public class ExpressionTreePanel extends TreePanel<Item> {
         docRefPresenter.getWidget().getElement().getStyle().setMargin(0, Unit.PX);
 
         final EntityDropDownPresenter dictionaryPresenter = docRefProvider.get();
-        dictionaryPresenter.setIncludedTypes(DictionaryDoc.ENTITY_TYPE);
+        dictionaryPresenter.setIncludedTypes(DictionaryDoc.DOCUMENT_TYPE);
         dictionaryPresenter.setRequiredPermissions(DocumentPermissionNames.USE);
         dictionaryPresenter.getWidget().getElement().getStyle().setMargin(0, Unit.PX);
 

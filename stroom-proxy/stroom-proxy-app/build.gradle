@@ -18,6 +18,7 @@ dependencies {
     compile project(':stroom-explorer:stroom-collection-api')
     compile project(':stroom-explorer:stroom-collection-mock')
     compile project(':stroom-meta:stroom-meta-api')
+    compile project(':stroom-legacy:stroom-legacy-impex_6_1')
     compile project(':stroom-pipeline')
     compile project(':stroom-proxy:stroom-proxy-remote-api')
     compile project(':stroom-proxy:stroom-proxy-repo')

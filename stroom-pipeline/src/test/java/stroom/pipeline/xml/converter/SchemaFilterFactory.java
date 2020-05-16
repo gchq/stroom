@@ -42,7 +42,7 @@ public class SchemaFilterFactory {
     private final Persistence persistence = new MemoryPersistence();
     private final XmlSchemaSerialiser serialiser = new XmlSchemaSerialiser(new Serialiser2FactoryImpl());
     private final XmlSchemaStore xmlSchemaStore = new XmlSchemaStoreImpl(
-            new StoreFactoryImpl(persistence, null, securityContext), securityContext, serialiser);
+            new StoreFactoryImpl(persistence, null, null, securityContext), serialiser);
     private final XmlSchemaCache xmlSchemaCache = new XmlSchemaCache(xmlSchemaStore);
     private final SchemaLoaderImpl schemaLoader = new SchemaLoaderImpl(xmlSchemaCache);
 

@@ -25,7 +25,6 @@ import java.io.IOException;
 import java.util.Map;
 
 public class KafkaConfigSerialiser implements DocumentSerialiser2<KafkaConfigDoc> {
-
     private final Serialiser2<KafkaConfigDoc> delegate;
 
     @Inject

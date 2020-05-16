@@ -23,7 +23,6 @@ import stroom.pipeline.shared.data.PipelineElementType;
 import stroom.util.xml.XMLMarshallerUtil;
 
 import javax.xml.bind.JAXBContext;
-import javax.xml.bind.JAXBException;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
@@ -32,8 +31,8 @@ class TestPipelineSerialisation {
             new String[]{PipelineElementType.ROLE_TARGET, PipelineElementType.ROLE_HAS_TARGETS}, null);
 
     @Test
-    void testEmpty() throws JAXBException {
-        final JAXBContext jaxbContext = JAXBContext.newInstance(PipelineData.class);
+    void testEmpty() {
+        final JAXBContext jaxbContext = PipelineSerialiser.getJAXBContext();
         final PipelineData pipelineData = new PipelineData();
         final String string = XMLMarshallerUtil.marshal(jaxbContext, XMLMarshallerUtil.removeEmptyCollections(pipelineData));
         assertThat("<?xml version=\"1.1\" encoding=\"UTF-8\"?>\n" +
@@ -41,8 +40,8 @@ class TestPipelineSerialisation {
     }
 
     @Test
-    void testElements() throws JAXBException {
-        final JAXBContext jaxbContext = JAXBContext.newInstance(PipelineData.class);
+    void testElements() {
+        final JAXBContext jaxbContext = PipelineSerialiser.getJAXBContext();
         final PipelineData pipelineData = new PipelineData();
         pipelineData.addElement(ELEM_TYPE, "test1");
         final String string = XMLMarshallerUtil.marshal(jaxbContext, XMLMarshallerUtil.removeEmptyCollections(pipelineData));
