@@ -16,6 +16,7 @@
 
 package stroom.legacy.model_6_1;
 
+@Deprecated
 public enum StreamAttributeFieldUse implements HasDisplayValue, HasPrimitiveValue {
     FIELD("Text", 1, false), NUMERIC_FIELD("Number", 2, true), DATE_FIELD("Date", 3, false), ID("Id", 4,
             true), COUNT_IN_DURATION_FIELD("Count in Duration", 5, true), SIZE_FIELD("Size", 6,

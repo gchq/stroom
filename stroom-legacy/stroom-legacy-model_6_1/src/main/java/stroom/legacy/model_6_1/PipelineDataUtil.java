@@ -18,6 +18,7 @@ package stroom.legacy.model_6_1;
 
 import java.util.Collections;
 
+@Deprecated
 public class PipelineDataUtil {
     public static PipelineElement createElement(final String id, final String type) {
         final PipelineElement element = new PipelineElement();

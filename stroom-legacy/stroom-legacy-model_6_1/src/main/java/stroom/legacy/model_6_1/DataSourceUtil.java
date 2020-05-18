@@ -3,6 +3,7 @@ package stroom.legacy.model_6_1;
 import stroom.legacy.model_6_1.DataSourceField.DataSourceFieldType;
 import stroom.legacy.model_6_1.ExpressionTerm.Condition;
 
+@Deprecated
 public class DataSourceUtil {
     public static DataSourceField createDateField(final String name) {
         return new DataSourceField.Builder()

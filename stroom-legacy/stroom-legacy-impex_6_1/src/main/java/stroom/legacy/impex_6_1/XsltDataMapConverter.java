@@ -14,6 +14,7 @@ import java.util.Map;
 import java.util.UUID;
 
 @Singleton
+@Deprecated
 class XsltDataMapConverter implements DataMapConverter {
     private final XsltSerialiser serialiser;
 

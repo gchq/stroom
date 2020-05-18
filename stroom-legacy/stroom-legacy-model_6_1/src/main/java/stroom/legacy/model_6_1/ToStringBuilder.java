@@ -16,6 +16,7 @@
 
 package stroom.legacy.model_6_1;
 
+@Deprecated
 public class ToStringBuilder {
     private final StringBuilder sb = new StringBuilder();
 

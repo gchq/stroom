@@ -16,5 +16,6 @@
 
 package stroom.legacy.model_6_1;
 
+@Deprecated
 public interface Document extends HasType, HasUuid {
 }

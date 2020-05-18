@@ -22,6 +22,7 @@ import javax.xml.bind.annotation.XmlType;
 
 @XmlRootElement(name = "inex")
 @XmlType(name = "inex", propOrder = {"include", "exclude"})
+@Deprecated
 public class IncludeExcludeEntityIdSet<T extends BaseEntity>
         implements Copyable<IncludeExcludeEntityIdSet<T>>, HasIsConstrained, Matcher<T>, Clearable, SharedObject {
     private static final long serialVersionUID = 7153300977968635056L;

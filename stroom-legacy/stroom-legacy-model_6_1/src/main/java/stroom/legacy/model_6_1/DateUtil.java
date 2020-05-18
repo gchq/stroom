@@ -28,6 +28,7 @@ import java.time.ZonedDateTime;
 import java.time.format.DateTimeFormatter;
 import java.time.temporal.TemporalAccessor;
 
+@Deprecated
 public final class DateUtil {
     private static final int DATE_LENGTH = "2000-01-01T00:00:00.000Z".length();
     private static final DateTimeFormatter NORMAL_STROOM_TIME_FORMATTER = DateTimeFormatter

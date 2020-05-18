@@ -23,6 +23,7 @@ import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Method;
 import java.util.Comparator;
 
+@Deprecated
 public class Property {
     private final String name;
     private final boolean externalFile;

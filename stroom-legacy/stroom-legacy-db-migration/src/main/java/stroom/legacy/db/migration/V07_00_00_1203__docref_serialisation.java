@@ -12,6 +12,7 @@ import stroom.db.util.JooqUtil;
 import java.util.Map;
 
 @SuppressWarnings("unused") // used by FlyWay
+@Deprecated
 public class V07_00_00_1203__docref_serialisation extends BaseJavaMigration {
 
     private static final Logger LOGGER = LoggerFactory.getLogger(V07_00_00_1203__docref_serialisation.class);

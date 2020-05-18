@@ -23,6 +23,7 @@ import java.util.Set;
 import java.util.TreeSet;
 
 @XmlRootElement(name = "docs")
+@Deprecated
 public class DocRefs implements Iterable<DocRef>, SharedObject {
     private static final long serialVersionUID = 8637215303311013483L;
     private Set<DocRef> set = new TreeSet<>();

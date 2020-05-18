@@ -23,6 +23,7 @@ import java.io.Serializable;
  * means an open ended range. The upper bound is not included i.e. [0..10) means
  * 0,1,2,3,4,5,6,7,8,9 or this can be represented by the toString [0..9]
  */
+@Deprecated
 public class Range<T extends Number> implements Serializable, HasIsConstrained {
     private static final long serialVersionUID = -7405632565984023195L;
 

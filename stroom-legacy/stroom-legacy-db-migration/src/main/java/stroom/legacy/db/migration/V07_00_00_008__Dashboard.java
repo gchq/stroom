@@ -33,6 +33,7 @@ import java.util.Map;
 import java.util.UUID;
 
 @SuppressWarnings("unused")
+@Deprecated
 public class V07_00_00_008__Dashboard extends BaseJavaMigration {
 
     @Override

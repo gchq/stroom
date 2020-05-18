@@ -22,6 +22,7 @@ import java.util.Optional;
 import java.util.function.Function;
 
 @SuppressWarnings("unused") // used by FlyWay
+@Deprecated
 public class V07_00_00_1202__property_rename extends BaseJavaMigration {
 
     private static final Logger LOGGER = LoggerFactory.getLogger(V07_00_00_1202__property_rename.class);

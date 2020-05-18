@@ -31,6 +31,7 @@ import java.util.Objects;
 @XmlType(name = "TimeZone", propOrder = {"use", "id", "offsetHours", "offsetMinutes"})
 @XmlAccessorType(XmlAccessType.FIELD)
 @ApiModel(description = "The timezone to apply to a date time value")
+@Deprecated
 public final class TimeZone implements Serializable {
     private static final long serialVersionUID = 1200175661441813029L;
 

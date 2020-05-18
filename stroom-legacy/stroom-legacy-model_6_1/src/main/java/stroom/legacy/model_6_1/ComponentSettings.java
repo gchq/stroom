@@ -24,7 +24,9 @@ import java.io.Serializable;
 
 @XmlAccessorType(XmlAccessType.FIELD)
 @XmlType(name = "settings")
+@Deprecated
 @XmlSeeAlso({QueryComponentSettings.class, TableComponentSettings.class, VisComponentSettings.class, TextComponentSettings.class})
+@Deprecated
 public abstract class ComponentSettings implements Serializable {
     private static final long serialVersionUID = 2110282486749818888L;
 

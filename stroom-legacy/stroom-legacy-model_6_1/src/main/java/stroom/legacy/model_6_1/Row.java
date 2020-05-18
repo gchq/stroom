@@ -34,6 +34,7 @@ import java.util.List;
 @XmlType(name = "Row", propOrder = {"groupKey", "values", "depth"})
 @XmlAccessorType(XmlAccessType.FIELD)
 @ApiModel(description = "A row of data in a result set")
+@Deprecated
 public final class Row implements Serializable {
     private static final long serialVersionUID = 4379892306375080112L;
 

@@ -26,6 +26,7 @@ import javax.persistence.UniqueConstraint;
  */
 @Entity
 @Table(name = "RK", uniqueConstraints = @UniqueConstraint(columnNames = {SQLNameConstants.NAME}))
+@Deprecated
 public class Rack extends NamedEntity {
     public static final String TABLE_NAME = SQLNameConstants.RACK;
     public static final String FOREIGN_KEY = FK_PREFIX + TABLE_NAME + ID_SUFFIX;

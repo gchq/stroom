@@ -33,6 +33,7 @@ import java.util.HashMap;
 import java.util.Map;
 
 @SuppressWarnings("unused")
+@Deprecated
 public class V07_00_00_004__Dictionary extends BaseJavaMigration {
     @Override
     public void migrate(final Context context) throws Exception {

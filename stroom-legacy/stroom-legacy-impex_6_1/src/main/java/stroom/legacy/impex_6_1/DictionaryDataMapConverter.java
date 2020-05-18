@@ -17,6 +17,7 @@ import java.util.Map;
 import java.util.UUID;
 
 @Singleton
+@Deprecated
 class DictionaryDataMapConverter implements DataMapConverter {
     private final DocumentSerialiser2<DictionaryDoc> serialiser;
     private final DocumentSerialiser2<OldDictionaryDoc> oldSerialiser;

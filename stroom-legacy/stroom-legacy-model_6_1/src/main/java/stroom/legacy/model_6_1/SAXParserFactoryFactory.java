@@ -31,6 +31,7 @@ import javax.xml.parsers.SAXParserFactory;
  * value of the javax.xml.parsers.SAXParserFactory property which is used by SAXParserFactory to determine which
  * implementation to return. If the property is not set then we hard code it to the xerces implementation in the JRE.
  */
+@Deprecated
 public final class SAXParserFactoryFactory {
     private static final Logger LOGGER = LoggerFactory.getLogger(SAXParserFactoryFactory.class);
 

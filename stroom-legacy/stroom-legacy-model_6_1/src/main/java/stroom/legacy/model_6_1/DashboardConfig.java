@@ -28,6 +28,7 @@ import java.util.List;
 @XmlAccessorType(XmlAccessType.FIELD)
 @XmlType(name = "dashboard", propOrder = {"parameters", "components", "layout", "tabVisibility"})
 @XmlRootElement(name = "dashboard")
+@Deprecated
 public class DashboardConfig implements SharedObject {
     private static final long serialVersionUID = -2530827581046882396L;
     @XmlElement(name = "parameters")

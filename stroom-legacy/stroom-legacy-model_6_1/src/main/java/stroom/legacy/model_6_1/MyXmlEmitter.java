@@ -15,6 +15,7 @@ import net.sf.saxon.tree.tiny.CompressedWhitespace;
 /**
  * An extension of the Saxon XMLEmitter that prevents forbidden XML characters U+FFFE and U+FFFF.
  */
+@Deprecated
 public class MyXmlEmitter extends XMLEmitter {
     private static boolean[] specialInText;         // lookup table for special characters in text
     private static boolean[] specialInAtt;          // lookup table for special characters in attributes

@@ -26,6 +26,7 @@ import java.sql.Statement;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
+@Deprecated
 public class EntityReferenceReplacer {
     private static final Logger LOGGER = LoggerFactory.getLogger(EntityReferenceReplacer.class);
 

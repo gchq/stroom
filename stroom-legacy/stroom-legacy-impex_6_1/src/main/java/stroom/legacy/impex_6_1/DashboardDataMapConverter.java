@@ -15,6 +15,7 @@ import java.util.Map;
 import java.util.UUID;
 
 @Singleton
+@Deprecated
 class DashboardDataMapConverter implements DataMapConverter {
     private final DashboardSerialiser serialiser;
 

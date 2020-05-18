@@ -37,6 +37,7 @@ import java.io.StringReader;
 import java.io.StringWriter;
 import java.io.Writer;
 
+@Deprecated
 public final class XMLUtil {
     public static final SAXParserFactory PARSER_FACTORY;
     private static final String XML = "xml";

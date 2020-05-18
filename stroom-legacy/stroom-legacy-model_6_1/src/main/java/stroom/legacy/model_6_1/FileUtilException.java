@@ -16,6 +16,7 @@
 
 package stroom.legacy.model_6_1;
 
+@Deprecated
 public class FileUtilException extends RuntimeException {
     private static final long serialVersionUID = 8845765305436611231L;
 

@@ -36,6 +36,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.Set;
 
+@Deprecated
 public class LegacyXmlSerialiser {
     private static final Logger LOGGER = LoggerFactory.getLogger(LegacyXmlSerialiser.class);
 

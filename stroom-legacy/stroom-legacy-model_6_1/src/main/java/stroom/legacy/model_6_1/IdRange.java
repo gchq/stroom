@@ -16,6 +16,7 @@
 
 package stroom.legacy.model_6_1;
 
+@Deprecated
 public class IdRange extends Range<Long> {
     private static final long serialVersionUID = -2823282661622633533L;
 

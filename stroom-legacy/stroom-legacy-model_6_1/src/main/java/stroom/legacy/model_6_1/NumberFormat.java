@@ -31,6 +31,7 @@ import java.util.Objects;
 @XmlType(name = "NumberFormat", propOrder = {"decimalPlaces", "useSeparator"})
 @XmlAccessorType(XmlAccessType.FIELD)
 @ApiModel(description = "The definition of a format to apply to numeric data")
+@Deprecated
 public final class NumberFormat implements Serializable {
     private static final long serialVersionUID = 9145624653060319801L;
 

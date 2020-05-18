@@ -29,6 +29,7 @@ import javax.xml.bind.annotation.XmlType;
 @XmlRootElement(name = "doc")
 @XmlType(name = "Doc", propOrder = {"type", "uuid", "name", "version", "createTime", "updateTime", "createUser", "updateUser"})
 @XmlAccessorType(XmlAccessType.FIELD)
+@Deprecated
 public class Doc implements SharedObject {
     private static final long serialVersionUID = -7268601402378907741L;
 

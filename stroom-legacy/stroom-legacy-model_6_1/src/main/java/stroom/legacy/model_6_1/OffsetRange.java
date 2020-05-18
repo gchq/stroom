@@ -30,6 +30,7 @@ import java.io.Serializable;
 @XmlType(name = "OffsetRange", propOrder = {"offset", "length"})
 @XmlAccessorType(XmlAccessType.FIELD)
 @ApiModel(description = "The offset and length of a range of data in a sub-set of a query result set")
+@Deprecated
 public final class OffsetRange implements Serializable {
     private static final long serialVersionUID = 5045453517852867315L;
 

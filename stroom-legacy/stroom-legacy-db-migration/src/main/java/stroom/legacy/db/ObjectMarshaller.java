@@ -25,6 +25,7 @@ import org.slf4j.MarkerFactory;
 
 import javax.xml.bind.JAXBContext;
 
+@Deprecated
 public class ObjectMarshaller<E> {
     private static final Logger LOGGER = LoggerFactory.getLogger(ObjectMarshaller.class);
 

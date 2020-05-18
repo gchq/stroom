@@ -31,6 +31,7 @@ import java.io.Serializable;
 @XmlAccessorType(XmlAccessType.FIELD)
 @ApiModel(description = "A unique key to identify the instance of the search by. This key is used to " +
         "identify multiple requests for the same search when running in incremental mode.")
+@Deprecated
 public final class QueryKey implements Serializable {
     private static final long serialVersionUID = -3222989872764402068L;
 

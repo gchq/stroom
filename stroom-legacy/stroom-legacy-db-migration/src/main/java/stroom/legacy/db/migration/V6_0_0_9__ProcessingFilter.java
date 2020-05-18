@@ -35,6 +35,7 @@ import java.util.stream.Collectors;
 
 import static stroom.legacy.model_6_1.ExpressionTerm.Condition.IN_CONDITION_DELIMITER;
 
+@Deprecated
 public class V6_0_0_9__ProcessingFilter extends BaseJavaMigration {
     private static final Logger LOGGER = LoggerFactory.getLogger(V6_0_0_9__ProcessingFilter.class);
 

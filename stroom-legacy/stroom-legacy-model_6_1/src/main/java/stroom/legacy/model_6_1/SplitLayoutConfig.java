@@ -27,6 +27,7 @@ import java.util.List;
 
 @XmlAccessorType(XmlAccessType.FIELD)
 @XmlType(name = "splitLayout", propOrder = {"dimension", "children"})
+@Deprecated
 public class SplitLayoutConfig extends LayoutConfig {
     private static final long serialVersionUID = 8201392610412513780L;
     @XmlElement(name = "dimension")

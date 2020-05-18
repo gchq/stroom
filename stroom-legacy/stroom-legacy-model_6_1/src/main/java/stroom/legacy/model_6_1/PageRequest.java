@@ -18,6 +18,7 @@ package stroom.legacy.model_6_1;
 
 import java.io.Serializable;
 
+@Deprecated
 public class PageRequest implements Serializable, Copyable<PageRequest> {
     public static final int DEFAULT_PAGE_SIZE = 100;
     private static final long serialVersionUID = 6838082084157676358L;

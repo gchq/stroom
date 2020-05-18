@@ -16,6 +16,7 @@
 
 package stroom.legacy.model_6_1;
 
+@Deprecated
 public enum IndexFieldType implements HasDisplayValue {
     ID("Id", true),
     BOOLEAN_FIELD("Boolean", false),

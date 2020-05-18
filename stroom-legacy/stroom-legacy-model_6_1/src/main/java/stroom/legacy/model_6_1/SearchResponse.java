@@ -41,6 +41,7 @@ import java.util.List;
 @XmlAccessorType(XmlAccessType.FIELD)
 @ApiModel(description = "The response to a search request, that may or may not contain results. The results " +
         "may only be a partial set if an iterative screech was requested")
+@Deprecated
 public final class SearchResponse implements Serializable {
 
     private static final long serialVersionUID = -2964122512841756795L;

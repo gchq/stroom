@@ -34,6 +34,7 @@ import java.util.Map;
 import java.util.UUID;
 
 @SuppressWarnings("unused")
+@Deprecated
 public class V07_00_00_014__Pipeline extends BaseJavaMigration {
     private static final Logger LOGGER = LoggerFactory.getLogger(V07_00_00_014__Pipeline.class);
 

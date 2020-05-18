@@ -16,6 +16,7 @@
 
 package stroom.legacy.model_6_1;
 
+@Deprecated
 public class PipelinePropertyType implements Comparable<PipelinePropertyType>, HasType, SharedObject {
     private static final long serialVersionUID = 2290622144151007980L;
 

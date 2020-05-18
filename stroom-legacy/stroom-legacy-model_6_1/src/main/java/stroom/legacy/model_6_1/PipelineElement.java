@@ -45,6 +45,7 @@ import javax.xml.bind.annotation.XmlType;
  */
 @XmlAccessorType(XmlAccessType.FIELD)
 @XmlType(name = "Element", propOrder = {"id", "type"})
+@Deprecated
 public class PipelineElement implements Comparable<PipelineElement>, SharedObject {
     private static final long serialVersionUID = -8891708244423055172L;
 

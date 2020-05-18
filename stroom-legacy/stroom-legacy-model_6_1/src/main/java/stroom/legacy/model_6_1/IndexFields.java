@@ -26,6 +26,7 @@ import java.util.List;
 import java.util.Set;
 
 @XmlRootElement(name = "fields")
+@Deprecated
 public class IndexFields implements Serializable {
     private static final long serialVersionUID = 4457718308915039068L;
 

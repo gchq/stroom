@@ -30,6 +30,7 @@ import javax.persistence.Transient;
  */
 @Entity
 @Table(name = "STRM_TASK")
+@Deprecated
 public class StreamTask extends TaskBasedEntity {
     public static final String TABLE_NAME = SQLNameConstants.STREAM + SEP + SQLNameConstants.TASK;
     public static final String FOREIGN_KEY = FK_PREFIX + TABLE_NAME + ID_SUFFIX;

@@ -16,6 +16,7 @@
 
 package stroom.legacy.model_6_1;
 
+@Deprecated
 public class ByteSlice {
     private final byte[] array;
     private final int off;

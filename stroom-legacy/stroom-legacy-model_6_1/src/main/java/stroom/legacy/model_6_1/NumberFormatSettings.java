@@ -24,6 +24,7 @@ import javax.xml.bind.annotation.XmlType;
 
 @XmlAccessorType(XmlAccessType.FIELD)
 @XmlType(name = "numberFormatSettings", propOrder = {"decimalPlaces", "useSeparator"})
+@Deprecated
 public class NumberFormatSettings implements FormatSettings {
     public static final int DEFAULT_DECIMAL_PLACES = 0;
     public static final boolean DEFAULT_USE_SEPARATOR = false;

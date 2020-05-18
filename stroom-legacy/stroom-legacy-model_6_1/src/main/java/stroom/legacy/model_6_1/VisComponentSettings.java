@@ -24,6 +24,7 @@ import javax.xml.bind.annotation.XmlType;
 
 @XmlAccessorType(XmlAccessType.FIELD)
 @XmlType(name = "vis", propOrder = {"tableId", "visualisation", "json"})
+@Deprecated
 public class VisComponentSettings extends ComponentSettings {
     private static final long serialVersionUID = -2530827581046882396L;
 

@@ -38,11 +38,13 @@ import java.io.Serializable;
         @JsonSubTypes.Type(value = ExpressionTerm.class, name = "term")
 })
 @XmlType(name = "ExpressionItem", propOrder = {"enabled"})
+@Deprecated
 @XmlSeeAlso({ExpressionOperator.class, ExpressionTerm.class})
 @XmlAccessorType(XmlAccessType.FIELD)
 @ApiModel(
         description = "Base type for an item in an expression tree",
         subTypes = {ExpressionOperator.class, ExpressionTerm.class})
+@Deprecated
 public abstract class ExpressionItem implements Serializable {
     private static final long serialVersionUID = -8483817637655853635L;
 

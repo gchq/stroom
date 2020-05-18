@@ -29,6 +29,7 @@ import java.util.stream.Collectors;
 
 @XmlAccessorType(XmlAccessType.FIELD)
 @XmlType(name = "tabLayout", propOrder = {"tabs", "selected"})
+@Deprecated
 public class TabLayoutConfig extends LayoutConfig {
     private static final long serialVersionUID = -2105048053435792675L;
 

@@ -38,6 +38,7 @@ import java.util.Objects;
 @XmlRootElement(name = "doc")
 @XmlAccessorType(XmlAccessType.FIELD)
 @ApiModel(description = DocRef.CLASS_DESC)
+@Deprecated
 public class DocRef implements Comparable<DocRef>, HasDisplayValue, Serializable {
 
     public static final String CLASS_DESC = "A class for describing a unique reference to a 'document' in stroom.  " +

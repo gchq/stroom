@@ -7,6 +7,7 @@ import java.util.Map;
 import java.util.function.Function;
 import java.util.stream.Collectors;
 
+@Deprecated
 public class StreamDataSource {
     public static final String STREAM_STORE_TYPE = "StreamStore";
     public static final DocRef STREAM_STORE_DOC_REF = new DocRef.Builder()

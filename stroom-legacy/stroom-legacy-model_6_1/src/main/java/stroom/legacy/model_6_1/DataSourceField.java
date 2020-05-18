@@ -37,6 +37,7 @@ import java.util.List;
 @XmlType(name = "DataSourceField", propOrder = {"type", "docRefType", "name", "queryable", "conditions"})
 @XmlAccessorType(XmlAccessType.FIELD)
 @ApiModel(description = "The definition of a field within a data source")
+@Deprecated
 public final class DataSourceField implements Serializable, HasDisplayValue {
     private static final long serialVersionUID = 1272545271946712570L;
 

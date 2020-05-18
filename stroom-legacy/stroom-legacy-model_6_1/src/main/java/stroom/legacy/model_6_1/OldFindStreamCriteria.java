@@ -27,6 +27,7 @@ import java.util.List;
  * </p>
  */
 @XmlRootElement
+@Deprecated
 public class OldFindStreamCriteria extends BaseCriteria {
     public static final String FIELD_CREATE_MS = "Create";
     private static final long serialVersionUID = -4777723504698304778L;

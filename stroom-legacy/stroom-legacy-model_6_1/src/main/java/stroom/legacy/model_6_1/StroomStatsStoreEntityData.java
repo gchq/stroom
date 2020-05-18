@@ -31,6 +31,7 @@ import java.util.Set;
 
 @XmlAccessorType(XmlAccessType.FIELD)
 @XmlRootElement(name = "data")
+@Deprecated
 public class StroomStatsStoreEntityData implements SharedObject {
 
     private static final long serialVersionUID = -2754817144611481958L;

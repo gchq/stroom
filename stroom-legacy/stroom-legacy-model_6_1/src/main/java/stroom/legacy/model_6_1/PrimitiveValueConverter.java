@@ -19,6 +19,7 @@ package stroom.legacy.model_6_1;
 import java.util.HashMap;
 import java.util.Map;
 
+@Deprecated
 public class PrimitiveValueConverter<E extends HasPrimitiveValue> {
     private Map<Byte, E> map;
 

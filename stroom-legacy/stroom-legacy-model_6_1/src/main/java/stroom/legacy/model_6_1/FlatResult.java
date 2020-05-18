@@ -33,6 +33,7 @@ import java.util.Objects;
 @ApiModel(
         description = "A result structure used primarily for visualisation data",
         parent = Result.class)
+@Deprecated
 public final class FlatResult extends Result {
 
     private static final long serialVersionUID = 3826654996795750099L;

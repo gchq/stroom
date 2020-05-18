@@ -17,13 +17,16 @@
 package stroom.legacy.model_6_1;
 
 import javax.persistence.Column;
+@Deprecated
 import javax.persistence.MappedSuperclass;
 import java.util.Arrays;
 import java.util.Collections;
 import java.util.HashSet;
 import java.util.Set;
 
+@Deprecated
 @MappedSuperclass
+@Deprecated
 public abstract class AuditedEntity extends BaseEntitySmall {
     public static final String CREATE_TIME = "CRT_MS";
     public static final String CREATE_USER = "CRT_USER";

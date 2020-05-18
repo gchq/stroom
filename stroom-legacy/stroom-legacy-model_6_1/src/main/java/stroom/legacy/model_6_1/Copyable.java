@@ -19,6 +19,7 @@ package stroom.legacy.model_6_1;
 /**
  * Something in our model that can produce a copy.
  */
+@Deprecated
 public interface Copyable<T> {
     void copyFrom(T t);
 }

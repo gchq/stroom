@@ -26,6 +26,7 @@ import javax.persistence.Transient;
 
 @Entity
 @Table(name = "STRM_PROC")
+@Deprecated
 public class StreamProcessor extends AuditedEntity {
     public static final String TABLE_NAME = SQLNameConstants.STREAM + SEP + SQLNameConstants.PROCESSOR;
     public static final String FOREIGN_KEY = FK_PREFIX + TABLE_NAME + ID_SUFFIX;

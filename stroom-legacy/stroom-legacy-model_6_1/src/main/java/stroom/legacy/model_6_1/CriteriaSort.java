@@ -18,6 +18,7 @@ package stroom.legacy.model_6_1;
 
 import java.io.Serializable;
 
+@Deprecated
 public class CriteriaSort implements Serializable {
     private static final long serialVersionUID = -5994197736743037915L;
 

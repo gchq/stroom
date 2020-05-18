@@ -29,6 +29,7 @@ import java.util.Date;
  * include 1/1/2002.
  * </p>
  */
+@Deprecated
 public class Period extends Range<Long> {
     private static final int N3 = 3;
 

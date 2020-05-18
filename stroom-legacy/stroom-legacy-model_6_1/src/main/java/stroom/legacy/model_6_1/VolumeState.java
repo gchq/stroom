@@ -24,6 +24,7 @@ import javax.persistence.Transient;
  * State of a volume.
  */
 @Entity(name = "VOL_STATE")
+@Deprecated
 public class VolumeState extends BaseEntitySmall {
     public static final String TABLE_NAME = SQLNameConstants.VOLUME + SEP + SQLNameConstants.STATE;
     public static final String FOREIGN_KEY = FK_PREFIX + TABLE_NAME + ID_SUFFIX;

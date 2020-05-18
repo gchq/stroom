@@ -26,6 +26,7 @@ import java.util.Set;
 /**
  * Base criteria object used to aid getting pages of data.
  */
+@Deprecated
 public abstract class BaseCriteria implements SharedObject {
     public static final String FIELD_ID = "Id";
     private static final long serialVersionUID = 779306892977183446L;

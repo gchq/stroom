@@ -31,6 +31,7 @@ import java.util.Set;
 
 @Entity
 @Table(name = "IDX")
+@Deprecated
 public class Index extends DocumentEntity {
     public static final String TABLE_NAME = SQLNameConstants.INDEX;
     public static final String FOREIGN_KEY = FK_PREFIX + TABLE_NAME + ID_SUFFIX;

@@ -22,6 +22,7 @@ package stroom.legacy.model_6_1;
  * downs etc).
  * </p>
  */
+@Deprecated
 public interface HasDisplayValue {
     /**
      * The string label/description of this object.

@@ -39,6 +39,7 @@ import java.util.List;
 @XmlAccessorType(XmlAccessType.FIELD)
 @ApiModel(description = "An object to describe how the query results should be returned, including which fields " +
         "should be included and what sorting, grouping, filtering, limiting, etc. should be applied")
+@Deprecated
 public final class TableSettings implements Serializable {
     private static final long serialVersionUID = -2530827581046882396L;
 

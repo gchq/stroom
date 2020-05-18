@@ -32,6 +32,7 @@ import java.util.Locale;
 /**
  * Helper class for resources.
  */
+@Deprecated
 public final class StreamUtil {
     /**
      * Buffer size to use.
