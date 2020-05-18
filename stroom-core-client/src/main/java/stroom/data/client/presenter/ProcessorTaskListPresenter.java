@@ -24,6 +24,7 @@ import stroom.data.grid.client.OrderByColumn;
 import stroom.dispatch.client.Rest;
 import stroom.dispatch.client.RestFactory;
 import stroom.docref.DocRef;
+import stroom.docstore.shared.DocRefUtil;
 import stroom.entity.client.presenter.HasDocumentRead;
 import stroom.entity.shared.ExpressionCriteria;
 import stroom.explorer.shared.ExplorerConstants;
@@ -228,10 +229,7 @@ public class ProcessorTaskListPresenter extends MyPresenterWidget<DataGridView<P
                             processorTask.getProcessorFilter().getId());
                     if (processorTask.getProcessorFilter().getProcessor().getPipelineUuid() != null) {
                         TooltipUtil.addRowData(html, "Stream Processor Pipeline",
-                                processorTask.getProcessorFilter().getPipelineName() +
-                                        " {" +
-                                        processorTask.getProcessorFilter().getPipelineUuid() +
-                                        "}");
+                                DocRefUtil.createSimpleDocRefString(processorTask.getProcessorFilter().getPipeline()));
                     }
                 }
             }

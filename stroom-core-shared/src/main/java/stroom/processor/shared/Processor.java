@@ -16,14 +16,16 @@
 
 package stroom.processor.shared;
 
+import stroom.docref.DocRef;
+import stroom.pipeline.shared.PipelineDoc;
+import stroom.util.shared.HasAuditInfo;
+import stroom.util.shared.HasUuid;
+
 import com.fasterxml.jackson.annotation.JsonCreator;
 import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.fasterxml.jackson.annotation.JsonInclude;
 import com.fasterxml.jackson.annotation.JsonInclude.Include;
 import com.fasterxml.jackson.annotation.JsonProperty;
-import stroom.docref.DocRef;
-import stroom.util.shared.HasAuditInfo;
-import stroom.util.shared.HasUuid;
 
 import javax.xml.bind.annotation.XmlRootElement;
 import java.util.Objects;
@@ -171,14 +173,21 @@ public class Processor implements HasAuditInfo, HasUuid {
         this.pipelineUuid = uuid;
     }
 
-    public String getPipelineName() { return pipelineName; }
+    public String getPipelineName() {
+        return pipelineName;
+    }
 
-    public void setPipelineName (final String pipelineName){
+    public void setPipelineName(final String pipelineName) {
         this.pipelineName = pipelineName;
     }
 
     @JsonIgnore
-    public void setPipeline (final DocRef pipelineDocRef) {
+    public DocRef getPipeline() {
+        return new DocRef(PipelineDoc.DOCUMENT_TYPE, pipelineUuid, pipelineName);
+    }
+
+    @JsonIgnore
+    public void setPipeline(final DocRef pipelineDocRef) {
         this.pipelineUuid = pipelineDocRef.getUuid();
         this.pipelineName = pipelineDocRef.getName();
     }
@@ -219,7 +228,7 @@ public class Processor implements HasAuditInfo, HasUuid {
         if (this == o) return true;
         if (o == null || getClass() != o.getClass()) return false;
         final Processor processor = (Processor) o;
-        return Objects.equals(id, processor.id)  || Objects.equals(uuid, processor.uuid) ;
+        return Objects.equals(id, processor.id) || Objects.equals(uuid, processor.uuid);
     }
 
     @Override
