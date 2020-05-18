@@ -24,6 +24,7 @@ import stroom.data.grid.client.OrderByColumn;
 import stroom.dispatch.client.Rest;
 import stroom.dispatch.client.RestFactory;
 import stroom.docref.DocRef;
+import stroom.docstore.shared.DocRefUtil;
 import stroom.entity.client.presenter.HasDocumentRead;
 import stroom.entity.shared.ExpressionCriteria;
 import stroom.feed.shared.FeedDoc;
@@ -72,8 +73,8 @@ public class ProcessorTaskSummaryPresenter extends MyPresenterWidget<DataGridVie
 
                 TooltipUtil.addHeading(html, "Key Data");
                 final DocRef pipeline = row.getPipeline();
-                if (pipeline != null && pipeline.getName() != null) {
-                    TooltipUtil.addRowData(html, "Pipeline", pipeline.getName() + " {" + pipeline.getUuid() + "}");
+                if (pipeline != null) {
+                    TooltipUtil.addRowData(html, "Pipeline", DocRefUtil.createSimpleDocRefString(pipeline));
                 }
                 TooltipUtil.addRowData(html, "Feed", row.getFeed());
                 TooltipUtil.addRowData(html, "Priority", row.getPriority());

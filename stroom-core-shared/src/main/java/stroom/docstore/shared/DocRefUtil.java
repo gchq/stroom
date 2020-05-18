@@ -30,4 +30,15 @@ public final class DocRefUtil {
 
         return new DocRef(doc.getType(), doc.getUuid(), doc.getName());
     }
+
+    public static String createSimpleDocRefString(final DocRef docRef) {
+        if (docRef.getName() != null && docRef.getUuid() != null) {
+            return docRef.getName() + " {" + docRef.getUuid() + "}";
+        } else if (docRef.getName() != null) {
+            return docRef.getName();
+        } else if (docRef.getUuid() != null) {
+            return docRef.getUuid();
+        }
+        return "";
+    }
 }

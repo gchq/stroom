@@ -6,6 +6,8 @@ and this project adheres to [Semantic Versioning](http://semver.org/).
 
 ## [Unreleased]
 
+* Issue **#1568** : Pipeline names should now be shown where needed in the UI.
+
 * Issue **#1396** : Completely changed DB migration and import/export compatibility code.
 
 * Fix index creation stored procedure.
