@@ -41,7 +41,6 @@ import stroom.util.shared.Severity;
 
 import javax.inject.Inject;
 import javax.inject.Provider;
-import javax.ws.rs.QueryParam;
 import java.nio.file.Path;
 import java.util.ArrayList;
 
@@ -148,12 +147,11 @@ class DataResourceImpl implements DataResource {
     }
 
     @Override
-    public AbstractFetchDataResult fetchData(
-            final @QueryParam("streamId") Long streamId,
-            final @QueryParam("streamsOffset") Long streamsOffset,
-            final @QueryParam("streamsLength") Long streamsLength,
-            final @QueryParam("pageOffset") Long pageOffset,
-            final @QueryParam("pageSize") Long pageSize) {
+    public AbstractFetchDataResult fetchData( final long streamId,
+                                              final Long streamsOffset,
+                                              final Long streamsLength,
+                                              final Long pageOffset,
+                                              final Long pageSize) {
 
         final OffsetRange<Long> pageRange = new OffsetRange<>(pageOffset, pageSize);
         final OffsetRange<Long> streamRange = new OffsetRange<>(streamsOffset, streamsLength);

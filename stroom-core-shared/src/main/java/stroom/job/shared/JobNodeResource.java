@@ -18,6 +18,7 @@ package stroom.job.shared;
 
 import io.swagger.annotations.Api;
 import io.swagger.annotations.ApiOperation;
+import io.swagger.annotations.ApiParam;
 import org.fusesource.restygwt.client.DirectRestService;
 import stroom.util.shared.ResourcePaths;
 import stroom.util.shared.RestResource;
@@ -62,15 +63,18 @@ public interface JobNodeResource extends RestResource, DirectRestService {
     @PUT
     @Path("/{id}" + TASK_LIMIT_PATH_PART)
     @ApiOperation(value = "Sets the task limit for the job node")
-    void setTaskLimit(@PathParam("id") Integer id, Integer taskLimit);
+    void setTaskLimit(@PathParam("id") Integer id, 
+                      @ApiParam("taskLimit") Integer taskLimit);
 
     @PUT
     @Path("/{id}" + SCHEDULE_PATH_PART)
     @ApiOperation(value = "Sets the schedule job node")
-    void setSchedule(@PathParam("id") Integer id, String schedule);
+    void setSchedule(@PathParam("id") Integer id, 
+                     @ApiParam("schedule") String schedule);
 
     @PUT
     @Path("/{id}" + ENABLED_PATH_PART)
     @ApiOperation(value = "Sets the enabled status of the job node")
-    void setEnabled(@PathParam("id") Integer id, Boolean enabled);
+    void setEnabled(@PathParam("id") Integer id, 
+                    @ApiParam("enabled") Boolean enabled);
 }

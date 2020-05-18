@@ -18,6 +18,7 @@ package stroom.node.shared;
 
 import io.swagger.annotations.Api;
 import io.swagger.annotations.ApiOperation;
+import io.swagger.annotations.ApiParam;
 import org.fusesource.restygwt.client.DirectRestService;
 import stroom.util.shared.ResourcePaths;
 import stroom.util.shared.RestResource;
@@ -80,10 +81,12 @@ public interface NodeResource extends RestResource, DirectRestService {
     @PUT
     @Path(PRIORITY_PATH_PART + NODE_NAME_PATH_PARAM)
     @ApiOperation(value = "Sets the priority of a node")
-    void setPriority(@PathParam("nodeName") String nodeName, Integer priority);
+    void setPriority(@PathParam("nodeName") String nodeName, 
+                     @ApiParam("nodeName") Integer priority);
 
     @PUT
     @Path(ENABLED_PATH_PART + NODE_NAME_PATH_PARAM)
     @ApiOperation(value = "Sets whether a node is enabled")
-    void setEnabled(@PathParam("nodeName") String nodeName, Boolean enabled);
+    void setEnabled(@PathParam("nodeName") String nodeName, 
+                    @ApiParam("enabled") Boolean enabled);
 }

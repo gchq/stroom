@@ -1,12 +1,14 @@
 package stroom.index.shared;
 
-import io.swagger.annotations.Api;
-import io.swagger.annotations.ApiOperation;
-import org.fusesource.restygwt.client.DirectRestService;
 import stroom.entity.shared.ExpressionCriteria;
 import stroom.util.shared.ResourcePaths;
 import stroom.util.shared.RestResource;
 import stroom.util.shared.ResultPage;
+
+import io.swagger.annotations.Api;
+import io.swagger.annotations.ApiOperation;
+import io.swagger.annotations.ApiParam;
+import org.fusesource.restygwt.client.DirectRestService;
 
 import javax.ws.rs.Consumes;
 import javax.ws.rs.DELETE;
@@ -32,13 +34,13 @@ public interface IndexVolumeResource extends RestResource, DirectRestService {
     @ApiOperation(
             value = "Finds index volumes matching request",
             response = ResultPage.class)
-    ResultPage<IndexVolume> find(ExpressionCriteria request);
+    ResultPage<IndexVolume> find(@ApiParam("request") ExpressionCriteria request);
 
     @POST
     @ApiOperation(
             value = "Creates an index volume",
             response = IndexVolume.class)
-    IndexVolume create(IndexVolume request);
+    IndexVolume create(@ApiParam("request") IndexVolume request);
 
     @GET
     @Path("/{id}")
@@ -52,7 +54,8 @@ public interface IndexVolumeResource extends RestResource, DirectRestService {
     @ApiOperation(
             value = "Updates an index volume",
             response = IndexVolume.class)
-    IndexVolume update(@PathParam("id") Integer id, IndexVolume indexVolume);
+    IndexVolume update(@PathParam("id") Integer id, 
+                       @ApiParam("indexVolume") IndexVolume indexVolume);
 
     @DELETE
     @Path("/{id}")

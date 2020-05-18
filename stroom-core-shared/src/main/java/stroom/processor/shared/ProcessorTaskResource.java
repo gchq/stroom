@@ -18,6 +18,7 @@ package stroom.processor.shared;
 
 import io.swagger.annotations.Api;
 import io.swagger.annotations.ApiOperation;
+import io.swagger.annotations.ApiParam;
 import org.fusesource.restygwt.client.DirectRestService;
 import stroom.entity.shared.ExpressionCriteria;
 import stroom.util.shared.ResourcePaths;
@@ -46,24 +47,26 @@ public interface ProcessorTaskResource extends RestResource, DirectRestService {
     @ApiOperation(
             value = "Finds processors tasks",
             response = ResultPage.class)
-    ResultPage<ProcessorTask> find(ExpressionCriteria expressionCriteria);
+    ResultPage<ProcessorTask> find(@ApiParam("expressionCriteria") ExpressionCriteria expressionCriteria);
 
     @POST
     @Path("summary")
     @ApiOperation(
             value = "Finds processor task summaries",
             response = ResultPage.class)
-    ResultPage<ProcessorTaskSummary> findSummary(ExpressionCriteria expressionCriteria);
+    ResultPage<ProcessorTaskSummary> findSummary(@ApiParam("expressionCriteria") ExpressionCriteria expressionCriteria);
 
     @POST
     @Path(ASSIGN_TASKS_PATH_PART + NODE_NAME_PATH_PARAM)
     @ApiOperation(value = "Assign some tasks",
             response = ProcessorTaskList.class)
-    ProcessorTaskList assignTasks(@PathParam("nodeName") String nodeName, AssignTasksRequest request);
+    ProcessorTaskList assignTasks(@PathParam("nodeName") String nodeName, 
+                                  @ApiParam("request") AssignTasksRequest request);
 
     @POST
     @Path(ABANDON_TASKS_PATH_PART + NODE_NAME_PATH_PARAM)
     @ApiOperation(value = "Abandon some tasks",
             response = Boolean.class)
-    Boolean abandonTasks(@PathParam("nodeName") String nodeName, ProcessorTaskList request);
+    Boolean abandonTasks(@PathParam("nodeName") String nodeName, 
+                         @ApiParam("request") ProcessorTaskList request);
 }

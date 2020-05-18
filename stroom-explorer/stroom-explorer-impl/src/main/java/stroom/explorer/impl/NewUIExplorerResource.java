@@ -19,6 +19,7 @@ import com.fasterxml.jackson.annotation.JsonInclude;
 import com.fasterxml.jackson.annotation.JsonInclude.Include;
 import com.fasterxml.jackson.annotation.JsonProperty;
 import io.swagger.annotations.Api;
+import io.swagger.annotations.ApiParam;
 
 import javax.inject.Inject;
 import javax.ws.rs.Consumes;
@@ -180,7 +181,7 @@ public class NewUIExplorerResource implements RestResource {
 
     @POST
     @Path("/create")
-    public Response createDocument(final CreateOp op) {
+    public Response createDocument(@ApiParam("op") final CreateOp op) {
         explorerService.create(op.docRefType, op.docRefName, op.destinationFolderRef, op.permissionInheritance);
 
         return getExplorerTree();
@@ -219,7 +220,7 @@ public class NewUIExplorerResource implements RestResource {
 
     @POST
     @Path("/copy")
-    public Response copyDocument(final CopyOp op) {
+    public Response copyDocument(@ApiParam("op") final CopyOp op) {
         final BulkActionResult result = explorerService.copy(op.docRefs, op.destinationFolderRef, op.permissionInheritance);
         if (result.getMessage().isEmpty()) {
             return getExplorerTree();

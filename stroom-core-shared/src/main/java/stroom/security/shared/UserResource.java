@@ -2,6 +2,7 @@ package stroom.security.shared;
 
 import io.swagger.annotations.Api;
 import io.swagger.annotations.ApiOperation;
+import io.swagger.annotations.ApiParam;
 import org.fusesource.restygwt.client.DirectRestService;
 import stroom.util.shared.ResourcePaths;
 import stroom.util.shared.RestResource;
@@ -34,7 +35,7 @@ public interface UserResource extends RestResource, DirectRestService {
 
     @POST
     @Path("/find")
-    ResultPage<User> find(FindUserCriteria criteria);
+    ResultPage<User> find(@ApiParam("criteria") FindUserCriteria criteria);
 
     @GET
     @Path("/{userUuid}")
@@ -63,7 +64,8 @@ public interface UserResource extends RestResource, DirectRestService {
 
     @PUT
     @Path("/{userName}/status")
-    Boolean setStatus(@PathParam("userName") String userName, @QueryParam("enabled") boolean status);
+    Boolean setStatus(@PathParam("userName") String userName, 
+                      @QueryParam("enabled") boolean status);
 
     @PUT
     @Path("/{userUuid}/{groupUuid}")

@@ -18,6 +18,7 @@ package stroom.kafka.shared;
 
 import io.swagger.annotations.Api;
 import io.swagger.annotations.ApiOperation;
+import io.swagger.annotations.ApiParam;
 import org.fusesource.restygwt.client.DirectRestService;
 import stroom.docref.DocRef;
 import stroom.util.shared.ResourceGeneration;
@@ -36,24 +37,25 @@ import javax.ws.rs.core.MediaType;
 @Produces(MediaType.APPLICATION_JSON)
 @Consumes(MediaType.APPLICATION_JSON)
 public interface KafkaConfigResource extends RestResource, DirectRestService {
+
     @POST
     @Path("/read")
     @ApiOperation(
             value = "Get a kafkaConfig doc",
             response = KafkaConfigDoc.class)
-    KafkaConfigDoc read(DocRef docRef);
+    KafkaConfigDoc read(@ApiParam("docRef") DocRef docRef);
 
     @PUT
     @Path("/update")
     @ApiOperation(
             value = "Update a kafkaConfig doc",
             response = KafkaConfigDoc.class)
-    KafkaConfigDoc update(KafkaConfigDoc updated);
+    KafkaConfigDoc update(@ApiParam("updated") KafkaConfigDoc updated);
 
     @POST
     @Path("/download")
     @ApiOperation(
             value = "Download a kafkaConfig doc",
             response = ResourceGeneration.class)
-    ResourceGeneration download(DocRef docRef);
+    ResourceGeneration download(@ApiParam("docRef") DocRef docRef);
 }

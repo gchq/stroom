@@ -6,6 +6,10 @@ and this project adheres to [Semantic Versioning](http://semver.org/).
 
 ## [Unreleased]
 
+* Issue **#1584** : Add @ApiParam to POST/PUT/DELETE endpoints so the request type appears in swagger-ui.
+
+* Issue **#1581** : Change streamId to a path param in GET /api/data/v1.
+
 * Issue **#1567** : Added error handling so the confirmation dialog continues to work even when there is a failure in a previous use.
 
 * Issue **#1568** : Pipeline names should now be shown where needed in the UI.

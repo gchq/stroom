@@ -18,6 +18,7 @@ package stroom.statistics.impl.sql.shared;
 
 import io.swagger.annotations.Api;
 import io.swagger.annotations.ApiOperation;
+import io.swagger.annotations.ApiParam;
 import org.fusesource.restygwt.client.DirectRestService;
 import stroom.util.shared.ResourcePaths;
 import stroom.util.shared.RestResource;
@@ -34,24 +35,25 @@ import java.util.List;
 @Produces(MediaType.APPLICATION_JSON)
 @Consumes(MediaType.APPLICATION_JSON)
 public interface StatisticRollupResource extends RestResource, DirectRestService {
+
     @POST
     @Path("/bitMaskPermGeneration")
     @ApiOperation(
             value = "Create rollup bit mask",
             response = List.class)
-    List<CustomRollUpMask> bitMaskPermGeneration(Integer fieldCount);
+    List<CustomRollUpMask> bitMaskPermGeneration(@ApiParam("fieldCount") Integer fieldCount);
 
     @POST
     @Path("/bitMaskConversion")
     @ApiOperation(
             value = "Get rollup bit mask",
             response = List.class)
-    List<CustomRollUpMaskFields> bitMaskConversion(List<Short> maskValues);
+    List<CustomRollUpMaskFields> bitMaskConversion(@ApiParam("maskValues") List<Short> maskValues);
 
     @POST
     @Path("/dataSourceFieldChange")
     @ApiOperation(
             value = "Change fields",
             response = StatisticsDataSourceData.class)
-    StatisticsDataSourceData fieldChange(StatisticsDataSourceFieldChangeRequest request);
+    StatisticsDataSourceData fieldChange(@ApiParam("request") StatisticsDataSourceFieldChangeRequest request);
 }

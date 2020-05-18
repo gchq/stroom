@@ -1,12 +1,14 @@
 package stroom.config.global.shared;
 
-import io.swagger.annotations.Api;
-import io.swagger.annotations.ApiOperation;
-import org.fusesource.restygwt.client.DirectRestService;
 import stroom.ui.config.shared.UiConfig;
 import stroom.ui.config.shared.UiPreferences;
 import stroom.util.shared.ResourcePaths;
 import stroom.util.shared.RestResource;
+
+import io.swagger.annotations.Api;
+import io.swagger.annotations.ApiOperation;
+import io.swagger.annotations.ApiParam;
+import org.fusesource.restygwt.client.DirectRestService;
 
 import javax.ws.rs.Consumes;
 import javax.ws.rs.DefaultValue;
@@ -79,7 +81,7 @@ public interface GlobalConfigResource extends RestResource, DirectRestService {
     @ApiOperation(
             value = "Update a ConfigProperty",
             response = ConfigProperty.class)
-    ConfigProperty create(final ConfigProperty configProperty);
+    ConfigProperty create(@ApiParam("configProperty") final ConfigProperty configProperty);
 
     @PUT
     @Path(CLUSTER_PROPERTIES_SUB_PATH + "/{propertyName}" + DB_OVERRIDE_VALUE_SUB_PATH)
@@ -87,7 +89,7 @@ public interface GlobalConfigResource extends RestResource, DirectRestService {
             value = "Update a ConfigProperty",
             response = ConfigProperty.class)
     ConfigProperty update(final @PathParam("propertyName") String propertyName,
-                          final ConfigProperty configProperty);
+                          final @ApiParam("configProperty") ConfigProperty configProperty);
 
     @GET
     @Path(FETCH_UI_CONFIG_SUB_PATH)

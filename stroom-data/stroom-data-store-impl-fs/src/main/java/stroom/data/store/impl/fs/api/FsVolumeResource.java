@@ -8,6 +8,7 @@ import stroom.util.shared.RestResource;
 import stroom.util.shared.ResultPage;
 
 import io.swagger.annotations.Api;
+import io.swagger.annotations.ApiParam;
 
 import javax.inject.Inject;
 import javax.ws.rs.Consumes;
@@ -57,7 +58,8 @@ public class FsVolumeResource implements RestResource {
 
     @PUT
     @Path("/{id}")
-    public FsVolume update(@PathParam("id") final int id, final FsVolume toUpdate) {
+    public FsVolume update(@PathParam("id") final int id, 
+                           @ApiParam("toUpdate") final FsVolume toUpdate) {
         return fsVolumeService.update(toUpdate);
     }
 }
