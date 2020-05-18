@@ -28,6 +28,7 @@ import java.util.Comparator;
  */
 @Entity
 @Table(name = "STRM_ATR_KEY")
+@Deprecated
 public class StreamAttributeKey extends AuditedEntity implements HasName, HasDisplayValue {
     public static final String TABLE_NAME = SQLNameConstants.STREAM + SEP + SQLNameConstants.ATTRIBUTE + SEP
             + SQLNameConstants.KEY;

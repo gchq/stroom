@@ -16,6 +16,7 @@
 
 package stroom.legacy.model_6_1;
 
+@Deprecated
 public final class DocRefUtil {
     public static final DocRef NULL_SELECTION = new DocRef.Builder().uuid("").name("None").type("").build();
 

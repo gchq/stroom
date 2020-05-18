@@ -36,6 +36,7 @@ import java.util.Objects;
 @XmlAccessorType(XmlAccessType.FIELD)
 @XmlType(name = "indexField", propOrder = {"analyzerType", "caseSensitive", "fieldName", "fieldType", "indexed",
         "stored", "termPositions"})
+@Deprecated
 public class IndexField implements HasDisplayValue, Comparable<IndexField>, Serializable {
     private static final long serialVersionUID = 3100770758821157580L;
 

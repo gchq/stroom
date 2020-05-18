@@ -32,6 +32,7 @@ import java.sql.Statement;
 import java.util.HashMap;
 import java.util.Map;
 
+@Deprecated
 public class V5_0_0_12__Script extends BaseJavaMigration {
     private static final Logger LOGGER = LoggerFactory.getLogger(V5_0_0_12__Script.class);
 

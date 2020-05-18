@@ -25,6 +25,7 @@ import javax.xml.bind.annotation.XmlTransient;
 
 @Entity
 @Table(name = "QUERY")
+@Deprecated
 public class QueryEntity extends DocumentEntity {
     public static final String ENTITY_TYPE = "Query";
     public static final String TABLE_NAME = SQLNameConstants.QUERY;

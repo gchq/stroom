@@ -16,6 +16,7 @@ import stroom.xmlschema.shared.XmlSchemaDoc;
 
 import com.google.inject.AbstractModule;
 
+@Deprecated
 public class LegacyImpexModule extends AbstractModule {
     @Override
     protected void configure() {

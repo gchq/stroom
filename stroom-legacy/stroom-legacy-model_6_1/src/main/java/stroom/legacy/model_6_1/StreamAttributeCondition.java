@@ -20,6 +20,7 @@ import stroom.legacy.model_6_1.ExpressionTerm.Condition;
 
 import java.io.Serializable;
 
+@Deprecated
 public class StreamAttributeCondition implements Serializable {
     private static final long serialVersionUID = -2063409357774838870L;
 

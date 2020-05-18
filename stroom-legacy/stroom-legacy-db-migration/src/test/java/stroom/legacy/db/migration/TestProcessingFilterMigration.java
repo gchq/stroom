@@ -11,6 +11,7 @@ import org.junit.jupiter.api.Test;
 import java.sql.Connection;
 
 @Disabled
+@Deprecated
 class TestProcessingFilterMigration {
     /**
      * If you have a database on a version prior to 6.0.0.13 then you can run this test to

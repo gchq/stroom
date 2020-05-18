@@ -26,6 +26,7 @@ import java.util.List;
 
 @XmlAccessorType(XmlAccessType.FIELD)
 @XmlType(name = "customRollUpMask")
+@Deprecated
 public class CustomRollUpMask implements HasDisplayValue, SharedObject {
     private static final long serialVersionUID = 5978256629347842695L;
 

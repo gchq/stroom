@@ -27,6 +27,7 @@ import javax.persistence.UniqueConstraint;
  */
 @Entity
 @Table(name = "STRM_TP", uniqueConstraints = @UniqueConstraint(columnNames = {SQLNameConstants.NAME}))
+@Deprecated
 public class StreamType extends NamedEntity implements HasPrimitiveValue {
     public static final String TABLE_NAME = SQLNameConstants.STREAM + SQLNameConstants.TYPE_SUFFIX;
     public static final String FOREIGN_KEY = FK_PREFIX + TABLE_NAME + ID_SUFFIX;

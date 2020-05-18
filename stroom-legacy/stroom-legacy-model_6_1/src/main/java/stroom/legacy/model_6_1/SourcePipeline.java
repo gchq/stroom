@@ -16,6 +16,7 @@
 
 package stroom.legacy.model_6_1;
 
+@Deprecated
 public class SourcePipeline implements SharedObject {
     private static final long serialVersionUID = -3209898449831302066L;
 

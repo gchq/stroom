@@ -26,6 +26,7 @@ import java.util.Map;
  * the column interval is too small relative to the row key interval then you
  * will end up with too many columns.
  */
+@Deprecated
 public enum EventStoreTimeIntervalEnum implements HasDisplayValue {
     // IMPORTANT - Each interval must be exactly divisible into the next
     // largest. This is to allow us to roll up the

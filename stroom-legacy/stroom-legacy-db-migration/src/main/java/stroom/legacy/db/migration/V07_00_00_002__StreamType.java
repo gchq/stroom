@@ -28,6 +28,7 @@ import java.sql.PreparedStatement;
 import java.sql.ResultSet;
 
 @SuppressWarnings("unused")
+@Deprecated
 public class V07_00_00_002__StreamType extends BaseJavaMigration {
     private static final Logger LOGGER = LoggerFactory.getLogger(V07_00_00_002__StreamType.class);
 

@@ -33,6 +33,7 @@ import javax.persistence.UniqueConstraint;
  */
 @Entity
 @Table(name = "FD", uniqueConstraints = @UniqueConstraint(columnNames = {SQLNameConstants.NAME}))
+@Deprecated
 public class Feed extends DocumentEntity {
     public static final String TABLE_NAME = SQLNameConstants.FEED;
     public static final String FOREIGN_KEY = FK_PREFIX + TABLE_NAME + ID_SUFFIX;

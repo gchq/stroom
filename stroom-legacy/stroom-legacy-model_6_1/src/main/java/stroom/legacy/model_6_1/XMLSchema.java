@@ -24,6 +24,7 @@ import javax.persistence.Transient;
 
 @Entity
 @Table(name = "XML_SCHEMA")
+@Deprecated
 public class XMLSchema extends DocumentEntity {
     public static final String TABLE_NAME = SQLNameConstants.XML + SEP + SQLNameConstants.SCHEMA;
     public static final String FOREIGN_KEY = FK_PREFIX + TABLE_NAME + ID_SUFFIX;

@@ -19,6 +19,7 @@ package stroom.legacy.model_6_1;
 /**
  * A GWT friendly version of commons HashCodeBuilder.
  */
+@Deprecated
 public class HashCodeBuilder {
     private int hashCode = 31;
 

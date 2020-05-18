@@ -25,6 +25,7 @@ import javax.xml.bind.annotation.XmlTransient;
 
 @Entity
 @Table(name = "SCRIPT")
+@Deprecated
 public class Script extends DocumentEntity implements Copyable<Script> {
     public static final String TABLE_NAME = SQLNameConstants.SCRIPT;
     public static final String FOREIGN_KEY = FK_PREFIX + TABLE_NAME + ID_SUFFIX;

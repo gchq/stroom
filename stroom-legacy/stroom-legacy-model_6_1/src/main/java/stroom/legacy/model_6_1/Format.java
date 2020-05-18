@@ -31,6 +31,7 @@ import java.util.Objects;
 @XmlType(name = "Format", propOrder = {"type", "numberFormat", "dateTimeFormat"})
 @XmlAccessorType(XmlAccessType.FIELD)
 @ApiModel(description = "Describes the formatting that will be applied to values in a field")
+@Deprecated
 public final class Format implements Serializable {
     private static final long serialVersionUID = -5380825645719299089L;
 

@@ -19,6 +19,7 @@ package stroom.legacy.model_6_1;
 /**
  * A GWT friendly version of commons EqualsBuilder.
  */
+@Deprecated
 public class EqualsBuilder {
     private boolean isEquals = true;
 

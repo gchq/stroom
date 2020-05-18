@@ -8,6 +8,7 @@ import java.util.List;
  * A general purpose list builder
  * @param <ListedPojo> The classes being put into the list under construction
  */
+@Deprecated
 public class ListBuilder<ListedPojo> {
     private final List<ListedPojo> childValues = new ArrayList<>();
 

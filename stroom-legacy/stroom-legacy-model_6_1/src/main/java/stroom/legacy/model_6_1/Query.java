@@ -39,6 +39,7 @@ import java.util.List;
 @XmlRootElement(name = "query")
 @XmlAccessorType(XmlAccessType.FIELD)
 @ApiModel(description = Query.CLASS_DESC)
+@Deprecated
 public final class Query implements Serializable {
 
     private static final long serialVersionUID = 9055582579670841979L;

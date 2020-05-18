@@ -44,6 +44,7 @@ import java.util.concurrent.atomic.AtomicInteger;
 import java.util.stream.Collectors;
 
 @SuppressWarnings("unused")
+@Deprecated
 public class V07_00_00_1502__Index extends BaseJavaMigration {
     private static final Logger LOGGER = LoggerFactory.getLogger(V07_00_00_1502__Index.class);
 

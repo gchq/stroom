@@ -30,6 +30,7 @@ import java.util.Objects;
 @XmlAccessorType(XmlAccessType.FIELD)
 @XmlType(name = "table", propOrder = {"queryId", "fields", "extractValues", "extractionPipeline", "maxResults",
         "showDetail"})
+@Deprecated
 public class TableComponentSettings extends ComponentSettings {
     public static final int[] DEFAULT_MAX_RESULTS = {1000000};
     private static final long serialVersionUID = -2530827581046882396L;

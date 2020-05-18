@@ -33,6 +33,7 @@ import java.sql.SQLException;
 import java.sql.Statement;
 import java.util.UUID;
 
+@Deprecated
 public class V6_0_0_21__Dictionary extends BaseJavaMigration {
     @Override
     public void migrate(final Context flywayContext) throws Exception {

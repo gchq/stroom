@@ -25,6 +25,7 @@ import java.util.Arrays;
 
 @XmlAccessorType(XmlAccessType.FIELD)
 @XmlType(name = "size", propOrder = {"width", "height"})
+@Deprecated
 public class Size implements SharedObject {
     private static final long serialVersionUID = 8201392610412513780L;
 

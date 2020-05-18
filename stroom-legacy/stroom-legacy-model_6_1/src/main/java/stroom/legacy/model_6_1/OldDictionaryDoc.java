@@ -31,6 +31,7 @@ import java.util.Objects;
 @JsonPropertyOrder({"type", "uuid", "name", "version", "createTime", "updateTime", "createUser", "updateUser", "description", "data", "imports"})
 @XmlRootElement(name = "dictionary")
 @XmlType(name = "DictionaryDoc", propOrder = {"type", "uuid", "name", "version", "createTime", "updateTime", "createUser", "updateUser", "description", "data", "imports"})
+@Deprecated
 public class OldDictionaryDoc extends Doc {
     public static final String ENTITY_TYPE = "Dictionary";
 

@@ -30,6 +30,7 @@ import java.io.Serializable;
 @XmlType(name = "Param", propOrder = {"key", "value"})
 @XmlAccessorType(XmlAccessType.FIELD)
 @ApiModel(description = "A key value pair that describes a property of a query")
+@Deprecated
 public final class Param implements Serializable {
 
     private static final long serialVersionUID = 9055582579670841979L;

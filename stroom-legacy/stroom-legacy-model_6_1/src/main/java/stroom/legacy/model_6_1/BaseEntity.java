@@ -29,6 +29,7 @@ import javax.xml.bind.annotation.XmlTransient;
  * </p>
  */
 @MappedSuperclass
+@Deprecated
 public abstract class BaseEntity extends Entity implements HasType, HasId, SharedObject, Comparable<BaseEntity> {
     private static final long serialVersionUID = 2405151110726276049L;
 

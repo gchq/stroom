@@ -11,6 +11,7 @@ import java.sql.Connection;
 import java.sql.SQLException;
 import java.util.Optional;
 
+@Deprecated
 public class DbHealthCheck implements HasHealthCheck {
 
     private final LegacyDbConnProvider legacyDbConnProvider;

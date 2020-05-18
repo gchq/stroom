@@ -45,6 +45,7 @@ import java.util.Map;
 import java.util.Map.Entry;
 import java.util.TreeMap;
 
+@Deprecated
 public class Config {
     private static final Attributes2Impl BLANK_ATTRIBUTES = new Attributes2Impl();
     private static final String YES = "yes";

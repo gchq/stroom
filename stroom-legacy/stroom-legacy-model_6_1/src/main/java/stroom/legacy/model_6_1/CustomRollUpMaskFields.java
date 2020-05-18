@@ -18,6 +18,7 @@ package stroom.legacy.model_6_1;
 
 import java.util.Set;
 
+@Deprecated
 public class CustomRollUpMaskFields implements SharedObject, Comparable<CustomRollUpMaskFields> {
     private static final long serialVersionUID = 5490835313079322510L;
 

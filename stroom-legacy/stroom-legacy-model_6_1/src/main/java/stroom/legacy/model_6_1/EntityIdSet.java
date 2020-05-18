@@ -26,6 +26,7 @@ import java.util.TreeSet;
  * Hold id criteria
  */
 @XmlRootElement(name = "EntityIdSet")
+@Deprecated
 public class EntityIdSet<T extends BaseEntity> extends CriteriaSet<Long> {
     private static final long serialVersionUID = 1L;
 

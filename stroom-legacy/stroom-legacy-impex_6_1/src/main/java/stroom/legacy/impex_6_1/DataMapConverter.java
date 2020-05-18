@@ -5,6 +5,7 @@ import stroom.importexport.shared.ImportState;
 
 import java.util.Map;
 
+@Deprecated
 public interface DataMapConverter {
     Map<String, byte[]> convert(DocRef docRef,
                                 Map<String, byte[]> dataMap,

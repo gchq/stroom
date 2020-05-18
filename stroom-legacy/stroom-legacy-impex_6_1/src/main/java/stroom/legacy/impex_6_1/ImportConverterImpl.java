@@ -7,6 +7,7 @@ import stroom.importexport.shared.ImportState;
 import javax.inject.Inject;
 import java.util.Map;
 
+@Deprecated
 class ImportConverterImpl implements ImportConverter {
     private final Map<DataMapConverterBinder.ConverterType, DataMapConverter> converterMap;
 

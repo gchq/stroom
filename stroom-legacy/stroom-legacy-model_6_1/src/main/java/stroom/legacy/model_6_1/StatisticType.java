@@ -23,6 +23,7 @@ import java.io.Serializable;
  * summed, e.g. the number of bytes written however VALUE events cannot, e.g.
  * cpu%.
  */
+@Deprecated
 public enum StatisticType implements HasDisplayValue, HasPrimitiveValue, Serializable {
     COUNT("Count", 1),
     VALUE("Value", 2);

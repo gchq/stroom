@@ -13,6 +13,7 @@ import java.util.Map;
 import java.util.UUID;
 
 @Singleton
+@Deprecated
 class XmlSchemaDataMapConverter implements DataMapConverter {
     private final XmlSchemaSerialiser serialiser;
 

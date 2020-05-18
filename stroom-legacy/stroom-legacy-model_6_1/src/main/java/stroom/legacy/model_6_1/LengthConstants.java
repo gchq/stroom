@@ -16,6 +16,7 @@
 
 package stroom.legacy.model_6_1;
 
+@Deprecated
 public final class LengthConstants {
     public static final int MIN_NAME_LENGTH = 1;
 

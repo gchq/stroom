@@ -33,6 +33,7 @@ import java.util.Set;
 
 @Entity
 @Table(name = "STAT_DAT_SRC", uniqueConstraints = @UniqueConstraint(columnNames = {"NAME"}))
+@Deprecated
 public class StatisticStoreEntity extends DocumentEntity implements StatisticStore {
     public static final String ENTITY_TYPE = "StatisticStore";
     public static final String ENTITY_TYPE_FOR_DISPLAY = "Statistic Store";

@@ -7,6 +7,7 @@ import stroom.legacy.model_6_1.Index;
 import java.util.Map;
 import java.util.UUID;
 
+@Deprecated
 public class LegacyIndexDeserialiser {
     public IndexDoc getIndexDocFromLegacyImport(final DocRef docRef, final Map<String, byte[]> dataMap) {
         final Index oldIndex = new Index();

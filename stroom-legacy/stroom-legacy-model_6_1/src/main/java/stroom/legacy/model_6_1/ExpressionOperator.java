@@ -39,6 +39,7 @@ import java.util.Objects;
         value = "ExpressionOperator",
         description = "A logical addOperator term in a query expression tree",
         parent = ExpressionItem.class)
+@Deprecated
 public final class ExpressionOperator extends ExpressionItem {
     private static final long serialVersionUID = 6602004424564268512L;
 

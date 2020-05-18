@@ -16,6 +16,7 @@
 
 package stroom.legacy.model_6_1;
 
+@Deprecated
 public final class DocDocRefUtil {
     private DocDocRefUtil() {
         // Utility class.

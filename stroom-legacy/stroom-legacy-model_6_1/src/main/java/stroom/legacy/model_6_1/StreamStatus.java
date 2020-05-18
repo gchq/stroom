@@ -22,6 +22,7 @@ package stroom.legacy.model_6_1;
  * and unlocked.
  * </p>
  */
+@Deprecated
 public enum StreamStatus implements HasDisplayValue, HasPrimitiveValue {
     UNLOCKED("Unlocked", 0), /**
      * Open exclusive lock.

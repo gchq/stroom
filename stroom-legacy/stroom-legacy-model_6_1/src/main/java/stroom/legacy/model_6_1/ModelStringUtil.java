@@ -18,6 +18,7 @@ package stroom.legacy.model_6_1;
 
 import java.util.Comparator;
 
+@Deprecated
 public final class ModelStringUtil {
     private static final int METRIC_DIV = 1000;
     private static final int IEC_BYTE_DIV = 1024;

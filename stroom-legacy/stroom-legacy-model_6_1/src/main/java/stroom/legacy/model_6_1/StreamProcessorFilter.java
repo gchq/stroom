@@ -28,6 +28,7 @@ import javax.xml.bind.annotation.XmlTransient;
 import java.util.Comparator;
 
 @Entity(name = "STRM_PROC_FILT")
+@Deprecated
 public class StreamProcessorFilter extends AuditedEntity {
     public static final String TABLE_NAME = SQLNameConstants.STREAM + SEP + SQLNameConstants.PROCESSOR + SEP
             + SQLNameConstants.FILTER;

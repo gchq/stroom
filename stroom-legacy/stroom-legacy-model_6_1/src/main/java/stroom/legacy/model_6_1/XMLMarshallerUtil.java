@@ -33,6 +33,7 @@ import java.lang.reflect.Array;
 import java.lang.reflect.Field;
 import java.util.Collection;
 
+@Deprecated
 public final class XMLMarshallerUtil {
     private XMLMarshallerUtil() {
         // Utility class.

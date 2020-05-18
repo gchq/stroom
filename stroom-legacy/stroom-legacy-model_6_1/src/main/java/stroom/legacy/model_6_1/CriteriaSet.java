@@ -29,6 +29,7 @@ import java.util.Set;
  * By default when created it has no criteria i.e. match anything. As soon as
  * you update it it will be restrictive until you setMatchAll
  */
+@Deprecated
 public class CriteriaSet<T>
         implements SharedObject, Iterable<T>, Copyable<CriteriaSet<T>>, HasIsConstrained, Matcher<T>, Clearable {
     private static final long serialVersionUID = 1L;

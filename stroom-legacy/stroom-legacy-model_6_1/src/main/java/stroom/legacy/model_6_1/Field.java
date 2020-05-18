@@ -32,6 +32,7 @@ import java.util.Objects;
 @XmlAccessorType(XmlAccessType.FIELD)
 @ApiModel(description = "Describes a field in a result set. The field can have various expressions applied to it, " +
         "e.g. SUM(), along with sorting, filtering, formatting and grouping")
+@Deprecated
 public final class Field implements Serializable {
     private static final long serialVersionUID = 7327802315955158337L;
 

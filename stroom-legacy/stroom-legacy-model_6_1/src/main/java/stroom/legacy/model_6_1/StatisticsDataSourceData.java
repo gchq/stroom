@@ -31,6 +31,7 @@ import java.util.Set;
 
 @XmlAccessorType(XmlAccessType.PROPERTY)
 @XmlRootElement(name = "data")
+@Deprecated
 public class StatisticsDataSourceData implements SharedObject {
     private static final long serialVersionUID = -9071682094300037627L;
 

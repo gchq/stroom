@@ -46,6 +46,7 @@ import javax.xml.bind.annotation.XmlType;
  */
 @XmlAccessorType(XmlAccessType.FIELD)
 @XmlType(name = "Value", propOrder = {"string", "integer", "_long", "_boolean", "entity"})
+@Deprecated
 public class PipelinePropertyValue implements SharedObject, Copyable<PipelinePropertyValue> {
     private static final long serialVersionUID = 1247638056133627349L;
 

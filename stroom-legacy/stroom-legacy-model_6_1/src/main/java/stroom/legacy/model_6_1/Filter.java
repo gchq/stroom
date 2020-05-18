@@ -32,6 +32,7 @@ import java.util.Objects;
 @XmlAccessorType(XmlAccessType.FIELD)
 @ApiModel(description = "A pair of regular expression filters (inclusion and exclusion) to apply to the field.  Either or " +
         "both can be supplied")
+@Deprecated
 public final class Filter implements Serializable {
     private static final long serialVersionUID = 7327802315955158337L;
 

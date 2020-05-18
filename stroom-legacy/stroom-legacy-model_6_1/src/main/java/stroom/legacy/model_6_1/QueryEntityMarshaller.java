@@ -16,6 +16,7 @@
 
 package stroom.legacy.model_6_1;
 
+@Deprecated
 public class QueryEntityMarshaller extends EntityMarshaller<QueryEntity, Query> {
     public QueryEntityMarshaller() {
     }

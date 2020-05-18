@@ -19,6 +19,7 @@ package stroom.legacy.model_6_1;
 /**
  * Implemented by services that can clear down.
  */
+@Deprecated
 public interface Clearable {
     void clear();
 }

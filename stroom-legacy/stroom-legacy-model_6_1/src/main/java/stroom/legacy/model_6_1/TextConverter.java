@@ -24,6 +24,7 @@ import javax.persistence.Transient;
 
 @Entity
 @Table(name = "TXT_CONV")
+@Deprecated
 public class TextConverter extends DocumentEntity implements Copyable<TextConverter>, HasData {
     public static final String TABLE_NAME = SQLNameConstants.TEXT + SEP + SQLNameConstants.CONVERTER;
     public static final String FOREIGN_KEY = FK_PREFIX + TABLE_NAME + ID_SUFFIX;

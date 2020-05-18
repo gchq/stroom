@@ -21,6 +21,7 @@ import com.google.inject.multibindings.MapBinder;
 
 import java.util.Objects;
 
+@Deprecated
 public final class DataMapConverterBinder {
     private final MapBinder<ConverterType, DataMapConverter> mapBinder;
 

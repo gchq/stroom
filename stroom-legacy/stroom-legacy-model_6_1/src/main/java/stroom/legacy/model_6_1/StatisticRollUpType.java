@@ -18,6 +18,7 @@ package stroom.legacy.model_6_1;
 
 import java.io.Serializable;
 
+@Deprecated
 public enum StatisticRollUpType implements HasDisplayValue, HasPrimitiveValue, Serializable {
     NONE("None", 1),
     ALL("All", 2),

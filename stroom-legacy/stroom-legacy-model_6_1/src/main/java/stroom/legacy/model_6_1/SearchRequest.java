@@ -41,6 +41,7 @@ import java.util.Objects;
 @XmlType(name = "SearchRequest", propOrder = {"key", "query", "resultRequests", "dateTimeLocale", "incremental", "timeout"})
 @XmlAccessorType(XmlAccessType.FIELD)
 @ApiModel(description = "A request for new search or a follow up request for more data for an existing iterative search")
+@Deprecated
 public final class SearchRequest implements Serializable {
     private static final long serialVersionUID = -6668626615097471925L;
 

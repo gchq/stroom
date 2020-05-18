@@ -43,6 +43,7 @@ import java.io.Serializable;
 @ApiModel(
         description = "Base object for describing a set of result data",
         subTypes = {TableResult.class, FlatResult.class})
+@Deprecated
 public abstract class Result implements Serializable {
     private static final long serialVersionUID = -7455554742243923562L;
 
