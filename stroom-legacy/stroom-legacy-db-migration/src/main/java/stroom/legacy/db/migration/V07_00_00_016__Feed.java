@@ -16,6 +16,7 @@
 
 package stroom.legacy.db.migration;
 
+import stroom.db.util.DbUtil;
 import stroom.docstore.impl.Serialiser2FactoryImpl;
 import stroom.feed.impl.FeedSerialiser;
 import stroom.feed.shared.FeedDoc;
@@ -67,7 +68,7 @@ public class V07_00_00_016__Feed extends BaseJavaMigration {
                     final String encoding = resultSet.getString(10);
                     final String contextEncoding = resultSet.getString(11);
                     final byte status = resultSet.getByte(12);
-                    final Integer retentionDayAge = resultSet.getInt(13);
+                    final Integer retentionDayAge = DbUtil.getInteger(resultSet, 13);
                     final boolean reference = resultSet.getBoolean(14);
 
                     final FeedDoc document = new FeedDoc();

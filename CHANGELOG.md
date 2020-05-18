@@ -8,6 +8,10 @@ and this project adheres to [Semantic Versioning](http://semver.org/).
 
 * Issue **#1568** : Pipeline names should now be shown where needed in the UI.
 
+* Issue **#1544** : Imported dashboard from 6.1 now work.
+
+* Issue **#1577** : Cluster node status is now updated when node settings are changed.
+
 * Issue **#1396** : Completely changed DB migration and import/export compatibility code.
 
 * Fix index creation stored procedure.

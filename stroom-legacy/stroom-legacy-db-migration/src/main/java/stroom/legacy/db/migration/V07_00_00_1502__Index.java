@@ -307,7 +307,7 @@ public class V07_00_00_1502__Index extends BaseJavaMigration {
                         final int maxShrd = resultSet.getInt(9);
                         final byte partBy = resultSet.getByte(10);
                         final int partSz = resultSet.getInt(11);
-                        final Integer retenDayAge = resultSet.getObject(12, Integer.class);
+                        final Integer retenDayAge = DbUtil.getInteger(resultSet, 12);
                         final String fields = resultSet.getString(13);
 
                         final IndexDoc document = new IndexDoc();

@@ -16,9 +16,8 @@
 
 package stroom.node.impl;
 
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 import stroom.config.common.UriFactory;
+import stroom.docref.DocRef;
 import stroom.node.api.FindNodeCriteria;
 import stroom.node.api.NodeInfo;
 import stroom.node.api.NodeService;
@@ -28,10 +27,14 @@ import stroom.security.shared.PermissionNames;
 import stroom.util.AuditUtil;
 import stroom.util.entityevent.EntityAction;
 import stroom.util.entityevent.EntityEvent;
+import stroom.util.entityevent.EntityEventBus;
 import stroom.util.entityevent.EntityEventHandler;
 import stroom.util.shared.Clearable;
 import stroom.util.shared.PermissionException;
 import stroom.util.shared.ResultPage;
+
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import javax.inject.Inject;
 import javax.inject.Singleton;
@@ -46,21 +49,21 @@ public class NodeServiceImpl implements NodeService, Clearable, EntityEvent.Hand
     private final SecurityContext securityContext;
     private final NodeDao nodeDao;
     private final NodeInfo nodeInfo;
-    private final NodeConfig nodeConfig;
     private final UriFactory uriFactory;
     private volatile Node thisNode;
+    private final EntityEventBus entityEventBus;
 
     @Inject
     NodeServiceImpl(final SecurityContext securityContext,
                     final NodeDao nodeDao,
                     final NodeInfo nodeInfo,
-                    final NodeConfig nodeConfig,
-                    final UriFactory uriFactory) {
+                    final UriFactory uriFactory,
+                    final EntityEventBus entityEventBus) {
         this.securityContext = securityContext;
         this.nodeDao = nodeDao;
         this.nodeInfo = nodeInfo;
-        this.nodeConfig = nodeConfig;
         this.uriFactory = uriFactory;
+        this.entityEventBus = entityEventBus;
 
         securityContext.asProcessingUser(this::ensureNodeCreated);
     }
@@ -70,7 +73,12 @@ public class NodeServiceImpl implements NodeService, Clearable, EntityEvent.Hand
             throw new PermissionException(securityContext.getUserId(), "You are not authorised to update this node");
         }
         AuditUtil.stamp(securityContext.getUserId(), node);
-        return nodeDao.update(node);
+        final Node updated = nodeDao.update(node);
+
+        // Let all nodes know that the node has changed.
+        EntityEvent.fire(entityEventBus, new DocRef(Node.ENTITY_TYPE, String.valueOf(updated.getId()), updated.getName()), EntityAction.UPDATE);
+
+        return updated;
     }
 
     ResultPage<Node> find(final FindNodeCriteria criteria) {
@@ -165,6 +173,7 @@ public class NodeServiceImpl implements NodeService, Clearable, EntityEvent.Hand
             LOGGER.info("Creating node record for {} with endpoint url {}",
                     node.getName(), node.getUrl());
             thisNode = nodeDao.create(node);
+
         } else {
             if (!endpointUrl.equals(thisNode.getUrl())) {
                 thisNode.setUrl(endpointUrl);
@@ -176,7 +185,13 @@ public class NodeServiceImpl implements NodeService, Clearable, EntityEvent.Hand
 
     @Override
     public void onChange(final EntityEvent event) {
-        thisNode = null;
+        final Node node = thisNode;
+        if (node != null) {
+            if (Node.ENTITY_TYPE.equals(event.getDocRef().getType()) &&
+                    String.valueOf(node.getId()).equals(event.getDocRef().getUuid())) {
+                thisNode = null;
+            }
+        }
     }
 
     @Override
