@@ -45,7 +45,7 @@ class StroomStatsInternalStatisticsService implements InternalStatisticsService 
     private final String docRefType;
     private final DatatypeFactory datatypeFactory;
 
-    private JAXBContext jaxbContext;
+    private static JAXBContext jaxbContext;
 
     @Inject
     StroomStatsInternalStatisticsService(final KafkaProducerFactory stroomKafkaProducerFactory,

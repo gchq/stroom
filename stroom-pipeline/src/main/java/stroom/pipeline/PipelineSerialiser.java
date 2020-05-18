@@ -1,8 +1,5 @@
 package stroom.pipeline;
 
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
-import stroom.docref.DocRef;
 import stroom.docstore.api.DocumentSerialiser2;
 import stroom.docstore.api.Serialiser2;
 import stroom.docstore.api.Serialiser2Factory;
@@ -10,6 +7,9 @@ import stroom.pipeline.shared.PipelineDoc;
 import stroom.pipeline.shared.data.PipelineData;
 import stroom.util.string.EncodingUtil;
 import stroom.util.xml.XMLMarshallerUtil;
+
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import javax.inject.Inject;
 import javax.xml.bind.JAXBContext;
@@ -23,6 +23,7 @@ public class PipelineSerialiser implements DocumentSerialiser2<PipelineDoc> {
     private static final String XML = "xml";
 
     private final Serialiser2<PipelineDoc> delegate;
+    private static JAXBContext jaxbContext;
 
     @Inject
     public PipelineSerialiser(final Serialiser2Factory serialiser2Factory) {
@@ -78,9 +79,8 @@ public class PipelineSerialiser implements DocumentSerialiser2<PipelineDoc> {
     public PipelineData getPipelineDataFromXml(final String xml) {
         if (xml != null) {
             try {
-                final JAXBContext jaxbContext = JAXBContext.newInstance(PipelineData.class);
-                return XMLMarshallerUtil.unmarshal(jaxbContext, PipelineData.class, xml);
-            } catch (final JAXBException | RuntimeException e) {
+                return XMLMarshallerUtil.unmarshal(getJAXBContext(), PipelineData.class, xml);
+            } catch (final RuntimeException e) {
                 LOGGER.error("Unable to unmarshal pipeline config", e);
             }
         }
@@ -91,9 +91,8 @@ public class PipelineSerialiser implements DocumentSerialiser2<PipelineDoc> {
     public String getXmlFromPipelineData(final PipelineData pipelineData) {
         if (pipelineData != null) {
             try {
-                final JAXBContext jaxbContext = JAXBContext.newInstance(PipelineData.class);
-                return XMLMarshallerUtil.marshal(jaxbContext, XMLMarshallerUtil.removeEmptyCollections(pipelineData));
-            } catch (final JAXBException | RuntimeException e) {
+                return XMLMarshallerUtil.marshal(getJAXBContext(), XMLMarshallerUtil.removeEmptyCollections(pipelineData));
+            } catch (final RuntimeException e) {
                 LOGGER.error("Unable to marshal pipeline config", e);
             }
         }
@@ -101,16 +100,14 @@ public class PipelineSerialiser implements DocumentSerialiser2<PipelineDoc> {
         return null;
     }
 
-    public DocRef getDocRefFromLegacyXML(final String xml) {
-        if (xml != null) {
+    public static JAXBContext getJAXBContext() {
+        if (jaxbContext == null) {
             try {
-                final JAXBContext jaxbContext = JAXBContext.newInstance(DocRef.class);
-                return XMLMarshallerUtil.unmarshal(jaxbContext, DocRef.class, xml);
-            } catch (final JAXBException | RuntimeException e) {
-                LOGGER.error("Unable to unmarshal dashboard config", e);
+                jaxbContext = JAXBContext.newInstance(PipelineData.class);
+            } catch (final JAXBException e) {
+                throw new RuntimeException(e.getMessage(), e);
             }
         }
-
-        return null;
+        return jaxbContext;
     }
 }

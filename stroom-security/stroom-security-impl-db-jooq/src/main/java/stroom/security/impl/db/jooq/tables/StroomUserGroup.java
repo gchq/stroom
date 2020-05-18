@@ -42,7 +42,7 @@ import stroom.security.impl.db.jooq.tables.records.StroomUserGroupRecord;
 @SuppressWarnings({ "all", "unchecked", "rawtypes" })
 public class StroomUserGroup extends TableImpl<StroomUserGroupRecord> {
 
-    private static final long serialVersionUID = 1239648678;
+    private static final long serialVersionUID = 73990831;
 
     /**
      * The reference instance of <code>stroom.stroom_user_group</code>
@@ -112,7 +112,7 @@ public class StroomUserGroup extends TableImpl<StroomUserGroupRecord> {
 
     @Override
     public List<Index> getIndexes() {
-        return Arrays.<Index>asList(Indexes.STROOM_USER_GROUP_PRIMARY, Indexes.STROOM_USER_GROUP_STROOM_USER_GROUP_FK_USER_UUID, Indexes.STROOM_USER_GROUP_STROOM_USER_GROUP_GROUP_UUID_USER_UUID_IDX);
+        return Arrays.<Index>asList(Indexes.STROOM_USER_GROUP_PRIMARY, Indexes.STROOM_USER_GROUP_STROOM_USER_GROUP_GROUP_UUID_USER_UUID_IDX, Indexes.STROOM_USER_GROUP_STROOM_USER_GROUP_USER_UUID_GROUP_UUID_IDX);
     }
 
     @Override
@@ -127,7 +127,7 @@ public class StroomUserGroup extends TableImpl<StroomUserGroupRecord> {
 
     @Override
     public List<UniqueKey<StroomUserGroupRecord>> getKeys() {
-        return Arrays.<UniqueKey<StroomUserGroupRecord>>asList(Keys.KEY_STROOM_USER_GROUP_PRIMARY, Keys.KEY_STROOM_USER_GROUP_STROOM_USER_GROUP_GROUP_UUID_USER_UUID_IDX);
+        return Arrays.<UniqueKey<StroomUserGroupRecord>>asList(Keys.KEY_STROOM_USER_GROUP_PRIMARY, Keys.KEY_STROOM_USER_GROUP_STROOM_USER_GROUP_GROUP_UUID_USER_UUID_IDX, Keys.KEY_STROOM_USER_GROUP_STROOM_USER_GROUP_USER_UUID_GROUP_UUID_IDX);
     }
 
     @Override

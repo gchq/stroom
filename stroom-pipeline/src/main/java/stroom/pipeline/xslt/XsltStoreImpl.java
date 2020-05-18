@@ -24,35 +24,25 @@ import stroom.docstore.api.Store;
 import stroom.docstore.api.StoreFactory;
 import stroom.docstore.api.UniqueNameUtil;
 import stroom.explorer.shared.DocumentType;
-import stroom.importexport.migration.LegacyXMLSerialiser;
 import stroom.importexport.shared.ImportState;
 import stroom.importexport.shared.ImportState.ImportMode;
 import stroom.pipeline.shared.XsltDoc;
-import stroom.security.api.SecurityContext;
 import stroom.util.shared.Message;
-import stroom.util.shared.Severity;
 
 import javax.inject.Inject;
 import javax.inject.Singleton;
-import java.io.IOException;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
-import java.util.UUID;
 
 @Singleton
 class XsltStoreImpl implements XsltStore {
     private final Store<XsltDoc> store;
-    private final SecurityContext securityContext;
-    private final XsltSerialiser serialiser;
 
     @Inject
     XsltStoreImpl(final StoreFactory storeFactory,
-                  final SecurityContext securityContext,
                   final XsltSerialiser serialiser) {
         this.store = storeFactory.createStore(serialiser, XsltDoc.DOCUMENT_TYPE, XsltDoc.class);
-        this.securityContext = securityContext;
-        this.serialiser = serialiser;
     }
 
     ////////////////////////////////////////////////////////////////////////
@@ -152,13 +142,7 @@ class XsltStoreImpl implements XsltStore {
 
     @Override
     public ImpexDetails importDocument(final DocRef docRef, final Map<String, byte[]> dataMap, final ImportState importState, final ImportMode importMode) {
-        // Convert legacy import format to the new format.
-        final Map<String, byte[]> map = convert(docRef, dataMap, importState, importMode);
-        if (map != null) {
-            return store.importDocument(docRef, map, importState, importMode);
-        }
-
-        return new ImpexDetails(docRef);
+        return store.importDocument(docRef, dataMap, importState, importMode);
     }
 
     @Override
@@ -167,51 +151,6 @@ class XsltStoreImpl implements XsltStore {
             return store.exportDocument(docRef, messageList, new AuditFieldFilter<>());
         }
         return store.exportDocument(docRef, messageList, d -> d);
-    }
-
-    private Map<String, byte[]> convert(final DocRef docRef, final Map<String, byte[]> dataMap, final ImportState importState, final ImportMode importMode) {
-        Map<String, byte[]> result = dataMap;
-        if (!dataMap.containsKey("meta")) {
-            final String uuid = docRef.getUuid();
-            try {
-                final boolean exists = store.exists(docRef);
-                XsltDoc document;
-                if (exists) {
-                    document = readDocument(docRef);
-
-                } else {
-                    final OldXslt oldXslt = new OldXslt();
-                    final LegacyXMLSerialiser legacySerialiser = new LegacyXMLSerialiser();
-                    legacySerialiser.performImport(oldXslt, dataMap);
-
-                    final long now = System.currentTimeMillis();
-                    final String userId = securityContext.getUserId();
-
-                    document = new XsltDoc();
-                    document.setType(docRef.getType());
-                    document.setUuid(uuid);
-                    document.setName(docRef.getName());
-                    document.setVersion(UUID.randomUUID().toString());
-                    document.setCreateTimeMs(now);
-                    document.setUpdateTimeMs(now);
-                    document.setCreateUser(userId);
-                    document.setUpdateUser(userId);
-
-                    document.setDescription(oldXslt.getDescription());
-                }
-
-                result = serialiser.write(document);
-                if (dataMap.containsKey("data.xsl")) {
-                    result.put("xsl", dataMap.remove("data.xsl"));
-                }
-
-            } catch (final IOException | RuntimeException e) {
-                importState.addMessage(Severity.ERROR, e.getMessage());
-                result = null;
-            }
-        }
-
-        return result;
     }
 
     @Override

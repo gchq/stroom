@@ -16,7 +16,7 @@ public class XsltSerialiser implements DocumentSerialiser2<XsltDoc> {
     private final Serialiser2<XsltDoc> delegate;
 
     @Inject
-    XsltSerialiser(final Serialiser2Factory serialiser2Factory) {
+    public XsltSerialiser(final Serialiser2Factory serialiser2Factory) {
         this.delegate = serialiser2Factory.createSerialiser(XsltDoc.class);
     }
 

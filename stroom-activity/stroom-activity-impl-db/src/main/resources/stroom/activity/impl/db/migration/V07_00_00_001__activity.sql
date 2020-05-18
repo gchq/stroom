@@ -18,32 +18,6 @@
 SET @OLD_SQL_NOTES=@@SQL_NOTES, SQL_NOTES=0;
 
 --
--- Rename the old ACTIVITY table
--- MUST BE DONE HERE DUE TO NAME CLASH
---
-DROP PROCEDURE IF EXISTS rename_activity;
-DELIMITER //
-CREATE PROCEDURE rename_activity ()
-BEGIN
-    IF NOT EXISTS (
-            SELECT NULL
-            FROM INFORMATION_SCHEMA.TABLES
-            WHERE TABLE_NAME = 'OLD_ACTIVITY') THEN
-
-        IF EXISTS (
-                SELECT NULL
-                FROM INFORMATION_SCHEMA.TABLES
-                WHERE TABLE_NAME = 'ACTIVITY') THEN
-
-            RENAME TABLE ACTIVITY TO OLD_ACTIVITY;
-        END IF;
-    END IF;
-END//
-DELIMITER ;
-CALL rename_activity();
-DROP PROCEDURE rename_activity;
-
---
 -- Create the activity table
 -- MUST BE DONE HERE DUE TO NAME CLASH
 --
@@ -58,54 +32,6 @@ CREATE TABLE IF NOT EXISTS activity (
   json                  longtext,
   PRIMARY KEY           (id)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8;
-
---
--- Copy data into the activity table
--- MUST BE DONE HERE DUE TO NAME CLASH
---
-DROP PROCEDURE IF EXISTS copy_activity;
-DELIMITER //
-CREATE PROCEDURE copy_activity ()
-BEGIN
-    IF EXISTS (
-            SELECT NULL
-            FROM INFORMATION_SCHEMA.TABLES
-            WHERE TABLE_NAME = 'OLD_ACTIVITY') THEN
-
-        INSERT INTO activity (
-            id,
-            version,
-            create_time_ms,
-            create_user,
-            update_time_ms,
-            update_user,
-            user_id,
-            json)
-        SELECT
-            ID,
-            1,
-            IFNULL(CRT_MS, 0),
-            IFNULL(CRT_USER, 'UNKNOWN'),
-            IFNULL(UPD_MS, 0),
-            IFNULL(UPD_USER, 'UNKNOWN'),
-            USER_ID,
-            JSON
-        FROM OLD_ACTIVITY
-        WHERE ID > (SELECT COALESCE(MAX(id), 0) FROM activity)
-        ORDER BY ID;
-
-        -- Work out what to set our auto_increment start value to
-        SELECT CONCAT('ALTER TABLE activity AUTO_INCREMENT = ', COALESCE(MAX(id) + 1, 1))
-        INTO @alter_table_sql
-        FROM activity;
-
-        PREPARE alter_table_stmt FROM @alter_table_sql;
-        EXECUTE alter_table_stmt;
-    END IF;
-END//
-DELIMITER ;
-CALL copy_activity();
-DROP PROCEDURE copy_activity;
 
 SET SQL_NOTES=@OLD_SQL_NOTES;
 

@@ -27,7 +27,11 @@ import javax.xml.bind.JAXBException;
 abstract class AbstractEntityMarshaller<T_Entity, T_Object> implements Marshaller<T_Entity, T_Object> {
     private static final Logger LOGGER = LoggerFactory.getLogger(AbstractEntityMarshaller.class);
 
-    private JAXBContext jaxbContext;
+    private final JAXBContext jaxbContext;
+
+    public AbstractEntityMarshaller(final JAXBContext jaxbContext) {
+        this.jaxbContext = jaxbContext;
+    }
 
     @Override
     public T_Entity marshal(final T_Entity entity) {
@@ -41,7 +45,7 @@ abstract class AbstractEntityMarshaller<T_Entity, T_Object> implements Marshalle
                 LOGGER.error(e.getMessage(), e);
             }
 
-            final String data = XMLMarshallerUtil.marshal(getJaxbContext(), object);
+            final String data = XMLMarshallerUtil.marshal(jaxbContext, object);
             setData(entity, data);
         } catch (final RuntimeException e) {
             LOGGER.debug("Problem marshaling {} {}", new Object[]{entity.getClass(), entity}, e);
@@ -54,7 +58,7 @@ abstract class AbstractEntityMarshaller<T_Entity, T_Object> implements Marshalle
     public T_Entity unmarshal(final T_Entity entity) {
         try {
             final String data = getData(entity);
-            final T_Object object = XMLMarshallerUtil.unmarshal(getJaxbContext(), getObjectType(), data);
+            final T_Object object = XMLMarshallerUtil.unmarshal(jaxbContext, getObjectType(), data);
             setObject(entity, object);
         } catch (final RuntimeException e) {
             LOGGER.debug("Unable to unmarshal entity!", e);
@@ -70,16 +74,4 @@ abstract class AbstractEntityMarshaller<T_Entity, T_Object> implements Marshalle
     protected abstract Class<T_Object> getObjectType();
 
     protected abstract String getEntityType();
-
-    private JAXBContext getJaxbContext() {
-        if (jaxbContext == null) {
-            try {
-                jaxbContext = JAXBContext.newInstance(getObjectType());
-            } catch (final JAXBException e) {
-                LOGGER.error(MarkerFactory.getMarker("FATAL"), "Unable to create new JAXBContext for object type!", e);
-                throw new RuntimeException(e.getMessage());
-            }
-        }
-        return jaxbContext;
-    }
 }

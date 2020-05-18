@@ -17,10 +17,6 @@
 -- Stop NOTE level warnings about objects (not)? existing
 SET @OLD_SQL_NOTES=@@SQL_NOTES, SQL_NOTES=0;
 
-
-
-
-
 --
 -- Rename the old token_types table
 --

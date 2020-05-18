@@ -23,46 +23,31 @@ import stroom.docref.DocRef;
 import stroom.docref.DocRefInfo;
 import stroom.docstore.api.AuditFieldFilter;
 import stroom.docstore.api.DependencyRemapper;
-import stroom.docstore.api.DocumentSerialiser2;
-import stroom.docstore.api.Serialiser2Factory;
 import stroom.docstore.api.Store;
 import stroom.docstore.api.StoreFactory;
 import stroom.docstore.api.UniqueNameUtil;
 import stroom.explorer.shared.DocumentType;
 import stroom.importexport.shared.ImportState;
 import stroom.importexport.shared.ImportState.ImportMode;
-import stroom.security.api.SecurityContext;
 import stroom.util.shared.Message;
-import stroom.util.shared.Severity;
-import stroom.util.string.EncodingUtil;
 
 import javax.inject.Inject;
 import javax.inject.Singleton;
-import java.io.IOException;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
-import java.util.UUID;
 import java.util.function.BiConsumer;
 import java.util.stream.Collectors;
 
 @Singleton
 class DictionaryStoreImpl implements DictionaryStore, WordListProvider {
     private final Store<DictionaryDoc> store;
-    private final SecurityContext securityContext;
-    private final DocumentSerialiser2<DictionaryDoc> serialiser;
-    private final DocumentSerialiser2<OldDictionaryDoc> oldSerialiser;
 
     @Inject
     DictionaryStoreImpl(final StoreFactory storeFactory,
-                        final SecurityContext securityContext,
-                        final DictionarySerialiser serialiser,
-                        final Serialiser2Factory serialiser2Factory) {
-        this.store = storeFactory.createStore(serialiser, DictionaryDoc.ENTITY_TYPE, DictionaryDoc.class);
-        this.securityContext = securityContext;
-        this.serialiser = serialiser;
-        this.oldSerialiser = serialiser2Factory.createSerialiser(OldDictionaryDoc.class);
+                        final DictionarySerialiser serialiser) {
+        this.store = storeFactory.createStore(serialiser, DictionaryDoc.DOCUMENT_TYPE, DictionaryDoc.class);
     }
 
     ////////////////////////////////////////////////////////////////////////
@@ -102,7 +87,7 @@ class DictionaryStoreImpl implements DictionaryStore, WordListProvider {
 
     @Override
     public DocumentType getDocumentType() {
-        return new DocumentType(9, DictionaryDoc.ENTITY_TYPE, DictionaryDoc.ENTITY_TYPE);
+        return new DocumentType(9, DictionaryDoc.DOCUMENT_TYPE, DictionaryDoc.DOCUMENT_TYPE);
     }
 
     ////////////////////////////////////////////////////////////////////////
@@ -175,13 +160,7 @@ class DictionaryStoreImpl implements DictionaryStore, WordListProvider {
 
     @Override
     public ImpexDetails importDocument(final DocRef docRef, final Map<String, byte[]> dataMap, final ImportState importState, final ImportMode importMode) {
-        // Convert legacy import format to the new format.
-        final Map<String, byte[]> map = convert(docRef, dataMap, importState, importMode);
-        if (map != null) {
-            return store.importDocument(docRef, map, importState, importMode);
-        }
-
-        return new ImpexDetails(docRef);
+        return store.importDocument(docRef, dataMap, importState, importMode);
     }
 
     @Override
@@ -192,73 +171,9 @@ class DictionaryStoreImpl implements DictionaryStore, WordListProvider {
         return store.exportDocument(docRef, messageList, d -> d);
     }
 
-    private Map<String, byte[]> convert(final DocRef docRef, final Map<String, byte[]> dataMap, final ImportState importState, final ImportMode importMode) {
-        Map<String, byte[]> result = dataMap;
-
-        try {
-            if (!dataMap.containsKey("meta")) {
-                // The latest version has a 'meta' file for the core details about the dictionary so convert this data.
-
-                if (dataMap.containsKey("dat")) {
-                    // Version 6.0 stored the whole dictionary in a single JSON file ending in 'dat' so convert this.
-                    dataMap.put("meta", dataMap.remove("dat"));
-                    final OldDictionaryDoc oldDocument = oldSerialiser.read(dataMap);
-
-                    final DictionaryDoc document = new DictionaryDoc();
-                    document.setVersion(oldDocument.getVersion());
-                    document.setCreateTimeMs(oldDocument.getCreateTimeMs());
-                    document.setUpdateTimeMs(oldDocument.getUpdateTimeMs());
-                    document.setCreateUser(oldDocument.getCreateUser());
-                    document.setUpdateUser(oldDocument.getUpdateUser());
-                    document.setType(oldDocument.getType());
-                    document.setUuid(oldDocument.getUuid());
-                    document.setName(oldDocument.getName());
-                    document.setDescription(oldDocument.getDescription());
-                    document.setImports(oldDocument.getImports());
-                    document.setData(oldDocument.getData());
-
-                    result = serialiser.write(document);
-                } else {
-                    // If we don't have a 'dat' file then this version is pre 6.0. We need to create the dictionary meta and put the data in the map.
-
-                    final boolean exists = store.exists(docRef);
-                    DictionaryDoc document;
-                    if (exists) {
-                        document = readDocument(docRef);
-
-                    } else {
-                        final long now = System.currentTimeMillis();
-                        final String userId = securityContext.getUserId();
-
-                        document = new DictionaryDoc();
-                        document.setType(docRef.getType());
-                        document.setUuid(docRef.getUuid());
-                        document.setName(docRef.getName());
-                        document.setVersion(UUID.randomUUID().toString());
-                        document.setCreateTimeMs(now);
-                        document.setUpdateTimeMs(now);
-                        document.setCreateUser(userId);
-                        document.setUpdateUser(userId);
-                    }
-
-                    if (dataMap.containsKey("data.xml")) {
-                        document.setData(EncodingUtil.asString(dataMap.get("data.xml")));
-                    }
-
-                    result = serialiser.write(document);
-                }
-            }
-        } catch (final IOException | RuntimeException e) {
-            importState.addMessage(Severity.ERROR, e.getMessage());
-            result = null;
-        }
-
-        return result;
-    }
-
     @Override
     public String getType() {
-        return DictionaryDoc.ENTITY_TYPE;
+        return DictionaryDoc.DOCUMENT_TYPE;
     }
 
     @Override

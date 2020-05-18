@@ -60,7 +60,7 @@ import static org.assertj.core.api.Assertions.within;
 class TestStatisticsFilter implements Statistics {
     private static final String INPUT_DIR = "TestStatisticsFilter/";
     private static final String STAT_NAME = "myStatName";
-    private static final double JUNIT_DOUBLE_TOLLERANCE = 0.001;
+    private static final double JUNIT_DOUBLE_TOLERANCE = 0.001;
 
     private final ArrayList<StatisticEvent> testEvents = new ArrayList<>();
 
@@ -199,7 +199,7 @@ class TestStatisticsFilter implements Statistics {
         assertThat(testEvents.get(0).getTagList().get(0).getValue()).isEqualTo("1tag1value");
         assertThat(testEvents.get(0).getTagList().get(1).getTag()).isEqualTo("tag2name");
         assertThat(testEvents.get(0).getTagList().get(1).getValue()).isEqualTo("1tag2value");
-        assertThat(testEvents.get(0).getValue()).isCloseTo(1.5, within(JUNIT_DOUBLE_TOLLERANCE));
+        assertThat(testEvents.get(0).getValue()).isCloseTo(1.5, within(JUNIT_DOUBLE_TOLERANCE));
         assertThatThrownBy(() -> testEvents.get(0)
                 .getCount()).isInstanceOf(RuntimeException.class);
 
@@ -210,7 +210,7 @@ class TestStatisticsFilter implements Statistics {
         assertThat(testEvents.get(1).getTagList().get(0).getValue()).isEqualTo("2tag1value");
         assertThat(testEvents.get(1).getTagList().get(1).getTag()).isEqualTo("tag2name");
         assertThat(testEvents.get(1).getTagList().get(1).getValue()).isEqualTo("2tag2value");
-        assertThat(testEvents.get(1).getValue()).isCloseTo(3.9, within(JUNIT_DOUBLE_TOLLERANCE));
+        assertThat(testEvents.get(1).getValue()).isCloseTo(3.9, within(JUNIT_DOUBLE_TOLERANCE));
         assertThatThrownBy(() -> testEvents.get(0)
                 .getCount()).isInstanceOf(RuntimeException.class);
 
@@ -460,8 +460,7 @@ class TestStatisticsFilter implements Statistics {
         final SecurityContext securityContext = new MockSecurityContext();
 
         return new StatisticStoreStoreImpl(
-                new StoreFactoryImpl(persistence, null, securityContext),
-                securityContext,
+                new StoreFactoryImpl(persistence, null, null, securityContext),
                 new StatisticStoreSerialiser(new Serialiser2FactoryImpl()));
     }
 }

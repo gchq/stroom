@@ -1,0 +1,70 @@
+ext.moduleName = 'stroom.legacy.impex_6_1'
+
+dependencies {
+//    compile project(':stroom-config:stroom-config-global-impl-db-jooq')
+//    compile project(':stroom-core-shared')
+    compile project(':stroom-dashboard:stroom-dashboard-impl')
+    compile project(':stroom-dictionary:stroom-dictionary-impl')
+    compile project(':stroom-docstore:stroom-docstore-impl')
+    compile project(':stroom-feed:stroom-feed-impl')
+    compile project(':stroom-index:stroom-index-impl')
+    compile project(':stroom-importexport:stroom-importexport-api')
+    compile project(':stroom-legacy:stroom-legacy-model_6_1')
+    compile project(':stroom-pipeline')
+    compile project(':stroom-statistics:stroom-statistics-impl-hbase')
+    compile project(':stroom-statistics:stroom-statistics-impl-sql')
+    compile project(':stroom-dashboard:stroom-storedquery-impl-db')
+
+//    compile project(':stroom-util')
+
+//    compile libs.hibernate_jpa_api
+//    compile libs.jackson_annotations
+//    compile libs.javassist
+//    compile libs.saxon_he
+//    compile libs.slf4j_api
+//    compile libs.swagger_annotations
+//    compile libs.validation_api
+
+//    compile libs.commons_compress
+//    compile libs.commons_io
+//    compile libs.commons_lang
+//    compile libs.dropwizard_lifecycle
+//    compile libs.dropwizard_metrics_annotation
+//    compile libs.eventLogging
+//    compile libs.flyway_core
+//    compile libs.guava
+    compile libs.guice4
+//    compile libs.gwt_servlet
+//    compile libs.hessian
+//    compile libs.hikari
+//    compile libs.jackson_annotations
+//    compile libs.jackson_core
+//    compile libs.jackson_databind
+//    compile libs.javassist
+//    compile libs.javax_inject
+//    compile libs.javax_servlet_api
+//    compile libs.jaxb_api
+//    compile libs.saxon_he
+    compile libs.slf4j_api
+//    compile libs.stroomDocRef
+//    compile libs.swagger_annotations
+//    compile libs.ws_rs_api
+//    compile libs.xml_apis
+//
+//    testCompile project(':stroom-test-common')
+//
+//    testCompile libs.assertj_core
+//    testCompile libs.junit_jupiter_api
+//    testCompile libs.mockito_core
+//    testCompile libs.mockito_junit_jupiter
+//
+//    // The following logging libs are needed when running junits outside dropwizard
+//    testRuntimeOnly libs.javax_activation
+//    testRuntimeOnly libs.jaxb_runtime
+//    testRuntimeOnly libs.jcl_over_slf4j
+//    testRuntimeOnly libs.jul_to_slf4j
+//    testRuntimeOnly libs.junit_jupiter_engine
+//    testRuntimeOnly libs.log4j_over_slf4j
+//    testRuntimeOnly libs.logback_classic
+//    testRuntimeOnly libs.logback_core
+}

@@ -24,6 +24,7 @@ import stroom.docstore.api.DependencyRemapper;
 import stroom.docstore.api.DocumentSerialiser2;
 import stroom.docstore.api.Store;
 import stroom.docstore.shared.Doc;
+import stroom.importexport.api.ImportConverter;
 import stroom.importexport.api.ImportExportActionHandler;
 import stroom.importexport.shared.ImportState;
 import stroom.importexport.shared.ImportState.ImportMode;
@@ -62,6 +63,7 @@ public class StoreImpl<D extends Doc> implements Store<D> {
 
     private final Persistence persistence;
     private final EntityEventBus entityEventBus;
+    private final ImportConverter importConverter;
     private final SecurityContext securityContext;
 
     private final DocumentSerialiser2<D> serialiser;
@@ -73,12 +75,14 @@ public class StoreImpl<D extends Doc> implements Store<D> {
     @Inject
     StoreImpl(final Persistence persistence,
               final EntityEventBus entityEventBus,
+              final ImportConverter importConverter,
               final SecurityContext securityContext,
               final DocumentSerialiser2<D> serialiser,
               final String type,
               final Class<D> clazz) {
         this.persistence = persistence;
         this.entityEventBus = entityEventBus;
+        this.importConverter = importConverter;
         this.securityContext = securityContext;
         this.serialiser = serialiser;
         this.type = type;
@@ -318,46 +322,51 @@ public class StoreImpl<D extends Doc> implements Store<D> {
 
     @Override
     public ImportExportActionHandler.ImpexDetails importDocument(final DocRef docRef, final Map<String, byte[]> dataMap, final ImportState importState, final ImportMode importMode) {
-        Objects.requireNonNull(docRef);
-        final String uuid = docRef.getUuid();
-        try {
-            final boolean exists = exists(docRef);
+        // Convert legacy import format to the new format if necessary.
+        final Map<String, byte[]> convertedDataMap = importConverter.convert(docRef, dataMap, importState, importMode, securityContext.getUserId());
 
-            if (ImportMode.CREATE_CONFIRMATION.equals(importMode)) {
-                // See if the new document is the same as the old one.
-                if (!exists) {
-                    importState.setState(State.NEW);
-                } else {
-                    final List<String> updatedFields = importState.getUpdatedFieldList();
-                    checkForUpdatedFields(docRef, dataMap, new AuditFieldFilter<>(), updatedFields);
-                    if (updatedFields.size() == 0) {
-                        importState.setState(State.EQUAL);
+        if (convertedDataMap != null) {
+            Objects.requireNonNull(docRef);
+            final String uuid = docRef.getUuid();
+            try {
+                final boolean exists = exists(docRef);
+
+                if (ImportMode.CREATE_CONFIRMATION.equals(importMode)) {
+                    // See if the new document is the same as the old one.
+                    if (!exists) {
+                        importState.setState(State.NEW);
+                    } else {
+                        final List<String> updatedFields = importState.getUpdatedFieldList();
+                        checkForUpdatedFields(docRef, convertedDataMap, new AuditFieldFilter<>(), updatedFields);
+                        if (updatedFields.size() == 0) {
+                            importState.setState(State.EQUAL);
+                        }
                     }
-                }
 
-                if (exists && !securityContext.hasDocumentPermission(uuid, DocumentPermissionNames.UPDATE)) {
-                    throw new PermissionException(securityContext.getUserId(), "You are not authorised to update this document " + docRef);
-                }
-
-            } else if (importState.ok(importMode)) {
-                if (exists && !securityContext.hasDocumentPermission(uuid, DocumentPermissionNames.UPDATE)) {
-                    throw new PermissionException(securityContext.getUserId(), "You are not authorised to update this document " + docRef);
-                }
-
-                persistence.getLockFactory().lock(uuid, () -> {
-                    try {
-                        persistence.write(docRef, exists, dataMap);
-                        EntityEvent.fire(entityEventBus, docRef, EntityAction.CREATE);
-                        dirty.set(true);
-
-                    } catch (final IOException e) {
-                        throw new UncheckedIOException(e);
+                    if (exists && !securityContext.hasDocumentPermission(uuid, DocumentPermissionNames.UPDATE)) {
+                        throw new PermissionException(securityContext.getUserId(), "You are not authorised to update this document " + docRef);
                     }
-                });
+
+                } else if (importState.ok(importMode)) {
+                    if (exists && !securityContext.hasDocumentPermission(uuid, DocumentPermissionNames.UPDATE)) {
+                        throw new PermissionException(securityContext.getUserId(), "You are not authorised to update this document " + docRef);
+                    }
+
+                    persistence.getLockFactory().lock(uuid, () -> {
+                        try {
+                            persistence.write(docRef, exists, convertedDataMap);
+                            EntityEvent.fire(entityEventBus, docRef, EntityAction.CREATE);
+                            dirty.set(true);
+
+                        } catch (final IOException e) {
+                            throw new UncheckedIOException(e);
+                        }
+                    });
+                }
+
+            } catch (final RuntimeException e) {
+                importState.addMessage(Severity.ERROR, e.getMessage());
             }
-
-        } catch (final RuntimeException e) {
-            importState.addMessage(Severity.ERROR, e.getMessage());
         }
 
         return new ImportExportActionHandler.ImpexDetails(docRef);

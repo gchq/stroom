@@ -42,7 +42,7 @@ import stroom.explorer.impl.db.jooq.tables.records.ExplorerNodeRecord;
 @SuppressWarnings({ "all", "unchecked", "rawtypes" })
 public class ExplorerNode extends TableImpl<ExplorerNodeRecord> {
 
-    private static final long serialVersionUID = 1220975626;
+    private static final long serialVersionUID = 987053500;
 
     /**
      * The reference instance of <code>stroom.explorer_node</code>
@@ -122,7 +122,7 @@ public class ExplorerNode extends TableImpl<ExplorerNodeRecord> {
 
     @Override
     public List<Index> getIndexes() {
-        return Arrays.<Index>asList(Indexes.EXPLORER_NODE_PRIMARY, Indexes.EXPLORER_NODE_TYPE);
+        return Arrays.<Index>asList(Indexes.EXPLORER_NODE_EXPLORER_NODE_TYPE_UUID, Indexes.EXPLORER_NODE_PRIMARY);
     }
 
     @Override
@@ -137,7 +137,7 @@ public class ExplorerNode extends TableImpl<ExplorerNodeRecord> {
 
     @Override
     public List<UniqueKey<ExplorerNodeRecord>> getKeys() {
-        return Arrays.<UniqueKey<ExplorerNodeRecord>>asList(Keys.KEY_EXPLORER_NODE_PRIMARY, Keys.KEY_EXPLORER_NODE_TYPE);
+        return Arrays.<UniqueKey<ExplorerNodeRecord>>asList(Keys.KEY_EXPLORER_NODE_PRIMARY, Keys.KEY_EXPLORER_NODE_EXPLORER_NODE_TYPE_UUID);
     }
 
     @Override
