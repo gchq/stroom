@@ -18,6 +18,7 @@ package stroom.processor.shared;
 
 import io.swagger.annotations.Api;
 import io.swagger.annotations.ApiOperation;
+import io.swagger.annotations.ApiParam;
 import org.fusesource.restygwt.client.DirectRestService;
 import stroom.meta.shared.FindMetaCriteria;
 import stroom.util.shared.ResourcePaths;
@@ -40,18 +41,19 @@ import java.util.List;
 @Produces(MediaType.APPLICATION_JSON)
 @Consumes(MediaType.APPLICATION_JSON)
 public interface ProcessorFilterResource extends RestResource, DirectRestService {
+
     @POST
     @Path("find")
     @ApiOperation(
             value = "Finds processors and filters matching request",
             response = ResultPage.class)
-    ProcessorListRowResultPage find(FetchProcessorRequest request);
+    ProcessorListRowResultPage find(@ApiParam("request") FetchProcessorRequest request);
 
     @POST
     @ApiOperation(
             value = "Creates a filter",
             response = ProcessorFilter.class)
-    ProcessorFilter create(CreateProcessorFilterRequest request);
+    ProcessorFilter create(@ApiParam("request") CreateProcessorFilterRequest request);
 
     @GET
     @Path("/{id}")
@@ -87,5 +89,5 @@ public interface ProcessorFilterResource extends RestResource, DirectRestService
     @POST
     @Path("/reprocess")
     @ApiOperation(value = "Create a filter to reprocess data")
-    List<ReprocessDataInfo> reprocess(FindMetaCriteria criteria);
+    List<ReprocessDataInfo> reprocess(@ApiParam("criteria") FindMetaCriteria criteria);
 }

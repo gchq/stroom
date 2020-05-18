@@ -18,6 +18,7 @@ package stroom.task.shared;
 
 import io.swagger.annotations.Api;
 import io.swagger.annotations.ApiOperation;
+import io.swagger.annotations.ApiParam;
 import org.fusesource.restygwt.client.DirectRestService;
 import stroom.util.shared.ResourcePaths;
 import stroom.util.shared.RestResource;
@@ -54,7 +55,8 @@ public interface TaskResource extends RestResource, DirectRestService {
     @ApiOperation(
             value = "Finds tasks for a node",
             response = TaskProgressResponse.class)
-    TaskProgressResponse find(@PathParam("nodeName") String nodeName, FindTaskProgressRequest request);
+    TaskProgressResponse find(@PathParam("nodeName") String nodeName, 
+                              @ApiParam("request") FindTaskProgressRequest request);
 
     @GET
     @Path(USER_PATH_PART + NODE_NAME_PATH_PARAM)
@@ -67,5 +69,6 @@ public interface TaskResource extends RestResource, DirectRestService {
     @Path(TERMINATE_PATH_PART + NODE_NAME_PATH_PARAM)
     @ApiOperation(
             value = "Terminates tasks for a node")
-    Boolean terminate(@PathParam("nodeName") String nodeName, TerminateTaskProgressRequest request);
+    Boolean terminate(@PathParam("nodeName") String nodeName, 
+                      @ApiParam("request") TerminateTaskProgressRequest request);
 }

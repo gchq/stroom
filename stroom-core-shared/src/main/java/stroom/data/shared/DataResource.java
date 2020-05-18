@@ -25,6 +25,7 @@ import stroom.util.shared.RestResource;
 
 import io.swagger.annotations.Api;
 import io.swagger.annotations.ApiOperation;
+import io.swagger.annotations.ApiParam;
 import org.fusesource.restygwt.client.DirectRestService;
 
 import javax.ws.rs.Consumes;
@@ -41,19 +42,20 @@ import javax.ws.rs.core.MediaType;
 @Produces(MediaType.APPLICATION_JSON)
 @Consumes(MediaType.APPLICATION_JSON)
 public interface DataResource extends RestResource, DirectRestService {
+
     @POST
     @Path("download")
     @ApiOperation(
             value = "Download matching data",
             response = ResourceGeneration.class)
-    ResourceGeneration download(FindMetaCriteria criteria);
+    ResourceGeneration download(@ApiParam("criteria") FindMetaCriteria criteria);
 
     @POST
     @Path("upload")
     @ApiOperation(
             value = "Upload data",
             response = ResourceGeneration.class)
-    ResourceKey upload(UploadDataRequest request);
+    ResourceKey upload(@ApiParam("request") UploadDataRequest request);
 
     @GET
     @Path("/{streamId}")

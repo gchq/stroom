@@ -18,6 +18,7 @@ package stroom.query.shared;
 
 import io.swagger.annotations.Api;
 import io.swagger.annotations.ApiOperation;
+import io.swagger.annotations.ApiParam;
 import org.fusesource.restygwt.client.DirectRestService;
 import stroom.util.shared.ResourcePaths;
 import stroom.util.shared.RestResource;
@@ -34,9 +35,10 @@ import java.util.List;
 @Produces(MediaType.APPLICATION_JSON)
 @Consumes(MediaType.APPLICATION_JSON)
 public interface SuggestionsResource extends RestResource, DirectRestService {
+
     @POST
     @ApiOperation(
             value = "Fetch some suggestions",
             response = List.class)
-    List<String> fetch(FetchSuggestionsRequest request);
+    List<String> fetch(@ApiParam("request") FetchSuggestionsRequest request);
 }

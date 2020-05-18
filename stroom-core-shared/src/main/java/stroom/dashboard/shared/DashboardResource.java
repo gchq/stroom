@@ -18,6 +18,7 @@ package stroom.dashboard.shared;
 
 import io.swagger.annotations.Api;
 import io.swagger.annotations.ApiOperation;
+import io.swagger.annotations.ApiParam;
 import org.fusesource.restygwt.client.DirectRestService;
 import stroom.docref.DocRef;
 import stroom.util.shared.ResourceGeneration;
@@ -39,12 +40,13 @@ import java.util.Set;
 @Produces(MediaType.APPLICATION_JSON)
 @Consumes(MediaType.APPLICATION_JSON)
 public interface DashboardResource extends RestResource, DirectRestService {
+
     @POST
     @Path("/read")
     @ApiOperation(
             value = "Get a dashboard doc",
             response = DashboardDoc.class)
-    DashboardDoc read(DocRef docRef);
+    DashboardDoc read(@ApiParam("docRef") DocRef docRef);
 
     @PUT
     @Path("/update")
@@ -58,28 +60,28 @@ public interface DashboardResource extends RestResource, DirectRestService {
     @ApiOperation(
             value = "Validate an expression",
             response = ValidateExpressionResult.class)
-    ValidateExpressionResult validateExpression(String expression);
+    ValidateExpressionResult validateExpression(@ApiParam("expression") String expression);
 
     @POST
     @Path("/downloadQuery")
     @ApiOperation(
             value = "Download a query",
             response = ResourceGeneration.class)
-    ResourceGeneration downloadQuery(DownloadQueryRequest downloadQueryRequest);
+    ResourceGeneration downloadQuery(@ApiParam("downloadQueryRequest") DownloadQueryRequest downloadQueryRequest);
 
     @POST
     @Path("/downloadSearchResults")
     @ApiOperation(
             value = "Download search results",
             response = ResourceGeneration.class)
-    ResourceGeneration downloadSearchResults(DownloadSearchResultsRequest request);
+    ResourceGeneration downloadSearchResults(@ApiParam("request") DownloadSearchResultsRequest request);
 
     @POST
     @Path("/poll")
     @ApiOperation(
             value = "Poll for new search results",
             response = Set.class)
-    Set<SearchResponse> poll(SearchBusPollRequest request);
+    Set<SearchResponse> poll(@ApiParam("request") SearchBusPollRequest request);
 
     @GET
     @Path("/fetchTimeZones")

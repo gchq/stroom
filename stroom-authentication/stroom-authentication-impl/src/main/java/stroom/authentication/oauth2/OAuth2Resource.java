@@ -1,7 +1,9 @@
 package stroom.authentication.oauth2;
 
 import com.codahale.metrics.annotation.Timed;
+import io.swagger.annotations.Api;
 import io.swagger.annotations.ApiOperation;
+import io.swagger.annotations.ApiParam;
 import stroom.authentication.api.OIDC;
 import stroom.util.shared.RestResource;
 
@@ -20,11 +22,13 @@ import javax.ws.rs.core.MediaType;
 import java.util.List;
 import java.util.Map;
 
+@Api
 @Singleton
 @Path("/oauth2/v1/noauth")
 @Produces(MediaType.APPLICATION_JSON)
 @Consumes(MediaType.APPLICATION_JSON)
 public interface OAuth2Resource extends RestResource {
+
     @GET
     @Path("auth")
     @Timed
@@ -43,7 +47,7 @@ public interface OAuth2Resource extends RestResource {
     @Path("token")
     @Timed
     @ApiOperation(value = "Get a token from an access code", response = String.class, tags = {"Authentication"})
-    TokenResponse token(TokenRequest tokenRequest);
+    TokenResponse token(@ApiParam("tokenRequest") TokenRequest tokenRequest);
 
     @ApiOperation(
             value = "Provides access to this service's current public key. " +

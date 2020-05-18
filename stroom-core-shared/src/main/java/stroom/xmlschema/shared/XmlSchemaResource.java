@@ -18,6 +18,7 @@ package stroom.xmlschema.shared;
 
 import io.swagger.annotations.Api;
 import io.swagger.annotations.ApiOperation;
+import io.swagger.annotations.ApiParam;
 import org.fusesource.restygwt.client.DirectRestService;
 import stroom.docref.DocRef;
 import stroom.util.shared.ResourcePaths;
@@ -40,7 +41,7 @@ public interface XmlSchemaResource extends RestResource, DirectRestService {
     @ApiOperation(
             value = "Get an xml schema doc",
             response = XmlSchemaDoc.class)
-    XmlSchemaDoc read(DocRef docRef);
+    XmlSchemaDoc read(@ApiParam("docRef") DocRef docRef);
 
     @PUT
     @Path("/update")

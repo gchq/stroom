@@ -22,6 +22,7 @@ import stroom.util.shared.ResultPage;
 
 import io.swagger.annotations.Api;
 import io.swagger.annotations.ApiOperation;
+import io.swagger.annotations.ApiParam;
 import org.fusesource.restygwt.client.DirectRestService;
 
 import javax.ws.rs.Consumes;
@@ -79,7 +80,7 @@ public interface ActivityResource extends RestResource, DirectRestService {
     @ApiOperation(
             value = "Create an Activity",
             response = ActivityValidationResult.class)
-    ActivityValidationResult validate(Activity activity);
+    ActivityValidationResult validate(@ApiParam("activity") Activity activity);
 
     @GET
     @Path("/current")
@@ -100,5 +101,5 @@ public interface ActivityResource extends RestResource, DirectRestService {
     @ApiOperation(
             value = "Acknowledge the slash screen",
             response = Boolean.class)
-    Boolean acknowledgeSplash(AcknowledgeSplashRequest request);
+    Boolean acknowledgeSplash(@ApiParam("request") AcknowledgeSplashRequest request);
 }
