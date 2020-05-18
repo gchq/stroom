@@ -16,11 +16,6 @@
 
 package stroom.alert.client.presenter;
 
-import com.google.gwt.safehtml.shared.SafeHtml;
-import com.google.inject.Inject;
-import com.google.web.bindery.event.shared.EventBus;
-import com.gwtplatform.mvp.client.MyPresenterWidget;
-import com.gwtplatform.mvp.client.View;
 import stroom.alert.client.event.AlertEvent;
 import stroom.alert.client.event.CommonAlertEvent;
 import stroom.alert.client.event.ConfirmEvent;
@@ -28,6 +23,13 @@ import stroom.widget.popup.client.event.HidePopupEvent;
 import stroom.widget.popup.client.event.ShowPopupEvent;
 import stroom.widget.popup.client.presenter.PopupUiHandlers;
 import stroom.widget.popup.client.presenter.PopupView.PopupType;
+
+import com.google.gwt.core.client.GWT;
+import com.google.gwt.safehtml.shared.SafeHtml;
+import com.google.inject.Inject;
+import com.google.web.bindery.event.shared.EventBus;
+import com.gwtplatform.mvp.client.MyPresenterWidget;
+import com.gwtplatform.mvp.client.View;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -79,24 +81,30 @@ public class CommonAlertPresenter extends MyPresenterWidget<CommonAlertPresenter
 
     @Override
     public void onHide(final boolean autoClose, final boolean ok) {
-        final CommonAlertEvent<?> event = stack.get(0);
+        try {
+            final CommonAlertEvent<?> event = stack.get(0);
 
-        // Tell the caller what the user decided.
-        if (event instanceof ConfirmEvent) {
-            final ConfirmEvent confirmEvent = (ConfirmEvent) event;
-            if (confirmEvent.getCallback() != null) {
-                confirmEvent.getCallback().onResult(ok);
+            // Tell the caller what the user decided.
+            if (event instanceof ConfirmEvent) {
+                final ConfirmEvent confirmEvent = (ConfirmEvent) event;
+                if (confirmEvent.getCallback() != null) {
+                    confirmEvent.getCallback().onResult(ok);
+                }
+            } else if (event instanceof AlertEvent) {
+                final AlertEvent alertEvent = (AlertEvent) event;
+                if (alertEvent.getCallback() != null) {
+                    alertEvent.getCallback().onClose();
+                }
             }
-        } else if (event instanceof AlertEvent) {
-            final AlertEvent alertEvent = (AlertEvent) event;
-            if (alertEvent.getCallback() != null) {
-                alertEvent.getCallback().onClose();
-            }
-        }
 
-        stack.remove(0);
-        if (stack.size() > 0) {
-            doShow();
+        } catch (final RuntimeException e) {
+            GWT.log(e.getMessage());
+
+        } finally {
+            stack.remove(0);
+            if (stack.size() > 0) {
+                doShow();
+            }
         }
     }
 
