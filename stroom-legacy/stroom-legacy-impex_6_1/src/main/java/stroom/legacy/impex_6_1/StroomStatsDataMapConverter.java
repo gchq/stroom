@@ -18,6 +18,7 @@ import java.util.Map;
 import java.util.UUID;
 
 @Singleton
+@Deprecated
 class StroomStatsDataMapConverter implements DataMapConverter {
 //    private static final Logger LOGGER = LoggerFactory.getLogger(StroomStatsDataMapConverter.class);
 

@@ -16,6 +16,7 @@
 
 package stroom.legacy.model_6_1;
 
+@Deprecated
 public class StatisticsDataSourceMarshaller extends EntityMarshaller<StatisticStoreEntity, StatisticsDataSourceData> {
     public StatisticsDataSourceMarshaller() {
     }

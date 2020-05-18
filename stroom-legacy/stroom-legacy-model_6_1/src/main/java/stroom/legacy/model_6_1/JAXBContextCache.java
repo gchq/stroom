@@ -5,6 +5,7 @@ import javax.xml.bind.JAXBException;
 import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
 
+@Deprecated
 public final class JAXBContextCache {
     private static final Map<Class<?>, JAXBContext> map = new ConcurrentHashMap<>();
 

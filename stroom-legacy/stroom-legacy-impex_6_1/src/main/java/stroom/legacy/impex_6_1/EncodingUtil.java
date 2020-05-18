@@ -3,6 +3,7 @@ package stroom.legacy.impex_6_1;
 import java.nio.charset.Charset;
 import java.nio.charset.StandardCharsets;
 
+@Deprecated
 public final class EncodingUtil {
     private static final Charset CHARSET = StandardCharsets.UTF_8;
 

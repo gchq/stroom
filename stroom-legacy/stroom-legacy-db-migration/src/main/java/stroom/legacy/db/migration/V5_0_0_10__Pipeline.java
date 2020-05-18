@@ -30,6 +30,7 @@ import java.sql.PreparedStatement;
 import java.sql.ResultSet;
 import java.sql.Statement;
 
+@Deprecated
 public class V5_0_0_10__Pipeline extends BaseJavaMigration {
     private static final Logger LOGGER = LoggerFactory.getLogger(V5_0_0_10__Pipeline.class);
 

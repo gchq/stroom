@@ -22,6 +22,7 @@ import org.slf4j.MarkerFactory;
 
 import javax.xml.bind.JAXBContext;
 
+@Deprecated
 public abstract class EntityMarshaller<E extends BaseEntity, O> implements Marshaller<E, O> {
     private static final Logger LOGGER = LoggerFactory.getLogger(EntityMarshaller.class);
 

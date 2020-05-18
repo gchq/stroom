@@ -9,6 +9,7 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.io.OutputStream;
 
+@Deprecated
 public class JsonSerialiser<D> implements Serialiser<D> {
     private final ObjectMapper mapper;
 

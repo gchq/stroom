@@ -25,6 +25,7 @@ import java.sql.Connection;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
+@Deprecated
 class TestEntityReferenceReplacer {
     @Test
     void testEntityStreamType() {

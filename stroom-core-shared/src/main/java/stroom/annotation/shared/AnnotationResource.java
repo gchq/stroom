@@ -18,6 +18,7 @@ package stroom.annotation.shared;
 
 import io.swagger.annotations.Api;
 import io.swagger.annotations.ApiOperation;
+import io.swagger.annotations.ApiParam;
 import org.fusesource.restygwt.client.DirectRestService;
 import stroom.util.shared.ResourcePaths;
 import stroom.util.shared.RestResource;
@@ -44,7 +45,7 @@ public interface AnnotationResource extends RestResource, DirectRestService {
     AnnotationDetail get(@QueryParam("annotationId") Long annotationId);
 
     @POST
-    AnnotationDetail createEntry(CreateEntryRequest request);
+    AnnotationDetail createEntry(@ApiParam("request") CreateEntryRequest request);
 
     @GET
     @Path("status")
@@ -72,26 +73,26 @@ public interface AnnotationResource extends RestResource, DirectRestService {
     @ApiOperation(
             value = "Links an annotation to an event",
             response = Response.class)
-    List<EventId> link(EventLink eventLink);
+    List<EventId> link(@ApiParam("eventLink") EventLink eventLink);
 
     @POST
     @Path("unlink")
     @ApiOperation(
             value = "Unlinks an annotation from an event",
             response = Response.class)
-    List<EventId> unlink(EventLink eventLink);
+    List<EventId> unlink(@ApiParam("eventLink") EventLink eventLink);
 
     @POST
     @Path("setStatus")
     @ApiOperation(
             value = "Bulk action to set the status for several annotations",
             response = Response.class)
-    Integer setStatus(SetStatusRequest request);
+    Integer setStatus(@ApiParam("request") SetStatusRequest request);
 
     @POST
     @Path("setAssignedTo")
     @ApiOperation(
             value = "Bulk action to set the assignment for several annotations",
             response = Response.class)
-    Integer setAssignedTo(SetAssignedToRequest request);
+    Integer setAssignedTo(@ApiParam("request") SetAssignedToRequest request);
 }

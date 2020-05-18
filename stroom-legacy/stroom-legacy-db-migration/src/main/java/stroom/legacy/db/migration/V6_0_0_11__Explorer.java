@@ -38,6 +38,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.Set;
 
+@Deprecated
 public class V6_0_0_11__Explorer extends BaseJavaMigration {
     private static final Logger LOGGER = LoggerFactory.getLogger(V6_0_0_21__Dictionary.class);
 

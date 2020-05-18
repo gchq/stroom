@@ -47,6 +47,7 @@ import javax.persistence.Transient;
  * </ol>
  */
 @Entity(name = "STRM")
+@Deprecated
 public class Stream extends BaseEntityBig {
     public static final String TABLE_NAME = SQLNameConstants.STREAM;
     public static final String FOREIGN_KEY = FK_PREFIX + TABLE_NAME + ID_SUFFIX;

@@ -16,6 +16,7 @@
 
 package stroom.legacy.model_6_1;
 
+@Deprecated
 public class DashboardMarshaller extends EntityMarshaller<Dashboard, DashboardConfig> {
     public DashboardMarshaller() {
     }

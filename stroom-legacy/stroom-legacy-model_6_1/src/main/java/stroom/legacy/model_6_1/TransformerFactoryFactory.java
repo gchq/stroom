@@ -28,6 +28,7 @@ import javax.xml.transform.TransformerConfigurationException;
 import javax.xml.transform.TransformerFactory;
 import java.util.Properties;
 
+@Deprecated
 public final class TransformerFactoryFactory {
     private static final Logger LOGGER = LoggerFactory.getLogger(TransformerFactoryFactory.class);
 

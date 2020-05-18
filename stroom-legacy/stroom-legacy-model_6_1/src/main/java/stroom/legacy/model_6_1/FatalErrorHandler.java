@@ -20,6 +20,7 @@ import org.xml.sax.ErrorHandler;
 import org.xml.sax.SAXException;
 import org.xml.sax.SAXParseException;
 
+@Deprecated
 public class FatalErrorHandler implements ErrorHandler {
     @Override
     public void warning(final SAXParseException exception) throws SAXException {

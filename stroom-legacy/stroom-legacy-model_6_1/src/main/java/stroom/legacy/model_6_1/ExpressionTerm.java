@@ -35,6 +35,7 @@ import java.util.Objects;
         value = "ExpressionTerm",
         description = "A predicate term in a query expression tree",
         parent = ExpressionItem.class)
+@Deprecated
 public final class ExpressionTerm extends ExpressionItem {
     private static final long serialVersionUID = 9035311895540457146L;
 

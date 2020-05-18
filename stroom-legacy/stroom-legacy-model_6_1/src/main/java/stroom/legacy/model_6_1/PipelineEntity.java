@@ -28,6 +28,7 @@ import javax.xml.bind.annotation.XmlTransient;
  */
 @Entity
 @Table(name = "PIPE")
+@Deprecated
 public class PipelineEntity extends DocumentEntity {
     public static final String TABLE_NAME = SQLNameConstants.PIPELINE;
     public static final String FOREIGN_KEY = FK_PREFIX + TABLE_NAME + ID_SUFFIX;

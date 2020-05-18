@@ -18,6 +18,7 @@ package stroom.cluster.lock.impl.db;
 
 import io.swagger.annotations.Api;
 import io.swagger.annotations.ApiOperation;
+import io.swagger.annotations.ApiParam;
 import org.fusesource.restygwt.client.DirectRestService;
 import stroom.util.shared.ResourcePaths;
 import stroom.util.shared.RestResource;
@@ -43,15 +44,18 @@ public interface ClusterLockResource extends RestResource, DirectRestService {
     @PUT
     @Path(TRY_PATH_PART + NODE_NAME_PATH_PARAM)
     @ApiOperation(value = "Try to lock")
-    Boolean tryLock(@PathParam("nodeName") String nodeName, ClusterLockKey key);
+    Boolean tryLock(@PathParam("nodeName") String nodeName, 
+                    @ApiParam("key") ClusterLockKey key);
 
     @PUT
     @Path(RELEASE_PATH_PART + NODE_NAME_PATH_PARAM)
     @ApiOperation(value = "Release a lock")
-    Boolean releaseLock(@PathParam("nodeName") String nodeName, ClusterLockKey key);
+    Boolean releaseLock(@PathParam("nodeName") String nodeName, 
+                        @ApiParam("key") ClusterLockKey key);
 
     @PUT
     @Path(KEEP_ALIVE_PATH_PART + NODE_NAME_PATH_PARAM)
     @ApiOperation(value = "Keep a lock alive")
-    Boolean keepLockAlive(@PathParam("nodeName") String nodeName, ClusterLockKey key);
+    Boolean keepLockAlive(@PathParam("nodeName") String nodeName, 
+                          @ApiParam("key") ClusterLockKey key);
 }

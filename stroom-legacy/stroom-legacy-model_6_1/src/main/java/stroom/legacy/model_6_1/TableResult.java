@@ -29,6 +29,7 @@ import java.util.Objects;
 @ApiModel(
         description = "Object for describing a set of results in a table form that supports grouped data",
         parent = Result.class)
+@Deprecated
 public final class TableResult extends Result {
     private static final long serialVersionUID = -2964122512841756795L;
 

@@ -14,6 +14,7 @@ import java.util.Map;
 import java.util.UUID;
 
 @Singleton
+@Deprecated
 class ScriptDataMapConverter implements DataMapConverter {
 //    private static final Logger LOGGER = LoggerFactory.getLogger(ScriptDataMapConverter.class);
 

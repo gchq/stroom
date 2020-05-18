@@ -43,6 +43,7 @@ import java.io.Serializable;
 @ApiModel(
         description = "Base type for an item in an expression tree",
         subTypes = {ExpressionOperator.class, ExpressionTerm.class})
+@Deprecated
 public abstract class ExpressionItem implements Serializable {
     private static final long serialVersionUID = -8483817637655853635L;
 

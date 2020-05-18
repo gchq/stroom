@@ -1,6 +1,7 @@
 package stroom.index.impl;
 
 import io.swagger.annotations.Api;
+import io.swagger.annotations.ApiParam;
 import stroom.index.shared.IndexVolumeGroup;
 import stroom.util.shared.ResourcePaths;
 import stroom.util.shared.RestResource;
@@ -36,7 +37,7 @@ public interface NewUIIndexVolumeGroupResource extends RestResource {
     Response create();
 
     @PUT
-    Response update(IndexVolumeGroup indexVolumeGroup);
+    Response update(@ApiParam("indexVolumeGroup") IndexVolumeGroup indexVolumeGroup);
 
     @DELETE
     @Path("/{id}")

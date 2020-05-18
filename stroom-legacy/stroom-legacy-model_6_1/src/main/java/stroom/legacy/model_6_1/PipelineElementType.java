@@ -20,6 +20,7 @@ import java.util.Arrays;
 import java.util.HashSet;
 import java.util.Set;
 
+@Deprecated
 public class PipelineElementType implements Comparable<PipelineElementType>, HasType, SharedObject {
     public static final String ROLE_SOURCE = "source";
     public static final String ROLE_DESTINATION = "destination";

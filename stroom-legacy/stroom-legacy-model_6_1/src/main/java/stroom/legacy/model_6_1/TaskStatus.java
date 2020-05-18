@@ -19,6 +19,7 @@ package stroom.legacy.model_6_1;
 /**
  * The status of this stream process.
  */
+@Deprecated
 public enum TaskStatus implements HasDisplayValue, HasPrimitiveValue {
     /**
      * Unprocessed - yet to be locked

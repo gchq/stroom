@@ -21,6 +21,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.Set;
 
+@Deprecated
 public class StreamAttributeMap implements SharedObject {
     private static final long serialVersionUID = -8198186456924478908L;
 

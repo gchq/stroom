@@ -24,6 +24,7 @@ import javax.xml.bind.annotation.XmlType;
 
 @XmlAccessorType(XmlAccessType.FIELD)
 @XmlType(name = "tab", propOrder = {"id", "visible", "settings"})
+@Deprecated
 public class TabConfig implements SharedObject {
     private static final long serialVersionUID = -2105048053435792675L;
 

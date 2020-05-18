@@ -22,6 +22,7 @@ import javax.persistence.Transient;
 import javax.validation.constraints.Size;
 
 @MappedSuperclass
+@Deprecated
 public abstract class NamedEntity extends AuditedEntity implements HasName, HasDisplayValue {
     public static final String NAME = SQLNameConstants.NAME;
     private static final long serialVersionUID = -6752797140242673318L;

@@ -8,6 +8,12 @@ and this project adheres to [Semantic Versioning](http://semver.org/).
 
 * Issue **#1573** : Active tasks tab now only shows tasks related to the open feed.
 
+* Issue **#1584** : Add @ApiParam to POST/PUT/DELETE endpoints so the request type appears in swagger-ui.
+
+* Issue **#1581** : Change streamId to a path param in GET /api/data/v1.
+
+* Issue **#1567** : Added error handling so the confirmation dialog continues to work even when there is a failure in a previous use.
+
 * Issue **#1568** : Pipeline names should now be shown where needed in the UI.
 
 * Issue **#1457** : Change field value suggester to use fuzzy matching.
@@ -24,7 +30,7 @@ and this project adheres to [Semantic Versioning](http://semver.org/).
 
 * Issue **#1508** : Tidy up property descriptions, change connection pool props to use Stroom Duration type.
 
-* Issue **#473** : Fix value stats being ignored during in memroy stat aggregation.
+* Issue **#473** : Fix value stats being ignored during in memory stat aggregation.
 
 * Issue **#1141** : Make SQL stats aggregation delete unused stat keys at the end.
 

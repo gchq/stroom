@@ -22,6 +22,7 @@ import org.xml.sax.Attributes;
 import org.xml.sax.SAXException;
 import org.xml.sax.helpers.DefaultHandler;
 
+@Deprecated
 public abstract class ImportContentHandler extends DefaultHandler {
     int depth = 0;
 

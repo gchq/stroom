@@ -32,6 +32,7 @@ import java.util.Map;
 import java.util.Objects;
 import java.util.concurrent.ConcurrentHashMap;
 
+@Deprecated
 public final class BeanPropertyUtil {
     private static final Map<Key, List<Property>> propertyCache = new ConcurrentHashMap<>();
 

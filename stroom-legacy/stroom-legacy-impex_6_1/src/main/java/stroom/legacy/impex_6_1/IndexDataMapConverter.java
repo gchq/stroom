@@ -12,6 +12,7 @@ import java.io.IOException;
 import java.util.Map;
 
 @Singleton
+@Deprecated
 class IndexDataMapConverter implements DataMapConverter {
     private final IndexSerialiser serialiser;
 

@@ -16,6 +16,7 @@
 
 package stroom.legacy.model_6_1;
 
+@Deprecated
 public class OldFolderIdSet extends EntityIdSet<OldFolder> {
     private static final long serialVersionUID = -470516763097779743L;
     private boolean deep = true;

@@ -19,6 +19,7 @@ package stroom.legacy.model_6_1;
 import javax.xml.transform.ErrorListener;
 import javax.xml.transform.TransformerException;
 
+@Deprecated
 public class FatalErrorListener implements ErrorListener {
     @Override
     public void warning(final TransformerException exception) throws TransformerException {

@@ -40,7 +40,7 @@ class StatisticResourceImpl implements StatisticResource {
     }
 
     @Override
-    public StatisticStoreDoc update(final StatisticStoreDoc doc) {
-        return documentResourceHelper.update(statisticStoreStore, doc);
+    public StatisticStoreDoc update(final StatisticStoreDoc statisticStoreDoc) {
+        return documentResourceHelper.update(statisticStoreStore, statisticStoreDoc);
     }
 }

@@ -25,6 +25,7 @@ import javax.xml.bind.annotation.XmlType;
 @XmlAccessorType(XmlAccessType.FIELD)
 @XmlType(name = "query", propOrder = {"dataSource", "expression", "automate"})
 @XmlRootElement(name = "query")
+@Deprecated
 public class QueryComponentSettings extends ComponentSettings {
     private static final long serialVersionUID = -2530827581046882396L;
 

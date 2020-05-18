@@ -18,6 +18,7 @@ package stroom.explorer.shared;
 
 import io.swagger.annotations.Api;
 import io.swagger.annotations.ApiOperation;
+import io.swagger.annotations.ApiParam;
 import org.fusesource.restygwt.client.DirectRestService;
 import stroom.docref.DocRef;
 import stroom.docref.DocRefInfo;
@@ -41,54 +42,55 @@ import java.util.Set;
 @Produces(MediaType.APPLICATION_JSON)
 @Consumes(MediaType.APPLICATION_JSON)
 public interface ExplorerResource extends RestResource, DirectRestService {
+
     @POST
     @Path("/create")
     @ApiOperation(
             value = "Create explorer item",
             response = DocRef.class)
-    DocRef create(ExplorerServiceCreateRequest request);
+    DocRef create(@ApiParam("request") ExplorerServiceCreateRequest request);
 
     @DELETE
     @Path("/delete")
     @ApiOperation(
             value = "Delete explorer items",
             response = BulkActionResult.class)
-    BulkActionResult delete(ExplorerServiceDeleteRequest request);
+    BulkActionResult delete(@ApiParam("request") ExplorerServiceDeleteRequest request);
 
     @POST
     @Path("/copy")
     @ApiOperation(
             value = "Copy explorer items",
             response = BulkActionResult.class)
-    BulkActionResult copy(ExplorerServiceCopyRequest request);
+    BulkActionResult copy(@ApiParam("request") ExplorerServiceCopyRequest request);
 
     @PUT
     @Path("/move")
     @ApiOperation(
             value = "Move explorer items",
             response = BulkActionResult.class)
-    BulkActionResult move(ExplorerServiceMoveRequest request);
+    BulkActionResult move(@ApiParam("request") ExplorerServiceMoveRequest request);
 
     @PUT
     @Path("/rename")
     @ApiOperation(
             value = "Rename explorer items",
             response = DocRef.class)
-    DocRef rename(ExplorerServiceRenameRequest request);
+    DocRef rename(@ApiParam("request") ExplorerServiceRenameRequest request);
 
     @POST
     @Path("/info")
     @ApiOperation(
             value = "Get document info",
             response = DocRefInfo.class)
-    DocRefInfo info(DocRef docRef);
+    DocRefInfo info(@ApiParam("docRef") DocRef docRef);
 
     @POST
     @Path("/fetchDocRefs")
     @ApiOperation(
             value = "Fetch document references",
             response = Set.class)
-    Set<DocRef> fetchDocRefs(Set<DocRef> docRefs);
+    Set<DocRef> fetchDocRefs(@ApiParam("docRefs") Set<DocRef> docRefs);
 
     @GET
     @Path("/fetchDocumentTypes")
@@ -102,12 +104,12 @@ public interface ExplorerResource extends RestResource, DirectRestService {
     @ApiOperation(
             value = "Fetch permissions for explorer items",
             response = Map.class)
-    Set<ExplorerNodePermissions> fetchExplorerPermissions(List<ExplorerNode> explorerNodes);
+    Set<ExplorerNodePermissions> fetchExplorerPermissions(@ApiParam("explorerNodes") List<ExplorerNode> explorerNodes);
 
     @POST
     @Path("/fetchExplorerNodes")
     @ApiOperation(
             value = "Fetch explorer nodes",
             response = FetchExplorerNodeResult.class)
-    FetchExplorerNodeResult fetch(FindExplorerNodeCriteria request);
+    FetchExplorerNodeResult fetch(@ApiParam("request") FindExplorerNodeCriteria request);
 }

@@ -16,13 +16,15 @@
 
 package stroom.statistics.impl.hbase.shared;
 
-import io.swagger.annotations.Api;
-import io.swagger.annotations.ApiOperation;
-import org.fusesource.restygwt.client.DirectRestService;
 import stroom.dictionary.shared.DictionaryDoc;
 import stroom.docref.DocRef;
 import stroom.util.shared.ResourcePaths;
 import stroom.util.shared.RestResource;
+
+import io.swagger.annotations.Api;
+import io.swagger.annotations.ApiOperation;
+import io.swagger.annotations.ApiParam;
+import org.fusesource.restygwt.client.DirectRestService;
 
 import javax.ws.rs.Consumes;
 import javax.ws.rs.POST;
@@ -36,17 +38,18 @@ import javax.ws.rs.core.MediaType;
 @Produces(MediaType.APPLICATION_JSON)
 @Consumes(MediaType.APPLICATION_JSON)
 public interface StatsStoreResource extends RestResource, DirectRestService {
+
     @POST
     @Path("/read")
     @ApiOperation(
             value = "Get a stats store doc",
             response = DictionaryDoc.class)
-    StroomStatsStoreDoc read(DocRef docRef);
+    StroomStatsStoreDoc read(@ApiParam("docRef") DocRef docRef);
 
     @PUT
     @Path("/update")
     @ApiOperation(
             value = "Update a stats store doc",
             response = StroomStatsStoreDoc.class)
-    StroomStatsStoreDoc update(StroomStatsStoreDoc xslt);
+    StroomStatsStoreDoc update(@ApiParam("stroomStatsStoreDoc") StroomStatsStoreDoc stroomStatsStoreDoc);
 }

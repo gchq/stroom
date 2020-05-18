@@ -18,5 +18,6 @@ package stroom.legacy.model_6_1;
 
 import java.io.Serializable;
 
+@Deprecated
 public interface SharedObject extends Serializable {
 }

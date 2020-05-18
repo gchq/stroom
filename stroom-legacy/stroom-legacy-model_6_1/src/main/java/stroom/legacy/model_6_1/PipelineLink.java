@@ -45,6 +45,7 @@ import javax.xml.bind.annotation.XmlType;
  */
 @XmlAccessorType(XmlAccessType.FIELD)
 @XmlType(name = "Link", propOrder = {"from", "to"})
+@Deprecated
 public class PipelineLink implements Comparable<PipelineLink>, SharedObject {
     private static final long serialVersionUID = 8520066243443177869L;
 

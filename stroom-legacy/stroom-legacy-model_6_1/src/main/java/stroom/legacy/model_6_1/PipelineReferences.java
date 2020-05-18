@@ -26,6 +26,7 @@ import java.util.List;
 
 @XmlAccessorType(XmlAccessType.FIELD)
 @XmlType(name = "PipelineReferences", propOrder = {"add", "remove"})
+@Deprecated
 public class PipelineReferences implements SharedObject {
     private static final long serialVersionUID = 240674119913805711L;
 

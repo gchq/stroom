@@ -32,6 +32,7 @@ import javax.validation.constraints.Size;
  */
 @Entity
 @Table(name = "VOL", uniqueConstraints = @UniqueConstraint(columnNames = {"FK_ND_ID", "PATH"}))
+@Deprecated
 public class Volume extends AuditedEntity {
     public static final String TABLE_NAME = SQLNameConstants.VOLUME;
     public static final String FOREIGN_KEY = FK_PREFIX + TABLE_NAME + ID_SUFFIX;

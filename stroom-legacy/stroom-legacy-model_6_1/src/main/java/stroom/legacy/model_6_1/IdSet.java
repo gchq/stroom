@@ -22,6 +22,7 @@ import java.util.List;
 import java.util.Set;
 import java.util.TreeSet;
 
+@Deprecated
 public class IdSet extends CriteriaSet<Long> {
     private static final long serialVersionUID = 1L;
 

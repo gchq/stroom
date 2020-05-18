@@ -14,6 +14,7 @@ import java.util.Map;
 import java.util.UUID;
 
 @Singleton
+@Deprecated
 class VisualisationDataMapConverter implements DataMapConverter {
     private final VisualisationSerialiser serialiser;
 

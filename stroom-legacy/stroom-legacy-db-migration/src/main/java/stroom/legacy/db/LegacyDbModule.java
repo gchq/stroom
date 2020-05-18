@@ -55,6 +55,7 @@ import java.util.stream.Stream;
  * are special and need to happen first before all the other migrations. {@link ForceCoreMigration} is
  * used to achieve this by making all other datasource providers depend on {@link ForceCoreMigration}.
  */
+@Deprecated
 public class LegacyDbModule extends AbstractModule {
 
     private static final LambdaLogger LOGGER = LambdaLoggerFactory.getLogger(LegacyDbModule.class);

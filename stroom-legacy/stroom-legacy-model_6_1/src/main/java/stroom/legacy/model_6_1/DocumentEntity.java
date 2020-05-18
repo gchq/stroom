@@ -20,6 +20,7 @@ import javax.persistence.Column;
 import javax.persistence.MappedSuperclass;
 
 @MappedSuperclass
+@Deprecated
 public abstract class DocumentEntity extends NamedEntity implements Document {
     public static final String UUID = SQLNameConstants.UUID;
 

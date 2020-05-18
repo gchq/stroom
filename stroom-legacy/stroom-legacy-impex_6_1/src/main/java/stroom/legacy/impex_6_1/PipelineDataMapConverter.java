@@ -14,6 +14,7 @@ import java.util.Map;
 import java.util.UUID;
 
 @Singleton
+@Deprecated
 class PipelineDataMapConverter implements DataMapConverter {
     private final PipelineSerialiser serialiser;
 

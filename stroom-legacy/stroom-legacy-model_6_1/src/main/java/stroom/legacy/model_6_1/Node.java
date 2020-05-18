@@ -30,6 +30,7 @@ import javax.persistence.UniqueConstraint;
  */
 @Entity
 @Table(name = "ND", uniqueConstraints = @UniqueConstraint(columnNames = {SQLNameConstants.NAME}))
+@Deprecated
 public class Node extends NamedEntity {
     public static final String TABLE_NAME = SQLNameConstants.NODE;
     public static final String FOREIGN_KEY = FK_PREFIX + TABLE_NAME + ID_SUFFIX;

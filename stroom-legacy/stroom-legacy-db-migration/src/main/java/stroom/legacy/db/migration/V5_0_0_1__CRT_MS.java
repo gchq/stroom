@@ -24,6 +24,7 @@ import org.slf4j.LoggerFactory;
 import java.sql.Connection;
 import java.sql.Statement;
 
+@Deprecated
 public class V5_0_0_1__CRT_MS extends BaseJavaMigration {
     private static final Logger LOGGER = LoggerFactory.getLogger(V5_0_0_1__CRT_MS.class);
 

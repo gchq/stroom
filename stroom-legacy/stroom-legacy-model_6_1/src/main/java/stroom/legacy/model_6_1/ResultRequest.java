@@ -34,6 +34,7 @@ import java.util.List;
 @XmlAccessorType(XmlAccessType.FIELD)
 @ApiModel(description = "A definition for how to return the raw results of the query in the SearchResponse, " +
         "e.g. sorted, grouped, limited, etc.")
+@Deprecated
 public final class ResultRequest implements Serializable {
     private static final long serialVersionUID = -7455554742243923562L;
 

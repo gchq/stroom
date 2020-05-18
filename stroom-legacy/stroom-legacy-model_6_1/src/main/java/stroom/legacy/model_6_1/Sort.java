@@ -31,6 +31,7 @@ import java.util.Objects;
 @XmlType(name = "Sort", propOrder = {"order", "direction"})
 @XmlAccessorType(XmlAccessType.FIELD)
 @ApiModel(description = "Describes the sorting applied to a field")
+@Deprecated
 public final class Sort implements Serializable {
     private static final long serialVersionUID = 4530846367973824427L;
 

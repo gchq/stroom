@@ -49,6 +49,7 @@ import java.util.Objects;
  */
 @XmlAccessorType(XmlAccessType.FIELD)
 @XmlType(name = "PipelineReference", propOrder = {"element", "name", "pipeline", "feed", "streamType"})
+@Deprecated
 public final class PipelineReference implements Comparable<PipelineReference>, SharedObject, Copyable<PipelineReference> {
     private static final long serialVersionUID = -8037614920682819123L;
     @XmlElement(name = "element", required = true)

@@ -17,6 +17,7 @@ import java.util.Map;
 import java.util.UUID;
 
 @Singleton
+@Deprecated
 class StatisticDataMapConverter implements DataMapConverter {
 //    private static final Logger LOGGER = LoggerFactory.getLogger(StatisticDataMapConverter.class);
 

@@ -1,9 +1,11 @@
 package stroom.security.impl.event;
 
-import io.swagger.annotations.Api;
-import io.swagger.annotations.ApiOperation;
 import stroom.util.shared.ResourcePaths;
 import stroom.util.shared.RestResource;
+
+import io.swagger.annotations.Api;
+import io.swagger.annotations.ApiOperation;
+import io.swagger.annotations.ApiParam;
 
 import javax.ws.rs.Consumes;
 import javax.ws.rs.POST;
@@ -25,5 +27,6 @@ public interface PermissionChangeResource extends RestResource {
     @Path(FIRE_CHANGE_PATH_PART + NODE_NAME_PATH_PARAM)
     @ApiOperation(
             value = "Fires a permission change event")
-    Boolean fireChange(@PathParam("nodeName") String nodeName, PermissionChangeRequest request);
+    Boolean fireChange(@PathParam("nodeName") String nodeName, 
+                       @ApiParam("request") PermissionChangeRequest request);
 }

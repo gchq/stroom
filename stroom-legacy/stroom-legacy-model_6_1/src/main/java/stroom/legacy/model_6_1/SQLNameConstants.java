@@ -21,6 +21,7 @@ package stroom.legacy.model_6_1;
  * Class used to enforce name standards in the application.
  * </p>
  */
+@Deprecated
 public final class SQLNameConstants {
     public static final String DATE_SUFFIX = "_DT";
     public static final String MS_SUFFIX = "_MS";

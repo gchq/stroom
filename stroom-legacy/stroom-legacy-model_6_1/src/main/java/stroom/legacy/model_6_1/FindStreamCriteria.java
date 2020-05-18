@@ -16,6 +16,7 @@
 
 package stroom.legacy.model_6_1;
 
+@Deprecated
 public class FindStreamCriteria extends BaseCriteria implements HasIsConstrained, Copyable<FindStreamCriteria> {
     private static final long serialVersionUID = -4777723504698304778L;
 

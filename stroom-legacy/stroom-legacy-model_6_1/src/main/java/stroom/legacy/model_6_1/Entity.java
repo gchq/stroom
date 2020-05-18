@@ -20,6 +20,7 @@ import javax.persistence.MappedSuperclass;
 import javax.persistence.Transient;
 
 @MappedSuperclass
+@Deprecated
 public abstract class Entity implements HasType, SharedObject {
     // Standard data types. Unfortunately HSQLDB doesn't have unsigned data
     // types so we do not set these to unsigned here.

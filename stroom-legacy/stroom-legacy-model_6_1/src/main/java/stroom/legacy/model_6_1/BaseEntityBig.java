@@ -29,6 +29,7 @@ import javax.xml.bind.annotation.XmlTransient;
  * </p>
  */
 @MappedSuperclass
+@Deprecated
 public abstract class BaseEntityBig extends BaseEntity {
     private static final long serialVersionUID = -2776331251851326084L;
 

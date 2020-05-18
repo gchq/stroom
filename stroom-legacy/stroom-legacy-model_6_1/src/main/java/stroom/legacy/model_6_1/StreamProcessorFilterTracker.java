@@ -21,6 +21,7 @@ import javax.persistence.Entity;
 import javax.persistence.Transient;
 
 @Entity(name = "STRM_PROC_FILT_TRAC")
+@Deprecated
 public class StreamProcessorFilterTracker extends BaseEntitySmall {
     public static final String TABLE_NAME = SQLNameConstants.STREAM + SEP + SQLNameConstants.PROCESSOR + SEP
             + SQLNameConstants.FILTER + SEP + SQLNameConstants.TRACKER;

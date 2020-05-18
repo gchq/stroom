@@ -8,6 +8,7 @@ import stroom.util.shared.AbstractConfig;
 import javax.inject.Singleton;
 
 @Singleton
+@Deprecated
 public class LegacyDbConfig extends AbstractConfig implements HasDbConfig {
     private DbConfig dbConfig = new DbConfig();
 

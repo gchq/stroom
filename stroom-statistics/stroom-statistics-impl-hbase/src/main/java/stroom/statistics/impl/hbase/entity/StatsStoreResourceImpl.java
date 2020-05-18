@@ -40,7 +40,7 @@ class StatsStoreResourceImpl implements StatsStoreResource {
     }
 
     @Override
-    public StroomStatsStoreDoc update(final StroomStatsStoreDoc doc) {
-        return documentResourceHelper.update(stroomStatsStoreStore, doc);
+    public StroomStatsStoreDoc update(final StroomStatsStoreDoc stroomStatsStoreDoc) {
+        return documentResourceHelper.update(stroomStatsStoreStore, stroomStatsStoreDoc);
     }
 }

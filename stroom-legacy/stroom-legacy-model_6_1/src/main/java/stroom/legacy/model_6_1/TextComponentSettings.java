@@ -23,6 +23,7 @@ import javax.xml.bind.annotation.XmlType;
 
 @XmlAccessorType(XmlAccessType.FIELD)
 @XmlType(name = "text", propOrder = {"tableId", "streamIdField", "partNoField", "recordNoField", "lineFromField", "colFromField", "lineToField", "colToField", "pipeline", "showAsHtml", "showStepping"})
+@Deprecated
 public class TextComponentSettings extends ComponentSettings {
     private static final long serialVersionUID = -2530827581046882396L;
 
