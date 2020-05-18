@@ -6,9 +6,13 @@ and this project adheres to [Semantic Versioning](http://semver.org/).
 
 ## [Unreleased]
 
-* Issue **#1457** : Change SuggestionService to use fuzzy matching.
+* Issue **#1457** : Change field value suggester to use fuzzy matching.
 
 * Issue **#1574** : Make feed suggestions return all feeds, not just ones with meta.
+
+* Issue **#1544** : Imported dashboard from 6.1 now work.
+
+* Issue **#1577** : Cluster node status is now updated when node settings are changed.
 
 * Issue **#1396** : Completely changed DB migration and import/export compatibility code.
 

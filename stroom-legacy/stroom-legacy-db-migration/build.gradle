@@ -13,6 +13,7 @@ dependencies {
     compile project(':stroom-legacy:stroom-legacy-impex_6_1')
     compile project(':stroom-legacy:stroom-legacy-model_6_1')
     compile project(':stroom-pipeline')
+    compile project(':stroom-processor:stroom-processor-impl-db')
     compile project(':stroom-statistics:stroom-statistics-impl-hbase')
     compile project(':stroom-statistics:stroom-statistics-impl-sql')
     compile project(':stroom-dashboard:stroom-storedquery-impl-db')

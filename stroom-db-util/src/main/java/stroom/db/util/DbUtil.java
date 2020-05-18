@@ -180,4 +180,24 @@ public class DbUtil {
 //        executeStatements(connection, Collections.singletonList(sql));
 //    }
 
+
+    public static Integer getInteger(final ResultSet rs, final String strColName) throws SQLException {
+        final int nValue = rs.getInt(strColName);
+        return rs.wasNull() ? null : nValue;
+    }
+
+    public static Integer getInteger(final ResultSet rs, final int columnIndex) throws SQLException {
+        final int nValue = rs.getInt(columnIndex);
+        return rs.wasNull() ? null : nValue;
+    }
+
+    public static Long getLong(final ResultSet rs, final String strColName) throws SQLException {
+        final long nValue = rs.getLong(strColName);
+        return rs.wasNull() ? null : nValue;
+    }
+
+    public static Long getLong(final ResultSet rs, final int columnIndex) throws SQLException {
+        final long nValue = rs.getLong(columnIndex);
+        return rs.wasNull() ? null : nValue;
+    }
 }
