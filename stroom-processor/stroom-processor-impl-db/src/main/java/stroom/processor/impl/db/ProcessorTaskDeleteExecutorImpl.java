@@ -28,7 +28,7 @@ import stroom.processor.impl.ProcessorFilterDao;
 import stroom.processor.impl.ProcessorTaskDeleteExecutor;
 import stroom.processor.impl.ProcessorTaskManager;
 import stroom.processor.shared.ProcessorFilter;
-import stroom.processor.shared.ProcessorFilterDataSource;
+import stroom.processor.shared.ProcessorFilterFields;
 import stroom.processor.shared.ProcessorFilterTracker;
 import stroom.processor.shared.TaskStatus;
 import stroom.query.api.v2.ExpressionOperator;
@@ -138,7 +138,7 @@ class ProcessorTaskDeleteExecutorImpl implements ProcessorTaskDeleteExecutor {
             // Get all filters that have not been polled for a while.
             final ExpressionOperator expression = new ExpressionOperator.Builder()
                     .addTerm(
-                        ProcessorFilterDataSource.LAST_POLL_MS,
+                        ProcessorFilterFields.LAST_POLL_MS,
                         ExpressionTerm.Condition.LESS_THAN,
                         deleteThreshold.toEpochMilli())
                     .build();

@@ -25,7 +25,7 @@ import stroom.meta.shared.Meta;
 import stroom.node.shared.Node;
 import stroom.processor.api.ProcessorTaskService;
 import stroom.processor.shared.ProcessorTask;
-import stroom.processor.shared.ProcessorTaskDataSource;
+import stroom.processor.shared.ProcessorTaskFields;
 import stroom.processor.shared.ProcessorTaskExpressionUtil;
 import stroom.processor.shared.TaskStatus;
 import stroom.query.api.v2.ExpressionOperator;
@@ -71,7 +71,7 @@ class TestProcessorTaskService extends AbstractCoreIntegrationTest {
         processorTaskDao.changeTaskStatus(ps1, ps1.getNodeName(), TaskStatus.COMPLETE, ps1.getStartTimeMs(), ps1.getEndTimeMs());
 
         final ExpressionOperator expressionOperator1 = new ExpressionOperator.Builder()
-                .addTerm(ProcessorTaskDataSource.STATUS, Condition.EQUALS, TaskStatus.COMPLETE.getDisplayValue())
+                .addTerm(ProcessorTaskFields.STATUS, Condition.EQUALS, TaskStatus.COMPLETE.getDisplayValue())
                 .build();
         ExpressionCriteria criteria = new ExpressionCriteria(expressionOperator1);
 //        criteria.obtainTaskStatusSet().add(TaskStatus.COMPLETE);
@@ -80,18 +80,18 @@ class TestProcessorTaskService extends AbstractCoreIntegrationTest {
 
         // Check the date filter works
         final ExpressionOperator expressionOperator2 = new ExpressionOperator.Builder()
-                .addTerm(ProcessorTaskDataSource.STATUS, Condition.EQUALS, TaskStatus.COMPLETE.getDisplayValue())
-                .addTerm(ProcessorTaskDataSource.CREATE_TIME_MS, Condition.GREATER_THAN_OR_EQUAL_TO, file1.getCreateMs() - 10000)
-                .addTerm(ProcessorTaskDataSource.CREATE_TIME_MS, Condition.LESS_THAN, file1.getCreateMs() + 10000)
+                .addTerm(ProcessorTaskFields.STATUS, Condition.EQUALS, TaskStatus.COMPLETE.getDisplayValue())
+                .addTerm(ProcessorTaskFields.CREATE_TIME_MS, Condition.GREATER_THAN_OR_EQUAL_TO, file1.getCreateMs() - 10000)
+                .addTerm(ProcessorTaskFields.CREATE_TIME_MS, Condition.LESS_THAN, file1.getCreateMs() + 10000)
                 .build();
         criteria.setExpression(expressionOperator2);
         //setCreatePeriod(new Period(file1.getCreateMs() - 10000, file1.getCreateMs() + 10000));
         assertThat(processorTaskService.find(criteria).size()).isEqualTo(1);
 
         final ExpressionOperator expressionOperator3 = new ExpressionOperator.Builder()
-                .addTerm(ProcessorTaskDataSource.STATUS, Condition.EQUALS, TaskStatus.COMPLETE.getDisplayValue())
-                .addTerm(ProcessorTaskDataSource.CREATE_TIME_MS, Condition.GREATER_THAN_OR_EQUAL_TO, Instant.ofEpochMilli(file1.getCreateMs() - 10000).atZone(ZoneOffset.UTC).plusYears(100).toInstant().toEpochMilli())
-                .addTerm(ProcessorTaskDataSource.CREATE_TIME_MS, Condition.LESS_THAN, Instant.ofEpochMilli(file1.getCreateMs() + 10000).atZone(ZoneOffset.UTC).plusYears(100).toInstant().toEpochMilli())
+                .addTerm(ProcessorTaskFields.STATUS, Condition.EQUALS, TaskStatus.COMPLETE.getDisplayValue())
+                .addTerm(ProcessorTaskFields.CREATE_TIME_MS, Condition.GREATER_THAN_OR_EQUAL_TO, Instant.ofEpochMilli(file1.getCreateMs() - 10000).atZone(ZoneOffset.UTC).plusYears(100).toInstant().toEpochMilli())
+                .addTerm(ProcessorTaskFields.CREATE_TIME_MS, Condition.LESS_THAN, Instant.ofEpochMilli(file1.getCreateMs() + 10000).atZone(ZoneOffset.UTC).plusYears(100).toInstant().toEpochMilli())
                 .build();
         criteria.setExpression(expressionOperator3);
 //        criteria.setCreatePeriod(
@@ -114,15 +114,15 @@ class TestProcessorTaskService extends AbstractCoreIntegrationTest {
         testNode.setId(1);
 
         final ExpressionOperator expression = new ExpressionOperator.Builder()
-                .addTerm(ProcessorTaskDataSource.NODE_NAME, Condition.EQUALS, "Node name")
-                .addTerm(ProcessorTaskDataSource.TASK_ID, Condition.EQUALS, 1)
-                .addTerm(ProcessorTaskDataSource.STATUS, Condition.EQUALS, TaskStatus.COMPLETE.getDisplayValue())
-                .addTerm(ProcessorTaskDataSource.CREATE_TIME_MS, Condition.GREATER_THAN_OR_EQUAL_TO, System.currentTimeMillis())
-                .addTerm(ProcessorTaskDataSource.CREATE_TIME_MS, Condition.LESS_THAN, System.currentTimeMillis())
+                .addTerm(ProcessorTaskFields.NODE_NAME, Condition.EQUALS, "Node name")
+                .addTerm(ProcessorTaskFields.TASK_ID, Condition.EQUALS, 1)
+                .addTerm(ProcessorTaskFields.STATUS, Condition.EQUALS, TaskStatus.COMPLETE.getDisplayValue())
+                .addTerm(ProcessorTaskFields.CREATE_TIME_MS, Condition.GREATER_THAN_OR_EQUAL_TO, System.currentTimeMillis())
+                .addTerm(ProcessorTaskFields.CREATE_TIME_MS, Condition.LESS_THAN, System.currentTimeMillis())
                 .build();
         final ExpressionCriteria criteria = new ExpressionCriteria(expression);
 //        criteria.obtainNodeNameCriteria().setString("Node name");
-        criteria.setSort(ProcessorTaskDataSource.FIELD_CREATE_TIME);
+        criteria.setSort(ProcessorTaskFields.FIELD_CREATE_TIME);
 //        criteria.obtainProcessorTaskIdSet().add(1L);
 //        criteria.obtainFeedNameSet().add(feedName);
 //        criteria.obtainMetaIdSet().add(1L);
@@ -144,11 +144,11 @@ class TestProcessorTaskService extends AbstractCoreIntegrationTest {
         testNode.setId(1);
 
         final ExpressionOperator expression = new ExpressionOperator.Builder()
-                .addTerm(ProcessorTaskDataSource.NODE_NAME, Condition.EQUALS, "Node name")
-                .addTerm(ProcessorTaskDataSource.TASK_ID, Condition.EQUALS, 1)
-                .addTerm(ProcessorTaskDataSource.STATUS, Condition.EQUALS, TaskStatus.COMPLETE.getDisplayValue())
-                .addTerm(ProcessorTaskDataSource.CREATE_TIME_MS, Condition.GREATER_THAN_OR_EQUAL_TO, System.currentTimeMillis())
-                .addTerm(ProcessorTaskDataSource.CREATE_TIME_MS, Condition.LESS_THAN, System.currentTimeMillis())
+                .addTerm(ProcessorTaskFields.NODE_NAME, Condition.EQUALS, "Node name")
+                .addTerm(ProcessorTaskFields.TASK_ID, Condition.EQUALS, 1)
+                .addTerm(ProcessorTaskFields.STATUS, Condition.EQUALS, TaskStatus.COMPLETE.getDisplayValue())
+                .addTerm(ProcessorTaskFields.CREATE_TIME_MS, Condition.GREATER_THAN_OR_EQUAL_TO, System.currentTimeMillis())
+                .addTerm(ProcessorTaskFields.CREATE_TIME_MS, Condition.LESS_THAN, System.currentTimeMillis())
                 .build();
         final ExpressionCriteria criteria = new ExpressionCriteria(expression);
 //        criteria.obtainNodeNameCriteria().setString("Node name");

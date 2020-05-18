@@ -22,8 +22,8 @@ import com.google.common.base.Strings;
 import stroom.docref.DocRef;
 import stroom.entity.shared.ExpressionCriteria;
 import stroom.pipeline.shared.PipelineDoc;
-import stroom.processor.shared.ProcessorFilterDataSource;
-import stroom.processor.shared.ProcessorTaskDataSource;
+import stroom.processor.shared.ProcessorFilterFields;
+import stroom.processor.shared.ProcessorTaskFields;
 import stroom.query.api.v2.ExpressionOperator;
 import stroom.query.api.v2.ExpressionTerm.Condition;
 import stroom.util.shared.Sort;
@@ -64,7 +64,7 @@ public class SearchKeywords {
                     .collect(joining());
 
             if (!Strings.isNullOrEmpty(plainOldFilter)) {
-                builder.addTerm(ProcessorFilterDataSource.PIPELINE, Condition.EQUALS, new DocRef(PipelineDoc.DOCUMENT_TYPE, plainOldFilter));
+                builder.addTerm(ProcessorFilterFields.PIPELINE, Condition.EQUALS, new DocRef(PipelineDoc.DOCUMENT_TYPE, plainOldFilter));
             }
         }
     }
@@ -74,9 +74,9 @@ public class SearchKeywords {
         if (terms.length == 2) {
             if (terms[0].equalsIgnoreCase(IS)) {
                 if (terms[1].equalsIgnoreCase(ENABLED)) {
-                    builder.addTerm(ProcessorFilterDataSource.PROCESSOR_FILTER_ENABLED, Condition.EQUALS, true);
+                    builder.addTerm(ProcessorFilterFields.PROCESSOR_FILTER_ENABLED, Condition.EQUALS, true);
                 } else if (terms[1].equalsIgnoreCase(DISABLED)) {
-                    builder.addTerm(ProcessorFilterDataSource.PROCESSOR_FILTER_ENABLED, Condition.EQUALS, false);
+                    builder.addTerm(ProcessorFilterFields.PROCESSOR_FILTER_ENABLED, Condition.EQUALS, false);
                 }
             }
         }
@@ -99,8 +99,8 @@ public class SearchKeywords {
                 if (terms[1].equalsIgnoreCase(NEXT)) {
                     // We don't want any other sorts happening here, so we'll get rid of them.
                     criteria.removeSorts();
-                    criteria.addSort(ProcessorTaskDataSource.FIELD_PRIORITY, DESCENDING, false);
-                    criteria.addSort(ProcessorTaskDataSource.FIELD_POLL_AGE, Sort.Direction.ASCENDING, false);
+                    criteria.addSort(ProcessorTaskFields.FIELD_PRIORITY, DESCENDING, false);
+                    criteria.addSort(ProcessorTaskFields.FIELD_POLL_AGE, Sort.Direction.ASCENDING, false);
                 }
             }
         }

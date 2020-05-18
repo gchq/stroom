@@ -15,7 +15,7 @@ import stroom.processor.impl.db.jooq.tables.records.ProcessorFilterRecord;
 import stroom.processor.impl.db.jooq.tables.records.ProcessorFilterTrackerRecord;
 import stroom.processor.shared.Processor;
 import stroom.processor.shared.ProcessorFilter;
-import stroom.processor.shared.ProcessorFilterDataSource;
+import stroom.processor.shared.ProcessorFilterFields;
 import stroom.processor.shared.ProcessorFilterTracker;
 import stroom.util.logging.LambdaLogUtil;
 import stroom.util.logging.LambdaLogger;
@@ -37,7 +37,7 @@ class ProcessorFilterDaoImpl implements ProcessorFilterDao {
     private static final LambdaLogger LAMBDA_LOGGER = LambdaLoggerFactory.getLogger(ProcessorFilterDaoImpl.class);
 
     private static final Map<String, Field<?>> FIELD_MAP = Map.of(
-            ProcessorFilterDataSource.FIELD_ID, PROCESSOR_FILTER.ID);
+            ProcessorFilterFields.FIELD_ID, PROCESSOR_FILTER.ID);
 
     private static final Function<Record, Processor> RECORD_TO_PROCESSOR_MAPPER = new RecordToProcessorMapper();
     private static final Function<Record, ProcessorFilter> RECORD_TO_PROCESSOR_FILTER_MAPPER = new RecordToProcessorFilterMapper();
@@ -57,14 +57,14 @@ class ProcessorFilterDaoImpl implements ProcessorFilterDao {
         this.genericDao = new GenericDao<>(PROCESSOR_FILTER, PROCESSOR_FILTER.ID, ProcessorFilter.class, processorDbConnProvider);
 
         expressionMapper = expressionMapperFactory.create();
-        expressionMapper.map(ProcessorFilterDataSource.PRIORITY, PROCESSOR_FILTER.PRIORITY, Integer::valueOf);
-        expressionMapper.map(ProcessorFilterDataSource.LAST_POLL_MS, PROCESSOR_FILTER_TRACKER.LAST_POLL_MS, Long::valueOf);
-        expressionMapper.map(ProcessorFilterDataSource.PROCESSOR_ID, PROCESSOR_FILTER.FK_PROCESSOR_ID, Integer::valueOf);
-        expressionMapper.map(ProcessorFilterDataSource.PIPELINE, PROCESSOR.PIPELINE_UUID, value -> value);
-        expressionMapper.map(ProcessorFilterDataSource.PROCESSOR_ENABLED, PROCESSOR.ENABLED, Boolean::valueOf);
-        expressionMapper.map(ProcessorFilterDataSource.PROCESSOR_FILTER_ENABLED, PROCESSOR_FILTER.ENABLED, Boolean::valueOf);
-        expressionMapper.map(ProcessorFilterDataSource.CREATE_USER, PROCESSOR_FILTER.CREATE_USER, value -> value);
-        expressionMapper.map(ProcessorFilterDataSource.UUID, PROCESSOR_FILTER.UUID, value -> value);
+        expressionMapper.map(ProcessorFilterFields.PRIORITY, PROCESSOR_FILTER.PRIORITY, Integer::valueOf);
+        expressionMapper.map(ProcessorFilterFields.LAST_POLL_MS, PROCESSOR_FILTER_TRACKER.LAST_POLL_MS, Long::valueOf);
+        expressionMapper.map(ProcessorFilterFields.PROCESSOR_ID, PROCESSOR_FILTER.FK_PROCESSOR_ID, Integer::valueOf);
+        expressionMapper.map(ProcessorFilterFields.PIPELINE, PROCESSOR.PIPELINE_UUID, value -> value);
+        expressionMapper.map(ProcessorFilterFields.PROCESSOR_ENABLED, PROCESSOR.ENABLED, Boolean::valueOf);
+        expressionMapper.map(ProcessorFilterFields.PROCESSOR_FILTER_ENABLED, PROCESSOR_FILTER.ENABLED, Boolean::valueOf);
+        expressionMapper.map(ProcessorFilterFields.CREATE_USER, PROCESSOR_FILTER.CREATE_USER, value -> value);
+        expressionMapper.map(ProcessorFilterFields.UUID, PROCESSOR_FILTER.UUID, value -> value);
     }
 
     @Override

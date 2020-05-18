@@ -16,7 +16,7 @@
 
 package stroom.search.impl;
 
-import stroom.annotation.api.AnnotationDataSource;
+import stroom.annotation.api.AnnotationFields;
 import stroom.datasource.api.v2.AbstractField;
 import stroom.datasource.api.v2.BooleanField;
 import stroom.datasource.api.v2.DateField;
@@ -57,7 +57,7 @@ public final class IndexDataSourceFieldUtil {
                     .map(IndexField::getFieldName)
                     .collect(Collectors.toSet());
             if (names.contains(IndexConstants.STREAM_ID) && names.contains(IndexConstants.EVENT_ID)) {
-                dataSourceFields.addAll(AnnotationDataSource.FIELDS);
+                dataSourceFields.addAll(AnnotationFields.FIELDS);
             }
         }
 

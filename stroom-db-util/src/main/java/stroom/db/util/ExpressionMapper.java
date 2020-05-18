@@ -30,6 +30,10 @@ public class ExpressionMapper implements Function<ExpressionItem, Collection<Con
         expressionMapper.addHandler(dataSourceField, new TermHandler<>(dataSourceField, field, new ConverterAdapter<>(converter), wordListProvider, collectionService));
     }
 
+    public <T> void map(final AbstractField dataSourceField, final Field<T> field, final Converter<T> converter, final boolean useName) {
+        expressionMapper.addHandler(dataSourceField, new TermHandler<>(dataSourceField, field, new ConverterAdapter<>(converter), wordListProvider, collectionService, useName));
+    }
+
     public <T> void multiMap(final AbstractField dataSourceField, final Field<T> field, final MultiConverter<T> converter) {
         expressionMapper.addHandler(dataSourceField, new TermHandler<>(dataSourceField, field, converter, wordListProvider, collectionService));
     }

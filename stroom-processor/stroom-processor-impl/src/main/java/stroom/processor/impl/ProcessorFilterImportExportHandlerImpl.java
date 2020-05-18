@@ -34,7 +34,7 @@ import stroom.processor.api.ProcessorService;
 import stroom.processor.shared.Processor;
 import stroom.processor.shared.ProcessorDataSource;
 import stroom.processor.shared.ProcessorFilter;
-import stroom.processor.shared.ProcessorFilterDataSource;
+import stroom.processor.shared.ProcessorFilterFields;
 import stroom.query.api.v2.ExpressionOperator;
 import stroom.query.api.v2.ExpressionTerm;
 import stroom.util.shared.Message;
@@ -137,7 +137,7 @@ public class ProcessorFilterImportExportHandlerImpl implements ImportExportActio
             return null;
 
         final ExpressionOperator expression = new ExpressionOperator.Builder()
-                .addTerm(ProcessorFilterDataSource.UUID, ExpressionTerm.Condition.EQUALS, docRef.getUuid()).build();
+                .addTerm(ProcessorFilterFields.UUID, ExpressionTerm.Condition.EQUALS, docRef.getUuid()).build();
 
         ExpressionCriteria criteria = new ExpressionCriteria(expression);
         ResultPage<ProcessorFilter> page = processorFilterService.find(criteria);
@@ -316,7 +316,7 @@ public class ProcessorFilterImportExportHandlerImpl implements ImportExportActio
     public Set<DocRef> getDependencies(final DocRef docRef) {
         final DependencyRemapper dependencyRemapper = new DependencyRemapper();
         final ExpressionOperator expression = new ExpressionOperator.Builder()
-                .addTerm(ProcessorFilterDataSource.UUID, ExpressionTerm.Condition.EQUALS, docRef.getUuid()).build();
+                .addTerm(ProcessorFilterFields.UUID, ExpressionTerm.Condition.EQUALS, docRef.getUuid()).build();
         final ExpressionCriteria criteria = new ExpressionCriteria(expression);
         final ResultPage<ProcessorFilter> page = processorFilterService.find(criteria);
         if (page != null && page.getValues() != null) {

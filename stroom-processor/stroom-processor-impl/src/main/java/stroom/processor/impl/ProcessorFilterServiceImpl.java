@@ -31,7 +31,7 @@ import stroom.processor.shared.FetchProcessorRequest;
 import stroom.processor.shared.Processor;
 import stroom.processor.shared.ProcessorDataSource;
 import stroom.processor.shared.ProcessorFilter;
-import stroom.processor.shared.ProcessorFilterDataSource;
+import stroom.processor.shared.ProcessorFilterFields;
 import stroom.processor.shared.ProcessorFilterRow;
 import stroom.processor.shared.ProcessorListRow;
 import stroom.processor.shared.ProcessorRow;
@@ -424,7 +424,7 @@ class ProcessorFilterServiceImpl implements ProcessorFilterService {
         //Now find all the processor filters
         for (Processor processor : processorResultPage.getValues()) {
             final ExpressionOperator filterExpression = new ExpressionOperator.Builder()
-                    .addTerm(ProcessorFilterDataSource.PROCESSOR_ID, ExpressionTerm.Condition.EQUALS, processor.getId()).build();
+                    .addTerm(ProcessorFilterFields.PROCESSOR_ID, ExpressionTerm.Condition.EQUALS, processor.getId()).build();
             ResultPage<ProcessorFilter> filterResultPage = find(new ExpressionCriteria(processorExpression));
             filters.addAll(filterResultPage.getValues());
         }

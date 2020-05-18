@@ -406,8 +406,8 @@ class ProcessorTaskManagerImpl implements ProcessorTaskManager {
         // Get an up to date list of all enabled stream processor filters.
         LOGGER.trace("Getting enabled stream processor filters");
         final ExpressionOperator expression = new Builder()
-                .addTerm(ProcessorFilterDataSource.PROCESSOR_ENABLED, Condition.EQUALS, true)
-                .addTerm(ProcessorFilterDataSource.PROCESSOR_FILTER_ENABLED, Condition.EQUALS, true)
+                .addTerm(ProcessorFilterFields.PROCESSOR_ENABLED, Condition.EQUALS, true)
+                .addTerm(ProcessorFilterFields.PROCESSOR_FILTER_ENABLED, Condition.EQUALS, true)
                 .build();
 
         final ExpressionCriteria findProcessorFilterCriteria = new ExpressionCriteria(expression);
@@ -649,9 +649,9 @@ class ProcessorTaskManagerImpl implements ProcessorTaskManager {
         try {
             // First look for any items that are no-longer locked etc
             final ExpressionOperator findProcessorTaskExpression = new ExpressionOperator.Builder()
-                    .addTerm(ProcessorTaskDataSource.STATUS, Condition.EQUALS, TaskStatus.UNPROCESSED.getDisplayValue())
-                    .addTerm(ProcessorTaskDataSource.NODE_NAME, Condition.IS_NULL, null)
-                    .addTerm(ProcessorTaskDataSource.PROCESSOR_FILTER_ID, Condition.EQUALS, filter.getId())
+                    .addTerm(ProcessorTaskFields.STATUS, Condition.EQUALS, TaskStatus.UNPROCESSED.getDisplayValue())
+                    .addTerm(ProcessorTaskFields.NODE_NAME, Condition.IS_NULL, null)
+                    .addTerm(ProcessorTaskFields.PROCESSOR_FILTER_ID, Condition.EQUALS, filter.getId())
                     .build();
             final ExpressionCriteria findProcessorTaskCriteria = new ExpressionCriteria(findProcessorTaskExpression);
 //            findProcessorTaskCriteria.obtainTaskStatusSet().add(TaskStatus.UNPROCESSED);

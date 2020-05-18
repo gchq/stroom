@@ -6,6 +6,8 @@ and this project adheres to [Semantic Versioning](http://semver.org/).
 
 ## [Unreleased]
 
+* Issue **#1573** : Active tasks tab now only shows tasks related to the open feed.
+
 * Issue **#1584** : Add @ApiParam to POST/PUT/DELETE endpoints so the request type appears in swagger-ui.
 
 * Issue **#1581** : Change streamId to a path param in GET /api/data/v1.
