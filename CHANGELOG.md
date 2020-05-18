@@ -6,6 +6,8 @@ and this project adheres to [Semantic Versioning](http://semver.org/).
 
 ## [Unreleased]
 
+* Issue **#1581** : Change streamId to a path param in GET /api/data/v1.
+
 * Issue **#1457** : Change field value suggester to use fuzzy matching.
 
 * Issue **#1574** : Make feed suggestions return all feeds, not just ones with meta.

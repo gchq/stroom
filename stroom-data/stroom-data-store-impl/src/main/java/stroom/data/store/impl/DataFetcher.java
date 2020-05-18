@@ -18,8 +18,6 @@
 
 package stroom.data.store.impl;
 
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 import stroom.data.shared.StreamTypeNames;
 import stroom.data.store.api.InputStreamProvider;
 import stroom.data.store.api.SegmentInputStream;
@@ -61,6 +59,9 @@ import stroom.util.shared.Marker;
 import stroom.util.shared.OffsetRange;
 import stroom.util.shared.RowCount;
 import stroom.util.shared.Severity;
+
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import javax.inject.Provider;
 import javax.xml.transform.TransformerException;
@@ -145,7 +146,7 @@ public class DataFetcher {
         pageTotalIsExact = false;
     }
 
-    public AbstractFetchDataResult getData(final Long streamId,
+    public AbstractFetchDataResult getData(final long streamId,
                                            final String childStreamTypeName,
                                            final OffsetRange<Long> streamsRange,
                                            final OffsetRange<Long> pageRange,
@@ -224,10 +225,25 @@ public class DataFetcher {
                         // If this is an error stream and the UI is requesting markers then
                         // create a list of markers.
                         if (StreamTypeNames.ERROR.equals(streamTypeName) && markerMode) {
-                            return createMarkerResult(feedName, streamTypeName, segmentInputStream, pageRange, availableChildStreamTypes, expandedSeverities);
+                            return createMarkerResult(
+                                    feedName,
+                                    streamTypeName,
+                                    segmentInputStream,
+                                    pageRange,
+                                    availableChildStreamTypes,
+                                    expandedSeverities);
                         }
 
-                        return createDataResult(feedName, streamTypeName, segmentInputStream, pageRange, availableChildStreamTypes, pipeline, showAsHtml, source, inputStreamProvider);
+                        return createDataResult(
+                                feedName,
+                                streamTypeName,
+                                segmentInputStream,
+                                pageRange,
+                                availableChildStreamTypes,
+                                pipeline,
+                                showAsHtml,
+                                source,
+                                inputStreamProvider);
                     }
                 }
 
@@ -248,7 +264,12 @@ public class DataFetcher {
         });
     }
 
-    private FetchMarkerResult createMarkerResult(final String feedName, final String streamTypeName, final SegmentInputStream segmentInputStream, final OffsetRange<Long> pageRange, final List<String> availableChildStreamTypes, final Severity... expandedSeverities) throws IOException {
+    private FetchMarkerResult createMarkerResult(final String feedName,
+                                                 final String streamTypeName,
+                                                 final SegmentInputStream segmentInputStream,
+                                                 final OffsetRange<Long> pageRange,
+                                                 final List<String> availableChildStreamTypes,
+                                                 final Severity... expandedSeverities) throws IOException {
         List<Marker> markersList;
 
         // Get the appropriate encoding for the stream type.
@@ -287,7 +308,15 @@ public class DataFetcher {
                 new ArrayList<>(resultList));
     }
 
-    private FetchDataResult createDataResult(final String feedName, final String streamTypeName, final SegmentInputStream segmentInputStream, final OffsetRange<Long> pageRange, final List<String> availableChildStreamTypes, final DocRef pipeline, final boolean showAsHtml, final Source streamSource, final InputStreamProvider inputStreamProvider) throws IOException {
+    private FetchDataResult createDataResult(final String feedName,
+                                             final String streamTypeName,
+                                             final SegmentInputStream segmentInputStream,
+                                             final OffsetRange<Long> pageRange,
+                                             final List<String> availableChildStreamTypes,
+                                             final DocRef pipeline,
+                                             final boolean showAsHtml,
+                                             final Source streamSource,
+                                             final InputStreamProvider inputStreamProvider) throws IOException {
         // Read the input stream into a string.
         // If the input stream has multiple segments then we are going to
         // read it in segment mode.
@@ -356,7 +385,9 @@ public class DataFetcher {
         }
     }
 
-    private String getSegmentedData(final String feedName, final String streamTypeName, final OffsetRange<Long> pageRange,
+    private String getSegmentedData(final String feedName,
+                                    final String streamTypeName,
+                                    final OffsetRange<Long> pageRange,
                                     final SegmentInputStream segmentInputStream) {
         // Get the appropriate encoding for the stream type.
         final String encoding = feedProperties.getEncoding(feedName, streamTypeName);
@@ -379,7 +410,9 @@ public class DataFetcher {
         // Include start root element.
         segmentInputStream.include(0);
         // Add the requested records.
-        for (long i = pageOffset + 1; pageLength < pageRange.getLength() && i <= segmentInputStream.count() - 2; i++) {
+        for (long i = pageOffset + 1; pageLength < pageRange.getLength()
+                && i <= segmentInputStream.count() - 2; i++) {
+
             segmentInputStream.include(i);
             pageLength++;
         }
@@ -390,7 +423,9 @@ public class DataFetcher {
         return StreamUtil.streamToString(segmentInputStream, Charset.forName(encoding));
     }
 
-    private String getNonSegmentedData(final String feedName, final String streamTypeName, final OffsetRange<Long> pageRange,
+    private String getNonSegmentedData(final String feedName,
+                                       final String streamTypeName,
+                                       final OffsetRange<Long> pageRange,
                                        final SegmentInputStream segmentInputStream) throws IOException {
         // Get the appropriate encoding for the stream type.
         final String encoding = feedProperties.getEncoding(feedName, streamTypeName);
@@ -442,8 +477,11 @@ public class DataFetcher {
         return sb.toString();
     }
 
-    private String usePipeline(final Source streamSource, final String string, final String feedName,
-                               final DocRef pipelineRef, final InputStreamProvider inputStreamProvider) {
+    private String usePipeline(final Source streamSource,
+                               final String string,
+                               final String feedName,
+                               final DocRef pipelineRef,
+                               final InputStreamProvider inputStreamProvider) {
         return pipelineScopeRunnable.scopeResult(() -> {
             try {
                 String data;
@@ -547,7 +585,9 @@ public class DataFetcher {
         });
     }
 
-    private List<String> getAvailableChildStreamTypes(final InputStreamProvider inputStreamProvider) throws IOException {
+    private List<String> getAvailableChildStreamTypes(
+            final InputStreamProvider inputStreamProvider) throws IOException {
+
         final List<String> availableChildStreamTypes = new ArrayList<>();
         try (final InputStream inputStream = inputStreamProvider.get(StreamTypeNames.META)) {
             if (inputStream != null) {
