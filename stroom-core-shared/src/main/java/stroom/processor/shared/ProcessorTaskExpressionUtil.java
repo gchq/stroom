@@ -13,7 +13,7 @@ public final class ProcessorTaskExpressionUtil {
     }
 
     public static ExpressionOperator createWithStream(final Meta meta) {
-        return ExpressionUtil.equals(ProcessorTaskDataSource.META_ID, meta.getId());
+        return ExpressionUtil.equals(ProcessorTaskFields.META_ID, meta.getId());
     }
 
     public static ExpressionOperator createFolderExpression(final DocRef folder) {
@@ -21,23 +21,27 @@ public final class ProcessorTaskExpressionUtil {
     }
 
     public static ExpressionOperator createFoldersExpression(final DocRef... folders) {
-        final ExpressionOperator.Builder builder = new ExpressionOperator.Builder(Op.AND);
+        final ExpressionOperator.Builder builder = new ExpressionOperator.Builder(Op.OR);
 
         if (folders != null) {
-            final ExpressionOperator.Builder or = new ExpressionOperator.Builder(Op.OR);
             for (final DocRef folder : folders) {
-                or.addTerm(ProcessorTaskDataSource.PIPELINE_UUID, Condition.IN_FOLDER, folder);
-//                or.addTerm(ProcessTaskDataSource.FEED_UUID, Condition.IN_FOLDER, folder);
+                builder.addTerm(ProcessorTaskFields.PIPELINE, Condition.IN_FOLDER, folder);
+                builder.addTerm(ProcessorTaskFields.FEED, Condition.IN_FOLDER, folder);
             }
-            builder.addOperator(or.build());
         }
 
         return builder.build();
     }
 
-    public static ExpressionOperator createPipelineExpression(final DocRef pipelineRef) {
+    public static ExpressionOperator createPipelineExpression(final DocRef pipeline) {
         return new ExpressionOperator.Builder(Op.AND)
-                .addTerm(ProcessorTaskDataSource.PIPELINE_UUID, Condition.IS_DOC_REF, pipelineRef)
+                .addTerm(ProcessorTaskFields.PIPELINE, Condition.IS_DOC_REF, pipeline)
+                .build();
+    }
+
+    public static ExpressionOperator createFeedExpression(final DocRef feed) {
+        return new ExpressionOperator.Builder(Op.AND)
+                .addTerm(ProcessorTaskFields.FEED, Condition.IS_DOC_REF, feed)
                 .build();
     }
 }

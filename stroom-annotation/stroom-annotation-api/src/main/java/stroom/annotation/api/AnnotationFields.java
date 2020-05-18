@@ -11,7 +11,7 @@ import java.util.Map;
 import java.util.function.Function;
 import java.util.stream.Collectors;
 
-public interface AnnotationDataSource {
+public interface AnnotationFields {
     String CURRENT_USER_FUNCTION = "currentUser()";
 
     String NAMESPACE = "annotation";

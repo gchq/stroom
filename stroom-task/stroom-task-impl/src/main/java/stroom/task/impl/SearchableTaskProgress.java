@@ -1,11 +1,13 @@
 package stroom.task.impl;
 
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 import stroom.cluster.task.api.NodeNotFoundException;
 import stroom.cluster.task.api.NullClusterStateException;
 import stroom.cluster.task.api.TargetNodeSetFactory;
-import stroom.dashboard.expression.v1.*;
+import stroom.dashboard.expression.v1.Val;
+import stroom.dashboard.expression.v1.ValInteger;
+import stroom.dashboard.expression.v1.ValLong;
+import stroom.dashboard.expression.v1.ValNull;
+import stroom.dashboard.expression.v1.ValString;
 import stroom.datasource.api.v2.AbstractField;
 import stroom.datasource.api.v2.DataSource;
 import stroom.docref.DocRef;
@@ -20,6 +22,9 @@ import stroom.task.api.TaskContextFactory;
 import stroom.task.shared.TaskProgressResponse;
 import stroom.task.shared.TaskResource;
 import stroom.util.shared.ResultPage;
+
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import javax.inject.Inject;
 import java.util.HashMap;

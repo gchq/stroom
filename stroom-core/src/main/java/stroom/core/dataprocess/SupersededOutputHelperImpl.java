@@ -14,7 +14,7 @@ import stroom.pipeline.task.SupersededOutputHelper;
 import stroom.processor.api.ProcessorTaskService;
 import stroom.processor.shared.Processor;
 import stroom.processor.shared.ProcessorTask;
-import stroom.processor.shared.ProcessorTaskDataSource;
+import stroom.processor.shared.ProcessorTaskFields;
 import stroom.query.api.v2.ExpressionOperator;
 import stroom.query.api.v2.ExpressionOperator.Op;
 import stroom.query.api.v2.ExpressionTerm.Condition;
@@ -96,9 +96,9 @@ public class SupersededOutputHelperImpl implements SupersededOutputHelper {
 
                 // Find any task id's that are greater than the current task id for this input meta.
                 final ExpressionOperator findTaskExpression = new ExpressionOperator.Builder()
-                        .addTerm(ProcessorTaskDataSource.META_ID, Condition.EQUALS, sourceMeta.getId())
-                        .addTerm(ProcessorTaskDataSource.PROCESSOR_ID, Condition.EQUALS, processor.getId())
-                        .addTerm(ProcessorTaskDataSource.TASK_ID, Condition.GREATER_THAN, processorTask.getId())
+                        .addTerm(ProcessorTaskFields.META_ID, Condition.EQUALS, sourceMeta.getId())
+                        .addTerm(ProcessorTaskFields.PROCESSOR_ID, Condition.EQUALS, processor.getId())
+                        .addTerm(ProcessorTaskFields.TASK_ID, Condition.GREATER_THAN, processorTask.getId())
                         .build();
                 final ResultPage<ProcessorTask> tasks = processorTaskService.find(new ExpressionCriteria(findTaskExpression));
                 final OptionalLong maxTaskId = tasks.getValues().stream().mapToLong(ProcessorTask::getId).max();

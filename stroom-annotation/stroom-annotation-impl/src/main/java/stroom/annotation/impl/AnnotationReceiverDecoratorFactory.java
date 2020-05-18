@@ -1,6 +1,6 @@
 package stroom.annotation.impl;
 
-import stroom.annotation.api.AnnotationDataSource;
+import stroom.annotation.api.AnnotationFields;
 import stroom.annotation.shared.Annotation;
 import stroom.dashboard.expression.v1.FieldIndexMap;
 import stroom.dashboard.expression.v1.Val;
@@ -44,33 +44,33 @@ class AnnotationReceiverDecoratorFactory implements AnnotationsDecoratorFactory 
     private static final Map<String, Function<Annotation, Val>> VALUE_MAPPING = new HashMap<>();
 
     static {
-        VALUE_MAPPING.put(AnnotationDataSource.ID, annotation -> annotation.getId() == null ? ValNull.INSTANCE : ValLong.create(annotation.getId()));
-        VALUE_MAPPING.put(AnnotationDataSource.CREATED_ON, annotation -> annotation.getCreateTime() == null ? ValNull.INSTANCE : ValLong.create(annotation.getCreateTime()));
-        VALUE_MAPPING.put(AnnotationDataSource.CREATED_BY, annotation -> annotation.getCreateUser() == null ? ValNull.INSTANCE : ValString.create(annotation.getCreateUser()));
-        VALUE_MAPPING.put(AnnotationDataSource.UPDATED_ON, annotation -> annotation.getUpdateTime() == null ? ValNull.INSTANCE : ValLong.create(annotation.getUpdateTime()));
-        VALUE_MAPPING.put(AnnotationDataSource.UPDATED_BY, annotation -> annotation.getUpdateUser() == null ? ValNull.INSTANCE : ValString.create(annotation.getUpdateUser()));
-        VALUE_MAPPING.put(AnnotationDataSource.TITLE, annotation -> annotation.getTitle() == null ? ValNull.INSTANCE : ValString.create(annotation.getTitle()));
-        VALUE_MAPPING.put(AnnotationDataSource.SUBJECT, annotation -> annotation.getSubject() == null ? ValNull.INSTANCE : ValString.create(annotation.getSubject()));
-        VALUE_MAPPING.put(AnnotationDataSource.STATUS, annotation -> annotation.getStatus() == null ? ValNull.INSTANCE : ValString.create(annotation.getStatus()));
-        VALUE_MAPPING.put(AnnotationDataSource.ASSIGNED_TO, annotation -> annotation.getAssignedTo() == null ? ValNull.INSTANCE : ValString.create(annotation.getAssignedTo()));
-        VALUE_MAPPING.put(AnnotationDataSource.COMMENT, annotation -> annotation.getComment() == null ? ValNull.INSTANCE : ValString.create(annotation.getComment()));
-        VALUE_MAPPING.put(AnnotationDataSource.HISTORY, annotation -> annotation.getHistory() == null ? ValNull.INSTANCE : ValString.create(annotation.getHistory()));
+        VALUE_MAPPING.put(AnnotationFields.ID, annotation -> annotation.getId() == null ? ValNull.INSTANCE : ValLong.create(annotation.getId()));
+        VALUE_MAPPING.put(AnnotationFields.CREATED_ON, annotation -> annotation.getCreateTime() == null ? ValNull.INSTANCE : ValLong.create(annotation.getCreateTime()));
+        VALUE_MAPPING.put(AnnotationFields.CREATED_BY, annotation -> annotation.getCreateUser() == null ? ValNull.INSTANCE : ValString.create(annotation.getCreateUser()));
+        VALUE_MAPPING.put(AnnotationFields.UPDATED_ON, annotation -> annotation.getUpdateTime() == null ? ValNull.INSTANCE : ValLong.create(annotation.getUpdateTime()));
+        VALUE_MAPPING.put(AnnotationFields.UPDATED_BY, annotation -> annotation.getUpdateUser() == null ? ValNull.INSTANCE : ValString.create(annotation.getUpdateUser()));
+        VALUE_MAPPING.put(AnnotationFields.TITLE, annotation -> annotation.getTitle() == null ? ValNull.INSTANCE : ValString.create(annotation.getTitle()));
+        VALUE_MAPPING.put(AnnotationFields.SUBJECT, annotation -> annotation.getSubject() == null ? ValNull.INSTANCE : ValString.create(annotation.getSubject()));
+        VALUE_MAPPING.put(AnnotationFields.STATUS, annotation -> annotation.getStatus() == null ? ValNull.INSTANCE : ValString.create(annotation.getStatus()));
+        VALUE_MAPPING.put(AnnotationFields.ASSIGNED_TO, annotation -> annotation.getAssignedTo() == null ? ValNull.INSTANCE : ValString.create(annotation.getAssignedTo()));
+        VALUE_MAPPING.put(AnnotationFields.COMMENT, annotation -> annotation.getComment() == null ? ValNull.INSTANCE : ValString.create(annotation.getComment()));
+        VALUE_MAPPING.put(AnnotationFields.HISTORY, annotation -> annotation.getHistory() == null ? ValNull.INSTANCE : ValString.create(annotation.getHistory()));
     }
 
     private static final Map<String, Function<Annotation, Object>> OBJECT_MAPPING = new HashMap<>();
 
     static {
-        OBJECT_MAPPING.put(AnnotationDataSource.ID, Annotation::getId);
-        OBJECT_MAPPING.put(AnnotationDataSource.CREATED_ON, Annotation::getCreateTime);
-        OBJECT_MAPPING.put(AnnotationDataSource.CREATED_BY, Annotation::getCreateUser);
-        OBJECT_MAPPING.put(AnnotationDataSource.UPDATED_ON, Annotation::getUpdateTime);
-        OBJECT_MAPPING.put(AnnotationDataSource.UPDATED_BY, Annotation::getUpdateUser);
-        OBJECT_MAPPING.put(AnnotationDataSource.TITLE, Annotation::getTitle);
-        OBJECT_MAPPING.put(AnnotationDataSource.SUBJECT, Annotation::getSubject);
-        OBJECT_MAPPING.put(AnnotationDataSource.STATUS, Annotation::getStatus);
-        OBJECT_MAPPING.put(AnnotationDataSource.ASSIGNED_TO, Annotation::getAssignedTo);
-        OBJECT_MAPPING.put(AnnotationDataSource.COMMENT, Annotation::getComment);
-        OBJECT_MAPPING.put(AnnotationDataSource.HISTORY, Annotation::getHistory);
+        OBJECT_MAPPING.put(AnnotationFields.ID, Annotation::getId);
+        OBJECT_MAPPING.put(AnnotationFields.CREATED_ON, Annotation::getCreateTime);
+        OBJECT_MAPPING.put(AnnotationFields.CREATED_BY, Annotation::getCreateUser);
+        OBJECT_MAPPING.put(AnnotationFields.UPDATED_ON, Annotation::getUpdateTime);
+        OBJECT_MAPPING.put(AnnotationFields.UPDATED_BY, Annotation::getUpdateUser);
+        OBJECT_MAPPING.put(AnnotationFields.TITLE, Annotation::getTitle);
+        OBJECT_MAPPING.put(AnnotationFields.SUBJECT, Annotation::getSubject);
+        OBJECT_MAPPING.put(AnnotationFields.STATUS, Annotation::getStatus);
+        OBJECT_MAPPING.put(AnnotationFields.ASSIGNED_TO, Annotation::getAssignedTo);
+        OBJECT_MAPPING.put(AnnotationFields.COMMENT, Annotation::getComment);
+        OBJECT_MAPPING.put(AnnotationFields.HISTORY, Annotation::getHistory);
     }
 
     @Inject
@@ -87,7 +87,7 @@ class AnnotationReceiverDecoratorFactory implements AnnotationsDecoratorFactory 
     @Override
     public Receiver create(final Receiver receiver, final Query query) {
         final FieldIndexMap fieldIndexMap = receiver.getFieldIndexMap();
-        final Integer annotationIdIndex = fieldIndexMap.getMap().get(AnnotationDataSource.ID);
+        final Integer annotationIdIndex = fieldIndexMap.getMap().get(AnnotationFields.ID);
         final Integer streamIdIndex = fieldIndexMap.getMap().get(IndexConstants.STREAM_ID);
         final Integer eventIdIndex = fieldIndexMap.getMap().get(IndexConstants.EVENT_ID);
 
@@ -99,7 +99,7 @@ class AnnotationReceiverDecoratorFactory implements AnnotationsDecoratorFactory 
         final Function<Annotation, Boolean> filter = createFilter(query.getExpression());
 
         final Set<String> usedFields = new HashSet<>(fieldIndexMap.getMap().keySet());
-        usedFields.retainAll(AnnotationDataSource.FIELD_MAP.keySet());
+        usedFields.retainAll(AnnotationFields.FIELD_MAP.keySet());
 
         if (filter == null && usedFields.size() == 0) {
             return receiver;
@@ -165,8 +165,8 @@ class AnnotationReceiverDecoratorFactory implements AnnotationsDecoratorFactory 
 
     private Function<Annotation, Boolean> createFilter(final ExpressionOperator expression) {
         final ExpressionFilter expressionFilter = new ExpressionFilter.Builder()
-                .addPrefixIncludeFilter(AnnotationDataSource.ANNOTATION_FIELD_PREFIX)
-                .addReplacementFilter(AnnotationDataSource.CURRENT_USER_FUNCTION, securityContext.getUserId())
+                .addPrefixIncludeFilter(AnnotationFields.ANNOTATION_FIELD_PREFIX)
+                .addReplacementFilter(AnnotationFields.CURRENT_USER_FUNCTION, securityContext.getUserId())
                 .build();
 
         final ExpressionOperator filteredExpression = expressionFilter.copy(expression);
@@ -180,7 +180,7 @@ class AnnotationReceiverDecoratorFactory implements AnnotationsDecoratorFactory 
             return null;
         }
 
-        final ExpressionMatcher expressionMatcher = expressionMatcherFactory.create(AnnotationDataSource.FIELD_MAP);
+        final ExpressionMatcher expressionMatcher = expressionMatcherFactory.create(AnnotationFields.FIELD_MAP);
         return annotation -> {
             final Map<String, Object> attributeMap = new HashMap<>();
             for (final String field : usedFields) {

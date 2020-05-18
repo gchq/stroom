@@ -27,7 +27,7 @@ import stroom.processor.api.ProcessorFilterService;
 import stroom.processor.api.ProcessorService;
 import stroom.processor.shared.Processor;
 import stroom.processor.shared.ProcessorFilter;
-import stroom.processor.shared.ProcessorFilterDataSource;
+import stroom.processor.shared.ProcessorFilterFields;
 import stroom.processor.shared.QueryData;
 import stroom.query.api.v2.ExpressionOperator;
 import stroom.query.api.v2.ExpressionTerm;
@@ -88,14 +88,14 @@ class TestProcessorFilterService extends AbstractCoreIntegrationTest {
         assertThat(processorFilterService.find(findProcessorFilterCriteria).size()).isEqualTo(2);
 
         final ExpressionOperator expression1 = new ExpressionOperator.Builder()
-                .addTerm(ProcessorFilterDataSource.PRIORITY, Condition.GREATER_THAN_OR_EQUAL_TO, 10)
+                .addTerm(ProcessorFilterFields.PRIORITY, Condition.GREATER_THAN_OR_EQUAL_TO, 10)
                 .build();
         findProcessorFilterCriteria.setExpression(expression1);
         //PriorityRange(new Range<>(10, null));
         assertThat(processorFilterService.find(findProcessorFilterCriteria).size()).isEqualTo(1);
 
         final ExpressionOperator expression2 = new ExpressionOperator.Builder()
-                .addTerm(ProcessorFilterDataSource.PRIORITY, Condition.GREATER_THAN_OR_EQUAL_TO, 1)
+                .addTerm(ProcessorFilterFields.PRIORITY, Condition.GREATER_THAN_OR_EQUAL_TO, 1)
                 .build();
         findProcessorFilterCriteria.setExpression(expression2);
 //        findProcessorFilterCriteria.setPriorityRange(new Range<>(1, null));
@@ -210,9 +210,9 @@ class TestProcessorFilterService extends AbstractCoreIntegrationTest {
     @Test
     void testApplyAllCriteria() {
         final ExpressionOperator expression = new ExpressionOperator.Builder()
-                .addTerm(ProcessorFilterDataSource.LAST_POLL_MS, Condition.GREATER_THAN_OR_EQUAL_TO, 1)
-                .addTerm(ProcessorFilterDataSource.LAST_POLL_MS, Condition.LESS_THAN, 1)
-                .addTerm(ProcessorFilterDataSource.PROCESSOR_FILTER_ENABLED, Condition.EQUALS, true)
+                .addTerm(ProcessorFilterFields.LAST_POLL_MS, Condition.GREATER_THAN_OR_EQUAL_TO, 1)
+                .addTerm(ProcessorFilterFields.LAST_POLL_MS, Condition.LESS_THAN, 1)
+                .addTerm(ProcessorFilterFields.PROCESSOR_FILTER_ENABLED, Condition.EQUALS, true)
                 .build();
         final ExpressionCriteria findProcessorFilterCriteria = new ExpressionCriteria(expression);
 //        findProcessorFilterCriteria.setLastPollPeriod(new Period(1L, 1L));

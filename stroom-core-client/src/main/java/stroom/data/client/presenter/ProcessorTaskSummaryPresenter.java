@@ -28,10 +28,10 @@ import stroom.entity.client.presenter.HasDocumentRead;
 import stroom.entity.shared.ExpressionCriteria;
 import stroom.feed.shared.FeedDoc;
 import stroom.pipeline.shared.PipelineDoc;
-import stroom.processor.shared.ProcessorTaskDataSource;
+import stroom.processor.shared.ProcessorTaskExpressionUtil;
+import stroom.processor.shared.ProcessorTaskFields;
 import stroom.processor.shared.ProcessorTaskResource;
 import stroom.processor.shared.ProcessorTaskSummary;
-import stroom.task.shared.TaskExpressionUtil;
 import stroom.util.shared.ModelStringUtil;
 import stroom.util.shared.ResultPage;
 import stroom.util.shared.Sort;
@@ -57,12 +57,35 @@ public class ProcessorTaskSummaryPresenter extends MyPresenterWidget<DataGridVie
 
     private final RestDataProvider<ProcessorTaskSummary, ResultPage<ProcessorTaskSummary>> dataProvider;
     private final ExpressionCriteria criteria;
+    private boolean initialised;
 
     @Inject
     public ProcessorTaskSummaryPresenter(final EventBus eventBus,
                                          final RestFactory restFactory,
                                          final TooltipPresenter tooltipPresenter) {
         super(eventBus, new DataGridViewImpl<>(true, false));
+
+        criteria = new ExpressionCriteria();
+        dataProvider = new RestDataProvider<ProcessorTaskSummary, ResultPage<ProcessorTaskSummary>>(eventBus, criteria.obtainPageRequest()) {
+            @Override
+            protected void exec(final Consumer<ResultPage<ProcessorTaskSummary>> dataConsumer, final Consumer<Throwable> throwableConsumer) {
+                final Rest<ResultPage<ProcessorTaskSummary>> rest = restFactory.create();
+                rest.onSuccess(dataConsumer).onFailure(throwableConsumer).call(PROCESSOR_TASK_RESOURCE).findSummary(criteria);
+            }
+
+            @Override
+            protected void changeData(final ResultPage<ProcessorTaskSummary> data) {
+                final ProcessorTaskSummary selected = getView().getSelectionModel().getSelected();
+                if (selected != null) {
+                    // Reselect the task set.
+                    getView().getSelectionModel().clear();
+                    if (data != null && data.getValues().contains(selected)) {
+                        getView().getSelectionModel().setSelected(selected);
+                    }
+                }
+                super.changeData(data);
+            }
+        };
 
         // Info column.
         final InfoColumn<ProcessorTaskSummary> infoColumn = new InfoColumn<ProcessorTaskSummary>() {
@@ -96,7 +119,7 @@ public class ProcessorTaskSummaryPresenter extends MyPresenterWidget<DataGridVie
         }, "Pipeline", ColumnSizeConstants.BIG_COL);
 
         getView().addResizableColumn(
-                new OrderByColumn<ProcessorTaskSummary, String>(new TextCell(), ProcessorTaskDataSource.FIELD_FEED, true) {
+                new OrderByColumn<ProcessorTaskSummary, String>(new TextCell(), ProcessorTaskFields.FIELD_FEED, true) {
                     @Override
                     public String getValue(final ProcessorTaskSummary row) {
                         return row.getFeed();
@@ -104,7 +127,7 @@ public class ProcessorTaskSummaryPresenter extends MyPresenterWidget<DataGridVie
                 }, "Feed", ColumnSizeConstants.BIG_COL);
 
         getView().addResizableColumn(
-                new OrderByColumn<ProcessorTaskSummary, String>(new TextCell(), ProcessorTaskDataSource.FIELD_PRIORITY, false) {
+                new OrderByColumn<ProcessorTaskSummary, String>(new TextCell(), ProcessorTaskFields.FIELD_PRIORITY, false) {
                     @Override
                     public String getValue(final ProcessorTaskSummary row) {
                         return String.valueOf(row.getPriority());
@@ -112,7 +135,7 @@ public class ProcessorTaskSummaryPresenter extends MyPresenterWidget<DataGridVie
                 }, "Priority", 60);
 
         getView().addResizableColumn(
-                new OrderByColumn<ProcessorTaskSummary, String>(new TextCell(), ProcessorTaskDataSource.FIELD_STATUS, false) {
+                new OrderByColumn<ProcessorTaskSummary, String>(new TextCell(), ProcessorTaskFields.FIELD_STATUS, false) {
                     @Override
                     public String getValue(final ProcessorTaskSummary row) {
                         return row.getStatus().getDisplayValue();
@@ -120,7 +143,7 @@ public class ProcessorTaskSummaryPresenter extends MyPresenterWidget<DataGridVie
                 }, "Status", ColumnSizeConstants.SMALL_COL);
 
         getView().addResizableColumn(
-                new OrderByColumn<ProcessorTaskSummary, String>(new TextCell(), ProcessorTaskDataSource.FIELD_COUNT, false) {
+                new OrderByColumn<ProcessorTaskSummary, String>(new TextCell(), ProcessorTaskFields.FIELD_COUNT, false) {
                     @Override
                     public String getValue(final ProcessorTaskSummary row) {
                         return ModelStringUtil.formatCsv(row.getCount());
@@ -128,29 +151,6 @@ public class ProcessorTaskSummaryPresenter extends MyPresenterWidget<DataGridVie
                 }, "Count", ColumnSizeConstants.SMALL_COL);
 
         getView().addEndColumn(new EndColumn<>());
-
-        criteria = new ExpressionCriteria();
-        dataProvider = new RestDataProvider<ProcessorTaskSummary, ResultPage<ProcessorTaskSummary>>(eventBus, criteria.obtainPageRequest()) {
-            @Override
-            protected void exec(final Consumer<ResultPage<ProcessorTaskSummary>> dataConsumer, final Consumer<Throwable> throwableConsumer) {
-                final Rest<ResultPage<ProcessorTaskSummary>> rest = restFactory.create();
-                rest.onSuccess(dataConsumer).onFailure(throwableConsumer).call(PROCESSOR_TASK_RESOURCE).findSummary(criteria);
-            }
-
-            @Override
-            protected void changeData(final ResultPage<ProcessorTaskSummary> data) {
-                final ProcessorTaskSummary selected = getView().getSelectionModel().getSelected();
-                if (selected != null) {
-                    // Reselect the task set.
-                    getView().getSelectionModel().clear();
-                    if (data != null && data.getValues().contains(selected)) {
-                        getView().getSelectionModel().setSelected(selected);
-                    }
-                }
-                super.changeData(data);
-            }
-        };
-        dataProvider.addDataDisplay(getView().getDataDisplay());
 
         getView().addColumnSortHandler(event -> {
             if (event.getColumn() instanceof OrderByColumn<?, ?>) {
@@ -160,7 +160,7 @@ public class ProcessorTaskSummaryPresenter extends MyPresenterWidget<DataGridVie
                 } else {
                     criteria.setSort(orderByColumn.getField(), Sort.Direction.DESCENDING, orderByColumn.isIgnoreCase());
                 }
-                dataProvider.refresh();
+                refresh();
             }
         });
     }
@@ -169,36 +169,45 @@ public class ProcessorTaskSummaryPresenter extends MyPresenterWidget<DataGridVie
         return getView().getSelectionModel();
     }
 
-    private void setPipeline(final PipelineDoc pipelineEntity) {
-        criteria.setExpression(TaskExpressionUtil.createPipelineExpression(pipelineEntity));
-        dataProvider.refresh();
+    private void setPipeline(final DocRef pipeline) {
+        criteria.setExpression(ProcessorTaskExpressionUtil.createPipelineExpression(pipeline));
+        refresh();
     }
 
-    private void setFeed(final String feed) {
-        criteria.setExpression(TaskExpressionUtil.createFeedExpression(feed));
-        dataProvider.refresh();
+    private void setFeed(final DocRef feed) {
+        criteria.setExpression(ProcessorTaskExpressionUtil.createFeedExpression(feed));
+        refresh();
     }
 
     private void setFolder(final DocRef folder) {
-        criteria.setExpression(TaskExpressionUtil.createFolderExpression(folder));
-        dataProvider.refresh();
+        criteria.setExpression(ProcessorTaskExpressionUtil.createFolderExpression(folder));
+        refresh();
     }
 
     private void setNullCriteria() {
         criteria.setExpression(null);
-        dataProvider.refresh();
+        refresh();
     }
 
     @Override
     public void read(final DocRef docRef, final Object entity) {
         if (entity instanceof PipelineDoc) {
-            setPipeline((PipelineDoc) entity);
+            setPipeline(docRef);
         } else if (entity instanceof FeedDoc) {
-            setFeed(((FeedDoc) entity).getName());
+            setFeed(docRef);
         } else if (docRef != null) {
             setFolder(docRef);
         } else {
             setNullCriteria();
+        }
+    }
+
+    public void refresh() {
+        if (!initialised) {
+            initialised = true;
+            dataProvider.addDataDisplay(getView().getDataDisplay());
+        } else {
+            dataProvider.refresh();
         }
     }
 }

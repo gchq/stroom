@@ -19,7 +19,7 @@ package stroom.search;
 
 import org.apache.hadoop.util.ThreadUtil;
 import org.junit.jupiter.api.Test;
-import stroom.annotation.api.AnnotationDataSource;
+import stroom.annotation.api.AnnotationFields;
 import stroom.dictionary.impl.DictionaryStore;
 import stroom.dictionary.shared.DictionaryDoc;
 import stroom.docref.DocRef;
@@ -513,7 +513,7 @@ class TestInteractiveSearch extends AbstractSearchTest {
 
         final Field statusField = new Field.Builder()
                 .name("Status")
-                .expression(ParamUtil.makeParam(AnnotationDataSource.STATUS))
+                .expression(ParamUtil.makeParam(AnnotationFields.STATUS))
                 .build();
 
         final DocRef resultPipeline = commonIndexingTestHelper.getSearchResultPipeline();

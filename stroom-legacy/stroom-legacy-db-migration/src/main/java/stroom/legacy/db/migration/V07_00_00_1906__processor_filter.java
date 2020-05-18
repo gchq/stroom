@@ -3,7 +3,6 @@ package stroom.legacy.db.migration;
 import stroom.legacy.impex_6_1.MappingUtil;
 import stroom.processor.impl.db.ProcessorFilterMarshaller;
 import stroom.processor.shared.ProcessorFilter;
-import stroom.query.api.v2.Query;
 import stroom.util.xml.XMLMarshallerUtil;
 
 import org.flywaydb.core.api.migration.BaseJavaMigration;

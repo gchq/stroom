@@ -38,7 +38,7 @@ import stroom.processor.shared.Processor;
 import stroom.processor.shared.ProcessorExpressionUtil;
 import stroom.processor.shared.ProcessorFilter;
 import stroom.processor.shared.ProcessorTask;
-import stroom.processor.shared.ProcessorTaskDataSource;
+import stroom.processor.shared.ProcessorTaskFields;
 import stroom.processor.shared.ProcessorTaskExpressionUtil;
 import stroom.processor.shared.QueryData;
 import stroom.query.api.v2.ExpressionOperator;
@@ -446,9 +446,9 @@ public class BenchmarkClusterExecutor extends AbstractBenchmark {
             final Map<String, Stat> stats = new HashMap<>();
 
             final ExpressionOperator taskExpression = new ExpressionOperator.Builder(Op.AND)
-                    .addTerm(ProcessorTaskDataSource.FEED_NAME, Condition.EQUALS, feedName)
+                    .addTerm(ProcessorTaskFields.FEED_NAME, Condition.EQUALS, feedName)
                     .addTerm(
-                            ProcessorTaskDataSource.CREATE_TIME,
+                            ProcessorTaskFields.CREATE_TIME,
                             Condition.BETWEEN,
                             DateUtil.createNormalDateTimeString(processPeriod.getFromMs()) +
                                     "," +

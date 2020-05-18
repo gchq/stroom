@@ -1,7 +1,7 @@
 package stroom.annotation.impl;
 
 import stroom.annotation.api.AnnotationCreator;
-import stroom.annotation.api.AnnotationDataSource;
+import stroom.annotation.api.AnnotationFields;
 import stroom.annotation.shared.AnnotationDetail;
 import stroom.annotation.shared.CreateEntryRequest;
 import stroom.annotation.shared.EventId;
@@ -50,7 +50,7 @@ public class AnnotationService implements Searchable, AnnotationCreator {
     @Override
     public DataSource getDataSource() {
         checkPermission();
-        return new DataSource(AnnotationDataSource.FIELDS);
+        return new DataSource(AnnotationFields.FIELDS);
     }
 
     @Override
@@ -58,7 +58,7 @@ public class AnnotationService implements Searchable, AnnotationCreator {
         checkPermission();
 
         final ExpressionFilter expressionFilter = new ExpressionFilter.Builder()
-                .addReplacementFilter(AnnotationDataSource.CURRENT_USER_FUNCTION, securityContext.getUserId())
+                .addReplacementFilter(AnnotationFields.CURRENT_USER_FUNCTION, securityContext.getUserId())
                 .build();
 
         ExpressionOperator expression = criteria.getExpression();

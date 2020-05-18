@@ -14,7 +14,7 @@ import java.util.Map;
 import java.util.function.Function;
 import java.util.stream.Collectors;
 
-public class ProcessorTaskDataSource {
+public class ProcessorTaskFields {
     private static final List<AbstractField> FIELDS = new ArrayList<>();
     private static final Map<String, AbstractField> FIELD_MAP;
 
@@ -34,10 +34,11 @@ public class ProcessorTaskDataSource {
     public static final LongField CREATE_TIME_MS = new LongField("Create Time Ms");
     public static final IdField META_ID = new IdField("Meta Id");
     public static final TextField NODE_NAME = new TextField("Node");
-    public static final DocRefField PIPELINE_UUID = new DocRefField(PipelineDoc.DOCUMENT_TYPE, "Pipeline");
+    public static final DocRefField PIPELINE = new DocRefField(PipelineDoc.DOCUMENT_TYPE, "Pipeline");
     public static final IdField PROCESSOR_FILTER_ID = new IdField("Processor Filter Id");
     public static final IdField PROCESSOR_ID = new IdField("Processor Id");
-    public static final TextField FEED_NAME = new TextField("Feed");
+    public static final TextField FEED_NAME = new TextField("Feed Name");
+    public static final DocRefField FEED = new DocRefField("Feed", "Feed");
     public static final TextField STATUS = new TextField("Status");
     public static final IdField TASK_ID = new IdField("Task Id");
 
@@ -46,9 +47,10 @@ public class ProcessorTaskDataSource {
         FIELDS.add(CREATE_TIME_MS);
         FIELDS.add(META_ID);
         FIELDS.add(NODE_NAME);
-        FIELDS.add(PIPELINE_UUID);
+        FIELDS.add(PIPELINE);
         FIELDS.add(PROCESSOR_FILTER_ID);
         FIELDS.add(PROCESSOR_ID);
+        FIELDS.add(FEED);
         FIELDS.add(FEED_NAME);
         FIELDS.add(STATUS);
         FIELDS.add(TASK_ID);

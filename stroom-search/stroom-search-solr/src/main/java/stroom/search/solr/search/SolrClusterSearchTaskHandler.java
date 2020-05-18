@@ -17,7 +17,7 @@
 
 package stroom.search.solr.search;
 
-import stroom.annotation.api.AnnotationDataSource;
+import stroom.annotation.api.AnnotationFields;
 import stroom.pipeline.errorhandler.MessageUtil;
 import stroom.query.api.v2.ExpressionOperator;
 import stroom.search.coprocessor.Error;
@@ -147,7 +147,7 @@ class SolrClusterSearchTaskHandler implements Consumer<Error> {
 
             // Search all index shards.
             final ExpressionFilter expressionFilter = new ExpressionFilter.Builder()
-                    .addPrefixExcludeFilter(AnnotationDataSource.ANNOTATION_FIELD_PREFIX)
+                    .addPrefixExcludeFilter(AnnotationFields.ANNOTATION_FIELD_PREFIX)
                     .build();
             final ExpressionOperator expression = expressionFilter.copy(task.getQuery().getExpression());
             solrSearchFactory.search(task, expression, extractionReceiver, taskContext);

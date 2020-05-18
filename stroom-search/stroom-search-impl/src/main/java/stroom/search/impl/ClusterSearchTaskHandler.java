@@ -17,7 +17,7 @@
 
 package stroom.search.impl;
 
-import stroom.annotation.api.AnnotationDataSource;
+import stroom.annotation.api.AnnotationFields;
 import stroom.cluster.task.api.ClusterResult;
 import stroom.cluster.task.api.ClusterTaskHandler;
 import stroom.cluster.task.api.ClusterTaskRef;
@@ -166,7 +166,7 @@ class ClusterSearchTaskHandler implements ClusterTaskHandler<ClusterSearchTask, 
 
                 // Search all index shards.
                 final ExpressionFilter expressionFilter = new ExpressionFilter.Builder()
-                        .addPrefixExcludeFilter(AnnotationDataSource.ANNOTATION_FIELD_PREFIX)
+                        .addPrefixExcludeFilter(AnnotationFields.ANNOTATION_FIELD_PREFIX)
                         .build();
                 final ExpressionOperator expression = expressionFilter.copy(task.getQuery().getExpression());
                 indexShardSearchFactory.search(taskContext, task, expression, extractionReceiver);
