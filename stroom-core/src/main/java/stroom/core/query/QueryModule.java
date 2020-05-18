@@ -25,5 +25,7 @@ public class QueryModule extends AbstractModule {
     protected void configure() {
         RestResourcesBinder.create(binder())
                 .bind(SuggestionsResourceImpl.class);
+
+        bind(SuggestionsService.class).to(SuggestionsServiceImpl.class);
     }
 }
