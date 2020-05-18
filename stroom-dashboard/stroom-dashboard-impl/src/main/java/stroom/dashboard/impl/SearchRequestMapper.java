@@ -143,13 +143,13 @@ public class SearchRequestMapper {
             if (componentResultRequest instanceof TableResultRequest) {
                 final TableResultRequest tableResultRequest = (TableResultRequest) componentResultRequest;
 
-                final TableSettings tableSettings = mapTableSettings(tableResultRequest.getTableSettings());
+                final TableSettings tableSettings = TableSettingsUtil.mapTableSettings(tableResultRequest.getTableSettings());
 
                 final stroom.query.api.v2.ResultRequest copy = new stroom.query.api.v2.ResultRequest(
                         componentId,
                         Collections.singletonList(tableSettings),
-                        mapOffsetRange(tableResultRequest.getRequestedRange()),
-                        mapCollection(String.class, tableResultRequest.getOpenGroups()),
+                        TableSettingsUtil.mapOffsetRange(tableResultRequest.getRequestedRange()),
+                        TableSettingsUtil.mapCollection(String.class, tableResultRequest.getOpenGroups()),
                         ResultStyle.TABLE,
                         tableResultRequest.getFetch());
                 resultRequests.add(copy);
@@ -157,7 +157,7 @@ public class SearchRequestMapper {
             } else if (componentResultRequest instanceof VisResultRequest) {
                 final VisResultRequest visResultRequest = (VisResultRequest) componentResultRequest;
 
-                final TableSettings parentTableSettings = mapTableSettings(visResultRequest.getVisDashboardSettings().getTableSettings());
+                final TableSettings parentTableSettings = TableSettingsUtil.mapTableSettings(visResultRequest.getVisDashboardSettings().getTableSettings());
                 final TableSettings childTableSettings = mapVisSettingsToTableSettings(visResultRequest.getVisDashboardSettings(), parentTableSettings);
 
                 final stroom.query.api.v2.ResultRequest copy = new stroom.query.api.v2.ResultRequest(componentId, Arrays.asList(parentTableSettings, childTableSettings), null, null, ResultStyle.FLAT, visResultRequest.getFetch());
@@ -185,143 +185,7 @@ public class SearchRequestMapper {
         return resultRequests;
     }
 
-    private TableSettings mapTableSettings(final TableComponentSettings tableComponentSettings) {
-        if (tableComponentSettings == null) {
-            return null;
-        }
 
-        final TableSettings tableSettings = new TableSettings.Builder()
-                .queryId(tableComponentSettings.getQueryId())
-                .addFields(mapFields(tableComponentSettings.getFields()))
-                .extractValues(tableComponentSettings.extractValues())
-                .extractionPipeline(tableComponentSettings.getExtractionPipeline())
-                .addMaxResults(mapIntArray(tableComponentSettings.getMaxResults()))
-                .showDetail(tableComponentSettings.getShowDetail())
-                .build();
-
-        return tableSettings;
-    }
-
-    private List<stroom.query.api.v2.Field> mapFields(final List<Field> fields) {
-        if (fields == null || fields.size() == 0) {
-            return Collections.emptyList();
-        }
-
-        final List<stroom.query.api.v2.Field> list = new ArrayList<>(fields.size());
-        for (final Field field : fields) {
-            final stroom.query.api.v2.Field.Builder builder = new stroom.query.api.v2.Field.Builder()
-                    .id(field.getId())
-                    .name(field.getName())
-                    .expression(field.getExpression())
-                    .sort(mapSort(field.getSort()))
-                    .filter(mapFilter(field.getFilter()))
-                    .format(mapFormat(field.getFormat()))
-                    .group(field.getGroup());
-
-            list.add(builder.build());
-        }
-
-        return list;
-    }
-
-    private List<Integer> mapIntArray(final int[] arr) {
-        if (arr == null || arr.length == 0) {
-            return null;
-        }
-
-        final List<Integer> copy = new ArrayList<>(arr.length);
-        for (int i = 0; i < arr.length; i++) {
-            copy.add(arr[i]);
-        }
-
-        return copy;
-    }
-
-    private <T> List<T> mapCollection(final Class<T> clazz, final Collection<T> collection) {
-        if (collection == null || collection.size() == 0) {
-            return null;
-        }
-
-        @SuppressWarnings("unchecked")
-        List<T> copy = new ArrayList<>(collection.size());
-        int i = 0;
-        for (final T t : collection) {
-            copy.add(t);
-        }
-
-        return copy;
-    }
-
-    private stroom.query.api.v2.OffsetRange mapOffsetRange(final OffsetRange<Integer> offsetRange) {
-        if (offsetRange == null) {
-            return null;
-        }
-
-        return new stroom.query.api.v2.OffsetRange(offsetRange.getOffset(), offsetRange.getLength());
-    }
-
-    private stroom.query.api.v2.Sort mapSort(final Sort sort) {
-        if (sort == null) {
-            return null;
-        }
-
-        SortDirection sortDirection = null;
-        if (sort.getDirection() != null) {
-            sortDirection = SortDirection.valueOf(sort.getDirection().name());
-        }
-
-        return new stroom.query.api.v2.Sort(sort.getOrder(), sortDirection);
-    }
-
-    private stroom.query.api.v2.Filter mapFilter(final Filter filter) {
-        if (filter == null) {
-            return null;
-        }
-
-        return new stroom.query.api.v2.Filter(filter.getIncludes(), filter.getExcludes());
-    }
-
-    private stroom.query.api.v2.Format mapFormat(final Format format) {
-        if (format == null) {
-            return null;
-        }
-
-        Type type = null;
-
-        if (format.getType() != null) {
-            type = Type.valueOf(format.getType().name());
-        }
-
-        return new stroom.query.api.v2.Format(type, mapNumberFormat(format.getSettings()), mapDateTimeFormat(format.getSettings()));
-    }
-
-    private stroom.query.api.v2.NumberFormat mapNumberFormat(final FormatSettings formatSettings) {
-        if (formatSettings == null || !(formatSettings instanceof NumberFormatSettings)) {
-            return null;
-        }
-
-        final NumberFormatSettings numberFormatSettings = (NumberFormatSettings) formatSettings;
-
-        return new NumberFormat(numberFormatSettings.getDecimalPlaces(), numberFormatSettings.getUseSeparator());
-    }
-
-    private stroom.query.api.v2.DateTimeFormat mapDateTimeFormat(final FormatSettings formatSettings) {
-        if (formatSettings == null || !(formatSettings instanceof DateTimeFormatSettings)) {
-            return null;
-        }
-
-        final DateTimeFormatSettings dateTimeFormatSettings = (DateTimeFormatSettings) formatSettings;
-
-        return new DateTimeFormat(dateTimeFormatSettings.getPattern(), mapTimeZone(dateTimeFormatSettings.getTimeZone()));
-    }
-
-    private stroom.query.api.v2.TimeZone mapTimeZone(final TimeZone timeZone) {
-        if (timeZone == null) {
-            return null;
-        }
-
-        return new stroom.query.api.v2.TimeZone(Use.valueOf(timeZone.getUse().name()), timeZone.getId(), timeZone.getOffsetHours(), timeZone.getOffsetMinutes());
-    }
 
 //    private TableSettings visStructureToTableSettings(final VisStructure visStructure, final TableSettings parentTableSettings) {
 //        final Map<String, stroom.query.api.v2.Format> formatMap = new HashMap<>();
