@@ -3,10 +3,8 @@ package stroom.legacy.impex_6_1;
 import stroom.index.shared.AnalyzerType;
 import stroom.index.shared.IndexField;
 import stroom.index.shared.IndexFieldType;
-import stroom.legacy.model_6_1.IndexFields;
 
 import java.util.Collection;
-import java.util.Collections;
 import java.util.List;
 import java.util.Set;
 import java.util.function.Function;
@@ -611,5 +609,27 @@ public final class MappingUtil {
                 stored,
                 termPositions,
                 caseSensitive);
+    }
+
+    public static stroom.processor.shared.QueryData map(stroom.legacy.model_6_1.QueryData value) {
+        if (value == null) {
+            return null;
+        }
+
+        return new stroom.processor.shared.QueryData(
+                map(value.getDataSource()),
+                map(value.getExpression()),
+                map(value.getLimits()));
+    }
+
+    public static stroom.processor.shared.Limits map(stroom.legacy.model_6_1.Limits value) {
+        if (value == null) {
+            return null;
+        }
+
+        return new stroom.processor.shared.Limits(
+                value.getStreamCount(),
+                value.getEventCount(),
+                value.getDurationMs());
     }
 }

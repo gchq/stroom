@@ -16,6 +16,7 @@
 
 package stroom.legacy.db.migration;
 
+import stroom.db.util.DbUtil;
 import stroom.docstore.impl.Serialiser2FactoryImpl;
 import stroom.legacy.impex_6_1.MappingUtil;
 import stroom.legacy.db.ObjectMarshaller;
@@ -68,7 +69,7 @@ public class V07_00_00_013__SqlStatistics extends BaseJavaMigration {
                     final String descrip = resultSet.getString(7);
                     final byte statTp = resultSet.getByte(8);
                     final byte rollupTp = resultSet.getByte(9);
-                    final Long pres = resultSet.getLong(10);
+                    final Long pres = DbUtil.getLong(resultSet, 10);
                     final boolean enbl = resultSet.getBoolean(11);
                     final String dat = resultSet.getString(12);
 
