@@ -6,6 +6,8 @@ and this project adheres to [Semantic Versioning](http://semver.org/).
 
 ## [Unreleased]
 
+* Issue **#1568** : Pipeline names should now be shown where needed in the UI.
+
 * Issue **#1457** : Change field value suggester to use fuzzy matching.
 
 * Issue **#1574** : Make feed suggestions return all feeds, not just ones with meta.

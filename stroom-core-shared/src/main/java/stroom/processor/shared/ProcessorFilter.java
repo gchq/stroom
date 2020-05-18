@@ -16,10 +16,13 @@
 
 package stroom.processor.shared;
 
+import stroom.docref.DocRef;
+import stroom.pipeline.shared.PipelineDoc;
 import stroom.util.shared.HasAuditInfo;
 import stroom.util.shared.HasUuid;
 
 import com.fasterxml.jackson.annotation.JsonCreator;
+import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.fasterxml.jackson.annotation.JsonInclude;
 import com.fasterxml.jackson.annotation.JsonInclude.Include;
 import com.fasterxml.jackson.annotation.JsonProperty;
@@ -244,6 +247,11 @@ public class ProcessorFilter implements HasAuditInfo, HasUuid {
 
     public void setPipelineName(final String pipelineName) {
         this.pipelineName = pipelineName;
+    }
+
+    @JsonIgnore
+    public DocRef getPipeline() {
+        return new DocRef(PipelineDoc.DOCUMENT_TYPE, pipelineUuid, pipelineName);
     }
 
     public void setProcessor(final Processor processor) {

@@ -5,6 +5,7 @@ import stroom.datasource.api.v2.AbstractField;
 import stroom.datasource.api.v2.DataSource;
 import stroom.docref.DocRef;
 import stroom.docrefinfo.api.DocRefInfoService;
+import stroom.docstore.shared.DocRefUtil;
 import stroom.entity.shared.ExpressionCriteria;
 import stroom.meta.api.AttributeMap;
 import stroom.meta.api.AttributeMapFactory;
@@ -19,6 +20,7 @@ import stroom.meta.shared.MetaFields;
 import stroom.meta.shared.MetaInfoSection;
 import stroom.meta.shared.MetaRow;
 import stroom.meta.shared.Status;
+import stroom.pipeline.shared.PipelineDoc;
 import stroom.query.api.v2.ExpressionOperator;
 import stroom.query.api.v2.ExpressionOperator.Builder;
 import stroom.query.api.v2.ExpressionOperator.Op;
@@ -637,11 +639,8 @@ public class MetaServiceImpl implements MetaService, Searchable {
         }
         if (meta.getPipelineUuid() != null) {
             final String pipelineName = getPipelineName(meta);
-            if (pipelineName != null) {
-                entries.add(new MetaInfoSection.Entry("Processor Pipeline", pipelineName));
-            } else {
-                entries.add(new MetaInfoSection.Entry("Processor Pipeline", meta.getPipelineUuid()));
-            }
+            final String pipeline = DocRefUtil.createSimpleDocRefString(new DocRef(PipelineDoc.DOCUMENT_TYPE, meta.getPipelineUuid(), pipelineName));
+            entries.add(new MetaInfoSection.Entry("Processor Pipeline", pipeline));
         }
         return entries;
     }
