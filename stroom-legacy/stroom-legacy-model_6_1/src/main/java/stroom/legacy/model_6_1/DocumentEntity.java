@@ -17,10 +17,8 @@
 package stroom.legacy.model_6_1;
 
 import javax.persistence.Column;
-@Deprecated
 import javax.persistence.MappedSuperclass;
 
-@Deprecated
 @MappedSuperclass
 @Deprecated
 public abstract class DocumentEntity extends NamedEntity implements Document {

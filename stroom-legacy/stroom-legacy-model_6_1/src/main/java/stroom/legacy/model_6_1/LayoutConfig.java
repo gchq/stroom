@@ -24,7 +24,6 @@ import javax.xml.bind.annotation.XmlType;
 
 @XmlAccessorType(XmlAccessType.FIELD)
 @XmlType(name = "layout", propOrder = {"preferredSize"})
-@Deprecated
 @XmlSeeAlso({SplitLayoutConfig.class, TabLayoutConfig.class})
 @Deprecated
 public abstract class LayoutConfig implements SharedObject {

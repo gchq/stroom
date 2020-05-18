@@ -20,11 +20,9 @@ import javax.persistence.Column;
 import javax.persistence.FetchType;
 import javax.persistence.JoinColumn;
 import javax.persistence.ManyToOne;
-@Deprecated
 import javax.persistence.MappedSuperclass;
 import javax.persistence.Transient;
 
-@Deprecated
 @MappedSuperclass
 @Deprecated
 public abstract class TaskBasedEntity extends BaseEntityBig {

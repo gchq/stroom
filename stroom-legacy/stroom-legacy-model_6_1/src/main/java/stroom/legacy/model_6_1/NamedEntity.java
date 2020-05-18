@@ -17,12 +17,10 @@
 package stroom.legacy.model_6_1;
 
 import javax.persistence.Column;
-@Deprecated
 import javax.persistence.MappedSuperclass;
 import javax.persistence.Transient;
 import javax.validation.constraints.Size;
 
-@Deprecated
 @MappedSuperclass
 @Deprecated
 public abstract class NamedEntity extends AuditedEntity implements HasName, HasDisplayValue {

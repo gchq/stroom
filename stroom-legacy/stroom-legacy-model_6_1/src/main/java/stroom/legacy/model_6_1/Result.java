@@ -38,7 +38,6 @@ import java.io.Serializable;
         @JsonSubTypes.Type(value = FlatResult.class, name = "vis")
 })
 @XmlType(name = "Result", propOrder = "componentId")
-@Deprecated
 @XmlSeeAlso({TableResult.class, FlatResult.class})
 @XmlAccessorType(XmlAccessType.FIELD)
 @ApiModel(

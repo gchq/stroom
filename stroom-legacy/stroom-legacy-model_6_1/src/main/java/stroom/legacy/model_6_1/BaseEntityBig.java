@@ -20,7 +20,6 @@ import javax.persistence.Column;
 import javax.persistence.GeneratedValue;
 import javax.persistence.GenerationType;
 import javax.persistence.Id;
-@Deprecated
 import javax.persistence.MappedSuperclass;
 import javax.xml.bind.annotation.XmlTransient;
 
@@ -29,7 +28,6 @@ import javax.xml.bind.annotation.XmlTransient;
  * Used for tables with millions of rows.
  * </p>
  */
-@Deprecated
 @MappedSuperclass
 @Deprecated
 public abstract class BaseEntityBig extends BaseEntity {

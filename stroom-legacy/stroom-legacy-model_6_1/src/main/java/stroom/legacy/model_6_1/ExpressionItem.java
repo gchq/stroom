@@ -38,7 +38,6 @@ import java.io.Serializable;
         @JsonSubTypes.Type(value = ExpressionTerm.class, name = "term")
 })
 @XmlType(name = "ExpressionItem", propOrder = {"enabled"})
-@Deprecated
 @XmlSeeAlso({ExpressionOperator.class, ExpressionTerm.class})
 @XmlAccessorType(XmlAccessType.FIELD)
 @ApiModel(

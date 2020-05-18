@@ -17,7 +17,6 @@
 package stroom.legacy.model_6_1;
 
 import javax.persistence.Column;
-@Deprecated
 import javax.persistence.MappedSuperclass;
 import javax.persistence.Transient;
 import javax.persistence.Version;
@@ -29,7 +28,6 @@ import javax.xml.bind.annotation.XmlTransient;
  * id's audit fields (createDate etc) optimistic locking in a standard way.
  * </p>
  */
-@Deprecated
 @MappedSuperclass
 @Deprecated
 public abstract class BaseEntity extends Entity implements HasType, HasId, SharedObject, Comparable<BaseEntity> {
