@@ -6,6 +6,8 @@ and this project adheres to [Semantic Versioning](http://semver.org/).
 
 ## [Unreleased]
 
+* Issue **#1577** : Cluster node status is now updated when node settings are changed.
+
 * Issue **#1396** : Completely changed DB migration and import/export compatibility code.
 
 * Fix index creation stored procedure.
