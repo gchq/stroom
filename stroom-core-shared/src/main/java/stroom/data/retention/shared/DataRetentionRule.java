@@ -17,12 +17,13 @@
 package stroom.data.retention.shared;
 
 
+import stroom.query.api.v2.ExpressionOperator;
+
 import com.fasterxml.jackson.annotation.JsonCreator;
 import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.fasterxml.jackson.annotation.JsonInclude;
 import com.fasterxml.jackson.annotation.JsonInclude.Include;
 import com.fasterxml.jackson.annotation.JsonProperty;
-import stroom.query.api.v2.ExpressionOperator;
 
 import javax.xml.bind.annotation.XmlAccessType;
 import javax.xml.bind.annotation.XmlAccessorType;
@@ -30,6 +31,7 @@ import javax.xml.bind.annotation.XmlElement;
 import javax.xml.bind.annotation.XmlRootElement;
 import javax.xml.bind.annotation.XmlTransient;
 import javax.xml.bind.annotation.XmlType;
+import java.util.Comparator;
 import java.util.Objects;
 
 @XmlAccessorType(XmlAccessType.FIELD)
@@ -38,6 +40,8 @@ import java.util.Objects;
 @JsonInclude(Include.NON_NULL)
 public class DataRetentionRule {
     public static final String FOREVER = "Forever";
+
+    private static final Comparator<DataRetentionRule> COMPARATOR = Comparator.comparing(DataRetentionRule::getRuleNumber);
 
     @XmlElement(name = "ruleNumber")
     @JsonProperty
