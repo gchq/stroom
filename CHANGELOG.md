@@ -6,6 +6,8 @@ and this project adheres to [Semantic Versioning](http://semver.org/).
 
 ## [Unreleased]
 
+* Issue **#1565** : Stop data retention rules deleting all data.
+
 
 ## [v7.0-beta.32] - 2020-05-19
 
