@@ -56,9 +56,7 @@ import com.google.web.bindery.event.shared.HandlerRegistration;
 import com.gwtplatform.mvp.client.MyPresenterWidget;
 import com.gwtplatform.mvp.client.View;
 
-import java.util.Arrays;
 import java.util.HashSet;
-import java.util.List;
 import java.util.Set;
 
 public class MetaPresenter extends MyPresenterWidget<MetaPresenter.StreamView>
@@ -143,8 +141,8 @@ public class MetaPresenter extends MyPresenterWidget<MetaPresenter.StreamView>
         streamListFilter = metaListPresenter.add(SvgPresets.FILTER);
 
         // Init the buttons
-        setStreamListSelectableEnabled(null, Status.UNLOCKED);
-        setStreamRelationListSelectableEnabled(null, Status.UNLOCKED);
+        setStreamListSelectableEnabled(null);
+        setStreamRelationListSelectableEnabled(null);
     }
 
     private static Meta getMeta(final AbstractMetaListPresenter streamListPresenter, final long id) {
@@ -161,33 +159,6 @@ public class MetaPresenter extends MyPresenterWidget<MetaPresenter.StreamView>
         return null;
     }
 
-    public static boolean isSelectedAllOfStatus(final Status filterStatus,
-                                                final AbstractMetaListPresenter streamListPresenter, final Selection<Long> selectedIdSet,
-                                                final Status... statusArray) {
-        final List<Status> statusList = Arrays.asList(statusArray);
-        // Nothing Selected
-        if (selectedIdSet == null || selectedIdSet.isMatchNothing()) {
-            return false;
-        }
-        // Match All must be a status that we expect
-        if (selectedIdSet.isMatchAll()) {
-            if (filterStatus == null) {
-                return false;
-            }
-            return statusList.contains(filterStatus);
-        }
-
-        for (final Long id : selectedIdSet.getSet()) {
-            final Meta meta = getMeta(streamListPresenter, id);
-            if (meta == null || !statusList.contains(meta.getStatus())) {
-                return false;
-            }
-        }
-
-        return true;
-
-    }
-
     @Override
     protected void onBind() {
         super.onBind();
@@ -197,10 +168,9 @@ public class MetaPresenter extends MyPresenterWidget<MetaPresenter.StreamView>
                     !Status.UNLOCKED.equals(getSingleStatus(getCriteria())));
             showData();
         }));
-        registerHandler(metaListPresenter.addDataSelectionHandler(event -> setStreamListSelectableEnabled(event.getSelectedItem(),
-                getSingleStatus(getCriteria()))));
+        registerHandler(metaListPresenter.addDataSelectionHandler(event -> setStreamListSelectableEnabled(event.getSelectedItem())));
         registerHandler(metaRelationListPresenter.getSelectionModel().addSelectionHandler(event -> showData()));
-        registerHandler(metaRelationListPresenter.addDataSelectionHandler(event -> setStreamRelationListSelectableEnabled(event.getSelectedItem(), getSingleStatus(getCriteria()))));
+        registerHandler(metaRelationListPresenter.addDataSelectionHandler(event -> setStreamRelationListSelectableEnabled(event.getSelectedItem())));
 
         registerHandler(streamListFilter.addClickHandler(event -> {
             final ExpressionPresenter presenter = streamListFilterPresenter.get();
@@ -249,8 +219,7 @@ public class MetaPresenter extends MyPresenterWidget<MetaPresenter.StreamView>
                     getCriteria().obtainPageRequest().setOffset(0L);
 
                     // Init the buttons
-                    final Status status = getSingleStatus(getCriteria());
-                    setStreamListSelectableEnabled(metaListPresenter.getSelection(), status);
+                    setStreamListSelectableEnabled(metaListPresenter.getSelection());
 
                     // Clear the current selection and get a new list of streams.
                     metaListPresenter.getSelectionModel().clear();
@@ -513,53 +482,93 @@ public class MetaPresenter extends MyPresenterWidget<MetaPresenter.StreamView>
         return selectedIdSet != null && !selectedIdSet.isMatchNothing();
     }
 
-    public void setStreamListSelectableEnabled(final Selection<Long> streamIdSet, final Status streamStatus) {
+    public void setStreamListSelectableEnabled(final Selection<Long> streamIdSet) {
         final boolean someSelected = isSomeSelected(metaListPresenter, streamIdSet);
 
         if (streamListDownload != null) {
             streamListDownload.setEnabled(someSelected);
         }
         if (streamListDelete != null) {
-            streamListDelete
-                    .setEnabled(someSelected);
-            // && isSelectedAllOfStatus(getCriteria().obtainStatusSet().getSingleItem(),
-//                            metaListPresenter, streamIdSet, StreamStatus.LOCKED, StreamStatus.UNLOCKED));
+            final boolean enabled = shouldEnableDelete(metaListPresenter, streamIdSet);
+            streamListDelete.setEnabled(enabled);
         }
         if (streamListProcess != null) {
             streamListProcess.setEnabled(someSelected);
         }
         if (streamListRestore != null) {
-            // Hide if we are normal view (Unlocked streams)
-            streamListRestore.setVisible(!Status.UNLOCKED.equals(streamStatus));
-            streamListRestore
-                    .setEnabled(someSelected && isSelectedAllOfStatus(getSingleStatus(getCriteria()),
-                            metaListPresenter, streamIdSet, Status.DELETED));
+            final boolean enabled = shouldEnableRestore(metaListPresenter, streamIdSet);
+            streamListRestore.setEnabled(enabled);
         }
-
     }
 
-    private void setStreamRelationListSelectableEnabled(final Selection<Long> streamIdSet,
-                                                        final Status streamStatus) {
+    private void setStreamRelationListSelectableEnabled(final Selection<Long> streamIdSet) {
         final boolean someSelected = isSomeSelected(metaRelationListPresenter, streamIdSet);
 
         if (streamRelationListDownload != null) {
             streamRelationListDownload.setEnabled(someSelected);
         }
         if (streamRelationListDelete != null) {
-            streamRelationListDelete
-                    .setEnabled(someSelected && isSelectedAllOfStatus(getSingleStatus(getCriteria()),
-                            metaRelationListPresenter, streamIdSet, Status.LOCKED, Status.UNLOCKED));
+            final boolean enabled = shouldEnableDelete(metaRelationListPresenter, streamIdSet);
+            streamRelationListDelete.setEnabled(enabled);
         }
         if (streamRelationListRestore != null) {
-            // Hide if we are normal view (Unlocked streams)
-            streamRelationListRestore.setVisible(!Status.UNLOCKED.equals(streamStatus));
-            streamRelationListRestore
-                    .setEnabled(someSelected && isSelectedAllOfStatus(getSingleStatus(getCriteria()),
-                            metaRelationListPresenter, streamIdSet, Status.DELETED));
+            final boolean enabled = shouldEnableRestore(metaRelationListPresenter, streamIdSet);
+            streamRelationListRestore.setEnabled(enabled);
         }
         if (streamRelationListProcess != null) {
             streamRelationListProcess.setEnabled(someSelected);
         }
+    }
+
+    private boolean shouldEnableDelete(final AbstractMetaListPresenter metaListPresenter, final Selection<Long> streamIdSet) {
+        final boolean someSelected = isSomeSelected(metaListPresenter, streamIdSet);
+        if (someSelected) {
+            final Set<Status> statusSet = getStatusSet(getCriteria().getExpression());
+            final boolean allowDelete = statusSet.size() == 0 ||
+                    statusSet.contains(Status.LOCKED) ||
+                    statusSet.contains(Status.UNLOCKED);
+
+            if (allowDelete) {
+                if (streamIdSet != null) {
+                    if (streamIdSet.isMatchAll()) {
+                        return true;
+                    } else {
+                        for (final Long id : streamIdSet.getSet()) {
+                            final Meta meta = getMeta(metaListPresenter, id);
+                            if (meta != null && !Status.DELETED.equals(meta.getStatus())) {
+                                return true;
+                            }
+                        }
+                    }
+                }
+            }
+        }
+        return false;
+    }
+
+    private boolean shouldEnableRestore(final AbstractMetaListPresenter metaListPresenter, final Selection<Long> streamIdSet) {
+        final boolean someSelected = isSomeSelected(metaListPresenter, streamIdSet);
+        if (someSelected) {
+            final Set<Status> statusSet = getStatusSet(getCriteria().getExpression());
+            final boolean allowRestore = statusSet.size() == 0 ||
+                    statusSet.contains(Status.DELETED);
+
+            if (allowRestore) {
+                if (streamIdSet != null) {
+                    if (streamIdSet.isMatchAll()) {
+                        return true;
+                    } else {
+                        for (final Long id : streamIdSet.getSet()) {
+                            final Meta meta = getMeta(metaListPresenter, id);
+                            if (meta != null && Status.DELETED.equals(meta.getStatus())) {
+                                return true;
+                            }
+                        }
+                    }
+                }
+            }
+        }
+        return false;
     }
 
     @Override

@@ -6,6 +6,10 @@ and this project adheres to [Semantic Versioning](http://semver.org/).
 
 ## [Unreleased]
 
+* Issue **#1588** : Fix processor filter import.
+
+* Issue **#1566** : Fixed UI data restore behaviour.
+
 
 ## [v7.0-beta.32] - 2020-05-19
 
