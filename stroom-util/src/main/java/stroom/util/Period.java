@@ -18,7 +18,10 @@ package stroom.util;
 
 import stroom.util.shared.Range;
 
+import java.time.Instant;
+import java.util.Comparator;
 import java.util.Date;
+import java.util.Optional;
 
 /**
  * <p>
@@ -47,11 +50,23 @@ public class Period extends Range<Long> {
         super(fromMs, toMs);
     }
 
+    public Period(final Instant from, final Instant to) {
+        super(from.toEpochMilli(), to.toEpochMilli());
+    }
+
     public static final Period clone(Period period) {
         if (period == null) {
             return null;
         }
         return new Period(period.getFromMs(), period.getToMs());
+    }
+
+    public static Comparator<Period> comparingFromTime() {
+        return Comparator.comparing(Period::getFromMs);
+    }
+
+    public static Comparator<Period> comparingToTime() {
+        return Comparator.comparing(Period::getFromMs);
     }
 
     /**
@@ -133,6 +148,11 @@ public class Period extends Range<Long> {
         return super.getFrom();
     }
 
+    public Optional<Instant> getFromTime() {
+        return Optional.ofNullable(super.getFrom())
+                .map(Instant::ofEpochMilli);
+    }
+
     // Here for XML serialisation.
     public void setFromMs(Long from) {
         super.setFrom(from);
@@ -141,6 +161,11 @@ public class Period extends Range<Long> {
     // Here for XML serialisation.
     public Long getToMs() {
         return super.getTo();
+    }
+
+    public Optional<Instant> getToTime() {
+        return Optional.ofNullable(super.getTo())
+                .map(Instant::ofEpochMilli);
     }
 
     // Here for XML serialisation.

@@ -40,6 +40,9 @@ import org.jooq.Record;
 import org.jooq.Record1;
 import org.jooq.Result;
 import org.jooq.SelectConditionStep;
+import org.jooq.impl.DSL;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import javax.inject.Inject;
 import javax.inject.Singleton;
@@ -69,6 +72,8 @@ import static stroom.meta.impl.db.jooq.tables.MetaVal.META_VAL;
 
 @Singleton
 class MetaDaoImpl implements MetaDao {
+    private static final Logger LOGGER = LoggerFactory.getLogger(MetaDaoImpl.class);
+
     private static final stroom.meta.impl.db.jooq.tables.Meta meta = META.as("m");
     private static final MetaFeed metaFeed = META_FEED.as("f");
     private static final MetaType metaType = META_TYPE.as("t");
@@ -233,26 +238,34 @@ class MetaDaoImpl implements MetaDao {
 
         Collection<Condition> conditions = expressionMapper.apply(criteria.getExpression());
 
-        // Add a condition if we should check current status.
-        if (currentStatus != null) {
-            final byte currentStatusId = MetaStatusId.getPrimitiveValue(currentStatus);
-            conditions = Stream
-                    .concat(conditions.stream(), Stream.of(meta.STATUS.eq(currentStatusId)))
-                    .collect(Collectors.toList());
+        // If a rule means we are retaining data then we will have a 1=0 condition in here
+        // and as they are all to be ANDed together there is no point in running the sql.
+        if (conditions.size() == 1 && conditions.contains(DSL.falseCondition())) {
+
+            // Add a condition if we should check current status.
+            if (currentStatus != null) {
+                final byte currentStatusId = MetaStatusId.getPrimitiveValue(currentStatus);
+                conditions = Stream
+                        .concat(conditions.stream(), Stream.of(meta.STATUS.eq(currentStatusId)))
+                        .collect(Collectors.toList());
+            } else {
+                conditions = Stream
+                        .concat(conditions.stream(), Stream.of(meta.STATUS.ne(newStatusId)))
+                        .collect(Collectors.toList());
+            }
+
+            final Collection<Condition> c = conditions;
+
+            return JooqUtil.contextResult(metaDbConnProvider, context -> context
+                    .update(meta)
+                    .set(meta.STATUS, newStatusId)
+                    .set(meta.STATUS_TIME, statusTime)
+                    .where(c)
+                    .execute());
         } else {
-            conditions = Stream
-                    .concat(conditions.stream(), Stream.of(meta.STATUS.ne(newStatusId)))
-                    .collect(Collectors.toList());
+            LOGGER.info("No conditions, skipping update");
+            return 0;
         }
-
-        final Collection<Condition> c = conditions;
-
-        return JooqUtil.contextResult(metaDbConnProvider, context -> context
-                .update(meta)
-                .set(meta.STATUS, newStatusId)
-                .set(meta.STATUS_TIME, statusTime)
-                .where(c)
-                .execute());
     }
 
     private Optional<SelectConditionStep<Record1<Long>>> getMetaCondition(final ExpressionOperator expression) {

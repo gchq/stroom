@@ -35,10 +35,12 @@ import stroom.util.logging.LambdaLoggerFactory;
 import stroom.util.logging.LogExecutionTime;
 
 import com.fasterxml.jackson.annotation.JsonCreator;
+import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.fasterxml.jackson.annotation.JsonInclude;
 import com.fasterxml.jackson.annotation.JsonInclude.Include;
 import com.fasterxml.jackson.annotation.JsonProperty;
 import com.fasterxml.jackson.annotation.JsonPropertyOrder;
+import com.google.common.collect.Ordering;
 
 import javax.inject.Inject;
 import javax.inject.Provider;
@@ -49,6 +51,8 @@ import java.io.InputStream;
 import java.io.OutputStream;
 import java.nio.file.Files;
 import java.nio.file.Path;
+import java.time.Duration;
+import java.time.Instant;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.Comparator;
@@ -57,8 +61,10 @@ import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Objects;
+import java.util.Optional;
 import java.util.Set;
 import java.util.concurrent.atomic.AtomicBoolean;
+import java.util.function.Function;
 import java.util.function.Supplier;
 import java.util.stream.Collectors;
 
@@ -132,7 +138,7 @@ public class DataRetentionPolicyExecutor {
                 final int batchSize = policyConfig.getDeleteBatchSize();
 
                 // Calculate the data retention ages for all enabled rules.
-                final long nowMs = System.currentTimeMillis();
+                final Instant now = Instant.now();
 
                 // Load the last tracker used.
                 Tracker tracker = Tracker.load();
@@ -140,28 +146,36 @@ public class DataRetentionPolicyExecutor {
                 // If the data retention policy has changed then we need to assume it has never been run before,
                 // i.e. all data must be considered for retention checking.
                 if (tracker == null || !tracker.rulesEquals(dataRetentionRules)) {
-                    tracker = new Tracker(null, dataRetentionRules);
+                    tracker = new Tracker( null, dataRetentionRules);
                 }
 
                 // Calculate the amount of time that has elapsed since we last ran.
-                long elapsedTime = nowMs;
-                if (tracker.lastRun != null) {
-                    elapsedTime = nowMs - tracker.lastRun;
-                }
+//                long elapsedTime = nowMs;
+                final Duration timeSinceLastRun = tracker.getLastRun()
+                        .map(lastRun -> Duration.between(lastRun, now))
+                        .orElseGet(() -> Duration.between(Instant.EPOCH, now));
+
+                LOGGER.info("Time since last run: {}", timeSinceLastRun);
+
+//                if (tracker.getLastRun() != null) {
+//                    timeSinceLastRun = Duration.between(tracker.getLastRun(), now);
+//                } else {
+//                    timeSinceLastRun = Duration.between(Instant.EPOCH, now);
+//                }
 
                 // Create a new tracker to save at the end of the process.
-                tracker = new Tracker(nowMs, dataRetentionRules);
+                tracker = new Tracker(now.toEpochMilli(), dataRetentionRules);
 
                 // Create a map of unique periods with the set of rules that apply to them.
                 final Map<Period, Set<DataRetentionRule>> rulesByPeriod = getRulesByPeriod(
-                        activeRules, nowMs, elapsedTime);
+                        activeRules, now, timeSinceLastRun);
 
                 final AtomicBoolean allSuccessful = new AtomicBoolean(true);
 
                 // Process the different data ages separately as they can consider different sets of streams.
                 rulesByPeriod.keySet()
                         .stream()
-                        .sorted(Comparator.comparing(Period::getFromMs))
+                        .sorted(Period.comparingFromTime())
                         .forEach(period -> {
                             final List<DataRetentionRule> sortedRules = rulesByPeriod.get(period)
                                     .stream()
@@ -189,12 +203,23 @@ public class DataRetentionPolicyExecutor {
                                final Period period,
                                final List<DataRetentionRule> rules,
                                final int batchSize) {
-        info(taskContext, () -> "" +
-                "Considering stream retention for streams created " +
-                "between " +
-                DateUtil.createNormalDateTimeString(period.getFromMs()) +
-                " and " +
-                DateUtil.createNormalDateTimeString(period.getToMs()));
+        info(taskContext, () -> {
+            final Function<DataRetentionRule, String> ruleInfo = rule ->
+                    rule.toString() + " " +
+                            rule.getAge() + " " + rule.getTimeUnit().getDisplayValue() + " " +
+                            rule.getExpression();
+
+            return "" +
+                    "Considering stream retention for streams created " +
+                    "between " +
+                    DateUtil.createNormalDateTimeString(period.getFromMs()) +
+                    " and " +
+                    DateUtil.createNormalDateTimeString(period.getToMs()) +
+                    " [" + period.getDuration() + "], " + rules.size() + " rules:\n" +
+                    rules.stream()
+                            .map(ruleInfo)
+                            .collect(Collectors.joining("\n"));
+        });
 
         final FindMetaCriteria findMetaCriteria = DataRetentionMetaCriteriaUtil.createCriteria(
                 period, rules, batchSize);
@@ -209,54 +234,55 @@ public class DataRetentionPolicyExecutor {
 
     private Map<Period, Set<DataRetentionRule>> getRulesByPeriod(
             final List<DataRetentionRule> activeRules,
-            final long nowMs,
-            final long elapsedTime) {
+            final Instant now,
+            final Duration timeSinceLastRun) {
 
         // Get effective minimum meta creation times for each rule.
-        final Map<Long, Set<DataRetentionRule>> minCreationTimeMap = getMinCreationTimeMap(
-                activeRules, nowMs);
+        final Map<Instant, Set<DataRetentionRule>> minCreationTimeMap = getMinCreationTimeMap(
+                activeRules, now);
 
         // Create a map of unique periods with the set of rules that apply to them.
         final Map<Period, Set<DataRetentionRule>> rulesByPeriod = new HashMap<>();
-        final List<Long> sortedCreationTimes = minCreationTimeMap.keySet()
+        final List<Instant> descendingMinCreationTimes = minCreationTimeMap.keySet()
                 .stream()
                 .sorted(Comparator.reverseOrder())
                 .collect(Collectors.toList());
 
-        long toMs = nowMs;
-        for (final long creationTime : sortedCreationTimes) {
+        Instant toTime = now;
+        for (final Instant creationTime : descendingMinCreationTimes) {
             // Calculate a from time for the period that takes account of the
             // time passed since the last execution.
-            final long fromMs = Math.max(creationTime, toMs - elapsedTime);
+            final Instant fromTime = Ordering.natural().max(creationTime, toTime.minus(timeSinceLastRun));
+//            final Instant fromTime = Math.max(creationTime, toTime.minus(elapsedTime));
 
-            final Period period = new Period(fromMs, toMs);
-            minCreationTimeMap.forEach((k, v) -> {
+            final Period period = new Period(fromTime, toTime);
+            minCreationTimeMap.forEach((minCreationTime, ruleSet) -> {
                 final Set<DataRetentionRule> set = rulesByPeriod.computeIfAbsent(
                         period,
                         p -> new HashSet<>());
 
-                if (k < period.getToMs()) {
-                    set.addAll(v);
+                if (minCreationTime.isBefore(period.getToTime().orElseThrow())) {
+                    set.addAll(ruleSet);
                 }
             });
 
-            toMs = creationTime;
+            toTime = creationTime;
         }
         return rulesByPeriod;
     }
 
-    private Map<Long, Set<DataRetentionRule>> getMinCreationTimeMap(
+    private Map<Instant, Set<DataRetentionRule>> getMinCreationTimeMap(
             final List<DataRetentionRule> activeRules,
-            final long nowMs) {
+            final Instant now) {
 
-        final Map<Long, Set<DataRetentionRule>> minCreationTimeMap = new HashMap<>();
+        final Map<Instant, Set<DataRetentionRule>> minCreationTimeMap = new HashMap<>();
         // Ensure we have a key for `forever`, so we know what rules, if any,
         // we should use to retain data forever.
-        minCreationTimeMap.computeIfAbsent(0L, ct -> new HashSet<>());
+        minCreationTimeMap.computeIfAbsent(Instant.EPOCH, ct -> new HashSet<>());
         // Add all other rules by minimum creation time.
         activeRules.forEach(rule -> {
-            final long time = DataRetentionCreationTimeUtil.minus(nowMs, rule);
-            minCreationTimeMap.computeIfAbsent(time, ct -> new HashSet<>()).add(rule);
+            final Instant minTime = DataRetentionCreationTimeUtil.minus(now, rule);
+            minCreationTimeMap.computeIfAbsent(minTime, ct -> new HashSet<>()).add(rule);
         });
         return minCreationTimeMap;
     }
@@ -283,6 +309,9 @@ public class DataRetentionPolicyExecutor {
         LOGGER.info(messageSupplier);
         taskContext.info(messageSupplier);
     }
+
+    // TODO Consider removing as there seems little point in the tracker.  A hang over from
+    //   a previous way of doing data retention
 
     @JsonPropertyOrder({"lastRun", "dataRetentionRules", "rulesVersion", "rulesHash"})
     @JsonInclude(Include.NON_NULL)
@@ -328,6 +357,12 @@ public class DataRetentionPolicyExecutor {
             return dataRetentionRules;
         }
 
+        @JsonIgnore
+        public Optional<Instant> getLastRun() {
+            return Optional.ofNullable(lastRun)
+                    .map(Instant::ofEpochMilli);
+        }
+
         static Tracker load() {
             try {
                 final Path path = FileUtil.getTempDir().resolve(FILE_NAME);
@@ -352,7 +387,25 @@ public class DataRetentionPolicyExecutor {
                 LOGGER.error(e::getMessage, e);
             }
         }
+
+        @Override
+        public boolean equals(final Object o) {
+            if (this == o) return true;
+            if (o == null || getClass() != o.getClass()) return false;
+            final Tracker tracker = (Tracker) o;
+            return rulesHash == tracker.rulesHash &&
+                    Objects.equals(lastRun, tracker.lastRun) &&
+                    Objects.equals(dataRetentionRules, tracker.dataRetentionRules) &&
+                    Objects.equals(rulesVersion, tracker.rulesVersion);
+        }
+
+        @Override
+        public int hashCode() {
+            return Objects.hash(lastRun, dataRetentionRules, rulesVersion, rulesHash);
+        }
+
     }
+
 
     public static class ActiveRules {
         private final Set<AbstractField> fieldSet;

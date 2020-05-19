@@ -12,6 +12,8 @@ import stroom.query.api.v2.ExpressionTerm;
 import org.jooq.Condition;
 import org.jooq.Field;
 import org.jooq.impl.DSL;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import java.util.ArrayList;
 import java.util.Arrays;
@@ -29,6 +31,8 @@ import static org.jooq.impl.DSL.and;
 import static org.jooq.impl.DSL.or;
 
 public final class CommonExpressionMapper implements Function<ExpressionItem, Collection<Condition>> {
+    private static final Logger LOGGER = LoggerFactory.getLogger(CommonExpressionMapper.class);
+
     private final Map<String, Function<ExpressionTerm, Condition>> termHandlers = new HashMap<>();
     private final Set<String> ignoredFields = new HashSet<>();
     private final boolean ignoreMissingHandler;
@@ -62,33 +66,71 @@ public final class CommonExpressionMapper implements Function<ExpressionItem, Co
 
             } else if (item instanceof ExpressionOperator) {
                 final ExpressionOperator operator = (ExpressionOperator) item;
-                if (operator.getChildren() != null) {
+                if (operator.getChildren() != null && !operator.getChildren().isEmpty()) {
                     final Collection<Condition> children = operator.getChildren()
                             .stream()
-                            .map(this)
+                            .map(this::apply)
                             .flatMap(Collection::stream)
                             .collect(Collectors.toList());
 
                     if (children.size() > 0) {
                         switch (operator.op()) {
                             case AND:
-                                result = Collections.singleton(and(children));
+                                if (children.contains(DSL.falseCondition())) {
+                                    LOGGER.debug("One of the conditions in the AND is 1=0 so just return false condition");
+                                    result = Collections.singleton(DSL.falseCondition());
+                                } else {
+                                    result = Collections.singleton(and(children));
+                                }
                                 break;
                             case OR:
-                                result = Collections.singleton(or(children));
+                                if (children.contains(DSL.trueCondition())) {
+                                    LOGGER.debug("One of the conditions in the OR is 1=1 so just return a true condition");
+                                    result = Collections.singleton(DSL.trueCondition());
+                                } else {
+                                    result = Collections.singleton(or(children));
+                                }
                                 break;
                             case NOT:
                                 result = children
                                         .stream()
-                                        .map(DSL::not)
+                                        .map(childCondition -> {
+                                            if (DSL.falseCondition().equals(childCondition)) {
+                                                return DSL.trueCondition();
+                                            } else if (DSL.trueCondition().equals(childCondition)) {
+                                                return DSL.falseCondition();
+                                            } else {
+                                                return DSL.not(childCondition);
+                                            }
+                                        })
                                         .collect(Collectors.toList());
                         }
+                    } else {
+//                        // No children
+//                        if (ExpressionOperator.Op.NOT.equals(operator.op())) {
+//                            result = Collections.singleton(DSL.falseCondition());
+//                        } else {
+//                            result = Collections.singleton(DSL.trueCondition());
+//                        }
+                    }
+                }
+
+                // AND {}, OR {}, equal true, so don't need to do anything with them
+                if (result.isEmpty()) {
+                    if (ExpressionOperator.Op.NOT.equals(operator.op())) {
+                        result = Collections.singleton(DSL.falseCondition());
+//                    } else {
+//                        result = Collections.singleton(DSL.trueCondition());
                     }
                 }
             }
         }
 
-        return result;
+        if (result.size() == 1 && result.contains(DSL.trueCondition())) {
+            return Collections.emptyList();
+        } else {
+            return result;
+        }
     }
 
     public static final class TermHandler<T> implements Function<ExpressionTerm, Condition> {
