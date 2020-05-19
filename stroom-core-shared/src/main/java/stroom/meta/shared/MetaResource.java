@@ -54,6 +54,13 @@ public interface MetaResource extends RestResource, DirectRestService {
             response = ResourceGeneration.class)
     ResultPage<MetaRow> findMetaRow(@ApiParam("criteria") FindMetaCriteria criteria);
 
+    @POST
+    @Path("getSelectionSummary")
+    @ApiOperation(
+            value = "Get a summary of the selected meta data",
+            response = ResourceGeneration.class)
+    SelectionSummary getSelectionSummary(@ApiParam("criteria") FindMetaCriteria criteria);
+
     @GET
     @Path("info/{id}")
     @ApiOperation(

@@ -46,6 +46,7 @@ import stroom.meta.shared.UpdateStatusRequest;
 import stroom.processor.shared.ProcessorFilterResource;
 import stroom.processor.shared.ReprocessDataInfo;
 import stroom.query.api.v2.ExpressionOperator;
+import stroom.query.api.v2.ExpressionTerm;
 import stroom.svg.client.SvgPreset;
 import stroom.svg.client.SvgPresets;
 import stroom.util.shared.PageRequest;
@@ -69,6 +70,7 @@ import com.google.gwt.user.cellview.client.Header;
 import com.google.web.bindery.event.shared.EventBus;
 import com.gwtplatform.mvp.client.MyPresenterWidget;
 
+import javax.inject.Provider;
 import java.util.Collections;
 import java.util.HashSet;
 import java.util.List;
@@ -88,6 +90,7 @@ public abstract class AbstractMetaListPresenter extends MyPresenterWidget<DataGr
     private final LocationManager locationManager;
     private final FindMetaCriteria criteria;
     private final RestDataProvider<MetaRow, ResultPage<MetaRow>> dataProvider;
+    private final Provider<SelectionSummaryPresenter> selectionSummaryPresenterProvider;
 
     private ResultPage<MetaRow> resultPage;
     private boolean initialised;
@@ -96,11 +99,13 @@ public abstract class AbstractMetaListPresenter extends MyPresenterWidget<DataGr
                               final RestFactory restFactory,
                               final TooltipPresenter tooltipPresenter,
                               final LocationManager locationManager,
+                              final Provider<SelectionSummaryPresenter> selectionSummaryPresenterProvider,
                               final boolean allowSelectAll) {
         super(eventBus, new DataGridViewImpl<>(true));
         this.tooltipPresenter = tooltipPresenter;
         this.restFactory = restFactory;
         this.locationManager = locationManager;
+        this.selectionSummaryPresenterProvider = selectionSummaryPresenterProvider;
 
         selection.setMatchAll(false);
         addColumns(allowSelectAll);
@@ -439,23 +444,63 @@ public abstract class AbstractMetaListPresenter extends MyPresenterWidget<DataGr
     }
 
     public void download() {
-        action("download", this::doDownload);
+        validateSelection("download", () -> {
+            final ExpressionOperator.Builder builder = selectionToExpression(this.criteria, getSelection());
+            if (builder != null) {
+                final FindMetaCriteria criteria = expressionToCriteria(builder);
+                showSummary(criteria, "downloaded", "download", "Confirm Download", () -> download(criteria));
+            }
+        });
     }
 
     public void reprocess() {
-        action("reprocess", this::doReprocess);
+        validateSelection("reprocess", () -> {
+            final ExpressionOperator.Builder builder = selectionToExpression(this.criteria, getSelection());
+            if (builder != null) {
+                final FindMetaCriteria criteria = expressionToCriteria(builder);
+                showSummary(criteria, "reprocessed", "reprocess", "Confirm Reprocess", () -> reprocess(criteria));
+            }
+        });
     }
 
     public void delete() {
-        action("delete", () -> doUpdate("Deleted", null, Status.DELETED));
+        validateSelection("delete", () -> {
+            ExpressionOperator.Builder not = new ExpressionOperator.Builder(ExpressionOperator.Op.NOT);
+            not.addTerm(MetaFields.STATUS, ExpressionTerm.Condition.EQUALS, Status.DELETED.getDisplayValue());
+
+            final ExpressionOperator.Builder builder = selectionToExpression(this.criteria, getSelection());
+            if (builder != null) {
+                builder.addOperator(not.build());
+                final FindMetaCriteria criteria = expressionToCriteria(builder);
+                showSummary(criteria, "deleted", "delete", "Confirm Delete", update(criteria, "Deleted", null, Status.DELETED));
+            }
+        });
     }
 
     public void restore() {
-        action("restore", () -> doUpdate("Restored", Status.DELETED, Status.UNLOCKED));
+        validateSelection("restore", () -> {
+            final ExpressionOperator.Builder builder = selectionToExpression(this.criteria, getSelection());
+            if (builder != null) {
+                builder.addTerm(MetaFields.STATUS, ExpressionTerm.Condition.EQUALS, Status.DELETED.getDisplayValue());
+                final FindMetaCriteria criteria = expressionToCriteria(builder);
+                showSummary(criteria, "restored", "restore", "Confirm Restore", update(criteria, "Restored", Status.DELETED, Status.UNLOCKED));
+            }
+        });
     }
 
-    private void doDownload() {
-        final FindMetaCriteria criteria = createSelectionCriteria();
+    private Runnable update(final FindMetaCriteria criteria, final String text, final Status currentStatus, final Status newStatus) {
+        return () -> {
+            final Rest<Integer> rest = restFactory.create();
+            rest
+                    .onSuccess(result ->
+                            AlertEvent.fireInfo(AbstractMetaListPresenter.this,
+                                    text + " " + result + " record" + ((result.longValue() > 1) ? "s" : ""), this::refresh))
+                    .call(META_RESOURCE)
+                    .updateStatus(new UpdateStatusRequest(criteria, currentStatus, newStatus));
+        };
+    }
+
+    private void download(final FindMetaCriteria criteria) {
         final Rest<ResourceGeneration> rest = restFactory.create();
         rest
                 .onSuccess(result -> ExportFileCompleteUtil.onSuccess(locationManager, null, result))
@@ -463,8 +508,7 @@ public abstract class AbstractMetaListPresenter extends MyPresenterWidget<DataGr
                 .download(criteria);
     }
 
-    private void doReprocess() {
-        final FindMetaCriteria criteria = createSelectionCriteria();
+    private void reprocess(final FindMetaCriteria criteria) {
         final Rest<List<ReprocessDataInfo>> rest = restFactory.create();
         rest
                 .onSuccess(result -> {
@@ -496,18 +540,11 @@ public abstract class AbstractMetaListPresenter extends MyPresenterWidget<DataGr
 
     }
 
-    private void doUpdate(final String text, final Status currentStatus, final Status newStatus) {
-        final FindMetaCriteria criteria = createSelectionCriteria();
-        final Rest<Integer> rest = restFactory.create();
-        rest
-                .onSuccess(result ->
-                        AlertEvent.fireInfo(AbstractMetaListPresenter.this,
-                                text + " " + result + " record" + ((result.longValue() > 1) ? "s" : ""), this::refresh))
-                .call(META_RESOURCE)
-                .updateStatus(new UpdateStatusRequest(criteria, currentStatus, newStatus));
+    private void showSummary(final FindMetaCriteria criteria, final String postAction, final String action, final String caption, final Runnable runnable) {
+        selectionSummaryPresenterProvider.get().show(criteria, postAction, action, caption, runnable);
     }
 
-    private void action(final String actionType, final Runnable runnable) {
+    private void validateSelection(final String actionType, final Runnable runnable) {
         final Selection<Long> selection = getSelection();
         if (!selection.isMatchNothing()) {
             ConfirmEvent.fire(this,
@@ -528,36 +565,42 @@ public abstract class AbstractMetaListPresenter extends MyPresenterWidget<DataGr
                             }
                         }
                     });
+        } else {
+            AlertEvent.fireError(AbstractMetaListPresenter.this, "You have not selected any items", null);
         }
     }
 
-    private FindMetaCriteria createSelectionCriteria() {
-        final Selection<Long> selection = getSelection();
+    private ExpressionOperator.Builder selectionToExpression(final FindMetaCriteria criteria, final Selection<Long> selection) {
+        final ExpressionOperator.Builder builder = new ExpressionOperator.Builder();
         // First make sure there is some sort of selection, either
         // individual streams have been selected or all streams have been
         // selected.
         // Only use match all if we are allowed to use criteria.
         if (selection.isMatchAll()) {
-            final FindMetaCriteria criteria = new FindMetaCriteria();
-            criteria.copyFrom(this.criteria);
-            // Paging is NA
-            criteria.obtainPageRequest().setLength(null);
-            criteria.obtainPageRequest().setOffset(null);
-            return criteria;
+            if (criteria != null && criteria.getExpression() != null) {
+                builder.addOperator(criteria.getExpression());
+            }
 
         } else if (selection.size() > 0) {
             // If we aren't matching all then create a criteria that
             // only includes the selected streams.
-            final FindMetaCriteria criteria = new FindMetaCriteria(MetaExpressionUtil
+            builder.addOperator(MetaExpressionUtil
                     .createDataIdSetExpression(selection.getSet()));
 
-            // Paging is NA
-            criteria.obtainPageRequest().setLength(null);
-            criteria.obtainPageRequest().setOffset(null);
-            return criteria;
+        } else {
+            return null;
         }
 
-        return null;
+        return builder;
+    }
+
+    private FindMetaCriteria expressionToCriteria(final ExpressionOperator.Builder builder) {
+        final FindMetaCriteria criteria = new FindMetaCriteria(builder.build());
+
+        // Paging is NA
+        criteria.obtainPageRequest().setLength(null);
+        criteria.obtainPageRequest().setOffset(null);
+        return criteria;
     }
 
     @Override

@@ -10,6 +10,7 @@ import stroom.meta.shared.Meta;
 import stroom.meta.shared.MetaFields;
 import stroom.meta.shared.MetaInfoSection;
 import stroom.meta.shared.MetaRow;
+import stroom.meta.shared.SelectionSummary;
 import stroom.meta.shared.Status;
 import stroom.util.shared.Clearable;
 import stroom.util.shared.ResultPage;
@@ -174,6 +175,11 @@ public class MockMetaService implements MetaService, Clearable {
         return ResultPage.createUnboundedList(list);
     }
 
+    @Override
+    public SelectionSummary getSelectionSummary(final FindMetaCriteria criteria) {
+        return null;
+    }
+
     /**
      * Turns a data row object into a generic map of attributes for use by an expression filter.
      */
@@ -235,7 +241,7 @@ public class MockMetaService implements MetaService, Clearable {
     }
 
     @Override
-    public ResultPage<MetaRow> findMetaRow(final FindMetaCriteria criteria) {
+    public ResultPage<MetaRow> findDecoratedRows(final FindMetaCriteria criteria) {
         return null;
     }
 

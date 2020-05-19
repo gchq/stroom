@@ -19,6 +19,7 @@ import stroom.meta.shared.Meta;
 import stroom.meta.shared.MetaFields;
 import stroom.meta.shared.MetaInfoSection;
 import stroom.meta.shared.MetaRow;
+import stroom.meta.shared.SelectionSummary;
 import stroom.meta.shared.Status;
 import stroom.pipeline.shared.PipelineDoc;
 import stroom.query.api.v2.ExpressionOperator;
@@ -469,7 +470,7 @@ public class MetaServiceImpl implements MetaService, Searchable {
     }
 
     @Override
-    public ResultPage<MetaRow> findMetaRow(final FindMetaCriteria criteria) {
+    public ResultPage<MetaRow> findDecoratedRows(final FindMetaCriteria criteria) {
         try {
             final ResultPage<MetaRow> list = findRows(criteria);
             final StreamAttributeMapRetentionRuleDecorator decorator = decoratorProvider.get();
@@ -513,6 +514,13 @@ public class MetaServiceImpl implements MetaService, Searchable {
             metaRowList.add(new MetaRow(meta, getPipelineName(meta), attributes));
         }
         return metaRowList;
+    }
+
+    @Override
+    public SelectionSummary getSelectionSummary(final FindMetaCriteria criteria) {
+        final ExpressionOperator expression = addPermissionConstraints(criteria.getExpression(), DocumentPermissionNames.READ);
+        criteria.setExpression(expression);
+        return metaDao.getSelectionSummary(criteria);
     }
 
     private String getPipelineName(final Meta meta) {

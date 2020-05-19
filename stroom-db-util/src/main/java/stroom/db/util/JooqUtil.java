@@ -1,5 +1,13 @@
 package stroom.db.util;
 
+import stroom.util.logging.LogUtil;
+import stroom.util.shared.BaseCriteria;
+import stroom.util.shared.PageRequest;
+import stroom.util.shared.Range;
+import stroom.util.shared.Selection;
+import stroom.util.shared.Sort;
+import stroom.util.shared.StringCriteria;
+
 import org.jooq.Condition;
 import org.jooq.DSLContext;
 import org.jooq.Field;
@@ -11,13 +19,6 @@ import org.jooq.conf.Settings;
 import org.jooq.impl.DSL;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import stroom.util.logging.LogUtil;
-import stroom.util.shared.BaseCriteria;
-import stroom.util.shared.Selection;
-import stroom.util.shared.PageRequest;
-import stroom.util.shared.Range;
-import stroom.util.shared.Sort;
-import stroom.util.shared.StringCriteria;
 
 import javax.sql.DataSource;
 import java.sql.Connection;
@@ -178,7 +179,14 @@ public final class JooqUtil {
         return idField;
     }
 
-    public static int getLimit(final PageRequest pageRequest, final boolean oneLarger) {
+    public static int getLimit(final PageRequest pageRequest,
+                               final boolean oneLarger) {
+        return getLimit(pageRequest, oneLarger, Integer.MAX_VALUE);
+    }
+
+    public static int getLimit(final PageRequest pageRequest,
+                               final boolean oneLarger,
+                               final int defaultValue) {
         if (pageRequest != null) {
             if (pageRequest.getLength() != null) {
                 if (oneLarger) {
@@ -189,7 +197,7 @@ public final class JooqUtil {
             }
         }
 
-        return Integer.MAX_VALUE;
+        return defaultValue;
     }
 
     public static int getOffset(final PageRequest pageRequest) {

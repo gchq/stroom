@@ -23,11 +23,13 @@ import stroom.meta.impl.db.jooq.tables.MetaVal;
 import stroom.meta.shared.FindMetaCriteria;
 import stroom.meta.shared.Meta;
 import stroom.meta.shared.MetaFields;
+import stroom.meta.shared.SelectionSummary;
 import stroom.meta.shared.Status;
 import stroom.query.api.v2.ExpressionOperator;
 import stroom.query.api.v2.ExpressionUtil;
 import stroom.util.date.DateUtil;
 import stroom.util.shared.PageRequest;
+import stroom.util.shared.Range;
 import stroom.util.shared.ResultPage;
 import stroom.util.shared.Sort;
 
@@ -40,6 +42,9 @@ import org.jooq.Record;
 import org.jooq.Record1;
 import org.jooq.Result;
 import org.jooq.SelectConditionStep;
+import org.jooq.impl.DSL;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import javax.inject.Inject;
 import javax.inject.Singleton;
@@ -69,6 +74,9 @@ import static stroom.meta.impl.db.jooq.tables.MetaVal.META_VAL;
 
 @Singleton
 class MetaDaoImpl implements MetaDao {
+    private static final Logger LOGGER = LoggerFactory.getLogger(MetaDaoImpl.class);
+
+    private static final int FIND_RECORD_LIMIT = 1000000;
     private static final stroom.meta.impl.db.jooq.tables.Meta meta = META.as("m");
     private static final MetaFeed metaFeed = META_FEED.as("f");
     private static final MetaType metaType = META_TYPE.as("t");
@@ -276,16 +284,14 @@ class MetaDaoImpl implements MetaDao {
         final Collection<Condition> conditions = createCondition(criteria);
         final Collection<OrderField<?>> orderFields = createOrderFields(criteria);
 
-        int offset = 0;
-        int numberOfRows = 1000000;
+        int offset = JooqUtil.getOffset(pageRequest);
+        int numberOfRows = JooqUtil.getLimit(pageRequest, true, FIND_RECORD_LIMIT);
 
-        if (pageRequest != null && pageRequest.getOffset() != null)
-            offset = pageRequest.getOffset().intValue();
-        if (pageRequest != null && pageRequest.getLength() != null)
-            numberOfRows = pageRequest.getLength();
+        final List<Meta> list = find(conditions, orderFields, offset, numberOfRows);
+        if (list.size() >= FIND_RECORD_LIMIT) {
+            LOGGER.warn("Hit max record limit of '" + FIND_RECORD_LIMIT + "' when finding meta records");
+        }
 
-
-        final List<Meta> list = find(conditions, orderFields, offset, numberOfRows + 1);
         return ResultPage.createCriterialBasedList(list, criteria);
     }
 
@@ -457,6 +463,51 @@ class MetaDaoImpl implements MetaDao {
 //                .where(condition)
 //                .execute());
 //    }
+
+
+    @Override
+    public SelectionSummary getSelectionSummary(final FindMetaCriteria criteria) {
+        final PageRequest pageRequest = criteria.getPageRequest();
+        final Collection<Condition> conditions = createCondition(criteria);
+
+        int offset = JooqUtil.getOffset(pageRequest);
+        int numberOfRows = JooqUtil.getLimit(pageRequest, false);
+
+        return getSelectionSummary(conditions, offset, numberOfRows);
+    }
+
+    private SelectionSummary getSelectionSummary(final Collection<Condition> conditions,
+                                                 final int offset,
+                                                 final int numberOfRows) {
+        return JooqUtil.contextResult(metaDbConnProvider, context -> context
+                .select(
+                        DSL.count(),
+                        DSL.countDistinct(metaFeed.NAME),
+                        DSL.countDistinct(metaType.NAME),
+                        DSL.countDistinct(metaProcessor.PROCESSOR_UUID),
+                        DSL.countDistinct(metaProcessor.PIPELINE_UUID),
+                        DSL.countDistinct(meta.STATUS),
+                        DSL.min(meta.CREATE_TIME),
+                        DSL.max(meta.CREATE_TIME)
+                )
+                .from(meta)
+                .join(metaFeed).on(meta.FEED_ID.eq(metaFeed.ID))
+                .join(metaType).on(meta.TYPE_ID.eq(metaType.ID))
+                .leftOuterJoin(metaProcessor).on(meta.PROCESSOR_ID.eq(metaProcessor.ID))
+                .where(conditions)
+                .limit(offset, numberOfRows)
+                .fetchOptional()
+                .map(record -> new SelectionSummary(
+                        record.value1(),
+                        record.value2(),
+                        record.value3(),
+                        record.value4(),
+                        record.value5(),
+                        record.value6(),
+                        new Range<>(record.value7(), record.value8())))
+                .orElse(null));
+    }
+
 
     @Override
     public int delete(final List<Long> metaIdList) {

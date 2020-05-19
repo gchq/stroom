@@ -38,6 +38,7 @@ import stroom.util.shared.ResultPage;
 import stroom.util.shared.Sort.Direction;
 import stroom.widget.tooltip.client.presenter.TooltipPresenter;
 
+import javax.inject.Provider;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
@@ -54,8 +55,9 @@ public class MetaRelationListPresenter extends AbstractMetaListPresenter {
     public MetaRelationListPresenter(final EventBus eventBus,
                                      final RestFactory restFactory,
                                      final TooltipPresenter tooltipPresenter,
-                                     final LocationManager locationManager) {
-        super(eventBus, restFactory, tooltipPresenter, locationManager, false);
+                                     final LocationManager locationManager,
+                                     final Provider<SelectionSummaryPresenter> selectionSummaryPresenterProvider) {
+        super(eventBus, restFactory, tooltipPresenter, locationManager, selectionSummaryPresenterProvider, false);
     }
 
     public void setSelectedStream(final MetaRow metaRow, final boolean fireEvents,

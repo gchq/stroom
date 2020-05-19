@@ -26,6 +26,7 @@ import stroom.meta.shared.MetaFields;
 import stroom.util.shared.ModelStringUtil;
 import stroom.widget.tooltip.client.presenter.TooltipPresenter;
 
+import javax.inject.Provider;
 import java.util.function.Function;
 
 public class MetaListPresenter extends AbstractMetaListPresenter {
@@ -33,8 +34,9 @@ public class MetaListPresenter extends AbstractMetaListPresenter {
     public MetaListPresenter(final EventBus eventBus,
                              final RestFactory restFactory,
                              final TooltipPresenter tooltipPresenter,
-                             final LocationManager locationManager) {
-        super(eventBus, restFactory, tooltipPresenter, locationManager, true);
+                             final LocationManager locationManager,
+                             final Provider<SelectionSummaryPresenter> selectionSummaryPresenterProvider) {
+        super(eventBus, restFactory, tooltipPresenter, locationManager, selectionSummaryPresenterProvider, true);
     }
 
     @Override

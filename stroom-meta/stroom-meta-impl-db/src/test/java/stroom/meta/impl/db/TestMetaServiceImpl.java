@@ -14,6 +14,7 @@ import stroom.meta.shared.Meta;
 import stroom.meta.shared.MetaFields;
 import stroom.meta.api.MetaProperties;
 import stroom.meta.api.MetaService;
+import stroom.meta.shared.SelectionSummary;
 import stroom.meta.shared.Status;
 import stroom.query.api.v2.ExpressionOperator;
 import stroom.query.api.v2.ExpressionOperator.Builder;
@@ -69,6 +70,30 @@ class TestMetaServiceImpl {
         assertThat(deleted).isEqualTo(2);
     }
 
+    @Test
+    void testSummary() {
+        final Meta meta1 = metaService.create(createProperties("FEED1"));
+        final Meta meta2 = metaService.create(createRawProperties("FEED2"));
+
+        final ExpressionOperator expression = new Builder(Op.AND)
+                .addTerm(MetaFields.ID, Condition.EQUALS, meta2.getId())
+                .build();
+        final FindMetaCriteria criteria = new FindMetaCriteria(expression);
+
+        SelectionSummary selectionSummary = metaService.getSelectionSummary(new FindMetaCriteria());
+
+        assertThat(selectionSummary.getItemCount()).isEqualTo(2);
+        assertThat(selectionSummary.getStatusCount()).isEqualTo(1);
+
+        int deleted = metaService.updateStatus(new FindMetaCriteria(expression), null, Status.DELETED);
+        assertThat(deleted).isEqualTo(1);
+
+        selectionSummary = metaService.getSelectionSummary(new FindMetaCriteria());
+
+        assertThat(selectionSummary.getItemCount()).isEqualTo(2);
+        assertThat(selectionSummary.getStatusCount()).isEqualTo(2);
+    }
+
     private MetaProperties createProperties(final String feedName) {
         return new MetaProperties.Builder()
                 .createMs(System.currentTimeMillis())
@@ -76,6 +101,14 @@ class TestMetaServiceImpl {
                 .processorUuid("12345")
                 .pipelineUuid("PIPELINE_UUID")
                 .typeName("TEST_STREAM_TYPE")
+                .build();
+    }
+
+    private MetaProperties createRawProperties(final String feedName) {
+        return new MetaProperties.Builder()
+                .createMs(System.currentTimeMillis())
+                .feedName(feedName)
+                .typeName("RAW_TEST_STREAM_TYPE")
                 .build();
     }
 }
