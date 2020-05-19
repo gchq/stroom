@@ -55,7 +55,7 @@ public class StringPredicateFactory {
      * Ends with "suffix$" matches "TextWithSuffix" (case insensitive)
      * Exact match: "^sometext$" matches "sometext" (case insensitive)
      * Chars anywhere (in order): "aid" matches "A big dog" (case insensitive)
-     * Word boundary match: "OTheM" matches "on the mat" in "the cat sat on the mat", but not "the cat sat on their mat"
+     * Word boundary match: "OTheiM" matches "on the mat" in "the cat sat on their mat", but not "the cat sat on there mat"
      * See TestStringPredicateFactory for more examples of how the
      * matching works.
      * @param separatorCharacterClass A regex character class, e.g. [ \-_] that defines the separators
