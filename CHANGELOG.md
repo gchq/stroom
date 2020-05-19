@@ -7,7 +7,7 @@ and this project adheres to [Semantic Versioning](http://semver.org/).
 ## [Unreleased]
 
 
-## [v7.0-beta.32] - 2020-05-12
+## [v7.0-beta.32] - 2020-05-19
 
 * Issue **#1573** : Active tasks tab now only shows tasks related to the open feed.
 
