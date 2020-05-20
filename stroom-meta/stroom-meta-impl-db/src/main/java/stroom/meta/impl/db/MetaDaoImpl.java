@@ -238,10 +238,13 @@ class MetaDaoImpl implements MetaDao {
 
         Collection<Condition> conditions = expressionMapper.apply(criteria.getExpression());
 
+        final int updateCount;
         // If a rule means we are retaining data then we will have a 1=0 condition in here
         // and as they are all to be ANDed together there is no point in running the sql.
         if (conditions.size() == 1 && conditions.contains(DSL.falseCondition())) {
-
+            LOGGER.info("Condition is FALSE so skipping SQL update");
+            updateCount = 0;
+        } else {
             // Add a condition if we should check current status.
             if (currentStatus != null) {
                 final byte currentStatusId = MetaStatusId.getPrimitiveValue(currentStatus);
@@ -256,16 +259,14 @@ class MetaDaoImpl implements MetaDao {
 
             final Collection<Condition> c = conditions;
 
-            return JooqUtil.contextResult(metaDbConnProvider, context -> context
+            updateCount = JooqUtil.contextResult(metaDbConnProvider, context -> context
                     .update(meta)
                     .set(meta.STATUS, newStatusId)
                     .set(meta.STATUS_TIME, statusTime)
                     .where(c)
                     .execute());
-        } else {
-            LOGGER.info("No conditions, skipping update");
-            return 0;
         }
+        return updateCount;
     }
 
     private Optional<SelectConditionStep<Record1<Long>>> getMetaCondition(final ExpressionOperator expression) {

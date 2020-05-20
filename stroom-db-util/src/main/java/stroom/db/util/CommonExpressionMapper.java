@@ -51,6 +51,12 @@ public final class CommonExpressionMapper implements Function<ExpressionItem, Co
 
     @Override
     public Collection<Condition> apply(final ExpressionItem item) {
+        final Collection<Condition> conditions = apply(item, true);
+        return conditions;
+    }
+
+    public Collection<Condition> apply(final ExpressionItem item,
+                                       final boolean simplifyConditions) {
         Collection<Condition> result = Collections.emptyList();
 
         if (item != null && item.enabled()) {
@@ -69,49 +75,19 @@ public final class CommonExpressionMapper implements Function<ExpressionItem, Co
                 if (operator.getChildren() != null && !operator.getChildren().isEmpty()) {
                     final Collection<Condition> children = operator.getChildren()
                             .stream()
-                            .map(this::apply)
+                            .map(expressionItem -> apply(expressionItem, simplifyConditions))
                             .flatMap(Collection::stream)
                             .collect(Collectors.toList());
 
-                    if (children.size() > 0) {
-                        switch (operator.op()) {
-                            case AND:
-                                if (children.contains(DSL.falseCondition())) {
-                                    LOGGER.debug("One of the conditions in the AND is 1=0 so just return false condition");
-                                    result = Collections.singleton(DSL.falseCondition());
-                                } else {
-                                    result = Collections.singleton(and(children));
-                                }
-                                break;
-                            case OR:
-                                if (children.contains(DSL.trueCondition())) {
-                                    LOGGER.debug("One of the conditions in the OR is 1=1 so just return a true condition");
-                                    result = Collections.singleton(DSL.trueCondition());
-                                } else {
-                                    result = Collections.singleton(or(children));
-                                }
-                                break;
-                            case NOT:
-                                result = children
-                                        .stream()
-                                        .map(childCondition -> {
-                                            if (DSL.falseCondition().equals(childCondition)) {
-                                                return DSL.trueCondition();
-                                            } else if (DSL.trueCondition().equals(childCondition)) {
-                                                return DSL.falseCondition();
-                                            } else {
-                                                return DSL.not(childCondition);
-                                            }
-                                        })
-                                        .collect(Collectors.toList());
-                        }
-                    } else {
-//                        // No children
-//                        if (ExpressionOperator.Op.NOT.equals(operator.op())) {
-//                            result = Collections.singleton(DSL.falseCondition());
-//                        } else {
-//                            result = Collections.singleton(DSL.trueCondition());
-//                        }
+                    switch (operator.op()) {
+                        case AND:
+                            result = buildAndConditions(simplifyConditions, children);
+                            break;
+                        case OR:
+                            result = buildOrConditions(simplifyConditions, operator.getChildren(), children);
+                            break;
+                        case NOT:
+                            result = buildNotConditions(simplifyConditions, children);
                     }
                 }
 
@@ -119,18 +95,83 @@ public final class CommonExpressionMapper implements Function<ExpressionItem, Co
                 if (result.isEmpty()) {
                     if (ExpressionOperator.Op.NOT.equals(operator.op())) {
                         result = Collections.singleton(DSL.falseCondition());
-//                    } else {
-//                        result = Collections.singleton(DSL.trueCondition());
+                    } else {
+                        result = Collections.singleton(DSL.trueCondition());
                     }
                 }
             }
         }
 
-        if (result.size() == 1 && result.contains(DSL.trueCondition())) {
-            return Collections.emptyList();
-        } else {
-            return result;
+        if (simplifyConditions && result.size() == 1 && result.contains(DSL.trueCondition())) {
+            result = Collections.emptyList();
         }
+        LOGGER.debug("Converted expressionItem {} into conditions {}", item, result);
+        return result;
+    }
+
+    private Collection<Condition> buildNotConditions(final boolean simplifyConditions,
+                                                     final Collection<Condition> children) {
+
+        final Collection<Condition> result;
+        result = children
+                .stream()
+                .map(childCondition -> {
+                    if (simplifyConditions
+                            && DSL.falseCondition().equals(childCondition)) {
+                        // Not(false) == true
+                        return DSL.trueCondition();
+                    } else if (simplifyConditions
+                            && DSL.trueCondition().equals(childCondition)) {
+                        // NOT(true) == false
+                        return DSL.falseCondition();
+                    } else {
+                        return DSL.not(childCondition);
+                    }
+                })
+                .collect(Collectors.toList());
+        return result;
+    }
+
+    private Collection<Condition> buildOrConditions(final boolean simplifyConditions,
+                                                    final List<ExpressionItem> expressionItems,
+                                                    final Collection<Condition> children) {
+        final Collection<Condition> result;
+
+        if (children.isEmpty()) {
+            result = Collections.singleton(DSL.trueCondition());
+        } else if (simplifyConditions
+                && (children.contains(DSL.trueCondition()) || children.size() < expressionItems.size())) {
+            // Either one of the OR items is TRUE so the whole is TRUE or we have less children than
+            // original expressionItems so one must have been simplified to true
+            // TODO There ought to be a neater way to work this out
+            LOGGER.debug("One of the conditions in the OR is 1=1 so " +
+                    "just return a true condition");
+            result = Collections.singleton(DSL.trueCondition());
+        } else if (children.size() == 1) {
+            // Don't wrap with the OR condition as it is not needed
+            result = Collections.singleton(children.iterator().next());
+        } else {
+            result = Collections.singleton(or(children));
+        }
+        return result;
+    }
+
+    private Collection<Condition> buildAndConditions(final boolean simplifyConditions,
+                                                     final Collection<Condition> children) {
+        final Collection<Condition> result;
+
+        if (children.isEmpty()) {
+            result = Collections.singleton(DSL.trueCondition());
+        } else if (simplifyConditions && children.contains(DSL.falseCondition())) {
+            LOGGER.debug("One of the conditions in the AND is 1=0 " +
+                    "so just return false condition");
+            result = Collections.singleton(DSL.falseCondition());
+        } else if (children.size() == 1) {
+            result = Collections.singleton(children.iterator().next());
+        } else {
+            result = Collections.singleton(and(children));
+        }
+        return result;
     }
 
     public static final class TermHandler<T> implements Function<ExpressionTerm, Condition> {
