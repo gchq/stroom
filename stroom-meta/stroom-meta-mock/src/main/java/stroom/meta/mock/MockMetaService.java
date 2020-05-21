@@ -11,8 +11,10 @@ import stroom.meta.shared.MetaFields;
 import stroom.meta.shared.MetaInfoSection;
 import stroom.meta.shared.MetaRow;
 import stroom.meta.shared.Status;
+import stroom.query.api.v2.ExpressionOperator;
 import stroom.util.shared.Clearable;
 import stroom.util.shared.ResultPage;
+import stroom.util.time.TimePeriod;
 
 import javax.inject.Singleton;
 import java.util.ArrayList;
@@ -115,6 +117,11 @@ public class MockMetaService implements MetaService, Clearable {
     @Override
     public int delete(final long id) {
         return delete(id, true);
+    }
+
+    @Override
+    public int delete(final List<ExpressionOperator> ruleCritera, final TimePeriod deletionPeriod, final int batchSize) {
+        return 0;
     }
 
     @Override

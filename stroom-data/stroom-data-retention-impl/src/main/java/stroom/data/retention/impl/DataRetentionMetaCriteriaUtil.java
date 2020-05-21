@@ -29,7 +29,6 @@ public final class DataRetentionMetaCriteriaUtil {
 //                .addOperator(new ExpressionOperator.Builder(Op.NOT).addOperator(inner.build()).build())
 
         if (rules != null && !rules.isEmpty()) {
-            // create terms for the active rules
             if (rules.size() == 1) {
                 outer.addOperator(negateOperator(rules.get(0).getExpression()));
             } else {

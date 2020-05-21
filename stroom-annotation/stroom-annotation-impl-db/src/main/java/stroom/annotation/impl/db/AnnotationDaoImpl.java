@@ -340,7 +340,10 @@ class AnnotationDaoImpl implements AnnotationDao {
         }).orElse(get(annotation));
     }
 
-    private void createEventLink(final long annotationId, final EventId eventId, final String user, final long now) {
+    private void createEventLink(final long annotationId,
+                                 final EventId eventId,
+                                 final String user,
+                                 final long now) {
         try {
             // Create event link.
             final int count = JooqUtil.contextResult(connectionProvider, context -> context
@@ -366,7 +369,10 @@ class AnnotationDaoImpl implements AnnotationDao {
         }
     }
 
-    private void removeEventLink(final long annotationId, final EventId eventId, final String user, final long now) {
+    private void removeEventLink(final long annotationId,
+                                 final EventId eventId,
+                                 final String user,
+                                 final long now) {
         try {
             // Remove event link.
             final int count = JooqUtil.contextResult(connectionProvider, context -> context
@@ -415,15 +421,29 @@ class AnnotationDaoImpl implements AnnotationDao {
 
     @Override
     public Integer setStatus(final SetStatusRequest request, final String user) {
-        return changeFields(request.getAnnotationIdList(), user, Annotation.STATUS, ANNOTATION.STATUS, request.getStatus());
+        return changeFields(
+                request.getAnnotationIdList(),
+                user,
+                Annotation.STATUS,
+                ANNOTATION.STATUS,
+                request.getStatus());
     }
 
     @Override
     public Integer setAssignedTo(final SetAssignedToRequest request, final String user) {
-        return changeFields(request.getAnnotationIdList(), user, Annotation.ASSIGNED_TO, ANNOTATION.ASSIGNED_TO, request.getAssignedTo());
+        return changeFields(
+                request.getAnnotationIdList(),
+                user,
+                Annotation.ASSIGNED_TO,
+                ANNOTATION.ASSIGNED_TO,
+                request.getAssignedTo());
     }
 
-    private Integer changeFields(final List<Long> annotationIdList, final String user, final String type, final Field<String> field, final String value) {
+    private Integer changeFields(final List<Long> annotationIdList,
+                                 final String user,
+                                 final String type,
+                                 final Field<String> field,
+                                 final String value) {
         final long now = System.currentTimeMillis();
         int count = 0;
         for (final Long annotationId : annotationIdList) {
@@ -437,7 +457,12 @@ class AnnotationDaoImpl implements AnnotationDao {
         return count;
     }
 
-    private void changeField(final long annotationId, final long now, final String user, final String type, final Field<String> field, final String value) {
+    private void changeField(final long annotationId,
+                             final long now,
+                             final String user,
+                             final String type,
+                             final Field<String> field,
+                             final String value) {
         JooqUtil.context(connectionProvider, context -> context
                 .update(ANNOTATION)
                 .set(field, value)
@@ -449,7 +474,9 @@ class AnnotationDaoImpl implements AnnotationDao {
     }
 
     @Override
-    public void search(final ExpressionCriteria criteria, final AbstractField[] fields, final Consumer<Val[]> consumer) {
+    public void search(final ExpressionCriteria criteria,
+                       final AbstractField[] fields,
+                       final Consumer<Val[]> consumer) {
         final List<AbstractField> fieldList = Arrays.asList(fields);
 
         final PageRequest pageRequest = criteria.getPageRequest();

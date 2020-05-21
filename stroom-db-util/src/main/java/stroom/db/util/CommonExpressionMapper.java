@@ -41,7 +41,8 @@ public final class CommonExpressionMapper implements Function<ExpressionItem, Co
         this.ignoreMissingHandler = ignoreMissingHandler;
     }
 
-    public void addHandler(final AbstractField dataSourceField, final Function<ExpressionTerm, Condition> handler) {
+    public void addHandler(final AbstractField dataSourceField,
+                           final Function<ExpressionTerm, Condition> handler) {
         termHandlers.put(dataSourceField.getName(), handler);
     }
 
@@ -55,6 +56,7 @@ public final class CommonExpressionMapper implements Function<ExpressionItem, Co
         return conditions;
     }
 
+    // TODO change to return Condition not a collection
     public Collection<Condition> apply(final ExpressionItem item,
                                        final boolean simplifyConditions) {
         Collection<Condition> result = Collections.emptyList();
@@ -129,6 +131,7 @@ public final class CommonExpressionMapper implements Function<ExpressionItem, Co
                     }
                 })
                 .collect(Collectors.toList());
+        // TODO wrap it in an and() condition
         return result;
     }
 

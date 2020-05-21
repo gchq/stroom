@@ -30,7 +30,9 @@ import stroom.util.date.DateUtil;
 import stroom.util.shared.PageRequest;
 import stroom.util.shared.ResultPage;
 import stroom.util.shared.Sort;
+import stroom.util.time.TimePeriod;
 
+import org.jooq.CaseConditionStep;
 import org.jooq.Condition;
 import org.jooq.Cursor;
 import org.jooq.DSLContext;
@@ -46,6 +48,7 @@ import org.slf4j.LoggerFactory;
 
 import javax.inject.Inject;
 import javax.inject.Singleton;
+import java.time.Instant;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collection;
@@ -142,7 +145,12 @@ class MetaDaoImpl implements MetaDao {
         expressionMapper.ignoreField(MetaFields.RAW_SIZE);
 
         // Extended meta fields.
-        metaExpressionMapper = new MetaExpressionMapper(metaKeyDao, metaVal.META_KEY_ID, metaVal.VAL, wordListProvider, collectionService);
+        metaExpressionMapper = new MetaExpressionMapper(
+                metaKeyDao,
+                metaVal.META_KEY_ID,
+                metaVal.VAL,
+                wordListProvider,
+                collectionService);
 //        metaTermHandlers.put(StreamDataSource.NODE, createMetaTermHandler(StreamDataSource.NODE));
         metaExpressionMapper.map(MetaFields.REC_READ);
         metaExpressionMapper.map(MetaFields.REC_WRITE);
@@ -184,7 +192,8 @@ class MetaDaoImpl implements MetaDao {
     public Meta create(final MetaProperties metaProperties) {
         final Integer feedId = feedDao.getOrCreate(metaProperties.getFeedName());
         final Integer typeId = metaTypeDao.getOrCreate(metaProperties.getTypeName());
-        final Integer processorId = metaProcessorDao.getOrCreate(metaProperties.getProcessorUuid(), metaProperties.getPipelineUuid());
+        final Integer processorId = metaProcessorDao.getOrCreate(
+                metaProperties.getProcessorUuid(), metaProperties.getPipelineUuid());
 
         final long id = JooqUtil.contextResult(metaDbConnProvider, context -> context
                 .insertInto(META,
@@ -238,6 +247,44 @@ class MetaDaoImpl implements MetaDao {
 
         Collection<Condition> conditions = expressionMapper.apply(criteria.getExpression());
 
+
+        // select
+        // 	v2.*
+        // from (
+        // 	select
+        // 	v.*,
+        // 	CASE
+        // 		WHEN
+        // 			-- purge DS events older than 10 mins
+        //             v.create_time < DATE_SUB(now(), INTERVAL 10 MINUTE)
+        // 			AND feed_name = 'DATA_SPLITTER-EVENTS'
+        // 			THEN 1
+        // 		WHEN
+        //             -- purge all events except json_events older than 1 month
+        // 			v.create_time < DATE_SUB(now(), INTERVAL 1 MONTH)
+        //             AND feed_name <> 'JSON-EVENTS'
+        // 			THEN 2
+        // 		WHEN
+        // 			-- purge all events older than 1 year
+        //             v.create_time < DATE_SUB(now(), INTERVAL 1 YEAR)
+        // 			THEN 3
+        // 		ELSE NULL
+        // 	END effective_rule
+        // 	from (
+        // 		select
+        // 			from_unixtime(m.create_time /1000) create_time,
+        // 			from_unixtime(m.effective_time /1000) effective_time,
+        // 			mf.name feed_name,
+        // 			mt.name type_name
+        // 		from meta m
+        // 		left join meta_feed mf on m.feed_id = mf.id
+        // 		left join meta_type mt on m.type_id = mt.id
+        // 		order by m.create_time desc
+        // 	) v
+        // ) v2
+        // order by v2.effective_rule;
+
+
         final int updateCount;
         // If a rule means we are retaining data then we will have a 1=0 condition in here
         // and as they are all to be ANDed together there is no point in running the sql.
@@ -259,12 +306,79 @@ class MetaDaoImpl implements MetaDao {
 
             final Collection<Condition> c = conditions;
 
+            // TODO consider using criteria.getPageLength (i.e. batch size) to limit update size
+            //   and number of records locked.  Would mean ignoring already updated rows which may
+            //   make it more costly.
             updateCount = JooqUtil.contextResult(metaDbConnProvider, context -> context
                     .update(meta)
                     .set(meta.STATUS, newStatusId)
                     .set(meta.STATUS_TIME, statusTime)
                     .where(c)
                     .execute());
+        }
+        return updateCount;
+    }
+
+    @Override
+    public int logicalDelete(final List<ExpressionOperator> ruleExpressions,
+                             final TimePeriod period,
+                             final int batchSize) {
+
+        final int updateCount;
+        if (ruleExpressions != null && !ruleExpressions.isEmpty()) {
+            final byte statusIdDeleted = MetaStatusId.getPrimitiveValue(Status.DELETED);
+            final byte statusIdUnlocked = MetaStatusId.getPrimitiveValue(Status.UNLOCKED);
+
+            // What we are building is roughly:
+            // WHERE (CASE
+            //   WHEN <rule 3 condition is true> THEN true
+            //   WHEN <rule 2 condition is true> THEN true
+            //   WHEN <rule 1 condition is true> THEN true
+            //   ELSE false
+            //   ) = true
+            // I.e. see if a rule matches the data in priority order
+            // Needs to be a CASE so we can ensure the order of rule evaluation
+
+            CaseConditionStep<Boolean> caseConditionStep = null;
+            // Order is critical here as we are building a case statement
+            // Highest priority rules first, i.e. largest rule number
+            for (ExpressionOperator ruleExpression : ruleExpressions) {
+                // TODO change mapper to return a Condition not a collection
+                final Collection<Condition> ruleConditions = expressionMapper.apply(ruleExpression);
+                final Condition ruleCondition = ruleConditions.iterator().next();
+
+                if (caseConditionStep == null) {
+                    caseConditionStep = DSL.when(ruleCondition, Boolean.TRUE);
+                } else {
+                    caseConditionStep.when(ruleCondition, Boolean.TRUE);
+                }
+            }
+            // If none of the rules matches then we don't to delete so return false
+            final Field<Boolean> caseField = caseConditionStep.otherwise(Boolean.FALSE);
+
+            List<Condition> conditions = new ArrayList<>();
+
+            // Time bound the data we are testing the rules over
+            conditions.add(meta.CREATE_TIME.greaterOrEqual(period.getFrom().toEpochMilli()));
+            conditions.add(meta.CREATE_TIME.lessThan(period.getTo().toEpochMilli()));
+
+            // Ensure we only 'delete' unlocked records
+            conditions.add(meta.STATUS.eq(statusIdUnlocked));
+
+            // Add our rule conditions
+            conditions.add(caseField.eq(true));
+
+            LOGGER.debug("conditions {}", conditions);
+
+            updateCount = JooqUtil.contextResult(metaDbConnProvider, context -> context
+                    .update(meta)
+                    .set(meta.STATUS, statusIdDeleted)
+                    .set(meta.STATUS_TIME, Instant.now().toEpochMilli())
+                    .where(conditions)
+                    .limit(batchSize)
+                    .execute());
+        } else {
+            updateCount = 0;
         }
         return updateCount;
     }

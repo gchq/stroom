@@ -5,8 +5,9 @@ import stroom.meta.shared.Meta;
 import stroom.meta.shared.MetaInfoSection;
 import stroom.meta.shared.MetaRow;
 import stroom.meta.shared.Status;
-import stroom.meta.shared.UpdateStatusRequest;
+import stroom.query.api.v2.ExpressionOperator;
 import stroom.util.shared.ResultPage;
+import stroom.util.time.TimePeriod;
 
 import java.util.List;
 import java.util.Set;
@@ -25,7 +26,7 @@ public interface MetaService {
      * @param properties The properties that the newly created meta data will have.
      * @return A new locked meta data ready to associate written data with.
      */
-    Meta create(MetaProperties properties);
+    Meta create(final MetaProperties properties);
 
     /**
      * Get meta data from the meta service by id.
@@ -33,7 +34,7 @@ public interface MetaService {
      * @param id The id of the meta data to retrieve.
      * @return An unlocked meta data for the supplied id or null if no unlocked meta data can be found.
      */
-    Meta getMeta(long id);
+    Meta getMeta(final long id);
 
     /**
      * Get meta data from the meta service by id.
@@ -42,7 +43,7 @@ public interface MetaService {
      * @param anyStatus Whether to allow locked or deleted meta data records to be returned.
      * @return An unlocked meta data for the supplied id or null if no unlocked meta data records can be found unless anyStatus is true.
      */
-    Meta getMeta(long id, boolean anyStatus);
+    Meta getMeta(final long id, final boolean anyStatus);
 
     /**
      * Change the status of the specified meta data if the current status is as specified.
@@ -52,7 +53,7 @@ public interface MetaService {
      * @param newStatus     The new status.
      * @return The updated meta data.
      */
-    Meta updateStatus(Meta meta, Status currentStatus, Status newStatus);
+    Meta updateStatus(final Meta meta, final Status currentStatus, final Status newStatus);
 
     /**
      * Change the status of meta data records that match the supplied criteria.
@@ -62,7 +63,8 @@ public interface MetaService {
      * @param status   The new status.
      * @return The number of meta data records that are updated.
      */
-    int updateStatus(FindMetaCriteria criteria, Status currentStatus, Status status);
+    int updateStatus(final FindMetaCriteria criteria, final Status currentStatus, final Status status);
+
 
     /**
      * Add some additional attributes to meta data.
@@ -70,7 +72,7 @@ public interface MetaService {
      * @param meta       The meta data to add attributes to.
      * @param attributes A map of key/value attributes.
      */
-    void addAttributes(Meta meta, AttributeMap attributes);
+    void addAttributes(final Meta meta, final AttributeMap attributes);
 
     /**
      * Delete meta data by id. Note that this method will only delete unlocked meta data records.
@@ -79,7 +81,11 @@ public interface MetaService {
      * @param id The id of the meta data to delete.
      * @return The number of meta data records deleted.
      */
-    int delete(long id);
+    int delete(final long id);
+
+    int delete(final List<ExpressionOperator> ruleCritera,
+               final TimePeriod deletionPeriod,
+               final int batchSize);
 
     /**
      * Delete meta data by id with an option to delete regardless of lock status.
@@ -118,7 +124,7 @@ public interface MetaService {
      * @param criteria The criteria to find matching meta data records with.
      * @return A list of matching meta data records.
      */
-    ResultPage<Meta> find(FindMetaCriteria criteria);
+    ResultPage<Meta> find(final FindMetaCriteria criteria);
 
     /**
      * Find meta data records and attributes that match the specified criteria.
@@ -126,9 +132,9 @@ public interface MetaService {
      * @param criteria The criteria to find matching meta data records with.
      * @return A list of matching meta data records that includes attributes.
      */
-    ResultPage<MetaRow> findRows(FindMetaCriteria criteria);
+    ResultPage<MetaRow> findRows(final FindMetaCriteria criteria);
 
-    ResultPage<MetaRow> findMetaRow(FindMetaCriteria criteria);
+    ResultPage<MetaRow> findMetaRow(final FindMetaCriteria criteria);
 
     /**
      * Find meta data records and attributes that are related to the supplied record id.
@@ -136,7 +142,7 @@ public interface MetaService {
      * @param id The id of the meta data to find related data for.
      * @return A list of matching meta data records that includes attributes.
      */
-    List<MetaRow> findRelatedData(long id, boolean anyStatus);
+    List<MetaRow> findRelatedData(final long id, final boolean anyStatus);
 
     /**
      * Return back a aet of meta data records that are effective for a period in
@@ -145,7 +151,7 @@ public interface MetaService {
      * @param criteria the search criteria
      * @return the list of matches
      */
-    Set<Meta> findEffectiveData(EffectiveMetaDataCriteria criteria);
+    Set<Meta> findEffectiveData(final EffectiveMetaDataCriteria criteria);
 
     /**
      * Return the id of the meta data record that is the one before the supplied timestamp
@@ -156,12 +162,6 @@ public interface MetaService {
      */
     Long getMaxDataIdWithCreationBeforePeriod(final Long timestampMs);
 
-
-
-
-
-
-
-    List<MetaInfoSection> fetchFullMetaInfo(long id) ;
+    List<MetaInfoSection> fetchFullMetaInfo(final long id) ;
 
 }

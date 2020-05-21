@@ -32,6 +32,7 @@ import stroom.security.shared.PermissionNames;
 import stroom.util.date.DateUtil;
 import stroom.util.shared.PageRequest;
 import stroom.util.shared.ResultPage;
+import stroom.util.time.TimePeriod;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -174,6 +175,19 @@ public class MetaServiceImpl implements MetaService, Searchable {
     @Override
     public int delete(final long id) {
         return securityContext.secureResult(PermissionNames.DELETE_DATA_PERMISSION, () -> doLogicalDelete(id, true));
+    }
+
+    @Override
+    public int delete(final List<ExpressionOperator> ruleCriteria,
+                      final TimePeriod period,
+                      final int batchSize) {
+        return securityContext.secureResult(PermissionNames.DELETE_DATA_PERMISSION, () -> {
+            if (ruleCriteria != null && !ruleCriteria.isEmpty()) {
+                return metaDao.logicalDelete(ruleCriteria, period, batchSize);
+            } else {
+                return 0;
+            }
+        });
     }
 
     @Override

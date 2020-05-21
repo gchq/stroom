@@ -17,16 +17,14 @@
 package stroom.data.retention.impl;
 
 import stroom.data.retention.shared.DataRetentionRules;
-import stroom.docref.DocRef;
-import stroom.util.RunnableWrapper;
 import stroom.job.api.ScheduledJobsBinder;
+import stroom.util.RunnableWrapper;
 import stroom.util.guice.RestResourcesBinder;
 
 import com.google.inject.AbstractModule;
 import com.google.inject.Provides;
 
 import javax.inject.Inject;
-import java.util.Set;
 
 import static stroom.job.api.Schedule.ScheduleType.CRON;
 

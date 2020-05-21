@@ -19,20 +19,18 @@ package stroom.data.retention.impl;
 import stroom.cluster.lock.api.ClusterLockService;
 import stroom.data.retention.shared.DataRetentionRule;
 import stroom.data.retention.shared.DataRetentionRules;
-import stroom.datasource.api.v2.AbstractField;
 import stroom.meta.api.MetaService;
-import stroom.meta.shared.FindMetaCriteria;
-import stroom.meta.shared.MetaFields;
-import stroom.meta.shared.Status;
+import stroom.query.api.v2.ExpressionOperator;
 import stroom.task.api.TaskContext;
 import stroom.task.api.TaskContextFactory;
-import stroom.util.Period;
-import stroom.util.date.DateUtil;
 import stroom.util.io.FileUtil;
 import stroom.util.json.JsonUtil;
 import stroom.util.logging.LambdaLogger;
 import stroom.util.logging.LambdaLoggerFactory;
 import stroom.util.logging.LogExecutionTime;
+import stroom.util.logging.LogUtil;
+import stroom.util.time.TimePeriod;
+import stroom.util.time.TimeUtils;
 
 import com.fasterxml.jackson.annotation.JsonCreator;
 import com.fasterxml.jackson.annotation.JsonIgnore;
@@ -53,7 +51,7 @@ import java.nio.file.Files;
 import java.nio.file.Path;
 import java.time.Duration;
 import java.time.Instant;
-import java.util.ArrayList;
+import java.time.Period;
 import java.util.Collections;
 import java.util.Comparator;
 import java.util.HashMap;
@@ -118,20 +116,8 @@ public class DataRetentionPolicyExecutor {
         final DataRetentionRules dataRetentionRules = dataRetentionRulesProvider.get();
         if (dataRetentionRules != null) {
             final List<DataRetentionRule> rules = dataRetentionRules.getRules();
-            final List<DataRetentionRule> activeRules = new ArrayList<>();
 
-            // Also make sure we create a list of rules that are enabled and have at least one enabled term.
-            if (rules != null) {
-                rules.forEach(rule -> {
-                    if (rule.isEnabled() && rule.getExpression() != null && rule.getExpression().enabled()) {
-//                        final Set<String> fields = new HashSet<>();
-//                        addToFieldSet(rule, fields);
-//                        if (fields.size() > 0) {
-                        activeRules.add(rule);
-//                        }
-                    }
-                });
-            }
+            final List<DataRetentionRule> activeRules = getActiveRules(rules);
 
             if (activeRules.size() > 0) {
                 // Figure out what the batch size will be for deletion.
@@ -146,7 +132,7 @@ public class DataRetentionPolicyExecutor {
                 // If the data retention policy has changed then we need to assume it has never been run before,
                 // i.e. all data must be considered for retention checking.
                 if (tracker == null || !tracker.rulesEquals(dataRetentionRules)) {
-                    tracker = new Tracker( null, dataRetentionRules);
+                    tracker = new Tracker(null, dataRetentionRules);
                 }
 
                 // Calculate the amount of time that has elapsed since we last ran.
@@ -167,7 +153,7 @@ public class DataRetentionPolicyExecutor {
                 tracker = new Tracker(now.toEpochMilli(), dataRetentionRules);
 
                 // Create a map of unique periods with the set of rules that apply to them.
-                final Map<Period, Set<DataRetentionRule>> rulesByPeriod = getRulesByPeriod(
+                final Map<TimePeriod, Set<DataRetentionRule>> rulesByPeriod = getRulesByPeriod(
                         activeRules, now, timeSinceLastRun);
 
                 final AtomicBoolean allSuccessful = new AtomicBoolean(true);
@@ -175,16 +161,16 @@ public class DataRetentionPolicyExecutor {
                 // Process the different data ages separately as they can consider different sets of streams.
                 rulesByPeriod.keySet()
                         .stream()
-                        .sorted(Period.comparingFromTime())
+                        .sorted(TimePeriod.comparingByFromTime())
                         .forEach(period -> {
-                            final List<DataRetentionRule> sortedRules = rulesByPeriod.get(period)
+                            final List<DataRetentionRule> reverseSortedRules = rulesByPeriod.get(period)
                                     .stream()
-                                    .sorted(Comparator.comparing(DataRetentionRule::getRuleNumber))
+                                    .sorted(Comparator.comparing(DataRetentionRule::getRuleNumber).reversed())
                                     .collect(Collectors.toList());
 
                             // Skip if we have terminated processing.
                             if (!Thread.currentThread().isInterrupted()) {
-                                processPeriod(taskContext, period, sortedRules, batchSize);
+                                processPeriod(taskContext, period, reverseSortedRules, batchSize, now);
                                 if (!Thread.currentThread().isInterrupted()) {
                                     allSuccessful.set(false);
                                 }
@@ -195,76 +181,147 @@ public class DataRetentionPolicyExecutor {
                 if (!Thread.currentThread().isInterrupted() && allSuccessful.get()) {
                     tracker.save();
                 }
+            } else {
+                LOGGER.info("No active rules to process");
             }
         }
     }
 
+    private List<DataRetentionRule> getActiveRules(final List<DataRetentionRule> rules) {
+        final List<DataRetentionRule> activeRules;// make sure we create a list of rules that are enabled and have at least one enabled term.
+        if (rules != null) {
+            activeRules = rules.stream()
+                    .filter(rule -> rule.isEnabled()
+                            && rule.getExpression() != null
+                            && rule.getExpression().enabled())
+                    .collect(Collectors.toList());
+        } else {
+            activeRules = Collections.emptyList();
+        }
+        return activeRules;
+    }
+
     private void processPeriod(final TaskContext taskContext,
-                               final Period period,
-                               final List<DataRetentionRule> rules,
-                               final int batchSize) {
+                               final TimePeriod period,
+                               final List<DataRetentionRule> reverseSortedRules,
+                               final int batchSize,
+                               final Instant now) {
         info(taskContext, () -> {
             final Function<DataRetentionRule, String> ruleInfo = rule ->
                     rule.toString() + " " +
                             rule.getAge() + " " + rule.getTimeUnit().getDisplayValue() + " " +
                             rule.getExpression();
 
+            // Get the ages of the two dates in the period
+            final Period fromTimeAge = TimeUtils.instantAsAge(period.getFrom(), now);
+            final Period toTimeAge = TimeUtils.instantAsAge(period.getTo(), now);
+
             return "" +
                     "Considering stream retention for streams created " +
                     "between " +
-                    DateUtil.createNormalDateTimeString(period.getFromMs()) +
+                    period.getFrom() + " (" + fromTimeAge + " ago)" +
                     " and " +
-                    DateUtil.createNormalDateTimeString(period.getToMs()) +
-                    " [" + period.getDuration() + "], " + rules.size() + " rules:\n" +
-                    rules.stream()
+                    period.getTo() + " (" + toTimeAge + " ago)" +
+                    " [" + period.getDurationStr() +
+                    "], " + reverseSortedRules.size() + " rules:\n" +
+                    reverseSortedRules.stream()
                             .map(ruleInfo)
                             .collect(Collectors.joining("\n"));
         });
 
-        final FindMetaCriteria findMetaCriteria = DataRetentionMetaCriteriaUtil.createCriteria(
-                period, rules, batchSize);
+        final List<ExpressionOperator> ruleExpressions = reverseSortedRules.stream()
+                .filter(rule -> rule.getExpression() != null)
+                .map(DataRetentionRule::getExpression)
+                .collect(Collectors.toList());
 
         int count = -1;
         while (count != 0 && !Thread.currentThread().isInterrupted()) {
-            count = metaService.updateStatus(findMetaCriteria, null, Status.DELETED);
+            count = metaService.delete(ruleExpressions, period, batchSize);
             final String message = "Marked " + count + " items as deleted";
             LOGGER.info(() -> message);
         }
     }
 
-    private Map<Period, Set<DataRetentionRule>> getRulesByPeriod(
+    private Map<TimePeriod, Set<DataRetentionRule>> getRulesByPeriod(
             final List<DataRetentionRule> activeRules,
             final Instant now,
             final Duration timeSinceLastRun) {
 
         // Get effective minimum meta creation times for each rule.
+        // A meta creation time earlier than one of these minimums is valid
+        // for deletion by the corresponding rules (if the expression criteria is matched)
         final Map<Instant, Set<DataRetentionRule>> minCreationTimeMap = getMinCreationTimeMap(
                 activeRules, now);
 
-        // Create a map of unique periods with the set of rules that apply to them.
-        final Map<Period, Set<DataRetentionRule>> rulesByPeriod = new HashMap<>();
+        // We need to work down the list of min time thresholds in newest -> oldest order
         final List<Instant> descendingMinCreationTimes = minCreationTimeMap.keySet()
                 .stream()
                 .sorted(Comparator.reverseOrder())
                 .collect(Collectors.toList());
 
-        Instant toTime = now;
+        final Instant latestMinCreationTime = descendingMinCreationTimes.get(0);
+
+        // Create a map of unique periods with the set of rules that apply to them.
+        final Map<TimePeriod, Set<DataRetentionRule>> rulesByPeriod = new HashMap<>();
+
+        // We don't need to delete anything newer than this time as all rules have a minCreateTime
+        // older than or equal to it.  Thus make this the end of our first deletion period
+        Instant toTime = latestMinCreationTime;
+        descendingMinCreationTimes.remove(latestMinCreationTime);
+
         for (final Instant creationTime : descendingMinCreationTimes) {
             // Calculate a from time for the period that takes account of the
             // time passed since the last execution.
-            final Instant fromTime = Ordering.natural().max(creationTime, toTime.minus(timeSinceLastRun));
-//            final Instant fromTime = Math.max(creationTime, toTime.minus(elapsedTime));
+            // e.g if rule is for 1 month and we are considering the period from
+            // now - 1month  to now then from time is now - 1month but if
+            // we ran this process 1day ago then the period is from now -1d to now
+            // as the rest of the data has already been considered.
+            final Instant fromTime = Ordering.natural()
+                    .max(creationTime, toTime.minus(timeSinceLastRun));
 
-            final Period period = new Period(fromTime, toTime);
-            minCreationTimeMap.forEach((minCreationTime, ruleSet) -> {
-                final Set<DataRetentionRule> set = rulesByPeriod.computeIfAbsent(
-                        period,
-                        p -> new HashSet<>());
+            final TimePeriod period = TimePeriod.between(fromTime, toTime);
 
-                if (minCreationTime.isBefore(period.getToTime().orElseThrow())) {
-                    set.addAll(ruleSet);
-                }
-            });
+            LOGGER.debug(() -> LogUtil.message("creationTime: {} ({} ago), periodFrom {} ago, periodTo {} ago",
+                    creationTime,
+                    TimeUtils.instantAsAge(creationTime, now),
+                    TimeUtils.instantAsAge(period.getFrom(), now),
+                    TimeUtils.instantAsAge(period.getTo(), now)));
+
+            minCreationTimeMap.entrySet()
+                    .stream()
+                    .sorted(Map.Entry.comparingByKey(Comparator.reverseOrder()))
+                    .forEach(entry -> {
+                        final Instant minCreationTime = entry.getKey();
+                        final Set<DataRetentionRule> ruleSet = entry.getValue();
+
+                        final Set<DataRetentionRule> set = rulesByPeriod.computeIfAbsent(
+                                period,
+                                p -> new HashSet<>());
+
+//                        LOGGER.debug(() -> Duration.between(minCreationTime, period.getFrom()).toString());
+//                        boolean doRulesApplyToPeriod = minCreationTime.truncatedTo(ChronoUnit.MILLIS)
+//                                .isBefore(period.getFrom().truncatedTo(ChronoUnit.MILLIS));
+//                        boolean doRulesApplyToPeriod = minCreationTime
+//                                .isBefore(period.getFrom());
+                        boolean doRulesApplyToPeriod = minCreationTime.isAfter(period.getFrom());
+
+                        LOGGER.debug(() -> LogUtil.message(
+                                "  {}, minCreationTime: {} ({} ago), from: {} ({} ago), to {} ({} ago), ruleSet {}",
+                                doRulesApplyToPeriod,
+                                minCreationTime,
+                                TimeUtils.instantAsAge(creationTime, now),
+                                period.getFrom(),
+                                TimeUtils.instantAsAge(period.getFrom(), now),
+                                period.getTo(),
+                                TimeUtils.instantAsAge(period.getTo(), now),
+                                ruleSet.stream()
+                                        .sorted(DataRetentionRule.comparingByDescendingRuleNumber())
+                                        .collect(Collectors.toList())));
+
+                        if (doRulesApplyToPeriod) {
+                            set.addAll(ruleSet);
+                        }
+                    });
 
             toTime = creationTime;
         }
@@ -275,35 +332,29 @@ public class DataRetentionPolicyExecutor {
             final List<DataRetentionRule> activeRules,
             final Instant now) {
 
-        final Map<Instant, Set<DataRetentionRule>> minCreationTimeMap = new HashMap<>();
-        // Ensure we have a key for `forever`, so we know what rules, if any,
-        // we should use to retain data forever.
-        minCreationTimeMap.computeIfAbsent(Instant.EPOCH, ct -> new HashSet<>());
-        // Add all other rules by minimum creation time.
-        activeRules.forEach(rule -> {
-            final Instant minTime = DataRetentionCreationTimeUtil.minus(now, rule);
-            minCreationTimeMap.computeIfAbsent(minTime, ct -> new HashSet<>()).add(rule);
-        });
+        // Use the rule retention period to work out the earliest meta createTime that
+        // we could delete matching records from
+        final Map<Instant, Set<DataRetentionRule>> minCreationTimeMap = activeRules.stream()
+                .collect(Collectors.groupingBy(
+                        rule -> DataRetentionCreationTimeUtil.minus(now, rule),
+                        Collectors.toSet()));
+
+        // Ensure we have a min creation time of the epoch to ensure we delete any qualifying data
+        // right back as far as the data goes.
+        minCreationTimeMap.computeIfAbsent(Instant.EPOCH, k -> new HashSet<>());
+
+        LOGGER.debug(() -> "minCreationTimes:\n" + minCreationTimeMap.entrySet().stream()
+                .sorted(Map.Entry.comparingByKey(Comparator.reverseOrder()))
+                .map(entry -> entry.getKey() + " (" +
+                        TimeUtils.instantAsAge(entry.getKey(), now) +
+                        " ago) - " +
+                        entry.getValue().stream()
+                                .sorted(Comparator.comparing(DataRetentionRule::getRuleNumber).reversed())
+                                .collect(Collectors.toList()))
+                .collect(Collectors.joining("\n")));
+
         return minCreationTimeMap;
     }
-
-//    private void addToFieldSet(final DataRetentionRule rule, final Set<String> fieldSet) {
-//        if (rule.isEnabled() && rule.getExpression() != null) {
-//            addChildren(rule.getExpression(), fieldSet);
-//        }
-//    }
-//
-//    private void addChildren(final ExpressionItem item, final Set<String> fieldSet) {
-//        if (item.getEnabled()) {
-//            if (item instanceof ExpressionOperator) {
-//                final ExpressionOperator operator = (ExpressionOperator) item;
-//                operator.getChildren().forEach(i -> addChildren(i, fieldSet));
-//            } else if (item instanceof ExpressionTerm) {
-//                final ExpressionTerm term = (ExpressionTerm) item;
-//                fieldSet.add(term.getField());
-//            }
-//        }
-//    }
 
     private void info(final TaskContext taskContext, final Supplier<String> messageSupplier) {
         LOGGER.info(messageSupplier);
@@ -404,149 +455,5 @@ public class DataRetentionPolicyExecutor {
             return Objects.hash(lastRun, dataRetentionRules, rulesVersion, rulesHash);
         }
 
-    }
-
-
-    public static class ActiveRules {
-        private final Set<AbstractField> fieldSet;
-        private final List<DataRetentionRule> activeRules;
-
-        ActiveRules(final List<DataRetentionRule> rules) {
-            final Set<AbstractField> fieldSet = new HashSet<>();
-            final List<DataRetentionRule> activeRules = new ArrayList<>();
-
-            // Find out which fields are used by the expressions so we don't have to do unnecessary joins.
-            fieldSet.add(MetaFields.ID);
-            fieldSet.add(MetaFields.CREATE_TIME);
-
-            // Also make sure we create a list of rules that are enabled and have at least one enabled term.
-            rules.forEach(rule -> {
-                if (rule.isEnabled() && rule.getExpression() != null && rule.getExpression().enabled()) {
-                    final Set<AbstractField> fields = new HashSet<>();
-//                    addToFieldSet(rule, fields);
-                    if (fields.size() > 0) {
-                        fieldSet.addAll(fields);
-                        activeRules.add(rule);
-                    }
-                }
-            });
-
-            this.fieldSet = Collections.unmodifiableSet(fieldSet);
-            this.activeRules = Collections.unmodifiableList(activeRules);
-        }
-
-//        private void addToFieldSet(final DataRetentionRule rule, final Set<String> fieldSet) {
-//            if (rule.isEnabled() && rule.getExpression() != null) {
-//                addChildren(rule.getExpression(), fieldSet);
-//            }
-//        }
-//
-//        private void addChildren(final ExpressionItem item, final Set<String> fieldSet) {
-//            if (item.getEnabled()) {
-//                if (item instanceof ExpressionOperator) {
-//                    final ExpressionOperator operator = (ExpressionOperator) item;
-//                    operator.getChildren().forEach(i -> addChildren(i, fieldSet));
-//                } else if (item instanceof ExpressionTerm) {
-//                    final ExpressionTerm term = (ExpressionTerm) item;
-//                    fieldSet.add(term.getField());
-//                }
-//            }
-//        }
-
-        public List<DataRetentionRule> getActiveRules() {
-            return activeRules;
-        }
-//
-//        public Set<String> getFieldSet() {
-//            return fieldSet;
-//        }
-    }
-
-    static class Progress {
-        private final Period ageRange;
-        private long rowCount;
-        private long rowNum;
-        private Long streamId;
-        private Long createMs;
-
-        Progress(final Period ageRange, final long rowCount) {
-            this.ageRange = ageRange;
-            this.rowCount = rowCount;
-        }
-
-        public void nextStream(final Long streamId, final Long createMs) {
-            this.streamId = streamId;
-            this.createMs = createMs;
-            rowNum++;
-            rowCount = Math.max(rowCount, rowNum);
-        }
-
-        public Long getStreamId() {
-            return streamId;
-        }
-
-        private String getPeriodString() {
-            if (ageRange.getFromMs() != null && ageRange.getToMs() != null) {
-                return "age between " + DateUtil.createNormalDateTimeString(ageRange.getFromMs()) + " and " + DateUtil.createNormalDateTimeString(ageRange.getToMs());
-            }
-            if (ageRange.getFromMs() != null) {
-                return "age after " + DateUtil.createNormalDateTimeString(ageRange.getFromMs());
-            }
-            if (ageRange.getToMs() != null) {
-                return "age before " + DateUtil.createNormalDateTimeString(ageRange.getToMs());
-            }
-            return "";
-        }
-
-        private String getCounts() {
-            return " (" +
-                    rowNum +
-                    " of " +
-                    rowCount +
-                    ")";
-        }
-
-        // Time based completion
-//        private String getPercentComplete() {
-//            if (createMs != null && ageRange.getFromMs() != null && ageRange.getToMs() != null) {
-//                long diff = ageRange.getToMs() - ageRange.getFromMs();
-//                long pos = createMs - ageRange.getFromMs();
-//                int pct = (int) ((100D / diff) * pos);
-//                return ", " + pct + "% complete";
-//            }
-//            return "";
-//        }
-
-        private String getPercentComplete() {
-            final int pct = (int) ((100D / rowCount) * rowNum);
-            return ", " + pct + "% complete";
-        }
-
-//        private String getStreamInfo() {
-//            if (streamId != null && createMs != null) {
-//                return ", current stream id=" +
-//                        streamId +
-//                        ", create time=" +
-//                        DateUtil.createNormalDateTimeString(createMs);
-//            }
-//
-//            return "";
-//        }
-
-        private String getStreamInfo() {
-            if (streamId != null && createMs != null) {
-                return ", current stream id=" +
-                        streamId;
-            }
-
-            return "";
-        }
-
-        public String toString() {
-            return getPeriodString() +
-                    getCounts() +
-                    getPercentComplete() +
-                    getStreamInfo();
-        }
     }
 }

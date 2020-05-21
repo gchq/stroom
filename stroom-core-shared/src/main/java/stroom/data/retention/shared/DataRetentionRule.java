@@ -41,7 +41,15 @@ import java.util.Objects;
 public class DataRetentionRule {
     public static final String FOREVER = "Forever";
 
-    private static final Comparator<DataRetentionRule> COMPARATOR = Comparator.comparing(DataRetentionRule::getRuleNumber);
+    public static final DataRetentionRule RETAIN_ALL_FOREVER = new DataRetentionRule(
+            0,
+            0L, // epoch
+            "Retain All Forever",
+            true,
+            new ExpressionOperator.Builder(true, ExpressionOperator.Op.AND).build(),
+            50,
+            TimeUnit.YEARS,
+            true);
 
     @XmlElement(name = "ruleNumber")
     @JsonProperty
@@ -170,5 +178,13 @@ public class DataRetentionRule {
             ruleName = String.valueOf(ruleNumber);
         }
         return ruleName;
+    }
+
+    public static Comparator<DataRetentionRule> comparingByRuleNumber() {
+        return Comparator.comparing(DataRetentionRule::getRuleNumber);
+    }
+
+    public static Comparator<DataRetentionRule> comparingByDescendingRuleNumber() {
+        return Comparator.comparing(DataRetentionRule::getRuleNumber).reversed();
     }
 }
