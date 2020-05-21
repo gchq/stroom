@@ -58,6 +58,7 @@ import java.util.Map;
 import java.util.Objects;
 import java.util.Optional;
 import java.util.Set;
+import java.util.concurrent.ConcurrentHashMap;
 import java.util.function.Consumer;
 import java.util.function.Function;
 import java.util.function.Predicate;
@@ -124,6 +125,9 @@ class MetaDaoImpl implements MetaDao {
     private final MetaExpressionMapper metaExpressionMapper;
     private final ValueMapper valueMapper;
 
+    private final Map<String, List<Integer>> feedIdCache = new ConcurrentHashMap<>();
+    private final Map<String, List<Integer>> typeIdCache = new ConcurrentHashMap<>();
+
     @Inject
     MetaDaoImpl(final MetaDbConnProvider metaDbConnProvider,
                 final MetaFeedDaoImpl feedDao,
@@ -143,9 +147,9 @@ class MetaDaoImpl implements MetaDao {
         expressionMapper = expressionMapperFactory.create();
         expressionMapper.map(MetaFields.ID, meta.ID, Long::valueOf);
         expressionMapper.map(MetaFields.PROCESSOR_ID, meta.PROCESSOR_ID, Integer::valueOf);
-        expressionMapper.multiMap(MetaFields.FEED, meta.FEED_ID, feedDao::find, true);
-        expressionMapper.multiMap(MetaFields.FEED_NAME, meta.FEED_ID, feedDao::find);
-        expressionMapper.multiMap(MetaFields.TYPE_NAME, meta.TYPE_ID, metaTypeDao::find);
+        expressionMapper.multiMap(MetaFields.FEED, meta.FEED_ID, this::getFeedIds, true);
+        expressionMapper.multiMap(MetaFields.FEED_NAME, meta.FEED_ID, this::getFeedIds);
+        expressionMapper.multiMap(MetaFields.TYPE_NAME, meta.TYPE_ID, this::getTypeIds);
         expressionMapper.map(MetaFields.PIPELINE, metaProcessor.PIPELINE_UUID, value -> value);
         expressionMapper.map(MetaFields.STATUS, meta.STATUS, value -> MetaStatusId.getPrimitiveValue(Status.valueOf(value.toUpperCase())));
         expressionMapper.map(MetaFields.STATUS_TIME, meta.STATUS_TIME, DateUtil::parseNormalDateTimeString);
@@ -165,6 +169,7 @@ class MetaDaoImpl implements MetaDao {
         expressionMapper.map(MetaFields.PARENT_ID, meta.PARENT_ID, Long::valueOf);
         expressionMapper.map(MetaFields.PARENT_STATUS, parent.STATUS, value -> MetaStatusId.getPrimitiveValue(Status.valueOf(value.toUpperCase())));
         expressionMapper.map(MetaFields.PARENT_CREATE_TIME, parent.CREATE_TIME, DateUtil::parseNormalDateTimeString);
+        expressionMapper.multiMap(MetaFields.PARENT_FEED, parent.FEED_ID, this::getFeedIds);
 
         // Extended meta fields.
         metaExpressionMapper = new MetaExpressionMapper(metaKeyDao, metaVal.META_KEY_ID, metaVal.VAL, wordListProvider, collectionService);
@@ -193,6 +198,35 @@ class MetaDaoImpl implements MetaDao {
         valueMapper.map(MetaFields.STATUS_TIME, meta.STATUS_TIME, ValLong::create);
         valueMapper.map(MetaFields.CREATE_TIME, meta.CREATE_TIME, ValLong::create);
         valueMapper.map(MetaFields.EFFECTIVE_TIME, meta.EFFECTIVE_TIME, ValLong::create);
+    }
+
+    private List<Integer> getFeedIds(final String feedName) {
+        return getIds(feedName, feedIdCache, feedDao::find);
+    }
+
+    private List<Integer> getTypeIds(final String typeName) {
+        return getIds(typeName, typeIdCache, metaTypeDao::find);
+    }
+
+    /**
+     * This method tries to get a list of ids from the supplied map and if not found it tries to fetch them from the
+     * supplied function.
+     * <p>
+     * NOTE THAT THE CHOICE TO NOT USE COMPUTE ON THE MAP IS DELIBERATE TO PREVENT LOCKING.
+     * THIS MIGHT LEAD TO A FEW DUPLICATE ATTEMPTS TO FIND THE SAME ID LIST BUT THAT IS PREFERRED TO SYNCHRONIZING ON
+     * THE MAP KEY DURING DB QUERY.
+     */
+    private List<Integer> getIds(final String name,
+                                 final Map<String, List<Integer>> map,
+                                 final Function<String, List<Integer>> function) {
+        List<Integer> list = map.get(name);
+        if (list == null || list.size() == 0) {
+            list = function.apply(name);
+            if (list != null && list.size() > 0) {
+                map.put(name, list);
+            }
+        }
+        return list;
     }
 
     @Override

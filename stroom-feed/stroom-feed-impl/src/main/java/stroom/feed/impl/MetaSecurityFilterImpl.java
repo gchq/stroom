@@ -4,14 +4,15 @@ import stroom.docref.DocRef;
 import stroom.feed.api.FeedStore;
 import stroom.meta.api.MetaSecurityFilter;
 import stroom.query.api.v2.ExpressionOperator;
+import stroom.query.api.v2.ExpressionOperator.Builder;
 import stroom.query.api.v2.ExpressionOperator.Op;
-import stroom.query.api.v2.ExpressionTerm;
 import stroom.query.api.v2.ExpressionTerm.Condition;
 import stroom.security.api.SecurityContext;
 
 import javax.inject.Inject;
 import javax.inject.Singleton;
 import java.util.List;
+import java.util.Objects;
 import java.util.Optional;
 import java.util.stream.Collectors;
 
@@ -28,24 +29,34 @@ class MetaSecurityFilterImpl implements MetaSecurityFilter {
     }
 
     @Override
-    public Optional<ExpressionOperator> getExpression(final String permission) {
-        if (securityContext.isAdmin()) {
-            return Optional.empty();
+    public Optional<ExpressionOperator> getExpression(final String permission,
+                                                      final List<String> fields) {
+        Objects.requireNonNull(permission);
+        Objects.requireNonNull(fields);
+
+        if (fields.size() == 0) {
+            throw new IllegalArgumentException("No fields provided");
         }
 
-        final List<DocRef> feeds = feedStore.list();
-        final List<ExpressionTerm> terms = feeds.stream()
-                .filter(docRef -> securityContext.hasDocumentPermission(docRef.getUuid(), permission))
-                .map(docRef -> new ExpressionTerm.Builder().field("Feed").condition(Condition.EQUALS).value(docRef.getName()).build())
-                .collect(Collectors.toList());
+        ExpressionOperator expressionOperator = null;
+        if (!securityContext.isAdmin()) {
 
-        if (terms.size() == 0) {
-            final ExpressionTerm expressionTerm = new ExpressionTerm.Builder().field("Feed").condition(Condition.IS_NULL).build();
-            final ExpressionOperator expressionOperator = new ExpressionOperator.Builder().addTerm(expressionTerm).build();
-            return Optional.of(expressionOperator);
+            // Get all feeds.
+            final List<DocRef> feeds = feedStore.list();
+
+            // Filter feeds that the current user has the requested permission on.
+            final String filteredFeeds = feeds.stream()
+                    .filter(docRef -> securityContext.hasDocumentPermission(docRef.getUuid(), permission))
+                    .map(DocRef::getName)
+                    .collect(Collectors.joining(","));
+
+            final Builder builder = new Builder(Op.AND);
+            for (final String field : fields) {
+                builder.addTerm(field, Condition.IN, filteredFeeds);
+            }
+            expressionOperator = builder.build();
         }
 
-        final ExpressionOperator expressionOperator = new ExpressionOperator.Builder(Op.OR).addTerms(terms).build();
-        return Optional.of(expressionOperator);
+        return Optional.ofNullable(expressionOperator);
     }
 }

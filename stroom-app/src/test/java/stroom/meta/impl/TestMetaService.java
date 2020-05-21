@@ -17,23 +17,18 @@
 
 package stroom.meta.impl;
 
-import name.falgout.jeffrey.testing.junit.guice.GuiceExtension;
-import name.falgout.jeffrey.testing.junit.guice.IncludeModule;
-import org.junit.jupiter.api.BeforeAll;
-import org.junit.jupiter.api.BeforeEach;
-import org.junit.jupiter.api.Test;
-import org.junit.jupiter.api.extension.ExtendWith;
 import stroom.app.guice.CoreModule;
 import stroom.app.guice.JerseyModule;
 import stroom.app.uri.UriFactoryModule;
 import stroom.docref.DocRef;
 import stroom.feed.api.FeedStore;
 import stroom.index.VolumeTestConfigModule;
-import stroom.meta.shared.FindMetaCriteria;
-import stroom.meta.shared.Meta;
 import stroom.meta.api.MetaProperties;
 import stroom.meta.api.MetaSecurityFilter;
 import stroom.meta.api.MetaService;
+import stroom.meta.shared.FindMetaCriteria;
+import stroom.meta.shared.Meta;
+import stroom.meta.shared.MetaFields;
 import stroom.meta.statistics.impl.MockMetaStatisticsModule;
 import stroom.query.api.v2.ExpressionOperator;
 import stroom.resource.impl.ResourceModule;
@@ -46,6 +41,13 @@ import stroom.security.shared.User;
 import stroom.test.AppConfigTestModule;
 import stroom.test.IntegrationTestSetupUtil;
 import stroom.test.common.util.db.DbTestModule;
+
+import name.falgout.jeffrey.testing.junit.guice.GuiceExtension;
+import name.falgout.jeffrey.testing.junit.guice.IncludeModule;
+import org.junit.jupiter.api.BeforeAll;
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.extension.ExtendWith;
 
 import javax.inject.Inject;
 import java.util.List;
@@ -70,6 +72,8 @@ class TestMetaService {
     private static final String FEED_NO_PERMISSION = "FEED_NO_PERMISSION";
     private static final String FEED_USE_PERMISSION = "FEED_USE_PERMISSION";
     private static final String FEED_READ_PERMISSION = "FEED_READ_PERMISSION";
+
+    private static final List<String> FEED_FIELDS = List.of(MetaFields.FIELD_FEED);
 
     @Inject
     private IntegrationTestSetupUtil integrationTestSetupUtil;
@@ -109,8 +113,8 @@ class TestMetaService {
             documentPermissionService.addPermission(docref3.getUuid(), user.getUuid(), DocumentPermissionNames.READ);
 
             securityContext.asUser(securityContext.createIdentity(user.getName()), () -> {
-                final Optional<ExpressionOperator> useExpression = metaSecurityFilter.getExpression(DocumentPermissionNames.USE);
-                final Optional<ExpressionOperator> readExpression = metaSecurityFilter.getExpression(DocumentPermissionNames.READ);
+                final Optional<ExpressionOperator> useExpression = metaSecurityFilter.getExpression(DocumentPermissionNames.USE, FEED_FIELDS);
+                final Optional<ExpressionOperator> readExpression = metaSecurityFilter.getExpression(DocumentPermissionNames.READ, FEED_FIELDS);
 
                 assertThat(useExpression).isNotEmpty();
                 assertThat(useExpression.get().getChildren().size() == 1);
@@ -125,8 +129,8 @@ class TestMetaService {
                 assertThat(readList.size()).isEqualTo(1);
 
                 securityContext.useAsRead(() -> {
-                    final Optional<ExpressionOperator> useExpression2 = metaSecurityFilter.getExpression(DocumentPermissionNames.USE);
-                    final Optional<ExpressionOperator> readExpression2 = metaSecurityFilter.getExpression(DocumentPermissionNames.READ);
+                    final Optional<ExpressionOperator> useExpression2 = metaSecurityFilter.getExpression(DocumentPermissionNames.USE, FEED_FIELDS);
+                    final Optional<ExpressionOperator> readExpression2 = metaSecurityFilter.getExpression(DocumentPermissionNames.READ, FEED_FIELDS);
 
                     assertThat(useExpression2).isNotEmpty();
                     assertThat(useExpression2.get().getChildren().size() == 2);

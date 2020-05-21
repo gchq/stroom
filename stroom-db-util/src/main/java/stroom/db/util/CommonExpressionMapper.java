@@ -23,12 +23,18 @@ import java.util.List;
 import java.util.Map;
 import java.util.Set;
 import java.util.function.Function;
+import java.util.regex.Pattern;
 import java.util.stream.Collectors;
 
 import static org.jooq.impl.DSL.and;
 import static org.jooq.impl.DSL.or;
 
 public final class CommonExpressionMapper implements Function<ExpressionItem, Collection<Condition>> {
+    private static final String LIST_DELIMITER = ",";
+    private static final String ASTERISK = "*";
+    private static final String PERCENT = "%";
+    private static final Pattern ASTERISK_PATTERN = Pattern.compile("\\*");
+
     private final Map<String, Function<ExpressionTerm, Condition>> termHandlers = new HashMap<>();
     private final Set<String> ignoredFields = new HashSet<>();
     private final boolean ignoreMissingHandler;
@@ -131,7 +137,7 @@ public final class CommonExpressionMapper implements Function<ExpressionItem, Co
                     return eq(term);
                 }
                 case BETWEEN: {
-                    final String[] parts = term.getValue().split(",");
+                    final String[] parts = term.getValue().split(LIST_DELIMITER);
                     if (parts.length == 2) {
                         return field.between(getSingleValue(parts[0]), getSingleValue(parts[1]));
                     }
@@ -150,11 +156,17 @@ public final class CommonExpressionMapper implements Function<ExpressionItem, Co
                     return field.lessOrEqual(getSingleValue(term.getValue()));
                 }
                 case IN: {
-                    final String[] parts = term.getValue().split(",");
-                    final List<T> values = Arrays.stream(parts)
-                            .map(this::getValues)
-                            .flatMap(List::stream)
-                            .collect(Collectors.toList());
+                    List<T> values = Collections.emptyList();
+                    final String value = term.getValue().trim();
+                    if (value.length() > 0) {
+                        final String[] parts = value.split(LIST_DELIMITER);
+                        values = Arrays.stream(parts)
+                                .map(String::trim)
+                                .filter(part -> part.length() > 0)
+                                .map(this::getValues)
+                                .flatMap(List::stream)
+                                .collect(Collectors.toList());
+                    }
                     return field.in(values);
                 }
                 case IN_DICTIONARY: {
@@ -195,8 +207,9 @@ public final class CommonExpressionMapper implements Function<ExpressionItem, Co
                     final T t = list.get(0);
                     if (t instanceof String) {
                         final String string = (String) t;
-                        if (string.contains("*")) {
-                            return field.like(string.replaceAll("\\*", "%"));
+                        if (string.contains(ASTERISK)) {
+                            final String like = ASTERISK_PATTERN.matcher(string).replaceAll(PERCENT);
+                            return field.like(like);
                         }
                     }
                     return field.eq(t);
