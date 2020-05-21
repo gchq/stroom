@@ -86,7 +86,7 @@ public class ProcessorFilterImportExportHandlerImpl implements ImportExportActio
             throw new RuntimeException("Unable to read meta file associated with processor " + docRef, ex);
         }
 
-        boolean ignore = ProcessorFilterUtil.shouldImport(processorFilter);
+        boolean ignore = !ProcessorFilterUtil.shouldImport(processorFilter);
 
         if (ignore)
             LOGGER.warn("Not importing processor filter " + docRef.getUuid() + " because it contains id fields");

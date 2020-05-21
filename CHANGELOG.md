@@ -16,6 +16,8 @@ and this project adheres to [Semantic Versioning](http://semver.org/).
 
 * Issue **#1557** : Added an impact summary to meta data actions such as delete, restore, process and download.
 
+* Issue **#1588** : Fix processor filter import.
+
 * Issue **#1566** : Fixed UI data restore behaviour.
 
 
