@@ -394,18 +394,18 @@ public class MetaServiceImpl implements MetaService, Searchable {
         return metaDao.getMaxId(new FindMetaCriteria(secureExpression));
     }
 
-    @Override
-    public Long getMaxDataIdWithCreationBeforePeriod(final Long timestampMs) {
-        if (timestampMs == null)
-            return null;
-        final ExpressionOperator expression = new ExpressionOperator.Builder(Op.AND)
-                .addTerm(MetaFields.CREATE_TIME, ExpressionTerm.Condition.LESS_THAN_OR_EQUAL_TO, DateUtil.createNormalDateTimeString(timestampMs))
-                .addTerm(MetaFields.STATUS, ExpressionTerm.Condition.EQUALS, Status.UNLOCKED.getDisplayValue())
-                .build();
-
-        final ExpressionOperator secureExpression = addPermissionConstraints(expression, DocumentPermissionNames.READ);
-        return metaDao.getMaxId(new FindMetaCriteria(secureExpression)).orElseThrow(() -> new NullPointerException("No current id exists"));
-    }
+//    @Override
+//    public Long getMaxDataIdWithCreationBeforePeriod(final Long timestampMs) {
+//        if (timestampMs == null)
+//            return null;
+//        final ExpressionOperator expression = new ExpressionOperator.Builder(Op.AND)
+//                .addTerm(MetaFields.CREATE_TIME, ExpressionTerm.Condition.LESS_THAN_OR_EQUAL_TO, DateUtil.createNormalDateTimeString(timestampMs))
+//                .addTerm(MetaFields.STATUS, ExpressionTerm.Condition.EQUALS, Status.UNLOCKED.getDisplayValue())
+//                .build();
+//
+//        final ExpressionOperator secureExpression = addPermissionConstraints(expression, DocumentPermissionNames.READ);
+//        return metaDao.getMaxId(new FindMetaCriteria(secureExpression)).orElseThrow(() -> new NullPointerException("No current id exists"));
+//    }
 
     @Override
     public List<String> getFeeds() {
@@ -501,6 +501,13 @@ public class MetaServiceImpl implements MetaService, Searchable {
         return decorate(result);
     }
 
+    @Override
+    public ResultPage<Meta> findReprocess(final FindMetaCriteria criteria) {
+        final ExpressionOperator expression = addPermissionConstraints(criteria.getExpression(), DocumentPermissionNames.READ);
+        criteria.setExpression(expression);
+        return metaDao.findReprocess(criteria);
+    }
+
     private List<MetaRow> decorate(final List<Meta> metaList) {
         if (metaList == null || metaList.size() == 0) {
             return Collections.emptyList();
@@ -521,6 +528,13 @@ public class MetaServiceImpl implements MetaService, Searchable {
         final ExpressionOperator expression = addPermissionConstraints(criteria.getExpression(), DocumentPermissionNames.READ);
         criteria.setExpression(expression);
         return metaDao.getSelectionSummary(criteria);
+    }
+
+    @Override
+    public SelectionSummary getReprocessSelectionSummary(final FindMetaCriteria criteria) {
+        final ExpressionOperator expression = addPermissionConstraints(criteria.getExpression(), DocumentPermissionNames.READ);
+        criteria.setExpression(expression);
+        return metaDao.getReprocessSelectionSummary(criteria);
     }
 
     private String getPipelineName(final Meta meta) {
@@ -669,5 +683,10 @@ public class MetaServiceImpl implements MetaService, Searchable {
         entries.add(new MetaInfoSection.Entry(DataRetentionFields.RETENTION_RULE, attributeMap.get(DataRetentionFields.RETENTION_RULE)));
 
         return entries;
+    }
+
+    @Override
+    public List<String> getProcessorUuidList(final FindMetaCriteria criteria) {
+        return metaDao.getProcessorUuidList(criteria);
     }
 }

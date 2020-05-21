@@ -6,6 +6,12 @@ and this project adheres to [Semantic Versioning](http://semver.org/).
 
 ## [Unreleased]
 
+* Issue **#1557** : Process, reprocess, delete and download data functions now provide an impact summary before a user can proceed with the action.
+
+* Issue **#1557** : The process data function in the data browser now provides the option to process or reprocess data. When selected a user can also choose: the priority of the process filters that will be created; to set the priority automatically based on previous filters; set the enabled state.
+
+* Issue **#1557** : Reprocessing data no longer has a limitation on how many items can be reprocessed as it is now implemented by reprocess specific filters.
+
 * Issue **#1585** : Fixed issue that was preventing viewing folders processors.
 
 * Issue **#1557** : Added an impact summary to meta data actions such as delete, restore, process and download.

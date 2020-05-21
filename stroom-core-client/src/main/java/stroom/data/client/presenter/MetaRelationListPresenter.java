@@ -16,14 +16,11 @@
 
 package stroom.data.client.presenter;
 
-import com.google.gwt.dom.client.Style.Unit;
-import com.google.gwt.user.cellview.client.Column;
-import com.google.inject.Inject;
-import com.google.web.bindery.event.shared.EventBus;
 import stroom.cell.expander.client.ExpanderCell;
 import stroom.core.client.LocationManager;
 import stroom.data.grid.client.EndColumn;
 import stroom.dispatch.client.RestFactory;
+import stroom.explorer.client.presenter.EntityChooser;
 import stroom.meta.shared.DataRetentionFields;
 import stroom.meta.shared.Meta;
 import stroom.meta.shared.MetaFields;
@@ -37,6 +34,11 @@ import stroom.util.shared.ModelStringUtil;
 import stroom.util.shared.ResultPage;
 import stroom.util.shared.Sort.Direction;
 import stroom.widget.tooltip.client.presenter.TooltipPresenter;
+
+import com.google.gwt.dom.client.Style.Unit;
+import com.google.gwt.user.cellview.client.Column;
+import com.google.inject.Inject;
+import com.google.web.bindery.event.shared.EventBus;
 
 import javax.inject.Provider;
 import java.util.ArrayList;
@@ -56,8 +58,17 @@ public class MetaRelationListPresenter extends AbstractMetaListPresenter {
                                      final RestFactory restFactory,
                                      final TooltipPresenter tooltipPresenter,
                                      final LocationManager locationManager,
-                                     final Provider<SelectionSummaryPresenter> selectionSummaryPresenterProvider) {
-        super(eventBus, restFactory, tooltipPresenter, locationManager, selectionSummaryPresenterProvider, false);
+                                     final Provider<SelectionSummaryPresenter> selectionSummaryPresenterProvider,
+                                     final Provider<ProcessChoicePresenter> processChoicePresenterProvider,
+                                     final Provider<EntityChooser> pipelineSelection) {
+        super(eventBus,
+                restFactory,
+                tooltipPresenter,
+                locationManager,
+                selectionSummaryPresenterProvider,
+                processChoicePresenterProvider,
+                pipelineSelection,
+                false);
     }
 
     public void setSelectedStream(final MetaRow metaRow, final boolean fireEvents,

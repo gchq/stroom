@@ -232,7 +232,7 @@ public final class StoreCreationTool {
                             .addTerm(MetaFields.TYPE_NAME, ExpressionTerm.Condition.EQUALS, StreamTypeNames.RAW_REFERENCE)
                             .build())
                     .build();
-            processorFilterService.create(pipelineRef, findStreamQueryData, 2, true);
+            processorFilterService.create(pipelineRef, findStreamQueryData, 2, false, true);
         }
 
         return docRef;
@@ -443,7 +443,7 @@ public final class StoreCreationTool {
                             .build())
                     .build();
 
-            processorFilterService.create(pipelineRef, findStreamQueryData, 1, true);
+            processorFilterService.create(pipelineRef, findStreamQueryData, 1, false, true);
         }
 
         return docRef;
@@ -764,7 +764,7 @@ public final class StoreCreationTool {
                             .addTerm(MetaFields.TYPE_NAME, ExpressionTerm.Condition.EQUALS, StreamTypeNames.EVENTS)
                             .build())
                     .build();
-            processorFilterService.create(pipelineRef, findStreamQueryData, 1, true);
+            processorFilterService.create(pipelineRef, findStreamQueryData, 1, false, true);
         }
 
         return indexRef;

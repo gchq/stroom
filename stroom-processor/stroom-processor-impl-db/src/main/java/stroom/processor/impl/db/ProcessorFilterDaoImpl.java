@@ -1,10 +1,5 @@
 package stroom.processor.impl.db;
 
-import org.jooq.Condition;
-import org.jooq.DSLContext;
-import org.jooq.Field;
-import org.jooq.OrderField;
-import org.jooq.Record;
 import stroom.db.util.ExpressionMapper;
 import stroom.db.util.ExpressionMapperFactory;
 import stroom.db.util.GenericDao;
@@ -21,6 +16,12 @@ import stroom.util.logging.LambdaLogUtil;
 import stroom.util.logging.LambdaLogger;
 import stroom.util.logging.LambdaLoggerFactory;
 import stroom.util.shared.ResultPage;
+
+import org.jooq.Condition;
+import org.jooq.DSLContext;
+import org.jooq.Field;
+import org.jooq.OrderField;
+import org.jooq.Record;
 
 import javax.inject.Inject;
 import java.util.Collection;
@@ -69,24 +70,26 @@ class ProcessorFilterDaoImpl implements ProcessorFilterDao {
 
     @Override
     public ProcessorFilter create(final ProcessorFilter processorFilter) {
-        return create(processorFilter, null);
+        return create(processorFilter, null, null);
     }
 
     @Override
-    public ProcessorFilter create(final ProcessorFilter processorFilter, final Long trackerStartStreamId) {
+    public ProcessorFilter create(final ProcessorFilter processorFilter,
+                                  final Long minMetaCreateMs,
+                                  final Long maxMetaCreateMs) {
         LAMBDA_LOGGER.debug(LambdaLogUtil.message("Creating a {}", PROCESSOR_FILTER.getName()));
 
         final ProcessorFilter marshalled = marshaller.marshal(processorFilter);
         final ProcessorFilter stored = JooqUtil.transactionResult(processorDbConnProvider, context -> {
             ProcessorFilterTracker tracker = new ProcessorFilterTracker();
-            if (trackerStartStreamId != null)
-                tracker.setMinMetaId(trackerStartStreamId);
+            tracker.setMinMetaCreateMs(minMetaCreateMs);
+            tracker.setMaxMetaCreateMs(maxMetaCreateMs);
 
             final ProcessorFilterTrackerRecord processorFilterTrackerRecord = context.newRecord(PROCESSOR_FILTER_TRACKER, tracker);
             processorFilterTrackerRecord.store();
-            final ProcessorFilterTracker processorFilterTracker = processorFilterTrackerRecord.into(ProcessorFilterTracker.class);
+            tracker = processorFilterTrackerRecord.into(ProcessorFilterTracker.class);
 
-            marshalled.setProcessorFilterTracker(processorFilterTracker);
+            marshalled.setProcessorFilterTracker(tracker);
 
             final ProcessorFilterRecord processorFilterRecord = context.newRecord(PROCESSOR_FILTER, marshalled);
 

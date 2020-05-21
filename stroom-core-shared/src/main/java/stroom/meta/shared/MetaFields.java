@@ -41,7 +41,6 @@ public class MetaFields {
 
     // Id's
     public static final IdField ID = new IdField("Id");
-    public static final IdField PARENT_ID = new IdField("Parent Id");
     public static final IdField PROCESSOR_ID = new IdField("Processor Id");
 
     // Times
@@ -60,6 +59,11 @@ public class MetaFields {
     public static final LongField DURATION = new LongField("Duration");
     public static final LongField FILE_SIZE = new LongField("File Size");
     public static final LongField RAW_SIZE = new LongField("Raw Size");
+
+    // Parent fields.
+    public static final IdField PARENT_ID = new IdField("Parent Id");
+    public static final TextField PARENT_STATUS = new TextField("Parent Status");
+    public static final DateField PARENT_CREATE_TIME = new DateField("Parent Create Time");
 
     static {
         // Non grouped fields

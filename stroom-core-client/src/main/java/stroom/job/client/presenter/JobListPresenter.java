@@ -54,6 +54,7 @@ public class JobListPresenter extends MyPresenterWidget<DataGridView<Job>> {
                             final UiConfigCache clientPropertyCache) {
         super(eventBus, new DataGridViewImpl<>(true));
 
+        // Help
         getView().addColumn(new InfoHelpLinkColumn<Job>() {
             @Override
             public SvgPreset getValue(final Job row) {
@@ -80,16 +81,6 @@ public class JobListPresenter extends MyPresenterWidget<DataGridView<Job>> {
 
         }, "<br/>", 20);
 
-        getView().addColumn(new Column<Job, String>(new TextCell()) {
-            @Override
-            public String getValue(final Job row) {
-                if (row != null) {
-                    return row.getName();
-                }
-                return null;
-            }
-        }, "Job");
-
         // Enabled.
         final Column<Job, TickBoxState> enabledColumn = new Column<Job, TickBoxState>(TickBoxCell.create(false, false)) {
             @Override
@@ -106,6 +97,17 @@ public class JobListPresenter extends MyPresenterWidget<DataGridView<Job>> {
             rest.call(JOB_RESOURCE).setEnabled(row.getId(), value.toBoolean());
         });
         getView().addColumn(enabledColumn, "Enabled", 80);
+
+        // Job name.
+        getView().addColumn(new Column<Job, String>(new TextCell()) {
+            @Override
+            public String getValue(final Job row) {
+                if (row != null) {
+                    return row.getName();
+                }
+                return null;
+            }
+        }, "Job");
 
         getView().addColumn(new Column<Job, String>(new TextCell()) {
             @Override

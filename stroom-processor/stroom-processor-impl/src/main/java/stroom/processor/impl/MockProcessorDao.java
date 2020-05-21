@@ -41,6 +41,11 @@ public class MockProcessorDao implements ProcessorDao, Clearable {
     }
 
     @Override
+    public Optional<Processor> fetchByUuid(final String uuid) {
+        return Optional.empty();
+    }
+
+    @Override
     public Processor update(final Processor processor) {
         return dao.update(processor);
     }

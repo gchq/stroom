@@ -284,18 +284,18 @@ public class MetaPresenter extends MyPresenterWidget<MetaPresenter.StreamView>
                 }
             }));
         }
-        // Reprocess
+        // Process
         if (streamListProcess != null) {
             registerHandler(streamListProcess.addClickHandler(event -> {
                 if ((event.getNativeButton() & NativeEvent.BUTTON_LEFT) != 0) {
-                    metaListPresenter.reprocess();
+                    metaListPresenter.process();
                 }
             }));
         }
         if (streamRelationListProcess != null) {
             registerHandler(streamRelationListProcess.addClickHandler(event -> {
                 if ((event.getNativeButton() & NativeEvent.BUTTON_LEFT) != 0) {
-                    metaRelationListPresenter.reprocess();
+                    metaRelationListPresenter.process();
                 }
             }));
         }

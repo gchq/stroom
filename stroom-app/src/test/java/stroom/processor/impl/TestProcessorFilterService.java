@@ -79,11 +79,11 @@ class TestProcessorFilterService extends AbstractCoreIntegrationTest {
         final DocRef pipelineRef = new DocRef(PipelineDoc.DOCUMENT_TYPE, "12345", "Test Pipeline");
         final ExpressionCriteria findProcessorFilterCriteria = new ExpressionCriteria();
 
-        processorFilterService.create(pipelineRef, new QueryData(), 1, true);
+        processorFilterService.create(pipelineRef, new QueryData(), 1, false, true);
         assertThat(processorService.find(new ExpressionCriteria()).size()).isEqualTo(1);
         assertThat(processorFilterService.find(findProcessorFilterCriteria).size()).isEqualTo(1);
 
-        processorFilterService.create(pipelineRef, new QueryData(), 10, true);
+        processorFilterService.create(pipelineRef, new QueryData(), 10, false, true);
         assertThat(processorService.find(new ExpressionCriteria()).size()).isEqualTo(1);
         assertThat(processorFilterService.find(findProcessorFilterCriteria).size()).isEqualTo(2);
 
@@ -125,7 +125,7 @@ class TestProcessorFilterService extends AbstractCoreIntegrationTest {
 
         final ExpressionCriteria findProcessorFilterCriteria = new ExpressionCriteria();
 
-        processorFilterService.create(pipelineRef, findStreamQueryData, 1, true);
+        processorFilterService.create(pipelineRef, findStreamQueryData, 1, false, true);
         assertThat(processorService.find(new ExpressionCriteria()).size()).isEqualTo(1);
 
         final ResultPage<ProcessorFilter> filters = processorFilterService

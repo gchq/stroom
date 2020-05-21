@@ -170,7 +170,7 @@ class TestImportExportSerializer extends AbstractCoreIntegrationTest {
     }
 
     @Test
-    void testPipelineWithProcessorFilter() throws IOException {
+    void testPipelineWithProcessorFilter() {
         final DocRef folder = explorerService.create(ExplorerConstants.FOLDER, FileSystemTestUtil.getUniqueTestString(), null, null);
         final DocRef pipelineRef = explorerService.create(PipelineDoc.DOCUMENT_TYPE, "TestPipeline", folder, null);
 
@@ -187,7 +187,7 @@ class TestImportExportSerializer extends AbstractCoreIntegrationTest {
 
         Processor processor = processorService.create(pipelineRef, true);
 
-        ProcessorFilter filter = processorFilterService.create(processor,filterConstraints, 10, true);
+        ProcessorFilter filter = processorFilterService.create(processor,filterConstraints, 10, false, true);
 
         HashSet<DocRef> forExport = new HashSet<DocRef>();
 

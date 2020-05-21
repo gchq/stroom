@@ -17,16 +17,13 @@
 package stroom.processor.impl;
 
 
-import org.junit.jupiter.api.Test;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 import stroom.data.shared.StreamTypeNames;
 import stroom.docref.DocRef;
 import stroom.entity.shared.ExpressionCriteria;
+import stroom.meta.api.MetaService;
 import stroom.meta.shared.FindMetaCriteria;
 import stroom.meta.shared.Meta;
 import stroom.meta.shared.MetaFields;
-import stroom.meta.api.MetaService;
 import stroom.pipeline.shared.PipelineDoc;
 import stroom.processor.api.ProcessorTaskService;
 import stroom.query.api.v2.ExpressionOperator;
@@ -36,6 +33,10 @@ import stroom.test.AbstractCoreIntegrationTest;
 import stroom.test.CommonTestControl;
 import stroom.test.CommonTestScenarioCreator;
 import stroom.test.common.util.test.FileSystemTestUtil;
+
+import org.junit.jupiter.api.Test;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import javax.inject.Inject;
 import java.time.Instant;
@@ -69,22 +70,22 @@ class TestProcessorTaskManager2 extends AbstractCoreIntegrationTest {
         assertThat(streams.size()).isEqualTo(1);
 
         ExpressionOperator expression = new ExpressionOperator.Builder(Op.AND).build();
-        assertThat(processorTaskManager.runSelectMetaQuery(expression, 0, 100).size()).isEqualTo(1);
+        assertThat(processorTaskManager.runSelectMetaQuery(expression, 0, null, null, false, 100).size()).isEqualTo(1);
 
         expression = new ExpressionOperator.Builder(Op.AND).addTerm(MetaFields.FEED_NAME, Condition.EQUALS, feedName).build();
-        assertThat(processorTaskManager.runSelectMetaQuery(expression, 0, 100).size()).isEqualTo(1);
+        assertThat(processorTaskManager.runSelectMetaQuery(expression, 0, null, null, false, 100).size()).isEqualTo(1);
 
         expression = new ExpressionOperator.Builder(Op.AND).addTerm(MetaFields.FEED_NAME, Condition.EQUALS, "otherFed").build();
-        assertThat(processorTaskManager.runSelectMetaQuery(expression, 0, 100).size()).isEqualTo(0);
+        assertThat(processorTaskManager.runSelectMetaQuery(expression, 0, null, null, false, 100).size()).isEqualTo(0);
 
         expression = new ExpressionOperator.Builder(Op.AND).addTerm(MetaFields.PIPELINE, Condition.EQUALS, new DocRef(PipelineDoc.DOCUMENT_TYPE, "1234")).build();
-        assertThat(processorTaskManager.runSelectMetaQuery(expression, 0, 100).size()).isEqualTo(0);
+        assertThat(processorTaskManager.runSelectMetaQuery(expression, 0, null, null, false, 100).size()).isEqualTo(0);
 
         // Check DB cleanup.
         expression = new ExpressionOperator.Builder(Op.AND).build();
-        assertThat(processorTaskManager.runSelectMetaQuery(expression, 0, 100).size()).isEqualTo(1);
+        assertThat(processorTaskManager.runSelectMetaQuery(expression, 0, null, null, false, 100).size()).isEqualTo(1);
         streamTaskDeleteExecutor.delete(Instant.EPOCH);
-        assertThat(processorTaskManager.runSelectMetaQuery(expression, 0, 100).size()).isEqualTo(1);
+        assertThat(processorTaskManager.runSelectMetaQuery(expression, 0, null, null, false, 100).size()).isEqualTo(1);
     }
 
 //    @Test

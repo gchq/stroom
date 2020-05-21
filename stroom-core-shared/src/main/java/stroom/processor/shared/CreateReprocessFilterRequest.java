@@ -20,59 +20,42 @@ import com.fasterxml.jackson.annotation.JsonCreator;
 import com.fasterxml.jackson.annotation.JsonInclude;
 import com.fasterxml.jackson.annotation.JsonInclude.Include;
 import com.fasterxml.jackson.annotation.JsonProperty;
-import stroom.docref.DocRef;
 
 @JsonInclude(Include.NON_NULL)
-public class CreateProcessorFilterRequest {
+public class CreateReprocessFilterRequest {
     @JsonProperty
-    private DocRef pipeline;
+    private final QueryData queryData;
     @JsonProperty
-    private QueryData queryData;
+    private final int priority;
     @JsonProperty
-    private boolean enabled;
+    private final boolean autoPriority;
     @JsonProperty
-    private int priority;
+    private final boolean enabled;
 
     @JsonCreator
-    public CreateProcessorFilterRequest(@JsonProperty("pipeline") final DocRef pipeline,
-                                        @JsonProperty("queryData") final QueryData queryData,
-                                        @JsonProperty("enabled") final boolean enabled,
-                                        @JsonProperty("priority") final int priority) {
-        this.pipeline = pipeline;
+    public CreateReprocessFilterRequest(@JsonProperty("queryData") final QueryData queryData,
+                                        @JsonProperty("priority") final int priority,
+                                        @JsonProperty("autoPriority") final boolean autoPriority,
+                                        @JsonProperty("enabled") final boolean enabled) {
         this.queryData = queryData;
-        this.enabled = enabled;
         this.priority = priority;
-    }
-
-    public DocRef getPipeline() {
-        return pipeline;
-    }
-
-    public void setPipeline(final DocRef pipeline) {
-        this.pipeline = pipeline;
+        this.autoPriority = autoPriority;
+        this.enabled = enabled;
     }
 
     public QueryData getQueryData() {
         return queryData;
     }
 
-    public void setQueryData(final QueryData queryData) {
-        this.queryData = queryData;
-    }
-
-    public boolean isEnabled() {
-        return enabled;
-    }
-
-    public void setEnabled(boolean enabled) {
-        this.enabled = enabled;
-    }
-
     public int getPriority() {
         return priority;
     }
 
-    public void setPriority(int priority) {
-        this.priority = priority;
+    public boolean isAutoPriority() {
+        return autoPriority;
+    }
+
+    public boolean isEnabled() {
+        return enabled;
     }
 }

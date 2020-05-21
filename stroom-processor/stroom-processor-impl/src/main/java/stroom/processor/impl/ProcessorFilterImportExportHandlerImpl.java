@@ -86,7 +86,7 @@ public class ProcessorFilterImportExportHandlerImpl implements ImportExportActio
             throw new RuntimeException("Unable to read meta file associated with processor " + docRef, ex);
         }
 
-        boolean ignore = ProcessorFilterUtil.shouldImport (processorFilter);
+        boolean ignore = ProcessorFilterUtil.shouldImport(processorFilter);
 
         if (ignore)
             LOGGER.warn("Not importing processor filter " + docRef.getUuid() + " because it contains id fields");
@@ -112,10 +112,12 @@ public class ProcessorFilterImportExportHandlerImpl implements ImportExportActio
                             processorFilter.getPipelineUuid(),
                             processorFilter.getPipelineName());
 
-                    processorFilterService.create(processor,
+                    processorFilterService.importFilter(processor,
                             new DocRef(ProcessorFilter.ENTITY_TYPE, processorFilter.getUuid(), null),
                             processorFilter.getQueryData(),
                             processorFilter.getPriority(),
+                            false,
+                            processorFilter.isReprocess(),
                             enable,
                             trackerStartMs);
                 }
@@ -129,7 +131,7 @@ public class ProcessorFilterImportExportHandlerImpl implements ImportExportActio
                 processorFilterService.update(processorFilter);
             }
         }
-        return new ImpexDetails(docRef, processorFilter.getPipelineName(),ignore);
+        return new ImpexDetails(docRef, processorFilter.getPipelineName(), ignore);
     }
 
     private ProcessorFilter findProcessorFilter(final DocRef docRef) {

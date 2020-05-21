@@ -145,12 +145,28 @@ public interface MetaService {
     List<MetaRow> findRelatedData(long id, boolean anyStatus);
 
     /**
+     * Find meta data for reprocessing where child records match the specified criteria.
+     *
+     * @param criteria The criteria to find matching meta data child records with.
+     * @return A list of meta data for reprocessing where child records match the specified criteria.
+     */
+    ResultPage<Meta> findReprocess(FindMetaCriteria criteria);
+
+    /**
      * Get a summary of the items included by the current selection.
      *
      * @param criteria The selection criteria.
      * @return An object that provides a summary of the current selection.
      */
     SelectionSummary getSelectionSummary(FindMetaCriteria criteria);
+
+    /**
+     * Get a summary of the parent items of the current selection for reprocessing purposes.
+     *
+     * @param criteria The selection criteria.
+     * @return An object that provides a summary of the parent items of the current selection for reprocessing purposes.
+     */
+    SelectionSummary getReprocessSelectionSummary(FindMetaCriteria criteria);
 
     /**
      * Return back a aet of meta data records that are effective for a period in
@@ -162,19 +178,18 @@ public interface MetaService {
     Set<Meta> findEffectiveData(EffectiveMetaDataCriteria criteria);
 
     /**
-     * Return the id of the meta data record that is the one before the supplied timestamp
-     *
-     * @param timestampMs the period to compare against the creation date timestamp of the streams in the store
-     * @return the id of the timestamp before the supplied timestamp, or null if
-     * timestamp is earlier than all data or null if timestamp is earlier than all data in the store
-     */
-    Long getMaxDataIdWithCreationBeforePeriod(final Long timestampMs);
-
-    /**
      * Get more detailed meta data for a specific item.
      *
      * @param id The id of the item.
      * @return More detailed meta data.
      */
     List<MetaInfoSection> fetchFullMetaInfo(long id);
+
+    /**
+     * Get a distinct list of processor UUIds for meta data matching the supplied criteria.
+     *
+     * @param criteria The criteria to find matching meta data processor UUIds for.
+     * @return A distinct list of processor UUIds for meta data matching the supplied criteria.
+     */
+    List<String> getProcessorUuidList(FindMetaCriteria criteria);
 }

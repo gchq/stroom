@@ -32,44 +32,21 @@ public class SelectionSummaryPresenter extends MyPresenterWidget<CommonAlertView
         this.restFactory = restFactory;
     }
 
-    public void show(final FindMetaCriteria criteria, final String postAction, final String action, final String caption, final Runnable runnable) {
+    public void show(final FindMetaCriteria criteria, final String postAction, final String action, final String caption, final boolean reprocess, final Runnable runnable) {
         getView().setInfo(SafeHtmlUtil.getSafeHtml("Fetching selection summary. Please wait..."));
 
         final Rest<SelectionSummary> rest = restFactory.create();
-        rest
-                .onSuccess(result -> {
-                    final SafeHtmlBuilder sb = new SafeHtmlBuilder();
-                    appendRow(sb, "item", "items", result.getItemCount());
-                    sb.appendEscaped(" will be ");
-                    sb.appendEscaped(postAction);
-                    sb.appendEscaped(":");
-                    sb.appendHtmlConstant("</br>");
-                    sb.appendHtmlConstant("</br>");
-                    appendRow(sb, "feed", "feeds", result.getFeedCount());
-                    sb.appendHtmlConstant("</br>");
-                    appendRow(sb, "type", "types", result.getTypeCount());
-                    sb.appendHtmlConstant("</br>");
-                    appendRow(sb, "processor", "processors", result.getProcessorCount());
-                    sb.appendHtmlConstant("</br>");
-                    appendRow(sb, "pipeline", "pipelines", result.getPipelineCount());
-                    sb.appendHtmlConstant("</br>");
-                    appendRow(sb, "status", "statuses", result.getStatusCount());
-                    sb.appendHtmlConstant("</br>");
-                    sb.appendEscaped("Created Between: ");
-                    sb.appendHtmlConstant("</br>");
-                    sb.appendEscaped(ClientDateUtil.toISOString(result.getAgeRange().getFrom()));
-                    sb.appendHtmlConstant("</br>");
-                    sb.appendEscaped(ClientDateUtil.toISOString(result.getAgeRange().getTo()));
-                    sb.appendHtmlConstant("</br>");
-                    sb.appendHtmlConstant("</br>");
-                    sb.appendEscaped("Are you sure you want to ");
-                    sb.appendEscaped(action);
-                    sb.appendEscaped("?");
-
-                    getView().setQuestion(sb.toSafeHtml());
-                })
-                .call(META_RESOURCE)
-                .getSelectionSummary(criteria);
+        if (reprocess) {
+            rest
+                    .onSuccess(result -> update(postAction, action, result))
+                    .call(META_RESOURCE)
+                    .getReprocessSelectionSummary(criteria);
+        } else {
+            rest
+                    .onSuccess(result -> update(postAction, action, result))
+                    .call(META_RESOURCE)
+                    .getSelectionSummary(criteria);
+        }
 
         ShowPopupEvent.fire(this, this, PopupType.OK_CANCEL_DIALOG, caption, new PopupUiHandlers() {
             @Override
@@ -84,6 +61,38 @@ public class SelectionSummaryPresenter extends MyPresenterWidget<CommonAlertView
             public void onHide(final boolean autoClose, final boolean ok) {
             }
         });
+    }
+
+    private void update(final String postAction, final String action, final SelectionSummary result) {
+        final SafeHtmlBuilder sb = new SafeHtmlBuilder();
+        appendRow(sb, "item", "items", result.getItemCount());
+        sb.appendEscaped(" will be ");
+        sb.appendEscaped(postAction);
+        sb.appendEscaped(":");
+        sb.appendHtmlConstant("</br>");
+        sb.appendHtmlConstant("</br>");
+        appendRow(sb, "feed", "feeds", result.getFeedCount());
+        sb.appendHtmlConstant("</br>");
+        appendRow(sb, "type", "types", result.getTypeCount());
+        sb.appendHtmlConstant("</br>");
+        appendRow(sb, "processor", "processors", result.getProcessorCount());
+        sb.appendHtmlConstant("</br>");
+        appendRow(sb, "pipeline", "pipelines", result.getPipelineCount());
+        sb.appendHtmlConstant("</br>");
+        appendRow(sb, "status", "statuses", result.getStatusCount());
+        sb.appendHtmlConstant("</br>");
+        sb.appendEscaped("Created Between: ");
+        sb.appendHtmlConstant("</br>");
+        sb.appendEscaped(ClientDateUtil.toISOString(result.getAgeRange().getFrom()));
+        sb.appendHtmlConstant("</br>");
+        sb.appendEscaped(ClientDateUtil.toISOString(result.getAgeRange().getTo()));
+        sb.appendHtmlConstant("</br>");
+        sb.appendHtmlConstant("</br>");
+        sb.appendEscaped("Are you sure you want to ");
+        sb.appendEscaped(action);
+        sb.appendEscaped("?");
+
+        getView().setQuestion(sb.toSafeHtml());
     }
 
     private void appendRow(final SafeHtmlBuilder sb, final String type, final String pluralType, final long count) {

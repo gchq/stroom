@@ -136,11 +136,6 @@ public class MockMetaService implements MetaService, Clearable {
         return (int) metaMap.values().stream().filter(data -> Status.LOCKED.equals(data.getStatus())).count();
     }
 
-//    @Override
-//    public Period getCreatePeriod() {
-//        return new Period(0L, Long.MAX_VALUE);
-//    }
-
     @Override
     public List<String> getFeeds() {
         return feeds.stream()
@@ -176,7 +171,17 @@ public class MockMetaService implements MetaService, Clearable {
     }
 
     @Override
+    public ResultPage<Meta> findReprocess(final FindMetaCriteria criteria) {
+        return null;
+    }
+
+    @Override
     public SelectionSummary getSelectionSummary(final FindMetaCriteria criteria) {
+        return null;
+    }
+
+    @Override
+    public SelectionSummary getReprocessSelectionSummary(final FindMetaCriteria criteria) {
         return null;
     }
 
@@ -278,11 +283,6 @@ public class MockMetaService implements MetaService, Clearable {
     }
 
     @Override
-    public Long getMaxDataIdWithCreationBeforePeriod(Long timestampMs) {
-        return null;
-    }
-
-    @Override
     public String toString() {
         final StringBuilder sb = new StringBuilder();
         for (final long id : metaMap.keySet()) {
@@ -308,5 +308,10 @@ public class MockMetaService implements MetaService, Clearable {
 
     public Map<Long, Meta> getMetaMap() {
         return metaMap;
+    }
+
+    @Override
+    public List<String> getProcessorUuidList(final FindMetaCriteria criteria) {
+        return null;
     }
 }

@@ -3,9 +3,9 @@ package stroom.meta.impl;
 import stroom.dashboard.expression.v1.Val;
 import stroom.datasource.api.v2.AbstractField;
 import stroom.entity.shared.ExpressionCriteria;
+import stroom.meta.api.MetaProperties;
 import stroom.meta.shared.FindMetaCriteria;
 import stroom.meta.shared.Meta;
-import stroom.meta.api.MetaProperties;
 import stroom.meta.shared.SelectionSummary;
 import stroom.meta.shared.Status;
 import stroom.util.shared.Clearable;
@@ -20,9 +20,23 @@ public interface MetaDao extends Clearable {
 
     Meta create(MetaProperties metaProperties);
 
+    void search(ExpressionCriteria criteria, AbstractField[] fields, Consumer<Val[]> consumer);
+
+    /**
+     * Find meta data records that match the specified criteria.
+     *
+     * @param criteria The criteria to find matching meta data records with.
+     * @return A list of matching meta data records.
+     */
     ResultPage<Meta> find(FindMetaCriteria criteria);
 
-    void search(ExpressionCriteria criteria, AbstractField[] fields, Consumer<Val[]> consumer);
+    /**
+     * Find meta data for reprocessing where child records match the specified criteria.
+     *
+     * @param criteria The criteria to find matching meta data child records with.
+     * @return A list of meta data for reprocessing where child records match the specified criteria.
+     */
+    ResultPage<Meta> findReprocess(FindMetaCriteria criteria);
 
     /**
      * Get a summary of the items included by the current selection.
@@ -32,6 +46,14 @@ public interface MetaDao extends Clearable {
      */
     SelectionSummary getSelectionSummary(FindMetaCriteria criteria);
 
+    /**
+     * Get a summary of the parent items of the current selection for reprocessing purposes.
+     *
+     * @param criteria The selection criteria.
+     * @return An object that provides a summary of the parent items of the current selection for reprocessing purposes.
+     */
+    SelectionSummary getReprocessSelectionSummary(FindMetaCriteria criteria);
+
     Optional<Long> getMaxId(FindMetaCriteria criteria);
 
     int updateStatus(FindMetaCriteria criteria, Status currentStatus, Status newStatus, long statusTime);
@@ -39,4 +61,12 @@ public interface MetaDao extends Clearable {
     int delete(List<Long> metaIdList);
 
     int getLockCount();
+
+    /**
+     * Get a distinct list of processor UUIds for meta data matching the supplied criteria.
+     *
+     * @param criteria The criteria to find matching meta data processor UUIds for.
+     * @return A distinct list of processor UUIds for meta data matching the supplied criteria.
+     */
+    List<String> getProcessorUuidList(FindMetaCriteria criteria);
 }

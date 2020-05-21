@@ -26,7 +26,15 @@ import stroom.meta.shared.Status;
 import stroom.node.api.NodeInfo;
 import stroom.processor.api.InclusiveRanges;
 import stroom.processor.api.ProcessorFilterService;
-import stroom.processor.shared.*;
+import stroom.processor.shared.Limits;
+import stroom.processor.shared.ProcessorFilter;
+import stroom.processor.shared.ProcessorFilterFields;
+import stroom.processor.shared.ProcessorFilterTracker;
+import stroom.processor.shared.ProcessorTask;
+import stroom.processor.shared.ProcessorTaskFields;
+import stroom.processor.shared.ProcessorTaskList;
+import stroom.processor.shared.QueryData;
+import stroom.processor.shared.TaskStatus;
 import stroom.query.api.v2.ExpressionOperator;
 import stroom.query.api.v2.ExpressionOperator.Builder;
 import stroom.query.api.v2.ExpressionOperator.Op;
@@ -56,8 +64,15 @@ import stroom.util.shared.Sort.Direction;
 import javax.inject.Inject;
 import javax.inject.Provider;
 import javax.inject.Singleton;
-import java.util.*;
+import java.util.ArrayList;
+import java.util.Collections;
+import java.util.HashMap;
+import java.util.HashSet;
+import java.util.List;
+import java.util.Map;
 import java.util.Map.Entry;
+import java.util.Optional;
+import java.util.Set;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.Executor;
@@ -530,53 +545,6 @@ class ProcessorTaskManagerImpl implements ProcessorTaskManager {
                                 // Get the tracker for this filter.
                                 ProcessorFilterTracker tracker = loadedFilter.getProcessorFilterTracker();
 
-                                // Set the latest stream ms time that this filter
-                                // will be applicable for. This might always be null
-                                // if the filter will be used indefinitely.
-                                if (tracker.getMaxMetaCreateMs() == null) {
-//                                    final long maxStreamId = recentStreamInfo.getMaxStreamId();
-                                    Long streamCreateMaxMs = null;
-//
-//                                    // If the criteria has a stream id set with the
-//                                    // greatest id that is less than the current max
-//                                    // stream id then we can bound the max stream
-//                                    // create time.
-//                                    if (findStreamCriteria.getMetaIdSet() != null) {
-//                                        final Long maxId = findStreamCriteria.getMetaIdSet().getMaxId();
-//                                        if (maxId != null && maxId.longValue() < maxStreamId) {
-//                                            streamCreateMaxMs = min(streamCreateMaxMs, streamQueryTime);
-//                                        }
-//                                    }
-//
-//                                    // If the criteria has a stream id range with an
-//                                    // upper limit on stream id that is less than
-//                                    // the current max stream id then we can bound
-//                                    // the max stream create time.
-//                                    if (findStreamCriteria.getStreamIdRange() != null) {
-//                                        if (findStreamCriteria.getStreamIdRange().getTo() != null
-//                                                && findStreamCriteria.getStreamIdRange().getTo().longValue() < maxStreamId) {
-//                                            streamCreateMaxMs = min(streamCreateMaxMs, streamQueryTime);
-//                                        }
-//                                    }
-//
-//                                    // If the criteria has a stream creation period
-//                                    // then determine the maximum stream creation
-//                                    // time from this period.
-//                                    if (findStreamCriteria.getCreatePeriod() != null && findStreamCriteria.getCreatePeriod().getTo() != null) {
-//                                        streamCreateMaxMs = min(streamCreateMaxMs, findStreamCriteria.getCreatePeriod().getTo());
-//                                    }
-//
-//                                    // For the time being we will get task
-//                                    // production for queries to end with the latest
-//                                    // stream that existed the first time this is
-//                                    // called.
-//                                    if (!isStreamStoreSearch) {
-//                                        streamCreateMaxMs = min(streamCreateMaxMs, streamQueryTime);
-//                                    }
-
-                                    tracker.setMaxMetaCreateMs(streamCreateMaxMs);
-                                }
-
                                 // Here we do an optimisation and only bother
                                 // processing anything that we have had recent
                                 // stream data for if we were exhausted last time
@@ -790,13 +758,21 @@ class ProcessorTaskManagerImpl implements ProcessorTaskManager {
                 maxEvents,
                 maxEventsPerStream,
                 POLL_INTERVAL_MS,
-                eventRefs -> createTasksFromEventRefs(filter, streamQueryTime, nodeName, query, requiredTasks, queue, maxMetaId, updatedTracker, eventRefs));
+                eventRefs ->
+                        createTasksFromEventRefs(
+                                filter,
+                                streamQueryTime,
+                                nodeName,
+                                requiredTasks,
+                                queue,
+                                maxMetaId,
+                                updatedTracker,
+                                eventRefs));
     }
 
     private void createTasksFromEventRefs(final ProcessorFilter filter,
                                           final long streamQueryTime,
                                           final String nodeName,
-                                          final Query query,
                                           final int requiredTasks,
                                           final StreamTaskQueue queue,
                                           final Long maxMetaId,
@@ -860,6 +836,9 @@ class ProcessorTaskManagerImpl implements ProcessorTaskManager {
         final List<Meta> streamList = runSelectMetaQuery(
                 queryData.getExpression(),
                 updatedTracker.getMinMetaId(),
+                updatedTracker.getMinMetaCreateMs(),
+                updatedTracker.getMaxMetaCreateMs(),
+                filter.isReprocess(),
                 requiredTasks);
 
         // Just create regular stream processing tasks.
@@ -945,46 +924,61 @@ class ProcessorTaskManagerImpl implements ProcessorTaskManager {
      * stream processor
      */
     List<Meta> runSelectMetaQuery(final ExpressionOperator expression,
-                                  final long minStreamId,
-                                  final int max) {
-        // Don't select deleted streams.
-        final ExpressionOperator statusExpression = new ExpressionOperator.Builder(Op.OR)
-                .addTerm(MetaFields.STATUS, Condition.EQUALS, Status.UNLOCKED.getDisplayValue())
-                .addTerm(MetaFields.STATUS, Condition.EQUALS, Status.LOCKED.getDisplayValue())
-                .build();
+                                  final long minMetaId,
+                                  final Long minMetaCreateMs,
+                                  final Long maxMetaCreateMs,
+                                  final boolean reprocess,
+                                  final int length) {
+        if (reprocess) {
+            // Don't select deleted streams.
+            final ExpressionOperator statusExpression = new ExpressionOperator.Builder(Op.OR)
+                    .addTerm(MetaFields.PARENT_STATUS, Condition.EQUALS, Status.UNLOCKED.getDisplayValue())
+                    .addTerm(MetaFields.PARENT_STATUS, Condition.EQUALS, Status.LOCKED.getDisplayValue())
+                    .build();
 
-        final ExpressionOperator streamIdExpression = new ExpressionOperator.Builder(Op.AND)
-                .addOperator(expression)
-                .addTerm(MetaFields.ID, Condition.GREATER_THAN_OR_EQUAL_TO, minStreamId)
-                .addOperator(statusExpression)
-                .build();
+            ExpressionOperator.Builder builder = new ExpressionOperator.Builder(Op.AND)
+                    .addOperator(expression)
+                    .addTerm(MetaFields.PARENT_ID, Condition.GREATER_THAN_OR_EQUAL_TO, minMetaId);
+            if (minMetaCreateMs != null) {
+                builder = builder.addTerm(MetaFields.PARENT_CREATE_TIME, Condition.GREATER_THAN_OR_EQUAL_TO, DateUtil.createNormalDateTimeString(minMetaCreateMs));
+            }
+            if (maxMetaCreateMs != null) {
+                builder = builder.addTerm(MetaFields.PARENT_CREATE_TIME, Condition.LESS_THAN, DateUtil.createNormalDateTimeString(maxMetaCreateMs));
+            }
+            builder = builder.addOperator(statusExpression);
 
-        // Copy the filter
-        final FindMetaCriteria findMetaCriteria = new FindMetaCriteria(streamIdExpression);
-//        findStreamCriteria.copyFrom(criteria);
-        findMetaCriteria.setSort(MetaFields.ID.getName(), Direction.ASCENDING, false);
-//        findStreamCriteria.setStreamIdRange(new IdRange(minStreamId, null));
-//        // Don't care about status
-//        findStreamCriteria.obtainStatusSet().add(StreamStatus.LOCKED);
-//        findStreamCriteria.obtainStatusSet().add(StreamStatus.UNLOCKED);
-        findMetaCriteria.obtainPageRequest().setLength(max);
+            final FindMetaCriteria findMetaCriteria = new FindMetaCriteria(builder.build());
+            findMetaCriteria.setSort(MetaFields.PARENT_ID.getName(), Direction.ASCENDING, false);
+            findMetaCriteria.obtainPageRequest().setLength(length);
 
-        return metaService.find(findMetaCriteria).getValues();
+            return metaService.findReprocess(findMetaCriteria).getValues();
+
+
+        } else {
+            // Don't select deleted streams.
+            final ExpressionOperator statusExpression = new ExpressionOperator.Builder(Op.OR)
+                    .addTerm(MetaFields.STATUS, Condition.EQUALS, Status.UNLOCKED.getDisplayValue())
+                    .addTerm(MetaFields.STATUS, Condition.EQUALS, Status.LOCKED.getDisplayValue())
+                    .build();
+
+            ExpressionOperator.Builder builder = new ExpressionOperator.Builder(Op.AND)
+                    .addOperator(expression)
+                    .addTerm(MetaFields.ID, Condition.GREATER_THAN_OR_EQUAL_TO, minMetaId);
+            if (minMetaCreateMs != null) {
+                builder = builder.addTerm(MetaFields.CREATE_TIME, Condition.GREATER_THAN_OR_EQUAL_TO, DateUtil.createNormalDateTimeString(minMetaCreateMs));
+            }
+            if (maxMetaCreateMs != null) {
+                builder = builder.addTerm(MetaFields.CREATE_TIME, Condition.LESS_THAN, DateUtil.createNormalDateTimeString(maxMetaCreateMs));
+            }
+            builder = builder.addOperator(statusExpression);
+
+            final FindMetaCriteria findMetaCriteria = new FindMetaCriteria(builder.build());
+            findMetaCriteria.setSort(MetaFields.ID.getName(), Direction.ASCENDING, false);
+            findMetaCriteria.obtainPageRequest().setLength(length);
+
+            return metaService.find(findMetaCriteria).getValues();
+        }
     }
-
-//    private Long min(final Long l1, final Long l2) {
-//        if (l1 == null) {
-//            return l2;
-//        }
-//        if (l2 == null) {
-//            return l1;
-//        }
-//        if (l1 > l2) {
-//            return l2;
-//        } else {
-//            return l1;
-//        }
-//    }
 
     /**
      * Schedule a delete if we don't have one

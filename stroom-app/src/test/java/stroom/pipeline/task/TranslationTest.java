@@ -166,7 +166,7 @@ public abstract class TranslationTest extends AbstractCoreIntegrationTest {
                                 .build())
                         .build();
 
-                processorFilterService.create(pipelineRef, findStreamQueryData, priority, true);
+                processorFilterService.create(pipelineRef, findStreamQueryData, priority, false, true);
 
                 // Add data.
                 final List<Path> files = new ArrayList<>();

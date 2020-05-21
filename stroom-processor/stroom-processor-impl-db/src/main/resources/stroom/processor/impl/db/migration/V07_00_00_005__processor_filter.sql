@@ -32,6 +32,7 @@ CREATE TABLE IF NOT EXISTS`processor_filter` (
   `fk_processor_filter_tracker_id` int(11) NOT NULL,
   `data` longtext NOT NULL,
   `priority` int(11) NOT NULL,
+  `reprocess` bit(1) DEFAULT b'0',
   `enabled` bit(1) DEFAULT b'0',
   `deleted` bit(1) DEFAULT b'0',
   PRIMARY KEY (`id`),

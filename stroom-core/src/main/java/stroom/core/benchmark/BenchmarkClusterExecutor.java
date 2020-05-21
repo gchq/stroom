@@ -315,7 +315,7 @@ public class BenchmarkClusterExecutor extends AbstractBenchmark {
                 final QueryData rawCriteria = new QueryData();
                 rawCriteria.setExpression(rawExpression);
 
-                processorFilterService.create(streamProcessor, rawCriteria, 1, true);
+                processorFilterService.create(streamProcessor, rawCriteria, 1, false, true);
 
                 jobManager.setJobEnabled(JobNames.DATA_PROCESSOR, true);
 

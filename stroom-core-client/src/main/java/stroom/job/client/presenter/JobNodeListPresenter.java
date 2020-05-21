@@ -16,15 +16,8 @@
 
 package stroom.job.client.presenter;
 
-import com.google.gwt.cell.client.Cell.Context;
-import com.google.gwt.cell.client.TextCell;
-import com.google.gwt.core.client.GWT;
-import com.google.gwt.dom.client.Element;
-import com.google.gwt.dom.client.NativeEvent;
-import com.google.gwt.user.cellview.client.Column;
-import com.google.inject.Inject;
-import com.google.web.bindery.event.shared.EventBus;
-import com.gwtplatform.mvp.client.MyPresenterWidget;
+import stroom.alert.client.event.AlertEvent;
+import stroom.cell.info.client.InfoHelpLinkColumn;
 import stroom.cell.tickbox.client.TickBoxCell;
 import stroom.cell.tickbox.shared.TickBoxState;
 import stroom.cell.valuespinner.client.ValueSpinnerCell;
@@ -42,10 +35,24 @@ import stroom.job.shared.JobNode;
 import stroom.job.shared.JobNode.JobType;
 import stroom.job.shared.JobNodeInfo;
 import stroom.job.shared.JobNodeResource;
+import stroom.svg.client.SvgPreset;
+import stroom.svg.client.SvgPresets;
+import stroom.ui.config.client.UiConfigCache;
 import stroom.util.shared.ModelStringUtil;
 import stroom.util.shared.ResultPage;
 import stroom.widget.customdatebox.client.ClientDateUtil;
 import stroom.widget.popup.client.presenter.PopupUiHandlers;
+
+import com.google.gwt.cell.client.Cell.Context;
+import com.google.gwt.cell.client.TextCell;
+import com.google.gwt.core.client.GWT;
+import com.google.gwt.dom.client.Element;
+import com.google.gwt.dom.client.NativeEvent;
+import com.google.gwt.user.cellview.client.Column;
+import com.google.gwt.user.client.Window;
+import com.google.inject.Inject;
+import com.google.web.bindery.event.shared.EventBus;
+import com.gwtplatform.mvp.client.MyPresenterWidget;
 
 import java.util.HashMap;
 import java.util.Map;
@@ -56,6 +63,7 @@ public class JobNodeListPresenter extends MyPresenterWidget<DataGridView<JobNode
 
     private final RestFactory restFactory;
     private final SchedulePresenter schedulePresenter;
+    private final UiConfigCache clientPropertyCache;
 
     private final RestDataProvider<JobNode, ResultPage<JobNode>> dataProvider;
     private final Map<JobNode, JobNodeInfo> latestNodeInfo = new HashMap<>();
@@ -65,10 +73,12 @@ public class JobNodeListPresenter extends MyPresenterWidget<DataGridView<JobNode
     @Inject
     public JobNodeListPresenter(final EventBus eventBus,
                                 final RestFactory restFactory,
-                                final SchedulePresenter schedulePresenter) {
+                                final SchedulePresenter schedulePresenter,
+                                final UiConfigCache clientPropertyCache) {
         super(eventBus, new DataGridViewImpl<>(false));
         this.restFactory = restFactory;
         this.schedulePresenter = schedulePresenter;
+        this.clientPropertyCache = clientPropertyCache;
 
         initTable();
 
@@ -101,6 +111,48 @@ public class JobNodeListPresenter extends MyPresenterWidget<DataGridView<JobNode
      * Add the columns to the table.
      */
     private void initTable() {
+        // Help
+        getView().addColumn(new InfoHelpLinkColumn<JobNode>() {
+            @Override
+            public SvgPreset getValue(final JobNode row) {
+                if (row != null) {
+                    return SvgPresets.HELP;
+                }
+                return null;
+            }
+
+            @Override
+            protected void showHelp(final JobNode row) {
+                clientPropertyCache.get()
+                        .onSuccess(result -> {
+                            final String helpUrl = result.getHelpUrl();
+                            if (helpUrl != null && helpUrl.trim().length() > 0) {
+                                String url = helpUrl + "/user-guide/tasks.html" + formatAnchor(row.getJob().getName());
+                                Window.open(url, "_blank", "");
+                            } else {
+                                AlertEvent.fireError(JobNodeListPresenter.this, "Help is not configured!", null);
+                            }
+                        })
+                        .onFailure(caught -> AlertEvent.fireError(JobNodeListPresenter.this, caught.getMessage(), null));
+            }
+
+        }, "<br/>", 20);
+
+        // Enabled.
+        final Column<JobNode, TickBoxState> enabledColumn = new Column<JobNode, TickBoxState>(TickBoxCell.create(false, false)) {
+            @Override
+            public TickBoxState getValue(final JobNode row) {
+                return TickBoxState.fromBoolean(row.isEnabled());
+            }
+        };
+        enabledColumn.setFieldUpdater((index, row, value) -> {
+            row.setEnabled(value.toBoolean());
+            final Rest<JobNode> rest = restFactory.create();
+            rest.call(JOB_NODE_RESOURCE).setEnabled(row.getId(), value.toBoolean());
+        });
+        getView().addColumn(enabledColumn, "Enabled", 80);
+
+        // Job Name
         final Column<JobNode, String> nameColumn = new Column<JobNode, String>(new TextCell()) {
             @Override
             public String getValue(final JobNode row) {
@@ -109,6 +161,7 @@ public class JobNodeListPresenter extends MyPresenterWidget<DataGridView<JobNode
         };
         getView().addResizableColumn(nameColumn, "Job", 200);
 
+        // Node Name
         final Column<JobNode, String> nodeColumn = new Column<JobNode, String>(new TextCell()) {
             @Override
             public String getValue(final JobNode row) {
@@ -215,19 +268,6 @@ public class JobNodeListPresenter extends MyPresenterWidget<DataGridView<JobNode
         };
         getView().addColumn(lastExecutedColumn, "Last Executed", ColumnSizeConstants.DATE_COL);
 
-        // Enabled.
-        final Column<JobNode, TickBoxState> enabledColumn = new Column<JobNode, TickBoxState>(TickBoxCell.create(false, false)) {
-            @Override
-            public TickBoxState getValue(final JobNode row) {
-                return TickBoxState.fromBoolean(row.isEnabled());
-            }
-        };
-        enabledColumn.setFieldUpdater((index, row, value) -> {
-            row.setEnabled(value.toBoolean());
-            final Rest<JobNode> rest = restFactory.create();
-            rest.call(JOB_NODE_RESOURCE).setEnabled(row.getId(), value.toBoolean());
-        });
-        getView().addColumn(enabledColumn, "Enabled", 80);
         getView().addEndColumn(new EndColumn<>());
     }
 

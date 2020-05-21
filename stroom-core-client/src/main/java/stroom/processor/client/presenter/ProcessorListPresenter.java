@@ -169,6 +169,7 @@ public class ProcessorListPresenter extends MyPresenterWidget<DataGridView<Proce
         addExpanderColumn();
         addIconColumn();
         addInfoColumn();
+        addEnabledColumn();
         addPipelineColumn();
         addTrackerColumns();
         addLastPollColumns();
@@ -176,7 +177,7 @@ public class ProcessorListPresenter extends MyPresenterWidget<DataGridView<Proce
         addStreamsColumn();
         addEventsColumn();
         addStatusColumn();
-        addEnabledColumn();
+        addReprocessColumn();
         addEndColumn();
     }
 
@@ -479,6 +480,23 @@ public class ProcessorListPresenter extends MyPresenterWidget<DataGridView<Proce
             });
         }
         getView().addColumn(enabledColumn, "Enabled", ColumnSizeConstants.MEDIUM_COL);
+    }
+
+    private void addReprocessColumn() {
+        getView().addResizableColumn(new Column<ProcessorListRow, String>(new TextCell()) {
+            @Override
+            public String getValue(final ProcessorListRow row) {
+                String reprocess = null;
+                if (row instanceof ProcessorFilterRow) {
+                    final ProcessorFilterRow processorFilterRow = (ProcessorFilterRow) row;
+                    reprocess = String.valueOf(
+                            processorFilterRow
+                                    .getProcessorFilter()
+                                    .isReprocess()).toLowerCase();
+                }
+                return reprocess;
+            }
+        }, "Reprocess", ColumnSizeConstants.MEDIUM_COL);
     }
 
     private void addEndColumn() {

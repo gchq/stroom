@@ -1,6 +1,5 @@
 package stroom.processor.impl.db;
 
-import org.jooq.Condition;
 import stroom.db.util.ExpressionMapper;
 import stroom.db.util.ExpressionMapperFactory;
 import stroom.db.util.GenericDao;
@@ -11,6 +10,8 @@ import stroom.processor.impl.db.jooq.tables.records.ProcessorRecord;
 import stroom.processor.shared.Processor;
 import stroom.processor.shared.ProcessorDataSource;
 import stroom.util.shared.ResultPage;
+
+import org.jooq.Condition;
 
 import javax.inject.Inject;
 import java.util.Collection;
@@ -93,6 +94,16 @@ class ProcessorDaoImpl implements ProcessorDao {
     @Override
     public Optional<Processor> fetch(final int id) {
         return genericDao.fetch(id);
+    }
+
+    @Override
+    public Optional<Processor> fetchByUuid(final String uuid) {
+        return JooqUtil.contextResult(processorDbConnProvider, context -> context
+                .select()
+                .from(PROCESSOR)
+                .where(PROCESSOR.UUID.eq(uuid))
+                .fetchOptional()
+                .map(record -> record.into(Processor.class)));
     }
 
     @Override

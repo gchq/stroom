@@ -54,6 +54,11 @@ class MetaResourceImpl implements MetaResource {
     }
 
     @Override
+    public SelectionSummary getReprocessSelectionSummary(final FindMetaCriteria criteria) {
+        return metaServiceProvider.get().getReprocessSelectionSummary(criteria);
+    }
+
+    @Override
     public List<MetaInfoSection> fetchFullMetaInfo(final long id) {
         return metaServiceProvider.get().fetchFullMetaInfo(id);
     }
