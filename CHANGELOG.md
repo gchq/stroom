@@ -6,6 +6,8 @@ and this project adheres to [Semantic Versioning](http://semver.org/).
 
 ## [Unreleased]
 
+* Issue **#1585** : Fixed issue that was preventing viewing folders processors.
+
 * Issue **#1557** : Added an impact summary to meta data actions such as delete, restore, process and download.
 
 * Issue **#1566** : Fixed UI data restore behaviour.

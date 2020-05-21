@@ -41,6 +41,7 @@ import stroom.entity.client.presenter.TreeRowHandler;
 import stroom.pipeline.shared.PipelineDoc;
 import stroom.processor.shared.FetchProcessorRequest;
 import stroom.processor.shared.Processor;
+import stroom.processor.shared.ProcessorExpressionUtil;
 import stroom.processor.shared.ProcessorFilter;
 import stroom.processor.shared.ProcessorFilterResource;
 import stroom.processor.shared.ProcessorFilterRow;
@@ -49,7 +50,6 @@ import stroom.processor.shared.ProcessorListRow;
 import stroom.processor.shared.ProcessorListRowResultPage;
 import stroom.processor.shared.ProcessorResource;
 import stroom.processor.shared.ProcessorRow;
-import stroom.processor.shared.ProcessorTaskExpressionUtil;
 import stroom.svg.client.SvgPreset;
 import stroom.svg.client.SvgPresets;
 import stroom.util.shared.Expander;
@@ -504,12 +504,12 @@ public class ProcessorListPresenter extends MyPresenterWidget<DataGridView<Proce
     }
 
     private void setPipeline(final DocRef pipelineRef) {
-        request.setExpression(ProcessorTaskExpressionUtil.createPipelineExpression(pipelineRef));
+        request.setExpression(ProcessorExpressionUtil.createPipelineExpression(pipelineRef));
         doDataDisplay();
     }
 
     private void setFolder(final DocRef folder) {
-        request.setExpression(ProcessorTaskExpressionUtil.createFolderExpression(folder));
+        request.setExpression(ProcessorExpressionUtil.createFolderExpression(folder));
         doDataDisplay();
     }
 
