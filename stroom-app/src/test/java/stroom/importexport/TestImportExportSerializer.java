@@ -68,7 +68,6 @@ import java.util.Set;
 import static org.assertj.core.api.Assertions.assertThat;
 
 class TestImportExportSerializer extends AbstractCoreIntegrationTest {
-
     private static final Logger LOGGER = LoggerFactory.getLogger(TestImportExportSerializer.class);
 
     @Inject

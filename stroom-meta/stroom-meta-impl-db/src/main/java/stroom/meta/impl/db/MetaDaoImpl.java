@@ -699,6 +699,8 @@ class MetaDaoImpl implements MetaDao {
         JooqUtil.context(metaDbConnProvider, context -> context
                 .delete(META)
                 .execute());
+        feedIdCache.clear();
+        typeIdCache.clear();
     }
 
     private Collection<Condition> createCondition(final FindMetaCriteria criteria) {

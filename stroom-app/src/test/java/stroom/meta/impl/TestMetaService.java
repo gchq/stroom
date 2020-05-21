@@ -29,6 +29,8 @@ import stroom.meta.api.MetaService;
 import stroom.meta.shared.FindMetaCriteria;
 import stroom.meta.shared.Meta;
 import stroom.meta.shared.MetaFields;
+import stroom.meta.shared.SelectionSummary;
+import stroom.meta.shared.Status;
 import stroom.meta.statistics.impl.MockMetaStatisticsModule;
 import stroom.query.api.v2.ExpressionOperator;
 import stroom.resource.impl.ResourceModule;
@@ -101,7 +103,7 @@ class TestMetaService {
     }
 
     @Test
-    void test() {
+    void testFindWithMetaSecurityFilter() {
         securityContext.asProcessingUser(() -> {
             final User user = userService.createUser(TEST_USER);
 
@@ -121,9 +123,9 @@ class TestMetaService {
                 assertThat(readExpression).isNotEmpty();
                 assertThat(readExpression.get().getChildren().size() == 1);
 
-                final Meta meta1 = metaService.create(createProps(FEED_NO_PERMISSION));
-                final Meta meta2 = metaService.create(createProps(FEED_USE_PERMISSION));
-                final Meta meta3 = metaService.create(createProps(FEED_READ_PERMISSION));
+                createMeta(FEED_NO_PERMISSION);
+                createMeta(FEED_USE_PERMISSION);
+                createMeta(FEED_READ_PERMISSION);
 
                 final List<Meta> readList = metaService.find(new FindMetaCriteria()).getValues();
                 assertThat(readList.size()).isEqualTo(1);
@@ -144,11 +146,148 @@ class TestMetaService {
         });
     }
 
-    private MetaProperties createProps(final String feedName) {
+    @Test
+    void testGetSelectionSummaryWithMetaSecurityFilter() {
+        securityContext.asProcessingUser(() -> {
+            final User user = userService.createUser(TEST_USER);
+
+            final DocRef docref1 = feedStore.createDocument(FEED_NO_PERMISSION);
+            final DocRef docref2 = feedStore.createDocument(FEED_USE_PERMISSION);
+            final DocRef docref3 = feedStore.createDocument(FEED_READ_PERMISSION);
+
+            documentPermissionService.addPermission(docref2.getUuid(), user.getUuid(), DocumentPermissionNames.USE);
+            documentPermissionService.addPermission(docref3.getUuid(), user.getUuid(), DocumentPermissionNames.READ);
+
+            securityContext.asUser(securityContext.createIdentity(user.getName()), () -> {
+                final Optional<ExpressionOperator> useExpression = metaSecurityFilter.getExpression(DocumentPermissionNames.USE, FEED_FIELDS);
+                final Optional<ExpressionOperator> readExpression = metaSecurityFilter.getExpression(DocumentPermissionNames.READ, FEED_FIELDS);
+
+                assertThat(useExpression).isNotEmpty();
+                assertThat(useExpression.get().getChildren().size() == 1);
+                assertThat(readExpression).isNotEmpty();
+                assertThat(readExpression.get().getChildren().size() == 1);
+
+                createMeta(FEED_NO_PERMISSION);
+                createMeta(FEED_USE_PERMISSION);
+                createMeta(FEED_READ_PERMISSION);
+
+                final SelectionSummary selectionSummary = metaService.getSelectionSummary(new FindMetaCriteria());
+                assertThat(selectionSummary.getItemCount()).isEqualTo(1);
+
+                securityContext.useAsRead(() -> {
+                    final Optional<ExpressionOperator> useExpression2 = metaSecurityFilter.getExpression(DocumentPermissionNames.USE, FEED_FIELDS);
+                    final Optional<ExpressionOperator> readExpression2 = metaSecurityFilter.getExpression(DocumentPermissionNames.READ, FEED_FIELDS);
+
+                    assertThat(useExpression2).isNotEmpty();
+                    assertThat(useExpression2.get().getChildren().size() == 2);
+                    assertThat(readExpression2).isNotEmpty();
+                    assertThat(readExpression2.get().getChildren().size() == 1);
+
+                    final SelectionSummary selectionSummary2 = metaService.getSelectionSummary(new FindMetaCriteria());
+                    assertThat(selectionSummary2.getItemCount()).isEqualTo(2);
+                });
+            });
+        });
+    }
+
+    @Test
+    void testFindReprocessWithMetaSecurityFilter() {
+        securityContext.asProcessingUser(() -> {
+            final User user = userService.createUser(TEST_USER);
+
+            final DocRef feedNoPermission = feedStore.createDocument(FEED_NO_PERMISSION);
+            final DocRef feedReadPermission = feedStore.createDocument(FEED_READ_PERMISSION);
+            documentPermissionService.addPermission(feedReadPermission.getUuid(), user.getUuid(), DocumentPermissionNames.READ);
+
+            securityContext.asUser(securityContext.createIdentity(user.getName()), () -> {
+                final Optional<ExpressionOperator> readExpression = metaSecurityFilter.getExpression(DocumentPermissionNames.READ, FEED_FIELDS);
+
+                assertThat(readExpression).isNotEmpty();
+                assertThat(readExpression.get().getChildren().size() == 1);
+
+                final Meta noPermissionParent = createMeta(FEED_NO_PERMISSION);
+                final Meta readPermissionParent = createMeta(FEED_READ_PERMISSION);
+
+                List<Meta> readList = metaService.findReprocess(new FindMetaCriteria()).getValues();
+                assertThat(readList.size()).isEqualTo(0);
+
+                final Meta noPermissionChild1 = createMeta(noPermissionParent, FEED_NO_PERMISSION, "Cooked Events");
+                readList = metaService.findReprocess(new FindMetaCriteria()).getValues();
+                assertThat(readList.size()).isEqualTo(0);
+
+                final Meta noPermissionChild2 = createMeta(noPermissionParent, FEED_READ_PERMISSION, "Cooked Events");
+                readList = metaService.findReprocess(new FindMetaCriteria()).getValues();
+                assertThat(readList.size()).isEqualTo(0);
+
+                final Meta readPermissionChild1 = createMeta(readPermissionParent, FEED_NO_PERMISSION, "Cooked Events");
+                readList = metaService.findReprocess(new FindMetaCriteria()).getValues();
+                assertThat(readList.size()).isEqualTo(0);
+
+                final Meta readPermissionChild2 = createMeta(readPermissionParent, FEED_READ_PERMISSION, "Cooked Events");
+                readList = metaService.findReprocess(new FindMetaCriteria()).getValues();
+                assertThat(readList.size()).isEqualTo(1);
+            });
+        });
+    }
+
+    @Test
+    void testGetReprocessSelectionSummaryWithMetaSecurityFilter() {
+        securityContext.asProcessingUser(() -> {
+            final User user = userService.createUser(TEST_USER);
+
+            final DocRef feedNoPermission = feedStore.createDocument(FEED_NO_PERMISSION);
+            final DocRef feedReadPermission = feedStore.createDocument(FEED_READ_PERMISSION);
+            documentPermissionService.addPermission(feedReadPermission.getUuid(), user.getUuid(), DocumentPermissionNames.READ);
+
+            securityContext.asUser(securityContext.createIdentity(user.getName()), () -> {
+                final Optional<ExpressionOperator> readExpression = metaSecurityFilter.getExpression(DocumentPermissionNames.READ, FEED_FIELDS);
+
+                assertThat(readExpression).isNotEmpty();
+                assertThat(readExpression.get().getChildren().size() == 1);
+
+                final Meta noPermissionParent = createMeta(FEED_NO_PERMISSION);
+                final Meta readPermissionParent = createMeta(FEED_READ_PERMISSION);
+
+                SelectionSummary selectionSummary = metaService.getReprocessSelectionSummary(new FindMetaCriteria());
+                assertThat(selectionSummary.getItemCount()).isEqualTo(0);
+
+                final Meta noPermissionChild1 = createMeta(noPermissionParent, FEED_NO_PERMISSION, "Cooked Events");
+                selectionSummary = metaService.getReprocessSelectionSummary(new FindMetaCriteria());
+                assertThat(selectionSummary.getItemCount()).isEqualTo(0);
+
+                final Meta noPermissionChild2 = createMeta(noPermissionParent, FEED_READ_PERMISSION, "Cooked Events");
+                selectionSummary = metaService.getReprocessSelectionSummary(new FindMetaCriteria());
+                assertThat(selectionSummary.getItemCount()).isEqualTo(0);
+
+                final Meta readPermissionChild1 = createMeta(readPermissionParent, FEED_NO_PERMISSION, "Cooked Events");
+                selectionSummary = metaService.getReprocessSelectionSummary(new FindMetaCriteria());
+                assertThat(selectionSummary.getItemCount()).isEqualTo(0);
+
+                final Meta readPermissionChild2 = createMeta(readPermissionParent, FEED_READ_PERMISSION, "Cooked Events");
+                selectionSummary = metaService.getReprocessSelectionSummary(new FindMetaCriteria());
+                assertThat(selectionSummary.getItemCount()).isEqualTo(1);
+            });
+        });
+    }
+
+    private Meta createMeta(final String feedName) {
+        return createMeta(null, feedName, "Raw Events");
+    }
+
+    private Meta createMeta(final Meta parent, final String feedName, final String typeName) {
+        return securityContext.asProcessingUserResult(() -> {
+            final Meta meta = metaService.create(createProps(parent, feedName, typeName));
+            metaService.updateStatus(meta, Status.LOCKED, Status.UNLOCKED);
+            return meta;
+        });
+    }
+
+    private MetaProperties createProps(final Meta parent, final String feedName, final String typeName) {
         final long now = System.currentTimeMillis();
         return new MetaProperties.Builder()
+                .parent(parent)
                 .feedName(feedName)
-                .typeName("Raw Events")
+                .typeName(typeName)
                 .createMs(now)
                 .build();
     }
