@@ -7,6 +7,8 @@ and this project adheres to [Semantic Versioning](http://semver.org/).
 
 ## [Unreleased]
 
+* Issue **#1544** : Fixes for imported dashboards.
+
 * Issue **#1586** : Fixed migration and initial population of standard meta type names.
 
 * Issue **#1592** : Changed DB bit(1) columns to be tinyint(1) so that they show values correctly in the CLI.
