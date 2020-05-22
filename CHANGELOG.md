@@ -10,6 +10,8 @@ and this project adheres to [Semantic Versioning](http://semver.org/).
 
 * Issue **#1566** : Fixed UI data restore behaviour.
 
+* Make public port configurable
+
 
 ## [v7.0-beta.32] - 2020-05-19
 
