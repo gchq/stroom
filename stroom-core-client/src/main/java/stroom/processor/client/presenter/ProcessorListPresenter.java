@@ -104,7 +104,11 @@ public class ProcessorListPresenter extends MyPresenterWidget<DataGridView<Proce
             @Override
             protected void exec(final Consumer<ProcessorListRowResultPage> dataConsumer, final Consumer<Throwable> throwableConsumer) {
                 final Rest<ProcessorListRowResultPage> rest = restFactory.create();
-                rest.onSuccess(dataConsumer).onFailure(throwableConsumer).call(PROCESSOR_FILTER_RESOURCE).find(request);
+                rest
+                        .onSuccess(dataConsumer)
+                        .onFailure(throwableConsumer)
+                        .call(PROCESSOR_FILTER_RESOURCE)
+                        .find(request);
             }
 
             @Override
@@ -116,19 +120,25 @@ public class ProcessorListPresenter extends MyPresenterWidget<DataGridView<Proce
         processorEnabledSaveQueue = new RestSaveQueue<Integer, Boolean>(eventBus, restFactory) {
             @Override
             protected void doAction(final Rest<?> rest, final Integer key, final Boolean value) {
-                rest.call(PROCESSOR_RESOURCE).setEnabled(key, value);
+                rest
+                        .call(PROCESSOR_RESOURCE)
+                        .setEnabled(key, value);
             }
         };
         processorFilterEnabledSaveQueue = new RestSaveQueue<Integer, Boolean>(eventBus, restFactory) {
             @Override
             protected void doAction(final Rest<?> rest, final Integer key, final Boolean value) {
-                rest.call(PROCESSOR_FILTER_RESOURCE).setEnabled(key, value);
+                rest
+                        .call(PROCESSOR_FILTER_RESOURCE)
+                        .setEnabled(key, value);
             }
         };
         processorFilterPrioritySaveQueue = new RestSaveQueue<Integer, Integer>(eventBus, restFactory) {
             @Override
             protected void doAction(final Rest<?> rest, final Integer key, final Integer value) {
-                rest.call(PROCESSOR_FILTER_RESOURCE).setPriority(key, value);
+                rest
+                        .call(PROCESSOR_FILTER_RESOURCE)
+                        .setPriority(key, value);
             }
         };
     }
@@ -532,7 +542,7 @@ public class ProcessorListPresenter extends MyPresenterWidget<DataGridView<Proce
     }
 
     private void setNullCriteria() {
-        request.setExpression(null);
+        request.setExpression(ProcessorExpressionUtil.createBasicExpression());
         doDataDisplay();
     }
 

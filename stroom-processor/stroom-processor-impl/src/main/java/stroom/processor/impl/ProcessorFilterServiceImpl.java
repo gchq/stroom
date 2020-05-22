@@ -28,7 +28,7 @@ import stroom.processor.api.ProcessorFilterService;
 import stroom.processor.api.ProcessorService;
 import stroom.processor.shared.FetchProcessorRequest;
 import stroom.processor.shared.Processor;
-import stroom.processor.shared.ProcessorDataSource;
+import stroom.processor.shared.ProcessorFields;
 import stroom.processor.shared.ProcessorFilter;
 import stroom.processor.shared.ProcessorFilterFields;
 import stroom.processor.shared.ProcessorFilterRow;
@@ -58,9 +58,11 @@ import javax.inject.Singleton;
 import java.util.ArrayList;
 import java.util.HashSet;
 import java.util.List;
+import java.util.Objects;
 import java.util.Optional;
 import java.util.Set;
 import java.util.UUID;
+import java.util.stream.Collectors;
 
 @Singleton
 class ProcessorFilterServiceImpl implements ProcessorFilterService {
@@ -237,19 +239,34 @@ class ProcessorFilterServiceImpl implements ProcessorFilterService {
             final List<ProcessorListRow> values = new ArrayList<>();
 
             final ExpressionCriteria criteria = new ExpressionCriteria(request.getExpression());
-            final ExpressionCriteria criteriaRoot = new ExpressionCriteria(request.getExpression());
+//            final ExpressionCriteria criteriaRoot = new ExpressionCriteria(request.getExpression());
 
             // If the user is not an admin then only show them filters that were created by them.
             if (!securityContext.isAdmin()) {
                 final ExpressionOperator.Builder builder = new Builder(Op.AND)
-                        .addTerm(ProcessorDataSource.CREATE_USER, Condition.EQUALS, securityContext.getUserId())
+                        .addTerm(ProcessorFields.CREATE_USER, Condition.EQUALS, securityContext.getUserId())
                         .addOperator(criteria.getExpression());
                 criteria.setExpression(builder.build());
             }
 
-            final ResultPage<Processor> streamProcessors = processorService.find(criteriaRoot);
+//            final ResultPage<Processor> streamProcessors = processorService.find(criteriaRoot);
 
             final ResultPage<ProcessorFilter> processorFilters = find(criteria);
+
+            final String processorIds = processorFilters
+                    .getValues()
+                    .stream()
+                    .map(ProcessorFilter::getProcessor)
+                    .filter(Objects::nonNull)
+                    .map(Processor::getId)
+                    .distinct()
+                    .map(String::valueOf)
+                    .collect(Collectors.joining(","));
+
+            final ExpressionOperator processorExpression = new ExpressionOperator.Builder()
+                    .addTerm(ProcessorFields.ID.getName(), Condition.IN, processorIds)
+                     .build();
+            final ResultPage<Processor> streamProcessors = processorService.find(new ExpressionCriteria(processorExpression));
 
             // Get unique processors.
             final Set<Processor> processors = new HashSet<>(streamProcessors.getValues());
@@ -339,7 +356,7 @@ class ProcessorFilterServiceImpl implements ProcessorFilterService {
 
         // First try to find the associated processors
         final ExpressionOperator processorExpression = new ExpressionOperator.Builder()
-                .addTerm(ProcessorDataSource.PIPELINE, Condition.IS_DOC_REF, pipelineDocRef).build();
+                .addTerm(ProcessorFields.PIPELINE, Condition.IS_DOC_REF, pipelineDocRef).build();
         ResultPage<Processor> processorResultPage = processorService.find(new ExpressionCriteria(processorExpression));
         if (processorResultPage.size() == 0)
             return new ResultPage<>(new ArrayList<>());
@@ -466,7 +483,7 @@ class ProcessorFilterServiceImpl implements ProcessorFilterService {
 
         final ExpressionOperator filterExpression = new ExpressionOperator.Builder()
                 .addTerm(ProcessorFilterFields.PROCESSOR_ID, ExpressionTerm.Condition.EQUALS, processor.getId())
-                .addTerm(ProcessorFilterFields.PROCESSOR_FILTER_DELETED, ExpressionTerm.Condition.EQUALS, false)
+                .addTerm(ProcessorFilterFields.DELETED, ExpressionTerm.Condition.EQUALS, false)
                 .build();
         final List<ProcessorFilter> list = processorFilterDao.find(new ExpressionCriteria(filterExpression)).getValues();
         for (final ProcessorFilter filter : list) {

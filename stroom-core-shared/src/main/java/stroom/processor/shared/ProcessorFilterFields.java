@@ -21,24 +21,22 @@ public class ProcessorFilterFields {
     private static final List<AbstractField> FIELDS = new ArrayList<>();
     private static final Map<String, AbstractField> FIELD_MAP;
 
-    public static final TextField CREATE_USER = new TextField("Create User");
-    public static final LongField LAST_POLL_MS = new LongField("Last Poll Ms");
-    public static final DocRefField PIPELINE = new DocRefField(PipelineDoc.DOCUMENT_TYPE, "Pipeline");
-    public static final IntegerField PRIORITY = new IntegerField("Priority");
-    public static final BooleanField PROCESSOR_ENABLED = new BooleanField("Processor Enabled");
-    public static final BooleanField PROCESSOR_DELETED = new BooleanField("Processor Deleted");
-    public static final BooleanField PROCESSOR_FILTER_ENABLED = new BooleanField("Processor Filter Enabled");
-    public static final BooleanField PROCESSOR_FILTER_DELETED = new BooleanField("Processor Filter Deleted");
+    public static final IdField ID = new IdField("Processor Filter Id");
+    public static final TextField CREATE_USER = new TextField("Processor Filter Create User");
+    public static final LongField LAST_POLL_MS = new LongField("Processor Filter Last Poll Ms");
+    public static final IntegerField PRIORITY = new IntegerField("Processor Filter Priority");
+    public static final BooleanField ENABLED = new BooleanField("Processor Filter Enabled");
+    public static final BooleanField DELETED = new BooleanField("Processor Filter Deleted");
     public static final IdField PROCESSOR_ID = new IdField("Processor Id");
-    public static final TextField UUID = new TextField("UUID");
+    public static final TextField UUID = new TextField("Processor Filter UUID");
 
     static {
+        FIELDS.add(ID);
         FIELDS.add(CREATE_USER);
         FIELDS.add(LAST_POLL_MS);
-        FIELDS.add(PIPELINE);
         FIELDS.add(PRIORITY);
-        FIELDS.add(PROCESSOR_ENABLED);
-        FIELDS.add(PROCESSOR_FILTER_ENABLED);
+        FIELDS.add(ENABLED);
+        FIELDS.add(DELETED);
         FIELDS.add(PROCESSOR_ID);
         FIELDS.add(UUID);
         FIELD_MAP = FIELDS.stream().collect(Collectors.toMap(AbstractField::getName, Function.identity()));

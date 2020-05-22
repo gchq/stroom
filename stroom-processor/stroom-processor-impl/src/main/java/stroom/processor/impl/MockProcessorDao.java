@@ -3,7 +3,7 @@ package stroom.processor.impl;
 import stroom.docref.DocRef;
 import stroom.entity.shared.ExpressionCriteria;
 import stroom.processor.shared.Processor;
-import stroom.processor.shared.ProcessorDataSource;
+import stroom.processor.shared.ProcessorFields;
 import stroom.query.api.v2.ExpressionOperator;
 import stroom.query.api.v2.ExpressionTerm.Condition;
 import stroom.query.api.v2.ExpressionUtil;
@@ -22,7 +22,7 @@ public class MockProcessorDao implements ProcessorDao, Clearable {
     @Override
     public Processor create(final Processor processor) {
         final ExpressionOperator findProcessorExpression = new ExpressionOperator.Builder()
-                .addTerm(ProcessorDataSource.PIPELINE, Condition.EQUALS, new DocRef("Pipeline", processor.getPipelineUuid()))
+                .addTerm(ProcessorFields.PIPELINE, Condition.EQUALS, new DocRef("Pipeline", processor.getPipelineUuid()))
                 .build();
         final ExpressionCriteria findProcessorCriteria = new ExpressionCriteria(findProcessorExpression);
 //        findProcessorCriteria.obtainPipelineUuidCriteria().setString(processor.getPipelineUuid());
@@ -67,7 +67,7 @@ public class MockProcessorDao implements ProcessorDao, Clearable {
                 .values()
                 .stream()
                 .filter(pf -> {
-                    final List<String> pipelineUuids = ExpressionUtil.values(criteria.getExpression(), ProcessorDataSource.PIPELINE);
+                    final List<String> pipelineUuids = ExpressionUtil.values(criteria.getExpression(), ProcessorFields.PIPELINE);
                     return pipelineUuids == null || pipelineUuids.contains(pf.getPipelineUuid());
                 })
                 .collect(Collectors.toList());

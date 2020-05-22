@@ -212,7 +212,7 @@ class TestProcessorFilterService extends AbstractCoreIntegrationTest {
         final ExpressionOperator expression = new ExpressionOperator.Builder()
                 .addTerm(ProcessorFilterFields.LAST_POLL_MS, Condition.GREATER_THAN_OR_EQUAL_TO, 1)
                 .addTerm(ProcessorFilterFields.LAST_POLL_MS, Condition.LESS_THAN, 1)
-                .addTerm(ProcessorFilterFields.PROCESSOR_FILTER_ENABLED, Condition.EQUALS, true)
+                .addTerm(ProcessorFilterFields.ENABLED, Condition.EQUALS, true)
                 .build();
         final ExpressionCriteria findProcessorFilterCriteria = new ExpressionCriteria(expression);
 //        findProcessorFilterCriteria.setLastPollPeriod(new Period(1L, 1L));

@@ -8,7 +8,7 @@ import stroom.entity.shared.ExpressionCriteria;
 import stroom.processor.impl.ProcessorDao;
 import stroom.processor.impl.db.jooq.tables.records.ProcessorRecord;
 import stroom.processor.shared.Processor;
-import stroom.processor.shared.ProcessorDataSource;
+import stroom.processor.shared.ProcessorFields;
 import stroom.util.shared.ResultPage;
 
 import org.jooq.Condition;
@@ -33,9 +33,12 @@ class ProcessorDaoImpl implements ProcessorDao {
         this.genericDao = new GenericDao<>(PROCESSOR, PROCESSOR.ID, Processor.class, processorDbConnProvider);
 
         expressionMapper = expressionMapperFactory.create();
-        expressionMapper.map(ProcessorDataSource.CREATE_USER, PROCESSOR_FILTER.CREATE_USER, value -> value);
-        expressionMapper.map(ProcessorDataSource.PIPELINE, PROCESSOR.PIPELINE_UUID, value -> value);
-        expressionMapper.map(ProcessorDataSource.UUID, PROCESSOR.UUID, value -> value);
+        expressionMapper.map(ProcessorFields.ID, PROCESSOR.ID, Integer::valueOf);
+        expressionMapper.map(ProcessorFields.CREATE_USER, PROCESSOR_FILTER.CREATE_USER, value -> value);
+        expressionMapper.map(ProcessorFields.PIPELINE, PROCESSOR.PIPELINE_UUID, value -> value);
+        expressionMapper.map(ProcessorFields.ENABLED, PROCESSOR.ENABLED, Boolean::valueOf);
+        expressionMapper.map(ProcessorFields.DELETED, PROCESSOR.DELETED, Boolean::valueOf);
+        expressionMapper.map(ProcessorFields.UUID, PROCESSOR.UUID, value -> value);
     }
 
     @Override
@@ -51,7 +54,8 @@ class ProcessorDaoImpl implements ProcessorDao {
                             PROCESSOR.UUID,
                             PROCESSOR.TASK_TYPE,
                             PROCESSOR.PIPELINE_UUID,
-                            PROCESSOR.ENABLED)
+                            PROCESSOR.ENABLED,
+                            PROCESSOR.DELETED)
                     .values(processor.getCreateTimeMs(),
                             processor.getCreateUser(),
                             processor.getUpdateTimeMs(),
@@ -59,7 +63,8 @@ class ProcessorDaoImpl implements ProcessorDao {
                             processor.getUuid(),
                             processor.getTaskType(),
                             processor.getPipelineUuid(),
-                            processor.isEnabled())
+                            processor.isEnabled(),
+                            processor.isDeleted())
                     .onDuplicateKeyIgnore()
                     .returning(PROCESSOR.ID)
                     .fetchOptional();

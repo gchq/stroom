@@ -10,6 +10,13 @@ public final class ProcessorExpressionUtil {
         // Utility class.
     }
 
+    public static ExpressionOperator createBasicExpression() {
+        return new ExpressionOperator.Builder(Op.AND)
+                .addTerm(ProcessorFields.DELETED, Condition.EQUALS, false)
+                .addTerm(ProcessorFilterFields.DELETED, Condition.EQUALS, false)
+                .build();
+    }
+
     public static ExpressionOperator createFolderExpression(final DocRef folder) {
         return createFoldersExpression(folder);
     }
@@ -18,26 +25,27 @@ public final class ProcessorExpressionUtil {
         final ExpressionOperator.Builder builder = new ExpressionOperator.Builder(Op.AND);
 
         if (folders != null) {
-            final ExpressionOperator.Builder or = new ExpressionOperator.Builder(Op.OR);
-            for (final DocRef folder : folders) {
-                or.addTerm(ProcessorDataSource.PIPELINE, Condition.IN_FOLDER, folder);
-//                or.addTerm(ProcessTaskDataSource.FEED_UUID, Condition.IN_FOLDER, folder);
+            if (folders.length == 1) {
+                builder.addTerm(ProcessorFields.PIPELINE, Condition.IN_FOLDER, folders[0]);
+            } else if (folders.length > 0) {
+                final ExpressionOperator.Builder or = new ExpressionOperator.Builder(Op.OR);
+                for (final DocRef folder : folders) {
+                    or.addTerm(ProcessorFields.PIPELINE, Condition.IN_FOLDER, folder);
+                }
+                builder.addOperator(or.build());
             }
-            builder.addOperator(or.build());
         }
 
-        return builder.build();
+        return builder.addTerm(ProcessorFields.DELETED, Condition.EQUALS, false)
+                .addTerm(ProcessorFilterFields.DELETED, Condition.EQUALS, false)
+                .build();
     }
-
-//    public static ExpressionOperator createFeedExpression(final DocRef feedRef) {
-//        return new ExpressionOperator.Builder(Op.AND)
-//                .addTerm(ProcessorTaskDataSource.FEED_UUID, Condition.IS_DOC_REF, feedRef)
-//                .build();
-//    }
 
     public static ExpressionOperator createPipelineExpression(final DocRef pipelineRef) {
         return new ExpressionOperator.Builder(Op.AND)
-                .addTerm(ProcessorDataSource.PIPELINE, Condition.IS_DOC_REF, pipelineRef)
+                .addTerm(ProcessorFields.PIPELINE, Condition.IS_DOC_REF, pipelineRef)
+                .addTerm(ProcessorFields.DELETED, Condition.EQUALS, false)
+                .addTerm(ProcessorFilterFields.DELETED, Condition.EQUALS, false)
                 .build();
     }
 }

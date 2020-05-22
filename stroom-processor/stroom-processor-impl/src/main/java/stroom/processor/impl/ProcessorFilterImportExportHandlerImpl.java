@@ -32,7 +32,7 @@ import stroom.processor.api.ProcessorFilterService;
 import stroom.processor.api.ProcessorFilterUtil;
 import stroom.processor.api.ProcessorService;
 import stroom.processor.shared.Processor;
-import stroom.processor.shared.ProcessorDataSource;
+import stroom.processor.shared.ProcessorFields;
 import stroom.processor.shared.ProcessorFilter;
 import stroom.processor.shared.ProcessorFilterFields;
 import stroom.query.api.v2.ExpressionOperator;
@@ -259,7 +259,7 @@ public class ProcessorFilterImportExportHandlerImpl implements ImportExportActio
         }
 
         final ExpressionOperator expression = new ExpressionOperator.Builder()
-                .addTerm(ProcessorDataSource.UUID, ExpressionTerm.Condition.EQUALS, processorUuid).build();
+                .addTerm(ProcessorFields.UUID, ExpressionTerm.Condition.EQUALS, processorUuid).build();
 
         ExpressionCriteria criteria = new ExpressionCriteria(expression);
         ResultPage<Processor> page = processorService.find(criteria);

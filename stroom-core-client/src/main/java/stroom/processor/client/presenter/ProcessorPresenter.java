@@ -17,19 +17,12 @@
 
 package stroom.processor.client.presenter;
 
-import com.google.gwt.core.client.GWT;
-import com.google.inject.Inject;
-import com.google.inject.Provider;
-import com.google.web.bindery.event.shared.EventBus;
-import com.gwtplatform.mvp.client.MyPresenterWidget;
-import com.gwtplatform.mvp.client.View;
 import stroom.alert.client.event.ConfirmEvent;
 import stroom.dispatch.client.Rest;
 import stroom.dispatch.client.RestFactory;
 import stroom.docref.DocRef;
 import stroom.entity.client.presenter.HasDocumentRead;
 import stroom.pipeline.shared.PipelineDoc;
-import stroom.processor.shared.Processor;
 import stroom.processor.shared.ProcessorFilter;
 import stroom.processor.shared.ProcessorFilterResource;
 import stroom.processor.shared.ProcessorFilterRow;
@@ -42,6 +35,13 @@ import stroom.query.client.ExpressionTreePresenter;
 import stroom.svg.client.SvgPresets;
 import stroom.widget.button.client.ButtonView;
 import stroom.widget.util.client.MultiSelectionModel;
+
+import com.google.gwt.core.client.GWT;
+import com.google.inject.Inject;
+import com.google.inject.Provider;
+import com.google.web.bindery.event.shared.EventBus;
+import com.gwtplatform.mvp.client.MyPresenterWidget;
+import com.gwtplatform.mvp.client.View;
 
 public class ProcessorPresenter extends MyPresenterWidget<ProcessorPresenter.ProcessorView>
         implements HasDocumentRead<Object> {
@@ -223,20 +223,25 @@ public class ProcessorPresenter extends MyPresenterWidget<ProcessorPresenter.Pro
 
     private void removeProcessor() {
         if (selectedProcessor != null) {
-            if (selectedProcessor instanceof ProcessorRow) {
-                final ProcessorRow streamProcessorRow = (ProcessorRow) selectedProcessor;
-                ConfirmEvent.fire(this, "Are you sure you want to delete this processor?", result -> {
-                    if (result) {
-                        final Rest<Processor> rest = restFactory.create();
-                        rest.onSuccess(res -> processorListPresenter.refresh()).call(PROCESSOR_RESOURCE).delete(streamProcessorRow.getProcessor().getId());
-                    }
-                });
-            } else if (selectedProcessor instanceof ProcessorFilterRow) {
+//            if (selectedProcessor instanceof ProcessorRow) {
+//                final ProcessorRow streamProcessorRow = (ProcessorRow) selectedProcessor;
+//                ConfirmEvent.fire(this, "Are you sure you want to delete this processor?", result -> {
+//                    if (result) {
+//                        final Rest<Processor> rest = restFactory.create();
+//                        rest.onSuccess(res -> processorListPresenter.refresh()).call(PROCESSOR_RESOURCE).delete(streamProcessorRow.getProcessor().getId());
+//                    }
+//                });
+//            } else
+//
+            if (selectedProcessor instanceof ProcessorFilterRow) {
                 final ProcessorFilterRow processorFilterRow = (ProcessorFilterRow) selectedProcessor;
                 ConfirmEvent.fire(this, "Are you sure you want to delete this filter?", result -> {
                     if (result) {
                         final Rest<ProcessorFilter> rest = restFactory.create();
-                        rest.onSuccess(res -> processorListPresenter.refresh()).call(PROCESSOR_FILTER_RESOURCE).delete(processorFilterRow.getProcessorFilter().getId());
+                        rest
+                                .onSuccess(res -> processorListPresenter.refresh())
+                                .call(PROCESSOR_FILTER_RESOURCE)
+                                .delete(processorFilterRow.getProcessorFilter().getId());
                     }
                 });
             }

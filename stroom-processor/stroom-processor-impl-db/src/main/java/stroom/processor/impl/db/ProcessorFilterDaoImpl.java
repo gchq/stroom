@@ -9,6 +9,7 @@ import stroom.processor.impl.ProcessorFilterDao;
 import stroom.processor.impl.db.jooq.tables.records.ProcessorFilterRecord;
 import stroom.processor.impl.db.jooq.tables.records.ProcessorFilterTrackerRecord;
 import stroom.processor.shared.Processor;
+import stroom.processor.shared.ProcessorFields;
 import stroom.processor.shared.ProcessorFilter;
 import stroom.processor.shared.ProcessorFilterFields;
 import stroom.processor.shared.ProcessorFilterTracker;
@@ -58,16 +59,21 @@ class ProcessorFilterDaoImpl implements ProcessorFilterDao {
         this.genericDao = new GenericDao<>(PROCESSOR_FILTER, PROCESSOR_FILTER.ID, ProcessorFilter.class, processorDbConnProvider);
 
         expressionMapper = expressionMapperFactory.create();
-        expressionMapper.map(ProcessorFilterFields.PRIORITY, PROCESSOR_FILTER.PRIORITY, Integer::valueOf);
-        expressionMapper.map(ProcessorFilterFields.LAST_POLL_MS, PROCESSOR_FILTER_TRACKER.LAST_POLL_MS, Long::valueOf);
-        expressionMapper.map(ProcessorFilterFields.PROCESSOR_ID, PROCESSOR_FILTER.FK_PROCESSOR_ID, Integer::valueOf);
-        expressionMapper.map(ProcessorFilterFields.PIPELINE, PROCESSOR.PIPELINE_UUID, value -> value);
-        expressionMapper.map(ProcessorFilterFields.PROCESSOR_ENABLED, PROCESSOR.ENABLED, Boolean::valueOf);
-        expressionMapper.map(ProcessorFilterFields.PROCESSOR_DELETED, PROCESSOR.DELETED, Boolean::valueOf);
-        expressionMapper.map(ProcessorFilterFields.PROCESSOR_FILTER_ENABLED, PROCESSOR_FILTER.ENABLED, Boolean::valueOf);
-        expressionMapper.map(ProcessorFilterFields.PROCESSOR_FILTER_DELETED, PROCESSOR_FILTER.DELETED, Boolean::valueOf);
+        expressionMapper.map(ProcessorFilterFields.ID, PROCESSOR_FILTER.ID, Integer::valueOf);
         expressionMapper.map(ProcessorFilterFields.CREATE_USER, PROCESSOR_FILTER.CREATE_USER, value -> value);
+        expressionMapper.map(ProcessorFilterFields.LAST_POLL_MS, PROCESSOR_FILTER_TRACKER.LAST_POLL_MS, Long::valueOf);
+        expressionMapper.map(ProcessorFilterFields.PRIORITY, PROCESSOR_FILTER.PRIORITY, Integer::valueOf);
+        expressionMapper.map(ProcessorFilterFields.ENABLED, PROCESSOR_FILTER.ENABLED, Boolean::valueOf);
+        expressionMapper.map(ProcessorFilterFields.DELETED, PROCESSOR_FILTER.DELETED, Boolean::valueOf);
+        expressionMapper.map(ProcessorFilterFields.PROCESSOR_ID, PROCESSOR_FILTER.FK_PROCESSOR_ID, Integer::valueOf);
         expressionMapper.map(ProcessorFilterFields.UUID, PROCESSOR_FILTER.UUID, value -> value);
+
+        expressionMapper.map(ProcessorFields.ID, PROCESSOR.ID, Integer::valueOf);
+        expressionMapper.map(ProcessorFields.CREATE_USER, PROCESSOR_FILTER.CREATE_USER, value -> value);
+        expressionMapper.map(ProcessorFields.PIPELINE, PROCESSOR.PIPELINE_UUID, value -> value);
+        expressionMapper.map(ProcessorFields.ENABLED, PROCESSOR.ENABLED, Boolean::valueOf);
+        expressionMapper.map(ProcessorFields.DELETED, PROCESSOR.DELETED, Boolean::valueOf);
+        expressionMapper.map(ProcessorFields.UUID, PROCESSOR.UUID, value -> value);
     }
 
     @Override

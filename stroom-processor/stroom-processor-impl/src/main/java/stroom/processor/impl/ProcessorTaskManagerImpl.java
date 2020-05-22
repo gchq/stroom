@@ -27,6 +27,7 @@ import stroom.node.api.NodeInfo;
 import stroom.processor.api.InclusiveRanges;
 import stroom.processor.api.ProcessorFilterService;
 import stroom.processor.shared.Limits;
+import stroom.processor.shared.ProcessorFields;
 import stroom.processor.shared.ProcessorFilter;
 import stroom.processor.shared.ProcessorFilterFields;
 import stroom.processor.shared.ProcessorFilterTracker;
@@ -421,10 +422,10 @@ class ProcessorTaskManagerImpl implements ProcessorTaskManager {
         // Get an up to date list of all enabled stream processor filters.
         LOGGER.trace("Getting enabled non deleted processor filters");
         final ExpressionOperator expression = new Builder()
-                .addTerm(ProcessorFilterFields.PROCESSOR_ENABLED, Condition.EQUALS, true)
-                .addTerm(ProcessorFilterFields.PROCESSOR_DELETED, Condition.EQUALS, false)
-                .addTerm(ProcessorFilterFields.PROCESSOR_FILTER_ENABLED, Condition.EQUALS, true)
-                .addTerm(ProcessorFilterFields.PROCESSOR_FILTER_DELETED, Condition.EQUALS, false)
+                .addTerm(ProcessorFields.ENABLED, Condition.EQUALS, true)
+                .addTerm(ProcessorFields.DELETED, Condition.EQUALS, false)
+                .addTerm(ProcessorFilterFields.ENABLED, Condition.EQUALS, true)
+                .addTerm(ProcessorFilterFields.DELETED, Condition.EQUALS, false)
                 .build();
 
         final ExpressionCriteria findProcessorFilterCriteria = new ExpressionCriteria(expression);
