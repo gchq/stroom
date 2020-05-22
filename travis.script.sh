@@ -260,7 +260,7 @@ else
       -PgwtCompilerMaxHeap=1G \
       clean \
       build \
-      test --tests stroom.pipeline.task.TestFullTranslationTask
+      test --tests *.TestFullTranslationTask
       "${extraBuildArgs[@]}"
 
 # IF WE WANT TO SKIP SOME PARTS OF THE BUILD INCLUDE THESE LINES
