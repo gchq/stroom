@@ -65,15 +65,19 @@ import java.util.stream.Collectors;
  * epoch to now into periods delimited by the earliest create times of each rule.  If a rule has an
  * age of 1 day then the min create time is now()-1d.
  *
- *  If we have a 1d rule and a 1month rule then the following periods will be used:
- *  1d ago => now (Ignored as all rules have age >= this, so all data is retained)
- *  1mnth ago => 1d ago
- *  epoch => 1mnth ago
+ *  If we have a 1mth rule and a 1yr rule then the following periods will be used:
+ *  1mnth ago => now (Ignored as ALL rules have age >= this, so all data is retained)
+ *  1yr ago => 1mnth ago
+ *  epoch => 1yr ago
  *
  *  Disabled rules are ignored and don't count towards the period splits.
  *
  *  A tracker record is used to keep track of what time the last run happened so we can offset the
- *  periods by that amount.
+ *  periods by that amount. Using the period example from above, if the tracker had a last run time
+ *  of 1d ago then the periods become:
+ *  1d ago => now (Ignored as ALL rules have age >= this, so all data is retained)
+ *  1mnth+1d ago => 1mnth ago
+ *  1yr+1d ago => 1yr ago
  */
 public class DataRetentionPolicyExecutor {
     private static final LambdaLogger LOGGER = LambdaLoggerFactory.getLogger(DataRetentionPolicyExecutor.class);

@@ -1,6 +1,7 @@
 package stroom.data.retention.shared;
 
 import java.time.Instant;
+import java.time.temporal.ChronoUnit;
 import java.util.Objects;
 
 public class DataRetentionTracker {
@@ -8,7 +9,7 @@ public class DataRetentionTracker {
     private final String rulesVersion;
 
     public DataRetentionTracker(final Instant lastRunTime, final String rulesVersion) {
-        this.lastRunTime = Objects.requireNonNull(lastRunTime);
+        this.lastRunTime = Objects.requireNonNull(lastRunTime.truncatedTo(ChronoUnit.MILLIS));
         this.rulesVersion = Objects.requireNonNull(rulesVersion);
     }
 
