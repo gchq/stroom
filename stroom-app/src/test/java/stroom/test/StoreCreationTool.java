@@ -17,8 +17,6 @@
 package stroom.test;
 
 
-import io.vavr.Tuple;
-import io.vavr.Tuple2;
 import stroom.data.shared.StreamTypeNames;
 import stroom.data.store.api.OutputStreamProvider;
 import stroom.data.store.api.SegmentOutputStream;
@@ -40,9 +38,9 @@ import stroom.index.shared.AnalyzerType;
 import stroom.index.shared.IndexDoc;
 import stroom.index.shared.IndexField;
 import stroom.index.shared.IndexFields;
+import stroom.meta.api.MetaProperties;
 import stroom.meta.shared.Meta;
 import stroom.meta.shared.MetaFields;
-import stroom.meta.api.MetaProperties;
 import stroom.pipeline.PipelineStore;
 import stroom.pipeline.PipelineTestUtil;
 import stroom.pipeline.parser.CombinedParser;
@@ -65,6 +63,9 @@ import stroom.query.api.v2.ExpressionTerm;
 import stroom.test.common.StroomCoreServerTestFileUtil;
 import stroom.util.io.FileUtil;
 import stroom.util.io.StreamUtil;
+
+import io.vavr.Tuple;
+import io.vavr.Tuple2;
 
 import javax.inject.Inject;
 import java.io.IOException;
@@ -90,7 +91,7 @@ import static org.assertj.core.api.Assertions.assertThat;
 public final class StoreCreationTool {
     private static final int OLD_YEAR = 2006;
 
-//    private static final String EVENT_DATA_TEXT_PIPELINE_UUID = "7740cfc4-3443-4001-bf0b-6adc77d5a3cf";
+    //    private static final String EVENT_DATA_TEXT_PIPELINE_UUID = "7740cfc4-3443-4001-bf0b-6adc77d5a3cf";
     private static final String REFERENCE_DATA_PIPELINE_UUID = "b15e0cc8-3f82-446d-b106-04f43c38e19c";
     private static final String REFERENCE_LOADER_PIPELINE_UUID = "da1c7351-086f-493b-866a-b42dbe990700";
     private static final String CONTEXT_DATA_PIPELINE_UUID = "fc281170-360d-4773-ad79-5378c5dcf52e";
@@ -99,7 +100,7 @@ public final class StoreCreationTool {
 
     private static final Path eventDataPipeline = StroomCoreServerTestFileUtil
             .getFile("samples/config/Feeds_and_Translations/Test/Event_Data.Pipeline.7740cfc4-3443-4001-bf0b-6adc77d5a3cf.xml");
-//    private static final Path referenceDataPipeline = StroomCoreServerTestFileUtil
+    //    private static final Path referenceDataPipeline = StroomCoreServerTestFileUtil
 //            .getFile("samples/config/Standard_Pipelines/Reference_Data.Pipeline.b15e0cc8-3f82-446d-b106-04f43c38e19c.xml");
 //    private static final Path referenceLoaderPipeline = StroomCoreServerTestFileUtil
 //            .getFile("samples/config/Standard_Pipelines/Reference_Loader.Pipeline.da1c7351-086f-493b-866a-b42dbe990700.xml");
@@ -703,8 +704,8 @@ public final class StoreCreationTool {
     }
 
     public DocRef duplicatePipeline(final DocRef sourcePipelineDocRef,
-                                           final String newName,
-                                           final String newDescription) {
+                                    final String newName,
+                                    final String newDescription) {
         Objects.requireNonNull(pipelineStore);
         Objects.requireNonNull(sourcePipelineDocRef);
         Objects.requireNonNull(newName);
