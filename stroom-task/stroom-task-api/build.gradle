@@ -2,16 +2,13 @@ ext.moduleName = 'stroom.task.api'
 
 dependencies {
     compile project(':stroom-core-shared')
-    compile project(':stroom-security:stroom-security-api')
     compile project(':stroom-util-shared')
     compile project(':stroom-util')
 
-    compile libs.guice4
+    compile libs.javax_inject
     compile libs.slf4j_api
-    compile libs.stroomDocRef
     
     testCompile libs.assertj_core
-    
     testCompile libs.junit_jupiter_api
 
     // The following logging libs are needed when running junits outside dropwizard
