@@ -48,12 +48,12 @@ class MetaTypeDaoImpl implements MetaTypeDao {
         cache = cacheManager.create(CACHE_NAME, metaServiceConfig::getMetaTypeCache, this::load);
 
         // Ensure some types are preloaded.
-        cache.get(StreamTypeNames.RAW_EVENTS);
-        cache.get(StreamTypeNames.RAW_REFERENCE);
-        cache.get(StreamTypeNames.EVENTS);
-        cache.get(StreamTypeNames.REFERENCE);
-        cache.get(StreamTypeNames.RECORDS);
-        cache.get(StreamTypeNames.ERROR);
+        load(StreamTypeNames.RAW_EVENTS);
+        load(StreamTypeNames.RAW_REFERENCE);
+        load(StreamTypeNames.EVENTS);
+        load(StreamTypeNames.REFERENCE);
+        load(StreamTypeNames.RECORDS);
+        load(StreamTypeNames.ERROR);
     }
 
     private int load(final String name) {
