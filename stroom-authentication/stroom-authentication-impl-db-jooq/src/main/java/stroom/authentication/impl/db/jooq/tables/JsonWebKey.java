@@ -42,7 +42,7 @@ import stroom.authentication.impl.db.jooq.tables.records.JsonWebKeyRecord;
 @SuppressWarnings({ "all", "unchecked", "rawtypes" })
 public class JsonWebKey extends TableImpl<JsonWebKeyRecord> {
 
-    private static final long serialVersionUID = 539266762;
+    private static final long serialVersionUID = 580716081;
 
     /**
      * The reference instance of <code>stroom.json_web_key</code>
@@ -115,7 +115,7 @@ public class JsonWebKey extends TableImpl<JsonWebKeyRecord> {
     /**
      * The column <code>stroom.json_web_key.enabled</code>.
      */
-    public final TableField<JsonWebKeyRecord, Boolean> ENABLED = createField(DSL.name("enabled"), org.jooq.impl.SQLDataType.BIT.nullable(false), this, "");
+    public final TableField<JsonWebKeyRecord, Boolean> ENABLED = createField(DSL.name("enabled"), org.jooq.impl.SQLDataType.BOOLEAN.nullable(false).defaultValue(org.jooq.impl.DSL.inline("0", org.jooq.impl.SQLDataType.BOOLEAN)), this, "");
 
     /**
      * Create a <code>stroom.json_web_key</code> table reference

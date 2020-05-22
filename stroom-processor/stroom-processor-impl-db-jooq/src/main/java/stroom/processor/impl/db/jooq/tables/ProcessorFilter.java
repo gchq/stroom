@@ -42,7 +42,7 @@ import stroom.processor.impl.db.jooq.tables.records.ProcessorFilterRecord;
 @SuppressWarnings({ "all", "unchecked", "rawtypes" })
 public class ProcessorFilter extends TableImpl<ProcessorFilterRecord> {
 
-    private static final long serialVersionUID = 894171290;
+    private static final long serialVersionUID = -753718749;
 
     /**
      * The reference instance of <code>stroom.processor_filter</code>
@@ -115,17 +115,17 @@ public class ProcessorFilter extends TableImpl<ProcessorFilterRecord> {
     /**
      * The column <code>stroom.processor_filter.reprocess</code>.
      */
-    public final TableField<ProcessorFilterRecord, Boolean> REPROCESS = createField(DSL.name("reprocess"), org.jooq.impl.SQLDataType.BIT.defaultValue(org.jooq.impl.DSL.inline("b'0'", org.jooq.impl.SQLDataType.BIT)), this, "");
+    public final TableField<ProcessorFilterRecord, Boolean> REPROCESS = createField(DSL.name("reprocess"), org.jooq.impl.SQLDataType.BOOLEAN.nullable(false).defaultValue(org.jooq.impl.DSL.inline("0", org.jooq.impl.SQLDataType.BOOLEAN)), this, "");
 
     /**
      * The column <code>stroom.processor_filter.enabled</code>.
      */
-    public final TableField<ProcessorFilterRecord, Boolean> ENABLED = createField(DSL.name("enabled"), org.jooq.impl.SQLDataType.BIT.defaultValue(org.jooq.impl.DSL.inline("b'0'", org.jooq.impl.SQLDataType.BIT)), this, "");
+    public final TableField<ProcessorFilterRecord, Boolean> ENABLED = createField(DSL.name("enabled"), org.jooq.impl.SQLDataType.BOOLEAN.nullable(false).defaultValue(org.jooq.impl.DSL.inline("0", org.jooq.impl.SQLDataType.BOOLEAN)), this, "");
 
     /**
      * The column <code>stroom.processor_filter.deleted</code>.
      */
-    public final TableField<ProcessorFilterRecord, Boolean> DELETED = createField(DSL.name("deleted"), org.jooq.impl.SQLDataType.BIT.defaultValue(org.jooq.impl.DSL.inline("b'0'", org.jooq.impl.SQLDataType.BIT)), this, "");
+    public final TableField<ProcessorFilterRecord, Boolean> DELETED = createField(DSL.name("deleted"), org.jooq.impl.SQLDataType.BOOLEAN.nullable(false).defaultValue(org.jooq.impl.DSL.inline("0", org.jooq.impl.SQLDataType.BOOLEAN)), this, "");
 
     /**
      * Create a <code>stroom.processor_filter</code> table reference

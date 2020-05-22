@@ -43,12 +43,17 @@ if (getPropertyOrDefault(propNameJooqGeneration, "false") == "true") {
                         // Add anything you want included in generation below, whitespace ignored
                         // and comments allowed. Each one is a java regex
                         includes = 'query'
-                        
                         // We don't want to include flyway versioning
                         excludes = 'query_schema_history'
-
                         // Specify 'version' for use in optimistic concurrency control
                         recordVersionFields = 'version'
+                        // Treat tinyint(1) columns as booleans
+                        forcedTypes {
+                            forcedType {
+                                name = 'BOOLEAN'
+                                types = '(?i:TINYINT\\(1\\))'
+                            }
+                        }
                     }
                     target {
                         packageName = 'stroom.storedquery.impl.db.jooq'

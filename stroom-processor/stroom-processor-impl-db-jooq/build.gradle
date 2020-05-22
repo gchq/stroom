@@ -51,12 +51,17 @@ if (getPropertyOrDefault(propNameJooqGeneration, "false") == "true") {
                                 "processor_filter|" +
                                 "processor_filter_tracker|" +
                                 "processor_task"
-
                         // We don't want to include flyway versioning
                         excludes = 'processor_schema_history'
-
                         // Specify 'version' for use in optimistic concurrency control
                         recordVersionFields = 'version'
+                        // Treat tinyint(1) columns as booleans
+                        forcedTypes {
+                            forcedType {
+                                name = 'BOOLEAN'
+                                types = '(?i:TINYINT\\(1\\))'
+                            }
+                        }
                     }
                     target {
                         packageName = 'stroom.processor.impl.db.jooq'

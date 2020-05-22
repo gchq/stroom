@@ -42,7 +42,7 @@ import stroom.authentication.impl.db.jooq.tables.records.AccountRecord;
 @SuppressWarnings({ "all", "unchecked", "rawtypes" })
 public class Account extends TableImpl<AccountRecord> {
 
-    private static final long serialVersionUID = 924184384;
+    private static final long serialVersionUID = -563586338;
 
     /**
      * The reference instance of <code>stroom.account</code>
@@ -120,12 +120,12 @@ public class Account extends TableImpl<AccountRecord> {
     /**
      * The column <code>stroom.account.login_count</code>.
      */
-    public final TableField<AccountRecord, Integer> LOGIN_COUNT = createField(DSL.name("login_count"), org.jooq.impl.SQLDataType.INTEGER.defaultValue(org.jooq.impl.DSL.inline("0", org.jooq.impl.SQLDataType.INTEGER)), this, "");
+    public final TableField<AccountRecord, Integer> LOGIN_COUNT = createField(DSL.name("login_count"), org.jooq.impl.SQLDataType.INTEGER.nullable(false).defaultValue(org.jooq.impl.DSL.inline("0", org.jooq.impl.SQLDataType.INTEGER)), this, "");
 
     /**
      * The column <code>stroom.account.login_failures</code>.
      */
-    public final TableField<AccountRecord, Integer> LOGIN_FAILURES = createField(DSL.name("login_failures"), org.jooq.impl.SQLDataType.INTEGER.defaultValue(org.jooq.impl.DSL.inline("0", org.jooq.impl.SQLDataType.INTEGER)), this, "");
+    public final TableField<AccountRecord, Integer> LOGIN_FAILURES = createField(DSL.name("login_failures"), org.jooq.impl.SQLDataType.INTEGER.nullable(false).defaultValue(org.jooq.impl.DSL.inline("0", org.jooq.impl.SQLDataType.INTEGER)), this, "");
 
     /**
      * The column <code>stroom.account.last_login_ms</code>.
@@ -140,32 +140,32 @@ public class Account extends TableImpl<AccountRecord> {
     /**
      * The column <code>stroom.account.force_password_change</code>.
      */
-    public final TableField<AccountRecord, Boolean> FORCE_PASSWORD_CHANGE = createField(DSL.name("force_password_change"), org.jooq.impl.SQLDataType.BIT.nullable(false), this, "");
+    public final TableField<AccountRecord, Boolean> FORCE_PASSWORD_CHANGE = createField(DSL.name("force_password_change"), org.jooq.impl.SQLDataType.BOOLEAN.nullable(false).defaultValue(org.jooq.impl.DSL.inline("0", org.jooq.impl.SQLDataType.BOOLEAN)), this, "");
 
     /**
      * The column <code>stroom.account.never_expires</code>.
      */
-    public final TableField<AccountRecord, Boolean> NEVER_EXPIRES = createField(DSL.name("never_expires"), org.jooq.impl.SQLDataType.BIT.nullable(false), this, "");
+    public final TableField<AccountRecord, Boolean> NEVER_EXPIRES = createField(DSL.name("never_expires"), org.jooq.impl.SQLDataType.BOOLEAN.nullable(false).defaultValue(org.jooq.impl.DSL.inline("0", org.jooq.impl.SQLDataType.BOOLEAN)), this, "");
 
     /**
      * The column <code>stroom.account.enabled</code>.
      */
-    public final TableField<AccountRecord, Boolean> ENABLED = createField(DSL.name("enabled"), org.jooq.impl.SQLDataType.BIT.nullable(false), this, "");
+    public final TableField<AccountRecord, Boolean> ENABLED = createField(DSL.name("enabled"), org.jooq.impl.SQLDataType.BOOLEAN.nullable(false).defaultValue(org.jooq.impl.DSL.inline("0", org.jooq.impl.SQLDataType.BOOLEAN)), this, "");
 
     /**
      * The column <code>stroom.account.inactive</code>.
      */
-    public final TableField<AccountRecord, Boolean> INACTIVE = createField(DSL.name("inactive"), org.jooq.impl.SQLDataType.BIT.nullable(false), this, "");
+    public final TableField<AccountRecord, Boolean> INACTIVE = createField(DSL.name("inactive"), org.jooq.impl.SQLDataType.BOOLEAN.nullable(false).defaultValue(org.jooq.impl.DSL.inline("0", org.jooq.impl.SQLDataType.BOOLEAN)), this, "");
 
     /**
      * The column <code>stroom.account.locked</code>.
      */
-    public final TableField<AccountRecord, Boolean> LOCKED = createField(DSL.name("locked"), org.jooq.impl.SQLDataType.BIT.nullable(false), this, "");
+    public final TableField<AccountRecord, Boolean> LOCKED = createField(DSL.name("locked"), org.jooq.impl.SQLDataType.BOOLEAN.nullable(false).defaultValue(org.jooq.impl.DSL.inline("0", org.jooq.impl.SQLDataType.BOOLEAN)), this, "");
 
     /**
      * The column <code>stroom.account.processing_account</code>.
      */
-    public final TableField<AccountRecord, Boolean> PROCESSING_ACCOUNT = createField(DSL.name("processing_account"), org.jooq.impl.SQLDataType.BIT.nullable(false), this, "");
+    public final TableField<AccountRecord, Boolean> PROCESSING_ACCOUNT = createField(DSL.name("processing_account"), org.jooq.impl.SQLDataType.BOOLEAN.nullable(false).defaultValue(org.jooq.impl.DSL.inline("0", org.jooq.impl.SQLDataType.BOOLEAN)), this, "");
 
     /**
      * Create a <code>stroom.account</code> table reference

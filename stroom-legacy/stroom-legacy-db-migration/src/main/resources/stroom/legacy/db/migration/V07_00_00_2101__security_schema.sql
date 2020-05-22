@@ -29,8 +29,8 @@ CREATE TABLE IF NOT EXISTS `stroom_user` (
   `update_user` varchar(255) NOT NULL,
   `name` varchar(255) NOT NULL,
   `uuid` varchar(255) NOT NULL,
-  `is_group` bit(1) NOT NULL,
-  `enabled` bit(1) NOT NULL,
+  `is_group` tinyint(1) NOT NULL DEFAULT '0',
+  `enabled` tinyint(1) NOT NULL DEFAULT '0',
   PRIMARY KEY (`id`),
   UNIQUE KEY `stroom_user_name_is_group_idx` (`name`,`is_group`),
   UNIQUE KEY `stroom_user_uuid_idx` (`uuid`)

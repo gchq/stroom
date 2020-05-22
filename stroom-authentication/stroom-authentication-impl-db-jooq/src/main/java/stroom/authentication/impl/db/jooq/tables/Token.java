@@ -42,7 +42,7 @@ import stroom.authentication.impl.db.jooq.tables.records.TokenRecord;
 @SuppressWarnings({ "all", "unchecked", "rawtypes" })
 public class Token extends TableImpl<TokenRecord> {
 
-    private static final long serialVersionUID = 1683526280;
+    private static final long serialVersionUID = 1249360303;
 
     /**
      * The reference instance of <code>stroom.token</code>
@@ -115,7 +115,7 @@ public class Token extends TableImpl<TokenRecord> {
     /**
      * The column <code>stroom.token.enabled</code>.
      */
-    public final TableField<TokenRecord, Boolean> ENABLED = createField(DSL.name("enabled"), org.jooq.impl.SQLDataType.BIT.nullable(false), this, "");
+    public final TableField<TokenRecord, Boolean> ENABLED = createField(DSL.name("enabled"), org.jooq.impl.SQLDataType.BOOLEAN.nullable(false).defaultValue(org.jooq.impl.DSL.inline("0", org.jooq.impl.SQLDataType.BOOLEAN)), this, "");
 
     /**
      * Create a <code>stroom.token</code> table reference
