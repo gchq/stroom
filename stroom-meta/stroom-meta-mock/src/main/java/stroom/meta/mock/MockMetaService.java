@@ -1,5 +1,6 @@
 package stroom.meta.mock;
 
+import stroom.data.retention.shared.DataRetentionRuleAction;
 import stroom.expression.matcher.ExpressionMatcher;
 import stroom.meta.api.AttributeMap;
 import stroom.meta.api.EffectiveMetaDataCriteria;
@@ -11,7 +12,6 @@ import stroom.meta.shared.MetaFields;
 import stroom.meta.shared.MetaInfoSection;
 import stroom.meta.shared.MetaRow;
 import stroom.meta.shared.Status;
-import stroom.query.api.v2.ExpressionOperator;
 import stroom.util.shared.Clearable;
 import stroom.util.shared.ResultPage;
 import stroom.util.time.TimePeriod;
@@ -120,7 +120,9 @@ public class MockMetaService implements MetaService, Clearable {
     }
 
     @Override
-    public int delete(final List<ExpressionOperator> ruleCritera, final TimePeriod deletionPeriod, final int batchSize) {
+    public int delete(final List<DataRetentionRuleAction> ruleActions,
+                      final TimePeriod deletionPeriod,
+                      final int batchSize) {
         return 0;
     }
 

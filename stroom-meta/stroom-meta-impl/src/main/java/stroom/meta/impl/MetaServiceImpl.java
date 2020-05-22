@@ -1,6 +1,7 @@
 package stroom.meta.impl;
 
 import stroom.dashboard.expression.v1.Val;
+import stroom.data.retention.shared.DataRetentionRuleAction;
 import stroom.datasource.api.v2.AbstractField;
 import stroom.datasource.api.v2.DataSource;
 import stroom.docref.DocRef;
@@ -178,12 +179,12 @@ public class MetaServiceImpl implements MetaService, Searchable {
     }
 
     @Override
-    public int delete(final List<ExpressionOperator> ruleCriteria,
+    public int delete(final List<DataRetentionRuleAction> ruleActions,
                       final TimePeriod period,
                       final int batchSize) {
         return securityContext.secureResult(PermissionNames.DELETE_DATA_PERMISSION, () -> {
-            if (ruleCriteria != null && !ruleCriteria.isEmpty()) {
-                return metaDao.logicalDelete(ruleCriteria, period, batchSize);
+            if (ruleActions != null && !ruleActions.isEmpty()) {
+                return metaDao.logicalDelete(ruleActions, period, batchSize);
             } else {
                 return 0;
             }

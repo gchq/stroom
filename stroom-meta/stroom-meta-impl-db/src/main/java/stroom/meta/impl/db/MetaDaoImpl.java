@@ -6,6 +6,7 @@ import stroom.dashboard.expression.v1.ValInteger;
 import stroom.dashboard.expression.v1.ValLong;
 import stroom.dashboard.expression.v1.ValNull;
 import stroom.dashboard.expression.v1.ValString;
+import stroom.data.retention.shared.DataRetentionRuleAction;
 import stroom.datasource.api.v2.AbstractField;
 import stroom.db.util.ExpressionMapper;
 import stroom.db.util.ExpressionMapperFactory;
@@ -320,12 +321,12 @@ class MetaDaoImpl implements MetaDao {
     }
 
     @Override
-    public int logicalDelete(final List<ExpressionOperator> ruleExpressions,
+    public int logicalDelete(final List<DataRetentionRuleAction> ruleActions,
                              final TimePeriod period,
                              final int batchSize) {
 
         final int updateCount;
-        if (ruleExpressions != null && !ruleExpressions.isEmpty()) {
+        if (ruleActions != null && !ruleActions.isEmpty()) {
             final byte statusIdDeleted = MetaStatusId.getPrimitiveValue(Status.DELETED);
             final byte statusIdUnlocked = MetaStatusId.getPrimitiveValue(Status.UNLOCKED);
 
@@ -342,9 +343,10 @@ class MetaDaoImpl implements MetaDao {
             CaseConditionStep<Boolean> caseConditionStep = null;
             // Order is critical here as we are building a case statement
             // Highest priority rules first, i.e. largest rule number
-            for (ExpressionOperator ruleExpression : ruleExpressions) {
+            for (DataRetentionRuleAction ruleAction : ruleActions) {
                 // TODO change mapper to return a Condition not a collection
-                final Collection<Condition> ruleConditions = expressionMapper.apply(ruleExpression);
+
+                final Collection<Condition> ruleConditions = expressionMapper.apply(ruleAction.getRule().getExpression());
                 final Condition ruleCondition = ruleConditions.iterator().next();
 
                 if (caseConditionStep == null) {

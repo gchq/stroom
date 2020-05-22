@@ -1,11 +1,11 @@
 package stroom.meta.api;
 
+import stroom.data.retention.shared.DataRetentionRuleAction;
 import stroom.meta.shared.FindMetaCriteria;
 import stroom.meta.shared.Meta;
 import stroom.meta.shared.MetaInfoSection;
 import stroom.meta.shared.MetaRow;
 import stroom.meta.shared.Status;
-import stroom.query.api.v2.ExpressionOperator;
 import stroom.util.shared.ResultPage;
 import stroom.util.time.TimePeriod;
 
@@ -83,7 +83,7 @@ public interface MetaService {
      */
     int delete(final long id);
 
-    int delete(final List<ExpressionOperator> ruleCritera,
+    int delete(final List<DataRetentionRuleAction> ruleActions,
                final TimePeriod deletionPeriod,
                final int batchSize);
 

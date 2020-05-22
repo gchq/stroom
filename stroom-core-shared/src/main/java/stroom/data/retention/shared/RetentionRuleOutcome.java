@@ -1,6 +1,6 @@
-package stroom.meta.api;
+package stroom.data.retention.shared;
 
-public enum MetaRetentionAction {
+public enum RetentionRuleOutcome {
     /**
      * States that associated data should be deleted or marked for deletion
      */

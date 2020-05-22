@@ -1,14 +1,13 @@
 package stroom.meta.impl;
 
 import stroom.dashboard.expression.v1.Val;
+import stroom.data.retention.shared.DataRetentionRuleAction;
 import stroom.datasource.api.v2.AbstractField;
 import stroom.entity.shared.ExpressionCriteria;
+import stroom.meta.api.MetaProperties;
 import stroom.meta.shared.FindMetaCriteria;
 import stroom.meta.shared.Meta;
-import stroom.meta.api.MetaProperties;
 import stroom.meta.shared.Status;
-import stroom.query.api.v2.ExpressionOperator;
-import stroom.util.Period;
 import stroom.util.shared.Clearable;
 import stroom.util.shared.ResultPage;
 import stroom.util.time.TimePeriod;
@@ -33,10 +32,10 @@ public interface MetaDao extends Clearable {
     int delete(List<Long> metaIdList);
 
     /**
-     * @param ruleCriteria Must be sorted with highest priority rule first
+     * @param ruleActions Must be sorted with highest priority rule first
      * @param period
      */
-    int logicalDelete(final List<ExpressionOperator> ruleCriteria,
+    int logicalDelete(final List<DataRetentionRuleAction> ruleActions,
                       final TimePeriod period,
                       int batchSize);
 
