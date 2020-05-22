@@ -204,7 +204,7 @@ class ProcessorFilterServiceImpl implements ProcessorFilterService {
     @Override
     public boolean delete(final int id) {
         return securityContext.secureResult(PERMISSION, () ->
-                processorFilterDao.delete(id));
+                processorFilterDao.logicalDelete(id));
     }
 
     @Override
@@ -465,7 +465,9 @@ class ProcessorFilterServiceImpl implements ProcessorFilterService {
         int priority = defaultPriority;
 
         final ExpressionOperator filterExpression = new ExpressionOperator.Builder()
-                .addTerm(ProcessorFilterFields.PROCESSOR_ID, ExpressionTerm.Condition.EQUALS, processor.getId()).build();
+                .addTerm(ProcessorFilterFields.PROCESSOR_ID, ExpressionTerm.Condition.EQUALS, processor.getId())
+                .addTerm(ProcessorFilterFields.PROCESSOR_FILTER_DELETED, ExpressionTerm.Condition.EQUALS, false)
+                .build();
         final List<ProcessorFilter> list = processorFilterDao.find(new ExpressionCriteria(filterExpression)).getValues();
         for (final ProcessorFilter filter : list) {
             // Ignore reprocess filters.

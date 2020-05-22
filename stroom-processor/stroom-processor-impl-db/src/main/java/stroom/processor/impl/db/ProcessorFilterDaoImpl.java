@@ -63,7 +63,9 @@ class ProcessorFilterDaoImpl implements ProcessorFilterDao {
         expressionMapper.map(ProcessorFilterFields.PROCESSOR_ID, PROCESSOR_FILTER.FK_PROCESSOR_ID, Integer::valueOf);
         expressionMapper.map(ProcessorFilterFields.PIPELINE, PROCESSOR.PIPELINE_UUID, value -> value);
         expressionMapper.map(ProcessorFilterFields.PROCESSOR_ENABLED, PROCESSOR.ENABLED, Boolean::valueOf);
+        expressionMapper.map(ProcessorFilterFields.PROCESSOR_DELETED, PROCESSOR.DELETED, Boolean::valueOf);
         expressionMapper.map(ProcessorFilterFields.PROCESSOR_FILTER_ENABLED, PROCESSOR_FILTER.ENABLED, Boolean::valueOf);
+        expressionMapper.map(ProcessorFilterFields.PROCESSOR_FILTER_DELETED, PROCESSOR_FILTER.DELETED, Boolean::valueOf);
         expressionMapper.map(ProcessorFilterFields.CREATE_USER, PROCESSOR_FILTER.CREATE_USER, value -> value);
         expressionMapper.map(ProcessorFilterFields.UUID, PROCESSOR_FILTER.UUID, value -> value);
     }
@@ -129,6 +131,15 @@ class ProcessorFilterDaoImpl implements ProcessorFilterDao {
     @Override
     public boolean delete(final int id) {
         return genericDao.delete(id);
+    }
+
+    @Override
+    public boolean logicalDelete(final int id) {
+        return JooqUtil.contextResult(processorDbConnProvider, context -> context
+                .update(PROCESSOR_FILTER)
+                .set(PROCESSOR_FILTER.DELETED, true)
+                .where(PROCESSOR_FILTER.ID.eq(id))
+                .execute() > 0);
     }
 
     @Override

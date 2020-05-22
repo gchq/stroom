@@ -135,7 +135,7 @@ public class ProcessorServiceImpl implements ProcessorService {
     @Override
     public boolean delete(final int id) {
         return securityContext.secureResult(PERMISSION, () ->
-                processorDao.delete(id));
+                processorDao.logicalDelete(id));
     }
 
     @Override

@@ -6,6 +6,8 @@ and this project adheres to [Semantic Versioning](http://semver.org/).
 
 ## [Unreleased]
 
+* Issue **#1510** : Added logical delete for processor and processor filter to allow a user to force deletion without encountering a DB constraint. 
+
 * Issue **#1557** : Process, reprocess, delete and download data functions now provide an impact summary before a user can proceed with the action.
 
 * Issue **#1557** : The process data function in the data browser now provides the option to process or reprocess data. When selected a user can also choose: the priority of the process filters that will be created; to set the priority automatically based on previous filters; set the enabled state.

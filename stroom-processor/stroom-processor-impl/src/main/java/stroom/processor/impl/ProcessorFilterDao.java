@@ -11,4 +11,6 @@ public interface ProcessorFilterDao extends HasIntCrud<ProcessorFilter> {
     ProcessorFilter create(ProcessorFilter processorFilter,
                            Long minMetaCreateMs,
                            Long maxMetaCreateMs);
+
+    boolean logicalDelete(int id);
 }

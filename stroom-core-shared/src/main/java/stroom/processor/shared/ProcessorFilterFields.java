@@ -26,7 +26,9 @@ public class ProcessorFilterFields {
     public static final DocRefField PIPELINE = new DocRefField(PipelineDoc.DOCUMENT_TYPE, "Pipeline");
     public static final IntegerField PRIORITY = new IntegerField("Priority");
     public static final BooleanField PROCESSOR_ENABLED = new BooleanField("Processor Enabled");
+    public static final BooleanField PROCESSOR_DELETED = new BooleanField("Processor Deleted");
     public static final BooleanField PROCESSOR_FILTER_ENABLED = new BooleanField("Processor Filter Enabled");
+    public static final BooleanField PROCESSOR_FILTER_DELETED = new BooleanField("Processor Filter Deleted");
     public static final IdField PROCESSOR_ID = new IdField("Processor Id");
     public static final TextField UUID = new TextField("UUID");
 

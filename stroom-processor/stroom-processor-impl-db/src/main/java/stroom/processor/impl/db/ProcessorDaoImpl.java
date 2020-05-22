@@ -92,6 +92,15 @@ class ProcessorDaoImpl implements ProcessorDao {
     }
 
     @Override
+    public boolean logicalDelete(final int id) {
+        return JooqUtil.contextResult(processorDbConnProvider, context -> context
+                .update(PROCESSOR)
+                .set(PROCESSOR.DELETED, true)
+                .where(PROCESSOR.ID.eq(id))
+                .execute() > 0);
+    }
+
+    @Override
     public Optional<Processor> fetch(final int id) {
         return genericDao.fetch(id);
     }
