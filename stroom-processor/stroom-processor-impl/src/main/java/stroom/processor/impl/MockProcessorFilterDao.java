@@ -44,6 +44,11 @@ public class MockProcessorFilterDao implements ProcessorFilterDao, Clearable {
     }
 
     @Override
+    public boolean logicalDelete(final int id) {
+        return false;
+    }
+
+    @Override
     public ResultPage<ProcessorFilter> find(final ExpressionCriteria criteria) {
         final List<ProcessorFilter> list = dao
                 .getMap()

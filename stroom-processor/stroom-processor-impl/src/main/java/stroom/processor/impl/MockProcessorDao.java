@@ -56,6 +56,11 @@ public class MockProcessorDao implements ProcessorDao, Clearable {
     }
 
     @Override
+    public boolean logicalDelete(final int id) {
+        return false;
+    }
+
+    @Override
     public ResultPage<Processor> find(final ExpressionCriteria criteria) {
         final List<Processor> list = dao
                 .getMap()
