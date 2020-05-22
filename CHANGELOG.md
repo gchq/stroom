@@ -4,6 +4,7 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](http://keepachangelog.com/) 
 and this project adheres to [Semantic Versioning](http://semver.org/).
 
+
 ## [Unreleased]
 
 * Issue **#1592** : Changed DB bit(1) columns to be tinyint(1) so that they show values correctly in the CLI.
@@ -20,9 +21,16 @@ and this project adheres to [Semantic Versioning](http://semver.org/).
 
 * Issue **#1557** : Added an impact summary to meta data actions such as delete, restore, process and download.
 
+* Issue **#1593** : NPE copying empty expressions
+
+
+## [v7.0-beta.33] - 2020-05-22
+
 * Issue **#1588** : Fix processor filter import.
 
 * Issue **#1566** : Fixed UI data restore behaviour.
+
+* Make public port configurable
 
 
 ## [v7.0-beta.32] - 2020-05-19
@@ -2208,7 +2216,8 @@ Issue **gchq/stroom-expression#22** : Add `typeOf(...)` function to dashboard.
 
 * Issue **#202** : Initial release of the new data retention policy functionality.
 
-[Unreleased]: https://github.com/gchq/stroom/compare/v7.0-beta.32...HEAD
+[Unreleased]: https://github.com/gchq/stroom/compare/v7.0-beta.33...HEAD
+[v7.0-beta.33]: https://github.com/gchq/stroom/compare/v7.0-beta.32...v7.0-beta.33
 [v7.0-beta.32]: https://github.com/gchq/stroom/compare/v7.0-beta.31...v7.0-beta.32
 [v7.0-beta.31]: https://github.com/gchq/stroom/compare/v7.0-beta.30...v7.0-beta.31
 [v7.0-beta.30]: https://github.com/gchq/stroom/compare/v7.0-beta.29...v7.0-beta.30

@@ -83,7 +83,7 @@ appConfig:
   # Comment out the publicUri block if you are not running with nginx
   publicUri:
     hostname: ${API_GATEWAY_HOST:-localhost}
-    port: ${API_GATEWAY_HTTPS_PORT:-443}
+    port: ${API_GATEWAY_PORT:-443}
   serviceDiscovery:
     zookeeperUrl: ${STROOM_SERVICE_DISCOVERY_ZOOKEEPER_URL:-localhost:2181}
     servicesHostNameOrIpAddress: ${STROOM_ADVERTISED_URL:-localhost}
