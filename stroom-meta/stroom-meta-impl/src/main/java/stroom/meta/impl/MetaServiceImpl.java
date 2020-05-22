@@ -2,6 +2,7 @@ package stroom.meta.impl;
 
 import stroom.dashboard.expression.v1.Val;
 import stroom.data.retention.shared.DataRetentionRuleAction;
+import stroom.data.retention.shared.DataRetentionTracker;
 import stroom.datasource.api.v2.AbstractField;
 import stroom.datasource.api.v2.DataSource;
 import stroom.docref.DocRef;
@@ -62,6 +63,7 @@ public class MetaServiceImpl implements MetaService, Searchable {
     private final MetaFeedDao metaFeedDao;
     private final MetaTypeDao metaTypeDao;
     private final MetaValueDao metaValueDao;
+    private final MetaRetentionTrackerDao metaRetentionTrackerDao;
     private final DocRefInfoService docRefInfoService;
     private final Provider<StreamAttributeMapRetentionRuleDecorator> decoratorProvider;
     private final Optional<AttributeMapFactory> attributeMapFactory;
@@ -73,6 +75,7 @@ public class MetaServiceImpl implements MetaService, Searchable {
                     final MetaFeedDao metaFeedDao,
                     final MetaTypeDao metaTypeDao,
                     final MetaValueDao metaValueDao,
+                    final MetaRetentionTrackerDao metaRetentionTrackerDao,
                     final DocRefInfoService docRefInfoService,
                     final Provider<StreamAttributeMapRetentionRuleDecorator> decoratorProvider,
                     final Optional<AttributeMapFactory> attributeMapFactory,
@@ -82,6 +85,7 @@ public class MetaServiceImpl implements MetaService, Searchable {
         this.metaFeedDao = metaFeedDao;
         this.metaTypeDao = metaTypeDao;
         this.metaValueDao = metaValueDao;
+        this.metaRetentionTrackerDao = metaRetentionTrackerDao;
         this.docRefInfoService = docRefInfoService;
         this.decoratorProvider = decoratorProvider;
         this.attributeMapFactory = attributeMapFactory;
@@ -635,6 +639,16 @@ public class MetaServiceImpl implements MetaService, Searchable {
         }
 
         return sections;
+    }
+
+    @Override
+    public Optional<DataRetentionTracker> getRetentionTracker() {
+        return metaRetentionTrackerDao.getTracker();
+    }
+
+    @Override
+    public void setTracker(final DataRetentionTracker dataRetentionTracker) {
+        metaRetentionTrackerDao.createOrUpdate(dataRetentionTracker);
     }
 
     private List<MetaInfoSection.Entry> getStreamEntries(final Meta meta) {

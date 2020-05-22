@@ -10,6 +10,7 @@ import stroom.meta.impl.db.jooq.tables.Meta;
 import stroom.meta.impl.db.jooq.tables.MetaFeed;
 import stroom.meta.impl.db.jooq.tables.MetaKey;
 import stroom.meta.impl.db.jooq.tables.MetaProcessor;
+import stroom.meta.impl.db.jooq.tables.MetaRetentionTracker;
 import stroom.meta.impl.db.jooq.tables.MetaType;
 import stroom.meta.impl.db.jooq.tables.MetaVal;
 
@@ -46,6 +47,11 @@ public class Tables {
      * The table <code>stroom.meta_processor</code>.
      */
     public static final MetaProcessor META_PROCESSOR = MetaProcessor.META_PROCESSOR;
+
+    /**
+     * The table <code>stroom.meta_retention_tracker</code>.
+     */
+    public static final MetaRetentionTracker META_RETENTION_TRACKER = MetaRetentionTracker.META_RETENTION_TRACKER;
 
     /**
      * The table <code>stroom.meta_type</code>.

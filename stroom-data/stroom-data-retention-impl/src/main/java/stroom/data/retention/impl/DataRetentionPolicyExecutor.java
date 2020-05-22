@@ -20,12 +20,11 @@ import stroom.cluster.lock.api.ClusterLockService;
 import stroom.data.retention.shared.DataRetentionRule;
 import stroom.data.retention.shared.DataRetentionRuleAction;
 import stroom.data.retention.shared.DataRetentionRules;
+import stroom.data.retention.shared.DataRetentionTracker;
 import stroom.data.retention.shared.RetentionRuleOutcome;
 import stroom.meta.api.MetaService;
 import stroom.task.api.TaskContext;
 import stroom.task.api.TaskContextFactory;
-import stroom.util.io.FileUtil;
-import stroom.util.json.JsonUtil;
 import stroom.util.logging.LambdaLogger;
 import stroom.util.logging.LambdaLoggerFactory;
 import stroom.util.logging.LogExecutionTime;
@@ -33,23 +32,10 @@ import stroom.util.logging.LogUtil;
 import stroom.util.time.TimePeriod;
 import stroom.util.time.TimeUtils;
 
-import com.fasterxml.jackson.annotation.JsonCreator;
-import com.fasterxml.jackson.annotation.JsonIgnore;
-import com.fasterxml.jackson.annotation.JsonInclude;
-import com.fasterxml.jackson.annotation.JsonInclude.Include;
-import com.fasterxml.jackson.annotation.JsonProperty;
-import com.fasterxml.jackson.annotation.JsonPropertyOrder;
 import com.google.common.collect.Ordering;
 
 import javax.inject.Inject;
 import javax.inject.Provider;
-import java.io.BufferedInputStream;
-import java.io.BufferedOutputStream;
-import java.io.IOException;
-import java.io.InputStream;
-import java.io.OutputStream;
-import java.nio.file.Files;
-import java.nio.file.Path;
 import java.time.Duration;
 import java.time.Instant;
 import java.time.Period;
@@ -60,7 +46,6 @@ import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
-import java.util.Objects;
 import java.util.Optional;
 import java.util.Set;
 import java.util.concurrent.atomic.AtomicBoolean;
@@ -68,6 +53,28 @@ import java.util.function.Function;
 import java.util.function.Supplier;
 import java.util.stream.Collectors;
 
+/**
+ * This class is concerned with logically deleting meta records according to a set of data
+ * retention rules. Rules have precedence, with a higher rule number meaning the rule is more
+ * important. All rules need to be applied to all meta records in precedence order. The first
+ * matching rule applies. If a rule matches, no other rules will be tested/applied. If no rules
+ * match then that record will not be deleted.
+ *
+ * Once the rules have been run over all the data then (assuming the rules have not changed) there
+ * is no need to scan all the data on next run. To limit the data being scanned we split the time since
+ * epoch to now into periods delimited by the earliest create times of each rule.  If a rule has an
+ * age of 1 day then the min create time is now()-1d.
+ *
+ *  If we have a 1d rule and a 1month rule then the following periods will be used:
+ *  1d ago => now (Ignored as all rules have age >= this, so all data is retained)
+ *  1mnth ago => 1d ago
+ *  epoch => 1mnth ago
+ *
+ *  Disabled rules are ignored and don't count towards the period splits.
+ *
+ *  A tracker record is used to keep track of what time the last run happened so we can offset the
+ *  periods by that amount.
+ */
 public class DataRetentionPolicyExecutor {
     private static final LambdaLogger LOGGER = LambdaLoggerFactory.getLogger(DataRetentionPolicyExecutor.class);
 
@@ -123,40 +130,17 @@ public class DataRetentionPolicyExecutor {
 
     private synchronized void process(final TaskContext taskContext, final Instant now) {
         final DataRetentionRules dataRetentionRules = dataRetentionRulesProvider.get();
+        LOGGER.info("Using run time {}", now);
         if (dataRetentionRules != null) {
-            final List<DataRetentionRule> rules = dataRetentionRules.getRules();
-
-            final List<DataRetentionRule> activeRules = getActiveRules(rules);
+            final List<DataRetentionRule> activeRules = getActiveRules(dataRetentionRules.getRules());
 
             if (activeRules.size() > 0) {
                 // Figure out what the batch size will be for deletion.
                 final int batchSize = policyConfig.getDeleteBatchSize();
 
-                // Load the last tracker used.
-                Tracker tracker = Tracker.load();
-
-                // If the data retention policy has changed then we need to assume it has never been run before,
-                // i.e. all data must be considered for retention checking.
-                if (tracker == null || !tracker.rulesEquals(dataRetentionRules)) {
-                    tracker = new Tracker(null, dataRetentionRules);
-                }
-
-                // Calculate the amount of time that has elapsed since we last ran.
-//                long elapsedTime = nowMs;
-                final Duration timeSinceLastRun = tracker.getLastRun()
-                        .map(lastRun -> Duration.between(lastRun, now))
-                        .orElseGet(() -> Duration.between(Instant.EPOCH, now));
-
-                LOGGER.info("Time since last run: {}", timeSinceLastRun);
-
-//                if (tracker.getLastRun() != null) {
-//                    timeSinceLastRun = Duration.between(tracker.getLastRun(), now);
-//                } else {
-//                    timeSinceLastRun = Duration.between(Instant.EPOCH, now);
-//                }
-
-                // Create a new tracker to save at the end of the process.
-                tracker = new Tracker(now.toEpochMilli(), dataRetentionRules);
+                // Use tracker to establish how long ago we last ran this process so we can avoid
+                // scanning over data that has already been evaluated
+                final Duration timeSinceLastRun = getTimeSinceLastRun(now, dataRetentionRules);
 
                 // Create a map of unique periods with the set of rules that apply to them.
                 final Map<TimePeriod, List<DataRetentionRuleAction>> ruleActionsByPeriod = getRulesByPeriod(
@@ -167,7 +151,8 @@ public class DataRetentionPolicyExecutor {
                 // Rules must be in descending order by rule number so they applied in the correct order
                 ruleActionsByPeriod.entrySet()
                         .stream()
-                        .sorted(Comparator.comparing(entry -> entry.getKey().getFrom(), Comparator.reverseOrder()))
+                        .sorted(Comparator.comparing(entry ->
+                                entry.getKey().getFrom(), Comparator.reverseOrder()))
                         .forEach(entry -> {
                             List<DataRetentionRuleAction> ruleActions = entry.getValue();
                             TimePeriod period = entry.getKey();
@@ -183,17 +168,40 @@ public class DataRetentionPolicyExecutor {
                                     allSuccessful.set(false);
                                 }
                             }
-
                         });
 
-                // If we finished running then save the tracker for use next time.
+                // If we finished running then update the tracker for use next time.
                 if (!Thread.currentThread().isInterrupted() && allSuccessful.get()) {
-                    tracker.save();
+                    metaService.setTracker(new DataRetentionTracker(now, dataRetentionRules.getVersion()));
                 }
             } else {
                 LOGGER.info("No active rules to process");
             }
         }
+    }
+
+    private Duration getTimeSinceLastRun(final Instant now, final DataRetentionRules dataRetentionRules) {
+        // Load the last tracker used, if there is one
+        // If the rules have changed since that run, then ignore it
+        // Calculate the amount of time that has elapsed since we last ran.
+        final Duration timeSinceLastRun = metaService.getRetentionTracker()
+                .flatMap(tracker -> {
+                        // If rules ver in track doesn't match, treat as if tracker isn't there
+                        if (tracker.getRulesVersion().equals(dataRetentionRules.getVersion())) {
+                            LOGGER.info("Found valid tracker {}", tracker);
+                            return Optional.of(tracker);
+                        } else {
+                            LOGGER.info("Tracker version is out of date, ignoring it rules version: {}, {}",
+                                    dataRetentionRules.getVersion(), tracker);
+                            return Optional.empty();
+                        }
+                })
+                .map(DataRetentionTracker::getLastRunTime)
+                .map(lastRun -> Duration.between(lastRun, now))
+                .orElseGet(() -> Duration.between(Instant.EPOCH, now));
+
+        LOGGER.info("Treating time since last run as: {}", timeSinceLastRun);
+        return timeSinceLastRun;
     }
 
     private List<DataRetentionRule> getActiveRules(final List<DataRetentionRule> rules) {
@@ -402,100 +410,4 @@ public class DataRetentionPolicyExecutor {
         taskContext.info(messageSupplier);
     }
 
-    // TODO Change the tracker to be a tbl in the db of lastRun, rulesVersion
-    //   Then we can just compare the rulesVersion uuid to see if we can use
-    //   the tracker position.
-
-    @JsonPropertyOrder({"lastRun", "dataRetentionRules", "rulesVersion", "rulesHash"})
-    @JsonInclude(Include.NON_NULL)
-    static class Tracker {
-        private static final String FILE_NAME = "dataRetentionTracker.json";
-
-        @JsonProperty
-        private Long lastRun;
-
-        @JsonProperty
-        private DataRetentionRules dataRetentionRules;
-        @JsonProperty
-        private String rulesVersion;
-        @JsonProperty
-        private int rulesHash;
-
-        Tracker(final Long lastRun, final DataRetentionRules dataRetentionRules) {
-            this.lastRun = lastRun;
-
-            this.dataRetentionRules = dataRetentionRules;
-            this.rulesVersion = dataRetentionRules.getVersion();
-            this.rulesHash = dataRetentionRules.hashCode();
-        }
-
-        @JsonCreator
-        Tracker(@JsonProperty("lastRun") final Long lastRun,
-                @JsonProperty("dataRetentionRules") final DataRetentionRules dataRetentionRules,
-                @JsonProperty("rulesVersion") final String rulesVersion,
-                @JsonProperty("rulesHash") final int rulesHash) {
-            this.lastRun = lastRun;
-            this.dataRetentionRules = dataRetentionRules;
-            this.rulesVersion = rulesVersion;
-            this.rulesHash = rulesHash;
-        }
-
-        boolean rulesEquals(final DataRetentionRules dataRetentionRules) {
-            return Objects.equals(rulesVersion, dataRetentionRules.getVersion())
-                    && rulesHash == dataRetentionRules.hashCode()
-                    && this.dataRetentionRules.equals(dataRetentionRules);
-        }
-
-        public DataRetentionRules getDataRetentionRules() {
-            return dataRetentionRules;
-        }
-
-        @JsonIgnore
-        public Optional<Instant> getLastRun() {
-            return Optional.ofNullable(lastRun)
-                    .map(Instant::ofEpochMilli);
-        }
-
-        static Tracker load() {
-            try {
-                final Path path = FileUtil.getTempDir().resolve(FILE_NAME);
-                if (Files.isRegularFile(path)) {
-                    try (final InputStream inputStream = new BufferedInputStream(Files.newInputStream(path))) {
-                        return JsonUtil.getMapper().readValue(inputStream, Tracker.class);
-                    }
-                }
-            } catch (final IOException e) {
-                LOGGER.error(e::getMessage, e);
-            }
-            return null;
-        }
-
-        void save() {
-            try {
-                final Path path = FileUtil.getTempDir().resolve(FILE_NAME);
-                try (final OutputStream outputStream = new BufferedOutputStream(Files.newOutputStream(path))) {
-                    JsonUtil.getMapper().writeValue(outputStream, this);
-                }
-            } catch (final IOException e) {
-                LOGGER.error(e::getMessage, e);
-            }
-        }
-
-        @Override
-        public boolean equals(final Object o) {
-            if (this == o) return true;
-            if (o == null || getClass() != o.getClass()) return false;
-            final Tracker tracker = (Tracker) o;
-            return rulesHash == tracker.rulesHash &&
-                    Objects.equals(lastRun, tracker.lastRun) &&
-                    Objects.equals(dataRetentionRules, tracker.dataRetentionRules) &&
-                    Objects.equals(rulesVersion, tracker.rulesVersion);
-        }
-
-        @Override
-        public int hashCode() {
-            return Objects.hash(lastRun, dataRetentionRules, rulesVersion, rulesHash);
-        }
-
-    }
 }

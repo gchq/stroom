@@ -17,42 +17,21 @@
 package stroom.data.retention.impl;
 
 
-import stroom.data.retention.impl.DataRetentionPolicyExecutor.Tracker;
 import stroom.data.retention.shared.DataRetentionRule;
-import stroom.data.retention.shared.DataRetentionRules;
 import stroom.data.retention.shared.TimeUnit;
-import stroom.meta.shared.MetaFields;
 import stroom.query.api.v2.ExpressionOperator;
-import stroom.query.api.v2.ExpressionOperator.Op;
-import stroom.query.api.v2.ExpressionTerm.Condition;
 
 import org.junit.jupiter.api.Test;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import java.util.ArrayList;
-import java.util.Collections;
 import java.util.List;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
 class TestDataRetentionRules {
     private static final Logger LOGGER = LoggerFactory.getLogger(TestDataRetentionRules.class);
-
-    @Test
-    void testTracker() {
-        final ExpressionOperator.Builder builder = new ExpressionOperator.Builder(true, Op.AND);
-        builder.addTerm(MetaFields.FEED_NAME, Condition.EQUALS, "TEST_FEED");
-        final DataRetentionRule rule = createRule(1, builder.build(), 1, TimeUnit.DAYS);
-        final DataRetentionRules dataRetentionPolicy = new DataRetentionRules(Collections.singletonList(rule));
-        Tracker tracker = new Tracker(100L, dataRetentionPolicy);
-
-        tracker.save();
-
-        Tracker tracker2 = Tracker.load();
-
-        assertThat(tracker.rulesEquals(tracker2.getDataRetentionRules())).isTrue();
-    }
 
 //    @Test
 //    void testProgress() {

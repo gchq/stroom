@@ -8,6 +8,7 @@ import stroom.meta.impl.MetaDao;
 import stroom.meta.impl.MetaFeedDao;
 import stroom.meta.impl.MetaKeyDao;
 import stroom.meta.impl.MetaProcessorDao;
+import stroom.meta.impl.MetaRetentionTrackerDao;
 import stroom.meta.impl.MetaTypeDao;
 import stroom.meta.impl.MetaValueDao;
 import stroom.util.RunnableWrapper;
@@ -34,6 +35,7 @@ public class MetaDbModule extends AbstractFlyWayDbModule<MetaServiceConfig, Meta
         bind(MetaKeyDao.class).to(MetaKeyDaoImpl.class);
         bind(MetaValueDao.class).to(MetaValueDaoImpl.class);
         bind(MetaDao.class).to(MetaDaoImpl.class);
+        bind(MetaRetentionTrackerDao.class).to(MetaRetentionTrackerDaoImpl.class);
 
         GuiceUtil.buildMultiBinder(binder(), Clearable.class)
                 .addBinding(Cleanup.class);

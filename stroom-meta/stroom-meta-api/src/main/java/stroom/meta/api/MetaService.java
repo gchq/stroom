@@ -1,6 +1,7 @@
 package stroom.meta.api;
 
 import stroom.data.retention.shared.DataRetentionRuleAction;
+import stroom.data.retention.shared.DataRetentionTracker;
 import stroom.meta.shared.FindMetaCriteria;
 import stroom.meta.shared.Meta;
 import stroom.meta.shared.MetaInfoSection;
@@ -10,6 +11,7 @@ import stroom.util.shared.ResultPage;
 import stroom.util.time.TimePeriod;
 
 import java.util.List;
+import java.util.Optional;
 import java.util.Set;
 
 public interface MetaService {
@@ -164,4 +166,7 @@ public interface MetaService {
 
     List<MetaInfoSection> fetchFullMetaInfo(final long id) ;
 
+    Optional<DataRetentionTracker> getRetentionTracker();
+
+    void setTracker(final DataRetentionTracker dataRetentionTracker);
 }
