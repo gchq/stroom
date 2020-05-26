@@ -27,12 +27,18 @@ import stroom.meta.shared.MetaFields;
 import stroom.meta.shared.Status;
 import stroom.query.api.v2.ExpressionOperator;
 import stroom.query.api.v2.ExpressionUtil;
+import stroom.util.collections.BatchingIterator;
 import stroom.util.date.DateUtil;
+import stroom.util.logging.LambdaLogger;
+import stroom.util.logging.LambdaLoggerFactory;
+import stroom.util.logging.LogUtil;
 import stroom.util.shared.PageRequest;
 import stroom.util.shared.ResultPage;
 import stroom.util.shared.Sort;
 import stroom.util.time.TimePeriod;
 
+import io.vavr.Tuple;
+import io.vavr.Tuple2;
 import org.jooq.CaseConditionStep;
 import org.jooq.Condition;
 import org.jooq.Cursor;
@@ -44,11 +50,10 @@ import org.jooq.Record1;
 import org.jooq.Result;
 import org.jooq.SelectConditionStep;
 import org.jooq.impl.DSL;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 
 import javax.inject.Inject;
 import javax.inject.Singleton;
+import java.time.Duration;
 import java.time.Instant;
 import java.util.ArrayList;
 import java.util.Arrays;
@@ -76,7 +81,12 @@ import static stroom.meta.impl.db.jooq.tables.MetaVal.META_VAL;
 
 @Singleton
 class MetaDaoImpl implements MetaDao {
-    private static final Logger LOGGER = LoggerFactory.getLogger(MetaDaoImpl.class);
+    private static final LambdaLogger LOGGER = LambdaLoggerFactory.getLogger(MetaDaoImpl.class);
+
+    // TODO add to config
+    private static final int MAX_VALUES_PER_INSERT = 500;
+    // TODO add to config
+    private static final Duration LOGICAL_DELETE_BATCH_TIME_BUCKET = Duration.ofDays(1);
 
     private static final stroom.meta.impl.db.jooq.tables.Meta meta = META.as("m");
     private static final MetaFeed metaFeed = META_FEED.as("f");
@@ -234,6 +244,64 @@ class MetaDaoImpl implements MetaDao {
     }
 
     @Override
+    public void create(final List<MetaProperties> metaPropertiesList, final Status status) {
+        // ensure we have all the parent records and capture all their ids
+        final Map<String, Integer> feedIds = metaPropertiesList.stream()
+                .map(MetaProperties::getFeedName)
+                .distinct()
+                .map(feedName -> Tuple.of(feedName, feedDao.getOrCreate(feedName)))
+                .collect(Collectors.toMap(Tuple2::_1, Tuple2::_2));
+
+        final Map<String, Integer> typeIds = metaPropertiesList.stream()
+                .map(MetaProperties::getTypeName)
+                .distinct()
+                .map(typeName -> Tuple.of(typeName, metaTypeDao.getOrCreate(typeName)))
+                .collect(Collectors.toMap(Tuple2::_1, Tuple2::_2));
+
+        final Map<String, Integer> processorIds = metaPropertiesList.stream()
+                .map(metaProperties -> Tuple.of(metaProperties.getProcessorUuid(), metaProperties.getPipelineUuid()))
+                .distinct()
+                .map(tuple -> Tuple.of(
+                        tuple._1(),
+                        metaProcessorDao.getOrCreate(tuple._1(), tuple._2())))
+                .collect(Collectors.toMap(Tuple2::_1, Tuple2::_2));
+
+        byte statusId = MetaStatusId.getPrimitiveValue(status);
+
+        // Create a batch of insert stmts, each with n value sets
+        JooqUtil.context(metaDbConnProvider, context -> {
+            context.batch(
+                    BatchingIterator.batchedStreamOf(metaPropertiesList, MAX_VALUES_PER_INSERT)
+                            .map(metaPropertiesBatch -> {
+                                final var insertStep = context
+                                        .insertInto(META,
+                                                META.CREATE_TIME,
+                                                META.EFFECTIVE_TIME,
+                                                META.PARENT_ID,
+                                                META.STATUS,
+                                                META.STATUS_TIME,
+                                                META.FEED_ID,
+                                                META.TYPE_ID,
+                                                META.PROCESSOR_ID);
+
+                                metaPropertiesBatch.forEach(metaProperties ->
+                                        insertStep.values(
+                                                metaProperties.getCreateMs(),
+                                                metaProperties.getEffectiveMs(),
+                                                metaProperties.getParentId(),
+                                                statusId,
+                                                metaProperties.getStatusMs(),
+                                                feedIds.get(metaProperties.getFeedName()),
+                                                typeIds.get(metaProperties.getTypeName()),
+                                                processorIds.get(metaProperties.getProcessorUuid())));
+                                return insertStep;
+                            })
+                            .collect(Collectors.toList()))
+                    .execute();
+        });
+    }
+
+    @Override
     public int updateStatus(final FindMetaCriteria criteria,
                             final Status currentStatus,
                             final Status newStatus,
@@ -325,64 +393,103 @@ class MetaDaoImpl implements MetaDao {
                              final TimePeriod period,
                              final int batchSize) {
 
+        LOGGER.debug(() ->
+                LogUtil.message("logicalDelete called for {} and actions\n{}",
+                        period, ruleActions.stream()
+                                .map(ruleAction -> ruleAction.getRule().getRuleNumber() + " " +
+                                        ruleAction.getRule().getExpression() + " " +
+                                        ruleAction.getOutcome().name())
+                                .collect(Collectors.joining("\n"))));
+
         final int updateCount;
         if (ruleActions != null && !ruleActions.isEmpty()) {
             final byte statusIdDeleted = MetaStatusId.getPrimitiveValue(Status.DELETED);
-            final byte statusIdUnlocked = MetaStatusId.getPrimitiveValue(Status.UNLOCKED);
 
-            // What we are building is roughly:
-            // WHERE (CASE
-            //   WHEN <rule 3 condition is true> THEN true
-            //   WHEN <rule 2 condition is true> THEN true
-            //   WHEN <rule 1 condition is true> THEN true
-            //   ELSE false
-            //   ) = true
-            // I.e. see if a rule matches the data in priority order
-            // Needs to be a CASE so we can ensure the order of rule evaluation
+            List<Condition> baseConditions = createDeleteConditions(ruleActions);
 
-            CaseConditionStep<Boolean> caseConditionStep = null;
-            // Order is critical here as we are building a case statement
-            // Highest priority rules first, i.e. largest rule number
-            for (DataRetentionRuleAction ruleAction : ruleActions) {
-                // TODO change mapper to return a Condition not a collection
+//            if (period.getDuration().compareTo(LOGICAL_DELETE_BATCH_TIME_BUCKET) > 0) {
+//
+//            }
 
-                final Collection<Condition> ruleConditions = expressionMapper.apply(ruleAction.getRule().getExpression());
-                final Condition ruleCondition = ruleConditions.iterator().next();
-
-                if (caseConditionStep == null) {
-                    caseConditionStep = DSL.when(ruleCondition, Boolean.TRUE);
-                } else {
-                    caseConditionStep.when(ruleCondition, Boolean.TRUE);
-                }
-            }
-            // If none of the rules matches then we don't to delete so return false
-            final Field<Boolean> caseField = caseConditionStep.otherwise(Boolean.FALSE);
-
-            List<Condition> conditions = new ArrayList<>();
+            List<Condition> conditions = new ArrayList<>(baseConditions);
 
             // Time bound the data we are testing the rules over
             conditions.add(meta.CREATE_TIME.greaterOrEqual(period.getFrom().toEpochMilli()));
             conditions.add(meta.CREATE_TIME.lessThan(period.getTo().toEpochMilli()));
 
-            // Ensure we only 'delete' unlocked records
-            conditions.add(meta.STATUS.eq(statusIdUnlocked));
+            updateCount = LOGGER.logDurationIfDebugEnabled(
+                    () -> JooqUtil.contextResult(metaDbConnProvider, context -> context
+                                    .update(meta)
+                                    .set(meta.STATUS, statusIdDeleted)
+                                    .set(meta.STATUS_TIME, Instant.now().toEpochMilli())
+                                    .where(conditions)
+                                    .limit(batchSize)
+                                    .execute()),
+                    cnt -> LogUtil.message("Logically deleting {} meta records", cnt));
 
-            // Add our rule conditions
-            conditions.add(caseField.eq(true));
-
-            LOGGER.debug("conditions {}", conditions);
-
-            updateCount = JooqUtil.contextResult(metaDbConnProvider, context -> context
-                    .update(meta)
-                    .set(meta.STATUS, statusIdDeleted)
-                    .set(meta.STATUS_TIME, Instant.now().toEpochMilli())
-                    .where(conditions)
-                    .limit(batchSize)
-                    .execute());
+            LOGGER.debug("Logically deleted {} meta rows", updateCount);
         } else {
+            LOGGER.debug("Empty ruleActions");
             updateCount = 0;
         }
         return updateCount;
+    }
+
+    private List<Condition> createDeleteConditions(final List<DataRetentionRuleAction> ruleActions) {
+        final byte statusIdUnlocked = MetaStatusId.getPrimitiveValue(Status.UNLOCKED);
+
+        // What we are building is roughly:
+        // WHERE (CASE
+        //   WHEN <rule 3 condition is true> THEN
+        //   WHEN <rule 2 condition is true> THEN true
+        //   WHEN <rule 1 condition is true> THEN true
+        //   ELSE false
+        //   ) = true
+        // I.e. see if a rule matches the data in priority order
+        // Needs to be a CASE so we can ensure the order of rule evaluation
+
+        CaseConditionStep<Boolean> caseConditionStep = null;
+        // Order is critical here as we are building a case statement
+        // Highest priority rules first, i.e. largest rule number
+        for (DataRetentionRuleAction ruleAction : ruleActions) {
+            // TODO change mapper to return a Condition not a collection
+
+            final Collection<Condition> ruleConditions = expressionMapper.apply(ruleAction.getRule().getExpression());
+            final Condition ruleCondition = ruleConditions.iterator().next();
+
+            // The rule will either result in true or false depending on if it needs
+            // to delete or retain the data
+            final boolean caseResult = ruleActionToBoolean(ruleAction);
+            if (caseConditionStep == null) {
+                caseConditionStep = DSL.when(ruleCondition, caseResult);
+            } else {
+                caseConditionStep.when(ruleCondition, caseResult);
+            }
+        }
+        // If none of the rules matches then we don't to delete so return false
+        final Field<Boolean> caseField = caseConditionStep.otherwise(Boolean.FALSE);
+
+        List<Condition> conditions = new ArrayList<>();
+
+        // Ensure we only 'delete' unlocked records
+        conditions.add(meta.STATUS.eq(statusIdUnlocked));
+
+        // Add our rule conditions
+        conditions.add(caseField.eq(true));
+
+        LOGGER.debug("conditions {}", conditions);
+        return conditions;
+    }
+
+    private boolean ruleActionToBoolean(final DataRetentionRuleAction action) {
+        switch (action.getOutcome()) {
+            case DELETE:
+                return true;
+            case RETAIN:
+                return false;
+            default:
+                throw new RuntimeException("Unexpected type " + action.getOutcome().name());
+        }
     }
 
     private Optional<SelectConditionStep<Record1<Long>>> getMetaCondition(final ExpressionOperator expression) {
@@ -417,6 +524,21 @@ class MetaDaoImpl implements MetaDao {
 
         final List<Meta> list = find(conditions, orderFields, offset, numberOfRows + 1);
         return ResultPage.createCriterialBasedList(list, criteria);
+    }
+
+    @Override
+    public int count(final FindMetaCriteria criteria) {
+        final Collection<Condition> conditions = createCondition(criteria);
+
+        return JooqUtil.contextResult(metaDbConnProvider, context -> context
+                .selectCount()
+                .from(meta)
+                .join(metaFeed).on(meta.FEED_ID.eq(metaFeed.ID))
+                .join(metaType).on(meta.TYPE_ID.eq(metaType.ID))
+                .leftOuterJoin(metaProcessor).on(meta.PROCESSOR_ID.eq(metaProcessor.ID))
+                .where(conditions)
+                .fetchOne()
+                .value1());
     }
 
     private List<Meta> find(final Collection<Condition> conditions,
@@ -621,9 +743,10 @@ class MetaDaoImpl implements MetaDao {
 
     @Override
     public void clear() {
-        JooqUtil.context(metaDbConnProvider, context -> context
-                .delete(META)
-                .execute());
+        JooqUtil.truncateTable(metaDbConnProvider, META);
+//        JooqUtil.context(metaDbConnProvider, context -> context
+//                .truncate(META)
+//                .execute());
     }
 
     private Collection<Condition> createCondition(final FindMetaCriteria criteria) {

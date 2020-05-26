@@ -32,9 +32,9 @@ public class Cleanup implements Clearable {
 
     @Override
     public void clear() {
+        metaDao.clear();
         metaValueDao.clear();
         metaKeyDao.clear();
-        metaDao.clear();
         metaProcessorDao.clear();
         metaTypeDao.clear();
         metaFeedDao.clear();

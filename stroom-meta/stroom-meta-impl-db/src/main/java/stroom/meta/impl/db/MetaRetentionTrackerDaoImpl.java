@@ -71,8 +71,9 @@ public class MetaRetentionTrackerDaoImpl implements MetaRetentionTrackerDao {
 
     @Override
     public void clear() {
-        JooqUtil.context(metaDbConnProvider, context -> context
-                .delete(META_RETENTION_TRACKER)
-                .execute());
+        JooqUtil.truncateTable(metaDbConnProvider, META_RETENTION_TRACKER);
+//        JooqUtil.context(metaDbConnProvider, context -> context
+//                .truncate(META_RETENTION_TRACKER)
+//                .execute());
     }
 }
