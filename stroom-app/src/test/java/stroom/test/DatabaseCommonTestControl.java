@@ -81,6 +81,8 @@ public class DatabaseCommonTestControl implements CommonTestControl {
 
         // Ensure we can create tasks.
         processorTaskManager.startup();
+        // Only allow tasks to be created synchronously for the purposes of testing.
+        processorTaskManager.setAllowAsyncTaskCreation(false);
         LOGGER.info("test environment setup completed in {}", Duration.between(startTime, Instant.now()));
     }
 

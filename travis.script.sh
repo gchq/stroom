@@ -260,13 +260,18 @@ else
       -PgwtCompilerMaxHeap=1G \
       -x gwtCompile \
       -x copyYarnBuild \
-      test :stroom-app:test --tests "stroom.pipeline.task.TestFullTranslationTask"
+      --info \
+      :stroom-app:test --tests "stroom.pipeline.task.TestFullTranslationTask" \
       "${extraBuildArgs[@]}"
 
 # IF WE WANT TO SKIP SOME PARTS OF THE BUILD INCLUDE THESE LINES
 #      -x gwtCompile \
 #      -x copyYarnBuild \
 #      -x test \
+
+# IF YOU WANT TO RUN A SPECIFIC TEST ADD LINES LIKE THIS
+#       --info \
+#      :stroom-app:test --tests "stroom.pipeline.task.TestFullTranslationTask" \
 
     generate_file_hashes
 
