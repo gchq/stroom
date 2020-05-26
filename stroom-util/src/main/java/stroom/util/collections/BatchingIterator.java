@@ -56,7 +56,7 @@ public class BatchingIterator<T> implements Iterator<List<T>> {
     @Override
     public boolean hasNext() {
         prepareNextBatch();
-        return currentBatch!=null && !currentBatch.isEmpty();
+        return currentBatch != null && !currentBatch.isEmpty();
     }
 
     @Override
