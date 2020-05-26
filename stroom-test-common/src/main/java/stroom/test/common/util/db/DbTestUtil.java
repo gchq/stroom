@@ -1,11 +1,5 @@
 package stroom.test.common.util.db;
 
-import com.wix.mysql.EmbeddedMysql;
-import com.wix.mysql.config.Charset;
-import com.wix.mysql.config.DownloadConfig;
-import com.wix.mysql.config.MysqldConfig;
-import com.wix.mysql.config.SchemaConfig;
-import com.wix.mysql.distribution.Version;
 import stroom.config.common.CommonDbConfig;
 import stroom.config.common.ConnectionConfig;
 import stroom.config.common.HasDbConfig;
@@ -15,6 +9,13 @@ import stroom.util.db.ForceCoreMigration;
 import stroom.util.logging.LambdaLogUtil;
 import stroom.util.logging.LambdaLogger;
 import stroom.util.logging.LambdaLoggerFactory;
+
+import com.wix.mysql.EmbeddedMysql;
+import com.wix.mysql.config.Charset;
+import com.wix.mysql.config.DownloadConfig;
+import com.wix.mysql.config.MysqldConfig;
+import com.wix.mysql.config.SchemaConfig;
+import com.wix.mysql.distribution.Version;
 
 import javax.sql.DataSource;
 import java.io.IOException;
