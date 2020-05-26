@@ -1,15 +1,19 @@
 package stroom.explorer.impl.db;
 
-import org.jooq.Record;
-import org.jooq.Result;
-import org.jooq.impl.DSL;
 import stroom.db.util.JooqUtil;
 import stroom.explorer.impl.ExplorerTreeDao;
 import stroom.explorer.impl.ExplorerTreeNode;
 import stroom.explorer.impl.ExplorerTreePath;
 import stroom.explorer.impl.TreeModel;
 import stroom.explorer.impl.db.jooq.tables.records.ExplorerNodeRecord;
+import stroom.explorer.shared.ExplorerConstants;
 import stroom.explorer.shared.ExplorerNode;
+
+import org.jooq.Record;
+import org.jooq.Result;
+import org.jooq.impl.DSL;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import javax.inject.Inject;
 import java.util.ArrayList;
@@ -25,6 +29,8 @@ import static stroom.explorer.impl.db.jooq.tables.ExplorerNode.EXPLORER_NODE;
 import static stroom.explorer.impl.db.jooq.tables.ExplorerPath.EXPLORER_PATH;
 
 class ExplorerTreeDaoImpl implements ExplorerTreeDao {
+    private static final Logger LOGGER = LoggerFactory.getLogger(ExplorerTreeDaoImpl.class);
+
     private final boolean orderIndexMatters;
     private boolean removeReferencedNodes;
     private final ExplorerDbConnProvider explorerDbConnProvider;
@@ -39,6 +45,18 @@ class ExplorerTreeDaoImpl implements ExplorerTreeDao {
         this.removeReferencedNodes = true;
         this.orderIndexMatters = false;
         this.explorerDbConnProvider = explorerDbConnProvider;
+
+
+        try {
+            final ExplorerTreeNode rootNode = new ExplorerTreeNode();
+            rootNode.setName(ExplorerConstants.ROOT_DOC_REF.getName());
+            rootNode.setType(ExplorerConstants.ROOT_DOC_REF.getType());
+            rootNode.setUuid(ExplorerConstants.ROOT_DOC_REF.getUuid());
+            createRoot(rootNode);
+        } catch (final RuntimeException e) {
+            // Ignore error as it is probably a duplicate entry constraint.
+            LOGGER.debug(e.getMessage(), e);
+        }
     }
 
     private boolean isPersistent(final ExplorerTreeNode entity) {
@@ -341,14 +359,15 @@ class ExplorerTreeDaoImpl implements ExplorerTreeDao {
         return JooqUtil.contextResult(explorerDbConnProvider, context -> {
 
             final Result<? extends Record> result = context
-                    .select(n.ID,n.TYPE,n.UUID,n.NAME,n.TAGS,p.DEPTH).from(n.innerJoin(p).on(n.ID.eq(p.ANCESTOR)))
-                    .where (p.DESCENDANT.eq(node.getId()).and(p.ANCESTOR.ne(node.getId())))
+                    .select(n.ID, n.TYPE, n.UUID, n.NAME, n.TAGS, p.DEPTH)
+                    .from(n.innerJoin(p).on(n.ID.eq(p.ANCESTOR)))
+                    .where(p.DESCENDANT.eq(node.getId()).and(p.ANCESTOR.ne(node.getId())))
                     .orderBy(p.DEPTH.desc())
                     .fetch();
 
-            ArrayList <ExplorerTreeNode> path = new ArrayList<>();
-            for (Record r : result){
-                path.add (new ExplorerTreeNode(r.get(n.ID), r.get(n.TYPE), r.get(n.UUID), r.get(n.NAME), r.get(n.TAGS)));
+            ArrayList<ExplorerTreeNode> path = new ArrayList<>();
+            for (Record r : result) {
+                path.add(new ExplorerTreeNode(r.get(n.ID), r.get(n.TYPE), r.get(n.UUID), r.get(n.NAME), r.get(n.TAGS)));
             }
             return path;
         });

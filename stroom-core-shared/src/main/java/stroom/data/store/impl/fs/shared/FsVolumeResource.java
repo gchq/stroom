@@ -16,13 +16,14 @@
 
 package stroom.data.store.impl.fs.shared;
 
+import stroom.util.shared.ResourcePaths;
+import stroom.util.shared.RestResource;
+import stroom.util.shared.ResultPage;
+
 import io.swagger.annotations.Api;
 import io.swagger.annotations.ApiOperation;
 import io.swagger.annotations.ApiParam;
 import org.fusesource.restygwt.client.DirectRestService;
-import stroom.util.shared.ResourcePaths;
-import stroom.util.shared.RestResource;
-import stroom.util.shared.ResultPage;
 
 import javax.ws.rs.Consumes;
 import javax.ws.rs.DELETE;
@@ -48,6 +49,9 @@ public interface FsVolumeResource extends RestResource, DirectRestService {
             response = List.class)
     ResultPage<FsVolume> find(@ApiParam("criteria") FindFsVolumeCriteria criteria);
 
+    @POST
+    FsVolume create(FsVolume volume);
+
     @GET
     @Path("/{id}")
     @ApiOperation(
@@ -60,7 +64,7 @@ public interface FsVolumeResource extends RestResource, DirectRestService {
     @ApiOperation(
             value = "Update a volume",
             response = FsVolume.class)
-    FsVolume update(@PathParam("id") Integer id, 
+    FsVolume update(@PathParam("id") Integer id,
                     @ApiParam("volume") FsVolume volume);
 
     @DELETE
