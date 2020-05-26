@@ -7,6 +7,8 @@ and this project adheres to [Semantic Versioning](http://semver.org/).
 
 ## [Unreleased]
 
+* Issue **#1569** : Removed recursive multi threading from file system clean as thread limit was being reached. 
+
 * Issue **#1478** : Fixed data volume creation and other resource methods.
 
 * Issue **#1594** : Now auto creates root explorer node on startup if it is missing.
