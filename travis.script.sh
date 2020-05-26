@@ -258,10 +258,9 @@ else
       -PgwtCompilerWorkers=2 \
       -PgwtCompilerMinHeap=50M \
       -PgwtCompilerMaxHeap=1G \
-      -x gwtCompile \
-      -x copyYarnBuild \
-      --info \
-      :stroom-app:test --tests "stroom.pipeline.task.TestFullTranslationTask" \
+      clean \
+      build \
+      buildDistribution \
       "${extraBuildArgs[@]}"
 
 # IF WE WANT TO SKIP SOME PARTS OF THE BUILD INCLUDE THESE LINES
