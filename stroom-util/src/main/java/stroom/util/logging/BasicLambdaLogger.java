@@ -5,6 +5,7 @@ import org.slf4j.Marker;
 
 import java.time.Duration;
 import java.time.Instant;
+import java.util.function.Function;
 import java.util.function.Supplier;
 
 public final class BasicLambdaLogger implements LambdaLogger {
@@ -154,7 +155,8 @@ public final class BasicLambdaLogger implements LambdaLogger {
     }
 
     @Override
-    public <T> T logDurationIfTraceEnabled(final Supplier<T> timedWork, final Supplier<String> workDescriptionSupplier) {
+    public <T> T logDurationIfTraceEnabled(final Supplier<T> timedWork,
+                                           final Supplier<String> workDescriptionSupplier) {
         if (logger.isTraceEnabled()) {
             final Instant startTime = Instant.now();
             T result = timedWork.get();
@@ -170,12 +172,34 @@ public final class BasicLambdaLogger implements LambdaLogger {
     }
 
     @Override
-    public <T> T logDurationIfDebugEnabled(final Supplier<T> timedWork, final Supplier<String> workDescriptionSupplier) {
+    public <T> T logDurationIfTraceEnabled(final Supplier<T> timedWork,
+                                           final Function<T, String> workDescriptionFunction) {
+        if (logger.isTraceEnabled()) {
+            final Instant startTime = Instant.now();
+            T result = timedWork.get();
+            try {
+                logger.trace("Completed [{}] in {}",
+                        workDescriptionFunction.apply(result),
+                        Duration.between(startTime, Instant.now()));
+            } catch (final RuntimeException e) {
+                logger.error("ERROR LOGGING MESSAGE - " + e.getMessage(), e);
+            }
+            return result;
+        } else {
+            return timedWork.get();
+        }
+    }
+
+    @Override
+    public <T> T logDurationIfDebugEnabled(final Supplier<T> timedWork,
+                                           final Supplier<String> workDescriptionSupplier) {
         if (logger.isDebugEnabled()) {
             final Instant startTime = Instant.now();
             T result = timedWork.get();
             try {
-                logger.debug("Completed [{}] in {}", workDescriptionSupplier.get(), Duration.between(startTime, Instant.now()));
+                logger.debug("Completed [{}] in {}",
+                        workDescriptionSupplier.get(),
+                        Duration.between(startTime, Instant.now()));
             } catch (final RuntimeException e) {
                 logger.error("ERROR LOGGING MESSAGE - " + e.getMessage(), e);
             }
@@ -186,12 +210,34 @@ public final class BasicLambdaLogger implements LambdaLogger {
     }
 
     @Override
-    public <T> T logDurationIfInfoEnabled(final Supplier<T> timedWork, final Supplier<String> workDescriptionSupplier) {
+    public <T> T logDurationIfDebugEnabled(final Supplier<T> timedWork,
+                                           final Function<T, String> workDescriptionFunction) {
+        if (logger.isDebugEnabled()) {
+            final Instant startTime = Instant.now();
+            T result = timedWork.get();
+            try {
+                logger.debug("Completed [{}] in {}",
+                        workDescriptionFunction.apply(result),
+                        Duration.between(startTime, Instant.now()));
+            } catch (final RuntimeException e) {
+                logger.error("ERROR LOGGING MESSAGE - " + e.getMessage(), e);
+            }
+            return result;
+        } else {
+            return timedWork.get();
+        }
+    }
+
+    @Override
+    public <T> T logDurationIfInfoEnabled(final Supplier<T> timedWork,
+                                          final Supplier<String> workDescriptionSupplier) {
         if (logger.isInfoEnabled()) {
             final Instant startTime = Instant.now();
             T result = timedWork.get();
             try {
-                logger.info("Completed [{}] in {}", workDescriptionSupplier.get(), Duration.between(startTime, Instant.now()));
+                logger.info("Completed [{}] in {}",
+                        workDescriptionSupplier.get(),
+                        Duration.between(startTime, Instant.now()));
             } catch (final RuntimeException e) {
                 logger.error("ERROR LOGGING MESSAGE - " + e.getMessage(), e);
             }
@@ -202,12 +248,34 @@ public final class BasicLambdaLogger implements LambdaLogger {
     }
 
     @Override
-    public void logDurationIfTraceEnabled(final Runnable timedWork, final Supplier<String> workDescriptionSupplier) {
+    public <T> T logDurationIfInfoEnabled(final Supplier<T> timedWork,
+                                          final Function<T, String> workDescriptionFunction) {
+        if (logger.isInfoEnabled()) {
+            final Instant startTime = Instant.now();
+            T result = timedWork.get();
+            try {
+                logger.info("Completed [{}] in {}",
+                        workDescriptionFunction.apply(result),
+                        Duration.between(startTime, Instant.now()));
+            } catch (final RuntimeException e) {
+                logger.error("ERROR LOGGING MESSAGE - " + e.getMessage(), e);
+            }
+            return result;
+        } else {
+            return timedWork.get();
+        }
+    }
+
+    @Override
+    public void logDurationIfTraceEnabled(final Runnable timedWork,
+                                          final Supplier<String> workDescriptionSupplier) {
         if (logger.isTraceEnabled()) {
             final Instant startTime = Instant.now();
             timedWork.run();
             try {
-                logger.trace("Completed [{}] in {}", workDescriptionSupplier.get(), Duration.between(startTime, Instant.now()));
+                logger.trace("Completed [{}] in {}",
+                        workDescriptionSupplier.get(),
+                        Duration.between(startTime, Instant.now()));
             } catch (final RuntimeException e) {
                 logger.error("ERROR LOGGING MESSAGE - " + e.getMessage(), e);
             }
@@ -217,12 +285,15 @@ public final class BasicLambdaLogger implements LambdaLogger {
     }
 
     @Override
-    public void logDurationIfDebugEnabled(final Runnable timedWork, final Supplier<String> workDescriptionSupplier) {
+    public void logDurationIfDebugEnabled(final Runnable timedWork,
+                                          final Supplier<String> workDescriptionSupplier) {
         if (logger.isDebugEnabled()) {
             final Instant startTime = Instant.now();
             timedWork.run();
             try {
-                logger.debug("Completed [{}] in {}", workDescriptionSupplier.get(), Duration.between(startTime, Instant.now()));
+                logger.debug("Completed [{}] in {}",
+                        workDescriptionSupplier.get(),
+                        Duration.between(startTime, Instant.now()));
             } catch (final RuntimeException e) {
                 logger.error("ERROR LOGGING MESSAGE - " + e.getMessage(), e);
             }
@@ -232,12 +303,15 @@ public final class BasicLambdaLogger implements LambdaLogger {
     }
 
     @Override
-    public void logDurationIfInfoEnabled(final Runnable timedWork, final Supplier<String> workDescriptionSupplier) {
+    public void logDurationIfInfoEnabled(final Runnable timedWork,
+                                         final Supplier<String> workDescriptionSupplier) {
         if (logger.isInfoEnabled()) {
             final Instant startTime = Instant.now();
             timedWork.run();
             try {
-                logger.info("Completed [{}] in {}", workDescriptionSupplier.get(), Duration.between(startTime, Instant.now()));
+                logger.info("Completed [{}] in {}",
+                        workDescriptionSupplier.get(),
+                        Duration.between(startTime, Instant.now()));
             } catch (final RuntimeException e) {
                 logger.error("ERROR LOGGING MESSAGE - " + e.getMessage(), e);
             }
