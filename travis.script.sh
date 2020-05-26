@@ -268,6 +268,10 @@ else
 #      -x copyYarnBuild \
 #      -x test \
 
+# IF YOU WANT TO RUN A SPECIFIC TEST ADD LINES LIKE THIS
+#       --info \
+#      :stroom-app:test --tests "stroom.pipeline.task.TestFullTranslationTask" \
+
     generate_file_hashes
 
     # Don't do a docker build for pull requests

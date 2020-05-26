@@ -143,7 +143,8 @@ class ProcessorTaskManagerImpl implements ProcessorTaskManager {
      * Make sure the task store isn't allowed to be filled until this node has
      * run startup() and has not run shutdown().
      */
-    private volatile boolean allowFillTaskStore = false;
+    private volatile boolean allowAsyncTaskCreation = false;
+    private volatile boolean allowTaskCreation = true;
 
     @Inject
     ProcessorTaskManagerImpl(final ProcessorFilterService processorFilterService,
@@ -182,7 +183,8 @@ class ProcessorTaskManagerImpl implements ProcessorTaskManager {
             LOGGER.error(e.getMessage(), e);
         } finally {
             createTasksLock.unlock();
-            allowFillTaskStore = true;
+            allowAsyncTaskCreation = true;
+            allowTaskCreation = true;
         }
     }
 
@@ -191,7 +193,8 @@ class ProcessorTaskManagerImpl implements ProcessorTaskManager {
         // It shouldn't be possible to create tasks during shutdown.
         createTasksLock.lock();
         try {
-            allowFillTaskStore = false;
+            allowAsyncTaskCreation = false;
+            allowTaskCreation = false;
             clearTaskStore();
 //            processorTaskManagerRecentStreamDetails = null;
         } catch (final RuntimeException e) {
@@ -332,7 +335,7 @@ class ProcessorTaskManagerImpl implements ProcessorTaskManager {
      * Lazy fill
      */
     private void fillTaskStore() {
-        if (allowFillTaskStore) {
+        if (allowAsyncTaskCreation) {
             try {
                 // Only kick off the work if are not already filling.
                 if (filling.compareAndSet(false, true)) {
@@ -399,7 +402,7 @@ class ProcessorTaskManagerImpl implements ProcessorTaskManager {
         // running.
         createTasksLock.lock();
         try {
-            if (allowFillTaskStore) {
+            if (allowTaskCreation) {
                 doCreateTasks(taskContext);
             }
         } catch (final RuntimeException e) {
@@ -1023,5 +1026,15 @@ class ProcessorTaskManagerImpl implements ProcessorTaskManager {
     @Override
     public AtomicLong getNextDeleteMs() {
         return nextDeleteMs;
+    }
+
+    @Override
+    public void setAllowAsyncTaskCreation(final boolean allowAsyncTaskCreation) {
+        this.allowAsyncTaskCreation = allowAsyncTaskCreation;
+    }
+
+    @Override
+    public void setAllowTaskCreation(final boolean allowTaskCreation) {
+        this.allowTaskCreation = allowTaskCreation;
     }
 }
