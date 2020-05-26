@@ -1,5 +1,13 @@
 package stroom.db.util;
 
+import stroom.util.logging.LogUtil;
+import stroom.util.shared.BaseCriteria;
+import stroom.util.shared.PageRequest;
+import stroom.util.shared.Range;
+import stroom.util.shared.Selection;
+import stroom.util.shared.Sort;
+import stroom.util.shared.StringCriteria;
+
 import org.jooq.Condition;
 import org.jooq.DSLContext;
 import org.jooq.Field;
@@ -11,13 +19,6 @@ import org.jooq.conf.Settings;
 import org.jooq.impl.DSL;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import stroom.util.logging.LogUtil;
-import stroom.util.shared.BaseCriteria;
-import stroom.util.shared.Selection;
-import stroom.util.shared.PageRequest;
-import stroom.util.shared.Range;
-import stroom.util.shared.Sort;
-import stroom.util.shared.StringCriteria;
 
 import javax.sql.DataSource;
 import java.sql.Connection;
@@ -70,6 +71,23 @@ public final class JooqUtil {
         }
     }
 
+    public static <R extends Record> void truncateTable(final DataSource dataSource,
+                                                        final Table<R> table) {
+
+        try (final Connection connection = dataSource.getConnection()) {
+            final DSLContext context = createContext(connection);
+            context
+                    .batch(
+                            "SET FOREIGN_KEY_CHECKS=0",
+                            "truncate table " + table.getName(),
+                            "SET FOREIGN_KEY_CHECKS=1")
+                    .execute();
+        } catch (final SQLException e) {
+            LOGGER.error(e.getMessage(), e);
+            throw new RuntimeException(e.getMessage(), e);
+        }
+}
+
     public static <R> R contextResult(final DataSource dataSource, final Function<DSLContext, R> function) {
         R result;
         try (final Connection connection = dataSource.getConnection()) {
@@ -92,7 +110,8 @@ public final class JooqUtil {
 //        }
 //    }
 
-    public static <R> R contextResultWithOptimisticLocking(final DataSource dataSource, final Function<DSLContext, R> function) {
+    public static <R> R contextResultWithOptimisticLocking(final DataSource dataSource,
+                                                           final Function<DSLContext, R> function) {
         R result;
         try (final Connection connection = dataSource.getConnection()) {
             final DSLContext context = createContextWithOptimisticLocking(connection);
