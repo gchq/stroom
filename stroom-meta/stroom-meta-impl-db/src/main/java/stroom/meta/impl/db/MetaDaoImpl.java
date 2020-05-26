@@ -390,8 +390,7 @@ class MetaDaoImpl implements MetaDao {
 
     @Override
     public int logicalDelete(final List<DataRetentionRuleAction> ruleActions,
-                             final TimePeriod period,
-                             final int batchSize) {
+                             final TimePeriod period) {
 
         LOGGER.debug(() ->
                 LogUtil.message("logicalDelete called for {} and actions\n{}",
@@ -439,9 +438,8 @@ class MetaDaoImpl implements MetaDao {
                                 .set(meta.STATUS, statusIdDeleted)
                                 .set(meta.STATUS_TIME, Instant.now().toEpochMilli())
                                 .where(conditions)
-                                .limit(batchSize)
                                 .execute()),
-                        cnt -> LogUtil.message("Logically deleting {} meta records", cnt));
+                        cnt -> LogUtil.message("Logically deleted {} meta records", cnt));
 
                 totalUpdateCount += updateCount;
 

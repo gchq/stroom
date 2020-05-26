@@ -39,7 +39,6 @@ import java.util.Optional;
 import java.util.stream.Collectors;
 
 import static org.assertj.core.api.Assertions.assertThat;
-import static org.mockito.Mockito.anyInt;
 import static org.mockito.Mockito.when;
 
 @ExtendWith(MockitoExtension.class)
@@ -417,8 +416,7 @@ class TestDataRetentionPolicyExecutor {
 
         when(metaService.delete(
                 ruleExpressionsCaptor.capture(),
-                periodCaptor.capture(),
-                anyInt()))
+                periodCaptor.capture()))
                 .thenReturn(0);
 
         when(metaService.getRetentionTracker())

@@ -184,11 +184,10 @@ public class MetaServiceImpl implements MetaService, Searchable {
 
     @Override
     public int delete(final List<DataRetentionRuleAction> ruleActions,
-                      final TimePeriod period,
-                      final int batchSize) {
+                      final TimePeriod period) {
         return securityContext.secureResult(PermissionNames.DELETE_DATA_PERMISSION, () -> {
             if (ruleActions != null && !ruleActions.isEmpty()) {
-                return metaDao.logicalDelete(ruleActions, period, batchSize);
+                return metaDao.logicalDelete(ruleActions, period);
             } else {
                 return 0;
             }

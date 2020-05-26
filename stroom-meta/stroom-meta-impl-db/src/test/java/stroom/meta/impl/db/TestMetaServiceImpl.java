@@ -95,7 +95,7 @@ class TestMetaServiceImpl {
 
         assertTotalRowCount(3, Status.UNLOCKED);
 
-        metaService.delete(ruleActions, period, 1000);
+        metaService.delete(ruleActions, period);
 
         // No rules, no data deleted
         assertTotalRowCount(3, Status.UNLOCKED);
@@ -116,7 +116,7 @@ class TestMetaServiceImpl {
 
         assertTotalRowCount(3, Status.UNLOCKED);
 
-        metaService.delete(ruleActions, period, 1000);
+        metaService.delete(ruleActions, period);
 
         // Rules all say retain
         assertTotalRowCount(3, Status.UNLOCKED);
@@ -137,7 +137,7 @@ class TestMetaServiceImpl {
 
         assertTotalRowCount(3, Status.LOCKED);
 
-        metaService.delete(ruleActions, period, 1000);
+        metaService.delete(ruleActions, period);
 
         // All data is locked so nothing deleted
         assertTotalRowCount(3, Status.LOCKED);
@@ -158,7 +158,7 @@ class TestMetaServiceImpl {
 
         TimePeriod period = TimePeriod.between(Instant.EPOCH, Instant.now());
 
-        metaService.delete(ruleActions, period, 1000);
+        metaService.delete(ruleActions, period);
 
         // All data is locked so nothing deleted
         assertTotalRowCount(3, Status.DELETED);
@@ -179,7 +179,7 @@ class TestMetaServiceImpl {
 
         TimePeriod period = TimePeriod.between(Instant.EPOCH, Instant.now());
 
-        metaService.delete(ruleActions, period, 1000);
+        metaService.delete(ruleActions, period);
 
         // Only one feed is deleted
         assertTotalRowCount(1, Status.DELETED);
@@ -203,7 +203,7 @@ class TestMetaServiceImpl {
 
         TimePeriod period = TimePeriod.between(Instant.EPOCH, Instant.now());
 
-        metaService.delete(ruleActions, period, 1000);
+        metaService.delete(ruleActions, period);
 
         // Rule 4 trumps rule 3
         assertTotalRowCount(2, Status.DELETED);
@@ -227,7 +227,7 @@ class TestMetaServiceImpl {
 
         TimePeriod period = TimePeriod.between(Instant.EPOCH, Instant.now());
 
-        metaService.delete(ruleActions, period, 1000);
+        metaService.delete(ruleActions, period);
 
         // Rule 4 trumps rule 3
         assertTotalRowCount(3, Status.DELETED);
@@ -256,7 +256,7 @@ class TestMetaServiceImpl {
                 now.minus(2, ChronoUnit.DAYS).minus(1, ChronoUnit.HOURS),
                 now.minus(2, ChronoUnit.DAYS).plus(1, ChronoUnit.HOURS));
 
-        metaService.delete(ruleActions, period, 1000);
+        metaService.delete(ruleActions, period);
 
         // Rule 4 trumps rule 3
         assertTotalRowCount(3, Status.DELETED);
@@ -285,7 +285,7 @@ class TestMetaServiceImpl {
                 Instant.EPOCH,
                 now.minus(1, ChronoUnit.DAYS));
 
-        metaService.delete(ruleActions, period, 1000);
+        metaService.delete(ruleActions, period);
 
         // Rule 4 trumps rule 3
         assertTotalRowCount(6, Status.DELETED);
@@ -342,7 +342,7 @@ class TestMetaServiceImpl {
 
         LOGGER.debug(period.toString());
 
-        metaService.delete(ruleActions, period, 10000000);
+        metaService.delete(ruleActions, period);
 
         LOGGER.debug("Period {}", period);
         LOGGER.debug("deletionDay {}", deletionDay);

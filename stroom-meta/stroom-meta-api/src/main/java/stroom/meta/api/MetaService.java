@@ -86,8 +86,7 @@ public interface MetaService {
     int delete(final long id);
 
     int delete(final List<DataRetentionRuleAction> ruleActions,
-               final TimePeriod deletionPeriod,
-               final int batchSize);
+               final TimePeriod deletionPeriod);
 
     /**
      * Delete meta data by id with an option to delete regardless of lock status.

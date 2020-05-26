@@ -40,8 +40,7 @@ public interface MetaDao extends Clearable {
      * @param period
      */
     int logicalDelete(final List<DataRetentionRuleAction> ruleActions,
-                      final TimePeriod period,
-                      int batchSize);
+                      final TimePeriod period);
 
     int getLockCount();
 }

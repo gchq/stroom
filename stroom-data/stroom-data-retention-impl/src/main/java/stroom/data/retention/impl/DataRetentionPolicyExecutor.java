@@ -252,7 +252,7 @@ public class DataRetentionPolicyExecutor {
 
         int count = -1;
         while (count != 0 && !Thread.currentThread().isInterrupted()) {
-            count = metaService.delete(reverseSortedRuleActions, period, batchSize);
+            count = metaService.delete(reverseSortedRuleActions, period);
             final String message = "Marked " + count + " items as deleted";
             LOGGER.info(() -> message);
         }

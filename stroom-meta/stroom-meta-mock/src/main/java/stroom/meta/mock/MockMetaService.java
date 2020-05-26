@@ -123,8 +123,7 @@ public class MockMetaService implements MetaService, Clearable {
 
     @Override
     public int delete(final List<DataRetentionRuleAction> ruleActions,
-                      final TimePeriod deletionPeriod,
-                      final int batchSize) {
+                      final TimePeriod deletionPeriod) {
         return 0;
     }
 
