@@ -32,7 +32,7 @@ CREATE TABLE IF NOT EXISTS job_node (
     node_name             varchar(255) NOT NULL,
     task_limit            int(11) NOT NULL,
     schedule              varchar(255) DEFAULT NULL,
-    enabled               bit(1) NOT NULL,
+    enabled               tinyint(1) NOT NULL DEFAULT '0',
     PRIMARY KEY           (id),
     CONSTRAINT job_id FOREIGN KEY (job_id) REFERENCES job (id)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8;

@@ -15,7 +15,7 @@ import org.jooq.Identity;
 import org.jooq.Index;
 import org.jooq.Name;
 import org.jooq.Record;
-import org.jooq.Row13;
+import org.jooq.Row14;
 import org.jooq.Schema;
 import org.jooq.Table;
 import org.jooq.TableField;
@@ -42,7 +42,7 @@ import stroom.processor.impl.db.jooq.tables.records.ProcessorFilterRecord;
 @SuppressWarnings({ "all", "unchecked", "rawtypes" })
 public class ProcessorFilter extends TableImpl<ProcessorFilterRecord> {
 
-    private static final long serialVersionUID = 1971537396;
+    private static final long serialVersionUID = -753718749;
 
     /**
      * The reference instance of <code>stroom.processor_filter</code>
@@ -113,14 +113,19 @@ public class ProcessorFilter extends TableImpl<ProcessorFilterRecord> {
     public final TableField<ProcessorFilterRecord, Integer> PRIORITY = createField(DSL.name("priority"), org.jooq.impl.SQLDataType.INTEGER.nullable(false), this, "");
 
     /**
+     * The column <code>stroom.processor_filter.reprocess</code>.
+     */
+    public final TableField<ProcessorFilterRecord, Boolean> REPROCESS = createField(DSL.name("reprocess"), org.jooq.impl.SQLDataType.BOOLEAN.nullable(false).defaultValue(org.jooq.impl.DSL.inline("0", org.jooq.impl.SQLDataType.BOOLEAN)), this, "");
+
+    /**
      * The column <code>stroom.processor_filter.enabled</code>.
      */
-    public final TableField<ProcessorFilterRecord, Boolean> ENABLED = createField(DSL.name("enabled"), org.jooq.impl.SQLDataType.BIT.defaultValue(org.jooq.impl.DSL.inline("b'0'", org.jooq.impl.SQLDataType.BIT)), this, "");
+    public final TableField<ProcessorFilterRecord, Boolean> ENABLED = createField(DSL.name("enabled"), org.jooq.impl.SQLDataType.BOOLEAN.nullable(false).defaultValue(org.jooq.impl.DSL.inline("0", org.jooq.impl.SQLDataType.BOOLEAN)), this, "");
 
     /**
      * The column <code>stroom.processor_filter.deleted</code>.
      */
-    public final TableField<ProcessorFilterRecord, Boolean> DELETED = createField(DSL.name("deleted"), org.jooq.impl.SQLDataType.BIT.defaultValue(org.jooq.impl.DSL.inline("b'0'", org.jooq.impl.SQLDataType.BIT)), this, "");
+    public final TableField<ProcessorFilterRecord, Boolean> DELETED = createField(DSL.name("deleted"), org.jooq.impl.SQLDataType.BOOLEAN.nullable(false).defaultValue(org.jooq.impl.DSL.inline("0", org.jooq.impl.SQLDataType.BOOLEAN)), this, "");
 
     /**
      * Create a <code>stroom.processor_filter</code> table reference
@@ -225,11 +230,11 @@ public class ProcessorFilter extends TableImpl<ProcessorFilterRecord> {
     }
 
     // -------------------------------------------------------------------------
-    // Row13 type methods
+    // Row14 type methods
     // -------------------------------------------------------------------------
 
     @Override
-    public Row13<Integer, Integer, Long, String, Long, String, String, Integer, Integer, String, Integer, Boolean, Boolean> fieldsRow() {
-        return (Row13) super.fieldsRow();
+    public Row14<Integer, Integer, Long, String, Long, String, String, Integer, Integer, String, Integer, Boolean, Boolean, Boolean> fieldsRow() {
+        return (Row14) super.fieldsRow();
     }
 }

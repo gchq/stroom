@@ -42,7 +42,7 @@ import stroom.job.impl.db.jooq.tables.records.JobRecord;
 @SuppressWarnings({ "all", "unchecked", "rawtypes" })
 public class Job extends TableImpl<JobRecord> {
 
-    private static final long serialVersionUID = 1681879735;
+    private static final long serialVersionUID = -1958952322;
 
     /**
      * The reference instance of <code>stroom.job</code>
@@ -95,7 +95,7 @@ public class Job extends TableImpl<JobRecord> {
     /**
      * The column <code>stroom.job.enabled</code>.
      */
-    public final TableField<JobRecord, Boolean> ENABLED = createField(DSL.name("enabled"), org.jooq.impl.SQLDataType.BIT.nullable(false), this, "");
+    public final TableField<JobRecord, Boolean> ENABLED = createField(DSL.name("enabled"), org.jooq.impl.SQLDataType.BOOLEAN.nullable(false).defaultValue(org.jooq.impl.DSL.inline("0", org.jooq.impl.SQLDataType.BOOLEAN)), this, "");
 
     /**
      * Create a <code>stroom.job</code> table reference

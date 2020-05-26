@@ -1,7 +1,8 @@
 package stroom.processor.impl.db;
 
-import org.jooq.Record;
 import stroom.processor.shared.ProcessorFilter;
+
+import org.jooq.Record;
 
 import java.util.function.Function;
 
@@ -20,7 +21,9 @@ class RecordToProcessorFilterMapper implements Function<Record, ProcessorFilter>
         processorFilter.setUuid(record.get(PROCESSOR_FILTER.UUID));
         processorFilter.setData(record.get(PROCESSOR_FILTER.DATA));
         processorFilter.setPriority(record.get(PROCESSOR_FILTER.PRIORITY));
+        processorFilter.setReprocess(record.get(PROCESSOR_FILTER.REPROCESS));
         processorFilter.setEnabled(record.get(PROCESSOR_FILTER.ENABLED));
+        processorFilter.setDeleted(record.get(PROCESSOR_FILTER.DELETED));
         return processorFilter;
     }
 }

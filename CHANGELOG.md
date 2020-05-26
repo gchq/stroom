@@ -7,6 +7,24 @@ and this project adheres to [Semantic Versioning](http://semver.org/).
 
 ## [Unreleased]
 
+* Issue **#1544** : Fixes for imported dashboards.
+
+* Issue **#1586** : Fixed migration and initial population of standard meta type names.
+
+* Issue **#1592** : Changed DB bit(1) columns to be tinyint(1) so that they show values correctly in the CLI.
+
+* Issue **#1510** : Added logical delete for processor and processor filter to allow a user to force deletion without encountering a DB constraint. 
+
+* Issue **#1557** : Process, reprocess, delete and download data functions now provide an impact summary before a user can proceed with the action.
+
+* Issue **#1557** : The process data function in the data browser now provides the option to process or reprocess data. When selected a user can also choose: the priority of the process filters that will be created; to set the priority automatically based on previous filters; set the enabled state.
+
+* Issue **#1557** : Reprocessing data no longer has a limitation on how many items can be reprocessed as it is now implemented by reprocess specific filters.
+
+* Issue **#1585** : Fixed issue that was preventing viewing folders processors.
+
+* Issue **#1557** : Added an impact summary to meta data actions such as delete, restore, process and download.
+
 * Issue **#1593** : NPE copying empty expressions
 
 
@@ -35,7 +53,7 @@ and this project adheres to [Semantic Versioning](http://semver.org/).
 
 * Issue **#1574** : Make feed suggestions return all feeds, not just ones with meta.
 
-* Issue **#1544** : Imported dashboard from 6.1 now work.
+* Issue **#1544** : Imported dashboards from 6.1 now work.
 
 * Issue **#1577** : Cluster node status is now updated when node settings are changed.
 

@@ -25,10 +25,10 @@ CREATE TABLE IF NOT EXISTS `doc` (
   `data` longblob,
   `ext` varchar(255) DEFAULT NULL,
   PRIMARY KEY (`id`),
+  UNIQUE KEY `doc_type_uuid_ext_idx` (`type`,`uuid`,`ext`),
   KEY `doc_type_uuid_idx` (`type`,`uuid`),
-  KEY `doc_uuid_idx` (`uuid`),
-  KEY `doc_type_uuid_ext_idx` (`type`,`uuid`,`ext`)
-) ENGINE=InnoDB DEFAULT CHARSET=utf8;
+  KEY `doc_uuid_idx` (`uuid`)
+) ENGINE=InnoDB AUTO_INCREMENT=446 DEFAULT CHARSET=utf8;
 
 -- Reset to the original value
 SET SQL_NOTES=@OLD_SQL_NOTES;

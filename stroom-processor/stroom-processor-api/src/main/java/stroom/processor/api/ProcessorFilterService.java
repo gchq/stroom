@@ -19,7 +19,6 @@ package stroom.processor.api;
 
 import stroom.docref.DocRef;
 import stroom.entity.shared.ExpressionCriteria;
-import stroom.meta.shared.FindMetaCriteria;
 import stroom.processor.shared.FetchProcessorRequest;
 import stroom.processor.shared.Processor;
 import stroom.processor.shared.ProcessorFilter;
@@ -32,45 +31,39 @@ import stroom.util.shared.ResultPage;
 import java.util.List;
 
 public interface ProcessorFilterService extends HasIntCrud<ProcessorFilter> {
-    ProcessorFilter create(final DocRef pipelineRef,
-                           final QueryData queryData,
-                           final int priority,
-                           final boolean enabled);
+    ProcessorFilter create(DocRef pipelineRef,
+                           QueryData queryData,
+                           int priority,
+                           boolean autoPriority,
+                           boolean enabled);
 
-    ProcessorFilter create(final DocRef pipelineRef,
-                           final QueryData queryData,
-                           final int priority,
-                           final boolean enabled,
-                           final Long trackerStartMs);
+    ProcessorFilter create(Processor processor,
+                           QueryData queryData,
+                           int priority,
+                           boolean autoPriority,
+                           boolean enabled);
 
-    ProcessorFilter create(final Processor processor,
-                           final QueryData queryData,
-                           final int priority,
-                           final boolean enabled,
-                           final Long trackerStartMs);
+    List<ReprocessDataInfo> reprocess(QueryData criteria,
+                                      int priority,
+                                      boolean autoPriority,
+                                      boolean enabled);
 
-    ProcessorFilter create(final Processor processor,
-                           final QueryData queryData,
-                           final int priority,
-                           final boolean enabled);
-
-    ProcessorFilter create(final Processor processor,
-                           final DocRef processorFilterDocRef,
-                           final QueryData queryData,
-                           final int priority,
-                           final boolean enabled,
-                           final Long trackerStartMs);
-
+    ProcessorFilter importFilter(Processor processor,
+                                 DocRef processorFilterDocRef,
+                                 QueryData queryData,
+                                 int priority,
+                                 boolean autoPriority,
+                                 boolean reprocess,
+                                 boolean enabled,
+                                 Long trackerStartMs);
 
     ResultPage<ProcessorFilter> find(ExpressionCriteria criteria);
 
     ResultPage<ProcessorListRow> find(FetchProcessorRequest request);
 
-    ResultPage<ProcessorFilter> find(final DocRef pipelineDocRef);
+    ResultPage<ProcessorFilter> find(DocRef pipelineDocRef);
 
     void setPriority(Integer id, Integer priority);
 
     void setEnabled(Integer id, Boolean enabled);
-
-    List<ReprocessDataInfo> reprocess(FindMetaCriteria criteria);
 }

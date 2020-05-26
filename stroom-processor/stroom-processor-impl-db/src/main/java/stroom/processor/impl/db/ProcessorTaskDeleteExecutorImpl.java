@@ -17,9 +17,6 @@
 
 package stroom.processor.impl.db;
 
-import org.jooq.Condition;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 import stroom.cluster.lock.api.ClusterLockService;
 import stroom.db.util.JooqUtil;
 import stroom.entity.shared.ExpressionCriteria;
@@ -38,6 +35,11 @@ import stroom.util.logging.LogExecutionTime;
 import stroom.util.time.StroomDuration;
 import stroom.util.time.TimeUtils;
 
+import org.jooq.Condition;
+import org.jooq.Record1;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+
 import javax.inject.Inject;
 import java.time.Instant;
 import java.util.Collection;
@@ -45,6 +47,8 @@ import java.util.List;
 import java.util.Optional;
 import java.util.concurrent.atomic.AtomicLong;
 
+import static stroom.processor.impl.db.jooq.tables.Processor.PROCESSOR;
+import static stroom.processor.impl.db.jooq.tables.ProcessorFilter.PROCESSOR_FILTER;
 import static stroom.processor.impl.db.jooq.tables.ProcessorTask.PROCESSOR_TASK;
 
 class ProcessorTaskDeleteExecutorImpl implements ProcessorTaskDeleteExecutor {
@@ -116,6 +120,7 @@ class ProcessorTaskDeleteExecutorImpl implements ProcessorTaskDeleteExecutor {
     public void delete(final Instant deleteThreshold) {
         deleteOldTasks(deleteThreshold);
         deleteOldFilters(deleteThreshold);
+        deleteDeletedTasksAndProcessors();
     }
 
     private int deleteOldTasks(final Instant deleteThreshold) {
@@ -131,6 +136,60 @@ class ProcessorTaskDeleteExecutorImpl implements ProcessorTaskDeleteExecutor {
                         .deleteFrom(PROCESSOR_TASK)
                         .where(conditions)
                         .execute());
+    }
+
+    private int deleteDeletedTasksAndProcessors() {
+        // Get deleted processors.
+        List<Integer> deletedProcessors = JooqUtil.contextResult(processorDbConnProvider, context -> context
+                        .select(PROCESSOR.ID)
+                        .from(PROCESSOR)
+                        .where(PROCESSOR.DELETED.eq(true))
+                        .fetch()
+                        .map(Record1::value1));
+
+        List<Integer> deletedProcessorFilters = JooqUtil.contextResult(processorDbConnProvider, context -> context
+                .select(PROCESSOR_FILTER.ID)
+                .from(PROCESSOR_FILTER)
+                .where(PROCESSOR_FILTER.DELETED.eq(true))
+                .or(PROCESSOR_FILTER.FK_PROCESSOR_ID.in(deletedProcessors))
+                .fetch()
+                .map(Record1::value1));
+
+        // Delete tasks.
+        int count = JooqUtil.contextResult(processorDbConnProvider, context ->
+                context
+                        .deleteFrom(PROCESSOR_TASK)
+                        .where(PROCESSOR_TASK.STATUS.eq(TaskStatus.DELETED.getPrimitiveValue()))
+                        .or(PROCESSOR_TASK.FK_PROCESSOR_FILTER_ID.in(deletedProcessorFilters))
+                        .execute());
+
+        // Delete filters one by one as there may still be some constraint failures.
+        for (final int id : deletedProcessorFilters) {
+            try {
+                JooqUtil.context(processorDbConnProvider, context ->
+                        context
+                                .deleteFrom(PROCESSOR_FILTER)
+                                .where(PROCESSOR_FILTER.ID.eq(id))
+                                .execute());
+            } catch (final RuntimeException e) {
+                LOGGER.debug(e.getMessage(), e);
+            }
+        }
+
+        // Delete processors one by one as there may still be some constraint failures.
+        for (final int id : deletedProcessors) {
+            try {
+                JooqUtil.context(processorDbConnProvider, context ->
+                        context
+                                .deleteFrom(PROCESSOR)
+                                .where(PROCESSOR.ID.eq(id))
+                                .execute());
+            } catch (final RuntimeException e) {
+                LOGGER.debug(e.getMessage(), e);
+            }
+        }
+
+        return count;
     }
 
     private void deleteOldFilters(final Instant deleteThreshold) {

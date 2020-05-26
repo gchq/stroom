@@ -55,6 +55,7 @@ BEGIN
             NAME
         FROM OLD_STRM_TP
         WHERE ID > (SELECT COALESCE(MAX(id), 0) FROM meta_type)
+        AND PURP IN (10, 11, 50)
         ORDER BY ID;
 
         -- Work out what to set our auto_increment start value to

@@ -34,6 +34,8 @@ import stroom.datasource.api.v2.AbstractField;
 import stroom.dispatch.client.ExportFileCompleteUtil;
 import stroom.dispatch.client.Rest;
 import stroom.dispatch.client.RestFactory;
+import stroom.docref.DocRef;
+import stroom.explorer.client.presenter.EntityChooser;
 import stroom.meta.shared.FindMetaCriteria;
 import stroom.meta.shared.Meta;
 import stroom.meta.shared.MetaExpressionUtil;
@@ -43,15 +45,26 @@ import stroom.meta.shared.MetaResource;
 import stroom.meta.shared.MetaRow;
 import stroom.meta.shared.Status;
 import stroom.meta.shared.UpdateStatusRequest;
+import stroom.pipeline.client.event.CreateProcessorEvent;
+import stroom.pipeline.shared.PipelineDoc;
+import stroom.processor.shared.CreateProcessFilterRequest;
+import stroom.processor.shared.CreateReprocessFilterRequest;
+import stroom.processor.shared.ProcessorFilter;
 import stroom.processor.shared.ProcessorFilterResource;
+import stroom.processor.shared.QueryData;
 import stroom.processor.shared.ReprocessDataInfo;
 import stroom.query.api.v2.ExpressionOperator;
+import stroom.query.api.v2.ExpressionOperator.Builder;
+import stroom.query.api.v2.ExpressionTerm;
+import stroom.query.api.v2.ExpressionUtil;
+import stroom.security.shared.DocumentPermissionNames;
 import stroom.svg.client.SvgPreset;
 import stroom.svg.client.SvgPresets;
 import stroom.util.shared.PageRequest;
 import stroom.util.shared.ResourceGeneration;
 import stroom.util.shared.ResultPage;
 import stroom.util.shared.Selection;
+import stroom.util.shared.Severity;
 import stroom.util.shared.Sort;
 import stroom.widget.button.client.ButtonView;
 import stroom.widget.customdatebox.client.ClientDateUtil;
@@ -69,6 +82,7 @@ import com.google.gwt.user.cellview.client.Header;
 import com.google.web.bindery.event.shared.EventBus;
 import com.gwtplatform.mvp.client.MyPresenterWidget;
 
+import javax.inject.Provider;
 import java.util.Collections;
 import java.util.HashSet;
 import java.util.List;
@@ -88,6 +102,9 @@ public abstract class AbstractMetaListPresenter extends MyPresenterWidget<DataGr
     private final LocationManager locationManager;
     private final FindMetaCriteria criteria;
     private final RestDataProvider<MetaRow, ResultPage<MetaRow>> dataProvider;
+    private final Provider<SelectionSummaryPresenter> selectionSummaryPresenterProvider;
+    private final Provider<ProcessChoicePresenter> processChoicePresenterProvider;
+    private final Provider<EntityChooser> pipelineSelection;
 
     private ResultPage<MetaRow> resultPage;
     private boolean initialised;
@@ -96,11 +113,17 @@ public abstract class AbstractMetaListPresenter extends MyPresenterWidget<DataGr
                               final RestFactory restFactory,
                               final TooltipPresenter tooltipPresenter,
                               final LocationManager locationManager,
+                              final Provider<SelectionSummaryPresenter> selectionSummaryPresenterProvider,
+                              final Provider<ProcessChoicePresenter> processChoicePresenterProvider,
+                              final Provider<EntityChooser> pipelineSelection,
                               final boolean allowSelectAll) {
         super(eventBus, new DataGridViewImpl<>(true));
         this.tooltipPresenter = tooltipPresenter;
         this.restFactory = restFactory;
         this.locationManager = locationManager;
+        this.selectionSummaryPresenterProvider = selectionSummaryPresenterProvider;
+        this.processChoicePresenterProvider = processChoicePresenterProvider;
+        this.pipelineSelection = pipelineSelection;
 
         selection.setMatchAll(false);
         addColumns(allowSelectAll);
@@ -439,23 +462,142 @@ public abstract class AbstractMetaListPresenter extends MyPresenterWidget<DataGr
     }
 
     public void download() {
-        action("download", this::doDownload);
+        validateSelection("download", () -> {
+            final ExpressionOperator expression = selectionToExpression(this.criteria, getSelection());
+            if (expression != null) {
+                final FindMetaCriteria criteria = expressionToNonPagedCriteria(expression);
+                showSummary(
+                        criteria,
+                        "downloaded",
+                        "download",
+                        "Confirm Download",
+                        false,
+                        () -> download(criteria));
+            }
+        });
     }
 
-    public void reprocess() {
-        action("reprocess", this::doReprocess);
+    public void process() {
+        final Selection<Long> selection = getSelection();
+        if (!selection.isMatchNothing()) {
+            final ProcessChoicePresenter processChoicePresenter = processChoicePresenterProvider.get();
+            final ProcessChoiceUiHandler processChoiceUiHandler = choice -> {
+                if (choice.isReprocess()) {
+                    doReprocess(choice);
+                } else {
+                    doProcess(choice);
+                }
+            };
+            processChoicePresenter.show(processChoiceUiHandler);
+        } else {
+            AlertEvent.fireError(AbstractMetaListPresenter.this, "You have not selected any items", null);
+        }
+    }
+
+    private void doProcess(final ProcessChoice processChoice) {
+        choosePipeline(docRef -> {
+            if (docRef != null) {
+                validateSelection("process", () -> {
+                    final ExpressionOperator expression = selectionToExpression(this.criteria, getSelection());
+                    if (expression != null) {
+                        final FindMetaCriteria criteria = expressionToNonPagedCriteria(expression);
+                        showSummary(
+                                criteria,
+                                "processed",
+                                "process",
+                                "Confirm Process",
+                                false,
+                                () -> process(docRef, criteria, processChoice));
+                    }
+                });
+            }
+        });
+    }
+
+    private void doReprocess(final ProcessChoice processChoice) {
+        validateSelection("reprocess", () -> {
+            final ExpressionOperator expression = selectionToExpression(this.criteria, getSelection());
+            if (expression != null) {
+                final FindMetaCriteria criteria = expressionToNonPagedCriteria(expression);
+                showSummary(
+                        criteria,
+                        "reprocessed",
+                        "reprocess",
+                        "Confirm Reprocess",
+                        true,
+                        () -> reprocess(criteria, processChoice));
+            }
+        });
+    }
+
+    private void choosePipeline(final Consumer<DocRef> consumer) {
+        final EntityChooser chooser = pipelineSelection.get();
+        chooser.setCaption("Choose Pipeline To Process Data With");
+        chooser.setIncludedTypes(PipelineDoc.DOCUMENT_TYPE);
+        chooser.setRequiredPermissions(DocumentPermissionNames.READ);
+        chooser.addDataSelectionHandler(event -> {
+            final DocRef pipeline = chooser.getSelectedEntityReference();
+            consumer.accept(pipeline);
+        });
+        chooser.show();
     }
 
     public void delete() {
-        action("delete", () -> doUpdate("Deleted", null, Status.DELETED));
+        validateSelection("delete", () -> {
+            final ExpressionOperator expression = selectionToExpression(this.criteria, getSelection());
+            if (expression != null) {
+                final Builder not = new ExpressionOperator.Builder(ExpressionOperator.Op.NOT);
+                not.addTerm(MetaFields.STATUS, ExpressionTerm.Condition.EQUALS, Status.DELETED.getDisplayValue());
+
+                final Builder builder = new ExpressionOperator.Builder();
+                builder.addOperator(expression);
+                builder.addOperator(not.build());
+
+                final FindMetaCriteria criteria = expressionToNonPagedCriteria(builder.build());
+                showSummary(
+                        criteria,
+                        "deleted",
+                        "delete",
+                        "Confirm Delete",
+                        false,
+                        update(criteria, "Deleted", null, Status.DELETED));
+            }
+        });
     }
 
     public void restore() {
-        action("restore", () -> doUpdate("Restored", Status.DELETED, Status.UNLOCKED));
+        validateSelection("restore", () -> {
+            final ExpressionOperator expression = selectionToExpression(this.criteria, getSelection());
+            if (expression != null) {
+                final Builder builder = new ExpressionOperator.Builder();
+                builder.addOperator(expression);
+                builder.addTerm(MetaFields.STATUS, ExpressionTerm.Condition.EQUALS, Status.DELETED.getDisplayValue());
+
+                final FindMetaCriteria criteria = expressionToNonPagedCriteria(builder.build());
+                showSummary(
+                        criteria,
+                        "restored",
+                        "restore",
+                        "Confirm Restore",
+                        false,
+                        update(criteria, "Restored", Status.DELETED, Status.UNLOCKED));
+            }
+        });
     }
 
-    private void doDownload() {
-        final FindMetaCriteria criteria = createSelectionCriteria();
+    private Runnable update(final FindMetaCriteria criteria, final String text, final Status currentStatus, final Status newStatus) {
+        return () -> {
+            final Rest<Integer> rest = restFactory.create();
+            rest
+                    .onSuccess(result ->
+                            AlertEvent.fireInfo(AbstractMetaListPresenter.this,
+                                    text + " " + result + " record" + ((result.longValue() > 1) ? "s" : ""), this::refresh))
+                    .call(META_RESOURCE)
+                    .updateStatus(new UpdateStatusRequest(criteria, currentStatus, newStatus));
+        };
+    }
+
+    private void download(final FindMetaCriteria criteria) {
         final Rest<ResourceGeneration> rest = restFactory.create();
         rest
                 .onSuccess(result -> ExportFileCompleteUtil.onSuccess(locationManager, null, result))
@@ -463,51 +605,105 @@ public abstract class AbstractMetaListPresenter extends MyPresenterWidget<DataGr
                 .download(criteria);
     }
 
-    private void doReprocess() {
-        final FindMetaCriteria criteria = createSelectionCriteria();
+    private void process(final DocRef pipeline,
+                         final FindMetaCriteria criteria,
+                         final ProcessChoice processChoice) {
+        final QueryData queryData = new QueryData(MetaFields.STREAM_STORE_DOC_REF, criteria.getExpression(), null);
+        final CreateProcessFilterRequest request = new CreateProcessFilterRequest(
+                pipeline,
+                queryData,
+                processChoice.getPriority(),
+                processChoice.isAutoPriority(),
+                processChoice.isEnabled());
+
+        final Rest<ProcessorFilter> rest = restFactory.create();
+        rest
+                .onSuccess(processorFilter -> {
+                    if (processorFilter != null) {
+                        CreateProcessorEvent.fire(AbstractMetaListPresenter.this, processorFilter);
+                    } else {
+                        AlertEvent.fireInfo(this, "Created processor filter", null);
+                    }
+                })
+                .call(PROCESSOR_FILTER_RESOURCE)
+                .create(request);
+
+    }
+
+    private void reprocess(final FindMetaCriteria criteria,
+                           final ProcessChoice processChoice) {
+        final QueryData queryData = new QueryData(MetaFields.STREAM_STORE_DOC_REF, criteria.getExpression(), null);
+        final CreateReprocessFilterRequest request = new CreateReprocessFilterRequest(
+                queryData,
+                processChoice.getPriority(),
+                processChoice.isAutoPriority(),
+                processChoice.isEnabled());
+
         final Rest<List<ReprocessDataInfo>> rest = restFactory.create();
         rest
                 .onSuccess(result -> {
                     if (result != null && result.size() > 0) {
+                        Severity maxSeverity = null;
+
+                        final StringBuilder sb = new StringBuilder();
                         for (final ReprocessDataInfo info : result) {
-                            switch (info.getSeverity()) {
+                            if (maxSeverity == null || info.getSeverity().greaterThan(maxSeverity)) {
+                                maxSeverity = info.getSeverity();
+                            }
+
+                            sb.append(info.getSeverity().getDisplayValue());
+                            sb.append(": ");
+                            sb.append(info.getMessage());
+                            if (info.getDetails() != null) {
+                                sb.append("\n\t");
+                                sb.append(info.getDetails());
+                            }
+                            sb.append("\n");
+                        }
+
+                        if (maxSeverity != null) {
+                            switch (maxSeverity) {
                                 case INFO:
-                                    AlertEvent.fireInfo(AbstractMetaListPresenter.this, info.getMessage(),
-                                            info.getDetails(), null);
+                                    AlertEvent.fireInfo(AbstractMetaListPresenter.this, "Result Details",
+                                            sb.toString().trim(), null);
                                     break;
                                 case WARNING:
-                                    AlertEvent.fireWarn(AbstractMetaListPresenter.this, info.getMessage(),
-                                            info.getDetails(), null);
+                                    AlertEvent.fireWarn(AbstractMetaListPresenter.this, "Result Details",
+                                            sb.toString().trim(), null);
                                     break;
                                 case ERROR:
-                                    AlertEvent.fireError(AbstractMetaListPresenter.this, info.getMessage(),
-                                            info.getDetails(), null);
+                                    AlertEvent.fireError(AbstractMetaListPresenter.this, "Result Details",
+                                            sb.toString().trim(), null);
                                     break;
                                 case FATAL_ERROR:
-                                    AlertEvent.fireError(AbstractMetaListPresenter.this, info.getMessage(),
-                                            info.getDetails(), null);
+                                    AlertEvent.fireError(AbstractMetaListPresenter.this, "Result Details",
+                                            sb.toString().trim(), null);
                                     break;
                             }
                         }
                     }
                 })
                 .call(PROCESSOR_FILTER_RESOURCE)
-                .reprocess(criteria);
+                .reprocess(request);
 
     }
 
-    private void doUpdate(final String text, final Status currentStatus, final Status newStatus) {
-        final FindMetaCriteria criteria = createSelectionCriteria();
-        final Rest<Integer> rest = restFactory.create();
-        rest
-                .onSuccess(result ->
-                        AlertEvent.fireInfo(AbstractMetaListPresenter.this,
-                                text + " " + result + " record" + ((result.longValue() > 1) ? "s" : ""), this::refresh))
-                .call(META_RESOURCE)
-                .updateStatus(new UpdateStatusRequest(criteria, currentStatus, newStatus));
+    private void showSummary(final FindMetaCriteria criteria,
+                             final String postAction,
+                             final String action,
+                             final String caption,
+                             final boolean reprocess,
+                             final Runnable runnable) {
+        selectionSummaryPresenterProvider.get().show(
+                criteria,
+                postAction,
+                action,
+                caption,
+                reprocess,
+                runnable);
     }
 
-    private void action(final String actionType, final Runnable runnable) {
+    private void validateSelection(final String actionType, final Runnable runnable) {
         final Selection<Long> selection = getSelection();
         if (!selection.isMatchNothing()) {
             ConfirmEvent.fire(this,
@@ -528,36 +724,43 @@ public abstract class AbstractMetaListPresenter extends MyPresenterWidget<DataGr
                             }
                         }
                     });
+        } else {
+            AlertEvent.fireError(AbstractMetaListPresenter.this, "You have not selected any items", null);
         }
     }
 
-    private FindMetaCriteria createSelectionCriteria() {
-        final Selection<Long> selection = getSelection();
+    private ExpressionOperator selectionToExpression(final FindMetaCriteria criteria, final Selection<Long> selection) {
+//        final ExpressionOperator.Builder builder = new ExpressionOperator.Builder();
         // First make sure there is some sort of selection, either
         // individual streams have been selected or all streams have been
         // selected.
-        // Only use match all if we are allowed to use criteria.
         if (selection.isMatchAll()) {
-            final FindMetaCriteria criteria = new FindMetaCriteria();
-            criteria.copyFrom(this.criteria);
-            // Paging is NA
-            criteria.obtainPageRequest().setLength(null);
-            criteria.obtainPageRequest().setOffset(null);
-            return criteria;
+            if (criteria != null && criteria.getExpression() != null) {
+//                builder.addOperator(criteria.getExpression());
+                return ExpressionUtil.copyOperator(criteria.getExpression());
+            }
 
         } else if (selection.size() > 0) {
             // If we aren't matching all then create a criteria that
             // only includes the selected streams.
-            final FindMetaCriteria criteria = new FindMetaCriteria(MetaExpressionUtil
-                    .createDataIdSetExpression(selection.getSet()));
+            return MetaExpressionUtil
+                    .createDataIdSetExpression(selection.getSet());
 
-            // Paging is NA
-            criteria.obtainPageRequest().setLength(null);
-            criteria.obtainPageRequest().setOffset(null);
-            return criteria;
         }
-
+//        else {
         return null;
+//        }
+//
+//        return builder;
+    }
+
+    private FindMetaCriteria expressionToNonPagedCriteria(final ExpressionOperator expression) {
+        final FindMetaCriteria criteria = new FindMetaCriteria(expression);
+
+        // Paging is NA
+        criteria.obtainPageRequest().setLength(null);
+        criteria.obtainPageRequest().setOffset(null);
+        return criteria;
     }
 
     @Override

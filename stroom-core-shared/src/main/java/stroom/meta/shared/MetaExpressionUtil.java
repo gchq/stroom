@@ -7,6 +7,7 @@ import stroom.query.api.v2.ExpressionTerm.Condition;
 import stroom.query.api.v2.ExpressionUtil;
 
 import java.util.Set;
+import java.util.stream.Collectors;
 
 public final class MetaExpressionUtil {
     private MetaExpressionUtil() {
@@ -18,11 +19,10 @@ public final class MetaExpressionUtil {
     }
 
     public static ExpressionOperator createDataIdSetExpression(final Set<Long> idSet) {
-        final ExpressionOperator.Builder builder = new ExpressionOperator.Builder(Op.OR);
-        for (final Long id : idSet) {
-            builder.addTerm(MetaFields.ID, Condition.EQUALS, id);
-        }
-        return builder.build();
+        final String delimitedList = idSet.stream().map(String::valueOf).collect(Collectors.joining(","));
+        return new ExpressionOperator.Builder(Op.OR)
+                .addTerm(MetaFields.ID.getName(), Condition.IN, delimitedList)
+                .build();
     }
 
     public static ExpressionOperator createDataIdExpression(final long id) {
@@ -51,49 +51,43 @@ public final class MetaExpressionUtil {
     }
 
     public static ExpressionOperator createFolderExpression(final DocRef folder) {
-        return createFoldersExpression(folder);
+        return new ExpressionOperator.Builder(Op.AND)
+                .addTerm(MetaFields.FEED, Condition.IN_FOLDER, folder)
+                .addTerm(MetaFields.STATUS, Condition.EQUALS, Status.UNLOCKED.getDisplayValue())
+                .build();
     }
 
-    public static ExpressionOperator createFoldersExpression(final DocRef... folders) {
-        final ExpressionOperator.Builder builder = new ExpressionOperator.Builder(Op.AND);
-
-        if (folders != null) {
-            if (folders.length == 1) {
-                builder.addTerm(MetaFields.FEED, Condition.IN_FOLDER, folders[0]);
-            } else {
-                final ExpressionOperator.Builder or = new ExpressionOperator.Builder(Op.OR);
-                for (final DocRef folder : folders) {
-                    or.addTerm(MetaFields.FEED, Condition.IN_FOLDER, folder);
-                }
-                builder.addOperator(or.build());
-            }
-        }
-
-        builder.addTerm(MetaFields.STATUS, Condition.EQUALS, Status.UNLOCKED.getDisplayValue());
-        return builder.build();
-    }
+//    public static ExpressionOperator createFoldersExpression(final DocRef... folders) {
+//        final ExpressionOperator.Builder builder = new ExpressionOperator.Builder(Op.AND);
+//
+//        if (folders != null) {
+//            if (folders.length == 1) {
+//                builder.addTerm(MetaFields.FEED, Condition.IN_FOLDER, folders[0]);
+//            } else {
+//                final ExpressionOperator.Builder or = new ExpressionOperator.Builder(Op.OR);
+//                for (final DocRef folder : folders) {
+//                    or.addTerm(MetaFields.FEED, Condition.IN_FOLDER, folder);
+//                }
+//                builder.addOperator(or.build());
+//            }
+//        }
+//
+//        builder.addTerm(MetaFields.STATUS, Condition.EQUALS, Status.UNLOCKED.getDisplayValue());
+//        return builder.build();
+//    }
 
     public static ExpressionOperator createFeedExpression(final String feedName) {
-        return createFeedsExpression(feedName);
+        return new ExpressionOperator.Builder(Op.AND)
+                .addTerm(MetaFields.FEED_NAME, Condition.EQUALS, feedName)
+                .addTerm(MetaFields.STATUS, Condition.EQUALS, Status.UNLOCKED.getDisplayValue())
+                .build();
     }
 
     public static ExpressionOperator createFeedsExpression(final String... feedNames) {
-        final ExpressionOperator.Builder builder = new ExpressionOperator.Builder(Op.AND);
-
-        if (feedNames != null) {
-            if (feedNames.length == 1) {
-                builder.addTerm(MetaFields.FEED_NAME, Condition.EQUALS, feedNames[0]);
-            } else {
-                final ExpressionOperator.Builder or = new ExpressionOperator.Builder(Op.OR);
-                for (final String feedName : feedNames) {
-                    or.addTerm(MetaFields.FEED_NAME, Condition.EQUALS, feedName);
-                }
-                builder.addOperator(or.build());
-            }
-        }
-
-        builder.addTerm(MetaFields.STATUS, Condition.EQUALS, Status.UNLOCKED.getDisplayValue());
-        return builder.build();
+        return new ExpressionOperator.Builder(Op.AND)
+                .addTerm(MetaFields.FEED_NAME, Condition.IN, String.join(",", feedNames))
+                .addTerm(MetaFields.STATUS, Condition.EQUALS, Status.UNLOCKED.getDisplayValue())
+                .build();
     }
 
     public static ExpressionOperator createPipelineExpression(final DocRef pipelineRef) {

@@ -86,6 +86,8 @@ CALL statistics_create_non_unique_index_v1(
 ALTER TABLE SQL_STAT_VAL_SRC
 MODIFY COLUMN VAL double ;
 
+ALTER TABLE SQL_STAT_VAL_SRC MODIFY COLUMN PROCESSING tinyint(1) NOT NULL DEFAULT '0';
+
 --
 -- Copy data into the job node table
 --

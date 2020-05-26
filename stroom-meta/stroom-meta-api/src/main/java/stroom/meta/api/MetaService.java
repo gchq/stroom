@@ -4,8 +4,8 @@ import stroom.meta.shared.FindMetaCriteria;
 import stroom.meta.shared.Meta;
 import stroom.meta.shared.MetaInfoSection;
 import stroom.meta.shared.MetaRow;
+import stroom.meta.shared.SelectionSummary;
 import stroom.meta.shared.Status;
-import stroom.meta.shared.UpdateStatusRequest;
 import stroom.util.shared.ResultPage;
 
 import java.util.List;
@@ -57,9 +57,9 @@ public interface MetaService {
     /**
      * Change the status of meta data records that match the supplied criteria.
      *
-     * @param criteria The criteria to match meta data records with.
+     * @param criteria      The criteria to match meta data records with.
      * @param currentStatus The current status.
-     * @param status   The new status.
+     * @param status        The new status.
      * @return The number of meta data records that are updated.
      */
     int updateStatus(FindMetaCriteria criteria, Status currentStatus, Status status);
@@ -128,7 +128,13 @@ public interface MetaService {
      */
     ResultPage<MetaRow> findRows(FindMetaCriteria criteria);
 
-    ResultPage<MetaRow> findMetaRow(FindMetaCriteria criteria);
+    /**
+     * Find meta data records and attributes that match the specified criteria and are decorated with data retention information.
+     *
+     * @param criteria The criteria to find matching meta data records with.
+     * @return A list of matching meta data records that includes attributes.
+     */
+    ResultPage<MetaRow> findDecoratedRows(FindMetaCriteria criteria);
 
     /**
      * Find meta data records and attributes that are related to the supplied record id.
@@ -137,6 +143,30 @@ public interface MetaService {
      * @return A list of matching meta data records that includes attributes.
      */
     List<MetaRow> findRelatedData(long id, boolean anyStatus);
+
+    /**
+     * Find meta data for reprocessing where child records match the specified criteria.
+     *
+     * @param criteria The criteria to find matching meta data child records with.
+     * @return A list of meta data for reprocessing where child records match the specified criteria.
+     */
+    ResultPage<Meta> findReprocess(FindMetaCriteria criteria);
+
+    /**
+     * Get a summary of the items included by the current selection.
+     *
+     * @param criteria The selection criteria.
+     * @return An object that provides a summary of the current selection.
+     */
+    SelectionSummary getSelectionSummary(FindMetaCriteria criteria);
+
+    /**
+     * Get a summary of the parent items of the current selection for reprocessing purposes.
+     *
+     * @param criteria The selection criteria.
+     * @return An object that provides a summary of the parent items of the current selection for reprocessing purposes.
+     */
+    SelectionSummary getReprocessSelectionSummary(FindMetaCriteria criteria);
 
     /**
      * Return back a aet of meta data records that are effective for a period in
@@ -148,20 +178,18 @@ public interface MetaService {
     Set<Meta> findEffectiveData(EffectiveMetaDataCriteria criteria);
 
     /**
-     * Return the id of the meta data record that is the one before the supplied timestamp
+     * Get more detailed meta data for a specific item.
      *
-     * @param timestampMs the period to compare against the creation date timestamp of the streams in the store
-     * @return the id of the timestamp before the supplied timestamp, or null if
-     * timestamp is earlier than all data or null if timestamp is earlier than all data in the store
+     * @param id The id of the item.
+     * @return More detailed meta data.
      */
-    Long getMaxDataIdWithCreationBeforePeriod(final Long timestampMs);
+    List<MetaInfoSection> fetchFullMetaInfo(long id);
 
-
-
-
-
-
-
-    List<MetaInfoSection> fetchFullMetaInfo(long id) ;
-
+    /**
+     * Get a distinct list of processor UUIds for meta data matching the supplied criteria.
+     *
+     * @param criteria The criteria to find matching meta data processor UUIds for.
+     * @return A distinct list of processor UUIds for meta data matching the supplied criteria.
+     */
+    List<String> getProcessorUuidList(FindMetaCriteria criteria);
 }

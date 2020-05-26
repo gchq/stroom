@@ -1,6 +1,5 @@
 package stroom.processor.impl.db;
 
-import org.jooq.Condition;
 import stroom.db.util.ExpressionMapper;
 import stroom.db.util.ExpressionMapperFactory;
 import stroom.db.util.GenericDao;
@@ -9,8 +8,10 @@ import stroom.entity.shared.ExpressionCriteria;
 import stroom.processor.impl.ProcessorDao;
 import stroom.processor.impl.db.jooq.tables.records.ProcessorRecord;
 import stroom.processor.shared.Processor;
-import stroom.processor.shared.ProcessorDataSource;
+import stroom.processor.shared.ProcessorFields;
 import stroom.util.shared.ResultPage;
+
+import org.jooq.Condition;
 
 import javax.inject.Inject;
 import java.util.Collection;
@@ -32,9 +33,12 @@ class ProcessorDaoImpl implements ProcessorDao {
         this.genericDao = new GenericDao<>(PROCESSOR, PROCESSOR.ID, Processor.class, processorDbConnProvider);
 
         expressionMapper = expressionMapperFactory.create();
-        expressionMapper.map(ProcessorDataSource.CREATE_USER, PROCESSOR_FILTER.CREATE_USER, value -> value);
-        expressionMapper.map(ProcessorDataSource.PIPELINE, PROCESSOR.PIPELINE_UUID, value -> value);
-        expressionMapper.map(ProcessorDataSource.UUID, PROCESSOR.UUID, value -> value);
+        expressionMapper.map(ProcessorFields.ID, PROCESSOR.ID, Integer::valueOf);
+        expressionMapper.map(ProcessorFields.CREATE_USER, PROCESSOR_FILTER.CREATE_USER, value -> value);
+        expressionMapper.map(ProcessorFields.PIPELINE, PROCESSOR.PIPELINE_UUID, value -> value);
+        expressionMapper.map(ProcessorFields.ENABLED, PROCESSOR.ENABLED, Boolean::valueOf);
+        expressionMapper.map(ProcessorFields.DELETED, PROCESSOR.DELETED, Boolean::valueOf);
+        expressionMapper.map(ProcessorFields.UUID, PROCESSOR.UUID, value -> value);
     }
 
     @Override
@@ -50,7 +54,8 @@ class ProcessorDaoImpl implements ProcessorDao {
                             PROCESSOR.UUID,
                             PROCESSOR.TASK_TYPE,
                             PROCESSOR.PIPELINE_UUID,
-                            PROCESSOR.ENABLED)
+                            PROCESSOR.ENABLED,
+                            PROCESSOR.DELETED)
                     .values(processor.getCreateTimeMs(),
                             processor.getCreateUser(),
                             processor.getUpdateTimeMs(),
@@ -58,7 +63,8 @@ class ProcessorDaoImpl implements ProcessorDao {
                             processor.getUuid(),
                             processor.getTaskType(),
                             processor.getPipelineUuid(),
-                            processor.isEnabled())
+                            processor.isEnabled(),
+                            processor.isDeleted())
                     .onDuplicateKeyIgnore()
                     .returning(PROCESSOR.ID)
                     .fetchOptional();
@@ -91,8 +97,27 @@ class ProcessorDaoImpl implements ProcessorDao {
     }
 
     @Override
+    public boolean logicalDelete(final int id) {
+        return JooqUtil.contextResult(processorDbConnProvider, context -> context
+                .update(PROCESSOR)
+                .set(PROCESSOR.DELETED, true)
+                .where(PROCESSOR.ID.eq(id))
+                .execute() > 0);
+    }
+
+    @Override
     public Optional<Processor> fetch(final int id) {
         return genericDao.fetch(id);
+    }
+
+    @Override
+    public Optional<Processor> fetchByUuid(final String uuid) {
+        return JooqUtil.contextResult(processorDbConnProvider, context -> context
+                .select()
+                .from(PROCESSOR)
+                .where(PROCESSOR.UUID.eq(uuid))
+                .fetchOptional()
+                .map(record -> record.into(Processor.class)));
     }
 
     @Override

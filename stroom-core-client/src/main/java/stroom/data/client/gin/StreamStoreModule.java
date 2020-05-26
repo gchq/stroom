@@ -28,6 +28,8 @@ import stroom.data.client.presenter.ExpressionPresenter.ExpressionView;
 import stroom.data.client.presenter.MetaListPresenter;
 import stroom.data.client.presenter.MetaPresenter;
 import stroom.data.client.presenter.MetaPresenter.StreamView;
+import stroom.data.client.presenter.ProcessChoicePresenter;
+import stroom.data.client.presenter.ProcessChoicePresenter.ProcessChoiceView;
 import stroom.data.client.presenter.ProcessorTaskListPresenter;
 import stroom.data.client.presenter.ProcessorTaskPresenter;
 import stroom.data.client.presenter.ProcessorTaskPresenter.StreamTaskView;
@@ -36,6 +38,7 @@ import stroom.data.client.presenter.TextPresenter.TextView;
 import stroom.data.client.view.ClassificationWrapperViewImpl;
 import stroom.data.client.view.DataViewImpl;
 import stroom.data.client.view.ExpressionViewImpl;
+import stroom.data.client.view.ProcessChoiceViewImpl;
 import stroom.data.client.view.StreamTaskViewImpl;
 import stroom.data.client.view.StreamViewImpl;
 import stroom.data.client.view.TextViewImpl;
@@ -61,6 +64,7 @@ public class StreamStoreModule extends PluginModule {
         bindPresenterWidget(TextPresenter.class, TextView.class, TextViewImpl.class);
         bindPresenterWidget(ProcessorTaskPresenter.class, StreamTaskView.class, StreamTaskViewImpl.class);
         bindPresenterWidget(ExpressionPresenter.class, ExpressionView.class, ExpressionViewImpl.class);
+        bindPresenterWidget(ProcessChoicePresenter.class, ProcessChoiceView.class, ProcessChoiceViewImpl.class);
         bind(MetaListPresenter.class);
 
         bind(ProcessorTaskListPresenter.class);

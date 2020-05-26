@@ -23,18 +23,14 @@ import stroom.processor.shared.Processor;
 import stroom.util.shared.HasIntCrud;
 import stroom.util.shared.ResultPage;
 
+import java.util.Optional;
+
 public interface ProcessorService extends HasIntCrud<Processor> {
     Processor create(DocRef pipelineRef, boolean enabled);
 
     Processor create(DocRef processorDocRef, DocRef pipelineDocRef, boolean enabled);
 
-//    Optional<Processor> fetchByUuid(final String uuid);
-//
-//    default Processor fetchByUuidOrThrow(final String uuid) {
-//        return fetchByUuid(uuid)
-//                .orElseThrow(() -> new RuntimeException(
-//                        LogUtil.message("Could not find processor with UUID {}", uuid)));
-//    }
+    Optional<Processor> fetchByUuid(final String uuid);
 
     ResultPage<Processor> find(ExpressionCriteria criteria);
 
