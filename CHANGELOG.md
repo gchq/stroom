@@ -7,6 +7,8 @@ and this project adheres to [Semantic Versioning](http://semver.org/).
 
 ## [Unreleased]
 
+* Issue **#1594** : Now auto creates root explorer node on startup if it is missing.
+
 * Issue **#1544** : Fixes for imported dashboards.
 
 * Issue **#1586** : Fixed migration and initial population of standard meta type names.
