@@ -1,6 +1,7 @@
 package stroom.util.collections;
 
 import java.util.ArrayList;
+import java.util.Collection;
 import java.util.Iterator;
 import java.util.List;
 import java.util.Spliterator;
@@ -15,7 +16,7 @@ import java.util.stream.StreamSupport;
 public class BatchingIterator<T> implements Iterator<List<T>> {
 
     /**
-     * Given a stream, convert it to a stream of batches no greater than the
+     * Given a {@link Stream}, convert it to a {@link Stream} of batches no greater than the
      * batchSize.
      * @param originalStream to convert
      * @param batchSize maximum size of a batch
@@ -24,6 +25,18 @@ public class BatchingIterator<T> implements Iterator<List<T>> {
      */
     public static <T> Stream<List<T>> batchedStreamOf(Stream<T> originalStream, int batchSize) {
         return asStream(new BatchingIterator<>(originalStream.iterator(), batchSize));
+    }
+
+    /**
+     * Given a {@link java.util.Collection}, convert it to a stream of batches no greater than the
+     * batchSize.
+     * @param originalCollection to convert
+     * @param batchSize maximum size of a batch
+     * @param <T> type of items in the stream
+     * @return a stream of batches taken sequentially from the original stream
+     */
+    public static <T> Stream<List<T>> batchedStreamOf(Collection<T> originalCollection, int batchSize) {
+        return asStream(new BatchingIterator<>(originalCollection.iterator(), batchSize));
     }
 
     private static <T> Stream<T> asStream(Iterator<T> iterator) {
