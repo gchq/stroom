@@ -128,10 +128,9 @@ public class TimePeriod {
 
     @Override
     public String toString() {
-        return "TimePeriod{" +
-                "from=" + from +
+        return "from=" + from +
                 ", to=" + to +
-                '}';
+                ", duration=" + getDuration();
     }
 
     @Override

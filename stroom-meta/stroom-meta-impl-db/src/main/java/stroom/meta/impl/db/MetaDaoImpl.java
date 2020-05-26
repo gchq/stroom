@@ -86,7 +86,7 @@ class MetaDaoImpl implements MetaDao {
     // TODO add to config
     private static final int MAX_VALUES_PER_INSERT = 500;
     // TODO add to config
-    private static final Duration LOGICAL_DELETE_BATCH_TIME_BUCKET = Duration.ofDays(1);
+    private static final Duration LOGICAL_DELETE_BATCH_TIME_BUCKET = Duration.ofHours(7);
 
     private static final stroom.meta.impl.db.jooq.tables.Meta meta = META.as("m");
     private static final MetaFeed metaFeed = META_FEED.as("f");
@@ -401,38 +401,64 @@ class MetaDaoImpl implements MetaDao {
                                         ruleAction.getOutcome().name())
                                 .collect(Collectors.joining("\n"))));
 
-        final int updateCount;
+        int totalUpdateCount = 0;
         if (ruleActions != null && !ruleActions.isEmpty()) {
             final byte statusIdDeleted = MetaStatusId.getPrimitiveValue(Status.DELETED);
 
             List<Condition> baseConditions = createDeleteConditions(ruleActions);
 
-//            if (period.getDuration().compareTo(LOGICAL_DELETE_BATCH_TIME_BUCKET) > 0) {
-//
-//            }
+            final Duration bucketSize = LOGICAL_DELETE_BATCH_TIME_BUCKET;
 
-            List<Condition> conditions = new ArrayList<>(baseConditions);
+            Instant batchPeriodFrom = period.getFrom();
+            Instant batchPeriodTo;
+            do {
+                // Work out duration from curent batchPeriodFrom time until periodTo time
+                Duration durationUntilPeriodTo = Duration.between(batchPeriodFrom, period.getTo());
 
-            // Time bound the data we are testing the rules over
-            conditions.add(meta.CREATE_TIME.greaterOrEqual(period.getFrom().toEpochMilli()));
-            conditions.add(meta.CREATE_TIME.lessThan(period.getTo().toEpochMilli()));
+                LOGGER.debug("durationUntilPeriodTo {}", durationUntilPeriodTo);
 
-            updateCount = LOGGER.logDurationIfDebugEnabled(
-                    () -> JooqUtil.contextResult(metaDbConnProvider, context -> context
-                                    .update(meta)
-                                    .set(meta.STATUS, statusIdDeleted)
-                                    .set(meta.STATUS_TIME, Instant.now().toEpochMilli())
-                                    .where(conditions)
-                                    .limit(batchSize)
-                                    .execute()),
-                    cnt -> LogUtil.message("Logically deleting {} meta records", cnt));
+                if (durationUntilPeriodTo.compareTo(LOGICAL_DELETE_BATCH_TIME_BUCKET) > 0) {
+                    // period bigger than bucketSize so split it up
+                    batchPeriodTo = batchPeriodFrom.plus(bucketSize);
+                } else {
+                    batchPeriodTo = period.getTo();
+                }
+                final TimePeriod batchPeriod = TimePeriod.between(batchPeriodFrom, batchPeriodTo);
 
-            LOGGER.debug("Logically deleted {} meta rows", updateCount);
+                LOGGER.debug("Processing batchPeriod {}", batchPeriod);
+
+                final List<Condition> conditions = new ArrayList<>(baseConditions);
+
+                // Time bound the data we are testing the rules over
+                conditions.add(meta.CREATE_TIME.greaterOrEqual(batchPeriod.getFrom().toEpochMilli()));
+                conditions.add(meta.CREATE_TIME.lessThan(batchPeriod.getTo().toEpochMilli()));
+
+                int updateCount = LOGGER.logDurationIfDebugEnabled(
+                        () -> JooqUtil.contextResult(metaDbConnProvider, context -> context
+                                .update(meta)
+                                .set(meta.STATUS, statusIdDeleted)
+                                .set(meta.STATUS_TIME, Instant.now().toEpochMilli())
+                                .where(conditions)
+                                .limit(batchSize)
+                                .execute()),
+                        cnt -> LogUtil.message("Logically deleting {} meta records", cnt));
+
+                totalUpdateCount += updateCount;
+
+                LOGGER.debug("Logically deleted {} meta rows (total so far {})", updateCount, totalUpdateCount);
+
+                // now advance the from time
+                batchPeriodFrom = batchPeriodFrom.plus(bucketSize);
+                
+                LOGGER.debug("new batchPeriodFrom {}, periodTo {}", batchPeriodFrom, period.getTo());
+
+            } while (batchPeriodTo.isBefore(period.getTo()));
+
         } else {
             LOGGER.debug("Empty ruleActions");
-            updateCount = 0;
+            totalUpdateCount = 0;
         }
-        return updateCount;
+        return totalUpdateCount;
     }
 
     private List<Condition> createDeleteConditions(final List<DataRetentionRuleAction> ruleActions) {

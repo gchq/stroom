@@ -305,7 +305,7 @@ class TestMetaServiceImpl {
 
         Instant now = Instant.now();
 
-        int days = 1000;
+        int days = 100;
         int rowsPerFeedPerDay = 10;
         int feedCount = 100;
         int batchSize = 10_000;
@@ -441,6 +441,7 @@ class TestMetaServiceImpl {
 
         final ExpressionOperator expressionOperator = new ExpressionOperator.Builder(true, Op.AND)
                 .addTerm(MetaFields.FIELD_FEED, Condition.EQUALS, feedName)
+                .addTerm(MetaFields.FIELD_TYPE, Condition.EQUALS, "TEST_STREAM_TYPE")
                 .build();
 
         // The age on the rule doesn't matter for the dao tests
