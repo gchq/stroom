@@ -35,6 +35,7 @@ import stroom.explorer.shared.StandardTagNames;
 import stroom.security.api.SecurityContext;
 import stroom.security.shared.DocumentPermissionNames;
 import stroom.util.shared.PermissionException;
+import stroom.util.string.StringPredicateFactory;
 
 import javax.inject.Inject;
 import javax.inject.Provider;
@@ -49,6 +50,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.Optional;
 import java.util.Set;
+import java.util.function.Predicate;
 import java.util.stream.Collectors;
 
 @Singleton
@@ -92,7 +94,10 @@ class ExplorerServiceImpl implements ExplorerService, CollectionService {
         allOpenItems.addAll(forcedOpenItems);
 
         final TreeModel filteredModel = new TreeModel();
-        addDescendants(null, masterTreeModel, filteredModel, filter, false, allOpenItems, 0);
+        // Create the predicate for the current filter value
+        final Predicate<String> fuzzyMatchPredicate = StringPredicateFactory.createFuzzyMatchPredicate(filter.getNameFilter());
+
+        addDescendants(null, masterTreeModel, filteredModel, filter, fuzzyMatchPredicate, false, allOpenItems, 0);
 
         // If the name filter has changed then we want to temporarily expand all nodes.
         if (filter.isNameFilterChange()) {
@@ -219,6 +224,7 @@ class ExplorerServiceImpl implements ExplorerService, CollectionService {
                                    final TreeModel treeModelIn,
                                    final TreeModel treeModelOut,
                                    final ExplorerTreeFilter filter,
+                                   final Predicate<String> filterPredicate,
                                    final boolean ignoreNameFilter,
                                    final Set<String> allOpenItems,
                                    final int currentDepth) {
@@ -235,17 +241,17 @@ class ExplorerServiceImpl implements ExplorerService, CollectionService {
                 final ExplorerNode child = iterator.next();
 
                 // We don't want to filter child items if the parent folder matches the name filter.
-                final boolean ignoreChildNameFilter = checkName(child, filter.getNameFilter());
+                final boolean ignoreChildNameFilter = checkName(child, filterPredicate);
 
                 // Recurse right down to find out if a descendant is being added and therefore if we need to include this as an ancestor.
-                final boolean hasChildren = addDescendants(child, treeModelIn, treeModelOut, filter, ignoreChildNameFilter, allOpenItems, currentDepth + 1);
+                final boolean hasChildren = addDescendants(child, treeModelIn, treeModelOut, filter, filterPredicate, ignoreChildNameFilter, allOpenItems, currentDepth + 1);
                 if (hasChildren) {
                     treeModelOut.add(parent, child);
                     added++;
 
                 } else if (checkType(child, filter.getIncludedTypes())
                         && checkTags(child, filter.getTags())
-                        && (ignoreNameFilter || checkName(child, filter.getNameFilter()))
+                        && (ignoreNameFilter || checkName(child, filterPredicate))
                         && checkSecurity(child, filter.getRequiredPermissions())) {
                     treeModelOut.add(parent, child);
                     added++;
@@ -289,8 +295,10 @@ class ExplorerServiceImpl implements ExplorerService, CollectionService {
         return false;
     }
 
-    static boolean checkName(final ExplorerNode explorerNode, final String nameFilter) {
-        return nameFilter == null || explorerNode.getDisplayValue().toLowerCase().contains(nameFilter.toLowerCase());
+    static boolean checkName(final ExplorerNode explorerNode,
+                             final Predicate<String> filterPredicate) {
+        return filterPredicate.test(explorerNode.getDisplayValue());
+//        return nameFilter == null || explorerNode.getDisplayValue().toLowerCase().contains(nameFilter.toLowerCase());
     }
 
     private void addRoots(final TreeModel filteredModel,

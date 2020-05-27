@@ -7,6 +7,8 @@ and this project adheres to [Semantic Versioning](http://semver.org/).
 
 ## [Unreleased]
 
+* Add fuzzy match filter to explorer tree.
+
 
 ## [v7.0-beta.34] - 2020-05-26
 
