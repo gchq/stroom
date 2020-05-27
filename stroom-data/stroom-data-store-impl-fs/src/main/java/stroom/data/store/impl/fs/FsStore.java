@@ -18,9 +18,6 @@
 package stroom.data.store.impl.fs;
 
 
-import event.logging.util.DateUtil;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 import stroom.data.store.api.DataException;
 import stroom.data.store.api.Source;
 import stroom.data.store.api.Store;
@@ -29,15 +26,21 @@ import stroom.data.store.impl.fs.DataVolumeDao.DataVolume;
 import stroom.data.store.impl.fs.shared.FsVolume;
 import stroom.datasource.api.v2.AbstractField;
 import stroom.meta.api.AttributeMapFactory;
-import stroom.meta.shared.Meta;
-import stroom.meta.shared.MetaFields;
 import stroom.meta.api.MetaProperties;
 import stroom.meta.api.MetaService;
+import stroom.meta.shared.Meta;
+import stroom.meta.shared.MetaFields;
 import stroom.meta.shared.Status;
+
+import event.logging.util.DateUtil;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import javax.inject.Inject;
 import javax.inject.Singleton;
 import java.io.IOException;
+import java.nio.file.Path;
+import java.nio.file.Paths;
 import java.util.Map;
 import java.util.Objects;
 
@@ -83,9 +86,9 @@ class FsStore implements Store, AttributeMapFactory {
         final Meta meta = metaService.create(metaProperties);
 
         final DataVolume dataVolume = dataVolumeService.createDataVolume(meta.getId(), volume);
-        final String rootPath = dataVolume.getVolumePath();
+        final Path volumePath = Paths.get(dataVolume.getVolumePath());
         final String streamType = meta.getTypeName();
-        final FsTarget target = FsTarget.create(metaService, fileSystemStreamPathHelper, meta, rootPath, streamType, false);
+        final FsTarget target = FsTarget.create(metaService, fileSystemStreamPathHelper, meta, volumePath, streamType, false);
 
         // Force Creation of the files
         target.getOutputStream();
@@ -106,10 +109,10 @@ class FsStore implements Store, AttributeMapFactory {
             throw new DataException("Not all volumes are unlocked");
         }
         final Meta lockedMeta = metaService.updateStatus(meta, Status.UNLOCKED, Status.LOCKED);
-        final String rootPath = dataVolume.getVolumePath();
+        final Path volumePath = Paths.get(dataVolume.getVolumePath());
 
         final String streamType = lockedMeta.getTypeName();
-        final FsTarget target = FsTarget.create(metaService, fileSystemStreamPathHelper, lockedMeta, rootPath,
+        final FsTarget target = FsTarget.create(metaService, fileSystemStreamPathHelper, lockedMeta, volumePath,
                 streamType, true);
 
         syncAttributes(lockedMeta, target);
@@ -184,7 +187,7 @@ class FsStore implements Store, AttributeMapFactory {
     public Target deleteTarget(final Target target) {
         // Make sure the stream is closed.
         try {
-            ((FsTarget)target).delete();
+            ((FsTarget) target).delete();
         } catch (final RuntimeException e) {
             LOGGER.error("Unable to delete stream target! {}", e.getMessage(), e);
         }
@@ -199,7 +202,7 @@ class FsStore implements Store, AttributeMapFactory {
      * @param streamId the id of the stream to open.
      * @return The stream source if the stream can be found.
      * @throws DataException in case of a IO error or stream volume not visible or non
-     *                         existent.
+     *                       existent.
      */
     @Override
     public Source openSource(final long streamId) throws DataException {
@@ -243,7 +246,8 @@ class FsStore implements Store, AttributeMapFactory {
 //                LOGGER.warn(message);
 //                throw new DataException(message);
 //            }
-            streamSource = FsSource.create(fileSystemStreamPathHelper, meta, dataVolume.getVolumePath(), meta.getTypeName());
+            final Path volumePath = Paths.get(dataVolume.getVolumePath());
+            streamSource = FsSource.create(fileSystemStreamPathHelper, meta, volumePath, meta.getTypeName());
         }
 
         return streamSource;

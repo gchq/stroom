@@ -7,10 +7,12 @@ and this project adheres to [Semantic Versioning](http://semver.org/).
 
 ## [Unreleased]
 
+* Issue **#1569** : Additional changes to improve the new `Data Delete` task that replaces the `File System Clean` task.
+
 
 ## [v7.0-beta.34] - 2020-05-26
 
-* Issue **#1569** : Removed recursive multi threading from file system clean as thread limit was being reached. 
+* Issue **#1569** : Removed recursive multi threading from file system clean as thread limit was being reached.
 
 * Issue **#1478** : Fixed data volume creation and other resource methods.
 

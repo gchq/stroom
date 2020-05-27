@@ -16,8 +16,8 @@
 
 package stroom.data.store.impl.fs;
 
-import stroom.util.RunnableWrapper;
 import stroom.job.api.ScheduledJobsBinder;
+import stroom.util.RunnableWrapper;
 
 import com.google.inject.AbstractModule;
 
@@ -30,30 +30,31 @@ public class FsDataStoreJobsModule extends AbstractModule {
     protected void configure() {
 
         ScheduledJobsBinder.create(binder())
+                .bindJobTo(PhysicalDelete.class, builder -> builder
+                        .withName("Data Delete")
+                        .withDescription("Physically delete meta data and associated files that have been logically deleted " +
+                                "based on age of delete (stroom.data.store.deletePurgeAge)")
+                        .withSchedule(CRON, "0 0 *")
+                        .withAdvancedState(false))
                 .bindJobTo(FileSystemClean.class, builder -> builder
-                        .withName("File System Clean")
+                        .withName("File System Clean (deprecated)")
                         .withDescription("Job to process a volume deleting files that are no " +
                                 "longer indexed (maybe the retention period has past or they have been deleted)")
                         .withSchedule(CRON, "0 0 *")
-                        .withAdvancedState(false))
-                .bindJobTo(MetaDelete.class, builder -> builder
-                        .withName("Meta Delete")
-                        .withDescription("Physically delete streams that have been logically deleted " +
-                                "based on age of delete (stroom.data.store.deletePurgeAge)")
-                        .withSchedule(CRON, "0 0 *"));
+                        .withEnabledState(false));
+    }
+
+    private static class PhysicalDelete extends RunnableWrapper {
+        @Inject
+        PhysicalDelete(final PhysicalDeleteExecutor physicalDeleteExecutor) {
+            super(physicalDeleteExecutor::exec);
+        }
     }
 
     private static class FileSystemClean extends RunnableWrapper {
         @Inject
         FileSystemClean(final FsCleanExecutor fileSystemCleanExecutor) {
             super(fileSystemCleanExecutor::clean);
-        }
-    }
-
-    private static class MetaDelete extends RunnableWrapper {
-        @Inject
-        MetaDelete(final PhysicalDeleteExecutor physicalDeleteExecutor) {
-            super(physicalDeleteExecutor::exec);
         }
     }
 }

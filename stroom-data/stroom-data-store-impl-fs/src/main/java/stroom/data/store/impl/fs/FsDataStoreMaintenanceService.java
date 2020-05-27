@@ -44,6 +44,7 @@ import java.io.IOException;
 import java.nio.file.DirectoryStream;
 import java.nio.file.Files;
 import java.nio.file.Path;
+import java.nio.file.Paths;
 import java.time.Duration;
 import java.time.LocalDate;
 import java.time.format.DateTimeFormatter;
@@ -89,7 +90,8 @@ class FsDataStoreMaintenanceService implements DataStoreMaintenanceService {
     List<Path> findAllStreamFile(final Meta meta) {
         final DataVolume dataVolume = dataVolumeService.findDataVolume(meta.getId());
         if (dataVolume != null) {
-            final Path rootFile = fileSystemStreamPathHelper.getRootPath(dataVolume.getVolumePath(), meta, meta.getTypeName());
+            final Path volumePath = Paths.get(dataVolume.getVolumePath());
+            final Path rootFile = fileSystemStreamPathHelper.getRootPath(volumePath, meta, meta.getTypeName());
             final List<Path> results = new ArrayList<>();
             if (Files.isRegularFile(rootFile)) {
                 results.add(rootFile);

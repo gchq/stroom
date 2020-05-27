@@ -60,6 +60,7 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.nio.file.Files;
 import java.nio.file.Path;
+import java.nio.file.Paths;
 import java.nio.file.attribute.PosixFilePermission;
 import java.time.ZoneOffset;
 import java.time.ZonedDateTime;
@@ -386,7 +387,7 @@ class TestFileSystemStreamStore extends AbstractCoreIntegrationTest {
 
         boolean foundOne = false;
         for (final Meta result : list) {
-            assertThat(fileSystemStreamPathHelper.getDirectory(result, StreamTypeNames.RAW_EVENTS)).isNotNull();
+            assertThat(fileSystemStreamPathHelper.getRootPath(Paths.get(""), result, StreamTypeNames.RAW_EVENTS)).isNotNull();
             assertThat(fileSystemStreamPathHelper.getBaseName(result)).isNotNull();
             if (fileSystemStreamPathHelper.getBaseName(result)
                     .equals(fileSystemStreamPathHelper.getBaseName(exactMetaData))) {
@@ -733,8 +734,9 @@ class TestFileSystemStreamStore extends AbstractCoreIntegrationTest {
             streamTarget.getAttributes().put(MetaFields.REC_READ.getName(), "100");
         }
 
-        final DataVolume streamVolume = dataVolumeService.findDataVolume(meta.getId());
-        final Path rootFile = fileSystemStreamPathHelper.getRootPath(streamVolume.getVolumePath(), meta, StreamTypeNames.RAW_EVENTS);
+        final DataVolume dataVolume = dataVolumeService.findDataVolume(meta.getId());
+        final Path volumePath = Paths.get(dataVolume.getVolumePath());
+        final Path rootFile = fileSystemStreamPathHelper.getRootPath(volumePath, meta, StreamTypeNames.RAW_EVENTS);
 
         assertThat(Files.isRegularFile(rootFile)).isTrue();
 
