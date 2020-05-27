@@ -9,6 +9,8 @@ and this project adheres to [Semantic Versioning](http://semver.org/).
 
 * Issue **#1565** : Stop data retention rules deleting all data.
 
+* Add fuzzy match filter to explorer tree.
+
 
 ## [v7.0-beta.34] - 2020-05-26
 
