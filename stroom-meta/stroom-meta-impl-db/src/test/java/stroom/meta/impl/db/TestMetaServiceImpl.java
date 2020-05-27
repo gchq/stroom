@@ -175,9 +175,9 @@ class TestMetaServiceImpl {
     void testRetentionDelete_retainAll() {
 
         List<DataRetentionRuleAction> ruleActions = List.of(
-                buildRuleAction(3, FEED_3, RetentionRuleOutcome.RETAIN),
+                buildRuleAction(1, FEED_1, RetentionRuleOutcome.RETAIN),
                 buildRuleAction(2, FEED_2, RetentionRuleOutcome.RETAIN),
-                buildRuleAction(1, FEED_1, RetentionRuleOutcome.RETAIN)
+                buildRuleAction(3, FEED_3, RetentionRuleOutcome.RETAIN)
         );
 
         TimePeriod period = TimePeriod.between(Instant.EPOCH, Instant.now());
@@ -196,9 +196,9 @@ class TestMetaServiceImpl {
     void testRetentionDelete_deleteAll_locked() {
 
         List<DataRetentionRuleAction> ruleActions = List.of(
-                buildRuleAction(3, FEED_3, RetentionRuleOutcome.DELETE),
+                buildRuleAction(1, FEED_1, RetentionRuleOutcome.DELETE),
                 buildRuleAction(2, FEED_2, RetentionRuleOutcome.DELETE),
-                buildRuleAction(1, FEED_1, RetentionRuleOutcome.DELETE)
+                buildRuleAction(3, FEED_3, RetentionRuleOutcome.DELETE)
         );
 
         setupRetentionData(Status.LOCKED);
@@ -217,9 +217,9 @@ class TestMetaServiceImpl {
     void testRetentionDelete_deleteAll() {
 
         List<DataRetentionRuleAction> ruleActions = List.of(
-                buildRuleAction(3, FEED_3, RetentionRuleOutcome.DELETE),
+                buildRuleAction(1, FEED_1, RetentionRuleOutcome.DELETE),
                 buildRuleAction(2, FEED_2, RetentionRuleOutcome.DELETE),
-                buildRuleAction(1, FEED_1, RetentionRuleOutcome.DELETE)
+                buildRuleAction(3, FEED_3, RetentionRuleOutcome.DELETE)
         );
 
         setupRetentionData();
@@ -238,9 +238,9 @@ class TestMetaServiceImpl {
     void testRetentionDelete_deleteSome() {
 
         List<DataRetentionRuleAction> ruleActions = List.of(
-                buildRuleAction(3, FEED_3, RetentionRuleOutcome.RETAIN),
+                buildRuleAction(1, FEED_1, RetentionRuleOutcome.RETAIN),
                 buildRuleAction(2, FEED_2, RetentionRuleOutcome.DELETE),
-                buildRuleAction(1, FEED_1, RetentionRuleOutcome.RETAIN)
+                buildRuleAction(3, FEED_3, RetentionRuleOutcome.RETAIN)
         );
 
         setupRetentionData();
@@ -261,10 +261,10 @@ class TestMetaServiceImpl {
 
         // Two rules for same expression, rule 3 will never match
         List<DataRetentionRuleAction> ruleActions = List.of(
-                buildRuleAction(4, FEED_3, RetentionRuleOutcome.RETAIN),
-                buildRuleAction(3, FEED_3, RetentionRuleOutcome.DELETE),
-                buildRuleAction(2, FEED_2, RetentionRuleOutcome.DELETE),
-                buildRuleAction(1, FEED_1, RetentionRuleOutcome.DELETE)
+                buildRuleAction(1, FEED_1, RetentionRuleOutcome.RETAIN),
+                buildRuleAction(2, FEED_1, RetentionRuleOutcome.DELETE),
+                buildRuleAction(3, FEED_2, RetentionRuleOutcome.DELETE),
+                buildRuleAction(4, FEED_3, RetentionRuleOutcome.DELETE)
         );
 
         setupRetentionData();
@@ -285,10 +285,10 @@ class TestMetaServiceImpl {
 
         // Two rules for same expression, rule 3 will never match
         List<DataRetentionRuleAction> ruleActions = List.of(
-                buildRuleAction(4, FEED_3, RetentionRuleOutcome.DELETE),
-                buildRuleAction(3, FEED_3, RetentionRuleOutcome.RETAIN),
-                buildRuleAction(2, FEED_2, RetentionRuleOutcome.DELETE),
-                buildRuleAction(1, FEED_1, RetentionRuleOutcome.DELETE)
+                buildRuleAction(1, FEED_1, RetentionRuleOutcome.DELETE),
+                buildRuleAction(2, FEED_1, RetentionRuleOutcome.RETAIN),
+                buildRuleAction(3, FEED_3, RetentionRuleOutcome.DELETE),
+                buildRuleAction(4, FEED_4, RetentionRuleOutcome.DELETE)
         );
 
         setupRetentionData();
@@ -308,9 +308,9 @@ class TestMetaServiceImpl {
     void testRetentionDelete_period() {
 
         List<DataRetentionRuleAction> ruleActions = List.of(
-                buildRuleAction(3, FEED_3, RetentionRuleOutcome.DELETE),
+                buildRuleAction(1, FEED_1, RetentionRuleOutcome.DELETE),
                 buildRuleAction(2, FEED_2, RetentionRuleOutcome.DELETE),
-                buildRuleAction(1, FEED_1, RetentionRuleOutcome.DELETE)
+                buildRuleAction(3, FEED_3, RetentionRuleOutcome.DELETE)
         );
 
         Instant now = Instant.now();
@@ -339,9 +339,9 @@ class TestMetaServiceImpl {
     void testRetentionDelete_period2() {
 
         List<DataRetentionRuleAction> ruleActions = List.of(
-                buildRuleAction(3, FEED_3, RetentionRuleOutcome.DELETE),
+                buildRuleAction(1, FEED_1, RetentionRuleOutcome.DELETE),
                 buildRuleAction(2, FEED_2, RetentionRuleOutcome.DELETE),
-                buildRuleAction(1, FEED_1, RetentionRuleOutcome.DELETE)
+                buildRuleAction(3, FEED_3, RetentionRuleOutcome.DELETE)
         );
 
         Instant now = Instant.now();
@@ -368,11 +368,11 @@ class TestMetaServiceImpl {
     void testRetentionDelete_volumeTest() {
 
         List<DataRetentionRuleAction> ruleActions = List.of(
-                buildRuleAction(5, FEED_5, RetentionRuleOutcome.DELETE),
-                buildRuleAction(4, FEED_4, RetentionRuleOutcome.RETAIN),
-                buildRuleAction(3, FEED_3, RetentionRuleOutcome.DELETE),
+                buildRuleAction(1, FEED_1, RetentionRuleOutcome.DELETE),
                 buildRuleAction(2, FEED_2, RetentionRuleOutcome.RETAIN),
-                buildRuleAction(1, FEED_1, RetentionRuleOutcome.DELETE)
+                buildRuleAction(3, FEED_3, RetentionRuleOutcome.DELETE),
+                buildRuleAction(4, FEED_4, RetentionRuleOutcome.RETAIN),
+                buildRuleAction(5, FEED_5, RetentionRuleOutcome.DELETE)
         );
 
         Instant now = Instant.now();
@@ -432,6 +432,9 @@ class TestMetaServiceImpl {
         LOGGER.info("Done");
     }
 
+    /**
+     * Seeing which execution timer was faster
+     */
     @Disabled
     @Test
     void testLogExecutionTime() {

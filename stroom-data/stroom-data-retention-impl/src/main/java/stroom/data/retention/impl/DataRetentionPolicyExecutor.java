@@ -151,22 +151,23 @@ public class DataRetentionPolicyExecutor {
 
                 final AtomicBoolean allSuccessful = new AtomicBoolean(true);
 
-                // Rules must be in descending order by rule number so they applied in the correct order
+                // Rules must be in ascending order by rule number so they applied in the correct order
                 ruleActionsByPeriod.entrySet()
                         .stream()
                         .sorted(Comparator.comparing(entry ->
+                                // Work backwards in time
                                 entry.getKey().getFrom(), Comparator.reverseOrder()))
                         .forEach(entry -> {
                             List<DataRetentionRuleAction> ruleActions = entry.getValue();
                             TimePeriod period = entry.getKey();
 
-                            final List<DataRetentionRuleAction> reverseSortedActions = ruleActions.stream()
-                                    .sorted(DataRetentionRuleAction.comparingByRuleNo().reversed())
+                            final List<DataRetentionRuleAction> sortedActions = ruleActions.stream()
+                                    .sorted(DataRetentionRuleAction.comparingByRuleNo())
                                     .collect(Collectors.toList());
 
                             // Skip if we have terminated processing.
                             if (!Thread.currentThread().isInterrupted()) {
-                                processPeriod(taskContext, period, reverseSortedActions, now);
+                                processPeriod(taskContext, period, sortedActions, now);
                                 if (!Thread.currentThread().isInterrupted()) {
                                     allSuccessful.set(false);
                                 }
@@ -189,7 +190,7 @@ public class DataRetentionPolicyExecutor {
         // Calculate the amount of time that has elapsed since we last ran.
         final Duration timeSinceLastRun = metaService.getRetentionTracker()
                 .flatMap(tracker -> {
-                        // If rules ver in track doesn't match, treat as if tracker isn't there
+                        // If rules ver in tracker doesn't match, treat as if tracker isn't there
                         if (tracker.getRulesVersion().equals(dataRetentionRules.getVersion())) {
                             LOGGER.info("Found valid tracker {}", tracker);
                             return Optional.of(tracker);
@@ -223,7 +224,7 @@ public class DataRetentionPolicyExecutor {
 
     private void processPeriod(final TaskContext taskContext,
                                final TimePeriod period,
-                               final List<DataRetentionRuleAction> reverseSortedRuleActions,
+                               final List<DataRetentionRuleAction> sortedRuleActions,
                                final Instant now) {
         info(taskContext, () -> {
             final Function<DataRetentionRuleAction, String> ruleInfo = rule ->
@@ -242,15 +243,15 @@ public class DataRetentionPolicyExecutor {
                     " and " +
                     period.getTo() + " (" + toTimeAge + " ago)" +
                     " [" + period.getDurationStr() +
-                    "], " + reverseSortedRuleActions.size() + " rules:\n" +
-                    reverseSortedRuleActions.stream()
+                    "], " + sortedRuleActions.size() + " rules:\n" +
+                    sortedRuleActions.stream()
                             .map(ruleInfo)
                             .collect(Collectors.joining("\n"));
         });
 
         int count = -1;
         while (count != 0 && !Thread.currentThread().isInterrupted()) {
-            count = metaService.delete(reverseSortedRuleActions, period);
+            count = metaService.delete(sortedRuleActions, period);
             final String message = "Marked " + count + " items as deleted";
             LOGGER.info(() -> message);
         }
@@ -322,43 +323,6 @@ public class DataRetentionPolicyExecutor {
                         TimeUtils.instantAsAge(period.getTo(), now)));
             });
 
-
-//            minCreationTimeMap.entrySet()
-//                    .stream()
-//                    .sorted(Map.Entry.comparingByKey(Comparator.reverseOrder()))
-//                    .forEach(entry -> {
-//                        final Instant minCreationTime = entry.getKey();
-//                        final Set<DataRetentionRule> ruleSet = entry.getValue();
-//
-//                        final Set<DataRetentionRule> set = rulesByPeriod.computeIfAbsent(
-//                                period,
-//                                p -> new HashSet<>());
-//
-////                        LOGGER.debug(() -> Duration.between(minCreationTime, period.getFrom()).toString());
-////                        boolean doRulesApplyToPeriod = minCreationTime.truncatedTo(ChronoUnit.MILLIS)
-////                                .isBefore(period.getFrom().truncatedTo(ChronoUnit.MILLIS));
-////                        boolean doRulesApplyToPeriod = minCreationTime
-////                                .isBefore(period.getFrom());
-//                        boolean doRulesApplyToPeriod = minCreationTime.isAfter(period.getFrom());
-//
-//                        LOGGER.debug(() -> LogUtil.message(
-//                                "  {}, minCreationTime: {} ({} ago), from: {} ({} ago), to {} ({} ago), ruleSet {}",
-//                                doRulesApplyToPeriod,
-//                                minCreationTime,
-//                                TimeUtils.instantAsAge(creationTime, now),
-//                                period.getFrom(),
-//                                TimeUtils.instantAsAge(period.getFrom(), now),
-//                                period.getTo(),
-//                                TimeUtils.instantAsAge(period.getTo(), now),
-//                                ruleSet.stream()
-//                                        .sorted(DataRetentionRule.comparingByDescendingRuleNumber())
-//                                        .collect(Collectors.toList())));
-//
-//                        if (doRulesApplyToPeriod) {
-//                            set.addAll(ruleSet);
-//                        }
-//                    });
-
             toTime = creationTime;
         }
         return rulesByPeriod;
@@ -396,7 +360,7 @@ public class DataRetentionPolicyExecutor {
                         TimeUtils.instantAsAge(entry.getKey(), now) +
                         " ago) - " +
                         entry.getValue().stream()
-                                .sorted(Comparator.comparing(DataRetentionRule::getRuleNumber).reversed())
+                                .sorted(Comparator.comparing(DataRetentionRule::getRuleNumber))
                                 .collect(Collectors.toList()))
                 .collect(Collectors.joining("\n")));
 
@@ -411,5 +375,4 @@ public class DataRetentionPolicyExecutor {
         LOGGER.info(messageSupplier);
         taskContext.info(messageSupplier);
     }
-
 }
