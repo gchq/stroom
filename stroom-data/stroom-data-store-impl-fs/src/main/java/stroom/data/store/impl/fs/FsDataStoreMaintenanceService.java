@@ -17,25 +17,26 @@
 
 package stroom.data.store.impl.fs;
 
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 import stroom.data.store.impl.DataStoreMaintenanceService;
 import stroom.data.store.impl.ScanVolumePathResult;
 import stroom.data.store.impl.fs.DataVolumeDao.DataVolume;
 import stroom.data.store.impl.fs.shared.FsVolume;
+import stroom.meta.api.MetaService;
 import stroom.meta.shared.FindMetaCriteria;
 import stroom.meta.shared.Meta;
 import stroom.meta.shared.MetaFields;
-import stroom.meta.api.MetaService;
 import stroom.query.api.v2.ExpressionOperator;
 import stroom.query.api.v2.ExpressionOperator.Op;
 import stroom.query.api.v2.ExpressionTerm.Condition;
 import stroom.security.api.SecurityContext;
 import stroom.security.shared.PermissionNames;
 import stroom.util.io.FileUtil;
+import stroom.util.shared.PageRequest;
 import stroom.util.shared.ResultPage;
 import stroom.util.shared.Selection;
-import stroom.util.shared.PageRequest;
+
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import javax.inject.Inject;
 import javax.inject.Singleton;
@@ -141,7 +142,7 @@ class FsDataStoreMaintenanceService implements DataStoreMaintenanceService {
             // Here we check the file system for files before querying the database.
             // The idea is that entries are written in the database before the file
             // system. We can safely delete entries on the file system that do not
-            // have a entries on the database.
+            // have any entries in the database.
             try {
                 if (!Files.isSameFile(volumeRoot, directory)) {
                     checkEmptyDirectory(result, doDelete, directory, oldFileTime, kids);
@@ -158,7 +159,6 @@ class FsDataStoreMaintenanceService implements DataStoreMaintenanceService {
                 buildStreamsKeyedByBaseName(volume, repoPath, streamsKeyedByBaseName);
 
                 deleteUnknownFiles(result, doDelete, directory, oldFileTime, filesKeyedByBaseName, streamsKeyedByBaseName);
-
             }
 
             return result;
@@ -342,8 +342,11 @@ class FsDataStoreMaintenanceService implements DataStoreMaintenanceService {
         }
     }
 
-    private void checkEmptyDirectory(final ScanVolumePathResult result, final boolean doDelete, final Path directory,
-                                     final long oldFileTime, final List<String> kids) {
+    private void checkEmptyDirectory(final ScanVolumePathResult result,
+                                     final boolean doDelete,
+                                     final Path directory,
+                                     final long oldFileTime,
+                                     final List<String> kids) {
         if (kids == null || kids.size() == 0) {
             tryDelete(result, doDelete, directory, oldFileTime);
         }
