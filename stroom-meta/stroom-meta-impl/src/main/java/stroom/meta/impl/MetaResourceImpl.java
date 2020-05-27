@@ -21,6 +21,7 @@ import stroom.meta.shared.FindMetaCriteria;
 import stroom.meta.shared.MetaInfoSection;
 import stroom.meta.shared.MetaResource;
 import stroom.meta.shared.MetaRow;
+import stroom.meta.shared.SelectionSummary;
 import stroom.meta.shared.UpdateStatusRequest;
 import stroom.util.shared.ResultPage;
 
@@ -44,7 +45,17 @@ class MetaResourceImpl implements MetaResource {
 
     @Override
     public ResultPage<MetaRow> findMetaRow(final FindMetaCriteria criteria) {
-        return metaServiceProvider.get().findMetaRow(criteria);
+        return metaServiceProvider.get().findDecoratedRows(criteria);
+    }
+
+    @Override
+    public SelectionSummary getSelectionSummary(final FindMetaCriteria criteria) {
+        return metaServiceProvider.get().getSelectionSummary(criteria);
+    }
+
+    @Override
+    public SelectionSummary getReprocessSelectionSummary(final FindMetaCriteria criteria) {
+        return metaServiceProvider.get().getReprocessSelectionSummary(criteria);
     }
 
     @Override

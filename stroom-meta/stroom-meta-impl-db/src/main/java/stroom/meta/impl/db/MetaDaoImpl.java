@@ -24,6 +24,7 @@ import stroom.meta.impl.db.jooq.tables.MetaVal;
 import stroom.meta.shared.FindMetaCriteria;
 import stroom.meta.shared.Meta;
 import stroom.meta.shared.MetaFields;
+import stroom.meta.shared.SelectionSummary;
 import stroom.meta.shared.Status;
 import stroom.query.api.v2.ExpressionOperator;
 import stroom.query.api.v2.ExpressionUtil;
@@ -33,6 +34,7 @@ import stroom.util.logging.LambdaLogger;
 import stroom.util.logging.LambdaLoggerFactory;
 import stroom.util.logging.LogUtil;
 import stroom.util.shared.PageRequest;
+import stroom.util.shared.Range;
 import stroom.util.shared.ResultPage;
 import stroom.util.shared.Sort;
 import stroom.util.time.TimePeriod;
@@ -65,6 +67,7 @@ import java.util.Map;
 import java.util.Objects;
 import java.util.Optional;
 import java.util.Set;
+import java.util.concurrent.ConcurrentHashMap;
 import java.util.function.Consumer;
 import java.util.function.Function;
 import java.util.function.Predicate;
@@ -88,11 +91,18 @@ class MetaDaoImpl implements MetaDao {
     // TODO add to config
     private static final Duration LOGICAL_DELETE_BATCH_TIME_BUCKET = Duration.ofHours(7);
 
+    private static final int FIND_RECORD_LIMIT = 1000000;
+
     private static final stroom.meta.impl.db.jooq.tables.Meta meta = META.as("m");
     private static final MetaFeed metaFeed = META_FEED.as("f");
     private static final MetaType metaType = META_TYPE.as("t");
     private static final MetaProcessor metaProcessor = META_PROCESSOR.as("p");
     private static final MetaVal metaVal = META_VAL.as("v");
+
+    private static final stroom.meta.impl.db.jooq.tables.Meta parent = META.as("parent");
+    private static final MetaFeed parentFeed = META_FEED.as("parentFeed");
+    private static final MetaType parentType = META_TYPE.as("parentType");
+    private static final MetaProcessor parentProcessor = META_PROCESSOR.as("parentProcessor");
 
     private static final Function<Record, Meta> RECORD_TO_META_MAPPER = record -> new Meta.Builder()
             .id(record.get(meta.ID))
@@ -107,6 +117,19 @@ class MetaDaoImpl implements MetaDao {
             .effectiveMs(record.get(meta.EFFECTIVE_TIME))
             .build();
 
+    private static final Function<Record, Meta> RECORD_TO_PARENT_META_MAPPER = record -> new Meta.Builder()
+            .id(record.get(parent.ID))
+            .feedName(record.get(parentFeed.NAME))
+            .typeName(record.get(parentType.NAME))
+            .processorUuid(record.get(parentProcessor.PROCESSOR_UUID))
+            .pipelineUuid(record.get(parentProcessor.PIPELINE_UUID))
+            .parentDataId(record.get(parent.PARENT_ID))
+            .status(MetaStatusId.getStatus(record.get(parent.STATUS)))
+            .statusMs(record.get(parent.STATUS_TIME))
+            .createMs(record.get(parent.CREATE_TIME))
+            .effectiveMs(record.get(parent.EFFECTIVE_TIME))
+            .build();
+
     private final MetaDbConnProvider metaDbConnProvider;
     private final MetaFeedDaoImpl feedDao;
     private final MetaTypeDaoImpl metaTypeDao;
@@ -116,6 +139,9 @@ class MetaDaoImpl implements MetaDao {
     private final ExpressionMapper expressionMapper;
     private final MetaExpressionMapper metaExpressionMapper;
     private final ValueMapper valueMapper;
+
+    private final Map<String, List<Integer>> feedIdCache = new ConcurrentHashMap<>();
+    private final Map<String, List<Integer>> typeIdCache = new ConcurrentHashMap<>();
 
     @Inject
     MetaDaoImpl(final MetaDbConnProvider metaDbConnProvider,
@@ -135,12 +161,11 @@ class MetaDaoImpl implements MetaDao {
         // Standard fields.
         expressionMapper = expressionMapperFactory.create();
         expressionMapper.map(MetaFields.ID, meta.ID, Long::valueOf);
-        expressionMapper.multiMap(MetaFields.FEED, meta.FEED_ID, feedDao::find, true);
-        expressionMapper.multiMap(MetaFields.FEED_NAME, meta.FEED_ID, feedDao::find);
-        expressionMapper.multiMap(MetaFields.TYPE_NAME, meta.TYPE_ID, metaTypeDao::find);
-        expressionMapper.map(MetaFields.PIPELINE, metaProcessor.PIPELINE_UUID, value -> value);
-        expressionMapper.map(MetaFields.PARENT_ID, meta.PARENT_ID, Long::valueOf);
         expressionMapper.map(MetaFields.PROCESSOR_ID, meta.PROCESSOR_ID, Integer::valueOf);
+        expressionMapper.multiMap(MetaFields.FEED, meta.FEED_ID, this::getFeedIds, true);
+        expressionMapper.multiMap(MetaFields.FEED_NAME, meta.FEED_ID, this::getFeedIds);
+        expressionMapper.multiMap(MetaFields.TYPE_NAME, meta.TYPE_ID, this::getTypeIds);
+        expressionMapper.map(MetaFields.PIPELINE, metaProcessor.PIPELINE_UUID, value -> value);
         expressionMapper.map(MetaFields.STATUS, meta.STATUS, value -> MetaStatusId.getPrimitiveValue(Status.valueOf(value.toUpperCase())));
         expressionMapper.map(MetaFields.STATUS_TIME, meta.STATUS_TIME, DateUtil::parseNormalDateTimeString);
         expressionMapper.map(MetaFields.CREATE_TIME, meta.CREATE_TIME, DateUtil::parseNormalDateTimeString);
@@ -154,6 +179,12 @@ class MetaDaoImpl implements MetaDao {
         expressionMapper.ignoreField(MetaFields.DURATION);
         expressionMapper.ignoreField(MetaFields.FILE_SIZE);
         expressionMapper.ignoreField(MetaFields.RAW_SIZE);
+
+        // Parent fields.
+        expressionMapper.map(MetaFields.PARENT_ID, meta.PARENT_ID, Long::valueOf);
+        expressionMapper.map(MetaFields.PARENT_STATUS, parent.STATUS, value -> MetaStatusId.getPrimitiveValue(Status.valueOf(value.toUpperCase())));
+        expressionMapper.map(MetaFields.PARENT_CREATE_TIME, parent.CREATE_TIME, DateUtil::parseNormalDateTimeString);
+        expressionMapper.multiMap(MetaFields.PARENT_FEED, parent.FEED_ID, this::getFeedIds);
 
         // Extended meta fields.
         metaExpressionMapper = new MetaExpressionMapper(
@@ -187,6 +218,35 @@ class MetaDaoImpl implements MetaDao {
         valueMapper.map(MetaFields.STATUS_TIME, meta.STATUS_TIME, ValLong::create);
         valueMapper.map(MetaFields.CREATE_TIME, meta.CREATE_TIME, ValLong::create);
         valueMapper.map(MetaFields.EFFECTIVE_TIME, meta.EFFECTIVE_TIME, ValLong::create);
+    }
+
+    private List<Integer> getFeedIds(final String feedName) {
+        return getIds(feedName, feedIdCache, feedDao::find);
+    }
+
+    private List<Integer> getTypeIds(final String typeName) {
+        return getIds(typeName, typeIdCache, metaTypeDao::find);
+    }
+
+    /**
+     * This method tries to get a list of ids from the supplied map and if not found it tries to fetch them from the
+     * supplied function.
+     * <p>
+     * NOTE THAT THE CHOICE TO NOT USE COMPUTE ON THE MAP IS DELIBERATE TO PREVENT LOCKING.
+     * THIS MIGHT LEAD TO A FEW DUPLICATE ATTEMPTS TO FIND THE SAME ID LIST BUT THAT IS PREFERRED TO SYNCHRONIZING ON
+     * THE MAP KEY DURING DB QUERY.
+     */
+    private List<Integer> getIds(final String name,
+                                 final Map<String, List<Integer>> map,
+                                 final Function<String, List<Integer>> function) {
+        List<Integer> list = map.get(name);
+        if (list == null || list.size() == 0) {
+            list = function.apply(name);
+            if (list != null && list.size() > 0) {
+                map.put(name, list);
+            }
+        }
+        return list;
     }
 
     @Override
@@ -443,7 +503,7 @@ class MetaDaoImpl implements MetaDao {
 
                 // now advance the from time
                 batchPeriodFrom = batchPeriodFrom.plus(bucketSize);
-                
+
                 LOGGER.debug("new batchPeriodFrom {}, periodTo {}", batchPeriodFrom, period.getTo());
 
             } while (batchPeriodTo.isBefore(period.getTo()));
@@ -527,25 +587,6 @@ class MetaDaoImpl implements MetaDao {
     }
 
     @Override
-    public ResultPage<Meta> find(final FindMetaCriteria criteria) {
-        final PageRequest pageRequest = criteria.getPageRequest();
-        final Collection<Condition> conditions = createCondition(criteria);
-        final Collection<OrderField<?>> orderFields = createOrderFields(criteria);
-
-        int offset = 0;
-        int numberOfRows = 1000000;
-
-        if (pageRequest != null && pageRequest.getOffset() != null)
-            offset = pageRequest.getOffset().intValue();
-        if (pageRequest != null && pageRequest.getLength() != null)
-            numberOfRows = pageRequest.getLength();
-
-
-        final List<Meta> list = find(conditions, orderFields, offset, numberOfRows + 1);
-        return ResultPage.createCriterialBasedList(list, criteria);
-    }
-
-    @Override
     public int count(final FindMetaCriteria criteria) {
         final Collection<Condition> conditions = createCondition(criteria);
 
@@ -558,34 +599,6 @@ class MetaDaoImpl implements MetaDao {
                 .where(conditions)
                 .fetchOne()
                 .value1());
-    }
-
-    private List<Meta> find(final Collection<Condition> conditions,
-                            final Collection<OrderField<?>> orderFields,
-                            final int offset,
-                            final int numberOfRows) {
-        return JooqUtil.contextResult(metaDbConnProvider, context -> context
-                .select(
-                        meta.ID,
-                        metaFeed.NAME,
-                        metaType.NAME,
-                        metaProcessor.PROCESSOR_UUID,
-                        metaProcessor.PIPELINE_UUID,
-                        meta.PARENT_ID,
-                        meta.STATUS,
-                        meta.STATUS_TIME,
-                        meta.CREATE_TIME,
-                        meta.EFFECTIVE_TIME
-                )
-                .from(meta)
-                .join(metaFeed).on(meta.FEED_ID.eq(metaFeed.ID))
-                .join(metaType).on(meta.TYPE_ID.eq(metaType.ID))
-                .leftOuterJoin(metaProcessor).on(meta.PROCESSOR_ID.eq(metaProcessor.ID))
-                .where(conditions)
-                .orderBy(orderFields)
-                .limit(offset, numberOfRows)
-                .fetch()
-                .map(RECORD_TO_META_MAPPER::apply));
     }
 
     @Override
@@ -730,6 +743,193 @@ class MetaDaoImpl implements MetaDao {
 //    }
 
     @Override
+    public ResultPage<Meta> find(final FindMetaCriteria criteria) {
+        final PageRequest pageRequest = criteria.getPageRequest();
+        final Collection<Condition> conditions = createCondition(criteria);
+        final Collection<OrderField<?>> orderFields = createOrderFields(criteria);
+
+        int offset = JooqUtil.getOffset(pageRequest);
+        int numberOfRows = JooqUtil.getLimit(pageRequest, true, FIND_RECORD_LIMIT);
+
+        final List<Meta> list = find(conditions, orderFields, offset, numberOfRows);
+        if (list.size() >= FIND_RECORD_LIMIT) {
+            LOGGER.warn("Hit max record limit of '" + FIND_RECORD_LIMIT + "' when finding meta records");
+        }
+
+        return ResultPage.createCriterialBasedList(list, criteria);
+    }
+
+    private List<Meta> find(final Collection<Condition> conditions,
+                            final Collection<OrderField<?>> orderFields,
+                            final int offset,
+                            final int numberOfRows) {
+        return JooqUtil.contextResult(metaDbConnProvider, context -> context
+                .select(
+                        meta.ID,
+                        metaFeed.NAME,
+                        metaType.NAME,
+                        metaProcessor.PROCESSOR_UUID,
+                        metaProcessor.PIPELINE_UUID,
+                        meta.PARENT_ID,
+                        meta.STATUS,
+                        meta.STATUS_TIME,
+                        meta.CREATE_TIME,
+                        meta.EFFECTIVE_TIME
+                )
+                .from(meta)
+                .join(metaFeed).on(meta.FEED_ID.eq(metaFeed.ID))
+                .join(metaType).on(meta.TYPE_ID.eq(metaType.ID))
+                .leftOuterJoin(metaProcessor).on(meta.PROCESSOR_ID.eq(metaProcessor.ID))
+                .where(conditions)
+                .orderBy(orderFields)
+                .limit(offset, numberOfRows)
+                .fetch()
+                .map(RECORD_TO_META_MAPPER::apply));
+    }
+
+
+    @Override
+    public ResultPage<Meta> findReprocess(final FindMetaCriteria criteria) {
+        final PageRequest pageRequest = criteria.getPageRequest();
+        final Collection<Condition> conditions = createCondition(criteria);
+        final Collection<OrderField<?>> orderFields = createOrderFields(criteria);
+
+        int offset = JooqUtil.getOffset(pageRequest);
+        int numberOfRows = JooqUtil.getLimit(pageRequest, true, FIND_RECORD_LIMIT);
+
+        final List<Meta> list = findReprocess(conditions, orderFields, offset, numberOfRows);
+        if (list.size() >= FIND_RECORD_LIMIT) {
+            LOGGER.warn("Hit max record limit of '" + FIND_RECORD_LIMIT + "' when finding meta records");
+        }
+
+        return ResultPage.createCriterialBasedList(list, criteria);
+    }
+
+    private List<Meta> findReprocess(final Collection<Condition> conditions,
+                                     final Collection<OrderField<?>> orderFields,
+                                     final int offset,
+                                     final int numberOfRows) {
+        return JooqUtil.contextResult(metaDbConnProvider, context -> context
+                .select(
+                        parent.ID,
+                        parentFeed.NAME,
+                        parentType.NAME,
+                        parentProcessor.PROCESSOR_UUID,
+                        parentProcessor.PIPELINE_UUID,
+                        parent.PARENT_ID,
+                        parent.STATUS,
+                        parent.STATUS_TIME,
+                        parent.CREATE_TIME,
+                        parent.EFFECTIVE_TIME
+                )
+                .from(meta)
+                .leftOuterJoin(metaFeed).on(meta.FEED_ID.eq(metaFeed.ID))
+                .leftOuterJoin(metaType).on(meta.TYPE_ID.eq(metaType.ID))
+                .leftOuterJoin(metaProcessor).on(meta.PROCESSOR_ID.eq(metaProcessor.ID))
+                .leftOuterJoin(parent).on(meta.PARENT_ID.eq(parent.ID))
+                .leftOuterJoin(parentFeed).on(parent.FEED_ID.eq(parentFeed.ID))
+                .leftOuterJoin(parentType).on(parent.TYPE_ID.eq(parentType.ID))
+                .leftOuterJoin(parentProcessor).on(parent.PROCESSOR_ID.eq(parentProcessor.ID))
+                .where(conditions)
+                .and(parent.ID.isNotNull())
+                .groupBy(parent.ID)
+                .orderBy(orderFields)
+                .limit(offset, numberOfRows)
+                .fetch()
+                .map(RECORD_TO_PARENT_META_MAPPER::apply));
+    }
+
+    @Override
+    public SelectionSummary getSelectionSummary(final FindMetaCriteria criteria) {
+        final PageRequest pageRequest = criteria.getPageRequest();
+        final Collection<Condition> conditions = createCondition(criteria);
+
+        int offset = JooqUtil.getOffset(pageRequest);
+        int numberOfRows = JooqUtil.getLimit(pageRequest, false);
+
+        return getSelectionSummary(conditions, offset, numberOfRows);
+    }
+
+    private SelectionSummary getSelectionSummary(final Collection<Condition> conditions,
+                                                 final int offset,
+                                                 final int numberOfRows) {
+        return JooqUtil.contextResult(metaDbConnProvider, context -> context
+                .select(
+                        DSL.count(),
+                        DSL.countDistinct(metaFeed.NAME),
+                        DSL.countDistinct(metaType.NAME),
+                        DSL.countDistinct(metaProcessor.PROCESSOR_UUID),
+                        DSL.countDistinct(metaProcessor.PIPELINE_UUID),
+                        DSL.countDistinct(meta.STATUS),
+                        DSL.min(meta.CREATE_TIME),
+                        DSL.max(meta.CREATE_TIME)
+                )
+                .from(meta)
+                .join(metaFeed).on(meta.FEED_ID.eq(metaFeed.ID))
+                .join(metaType).on(meta.TYPE_ID.eq(metaType.ID))
+                .leftOuterJoin(metaProcessor).on(meta.PROCESSOR_ID.eq(metaProcessor.ID))
+                .where(conditions)
+                .limit(offset, numberOfRows)
+                .fetchOptional()
+                .map(record -> new SelectionSummary(
+                        record.value1(),
+                        record.value2(),
+                        record.value3(),
+                        record.value4(),
+                        record.value5(),
+                        record.value6(),
+                        new Range<>(record.value7(), record.value8())))
+                .orElse(null));
+    }
+
+    @Override
+    public SelectionSummary getReprocessSelectionSummary(final FindMetaCriteria criteria) {
+        final PageRequest pageRequest = criteria.getPageRequest();
+        final Collection<Condition> conditions = createCondition(criteria);
+
+        int offset = JooqUtil.getOffset(pageRequest);
+        int numberOfRows = JooqUtil.getLimit(pageRequest, false);
+
+        return getReprocessSelectionSummary(conditions, offset, numberOfRows);
+    }
+
+    private SelectionSummary getReprocessSelectionSummary(final Collection<Condition> conditions,
+                                                          final int offset,
+                                                          final int numberOfRows) {
+        return JooqUtil.contextResult(metaDbConnProvider, context -> context
+                .select(
+                        DSL.countDistinct(parent.ID),
+                        DSL.countDistinct(parent.FEED_ID),
+                        DSL.countDistinct(parent.TYPE_ID),
+                        DSL.countDistinct(meta.PROCESSOR_ID),
+                        DSL.countDistinct(meta.PROCESSOR_ID),
+                        DSL.countDistinct(parent.STATUS),
+                        DSL.min(parent.CREATE_TIME),
+                        DSL.max(parent.CREATE_TIME)
+                )
+                .from(meta)
+                .join(metaFeed).on(meta.FEED_ID.eq(metaFeed.ID))
+                .join(metaType).on(meta.TYPE_ID.eq(metaType.ID))
+                .leftOuterJoin(metaProcessor).on(meta.PROCESSOR_ID.eq(metaProcessor.ID))
+                .leftOuterJoin(parent).on(meta.PARENT_ID.eq(parent.ID))
+                .where(conditions)
+                .and(parent.ID.isNotNull())
+                .and(parent.STATUS.eq(MetaStatusId.getPrimitiveValue(Status.UNLOCKED)))
+                .limit(offset, numberOfRows)
+                .fetchOptional()
+                .map(record -> new SelectionSummary(
+                        record.value1(),
+                        record.value2(),
+                        record.value3(),
+                        record.value4(),
+                        record.value5(),
+                        record.value6(),
+                        new Range<>(record.value7(), record.value8())))
+                .orElse(null));
+    }
+
+
+    @Override
     public int delete(final List<Long> metaIdList) {
         return JooqUtil.contextResult(metaDbConnProvider, context -> context
                 .deleteFrom(meta)
@@ -763,9 +963,8 @@ class MetaDaoImpl implements MetaDao {
     @Override
     public void clear() {
         JooqUtil.truncateTable(metaDbConnProvider, META);
-//        JooqUtil.context(metaDbConnProvider, context -> context
-//                .truncate(META)
-//                .execute());
+        feedIdCache.clear();
+        typeIdCache.clear();
     }
 
     private Collection<Condition> createCondition(final FindMetaCriteria criteria) {
@@ -806,6 +1005,10 @@ class MetaDaoImpl implements MetaDao {
                 field = metaFeed.NAME;
             } else if (MetaFields.TYPE_NAME.getName().equals(sort.getField())) {
                 field = metaType.NAME;
+            } else if (MetaFields.PARENT_ID.getName().equals(sort.getField())) {
+                field = meta.PARENT_ID;
+            } else if (MetaFields.PARENT_CREATE_TIME.getName().equals(sort.getField())) {
+                field = parent.CREATE_TIME;
             } else {
                 field = meta.ID;
             }
@@ -817,5 +1020,24 @@ class MetaDaoImpl implements MetaDao {
 
             return orderField;
         }).collect(Collectors.toList());
+    }
+
+    @Override
+    public List<String> getProcessorUuidList(final FindMetaCriteria criteria) {
+        final Collection<Condition> conditions = createCondition(criteria);
+        return getProcessorUuidList(conditions);
+    }
+
+    private List<String> getProcessorUuidList(final Collection<Condition> conditions) {
+        return JooqUtil.contextResult(metaDbConnProvider, context -> context
+                .select(metaProcessor.PROCESSOR_UUID)
+                .from(meta)
+                .join(metaFeed).on(meta.FEED_ID.eq(metaFeed.ID))
+                .join(metaType).on(meta.TYPE_ID.eq(metaType.ID))
+                .leftOuterJoin(metaProcessor).on(meta.PROCESSOR_ID.eq(metaProcessor.ID))
+                .where(conditions)
+                .groupBy(metaProcessor.PROCESSOR_UUID)
+                .fetch()
+                .map(Record1::value1));
     }
 }

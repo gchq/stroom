@@ -42,7 +42,7 @@ import stroom.storedquery.impl.db.jooq.tables.records.QueryRecord;
 @SuppressWarnings({ "all", "unchecked", "rawtypes" })
 public class Query extends TableImpl<QueryRecord> {
 
-    private static final long serialVersionUID = -69451907;
+    private static final long serialVersionUID = 428494644;
 
     /**
      * The reference instance of <code>stroom.query</code>
@@ -110,7 +110,7 @@ public class Query extends TableImpl<QueryRecord> {
     /**
      * The column <code>stroom.query.favourite</code>.
      */
-    public final TableField<QueryRecord, Boolean> FAVOURITE = createField(DSL.name("favourite"), org.jooq.impl.SQLDataType.BIT.nullable(false), this, "");
+    public final TableField<QueryRecord, Boolean> FAVOURITE = createField(DSL.name("favourite"), org.jooq.impl.SQLDataType.BOOLEAN.nullable(false).defaultValue(org.jooq.impl.DSL.inline("0", org.jooq.impl.SQLDataType.BOOLEAN)), this, "");
 
     /**
      * Create a <code>stroom.query</code> table reference

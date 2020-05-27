@@ -16,8 +16,6 @@
 
 package stroom.core.entity.event;
 
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 import stroom.cluster.task.api.NodeNotFoundException;
 import stroom.cluster.task.api.NullClusterStateException;
 import stroom.cluster.task.api.TargetNodeSetFactory;
@@ -26,7 +24,11 @@ import stroom.task.api.TaskContextFactory;
 import stroom.util.entityevent.EntityEvent;
 import stroom.util.entityevent.EntityEventBus;
 
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+
 import javax.inject.Inject;
+import javax.inject.Provider;
 import javax.inject.Singleton;
 import java.util.Set;
 import java.util.concurrent.CompletableFuture;
@@ -38,7 +40,7 @@ class EntityEventBusImpl implements EntityEventBus {
 
     private final Executor executor;
     private final TaskContextFactory taskContextFactory;
-    private final TargetNodeSetFactory targetNodeSetFactory;
+    private final Provider<TargetNodeSetFactory> targetNodeSetFactoryProvider;
     private final SecurityContext securityContext;
     private final EntityEventHandler entityEventHandler;
     private final EntityEventResource entityEventResource;
@@ -48,13 +50,13 @@ class EntityEventBusImpl implements EntityEventBus {
     @Inject
     EntityEventBusImpl(final Executor executor,
                        final TaskContextFactory taskContextFactory,
-                       final TargetNodeSetFactory targetNodeSetFactory,
+                       final Provider<TargetNodeSetFactory> targetNodeSetFactoryProvider,
                        final SecurityContext securityContext,
                        final EntityEventHandler entityEventHandler,
                        final EntityEventResource entityEventResource) {
         this.executor = executor;
         this.taskContextFactory = taskContextFactory;
-        this.targetNodeSetFactory = targetNodeSetFactory;
+        this.targetNodeSetFactoryProvider = targetNodeSetFactoryProvider;
         this.securityContext = securityContext;
         this.entityEventHandler = entityEventHandler;
         this.entityEventResource = entityEventResource;
@@ -103,6 +105,8 @@ class EntityEventBusImpl implements EntityEventBus {
     private void fireRemote(final EntityEvent entityEvent) {
         securityContext.secure(() -> {
             try {
+                final TargetNodeSetFactory targetNodeSetFactory = targetNodeSetFactoryProvider.get();
+
                 // Get this node.
                 final String sourceNode = targetNodeSetFactory.getSourceNode();
 

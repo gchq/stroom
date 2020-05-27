@@ -42,7 +42,7 @@ import stroom.security.impl.db.jooq.tables.records.StroomUserRecord;
 @SuppressWarnings({ "all", "unchecked", "rawtypes" })
 public class StroomUser extends TableImpl<StroomUserRecord> {
 
-    private static final long serialVersionUID = 1991163391;
+    private static final long serialVersionUID = 914707809;
 
     /**
      * The reference instance of <code>stroom.stroom_user</code>
@@ -100,12 +100,12 @@ public class StroomUser extends TableImpl<StroomUserRecord> {
     /**
      * The column <code>stroom.stroom_user.is_group</code>.
      */
-    public final TableField<StroomUserRecord, Boolean> IS_GROUP = createField(DSL.name("is_group"), org.jooq.impl.SQLDataType.BIT.nullable(false), this, "");
+    public final TableField<StroomUserRecord, Boolean> IS_GROUP = createField(DSL.name("is_group"), org.jooq.impl.SQLDataType.BOOLEAN.nullable(false).defaultValue(org.jooq.impl.DSL.inline("0", org.jooq.impl.SQLDataType.BOOLEAN)), this, "");
 
     /**
      * The column <code>stroom.stroom_user.enabled</code>.
      */
-    public final TableField<StroomUserRecord, Boolean> ENABLED = createField(DSL.name("enabled"), org.jooq.impl.SQLDataType.BIT.nullable(false), this, "");
+    public final TableField<StroomUserRecord, Boolean> ENABLED = createField(DSL.name("enabled"), org.jooq.impl.SQLDataType.BOOLEAN.nullable(false).defaultValue(org.jooq.impl.DSL.inline("0", org.jooq.impl.SQLDataType.BOOLEAN)), this, "");
 
     /**
      * Create a <code>stroom.stroom_user</code> table reference

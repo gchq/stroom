@@ -26,6 +26,7 @@ public class ShowNewMenuEvent extends GwtEvent<ShowNewMenuEvent.Handler> {
     private final Element element;
     private final int x;
     private final int y;
+
     private ShowNewMenuEvent(final Element element, final int x, final int y) {
         this.element = element;
         this.x = x;

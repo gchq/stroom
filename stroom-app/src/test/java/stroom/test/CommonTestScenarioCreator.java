@@ -84,7 +84,7 @@ public class CommonTestScenarioCreator {
         processor.setPipelineUuid(UUID.randomUUID().toString());
         processor.setEnabled(true);
         processor = streamProcessorService.create(processor);
-        processorFilterService.create(processor, queryData, 1, true);
+        processorFilterService.create(processor, queryData, 1, false, true);
     }
 
     public DocRef createIndex(final String name) {

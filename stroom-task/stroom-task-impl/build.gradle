@@ -3,9 +3,7 @@ ext.moduleName = 'stroom.task.impl'
 dependencies {
     compile project(':stroom-cluster:stroom-cluster-task-api')
     compile project(':stroom-core-shared')
-    compile project(':stroom-dictionary:stroom-dictionary-api')
     compile project(':stroom-event-logging:stroom-event-logging-api')
-    compile project(':stroom-explorer:stroom-collection-api')
     compile project(':stroom-lifecycle:stroom-lifecycle-api')
     compile project(':stroom-node:stroom-node-api')
     compile project(':stroom-search:stroom-expression-matcher')
@@ -14,15 +12,18 @@ dependencies {
     compile project(':stroom-task:stroom-task-api')
     compile project(':stroom-util-shared')
     compile project(':stroom-util')
-    
-    compile libs.stroomDocRef
-    
+
     compile libs.guice4
     compile libs.javax_inject
+    compile libs.javax_servlet_api
+    compile libs.slf4j_api
+    compile libs.stroomDocRef
+    compile libs.stroomExpression
+    compile libs.stroomQueryApi
+    compile libs.ws_rs_api
 
     testCompile project(':stroom-test-common')
     testCompile libs.assertj_core
-    testCompile libs.commons_lang
     testCompile libs.junit_jupiter_api
     testCompile libs.mockito_core
     testCompile libs.mockito_junit_jupiter

@@ -17,26 +17,6 @@
 -- Stop NOTE level warnings about objects (not)? existing
 SET @OLD_SQL_NOTES=@@SQL_NOTES, SQL_NOTES=0;
 
-
---Create Table: CREATE TABLE `STRM_PROC_FILT` (
---  `ID` int(11) NOT NULL AUTO_INCREMENT,
---  `VER` tinyint(4) NOT NULL,
---  `CRT_MS` bigint(20) DEFAULT NULL,
---  `CRT_USER` varchar(255) DEFAULT NULL,
---  `UPD_MS` bigint(20) DEFAULT NULL,
---  `UPD_USER` varchar(255) DEFAULT NULL,
---  `DAT` longtext NOT NULL,
---  `PRIOR` int(11) NOT NULL,
---  `FK_STRM_PROC_ID` int(11) NOT NULL,
---  `FK_STRM_PROC_FILT_TRAC_ID` int(11) NOT NULL,
---  `ENBL` bit(1) NOT NULL,
---  PRIMARY KEY (`ID`),
---  KEY `STRM_PROC_FILT_FK_STRM_PROC_ID` (`FK_STRM_PROC_ID`),
---  KEY `STRM_PROC_FILT_FK_STRM_PROC_FILT_TRAC_ID` (`FK_STRM_PROC_FILT_TRAC_ID`),
---  CONSTRAINT `STRM_PROC_FILT_FK_STRM_PROC_FILT_TRAC_ID` FOREIGN KEY (`FK_STRM_PROC_FILT_TRAC_ID`) REFERENCES `STRM_PROC_FILT_TRAC` (`ID`),
---  CONSTRAINT `STRM_PROC_FILT_FK_STRM_PROC_ID` FOREIGN KEY (`FK_STRM_PROC_ID`) REFERENCES `STRM_PROC` (`ID`)
---) ENGINE=InnoDB DEFAULT CHARSET=utf8
-
 --
 -- Create the table
 --
@@ -52,8 +32,9 @@ CREATE TABLE IF NOT EXISTS`processor_filter` (
   `fk_processor_filter_tracker_id` int(11) NOT NULL,
   `data` longtext NOT NULL,
   `priority` int(11) NOT NULL,
-  `enabled` bit(1) DEFAULT b'0',
-  `deleted` bit(1) DEFAULT b'0',
+  `reprocess` tinyint(1) NOT NULL DEFAULT '0',
+  `enabled` tinyint(1) NOT NULL DEFAULT '0',
+  `deleted` tinyint(1) NOT NULL DEFAULT '0',
   PRIMARY KEY (`id`),
   UNIQUE KEY `uuid` (`uuid`),
   KEY `processor_filter_fk_processor_id` (`fk_processor_id`),

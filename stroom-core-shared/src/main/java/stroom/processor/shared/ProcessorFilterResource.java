@@ -53,7 +53,13 @@ public interface ProcessorFilterResource extends RestResource, DirectRestService
     @ApiOperation(
             value = "Creates a filter",
             response = ProcessorFilter.class)
-    ProcessorFilter create(@ApiParam("request") CreateProcessorFilterRequest request);
+    ProcessorFilter create(@ApiParam("request") CreateProcessFilterRequest request);
+
+
+    @POST
+    @Path("/reprocess")
+    @ApiOperation(value = "Create filters to reprocess data")
+    List<ReprocessDataInfo> reprocess(@ApiParam("criteria") CreateReprocessFilterRequest request);
 
     @GET
     @Path("/{id}")
@@ -85,9 +91,4 @@ public interface ProcessorFilterResource extends RestResource, DirectRestService
     @Path("/{id}/enabled")
     @ApiOperation(value = "Sets the enabled/disabled state for a filter")
     void setEnabled(@PathParam("id") Integer id, Boolean enabled);
-
-    @POST
-    @Path("/reprocess")
-    @ApiOperation(value = "Create a filter to reprocess data")
-    List<ReprocessDataInfo> reprocess(@ApiParam("criteria") FindMetaCriteria criteria);
 }

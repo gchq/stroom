@@ -15,10 +15,10 @@ public class DataRetentionConfig extends AbstractConfig {
 
     @JsonProperty
     @JsonPropertyDescription("When the data retention deletion process runs this property controls the window of " +
-            "data that will be logically deleted in each pass. To be of use it should be less than the interval between " +
-            "data retention job execution times. Its purpose is to reduce the quantity of data deleted in each pass " +
+            "data that will be logically deleted in each pass. To be of use it should be less than the " +
+            "data retention job execution frequency. Its purpose is to reduce the quantity of data deleted in each pass " +
             "and thus reduce the length of time database locks are held for. If unset the data will be deleted across " +
-            "as full a time range as possible."
+            "as large a time range as possible."
     )
     private StroomDuration deleteBatchWindowSize = null;
 

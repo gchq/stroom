@@ -116,6 +116,12 @@ public class ProcessorServiceImpl implements ProcessorService {
     }
 
     @Override
+    public Optional<Processor> fetchByUuid(final String uuid) {
+        return securityContext.secureResult(() ->
+                processorDao.fetchByUuid(uuid));
+    }
+
+    @Override
     public Processor update(final Processor processor) {
         if (processor.getUuid() == null) {
             processor.setUuid(UUID.randomUUID().toString());
@@ -129,7 +135,7 @@ public class ProcessorServiceImpl implements ProcessorService {
     @Override
     public boolean delete(final int id) {
         return securityContext.secureResult(PERMISSION, () ->
-                processorDao.delete(id));
+                processorDao.logicalDelete(id));
     }
 
     @Override

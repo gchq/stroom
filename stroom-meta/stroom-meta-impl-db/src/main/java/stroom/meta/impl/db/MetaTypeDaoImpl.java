@@ -19,6 +19,7 @@ package stroom.meta.impl.db;
 
 import stroom.cache.api.CacheManager;
 import stroom.cache.api.ICache;
+import stroom.data.shared.StreamTypeNames;
 import stroom.db.util.JooqUtil;
 import stroom.meta.impl.MetaTypeDao;
 import stroom.meta.impl.db.jooq.tables.records.MetaTypeRecord;
@@ -46,6 +47,14 @@ class MetaTypeDaoImpl implements MetaTypeDao {
                     final MetaServiceConfig metaServiceConfig) {
         this.metaDbConnProvider = metaDbConnProvider;
         cache = cacheManager.create(CACHE_NAME, metaServiceConfig::getMetaTypeCache, this::load);
+
+        // Ensure some types are preloaded.
+        load(StreamTypeNames.RAW_EVENTS);
+        load(StreamTypeNames.RAW_REFERENCE);
+        load(StreamTypeNames.EVENTS);
+        load(StreamTypeNames.REFERENCE);
+        load(StreamTypeNames.RECORDS);
+        load(StreamTypeNames.ERROR);
     }
 
     private int load(final String name) {

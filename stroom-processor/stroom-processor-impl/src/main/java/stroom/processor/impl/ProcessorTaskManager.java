@@ -36,4 +36,8 @@ public interface ProcessorTaskManager {
     void startup();
 
     void shutdown();
+
+    void setAllowAsyncTaskCreation(boolean allowAsyncFillTaskStore);
+
+    void setAllowTaskCreation(boolean allowCreateTasks);
 }

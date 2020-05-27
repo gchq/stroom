@@ -24,6 +24,7 @@ import stroom.util.jersey.WebTargetFactory;
 import stroom.util.shared.ResourcePaths;
 
 import javax.inject.Inject;
+import javax.inject.Provider;
 import javax.ws.rs.WebApplicationException;
 import javax.ws.rs.client.Entity;
 import javax.ws.rs.core.MediaType;
@@ -31,36 +32,37 @@ import javax.ws.rs.core.Response;
 import java.util.Objects;
 
 class EntityEventResourceImpl implements EntityEventResource {
-    private final NodeService nodeService;
-    private final NodeInfo nodeInfo;
-    private final WebTargetFactory webTargetFactory;
-    private final EntityEventHandler entityEventHandler;
+    private final Provider<NodeService> nodeServiceProvider;
+    private final Provider<NodeInfo> nodeInfoProvider;
+    private final Provider<WebTargetFactory> webTargetFactoryProvider;
+    private final Provider<EntityEventHandler> entityEventHandlerProvider;
 
     @Inject
-    EntityEventResourceImpl(final NodeService nodeService,
-                            final NodeInfo nodeInfo,
-                            final WebTargetFactory webTargetFactory,
-                            final EntityEventHandler entityEventHandler) {
-        this.nodeService = nodeService;
-        this.nodeInfo = nodeInfo;
-        this.webTargetFactory = webTargetFactory;
-        this.entityEventHandler = entityEventHandler;
+    EntityEventResourceImpl(final Provider<NodeService> nodeServiceProvider,
+                            final Provider<NodeInfo> nodeInfoProvider,
+                            final Provider<WebTargetFactory> webTargetFactoryProvider,
+                            final Provider<EntityEventHandler> entityEventHandlerProvider) {
+        this.nodeServiceProvider = nodeServiceProvider;
+        this.nodeInfoProvider = nodeInfoProvider;
+        this.webTargetFactoryProvider = webTargetFactoryProvider;
+        this.entityEventHandlerProvider = entityEventHandlerProvider;
     }
 
     @Override
     public Boolean fireEvent(final String nodeName, final EntityEvent entityEvent) {
         // If this is the node that was contacted then just return the latency we have incurred within this method.
-        if (NodeCallUtil.shouldExecuteLocally(nodeInfo, nodeName)) {
-            entityEventHandler.fireLocally(entityEvent);
+        if (NodeCallUtil.shouldExecuteLocally(nodeInfoProvider.get(), nodeName)) {
+            entityEventHandlerProvider.get().fireLocally(entityEvent);
             return true;
         } else {
-            final String url = NodeCallUtil.getBaseEndpointUrl(nodeService, nodeName)
+            final String url = NodeCallUtil.getBaseEndpointUrl(nodeServiceProvider.get(), nodeName)
                     + ResourcePaths.buildAuthenticatedApiPath(
                     EntityEventResource.BASE_PATH,
                     nodeName);
 
             try {
-                final Response response = webTargetFactory
+                final Response response = webTargetFactoryProvider
+                        .get()
                         .create(url)
                         .request(MediaType.APPLICATION_JSON)
                         .put(Entity.json(entityEvent));

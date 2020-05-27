@@ -38,8 +38,8 @@ import stroom.processor.shared.Processor;
 import stroom.processor.shared.ProcessorExpressionUtil;
 import stroom.processor.shared.ProcessorFilter;
 import stroom.processor.shared.ProcessorTask;
-import stroom.processor.shared.ProcessorTaskFields;
 import stroom.processor.shared.ProcessorTaskExpressionUtil;
+import stroom.processor.shared.ProcessorTaskFields;
 import stroom.processor.shared.QueryData;
 import stroom.query.api.v2.ExpressionOperator;
 import stroom.query.api.v2.ExpressionOperator.Op;
@@ -315,7 +315,7 @@ public class BenchmarkClusterExecutor extends AbstractBenchmark {
                 final QueryData rawCriteria = new QueryData();
                 rawCriteria.setExpression(rawExpression);
 
-                processorFilterService.create(streamProcessor, rawCriteria, 1, true);
+                processorFilterService.create(streamProcessor, rawCriteria, 1, false, true);
 
                 jobManager.setJobEnabled(JobNames.DATA_PROCESSOR, true);
 

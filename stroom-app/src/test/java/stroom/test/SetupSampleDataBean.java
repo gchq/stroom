@@ -216,7 +216,7 @@ public final class SetupSampleDataBean {
                                 .build())
                         .build();
                 final Processor processor = processorService.create(pipeline, true);
-                final ProcessorFilter processorFilter = processorFilterService.create(processor, criteria, 10, true);
+                final ProcessorFilter processorFilter = processorFilterService.create(processor, criteria, 10, false, true);
                 LOGGER.debug(processorFilter.toString());
             }
         }
@@ -259,7 +259,7 @@ public final class SetupSampleDataBean {
                     .build();
 
             final Processor processor = processorService.create(pipeline, true);
-            final ProcessorFilter processorFilter = processorFilterService.create(processor, criteria, 10, true);
+            final ProcessorFilter processorFilter = processorFilterService.create(processor, criteria, 10, false, true);
             LOGGER.debug(processorFilter.toString());
         }
     }

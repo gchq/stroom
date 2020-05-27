@@ -17,21 +17,6 @@
 -- Stop NOTE level warnings about objects (not)? existing
 SET @OLD_SQL_NOTES=@@SQL_NOTES, SQL_NOTES=0;
 
---Create Table: CREATE TABLE `STRM_PROC` (
---  `ID` int(11) NOT NULL AUTO_INCREMENT,
---  `VER` tinyint(4) NOT NULL,
---  `CRT_USER` varchar(255) DEFAULT NULL,
---  `UPD_USER` varchar(255) DEFAULT NULL,
---  `TASK_TP` varchar(255) DEFAULT NULL,
---  `FK_PIPE_ID` int(11) DEFAULT NULL,
---  `ENBL` bit(1) NOT NULL,
---  `CRT_MS` bigint(20) DEFAULT NULL,
---  `UPD_MS` bigint(20) DEFAULT NULL,
---  PRIMARY KEY (`ID`),
---  KEY `STRM_PROC_FK_PIPE_ID` (`FK_PIPE_ID`),
---  CONSTRAINT `STRM_PROC_FK_PIPE_ID` FOREIGN KEY (`FK_PIPE_ID`) REFERENCES `PIPE` (`ID`)
---) ENGINE=InnoDB DEFAULT CHARSET=latin1
-
 -- Create the table
 CREATE TABLE IF NOT EXISTS `processor` (
   `id` int(11) NOT NULL AUTO_INCREMENT,
@@ -43,8 +28,8 @@ CREATE TABLE IF NOT EXISTS `processor` (
   `uuid` varchar(255) NOT NULL,
   `task_type` varchar(255) DEFAULT NULL,
   `pipeline_uuid` varchar(255) NOT NULL,
-  `enabled` bit(1) DEFAULT b'0',
-  `deleted` bit(1) DEFAULT b'0',
+  `enabled` tinyint(1) NOT NULL DEFAULT '0',
+  `deleted` tinyint(1) NOT NULL DEFAULT '0',
   PRIMARY KEY (`id`),
   UNIQUE KEY `processor_uuid` (`uuid`),
   UNIQUE KEY `processor_pipeline_uuid` (`pipeline_uuid`)

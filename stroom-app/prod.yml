@@ -124,6 +124,7 @@ appConfig:
     proxyDir: ${STROOM_PROXY_DIR:-/tmp/stroom/proxy}
   publicUri:
     hostname: ${API_GATEWAY_HOST:-localhost}
+    port: ${API_GATEWAY_PORT:-443}
   security:
     authentication:
       preventLogin: false

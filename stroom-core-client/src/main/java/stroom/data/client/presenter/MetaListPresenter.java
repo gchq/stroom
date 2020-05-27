@@ -16,16 +16,19 @@
 
 package stroom.data.client.presenter;
 
-import com.google.inject.Inject;
-import com.google.web.bindery.event.shared.EventBus;
 import stroom.core.client.LocationManager;
 import stroom.data.grid.client.EndColumn;
 import stroom.dispatch.client.RestFactory;
+import stroom.explorer.client.presenter.EntityChooser;
 import stroom.meta.shared.DataRetentionFields;
 import stroom.meta.shared.MetaFields;
 import stroom.util.shared.ModelStringUtil;
 import stroom.widget.tooltip.client.presenter.TooltipPresenter;
 
+import com.google.inject.Inject;
+import com.google.web.bindery.event.shared.EventBus;
+
+import javax.inject.Provider;
 import java.util.function.Function;
 
 public class MetaListPresenter extends AbstractMetaListPresenter {
@@ -33,8 +36,18 @@ public class MetaListPresenter extends AbstractMetaListPresenter {
     public MetaListPresenter(final EventBus eventBus,
                              final RestFactory restFactory,
                              final TooltipPresenter tooltipPresenter,
-                             final LocationManager locationManager) {
-        super(eventBus, restFactory, tooltipPresenter, locationManager, true);
+                             final LocationManager locationManager,
+                             final Provider<SelectionSummaryPresenter> selectionSummaryPresenterProvider,
+                             final Provider<ProcessChoicePresenter> processChoicePresenterProvider,
+                             final Provider<EntityChooser> pipelineSelection) {
+        super(eventBus,
+                restFactory,
+                tooltipPresenter,
+                locationManager,
+                selectionSummaryPresenterProvider,
+                processChoicePresenterProvider,
+                pipelineSelection,
+                true);
     }
 
     @Override

@@ -213,7 +213,14 @@ public final class JooqUtil {
         return idField;
     }
 
-    public static int getLimit(final PageRequest pageRequest, final boolean oneLarger) {
+    public static int getLimit(final PageRequest pageRequest,
+                               final boolean oneLarger) {
+        return getLimit(pageRequest, oneLarger, Integer.MAX_VALUE);
+    }
+
+    public static int getLimit(final PageRequest pageRequest,
+                               final boolean oneLarger,
+                               final int defaultValue) {
         if (pageRequest != null) {
             if (pageRequest.getLength() != null) {
                 if (oneLarger) {
@@ -224,7 +231,7 @@ public final class JooqUtil {
             }
         }
 
-        return Integer.MAX_VALUE;
+        return defaultValue;
     }
 
     public static int getOffset(final PageRequest pageRequest) {

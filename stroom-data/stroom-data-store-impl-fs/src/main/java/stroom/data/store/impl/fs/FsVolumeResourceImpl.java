@@ -30,20 +30,21 @@ import event.logging.Query;
 import event.logging.Query.Advanced;
 
 import javax.inject.Inject;
+import javax.inject.Provider;
 
 // TODO : @66 add event logging
 class FsVolumeResourceImpl implements FsVolumeResource {
     private static final LambdaLogger LOGGER = LambdaLoggerFactory.getLogger(FsVolumeResourceImpl.class);
 
-    private final FsVolumeService volumeService;
+    private final Provider<FsVolumeService> volumeServiceProvider;
     private final DocumentEventLog documentEventLog;
     private final SecurityContext securityContext;
 
     @Inject
-    FsVolumeResourceImpl(final FsVolumeService volumeService,
+    FsVolumeResourceImpl(final Provider<FsVolumeService> volumeServiceProvider,
                          final DocumentEventLog documentEventLog,
                          final SecurityContext securityContext) {
-        this.volumeService = volumeService;
+        this.volumeServiceProvider = volumeServiceProvider;
         this.documentEventLog = documentEventLog;
         this.securityContext = securityContext;
     }
@@ -61,10 +62,27 @@ class FsVolumeResourceImpl implements FsVolumeResource {
             ResultPage<FsVolume> result = null;
 
             try {
-                result = volumeService.find(criteria);
+                result = volumeServiceProvider.get().find(criteria);
                 documentEventLog.search(criteria.getClass().getSimpleName(), query, FsVolume.class.getSimpleName(), result.getPageResponse(), null);
             } catch (final RuntimeException e) {
                 documentEventLog.search(criteria.getClass().getSimpleName(), query, FsVolume.class.getSimpleName(), null, e);
+                throw e;
+            }
+
+            return result;
+        });
+    }
+
+    @Override
+    public FsVolume create(final FsVolume volume) {
+        return securityContext.secureResult(() -> {
+            FsVolume result;
+
+            try {
+                result = volumeServiceProvider.get().create(volume);
+                documentEventLog.create(result, null);
+            } catch (final RuntimeException e) {
+                documentEventLog.create(volume, e);
                 throw e;
             }
 
@@ -78,7 +96,7 @@ class FsVolumeResourceImpl implements FsVolumeResource {
             FsVolume result;
 
             try {
-                result = volumeService.fetch(id);
+                result = volumeServiceProvider.get().fetch(id);
                 documentEventLog.view(result, null);
             } catch (final RuntimeException e) {
                 final FsVolume fsVolume = new FsVolume();
@@ -98,7 +116,7 @@ class FsVolumeResourceImpl implements FsVolumeResource {
 
             if (volume.getId() == null) {
                 try {
-                    result = volumeService.create(volume);
+                    result = volumeServiceProvider.get().create(volume);
                     documentEventLog.create(volume, null);
                 } catch (final RuntimeException e) {
                     documentEventLog.create(volume, e);
@@ -106,7 +124,7 @@ class FsVolumeResourceImpl implements FsVolumeResource {
                 }
             } else {
                 try {
-                    result = volumeService.update(volume);
+                    result = volumeServiceProvider.get().update(volume);
                     documentEventLog.update(volume, result, null);
                 } catch (final RuntimeException e) {
                     documentEventLog.update(volume, result, e);
@@ -125,7 +143,7 @@ class FsVolumeResourceImpl implements FsVolumeResource {
             fsVolume.setId(id);
 
             try {
-                volumeService.delete(id);
+                volumeServiceProvider.get().delete(id);
                 documentEventLog.delete(fsVolume, null);
             } catch (final RuntimeException e) {
                 documentEventLog.delete(fsVolume, e);
@@ -138,7 +156,7 @@ class FsVolumeResourceImpl implements FsVolumeResource {
 
     @Override
     public Boolean rescan() {
-        volumeService.flush();
+        volumeServiceProvider.get().flush();
         return true;
     }
 }

@@ -125,4 +125,12 @@ public class MockProcessorTaskManager implements ProcessorTaskManager, Clearable
     public Boolean abandonTasks(final ProcessorTaskList processorTaskList) {
         return true;
     }
+
+    @Override
+    public void setAllowAsyncTaskCreation(final boolean allowAsyncFillTaskStore) {
+    }
+
+    @Override
+    public void setAllowTaskCreation(final boolean allowCreateTasks) {
+    }
 }

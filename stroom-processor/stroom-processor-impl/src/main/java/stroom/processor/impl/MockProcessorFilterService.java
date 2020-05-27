@@ -2,7 +2,6 @@ package stroom.processor.impl;
 
 import stroom.docref.DocRef;
 import stroom.entity.shared.ExpressionCriteria;
-import stroom.meta.shared.FindMetaCriteria;
 import stroom.processor.api.ProcessorFilterService;
 import stroom.processor.api.ProcessorService;
 import stroom.processor.shared.FetchProcessorRequest;
@@ -17,24 +16,23 @@ import javax.inject.Inject;
 import javax.inject.Singleton;
 import java.util.List;
 import java.util.Optional;
-import java.util.Random;
 
 @Singleton
 public class MockProcessorFilterService implements ProcessorFilterService {
 
     private final MockProcessorFilterDao dao = new MockProcessorFilterDao();
 
-    private Random idRandom = new Random (0);
+//    private Random idRandom = new Random (0);
 
     private final ProcessorService processorService;
 
     @Inject
-    MockProcessorFilterService(final ProcessorService processorService){
+    MockProcessorFilterService(final ProcessorService processorService) {
         this.processorService = processorService;
     }
 
     @Override
-    public ProcessorFilter create(DocRef pipelineRef, QueryData queryData, int priority, boolean enabled) {
+    public ProcessorFilter create(DocRef pipelineRef, QueryData queryData, int priority, boolean autoPriority, boolean enabled) {
         ProcessorFilter filter = new ProcessorFilter();
         filter.setPipelineUuid(pipelineRef.getUuid());
         filter.setQueryData(queryData);
@@ -46,13 +44,13 @@ public class MockProcessorFilterService implements ProcessorFilterService {
         return dao.create(filter);
     }
 
+    //    @Override
+//    public ProcessorFilter create(DocRef pipelineRef, QueryData queryData, int priority, boolean enabled, Long trackerStartMs) {
+//        return create (pipelineRef, queryData, priority, enabled, null);
+//    }
+//
     @Override
-    public ProcessorFilter create(DocRef pipelineRef, QueryData queryData, int priority, boolean enabled, Long trackerStartMs) {
-        return create (pipelineRef, queryData, priority, enabled, null);
-    }
-
-    @Override
-    public ProcessorFilter create(Processor processor, QueryData queryData, int priority, boolean enabled, Long trackerStartMs) {
+    public ProcessorFilter create(Processor processor, QueryData queryData, int priority, boolean autoPriority, boolean enabled) {
         ProcessorFilter filter = new ProcessorFilter();
         filter.setProcessor(processor);
         filter.setQueryData(queryData);
@@ -62,12 +60,24 @@ public class MockProcessorFilterService implements ProcessorFilterService {
     }
 
     @Override
-    public ProcessorFilter create(Processor processor, QueryData queryData, int priority, boolean enabled) {
-        return create (processor, queryData, priority, enabled, null);
+    public List<ReprocessDataInfo> reprocess(final QueryData criteria, final int priority, final boolean autoPriority, final boolean enabled) {
+        return null;
     }
 
+    //    @Override
+//    public ProcessorFilter create(Processor processor, QueryData queryData, int priority, boolean enabled) {
+//        return create (processor, queryData, priority, enabled);
+//    }
+
     @Override
-    public ProcessorFilter create(Processor processor, DocRef processorFilterDocRef, QueryData queryData, int priority, boolean enabled, Long trackerStartMs) {
+    public ProcessorFilter importFilter(final Processor processor,
+                                        final DocRef processorFilterDocRef,
+                                        final QueryData queryData,
+                                        final int priority,
+                                        boolean autoPriority,
+                                        final boolean enabled,
+                                        final boolean reprocess,
+                                        final Long trackerStartMs) {
         ProcessorFilter filter = new ProcessorFilter();
         filter.setProcessor(processor);
         filter.setQueryData(queryData);
@@ -99,11 +109,6 @@ public class MockProcessorFilterService implements ProcessorFilterService {
     @Override
     public void setEnabled(Integer id, Boolean enabled) {
 
-    }
-
-    @Override
-    public List<ReprocessDataInfo> reprocess(FindMetaCriteria criteria) {
-        return null;
     }
 
     @Override

@@ -39,10 +39,20 @@ if (getPropertyOrDefault(propNameJooqGeneration, "false") == "true") {
                     database {
                         name = 'org.jooq.meta.mysql.MySQLDatabase'
                         inputSchema = 'stroom'
-                        // Add anything you want included in generation below
+                        // Add anything you want included in generation below, whitespace ignored
+                        // and comments allowed. Each one is a java regex
                         includes = 'meta_feed|meta_type|meta_processor|meta|meta_key|meta_val|meta_retention_tracker'
                         // We don't want to include flyway versioning
                         excludes = 'meta_schema_history'
+                        // Specify 'version' for use in optimistic concurrency control
+                        recordVersionFields = 'version'
+                        // Treat tinyint(1) columns as booleans
+                        forcedTypes {
+                            forcedType {
+                                name = 'BOOLEAN'
+                                types = '(?i:TINYINT\\(1\\))'
+                            }
+                        }
                     }
                     target {
                         packageName = 'stroom.meta.impl.db.jooq'

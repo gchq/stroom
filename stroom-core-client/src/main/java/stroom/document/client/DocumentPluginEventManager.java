@@ -17,10 +17,6 @@
 
 package stroom.document.client;
 
-import com.google.gwt.core.client.GWT;
-import com.google.gwt.user.client.Command;
-import com.google.inject.Inject;
-import com.google.web.bindery.event.shared.EventBus;
 import stroom.alert.client.event.AlertEvent;
 import stroom.alert.client.event.ConfirmEvent;
 import stroom.content.client.event.ContentTabSelectionChangeEvent;
@@ -89,6 +85,11 @@ import stroom.widget.tab.client.presenter.TabData;
 import stroom.widget.util.client.Future;
 import stroom.widget.util.client.FutureImpl;
 import stroom.widget.util.client.MultiSelectionModel;
+
+import com.google.gwt.core.client.GWT;
+import com.google.gwt.user.client.Command;
+import com.google.inject.Inject;
+import com.google.web.bindery.event.shared.EventBus;
 
 import java.util.ArrayList;
 import java.util.Collections;
@@ -519,7 +520,13 @@ public class DocumentPluginEventManager extends Plugin {
 
     private Future<List<Item>> getNewMenuItems(final ExplorerNode explorerNode) {
         final FutureImpl<List<Item>> future = new FutureImpl<>();
-        fetchPermissions(Collections.singletonList(explorerNode), documentPermissions ->
+
+        List<ExplorerNode> explorerNodes = Collections.emptyList();
+        if (explorerNode != null) {
+            explorerNodes = Collections.singletonList(explorerNode);
+        }
+
+        fetchPermissions(explorerNodes, documentPermissions ->
                 documentTypeCache.fetch(documentTypes ->
                         future.setResult(createNewMenuItems(explorerNode, documentPermissions.get(explorerNode), documentTypes))));
         return future;
@@ -585,9 +592,18 @@ public class DocumentPluginEventManager extends Plugin {
                     }
                 };
 
-                final Item item = new IconMenuItem(documentType.getPriority(), new SvgIcon(ImageUtil.getImageURL() + documentType.getIconUrl(), 18, 18), null,
-                        documentType.getDisplayType(), null, true, () -> ShowCreateDocumentDialogEvent.fire(DocumentPluginEventManager.this,
-                        explorerNode, documentType.getType(), documentType.getDisplayType(), true, newDocumentConsumer));
+                final Item item = new IconMenuItem(
+                        documentType.getPriority(),
+                        new SvgIcon(ImageUtil.getImageURL() + documentType.getIconUrl(), 18, 18),
+                        null,
+                        documentType.getDisplayType(), null, true, () ->
+                        ShowCreateDocumentDialogEvent.fire(
+                                DocumentPluginEventManager.this,
+                                explorerNode,
+                                documentType.getType(),
+                                documentType.getDisplayType(),
+                                true,
+                                newDocumentConsumer));
                 children.add(item);
 
                 if (DocumentTypes.isFolder(documentType.getType())) {

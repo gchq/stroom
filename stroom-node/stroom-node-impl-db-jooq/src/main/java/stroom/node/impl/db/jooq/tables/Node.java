@@ -42,7 +42,7 @@ import stroom.node.impl.db.jooq.tables.records.NodeRecord;
 @SuppressWarnings({ "all", "unchecked", "rawtypes" })
 public class Node extends TableImpl<NodeRecord> {
 
-    private static final long serialVersionUID = -906526580;
+    private static final long serialVersionUID = 1807556757;
 
     /**
      * The reference instance of <code>stroom.node</code>
@@ -105,7 +105,7 @@ public class Node extends TableImpl<NodeRecord> {
     /**
      * The column <code>stroom.node.enabled</code>.
      */
-    public final TableField<NodeRecord, Boolean> ENABLED = createField(DSL.name("enabled"), org.jooq.impl.SQLDataType.BIT.nullable(false), this, "");
+    public final TableField<NodeRecord, Boolean> ENABLED = createField(DSL.name("enabled"), org.jooq.impl.SQLDataType.BOOLEAN.nullable(false).defaultValue(org.jooq.impl.DSL.inline("0", org.jooq.impl.SQLDataType.BOOLEAN)), this, "");
 
     /**
      * Create a <code>stroom.node</code> table reference

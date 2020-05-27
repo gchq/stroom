@@ -36,13 +36,14 @@ class DocPermissionDaoImplTest {
     }
 
     @Test
-    void testMissingUser() {
+    void testAddPermission() {
         // Given
         final String userUuid = UUID.randomUUID().toString();
         final DocRef docRef = createTestDocRef();
 
         // When
-        assertThrows(SecurityException.class, () -> documentPermissionDao.addPermission(docRef.getUuid(), userUuid, "USE"));
+        documentPermissionDao.addPermission(docRef.getUuid(), userUuid, "USE");
+//        assertThrows(SecurityException.class, () -> documentPermissionDao.addPermission(docRef.getUuid(), userUuid, "USE"));
     }
 
     private User createUser(final String name) {

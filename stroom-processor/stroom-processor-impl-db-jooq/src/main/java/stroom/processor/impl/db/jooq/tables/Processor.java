@@ -42,7 +42,7 @@ import stroom.processor.impl.db.jooq.tables.records.ProcessorRecord;
 @SuppressWarnings({ "all", "unchecked", "rawtypes" })
 public class Processor extends TableImpl<ProcessorRecord> {
 
-    private static final long serialVersionUID = -660799387;
+    private static final long serialVersionUID = 1126691563;
 
     /**
      * The reference instance of <code>stroom.processor</code>
@@ -105,12 +105,12 @@ public class Processor extends TableImpl<ProcessorRecord> {
     /**
      * The column <code>stroom.processor.enabled</code>.
      */
-    public final TableField<ProcessorRecord, Boolean> ENABLED = createField(DSL.name("enabled"), org.jooq.impl.SQLDataType.BIT.defaultValue(org.jooq.impl.DSL.inline("b'0'", org.jooq.impl.SQLDataType.BIT)), this, "");
+    public final TableField<ProcessorRecord, Boolean> ENABLED = createField(DSL.name("enabled"), org.jooq.impl.SQLDataType.BOOLEAN.nullable(false).defaultValue(org.jooq.impl.DSL.inline("0", org.jooq.impl.SQLDataType.BOOLEAN)), this, "");
 
     /**
      * The column <code>stroom.processor.deleted</code>.
      */
-    public final TableField<ProcessorRecord, Boolean> DELETED = createField(DSL.name("deleted"), org.jooq.impl.SQLDataType.BIT.defaultValue(org.jooq.impl.DSL.inline("b'0'", org.jooq.impl.SQLDataType.BIT)), this, "");
+    public final TableField<ProcessorRecord, Boolean> DELETED = createField(DSL.name("deleted"), org.jooq.impl.SQLDataType.BOOLEAN.nullable(false).defaultValue(org.jooq.impl.DSL.inline("0", org.jooq.impl.SQLDataType.BOOLEAN)), this, "");
 
     /**
      * Create a <code>stroom.processor</code> table reference

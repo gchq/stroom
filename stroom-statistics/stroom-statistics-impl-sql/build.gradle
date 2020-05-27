@@ -23,22 +23,22 @@ dependencies {
     compile libs.stroomExpression
     compile libs.stroomQueryApi
     compile libs.stroomQueryCommon
-    compile libs.stroomStatsSchema
 
-    compile libs.commons_lang
     compile libs.commons_pool2
     compile libs.dropwizard_metrics_annotation
-    compile libs.flyway_core
+    compile libs.google_findbugs
+    compile libs.guava
     compile libs.guice4
-    compile libs.hikari
     compile libs.jackson_annotations
     compile libs.javax_inject
     compile libs.jaxb_api
+    compile libs.reactivestreams
     compile libs.rxjava
     compile libs.slf4j_api
     compile libs.swagger_annotations
     compile libs.vavr
     compile libs.ws_rs_api
+    compile libs.xml_apis
     compile(libs.hbase) { transitive = false } //hbase-common is currently only used for its Bytes class, so exclude all its deps
 
     testCompile project(':stroom-docstore:stroom-docstore-impl')

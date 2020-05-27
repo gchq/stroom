@@ -17,15 +17,15 @@ public class MockProcessorFilterDao implements ProcessorFilterDao, Clearable {
 
     @Override
     public ProcessorFilter create(final ProcessorFilter processorFilter) {
+        return create(processorFilter, null, null);
+    }
+
+    @Override
+    public ProcessorFilter create(final ProcessorFilter processorFilter, final Long minMetaCreateMs, final Long maxMetaCreateMs) {
         if (processorFilter.getProcessorFilterTracker() == null) {
             processorFilter.setProcessorFilterTracker(new ProcessorFilterTracker());
         }
         return dao.create(processorFilter);
-    }
-
-    @Override
-    public ProcessorFilter create(final ProcessorFilter processorFilter, Long trackerStartMs) {
-        return create (processorFilter, null);
     }
 
     @Override
@@ -41,6 +41,11 @@ public class MockProcessorFilterDao implements ProcessorFilterDao, Clearable {
     @Override
     public boolean delete(final int id) {
         return dao.delete(id);
+    }
+
+    @Override
+    public boolean logicalDelete(final int id) {
+        return false;
     }
 
     @Override
