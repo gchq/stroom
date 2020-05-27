@@ -63,7 +63,7 @@ class TestCommonExpressionMapper {
                                     .isEqualTo(DSL.falseCondition());
                         } else {
                             assertThat(condition)
-                                    .isEqualTo(DSL.noCondition());
+                                    .isEqualTo(DSL.trueCondition());
                         }
                     });
                 })
@@ -95,7 +95,7 @@ class TestCommonExpressionMapper {
 
         // AND { AND {} } == true, so no condition
         assertThat(condition)
-                .isEqualTo(DSL.noCondition());
+                .isEqualTo(DSL.trueCondition());
     }
 
     @Test
@@ -150,7 +150,7 @@ class TestCommonExpressionMapper {
 
         // OR { 1=1, field1=123 } == true, terms condensed down to one true condition, so empty list
         assertThat(condition)
-                .isEqualTo(DSL.noCondition());
+                .isEqualTo(DSL.trueCondition());
     }
 
     @Test
@@ -179,7 +179,7 @@ class TestCommonExpressionMapper {
 
         // NOT { NOT {} } == true so simplifies to no condition.
         assertThat(condition)
-                .isEqualTo(DSL.noCondition());
+                .isEqualTo(DSL.trueCondition());
     }
 
     @Test

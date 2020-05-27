@@ -1,4 +1,6 @@
-package stroom.data.retention.shared;
+package stroom.data.retention.api;
+
+import stroom.data.retention.shared.DataRetentionRule;
 
 import java.util.Comparator;
 import java.util.Objects;

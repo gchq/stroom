@@ -1,0 +1,10 @@
+ext.moduleName = 'stroom.data.retention.api'
+
+dependencies {
+
+    compile project(':stroom-core-shared')
+    compile project(':stroom-util')
+
+    compile libs.jackson_annotations
+
+}

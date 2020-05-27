@@ -59,8 +59,7 @@ public final class CommonExpressionMapper implements Function<ExpressionItem, Co
     /**
      * Converts the passed {@link ExpressionItem} into a Jooq {@link Condition}. By default it
      * will simplify expressions that can be simplified, e.g. NOT {NOT{}} becomes true, an OR
-     * with one child that is true becomes true, etc. It will always return a value even if
-     * that value is noCondition.
+     * with one child that is true becomes true, etc. It will always return a value.
      */
     @Override
     public Condition apply(final ExpressionItem item) {
@@ -115,7 +114,7 @@ public final class CommonExpressionMapper implements Function<ExpressionItem, Co
         }
 
         if (result == null || (simplifyConditions && isTrue(result))) {
-            result = DSL.noCondition();
+            result = DSL.trueCondition();
         }
         LOGGER.debug("Converted expressionItem {} into condition {}", item, result);
         return result;

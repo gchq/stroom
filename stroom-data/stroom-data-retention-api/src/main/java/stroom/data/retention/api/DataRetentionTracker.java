@@ -1,4 +1,4 @@
-package stroom.data.retention.shared;
+package stroom.data.retention.api;
 
 import java.time.Instant;
 import java.time.temporal.ChronoUnit;

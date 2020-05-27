@@ -1,4 +1,4 @@
-package stroom.data.retention.impl;
+package stroom.data.retention.api;
 
 import stroom.util.shared.AbstractConfig;
 import stroom.util.time.StroomDuration;

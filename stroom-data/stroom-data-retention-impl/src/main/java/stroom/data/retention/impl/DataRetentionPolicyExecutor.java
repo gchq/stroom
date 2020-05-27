@@ -17,11 +17,12 @@
 package stroom.data.retention.impl;
 
 import stroom.cluster.lock.api.ClusterLockService;
+import stroom.data.retention.api.DataRetentionConfig;
 import stroom.data.retention.shared.DataRetentionRule;
-import stroom.data.retention.shared.DataRetentionRuleAction;
+import stroom.data.retention.api.DataRetentionRuleAction;
 import stroom.data.retention.shared.DataRetentionRules;
-import stroom.data.retention.shared.DataRetentionTracker;
-import stroom.data.retention.shared.RetentionRuleOutcome;
+import stroom.data.retention.api.DataRetentionTracker;
+import stroom.data.retention.api.RetentionRuleOutcome;
 import stroom.meta.api.MetaService;
 import stroom.task.api.TaskContext;
 import stroom.task.api.TaskContextFactory;

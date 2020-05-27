@@ -1,7 +1,7 @@
 package stroom.meta.mock;
 
-import stroom.data.retention.shared.DataRetentionRuleAction;
-import stroom.data.retention.shared.DataRetentionTracker;
+import stroom.data.retention.api.DataRetentionRuleAction;
+import stroom.data.retention.api.DataRetentionTracker;
 import stroom.expression.matcher.ExpressionMatcher;
 import stroom.meta.api.AttributeMap;
 import stroom.meta.api.EffectiveMetaDataCriteria;

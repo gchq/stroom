@@ -4,8 +4,8 @@ import stroom.cache.impl.CacheModule;
 import stroom.cluster.lock.mock.MockClusterLockModule;
 import stroom.collection.mock.MockCollectionModule;
 import stroom.data.retention.shared.DataRetentionRule;
-import stroom.data.retention.shared.DataRetentionRuleAction;
-import stroom.data.retention.shared.RetentionRuleOutcome;
+import stroom.data.retention.api.DataRetentionRuleAction;
+import stroom.data.retention.api.RetentionRuleOutcome;
 import stroom.data.retention.shared.TimeUnit;
 import stroom.dictionary.mock.MockWordListProviderModule;
 import stroom.docrefinfo.mock.MockDocRefInfoModule;
@@ -101,7 +101,8 @@ class TestMetaServiceImpl {
         assertThat(selectionSummary.getItemCount()).isEqualTo(2);
         assertThat(selectionSummary.getStatusCount()).isEqualTo(1);
 
-        int deleted = metaService.updateStatus(new FindMetaCriteria(expression), null, Status.DELETED);
+        int deleted = metaService.updateStatus(
+                new FindMetaCriteria(expression), null, Status.DELETED);
         assertThat(deleted).isEqualTo(1);
 
         selectionSummary = metaService.getSelectionSummary(new FindMetaCriteria());
@@ -124,6 +125,50 @@ class TestMetaServiceImpl {
 
         // No rules, no data deleted
         assertTotalRowCount(3, Status.UNLOCKED);
+    }
+
+    @Test
+    void testRetentionDelete_allData() {
+
+        // Testing a true condition
+        List<DataRetentionRuleAction> ruleActions = List.of(
+                buildRuleAction(
+                        1,
+                        new ExpressionOperator.Builder(Op.AND).build(),
+                        RetentionRuleOutcome.DELETE)
+        );
+        setupRetentionData();
+
+        assertTotalRowCount(3, Status.UNLOCKED);
+
+        TimePeriod period = TimePeriod.between(Instant.EPOCH, Instant.now());
+
+        metaService.delete(ruleActions, period);
+
+        // Rules all say delete
+        assertTotalRowCount(3, Status.DELETED);
+    }
+
+    @Test
+    void testRetentionDelete_noData() {
+
+        // Testing a true condition
+        List<DataRetentionRuleAction> ruleActions = List.of(
+                buildRuleAction(
+                        1,
+                        new ExpressionOperator.Builder(Op.NOT).build(),
+                        RetentionRuleOutcome.DELETE)
+        );
+        setupRetentionData();
+
+        assertTotalRowCount(3, Status.UNLOCKED);
+
+        TimePeriod period = TimePeriod.between(Instant.EPOCH, Instant.now());
+
+        metaService.delete(ruleActions, period);
+
+        // Rules all say delete, but nothing will match
+        assertTotalRowCount(0, Status.DELETED);
     }
 
     @Test
@@ -156,11 +201,11 @@ class TestMetaServiceImpl {
                 buildRuleAction(1, FEED_1, RetentionRuleOutcome.DELETE)
         );
 
-        TimePeriod period = TimePeriod.between(Instant.EPOCH, Instant.now());
-
         setupRetentionData(Status.LOCKED);
 
         assertTotalRowCount(3, Status.LOCKED);
+
+        TimePeriod period = TimePeriod.between(Instant.EPOCH, Instant.now());
 
         metaService.delete(ruleActions, period);
 
@@ -278,8 +323,10 @@ class TestMetaServiceImpl {
 
         // Period should cover set of data
         TimePeriod period = TimePeriod.between(
-                now.minus(2, ChronoUnit.DAYS).minus(1, ChronoUnit.HOURS),
-                now.minus(2, ChronoUnit.DAYS).plus(1, ChronoUnit.HOURS));
+                now.minus(2, ChronoUnit.DAYS)
+                        .minus(1, ChronoUnit.HOURS),
+                now.minus(2, ChronoUnit.DAYS)
+                        .plus(1, ChronoUnit.HOURS));
 
         metaService.delete(ruleActions, period);
 
@@ -330,9 +377,11 @@ class TestMetaServiceImpl {
 
         Instant now = Instant.now();
 
-        int days = 100;
+        // Increase all these to get large volumes to test with
+        int days = 10;
         int rowsPerFeedPerDay = 10;
-        int feedCount = 100;
+        int feedCount = 10;
+
         int batchSize = 10_000;
         int totalRows = days * feedCount * rowsPerFeedPerDay;
 
@@ -356,7 +405,9 @@ class TestMetaServiceImpl {
 
         assertTotalRowCount(totalRows, Status.UNLOCKED);
 
-        final Instant deletionDay = now.minus(days / 2, ChronoUnit.DAYS).plus(1, ChronoUnit.HOURS);
+        final Instant deletionDay = now
+                .minus(days / 2, ChronoUnit.DAYS)
+                .plus(1, ChronoUnit.HOURS);
 
         int daysToDelete = 2;
 
@@ -476,6 +527,14 @@ class TestMetaServiceImpl {
                 .addTerm(MetaFields.FIELD_FEED, Condition.EQUALS, feedName)
                 .addTerm(MetaFields.FIELD_TYPE, Condition.EQUALS, "TEST_STREAM_TYPE")
                 .build();
+
+        // The age on the rule doesn't matter for the dao tests
+        return buildRuleAction(ruleNo, expressionOperator, outcome);
+    }
+
+    private DataRetentionRuleAction buildRuleAction(final int ruleNo,
+                                                    final ExpressionOperator expressionOperator,
+                                                    final RetentionRuleOutcome outcome) {
 
         // The age on the rule doesn't matter for the dao tests
         return new DataRetentionRuleAction(new DataRetentionRule(ruleNo,

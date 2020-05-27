@@ -1,6 +1,6 @@
 package stroom.meta.impl.db;
 
-import stroom.data.retention.shared.DataRetentionTracker;
+import stroom.data.retention.api.DataRetentionTracker;
 import stroom.db.util.JooqUtil;
 import stroom.meta.impl.MetaRetentionTrackerDao;
 

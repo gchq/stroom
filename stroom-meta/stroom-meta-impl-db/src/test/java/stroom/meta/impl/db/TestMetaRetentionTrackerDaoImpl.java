@@ -19,7 +19,7 @@ package stroom.meta.impl.db;
 import stroom.cache.impl.CacheModule;
 import stroom.cluster.lock.mock.MockClusterLockModule;
 import stroom.collection.mock.MockCollectionModule;
-import stroom.data.retention.shared.DataRetentionTracker;
+import stroom.data.retention.api.DataRetentionTracker;
 import stroom.dictionary.mock.MockWordListProviderModule;
 import stroom.security.mock.MockSecurityContextModule;
 import stroom.test.common.util.db.DbTestModule;

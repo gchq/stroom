@@ -1,7 +1,7 @@
 package stroom.meta.api;
 
-import stroom.data.retention.shared.DataRetentionRuleAction;
-import stroom.data.retention.shared.DataRetentionTracker;
+import stroom.data.retention.api.DataRetentionRuleAction;
+import stroom.data.retention.api.DataRetentionTracker;
 import stroom.meta.shared.FindMetaCriteria;
 import stroom.meta.shared.Meta;
 import stroom.meta.shared.MetaInfoSection;

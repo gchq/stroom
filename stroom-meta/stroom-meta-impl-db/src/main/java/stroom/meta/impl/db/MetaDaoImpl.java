@@ -6,7 +6,8 @@ import stroom.dashboard.expression.v1.ValInteger;
 import stroom.dashboard.expression.v1.ValLong;
 import stroom.dashboard.expression.v1.ValNull;
 import stroom.dashboard.expression.v1.ValString;
-import stroom.data.retention.shared.DataRetentionRuleAction;
+import stroom.data.retention.api.DataRetentionConfig;
+import stroom.data.retention.api.DataRetentionRuleAction;
 import stroom.datasource.api.v2.AbstractField;
 import stroom.db.util.ExpressionMapper;
 import stroom.db.util.ExpressionMapperFactory;
@@ -89,7 +90,7 @@ class MetaDaoImpl implements MetaDao {
     // TODO add to config
     private static final int MAX_VALUES_PER_INSERT = 500;
     // TODO add to config
-    private static final Duration LOGICAL_DELETE_BATCH_TIME_BUCKET = Duration.ofHours(7);
+    private static final Duration LOGICAL_DELETE_BATCH_TIME_BUCKET = null;
 
     private static final int FIND_RECORD_LIMIT = 1000000;
 
@@ -135,6 +136,7 @@ class MetaDaoImpl implements MetaDao {
     private final MetaTypeDaoImpl metaTypeDao;
     private final MetaProcessorDaoImpl metaProcessorDao;
     private final MetaKeyDaoImpl metaKeyDao;
+    private final DataRetentionConfig dataRetentionConfig;
 
     private final ExpressionMapper expressionMapper;
     private final MetaExpressionMapper metaExpressionMapper;
@@ -149,6 +151,7 @@ class MetaDaoImpl implements MetaDao {
                 final MetaTypeDaoImpl metaTypeDao,
                 final MetaProcessorDaoImpl metaProcessorDao,
                 final MetaKeyDaoImpl metaKeyDao,
+                final DataRetentionConfig dataRetentionConfig,
                 final ExpressionMapperFactory expressionMapperFactory,
                 final WordListProvider wordListProvider,
                 final CollectionService collectionService) {
@@ -157,6 +160,7 @@ class MetaDaoImpl implements MetaDao {
         this.metaTypeDao = metaTypeDao;
         this.metaProcessorDao = metaProcessorDao;
         this.metaKeyDao = metaKeyDao;
+        this.dataRetentionConfig = dataRetentionConfig;
 
         // Standard fields.
         expressionMapper = expressionMapperFactory.create();
@@ -472,7 +476,7 @@ class MetaDaoImpl implements MetaDao {
 
                 LOGGER.debug("durationUntilPeriodTo {}", durationUntilPeriodTo);
 
-                if (durationUntilPeriodTo.compareTo(LOGICAL_DELETE_BATCH_TIME_BUCKET) > 0) {
+                if (bucketSize != null && durationUntilPeriodTo.compareTo(bucketSize) > 0) {
                     // period bigger than bucketSize so split it up
                     batchPeriodTo = batchPeriodFrom.plus(bucketSize);
                 } else {
@@ -502,9 +506,10 @@ class MetaDaoImpl implements MetaDao {
                 LOGGER.debug("Logically deleted {} meta rows (total so far {})", updateCount, totalUpdateCount);
 
                 // now advance the from time
-                batchPeriodFrom = batchPeriodFrom.plus(bucketSize);
-
-                LOGGER.debug("new batchPeriodFrom {}, periodTo {}", batchPeriodFrom, period.getTo());
+                if (bucketSize != null) {
+                    batchPeriodFrom = batchPeriodFrom.plus(bucketSize);
+                    LOGGER.debug("new batchPeriodFrom {}, periodTo {}", batchPeriodFrom, period.getTo());
+                }
 
             } while (batchPeriodTo.isBefore(period.getTo()));
 
@@ -516,25 +521,32 @@ class MetaDaoImpl implements MetaDao {
     }
 
     private List<Condition> createDeleteConditions(final List<DataRetentionRuleAction> ruleActions) {
+        Objects.requireNonNull(ruleActions);
         final byte statusIdUnlocked = MetaStatusId.getPrimitiveValue(Status.UNLOCKED);
 
         // What we are building is roughly:
         // WHERE (CASE
-        //   WHEN <rule 3 condition is true> THEN
-        //   WHEN <rule 2 condition is true> THEN true
-        //   WHEN <rule 1 condition is true> THEN true
+        //   WHEN <rule 3 condition is true> THEN <outcome => true|false>
+        //   WHEN <rule 2 condition is true> THEN <outcome => true|false>
+        //   WHEN <rule 1 condition is true> THEN <outcome => true|false>
         //   ELSE false
         //   ) = true
         // I.e. see if a rule matches the data in priority order
         // Needs to be a CASE so we can ensure the order of rule evaluation
+        // and drop out when one matches. A matching rule may have an outcome
+        // of delete (true) or retain (false)
 
         CaseConditionStep<Boolean> caseConditionStep = null;
+        List<Condition> orConditions = new ArrayList<>();
         // Order is critical here as we are building a case statement
         // Highest priority rules first, i.e. largest rule number
         for (DataRetentionRuleAction ruleAction : ruleActions) {
-            // TODO change mapper to return a Condition not a collection
-
             final Condition ruleCondition = expressionMapper.apply(ruleAction.getRule().getExpression());
+
+            // TODO make this conditional based on config
+            if (dataRetentionConfig.isUseQueryOptimisation()) {
+                orConditions.add(ruleCondition);
+            }
 
             // The rule will either result in true or false depending on if it needs
             // to delete or retain the data
@@ -555,6 +567,15 @@ class MetaDaoImpl implements MetaDao {
 
         // Add our rule conditions
         conditions.add(caseField.eq(true));
+
+        // Now add all the rule conditions as an OR block
+        // This is to improve the performance of the query as the OR can make use of other indexes,
+        // e.g. range scanning the feedid+createTime index to reduce the number of rows scanned.
+        // We are still reliant on the case statement block to get the right outcome for the rules.
+        // It is possible this approach may slow things down as it makes the SQL more complex.
+        if (dataRetentionConfig.isUseQueryOptimisation()) {
+            conditions.add(DSL.or(orConditions));
+        }
 
         LOGGER.debug("conditions {}", conditions);
         return conditions;
@@ -577,7 +598,7 @@ class MetaDaoImpl implements MetaDao {
         }
 
         final Condition condition = metaExpressionMapper.apply(expression);
-        if (DSL.noCondition().equals(condition)) {
+        if (DSL.trueCondition().equals(condition)) {
             return Optional.empty();
         }
 

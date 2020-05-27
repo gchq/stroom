@@ -1,8 +1,8 @@
 package stroom.meta.impl;
 
 import stroom.dashboard.expression.v1.Val;
-import stroom.data.retention.shared.DataRetentionRuleAction;
-import stroom.data.retention.shared.DataRetentionTracker;
+import stroom.data.retention.api.DataRetentionRuleAction;
+import stroom.data.retention.api.DataRetentionTracker;
 import stroom.datasource.api.v2.AbstractField;
 import stroom.datasource.api.v2.DataSource;
 import stroom.docref.DocRef;
