@@ -480,7 +480,7 @@ class AnnotationDaoImpl implements AnnotationDao {
         final List<AbstractField> fieldList = Arrays.asList(fields);
 
         final PageRequest pageRequest = criteria.getPageRequest();
-        final Collection<Condition> conditions = createCondition(criteria.getExpression());
+        final Condition condition = createCondition(criteria.getExpression());
         final Collection<OrderField<?>> orderFields = createOrderFields(criteria);
         final List<Field<?>> dbFields = new ArrayList<>(valueMapper.getFields(fieldList));
         final Mapper<?>[] mappers = valueMapper.getMappers(fields);
@@ -496,7 +496,7 @@ class AnnotationDaoImpl implements AnnotationDao {
 
             SelectJoinStep<?> select = context.select(dbFields).from(ANNOTATION);
             try (final Cursor<?> cursor = select
-                    .where(conditions)
+                    .where(condition)
                     .orderBy(orderFields)
                     .limit(offset, numberOfRows)
                     .fetchLazy()) {
@@ -520,7 +520,7 @@ class AnnotationDaoImpl implements AnnotationDao {
         });
     }
 
-    private Collection<Condition> createCondition(final ExpressionOperator expression) {
+    private Condition createCondition(final ExpressionOperator expression) {
         return expressionMapper.apply(expression);
     }
 

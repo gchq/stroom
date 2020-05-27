@@ -12,11 +12,10 @@ import stroom.query.api.v2.ExpressionTerm;
 import org.jooq.Condition;
 import org.jooq.Field;
 
-import java.util.Collection;
 import java.util.List;
 import java.util.function.Function;
 
-class MetaExpressionMapper implements Function<ExpressionItem, Collection<Condition>> {
+class MetaExpressionMapper implements Function<ExpressionItem, Condition> {
     private final CommonExpressionMapper expressionMapper;
     private final MetaKeyDao metaKeyDao;
     private final Field<Integer> keyField;
@@ -50,7 +49,7 @@ class MetaExpressionMapper implements Function<ExpressionItem, Collection<Condit
     }
 
     @Override
-    public Collection<Condition> apply(final ExpressionItem expressionItem) {
+    public Condition apply(final ExpressionItem expressionItem) {
         return expressionMapper.apply(expressionItem);
     }
 

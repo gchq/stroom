@@ -1,6 +1,5 @@
 package stroom.processor.impl.db;
 
-import org.jooq.Condition;
 import stroom.db.util.ExpressionMapper;
 import stroom.db.util.ExpressionMapperFactory;
 import stroom.db.util.GenericDao;
@@ -12,8 +11,9 @@ import stroom.processor.shared.Processor;
 import stroom.processor.shared.ProcessorDataSource;
 import stroom.util.shared.ResultPage;
 
+import org.jooq.Condition;
+
 import javax.inject.Inject;
-import java.util.Collection;
 import java.util.List;
 import java.util.Optional;
 
@@ -97,12 +97,12 @@ class ProcessorDaoImpl implements ProcessorDao {
 
     @Override
     public ResultPage<Processor> find(final ExpressionCriteria criteria) {
-        final Collection<Condition> conditions = expressionMapper.apply(criteria.getExpression());
+        final Condition condition = expressionMapper.apply(criteria.getExpression());
 
         final List<Processor> list = JooqUtil.contextResult(processorDbConnProvider, context -> context
                 .select()
                 .from(PROCESSOR)
-                .where(conditions)
+                .where(condition)
                 .limit(JooqUtil.getLimit(criteria.getPageRequest(), true))
                 .offset(JooqUtil.getOffset(criteria.getPageRequest()))
                 .fetch()

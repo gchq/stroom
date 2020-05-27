@@ -15,7 +15,6 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import java.util.Arrays;
-import java.util.Collection;
 import java.util.Collections;
 import java.util.List;
 import java.util.function.Function;
@@ -54,17 +53,17 @@ class TestCommonExpressionMapper {
 
                         final CommonExpressionMapper mapper = new CommonExpressionMapper(true);
 
-                        final Collection<Condition> conditions = mapper.apply(expressionOperator);
+                        final Condition condition = mapper.apply(expressionOperator);
 
                         LOGGER.info("expressionItem: {}", expressionOperator);
-                        LOGGER.info("conditions: {}", conditions);
+                        LOGGER.info("condition: {}", condition);
 
                         if (expressionOperator.op().equals(ExpressionOperator.Op.NOT)) {
-                            assertThat(conditions)
-                                    .contains(DSL.falseCondition());
+                            assertThat(condition)
+                                    .isEqualTo(DSL.falseCondition());
                         } else {
-                            assertThat(conditions)
-                                    .isEmpty();
+                            assertThat(condition)
+                                    .isEqualTo(DSL.noCondition());
                         }
                     });
                 })
@@ -78,12 +77,11 @@ class TestCommonExpressionMapper {
                 .addOperator(new ExpressionOperator(true, ExpressionOperator.Op.AND, Collections.emptyList()))
                 .build();
 
-        final Collection<Condition> conditions = doTest(expressionOperator);
+        final Condition condition = doTest(expressionOperator);
 
-        assertThat(conditions)
-                .isNotEmpty();
         // NOT { AND {} } == false
-        assertThat(conditions).contains(DSL.falseCondition());
+        assertThat(condition)
+                .isEqualTo(DSL.falseCondition());
     }
 
     @Test
@@ -93,11 +91,11 @@ class TestCommonExpressionMapper {
                 .addOperator(new ExpressionOperator(true, ExpressionOperator.Op.AND, Collections.emptyList()))
                 .build();
 
-        final Collection<Condition> conditions = doTest(expressionOperator);
+        final Condition condition = doTest(expressionOperator);
 
         // AND { AND {} } == true, so no condition
-        assertThat(conditions)
-                .isEmpty();
+        assertThat(condition)
+                .isEqualTo(DSL.noCondition());
     }
 
     @Test
@@ -111,11 +109,30 @@ class TestCommonExpressionMapper {
                         .value(FIELD_1_VALUE).build())
                 .build();
 
-        final Collection<Condition> conditions = doTest(expressionOperator);
+        final Condition condition = doTest(expressionOperator);
 
         // AND { 1=0, field1=123 } == false, terms condensed down to one false condition
-        assertThat(conditions)
-                .contains(DSL.falseCondition());
+        assertThat(condition)
+                .isEqualTo(DSL.falseCondition());
+    }
+
+    @Test
+    void testAlwaysTrueAnd() {
+        final ExpressionOperator expressionOperator = new ExpressionOperator.Builder(ExpressionOperator.Op.AND)
+                .addOperator(new ExpressionOperator(true, ExpressionOperator.Op.AND, Collections.emptyList()))
+                .addOperator(new ExpressionOperator(true, ExpressionOperator.Op.AND, List.of(
+                        new ExpressionOperator.Builder(ExpressionOperator.Op.AND)
+                        .build(),
+                        new ExpressionOperator.Builder(ExpressionOperator.Op.OR)
+                                .build()
+                )))
+                .build();
+
+        final Condition condition = doTest(expressionOperator);
+
+        // AND { AND {}, AND { AND{}, OR{} } } == true
+        assertThat(condition)
+                .isEqualTo(DSL.trueCondition());
     }
 
     @Test
@@ -129,11 +146,26 @@ class TestCommonExpressionMapper {
                         .value(FIELD_1_VALUE).build())
                 .build();
 
-        final Collection<Condition> conditions = doTest(expressionOperator);
+        final Condition condition = doTest(expressionOperator);
 
         // OR { 1=1, field1=123 } == true, terms condensed down to one true condition, so empty list
-        assertThat(conditions)
-                .isEmpty();
+        assertThat(condition)
+                .isEqualTo(DSL.noCondition());
+    }
+
+    @Test
+    void testAlwaysFalseOr() {
+        final ExpressionOperator expressionOperator = new ExpressionOperator.Builder(
+                true, ExpressionOperator.Op.OR)
+                .addOperator(new ExpressionOperator(true, ExpressionOperator.Op.NOT, Collections.emptyList()))
+                .addOperator(new ExpressionOperator(true, ExpressionOperator.Op.NOT, Collections.emptyList()))
+                .build();
+
+        final Condition condition = doTest(expressionOperator);
+
+        // OR { NOT{}, NOT{} } == true, terms condensed down to one true condition, so empty list
+        assertThat(condition)
+                .isEqualTo(DSL.falseCondition());
     }
 
     @Test
@@ -143,11 +175,36 @@ class TestCommonExpressionMapper {
                 .addOperator(new ExpressionOperator(true, ExpressionOperator.Op.NOT, Collections.emptyList()))
                 .build();
 
-        final Collection<Condition> conditions = doTest(expressionOperator);
+        final Condition condition = doTest(expressionOperator);
 
-        // NOT { NOT {} } == true so simplifies to no conditions.
-        assertThat(conditions)
-                .isEmpty();
+        // NOT { NOT {} } == true so simplifies to no condition.
+        assertThat(condition)
+                .isEqualTo(DSL.noCondition());
+    }
+
+    @Test
+    void testNotWithChildren() {
+        final ExpressionOperator expressionOperator = new ExpressionOperator.Builder(
+                true, ExpressionOperator.Op.NOT)
+                .addTerm(new ExpressionTerm.Builder()
+                        .field(DB_FIELD_NAME_1)
+                        .condition(ExpressionTerm.Condition.EQUALS)
+                        .value(FIELD_1_VALUE).build())
+                .addTerm(new ExpressionTerm.Builder()
+                        .field(DB_FIELD_NAME_2)
+                        .condition(ExpressionTerm.Condition.EQUALS)
+                        .value(FIELD_2_VALUE).build())
+                .build();
+
+        final Condition condition = doTest(expressionOperator);
+
+        // NOT { field1=123, field2=456 } == not(field1=123) and not(field2=456)
+        assertThat(condition.toString())
+                .contains(conditionString(DB_FIELD_NAME_1, FIELD_1_VALUE));
+        assertThat(condition.toString())
+                .contains(conditionString(DB_FIELD_NAME_2, FIELD_2_VALUE));
+        assertThat(condition.toString())
+                .contains("and");
     }
 
     @TestFactory
@@ -162,11 +219,9 @@ class TestCommonExpressionMapper {
                                     .value(FIELD_1_VALUE).build())
                             .build();
 
-                    final Collection<Condition> conditions = doTest(expressionOperator);
+                    final Condition condition = doTest(expressionOperator);
 
-                    assertThat(conditions)
-                            .hasSize(1);
-                    assertThat(conditions.iterator().next().toString())
+                    assertThat(condition.toString())
                             .isEqualTo(conditionString(DB_FIELD_NAME_1, FIELD_1_VALUE));
                 }))
                 .collect(Collectors.toList());
@@ -188,15 +243,13 @@ class TestCommonExpressionMapper {
                                     .value(FIELD_2_VALUE).build())
                             .build();
 
-                    final Collection<Condition> conditions = doTest(expressionOperator);
+                    final Condition condition = doTest(expressionOperator);
 
-                    assertThat(conditions)
-                            .hasSize(1);
                     // No way to inspect the conditon tree so have to do contains on toString
                     // No way to check it is an OR either
-                    assertThat(conditions.iterator().next().toString())
+                    assertThat(condition.toString())
                             .contains(conditionString(DB_FIELD_NAME_1, FIELD_1_VALUE));
-                    assertThat(conditions.iterator().next().toString())
+                    assertThat(condition.toString())
                             .contains(conditionString(DB_FIELD_NAME_2, FIELD_2_VALUE));
                 }))
                 .collect(Collectors.toList());
@@ -225,21 +278,19 @@ class TestCommonExpressionMapper {
                         .value(FIELD_3_VALUE).build())
                 .build();
 
-        final Collection<Condition> conditions = doTest(expressionOperator);
+        final Condition condition = doTest(expressionOperator);
 
-        assertThat(conditions)
-                .hasSize(1);
         // No way to inspect the conditon tree so have to do contains on toString
         // No way to check it is an OR either
-        assertThat(conditions.iterator().next().toString())
+        assertThat(condition.toString())
                 .contains(conditionString(DB_FIELD_NAME_1, FIELD_1_VALUE));
-        assertThat(conditions.iterator().next().toString())
+        assertThat(condition.toString())
                 .contains(conditionString(DB_FIELD_NAME_2, FIELD_2_VALUE));
-        assertThat(conditions.iterator().next().toString())
+        assertThat(condition.toString())
                 .contains(conditionString(DB_FIELD_NAME_3, FIELD_3_VALUE));
     }
 
-    private Collection<Condition> doTest(final ExpressionItem expressionItem) {
+    private Condition doTest(final ExpressionItem expressionItem) {
         // create a noddy term mapper that doesn't need any generated code
         Function<ExpressionTerm, Condition> handler = expressionTerm -> {
             return DSL.condition(expressionTerm.getField() + "=" + expressionTerm.getValue());
@@ -251,12 +302,12 @@ class TestCommonExpressionMapper {
         FIELD_NAMES.forEach(fieldName ->
                 mapper.addHandler(new MyDbField(fieldName), handler));
 
-        final Collection<Condition> conditions = mapper.apply(expressionItem);
+        final Condition condition = mapper.apply(expressionItem);
 
         LOGGER.info("expressionItem: {}", expressionItem);
-        LOGGER.info("conditions: {}", conditions);
+        LOGGER.info("condition: {}", condition);
 
-        return conditions;
+        return condition;
     }
 
     private String conditionString(final String fieldName, final String value) {

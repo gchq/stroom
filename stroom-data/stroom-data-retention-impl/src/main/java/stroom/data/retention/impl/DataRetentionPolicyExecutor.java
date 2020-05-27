@@ -139,8 +139,6 @@ public class DataRetentionPolicyExecutor {
             final List<DataRetentionRule> activeRules = getActiveRules(dataRetentionRules.getRules());
 
             if (activeRules.size() > 0) {
-                // Figure out what the batch size will be for deletion.
-                final int batchSize = policyConfig.getDeleteBatchSize();
 
                 // Use tracker to establish how long ago we last ran this process so we can avoid
                 // scanning over data that has already been evaluated
@@ -167,7 +165,7 @@ public class DataRetentionPolicyExecutor {
 
                             // Skip if we have terminated processing.
                             if (!Thread.currentThread().isInterrupted()) {
-                                processPeriod(taskContext, period, reverseSortedActions, batchSize, now);
+                                processPeriod(taskContext, period, reverseSortedActions, now);
                                 if (!Thread.currentThread().isInterrupted()) {
                                     allSuccessful.set(false);
                                 }
@@ -225,7 +223,6 @@ public class DataRetentionPolicyExecutor {
     private void processPeriod(final TaskContext taskContext,
                                final TimePeriod period,
                                final List<DataRetentionRuleAction> reverseSortedRuleActions,
-                               final int batchSize,
                                final Instant now) {
         info(taskContext, () -> {
             final Function<DataRetentionRuleAction, String> ruleInfo = rule ->

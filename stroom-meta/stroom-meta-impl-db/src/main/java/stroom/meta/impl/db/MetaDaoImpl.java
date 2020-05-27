@@ -314,8 +314,7 @@ class MetaDaoImpl implements MetaDao {
 
         final byte newStatusId = MetaStatusId.getPrimitiveValue(newStatus);
 
-        Collection<Condition> conditions = expressionMapper.apply(criteria.getExpression());
-
+        final Condition criteriaCondition = expressionMapper.apply(criteria.getExpression());
 
         // select
         // 	v2.*
@@ -357,23 +356,20 @@ class MetaDaoImpl implements MetaDao {
         final int updateCount;
         // If a rule means we are retaining data then we will have a 1=0 condition in here
         // and as they are all to be ANDed together there is no point in running the sql.
-        if (conditions.size() == 1 && conditions.contains(DSL.falseCondition())) {
+        if (DSL.falseCondition().equals(criteriaCondition)) {
             LOGGER.info("Condition is FALSE so skipping SQL update");
             updateCount = 0;
         } else {
             // Add a condition if we should check current status.
+            final List<Condition> conditions;
             if (currentStatus != null) {
                 final byte currentStatusId = MetaStatusId.getPrimitiveValue(currentStatus);
-                conditions = Stream
-                        .concat(conditions.stream(), Stream.of(meta.STATUS.eq(currentStatusId)))
+                conditions = Stream.of(criteriaCondition, meta.STATUS.eq(currentStatusId))
                         .collect(Collectors.toList());
             } else {
-                conditions = Stream
-                        .concat(conditions.stream(), Stream.of(meta.STATUS.ne(newStatusId)))
+                conditions = Stream.of(criteriaCondition, meta.STATUS.ne(newStatusId))
                         .collect(Collectors.toList());
             }
-
-            final Collection<Condition> c = conditions;
 
             // TODO consider using criteria.getPageLength (i.e. batch size) to limit update size
             //   and number of records locked.  Would mean ignoring already updated rows which may
@@ -382,7 +378,7 @@ class MetaDaoImpl implements MetaDao {
                     .update(meta)
                     .set(meta.STATUS, newStatusId)
                     .set(meta.STATUS_TIME, statusTime)
-                    .where(c)
+                    .where(conditions)
                     .execute());
         }
         return updateCount;
@@ -478,8 +474,7 @@ class MetaDaoImpl implements MetaDao {
         for (DataRetentionRuleAction ruleAction : ruleActions) {
             // TODO change mapper to return a Condition not a collection
 
-            final Collection<Condition> ruleConditions = expressionMapper.apply(ruleAction.getRule().getExpression());
-            final Condition ruleCondition = ruleConditions.iterator().next();
+            final Condition ruleCondition = expressionMapper.apply(ruleAction.getRule().getExpression());
 
             // The rule will either result in true or false depending on if it needs
             // to delete or retain the data
@@ -521,14 +516,14 @@ class MetaDaoImpl implements MetaDao {
             return Optional.empty();
         }
 
-        final Collection<Condition> conditions = metaExpressionMapper.apply(expression);
-        if (conditions.size() == 0) {
+        final Condition condition = metaExpressionMapper.apply(expression);
+        if (DSL.noCondition().equals(condition)) {
             return Optional.empty();
         }
 
         return Optional.of(selectDistinct(metaVal.META_ID)
                 .from(metaVal)
-                .where(conditions));
+                .where(condition));
     }
 
     @Override
@@ -744,12 +739,12 @@ class MetaDaoImpl implements MetaDao {
 
     @Override
     public Optional<Long> getMaxId(final FindMetaCriteria criteria) {
-        final Collection<Condition> conditions = expressionMapper.apply(criteria.getExpression());
+        final Condition condition = expressionMapper.apply(criteria.getExpression());
 
         return JooqUtil.contextResult(metaDbConnProvider, context -> context
                 .select(max(meta.ID))
                 .from(meta)
-                .where(conditions)
+                .where(condition)
                 .fetchOptional()
                 .map(Record1::value1));
     }
@@ -778,7 +773,7 @@ class MetaDaoImpl implements MetaDao {
     }
 
     private Collection<Condition> createCondition(final ExpressionOperator expression) {
-        Collection<Condition> conditions = expressionMapper.apply(expression);
+        Condition criteriaCondition = expressionMapper.apply(expression);
 
 //        // If we aren't being asked to match everything then add constraints to the expression.
 //        if (idSet != null && (idSet.getMatchAll() == null || !idSet.getMatchAll())) {
@@ -787,11 +782,11 @@ class MetaDaoImpl implements MetaDao {
 
         // Get additional selection criteria based on meta data attributes;
         final Optional<SelectConditionStep<Record1<Long>>> metaConditionStep = getMetaCondition(expression);
-        if (metaConditionStep.isPresent()) {
-            conditions = Stream
-                    .concat(conditions.stream(), Stream.of(meta.ID.in(metaConditionStep.get())))
-                    .collect(Collectors.toList());
-        }
+        List<Condition> conditions = new ArrayList<>();
+        conditions.add(criteriaCondition);
+
+        metaConditionStep.ifPresent(record1s ->
+                conditions.add(meta.ID.in(record1s)));
 
         return conditions;
     }

@@ -9,12 +9,11 @@ import stroom.query.api.v2.ExpressionItem;
 import org.jooq.Condition;
 import org.jooq.Field;
 
-import java.util.Collection;
 import java.util.Collections;
 import java.util.List;
 import java.util.function.Function;
 
-public class ExpressionMapper implements Function<ExpressionItem, Collection<Condition>> {
+public class ExpressionMapper implements Function<ExpressionItem, Condition> {
     private final CommonExpressionMapper expressionMapper;
     private final WordListProvider wordListProvider;
     private final CollectionService collectionService;
@@ -77,7 +76,7 @@ public class ExpressionMapper implements Function<ExpressionItem, Collection<Con
     }
 
     @Override
-    public Collection<Condition> apply(final ExpressionItem expressionItem) {
+    public Condition apply(final ExpressionItem expressionItem) {
         return expressionMapper.apply(expressionItem);
     }
 
