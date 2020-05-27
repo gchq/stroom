@@ -491,14 +491,13 @@ class TestDataRetentionPolicyExecutor {
                                         final ExpressionOperator expressionOperator) {
 
 
-        return new DataRetentionRule(ruleNo,
+        return DataRetentionRule.ageRule(ruleNo,
                 Instant.now().toEpochMilli(),
                 "Rule" + ruleNo + "_" + age + timeUnit.getDisplayValue(),
                 isEnabled,
                 expressionOperator,
                 age,
-                timeUnit,
-                false);
+                timeUnit);
     }
 
     private DataRetentionRule buildRule(final int ruleNo,
@@ -523,14 +522,11 @@ class TestDataRetentionPolicyExecutor {
     private DataRetentionRule buildForeverRule(final int ruleNo,
                                                final boolean isEnabled,
                                                final ExpressionOperator expressionOperator) {
-        return new DataRetentionRule(ruleNo,
+        return DataRetentionRule.foreverRule(ruleNo,
                 Instant.now().toEpochMilli(),
                 "Rule" + ruleNo + "_Forever",
                 isEnabled,
-                expressionOperator,
-                1,
-                TimeUnit.YEARS,
-                true);
+                expressionOperator);
     }
 
 }

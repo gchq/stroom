@@ -41,16 +41,6 @@ import java.util.Objects;
 public class DataRetentionRule {
     public static final String FOREVER = "Forever";
 
-    public static final DataRetentionRule RETAIN_ALL_FOREVER = new DataRetentionRule(
-            0,
-            0L, // epoch
-            "Retain All Forever",
-            true,
-            new ExpressionOperator.Builder(true, ExpressionOperator.Op.AND).build(),
-            50,
-            TimeUnit.YEARS,
-            true);
-
     @XmlElement(name = "ruleNumber")
     @JsonProperty
     private int ruleNumber;
@@ -96,6 +86,26 @@ public class DataRetentionRule {
         this.age = age;
         this.timeUnit = timeUnit;
         this.forever = forever;
+    }
+
+    public static DataRetentionRule foreverRule(final int ruleNumber,
+                                                final long creationTime,
+                                                final String name,
+                                                final boolean enabled,
+                                                final ExpressionOperator expression) {
+        // Forever so the age parts are ignored.
+        return new DataRetentionRule(ruleNumber, creationTime, name, enabled, expression, 1, TimeUnit.YEARS, true);
+    }
+
+    public static DataRetentionRule ageRule(final int ruleNumber,
+                                            final long creationTime,
+                                            final String name,
+                                            final boolean enabled,
+                                            final ExpressionOperator expression,
+                                            final int age,
+                                            final TimeUnit timeUnit) {
+        // Forever so the age parts are ignored.
+        return new DataRetentionRule(ruleNumber, creationTime, name, enabled, expression, age, timeUnit, false);
     }
 
     public int getRuleNumber() {

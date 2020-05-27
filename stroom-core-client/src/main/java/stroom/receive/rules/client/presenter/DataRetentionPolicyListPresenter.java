@@ -16,14 +16,6 @@
 
 package stroom.receive.rules.client.presenter;
 
-import com.google.gwt.cell.client.SafeHtmlCell;
-import com.google.gwt.safehtml.shared.SafeHtml;
-import com.google.gwt.safehtml.shared.SafeHtmlBuilder;
-import com.google.gwt.safehtml.shared.SafeHtmlUtils;
-import com.google.gwt.user.cellview.client.Column;
-import com.google.inject.Inject;
-import com.google.web.bindery.event.shared.EventBus;
-import com.gwtplatform.mvp.client.MyPresenterWidget;
 import stroom.data.client.presenter.ColumnSizeConstants;
 import stroom.data.grid.client.DataGridView;
 import stroom.data.grid.client.DataGridViewImpl;
@@ -34,7 +26,17 @@ import stroom.util.client.BorderUtil;
 import stroom.widget.button.client.ButtonView;
 import stroom.widget.util.client.MultiSelectionModel;
 
+import com.google.gwt.cell.client.SafeHtmlCell;
+import com.google.gwt.safehtml.shared.SafeHtml;
+import com.google.gwt.safehtml.shared.SafeHtmlBuilder;
+import com.google.gwt.safehtml.shared.SafeHtmlUtils;
+import com.google.gwt.user.cellview.client.Column;
+import com.google.inject.Inject;
+import com.google.web.bindery.event.shared.EventBus;
+import com.gwtplatform.mvp.client.MyPresenterWidget;
+
 import java.util.List;
+import java.util.function.Function;
 
 public class DataRetentionPolicyListPresenter extends MyPresenterWidget<DataGridView<DataRetentionRule>> {
     @Inject
@@ -51,43 +53,22 @@ public class DataRetentionPolicyListPresenter extends MyPresenterWidget<DataGrid
      * Add the columns to the table.
      */
     private void initTableColumns() {
-        // Rule.
-        final Column<DataRetentionRule, SafeHtml> ruleColumn = new Column<DataRetentionRule, SafeHtml>(new SafeHtmlCell()) {
-            @Override
-            public SafeHtml getValue(final DataRetentionRule row) {
-                return getSafeHtml(String.valueOf(row.getRuleNumber()), row.isEnabled());
-            }
-        };
-        getView().addResizableColumn(ruleColumn, "Rule", 40);
 
-        // Name.
-        final Column<DataRetentionRule, SafeHtml> nameColumn = new Column<DataRetentionRule, SafeHtml>(new SafeHtmlCell()) {
-            @Override
-            public SafeHtml getValue(final DataRetentionRule row) {
-                return getSafeHtml(row.getName(), row.isEnabled());
-            }
-        };
-        getView().addResizableColumn(nameColumn, "Name", 200);
+        addColumn("Rule", 40, row -> String.valueOf(row.getRuleNumber()));
+        addColumn("Name", 200, DataRetentionRule::getName);
+        addColumn("Retention", ColumnSizeConstants.SMALL_COL, DataRetentionRule::getAgeString);
+        addColumn("Expression", 500, row -> row.getExpression().toString());
+        getView().addEndColumn(new EndColumn<>());
+    }
 
-        // Retention.
-        final Column<DataRetentionRule, SafeHtml> ageColumn = new Column<DataRetentionRule, SafeHtml>(new SafeHtmlCell()) {
-            @Override
-            public SafeHtml getValue(final DataRetentionRule row) {
-                return getSafeHtml(row.getAgeString(), row.isEnabled());
-            }
-        };
-        getView().addResizableColumn(ageColumn, "Retention", ColumnSizeConstants.SMALL_COL);
-
-        // Expression.
+    private void addColumn(final String name, final int width, final Function<DataRetentionRule, String> valueFunc) {
         final Column<DataRetentionRule, SafeHtml> expressionColumn = new Column<DataRetentionRule, SafeHtml>(new SafeHtmlCell()) {
             @Override
             public SafeHtml getValue(final DataRetentionRule row) {
-                return getSafeHtml(row.getExpression().toString(), row.isEnabled());
+                return getSafeHtml(valueFunc.apply(row), row.isEnabled());
             }
         };
-        getView().addResizableColumn(expressionColumn, "Expression", 500);
-
-        getView().addEndColumn(new EndColumn<>());
+        getView().addResizableColumn(expressionColumn, name, width);
     }
 
     private SafeHtml getSafeHtml(final String string, final boolean enabled) {

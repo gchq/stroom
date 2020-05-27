@@ -17,7 +17,6 @@
 package stroom.data.retention;
 
 
-import org.junit.jupiter.api.Test;
 import stroom.data.retention.impl.DataRetentionPolicyExecutor;
 import stroom.data.retention.impl.DataRetentionRulesService;
 import stroom.data.retention.shared.DataRetentionRule;
@@ -25,11 +24,11 @@ import stroom.data.retention.shared.DataRetentionRules;
 import stroom.data.retention.shared.TimeUnit;
 import stroom.data.shared.StreamTypeNames;
 import stroom.docref.DocRef;
+import stroom.meta.api.MetaProperties;
 import stroom.meta.api.MetaService;
 import stroom.meta.shared.FindMetaCriteria;
 import stroom.meta.shared.Meta;
 import stroom.meta.shared.MetaFields;
-import stroom.meta.api.MetaProperties;
 import stroom.meta.shared.Status;
 import stroom.query.api.v2.ExpressionOperator;
 import stroom.query.api.v2.ExpressionOperator.Op;
@@ -39,6 +38,8 @@ import stroom.test.common.util.test.FileSystemTestUtil;
 import stroom.util.date.DateUtil;
 import stroom.util.logging.LambdaLogger;
 import stroom.util.logging.LambdaLoggerFactory;
+
+import org.junit.jupiter.api.Test;
 
 import javax.inject.Inject;
 import java.util.List;
@@ -159,11 +160,11 @@ class TestDataRetentionPolicyExecutor extends AbstractCoreIntegrationTest {
     }
 
     private DataRetentionRule createRule(final int num, final ExpressionOperator expression, final int age, final TimeUnit timeUnit) {
-        return new DataRetentionRule(num, System.currentTimeMillis(), "rule " + num, true, expression, age, timeUnit, false);
+        return DataRetentionRule.ageRule(num, System.currentTimeMillis(), "rule " + num, true, expression, age, timeUnit);
     }
 
     private DataRetentionRule createForeverRule(final int num, final ExpressionOperator expression) {
-        return new DataRetentionRule(num, System.currentTimeMillis(), "rule " + num, true, expression, 0, null, true);
+        return DataRetentionRule.foreverRule(num, System.currentTimeMillis(), "rule " + num, true, expression);
     }
 
     private void dumpStreams() {
