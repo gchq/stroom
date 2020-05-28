@@ -18,11 +18,11 @@ package stroom.data.retention.impl;
 
 import stroom.cluster.lock.api.ClusterLockService;
 import stroom.data.retention.api.DataRetentionConfig;
-import stroom.data.retention.shared.DataRetentionRule;
 import stroom.data.retention.api.DataRetentionRuleAction;
-import stroom.data.retention.shared.DataRetentionRules;
 import stroom.data.retention.api.DataRetentionTracker;
 import stroom.data.retention.api.RetentionRuleOutcome;
+import stroom.data.retention.shared.DataRetentionRule;
+import stroom.data.retention.shared.DataRetentionRules;
 import stroom.meta.api.MetaService;
 import stroom.task.api.TaskContext;
 import stroom.task.api.TaskContextFactory;
@@ -60,25 +60,25 @@ import java.util.stream.Collectors;
  * important. All rules need to be applied to all meta records in precedence order. The first
  * matching rule applies. If a rule matches, no other rules will be tested/applied. If no rules
  * match then that record will not be deleted.
- *
+ * <p>
  * Once the rules have been run over all the data then (assuming the rules have not changed) there
  * is no need to scan all the data on next run. To limit the data being scanned we split the time since
  * epoch to now into periods delimited by the earliest create times of each rule.  If a rule has an
  * age of 1 day then the min create time is now()-1d.
- *
- *  If we have a 1mth rule and a 1yr rule then the following periods will be used:
- *  1mnth ago => now (Ignored as ALL rules have age >= this, so all data is retained)
- *  1yr ago => 1mnth ago
- *  epoch => 1yr ago
- *
- *  Disabled rules are ignored and don't count towards the period splits.
- *
- *  A tracker record is used to keep track of what time the last run happened so we can offset the
- *  periods by that amount. Using the period example from above, if the tracker had a last run time
- *  of 1d ago then the periods become:
- *  1d ago => now (Ignored as ALL rules have age >= this, so all data is retained)
- *  1mnth+1d ago => 1mnth ago
- *  1yr+1d ago => 1yr ago
+ * <p>
+ * If we have a 1mth rule and a 1yr rule then the following periods will be used:
+ * 1mnth ago => now (Ignored as ALL rules have age >= this, so all data is retained)
+ * 1yr ago => 1mnth ago
+ * epoch => 1yr ago
+ * <p>
+ * Disabled rules are ignored and don't count towards the period splits.
+ * <p>
+ * A tracker record is used to keep track of what time the last run happened so we can offset the
+ * periods by that amount. Using the period example from above, if the tracker had a last run time
+ * of 1d ago then the periods become:
+ * 1d ago => now (Ignored as ALL rules have age >= this, so all data is retained)
+ * 1mnth+1d ago => 1mnth ago
+ * 1yr+1d ago => 1yr ago
  */
 public class DataRetentionPolicyExecutor {
     private static final LambdaLogger LOGGER = LambdaLoggerFactory.getLogger(DataRetentionPolicyExecutor.class);
@@ -190,15 +190,15 @@ public class DataRetentionPolicyExecutor {
         // Calculate the amount of time that has elapsed since we last ran.
         final Duration timeSinceLastRun = metaService.getRetentionTracker()
                 .flatMap(tracker -> {
-                        // If rules ver in tracker doesn't match, treat as if tracker isn't there
-                        if (tracker.getRulesVersion().equals(dataRetentionRules.getVersion())) {
-                            LOGGER.info("Found valid tracker {}", tracker);
-                            return Optional.of(tracker);
-                        } else {
-                            LOGGER.info("Tracker version is out of date, ignoring it rules version: {}, {}",
-                                    dataRetentionRules.getVersion(), tracker);
-                            return Optional.empty();
-                        }
+                    // If rules ver in tracker doesn't match, treat as if tracker isn't there
+                    if (tracker.getRulesVersion().equals(dataRetentionRules.getVersion())) {
+                        LOGGER.info("Found valid tracker {}", tracker);
+                        return Optional.of(tracker);
+                    } else {
+                        LOGGER.info("Tracker version is out of date, ignoring it rules version: {}, {}",
+                                dataRetentionRules.getVersion(), tracker);
+                        return Optional.empty();
+                    }
                 })
                 .map(DataRetentionTracker::getLastRunTime)
                 .map(lastRun -> Duration.between(lastRun, now))
@@ -249,12 +249,9 @@ public class DataRetentionPolicyExecutor {
                             .collect(Collectors.joining("\n"));
         });
 
-        int count = -1;
-        while (count != 0 && !Thread.currentThread().isInterrupted()) {
-            count = metaService.delete(sortedRuleActions, period);
-            final String message = "Marked " + count + " items as deleted";
-            LOGGER.info(() -> message);
-        }
+        final int count = metaService.delete(sortedRuleActions, period);
+        final String message = "Marked " + count + " items as deleted";
+        LOGGER.info(() -> message);
     }
 
     private Map<TimePeriod, List<DataRetentionRuleAction>> getRulesByPeriod(

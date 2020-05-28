@@ -56,7 +56,6 @@ import org.jooq.impl.DSL;
 
 import javax.inject.Inject;
 import javax.inject.Singleton;
-import java.time.Duration;
 import java.time.Instant;
 import java.util.ArrayList;
 import java.util.Arrays;
@@ -87,10 +86,9 @@ import static stroom.meta.impl.db.jooq.tables.MetaVal.META_VAL;
 class MetaDaoImpl implements MetaDao {
     private static final LambdaLogger LOGGER = LambdaLoggerFactory.getLogger(MetaDaoImpl.class);
 
-    // TODO add to config
+    // This is currently only used for testing so no need to put it in config,
+    // unless it gets used in real code.
     private static final int MAX_VALUES_PER_INSERT = 500;
-    // TODO add to config
-    private static final Duration LOGICAL_DELETE_BATCH_TIME_BUCKET = null;
 
     private static final int FIND_RECORD_LIMIT = 1000000;
 
@@ -307,7 +305,9 @@ class MetaDaoImpl implements MetaDao {
                 .build();
     }
 
-    @Override
+    /**
+     * Method currently only here for test purposes as a means of bulk loading data.
+     */
     public void create(final List<MetaProperties> metaPropertiesList, final Status status) {
         // ensure we have all the parent records and capture all their ids
         final Map<String, Integer> feedIds = metaPropertiesList.stream()
@@ -380,43 +380,6 @@ class MetaDaoImpl implements MetaDao {
 
         final Condition criteriaCondition = expressionMapper.apply(criteria.getExpression());
 
-        // select
-        // 	v2.*
-        // from (
-        // 	select
-        // 	v.*,
-        // 	CASE
-        // 		WHEN
-        // 			-- purge DS events older than 10 mins
-        //             v.create_time < DATE_SUB(now(), INTERVAL 10 MINUTE)
-        // 			AND feed_name = 'DATA_SPLITTER-EVENTS'
-        // 			THEN 1
-        // 		WHEN
-        //             -- purge all events except json_events older than 1 month
-        // 			v.create_time < DATE_SUB(now(), INTERVAL 1 MONTH)
-        //             AND feed_name <> 'JSON-EVENTS'
-        // 			THEN 2
-        // 		WHEN
-        // 			-- purge all events older than 1 year
-        //             v.create_time < DATE_SUB(now(), INTERVAL 1 YEAR)
-        // 			THEN 3
-        // 		ELSE NULL
-        // 	END effective_rule
-        // 	from (
-        // 		select
-        // 			from_unixtime(m.create_time /1000) create_time,
-        // 			from_unixtime(m.effective_time /1000) effective_time,
-        // 			mf.name feed_name,
-        // 			mt.name type_name
-        // 		from meta m
-        // 		left join meta_feed mf on m.feed_id = mf.id
-        // 		left join meta_type mt on m.type_id = mt.id
-        // 		order by m.create_time desc
-        // 	) v
-        // ) v2
-        // order by v2.effective_rule;
-
-
         final int updateCount;
         // If a rule means we are retaining data then we will have a 1=0 condition in here
         // and as they are all to be ANDed together there is no point in running the sql.
@@ -435,9 +398,6 @@ class MetaDaoImpl implements MetaDao {
                         .collect(Collectors.toList());
             }
 
-            // TODO consider using criteria.getPageLength (i.e. batch size) to limit update size
-            //   and number of records locked.  Would mean ignoring already updated rows which may
-            //   make it more costly.
             updateCount = JooqUtil.contextResult(metaDbConnProvider, context -> context
                     .update(meta)
                     .set(meta.STATUS, newStatusId)
@@ -464,63 +424,47 @@ class MetaDaoImpl implements MetaDao {
         if (ruleActions != null && !ruleActions.isEmpty()) {
             final byte statusIdDeleted = MetaStatusId.getPrimitiveValue(Status.DELETED);
 
-            List<Condition> baseConditions = createDeleteConditions(ruleActions);
+            final List<Condition> baseConditions = createRetentionDeleteConditions(ruleActions);
 
-            final Duration bucketSize = LOGICAL_DELETE_BATCH_TIME_BUCKET;
-
-            Instant batchPeriodFrom = period.getFrom();
-            Instant batchPeriodTo;
+            // Looping like this is not ideal as we are then relying on filtering out
+            // all the rows we have already touched, based on their status col. An index
+            // of (status, feed_id, create_time) may help here. There is a risk that
+            // each pass takes longer and longer as it has to scan over old data.
+            //
+            // We could INSERT...SELECT into a temp table but that still has locking
+            // implications on meta.
+            int lastUpdateCount = -1;
+            final int batchSize = dataRetentionConfig.getDeleteBatchSize();
             do {
-                // Work out duration from curent batchPeriodFrom time until periodTo time
-                Duration durationUntilPeriodTo = Duration.between(batchPeriodFrom, period.getTo());
-
-                LOGGER.debug("durationUntilPeriodTo {}", durationUntilPeriodTo);
-
-                if (bucketSize != null && durationUntilPeriodTo.compareTo(bucketSize) > 0) {
-                    // period bigger than bucketSize so split it up
-                    batchPeriodTo = batchPeriodFrom.plus(bucketSize);
-                } else {
-                    batchPeriodTo = period.getTo();
-                }
-                final TimePeriod batchPeriod = TimePeriod.between(batchPeriodFrom, batchPeriodTo);
-
-                LOGGER.debug("Processing batchPeriod {}", batchPeriod);
-
                 final List<Condition> conditions = new ArrayList<>(baseConditions);
 
                 // Time bound the data we are testing the rules over
-                conditions.add(meta.CREATE_TIME.greaterOrEqual(batchPeriod.getFrom().toEpochMilli()));
-                conditions.add(meta.CREATE_TIME.lessThan(batchPeriod.getTo().toEpochMilli()));
+                conditions.add(meta.CREATE_TIME.greaterOrEqual(period.getFrom().toEpochMilli()));
+                conditions.add(meta.CREATE_TIME.lessThan(period.getTo().toEpochMilli()));
 
-                int updateCount = LOGGER.logDurationIfDebugEnabled(
+                lastUpdateCount = LOGGER.logDurationIfInfoEnabled(
                         () -> JooqUtil.contextResult(metaDbConnProvider, context -> context
                                 .update(meta)
                                 .set(meta.STATUS, statusIdDeleted)
                                 .set(meta.STATUS_TIME, Instant.now().toEpochMilli())
                                 .where(conditions)
+                                .limit(batchSize)
                                 .execute()),
-                        cnt -> LogUtil.message("Logically deleted {} meta records", cnt));
+                        cnt -> LogUtil.message("Logically deleted {} meta records with limit {}", cnt, batchSize));
 
-                totalUpdateCount += updateCount;
+                totalUpdateCount += lastUpdateCount;
 
-                LOGGER.debug("Logically deleted {} meta rows (total so far {})", updateCount, totalUpdateCount);
+                LOGGER.debug("Logically deleted {} meta rows (total so far {})", lastUpdateCount, totalUpdateCount);
 
-                // now advance the from time
-                if (bucketSize != null) {
-                    batchPeriodFrom = batchPeriodFrom.plus(bucketSize);
-                    LOGGER.debug("new batchPeriodFrom {}, periodTo {}", batchPeriodFrom, period.getTo());
-                }
-
-            } while (batchPeriodTo.isBefore(period.getTo()));
-
+            } while (lastUpdateCount != 0 && !Thread.currentThread().isInterrupted());
         } else {
-            LOGGER.debug("Empty ruleActions");
+            LOGGER.debug("Empty ruleActions, nothing to delete");
             totalUpdateCount = 0;
         }
         return totalUpdateCount;
     }
 
-    private List<Condition> createDeleteConditions(final List<DataRetentionRuleAction> ruleActions) {
+    private List<Condition> createRetentionDeleteConditions(final List<DataRetentionRuleAction> ruleActions) {
         Objects.requireNonNull(ruleActions);
         final byte statusIdUnlocked = MetaStatusId.getPrimitiveValue(Status.UNLOCKED);
 
@@ -562,7 +506,8 @@ class MetaDaoImpl implements MetaDao {
 
         List<Condition> conditions = new ArrayList<>();
 
-        // Ensure we only 'delete' unlocked records
+        // Ensure we only 'delete' unlocked records, also ensures we don't touch
+        // records we have already deleted in a previous pass
         conditions.add(meta.STATUS.eq(statusIdUnlocked));
 
         // Add our rule conditions

@@ -3,15 +3,15 @@ package stroom.meta.impl.db;
 import stroom.cache.impl.CacheModule;
 import stroom.cluster.lock.mock.MockClusterLockModule;
 import stroom.collection.mock.MockCollectionModule;
-import stroom.data.retention.shared.DataRetentionRule;
+import stroom.data.retention.api.DataRetentionConfig;
 import stroom.data.retention.api.DataRetentionRuleAction;
 import stroom.data.retention.api.RetentionRuleOutcome;
+import stroom.data.retention.shared.DataRetentionRule;
 import stroom.data.retention.shared.TimeUnit;
 import stroom.dictionary.mock.MockWordListProviderModule;
 import stroom.docrefinfo.mock.MockDocRefInfoModule;
 import stroom.meta.api.MetaProperties;
 import stroom.meta.api.MetaService;
-import stroom.meta.impl.MetaDao;
 import stroom.meta.impl.MetaModule;
 import stroom.meta.shared.FindMetaCriteria;
 import stroom.meta.shared.Meta;
@@ -65,9 +65,10 @@ class TestMetaServiceImpl {
     private Cleanup cleanup;
     @Inject
     private MetaService metaService;
-
     @Inject
-    private MetaDao metaDao;
+    private MetaDaoImpl metaDao;
+    @Inject
+    private DataRetentionConfig dataRetentionConfig;
 
     @BeforeEach
     void setup() {
@@ -367,7 +368,7 @@ class TestMetaServiceImpl {
     @Test
     void testRetentionDelete_volumeTest() {
 
-        List<DataRetentionRuleAction> ruleActions = List.of(
+        final List<DataRetentionRuleAction> ruleActions = List.of(
                 buildRuleAction(1, FEED_1, RetentionRuleOutcome.DELETE),
                 buildRuleAction(2, FEED_2, RetentionRuleOutcome.RETAIN),
                 buildRuleAction(3, FEED_3, RetentionRuleOutcome.DELETE),
@@ -375,17 +376,17 @@ class TestMetaServiceImpl {
                 buildRuleAction(5, FEED_5, RetentionRuleOutcome.DELETE)
         );
 
-        Instant now = Instant.now();
+        final Instant now = Instant.now();
 
         // Increase all these to get large volumes to test with
-        int days = 10;
-        int rowsPerFeedPerDay = 10;
-        int feedCount = 10;
+        final int days = 100;
+        final int rowsPerFeedPerDay = 100;
+        final int feedCount = 100;
 
-        int batchSize = 10_000;
-        int totalRows = days * feedCount * rowsPerFeedPerDay;
+        final int insertBatchSize = 10_000;
+        final int totalRows = days * feedCount * rowsPerFeedPerDay;
 
-        AtomicLong counter = new AtomicLong(0);
+        final AtomicLong counter = new AtomicLong(0);
 
         IntStream.range(0, days)
                 .boxed()
@@ -397,7 +398,7 @@ class TestMetaServiceImpl {
                                     .boxed()
                                     .map(k -> createProperties("FEED" + j, createTime)));
                 })
-                .collect(BatchingCollector.of(batchSize, batch -> {
+                .collect(BatchingCollector.of(insertBatchSize, batch -> {
                     metaDao.create(batch, Status.UNLOCKED);
                     counter.addAndGet(batch.size());
                     LOGGER.info("Processed {} of {}", counter.get(), totalRows);
@@ -409,22 +410,28 @@ class TestMetaServiceImpl {
                 .minus(days / 2, ChronoUnit.DAYS)
                 .plus(1, ChronoUnit.HOURS);
 
-        int daysToDelete = 2;
+        final int daysToDelete = 2;
 
         // Period should cover set of data
         final TimePeriod period = TimePeriod.between(
                 deletionDay.minus(daysToDelete, ChronoUnit.DAYS),
                 deletionDay);
 
+        final int expectedRowsDeleted = 3 * daysToDelete * rowsPerFeedPerDay;
+
+        // Use a batch size smaller than the expected number of deletes to ensure we exercise
+        // batching
+        dataRetentionConfig.setDeleteBatchSize(Math.max(1, (expectedRowsDeleted / 2) - 1));
+
         LOGGER.debug(period.toString());
 
         metaService.delete(ruleActions, period);
 
+        LOGGER.debug("deleteBatchSize {}", dataRetentionConfig.getDeleteBatchSize());
         LOGGER.debug("Period {}", period);
         LOGGER.debug("deletionDay {}", deletionDay);
         LOGGER.debug("daysToDelete {}", daysToDelete);
         LOGGER.debug("totalRows {}", totalRows);
-        int expectedRowsDeleted = 3 * daysToDelete * rowsPerFeedPerDay;
         LOGGER.debug("expectedRowsDeleted {}", expectedRowsDeleted);
 
         assertTotalRowCount(totalRows);

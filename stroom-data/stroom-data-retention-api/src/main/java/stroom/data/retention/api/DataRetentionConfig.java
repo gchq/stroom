@@ -1,7 +1,6 @@
 package stroom.data.retention.api;
 
 import stroom.util.shared.AbstractConfig;
-import stroom.util.time.StroomDuration;
 
 import com.fasterxml.jackson.annotation.JsonProperty;
 import com.fasterxml.jackson.annotation.JsonPropertyDescription;
@@ -14,13 +13,10 @@ import javax.inject.Singleton;
 public class DataRetentionConfig extends AbstractConfig {
 
     @JsonProperty
-    @JsonPropertyDescription("When the data retention deletion process runs this property controls the window of " +
-            "data that will be logically deleted in each pass. To be of use it should be less than the " +
-            "data retention job execution frequency. Its purpose is to reduce the quantity of data deleted in each pass " +
-            "and thus reduce the length of time database locks are held for. If unset the data will be deleted across " +
-            "as large a time range as possible."
-    )
-    private StroomDuration deleteBatchWindowSize = null;
+    @JsonPropertyDescription("The number of records that will be logically deleted in each pass of the data " +
+            "retention deletion process. This number can be reduced to limit the time database locks are " +
+            "held for.")
+    private int deleteBatchSize = 10_000;
 
     @JsonProperty
     @JsonPropertyDescription("If true stroom will add additional clauses to the data retention deletion SQL in order " +
@@ -28,13 +24,14 @@ public class DataRetentionConfig extends AbstractConfig {
             "possible retention rules and data held on the system, this optimisation may be counter productive.")
     private boolean useQueryOptimisation = true;
 
-    public StroomDuration getDeleteBatchWindowSize() {
-        return deleteBatchWindowSize;
+
+    public int getDeleteBatchSize() {
+        return deleteBatchSize;
     }
 
     @SuppressWarnings("unused")
-    public void setDeleteBatchWindowSize(final StroomDuration deleteBatchWindowSize) {
-        this.deleteBatchWindowSize = deleteBatchWindowSize;
+    public void setDeleteBatchSize(final int deleteBatchSize) {
+        this.deleteBatchSize = deleteBatchSize;
     }
 
     public boolean isUseQueryOptimisation() {

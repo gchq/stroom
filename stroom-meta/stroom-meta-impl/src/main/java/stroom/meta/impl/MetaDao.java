@@ -22,8 +22,6 @@ public interface MetaDao extends Clearable {
 
     Meta create(MetaProperties metaProperties);
 
-    void create(List<MetaProperties> metaPropertiesList, Status status);
-
     void search(ExpressionCriteria criteria, AbstractField[] fields, Consumer<Val[]> consumer);
 
     int count(FindMetaCriteria criteria);
