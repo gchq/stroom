@@ -99,6 +99,8 @@ public class StoreImpl<D extends Doc> implements Store<D> {
         Objects.requireNonNull(name);
 
         final D document = create(type, UUID.randomUUID().toString(), name);
+        document.setVersion(UUID.randomUUID().toString());
+
         // Add audit data.
         stampAuditData(document);
 
@@ -136,6 +138,7 @@ public class StoreImpl<D extends Doc> implements Store<D> {
         document.setType(type);
         document.setUuid(UUID.randomUUID().toString());
         document.setName(newName);
+        document.setVersion(UUID.randomUUID().toString());
 
         // Add audit data.
         stampAuditData(document);
@@ -544,6 +547,7 @@ public class StoreImpl<D extends Doc> implements Store<D> {
         try {
             // Get the current document version to make sure the document hasn't been changed by somebody else since we last read it.
             final String currentVersion = document.getVersion();
+            document.setVersion(UUID.randomUUID().toString());
 
             // Add audit data.
             stampAuditData(document);
@@ -603,7 +607,6 @@ public class StoreImpl<D extends Doc> implements Store<D> {
 
     private void stampAuditData(final D document) {
         final String userId = securityContext.getUserId();
-        document.setVersion(UUID.randomUUID().toString());
         AuditUtil.stamp(userId, document);
     }
 }
