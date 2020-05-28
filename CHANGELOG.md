@@ -7,6 +7,16 @@ and this project adheres to [Semantic Versioning](http://semver.org/).
 
 ## [Unreleased]
 
+* Issue **#1603** : XSLT imports now error if more than one matching XSLT is found.
+
+* Issue **#1604** : XSLT import resolution now accepts the use of UUIDs and DocRef strings.
+
+* Issue **#1403** : Dashboard query download now retains expression parameters.
+
+* Issue **#1514** : Fixed properties edit presenter issue.
+
+* Issue **#1569** : Additional changes to improve the new `Data Delete` task that replaces the `File System Clean` task.
+
 * Issue **#1565** : Stop data retention rules deleting all data.
 
 * Add default data retention rule to the UI screen to make it clear what happens by default.
@@ -16,7 +26,7 @@ and this project adheres to [Semantic Versioning](http://semver.org/).
 
 ## [v7.0-beta.34] - 2020-05-26
 
-* Issue **#1569** : Removed recursive multi threading from file system clean as thread limit was being reached. 
+* Issue **#1569** : Removed recursive multi threading from file system clean as thread limit was being reached.
 
 * Issue **#1478** : Fixed data volume creation and other resource methods.
 

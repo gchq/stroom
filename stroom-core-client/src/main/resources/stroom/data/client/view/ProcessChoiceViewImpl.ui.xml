@@ -12,7 +12,7 @@
                 </g:customCell>
             </g:row>
             <g:row>
-                <g:cell>Automatically try and set priority:</g:cell>
+                <g:cell>Attempt to automatically set priority:</g:cell>
                 <g:customCell>
                     <tickbox:TickBox ui:field="autoPriority"/>
                 </g:customCell>
