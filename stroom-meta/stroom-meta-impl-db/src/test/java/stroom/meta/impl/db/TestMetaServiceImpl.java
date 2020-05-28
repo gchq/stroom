@@ -260,7 +260,7 @@ class TestMetaServiceImpl {
     @Test
     void testRetentionDelete_caseFallThrough() {
 
-        // Two rules for same expression, rule 3 will never match
+        // Two rules for same expression, rule 2 will never match
         List<DataRetentionRuleAction> ruleActions = List.of(
                 buildRuleAction(1, FEED_1, RetentionRuleOutcome.RETAIN),
                 buildRuleAction(2, FEED_1, RetentionRuleOutcome.DELETE),
@@ -272,7 +272,7 @@ class TestMetaServiceImpl {
 
         assertTotalRowCount(3, Status.UNLOCKED);
 
-        TimePeriod period = TimePeriod.between(Instant.EPOCH, Instant.now());
+        TimePeriod period = TimePeriod.fromEpochTo(Instant.now());
 
         metaService.delete(ruleActions, period);
 
@@ -288,19 +288,19 @@ class TestMetaServiceImpl {
         List<DataRetentionRuleAction> ruleActions = List.of(
                 buildRuleAction(1, FEED_1, RetentionRuleOutcome.DELETE),
                 buildRuleAction(2, FEED_1, RetentionRuleOutcome.RETAIN),
-                buildRuleAction(3, FEED_3, RetentionRuleOutcome.DELETE),
-                buildRuleAction(4, FEED_4, RetentionRuleOutcome.DELETE)
+                buildRuleAction(3, FEED_2, RetentionRuleOutcome.DELETE),
+                buildRuleAction(4, FEED_3, RetentionRuleOutcome.DELETE)
         );
 
         setupRetentionData();
 
         assertTotalRowCount(3, Status.UNLOCKED);
 
-        TimePeriod period = TimePeriod.between(Instant.EPOCH, Instant.now());
+        TimePeriod period = TimePeriod.fromEpochTo(Instant.now());
 
         metaService.delete(ruleActions, period);
 
-        // Rule 4 trumps rule 3
+        // Rule 1 trumps rule 2
         assertTotalRowCount(3, Status.DELETED);
         assertTotalRowCount(0, Status.UNLOCKED);
     }

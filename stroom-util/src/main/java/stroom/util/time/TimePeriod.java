@@ -43,6 +43,12 @@ public class TimePeriod {
                 to.truncatedTo(ChronoUnit.MILLIS));
     }
 
+    public static TimePeriod fromEpochTo(final Instant to) {
+        return new TimePeriod(
+                Instant.EPOCH.truncatedTo(ChronoUnit.MILLIS),
+                to.truncatedTo(ChronoUnit.MILLIS));
+    }
+
     public static TimePeriod between(final long fromMs, final long toMs) {
         return new TimePeriod(Instant.ofEpochMilli(fromMs), Instant.ofEpochMilli(toMs));
     }
