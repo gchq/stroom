@@ -157,6 +157,15 @@ public class DataRetentionPolicyExecutor {
                         .sorted(Comparator.comparing(entry ->
                                 // Work backwards in time
                                 entry.getKey().getFrom(), Comparator.reverseOrder()))
+                        .takeWhile(entry -> {
+                            if (Thread.currentThread().isInterrupted()) {
+                                allSuccessful.set(false);
+                                LOGGER.error("Thread interrupted");
+                                return false;
+                            } else {
+                                return true;
+                            }
+                        })
                         .forEach(entry -> {
                             List<DataRetentionRuleAction> ruleActions = entry.getValue();
                             TimePeriod period = entry.getKey();
@@ -165,13 +174,7 @@ public class DataRetentionPolicyExecutor {
                                     .sorted(DataRetentionRuleAction.comparingByRuleNo())
                                     .collect(Collectors.toList());
 
-                            // Skip if we have terminated processing.
-                            if (!Thread.currentThread().isInterrupted()) {
-                                processPeriod(taskContext, period, sortedActions, now);
-                                if (!Thread.currentThread().isInterrupted()) {
-                                    allSuccessful.set(false);
-                                }
-                            }
+                            processPeriod(taskContext, period, sortedActions, now);
                         });
 
                 // If we finished running then update the tracker for use next time.
@@ -195,8 +198,9 @@ public class DataRetentionPolicyExecutor {
                         LOGGER.info("Found valid tracker {}", tracker);
                         return Optional.of(tracker);
                     } else {
-                        LOGGER.info("Tracker version is out of date, ignoring it rules version: {}, {}",
-                                dataRetentionRules.getVersion(), tracker);
+                        LOGGER.info("Tracker version is out of date, ignoring it. Current rules " +
+                                        "version: {}, tracker version {}",
+                                dataRetentionRules.getVersion(), tracker.getRulesVersion());
                         return Optional.empty();
                     }
                 })
@@ -227,10 +231,13 @@ public class DataRetentionPolicyExecutor {
                                final List<DataRetentionRuleAction> sortedRuleActions,
                                final Instant now) {
         info(taskContext, () -> {
-            final Function<DataRetentionRuleAction, String> ruleInfo = rule ->
-                    rule.toString() + " " +
-                            rule.getRule().getAge() + " " + rule.getRule().getTimeUnit().getDisplayValue() + " " +
-                            rule.getRule().getExpression() + " " + rule.getOutcome();
+            final Function<DataRetentionRuleAction, String> ruleInfo = ruleAction ->
+                    String.join(" - ",
+                            ruleAction.getRule().toString(),
+                            ruleAction.getRule().getAgeString(),
+                            ruleAction.getRule().getExpression().toString(),
+                            ruleAction.getOutcome().name()
+                    );
 
             // Get the ages of the two dates in the period
             final Period fromTimeAge = TimeUtils.instantAsAge(period.getFrom(), now);
@@ -242,8 +249,8 @@ public class DataRetentionPolicyExecutor {
                     period.getFrom() + " (" + fromTimeAge + " ago)" +
                     " and " +
                     period.getTo() + " (" + toTimeAge + " ago)" +
-                    " [" + period.getDurationStr() +
-                    "], " + sortedRuleActions.size() + " rules:\n" +
+                    " [" + period.getPeriod() + "], " +
+                    sortedRuleActions.size() + " rules:\n" +
                     sortedRuleActions.stream()
                             .map(ruleInfo)
                             .collect(Collectors.joining("\n"));

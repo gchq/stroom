@@ -34,6 +34,7 @@ import java.time.Instant;
 import java.time.LocalDateTime;
 import java.time.Period;
 import java.time.ZoneOffset;
+import java.time.temporal.ChronoUnit;
 import java.util.Collections;
 import java.util.List;
 import java.util.Optional;
@@ -68,12 +69,12 @@ class TestDataRetentionPolicyExecutor {
     void testDataRetention_fourRules1() {
 
         final List<DataRetentionRule> rules = List.of(
-                buildRule(4, true, 10, TimeUnit.DAYS),
-                buildRule(3, true, 1, TimeUnit.MONTHS),
-                buildRule(2, true, 1, TimeUnit.YEARS),
-                buildForeverRule(1, true));
+                buildRule(1, true, 10, TimeUnit.DAYS),
+                buildRule(2, true, 1, TimeUnit.MONTHS),
+                buildRule(3, true, 1, TimeUnit.YEARS),
+                buildForeverRule(4, true));
 
-        final Instant now = Instant.now();
+        final Instant now = Instant.now().truncatedTo(ChronoUnit.MILLIS);
 
         runDataRretention(rules, now, null);
 
@@ -91,42 +92,42 @@ class TestDataRetentionPolicyExecutor {
 
         assertPeriod(allPeriods.get(callNo), Period.ofMonths(1), Period.ofDays(10), now);
         assertRuleActions(allRuleActions.get(callNo), List.of(
-                Tuple.of(4, RetentionRuleOutcome.DELETE),
-                Tuple.of(3, RetentionRuleOutcome.RETAIN),
+                Tuple.of(1, RetentionRuleOutcome.DELETE),
                 Tuple.of(2, RetentionRuleOutcome.RETAIN),
-                Tuple.of(1, RetentionRuleOutcome.RETAIN)));
+                Tuple.of(3, RetentionRuleOutcome.RETAIN),
+                Tuple.of(4, RetentionRuleOutcome.RETAIN)));
         callNo++;
 
         // -------------------------------------------------
 
         assertPeriod(allPeriods.get(callNo), Period.ofYears(1), Period.ofMonths(1), now);
         assertRuleActions(allRuleActions.get(callNo), List.of(
-                Tuple.of(4, RetentionRuleOutcome.DELETE),
-                Tuple.of(3, RetentionRuleOutcome.DELETE),
-                Tuple.of(2, RetentionRuleOutcome.RETAIN),
-                Tuple.of(1, RetentionRuleOutcome.RETAIN)));
+                Tuple.of(1, RetentionRuleOutcome.DELETE),
+                Tuple.of(2, RetentionRuleOutcome.DELETE),
+                Tuple.of(3, RetentionRuleOutcome.RETAIN),
+                Tuple.of(4, RetentionRuleOutcome.RETAIN)));
         callNo++;
 
         // -------------------------------------------------
 
         assertEpochPeriod(allPeriods.get(callNo), Period.ofYears(1), now);
         assertRuleActions(allRuleActions.get(callNo), List.of(
-                Tuple.of(4, RetentionRuleOutcome.DELETE),
-                Tuple.of(3, RetentionRuleOutcome.DELETE),
+                Tuple.of(1, RetentionRuleOutcome.DELETE),
                 Tuple.of(2, RetentionRuleOutcome.DELETE),
-                Tuple.of(1, RetentionRuleOutcome.RETAIN)));
+                Tuple.of(3, RetentionRuleOutcome.DELETE),
+                Tuple.of(4, RetentionRuleOutcome.RETAIN)));
     }
 
     @Test
     void testDataRetention_fourRules2() {
 
         final List<DataRetentionRule> rules = List.of(
-                buildForeverRule(4, true),
-                buildRule(3, true, 1, TimeUnit.YEARS),
-                buildRule(2, true, 1, TimeUnit.MONTHS),
-                buildRule(1, true, 1, TimeUnit.DAYS));
+                buildForeverRule(1, true),
+                buildRule(2, true, 1, TimeUnit.YEARS),
+                buildRule(3, true, 1, TimeUnit.MONTHS),
+                buildRule(4, true, 1, TimeUnit.DAYS));
 
-        final Instant now = Instant.now();
+        final Instant now = Instant.now().truncatedTo(ChronoUnit.MILLIS);
 
         runDataRretention(rules, now, null);
 
@@ -144,42 +145,42 @@ class TestDataRetentionPolicyExecutor {
 
         assertPeriod(allPeriods.get(callNo), Period.ofMonths(1), Period.ofDays(1), now);
         assertRuleActions(allRuleActions.get(callNo), List.of(
-                Tuple.of(4, RetentionRuleOutcome.RETAIN),
-                Tuple.of(3, RetentionRuleOutcome.RETAIN),
+                Tuple.of(1, RetentionRuleOutcome.RETAIN),
                 Tuple.of(2, RetentionRuleOutcome.RETAIN),
-                Tuple.of(1, RetentionRuleOutcome.DELETE)));
+                Tuple.of(3, RetentionRuleOutcome.RETAIN),
+                Tuple.of(4, RetentionRuleOutcome.DELETE)));
         callNo++;
 
         // -------------------------------------------------
 
         assertPeriod(allPeriods.get(callNo), Period.ofYears(1), Period.ofMonths(1), now);
         assertRuleActions(allRuleActions.get(callNo), List.of(
-                Tuple.of(4, RetentionRuleOutcome.RETAIN),
-                Tuple.of(3, RetentionRuleOutcome.RETAIN),
-                Tuple.of(2, RetentionRuleOutcome.DELETE),
-                Tuple.of(1, RetentionRuleOutcome.DELETE)));
+                Tuple.of(1, RetentionRuleOutcome.RETAIN),
+                Tuple.of(2, RetentionRuleOutcome.RETAIN),
+                Tuple.of(3, RetentionRuleOutcome.DELETE),
+                Tuple.of(4, RetentionRuleOutcome.DELETE)));
         callNo++;
 
         // -------------------------------------------------
 
         assertEpochPeriod(allPeriods.get(callNo), Period.ofYears(1), now);
         assertRuleActions(allRuleActions.get(callNo), List.of(
-                Tuple.of(4, RetentionRuleOutcome.RETAIN),
-                Tuple.of(3, RetentionRuleOutcome.DELETE),
+                Tuple.of(1, RetentionRuleOutcome.RETAIN),
                 Tuple.of(2, RetentionRuleOutcome.DELETE),
-                Tuple.of(1, RetentionRuleOutcome.DELETE)));
+                Tuple.of(3, RetentionRuleOutcome.DELETE),
+                Tuple.of(4, RetentionRuleOutcome.DELETE)));
     }
 
     @Test
     void testDataRetention_fourRulesWithRecentTracker() {
 
         final List<DataRetentionRule> rules = List.of(
-                buildRule(4, true, 10, TimeUnit.DAYS),
-                buildRule(3, true, 1, TimeUnit.MONTHS),
-                buildRule(2, true, 1, TimeUnit.YEARS),
-                buildForeverRule(1, true));
+                buildRule(1, true, 10, TimeUnit.DAYS),
+                buildRule(2, true, 1, TimeUnit.MONTHS),
+                buildRule(3, true, 1, TimeUnit.YEARS),
+                buildForeverRule(4, true));
 
-        final Instant now = Instant.now();
+        final Instant now = Instant.now().truncatedTo(ChronoUnit.MILLIS);
         final LocalDateTime nowUTC = LocalDateTime.ofInstant(now, ZoneOffset.UTC);
 
         DataRetentionTracker tracker = new DataRetentionTracker(
@@ -201,43 +202,43 @@ class TestDataRetentionPolicyExecutor {
 
         assertPeriod(allPeriods.get(callNo), Period.ofDays(10).plusDays(2), Period.ofDays(10), now);
         assertRuleActions(allRuleActions.get(callNo), List.of(
-                Tuple.of(4, RetentionRuleOutcome.DELETE),
-                Tuple.of(3, RetentionRuleOutcome.RETAIN),
+                Tuple.of(1, RetentionRuleOutcome.DELETE),
                 Tuple.of(2, RetentionRuleOutcome.RETAIN),
-                Tuple.of(1, RetentionRuleOutcome.RETAIN)));
+                Tuple.of(3, RetentionRuleOutcome.RETAIN),
+                Tuple.of(4, RetentionRuleOutcome.RETAIN)));
         callNo++;
 
         // -------------------------------------------------
 
         assertPeriod(allPeriods.get(callNo), Period.ofMonths(1).plusDays(2), Period.ofMonths(1), now);
         assertRuleActions(allRuleActions.get(callNo), List.of(
-                Tuple.of(4, RetentionRuleOutcome.DELETE),
-                Tuple.of(3, RetentionRuleOutcome.DELETE),
-                Tuple.of(2, RetentionRuleOutcome.RETAIN),
-                Tuple.of(1, RetentionRuleOutcome.RETAIN)));
+                Tuple.of(1, RetentionRuleOutcome.DELETE),
+                Tuple.of(2, RetentionRuleOutcome.DELETE),
+                Tuple.of(3, RetentionRuleOutcome.RETAIN),
+                Tuple.of(4, RetentionRuleOutcome.RETAIN)));
         callNo++;
 
         // -------------------------------------------------
 
         assertPeriod(allPeriods.get(callNo), Period.ofYears(1).plusDays(2), Period.ofYears(1), now);
         assertRuleActions(allRuleActions.get(callNo), List.of(
-                Tuple.of(4, RetentionRuleOutcome.DELETE),
-                Tuple.of(3, RetentionRuleOutcome.DELETE),
+                Tuple.of(1, RetentionRuleOutcome.DELETE),
                 Tuple.of(2, RetentionRuleOutcome.DELETE),
-                Tuple.of(1, RetentionRuleOutcome.RETAIN)));
+                Tuple.of(3, RetentionRuleOutcome.DELETE),
+                Tuple.of(4, RetentionRuleOutcome.RETAIN)));
     }
 
     @Test
     void testDataRetention_fourRulesWithOldTracker() {
 
         final List<DataRetentionRule> rules = List.of(
-                buildRule(4, true, 10, TimeUnit.DAYS),
-                buildRule(3, true, 1, TimeUnit.MONTHS),
-                buildRule(2, true, 2, TimeUnit.MONTHS),
-                buildRule(1, true, 1, TimeUnit.YEARS)
+                buildRule(1, true, 10, TimeUnit.DAYS),
+                buildRule(2, true, 1, TimeUnit.MONTHS),
+                buildRule(3, true, 2, TimeUnit.MONTHS),
+                buildRule(4, true, 1, TimeUnit.YEARS)
         );
 
-        final Instant now = Instant.now();
+        final Instant now = Instant.now().truncatedTo(ChronoUnit.MILLIS);
 
         int trackerAgeDays = 90;
         // Tracker is 90days old so should be ignored for periods:
@@ -263,40 +264,40 @@ class TestDataRetentionPolicyExecutor {
         // period same as if no tracker as tracker is so old
         assertPeriod(allPeriods.get(callNo), Period.ofMonths(1), Period.ofDays(10), now);
         assertRuleActions(allRuleActions.get(callNo), List.of(
-                Tuple.of(4, RetentionRuleOutcome.DELETE),
-                Tuple.of(3, RetentionRuleOutcome.RETAIN),
+                Tuple.of(1, RetentionRuleOutcome.DELETE),
                 Tuple.of(2, RetentionRuleOutcome.RETAIN),
-                Tuple.of(1, RetentionRuleOutcome.RETAIN)));
+                Tuple.of(3, RetentionRuleOutcome.RETAIN),
+                Tuple.of(4, RetentionRuleOutcome.RETAIN)));
         callNo++;
 
         // -------------------------------------------------
 
         assertPeriod(allPeriods.get(callNo), Period.ofMonths(2), Period.ofMonths(1), now);
         assertRuleActions(allRuleActions.get(callNo), List.of(
-                Tuple.of(4, RetentionRuleOutcome.DELETE),
-                Tuple.of(3, RetentionRuleOutcome.DELETE),
-                Tuple.of(2, RetentionRuleOutcome.RETAIN),
-                Tuple.of(1, RetentionRuleOutcome.RETAIN)));
+                Tuple.of(1, RetentionRuleOutcome.DELETE),
+                Tuple.of(2, RetentionRuleOutcome.DELETE),
+                Tuple.of(3, RetentionRuleOutcome.RETAIN),
+                Tuple.of(4, RetentionRuleOutcome.RETAIN)));
         callNo++;
 
         // -------------------------------------------------
 
         assertPeriod(allPeriods.get(callNo), Period.ofMonths(2).plusDays(trackerAgeDays), Period.ofMonths(2), now);
         assertRuleActions(allRuleActions.get(callNo), List.of(
-                Tuple.of(4, RetentionRuleOutcome.DELETE),
-                Tuple.of(3, RetentionRuleOutcome.DELETE),
+                Tuple.of(1, RetentionRuleOutcome.DELETE),
                 Tuple.of(2, RetentionRuleOutcome.DELETE),
-                Tuple.of(1, RetentionRuleOutcome.RETAIN)));
+                Tuple.of(3, RetentionRuleOutcome.DELETE),
+                Tuple.of(4, RetentionRuleOutcome.RETAIN)));
         callNo++;
 
         // -------------------------------------------------
 
         assertPeriod(allPeriods.get(callNo), Period.ofYears(1).plusDays(trackerAgeDays), Period.ofYears(1), now);
         assertRuleActions(allRuleActions.get(callNo), List.of(
-                Tuple.of(4, RetentionRuleOutcome.DELETE),
-                Tuple.of(3, RetentionRuleOutcome.DELETE),
+                Tuple.of(1, RetentionRuleOutcome.DELETE),
                 Tuple.of(2, RetentionRuleOutcome.DELETE),
-                Tuple.of(1, RetentionRuleOutcome.DELETE)));
+                Tuple.of(3, RetentionRuleOutcome.DELETE),
+                Tuple.of(4, RetentionRuleOutcome.DELETE)));
     }
 
     @Test
@@ -304,7 +305,7 @@ class TestDataRetentionPolicyExecutor {
 
         final List<DataRetentionRule> rules = Collections.emptyList();
 
-        final Instant now = Instant.now();
+        final Instant now = Instant.now().truncatedTo(ChronoUnit.MILLIS);
 
         final DataRetentionPolicyExecutor dataRetentionPolicyExecutor = createExecutor(rules);
 
@@ -320,7 +321,7 @@ class TestDataRetentionPolicyExecutor {
                 buildRule(1, true, 2, TimeUnit.MONTHS)
         );
 
-        final Instant now = Instant.now();
+        final Instant now = Instant.now().truncatedTo(ChronoUnit.MILLIS);
 
         runDataRretention(rules, now, null);
 
@@ -346,12 +347,12 @@ class TestDataRetentionPolicyExecutor {
 
         // rule 2 gets ignored
         final List<DataRetentionRule> rules = List.of(
-                buildRule(3, true, 1, TimeUnit.MONTHS),
+                buildRule(1, true, 1, TimeUnit.MONTHS),
                 buildRule(2, false, 2, TimeUnit.MONTHS),
-                buildRule(1, true, 3, TimeUnit.MONTHS)
+                buildRule(3, true, 3, TimeUnit.MONTHS)
         );
 
-        final Instant now = Instant.now();
+        final Instant now = Instant.now().truncatedTo(ChronoUnit.MILLIS);
 
         runDataRretention(rules, now, null);
 
@@ -369,26 +370,26 @@ class TestDataRetentionPolicyExecutor {
 
         assertPeriod(allPeriods.get(callNo), Period.ofMonths(3), Period.ofMonths(1), now);
         assertRuleActions(allRuleActions.get(callNo), List.of(
-                Tuple.of(3, RetentionRuleOutcome.DELETE),
-                Tuple.of(1, RetentionRuleOutcome.RETAIN)));
+                Tuple.of(1, RetentionRuleOutcome.DELETE),
+                Tuple.of(3, RetentionRuleOutcome.RETAIN)));
         callNo++;
 
         // -------------------------------------------------
 
         assertEpochPeriod(allPeriods.get(callNo), Period.ofMonths(3), now);
         assertRuleActions(allRuleActions.get(callNo), List.of(
-                Tuple.of(3, RetentionRuleOutcome.DELETE),
-                Tuple.of(1, RetentionRuleOutcome.DELETE)));
+                Tuple.of(1, RetentionRuleOutcome.DELETE),
+                Tuple.of(3, RetentionRuleOutcome.DELETE)));
     }
 
     @Test
     void testDataRetention_sameRuleAges() {
 
         final List<DataRetentionRule> rules = List.of(
-                buildRule(2, true, 2, TimeUnit.MONTHS),
-                buildRule(1, true, 2, TimeUnit.MONTHS));
+                buildRule(1, true, 2, TimeUnit.MONTHS),
+                buildRule(2, true, 2, TimeUnit.MONTHS));
 
-        final Instant now = Instant.now();
+        final Instant now = Instant.now().truncatedTo(ChronoUnit.MILLIS);
 
         runDataRretention(rules, now, null);
 
@@ -406,8 +407,8 @@ class TestDataRetentionPolicyExecutor {
 
         assertEpochPeriod(allPeriods.get(callNo), Period.ofMonths(2), now);
         assertRuleActions(allRuleActions.get(callNo), List.of(
-                Tuple.of(2, RetentionRuleOutcome.DELETE),
-                Tuple.of(1, RetentionRuleOutcome.DELETE)));
+                Tuple.of(1, RetentionRuleOutcome.DELETE),
+                Tuple.of(2, RetentionRuleOutcome.DELETE)));
     }
 
     private void runDataRretention(final List<DataRetentionRule> rules,
@@ -441,9 +442,13 @@ class TestDataRetentionPolicyExecutor {
                               final Instant now) {
         LOGGER.debug("actualPeriod: {}", actualPeriod);
         assertThat(LocalDateTime.ofInstant(actualPeriod.getFrom(), ZoneOffset.UTC))
-                .isEqualTo(LocalDateTime.ofInstant(now, ZoneOffset.UTC).minus(expectedTimeSinceFrom));
+                .isEqualTo(LocalDateTime.ofInstant(now, ZoneOffset.UTC)
+                        .truncatedTo(ChronoUnit.MILLIS)
+                        .minus(expectedTimeSinceFrom));
         assertThat(LocalDateTime.ofInstant(actualPeriod.getTo(), ZoneOffset.UTC))
-                .isEqualTo(LocalDateTime.ofInstant(now, ZoneOffset.UTC).minus(expectedTimeSinceTo));
+                .isEqualTo(LocalDateTime.ofInstant(now, ZoneOffset.UTC)
+                        .truncatedTo(ChronoUnit.MILLIS)
+                        .minus(expectedTimeSinceTo));
     }
 
     private void assertPeriod(final TimePeriod actualPeriod,

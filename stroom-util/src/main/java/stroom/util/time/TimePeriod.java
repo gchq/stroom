@@ -7,11 +7,14 @@ import java.time.Instant;
 import java.time.LocalDate;
 import java.time.Period;
 import java.time.ZoneOffset;
+import java.time.temporal.ChronoUnit;
 import java.util.Comparator;
 import java.util.Objects;
 
 /**
- * Defines a period between two instants (the to instant is exclusive)
+ * Defines a period between two instants (the to instant is exclusive).
+ * Works to millisecond precision to ensure compatibility with the millis
+ * since epoch used elsewhere in stroom
  */
 public class TimePeriod {
 
@@ -31,11 +34,13 @@ public class TimePeriod {
     }
 
     /**
-     * @param from Is inclusive
-     * @param to Is exclusive
+     * @param from Is inclusive. Will be truncated to millisecond precision.
+     * @param to Is exclusive. Will be truncated to millisecond precision.
      */
     public static TimePeriod between(final Instant from, final Instant to) {
-        return new TimePeriod(from, to);
+        return new TimePeriod(
+                from.truncatedTo(ChronoUnit.MILLIS),
+                to.truncatedTo(ChronoUnit.MILLIS));
     }
 
     public static TimePeriod between(final long fromMs, final long toMs) {

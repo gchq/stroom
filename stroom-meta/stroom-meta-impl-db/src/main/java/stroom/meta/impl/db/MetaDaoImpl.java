@@ -457,6 +457,10 @@ class MetaDaoImpl implements MetaDao {
                 LOGGER.debug("Logically deleted {} meta rows (total so far {})", lastUpdateCount, totalUpdateCount);
 
             } while (lastUpdateCount != 0 && !Thread.currentThread().isInterrupted());
+
+            if (Thread.currentThread().isInterrupted()) {
+                LOGGER.error("Thread interrupted");
+            }
         } else {
             LOGGER.debug("Empty ruleActions, nothing to delete");
             totalUpdateCount = 0;
