@@ -7,6 +7,10 @@ and this project adheres to [Semantic Versioning](http://semver.org/).
 
 ## [Unreleased]
 
+* Issue **#1608** : Fixed NPE in UI data presenter.
+
+* Issue **#1595** : Fixed names for imported items that already exist but are updated by import.
+
 * Issue **#1603** : XSLT imports now error if more than one matching XSLT is found.
 
 * Issue **#1604** : XSLT import resolution now accepts the use of UUIDs and DocRef strings.
