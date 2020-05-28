@@ -1,5 +1,7 @@
 package stroom.meta.mock;
 
+import stroom.data.retention.api.DataRetentionRuleAction;
+import stroom.data.retention.api.DataRetentionTracker;
 import stroom.expression.matcher.ExpressionMatcher;
 import stroom.meta.api.AttributeMap;
 import stroom.meta.api.EffectiveMetaDataCriteria;
@@ -14,6 +16,7 @@ import stroom.meta.shared.SelectionSummary;
 import stroom.meta.shared.Status;
 import stroom.util.shared.Clearable;
 import stroom.util.shared.ResultPage;
+import stroom.util.time.TimePeriod;
 
 import javax.inject.Singleton;
 import java.util.ArrayList;
@@ -24,6 +27,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.Map.Entry;
 import java.util.Objects;
+import java.util.Optional;
 import java.util.Set;
 import java.util.stream.Collectors;
 
@@ -116,6 +120,12 @@ public class MockMetaService implements MetaService, Clearable {
     @Override
     public int delete(final long id) {
         return delete(id, true);
+    }
+
+    @Override
+    public int delete(final List<DataRetentionRuleAction> ruleActions,
+                      final TimePeriod deletionPeriod) {
+        return 0;
     }
 
     @Override
@@ -304,6 +314,16 @@ public class MockMetaService implements MetaService, Clearable {
     @Override
     public List<MetaInfoSection> fetchFullMetaInfo(final long id) {
         return null;
+    }
+
+    @Override
+    public Optional<DataRetentionTracker> getRetentionTracker() {
+        return Optional.empty();
+    }
+
+    @Override
+    public void setTracker(final DataRetentionTracker dataRetentionTracker) {
+
     }
 
     public Map<Long, Meta> getMetaMap() {

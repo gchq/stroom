@@ -17,12 +17,13 @@
 package stroom.data.retention.shared;
 
 
+import stroom.query.api.v2.ExpressionOperator;
+
 import com.fasterxml.jackson.annotation.JsonCreator;
 import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.fasterxml.jackson.annotation.JsonInclude;
 import com.fasterxml.jackson.annotation.JsonInclude.Include;
 import com.fasterxml.jackson.annotation.JsonProperty;
-import stroom.query.api.v2.ExpressionOperator;
 
 import javax.xml.bind.annotation.XmlAccessType;
 import javax.xml.bind.annotation.XmlAccessorType;
@@ -30,6 +31,7 @@ import javax.xml.bind.annotation.XmlElement;
 import javax.xml.bind.annotation.XmlRootElement;
 import javax.xml.bind.annotation.XmlTransient;
 import javax.xml.bind.annotation.XmlType;
+import java.util.Comparator;
 import java.util.Objects;
 
 @XmlAccessorType(XmlAccessType.FIELD)
@@ -84,6 +86,26 @@ public class DataRetentionRule {
         this.age = age;
         this.timeUnit = timeUnit;
         this.forever = forever;
+    }
+
+    public static DataRetentionRule foreverRule(final int ruleNumber,
+                                                final long creationTime,
+                                                final String name,
+                                                final boolean enabled,
+                                                final ExpressionOperator expression) {
+        // Forever so the age parts are ignored.
+        return new DataRetentionRule(ruleNumber, creationTime, name, enabled, expression, 1, TimeUnit.YEARS, true);
+    }
+
+    public static DataRetentionRule ageRule(final int ruleNumber,
+                                            final long creationTime,
+                                            final String name,
+                                            final boolean enabled,
+                                            final ExpressionOperator expression,
+                                            final int age,
+                                            final TimeUnit timeUnit) {
+        // Forever so the age parts are ignored.
+        return new DataRetentionRule(ruleNumber, creationTime, name, enabled, expression, age, timeUnit, false);
     }
 
     public int getRuleNumber() {
@@ -166,5 +188,13 @@ public class DataRetentionRule {
             ruleName = String.valueOf(ruleNumber);
         }
         return ruleName;
+    }
+
+    public static Comparator<DataRetentionRule> comparingByRuleNumber() {
+        return Comparator.comparing(DataRetentionRule::getRuleNumber);
+    }
+
+    public static Comparator<DataRetentionRule> comparingByDescendingRuleNumber() {
+        return Comparator.comparing(DataRetentionRule::getRuleNumber).reversed();
     }
 }

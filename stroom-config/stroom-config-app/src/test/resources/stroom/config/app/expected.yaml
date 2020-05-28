@@ -180,7 +180,8 @@ appConfig:
         deleteBatchSize: 1000
         flushBatchSize: 1000
     retention:
-      deleteBatchSize: 1000
+      deleteBatchSize: 50000
+      useQueryOptimisation: true
     store:
       deletePurgeAge: "P7D"
       deleteBatchSize: 1000

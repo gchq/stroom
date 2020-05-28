@@ -25,10 +25,12 @@ import stroom.docref.HasDisplayValue;
  * </p>
  */
 public enum Status implements HasDisplayValue {
-    UNLOCKED("Unlocked"), /**
+    UNLOCKED("Unlocked"),
+    /**
      * Open exclusive lock.
      */
-    LOCKED("Locked"), /**
+    LOCKED("Locked"),
+    /**
      * Logical Delete
      */
     DELETED("Deleted");

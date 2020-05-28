@@ -16,7 +16,7 @@ import stroom.core.receive.ProxyAggregationConfig;
 import stroom.core.receive.ReceiveDataConfig;
 import stroom.dashboard.impl.DashboardConfig;
 import stroom.dashboard.impl.datasource.DataSourceUrlConfig;
-import stroom.data.retention.impl.DataRetentionConfig;
+import stroom.data.retention.api.DataRetentionConfig;
 import stroom.data.store.impl.fs.DataStoreServiceConfig;
 import stroom.data.store.impl.fs.FsVolumeConfig;
 import stroom.docstore.impl.db.DocStoreConfig;

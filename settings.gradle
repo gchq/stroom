@@ -80,6 +80,7 @@ include 'stroom-dashboard:stroom-storedquery-impl-db'
 include 'stroom-dashboard:stroom-storedquery-impl-db-jooq'
 
 // Data projects
+include 'stroom-data:stroom-data-retention-api'
 include 'stroom-data:stroom-data-retention-impl'
 include 'stroom-data:stroom-data-store-api'
 include 'stroom-data:stroom-data-store-impl'

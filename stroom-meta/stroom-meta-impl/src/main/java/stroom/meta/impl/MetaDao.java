@@ -1,6 +1,7 @@
 package stroom.meta.impl;
 
 import stroom.dashboard.expression.v1.Val;
+import stroom.data.retention.api.DataRetentionRuleAction;
 import stroom.datasource.api.v2.AbstractField;
 import stroom.entity.shared.ExpressionCriteria;
 import stroom.meta.api.MetaProperties;
@@ -10,6 +11,7 @@ import stroom.meta.shared.SelectionSummary;
 import stroom.meta.shared.Status;
 import stroom.util.shared.Clearable;
 import stroom.util.shared.ResultPage;
+import stroom.util.time.TimePeriod;
 
 import java.util.List;
 import java.util.Optional;
@@ -21,6 +23,8 @@ public interface MetaDao extends Clearable {
     Meta create(MetaProperties metaProperties);
 
     void search(ExpressionCriteria criteria, AbstractField[] fields, Consumer<Val[]> consumer);
+
+    int count(FindMetaCriteria criteria);
 
     /**
      * Find meta data records that match the specified criteria.
@@ -59,6 +63,13 @@ public interface MetaDao extends Clearable {
     int updateStatus(FindMetaCriteria criteria, Status currentStatus, Status newStatus, long statusTime);
 
     int delete(List<Long> metaIdList);
+
+    /**
+     * @param ruleActions Must be sorted with highest priority rule first
+     * @param period
+     */
+    int logicalDelete(final List<DataRetentionRuleAction> ruleActions,
+                      final TimePeriod period);
 
     int getLockCount();
 

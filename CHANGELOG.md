@@ -17,6 +17,10 @@ and this project adheres to [Semantic Versioning](http://semver.org/).
 
 * Issue **#1569** : Additional changes to improve the new `Data Delete` task that replaces the `File System Clean` task.
 
+* Issue **#1565** : Stop data retention rules deleting all data.
+
+* Add default data retention rule to the UI screen to make it clear what happens by default.
+
 * Add fuzzy match filter to explorer tree.
 
 

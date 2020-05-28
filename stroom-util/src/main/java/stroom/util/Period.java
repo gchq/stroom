@@ -18,7 +18,10 @@ package stroom.util;
 
 import stroom.util.shared.Range;
 
+import java.time.Instant;
+import java.util.Comparator;
 import java.util.Date;
+import java.util.Optional;
 
 /**
  * <p>
@@ -47,11 +50,23 @@ public class Period extends Range<Long> {
         super(fromMs, toMs);
     }
 
+    public Period(final Instant from, final Instant to) {
+        super(from.toEpochMilli(), to.toEpochMilli());
+    }
+
     public static final Period clone(Period period) {
         if (period == null) {
             return null;
         }
         return new Period(period.getFromMs(), period.getToMs());
+    }
+
+    public static Comparator<Period> comparingByFromTime() {
+        return Comparator.comparing(Period::getFromMs);
+    }
+
+    public static Comparator<Period> comparingByToTime() {
+        return Comparator.comparing(Period::getFromMs);
     }
 
     /**
@@ -133,6 +148,11 @@ public class Period extends Range<Long> {
         return super.getFrom();
     }
 
+    public Optional<Instant> getFromTime() {
+        return Optional.ofNullable(super.getFrom())
+                .map(Instant::ofEpochMilli);
+    }
+
     // Here for XML serialisation.
     public void setFromMs(Long from) {
         super.setFrom(from);
@@ -143,6 +163,11 @@ public class Period extends Range<Long> {
         return super.getTo();
     }
 
+    public Optional<Instant> getToTime() {
+        return Optional.ofNullable(super.getTo())
+                .map(Instant::ofEpochMilli);
+    }
+
     // Here for XML serialisation.
     public void setToMs(Long to) {
         super.setTo(to);
@@ -151,26 +176,45 @@ public class Period extends Range<Long> {
     /**
      * Gets the duration as a user readable string.
      */
-    public String getDuration() {
+    public String getDurationStr() {
         if (!isBounded()) {
             return null;
         }
         long duration = getTo() - getFrom();
-        int hours = (int) (duration / MS_IN_HOUR);
-        duration = duration - (hours * MS_IN_HOUR);
+        int totalHours = (int) (duration / MS_IN_HOUR);
+        duration = duration - (totalHours * MS_IN_HOUR);
+
+        int hours;
+        int days;
+        if (totalHours > 24) {
+            hours = totalHours % 24;
+            days = totalHours / 24;
+        } else {
+            hours = totalHours;
+            days = 0;
+        }
+
         int minutes = (int) (duration / MS_IN_MINUTE);
         duration = duration - (minutes * MS_IN_MINUTE);
         int seconds = (int) (duration / MS_IN_SECOND);
         duration = duration - (seconds * MS_IN_SECOND);
 
         final StringBuilder sb = new StringBuilder();
-        sb.append(zeroPad(2, Integer.toString(hours)));
+        sb.append(zeroPad(2, Integer.toString(totalHours)));
         sb.append(":");
         sb.append(zeroPad(2, Integer.toString(minutes)));
         sb.append(":");
         sb.append(zeroPad(2, Integer.toString(seconds)));
         sb.append(".");
         sb.append(zeroPad(N3, Long.toString(duration)));
+
+        if (days > 0) {
+            sb.append(" (");
+            sb.append(days);
+            sb.append(" days ");
+            sb.append(hours);
+            sb.append(" hrs)");
+        }
 
         return sb.toString();
     }
@@ -199,7 +243,7 @@ public class Period extends Range<Long> {
             builder.append(new Date(getTo()));
         }
         builder.append(", Duration: ");
-        builder.append(getDuration());
+        builder.append(getDurationStr());
         builder.append("]");
         return builder.toString();
     }
