@@ -377,18 +377,24 @@ class TestMetaServiceImpl {
         );
 
         final Instant now = Instant.now();
+        // The following will load 1k rows then delete 60
+        final int totalDays = 10;
+        final int rowsPerFeedPerDay = 10;
+        final int feedCount = 10;
+        final int daysToDelete = 2;
 
-        // Increase all these to get large volumes to test with
-        final int days = 100;
-        final int rowsPerFeedPerDay = 100;
-        final int feedCount = 100;
+        // The following will load 1mil rows then delete 1500
+//        final int totalDays = 100;
+//        final int rowsPerFeedPerDay = 100;
+//        final int feedCount = 100;
+//        final int daysToDelete = 5;
 
         final int insertBatchSize = 10_000;
-        final int totalRows = days * feedCount * rowsPerFeedPerDay;
+        final int totalRows = totalDays * feedCount * rowsPerFeedPerDay;
 
         final AtomicLong counter = new AtomicLong(0);
 
-        IntStream.range(0, days)
+        IntStream.range(0, totalDays)
                 .boxed()
                 .flatMap(i -> {
                     Instant createTime = now.minus(i, ChronoUnit.DAYS);
@@ -407,10 +413,9 @@ class TestMetaServiceImpl {
         assertTotalRowCount(totalRows, Status.UNLOCKED);
 
         final Instant deletionDay = now
-                .minus(days / 2, ChronoUnit.DAYS)
+                .minus(totalDays / 2, ChronoUnit.DAYS)
                 .plus(1, ChronoUnit.HOURS);
 
-        final int daysToDelete = 2;
 
         // Period should cover set of data
         final TimePeriod period = TimePeriod.between(
