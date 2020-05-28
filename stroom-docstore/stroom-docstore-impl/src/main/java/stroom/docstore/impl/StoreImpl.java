@@ -320,7 +320,8 @@ public class StoreImpl<D extends Doc> implements Store<D> {
             Objects.requireNonNull(docRef);
             final String uuid = docRef.getUuid();
             try {
-                final D existingDocument = readDocument(docRef);
+                // See if this document already exists and try and read it.
+                final D existingDocument = getExistingDocument(docRef);
 
                 if (ImportMode.CREATE_CONFIRMATION.equals(importMode)) {
                     // See if the new document is the same as the old one.
@@ -386,6 +387,18 @@ public class StoreImpl<D extends Doc> implements Store<D> {
         }
 
         return new ImportExportActionHandler.ImpexDetails(docRef);
+    }
+
+    private D getExistingDocument(final DocRef docRef) {
+        try {
+            return readDocument(docRef);
+        } catch (final PermissionException e) {
+            throw new PermissionException(securityContext.getUserId(), "The document being imported exists but you are authorised to read this document " + docRef);
+        } catch (final RuntimeException e) {
+            // Ignore.
+            LOGGER.debug(e.getMessage(), e);
+        }
+        return null;
     }
 
     @Override
