@@ -13,6 +13,8 @@ and this project adheres to [Semantic Versioning](http://semver.org/).
 
 * Issue **#1569** : Additional changes to improve the new `Data Delete` task that replaces the `File System Clean` task.
 
+* Add fuzzy match filter to explorer tree.
+
 
 ## [v7.0-beta.34] - 2020-05-26
 

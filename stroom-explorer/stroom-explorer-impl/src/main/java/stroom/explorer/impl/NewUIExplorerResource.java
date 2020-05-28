@@ -13,6 +13,7 @@ import stroom.security.api.SecurityContext;
 import stroom.security.shared.DocumentPermissionNames;
 import stroom.util.shared.ResourcePaths;
 import stroom.util.shared.RestResource;
+import stroom.util.string.StringPredicateFactory;
 
 import com.fasterxml.jackson.annotation.JsonCreator;
 import com.fasterxml.jackson.annotation.JsonInclude;
@@ -37,6 +38,7 @@ import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
 import java.util.Set;
+import java.util.function.Predicate;
 import java.util.stream.Collectors;
 
 @Api(value = "explorer - /v1")
@@ -79,7 +81,10 @@ public class NewUIExplorerResource implements RestResource {
                 searchTerm,
                 true);
 
-        filterDescendants(null, treeModel, filteredModel, 0, filter);
+        // Getting all the tree
+        Predicate<String> filterPredicate = str -> true;
+
+        filterDescendants(null, treeModel, filteredModel, 0, filter, filterPredicate);
 
         // Flatten this tree out
         final List<DocRef> results = new ArrayList<>();
@@ -104,7 +109,10 @@ public class NewUIExplorerResource implements RestResource {
                 null,
                 true);
 
-        filterDescendants(null, treeModel, filteredModel, 0, filter);
+        final Predicate<String> filterPredicate = StringPredicateFactory.createFuzzyMatchPredicate(
+                filter.getNameFilter());
+
+        filterDescendants(null, treeModel, filteredModel, 0, filter, filterPredicate);
         final SimpleDocRefTreeDTO result = getRoot(filteredModel);
 
         return Response.ok(result).build();
@@ -317,7 +325,8 @@ public class NewUIExplorerResource implements RestResource {
                                       final TreeModel treeModelIn,
                                       final TreeModel treeModelOut,
                                       final int currentDepth,
-                                      final ExplorerTreeFilter filter) {
+                                      final ExplorerTreeFilter filter,
+                                      final Predicate<String> filterPredicate) {
         int added = 0;
 
         final List<ExplorerNode> children = treeModelIn.getChildren(parent);
@@ -325,14 +334,14 @@ public class NewUIExplorerResource implements RestResource {
 
             for (final ExplorerNode child : children) {
                 // Recurse right down to find out if a descendant is being added and therefore if we need to include this as an ancestor.
-                final boolean hasChildren = filterDescendants(child, treeModelIn, treeModelOut, currentDepth + 1, filter);
+                final boolean hasChildren = filterDescendants(child, treeModelIn, treeModelOut, currentDepth + 1, filter, filterPredicate);
                 if (hasChildren) {
                     treeModelOut.add(parent, child);
                     added++;
 
                 } else if (ExplorerServiceImpl.checkType(child, filter.getIncludedTypes())
                         && ExplorerServiceImpl.checkTags(child, filter.getTags())
-                        && (ExplorerServiceImpl.checkName(child, filter.getNameFilter()))
+                        && (ExplorerServiceImpl.checkName(child, filterPredicate))
                         && checkSecurity(child, filter.getRequiredPermissions())) {
                     treeModelOut.add(parent, child);
                     added++;
