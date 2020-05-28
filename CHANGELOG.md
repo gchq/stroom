@@ -7,6 +7,10 @@ and this project adheres to [Semantic Versioning](http://semver.org/).
 
 ## [Unreleased]
 
+* Issue **#1603** : XSLT imports now error if more than one matching XSLT is found.
+
+* Issue **#1604** : XSLT import resolution now accepts the use of UUIDs and DocRef strings.
+
 * Issue **#1403** : Dashboard query download now retains expression parameters.
 
 * Issue **#1514** : Fixed properties edit presenter issue.
