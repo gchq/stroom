@@ -7,6 +7,8 @@ and this project adheres to [Semantic Versioning](http://semver.org/).
 
 ## [Unreleased]
 
+* Issue **#1403** : Dashboard query download now retains expression parameters.
+
 * Issue **#1514** : Fixed properties edit presenter issue.
 
 * Issue **#1569** : Additional changes to improve the new `Data Delete` task that replaces the `File System Clean` task.
