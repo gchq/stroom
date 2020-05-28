@@ -17,22 +17,22 @@
 package stroom.data.retention;
 
 
-import org.junit.jupiter.api.Test;
 import stroom.data.retention.impl.DataRetentionMetaCriteriaUtil;
 import stroom.data.shared.StreamTypeNames;
-import stroom.dictionary.impl.DictionaryStore;
-import stroom.meta.shared.FindMetaCriteria;
-import stroom.meta.shared.Meta;
 import stroom.meta.api.MetaProperties;
 import stroom.meta.api.MetaService;
+import stroom.meta.shared.FindMetaCriteria;
+import stroom.meta.shared.Meta;
 import stroom.meta.shared.Status;
 import stroom.test.AbstractCoreIntegrationTest;
 import stroom.test.common.util.test.FileSystemTestUtil;
+import stroom.util.Period;
 import stroom.util.date.DateUtil;
 import stroom.util.logging.LambdaLogger;
 import stroom.util.logging.LambdaLoggerFactory;
 import stroom.util.shared.ResultPage;
-import stroom.util.Period;
+
+import org.junit.jupiter.api.Test;
 
 import javax.inject.Inject;
 import java.util.Collections;
@@ -47,8 +47,6 @@ class TestDataRetentionTransactionHelper extends AbstractCoreIntegrationTest {
 
     @Inject
     private MetaService metaService;
-    @Inject
-    private DictionaryStore dictionaryStore;
 
     @Test
     void testRowCount() {

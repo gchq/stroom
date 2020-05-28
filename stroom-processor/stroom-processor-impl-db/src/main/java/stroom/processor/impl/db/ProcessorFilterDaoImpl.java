@@ -176,7 +176,7 @@ class ProcessorFilterDaoImpl implements ProcessorFilterDao {
     }
 
     private ResultPage<ProcessorFilter> find(final DSLContext context, final ExpressionCriteria criteria) {
-        final Collection<Condition> conditions = expressionMapper.apply(criteria.getExpression());
+        final Condition condition = expressionMapper.apply(criteria.getExpression());
 
         final Collection<OrderField<?>> orderFields = JooqUtil.getOrderFields(FIELD_MAP, criteria);
 
@@ -185,7 +185,7 @@ class ProcessorFilterDaoImpl implements ProcessorFilterDao {
                 .from(PROCESSOR_FILTER)
                 .join(PROCESSOR_FILTER_TRACKER).on(PROCESSOR_FILTER.FK_PROCESSOR_FILTER_TRACKER_ID.eq(PROCESSOR_FILTER_TRACKER.ID))
                 .join(PROCESSOR).on(PROCESSOR_FILTER.FK_PROCESSOR_ID.eq(PROCESSOR.ID))
-                .where(conditions)
+                .where(condition)
                 .orderBy(orderFields)
                 .limit(JooqUtil.getLimit(criteria.getPageRequest(), true))
                 .offset(JooqUtil.getOffset(criteria.getPageRequest()))

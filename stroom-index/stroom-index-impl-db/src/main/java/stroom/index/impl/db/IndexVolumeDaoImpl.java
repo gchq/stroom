@@ -150,7 +150,11 @@ class IndexVolumeDaoImpl implements IndexVolumeDao {
     }
 
     @Override
-    public void updateVolumeState(final int id, final Long updateTimeMs, final Long bytesUsed, final Long bytesFree, final Long bytesTotal) {
+    public void updateVolumeState(final int id,
+                                  final Long updateTimeMs,
+                                  final Long bytesUsed,
+                                  final Long bytesFree,
+                                  final Long bytesTotal) {
         JooqUtil.context(indexDbConnProvider, context -> context
                 .update(INDEX_VOLUME)
                 .set(INDEX_VOLUME.UPDATE_TIME_MS, updateTimeMs)
@@ -164,7 +168,7 @@ class IndexVolumeDaoImpl implements IndexVolumeDao {
     @Override
     public ResultPage<IndexVolume> find(final ExpressionCriteria criteria) {
         final PageRequest pageRequest = criteria.getPageRequest();
-        final Collection<Condition> conditions = createCondition(criteria);
+        final Condition condition = createCondition(criteria);
         final Collection<OrderField<?>> orderFields = createOrderFields(criteria);
 
         int offset = 0;
@@ -175,26 +179,33 @@ class IndexVolumeDaoImpl implements IndexVolumeDao {
             numberOfRows = pageRequest.getLength();
         }
 
-        final List<IndexVolume> list = find(conditions, orderFields, offset, numberOfRows + 1);
+        final List<IndexVolume> list = find(
+                condition,
+                orderFields,
+                offset,
+                numberOfRows + 1);
         return ResultPage.createCriterialBasedList(list, criteria);
     }
 
-    private List<IndexVolume> find(final Collection<Condition> conditions, final Collection<OrderField<?>> orderFields, final int offset, final int numberOfRows) {
+    private List<IndexVolume> find(final Condition condition,
+                                   final Collection<OrderField<?>> orderFields,
+                                   final int offset,
+                                   final int numberOfRows) {
         return JooqUtil.contextResult(indexDbConnProvider, context -> context
                 .select()
                 .from(INDEX_VOLUME)
-                .where(conditions)
+                .where(condition)
                 .orderBy(orderFields)
                 .limit(offset, numberOfRows)
                 .fetch()
                 .map(RECORD_TO_INDEX_VOLUME_MAPPER::apply));
     }
 
-    private Collection<Condition> createCondition(final ExpressionCriteria criteria) {
+    private Condition createCondition(final ExpressionCriteria criteria) {
         return createCondition(criteria.getExpression());
     }
 
-    private Collection<Condition> createCondition(final ExpressionOperator expression) {
+    private Condition createCondition(final ExpressionOperator expression) {
         return expressionMapper.apply(expression);
     }
 

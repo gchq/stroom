@@ -129,9 +129,10 @@ class MetaKeyDaoImpl implements MetaKeyDao {
         setup();
     }
 
-    private int deleteAll() {
-        return JooqUtil.contextResult(metaDbConnProvider, context -> context
-                .delete(META_KEY)
-                .execute());
+    private void deleteAll() {
+        JooqUtil.truncateTable(metaDbConnProvider, META_KEY);
+//        return JooqUtil.contextResult(metaDbConnProvider, context -> context
+//                .truncate(META_KEY)
+//                .execute());
     }
 }

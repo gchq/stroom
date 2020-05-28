@@ -830,7 +830,7 @@ class ProcessorTaskDaoImpl implements ProcessorTaskDao {
     }
 
     ResultPage<ProcessorTask> find(final DSLContext context, final ExpressionCriteria criteria) {
-        final Collection<Condition> conditions = expressionMapper.apply(criteria.getExpression());
+        final Condition condition = expressionMapper.apply(criteria.getExpression());
 
         final Collection<OrderField<?>> orderFields = JooqUtil.getOrderFields(FIELD_MAP, criteria);
 
@@ -844,7 +844,7 @@ class ProcessorTaskDaoImpl implements ProcessorTaskDao {
                 .join(PROCESSOR_FILTER).on(PROCESSOR_TASK.FK_PROCESSOR_FILTER_ID.eq(PROCESSOR_FILTER.ID))
                 .join(PROCESSOR_FILTER_TRACKER).on(PROCESSOR_FILTER.FK_PROCESSOR_FILTER_TRACKER_ID.eq(PROCESSOR_FILTER_TRACKER.ID))
                 .join(PROCESSOR).on(PROCESSOR_FILTER.FK_PROCESSOR_ID.eq(PROCESSOR.ID))
-                .where(conditions)
+                .where(condition)
                 .orderBy(orderFields)
                 .limit(JooqUtil.getLimit(criteria.getPageRequest(), true))
                 .offset(JooqUtil.getOffset(criteria.getPageRequest()))
@@ -872,7 +872,7 @@ class ProcessorTaskDaoImpl implements ProcessorTaskDao {
 
     @Override
     public ResultPage<ProcessorTaskSummary> findSummary(final ExpressionCriteria criteria) {
-        final Collection<Condition> conditions = expressionMapper.apply(criteria.getExpression());
+        final Condition condition = expressionMapper.apply(criteria.getExpression());
 
         final Collection<OrderField<?>> orderFields = JooqUtil.getOrderFields(FIELD_MAP, criteria);
 
@@ -889,7 +889,7 @@ class ProcessorTaskDaoImpl implements ProcessorTaskDao {
                 .join(PROCESSOR_FEED).on(PROCESSOR_TASK.FK_PROCESSOR_FEED_ID.eq(PROCESSOR_FEED.ID))
                 .join(PROCESSOR_FILTER).on(PROCESSOR_TASK.FK_PROCESSOR_FILTER_ID.eq(PROCESSOR_FILTER.ID))
                 .join(PROCESSOR).on(PROCESSOR_FILTER.FK_PROCESSOR_ID.eq(PROCESSOR.ID))
-                .where(conditions)
+                .where(condition)
                 .groupBy(PROCESSOR.PIPELINE_UUID, PROCESSOR_FILTER.PRIORITY, PROCESSOR_TASK.STATUS)
                 .orderBy(orderFields)
                 .limit(JooqUtil.getLimit(criteria.getPageRequest(), true))
@@ -921,7 +921,7 @@ class ProcessorTaskDaoImpl implements ProcessorTaskDao {
         final boolean pipelineValueExists = fieldList.stream().anyMatch(Predicate.isEqual(ProcessorTaskFields.PIPELINE));
 
         final PageRequest pageRequest = criteria.getPageRequest();
-        final Collection<Condition> conditions = expressionMapper.apply(criteria.getExpression());
+        final Condition condition = expressionMapper.apply(criteria.getExpression());
         final Collection<OrderField<?>> orderFields = JooqUtil.getOrderFields(FIELD_MAP, criteria);
         final List<Field<?>> dbFields = new ArrayList<>(valueMapper.getFields(fieldList));
         final Mapper<?>[] mappers = valueMapper.getMappers(fields);
@@ -948,7 +948,7 @@ class ProcessorTaskDaoImpl implements ProcessorTaskDao {
             }
 
             try (final Cursor<?> cursor = select
-                    .where(conditions)
+                    .where(condition)
                     .orderBy(orderFields)
                     .limit(offset, numberOfRows)
                     .fetchLazy()) {

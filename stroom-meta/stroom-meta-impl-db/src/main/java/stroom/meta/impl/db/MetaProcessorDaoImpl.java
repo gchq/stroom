@@ -96,10 +96,11 @@ class MetaProcessorDaoImpl implements MetaProcessorDao {
         cache.clear();
     }
 
-    private int deleteAll() {
-        return JooqUtil.contextResult(metaDbConnProvider, context -> context
-                .delete(META_PROCESSOR)
-                .execute());
+    private void deleteAll() {
+        JooqUtil.truncateTable(metaDbConnProvider, META_PROCESSOR);
+//        return JooqUtil.contextResult(metaDbConnProvider, context -> context
+//                .truncate(META_PROCESSOR)
+//                .execute());
     }
 
     private static class Key {

@@ -2,6 +2,10 @@ package stroom.util.time;
 
 import java.time.Duration;
 import java.time.Instant;
+import java.time.LocalDate;
+import java.time.Period;
+import java.time.ZoneOffset;
+import java.util.Objects;
 
 public class TimeUtils {
 
@@ -42,4 +46,30 @@ public class TimeUtils {
         return durationToThreshold(Instant.now(), duration);
     }
 
+    /**
+     * If time is in the past then return the period from time until now().
+     * If time is in the future then return the period from now() until time.
+     */
+    public static Period instantAsAge(final Instant time) {
+        return instantAsAge(time, Instant.now());
+    }
+
+    /**
+     * If time is in the past then return the period from time until now().
+     * If time is in the future then return the period from now() until time.
+     */
+    public static Period instantAsAge(final Instant time, final Instant now) {
+        Objects.requireNonNull(time);
+        Objects.requireNonNull(now);
+
+        if (time.isBefore(now)) {
+            return Period.between(
+                    LocalDate.ofInstant(time, ZoneOffset.UTC),
+                    LocalDate.ofInstant(now, ZoneOffset.UTC));
+        } else {
+            return Period.between(
+                    LocalDate.ofInstant(now, ZoneOffset.UTC),
+                    LocalDate.ofInstant(time, ZoneOffset.UTC));
+        }
+    }
 }

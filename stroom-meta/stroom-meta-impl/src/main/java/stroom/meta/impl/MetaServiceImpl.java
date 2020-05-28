@@ -1,6 +1,8 @@
 package stroom.meta.impl;
 
 import stroom.dashboard.expression.v1.Val;
+import stroom.data.retention.api.DataRetentionRuleAction;
+import stroom.data.retention.api.DataRetentionTracker;
 import stroom.datasource.api.v2.AbstractField;
 import stroom.datasource.api.v2.DataSource;
 import stroom.docref.DocRef;
@@ -33,6 +35,7 @@ import stroom.security.shared.PermissionNames;
 import stroom.util.date.DateUtil;
 import stroom.util.shared.PageRequest;
 import stroom.util.shared.ResultPage;
+import stroom.util.time.TimePeriod;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -63,6 +66,7 @@ public class MetaServiceImpl implements MetaService, Searchable {
     private final MetaFeedDao metaFeedDao;
     private final MetaTypeDao metaTypeDao;
     private final MetaValueDao metaValueDao;
+    private final MetaRetentionTrackerDao metaRetentionTrackerDao;
     private final DocRefInfoService docRefInfoService;
     private final Provider<StreamAttributeMapRetentionRuleDecorator> decoratorProvider;
     private final Optional<AttributeMapFactory> attributeMapFactory;
@@ -74,6 +78,7 @@ public class MetaServiceImpl implements MetaService, Searchable {
                     final MetaFeedDao metaFeedDao,
                     final MetaTypeDao metaTypeDao,
                     final MetaValueDao metaValueDao,
+                    final MetaRetentionTrackerDao metaRetentionTrackerDao,
                     final DocRefInfoService docRefInfoService,
                     final Provider<StreamAttributeMapRetentionRuleDecorator> decoratorProvider,
                     final Optional<AttributeMapFactory> attributeMapFactory,
@@ -83,6 +88,7 @@ public class MetaServiceImpl implements MetaService, Searchable {
         this.metaFeedDao = metaFeedDao;
         this.metaTypeDao = metaTypeDao;
         this.metaValueDao = metaValueDao;
+        this.metaRetentionTrackerDao = metaRetentionTrackerDao;
         this.docRefInfoService = docRefInfoService;
         this.decoratorProvider = decoratorProvider;
         this.attributeMapFactory = attributeMapFactory;
@@ -177,6 +183,18 @@ public class MetaServiceImpl implements MetaService, Searchable {
     @Override
     public int delete(final long id) {
         return securityContext.secureResult(PermissionNames.DELETE_DATA_PERMISSION, () -> doLogicalDelete(id, true));
+    }
+
+    @Override
+    public int delete(final List<DataRetentionRuleAction> ruleActions,
+                      final TimePeriod period) {
+        return securityContext.secureResult(PermissionNames.DELETE_DATA_PERMISSION, () -> {
+            if (ruleActions != null && !ruleActions.isEmpty()) {
+                return metaDao.logicalDelete(ruleActions, period);
+            } else {
+                return 0;
+            }
+        });
     }
 
     @Override
@@ -648,6 +666,16 @@ public class MetaServiceImpl implements MetaService, Searchable {
         }
 
         return sections;
+    }
+
+    @Override
+    public Optional<DataRetentionTracker> getRetentionTracker() {
+        return metaRetentionTrackerDao.getTracker();
+    }
+
+    @Override
+    public void setTracker(final DataRetentionTracker dataRetentionTracker) {
+        metaRetentionTrackerDao.createOrUpdate(dataRetentionTracker);
     }
 
     private List<MetaInfoSection.Entry> getStreamEntries(final Meta meta) {
