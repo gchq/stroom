@@ -154,7 +154,8 @@ public class DBPersistence implements Persistence, Clearable {
             final String sql = "" +
                     "SELECT DISTINCT " +
                     "  uuid, " +
-                    "  name " +
+                    "  name, " +
+                    "  id  " +
                     "FROM doc " +
                     "WHERE type = ? " +
                     "ORDER BY id";

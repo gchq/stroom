@@ -7,6 +7,8 @@ and this project adheres to [Semantic Versioning](http://semver.org/).
 
 ## [Unreleased]
 
+* Issue **#1462** : Stroom not working with MySQL 8.0 due to SQLException
+
 * Add fuzzy match filter to explorer tree.
 
 
