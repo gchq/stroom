@@ -441,63 +441,69 @@ class MetaDaoImpl implements MetaDao {
         final Instant now = Instant.now().truncatedTo(ChronoUnit.MILLIS);
         long nowMs = now.toEpochMilli();
 
-        CaseConditionStep<Integer> ruleNoCaseConditionStep = null;
-        CaseConditionStep<Serializable> daysTilDeleteCaseConditionStep = null;
-        List<Condition> orConditions = new ArrayList<>();
-        // Order is critical here as we are building a case statement
-        // Highest priority rules first, i.e. largest rule number
-        for (DataRetentionRule rule : rules) {
-            if (rule.isEnabled()) {
-                final Condition ruleCondition = expressionMapper.apply(rule.getExpression());
-
-                if (dataRetentionConfig.isUseQueryOptimisation()) {
-                    orConditions.add(ruleCondition);
-                }
-
-                // The rule will either result in true or false depending on if it needs
-                // to delete or retain the data
-
-                final Integer ruleNoCaseResult = rule.getRuleNumber();
-
-                if (ruleNoCaseConditionStep == null) {
-                    ruleNoCaseConditionStep = DSL.when(ruleCondition, ruleNoCaseResult);
-                } else {
-                    ruleNoCaseConditionStep.when(ruleCondition, ruleNoCaseResult);
-                }
-
-                final Field<Serializable> daysTilDeleteCaseResult;
-                if (rule.isForever()) {
-                    daysTilDeleteCaseResult = null;
-                } else {
-                    long minCreateTimeMs = ruleToMinCreateTime(now, rule).toEpochMilli();
-                    daysTilDeleteCaseResult = DSL.greatest(0, meta.CREATE_TIME.minus(minCreateTimeMs));
-                }
-
-                if (daysTilDeleteCaseConditionStep == null) {
-                    daysTilDeleteCaseConditionStep = DSL.when(ruleCondition, daysTilDeleteCaseResult);
-                } else {
-                    daysTilDeleteCaseConditionStep.when(ruleCondition, daysTilDeleteCaseResult);
-                }
-            }
-        }
-        // If none of the rules matches then we don't to delete so return false
-        final Field<Integer> ruleNoCaseField = ruleNoCaseConditionStep.otherwise(0);
-        final Field<Serializable> ruleNoCaseField = ruleNoCaseConditionStep.otherwise(0);
-
         List<Condition> conditions = new ArrayList<>();
 
-        final byte statusIdUnlocked = MetaStatusId.getPrimitiveValue(Status.UNLOCKED);
-        conditions.add(meta.STATUS.eq(statusIdUnlocked));
+        if (rules != null && !rules.isEmpty()) {
+            CaseConditionStep<Integer> ruleNoCaseConditionStep = null;
+            CaseConditionStep<Serializable> daysTilDeleteCaseConditionStep = null;
+            List<Condition> orConditions = new ArrayList<>();
+            // Order is critical here as we are building a case statement
+            // Highest priority rules first, i.e. largest rule number
+            for (DataRetentionRule rule : rules) {
+                if (rule.isEnabled()) {
+                    final Condition ruleCondition = expressionMapper.apply(rule.getExpression());
 
-        // Now add all the rule conditions as an OR block
-        // This is to improve the performance of the query as the OR can make use of other indexes,
-        // e.g. range scanning the feedid+createTime index to reduce the number of rows scanned.
-        // We are still reliant on the case statement block to get the right outcome for the rules.
-        // It is possible this approach may slow things down as it makes the SQL more complex.
-        if (dataRetentionConfig.isUseQueryOptimisation()) {
-            conditions.add(DSL.or(orConditions));
+                    if (dataRetentionConfig.isUseQueryOptimisation()) {
+                        orConditions.add(ruleCondition);
+                    }
+
+                    // The rule will either result in true or false depending on if it needs
+                    // to delete or retain the data
+
+                    final Integer ruleNoCaseResult = rule.getRuleNumber();
+
+                    if (ruleNoCaseConditionStep == null) {
+                        ruleNoCaseConditionStep = DSL.when(ruleCondition, ruleNoCaseResult);
+                    } else {
+                        ruleNoCaseConditionStep.when(ruleCondition, ruleNoCaseResult);
+                    }
+
+                    final Field<Serializable> daysTilDeleteCaseResult;
+                    if (rule.isForever()) {
+                        daysTilDeleteCaseResult = null;
+                    } else {
+                        long minCreateTimeMs = ruleToMinCreateTime(now, rule).toEpochMilli();
+                        daysTilDeleteCaseResult = DSL.greatest(0, meta.CREATE_TIME.minus(minCreateTimeMs));
+                    }
+
+                    if (daysTilDeleteCaseConditionStep == null) {
+                        daysTilDeleteCaseConditionStep = DSL.when(ruleCondition, daysTilDeleteCaseResult);
+                    } else {
+                        daysTilDeleteCaseConditionStep.when(ruleCondition, daysTilDeleteCaseResult);
+                    }
+                }
+            }
+            // If none of the rules matches then we don't to delete so return false
+            final Field<Integer> ruleNoCaseField = ruleNoCaseConditionStep.otherwise(0);
+            final Field<Serializable> daysTilDeleteCaseField = daysTilDeleteCaseConditionStep.otherwise((Field<Serializable>) null);
+
+
+            final byte statusIdUnlocked = MetaStatusId.getPrimitiveValue(Status.UNLOCKED);
+            conditions.add(meta.STATUS.eq(statusIdUnlocked));
+
+            // Now add all the rule conditions as an OR block
+            // This is to improve the performance of the query as the OR can make use of other indexes,
+            // e.g. range scanning the feedid+createTime index to reduce the number of rows scanned.
+            // We are still reliant on the case statement block to get the right outcome for the rules.
+            // It is possible this approach may slow things down as it makes the SQL more complex.
+            if (dataRetentionConfig.isUseQueryOptimisation()) {
+                conditions.add(DSL.or(orConditions));
+            }
+
+        } else {
+            // No rules so no point running a query
+            // TODO return an empty collection
         }
-
     }
 
     private static Instant ruleToMinCreateTime(final Instant now, final DataRetentionRule rule) {
