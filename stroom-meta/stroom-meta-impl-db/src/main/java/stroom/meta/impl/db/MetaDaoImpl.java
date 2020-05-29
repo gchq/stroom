@@ -8,6 +8,7 @@ import stroom.dashboard.expression.v1.ValNull;
 import stroom.dashboard.expression.v1.ValString;
 import stroom.data.retention.api.DataRetentionConfig;
 import stroom.data.retention.api.DataRetentionRuleAction;
+import stroom.data.retention.shared.DataRetentionRule;
 import stroom.datasource.api.v2.AbstractField;
 import stroom.db.util.ExpressionMapper;
 import stroom.db.util.ExpressionMapperFactory;
@@ -53,10 +54,15 @@ import org.jooq.Record1;
 import org.jooq.Result;
 import org.jooq.SelectConditionStep;
 import org.jooq.impl.DSL;
+import org.jooq.util.cubrid.CUBRIDDSL;
 
 import javax.inject.Inject;
 import javax.inject.Singleton;
+import java.sql.Timestamp;
 import java.time.Instant;
+import java.time.LocalDateTime;
+import java.time.ZoneOffset;
+import java.time.temporal.ChronoUnit;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collection;
@@ -406,6 +412,114 @@ class MetaDaoImpl implements MetaDao {
                     .execute());
         }
         return updateCount;
+    }
+
+    public void getRetentionDeletionSummary(final List<DataRetentionRule> rules) {
+
+        // What we are building is roughly:
+        // SELECT
+        //   v.feed_name, v.rule_no, v.ms_til_delete, count(*)
+        // FROM (
+        //   SELECT
+        //     feed_name,
+        //     CASE
+        //       WHEN <rule 1 condition is true> THEN m.create_time - <rule min create time ms>
+        //       WHEN <rule 2 condition is true> THEN m.create_time - <rule min create time ms>
+        //       ELSE null
+        //     END as ms_til_delete,
+        //     CASE
+        //       WHEN <rule 1 condition is true> THEN <rule no>
+        //       WHEN <rule 2 condition is true> THEN <rule no>
+        //       ELSE 0
+        //     END as rule_no
+        //   FROM meta m
+        //   WHERE <big OR block of all rules>
+        //   AND status IN (0,1)
+        // ) v
+        // WHERE v.ms_til_delete is not null
+        // GROUP BY v.feed_name, v.rule_no, v.ms_til_delete
+
+        final Instant now = Instant.now().truncatedTo(ChronoUnit.MILLIS);
+        long nowMs = now.toEpochMilli();
+
+        CaseConditionStep<Integer> ruleNoCaseConditionStep = null;
+        CaseConditionStep<Long> msTilDeleteCaseConditionStep = null;
+        List<Condition> orConditions = new ArrayList<>();
+        // Order is critical here as we are building a case statement
+        // Highest priority rules first, i.e. largest rule number
+        for (DataRetentionRule rule : rules) {
+            if (rule.isEnabled()) {
+                final Condition ruleCondition = expressionMapper.apply(rule.getExpression());
+
+                if (dataRetentionConfig.isUseQueryOptimisation()) {
+                    orConditions.add(ruleCondition);
+                }
+
+                // The rule will either result in true or false depending on if it needs
+                // to delete or retain the data
+
+                final Integer ruleNoCaseResult = rule.getRuleNumber();
+
+                if (ruleNoCaseConditionStep == null) {
+                    ruleNoCaseConditionStep = DSL.when(ruleCondition, ruleNoCaseResult);
+                } else {
+                    ruleNoCaseConditionStep.when(ruleCondition, ruleNoCaseResult);
+                }
+
+                final Field<Long> msTilDeleteCaseResult;
+                if (rule.isForever()) {
+                    msTilDeleteCaseResult = null;
+                } else {
+                    long minCreateTimeMs = ruleToMinCreateTime(now, rule).toEpochMilli();
+                    msTilDeleteCaseResult = meta.CREATE_TIME.minus(minCreateTimeMs);
+                }
+
+                if (msTilDeleteCaseConditionStep == null) {
+                    msTilDeleteCaseConditionStep = DSL.when(ruleCondition, msTilDeleteCaseResult);
+                } else {
+                    msTilDeleteCaseConditionStep.when(ruleCondition, msTilDeleteCaseResult);
+                }
+            }
+        }
+        // If none of the rules matches then we don't to delete so return false
+        final Field<Boolean> caseField = ruleNoCaseConditionStep.otherwise(Boolean.FALSE);
+
+        List<Condition> conditions = new ArrayList<>();
+    }
+
+    private static Instant ruleToMinCreateTime(final Instant now, final DataRetentionRule rule) {
+        if (rule.isForever()) {
+            return Instant.EPOCH;
+        }
+
+        LocalDateTime age = null;
+        final LocalDateTime time = LocalDateTime.ofInstant(now, ZoneOffset.UTC);
+        switch (rule.getTimeUnit()) {
+            case MINUTES:
+                age = time.minusMinutes(rule.getAge());
+                break;
+            case HOURS:
+                age = time.minusHours(rule.getAge());
+                break;
+            case DAYS:
+                age = time.minusDays(rule.getAge());
+                break;
+            case WEEKS:
+                age = time.minusWeeks(rule.getAge());
+                break;
+            case MONTHS:
+                age = time.minusMonths(rule.getAge());
+                break;
+            case YEARS:
+                age = time.minusYears(rule.getAge());
+                break;
+        }
+
+        if (age == null) {
+            return Instant.EPOCH;
+        }
+
+        return age.toInstant(ZoneOffset.UTC);
     }
 
     @Override
