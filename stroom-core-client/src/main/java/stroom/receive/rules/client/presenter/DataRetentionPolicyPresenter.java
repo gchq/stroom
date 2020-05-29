@@ -139,7 +139,10 @@ public class DataRetentionPolicyPresenter
     }
 
     private void setVisibleRules(final List<DataRetentionRule> rules) {
-        List<DataRetentionRule> allRules = new ArrayList<>(rules);
+        List<DataRetentionRule> allRules = new ArrayList<>();
+        if (rules != null) {
+            allRules.addAll(rules);
+        }
         // Add in our special UI only rule
         allRules.add(DEFAULT_UI_ONLY_RETAIN_ALL_RULE);
         this.visibleRules = allRules;
