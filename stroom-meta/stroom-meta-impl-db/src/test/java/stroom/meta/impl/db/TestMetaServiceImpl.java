@@ -368,6 +368,8 @@ class TestMetaServiceImpl {
     @Test
     void testRetentionDelete_volumeTest() {
 
+        LOGGER.info("Loading data");
+
         final List<DataRetentionRuleAction> ruleActions = List.of(
                 buildRuleAction(1, FEED_1, RetentionRuleOutcome.DELETE),
                 buildRuleAction(2, FEED_2, RetentionRuleOutcome.RETAIN),
@@ -402,7 +404,14 @@ class TestMetaServiceImpl {
                             .boxed()
                             .flatMap(j -> IntStream.rangeClosed(1, rowsPerFeedPerDay)
                                     .boxed()
-                                    .map(k -> createProperties("FEED" + j, createTime)));
+                                    .map(k ->
+                                            // Spread the records over time to avoid
+                                            // the batching picking up multiples
+                                            createProperties(
+                                                    "FEED" + j,
+                                                    createTime
+                                                            .minus(j, ChronoUnit.SECONDS)
+                                                            .minus(k, ChronoUnit.MILLIS))));
                 })
                 .collect(BatchingCollector.of(insertBatchSize, batch -> {
                     metaDao.create(batch, Status.UNLOCKED);
@@ -426,18 +435,20 @@ class TestMetaServiceImpl {
 
         // Use a batch size smaller than the expected number of deletes to ensure we exercise
         // batching
-        dataRetentionConfig.setDeleteBatchSize(Math.max(1, (expectedRowsDeleted / 2) - 1));
+        dataRetentionConfig.setDeleteBatchSize(Math.max(1, (expectedRowsDeleted / 2) - 10));
+//        dataRetentionConfig.setDeleteBatchSize(7);
 
-        LOGGER.debug(period.toString());
+        LOGGER.info("Doing data retention delete for period {}, batch size {}",
+                period, dataRetentionConfig.getDeleteBatchSize());
 
         metaService.delete(ruleActions, period);
 
-        LOGGER.debug("deleteBatchSize {}", dataRetentionConfig.getDeleteBatchSize());
-        LOGGER.debug("Period {}", period);
-        LOGGER.debug("deletionDay {}", deletionDay);
-        LOGGER.debug("daysToDelete {}", daysToDelete);
-        LOGGER.debug("totalRows {}", totalRows);
-        LOGGER.debug("expectedRowsDeleted {}", expectedRowsDeleted);
+        LOGGER.info("deleteBatchSize {}", dataRetentionConfig.getDeleteBatchSize());
+        LOGGER.info("Period {}", period);
+        LOGGER.info("deletionDay {}", deletionDay);
+        LOGGER.info("daysToDelete {}", daysToDelete);
+        LOGGER.info("totalRows {}", totalRows);
+        LOGGER.info("expectedRowsDeleted {}", expectedRowsDeleted);
 
         assertTotalRowCount(totalRows);
         assertTotalRowCount(expectedRowsDeleted, Status.DELETED);
