@@ -52,10 +52,12 @@ import org.jooq.Record;
 import org.jooq.Record1;
 import org.jooq.Result;
 import org.jooq.SelectConditionStep;
+import org.jooq.Table;
 import org.jooq.impl.DSL;
 
 import javax.inject.Inject;
 import javax.inject.Singleton;
+import java.time.Duration;
 import java.time.Instant;
 import java.util.ArrayList;
 import java.util.Arrays;
@@ -68,6 +70,7 @@ import java.util.Objects;
 import java.util.Optional;
 import java.util.Set;
 import java.util.concurrent.ConcurrentHashMap;
+import java.util.concurrent.atomic.AtomicInteger;
 import java.util.function.Consumer;
 import java.util.function.Function;
 import java.util.function.Predicate;
@@ -420,52 +423,141 @@ class MetaDaoImpl implements MetaDao {
                                         ruleAction.getOutcome().name())
                                 .collect(Collectors.joining("\n"))));
 
-        int totalUpdateCount = 0;
+        final AtomicInteger totalUpdateCount = new AtomicInteger(0);
         if (ruleActions != null && !ruleActions.isEmpty()) {
             final byte statusIdDeleted = MetaStatusId.getPrimitiveValue(Status.DELETED);
 
             final List<Condition> baseConditions = createRetentionDeleteConditions(ruleActions);
 
-            // Looping like this is not ideal as we are then relying on filtering out
-            // all the rows we have already touched, based on their status col. An index
-            // of (status, feed_id, create_time) may help here. There is a risk that
-            // each pass takes longer and longer as it has to scan over old data.
-            //
-            // We could INSERT...SELECT into a temp table but that still has locking
-            // implications on meta.
+            final List<Condition> conditions = new ArrayList<>(baseConditions);
+
+            // Time bound the data we are testing the rules over
+            conditions.add(meta.CREATE_TIME.greaterOrEqual(period.getFrom().toEpochMilli()));
+            conditions.add(meta.CREATE_TIME.lessThan(period.getTo().toEpochMilli()));
+
             int lastUpdateCount = -1;
+            AtomicInteger iteration = new AtomicInteger(1);
+            Duration totalSelectDuration = Duration.ZERO;
+            Duration totalUpdateDuration = Duration.ZERO;
+            Instant startTime;
+            Instant startTimeInc = period.getFrom();
             final int batchSize = dataRetentionConfig.getDeleteBatchSize();
+
+            // The aim here is to ensure we lock up the meta table for as short a time
+            // as possible. As we are updating by non-unique indexes it is likely we will
+            // get next-key locks which may impact other writes.
+            // At the cost of the whole retention delete taking longer we split the updates
+            // up into smaller chunks to reduce the time meta is locked for. To do the chunking
+            // we query the table with the same conditions as the update to find a batch
+            // of n records and capture the min/max create_time for that batch.
+            // Then we update over that sub-period so we can just rang-scan the create_time or
+            // feed_id|create_time index.
             do {
-                final List<Condition> conditions = new ArrayList<>(baseConditions);
+                // Get a sub period of period
 
-                // Time bound the data we are testing the rules over
-                conditions.add(meta.CREATE_TIME.greaterOrEqual(period.getFrom().toEpochMilli()));
-                conditions.add(meta.CREATE_TIME.lessThan(period.getTo().toEpochMilli()));
+                startTime = Instant.now();
+                final Optional<TimePeriod> optSubPeriod = getTimeSlice(startTimeInc, batchSize, conditions);
+                totalSelectDuration = totalSelectDuration.plus(Duration.between(startTime, Instant.now().plusMillis(1)));
 
-                lastUpdateCount = LOGGER.logDurationIfInfoEnabled(
+                if (optSubPeriod.isEmpty()) {
+                    LOGGER.debug("No time slice found");
+                    break;
+                }
+                TimePeriod subPeriod = optSubPeriod.get();
+                LOGGER.debug("Iteration {}, using sub-period {}", iteration, subPeriod);
+
+                startTime = Instant.now();
+                lastUpdateCount = LOGGER.logDurationIfDebugEnabled(
                         () -> JooqUtil.contextResult(metaDbConnProvider, context -> context
                                 .update(meta)
                                 .set(meta.STATUS, statusIdDeleted)
                                 .set(meta.STATUS_TIME, Instant.now().toEpochMilli())
                                 .where(conditions)
-                                .limit(batchSize)
+                                .and(meta.CREATE_TIME.greaterOrEqual(subPeriod.getFrom().toEpochMilli()))
+                                .and(meta.CREATE_TIME.lessThan(subPeriod.getTo().toEpochMilli()))
                                 .execute()),
-                        cnt -> LogUtil.message("Logically deleted {} meta records with limit {}", cnt, batchSize));
+                        cnt -> LogUtil.message("Logically deleted {} meta records with approx. limit of {}. Iteration {}",
+                                cnt, batchSize, iteration));
+                totalUpdateDuration = totalUpdateDuration.plus(Duration.between(startTime, Instant.now().plusMillis(1)));
 
-                totalUpdateCount += lastUpdateCount;
-
+                // Advance the start time
+                startTimeInc = subPeriod.getFrom();
+                totalUpdateCount.addAndGet(lastUpdateCount);
+                iteration.incrementAndGet();
                 LOGGER.debug("Logically deleted {} meta rows (total so far {})", lastUpdateCount, totalUpdateCount);
 
             } while (lastUpdateCount != 0 && !Thread.currentThread().isInterrupted());
+
+            LOGGER.info("Logically deleted {} meta rows, batchSize {}, iterations {}, select avg {}, update avg {}",
+                    totalUpdateCount.get(),
+                    batchSize,
+                    iteration.decrementAndGet(),
+                    iteration.get() != 0 ? totalSelectDuration.dividedBy(iteration.get()) : Duration.ZERO,
+                    iteration.get() != 0 ? totalUpdateDuration.dividedBy(iteration.get()) : Duration.ZERO);
 
             if (Thread.currentThread().isInterrupted()) {
                 LOGGER.error("Thread interrupted");
             }
         } else {
             LOGGER.debug("Empty ruleActions, nothing to delete");
-            totalUpdateCount = 0;
+            totalUpdateCount.set(0);
         }
-        return totalUpdateCount;
+        return totalUpdateCount.get();
+    }
+
+    private Optional<TimePeriod> getTimeSlice(final Instant startTimeInc,
+                                              final int batchSize,
+                                              final List<Condition> conditions) {
+        LOGGER.debug("getTimeSlice({}, {}, {})", startTimeInc, batchSize, conditions);
+
+        // For a given set of conditions (that may already contain some create_time bounds
+        // get the create_time range for a batch n records
+        final Optional<TimePeriod> timePeriod = JooqUtil.contextResult(metaDbConnProvider, context -> {
+
+            final Table<?> orderedFullSet = context
+                    .select(meta.CREATE_TIME)
+                    .from(meta)
+                    .where(conditions)
+                    .and(meta.CREATE_TIME.greaterOrEqual(startTimeInc.toEpochMilli()))
+                    .orderBy(meta.CREATE_TIME)
+                    .asTable("orderedFullSet");
+
+            final Table<?> limitedSet = context
+                    .select(orderedFullSet.fields())
+                    .from(orderedFullSet)
+                    .limit(batchSize)
+                    .asTable("limitedSet");
+
+            final String createTimeCol = meta.CREATE_TIME.getName();
+            final String minCreateTimeCol = "min_create_time";
+            final String maxCreateTimeCol = "max_create_time";
+
+            return LOGGER.logDurationIfDebugEnabled(() -> context
+                            .select(
+                                    DSL.min(limitedSet.field(createTimeCol)).as(minCreateTimeCol),
+                                    DSL.max(limitedSet.field(createTimeCol)).as(maxCreateTimeCol))
+                            .from(limitedSet)
+                            .fetchOne()
+                            .map(record -> {
+                                Object min = record.get(minCreateTimeCol);
+                                Object max = record.get(maxCreateTimeCol);
+
+                                if (min == null || max == null) {
+                                    return Optional.empty();
+                                } else {
+                                    return Optional.of(
+                                            TimePeriod.between((long) min, (long) max + 1)); // Add one to make it exclusive
+                                }
+                            }),
+                    () -> LogUtil.message("Selecting time slice starting at {}, with batch size {}",
+                            startTimeInc, batchSize));
+        });
+        LOGGER.debug("Returning period {}", timePeriod);
+
+        // NOTE The number of records in the slice may differ from the desired batch size if you have
+        // multiple records on the boundary with the same create_time (unlikely with milli precision).
+
+        return timePeriod;
     }
 
     private List<Condition> createRetentionDeleteConditions(final List<DataRetentionRuleAction> ruleActions) {

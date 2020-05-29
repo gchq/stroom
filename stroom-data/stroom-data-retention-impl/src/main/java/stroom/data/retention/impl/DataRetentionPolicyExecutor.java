@@ -258,9 +258,9 @@ public class DataRetentionPolicyExecutor {
                             .collect(Collectors.joining("\n"));
         });
 
-        final int count = metaService.delete(sortedRuleActions, period);
-        final String message = "Marked " + count + " items as deleted";
-        LOGGER.info(() -> message);
+        LOGGER.logDurationIfInfoEnabled(
+                () -> metaService.delete(sortedRuleActions, period),
+                count -> LogUtil.message("Marked {} items as deleted", count));
     }
 
     private Map<TimePeriod, List<DataRetentionRuleAction>> getRulesByPeriod(

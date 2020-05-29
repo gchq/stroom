@@ -9,6 +9,8 @@ and this project adheres to [Semantic Versioning](http://semver.org/).
 
 * Issue **#1564** : Fix error in data retention section of stream info popup.
 
+* Change data retention delete batching approach to use time ranges.
+
 
 ## [v7.0-beta.35] - 2020-05-28
 

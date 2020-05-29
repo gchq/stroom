@@ -36,4 +36,5 @@ public class LogExecutionTime {
     public String toString() {
         return ModelStringUtil.formatDurationString(getDuration());
     }
+
 }
