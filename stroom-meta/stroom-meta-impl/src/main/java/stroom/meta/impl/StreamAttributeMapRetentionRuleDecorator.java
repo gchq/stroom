@@ -37,6 +37,7 @@ import java.time.ZoneOffset;
 import java.util.Collections;
 import java.util.List;
 import java.util.Map;
+import java.util.Optional;
 
 class StreamAttributeMapRetentionRuleDecorator {
     private static final Logger LOGGER = LoggerFactory.getLogger(StreamAttributeMapRetentionRuleDecorator.class);
@@ -49,12 +50,10 @@ class StreamAttributeMapRetentionRuleDecorator {
                                                     final Provider<DataRetentionRules> dataRetentionRulesProvider) {
         expressionMatcher = expressionMatcherFactory.create(MetaFields.getFieldMap());
 
-        final DataRetentionRules dataRetentionRules = dataRetentionRulesProvider.get();
-        if (dataRetentionRules != null) {
-            rules = dataRetentionRules.getRules();
-        } else {
-            rules = Collections.emptyList();
-        }
+        rules = Optional.ofNullable(dataRetentionRulesProvider)
+                .map(Provider::get)
+                .map(DataRetentionRules::getRules)
+                .orElse(Collections.emptyList());
     }
 
     void addMatchingRetentionRuleInfo(final Meta meta, final Map<String, String> attributeMap) {
