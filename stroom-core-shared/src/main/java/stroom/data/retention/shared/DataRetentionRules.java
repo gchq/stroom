@@ -16,17 +16,19 @@
 
 package stroom.data.retention.shared;
 
+import stroom.docstore.shared.Doc;
+
 import com.fasterxml.jackson.annotation.JsonCreator;
 import com.fasterxml.jackson.annotation.JsonInclude;
 import com.fasterxml.jackson.annotation.JsonInclude.Include;
 import com.fasterxml.jackson.annotation.JsonProperty;
 import com.fasterxml.jackson.annotation.JsonPropertyOrder;
-import stroom.docstore.shared.Doc;
 
 import javax.xml.bind.annotation.XmlAccessType;
 import javax.xml.bind.annotation.XmlAccessorType;
 import javax.xml.bind.annotation.XmlRootElement;
 import javax.xml.bind.annotation.XmlType;
+import java.util.Collections;
 import java.util.List;
 import java.util.Objects;
 
@@ -45,7 +47,9 @@ public class DataRetentionRules extends Doc {
     }
 
     public DataRetentionRules(final List<DataRetentionRule> rules) {
-        this.rules = rules;
+        this.rules = rules != null
+                ? rules
+                : Collections.emptyList();
     }
 
     @JsonCreator
@@ -59,7 +63,9 @@ public class DataRetentionRules extends Doc {
                               @JsonProperty("updateUser") final String updateUser,
                               @JsonProperty("rules") final List<DataRetentionRule> rules) {
         super(type, uuid, name, version, createTime, updateTime, createUser, updateUser);
-        this.rules = rules;
+        this.rules = rules != null
+                ? rules
+                : Collections.emptyList();
     }
 
     public List<DataRetentionRule> getRules() {
@@ -67,7 +73,9 @@ public class DataRetentionRules extends Doc {
     }
 
     public void setRules(final List<DataRetentionRule> rules) {
-        this.rules = rules;
+        this.rules = rules != null
+                ? rules
+                : Collections.emptyList();
     }
 
     @Override

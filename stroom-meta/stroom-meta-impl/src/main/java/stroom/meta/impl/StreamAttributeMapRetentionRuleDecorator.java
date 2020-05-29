@@ -62,7 +62,7 @@ class StreamAttributeMapRetentionRuleDecorator {
             int index = -1;
 
             // If there are no active rules then we aren't going to process anything.
-            if (rules.size() > 0) {
+            if (rules != null && rules.size() > 0) {
                 // Create an attribute map we can match on.
                 final Map<String, Object> map = StreamAttributeMapUtil.createAttributeMap(meta, attributeMap);
                 index = findMatchingRuleIndex(map);

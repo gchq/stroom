@@ -7,6 +7,8 @@ and this project adheres to [Semantic Versioning](http://semver.org/).
 
 ## [Unreleased]
 
+* Issue **#1564** : Fix error in data retention section of stream info popup.
+
 
 ## [v7.0-beta.35] - 2020-05-28
 
