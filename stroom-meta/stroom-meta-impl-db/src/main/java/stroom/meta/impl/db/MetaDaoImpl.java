@@ -439,7 +439,6 @@ class MetaDaoImpl implements MetaDao {
         // GROUP BY v.feed_name, v.rule_no, v.ms_til_delete
 
         final Instant now = Instant.now().truncatedTo(ChronoUnit.MILLIS);
-        long nowMs = now.toEpochMilli();
 
         List<Condition> conditions = new ArrayList<>();
 
