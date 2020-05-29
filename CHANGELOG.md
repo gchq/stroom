@@ -7,6 +7,27 @@ and this project adheres to [Semantic Versioning](http://semver.org/).
 
 ## [Unreleased]
 
+* Issue **#1564** : Fix error in data retention section of stream info popup.
+
+* Change data retention delete batching approach to use time ranges.
+
+
+## [v7.0-beta.35] - 2020-05-28
+
+* Issue **#1608** : Fixed NPE in UI data presenter.
+
+* Issue **#1595** : Fixed names for imported items that already exist but are updated by import.
+
+* Issue **#1603** : XSLT imports now error if more than one matching XSLT is found.
+
+* Issue **#1604** : XSLT import resolution now accepts the use of UUIDs and DocRef strings.
+
+* Issue **#1403** : Dashboard query download now retains expression parameters.
+
+* Issue **#1514** : Fixed properties edit presenter issue.
+
+* Issue **#1569** : Additional changes to improve the new `Data Delete` task that replaces the `File System Clean` task.
+
 * Issue **#1565** : Stop data retention rules deleting all data.
 
 * Add default data retention rule to the UI screen to make it clear what happens by default.
@@ -16,7 +37,7 @@ and this project adheres to [Semantic Versioning](http://semver.org/).
 
 ## [v7.0-beta.34] - 2020-05-26
 
-* Issue **#1569** : Removed recursive multi threading from file system clean as thread limit was being reached. 
+* Issue **#1569** : Removed recursive multi threading from file system clean as thread limit was being reached.
 
 * Issue **#1478** : Fixed data volume creation and other resource methods.
 
@@ -2235,7 +2256,8 @@ Issue **gchq/stroom-expression#22** : Add `typeOf(...)` function to dashboard.
 
 * Issue **#202** : Initial release of the new data retention policy functionality.
 
-[Unreleased]: https://github.com/gchq/stroom/compare/v7.0-beta.34...HEAD
+[Unreleased]: https://github.com/gchq/stroom/compare/v7.0-beta.35...HEAD
+[v7.0-beta.35]: https://github.com/gchq/stroom/compare/v7.0-beta.34...v7.0-beta.35
 [v7.0-beta.34]: https://github.com/gchq/stroom/compare/v7.0-beta.33...v7.0-beta.34
 [v7.0-beta.33]: https://github.com/gchq/stroom/compare/v7.0-beta.32...v7.0-beta.33
 [v7.0-beta.32]: https://github.com/gchq/stroom/compare/v7.0-beta.31...v7.0-beta.32

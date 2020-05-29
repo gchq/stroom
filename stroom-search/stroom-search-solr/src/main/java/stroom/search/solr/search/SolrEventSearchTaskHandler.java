@@ -16,6 +16,9 @@
 
 package stroom.search.solr.search;
 
+import stroom.query.api.v2.ExpressionOperator;
+import stroom.query.api.v2.ExpressionParamUtil;
+import stroom.query.api.v2.ExpressionUtil;
 import stroom.query.api.v2.Query;
 import stroom.query.common.v2.CompletionState;
 import stroom.query.common.v2.CoprocessorSettings;
@@ -72,6 +75,12 @@ public class SolrEventSearchTaskHandler {
 
             // Get the search.
             final Query query = task.getQuery();
+
+            // Replace expression parameters.
+            ExpressionOperator expression = query.getExpression();
+            final Map<String, String> paramMap = ExpressionParamUtil.createParamMap(query.getParams());
+            expression = ExpressionUtil.replaceExpressionParameters(expression, paramMap);
+            query.setExpression(expression);
 
             final EventCoprocessorSettings settings = new EventCoprocessorSettings(task.getMinEvent(), task.getMaxEvent(),
                     task.getMaxStreams(), task.getMaxEvents(), task.getMaxEventsPerStream());

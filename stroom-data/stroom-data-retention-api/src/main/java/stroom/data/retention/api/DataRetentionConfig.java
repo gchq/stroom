@@ -16,7 +16,7 @@ public class DataRetentionConfig extends AbstractConfig {
     @JsonPropertyDescription("The number of records that will be logically deleted in each pass of the data " +
             "retention deletion process. This number can be reduced to limit the time database locks are " +
             "held for.")
-    private int deleteBatchSize = 50_000;
+    private int deleteBatchSize = 1_000;
 
     @JsonProperty
     @JsonPropertyDescription("If true stroom will add additional clauses to the data retention deletion SQL in order " +

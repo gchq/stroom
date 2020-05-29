@@ -139,7 +139,7 @@ public class DataRetentionPolicyExecutor {
         if (dataRetentionRules != null) {
             final List<DataRetentionRule> activeRules = getActiveRules(dataRetentionRules.getRules());
 
-            if (activeRules.size() > 0) {
+            if (activeRules != null && activeRules.size() > 0) {
 
                 // Use tracker to establish how long ago we last ran this process so we can avoid
                 // scanning over data that has already been evaluated
@@ -184,6 +184,8 @@ public class DataRetentionPolicyExecutor {
             } else {
                 LOGGER.info("No active rules to process");
             }
+        } else {
+            LOGGER.info("No active rules to process");
         }
     }
 
@@ -256,9 +258,9 @@ public class DataRetentionPolicyExecutor {
                             .collect(Collectors.joining("\n"));
         });
 
-        final int count = metaService.delete(sortedRuleActions, period);
-        final String message = "Marked " + count + " items as deleted";
-        LOGGER.info(() -> message);
+        LOGGER.logDurationIfInfoEnabled(
+                () -> metaService.delete(sortedRuleActions, period),
+                count -> LogUtil.message("Marked {} items as deleted", count));
     }
 
     private Map<TimePeriod, List<DataRetentionRuleAction>> getRulesByPeriod(

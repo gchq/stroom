@@ -64,7 +64,7 @@ main() {
         shift 2
     done
 
-    echo "${GREEN}Done${NC}"
+    echo -e "${GREEN}Done${NC}"
 }
 
 main "$@"
