@@ -492,8 +492,8 @@ class MetaDaoImpl implements MetaDao {
                     totalUpdateCount.get(),
                     batchSize,
                     iteration.decrementAndGet(),
-                    totalSelectDuration.dividedBy(iteration.get()),
-                    totalUpdateDuration.dividedBy(iteration.get()));
+                    iteration.get() != 0 ? totalSelectDuration.dividedBy(iteration.get()) : Duration.ZERO,
+                    iteration.get() != 0 ? totalUpdateDuration.dividedBy(iteration.get()) : Duration.ZERO);
 
             if (Thread.currentThread().isInterrupted()) {
                 LOGGER.error("Thread interrupted");
