@@ -15,6 +15,8 @@ and this project adheres to [Semantic Versioning](http://semver.org/).
 
 * Issue **#1611** : Change explorer tree filtering to also filter on an exact match of the entity's UUID.
 
+* Add regex filtering with `/` prefix to fuzzy matching.
+
 
 ## [v7.0-beta.35] - 2020-05-28
 

@@ -1,10 +1,9 @@
 package stroom.util.string;
 
 import stroom.util.ConsoleColour;
+import stroom.util.logging.LambdaLogger;
+import stroom.util.logging.LambdaLoggerFactory;
 import stroom.util.logging.LogUtil;
-
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 
 import javax.validation.constraints.NotNull;
 import java.util.function.Predicate;
@@ -15,7 +14,7 @@ import java.util.regex.Pattern;
  */
 public class StringPredicateFactory {
 
-    private static final Logger LOGGER = LoggerFactory.getLogger(StringPredicateFactory.class);
+    private static final LambdaLogger LOGGER = LambdaLoggerFactory.getLogger(StringPredicateFactory.class);
 
     // Treat brackets as word separators, e.g. "Events (XML)"
     private static final Pattern DEFAULT_SEPARATOR_CHAR_CLASS = Pattern.compile("[ _\\-()\\[\\]]");
@@ -58,6 +57,7 @@ public class StringPredicateFactory {
      * Word boundary match: "OTheiM" matches "on the mat" in "the cat sat on their mat", but not "the cat sat on there mat"
      * See TestStringPredicateFactory for more examples of how the
      * matching works.
+     *
      * @param separatorCharacterClass A regex character class, e.g. [ \-_] that defines the separators
      *                                between words in the string(s) under test.
      */
@@ -69,6 +69,9 @@ public class StringPredicateFactory {
             LOGGER.trace("Creating null input predicate");
             // No input so get everything
             predicate = stringUnderTest -> true;
+        } else if (userInput.startsWith("/")) {
+            // remove the / marker char from the beginning
+            predicate = createRegexPredicate(userInput.substring(1));
         } else if (userInput.startsWith("^") && userInput.endsWith("$")) {
             predicate = createCaseInsensitiveExactMatchPredicate(userInput);
         } else if (userInput.endsWith("$")) {
@@ -144,9 +147,27 @@ public class StringPredicateFactory {
         }
     }
 
+    public static Predicate<String> createRegexPredicate(final String userInput) {
+        LOGGER.trace("Creating regex predicate for {}", userInput);
+        Pattern pattern;
+        try {
+            pattern = Pattern.compile(userInput, Pattern.CASE_INSENSITIVE);
+        } catch (Exception e) {
+            LOGGER.trace(() ->
+                    LogUtil.message("Invalid pattern {}, due to {}", userInput, e.getMessage()));
+            // Bad pattern, can't really raise an exception as the user may have just mis-typed
+            // so just return a false predicate
+            return str -> false;
+        }
+
+        return pattern.asPredicate();
+    }
+
     @NotNull
-    private static Predicate<String> createWordBoundaryPredicate(final String userInput,
-                                                                 final Pattern separatorCharacterClass) {
+    private static Predicate<String> createWordBoundaryPredicate(
+            final String userInput,
+            final Pattern separatorCharacterClass) {
+
         LOGGER.trace("creating word boundary predicate");
         // Has some uppercase so use word boundaries
         // An upper case letter means the start of a word
@@ -185,8 +206,10 @@ public class StringPredicateFactory {
     }
 
     @NotNull
-    private static Predicate<String> createSeparatedWordBoundaryPredicate(final String userInput,
-                                                                          final Pattern separatorCharacterClass) {
+    private static Predicate<String> createSeparatedWordBoundaryPredicate(
+            final String userInput,
+            final Pattern separatorCharacterClass) {
+
         // Has some uppercase so use word boundaries
         // An upper case letter means the start of a word
         // a lower case letter means the continuation of a word
@@ -221,14 +244,18 @@ public class StringPredicateFactory {
                 patternBuilder.append(Pattern.quote(String.valueOf(chr)));
             }
         }
-        final Pattern pattern = Pattern.compile(patternBuilder.toString(), Pattern.CASE_INSENSITIVE);
-        LOGGER.trace("Using separated word pattern: {} with separators {}", pattern, separatorCharacterClass);
+        final Pattern pattern = Pattern.compile(
+                patternBuilder.toString(), Pattern.CASE_INSENSITIVE);
+        LOGGER.trace("Using separated word pattern: {} with separators {}",
+                pattern, separatorCharacterClass);
 
         return pattern.asPredicate();
     }
 
     @NotNull
-    private static Predicate<String> createCamelCaseWordBoundaryPredicate(final String userInput) {
+    private static Predicate<String> createCamelCaseWordBoundaryPredicate(
+            final String userInput) {
+
         // Has some uppercase so use word boundaries
         // An upper case letter means the start of a word
         // a lower case letter means the continuation of a word
@@ -239,7 +266,8 @@ public class StringPredicateFactory {
 
             if (Character.isUpperCase(chr)) {
                 if (i == 0) {
-                    // First letter so is either preceded by ^ or by the end of the previous word
+                    // First letter so is either preceded by ^ or
+                    // by the end of the previous word
                     patternBuilder
                             .append("(?:^|[a-z0-9]") // non-capturing, assume numbers part of prev word
                             .append(")");
