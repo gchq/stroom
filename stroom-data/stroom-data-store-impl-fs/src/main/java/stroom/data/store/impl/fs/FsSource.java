@@ -16,16 +16,16 @@
 
 package stroom.data.store.impl.fs;
 
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 import stroom.data.store.api.DataException;
 import stroom.data.store.api.InputStreamProvider;
-import stroom.data.store.api.Source;
 import stroom.meta.api.AttributeMap;
 import stroom.meta.api.AttributeMapUtil;
 import stroom.meta.shared.Meta;
 import stroom.meta.shared.Status;
 import stroom.util.io.FileUtil;
+
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import java.io.IOException;
 import java.io.InputStream;
@@ -45,7 +45,7 @@ final class FsSource implements InternalSource, SegmentInputStreamProviderFactor
     private final FsPathHelper fileSystemStreamPathHelper;
     private final Map<String, FsSource> childMap = new HashMap<>();
     private final HashMap<String, SegmentInputStreamProvider> inputStreamMap = new HashMap<>(10);
-    private final String rootPath;
+    private final Path volumePath;
     private final String streamType;
     private final FsSource parent;
     private AttributeMap attributeMap;
@@ -58,11 +58,11 @@ final class FsSource implements InternalSource, SegmentInputStreamProviderFactor
 
     private FsSource(final FsPathHelper fileSystemStreamPathHelper,
                      final Meta meta,
-                     final String rootPath,
+                     final Path volumePath,
                      final String streamType) {
         this.fileSystemStreamPathHelper = fileSystemStreamPathHelper;
         this.meta = meta;
-        this.rootPath = rootPath;
+        this.volumePath = volumePath;
         this.parent = null;
         this.streamType = streamType;
 
@@ -75,7 +75,7 @@ final class FsSource implements InternalSource, SegmentInputStreamProviderFactor
                      final Path file) {
         this.fileSystemStreamPathHelper = fileSystemStreamPathHelper;
         this.meta = parent.meta;
-        this.rootPath = parent.rootPath;
+        this.volumePath = parent.volumePath;
         this.parent = parent;
         this.streamType = streamType;
         this.file = file;
@@ -89,7 +89,7 @@ final class FsSource implements InternalSource, SegmentInputStreamProviderFactor
      */
     static FsSource create(final FsPathHelper fileSystemStreamPathHelper,
                            final Meta meta,
-                           final String rootPath,
+                           final Path rootPath,
                            final String streamType) {
         return new FsSource(fileSystemStreamPathHelper, meta, rootPath, streamType);
     }
@@ -131,7 +131,7 @@ final class FsSource implements InternalSource, SegmentInputStreamProviderFactor
     private Path getFile() {
         if (file == null) {
             if (parent == null) {
-                file = fileSystemStreamPathHelper.getRootPath(rootPath, meta, streamType);
+                file = fileSystemStreamPathHelper.getRootPath(volumePath, meta, streamType);
             } else {
                 file = fileSystemStreamPathHelper.getChildPath(parent.getFile(), streamType);
             }
@@ -218,9 +218,9 @@ final class FsSource implements InternalSource, SegmentInputStreamProviderFactor
         }
     }
 
-    Source getParent() {
-        return parent;
-    }
+//    Source getParent() {
+//        return parent;
+//    }
 
     /////////////////////////////////
     // START INTERNAL SOURCE

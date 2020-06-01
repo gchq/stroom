@@ -31,13 +31,13 @@ final class DataRetentionCreationTimeUtil {
         // Utility class.
     }
 
-    static long minus(final long ms, final DataRetentionRule rule) {
+    static Instant minus(final Instant instant, final DataRetentionRule rule) {
         if (rule.isForever()) {
-            return 0;
+            return Instant.EPOCH;
         }
 
         LocalDateTime age = null;
-        final LocalDateTime time = LocalDateTime.ofInstant(Instant.ofEpochMilli(ms), ZoneOffset.UTC);
+        final LocalDateTime time = LocalDateTime.ofInstant(instant, ZoneOffset.UTC);
         switch (rule.getTimeUnit()) {
             case MINUTES:
                 age = time.minusMinutes(rule.getAge());
@@ -60,19 +60,19 @@ final class DataRetentionCreationTimeUtil {
         }
 
         if (age == null) {
-            return 0;
+            return Instant.EPOCH;
         }
 
-        return age.toInstant(ZoneOffset.UTC).toEpochMilli();
+        return age.toInstant(ZoneOffset.UTC);
     }
 
-    static long plus(final long ms, final DataRetentionRule rule) {
+    static Instant plus(final Instant instant, final DataRetentionRule rule) {
         if (rule.isForever()) {
-            return 0;
+            return Instant.EPOCH;
         }
 
         LocalDateTime age = null;
-        final LocalDateTime time = LocalDateTime.ofInstant(Instant.ofEpochMilli(ms), ZoneOffset.UTC);
+        final LocalDateTime time = LocalDateTime.ofInstant(instant, ZoneOffset.UTC);
         switch (rule.getTimeUnit()) {
             case MINUTES:
                 age = time.plusMinutes(rule.getAge());
@@ -95,9 +95,9 @@ final class DataRetentionCreationTimeUtil {
         }
 
         if (age == null) {
-            return 0;
+            return Instant.EPOCH;
         }
 
-        return age.toInstant(ZoneOffset.UTC).toEpochMilli();
+        return age.toInstant(ZoneOffset.UTC);
     }
 }

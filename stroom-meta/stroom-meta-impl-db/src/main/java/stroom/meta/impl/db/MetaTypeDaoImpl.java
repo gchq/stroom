@@ -17,14 +17,15 @@
 
 package stroom.meta.impl.db;
 
-import org.jooq.Condition;
-import org.jooq.Field;
 import stroom.cache.api.CacheManager;
 import stroom.cache.api.ICache;
 import stroom.data.shared.StreamTypeNames;
 import stroom.db.util.JooqUtil;
 import stroom.meta.impl.MetaTypeDao;
 import stroom.meta.impl.db.jooq.tables.records.MetaTypeRecord;
+
+import org.jooq.Condition;
+import org.jooq.Field;
 
 import javax.inject.Inject;
 import javax.inject.Singleton;
@@ -129,9 +130,10 @@ class MetaTypeDaoImpl implements MetaTypeDao {
         cache.clear();
     }
 
-    private int deleteAll() {
-        return JooqUtil.contextResult(metaDbConnProvider, context -> context
-                .delete(META_TYPE)
-                .execute());
+    private void deleteAll() {
+        JooqUtil.truncateTable(metaDbConnProvider, META_TYPE);
+//        return JooqUtil.contextResult(metaDbConnProvider, context -> context
+//                .truncate(META_TYPE)
+//                .execute());
     }
 }

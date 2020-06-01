@@ -18,6 +18,7 @@ package stroom.util.logging;
 
 import org.slf4j.Logger;
 
+import java.util.function.Function;
 import java.util.function.Supplier;
 
 public interface LambdaLogger extends Logger {
@@ -75,6 +76,17 @@ public interface LambdaLogger extends Logger {
     <T> T logDurationIfTraceEnabled(final Supplier<T> timedWork, final Supplier<String> workDescriptionSupplier);
 
     /**
+     * Performs timedWork and if TRACE is enabled, logs the time taken to do that work. This cannot be used
+     * where the work throws a checked exception.
+     *
+     * @param timedWork               Work to perform and to time if required
+     * @param <T>                     The type of the result of the work
+     * @param workDescriptionFunction A supplier of the description of the work to be added to the log message
+     * @return The result of the work
+     */
+    <T> T logDurationIfTraceEnabled(final Supplier<T> timedWork, final Function<T, String> workDescriptionFunction);
+
+    /**
      * Performs timedWork and if DEBUG is enabled, logs the time taken to do that work. This cannot be used
      * where the work throws a checked exception.
      *
@@ -99,6 +111,17 @@ public interface LambdaLogger extends Logger {
     <T> T logDurationIfDebugEnabled(final Supplier<T> timedWork, final Supplier<String> workDescriptionSupplier);
 
     /**
+     * Performs timedWork and if DEBUG is enabled, logs the time taken to do that work. This cannot be used
+     * where the work throws a checked exception.
+     *
+     * @param timedWork               Work to perform and to time if required
+     * @param workDescriptionFunction The name of the work to be added to the log message
+     * @param <T>                     The type of the result of the work
+     * @return The result of the work
+     */
+    <T> T logDurationIfDebugEnabled(final Supplier<T> timedWork, final Function<T, String> workDescriptionFunction);
+
+    /**
      * Performs timedWork and if INFO is enabled, logs the time taken to do that work. This cannot be used
      * where the work throws a checked exception.
      *
@@ -121,6 +144,17 @@ public interface LambdaLogger extends Logger {
      * @return The result of the work
      */
     <T> T logDurationIfInfoEnabled(final Supplier<T> timedWork, final Supplier<String> workDescriptionSupplier);
+
+    /**
+     * Performs timedWork and if INFO is enabled, logs the time taken to do that work. This cannot be used
+     * where the work throws a checked exception.
+     *
+     * @param timedWork               Work to perform and to time if required
+     * @param workDescriptionFunction The name of the work to be added to the log message
+     * @param <T>                     The type of the result of the work
+     * @return The result of the work
+     */
+    <T> T logDurationIfInfoEnabled(final Supplier<T> timedWork, final Function<T, String> workDescriptionFunction);
 
     /**
      * Performs timedWork and if TRACE is enabled, logs the time taken to do that work. This cannot be used

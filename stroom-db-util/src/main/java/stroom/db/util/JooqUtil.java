@@ -71,6 +71,39 @@ public final class JooqUtil {
         }
     }
 
+    public static <R extends Record> void truncateTable(final DataSource dataSource,
+                                                        final Table<R> table) {
+
+        try (final Connection connection = dataSource.getConnection()) {
+            final DSLContext context = createContext(connection);
+            context
+                    .batch(
+                            "SET FOREIGN_KEY_CHECKS=0",
+                            "truncate table " + table.getName(),
+                            "SET FOREIGN_KEY_CHECKS=1")
+                    .execute();
+        } catch (final SQLException e) {
+            LOGGER.error(e.getMessage(), e);
+            throw new RuntimeException(e.getMessage(), e);
+        }
+    }
+
+    public static <R extends Record> int getTableCount(final DataSource dataSource,
+                                                       final Table<R> table) {
+
+        try (final Connection connection = dataSource.getConnection()) {
+            final DSLContext context = createContext(connection);
+            return context
+                    .selectCount()
+                    .from(table)
+                    .fetchOne()
+                    .value1();
+        } catch (final SQLException e) {
+            LOGGER.error(e.getMessage(), e);
+            throw new RuntimeException(e.getMessage(), e);
+        }
+    }
+
     public static <R> R contextResult(final DataSource dataSource, final Function<DSLContext, R> function) {
         R result;
         try (final Connection connection = dataSource.getConnection()) {
@@ -93,7 +126,8 @@ public final class JooqUtil {
 //        }
 //    }
 
-    public static <R> R contextResultWithOptimisticLocking(final DataSource dataSource, final Function<DSLContext, R> function) {
+    public static <R> R contextResultWithOptimisticLocking(final DataSource dataSource,
+                                                           final Function<DSLContext, R> function) {
         R result;
         try (final Connection connection = dataSource.getConnection()) {
             final DSLContext context = createContextWithOptimisticLocking(connection);

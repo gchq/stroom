@@ -21,6 +21,8 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import stroom.dictionary.api.WordListProvider;
 import stroom.query.api.v2.ExpressionOperator;
+import stroom.query.api.v2.ExpressionParamUtil;
+import stroom.query.api.v2.ExpressionUtil;
 import stroom.query.api.v2.Query;
 import stroom.query.api.v2.SearchRequest;
 import stroom.query.common.v2.*;
@@ -86,6 +88,12 @@ class SolrSearchStoreFactory implements StoreFactory {
 
         // Get the search.
         final Query query = searchRequest.getQuery();
+
+        // Replace expression parameters.
+        ExpressionOperator expression = query.getExpression();
+        final Map<String, String> paramMap = ExpressionParamUtil.createParamMap(query.getParams());
+        expression = ExpressionUtil.replaceExpressionParameters(expression, paramMap);
+        query.setExpression(expression);
 
         // Load the index.
         final CachedSolrIndex index = securityContext.useAsReadResult(() -> solrIndexCache.get(query.getDataSource()));

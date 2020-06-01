@@ -9,12 +9,11 @@ import stroom.query.api.v2.ExpressionItem;
 import org.jooq.Condition;
 import org.jooq.Field;
 
-import java.util.Collection;
 import java.util.Collections;
 import java.util.List;
 import java.util.function.Function;
 
-public class ExpressionMapper implements Function<ExpressionItem, Collection<Condition>> {
+public class ExpressionMapper implements Function<ExpressionItem, Condition> {
     private final CommonExpressionMapper expressionMapper;
     private final WordListProvider wordListProvider;
     private final CollectionService collectionService;
@@ -26,20 +25,50 @@ public class ExpressionMapper implements Function<ExpressionItem, Collection<Con
         this.collectionService = collectionService;
     }
 
-    public <T> void map(final AbstractField dataSourceField, final Field<T> field, final Converter<T> converter) {
-        expressionMapper.addHandler(dataSourceField, new TermHandler<>(dataSourceField, field, new ConverterAdapter<>(converter), wordListProvider, collectionService));
+    public <T> void map(final AbstractField dataSourceField,
+                        final Field<T> field, final Converter<T> converter) {
+        expressionMapper.addHandler(dataSourceField, new TermHandler<>(
+                dataSourceField,
+                field,
+                new ConverterAdapter<>(converter),
+                wordListProvider,
+                collectionService));
     }
 
-    public <T> void map(final AbstractField dataSourceField, final Field<T> field, final Converter<T> converter, final boolean useName) {
-        expressionMapper.addHandler(dataSourceField, new TermHandler<>(dataSourceField, field, new ConverterAdapter<>(converter), wordListProvider, collectionService, useName));
+    public <T> void map(final AbstractField dataSourceField,
+                        final Field<T> field,
+                        final Converter<T> converter, final boolean useName) {
+        expressionMapper.addHandler(dataSourceField, new TermHandler<>(
+                dataSourceField,
+                field,
+                new ConverterAdapter<>(converter),
+                wordListProvider,
+                collectionService,
+                useName));
     }
 
-    public <T> void multiMap(final AbstractField dataSourceField, final Field<T> field, final MultiConverter<T> converter) {
-        expressionMapper.addHandler(dataSourceField, new TermHandler<>(dataSourceField, field, converter, wordListProvider, collectionService));
+    public <T> void multiMap(final AbstractField dataSourceField,
+                             final Field<T> field,
+                             final MultiConverter<T> converter) {
+        expressionMapper.addHandler(dataSourceField, new TermHandler<>(
+                dataSourceField,
+                field,
+                converter,
+                wordListProvider,
+                collectionService));
     }
 
-    public <T> void multiMap(final AbstractField dataSourceField, final Field<T> field, final MultiConverter<T> converter, final boolean useName) {
-        expressionMapper.addHandler(dataSourceField, new TermHandler<>(dataSourceField, field, converter, wordListProvider, collectionService, useName));
+    public <T> void multiMap(final AbstractField dataSourceField,
+                             final Field<T> field,
+                             final MultiConverter<T> converter,
+                             final boolean useName) {
+        expressionMapper.addHandler(dataSourceField, new TermHandler<>(
+                dataSourceField,
+                field,
+                converter,
+                wordListProvider,
+                collectionService,
+                useName));
     }
 
     public void ignoreField(final AbstractField dataSourceField) {
@@ -47,7 +76,7 @@ public class ExpressionMapper implements Function<ExpressionItem, Collection<Con
     }
 
     @Override
-    public Collection<Condition> apply(final ExpressionItem expressionItem) {
+    public Condition apply(final ExpressionItem expressionItem) {
         return expressionMapper.apply(expressionItem);
     }
 

@@ -387,9 +387,10 @@ class MetaValueDaoImpl implements MetaValueDao {
         deleteAll();
     }
 
-    private int deleteAll() {
-        return JooqUtil.contextResult(metaDbConnProvider, context -> context
-                .delete(META_VAL)
-                .execute());
+    private void deleteAll() {
+        JooqUtil.truncateTable(metaDbConnProvider, META_VAL);
+//        return JooqUtil.contextResult(metaDbConnProvider, context -> context
+//                .truncate(META_VAL)
+//                .execute());
     }
 }

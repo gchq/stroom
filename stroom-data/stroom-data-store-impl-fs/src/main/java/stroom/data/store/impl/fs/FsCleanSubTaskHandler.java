@@ -19,6 +19,7 @@ package stroom.data.store.impl.fs;
 import stroom.data.store.impl.DataStoreMaintenanceService;
 import stroom.data.store.impl.ScanVolumePathResult;
 import stroom.security.api.SecurityContext;
+import stroom.security.shared.PermissionNames;
 import stroom.task.api.ExecutorProvider;
 import stroom.task.api.TaskContext;
 import stroom.task.api.TaskContextFactory;
@@ -39,7 +40,6 @@ import java.util.function.Consumer;
 /**
  * Task to clean the stream store.
  */
-
 class FsCleanSubTaskHandler {
     private static final Logger LOGGER = LoggerFactory.getLogger(FsCleanSubTaskHandler.class);
 
@@ -63,7 +63,7 @@ class FsCleanSubTaskHandler {
     }
 
     public void exec(final TaskContext taskContext, final FsCleanSubTask task, final Consumer<List<String>> deleteListConsumer) {
-        securityContext.secure(() -> {
+        securityContext.secure(PermissionNames.DELETE_DATA_PERMISSION, () -> {
             final ThreadPool threadPool = new ThreadPoolImpl("File System Clean#", 1, 1, config.getFileSystemCleanBatchSize(), Integer.MAX_VALUE);
             final Executor executor = executorProvider.get(threadPool);
 

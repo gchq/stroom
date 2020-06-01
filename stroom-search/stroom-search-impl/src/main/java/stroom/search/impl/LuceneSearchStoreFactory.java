@@ -26,6 +26,8 @@ import stroom.index.shared.IndexDoc;
 import stroom.index.shared.IndexFieldsMap;
 import stroom.node.api.NodeInfo;
 import stroom.query.api.v2.ExpressionOperator;
+import stroom.query.api.v2.ExpressionParamUtil;
+import stroom.query.api.v2.ExpressionUtil;
 import stroom.query.api.v2.Query;
 import stroom.query.api.v2.SearchRequest;
 import stroom.query.common.v2.CompletionState;
@@ -41,6 +43,7 @@ import stroom.ui.config.shared.UiConfig;
 import javax.inject.Inject;
 import java.util.Arrays;
 import java.util.Collections;
+import java.util.Map;
 import java.util.Set;
 import java.util.stream.Collectors;
 
@@ -82,6 +85,12 @@ public class LuceneSearchStoreFactory implements StoreFactory {
 
         // Get the search.
         final Query query = searchRequest.getQuery();
+
+        // Replace expression parameters.
+        ExpressionOperator expression = query.getExpression();
+        final Map<String, String> paramMap = ExpressionParamUtil.createParamMap(query.getParams());
+        expression = ExpressionUtil.replaceExpressionParameters(expression, paramMap);
+        query.setExpression(expression);
 
         // Load the index.
         final IndexDoc index = securityContext.useAsReadResult(() -> indexStore.readDocument(query.getDataSource()));

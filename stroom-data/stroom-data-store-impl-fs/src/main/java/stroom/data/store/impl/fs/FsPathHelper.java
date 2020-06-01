@@ -16,12 +16,12 @@
 
 package stroom.data.store.impl.fs;
 
-import com.google.inject.Inject;
 import stroom.data.shared.StreamTypeNames;
-import stroom.data.store.impl.fs.DataVolumeDao.DataVolume;
 import stroom.meta.shared.Meta;
 import stroom.util.date.DateUtil;
 import stroom.util.io.FileUtil;
+
+import com.google.inject.Inject;
 
 import java.io.IOException;
 import java.io.InputStream;
@@ -31,19 +31,17 @@ import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.util.ArrayList;
 import java.util.List;
-import java.util.Set;
-import java.util.stream.Collectors;
 
 class FsPathHelper {
     /**
      * We use this rather than the File.separator as we need to be standard
      * across Windows and UNIX.
      */
-    private static final String SEPERATOR_CHAR = "/";
+//    private static final String SEPERATOR_CHAR = "/";
     private static final String FILE_SEPERATOR_CHAR = "=";
     private static final String STORE_NAME = "store";
 
-    private String[] CHILD_STREAM_TYPES = new String[]{
+    private static final String[] CHILD_STREAM_TYPES = new String[]{
             InternalStreamTypeNames.SEGMENT_INDEX,
             InternalStreamTypeNames.BOUNDARY_INDEX,
             InternalStreamTypeNames.MANIFEST,
@@ -60,15 +58,21 @@ class FsPathHelper {
         this.fileSystemTypePaths = fileSystemTypePaths;
     }
 
-    private String createFilePathBase(final String rootPath, final Meta meta, final String streamTypeName) {
-        return rootPath +
-                SEPERATOR_CHAR +
-                STORE_NAME +
-                SEPERATOR_CHAR +
-                getDirectory(meta, streamTypeName) +
-                SEPERATOR_CHAR +
-                getBaseName(meta);
-    }
+//    private String createFilePathBase(final String rootPath, final Meta meta, final String streamTypeName) {
+//        return rootPath +
+//                SEPERATOR_CHAR +
+//                STORE_NAME +
+//                SEPERATOR_CHAR +
+//                getDirectory(meta, streamTypeName) +
+//                SEPERATOR_CHAR +
+//                getBaseName(meta);
+//    }
+//
+//    private Path createFilePathBase(final Path rootPath, final Meta meta, final String streamTypeName) {
+//        Path result = rootPath.resolve(STORE_NAME);
+//        result = appendDirectory(result, meta, streamTypeName);
+//        return result.resolve(getBaseName(meta));
+//    }
 
     /**
      * Return back a input stream for a given stream type and file.
@@ -128,20 +132,20 @@ class FsPathHelper {
         return outputStream;
     }
 
-    /**
-     * Create a child file for a parent.
-     */
-    Path getChildPath(final Meta meta, final DataVolume streamVolume, final String streamTypeName) {
-        final String path = createFilePathBase(streamVolume.getVolumePath(), meta,
-                meta.getTypeName()) +
-                "." +
-                StreamTypeExtensions.getExtension(meta.getTypeName()) +
-                "." +
-                StreamTypeExtensions.getExtension(streamTypeName) +
-                "." +
-                String.valueOf(getFileStoreType(streamTypeName));
-        return Paths.get(path);
-    }
+//    /**
+//     * Create a child file for a parent.
+//     */
+//    Path getChildPath(final Meta meta, final DataVolume streamVolume, final String streamTypeName) {
+//        final String path = createFilePathBase(streamVolume.getVolumePath(), meta,
+//                meta.getTypeName()) +
+//                "." +
+//                StreamTypeExtensions.getExtension(meta.getTypeName()) +
+//                "." +
+//                StreamTypeExtensions.getExtension(streamTypeName) +
+//                "." +
+//                String.valueOf(getFileStoreType(streamTypeName));
+//        return Paths.get(path);
+//    }
 
     /**
      * <p>
@@ -159,32 +163,54 @@ class FsPathHelper {
                 FsPrefixUtil.padId(meta.getId());
     }
 
-    String getDirectory(Meta meta, String streamTypeName) {
-        StringBuilder builder = new StringBuilder();
-        builder.append(fileSystemTypePaths.getOrCreatePath(streamTypeName));
-        builder.append(FsPathHelper.SEPERATOR_CHAR);
-        String utcDate = DateUtil.createNormalDateTimeString(meta.getCreateMs());
-        builder.append(utcDate, 0, 4);
-        builder.append(FsPathHelper.SEPERATOR_CHAR);
-        builder.append(utcDate, 5, 7);
-        builder.append(FsPathHelper.SEPERATOR_CHAR);
-        builder.append(utcDate, 8, 10);
-        String idPath = FsPrefixUtil.buildIdPath(FsPrefixUtil.padId(meta.getId()));
-        if (idPath != null) {
-            builder.append(FsPathHelper.SEPERATOR_CHAR);
-            builder.append(idPath);
-        }
-        return builder.toString();
-    }
-
-    /**
-     * Create a child file set for a parent file set.
-     */
-    Set<Path> getChildPathSet(final Set<Path> parentSet, final String streamTypeName) {
-        return parentSet.stream()
-                .map(parent -> getChildPath(parent, streamTypeName))
-                .collect(Collectors.toSet());
-    }
+//    String getDirectory(Meta meta, String streamTypeName) {
+//        StringBuilder builder = new StringBuilder();
+//        builder.append(fileSystemTypePaths.getOrCreatePath(streamTypeName));
+//        builder.append(FsPathHelper.SEPERATOR_CHAR);
+//        String utcDate = DateUtil.createNormalDateTimeString(meta.getCreateMs());
+//        builder.append(utcDate, 0, 4);
+//        builder.append(FsPathHelper.SEPERATOR_CHAR);
+//        builder.append(utcDate, 5, 7);
+//        builder.append(FsPathHelper.SEPERATOR_CHAR);
+//        builder.append(utcDate, 8, 10);
+//        String idPath = FsPrefixUtil.buildIdPath(FsPrefixUtil.padId(meta.getId()));
+//        if (idPath != null) {
+//            builder.append(FsPathHelper.SEPERATOR_CHAR);
+//            builder.append(idPath);
+//        }
+//        return builder.toString();
+//    }
+//
+//    Path appendDirectory(final Path path, final Meta meta, final String streamTypeName) {
+//        final String utcDate = DateUtil.createNormalDateTimeString(meta.getCreateMs());
+//        final String typePath = fileSystemTypePaths.getOrCreatePath(streamTypeName);
+//        final String paddedId = FsPrefixUtil.padId(meta.getId());
+//
+//        return appendDirectory(path, typePath, utcDate, paddedId);
+//    }
+//
+//    Path appendDirectory(final Path path, final String typePath, final String utcDate, final String paddedId) {
+//        Path result = path;
+//
+//        result = result
+//                .resolve(typePath)
+//                .resolve(utcDate.substring(0, 4))
+//                .resolve(utcDate.substring(5, 7))
+//                .resolve(utcDate.substring(8, 10));
+//
+//        result = FsPrefixUtil.appendIdPath(result, paddedId);
+//
+//        return result;
+//    }
+//
+//    /**
+//     * Create a child file set for a parent file set.
+//     */
+//    Set<Path> getChildPathSet(final Set<Path> parentSet, final String streamTypeName) {
+//        return parentSet.stream()
+//                .map(parent -> getChildPath(parent, streamTypeName))
+//                .collect(Collectors.toSet());
+//    }
 
     /**
      * Find all the descendants to this file.
@@ -202,13 +228,32 @@ class FsPathHelper {
     /**
      * Return a File IO object.
      */
-    Path getRootPath(final String rootPath, final Meta meta, final String streamTypeName) {
-        final String path = createFilePathBase(rootPath, meta, streamTypeName) +
+    Path getRootPath(final Path volumePath, final Meta meta, final String streamTypeName) {
+        final String utcDate = DateUtil.createNormalDateTimeString(meta.getCreateMs());
+        final String typePath = fileSystemTypePaths.getOrCreatePath(streamTypeName);
+        final String feedPath = fileSystemFeedPaths.getOrCreatePath(meta.getFeedName());
+        final String paddedId = FsPrefixUtil.padId(meta.getId());
+
+        final String fileName = "" +
+                feedPath +
+                FILE_SEPERATOR_CHAR +
+                paddedId +
                 "." +
                 StreamTypeExtensions.getExtension(streamTypeName) +
                 "." +
                 getFileStoreType(streamTypeName);
-        return Paths.get(path);
+
+        Path result = volumePath;
+        result = result
+                .resolve(STORE_NAME)
+                .resolve(typePath)
+                .resolve(utcDate.substring(0, 4))
+                .resolve(utcDate.substring(5, 7))
+                .resolve(utcDate.substring(8, 10));
+
+        result = FsPrefixUtil.appendIdPath(result, paddedId);
+
+        return result.resolve(fileName);
     }
 
     /**
@@ -241,10 +286,10 @@ class FsPathHelper {
     boolean isStreamTypeLazy(final String streamTypeName) {
         return InternalStreamTypeNames.SEGMENT_INDEX.equals(streamTypeName) || InternalStreamTypeNames.BOUNDARY_INDEX.equals(streamTypeName);
     }
-
-    static boolean isStreamTypeSegment(final String streamTypeName) {
-        return InternalStreamTypeNames.SEGMENT_INDEX.equals(streamTypeName) || InternalStreamTypeNames.BOUNDARY_INDEX.equals(streamTypeName);
-    }
+//
+//    static boolean isStreamTypeSegment(final String streamTypeName) {
+//        return InternalStreamTypeNames.SEGMENT_INDEX.equals(streamTypeName) || InternalStreamTypeNames.BOUNDARY_INDEX.equals(streamTypeName);
+//    }
 
     /**
      * Types of file we are dealing with.

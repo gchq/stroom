@@ -16,6 +16,8 @@
 
 package stroom.data.store.impl.fs;
 
+import java.nio.file.Path;
+
 /**
  * <p>
  * Utility to get prefix sequences.
@@ -36,43 +38,63 @@ final class FsPrefixUtil {
         if (current == null) {
             return START_PREFIX;
         }
-        StringBuilder buffer = new StringBuilder();
-        buffer.append(current);
 
-        while ((buffer.length() % PAD_SIZE) != 0) {
-            buffer.insert(0, "0");
+        final StringBuilder sb = new StringBuilder();
+        sb.append(current);
+
+        while ((sb.length() % PAD_SIZE) != 0) {
+            sb.insert(0, "0");
         }
-        return buffer.toString();
 
+        return sb.toString();
+    }
+
+//    /**
+//     * Given a string chop it up into 3 parts separately by '/'.
+//     */
+//    static String buildIdPath(final String id) {
+//        if (id.length() == PAD_SIZE) {
+//            return null;
+//        }
+//
+//        StringBuilder builder = new StringBuilder();
+//        int startPos = 0;
+//        while (startPos < id.length() - PAD_SIZE) {
+//            builder.append(id.charAt(startPos));
+//            startPos++;
+//            if (startPos < id.length()) {
+//                builder.append(id.charAt(startPos));
+//                startPos++;
+//                if (startPos < id.length()) {
+//                    builder.append(id.charAt(startPos));
+//                    builder.append('/');
+//                    startPos++;
+//                }
+//            }
+//        }
+//        // Drop last '/'
+//        if (builder.charAt(builder.length() - 1) == '/') {
+//            builder.setLength(builder.length() - 1);
+//        }
+//        return builder.toString();
+//    }
+
+    /**
+     * Given a string chop it up into parts and append to a path.
+     */
+    static Path appendIdPath(final Path path, final long id) {
+        return appendIdPath(path, FsPrefixUtil.padId(id));
     }
 
     /**
-     * Given a string chop it up into 3 parts separately by '/'.
+     * Given a string chop it up into parts and append to a path.
      */
-    static String buildIdPath(final String id) {
-        if (id.length() == PAD_SIZE) {
-            return null;
+    static Path appendIdPath(final Path path, final String id) {
+        Path result = path;
+        for (int i = 0; i < id.length() - PAD_SIZE; i += PAD_SIZE) {
+            final String part = id.substring(i, i + PAD_SIZE);
+            result = result.resolve(part);
         }
-
-        StringBuilder builder = new StringBuilder();
-        int startPos = 0;
-        while (startPos < id.length() - PAD_SIZE) {
-            builder.append(id.charAt(startPos));
-            startPos++;
-            if (startPos < id.length()) {
-                builder.append(id.charAt(startPos));
-                startPos++;
-                if (startPos < id.length()) {
-                    builder.append(id.charAt(startPos));
-                    builder.append('/');
-                    startPos++;
-                }
-            }
-        }
-        // Drop last '/'
-        if (builder.charAt(builder.length() - 1) == '/') {
-            builder.setLength(builder.length() - 1);
-        }
-        return builder.toString();
+        return result;
     }
 }

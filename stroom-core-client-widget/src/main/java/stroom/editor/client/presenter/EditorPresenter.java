@@ -76,11 +76,15 @@ public class EditorPresenter extends MyPresenterWidget<EditorView>
     }
 
     public void setText(final String text, final boolean format) {
-        if (format) {
-            final String formatted = new XmlFormatter().format(text);
-            getView().setText(formatted);
+        if (text == null) {
+            getView().setText("");
         } else {
-            getView().setText(text);
+            if (format) {
+                final String formatted = new XmlFormatter().format(text);
+                getView().setText(formatted);
+            } else {
+                getView().setText(text);
+            }
         }
     }
 

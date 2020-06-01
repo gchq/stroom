@@ -16,16 +16,18 @@
 
 package stroom.util.client;
 
+import stroom.query.api.v2.ExpressionParamUtil;
+
 import org.junit.jupiter.api.Test;
 
 import java.util.Map;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
-class TestKVMapUtil {
+class TestExpressionParamUtil {
     @Test
     void testSimpleParse() {
-        final Map<String, String> map = KVMapUtil.parse("param1=value1");
+        final Map<String, String> map = ExpressionParamUtil.parse("param1=value1");
         assertThat(map.keySet().iterator().next()).isEqualTo("param1");
         assertThat(map.get("param1")).isEqualTo("value1");
     }
@@ -42,33 +44,33 @@ class TestKVMapUtil {
 
     @Test
     void testReplacement() {
-        Map<String, String> map = KVMapUtil.parse("key1=value1");
-        String result = KVMapUtil.replaceParameters("this is ${key1}", map);
+        Map<String, String> map = ExpressionParamUtil.parse("key1=value1");
+        String result = ExpressionParamUtil.replaceParameters("this is ${key1}", map);
         assertThat(result).isEqualTo("this is value1");
 
-        map = KVMapUtil.parse("key1=value1 key2=value2");
-        result = KVMapUtil.replaceParameters("this is $${key1} ${key2}", map);
+        map = ExpressionParamUtil.parse("key1=value1 key2=value2");
+        result = ExpressionParamUtil.replaceParameters("this is $${key1} ${key2}", map);
         assertThat(result).isEqualTo("this is ${key1} value2");
 
-        result = KVMapUtil.replaceParameters("this is $$${key1} ${key2}", map);
+        result = ExpressionParamUtil.replaceParameters("this is $$${key1} ${key2}", map);
         assertThat(result).isEqualTo("this is $value1 value2");
 
-        result = KVMapUtil.replaceParameters("this is $$$${key1} ${key2}", map);
+        result = ExpressionParamUtil.replaceParameters("this is $$$${key1} ${key2}", map);
         assertThat(result).isEqualTo("this is $${key1} value2");
 
-        result = KVMapUtil.replaceParameters("this is $$$$${key1} ${key2}", map);
+        result = ExpressionParamUtil.replaceParameters("this is $$$$${key1} ${key2}", map);
         assertThat(result).isEqualTo("this is $$value1 value2");
 
-        result = KVMapUtil.replaceParameters("$this is $$$$${key1} ${key2}", map);
+        result = ExpressionParamUtil.replaceParameters("$this is $$$$${key1} ${key2}", map);
         assertThat(result).isEqualTo("$this is $$value1 value2");
 
-        map = KVMapUtil.parse("user=user1 user2");
-        result = KVMapUtil.replaceParameters("${user}", map);
+        map = ExpressionParamUtil.parse("user=user1 user2");
+        result = ExpressionParamUtil.replaceParameters("${user}", map);
         assertThat(result).isEqualTo("user1 user2");
     }
 
     private void testKV(String text, String... expectedParams) {
-        final Map<String, String> map = KVMapUtil.parse(text);
+        final Map<String, String> map = ExpressionParamUtil.parse(text);
 
         assertThat(expectedParams.length > 0).isTrue();
         assertThat(expectedParams.length % 2 == 0).isTrue();
