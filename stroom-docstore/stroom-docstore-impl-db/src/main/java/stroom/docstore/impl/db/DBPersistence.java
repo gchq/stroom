@@ -157,7 +157,7 @@ public class DBPersistence implements Persistence, Clearable {
                     "  name " +
                     "FROM doc " +
                     "WHERE type = ? " +
-                    "ORDER BY id";
+                    "ORDER BY uuid";
             try (final PreparedStatement preparedStatement = connection.prepareStatement(sql)) {
                 preparedStatement.setString(1, type);
 
