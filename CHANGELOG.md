@@ -11,6 +11,8 @@ and this project adheres to [Semantic Versioning](http://semver.org/).
 
 * Change data retention delete batching approach to use time ranges.
 
+* Issue **#1611** : Change explorer tree filtering to also filter on an exact match of the entity's UUID.
+
 
 ## [v7.0-beta.35] - 2020-05-28
 
