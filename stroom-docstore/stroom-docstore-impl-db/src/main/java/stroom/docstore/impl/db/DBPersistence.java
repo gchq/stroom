@@ -152,14 +152,12 @@ public class DBPersistence implements Persistence, Clearable {
 
         try (final Connection connection = dataSource.getConnection()) {
             final String sql = "" +
-                    "SELECT " +
+                    "SELECT DISTINCT " +
                     "  uuid, " +
-                    "  name, " +
-                    " id " +
+                    "  name " +
                     "FROM doc " +
                     "WHERE type = ? " +
-                    "AND ext = 'meta' " +
-                    "ORDER BY id";
+                    "ORDER BY uuid";
             try (final PreparedStatement preparedStatement = connection.prepareStatement(sql)) {
                 preparedStatement.setString(1, type);
 
