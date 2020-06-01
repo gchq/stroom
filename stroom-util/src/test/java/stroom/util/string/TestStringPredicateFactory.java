@@ -129,7 +129,7 @@ class TestStringPredicateFactory {
                         List.of("theCatSatOnTheirMat",
                                 "TheCatSatOnTheirMat",
                                 "OfTheirMagic"),
-                        List.of("theCatSatOnTheMat", "satOnThereMat", "OnTheMix")),
+                        List.of("theCatSatOnTheMat", "satOnThereMat", "OnTheMix", "on their moat")),
 
                 makeTest("Word boundary match 5",
                         "CPSP",
