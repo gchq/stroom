@@ -94,13 +94,13 @@ public class StringPredicateFactory {
      * Wraps the passed {@link Predicate} with one that returns result
      * if the value under test is null
      */
-    public static Predicate<String> toNullSafePredicate(final boolean resultIfNull,
-                                                        final Predicate<String> predicate) {
-        return str -> {
-            if (str == null) {
+    public static <T> Predicate<T> toNullSafePredicate(final boolean resultIfNull,
+                                                       final Predicate<T> predicate) {
+        return obj -> {
+            if (obj == null) {
                 return resultIfNull;
             } else {
-                return predicate.test(str);
+                return predicate.test(obj);
             }
         };
     }
