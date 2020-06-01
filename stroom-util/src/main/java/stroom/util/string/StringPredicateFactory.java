@@ -69,6 +69,9 @@ public class StringPredicateFactory {
             LOGGER.trace("Creating null input predicate");
             // No input so get everything
             predicate = stringUnderTest -> true;
+        } else if (userInput.startsWith("/")) {
+            // remove the / marker char from the beginning
+            predicate = createRegexPredicate(userInput.substring(1));
         } else if (userInput.startsWith("^") && userInput.endsWith("$")) {
             predicate = createCaseInsensitiveExactMatchPredicate(userInput);
         } else if (userInput.endsWith("$")) {
@@ -142,6 +145,20 @@ public class StringPredicateFactory {
             return toNullSafePredicate(false, stringUnderTest ->
                     stringUnderTest.toLowerCase().contains(lowerCaseInput));
         }
+    }
+
+    public static Predicate<String> createRegexPredicate(final String userInput) {
+        LOGGER.trace("Creating regex predicate for {}", userInput);
+        Pattern pattern;
+        try {
+            pattern = Pattern.compile(userInput, Pattern.CASE_INSENSITIVE);
+        } catch (Exception e) {
+            // Bad pattern, can't really raise an exception as the user may have just mis-typed
+            // so just return a false predicate
+            return str -> false;
+        }
+
+        return pattern.asPredicate();
     }
 
     @NotNull
