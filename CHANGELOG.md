@@ -7,6 +7,8 @@ and this project adheres to [Semantic Versioning](http://semver.org/).
 
 ## [Unreleased]
 
+* Issue **#1621** : Fix NPE in proxy content syncing.
+
 * Issue **#1462** : Stroom not working with MySQL 8.0 due to SQLException
 
 * Issue **#1564** : Fix error in data retention section of stream info popup.
