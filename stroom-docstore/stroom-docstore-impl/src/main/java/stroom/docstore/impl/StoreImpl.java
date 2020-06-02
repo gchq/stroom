@@ -81,13 +81,13 @@ public class StoreImpl<D extends Doc> implements Store<D> {
               final DocumentSerialiser2<D> serialiser,
               final String type,
               final Class<D> clazz) {
-        this.persistence = Objects.requireNonNull(persistence);
-        this.entityEventBus = Objects.requireNonNull(entityEventBus);
-        this.importConverter = Objects.requireNonNull(importConverter);
-        this.securityContext = Objects.requireNonNull(securityContext);
-        this.serialiser = Objects.requireNonNull(serialiser);
-        this.type = Objects.requireNonNull(type);
-        this.clazz = Objects.requireNonNull(clazz);
+        this.persistence = persistence;
+        this.entityEventBus = entityEventBus;
+        this.importConverter = importConverter;
+        this.securityContext = securityContext;
+        this.serialiser = serialiser;
+        this.type = type;
+        this.clazz = clazz;
     }
 
     ////////////////////////////////////////////////////////////////////////
