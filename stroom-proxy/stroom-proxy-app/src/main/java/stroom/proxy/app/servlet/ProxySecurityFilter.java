@@ -20,7 +20,7 @@ import stroom.proxy.app.ContentSyncConfig;
 import stroom.proxy.app.ProxyConfig;
 import stroom.proxy.app.handler.FeedStatusConfig;
 import stroom.receive.common.FeedStatusResource;
-import stroom.receive.rules.impl.ReceiveDataRuleSetResource;
+import stroom.receive.rules.shared.ReceiveDataRuleSetResource;
 import stroom.util.authentication.DefaultOpenIdCredentials;
 import stroom.util.logging.LogUtil;
 import stroom.util.shared.ResourcePaths;
