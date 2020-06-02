@@ -7,7 +7,6 @@ import io.vavr.Tuple;
 import io.vavr.Tuple2;
 
 import javax.annotation.Nullable;
-import javax.sql.rowset.serial.SerialJavaObject;
 import java.time.Instant;
 import java.time.ZoneOffset;
 import java.time.ZonedDateTime;
@@ -25,19 +24,6 @@ import java.util.stream.Collectors;
 public class AsciiTable {
 
 
-    private static final Map<Class<?>, Function<String, Object>> conversionMap = new HashMap<>();
-
-    static {
-        conversionMap.put(String.class, str -> str);
-        conversionMap.put(Long.class, Long::valueOf);
-        conversionMap.put(Double.class, Double::valueOf);
-        conversionMap.put(Instant.class, str -> Instant.ofEpochMilli(Long.valueOf(str)));
-        conversionMap.put(ZonedDateTime.class, str ->
-                ZonedDateTime.ofInstant(Instant.ofEpochMilli(Long.valueOf(str)), ZoneOffset.UTC));
-    }
-
-    private static final char TABLE_COLUMN_DELIMITER = '|';
-    private static final char TABLE_HEADER_DELIMITER = '-';
 
 
     public static <T> Builder<T> from(final Collection<T> data) {
@@ -132,7 +118,7 @@ public class AsciiTable {
         }
     }
 
-    private static String formatCell(String value, int maxWidth) {
+    private static String formatCell(final String value, final int maxWidth) {
         return Strings.padStart(value, maxWidth + 1, ' ') + " ";
     }
 
@@ -162,14 +148,29 @@ public class AsciiTable {
 
     public static class Builder<T_ROW> {
 
+//        private static final Map<Class<?>, Function<String, Object>> CONVERSION_MAP = new HashMap<>();
+//
+//        static {
+//            CONVERSION_MAP.put(String.class, str -> str);
+//            CONVERSION_MAP.put(Long.class, Long::valueOf);
+//            CONVERSION_MAP.put(Double.class, Double::valueOf);
+//            CONVERSION_MAP.put(Instant.class, str -> Instant.ofEpochMilli(Long.parseLong(str)));
+//            CONVERSION_MAP.put(ZonedDateTime.class, str ->
+//                    ZonedDateTime.ofInstant(Instant.ofEpochMilli(Long.parseLong(str)), ZoneOffset.UTC));
+//        }
+
+        private static final char TABLE_COLUMN_DELIMITER = '|';
+        private static final char TABLE_HEADER_DELIMITER = '-';
+
         private final Collection<T_ROW> sourceData;
         private final List<Field<T_ROW, ?>> fields = new ArrayList<>();
+        private int rowLimit = 0;
 
         private Builder(final Collection<T_ROW> sourceData) {
             this.sourceData = sourceData;
         }
 
-        public Builder<T_ROW> withField(final Field field) {
+        public Builder<T_ROW> withField(final Field<T_ROW, ?> field) {
             final boolean isNameAlreadyUsed = fields.stream()
                     .map(Field::getName)
                     .anyMatch(fieldName -> fieldName.equals(field.getName()));
@@ -180,6 +181,13 @@ public class AsciiTable {
 
             return this;
         }
+
+        public Builder<T_ROW> withRowLimt(final int rowLimit) {
+            this.rowLimit = rowLimit;
+            return this;
+        }
+
+
 
 //        public Builder<T_ROW> withField(final String name,
 //                                    final Function<T, String> fieldMapper,
@@ -215,14 +223,65 @@ public class AsciiTable {
                     .collect(Collectors.toList());
         }
 
+        private String formatCell(final Field<T_ROW, ?> field, final String value, final int maxWidth) {
+            if (field.getAlignment().equals(Alignment.RIGHT)) {
+                return Strings.padStart(value, maxWidth + 1, ' ') + " ";
+            } else if (field.getAlignment().equals(Alignment.LEFT)) {
+                return Strings.padEnd(value, maxWidth + 1, ' ') + " ";
+            } else if (field.getAlignment().equals(Alignment.CENTER)) {
+                throw new RuntimeException("TODO");
+            } else {
+                throw new RuntimeException("Unknown alignment");
+            }
+        }
+
         public String build() {
 
-            List<List<String>> cells = sourceData.stream()
+            // outer list is rows, inner is cols
+            List<List<String>> rawCells = sourceData.stream()
                     .map(this::extractValuesFromRow)
                     .collect(Collectors.toList());
 
+            //get the widths of the field headings
+            final Map<String, Integer> maxFieldWidths = new HashMap<>();
 
-            // TODO Convert source into a str
+            // Get lengths of field names
+            fields.stream()
+                    .map(Field::getName)
+                    .forEach(key -> maxFieldWidths.put(key, key.length()));
+
+            // Build up map of max field value/name lengths
+            rawCells.forEach(row -> {
+                for (int i = 0; i < fields.size(); i++) {
+                    final String cellValue = row.get(i);
+                    maxFieldWidths.merge(
+                            fields.get(i).getName(),
+                            cellValue != null ? cellValue.length() : 0,
+                            Math::max);
+                }
+            });
+
+
+            //now construct the row strings
+            List<String> valueStrings = rawCells.stream()
+                    .map(rowMap -> fields.stream()
+                            .map(Field::getName)
+                            .map(fieldName -> formatCell(rowMap.get(fieldName), maxFieldWidths.get(fieldName)))
+                            .collect(Collectors.joining(String.valueOf(TABLE_COLUMN_DELIMITER))))
+                    .collect(Collectors.toList());
+
+            String headerString = fieldNames.stream()
+                    .map(fieldName -> formatCell(fieldName, maxFieldWidths.get(fieldName)))
+                    .collect(Collectors.joining(String.valueOf(TABLE_COLUMN_DELIMITER)));
+
+            List<String> headerAndValueStrings = new ArrayList<>();
+            headerAndValueStrings.add(headerString);
+            headerAndValueStrings.add(createHorizontalLine(headerString.length(), TABLE_HEADER_DELIMITER));
+            headerAndValueStrings.addAll(valueStrings);
+
+            if (wasTruncated) {
+                headerAndValueStrings.add(String.format("...TRUNCATED TO %s ROWS...", rowLimit));
+            }
 
         }
     }
@@ -230,30 +289,35 @@ public class AsciiTable {
     private static class Field<T_ROW, T_FIELD> {
 
         private final String name;
-//        private final Class<T_FIELD> type;
+        private final Class<T_FIELD> type;
         private final Function<T_ROW, T_FIELD> fieldExtractor;
         private final Function<T_FIELD, String> fieldFormatter;
         private final Alignment alignment;
 
         private Field(final String name,
-//                     final Class<T_FIELD> type,
+                     final Class<T_FIELD> type,
                      final Function<T_ROW, T_FIELD> fieldExtractor,
                      final Function<T_FIELD, String> fieldFormatter,
                      final Alignment alignment) {
             this.name = name;
-//            this.type = type;
+            this.type = type;
             this.fieldExtractor = fieldExtractor;
             this.fieldFormatter = fieldFormatter;
             this.alignment = alignment;
         }
 
         public static <T_ROW, T_FIELD> Builder of(final String name,
+                                                  final Class<T_FIELD> type,
                                                   final Function<T_ROW, T_FIELD> fieldExtractor) {
-            return new Builder(name, fieldExtractor);
+            return new Builder(name, type, fieldExtractor);
         }
 
         public String getName() {
             return name;
+        }
+
+        public Alignment getAlignment() {
+            return alignment;
         }
 
         public String extractValue(final T_ROW row) {
@@ -269,13 +333,16 @@ public class AsciiTable {
 
         private static class Builder<T_ROW, T_FIELD> {
             private final String name;
-//            private final Class<T_FIELD> type;
+            private final Class<T_FIELD> type;
             private final Function<T_ROW, T_FIELD> fieldExtractor;
             private Function<T_FIELD, String> fieldFormatter = null;
             private Alignment alignment = Alignment.LEFT;
 
-            public Builder(final String name, final Function<T_ROW, T_FIELD> fieldExtractor) {
+            public Builder(final String name,
+                           final Class<T_FIELD> type,
+                           final Function<T_ROW, T_FIELD> fieldExtractor) {
                 this.name = name;
+                this.type = type;
                 this.fieldExtractor = fieldExtractor;
             }
 
