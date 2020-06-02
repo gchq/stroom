@@ -18,19 +18,27 @@ class TestAsciiTable {
     void test() {
 
         List<Pojo> sourceData = List.of(
-               new Pojo("Mr", "Joe", "Bloggs", LocalDate.of(1971, 3, 23), 180),
-                new Pojo("Mrs", "Joanna", "Bloggs", LocalDate.of(1972, 4, 1), 170)
+               new Pojo("Mr", "Joe", "Bloggs",
+                       LocalDate.of(1971, 3, 23), 180),
+                new Pojo("Mrs", "Joanna", "Bloggs",
+                        LocalDate.of(1972, 4, 1), 170),
+                new Pojo("Mr", "No Surname", null,
+                        LocalDate.of(1972, 4, 1), 170)
+
         );
 
-        String table = AsciiTable.from(sourceData)
-                .withField(Field.of("Title", String.class, Pojo::getTitle))
-                .withField(Field.of("First Name", String.class, Pojo::getFirstName))
-                .withField(Field.of("Surname", String.class, Pojo::getSurname))
-                .withField(Field.builder("Date of Birth", LocalDate.class, Pojo::getDob)
+        final String table = AsciiTable.from(sourceData)
+                .withField(Field.of("Title", Pojo::getTitle))
+                .withField(Field.of("First Name", Pojo::getFirstName))
+                .withField(Field.builder("Surname", Pojo::getSurname)
+                        .withNullValueSupplier(() -> "-")
+                        .build())
+                .withField(Field.builder("Date of Birth", Pojo::getDob)
                         .centerAligned()
                         .build())
-                .withField(Field.builder("Height", Integer.class, Pojo::getHeightCm)
+                .withField(Field.builder("Height", Pojo::getHeightCm)
                         .rightAligned()
+                        .withFormat(val -> val + "cm")
                         .build())
 //                .withRowLimt(1)
                 .build();

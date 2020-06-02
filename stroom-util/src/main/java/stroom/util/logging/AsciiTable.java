@@ -11,8 +11,23 @@ import java.util.List;
 import java.util.Map;
 import java.util.Objects;
 import java.util.function.Function;
+import java.util.function.Supplier;
 import java.util.stream.Collectors;
 
+/**
+ * Used for turning a {@link Collection} of some class into a
+ * markdown style ascii table, e.g.
+ * <pre>
+ *
+ *  Title | First Name | Surname | Date of Birth | Height
+ * -------------------------------------------------------
+ *  Mr    | Joe        | Bloggs  |  1971-03-23   |    180
+ *  Mrs   | Joanna     | Bloggs  |  1972-04-01   |    170
+ *
+ * </pre>
+ *
+ * Supports left/right/center alignment.
+ */
 public class AsciiTable {
 
     private AsciiTable() {
@@ -35,6 +50,9 @@ public class AsciiTable {
             this.sourceData = sourceData;
         }
 
+        /**
+         * Add field in order from left to right
+         */
         public Builder<T_ROW> withField(final Field<T_ROW, ?> field) {
             final boolean isNameAlreadyUsed = fields.stream()
                     .map(Field::getName)
@@ -47,6 +65,9 @@ public class AsciiTable {
             return this;
         }
 
+        /**
+         * Only output rowLimit rows of the source data
+         */
         public Builder<T_ROW> withRowLimt(final int rowLimit) {
             this.rowLimit = rowLimit;
             return this;
@@ -107,17 +128,6 @@ public class AsciiTable {
                             entry.getValue().length(),
                             Math::max));
 
-//            rawRows.forEach(row -> {
-//                for (int i = 0; i < fields.size(); i++) {
-//                    final String cellValue = row.get(i);
-//                    maxFieldWidths.merge(
-//                            fields.get(i).getName(),
-//                            cellValue != null ? cellValue.length() : 0,
-//                            Math::max);
-//                }
-//            });
-
-
             //now construct the row strings
             List<String> valueStrings = rawRows.stream()
                     .limit(rowLimit)
@@ -146,39 +156,42 @@ public class AsciiTable {
     static class Field<T_ROW, T_FIELD> {
 
         private final String name;
-        private final Class<T_FIELD> type;
+//        private final Class<T_FIELD> type;
         private final Function<T_ROW, T_FIELD> fieldExtractor;
         private final Function<T_FIELD, String> fieldFormatter;
+        private final Supplier<String> nullValueSupplier;
         private final Alignment alignment;
 
         private Field(final String name,
-                     final Class<T_FIELD> type,
-                     final Function<T_ROW, T_FIELD> fieldExtractor,
-                     final Function<T_FIELD, String> fieldFormatter,
-                     final Alignment alignment) {
+//                     final Class<T_FIELD> type,
+                      final Function<T_ROW, T_FIELD> fieldExtractor,
+                      final Function<T_FIELD, String> fieldFormatter,
+                      final Supplier<String> nullValueSupplier,
+                      final Alignment alignment) {
             this.name = name;
-            this.type = type;
+//            this.type = type;
             this.fieldExtractor = fieldExtractor;
             this.fieldFormatter = fieldFormatter;
+            this.nullValueSupplier = nullValueSupplier;
             this.alignment = alignment;
         }
 
         public static <T_ROW, T_FIELD> Field<T_ROW, T_FIELD> of(final String name,
-                                                                final Class<T_FIELD> type,
+//                                                                final Class<T_FIELD> type,
                                                                 final Function<T_ROW, T_FIELD> fieldExtractor) {
             return new Builder<>(
                     Objects.requireNonNull(name),
-                    Objects.requireNonNull(type),
+//                    Objects.requireNonNull(type),
                     Objects.requireNonNull(fieldExtractor))
                     .build();
         }
 
         public static <T_ROW, T_FIELD> Builder<T_ROW, T_FIELD> builder(final String name,
-                                                                       final Class<T_FIELD> type,
+//                                                                       final Class<T_FIELD> type,
                                                                        final Function<T_ROW, T_FIELD> fieldExtractor) {
             return new Builder<>(
                     Objects.requireNonNull(name),
-                    Objects.requireNonNull(type),
+//                    Objects.requireNonNull(type),
                     Objects.requireNonNull(fieldExtractor));
         }
 
@@ -192,7 +205,11 @@ public class AsciiTable {
 
         private String extractValue(final T_ROW row) {
             T_FIELD obj = fieldExtractor.apply(row);
-            return fieldFormatter.apply(obj);
+            if (obj == null) {
+                return nullValueSupplier.get();
+            } else {
+                return fieldFormatter.apply(obj);
+            }
         }
 
         @Override
@@ -201,7 +218,7 @@ public class AsciiTable {
             if (o == null || getClass() != o.getClass()) return false;
             final Field<?, ?> field = (Field<?, ?>) o;
             return name.equals(field.name) &&
-                    type.equals(field.type) &&
+//                    type.equals(field.type) &&
                     fieldExtractor.equals(field.fieldExtractor) &&
                     fieldFormatter.equals(field.fieldFormatter) &&
                     alignment == field.alignment;
@@ -209,14 +226,14 @@ public class AsciiTable {
 
         @Override
         public int hashCode() {
-            return Objects.hash(name, type, fieldExtractor, fieldFormatter, alignment);
+            return Objects.hash(name, fieldExtractor, fieldFormatter, alignment);
         }
 
         @Override
         public String toString() {
             return "Field{" +
                     "name='" + name + '\'' +
-                    ", type=" + type +
+//                    ", type=" + type +
                     ", alignment=" + alignment +
                     '}';
         }
@@ -229,21 +246,27 @@ public class AsciiTable {
 
         public static class Builder<T_ROW, T_FIELD> {
             private final String name;
-            private final Class<T_FIELD> type;
+//            private final Class<T_FIELD> type;
             private final Function<T_ROW, T_FIELD> fieldExtractor;
             private Function<T_FIELD, String> fieldFormatter = null;
+            private Supplier<String> nullValueSupplier = null;
             private Alignment alignment = Alignment.LEFT;
 
             private Builder(final String name,
-                           final Class<T_FIELD> type,
+//                           final Class<T_FIELD> type,
                            final Function<T_ROW, T_FIELD> fieldExtractor) {
                 this.name = name;
-                this.type = type;
+//                this.type = type;
                 this.fieldExtractor = fieldExtractor;
             }
 
             public Builder<T_ROW, T_FIELD> withFormat(final Function<T_FIELD, String> fieldFormatter) {
                 this.fieldFormatter = fieldFormatter;
+                return this;
+            }
+
+            public Builder<T_ROW, T_FIELD> withNullValueSupplier(final Supplier<String> nullValueSupplier) {
+                this.nullValueSupplier = nullValueSupplier;
                 return this;
             }
 
@@ -265,9 +288,10 @@ public class AsciiTable {
             public Field<T_ROW, T_FIELD> build() {
                 return new Field<>(
                         name,
-                        type,
+//                        type,
                         fieldExtractor,
                         fieldFormatter == null ? Objects::toString : fieldFormatter,
+                        nullValueSupplier == null ? () -> "" : nullValueSupplier,
                         alignment);
             }
         }
