@@ -80,7 +80,13 @@ class ReceiveDataPolicyChecker {
     private synchronized void refresh() {
         if (needsRefresh()) {
             // We need to examine the meta map and ensure we aren't dropping or rejecting this data.
-            final ReceiveDataRules dataReceiptPolicy = ruleSetService.readDocument(policyRef);
+            ReceiveDataRules dataReceiptPolicy = null;
+            try {
+                dataReceiptPolicy = ruleSetService.readDocument(policyRef);
+            } catch (Exception e) {
+                LOGGER.error("Error reading rule set {}. The default receive all policy will be applied",
+                        policyRef, e);
+            }
             if (dataReceiptPolicy != null && dataReceiptPolicy.getRules() != null && dataReceiptPolicy.getFields() != null) {
                 // Create a map of fields.
                 final Map<String, AbstractField> fieldMap = dataReceiptPolicy.getFields()

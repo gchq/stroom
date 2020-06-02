@@ -81,13 +81,13 @@ public class StoreImpl<D extends Doc> implements Store<D> {
               final DocumentSerialiser2<D> serialiser,
               final String type,
               final Class<D> clazz) {
-        this.persistence = persistence;
-        this.entityEventBus = entityEventBus;
-        this.importConverter = importConverter;
-        this.securityContext = securityContext;
-        this.serialiser = serialiser;
-        this.type = type;
-        this.clazz = clazz;
+        this.persistence = Objects.requireNonNull(persistence);
+        this.entityEventBus = Objects.requireNonNull(entityEventBus);
+        this.importConverter = Objects.requireNonNull(importConverter);
+        this.securityContext = Objects.requireNonNull(securityContext);
+        this.serialiser = Objects.requireNonNull(serialiser);
+        this.type = Objects.requireNonNull(type);
+        this.clazz = Objects.requireNonNull(clazz);
     }
 
     ////////////////////////////////////////////////////////////////////////
@@ -526,13 +526,18 @@ public class StoreImpl<D extends Doc> implements Store<D> {
             }
         });
 
-        try {
-            return serialiser.read(data);
-        } catch (final IOException e) {
-            LOGGER.error(e.getMessage(), e);
-            throw new UncheckedIOException(
-                    LogUtil.message("Error deserialising doc {} from store {}, {}",
-                            uuid, persistence.getClass().getSimpleName(), e.getMessage()), e);
+        if (data != null) {
+            try {
+                return serialiser.read(data);
+            } catch (final IOException e) {
+                LOGGER.error(e.getMessage(), e);
+                throw new UncheckedIOException(
+                        LogUtil.message("Error deserialising doc {} from store {}, {}",
+                                uuid, persistence.getClass().getSimpleName(), e.getMessage()), e);
+            }
+        } else {
+            throw new RuntimeException(LogUtil.message("No document found for UUID {} in store {}",
+                    uuid, persistence.getClass().getSimpleName()));
         }
     }
 
