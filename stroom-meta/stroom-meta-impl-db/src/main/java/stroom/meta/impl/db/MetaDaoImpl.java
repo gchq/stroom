@@ -8,6 +8,7 @@ import stroom.dashboard.expression.v1.ValNull;
 import stroom.dashboard.expression.v1.ValString;
 import stroom.data.retention.api.DataRetentionConfig;
 import stroom.data.retention.api.DataRetentionRuleAction;
+import stroom.data.retention.shared.DataRetentionDeleteInfo;
 import stroom.data.retention.shared.DataRetentionRule;
 import stroom.datasource.api.v2.AbstractField;
 import stroom.db.util.ExpressionMapper;
@@ -75,6 +76,7 @@ import java.util.Objects;
 import java.util.Optional;
 import java.util.Set;
 import java.util.concurrent.ConcurrentHashMap;
+import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.function.Consumer;
 import java.util.function.Function;
@@ -416,7 +418,7 @@ class MetaDaoImpl implements MetaDao {
         return updateCount;
     }
 
-    public void getRetentionDeletionSummary(final List<DataRetentionRule> rules) {
+    public List<DataRetentionDeleteInfo> getRetentionDeletionSummary(final List<DataRetentionRule> rules) {
 
         // What we are building is roughly:
         // SELECT
@@ -444,6 +446,8 @@ class MetaDaoImpl implements MetaDao {
         final Instant now = Instant.now().truncatedTo(ChronoUnit.MILLIS);
 
         List<Condition> conditions = new ArrayList<>();
+
+        final List<DataRetentionDeleteInfo> result;
 
         if (rules != null && !rules.isEmpty()) {
             CaseConditionStep<Integer> ruleNoCaseConditionStep = null;
@@ -475,7 +479,11 @@ class MetaDaoImpl implements MetaDao {
                         daysTilDeleteCaseResult = null;
                     } else {
                         long minCreateTimeMs = ruleToMinCreateTime(now, rule).toEpochMilli();
-                        daysTilDeleteCaseResult = DSL.greatest(0, meta.CREATE_TIME.minus(minCreateTimeMs));
+                        daysTilDeleteCaseResult = DSL.greatest(
+                                0,
+                                meta.CREATE_TIME
+                                        .minus(minCreateTimeMs)
+                                        .divide(TimeUnit.HOURS.toMillis(1)));
                     }
 
                     if (daysTilDeleteCaseConditionStep == null) {
@@ -502,10 +510,45 @@ class MetaDaoImpl implements MetaDao {
                 conditions.add(DSL.or(orConditions));
             }
 
+            final List<DataRetentionDeleteInfo> deleteInfoList = JooqUtil.contextResult(metaDbConnProvider, context -> {
+
+                final var detailTable = context
+                        .select(
+                                metaFeed.NAME,
+                                ruleNoCaseField.as("rule_no"),
+                                daysTilDeleteCaseField.as("days_til_delete"))
+                        .from(meta)
+                        .leftJoin(metaFeed).on(meta.FEED_ID.eq(metaFeed.ID))
+                        .where(conditions)
+                        .asTable("detail");
+
+                return context
+                        .select(
+                                detailTable.field(metaFeed.NAME.getName()),
+                                detailTable.field("rule_no"),
+                                detailTable.field("days_til_delete"),
+                                DSL.count())
+                        .from(detailTable)
+                        .where(detailTable.field("days_til_delete").isNotNull())
+                        .groupBy(
+                                detailTable.field(metaFeed.NAME.getName()),
+                                detailTable.field("rule_no"),
+                                detailTable.field("days_til_delete"))
+                        .fetch()
+                        .map(record ->
+                                new DataRetentionDeleteInfo(
+                                        (String) record.get(metaFeed.NAME.getName()),
+                                        (int) record.get("rule_no"),
+                                        (int) record.get("days_til_delete")
+                        ));
+            });
+            result = deleteInfoList;
+
         } else {
             // No rules so no point running a query
-            // TODO return an empty collection
+            result = Collections.emptyList();
         }
+        return result;
     }
 
     private static Instant ruleToMinCreateTime(final Instant now, final DataRetentionRule rule) {

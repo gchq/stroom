@@ -6,6 +6,7 @@ import stroom.collection.mock.MockCollectionModule;
 import stroom.data.retention.api.DataRetentionConfig;
 import stroom.data.retention.api.DataRetentionRuleAction;
 import stroom.data.retention.api.RetentionRuleOutcome;
+import stroom.data.retention.shared.DataRetentionDeleteInfo;
 import stroom.data.retention.shared.DataRetentionRule;
 import stroom.data.retention.shared.TimeUnit;
 import stroom.dictionary.mock.MockWordListProviderModule;
@@ -455,6 +456,89 @@ class TestMetaServiceImpl {
         LOGGER.info("Done");
     }
 
+    @Test
+    void testRetentionInfo() {
+
+        LOGGER.info("Loading data");
+
+        final List<DataRetentionRule> ruleActions = List.of(
+                buildRule(1, FEED_1, 1, TimeUnit.DAYS),
+                buildRule(2, FEED_2, 2, TimeUnit.DAYS),
+                buildRule(3, FEED_3, 1, TimeUnit.WEEKS),
+                buildRule(4, FEED_4, 2, TimeUnit.WEEKS),
+                buildRule(5, FEED_5, 1, TimeUnit.MONTHS)
+        );
+
+        final Instant now = Instant.now();
+        // The following will load 1k rows then delete 60
+        final int totalDays = 10;
+        final int rowsPerFeedPerDay = 10;
+        final int feedCount = 10;
+        final int daysToDelete = 2;
+
+        // The following will load 1mil rows then delete 1500
+//        final int totalDays = 100;
+//        final int rowsPerFeedPerDay = 100;
+//        final int feedCount = 100;
+//        final int daysToDelete = 5;
+
+        final int insertBatchSize = 10_000;
+        final int totalRows = totalDays * feedCount * rowsPerFeedPerDay;
+
+        final AtomicLong counter = new AtomicLong(0);
+
+        IntStream.range(0, totalDays)
+                .boxed()
+                .flatMap(i -> {
+                    Instant createTime = now.minus(i, ChronoUnit.DAYS);
+                    return IntStream.rangeClosed(1, feedCount)
+                            .boxed()
+                            .flatMap(j -> IntStream.rangeClosed(1, rowsPerFeedPerDay)
+                                    .boxed()
+                                    .map(k ->
+                                            // Spread the records over time to avoid
+                                            // the batching picking up multiples
+                                            createProperties(
+                                                    "FEED" + j,
+                                                    createTime
+                                                            .minus(j, ChronoUnit.SECONDS)
+                                                            .minus(k, ChronoUnit.MILLIS))));
+                })
+                .collect(BatchingCollector.of(insertBatchSize, batch -> {
+                    metaDao.create(batch, Status.UNLOCKED);
+                    counter.addAndGet(batch.size());
+                    LOGGER.info("Processed {} of {}", counter.get(), totalRows);
+                }));
+
+        assertTotalRowCount(totalRows, Status.UNLOCKED);
+
+        final Instant deletionDay = now
+                .minus(totalDays / 2, ChronoUnit.DAYS)
+                .plus(1, ChronoUnit.HOURS);
+
+
+        // Period should cover set of data
+        final TimePeriod period = TimePeriod.between(
+                deletionDay.minus(daysToDelete, ChronoUnit.DAYS),
+                deletionDay);
+
+        // Use a batch size smaller than the expected number of deletes to ensure we exercise
+        // batching
+
+        final List<DataRetentionDeleteInfo> summary = metaDao.getRetentionDeletionSummary(ruleActions);
+
+        LOGGER.info("result: {}", summary);
+
+        LOGGER.info("deleteBatchSize {}", dataRetentionConfig.getDeleteBatchSize());
+        LOGGER.info("Period {}", period);
+        LOGGER.info("deletionDay {}", deletionDay);
+        LOGGER.info("daysToDelete {}", daysToDelete);
+        LOGGER.info("totalRows {}", totalRows);
+
+        assertTotalRowCount(totalRows);
+        LOGGER.info("Done");
+    }
+
     /**
      * Seeing which execution timer was faster
      */
@@ -558,18 +642,55 @@ class TestMetaServiceImpl {
         return buildRuleAction(ruleNo, expressionOperator, outcome);
     }
 
+    private DataRetentionRule buildRule(final int ruleNo,
+                                        final String feedName,
+                                        final int age,
+                                        final TimeUnit timeUnit) {
+
+        final ExpressionOperator expressionOperator = new ExpressionOperator.Builder(true, Op.AND)
+                .addTerm(MetaFields.FIELD_FEED, Condition.EQUALS, feedName)
+                .addTerm(MetaFields.FIELD_TYPE, Condition.EQUALS, "TEST_STREAM_TYPE")
+                .build();
+
+        // The age on the rule doesn't matter for the dao tests
+        return buildRule(ruleNo, expressionOperator, age, timeUnit);
+    }
+
     private DataRetentionRuleAction buildRuleAction(final int ruleNo,
                                                     final ExpressionOperator expressionOperator,
                                                     final RetentionRuleOutcome outcome) {
 
         // The age on the rule doesn't matter for the dao tests
-        return new DataRetentionRuleAction(new DataRetentionRule(ruleNo,
+        return new DataRetentionRuleAction(buildRule(ruleNo, expressionOperator), outcome);
+    }
+
+    private DataRetentionRule buildRule(final int ruleNo,
+                                        final ExpressionOperator expressionOperator) {
+
+        // The age on the rule doesn't matter for the dao tests
+        return new DataRetentionRule(ruleNo,
                 Instant.now().toEpochMilli(),
                 "Rule" + ruleNo,
                 true,
                 expressionOperator,
                 1,
                 TimeUnit.YEARS,
-                false), outcome);
+                false);
+    }
+
+    private DataRetentionRule buildRule(final int ruleNo,
+                                        final ExpressionOperator expressionOperator,
+                                        final int age,
+                                        final TimeUnit timeUnit) {
+
+        // The age on the rule doesn't matter for the dao tests
+        return new DataRetentionRule(ruleNo,
+                Instant.now().toEpochMilli(),
+                "Rule" + ruleNo,
+                true,
+                expressionOperator,
+                age,
+                timeUnit,
+                false);
     }
 }
