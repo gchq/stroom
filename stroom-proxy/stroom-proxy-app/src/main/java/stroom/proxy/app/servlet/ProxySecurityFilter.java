@@ -25,6 +25,7 @@ import stroom.util.authentication.DefaultOpenIdCredentials;
 import stroom.util.logging.LogUtil;
 import stroom.util.shared.ResourcePaths;
 
+import com.google.common.base.Strings;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -40,6 +41,7 @@ import javax.servlet.http.HttpServletResponse;
 import javax.ws.rs.HttpMethod;
 import javax.ws.rs.core.Response;
 import java.io.IOException;
+import java.util.Objects;
 import java.util.regex.Pattern;
 
 /**
@@ -147,13 +149,20 @@ public class ProxySecurityFilter implements Filter {
     private String getConfiguredApiKey(final String requestUri) {
         // TODO it could be argued that we should have a single API key to use for all of these resources.
         final String apiKey;
-        if (proxyConfig.isUseDefaultOpenIdCredentials()) {
-            apiKey = defaultOpenIdCredentials.getApiKey();
-            LOGGER.warn("Authenticating using default API key. For production use, set up an API key in Stroom!");
-        } else if (requestUri.startsWith(ResourcePaths.API_ROOT_PATH + FeedStatusResource.BASE_RESOURCE_PATH)) {
-            apiKey = feedStatusConfig.getApiKey();
+        if (requestUri.startsWith(ResourcePaths.API_ROOT_PATH + FeedStatusResource.BASE_RESOURCE_PATH)) {
+            if (proxyConfig.isUseDefaultOpenIdCredentials() && Strings.isNullOrEmpty(feedStatusConfig.getApiKey())) {
+                LOGGER.info("Authenticating using default API key. For production use, set up an API key in Stroom!");
+                apiKey = Objects.requireNonNull(defaultOpenIdCredentials.getApiKey());
+            } else {
+                apiKey = feedStatusConfig.getApiKey();
+            }
         } else if (requestUri.startsWith(ResourcePaths.API_ROOT_PATH + ReceiveDataRuleSetResource.BASE_RESOURCE_PATH)) {
-            apiKey = contentSyncConfig.getApiKey();
+            if (proxyConfig.isUseDefaultOpenIdCredentials() && Strings.isNullOrEmpty(contentSyncConfig.getApiKey())) {
+                LOGGER.info("Using default authentication token, should only be used in test/demo environments.");
+                apiKey = Objects.requireNonNull(defaultOpenIdCredentials.getApiKey());
+            } else {
+                apiKey = contentSyncConfig.getApiKey();
+            }
         } else {
             throw new RuntimeException(LogUtil.message(
                     "Unable to determine which config to get API key from for requestURI {}", requestUri));
