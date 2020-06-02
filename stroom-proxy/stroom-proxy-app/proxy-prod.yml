@@ -127,7 +127,7 @@ proxyConfig:
 #  contentSyncConfig:
 #    contentSyncEnabled: ${CONTENT_SYNC_ENABLED:-false}
 #    upstreamUrl:
-#      RuleSet: "${UPSTREAM_RULE_URL:-http://stroom:8080/api/ruleset/v1}"
+#      ReceiveDataRuleSet: "${UPSTREAM_RULE_URL:-http://stroom:8080/api/ruleset/v1}"
 #      Dictionary: "${UPSTREAM_DICTIONARY_URL:-http://stroom:8080/api/dictionary/v1}"
 #    syncFrequency: 30000
 #    apiKey: "${SYNC_API_KEY:-}"

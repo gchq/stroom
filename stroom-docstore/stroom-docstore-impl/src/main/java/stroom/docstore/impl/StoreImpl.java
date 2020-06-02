@@ -526,13 +526,18 @@ public class StoreImpl<D extends Doc> implements Store<D> {
             }
         });
 
-        try {
-            return serialiser.read(data);
-        } catch (final IOException e) {
-            LOGGER.error(e.getMessage(), e);
-            throw new UncheckedIOException(
-                    LogUtil.message("Error deserialising doc {} from store {}, {}",
-                            uuid, persistence.getClass().getSimpleName(), e.getMessage()), e);
+        if (data != null) {
+            try {
+                return serialiser.read(data);
+            } catch (final IOException e) {
+                LOGGER.error(e.getMessage(), e);
+                throw new UncheckedIOException(
+                        LogUtil.message("Error deserialising doc {} from store {}, {}",
+                                uuid, persistence.getClass().getSimpleName(), e.getMessage()), e);
+            }
+        } else {
+            throw new RuntimeException(LogUtil.message("No document found for UUID {} in store {}",
+                    uuid, persistence.getClass().getSimpleName()));
         }
     }
 

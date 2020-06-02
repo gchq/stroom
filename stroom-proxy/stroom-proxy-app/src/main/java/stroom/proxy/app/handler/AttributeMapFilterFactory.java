@@ -16,14 +16,16 @@
 
 package stroom.proxy.app.handler;
 
-import org.apache.commons.lang3.StringUtils;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 import stroom.docref.DocRef;
 import stroom.receive.common.AttributeMapFilter;
 import stroom.receive.common.DataReceiptPolicyAttributeMapFilterFactory;
 import stroom.receive.common.FeedStatusAttributeMapFilter;
 import stroom.receive.common.PermissiveAttributeMapFilter;
+import stroom.receive.rules.shared.ReceiveDataRules;
+
+import org.apache.commons.lang3.StringUtils;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import javax.inject.Inject;
 import javax.inject.Provider;
@@ -42,7 +44,8 @@ public class AttributeMapFilterFactory {
                                      final Provider<RemoteFeedStatusService> remoteFeedStatusServiceProvider) {
         if (StringUtils.isNotBlank(proxyRequestConfig.getReceiptPolicyUuid())) {
             LOGGER.info("Using data receipt policy to filter received data");
-            attributeMapFilter = dataReceiptPolicyAttributeMapFilterFactory.create(new DocRef("RuleSet", proxyRequestConfig.getReceiptPolicyUuid()));
+            attributeMapFilter = dataReceiptPolicyAttributeMapFilterFactory.create(
+                    new DocRef(ReceiveDataRules.DOCUMENT_TYPE, proxyRequestConfig.getReceiptPolicyUuid()));
         } else if (StringUtils.isNotBlank(feedStatusConfig.getFeedStatusUrl())) {
             LOGGER.info("Using remote feed status service to filter received data");
             final RemoteFeedStatusService remoteFeedStatusService = remoteFeedStatusServiceProvider.get();
