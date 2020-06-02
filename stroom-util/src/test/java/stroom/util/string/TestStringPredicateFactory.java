@@ -122,7 +122,8 @@ class TestStringPredicateFactory {
                                 "THIS  IS  MY  FEED",
                                 "THIS IS MY FEED",
                                 "this_is_my_feed",
-                                "SO_IS_THIS_IS_MY_FEED"),
+                                "SO_IS_THIS_IS_MY_FEED",
+                                "SO_IS_THIS_IS_MY_FEED_TOO"),
                         List.of("timf", "TIMF")),
 
                 makeTest("Word boundary match 2",
