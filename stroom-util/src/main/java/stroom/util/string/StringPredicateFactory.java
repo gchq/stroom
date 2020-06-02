@@ -50,11 +50,12 @@ public class StringPredicateFactory {
      * Creates a fuzzy match {@link Predicate<String>} for userInput.
      * Null userInput results in an always true predicate.
      * Broadly it has five match modes:
+     * Regex match: "/(wo|^)man" matches "a woman", "manly"
+     * Word boundary match: "?OTheiM" matches "on the mat" in "the cat sat on their mat", but not "the cat sat on there mat"
      * Starts with: "^prefix" matches "PrefixToSomeText" (case insensitive)
      * Ends with "suffix$" matches "TextWithSuffix" (case insensitive)
      * Exact match: "^sometext$" matches "sometext" (case insensitive)
      * Chars anywhere (in order): "aid" matches "A big dog" (case insensitive)
-     * Word boundary match: "OTheiM" matches "on the mat" in "the cat sat on their mat", but not "the cat sat on there mat"
      * See TestStringPredicateFactory for more examples of how the
      * matching works.
      *
@@ -72,6 +73,9 @@ public class StringPredicateFactory {
         } else if (userInput.startsWith("/")) {
             // remove the / marker char from the beginning
             predicate = createRegexPredicate(userInput.substring(1));
+        } else if (userInput.startsWith("?")) {
+            // remove the ? marker char from the beginning
+            predicate = createWordBoundaryPredicate(userInput.substring(1), separatorCharacterClass);
         } else if (userInput.startsWith("^") && userInput.endsWith("$")) {
             predicate = createCaseInsensitiveExactMatchPredicate(userInput);
         } else if (userInput.endsWith("$")) {
@@ -80,10 +84,8 @@ public class StringPredicateFactory {
         } else if (userInput.startsWith("^")) {
             // remove the ^ marker char from the beginning
             predicate = createCaseInsensitiveStartsWithPredicate(userInput.substring(1));
-        } else if (isAllLowerCase(userInput)) {
-            predicate = createCharsAnywherePredicate(userInput);
         } else {
-            predicate = createWordBoundaryPredicate(userInput, separatorCharacterClass);
+            predicate = createCharsAnywherePredicate(userInput);
         }
 
         if (LOGGER.isTraceEnabled()) {
@@ -298,8 +300,9 @@ public class StringPredicateFactory {
         LOGGER.trace("creating chars appear anywhere in correct order predicate");
         // All lower case so match on each char appearing somewhere in the text
         // in the correct order
+        final String lowerCaseInput = userInput.toLowerCase();
         final StringBuilder patternBuilder = new StringBuilder();
-        for (int i = 0; i < userInput.length(); i++) {
+        for (int i = 0; i < lowerCaseInput.length(); i++) {
             patternBuilder.append(".*?");
 
             char chr = userInput.charAt(i);
