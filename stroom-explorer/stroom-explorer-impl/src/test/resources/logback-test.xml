@@ -8,9 +8,9 @@
         </encoder>
     </appender>
 
-    <logger name="stroom" level="debug" />
+    <logger name="stroom" level="info" />
 
-<!--    <logger name="stroom.util.string" level="trace" />-->
+    <logger name="stroom.explorer" level="debug" />
 
     <root level="error">
         <appender-ref ref="STDOUT" />
