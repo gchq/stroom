@@ -17,6 +17,8 @@ and this project adheres to [Semantic Versioning](http://semver.org/).
 
 * Add regex filtering with `/` prefix to fuzzy matching.
 
+* Change word boundary matching to require a `?` prefix.
+
 
 ## [v7.0-beta.35] - 2020-05-28
 
