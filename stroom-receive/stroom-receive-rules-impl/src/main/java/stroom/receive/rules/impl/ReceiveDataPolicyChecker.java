@@ -102,8 +102,9 @@ class ReceiveDataPolicyChecker {
                         addToFieldSet(rule, set);
                         if (set.size() > 0) {
                             fieldSet.addAll(set);
-                            activeRules.add(rule);
                         }
+                        // expression may have no fields in it.
+                        activeRules.add(rule);
                     }
                 });
 
