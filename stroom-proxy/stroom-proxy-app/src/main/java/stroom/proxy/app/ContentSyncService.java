@@ -22,6 +22,7 @@ import javax.ws.rs.client.Client;
 import javax.ws.rs.client.Entity;
 import javax.ws.rs.client.Invocation;
 import javax.ws.rs.client.WebTarget;
+import javax.ws.rs.core.GenericType;
 import javax.ws.rs.core.MediaType;
 import javax.ws.rs.core.Response;
 import javax.ws.rs.core.Response.Status;
@@ -67,7 +68,11 @@ public class ContentSyncService implements Managed, HasHealthCheck {
         if (contentSyncConfig.isContentSyncEnabled()) {
             if (scheduledExecutorService == null) {
                 scheduledExecutorService = Executors.newSingleThreadScheduledExecutor();
-                scheduledExecutorService.scheduleWithFixedDelay(this::sync, 0, contentSyncConfig.getSyncFrequency(), TimeUnit.MILLISECONDS);
+                scheduledExecutorService.scheduleWithFixedDelay(
+                        this::sync,
+                        0,
+                        contentSyncConfig.getSyncFrequency(),
+                        TimeUnit.MILLISECONDS);
             }
         }
     }
@@ -103,7 +108,7 @@ public class ContentSyncService implements Managed, HasHealthCheck {
                             if (response.getStatusInfo().getStatusCode() != Status.OK.getStatusCode()) {
                                 LOGGER.error(response.getStatusInfo().getReasonPhrase());
                             } else {
-                                final Set<DocRef> docRefs = response.readEntity(Set.class);
+                                final Set<DocRef> docRefs = response.readEntity(new GenericType<Set<DocRef>>(){});
                                 docRefs.forEach(docRef -> importDocument(url, docRef, importHandler));
                                 LOGGER.info("Synced {} documents", docRefs.size());
                             }
@@ -116,15 +121,23 @@ public class ContentSyncService implements Managed, HasHealthCheck {
         }
     }
 
-    private void importDocument(final String url, final DocRef docRef, final ImportExportActionHandler importExportActionHandler) {
-        LOGGER.info("Fetching " + docRef.getType() + " " + docRef.getUuid());
+    private void importDocument(final String url,
+                                final DocRef docRef,
+                                final ImportExportActionHandler importExportActionHandler) {
+        LOGGER.info("Fetching " + docRef.getType() + " " + docRef.getName() + " " + docRef.getUuid());
         final Response response = createClient(url, "/export").post(Entity.json(docRef));
         if (response.getStatusInfo().getStatusCode() != Status.OK.getStatusCode()) {
             LOGGER.error(response.getStatusInfo().getReasonPhrase());
         } else {
             final DocumentData documentData = response.readEntity(DocumentData.class);
-            final ImportState importState = new ImportState(documentData.getDocRef(), documentData.getDocRef().getName());
-            importExportActionHandler.importDocument(documentData.getDocRef(), documentData.getDataMap(), importState, ImportMode.IGNORE_CONFIRMATION);
+            final ImportState importState = new ImportState(
+                    documentData.getDocRef(),
+                    documentData.getDocRef().getName());
+            importExportActionHandler.importDocument(
+                    documentData.getDocRef(),
+                    documentData.getDataMap(),
+                    importState,
+                    ImportMode.IGNORE_CONFIRMATION);
         }
     }
 
