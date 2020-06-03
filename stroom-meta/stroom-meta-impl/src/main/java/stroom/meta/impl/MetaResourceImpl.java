@@ -16,6 +16,8 @@
 
 package stroom.meta.impl;
 
+import stroom.data.retention.shared.DataRetentionDeleteSummary;
+import stroom.data.retention.shared.DataRetentionRules;
 import stroom.meta.api.MetaService;
 import stroom.meta.shared.FindMetaCriteria;
 import stroom.meta.shared.MetaInfoSection;
@@ -40,7 +42,10 @@ class MetaResourceImpl implements MetaResource {
 
     @Override
     public Integer updateStatus(final UpdateStatusRequest request) {
-        return metaServiceProvider.get().updateStatus(request.getCriteria(), request.getCurrentStatus(), request.getNewStatus());
+        return metaServiceProvider.get().updateStatus(
+                request.getCriteria(),
+                request.getCurrentStatus(),
+                request.getNewStatus());
     }
 
     @Override
@@ -61,5 +66,10 @@ class MetaResourceImpl implements MetaResource {
     @Override
     public List<MetaInfoSection> fetchFullMetaInfo(final long id) {
         return metaServiceProvider.get().fetchFullMetaInfo(id);
+    }
+
+    @Override
+    public List<DataRetentionDeleteSummary> getRetentionDeletionSummary(final DataRetentionRules rules) {
+          return metaServiceProvider.get().getRetentionDeleteSummary(rules);
     }
 }

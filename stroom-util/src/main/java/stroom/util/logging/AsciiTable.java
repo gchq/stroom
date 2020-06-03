@@ -265,7 +265,7 @@ public class AsciiTable {
 
 
 
-    static class Column<T_ROW, T_COL> {
+    public static class Column<T_ROW, T_COL> {
 
         private final String name;
         private final Function<T_ROW, T_COL> columnExtractor;

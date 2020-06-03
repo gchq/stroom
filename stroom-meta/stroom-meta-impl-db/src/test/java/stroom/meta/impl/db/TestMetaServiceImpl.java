@@ -8,6 +8,7 @@ import stroom.data.retention.api.DataRetentionRuleAction;
 import stroom.data.retention.api.RetentionRuleOutcome;
 import stroom.data.retention.shared.DataRetentionDeleteSummary;
 import stroom.data.retention.shared.DataRetentionRule;
+import stroom.data.retention.shared.DataRetentionRules;
 import stroom.data.retention.shared.TimeUnit;
 import stroom.dictionary.mock.MockWordListProviderModule;
 import stroom.docrefinfo.mock.MockDocRefInfoModule;
@@ -27,6 +28,7 @@ import stroom.security.mock.MockSecurityContextModule;
 import stroom.test.common.util.db.DbTestModule;
 import stroom.util.collections.BatchingCollector;
 import stroom.util.logging.AsciiTable;
+import stroom.util.logging.AsciiTable.Column;
 import stroom.util.logging.LambdaLogger;
 import stroom.util.logging.LambdaLoggerFactory;
 import stroom.util.logging.LogExecutionTime;
@@ -458,11 +460,11 @@ class TestMetaServiceImpl {
     }
 
     @Test
-    void testRetentionInfo() {
+    void testRetentionSummary() {
 
         LOGGER.info("Loading data");
 
-        final List<DataRetentionRule> ruleActions = List.of(
+        final List<DataRetentionRule> rules = List.of(
                 buildRule(1, FEED_1, 1, TimeUnit.DAYS),
                 buildRule(2, FEED_2, 2, TimeUnit.DAYS),
                 buildRule(3, FEED_3, 1, TimeUnit.WEEKS),
@@ -526,7 +528,7 @@ class TestMetaServiceImpl {
         // Use a batch size smaller than the expected number of deletes to ensure we exercise
         // batching
 
-        final List<DataRetentionDeleteSummary> summary = metaDao.getRetentionDeletionSummary(ruleActions);
+        final List<DataRetentionDeleteSummary> summary = metaDao.getRetentionDeletionSummary(new DataRetentionRules(rules));
 
         LOGGER.info("Period {}", period);
         LOGGER.info("deletionDay {}", deletionDay);
@@ -535,7 +537,18 @@ class TestMetaServiceImpl {
 
         assertTotalRowCount(totalRows);
 
-        LOGGER.info("result:\n{}", AsciiTable.from(summary));
+        LOGGER.info("result:\n\n{}\n", AsciiTable.builder(summary)
+                .withColumn(Column.of("Feed Name", DataRetentionDeleteSummary::getFeedName))
+                .withColumn(Column.of("Type", DataRetentionDeleteSummary::getMetaType))
+                .withColumn(Column.builder("Rule No.", DataRetentionDeleteSummary::getRuleNumber)
+                        .rightAligned()
+                        .build())
+                .withColumn(Column.of("Rule Name", DataRetentionDeleteSummary::getRuleName))
+                .withColumn(Column.builder("Stream Delete Count", DataRetentionDeleteSummary::getCount)
+                        .rightAligned()
+                        .build())
+                .build());
+
         LOGGER.info("Done");
     }
 

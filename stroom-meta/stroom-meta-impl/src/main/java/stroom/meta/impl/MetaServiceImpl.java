@@ -3,6 +3,8 @@ package stroom.meta.impl;
 import stroom.dashboard.expression.v1.Val;
 import stroom.data.retention.api.DataRetentionRuleAction;
 import stroom.data.retention.api.DataRetentionTracker;
+import stroom.data.retention.shared.DataRetentionDeleteSummary;
+import stroom.data.retention.shared.DataRetentionRules;
 import stroom.datasource.api.v2.AbstractField;
 import stroom.datasource.api.v2.DataSource;
 import stroom.docref.DocRef;
@@ -676,6 +678,12 @@ public class MetaServiceImpl implements MetaService, Searchable {
     @Override
     public void setTracker(final DataRetentionTracker dataRetentionTracker) {
         metaRetentionTrackerDao.createOrUpdate(dataRetentionTracker);
+    }
+
+    @Override
+    public List<DataRetentionDeleteSummary> getRetentionDeleteSummary(final DataRetentionRules rules) {
+        return securityContext.secureResult(PermissionNames.MANAGE_POLICIES_PERMISSION, () ->
+                metaDao.getRetentionDeletionSummary(rules));
     }
 
     private List<MetaInfoSection.Entry> getStreamEntries(final Meta meta) {

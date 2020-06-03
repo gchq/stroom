@@ -10,7 +10,7 @@ import stroom.data.retention.api.DataRetentionConfig;
 import stroom.data.retention.api.DataRetentionRuleAction;
 import stroom.data.retention.shared.DataRetentionDeleteSummary;
 import stroom.data.retention.shared.DataRetentionRule;
-import stroom.data.retention.shared.TimeUnit;
+import stroom.data.retention.shared.DataRetentionRules;
 import stroom.datasource.api.v2.AbstractField;
 import stroom.db.util.ExpressionMapper;
 import stroom.db.util.ExpressionMapperFactory;
@@ -46,8 +46,6 @@ import stroom.util.time.TimePeriod;
 import io.vavr.Tuple;
 import io.vavr.Tuple2;
 import org.jooq.CaseConditionStep;
-import org.jooq.CaseValueStep;
-import org.jooq.CaseWhenStep;
 import org.jooq.Condition;
 import org.jooq.Cursor;
 import org.jooq.DSLContext;
@@ -62,12 +60,8 @@ import org.jooq.impl.DSL;
 
 import javax.inject.Inject;
 import javax.inject.Singleton;
-import java.sql.Date;
 import java.time.Duration;
 import java.time.Instant;
-import java.time.LocalDateTime;
-import java.time.ZoneOffset;
-import java.time.temporal.ChronoUnit;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collection;
@@ -420,78 +414,45 @@ class MetaDaoImpl implements MetaDao {
         return updateCount;
     }
 
-    public List<DataRetentionDeleteSummary> getRetentionDeletionSummary(final List<DataRetentionRule> rules) {
-        Objects.requireNonNull(rules);
-
-        // What we are building is roughly:
-        // SELECT
-        //   v.feed_name, v.rule_no, v.ms_til_delete, count(*)
-        // FROM (
-        //   SELECT
-        //     feed_name,
-        //     create_time, -- converted to a Date
-        //     CASE
-        //       WHEN <rule 1 condition is true> THEN <rule no>
-        //       WHEN <rule 2 condition is true> THEN <rule no>
-        //       ELSE 0
-        //     END as rule_no
-        //   FROM meta m
-        //   WHERE <big OR block of all rules>
-        //   AND status IN (0,1)
-        // ) v
-        // WHERE v.ms_til_delete is not null
-        // GROUP BY v.feed_name, v.rule_no, v.ms_til_delete
-
-        final Instant now = Instant.now().truncatedTo(ChronoUnit.MILLIS);
-
-        List<Condition> conditions = new ArrayList<>();
-
+    @Override
+    public List<DataRetentionDeleteSummary> getRetentionDeletionSummary(final DataRetentionRules rules) {
         final List<DataRetentionDeleteSummary> result;
 
-        boolean hasAtLeastOneActiveRule = rules.stream()
-                .anyMatch(DataRetentionRule::isEnabled);
+        final List<DataRetentionRule> activeRules = Optional.ofNullable(rules)
+                .flatMap(rules2 -> Optional.ofNullable(rules2.getRules()))
+                .map(allRules -> allRules.stream()
+                        .filter(DataRetentionRule::isEnabled)
+                        .collect(Collectors.toList()))
+                .orElse(Collections.emptyList());
 
-        if (!rules.isEmpty() && hasAtLeastOneActiveRule) {
+        if (!activeRules.isEmpty()) {
             CaseConditionStep<Integer> ruleNoCaseConditionStep = null;
-            List<Condition> orConditions = new ArrayList<>();
-            Map<Integer, DataRetentionRule> numberToRuleMap = new HashMap<>();
+            final Map<Integer, DataRetentionRule> numberToRuleMap = new HashMap<>();
             // Order is critical here as we are building a case statement
             // Highest priority rules first, i.e. largest rule number
-            for (DataRetentionRule rule : rules) {
-                if (rule.isEnabled()) {
-                    numberToRuleMap.put(rule.getRuleNumber(), rule);
-                    final Condition ruleCondition = expressionMapper.apply(rule.getExpression());
+            final Map<Integer, Condition> ruleNoToConditionMap = activeRules.stream()
+                    .collect(Collectors.toMap(
+                            DataRetentionRule::getRuleNumber,
+                            rule -> expressionMapper.apply(rule.getExpression())));
 
-                    if (dataRetentionConfig.isUseQueryOptimisation()) {
-                        orConditions.add(ruleCondition);
-                    }
+            final List<Condition> orConditions = activeRules.stream()
+                    .map(rule -> ruleNoToConditionMap.get(rule.getRuleNumber()))
+                    .collect(Collectors.toList());
 
-                    // The rule will either result in true or false depending on if it needs
-                    // to delete or retain the data
+            for (DataRetentionRule rule : activeRules) {
+                numberToRuleMap.put(rule.getRuleNumber(), rule);
+                final Condition ruleCondition = ruleNoToConditionMap.get(rule.getRuleNumber());
 
-                    final Integer ruleNoCaseResult = rule.getRuleNumber();
-
-                    if (ruleNoCaseConditionStep == null) {
-                        ruleNoCaseConditionStep = DSL.when(ruleCondition, ruleNoCaseResult);
-                    } else {
-                        ruleNoCaseConditionStep.when(ruleCondition, ruleNoCaseResult);
-                    }
+                if (ruleNoCaseConditionStep == null) {
+                    ruleNoCaseConditionStep = DSL.when(ruleCondition, rule.getRuleNumber());
+                } else {
+                    ruleNoCaseConditionStep.when(ruleCondition, rule.getRuleNumber());
                 }
             }
             // If none of the rules matches then we don't to delete so return false
             final Field<Integer> ruleNoCaseField = ruleNoCaseConditionStep.otherwise((Field<Integer>) null);
 
-            final byte statusIdUnlocked = MetaStatusId.getPrimitiveValue(Status.UNLOCKED);
-            conditions.add(meta.STATUS.eq(statusIdUnlocked));
-
-            // Now add all the rule conditions as an OR block
-            // This is to improve the performance of the query as the OR can make use of other indexes,
-            // e.g. range scanning the feedid+createTime index to reduce the number of rows scanned.
-            // We are still reliant on the case statement block to get the right outcome for the rules.
-            // It is possible this approach may slow things down as it makes the SQL more complex.
-            if (dataRetentionConfig.isUseQueryOptimisation()) {
-                conditions.add(DSL.or(orConditions));
-            }
+            final byte statusIdDeleted = MetaStatusId.getPrimitiveValue(Status.DELETED);
 
             final List<DataRetentionDeleteSummary> deleteSummaries = JooqUtil.contextResult(
                     metaDbConnProvider, context -> {
@@ -499,144 +460,52 @@ class MetaDaoImpl implements MetaDao {
                         final String ruleNoFieldName = "rule_no";
                         final String feedNameFieldName = "feed_name";
                         final String typeNameFieldName = "type_name";
-                        final String createTimeTimeStampFieldName = "create_time_timestamp";
 
                         // Get all meta records that are impacted by a rule and for each determine
-                        // which rule wins and get the meta create_time in timestamp form
-                        // so we can later do some date maths
+                        // which rule wins and get its rule number, along with feed and type
                         final var detailTable = context
                                 .select(
                                         metaFeed.NAME.as(feedNameFieldName),
                                         metaType.NAME.as(typeNameFieldName),
-                                        JooqUtil.epochMsToDate(meta.CREATE_TIME).as(createTimeTimeStampFieldName),
                                         ruleNoCaseField.as(ruleNoFieldName))
                                 .from(meta)
                                 .leftJoin(metaFeed).on(meta.FEED_ID.eq(metaFeed.ID))
                                 .leftJoin(metaType).on(meta.TYPE_ID.eq(metaType.ID))
-                                .where(conditions)
+                                .where(meta.STATUS.notEqual(statusIdDeleted))
+                                .and(DSL.or(orConditions))
                                 .asTable("detail");
 
-                        final Field<Integer> ruleNoField = detailTable.field(
-                                ruleNoFieldName, Integer.class);
-                        final Field<Date> createTimeTimeStampField = detailTable.field(
-                                createTimeTimeStampFieldName, Date.class);
-
-                        final CaseValueStep<Integer> timeTilDeleteCaseValueStep = DSL.choose(ruleNoField);
-                        CaseWhenStep<Integer, String> timeTilDeleteCaseWhenStep = null;
-
-                        for (DataRetentionRule rule : rules) {
-                            if (rule.isEnabled()) {
-                                final Integer caseValueCondition = rule.getRuleNumber();
-                                final Instant minCreateTime = ruleToMinCreateTime(now, rule);
-                                final java.sql.Date minCreateTimeDate = new java.sql.Date(minCreateTime.toEpochMilli());
-
-                                // Work out the days between the meta.create_time and the minCreateTime for deletion
-                                // If that is <31 then display it as days else as months
-                                final Field<String> subCaseField = DSL.when(
-                                        DSL.dateDiff(createTimeTimeStampField, minCreateTimeDate).lessThan(31),
-                                        DSL.concat(DSL.greatest(0, DSL.dateDiff(
-                                                createTimeTimeStampField,
-                                                minCreateTimeDate)).cast(String.class), " DAYS"))
-                                        .else_(DSL.concat(
-                                                DSL.greatest(0, JooqUtil.periodDiff(
-                                                        createTimeTimeStampField,
-                                                        minCreateTimeDate)).cast(String.class), " MONTHS"));
-
-                                if (timeTilDeleteCaseWhenStep == null) {
-                                    timeTilDeleteCaseWhenStep = timeTilDeleteCaseValueStep.when(
-                                            caseValueCondition, subCaseField);
-                                } else {
-                                    timeTilDeleteCaseWhenStep = timeTilDeleteCaseWhenStep.when(
-                                            caseValueCondition, subCaseField);
-                                }
-                            }
-                        }
-                        timeTilDeleteCaseWhenStep.else_((String) null);
-
-                        String timeTillDeleteFieldName = "time_til_deletion";
-
-                        final var middleTable = context
+                        // Now get counts grouped by feed, type and rule
+                        return context
                                 .select(
                                         detailTable.field(feedNameFieldName),
                                         detailTable.field(typeNameFieldName),
-                                        detailTable.field(ruleNoField),
-                                        timeTilDeleteCaseWhenStep.as(timeTillDeleteFieldName))
-                                .from(detailTable)
-                                .where(ruleNoField.isNotNull()) // ignore rows not impacted by a rule
-                                .asTable("middle");
-
-                        return context
-                                .select(
-                                        middleTable.field(feedNameFieldName),
-                                        middleTable.field(typeNameFieldName),
-                                        middleTable.field(ruleNoFieldName),
-                                        middleTable.field(timeTillDeleteFieldName),
+                                        detailTable.field(ruleNoFieldName),
                                         DSL.count())
-                                .from(middleTable)
-                                .where(middleTable.field(timeTillDeleteFieldName).isNotNull())
+                                .from(detailTable)
+                                .where(detailTable.field(ruleNoFieldName).isNotNull()) // ignore rows not impacted by a rule
                                 .groupBy(
-                                        middleTable.field(feedNameFieldName),
-                                        middleTable.field(typeNameFieldName),
-                                        middleTable.field(ruleNoFieldName),
-                                        middleTable.field(timeTillDeleteFieldName))
+                                        detailTable.field(feedNameFieldName),
+                                        detailTable.field(typeNameFieldName),
+                                        detailTable.field(ruleNoFieldName))
                                 .fetch()
                                 .map(record -> {
                                     int ruleNo = (int) record.get(ruleNoFieldName);
-                                    String[] parts = ((String) record.get(timeTillDeleteFieldName)).split(" ");
-                                    int time = Integer.parseInt(parts[0]);
-                                    TimeUnit timeUnit = TimeUnit.valueOf(parts[1]);
 
                                     return new DataRetentionDeleteSummary(
                                             (String) record.get(feedNameFieldName),
                                             (String) record.get(typeNameFieldName),
                                             ruleNo,
                                             numberToRuleMap.get(ruleNo).getName(),
-                                            time,
-                                            timeUnit);
+                                            (int) record.get(DSL.count().getName()));
                                 });
                     });
             result = deleteSummaries;
-
         } else {
             // No rules so no point running a query
             result = Collections.emptyList();
         }
         return result;
-    }
-
-    private static Instant ruleToMinCreateTime(final Instant now, final DataRetentionRule rule) {
-        if (rule.isForever()) {
-            return Instant.EPOCH;
-        }
-
-        LocalDateTime age = null;
-        final LocalDateTime time = LocalDateTime.ofInstant(now, ZoneOffset.UTC);
-        switch (rule.getTimeUnit()) {
-            case MINUTES:
-                age = time.minusMinutes(rule.getAge());
-                break;
-            case HOURS:
-                age = time.minusHours(rule.getAge());
-                break;
-            case DAYS:
-                age = time.minusDays(rule.getAge());
-                break;
-            case WEEKS:
-                age = time.minusWeeks(rule.getAge());
-                break;
-            case MONTHS:
-                age = time.minusMonths(rule.getAge());
-                break;
-            case YEARS:
-                age = time.minusYears(rule.getAge());
-                break;
-        }
-
-        if (age == null) {
-            return Instant.EPOCH;
-        }
-
-        return age.toInstant(ZoneOffset.UTC);
     }
 
     @Override

@@ -8,21 +8,18 @@ public class DataRetentionDeleteSummary {
     private final String metaType;
     private final int ruleNumber;
     private final String ruleName;
-    private final int timeTillDelete;
-    private final TimeUnit timeTillDeleteUnits;
+    private final int count;
 
     public DataRetentionDeleteSummary(final String feedName,
                                       final String metaType,
                                       final int ruleNumber,
                                       final String ruleName,
-                                      final int timeTillDelete,
-                                      final TimeUnit timeTillDeleteUnits) {
+                                      final int count) {
         this.feedName = Objects.requireNonNull(feedName);
         this.metaType = Objects.requireNonNull(metaType);
         this.ruleNumber = ruleNumber;
         this.ruleName = Objects.requireNonNull(ruleName);
-        this.timeTillDelete = timeTillDelete;
-        this.timeTillDeleteUnits = Objects.requireNonNull(timeTillDeleteUnits);
+        this.count = count;
     }
 
     public String getFeedName() {
@@ -41,12 +38,8 @@ public class DataRetentionDeleteSummary {
         return ruleName;
     }
 
-    public int getTimeTillDelete() {
-        return timeTillDelete;
-    }
-
-    public TimeUnit getTimeTillDeleteUnits() {
-        return timeTillDeleteUnits;
+    public int getCount() {
+        return count;
     }
 
     @Override
@@ -55,27 +48,14 @@ public class DataRetentionDeleteSummary {
         if (o == null || getClass() != o.getClass()) return false;
         final DataRetentionDeleteSummary that = (DataRetentionDeleteSummary) o;
         return ruleNumber == that.ruleNumber &&
-                timeTillDelete == that.timeTillDelete &&
+                count == that.count &&
                 feedName.equals(that.feedName) &&
                 metaType.equals(that.metaType) &&
-                ruleName.equals(that.ruleName) &&
-                timeTillDeleteUnits == that.timeTillDeleteUnits;
+                ruleName.equals(that.ruleName);
     }
 
     @Override
     public int hashCode() {
-        return Objects.hash(feedName, metaType, ruleNumber, ruleName, timeTillDelete, timeTillDeleteUnits);
-    }
-
-    @Override
-    public String toString() {
-        return "DataRetentionDeleteSummary{" +
-                "feedName='" + feedName + '\'' +
-                ", metaType='" + metaType + '\'' +
-                ", ruleNumber=" + ruleNumber +
-                ", ruleName='" + ruleName + '\'' +
-                ", timeTillDelete=" + timeTillDelete +
-                ", timeTillDeleteUnits=" + timeTillDeleteUnits +
-                '}';
+        return Objects.hash(feedName, metaType, ruleNumber, ruleName, count);
     }
 }
