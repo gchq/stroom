@@ -13,10 +13,6 @@ import { ChangeEventHandler, useCallback, useState } from "react";
   { valueType: "number", defaultValue: "10" },
   { valueType: "datetime-local", defaultValue: "2018-06-12T19:30" },
 ].forEach(({ valueType, defaultValue }) => {
-  const stories = storiesOf(
-    `Expression/Value Widgets/Single/${valueType}`,
-    module,
-  );
   const TestHarness: React.FunctionComponent = () => {
     const [value, setValue] = useState(defaultValue);
     const onChange: ChangeEventHandler<HTMLInputElement> = useCallback(
@@ -35,7 +31,8 @@ import { ChangeEventHandler, useCallback, useState } from "react";
     );
   };
 
-  addThemedStories(stories, () => <TestHarness />);
+  const stories = storiesOf(    "Expression/Value Widgets/Single",    module);
+  addThemedStories(stories, valueType, () => <TestHarness />);
 });
 
 [
@@ -54,8 +51,8 @@ import { ChangeEventHandler, useCallback, useState } from "react";
     );
   };
 
-  const stories = storiesOf(`Expression/Value Widgets/In/${valueType}`, module);
-  addThemedStories(stories, () => <TestHarness />);
+  const stories = storiesOf("Expression/Value Widgets/In", module);
+  addThemedStories(stories, valueType, () => <TestHarness />);
 });
 
 [
@@ -78,9 +75,6 @@ import { ChangeEventHandler, useCallback, useState } from "react";
     );
   };
 
-  const stories = storiesOf(
-    `Expression/Value Widgets/Between/${valueType}`,
-    module,
-  );
-  addThemedStories(stories, () => <TestHarness />);
+  const stories = storiesOf(    "Expression/Value Widgets/Between", module);
+  addThemedStories(stories, valueType, () => <TestHarness />);
 });

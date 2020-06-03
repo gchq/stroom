@@ -1,10 +1,10 @@
 @import "themes.scss";
 @import "../../styles/themify.scss";
 
-///////////////
-// Variables //
-///////////////
-$button-margin: .2rem;
+/////////////////
+//// Variables //
+/////////////////
+//$button-margin: .2rem;
 
 ////////////////////
 // Inner elements //
@@ -28,7 +28,7 @@ $button-margin: .2rem;
 .Button__container {
   display: flex;
   flex-wrap: wrap;
-  margin: -$button-margin;
+  //margin: -$button-margin;
 }
 
 ////////////////////////////////////////////////////////////////////////////////
@@ -55,8 +55,8 @@ $button-margin: .2rem;
   -webkit-appearance: none;
   -webkit-tap-highlight-color: transparent;
 
-  margin: $button-margin;
-  height: 30px;
+  //margin: $button-margin;
+  height: 1.9rem;
 }
 
 .Button--base.Button--disabled {
@@ -71,14 +71,14 @@ $button-margin: .2rem;
 .Button {
   // .j9la4jl
   color: rgba(0, 0, 0, 0.87);
-  padding: .375rem 1rem;
-  font-size: 0.875rem;
-  min-width: 4rem;
+  //padding: .375rem 1rem;
+  //font-size: 0.875rem;
+  min-width: 7rem;
   box-sizing: border-box;
   transition: background-color 250ms cubic-bezier(0.4, 0, 0.2, 1) 0ms, box-shadow 250ms cubic-bezier(0.4, 0, 0.2, 1) 0ms, border 250ms cubic-bezier(0.4, 0, 0.2, 1) 0ms;
   line-height: 1.75;
   // font-family: "Roboto", "Helvetica", "Arial", sans-serif;
-  font-weight: 500;
+  //font-weight: 500;
   border-radius: .25rem;
   letter-spacing: 0.02857em;
   text-transform: uppercase;
@@ -90,7 +90,7 @@ $button-margin: .2rem;
   position: relative;
   overflow: hidden;
 
-  font-family: "Open Sans";
+  font-family: "Open Sans", "Roboto", "Helvetica", "Arial", sans-serif;
   font-weight: 600;
 }
 

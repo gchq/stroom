@@ -12,8 +12,8 @@ storiesOf("Document Editors/Pipeline/Element Image", module)
   .add("large", () => <ElementImage size="lg" icon="stream.svg" />);
 
 const stories = storiesOf(
-  "Document Editors/Pipeline/Element Image/Themed",
+  "Document Editors/Pipeline/Element Image",
   module,
 );
 
-addThemedStories(stories, () => <ElementImage size="lg" icon="kafka.svg" />);
+addThemedStories(stories, "Themed", () => <ElementImage size="lg" icon="kafka.svg" />);

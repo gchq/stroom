@@ -37,6 +37,6 @@ const TestHarness = () => (
   </Switch>
 );
 
-const stories = storiesOf("Sections/Activity/Chooser", module);
+const stories = storiesOf("Sections/Activity", module);
 
-addThemedStories(stories, () => <TestHarness />);
+addThemedStories(stories, "Chooser",() => <TestHarness />);

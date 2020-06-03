@@ -21,7 +21,7 @@ import { IndexVolume } from "../indexVolumeApi";
 import IndexVolumeCard from "../IndexVolumeCard";
 
 const stories = storiesOf(
-  "Sections/Index Volumes 2/DraggableIndexVolumeCard",
+  "Sections/Index Volumes 2",
   module,
 );
 
@@ -41,7 +41,7 @@ const indexVolume01: IndexVolume = {
   updateUser: "Updating user",
 };
 
-addThemedStories(stories, () => (
+addThemedStories(stories, "DraggableIndexVolumeCard", () => (
   <div style={{ padding: "1em" }}>
     <IndexVolumeCard
       indexVolume={indexVolume01}

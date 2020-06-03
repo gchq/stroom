@@ -5,9 +5,9 @@ import { addThemedStories } from "../../../storybook/themedStoryGenerator";
 
 import PillChoice from "./PillChoice";
 
-const stories = storiesOf("New Developer/Step 2/Pill Choice", module);
+const stories = storiesOf("New Developer/Step 2", module);
 
-addThemedStories(stories, () => {
+addThemedStories(stories, "Pill Choice", () => {
   return (
     <div>
       <h2>Pill Choice Test Harness</h2>

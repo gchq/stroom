@@ -21,6 +21,6 @@ import PathNotFound from "./PathNotFound";
 
 import { addThemedStories } from "testing/storybook/themedStoryGenerator";
 
-const stories = storiesOf("Sections/Path not found", module);
+const stories = storiesOf("Sections", module);
 
-addThemedStories(stories, () => <PathNotFound />);
+addThemedStories(stories, "Path not found", () => <PathNotFound />);

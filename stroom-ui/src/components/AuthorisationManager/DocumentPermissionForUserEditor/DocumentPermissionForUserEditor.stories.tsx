@@ -26,11 +26,11 @@ const testUser: StroomUser = fullTestData.usersAndGroups.users[0];
 const testDocRef: DocRefType = fullTestData.documentTree.children![0];
 
 const stories = storiesOf(
-  "Sections/Authorisation Manager/Document Permission For User Editor",
+  "Sections/Authorisation Manager",
   module,
 );
 
-addThemedStories(stories, () => (
+addThemedStories(stories, "Document Permission For User Editor", () => (
   <DocumentPermissionForUserEditor
     userUuid={testUser.uuid}
     docRefUuid={testDocRef.uuid}

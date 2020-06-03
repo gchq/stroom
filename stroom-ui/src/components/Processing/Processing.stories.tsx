@@ -5,6 +5,6 @@ import { storiesOf } from "@storybook/react";
 import Processing from "./Processing";
 import { addThemedStories } from "testing/storybook/themedStoryGenerator";
 
-const stories = storiesOf("Sections/Processing", module);
+const stories = storiesOf("Sections", module);
 
-addThemedStories(stories, () => <Processing />);
+addThemedStories(stories, "Processing", () => <Processing />);

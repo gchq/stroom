@@ -21,7 +21,7 @@ import JsonDebug from "testing/JsonDebug";
 import { addThemedStories } from "testing/storybook/themedStoryGenerator";
 import InlineSelect, { SelectOption } from "./InlineSelect";
 
-const stories = storiesOf("General Purpose/InlineSelect", module);
+const stories = storiesOf("General Purpose", module);
 
 const options: SelectOption[] = [
   { value: "leia", label: "Princess Leia" },
@@ -31,7 +31,7 @@ const options: SelectOption[] = [
   { value: "everyone", label: "everyone" },
 ];
 
-addThemedStories(stories, () => {
+addThemedStories(stories, "InlineSelect", () => {
   const [empty, setEmpty] = useState<string>("");
   const onEmptyChangeHandler: ChangeEventHandler<
     HTMLSelectElement

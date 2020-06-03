@@ -150,7 +150,7 @@ const PanelTest = () => {
 };
 
 const stories = storiesOf(
-  "General Purpose/Horizontal Main Details/Mounting Issue",
+  "General Purpose/Horizontal Main Details",
   module,
 );
-addThemedStories(stories, () => <PanelTest />);
+addThemedStories(stories, "Mounting Issue", () => <PanelTest />);

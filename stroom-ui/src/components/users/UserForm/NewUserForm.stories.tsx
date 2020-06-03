@@ -1,7 +1,7 @@
 import { action } from "@storybook/addon-actions";
 import { storiesOf } from "@storybook/react";
 import * as React from "react";
-import { addThemedStories } from "testing/storybook/themedStoryGenerator";
+// import { addThemedStories } from "testing/storybook/themedStoryGenerator";
 import NewUserForm from "./NewUserForm";
 
 const onValidate = (

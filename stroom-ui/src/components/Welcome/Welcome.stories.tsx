@@ -21,6 +21,6 @@ import Welcome from "./Welcome";
 
 import { addThemedStories } from "testing/storybook/themedStoryGenerator";
 
-const stories = storiesOf("Sections/Welcome", module);
+const stories = storiesOf("Sections", module);
 
-addThemedStories(stories, () => <Welcome />);
+addThemedStories(stories, "Welcome", () => <Welcome />);

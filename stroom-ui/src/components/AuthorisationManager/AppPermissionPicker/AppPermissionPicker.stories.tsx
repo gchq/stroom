@@ -56,8 +56,8 @@ const TestForm = () => {
 };
 
 const stories = storiesOf(
-  "Sections/Authorisation Manager/App Permission Picker",
+  "Sections/Authorisation Manager",
   module,
 );
 
-addThemedStories(stories, () => <TestForm />);
+addThemedStories(stories, "App Permission Picker", () => <TestForm />);

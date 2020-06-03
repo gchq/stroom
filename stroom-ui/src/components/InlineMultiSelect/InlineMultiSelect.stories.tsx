@@ -22,7 +22,7 @@ import JsonDebug from "testing/JsonDebug";
 import { addThemedStories } from "testing/storybook/themedStoryGenerator";
 import InlineMultiSelect from "./InlineMultiSelect";
 
-const stories = storiesOf("General Purpose/InlineMultiSelect", module);
+const stories = storiesOf("General Purpose", module);
 
 const options: SelectOption[] = [
   { value: "leia", label: "Princess Leia" },
@@ -32,7 +32,7 @@ const options: SelectOption[] = [
   { value: "everyone", label: "everyone" },
 ];
 
-addThemedStories(stories, () => {
+addThemedStories(stories, "InlineMultiSelect", () => {
   const [emptySelection, setEmptySelection] = useState<string[]>([]);
   const [singleSelection, setSingleSelection] = useState<string[]>(["leia"]);
   const [multiSelection, setMultiSelection] = useState<string[]>([

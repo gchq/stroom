@@ -29,7 +29,7 @@ import {
 import { IndexVolumeGroup } from "../indexVolumeGroupApi";
 import { useCallback } from "react";
 import { IndexVolume } from "../indexVolumeApi";
-const stories = storiesOf("Sections/Index Volumes 2", module);
+const stories = storiesOf("Sections", module);
 
 const TestHarness: React.FunctionComponent = () => {
   var initialGroups = [indexVolumeGroup01, indexVolumeGroup02];
@@ -106,4 +106,4 @@ const TestHarness: React.FunctionComponent = () => {
   );
 };
 
-addThemedStories(stories, () => <TestHarness />);
+addThemedStories(stories, "Index Volumes 2", () => <TestHarness />);

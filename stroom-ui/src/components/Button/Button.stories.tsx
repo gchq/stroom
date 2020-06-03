@@ -222,6 +222,6 @@ const TestHarness: React.FunctionComponent = () => {
   );
 };
 
-const stories = storiesOf("General Purpose/Button", module);
+const stories = storiesOf("General Purpose", module);
 
-addThemedStories(stories, () => <TestHarness />, true);
+addThemedStories(stories, "Button", () => <TestHarness />, true);

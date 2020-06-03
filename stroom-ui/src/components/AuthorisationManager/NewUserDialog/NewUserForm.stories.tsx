@@ -16,8 +16,8 @@ const TestHarness: React.FunctionComponent = () => {
 };
 
 const stories = storiesOf(
-  "Sections/Authorisation Manager/New User/Form",
+  "Sections/Authorisation Manager/New User",
   module,
 );
 
-addThemedStories(stories, () => <TestHarness />);
+addThemedStories(stories, "Form", () => <TestHarness />);

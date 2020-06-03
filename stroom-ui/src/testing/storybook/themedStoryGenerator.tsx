@@ -14,58 +14,105 @@
  * limitations under the License.
  */
 
+// import { ActionTypes, PropsWithStyles, ValueType } from "react-select";
+// import { DocRefType } from "../../components/DocumentEditors/useDocumentApi/types/base";
+// import JsonDebug from "../JsonDebug";
+// import { StroomUser, useManageUsers } from "../../components/AuthorisationManager/api/userGroups";
+// import CreatableSelect from "react-select/creatable";
 import * as React from "react";
+import { useCallback } from "react";
+// import useLocalStorage, { useStoreObjectFactory } from "../../lib/useLocalStorage";
+import ThemePicker from "./ThemePicker";
+import { useTheme } from "lib/useTheme/useTheme";
 
-const styles = {
-  fullScreen: {
-    width: "100%",
-    height: "100%",
-  },
-  center: {
-    width: "100%",
-    height: "100%",
-    display: "flex",
-    justifyContent: "center",
-    alignItems: "center",
-  },
-};
-
-const themes = ["theme-light", "theme-dark"];
+// const styles = {
+//   topBar: {
+//     display: "flex",
+//     flexDirection: "row",
+//     width: "100%",
+//     background: "red",
+//     // padding: "0.5rem",
+//   },
+//   themePicker: {
+//     width: "10rem",
+//   },
+//   fullScreen: {
+//     width: "100%",
+//     height: "100%",
+//   },
+//   center: {
+//     width: "100%",
+//     height: "100%",
+//     display: "flex",
+//     justifyContent: "center",
+//     alignItems: "center",
+//   },
+// };
+//
+// const themes = ["theme-light", "theme-dark"];
 
 interface Props {
-  theme: string;
   component: any;
   centerComponent?: React.ReactNode;
 }
 
 const ThemedContainer: React.FunctionComponent<Props> = ({
-  theme,
-  component,
-  centerComponent,
-}) => (
-  <div className={`${theme} raised-low`} style={styles.fullScreen}>
-    {centerComponent ? (
-      <div className="page" style={styles.center}>
-        {component()}
+                                                           component,
+                                                           centerComponent,
+                                                         }) => {
+
+
+  // const storageKey = "themeValue";
+  //
+  // const { value, setValue } = useLocalStorage<string>(
+  //   storageKey,
+  //   OPTIONS[0].value,
+  //   useStoreObjectFactory(),
+  // );
+  //
+
+  const { theme, setTheme } = useTheme();
+
+  const onChange = useCallback(
+    (option: string) => {
+      setTheme(option);
+    }, [setTheme]);
+
+
+  // const onChange = React.useCallback(
+  //   (d: ThemeOption) => {
+  //     setTheme(d.value);
+  //   },
+  //   [setTheme],
+  // );
+
+  return (
+    <div className={`${theme} raised-low ThemedStory__fullScreen`}>
+      <div className="ThemedStory__topBar page">
+        <div>Theme:</div>
+        <ThemePicker className="ThemedStory__themePicker" value={theme} onChange={onChange}/>
       </div>
-    ) : (
-      <React.Fragment>{component()}</React.Fragment>
-    )}
-  </div>
-);
+      {centerComponent ? (
+        <div className="page ThemedStory__center">
+          {component()}
+        </div>
+      ) : (
+        <React.Fragment>{component()}</React.Fragment>
+      )}
+    </div>
+  );
+};
 
 export const addThemedStories = (
   stories: any,
+  storyName: string,
   component: any,
   centerComponent?: React.ReactNode,
 ) => {
-  themes.forEach(theme =>
-    stories.add(theme, () => (
-      <ThemedContainer
-        theme={theme}
-        component={component}
-        centerComponent={centerComponent}
-      />
-    )),
-  );
+  stories.add(storyName, () => (
+    <ThemedContainer
+      component={component}
+      centerComponent={centerComponent}
+    />
+  ));
 };

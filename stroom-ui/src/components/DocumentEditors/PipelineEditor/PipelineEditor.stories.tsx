@@ -23,8 +23,8 @@ import { addThemedStories } from "testing/storybook/themedStoryGenerator";
 
 Object.entries(testPipelines).forEach(k => {
   const stories = storiesOf(
-    `Document Editors/Pipeline/Topologies/${k[0]}`,
+    "Document Editors/Pipeline/Topologies",
     module,
   );
-  addThemedStories(stories, () => <PipelineEditor docRefUuid={k[1].uuid} />);
+  addThemedStories(stories, k[0], () => <PipelineEditor docRefUuid={k[1].uuid} />);
 });

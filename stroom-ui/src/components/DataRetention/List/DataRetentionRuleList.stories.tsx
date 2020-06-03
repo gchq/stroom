@@ -22,7 +22,7 @@ import { DataRetentionRule } from "../types/DataRetentionRule";
 import DataRetentionRuleList from "./DataRetentionRuleList";
 import { useCallback } from "react";
 
-const stories = storiesOf("Sections/DataRetention/List", module);
+const stories = storiesOf("Sections/DataRetention", module);
 
 // These are out of order in this list because they should be
 // correctly ordered by ruleNumber the component
@@ -99,7 +99,7 @@ const rules1: DataRetentionRule[] = [
   },
 ];
 
-addThemedStories(stories, () => {
+addThemedStories(stories, "List", () => {
   const [rules, setRules] = React.useState<DataRetentionRule[]>(rules1);
   const onRulesChange = useCallback(rules => setRules(rules), [setRules]);
   return (

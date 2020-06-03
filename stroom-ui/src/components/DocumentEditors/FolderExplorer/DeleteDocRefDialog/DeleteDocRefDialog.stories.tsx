@@ -30,10 +30,10 @@ const TestHarness: React.FunctionComponent<Props> = ({ testUuids }) => {
 };
 
 const stories = storiesOf(
-  "Document Editors/Folder/Delete Doc Ref Dialog",
+  "Document Editors/Folder",
   module,
 );
-addThemedStories(stories, () => (
+addThemedStories(stories, "Delete Doc Ref Dialog", () => (
   <TestHarness
     testUuids={testFolder2.children!.map((d: DocRefType) => d.uuid)}
   />

@@ -5,7 +5,7 @@ import JsonDebug from "testing/JsonDebug";
 import CreateDocRefForm, { useThisForm } from "./CreateDocRefForm";
 
 const stories = storiesOf(
-  "Document Editors/Folder/Create Doc Ref/Form",
+  "Document Editors/Folder/Create Doc Ref",
   module,
 );
 
@@ -20,4 +20,4 @@ const TestHarness: React.FunctionComponent = () => {
   );
 };
 
-addThemedStories(stories, () => <TestHarness />);
+addThemedStories(stories, "Form", () => <TestHarness />);

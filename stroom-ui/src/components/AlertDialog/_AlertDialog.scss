@@ -1,0 +1,24 @@
+.ReactModal__Content {
+  border-radius: 0.5rem !important;
+}
+
+.Button__ok {
+  min-width: 3rem;
+}
+
+.ImageHeader {
+  display: flex;
+  flex-direction: row;
+  min-width: 15rem;
+  align-items: center;
+}
+
+.ImageHeader__icon {
+  width: 2.5rem;
+  height: 2.5rem;
+}
+
+.ImageHeader__text {
+  padding-left: 1rem;
+  font-size: large;
+}

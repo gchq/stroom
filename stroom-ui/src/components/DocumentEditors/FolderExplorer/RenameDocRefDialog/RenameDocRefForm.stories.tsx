@@ -9,7 +9,7 @@ const testDocRef = fullTestData.documentTree.children![0].children![0]
   .children![0];
 
 const stories = storiesOf(
-  "Document Editors/Folder/Rename Doc Ref/Form",
+  "Document Editors/Folder/Rename Doc Ref",
   module,
 );
 
@@ -24,4 +24,4 @@ const TestHarness: React.FunctionComponent = () => {
   );
 };
 
-addThemedStories(stories, () => <TestHarness />);
+addThemedStories(stories, "Form", () => <TestHarness />);

@@ -39,7 +39,7 @@ const TestHarness: React.FunctionComponent<TestProps> = ({
   );
 };
 
+const stories = storiesOf("Document Editors/Pipeline/Display", module);
 Object.entries(testPipelines).forEach(k => {
-  const s = storiesOf(`Document Editors/Pipeline/Display/${k[0]}`, module);
-  addThemedStories(s, () => <TestHarness pipelineId={k[1].uuid} />);
+  addThemedStories(stories, k[0], () => <TestHarness pipelineId={k[1].uuid} />);
 });

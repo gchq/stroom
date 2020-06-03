@@ -7,6 +7,6 @@ import FeedSettings from "./FeedSettings";
 
 const feed: FeedDoc = fullTestData.documents.Feed[0];
 
-const stories = storiesOf("Document Editors/Feed/Settings", module);
+const stories = storiesOf("Document Editors/Feed", module);
 
-addThemedStories(stories, () => <FeedSettings feedUuid={feed.uuid} />);
+addThemedStories(stories, "Settings", () => <FeedSettings feedUuid={feed.uuid} />);

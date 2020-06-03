@@ -21,7 +21,7 @@ import ConditionPicker from "./ConditionPicker";
 import { ConditionType } from "../types";
 import JsonDebug from "testing/JsonDebug";
 
-const stories = storiesOf("Expression/Condition Picker", module);
+const stories = storiesOf("Expression", module);
 
 const TestHarness: React.FunctionComponent = () => {
   const [value, onChange] = React.useState<ConditionType | undefined>(
@@ -36,4 +36,4 @@ const TestHarness: React.FunctionComponent = () => {
   );
 };
 
-addThemedStories(stories, () => <TestHarness />);
+addThemedStories(stories, "Condition Picker", () => <TestHarness />);

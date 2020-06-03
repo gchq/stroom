@@ -7,7 +7,7 @@ import JsonDebug from "testing/JsonDebug";
 import { testDataSource as dataSource } from "../test";
 import DataSourceFieldPicker from "./DataSourceFieldPicker";
 
-const stories = storiesOf("Expression/Data Source Field Picker", module);
+const stories = storiesOf("Expression", module);
 
 const TestHarness: React.FunctionComponent = () => {
   const [value, onChange] = React.useState<string | undefined>(undefined);
@@ -20,4 +20,4 @@ const TestHarness: React.FunctionComponent = () => {
   );
 };
 
-addThemedStories(stories, () => <TestHarness />);
+addThemedStories(stories, "Data Source Field Picker", () => <TestHarness />);

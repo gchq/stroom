@@ -8,7 +8,7 @@ import DeletePipelineElement, { useDialog } from ".";
 import Button from "components/Button";
 import JsonDebug from "testing/JsonDebug";
 
-const stories = storiesOf("Document Editors/Pipeline/Delete Element", module);
+const stories = storiesOf("Document Editors/Pipeline", module);
 
 let nextElementId = 12;
 
@@ -28,4 +28,4 @@ const TestHarness: React.FunctionComponent = () => {
   );
 };
 
-addThemedStories(stories, () => <TestHarness />);
+addThemedStories(stories, "Delete Element", () => <TestHarness />);

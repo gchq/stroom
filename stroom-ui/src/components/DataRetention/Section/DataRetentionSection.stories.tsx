@@ -25,7 +25,7 @@ import { useState } from "react";
 import JsonDebug from "testing/JsonDebug";
 import { action } from "@storybook/addon-actions";
 
-const stories = storiesOf("Sections/DataRetention/Main view", module);
+const stories = storiesOf("Sections/DataRetention", module);
 const policy1: DataRetentionPolicy = {
   name: "rule2",
   type: "DataRetentionRules",
@@ -78,7 +78,7 @@ const policy1: DataRetentionPolicy = {
   uuid: "blah-blah-uuid-blah",
   version: "1",
 };
-addThemedStories(stories, () => {
+addThemedStories(stories, "Main view", () => {
   const [policy] = useState(policy1);
   return (
     <div>

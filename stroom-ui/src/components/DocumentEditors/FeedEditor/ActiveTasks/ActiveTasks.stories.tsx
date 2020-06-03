@@ -7,6 +7,6 @@ import ActiveTasks from "./ActiveTasks";
 
 const feed: FeedDoc = fullTestData.documents.Feed[0];
 
-const stories = storiesOf("Document Editors/Feed/Active Tasks", module);
+const stories = storiesOf("Document Editors/Feed", module);
 
-addThemedStories(stories, () => <ActiveTasks feedUuid={feed.uuid} />);
+addThemedStories(stories, "Active Tasks", () => <ActiveTasks feedUuid={feed.uuid} />);

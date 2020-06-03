@@ -5,9 +5,9 @@ import { addThemedStories } from "testing/storybook/themedStoryGenerator";
 
 import Tooltip from "./Tooltip";
 
-const stories = storiesOf("General Purpose/Tooltip", module);
+const stories = storiesOf("General Purpose", module);
 
-addThemedStories(stories, () => (
+addThemedStories(stories, "Tooltip", () => (
   <Tooltip
     trigger={
       <button onClick={() => console.log("Clicked the tooltip button")}>

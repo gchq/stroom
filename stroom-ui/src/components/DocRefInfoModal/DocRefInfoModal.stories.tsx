@@ -37,6 +37,6 @@ const TestHarness: React.FunctionComponent = () => {
   );
 };
 
-const stories = storiesOf("Doc Ref/Info/Dialog", module);
+const stories = storiesOf("Doc Ref/Info", module);
 
-addThemedStories(stories, () => <TestHarness />);
+addThemedStories(stories, "Dialog", () => <TestHarness />);

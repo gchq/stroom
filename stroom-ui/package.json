@@ -38,7 +38,7 @@
     "js-search": "1.4.3",
     "jwt-decode": "2.2.0",
     "lorem-ipsum": "2.0.3",
-    "moment": "2.24.0",
+    "moment": "^2.26.0",
     "mousetrap": "1.6.3",
     "qs": "6.9.1",
     "query-string": "6.9.0",

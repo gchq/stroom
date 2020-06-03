@@ -43,6 +43,6 @@ const BreadcrumbOpen = () => {
   );
 };
 
-const stories = storiesOf("Doc Ref/Breadcrumb", module);
+const stories = storiesOf("Doc Ref", module);
 
-addThemedStories(stories, () => <BreadcrumbOpen />);
+addThemedStories(stories, "Breadcrumb", () => <BreadcrumbOpen />);

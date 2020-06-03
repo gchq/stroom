@@ -11,7 +11,7 @@ import JsonDebug from "testing/JsonDebug";
 import Button from "components/Button";
 import useToggle from "lib/useToggle";
 
-const stories = storiesOf("Expression/Term", module);
+const stories = storiesOf("Expression", module);
 
 const newTerm: ExpressionTermType = getNewTerm();
 
@@ -51,4 +51,4 @@ const TestHarness: React.FunctionComponent = () => {
   );
 };
 
-addThemedStories(stories, () => <TestHarness />);
+addThemedStories(stories, "Term", () => <TestHarness />);

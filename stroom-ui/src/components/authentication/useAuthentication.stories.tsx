@@ -20,7 +20,7 @@ const TestHarness: React.FunctionComponent = () => {
     Cookies.set("authSessionId", TEST_COOKIE);
   }, []);
 
-  const { login } = useAuthentication();
+  const { login, isSubmitting } = useAuthentication();
   const {
     useTextInput,
     value: { email, password },
@@ -33,15 +33,13 @@ const TestHarness: React.FunctionComponent = () => {
   const emailProps = useTextInput("email");
   const passwordProps = useTextInput("password");
 
-  const [submitting, setSubmitting] = React.useState<boolean>(false);
-  const [status, setStatus] = React.useState<string | undefined>(undefined);
+  // const [submitting, setSubmitting] = React.useState<boolean>(false);
+  // const [status, setStatus] = React.useState<string | undefined>(undefined);
 
   const onLogin = React.useCallback(() => login({ email, password }), [
     email,
     password,
     login,
-    setSubmitting,
-    setStatus,
   ]);
 
   return (
@@ -53,7 +51,7 @@ const TestHarness: React.FunctionComponent = () => {
         <input {...passwordProps} />
       </form>
       <button onClick={onLogin}>Test Login</button>
-      <JsonDebug value={{ email, password, submitting, status, TEST_COOKIE }} />
+      <JsonDebug value={{ email, password, isSubmitting, TEST_COOKIE }}/>
     </div>
   );
 };

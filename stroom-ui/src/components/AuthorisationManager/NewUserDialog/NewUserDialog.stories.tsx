@@ -24,7 +24,7 @@ import Button from "components/Button";
 import JsonDebug from "testing/JsonDebug";
 
 const stories = storiesOf(
-  "Sections/Authorisation Manager/New User/Dialog",
+  "Sections/Authorisation Manager/New User",
   module,
 );
 
@@ -52,4 +52,4 @@ const TestHarness: React.FunctionComponent<Props> = ({ isGroup }) => {
   );
 };
 
-addThemedStories(stories, () => <TestHarness isGroup={false} />);
+addThemedStories(stories, "Dialog", () => <TestHarness isGroup={false} />);

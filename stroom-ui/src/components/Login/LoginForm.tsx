@@ -18,9 +18,10 @@ import * as React from "react";
 import { NavLink } from "react-router-dom";
 import { Credentials } from "components/authentication/types";
 import useForm from "react-hook-form";
-import { Button, Input, Icon, Form } from "antd";
+import { Button, Form, Icon, Input } from "antd";
 import { RequiredFieldMessage } from "components/FormComponents";
 import styled from "styled-components";
+import useConfig from "../../startup/config/useConfig";
 
 interface FormData {
   email: string;
@@ -30,14 +31,12 @@ interface FormData {
 const InputContainer = styled.div`
   display: flex;
   flex-direction: column;
-  justify-content: space-between;
-  height: 5.5em;
+  height: 4rem;
 `;
 
 const StatusContainer = styled.div`
-  margin-top: 1em;
+  margin-top: 1rem;
   display: flex;
-  justify-content: space-between;
 
   a > {
     align-self: flex-end;
@@ -47,15 +46,14 @@ const StatusContainer = styled.div`
 const LoginForm: React.FunctionComponent<{
   onSubmit: (credentials: Credentials) => void;
   isSubmitting: boolean;
-  loginResultMessage?: string;
   allowPasswordResets?: boolean;
-}> = ({ onSubmit, allowPasswordResets, loginResultMessage, isSubmitting }) => {
+}> = ({ onSubmit, allowPasswordResets, isSubmitting }) => {
   const {
     triggerValidation,
     setValue,
     register,
     handleSubmit,
-    getValues,
+    // getValues,
     errors,
   } = useForm<FormData>({
     defaultValues: {
@@ -70,9 +68,11 @@ const LoginForm: React.FunctionComponent<{
     register({ name: "password", type: "custom" }, { required: true });
   }, [register]);
 
-  const { email, password } = getValues();
+  const { theme } = useConfig();
 
-  const disableSubmit = email === "" || password === "";
+  // const { email, password } = getValues();
+
+  const disableSubmit = isSubmitting;//email === "" || password === "";
 
   const handleInputChange = async (
     name: "email" | "password",
@@ -83,7 +83,12 @@ const LoginForm: React.FunctionComponent<{
   };
 
   return (
-    <div className="content-floating-without-appbar">
+    <div style={theme} className="content-floating-without-appbar">
+      <img
+        className="content-logo"
+        alt="Stroom logo"
+        src={require("../../images/logo.svg")}
+      />
       <div className="Login__container">
         <Form onSubmit={handleSubmit(onSubmit)}>
           <div className="Login__content">
@@ -97,54 +102,54 @@ const LoginForm: React.FunctionComponent<{
               <Input
                 placeholder="username or email"
                 prefix={
-                  <Icon type="user" style={{ color: "rgba(0,0,0,.25)" }} />
+                  <Icon type="user" style={{ color: "rgba(0,0,0,.25)" }}/>
                 }
                 name="email"
                 autoFocus
                 onChange={async e => handleInputChange("email", e.target.value)}
               />
-              {errors.email && <RequiredFieldMessage />}
+              {errors.email && <RequiredFieldMessage/>}
+            </InputContainer>
+            <InputContainer>
               <Input.Password
                 name="password"
                 placeholder="password"
                 prefix={
-                  <Icon type="lock" style={{ color: "rgba(0,0,0,.25)" }} />
+                  <Icon type="lock" style={{ color: "rgba(0,0,0,.25)" }}/>
                 }
                 onChange={async e =>
                   handleInputChange("password", e.target.value)
                 }
               />
-              {errors.password && <RequiredFieldMessage />}
+              {errors.password && <RequiredFieldMessage/>}
             </InputContainer>
-            <StatusContainer>
-              {loginResultMessage ? (
-                <div className="validation-error">{loginResultMessage}</div>
-              ) : (
-                <div />
-              )}
-              {allowPasswordResets ? (
-                <NavLink
-                  className="Login__reset-password"
-                  to={"/s/resetPasswordRequest"}
-                >
-                  Reset password?
-                </NavLink>
-              ) : (
-                undefined
-              )}
-            </StatusContainer>
 
             <div className="Login__actions page__buttons Button__container">
               <Button
+                className="Login__login-button"
                 type="primary"
                 loading={isSubmitting}
                 disabled={disableSubmit}
                 htmlType="submit"
                 ref={register}
               >
-                Submit
+                Login
               </Button>
             </div>
+
+            <StatusContainer>
+              {allowPasswordResets ? (
+                <NavLink
+                  className="Login__reset-password"
+                  to={"/s/resetPasswordRequest"}
+                >
+                  Forgot password?
+                </NavLink>
+              ) : (
+                undefined
+              )}
+            </StatusContainer>
+
           </div>
         </Form>
       </div>

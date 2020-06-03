@@ -6,7 +6,7 @@ import ModeOptionButtons, { useModeOptionButtons } from "./ModeOptionButtons";
 import { addThemedStories } from "testing/storybook/themedStoryGenerator";
 import JsonDebug from "testing/JsonDebug";
 
-const stories = storiesOf("App Search Bar/Mode Option", module);
+const stories = storiesOf("App Search Bar", module);
 
 const TestHarness = () => {
   const { searchMode, componentProps } = useModeOptionButtons();
@@ -19,4 +19,4 @@ const TestHarness = () => {
   );
 };
 
-addThemedStories(stories, () => <TestHarness />);
+addThemedStories(stories, "Mode Option", () => <TestHarness />);

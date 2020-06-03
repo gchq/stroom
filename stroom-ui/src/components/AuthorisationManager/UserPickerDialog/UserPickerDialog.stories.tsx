@@ -51,11 +51,9 @@ const TestHarness: React.FunctionComponent<Props> = ({ isGroup }) => {
 
 [true, false].forEach(isGroup => {
   const stories = storiesOf(
-    `Sections/Authorisation Manager/User Picker Dialog/${
-      isGroup ? "Group" : "User"
-    }`,
+    "Sections/Authorisation Manager/User Picker Dialog",
     module,
   );
 
-  addThemedStories(stories, () => <TestHarness {...{ isGroup }} />);
+  addThemedStories(stories, `${isGroup ? "Group" : "User"}`, () => <TestHarness {...{ isGroup }} />);
 });

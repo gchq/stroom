@@ -20,7 +20,7 @@ import { addThemedStories } from "testing/storybook/themedStoryGenerator";
 import FsVolume from "./types/FsVolume";
 import DataVolumeCard from "./DataVolumeCard";
 
-const stories = storiesOf("Sections/Data Volumes/DataVolumeCard", module);
+const stories = storiesOf("Sections/Data Volumes", module);
 
 const volume01: FsVolume = {
   id: "123",
@@ -42,7 +42,7 @@ const volume01: FsVolume = {
   createUser: "Creating user",
 };
 
-addThemedStories(stories, () => (
+addThemedStories(stories, "DataVolumeCard", () => (
   <div style={{ padding: "1em" }}>
     <DataVolumeCard
       volume={volume01}

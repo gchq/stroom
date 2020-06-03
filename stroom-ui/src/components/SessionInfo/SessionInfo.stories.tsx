@@ -20,6 +20,6 @@ import { storiesOf } from "@storybook/react";
 import { addThemedStories } from "testing/storybook/themedStoryGenerator";
 import SessionInfo from "./SessionInfo";
 
-const stories = storiesOf("Sections/SessionInfo", module);
+const stories = storiesOf("Sections", module);
 
-addThemedStories(stories, () => <SessionInfo />);
+addThemedStories(stories, "SessionInfo", () => <SessionInfo />);

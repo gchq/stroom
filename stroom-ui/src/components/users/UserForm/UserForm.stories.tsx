@@ -49,12 +49,13 @@ const tests: Test = {
   locked: lockedUser,
 };
 
+const stories = storiesOf("Users/User Form", module);
+
 Object.entries(tests)
   .map(k => ({
     name: k[0],
     user: k[1],
   }))
   .forEach(({ name, user }) => {
-    const stories = storiesOf(`Users/User Form/${name}`, module);
-    addThemedStories(stories, () => <TestHarness user={user} />);
+    addThemedStories(stories, name, () => <TestHarness user={user} />);
   });

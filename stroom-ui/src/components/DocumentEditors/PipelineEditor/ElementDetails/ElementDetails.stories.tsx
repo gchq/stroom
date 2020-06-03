@@ -61,19 +61,18 @@ class TestDeduplicator {
 
 const testDeduplicator: TestDeduplicator = new TestDeduplicator();
 
+const stories = storiesOf(
+  "Document Editors/Pipeline/Element Details/Element Types",
+  module,
+);
+
 Object.values(fullTestData.documents.Pipeline)
   .map(p => p as PipelineDocumentType)
   .forEach(pipeline => {
     pipeline.merged.elements
       .add!.filter(e => testDeduplicator.isUnique(e))
       .forEach(element => {
-        const stories = storiesOf(
-          `Document Editors/Pipeline/Element Details/Element Types/${
-            element.type
-          }`,
-          module,
-        );
-        addThemedStories(stories, () => (
+        addThemedStories(stories, element.type, () => (
           <TestHarness pipelineId={pipeline.uuid} testElementId={element.id} />
         ));
       });

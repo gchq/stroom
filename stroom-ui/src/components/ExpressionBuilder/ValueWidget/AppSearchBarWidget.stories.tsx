@@ -6,9 +6,9 @@ import AppSearchBarWidget from "./AppSearchBarWidget";
 import { DocRefType } from "components/DocumentEditors/useDocumentApi/types/base";
 import { useState } from "react";
 
-const stories = storiesOf("Expression/Value Widgets/Dictionary", module);
+const stories = storiesOf("Expression/Value Widgets", module);
 
-addThemedStories(stories, () => {
+addThemedStories(stories, "Dictionary", () => {
   const [value, setValue] = useState<DocRefType>(undefined);
   return (
     <div>

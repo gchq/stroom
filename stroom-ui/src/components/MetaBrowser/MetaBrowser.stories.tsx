@@ -20,6 +20,6 @@ import { storiesOf } from "@storybook/react";
 import MetaBrowser from "./MetaBrowser";
 import { addThemedStories } from "testing/storybook/themedStoryGenerator";
 
-const stories = storiesOf("Sections/Meta Browser", module);
+const stories = storiesOf("Sections", module);
 
-addThemedStories(stories, () => <MetaBrowser />);
+addThemedStories(stories, "Meta Browser", () => <MetaBrowser />);

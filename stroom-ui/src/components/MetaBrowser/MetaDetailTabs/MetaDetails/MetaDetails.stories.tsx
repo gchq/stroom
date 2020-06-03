@@ -8,8 +8,8 @@ import { MetaRow } from "components/MetaBrowser/types";
 const dataRow: MetaRow = fullTestData.dataList.streamAttributeMaps[0];
 
 const stories = storiesOf(
-  "Sections/Meta Browser/Detail Tabs/Meta Details",
+  "Sections/Meta Browser/Detail Tabs",
   module,
 );
 
-addThemedStories(stories, () => <MetaDetails dataRow={dataRow} />);
+addThemedStories(stories, "Meta Details", () => <MetaDetails dataRow={dataRow} />);

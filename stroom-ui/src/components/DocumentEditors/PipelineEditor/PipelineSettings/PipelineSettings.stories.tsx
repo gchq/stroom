@@ -8,7 +8,7 @@ import useUpdateableState from "lib/useUpdateableState";
 import Button from "components/Button";
 import JsonDebug from "testing/JsonDebug";
 
-const stories = storiesOf("Document Editors/Pipeline/Settings", module);
+const stories = storiesOf("Document Editors/Pipeline", module);
 
 const TestHarness: React.FunctionComponent = () => {
   const { value, update } = useUpdateableState<PipelineSettingsValues>({
@@ -31,4 +31,4 @@ const TestHarness: React.FunctionComponent = () => {
   );
 };
 
-addThemedStories(stories, () => <TestHarness />);
+addThemedStories(stories, "Settings", () => <TestHarness />);

@@ -36,6 +36,6 @@ const TestForm = () => {
   );
 };
 
-const stories = storiesOf("Doc Ref/Doc Ref Type Filters", module);
+const stories = storiesOf("Doc Ref", module);
 
-addThemedStories(stories, () => <TestForm />);
+addThemedStories(stories, "Doc Ref Type Filters", () => <TestForm />);

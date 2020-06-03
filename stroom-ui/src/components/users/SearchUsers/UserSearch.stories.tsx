@@ -6,9 +6,9 @@ import UserSearch from "./UserSearch";
 import { addThemedStories } from "testing/storybook/themedStoryGenerator";
 import fullTestData from "testing/data";
 
-const stories = storiesOf("Users/Search", module);
+const stories = storiesOf("Users", module);
 
-addThemedStories(stories, () => (
+addThemedStories(stories, "Search", () => (
   <UserSearch
     onNewUserClicked={() => action("onNewUserClicked")}
     onUserOpen={(userId: string) => action(`onUserOpen:${userId}`)}

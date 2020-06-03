@@ -3,6 +3,6 @@ import { storiesOf } from "@storybook/react";
 import { addThemedStories } from "testing/storybook/themedStoryGenerator";
 import Sidebar from "./Sidebar";
 
-const stories = storiesOf("App Chrome/Sidebar", module);
+const stories = storiesOf("App Chrome", module);
 
-addThemedStories(stories, () => <Sidebar activeMenuItem="welcome" />);
+addThemedStories(stories, "Sidebar", () => <Sidebar activeMenuItem="welcome" />);

@@ -24,14 +24,9 @@ import fullTestData from "testing/data";
 const testError = fullTestData.dataList.streamAttributeMaps[0];
 const testData = fullTestData.dataList.streamAttributeMaps[1];
 
-const errorStories = storiesOf(
-  "Sections/Meta Browser/Data Display/Errors",
+const stories = storiesOf(
+  "Sections/Meta Browser/Data Display",
   module,
 );
-addThemedStories(errorStories, () => <DataDisplay metaRow={testError} />);
-
-const eventStories = storiesOf(
-  "Sections/Meta Browser/Data Display/Events",
-  module,
-);
-addThemedStories(eventStories, () => <DataDisplay metaRow={testData} />);
+addThemedStories(stories, "Errors", () => <DataDisplay metaRow={testError} />);
+addThemedStories(stories, "Events", () => <DataDisplay metaRow={testData} />);

@@ -21,7 +21,7 @@ import { addThemedStories } from "testing/storybook/themedStoryGenerator";
 import AnalyzerPicker from "./AnalyzerPicker";
 import { AnalyzerType } from "components/DocumentEditors/useDocumentApi/types/indexDoc";
 
-const stories = storiesOf("Document Editors/Index/Analyzer Picker", module);
+const stories = storiesOf("Document Editors/Index", module);
 
 const B: React.FunctionComponent = () => {
   const [value, onChange] = React.useState<AnalyzerType | undefined>(undefined);
@@ -34,4 +34,4 @@ const B: React.FunctionComponent = () => {
   );
 };
 
-addThemedStories(stories, () => <B />);
+addThemedStories(stories, "Analyzer Picker", () => <B />);

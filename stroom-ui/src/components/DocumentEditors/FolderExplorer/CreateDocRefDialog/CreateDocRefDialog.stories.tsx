@@ -25,7 +25,7 @@ const TestHarness: React.FunctionComponent = () => {
 };
 
 const stories = storiesOf(
-  "Document Editors/Folder/Create Doc Ref/Dialog",
+  "Document Editors/Folder/Create Doc Ref",
   module,
 );
-addThemedStories(stories, () => <TestHarness />);
+addThemedStories(stories, "Dialog", () => <TestHarness />);

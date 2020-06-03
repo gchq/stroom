@@ -21,9 +21,9 @@ import JsonDebug from "testing/JsonDebug";
 import { addThemedStories } from "testing/storybook/themedStoryGenerator";
 import InlineInput from "./InlineInput";
 
-const stories = storiesOf("General Purpose/InlineInput", module);
+const stories = storiesOf("General Purpose", module);
 
-addThemedStories(stories, () => {
+addThemedStories(stories, "InlineInput", () => {
   const [stringValue, setStringValue] = React.useState<string>("Yoda");
   const onStringValueChange: ChangeEventHandler<
     HTMLInputElement

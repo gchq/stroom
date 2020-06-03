@@ -6,7 +6,7 @@ import { action } from "@storybook/addon-actions";
 import { Token } from "../api/types";
 import * as moment from "moment";
 
-const stories = storiesOf("Tokens/Edit", module);
+const stories = storiesOf("Tokens", module);
 
 const token: Token = {
   id: "1",
@@ -23,7 +23,7 @@ const token: Token = {
   enabled: true,
 };
 
-addThemedStories(stories, () => (
+addThemedStories(stories, "Edit", () => (
   <EditTokenForm
     onChangeState={action("onChangeState")}
     onBack={action("onBack")}

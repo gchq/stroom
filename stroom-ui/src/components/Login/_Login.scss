@@ -16,37 +16,42 @@
 
 .Login__container {
   width: 300px;
-  padding: 15px;
-  border: thin solid lightgrey;
-}
-
-/* We need to force the width on the input otherwise it'll be a bit short */
-.LoginForm-input {
-  width: 100% !important;
+  padding: 2rem;
+  //border: thin solid lightgrey;
+  background: white;
+  border-radius: .5rem;
 }
 
 .Login__icon-container {
   display: flex;
   justify-content: center;
-  margin-bottom: 15px;
+  margin: 0 0 2rem 0;
 }
 
 .Login__icon-container img {
-  width: 125px;
-  height: 125px;
-  border-radius: 75px;
+  width: 8rem;
+  height: 8rem;
+  border-radius: 4rem;
 }
 
 .Login__reset-password {
   font-size: .7rem;
 }
 
-.Login__content .field-container {
-  width: 100% !important;
+.Login__content input {
+  width: 100%;
+  background: rgba(0, 0, 0, 0.05);
+  border: none;
+  border-radius: .25rem;
 }
 
-.Login__content .field-container input {
-  width: auto;
+.Login__content input:focus {
+  box-shadow: 0 0 0 .2rem rgba(24, 144, 255, 0.2);
+  background: rgba(0, 0, 0, 0.02);
+}
+
+.Login__content i {
+  color: rgba(0, 0, 0, 0.5) !important;
 }
 
 .Login__actions {
@@ -63,4 +68,10 @@
 
 .Login__status-container a {
   align-self: flex-end;
+}
+
+.Login__login-button {
+  width: 100%;
+  border: none !important;
+  border-radius: .25rem;
 }

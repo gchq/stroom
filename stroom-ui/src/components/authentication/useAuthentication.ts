@@ -8,6 +8,7 @@ import { Credentials } from "./types";
 interface UseAuthentication {
   login: (credentials: Credentials) => void;
   loginResultMessage: string;
+  setLoginResultMessage: (message: string) => void;
   isSubmitting: boolean;
 }
 
@@ -34,7 +35,7 @@ const useAuthentication = (): UseAuthentication => {
     [apiLogin],
   );
 
-  return { login, loginResultMessage, isSubmitting };
+  return { login, loginResultMessage, setLoginResultMessage, isSubmitting };
 };
 
 export default useAuthentication;

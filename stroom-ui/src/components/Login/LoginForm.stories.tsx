@@ -5,7 +5,10 @@ import LoginForm from "./LoginForm";
 
 storiesOf("Auth/Login", module)
   .add("simplest", () => (
-    <LoginForm onSubmit={action("onSubmit")} isSubmitting={false} />
+    <LoginForm
+      onSubmit={action("onSubmit")}
+      isSubmitting={false}
+    />
   ))
   .add("allow password resets", () => (
     <LoginForm

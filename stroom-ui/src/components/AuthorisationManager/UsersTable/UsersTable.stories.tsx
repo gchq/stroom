@@ -4,7 +4,7 @@ import UsersTable, { useTable } from "./UsersTable";
 import fullTestData from "testing/data";
 import { addThemedStories } from "testing/storybook/themedStoryGenerator";
 
-const stories = storiesOf("Sections/Authorisation Manager/Users Table", module);
+const stories = storiesOf("Sections/Authorisation Manager", module);
 
 const TestHarness: React.FunctionComponent = () => {
   const { componentProps } = useTable(fullTestData.usersAndGroups.users);
@@ -12,4 +12,4 @@ const TestHarness: React.FunctionComponent = () => {
   return <UsersTable {...componentProps} />;
 };
 
-addThemedStories(stories, () => <TestHarness />);
+addThemedStories(stories, "Users Table", () => <TestHarness />);

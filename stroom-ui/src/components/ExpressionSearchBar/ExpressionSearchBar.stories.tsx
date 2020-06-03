@@ -25,7 +25,7 @@ import JsonDebug from "testing/JsonDebug";
 import Button from "../Button";
 import { ExpressionOperatorType } from "../ExpressionBuilder/types";
 
-const stories = storiesOf("Expression/Search Bar", module);
+const stories = storiesOf("Expression", module);
 
 const TestHarness: React.FunctionComponent = () => {
   const [lastSearch, setLastSearch] = React.useState<
@@ -50,4 +50,4 @@ const TestHarness: React.FunctionComponent = () => {
   );
 };
 
-addThemedStories(stories, () => <TestHarness />);
+addThemedStories(stories, "Search Bar", () => <TestHarness />);

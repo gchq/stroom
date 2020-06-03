@@ -4,8 +4,8 @@ import { storiesOf } from "@storybook/react";
 import { addThemedStories } from "testing/storybook/themedStoryGenerator";
 import CreateTokenForm from "./CreateTokenForm";
 
-const stories = storiesOf("Tokens/Create", module);
+const stories = storiesOf("Tokens", module);
 
-addThemedStories(stories, () => (
+addThemedStories(stories, "Create", () => (
   <CreateTokenForm onSubmit={action("onSubmit")} onBack={action("onBack")} />
 ));

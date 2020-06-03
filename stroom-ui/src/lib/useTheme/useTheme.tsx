@@ -4,16 +4,19 @@ import useLocalStorage, { storeString } from "../useLocalStorage";
 
 export interface ThemeOption {
   text: string;
+  label: string;
   value: string;
 }
 
 export const themeOptions: ThemeOption[] = [
   {
     text: "Light",
+    label: "Light",
     value: "theme-light",
   },
   {
     text: "Dark",
+    label: "Dark",
     value: "theme-dark",
   },
 ];
@@ -23,7 +26,7 @@ interface ThemeContextValue {
   setTheme: (t: string) => void;
 }
 
-let ThemeContext: React.Context<ThemeContextValue> = React.createContext({
+const ThemeContext: React.Context<ThemeContextValue> = React.createContext({
   theme: themeOptions[0].value,
   setTheme: (t: string) =>
     console.log("Theme Change Ignored, something wrong with context setup", {

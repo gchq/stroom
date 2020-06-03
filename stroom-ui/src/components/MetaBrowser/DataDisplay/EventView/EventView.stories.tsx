@@ -6,10 +6,10 @@ import EventView from "./EventView";
 import { eventData } from "testing/data/data";
 
 const stories = storiesOf(
-  "Sections/Meta Browser/Data Display/Event View",
+  "Sections/Meta Browser/Data Display",
   module,
 );
 
-addThemedStories(stories, () => {
+addThemedStories(stories, "Event View", () => {
   return <EventView events={eventData.data} />;
 });

@@ -26,6 +26,6 @@ const TestHarness: React.FunctionComponent = () => {
   );
 };
 
-const stories = storiesOf("General Purpose/Button/Ripple Container", module);
+const stories = storiesOf("General Purpose/Button", module);
 
-addThemedStories(stories, () => <TestHarness />);
+addThemedStories(stories, "Ripple Container", () => <TestHarness />);

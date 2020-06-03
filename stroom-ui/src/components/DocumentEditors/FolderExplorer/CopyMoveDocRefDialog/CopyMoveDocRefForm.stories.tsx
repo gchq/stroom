@@ -26,15 +26,15 @@ const TestHarness: React.FunctionComponent<Props> = ({ testDestination }) => {
 };
 
 const storiesPreFilled = storiesOf(
-  "Document Editors/Folder/Copy Doc Ref/Form/preFilled",
+  "Document Editors/Folder/Copy Doc Ref/Form",
   module,
 );
-addThemedStories(storiesPreFilled, () => (
+addThemedStories(storiesPreFilled, "preFilled", () => (
   <TestHarness testDestination={testFolder2} />
 ));
 
 const storiesBlankSlate = storiesOf(
-  "Document Editors/Folder/Copy Doc Ref/Form/blankSlate",
+  "Document Editors/Folder/Copy Doc Ref/Form",
   module,
 );
-addThemedStories(storiesBlankSlate, () => <TestHarness />);
+addThemedStories(storiesBlankSlate, "blankSlate", () => <TestHarness />);

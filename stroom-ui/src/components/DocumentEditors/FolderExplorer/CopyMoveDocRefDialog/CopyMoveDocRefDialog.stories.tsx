@@ -46,11 +46,11 @@ const TestHarness: React.FunctionComponent<Props> = ({
 };
 
 const stories = storiesOf(
-  "Document Editors/Folder/Copy Doc Ref/Dialog",
+  "Document Editors/Folder/Copy Doc Ref",
   module,
 );
 
-addThemedStories(stories, () => (
+addThemedStories(stories, "Dialog", () => (
   <TestHarness
     testUuids={testFolder2.children!.map(d => d.uuid)}
     testDestination={testFolder2}

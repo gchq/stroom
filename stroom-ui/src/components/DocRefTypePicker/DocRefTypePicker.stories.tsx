@@ -43,6 +43,6 @@ const TestForm = () => {
   );
 };
 
-const stories = storiesOf("Doc Ref/Doc Ref Type Picker", module);
+const stories = storiesOf("Doc Ref", module);
 
-addThemedStories(stories, () => <TestForm />);
+addThemedStories(stories, "Doc Ref Type Picker", () => <TestForm />);

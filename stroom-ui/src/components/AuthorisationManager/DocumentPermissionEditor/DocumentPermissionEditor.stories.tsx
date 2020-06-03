@@ -54,8 +54,8 @@ const TestHarness: React.FunctionComponent<Props> = ({ docRefUuid }) => (
 );
 
 const stories = storiesOf(
-  "Sections/Authorisation Manager/Document Permission Editor",
+  "Sections/Authorisation Manager",
   module,
 );
 
-addThemedStories(stories, () => <TestHarness docRefUuid={testDocRef.uuid} />);
+addThemedStories(stories, "Document Permission Editor", () => <TestHarness docRefUuid={testDocRef.uuid} />);

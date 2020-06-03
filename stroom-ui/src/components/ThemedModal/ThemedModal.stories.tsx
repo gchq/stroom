@@ -44,6 +44,6 @@ const TestHarness: React.FunctionComponent = () => {
   );
 };
 
-const stories = storiesOf("General Purpose/Themed Modal", module);
+const stories = storiesOf("General Purpose", module);
 
-addThemedStories(stories, () => <TestHarness />);
+addThemedStories(stories, "Themed Modal", () => <TestHarness />);

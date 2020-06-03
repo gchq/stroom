@@ -57,8 +57,8 @@ const TestHarness: React.FunctionComponent = () => {
 };
 
 const stories = storiesOf(
-  "Document Editors/Pipeline/Add Element/Dialog",
+  "Document Editors/Pipeline/Add Element",
   module,
 );
 
-addThemedStories(stories, () => <TestHarness />);
+addThemedStories(stories, "Dialog", () => <TestHarness />);

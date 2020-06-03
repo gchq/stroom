@@ -1,7 +1,7 @@
 import * as React from "react";
 
 import { storiesOf } from "@storybook/react";
-import PipelineElement from "./PipelineElement";
+// import PipelineElement from "./PipelineElement";
 import { testPipelines } from "testing/data/pipelines";
 import { addThemedStories } from "testing/storybook/themedStoryGenerator";
 import { PipelineDocumentType } from "components/DocumentEditors/useDocumentApi/types/pipelineDoc";
@@ -28,7 +28,7 @@ const TestHarness: React.FunctionComponent<Props> = ({
   );
 };
 
-const stories = storiesOf("Document Editors/Pipeline/Pipeline Element", module);
+const stories = storiesOf("Document Editors/Pipeline", module);
 
 const testPipeline: PipelineDocumentType = Object.values(testPipelines).find(
   d => {
@@ -42,7 +42,7 @@ const testPipeline: PipelineDocumentType = Object.values(testPipelines).find(
   },
 );
 
-addThemedStories(stories, () => (
+addThemedStories(stories, "Pipeline Element", () => (
   <TestHarness
     pipelineId={testPipeline.uuid}
     elementId={testPipeline.merged.elements.add[0].id}

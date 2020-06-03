@@ -5,6 +5,6 @@ import { addThemedStories } from "../../storybook/themedStoryGenerator";
 
 import Step2 from "./Step2";
 
-const stories = storiesOf("New Developer/Step 2", module);
+const stories = storiesOf("New Developer", module);
 
-addThemedStories(stories, () => <Step2 />);
+addThemedStories(stories, "Step 2", () => <Step2 />);

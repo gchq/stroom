@@ -34,14 +34,14 @@ import {
 import UserSelect from "./UserSelect";
 import styled from "styled-components";
 
-const stories = storiesOf("Users/UserSelect", module);
+const stories = storiesOf("Users", module);
 
 const Container = styled.div`
   width: 30em;
 `;
 
 const TestHarness: React.FunctionComponent = () => {
-  var initialUsers = [
+  const initialUsers = [
     disabledUser,
     inactiveUser,
     lockedUser,
@@ -53,13 +53,13 @@ const TestHarness: React.FunctionComponent = () => {
   const [selectedUser, setSelectedUser] = React.useState<Account>();
   const handleFuzzySearch = useCallback(
     (criteria: string) => {
-      var fuse = new Fuse(initialUsers, {
+      const fuse = new Fuse(initialUsers, {
         keys: [{ name: "email", weight: 1 }],
       });
       const searchResults: Account[] = fuse.search(criteria);
       setUsers(searchResults);
     },
-    [users, setUsers],
+    [initialUsers, setUsers],
   );
   const handleSearch = useCallback(
     (criteria: string) => {
@@ -68,7 +68,7 @@ const TestHarness: React.FunctionComponent = () => {
       );
       setUsers(searchResults);
     },
-    [users, setUsers],
+    [initialUsers, setUsers],
   );
 
   const handleChange = useCallback(
@@ -76,7 +76,7 @@ const TestHarness: React.FunctionComponent = () => {
       const result = users.find(u => user === u.email);
       setSelectedUser(result);
     },
-    [users, selectedUser, setSelectedUser],
+    [users, setSelectedUser],
   );
   return (
     <Container>
@@ -99,4 +99,4 @@ const TestHarness: React.FunctionComponent = () => {
   );
 };
 
-addThemedStories(stories, () => <TestHarness />);
+addThemedStories(stories, "UserSelect", () => <TestHarness />);

@@ -10,5 +10,5 @@ const TestHarness: React.FunctionComponent = () => {
   return <DocRefInfoForm docRef={testFolder1} />;
 };
 
-const stories = storiesOf("Doc Ref/Info/Form", module);
-addThemedStories(stories, () => <TestHarness />);
+const stories = storiesOf("Doc Ref/Info", module);
+addThemedStories(stories, "Form", () => <TestHarness />);

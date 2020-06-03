@@ -24,7 +24,7 @@ import Button from "../../../Button";
 import JsonDebug from "testing/JsonDebug";
 import { IndexField } from "components/DocumentEditors/useDocumentApi/types/indexDoc";
 
-const stories = storiesOf("Document Editors/Index/Field Editor", module);
+const stories = storiesOf("Document Editors/Index", module);
 
 const FIELD_ID = 1007;
 
@@ -51,4 +51,4 @@ const TestHarness: React.FunctionComponent = () => {
   );
 };
 
-addThemedStories(stories, () => <TestHarness />);
+addThemedStories(stories, "Field Editor", () => <TestHarness />);

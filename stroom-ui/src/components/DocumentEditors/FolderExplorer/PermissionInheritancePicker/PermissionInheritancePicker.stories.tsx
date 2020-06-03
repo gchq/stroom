@@ -50,8 +50,8 @@ const TestHarness: React.FunctionComponent = () => {
 };
 
 const stories = storiesOf(
-  "Document Editors/Folder/Permission Inheritance Picker",
+  "Document Editors/Folder",
   module,
 );
 
-addThemedStories(stories, () => <TestHarness />);
+addThemedStories(stories, "Permission Inheritance Picker", () => <TestHarness />);

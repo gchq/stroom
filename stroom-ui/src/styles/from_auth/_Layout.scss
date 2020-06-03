@@ -21,6 +21,13 @@
   height: 100vh;
 }
 
+.content-floating-without-appbar {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  height: 100vh;
+}
+
 .content-floating-with-appbar {
   display: flex;
   align-items: center;
@@ -39,4 +46,12 @@
   display: flex;
   align-items: center;
   /*justify-content: center;*/
+}
+
+.content-logo {
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 146px;
+  height: 35px;
 }

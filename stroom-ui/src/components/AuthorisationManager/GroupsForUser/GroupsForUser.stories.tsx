@@ -27,8 +27,8 @@ let aUser: StroomUser = fullTestData.usersAndGroups.users
   .pop()!;
 
 const stories = storiesOf(
-  "Sections/Authorisation Manager/Groups For User",
+  "Sections/Authorisation Manager",
   module,
 );
 
-addThemedStories(stories, () => <GroupsForUser user={aUser} />);
+addThemedStories(stories, "Groups For User2", () => <GroupsForUser user={aUser} />);

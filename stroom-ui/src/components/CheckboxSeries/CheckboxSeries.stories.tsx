@@ -5,7 +5,7 @@ import { addThemedStories } from "testing/storybook/themedStoryGenerator";
 import CheckboxSeries from "./CheckboxSeries";
 import JsonDebug from "testing/JsonDebug";
 
-const stories = storiesOf("General Purpose/Checkbox Series", module);
+const stories = storiesOf("General Purpose", module);
 
 const AVAILABLE_VALUES: string[] = [
   "cereal",
@@ -42,4 +42,4 @@ const TestHarness: React.FunctionComponent = () => {
   );
 };
 
-addThemedStories(stories, () => <TestHarness />);
+addThemedStories(stories, "Checkbox Series", () => <TestHarness />);

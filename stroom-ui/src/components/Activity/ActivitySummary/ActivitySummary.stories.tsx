@@ -21,6 +21,6 @@ import ActivitySummary from "./ActivitySummary";
 
 import { addThemedStories } from "testing/storybook/themedStoryGenerator";
 
-const stories = storiesOf("Sections/Activity/Summary", module);
+const stories = storiesOf("Sections/Activity", module);
 
-addThemedStories(stories, () => <ActivitySummary />);
+addThemedStories(stories, "Summary",() => <ActivitySummary />);

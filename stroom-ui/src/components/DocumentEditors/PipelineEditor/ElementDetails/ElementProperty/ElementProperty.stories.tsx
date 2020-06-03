@@ -94,6 +94,11 @@ class TestDeduplicator {
 
 const testDeduplicator: TestDeduplicator = new TestDeduplicator();
 
+const stories = storiesOf(
+  "Document Editors/Pipeline/Element Details/Element Property",
+  module,
+);
+
 fullTestData.documents.Pipeline.forEach((pipeline: PipelineDocumentType) => {
   pipeline.merged.elements.add.forEach(element => {
     const elementProperties: ElementPropertiesType =
@@ -102,13 +107,7 @@ fullTestData.documents.Pipeline.forEach((pipeline: PipelineDocumentType) => {
       .map(p => testDeduplicator.isUnique(pipeline, element, p))
       .filter(p => p !== undefined)
       .forEach(props => {
-        const stories = storiesOf(
-          `Document Editors/Pipeline/Element Details/Element Property/${
-            props.property.type
-          }-${props.hasParentValue ? "parent" : "noParent"}`,
-          module,
-        );
-        addThemedStories(stories, () => <TestHarness {...props} />);
+        addThemedStories(stories, `${props.property.type}-${props.hasParentValue ? "parent" : "noParent"}`, () => <TestHarness {...props} />);
       });
   });
 });

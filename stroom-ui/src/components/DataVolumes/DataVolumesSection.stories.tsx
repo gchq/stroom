@@ -83,13 +83,14 @@ const volume03: FsVolume = {
   createUser: "Creating user",
 };
 
-const stories = storiesOf("Sections/Data Volumes/DataVolumesSection", module);
+const stories = storiesOf("Sections/Data Volumes", module);
 
 const TestHarness: React.FunctionComponent = () => {
   var initialVolumes = [volume01, volume02, volume03];
 
   const [volumes, setVolumes] = React.useState<FsVolume[]>(initialVolumes);
-  const handleAddVolume = useCallback(() => {
+  const handleAddVolume = useCallback(() => {},[]);
+    // {
     // const newVolumeId = -1;
     // const newVolume: FsVolume = {
     //   id: newVolumeId,
@@ -100,7 +101,7 @@ const TestHarness: React.FunctionComponent = () => {
     //   updateUser: "",
     // };
     // setVolumes([...volumes, newVolume]);
-  }, [setVolumes, volumes]);
+  // }, [setVolumes, volumes]);
 
   const handleDeleteVolume = useCallback(
     (volume: FsVolume) => {
@@ -132,4 +133,4 @@ const TestHarness: React.FunctionComponent = () => {
   );
 };
 
-addThemedStories(stories, () => <TestHarness />);
+addThemedStories(stories, "DataVolumesSection", () => <TestHarness />);

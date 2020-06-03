@@ -10,6 +10,6 @@ const TestHarness: React.FunctionComponent = () => {
   return <MetaTable {...props} />;
 };
 
-const stories = storiesOf("Sections/Meta Browser/Meta Table", module);
+const stories = storiesOf("Sections/Meta Browser", module);
 
-addThemedStories(stories, () => <TestHarness />);
+addThemedStories(stories, "Meta Table", () => <TestHarness />);

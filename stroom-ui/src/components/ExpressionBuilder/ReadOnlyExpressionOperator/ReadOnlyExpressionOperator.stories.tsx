@@ -15,5 +15,4 @@ const TestHarness: React.FunctionComponent = () => {
 };
 
 const stories = storiesOf("Expression/Read Only Operator", module);
-
-addThemedStories(stories, () => <TestHarness />);
+addThemedStories(stories, "react", () => <TestHarness />);

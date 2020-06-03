@@ -33,8 +33,8 @@ const TestHarness: React.FunctionComponent<Props> = ({ testDocRef }) => {
 };
 
 const stories = storiesOf(
-  "Document Editors/Folder/Rename Doc Ref/Dialog",
+  "Document Editors/Folder/Rename Doc Ref",
   module,
 );
 
-addThemedStories(stories, () => <TestHarness testDocRef={testDocRef} />);
+addThemedStories(stories, "Dialog", () => <TestHarness testDocRef={testDocRef} />);

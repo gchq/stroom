@@ -25,9 +25,9 @@ import { addThemedStories } from "testing/storybook/themedStoryGenerator";
 const showDeleteElementDialog = () =>
   console.error("Deleting Elements Not Supported in this Story");
 
-const stories = storiesOf("Document Editors/Pipeline/Element Palette", module);
+const stories = storiesOf("Document Editors/Pipeline", module);
 
-addThemedStories(stories, () => {
+addThemedStories(stories, "Element Palette", () => {
   return (
     <ElementPalette
       pipeline={

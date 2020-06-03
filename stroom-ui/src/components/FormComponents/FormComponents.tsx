@@ -2,7 +2,7 @@ import * as React from "react";
 import styled from "styled-components";
 import { Tooltip } from "antd";
 
-const requiredFieldText = "This field is required.";
+const requiredFieldText = "This field is required";
 
 export const ValidationMessage = styled.span`
   color: red;

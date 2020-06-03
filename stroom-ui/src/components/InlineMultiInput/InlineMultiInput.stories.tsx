@@ -20,9 +20,9 @@ import { addThemedStories } from "testing/storybook/themedStoryGenerator";
 import InlineMultiInput from "./InlineMultiInput";
 import JsonDebug from "testing/JsonDebug";
 
-const stories = storiesOf("General Purpose/InlineMultiInput", module);
+const stories = storiesOf("General Purpose", module);
 
-addThemedStories(stories, () => {
+addThemedStories(stories, "InlineMultiInput", () => {
   const [empty, setEmpty] = React.useState<string[]>([]);
   const [single, setSingle] = React.useState<string[]>(["Leia"]);
   const [multi, setMulti] = React.useState<string[]>([

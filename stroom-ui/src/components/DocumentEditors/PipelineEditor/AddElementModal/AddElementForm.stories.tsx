@@ -23,6 +23,6 @@ const TestHarness: React.FunctionComponent = () => {
   );
 };
 
-const stories = storiesOf("Document Editors/Pipeline/Add Element/Form", module);
+const stories = storiesOf("Document Editors/Pipeline/Add Element", module);
 
-addThemedStories(stories, () => <TestHarness />);
+addThemedStories(stories, "Form", () => <TestHarness />);

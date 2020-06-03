@@ -25,8 +25,8 @@ import { WithChromeContext } from "lib/useRouter/BrowserRouter";
 import Button from "components/Button";
 import useRouter from "lib/useRouter";
 
-const storiesWithChrome = storiesOf("App Chrome/With Chrome", module);
-addThemedStories(storiesWithChrome, () => <Routes />);
+const stories = storiesOf("App Chrome", module);
+addThemedStories(stories, "With Chrome", () => <Routes/>);
 
 const TestHarness: React.FunctionComponent = () => {
   const {
@@ -59,17 +59,15 @@ const TestHarness: React.FunctionComponent = () => {
           onClick={goToAuthorisationGroups}
           text="Go To Authorisation for Groups"
         />
-        <Button onClick={goToIndexVolumes} text="Go To Index Volumes" />
+        <Button onClick={goToIndexVolumes} text="Go To Index Volumes"/>
         <Button
           onClick={goToIndexVolumeGroups}
           text="Go To Index Volume Groups"
         />
       </div>
-      <Routes />
+      <Routes/>
     </div>
   );
 };
 
-const storiesFullScreen = storiesOf("App Chrome/Full Screen", module);
-
-addThemedStories(storiesFullScreen, () => <TestHarness />);
+addThemedStories(stories, "Full Screen", () => <TestHarness/>);
