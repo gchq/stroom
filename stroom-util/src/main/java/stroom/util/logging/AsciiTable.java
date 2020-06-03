@@ -268,20 +268,17 @@ public class AsciiTable {
     static class Column<T_ROW, T_COL> {
 
         private final String name;
-//        private final Class<T_COL> type;
         private final Function<T_ROW, T_COL> columnExtractor;
         private final Function<T_COL, String> columnFormatter;
         private final Supplier<String> nullValueSupplier;
         private final Alignment alignment;
 
         private Column(final String name,
-//                     final Class<T_COL> type,
                        final Function<T_ROW, T_COL> columnExtractor,
                        final Function<T_COL, String> columnFormatter,
                        final Supplier<String> nullValueSupplier,
                        final Alignment alignment) {
             this.name = name;
-//            this.type = type;
             this.columnExtractor = columnExtractor;
             this.columnFormatter = columnFormatter;
             this.nullValueSupplier = nullValueSupplier;
@@ -289,21 +286,17 @@ public class AsciiTable {
         }
 
         public static <T_ROW, T_COL> Column<T_ROW, T_COL> of(final String name,
-//                                                                final Class<T_COL> type,
                                                              final Function<T_ROW, T_COL> columnExtractor) {
             return new ColumnBuilder<>(
                     Objects.requireNonNull(name),
-//                    Objects.requireNonNull(type),
                     Objects.requireNonNull(columnExtractor))
                     .build();
         }
 
         public static <T_ROW, T_COL> ColumnBuilder<T_ROW, T_COL> builder(final String name,
-//                                                                       final Class<T_COL> type,
                                                                          final Function<T_ROW, T_COL> columnExtractor) {
             return new ColumnBuilder<>(
                     Objects.requireNonNull(name),
-//                    Objects.requireNonNull(type),
                     Objects.requireNonNull(columnExtractor));
         }
 
@@ -330,7 +323,6 @@ public class AsciiTable {
             if (o == null || getClass() != o.getClass()) return false;
             final Column<?, ?> column = (Column<?, ?>) o;
             return name.equals(column.name) &&
-//                    type.equals(column.type) &&
                     columnExtractor.equals(column.columnExtractor) &&
                     columnFormatter.equals(column.columnFormatter) &&
                     alignment == column.alignment;
@@ -345,7 +337,6 @@ public class AsciiTable {
         public String toString() {
             return "Column{" +
                     "name='" + name + '\'' +
-//                    ", type=" + type +
                     ", alignment=" + alignment +
                     '}';
         }
@@ -367,17 +358,14 @@ public class AsciiTable {
 
         public static class ColumnBuilder<T_ROW, T_COL> {
             private final String name;
-//            private final Class<T_COL> type;
             private final Function<T_ROW, T_COL> columnExtractor;
             private Function<T_COL, String> columnFormatter = null;
             private Supplier<String> nullValueSupplier = null;
             private Alignment alignment = Alignment.LEFT;
 
             private ColumnBuilder(final String name,
-//                           final Class<T_COL> type,
                                   final Function<T_ROW, T_COL> columnExtractor) {
                 this.name = name;
-//                this.type = type;
                 this.columnExtractor = columnExtractor;
             }
 
@@ -407,13 +395,14 @@ public class AsciiTable {
             }
 
             public Column<T_ROW, T_COL> build() {
-                return new Column<>(
+                // IJ was having issues inferring arguments, hence not inlined
+                final Column<T_ROW, T_COL> column = new Column<>(
                         name,
-//                        type,
                         columnExtractor,
                         columnFormatter == null ? Objects::toString : columnFormatter,
                         nullValueSupplier == null ? () -> "" : nullValueSupplier,
                         alignment);
+                return column;
             }
         }
     }
