@@ -127,32 +127,32 @@ public class IndexVolumeGroupServiceImpl implements IndexVolumeGroupService {
             try {
                 creatingDefaultVolumes = true;
                 securityContext.insecure(() -> {
-                    final boolean isEnabled = volumeConfig.isCreateDefaultOnStart();
+                    final boolean isEnabled = volumeConfig.isCreateDefaultIndexVolumesOnStart();
                     if (isEnabled) {
                         List<String> allVolGroups = getNames ();
 
                         if (allVolGroups == null || allVolGroups.size() == 0){
-                            if (volumeConfig.getDefaultVolumeGroupName() != null) {
+                            if (volumeConfig.getDefaultIndexVolumeGroupName() != null) {
                                 LOGGER.info(() -> "Creating default index volume group");
                                 final IndexVolumeGroup indexVolumeGroup = new IndexVolumeGroup();
                                 final String processingUserId = processingUserIdentityProvider.get().getId();
-                                indexVolumeGroup.setName(volumeConfig.getDefaultVolumeGroupName());
+                                indexVolumeGroup.setName(volumeConfig.getDefaultIndexVolumeGroupName());
                                 AuditUtil.stamp(processingUserId, indexVolumeGroup);
 
                                 IndexVolumeGroup newGroup = indexVolumeGroupDao.getOrCreate(indexVolumeGroup);
 
                                 //Now create associated volumes within the group
-                                if (volumeConfig.getDefaultVolumeGroupPaths() != null &&
-                                        volumeConfig.getDefaultVolumeGroupNodes() != null &&
-                                        volumeConfig.getDefaultVolumeGroupLimit() != null) {
+                                if (volumeConfig.getDefaultIndexVolumeGroupPaths() != null &&
+                                        volumeConfig.getDefaultIndexVolumeGroupNodes() != null &&
+                                        volumeConfig.getDefaultIndexVolumeGroupLimit() != null) {
                                     Long bytesLimit = ModelStringUtil.parseIECByteSizeString
-                                            (volumeConfig.getDefaultVolumeGroupLimit());
+                                            (volumeConfig.getDefaultIndexVolumeGroupLimit());
 
-                                    String[] paths = volumeConfig.getDefaultVolumeGroupPaths().split(",");
-                                    String[] nodes = volumeConfig.getDefaultVolumeGroupNodes().split(",");
+                                    String[] paths = volumeConfig.getDefaultIndexVolumeGroupPaths().split(",");
+                                    String[] nodes = volumeConfig.getDefaultIndexVolumeGroupNodes().split(",");
                                     if (nodes.length == paths.length){
                                         for (int i = 0; i < paths.length; i++){
-                                            String resolvedPath = getDefaultVolumesPath().get().resolve(paths[i]).toString();
+                                            String resolvedPath = getDefaultVolumesPath().get().resolve(paths[i].trim()).toString();
 
                                             IndexVolume indexVolume = new IndexVolume();
                                             indexVolume.setIndexVolumeGroupId(newGroup.getId());

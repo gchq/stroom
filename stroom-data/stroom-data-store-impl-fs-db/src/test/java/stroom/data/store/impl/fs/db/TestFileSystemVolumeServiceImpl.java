@@ -50,8 +50,8 @@ class TestFileSystemVolumeServiceImpl extends StroomUnitTest {
     private static final Path DEFAULT_STREAM_VOLUME_PATH;
 
     static {
-        DEFAULT_VOLUMES_PATH = FileUtil.getTempDir().resolve(FsVolumeService.DEFAULT_VOLUMES_SUBDIR);
-        DEFAULT_STREAM_VOLUME_PATH = DEFAULT_VOLUMES_PATH.resolve(FsVolumeService.DEFAULT_STREAM_VOLUME_SUBDIR);
+        DEFAULT_VOLUMES_PATH = FileUtil.getTempDir().resolve("volumes");
+        DEFAULT_STREAM_VOLUME_PATH = DEFAULT_VOLUMES_PATH.resolve("defaultStreamVolume");
     }
 
     private final FsVolume public1a = FsVolume.create(

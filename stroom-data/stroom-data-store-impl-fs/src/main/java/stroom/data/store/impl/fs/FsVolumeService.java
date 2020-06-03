@@ -60,8 +60,8 @@ public class FsVolumeService implements EntityEvent.Handler, Clearable, Flushabl
     static final String ENTITY_TYPE = "FILE_SYSTEM_VOLUME";
     private static final DocRef EVENT_DOCREF = new DocRef(ENTITY_TYPE, null, null);
 
-    public static final Path DEFAULT_VOLUMES_SUBDIR = Paths.get("volumes");
-    public static final Path DEFAULT_STREAM_VOLUME_SUBDIR = Paths.get("defaultStreamVolume");
+//    public static final Path DEFAULT_VOLUMES_SUBDIR = Paths.get("volumes");
+//    public static final Path DEFAULT_STREAM_VOLUME_SUBDIR = Paths.get("defaultStreamVolume");
 
     private static final Map<String, FsVolumeSelector> volumeSelectorMap;
 
@@ -411,17 +411,23 @@ public class FsVolumeService implements EntityEvent.Handler, Clearable, Flushabl
             try {
                 creatingDefaultVolumes = true;
                 securityContext.insecure(() -> {
-                    final boolean isEnabled = volumeConfig.isCreateDefaultOnStart();
+                    final boolean isEnabled = volumeConfig.isCreateDefaultStreamVolumesOnStart();
                     if (isEnabled) {
                         final FindFsVolumeCriteria findVolumeCriteria = FindFsVolumeCriteria.matchAll();
                         findVolumeCriteria.addSort(FindFsVolumeCriteria.FIELD_ID, Direction.ASCENDING, false);
                         final List<FsVolume> existingVolumes = doFind(findVolumeCriteria).getValues();
                         if (existingVolumes.size() == 0) {
-                            final Optional<Path> optDefaultVolumePath = getDefaultVolumesPath();
-                            if (optDefaultVolumePath.isPresent()) {
+
+                            if (volumeConfig.getDefaultStreamVolumePaths() != null) {
                                 LOGGER.info(() -> "Creating default volumes");
-                                final Path streamVolPath = optDefaultVolumePath.get().resolve(DEFAULT_STREAM_VOLUME_SUBDIR);
-                                createVolume(streamVolPath);
+
+                                String[] paths = volumeConfig.getDefaultStreamVolumePaths().split(",");
+                                for (String path : paths){
+                                    Path resolvedPath = getDefaultVolumesPath().get().resolve(path.trim());
+
+                                    createVolume(resolvedPath);
+                                }
+
                             } else {
                                 LOGGER.warn(() -> "No suitable directory to create default volumes in");
                             }
@@ -486,7 +492,7 @@ public class FsVolumeService implements EntityEvent.Handler, Clearable, Flushabl
             // to all volumes and any other data on the filesystem. I.e. once the amount of the filesystem in use
             // is greater than the limit writes to those volumes will be prevented. See Volume.isFull() and
             // this.updateVolumeState()
-            return OptionalLong.of((long) (totalBytes * 0.9));
+            return OptionalLong.of((long) (totalBytes * volumeConfig.getDefaultStreamVolumeFilesystemUtilisation()));
         } catch (IOException e) {
             LOGGER.warn(LambdaLogUtil.message("Unable to determine the total space on the filesystem for path: {}", FileUtil.getCanonicalPath(path)));
             return OptionalLong.empty();
@@ -503,8 +509,7 @@ public class FsVolumeService implements EntityEvent.Handler, Clearable, Flushabl
                 .map(Supplier::get)
                 .filter(Optional::isPresent)
                 .findFirst()
-                .map(Optional::get)
-                .flatMap(path -> Optional.of(path.resolve(DEFAULT_VOLUMES_SUBDIR)));
+                .map(Optional::get);
     }
 
     private Optional<Path> getDotStroomDir() {
