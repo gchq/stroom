@@ -6,7 +6,7 @@ import stroom.collection.mock.MockCollectionModule;
 import stroom.data.retention.api.DataRetentionConfig;
 import stroom.data.retention.api.DataRetentionRuleAction;
 import stroom.data.retention.api.RetentionRuleOutcome;
-import stroom.data.retention.shared.DataRetentionDeleteInfo;
+import stroom.data.retention.shared.DataRetentionDeleteSummary;
 import stroom.data.retention.shared.DataRetentionRule;
 import stroom.data.retention.shared.TimeUnit;
 import stroom.dictionary.mock.MockWordListProviderModule;
@@ -26,6 +26,7 @@ import stroom.query.api.v2.ExpressionTerm.Condition;
 import stroom.security.mock.MockSecurityContextModule;
 import stroom.test.common.util.db.DbTestModule;
 import stroom.util.collections.BatchingCollector;
+import stroom.util.logging.AsciiTable;
 import stroom.util.logging.LambdaLogger;
 import stroom.util.logging.LambdaLoggerFactory;
 import stroom.util.logging.LogExecutionTime;
@@ -465,8 +466,8 @@ class TestMetaServiceImpl {
                 buildRule(1, FEED_1, 1, TimeUnit.DAYS),
                 buildRule(2, FEED_2, 2, TimeUnit.DAYS),
                 buildRule(3, FEED_3, 1, TimeUnit.WEEKS),
-                buildRule(4, FEED_4, 2, TimeUnit.WEEKS),
-                buildRule(5, FEED_5, 1, TimeUnit.MONTHS)
+                buildRule(4, FEED_4, 2, TimeUnit.MONTHS),
+                buildRule(5, FEED_5, 1, TimeUnit.YEARS)
         );
 
         final Instant now = Instant.now();
@@ -525,17 +526,16 @@ class TestMetaServiceImpl {
         // Use a batch size smaller than the expected number of deletes to ensure we exercise
         // batching
 
-        final List<DataRetentionDeleteInfo> summary = metaDao.getRetentionDeletionSummary(ruleActions);
+        final List<DataRetentionDeleteSummary> summary = metaDao.getRetentionDeletionSummary(ruleActions);
 
-        LOGGER.info("result: {}", summary);
-
-        LOGGER.info("deleteBatchSize {}", dataRetentionConfig.getDeleteBatchSize());
         LOGGER.info("Period {}", period);
         LOGGER.info("deletionDay {}", deletionDay);
         LOGGER.info("daysToDelete {}", daysToDelete);
         LOGGER.info("totalRows {}", totalRows);
 
         assertTotalRowCount(totalRows);
+
+        LOGGER.info("result:\n{}", AsciiTable.from(summary));
         LOGGER.info("Done");
     }
 

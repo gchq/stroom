@@ -8,8 +8,9 @@ import stroom.dashboard.expression.v1.ValNull;
 import stroom.dashboard.expression.v1.ValString;
 import stroom.data.retention.api.DataRetentionConfig;
 import stroom.data.retention.api.DataRetentionRuleAction;
-import stroom.data.retention.shared.DataRetentionDeleteInfo;
+import stroom.data.retention.shared.DataRetentionDeleteSummary;
 import stroom.data.retention.shared.DataRetentionRule;
+import stroom.data.retention.shared.TimeUnit;
 import stroom.datasource.api.v2.AbstractField;
 import stroom.db.util.ExpressionMapper;
 import stroom.db.util.ExpressionMapperFactory;
@@ -45,6 +46,8 @@ import stroom.util.time.TimePeriod;
 import io.vavr.Tuple;
 import io.vavr.Tuple2;
 import org.jooq.CaseConditionStep;
+import org.jooq.CaseValueStep;
+import org.jooq.CaseWhenStep;
 import org.jooq.Condition;
 import org.jooq.Cursor;
 import org.jooq.DSLContext;
@@ -59,7 +62,7 @@ import org.jooq.impl.DSL;
 
 import javax.inject.Inject;
 import javax.inject.Singleton;
-import java.io.Serializable;
+import java.sql.Date;
 import java.time.Duration;
 import java.time.Instant;
 import java.time.LocalDateTime;
@@ -76,7 +79,6 @@ import java.util.Objects;
 import java.util.Optional;
 import java.util.Set;
 import java.util.concurrent.ConcurrentHashMap;
-import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.function.Consumer;
 import java.util.function.Function;
@@ -418,7 +420,8 @@ class MetaDaoImpl implements MetaDao {
         return updateCount;
     }
 
-    public List<DataRetentionDeleteInfo> getRetentionDeletionSummary(final List<DataRetentionRule> rules) {
+    public List<DataRetentionDeleteSummary> getRetentionDeletionSummary(final List<DataRetentionRule> rules) {
+        Objects.requireNonNull(rules);
 
         // What we are building is roughly:
         // SELECT
@@ -426,11 +429,7 @@ class MetaDaoImpl implements MetaDao {
         // FROM (
         //   SELECT
         //     feed_name,
-        //     CASE
-        //       WHEN <rule 1 condition is true> THEN m.create_time - <rule min create time ms>
-        //       WHEN <rule 2 condition is true> THEN m.create_time - <rule min create time ms>
-        //       ELSE null
-        //     END as ms_til_delete,
+        //     create_time, -- converted to a Date
         //     CASE
         //       WHEN <rule 1 condition is true> THEN <rule no>
         //       WHEN <rule 2 condition is true> THEN <rule no>
@@ -447,16 +446,20 @@ class MetaDaoImpl implements MetaDao {
 
         List<Condition> conditions = new ArrayList<>();
 
-        final List<DataRetentionDeleteInfo> result;
+        final List<DataRetentionDeleteSummary> result;
 
-        if (rules != null && !rules.isEmpty()) {
+        boolean hasAtLeastOneActiveRule = rules.stream()
+                .anyMatch(DataRetentionRule::isEnabled);
+
+        if (!rules.isEmpty() && hasAtLeastOneActiveRule) {
             CaseConditionStep<Integer> ruleNoCaseConditionStep = null;
-            CaseConditionStep<Serializable> daysTilDeleteCaseConditionStep = null;
             List<Condition> orConditions = new ArrayList<>();
+            Map<Integer, DataRetentionRule> numberToRuleMap = new HashMap<>();
             // Order is critical here as we are building a case statement
             // Highest priority rules first, i.e. largest rule number
             for (DataRetentionRule rule : rules) {
                 if (rule.isEnabled()) {
+                    numberToRuleMap.put(rule.getRuleNumber(), rule);
                     final Condition ruleCondition = expressionMapper.apply(rule.getExpression());
 
                     if (dataRetentionConfig.isUseQueryOptimisation()) {
@@ -473,30 +476,10 @@ class MetaDaoImpl implements MetaDao {
                     } else {
                         ruleNoCaseConditionStep.when(ruleCondition, ruleNoCaseResult);
                     }
-
-                    final Field<Serializable> daysTilDeleteCaseResult;
-                    if (rule.isForever()) {
-                        daysTilDeleteCaseResult = null;
-                    } else {
-                        long minCreateTimeMs = ruleToMinCreateTime(now, rule).toEpochMilli();
-                        daysTilDeleteCaseResult = DSL.greatest(
-                                0,
-                                meta.CREATE_TIME
-                                        .minus(minCreateTimeMs)
-                                        .divide(TimeUnit.HOURS.toMillis(1)));
-                    }
-
-                    if (daysTilDeleteCaseConditionStep == null) {
-                        daysTilDeleteCaseConditionStep = DSL.when(ruleCondition, daysTilDeleteCaseResult);
-                    } else {
-                        daysTilDeleteCaseConditionStep.when(ruleCondition, daysTilDeleteCaseResult);
-                    }
                 }
             }
             // If none of the rules matches then we don't to delete so return false
-            final Field<Integer> ruleNoCaseField = ruleNoCaseConditionStep.otherwise(0);
-            final Field<Serializable> daysTilDeleteCaseField = daysTilDeleteCaseConditionStep.otherwise((Field<Serializable>) null);
-
+            final Field<Integer> ruleNoCaseField = ruleNoCaseConditionStep.otherwise((Field<Integer>) null);
 
             final byte statusIdUnlocked = MetaStatusId.getPrimitiveValue(Status.UNLOCKED);
             conditions.add(meta.STATUS.eq(statusIdUnlocked));
@@ -510,39 +493,109 @@ class MetaDaoImpl implements MetaDao {
                 conditions.add(DSL.or(orConditions));
             }
 
-            final List<DataRetentionDeleteInfo> deleteInfoList = JooqUtil.contextResult(metaDbConnProvider, context -> {
+            final List<DataRetentionDeleteSummary> deleteSummaries = JooqUtil.contextResult(
+                    metaDbConnProvider, context -> {
 
-                final var detailTable = context
-                        .select(
-                                metaFeed.NAME,
-                                ruleNoCaseField.as("rule_no"),
-                                daysTilDeleteCaseField.as("days_til_delete"))
-                        .from(meta)
-                        .leftJoin(metaFeed).on(meta.FEED_ID.eq(metaFeed.ID))
-                        .where(conditions)
-                        .asTable("detail");
+                        final String ruleNoFieldName = "rule_no";
+                        final String feedNameFieldName = "feed_name";
+                        final String typeNameFieldName = "type_name";
+                        final String createTimeTimeStampFieldName = "create_time_timestamp";
 
-                return context
-                        .select(
-                                detailTable.field(metaFeed.NAME.getName()),
-                                detailTable.field("rule_no"),
-                                detailTable.field("days_til_delete"),
-                                DSL.count())
-                        .from(detailTable)
-                        .where(detailTable.field("days_til_delete").isNotNull())
-                        .groupBy(
-                                detailTable.field(metaFeed.NAME.getName()),
-                                detailTable.field("rule_no"),
-                                detailTable.field("days_til_delete"))
-                        .fetch()
-                        .map(record ->
-                                new DataRetentionDeleteInfo(
-                                        (String) record.get(metaFeed.NAME.getName()),
-                                        (int) record.get("rule_no"),
-                                        (int) record.get("days_til_delete")
-                        ));
-            });
-            result = deleteInfoList;
+                        // Get all meta records that are impacted by a rule and for each determine
+                        // which rule wins and get the meta create_time in timestamp form
+                        // so we can later do some date maths
+                        final var detailTable = context
+                                .select(
+                                        metaFeed.NAME.as(feedNameFieldName),
+                                        metaType.NAME.as(typeNameFieldName),
+                                        JooqUtil.epochMsToDate(meta.CREATE_TIME).as(createTimeTimeStampFieldName),
+                                        ruleNoCaseField.as(ruleNoFieldName))
+                                .from(meta)
+                                .leftJoin(metaFeed).on(meta.FEED_ID.eq(metaFeed.ID))
+                                .leftJoin(metaType).on(meta.TYPE_ID.eq(metaType.ID))
+                                .where(conditions)
+                                .asTable("detail");
+
+                        final Field<Integer> ruleNoField = detailTable.field(
+                                ruleNoFieldName, Integer.class);
+                        final Field<Date> createTimeTimeStampField = detailTable.field(
+                                createTimeTimeStampFieldName, Date.class);
+
+                        final CaseValueStep<Integer> timeTilDeleteCaseValueStep = DSL.choose(ruleNoField);
+                        CaseWhenStep<Integer, String> timeTilDeleteCaseWhenStep = null;
+
+                        for (DataRetentionRule rule : rules) {
+                            if (rule.isEnabled()) {
+                                final Integer caseValueCondition = rule.getRuleNumber();
+                                final Instant minCreateTime = ruleToMinCreateTime(now, rule);
+                                final java.sql.Date minCreateTimeDate = new java.sql.Date(minCreateTime.toEpochMilli());
+
+                                // Work out the days between the meta.create_time and the minCreateTime for deletion
+                                // If that is <31 then display it as days else as months
+                                final Field<String> subCaseField = DSL.when(
+                                        DSL.dateDiff(createTimeTimeStampField, minCreateTimeDate).lessThan(31),
+                                        DSL.concat(DSL.greatest(0, DSL.dateDiff(
+                                                createTimeTimeStampField,
+                                                minCreateTimeDate)).cast(String.class), " DAYS"))
+                                        .else_(DSL.concat(
+                                                DSL.greatest(0, JooqUtil.periodDiff(
+                                                        createTimeTimeStampField,
+                                                        minCreateTimeDate)).cast(String.class), " MONTHS"));
+
+                                if (timeTilDeleteCaseWhenStep == null) {
+                                    timeTilDeleteCaseWhenStep = timeTilDeleteCaseValueStep.when(
+                                            caseValueCondition, subCaseField);
+                                } else {
+                                    timeTilDeleteCaseWhenStep = timeTilDeleteCaseWhenStep.when(
+                                            caseValueCondition, subCaseField);
+                                }
+                            }
+                        }
+                        timeTilDeleteCaseWhenStep.else_((String) null);
+
+                        String timeTillDeleteFieldName = "time_til_deletion";
+
+                        final var middleTable = context
+                                .select(
+                                        detailTable.field(feedNameFieldName),
+                                        detailTable.field(typeNameFieldName),
+                                        detailTable.field(ruleNoField),
+                                        timeTilDeleteCaseWhenStep.as(timeTillDeleteFieldName))
+                                .from(detailTable)
+                                .where(ruleNoField.isNotNull()) // ignore rows not impacted by a rule
+                                .asTable("middle");
+
+                        return context
+                                .select(
+                                        middleTable.field(feedNameFieldName),
+                                        middleTable.field(typeNameFieldName),
+                                        middleTable.field(ruleNoFieldName),
+                                        middleTable.field(timeTillDeleteFieldName),
+                                        DSL.count())
+                                .from(middleTable)
+                                .where(middleTable.field(timeTillDeleteFieldName).isNotNull())
+                                .groupBy(
+                                        middleTable.field(feedNameFieldName),
+                                        middleTable.field(typeNameFieldName),
+                                        middleTable.field(ruleNoFieldName),
+                                        middleTable.field(timeTillDeleteFieldName))
+                                .fetch()
+                                .map(record -> {
+                                    int ruleNo = (int) record.get(ruleNoFieldName);
+                                    String[] parts = ((String) record.get(timeTillDeleteFieldName)).split(" ");
+                                    int time = Integer.parseInt(parts[0]);
+                                    TimeUnit timeUnit = TimeUnit.valueOf(parts[1]);
+
+                                    return new DataRetentionDeleteSummary(
+                                            (String) record.get(feedNameFieldName),
+                                            (String) record.get(typeNameFieldName),
+                                            ruleNo,
+                                            numberToRuleMap.get(ruleNo).getName(),
+                                            time,
+                                            timeUnit);
+                                });
+                    });
+            result = deleteSummaries;
 
         } else {
             // No rules so no point running a query

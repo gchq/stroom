@@ -17,12 +17,15 @@ import org.jooq.SQLDialect;
 import org.jooq.Table;
 import org.jooq.conf.Settings;
 import org.jooq.impl.DSL;
+import org.jooq.impl.SQLDataType;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import javax.sql.DataSource;
 import java.sql.Connection;
+import java.sql.Date;
 import java.sql.SQLException;
+import java.sql.Timestamp;
 import java.util.Collection;
 import java.util.Collections;
 import java.util.Map;
@@ -381,4 +384,31 @@ public final class JooqUtil {
 
         return Optional.empty();
     }
+
+    /**
+     * Converts a time in millis since epoch to a {@link java.sql.Timestamp}
+     */
+    public static Field<Timestamp> epochMsToTimestamp(Field<? extends Number> field) {
+        return DSL.field("from_unixtime({0} / 1000)", SQLDataType.TIMESTAMP, field);
+    }
+
+    /**
+     * Converts a time in millis since epoch to a {@link java.sql.Date}
+     */
+    public static Field<Date> epochMsToDate(Field<? extends Number> field) {
+        return DSL.field("from_unixtime({0} / 1000)", SQLDataType.DATE, field);
+    }
+
+    public static Field<Integer> periodDiff(final Field<? extends Date> date1,
+                                            final Field<? extends Date> date2) {
+        return DSL.field("period_diff(extract(year_month from {0}), extract(year_month from {1}))",
+                SQLDataType.INTEGER, date1, date2);
+    }
+
+    public static Field<Integer> periodDiff(final Field<? extends Date> date1,
+                                            final Date date2) {
+        return DSL.field("period_diff(extract(year_month from {0}), extract(year_month from {1}))",
+                SQLDataType.INTEGER, date1, date2);
+    }
+
 }

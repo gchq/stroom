@@ -95,6 +95,10 @@ public class AsciiTable {
                             replaceAll("(?<!^)([A-Z])", " $1");
     }
 
+
+    // -----------------------------------------------------------------------------------
+
+
     public static class TableBuilder<T_ROW> {
 
         private static final char TABLE_COLUMN_DELIMITER = '|';
@@ -106,6 +110,7 @@ public class AsciiTable {
         private final Collection<T_ROW> sourceData;
         private final List<Column<T_ROW, ?>> columns = new ArrayList<>();
         private int rowLimit = Integer.MAX_VALUE;
+        private boolean useHeader = true;
 
         private TableBuilder(final Collection<T_ROW> sourceData) {
             this.sourceData = sourceData;
@@ -132,6 +137,14 @@ public class AsciiTable {
          */
         public TableBuilder<T_ROW> withRowLimit(final int rowLimit) {
             this.rowLimit = rowLimit;
+            return this;
+        }
+
+        /**
+         * Don't include the header rows
+         */
+        public TableBuilder<T_ROW> withoutHeader() {
+            this.useHeader = false;
             return this;
         }
 
@@ -188,7 +201,9 @@ public class AsciiTable {
             final Map<Column<T_ROW, ?>, Integer> maxColumnWidths = new HashMap<>();
 
             // Get lengths of column names
-            columns.forEach(column -> maxColumnWidths.put(column, column.getName().length()));
+            if (useHeader) {
+                columns.forEach(column -> maxColumnWidths.put(column, column.getName().length()));
+            }
 
             // Build up map of max column value/name lengths
             rawRows.stream()
@@ -198,13 +213,14 @@ public class AsciiTable {
                             entry.getValue().length(),
                             Math::max));
 
-            final String headerString = createHeaderRowString(maxColumnWidths);
-            final String headerLine = createHeaderLineString(maxColumnWidths);
-            final List<String> valueRowStrings = createValueRowStrings(rawRows, maxColumnWidths);
-
             final List<String> headerAndValueStrings = new ArrayList<>();
-            headerAndValueStrings.add(headerString);
-            headerAndValueStrings.add(headerLine);
+
+            if (useHeader) {
+                headerAndValueStrings.add(createHeaderRowString(maxColumnWidths));
+                headerAndValueStrings.add(createHeaderLineString(maxColumnWidths));
+            }
+
+            final List<String> valueRowStrings = createValueRowStrings(rawRows, maxColumnWidths);
             headerAndValueStrings.addAll(valueRowStrings);
 
             if (isTruncated()) {
@@ -239,6 +255,15 @@ public class AsciiTable {
                             .collect(Collectors.joining(String.valueOf(TABLE_COLUMN_DELIMITER)));
         }
     }
+
+
+
+
+    // -----------------------------------------------------------------------------------
+
+
+
+
 
     static class Column<T_ROW, T_COL> {
 
@@ -330,6 +355,15 @@ public class AsciiTable {
             RIGHT,
             CENTER
         }
+
+
+
+
+        // -----------------------------------------------------------------------------------
+
+
+
+
 
         public static class ColumnBuilder<T_ROW, T_COL> {
             private final String name;

@@ -19,7 +19,12 @@ package stroom.data.retention.shared;
 import stroom.docref.HasDisplayValue;
 
 public enum TimeUnit implements HasDisplayValue {
-    MINUTES("Minutes"), HOURS("Hours"), DAYS("Days"), WEEKS("Weeks"), MONTHS("Months"), YEARS("Years");
+    MINUTES("Minutes"),
+    HOURS("Hours"),
+    DAYS("Days"),
+    WEEKS("Weeks"),
+    MONTHS("Months"),
+    YEARS("Years");
 
     private final String displayValue;
 
