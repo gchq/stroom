@@ -14,6 +14,7 @@ import stroom.statistics.api.InternalStatisticKey;
 import stroom.statistics.api.InternalStatisticsReceiver;
 import stroom.util.AuditUtil;
 import stroom.util.NextNameGenerator;
+import stroom.util.io.FileUtil;
 import stroom.util.logging.LambdaLogUtil;
 import stroom.util.logging.LambdaLogger;
 import stroom.util.logging.LambdaLoggerFactory;
@@ -28,7 +29,11 @@ import java.nio.file.Paths;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
+import java.util.Optional;
+import java.util.function.Supplier;
+import java.util.regex.Pattern;
 import java.util.stream.Collectors;
+import java.util.stream.Stream;
 
 import static com.google.common.base.Strings.isNullOrEmpty;
 
@@ -191,4 +196,7 @@ public class IndexVolumeServiceImpl implements IndexVolumeService {
             events.add(event);
         }
     }
+
+
+
 }
