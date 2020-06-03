@@ -1,20 +1,32 @@
 package stroom.data.retention.shared;
 
+import com.fasterxml.jackson.annotation.JsonCreator;
+import com.fasterxml.jackson.annotation.JsonInclude;
+import com.fasterxml.jackson.annotation.JsonInclude.Include;
+import com.fasterxml.jackson.annotation.JsonProperty;
+
 import java.util.Objects;
 
+@JsonInclude(Include.NON_NULL)
 public class DataRetentionDeleteSummary {
 
+    @JsonProperty
     private final String feedName;
+    @JsonProperty
     private final String metaType;
+    @JsonProperty
     private final int ruleNumber;
+    @JsonProperty
     private final String ruleName;
+    @JsonProperty
     private final int count;
 
-    public DataRetentionDeleteSummary(final String feedName,
-                                      final String metaType,
-                                      final int ruleNumber,
-                                      final String ruleName,
-                                      final int count) {
+    @JsonCreator
+    public DataRetentionDeleteSummary(@JsonProperty("feedName") final String feedName,
+                                      @JsonProperty("metaType") final String metaType,
+                                      @JsonProperty("ruleNumber") final int ruleNumber,
+                                      @JsonProperty("ruleName") final String ruleName,
+                                      @JsonProperty("count") final int count) {
         this.feedName = Objects.requireNonNull(feedName);
         this.metaType = Objects.requireNonNull(metaType);
         this.ruleNumber = ruleNumber;
