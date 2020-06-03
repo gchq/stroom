@@ -1,14 +1,15 @@
 package stroom.proxy.app;
 
-import com.fasterxml.jackson.annotation.JsonProperty;
-import com.fasterxml.jackson.annotation.JsonPropertyDescription;
-import io.dropwizard.client.JerseyClientConfiguration;
 import stroom.proxy.app.handler.FeedStatusConfig;
 import stroom.proxy.app.handler.ForwardStreamConfig;
 import stroom.proxy.app.handler.LogStreamConfig;
 import stroom.proxy.app.handler.ProxyRequestConfig;
 import stroom.proxy.repo.ProxyRepositoryConfig;
 import stroom.proxy.repo.ProxyRepositoryReaderConfig;
+
+import com.fasterxml.jackson.annotation.JsonProperty;
+import com.fasterxml.jackson.annotation.JsonPropertyDescription;
+import io.dropwizard.client.JerseyClientConfiguration;
 
 public class ProxyConfig {
     private String proxyContentDir;
@@ -27,7 +28,8 @@ public class ProxyConfig {
 
     @JsonProperty()
     @JsonPropertyDescription("If true, stroom will use a set of default authentication credentials to allow" +
-            "API calls from stroom-proxy. For test or demonstration purposes only, set to false for production")
+            "API calls from stroom-proxy. For test or demonstration purposes only, set to false for production. " +
+            "If API keys are set elsewhere in config then they will override this setting.")
     public boolean isUseDefaultOpenIdCredentials() {
         return useDefaultOpenIdCredentials;
     }

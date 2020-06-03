@@ -39,7 +39,6 @@ public class ReceiveDataRuleSetModule extends AbstractModule {
                 .addBinding(ReceiveDataRuleSetServiceImpl.class);
 
         RestResourcesBinder.create(binder())
-                .bind(ReceiveDataRuleSetResource.class)
                 .bind(ReceiveDataRuleSetResourceImpl.class);
 
         DocumentActionHandlerBinder.create(binder())

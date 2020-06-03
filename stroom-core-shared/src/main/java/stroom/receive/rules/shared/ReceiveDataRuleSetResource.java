@@ -36,10 +36,13 @@ import javax.ws.rs.core.MediaType;
 import java.util.Set;
 
 @Api(value = "ruleset - /v2")
-@Path("/ruleset" + ResourcePaths.V2)
+@Path(ReceiveDataRuleSetResource.BASE_RESOURCE_PATH)
 @Produces(MediaType.APPLICATION_JSON)
 @Consumes(MediaType.APPLICATION_JSON)
 public interface ReceiveDataRuleSetResource extends RestResource, DirectRestService {
+
+    String BASE_RESOURCE_PATH = "/ruleset" + ResourcePaths.V2;
+
     @POST
     @Path("/read")
     @ApiOperation(

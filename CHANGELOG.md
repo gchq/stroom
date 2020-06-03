@@ -7,6 +7,11 @@ and this project adheres to [Semantic Versioning](http://semver.org/).
 
 ## [Unreleased]
 
+
+## [v7.0-beta.36] - 2020-06-02
+
+* Issue **#1621** : Fix NPE in proxy content syncing.
+
 * Issue **#1462** : Stroom not working with MySQL 8.0 due to SQLException
 
 * Issue **#1564** : Fix error in data retention section of stream info popup.
@@ -16,6 +21,8 @@ and this project adheres to [Semantic Versioning](http://semver.org/).
 * Issue **#1611** : Change explorer tree filtering to also filter on an exact match of the entity's UUID.
 
 * Add regex filtering with `/` prefix to fuzzy matching.
+
+* Change word boundary matching to require a `?` prefix.
 
 
 ## [v7.0-beta.35] - 2020-05-28
@@ -2262,7 +2269,9 @@ Issue **gchq/stroom-expression#22** : Add `typeOf(...)` function to dashboard.
 
 * Issue **#202** : Initial release of the new data retention policy functionality.
 
-[Unreleased]: https://github.com/gchq/stroom/compare/v7.0-beta.34...HEAD
+[Unreleased]: https://github.com/gchq/stroom/compare/v7.0-beta.36...HEAD
+[v7.0-beta.36]: https://github.com/gchq/stroom/compare/v7.0-beta.35...v7.0-beta.36
+[v7.0-beta.35]: https://github.com/gchq/stroom/compare/v7.0-beta.34...v7.0-beta.35
 [v7.0-beta.34]: https://github.com/gchq/stroom/compare/v7.0-beta.33...v7.0-beta.34
 [v7.0-beta.33]: https://github.com/gchq/stroom/compare/v7.0-beta.32...v7.0-beta.33
 [v7.0-beta.32]: https://github.com/gchq/stroom/compare/v7.0-beta.31...v7.0-beta.32
