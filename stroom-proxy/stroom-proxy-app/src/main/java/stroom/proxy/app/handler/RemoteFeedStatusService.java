@@ -10,6 +10,7 @@ import stroom.util.authentication.DefaultOpenIdCredentials;
 import stroom.util.logging.LogUtil;
 
 import com.codahale.metrics.health.HealthCheck;
+import com.google.common.base.Strings;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -47,7 +48,7 @@ public class RemoteFeedStatusService implements FeedStatusService, HasHealthChec
 
         // Allows us to use hard-coded open id creds / token to authenticate with stroom
         // out of the box. ONLY for use in test/demo environments.
-        if (proxyConfig.isUseDefaultOpenIdCredentials()) {
+        if (proxyConfig.isUseDefaultOpenIdCredentials() && Strings.isNullOrEmpty(feedStatusConfig.getApiKey())) {
             LOGGER.info("Using default authentication token, should only be used in test/demo environments.");
             this.apiKey = Objects.requireNonNull(defaultOpenIdCredentials.getApiKey());
         } else {

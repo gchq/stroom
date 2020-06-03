@@ -34,8 +34,8 @@ import stroom.explorer.shared.PermissionInheritance;
 import stroom.explorer.shared.StandardTagNames;
 import stroom.security.api.SecurityContext;
 import stroom.security.shared.DocumentPermissionNames;
+import stroom.util.docref.DocRefPredicateFactory;
 import stroom.util.shared.PermissionException;
-import stroom.util.string.StringPredicateFactory;
 
 import javax.inject.Inject;
 import javax.inject.Provider;
@@ -95,7 +95,7 @@ class ExplorerServiceImpl implements ExplorerService, CollectionService {
 
         final TreeModel filteredModel = new TreeModel();
         // Create the predicate for the current filter value
-        final Predicate<String> fuzzyMatchPredicate = StringPredicateFactory.createFuzzyMatchPredicate(filter.getNameFilter());
+        final Predicate<DocRef> fuzzyMatchPredicate = DocRefPredicateFactory.createFuzzyMatchPredicate(filter.getNameFilter());
 
         addDescendants(null, masterTreeModel, filteredModel, filter, fuzzyMatchPredicate, false, allOpenItems, 0);
 
@@ -224,7 +224,7 @@ class ExplorerServiceImpl implements ExplorerService, CollectionService {
                                    final TreeModel treeModelIn,
                                    final TreeModel treeModelOut,
                                    final ExplorerTreeFilter filter,
-                                   final Predicate<String> filterPredicate,
+                                   final Predicate<DocRef> filterPredicate,
                                    final boolean ignoreNameFilter,
                                    final Set<String> allOpenItems,
                                    final int currentDepth) {
@@ -241,7 +241,7 @@ class ExplorerServiceImpl implements ExplorerService, CollectionService {
                 final ExplorerNode child = iterator.next();
 
                 // We don't want to filter child items if the parent folder matches the name filter.
-                final boolean ignoreChildNameFilter = checkName(child, filterPredicate);
+                final boolean ignoreChildNameFilter = filterPredicate.test(child.getDocRef());
 
                 // Recurse right down to find out if a descendant is being added and therefore if we need to include this as an ancestor.
                 final boolean hasChildren = addDescendants(child, treeModelIn, treeModelOut, filter, filterPredicate, ignoreChildNameFilter, allOpenItems, currentDepth + 1);
@@ -251,7 +251,7 @@ class ExplorerServiceImpl implements ExplorerService, CollectionService {
 
                 } else if (checkType(child, filter.getIncludedTypes())
                         && checkTags(child, filter.getTags())
-                        && (ignoreNameFilter || checkName(child, filterPredicate))
+                        && (ignoreNameFilter || filterPredicate.test(child.getDocRef()))
                         && checkSecurity(child, filter.getRequiredPermissions())) {
                     treeModelOut.add(parent, child);
                     added++;
@@ -293,12 +293,6 @@ class ExplorerServiceImpl implements ExplorerService, CollectionService {
         }
 
         return false;
-    }
-
-    static boolean checkName(final ExplorerNode explorerNode,
-                             final Predicate<String> filterPredicate) {
-        return filterPredicate.test(explorerNode.getDisplayValue());
-//        return nameFilter == null || explorerNode.getDisplayValue().toLowerCase().contains(nameFilter.toLowerCase());
     }
 
     private void addRoots(final TreeModel filteredModel,

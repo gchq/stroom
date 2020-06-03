@@ -14,7 +14,6 @@ import stroom.docstore.impl.StoreFactoryImpl;
 import stroom.docstore.impl.fs.FSPersistence;
 import stroom.dropwizard.common.LogLevelInspector;
 import stroom.dropwizard.common.PermissionExceptionMapper;
-import stroom.importexport.api.ImportConverter;
 import stroom.importexport.api.ImportExportActionHandler;
 import stroom.legacy.impex_6_1.LegacyImpexModule;
 import stroom.proxy.app.BufferFactoryImpl;
@@ -39,7 +38,6 @@ import stroom.receive.common.ReceiveDataServlet;
 import stroom.receive.common.RemoteFeedModule;
 import stroom.receive.common.RequestHandler;
 import stroom.receive.rules.impl.DataReceiptPolicyAttributeMapFilterFactoryImpl;
-import stroom.receive.rules.impl.ReceiveDataRuleSetResource;
 import stroom.receive.rules.impl.ReceiveDataRuleSetResourceImpl;
 import stroom.receive.rules.impl.ReceiveDataRuleSetService;
 import stroom.receive.rules.impl.ReceiveDataRuleSetServiceImpl;
@@ -139,7 +137,6 @@ public class ProxyModule extends AbstractModule {
 
         RestResourcesBinder.create(binder())
                 .bind(NewUiDictionaryResource2.class)
-                .bind(ReceiveDataRuleSetResource.class)
                 .bind(ReceiveDataRuleSetResourceImpl.class)
                 .bind(FeedStatusResource.class);
 
