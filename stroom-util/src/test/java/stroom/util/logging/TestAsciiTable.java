@@ -1,7 +1,7 @@
 package stroom.util.logging;
 
 
-import stroom.util.logging.AsciiTable.Field;
+import stroom.util.logging.AsciiTable.Column;
 
 import org.junit.jupiter.api.Test;
 import org.slf4j.Logger;
@@ -17,31 +17,49 @@ class TestAsciiTable {
     @Test
     void test() {
 
-        List<Pojo> sourceData = List.of(
+        final List<Pojo> sourceData = List.of(
                new Pojo("Mr", "Joe", "Bloggs",
                        LocalDate.of(1971, 3, 23), 180),
                 new Pojo("Mrs", "Joanna", "Bloggs",
                         LocalDate.of(1972, 4, 1), 170),
                 new Pojo("Mr", "No Surname", null,
-                        LocalDate.of(1972, 4, 1), 170)
-
+                        LocalDate.of(1972, 4, 1), 170),
+        new Pojo("Mrs", "Magdalena Clementine", "Fotherington-Smythe",
+                LocalDate.of(1971, 3, 6), 166)
         );
 
-        final String table = AsciiTable.from(sourceData)
-                .withField(Field.of("Title", Pojo::getTitle))
-                .withField(Field.of("First Name", Pojo::getFirstName))
-                .withField(Field.builder("Surname", Pojo::getSurname)
+        final String table = AsciiTable.builder(sourceData)
+                .withColumn(Column.of("Title", Pojo::getTitle))
+                .withColumn(Column.of("First Name", Pojo::getFirstName))
+                .withColumn(Column.builder("Surname", Pojo::getSurname)
                         .withNullValueSupplier(() -> "-")
                         .build())
-                .withField(Field.builder("Date of Birth", Pojo::getDob)
+                .withColumn(Column.builder("Date of Birth", Pojo::getDob)
                         .centerAligned()
                         .build())
-                .withField(Field.builder("Height", Pojo::getHeightCm)
+                .withColumn(Column.builder("Height", Pojo::getHeightCm)
                         .rightAligned()
                         .withFormat(val -> val + "cm")
                         .build())
-//                .withRowLimt(1)
+                .withRowLimit(100)
                 .build();
+
+        LOGGER.info("table:\n{}", table);
+    }
+
+    @Test
+    void testAuto() {
+
+        final List<Pojo> sourceData = List.of(
+                new Pojo("Mr", "Joe", "Bloggs",
+                        LocalDate.of(1971, 3, 23), 180),
+                new Pojo("Mrs", "Joanna", "Bloggs",
+                        LocalDate.of(1972, 4, 1), 170),
+                new Pojo("Mr", "No Surname", null,
+                        LocalDate.of(1972, 4, 1), 170)
+        );
+
+        final String table = AsciiTable.from(sourceData);
 
         LOGGER.info("table:\n{}", table);
     }
