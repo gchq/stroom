@@ -15,11 +15,16 @@
  */
 
 .Login__container {
-  width: 300px;
+  width: 18rem;
   padding: 2rem;
   //border: thin solid lightgrey;
   background: white;
   border-radius: .5rem;
+}
+
+.Login__label {
+  //font-weight: 600;
+  margin-bottom: 0.25rem;
 }
 
 .Login__icon-container {
@@ -34,8 +39,9 @@
   border-radius: 4rem;
 }
 
-.Login__reset-password {
-  font-size: .7rem;
+.Login__content {
+  display: flex;
+  flex-direction: column;
 }
 
 .Login__content input {
@@ -43,6 +49,7 @@
   background: rgba(0, 0, 0, 0.05);
   border: none;
   border-radius: .25rem;
+  margin-bottom: 0.25rem;
 }
 
 .Login__content input:focus {
@@ -55,23 +62,21 @@
 }
 
 .Login__actions {
-  // width: 100%;
-  display: flex;
-  justify-content: flex-end;
-  padding: 15px 0 2px 0;
+  padding: 1rem 0 .25rem 0;
 }
 
-.Login__status-container {
+.Login__input-container {
   display: flex;
-  justify-content: space-between;
-}
-
-.Login__status-container a {
-  align-self: flex-end;
+  flex-direction: column;
 }
 
 .Login__login-button {
   width: 100%;
   border: none !important;
   border-radius: .25rem;
+}
+
+.Login__reset-password {
+  font-size: .7rem;
+  text-align: center;
 }

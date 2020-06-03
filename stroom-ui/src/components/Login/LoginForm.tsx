@@ -19,29 +19,13 @@ import { NavLink } from "react-router-dom";
 import { Credentials } from "components/authentication/types";
 import useForm from "react-hook-form";
 import { Button, Form, Icon, Input } from "antd";
-import { RequiredFieldMessage } from "components/FormComponents";
-import styled from "styled-components";
 import useConfig from "../../startup/config/useConfig";
+import { OptionalRequiredFieldMessage } from "../FormComponents/FormComponents";
 
 interface FormData {
   email: string;
   password: string;
 }
-
-const InputContainer = styled.div`
-  display: flex;
-  flex-direction: column;
-  height: 4rem;
-`;
-
-const StatusContainer = styled.div`
-  margin-top: 1rem;
-  display: flex;
-
-  a > {
-    align-self: flex-end;
-  }
-`;
 
 const LoginForm: React.FunctionComponent<{
   onSubmit: (credentials: Credentials) => void;
@@ -98,7 +82,8 @@ const LoginForm: React.FunctionComponent<{
                 alt="Stroom logo"
               />
             </div>
-            <InputContainer>
+            <div className="Login__input-container">
+              <div className="Login__label">Username:</div>
               <Input
                 placeholder="username or email"
                 prefix={
@@ -108,9 +93,13 @@ const LoginForm: React.FunctionComponent<{
                 autoFocus
                 onChange={async e => handleInputChange("email", e.target.value)}
               />
-              {errors.email && <RequiredFieldMessage/>}
-            </InputContainer>
-            <InputContainer>
+              {/*<ErrorMessage message={errors.email ? errors.email.message : ""} />*/}
+              {/*{errors.email && <RequiredFieldMessage/>}*/}
+
+              <OptionalRequiredFieldMessage visible={Boolean(errors.email)}/>
+            </div>
+            <div className="Login__input-container">
+              <div className="Login__label">Password:</div>
               <Input.Password
                 name="password"
                 placeholder="password"
@@ -121,8 +110,11 @@ const LoginForm: React.FunctionComponent<{
                   handleInputChange("password", e.target.value)
                 }
               />
-              {errors.password && <RequiredFieldMessage/>}
-            </InputContainer>
+
+              <OptionalRequiredFieldMessage visible={Boolean(errors.password)}/>
+
+              {/*<ValidationMessage>{errors.password ? errors.password.message : ""}</ValidationMessage>*/}
+            </div>
 
             <div className="Login__actions page__buttons Button__container">
               <Button
@@ -137,18 +129,16 @@ const LoginForm: React.FunctionComponent<{
               </Button>
             </div>
 
-            <StatusContainer>
-              {allowPasswordResets ? (
-                <NavLink
-                  className="Login__reset-password"
-                  to={"/s/resetPasswordRequest"}
-                >
-                  Forgot password?
-                </NavLink>
-              ) : (
-                undefined
-              )}
-            </StatusContainer>
+            {allowPasswordResets ? (
+              <NavLink
+                className="Login__reset-password"
+                to={"/s/resetPasswordRequest"}
+              >
+                Forgot password?
+              </NavLink>
+            ) : (
+              undefined
+            )}
 
           </div>
         </Form>
