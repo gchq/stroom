@@ -59,18 +59,18 @@ const ResetPassword: React.FunctionComponent<{
         <div className="section__title">
           <h3>Reset your password</h3>
         </div>
-        {showFailure ? failure : undefined}
-        {showChangePasswordFields ? (
-          <ChangePasswordFields
-            showOldPasswordField={false}
-            onSubmit={onSubmit}
-            onValidate={(password, oldPassword, verifyPassword, email) =>
-              onValidate(oldPassword, password, verifyPassword, email)
-            }
-          />
-        ) : (
-          undefined
-        )}
+        {/*{showFailure ? failure : undefined}*/}
+        {/*{showChangePasswordFields ? (*/}
+        {/*  <ChangePasswordFields*/}
+        {/*    showOldPasswordField={false}*/}
+        {/*    onSubmit={onSubmit}*/}
+        {/*    onValidate={(password, oldPassword, verifyPassword, email) =>*/}
+        {/*      onValidate(oldPassword, password, verifyPassword, email)*/}
+        {/*    }*/}
+        {/*  />*/}
+        {/*) : (*/}
+        {/*  undefined*/}
+        {/*)}*/}
       </div>
     </div>
   );

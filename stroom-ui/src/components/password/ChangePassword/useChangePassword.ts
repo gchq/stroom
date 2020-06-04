@@ -1,3 +1,4 @@
+import * as React from "react";
 import { useCallback } from "react";
 import { ChangePasswordRequest } from "components/authentication/types";
 import useApi from "components/authentication";
@@ -7,6 +8,7 @@ const useChangePassword = (): {
   errorMessages: string[];
   showChangeConfirmation: boolean;
   changePassword: (changePasswordRequest: ChangePasswordRequest) => void;
+  isSubmitting: boolean;
 } => {
   const {
     addErrorMessage,
@@ -15,8 +17,11 @@ const useChangePassword = (): {
     setShowChangeConfirmation,
   } = usePasswordState();
   const { changePassword: changePasswordUsingApi } = useApi();
+  const [isSubmitting, setSubmitting] = React.useState(false);
+
   const changePassword = useCallback(
     (changePasswordRequest: ChangePasswordRequest) => {
+      setSubmitting(true);
       changePasswordUsingApi(changePasswordRequest).then(response => {
         if (response.changeSucceeded) {
           // // If we successfully changed the password then we want to redirect if there's a redirection URL
@@ -26,9 +31,10 @@ const useChangePassword = (): {
           // ) {
           //   window.location.href = changePasswordRequest.redirectUri;
           // } else {
-            setShowChangeConfirmation(true);
+          setShowChangeConfirmation(true);
           // }
         } else {
+          setSubmitting(false);
           if (response.failedOn.includes("BAD_OLD_PASSWORD")) {
             addErrorMessage("Your old password is not correct");
           }
@@ -46,10 +52,10 @@ const useChangePassword = (): {
         }
       });
     },
-    [changePasswordUsingApi, setShowChangeConfirmation, addErrorMessage],
+    [changePasswordUsingApi, setShowChangeConfirmation, addErrorMessage, isSubmitting],
   );
 
-  return { changePassword, errorMessages, showChangeConfirmation };
+  return { changePassword, errorMessages, showChangeConfirmation, isSubmitting };
 };
 
 export default useChangePassword;

@@ -16,20 +16,23 @@
 
 import * as React from "react";
 import ChangePasswordFields from "../ChangePasswordFields";
+import LogoPage from "../../LogoPage/LogoPage";
+import { ChangePasswordRequest } from "../../authentication/types";
 
 const ChangePasswordForm: React.FunctionComponent<{
   email: string;
-  onSubmit: Function;
+  onSubmit: (request: ChangePasswordRequest) => void;
+  isSubmitting: boolean;
   showChangeConfirmation?: boolean;
   redirectUri?: string;
-  onValidate: (
-    oldPassword: string,
-    newPassword: string,
-    verifyPassword: string,
-    email: string,
-  ) => Promise<string>;
-}> = ({ showChangeConfirmation, redirectUri, email, onSubmit, onValidate }) => {
-  let title = "Change your password";
+  // onValidate: (
+  //   oldPassword: string,
+  //   newPassword: string,
+  //   verifyPassword: string,
+  //   email: string,
+  // ) => Promise<string>;
+}> = ({ showChangeConfirmation, redirectUri, email, onSubmit, isSubmitting }) => {
+  let title = "Change Password";
   if (showChangeConfirmation && redirectUri) {
     title = "Your password has been changed";
     window.location.href = redirectUri;
@@ -43,7 +46,7 @@ const ChangePasswordForm: React.FunctionComponent<{
         redirectUri={redirectUri}
         showOldPasswordField={true}
         onSubmit={onSubmit}
-        onValidate={onValidate}
+        isSubmitting={isSubmitting}
       />
     );
   } else if (showChangeConfirmation && !redirectUri) {
@@ -51,14 +54,12 @@ const ChangePasswordForm: React.FunctionComponent<{
   }
 
   return (
-    <div className="container">
-      <div className="section">
-        <div className="section__title">
-          <h3>{title} </h3>
-        </div>
+    <LogoPage>
+      <div className="ChangePassword__container">
+        <h3>{title}</h3>
         {content}
       </div>
-    </div>
+    </LogoPage>
   );
 };
 

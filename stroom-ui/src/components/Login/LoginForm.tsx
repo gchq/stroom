@@ -15,17 +15,51 @@
  */
 
 import * as React from "react";
+import { ChangeEventHandler } from "react";
 import { NavLink } from "react-router-dom";
 import { Credentials } from "components/authentication/types";
 import useForm from "react-hook-form";
 import { Button, Form, Icon, Input } from "antd";
-import useConfig from "../../startup/config/useConfig";
 import { OptionalRequiredFieldMessage } from "../FormComponents/FormComponents";
+import LogoPage from "../LogoPage/LogoPage";
 
 interface FormData {
   email: string;
   password: string;
 }
+
+export const InputContainer: React.FunctionComponent<{
+  label: string;
+  children: any;
+  error: boolean;
+}> = ({ label, children, error }) => {
+  return (
+    <div className="Login__input-container">
+      <div className="Login__label">{label}:</div>
+      {children}
+      <OptionalRequiredFieldMessage visible={error}/>
+    </div>
+  );
+};
+
+
+export const PasswordInput: React.FunctionComponent<{
+  name: string;
+  placeholder: string;
+  onChange?: ChangeEventHandler<HTMLInputElement>;
+}> = ({ name, placeholder, onChange }) => {
+  return (
+    <Input.Password
+      name={name}
+      placeholder={placeholder}
+      prefix={
+        <Icon type="lock" style={{ color: "rgba(0,0,0,.25)" }}/>
+      }
+      onChange={onChange}
+    />
+  );
+};
+
 
 const LoginForm: React.FunctionComponent<{
   onSubmit: (credentials: Credentials) => void;
@@ -52,8 +86,6 @@ const LoginForm: React.FunctionComponent<{
     register({ name: "password", type: "custom" }, { required: true });
   }, [register]);
 
-  const { theme } = useConfig();
-
   // const { email, password } = getValues();
 
   const disableSubmit = isSubmitting;//email === "" || password === "";
@@ -67,12 +99,7 @@ const LoginForm: React.FunctionComponent<{
   };
 
   return (
-    <div style={theme} className="content-floating-without-appbar">
-      <img
-        className="content-logo"
-        alt="Stroom logo"
-        src={require("../../images/logo.svg")}
-      />
+    <LogoPage>
       <div className="Login__container">
         <Form onSubmit={handleSubmit(onSubmit)}>
           <div className="Login__content">
@@ -82,8 +109,7 @@ const LoginForm: React.FunctionComponent<{
                 alt="Stroom logo"
               />
             </div>
-            <div className="Login__input-container">
-              <div className="Login__label">Username:</div>
+            <InputContainer label="Username" error={Boolean(errors.email)}>
               <Input
                 placeholder="username or email"
                 prefix={
@@ -93,29 +119,15 @@ const LoginForm: React.FunctionComponent<{
                 autoFocus
                 onChange={async e => handleInputChange("email", e.target.value)}
               />
-              {/*<ErrorMessage message={errors.email ? errors.email.message : ""} />*/}
-              {/*{errors.email && <RequiredFieldMessage/>}*/}
-
-              <OptionalRequiredFieldMessage visible={Boolean(errors.email)}/>
-            </div>
-            <div className="Login__input-container">
-              <div className="Login__label">Password:</div>
-              <Input.Password
-                name="password"
-                placeholder="password"
-                prefix={
-                  <Icon type="lock" style={{ color: "rgba(0,0,0,.25)" }}/>
-                }
-                onChange={async e =>
-                  handleInputChange("password", e.target.value)
-                }
+            </InputContainer>
+            <InputContainer label="Password" error={Boolean(errors.password)}>
+              <PasswordInput name="password"
+                             placeholder="password"
+                             onChange={async e =>
+                               handleInputChange("password", e.target.value)
+                             }
               />
-
-              <OptionalRequiredFieldMessage visible={Boolean(errors.password)}/>
-
-              {/*<ValidationMessage>{errors.password ? errors.password.message : ""}</ValidationMessage>*/}
-            </div>
-
+            </InputContainer>
             <div className="Login__actions page__buttons Button__container">
               <Button
                 className="Login__login-button"
@@ -143,7 +155,7 @@ const LoginForm: React.FunctionComponent<{
           </div>
         </Form>
       </div>
-    </div>
+    </LogoPage>
   );
 };
 
