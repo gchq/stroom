@@ -39,6 +39,9 @@ import stroom.widget.popup.client.event.ShowPopupEvent;
 import stroom.widget.popup.client.presenter.PopupSize;
 import stroom.widget.popup.client.presenter.PopupUiHandlers;
 import stroom.widget.popup.client.presenter.PopupView.PopupType;
+import stroom.widget.tab.client.presenter.TabBar;
+import stroom.widget.tab.client.presenter.TabData;
+import stroom.widget.tab.client.presenter.TabDataImpl;
 
 import com.google.gwt.core.client.GWT;
 import com.google.gwt.dom.client.Style.BorderStyle;
@@ -76,6 +79,9 @@ public class DataRetentionPolicyPresenter
 
     private DataRetentionRules policy;
     private List<DataRetentionRule> visibleRules;
+
+    private final TabData rulesTab = new TabDataImpl("Rules");
+    private final TabData summaryTab = new TabDataImpl("Impact Summary");
 
     private ButtonView saveButton;
     private ButtonView addButton;
@@ -117,10 +123,18 @@ public class DataRetentionPolicyPresenter
         moveUpButton = listPresenter.add(SvgPresets.UP);
         moveDownButton = listPresenter.add(SvgPresets.DOWN);
 
+        addTab(rulesTab);
+        addTab(summaryTab);
+        getView().getTabBar().selectTab(rulesTab);
+
         listPresenter.getView().asWidget().getElement().getStyle().setBorderStyle(BorderStyle.NONE);
 
         updateButtons();
 
+        initialiseRules(restFactory);
+    }
+
+    private void initialiseRules(final RestFactory restFactory) {
         final Rest<DataRetentionRules> rest = restFactory.create();
         rest
                 .onSuccess(result -> {
@@ -136,6 +150,15 @@ public class DataRetentionPolicyPresenter
                 })
                 .call(DATA_RETENTION_RULES_RESOURCE)
                 .read();
+    }
+
+    private void addTab(final TabData tab) {
+        getView().getTabBar().addTab(tab);
+        hideTab(tab, false);
+    }
+
+    private void hideTab(final TabData tab, final boolean hide) {
+        getView().getTabBar().setTabHidden(tab, hide);
     }
 
     private void setVisibleRules(final List<DataRetentionRule> rules) {
@@ -167,8 +190,14 @@ public class DataRetentionPolicyPresenter
         }
     }
 
+    private void selectTab(final TabData tab) {
+
+    }
+
     @Override
     protected void onBind() {
+        registerHandler(getView().getTabBar().addSelectionHandler(event ->
+                selectTab(event.getSelectedItem())));
         registerHandler(saveButton.addClickHandler(event -> {
             // Get the user's rules without our default one
             policy.setRules(getUserRules());
@@ -177,7 +206,6 @@ public class DataRetentionPolicyPresenter
             rest
                     .onSuccess(result -> {
                         policy = result;
-//                        this.rules = policy.getRules();
                         setVisibleRules(policy.getRules());
                         listPresenter.getSelectionModel().clear();
 
@@ -523,5 +551,7 @@ public class DataRetentionPolicyPresenter
         void setTableView(View view);
 
         void setExpressionView(View view);
+
+        TabBar getTabBar();
     }
 }

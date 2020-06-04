@@ -17,6 +17,9 @@
 
 package stroom.receive.rules.client.view;
 
+import stroom.receive.rules.client.presenter.DataRetentionPolicyPresenter.DataRetentionPolicyView;
+import stroom.widget.tab.client.view.LinkTabBar;
+
 import com.google.gwt.uibinder.client.UiBinder;
 import com.google.gwt.uibinder.client.UiField;
 import com.google.gwt.user.client.ui.SimplePanel;
@@ -24,11 +27,12 @@ import com.google.gwt.user.client.ui.Widget;
 import com.google.inject.Inject;
 import com.gwtplatform.mvp.client.View;
 import com.gwtplatform.mvp.client.ViewImpl;
-import stroom.receive.rules.client.presenter.DataRetentionPolicyPresenter.DataRetentionPolicyView;
 
 public class DataRetentionPolicyViewImpl extends ViewImpl implements DataRetentionPolicyView {
     private final Widget widget;
 
+    @UiField
+    LinkTabBar tabBar;
     @UiField
     SimplePanel table;
     @UiField
@@ -52,6 +56,11 @@ public class DataRetentionPolicyViewImpl extends ViewImpl implements DataRetenti
     @Override
     public void setExpressionView(final View view) {
         this.expression.setWidget(view.asWidget());
+    }
+
+    @Override
+    public LinkTabBar getTabBar() {
+        return tabBar;
     }
 
     public interface Binder extends UiBinder<Widget, DataRetentionPolicyViewImpl> {
