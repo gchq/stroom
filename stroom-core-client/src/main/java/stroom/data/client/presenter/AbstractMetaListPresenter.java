@@ -322,29 +322,33 @@ public abstract class AbstractMetaListPresenter extends MyPresenterWidget<DataGr
                 return getInfoCellState(object);
             }
 
+
+
             @Override
             protected void showInfo(final MetaRow row, final int x, final int y) {
-                final Rest<List<MetaInfoSection>> rest = restFactory.create();
-                rest
-                        .onSuccess(result -> {
-                            final StringBuilder html = new StringBuilder();
+                if (!Status.DELETED.equals(row.getMeta().getStatus())) {
+                    final Rest<List<MetaInfoSection>> rest = restFactory.create();
+                    rest
+                            .onSuccess(result -> {
+                                final StringBuilder html = new StringBuilder();
 
-                            for (int i = 0; i < result.size(); i++) {
-                                final MetaInfoSection section = result.get(i);
-                                TooltipUtil.addHeading(html, section.getTitle());
-                                section.getEntries().forEach(entry -> TooltipUtil.addRowData(html, entry.getKey(), entry.getValue()));
-                                if (i < result.size() - 1) {
-                                    TooltipUtil.addBreak(html);
+                                for (int i = 0; i < result.size(); i++) {
+                                    final MetaInfoSection section = result.get(i);
+                                    TooltipUtil.addHeading(html, section.getTitle());
+                                    section.getEntries().forEach(entry -> TooltipUtil.addRowData(html, entry.getKey(), entry.getValue()));
+                                    if (i < result.size() - 1) {
+                                        TooltipUtil.addBreak(html);
+                                    }
                                 }
-                            }
 
-                            tooltipPresenter.setHTML(html.toString());
-                            final PopupPosition popupPosition = new PopupPosition(x, y);
-                            ShowPopupEvent.fire(AbstractMetaListPresenter.this, tooltipPresenter, PopupType.POPUP,
-                                    popupPosition, null);
-                        })
-                        .call(META_RESOURCE)
-                        .fetchFullMetaInfo(row.getMeta().getId());
+                                tooltipPresenter.setHTML(html.toString());
+                                final PopupPosition popupPosition = new PopupPosition(x, y);
+                                ShowPopupEvent.fire(AbstractMetaListPresenter.this, tooltipPresenter, PopupType.POPUP,
+                                        popupPosition, null);
+                            })
+                            .call(META_RESOURCE)
+                            .fetchFullMetaInfo(row.getMeta().getId());
+                }
             }
         };
         getView().addColumn(infoColumn, "<br/>", ColumnSizeConstants.ICON_COL);
