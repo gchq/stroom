@@ -24,6 +24,7 @@ import stroom.dropwizard.common.RestResources;
 import stroom.dropwizard.common.Servlets;
 import stroom.proxy.app.guice.ProxyModule;
 import stroom.util.authentication.DefaultOpenIdCredentials;
+import stroom.util.shared.BuildInfo;
 import stroom.util.shared.ResourcePaths;
 
 import com.google.inject.Guice;
@@ -43,6 +44,7 @@ import javax.inject.Inject;
 import javax.servlet.DispatcherType;
 import javax.servlet.FilterRegistration;
 import java.util.EnumSet;
+import java.util.Objects;
 
 public class App extends Application<Config> {
     private static final Logger LOGGER = LoggerFactory.getLogger(App.class);
@@ -59,6 +61,8 @@ public class App extends Application<Config> {
     private ManagedServices managedServices;
     @Inject
     private DelegatingExceptionMapper delegatingExceptionMapper;
+    @Inject
+    private BuildInfo buildInfo;
 
     public static void main(final String[] args) throws Exception {
         new App().run(args);
@@ -113,6 +117,7 @@ public class App extends Application<Config> {
 
         warnAboutDefaultOpenIdCreds(configuration, injector);
 
+        showBuildInfo();
     }
 
     private void warnAboutDefaultOpenIdCreds(Config configuration, Injector injector) {
@@ -152,5 +157,11 @@ public class App extends Application<Config> {
 
         LOGGER.info("Registering Log Configuration Task on {}/tasks/log-level", path);
         environment.admin().addTask(new LogConfigurationTask());
+    }
+
+    private void showBuildInfo() {
+        Objects.requireNonNull(buildInfo);
+        LOGGER.info("Build version: {}, date: {}",
+                buildInfo.getBuildVersion(), buildInfo.getBuildDate());
     }
 }

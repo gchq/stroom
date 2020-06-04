@@ -40,6 +40,7 @@ import javax.inject.Provider;
 import java.time.Duration;
 import java.time.Instant;
 import java.time.Period;
+import java.time.temporal.ChronoUnit;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.Comparator;
@@ -50,7 +51,6 @@ import java.util.Map;
 import java.util.Optional;
 import java.util.Set;
 import java.util.concurrent.atomic.AtomicBoolean;
-import java.util.function.Function;
 import java.util.function.Supplier;
 import java.util.stream.Collectors;
 
@@ -120,7 +120,10 @@ public class DataRetentionPolicyExecutor {
                         taskContextFactory.context("Data Retention", taskContext -> {
                             info(taskContext, () -> "Starting data retention process");
                             final LogExecutionTime logExecutionTime = new LogExecutionTime();
-                            process(taskContext, now);
+                            // MUST truncate down to millis as the DB stores in millis and TimePeriod
+                            // also truncates to millis so we need to work to a consistent precision else
+                            // some of the date logic fails due to micro second differences
+                            process(taskContext, now.truncatedTo(ChronoUnit.MILLIS));
                             info(taskContext, () -> "Finished data retention process in " + logExecutionTime);
                         }).run();
                     } catch (final RuntimeException e) {
@@ -135,7 +138,7 @@ public class DataRetentionPolicyExecutor {
 
     private synchronized void process(final TaskContext taskContext, final Instant now) {
         final DataRetentionRules dataRetentionRules = dataRetentionRulesProvider.get();
-        LOGGER.info("Using run time {}", now);
+        LOGGER.info("All retention time calculations based on now()={}", now);
         if (dataRetentionRules != null) {
             final List<DataRetentionRule> activeRules = getActiveRules(dataRetentionRules.getRules());
 
@@ -228,34 +231,49 @@ public class DataRetentionPolicyExecutor {
         return activeRules;
     }
 
+    private String getRuleInfo(final DataRetentionRule rule) {
+        return String.join(" - ",
+                rule.toString(),
+                rule.getAgeString(),
+                rule.getExpression().toString());
+    }
+
+    private String getRuleActionInfo(final DataRetentionRuleAction ruleAction) {
+        return String.join(" - ",
+                ruleAction.getOutcome().toString(),
+                getRuleInfo(ruleAction.getRule()));
+    }
+
+    private String getPeriodInfo(final TimePeriod period, final Instant now) {
+        final Period fromTimeAge = TimeUtils.instantAsAge(period.getFrom(), now);
+        final Period toTimeAge = TimeUtils.instantAsAge(period.getTo(), now);
+
+        return LogUtil.message("{} ago => {} ago ({} => {}) [duration: {}]",
+                fromTimeAge,
+                toTimeAge,
+                period.getFrom(),
+                period.getTo(),
+                period.getPeriod());
+    }
+
     private void processPeriod(final TaskContext taskContext,
                                final TimePeriod period,
                                final List<DataRetentionRuleAction> sortedRuleActions,
                                final Instant now) {
         info(taskContext, () -> {
-            final Function<DataRetentionRuleAction, String> ruleInfo = ruleAction ->
-                    String.join(" - ",
-                            ruleAction.getRule().toString(),
-                            ruleAction.getRule().getAgeString(),
-                            ruleAction.getRule().getExpression().toString(),
-                            ruleAction.getOutcome().name()
-                    );
 
             // Get the ages of the two dates in the period
             final Period fromTimeAge = TimeUtils.instantAsAge(period.getFrom(), now);
             final Period toTimeAge = TimeUtils.instantAsAge(period.getTo(), now);
 
-            return "" +
-                    "Considering stream retention for streams created " +
-                    "between " +
-                    period.getFrom() + " (" + fromTimeAge + " ago)" +
-                    " and " +
-                    period.getTo() + " (" + toTimeAge + " ago)" +
-                    " [" + period.getPeriod() + "], " +
-                    sortedRuleActions.size() + " rules:\n" +
+            return LogUtil.message(
+                    "Considering streams created " +
+                    "between {}, {} rule actions:\n{}",
+                    getPeriodInfo(period, now),
+                    sortedRuleActions.size(),
                     sortedRuleActions.stream()
-                            .map(ruleInfo)
-                            .collect(Collectors.joining("\n"));
+                            .map(this::getRuleActionInfo)
+                            .collect(Collectors.joining("\n")));
         });
 
         LOGGER.logDurationIfInfoEnabled(
@@ -303,11 +321,10 @@ public class DataRetentionPolicyExecutor {
 
             final TimePeriod period = TimePeriod.between(fromTime, toTime);
 
-            LOGGER.debug(() -> LogUtil.message("creationTime: {} ({} ago), periodFrom {} ago, periodTo {} ago",
+            LOGGER.debug(() -> LogUtil.message("creationTime: {} ({} ago), period: {}",
                     creationTime,
                     TimeUtils.instantAsAge(creationTime, now),
-                    TimeUtils.instantAsAge(period.getFrom(), now),
-                    TimeUtils.instantAsAge(period.getTo(), now)));
+                    getPeriodInfo(period, now)));
 
             activeRules.forEach(rule -> {
                 final RetentionRuleOutcome ruleOutcome = getRuleOutcome(period, rule, now);
@@ -318,15 +335,11 @@ public class DataRetentionPolicyExecutor {
                         .add(ruleAction);
 
                 LOGGER.debug(() -> LogUtil.message(
-                        "  {} rule: {}, ruleMinCreateTime: {} ({} ago), from: {} ({} ago), to {} ({} ago)",
+                        "  {} Rule: {}, ruleMinCreateTime: {} ({} ago)",
                         ruleOutcome,
                         rule,
                         getMinCreateTime(rule, now),
-                        TimeUtils.instantAsAge(getMinCreateTime(rule, now), now),
-                        period.getFrom(),
-                        TimeUtils.instantAsAge(period.getFrom(), now),
-                        period.getTo(),
-                        TimeUtils.instantAsAge(period.getTo(), now)));
+                        TimeUtils.instantAsAge(getMinCreateTime(rule, now), now)));
             });
 
             toTime = creationTime;
@@ -334,11 +347,11 @@ public class DataRetentionPolicyExecutor {
         return rulesByPeriod;
     }
 
-    private static RetentionRuleOutcome getRuleOutcome(final TimePeriod period,
-                                                       final DataRetentionRule rule,
-                                                       final Instant now) {
-        Instant ruleMinCreateTime = getMinCreateTime(rule, now);
-
+    private RetentionRuleOutcome getRuleOutcome(final TimePeriod period,
+                                                final DataRetentionRule rule,
+                                                final Instant now) {
+        final Instant ruleMinCreateTime = getMinCreateTime(rule, now);
+        
         // Work out if this rule should delete or retain data in this period
         return period.getFrom().isBefore(ruleMinCreateTime)
                 ? RetentionRuleOutcome.DELETE
@@ -360,7 +373,7 @@ public class DataRetentionPolicyExecutor {
         // right back as far as the data goes.
         minCreationTimeMap.computeIfAbsent(Instant.EPOCH, k -> new HashSet<>());
 
-        LOGGER.debug(() -> "minCreationTimes:\n" + minCreationTimeMap.entrySet().stream()
+        LOGGER.debug(() -> "minCreationTimes => rules map\n" + minCreationTimeMap.entrySet().stream()
                 .sorted(Map.Entry.comparingByKey(Comparator.reverseOrder()))
                 .map(entry -> entry.getKey() + " (" +
                         TimeUtils.instantAsAge(entry.getKey(), now) +
