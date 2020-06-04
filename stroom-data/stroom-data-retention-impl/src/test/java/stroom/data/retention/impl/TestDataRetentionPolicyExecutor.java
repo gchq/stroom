@@ -66,6 +66,43 @@ class TestDataRetentionPolicyExecutor {
     private ArgumentCaptor<TimePeriod> periodCaptor;
 
     @Test
+    void testDataRetention_gh1636() {
+
+        final List<DataRetentionRule> rules = List.of(
+                buildRule(1, true, 2, TimeUnit.DAYS),
+                buildRule(2, true, 1, TimeUnit.MONTHS));
+
+        final Instant now = Instant.now();
+
+        runDataRretention(rules, now, null);
+
+        final List<List<DataRetentionRuleAction>> allRuleActions = ruleExpressionsCaptor.getAllValues();
+        final List<TimePeriod> allPeriods = periodCaptor.getAllValues();
+
+        int expectedPeriodCount = 2;
+        assertThat(allPeriods).hasSize(expectedPeriodCount);
+        assertThat(allRuleActions).hasSize(expectedPeriodCount);
+
+        // The method call number
+        int callNo = 0;
+
+        // -------------------------------------------------
+
+        assertPeriod(allPeriods.get(callNo), Period.ofMonths(1), Period.ofDays(2), now);
+        assertRuleActions(allRuleActions.get(callNo), List.of(
+                Tuple.of(1, RetentionRuleOutcome.DELETE),
+                Tuple.of(2, RetentionRuleOutcome.RETAIN)));
+        callNo++;
+
+        // -------------------------------------------------
+
+        assertEpochPeriod(allPeriods.get(callNo), Period.ofMonths(1), now);
+        assertRuleActions(allRuleActions.get(callNo), List.of(
+                Tuple.of(1, RetentionRuleOutcome.DELETE),
+                Tuple.of(2, RetentionRuleOutcome.DELETE)));
+    }
+
+    @Test
     void testDataRetention_fourRules1() {
 
         final List<DataRetentionRule> rules = List.of(
@@ -74,7 +111,7 @@ class TestDataRetentionPolicyExecutor {
                 buildRule(3, true, 1, TimeUnit.YEARS),
                 buildForeverRule(4, true));
 
-        final Instant now = Instant.now().truncatedTo(ChronoUnit.MILLIS);
+        final Instant now = Instant.now();
 
         runDataRretention(rules, now, null);
 
@@ -127,7 +164,7 @@ class TestDataRetentionPolicyExecutor {
                 buildRule(3, true, 1, TimeUnit.MONTHS),
                 buildRule(4, true, 1, TimeUnit.DAYS));
 
-        final Instant now = Instant.now().truncatedTo(ChronoUnit.MILLIS);
+        final Instant now = Instant.now();
 
         runDataRretention(rules, now, null);
 
@@ -180,7 +217,7 @@ class TestDataRetentionPolicyExecutor {
                 buildRule(3, true, 1, TimeUnit.YEARS),
                 buildForeverRule(4, true));
 
-        final Instant now = Instant.now().truncatedTo(ChronoUnit.MILLIS);
+        final Instant now = Instant.now();
         final LocalDateTime nowUTC = LocalDateTime.ofInstant(now, ZoneOffset.UTC);
 
         DataRetentionTracker tracker = new DataRetentionTracker(
@@ -238,7 +275,7 @@ class TestDataRetentionPolicyExecutor {
                 buildRule(4, true, 1, TimeUnit.YEARS)
         );
 
-        final Instant now = Instant.now().truncatedTo(ChronoUnit.MILLIS);
+        final Instant now = Instant.now();
 
         int trackerAgeDays = 90;
         // Tracker is 90days old so should be ignored for periods:
@@ -305,7 +342,7 @@ class TestDataRetentionPolicyExecutor {
 
         final List<DataRetentionRule> rules = Collections.emptyList();
 
-        final Instant now = Instant.now().truncatedTo(ChronoUnit.MILLIS);
+        final Instant now = Instant.now();
 
         final DataRetentionPolicyExecutor dataRetentionPolicyExecutor = createExecutor(rules);
 
@@ -321,7 +358,7 @@ class TestDataRetentionPolicyExecutor {
                 buildRule(1, true, 2, TimeUnit.MONTHS)
         );
 
-        final Instant now = Instant.now().truncatedTo(ChronoUnit.MILLIS);
+        final Instant now = Instant.now();
 
         runDataRretention(rules, now, null);
 
@@ -352,7 +389,7 @@ class TestDataRetentionPolicyExecutor {
                 buildRule(3, true, 3, TimeUnit.MONTHS)
         );
 
-        final Instant now = Instant.now().truncatedTo(ChronoUnit.MILLIS);
+        final Instant now = Instant.now();
 
         runDataRretention(rules, now, null);
 
@@ -389,7 +426,7 @@ class TestDataRetentionPolicyExecutor {
                 buildRule(1, true, 2, TimeUnit.MONTHS),
                 buildRule(2, true, 2, TimeUnit.MONTHS));
 
-        final Instant now = Instant.now().truncatedTo(ChronoUnit.MILLIS);
+        final Instant now = Instant.now();
 
         runDataRretention(rules, now, null);
 
@@ -459,7 +496,8 @@ class TestDataRetentionPolicyExecutor {
         assertThat(LocalDateTime.ofInstant(actualPeriod.getFrom(), ZoneOffset.UTC))
                 .isEqualTo(expectedFrom);
         assertThat(LocalDateTime.ofInstant(actualPeriod.getTo(), ZoneOffset.UTC))
-                .isEqualTo(LocalDateTime.ofInstant(now, ZoneOffset.UTC).minus(expectedTimeSinceTo));
+                .isEqualTo(LocalDateTime.ofInstant(now.truncatedTo(ChronoUnit.MILLIS), ZoneOffset.UTC)
+                        .minus(expectedTimeSinceTo));
     }
 
     private void assertEpochPeriod(final TimePeriod actualPeriod,
@@ -468,7 +506,8 @@ class TestDataRetentionPolicyExecutor {
         assertThat(actualPeriod.getFrom())
                 .isEqualTo(Instant.EPOCH);
         assertThat(LocalDateTime.ofInstant(actualPeriod.getTo(), ZoneOffset.UTC))
-                .isEqualTo(LocalDateTime.ofInstant(now, ZoneOffset.UTC).minus(expectedTimeSinceTo));
+                .isEqualTo(LocalDateTime.ofInstant(now.truncatedTo(ChronoUnit.MILLIS), ZoneOffset.UTC)
+                        .minus(expectedTimeSinceTo));
     }
 
     private void assertRuleActions(final List<DataRetentionRuleAction> actualRuleActions,
