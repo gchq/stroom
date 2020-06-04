@@ -245,17 +245,18 @@ public class DataRetentionPolicyExecutor {
             final Period fromTimeAge = TimeUtils.instantAsAge(period.getFrom(), now);
             final Period toTimeAge = TimeUtils.instantAsAge(period.getTo(), now);
 
-            return "" +
-                    "Considering stream retention for streams created " +
-                    "between " +
-                    period.getFrom() + " (" + fromTimeAge + " ago)" +
-                    " and " +
-                    period.getTo() + " (" + toTimeAge + " ago)" +
-                    " [" + period.getPeriod() + "], " +
-                    sortedRuleActions.size() + " rules:\n" +
+            return LogUtil.message(
+                    "Considering streams created " +
+                    "between {} ago => {} ago ({} => {}) [duration: {}], {} rule actions:\n{}",
+                    fromTimeAge,
+                    toTimeAge,
+                    period.getFrom(),
+                    period.getTo(),
+                    period.getPeriod(),
+                    sortedRuleActions.size(),
                     sortedRuleActions.stream()
                             .map(ruleInfo)
-                            .collect(Collectors.joining("\n"));
+                            .collect(Collectors.joining("\n")));
         });
 
         LOGGER.logDurationIfInfoEnabled(
