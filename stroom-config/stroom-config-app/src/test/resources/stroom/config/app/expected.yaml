@@ -205,7 +205,9 @@ appConfig:
           maxPoolSize: 10
     filesystemVolume:
       volumeSelector: "RoundRobin"
-      createDefaultOnStart: true
+      defaultStreamVolumePaths: "volumes/defaultStreamVolume"
+      defaultStreamVolumeFilesystemUtilisation: 0.9
+      createDefaultStreamVolumesOnStart: true
       feedPathCache:
         maximumSize: 1000
         expireAfterAccess: "PT10M"
@@ -800,4 +802,8 @@ appConfig:
     resilientReplicationCount: 1
     preferLocalVolumes: false
     volumeSelector: "RoundRobin"
-    createDefaultOnStart: true
+    createDefaultIndexVolumesOnStart: true
+    defaultIndexVolumeGroupName: "Default Volume Group"
+    defaultIndexVolumeGroupPaths: "volumes/defaultIndexVolume"
+    defaultIndexVolumeGroupNodes: "node1a"
+    defaultIndexVolumeGroupLimit: "1G"

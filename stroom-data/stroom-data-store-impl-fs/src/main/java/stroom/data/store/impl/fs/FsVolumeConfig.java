@@ -11,10 +11,14 @@ import javax.validation.constraints.Pattern;
 
 @Singleton
 public class FsVolumeConfig extends AbstractConfig {
+    private static final String PATH_LIST_PATTERN = "^[^,]+(,[ ]?[^,]+)*$";
 //    private int resilientReplicationCount = 1;
 //    private boolean preferLocalVolumes;
     private String volumeSelector = "RoundRobin";
-    private boolean createDefaultOnStart = true;
+
+    private String defaultStreamVolumePaths = "volumes/defaultStreamVolume";
+    private double defaultStreamVolumeFilesystemUtilisation = 0.9;
+    private boolean createDefaultStreamVolumesOnStart = true;
 
     private static final String VOLUME_SELECTOR_PATTERN = "^(" +
         RoundRobinVolumeSelector.NAME + "|" +
@@ -69,14 +73,14 @@ public class FsVolumeConfig extends AbstractConfig {
     }
 
     @RequiresRestart(RequiresRestart.RestartScope.UI)
-    @JsonPropertyDescription("If no existing volumes are present a default volume will be created on application " +
-            "start. The volume will live in the volumes sub directory of the Stroom installation directory")
-    public boolean isCreateDefaultOnStart() {
-        return createDefaultOnStart;
+    @JsonPropertyDescription("If no existing stream volumes are present default volume swill be created on application " +
+            "start.  Use property defaultStreamVolumePaths to define the volumes created.")
+    public boolean isCreateDefaultStreamVolumesOnStart() {
+        return createDefaultStreamVolumesOnStart;
     }
 
-    public void setCreateDefaultOnStart(final boolean createDefaultOnStart) {
-        this.createDefaultOnStart = createDefaultOnStart;
+    public void setCreateDefaultStreamVolumesOnStart(final boolean createDefaultStreamVolumesOnStart) {
+        this.createDefaultStreamVolumesOnStart = createDefaultStreamVolumesOnStart;
     }
 
     public CacheConfig getFeedPathCache() {
@@ -95,11 +99,35 @@ public class FsVolumeConfig extends AbstractConfig {
         this.typePathCache = typePathCache;
     }
 
+    @JsonPropertyDescription("Comma delimited list of the paths used " +
+            "if the default stream volumes are created on application start.")
+    @Pattern(regexp = PATH_LIST_PATTERN, message = "Value must be a comma delimited string of paths")
+    public String getDefaultStreamVolumePaths() {
+        return defaultStreamVolumePaths;
+    }
+
+    public void setDefaultStreamVolumePaths(final String defaultStreamVolumePaths) {
+        this.defaultStreamVolumePaths = defaultStreamVolumePaths;
+    }
+
+
+    @JsonPropertyDescription("Inital value for fraction of the filesystem beyond which the system will stop writing to the " +
+            "default volumes that may be created on application start.")
+    public double getDefaultStreamVolumeFilesystemUtilisation() {
+        return defaultStreamVolumeFilesystemUtilisation;
+    }
+
+    public void setDefaultStreamVolumeFilesystemUtilisation(final double defaultStreamVolumeFilesystemUtilisation) {
+        this.defaultStreamVolumeFilesystemUtilisation = defaultStreamVolumeFilesystemUtilisation;
+    }
+
     @Override
     public String toString() {
         return "VolumeConfig{" +
                 "volumeSelector='" + volumeSelector + '\'' +
-                ", createDefaultOnStart=" + createDefaultOnStart +
+                ", createDefaultStreamVolumesOnStart=" + createDefaultStreamVolumesOnStart +
+                ", defaultStreamVolumePaths=" + "\"" +defaultStreamVolumePaths + "\"" +
+                ", defaultStreamVolumeFilesystemUtilisation=" + "\"" +defaultStreamVolumeFilesystemUtilisation + "\"" +
                 '}';
     }
 }
