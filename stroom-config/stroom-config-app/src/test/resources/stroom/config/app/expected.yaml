@@ -806,4 +806,4 @@ appConfig:
     defaultIndexVolumeGroupName: "Default Volume Group"
     defaultIndexVolumeGroupPaths: "volumes/defaultIndexVolume"
     defaultIndexVolumeGroupNodes: "node1a"
-    defaultIndexVolumeGroupLimit: "1G"
+    defaultIndexVolumeFilesystemUtilisation: 0.9

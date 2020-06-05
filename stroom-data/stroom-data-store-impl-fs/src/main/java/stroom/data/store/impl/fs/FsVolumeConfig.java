@@ -111,8 +111,8 @@ public class FsVolumeConfig extends AbstractConfig {
     }
 
 
-    @JsonPropertyDescription("Inital value for fraction of the filesystem beyond which the system will stop writing to the " +
-            "default volumes that may be created on application start.")
+    @JsonPropertyDescription("Fraction of the filesystem beyond which the system will stop writing to the " +
+            "default stream volumes that may be created on application start.")
     public double getDefaultStreamVolumeFilesystemUtilisation() {
         return defaultStreamVolumeFilesystemUtilisation;
     }

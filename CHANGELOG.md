@@ -9,6 +9,8 @@ and this project adheres to [Semantic Versioning](http://semver.org/).
 
 * Issue **#1640** : Fix server error when clicking disabled delete/info icon for deleted streams.
 
+* Issue **#1639** : Default index volume group property changes.
+
 * Issue **#1636** : Fix data retention deletion using wrong action for rules.
 
 * Issue **#1280** : Fix creation of default index volumes.
