@@ -1,5 +1,6 @@
 import * as React from "react";
 import { ChangeEvent, FunctionComponent, useState } from "react";
+import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
 
 export interface FormFieldProps {
   type: "text" | "password";
@@ -7,7 +8,8 @@ export interface FormFieldProps {
   fieldId: string;
   placeholder: string;
   required?: boolean;
-  hideIcon?: boolean;
+  hideValidateIcon?: boolean;
+  leftIcon?: any;
   children?: any;
   validator?: (value: string) => void;
   onStateChanged?: (state: FormFieldState) => void;
@@ -25,7 +27,8 @@ const FormField: FunctionComponent<FormFieldProps> = ({
   fieldId,
   placeholder,
   required,
-  hideIcon,
+  hideValidateIcon,
+  leftIcon,
   children,
   validator = (value: string) => value,
   onStateChanged = (state: FormFieldState) => state,
@@ -77,13 +80,14 @@ const FormField: FunctionComponent<FormFieldProps> = ({
   const controlClass = [
     "form-control",
     dirty ? (hasErrors ? "is-invalid" : "is-valid") : "",
-    hideIcon ? "hide-icon" : "",
+    hideValidateIcon ? "hide-icon" : "",
+    leftIcon ? "left-icon" : "",
   ]
     .join(" ")
     .trim();
 
   return (
-    <div className="form-group px-3 pb-2">
+    <div className="form-group pb-2 position-relative">
       <div className="d-flex flex-row justify-content-between align-items-center">
         <label htmlFor={fieldId} className="control-label">
           {label}
@@ -105,6 +109,7 @@ const FormField: FunctionComponent<FormFieldProps> = ({
         value={value}
         onChange={hasChanged}
       />
+      {leftIcon && <div className="FormField__icon-container">{leftIcon}</div>}
     </div>
   );
 };

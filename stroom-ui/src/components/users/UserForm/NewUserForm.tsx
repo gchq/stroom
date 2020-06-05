@@ -1,11 +1,12 @@
 import * as React from "react";
 import useForm from "react-hook-form";
 import Button from "components/Button";
-import { Icon, Input, Switch } from "antd";
+import { Input, Switch } from "antd";
 import BackConfirmation from "../BackConfirmation";
 import EditUserFormProps from "./EditUserFormProps";
 import styled from "styled-components";
 import { MandatoryIndicator } from "components/FormComponents";
+import { LockOutlined } from "@ant-design/icons";
 
 const { TextArea } = Input;
 
@@ -55,11 +56,11 @@ const ValidationMessage = styled.span`
 `;
 
 const UserForm: React.FunctionComponent<EditUserFormProps> = ({
-                                                                onSubmit,
-                                                                onBack,
-                                                                onCancel,
-                                                                onValidate,
-                                                              }) => {
+  onSubmit,
+  onBack,
+  onCancel,
+  onValidate,
+}) => {
   const {
     register,
     handleSubmit,
@@ -118,7 +119,7 @@ const UserForm: React.FunctionComponent<EditUserFormProps> = ({
       </div>
       <div>
         <div className="container">
-          <input name="id" type="hidden"/>
+          <input name="id" type="hidden" />
           <Row>
             <Label>First name:</Label>
             <InputAndValidation>
@@ -145,7 +146,7 @@ const UserForm: React.FunctionComponent<EditUserFormProps> = ({
           </Row>
           <Row>
             <Label>
-              <MandatoryIndicator/>
+              <MandatoryIndicator />
               Email:
             </Label>
             <InputAndValidation>
@@ -163,7 +164,7 @@ const UserForm: React.FunctionComponent<EditUserFormProps> = ({
             <LabelForSwitch>Enabled?</LabelForSwitch>
             <InputAndValidation>
               <div>
-                <Switch ref={register}/>
+                <Switch ref={register} />
               </div>
             </InputAndValidation>
           </Row>
@@ -172,23 +173,21 @@ const UserForm: React.FunctionComponent<EditUserFormProps> = ({
             <LabelForSwitch>Never expires?</LabelForSwitch>
             <InputAndValidation>
               <div>
-                <Switch ref={register}/>
+                <Switch ref={register} />
               </div>
             </InputAndValidation>
           </Row>
 
           <Row>
             <Label>
-              <MandatoryIndicator/>
+              <MandatoryIndicator />
               Password:
             </Label>
             <InputAndValidation>
               <StyledPasswordInput
                 name="password"
                 type="password"
-                prefix={
-                  <Icon type="lock" style={{ color: "rgba(0,0,0,.25)" }}/>
-                }
+                prefix={<LockOutlined style={{ color: "rgba(0,0,0,.25)" }} />}
                 onChange={async e =>
                   handleInputChange("password", e.target.value)
                 }
@@ -204,16 +203,14 @@ const UserForm: React.FunctionComponent<EditUserFormProps> = ({
           </Row>
           <Row>
             <Label>
-              <MandatoryIndicator/>
+              <MandatoryIndicator />
               Verify password:
             </Label>
             <InputAndValidation>
               <StyledPasswordInput
                 name="verifyPassword"
                 type="password"
-                prefix={
-                  <Icon type="lock" style={{ color: "rgba(0,0,0,.25)" }}/>
-                }
+                prefix={<LockOutlined style={{ color: "rgba(0,0,0,.25)" }} />}
                 onChange={async e =>
                   handleInputChange("verifyPassword", e.target.value)
                 }
@@ -234,7 +231,7 @@ const UserForm: React.FunctionComponent<EditUserFormProps> = ({
             </LabelForSwitch>
             <InputAndValidation>
               <div>
-                <Switch ref={register}/>
+                <Switch ref={register} />
               </div>
             </InputAndValidation>
           </Row>

@@ -19,10 +19,13 @@ import { ChangeEventHandler } from "react";
 import { NavLink } from "react-router-dom";
 import { Credentials } from "components/authentication/types";
 import useForm from "react-hook-form";
-import { Button, Form, Icon, Input } from "antd";
+import { Button, Input } from "antd";
 import { OptionalRequiredFieldMessage } from "../FormComponents/FormComponents";
 import LogoPage from "../Layout/LogoPage";
 import FormContainer from "../Layout/FormContainer";
+import FormField from "../ChangePassword2/FormField";
+import PasswordField from "../ChangePassword2/PasswordField";
+import { UserOutlined, LockOutlined } from "@ant-design/icons";
 
 interface FormData {
   email: string;
@@ -38,11 +41,10 @@ export const InputContainer: React.FunctionComponent<{
     <div className="Login__input-container">
       <div className="Login__label">{label}:</div>
       {children}
-      <OptionalRequiredFieldMessage visible={error}/>
+      <OptionalRequiredFieldMessage visible={error} />
     </div>
   );
 };
-
 
 export const PasswordInput: React.FunctionComponent<{
   name: string;
@@ -53,14 +55,11 @@ export const PasswordInput: React.FunctionComponent<{
     <Input.Password
       name={name}
       placeholder={placeholder}
-      prefix={
-        <Icon type="lock" style={{ color: "rgba(0,0,0,.25)" }}/>
-      }
+      prefix={<LockOutlined style={{ color: "rgba(0,0,0,.25)" }} />}
       onChange={onChange}
     />
   );
 };
-
 
 const LoginForm: React.FunctionComponent<{
   onSubmit: (credentials: Credentials) => void;
@@ -89,7 +88,7 @@ const LoginForm: React.FunctionComponent<{
 
   // const { email, password } = getValues();
 
-  const disableSubmit = isSubmitting;//email === "" || password === "";
+  const disableSubmit = isSubmitting; //email === "" || password === "";
 
   const handleInputChange = async (
     name: "email" | "password",
@@ -99,10 +98,17 @@ const LoginForm: React.FunctionComponent<{
     await triggerValidation({ name });
   };
 
+  // validation function for the fullname
+  // ensures that fullname contains at least two names separated with a space
+  const validateUserName = (value: string) => {
+    const regex = /^[a-z]{2,}$/i;
+    if (!regex.test(value)) throw new Error("User name is invalid");
+  };
+
   return (
     <LogoPage>
       <FormContainer>
-        <Form onSubmit={handleSubmit(onSubmit)}>
+        <form action="/" method="POST" noValidate>
           <div className="Login__content">
             <div className="Login__icon-container">
               <img
@@ -110,23 +116,44 @@ const LoginForm: React.FunctionComponent<{
                 alt="Stroom logo"
               />
             </div>
+
+            <FormField
+              type="text"
+              fieldId="email"
+              label="User Name"
+              placeholder="Enter User Name"
+              validator={validateUserName}
+              onStateChanged={async e => handleInputChange("email", e.value)}
+              required
+              leftIcon={<UserOutlined />}
+            />
+
+            <PasswordField
+              fieldId="password"
+              label="Password"
+              placeholder="Enter Password"
+              validator={validateUserName}
+              onStateChanged={async e => handleInputChange("password", e.value)}
+              required
+              leftIcon={<LockOutlined />}
+            />
+
             <InputContainer label="Username" error={Boolean(errors.email)}>
               <Input
                 placeholder="username or email"
-                prefix={
-                  <Icon type="user" style={{ color: "rgba(0,0,0,.25)" }}/>
-                }
+                prefix={<UserOutlined style={{ color: "rgba(0,0,0,.25)" }} />}
                 name="email"
                 autoFocus
                 onChange={async e => handleInputChange("email", e.target.value)}
               />
             </InputContainer>
             <InputContainer label="Password" error={Boolean(errors.password)}>
-              <PasswordInput name="password"
-                             placeholder="password"
-                             onChange={async e =>
-                               handleInputChange("password", e.target.value)
-                             }
+              <PasswordInput
+                name="password"
+                placeholder="password"
+                onChange={async e =>
+                  handleInputChange("password", e.target.value)
+                }
               />
             </InputContainer>
             <div className="Login__actions page__buttons Button__container">
@@ -152,9 +179,8 @@ const LoginForm: React.FunctionComponent<{
             ) : (
               undefined
             )}
-
           </div>
-        </Form>
+        </form>
       </FormContainer>
     </LogoPage>
   );

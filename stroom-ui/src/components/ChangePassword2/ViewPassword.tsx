@@ -1,7 +1,8 @@
 import * as React from "react";
 import { FunctionComponent } from "react";
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
-import { IconProp } from "@fortawesome/fontawesome-svg-core";
+import { IconProp, IconPrefix } from "@fortawesome/fontawesome-svg-core";
+
 
 export interface ViewPasswordProps {
   state: boolean;
@@ -13,12 +14,14 @@ const ViewPassword: FunctionComponent<ViewPasswordProps> = ({
   onStateChanged = (s: boolean) => s,
 }) => {
   const icon: IconProp = state ? "eye-slash" : "eye";
+  const prefix: IconPrefix = "far";
   return (
-    <div className="ViewPassword">
+    <div className="ViewPassword__icon-container">
+>
+
       <FontAwesomeIcon
         className="ViewPassword__icon"
-        size="lg"
-        icon={icon}
+        icon={[prefix, icon]}
         onClick={() => onStateChanged(!state)}
       />
     </div>

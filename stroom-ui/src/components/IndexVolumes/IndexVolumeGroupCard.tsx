@@ -20,7 +20,7 @@ interface Props {
   onVolumeDelete: (indexVolumeId: string) => void;
 }
 
-var StyledMinimalInput = styled(MinimalInput)`
+const StyledMinimalInput = styled(MinimalInput)`
   margin-bottom: 0.5em;
   margin-right: 1em;
   font-size: 1.25em;
@@ -114,7 +114,7 @@ const IndexVolumeGroupCard: React.FunctionComponent<Props> = ({
           >
             <Button
               ghost
-              type="danger"
+              // type="danger"
               shape="circle"
               icon="delete"
               size="small"

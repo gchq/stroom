@@ -17,18 +17,19 @@
 // import { ErrorMessage, Field, Form, Formik } from "formik";
 import * as React from "react";
 // import Button from "components/Button";
-import { Button, Form, Input } from "antd";
+// import { Button, Form, Input } from "antd";
 // import { hasAnyProps } from "lib/lang";
 import { InputContainer, PasswordInput } from "../Login/LoginForm";
 // import { Icon, Input } from "antd";
 import useForm from "react-hook-form";
 import { ChangePasswordRequest } from "../authentication/types";
+import Button from "../Button/Button";
 
 interface FormData {
-  email: string,
+  email: string;
   oldPassword: string;
   newPassword: string;
-  confirmPassword: string,
+  confirmPassword: string;
 }
 
 const ChangePasswordFields: React.FunctionComponent<{
@@ -37,27 +38,20 @@ const ChangePasswordFields: React.FunctionComponent<{
   showOldPasswordField: boolean;
   onSubmit: (request: ChangePasswordRequest) => void;
   isSubmitting: boolean;
-}> = ({
-        email,
-        redirectUri,
-        showOldPasswordField,
-        onSubmit,
-        isSubmitting,
-      }) => {
-
-// const ChangePasswordFields = ({
-//                                 email,
-//                                 redirectUri,
-//                                 showOldPasswordField,
-//                                 onSubmit,
-//                                 onValidate,
-//                               }: {
-//   email?: string;
-//   redirectUri?: string;
-//   showOldPasswordField: boolean;
-//   onSubmit: Function;
-//   onValidate: (formData: FormData) => Promise<string>;
-// }) => {
+}> = ({ email, redirectUri, showOldPasswordField, onSubmit, isSubmitting }) => {
+  // const ChangePasswordFields = ({
+  //                                 email,
+  //                                 redirectUri,
+  //                                 showOldPasswordField,
+  //                                 onSubmit,
+  //                                 onValidate,
+  //                               }: {
+  //   email?: string;
+  //   redirectUri?: string;
+  //   showOldPasswordField: boolean;
+  //   onSubmit: Function;
+  //   onValidate: (formData: FormData) => Promise<string>;
+  // }) => {
   const {
     triggerValidation,
     setValue,
@@ -84,7 +78,7 @@ const ChangePasswordFields: React.FunctionComponent<{
 
   // const { email, password } = getValues();
 
-  const disableSubmit = isSubmitting;//email === "" || password === "";
+  const disableSubmit = isSubmitting; //email === "" || password === "";
 
   const handleInputChange = async (
     name: "oldPassword" | "newPassword" | "confirmPassword",
@@ -115,25 +109,25 @@ const ChangePasswordFields: React.FunctionComponent<{
   //     const isPristine = !hasAnyProps(touched);
   //     const hasErrors = hasAnyProps(errors);
   return (
-    <Form className="ChangePassword-form" onSubmit={handleSubmit(onSubmit)}>
+    <form className="ChangePassword-form" onSubmit={handleSubmit(onSubmit)}>
       <div style={{ display: "none" }}>
-        <Input
+        <input
           className="redirectUri-field"
           name="redirectUri"
           type="hidden"
           value={redirectUri}
         />
-        <Input
-          className="email-field"
-          name="email"
-          type="hidden"/>
+        <input className="email-field" name="email" type="hidden" />
         value={email}
       </div>
 
       {/*<div className="section__fields">*/}
       {/*  <div className="section__fields__row">*/}
       {showOldPasswordField ? (
-        <InputContainer label="Old password" error={Boolean(errors.oldPassword)}>
+        <InputContainer
+          label="Old password"
+          error={Boolean(errors.oldPassword)}
+        >
           <PasswordInput
             name="oldPassword"
             placeholder="Old password"
@@ -142,28 +136,17 @@ const ChangePasswordFields: React.FunctionComponent<{
             }
           />
         </InputContainer>
-        // <div className="field-container vertical">
-        //   <label>Old password</label>
-        //   <Field name="oldPassword" type="password" autoFocus/>
-        //   <ErrorMessage
-        //     name="oldPassword"
-        //     render={msg => (
-        //       <div className="validation-error">{msg}</div>
-        //     )}
-        //   />
-        // </div>
-      ) : undefined}
+      ) : (
+        undefined
+      )}
 
       <InputContainer label="New password" error={Boolean(errors.newPassword)}>
         <PasswordInput
           name="newPassword"
           placeholder="New password"
-          onChange={async e =>
-            handleInputChange("newPassword", e.target.value)
-          }
+          onChange={async e => handleInputChange("newPassword", e.target.value)}
         />
       </InputContainer>
-
 
       {/*<div className="field-container__spacer"/>*/}
 
@@ -178,8 +161,10 @@ const ChangePasswordFields: React.FunctionComponent<{
       {/*  />*/}
       {/*</div>*/}
 
-
-      <InputContainer label="Confirm password" error={Boolean(errors.confirmPassword)}>
+      <InputContainer
+        label="Confirm password"
+        error={Boolean(errors.confirmPassword)}
+      >
         <PasswordInput
           name="confirmPassword"
           placeholder="Confirm password"
@@ -210,17 +195,16 @@ const ChangePasswordFields: React.FunctionComponent<{
       <div className="Login__actions page__buttons Button__container">
         <Button
           className="Login__login-button"
-          type="primary"
-          loading={isSubmitting}
+          action="primary"
+          // loading={isSubmitting}
           disabled={disableSubmit}
-          htmlType="submit"
+          // htmlType="submit"
           icon="save"
-          ref={register}
+          // ref={register}
         >
           Change Password
         </Button>
       </div>
-
 
       {/*<Button*/}
       {/*  disabled={isPristine || hasErrors}*/}
@@ -234,7 +218,7 @@ const ChangePasswordFields: React.FunctionComponent<{
       {/*  </div>*/}
       {/*</div>
             {/*</div>*/}
-    </Form>
+    </form>
     //     );
     //   }}
     // </Formik>

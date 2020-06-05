@@ -155,7 +155,7 @@ const DataVolumeCard: React.FunctionComponent<Props> = ({
           >
             <Button
               ghost
-              type="danger"
+              // type="danger"
               shape="circle"
               icon="delete"
               size="small"

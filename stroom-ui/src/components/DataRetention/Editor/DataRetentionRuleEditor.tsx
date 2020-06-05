@@ -79,7 +79,11 @@ const DataRetentionRuleEditor: React.FunctionComponent<Props> = ({
                     cancelText="No"
                     placement="left"
                   >
-                    <Button shape="circle" icon="delete" type="danger" />
+                    <Button
+                      shape="circle"
+                      icon="delete"
+                      // type="danger"
+                    />
                   </Popconfirm>
                   <Tooltip
                     placement="rightBottom"

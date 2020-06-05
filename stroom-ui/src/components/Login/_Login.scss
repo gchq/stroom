@@ -32,26 +32,26 @@
 }
 
 .Login__content {
-  display: flex;
-  flex-direction: column;
+  //display: flex;
+  //flex-direction: column;
   width: 16rem;
 }
 
 .Login__content input {
-  width: 100%;
-  background: rgba(0, 0, 0, 0.05);
-  border: none;
-  border-radius: .25rem;
-  margin-bottom: 0.25rem;
+  //width: 100%;
+  //background: rgba(0, 0, 0, 0.05);
+  //border: none;
+  //border-radius: .25rem;
+  //margin-bottom: 0.25rem;
 }
 
 .Login__content input:focus {
-  box-shadow: 0 0 0 .2rem rgba(24, 144, 255, 0.2);
-  background: rgba(0, 0, 0, 0.02);
+  //box-shadow: 0 0 0 .2rem rgba(24, 144, 255, 0.2);
+  //background: rgba(0, 0, 0, 0.02);
 }
 
 .Login__content i {
-  color: rgba(0, 0, 0, 0.5) !important;
+  //color: rgba(0, 0, 0, 0.5) !important;
 }
 
 .Login__actions {

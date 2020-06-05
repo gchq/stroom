@@ -16,8 +16,8 @@
 
 import * as React from "react";
 import { Account } from "components/users/types";
-import { Select } from "antd";
 import styled from "styled-components";
+import { Select } from "antd";
 
 interface Props {
   onChange: (user: string) => void;
@@ -44,16 +44,16 @@ const UserSelect: React.FunctionComponent<Props> = ({
   options,
 }) => (
   // We don't need to specify a value because this is read only
-  <StyledSelect
-    showSearch
-    placeholder="Search for a user"
-    onChange={(email: string) => onChange(email)}
-    onSearch={(search: string) => onSearch(search)}
+  <Select
+    // showSearch
+    // placeholder="Search for a user"
+    // onChange={(email: string) => onChange(email)}
+    // onSearch={(search: string) => onSearch(search)}
   >
     {options.map(option => (
       <Option key={option.email}>{option.email}</Option>
     ))}
-  </StyledSelect>
+  </Select>
 );
 
 export default UserSelect;

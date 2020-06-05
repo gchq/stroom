@@ -6,7 +6,7 @@ import { FunctionComponent, useState } from "react";
 
 import FormField, { FormFieldState } from "./FormField";
 import EmailField from "./EmailField";
-import PasswordField from "./PasswordField";
+import NewPasswordField from "./NewPasswordField";
 import LogoPage from "../Layout/LogoPage";
 import FormContainer from "../Layout/FormContainer";
 
@@ -89,7 +89,7 @@ const JoinForm: FunctionComponent = () => {
               />
 
               {/** Render the password field component using thresholdLength of 7 and minStrength of 3 **/}
-              <PasswordField
+              <NewPasswordField
                 fieldId="password"
                 label="Password"
                 placeholder="Enter Password"
