@@ -16,6 +16,8 @@
 
 package stroom.widget.button.client;
 
+import stroom.svg.client.SvgPreset;
+
 import com.google.gwt.dom.client.Document;
 import com.google.gwt.dom.client.Element;
 import com.google.gwt.dom.client.NativeEvent;
@@ -23,7 +25,6 @@ import com.google.gwt.dom.client.Style.Display;
 import com.google.gwt.user.client.DOM;
 import com.google.gwt.user.client.Event;
 import com.google.gwt.user.client.ui.ButtonBase;
-import stroom.svg.client.SvgPreset;
 
 public class SvgButton extends ButtonBase implements ButtonView {
     private final Element face;
@@ -73,9 +74,9 @@ public class SvgButton extends ButtonBase implements ButtonView {
     public void setEnabled(final boolean enabled) {
         super.setEnabled(enabled);
         if (enabled) {
-            getElement().getStyle().setOpacity(1);
+            face.removeClassName("face--disabled");
         } else {
-            getElement().getStyle().setOpacity(0.4);
+            face.addClassName("face--disabled");
         }
     }
 
@@ -213,7 +214,16 @@ public class SvgButton extends ButtonBase implements ButtonView {
 
         // Mouse coordinates are not always available (e.g., when the click is
         // caused by a keyboard event).
-        final NativeEvent evt = Document.get().createClickEvent(1, 0, 0, 0, 0, false, false, false, false);
+        final NativeEvent evt = Document.get().createClickEvent(
+                1,
+                0,
+                0,
+                0,
+                0,
+                false,
+                false,
+                false,
+                false);
         getElement().dispatchEvent(evt);
 
         allowClick = false;

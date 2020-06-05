@@ -304,14 +304,16 @@ public abstract class AbstractMetaListPresenter extends MyPresenterWidget<DataGr
 
     private SvgPreset getInfoCellState(final MetaRow object) {
         // Should only show unlocked ones by default
-        if (Status.UNLOCKED.equals(object.getMeta().getStatus())) {
-            return SvgPresets.INFO;
+        final Status status = object.getMeta().getStatus();
+        if (Status.UNLOCKED.equals(status)) {
+            return SvgPresets.INFO.title("Info (Unlocked)");
+        } else if (Status.DELETED.equals(status)) {
+            return SvgPresets.INFO_DELETED.title("Info (Deleted)");
+        } else if (Status.LOCKED.equals(status)) {
+            return SvgPresets.INFO_WARNING.title("Info (Locked)");
+        } else {
+            throw new RuntimeException("Unknown status " + status);
         }
-        if (Status.DELETED.equals(object.getMeta().getStatus())) {
-            return SvgPresets.DELETE;
-        }
-
-        return SvgPresets.ALERT;
     }
 
     void addInfoColumn() {
