@@ -15,11 +15,14 @@ import stroom.util.logging.LambdaLoggerFactory;
 import stroom.util.shared.ModelStringUtil;
 
 import javax.inject.Inject;
+import java.io.File;
+import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.util.List;
 import java.util.Optional;
+import java.util.OptionalLong;
 import java.util.function.Supplier;
 import java.util.regex.Pattern;
 import java.util.stream.Collectors;
@@ -141,12 +144,11 @@ public class IndexVolumeGroupServiceImpl implements IndexVolumeGroupService {
 
                                 IndexVolumeGroup newGroup = indexVolumeGroupDao.getOrCreate(indexVolumeGroup);
 
+
+
                                 //Now create associated volumes within the group
                                 if (volumeConfig.getDefaultIndexVolumeGroupPaths() != null &&
-                                        volumeConfig.getDefaultIndexVolumeGroupNodes() != null &&
-                                        volumeConfig.getDefaultIndexVolumeGroupLimit() != null) {
-                                    Long bytesLimit = ModelStringUtil.parseIECByteSizeString
-                                            (volumeConfig.getDefaultIndexVolumeGroupLimit());
+                                        volumeConfig.getDefaultIndexVolumeGroupNodes() != null) {
 
                                     String[] paths = volumeConfig.getDefaultIndexVolumeGroupPaths().split(",");
                                     String[] nodes = volumeConfig.getDefaultIndexVolumeGroupNodes().split(",");
@@ -154,9 +156,11 @@ public class IndexVolumeGroupServiceImpl implements IndexVolumeGroupService {
                                         for (int i = 0; i < paths.length; i++){
                                             String resolvedPath = getDefaultVolumesPath().get().resolve(paths[i].trim()).toString();
 
+                                            OptionalLong byteLimitOption = getDefaultVolumeLimit(resolvedPath);
+
                                             IndexVolume indexVolume = new IndexVolume();
                                             indexVolume.setIndexVolumeGroupId(newGroup.getId());
-                                            indexVolume.setBytesLimit(bytesLimit);
+                                            indexVolume.setBytesLimit(byteLimitOption.orElse(0l));
                                             indexVolume.setNodeName(nodes[i]);
                                             indexVolume.setPath(resolvedPath);
                                             indexVolume.setCreateTimeMs(System.currentTimeMillis());
@@ -227,6 +231,24 @@ public class IndexVolumeGroupServiceImpl implements IndexVolumeGroupService {
         }
     }
 
+    private OptionalLong getDefaultVolumeLimit(final String path) {
+        try {
+            File parentDir = new File(path);
+            parentDir.mkdirs();
+            long totalBytes = Files.getFileStore(Path.of(path)).getTotalSpace();
+            // set an arbitrary limit of 90% of the filesystem total size to ensure we don't fill up the
+            // filesystem.  Limit can be configured from within stroom.
+            // Should be noted that although if you have multiple volumes on a filesystem the limit will apply
+            // to all volumes and any other data on the filesystem. I.e. once the amount of the filesystem in use
+            // is greater than the limit writes to those volumes will be prevented. See Volume.isFull() and
+            // this.updateVolumeState()
+            return OptionalLong.of((long) (totalBytes * volumeConfig.getDefaultIndexVolumeFilesystemUtilisation()));
+        } catch (IOException e) {
+            LOGGER.warn(LambdaLogUtil.message("Unable to determine the total space on the filesystem for path: {}." +
+                    " Please manually set limit for index volume.", FileUtil.getCanonicalPath(Path.of(path))));
+            return OptionalLong.empty();
+        }
+    }
 
     private Optional<Path> getApplicationJarDir() {
         try {

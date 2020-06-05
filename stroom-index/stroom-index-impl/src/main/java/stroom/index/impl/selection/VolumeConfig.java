@@ -19,7 +19,7 @@ public class VolumeConfig extends AbstractConfig {
     private String defaultIndexVolumeGroupName = "Default Volume Group";
     private String defaultIndexVolumeGroupPaths = "volumes/defaultIndexVolume";
     private String defaultIndexVolumeGroupNodes = "node1a";
-    private String defaultIndexVolumeGroupLimit = "1G";
+    private double defaultIndexVolumeFilesystemUtilisation = 0.9;
 
     @JsonPropertyDescription("Set to determine how many volume locations will be used to store a single stream")
     public int getResilientReplicationCount() {
@@ -99,14 +99,14 @@ public class VolumeConfig extends AbstractConfig {
         this.defaultIndexVolumeGroupNodes = defaultIndexVolumeGroupNodes;
     }
 
-    @JsonPropertyDescription("The size limit that will be applied to all the volumes in the default index " +
-            "volume group that is created if none exist on application start.  ")
-    public String getDefaultIndexVolumeGroupLimit() {
-        return defaultIndexVolumeGroupLimit;
+    @JsonPropertyDescription("Fraction of the filesystem beyond which the system will stop writing to the " +
+            "default index volumes that may be created on application start.")
+    public double getDefaultIndexVolumeFilesystemUtilisation() {
+        return defaultIndexVolumeFilesystemUtilisation;
     }
 
-    public void setDefaultIndexVolumeGroupLimit(final String defaultIndexVolumeGroupLimit) {
-        this.defaultIndexVolumeGroupLimit = defaultIndexVolumeGroupLimit;
+    public void setDefaultIndexVolumeFilesystemUtilisation(final double defaultIndexVolumeFilesystemUtilisation) {
+        this.defaultIndexVolumeFilesystemUtilisation = defaultIndexVolumeFilesystemUtilisation;
     }
 
     @Override
@@ -117,7 +117,7 @@ public class VolumeConfig extends AbstractConfig {
                 ", volumeSelector='" + volumeSelector + '\'' +
                 ", createDefaultIndexVolumesOnStart=" + createDefaultIndexVolumesOnStart +
                 ", defaultIndexVolumeGroupName=" + "\"" +defaultIndexVolumeGroupName + "\"" +
-                ", defaultIndexVolumeGroupLimit=" + defaultIndexVolumeGroupLimit +
+                ", defaultIndexVolumeFilesystemUtilisation=" + defaultIndexVolumeFilesystemUtilisation +
                 ", defaultIndexVolumeGroupNodes=" + "\"" +defaultIndexVolumeGroupNodes + "\"" +
                 ", defaultIndexVolumeGroupPaths=" + "\"" + defaultIndexVolumeGroupPaths + "\"" +
                 '}';
