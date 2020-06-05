@@ -140,4 +140,4 @@ appConfig:
     createDefaultIndexVolumesOnStart: false
   data:
     filesystemVolume:
-      createDefaultStreamVolumesOnStart: false
+      createDefaultStreamVolumesOnStart: ${STROOM_CREATE_DEFAULT_STREAM_VOLUMES_ON_BOOTSTRAP:-false}
