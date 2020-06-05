@@ -268,6 +268,7 @@ class ImportExportSerializerImpl implements ImportExportSerializer {
                             ImportMode.CREATE_CONFIRMATION.equals(importMode) ||
                             ImportMode.IGNORE_CONFIRMATION.equals(importMode) ||
                             importState.isAction())) {
+
                         final ImportExportActionHandler.ImpexDetails importDetails = importExportActionHandler.importDocument(docRef, dataMap, importState, importMode);
 
                         if (importDetails.isIgnore()) {

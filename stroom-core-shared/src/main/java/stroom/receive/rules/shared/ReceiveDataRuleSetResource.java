@@ -16,14 +16,15 @@
 
 package stroom.receive.rules.shared;
 
-import io.swagger.annotations.Api;
-import io.swagger.annotations.ApiOperation;
-import io.swagger.annotations.ApiParam;
-import org.fusesource.restygwt.client.DirectRestService;
 import stroom.docref.DocRef;
 import stroom.importexport.shared.Base64EncodedDocumentData;
 import stroom.util.shared.ResourcePaths;
 import stroom.util.shared.RestResource;
+
+import io.swagger.annotations.Api;
+import io.swagger.annotations.ApiOperation;
+import io.swagger.annotations.ApiParam;
+import org.fusesource.restygwt.client.DirectRestService;
 
 import javax.ws.rs.Consumes;
 import javax.ws.rs.GET;
@@ -35,23 +36,26 @@ import javax.ws.rs.core.MediaType;
 import java.util.Set;
 
 @Api(value = "ruleset - /v2")
-@Path("/ruleset" + ResourcePaths.V2)
+@Path(ReceiveDataRuleSetResource.BASE_RESOURCE_PATH)
 @Produces(MediaType.APPLICATION_JSON)
 @Consumes(MediaType.APPLICATION_JSON)
 public interface ReceiveDataRuleSetResource extends RestResource, DirectRestService {
+
+    String BASE_RESOURCE_PATH = "/ruleset" + ResourcePaths.V2;
+
     @POST
     @Path("/read")
     @ApiOperation(
             value = "Get a rules doc",
             response = ReceiveDataRules.class)
-    ReceiveDataRules read(DocRef docRef);
+    ReceiveDataRules read(@ApiParam("docRef") DocRef docRef);
 
     @PUT
     @Path("/update")
     @ApiOperation(
             value = "Update a rules doc",
             response = ReceiveDataRules.class)
-    ReceiveDataRules update(ReceiveDataRules xslt);
+    ReceiveDataRules update(@ApiParam("receiveDataRules") ReceiveDataRules receiveDataRules);
 
     @GET
     @Path("/list")

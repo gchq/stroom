@@ -10,7 +10,6 @@ dependencies {
     compile project(':stroom-docstore:stroom-docstore-api')
     compile project(':stroom-explorer:stroom-explorer-api')
     compile project(':stroom-importexport:stroom-importexport-api')
-    compile project(':stroom-importexport:stroom-importexport-migration')
     compile project(':stroom-job:stroom-job-api')
     compile project(':stroom-lifecycle:stroom-lifecycle-api')
     compile project(':stroom-meta:stroom-meta-api')

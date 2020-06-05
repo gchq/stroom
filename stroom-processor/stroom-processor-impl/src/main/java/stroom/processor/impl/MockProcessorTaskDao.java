@@ -9,7 +9,7 @@ import stroom.processor.api.InclusiveRanges;
 import stroom.processor.shared.ProcessorFilter;
 import stroom.processor.shared.ProcessorFilterTracker;
 import stroom.processor.shared.ProcessorTask;
-import stroom.processor.shared.ProcessorTaskDataSource;
+import stroom.processor.shared.ProcessorTaskFields;
 import stroom.processor.shared.ProcessorTaskSummary;
 import stroom.processor.shared.TaskStatus;
 import stroom.query.api.v2.ExpressionUtil;
@@ -99,13 +99,13 @@ public class MockProcessorTaskDao implements ProcessorTaskDao, Clearable {
                 .values()
                 .stream()
                 .filter(task -> {
-                    final List<String> pipelineUuids = ExpressionUtil.values(criteria.getExpression(), ProcessorTaskDataSource.PIPELINE_UUID);
+                    final List<String> pipelineUuids = ExpressionUtil.values(criteria.getExpression(), ProcessorTaskFields.PIPELINE);
                     if (pipelineUuids != null) {
                         if (!pipelineUuids.contains(task.getProcessorFilter().getProcessor().getPipelineUuid())) {
                             return false;
                         }
                     }
-                    final List<String> taskStatus = ExpressionUtil.values(criteria.getExpression(), ProcessorTaskDataSource.STATUS);
+                    final List<String> taskStatus = ExpressionUtil.values(criteria.getExpression(), ProcessorTaskFields.STATUS);
                     if (taskStatus != null) {
                         if (!taskStatus.contains(task.getStatus().getDisplayValue())) {
                             return false;

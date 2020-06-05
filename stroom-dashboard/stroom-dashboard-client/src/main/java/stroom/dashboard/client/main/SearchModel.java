@@ -26,10 +26,9 @@ import stroom.dashboard.shared.Search;
 import stroom.dashboard.shared.SearchRequest;
 import stroom.dashboard.shared.SearchResponse;
 import stroom.docref.DocRef;
-import stroom.query.api.v2.ExpressionItem;
 import stroom.query.api.v2.ExpressionOperator;
-import stroom.query.api.v2.ExpressionTerm;
-import stroom.util.client.KVMapUtil;
+import stroom.query.api.v2.ExpressionParamUtil;
+import stroom.query.api.v2.ExpressionUtil;
 
 import java.util.HashMap;
 import java.util.Map;
@@ -136,12 +135,10 @@ public class SearchModel {
             final DocRef dataSourceRef = indexLoader.getLoadedDataSourceRef();
             if (dataSourceRef != null && expression != null) {
                 // Create a parameter map.
-                currentParameterMap = KVMapUtil.parse(params);
+                currentParameterMap = ExpressionParamUtil.parse(params);
 
-                // Replace any parameters in the expression.
-                final ExpressionOperator.Builder builder = new ExpressionOperator.Builder(expression.enabled(), expression.op());
-                replaceExpressionParameters(builder, expression, currentParameterMap);
-                currentExpression = builder.build();
+                // Copy the expression.
+                currentExpression = ExpressionUtil.copyOperator(expression);
 
                 currentQueryKey = new DashboardQueryKey(
                         dashboardUUID.getUUID(),
@@ -204,33 +201,6 @@ public class SearchModel {
         }
     }
 
-    private void replaceExpressionParameters(final ExpressionOperator.Builder builder,
-                                             final ExpressionOperator operator,
-                                             final Map<String, String> paramMap) {
-        if (operator.getChildren() != null) {
-            for (ExpressionItem child : operator.getChildren()) {
-                if (child instanceof ExpressionOperator) {
-                    final ExpressionOperator childOperator = (ExpressionOperator) child;
-                    final ExpressionOperator.Builder childBuilder = new ExpressionOperator.Builder(childOperator.op())
-                            .enabled(childOperator.enabled());
-                    builder.addOperator(childBuilder.build());
-                    replaceExpressionParameters(childBuilder, childOperator, paramMap);
-                } else if (child instanceof ExpressionTerm) {
-                    final ExpressionTerm term = (ExpressionTerm) child;
-                    final String value = term.getValue();
-                    final String replaced = KVMapUtil.replaceParameters(value, paramMap);
-                    builder.addTerm(new ExpressionTerm.Builder()
-                            .enabled(term.enabled())
-                            .field(term.getField())
-                            .condition(term.getCondition())
-                            .value(replaced)
-                            .docRef(term.getDocRef())
-                            .build());
-                }
-            }
-        }
-    }
-
     /**
      * Refresh the search data for the specified component.
      */
@@ -282,7 +252,7 @@ public class SearchModel {
     /**
      * Method to update the wantsData state for all interested components.
      *
-     * @param wantsData
+     * @param wantsData True if you want all components to be ready to receive data.
      */
     private void setWantsData(final boolean wantsData) {
         // Tell every component that it should want data.
@@ -296,7 +266,7 @@ public class SearchModel {
      * On receiving a search result from the server update all interested
      * components with new data.
      *
-     * @param result
+     * @param result The search response.
      */
     void update(final SearchResponse result) {
         currentResult = result;
@@ -341,7 +311,7 @@ public class SearchModel {
      * The search bus calls this method to get the search request for this
      * search model.
      *
-     * @return
+     * @return The current search request.
      */
     SearchRequest getCurrentRequest() {
         final Search search = currentSearch;
@@ -375,12 +345,10 @@ public class SearchModel {
             final DocRef dataSourceRef = indexLoader.getLoadedDataSourceRef();
             if (dataSourceRef != null && expression != null) {
                 // Create a parameter map.
-                final Map<String, String> currentParameterMap = KVMapUtil.parse(params);
+                final Map<String, String> currentParameterMap = ExpressionParamUtil.parse(params);
 
-                // Replace any parameters in the expression.
-                final ExpressionOperator.Builder builder = new ExpressionOperator.Builder(expression.enabled(), expression.op());
-                replaceExpressionParameters(builder, expression, currentParameterMap);
-                final ExpressionOperator currentExpression = builder.build();
+                // Copy the expression.
+                final ExpressionOperator currentExpression = ExpressionUtil.copyOperator(expression);
 
                 search = new Search.Builder()
                         .dataSourceRef(dataSourceRef)

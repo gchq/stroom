@@ -18,8 +18,6 @@ package stroom.pipeline.stepping.client;
 
 
 import com.google.gwt.core.client.GWT;
-import com.google.inject.Inject;
-import com.google.inject.Provider;
 import com.google.web.bindery.event.shared.EventBus;
 import stroom.core.client.ContentManager;
 import stroom.core.client.presenter.Plugin;
@@ -29,7 +27,6 @@ import stroom.docref.DocRef;
 import stroom.explorer.client.presenter.EntityChooser;
 import stroom.meta.shared.FindMetaCriteria;
 import stroom.meta.shared.Meta;
-import stroom.meta.shared.MetaExpressionUtil;
 import stroom.meta.shared.MetaResource;
 import stroom.meta.shared.MetaRow;
 import stroom.pipeline.shared.PipelineDoc;
@@ -38,9 +35,11 @@ import stroom.pipeline.shared.stepping.StepLocation;
 import stroom.pipeline.shared.stepping.SteppingResource;
 import stroom.pipeline.stepping.client.event.BeginPipelineSteppingEvent;
 import stroom.pipeline.stepping.client.presenter.SteppingContentTabPresenter;
-import stroom.query.api.v2.ExpressionOperator;
 import stroom.security.shared.DocumentPermissionNames;
 import stroom.util.shared.ResultPage;
+
+import javax.inject.Inject;
+import javax.inject.Provider;
 
 public class PipelineSteppingPlugin extends Plugin implements BeginPipelineSteppingEvent.Handler {
     private static final MetaResource META_RESOURCE = GWT.create(MetaResource.class);

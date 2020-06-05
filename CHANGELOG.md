@@ -4,7 +4,134 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](http://keepachangelog.com/) 
 and this project adheres to [Semantic Versioning](http://semver.org/).
 
+
 ## [Unreleased]
+
+* Issue **#1640** : Fix server error when clicking disabled delete/info icon for deleted streams.
+
+* Issue **#1639** : Default index volume group property changes.
+
+* Issue **#1636** : Fix data retention deletion using wrong action for rules.
+
+* Issue **#1280** : Fix creation of default index volumes.
+
+
+## [v7.0-beta.36] - 2020-06-02
+
+* Issue **#1621** : Fix NPE in proxy content syncing.
+
+* Issue **#1462** : Stroom not working with MySQL 8.0 due to SQLException
+
+* Issue **#1564** : Fix error in data retention section of stream info popup.
+
+* Change data retention delete batching approach to use time ranges.
+
+* Issue **#1611** : Change explorer tree filtering to also filter on an exact match of the entity's UUID.
+
+* Add regex filtering with `/` prefix to fuzzy matching.
+
+* Change word boundary matching to require a `?` prefix.
+
+
+## [v7.0-beta.35] - 2020-05-28
+
+* Issue **#1608** : Fixed NPE in UI data presenter.
+
+* Issue **#1595** : Fixed names for imported items that already exist but are updated by import.
+
+* Issue **#1603** : XSLT imports now error if more than one matching XSLT is found.
+
+* Issue **#1604** : XSLT import resolution now accepts the use of UUIDs and DocRef strings.
+
+* Issue **#1403** : Dashboard query download now retains expression parameters.
+
+* Issue **#1514** : Fixed properties edit presenter issue.
+
+* Issue **#1569** : Additional changes to improve the new `Data Delete` task that replaces the `File System Clean` task.
+
+* Issue **#1565** : Stop data retention rules deleting all data.
+
+* Add default data retention rule to the UI screen to make it clear what happens by default.
+
+* Add fuzzy match filter to explorer tree.
+
+
+## [v7.0-beta.34] - 2020-05-26
+
+* Issue **#1569** : Removed recursive multi threading from file system clean as thread limit was being reached. 
+
+* Issue **#1478** : Fixed data volume creation and other resource methods.
+
+* Issue **#1594** : Now auto creates root explorer node on startup if it is missing.
+
+* Issue **#1544** : Fixes for imported dashboards.
+
+* Issue **#1586** : Fixed migration and initial population of standard meta type names.
+
+* Issue **#1592** : Changed DB bit(1) columns to be tinyint(1) so that they show values correctly in the CLI.
+
+* Issue **#1510** : Added logical delete for processor and processor filter to allow a user to force deletion without encountering a DB constraint. 
+
+* Issue **#1557** : Process, reprocess, delete and download data functions now provide an impact summary before a user can proceed with the action.
+
+* Issue **#1557** : The process data function in the data browser now provides the option to process or reprocess data. When selected a user can also choose: the priority of the process filters that will be created; to set the priority automatically based on previous filters; set the enabled state.
+
+* Issue **#1557** : Reprocessing data no longer has a limitation on how many items can be reprocessed as it is now implemented by reprocess specific filters.
+
+* Issue **#1585** : Fixed issue that was preventing viewing folders processors.
+
+* Issue **#1557** : Added an impact summary to meta data actions such as delete, restore, process and download.
+
+* Issue **#1593** : NPE copying empty expressions
+
+
+## [v7.0-beta.33] - 2020-05-22
+
+* Issue **#1588** : Fix processor filter import.
+
+* Issue **#1566** : Fixed UI data restore behaviour.
+
+* Make public port configurable
+
+
+## [v7.0-beta.32] - 2020-05-19
+
+* Issue **#1573** : Active tasks tab now only shows tasks related to the open feed.
+
+* Issue **#1584** : Add @ApiParam to POST/PUT/DELETE endpoints so the request type appears in swagger-ui.
+
+* Issue **#1581** : Change streamId to a path param in GET /api/data/v1.
+
+* Issue **#1567** : Added error handling so the confirmation dialog continues to work even when there is a failure in a previous use.
+
+* Issue **#1568** : Pipeline names should now be shown where needed in the UI.
+
+* Issue **#1457** : Change field value suggester to use fuzzy matching.
+
+* Issue **#1574** : Make feed suggestions return all feeds, not just ones with meta.
+
+* Issue **#1544** : Imported dashboards from 6.1 now work.
+
+* Issue **#1577** : Cluster node status is now updated when node settings are changed.
+
+* Issue **#1396** : Completely changed DB migration and import/export compatibility code.
+
+* Fix index creation stored procedure.
+
+* Issue **#1508** : Tidy up property descriptions, change connection pool props to use Stroom Duration type.
+
+* Issue **#473** : Fix value stats being ignored during in memory stat aggregation.
+
+* Issue **#1141** : Make SQL stats aggregation delete unused stat keys at the end.
+
+
+## [v7.0-beta.31] - 2020-05-12
+
+* Issue **#1546** : Fixed opening and editing of data retention rules.
+
+* Issue **#1494** : Scrollbars now have a white background unless used in a readonly text area.
+
+* Issue **#1547** : Added pipeline names to processor task screens.
 
 * Issue **#1543** : Prevent import/export of processor filters with id fields
 
@@ -15,6 +142,7 @@ and this project adheres to [Semantic Versioning](http://semver.org/).
 * Issue **#1112** : As part of fixing dependencies when copying items, the dependencies screen now works correctly and now also shows processor filters. 
 
 * Issue **#1545** : Add property `enableDistributedJobsOnBootstrap` to enable/disable processing on first boot.
+
 
 ## [v7.0-beta.30] - 2020-05-06
 
@@ -2149,7 +2277,13 @@ Issue **gchq/stroom-expression#22** : Add `typeOf(...)` function to dashboard.
 
 * Issue **#202** : Initial release of the new data retention policy functionality.
 
-[Unreleased]: https://github.com/gchq/stroom/compare/v7.0-beta.30...HEAD
+[Unreleased]: https://github.com/gchq/stroom/compare/v7.0-beta.36...HEAD
+[v7.0-beta.36]: https://github.com/gchq/stroom/compare/v7.0-beta.35...v7.0-beta.36
+[v7.0-beta.35]: https://github.com/gchq/stroom/compare/v7.0-beta.34...v7.0-beta.35
+[v7.0-beta.34]: https://github.com/gchq/stroom/compare/v7.0-beta.33...v7.0-beta.34
+[v7.0-beta.33]: https://github.com/gchq/stroom/compare/v7.0-beta.32...v7.0-beta.33
+[v7.0-beta.32]: https://github.com/gchq/stroom/compare/v7.0-beta.31...v7.0-beta.32
+[v7.0-beta.31]: https://github.com/gchq/stroom/compare/v7.0-beta.30...v7.0-beta.31
 [v7.0-beta.30]: https://github.com/gchq/stroom/compare/v7.0-beta.29...v7.0-beta.30
 [v7.0-beta.29]: https://github.com/gchq/stroom/compare/v7.0-beta.28...v7.0-beta.29
 [v7.0-beta.28]: https://github.com/gchq/stroom/compare/v7.0-beta.27...v7.0-beta.28

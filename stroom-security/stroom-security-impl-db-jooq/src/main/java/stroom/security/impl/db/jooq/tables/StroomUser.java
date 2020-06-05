@@ -42,7 +42,7 @@ import stroom.security.impl.db.jooq.tables.records.StroomUserRecord;
 @SuppressWarnings({ "all", "unchecked", "rawtypes" })
 public class StroomUser extends TableImpl<StroomUserRecord> {
 
-    private static final long serialVersionUID = 2091321499;
+    private static final long serialVersionUID = 914707809;
 
     /**
      * The reference instance of <code>stroom.stroom_user</code>
@@ -100,12 +100,12 @@ public class StroomUser extends TableImpl<StroomUserRecord> {
     /**
      * The column <code>stroom.stroom_user.is_group</code>.
      */
-    public final TableField<StroomUserRecord, Boolean> IS_GROUP = createField(DSL.name("is_group"), org.jooq.impl.SQLDataType.BIT.nullable(false), this, "");
+    public final TableField<StroomUserRecord, Boolean> IS_GROUP = createField(DSL.name("is_group"), org.jooq.impl.SQLDataType.BOOLEAN.nullable(false).defaultValue(org.jooq.impl.DSL.inline("0", org.jooq.impl.SQLDataType.BOOLEAN)), this, "");
 
     /**
      * The column <code>stroom.stroom_user.enabled</code>.
      */
-    public final TableField<StroomUserRecord, Boolean> ENABLED = createField(DSL.name("enabled"), org.jooq.impl.SQLDataType.BIT.nullable(false), this, "");
+    public final TableField<StroomUserRecord, Boolean> ENABLED = createField(DSL.name("enabled"), org.jooq.impl.SQLDataType.BOOLEAN.nullable(false).defaultValue(org.jooq.impl.DSL.inline("0", org.jooq.impl.SQLDataType.BOOLEAN)), this, "");
 
     /**
      * Create a <code>stroom.stroom_user</code> table reference
@@ -147,7 +147,7 @@ public class StroomUser extends TableImpl<StroomUserRecord> {
 
     @Override
     public List<Index> getIndexes() {
-        return Arrays.<Index>asList(Indexes.STROOM_USER_NAME, Indexes.STROOM_USER_PRIMARY, Indexes.STROOM_USER_STROOM_USER_UUID_INDEX);
+        return Arrays.<Index>asList(Indexes.STROOM_USER_PRIMARY, Indexes.STROOM_USER_STROOM_USER_NAME_IS_GROUP_IDX, Indexes.STROOM_USER_STROOM_USER_UUID_IDX);
     }
 
     @Override
@@ -162,7 +162,7 @@ public class StroomUser extends TableImpl<StroomUserRecord> {
 
     @Override
     public List<UniqueKey<StroomUserRecord>> getKeys() {
-        return Arrays.<UniqueKey<StroomUserRecord>>asList(Keys.KEY_STROOM_USER_PRIMARY, Keys.KEY_STROOM_USER_NAME, Keys.KEY_STROOM_USER_STROOM_USER_UUID_INDEX);
+        return Arrays.<UniqueKey<StroomUserRecord>>asList(Keys.KEY_STROOM_USER_PRIMARY, Keys.KEY_STROOM_USER_STROOM_USER_NAME_IS_GROUP_IDX, Keys.KEY_STROOM_USER_STROOM_USER_UUID_IDX);
     }
 
     @Override

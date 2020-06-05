@@ -20,7 +20,7 @@ public class DictionaryDTO extends DocRef {
     }
 
     public DictionaryDTO(final DictionaryDoc doc) {
-        super(DictionaryDoc.ENTITY_TYPE, doc.getUuid(), doc.getName());
+        super(DictionaryDoc.DOCUMENT_TYPE, doc.getUuid(), doc.getName());
         this.description = doc.getDescription();
         this.data = doc.getData();
         this.imports = doc.getImports();

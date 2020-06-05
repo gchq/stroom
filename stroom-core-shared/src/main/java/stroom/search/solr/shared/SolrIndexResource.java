@@ -18,6 +18,7 @@ package stroom.search.solr.shared;
 
 import io.swagger.annotations.Api;
 import io.swagger.annotations.ApiOperation;
+import io.swagger.annotations.ApiParam;
 import org.fusesource.restygwt.client.DirectRestService;
 import stroom.docref.DocRef;
 import stroom.util.shared.ResourcePaths;
@@ -36,31 +37,32 @@ import java.util.List;
 @Produces(MediaType.APPLICATION_JSON)
 @Consumes(MediaType.APPLICATION_JSON)
 public interface SolrIndexResource extends RestResource, DirectRestService {
+
     @POST
     @Path("/read")
     @ApiOperation(
             value = "Get a solr index doc",
             response = SolrIndexDoc.class)
-    SolrIndexDoc read(DocRef docRef);
+    SolrIndexDoc read(@ApiParam("docRef") DocRef docRef);
 
     @PUT
     @Path("/update")
     @ApiOperation(
             value = "Update a solr index doc",
             response = SolrIndexDoc.class)
-    SolrIndexDoc update(SolrIndexDoc solrIndexDoc);
+    SolrIndexDoc update(@ApiParam("solrIndexDoc") SolrIndexDoc solrIndexDoc);
 
     @POST
     @Path("/fetchSolrTypes")
     @ApiOperation(
             value = "Fetch Solr types",
             response = List.class)
-    List<String> fetchSolrTypes(SolrIndexDoc solrIndexDoc);
+    List<String> fetchSolrTypes(@ApiParam("solrIndexDoc") SolrIndexDoc solrIndexDoc);
 
     @POST
     @Path("/solrConnectionTest")
     @ApiOperation(
             value = "Test connection to Solr",
             response = String.class)
-    String solrConnectionTest(SolrIndexDoc solrIndexDoc);
+    String solrConnectionTest(@ApiParam("solrIndexDoc") SolrIndexDoc solrIndexDoc);
 }

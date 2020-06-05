@@ -16,14 +16,16 @@
 
 package stroom.processor.shared;
 
+import stroom.docref.DocRef;
+import stroom.pipeline.shared.PipelineDoc;
+import stroom.util.shared.HasAuditInfo;
+import stroom.util.shared.HasUuid;
+
 import com.fasterxml.jackson.annotation.JsonCreator;
 import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.fasterxml.jackson.annotation.JsonInclude;
 import com.fasterxml.jackson.annotation.JsonInclude.Include;
 import com.fasterxml.jackson.annotation.JsonProperty;
-import stroom.docref.DocRef;
-import stroom.util.shared.HasAuditInfo;
-import stroom.util.shared.HasUuid;
 
 import javax.xml.bind.annotation.XmlRootElement;
 import java.util.Objects;
@@ -59,6 +61,8 @@ public class Processor implements HasAuditInfo, HasUuid {
     private String pipelineName;
     @JsonProperty
     private boolean enabled;
+    @JsonProperty
+    private boolean deleted;
 
     public Processor() {
         taskType = PIPELINE_STREAM_PROCESSOR_TASK_TYPE;
@@ -80,7 +84,8 @@ public class Processor implements HasAuditInfo, HasUuid {
                      @JsonProperty("taskType") final String taskType,
                      @JsonProperty("pipelineUuid") final String pipelineUuid,
                      @JsonProperty("pipelineName") final String pipelineName,
-                     @JsonProperty("enabled") final boolean enabled) {
+                     @JsonProperty("enabled") final boolean enabled,
+                     @JsonProperty("deleted") final boolean deleted) {
         this.id = id;
         this.version = version;
         this.createTimeMs = createTimeMs;
@@ -92,6 +97,7 @@ public class Processor implements HasAuditInfo, HasUuid {
         this.pipelineUuid = pipelineUuid;
         this.pipelineName = pipelineName;
         this.enabled = enabled;
+        this.deleted = deleted;
     }
 
     public Integer getId() {
@@ -171,14 +177,21 @@ public class Processor implements HasAuditInfo, HasUuid {
         this.pipelineUuid = uuid;
     }
 
-    public String getPipelineName() { return pipelineName; }
+    public String getPipelineName() {
+        return pipelineName;
+    }
 
-    public void setPipelineName (final String pipelineName){
+    public void setPipelineName(final String pipelineName) {
         this.pipelineName = pipelineName;
     }
 
     @JsonIgnore
-    public void setPipeline (final DocRef pipelineDocRef) {
+    public DocRef getPipeline() {
+        return new DocRef(PipelineDoc.DOCUMENT_TYPE, pipelineUuid, pipelineName);
+    }
+
+    @JsonIgnore
+    public void setPipeline(final DocRef pipelineDocRef) {
         this.pipelineUuid = pipelineDocRef.getUuid();
         this.pipelineName = pipelineDocRef.getName();
     }
@@ -199,6 +212,14 @@ public class Processor implements HasAuditInfo, HasUuid {
         this.enabled = enabled;
     }
 
+    public boolean isDeleted() {
+        return deleted;
+    }
+
+    public void setDeleted(final boolean deleted) {
+        this.deleted = deleted;
+    }
+
     @Override
     public String toString() {
         return "Processor{" +
@@ -211,6 +232,7 @@ public class Processor implements HasAuditInfo, HasUuid {
                 ", taskType='" + taskType + '\'' +
                 ", pipelineUuid='" + pipelineUuid + '\'' +
                 ", enabled=" + enabled +
+                ", deleted=" + deleted +
                 '}';
     }
 
@@ -219,7 +241,7 @@ public class Processor implements HasAuditInfo, HasUuid {
         if (this == o) return true;
         if (o == null || getClass() != o.getClass()) return false;
         final Processor processor = (Processor) o;
-        return Objects.equals(id, processor.id)  || Objects.equals(uuid, processor.uuid) ;
+        return Objects.equals(id, processor.id) || Objects.equals(uuid, processor.uuid);
     }
 
     @Override

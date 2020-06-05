@@ -133,7 +133,7 @@ public class PipelinePropertyValue implements Copyable<PipelinePropertyValue> {
         this._long = value;
     }
 
-    public Boolean isBoolean() {
+    public Boolean getBoolean() {
         return _boolean;
     }
 

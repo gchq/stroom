@@ -6,6 +6,7 @@ import com.fasterxml.jackson.annotation.JsonInclude.Include;
 import com.fasterxml.jackson.annotation.JsonProperty;
 import com.google.common.base.Strings;
 import io.swagger.annotations.Api;
+import io.swagger.annotations.ApiParam;
 import stroom.docref.DocRef;
 import stroom.docstore.shared.DocRefUtil;
 import stroom.pipeline.factory.PipelineDataValidator;
@@ -204,7 +205,7 @@ public class NewUiPipelineResource implements RestResource {
     @POST
     @Path("/{parentPipelineId}/inherit")
     public Response createInherited(@PathParam("parentPipelineId") final String pipelineId,
-                                    final DocRef parentPipeline) {
+                                    @ApiParam("parentPipeline") final DocRef parentPipeline) {
 
         return pipelineScopeRunnable.scopeResult(() -> {
             final PipelineDoc parentDoc = pipelineStore.readDocument(getDocRef(pipelineId));
@@ -224,7 +225,7 @@ public class NewUiPipelineResource implements RestResource {
     @POST
     @Path("/{pipelineId}")
     public Response save(@PathParam("pipelineId") final String pipelineId,
-                         final PipelineDTO pipelineDocUpdates) {
+                         @ApiParam("pipelineDocUpdates") final PipelineDTO pipelineDocUpdates) {
         pipelineScopeRunnable.scopeRunnable(() -> {
             // A user should be allowed to read pipelines that they are inheriting from as long as they have 'use' permission on them.
             securityContext.useAsRead(() -> {

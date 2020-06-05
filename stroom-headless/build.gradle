@@ -23,6 +23,7 @@ dependencies {
     compile project(':stroom-feed:stroom-feed-impl')
     compile project(':stroom-importexport:stroom-importexport-api')
     compile project(':stroom-importexport:stroom-importexport-impl')
+    compile project(':stroom-legacy:stroom-legacy-impex_6_1')
     compile project(':stroom-node:stroom-node-api')
     compile project(':stroom-pipeline')
     compile project(':stroom-processor:stroom-processor-impl')

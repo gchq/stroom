@@ -13,7 +13,7 @@ import stroom.dispatch.client.RestFactory;
 import stroom.docref.DocRef;
 import stroom.meta.shared.MetaFields;
 import stroom.processor.client.presenter.ProcessorEditPresenter.ProcessorEditView;
-import stroom.processor.shared.CreateProcessorFilterRequest;
+import stroom.processor.shared.CreateProcessFilterRequest;
 import stroom.processor.shared.ProcessorFilter;
 import stroom.processor.shared.ProcessorFilterResource;
 import stroom.processor.shared.QueryData;
@@ -181,7 +181,7 @@ public class ProcessorEditPresenter extends MyPresenterWidget<ProcessorEditView>
 
         } else {
             // Now create the processor filter using the find stream criteria.
-            final CreateProcessorFilterRequest request = new CreateProcessorFilterRequest(pipelineRef, queryData, false, 10);
+            final CreateProcessFilterRequest request = new CreateProcessFilterRequest(pipelineRef, queryData,  10, true, false);
             final Rest<ProcessorFilter> rest = restFactory.create();
             rest.onSuccess(this::hide).call(PROCESSOR_FILTER_RESOURCE).create(request);
         }

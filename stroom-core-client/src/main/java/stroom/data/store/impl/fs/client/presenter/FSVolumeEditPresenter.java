@@ -17,12 +17,6 @@
 
 package stroom.data.store.impl.fs.client.presenter;
 
-import com.google.gwt.core.client.GWT;
-import com.google.gwt.user.client.ui.HasText;
-import com.google.inject.Inject;
-import com.google.web.bindery.event.shared.EventBus;
-import com.gwtplatform.mvp.client.MyPresenterWidget;
-import com.gwtplatform.mvp.client.View;
 import stroom.alert.client.event.AlertEvent;
 import stroom.data.store.impl.fs.shared.FsVolume;
 import stroom.data.store.impl.fs.shared.FsVolume.VolumeUseStatus;
@@ -37,6 +31,13 @@ import stroom.widget.popup.client.presenter.DefaultPopupUiHandlers;
 import stroom.widget.popup.client.presenter.PopupSize;
 import stroom.widget.popup.client.presenter.PopupUiHandlers;
 import stroom.widget.popup.client.presenter.PopupView.PopupType;
+
+import com.google.gwt.core.client.GWT;
+import com.google.gwt.user.client.ui.HasText;
+import com.google.inject.Inject;
+import com.google.web.bindery.event.shared.EventBus;
+import com.gwtplatform.mvp.client.MyPresenterWidget;
+import com.gwtplatform.mvp.client.View;
 
 import java.util.function.Consumer;
 
@@ -73,10 +74,20 @@ public class FSVolumeEditPresenter extends MyPresenterWidget<FSVolumeEditPresent
                     write();
                     try {
                         final Rest<FsVolume> rest = restFactory.create();
-                        rest
-                                .onSuccess(consumer)
-                                .call(FS_VOLUME_RESOURCE)
-                                .update(volume.getId(), volume);
+                        if (volume.getId() == null) {
+                            rest
+                                    .onSuccess(consumer)
+                                    .call(FS_VOLUME_RESOURCE)
+                                    .create(volume);
+
+                        } else {
+
+                            rest
+                                    .onSuccess(consumer)
+                                    .call(FS_VOLUME_RESOURCE)
+                                    .update(volume.getId(), volume);
+
+                        }
 
                     } catch (final RuntimeException e) {
                         AlertEvent.fireError(FSVolumeEditPresenter.this, e.getMessage(), null);

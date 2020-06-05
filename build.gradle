@@ -93,7 +93,7 @@ ext.versions = [
         hadoopHdfsShaded  : 'v2.6.4-4',
         stroomAuth        : 'v7.0-beta.4', // Needed for the correct version of the client API
         stroomExpression  : 'v3.0.3',
-        stroomQuery       : 'v4.0-beta.68', // same version for stroom-docref, stroom-query-api and stroom-query-common
+        stroomQuery       : 'v4.0-beta.73', // same version for stroom-docref, stroom-query-api and stroom-query-common
         stroomStats       : 'v0.6.0-alpha.2',
 
         // NOTE: Curator relies on zookeeper and we are pegged to zookeeper 3.4.5 server by the cloudera stack.
@@ -259,7 +259,7 @@ ext.libs = [
         mbknor_jackson_jsonSchema      : "com.kjetland:mbknor-jackson-jsonschema_2.12:1.0.36",
         mockito_core                   : "org.mockito:mockito-core:$versions.mockito",
         mockito_junit_jupiter          : "org.mockito:mockito-junit-jupiter:$versions.mockito",
-        mysql_connector_java           : "mysql:mysql-connector-java:8.0.15",
+        mysql_connector_java           : "mysql:mysql-connector-java:8.0.16",
         objenesis                      : "org.objenesis:objenesis", // version controlled by DW BOM
         okhttp                         : "com.squareup.okhttp3:okhttp:4.3.0",
         okhttp_logging_interceptor     : 'com.squareup.okhttp:logging-interceptor:2.7.5',

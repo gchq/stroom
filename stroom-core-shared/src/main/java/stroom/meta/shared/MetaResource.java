@@ -18,6 +18,7 @@ package stroom.meta.shared;
 
 import io.swagger.annotations.Api;
 import io.swagger.annotations.ApiOperation;
+import io.swagger.annotations.ApiParam;
 import org.fusesource.restygwt.client.DirectRestService;
 import stroom.util.shared.ResourceGeneration;
 import stroom.util.shared.ResourcePaths;
@@ -51,7 +52,21 @@ public interface MetaResource extends RestResource, DirectRestService {
     @ApiOperation(
             value = "Find matching meta data",
             response = ResourceGeneration.class)
-    ResultPage<MetaRow> findMetaRow(FindMetaCriteria criteria);
+    ResultPage<MetaRow> findMetaRow(@ApiParam("criteria") FindMetaCriteria criteria);
+
+    @POST
+    @Path("getSelectionSummary")
+    @ApiOperation(
+            value = "Get a summary of the selected meta data",
+            response = ResourceGeneration.class)
+    SelectionSummary getSelectionSummary(@ApiParam("criteria") FindMetaCriteria criteria);
+
+    @POST
+    @Path("getReprocessSelectionSummary")
+    @ApiOperation(
+            value = "Get a summary of the parent items of the selected meta data",
+            response = ResourceGeneration.class)
+    SelectionSummary getReprocessSelectionSummary(@ApiParam("criteria") FindMetaCriteria criteria);
 
     @GET
     @Path("info/{id}")

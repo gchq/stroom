@@ -1,5 +1,7 @@
 package stroom.app.guice;
 
+import stroom.core.db.DbStatusModule;
+
 import com.google.inject.AbstractModule;
 
 public class CoreModule extends AbstractModule {
@@ -17,7 +19,7 @@ public class CoreModule extends AbstractModule {
         install(new stroom.cluster.task.impl.ClusterTaskModule());
         install(new stroom.config.global.impl.db.GlobalConfigDbModule());
         install(new stroom.core.dataprocess.PipelineStreamTaskModule());
-        install(new stroom.core.db.CoreDbModule());
+        install(new DbStatusModule());
         install(new stroom.core.entity.cluster.EntityClusterModule());
         install(new stroom.core.entity.event.EntityEventModule());
         install(new stroom.core.entity.event.EntityEventModule());
@@ -56,6 +58,8 @@ public class CoreModule extends AbstractModule {
         install(new stroom.kafka.impl.KafkaConfigHandlerModule());
         install(new stroom.kafka.impl.KafkaConfigModule());
         install(new stroom.kafka.pipeline.KafkaPipelineModule());
+        install(new stroom.legacy.db.LegacyDbModule());
+        install(new stroom.legacy.impex_6_1.LegacyImpexModule());
         install(new stroom.meta.impl.MetaModule());
         install(new stroom.meta.impl.StreamAttributeMapResourceModule());
         install(new stroom.meta.impl.db.MetaDbModule());

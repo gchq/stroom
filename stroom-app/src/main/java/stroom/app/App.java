@@ -34,6 +34,7 @@ import stroom.security.impl.ContentSecurityConfig;
 import stroom.util.ColouredStringBuilder;
 import stroom.util.ConsoleColour;
 import stroom.util.logging.LogUtil;
+import stroom.util.shared.BuildInfo;
 import stroom.util.shared.ResourcePaths;
 
 import com.google.inject.Guice;
@@ -61,6 +62,7 @@ import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.util.Arrays;
 import java.util.EnumSet;
+import java.util.Objects;
 import java.util.logging.Level;
 
 public class App extends Application<Config> {
@@ -86,6 +88,9 @@ public class App extends Application<Config> {
     private RestResources restResources;
     @Inject
     private ManagedServices managedServices;
+    @Inject
+    private BuildInfo buildInfo;
+    
 
     private final Path configFile;
 
@@ -211,6 +216,15 @@ public class App extends Application<Config> {
         managedServices.register();
 
         warnAboutDefaultOpenIdCreds(configuration);
+
+        showBuildInfo();
+        
+    }
+    
+    private void showBuildInfo() {
+        Objects.requireNonNull(buildInfo);
+        LOGGER.info("Build version: {}, date: {}",
+                buildInfo.getBuildVersion(), buildInfo.getBuildDate());
     }
 
     private void warnAboutDefaultOpenIdCreds(Config configuration) {

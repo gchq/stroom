@@ -18,6 +18,7 @@ package stroom.importexport.shared;
 
 import io.swagger.annotations.Api;
 import io.swagger.annotations.ApiOperation;
+import io.swagger.annotations.ApiParam;
 import org.fusesource.restygwt.client.DirectRestService;
 import stroom.util.shared.DocRefs;
 import stroom.util.shared.ResourceGeneration;
@@ -38,31 +39,32 @@ import java.util.List;
 @Produces(MediaType.APPLICATION_JSON)
 @Consumes(MediaType.APPLICATION_JSON)
 public interface ContentResource extends RestResource, DirectRestService {
+
     @POST
     @Path("import")
     @ApiOperation(
             value = "Import content",
             response = ResourceGeneration.class)
-    ResourceKey importContent(ImportConfigRequest request);
+    ResourceKey importContent(@ApiParam("request") ImportConfigRequest request);
 
     @POST
     @Path("confirmImport")
     @ApiOperation(
             value = "Get import confirmation state",
             response = List.class)
-    List<ImportState> confirmImport(ResourceKey resourceKey);
+    List<ImportState> confirmImport(@ApiParam("resourceKey") ResourceKey resourceKey);
 
     @POST
     @Path("export")
     @ApiOperation(
             value = "Export content",
             response = ResourceGeneration.class)
-    ResourceGeneration exportContent(DocRefs docRefs);
+    ResourceGeneration exportContent(@ApiParam("docRefs") DocRefs docRefs);
 
     @POST
     @Path("fetchDependencies")
     @ApiOperation(
             value = "Fetch content dependencies",
             response = ResultPage.class)
-    ResultPage<Dependency> fetchDependencies(DependencyCriteria criteria);
+    ResultPage<Dependency> fetchDependencies(@ApiParam("criteria") DependencyCriteria criteria);
 }

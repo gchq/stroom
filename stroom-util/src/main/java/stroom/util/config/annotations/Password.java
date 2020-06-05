@@ -10,6 +10,6 @@ import java.lang.annotation.Target;
  * treated differently, e.g. masked by default
  */
 @Retention(RetentionPolicy.RUNTIME)
-@Target(ElementType.METHOD)
+@Target({ElementType.METHOD, ElementType.FIELD})
 public @interface Password {
 }

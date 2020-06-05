@@ -42,7 +42,7 @@ import stroom.security.impl.db.jooq.tables.records.DocPermissionRecord;
 @SuppressWarnings({ "all", "unchecked", "rawtypes" })
 public class DocPermission extends TableImpl<DocPermissionRecord> {
 
-    private static final long serialVersionUID = -1495823203;
+    private static final long serialVersionUID = -2104594977;
 
     /**
      * The reference instance of <code>stroom.doc_permission</code>
@@ -117,7 +117,7 @@ public class DocPermission extends TableImpl<DocPermissionRecord> {
 
     @Override
     public List<Index> getIndexes() {
-        return Arrays.<Index>asList(Indexes.DOC_PERMISSION_DOC_PERMISSION_FK_USER_UUID, Indexes.DOC_PERMISSION_PRIMARY);
+        return Arrays.<Index>asList(Indexes.DOC_PERMISSION_DOC_PERMISSION_DOC_UUID, Indexes.DOC_PERMISSION_DOC_PERMISSION_FK_USER_UUID, Indexes.DOC_PERMISSION_DOC_PERMISSION_FK_USER_UUID_DOC_UUID_PERMISSION_IDX, Indexes.DOC_PERMISSION_PRIMARY);
     }
 
     @Override
@@ -132,7 +132,7 @@ public class DocPermission extends TableImpl<DocPermissionRecord> {
 
     @Override
     public List<UniqueKey<DocPermissionRecord>> getKeys() {
-        return Arrays.<UniqueKey<DocPermissionRecord>>asList(Keys.KEY_DOC_PERMISSION_PRIMARY);
+        return Arrays.<UniqueKey<DocPermissionRecord>>asList(Keys.KEY_DOC_PERMISSION_PRIMARY, Keys.KEY_DOC_PERMISSION_DOC_PERMISSION_FK_USER_UUID_DOC_UUID_PERMISSION_IDX);
     }
 
     @Override

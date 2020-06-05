@@ -32,9 +32,9 @@ import stroom.processor.api.ProcessorFilterService;
 import stroom.processor.api.ProcessorFilterUtil;
 import stroom.processor.api.ProcessorService;
 import stroom.processor.shared.Processor;
-import stroom.processor.shared.ProcessorDataSource;
+import stroom.processor.shared.ProcessorFields;
 import stroom.processor.shared.ProcessorFilter;
-import stroom.processor.shared.ProcessorFilterDataSource;
+import stroom.processor.shared.ProcessorFilterFields;
 import stroom.query.api.v2.ExpressionOperator;
 import stroom.query.api.v2.ExpressionTerm;
 import stroom.util.shared.Message;
@@ -86,7 +86,7 @@ public class ProcessorFilterImportExportHandlerImpl implements ImportExportActio
             throw new RuntimeException("Unable to read meta file associated with processor " + docRef, ex);
         }
 
-        boolean ignore = ProcessorFilterUtil.shouldImport (processorFilter);
+        boolean ignore = !ProcessorFilterUtil.shouldImport(processorFilter);
 
         if (ignore)
             LOGGER.warn("Not importing processor filter " + docRef.getUuid() + " because it contains id fields");
@@ -112,10 +112,12 @@ public class ProcessorFilterImportExportHandlerImpl implements ImportExportActio
                             processorFilter.getPipelineUuid(),
                             processorFilter.getPipelineName());
 
-                    processorFilterService.create(processor,
+                    processorFilterService.importFilter(processor,
                             new DocRef(ProcessorFilter.ENTITY_TYPE, processorFilter.getUuid(), null),
                             processorFilter.getQueryData(),
                             processorFilter.getPriority(),
+                            false,
+                            processorFilter.isReprocess(),
                             enable,
                             trackerStartMs);
                 }
@@ -129,7 +131,7 @@ public class ProcessorFilterImportExportHandlerImpl implements ImportExportActio
                 processorFilterService.update(processorFilter);
             }
         }
-        return new ImpexDetails(docRef, processorFilter.getPipelineName(),ignore);
+        return new ImpexDetails(docRef, processorFilter.getPipelineName(), ignore);
     }
 
     private ProcessorFilter findProcessorFilter(final DocRef docRef) {
@@ -137,7 +139,7 @@ public class ProcessorFilterImportExportHandlerImpl implements ImportExportActio
             return null;
 
         final ExpressionOperator expression = new ExpressionOperator.Builder()
-                .addTerm(ProcessorFilterDataSource.UUID, ExpressionTerm.Condition.EQUALS, docRef.getUuid()).build();
+                .addTerm(ProcessorFilterFields.UUID, ExpressionTerm.Condition.EQUALS, docRef.getUuid()).build();
 
         ExpressionCriteria criteria = new ExpressionCriteria(expression);
         ResultPage<ProcessorFilter> page = processorFilterService.find(criteria);
@@ -257,7 +259,7 @@ public class ProcessorFilterImportExportHandlerImpl implements ImportExportActio
         }
 
         final ExpressionOperator expression = new ExpressionOperator.Builder()
-                .addTerm(ProcessorDataSource.UUID, ExpressionTerm.Condition.EQUALS, processorUuid).build();
+                .addTerm(ProcessorFields.UUID, ExpressionTerm.Condition.EQUALS, processorUuid).build();
 
         ExpressionCriteria criteria = new ExpressionCriteria(expression);
         ResultPage<Processor> page = processorService.find(criteria);
@@ -316,7 +318,7 @@ public class ProcessorFilterImportExportHandlerImpl implements ImportExportActio
     public Set<DocRef> getDependencies(final DocRef docRef) {
         final DependencyRemapper dependencyRemapper = new DependencyRemapper();
         final ExpressionOperator expression = new ExpressionOperator.Builder()
-                .addTerm(ProcessorFilterDataSource.UUID, ExpressionTerm.Condition.EQUALS, docRef.getUuid()).build();
+                .addTerm(ProcessorFilterFields.UUID, ExpressionTerm.Condition.EQUALS, docRef.getUuid()).build();
         final ExpressionCriteria criteria = new ExpressionCriteria(expression);
         final ResultPage<ProcessorFilter> page = processorFilterService.find(criteria);
         if (page != null && page.getValues() != null) {

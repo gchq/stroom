@@ -16,14 +16,6 @@
 
 package stroom.processor.client.presenter;
 
-import com.google.gwt.cell.client.FieldUpdater;
-import com.google.gwt.cell.client.NumberCell;
-import com.google.gwt.cell.client.TextCell;
-import com.google.gwt.core.client.GWT;
-import com.google.gwt.user.cellview.client.Column;
-import com.google.inject.Inject;
-import com.google.web.bindery.event.shared.EventBus;
-import com.gwtplatform.mvp.client.MyPresenterWidget;
 import stroom.cell.expander.client.ExpanderCell;
 import stroom.cell.info.client.InfoColumn;
 import stroom.cell.info.client.SvgCell;
@@ -43,11 +35,13 @@ import stroom.data.table.client.Refreshable;
 import stroom.dispatch.client.Rest;
 import stroom.dispatch.client.RestFactory;
 import stroom.docref.DocRef;
+import stroom.docstore.shared.DocRefUtil;
 import stroom.entity.client.presenter.HasDocumentRead;
 import stroom.entity.client.presenter.TreeRowHandler;
 import stroom.pipeline.shared.PipelineDoc;
 import stroom.processor.shared.FetchProcessorRequest;
 import stroom.processor.shared.Processor;
+import stroom.processor.shared.ProcessorFilterExpressionUtil;
 import stroom.processor.shared.ProcessorFilter;
 import stroom.processor.shared.ProcessorFilterResource;
 import stroom.processor.shared.ProcessorFilterRow;
@@ -56,12 +50,10 @@ import stroom.processor.shared.ProcessorListRow;
 import stroom.processor.shared.ProcessorListRowResultPage;
 import stroom.processor.shared.ProcessorResource;
 import stroom.processor.shared.ProcessorRow;
-import stroom.processor.shared.ProcessorTaskExpressionUtil;
 import stroom.svg.client.SvgPreset;
 import stroom.svg.client.SvgPresets;
 import stroom.util.shared.Expander;
 import stroom.util.shared.ModelStringUtil;
-import stroom.util.shared.ResultPage;
 import stroom.util.shared.TreeRow;
 import stroom.widget.customdatebox.client.ClientDateUtil;
 import stroom.widget.popup.client.event.ShowPopupEvent;
@@ -70,6 +62,15 @@ import stroom.widget.popup.client.presenter.PopupView.PopupType;
 import stroom.widget.tooltip.client.presenter.TooltipPresenter;
 import stroom.widget.tooltip.client.presenter.TooltipUtil;
 import stroom.widget.util.client.MultiSelectionModel;
+
+import com.google.gwt.cell.client.FieldUpdater;
+import com.google.gwt.cell.client.NumberCell;
+import com.google.gwt.cell.client.TextCell;
+import com.google.gwt.core.client.GWT;
+import com.google.gwt.user.cellview.client.Column;
+import com.google.inject.Inject;
+import com.google.web.bindery.event.shared.EventBus;
+import com.gwtplatform.mvp.client.MyPresenterWidget;
 
 import java.util.function.Consumer;
 
@@ -103,7 +104,11 @@ public class ProcessorListPresenter extends MyPresenterWidget<DataGridView<Proce
             @Override
             protected void exec(final Consumer<ProcessorListRowResultPage> dataConsumer, final Consumer<Throwable> throwableConsumer) {
                 final Rest<ProcessorListRowResultPage> rest = restFactory.create();
-                rest.onSuccess(dataConsumer).onFailure(throwableConsumer).call(PROCESSOR_FILTER_RESOURCE).find(request);
+                rest
+                        .onSuccess(dataConsumer)
+                        .onFailure(throwableConsumer)
+                        .call(PROCESSOR_FILTER_RESOURCE)
+                        .find(request);
             }
 
             @Override
@@ -115,19 +120,25 @@ public class ProcessorListPresenter extends MyPresenterWidget<DataGridView<Proce
         processorEnabledSaveQueue = new RestSaveQueue<Integer, Boolean>(eventBus, restFactory) {
             @Override
             protected void doAction(final Rest<?> rest, final Integer key, final Boolean value) {
-                rest.call(PROCESSOR_RESOURCE).setEnabled(key, value);
+                rest
+                        .call(PROCESSOR_RESOURCE)
+                        .setEnabled(key, value);
             }
         };
         processorFilterEnabledSaveQueue = new RestSaveQueue<Integer, Boolean>(eventBus, restFactory) {
             @Override
             protected void doAction(final Rest<?> rest, final Integer key, final Boolean value) {
-                rest.call(PROCESSOR_FILTER_RESOURCE).setEnabled(key, value);
+                rest
+                        .call(PROCESSOR_FILTER_RESOURCE)
+                        .setEnabled(key, value);
             }
         };
         processorFilterPrioritySaveQueue = new RestSaveQueue<Integer, Integer>(eventBus, restFactory) {
             @Override
             protected void doAction(final Rest<?> rest, final Integer key, final Integer value) {
-                rest.call(PROCESSOR_FILTER_RESOURCE).setPriority(key, value);
+                rest
+                        .call(PROCESSOR_FILTER_RESOURCE)
+                        .setPriority(key, value);
             }
         };
     }
@@ -168,6 +179,7 @@ public class ProcessorListPresenter extends MyPresenterWidget<DataGridView<Proce
         addExpanderColumn();
         addIconColumn();
         addInfoColumn();
+        addEnabledColumn();
         addPipelineColumn();
         addTrackerColumns();
         addLastPollColumns();
@@ -175,7 +187,7 @@ public class ProcessorListPresenter extends MyPresenterWidget<DataGridView<Proce
         addStreamsColumn();
         addEventsColumn();
         addStatusColumn();
-        addEnabledColumn();
+        addReprocessColumn();
         addEndColumn();
     }
 
@@ -195,7 +207,7 @@ public class ProcessorListPresenter extends MyPresenterWidget<DataGridView<Proce
                     addRowDateString(html, "Created On", processor.getCreateTimeMs());
                     TooltipUtil.addRowData(html, "Updated By", processor.getUpdateUser());
                     addRowDateString(html, "Updated On", processor.getUpdateTimeMs());
-                    TooltipUtil.addRowData(html, "Pipeline", processor.getPipelineUuid());
+                    TooltipUtil.addRowData(html, "Pipeline", DocRefUtil.createSimpleDocRefString(processor.getPipeline()));
 
                 } else if (row instanceof ProcessorFilterRow) {
                     final ProcessorFilterRow processorFilterRow = (ProcessorFilterRow) row;
@@ -207,6 +219,7 @@ public class ProcessorListPresenter extends MyPresenterWidget<DataGridView<Proce
                     addRowDateString(html, "Created On", filter.getCreateTimeMs());
                     TooltipUtil.addRowData(html, "Updated By", filter.getUpdateUser());
                     addRowDateString(html, "Updated On", filter.getUpdateTimeMs());
+                    TooltipUtil.addRowData(html, "Pipeline", DocRefUtil.createSimpleDocRefString(filter.getPipeline()));
                     addRowDateString(html, "Min Stream Create Ms", tracker.getMinMetaCreateMs());
                     addRowDateString(html, "Max Stream Create Ms", tracker.getMaxMetaCreateMs());
                     addRowDateString(html, "Stream Create Ms", tracker.getMetaCreateMs());
@@ -274,7 +287,7 @@ public class ProcessorListPresenter extends MyPresenterWidget<DataGridView<Proce
                     final ProcessorFilterRow processorFilterRow = (ProcessorFilterRow) row;
                     final ProcessorFilter processorFilter = processorFilterRow.getProcessorFilter();
                     name = processorFilter.getPipelineName();
-                    if (name == null){
+                    if (name == null) {
                         final Processor processor = processorFilter.getProcessor();
                         if (processor != null) {
                             final String pipelineName = processor.getPipelineName();
@@ -479,6 +492,23 @@ public class ProcessorListPresenter extends MyPresenterWidget<DataGridView<Proce
         getView().addColumn(enabledColumn, "Enabled", ColumnSizeConstants.MEDIUM_COL);
     }
 
+    private void addReprocessColumn() {
+        getView().addResizableColumn(new Column<ProcessorListRow, String>(new TextCell()) {
+            @Override
+            public String getValue(final ProcessorListRow row) {
+                String reprocess = null;
+                if (row instanceof ProcessorFilterRow) {
+                    final ProcessorFilterRow processorFilterRow = (ProcessorFilterRow) row;
+                    reprocess = String.valueOf(
+                            processorFilterRow
+                                    .getProcessorFilter()
+                                    .isReprocess()).toLowerCase();
+                }
+                return reprocess;
+            }
+        }, "Reprocess", ColumnSizeConstants.MEDIUM_COL);
+    }
+
     private void addEndColumn() {
         getView().addEndColumn(new EndColumn<>());
     }
@@ -502,17 +532,17 @@ public class ProcessorListPresenter extends MyPresenterWidget<DataGridView<Proce
     }
 
     private void setPipeline(final DocRef pipelineRef) {
-        request.setExpression(ProcessorTaskExpressionUtil.createPipelineExpression(pipelineRef));
+        request.setExpression(ProcessorFilterExpressionUtil.createPipelineExpression(pipelineRef));
         doDataDisplay();
     }
 
     private void setFolder(final DocRef folder) {
-        request.setExpression(ProcessorTaskExpressionUtil.createFolderExpression(folder));
+        request.setExpression(ProcessorFilterExpressionUtil.createFolderExpression(folder));
         doDataDisplay();
     }
 
     private void setNullCriteria() {
-        request.setExpression(null);
+        request.setExpression(ProcessorFilterExpressionUtil.createBasicExpression());
         doDataDisplay();
     }
 

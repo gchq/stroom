@@ -1,5 +1,7 @@
 package stroom.meta.mock;
 
+import stroom.data.retention.api.DataRetentionRuleAction;
+import stroom.data.retention.api.DataRetentionTracker;
 import stroom.expression.matcher.ExpressionMatcher;
 import stroom.meta.api.AttributeMap;
 import stroom.meta.api.EffectiveMetaDataCriteria;
@@ -10,9 +12,11 @@ import stroom.meta.shared.Meta;
 import stroom.meta.shared.MetaFields;
 import stroom.meta.shared.MetaInfoSection;
 import stroom.meta.shared.MetaRow;
+import stroom.meta.shared.SelectionSummary;
 import stroom.meta.shared.Status;
 import stroom.util.shared.Clearable;
 import stroom.util.shared.ResultPage;
+import stroom.util.time.TimePeriod;
 
 import javax.inject.Singleton;
 import java.util.ArrayList;
@@ -23,6 +27,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.Map.Entry;
 import java.util.Objects;
+import java.util.Optional;
 import java.util.Set;
 import java.util.stream.Collectors;
 
@@ -118,6 +123,12 @@ public class MockMetaService implements MetaService, Clearable {
     }
 
     @Override
+    public int delete(final List<DataRetentionRuleAction> ruleActions,
+                      final TimePeriod deletionPeriod) {
+        return 0;
+    }
+
+    @Override
     public int delete(final long id, final boolean lockCheck) {
         final Meta meta = metaMap.get(id);
         if (lockCheck && !Status.UNLOCKED.equals(meta.getStatus())) {
@@ -134,11 +145,6 @@ public class MockMetaService implements MetaService, Clearable {
     public int getLockCount() {
         return (int) metaMap.values().stream().filter(data -> Status.LOCKED.equals(data.getStatus())).count();
     }
-
-//    @Override
-//    public Period getCreatePeriod() {
-//        return new Period(0L, Long.MAX_VALUE);
-//    }
 
     @Override
     public List<String> getFeeds() {
@@ -172,6 +178,21 @@ public class MockMetaService implements MetaService, Clearable {
         }
 
         return ResultPage.createUnboundedList(list);
+    }
+
+    @Override
+    public ResultPage<Meta> findReprocess(final FindMetaCriteria criteria) {
+        return null;
+    }
+
+    @Override
+    public SelectionSummary getSelectionSummary(final FindMetaCriteria criteria) {
+        return null;
+    }
+
+    @Override
+    public SelectionSummary getReprocessSelectionSummary(final FindMetaCriteria criteria) {
+        return null;
     }
 
     /**
@@ -235,7 +256,7 @@ public class MockMetaService implements MetaService, Clearable {
     }
 
     @Override
-    public ResultPage<MetaRow> findMetaRow(final FindMetaCriteria criteria) {
+    public ResultPage<MetaRow> findDecoratedRows(final FindMetaCriteria criteria) {
         return null;
     }
 
@@ -272,11 +293,6 @@ public class MockMetaService implements MetaService, Clearable {
     }
 
     @Override
-    public Long getMaxDataIdWithCreationBeforePeriod(Long timestampMs) {
-        return null;
-    }
-
-    @Override
     public String toString() {
         final StringBuilder sb = new StringBuilder();
         for (final long id : metaMap.keySet()) {
@@ -300,7 +316,22 @@ public class MockMetaService implements MetaService, Clearable {
         return null;
     }
 
+    @Override
+    public Optional<DataRetentionTracker> getRetentionTracker() {
+        return Optional.empty();
+    }
+
+    @Override
+    public void setTracker(final DataRetentionTracker dataRetentionTracker) {
+
+    }
+
     public Map<Long, Meta> getMetaMap() {
         return metaMap;
+    }
+
+    @Override
+    public List<String> getProcessorUuidList(final FindMetaCriteria criteria) {
+        return null;
     }
 }

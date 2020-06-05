@@ -82,8 +82,8 @@ appConfig:
     temp: "/tmp/stroom"
   # Comment out the publicUri block if you are not running with nginx
   publicUri:
-    hostname: localhost
-    port: 443
+    hostname: ${API_GATEWAY_HOST:-localhost}
+    port: ${API_GATEWAY_PORT:-443}
   serviceDiscovery:
     zookeeperUrl: ${STROOM_SERVICE_DISCOVERY_ZOOKEEPER_URL:-localhost:2181}
     servicesHostNameOrIpAddress: ${STROOM_ADVERTISED_URL:-localhost}
@@ -95,6 +95,4 @@ appConfig:
     internal:
       enabledStoreTypes: ${STROOM_ENABLED_STAT_STORE_TYPES:-[ "StatisticStore" ]}
 #      enabledStoreTypes: ${STROOM_ENABLED_STAT_STORE_TYPES:-[ "StatisticStore", "StroomStatsStore" ]}
-  volumes:
-    createDefaultOnStart: false
 

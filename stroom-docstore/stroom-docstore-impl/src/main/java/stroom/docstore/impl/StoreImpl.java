@@ -24,12 +24,14 @@ import stroom.docstore.api.DependencyRemapper;
 import stroom.docstore.api.DocumentSerialiser2;
 import stroom.docstore.api.Store;
 import stroom.docstore.shared.Doc;
+import stroom.importexport.api.ImportConverter;
 import stroom.importexport.api.ImportExportActionHandler;
 import stroom.importexport.shared.ImportState;
 import stroom.importexport.shared.ImportState.ImportMode;
 import stroom.importexport.shared.ImportState.State;
 import stroom.security.api.SecurityContext;
 import stroom.security.shared.DocumentPermissionNames;
+import stroom.util.AuditUtil;
 import stroom.util.entityevent.EntityAction;
 import stroom.util.entityevent.EntityEvent;
 import stroom.util.entityevent.EntityEventBus;
@@ -62,6 +64,7 @@ public class StoreImpl<D extends Doc> implements Store<D> {
 
     private final Persistence persistence;
     private final EntityEventBus entityEventBus;
+    private final ImportConverter importConverter;
     private final SecurityContext securityContext;
 
     private final DocumentSerialiser2<D> serialiser;
@@ -73,12 +76,14 @@ public class StoreImpl<D extends Doc> implements Store<D> {
     @Inject
     StoreImpl(final Persistence persistence,
               final EntityEventBus entityEventBus,
+              final ImportConverter importConverter,
               final SecurityContext securityContext,
               final DocumentSerialiser2<D> serialiser,
               final String type,
               final Class<D> clazz) {
         this.persistence = persistence;
         this.entityEventBus = entityEventBus;
+        this.importConverter = importConverter;
         this.securityContext = securityContext;
         this.serialiser = serialiser;
         this.type = type;
@@ -92,15 +97,12 @@ public class StoreImpl<D extends Doc> implements Store<D> {
     @Override
     public final DocRef createDocument(final String name) {
         Objects.requireNonNull(name);
-        final long now = System.currentTimeMillis();
-        final String userId = securityContext.getUserId();
 
         final D document = create(type, UUID.randomUUID().toString(), name);
         document.setVersion(UUID.randomUUID().toString());
-        document.setCreateTimeMs(now);
-        document.setUpdateTimeMs(now);
-        document.setCreateUser(userId);
-        document.setUpdateUser(userId);
+
+        // Add audit data.
+        stampAuditData(document);
 
         final D created = create(document);
         return createDocRef(created);
@@ -132,18 +134,14 @@ public class StoreImpl<D extends Doc> implements Store<D> {
         Objects.requireNonNull(originalUuid);
         Objects.requireNonNull(newName);
 
-        final long now = System.currentTimeMillis();
-        final String userId = securityContext.getUserId();
-
         final D document = read(originalUuid);
         document.setType(type);
         document.setUuid(UUID.randomUUID().toString());
         document.setName(newName);
         document.setVersion(UUID.randomUUID().toString());
-        document.setCreateTimeMs(now);
-        document.setUpdateTimeMs(now);
-        document.setCreateUser(userId);
-        document.setUpdateUser(userId);
+
+        // Add audit data.
+        stampAuditData(document);
 
         final D created = create(document);
         return createDocRef(created);
@@ -318,49 +316,92 @@ public class StoreImpl<D extends Doc> implements Store<D> {
 
     @Override
     public ImportExportActionHandler.ImpexDetails importDocument(final DocRef docRef, final Map<String, byte[]> dataMap, final ImportState importState, final ImportMode importMode) {
-        Objects.requireNonNull(docRef);
-        final String uuid = docRef.getUuid();
-        try {
-            final boolean exists = exists(docRef);
+        // Convert legacy import format to the new format if necessary.
+        final Map<String, byte[]> convertedDataMap = importConverter.convert(docRef, dataMap, importState, importMode, securityContext.getUserId());
 
-            if (ImportMode.CREATE_CONFIRMATION.equals(importMode)) {
-                // See if the new document is the same as the old one.
-                if (!exists) {
-                    importState.setState(State.NEW);
-                } else {
-                    final List<String> updatedFields = importState.getUpdatedFieldList();
-                    checkForUpdatedFields(docRef, dataMap, new AuditFieldFilter<>(), updatedFields);
-                    if (updatedFields.size() == 0) {
-                        importState.setState(State.EQUAL);
+        if (convertedDataMap != null) {
+            Objects.requireNonNull(docRef);
+            final String uuid = docRef.getUuid();
+            try {
+                // See if this document already exists and try and read it.
+                final D existingDocument = getExistingDocument(docRef);
+
+                if (ImportMode.CREATE_CONFIRMATION.equals(importMode)) {
+                    // See if the new document is the same as the old one.
+                    if (existingDocument == null) {
+                        importState.setState(State.NEW);
+
+                    } else {
+                        docRef.setName(existingDocument.getName());
+                        if (!securityContext.hasDocumentPermission(uuid, DocumentPermissionNames.UPDATE)) {
+                            throw new PermissionException(securityContext.getUserId(), "You are not authorised to update this document " + docRef);
+                        }
+
+                        final List<String> updatedFields = importState.getUpdatedFieldList();
+                        checkForUpdatedFields(existingDocument, convertedDataMap, new AuditFieldFilter<>(), updatedFields);
+                        if (updatedFields.size() == 0) {
+                            importState.setState(State.EQUAL);
+                        }
                     }
-                }
 
-                if (exists && !securityContext.hasDocumentPermission(uuid, DocumentPermissionNames.UPDATE)) {
-                    throw new PermissionException(securityContext.getUserId(), "You are not authorised to update this document " + docRef);
-                }
-
-            } else if (importState.ok(importMode)) {
-                if (exists && !securityContext.hasDocumentPermission(uuid, DocumentPermissionNames.UPDATE)) {
-                    throw new PermissionException(securityContext.getUserId(), "You are not authorised to update this document " + docRef);
-                }
-
-                persistence.getLockFactory().lock(uuid, () -> {
-                    try {
-                        persistence.write(docRef, exists, dataMap);
-                        EntityEvent.fire(entityEventBus, docRef, EntityAction.CREATE);
-                        dirty.set(true);
-
-                    } catch (final IOException e) {
-                        throw new UncheckedIOException(e);
+                } else if (importState.ok(importMode)) {
+                    if (existingDocument != null) {
+                        docRef.setName(existingDocument.getName());
+                        if (!securityContext.hasDocumentPermission(uuid, DocumentPermissionNames.UPDATE)) {
+                            throw new PermissionException(securityContext.getUserId(), "You are not authorised to update this document " + docRef);
+                        }
                     }
-                });
+
+                    persistence.getLockFactory().lock(uuid, () -> {
+                        try {
+                            // Turn the data map into a document.
+                            final D newDocument = serialiser.read(convertedDataMap);
+                            // Copy create time and user from the existing document.
+                            if (existingDocument != null) {
+                                newDocument.setName(existingDocument.getName());
+                                newDocument.setCreateTimeMs(existingDocument.getCreateTimeMs());
+                                newDocument.setCreateUser(existingDocument.getCreateUser());
+                            }
+                            // Stamp audit data on the imported document.
+                            stampAuditData(newDocument);
+                            // Convert the document back into a data map.
+                            final Map<String, byte[]> finalData = serialiser.write(newDocument);
+                            // Write the data.
+                            persistence.write(docRef, existingDocument != null, finalData);
+
+                            // Fire an entity event to alert other services of the change.
+                            if (existingDocument != null) {
+                                EntityEvent.fire(entityEventBus, docRef, EntityAction.UPDATE);
+                            } else {
+                                EntityEvent.fire(entityEventBus, docRef, EntityAction.CREATE);
+                            }
+
+                            dirty.set(true);
+
+                        } catch (final IOException e) {
+                            throw new UncheckedIOException(e);
+                        }
+                    });
+                }
+
+            } catch (final RuntimeException e) {
+                importState.addMessage(Severity.ERROR, e.getMessage());
             }
-
-        } catch (final RuntimeException e) {
-            importState.addMessage(Severity.ERROR, e.getMessage());
         }
 
         return new ImportExportActionHandler.ImpexDetails(docRef);
+    }
+
+    private D getExistingDocument(final DocRef docRef) {
+        try {
+            return readDocument(docRef);
+        } catch (final PermissionException e) {
+            throw new PermissionException(securityContext.getUserId(), "The document being imported exists but you are authorised to read this document " + docRef);
+        } catch (final RuntimeException e) {
+            // Ignore.
+            LOGGER.debug(e.getMessage(), e);
+        }
+        return null;
     }
 
     @Override
@@ -390,20 +431,14 @@ public class StoreImpl<D extends Doc> implements Store<D> {
         return data;
     }
 
-    private void checkForUpdatedFields(final DocRef docRef,
+    private void checkForUpdatedFields(final D existingDoc,
                                        final Map<String, byte[]> dataMap,
                                        final Function<D, D> filter,
                                        final List<String> updatedFieldList) {
         try {
-            D existingDocument = read(docRef.getUuid());
-            if (existingDocument == null) {
-                throw new RuntimeException("Unable to read " + docRef);
-            }
-
-            D newDocument = serialiser.read(dataMap);
-
-            existingDocument = filter.apply(existingDocument);
-            newDocument = filter.apply(newDocument);
+            final D newDoc = serialiser.read(dataMap);
+            final D existingDocument = filter.apply(existingDoc);
+            final D newDocument = filter.apply(newDoc);
 
             try {
                 final Method[] methods = existingDocument.getClass().getMethods();
@@ -423,7 +458,6 @@ public class StoreImpl<D extends Doc> implements Store<D> {
             } catch (final InvocationTargetException | IllegalAccessException e) {
                 LOGGER.error(e.getMessage(), e);
             }
-
 
         } catch (final RuntimeException | IOException e) {
             LOGGER.error(e.getMessage(), e);
@@ -492,13 +526,18 @@ public class StoreImpl<D extends Doc> implements Store<D> {
             }
         });
 
-        try {
-            return serialiser.read(data);
-        } catch (final IOException e) {
-            LOGGER.error(e.getMessage(), e);
-            throw new UncheckedIOException(
-                    LogUtil.message("Error deserialising doc {} from store {}, {}",
-                            uuid, persistence.getClass().getSimpleName(), e.getMessage()), e);
+        if (data != null) {
+            try {
+                return serialiser.read(data);
+            } catch (final IOException e) {
+                LOGGER.error(e.getMessage(), e);
+                throw new UncheckedIOException(
+                        LogUtil.message("Error deserialising doc {} from store {}, {}",
+                                uuid, persistence.getClass().getSimpleName(), e.getMessage()), e);
+            }
+        } else {
+            throw new RuntimeException(LogUtil.message("No document found for UUID {} in store {}",
+                    uuid, persistence.getClass().getSimpleName()));
         }
     }
 
@@ -513,13 +552,10 @@ public class StoreImpl<D extends Doc> implements Store<D> {
         try {
             // Get the current document version to make sure the document hasn't been changed by somebody else since we last read it.
             final String currentVersion = document.getVersion();
-
-            final long now = System.currentTimeMillis();
-            final String userId = securityContext.getUserId();
-
             document.setVersion(UUID.randomUUID().toString());
-            document.setUpdateTimeMs(now);
-            document.setUpdateUser(userId);
+
+            // Add audit data.
+            stampAuditData(document);
 
             final Map<String, byte[]> newData = serialiser.write(document);
 
@@ -572,5 +608,10 @@ public class StoreImpl<D extends Doc> implements Store<D> {
                 .stream()
                 .filter(docRef -> name.equals(docRef.getName()))
                 .collect(Collectors.toList());
+    }
+
+    private void stampAuditData(final D document) {
+        final String userId = securityContext.getUserId();
+        AuditUtil.stamp(userId, document);
     }
 }

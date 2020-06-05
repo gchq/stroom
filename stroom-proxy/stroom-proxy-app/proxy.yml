@@ -105,7 +105,7 @@ proxyConfig:
 #  contentSyncConfig:
 #    contentSyncEnabled: false
 #    upstreamUrl:
-#      RuleSet: "http://localhost/api/ruleset/v1"
+#      ReceiveDataRuleSet: "http://localhost/api/ruleset/v1"
 #      Dictionary: "http://localhost/api/dictionary/v1"
 #    syncFrequency: 30000
 #    apiKey: ""

@@ -17,13 +17,15 @@
 
 package stroom.meta.impl.db;
 
-import org.jooq.Condition;
-import org.jooq.Field;
 import stroom.cache.api.CacheManager;
 import stroom.cache.api.ICache;
+import stroom.data.shared.StreamTypeNames;
 import stroom.db.util.JooqUtil;
 import stroom.meta.impl.MetaTypeDao;
 import stroom.meta.impl.db.jooq.tables.records.MetaTypeRecord;
+
+import org.jooq.Condition;
+import org.jooq.Field;
 
 import javax.inject.Inject;
 import javax.inject.Singleton;
@@ -45,6 +47,14 @@ class MetaTypeDaoImpl implements MetaTypeDao {
                     final MetaServiceConfig metaServiceConfig) {
         this.metaDbConnProvider = metaDbConnProvider;
         cache = cacheManager.create(CACHE_NAME, metaServiceConfig::getMetaTypeCache, this::load);
+
+        // Ensure some types are preloaded.
+        load(StreamTypeNames.RAW_EVENTS);
+        load(StreamTypeNames.RAW_REFERENCE);
+        load(StreamTypeNames.EVENTS);
+        load(StreamTypeNames.REFERENCE);
+        load(StreamTypeNames.RECORDS);
+        load(StreamTypeNames.ERROR);
     }
 
     private int load(final String name) {
@@ -120,9 +130,10 @@ class MetaTypeDaoImpl implements MetaTypeDao {
         cache.clear();
     }
 
-    private int deleteAll() {
-        return JooqUtil.contextResult(metaDbConnProvider, context -> context
-                .delete(META_TYPE)
-                .execute());
+    private void deleteAll() {
+        JooqUtil.truncateTable(metaDbConnProvider, META_TYPE);
+//        return JooqUtil.contextResult(metaDbConnProvider, context -> context
+//                .truncate(META_TYPE)
+//                .execute());
     }
 }

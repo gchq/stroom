@@ -18,12 +18,15 @@
 package stroom.util.config;
 
 
+import stroom.util.logging.LogUtil;
+
 import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.google.common.base.CaseFormat;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import stroom.util.logging.LogUtil;
 
+import java.lang.annotation.Annotation;
+import java.lang.reflect.Field;
 import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Method;
 import java.lang.reflect.Type;
@@ -31,6 +34,7 @@ import java.util.HashMap;
 import java.util.Map;
 import java.util.Map.Entry;
 import java.util.Objects;
+import java.util.Optional;
 import java.util.function.Consumer;
 import java.util.function.Predicate;
 import java.util.stream.Collectors;
@@ -83,11 +87,43 @@ public final class PropertyUtil {
     public static Map<String, Prop> getProperties(final Object object) {
         Objects.requireNonNull(object);
         LOGGER.trace("getProperties called for {}", object);
+        final Map<String, Prop> propMap = new HashMap<>();
+        final Class<?> clazz = object.getClass();
+
+        getPropsFromFields(object, propMap);
+
+        getPropsFromMethods(object, propMap);
+
+        return propMap
+                .entrySet()
+                .stream()
+                .filter(e -> {
+                    if (e.getValue().getter == null || e.getValue().setter == null) {
+                        LOGGER.trace("Invalid property " + e.getKey() + " on " + clazz.getName());
+                        return false;
+                    }
+                    return true;
+                })
+                .collect(Collectors.toMap(Entry::getKey, Entry::getValue));
+    }
+
+    private static void getPropsFromFields(final Object object, final Map<String, Prop> propMap) {
+        final Class<?> clazz = object.getClass();
+
+        for (final Field declaredField : clazz.getDeclaredFields()) {
+            if (declaredField.getDeclaredAnnotation(JsonIgnore.class) == null) {
+                final String name = declaredField.getName();
+                final Prop prop = propMap.computeIfAbsent(name, k -> new Prop(name, object));
+                prop.addFieldAnnotations(declaredField.getDeclaredAnnotations());
+            }
+        }
+    }
+
+    private static void getPropsFromMethods(final Object object, final Map<String, Prop> propMap) {
         final Class<?> clazz = object.getClass();
         // Using getMethods rather than getDeclaredMethods means we have to make the methods public
         // but it does allow us to see inherited methods, e.g. on CommonDbConfig
         final Method[] methods = clazz.getMethods();
-        final Map<String, Prop> propMap = new HashMap<>();
         for (final Method method : methods) {
             final String methodName = method.getName();
 
@@ -127,18 +163,6 @@ public final class PropertyUtil {
                 }
             }
         }
-
-        return propMap
-                .entrySet()
-                .stream()
-                .filter(e -> {
-                    if (e.getValue().getter == null || e.getValue().setter == null) {
-                        LOGGER.trace("Invalid property " + e.getKey() + " on " + clazz.getName());
-                        return false;
-                    }
-                    return true;
-                })
-                .collect(Collectors.toMap(Entry::getKey, Entry::getValue));
     }
 
     private static String getPropertyName(final String methodName, final int len) {
@@ -159,6 +183,9 @@ public final class PropertyUtil {
         // The getter method to set the value of the property
         private Method setter;
 
+        private Map<Class<? extends Annotation>, Annotation> fieldAnnotationsMap = new HashMap<>();
+        private Map<Class<? extends Annotation>, Annotation> getterAnnotationsMap = new HashMap<>();
+
         Prop(final String name, final Object parentObject) {
             this.name = name;
             this.parentObject = parentObject;
@@ -177,7 +204,11 @@ public final class PropertyUtil {
         }
 
         void setGetter(final Method getter) {
-            this.getter = getter;
+            this.getter = Objects.requireNonNull(getter);
+
+            for (final Annotation annotation : getter.getDeclaredAnnotations()) {
+                this.getterAnnotationsMap.put(annotation.annotationType(), annotation);
+            }
         }
 
         public Method getSetter() {
@@ -185,7 +216,59 @@ public final class PropertyUtil {
         }
 
         void setSetter(final Method setter) {
-            this.setter = setter;
+            this.setter = Objects.requireNonNull(setter);
+        }
+
+        void addFieldAnnotations(final Annotation... annotations) {
+            for (final Annotation annotation : Objects.requireNonNull(annotations)) {
+                this.fieldAnnotationsMap.put(annotation.annotationType(), annotation);
+            }
+        }
+
+        /**
+         * @return True if the field has the passed {@link Annotation} class.
+         */
+        public boolean hasFieldAnnotation(final Class<? extends Annotation> clazz) {
+            Objects.requireNonNull(clazz);
+            return fieldAnnotationsMap.containsKey(clazz);
+        }
+
+        /**
+         * @return True if the getter has the passed {@link Annotation} class.
+         */
+        public boolean hasGetterAnnotation(final Class<? extends Annotation> clazz) {
+            Objects.requireNonNull(clazz);
+            return getterAnnotationsMap.containsKey(clazz);
+        }
+
+        /**
+         * @return True if either the field or getter have the passed {@link Annotation} class.
+         */
+        public boolean hasAnnotation(final Class<? extends Annotation> clazz) {
+            Objects.requireNonNull(clazz);
+            return fieldAnnotationsMap.containsKey(clazz) || getterAnnotationsMap.containsKey(clazz);
+        }
+
+        public <T extends Annotation> Optional<T> getFieldAnnotation(final Class<T> clazz) {
+            Objects.requireNonNull(clazz);
+            return Optional.ofNullable(fieldAnnotationsMap.get(clazz))
+                    .map(clazz::cast);
+        }
+
+        public <T extends Annotation> Optional<T> getGetterAnnotation(final Class<T> clazz) {
+            Objects.requireNonNull(clazz);
+            return Optional.ofNullable(getterAnnotationsMap.get(clazz))
+                    .map(clazz::cast);
+        }
+
+        /**
+         * @return The {@link Annotation} if it is found on the field or getter, in that order.
+         */
+        public <T extends Annotation> Optional<T> getAnnotation(final Class<T> clazz) {
+            Objects.requireNonNull(clazz);
+            return Optional.ofNullable(fieldAnnotationsMap.get(clazz))
+                    .or(() -> Optional.ofNullable(getterAnnotationsMap.get(clazz)))
+                    .map(clazz::cast);
         }
 
         public Object getValueFromConfigObject() {

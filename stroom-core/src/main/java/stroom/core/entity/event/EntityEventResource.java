@@ -18,6 +18,7 @@ package stroom.core.entity.event;
 
 import io.swagger.annotations.Api;
 import io.swagger.annotations.ApiOperation;
+import io.swagger.annotations.ApiParam;
 import stroom.util.entityevent.EntityEvent;
 import stroom.util.shared.ResourcePaths;
 import stroom.util.shared.RestResource;
@@ -40,5 +41,6 @@ public interface EntityEventResource extends RestResource {
     @PUT
     @Path(NODE_NAME_PATH_PARAM)
     @ApiOperation(value = "Sends an entity event")
-    Boolean fireEvent(@PathParam("nodeName") String nodeName, EntityEvent entityEvent);
+    Boolean fireEvent(@PathParam("nodeName") String nodeName, 
+                      @ApiParam("entityevent") EntityEvent entityEvent);
 }

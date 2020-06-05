@@ -18,6 +18,7 @@
 package stroom.pipeline.xslt;
 
 import stroom.docref.DocRef;
+import stroom.pipeline.shared.PipelineDoc;
 import stroom.pipeline.shared.XsltDoc;
 import stroom.util.io.StreamUtil;
 
@@ -28,6 +29,7 @@ import javax.xml.transform.URIResolver;
 import javax.xml.transform.stream.StreamSource;
 import java.io.IOException;
 import java.util.List;
+import java.util.Optional;
 
 /**
  * <p>
@@ -40,8 +42,6 @@ import java.util.List;
  * </p>
  */
 class CustomURIResolver implements URIResolver {
-    private static final String RESOURCE_NOT_FOUND = "Resource not found: \"";
-    private static final String RESOURCE_NOT_FOUND_END = "\"";
 
     private final XsltStore xsltStore;
 
@@ -63,24 +63,68 @@ class CustomURIResolver implements URIResolver {
      */
     public Source resolve(final String href, final String base) throws TransformerException {
         try {
-            // Try and locate a translation with this name
+            // Try and locate a translation by name
             final List<DocRef> docRefs = xsltStore.findByName(href);
 
-            if (docRefs != null && docRefs.size() > 0) {
-                final XsltDoc document = xsltStore.readDocument(docRefs.get(0));
-                if (document != null) {
-                    return new StreamSource(StreamUtil.stringToStream(document.getData()));
+            if (docRefs == null || docRefs.size() == 0) {
+                // Try loading by UUID or doc ref string, e.g, `uuid='test-uuid', name='test-name'`.
+                final DocRef docRef = parseDocRef(href);
+                final XsltDoc document = xsltStore.readDocument(docRef);
+                if (document == null) {
+                    throw new IOException("Resource not found: \"" + href + "\"");
                 }
+                return new StreamSource(StreamUtil.stringToStream(document.getData()));
             }
 
-            final StringBuilder sb = new StringBuilder();
-            sb.append(RESOURCE_NOT_FOUND);
-            sb.append(href);
-            sb.append(RESOURCE_NOT_FOUND_END);
-            throw new IOException(sb.toString());
+            if (docRefs.size() > 1) {
+                throw new IOException("Found " + docRefs.size() + " resources for: \"" + href + "\"");
+            }
+
+            final XsltDoc document = xsltStore.readDocument(docRefs.get(0));
+            if (document == null) {
+                throw new IOException("Error reading: \"" + href + "\"");
+            }
+
+            return new StreamSource(StreamUtil.stringToStream(document.getData()));
 
         } catch (final IOException e) {
             throw new TransformerException(e);
         }
+    }
+
+    static DocRef parseDocRef(final String href) {
+        return new DocRef(
+                getPart("type", href, PipelineDoc.DOCUMENT_TYPE),
+                getPart("uuid", href, href),
+                getPart("name", href, null));
+    }
+
+    static String getPart(final String key, final String href, final String defaultValue) {
+        return getQuotedPart(key, href, "'")
+                .orElseGet(() -> getQuotedPart(key, href, "\"")
+                        .orElseGet(() -> getQuotedPart(key, href, "")
+                                .orElse(defaultValue)));
+    }
+
+    static Optional<String> getQuotedPart(final String key, final String href, final String quotes) {
+        final String match = key + "=" + quotes;
+        int start = href.indexOf(match);
+        if (start != -1) {
+            start = start + match.length();
+            int end = href.indexOf(quotes + ",", start);
+            if (end == -1) {
+                end = href.indexOf(quotes + " ", start);
+                if (end == -1) {
+                    if (quotes.length() > 0) {
+                        end = href.indexOf(quotes, start);
+                    }
+                    if (end == -1) {
+                        end = href.length();
+                    }
+                }
+            }
+            return Optional.of(href.substring(start, end));
+        }
+        return Optional.empty();
     }
 }

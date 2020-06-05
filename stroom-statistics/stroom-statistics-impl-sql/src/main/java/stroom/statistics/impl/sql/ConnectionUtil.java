@@ -38,17 +38,17 @@ public class ConnectionUtil {
     @SuppressWarnings("SQL_PREPARED_STATEMENT_GENERATED_FROM_NONCONSTANT_STRING")
     public static int executeUpdate(final Connection connection, final String sql, final List<Object> args)
             throws SQLException {
-        LOGGER.debug(() -> ">>> " + sql);
+        logSql(sql, args);
         final LogExecutionTime logExecutionTime = new LogExecutionTime();
         try (final PreparedStatement preparedStatement = connection.prepareStatement(sql)) {
             PreparedStatementUtil.setArguments(preparedStatement, args);
             final int result = preparedStatement.executeUpdate();
 
-            log(logExecutionTime, () -> Integer.toString(result), () -> sql, args);
+            logExecution(logExecutionTime, () -> Integer.toString(result), () -> sql, args);
 
             return result;
         } catch (final SQLException sqlException) {
-            LOGGER.error(() -> "executeUpdate() - " + sql + " " + args + "", sqlException);
+            LOGGER.error(() -> "executeUpdate() - " + buildSQLTrace(sql, args), sqlException);
             throw sqlException;
         }
     }
@@ -83,7 +83,10 @@ public class ConnectionUtil {
     }
 
     public static void executeStatements(final Connection connection, final List<String> sqlStatements) throws SQLException {
-        LOGGER.debug(() -> ">>> " + sqlStatements);
+        LOGGER.debug(() -> ">>> " + sqlStatements.stream()
+                .map(ConnectionUtil::cleanSqlForLogs)
+                .collect(Collectors.joining("; ")));
+
         final LogExecutionTime logExecutionTime = new LogExecutionTime();
         try (final Statement statement = connection.createStatement()) {
 
@@ -102,7 +105,7 @@ public class ConnectionUtil {
                 throw new RuntimeException(String.format("Got error code for batch %s", sqlStatements));
             }
 
-            log(logExecutionTime,
+            logExecution(logExecutionTime,
                     () -> Arrays.stream(results)
                             .mapToObj(Integer::toString)
                             .collect(Collectors.joining(",")),
@@ -118,7 +121,7 @@ public class ConnectionUtil {
     @SuppressWarnings("SQL_PREPARED_STATEMENT_GENERATED_FROM_NONCONSTANT_STRING")
     public static Long executeQueryLongResult(final Connection connection, final String sql, final List<Object> args)
             throws SQLException {
-        LOGGER.debug(() -> ">>> " + sql);
+        logSql(sql, args);
         final LogExecutionTime logExecutionTime = new LogExecutionTime();
         Long result = null;
 
@@ -130,7 +133,7 @@ public class ConnectionUtil {
                 }
             }
 
-            log(logExecutionTime, result, sql, args);
+            logExecution(logExecutionTime, result, sql, args);
 
             return result;
         } catch (final SQLException sqlException) {
@@ -191,24 +194,34 @@ public class ConnectionUtil {
 //        }
 //    }
 
-    private static void log(final LogExecutionTime logExecutionTime,
-                            final Object result,
-                            final String sql,
-                            final List<Object> args) {
-        if (result == null) {
-            log(logExecutionTime, () -> "", () -> sql, args);
-        } else {
-            log(logExecutionTime, result::toString, () -> sql, args);
+    private static void logSql(final String sql,
+                               final List<Object> args) {
+        if (LOGGER.isDebugEnabled()) {
+            final String formattedSql = buildSQLTrace(sql, args);
+            LOGGER.debug(">>> " + formattedSql);
         }
     }
 
-    private static void log(final LogExecutionTime logExecutionTime,
-                            final Supplier<String> resultSupplier,
-                            final Supplier<String> sqlSupplier,
-                            final List<Object> args) {
+    private static void logExecution(final LogExecutionTime logExecutionTime,
+                                     final Object result,
+                                     final String sql,
+                                     final List<Object> args) {
+        if (result == null) {
+            logExecution(logExecutionTime, () -> "", () -> sql, args);
+        } else {
+            logExecution(logExecutionTime, result::toString, () -> sql, args);
+        }
+    }
+
+    private static void logExecution(final LogExecutionTime logExecutionTime,
+                                     final Supplier<String> resultSupplier,
+                                     final Supplier<String> sqlSupplier,
+                                     final List<Object> args) {
         final long time = logExecutionTime.getDuration();
         if (LOGGER.isDebugEnabled() || time > 1000) {
-            final String message = "<<< " + sqlSupplier.get() + " " + args + " took " + ModelStringUtil.formatDurationString(time)
+            final String sql = buildSQLTrace(sqlSupplier.get(), args);
+            final String message = "<<< " + sql + " "
+                    + " took " + ModelStringUtil.formatDurationString(time)
                     + " with result " + resultSupplier.get();
             if (time > 1000) {
                 LOGGER.warn(() -> message);
@@ -216,5 +229,28 @@ public class ConnectionUtil {
                 LOGGER.debug(() -> message);
             }
         }
+    }
+
+    private static String cleanSqlForLogs(final String sql) {
+        return sql.replaceAll("\\s+", " ");
+    }
+
+    private static String buildSQLTrace(final String sql, final List<Object> args) {
+        final StringBuilder sqlString = new StringBuilder();
+        int arg = 0;
+        for (int i = 0; i < sql.length(); i++) {
+            final char c = sql.charAt(i);
+            if (c == '?') {
+                try {
+                    sqlString.append(args.get(arg++));
+                } catch (IndexOutOfBoundsException e) {
+                    LOGGER.warn("Mismatch between '?' and args. sql: {}, args: {}", sql, args);
+                    sqlString.append(c);
+                }
+            } else {
+                sqlString.append(c);
+            }
+        }
+        return cleanSqlForLogs(sqlString.toString());
     }
 }

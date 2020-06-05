@@ -24,8 +24,8 @@ import io.swagger.annotations.Api;
 import stroom.entity.shared.ExpressionCriteria;
 import stroom.processor.api.ProcessorFilterService;
 import stroom.processor.shared.ProcessorFilter;
-import stroom.processor.shared.ProcessorFilterDataSource;
-import stroom.processor.shared.ProcessorTaskDataSource;
+import stroom.processor.shared.ProcessorFilterFields;
+import stroom.processor.shared.ProcessorTaskFields;
 import stroom.query.api.v2.ExpressionOperator;
 import stroom.query.api.v2.ExpressionOperator.Builder;
 import stroom.query.api.v2.ExpressionTerm.Condition;
@@ -127,8 +127,8 @@ public class StreamTaskResource implements RestResource {
             } catch (IllegalArgumentException exception) {
                 return Response.status(Response.Status.BAD_REQUEST).entity("Invalid sortDirection field").build();
             }
-            if (sortBy.equalsIgnoreCase(ProcessorTaskDataSource.FIELD_PIPELINE)
-                    || sortBy.equalsIgnoreCase(ProcessorTaskDataSource.FIELD_PRIORITY)) {
+            if (sortBy.equalsIgnoreCase(ProcessorTaskFields.FIELD_PIPELINE)
+                    || sortBy.equalsIgnoreCase(ProcessorTaskFields.FIELD_PRIORITY)) {
                 criteria.setSort(sortBy, direction, false);
             } else if (sortBy.equalsIgnoreCase(FIELD_PROGRESS)) {
                 // Sorting progress is done below -- this is here for completeness.
@@ -153,7 +153,7 @@ public class StreamTaskResource implements RestResource {
         addSorting(filter, criteria);
 
         if (!securityContext.isAdmin()) {
-            builder.addTerm(ProcessorFilterDataSource.CREATE_USER, Condition.EQUALS, securityContext.getUserId());
+            builder.addTerm(ProcessorFilterFields.CREATE_USER, Condition.EQUALS, securityContext.getUserId());
         }
 
         criteria.setExpression(builder.build());

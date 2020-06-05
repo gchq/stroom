@@ -42,7 +42,7 @@ import stroom.processor.impl.db.jooq.tables.records.ProcessorFeedRecord;
 @SuppressWarnings({ "all", "unchecked", "rawtypes" })
 public class ProcessorFeed extends TableImpl<ProcessorFeedRecord> {
 
-    private static final long serialVersionUID = -503474922;
+    private static final long serialVersionUID = 1134723790;
 
     /**
      * The reference instance of <code>stroom.processor_feed</code>
@@ -107,7 +107,7 @@ public class ProcessorFeed extends TableImpl<ProcessorFeedRecord> {
 
     @Override
     public List<Index> getIndexes() {
-        return Arrays.<Index>asList(Indexes.PROCESSOR_FEED_NAME, Indexes.PROCESSOR_FEED_PRIMARY);
+        return Arrays.<Index>asList(Indexes.PROCESSOR_FEED_PRIMARY, Indexes.PROCESSOR_FEED_PROCESSOR_FEED_NAME);
     }
 
     @Override
@@ -122,7 +122,7 @@ public class ProcessorFeed extends TableImpl<ProcessorFeedRecord> {
 
     @Override
     public List<UniqueKey<ProcessorFeedRecord>> getKeys() {
-        return Arrays.<UniqueKey<ProcessorFeedRecord>>asList(Keys.KEY_PROCESSOR_FEED_PRIMARY, Keys.KEY_PROCESSOR_FEED_NAME);
+        return Arrays.<UniqueKey<ProcessorFeedRecord>>asList(Keys.KEY_PROCESSOR_FEED_PRIMARY, Keys.KEY_PROCESSOR_FEED_PROCESSOR_FEED_NAME);
     }
 
     @Override

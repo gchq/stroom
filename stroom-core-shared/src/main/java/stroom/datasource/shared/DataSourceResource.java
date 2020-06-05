@@ -16,13 +16,15 @@
 
 package stroom.datasource.shared;
 
-import io.swagger.annotations.Api;
-import io.swagger.annotations.ApiOperation;
-import org.fusesource.restygwt.client.DirectRestService;
 import stroom.datasource.api.v2.AbstractField;
 import stroom.docref.DocRef;
 import stroom.util.shared.ResourcePaths;
 import stroom.util.shared.RestResource;
+
+import io.swagger.annotations.Api;
+import io.swagger.annotations.ApiOperation;
+import io.swagger.annotations.ApiParam;
+import org.fusesource.restygwt.client.DirectRestService;
 
 import javax.ws.rs.Consumes;
 import javax.ws.rs.POST;
@@ -36,10 +38,11 @@ import java.util.List;
 @Produces(MediaType.APPLICATION_JSON)
 @Consumes(MediaType.APPLICATION_JSON)
 public interface DataSourceResource extends RestResource, DirectRestService {
+
     @POST
     @Path("/fetchFields")
     @ApiOperation(
             value = "Fetch data source fields",
             response = List.class)
-    List<AbstractField> fetchFields(DocRef dataSourceRef);
+    List<AbstractField> fetchFields(@ApiParam("dataSourceRef") DocRef dataSourceRef);
 }

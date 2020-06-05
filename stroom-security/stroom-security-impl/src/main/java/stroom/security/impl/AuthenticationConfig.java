@@ -1,11 +1,12 @@
 package stroom.security.impl;
 
-import com.fasterxml.jackson.annotation.JsonProperty;
-import com.fasterxml.jackson.annotation.JsonPropertyDescription;
 import stroom.util.config.annotations.ReadOnly;
 import stroom.util.shared.AbstractConfig;
 import stroom.util.shared.validation.ValidRegex;
 import stroom.util.shared.validation.ValidationSeverity;
+
+import com.fasterxml.jackson.annotation.JsonProperty;
+import com.fasterxml.jackson.annotation.JsonPropertyDescription;
 
 import javax.inject.Singleton;
 import javax.validation.constraints.AssertTrue;
@@ -17,21 +18,10 @@ public class AuthenticationConfig extends AbstractConfig {
     public static final String PROP_NAME_PREVENT_LOGIN = "preventLogin";
     public static final String PROP_NAME_USER_NAME_PATTERN = "userNamePattern";
 
-    private String authenticationServiceUrl;
     private boolean authenticationRequired = true;
     private OpenIdConfig openIdConfig = new OpenIdConfig();
     private boolean preventLogin;
     private String userNamePattern = "^[a-zA-Z0-9_-]{3,}$";
-
-    @JsonPropertyDescription("The URL of the authentication service")
-    public String getAuthenticationServiceUrl() {
-        return authenticationServiceUrl;
-    }
-
-    @SuppressWarnings("unused")
-    public void setAuthenticationServiceUrl(final String authenticationServiceUrl) {
-        this.authenticationServiceUrl = authenticationServiceUrl;
-    }
 
     @ReadOnly
     @JsonProperty(PROP_NAME_AUTHENTICATION_REQUIRED)
@@ -85,7 +75,6 @@ public class AuthenticationConfig extends AbstractConfig {
     @Override
     public String toString() {
         return "AuthenticationConfig{" +
-                "authenticationServiceUrl='" + authenticationServiceUrl + '\'' +
                 ", authenticationRequired=" + authenticationRequired +
                 ", preventLogin=" + preventLogin +
                 ", userNamePattern='" + userNamePattern + '\'' +

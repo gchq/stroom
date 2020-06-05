@@ -20,7 +20,6 @@ package stroom.authentication.token;
 
 import stroom.authentication.config.AuthenticationConfig;
 import stroom.authentication.exceptions.TokenCreationException;
-import stroom.authentication.token.Token.TokenType;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -56,18 +55,18 @@ public class TokenBuilderFactory {
             case API:
                 if (expiryDateForApiKeys == null) {
                     expiryDateForApiKeys = Instant.now()
-                            .plusSeconds(config.getTokenConfig().getMinutesUntilExpirationForUserToken() * 60);
+                            .plus(config.getTokenConfig().getTimeUntilExpirationForUserToken());
                 }
                 tokenBuilder.expiryDate(expiryDateForApiKeys);
                 break;
             case USER:
                 Instant expiryDateForLogin = Instant.now()
-                        .plusSeconds(config.getTokenConfig().getMinutesUntilExpirationForUserToken() * 60);
+                        .plus(config.getTokenConfig().getTimeUntilExpirationForUserToken());
                 tokenBuilder.expiryDate(expiryDateForLogin);
                 break;
             case EMAIL_RESET:
                 Instant expiryDateForReset = Instant.now()
-                        .plusSeconds(config.getTokenConfig().getMinutesUntilExpirationForEmailResetToken() * 60);
+                        .plus(config.getTokenConfig().getTimeUntilExpirationForEmailResetToken());
                 tokenBuilder.expiryDate(expiryDateForReset);
                 break;
             default:

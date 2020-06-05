@@ -17,14 +17,15 @@
 package stroom.statistics.impl.sql;
 
 
-import org.junit.jupiter.api.Test;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 import stroom.security.api.SecurityContext;
 import stroom.statistics.impl.sql.exception.StatisticsEventValidationException;
 import stroom.statistics.impl.sql.rollup.RolledUpStatisticEvent;
 import stroom.task.api.TaskContextFactory;
 import stroom.test.AbstractCoreIntegrationTest;
+
+import org.junit.jupiter.api.Test;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import javax.inject.Inject;
 import java.sql.Connection;
@@ -55,7 +56,8 @@ class TestSQLStatisticFlushTaskHandler extends AbstractCoreIntegrationTest {
         assertThatThrownBy(() -> {
             deleteRows();
 
-            assertThat(getRowCount()).isEqualTo(0);
+            assertThat(getRowCount())
+                    .isEqualTo(0);
 
             final SQLStatisticFlushTaskHandler taskHandler = new SQLStatisticFlushTaskHandler(
                     sqlStatisticValueBatchSaveService, taskContextFactory, securityContext);
@@ -81,7 +83,8 @@ class TestSQLStatisticFlushTaskHandler extends AbstractCoreIntegrationTest {
     void testExec_threeGoodRows() throws StatisticsEventValidationException, SQLException {
         deleteRows();
 
-        assertThat(getRowCount()).isEqualTo(0);
+        assertThat(getRowCount())
+                .isEqualTo(0);
 
         final SQLStatisticFlushTaskHandler taskHandler = new SQLStatisticFlushTaskHandler(
                 sqlStatisticValueBatchSaveService, taskContextFactory, securityContext);
@@ -94,7 +97,8 @@ class TestSQLStatisticFlushTaskHandler extends AbstractCoreIntegrationTest {
 
         taskHandler.exec(aggregateMap);
 
-        assertThat(getRowCount()).isEqualTo(3);
+        assertThat(getRowCount())
+                .isEqualTo(3);
     }
 
     @Test
@@ -102,7 +106,8 @@ class TestSQLStatisticFlushTaskHandler extends AbstractCoreIntegrationTest {
         assertThatThrownBy(() -> {
             deleteRows();
 
-            assertThat(getRowCount()).isEqualTo(0);
+            assertThat(getRowCount())
+                    .isEqualTo(0);
 
             final SQLStatisticFlushTaskHandler taskHandler = new SQLStatisticFlushTaskHandler(
                     sqlStatisticValueBatchSaveService, taskContextFactory, securityContext);
@@ -120,34 +125,45 @@ class TestSQLStatisticFlushTaskHandler extends AbstractCoreIntegrationTest {
     void testExec_hugeNumbers() throws StatisticsEventValidationException, SQLException {
         deleteRows();
 
-        assertThat(getRowCount()).isEqualTo(0);
+        assertThat(getRowCount())
+                .isEqualTo(0);
 
         final SQLStatisticFlushTaskHandler taskHandler = new SQLStatisticFlushTaskHandler(
                 sqlStatisticValueBatchSaveService, taskContextFactory, securityContext);
 
-        final SQLStatisticAggregateMap aggregateMap = new SQLStatisticAggregateMap();
+        SQLStatisticAggregateMap aggregateMap = new SQLStatisticAggregateMap();
 
-        aggregateMap.addRolledUpEvent(buildCustomCountEvent(1, 66666666666L), 1000);
-
-        taskHandler.exec(aggregateMap);
-
-        assertThat(getRowCount()).isEqualTo(1);
-
-        sqlStatisticAggregationManager.aggregate(Instant.now());
-
-        aggregateMap.addRolledUpEvent(buildCustomCountEvent(1, 66666666666L), 1000);
+        aggregateMap.addRolledUpEvent(
+                buildCustomCountEvent(1, 66666666666L), 1000);
 
         taskHandler.exec(aggregateMap);
 
-        assertThat(getRowCount()).isEqualTo(1);
+        assertThat(getRowCount())
+                .isEqualTo(1);
 
         sqlStatisticAggregationManager.aggregate(Instant.now());
 
-        assertThat(getRowCount()).isEqualTo(0);
+        assertThat(getRowCount())
+                .isEqualTo(0);
+
+        aggregateMap = new SQLStatisticAggregateMap();
+        aggregateMap.addRolledUpEvent(
+                buildCustomCountEvent(1, 66666666666L), 1000);
+
+        taskHandler.exec(aggregateMap);
+
+        assertThat(getRowCount())
+                .isEqualTo(1);
+
+        sqlStatisticAggregationManager.aggregate(Instant.now());
+
+        assertThat(getRowCount())
+                .isEqualTo(0);
     }
 
     private RolledUpStatisticEvent buildGoodEvent(final int id) {
-        final StatisticEvent goodEvent = StatisticEvent.createCount(123, "shortName" + id, null, 1);
+        final StatisticEvent goodEvent = StatisticEvent.createCount(
+                123, "shortName" + id, null, 1);
         return new RolledUpStatisticEvent(goodEvent);
     }
 
@@ -157,13 +173,15 @@ class TestSQLStatisticFlushTaskHandler extends AbstractCoreIntegrationTest {
             sb.append("0123456789");
         }
 
-        final StatisticEvent badEvent = StatisticEvent.createCount(123, sb.toString() + id, null, 1);
+        final StatisticEvent badEvent = StatisticEvent.createCount(
+                123, sb.toString() + id, null, 1);
 
         return new RolledUpStatisticEvent(badEvent);
     }
 
     private RolledUpStatisticEvent buildCustomCountEvent(final int id, final long countValue) {
-        final StatisticEvent goodEvent = StatisticEvent.createCount(123, "shortName" + id, null, countValue);
+        final StatisticEvent goodEvent = StatisticEvent.createCount(
+                123, "shortName" + id, null, countValue);
 
         return new RolledUpStatisticEvent(goodEvent);
     }
@@ -171,7 +189,8 @@ class TestSQLStatisticFlushTaskHandler extends AbstractCoreIntegrationTest {
     private int getRowCount() throws SQLException {
         int count;
         try (final Connection connection = sqlStatisticsDbConnProvider.getConnection()) {
-            try (final PreparedStatement preparedStatement = connection.prepareStatement("select count(*) from " + SQLStatisticNames.SQL_STATISTIC_VALUE_SOURCE_TABLE_NAME)) {
+            try (final PreparedStatement preparedStatement = connection.prepareStatement(
+                    "select count(*) from " + SQLStatisticNames.SQL_STATISTIC_VALUE_SOURCE_TABLE_NAME)) {
                 try (final ResultSet resultSet = preparedStatement.executeQuery()) {
                     resultSet.next();
                     count = resultSet.getInt(1);
@@ -183,7 +202,8 @@ class TestSQLStatisticFlushTaskHandler extends AbstractCoreIntegrationTest {
 
     private void deleteRows() throws SQLException {
         try (final Connection connection = sqlStatisticsDbConnProvider.getConnection()) {
-            try (final PreparedStatement preparedStatement = connection.prepareStatement("delete from " + SQLStatisticNames.SQL_STATISTIC_VALUE_SOURCE_TABLE_NAME)) {
+            try (final PreparedStatement preparedStatement = connection.prepareStatement(
+                    "delete from " + SQLStatisticNames.SQL_STATISTIC_VALUE_SOURCE_TABLE_NAME)) {
                 preparedStatement.execute();
             }
         }

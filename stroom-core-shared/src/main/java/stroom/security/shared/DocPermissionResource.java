@@ -2,6 +2,7 @@ package stroom.security.shared;
 
 import io.swagger.annotations.Api;
 import io.swagger.annotations.ApiOperation;
+import io.swagger.annotations.ApiParam;
 import org.fusesource.restygwt.client.DirectRestService;
 import stroom.util.shared.ResourcePaths;
 import stroom.util.shared.RestResource;
@@ -20,19 +21,20 @@ import java.util.List;
 @Produces(MediaType.APPLICATION_JSON)
 @Consumes(MediaType.APPLICATION_JSON)
 public interface DocPermissionResource extends RestResource, DirectRestService {
+
     @POST
     @Path("/changeDocumentPermissions")
     @ApiOperation(
             value = "Change document permissions",
             response = Boolean.class)
-    Boolean changeDocumentPermissions(ChangeDocumentPermissionsRequest request);
+    Boolean changeDocumentPermissions(@ApiParam("request") ChangeDocumentPermissionsRequest request);
 
     @POST
     @Path("/copyPermissionsFromParent")
     @ApiOperation(
             value = "Copy permissions from parent",
             response = DocumentPermissions.class)
-    DocumentPermissions copyPermissionFromParent(CopyPermissionsFromParentRequest request);
+    DocumentPermissions copyPermissionFromParent(@ApiParam("request") CopyPermissionsFromParentRequest request);
 
 
     @POST
@@ -40,14 +42,14 @@ public interface DocPermissionResource extends RestResource, DirectRestService {
     @ApiOperation(
             value = "Fetch document permissions",
             response = DocumentPermissions.class)
-    DocumentPermissions fetchAllDocumentPermissions(FetchAllDocumentPermissionsRequest request);
+    DocumentPermissions fetchAllDocumentPermissions(@ApiParam("request") FetchAllDocumentPermissionsRequest request);
 
     @POST
     @Path("/checkDocumentPermission")
     @ApiOperation(
             value = "Check document permission",
             response = Boolean.class)
-    Boolean checkDocumentPermission(CheckDocumentPermissionRequest request);
+    Boolean checkDocumentPermission(@ApiParam("request") CheckDocumentPermissionRequest request);
 
     @GET
     @Path("/getPermissionForDocType/${docType}")

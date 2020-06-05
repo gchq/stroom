@@ -79,7 +79,7 @@ public class DictionaryPlugin extends DocumentPlugin<DictionaryDoc> {
 
     @Override
     public String getType() {
-        return DictionaryDoc.ENTITY_TYPE;
+        return DictionaryDoc.DOCUMENT_TYPE;
     }
 
     @Override

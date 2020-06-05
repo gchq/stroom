@@ -42,12 +42,17 @@ if (getPropertyOrDefault(propNameJooqGeneration, "false") == "true") {
                         // Add anything you want included in generation below, whitespace ignored
                         // and comments allowed. Each one is a java regex
                         includes = 'account|token|token_type|json_web_key|oauth_client'
-
                         // We don't want to include flyway versioning
                         excludes = 'authentication_schema_version'
-
                         // Specify 'version' for use in optimistic concurrency control
                         recordVersionFields = 'version'
+                        // Treat tinyint(1) columns as booleans
+                        forcedTypes {
+                            forcedType {
+                                name = 'BOOLEAN'
+                                types = '(?i:TINYINT\\(1\\))'
+                            }
+                        }
                     }
                     target {
                         packageName = 'stroom.authentication.impl.db.jooq'

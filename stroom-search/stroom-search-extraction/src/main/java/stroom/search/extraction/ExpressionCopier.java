@@ -15,6 +15,10 @@ public class ExpressionCopier {
     protected ExpressionOperator.Builder copyOperator(final ExpressionOperator expressionOperator) {
         final ExpressionOperator.Builder builder = createOperatorBuilder(expressionOperator);
 
+        if (expressionOperator.getChildren() == null) {
+            return builder;
+        }
+
         expressionOperator.getChildren().forEach(child -> {
             if (child instanceof ExpressionOperator) {
                 final ExpressionOperator childOperator = (ExpressionOperator) child;

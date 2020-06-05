@@ -16,10 +16,13 @@
 
 package stroom.processor.shared;
 
+import stroom.docref.DocRef;
+import stroom.pipeline.shared.PipelineDoc;
 import stroom.util.shared.HasAuditInfo;
 import stroom.util.shared.HasUuid;
 
 import com.fasterxml.jackson.annotation.JsonCreator;
+import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.fasterxml.jackson.annotation.JsonInclude;
 import com.fasterxml.jackson.annotation.JsonInclude.Include;
 import com.fasterxml.jackson.annotation.JsonProperty;
@@ -89,7 +92,11 @@ public class ProcessorFilter implements HasAuditInfo, HasUuid {
     @JsonProperty
     private int priority;
     @JsonProperty
+    private boolean reprocess;
+    @JsonProperty
     private boolean enabled;
+    @JsonProperty
+    private boolean deleted;
 
     public ProcessorFilter() {
         priority = 10;
@@ -108,7 +115,9 @@ public class ProcessorFilter implements HasAuditInfo, HasUuid {
                            @JsonProperty("processor") final Processor processor,
                            @JsonProperty("processorFilterTracker") final ProcessorFilterTracker processorFilterTracker,
                            @JsonProperty("priority") final int priority,
+                           @JsonProperty("reprocess") final boolean reprocess,
                            @JsonProperty("enabled") final boolean enabled,
+                           @JsonProperty("deleted") final boolean deleted,
                            @JsonProperty("processorUuid") final String processorUuid,
                            @JsonProperty("pipelineUuid") final String pipelineUuid,
                            @JsonProperty("pipelineName") final String pipelineName) {
@@ -129,7 +138,9 @@ public class ProcessorFilter implements HasAuditInfo, HasUuid {
         } else {
             this.priority = 10;
         }
+        this.reprocess = reprocess;
         this.enabled = enabled;
+        this.deleted = deleted;
         this.processorUuid = processorUuid;
         this.pipelineName = pipelineName;
     }
@@ -246,6 +257,11 @@ public class ProcessorFilter implements HasAuditInfo, HasUuid {
         this.pipelineName = pipelineName;
     }
 
+    @JsonIgnore
+    public DocRef getPipeline() {
+        return new DocRef(PipelineDoc.DOCUMENT_TYPE, pipelineUuid, pipelineName);
+    }
+
     public void setProcessor(final Processor processor) {
         this.processor = processor;
 
@@ -272,12 +288,28 @@ public class ProcessorFilter implements HasAuditInfo, HasUuid {
         this.queryData = queryData;
     }
 
+    public boolean isReprocess() {
+        return reprocess;
+    }
+
+    public void setReprocess(final boolean reprocess) {
+        this.reprocess = reprocess;
+    }
+
     public boolean isEnabled() {
         return enabled;
     }
 
     public void setEnabled(boolean enabled) {
         this.enabled = enabled;
+    }
+
+    public boolean isDeleted() {
+        return deleted;
+    }
+
+    public void setDeleted(final boolean deleted) {
+        this.deleted = deleted;
     }
 
     @Override
@@ -295,7 +327,9 @@ public class ProcessorFilter implements HasAuditInfo, HasUuid {
                 ", processor=" + processor +
                 ", processorFilterTracker=" + processorFilterTracker +
                 ", priority=" + priority +
+                ", reprocess=" + reprocess +
                 ", enabled=" + enabled +
+                ", deleted=" + deleted +
                 '}';
     }
 

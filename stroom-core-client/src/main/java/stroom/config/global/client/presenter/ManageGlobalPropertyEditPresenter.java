@@ -17,17 +17,6 @@
 
 package stroom.config.global.client.presenter;
 
-import com.google.gwt.core.client.GWT;
-import com.google.gwt.dom.client.NativeEvent;
-import com.google.gwt.event.dom.client.ClickHandler;
-import com.google.gwt.user.client.Window;
-import com.google.gwt.user.client.ui.HasText;
-import com.google.inject.Inject;
-import com.google.inject.Provider;
-import com.google.web.bindery.event.shared.EventBus;
-import com.gwtplatform.mvp.client.HasUiHandlers;
-import com.gwtplatform.mvp.client.MyPresenterWidget;
-import com.gwtplatform.mvp.client.View;
 import stroom.alert.client.event.AlertEvent;
 import stroom.config.global.shared.ConfigProperty;
 import stroom.config.global.shared.GlobalConfigResource;
@@ -35,7 +24,6 @@ import stroom.config.global.shared.OverrideValue;
 import stroom.dispatch.client.Rest;
 import stroom.dispatch.client.RestFactory;
 import stroom.node.client.NodeCache;
-import stroom.node.shared.FetchNodeStatusResponse;
 import stroom.security.client.api.ClientSecurityContext;
 import stroom.svg.client.SvgPreset;
 import stroom.svg.client.SvgPresets;
@@ -48,6 +36,18 @@ import stroom.widget.popup.client.presenter.PopupPosition;
 import stroom.widget.popup.client.presenter.PopupSize;
 import stroom.widget.popup.client.presenter.PopupUiHandlers;
 import stroom.widget.popup.client.presenter.PopupView.PopupType;
+
+import com.google.gwt.core.client.GWT;
+import com.google.gwt.dom.client.NativeEvent;
+import com.google.gwt.event.dom.client.ClickHandler;
+import com.google.gwt.user.client.Window;
+import com.google.gwt.user.client.ui.HasText;
+import com.google.inject.Inject;
+import com.google.inject.Provider;
+import com.google.web.bindery.event.shared.EventBus;
+import com.gwtplatform.mvp.client.HasUiHandlers;
+import com.gwtplatform.mvp.client.MyPresenterWidget;
+import com.gwtplatform.mvp.client.View;
 
 import java.util.ArrayList;
 import java.util.HashMap;
@@ -76,12 +76,12 @@ public final class ManageGlobalPropertyEditPresenter
     private ConfigProperty configProperty;
 
     // node => yamlOverride
-    private Map<String, OverrideValue<String>> nodeToYamlOverrideMap = new HashMap<>();
+    private final Map<String, OverrideValue<String>> nodeToYamlOverrideMap = new HashMap<>();
 
     // effectiveValue => (sources)
-    private Map<String, Set<NodeSource>> effectiveValueToNodeSourcesMap = new HashMap<>();
+    private final Map<String, Set<NodeSource>> effectiveValueToNodeSourcesMap = new HashMap<>();
 
-    private Provider<ConfigPropertyClusterValuesPresenter> clusterValuesPresenterProvider;
+    private final Provider<ConfigPropertyClusterValuesPresenter> clusterValuesPresenterProvider;
 
     private final ButtonView effectiveValueWarningsButton;
     private final ButtonView effectiveValueInfoButton;
@@ -161,18 +161,12 @@ public final class ManageGlobalPropertyEditPresenter
     }
 
     void showEntity(final ConfigProperty configProperty, final PopupUiHandlers popupUiHandlers) {
-
         if (configProperty.getId() != null) {
             updateValuesFromResource(configProperty.getName().toString(), popupUiHandlers);
-
         } else {
             // new configProperty
-            setEntity(configProperty);
-            showPopup(popupUiHandlers);
+            show(configProperty, popupUiHandlers);
         }
-        // find out the yaml values for each node in the cluster
-        refreshYamlOverrideForAllNodes();
-        updateAllNodeEffectiveValues();
     }
 
     private void updateWarningState() {
@@ -209,16 +203,12 @@ public final class ManageGlobalPropertyEditPresenter
     }
 
     private void updateValuesFromResource(final String propertyName, final PopupUiHandlers popupUiHandlers) {
-        final Rest<ConfigProperty> fetchPropertyRest = restFactory.create();
-
-        fetchPropertyRest
-                .onSuccess(configProperty -> {
-                    setEntity(configProperty);
-                    showPopup(popupUiHandlers);
-                })
-                .onFailure(throwable -> {
-                    showError(throwable, "Error fetching property " + propertyName);
-                })
+        final Rest<ConfigProperty> rest = restFactory.create();
+        rest
+                .onSuccess(configProperty ->
+                        show(configProperty, popupUiHandlers))
+                .onFailure(throwable ->
+                        showError(throwable, "Error fetching property " + propertyName))
                 .call(GLOBAL_CONFIG_RESOURCE_RESOURCE)
                 .getPropertyByName(propertyName);
     }
@@ -252,8 +242,6 @@ public final class ManageGlobalPropertyEditPresenter
     }
 
     private void refreshYamlOverrideForAllNodes() {
-        final Rest<FetchNodeStatusResponse> fetchAllNodes = restFactory.create();
-
         // For each node fire off a request to get the yaml override for that node
         nodeCache.listEnabledNodes(
                 nodeNames -> nodeNames.forEach(this::refreshYamlOverrideForNode),
@@ -300,8 +288,7 @@ public final class ManageGlobalPropertyEditPresenter
             }
         });
         // Remove entries with no nodes
-        keysToRemove.forEach(key ->
-                effectiveValueToNodeSourcesMap.remove(key));
+        keysToRemove.forEach(effectiveValueToNodeSourcesMap::remove);
     }
 
     private void updateAllNodeEffectiveValues() {
@@ -309,15 +296,14 @@ public final class ManageGlobalPropertyEditPresenter
     }
 
     private void refreshYamlOverrideForNode(final String nodeName) {
-        final Rest<OverrideValue<String>> fetchNodeYamlOverrideRest = restFactory.create();
-
-        fetchNodeYamlOverrideRest
+        final Rest<OverrideValue<String>> rest = restFactory.create();
+        rest
                 .onSuccess(yamlOverride -> {
                     // Add the node's result to our maps
                     refreshYamlOverrideForNode(nodeName, yamlOverride);
                 })
-                .onFailure(throwable -> refreshYamlOverrideForNode(
-                        nodeName, ERROR_VALUE))
+                .onFailure(throwable ->
+                        refreshYamlOverrideForNode(nodeName, ERROR_VALUE))
                 .call(GLOBAL_CONFIG_RESOURCE_RESOURCE)
                 .getYamlValueByNodeAndName(configProperty.getName().toString(), nodeName);
     }
@@ -330,7 +316,13 @@ public final class ManageGlobalPropertyEditPresenter
         refreshValuesOnChange();
     }
 
-    private void showPopup(final PopupUiHandlers popupUiHandlers) {
+    private void show(final ConfigProperty configProperty,
+                      final PopupUiHandlers popupUiHandlers) {
+        setEntity(configProperty);
+        // find out the yaml values for each node in the cluster
+        refreshYamlOverrideForAllNodes();
+        updateAllNodeEffectiveValues();
+
         final String caption = getEntityDisplayType() + " - " + configProperty.getName();
         final PopupType popupType = PopupType.OK_CANCEL_DIALOG;
 
@@ -397,7 +389,7 @@ public final class ManageGlobalPropertyEditPresenter
     }
 
     private void setUiSourceText() {
-        String text = "";
+        String text;
         if (didAnyNodesError()) {
             text = NODES_UNAVAILABLE_MSG;
         } else if (getUniqueSourcesCount() > 1) {
@@ -409,7 +401,7 @@ public final class ManageGlobalPropertyEditPresenter
     }
 
     private void setUiEffectiveValueText() {
-        String text = "";
+        String text;
         if (didAnyNodesError()) {
             text = NODES_UNAVAILABLE_MSG;
         } else if (getUniqueEffectiveValuesCount() > 1) {
@@ -587,5 +579,4 @@ public final class ManageGlobalPropertyEditPresenter
 
         ButtonView addDataTypeHelpIcon(SvgPreset preset);
     }
-
 }

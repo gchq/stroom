@@ -10,34 +10,39 @@ public final class ProcessorExpressionUtil {
         // Utility class.
     }
 
-    public static ExpressionOperator createFolderExpression(final DocRef folder) {
-        return createFoldersExpression(folder);
-    }
-
-    public static ExpressionOperator createFoldersExpression(final DocRef... folders) {
-        final ExpressionOperator.Builder builder = new ExpressionOperator.Builder(Op.AND);
-
-        if (folders != null) {
-            final ExpressionOperator.Builder or = new ExpressionOperator.Builder(Op.OR);
-            for (final DocRef folder : folders) {
-                or.addTerm(ProcessorDataSource.PIPELINE, Condition.IN_FOLDER, folder);
-//                or.addTerm(ProcessTaskDataSource.FEED_UUID, Condition.IN_FOLDER, folder);
-            }
-            builder.addOperator(or.build());
-        }
-
-        return builder.build();
-    }
-
-//    public static ExpressionOperator createFeedExpression(final DocRef feedRef) {
+//    public static ExpressionOperator createBasicExpression() {
 //        return new ExpressionOperator.Builder(Op.AND)
-//                .addTerm(ProcessorTaskDataSource.FEED_UUID, Condition.IS_DOC_REF, feedRef)
+//                .addTerm(ProcessorFields.DELETED, Condition.EQUALS, false)
+//                .build();
+//    }
+//
+//    public static ExpressionOperator createFolderExpression(final DocRef folder) {
+//        return createFoldersExpression(folder);
+//    }
+//
+//    public static ExpressionOperator createFoldersExpression(final DocRef... folders) {
+//        final ExpressionOperator.Builder builder = new ExpressionOperator.Builder(Op.AND);
+//
+//        if (folders != null) {
+//            if (folders.length == 1) {
+//                builder.addTerm(ProcessorFields.PIPELINE, Condition.IN_FOLDER, folders[0]);
+//            } else if (folders.length > 0) {
+//                final ExpressionOperator.Builder or = new ExpressionOperator.Builder(Op.OR);
+//                for (final DocRef folder : folders) {
+//                    or.addTerm(ProcessorFields.PIPELINE, Condition.IN_FOLDER, folder);
+//                }
+//                builder.addOperator(or.build());
+//            }
+//        }
+//
+//        return builder.addTerm(ProcessorFields.DELETED, Condition.EQUALS, false)
 //                .build();
 //    }
 
     public static ExpressionOperator createPipelineExpression(final DocRef pipelineRef) {
         return new ExpressionOperator.Builder(Op.AND)
-                .addTerm(ProcessorDataSource.PIPELINE, Condition.IS_DOC_REF, pipelineRef)
+                .addTerm(ProcessorFields.PIPELINE, Condition.IS_DOC_REF, pipelineRef)
+                .addTerm(ProcessorFields.DELETED, Condition.EQUALS, false)
                 .build();
     }
 }

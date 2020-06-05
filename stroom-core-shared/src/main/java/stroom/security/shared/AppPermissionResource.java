@@ -2,6 +2,7 @@ package stroom.security.shared;
 
 import io.swagger.annotations.Api;
 import io.swagger.annotations.ApiOperation;
+import io.swagger.annotations.ApiParam;
 import org.fusesource.restygwt.client.DirectRestService;
 import stroom.util.shared.ResourcePaths;
 import stroom.util.shared.RestResource;
@@ -30,7 +31,7 @@ public interface AppPermissionResource extends RestResource, DirectRestService {
     @ApiOperation(
             value = "User and app permissions for the specified user",
             response = UserAndPermissions.class)
-    UserAndPermissions fetchUserAppPermissions(User user);
+    UserAndPermissions fetchUserAppPermissions(@ApiParam("user") User user);
 
     @GET
     @Path("fetchAllPermissions")
@@ -44,5 +45,5 @@ public interface AppPermissionResource extends RestResource, DirectRestService {
     @ApiOperation(
             value = "User and app permissions for the current session",
             response = Boolean.class)
-    Boolean changeUser(ChangeUserRequest changeUserRequest);
+    Boolean changeUser(@ApiParam("changeUserRequest") ChangeUserRequest changeUserRequest);
 }

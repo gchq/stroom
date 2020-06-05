@@ -11,6 +11,7 @@ import stroom.explorer.shared.ExplorerTreeFilter;
 import stroom.explorer.shared.PermissionInheritance;
 import stroom.security.api.SecurityContext;
 import stroom.security.shared.DocumentPermissionNames;
+import stroom.util.docref.DocRefPredicateFactory;
 import stroom.util.shared.ResourcePaths;
 import stroom.util.shared.RestResource;
 
@@ -19,6 +20,7 @@ import com.fasterxml.jackson.annotation.JsonInclude;
 import com.fasterxml.jackson.annotation.JsonInclude.Include;
 import com.fasterxml.jackson.annotation.JsonProperty;
 import io.swagger.annotations.Api;
+import io.swagger.annotations.ApiParam;
 
 import javax.inject.Inject;
 import javax.ws.rs.Consumes;
@@ -36,6 +38,7 @@ import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
 import java.util.Set;
+import java.util.function.Predicate;
 import java.util.stream.Collectors;
 
 @Api(value = "explorer - /v1")
@@ -78,7 +81,10 @@ public class NewUIExplorerResource implements RestResource {
                 searchTerm,
                 true);
 
-        filterDescendants(null, treeModel, filteredModel, 0, filter);
+        // Getting all the tree
+        Predicate<DocRef> filterPredicate = str -> true;
+
+        filterDescendants(null, treeModel, filteredModel, 0, filter, filterPredicate);
 
         // Flatten this tree out
         final List<DocRef> results = new ArrayList<>();
@@ -103,7 +109,9 @@ public class NewUIExplorerResource implements RestResource {
                 null,
                 true);
 
-        filterDescendants(null, treeModel, filteredModel, 0, filter);
+        final Predicate<DocRef> filterPredicate = DocRefPredicateFactory.createFuzzyMatchPredicate(filter.getNameFilter());
+
+        filterDescendants(null, treeModel, filteredModel, 0, filter, filterPredicate);
         final SimpleDocRefTreeDTO result = getRoot(filteredModel);
 
         return Response.ok(result).build();
@@ -180,7 +188,7 @@ public class NewUIExplorerResource implements RestResource {
 
     @POST
     @Path("/create")
-    public Response createDocument(final CreateOp op) {
+    public Response createDocument(@ApiParam("op") final CreateOp op) {
         explorerService.create(op.docRefType, op.docRefName, op.destinationFolderRef, op.permissionInheritance);
 
         return getExplorerTree();
@@ -219,7 +227,7 @@ public class NewUIExplorerResource implements RestResource {
 
     @POST
     @Path("/copy")
-    public Response copyDocument(final CopyOp op) {
+    public Response copyDocument(@ApiParam("op") final CopyOp op) {
         final BulkActionResult result = explorerService.copy(op.docRefs, op.destinationFolderRef, op.permissionInheritance);
         if (result.getMessage().isEmpty()) {
             return getExplorerTree();
@@ -316,7 +324,8 @@ public class NewUIExplorerResource implements RestResource {
                                       final TreeModel treeModelIn,
                                       final TreeModel treeModelOut,
                                       final int currentDepth,
-                                      final ExplorerTreeFilter filter) {
+                                      final ExplorerTreeFilter filter,
+                                      final Predicate<DocRef> filterPredicate) {
         int added = 0;
 
         final List<ExplorerNode> children = treeModelIn.getChildren(parent);
@@ -324,14 +333,15 @@ public class NewUIExplorerResource implements RestResource {
 
             for (final ExplorerNode child : children) {
                 // Recurse right down to find out if a descendant is being added and therefore if we need to include this as an ancestor.
-                final boolean hasChildren = filterDescendants(child, treeModelIn, treeModelOut, currentDepth + 1, filter);
+                final boolean hasChildren = filterDescendants(child, treeModelIn, treeModelOut, currentDepth + 1, filter, filterPredicate);
                 if (hasChildren) {
                     treeModelOut.add(parent, child);
                     added++;
 
+                    // Not ideal creating a new DocRef instance each time we want to compare an entity
                 } else if (ExplorerServiceImpl.checkType(child, filter.getIncludedTypes())
                         && ExplorerServiceImpl.checkTags(child, filter.getTags())
-                        && (ExplorerServiceImpl.checkName(child, filter.getNameFilter()))
+                        && (filterPredicate.test(child.getDocRef()))
                         && checkSecurity(child, filter.getRequiredPermissions())) {
                     treeModelOut.add(parent, child);
                     added++;

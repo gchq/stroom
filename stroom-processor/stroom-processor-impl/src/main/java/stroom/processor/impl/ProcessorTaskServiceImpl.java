@@ -21,10 +21,12 @@ import stroom.dashboard.expression.v1.Val;
 import stroom.datasource.api.v2.AbstractField;
 import stroom.datasource.api.v2.DataSource;
 import stroom.docref.DocRef;
+import stroom.docrefinfo.api.DocRefInfoService;
 import stroom.entity.shared.ExpressionCriteria;
+import stroom.pipeline.shared.PipelineDoc;
 import stroom.processor.api.ProcessorTaskService;
 import stroom.processor.shared.ProcessorTask;
-import stroom.processor.shared.ProcessorTaskDataSource;
+import stroom.processor.shared.ProcessorTaskFields;
 import stroom.processor.shared.ProcessorTaskSummary;
 import stroom.searchable.api.Searchable;
 import stroom.security.api.SecurityContext;
@@ -33,6 +35,7 @@ import stroom.util.shared.ResultPage;
 
 import javax.inject.Inject;
 import javax.inject.Singleton;
+import java.util.Optional;
 import java.util.function.Consumer;
 
 @Singleton
@@ -42,19 +45,29 @@ class ProcessorTaskServiceImpl implements ProcessorTaskService, Searchable {
     private static final DocRef PROCESSOR_TASK_PSEUDO_DOC_REF = new DocRef("Searchable", "Processor Tasks", "Processor Tasks");
 
     private final ProcessorTaskDao processorTaskDao;
+    private final DocRefInfoService docRefInfoService;
     private final SecurityContext securityContext;
 
     @Inject
     ProcessorTaskServiceImpl(final ProcessorTaskDao processorTaskDao,
+                             final DocRefInfoService docRefInfoService,
                              final SecurityContext securityContext) {
         this.processorTaskDao = processorTaskDao;
+        this.docRefInfoService = docRefInfoService;
         this.securityContext = securityContext;
     }
 
     @Override
     public ResultPage<ProcessorTask> find(final ExpressionCriteria criteria) {
-        return securityContext.secureResult(PERMISSION, () ->
-                processorTaskDao.find(criteria));
+        return securityContext.secureResult(PERMISSION, () -> {
+            final ResultPage<ProcessorTask> resultPage = processorTaskDao.find(criteria);
+            resultPage.getValues().forEach(processorTask -> {
+                final DocRef docRef = new DocRef(PipelineDoc.DOCUMENT_TYPE, processorTask.getProcessorFilter().getPipelineUuid());
+                final Optional<String> name = docRefInfoService.name(docRef);
+                processorTask.getProcessorFilter().setPipelineName(name.orElse(null));
+            });
+            return resultPage;
+        });
     }
 
     @Override
@@ -79,6 +92,6 @@ class ProcessorTaskServiceImpl implements ProcessorTaskService, Searchable {
 
     @Override
     public DataSource getDataSource() {
-        return new DataSource(ProcessorTaskDataSource.getFields());
+        return new DataSource(ProcessorTaskFields.getFields());
     }
 }

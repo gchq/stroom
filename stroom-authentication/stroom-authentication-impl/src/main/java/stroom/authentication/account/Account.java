@@ -35,8 +35,8 @@ public class Account {
     private String firstName;
     private String lastName;
     private String comments;
-    private Integer loginCount;
-    private Integer loginFailures;
+    private int loginCount;
+    private int loginFailures;
     private Long lastLoginMs;
     private Long reactivatedMs;
     private boolean forcePasswordChange;
@@ -157,19 +157,19 @@ public class Account {
         this.comments = comments;
     }
 
-    public Integer getLoginCount() {
+    public int getLoginCount() {
         return loginCount;
     }
 
-    public void setLoginCount(final Integer loginCount) {
+    public void setLoginCount(final int loginCount) {
         this.loginCount = loginCount;
     }
 
-    public Integer getLoginFailures() {
+    public int getLoginFailures() {
         return loginFailures;
     }
 
-    public void setLoginFailures(final Integer loginFailures) {
+    public void setLoginFailures(final int loginFailures) {
         this.loginFailures = loginFailures;
     }
 

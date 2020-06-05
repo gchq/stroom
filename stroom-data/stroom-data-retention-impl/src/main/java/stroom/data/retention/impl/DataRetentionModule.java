@@ -17,16 +17,14 @@
 package stroom.data.retention.impl;
 
 import stroom.data.retention.shared.DataRetentionRules;
-import stroom.docref.DocRef;
-import stroom.util.RunnableWrapper;
 import stroom.job.api.ScheduledJobsBinder;
+import stroom.util.RunnableWrapper;
 import stroom.util.guice.RestResourcesBinder;
 
 import com.google.inject.AbstractModule;
 import com.google.inject.Provides;
 
 import javax.inject.Inject;
-import java.util.Set;
 
 import static stroom.job.api.Schedule.ScheduleType.CRON;
 
@@ -49,17 +47,7 @@ public class DataRetentionModule extends AbstractModule {
     @SuppressWarnings("unused") // called by guice
     @Provides
     DataRetentionRules getRules(final DataRetentionRulesService dataRetentionRulesService) {
-        DataRetentionRules dataRetentionRules = null;
-        final Set<DocRef> set = dataRetentionRulesService.listDocuments();
-        if (set != null && set.size() == 1) {
-            dataRetentionRules = dataRetentionRulesService.readDocument(set.iterator().next());
-        }
-
-        if (dataRetentionRules != null) {
-            return dataRetentionRules;
-        }
-
-        return null;
+        return dataRetentionRulesService.getOrCreate();
     }
 
     private static class DataRetention extends RunnableWrapper {

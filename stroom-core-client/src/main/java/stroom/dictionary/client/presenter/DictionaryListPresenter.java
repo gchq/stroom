@@ -80,7 +80,7 @@ public class DictionaryListPresenter extends MyPresenterWidget<WrapperView>
     private void onAdd(final ClickEvent event) {
         final EntityChooser chooser = dictionarySelection.get();
         chooser.setCaption("Import a dictionary");
-        chooser.setIncludedTypes(DictionaryDoc.ENTITY_TYPE);
+        chooser.setIncludedTypes(DictionaryDoc.DOCUMENT_TYPE);
         chooser.setRequiredPermissions(DocumentPermissionNames.USE);
         chooser.addDataSelectionHandler(e -> {
             final DocRef docRef = chooser.getSelectedEntityReference();

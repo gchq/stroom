@@ -20,7 +20,6 @@ import stroom.util.logging.LambdaLogger;
 import stroom.util.logging.LambdaLoggerFactory;
 
 import com.google.common.base.Preconditions;
-import com.google.common.collect.ImmutableMap;
 import io.reactivex.Flowable;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -62,12 +61,17 @@ class StatisticsSearchServiceImpl implements StatisticsSearchService {
     private final TaskContextFactory taskContextFactory;
 
     //defines how the entity fields relate to the table columns
-    private static final Map<String, List<String>> STATIC_FIELDS_TO_COLUMNS_MAP = ImmutableMap.<String, List<String>>builder()
-            .put(StatisticStoreDoc.FIELD_NAME_DATE_TIME, Collections.singletonList(ALIASED_TIME_MS_COL))
-            .put(StatisticStoreDoc.FIELD_NAME_PRECISION_MS, Collections.singletonList(ALIASED_PRECISION_COL))
-            .put(StatisticStoreDoc.FIELD_NAME_COUNT, Collections.singletonList(ALIASED_COUNT_COL))
-            .put(StatisticStoreDoc.FIELD_NAME_VALUE, Arrays.asList(ALIASED_COUNT_COL, ALIASED_VALUE_COL))
-            .build();
+
+    private static final Map<String, List<String>> COMMON_STATIC_FIELDS_TO_COLUMNS_MAP = Map.of(
+            StatisticStoreDoc.FIELD_NAME_DATE_TIME, Collections.singletonList(ALIASED_TIME_MS_COL),
+            StatisticStoreDoc.FIELD_NAME_PRECISION_MS, Collections.singletonList(ALIASED_PRECISION_COL),
+            StatisticStoreDoc.FIELD_NAME_COUNT, Collections.singletonList(ALIASED_COUNT_COL)
+    );
+
+    // VALUE stat only cols
+    private static final Map<String, List<String>> VALUE_STAT_STATIC_FIELDS_TO_COLUMNS_MAP = Map.of(
+            StatisticStoreDoc.FIELD_NAME_VALUE, Arrays.asList(ALIASED_COUNT_COL, ALIASED_VALUE_COL)
+    );
 
     @SuppressWarnings("unused") // Called by DI
     @Inject
@@ -101,7 +105,11 @@ class StatisticsSearchServiceImpl implements StatisticsSearchService {
         //assemble a map of how fields map to 1-* select cols
 
         //get all the static field mappings
-        final Map<String, List<String>> fieldToColumnsMap = new HashMap<>(STATIC_FIELDS_TO_COLUMNS_MAP);
+        final Map<String, List<String>> fieldToColumnsMap = new HashMap<>(COMMON_STATIC_FIELDS_TO_COLUMNS_MAP);
+
+        if (StatisticType.VALUE.equals(statisticStoreEntity.getStatisticType())) {
+            fieldToColumnsMap.putAll(VALUE_STAT_STATIC_FIELDS_TO_COLUMNS_MAP);
+        }
 
         //now add in all the dynamic tag field mappings
         statisticStoreEntity.getFieldNames().forEach(tagField ->

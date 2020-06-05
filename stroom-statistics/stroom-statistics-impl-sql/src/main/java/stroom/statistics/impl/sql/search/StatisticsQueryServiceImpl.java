@@ -5,7 +5,11 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import stroom.datasource.api.v2.DataSource;
 import stroom.docref.DocRef;
+import stroom.query.api.v2.ExpressionOperator;
+import stroom.query.api.v2.ExpressionParamUtil;
+import stroom.query.api.v2.ExpressionUtil;
 import stroom.query.api.v2.OffsetRange;
+import stroom.query.api.v2.Query;
 import stroom.query.api.v2.QueryKey;
 import stroom.query.api.v2.Result;
 import stroom.query.api.v2.SearchRequest;
@@ -26,6 +30,7 @@ import stroom.util.logging.LambdaLoggerFactory;
 import javax.inject.Inject;
 import java.util.Collections;
 import java.util.List;
+import java.util.Map;
 import java.util.stream.Collectors;
 
 @SuppressWarnings("unused") //used by DI
@@ -65,6 +70,15 @@ public class StatisticsQueryServiceImpl implements StatisticsQueryService {
     public SearchResponse search(final SearchRequest searchRequest) {
         return securityContext.useAsReadResult(() -> {
             LOGGER.debug("search called for searchRequest {}", searchRequest);
+
+            // Replace expression parameters.
+            final Query query = searchRequest.getQuery();
+            if (query != null) {
+                ExpressionOperator expression = query.getExpression();
+                final Map<String, String> paramMap = ExpressionParamUtil.createParamMap(query.getParams());
+                expression = ExpressionUtil.replaceExpressionParameters(expression, paramMap);
+                query.setExpression(expression);
+            }
 
             final DocRef docRef = Preconditions.checkNotNull(
                     Preconditions.checkNotNull(

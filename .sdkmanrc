@@ -1,0 +1,4 @@
+# Enable auto-env through the sdkman_auto_env config
+# Add key=value pairs of SDKs to use below
+java=12.0.2.j9-adpt
+

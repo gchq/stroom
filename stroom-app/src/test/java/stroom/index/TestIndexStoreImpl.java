@@ -18,26 +18,32 @@
 package stroom.index;
 
 
-import org.junit.jupiter.api.Test;
 import stroom.docref.DocRef;
 import stroom.index.impl.IndexSerialiser;
 import stroom.index.impl.IndexStore;
 import stroom.index.shared.IndexDoc;
 import stroom.index.shared.IndexField;
 import stroom.index.shared.IndexFields;
+import stroom.legacy.impex_6_1.LegacyIndexDeserialiser;
+import stroom.legacy.impex_6_1.LegacyXmlSerialiser;
+import stroom.legacy.impex_6_1.MappingUtil;
 import stroom.test.AbstractCoreIntegrationTest;
+
+import org.junit.jupiter.api.Test;
 
 import javax.inject.Inject;
 import java.util.List;
+import java.util.stream.Collectors;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
 class TestIndexStoreImpl extends AbstractCoreIntegrationTest {
     @Inject
     private IndexStore indexStore;
-
     @Inject
     private IndexSerialiser indexSerialiser;
+    @Inject
+    private LegacyIndexDeserialiser legacyIndexDeserialiser;
 
     private DocRef testIndex;
     private DocRef refIndex;
@@ -58,10 +64,17 @@ class TestIndexStoreImpl extends AbstractCoreIntegrationTest {
 
     @Test
     void testIndexRetrieval() {
-        assertThat(indexStore.list().size()).isEqualTo(2);
+        List<DocRef> list = indexStore.list();
+        assertThat(list.size()).isEqualTo(2);
 
-        final IndexDoc index = indexStore.readDocument(indexStore.list().get(1));
+        assertThat(list.stream().filter(docRef -> docRef.getName().equals("Test index")).
+                collect(Collectors.toList()).size()).isEqualTo(1);
+        assertThat(list.stream().filter(docRef -> docRef.getName().equals("Ref index")).
+                collect(Collectors.toList()).size()).isEqualTo(1);
 
+        final IndexDoc index = indexStore.readDocument(list.stream().
+                filter(docRef -> docRef.getName().equals("Test index")).findFirst().get());
+        
         assertThat(index).isNotNull();
         assertThat(index.getName()).isEqualTo("Test index");
 
@@ -105,8 +118,8 @@ class TestIndexStoreImpl extends AbstractCoreIntegrationTest {
                 "      <termPositions>false</termPositions>\n" +
                 "   </field>\n" +
                 "</fields>\n";
-        final IndexFields indexFields = indexSerialiser.getIndexFieldsFromLegacyXML(xml);
-        assertThat(index.getFields()).isEqualTo(indexFields.getIndexFields());
+        final List<IndexField> indexFields = MappingUtil.map(LegacyXmlSerialiser.getIndexFieldsFromLegacyXml(xml));
+        assertThat(index.getFields()).isEqualTo(indexFields);
     }
 
     @Test

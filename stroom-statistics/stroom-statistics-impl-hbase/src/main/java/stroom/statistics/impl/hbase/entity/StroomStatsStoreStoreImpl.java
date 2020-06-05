@@ -24,36 +24,25 @@ import stroom.docstore.api.Store;
 import stroom.docstore.api.StoreFactory;
 import stroom.docstore.api.UniqueNameUtil;
 import stroom.explorer.shared.DocumentType;
-import stroom.importexport.migration.LegacyXMLSerialiser;
 import stroom.importexport.shared.ImportState;
 import stroom.importexport.shared.ImportState.ImportMode;
-import stroom.security.api.SecurityContext;
 import stroom.statistics.impl.hbase.shared.StroomStatsStoreDoc;
-import stroom.statistics.impl.hbase.shared.StroomStatsStoreEntityData;
 import stroom.util.shared.Message;
-import stroom.util.shared.Severity;
 
 import javax.inject.Inject;
 import javax.inject.Singleton;
-import java.io.IOException;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
-import java.util.UUID;
 
 @Singleton
 class StroomStatsStoreStoreImpl implements StroomStatsStoreStore {
     private final Store<StroomStatsStoreDoc> store;
-    private final SecurityContext securityContext;
-    private final StroomStatsStoreSerialiser serialiser;
 
     @Inject
     StroomStatsStoreStoreImpl(final StoreFactory storeFactory,
-                              final SecurityContext securityContext,
                               final StroomStatsStoreSerialiser serialiser) {
         this.store = storeFactory.createStore(serialiser, StroomStatsStoreDoc.DOCUMENT_TYPE, StroomStatsStoreDoc.class);
-        this.securityContext = securityContext;
-        this.serialiser = serialiser;
     }
 
     ////////////////////////////////////////////////////////////////////////
@@ -153,13 +142,7 @@ class StroomStatsStoreStoreImpl implements StroomStatsStoreStore {
 
     @Override
     public ImpexDetails importDocument(final DocRef docRef, final Map<String, byte[]> dataMap, final ImportState importState, final ImportMode importMode) {
-        // Convert legacy import format to the new format.
-        final Map<String, byte[]> map = convert(docRef, dataMap, importState, importMode);
-        if (map != null) {
-            return store.importDocument(docRef, map, importState, importMode);
-        }
-
-        return new ImpexDetails(docRef);
+        return store.importDocument(docRef, dataMap, importState, importMode);
     }
 
     @Override
@@ -168,57 +151,6 @@ class StroomStatsStoreStoreImpl implements StroomStatsStoreStore {
             return store.exportDocument(docRef, messageList, new AuditFieldFilter<>());
         }
         return store.exportDocument(docRef, messageList, d -> d);
-    }
-
-    private Map<String, byte[]> convert(final DocRef docRef, final Map<String, byte[]> dataMap, final ImportState importState, final ImportMode importMode) {
-        Map<String, byte[]> result = dataMap;
-        if (dataMap.size() > 0 && !dataMap.containsKey("meta")) {
-            final String uuid = docRef.getUuid();
-            try {
-                final boolean exists = store.exists(docRef);
-                StroomStatsStoreDoc document;
-                if (exists) {
-                    document = readDocument(docRef);
-
-                } else {
-                    final OldStroomStatsStoreEntity oldStroomStatsStore = new OldStroomStatsStoreEntity();
-                    final LegacyXMLSerialiser legacySerialiser = new LegacyXMLSerialiser();
-                    legacySerialiser.performImport(oldStroomStatsStore, dataMap);
-
-                    final long now = System.currentTimeMillis();
-                    final String userId = securityContext.getUserId();
-
-                    document = new StroomStatsStoreDoc();
-                    document.setType(docRef.getType());
-                    document.setUuid(uuid);
-                    document.setName(docRef.getName());
-                    document.setVersion(UUID.randomUUID().toString());
-                    document.setCreateTimeMs(now);
-                    document.setUpdateTimeMs(now);
-                    document.setCreateUser(userId);
-                    document.setUpdateUser(userId);
-
-                    document.setDescription(oldStroomStatsStore.getDescription());
-                    document.setStatisticType(oldStroomStatsStore.getStatisticType());
-                    document.setRollUpType(oldStroomStatsStore.getRollUpType());
-                    document.setPrecision(oldStroomStatsStore.getPrecisionAsInterval());
-                    document.setEnabled(oldStroomStatsStore.isEnabled());
-
-                    final StroomStatsStoreEntityData stroomStatsStoreEntityData = serialiser.getDataFromLegacyXML(oldStroomStatsStore.getData());
-                    if (stroomStatsStoreEntityData != null) {
-                        document.setConfig(stroomStatsStoreEntityData);
-                    }
-                }
-
-                result = serialiser.write(document);
-
-            } catch (final IOException | RuntimeException e) {
-                importState.addMessage(Severity.ERROR, e.getMessage());
-                result = null;
-            }
-        }
-
-        return result;
     }
 
     @Override

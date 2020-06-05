@@ -16,12 +16,13 @@
 
 package stroom.statistics.impl.sql;
 
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 import stroom.statistics.impl.sql.shared.StatisticType;
 import stroom.task.api.TaskContext;
 import stroom.util.date.DateUtil;
+import stroom.util.logging.LambdaLogger;
+import stroom.util.logging.LambdaLoggerFactory;
 import stroom.util.logging.LogExecutionTime;
+import stroom.util.logging.LogUtil;
 import stroom.util.shared.ModelStringUtil;
 import stroom.util.time.StroomDuration;
 
@@ -33,7 +34,9 @@ import java.sql.SQLException;
 import java.sql.Statement;
 import java.sql.Types;
 import java.time.Instant;
+import java.time.temporal.ChronoUnit;
 import java.util.Arrays;
+import java.util.Collections;
 import java.util.List;
 
 @Singleton
@@ -43,15 +46,21 @@ public class SQLStatisticAggregationTransactionHelper {
     // table on each pass
     //
     // private static final int AGGREGATE_INCREMENT = 10000;
-    public static final byte DEFAULT_PRECISION = 0;
-    public static final long MS_HOUR = 1000 * 60 * 60;
-    public static final long MS_DAY = MS_HOUR * 24;
+    public static final long MS_HOUR = ChronoUnit.HOURS.getDuration().toMillis();
+    public static final long MS_DAY = ChronoUnit.DAYS.getDuration().toMillis();
     public static final long MS_MONTH = 31 * MS_DAY;
+
+    public static final byte DEFAULT_PRECISION = 0;
+    public static final byte MONTH_PRECISION = (byte) Math.floor(Math.log10(MS_MONTH)); // 9
+    public static final byte DAY_PRECISION = (byte) Math.floor(Math.log10(MS_DAY)); // 7
+    public static final byte HOUR_PRECISION = (byte) Math.floor(Math.log10(MS_HOUR)); // 6
+
     public static final String AGGREGATE_MAX_ID = "" +
             "SELECT MAX(" +
             SQLStatisticNames.ID +
             ") FROM "
             + SQLStatisticNames.SQL_STATISTIC_VALUE_SOURCE_TABLE_NAME;
+
     public static final String AGGREGATE_MIN_ID = "" +
             "SELECT MIN(" +
             SQLStatisticNames.ID +
@@ -59,17 +68,27 @@ public class SQLStatisticAggregationTransactionHelper {
             SQLStatisticNames.SQL_STATISTIC_VALUE_SOURCE_TABLE_NAME;
     public static final String TRUNCATE_TABLE_SQL = "TRUNCATE TABLE ";
     public static final String CLEAR_TABLE_SQL = "DELETE FROM ";
-    public static final byte MONTH_PRECISION = (byte) Math.floor(Math.log10(MS_MONTH));
-    public static final byte DAY_PRECISION = (byte) Math.floor(Math.log10(MS_DAY));
-    public static final byte HOUR_PRECISION = (byte) Math.floor(Math.log10(MS_HOUR));
-    private static final Logger LOGGER = LoggerFactory.getLogger(SQLStatisticAggregationTransactionHelper.class);
+
+
+    private static final LambdaLogger LOGGER = LambdaLoggerFactory.getLogger(SQLStatisticAggregationTransactionHelper.class);
     private static final String AGGREGATE = "AGGREGATE";
+
     private static final String AGGREGATE_COUNT = "" +
             "SELECT COUNT(*) " +
             "FROM SQL_STAT_VAL_SRC ";
+
     private static final String DELETE_OLD_STATS = "" +
             "DELETE FROM SQL_STAT_VAL " +
             "WHERE TIME_MS < ? ";
+
+    private static final String DELETE_UNUSED_KEYS = "" +
+            "DELETE FROM SQL_STAT_KEY " +
+            "WHERE NOT EXISTS ( " +
+            "        SELECT null " +
+            "        FROM SQL_STAT_VAL " +
+            "        WHERE FK_SQL_STAT_KEY_ID = SQL_STAT_KEY.ID " +
+            ")";
+
     // Mark a batch of n records as 'processing' so we can work on them in
     // isolation
     private static final String STAGE1_MARK_PROCESSING = "" +
@@ -88,6 +107,7 @@ public class SQLStatisticAggregationTransactionHelper {
             "LEFT OUTER JOIN SQL_STAT_KEY SSK on (SSK.NAME = SSVS.NAME) " +
             "WHERE SSVS.PROCESSING = 1 " +
             "AND SSK.ID IS NULL";
+
     // grab the oldest n records from SVS and aggregate those records with the
     // right time range
     // then outer join them to any existing SV records and add the values
@@ -95,11 +115,13 @@ public class SQLStatisticAggregationTransactionHelper {
     // relies on SV having a unique key index on FK_SQL_STAT_KEY_ID, TIME_MS,
     // PRES, VAL_TP
     private static final String SPROC_STAGE1_UPSERT = "{call stage1Upsert (?, ?, ?, ?, ?)}";
+
     private static final String STAGE1_AGGREGATE_DELETE_SOURCE = "" +
             "DELETE FROM SQL_STAT_VAL_SRC " +
             "WHERE PROCESSING = 1 " +
             "AND TIME_MS < ? " +
             "AND VAL_TP = ?";
+
     // Find if records exist in STAT_VAL older than a given age for a given
     // precision
     private static final String STAGE2_FIND_ROWS_TO_MOVE = "" +
@@ -112,6 +134,7 @@ public class SQLStatisticAggregationTransactionHelper {
             "       AND SSV.PRES = ? " + // old PRES
             "       AND SSV.VAL_TP = ? " +
             "   ) ";
+
     // Copy stats from one precision to a coarser precision, aggregating them
     // with any stats
     // in the target precision if there are any
@@ -124,6 +147,7 @@ public class SQLStatisticAggregationTransactionHelper {
             "WHERE TIME_MS < ? " +
             "AND PRES = ? " +
             "AND VAL_TP = ?";
+
     private final SQLStatisticsDbConnProvider sqlStatisticsDbConnProvider;
     private final SQLStatisticsConfig config;
 
@@ -170,8 +194,12 @@ public class SQLStatisticAggregationTransactionHelper {
         return ((timeMs) / scale) * scale;
     }
 
-    protected int doAggregateSQL_Update(final Connection connection, final TaskContext taskContext, final String prefix,
-                                        final String sql, final List<Object> args) throws SQLException {
+    protected int doAggregateSQL_Update(final Connection connection,
+                                        final TaskContext taskContext,
+                                        final String prefix,
+                                        final String sql,
+                                        final List<Object> args) throws SQLException {
+
         final LogExecutionTime time = new LogExecutionTime();
         final String trace = buildSQLTrace(sql, args);
 
@@ -179,7 +207,8 @@ public class SQLStatisticAggregationTransactionHelper {
 
         final int count = ConnectionUtil.executeUpdate(connection, sql, args);
 
-        logDebug("doAggretateSQL - {} - {} in {} - {}", prefix, ModelStringUtil.formatCsv(count), time, trace);
+        LOGGER.debug(() -> LogUtil.message("doAggretateSQL - {} - {} in {} - {}",
+                prefix, ModelStringUtil.formatCsv(count), time, trace));
         return count;
     }
 
@@ -192,7 +221,7 @@ public class SQLStatisticAggregationTransactionHelper {
 
         final long result = ConnectionUtil.executeQueryLongResult(connection, sql, args);
 
-        logDebug("doAggretateSQL - {} - {} in {} - {}", prefix, ModelStringUtil.formatCsv(result), time, trace);
+        LOGGER.debug("doAggretateSQL - {} - {} in {} - {}", prefix, ModelStringUtil.formatCsv(result), time, trace);
         return result;
     }
 
@@ -200,7 +229,9 @@ public class SQLStatisticAggregationTransactionHelper {
         return aggregateConfig;
     }
 
-    protected Long doAggregateSQL_LongResult(final Connection connection, final String sql, final List<Object> args)
+    protected Long doAggregateSQL_LongResult(final Connection connection,
+                                             final String sql,
+                                             final List<Object> args)
             throws SQLException {
         return ConnectionUtil.executeQueryLongResult(connection, sql, args);
     }
@@ -227,7 +258,8 @@ public class SQLStatisticAggregationTransactionHelper {
         return deleteOldStats(Instant.now(), taskContext);
     }
 
-    public Long deleteOldStats(final Instant timeNow, final TaskContext taskContext) throws SQLException {
+    public Long deleteOldStats(final Instant timeNow,
+                               final TaskContext taskContext) throws SQLException {
         final AggregateConfig mostCoarseLevel = new AggregateConfig(StatisticType.COUNT, MS_MONTH, MONTH_PRECISION,
                 DEFAULT_PRECISION);
 
@@ -240,8 +272,12 @@ public class SQLStatisticAggregationTransactionHelper {
             // everything older than that time bucket
             final long oldestTimeBucketToKeep = mostCoarseLevel.getAggregateToMs(timeNow.minus(maxProcessingAge.getDuration()));
             try (final Connection connection = sqlStatisticsDbConnProvider.getConnection()) {
-                final long rowsAffected = doAggregateSQL_Update(connection, taskContext, "", DELETE_OLD_STATS,
-                        Arrays.asList((Object) oldestTimeBucketToKeep));
+                final long rowsAffected = doAggregateSQL_Update(
+                        connection,
+                        taskContext,
+                        "",
+                        DELETE_OLD_STATS,
+                        Collections.singletonList(oldestTimeBucketToKeep));
                 LOGGER.info("Deleted {} stats with a time older than {}", rowsAffected,
                         DateUtil.createNormalDateTimeString(oldestTimeBucketToKeep));
                 return rowsAffected;
@@ -251,35 +287,77 @@ public class SQLStatisticAggregationTransactionHelper {
         }
     }
 
-    protected void logDebug(final Object... args) {
-        Arrays.asList(args).forEach(arg -> LOGGER.debug(arg.toString()));
+    // Must be done under cluster lock and at the right time so we don't delete keys that have just
+    // been created but don't yet have child records.
+    public int deleteUnusedKeys(final TaskContext taskContext) throws SQLException {
+
+        LOGGER.debug("Deleting unused keys");
+
+        // convert the max age into a time bucket so we can delete
+        // everything older than that time bucket
+        try (final Connection connection = sqlStatisticsDbConnProvider.getConnection()) {
+
+            final LogExecutionTime time = new LogExecutionTime();
+
+            final String sql = DELETE_UNUSED_KEYS;
+
+            taskContext.info(() -> "\n " + sql);
+
+            final int count = ConnectionUtil.executeUpdate(
+                    connection,
+                    DELETE_UNUSED_KEYS,
+                    Collections.emptyList());
+
+            LOGGER.debug(() -> LogUtil.message("deleteUnusedKeys - {} in {} - {}",
+                    ModelStringUtil.formatCsv(count), time, cleanSqlForLogs(sql)));
+
+            return count;
+        }
     }
 
-    public long aggregateConfigStage1(final TaskContext taskContext, final String prefix, final long batchSize,
+    public long aggregateConfigStage1(final TaskContext taskContext,
+                                      final String prefix,
+                                      final long batchSize,
                                       final Instant timeNow) throws SQLException {
         long processCount = 0;
 
         try (final Connection connection = sqlStatisticsDbConnProvider.getConnection()) {
-            // mark a set of records in STATVAL_SRC as being processed so all
+            // mark a set of records in STAT_VAL_SRC as being processed so all
             // DML below can filter by them
             // records are chosen at random to avoid overhead of a sort
-            processCount = doAggregateSQL_Update(connection, taskContext, AGGREGATE, STAGE1_MARK_PROCESSING,
-                    Arrays.asList((Object) batchSize));
+            processCount = doAggregateSQL_Update(
+                    connection,
+                    taskContext,
+                    AGGREGATE,
+                    STAGE1_MARK_PROCESSING,
+                    Collections.singletonList(batchSize));
 
             // Fill the STAT_KEY table with any new Keys
-            doAggregateSQL_Update(connection, taskContext, AGGREGATE, STAGE1_AGGREGATE_SOURCE_KEY, null);
+            doAggregateSQL_Update(
+                    connection,
+                    taskContext,
+                    AGGREGATE,
+                    STAGE1_AGGREGATE_SOURCE_KEY,
+                    null);
 
             // Stage 1 is about handling values in the source table that are
             // implied to be precision 0 and aggregating them into SQL_STAT_VAL
             // at the correct precision for their age.
             for (final AggregateConfig level : aggregateConfig) {
                 if (level.getLastPrecision() == 0) {
+                    // precision => bucket size
+                    // DEFAULT: 0 => 1 ms
+                    // HOUR:    6 => 1_000_000 ms (true hour: 3_600_000 ms)
+                    // DAY:     7 => 10_000_000 ms (true day: 86_400_000 ms)
+                    // MONTH:   9 => 1_000_000_000 ms (true 31day month = 2_678_400_000 ms)
                     final long bucketSize = (long) Math.pow(10, level.getPrecision());
                     final String bucketSizeStr = ModelStringUtil.formatDurationString(bucketSize);
                     final long aggregateToMs = level.getAggregateToMs(timeNow);
 
-                    final String newPrefix = prefix + " Source " + level.getValueType() + " < "
-                            + DateUtil.createNormalDateTimeString(aggregateToMs) + " P=" + level.getPrecision()
+                    final String newPrefix = prefix + " Source "
+                            + level.getValueType() + " < "
+                            + DateUtil.createNormalDateTimeString(aggregateToMs)
+                            + " P=" + level.getPrecision()
                             + " (Size " + bucketSizeStr + ")";
 
                     // insert a batch of data in STAT_VAL_SRC into
@@ -305,14 +383,20 @@ public class SQLStatisticAggregationTransactionHelper {
                     // i.e. all the records we have just upserted.
                     int rowsAffectedOnDelete = 0;
                     if (rowsAffectedOnUpsert > 0) {
-                        rowsAffectedOnDelete = doAggregateSQL_Update(connection, taskContext, newPrefix,
+                        rowsAffectedOnDelete = doAggregateSQL_Update(
+                                connection,
+                                taskContext,
+                                newPrefix,
                                 STAGE1_AGGREGATE_DELETE_SOURCE,
-                                Arrays.asList(aggregateToMs, level.getValueType().getPrimitiveValue()));
+                                Arrays.asList(
+                                        aggregateToMs,
+                                        level.getValueType().getPrimitiveValue()));
                     }
 
                     if (rowsAffectedOnUpsert > 0 && rowsAffectedOnDelete == 0) {
                         LOGGER.error(
-                                "Deleted {} rows from SQL_STAT_VAL_SRC but didn't affect any rows in SQL_STAT_VAL, may have lost some stats",
+                                "Deleted {} rows from SQL_STAT_VAL_SRC but didn't affect any " +
+                                        "rows in SQL_STAT_VAL, may have lost some stats",
                                 rowsAffectedOnDelete);
                     }
                 }
@@ -334,7 +418,7 @@ public class SQLStatisticAggregationTransactionHelper {
         final LogExecutionTime time = new LogExecutionTime();
         taskContext.info(() -> prefix + "\n " + SPROC_STAGE1_UPSERT);
 
-        LOGGER.debug(">>> {}", SPROC_STAGE1_UPSERT);
+        LOGGER.debug(() -> ">>> " + cleanSqlForLogs(SPROC_STAGE1_UPSERT));
         try (final CallableStatement stmt = connection.prepareCall(SPROC_STAGE1_UPSERT)) {
             // Set IN parameters
             stmt.setByte(1, sqlPrecision);
@@ -355,7 +439,7 @@ public class SQLStatisticAggregationTransactionHelper {
             throw sqlException;
         }
 
-        logDebug("callUpsert1 - {} - {} in {}", prefix, ModelStringUtil.formatCsv(count), time);
+        LOGGER.debug("callUpsert1 - {} - {} in {}", prefix, ModelStringUtil.formatCsv(count), time);
         return count;
     }
 
@@ -371,7 +455,7 @@ public class SQLStatisticAggregationTransactionHelper {
         final LogExecutionTime time = new LogExecutionTime();
         taskContext.info(() -> prefix + "\n " + SPROC_STAGE2_UPSERT);
 
-        LOGGER.debug(">>> {}", SPROC_STAGE2_UPSERT);
+        LOGGER.debug(">>> " + cleanSqlForLogs(SPROC_STAGE2_UPSERT));
         try (final CallableStatement stmt = connection.prepareCall(SPROC_STAGE2_UPSERT)) {
             // Set IN parameters
             stmt.setByte(1, targetPrecision);
@@ -393,7 +477,7 @@ public class SQLStatisticAggregationTransactionHelper {
             throw sqlException;
         }
 
-        logDebug("callUpsert2 - {} - {} in {}", prefix, ModelStringUtil.formatCsv(count), time);
+        LOGGER.debug("callUpsert2 - {} - {} in {}", prefix, ModelStringUtil.formatCsv(count), time);
         return count;
     }
 
@@ -502,12 +586,21 @@ public class SQLStatisticAggregationTransactionHelper {
         for (int i = 0; i < sql.length(); i++) {
             final char c = sql.charAt(i);
             if (c == '?') {
-                sqlString.append(args.get(arg++));
+                try {
+                    sqlString.append(args.get(arg++));
+                } catch (IndexOutOfBoundsException e) {
+                    LOGGER.warn("Mismatch between '?' and args. sql: {}, args: {}", sql, args);
+                    sqlString.append(c);
+                }
             } else {
                 sqlString.append(c);
             }
         }
-        return sqlString.toString();
+        return cleanSqlForLogs(sqlString.toString());
+    }
+
+    private static String cleanSqlForLogs(final String sql) {
+        return sql.replaceAll("\\s+", " ");
     }
 
     public static class AggregateConfig {

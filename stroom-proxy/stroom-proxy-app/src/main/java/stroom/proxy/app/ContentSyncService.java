@@ -1,9 +1,5 @@
 package stroom.proxy.app;
 
-import com.codahale.metrics.health.HealthCheck;
-import io.dropwizard.lifecycle.Managed;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 import stroom.docref.DocRef;
 import stroom.importexport.api.DocumentData;
 import stroom.importexport.api.ImportExportActionHandler;
@@ -14,12 +10,19 @@ import stroom.util.HasHealthCheck;
 import stroom.util.authentication.DefaultOpenIdCredentials;
 import stroom.util.logging.LogUtil;
 
+import com.codahale.metrics.health.HealthCheck;
+import com.google.common.base.Strings;
+import io.dropwizard.lifecycle.Managed;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+
 import javax.inject.Inject;
 import javax.inject.Provider;
 import javax.ws.rs.client.Client;
 import javax.ws.rs.client.Entity;
 import javax.ws.rs.client.Invocation;
 import javax.ws.rs.client.WebTarget;
+import javax.ws.rs.core.GenericType;
 import javax.ws.rs.core.MediaType;
 import javax.ws.rs.core.Response;
 import javax.ws.rs.core.Response.Status;
@@ -32,6 +35,8 @@ import java.util.concurrent.Executors;
 import java.util.concurrent.ScheduledExecutorService;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicBoolean;
+import java.util.function.Function;
+import java.util.stream.Collectors;
 
 public class ContentSyncService implements Managed, HasHealthCheck {
     private static final Logger LOGGER = LoggerFactory.getLogger(ContentSyncService.class);
@@ -63,7 +68,11 @@ public class ContentSyncService implements Managed, HasHealthCheck {
         if (contentSyncConfig.isContentSyncEnabled()) {
             if (scheduledExecutorService == null) {
                 scheduledExecutorService = Executors.newSingleThreadScheduledExecutor();
-                scheduledExecutorService.scheduleWithFixedDelay(this::sync, 0, contentSyncConfig.getSyncFrequency(), TimeUnit.MILLISECONDS);
+                scheduledExecutorService.scheduleWithFixedDelay(
+                        this::sync,
+                        0,
+                        contentSyncConfig.getSyncFrequency(),
+                        TimeUnit.MILLISECONDS);
             }
         }
     }
@@ -79,35 +88,56 @@ public class ContentSyncService implements Managed, HasHealthCheck {
     }
 
     private void sync() {
-        importExportActionHandlers.forEach(importExportActionHandler -> {
-            final String type = importExportActionHandler.getType();
-            try {
-                final String url = contentSyncConfig.getUpstreamUrl().get(type);
-                if (url != null) {
-                    LOGGER.info("Syncing content from '" + url + "'");
-                    final Response response = createClient(url, "/list").get();
-                    if (response.getStatusInfo().getStatusCode() != Status.OK.getStatusCode()) {
-                        LOGGER.error(response.getStatusInfo().getReasonPhrase());
-                    } else {
-                        final Set<DocRef> docRefs = response.readEntity(Set.class);
-                        docRefs.forEach(docRef -> importDocument(url, docRef, importExportActionHandler));
+        final Map<String, ImportExportActionHandler> typeToHandlerMap = importExportActionHandlers.stream()
+                .collect(Collectors.toMap(ImportExportActionHandler::getType, Function.identity()));
+
+        if (contentSyncConfig.getUpstreamUrl() != null) {
+            contentSyncConfig.getUpstreamUrl().forEach((type, url) -> {
+                final ImportExportActionHandler importHandler = typeToHandlerMap.get(type);
+                if (importHandler == null) {
+                    String knownHandlers = importExportActionHandlers.stream()
+                            .map(handler -> handler.getType() + "(" + handler.getClass().getSimpleName() + ")")
+                            .collect(Collectors.joining(", "));
+                    LOGGER.error("No import handler found for type {} with url {}. Known handlers {}",
+                            type, url, knownHandlers);
+                } else {
+                    try {
+                        if (url != null) {
+                            LOGGER.info("Syncing content from '" + url + "'");
+                            final Response response = createClient(url, "/list").get();
+                            if (response.getStatusInfo().getStatusCode() != Status.OK.getStatusCode()) {
+                                LOGGER.error(response.getStatusInfo().getReasonPhrase());
+                            } else {
+                                final Set<DocRef> docRefs = response.readEntity(new GenericType<Set<DocRef>>(){});
+                                docRefs.forEach(docRef -> importDocument(url, docRef, importHandler));
+                                LOGGER.info("Synced {} documents", docRefs.size());
+                            }
+                        }
+                    } catch (Exception e) {
+                        LOGGER.error("Error syncing content of type {}", type, e);
                     }
                 }
-            } catch (final RuntimeException e) {
-                LOGGER.error("Error syncing content of type {}", type, e);
-            }
-        });
+            });
+        }
     }
 
-    private void importDocument(final String url, final DocRef docRef, final ImportExportActionHandler importExportActionHandler) {
-        LOGGER.info("Fetching " + docRef.getType() + " " + docRef.getUuid());
+    private void importDocument(final String url,
+                                final DocRef docRef,
+                                final ImportExportActionHandler importExportActionHandler) {
+        LOGGER.info("Fetching " + docRef.getType() + " " + docRef.getName() + " " + docRef.getUuid());
         final Response response = createClient(url, "/export").post(Entity.json(docRef));
         if (response.getStatusInfo().getStatusCode() != Status.OK.getStatusCode()) {
             LOGGER.error(response.getStatusInfo().getReasonPhrase());
         } else {
             final DocumentData documentData = response.readEntity(DocumentData.class);
-            final ImportState importState = new ImportState(documentData.getDocRef(), documentData.getDocRef().getName());
-            importExportActionHandler.importDocument(documentData.getDocRef(), documentData.getDataMap(), importState, ImportMode.IGNORE_CONFIRMATION);
+            final ImportState importState = new ImportState(
+                    documentData.getDocRef(),
+                    documentData.getDocRef().getName());
+            importExportActionHandler.importDocument(
+                    documentData.getDocRef(),
+                    documentData.getDataMap(),
+                    importState,
+                    ImportMode.IGNORE_CONFIRMATION);
         }
     }
 
@@ -123,7 +153,7 @@ public class ContentSyncService implements Managed, HasHealthCheck {
 
         // Allows us to use hard-coded open id creds / token to authenticate with stroom
         // out of the box. ONLY for use in test/demo environments.
-        if (proxyConfig.isUseDefaultOpenIdCredentials()) {
+        if (proxyConfig.isUseDefaultOpenIdCredentials() && Strings.isNullOrEmpty(contentSyncConfig.getApiKey())) {
             LOGGER.info("Using default authentication token, should only be used in test/demo environments.");
             return Objects.requireNonNull(defaultOpenIdCredentials.getApiKey());
         } else {

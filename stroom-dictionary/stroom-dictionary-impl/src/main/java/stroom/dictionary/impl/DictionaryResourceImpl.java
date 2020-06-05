@@ -141,7 +141,7 @@ class DictionaryResourceImpl implements DictionaryResource {
     private DocRef getDocRef(final String pipelineId) {
         return new DocRef.Builder()
                 .uuid(pipelineId)
-                .type(DictionaryDoc.ENTITY_TYPE)
+                .type(DictionaryDoc.DOCUMENT_TYPE)
                 .build();
     }
 

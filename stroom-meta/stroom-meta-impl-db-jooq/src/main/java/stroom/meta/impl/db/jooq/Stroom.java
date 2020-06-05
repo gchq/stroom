@@ -20,6 +20,7 @@ import stroom.meta.impl.db.jooq.tables.MetaKey;
 import stroom.meta.impl.db.jooq.tables.MetaProcessor;
 import stroom.meta.impl.db.jooq.tables.MetaType;
 import stroom.meta.impl.db.jooq.tables.MetaVal;
+import stroom.meta.impl.db.jooq.tables.MetaRetentionTracker;
 
 
 /**
@@ -35,7 +36,7 @@ import stroom.meta.impl.db.jooq.tables.MetaVal;
 @SuppressWarnings({ "all", "unchecked", "rawtypes" })
 public class Stroom extends SchemaImpl {
 
-    private static final long serialVersionUID = -1638617744;
+    private static final long serialVersionUID = 739267913;
 
     /**
      * The reference instance of <code>stroom</code>
@@ -61,6 +62,11 @@ public class Stroom extends SchemaImpl {
      * The table <code>stroom.meta_processor</code>.
      */
     public final MetaProcessor META_PROCESSOR = stroom.meta.impl.db.jooq.tables.MetaProcessor.META_PROCESSOR;
+
+    /**
+     * The table <code>stroom.meta_retention_tracker</code>.
+     */
+    public final MetaRetentionTracker META_RETENTION_TRACKER = stroom.meta.impl.db.jooq.tables.MetaRetentionTracker.META_RETENTION_TRACKER;
 
     /**
      * The table <code>stroom.meta_type</code>.
@@ -98,6 +104,7 @@ public class Stroom extends SchemaImpl {
             MetaFeed.META_FEED,
             MetaKey.META_KEY,
             MetaProcessor.META_PROCESSOR,
+            MetaRetentionTracker.META_RETENTION_TRACKER,
             MetaType.META_TYPE,
             MetaVal.META_VAL);
     }

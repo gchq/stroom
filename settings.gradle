@@ -84,6 +84,7 @@ include 'stroom-dashboard:stroom-storedquery-impl-db'
 include 'stroom-dashboard:stroom-storedquery-impl-db-jooq'
 
 // Data projects
+include 'stroom-data:stroom-data-retention-api'
 include 'stroom-data:stroom-data-retention-impl'
 include 'stroom-data:stroom-data-store-api'
 include 'stroom-data:stroom-data-store-impl'
@@ -141,7 +142,6 @@ include 'stroom-headless'
 // Import Export
 include 'stroom-importexport:stroom-importexport-api'
 include 'stroom-importexport:stroom-importexport-impl'
-include 'stroom-importexport:stroom-importexport-migration'
 
 // Index
 include 'stroom-index:stroom-index-app'
@@ -159,6 +159,11 @@ include 'stroom-job:stroom-job-impl-db-jooq'
 // Kafka
 include 'stroom-kafka:stroom-kafka-api'
 include 'stroom-kafka:stroom-kafka-impl'
+
+// Legacy code for migration
+include 'stroom-legacy:stroom-legacy-db-migration'
+include 'stroom-legacy:stroom-legacy-impex_6_1'
+include 'stroom-legacy:stroom-legacy-model_6_1'
 
 // Lifecycle
 include 'stroom-lifecycle:stroom-lifecycle-api'

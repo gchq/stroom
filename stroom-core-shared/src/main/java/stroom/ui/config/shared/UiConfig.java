@@ -16,57 +16,81 @@
 
 package stroom.ui.config.shared;
 
+import stroom.util.shared.AbstractConfig;
+import stroom.util.shared.validation.ValidRegex;
+
 import com.fasterxml.jackson.annotation.JsonCreator;
 import com.fasterxml.jackson.annotation.JsonInclude;
 import com.fasterxml.jackson.annotation.JsonInclude.Include;
 import com.fasterxml.jackson.annotation.JsonProperty;
 import com.fasterxml.jackson.annotation.JsonPropertyDescription;
 import com.fasterxml.jackson.annotation.JsonPropertyOrder;
-import stroom.util.shared.AbstractConfig;
-import stroom.util.shared.validation.ValidRegex;
 
 import javax.inject.Singleton;
+import javax.validation.constraints.Pattern;
 import java.util.Objects;
 
 @Singleton
-@JsonPropertyOrder({"welcomeHtml", "aboutHtml", "buildInfo", "nodeName", "maintenanceMessage", "defaultMaxResults", "process", "helpUrl", "theme", "query", "namePattern", "htmlTitle", "oncontextmenu", "splash", "activity", "url", "uiPreferences"})
+@JsonPropertyOrder(alphabetic = true)
 @JsonInclude(Include.NON_NULL)
 public class UiConfig extends AbstractConfig {
+
     @JsonProperty
-    @JsonPropertyDescription("HTML")
+    @JsonPropertyDescription("The welcome message that is displayed in the welcome tab when logging in to Stroom. " +
+            "The welcome message is in HTML format.")
     private String welcomeHtml;
+
     @JsonProperty
-    @JsonPropertyDescription("HTML")
+    @JsonPropertyDescription("The about message that is displayed when selecting Help -> About. " +
+            "The about message is in HTML format.")
     private String aboutHtml;
+
     @JsonProperty
     @JsonPropertyDescription("Provide a warning message to users about an outage or other significant event.")
     private String maintenanceMessage;
+
     @JsonProperty
-    @JsonPropertyDescription("The default maximum number of search results to return to the dashboard, unless the user requests lower values")
+    @JsonPropertyDescription("The default maximum number of search results to return to the dashboard, unless the user requests lower values.")
     private String defaultMaxResults;
+
     @JsonProperty
     private ProcessConfig process;
+
     @JsonProperty
     @JsonPropertyDescription("The URL of hosted help files.")
     private String helpUrl;
+
     @JsonProperty
     private ThemeConfig theme;
+
     @JsonProperty
     private QueryConfig query;
-    @JsonProperty
-    @JsonPropertyDescription("The regex pattern for entity names")
+
     @ValidRegex
+    @JsonProperty
+    @JsonPropertyDescription("The regex pattern for entity names.")
     private String namePattern;
+
     @JsonProperty
+    @JsonPropertyDescription("The title to use for the application in the browser.")
     private String htmlTitle;
+
+    @Pattern(regexp = "^return (true|false);$")
     @JsonProperty
+    @JsonPropertyDescription("Determines the behaviour of the browser built-in context menu. This property is for developer " +
+            "use only. Set to 'return false;' to see Stroom's context menu. Set to 'return true;' to see the standard " +
+            "browser menu.")
     private String oncontextmenu;
+
     @JsonProperty
     private SplashConfig splash;
+
     @JsonProperty
     private ActivityConfig activity;
+
     @JsonProperty
     private UrlConfig url;
+
     @JsonProperty
     private UiPreferences uiPreferences;
 

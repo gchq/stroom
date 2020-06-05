@@ -1,8 +1,5 @@
 package stroom.config.app;
 
-import com.fasterxml.jackson.annotation.JsonProperty;
-import com.fasterxml.jackson.annotation.JsonPropertyDescription;
-import com.fasterxml.jackson.annotation.JsonRootName;
 import stroom.activity.impl.db.ActivityConfig;
 import stroom.annotation.impl.AnnotationConfig;
 import stroom.authentication.config.AuthenticationConfig;
@@ -14,7 +11,6 @@ import stroom.config.common.NodeUriConfig;
 import stroom.config.common.PublicUriConfig;
 import stroom.config.common.UiUriConfig;
 import stroom.core.benchmark.BenchmarkClusterConfig;
-import stroom.core.db.CoreConfig;
 import stroom.core.receive.ProxyAggregationConfig;
 import stroom.core.receive.ReceiveDataConfig;
 import stroom.dashboard.impl.DashboardConfig;
@@ -28,6 +24,7 @@ import stroom.index.impl.IndexConfig;
 import stroom.index.impl.selection.VolumeConfig;
 import stroom.job.impl.JobSystemConfig;
 import stroom.kafka.impl.KafkaConfig;
+import stroom.legacy.db.LegacyDbConfig;
 import stroom.lifecycle.impl.LifecycleConfig;
 import stroom.node.impl.NodeConfig;
 import stroom.pipeline.PipelineConfig;
@@ -36,12 +33,16 @@ import stroom.search.impl.SearchConfig;
 import stroom.search.solr.SolrConfig;
 import stroom.searchable.impl.SearchableConfig;
 import stroom.security.impl.SecurityConfig;
-import stroom.util.shared.validation.ValidationSeverity;
 import stroom.servicediscovery.impl.ServiceDiscoveryConfig;
 import stroom.storedquery.impl.StoredQueryConfig;
 import stroom.ui.config.shared.UiConfig;
 import stroom.util.io.PathConfig;
 import stroom.util.shared.AbstractConfig;
+import stroom.util.shared.validation.ValidationSeverity;
+
+import com.fasterxml.jackson.annotation.JsonProperty;
+import com.fasterxml.jackson.annotation.JsonPropertyDescription;
+import com.fasterxml.jackson.annotation.JsonRootName;
 
 import javax.inject.Singleton;
 import javax.validation.constraints.AssertTrue;
@@ -105,7 +106,7 @@ public class AppConfig extends AbstractConfig {
     private ClusterTaskConfig clusterTaskConfig = new ClusterTaskConfig();
     private CommonDbConfig commonDbConfig = new CommonDbConfig();
     private ContentPackImportConfig contentPackImportConfig = new ContentPackImportConfig();
-    private CoreConfig coreConfig = new CoreConfig();
+    private LegacyDbConfig legacyDbConfig = new LegacyDbConfig();
     private DashboardConfig dashboardConfig = new DashboardConfig();
     private DataConfig dataConfig = new DataConfig();
     private DataSourceUrlConfig dataSourceUrlConfig = new DataSourceUrlConfig();
@@ -139,13 +140,13 @@ public class AppConfig extends AbstractConfig {
     private VolumeConfig volumeConfig = new VolumeConfig();
 
 
-
-
     @AssertTrue(
-        message = "stroom." + PROP_NAME_HALT_BOOT_ON_CONFIG_VALIDATION_FAILURE + " is set to false. If there is " +
-            "invalid configuration the system may behave in unexpected ways. This setting is not advised.",
-        payload = ValidationSeverity.Warning.class)
+            message = "stroom." + PROP_NAME_HALT_BOOT_ON_CONFIG_VALIDATION_FAILURE + " is set to false. If there is " +
+                    "invalid configuration the system may behave in unexpected ways. This setting is not advised.",
+            payload = ValidationSeverity.Warning.class)
     @JsonProperty(PROP_NAME_HALT_BOOT_ON_CONFIG_VALIDATION_FAILURE)
+    @JsonPropertyDescription("If true, Stroom will halt on start up if any errors are found in the YAML " +
+            "configuration file. If false, the errors will simply be logged. Setting this to false is not advised.")
     public boolean isHaltBootOnConfigValidationFailure() {
         return haltBootOnConfigValidationFailure;
     }
@@ -250,13 +251,13 @@ public class AppConfig extends AbstractConfig {
 
     @JsonProperty(PROP_NAME_CORE)
     @JsonPropertyDescription("Configuration for the core stroom DB")
-    public CoreConfig getCoreConfig() {
-        return coreConfig;
+    public LegacyDbConfig getLegacyDbConfig() {
+        return legacyDbConfig;
     }
 
     @SuppressWarnings("unused")
-    public void setCoreConfig(final CoreConfig coreConfig) {
-        this.coreConfig = coreConfig;
+    public void setLegacyDbConfig(final LegacyDbConfig legacyDbConfig) {
+        this.legacyDbConfig = legacyDbConfig;
     }
 
     @JsonProperty(PROP_NAME_DASHBOARD)

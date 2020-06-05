@@ -20,57 +20,15 @@ SET @OLD_SQL_NOTES=@@SQL_NOTES, SQL_NOTES=0;
 --
 -- Create the explorer_node table
 --
-CREATE TABLE IF NOT EXISTS explorer_node (
-    id            int(11) NOT NULL AUTO_INCREMENT,
-    type          varchar(255) NOT NULL,
-    uuid          varchar(255) NOT NULL,
-    name          varchar(255) NOT NULL,
-    tags          varchar(255) DEFAULT NULL,
-    PRIMARY KEY   (id),
-    UNIQUE  KEY   type (type,uuid)
-) ENGINE=InnoDB DEFAULT CHARSET=utf8;
-
---
--- Copy data into the explorer table
---
-DROP PROCEDURE IF EXISTS copy_explorer;
-DELIMITER //
-CREATE PROCEDURE copy_explorer ()
-BEGIN
-
-    IF EXISTS (
-            SELECT NULL
-            FROM INFORMATION_SCHEMA.TABLES
-            WHERE TABLE_NAME = 'explorerTreeNode') THEN
-
-        RENAME TABLE explorerTreeNode TO OLD_explorerTreeNode;
-    END IF;
-
-    -- Check again so it is idempotent
-    IF EXISTS (
-            SELECT NULL
-            FROM INFORMATION_SCHEMA.TABLES
-            WHERE TABLE_NAME = 'OLD_explorerTreeNode') THEN
-
-        INSERT INTO explorer_node (
-            id, 
-            type, 
-            uuid, 
-            name, 
-            tags)
-        SELECT 
-            id, 
-            type, 
-            uuid, 
-            name, 
-            tags
-        FROM OLD_explorerTreeNode;
-    END IF;
-
-END//
-DELIMITER ;
-CALL copy_explorer();
-DROP PROCEDURE copy_explorer;
+CREATE TABLE IF NOT EXISTS `explorer_node` (
+  `id` int(11) NOT NULL AUTO_INCREMENT,
+  `type` varchar(255) NOT NULL,
+  `uuid` varchar(255) NOT NULL,
+  `name` varchar(255) NOT NULL,
+  `tags` varchar(255) DEFAULT NULL,
+  PRIMARY KEY (`id`),
+  UNIQUE KEY `explorer_node_type_uuid` (`type`,`uuid`)
+) ENGINE=InnoDB AUTO_INCREMENT=2 DEFAULT CHARSET=utf8;
 
 SET SQL_NOTES=@OLD_SQL_NOTES;
 

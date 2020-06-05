@@ -16,11 +16,10 @@
 
 package stroom.data.store.impl.fs;
 
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 import stroom.data.store.impl.DataStoreMaintenanceService;
 import stroom.data.store.impl.ScanVolumePathResult;
 import stroom.security.api.SecurityContext;
+import stroom.security.shared.PermissionNames;
 import stroom.task.api.ExecutorProvider;
 import stroom.task.api.TaskContext;
 import stroom.task.api.TaskContextFactory;
@@ -28,9 +27,11 @@ import stroom.task.api.ThreadPoolImpl;
 import stroom.task.shared.ThreadPool;
 import stroom.util.shared.ModelStringUtil;
 
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+
 import javax.inject.Inject;
 import java.util.List;
-import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.Executor;
 import java.util.concurrent.TimeUnit;
@@ -39,7 +40,6 @@ import java.util.function.Consumer;
 /**
  * Task to clean the stream store.
  */
-
 class FsCleanSubTaskHandler {
     private static final Logger LOGGER = LoggerFactory.getLogger(FsCleanSubTaskHandler.class);
 
@@ -63,7 +63,7 @@ class FsCleanSubTaskHandler {
     }
 
     public void exec(final TaskContext taskContext, final FsCleanSubTask task, final Consumer<List<String>> deleteListConsumer) {
-        securityContext.secure(() -> {
+        securityContext.secure(PermissionNames.DELETE_DATA_PERMISSION, () -> {
             final ThreadPool threadPool = new ThreadPoolImpl("File System Clean#", 1, 1, config.getFileSystemCleanBatchSize(), Integer.MAX_VALUE);
             final Executor executor = executorProvider.get(threadPool);
 
@@ -99,22 +99,31 @@ class FsCleanSubTaskHandler {
                     LOGGER.info("exec() - Been asked to Quit");
 
                 } else {
-                    if (result.getChildDirectoryList() != null && result.getChildDirectoryList().size() > 0) {
+                    final List<String> childDirectoryList = result.getChildDirectoryList();
+                    if (childDirectoryList != null && childDirectoryList.size() > 0) {
                         // Add to the task steps remaining.
-                        task.getTaskProgress().addScanPending(result.getChildDirectoryList().size());
+                        task.getTaskProgress().addScanPending(childDirectoryList.size());
 
-                        final CountDownLatch countDownLatch = new CountDownLatch(result.getChildDirectoryList().size());
-                        for (final String subPath : result.getChildDirectoryList()) {
+                        final CountDownLatch countDownLatch = new CountDownLatch(childDirectoryList.size());
+                        for (final String subPath : childDirectoryList) {
                             final FsCleanSubTask subTask = new FsCleanSubTask(task.getTaskProgress(), task.getVolume(), subPath, task.getLogPrefix(), task.getOldAge(), task.isDelete());
-                            final Runnable runnable = taskContextFactory.context(taskContext, "File system clean", tc -> {
-                                exec(tc, subTask, deleteListConsumer);
-                            });
-                            CompletableFuture
-                                    .runAsync(runnable, executor)
-                                    .whenComplete((r, t) -> {
-                                        countDownLatch.countDown();
-                                        task.getTaskProgress().addScanComplete();
-                                    });
+                            final Runnable runnable = taskContextFactory
+                                    .context(taskContext, "File system clean", tc ->
+                                            exec(tc, subTask, deleteListConsumer));
+
+                            try {
+                                runnable.run();
+                            } finally {
+                                countDownLatch.countDown();
+                                task.getTaskProgress().addScanComplete();
+                            }
+
+//                            CompletableFuture
+//                                    .runAsync(runnable, executor)
+//                                    .whenComplete((r, t) -> {
+//                                        countDownLatch.countDown();
+//                                        task.getTaskProgress().addScanComplete();
+//                                    });
                         }
 
                         try {

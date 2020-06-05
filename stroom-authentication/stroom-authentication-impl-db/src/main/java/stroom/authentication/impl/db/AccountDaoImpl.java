@@ -18,12 +18,6 @@
 
 package stroom.authentication.impl.db;
 
-import com.google.common.base.Strings;
-import org.apache.commons.lang3.Validate;
-import org.jooq.Condition;
-import org.jooq.Record;
-import org.jooq.Record1;
-import org.jooq.TableField;
 import stroom.authentication.account.Account;
 import stroom.authentication.account.AccountDao;
 import stroom.authentication.authenticate.LoginResult;
@@ -37,10 +31,17 @@ import stroom.util.logging.LambdaLogger;
 import stroom.util.logging.LambdaLoggerFactory;
 import stroom.util.shared.ResultPage;
 
+import com.google.common.base.Strings;
+import org.jooq.Record;
+import org.jooq.Record1;
+import org.jooq.TableField;
+
 import javax.inject.Inject;
 import javax.inject.Singleton;
 import java.time.Duration;
+import java.time.Instant;
 import java.util.List;
+import java.util.Objects;
 import java.util.Optional;
 import java.util.function.BiFunction;
 import java.util.function.Function;
@@ -171,18 +172,26 @@ class AccountDaoImpl implements AccountDao {
 
             if (isLocked) {
                 LOGGER.debug("Account {} tried to log in but it is locked.", email);
-                return isPasswordCorrect ? LoginResult.LOCKED_GOOD_CREDENTIALS : LoginResult.LOCKED_BAD_CREDENTIALS;
+                return isPasswordCorrect
+                        ? LoginResult.LOCKED_GOOD_CREDENTIALS
+                        : LoginResult.LOCKED_BAD_CREDENTIALS;
             } else if (isDisabled) {
                 LOGGER.debug("Account {} tried to log in but it is disabled.", email);
-                return isPasswordCorrect ? LoginResult.DISABLED_GOOD_CREDENTIALS : LoginResult.DISABLED_BAD_CREDENTIALS;
+                return isPasswordCorrect
+                        ? LoginResult.DISABLED_GOOD_CREDENTIALS
+                        : LoginResult.DISABLED_BAD_CREDENTIALS;
             } else if (isInactive) {
                 LOGGER.debug("Account {} tried to log in but it is inactive.", email);
-                return isPasswordCorrect ? LoginResult.INACTIVE_GOOD_CREDENTIALS : LoginResult.INACTIVE_BAD_CREDENTIALS;
+                return isPasswordCorrect
+                        ? LoginResult.INACTIVE_GOOD_CREDENTIALS
+                        : LoginResult.INACTIVE_BAD_CREDENTIALS;
             } else if (isProcessingAccount) {
                 LOGGER.debug("Account {} tried to log in but it is a processing account.", email);
                 return LoginResult.PROCESSING_ACCOUNT;
             } else {
-                return isPasswordCorrect ? LoginResult.GOOD_CREDENTIALS : LoginResult.BAD_CREDENTIALS;
+                return isPasswordCorrect
+                        ? LoginResult.GOOD_CREDENTIALS
+                        : LoginResult.BAD_CREDENTIALS;
             }
         }
     }
@@ -311,8 +320,10 @@ class AccountDaoImpl implements AccountDao {
     }
 
     @Override
-    public Boolean needsPasswordChange(String email, Duration mandatoryPasswordChangeDuration, boolean forcePasswordChangeOnFirstLogin) {
-        Validate.notNull(email, "email must not be null");
+    public Boolean needsPasswordChange(final String email,
+                                       final Duration mandatoryPasswordChangeDuration,
+                                       final boolean forcePasswordChangeOnFirstLogin) {
+        Objects.requireNonNull(email, "email must not be null");
 
         final AccountRecord user = JooqUtil.contextResult(authDbConnProvider, context -> context
                 .selectFrom(ACCOUNT)
@@ -320,28 +331,36 @@ class AccountDaoImpl implements AccountDao {
                 .fetchOne());
 
         if (user == null) {
-            throw new NoSuchUserException("Cannot check if this user needs a password change because this user does not exist!");
+            throw new NoSuchUserException(
+                    "Cannot check if this user needs a password change because this user does not exist!");
         }
 
-        final Long passwordLastChanged = user.getPasswordLastChangedMs() == null ?
+        final long passwordLastChangedMs = user.getPasswordLastChangedMs() == null ?
                 user.getCreateTimeMs() :
                 user.getPasswordLastChangedMs();
-        final long now = System.currentTimeMillis();
-        Duration durationSinceLastPasswordChange = Duration.ofMillis(now - passwordLastChanged);
 
-        boolean thresholdBreached = durationSinceLastPasswordChange.compareTo(mandatoryPasswordChangeDuration) > 0;
-        boolean isFirstLogin = user.getPasswordLastChangedMs() == null;
+        final Duration durationSinceLastPasswordChange = Duration.between(
+                Instant.ofEpochMilli(passwordLastChangedMs),
+                Instant.now());
 
-        if (thresholdBreached || (forcePasswordChangeOnFirstLogin && isFirstLogin) || user.getForcePasswordChange()) {
+        final boolean thresholdBreached = durationSinceLastPasswordChange
+                .compareTo(mandatoryPasswordChangeDuration) > 0;
+
+        final boolean isFirstLogin = user.getPasswordLastChangedMs() == null;
+
+        if (thresholdBreached
+                || (forcePasswordChangeOnFirstLogin && isFirstLogin)
+                || user.getForcePasswordChange()) {
             LOGGER.debug("User {} needs a password change.", email);
             return true;
         } else return false;
     }
 
     @Override
-    public int deactivateNewInactiveUsers(Duration neverUsedAccountDeactivationThreshold) {
-        final long now = System.currentTimeMillis();
-        final long activityThreshold = now - neverUsedAccountDeactivationThreshold.toMillis();
+    public int deactivateNewInactiveUsers(final Duration neverUsedAccountDeactivationThreshold) {
+        final long activityThreshold = Instant.now()
+                .minus(neverUsedAccountDeactivationThreshold)
+                .toEpochMilli();
 
         return JooqUtil.contextResult(authDbConnProvider, context -> context
                 .update(ACCOUNT)
@@ -359,9 +378,10 @@ class AccountDaoImpl implements AccountDao {
     }
 
     @Override
-    public int deactivateInactiveUsers(Duration unusedAccountDeactivationThreshold) {
-        final long now = System.currentTimeMillis();
-        final long activityThreshold = now - unusedAccountDeactivationThreshold.toMillis();
+    public int deactivateInactiveUsers(final Duration unusedAccountDeactivationThreshold) {
+        final long activityThreshold = Instant.now()
+                .minus(unusedAccountDeactivationThreshold)
+                .toEpochMilli();
 
         return JooqUtil.contextResult(authDbConnProvider, context -> context
                 .update(ACCOUNT)

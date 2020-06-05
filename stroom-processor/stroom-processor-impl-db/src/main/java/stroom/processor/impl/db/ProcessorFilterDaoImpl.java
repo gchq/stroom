@@ -1,10 +1,5 @@
 package stroom.processor.impl.db;
 
-import org.jooq.Condition;
-import org.jooq.DSLContext;
-import org.jooq.Field;
-import org.jooq.OrderField;
-import org.jooq.Record;
 import stroom.db.util.ExpressionMapper;
 import stroom.db.util.ExpressionMapperFactory;
 import stroom.db.util.GenericDao;
@@ -14,13 +9,20 @@ import stroom.processor.impl.ProcessorFilterDao;
 import stroom.processor.impl.db.jooq.tables.records.ProcessorFilterRecord;
 import stroom.processor.impl.db.jooq.tables.records.ProcessorFilterTrackerRecord;
 import stroom.processor.shared.Processor;
+import stroom.processor.shared.ProcessorFields;
 import stroom.processor.shared.ProcessorFilter;
-import stroom.processor.shared.ProcessorFilterDataSource;
+import stroom.processor.shared.ProcessorFilterFields;
 import stroom.processor.shared.ProcessorFilterTracker;
 import stroom.util.logging.LambdaLogUtil;
 import stroom.util.logging.LambdaLogger;
 import stroom.util.logging.LambdaLoggerFactory;
 import stroom.util.shared.ResultPage;
+
+import org.jooq.Condition;
+import org.jooq.DSLContext;
+import org.jooq.Field;
+import org.jooq.OrderField;
+import org.jooq.Record;
 
 import javax.inject.Inject;
 import java.util.Collection;
@@ -37,7 +39,7 @@ class ProcessorFilterDaoImpl implements ProcessorFilterDao {
     private static final LambdaLogger LAMBDA_LOGGER = LambdaLoggerFactory.getLogger(ProcessorFilterDaoImpl.class);
 
     private static final Map<String, Field<?>> FIELD_MAP = Map.of(
-            ProcessorFilterDataSource.FIELD_ID, PROCESSOR_FILTER.ID);
+            ProcessorFilterFields.FIELD_ID, PROCESSOR_FILTER.ID);
 
     private static final Function<Record, Processor> RECORD_TO_PROCESSOR_MAPPER = new RecordToProcessorMapper();
     private static final Function<Record, ProcessorFilter> RECORD_TO_PROCESSOR_FILTER_MAPPER = new RecordToProcessorFilterMapper();
@@ -49,42 +51,53 @@ class ProcessorFilterDaoImpl implements ProcessorFilterDao {
     private final ExpressionMapper expressionMapper;
 
     @Inject
-    ProcessorFilterDaoImpl(final ProcessorDbConnProvider processorDbConnProvider, final ExpressionMapperFactory expressionMapperFactory) {
+    ProcessorFilterDaoImpl(final ProcessorDbConnProvider processorDbConnProvider,
+                           final ExpressionMapperFactory expressionMapperFactory,
+                           final ProcessorFilterMarshaller marshaller) {
         this.processorDbConnProvider = processorDbConnProvider;
-        this.marshaller = new ProcessorFilterMarshaller();
+        this.marshaller = marshaller;
         this.genericDao = new GenericDao<>(PROCESSOR_FILTER, PROCESSOR_FILTER.ID, ProcessorFilter.class, processorDbConnProvider);
 
         expressionMapper = expressionMapperFactory.create();
-        expressionMapper.map(ProcessorFilterDataSource.PRIORITY, PROCESSOR_FILTER.PRIORITY, Integer::valueOf);
-        expressionMapper.map(ProcessorFilterDataSource.LAST_POLL_MS, PROCESSOR_FILTER_TRACKER.LAST_POLL_MS, Long::valueOf);
-        expressionMapper.map(ProcessorFilterDataSource.PROCESSOR_ID, PROCESSOR_FILTER.FK_PROCESSOR_ID, Integer::valueOf);
-        expressionMapper.map(ProcessorFilterDataSource.PIPELINE, PROCESSOR.PIPELINE_UUID, value -> value);
-        expressionMapper.map(ProcessorFilterDataSource.PROCESSOR_ENABLED, PROCESSOR.ENABLED, Boolean::valueOf);
-        expressionMapper.map(ProcessorFilterDataSource.PROCESSOR_FILTER_ENABLED, PROCESSOR_FILTER.ENABLED, Boolean::valueOf);
-        expressionMapper.map(ProcessorFilterDataSource.CREATE_USER, PROCESSOR_FILTER.CREATE_USER, value -> value);
-        expressionMapper.map(ProcessorFilterDataSource.UUID, PROCESSOR_FILTER.UUID, value -> value);
+        expressionMapper.map(ProcessorFilterFields.ID, PROCESSOR_FILTER.ID, Integer::valueOf);
+        expressionMapper.map(ProcessorFilterFields.CREATE_USER, PROCESSOR_FILTER.CREATE_USER, value -> value);
+        expressionMapper.map(ProcessorFilterFields.LAST_POLL_MS, PROCESSOR_FILTER_TRACKER.LAST_POLL_MS, Long::valueOf);
+        expressionMapper.map(ProcessorFilterFields.PRIORITY, PROCESSOR_FILTER.PRIORITY, Integer::valueOf);
+        expressionMapper.map(ProcessorFilterFields.ENABLED, PROCESSOR_FILTER.ENABLED, Boolean::valueOf);
+        expressionMapper.map(ProcessorFilterFields.DELETED, PROCESSOR_FILTER.DELETED, Boolean::valueOf);
+        expressionMapper.map(ProcessorFilterFields.PROCESSOR_ID, PROCESSOR_FILTER.FK_PROCESSOR_ID, Integer::valueOf);
+        expressionMapper.map(ProcessorFilterFields.UUID, PROCESSOR_FILTER.UUID, value -> value);
+
+        expressionMapper.map(ProcessorFields.ID, PROCESSOR.ID, Integer::valueOf);
+        expressionMapper.map(ProcessorFields.CREATE_USER, PROCESSOR_FILTER.CREATE_USER, value -> value);
+        expressionMapper.map(ProcessorFields.PIPELINE, PROCESSOR.PIPELINE_UUID, value -> value);
+        expressionMapper.map(ProcessorFields.ENABLED, PROCESSOR.ENABLED, Boolean::valueOf);
+        expressionMapper.map(ProcessorFields.DELETED, PROCESSOR.DELETED, Boolean::valueOf);
+        expressionMapper.map(ProcessorFields.UUID, PROCESSOR.UUID, value -> value);
     }
 
     @Override
     public ProcessorFilter create(final ProcessorFilter processorFilter) {
-        return create(processorFilter, null);
+        return create(processorFilter, null, null);
     }
 
     @Override
-    public ProcessorFilter create(final ProcessorFilter processorFilter, final Long trackerStartStreamId) {
+    public ProcessorFilter create(final ProcessorFilter processorFilter,
+                                  final Long minMetaCreateMs,
+                                  final Long maxMetaCreateMs) {
         LAMBDA_LOGGER.debug(LambdaLogUtil.message("Creating a {}", PROCESSOR_FILTER.getName()));
 
         final ProcessorFilter marshalled = marshaller.marshal(processorFilter);
         final ProcessorFilter stored = JooqUtil.transactionResult(processorDbConnProvider, context -> {
             ProcessorFilterTracker tracker = new ProcessorFilterTracker();
-            if (trackerStartStreamId != null)
-                tracker.setMinMetaId(trackerStartStreamId);
+            tracker.setMinMetaCreateMs(minMetaCreateMs);
+            tracker.setMaxMetaCreateMs(maxMetaCreateMs);
 
             final ProcessorFilterTrackerRecord processorFilterTrackerRecord = context.newRecord(PROCESSOR_FILTER_TRACKER, tracker);
             processorFilterTrackerRecord.store();
-            final ProcessorFilterTracker processorFilterTracker = processorFilterTrackerRecord.into(ProcessorFilterTracker.class);
+            tracker = processorFilterTrackerRecord.into(ProcessorFilterTracker.class);
 
-            marshalled.setProcessorFilterTracker(processorFilterTracker);
+            marshalled.setProcessorFilterTracker(tracker);
 
             final ProcessorFilterRecord processorFilterRecord = context.newRecord(PROCESSOR_FILTER, marshalled);
 
@@ -127,6 +140,15 @@ class ProcessorFilterDaoImpl implements ProcessorFilterDao {
     }
 
     @Override
+    public boolean logicalDelete(final int id) {
+        return JooqUtil.contextResult(processorDbConnProvider, context -> context
+                .update(PROCESSOR_FILTER)
+                .set(PROCESSOR_FILTER.DELETED, true)
+                .where(PROCESSOR_FILTER.ID.eq(id))
+                .execute() > 0);
+    }
+
+    @Override
     public Optional<ProcessorFilter> fetch(final int id) {
         return JooqUtil.contextResult(processorDbConnProvider, context ->
                 context
@@ -154,7 +176,7 @@ class ProcessorFilterDaoImpl implements ProcessorFilterDao {
     }
 
     private ResultPage<ProcessorFilter> find(final DSLContext context, final ExpressionCriteria criteria) {
-        final Collection<Condition> conditions = expressionMapper.apply(criteria.getExpression());
+        final Condition condition = expressionMapper.apply(criteria.getExpression());
 
         final Collection<OrderField<?>> orderFields = JooqUtil.getOrderFields(FIELD_MAP, criteria);
 
@@ -163,7 +185,7 @@ class ProcessorFilterDaoImpl implements ProcessorFilterDao {
                 .from(PROCESSOR_FILTER)
                 .join(PROCESSOR_FILTER_TRACKER).on(PROCESSOR_FILTER.FK_PROCESSOR_FILTER_TRACKER_ID.eq(PROCESSOR_FILTER_TRACKER.ID))
                 .join(PROCESSOR).on(PROCESSOR_FILTER.FK_PROCESSOR_ID.eq(PROCESSOR.ID))
-                .where(conditions)
+                .where(condition)
                 .orderBy(orderFields)
                 .limit(JooqUtil.getLimit(criteria.getPageRequest(), true))
                 .offset(JooqUtil.getOffset(criteria.getPageRequest()))

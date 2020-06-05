@@ -20,19 +20,14 @@ package stroom.pipeline.xmlschema;
 import stroom.docref.DocRef;
 import stroom.docref.DocRefInfo;
 import stroom.docstore.api.AuditFieldFilter;
-import stroom.docstore.api.DocumentSerialiser2;
 import stroom.docstore.api.Store;
 import stroom.docstore.api.StoreFactory;
 import stroom.docstore.api.UniqueNameUtil;
 import stroom.explorer.shared.DocumentType;
-import stroom.importexport.migration.LegacyXMLSerialiser;
 import stroom.importexport.shared.ImportState;
 import stroom.importexport.shared.ImportState.ImportMode;
-import stroom.pipeline.xmlschema.migration.OldXMLSchema;
-import stroom.security.api.SecurityContext;
 import stroom.util.shared.Message;
 import stroom.util.shared.ResultPage;
-import stroom.util.shared.Severity;
 import stroom.xmlschema.shared.XmlSchemaDoc;
 
 import org.slf4j.Logger;
@@ -40,28 +35,21 @@ import org.slf4j.LoggerFactory;
 
 import javax.inject.Inject;
 import javax.inject.Singleton;
-import java.io.IOException;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
-import java.util.UUID;
 
 @Singleton
 public class XmlSchemaStoreImpl implements XmlSchemaStore {
     private static final Logger LOGGER = LoggerFactory.getLogger(XmlSchemaStoreImpl.class);
 
     private final Store<XmlSchemaDoc> store;
-    private final SecurityContext securityContext;
-    private final DocumentSerialiser2<XmlSchemaDoc> serialiser;
 
     @Inject
     public XmlSchemaStoreImpl(final StoreFactory storeFactory,
-                              final SecurityContext securityContext,
                               final XmlSchemaSerialiser serialiser) {
-        this.serialiser = serialiser;
         this.store = storeFactory.createStore(serialiser, XmlSchemaDoc.DOCUMENT_TYPE, XmlSchemaDoc.class);
-        this.securityContext = securityContext;
     }
 
     ////////////////////////////////////////////////////////////////////////
@@ -161,13 +149,7 @@ public class XmlSchemaStoreImpl implements XmlSchemaStore {
 
     @Override
     public ImpexDetails importDocument(final DocRef docRef, final Map<String, byte[]> dataMap, final ImportState importState, final ImportMode importMode) {
-        // Convert legacy import format to the new format.
-        final Map<String, byte[]> map = convert(docRef, dataMap, importState, importMode);
-        if (map != null) {
-            return store.importDocument(docRef, map, importState, importMode);
-        }
-
-        return new ImpexDetails(docRef);
+        return store.importDocument(docRef, dataMap, importState, importMode);
     }
 
     @Override
@@ -176,55 +158,6 @@ public class XmlSchemaStoreImpl implements XmlSchemaStore {
             return store.exportDocument(docRef, messageList, new AuditFieldFilter<>());
         }
         return store.exportDocument(docRef, messageList, d -> d);
-    }
-
-    private Map<String, byte[]> convert(final DocRef docRef, final Map<String, byte[]> dataMap, final ImportState importState, final ImportMode importMode) {
-        Map<String, byte[]> result = dataMap;
-        if (dataMap.size() > 1 && !dataMap.containsKey("meta") && dataMap.containsKey("xml")) {
-            final String uuid = docRef.getUuid();
-            try {
-                final boolean exists = store.exists(docRef);
-                XmlSchemaDoc document;
-                if (exists) {
-                    document = readDocument(docRef);
-
-                } else {
-                    final OldXMLSchema oldXmlSchema = new OldXMLSchema();
-                    final LegacyXMLSerialiser legacySerialiser = new LegacyXMLSerialiser();
-                    legacySerialiser.performImport(oldXmlSchema, dataMap);
-
-                    final long now = System.currentTimeMillis();
-                    final String userId = securityContext.getUserId();
-
-                    document = new XmlSchemaDoc();
-                    document.setType(docRef.getType());
-                    document.setUuid(uuid);
-                    document.setName(docRef.getName());
-                    document.setVersion(UUID.randomUUID().toString());
-                    document.setCreateTimeMs(now);
-                    document.setUpdateTimeMs(now);
-                    document.setCreateUser(userId);
-                    document.setUpdateUser(userId);
-                    document.setDescription(oldXmlSchema.getDescription());
-                    document.setNamespaceURI(oldXmlSchema.getNamespaceURI());
-                    document.setSystemId(oldXmlSchema.getSystemId());
-                    document.setData(oldXmlSchema.getData());
-                    document.setDeprecated(oldXmlSchema.isDeprecated());
-                    document.setSchemaGroup(oldXmlSchema.getSchemaGroup());
-                }
-
-                result = serialiser.write(document);
-                if (dataMap.containsKey("data.xsd")) {
-                    result.put("xsd", dataMap.remove("data.xsd"));
-                }
-
-            } catch (final IOException | RuntimeException e) {
-                importState.addMessage(Severity.ERROR, e.getMessage());
-                result = null;
-            }
-        }
-
-        return result;
     }
 
     @Override

@@ -26,10 +26,25 @@
             <id>statisticsFilter</id>
             <type>StatisticsFilter</type>
          </element>
+         <element>
+            <id>Source</id>
+            <type>Source</type>
+         </element>
+         <element>
+            <id>schemaFilter</id>
+            <type>SchemaFilter</type>
+         </element>
       </add>
    </elements>
    <properties>
       <add>
+         <property>
+            <element>splitFilter</element>
+            <name>splitCount</name>
+            <value>
+               <integer>1000</integer>
+            </value>
+         </property>
          <property>
             <element>streamAppender</element>
             <name>streamType</name>
@@ -55,15 +70,15 @@
                <entity>
                   <type>XSLT</type>
                   <uuid>eefdaca9-a84b-43d0-a8a9-8f79b75d29f1</uuid>
-                  <name>CountXSLT</name>
+                  <name>CountXSLTSQL</name>
                </entity>
             </value>
          </property>
          <property>
-            <element>splitFilter</element>
-            <name>splitCount</name>
+            <element>schemaFilter</element>
+            <name>schemaGroup</name>
             <value>
-               <integer>1000</integer>
+               <string>STATISTICS</string>
             </value>
          </property>
          <property>
@@ -78,12 +93,7 @@
             </value>
          </property>
       </add>
-      <remove/>
    </properties>
-   <pipelineReferences>
-      <add/>
-      <remove/>
-   </pipelineReferences>
    <links>
       <add>
          <link>
@@ -91,20 +101,28 @@
             <to>splitFilter</to>
          </link>
          <link>
+            <from>splitFilter</from>
+            <to>xsltFilter</to>
+         </link>
+         <link>
             <from>xmlWriter</from>
             <to>streamAppender</to>
          </link>
          <link>
             <from>xsltFilter</from>
-            <to>xmlWriter</to>
+            <to>schemaFilter</to>
          </link>
          <link>
-            <from>xsltFilter</from>
+            <from>Source</from>
+            <to>combinedParser</to>
+         </link>
+         <link>
+            <from>schemaFilter</from>
             <to>statisticsFilter</to>
          </link>
          <link>
-            <from>splitFilter</from>
-            <to>xsltFilter</to>
+            <from>schemaFilter</from>
+            <to>xmlWriter</to>
          </link>
       </add>
    </links>

@@ -16,14 +16,15 @@
 
 package stroom.data.store.impl.fs;
 
-import org.junit.jupiter.api.Test;
-import org.junit.jupiter.api.io.TempDir;
 import stroom.data.shared.StreamTypeNames;
 import stroom.data.store.impl.fs.shared.FsVolume;
 import stroom.meta.shared.Meta;
 import stroom.test.common.util.test.FileSystemTestUtil;
 import stroom.util.date.DateUtil;
 import stroom.util.io.FileUtil;
+
+import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.io.TempDir;
 
 import java.io.IOException;
 import java.nio.file.Files;
@@ -96,7 +97,8 @@ class TestFileSystemUtil {
 
         final FsPathHelper fileSystemStreamPathHelper = new FsPathHelper(fileSystemFeedPaths, new MockFsTypePaths());
 
-        final Path rootFile = fileSystemStreamPathHelper.getRootPath(buildTestVolume().getPath(), meta, StreamTypeNames.EVENTS);
+        final Path volumePath = Paths.get(buildTestVolume().getPath());
+        final Path rootFile = fileSystemStreamPathHelper.getRootPath(volumePath, meta, StreamTypeNames.EVENTS);
 
         assertThat(rootFile).isNotNull();
         assertPathEndsWith(rootFile, "EVENTS/2010/01/01/001/001/1=001001001.evt.bgz");
@@ -115,7 +117,8 @@ class TestFileSystemUtil {
 
         final FsPathHelper fileSystemStreamPathHelper = new FsPathHelper(fileSystemFeedPaths, new MockFsTypePaths());
 
-        final Path rootFile = fileSystemStreamPathHelper.getRootPath(buildTestVolume().getPath(), meta,
+        final Path volumePath = Paths.get(buildTestVolume().getPath());
+        final Path rootFile = fileSystemStreamPathHelper.getRootPath(volumePath, meta,
                 StreamTypeNames.RAW_EVENTS);
 
         touch(rootFile);
@@ -269,7 +272,9 @@ class TestFileSystemUtil {
 
         final FsPathHelper fileSystemStreamPathHelper = new FsPathHelper(fileSystemFeedPaths, new MockFsTypePaths());
 
-        assertThat(fileSystemStreamPathHelper.getDirectory(meta, StreamTypeNames.EVENTS)).isEqualTo("EVENTS/2008/11/18/100");
+        Path path = Paths.get("");
+        assertThat(fileSystemStreamPathHelper.getRootPath(path, meta, StreamTypeNames.EVENTS))
+                .isEqualTo(path.resolve("store/EVENTS/2008/11/18/100/2=100100.evt.bgz"));
         assertThat(fileSystemStreamPathHelper.getBaseName(meta)).isEqualTo("2=100100");
     }
 
@@ -286,7 +291,9 @@ class TestFileSystemUtil {
 
         final FsPathHelper fileSystemStreamPathHelper = new FsPathHelper(fileSystemFeedPaths, new MockFsTypePaths());
 
-        assertThat(fileSystemStreamPathHelper.getDirectory(meta, StreamTypeNames.EVENTS)).isEqualTo("EVENTS/2008/11/18/001/100");
+        Path path = Paths.get("");
+        assertThat(fileSystemStreamPathHelper.getRootPath(path, meta, StreamTypeNames.EVENTS))
+                .isEqualTo(path.resolve("store/EVENTS/2008/11/18/001/100/2=001100100.evt.bgz"));
         assertThat(fileSystemStreamPathHelper.getBaseName(meta)).isEqualTo("2=001100100");
     }
 }

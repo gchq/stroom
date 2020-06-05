@@ -16,10 +16,12 @@
 
 package stroom.config.common;
 
-import com.fasterxml.jackson.annotation.JsonPropertyDescription;
 import stroom.util.config.annotations.RequiresRestart;
 import stroom.util.shared.AbstractConfig;
 import stroom.util.shared.NotInjectableConfig;
+import stroom.util.time.StroomDuration;
+
+import com.fasterxml.jackson.annotation.JsonPropertyDescription;
 
 import javax.validation.constraints.Min;
 import java.util.Objects;
@@ -36,160 +38,127 @@ public class ConnectionPoolConfig extends AbstractConfig {
         "details on configuring the MySQL JDBC driver properties.";
 
     // JDBC driver level props
-    private Boolean cachePrepStmts;
-    private Integer prepStmtCacheSize;
-    private Integer prepStmtCacheSqlLimit;
+    private boolean cachePrepStmts = false;
+    private int prepStmtCacheSize = 25;
+    private int prepStmtCacheSqlLimit = 256;
 
     // Hikari pool props
-    private Long connectionTimeout;
-    private Long idleTimeout;
-    private Long maxLifetime;
-    private Integer minimumIdle;
-    private Integer maxPoolSize;
+    private StroomDuration connectionTimeout = StroomDuration.ofSeconds(30);
+    private StroomDuration idleTimeout = StroomDuration.ofMinutes(10);
+    private StroomDuration maxLifetime = StroomDuration.ofMinutes(30);
+    private int minimumIdle = 10;
+    private int maxPoolSize = 10;
 
     @RequiresRestart(RequiresRestart.RestartScope.SYSTEM)
     @JsonPropertyDescription(
         "Sets the cachePrepStmts property on the at the JDBC driver level. Set to true to " +
-        "enable caching of prepared statements at the JDBC driver level. Disabled by default." +
+        "enable caching of prepared statements at the JDBC driver level. " +
         COMMON_JDBC_DESC)
-    public Boolean getCachePrepStmts() {
+    public boolean getCachePrepStmts() {
         return cachePrepStmts;
     }
 
     @SuppressWarnings("unused")
-    public void setCachePrepStmts(final Boolean cachePrepStmts) {
+    public void setCachePrepStmts(final boolean cachePrepStmts) {
         this.cachePrepStmts = cachePrepStmts;
     }
 
     @RequiresRestart(RequiresRestart.RestartScope.SYSTEM)
     @JsonPropertyDescription(
         "Sets the prepStmtCacheSize property on the at the JDBC driver level. " +
-        "The number of prepared statements that the driver will cache per connection. Defaults to 25. "
-        + COMMON_JDBC_DESC)
+        "The number of prepared statements that the driver will cache per connection. " +
+        COMMON_JDBC_DESC)
     @Min(0)
-    public Integer getPrepStmtCacheSize() {
+    public int getPrepStmtCacheSize() {
         return prepStmtCacheSize;
     }
 
-    public void setPrepStmtCacheSize(final Integer prepStmtCacheSize) {
+    public void setPrepStmtCacheSize(final int prepStmtCacheSize) {
         this.prepStmtCacheSize = prepStmtCacheSize;
     }
 
     @RequiresRestart(RequiresRestart.RestartScope.SYSTEM)
     @JsonPropertyDescription(
         "Sets the prepStmtCacheSqlLimit property on the at the JDBC driver level. The " +
-        "maximum length for a prepared SQL statement that can be cached. Defaults to 256. " +
+        "maximum length for a prepared SQL statement that can be cached. " +
         COMMON_JDBC_DESC)
     @Min(0)
-    public Integer getPrepStmtCacheSqlLimit() {
+    public int getPrepStmtCacheSqlLimit() {
         return prepStmtCacheSqlLimit;
     }
 
     @SuppressWarnings("unused")
-    public void setPrepStmtCacheSqlLimit(final Integer prepStmtCacheSqlLimit) {
+    public void setPrepStmtCacheSqlLimit(final int prepStmtCacheSqlLimit) {
         this.prepStmtCacheSqlLimit = prepStmtCacheSqlLimit;
     }
 
     @RequiresRestart(RequiresRestart.RestartScope.SYSTEM)
     @JsonPropertyDescription(
-        "the maximum number of milliseconds that a client will wait for a connection from the pool. " +
-        "Defaults to 30000 (30s). " +
+        "The maximum amount of time that a client will wait for a connection from the pool. " +
         COMMON_CONN_POOL_DESC)
-    @Min(0)
-    public Long getConnectionTimeout() {
+    public StroomDuration getConnectionTimeout() {
         return connectionTimeout;
     }
 
     @SuppressWarnings("unused")
-    public void setConnectionTimeout(final Long connectionTimeout) {
+    public void setConnectionTimeout(final StroomDuration connectionTimeout) {
         this.connectionTimeout = connectionTimeout;
     }
 
     @RequiresRestart(RequiresRestart.RestartScope.SYSTEM)
     @JsonPropertyDescription(
-        "The maximum amount of time in milliseconds that a connection can sit idle in the pool. " +
+        "The maximum amount of time that a connection can sit idle in the pool. " +
         "Only applies when minimumIdle is defined to be less than maximumPoolSize. " +
-        "Defaults to 600000 (10mins). " +
         COMMON_CONN_POOL_DESC)
-    @Min(0)
-    public Long getIdleTimeout() {
+    public StroomDuration getIdleTimeout() {
         return idleTimeout;
     }
 
     @SuppressWarnings("unused")
-    public void setIdleTimeout(final Long idleTimeout) {
+    public void setIdleTimeout(final StroomDuration idleTimeout) {
         this.idleTimeout = idleTimeout;
     }
 
     @RequiresRestart(RequiresRestart.RestartScope.SYSTEM)
     @JsonPropertyDescription(
-        "The maximum lifetime (in milliseconds) of a connection in the pool. " +
-        "Defaults to 1800000 (30mins). " +
+        "The maximum lifetime of a connection in the pool. " +
         COMMON_CONN_POOL_DESC)
-    @Min(0)
-    public Long getMaxLifetime() {
+    public StroomDuration getMaxLifetime() {
         return maxLifetime;
     }
 
     @SuppressWarnings("unused")
-    public void setMaxLifetime(final Long maxLifetime) {
+    public void setMaxLifetime(final StroomDuration maxLifetime) {
         this.maxLifetime = maxLifetime;
     }
 
     @RequiresRestart(RequiresRestart.RestartScope.SYSTEM)
     @JsonPropertyDescription(
         "The minimum number of idle connections that Hikari tries to maintain in the pool. " +
-        "Defaults to 10 (same as maxPoolSize). " +
         COMMON_CONN_POOL_DESC)
     @Min(0)
-    public Integer getMinimumIdle() {
+    public int getMinimumIdle() {
         return minimumIdle;
     }
 
     @SuppressWarnings("unused")
-    public void setMinimumIdle(final Integer minimumIdle) {
+    public void setMinimumIdle(final int minimumIdle) {
         this.minimumIdle = minimumIdle;
     }
 
     @RequiresRestart(RequiresRestart.RestartScope.SYSTEM)
     @JsonPropertyDescription(
-        "The maximum size that the pool is allowed to reach, including both idle " +
-        "and in-use connections. Defaults to 10. " +
+        "The maximum size that the pool is allowed to reach, including both idle and in-use connections. " +
         COMMON_CONN_POOL_DESC)
     @Min(0)
-    public Integer getMaxPoolSize() {
+    public int getMaxPoolSize() {
         return maxPoolSize;
     }
 
     @SuppressWarnings("unused")
-    public void setMaxPoolSize(final Integer maxPoolSize) {
+    public void setMaxPoolSize(final int maxPoolSize) {
         this.maxPoolSize = maxPoolSize;
     }
-
-//    @Override
-//    public boolean equals(final Object o) {
-//        if (this == o) return true;
-//        if (o == null || getClass() != o.getClass()) return false;
-//        final ConnectionPoolConfig that = (ConnectionPoolConfig) o;
-//        return cachePrepStmts == that.cachePrepStmts &&
-//                prepStmtCacheSize == that.prepStmtCacheSize &&
-//                prepStmtCacheSqlLimit == that.prepStmtCacheSqlLimit;
-//    }
-//
-//    @Override
-//    public int hashCode() {
-//        return Objects.hash(cachePrepStmts, prepStmtCacheSize, prepStmtCacheSqlLimit);
-//    }
-//
-//    @Override
-//    public String toString() {
-//        return "ConnectionPoolConfig{" +
-//                "cachePrepStmts=" + cachePrepStmts +
-//                ", prepStmtCacheSize=" + prepStmtCacheSize +
-//                ", prepStmtCacheSqlLimit=" + prepStmtCacheSqlLimit +
-//                '}';
-//    }
-
 
     @Override
     public boolean equals(final Object o) {

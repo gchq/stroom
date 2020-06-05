@@ -51,8 +51,7 @@
 
 .fa-button .face--disabled {
 	cursor: default;
-	color: #000;
-	opacity: 0.3;
+	opacity: 0.35;
 }
 
 .fa-button .face--down {

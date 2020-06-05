@@ -83,13 +83,13 @@ public class TokenServiceImpl implements TokenService, HasHealthCheck {
                 new NoSuchUserException("Cannot find user to associate with this API key!"));
 
         // Parse and validate tokenType
-        final Optional<Token.TokenType> optionalTokenType = getParsedTokenType(createTokenRequest.getTokenType());
-        final Token.TokenType tokenType = optionalTokenType.orElseThrow(() ->
+        final Optional<TokenType> optionalTokenType = getParsedTokenType(createTokenRequest.getTokenType());
+        final TokenType tokenType = optionalTokenType.orElseThrow(() ->
                 new BadRequestException("Unknown token type:" + createTokenRequest.getTokenType()));
 
         final Instant expiryInstant = createTokenRequest.getExpiryDate() == null
-                ? null :
-                createTokenRequest.getExpiryDate().toInstant();
+                ? null
+                : createTokenRequest.getExpiryDate().toInstant();
 
         final long now = System.currentTimeMillis();
 
@@ -124,10 +124,10 @@ public class TokenServiceImpl implements TokenService, HasHealthCheck {
 
     @Override
     public Token createResetEmailToken(final Account account, final String clientId) {
-        final Token.TokenType tokenType = Token.TokenType.EMAIL_RESET;
-        long timeToExpiryInSeconds = tokenConfig.getMinutesUntilExpirationForEmailResetToken() * 60;
+        final TokenType tokenType = TokenType.EMAIL_RESET;
         final TokenBuilder tokenBuilder = tokenBuilderFactory
-                .expiryDateForApiKeys(Instant.now().plusSeconds(timeToExpiryInSeconds))
+                .expiryDateForApiKeys(Instant.now()
+                        .plus(tokenConfig.getTimeUntilExpirationForEmailResetToken()))
                 .newBuilder(tokenType)
                 .clientId(clientId);
 
@@ -221,17 +221,16 @@ public class TokenServiceImpl implements TokenService, HasHealthCheck {
         }
     }
 
-    static Optional<Token.TokenType> getParsedTokenType(String tokenType) {
-        // TODO why not enums?
-        switch (tokenType.toLowerCase()) {
-            case "api":
-                return Optional.of(Token.TokenType.API);
-            case "user":
-                return Optional.of(Token.TokenType.USER);
-            case "email_reset":
-                return Optional.of(Token.TokenType.EMAIL_RESET);
-            default:
+    static Optional<TokenType> getParsedTokenType(final String tokenType) {
+
+        try {
+            if (tokenType == null) {
                 return Optional.empty();
+            } else {
+                return Optional.of(TokenType.fromText(tokenType));
+            }
+        } catch (Exception e) {
+            return Optional.empty();
         }
     }
 

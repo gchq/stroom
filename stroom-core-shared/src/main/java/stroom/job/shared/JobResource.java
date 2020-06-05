@@ -18,6 +18,7 @@ package stroom.job.shared;
 
 import io.swagger.annotations.Api;
 import io.swagger.annotations.ApiOperation;
+import io.swagger.annotations.ApiParam;
 import org.fusesource.restygwt.client.DirectRestService;
 import stroom.util.shared.ResourcePaths;
 import stroom.util.shared.RestResource;
@@ -45,5 +46,6 @@ public interface JobResource extends RestResource, DirectRestService {
     @PUT
     @Path("/{id}/enabled")
     @ApiOperation(value = "Sets the enabled status of the job")
-    void setEnabled(@PathParam("id") Integer id, Boolean enabled);
+    void setEnabled(@PathParam("id") Integer id, 
+                    @ApiParam("enabled") Boolean enabled);
 }

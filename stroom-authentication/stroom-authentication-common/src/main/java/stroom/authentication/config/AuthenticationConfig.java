@@ -18,17 +18,20 @@
 
 package stroom.authentication.config;
 
-import com.fasterxml.jackson.annotation.JsonProperty;
-import com.fasterxml.jackson.annotation.JsonPropertyDescription;
-import com.fasterxml.jackson.annotation.JsonPropertyOrder;
 import stroom.util.config.annotations.ReadOnly;
 import stroom.util.config.annotations.RequiresRestart;
 import stroom.util.shared.AbstractConfig;
+import stroom.util.shared.validation.ValidRegex;
 import stroom.util.shared.validation.ValidationSeverity;
+
+import com.fasterxml.jackson.annotation.JsonProperty;
+import com.fasterxml.jackson.annotation.JsonPropertyDescription;
+import com.fasterxml.jackson.annotation.JsonPropertyOrder;
 
 import javax.annotation.Nullable;
 import javax.inject.Singleton;
 import javax.validation.constraints.AssertFalse;
+import javax.validation.constraints.Min;
 import javax.validation.constraints.NotNull;
 
 @Singleton
@@ -41,12 +44,9 @@ public final class AuthenticationConfig extends AbstractConfig {
     public static final String PROP_NAME_PASSWORD_INTEGRITY_CHECKS = "passwordIntegrityChecks";
 
     private boolean useDefaultOpenIdCredentials = true;
-    private String certificateDnPattern = ".*\\((.*)\\)";
-    private int certificateDnCaptureGroupIndex = 1;
-    private String loginUrl = "/s/login";
-    private String changePasswordUrl = "/s/changepassword";
+    private String certificateCnPattern = ".*\\((.*)\\)";
+    private int certificateCnCaptureGroupIndex = 1;
     private Integer failedLoginLockThreshold = 3;
-    private String unauthorisedUrl = "/s/unauthorised";
 
     private EmailConfig emailConfig = new EmailConfig();
     private TokenConfig tokenConfig = new TokenConfig();
@@ -67,38 +67,41 @@ public final class AuthenticationConfig extends AbstractConfig {
         return useDefaultOpenIdCredentials;
     }
 
+    @SuppressWarnings("unused")
     public void setUseDefaultOpenIdCredentials(final boolean useDefaultOpenIdCredentials) {
         this.useDefaultOpenIdCredentials = useDefaultOpenIdCredentials;
     }
 
     @NotNull
+    @ValidRegex
     @JsonProperty
-    public final String getCertificateDnPattern() {
-        return this.certificateDnPattern;
+    @JsonPropertyDescription("The regular expression pattern that represents the Common Name (CN) value in an X509 " +
+            "certificate. The pattern should include a capture group for extracting the user identity from the " +
+            "CN value. For example the CN may be of the form 'Joe Bloggs [jbloggs]' in which case the pattern would be " +
+            "'.*?\\[([^]]*)\\].*'. The only capture group surrounds the user identity part.")
+    public final String getCertificateCnPattern() {
+        return this.certificateCnPattern;
     }
 
-    public void setCertificateDnPattern(final String certificateDnPattern) {
-        this.certificateDnPattern = certificateDnPattern;
+    @SuppressWarnings("unused")
+    public void setCertificateCnPattern(final String certificateCnPattern) {
+        this.certificateCnPattern = certificateCnPattern;
     }
 
     @NotNull
+    @Min(0)
     @JsonProperty
-    public final String getLoginUrl() {
-        return this.loginUrl;
+    @JsonPropertyDescription("Used in conjunction with property certificateCnPattern. This property value is the " +
+            "number of the regex capture group that represents the portion of certificate Common Name (CN) value " +
+            "that is the user identity. If all of the CN value is the user identity then set this property to " +
+            "0 to capture the whole CN value.")
+    public int getCertificateCnCaptureGroupIndex() {
+        return certificateCnCaptureGroupIndex;
     }
 
-    public void setLoginUrl(final String loginUrl) {
-        this.loginUrl = loginUrl;
-    }
-
-    @NotNull
-    @JsonProperty
-    public String getChangePasswordUrl() {
-        return changePasswordUrl;
-    }
-
-    public void setChangePasswordUrl(final String changePasswordUrl) {
-        this.changePasswordUrl = changePasswordUrl;
+    @SuppressWarnings("unused")
+    public void setCertificateCnCaptureGroupIndex(final int certificateCnCaptureGroupIndex) {
+        this.certificateCnCaptureGroupIndex = certificateCnCaptureGroupIndex;
     }
 
     @Nullable
@@ -107,16 +110,21 @@ public final class AuthenticationConfig extends AbstractConfig {
         return emailConfig;
     }
 
+    @SuppressWarnings("unused")
     public void setEmailConfig(EmailConfig emailConfig) {
         this.emailConfig = emailConfig;
     }
 
     @Nullable
     @JsonProperty
+    @JsonPropertyDescription("If the number of failed logins is greater than or equal to this value then the account " +
+            " will be locked.")
+    @Min(1)
     public Integer getFailedLoginLockThreshold() {
         return this.failedLoginLockThreshold;
     }
 
+    @SuppressWarnings("unused")
     public void setFailedLoginLockThreshold(final Integer failedLoginLockThreshold) {
         this.failedLoginLockThreshold = failedLoginLockThreshold;
     }
@@ -127,6 +135,7 @@ public final class AuthenticationConfig extends AbstractConfig {
         return tokenConfig;
     }
 
+    @SuppressWarnings("unused")
     public void setTokenConfig(TokenConfig tokenConfig) {
         this.tokenConfig = tokenConfig;
     }
@@ -137,18 +146,9 @@ public final class AuthenticationConfig extends AbstractConfig {
         return oAuth2Config;
     }
 
+    @SuppressWarnings("unused")
     public void setOAuth2Config(final OAuth2Config oAuth2Config) {
         this.oAuth2Config = oAuth2Config;
-    }
-
-    @Nullable
-    @JsonProperty
-    public String getUnauthorisedUrl() {
-        return unauthorisedUrl;
-    }
-
-    public void setUnauthorisedUrl(final String unauthorisedUrl) {
-        this.unauthorisedUrl = unauthorisedUrl;
     }
 
     @NotNull
@@ -157,17 +157,9 @@ public final class AuthenticationConfig extends AbstractConfig {
         return passwordIntegrityChecksConfig;
     }
 
+    @SuppressWarnings("unused")
     public void setPasswordIntegrityChecksConfig(PasswordIntegrityChecksConfig passwordIntegrityChecksConfig) {
         this.passwordIntegrityChecksConfig = passwordIntegrityChecksConfig;
     }
 
-    @NotNull
-    @JsonProperty
-    public int getCertificateDnCaptureGroupIndex() {
-        return certificateDnCaptureGroupIndex;
-    }
-
-    public void setCertificateDnCaptureGroupIndex(final int certificateDnCaptureGroupIndex) {
-        this.certificateDnCaptureGroupIndex = certificateDnCaptureGroupIndex;
-    }
 }

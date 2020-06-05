@@ -40,12 +40,20 @@ if (getPropertyOrDefault(propNameJooqGeneration, "false") == "true") {
                     database {
                         name = 'org.jooq.meta.mysql.MySQLDatabase'
                         inputSchema = 'stroom'
-                        // Add anything you want included in generation below
+                        // Add anything you want included in generation below, whitespace ignored
+                        // and comments allowed. Each one is a java regex
                         includes = 'annotation|annotation_data_link|annotation_entry'
                         // We don't want to include flyway versioning
                         excludes = 'annotation_schema_version'
                         // Specify 'version' for use in optimistic concurrency control
                         recordVersionFields = 'version'
+                        // Treat tinyint(1) columns as booleans
+                        forcedTypes {
+                            forcedType {
+                                name = 'BOOLEAN'
+                                types = '(?i:TINYINT\\(1\\))'
+                            }
+                        }
                     }
                     target {
                         packageName = 'stroom.annotation.impl.db.jooq'

@@ -19,7 +19,8 @@ package stroom.processor.impl;
 import stroom.event.logging.api.DocumentEventLog;
 import stroom.meta.shared.FindMetaCriteria;
 import stroom.processor.api.ProcessorFilterService;
-import stroom.processor.shared.CreateProcessorFilterRequest;
+import stroom.processor.shared.CreateProcessFilterRequest;
+import stroom.processor.shared.CreateReprocessFilterRequest;
 import stroom.processor.shared.FetchProcessorRequest;
 import stroom.processor.shared.ProcessorFilter;
 import stroom.processor.shared.ProcessorFilterResource;
@@ -48,11 +49,21 @@ class ProcessorFilterResourceImpl implements ProcessorFilterResource {
     }
 
     @Override
-    public ProcessorFilter create(final CreateProcessorFilterRequest request) {
+    public ProcessorFilter create(final CreateProcessFilterRequest request) {
         return processorFilterService.create(
                 request.getPipeline(),
                 request.getQueryData(),
                 request.getPriority(),
+                request.isAutoPriority(),
+                request.isEnabled());
+    }
+
+    @Override
+    public List<ReprocessDataInfo> reprocess(final CreateReprocessFilterRequest request) {
+        return processorFilterService.reprocess(
+                request.getQueryData(),
+                request.getPriority(),
+                request.isAutoPriority(),
                 request.isEnabled());
     }
 
@@ -85,10 +96,5 @@ class ProcessorFilterResourceImpl implements ProcessorFilterResource {
     public ProcessorListRowResultPage find(final FetchProcessorRequest request) {
         final ResultPage<ProcessorListRow> resultPage = processorFilterService.find(request);
         return new ProcessorListRowResultPage(resultPage.getValues(), resultPage.getPageResponse());
-    }
-
-    @Override
-    public List<ReprocessDataInfo> reprocess(final FindMetaCriteria criteria) {
-        return processorFilterService.reprocess(criteria);
     }
 }

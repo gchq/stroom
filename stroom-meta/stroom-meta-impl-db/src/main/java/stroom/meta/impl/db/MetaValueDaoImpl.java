@@ -32,7 +32,6 @@ import javax.inject.Inject;
 import javax.inject.Singleton;
 import java.time.Duration;
 import java.util.ArrayList;
-import java.util.Collections;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -40,6 +39,7 @@ import java.util.Optional;
 import java.util.Queue;
 import java.util.concurrent.ConcurrentLinkedQueue;
 import java.util.stream.Collectors;
+import java.util.stream.Stream;
 
 import static stroom.meta.impl.db.jooq.tables.MetaVal.META_VAL;
 
@@ -69,28 +69,34 @@ class MetaValueDaoImpl implements MetaValueDao {
 
     @Override
     public void addAttributes(final Meta meta, final AttributeMap attributes) {
-        attributes.forEach((k, v) -> {
-            final Optional<Integer> optional = metaKeyService.getIdForName(k);
-            optional.ifPresent(keyId -> {
-                try {
-                    final Long longValue = Long.valueOf(v);
+        final Stream<MetaValRecord> stream = attributes.entrySet()
+                .stream()
+                .map(entry ->
+                        metaKeyService.getIdForName(entry.getKey())
+                                .flatMap(keyId -> {
+                                    try {
+                                        final Long longValue = Long.valueOf(entry.getValue());
 
-                    MetaValRecord record = new MetaValRecord();
-                    record.setCreateTime(meta.getCreateMs());
-                    record.setMetaId(meta.getId());
-                    record.setMetaKeyId(keyId);
-                    record.setVal(longValue);
+                                        final MetaValRecord record = new MetaValRecord();
+                                        record.setCreateTime(meta.getCreateMs());
+                                        record.setMetaId(meta.getId());
+                                        record.setMetaKeyId(keyId);
+                                        record.setVal(longValue);
 
-                    if (metaValueConfig.isAddAsync()) {
-                        queue.add(record);
-                    } else {
-                        insertRecords(Collections.singletonList(record));
-                    }
-                } catch (final NumberFormatException e) {
-                    LOGGER.debug(e.getMessage(), e);
-                }
-            });
-        });
+                                        return Optional.of(record);
+                                    } catch (final NumberFormatException e) {
+                                        LOGGER.debug(e.getMessage(), e);
+                                        return Optional.empty();
+                                    }
+                                }))
+                .filter(Optional::isPresent)
+                .map(Optional::get);
+
+        if (metaValueConfig.isAddAsync()) {
+            stream.forEach(queue::add);
+        } else {
+            insertRecords(stream.collect(Collectors.toList()));
+        }
     }
 
     @Override
@@ -102,7 +108,8 @@ class MetaValueDaoImpl implements MetaValueDao {
         while (!ranOutOfItems) {
             final List<MetaValRecord> records = new ArrayList<>();
             MetaValRecord record;
-            while ((record = queue.poll()) != null && records.size() < metaValueConfig.getFlushBatchSize()) {
+            while ((record = queue.poll()) != null
+                    && records.size() < metaValueConfig.getFlushBatchSize()) {
                 records.add(record);
             }
 
@@ -380,9 +387,10 @@ class MetaValueDaoImpl implements MetaValueDao {
         deleteAll();
     }
 
-    private int deleteAll() {
-        return JooqUtil.contextResult(metaDbConnProvider, context -> context
-                .delete(META_VAL)
-                .execute());
+    private void deleteAll() {
+        JooqUtil.truncateTable(metaDbConnProvider, META_VAL);
+//        return JooqUtil.contextResult(metaDbConnProvider, context -> context
+//                .truncate(META_VAL)
+//                .execute());
     }
 }

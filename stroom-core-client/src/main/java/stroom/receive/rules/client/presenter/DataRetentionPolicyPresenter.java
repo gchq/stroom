@@ -16,13 +16,6 @@
 
 package stroom.receive.rules.client.presenter;
 
-import com.google.gwt.core.client.GWT;
-import com.google.gwt.dom.client.Style.BorderStyle;
-import com.google.inject.Inject;
-import com.google.inject.Provider;
-import com.google.web.bindery.event.shared.EventBus;
-import com.google.web.bindery.event.shared.HandlerRegistration;
-import com.gwtplatform.mvp.client.View;
 import stroom.alert.client.event.ConfirmEvent;
 import stroom.content.client.event.RefreshContentTabEvent;
 import stroom.content.client.presenter.ContentTabPresenter;
@@ -47,11 +40,34 @@ import stroom.widget.popup.client.presenter.PopupSize;
 import stroom.widget.popup.client.presenter.PopupUiHandlers;
 import stroom.widget.popup.client.presenter.PopupView.PopupType;
 
+import com.google.gwt.core.client.GWT;
+import com.google.gwt.dom.client.Style.BorderStyle;
+import com.google.inject.Inject;
+import com.google.inject.Provider;
+import com.google.web.bindery.event.shared.EventBus;
+import com.google.web.bindery.event.shared.HandlerRegistration;
+import com.gwtplatform.mvp.client.View;
+
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.List;
 
-public class DataRetentionPolicyPresenter extends ContentTabPresenter<DataRetentionPolicyPresenter.DataRetentionPolicyView> implements HasDirtyHandlers {
-    private static final DataRetentionRulesResource DATA_RETENTION_RULES_RESOURCE = GWT.create(DataRetentionRulesResource.class);
+public class DataRetentionPolicyPresenter
+        extends ContentTabPresenter<DataRetentionPolicyPresenter.DataRetentionPolicyView>
+        implements HasDirtyHandlers {
+
+    private static final DataRetentionRulesResource DATA_RETENTION_RULES_RESOURCE = GWT.create(
+            DataRetentionRulesResource.class);
+
+    // This rule exist in the UI only and is never passed to the back end
+    // The back end retains all data by default unless a rule specifies otherwise.
+    // This rule just makes it clear to the users what is happening.
+    private static final DataRetentionRule DEFAULT_UI_ONLY_RETAIN_ALL_RULE = DataRetentionRule.foreverRule(
+            Integer.MAX_VALUE,
+            0,
+            "Default Retain All Rule",
+            true,
+            new ExpressionOperator.Builder(Op.AND).build());
 
     private final DataRetentionPolicyListPresenter listPresenter;
     private final ExpressionTreePresenter expressionPresenter;
@@ -59,7 +75,7 @@ public class DataRetentionPolicyPresenter extends ContentTabPresenter<DataRetent
     private final RestFactory restFactory;
 
     private DataRetentionRules policy;
-    private List<DataRetentionRule> rules;
+    private List<DataRetentionRule> visibleRules;
 
     private ButtonView saveButton;
     private ButtonView addButton;
@@ -114,7 +130,7 @@ public class DataRetentionPolicyPresenter extends ContentTabPresenter<DataRetent
                         policy.setRules(new ArrayList<>());
                     }
 
-                    this.rules = policy.getRules();
+                    setVisibleRules(policy.getRules());
 
                     update();
                 })
@@ -122,14 +138,47 @@ public class DataRetentionPolicyPresenter extends ContentTabPresenter<DataRetent
                 .read();
     }
 
+    private void setVisibleRules(final List<DataRetentionRule> rules) {
+        List<DataRetentionRule> allRules = new ArrayList<>();
+        if (rules != null) {
+            allRules.addAll(rules);
+        }
+        // Add in our special UI only rule
+        allRules.add(DEFAULT_UI_ONLY_RETAIN_ALL_RULE);
+        this.visibleRules = allRules;
+    }
+
+    /**
+     * @return The rules created by the users, ignoring the default retain all rule
+     */
+    private List<DataRetentionRule> getUserRules() {
+        if (visibleRules == null || visibleRules.size() <= 1) {
+            return Collections.emptyList();
+        } else {
+            return visibleRules.subList(0, visibleRules.size() - 1);
+        }
+    }
+
+    private boolean isDefaultRule(final DataRetentionRule rule) {
+        if (rule == null || visibleRules == null || visibleRules.size() < 1) {
+            return false;
+        } else {
+            return rule.getRuleNumber() == visibleRules.get(visibleRules.size() - 1).getRuleNumber();
+        }
+    }
+
     @Override
     protected void onBind() {
         registerHandler(saveButton.addClickHandler(event -> {
+            // Get the user's rules without our default one
+            policy.setRules(getUserRules());
+
             final Rest<DataRetentionRules> rest = restFactory.create();
             rest
                     .onSuccess(result -> {
                         policy = result;
-                        this.rules = policy.getRules();
+//                        this.rules = policy.getRules();
+                        setVisibleRules(policy.getRules());
                         listPresenter.getSelectionModel().clear();
 
                         update();
@@ -139,65 +188,81 @@ public class DataRetentionPolicyPresenter extends ContentTabPresenter<DataRetent
                     .update(policy);
         }));
         registerHandler(addButton.addClickHandler(event -> {
-            if (rules != null) {
+            if (visibleRules != null) {
                 add();
             }
         }));
         registerHandler(editButton.addClickHandler(event -> {
-            if (rules != null) {
+            if (visibleRules != null) {
                 final DataRetentionRule selected = listPresenter.getSelectionModel().getSelected();
-                if (selected != null) {
+                if (selected != null && !isDefaultRule(selected)) {
                     edit(selected);
                 }
             }
         }));
         registerHandler(copyButton.addClickHandler(event -> {
-            if (rules != null) {
+            if (visibleRules != null) {
                 final DataRetentionRule selected = listPresenter.getSelectionModel().getSelected();
                 if (selected != null) {
-                    final DataRetentionRule newRule = new DataRetentionRule(selected.getRuleNumber(), System.currentTimeMillis(), selected.getName(), selected.isEnabled(), selected.getExpression(), selected.getAge(), selected.getTimeUnit(), selected.isForever());
+                    final DataRetentionRule newRule = new DataRetentionRule(
+                            selected.getRuleNumber(),
+                            System.currentTimeMillis(),
+                            selected.getName(),
+                            selected.isEnabled(),
+                            selected.getExpression(),
+                            selected.getAge(),
+                            selected.getTimeUnit(),
+                            selected.isForever());
 
-                    int index = rules.indexOf(selected);
-                    if (index < rules.size() - 1) {
-                        rules.add(index + 1, newRule);
+                    int index = visibleRules.indexOf(selected);
+                    if (index < visibleRules.size() - 1) {
+                        visibleRules.add(index + 1, newRule);
                     } else {
-                        rules.add(newRule);
+                        visibleRules.add(newRule);
                     }
-                    index = rules.indexOf(newRule);
+                    index = visibleRules.indexOf(newRule);
 
                     update();
                     setDirty(true);
 
-                    listPresenter.getSelectionModel().setSelected(rules.get(index));
+                    listPresenter.getSelectionModel().setSelected(visibleRules.get(index));
                 }
             }
         }));
         registerHandler(disableButton.addClickHandler(event -> {
-            if (rules != null) {
+            if (visibleRules != null) {
                 final DataRetentionRule selected = listPresenter.getSelectionModel().getSelected();
-                if (selected != null) {
-                    final DataRetentionRule newRule = new DataRetentionRule(selected.getRuleNumber(), selected.getCreationTime(), selected.getName(), !selected.isEnabled(), selected.getExpression(), selected.getAge(), selected.getTimeUnit(), selected.isForever());
+                if (selected != null && !isDefaultRule(selected)) {
+                    final DataRetentionRule newRule = new DataRetentionRule(
+                            selected.getRuleNumber(),
+                            selected.getCreationTime(),
+                            selected.getName(),
+                            !selected.isEnabled(),
+                            selected.getExpression(),
+                            selected.getAge(),
+                            selected.getTimeUnit(),
+                            selected.isForever());
 
-                    int index = rules.indexOf(selected);
-                    rules.remove(index);
-                    rules.add(index, newRule);
-                    index = rules.indexOf(newRule);
+                    int index = visibleRules.indexOf(selected);
+                    visibleRules.remove(index);
+                    visibleRules.add(index, newRule);
+                    index = visibleRules.indexOf(newRule);
 
                     update();
                     setDirty(true);
 
-                    listPresenter.getSelectionModel().setSelected(rules.get(index));
+                    listPresenter.getSelectionModel().setSelected(visibleRules.get(index));
                 }
             }
         }));
         registerHandler(deleteButton.addClickHandler(event -> {
-            if (rules != null) {
+            if (visibleRules != null) {
                 ConfirmEvent.fire(this, "Are you sure you want to delete this item?", ok -> {
                     if (ok) {
                         final DataRetentionRule rule = listPresenter.getSelectionModel().getSelected();
-                        if (rule != null) {
-                            int index = rules.indexOf(rule);
-                            rules.remove(rule);
+                        if (rule != null && !isDefaultRule(rule)) {
+                            int index = visibleRules.indexOf(rule);
+                            visibleRules.remove(rule);
 
                             update();
                             setDirty(true);
@@ -206,8 +271,8 @@ public class DataRetentionPolicyPresenter extends ContentTabPresenter<DataRetent
                             if (index > 0) {
                                 index--;
                             }
-                            if (index < rules.size()) {
-                                listPresenter.getSelectionModel().setSelected(rules.get(index));
+                            if (index < visibleRules.size()) {
+                                listPresenter.getSelectionModel().setSelected(visibleRules.get(index));
                             } else {
                                 listPresenter.getSelectionModel().clear();
                             }
@@ -217,41 +282,41 @@ public class DataRetentionPolicyPresenter extends ContentTabPresenter<DataRetent
             }
         }));
         registerHandler(moveUpButton.addClickHandler(event -> {
-            if (rules != null) {
+            if (visibleRules != null) {
                 final DataRetentionRule rule = listPresenter.getSelectionModel().getSelected();
-                if (rule != null) {
-                    int index = rules.indexOf(rule);
+                if (rule != null && !isDefaultRule(rule)) {
+                    int index = visibleRules.indexOf(rule);
                     if (index > 0) {
                         index--;
 
-                        rules.remove(rule);
-                        rules.add(index, rule);
+                        visibleRules.remove(rule);
+                        visibleRules.add(index, rule);
 
                         update();
                         setDirty(true);
 
                         // Re-select the rule.
-                        listPresenter.getSelectionModel().setSelected(rules.get(index));
+                        listPresenter.getSelectionModel().setSelected(visibleRules.get(index));
                     }
                 }
             }
         }));
         registerHandler(moveDownButton.addClickHandler(event -> {
-            if (rules != null) {
+            if (visibleRules != null) {
                 final DataRetentionRule rule = listPresenter.getSelectionModel().getSelected();
-                if (rule != null) {
-                    int index = rules.indexOf(rule);
-                    if (index < rules.size() - 1) {
+                if (rule != null && !isDefaultRule(rule)) {
+                    int index = visibleRules.indexOf(rule);
+                    if (index < visibleRules.size() - 2) {
                         index++;
 
-                        rules.remove(rule);
-                        rules.add(index, rule);
+                        visibleRules.remove(rule);
+                        visibleRules.add(index, rule);
 
                         update();
                         setDirty(true);
 
                         // Re-select the rule.
-                        listPresenter.getSelectionModel().setSelected(rules.get(index));
+                        listPresenter.getSelectionModel().setSelected(visibleRules.get(index));
                     }
                 }
             }
@@ -260,7 +325,7 @@ public class DataRetentionPolicyPresenter extends ContentTabPresenter<DataRetent
             final DataRetentionRule rule = listPresenter.getSelectionModel().getSelected();
             if (rule != null) {
                 expressionPresenter.read(rule.getExpression());
-                if (event.getSelectionType().isDoubleSelect()) {
+                if (event.getSelectionType().isDoubleSelect() && !isDefaultRule(rule)) {
                     edit(rule);
                 }
             } else {
@@ -281,86 +346,124 @@ public class DataRetentionPolicyPresenter extends ContentTabPresenter<DataRetent
                 1,
                 TimeUnit.YEARS,
                 true);
+
         final DataRetentionRulePresenter editRulePresenter = editRulePresenterProvider.get();
         editRulePresenter.read(newRule);
 
-        final PopupSize popupSize = new PopupSize(800, 400, 300, 300, 2000, 2000, true);
-        ShowPopupEvent.fire(DataRetentionPolicyPresenter.this, editRulePresenter, PopupType.OK_CANCEL_DIALOG, popupSize, "Add New Rule", new PopupUiHandlers() {
-            @Override
-            public void onHideRequest(final boolean autoClose, final boolean ok) {
-                if (ok) {
-                    final DataRetentionRule rule = editRulePresenter.write();
-                    rules.add(0, rule);
+        final PopupSize popupSize = new PopupSize(
+                800,
+                400,
+                300,
+                300,
+                2000,
+                2000,
+                true);
 
-                    update();
-                    setDirty(true);
+        ShowPopupEvent.fire(
+                DataRetentionPolicyPresenter.this,
+                editRulePresenter,
+                PopupType.OK_CANCEL_DIALOG,
+                popupSize,
+                "Add New Rule",
+                new PopupUiHandlers() {
+                    @Override
+                    public void onHideRequest(final boolean autoClose, final boolean ok) {
+                        if (ok) {
+                            final DataRetentionRule rule = editRulePresenter.write();
+                            visibleRules.add(0, rule);
 
-                    listPresenter.getSelectionModel().setSelected(rules.get(0));
-                }
+                            update();
+                            setDirty(true);
 
-                HidePopupEvent.fire(DataRetentionPolicyPresenter.this, editRulePresenter);
-            }
+                            listPresenter.getSelectionModel().setSelected(visibleRules.get(0));
+                        }
 
-            @Override
-            public void onHide(final boolean autoClose, final boolean ok) {
-                // Do nothing.
-            }
-        });
+                        HidePopupEvent.fire(DataRetentionPolicyPresenter.this, editRulePresenter);
+                    }
+
+                    @Override
+                    public void onHide(final boolean autoClose, final boolean ok) {
+                        // Do nothing.
+                    }
+                });
     }
 
     private void edit(final DataRetentionRule existingRule) {
         final DataRetentionRulePresenter editRulePresenter = editRulePresenterProvider.get();
         editRulePresenter.read(existingRule);
 
-        final PopupSize popupSize = new PopupSize(800, 400, 300, 300, 2000, 2000, true);
-        ShowPopupEvent.fire(DataRetentionPolicyPresenter.this, editRulePresenter, PopupType.OK_CANCEL_DIALOG, popupSize, "Edit Rule", new PopupUiHandlers() {
-            @Override
-            public void onHideRequest(final boolean autoClose, final boolean ok) {
-                if (ok) {
-                    final DataRetentionRule rule = editRulePresenter.write();
-                    final int index = rules.indexOf(existingRule);
-                    rules.remove(index);
-                    rules.add(index, rule);
+        final PopupSize popupSize = new PopupSize(
+                800,
+                400,
+                300,
+                300,
+                2000,
+                2000,
+                true);
 
-                    update();
-                    // Only mark the policies as dirty if the rule was actually changed.
-                    if (!existingRule.equals(rule)) {
-                        setDirty(true);
+        ShowPopupEvent.fire(
+                DataRetentionPolicyPresenter.this,
+                editRulePresenter,
+                PopupType.OK_CANCEL_DIALOG,
+                popupSize,
+                "Edit Rule",
+                new PopupUiHandlers() {
+                    @Override
+                    public void onHideRequest(final boolean autoClose, final boolean ok) {
+                        if (ok) {
+                            final DataRetentionRule rule = editRulePresenter.write();
+                            final int index = visibleRules.indexOf(existingRule);
+                            visibleRules.remove(index);
+                            visibleRules.add(index, rule);
+
+                            update();
+                            // Only mark the policies as dirty if the rule was actually changed.
+                            if (!existingRule.equals(rule)) {
+                                setDirty(true);
+                            }
+
+                            listPresenter.getSelectionModel().setSelected(visibleRules.get(index));
+                        }
+
+                        HidePopupEvent.fire(DataRetentionPolicyPresenter.this, editRulePresenter);
                     }
 
-                    listPresenter.getSelectionModel().setSelected(rules.get(index));
-                }
-
-                HidePopupEvent.fire(DataRetentionPolicyPresenter.this, editRulePresenter);
-            }
-
-            @Override
-            public void onHide(final boolean autoClose, final boolean ok) {
-                // Do nothing.
-            }
-        });
+                    @Override
+                    public void onHide(final boolean autoClose, final boolean ok) {
+                        // Do nothing.
+                    }
+                });
     }
 
     private void update() {
-        if (rules != null) {
+        if (visibleRules != null) {
             // Set rule numbers on all of the rules for display purposes.
-            for (int i = 0; i < rules.size(); i++) {
-                final DataRetentionRule rule = rules.get(i);
-                final DataRetentionRule newRule = new DataRetentionRule(i + 1, rule.getCreationTime(), rule.getName(), rule.isEnabled(), rule.getExpression(), rule.getAge(), rule.getTimeUnit(), rule.isForever());
-                rules.set(i, newRule);
+            for (int i = 0; i < visibleRules.size(); i++) {
+                final DataRetentionRule rule = visibleRules.get(i);
+                final DataRetentionRule newRule = new DataRetentionRule(
+                        i + 1,
+                        rule.getCreationTime(),
+                        rule.getName(),
+                        rule.isEnabled(),
+                        rule.getExpression(),
+                        rule.getAge(),
+                        rule.getTimeUnit(),
+                        rule.isForever());
+                visibleRules.set(i, newRule);
             }
-            listPresenter.setData(rules);
+            listPresenter.setData(visibleRules);
         }
         updateButtons();
     }
 
     private void updateButtons() {
-        final boolean loadedPolicy = rules != null;
+        final boolean loadedPolicy = visibleRules != null;
         final DataRetentionRule selection = listPresenter.getSelectionModel().getSelected();
         final boolean selected = loadedPolicy && selection != null;
+        final boolean isDefaultRule = isDefaultRule(selection);
         int index = -1;
         if (selected) {
-            index = rules.indexOf(selection);
+            index = visibleRules.indexOf(selection);
         }
 
         if (selection != null && selection.isEnabled()) {
@@ -371,12 +474,12 @@ public class DataRetentionPolicyPresenter extends ContentTabPresenter<DataRetent
 
         saveButton.setEnabled(loadedPolicy && dirty);
         addButton.setEnabled(loadedPolicy);
-        editButton.setEnabled(selected);
+        editButton.setEnabled(selected && !isDefaultRule);
         copyButton.setEnabled(selected);
-        disableButton.setEnabled(selected);
-        deleteButton.setEnabled(selected);
-        moveUpButton.setEnabled(selected && index > 0);
-        moveDownButton.setEnabled(selected && index >= 0 && index < rules.size() - 1);
+        disableButton.setEnabled(selected && !isDefaultRule);
+        deleteButton.setEnabled(selected && !isDefaultRule);
+        moveUpButton.setEnabled(selected && !isDefaultRule && index > 0);
+        moveDownButton.setEnabled(selected && !isDefaultRule && index >= 0 && index < visibleRules.size() - 2);
     }
 
     @Override

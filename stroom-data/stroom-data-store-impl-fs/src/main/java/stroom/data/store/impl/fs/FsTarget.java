@@ -16,20 +16,21 @@
 
 package stroom.data.store.impl.fs;
 
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 import stroom.data.store.api.DataException;
 import stroom.data.store.api.OutputStreamProvider;
 import stroom.data.store.api.Target;
 import stroom.datasource.api.v2.AbstractField;
-import stroom.meta.api.AttributeMapUtil;
 import stroom.meta.api.AttributeMap;
+import stroom.meta.api.AttributeMapUtil;
+import stroom.meta.api.MetaService;
 import stroom.meta.shared.Meta;
 import stroom.meta.shared.MetaFields;
-import stroom.meta.api.MetaService;
 import stroom.meta.shared.Status;
 import stroom.util.io.FileUtil;
 import stroom.util.io.SeekableOutputStream;
+
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import java.io.IOException;
 import java.io.InputStream;
@@ -37,7 +38,6 @@ import java.io.OutputStream;
 import java.io.UncheckedIOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
-import java.nio.file.Paths;
 import java.util.HashMap;
 import java.util.Map;
 
@@ -51,7 +51,7 @@ final class FsTarget implements InternalTarget, SegmentOutputStreamProviderFacto
     private final FsPathHelper fileSystemStreamPathHelper;
     private final Map<String, FsTarget> childMap = new HashMap<>();
     private final HashMap<String, SegmentOutputStreamProvider> outputStreamMap = new HashMap<>(10);
-    private final String rootPath;
+    private final Path volumePath;
     private final String streamType;
     private final FsTarget parent;
     private AttributeMap attributeMap;
@@ -67,13 +67,13 @@ final class FsTarget implements InternalTarget, SegmentOutputStreamProviderFacto
     private FsTarget(final MetaService metaService,
                      final FsPathHelper fileSystemStreamPathHelper,
                      final Meta requestMetaData,
-                     final String rootPath,
+                     final Path volumePath,
                      final String streamType,
                      final boolean append) {
         this.metaService = metaService;
         this.fileSystemStreamPathHelper = fileSystemStreamPathHelper;
         this.meta = requestMetaData;
-        this.rootPath = rootPath;
+        this.volumePath = volumePath;
         this.parent = null;
         this.streamType = streamType;
         this.append = append;
@@ -89,7 +89,7 @@ final class FsTarget implements InternalTarget, SegmentOutputStreamProviderFacto
         this.metaService = metaService;
         this.fileSystemStreamPathHelper = fileSystemStreamPathHelper;
         this.meta = parent.meta;
-        this.rootPath = parent.rootPath;
+        this.volumePath = parent.volumePath;
         this.parent = parent;
         this.append = parent.append;
         this.streamType = streamType;
@@ -105,7 +105,7 @@ final class FsTarget implements InternalTarget, SegmentOutputStreamProviderFacto
     static FsTarget create(final MetaService metaService,
                            final FsPathHelper fileSystemStreamPathHelper,
                            final Meta meta,
-                           final String rootPath,
+                           final Path rootPath,
                            final String streamType,
                            final boolean append) {
         return new FsTarget(metaService, fileSystemStreamPathHelper, meta, rootPath, streamType, append);
@@ -188,7 +188,7 @@ final class FsTarget implements InternalTarget, SegmentOutputStreamProviderFacto
     Path getFile() {
         if (file == null) {
             if (parent == null) {
-                file = fileSystemStreamPathHelper.getRootPath(rootPath, meta, streamType);
+                file = fileSystemStreamPathHelper.getRootPath(volumePath, meta, streamType);
             } else {
                 file = fileSystemStreamPathHelper.getChildPath(parent.getFile(), streamType);
             }
@@ -313,13 +313,13 @@ final class FsTarget implements InternalTarget, SegmentOutputStreamProviderFacto
     private Long getTotalFileSize() {
         long total = 0;
         final Path file = getFile();
-            try {
-                if (Files.isRegularFile(file)) {
-                    total += Files.size(file);
-                }
-            } catch (final IOException e) {
-                LOGGER.error(e.getMessage(), e);
+        try {
+            if (Files.isRegularFile(file)) {
+                total += Files.size(file);
             }
+        } catch (final IOException e) {
+            LOGGER.error(e.getMessage(), e);
+        }
         return total;
     }
 
@@ -386,8 +386,7 @@ final class FsTarget implements InternalTarget, SegmentOutputStreamProviderFacto
                 file = getFile();
 
                 // Make sure the parent path exists.
-                final Path rootDir = Paths.get(rootPath);
-                if (!FileSystemUtil.mkdirs(rootDir, file.getParent())) {
+                if (!FileSystemUtil.mkdirs(volumePath, file.getParent())) {
                     // Unable to create path
                     throw new DataException("Unable to create directory for file " + file);
                 }

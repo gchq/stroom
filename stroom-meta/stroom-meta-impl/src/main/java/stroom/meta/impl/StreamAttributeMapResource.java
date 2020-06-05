@@ -18,15 +18,11 @@
 
 package stroom.meta.impl;
 
-import com.google.common.collect.ImmutableList;
-import com.google.inject.Inject;
-import io.swagger.annotations.Api;
 import stroom.datasource.api.v2.DataSource;
 import stroom.datasource.api.v2.DocRefField;
 import stroom.feed.shared.FeedDoc;
 import stroom.meta.api.MetaService;
 import stroom.meta.shared.FindMetaCriteria;
-import stroom.meta.shared.MetaExpressionUtil;
 import stroom.meta.shared.MetaRow;
 import stroom.query.api.v2.ExpressionOperator;
 import stroom.query.api.v2.ExpressionTerm;
@@ -37,6 +33,11 @@ import stroom.util.shared.ResourcePaths;
 import stroom.util.shared.RestResource;
 import stroom.util.shared.ResultPage;
 import stroom.util.shared.Sort;
+
+import com.google.common.collect.ImmutableList;
+import com.google.inject.Inject;
+import io.swagger.annotations.Api;
+import io.swagger.annotations.ApiParam;
 
 import javax.ws.rs.Consumes;
 import javax.ws.rs.GET;
@@ -100,7 +101,7 @@ public class StreamAttributeMapResource implements RestResource {
     @POST
     public Response search(@QueryParam("pageOffset") Long pageOffset,
                            @QueryParam("pageSize") Integer pageSize,
-                           final ExpressionOperator expression) {
+                           @ApiParam("expression") final ExpressionOperator expression) {
         return securityContext.secureResult(() -> {
             // Validate pagination params
             if ((pageSize != null && pageOffset == null) || (pageSize == null && pageOffset != null)) {

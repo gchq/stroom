@@ -17,8 +17,7 @@
 /* Scrollbar */
 ::-webkit-scrollbar {
 	width: 12px;
-	/* Use transparent background so it looks better with non-white readonly text areas */
-	background: rgb(0,0,0,0);
+    background: #fff;
 }
 
 ::-webkit-scrollbar:horizontal {
@@ -31,8 +30,7 @@
 
 /* Corner */
 ::-webkit-scrollbar-corner {
-	/* Use transparent background so it looks better with non-white readonly text areas */
-	background: rgb(0,0,0,0);
+    background: #fff;
 }
 
 /* Thumb */
@@ -65,4 +63,15 @@
 ::-webkit-scrollbar-button {
 	width: 0;
 	height: 0;
+}
+
+
+.gwt-TextArea-readonly::-webkit-scrollbar {
+	/* Use transparent background so it looks better with non-white readonly text areas */
+	background: rgb(0,0,0,0);
+}
+
+.gwt-TextArea-readonly::-webkit-scrollbar-corner {
+	/* Use transparent background so it looks better with non-white readonly text areas */
+	background: rgb(0,0,0,0);
 }

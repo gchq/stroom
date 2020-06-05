@@ -35,7 +35,7 @@ public class DictionaryHandlerModule extends AbstractModule {
                 .addBinding(DictionaryStoreImpl.class);
 
         DocumentActionHandlerBinder.create(binder())
-                .bind(DictionaryDoc.ENTITY_TYPE, DictionaryStoreImpl.class);
+                .bind(DictionaryDoc.DOCUMENT_TYPE, DictionaryStoreImpl.class);
 
         RestResourcesBinder.create(binder())
                 .bind(NewUiDictionaryResource2.class)

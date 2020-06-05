@@ -41,7 +41,7 @@ public class Keys {
     // -------------------------------------------------------------------------
 
     public static final UniqueKey<ExplorerNodeRecord> KEY_EXPLORER_NODE_PRIMARY = UniqueKeys0.KEY_EXPLORER_NODE_PRIMARY;
-    public static final UniqueKey<ExplorerNodeRecord> KEY_EXPLORER_NODE_TYPE = UniqueKeys0.KEY_EXPLORER_NODE_TYPE;
+    public static final UniqueKey<ExplorerNodeRecord> KEY_EXPLORER_NODE_EXPLORER_NODE_TYPE_UUID = UniqueKeys0.KEY_EXPLORER_NODE_EXPLORER_NODE_TYPE_UUID;
     public static final UniqueKey<ExplorerPathRecord> KEY_EXPLORER_PATH_PRIMARY = UniqueKeys0.KEY_EXPLORER_PATH_PRIMARY;
 
     // -------------------------------------------------------------------------
@@ -59,7 +59,7 @@ public class Keys {
 
     private static class UniqueKeys0 {
         public static final UniqueKey<ExplorerNodeRecord> KEY_EXPLORER_NODE_PRIMARY = Internal.createUniqueKey(ExplorerNode.EXPLORER_NODE, "KEY_explorer_node_PRIMARY", ExplorerNode.EXPLORER_NODE.ID);
-        public static final UniqueKey<ExplorerNodeRecord> KEY_EXPLORER_NODE_TYPE = Internal.createUniqueKey(ExplorerNode.EXPLORER_NODE, "KEY_explorer_node_type", ExplorerNode.EXPLORER_NODE.TYPE, ExplorerNode.EXPLORER_NODE.UUID);
+        public static final UniqueKey<ExplorerNodeRecord> KEY_EXPLORER_NODE_EXPLORER_NODE_TYPE_UUID = Internal.createUniqueKey(ExplorerNode.EXPLORER_NODE, "KEY_explorer_node_explorer_node_type_uuid", ExplorerNode.EXPLORER_NODE.TYPE, ExplorerNode.EXPLORER_NODE.UUID);
         public static final UniqueKey<ExplorerPathRecord> KEY_EXPLORER_PATH_PRIMARY = Internal.createUniqueKey(ExplorerPath.EXPLORER_PATH, "KEY_explorer_path_PRIMARY", ExplorerPath.EXPLORER_PATH.ANCESTOR, ExplorerPath.EXPLORER_PATH.DESCENDANT);
     }
 }

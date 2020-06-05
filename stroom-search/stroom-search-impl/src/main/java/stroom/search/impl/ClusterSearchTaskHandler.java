@@ -17,13 +17,14 @@
 
 package stroom.search.impl;
 
-import stroom.annotation.api.AnnotationDataSource;
+import stroom.annotation.api.AnnotationFields;
 import stroom.cluster.task.api.ClusterResult;
 import stroom.cluster.task.api.ClusterTaskHandler;
 import stroom.cluster.task.api.ClusterTaskRef;
 import stroom.cluster.task.api.ClusterWorker;
 import stroom.pipeline.errorhandler.MessageUtil;
 import stroom.query.api.v2.ExpressionOperator;
+import stroom.query.api.v2.ExpressionParamUtil;
 import stroom.search.coprocessor.CompletionState;
 import stroom.search.coprocessor.Coprocessors;
 import stroom.search.coprocessor.CoprocessorsFactory;
@@ -44,6 +45,7 @@ import stroom.util.logging.LambdaLogger;
 import stroom.util.logging.LambdaLoggerFactory;
 
 import javax.inject.Inject;
+import java.util.Map;
 import java.util.Set;
 import java.util.concurrent.LinkedBlockingQueue;
 import java.util.concurrent.TimeUnit;
@@ -166,7 +168,7 @@ class ClusterSearchTaskHandler implements ClusterTaskHandler<ClusterSearchTask, 
 
                 // Search all index shards.
                 final ExpressionFilter expressionFilter = new ExpressionFilter.Builder()
-                        .addPrefixExcludeFilter(AnnotationDataSource.ANNOTATION_FIELD_PREFIX)
+                        .addPrefixExcludeFilter(AnnotationFields.ANNOTATION_FIELD_PREFIX)
                         .build();
                 final ExpressionOperator expression = expressionFilter.copy(task.getQuery().getExpression());
                 indexShardSearchFactory.search(taskContext, task, expression, extractionReceiver);

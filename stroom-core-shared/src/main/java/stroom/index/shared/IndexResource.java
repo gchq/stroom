@@ -16,13 +16,15 @@
 
 package stroom.index.shared;
 
-import io.swagger.annotations.Api;
-import io.swagger.annotations.ApiOperation;
-import org.fusesource.restygwt.client.DirectRestService;
 import stroom.docref.DocRef;
 import stroom.util.shared.ResourcePaths;
 import stroom.util.shared.RestResource;
 import stroom.util.shared.ResultPage;
+
+import io.swagger.annotations.Api;
+import io.swagger.annotations.ApiOperation;
+import io.swagger.annotations.ApiParam;
+import org.fusesource.restygwt.client.DirectRestService;
 
 import javax.ws.rs.Consumes;
 import javax.ws.rs.POST;
@@ -46,7 +48,7 @@ public interface IndexResource extends RestResource, DirectRestService {
     @ApiOperation(
             value = "Get an index doc",
             response = IndexDoc.class)
-    IndexDoc read(DocRef docRef);
+    IndexDoc read(@ApiParam("docRef") DocRef docRef);
 
     @PUT
     @Path("/update")
@@ -60,19 +62,21 @@ public interface IndexResource extends RestResource, DirectRestService {
     @ApiOperation(
             value = "Find matching index shards",
             response = ResultPage.class)
-    ResultPage<IndexShard> findIndexShards(FindIndexShardCriteria criteria);
+    ResultPage<IndexShard> findIndexShards(@ApiParam("criteria") FindIndexShardCriteria criteria);
 
     @POST
     @Path(SHARD_DELETE_SUB_PATH)
     @ApiOperation(
             value = "Delete matching index shards",
             response = Integer.class)
-    Long deleteIndexShards(@QueryParam("nodeName") String nodeName, FindIndexShardCriteria criteria);
+    Long deleteIndexShards(@QueryParam("nodeName") String nodeName, 
+                           @ApiParam("criteria") FindIndexShardCriteria criteria);
 
     @POST
     @Path(SHARD_FLUSH_SUB_PATH)
     @ApiOperation(
             value = "Flush matching index shards",
             response = Integer.class)
-    Long flushIndexShards(@QueryParam("nodeName") String nodeName, FindIndexShardCriteria criteria);
+    Long flushIndexShards(@QueryParam("nodeName") String nodeName, 
+                          @ApiParam("criteria") FindIndexShardCriteria criteria);
 }

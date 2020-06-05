@@ -1,6 +1,6 @@
 package stroom.annotation.impl.db;
 
-import stroom.annotation.api.AnnotationDataSource;
+import stroom.annotation.api.AnnotationFields;
 import stroom.annotation.impl.AnnotationDao;
 import stroom.annotation.impl.db.jooq.tables.records.AnnotationRecord;
 import stroom.annotation.shared.Annotation;
@@ -110,34 +110,34 @@ class AnnotationDaoImpl implements AnnotationDao {
         this.connectionProvider = connectionProvider;
 
         expressionMapper = expressionMapperFactory.create();
-        expressionMapper.map(AnnotationDataSource.ID_FIELD, ANNOTATION.ID, Long::valueOf);
+        expressionMapper.map(AnnotationFields.ID_FIELD, ANNOTATION.ID, Long::valueOf);
 //        expressionMapper.map(AnnotationDataSource.STREAM_ID_FIELD, ANNOTATION_DATA_LINK.STREAM_ID, Long::valueOf);
 //        expressionMapper.map(AnnotationDataSource.EVENT_ID_FIELD, ANNOTATION_DATA_LINK.EVENT_ID, Long::valueOf);
-        expressionMapper.map(AnnotationDataSource.CREATED_ON_FIELD, ANNOTATION.CREATE_TIME_MS, value -> getDate(AnnotationDataSource.CREATED_ON, value));
-        expressionMapper.map(AnnotationDataSource.CREATED_BY_FIELD, ANNOTATION.CREATE_USER, value -> value);
-        expressionMapper.map(AnnotationDataSource.UPDATED_ON_FIELD, ANNOTATION.UPDATE_TIME_MS, value -> getDate(AnnotationDataSource.UPDATED_ON, value));
-        expressionMapper.map(AnnotationDataSource.UPDATED_BY_FIELD, ANNOTATION.UPDATE_USER, value -> value);
-        expressionMapper.map(AnnotationDataSource.TITLE_FIELD, ANNOTATION.TITLE, value -> value);
-        expressionMapper.map(AnnotationDataSource.SUBJECT_FIELD, ANNOTATION.SUBJECT, value -> value);
-        expressionMapper.map(AnnotationDataSource.STATUS_FIELD, ANNOTATION.STATUS, value -> value);
-        expressionMapper.map(AnnotationDataSource.ASSIGNED_TO_FIELD, ANNOTATION.ASSIGNED_TO, value -> value);
-        expressionMapper.map(AnnotationDataSource.COMMENT_FIELD, ANNOTATION.COMMENT, value -> value);
-        expressionMapper.map(AnnotationDataSource.HISTORY_FIELD, ANNOTATION.HISTORY, value -> value);
+        expressionMapper.map(AnnotationFields.CREATED_ON_FIELD, ANNOTATION.CREATE_TIME_MS, value -> getDate(AnnotationFields.CREATED_ON, value));
+        expressionMapper.map(AnnotationFields.CREATED_BY_FIELD, ANNOTATION.CREATE_USER, value -> value);
+        expressionMapper.map(AnnotationFields.UPDATED_ON_FIELD, ANNOTATION.UPDATE_TIME_MS, value -> getDate(AnnotationFields.UPDATED_ON, value));
+        expressionMapper.map(AnnotationFields.UPDATED_BY_FIELD, ANNOTATION.UPDATE_USER, value -> value);
+        expressionMapper.map(AnnotationFields.TITLE_FIELD, ANNOTATION.TITLE, value -> value);
+        expressionMapper.map(AnnotationFields.SUBJECT_FIELD, ANNOTATION.SUBJECT, value -> value);
+        expressionMapper.map(AnnotationFields.STATUS_FIELD, ANNOTATION.STATUS, value -> value);
+        expressionMapper.map(AnnotationFields.ASSIGNED_TO_FIELD, ANNOTATION.ASSIGNED_TO, value -> value);
+        expressionMapper.map(AnnotationFields.COMMENT_FIELD, ANNOTATION.COMMENT, value -> value);
+        expressionMapper.map(AnnotationFields.HISTORY_FIELD, ANNOTATION.HISTORY, value -> value);
 
         valueMapper = new ValueMapper();
-        valueMapper.map(AnnotationDataSource.ID_FIELD, ANNOTATION.ID, ValLong::create);
+        valueMapper.map(AnnotationFields.ID_FIELD, ANNOTATION.ID, ValLong::create);
 //        valueMapper.map(AnnotationDataSource.STREAM_ID_FIELD, ANNOTATION_DATA_LINK.STREAM_ID, ValLong::create);
 //        valueMapper.map(AnnotationDataSource.EVENT_ID_FIELD, ANNOTATION_DATA_LINK.EVENT_ID, ValLong::create);
-        valueMapper.map(AnnotationDataSource.CREATED_ON_FIELD, ANNOTATION.CREATE_TIME_MS, ValLong::create);
-        valueMapper.map(AnnotationDataSource.CREATED_BY_FIELD, ANNOTATION.CREATE_USER, ValString::create);
-        valueMapper.map(AnnotationDataSource.UPDATED_ON_FIELD, ANNOTATION.UPDATE_TIME_MS, ValLong::create);
-        valueMapper.map(AnnotationDataSource.UPDATED_BY_FIELD, ANNOTATION.UPDATE_USER, ValString::create);
-        valueMapper.map(AnnotationDataSource.TITLE_FIELD, ANNOTATION.TITLE, ValString::create);
-        valueMapper.map(AnnotationDataSource.SUBJECT_FIELD, ANNOTATION.SUBJECT, ValString::create);
-        valueMapper.map(AnnotationDataSource.STATUS_FIELD, ANNOTATION.STATUS, ValString::create);
-        valueMapper.map(AnnotationDataSource.ASSIGNED_TO_FIELD, ANNOTATION.ASSIGNED_TO, ValString::create);
-        valueMapper.map(AnnotationDataSource.COMMENT_FIELD, ANNOTATION.COMMENT, ValString::create);
-        valueMapper.map(AnnotationDataSource.HISTORY_FIELD, ANNOTATION.HISTORY, ValString::create);
+        valueMapper.map(AnnotationFields.CREATED_ON_FIELD, ANNOTATION.CREATE_TIME_MS, ValLong::create);
+        valueMapper.map(AnnotationFields.CREATED_BY_FIELD, ANNOTATION.CREATE_USER, ValString::create);
+        valueMapper.map(AnnotationFields.UPDATED_ON_FIELD, ANNOTATION.UPDATE_TIME_MS, ValLong::create);
+        valueMapper.map(AnnotationFields.UPDATED_BY_FIELD, ANNOTATION.UPDATE_USER, ValString::create);
+        valueMapper.map(AnnotationFields.TITLE_FIELD, ANNOTATION.TITLE, ValString::create);
+        valueMapper.map(AnnotationFields.SUBJECT_FIELD, ANNOTATION.SUBJECT, ValString::create);
+        valueMapper.map(AnnotationFields.STATUS_FIELD, ANNOTATION.STATUS, ValString::create);
+        valueMapper.map(AnnotationFields.ASSIGNED_TO_FIELD, ANNOTATION.ASSIGNED_TO, ValString::create);
+        valueMapper.map(AnnotationFields.COMMENT_FIELD, ANNOTATION.COMMENT, ValString::create);
+        valueMapper.map(AnnotationFields.HISTORY_FIELD, ANNOTATION.HISTORY, ValString::create);
     }
 
     private long getDate(final String fieldName, final String value) {
@@ -340,7 +340,10 @@ class AnnotationDaoImpl implements AnnotationDao {
         }).orElse(get(annotation));
     }
 
-    private void createEventLink(final long annotationId, final EventId eventId, final String user, final long now) {
+    private void createEventLink(final long annotationId,
+                                 final EventId eventId,
+                                 final String user,
+                                 final long now) {
         try {
             // Create event link.
             final int count = JooqUtil.contextResult(connectionProvider, context -> context
@@ -366,7 +369,10 @@ class AnnotationDaoImpl implements AnnotationDao {
         }
     }
 
-    private void removeEventLink(final long annotationId, final EventId eventId, final String user, final long now) {
+    private void removeEventLink(final long annotationId,
+                                 final EventId eventId,
+                                 final String user,
+                                 final long now) {
         try {
             // Remove event link.
             final int count = JooqUtil.contextResult(connectionProvider, context -> context
@@ -415,15 +421,29 @@ class AnnotationDaoImpl implements AnnotationDao {
 
     @Override
     public Integer setStatus(final SetStatusRequest request, final String user) {
-        return changeFields(request.getAnnotationIdList(), user, Annotation.STATUS, ANNOTATION.STATUS, request.getStatus());
+        return changeFields(
+                request.getAnnotationIdList(),
+                user,
+                Annotation.STATUS,
+                ANNOTATION.STATUS,
+                request.getStatus());
     }
 
     @Override
     public Integer setAssignedTo(final SetAssignedToRequest request, final String user) {
-        return changeFields(request.getAnnotationIdList(), user, Annotation.ASSIGNED_TO, ANNOTATION.ASSIGNED_TO, request.getAssignedTo());
+        return changeFields(
+                request.getAnnotationIdList(),
+                user,
+                Annotation.ASSIGNED_TO,
+                ANNOTATION.ASSIGNED_TO,
+                request.getAssignedTo());
     }
 
-    private Integer changeFields(final List<Long> annotationIdList, final String user, final String type, final Field<String> field, final String value) {
+    private Integer changeFields(final List<Long> annotationIdList,
+                                 final String user,
+                                 final String type,
+                                 final Field<String> field,
+                                 final String value) {
         final long now = System.currentTimeMillis();
         int count = 0;
         for (final Long annotationId : annotationIdList) {
@@ -437,7 +457,12 @@ class AnnotationDaoImpl implements AnnotationDao {
         return count;
     }
 
-    private void changeField(final long annotationId, final long now, final String user, final String type, final Field<String> field, final String value) {
+    private void changeField(final long annotationId,
+                             final long now,
+                             final String user,
+                             final String type,
+                             final Field<String> field,
+                             final String value) {
         JooqUtil.context(connectionProvider, context -> context
                 .update(ANNOTATION)
                 .set(field, value)
@@ -449,11 +474,13 @@ class AnnotationDaoImpl implements AnnotationDao {
     }
 
     @Override
-    public void search(final ExpressionCriteria criteria, final AbstractField[] fields, final Consumer<Val[]> consumer) {
+    public void search(final ExpressionCriteria criteria,
+                       final AbstractField[] fields,
+                       final Consumer<Val[]> consumer) {
         final List<AbstractField> fieldList = Arrays.asList(fields);
 
         final PageRequest pageRequest = criteria.getPageRequest();
-        final Collection<Condition> conditions = createCondition(criteria.getExpression());
+        final Condition condition = createCondition(criteria.getExpression());
         final Collection<OrderField<?>> orderFields = createOrderFields(criteria);
         final List<Field<?>> dbFields = new ArrayList<>(valueMapper.getFields(fieldList));
         final Mapper<?>[] mappers = valueMapper.getMappers(fields);
@@ -469,7 +496,7 @@ class AnnotationDaoImpl implements AnnotationDao {
 
             SelectJoinStep<?> select = context.select(dbFields).from(ANNOTATION);
             try (final Cursor<?> cursor = select
-                    .where(conditions)
+                    .where(condition)
                     .orderBy(orderFields)
                     .limit(offset, numberOfRows)
                     .fetchLazy()) {
@@ -493,7 +520,7 @@ class AnnotationDaoImpl implements AnnotationDao {
         });
     }
 
-    private Collection<Condition> createCondition(final ExpressionOperator expression) {
+    private Condition createCondition(final ExpressionOperator expression) {
         return expressionMapper.apply(expression);
     }
 
@@ -504,25 +531,25 @@ class AnnotationDaoImpl implements AnnotationDao {
 
         return criteria.getSortList().stream().map(sort -> {
             Field<?> field;
-            if (AnnotationDataSource.CREATED_ON.equals(sort.getField())) {
+            if (AnnotationFields.CREATED_ON.equals(sort.getField())) {
                 field = ANNOTATION.CREATE_TIME_MS;
-            } else if (AnnotationDataSource.CREATED_BY.equals(sort.getField())) {
+            } else if (AnnotationFields.CREATED_BY.equals(sort.getField())) {
                 field = ANNOTATION.CREATE_USER;
-            } else if (AnnotationDataSource.UPDATED_ON.equals(sort.getField())) {
+            } else if (AnnotationFields.UPDATED_ON.equals(sort.getField())) {
                 field = ANNOTATION.UPDATE_TIME_MS;
-            } else if (AnnotationDataSource.UPDATED_BY.equals(sort.getField())) {
+            } else if (AnnotationFields.UPDATED_BY.equals(sort.getField())) {
                 field = ANNOTATION.UPDATE_USER;
-            } else if (AnnotationDataSource.TITLE.equals(sort.getField())) {
+            } else if (AnnotationFields.TITLE.equals(sort.getField())) {
                 field = ANNOTATION.TITLE;
-            } else if (AnnotationDataSource.SUBJECT.equals(sort.getField())) {
+            } else if (AnnotationFields.SUBJECT.equals(sort.getField())) {
                 field = ANNOTATION.SUBJECT;
-            } else if (AnnotationDataSource.STATUS.equals(sort.getField())) {
+            } else if (AnnotationFields.STATUS.equals(sort.getField())) {
                 field = ANNOTATION.STATUS;
-            } else if (AnnotationDataSource.ASSIGNED_TO.equals(sort.getField())) {
+            } else if (AnnotationFields.ASSIGNED_TO.equals(sort.getField())) {
                 field = ANNOTATION.ASSIGNED_TO;
-            } else if (AnnotationDataSource.COMMENT.equals(sort.getField())) {
+            } else if (AnnotationFields.COMMENT.equals(sort.getField())) {
                 field = ANNOTATION.COMMENT;
-            } else if (AnnotationDataSource.HISTORY.equals(sort.getField())) {
+            } else if (AnnotationFields.HISTORY.equals(sort.getField())) {
                 field = ANNOTATION.HISTORY;
             } else {
                 field = ANNOTATION.ID;

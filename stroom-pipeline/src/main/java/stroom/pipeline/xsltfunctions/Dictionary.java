@@ -64,7 +64,7 @@ class Dictionary extends StroomExtensionFunctionCall {
                     try {
                         // Try by UUID
                         try {
-                            DocRef docRef = new DocRef(DictionaryDoc.ENTITY_TYPE, name);
+                            DocRef docRef = new DocRef(DictionaryDoc.DOCUMENT_TYPE, name);
                             result = wordListProvider.getCombinedData(docRef);
                             if (result == null) {
                                 LOGGER.debug(() -> "Unable to load dictionary by UUID '" + name + "'");

@@ -30,70 +30,10 @@ CREATE TABLE IF NOT EXISTS node (
     url                   varchar(255) DEFAULT NULL,
     name                  varchar(255) NOT NULL,
     priority              smallint(6) NOT NULL,
-    enabled               bit(1) NOT NULL,
+    enabled               tinyint(1) NOT NULL DEFAULT '0',
     PRIMARY KEY           (id),
     UNIQUE KEY            name (name)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8;
-
---
--- Copy data into the node table
---
-DROP PROCEDURE IF EXISTS copy_node;
-DELIMITER //
-CREATE PROCEDURE copy_node ()
-BEGIN
-    -- Can be run by multiple scripts
-    IF EXISTS (
-            SELECT NULL
-            FROM INFORMATION_SCHEMA.TABLES
-            WHERE TABLE_NAME = 'ND') THEN
-
-        RENAME TABLE ND TO OLD_ND;
-    END IF;
-
-    IF EXISTS (
-            SELECT NULL 
-            FROM INFORMATION_SCHEMA.TABLES 
-            where TABLE_NAME = 'OLD_ND') THEN
-
-        INSERT INTO node (
-            id,
-            version,
-            create_time_ms,
-            create_user,
-            update_time_ms,
-            update_user,
-            url,
-            name,
-            priority,
-            enabled)
-        SELECT
-            ID,
-            VER,
-            IFNULL(CRT_MS,  0),
-            IFNULL(CRT_USER,  'UNKNOWN'),
-            IFNULL(UPD_MS,  0),
-            IFNULL(UPD_USER,  'UNKNOWN'),
-            CLSTR_URL,
-            NAME,
-            PRIOR,
-            ENBL
-        FROM OLD_ND
-        WHERE ID > (SELECT COALESCE(MAX(id), 0) FROM node)
-        ORDER BY ID;
-
-        -- Work out what to set our auto_increment start value to
-        SELECT CONCAT('ALTER TABLE node AUTO_INCREMENT = ', COALESCE(MAX(id) + 1, 1))
-        INTO @alter_table_sql
-        FROM node;
-
-        PREPARE alter_table_stmt FROM @alter_table_sql;
-        EXECUTE alter_table_stmt;
-    END IF;
-END//
-DELIMITER ;
-CALL copy_node();
-DROP PROCEDURE copy_node;
 
 SET SQL_NOTES=@OLD_SQL_NOTES;
 

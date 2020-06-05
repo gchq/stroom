@@ -23,7 +23,7 @@ import com.gwtplatform.mvp.client.View;
 import stroom.docref.DocRef;
 
 import stroom.entity.client.presenter.HasDocumentRead;
-import stroom.processor.shared.ProcessorTaskDataSource;
+import stroom.processor.shared.ProcessorTaskFields;
 import stroom.processor.shared.ProcessorTaskSummary;
 import stroom.query.api.v2.ExpressionOperator;
 import stroom.query.api.v2.ExpressionOperator.Op;
@@ -61,13 +61,13 @@ public class ProcessorTaskPresenter extends MyPresenterWidget<ProcessorTaskPrese
             if (row != null) {
                 final ExpressionOperator.Builder root = new ExpressionOperator.Builder(Op.AND);
                 if (row.getPipeline() != null) {
-                    root.addTerm(ProcessorTaskDataSource.PIPELINE_UUID, Condition.IS_DOC_REF, row.getPipeline());
+                    root.addTerm(ProcessorTaskFields.PIPELINE, Condition.IS_DOC_REF, row.getPipeline());
                 }
 //                if (row.getFeed() != null) {
 //                    root.addTerm(ProcessorTaskDataSource.FEED_UUID, Condition.IS_DOC_REF, row.getFeed());
 //                }
                 if (row.getStatus() != null) {
-                    root.addTerm(ProcessorTaskDataSource.STATUS, Condition.EQUALS, row.getStatus().getDisplayValue());
+                    root.addTerm(ProcessorTaskFields.STATUS, Condition.EQUALS, row.getStatus().getDisplayValue());
                 }
 
                 processorTaskListPresenter.setExpression(root.build());

@@ -124,6 +124,7 @@ appConfig:
     proxyDir: ${STROOM_PROXY_DIR:-/tmp/stroom/proxy}
   publicUri:
     hostname: ${API_GATEWAY_HOST:-localhost}
+    port: ${API_GATEWAY_PORT:-443}
   security:
     authentication:
       preventLogin: false
@@ -136,4 +137,10 @@ appConfig:
     internal:
       enabledStoreTypes: ${STROOM_ENABLED_STAT_STORE_TYPES:-[ "StatisticStore" ]}
   volumes:
-    createDefaultOnStart: false
+    createDefaultIndexVolumesOnStart: ${STROOM_CREATE_DEFAULT_INDEX_VOLUMES:-false}
+    defaultIndexVolumeGroupPaths: ${STROOM_DEFAULT_INDEX_VOLUME_PATHS:-volumes/defaultIndexVolume}
+    defaultIndexVolumeGroupNodes: ${STROOM_DEFAULT_INDEX_VOLUME_NODES:-node1a}
+  data:
+    filesystemVolume:
+      createDefaultStreamVolumesOnStart: ${STROOM_CREATE_DEFAULT_STREAM_VOLUMES:-false}
+      defaultStreamVolumePaths: ${STROOM_DEFAULT_STREAM_VOLUME_PATHS:-volumes/defaultStreamVolume}

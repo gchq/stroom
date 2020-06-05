@@ -16,6 +16,8 @@
     }, {
       "fieldName" : "user"
     } ],
-    "customRollUpMasks" : [ { } ]
+    "customRollUpMasks" : [ {
+      "rolledUpTagPosition" : [ ]
+    } ]
   }
 }

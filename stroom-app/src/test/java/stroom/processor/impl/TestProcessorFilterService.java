@@ -27,7 +27,7 @@ import stroom.processor.api.ProcessorFilterService;
 import stroom.processor.api.ProcessorService;
 import stroom.processor.shared.Processor;
 import stroom.processor.shared.ProcessorFilter;
-import stroom.processor.shared.ProcessorFilterDataSource;
+import stroom.processor.shared.ProcessorFilterFields;
 import stroom.processor.shared.QueryData;
 import stroom.query.api.v2.ExpressionOperator;
 import stroom.query.api.v2.ExpressionTerm;
@@ -79,23 +79,23 @@ class TestProcessorFilterService extends AbstractCoreIntegrationTest {
         final DocRef pipelineRef = new DocRef(PipelineDoc.DOCUMENT_TYPE, "12345", "Test Pipeline");
         final ExpressionCriteria findProcessorFilterCriteria = new ExpressionCriteria();
 
-        processorFilterService.create(pipelineRef, new QueryData(), 1, true);
+        processorFilterService.create(pipelineRef, new QueryData(), 1, false, true);
         assertThat(processorService.find(new ExpressionCriteria()).size()).isEqualTo(1);
         assertThat(processorFilterService.find(findProcessorFilterCriteria).size()).isEqualTo(1);
 
-        processorFilterService.create(pipelineRef, new QueryData(), 10, true);
+        processorFilterService.create(pipelineRef, new QueryData(), 10, false, true);
         assertThat(processorService.find(new ExpressionCriteria()).size()).isEqualTo(1);
         assertThat(processorFilterService.find(findProcessorFilterCriteria).size()).isEqualTo(2);
 
         final ExpressionOperator expression1 = new ExpressionOperator.Builder()
-                .addTerm(ProcessorFilterDataSource.PRIORITY, Condition.GREATER_THAN_OR_EQUAL_TO, 10)
+                .addTerm(ProcessorFilterFields.PRIORITY, Condition.GREATER_THAN_OR_EQUAL_TO, 10)
                 .build();
         findProcessorFilterCriteria.setExpression(expression1);
         //PriorityRange(new Range<>(10, null));
         assertThat(processorFilterService.find(findProcessorFilterCriteria).size()).isEqualTo(1);
 
         final ExpressionOperator expression2 = new ExpressionOperator.Builder()
-                .addTerm(ProcessorFilterDataSource.PRIORITY, Condition.GREATER_THAN_OR_EQUAL_TO, 1)
+                .addTerm(ProcessorFilterFields.PRIORITY, Condition.GREATER_THAN_OR_EQUAL_TO, 1)
                 .build();
         findProcessorFilterCriteria.setExpression(expression2);
 //        findProcessorFilterCriteria.setPriorityRange(new Range<>(1, null));
@@ -125,7 +125,7 @@ class TestProcessorFilterService extends AbstractCoreIntegrationTest {
 
         final ExpressionCriteria findProcessorFilterCriteria = new ExpressionCriteria();
 
-        processorFilterService.create(pipelineRef, findStreamQueryData, 1, true);
+        processorFilterService.create(pipelineRef, findStreamQueryData, 1, false, true);
         assertThat(processorService.find(new ExpressionCriteria()).size()).isEqualTo(1);
 
         final ResultPage<ProcessorFilter> filters = processorFilterService
@@ -210,9 +210,9 @@ class TestProcessorFilterService extends AbstractCoreIntegrationTest {
     @Test
     void testApplyAllCriteria() {
         final ExpressionOperator expression = new ExpressionOperator.Builder()
-                .addTerm(ProcessorFilterDataSource.LAST_POLL_MS, Condition.GREATER_THAN_OR_EQUAL_TO, 1)
-                .addTerm(ProcessorFilterDataSource.LAST_POLL_MS, Condition.LESS_THAN, 1)
-                .addTerm(ProcessorFilterDataSource.PROCESSOR_FILTER_ENABLED, Condition.EQUALS, true)
+                .addTerm(ProcessorFilterFields.LAST_POLL_MS, Condition.GREATER_THAN_OR_EQUAL_TO, 1)
+                .addTerm(ProcessorFilterFields.LAST_POLL_MS, Condition.LESS_THAN, 1)
+                .addTerm(ProcessorFilterFields.ENABLED, Condition.EQUALS, true)
                 .build();
         final ExpressionCriteria findProcessorFilterCriteria = new ExpressionCriteria(expression);
 //        findProcessorFilterCriteria.setLastPollPeriod(new Period(1L, 1L));
