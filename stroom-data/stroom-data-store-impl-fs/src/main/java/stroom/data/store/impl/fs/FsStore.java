@@ -337,7 +337,7 @@ class FsStore implements Store, AttributeMapFactory {
 
     @Override
     public Map<String, String> getAttributes(final Meta meta) {
-        try (final Source source = openSource(meta.getId())) {
+        try (final Source source = openSource(meta.getId(), true)) {
             return source != null
                     ? source.getAttributes()
                     : Collections.emptyMap();
