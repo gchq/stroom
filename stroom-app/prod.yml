@@ -137,7 +137,10 @@ appConfig:
     internal:
       enabledStoreTypes: ${STROOM_ENABLED_STAT_STORE_TYPES:-[ "StatisticStore" ]}
   volumes:
-    createDefaultIndexVolumesOnStart: false
+    createDefaultIndexVolumesOnStart: ${STROOM_CREATE_DEFAULT_INDEX_VOLUMES:-false}
+    defaultIndexVolumeGroupPaths: ${STROOM_DEFAULT_INDEX_VOLUME_PATHS:-volumes/defaultIndexVolume}
+    defaultIndexVolumeGroupNodes: ${STROOM_DEFAULT_INDEX_VOLUME_NODES:-node1a}
   data:
     filesystemVolume:
-      createDefaultStreamVolumesOnStart: false
+      createDefaultStreamVolumesOnStart: ${STROOM_CREATE_DEFAULT_STREAM_VOLUMES:-false}
+      defaultStreamVolumePaths: ${STROOM_DEFAULT_STREAM_VOLUME_PATHS:-volumes/defaultStreamVolume}
