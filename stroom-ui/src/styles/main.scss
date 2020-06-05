@@ -1,3 +1,6 @@
+@import "~bootstrap/dist/css/bootstrap.min.css";
+@import "~react-table/react-table.css";
+
 // Fonts
 @import "./open-sans-v16-latin";
 
@@ -37,6 +40,8 @@
 @import "../components/IconHeader/IconHeader";
 @import "../components/InlineInput/InlineInput";
 @import "../components/InlineSelect/InlineSelect";
+@import "../components/ChangePassword2/JoinForm";
+@import "../components/Layout/Layout";
 @import "../components/LineTo/LineTo";
 @import "../components/Loader/Loader";
 @import "../components/Login/Login";

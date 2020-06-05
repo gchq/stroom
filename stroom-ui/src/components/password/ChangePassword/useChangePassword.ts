@@ -1,5 +1,4 @@
-import * as React from "react";
-import { useCallback } from "react";
+import { useCallback, useState } from "react";
 import { ChangePasswordRequest } from "components/authentication/types";
 import useApi from "components/authentication";
 import usePasswordState from "./useChangePasswordState";
@@ -17,7 +16,7 @@ const useChangePassword = (): {
     setShowChangeConfirmation,
   } = usePasswordState();
   const { changePassword: changePasswordUsingApi } = useApi();
-  const [isSubmitting, setSubmitting] = React.useState(false);
+  const [isSubmitting, setSubmitting] = useState(false);
 
   const changePassword = useCallback(
     (changePasswordRequest: ChangePasswordRequest) => {
@@ -52,10 +51,15 @@ const useChangePassword = (): {
         }
       });
     },
-    [changePasswordUsingApi, setShowChangeConfirmation, addErrorMessage, isSubmitting],
+    [changePasswordUsingApi, setShowChangeConfirmation, addErrorMessage],
   );
 
-  return { changePassword, errorMessages, showChangeConfirmation, isSubmitting };
+  return {
+    changePassword,
+    errorMessages,
+    showChangeConfirmation,
+    isSubmitting,
+  };
 };
 
 export default useChangePassword;

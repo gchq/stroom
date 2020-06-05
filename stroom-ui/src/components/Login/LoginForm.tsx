@@ -21,7 +21,8 @@ import { Credentials } from "components/authentication/types";
 import useForm from "react-hook-form";
 import { Button, Form, Icon, Input } from "antd";
 import { OptionalRequiredFieldMessage } from "../FormComponents/FormComponents";
-import LogoPage from "../LogoPage/LogoPage";
+import LogoPage from "../Layout/LogoPage";
+import FormContainer from "../Layout/FormContainer";
 
 interface FormData {
   email: string;
@@ -100,7 +101,7 @@ const LoginForm: React.FunctionComponent<{
 
   return (
     <LogoPage>
-      <div className="Login__container">
+      <FormContainer>
         <Form onSubmit={handleSubmit(onSubmit)}>
           <div className="Login__content">
             <div className="Login__icon-container">
@@ -154,7 +155,7 @@ const LoginForm: React.FunctionComponent<{
 
           </div>
         </Form>
-      </div>
+      </FormContainer>
     </LogoPage>
   );
 };

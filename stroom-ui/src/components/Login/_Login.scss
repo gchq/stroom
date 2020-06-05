@@ -14,14 +14,6 @@
  * limitations under the License.
  */
 
-.Login__container {
-  width: 18rem;
-  padding: 2rem;
-  //border: thin solid lightgrey;
-  background: white;
-  border-radius: .5rem;
-}
-
 .Login__label {
   //font-weight: 600;
   margin-bottom: 0.25rem;
@@ -42,6 +34,7 @@
 .Login__content {
   display: flex;
   flex-direction: column;
+  width: 16rem;
 }
 
 .Login__content input {

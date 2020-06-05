@@ -14,12 +14,9 @@
  * limitations under the License.
  */
 import * as React from "react";
-import * as storybook from "@storybook/react";
 import { addParameters, configure, addDecorator } from "@storybook/react";
-import StoryRouter from "storybook-react-router";
 import StroomDecorator from "../src/testing/storybook/StroomDecorator";
 
-import "react-table/react-table.css";
 import "../src/styles/main.css";
 
 const req = require.context("../src", true, /\.stories\.tsx$/);
@@ -94,8 +91,8 @@ addParameters({
     /**
      * theme storybook, see link below
      */
-    theme: undefined
-  }
+    theme: undefined,
+  },
 });
 
 configure(loadStories, module);

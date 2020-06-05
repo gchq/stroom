@@ -1,0 +1,138 @@
+/** Declare some variables **/
+$primary: #007bff;
+
+// Password strength meter color for the different levels
+$strength-colors: (darkred, orangered, orange, yellowgreen, green);
+
+// Gap width between strength meter bars
+$strength-gap: 6px;
+
+body {
+  font-size: 62.5%;
+}
+
+//.main-container {
+//  width: 400px;
+//  top: 0;
+//  bottom: 0;
+//  left: 0;
+//  right: 0;
+//}
+
+.JoinForm__content {
+  display: flex;
+  flex-direction: column;
+  width: 25rem;
+}
+
+.form-container {
+  bottom: 100px;
+}
+
+legend.form-label {
+  font-size: 1.5rem;
+  color: desaturate(darken($primary, 10%), 60%);
+}
+
+.control-label {
+  font-size: 0.8rem;
+  font-weight: bold;
+  color: desaturate(darken($primary, 10%), 80%);
+}
+
+.form-control {
+  font-size: 1rem;
+}
+
+.form-hint {
+  font-size: 0.6rem;
+  line-height: 1.4;
+  margin: -5px auto 5px;
+  color: #999;
+
+  &.error {
+    color: #c00;
+    font-size: 0.8rem;
+  }
+}
+
+button.btn {
+  letter-spacing: 1px;
+  font-size: 0.8rem;
+  font-weight: 600;
+}
+
+.password-count {
+  //bottom: 16px;
+  //right: 10px;
+
+  bottom: 1.04rem;
+  right: 2.3rem;
+  font-size: 1rem;
+}
+
+.strength-meter {
+  position: relative;
+  height: 3px;
+  background: #ddd;
+  margin: 7px 0;
+  border-radius: 2px;
+
+  // Dynamically create the gap effect
+  &:before,
+  &:after {
+    content: "";
+    height: inherit;
+    background: transparent;
+    display: block;
+    border-color: #fff;
+    border-style: solid;
+    border-width: 0 $strength-gap 0;
+    position: absolute;
+    width: calc(20% + #{$strength-gap});
+    z-index: 10;
+  }
+
+  // Dynamically create the gap effect
+  &:before {
+    left: calc(20% - #{($strength-gap / 2)});
+  }
+
+  // Dynamically create the gap effect
+  &:after {
+    right: calc(20% - #{($strength-gap / 2)});
+  }
+}
+
+.strength-meter-fill {
+  background: transparent;
+  height: inherit;
+  position: absolute;
+  width: 0;
+  border-radius: inherit;
+  transition: width 0.5s ease-in-out, background 0.25s;
+
+  // Dynamically generate strength meter color styles
+  @for $i from 1 through 5 {
+    &[data-strength="#{$i - 1}"] {
+      width: (20% * $i);
+      background: nth($strength-colors, $i);
+    }
+  }
+}
+
+.ViewPassword {
+  position: absolute;
+  bottom: .93rem;
+  right: 1.5rem;
+  font-size: 1rem;
+}
+
+.ViewPassword__icon {
+  color: desaturate(darken($primary, 10%), 80%);
+}
+
+.form-control.hide-icon {
+  background-image: none;
+  padding-right: 4.5rem;
+}

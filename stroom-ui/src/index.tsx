@@ -13,7 +13,6 @@ import { CustomRouter } from "./lib/useRouter";
 import { createBrowserHistory as createHistory } from "history";
 import ConfigProvider from "startup/config/ConfigProvider";
 
-import "react-table/react-table.css";
 import "./styles/main.css";
 import { AuthorisationContextProvider } from "startup/Authorisation";
 import { AuthenticationContextProvider } from "startup/Authentication";

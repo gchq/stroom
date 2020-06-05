@@ -16,8 +16,9 @@
 
 import * as React from "react";
 import ChangePasswordFields from "../ChangePasswordFields";
-import LogoPage from "../../LogoPage/LogoPage";
+import LogoPage from "../../Layout/LogoPage";
 import { ChangePasswordRequest } from "../../authentication/types";
+import FormContainer from "../../Layout/FormContainer";
 
 const ChangePasswordForm: React.FunctionComponent<{
   email: string;
@@ -31,7 +32,13 @@ const ChangePasswordForm: React.FunctionComponent<{
   //   verifyPassword: string,
   //   email: string,
   // ) => Promise<string>;
-}> = ({ showChangeConfirmation, redirectUri, email, onSubmit, isSubmitting }) => {
+}> = ({
+  showChangeConfirmation,
+  redirectUri,
+  email,
+  onSubmit,
+  isSubmitting,
+}) => {
   let title = "Change Password";
   if (showChangeConfirmation && redirectUri) {
     title = "Your password has been changed";
@@ -55,10 +62,10 @@ const ChangePasswordForm: React.FunctionComponent<{
 
   return (
     <LogoPage>
-      <div className="ChangePassword__container">
+      <FormContainer>
         <h3>{title}</h3>
         {content}
-      </div>
+      </FormContainer>
     </LogoPage>
   );
 };
