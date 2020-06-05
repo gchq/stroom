@@ -12,7 +12,7 @@ const ViewPassword: FunctionComponent<ViewPasswordProps> = ({
   state,
   onStateChanged = (s: boolean) => s,
 }) => {
-  const icon: IconProp = state ? "eye" : "eye-slash";
+  const icon: IconProp = state ? "eye-slash" : "eye";
   return (
     <div className="ViewPassword">
       <FontAwesomeIcon

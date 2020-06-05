@@ -124,8 +124,12 @@ button.btn {
 .ViewPassword {
   position: absolute;
   bottom: .93rem;
-  right: 1.5rem;
+  right: 1.2rem;
   font-size: 1rem;
+  text-align: center;
+  width: 2rem;
+  cursor: pointer;
+  user-select: none;
 }
 
 .ViewPassword__icon {

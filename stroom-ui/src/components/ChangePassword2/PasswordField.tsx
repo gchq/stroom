@@ -8,7 +8,7 @@ import ViewPassword from "./ViewPassword";
 export interface PasswordFieldState {
   password: string;
   strength: ZXCVBNScore;
-  visible: boolean;
+  viewText: boolean;
 }
 
 export interface PasswordFieldProps {
@@ -47,10 +47,11 @@ const PasswordField: FunctionComponent<PasswordFieldProps> = ({
   const [state, setState] = useState<PasswordFieldState>({
     password: "",
     strength: 0,
-    visible: false,
+    viewText: false,
   });
+
   // Destructure state.
-  const { password, strength, visible } = state;
+  const { password, strength, viewText } = state;
 
   const stateChanged = (e: FormFieldState) => {
     // update the internal state using the updated state from the form field
@@ -64,11 +65,11 @@ const PasswordField: FunctionComponent<PasswordFieldProps> = ({
     onStateChanged(e);
   };
 
-  const viewPasswordToggle = (visible: boolean) => {
+  const viewPasswordToggle = (viewText: boolean) => {
     // update the internal state using the updated state from the form field
     const newState: PasswordFieldState = {
       ...state,
-      visible: visible,
+      viewText: viewText,
     };
 
     setState(newState);
@@ -115,7 +116,7 @@ const PasswordField: FunctionComponent<PasswordFieldProps> = ({
     <div className="position-relative">
       {/** Pass the validation and stateChanged functions as props to the form field **/}
       <FormField
-        type="password"
+        type={viewText ? "text" : "password"}
         hideIcon={true}
         validator={validatePasswordStrong}
         onStateChanged={stateChanged}
@@ -141,7 +142,7 @@ const PasswordField: FunctionComponent<PasswordFieldProps> = ({
             : ""}
         </span>
       </div>
-      <ViewPassword state={true} onStateChanged={viewPasswordToggle} />
+      <ViewPassword state={viewText} onStateChanged={viewPasswordToggle} />
     </div>
   );
 };
