@@ -136,31 +136,49 @@ button.btn {
   width: .9rem;
 }
 
-.FormField__icon {
-  color: #ced4da;
-}
-
-.form-control.left-icon {
-  padding-left: 1.6rem;
-}
+//.FormField__icon {
+//  color: #ced4da;
+//}
 
 .ViewPassword__icon-container {
   position: absolute;
-  bottom: .73rem;
+  bottom: .95rem;
   right: .2rem;
   font-size: 1rem;
   text-align: center;
-  width: 2rem;
+  width: 1.5rem;
   cursor: pointer;
   user-select: none;
 }
 
-.ViewPassword__icon {
-  color: desaturate(darken($primary, 10%), 80%);
-  font-size: 1.2rem;
+.ViewPassword__icon-container span svg {
+  //color: desaturate(darken($primary, 10%), 80%);
+  color: rgba(0,0,0,.4);
+  width: .9rem;
 }
 
-.form-control.hide-icon {
+//.ViewPassword__icon {
+//  //color: #ced4da;
+//  //color: desaturate(darken($primary, 10%), 80%);
+//}
+
+.form-control.hide-background-image {
   background-image: none;
+}
+
+.form-control.no-icon-padding {
+  padding-left: .75rem;
+  padding-right: .75rem;
+}
+
+.form-control.left-icon-padding {
+  padding-left: 1.6rem;
+}
+
+.form-control.right-icon-padding {
+  padding-right: 1.6rem;
+}
+
+.form-control.length-indicator-padding {
   padding-right: 4.5rem;
 }

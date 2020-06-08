@@ -17,8 +17,12 @@ const EmailField: FunctionComponent<EmailFieldProps> =
   // prevent passing type and validator props from this component to the rendered form field component
   ({ ...restProps }) => {
     // validateEmail function using the validate() method of the isemail package
-    const validateEmail = (value: string) => {
-      if (!validate(value)) throw new Error("Email is invalid");
+    const validateEmail = (label: string, value: string) => {
+      if (value.length === 0) {
+        throw new Error(`${label} is required`);
+      } else if (!validate(value)) {
+        throw new Error("Email is invalid");
+      }
     };
 
     // pass the validateEmail to the validator prop

@@ -9,8 +9,9 @@ export interface PasswordFieldProps {
   placeholder: string;
   required?: boolean;
   leftIcon?: any;
+  className?: string;
   children?: any;
-  validator?: (value: string) => void;
+  validator?: (label: string, value: string) => void;
   onStateChanged?: (state: FormFieldState) => void;
 }
 
@@ -32,7 +33,6 @@ const PasswordField: FunctionComponent<PasswordFieldProps> = ({
       {/** Pass the validation and stateChanged functions as props to the form field **/}
       <FormField
         type={state ? "text" : "password"}
-        hideValidateIcon={true}
         validator={validator}
         onStateChanged={onStateChanged}
         {...restProps}

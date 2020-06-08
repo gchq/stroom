@@ -1,17 +1,15 @@
 import * as React from "react";
 import { ChangeEvent, FunctionComponent, useState } from "react";
-import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
 
 export interface FormFieldProps {
   type: "text" | "password";
   label: string;
   fieldId: string;
   placeholder: string;
-  required?: boolean;
-  hideValidateIcon?: boolean;
   leftIcon?: any;
+  className?: string;
   children?: any;
-  validator?: (value: string) => void;
+  validator?: (label: string, value: string) => void;
   onStateChanged?: (state: FormFieldState) => void;
 }
 
@@ -26,9 +24,8 @@ const FormField: FunctionComponent<FormFieldProps> = ({
   label,
   fieldId,
   placeholder,
-  required,
-  hideValidateIcon,
   leftIcon,
+  className = "",
   children,
   validator = (value: string) => value,
   onStateChanged = (state: FormFieldState) => state,
@@ -44,17 +41,19 @@ const FormField: FunctionComponent<FormFieldProps> = ({
     e.preventDefault();
 
     const value = e.target.value;
-    const isEmpty = value.length === 0;
-    const requiredMissing = state.dirty && required && isEmpty;
+    // const isEmpty = value.length === 0;
+    // const requiredMissing = state.dirty && required && isEmpty;
 
     let errors: string[] = [];
 
-    if (requiredMissing) {
-      // if required and is empty, add required error to state
-      errors = [...errors, `${label} is required`];
-    } else if ("function" === typeof validator) {
+    // if (requiredMissing) {
+    //   // if required and is empty, add required error to state
+    //   errors = [...errors, `${label} is required`];
+    // } else
+
+      if ("function" === typeof validator) {
       try {
-        validator(value);
+        validator(label, value);
       } catch (e) {
         // if validator throws error, add validation error to state
         errors = [...errors, e.message];
@@ -79,9 +78,8 @@ const FormField: FunctionComponent<FormFieldProps> = ({
   const hasErrors = errors.length > 0;
   const controlClass = [
     "form-control",
+    className,
     dirty ? (hasErrors ? "is-invalid" : "is-valid") : "",
-    hideValidateIcon ? "hide-icon" : "",
-    leftIcon ? "left-icon" : "",
   ]
     .join(" ")
     .trim();

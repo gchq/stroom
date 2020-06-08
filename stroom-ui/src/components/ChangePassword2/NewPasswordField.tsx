@@ -76,7 +76,12 @@ const NewPasswordField: FunctionComponent<NewPasswordFieldProps> = ({
     // onStateChanged(e);
   };
 
-  const validatePasswordStrong = (value: string) => {
+  const validatePasswordStrong = (label: string, value: string) => {
+    if (value.length === 0) {
+      // if required and is empty, add required error to state
+      throw new Error(`${label} is required`);
+    }
+
     // ensure password is long enough
     if (value.length <= thresholdLength) {
       throw new Error("Password is short");
@@ -117,7 +122,7 @@ const NewPasswordField: FunctionComponent<NewPasswordFieldProps> = ({
       {/** Pass the validation and stateChanged functions as props to the form field **/}
       <FormField
         type={viewText ? "text" : "password"}
-        hideValidateIcon={true}
+        className="hide-background-image length-indicator-padding"
         validator={validatePasswordStrong}
         onStateChanged={stateChanged}
         {...restProps}

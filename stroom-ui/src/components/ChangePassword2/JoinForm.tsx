@@ -44,9 +44,13 @@ const JoinForm: FunctionComponent = () => {
 
   // validation function for the fullname
   // ensures that fullname contains at least two names separated with a space
-  const validateFullname = (value: string) => {
-    const regex = /^[a-z]{2,}(\s[a-z]{2,})+$/i;
-    if (!regex.test(value)) throw new Error("Fullname is invalid");
+  const validateFullname = (label: string, value: string) => {
+    if (value.length === 0) {
+      throw new Error(`${label} is required`);
+    } else {
+      const regex = /^[a-z]{2,}(\s[a-z]{2,})+$/i;
+      if (!regex.test(value)) throw new Error(`${label} is invalid`);
+    }
   };
 
   return (
@@ -76,7 +80,6 @@ const JoinForm: FunctionComponent = () => {
                 placeholder="Enter Full Name"
                 validator={validateFullname}
                 onStateChanged={fullnameChanged}
-                required
               />
 
               {/** Render the email field component **/}
@@ -85,7 +88,6 @@ const JoinForm: FunctionComponent = () => {
                 label="Email"
                 placeholder="Enter Email Address"
                 onStateChanged={emailChanged}
-                required
               />
 
               {/** Render the password field component using thresholdLength of 7 and minStrength of 3 **/}
@@ -96,7 +98,6 @@ const JoinForm: FunctionComponent = () => {
                 onStateChanged={passwordChanged}
                 thresholdLength={7}
                 minStrength={3}
-                required
               />
             </div>
           </div>

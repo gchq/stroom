@@ -98,12 +98,23 @@ const LoginForm: React.FunctionComponent<{
     await triggerValidation({ name });
   };
 
-  // validation function for the fullname
-  // ensures that fullname contains at least two names separated with a space
-  const validateUserName = (value: string) => {
-    const regex = /^[a-z]{2,}$/i;
-    if (!regex.test(value)) throw new Error("User name is invalid");
+  // ensures that field contains characters
+  const fieldRequired = (label: string, value: string) => {
+    if (value.length === 0) {
+      // if required and is empty, add required error to state
+      throw new Error(`${label} is required`);
+    } else {
+      const regex = /^.+$/i;
+      if (!regex.test(value)) throw new Error("Field required");
+    }
   };
+
+  // // validation function for the fullname
+  // // ensures that fullname contains at least two names separated with a space
+  // const validatePassword = (value: string) => {
+  //   const regex = /^[a-z]{2,}$/i;
+  //   if (!regex.test(value)) throw new Error("Field required");
+  // };
 
   return (
     <LogoPage>
@@ -122,9 +133,9 @@ const LoginForm: React.FunctionComponent<{
               fieldId="email"
               label="User Name"
               placeholder="Enter User Name"
-              validator={validateUserName}
+              className="no-icon-padding left-icon-padding hide-background-image"
+              validator={fieldRequired}
               onStateChanged={async e => handleInputChange("email", e.value)}
-              required
               leftIcon={<UserOutlined />}
             />
 
@@ -132,30 +143,30 @@ const LoginForm: React.FunctionComponent<{
               fieldId="password"
               label="Password"
               placeholder="Enter Password"
-              validator={validateUserName}
+              className="left-icon-padding right-icon-padding hide-background-image"
+              validator={fieldRequired}
               onStateChanged={async e => handleInputChange("password", e.value)}
-              required
               leftIcon={<LockOutlined />}
             />
 
-            <InputContainer label="Username" error={Boolean(errors.email)}>
-              <Input
-                placeholder="username or email"
-                prefix={<UserOutlined style={{ color: "rgba(0,0,0,.25)" }} />}
-                name="email"
-                autoFocus
-                onChange={async e => handleInputChange("email", e.target.value)}
-              />
-            </InputContainer>
-            <InputContainer label="Password" error={Boolean(errors.password)}>
-              <PasswordInput
-                name="password"
-                placeholder="password"
-                onChange={async e =>
-                  handleInputChange("password", e.target.value)
-                }
-              />
-            </InputContainer>
+            {/*<InputContainer label="Username" error={Boolean(errors.email)}>*/}
+            {/*  <Input*/}
+            {/*    placeholder="username or email"*/}
+            {/*    prefix={<UserOutlined style={{ color: "rgba(0,0,0,.25)" }} />}*/}
+            {/*    name="email"*/}
+            {/*    autoFocus*/}
+            {/*    onChange={async e => handleInputChange("email", e.target.value)}*/}
+            {/*  />*/}
+            {/*</InputContainer>*/}
+            {/*<InputContainer label="Password" error={Boolean(errors.password)}>*/}
+            {/*  <PasswordInput*/}
+            {/*    name="password"*/}
+            {/*    placeholder="password"*/}
+            {/*    onChange={async e =>*/}
+            {/*      handleInputChange("password", e.target.value)*/}
+            {/*    }*/}
+            {/*  />*/}
+            {/*</InputContainer>*/}
             <div className="Login__actions page__buttons Button__container">
               <Button
                 className="Login__login-button"
