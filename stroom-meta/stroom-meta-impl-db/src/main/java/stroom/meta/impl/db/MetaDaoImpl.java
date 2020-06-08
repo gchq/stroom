@@ -463,6 +463,7 @@ class MetaDaoImpl implements MetaDao {
 
                         // Get all meta records that are impacted by a rule and for each determine
                         // which rule wins and get its rule number, along with feed and type
+                        // The OR condition is here to try and help the DB use indexes.
                         final var detailTable = context
                                 .select(
                                         metaFeed.NAME.as(feedNameFieldName),
@@ -472,6 +473,7 @@ class MetaDaoImpl implements MetaDao {
                                 .leftJoin(metaFeed).on(meta.FEED_ID.eq(metaFeed.ID))
                                 .leftJoin(metaType).on(meta.TYPE_ID.eq(metaType.ID))
                                 .where(meta.STATUS.notEqual(statusIdDeleted))
+                                .and(ruleNoCaseField.isNotNull())
                                 .and(DSL.or(orConditions))
                                 .asTable("detail");
 
@@ -485,9 +487,9 @@ class MetaDaoImpl implements MetaDao {
                                 .from(detailTable)
                                 .where(detailTable.field(ruleNoFieldName).isNotNull()) // ignore rows not impacted by a rule
                                 .groupBy(
+                                        detailTable.field(ruleNoFieldName),
                                         detailTable.field(feedNameFieldName),
-                                        detailTable.field(typeNameFieldName),
-                                        detailTable.field(ruleNoFieldName))
+                                        detailTable.field(typeNameFieldName))
                                 .fetch()
                                 .map(record -> {
                                     int ruleNo = (int) record.get(ruleNoFieldName);

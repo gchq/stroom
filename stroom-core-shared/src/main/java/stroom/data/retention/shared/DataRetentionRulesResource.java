@@ -16,12 +16,13 @@
 
 package stroom.data.retention.shared;
 
+import stroom.util.shared.ResourcePaths;
+import stroom.util.shared.RestResource;
+
 import io.swagger.annotations.Api;
 import io.swagger.annotations.ApiOperation;
 import io.swagger.annotations.ApiParam;
 import org.fusesource.restygwt.client.DirectRestService;
-import stroom.util.shared.ResourcePaths;
-import stroom.util.shared.RestResource;
 
 import javax.ws.rs.Consumes;
 import javax.ws.rs.POST;
@@ -49,4 +50,11 @@ public interface DataRetentionRulesResource extends RestResource, DirectRestServ
             value = "Update data retention rules",
             response = DataRetentionRules.class)
     DataRetentionRules update(@ApiParam("dataRetentionRules") DataRetentionRules dataRetentionRules);
+
+    @POST
+    @Path("getRetentionDeletionSummary")
+    @ApiOperation(
+            value = "Get a summary of meta deletions with the passed data retention rules",
+            response = DataRetentionDeleteSummary.class)
+    DataRetentionDeleteSummaryResponse getRetentionDeletionSummary(@ApiParam("rules") DataRetentionRules rules);
 }

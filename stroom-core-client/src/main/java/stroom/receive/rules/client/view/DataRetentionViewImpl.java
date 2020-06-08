@@ -17,28 +17,26 @@
 
 package stroom.receive.rules.client.view;
 
-import stroom.receive.rules.client.presenter.DataRetentionPolicyPresenter.DataRetentionPolicyView;
+import stroom.receive.rules.client.presenter.DataRetentionPresenter.DataRetentionView;
+import stroom.widget.tab.client.view.LinkTabBar;
 
 import com.google.gwt.uibinder.client.UiBinder;
 import com.google.gwt.uibinder.client.UiField;
-import com.google.gwt.user.client.ui.SimplePanel;
 import com.google.gwt.user.client.ui.Widget;
 import com.google.inject.Inject;
-import com.gwtplatform.mvp.client.View;
+import com.gwtplatform.mvp.client.LayerContainer;
 import com.gwtplatform.mvp.client.ViewImpl;
 
-public class DataRetentionPolicyViewImpl extends ViewImpl implements DataRetentionPolicyView {
+public class DataRetentionViewImpl extends ViewImpl implements DataRetentionView {
     private final Widget widget;
 
-//    @UiField
-//    LinkTabBar tabBar;
     @UiField
-    SimplePanel table;
+    LinkTabBar tabBar;
     @UiField
-    SimplePanel expression;
+    LayerContainer layerContainer;
 
     @Inject
-    public DataRetentionPolicyViewImpl(final Binder binder) {
+    public DataRetentionViewImpl(final Binder binder) {
         widget = binder.createAndBindUi(this);
     }
 
@@ -48,20 +46,15 @@ public class DataRetentionPolicyViewImpl extends ViewImpl implements DataRetenti
     }
 
     @Override
-    public void setTableView(final View view) {
-        this.table.setWidget(view.asWidget());
+    public LinkTabBar getTabBar() {
+        return tabBar;
     }
 
     @Override
-    public void setExpressionView(final View view) {
-        this.expression.setWidget(view.asWidget());
+    public LayerContainer getLayerContainer() {
+        return layerContainer;
     }
 
-//    @Override
-//    public LinkTabBar getTabBar() {
-//        return tabBar;
-//    }
-
-    public interface Binder extends UiBinder<Widget, DataRetentionPolicyViewImpl> {
+    public interface Binder extends UiBinder<Widget, DataRetentionViewImpl> {
     }
 }

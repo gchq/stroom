@@ -17,11 +17,6 @@
 
 package stroom.entity.client.presenter;
 
-import com.google.gwt.core.client.Scheduler;
-import com.google.gwt.user.client.ui.Widget;
-import com.google.web.bindery.event.shared.EventBus;
-import com.gwtplatform.mvp.client.Layer;
-import com.gwtplatform.mvp.client.PresenterWidget;
 import stroom.content.client.event.RefreshContentTabEvent;
 import stroom.core.client.HasSave;
 import stroom.data.table.client.Refreshable;
@@ -42,11 +37,18 @@ import stroom.widget.button.client.ButtonPanel;
 import stroom.widget.button.client.ButtonView;
 import stroom.widget.tab.client.presenter.TabData;
 
+import com.google.gwt.core.client.Scheduler;
+import com.google.gwt.user.client.ui.Widget;
+import com.google.web.bindery.event.shared.EventBus;
+import com.gwtplatform.mvp.client.Layer;
+import com.gwtplatform.mvp.client.PresenterWidget;
+
 import java.util.ArrayList;
 import java.util.List;
 
 public abstract class DocumentEditTabPresenter<V extends LinkTabPanelView, D>
         extends DocumentEditPresenter<V, D> implements DocumentTabData, Refreshable, HasType, HasSave {
+
     private final List<TabData> tabs = new ArrayList<>();
     private final ButtonView saveButton;
     private final ButtonView saveAsButton;

@@ -16,8 +16,6 @@
 
 package stroom.meta.shared;
 
-import stroom.data.retention.shared.DataRetentionDeleteSummary;
-import stroom.data.retention.shared.DataRetentionRules;
 import stroom.util.shared.ResourceGeneration;
 import stroom.util.shared.ResourcePaths;
 import stroom.util.shared.RestResource;
@@ -78,10 +76,4 @@ public interface MetaResource extends RestResource, DirectRestService {
             response = MetaInfoSection.class)
     List<MetaInfoSection> fetchFullMetaInfo(@PathParam("id") long id);
 
-    @POST
-    @Path("getRetentionDeletionSummary")
-    @ApiOperation(
-            value = "Get a summary of meta deletions with the passed data retention rules",
-            response = DataRetentionDeleteSummary.class)
-    List<DataRetentionDeleteSummary> getRetentionDeletionSummary(@ApiParam("rules") DataRetentionRules rules);
 }
