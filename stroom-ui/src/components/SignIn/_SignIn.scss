@@ -14,21 +14,43 @@
  * limitations under the License.
  */
 
-import * as React from "react";
-import useAuthentication from "components/authentication/useAuthentication";
-import useConfig from "startup/config/useConfig";
-import LoginForm from "./LoginForm";
+.SignIn__label {
+  margin-bottom: 0.25rem;
+}
 
-const LoginContainer = () => {
-  const { allowPasswordResets } = useConfig();
-  const { login, isSubmitting } = useAuthentication();
-  return (
-    <LoginForm
-      allowPasswordResets={allowPasswordResets}
-      isSubmitting={isSubmitting}
-      onSubmit={login}
-    />
-  );
-};
+.SignIn__icon-container {
+  display: flex;
+  justify-content: center;
+  margin: 0 0 2rem 0;
+}
 
-export default LoginContainer;
+.SignIn__icon-container img {
+  width: 8rem;
+  height: 8rem;
+  border-radius: 4rem;
+}
+
+.SignIn__content {
+  width: 16rem;
+  text-align: center;
+}
+
+.SignIn__actions {
+  padding: 1rem 0 .25rem 0;
+}
+
+.SignIn__input-container {
+  display: flex;
+  flex-direction: column;
+}
+
+.SignIn__button {
+  width: 100%;
+  border: none !important;
+  border-radius: .25rem;
+}
+
+.SignIn__reset-password {
+  font-size: .7rem;
+  text-align: center;
+}

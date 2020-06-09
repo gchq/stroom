@@ -28,7 +28,7 @@ import MetaBrowser from "components/MetaBrowser";
 import SwitchedDocRefEditor from "components/DocumentEditors/SwitchedDocRefEditor";
 import ErrorPage from "components/ErrorPage";
 import IndexVolumes from "components/IndexVolumes";
-import { Login } from "components/Login";
+import { SignIn } from "components/SignIn";
 import {
   ChangePassword,
   ResetPassword,
@@ -91,7 +91,7 @@ const Routes: React.FunctionComponent = () => {
         component={ConfirmPasswordResetEmail}
       />
 
-      <Route exact path={`${singlePagePrefix}/login`} component={Login} />
+      <Route exact path={`${singlePagePrefix}/login`} component={SignIn} />
       <Route
         exact
         path={`${singlePagePrefix}/changepassword`}

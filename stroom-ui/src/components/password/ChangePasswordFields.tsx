@@ -19,7 +19,7 @@ import * as React from "react";
 // import Button from "components/Button";
 // import { Button, Form, Input } from "antd";
 // import { hasAnyProps } from "lib/lang";
-import { InputContainer, PasswordInput } from "../Login/LoginForm";
+import { InputContainer } from "../SignIn/SignInForm";
 // import { Icon, Input } from "antd";
 import useForm from "react-hook-form";
 import { ChangePasswordRequest } from "../authentication/types";
@@ -128,25 +128,25 @@ const ChangePasswordFields: React.FunctionComponent<{
           label="Old password"
           error={Boolean(errors.oldPassword)}
         >
-          <PasswordInput
-            name="oldPassword"
-            placeholder="Old password"
-            onChange={async e =>
-              handleInputChange("oldPassword", e.target.value)
-            }
-          />
+          {/*<PasswordInput*/}
+          {/*  name="oldPassword"*/}
+          {/*  placeholder="Old password"*/}
+          {/*  onChange={async e =>*/}
+          {/*    handleInputChange("oldPassword", e.target.value)*/}
+          {/*  }*/}
+          {/*/>*/}
         </InputContainer>
       ) : (
         undefined
       )}
 
-      <InputContainer label="New password" error={Boolean(errors.newPassword)}>
-        <PasswordInput
-          name="newPassword"
-          placeholder="New password"
-          onChange={async e => handleInputChange("newPassword", e.target.value)}
-        />
-      </InputContainer>
+      {/*<InputContainer label="New password" error={Boolean(errors.newPassword)}>*/}
+      {/*  <PasswordInput*/}
+      {/*    name="newPassword"*/}
+      {/*    placeholder="New password"*/}
+      {/*    onChange={async e => handleInputChange("newPassword", e.target.value)}*/}
+      {/*  />*/}
+      {/*</InputContainer>*/}
 
       {/*<div className="field-container__spacer"/>*/}
 
@@ -165,13 +165,13 @@ const ChangePasswordFields: React.FunctionComponent<{
         label="Confirm password"
         error={Boolean(errors.confirmPassword)}
       >
-        <PasswordInput
-          name="confirmPassword"
-          placeholder="Confirm password"
-          onChange={async e =>
-            handleInputChange("confirmPassword", e.target.value)
-          }
-        />
+        {/*<PasswordInput*/}
+        {/*  name="confirmPassword"*/}
+        {/*  placeholder="Confirm password"*/}
+        {/*  onChange={async e =>*/}
+        {/*    handleInputChange("confirmPassword", e.target.value)*/}
+        {/*  }*/}
+        {/*/>*/}
       </InputContainer>
       {/*</div>*/}
 
@@ -192,9 +192,9 @@ const ChangePasswordFields: React.FunctionComponent<{
 
       {/*<div className="ChangePassword-controls">*/}
       {/*  <div className="ChangePassword-actions">*/}
-      <div className="Login__actions page__buttons Button__container">
+      <div className="SignIn__actions page__buttons Button__container">
         <Button
-          className="Login__login-button"
+          className="SignIn__button"
           action="primary"
           // loading={isSubmitting}
           disabled={disableSubmit}

@@ -73,14 +73,14 @@ const useColumns = (selectedUserRowId: string | undefined): Column<Account>[] =>
       Filter: getStateCellFilter,
     },
     {
-      Header: "Last login",
+      Header: "Last Sign In",
       accessor: "last_login",
       Cell: (row: RowInfo) => moment(row.row.value).format(dateFormat),
       maxWidth: 205,
       filterable: false,
     },
     {
-      Header: "Login failures",
+      Header: "Sign In failures",
       accessor: "login_failures",
       maxWidth: 100,
     },

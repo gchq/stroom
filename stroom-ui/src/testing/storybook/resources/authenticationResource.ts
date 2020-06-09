@@ -17,7 +17,7 @@ const resourceBuilder: ResourceBuilder = (
       res.sendStatus(200);
     });
 
-  // Login
+  // SignIn
   server
     .post(`${resource}/noauth/login`)
     .intercept((req: HttpRequest, res: HttpResponse) => {

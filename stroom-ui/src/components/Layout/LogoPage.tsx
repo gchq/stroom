@@ -21,9 +21,9 @@ const LogoPage: React.FunctionComponent = ({ children }) => {
   const { theme } = useConfig();
 
   return (
-    <div style={theme} className="content-floating-without-appbar">
+    <div style={theme} className="LogoPage">
       <img
-        className="content-logo"
+        className="LogoPage__logo"
         alt="Stroom logo"
         src={require("../../images/logo.svg")}
       />

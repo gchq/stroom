@@ -23,7 +23,7 @@ import useRouter from "lib/useRouter";
 import ChangePasswordForm from "./ChangePasswordForm";
 import usePassword from "./useChangePassword";
 import useUrlFactory from "lib/useUrlFactory";
-import LoginForm from "../../Login/LoginForm";
+import SignInForm from "../../SignIn/SignInForm";
 
 const ChangePasswordContainer = () => {
   const { changePassword, showChangeConfirmation, isSubmitting } = usePassword();

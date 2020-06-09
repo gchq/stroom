@@ -57,11 +57,9 @@ interface Props {
 }
 
 const ThemedContainer: React.FunctionComponent<Props> = ({
-                                                           component,
-                                                           centerComponent,
-                                                         }) => {
-
-
+  component,
+  centerComponent,
+}) => {
   // const storageKey = "themeValue";
   //
   // const { value, setValue } = useLocalStorage<string>(
@@ -76,8 +74,9 @@ const ThemedContainer: React.FunctionComponent<Props> = ({
   const onChange = useCallback(
     (option: string) => {
       setTheme(option);
-    }, [setTheme]);
-
+    },
+    [setTheme],
+  );
 
   // const onChange = React.useCallback(
   //   (d: ThemeOption) => {
@@ -87,18 +86,22 @@ const ThemedContainer: React.FunctionComponent<Props> = ({
   // );
 
   return (
-    <div className={`${theme} raised-low ThemedStory__fullScreen`}>
-      <div className="ThemedStory__topBar page">
+    <div className={`${theme} raised-low ThemedStory__outer page`}>
+      <div className="ThemedStory__top">
         <div>Theme:</div>
-        <ThemePicker className="ThemedStory__themePicker" value={theme} onChange={onChange}/>
+        <ThemePicker
+          className="ThemedStory__themePicker"
+          value={theme}
+          onChange={onChange}
+        />
       </div>
-      {centerComponent ? (
-        <div className="page ThemedStory__center">
-          {component()}
-        </div>
-      ) : (
-        <React.Fragment>{component()}</React.Fragment>
-      )}
+      <div className="ThemedStory__bottom">
+        {centerComponent ? (
+          <div className="ThemedStory__inner-center">{component()}</div>
+        ) : (
+          <div className="ThemedStory__inner">{component()}</div>
+        )}
+      </div>
     </div>
   );
 };
@@ -110,9 +113,6 @@ export const addThemedStories = (
   centerComponent?: React.ReactNode,
 ) => {
   stories.add(storyName, () => (
-    <ThemedContainer
-      component={component}
-      centerComponent={centerComponent}
-    />
+    <ThemedContainer component={component} centerComponent={centerComponent} />
   ));
 };

@@ -78,7 +78,7 @@ const UserForm: React.FunctionComponent<EditUserFormProps> = ({
   const verifyPassword = watch("verifyPassword");
   const email = watch("email");
 
-  //TODO this is used in LoginForm too -- move it somewhere?
+  //TODO this is used in SignInForm too -- move it somewhere?
   const handleInputChange = async (name: string, value: string) => {
     setValue(name, value);
     await triggerValidation({ name });
