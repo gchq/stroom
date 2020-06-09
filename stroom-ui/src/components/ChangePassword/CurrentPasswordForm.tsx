@@ -15,7 +15,7 @@ interface FormData {
   password: string;
 }
 
-const CurrentPassword: React.FunctionComponent<{
+const CurrentPasswordForm: React.FunctionComponent<{
   onSubmit: (credentials: Credentials) => void;
   isSubmitting: boolean;
   allowPasswordResets?: boolean;
@@ -83,16 +83,16 @@ const CurrentPassword: React.FunctionComponent<{
   //   }
   // };
 
-  // ensures that field contains characters
-  const fieldRequired = (label: string, value: string) => {
-    if (value.length === 0) {
-      // if required and is empty, add required error to state
-      throw new Error(`${label} is required`);
-    } else {
-      const regex = /^.+$/i;
-      if (!regex.test(value)) throw new Error("Field required");
-    }
-  };
+  // // ensures that field contains characters
+  // const fieldRequired = (label: string, value: string) => {
+  //   if (value.length === 0) {
+  //     // if required and is empty, add required error to state
+  //     throw new Error(`${label} is required`);
+  //   } else {
+  //     const regex = /^.+$/i;
+  //     if (!regex.test(value)) throw new Error("Field required");
+  //   }
+  // };
 
   return (
     <LogoPage>
@@ -105,14 +105,14 @@ const CurrentPassword: React.FunctionComponent<{
               </legend>
             </div>
 
-            <PasswordField
-              fieldId="password"
-              label="Password"
-              placeholder="Enter Password"
-              className="no-icon-padding right-icon-padding hide-background-image"
-              validator={fieldRequired}
-              onStateChanged={async e => handleInputChange("password", e.value)}
-            />
+            {/*<PasswordField*/}
+            {/*  name="password"*/}
+            {/*  label="Password"*/}
+            {/*  placeholder="Enter Password"*/}
+            {/*  className="no-icon-padding right-icon-padding hide-background-image"*/}
+            {/*  validator={fieldRequired}*/}
+            {/*  onStateChanged={async e => handleInputChange("password", e.value)}*/}
+            {/*/>*/}
 
             <div className="SignIn__actions page__buttons Button__container">
               <Button
@@ -121,7 +121,6 @@ const CurrentPassword: React.FunctionComponent<{
                 loading={isSubmitting}
                 disabled={disableSubmit}
                 htmlType="submit"
-                ref={register}
               >
                 Validate
               </Button>
@@ -144,4 +143,4 @@ const CurrentPassword: React.FunctionComponent<{
   );
 };
 
-export default CurrentPassword;
+export default CurrentPasswordForm;

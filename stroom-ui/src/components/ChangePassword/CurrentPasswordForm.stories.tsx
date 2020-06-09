@@ -1,22 +1,22 @@
 import { storiesOf } from "@storybook/react";
 import * as React from "react";
-import CurrentPassword from "./CurrentPassword";
+import CurrentPasswordForm from "./CurrentPasswordForm";
 import { action } from "@storybook/addon-actions";
 import { addThemedStories } from "../../testing/storybook/themedStoryGenerator";
 
-const stories = storiesOf("CurrentPassword", module);
+const stories = storiesOf("CurrentPasswordForm", module);
 addThemedStories(stories, "simplest", () => (
-  <CurrentPassword onSubmit={action("onSubmit")} isSubmitting={false} />
+  <CurrentPasswordForm onSubmit={action("onSubmit")} isSubmitting={false} />
 ));
 addThemedStories(stories, "allow password resets", () => (
-  <CurrentPassword
+  <CurrentPasswordForm
     allowPasswordResets={true}
     onSubmit={action("onSubmit")}
     isSubmitting={false}
   />
 ));
 addThemedStories(stories, "disallow password resets", () => (
-  <CurrentPassword
+  <CurrentPasswordForm
     allowPasswordResets={false}
     onSubmit={action("onSubmit")}
     isSubmitting={false}

@@ -16,155 +16,100 @@
 
 import * as React from "react";
 import { NavLink } from "react-router-dom";
-import { Credentials } from "components/authentication/types";
-import useForm from "react-hook-form";
+import { FormikProps } from "formik";
 import { Button } from "antd";
-import { OptionalRequiredFieldMessage } from "../FormComponents/FormComponents";
 import LogoPage from "../Layout/LogoPage";
 import FormContainer from "../Layout/FormContainer";
 import FormField from "../ChangePassword2/FormField";
 import PasswordField from "../ChangePassword2/PasswordField";
 import { UserOutlined, LockOutlined } from "@ant-design/icons";
 
-interface FormData {
+export interface FormValues {
   email: string;
   password: string;
 }
 
-export const InputContainer: React.FunctionComponent<{
-  label: string;
-  children: any;
-  error: boolean;
-}> = ({ label, children, error }) => {
-  return (
-    <div className="SignIn__input-container">
-      <div className="SignIn__label">{label}:</div>
-      {children}
-      <OptionalRequiredFieldMessage visible={error} />
-    </div>
-  );
-};
-
-// export const PasswordInput: React.FunctionComponent<{
-//   name: string;
-//   placeholder: string;
-//   onChange?: ChangeEventHandler<HTMLInputElement>;
-// }> = ({ name, placeholder, onChange }) => {
-//   return (
-//     <Input.Password
-//       name={name}
-//       placeholder={placeholder}
-//       prefix={<LockOutlined style={{ color: "rgba(0,0,0,.25)" }} />}
-//       onChange={onChange}
-//     />
-//   );
-// };
-
-const SignInForm: React.FunctionComponent<{
-  onSubmit: (credentials: Credentials) => void;
-  isSubmitting: boolean;
+export interface Props {
   allowPasswordResets?: boolean;
-}> = ({ onSubmit, allowPasswordResets, isSubmitting }) => {
-  const {
-    triggerValidation,
-    setValue,
-    register,
-    handleSubmit,
-    // getValues,
-    errors,
-  } = useForm<FormData>({
-    defaultValues: {
-      email: "",
-      password: "",
-    },
-    mode: "onChange",
-  });
+}
 
-  React.useEffect(() => {
-    register({ name: "email", type: "custom" }, { required: true });
-    register({ name: "password", type: "custom" }, { required: true });
-  }, [register]);
-
-  const handleInputChange = async (
-    name: "email" | "password",
-    value: string,
-  ) => {
-    setValue(name, value);
-    await triggerValidation({ name });
-  };
-
-  // ensures that field contains characters
-  const fieldRequired = (label: string, value: string) => {
-    if (value.length === 0) {
-      // if required and is empty, add required error to state
-      throw new Error(`${label} is required`);
-    } else {
-      const regex = /^.+$/i;
-      if (!regex.test(value)) throw new Error("Field required");
-    }
-  };
-
-  return (
-    <LogoPage>
-      <FormContainer>
-        <form onSubmit={handleSubmit(onSubmit)}>
-          <div className="SignIn__content">
-            <div className="SignIn__icon-container">
-              <img
-                src={require("../../images/infinity_logo.svg")}
-                alt="Stroom logo"
-              />
-            </div>
-
-            <FormField
-              type="text"
-              fieldId="email"
-              label="User Name"
-              placeholder="Enter User Name"
-              className="no-icon-padding left-icon-padding hide-background-image"
-              validator={fieldRequired}
-              onStateChanged={async e => handleInputChange("email", e.value)}
-              leftIcon={<UserOutlined />}
-              validateOnLoad={true}
+export const SignInForm: React.FunctionComponent<Props &
+  FormikProps<FormValues>> = ({
+  values,
+  errors,
+  touched,
+  setFieldTouched,
+  handleChange,
+  handleBlur,
+  handleSubmit,
+  isSubmitting,
+  allowPasswordResets,
+}) => (
+  <LogoPage>
+    <FormContainer>
+      <form onSubmit={handleSubmit}>
+        <div className="SignIn__content">
+          <div className="SignIn__icon-container">
+            <img
+              src={require("../../images/infinity_logo.svg")}
+              alt="Stroom logo"
             />
-
-            <PasswordField
-              fieldId="password"
-              label="Password"
-              placeholder="Enter Password"
-              className="left-icon-padding right-icon-padding hide-background-image"
-              validator={fieldRequired}
-              onStateChanged={async e => handleInputChange("password", e.value)}
-              leftIcon={<LockOutlined />}
-            />
-
-            <div className="SignIn__actions page__buttons Button__container">
-              <Button
-                className="SignIn__button"
-                type="primary"
-                loading={isSubmitting}
-                htmlType="submit"
-                ref={register}
-              >
-                Sign In
-              </Button>
-            </div>
-
-            {allowPasswordResets ? (
-              <NavLink
-                className="SignIn__reset-password"
-                to={"/s/resetPasswordRequest"}
-              >
-                Forgot password?
-              </NavLink>
-            ) : (
-              undefined
-            )}
           </div>
-        </form>
-      </FormContainer>
-    </LogoPage>
-  );
-};
+
+          <FormField
+            name="email"
+            type="text"
+            label="User Name"
+            placeholder="Enter User Name"
+            className="no-icon-padding left-icon-padding hide-background-image"
+            leftIcon={<UserOutlined />}
+            onChange={handleChange}
+            onBlur={handleBlur}
+            value={values.email}
+            error={errors.email}
+            touched={touched.email}
+            setFieldTouched={setFieldTouched}
+          />
+
+          <PasswordField
+            name="password"
+            label="Password"
+            placeholder="Enter Password"
+            className="left-icon-padding right-icon-padding hide-background-image"
+            leftIcon={<LockOutlined />}
+            onChange={handleChange}
+            onBlur={handleBlur}
+            value={values.password}
+            error={errors.password}
+            touched={touched.password}
+            setFieldTouched={setFieldTouched}
+          />
+
+          <div className="SignIn__actions page__buttons Button__container">
+            <Button
+              className="SignIn__button"
+              type="primary"
+              loading={isSubmitting}
+              htmlType="submit"
+            >
+              Sign In
+            </Button>
+          </div>
+
+          {allowPasswordResets ? (
+            <NavLink
+              className="SignIn__reset-password"
+              to={"/s/resetPasswordRequest"}
+            >
+              Forgot password?
+            </NavLink>
+          ) : (
+            undefined
+          )}
+        </div>
+      </form>
+    </FormContainer>
+  </LogoPage>
+);
 
 export default SignInForm;

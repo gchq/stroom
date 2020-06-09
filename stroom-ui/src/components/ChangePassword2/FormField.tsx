@@ -1,94 +1,113 @@
 import * as React from "react";
-import { ChangeEvent, FunctionComponent, useState } from "react";
+import {
+  ChangeEventHandler,
+  FocusEventHandler,
+  FunctionComponent,
+} from "react";
+
+export interface FormFieldState {
+  value: string;
+  error: string;
+  touched: boolean;
+  setFieldTouched: (name: string) => void;
+}
+
+export interface FormFieldType {
+  type: "text" | "password";
+}
 
 export interface FormFieldProps {
-  type: "text" | "password";
+  name: string;
   label: string;
-  fieldId: string;
   placeholder: string;
   leftIcon?: any;
   className?: string;
   children?: any;
   validator?: (label: string, value: string) => void;
-  onStateChanged?: (state: FormFieldState) => void;
-  validateOnLoad?: boolean;
+  onChange?: ChangeEventHandler<HTMLInputElement>;
+  onBlur?: FocusEventHandler<HTMLInputElement>;
 }
 
-export interface FormFieldState {
-  value: string;
-  dirty: boolean;
-  errors: string[];
-}
+// export interface FormFieldState {
+//   value: string;
+//   dirty: boolean;
+//   errors: string[];
+// }
 
-const FormField: FunctionComponent<FormFieldProps> = ({
+const FormField: FunctionComponent<FormFieldProps &
+  FormFieldState &
+  FormFieldType> = ({
+  name,
   type,
   label,
-  fieldId,
   placeholder,
   leftIcon,
   className = "",
   children,
-  validator = (value: string) => value,
-  onStateChanged = (state: FormFieldState) => state,
-  validateOnLoad = false,
+  onChange,
+  onBlur,
+  value,
+  error,
+  touched,
+  setFieldTouched,
 }) => {
-  // initialize state
-  const [state, setState] = useState<FormFieldState>({
-    value: "",
-    dirty: false,
-    errors: [],
-  });
+  // // initialize state
+  // const [state, setState] = useState<FormFieldState>({
+  //   value: "",
+  //   dirty: false,
+  //   errors: [],
+  // });
+  //
+  // // Destructure state.
+  // const { value, dirty, errors } = state;
+  //
+  // const validate = (value: string) => {
+  //   // const isEmpty = value.length === 0;
+  //   // const requiredMissing = state.dirty && required && isEmpty;
+  //
+  //   let errors: string[] = [];
+  //
+  //   // if (requiredMissing) {
+  //   //   // if required and is empty, add required error to state
+  //   //   errors = [...errors, `${label} is required`];
+  //   // } else
+  //
+  //   if ("function" === typeof validator) {
+  //     try {
+  //       validator(label, value);
+  //     } catch (e) {
+  //       // if validator throws error, add validation error to state
+  //       errors = [...errors, e.message];
+  //     }
+  //   }
+  //
+  //   // update state and call the onStateChanged callback fn after the update
+  //   // dirty is only changed to true and remains true on and after the first state update
+  //   const newState: FormFieldState = {
+  //     value,
+  //     errors,
+  //     dirty: !state.dirty || state.dirty,
+  //   };
+  //   setState(newState);
+  //   onStateChanged(newState);
+  // };
 
-  // Destructure state.
-  const { value, dirty, errors } = state;
+  // const hasChanged = (e: ChangeEvent<HTMLInputElement>) => {
+  //   e.preventDefault();
+  //
+  //   const value = e.target.value;
+  //   validate(value);
+  // };
+  //
+  // if (validateOnLoad && !dirty) {
+  //   validate(state.value);
+  // }
 
-  const validate = (value: string) => {
-    // const isEmpty = value.length === 0;
-    // const requiredMissing = state.dirty && required && isEmpty;
-
-    let errors: string[] = [];
-
-    // if (requiredMissing) {
-    //   // if required and is empty, add required error to state
-    //   errors = [...errors, `${label} is required`];
-    // } else
-
-    if ("function" === typeof validator) {
-      try {
-        validator(label, value);
-      } catch (e) {
-        // if validator throws error, add validation error to state
-        errors = [...errors, e.message];
-      }
-    }
-
-    // update state and call the onStateChanged callback fn after the update
-    // dirty is only changed to true and remains true on and after the first state update
-    const newState: FormFieldState = {
-      value,
-      errors,
-      dirty: !state.dirty || state.dirty,
-    };
-    setState(newState);
-    onStateChanged(newState);
-  };
-
-  const hasChanged = (e: ChangeEvent<HTMLInputElement>) => {
-    e.preventDefault();
-
-    const value = e.target.value;
-    validate(value);
-  };
-
-  if (validateOnLoad && !dirty) {
-    validate(state.value);
-  }
-
-  const hasErrors = errors.length > 0;
+  const hasErrors = touched && error;
   const controlClass = [
     "form-control",
     className,
-    dirty ? (hasErrors ? "is-invalid" : "is-valid") : "",
+    touched ? (hasErrors ? "is-invalid" : "is-valid") : "",
   ]
     .join(" ")
     .trim();
@@ -96,13 +115,13 @@ const FormField: FunctionComponent<FormFieldProps> = ({
   return (
     <div className="form-group pb-2 position-relative">
       <div className="d-flex flex-row justify-content-between align-items-center">
-        <label htmlFor={fieldId} className="control-label">
+        <label htmlFor={name} className="control-label">
           {label}
         </label>
         {/** Render the first error if there are any errors **/}
         {hasErrors && (
           <div className="error form-hint font-weight-bold text-right m-0 mb-2">
-            {errors[0]}
+            {error}
           </div>
         )}
       </div>
@@ -111,10 +130,14 @@ const FormField: FunctionComponent<FormFieldProps> = ({
       <input
         type={type}
         className={controlClass}
-        id={fieldId}
+        id={name}
         placeholder={placeholder}
         value={value}
-        onChange={hasChanged}
+        onChange={e => {
+          setFieldTouched(name);
+          onChange(e);
+        }}
+        onBlur={onBlur}
       />
       {leftIcon && <div className="FormField__icon-container">{leftIcon}</div>}
     </div>

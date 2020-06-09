@@ -2,109 +2,103 @@
 // https://www.digitalocean.com/community/tutorials/how-to-build-a-password-strength-meter-in-react
 
 import * as React from "react";
-import { FunctionComponent, useState } from "react";
 
-import FormField, { FormFieldState } from "./FormField";
-import EmailField from "./EmailField";
+import FormField from "./FormField";
 import NewPasswordField from "./NewPasswordField";
 import LogoPage from "../Layout/LogoPage";
 import FormContainer from "../Layout/FormContainer";
+import { FormikProps } from "formik";
+import { Button } from "antd";
 
-export interface JoinFormState {
-  fullname: boolean;
-  email: boolean;
-  password: boolean;
+export interface FormValues {
+  fullname: string;
+  email: string;
+  password: string;
 }
 
-const JoinForm: FunctionComponent = () => {
-  // initialize state to hold validity of form fields
-  const [state, setState] = useState<JoinFormState>({
-    fullname: false,
-    email: false,
-    password: false,
-  });
+export interface Props {
+  minStrength: number;
+  thresholdLength: number;
+}
 
-  // higher-order function that returns a state change watch function
-  // sets the corresponding state property to true if the form field has no errors
-  const fieldStateChanged = (field: string) => (s: FormFieldState) => {
-    const newState: JoinFormState = {
-      ...state,
-      [field]: s.errors.length === 0,
-    };
-    setState(newState);
-  };
-
-  // state change watch functions for each field
-  const emailChanged = fieldStateChanged("email");
-  const fullnameChanged = fieldStateChanged("fullname");
-  const passwordChanged = fieldStateChanged("password");
-
-  const { fullname, email, password } = state;
-  const formValidated = fullname && email && password;
-
-  // validation function for the fullname
-  // ensures that fullname contains at least two names separated with a space
-  const validateFullname = (label: string, value: string) => {
-    if (value.length === 0) {
-      throw new Error(`${label} is required`);
-    } else {
-      const regex = /^[a-z]{2,}(\s[a-z]{2,})+$/i;
-      if (!regex.test(value)) throw new Error(`${label} is invalid`);
-    }
-  };
-
-  return (
-    <LogoPage>
-      <FormContainer>
-        <form action="/" method="POST" noValidate>
-          <div className="JoinForm__content">
-            <div className="d-flex flex-row justify-content-between align-items-center px-3 mb-5">
-              <legend className="form-label mb-0">Support Team</legend>
-              {/** Show the form button only if all fields are valid **/}
-              {formValidated && (
-                <button
-                  type="button"
-                  className="btn btn-primary text-uppercase px-3 py-2"
-                >
-                  Join
-                </button>
-              )}
-            </div>
-
-            <div className="py-5 border-gray border-top border-bottom">
-              {/** Render the fullname form field passing the name validation fn **/}
-              <FormField
-                type="text"
-                fieldId="fullname"
-                label="Full Name"
-                placeholder="Enter Full Name"
-                validator={validateFullname}
-                onStateChanged={fullnameChanged}
-              />
-
-              {/** Render the email field component **/}
-              <EmailField
-                fieldId="email"
-                label="Email"
-                placeholder="Enter Email Address"
-                onStateChanged={emailChanged}
-              />
-
-              {/** Render the password field component using thresholdLength of 7 and minStrength of 3 **/}
-              <NewPasswordField
-                fieldId="password"
-                label="Password"
-                placeholder="Enter Password"
-                onStateChanged={passwordChanged}
-                thresholdLength={7}
-                minStrength={3}
-              />
-            </div>
+export const JoinForm: React.FunctionComponent<Props &
+  FormikProps<FormValues>> = ({
+  values,
+  errors,
+  touched,
+  setFieldTouched,
+  handleChange,
+  handleBlur,
+  handleSubmit,
+  isSubmitting,
+  minStrength,
+  thresholdLength,
+}) => (
+  <LogoPage>
+    <FormContainer>
+      <form onSubmit={handleSubmit}>
+        <div className="JoinForm__content">
+          <div className="d-flex flex-row justify-content-between align-items-center px-3 mb-5">
+            <legend className="form-label mb-0">Support Team</legend>
+            {/** Show the form button only if all fields are valid **/}
+            <Button
+              className="btn btn-primary text-uppercase px-3 py-2"
+              type="primary"
+              loading={isSubmitting}
+              htmlType="submit"
+            >
+              Join
+            </Button>
           </div>
-        </form>
-      </FormContainer>
-    </LogoPage>
-  );
-};
+
+          <div className="py-5 border-gray border-top border-bottom">
+            {/** Render the fullname form field passing the name validation fn **/}
+            <FormField
+              name="fullname"
+              type="text"
+              label="Full Name"
+              placeholder="Enter Full Name"
+              onChange={handleChange}
+              onBlur={handleBlur}
+              value={values.fullname}
+              error={errors.fullname}
+              touched={touched.fullname}
+              setFieldTouched={setFieldTouched}
+            />
+
+            {/** Render the email field component **/}
+            <FormField
+              name="email"
+              type="text"
+              label="Email"
+              placeholder="Enter Email Address"
+              onChange={handleChange}
+              onBlur={handleBlur}
+              value={values.email}
+              error={errors.email}
+              touched={touched.email}
+              setFieldTouched={setFieldTouched}
+            />
+
+            {/** Render the password field component using thresholdLength of 7 and minStrength of 3 **/}
+            <NewPasswordField
+              name="password"
+              label="Password"
+              placeholder="Enter Password"
+              thresholdLength={thresholdLength}
+              minStrength={minStrength}
+              onChange={handleChange}
+              onBlur={handleBlur}
+              value={values.password}
+              error={errors.password}
+              touched={touched.password}
+              setFieldTouched={setFieldTouched}
+            />
+          </div>
+        </div>
+      </form>
+    </FormContainer>
+  </LogoPage>
+);
 
 export default JoinForm;

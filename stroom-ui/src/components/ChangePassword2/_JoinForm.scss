@@ -142,7 +142,7 @@ button.btn {
 
 .ViewPassword__icon-container {
   position: absolute;
-  bottom: .95rem;
+  bottom: .8rem;
   right: .2rem;
   font-size: 1rem;
   text-align: center;
@@ -154,7 +154,7 @@ button.btn {
 .ViewPassword__icon-container span svg {
   //color: desaturate(darken($primary, 10%), 80%);
   color: rgba(0,0,0,.4);
-  width: .9rem;
+  //width: .9rem;
 }
 
 //.ViewPassword__icon {

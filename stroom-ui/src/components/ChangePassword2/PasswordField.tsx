@@ -1,23 +1,9 @@
 import * as React from "react";
 import { FunctionComponent, useState } from "react";
-import FormField, { FormFieldState } from "./FormField";
+import FormField, { FormFieldProps, FormFieldState } from "./FormField";
 import ViewPassword from "./ViewPassword";
 
-export interface PasswordFieldProps {
-  label: string;
-  fieldId: string;
-  placeholder: string;
-  required?: boolean;
-  leftIcon?: any;
-  className?: string;
-  children?: any;
-  validator?: (label: string, value: string) => void;
-  onStateChanged?: (state: FormFieldState) => void;
-}
-
-const PasswordField: FunctionComponent<PasswordFieldProps> = ({
-  validator,
-  onStateChanged,
+const PasswordField: FunctionComponent<FormFieldProps & FormFieldState> = ({
   children,
   ...restProps
 }) => {
@@ -31,12 +17,7 @@ const PasswordField: FunctionComponent<PasswordFieldProps> = ({
   return (
     <div className="position-relative">
       {/** Pass the validation and stateChanged functions as props to the form field **/}
-      <FormField
-        type={state ? "text" : "password"}
-        validator={validator}
-        onStateChanged={onStateChanged}
-        {...restProps}
-      >
+      <FormField type={state ? "text" : "password"} {...restProps}>
         {children}
         <ViewPassword state={state} onStateChanged={viewPasswordToggle} />
       </FormField>

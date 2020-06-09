@@ -19,7 +19,7 @@ import * as React from "react";
 // import Button from "components/Button";
 // import { Button, Form, Input } from "antd";
 // import { hasAnyProps } from "lib/lang";
-import { InputContainer } from "../SignIn/SignInForm";
+// import { InputContainer } from "../SignIn/SignInForm";
 // import { Icon, Input } from "antd";
 import useForm from "react-hook-form";
 import { ChangePasswordRequest } from "../authentication/types";
@@ -121,74 +121,6 @@ const ChangePasswordFields: React.FunctionComponent<{
         value={email}
       </div>
 
-      {/*<div className="section__fields">*/}
-      {/*  <div className="section__fields__row">*/}
-      {showOldPasswordField ? (
-        <InputContainer
-          label="Old password"
-          error={Boolean(errors.oldPassword)}
-        >
-          {/*<PasswordInput*/}
-          {/*  name="oldPassword"*/}
-          {/*  placeholder="Old password"*/}
-          {/*  onChange={async e =>*/}
-          {/*    handleInputChange("oldPassword", e.target.value)*/}
-          {/*  }*/}
-          {/*/>*/}
-        </InputContainer>
-      ) : (
-        undefined
-      )}
-
-      {/*<InputContainer label="New password" error={Boolean(errors.newPassword)}>*/}
-      {/*  <PasswordInput*/}
-      {/*    name="newPassword"*/}
-      {/*    placeholder="New password"*/}
-      {/*    onChange={async e => handleInputChange("newPassword", e.target.value)}*/}
-      {/*  />*/}
-      {/*</InputContainer>*/}
-
-      {/*<div className="field-container__spacer"/>*/}
-
-      {/*<div className="field-container vertical">*/}
-      {/*  <label>New password</label>*/}
-      {/*  <Field name="newPassword" type="password"/>*/}
-      {/*  <ErrorMessage*/}
-      {/*    name="newPassword"*/}
-      {/*    render={msg => (*/}
-      {/*      <div className="validation-error">{msg}</div>*/}
-      {/*    )}*/}
-      {/*  />*/}
-      {/*</div>*/}
-
-      <InputContainer
-        label="Confirm password"
-        error={Boolean(errors.confirmPassword)}
-      >
-        {/*<PasswordInput*/}
-        {/*  name="confirmPassword"*/}
-        {/*  placeholder="Confirm password"*/}
-        {/*  onChange={async e =>*/}
-        {/*    handleInputChange("confirmPassword", e.target.value)*/}
-        {/*  }*/}
-        {/*/>*/}
-      </InputContainer>
-      {/*</div>*/}
-
-      {/*<div className="section__fields__row">*/}
-      {/*  <div className="field-container vertical"/>*/}
-      {/*  <div className="field-container__spacer"/>*/}
-      {/*  <div className="field-container vertical">*/}
-      {/*    <label>New password again</label>*/}
-      {/*    <Field name="verifyPassword" type="password"/>*/}
-      {/*    <ErrorMessage*/}
-      {/*      name="verifyPassword"*/}
-      {/*      render={msg => (*/}
-      {/*        <div className="validation-error">{msg}</div>*/}
-      {/*      )}*/}
-      {/*    />*/}
-      {/*  </div>*/}
-      {/*</div>*/}
 
       {/*<div className="ChangePassword-controls">*/}
       {/*  <div className="ChangePassword-actions">*/}
