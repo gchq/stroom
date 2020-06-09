@@ -18,6 +18,7 @@ package stroom.receive.rules.client.presenter;
 
 import stroom.alert.client.event.AlertEvent;
 import stroom.config.global.client.presenter.ListDataProvider;
+import stroom.data.client.presenter.ColumnSizeConstants;
 import stroom.data.grid.client.DataGridView;
 import stroom.data.grid.client.DataGridViewImpl;
 import stroom.data.retention.shared.DataRetentionDeleteSummary;
@@ -46,9 +47,14 @@ public class DataRetentionImpactPresenter
         extends MyPresenterWidget<DataGridView<DataRetentionImpactRow>>
         implements ColumnSortEvent.Handler {
 
-    private static final int TIMER_DELAY_MS = 50;
-
     private static final DataRetentionRulesResource RETENTION_RULES_RESOURCE = GWT.create(DataRetentionRulesResource.class);
+
+    private static final String FIELD_NAME_RULE_NO = "Rule No.";
+    private static final String FIELD_NAME_RULE_NAME = "Rule No.";
+    private static final String FIELD_NAME_RULE_AGE = "Rule Age";
+    private static final String FIELD_NAME_FEED_NAME = "Field Name";
+    private static final String FIELD_NAME_META_TYPE = "Meta Type";
+    private static final String FIELD_NAME_DELETE_COUNT = "Delete Count";
 
     private final ListDataProvider<DataRetentionImpactRow> dataProvider = new ListDataProvider<>();
     private final RestFactory restFactory;
@@ -56,6 +62,7 @@ public class DataRetentionImpactPresenter
 
     private DataRetentionRules dataRetentionRules;
     private List<DataRetentionDeleteSummary> sourceData;
+    private FindDataRetentionImpactCriteria criteria = new FindDataRetentionImpactCriteria();
 
     @Inject
     public DataRetentionImpactPresenter(final EventBus eventBus,
@@ -68,31 +75,6 @@ public class DataRetentionImpactPresenter
 
         dataProvider.addDataDisplay(getView().getDataDisplay());
         dataProvider.setListUpdater(this::refreshSourceData);
-
-//        dataProvider = new RestDataProvider<List<DataRetentionImpactRow>, DataRetentionDeleteSummaryResponse>(eventBus) {
-//            @Override
-//            protected void exec(final Consumer<List<DataRetentionImpactRow>> dataConsumer, final Consumer<Throwable> throwableConsumer) {
-//                final Rest<DataRetentionDeleteSummaryResponse> rest = restFactory.create();
-//                rest
-//                        .onSuccess(response -> {
-//                            List<DataRetentionImpactRow> rows = response.getValues().stream()
-//                                    .map(summary -> {
-//                                        return new DataRetentionImpactRow(
-//                                                summary.getRuleNumber(),
-//                                                summary.getRuleName(),
-//                                                summary.getFeedName(),
-//                                                summary.getMetaType(),
-//                                                summary.getCount());
-//                                    })
-//                                    .collect(Collectors.toList());
-//
-//                            dataConsumer.accept(rows);
-//                        })
-//                        .onFailure(throwableConsumer)
-//                        .call(RETENTION_RULES_RESOURCE)
-//                        .getRetentionDeletionSummary(dataRetentionRules);
-//            }
-//        };
     }
 
     private void refreshSourceData(final Range range) {
@@ -102,19 +84,6 @@ public class DataRetentionImpactPresenter
         rest
                 .onSuccess(dataRetentionDeleteSummary -> {
                     this.sourceData = dataRetentionDeleteSummary.getValues();
-//                    final List<DataRetentionImpactRow> rows = dataRetentionDeleteSummary.stream()
-//                            .map(summary -> {
-//                                // TODO expander
-//                                return new DataRetentionImpactRow(
-//                                        summary.getRuleNumber(),
-//                                        summary.getRuleName(),
-//                                        numberToAgeMap.get(summary.getRuleNumber()),
-//                                        summary.getFeedName(),
-//                                        summary.getMetaType(),
-//                                        summary.getCount());
-//                            })
-//                            .collect(Collectors.toList());
-//                    dataProvider.setCompleteList(rows);
                     refreshVisibleData();
                 })
                 .onFailure(throwable ->
@@ -136,43 +105,63 @@ public class DataRetentionImpactPresenter
         dataProvider.setCompleteList(rows);
     }
 
-//    private String getRuleAge(final int ruleNumber) {
-//        final DataRetentionRule rule = numberToRuleMap.get(ruleNumber);
-//        if (rule == null) {
-//            return null;
-//        } else {
-//            return rule.getAgeString();
-//        }
-//    }
-
     public void setDataRetentionRules(final DataRetentionRules dataRetentionRules) {
         this.dataRetentionRules = dataRetentionRules;
-//        this.numberToRuleMap = Optional.ofNullable(dataRetentionRules)
-//                .map(DataRetentionRules::getRules)
-//                .map(rules ->
-//                        rules.stream()
-//                                .collect(Collectors.toMap(
-//                                        DataRetentionRule::getRuleNumber,
-//                                        Function.identity())))
-//                .orElse(Collections.emptyMap());
-
-//        this.numberToAgeMap = numberToRuleMap.values().stream()
-//                .collect(Collectors.toMap(
-//                        DataRetentionRule::getRuleNumber,
-//                        DataRetentionRule::getAgeString));
-
-//        this.dataProvider.refresh(true);
     }
 
     private void initColumns() {
-        DataGridUtil.addExpanderColumn(getView(), DataRetentionImpactRow::getExpander, treeAction, this::refreshVisibleData);
-        DataGridUtil.addResizableNumericTextColumn(getView(), DataRetentionImpactRow::getRuleNumber, "Rule No.", 60);
-        DataGridUtil.addResizableTextColumn(getView(), DataRetentionImpactRow::getRuleName, "Rule Name", 250);
-        DataGridUtil.addResizableTextColumn(getView(), DataRetentionImpactRow::getRuleAge, "Rule Age", 100);
-        DataGridUtil.addResizableTextColumn(getView(), DataRetentionImpactRow::getFeedName, "Feed Name", 300);
-        DataGridUtil.addResizableTextColumn(getView(), DataRetentionImpactRow::getMetaType, "Meta Type", 100);
-        DataGridUtil.addResizableNumericTextColumn(getView(), DataRetentionImpactRow::getCount, "Delete Count", 100);
+
+        DataGridUtil.addExpanderColumn(
+                getView(),
+                DataRetentionImpactRow::getExpander,
+                treeAction,
+                this::refreshVisibleData);
+
+        getView().addResizableColumn(
+                DataGridUtil.textColumnBuilder((DataRetentionImpactRow row) -> Integer.toString(row.getRuleNumber()))
+                        .rightAligned()
+                        .withSorting(FIELD_NAME_RULE_NO)
+                        .build(),
+                FIELD_NAME_RULE_NO,
+                ColumnSizeConstants.SMALL_COL);
+
+        getView().addResizableColumn(
+                DataGridUtil.textColumnBuilder(DataRetentionImpactRow::getRuleName)
+                        .build(),
+                FIELD_NAME_RULE_NAME,
+                ColumnSizeConstants.BIG_COL);
+
+        getView().addResizableColumn(
+                DataGridUtil.textColumnBuilder(DataRetentionImpactRow::getRuleAge)
+                        .build(),
+                FIELD_NAME_RULE_AGE,
+                ColumnSizeConstants.MEDIUM_COL);
+
+        getView().addResizableColumn(
+                DataGridUtil.textColumnBuilder(DataRetentionImpactRow::getFeedName)
+                        .withSorting(FIELD_NAME_FEED_NAME)
+                        .build(),
+                FIELD_NAME_FEED_NAME,
+                ColumnSizeConstants.BIG_COL);
+
+        getView().addResizableColumn(
+                DataGridUtil.textColumnBuilder(DataRetentionImpactRow::getMetaType)
+                        .withSorting(FIELD_NAME_META_TYPE)
+                        .build(),
+                FIELD_NAME_META_TYPE,
+                ColumnSizeConstants.MEDIUM_COL);
+
+        getView().addResizableColumn(
+                DataGridUtil.textColumnBuilder((DataRetentionImpactRow row) -> Integer.toString(row.getCount()))
+                        .rightAligned()
+                        .withSorting(FIELD_NAME_DELETE_COUNT)
+                        .build(),
+                FIELD_NAME_DELETE_COUNT,
+                ColumnSizeConstants.MEDIUM_COL);
+
         DataGridUtil.addEndColumn(getView());
+
+        DataGridUtil.addColumnSortHandler(getView(), criteria, this::refreshVisibleData);
     }
 
     public ButtonView addButton(final SvgPreset preset) {
