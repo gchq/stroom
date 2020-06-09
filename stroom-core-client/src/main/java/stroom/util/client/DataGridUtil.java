@@ -20,6 +20,7 @@ import com.google.gwt.user.client.ui.HasHorizontalAlignment.HorizontalAlignmentC
 import com.google.gwt.user.client.ui.HasVerticalAlignment.VerticalAlignmentConstant;
 
 import java.util.Objects;
+import java.util.Optional;
 import java.util.function.Function;
 import java.util.function.Supplier;
 
@@ -191,27 +192,54 @@ public class DataGridUtil {
 //
 //    }
 
-    public static <T_ROW, T_CELL_VAL, T_CELL extends Cell<T_CELL_VAL>> ColumnBuilder<T_ROW, T_CELL_VAL, T_CELL> columnBuilder(
-            final Function<T_ROW, T_CELL_VAL> cellExtractor,
+
+    // There ought to be a better way of doing this so we don't have to have so many
+    // methods to initiate the builder
+
+    public static <T_ROW, T_RAW_VAL, T_CELL_VAL, T_CELL extends Cell<T_CELL_VAL>> ColumnBuilder<T_ROW, T_RAW_VAL, T_CELL_VAL, T_CELL> columnBuilder(
+            final Function<T_ROW, T_RAW_VAL> valueExtractor,
+            final Function<T_RAW_VAL, T_CELL_VAL> formatter,
             final Supplier<T_CELL> cellSupplier) {
 
-        return new ColumnBuilder<>(cellExtractor, cellSupplier);
+        return new ColumnBuilder<>(valueExtractor, formatter, cellSupplier);
     }
 
-    public static <T_ROW> ColumnBuilder<T_ROW, String, Cell<String>> textColumnBuilder(
+    public static <T_ROW, T_CELL_VAL, T_CELL extends Cell<T_CELL_VAL>> ColumnBuilder<T_ROW, T_CELL_VAL, T_CELL_VAL, T_CELL> columnBuilder(
+            final Function<T_ROW, T_CELL_VAL> valueExtractor,
+            final Supplier<T_CELL> cellSupplier) {
+
+        return new ColumnBuilder<>(valueExtractor, Function.identity(), cellSupplier);
+    }
+
+    public static <T_ROW, T_RAW_VAL> ColumnBuilder<T_ROW, T_RAW_VAL, String, Cell<String>> textColumnBuilder(
+            final Function<T_ROW, T_RAW_VAL> cellExtractor,
+            final Function<T_RAW_VAL, String> formatter) {
+
+        return new ColumnBuilder<>(cellExtractor, formatter, TextCell::new);
+    }
+
+    public static <T_ROW> ColumnBuilder<T_ROW, String, String, Cell<String>> textColumnBuilder(
             final Function<T_ROW, String> cellExtractor) {
 
-        return new ColumnBuilder<>(cellExtractor, TextCell::new);
+        return new ColumnBuilder<>(cellExtractor, Function.identity(), TextCell::new);
     }
 
-    public static <T_ROW> ColumnBuilder<T_ROW, SafeHtml, Cell<SafeHtml>> htmlColumnBuilder(
+    public static <T_ROW, T_RAW_VAL> ColumnBuilder<T_ROW, T_RAW_VAL, SafeHtml, Cell<SafeHtml>> htmlColumnBuilder(
+            final Function<T_ROW, T_RAW_VAL> cellExtractor,
+            final Function<T_RAW_VAL, SafeHtml> formatter) {
+
+        return new ColumnBuilder<>(cellExtractor, formatter, SafeHtmlCell::new);
+    }
+
+    public static <T_ROW> ColumnBuilder<T_ROW, SafeHtml, SafeHtml, Cell<SafeHtml>> htmlColumnBuilder(
             final Function<T_ROW, SafeHtml> cellExtractor) {
 
-        return new ColumnBuilder<>(cellExtractor, SafeHtmlCell::new);
+        return new ColumnBuilder<>(cellExtractor, Function.identity(), SafeHtmlCell::new);
     }
 
-    public static class ColumnBuilder<T_ROW, T_CELL_VAL, T_CELL extends Cell<T_CELL_VAL>> {
-        private final Function<T_ROW, T_CELL_VAL> cellExtractor;
+    public static class ColumnBuilder<T_ROW, T_RAW_VAL, T_CELL_VAL, T_CELL extends Cell<T_CELL_VAL>> {
+        private final Function<T_ROW, T_RAW_VAL> valueExtractor;
+        private final Function<T_RAW_VAL, T_CELL_VAL> formatter;
         private final Supplier<T_CELL> cellSupplier;
         private boolean isSorted = false;
         private HorizontalAlignmentConstant horizontalAlignment = null;
@@ -219,49 +247,74 @@ public class DataGridUtil {
         private String fieldName;
         private boolean isIgnoreCaseOrdering = false;
 
-        private ColumnBuilder(final Function<T_ROW, T_CELL_VAL> cellExtractor,
+        private ColumnBuilder(final Function<T_ROW, T_RAW_VAL> valueExtractor,
+                             final Function<T_RAW_VAL, T_CELL_VAL> formatter,
                              final Supplier<T_CELL> cellSupplier) {
-            this.cellExtractor = cellExtractor;
+            Objects.requireNonNull(valueExtractor);
+            Objects.requireNonNull(formatter);
+            Objects.requireNonNull(cellSupplier);
+
+            this.valueExtractor = valueExtractor;
+            this.formatter = formatter;
             this.cellSupplier = cellSupplier;
         }
 
-        public ColumnBuilder<T_ROW, T_CELL_VAL, T_CELL> withSorting(final String fieldName) {
+        public ColumnBuilder<T_ROW, T_RAW_VAL, T_CELL_VAL, T_CELL> withSorting(final String fieldName) {
             this.isSorted = true;
-            this.fieldName = fieldName;
+            this.fieldName = Objects.requireNonNull(fieldName);
             return this;
         }
 
-        public ColumnBuilder<T_ROW, T_CELL_VAL, T_CELL> withSorting(
+        public ColumnBuilder<T_ROW, T_RAW_VAL, T_CELL_VAL, T_CELL> withSorting(
                 final String fieldName,
                 final boolean isIgnoreCase) {
             this.isSorted = true;
             this.isIgnoreCaseOrdering = isIgnoreCase;
-            this.fieldName = fieldName;
+            this.fieldName = Objects.requireNonNull(fieldName);
             return this;
         }
 
-        public ColumnBuilder<T_ROW, T_CELL_VAL, T_CELL> rightAligned() {
+        public ColumnBuilder<T_ROW, T_RAW_VAL, T_CELL_VAL, T_CELL> rightAligned() {
             horizontalAlignment = HasHorizontalAlignment.ALIGN_RIGHT;
             return this;
         }
 
-        public ColumnBuilder<T_ROW, T_CELL_VAL, T_CELL> centerAligned() {
+        public ColumnBuilder<T_ROW, T_RAW_VAL, T_CELL_VAL, T_CELL> centerAligned() {
             horizontalAlignment = HasHorizontalAlignment.ALIGN_CENTER;
+            return this;
+        }
+
+        public ColumnBuilder<T_ROW, T_RAW_VAL, T_CELL_VAL, T_CELL> withHorizontalAlignment(
+                final HorizontalAlignmentConstant alignment) {
+            horizontalAlignment = Objects.requireNonNull(alignment);
+            return this;
+        }
+
+        public ColumnBuilder<T_ROW, T_RAW_VAL, T_CELL_VAL, T_CELL> withVerticalAlignment(
+                final VerticalAlignmentConstant alignment) {
+            verticalAlignment = Objects.requireNonNull(alignment);
             return this;
         }
 
         public Column<T_ROW, T_CELL_VAL> build() {
 
+            final Function<T_ROW, T_CELL_VAL> formattedValueExtractor = row ->
+                    Optional.ofNullable(row)
+                            .map(valueExtractor)
+                            .map(formatter)
+                            .orElse(null);
+
             final Column<T_ROW, T_CELL_VAL> column;
             if (isSorted) {
                 // Explicit generics typing for GWT
-                column = new OrderByColumn<T_ROW, T_CELL_VAL>(cellSupplier.get(), fieldName, isIgnoreCaseOrdering) {
+                column = new OrderByColumn<T_ROW, T_CELL_VAL>(
+                        cellSupplier.get(),
+                        fieldName,
+                        isIgnoreCaseOrdering) {
+
                     @Override
                     public T_CELL_VAL getValue(final T_ROW row) {
-                        if (row == null) {
-                            return null;
-                        }
-                        return cellExtractor.apply(row);
+                        return formattedValueExtractor.apply(row);
                     }
                 };
             } else {
@@ -269,10 +322,7 @@ public class DataGridUtil {
                 column = new Column<T_ROW, T_CELL_VAL>(cellSupplier.get()) {
                     @Override
                     public T_CELL_VAL getValue(final T_ROW row) {
-                        if (row == null) {
-                            return null;
-                        }
-                        return cellExtractor.apply(row);
+                        return formattedValueExtractor.apply(row);
                     }
                 };
             }

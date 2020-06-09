@@ -3,16 +3,35 @@ package stroom.receive.rules.client.presenter;
 import stroom.data.retention.shared.DataRetentionDeleteSummary;
 import stroom.data.retention.shared.DataRetentionRule;
 import stroom.util.shared.Expander;
+import stroom.util.shared.Sort.Direction;
 
 import java.util.ArrayList;
 import java.util.Comparator;
+import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Objects;
+import java.util.Optional;
 import java.util.Set;
 import java.util.stream.Collectors;
 
 public class DataRetentionImpactRow {
+
+    public static final String FIELD_NAME_RULE_NO = "Rule No.";
+    public static final String FIELD_NAME_RULE_NAME = "Rule Name";
+    public static final String FIELD_NAME_RULE_AGE = "Rule Age";
+    public static final String FIELD_NAME_FEED_NAME = "Feed Name";
+    public static final String FIELD_NAME_META_TYPE = "Meta Type";
+    public static final String FIELD_NAME_DELETE_COUNT = "Delete Count";
+
+    public static final Map<String, Comparator<DataRetentionImpactRow>> FIELD_TO_COMPARATOR_MAP = new HashMap<>();
+
+    // GWT doesn't like Map.of()
+    static {
+        FIELD_TO_COMPARATOR_MAP.put(FIELD_NAME_FEED_NAME, Comparator.comparing(DataRetentionImpactRow::getFeedName));
+        FIELD_TO_COMPARATOR_MAP.put(FIELD_NAME_META_TYPE, Comparator.comparing(DataRetentionImpactRow::getMetaType));
+        FIELD_TO_COMPARATOR_MAP.put(FIELD_NAME_DELETE_COUNT, Comparator.comparing(DataRetentionImpactRow::getCount));
+    }
 
     private Integer ruleNumber;
     private String ruleName;
@@ -109,9 +128,54 @@ public class DataRetentionImpactRow {
         this.expander = expander;
     }
 
+    private Comparator<DataRetentionImpactRow> chainComparators(
+            final Comparator<DataRetentionImpactRow> first,
+            final Comparator<DataRetentionImpactRow> second) {
+
+        if (first == null) {
+            return second;
+        } else {
+            return first.thenComparing(second);
+        }
+    }
+
+    private static Comparator<DataRetentionImpactRow> buildComparator(final FindDataRetentionImpactCriteria criteria) {
+
+        if (criteria != null && criteria.getSortList() != null) {
+            List<Comparator<DataRetentionImpactRow>> comparators = criteria.getSortList().stream()
+                    .filter(Objects::nonNull)
+                    .map(sort ->
+                            Optional.ofNullable(FIELD_TO_COMPARATOR_MAP.get(sort.getField()))
+                                    .map(comparator -> {
+                                        if (Direction.DESCENDING.equals(sort.getDirection())) {
+                                            return comparator.reversed();
+                                        } else {
+                                            return comparator;
+                                        }
+                                    }))
+                    .filter(Optional::isPresent)
+                    .map(Optional::get)
+                    .collect(Collectors.toList());
+
+            return (o1, o2) -> {
+                int result;
+                for (Comparator<DataRetentionImpactRow> comparator : comparators) {
+                    if ((result = comparator.compare(o1, o2)) != 0) {
+                        return result;
+                    }
+                }
+                return 0;
+            };
+        } else {
+            // No sort
+            return (o1, o2) -> 0;
+        }
+    }
+
     public static List<DataRetentionImpactRow> buildTree(final List<DataRetentionRule> rules,
                                                          final List<DataRetentionDeleteSummary> summaries,
-                                                         final DataRetentionImpactTreeAction treeAction) {
+                                                         final DataRetentionImpactTreeAction treeAction,
+                                                         final FindDataRetentionImpactCriteria criteria) {
         final List<DataRetentionImpactRow> rows = new ArrayList<>();
 
         final Map<Integer, Set<DataRetentionDeleteSummary>> ruleNoToSummariesMap = summaries.stream()
@@ -129,13 +193,13 @@ public class DataRetentionImpactRow {
             if (isExpanded(treeAction, ruleRow)) {
 //        // TODO column sorting
                 if (summariesForRule != null) {
-                    summariesForRule
+                    rows.addAll(summariesForRule
                             .stream()
-                            .sorted(Comparator.comparing(DataRetentionDeleteSummary::getFeedName)
-                                    .thenComparing(DataRetentionDeleteSummary::getMetaType))
-                            .forEach(summary -> {
-                                rows.add(buildDetailRow(summary, treeAction));
-                            });
+//                            .sorted(Comparator.comparing(DataRetentionDeleteSummary::getFeedName)
+//                                    .thenComparing(DataRetentionDeleteSummary::getMetaType))
+                            .map(summary -> buildDetailRow(summary, treeAction))
+                            .sorted(buildComparator(criteria))
+                            .collect(Collectors.toList()));
                 }
             }
         });

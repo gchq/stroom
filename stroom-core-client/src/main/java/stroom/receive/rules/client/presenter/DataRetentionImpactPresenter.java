@@ -41,6 +41,7 @@ import com.gwtplatform.mvp.client.MyPresenterWidget;
 
 import java.util.Collections;
 import java.util.List;
+import java.util.Objects;
 import java.util.Optional;
 
 public class DataRetentionImpactPresenter
@@ -49,12 +50,6 @@ public class DataRetentionImpactPresenter
 
     private static final DataRetentionRulesResource RETENTION_RULES_RESOURCE = GWT.create(DataRetentionRulesResource.class);
 
-    private static final String FIELD_NAME_RULE_NO = "Rule No.";
-    private static final String FIELD_NAME_RULE_NAME = "Rule No.";
-    private static final String FIELD_NAME_RULE_AGE = "Rule Age";
-    private static final String FIELD_NAME_FEED_NAME = "Field Name";
-    private static final String FIELD_NAME_META_TYPE = "Meta Type";
-    private static final String FIELD_NAME_DELETE_COUNT = "Delete Count";
 
     private final ListDataProvider<DataRetentionImpactRow> dataProvider = new ListDataProvider<>();
     private final RestFactory restFactory;
@@ -83,6 +78,7 @@ public class DataRetentionImpactPresenter
         final Rest<DataRetentionDeleteSummaryResponse> rest = restFactory.create();
         rest
                 .onSuccess(dataRetentionDeleteSummary -> {
+
                     this.sourceData = dataRetentionDeleteSummary.getValues();
                     refreshVisibleData();
                 })
@@ -99,7 +95,8 @@ public class DataRetentionImpactPresenter
                         DataRetentionImpactRow.buildTree(
                                 dataRetentionRules.getRules(),
                                 summaries,
-                                treeAction))
+                                treeAction,
+                                criteria))
                 .orElse(Collections.emptyList());
 
         dataProvider.setCompleteList(rows);
@@ -118,45 +115,44 @@ public class DataRetentionImpactPresenter
                 this::refreshVisibleData);
 
         getView().addResizableColumn(
-                DataGridUtil.textColumnBuilder((DataRetentionImpactRow row) -> Integer.toString(row.getRuleNumber()))
+                DataGridUtil.textColumnBuilder(DataRetentionImpactRow::getRuleNumber, Object::toString)
                         .rightAligned()
-                        .withSorting(FIELD_NAME_RULE_NO)
                         .build(),
-                FIELD_NAME_RULE_NO,
+                DataRetentionImpactRow.FIELD_NAME_RULE_NO,
                 ColumnSizeConstants.SMALL_COL);
 
         getView().addResizableColumn(
                 DataGridUtil.textColumnBuilder(DataRetentionImpactRow::getRuleName)
                         .build(),
-                FIELD_NAME_RULE_NAME,
+                DataRetentionImpactRow.FIELD_NAME_RULE_NAME,
                 ColumnSizeConstants.BIG_COL);
 
         getView().addResizableColumn(
                 DataGridUtil.textColumnBuilder(DataRetentionImpactRow::getRuleAge)
                         .build(),
-                FIELD_NAME_RULE_AGE,
+                DataRetentionImpactRow.FIELD_NAME_RULE_AGE,
                 ColumnSizeConstants.MEDIUM_COL);
 
         getView().addResizableColumn(
                 DataGridUtil.textColumnBuilder(DataRetentionImpactRow::getFeedName)
-                        .withSorting(FIELD_NAME_FEED_NAME)
+                        .withSorting(DataRetentionImpactRow.FIELD_NAME_FEED_NAME)
                         .build(),
-                FIELD_NAME_FEED_NAME,
+                DataRetentionImpactRow.FIELD_NAME_FEED_NAME,
                 ColumnSizeConstants.BIG_COL);
 
         getView().addResizableColumn(
                 DataGridUtil.textColumnBuilder(DataRetentionImpactRow::getMetaType)
-                        .withSorting(FIELD_NAME_META_TYPE)
+                        .withSorting(DataRetentionImpactRow.FIELD_NAME_META_TYPE)
                         .build(),
-                FIELD_NAME_META_TYPE,
+                DataRetentionImpactRow.FIELD_NAME_META_TYPE,
                 ColumnSizeConstants.MEDIUM_COL);
 
         getView().addResizableColumn(
-                DataGridUtil.textColumnBuilder((DataRetentionImpactRow row) -> Integer.toString(row.getCount()))
+                DataGridUtil.textColumnBuilder(DataRetentionImpactRow::getCount, Objects::toString)
                         .rightAligned()
-                        .withSorting(FIELD_NAME_DELETE_COUNT)
+                        .withSorting(DataRetentionImpactRow.FIELD_NAME_DELETE_COUNT)
                         .build(),
-                FIELD_NAME_DELETE_COUNT,
+                DataRetentionImpactRow.FIELD_NAME_DELETE_COUNT,
                 ColumnSizeConstants.MEDIUM_COL);
 
         DataGridUtil.addEndColumn(getView());
