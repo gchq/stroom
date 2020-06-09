@@ -19,6 +19,8 @@ package stroom.pipeline.filter;
 import org.xml.sax.Attributes;
 import org.xml.sax.Locator;
 import org.xml.sax.SAXException;
+
+import stroom.pipeline.factory.Pipeline;
 import stroom.pipeline.factory.Processor;
 import stroom.pipeline.factory.Terminator;
 
@@ -26,6 +28,8 @@ import java.util.Collections;
 import java.util.List;
 
 public class XMLFilterAdaptor implements XMLFilter {
+    private Pipeline pipeline;
+
     @Override
     public void startProcessing() {
     }
@@ -103,5 +107,13 @@ public class XMLFilterAdaptor implements XMLFilter {
 
     @Override
     public void setTerminator(final Terminator terminator) {
+    }
+    public Pipeline getPipeline(){
+        return pipeline;
+    }
+
+    @Override
+    public void setPipeline(final Pipeline pipeline) {
+        this.pipeline = pipeline;
     }
 }

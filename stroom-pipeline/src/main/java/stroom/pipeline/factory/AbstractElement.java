@@ -19,6 +19,7 @@ package stroom.pipeline.factory;
 public abstract class AbstractElement implements Element {
     private Terminator terminator = Terminator.DEFAULT;
     private String elementId;
+    private Pipeline pipeline;
 
     @Override
     public void startProcessing() {
@@ -53,5 +54,14 @@ public abstract class AbstractElement implements Element {
     @Override
     public void setTerminator(final Terminator terminator) {
         this.terminator = terminator;
+    }
+
+    public Pipeline getPipeline(){
+        return pipeline;
+    }
+
+    @Override
+    public void setPipeline(final Pipeline pipeline) {
+        this.pipeline = pipeline;
     }
 }

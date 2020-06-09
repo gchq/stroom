@@ -112,6 +112,7 @@ public class XsltFilter extends AbstractXMLFilter implements SupportsCodeInjecti
                       final LocationFactoryProxy locationFactory,
                       final PipelineContext pipelineContext,
                       final PathCreator pathCreator) {
+        super (true);
         this.xsltPool = xsltPool;
         this.errorReceiverProxy = errorReceiverProxy;
         this.xsltStore = xsltStore;
@@ -309,7 +310,8 @@ public class XsltFilter extends AbstractXMLFilter implements SupportsCodeInjecti
                 }
                 handler.startDocument();
 
-            } else if (passThrough) {
+            }
+            if (passThrough) {
                 super.startDocument();
             }
 
@@ -347,13 +349,15 @@ public class XsltFilter extends AbstractXMLFilter implements SupportsCodeInjecti
                 } finally {
                     // We don't want the whole pipeline to terminate processing
                     // if there is a problem with the transform.
-                    super.endDocument();
+                    //todo check change to logic
+//                    super.endDocument();
                 }
             } finally {
                 handler = null;
                 elementCount = 0;
             }
-        } else if (passThrough) {
+        }
+        if (passThrough) {
             super.endDocument();
         }
     }
@@ -395,7 +399,8 @@ public class XsltFilter extends AbstractXMLFilter implements SupportsCodeInjecti
     public void startPrefixMapping(final String prefix, final String uri) throws SAXException {
         if (handler != null) {
             handler.startPrefixMapping(prefix, uri);
-        } else if (passThrough) {
+        }
+        if (passThrough) {
             super.startPrefixMapping(prefix, uri);
         }
     }
@@ -415,7 +420,8 @@ public class XsltFilter extends AbstractXMLFilter implements SupportsCodeInjecti
     public void endPrefixMapping(final String prefix) throws SAXException {
         if (handler != null) {
             handler.endPrefixMapping(prefix);
-        } else if (passThrough) {
+        }
+        if (passThrough) {
             super.endPrefixMapping(prefix);
         }
     }
@@ -466,7 +472,8 @@ public class XsltFilter extends AbstractXMLFilter implements SupportsCodeInjecti
             }
 
             handler.startElement(uri, localName, qName, atts);
-        } else if (passThrough) {
+        }
+        if (passThrough) {
             super.startElement(uri, localName, qName, atts);
         }
     }
@@ -487,7 +494,8 @@ public class XsltFilter extends AbstractXMLFilter implements SupportsCodeInjecti
     public void endElement(final String uri, final String localName, final String qName) throws SAXException {
         if (handler != null) {
             handler.endElement(uri, localName, qName);
-        } else if (passThrough) {
+        }
+        if (passThrough) {
             super.endElement(uri, localName, qName);
         }
     }
@@ -506,7 +514,8 @@ public class XsltFilter extends AbstractXMLFilter implements SupportsCodeInjecti
     public void characters(final char[] ch, final int start, final int length) throws SAXException {
         if (handler != null) {
             handler.characters(ch, start, length);
-        } else if (passThrough) {
+        }
+        if (passThrough) {
             super.characters(ch, start, length);
         }
     }
@@ -524,7 +533,8 @@ public class XsltFilter extends AbstractXMLFilter implements SupportsCodeInjecti
     public void ignorableWhitespace(final char[] ch, final int start, final int length) throws SAXException {
         if (handler != null) {
             handler.ignorableWhitespace(ch, start, length);
-        } else if (passThrough) {
+        }
+        if (passThrough) {
             super.ignorableWhitespace(ch, start, length);
         }
     }
@@ -558,7 +568,8 @@ public class XsltFilter extends AbstractXMLFilter implements SupportsCodeInjecti
     public void skippedEntity(final String name) throws SAXException {
         if (handler != null) {
             handler.skippedEntity(name);
-        } else if (passThrough) {
+        }
+        if (passThrough) {
             super.skippedEntity(name);
         }
     }

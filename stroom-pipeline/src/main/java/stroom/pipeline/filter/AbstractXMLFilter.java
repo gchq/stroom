@@ -16,6 +16,8 @@
 
 package stroom.pipeline.filter;
 
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.xml.sax.Attributes;
 import org.xml.sax.ContentHandler;
 import org.xml.sax.Locator;
@@ -24,7 +26,16 @@ import stroom.pipeline.factory.AbstractElement;
 import stroom.pipeline.factory.HasTargets;
 import stroom.pipeline.factory.Processor;
 import stroom.pipeline.factory.Target;
+import stroom.util.shared.Severity;
+import stroom.util.xml.XMLUtil;
 
+import javax.xml.transform.ErrorListener;
+import javax.xml.transform.TransformerConfigurationException;
+import javax.xml.transform.TransformerException;
+import javax.xml.transform.sax.TransformerHandler;
+import javax.xml.transform.stream.StreamResult;
+import java.io.ByteArrayOutputStream;
+import java.io.IOException;
 import java.util.List;
 
 /**
@@ -32,15 +43,66 @@ import java.util.List;
  * provides a child filter that all SAX events will be forwarded to by default.
  */
 public abstract class AbstractXMLFilter extends AbstractElement implements XMLFilter, HasTargets {
+    private static final Logger LOGGER = LoggerFactory.getLogger(AbstractXMLFilter.class);
     private ContentHandler contentHandler = NullXMLFilter.INSTANCE;
     private XMLFilter filter = NullXMLFilter.INSTANCE;
 
+    private TransformerHandler xmlValueHandler;
+    private ByteArrayOutputStream outputStream;
+    private final boolean buffering;
+
+    private boolean debugDocStarted = false;
+
+    private final ErrorListener errorListener = new ErrorListener(){
+        @Override
+        public void warning(TransformerException exception) throws TransformerException {
+            LOGGER.warn("Unable to buffer " + getElementId(), exception);
+        }
+
+        @Override
+        public void error(TransformerException exception) throws TransformerException {
+            LOGGER.error("Unable to buffer " + getElementId(), exception);
+        }
+
+        @Override
+        public void fatalError(TransformerException exception) throws TransformerException {
+            LOGGER.error("Unable to buffer " + getElementId(), exception);
+        }
+    };
+
+    public AbstractXMLFilter (){
+        this.buffering = false;
+    }
+
+    public AbstractXMLFilter(boolean buffering){
+        this.buffering = buffering;
+    }
     /**
      * Called just before a pipeline begins processing.
      */
     @Override
     public void startProcessing() {
         filter.startProcessing();
+        initiliseBuffer();
+    }
+
+    private void initiliseBuffer(){
+        if (!buffering || xmlValueHandler != null) {
+            return;
+        }
+
+        try {
+            this.xmlValueHandler = XMLUtil.createTransformerHandler(errorListener, false);
+            outputStream = new ByteArrayOutputStream();
+            xmlValueHandler.setResult(new StreamResult(outputStream));
+        } catch (TransformerConfigurationException exception) {
+            LOGGER.error("Unable to buffer " + getElementId(), exception);
+        }
+    }
+
+    private void destroyBuffer(){
+        xmlValueHandler = null;
+        outputStream = null;
     }
 
     /**
@@ -49,6 +111,7 @@ public abstract class AbstractXMLFilter extends AbstractElement implements XMLFi
     @Override
     public void endProcessing() {
         filter.endProcessing();
+        destroyBuffer();
     }
 
     /**
@@ -58,6 +121,7 @@ public abstract class AbstractXMLFilter extends AbstractElement implements XMLFi
     @Override
     public void startStream() {
         filter.startStream();
+        initiliseBuffer();
     }
 
     /**
@@ -67,6 +131,7 @@ public abstract class AbstractXMLFilter extends AbstractElement implements XMLFi
     @Override
     public void endStream() {
         filter.endStream();
+        destroyBuffer();
     }
 
     /**
@@ -127,7 +192,19 @@ public abstract class AbstractXMLFilter extends AbstractElement implements XMLFi
      */
     @Override
     public void startDocument() throws SAXException {
+        if (buffering && debugDocStarted)
+            System.err.println(this.toString() + " doc start (without documentEnd first)");
         contentHandler.startDocument();
+
+        try {
+            if (buffering) {
+                xmlValueHandler.startDocument();
+                outputStream.flush();
+            }
+        } catch (Exception exception){
+            LOGGER.error("Unable to update buffer " + getElementId(), exception);
+        }
+        debugDocStarted = true;
     }
 
     /**
@@ -154,7 +231,25 @@ public abstract class AbstractXMLFilter extends AbstractElement implements XMLFi
      */
     @Override
     public void endDocument() throws SAXException {
+        if (buffering && !debugDocStarted)
+            System.err.println(this.toString() + " doc end without start");
         contentHandler.endDocument();
+
+        try {
+            if (buffering) {
+                xmlValueHandler.endDocument();
+                outputStream.flush();
+
+                //Just diagnostics to understand what's going on - todo remove when feature is complete
+                if (outputStream.size() == 0)
+                    System.err.println ("EndDoc, but no data: " + this.toString());
+                else if (false)
+                    System.err.println ("EndDoc : " + outputStream.toString() + "----" + this.toString());
+            }
+        } catch (Exception exception){
+            LOGGER.error("Unable to update buffer " + getElementId(), exception);
+        }
+        debugDocStarted = false;
     }
 
     /**
@@ -200,6 +295,14 @@ public abstract class AbstractXMLFilter extends AbstractElement implements XMLFi
     @Override
     public void startPrefixMapping(final String prefix, final String uri) throws SAXException {
         contentHandler.startPrefixMapping(prefix, uri);
+
+        try {
+            if (buffering) {
+                xmlValueHandler.startPrefixMapping(prefix, uri);
+            }
+        } catch (SAXException exception){
+            LOGGER.error("Unable to update buffer " + getElementId(), exception);
+        }
     }
 
     /**
@@ -222,6 +325,15 @@ public abstract class AbstractXMLFilter extends AbstractElement implements XMLFi
     @Override
     public void endPrefixMapping(final String prefix) throws SAXException {
         contentHandler.endPrefixMapping(prefix);
+
+        try {
+            if (buffering) {
+                xmlValueHandler.endPrefixMapping(prefix);
+            }
+        } catch (SAXException exception){
+            LOGGER.error("Unable to update buffer " + getElementId(), exception);
+        }
+
     }
 
     /**
@@ -293,7 +405,18 @@ public abstract class AbstractXMLFilter extends AbstractElement implements XMLFi
     @Override
     public void startElement(final String uri, final String localName, final String qName, final Attributes atts)
             throws SAXException {
+        if (buffering && !debugDocStarted)
+            System.err.println(this.toString() + " element start before doc");
+
         terminationCheck();
+        try {
+            if (buffering) {
+                xmlValueHandler.startElement(uri, localName, qName, atts);
+                outputStream.flush();
+            }
+        } catch (Exception exception){
+            LOGGER.error("Unable to update buffer " + getElementId(), exception);
+        }
         contentHandler.startElement(uri, localName, qName, atts);
     }
 
@@ -322,6 +445,16 @@ public abstract class AbstractXMLFilter extends AbstractElement implements XMLFi
      */
     @Override
     public void endElement(final String uri, final String localName, final String qName) throws SAXException {
+        if (buffering && !debugDocStarted)
+            System.err.println(this.toString() + " element end without doc start");
+        try {
+            if (buffering) {
+                xmlValueHandler.endElement(uri, localName, qName);
+                outputStream.flush();
+            }
+        } catch (Exception exception){
+            LOGGER.error("Unable to update buffer " + getElementId(), exception);
+        }
         contentHandler.endElement(uri, localName, qName);
     }
 
@@ -377,6 +510,14 @@ public abstract class AbstractXMLFilter extends AbstractElement implements XMLFi
      */
     @Override
     public void characters(final char[] ch, final int start, final int length) throws SAXException {
+        try {
+            if (buffering) {
+                xmlValueHandler.characters(ch,start, length);
+                outputStream.flush();
+            }
+        } catch (Exception exception){
+            LOGGER.error("Unable to update buffer " + getElementId(), exception);
+        }
         contentHandler.characters(ch, start, length);
     }
 
@@ -410,6 +551,14 @@ public abstract class AbstractXMLFilter extends AbstractElement implements XMLFi
      */
     @Override
     public void ignorableWhitespace(final char[] ch, final int start, final int length) throws SAXException {
+        try {
+            if (buffering) {
+                xmlValueHandler.ignorableWhitespace(ch, start, length);
+                outputStream.flush();
+            }
+        } catch (Exception exception){
+            LOGGER.error("Unable to update buffer " + getElementId(), exception);
+        }
         contentHandler.ignorableWhitespace(ch, start, length);
     }
 
@@ -440,6 +589,14 @@ public abstract class AbstractXMLFilter extends AbstractElement implements XMLFi
      */
     @Override
     public void processingInstruction(final String target, final String data) throws SAXException {
+        try {
+            if (buffering) {
+                xmlValueHandler.processingInstruction(target, data);
+                outputStream.flush();
+            }
+        } catch (Exception exception){
+            LOGGER.error("Unable to update buffer " + getElementId(), exception);
+        }
         contentHandler.processingInstruction(target, data);
     }
 
@@ -468,6 +625,14 @@ public abstract class AbstractXMLFilter extends AbstractElement implements XMLFi
      */
     @Override
     public void skippedEntity(final String name) throws SAXException {
+        try {
+            if (buffering) {
+                xmlValueHandler.skippedEntity(name);
+                outputStream.flush();
+            }
+        } catch (Exception exception){
+            LOGGER.error("Unable to update buffer " + getElementId(), exception);
+        }
         contentHandler.skippedEntity(name);
     }
 

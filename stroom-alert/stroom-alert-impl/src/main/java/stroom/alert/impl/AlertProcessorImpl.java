@@ -147,10 +147,15 @@ public class AlertProcessorImpl implements AlertProcessor {
             for (RuleConfig rule : rules) {
                 if (matchQuery(indexSearcher, indexFieldsMap, rule.getExpression())){
                     //This query matches - now apply filters
+
+                    //First get the original event XML
+
    //                 System.out.println ("Found a matching query rule");
+
 
                     //Now apply filters and formatting
                     final String[] filteredVals = mapHit(rule, inputVals);
+
 
                     //A match
                     if (filteredVals != null){

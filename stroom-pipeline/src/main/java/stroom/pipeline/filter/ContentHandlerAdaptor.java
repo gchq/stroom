@@ -16,6 +16,8 @@
 
 package stroom.pipeline.filter;
 
+import stroom.pipeline.factory.Pipeline;
+
 import org.xml.sax.Attributes;
 import org.xml.sax.ContentHandler;
 import org.xml.sax.Locator;
@@ -23,6 +25,8 @@ import org.xml.sax.SAXException;
 
 public abstract class ContentHandlerAdaptor implements ContentHandler {
     protected final ContentHandler handler;
+
+    private Pipeline pipeline;
 
     public ContentHandlerAdaptor(final ContentHandler handler) {
         this.handler = handler;
@@ -419,5 +423,13 @@ public abstract class ContentHandlerAdaptor implements ContentHandler {
     @Override
     public void skippedEntity(final String name) throws SAXException {
         handler.skippedEntity(name);
+    }
+
+    public Pipeline getPipeline(){
+        return pipeline;
+    }
+
+    public void setPipeline(final Pipeline pipeline) {
+        this.pipeline = pipeline;
     }
 }
