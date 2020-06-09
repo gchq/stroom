@@ -85,10 +85,6 @@ const SignInForm: React.FunctionComponent<{
     register({ name: "password", type: "custom" }, { required: true });
   }, [register]);
 
-  // const { email, password } = getValues();
-
-  const disableSubmit = isSubmitting; //email === "" || password === "";
-
   const handleInputChange = async (
     name: "email" | "password",
     value: string,
@@ -129,6 +125,7 @@ const SignInForm: React.FunctionComponent<{
               validator={fieldRequired}
               onStateChanged={async e => handleInputChange("email", e.value)}
               leftIcon={<UserOutlined />}
+              validateOnLoad={true}
             />
 
             <PasswordField
@@ -140,12 +137,12 @@ const SignInForm: React.FunctionComponent<{
               onStateChanged={async e => handleInputChange("password", e.value)}
               leftIcon={<LockOutlined />}
             />
+
             <div className="SignIn__actions page__buttons Button__container">
               <Button
                 className="SignIn__button"
                 type="primary"
                 loading={isSubmitting}
-                disabled={disableSubmit}
                 htmlType="submit"
                 ref={register}
               >

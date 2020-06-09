@@ -11,6 +11,7 @@ export interface FormFieldProps {
   children?: any;
   validator?: (label: string, value: string) => void;
   onStateChanged?: (state: FormFieldState) => void;
+  validateOnLoad?: boolean;
 }
 
 export interface FormFieldState {
@@ -29,6 +30,7 @@ const FormField: FunctionComponent<FormFieldProps> = ({
   children,
   validator = (value: string) => value,
   onStateChanged = (state: FormFieldState) => state,
+  validateOnLoad = false,
 }) => {
   // initialize state
   const [state, setState] = useState<FormFieldState>({
@@ -37,10 +39,10 @@ const FormField: FunctionComponent<FormFieldProps> = ({
     errors: [],
   });
 
-  const hasChanged = (e: ChangeEvent<HTMLInputElement>) => {
-    e.preventDefault();
+  // Destructure state.
+  const { value, dirty, errors } = state;
 
-    const value = e.target.value;
+  const validate = (value: string) => {
     // const isEmpty = value.length === 0;
     // const requiredMissing = state.dirty && required && isEmpty;
 
@@ -51,7 +53,7 @@ const FormField: FunctionComponent<FormFieldProps> = ({
     //   errors = [...errors, `${label} is required`];
     // } else
 
-      if ("function" === typeof validator) {
+    if ("function" === typeof validator) {
       try {
         validator(label, value);
       } catch (e) {
@@ -71,9 +73,16 @@ const FormField: FunctionComponent<FormFieldProps> = ({
     onStateChanged(newState);
   };
 
-  // Destructure state.
-  const { value, dirty, errors } = state;
-  // const { type, label, fieldId, placeholder, children } = this.props;
+  const hasChanged = (e: ChangeEvent<HTMLInputElement>) => {
+    e.preventDefault();
+
+    const value = e.target.value;
+    validate(value);
+  };
+
+  if (validateOnLoad && !dirty) {
+    validate(state.value);
+  }
 
   const hasErrors = errors.length > 0;
   const controlClass = [
