@@ -96,7 +96,6 @@ public class DataRetentionPresenter extends ContentTabPresenter<DataRetentionPre
                 selectTab(event.getSelectedItem())));
     }
 
-
     protected void getContent(final TabData tab, final ContentCallback callback) {
         if (RULES_TAB.equals(tab)) {
             callback.onReady(retentionPolicyPresenter);
@@ -205,7 +204,7 @@ public class DataRetentionPresenter extends ContentTabPresenter<DataRetentionPre
     public void onCloseRequest(final CloseCallback callback) {
         if (dirty) {
             ConfirmEvent.fire(this,
-                            "' has unsaved changes. Are you sure you want to close this item?",
+                    "There are unsaved changes. Are you sure you want to close this tab?",
                     result -> {
                         callback.closeTab(result);
                         if (result) {
@@ -221,5 +220,4 @@ public class DataRetentionPresenter extends ContentTabPresenter<DataRetentionPre
     public static interface DataRetentionView extends LinkTabsLayoutView {
 
     }
-
 }
