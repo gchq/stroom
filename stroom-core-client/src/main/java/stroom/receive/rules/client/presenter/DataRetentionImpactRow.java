@@ -187,23 +187,39 @@ public class DataRetentionImpactRow {
                 .filter(DataRetentionRule::isEnabled)
                 .forEach(rule -> {
 
-                    Set<DataRetentionDeleteSummary> summariesForRule = ruleNoToSummariesMap.get(rule.getRuleNumber());
+                    final Set<DataRetentionDeleteSummary> summariesForRule = ruleNoToSummariesMap.get(rule.getRuleNumber());
 
-                    DataRetentionImpactRow ruleRow = buildRuleRow(rule, treeAction, summariesForRule);
+                    final DataRetentionImpactRow ruleRow = buildRuleRow(rule, treeAction, summariesForRule);
                     rows.add(ruleRow);
 
-                    if (isExpanded(treeAction, ruleRow)) {
-                        if (summariesForRule != null) {
-                            // We do the sorting client side as the amount of data we are dealing with is
-                            // relatively small, and the DB query is potentially very slow
-                            rows.addAll(summariesForRule
-                                    .stream()
-                                    .map(summary -> buildDetailRow(summary, treeAction))
-                                    .sorted(buildComparator(criteria))
-                                    .collect(Collectors.toList()));
-                        }
+                    if (isExpanded(treeAction, ruleRow, 0) && summariesForRule != null) {
+                        // We do the sorting client side as the amount of data we are dealing with is
+                        // relatively small, and the DB query is potentially very slow
+
+                        final Map<String, Set<DataRetentionDeleteSummary>> summariesByRuleAndType = summariesForRule.stream()
+                                .collect(Collectors.groupingBy(
+                                        DataRetentionDeleteSummary::getMetaType,
+                                        Collectors.toSet()));
+
+                        summariesByRuleAndType.forEach((metaType, summariesForRuleAndType) -> {
+                            final DataRetentionImpactRow metaTypeRow = buildMetaTypeRow(
+                                    metaType,
+                                    summariesForRuleAndType,
+                                    treeAction);
+                            rows.add(metaTypeRow);
+
+                            if (isExpanded(treeAction, metaTypeRow, 1) && summariesForRuleAndType != null) {
+                                rows.addAll(summariesForRuleAndType.stream()
+                                        .map(summaryForRuleTypeAndFeed ->
+                                                buildFeedRow(summaryForRuleTypeAndFeed,treeAction))
+                                        .collect(Collectors.toList()));
+                            }
+                        });
                     }
                 });
+
+        // TODO fix sorting
+//        rows.sort(buildComparator(criteria));
 
         return rows;
     }
@@ -238,19 +254,49 @@ public class DataRetentionImpactRow {
     }
 
 
-    private static DataRetentionImpactRow buildDetailRow(final DataRetentionDeleteSummary summary,
-                                                         final DataRetentionImpactTreeAction treeAction) {
+    private static DataRetentionImpactRow buildMetaTypeRow(final String metaType,
+                                                           final Set<DataRetentionDeleteSummary> summaries,
+                                                           final DataRetentionImpactTreeAction treeAction) {
+
+        final int countByRuleAndFeed;
+        if (summaries != null) {
+            countByRuleAndFeed = summaries.stream()
+                    .mapToInt(DataRetentionDeleteSummary::getCount)
+                    .sum();
+        } else {
+            countByRuleAndFeed = 0;
+        }
+
+        final DataRetentionImpactRow row = new DataRetentionImpactRow(
+                null,
+                null,
+                null,
+                null,
+                metaType,
+                countByRuleAndFeed,
+                null);
+
+        final int depth = 1;
+        final boolean isLeaf = summaries == null || summaries.isEmpty();
+
+        setExpander(treeAction, row, depth, isLeaf);
+
+        return row;
+    }
+
+    private static DataRetentionImpactRow buildFeedRow(final DataRetentionDeleteSummary summary,
+                                                       final DataRetentionImpactTreeAction treeAction) {
 
         final DataRetentionImpactRow row = new DataRetentionImpactRow(
                 null,
                 null,
                 null,
                 summary.getFeedName(),
-                summary.getMetaType(),
+                null,
                 summary.getCount(),
                 null);
 
-        final int depth = 1;
+        final int depth = 2;
         final boolean isLeaf = true;
 
         setExpander(treeAction, row, depth, isLeaf);
@@ -263,7 +309,7 @@ public class DataRetentionImpactRow {
                                     final int depth,
                                     final boolean isLeaf) {
 
-        boolean isExpanded = isExpanded(treeAction, row);
+        boolean isExpanded = isExpanded(treeAction, row, depth);
 
         if (row.getExpander() == null) {
             row.setExpander(new Expander(depth, isExpanded, isLeaf));
@@ -275,13 +321,14 @@ public class DataRetentionImpactRow {
     }
 
     private static boolean isExpanded(final DataRetentionImpactTreeAction treeAction,
-                                      final DataRetentionImpactRow row) {
+                                      final DataRetentionImpactRow row,
+                                      final int depth) {
         // expanded if explicitly set or default to expanded if not set
         boolean isExpanded = treeAction.isRowExpanded(row);
         boolean isCollapsed = treeAction.isRowCollapsed(row);
         if (!isExpanded && !isCollapsed) {
-            // State not known so default to collapsed
-            return false;
+            // State not known so default to collapsed for all but root level
+            return depth <= 0;
         } else {
             return isExpanded;
         }

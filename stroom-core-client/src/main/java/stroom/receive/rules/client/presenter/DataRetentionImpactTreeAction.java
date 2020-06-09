@@ -37,4 +37,9 @@ public class DataRetentionImpactTreeAction implements TreeAction<DataRetentionIm
     void setExpandedRows(final Set<DataRetentionImpactRow> expandedRows) {
         this.expandedRows = expandedRows;
     }
+
+    void reset() {
+        expandedRows.clear();
+        collapsedRows.clear();
+    }
 }

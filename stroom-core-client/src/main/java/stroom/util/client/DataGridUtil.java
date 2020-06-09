@@ -1,7 +1,6 @@
 package stroom.util.client;
 
 import stroom.cell.expander.client.ExpanderCell;
-import stroom.data.client.presenter.ColumnSizeConstants;
 import stroom.data.grid.client.DataGridView;
 import stroom.data.grid.client.EndColumn;
 import stroom.data.grid.client.OrderByColumn;
@@ -114,11 +113,12 @@ public class DataGridUtil {
             final T_VIEW view,
             final Function<T_ROW, Expander> expanderExtractor,
             final TreeAction<T_ROW> treeAction,
-            final Runnable onExpanderChange) {
+            final Runnable onExpanderChange,
+            final int width) {
         view.addColumn(
                 expanderColumn(expanderExtractor, treeAction, onExpanderChange),
                 "",
-                ColumnSizeConstants.CHECKBOX_COL * 2);
+                width);
     }
 
 //    public static <T_VIEW extends DataGridView<T_ROW>, T_ROW> void addResizableColumn(

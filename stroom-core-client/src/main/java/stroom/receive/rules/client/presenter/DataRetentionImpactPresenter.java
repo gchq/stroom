@@ -30,10 +30,15 @@ import stroom.dispatch.client.RestFactory;
 import stroom.node.client.NodeCache;
 import stroom.svg.client.SvgPreset;
 import stroom.util.client.DataGridUtil;
+import stroom.util.client.SafeHtmlUtil;
 import stroom.widget.button.client.ButtonView;
 
 import com.google.gwt.core.client.GWT;
+import com.google.gwt.safehtml.shared.SafeHtml;
+import com.google.gwt.safehtml.shared.SafeHtmlBuilder;
 import com.google.gwt.user.cellview.client.ColumnSortEvent;
+import com.google.gwt.user.cellview.client.Header;
+import com.google.gwt.user.cellview.client.SafeHtmlHeader;
 import com.google.gwt.view.client.Range;
 import com.google.inject.Inject;
 import com.google.web.bindery.event.shared.EventBus;
@@ -41,7 +46,6 @@ import com.gwtplatform.mvp.client.MyPresenterWidget;
 
 import java.util.Collections;
 import java.util.List;
-import java.util.Objects;
 import java.util.Optional;
 
 public class DataRetentionImpactPresenter
@@ -50,14 +54,13 @@ public class DataRetentionImpactPresenter
 
     private static final DataRetentionRulesResource RETENTION_RULES_RESOURCE = GWT.create(DataRetentionRulesResource.class);
 
-
     private final ListDataProvider<DataRetentionImpactRow> dataProvider = new ListDataProvider<>();
     private final RestFactory restFactory;
-    private final DataRetentionImpactTreeAction treeAction = new DataRetentionImpactTreeAction();
 
     private DataRetentionRules dataRetentionRules;
     private List<DataRetentionDeleteSummary> sourceData;
     private FindDataRetentionImpactCriteria criteria = new FindDataRetentionImpactCriteria();
+    private DataRetentionImpactTreeAction treeAction = new DataRetentionImpactTreeAction();
 
     @Inject
     public DataRetentionImpactPresenter(final EventBus eventBus,
@@ -73,13 +76,15 @@ public class DataRetentionImpactPresenter
     }
 
     private void refreshSourceData(final Range range) {
-
+        // Get the summary data from the rest service, this could
+        // take a looooong time
         // Need to assign it to a variable for the generics typing
         final Rest<DataRetentionDeleteSummaryResponse> rest = restFactory.create();
         rest
                 .onSuccess(dataRetentionDeleteSummary -> {
-
                     this.sourceData = dataRetentionDeleteSummary.getValues();
+                    // Changed data so clear out the expander states
+                    treeAction.reset();
                     refreshVisibleData();
                 })
                 .onFailure(throwable ->
@@ -106,31 +111,59 @@ public class DataRetentionImpactPresenter
         this.dataRetentionRules = dataRetentionRules;
     }
 
+    private Header<SafeHtml> createRightAlignedHeader(final String name) {
+        Header<SafeHtml> header = new SafeHtmlHeader(SafeHtmlUtil.getSafeHtml(name));
+        header.setHeaderStyleNames("alignRight");
+        return header;
+    }
+
+    private SafeHtml getIndentedCountCellText(final DataRetentionImpactRow row) {
+        if (row != null) {
+            final SafeHtmlBuilder indent = new SafeHtmlBuilder();
+            indent.appendEscaped(Integer.toString(row.getCount()));
+            for (int i = 0; i < row.getExpander().getDepth(); i++) {
+//                indent.appendEscaped("<-");
+                indent.appendHtmlConstant("&ensp;&ensp;");
+            }
+            return indent.toSafeHtml();
+        } else {
+            return null;
+        }
+    }
+
     private void initColumns() {
 
         DataGridUtil.addExpanderColumn(
                 getView(),
                 DataRetentionImpactRow::getExpander,
                 treeAction,
-                this::refreshVisibleData);
+                this::refreshVisibleData,
+                36); // Need space for three expander levels
 
         getView().addResizableColumn(
                 DataGridUtil.textColumnBuilder(DataRetentionImpactRow::getRuleNumber, Object::toString)
                         .rightAligned()
                         .build(),
-                DataRetentionImpactRow.FIELD_NAME_RULE_NO,
+                createRightAlignedHeader(DataRetentionImpactRow.FIELD_NAME_RULE_NO),
                 ColumnSizeConstants.SMALL_COL);
 
         getView().addResizableColumn(
                 DataGridUtil.textColumnBuilder(DataRetentionImpactRow::getRuleName)
                         .build(),
                 DataRetentionImpactRow.FIELD_NAME_RULE_NAME,
-                ColumnSizeConstants.BIG_COL);
+                200);
 
         getView().addResizableColumn(
                 DataGridUtil.textColumnBuilder(DataRetentionImpactRow::getRuleAge)
                         .build(),
                 DataRetentionImpactRow.FIELD_NAME_RULE_AGE,
+                ColumnSizeConstants.MEDIUM_COL);
+
+        getView().addResizableColumn(
+                DataGridUtil.textColumnBuilder(DataRetentionImpactRow::getMetaType)
+                        .withSorting(DataRetentionImpactRow.FIELD_NAME_META_TYPE)
+                        .build(),
+                DataRetentionImpactRow.FIELD_NAME_META_TYPE,
                 ColumnSizeConstants.MEDIUM_COL);
 
         getView().addResizableColumn(
@@ -141,19 +174,12 @@ public class DataRetentionImpactPresenter
                 ColumnSizeConstants.BIG_COL);
 
         getView().addResizableColumn(
-                DataGridUtil.textColumnBuilder(DataRetentionImpactRow::getMetaType)
-                        .withSorting(DataRetentionImpactRow.FIELD_NAME_META_TYPE)
-                        .build(),
-                DataRetentionImpactRow.FIELD_NAME_META_TYPE,
-                ColumnSizeConstants.MEDIUM_COL);
-
-        getView().addResizableColumn(
-                DataGridUtil.textColumnBuilder(DataRetentionImpactRow::getCount, Objects::toString)
+                DataGridUtil.htmlColumnBuilder(this::getIndentedCountCellText)
                         .rightAligned()
                         .withSorting(DataRetentionImpactRow.FIELD_NAME_DELETE_COUNT)
                         .build(),
                 DataRetentionImpactRow.FIELD_NAME_DELETE_COUNT,
-                ColumnSizeConstants.MEDIUM_COL);
+                150);
 
         DataGridUtil.addEndColumn(getView());
 
