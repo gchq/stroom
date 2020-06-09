@@ -244,11 +244,13 @@ public class DataRetentionPolicyPresenter extends MyPresenterWidget<DataRetentio
                     .call(DATA_RETENTION_RULES_RESOURCE)
                     .update(policy);
         }));
+
         registerHandler(addButton.addClickHandler(event -> {
             if (visibleRules != null) {
                 add();
             }
         }));
+
         registerHandler(editButton.addClickHandler(event -> {
             if (visibleRules != null) {
                 final DataRetentionRule selected = listPresenter.getSelectionModel().getSelected();
@@ -257,6 +259,7 @@ public class DataRetentionPolicyPresenter extends MyPresenterWidget<DataRetentio
                 }
             }
         }));
+
         registerHandler(copyButton.addClickHandler(event -> {
             if (visibleRules != null) {
                 final DataRetentionRule selected = listPresenter.getSelectionModel().getSelected();
@@ -286,6 +289,7 @@ public class DataRetentionPolicyPresenter extends MyPresenterWidget<DataRetentio
                 }
             }
         }));
+
         registerHandler(disableButton.addClickHandler(event -> {
             if (visibleRules != null) {
                 final DataRetentionRule selected = listPresenter.getSelectionModel().getSelected();
@@ -312,6 +316,7 @@ public class DataRetentionPolicyPresenter extends MyPresenterWidget<DataRetentio
                 }
             }
         }));
+
         registerHandler(deleteButton.addClickHandler(event -> {
             if (visibleRules != null) {
                 ConfirmEvent.fire(this, "Are you sure you want to delete this item?", ok -> {
@@ -338,6 +343,7 @@ public class DataRetentionPolicyPresenter extends MyPresenterWidget<DataRetentio
                 });
             }
         }));
+
         registerHandler(moveUpButton.addClickHandler(event -> {
             if (visibleRules != null) {
                 final DataRetentionRule rule = listPresenter.getSelectionModel().getSelected();
@@ -358,6 +364,7 @@ public class DataRetentionPolicyPresenter extends MyPresenterWidget<DataRetentio
                 }
             }
         }));
+
         registerHandler(moveDownButton.addClickHandler(event -> {
             if (visibleRules != null) {
                 final DataRetentionRule rule = listPresenter.getSelectionModel().getSelected();
@@ -378,6 +385,7 @@ public class DataRetentionPolicyPresenter extends MyPresenterWidget<DataRetentio
                 }
             }
         }));
+
         registerHandler(listPresenter.getSelectionModel().addSelectionHandler(event -> {
             final DataRetentionRule rule = listPresenter.getSelectionModel().getSelected();
             if (rule != null) {
@@ -509,6 +517,8 @@ public class DataRetentionPolicyPresenter extends MyPresenterWidget<DataRetentio
                 visibleRules.set(i, newRule);
             }
             listPresenter.setData(visibleRules);
+            // Update the policy so the impact tab can see the unsaved changes
+            policy.setRules(getUserRules());
         }
         updateButtons();
     }

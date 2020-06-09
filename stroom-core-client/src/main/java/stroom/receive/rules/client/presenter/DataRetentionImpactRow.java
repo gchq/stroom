@@ -183,34 +183,27 @@ public class DataRetentionImpactRow {
                         DataRetentionDeleteSummary::getRuleNumber,
                         Collectors.toSet()));
 
-        rules.forEach(rule -> {
+        rules.stream()
+                .filter(DataRetentionRule::isEnabled)
+                .forEach(rule -> {
 
-            Set<DataRetentionDeleteSummary> summariesForRule = ruleNoToSummariesMap.get(rule.getRuleNumber());
+                    Set<DataRetentionDeleteSummary> summariesForRule = ruleNoToSummariesMap.get(rule.getRuleNumber());
 
-            DataRetentionImpactRow ruleRow = buildRuleRow(rule, treeAction, summariesForRule);
-            rows.add(ruleRow);
+                    DataRetentionImpactRow ruleRow = buildRuleRow(rule, treeAction, summariesForRule);
+                    rows.add(ruleRow);
 
-            if (isExpanded(treeAction, ruleRow)) {
-//        // TODO column sorting
-                if (summariesForRule != null) {
-                    rows.addAll(summariesForRule
-                            .stream()
-//                            .sorted(Comparator.comparing(DataRetentionDeleteSummary::getFeedName)
-//                                    .thenComparing(DataRetentionDeleteSummary::getMetaType))
-                            .map(summary -> buildDetailRow(summary, treeAction))
-                            .sorted(buildComparator(criteria))
-                            .collect(Collectors.toList()));
-                }
-            }
-        });
-
-//        summaries.stream()
-//                .collect(Collectors.toMap(
-//                        DataRetentionDeleteSummary::getRuleNumber,
-//                        Function.identity()))
-//                .forEach((ruleNo, summariesForRule) -> {
-//                    rows.add(new DataRetentionImpactRow())
-//                })
+                    if (isExpanded(treeAction, ruleRow)) {
+                        if (summariesForRule != null) {
+                            // We do the sorting client side as the amount of data we are dealing with is
+                            // relatively small, and the DB query is potentially very slow
+                            rows.addAll(summariesForRule
+                                    .stream()
+                                    .map(summary -> buildDetailRow(summary, treeAction))
+                                    .sorted(buildComparator(criteria))
+                                    .collect(Collectors.toList()));
+                        }
+                    }
+                });
 
         return rows;
     }
