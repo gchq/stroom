@@ -199,13 +199,9 @@ public class DataRetentionImpactPresenter
                 36); // Need space for three expander levels
 
         getView().addResizableColumn(
-                isTableNested
-                        ? DataGridUtil.textColumnBuilder(DataRetentionImpactRow::getRuleNumber, Object::toString)
+                        DataGridUtil.textColumnBuilder(DataRetentionImpactRow::getRuleNumber, Object::toString)
                         .rightAligned()
-                        .build()
-                        : DataGridUtil.textColumnBuilder(DataRetentionImpactRow::getRuleNumber, Object::toString)
-                        .rightAligned()
-                        .withSorting(DataRetentionImpactRow.FIELD_NAME_RULE_NO)
+                        .withSorting(DataRetentionImpactRow.FIELD_NAME_RULE_NO, () -> !isTableNested)
                         .build(),
                 DataGridUtil.createRightAlignedHeader(DataRetentionImpactRow.FIELD_NAME_RULE_NO),
                 ColumnSizeConstants.SMALL_COL);
@@ -223,11 +219,8 @@ public class DataRetentionImpactPresenter
                 ColumnSizeConstants.MEDIUM_COL);
 
         getView().addResizableColumn(
-                isTableNested
-                        ? DataGridUtil.textColumnBuilder(DataRetentionImpactRow::getMetaType)
-                        .build()
-                        : DataGridUtil.textColumnBuilder(DataRetentionImpactRow::getMetaType)
-                        .withSorting(DataRetentionImpactRow.FIELD_NAME_META_TYPE)
+                        DataGridUtil.textColumnBuilder(DataRetentionImpactRow::getMetaType)
+                        .withSorting(DataRetentionImpactRow.FIELD_NAME_META_TYPE, () -> !isTableNested)
                         .build(),
                 DataRetentionImpactRow.FIELD_NAME_META_TYPE,
                 ColumnSizeConstants.MEDIUM_COL);

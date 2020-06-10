@@ -23,6 +23,7 @@ import com.google.gwt.user.client.ui.HasVerticalAlignment.VerticalAlignmentConst
 
 import java.util.Objects;
 import java.util.Optional;
+import java.util.function.BooleanSupplier;
 import java.util.function.Function;
 import java.util.function.Supplier;
 
@@ -165,7 +166,7 @@ public class DataGridUtil {
                                             final Runnable onSortChange) {
 
             view.addColumnSortHandler(event -> {
-            if (event.getColumn() instanceof OrderByColumn<?, ?>) {
+            if (event.getColumn() instanceof OrderByColumn<?, ?> && event.getColumn().isSortable()) {
                 final OrderByColumn<?, ?> orderByColumn = (OrderByColumn<?, ?>) event.getColumn();
                 if (event.isSortAscending()) {
                     criteria.setSort(
@@ -269,6 +270,7 @@ public class DataGridUtil {
         private final Function<T_RAW_VAL, T_CELL_VAL> formatter;
         private final Supplier<T_CELL> cellSupplier;
         private boolean isSorted = false;
+        private BooleanSupplier isSortableSupplier = () -> false;
         private HorizontalAlignmentConstant horizontalAlignment = null;
         private VerticalAlignmentConstant verticalAlignment = null;
         private String fieldName;
@@ -288,6 +290,15 @@ public class DataGridUtil {
 
         public ColumnBuilder<T_ROW, T_RAW_VAL, T_CELL_VAL, T_CELL> withSorting(final String fieldName) {
             this.isSorted = true;
+            this.isSortableSupplier = () -> true;
+            this.fieldName = Objects.requireNonNull(fieldName);
+            return this;
+        }
+
+        public ColumnBuilder<T_ROW, T_RAW_VAL, T_CELL_VAL, T_CELL> withSorting(final String fieldName,
+                                                                               final BooleanSupplier isSortableSupplier) {
+            this.isSorted = true;
+            this.isSortableSupplier = isSortableSupplier;
             this.fieldName = Objects.requireNonNull(fieldName);
             return this;
         }
@@ -342,6 +353,11 @@ public class DataGridUtil {
                     @Override
                     public T_CELL_VAL getValue(final T_ROW row) {
                         return formattedValueExtractor.apply(row);
+                    }
+
+                    @Override
+                    public boolean isSortable() {
+                        return isSortableSupplier.getAsBoolean();
                     }
                 };
             } else {

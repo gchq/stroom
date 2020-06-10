@@ -471,7 +471,7 @@ class MetaDaoImpl implements MetaDao {
                         // which rule wins and get its rule number, along with feed and type
                         // The OR condition is here to try and help the DB use indexes.
                         // TODO Should maybe move the ruleNoCaseField into a sub select so we don't need
-                        // to compute it for the select and the where
+                        //   to compute it for the select and the where
                         final var detailTable = context
                                 .select(
                                         metaFeed.NAME.as(feedNameFieldName),
