@@ -201,26 +201,28 @@ public class DataRetentionImpactPresenter
         getView().addResizableColumn(
                         DataGridUtil.textColumnBuilder(DataRetentionImpactRow::getRuleNumber, Object::toString)
                         .rightAligned()
-                        .withSorting(DataRetentionImpactRow.FIELD_NAME_RULE_NO, () -> !isTableNested)
+                        .withSorting(DataRetentionImpactRow.FIELD_NAME_RULE_NO)
                         .build(),
                 DataGridUtil.createRightAlignedHeader(DataRetentionImpactRow.FIELD_NAME_RULE_NO),
                 ColumnSizeConstants.SMALL_COL);
 
         getView().addResizableColumn(
                 DataGridUtil.textColumnBuilder(DataRetentionImpactRow::getRuleName)
+                        .withSorting(DataRetentionImpactRow.FIELD_NAME_RULE_NAME)
                         .build(),
                 DataRetentionImpactRow.FIELD_NAME_RULE_NAME,
                 200);
 
         getView().addResizableColumn(
-                DataGridUtil.textColumnBuilder(DataRetentionImpactRow::getRuleAge)
+                DataGridUtil.textColumnBuilder(DataRetentionImpactRow::getRuleAgeStr)
+                        .withSorting(DataRetentionImpactRow.FIELD_NAME_RULE_AGE)
                         .build(),
                 DataRetentionImpactRow.FIELD_NAME_RULE_AGE,
                 ColumnSizeConstants.MEDIUM_COL);
 
         getView().addResizableColumn(
                         DataGridUtil.textColumnBuilder(DataRetentionImpactRow::getMetaType)
-                        .withSorting(DataRetentionImpactRow.FIELD_NAME_META_TYPE, () -> !isTableNested)
+                        .withSorting(DataRetentionImpactRow.FIELD_NAME_META_TYPE)
                         .build(),
                 DataRetentionImpactRow.FIELD_NAME_META_TYPE,
                 ColumnSizeConstants.MEDIUM_COL);

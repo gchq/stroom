@@ -2,6 +2,7 @@ package stroom.receive.rules.client.presenter;
 
 import stroom.data.retention.shared.DataRetentionDeleteSummary;
 import stroom.data.retention.shared.DataRetentionRule;
+import stroom.data.retention.shared.TimeUnit;
 import stroom.util.shared.Expander;
 import stroom.util.shared.Sort.Direction;
 
@@ -24,51 +25,76 @@ public class DataRetentionImpactRow {
     public static final String FIELD_NAME_RULE_AGE = "Rule Age";
     public static final String FIELD_NAME_FEED_NAME = "Feed Name";
     public static final String FIELD_NAME_META_TYPE = "Meta Type";
-    public static final String FIELD_NAME_DELETE_COUNT = "Delete Count";
+    public static final String FIELD_NAME_DELETE_COUNT = "Stream Delete Count";
 
-    public static final Comparator<DataRetentionImpactRow> NO_SORT_COMPARATOR = Comparator.comparing(row -> 0);
+    public static final Comparator<DataRetentionImpactRow> FEED_NAME_COMPARATOR = Comparator.comparing(DataRetentionImpactRow::getFeedName);
+    public static final Comparator<DataRetentionImpactRow> META_TYPE_COMPARATOR = Comparator.comparing(DataRetentionImpactRow::getMetaType);
+    public static final Comparator<DataRetentionImpactRow> COUNT_COMPARATOR = Comparator.comparingInt(DataRetentionImpactRow::getCount);
+    public static final Comparator<DataRetentionImpactRow> RULE_NO_COMPARATOR = Comparator.comparingInt(DataRetentionImpactRow::getRuleNumber);
+    public static final Comparator<DataRetentionImpactRow> RULE_NAME_COMPARATOR = Comparator.comparing(DataRetentionImpactRow::getRuleName);
+    public static final Comparator<DataRetentionImpactRow> RULE_AGE_COMPARATOR = Comparator.comparingLong(row -> timeUnitToMillis(row.ruleAge, row.timeUnit));
+
     public static final Map<String, Comparator<DataRetentionImpactRow>> FIELD_TO_COMPARATOR_MAP = new HashMap<>();
-
     // GWT doesn't like Map.of()
     static {
-        FIELD_TO_COMPARATOR_MAP.put(FIELD_NAME_FEED_NAME, Comparator.comparing(DataRetentionImpactRow::getFeedName));
-        FIELD_TO_COMPARATOR_MAP.put(FIELD_NAME_META_TYPE, Comparator.comparing(DataRetentionImpactRow::getMetaType));
-        FIELD_TO_COMPARATOR_MAP.put(FIELD_NAME_DELETE_COUNT, Comparator.comparing(DataRetentionImpactRow::getCount));
+        FIELD_TO_COMPARATOR_MAP.put(FIELD_NAME_RULE_NO, RULE_NO_COMPARATOR);
+        FIELD_TO_COMPARATOR_MAP.put(FIELD_NAME_RULE_NAME, RULE_NAME_COMPARATOR);
+        FIELD_TO_COMPARATOR_MAP.put(FIELD_NAME_RULE_AGE, RULE_AGE_COMPARATOR);
+        FIELD_TO_COMPARATOR_MAP.put(FIELD_NAME_FEED_NAME, FEED_NAME_COMPARATOR);
+        FIELD_TO_COMPARATOR_MAP.put(FIELD_NAME_META_TYPE, META_TYPE_COMPARATOR);
+        FIELD_TO_COMPARATOR_MAP.put(FIELD_NAME_DELETE_COUNT, COUNT_COMPARATOR);
     }
 
-    private Integer ruleNumber;
-    private String ruleName;
-    private String ruleAge;
-    private String feedName;
-    private String metaType;
-    private int count;
+    private static final long MINUTE_MS = 60 * 1_000;
+    private static final long HOUR_MS = 60 * MINUTE_MS;
+    private static final long DAY_MS = 24 * HOUR_MS;
+    private static final long WEEK_MS = 7 * DAY_MS;
+    private static final long AVG_MOUNTH_MS = 365 / 12 * DAY_MS;
+    private static final long YEAR_MS = 365 * DAY_MS;
+
+    private final Integer ruleNumber;
+    private final String ruleName;
+    private final String ruleAgeStr;
+    private final int ruleAge;
+    private final TimeUnit timeUnit;
+    private final String feedName;
+    private final String metaType;
+    private final int count;
     private Expander expander;
 
-    public DataRetentionImpactRow(final Integer ruleNumber,
-                                  final String ruleName,
-                                  final String ruleAge,
-                                  final String feedName,
-                                  final String metaType,
-                                  final int count,
-                                  final Expander expander) {
-        this.ruleNumber = ruleNumber;
-        this.ruleName = ruleName;
-        this.ruleAge = ruleAge;
-        this.feedName = feedName;
-        this.metaType = metaType;
-        this.count = count;
-        this.expander = expander;
-    }
+//    public DataRetentionImpactRow(final Integer ruleNumber,
+//                                  final String ruleName,
+//                                  final String ruleAgeStr,
+//                                  final int ruleAge,
+//                                  final TimeUnit timeUnit,
+//                                  final String feedName,
+//                                  final String metaType,
+//                                  final int count,
+//                                  final Expander expander) {
+//        this.ruleNumber = ruleNumber;
+//        this.ruleName = ruleName;
+//        this.ruleAgeStr = ruleAgeStr;
+//        this.ruleAge = ruleAge;
+//        this.timeUnit = timeUnit;
+//        this.feedName = feedName;
+//        this.metaType = metaType;
+//        this.count = count;
+//        this.expander = expander;
+//    }
 
     public DataRetentionImpactRow(final Integer ruleNumber,
                                   final String ruleName,
-                                  final String ruleAge,
+                                  final String ruleAgeStr,
+                                  final int ruleAge,
+                                  final TimeUnit timeUnit,
                                   final String feedName,
                                   final String metaType,
                                   final int count) {
         this.ruleNumber = ruleNumber;
         this.ruleName = ruleName;
+        this.ruleAgeStr = ruleAgeStr;
         this.ruleAge = ruleAge;
+        this.timeUnit = timeUnit;
         this.feedName = feedName;
         this.metaType = metaType;
         this.count = count;
@@ -79,48 +105,32 @@ public class DataRetentionImpactRow {
         return ruleNumber;
     }
 
-    public void setRuleNumber(final Integer ruleNumber) {
-        this.ruleNumber = ruleNumber;
-    }
-
     public String getRuleName() {
         return ruleName;
     }
 
-    public void setRuleName(final String ruleName) {
-        this.ruleName = ruleName;
+    public String getRuleAgeStr() {
+        return ruleAgeStr;
     }
 
-    public String getRuleAge() {
+    private int getRuleAge() {
         return ruleAge;
     }
 
-    public void setRuleAge(final String ruleAge) {
-        this.ruleAge = ruleAge;
+    private TimeUnit getTimeUnit() {
+        return timeUnit;
     }
 
     public String getFeedName() {
         return feedName;
     }
 
-    public void setFeedName(final String feedName) {
-        this.feedName = feedName;
-    }
-
     public String getMetaType() {
         return metaType;
     }
 
-    public void setMetaType(final String metaType) {
-        this.metaType = metaType;
-    }
-
     public int getCount() {
         return count;
-    }
-
-    public void setCount(final int count) {
-        this.count = count;
     }
 
     public Expander getExpander() {
@@ -180,7 +190,8 @@ public class DataRetentionImpactRow {
                                                               final FindDataRetentionImpactCriteria criteria) {
 
         Map<Integer, DataRetentionRule> ruleNoToRuleMap = rules.stream()
-                .collect(Collectors.toMap(DataRetentionRule::getRuleNumber,
+                .collect(Collectors.toMap(
+                        rule -> Integer.valueOf(rule.getRuleNumber()), // Manual boxing to keep GWT happy
                         Function.identity()));
 
         return summaries.stream()
@@ -191,10 +202,11 @@ public class DataRetentionImpactRow {
                             summary.getRuleNumber(),
                             summary.getRuleName(),
                             rule.getAgeString(),
+                            rule.getAge(),
+                            rule.getTimeUnit(),
                             summary.getFeedName(),
                             summary.getMetaType(),
-                            summary.getCount(),
-                            null);
+                            summary.getCount());
                 })
                 .sorted(buildComparator(criteria))
                 .collect(Collectors.toList());
@@ -206,81 +218,85 @@ public class DataRetentionImpactRow {
                                                                 final FindDataRetentionImpactCriteria criteria) {
         final List<DataRetentionImpactRow> rows = new ArrayList<>();
 
+        // Group our data by rule No.
         final Map<Integer, Set<DataRetentionDeleteSummary>> ruleNoToSummariesMap = summaries.stream()
                 .collect(Collectors.groupingBy(
                         DataRetentionDeleteSummary::getRuleNumber,
                         Collectors.toSet()));
 
         rules.stream()
-                .filter(DataRetentionRule::isEnabled)
-                .forEach(rule -> {
-
-                    final Set<DataRetentionDeleteSummary> summariesForRule = ruleNoToSummariesMap.get(rule.getRuleNumber());
-
-                    final DataRetentionImpactRow ruleRow = buildRuleRow(rule, treeAction, summariesForRule);
+                .map(rule ->
+                        buildRuleRow(rule, treeAction, ruleNoToSummariesMap.get(rule.getRuleNumber())))
+                .sorted(getComparator(
+                        criteria,
+                        RULE_NO_COMPARATOR,
+                        FIELD_NAME_RULE_NO,
+                        FIELD_NAME_RULE_NAME,
+                        FIELD_NAME_RULE_AGE,
+                        FIELD_NAME_DELETE_COUNT))
+                .forEach(ruleRow -> {
+                    final Set<DataRetentionDeleteSummary> summariesForRule = ruleNoToSummariesMap.get(ruleRow.getRuleNumber());
                     rows.add(ruleRow);
 
                     if (isExpanded(treeAction, ruleRow, 0) && summariesForRule != null) {
                         // We do the sorting client side as the amount of data we are dealing with is
-                        // relatively small, and the DB query is potentially very slow
+                        // probably relatively small (in the 1000s), and the DB query is potentially VERY slow
 
+                        // Sub-group the data by meta type
                         final Map<String, Set<DataRetentionDeleteSummary>> summariesByRuleAndType = summariesForRule.stream()
                                 .collect(Collectors.groupingBy(
                                         DataRetentionDeleteSummary::getMetaType,
                                         Collectors.toSet()));
 
-                        summariesByRuleAndType.forEach((metaType, summariesForRuleAndType) -> {
-                            final DataRetentionImpactRow metaTypeRow = buildMetaTypeRow(
-                                    metaType,
-                                    summariesForRuleAndType,
-                                    treeAction);
-                            rows.add(metaTypeRow);
-
-                            if (isExpanded(treeAction, metaTypeRow, 1) && summariesForRuleAndType != null) {
-
-                                Comparator<DataRetentionImpactRow> feedRowComparator = getComparator(
+                        summariesByRuleAndType.keySet().stream()
+                                .map(metaType ->
+                                        buildMetaTypeRow(
+                                                metaType,
+                                                summariesByRuleAndType.get(metaType),
+                                                treeAction))
+                                .sorted(getComparator(
                                         criteria,
-                                        FIELD_NAME_FEED_NAME,
-                                        FIELD_NAME_DELETE_COUNT);
+                                        META_TYPE_COMPARATOR,
+                                        FIELD_NAME_META_TYPE,
+                                        FIELD_NAME_DELETE_COUNT))
+                                .forEach(metaTypeRow -> {
+                                    rows.add(metaTypeRow);
 
-                                rows.addAll(summariesForRuleAndType.stream()
-                                        .map(summaryForRuleTypeAndFeed ->
-                                                buildFeedRow(summaryForRuleTypeAndFeed,treeAction))
-                                        .sorted(feedRowComparator)
-                                        .collect(Collectors.toList()));
-                            }
-                        });
+                                    final Set<DataRetentionDeleteSummary> summariesForRuleAndType = summariesByRuleAndType.get(metaTypeRow.getMetaType());
+
+                                    if (isExpanded(treeAction, metaTypeRow, 1) && summariesForRuleAndType != null) {
+
+                                        Comparator<DataRetentionImpactRow> feedRowComparator = getComparator(
+                                                criteria,
+                                                FEED_NAME_COMPARATOR,
+                                                FIELD_NAME_FEED_NAME,
+                                                FIELD_NAME_DELETE_COUNT);
+
+                                        rows.addAll(summariesForRuleAndType.stream()
+                                                .map(summaryForRuleTypeAndFeed ->
+                                                        buildFeedRow(summaryForRuleTypeAndFeed,treeAction))
+                                                .sorted(feedRowComparator)
+                                                .collect(Collectors.toList()));
+                                    }
+                                });
                     }
                 });
 
         return rows;
     }
 
-//    private static <T extends Comparable<T>> Comparator<DataRetentionImpactRow> getComparator(
-//            final FindDataRetentionImpactCriteria criteria,
-//            final String fieldName) {
-//
-//        final Comparator<DataRetentionImpactRow> comparator = FIELD_TO_COMPARATOR_MAP.get(fieldName);
-//
-//        return criteria.getSortList().stream()
-//                .filter(sort -> fieldName.equals(sort.getField()))
-//                .findAny()
-//                .map(sort ->
-//                        Direction.DESCENDING.equals(sort.getDirection())
-//                                ? comparator.reversed()
-//                                : comparator)
-//                .orElse(Comparator.comparing(row -> 0));
-//    }
-
-    private static <T extends Comparable<T>> Comparator<DataRetentionImpactRow> getComparator(
+    private static Comparator<DataRetentionImpactRow> getComparator(
             final FindDataRetentionImpactCriteria criteria,
-            final String... fieldNames) {
+            final Comparator<DataRetentionImpactRow> fallbackComparator,
+            final String... sortableFieldNames) {
+
+        // If the sort list contains any of the sortableFieldNames then create a
+        // comparator for it. Assumes only one sort in the sort list
 
         if (criteria.getSortList() != null && !criteria.getSortList().isEmpty()) {
-            // Assumes only one sort in the list
             return criteria.getSortList().stream()
                     .filter(sort ->
-                            Arrays.stream(fieldNames)
+                            Arrays.stream(sortableFieldNames)
                                     .anyMatch(fieldName ->
                                             fieldName.equals(sort.getField())))
                     .findAny()
@@ -290,9 +306,9 @@ public class DataRetentionImpactRow {
                                 ? comparator.reversed()
                                 : comparator;
                     })
-                    .orElse(NO_SORT_COMPARATOR);
+                    .orElse(fallbackComparator);
         } else {
-            return NO_SORT_COMPARATOR;
+            return fallbackComparator;
         }
     }
 
@@ -308,14 +324,16 @@ public class DataRetentionImpactRow {
             totalCount = 0;
         }
 
+        // Set forever rules to 1000 years for sorting
         final DataRetentionImpactRow row = new DataRetentionImpactRow(
                 rule.getRuleNumber(),
                 rule.getName(),
                 rule.getAgeString(),
+                rule.isForever() ? 1000 : rule.getAge(),
+                rule.isForever() ? TimeUnit.YEARS : rule.getTimeUnit(),
                 null,
                 null,
-                totalCount,
-                null);
+                totalCount);
 
         final int depth = 0;
         final boolean isLeaf = summaries == null || summaries.isEmpty();
@@ -343,10 +361,11 @@ public class DataRetentionImpactRow {
                 null,
                 null,
                 null,
+                0,
+                null,
                 null,
                 metaType,
-                countByRuleAndFeed,
-                null);
+                countByRuleAndFeed);
 
         final int depth = 1;
         final boolean isLeaf = summaries == null || summaries.isEmpty();
@@ -363,10 +382,11 @@ public class DataRetentionImpactRow {
                 null,
                 null,
                 null,
+                0,
+                null,
                 summary.getFeedName(),
                 null,
-                summary.getCount(),
-                null);
+                summary.getCount());
 
         final int depth = 2;
         final boolean isLeaf = true;
@@ -414,14 +434,14 @@ public class DataRetentionImpactRow {
         return count == that.count &&
                 Objects.equals(ruleNumber, that.ruleNumber) &&
                 Objects.equals(ruleName, that.ruleName) &&
-                Objects.equals(ruleAge, that.ruleAge) &&
+                Objects.equals(ruleAgeStr, that.ruleAgeStr) &&
                 Objects.equals(feedName, that.feedName) &&
                 Objects.equals(metaType, that.metaType);
     }
 
     @Override
     public int hashCode() {
-        return Objects.hash(ruleNumber, ruleName, ruleAge, feedName, metaType, count);
+        return Objects.hash(ruleNumber, ruleName, ruleAgeStr, feedName, metaType, count);
     }
 
     @Override
@@ -429,11 +449,42 @@ public class DataRetentionImpactRow {
         return "DataRetentionImpactRow{" +
                 "ruleNumber=" + ruleNumber +
                 ", ruleName='" + ruleName + '\'' +
-                ", ruleAge='" + ruleAge + '\'' +
+                ", ruleAge='" + ruleAgeStr + '\'' +
                 ", feedName='" + feedName + '\'' +
                 ", metaType='" + metaType + '\'' +
                 ", count=" + count +
                 ", expander=" + expander +
                 '}';
+    }
+
+    /**
+     * Months/years are variable things so this is only approximate
+     * for use in sorting
+     */
+    private static long timeUnitToMillis(final int ruleAge, final TimeUnit timeUnit) {
+        final long unitMs;
+        switch (timeUnit) {
+            case MINUTES:
+                unitMs = MINUTE_MS;
+                break;
+            case HOURS:
+                unitMs = HOUR_MS;
+                break;
+            case DAYS:
+                unitMs = DAY_MS;
+                break;
+            case WEEKS:
+                unitMs = WEEK_MS;
+                break;
+            case MONTHS:
+                unitMs = AVG_MOUNTH_MS;
+                break;
+            case YEARS:
+                unitMs = YEAR_MS;
+                break;
+            default:
+                throw new IllegalStateException("Unexpected value: " + timeUnit);
+        }
+        return unitMs * ruleAge;
     }
 }

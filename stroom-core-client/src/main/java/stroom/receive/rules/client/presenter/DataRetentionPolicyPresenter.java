@@ -20,7 +20,6 @@ import stroom.alert.client.event.ConfirmEvent;
 import stroom.data.retention.shared.DataRetentionRule;
 import stroom.data.retention.shared.DataRetentionRules;
 import stroom.data.retention.shared.DataRetentionRulesResource;
-import stroom.data.retention.shared.TimeUnit;
 import stroom.dispatch.client.Rest;
 import stroom.dispatch.client.RestFactory;
 import stroom.query.api.v2.ExpressionOperator;
@@ -403,14 +402,11 @@ public class DataRetentionPolicyPresenter extends MyPresenterWidget<DataRetentio
     }
 
     private void add() {
-        final DataRetentionRule newRule = new DataRetentionRule(0,
+        final DataRetentionRule newRule = DataRetentionRule.foreverRule(0,
                 System.currentTimeMillis(),
                 "",
                 true,
-                new ExpressionOperator.Builder(Op.AND).build(),
-                1,
-                TimeUnit.YEARS,
-                true);
+                new ExpressionOperator.Builder(Op.AND).build());
 
         final DataRetentionRulePresenter editRulePresenter = editRulePresenterProvider.get();
         editRulePresenter.read(newRule);
