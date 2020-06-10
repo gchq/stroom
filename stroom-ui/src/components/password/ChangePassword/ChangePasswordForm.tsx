@@ -17,7 +17,7 @@
 import * as React from "react";
 import ChangePasswordFields from "../ChangePasswordFields";
 import LogoPage from "../../Layout/LogoPage";
-import { ChangePasswordRequest } from "../../authentication/types";
+import { ChangePasswordRequest } from "../../Oldauthentication/types";
 import FormContainer from "../../Layout/FormContainer";
 
 const ChangePasswordForm: React.FunctionComponent<{

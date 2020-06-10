@@ -22,7 +22,7 @@ import * as React from "react";
 // import { InputContainer } from "../SignIn/SignInForm";
 // import { Icon, Input } from "antd";
 import useForm from "react-hook-form";
-import { ChangePasswordRequest } from "../authentication/types";
+import { ChangePasswordRequest } from "../Oldauthentication/types";
 import Button from "../Button/Button";
 
 interface FormData {

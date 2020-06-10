@@ -34,7 +34,7 @@ interface Api {
 export const useApi = (): Api => {
   const { httpGetEmptyResponse, httpPostJsonResponse } = useHttpClient();
   const { apiUrl } = useUrlFactory();
-  const resource = apiUrl("/authentication/v1");
+  const resource = apiUrl("/Oldauthentication/v1");
   let redirectUri: string;
 
   const { router } = useRouter();

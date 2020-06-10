@@ -5,9 +5,8 @@ import * as React from "react";
 
 import LogoPage from "../Layout/LogoPage";
 import FormContainer from "../Layout/FormContainer";
-import PasswordField from "../ChangePassword2/PasswordField";
 import useForm from "react-hook-form";
-import { Credentials } from "../authentication/types";
+import { Credentials } from "../Oldauthentication/types";
 import { Button } from "antd";
 import { NavLink } from "react-router-dom";
 
@@ -41,58 +40,6 @@ const CurrentPasswordForm: React.FunctionComponent<{
   // const { email, password } = getValues();
 
   const disableSubmit = isSubmitting; //email === "" || password === "";
-
-  const handleInputChange = async (name: "password", value: string) => {
-    setValue(name, value);
-    await triggerValidation({ name });
-  };
-  //
-  // // initialize state to hold validity of form fields
-  // const [state, setState] = useState<JoinFormState>({
-  //   fullname: false,
-  //   email: false,
-  //   password: false,
-  // });
-  //
-  // // higher-order function that returns a state change watch function
-  // // sets the corresponding state property to true if the form field has no errors
-  // const fieldStateChanged = (field: string) => (s: FormFieldState) => {
-  //   const newState: JoinFormState = {
-  //     ...state,
-  //     [field]: s.errors.length === 0,
-  //   };
-  //   setState(newState);
-  // };
-  //
-  // // state change watch functions for each field
-  // const emailChanged = fieldStateChanged("email");
-  // const fullnameChanged = fieldStateChanged("fullname");
-  // const passwordChanged = fieldStateChanged("password");
-  //
-  // const { fullname, email, password } = state;
-  // const formValidated = fullname && email && password;
-  //
-  // // validation function for the fullname
-  // // ensures that fullname contains at least two names separated with a space
-  // const validateFullname = (label: string, value: string) => {
-  //   if (value.length === 0) {
-  //     throw new Error(`${label} is required`);
-  //   } else {
-  //     const regex = /^[a-z]{2,}(\s[a-z]{2,})+$/i;
-  //     if (!regex.test(value)) throw new Error(`${label} is invalid`);
-  //   }
-  // };
-
-  // // ensures that field contains characters
-  // const fieldRequired = (label: string, value: string) => {
-  //   if (value.length === 0) {
-  //     // if required and is empty, add required error to state
-  //     throw new Error(`${label} is required`);
-  //   } else {
-  //     const regex = /^.+$/i;
-  //     if (!regex.test(value)) throw new Error("Field required");
-  //   }
-  // };
 
   return (
     <LogoPage>

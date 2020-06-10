@@ -1,13 +1,13 @@
 import { HttpRequest, HttpResponse } from "@pollyjs/adapter-fetch";
 
 import { ResourceBuilder } from "./types";
-import { PasswordValidationRequest } from "components/authentication/types";
+import { PasswordValidationRequest } from "components/Oldauthentication/types";
 
 const resourceBuilder: ResourceBuilder = (
   server: any,
   apiUrl: any,
 ) => {
-  const resource = apiUrl("/authentication/v1");
+  const resource = apiUrl("/Oldauthentication/v1");
   server
     .get(`${resource}/idToken`)
     .intercept((req: HttpRequest, res: HttpResponse) => {

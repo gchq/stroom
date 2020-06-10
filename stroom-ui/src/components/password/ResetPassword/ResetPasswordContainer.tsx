@@ -24,7 +24,7 @@ import useUrlFactory from "lib/useUrlFactory";
 const ResetPasswordContainer = () => {
   const { resetPassword } = useResetPassword();
   const { apiUrl } = useUrlFactory();
-  const resource = apiUrl("/authentication/v1");
+  const resource = apiUrl("/Oldauthentication/v1");
 
   const {
     isTokenMissing,

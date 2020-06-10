@@ -25,12 +25,12 @@ const TestHarness: React.FunctionComponent = () => {
           .required("Email is required"),
         password: Yup.string()
           .required("Password is required")
-          .min(thresholdLength, "Password is short"),
-          // .test(
-          //   "password-strength",
-          //   "Password is weak",
-          //   value => zxcvbn(value).score >= minStrength,
-          // ),
+          .min(thresholdLength, "Password is short")
+          .test(
+            "password-strength",
+            "Password is weak",
+            value => zxcvbn(value).score >= minStrength,
+          ),
       })}
       onSubmit={(values, actions) => {
         setTimeout(() => {

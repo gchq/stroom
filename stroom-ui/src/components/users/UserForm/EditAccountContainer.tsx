@@ -33,7 +33,7 @@ const EditAccountContainer = () => {
   } = useAppNavigation();
 
   const { apiUrl } = useUrlFactory();
-  const resource = apiUrl("/authentication/v1");
+  const resource = apiUrl("/Oldauthentication/v1");
 
   useEffect(() => {
     if (!!userId && !account) {

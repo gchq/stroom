@@ -1,6 +1,6 @@
 import { useCallback, useState } from "react";
-import { ChangePasswordRequest } from "components/authentication/types";
-import useApi from "components/authentication";
+import { ChangePasswordRequest } from "components/Oldauthentication/types";
+import useApi from "components/Oldauthentication";
 import usePasswordState from "./useChangePasswordState";
 
 const useChangePassword = (): {

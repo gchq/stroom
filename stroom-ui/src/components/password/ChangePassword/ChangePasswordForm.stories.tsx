@@ -2,7 +2,7 @@
 import { storiesOf } from "@storybook/react";
 import * as React from "react";
 import ChangePasswordForm from "./ChangePasswordForm";
-// import { ChangePasswordRequest } from "../../authentication/types";
+// import { ChangePasswordRequest } from "../../Oldauthentication/types";
 
 // const onValidate = (
 //   oldPassword: string,

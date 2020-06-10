@@ -1,7 +1,7 @@
 import { FormikBag } from "formik";
 import { useCallback } from "react";
-import { ChangePasswordResponse, ResetPasswordRequest } from "components/authentication/types";
-import useApi from "components/authentication";
+import { ChangePasswordResponse, ResetPasswordRequest } from "components/Oldauthentication/types";
+import useApi from "components/Oldauthentication";
 import { useRouter } from "lib/useRouter";
 import * as queryString from "query-string";
 

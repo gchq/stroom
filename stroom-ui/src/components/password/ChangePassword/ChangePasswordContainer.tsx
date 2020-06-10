@@ -31,7 +31,7 @@ const ChangePasswordContainer = () => {
   const [redirectUri, setRedirectUri] = useState("");
   const [email, setEmail] = useState("");
   const { apiUrl } = useUrlFactory();
-  const resource = apiUrl("/authentication/v1");
+  const resource = apiUrl("/Oldauthentication/v1");
 
   useEffect(() => {
     if (!!router.location) {
