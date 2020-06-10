@@ -7,6 +7,8 @@ and this project adheres to [Semantic Versioning](http://semver.org/).
 
 ## [Unreleased]
 
+* Add _Impact Summary_ tab to _Data Retention_ to show breakdown of counts of streams to be deleted.
+
 
 ## [v7.0-beta.36] - 2020-06-02
 
