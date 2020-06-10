@@ -63,6 +63,7 @@ public final class SvgPresets {
     public static final SvgPreset REMOVE = new SvgPreset("images/remove.svg", "Remove", false);
     public static final SvgPreset RULESET = new SvgPreset("images/ruleset.svg", "Rule Set", true);
     public static final SvgPreset RUN = new SvgPreset("images/play-green.svg", "Run", true);
+    public static final SvgPreset STOP = new SvgPreset("images/stop-red.svg", "Stop", true);
     public static final SvgPreset SAVE = new SvgPreset("images/save.svg", "Save", false);
     public static final SvgPreset SAVE_AS = new SvgPreset("images/saveas.svg", "Save As", false);
     public static final SvgPreset SETTINGS = new SvgPreset("images/settings.svg", "Settings", true);

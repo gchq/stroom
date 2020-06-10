@@ -54,6 +54,7 @@ public class DataRetentionImpactPresenter
     private static final DataRetentionRulesResource RETENTION_RULES_RESOURCE = GWT.create(DataRetentionRulesResource.class);
     private static final NumberFormat COMMA_INTEGER_FORMAT = NumberFormat.getFormat("#,##0");
     private static final String BTN_TITLE_RUN_QUERY = "Run Query";
+    private static final String BTN_TITLE_STOP_QUERY = "Abort Query";
     private static final String BTN_TITLE_SET_FILTER = "Set Filter";
     private static final String BTN_TITLE_FLAT_TABLE = "View Flat Results";
     private static final String BTN_TITLE_NESTED_TABLE = "View Nested Results";
@@ -67,11 +68,13 @@ public class DataRetentionImpactPresenter
     private DataRetentionImpactTreeAction treeAction = new DataRetentionImpactTreeAction();
 
     private ButtonView runButton;
+    private ButtonView stopButton;
     private ButtonView filterButton;
     private ButtonView flatViewButton;
     private ButtonView nestedViewButton;
 
     private boolean isTableNested = true;
+    private boolean isQueryRunning = false;
     private List<Column<DataRetentionImpactRow, ?>> columns = new ArrayList<>();
 
     @Inject
@@ -82,6 +85,7 @@ public class DataRetentionImpactPresenter
         this.restFactory = restFactory;
 
         runButton = getView().addButton(SvgPresets.RUN.with(BTN_TITLE_RUN_QUERY, true));
+        stopButton = getView().addButton(SvgPresets.STOP.with(BTN_TITLE_STOP_QUERY, false));
         filterButton = getView().addButton(SvgPresets.FILTER.with(BTN_TITLE_SET_FILTER, true));
         nestedViewButton = getView().addButton(SvgPresets.TABLE_NESTED.with(BTN_TITLE_NESTED_TABLE, false));
         flatViewButton = getView().addButton(SvgPresets.TABLE.with(BTN_TITLE_FLAT_TABLE, true));
@@ -104,6 +108,8 @@ public class DataRetentionImpactPresenter
 
     private void refreshSourceData(final Range range) {
         clearTable();
+        isQueryRunning = true;
+        updateButtonStates();
         // Get the summary data from the rest service, this could
         // take a looooong time
         // Need to assign it to a variable for the generics typing
@@ -116,11 +122,24 @@ public class DataRetentionImpactPresenter
                     // Changed data so clear out the expander states
                     treeAction.reset();
                     refreshVisibleData();
+                    isQueryRunning = false;
+                    updateButtonStates();
                 })
-                .onFailure(throwable ->
-                        AlertEvent.fireErrorFromException(this, throwable, null))
+                .onFailure(throwable -> {
+                    isQueryRunning = false;
+                    updateButtonStates();
+                    AlertEvent.fireErrorFromException(this, throwable, null);
+                })
                 .call(RETENTION_RULES_RESOURCE)
                 .getRetentionDeletionSummary(dataRetentionRules);
+    }
+
+    private void updateButtonStates() {
+        runButton.setEnabled(!isQueryRunning);
+        stopButton.setEnabled(isQueryRunning);
+        filterButton.setEnabled(!isQueryRunning);
+        nestedViewButton.setEnabled(!isQueryRunning && isTableNested);
+        flatViewButton.setEnabled(!isQueryRunning && !isTableNested);
     }
 
     private void refreshVisibleData() {
@@ -158,16 +177,14 @@ public class DataRetentionImpactPresenter
         registerHandler(nestedViewButton.addClickHandler(event -> {
             // Get the user's rules without our default one
             isTableNested = true;
-            nestedViewButton.setEnabled(false);
-            flatViewButton.setEnabled(true);
+            updateButtonStates();
             refreshVisibleData();
         }));
 
         registerHandler(flatViewButton.addClickHandler(event -> {
             // Get the user's rules without our default one
             isTableNested = false;
-            nestedViewButton.setEnabled(true);
-            flatViewButton.setEnabled(false);
+            updateButtonStates();
             refreshVisibleData();
         }));
     }
