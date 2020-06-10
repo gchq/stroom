@@ -50,7 +50,6 @@ import java.util.Optional;
 
 public class DataRetentionImpactPresenter
         extends MyPresenterWidget<DataGridView<DataRetentionImpactRow>> {
-//        implements ColumnSortEvent.Handler {
 
     private static final DataRetentionRulesResource RETENTION_RULES_RESOURCE = GWT.create(DataRetentionRulesResource.class);
     private static final NumberFormat COMMA_INTEGER_FORMAT = NumberFormat.getFormat("#,##0");
@@ -62,7 +61,7 @@ public class DataRetentionImpactPresenter
     private final ListDataProvider<DataRetentionImpactRow> dataProvider = new ListDataProvider<>();
     private final RestFactory restFactory;
 
-    private DataRetentionRules dataRetentionRules;
+    private DataRetentionRules dataRetentionRules = null;
     private List<DataRetentionDeleteSummary> sourceData;
     private FindDataRetentionImpactCriteria criteria = new FindDataRetentionImpactCriteria();
     private DataRetentionImpactTreeAction treeAction = new DataRetentionImpactTreeAction();
@@ -93,14 +92,27 @@ public class DataRetentionImpactPresenter
         dataProvider.setListUpdater(this::refreshSourceData);
     }
 
+    private void clearTable() {
+        sourceData = null;
+        dataProvider.setCompleteList(Collections.emptyList());
+        getView().clearColumnSortList();
+        if (criteria != null && criteria.getSortList() != null) {
+            criteria.getSortList().clear();
+            getView().redrawHeaders();
+        }
+    }
+
     private void refreshSourceData(final Range range) {
+        clearTable();
         // Get the summary data from the rest service, this could
         // take a looooong time
         // Need to assign it to a variable for the generics typing
         final Rest<DataRetentionDeleteSummaryResponse> rest = restFactory.create();
         rest
                 .onSuccess(dataRetentionDeleteSummary -> {
-                    this.sourceData = dataRetentionDeleteSummary.getValues();
+                    this.sourceData = dataRetentionDeleteSummary.getValues() != null
+                            ? dataRetentionDeleteSummary.getValues()
+                            : Collections.emptyList();
                     // Changed data so clear out the expander states
                     treeAction.reset();
                     refreshVisibleData();
@@ -162,6 +174,8 @@ public class DataRetentionImpactPresenter
 
     public void setDataRetentionRules(final DataRetentionRules dataRetentionRules) {
         this.dataRetentionRules = dataRetentionRules;
+        // Clear out any existing data ready for user to hit run
+        clearTable();
     }
 
     private SafeHtml getIndentedCountCellText(final DataRetentionImpactRow row) {
@@ -273,13 +287,5 @@ public class DataRetentionImpactPresenter
                 null);
     }
 
-//    @Override
-//    public void onColumnSort(final ColumnSortEvent event) {
-//        // TODO implement sorting for Name and Source
-//    }
-
-//    public ButtonView add(final SvgPreset preset) {
-//        return getView().addButton(preset);
-//    }
 
 }

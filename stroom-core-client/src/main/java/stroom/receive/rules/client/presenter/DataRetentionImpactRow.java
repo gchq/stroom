@@ -49,7 +49,7 @@ public class DataRetentionImpactRow {
     private static final long HOUR_MS = 60 * MINUTE_MS;
     private static final long DAY_MS = 24 * HOUR_MS;
     private static final long WEEK_MS = 7 * DAY_MS;
-    private static final long AVG_MOUNTH_MS = 365 / 12 * DAY_MS;
+    private static final long AVG_MONTH_MS = 365 / 12 * DAY_MS; // Approx, only for sorting
     private static final long YEAR_MS = 365 * DAY_MS;
 
     private final Integer ruleNumber;
@@ -61,26 +61,6 @@ public class DataRetentionImpactRow {
     private final String metaType;
     private final int count;
     private Expander expander;
-
-//    public DataRetentionImpactRow(final Integer ruleNumber,
-//                                  final String ruleName,
-//                                  final String ruleAgeStr,
-//                                  final int ruleAge,
-//                                  final TimeUnit timeUnit,
-//                                  final String feedName,
-//                                  final String metaType,
-//                                  final int count,
-//                                  final Expander expander) {
-//        this.ruleNumber = ruleNumber;
-//        this.ruleName = ruleName;
-//        this.ruleAgeStr = ruleAgeStr;
-//        this.ruleAge = ruleAge;
-//        this.timeUnit = timeUnit;
-//        this.feedName = feedName;
-//        this.metaType = metaType;
-//        this.count = count;
-//        this.expander = expander;
-//    }
 
     public DataRetentionImpactRow(final Integer ruleNumber,
                                   final String ruleName,
@@ -111,14 +91,6 @@ public class DataRetentionImpactRow {
 
     public String getRuleAgeStr() {
         return ruleAgeStr;
-    }
-
-    private int getRuleAge() {
-        return ruleAge;
-    }
-
-    private TimeUnit getTimeUnit() {
-        return timeUnit;
     }
 
     public String getFeedName() {
@@ -477,7 +449,7 @@ public class DataRetentionImpactRow {
                 unitMs = WEEK_MS;
                 break;
             case MONTHS:
-                unitMs = AVG_MOUNTH_MS;
+                unitMs = AVG_MONTH_MS;
                 break;
             case YEARS:
                 unitMs = YEAR_MS;

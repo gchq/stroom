@@ -16,6 +16,12 @@
 
 package stroom.data.grid.client;
 
+import stroom.data.grid.client.DataGridViewImpl.HeadingListener;
+import stroom.hyperlink.client.HyperlinkEvent;
+import stroom.svg.client.SvgPreset;
+import stroom.widget.button.client.ButtonView;
+import stroom.widget.util.client.MultiSelectionModel;
+
 import com.google.gwt.dom.client.Style.Unit;
 import com.google.gwt.dom.client.TableRowElement;
 import com.google.gwt.event.shared.HandlerRegistration;
@@ -25,11 +31,6 @@ import com.google.gwt.user.cellview.client.Header;
 import com.google.gwt.view.client.HasData;
 import com.google.gwt.view.client.HasRows;
 import com.gwtplatform.mvp.client.View;
-import stroom.data.grid.client.DataGridViewImpl.HeadingListener;
-import stroom.hyperlink.client.HyperlinkEvent;
-import stroom.svg.client.SvgPreset;
-import stroom.widget.button.client.ButtonView;
-import stroom.widget.util.client.MultiSelectionModel;
 
 import java.util.List;
 
@@ -75,4 +76,6 @@ public interface DataGridView<R> extends View, HasRows {
     HasData<R> getDataDisplay();
 
     MultiSelectionModel<R> getSelectionModel();
+
+    void clearColumnSortList();
 }

@@ -682,6 +682,12 @@ public class MetaServiceImpl implements MetaService, Searchable {
 
     @Override
     public List<DataRetentionDeleteSummary> getRetentionDeleteSummary(final DataRetentionRules rules) {
+        // TODO remove
+        try {
+            Thread.sleep(2_000);
+        } catch (InterruptedException e) {
+            e.printStackTrace();
+        }
         return securityContext.secureResult(PermissionNames.MANAGE_POLICIES_PERMISSION, () ->
                 metaDao.getRetentionDeletionSummary(rules));
     }

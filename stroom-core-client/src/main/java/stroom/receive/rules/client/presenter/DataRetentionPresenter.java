@@ -22,6 +22,7 @@ import stroom.content.client.event.RefreshContentTabEvent;
 import stroom.content.client.presenter.ContentTabPresenter;
 import stroom.core.client.ContentManager.CloseCallback;
 import stroom.core.client.ContentManager.CloseHandler;
+import stroom.data.retention.shared.DataRetentionRules;
 import stroom.document.client.event.DirtyEvent;
 import stroom.document.client.event.DirtyEvent.DirtyHandler;
 import stroom.document.client.event.HasDirtyHandlers;
@@ -65,6 +66,7 @@ public class DataRetentionPresenter extends ContentTabPresenter<DataRetentionPre
     private final List<TabData> tabs = new ArrayList<>();
     private boolean dirty;
     private String lastLabel;
+    private Integer lastPolicyHash = null;
 
     @Inject
     public DataRetentionPresenter(final EventBus eventBus,
@@ -101,10 +103,16 @@ public class DataRetentionPresenter extends ContentTabPresenter<DataRetentionPre
             callback.onReady(retentionPolicyPresenter);
         } else if (IMPACT_SUMMARY_TAB.equals(tab)) {
             final DataRetentionImpactPresenter impactPresenter = getOrCreateImpactPresenter();
-            impactPresenter.setDataRetentionRules(retentionPolicyPresenter.getPolicy());
 
-            // TODO only call refresh if the rules have changed since last refresh.  Need to hash the rules.
-//            impactPresenter.refresh();
+            // Get the current state of the rules saved or dirty
+            final DataRetentionRules currentRules = retentionPolicyPresenter.getPolicy();
+            int currentPolicyHash = currentRules.hashCode();
+            if (lastPolicyHash == null || currentPolicyHash != lastPolicyHash) {
+                lastPolicyHash = currentPolicyHash;
+                // Rules have changed, so any current data is invalid
+                impactPresenter.setDataRetentionRules(currentRules);
+            }
+
             callback.onReady(impactPresenter);
         } else {
             callback.onReady(null);
