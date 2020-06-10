@@ -6,6 +6,7 @@ import stroom.util.shared.Expander;
 import stroom.util.shared.Sort.Direction;
 
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.Comparator;
 import java.util.HashMap;
 import java.util.List;
@@ -13,6 +14,7 @@ import java.util.Map;
 import java.util.Objects;
 import java.util.Optional;
 import java.util.Set;
+import java.util.function.Function;
 import java.util.stream.Collectors;
 
 public class DataRetentionImpactRow {
@@ -24,6 +26,7 @@ public class DataRetentionImpactRow {
     public static final String FIELD_NAME_META_TYPE = "Meta Type";
     public static final String FIELD_NAME_DELETE_COUNT = "Delete Count";
 
+    public static final Comparator<DataRetentionImpactRow> NO_SORT_COMPARATOR = Comparator.comparing(row -> 0);
     public static final Map<String, Comparator<DataRetentionImpactRow>> FIELD_TO_COMPARATOR_MAP = new HashMap<>();
 
     // GWT doesn't like Map.of()
@@ -172,10 +175,35 @@ public class DataRetentionImpactRow {
         }
     }
 
-    public static List<DataRetentionImpactRow> buildTree(final List<DataRetentionRule> rules,
-                                                         final List<DataRetentionDeleteSummary> summaries,
-                                                         final DataRetentionImpactTreeAction treeAction,
-                                                         final FindDataRetentionImpactCriteria criteria) {
+    public static List<DataRetentionImpactRow> buildFlatTable(final List<DataRetentionRule> rules,
+                                                              final List<DataRetentionDeleteSummary> summaries,
+                                                              final FindDataRetentionImpactCriteria criteria) {
+
+        Map<Integer, DataRetentionRule> ruleNoToRuleMap = rules.stream()
+                .collect(Collectors.toMap(DataRetentionRule::getRuleNumber,
+                        Function.identity()));
+
+        return summaries.stream()
+                .map(summary -> {
+                    final DataRetentionRule rule = ruleNoToRuleMap.get(summary.getRuleNumber());
+
+                    return new DataRetentionImpactRow(
+                            summary.getRuleNumber(),
+                            summary.getRuleName(),
+                            rule.getAgeString(),
+                            summary.getFeedName(),
+                            summary.getMetaType(),
+                            summary.getCount(),
+                            null);
+                })
+                .sorted(buildComparator(criteria))
+                .collect(Collectors.toList());
+    }
+
+    public static List<DataRetentionImpactRow> buildNestedTable(final List<DataRetentionRule> rules,
+                                                                final List<DataRetentionDeleteSummary> summaries,
+                                                                final DataRetentionImpactTreeAction treeAction,
+                                                                final FindDataRetentionImpactCriteria criteria) {
         final List<DataRetentionImpactRow> rows = new ArrayList<>();
 
         final Map<Integer, Set<DataRetentionDeleteSummary>> ruleNoToSummariesMap = summaries.stream()
@@ -209,19 +237,63 @@ public class DataRetentionImpactRow {
                             rows.add(metaTypeRow);
 
                             if (isExpanded(treeAction, metaTypeRow, 1) && summariesForRuleAndType != null) {
+
+                                Comparator<DataRetentionImpactRow> feedRowComparator = getComparator(
+                                        criteria,
+                                        FIELD_NAME_FEED_NAME,
+                                        FIELD_NAME_DELETE_COUNT);
+
                                 rows.addAll(summariesForRuleAndType.stream()
                                         .map(summaryForRuleTypeAndFeed ->
                                                 buildFeedRow(summaryForRuleTypeAndFeed,treeAction))
+                                        .sorted(feedRowComparator)
                                         .collect(Collectors.toList()));
                             }
                         });
                     }
                 });
 
-        // TODO fix sorting
-//        rows.sort(buildComparator(criteria));
-
         return rows;
+    }
+
+//    private static <T extends Comparable<T>> Comparator<DataRetentionImpactRow> getComparator(
+//            final FindDataRetentionImpactCriteria criteria,
+//            final String fieldName) {
+//
+//        final Comparator<DataRetentionImpactRow> comparator = FIELD_TO_COMPARATOR_MAP.get(fieldName);
+//
+//        return criteria.getSortList().stream()
+//                .filter(sort -> fieldName.equals(sort.getField()))
+//                .findAny()
+//                .map(sort ->
+//                        Direction.DESCENDING.equals(sort.getDirection())
+//                                ? comparator.reversed()
+//                                : comparator)
+//                .orElse(Comparator.comparing(row -> 0));
+//    }
+
+    private static <T extends Comparable<T>> Comparator<DataRetentionImpactRow> getComparator(
+            final FindDataRetentionImpactCriteria criteria,
+            final String... fieldNames) {
+
+        if (criteria.getSortList() != null && !criteria.getSortList().isEmpty()) {
+            // Assumes only one sort in the list
+            return criteria.getSortList().stream()
+                    .filter(sort ->
+                            Arrays.stream(fieldNames)
+                                    .anyMatch(fieldName ->
+                                            fieldName.equals(sort.getField())))
+                    .findAny()
+                    .map(sort -> {
+                        final Comparator<DataRetentionImpactRow> comparator = FIELD_TO_COMPARATOR_MAP.get(sort.getField());
+                        return Direction.DESCENDING.equals(sort.getDirection())
+                                ? comparator.reversed()
+                                : comparator;
+                    })
+                    .orElse(NO_SORT_COMPARATOR);
+        } else {
+            return NO_SORT_COMPARATOR;
+        }
     }
 
     private static DataRetentionImpactRow buildRuleRow(final DataRetentionRule rule,

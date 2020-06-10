@@ -13,7 +13,10 @@ import com.google.gwt.cell.client.Cell;
 import com.google.gwt.cell.client.SafeHtmlCell;
 import com.google.gwt.cell.client.TextCell;
 import com.google.gwt.safehtml.shared.SafeHtml;
+import com.google.gwt.safehtml.shared.SafeHtmlBuilder;
 import com.google.gwt.user.cellview.client.Column;
+import com.google.gwt.user.cellview.client.Header;
+import com.google.gwt.user.cellview.client.SafeHtmlHeader;
 import com.google.gwt.user.client.ui.HasHorizontalAlignment;
 import com.google.gwt.user.client.ui.HasHorizontalAlignment.HorizontalAlignmentConstant;
 import com.google.gwt.user.client.ui.HasVerticalAlignment.VerticalAlignmentConstant;
@@ -27,6 +30,30 @@ public class DataGridUtil {
 
     private DataGridUtil() {
     }
+
+
+    public static Header<SafeHtml> createRightAlignedHeader(final String headerText) {
+        final SafeHtml safeHtml = new SafeHtmlBuilder()
+                .appendHtmlConstant("<div style=\"text-align: right;\">")
+                .appendEscaped(headerText)
+                .appendHtmlConstant("</div>")
+                .toSafeHtml();
+
+        final Header<SafeHtml> header = new SafeHtmlHeader(safeHtml);
+        return header;
+    }
+
+    public static Header<SafeHtml> createCenterAlignedHeader(final String headerText) {
+        final SafeHtml safeHtml = new SafeHtmlBuilder()
+                .appendHtmlConstant("<div style=\"text-align: center;\">")
+                .appendEscaped(headerText)
+                .appendHtmlConstant("</div>")
+                .toSafeHtml();
+
+        final Header<SafeHtml> header = new SafeHtmlHeader(safeHtml);
+        return header;
+    }
+
 
     public static <T_ROW, T_CELL> Column<T_ROW, T_CELL> column(
             final Function<T_ROW, T_CELL> cellValueExtractor,

@@ -30,8 +30,6 @@ import com.gwtplatform.mvp.client.ViewImpl;
 public class DataRetentionPolicyViewImpl extends ViewImpl implements DataRetentionPolicyView {
     private final Widget widget;
 
-//    @UiField
-//    LinkTabBar tabBar;
     @UiField
     SimplePanel table;
     @UiField
@@ -56,11 +54,6 @@ public class DataRetentionPolicyViewImpl extends ViewImpl implements DataRetenti
     public void setExpressionView(final View view) {
         this.expression.setWidget(view.asWidget());
     }
-
-//    @Override
-//    public LinkTabBar getTabBar() {
-//        return tabBar;
-//    }
 
     public interface Binder extends UiBinder<Widget, DataRetentionPolicyViewImpl> {
     }

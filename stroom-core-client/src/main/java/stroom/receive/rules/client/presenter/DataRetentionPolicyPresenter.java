@@ -107,14 +107,14 @@ public class DataRetentionPolicyPresenter extends MyPresenterWidget<DataRetentio
         // Stop users from selecting expression items.
         expressionPresenter.setSelectionModel(null);
 
-        saveButton = listPresenter.add(SvgPresets.SAVE);
-        addButton = listPresenter.add(SvgPresets.ADD);
-        editButton = listPresenter.add(SvgPresets.EDIT);
-        copyButton = listPresenter.add(SvgPresets.COPY);
-        disableButton = listPresenter.add(SvgPresets.DISABLE);
-        deleteButton = listPresenter.add(SvgPresets.DELETE);
-        moveUpButton = listPresenter.add(SvgPresets.UP);
-        moveDownButton = listPresenter.add(SvgPresets.DOWN);
+        saveButton = listPresenter.add(SvgPresets.SAVE.title("Save Rules"));
+        addButton = listPresenter.add(SvgPresets.ADD.title("Add Rule"));
+        editButton = listPresenter.add(SvgPresets.EDIT.title("Edit Rule"));
+        copyButton = listPresenter.add(SvgPresets.COPY.title("Copy Rule"));
+        disableButton = listPresenter.add(SvgPresets.DISABLE.title("Disable Rule"));
+        deleteButton = listPresenter.add(SvgPresets.DELETE.title("Delete Rule"));
+        moveUpButton = listPresenter.add(SvgPresets.UP.title("Move Rule Up"));
+        moveDownButton = listPresenter.add(SvgPresets.DOWN.title("Move Rule Down"));
 
         listPresenter.getView()
                 .asWidget()

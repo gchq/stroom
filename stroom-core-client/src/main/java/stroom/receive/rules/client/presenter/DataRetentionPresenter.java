@@ -104,7 +104,7 @@ public class DataRetentionPresenter extends ContentTabPresenter<DataRetentionPre
             impactPresenter.setDataRetentionRules(retentionPolicyPresenter.getPolicy());
 
             // TODO only call refresh if the rules have changed since last refresh.  Need to hash the rules.
-            impactPresenter.refresh();
+//            impactPresenter.refresh();
             callback.onReady(impactPresenter);
         } else {
             callback.onReady(null);
