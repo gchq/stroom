@@ -443,10 +443,16 @@ class MetaDaoImpl implements MetaDao {
                 numberToRuleMap.put(rule.getRuleNumber(), rule);
                 final Condition ruleCondition = ruleNoToConditionMap.get(rule.getRuleNumber());
 
+                // We are not interested in counts for stuff being kept forever as they will never
+                // be deleted.
+                final Integer caseResult = rule.isForever()
+                        ? null
+                        : rule.getRuleNumber();
+
                 if (ruleNoCaseConditionStep == null) {
-                    ruleNoCaseConditionStep = DSL.when(ruleCondition, rule.getRuleNumber());
+                    ruleNoCaseConditionStep = DSL.when(ruleCondition, caseResult);
                 } else {
-                    ruleNoCaseConditionStep.when(ruleCondition, rule.getRuleNumber());
+                    ruleNoCaseConditionStep.when(ruleCondition, caseResult);
                 }
             }
             // If none of the rules matches then we don't to delete so return false
@@ -464,6 +470,8 @@ class MetaDaoImpl implements MetaDao {
                         // Get all meta records that are impacted by a rule and for each determine
                         // which rule wins and get its rule number, along with feed and type
                         // The OR condition is here to try and help the DB use indexes.
+                        // TODO Should maybe move the ruleNoCaseField into a sub select so we don't need
+                        // to compute it for the select and the where
                         final var detailTable = context
                                 .select(
                                         metaFeed.NAME.as(feedNameFieldName),
