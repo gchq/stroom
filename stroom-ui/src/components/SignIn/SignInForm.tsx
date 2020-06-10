@@ -20,8 +20,8 @@ import { FormikProps } from "formik";
 import { Button } from "antd";
 import LogoPage from "../Layout/LogoPage";
 import FormContainer from "../Layout/FormContainer";
-import FormField from "../ChangePassword2/FormField";
-import PasswordField from "../ChangePassword2/PasswordField";
+import FormField from "../Authentication/FormField";
+import PasswordField from "../Authentication/PasswordField";
 import { UserOutlined, LockOutlined } from "@ant-design/icons";
 
 export interface FormValues {
