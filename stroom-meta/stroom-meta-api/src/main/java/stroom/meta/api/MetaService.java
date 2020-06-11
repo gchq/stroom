@@ -4,6 +4,7 @@ import stroom.data.retention.api.DataRetentionRuleAction;
 import stroom.data.retention.api.DataRetentionTracker;
 import stroom.data.retention.shared.DataRetentionDeleteSummary;
 import stroom.data.retention.shared.DataRetentionRules;
+import stroom.data.retention.shared.FindDataRetentionImpactCriteria;
 import stroom.meta.shared.FindMetaCriteria;
 import stroom.meta.shared.Meta;
 import stroom.meta.shared.MetaInfoSection;
@@ -208,5 +209,6 @@ public interface MetaService {
 
     void setTracker(final DataRetentionTracker dataRetentionTracker);
 
-    List<DataRetentionDeleteSummary> getRetentionDeleteSummary(DataRetentionRules rules);
+    List<DataRetentionDeleteSummary> getRetentionDeleteSummary(final DataRetentionRules rules,
+                                                               final FindDataRetentionImpactCriteria criteria);
 }

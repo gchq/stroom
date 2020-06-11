@@ -9,6 +9,7 @@ import stroom.data.retention.api.RetentionRuleOutcome;
 import stroom.data.retention.shared.DataRetentionDeleteSummary;
 import stroom.data.retention.shared.DataRetentionRule;
 import stroom.data.retention.shared.DataRetentionRules;
+import stroom.data.retention.shared.FindDataRetentionImpactCriteria;
 import stroom.data.retention.shared.TimeUnit;
 import stroom.dictionary.mock.MockWordListProviderModule;
 import stroom.docrefinfo.mock.MockDocRefInfoModule;
@@ -528,7 +529,9 @@ class TestMetaServiceImpl {
         // Use a batch size smaller than the expected number of deletes to ensure we exercise
         // batching
 
-        final List<DataRetentionDeleteSummary> summary = metaDao.getRetentionDeletionSummary(new DataRetentionRules(rules));
+        final List<DataRetentionDeleteSummary> summary = metaDao.getRetentionDeletionSummary(
+                new DataRetentionRules(rules),
+                new FindDataRetentionImpactCriteria());
 
         LOGGER.info("Period {}", period);
         LOGGER.info("deletionDay {}", deletionDay);

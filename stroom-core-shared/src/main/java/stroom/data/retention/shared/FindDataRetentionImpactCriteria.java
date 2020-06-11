@@ -1,4 +1,4 @@
-package stroom.receive.rules.client.presenter;
+package stroom.data.retention.shared;
 
 import stroom.entity.shared.ExpressionCriteria;
 

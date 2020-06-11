@@ -2,6 +2,7 @@ package stroom.receive.rules.client.presenter;
 
 import stroom.data.retention.shared.DataRetentionDeleteSummary;
 import stroom.data.retention.shared.DataRetentionRule;
+import stroom.data.retention.shared.FindDataRetentionImpactCriteria;
 import stroom.data.retention.shared.TimeUnit;
 import stroom.util.shared.Expander;
 import stroom.util.shared.Sort.Direction;
@@ -24,7 +25,7 @@ public class DataRetentionImpactRow {
     public static final String FIELD_NAME_RULE_NAME = "Rule Name";
     public static final String FIELD_NAME_RULE_AGE = "Rule Age";
     public static final String FIELD_NAME_FEED_NAME = "Feed Name";
-    public static final String FIELD_NAME_META_TYPE = "Meta Type";
+    public static final String FIELD_NAME_META_TYPE = "Stream Type";
     public static final String FIELD_NAME_DELETE_COUNT = "Stream Delete Count";
 
     public static final Comparator<DataRetentionImpactRow> FEED_NAME_COMPARATOR = Comparator.comparing(DataRetentionImpactRow::getFeedName);

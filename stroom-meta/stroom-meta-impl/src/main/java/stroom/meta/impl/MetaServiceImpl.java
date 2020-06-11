@@ -5,6 +5,7 @@ import stroom.data.retention.api.DataRetentionRuleAction;
 import stroom.data.retention.api.DataRetentionTracker;
 import stroom.data.retention.shared.DataRetentionDeleteSummary;
 import stroom.data.retention.shared.DataRetentionRules;
+import stroom.data.retention.shared.FindDataRetentionImpactCriteria;
 import stroom.datasource.api.v2.AbstractField;
 import stroom.datasource.api.v2.DataSource;
 import stroom.docref.DocRef;
@@ -681,7 +682,8 @@ public class MetaServiceImpl implements MetaService, Searchable {
     }
 
     @Override
-    public List<DataRetentionDeleteSummary> getRetentionDeleteSummary(final DataRetentionRules rules) {
+    public List<DataRetentionDeleteSummary> getRetentionDeleteSummary(final DataRetentionRules rules,
+                                                                      final FindDataRetentionImpactCriteria criteria) {
         // Here for dev testing to add a delay
 //        try {
 //            Thread.sleep(1_300);
@@ -689,7 +691,7 @@ public class MetaServiceImpl implements MetaService, Searchable {
 //            e.printStackTrace();
 //        }
         return securityContext.secureResult(PermissionNames.MANAGE_POLICIES_PERMISSION, () ->
-                metaDao.getRetentionDeletionSummary(rules));
+                metaDao.getRetentionDeletionSummary(rules, criteria));
     }
 
     private List<MetaInfoSection.Entry> getStreamEntries(final Meta meta) {

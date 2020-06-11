@@ -56,5 +56,5 @@ public interface DataRetentionRulesResource extends RestResource, DirectRestServ
     @ApiOperation(
             value = "Get a summary of meta deletions with the passed data retention rules",
             response = DataRetentionDeleteSummary.class)
-    DataRetentionDeleteSummaryResponse getRetentionDeletionSummary(@ApiParam("rules") DataRetentionRules rules);
+    DataRetentionDeleteSummaryResponse getRetentionDeletionSummary(@ApiParam("request") DataRetentionDeleteSummaryRequest request);
 }

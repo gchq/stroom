@@ -11,6 +11,7 @@ import stroom.data.retention.api.DataRetentionRuleAction;
 import stroom.data.retention.shared.DataRetentionDeleteSummary;
 import stroom.data.retention.shared.DataRetentionRule;
 import stroom.data.retention.shared.DataRetentionRules;
+import stroom.data.retention.shared.FindDataRetentionImpactCriteria;
 import stroom.datasource.api.v2.AbstractField;
 import stroom.db.util.ExpressionMapper;
 import stroom.db.util.ExpressionMapperFactory;
@@ -31,6 +32,7 @@ import stroom.meta.shared.MetaFields;
 import stroom.meta.shared.SelectionSummary;
 import stroom.meta.shared.Status;
 import stroom.query.api.v2.ExpressionOperator;
+import stroom.query.api.v2.ExpressionOperator.Op;
 import stroom.query.api.v2.ExpressionUtil;
 import stroom.util.collections.BatchingIterator;
 import stroom.util.date.DateUtil;
@@ -414,8 +416,24 @@ class MetaDaoImpl implements MetaDao {
         return updateCount;
     }
 
+    private Condition getFilterCriteriaCondition(final FindDataRetentionImpactCriteria criteria) {
+        final Condition filterCondition;
+        if (criteria != null
+                && criteria.getExpression() != null
+                && !criteria.getExpression().equals(new ExpressionOperator.Builder(Op.AND).build())) {
+
+            filterCondition = expressionMapper.apply(criteria.getExpression());
+        } else {
+            filterCondition = DSL.noCondition();
+        }
+        return filterCondition;
+    }
+
     @Override
-    public List<DataRetentionDeleteSummary> getRetentionDeletionSummary(final DataRetentionRules rules) {
+    public List<DataRetentionDeleteSummary> getRetentionDeletionSummary(
+            final DataRetentionRules rules,
+            final FindDataRetentionImpactCriteria criteria) {
+
         final List<DataRetentionDeleteSummary> result;
 
         final List<DataRetentionRule> activeRules = Optional.ofNullable(rules)
@@ -481,8 +499,9 @@ class MetaDaoImpl implements MetaDao {
                                 .leftJoin(metaFeed).on(meta.FEED_ID.eq(metaFeed.ID))
                                 .leftJoin(metaType).on(meta.TYPE_ID.eq(metaType.ID))
                                 .where(meta.STATUS.notEqual(statusIdDeleted))
-                                .and(ruleNoCaseField.isNotNull())
-                                .and(DSL.or(orConditions))
+                                .and(ruleNoCaseField.isNotNull()) // only want data that WILL be deleted
+                                .and(DSL.or(orConditions)) // Here to help use indexes
+                                .and(getFilterCriteriaCondition(criteria)) // UI filtering
                                 .asTable("detail");
 
                         // Now get counts grouped by feed, type and rule

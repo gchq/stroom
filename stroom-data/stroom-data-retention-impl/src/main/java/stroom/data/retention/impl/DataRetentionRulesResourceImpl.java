@@ -16,10 +16,13 @@
 
 package stroom.data.retention.impl;
 
+import stroom.data.retention.shared.DataRetentionDeleteSummaryRequest;
 import stroom.data.retention.shared.DataRetentionDeleteSummaryResponse;
 import stroom.data.retention.shared.DataRetentionRules;
 import stroom.data.retention.shared.DataRetentionRulesResource;
 import stroom.meta.api.MetaService;
+
+import io.swagger.annotations.ApiParam;
 
 import javax.inject.Inject;
 import javax.inject.Provider;
@@ -46,7 +49,8 @@ class DataRetentionRulesResourceImpl implements DataRetentionRulesResource {
     }
 
     @Override
-    public DataRetentionDeleteSummaryResponse getRetentionDeletionSummary(final DataRetentionRules rules) {
-        return new DataRetentionDeleteSummaryResponse(metaServiceProvider.get().getRetentionDeleteSummary(rules));
+    public DataRetentionDeleteSummaryResponse getRetentionDeletionSummary(@ApiParam("request") DataRetentionDeleteSummaryRequest request) {
+        return new DataRetentionDeleteSummaryResponse(metaServiceProvider.get()
+                .getRetentionDeleteSummary(request.getDataRetentionRules(), request.getCriteria()));
     }
 }

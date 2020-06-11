@@ -4,6 +4,7 @@ import stroom.data.retention.api.DataRetentionRuleAction;
 import stroom.data.retention.api.DataRetentionTracker;
 import stroom.data.retention.shared.DataRetentionDeleteSummary;
 import stroom.data.retention.shared.DataRetentionRules;
+import stroom.data.retention.shared.FindDataRetentionImpactCriteria;
 import stroom.expression.matcher.ExpressionMatcher;
 import stroom.meta.api.AttributeMap;
 import stroom.meta.api.EffectiveMetaDataCriteria;
@@ -339,7 +340,8 @@ public class MockMetaService implements MetaService, Clearable {
     }
 
     @Override
-    public List<DataRetentionDeleteSummary> getRetentionDeleteSummary(final DataRetentionRules rules) {
+    public List<DataRetentionDeleteSummary> getRetentionDeleteSummary(final DataRetentionRules rules,
+                                                                      final FindDataRetentionImpactCriteria criteria) {
         return Collections.emptyList();
     }
 }

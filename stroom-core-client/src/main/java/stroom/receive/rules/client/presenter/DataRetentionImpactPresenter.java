@@ -19,27 +19,38 @@ package stroom.receive.rules.client.presenter;
 import stroom.alert.client.event.AlertEvent;
 import stroom.config.global.client.presenter.ListDataProvider;
 import stroom.data.client.presenter.ColumnSizeConstants;
+import stroom.data.client.presenter.EditExpressionPresenter;
 import stroom.data.grid.client.DataGridView;
 import stroom.data.grid.client.DataGridViewImpl;
 import stroom.data.retention.shared.DataRetentionDeleteSummary;
+import stroom.data.retention.shared.DataRetentionDeleteSummaryRequest;
 import stroom.data.retention.shared.DataRetentionDeleteSummaryResponse;
 import stroom.data.retention.shared.DataRetentionRules;
 import stroom.data.retention.shared.DataRetentionRulesResource;
+import stroom.data.retention.shared.FindDataRetentionImpactCriteria;
+import stroom.datasource.api.v2.AbstractField;
 import stroom.dispatch.client.Rest;
 import stroom.dispatch.client.RestFactory;
-import stroom.node.client.NodeCache;
+import stroom.meta.shared.MetaFields;
+import stroom.query.api.v2.ExpressionOperator;
+import stroom.query.api.v2.ExpressionOperator.Op;
 import stroom.svg.client.SvgPreset;
 import stroom.svg.client.SvgPresets;
 import stroom.util.client.DataGridUtil;
 import stroom.widget.button.client.ButtonView;
+import stroom.widget.popup.client.event.HidePopupEvent;
+import stroom.widget.popup.client.event.ShowPopupEvent;
+import stroom.widget.popup.client.presenter.PopupSize;
+import stroom.widget.popup.client.presenter.PopupUiHandlers;
+import stroom.widget.popup.client.presenter.PopupView.PopupType;
 
 import com.google.gwt.core.client.GWT;
 import com.google.gwt.i18n.client.NumberFormat;
 import com.google.gwt.safehtml.shared.SafeHtml;
 import com.google.gwt.safehtml.shared.SafeHtmlBuilder;
-import com.google.gwt.user.cellview.client.Column;
 import com.google.gwt.view.client.Range;
 import com.google.inject.Inject;
+import com.google.inject.Provider;
 import com.google.web.bindery.event.shared.EventBus;
 import com.gwtplatform.mvp.client.MyPresenterWidget;
 
@@ -55,40 +66,49 @@ public class DataRetentionImpactPresenter
     private static final NumberFormat COMMA_INTEGER_FORMAT = NumberFormat.getFormat("#,##0");
     private static final String BTN_TITLE_RUN_QUERY = "Run Query";
     private static final String BTN_TITLE_STOP_QUERY = "Abort Query";
-    private static final String BTN_TITLE_SET_FILTER = "Set Filter";
+    private static final String BTN_TITLE_SET_FILTER = "Set Query Filter";
     private static final String BTN_TITLE_FLAT_TABLE = "View Flat Results";
     private static final String BTN_TITLE_NESTED_TABLE = "View Nested Results";
 
+    private static final List<AbstractField> FILTERABLE_FIELDS = new ArrayList<>();
+
+    static {
+        FILTERABLE_FIELDS.add(MetaFields.FEED_NAME);
+        FILTERABLE_FIELDS.add(MetaFields.TYPE_NAME);
+    }
+
     private final ListDataProvider<DataRetentionImpactRow> dataProvider = new ListDataProvider<>();
     private final RestFactory restFactory;
+    private final Provider<EditExpressionPresenter> editExpressionPresenterProvider;
+    private final ButtonView runButton;
+    private final ButtonView stopButton;
+    private final ButtonView filterButton;
+    private final ButtonView flatViewButton;
+    private final ButtonView nestedViewButton;
+    private final FindDataRetentionImpactCriteria criteria;
+    private final DataRetentionImpactTreeAction treeAction = new DataRetentionImpactTreeAction();
 
     private DataRetentionRules dataRetentionRules = null;
     private List<DataRetentionDeleteSummary> sourceData;
-    private FindDataRetentionImpactCriteria criteria = new FindDataRetentionImpactCriteria();
-    private DataRetentionImpactTreeAction treeAction = new DataRetentionImpactTreeAction();
-
-    private ButtonView runButton;
-    private ButtonView stopButton;
-    private ButtonView filterButton;
-    private ButtonView flatViewButton;
-    private ButtonView nestedViewButton;
-
     private boolean isTableNested = true;
     private boolean isQueryRunning = false;
-    private List<Column<DataRetentionImpactRow, ?>> columns = new ArrayList<>();
 
     @Inject
     public DataRetentionImpactPresenter(final EventBus eventBus,
                                         final RestFactory restFactory,
-                                        final NodeCache nodeCache) {
+                                        final Provider<EditExpressionPresenter> editExpressionPresenterProvider) {
         super(eventBus, new DataGridViewImpl<>(true));
         this.restFactory = restFactory;
+        this.editExpressionPresenterProvider = editExpressionPresenterProvider;
 
         runButton = getView().addButton(SvgPresets.RUN.with(BTN_TITLE_RUN_QUERY, true));
         stopButton = getView().addButton(SvgPresets.STOP.with(BTN_TITLE_STOP_QUERY, false));
         filterButton = getView().addButton(SvgPresets.FILTER.with(BTN_TITLE_SET_FILTER, true));
         nestedViewButton = getView().addButton(SvgPresets.TABLE_NESTED.with(BTN_TITLE_NESTED_TABLE, false));
         flatViewButton = getView().addButton(SvgPresets.TABLE.with(BTN_TITLE_FLAT_TABLE, true));
+
+        criteria = new FindDataRetentionImpactCriteria();
+        criteria.setExpression(new ExpressionOperator.Builder(Op.AND).build());
 
         initColumns();
 
@@ -110,6 +130,10 @@ public class DataRetentionImpactPresenter
         clearTable();
         isQueryRunning = true;
         updateButtonStates();
+
+        DataRetentionDeleteSummaryRequest request = new DataRetentionDeleteSummaryRequest(
+                dataRetentionRules, criteria);
+
         // Get the summary data from the rest service, this could
         // take a looooong time
         // Need to assign it to a variable for the generics typing
@@ -131,15 +155,15 @@ public class DataRetentionImpactPresenter
                     AlertEvent.fireErrorFromException(this, throwable, null);
                 })
                 .call(RETENTION_RULES_RESOURCE)
-                .getRetentionDeletionSummary(dataRetentionRules);
+                .getRetentionDeletionSummary(request);
     }
 
     private void updateButtonStates() {
         runButton.setEnabled(!isQueryRunning);
         stopButton.setEnabled(isQueryRunning);
         filterButton.setEnabled(!isQueryRunning);
-        nestedViewButton.setEnabled(!isQueryRunning && isTableNested);
-        flatViewButton.setEnabled(!isQueryRunning && !isTableNested);
+        nestedViewButton.setEnabled(!isQueryRunning && !isTableNested);
+        flatViewButton.setEnabled(!isQueryRunning && isTableNested);
     }
 
     private void refreshVisibleData() {
@@ -174,6 +198,10 @@ public class DataRetentionImpactPresenter
             refreshSourceData(new Range(0, Integer.MAX_VALUE));
         }));
 
+        registerHandler(filterButton.addClickHandler(event -> {
+            openFilterPresenter();
+        }));
+
         registerHandler(nestedViewButton.addClickHandler(event -> {
             // Get the user's rules without our default one
             isTableNested = true;
@@ -187,6 +215,45 @@ public class DataRetentionImpactPresenter
             updateButtonStates();
             refreshVisibleData();
         }));
+    }
+
+    private void openFilterPresenter() {
+        final EditExpressionPresenter editExpressionPresenter = editExpressionPresenterProvider.get();
+        editExpressionPresenter.read(criteria.getExpression());
+        editExpressionPresenter.init(restFactory, MetaFields.STREAM_STORE_DOC_REF, FILTERABLE_FIELDS);
+
+        final PopupSize popupSize = new PopupSize(
+                800,
+                400,
+                300,
+                300,
+                2000,
+                2000,
+                true);
+
+        ShowPopupEvent.fire(
+                DataRetentionImpactPresenter.this,
+                editExpressionPresenter,
+                PopupType.OK_CANCEL_DIALOG,
+                popupSize,
+                "Edit Query Filter",
+                new PopupUiHandlers() {
+                    @Override
+                    public void onHideRequest(final boolean autoClose, final boolean ok) {
+                        if (ok) {
+                            criteria.setExpression(editExpressionPresenter.write());
+                        }
+
+                        HidePopupEvent.fire(
+                                DataRetentionImpactPresenter.this,
+                                editExpressionPresenter);
+                    }
+
+                    @Override
+                    public void onHide(final boolean autoClose, final boolean ok) {
+                        // Do nothing.
+                    }
+                });
     }
 
     public void setDataRetentionRules(final DataRetentionRules dataRetentionRules) {

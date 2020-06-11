@@ -17,11 +17,6 @@
 
 package stroom.receive.rules.client.presenter;
 
-import com.google.gwt.core.client.GWT;
-import com.google.inject.Inject;
-import com.google.web.bindery.event.shared.EventBus;
-import com.gwtplatform.mvp.client.MyPresenterWidget;
-import com.gwtplatform.mvp.client.View;
 import stroom.data.client.presenter.EditExpressionPresenter;
 import stroom.data.retention.shared.DataRetentionRule;
 import stroom.data.retention.shared.TimeUnit;
@@ -33,6 +28,12 @@ import stroom.meta.shared.MetaFields;
 import stroom.query.api.v2.ExpressionOperator;
 import stroom.query.api.v2.ExpressionOperator.Op;
 import stroom.receive.rules.client.presenter.DataRetentionRulePresenter.DataRetentionRuleView;
+
+import com.google.gwt.core.client.GWT;
+import com.google.inject.Inject;
+import com.google.web.bindery.event.shared.EventBus;
+import com.gwtplatform.mvp.client.MyPresenterWidget;
+import com.gwtplatform.mvp.client.View;
 
 import java.util.List;
 
@@ -52,7 +53,11 @@ public class DataRetentionRulePresenter extends MyPresenterWidget<DataRetentionR
 
         final Rest<List<AbstractField>> rest = restFactory.create();
         rest
-                .onSuccess(result -> editExpressionPresenter.init(restFactory, MetaFields.STREAM_STORE_DOC_REF, result))
+                .onSuccess(result ->
+                        editExpressionPresenter.init(
+                                restFactory,
+                                MetaFields.STREAM_STORE_DOC_REF,
+                                result))
                 .call(DATA_SOURCE_RESOURCE)
                 .fetchFields(MetaFields.STREAM_STORE_DOC_REF);
     }
@@ -72,7 +77,15 @@ public class DataRetentionRulePresenter extends MyPresenterWidget<DataRetentionR
 
     DataRetentionRule write() {
         final ExpressionOperator expression = editExpressionPresenter.write();
-        return new DataRetentionRule(originalRule.getRuleNumber(), originalRule.getCreationTime(), getView().getName(), originalRule.isEnabled(), expression, getView().getAge(), getView().getTimeUnit(), getView().isForever());
+        return new DataRetentionRule(
+                originalRule.getRuleNumber(),
+                originalRule.getCreationTime(),
+                getView().getName(),
+                originalRule.isEnabled(),
+                expression,
+                getView().getAge(),
+                getView().getTimeUnit(),
+                getView().isForever());
     }
 
     public interface DataRetentionRuleView extends View {
