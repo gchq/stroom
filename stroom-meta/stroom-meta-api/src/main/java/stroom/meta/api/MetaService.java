@@ -171,6 +171,7 @@ public interface MetaService {
      */
     SelectionSummary getSelectionSummary(FindMetaCriteria criteria);
 
+
     /**
      * Get a summary of the parent items of the current selection for reprocessing purposes.
      *
@@ -209,6 +210,9 @@ public interface MetaService {
 
     void setTracker(final DataRetentionTracker dataRetentionTracker);
 
-    List<DataRetentionDeleteSummary> getRetentionDeleteSummary(final DataRetentionRules rules,
+    List<DataRetentionDeleteSummary> getRetentionDeleteSummary(final String queryId,
+                                                               final DataRetentionRules rules,
                                                                final FindDataRetentionImpactCriteria criteria);
+
+    boolean cancelRetentionDeleteSummary(final String queryId);
 }

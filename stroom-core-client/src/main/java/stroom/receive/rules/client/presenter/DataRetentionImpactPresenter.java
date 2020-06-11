@@ -133,6 +133,7 @@ public class DataRetentionImpactPresenter
     private void clearTable() {
         sourceData = null;
         dataProvider.setCompleteList(Collections.emptyList());
+        treeAction.reset();
         getView().clearColumnSortList();
         if (criteria != null && criteria.getSortList() != null) {
             criteria.getSortList().clear();
@@ -155,14 +156,24 @@ public class DataRetentionImpactPresenter
         // Need to assign it to a variable for the generics typing
         final Rest<DataRetentionDeleteSummaryResponse> rest = restFactory.create();
         rest
-                .onSuccess(dataRetentionDeleteSummary -> {
-                    this.sourceData = dataRetentionDeleteSummary.getValues() != null
-                            ? dataRetentionDeleteSummary.getValues()
-                            : Collections.emptyList();
-                    // Changed data so clear out the expander states
-                    treeAction.reset();
-                    isQueryRunning = false;
-                    refreshVisibleData();
+                .onSuccess(response -> {
+                    // check we are expecting the results
+                    if (isQueryRunning && currentQueryId.equals(response.getQueryId())) {
+
+                        this.sourceData = response.getValues() != null
+                                ? response.getValues()
+                                : Collections.emptyList();
+                        // Changed data so clear out the expander states
+                        treeAction.reset();
+                        isQueryRunning = false;
+                        refreshVisibleData();
+                        GWT.log("Query finished (success)");
+                    } else {
+                        GWT.log("Query finished (different queryId)");
+                        clearTable();
+                        isQueryRunning = false;
+                        refreshVisibleData();
+                    }
                 })
                 .onFailure(throwable -> {
                     isQueryRunning = false;
@@ -171,6 +182,28 @@ public class DataRetentionImpactPresenter
                 })
                 .call(RETENTION_RULES_RESOURCE)
                 .getRetentionDeletionSummary(request);
+    }
+
+    private void cancelQuery() {
+        if (currentQueryId != null) {
+            final Rest<Boolean> rest = restFactory.create();
+            rest
+                    .onSuccess(success -> {
+                        isQueryRunning = false;
+                        clearTable();
+                        refreshVisibleData();
+                        updateButtonStates();
+                        GWT.log("Cancel finished (success)");
+                    })
+                    .onFailure(throwable -> {
+                        // Have to assume it is still running
+                        isQueryRunning = true;
+                        updateButtonStates();
+                        AlertEvent.fireErrorFromException(this, throwable, null);
+                    })
+                    .call(RETENTION_RULES_RESOURCE)
+                    .cancelQuery(currentQueryId);
+        }
     }
 
     private void updateButtonStates() {
@@ -221,6 +254,11 @@ public class DataRetentionImpactPresenter
         registerHandler(runButton.addClickHandler(event -> {
             // Get the user's rules without our default one
             refreshSourceData(new Range(0, Integer.MAX_VALUE));
+        }));
+
+        registerHandler(stopButton.addClickHandler(event -> {
+            // Get the user's rules without our default one
+            cancelQuery();
         }));
 
         registerHandler(filterButton.addClickHandler(event -> {

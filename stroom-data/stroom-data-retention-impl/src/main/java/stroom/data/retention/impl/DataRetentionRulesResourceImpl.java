@@ -49,8 +49,20 @@ class DataRetentionRulesResourceImpl implements DataRetentionRulesResource {
     }
 
     @Override
-    public DataRetentionDeleteSummaryResponse getRetentionDeletionSummary(@ApiParam("request") DataRetentionDeleteSummaryRequest request) {
-        return new DataRetentionDeleteSummaryResponse(metaServiceProvider.get()
-                .getRetentionDeleteSummary(request.getDataRetentionRules(), request.getCriteria()));
+    public DataRetentionDeleteSummaryResponse getRetentionDeletionSummary(
+            @ApiParam("request") DataRetentionDeleteSummaryRequest request) {
+
+        return new DataRetentionDeleteSummaryResponse(
+                metaServiceProvider.get()
+                        .getRetentionDeleteSummary(
+                                request.getQueryId(),
+                                request.getDataRetentionRules(),
+                                request.getCriteria()),
+                request.getQueryId());
+    }
+
+    @Override
+    public Boolean cancelQuery(final String queryId) {
+        return metaServiceProvider.get().cancelRetentionDeleteSummary(queryId);
     }
 }

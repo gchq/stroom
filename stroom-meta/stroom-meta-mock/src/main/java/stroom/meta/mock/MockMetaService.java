@@ -340,8 +340,14 @@ public class MockMetaService implements MetaService, Clearable {
     }
 
     @Override
-    public List<DataRetentionDeleteSummary> getRetentionDeleteSummary(final DataRetentionRules rules,
+    public List<DataRetentionDeleteSummary> getRetentionDeleteSummary(final String queryId,
+                                                                      final DataRetentionRules rules,
                                                                       final FindDataRetentionImpactCriteria criteria) {
         return Collections.emptyList();
+    }
+
+    @Override
+    public boolean cancelRetentionDeleteSummary(final String queryId) {
+        return true;
     }
 }

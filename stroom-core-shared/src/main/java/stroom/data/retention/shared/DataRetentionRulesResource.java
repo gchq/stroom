@@ -25,9 +25,11 @@ import io.swagger.annotations.ApiParam;
 import org.fusesource.restygwt.client.DirectRestService;
 
 import javax.ws.rs.Consumes;
+import javax.ws.rs.DELETE;
 import javax.ws.rs.POST;
 import javax.ws.rs.PUT;
 import javax.ws.rs.Path;
+import javax.ws.rs.PathParam;
 import javax.ws.rs.Produces;
 import javax.ws.rs.core.MediaType;
 
@@ -52,9 +54,18 @@ public interface DataRetentionRulesResource extends RestResource, DirectRestServ
     DataRetentionRules update(@ApiParam("dataRetentionRules") DataRetentionRules dataRetentionRules);
 
     @POST
-    @Path("getRetentionDeletionSummary")
+    @Path("/impactSummary")
     @ApiOperation(
             value = "Get a summary of meta deletions with the passed data retention rules",
             response = DataRetentionDeleteSummary.class)
-    DataRetentionDeleteSummaryResponse getRetentionDeletionSummary(@ApiParam("request") DataRetentionDeleteSummaryRequest request);
+    DataRetentionDeleteSummaryResponse getRetentionDeletionSummary(
+            @ApiParam("request") DataRetentionDeleteSummaryRequest request);
+
+    @DELETE
+    @Path("/impactSummary/{queryId}")
+    @ApiOperation(
+            value = "Delete a running query")
+    Boolean cancelQuery(@PathParam("queryId") final String queryId);
+
+
 }
