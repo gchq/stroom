@@ -17,6 +17,7 @@ export interface FormValues {
 }
 
 export interface Props {
+  strength: number;
   minStrength: number;
   thresholdLength: number;
 }
@@ -31,6 +32,7 @@ export const JoinForm: React.FunctionComponent<Props &
   handleBlur,
   handleSubmit,
   isSubmitting,
+  strength,
   minStrength,
   thresholdLength,
 }) => (
@@ -85,8 +87,9 @@ export const JoinForm: React.FunctionComponent<Props &
               name="password"
               label="Password"
               placeholder="Enter Password"
-              thresholdLength={thresholdLength}
+              strength={strength}
               minStrength={minStrength}
+              thresholdLength={thresholdLength}
               onChange={handleChange}
               onBlur={handleBlur}
               value={values.password}

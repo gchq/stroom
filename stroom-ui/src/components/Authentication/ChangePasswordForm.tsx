@@ -3,19 +3,22 @@ import * as React from "react";
 import LogoPage from "../Layout/LogoPage";
 import FormContainer from "../Layout/FormContainer";
 import { Button } from "antd";
-import { NavLink } from "react-router-dom";
 import { FormikProps } from "formik";
 import PasswordField from "./PasswordField";
+import NewPasswordField from "./NewPasswordField";
 
 export interface FormValues {
   password: string;
+  confirmPassword: string;
 }
 
 export interface Props {
-  allowPasswordResets?: boolean;
+  strength: number;
+  minStrength: number;
+  thresholdLength: number;
 }
 
-export const CurrentPasswordForm: React.FunctionComponent<Props &
+export const ChangePasswordForm: React.FunctionComponent<Props &
   FormikProps<FormValues>> = ({
   values,
   errors,
@@ -25,26 +28,43 @@ export const CurrentPasswordForm: React.FunctionComponent<Props &
   handleBlur,
   handleSubmit,
   isSubmitting,
-  allowPasswordResets,
+  strength,
+  minStrength,
+  thresholdLength,
 }) => (
   <LogoPage>
     <FormContainer>
       <form onSubmit={handleSubmit}>
         <div className="JoinForm__content">
           <div className="d-flex flex-row justify-content-between align-items-center mb-3">
-            <legend className="form-label mb-0">Enter Current Password</legend>
+            <legend className="form-label mb-0">Change Password</legend>
           </div>
 
-          <PasswordField
+          <NewPasswordField
             name="password"
             label="Password"
             placeholder="Enter Password"
-            className="no-icon-padding right-icon-padding hide-background-image"
+            strength={strength}
+            minStrength={minStrength}
+            thresholdLength={thresholdLength}
             onChange={handleChange}
             onBlur={handleBlur}
             value={values.password}
             error={errors.password}
             touched={touched.password}
+            setFieldTouched={setFieldTouched}
+          />
+
+          <PasswordField
+            name="confirmPassword"
+            label="Confirm Password"
+            placeholder="Confirm Password"
+            className="no-icon-padding right-icon-padding hide-background-image"
+            onChange={handleChange}
+            onBlur={handleBlur}
+            value={values.confirmPassword}
+            error={errors.confirmPassword}
+            touched={touched.confirmPassword}
             setFieldTouched={setFieldTouched}
           />
 
@@ -55,24 +75,13 @@ export const CurrentPasswordForm: React.FunctionComponent<Props &
               loading={isSubmitting}
               htmlType="submit"
             >
-              Validate
+              Change Password
             </Button>
           </div>
-
-          {allowPasswordResets ? (
-            <NavLink
-              className="SignIn__reset-password"
-              to={"/s/resetPasswordRequest"}
-            >
-              Forgot password?
-            </NavLink>
-          ) : (
-            undefined
-          )}
         </div>
       </form>
     </FormContainer>
   </LogoPage>
 );
 
-export default CurrentPasswordForm;
+export default ChangePasswordForm;

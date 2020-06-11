@@ -1,5 +1,5 @@
 /*
- * Copyright 2017 Crown Copyright
+ * Copyright 2020 Crown Copyright
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -20,12 +20,12 @@ import { FormikProps } from "formik";
 import { Button } from "antd";
 import LogoPage from "../Layout/LogoPage";
 import FormContainer from "../Layout/FormContainer";
-import FormField from "../Authentication/FormField";
-import PasswordField from "../Authentication/PasswordField";
+import FormField from "./FormField";
+import PasswordField from "./PasswordField";
 import { UserOutlined, LockOutlined } from "@ant-design/icons";
 
 export interface FormValues {
-  email: string;
+  userId: string;
   password: string;
 }
 
@@ -57,7 +57,7 @@ export const SignInForm: React.FunctionComponent<Props &
           </div>
 
           <FormField
-            name="email"
+            name="userId"
             type="text"
             label="User Name"
             placeholder="Enter User Name"
@@ -65,9 +65,9 @@ export const SignInForm: React.FunctionComponent<Props &
             leftIcon={<UserOutlined />}
             onChange={handleChange}
             onBlur={handleBlur}
-            value={values.email}
-            error={errors.email}
-            touched={touched.email}
+            value={values.userId}
+            error={errors.userId}
+            touched={touched.userId}
             setFieldTouched={setFieldTouched}
           />
 

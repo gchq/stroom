@@ -1,18 +1,29 @@
 import * as React from "react";
-import { createContext, FunctionComponent, useContext, useEffect, useMemo, useRef, useState } from "react";
+import {
+  createContext,
+  FunctionComponent,
+  useContext,
+  useEffect,
+  useMemo,
+  useRef,
+  useState,
+} from "react";
 import AlertDialog, { Alert, AlertType } from "./AlertDialog";
 
 const ErrorContext = createContext(null);
 
-export function useErrorOutlet() {
+export const useAlert = () => {
   const errorCtx = useContext(ErrorContext);
-  return errorCtx.setError;
-}
 
-export const AlertDisplayBoundary: FunctionComponent = ({
-                                                          children,
-                                                        }) => {
-  const [error, setError] = useState(null);
+  const alert = (alert: Alert) => {
+    errorCtx.setError(alert);
+  };
+
+  return { alert };
+};
+
+export const AlertDisplayBoundary: FunctionComponent = ({ children }) => {
+  const [error, setError] = useState<Alert>();
   const ctx = useMemo(() => ({ error, setError }), [error]);
 
   return <ErrorContext.Provider value={ctx}>{children}</ErrorContext.Provider>;
@@ -29,7 +40,11 @@ export const ErrorOutlet: FunctionComponent = () => {
 
     // <AlertForm title={error.message} message={error.message}/>
 
-    <AlertDialog alert={error} isOpen={error !== null} onCloseDialog={() => setError(null)}/>
+    <AlertDialog
+      alert={error}
+      isOpen={error !== null}
+      onCloseDialog={() => setError(null)}
+    />
     // <ThemedModal
     //   isOpen={error !== null}
     //   // onRequestClose={clearError()}
@@ -76,7 +91,7 @@ export const UsingErrorInlet: FunctionComponent = () => {
   return (
     <>
       <h2>Via component</h2>
-      <ErrorInlet alert={someError}/>
+      <ErrorInlet alert={someError} />
       <button onClick={() => setTheError(alert)}>
         Press to render an error message somewhere
       </button>
@@ -86,7 +101,7 @@ export const UsingErrorInlet: FunctionComponent = () => {
 };
 
 export const UsingErrorHook: FunctionComponent = () => {
-  const setError = useErrorOutlet();
+  const { alert } = useAlert();
 
   const info: Alert = {
     type: AlertType.INFO,
@@ -115,19 +130,11 @@ export const UsingErrorHook: FunctionComponent = () => {
   return (
     <>
       <h2>Via hook</h2>
-      <button onClick={() => setError(info)}>
-        Info
-      </button>
-      <button onClick={() => setError(warning)}>
-        Warning
-      </button>
-      <button onClick={() => setError(error)}>
-        Error
-      </button>
-      <button onClick={() => setError(fatal)}>
-        Fatal
-      </button>
-      <button onClick={() => setError(null)}>Get rid of it</button>
+      <button onClick={() => alert(info)}>Info</button>
+      <button onClick={() => alert(warning)}>Warning</button>
+      <button onClick={() => alert(error)}>Error</button>
+      <button onClick={() => alert(fatal)}>Fatal</button>
+      <button onClick={() => alert(null)}>Get rid of it</button>
     </>
   );
 };

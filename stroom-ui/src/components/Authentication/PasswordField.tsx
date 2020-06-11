@@ -17,7 +17,7 @@ const PasswordField: FunctionComponent<FormFieldProps & FormFieldState> = ({
   return (
     <div className="position-relative">
       {/** Pass the validation and stateChanged functions as props to the form field **/}
-      <FormField type={state ? "text" : "password"} {...restProps}>
+      <FormField {...restProps} type={state ? "text" : "password"}>
         {children}
         <ViewPassword state={state} onStateChanged={viewPasswordToggle} />
       </FormField>

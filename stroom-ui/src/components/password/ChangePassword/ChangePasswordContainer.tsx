@@ -23,7 +23,7 @@ import useRouter from "lib/useRouter";
 import ChangePasswordForm from "./ChangePasswordForm";
 import usePassword from "./useChangePassword";
 import useUrlFactory from "lib/useUrlFactory";
-import SignInForm from "../../SignIn/SignInForm";
+import SignInForm from "../../Authentication/SignInForm";
 
 const ChangePasswordContainer = () => {
   const { changePassword, showChangeConfirmation, isSubmitting } = usePassword();
@@ -43,9 +43,9 @@ const ChangePasswordContainer = () => {
         setRedirectUri(decodedRedirectUri);
       }
 
-      let email: string = query.email as string;
-      if (email === undefined) {
-        email = Cookies.get("username");
+      let userId: string = query.userId as string;
+      if (userId === undefined) {
+        userId = Cookies.get("userId");
       }
 
       if (email) {

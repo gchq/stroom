@@ -28,12 +28,6 @@ export interface FormFieldProps {
   onBlur?: FocusEventHandler<HTMLInputElement>;
 }
 
-// export interface FormFieldState {
-//   value: string;
-//   dirty: boolean;
-//   errors: string[];
-// }
-
 const FormField: FunctionComponent<FormFieldProps &
   FormFieldState &
   FormFieldType> = ({
@@ -51,58 +45,6 @@ const FormField: FunctionComponent<FormFieldProps &
   touched,
   setFieldTouched,
 }) => {
-  // // initialize state
-  // const [state, setState] = useState<FormFieldState>({
-  //   value: "",
-  //   dirty: false,
-  //   errors: [],
-  // });
-  //
-  // // Destructure state.
-  // const { value, dirty, errors } = state;
-  //
-  // const validate = (value: string) => {
-  //   // const isEmpty = value.length === 0;
-  //   // const requiredMissing = state.dirty && required && isEmpty;
-  //
-  //   let errors: string[] = [];
-  //
-  //   // if (requiredMissing) {
-  //   //   // if required and is empty, add required error to state
-  //   //   errors = [...errors, `${label} is required`];
-  //   // } else
-  //
-  //   if ("function" === typeof validator) {
-  //     try {
-  //       validator(label, value);
-  //     } catch (e) {
-  //       // if validator throws error, add validation error to state
-  //       errors = [...errors, e.message];
-  //     }
-  //   }
-  //
-  //   // update state and call the onStateChanged callback fn after the update
-  //   // dirty is only changed to true and remains true on and after the first state update
-  //   const newState: FormFieldState = {
-  //     value,
-  //     errors,
-  //     dirty: !state.dirty || state.dirty,
-  //   };
-  //   setState(newState);
-  //   onStateChanged(newState);
-  // };
-
-  // const hasChanged = (e: ChangeEvent<HTMLInputElement>) => {
-  //   e.preventDefault();
-  //
-  //   const value = e.target.value;
-  //   validate(value);
-  // };
-  //
-  // if (validateOnLoad && !dirty) {
-  //   validate(state.value);
-  // }
-
   const hasErrors = touched && error;
   const controlClass = [
     "form-control",

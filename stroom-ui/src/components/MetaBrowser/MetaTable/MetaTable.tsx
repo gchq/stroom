@@ -30,8 +30,8 @@ import { TableOutProps } from "lib/useSelectableItemListing/types";
 // import "react-table/react-table.css";
 // import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
 
-// import useStreamAttributeMapApi from "components/MetaBrowser/api/streamAttributeMap/useApi";
-// import useDataApi from "api/data/useApi";
+// import useStreamAttributeMapApi from "components/MetaBrowser/api/streamAttributeMap/useAuthenticationApi";
+// import useDataApi from "api/data/useAuthenticationApi";
 
 // import Loader from "components/Loader";
 // import Button from "components/Button";

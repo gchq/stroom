@@ -28,7 +28,7 @@ import MetaBrowser from "components/MetaBrowser";
 import SwitchedDocRefEditor from "components/DocumentEditors/SwitchedDocRefEditor";
 import ErrorPage from "components/ErrorPage";
 import IndexVolumes from "components/IndexVolumes";
-import { SignIn } from "components/SignIn";
+import { SignIn } from "components/Authentication";
 import {
   ChangePassword,
   ResetPassword,

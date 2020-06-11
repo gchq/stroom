@@ -1,42 +1,19 @@
-/*
- * Copyright 2020 Crown Copyright
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- *     http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
-
+import { storiesOf } from "@storybook/react";
+import * as React from "react";
 import { Formik } from "formik";
 import * as Yup from "yup";
-import * as React from "react";
-import JoinForm, { FormValues } from "./JoinForm";
-import useAuthenticationApi from "./api/useAuthenticationApi";
+import { addThemedStories } from "../../testing/storybook/themedStoryGenerator";
+import ChangePasswordForm from "./ChangePasswordForm";
 import { useState } from "react";
 import * as zxcvbn from "zxcvbn";
 
-export const JoinFormContainer: React.FunctionComponent = () => {
-  const { login } = useAuthenticationApi();
-
+const TestHarness: React.FunctionComponent = () => {
   const [strength, setStrength] = useState(0);
   let currentStrength = strength;
 
   const minStrength = 3;
   const thresholdLength = 7;
 
-  const fullNameSchema = Yup.string()
-    .required("Full name is required")
-    .matches(/^[a-z]{2,}(\s[a-z]{2,})+$/i, "Full name is invalid");
-  const emailSchema = Yup.string()
-    .email("Email is invalid")
-    .required("Email is required");
   const passwordSchema = Yup.string()
     .label("Password")
     .required("Password is required")
@@ -46,15 +23,24 @@ export const JoinFormContainer: React.FunctionComponent = () => {
       "Password is weak",
       () => currentStrength > minStrength,
     );
+
+  const confirmPasswordSchema = Yup.string()
+    .label("Confirm Password")
+    .required("Required")
+    .test("password-match", "Passwords must match", function(value) {
+      const { resolve } = this;
+      const ref = Yup.ref("password");
+      return value === resolve(ref);
+    });
+
   const validationSchema = Yup.object().shape({
-    fullname: fullNameSchema,
-    email: emailSchema,
     password: passwordSchema,
+    confirmPassword: confirmPasswordSchema,
   });
 
   return (
     <Formik
-      initialValues={{ fullname: "", email: "", password: "" }}
+      initialValues={{ password: "", confirmPassword: "" }}
       validationSchema={validationSchema}
       onSubmit={(values, actions) => {
         setTimeout(() => {
@@ -74,7 +60,7 @@ export const JoinFormContainer: React.FunctionComponent = () => {
         };
 
         return (
-          <JoinForm
+          <ChangePasswordForm
             {...props}
             strength={strength}
             minStrength={minStrength}
@@ -87,4 +73,5 @@ export const JoinFormContainer: React.FunctionComponent = () => {
   );
 };
 
-export default JoinFormContainer;
+const stories = storiesOf("Authentication", module);
+addThemedStories(stories, "Change Password Form", () => <TestHarness />);

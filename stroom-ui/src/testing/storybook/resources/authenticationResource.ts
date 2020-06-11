@@ -1,7 +1,7 @@
 import { HttpRequest, HttpResponse } from "@pollyjs/adapter-fetch";
 
 import { ResourceBuilder } from "./types";
-import { PasswordValidationRequest } from "components/Oldauthentication/types";
+import { PasswordValidationRequest } from "components/Authentication/api/types";
 
 const resourceBuilder: ResourceBuilder = (
   server: any,
@@ -21,12 +21,12 @@ const resourceBuilder: ResourceBuilder = (
   server
     .post(`${resource}/noauth/login`)
     .intercept((req: HttpRequest, res: HttpResponse) => {
-      const { email, password, sessionId, requestingClientId } = JSON.parse(
+      const { userId, password, sessionId, requestingClientId } = JSON.parse(
         req.body,
       );
 
       console.log("Received ", {
-        email,
+        userId,
         password,
         sessionId,
         requestingClientId,

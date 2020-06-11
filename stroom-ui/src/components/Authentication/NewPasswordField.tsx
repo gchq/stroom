@@ -1,10 +1,10 @@
 import * as React from "react";
 import { FunctionComponent, useState } from "react";
 import FormField, { FormFieldProps, FormFieldState } from "./FormField";
-import * as zxcvbn from "zxcvbn";
 import ViewPassword from "./ViewPassword";
 
 export interface NewPasswordFieldProps {
+  strength?: number;
   minStrength?: number;
   thresholdLength?: number;
 }
@@ -12,6 +12,7 @@ export interface NewPasswordFieldProps {
 const NewPasswordField: FunctionComponent<NewPasswordFieldProps &
   FormFieldProps &
   FormFieldState> = ({
+  strength,
   minStrength = 3,
   thresholdLength = 7,
   children,
@@ -25,7 +26,6 @@ const NewPasswordField: FunctionComponent<NewPasswordFieldProps &
     setState(viewText);
   };
 
-  const strength = zxcvbn(value).score;
   const passwordLength = value.length;
   const passwordStrong = strength >= minStrength;
   const passwordLong = passwordLength > thresholdLength;
@@ -54,32 +54,32 @@ const NewPasswordField: FunctionComponent<NewPasswordFieldProps &
     <div className="position-relative">
       {/** Pass the validation and stateChanged functions as props to the form field **/}
       <FormField
+        {...restProps}
         type={state ? "text" : "password"}
         className="hide-background-image length-indicator-padding"
         value={value}
-        {...restProps}
       >
         <span className="d-block form-hint">
-          To conform with our Strong Password policy, you are required to use a
-          sufficiently strong password. Password must be more than 7 characters.
+          {`To conform with our Strong Password policy, you are required to use a
+          sufficiently strong password. Password must be more than ${thresholdLength} characters.`}
         </span>
         {children}
         {/** Render the password strength meter **/}
         <div className={strengthClass}>
           <div className="strength-meter-fill" data-strength={strength} />
         </div>
+        <div className="position-absolute password-count mx-3">
+          {/** Render the password length counter indicator **/}
+          <span className={counterClass}>
+            {passwordLength
+              ? passwordLong
+                ? `${thresholdLength}+`
+                : passwordLength
+              : ""}
+          </span>
+        </div>
+        <ViewPassword state={state} onStateChanged={viewPasswordToggle} />
       </FormField>
-      <div className="position-absolute password-count mx-3">
-        {/** Render the password length counter indicator **/}
-        <span className={counterClass}>
-          {passwordLength
-            ? passwordLong
-              ? `${thresholdLength}+`
-              : passwordLength
-            : ""}
-        </span>
-      </div>
-      <ViewPassword state={state} onStateChanged={viewPasswordToggle} />
     </div>
   );
 };

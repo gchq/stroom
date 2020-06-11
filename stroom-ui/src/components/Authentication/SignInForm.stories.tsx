@@ -12,11 +12,11 @@ const TestHarness: React.FunctionComponent<{
 
   return (
     <Formik
-      initialValues={{ email: "", password: "" }}
+      initialValues={{ userId: "", password: "" }}
       validationSchema={Yup.object().shape({
-        email: Yup.string()
-          .email("Email not valid")
-          .required("Email is required"),
+        userId: Yup.string()
+          .email("User name not valid")
+          .required("User name is required"),
         password: Yup.string().required("Password is required"),
       })}
       onSubmit={(values, actions) => {
@@ -44,11 +44,10 @@ const TestHarness: React.FunctionComponent<{
   );
 };
 
-const stories = storiesOf("Sign In", module);
-addThemedStories(stories, "simplest", () => <TestHarness />);
-addThemedStories(stories, "allow password resets", () => (
+const stories = storiesOf("Authentication", module);
+addThemedStories(stories, "Sign In - allow password resets", () => (
   <TestHarness allowPasswordResets={true} />
 ));
-addThemedStories(stories, "disallow password resets", () => (
+addThemedStories(stories, "Sign In - disallow password resets", () => (
   <TestHarness allowPasswordResets={false} />
 ));

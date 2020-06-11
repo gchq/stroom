@@ -15,7 +15,6 @@
  */
 
 import * as React from "react";
-import ChangePasswordFields from "../ChangePasswordFields";
 
 const ResetPassword: React.FunctionComponent<{
   isTokenMissing: boolean;

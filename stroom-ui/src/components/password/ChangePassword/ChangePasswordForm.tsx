@@ -15,9 +15,8 @@
  */
 
 import * as React from "react";
-import ChangePasswordFields from "../ChangePasswordFields";
 import LogoPage from "../../Layout/LogoPage";
-import { ChangePasswordRequest } from "../../Oldauthentication/types";
+import { ChangePasswordRequest } from "../../Authentication/api/types";
 import FormContainer from "../../Layout/FormContainer";
 
 const ChangePasswordForm: React.FunctionComponent<{
@@ -47,15 +46,15 @@ const ChangePasswordForm: React.FunctionComponent<{
 
   let content;
   if (!showChangeConfirmation) {
-    content = (
-      <ChangePasswordFields
-        email={email}
-        redirectUri={redirectUri}
-        showOldPasswordField={true}
-        onSubmit={onSubmit}
-        isSubmitting={isSubmitting}
-      />
-    );
+    // content = (
+    //   <ChangePasswordFields
+    //     email={email}
+    //     redirectUri={redirectUri}
+    //     showOldPasswordField={true}
+    //     onSubmit={onSubmit}
+    //     isSubmitting={isSubmitting}
+    //   />
+    // );
   } else if (showChangeConfirmation && !redirectUri) {
     content = <p>Your password has been changed.</p>;
   }

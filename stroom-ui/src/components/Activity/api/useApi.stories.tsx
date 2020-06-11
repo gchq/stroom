@@ -37,7 +37,7 @@ const ActivitiesTestHarness: React.FunctionComponent = () => {
   );
 };
 
-storiesOf("Sections/Activity/useApi", module).add("test", () => (
+storiesOf("Sections/Activity/useAuthenticationApi", module).add("test", () => (
   <div>
     <CurrentActivityTestHarness />
     <ActivitiesTestHarness />
