@@ -297,6 +297,12 @@ public class DataRetentionImpactRow {
             totalCount = 0;
         }
 
+        // TODO once we have built all the rows we will still have all the source data in memory.
+        //   We could change this class so it holds a ref to the source summary object and then
+        //   a number of functions to get the cell values from that source summary.  We would then
+        //   just need three template rows for rule, type, feed levels.  This the impact row
+        //   becomes a kind of view (with some mapping) onto the source row.
+
         // Set forever rules to 1000 years for sorting
         final DataRetentionImpactRow row = new DataRetentionImpactRow(
                 rule.getRuleNumber(),
