@@ -61,7 +61,11 @@ public class SvgButton extends ButtonBase implements ButtonView {
 
 //        setWidth(preset.getWidth() + "px");
 //        setHeight(preset.getHeight() + "px");
-        setTitle(preset.getTitle());
+
+        // Add the button tool-tip
+        if (preset.hasTitle()) {
+            setTitle(preset.getTitle());
+        }
         setEnabled(preset.isEnabled());
     }
 

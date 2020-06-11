@@ -16,6 +16,12 @@
 
 package stroom.widget.tab.client.presenter;
 
+import stroom.svg.client.Icon;
+import stroom.widget.menu.client.presenter.IconMenuItem;
+import stroom.widget.menu.client.presenter.Item;
+import stroom.widget.menu.client.presenter.MenuItem;
+import stroom.widget.menu.client.presenter.MenuPresenter;
+
 import com.google.gwt.dom.client.Element;
 import com.google.gwt.event.logical.shared.HasSelectionHandlers;
 import com.google.gwt.event.logical.shared.SelectionEvent;
@@ -23,11 +29,6 @@ import com.google.gwt.event.logical.shared.SelectionHandler;
 import com.google.gwt.event.shared.HandlerRegistration;
 import com.google.gwt.event.shared.LegacyHandlerWrapper;
 import com.google.gwt.event.shared.SimpleEventBus;
-import stroom.svg.client.Icon;
-import stroom.widget.menu.client.presenter.IconMenuItem;
-import stroom.widget.menu.client.presenter.Item;
-import stroom.widget.menu.client.presenter.MenuItem;
-import stroom.widget.menu.client.presenter.MenuPresenter;
 
 import java.util.ArrayList;
 import java.util.Collections;
