@@ -78,9 +78,9 @@ public class SvgButton extends ButtonBase implements ButtonView {
     public void setEnabled(final boolean enabled) {
         super.setEnabled(enabled);
         if (enabled) {
-            getElement().getStyle().setOpacity(1);
+            face.removeClassName("face--disabled");
         } else {
-            getElement().getStyle().setOpacity(0.25);
+            face.addClassName("face--disabled");
         }
     }
 
@@ -218,7 +218,16 @@ public class SvgButton extends ButtonBase implements ButtonView {
 
         // Mouse coordinates are not always available (e.g., when the click is
         // caused by a keyboard event).
-        final NativeEvent evt = Document.get().createClickEvent(1, 0, 0, 0, 0, false, false, false, false);
+        final NativeEvent evt = Document.get().createClickEvent(
+                1,
+                0,
+                0,
+                0,
+                0,
+                false,
+                false,
+                false,
+                false);
         getElement().dispatchEvent(evt);
 
         allowClick = false;

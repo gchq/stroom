@@ -774,16 +774,19 @@ public class MetaServiceImpl implements MetaService, Searchable {
         return DateUtil.createNormalDateTimeString(ms) + " (" + ms + ")";
     }
 
-    private List<MetaInfoSection.Entry> getDataRententionEntries(final Meta meta, final Map<String, String> attributeMap) {
+    private List<MetaInfoSection.Entry> getDataRententionEntries(final Meta meta,
+                                                                 final Map<String, String> attributeMap) {
         final List<MetaInfoSection.Entry> entries = new ArrayList<>();
 
-        // Add additional data retention information.
-        final StreamAttributeMapRetentionRuleDecorator decorator = decoratorProvider.get();
-        decorator.addMatchingRetentionRuleInfo(meta, attributeMap);
+        if (attributeMap != null && !attributeMap.isEmpty()) {
+            // Add additional data retention information.
+            final StreamAttributeMapRetentionRuleDecorator decorator = decoratorProvider.get();
+            decorator.addMatchingRetentionRuleInfo(meta, attributeMap);
 
-        entries.add(new MetaInfoSection.Entry(DataRetentionFields.RETENTION_AGE, attributeMap.get(DataRetentionFields.RETENTION_AGE)));
-        entries.add(new MetaInfoSection.Entry(DataRetentionFields.RETENTION_UNTIL, attributeMap.get(DataRetentionFields.RETENTION_UNTIL)));
-        entries.add(new MetaInfoSection.Entry(DataRetentionFields.RETENTION_RULE, attributeMap.get(DataRetentionFields.RETENTION_RULE)));
+            entries.add(new MetaInfoSection.Entry(DataRetentionFields.RETENTION_AGE, attributeMap.get(DataRetentionFields.RETENTION_AGE)));
+            entries.add(new MetaInfoSection.Entry(DataRetentionFields.RETENTION_UNTIL, attributeMap.get(DataRetentionFields.RETENTION_UNTIL)));
+            entries.add(new MetaInfoSection.Entry(DataRetentionFields.RETENTION_RULE, attributeMap.get(DataRetentionFields.RETENTION_RULE)));
+        }
 
         return entries;
     }
