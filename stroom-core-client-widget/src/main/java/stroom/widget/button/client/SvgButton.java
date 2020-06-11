@@ -16,6 +16,8 @@
 
 package stroom.widget.button.client;
 
+import stroom.svg.client.SvgPreset;
+
 import com.google.gwt.dom.client.Document;
 import com.google.gwt.dom.client.Element;
 import com.google.gwt.dom.client.NativeEvent;
@@ -23,7 +25,6 @@ import com.google.gwt.dom.client.Style.Display;
 import com.google.gwt.user.client.DOM;
 import com.google.gwt.user.client.Event;
 import com.google.gwt.user.client.ui.ButtonBase;
-import stroom.svg.client.SvgPreset;
 
 public class SvgButton extends ButtonBase implements ButtonView {
     private final Element face;
@@ -75,7 +76,7 @@ public class SvgButton extends ButtonBase implements ButtonView {
         if (enabled) {
             getElement().getStyle().setOpacity(1);
         } else {
-            getElement().getStyle().setOpacity(0.4);
+            getElement().getStyle().setOpacity(0.25);
         }
     }
 

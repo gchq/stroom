@@ -58,6 +58,7 @@ import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
 import java.util.Optional;
+import java.util.UUID;
 
 public class DataRetentionImpactPresenter
         extends MyPresenterWidget<DataGridView<DataRetentionImpactRow>> {
@@ -99,6 +100,7 @@ public class DataRetentionImpactPresenter
     private List<DataRetentionDeleteSummary> sourceData;
     private boolean isTableNested = true;
     private boolean isQueryRunning = false;
+    private String currentQueryId = null;
 
     @Inject
     public DataRetentionImpactPresenter(final EventBus eventBus,
@@ -143,8 +145,10 @@ public class DataRetentionImpactPresenter
         isQueryRunning = true;
         updateButtonStates();
 
-        DataRetentionDeleteSummaryRequest request = new DataRetentionDeleteSummaryRequest(
-                dataRetentionRules, criteria);
+        final String queryId = UUID.randomUUID().toString();
+        final DataRetentionDeleteSummaryRequest request = new DataRetentionDeleteSummaryRequest(
+                queryId, dataRetentionRules, criteria);
+        currentQueryId = queryId;
 
         // Get the summary data from the rest service, this could
         // take a looooong time
@@ -157,9 +161,8 @@ public class DataRetentionImpactPresenter
                             : Collections.emptyList();
                     // Changed data so clear out the expander states
                     treeAction.reset();
-                    refreshVisibleData();
                     isQueryRunning = false;
-                    updateButtonStates();
+                    refreshVisibleData();
                 })
                 .onFailure(throwable -> {
                     isQueryRunning = false;
@@ -174,14 +177,19 @@ public class DataRetentionImpactPresenter
         runButton.setEnabled(!isQueryRunning);
         stopButton.setEnabled(isQueryRunning);
         filterButton.setEnabled(!isQueryRunning);
+
         nestedViewButton.setEnabled(!isQueryRunning && !isTableNested);
         flatViewButton.setEnabled(!isQueryRunning && isTableNested);
-        expandAllButton.setEnabled(!isQueryRunning && isTableNested && treeAction.hasCollapsedRows());
-        collapseAllButton.setEnabled(!isQueryRunning && isTableNested && treeAction.hasExpandedRows());
+
+        expandAllButton.setEnabled(!isQueryRunning
+                && isTableNested
+                && treeAction.hasCollapsedRows());
+        collapseAllButton.setEnabled(!isQueryRunning
+                && isTableNested
+                && treeAction.hasExpandedRows());
     }
 
     private void refreshVisibleData() {
-        updateButtonStates();
         // Rebuild the rows from the source data, e.g. when sorting has changed
         // or it is toggled from nest/flat
         final List<DataRetentionImpactRow> rows = Optional.ofNullable(this.sourceData)
@@ -202,6 +210,8 @@ public class DataRetentionImpactPresenter
                 )
                 .orElse(Collections.emptyList());
         dataProvider.setCompleteList(rows);
+
+        updateButtonStates();
     }
 
     @Override
@@ -259,7 +269,7 @@ public class DataRetentionImpactPresenter
                 editExpressionPresenter,
                 PopupType.OK_CANCEL_DIALOG,
                 popupSize,
-                "Edit Query Filter",
+                "Query Filter",
                 new PopupUiHandlers() {
                     @Override
                     public void onHideRequest(final boolean autoClose, final boolean ok) {

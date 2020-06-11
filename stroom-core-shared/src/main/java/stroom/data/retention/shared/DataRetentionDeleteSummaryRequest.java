@@ -11,17 +11,24 @@ import java.util.Objects;
 public class DataRetentionDeleteSummaryRequest {
 
     @JsonProperty
+    private final String queryId;
+    @JsonProperty
     private final DataRetentionRules dataRetentionRules;
     @JsonProperty
     private final FindDataRetentionImpactCriteria criteria;
 
     @JsonCreator
-    public DataRetentionDeleteSummaryRequest(@JsonProperty("dataRetentionRules") final DataRetentionRules dataRetentionRules,
+    public DataRetentionDeleteSummaryRequest(@JsonProperty("queryId") final String queryId,
+                                             @JsonProperty("dataRetentionRules") final DataRetentionRules dataRetentionRules,
                                              @JsonProperty("criteria") final FindDataRetentionImpactCriteria criteria) {
-        this.dataRetentionRules = Objects.requireNonNull(dataRetentionRules);
-        this.criteria = Objects.requireNonNull(criteria);
+        this.queryId = queryId;
+        this.dataRetentionRules = dataRetentionRules;
+        this.criteria = criteria;
     }
 
+    public String getQueryId() {
+        return queryId;
+    }
 
     public DataRetentionRules getDataRetentionRules() {
         return dataRetentionRules;
@@ -31,25 +38,26 @@ public class DataRetentionDeleteSummaryRequest {
         return criteria;
     }
 
-
     @Override
     public boolean equals(final Object o) {
         if (this == o) return true;
         if (o == null || getClass() != o.getClass()) return false;
-        final DataRetentionDeleteSummaryRequest that = (DataRetentionDeleteSummaryRequest) o;
-        return dataRetentionRules.equals(that.dataRetentionRules) &&
-                criteria.equals(that.criteria);
+        final DataRetentionDeleteSummaryRequest request = (DataRetentionDeleteSummaryRequest) o;
+        return Objects.equals(queryId, request.queryId) &&
+                Objects.equals(dataRetentionRules, request.dataRetentionRules) &&
+                Objects.equals(criteria, request.criteria);
     }
 
     @Override
     public int hashCode() {
-        return Objects.hash(dataRetentionRules, criteria);
+        return Objects.hash(queryId, dataRetentionRules, criteria);
     }
 
     @Override
     public String toString() {
         return "DataRetentionDeleteSummaryRequest{" +
-                "dataRetentionRules=" + dataRetentionRules +
+                "queryId='" + queryId + '\'' +
+                ", dataRetentionRules=" + dataRetentionRules +
                 ", criteria=" + criteria +
                 '}';
     }
