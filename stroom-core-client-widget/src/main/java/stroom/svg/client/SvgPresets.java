@@ -25,6 +25,7 @@ public final class SvgPresets {
     public static final SvgPreset ANNOTATIONS = new SvgPreset("images/document/AnnotationsIndex.svg", "Annotations", true);
     public static final SvgPreset CLEAR = new SvgPreset("images/clear.svg", "Clear", false);
     public static final SvgPreset CLOSE = new SvgPreset("images/close.svg", "Close", false);
+    public static final SvgPreset COLLAPSE_UP = new SvgPreset("images/collapse-up.svg", "Collapse", true);
     public static final SvgPreset COPY = new SvgPreset("images/copy.svg", "Copy", false);
     public static final SvgPreset DATABASE = new SvgPreset("images/database.svg", "Database", true);
     public static final SvgPreset DELETE = new SvgPreset("images/delete.svg", "Delete", false);
@@ -35,6 +36,7 @@ public final class SvgPresets {
     public static final SvgPreset EDIT = new SvgPreset("images/edit.svg", "Edit", false);
     public static final SvgPreset ELASTIC_SEARCH = new SvgPreset("images/document/ElasticIndex.svg", "Elastic Search", true);
     public static final SvgPreset ERROR = new SvgPreset("images/error.svg", "Error", true);
+    public static final SvgPreset EXPAND_DOWN = new SvgPreset("images/expand-down.svg", "Expand", true);
     public static final SvgPreset EXPLORER = new SvgPreset("images/explorer.svg", "Explorer", true);
     public static final SvgPreset FATAL = new SvgPreset("images/fatal.svg", "Fatal", true);
     public static final SvgPreset FAVOURITES = new SvgPreset("images/favourites.svg", "Favourites", false);

@@ -42,4 +42,22 @@ public class DataRetentionImpactTreeAction implements TreeAction<DataRetentionIm
         expandedRows.clear();
         collapsedRows.clear();
     }
+
+    void expandAll() {
+        expandedRows.addAll(collapsedRows);
+        collapsedRows.clear();
+    }
+
+    void collapseAll() {
+        collapsedRows.addAll(expandedRows);
+        expandedRows.clear();
+    }
+
+    boolean hasExpandedRows() {
+        return !expandedRows.isEmpty();
+    }
+
+    boolean hasCollapsedRows() {
+        return !collapsedRows.isEmpty();
+    }
 }

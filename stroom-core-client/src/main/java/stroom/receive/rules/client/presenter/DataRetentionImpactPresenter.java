@@ -64,11 +64,14 @@ public class DataRetentionImpactPresenter
 
     private static final DataRetentionRulesResource RETENTION_RULES_RESOURCE = GWT.create(DataRetentionRulesResource.class);
     private static final NumberFormat COMMA_INTEGER_FORMAT = NumberFormat.getFormat("#,##0");
+
     private static final String BTN_TITLE_RUN_QUERY = "Run Query";
     private static final String BTN_TITLE_STOP_QUERY = "Abort Query";
     private static final String BTN_TITLE_SET_FILTER = "Set Query Filter";
     private static final String BTN_TITLE_FLAT_TABLE = "View Flat Results";
     private static final String BTN_TITLE_NESTED_TABLE = "View Nested Results";
+    private static final String BTN_TITLE_EXPAND_ALL = "Expand all";
+    private static final String BTN_TITLE_COLLAPSE_ALL = "Collapse all";
 
     private static final List<AbstractField> FILTERABLE_FIELDS = new ArrayList<>();
 
@@ -80,11 +83,15 @@ public class DataRetentionImpactPresenter
     private final ListDataProvider<DataRetentionImpactRow> dataProvider = new ListDataProvider<>();
     private final RestFactory restFactory;
     private final Provider<EditExpressionPresenter> editExpressionPresenterProvider;
+
     private final ButtonView runButton;
     private final ButtonView stopButton;
     private final ButtonView filterButton;
     private final ButtonView flatViewButton;
     private final ButtonView nestedViewButton;
+    private final ButtonView expandAllButton;
+    private final ButtonView collapseAllButton;
+
     private final FindDataRetentionImpactCriteria criteria;
     private final DataRetentionImpactTreeAction treeAction = new DataRetentionImpactTreeAction();
 
@@ -101,16 +108,21 @@ public class DataRetentionImpactPresenter
         this.restFactory = restFactory;
         this.editExpressionPresenterProvider = editExpressionPresenterProvider;
 
-        runButton = getView().addButton(SvgPresets.RUN.with(BTN_TITLE_RUN_QUERY, true));
-        stopButton = getView().addButton(SvgPresets.STOP.with(BTN_TITLE_STOP_QUERY, false));
-        filterButton = getView().addButton(SvgPresets.FILTER.with(BTN_TITLE_SET_FILTER, true));
-        nestedViewButton = getView().addButton(SvgPresets.TABLE_NESTED.with(BTN_TITLE_NESTED_TABLE, false));
-        flatViewButton = getView().addButton(SvgPresets.TABLE.with(BTN_TITLE_FLAT_TABLE, true));
+        runButton = getView().addButton(SvgPresets.RUN.title(BTN_TITLE_RUN_QUERY));
+        stopButton = getView().addButton(SvgPresets.STOP.title(BTN_TITLE_STOP_QUERY));
+        filterButton = getView().addButton(SvgPresets.FILTER.title(BTN_TITLE_SET_FILTER));
+        nestedViewButton = getView().addButton(SvgPresets.TABLE_NESTED.title(BTN_TITLE_NESTED_TABLE));
+        flatViewButton = getView().addButton(SvgPresets.TABLE.title(BTN_TITLE_FLAT_TABLE));
+        expandAllButton = getView().addButton(SvgPresets.EXPAND_DOWN.title(BTN_TITLE_EXPAND_ALL));
+        collapseAllButton = getView().addButton(SvgPresets.COLLAPSE_UP.title(BTN_TITLE_COLLAPSE_ALL));
+
+        updateButtonStates();
 
         criteria = new FindDataRetentionImpactCriteria();
         criteria.setExpression(new ExpressionOperator.Builder(Op.AND).build());
 
         initColumns();
+
 
         dataProvider.addDataDisplay(getView().getDataDisplay());
         dataProvider.setListUpdater(this::refreshSourceData);
@@ -164,9 +176,12 @@ public class DataRetentionImpactPresenter
         filterButton.setEnabled(!isQueryRunning);
         nestedViewButton.setEnabled(!isQueryRunning && !isTableNested);
         flatViewButton.setEnabled(!isQueryRunning && isTableNested);
+        expandAllButton.setEnabled(!isQueryRunning && isTableNested && treeAction.hasCollapsedRows());
+        collapseAllButton.setEnabled(!isQueryRunning && isTableNested && treeAction.hasExpandedRows());
     }
 
     private void refreshVisibleData() {
+        updateButtonStates();
         // Rebuild the rows from the source data, e.g. when sorting has changed
         // or it is toggled from nest/flat
         final List<DataRetentionImpactRow> rows = Optional.ofNullable(this.sourceData)
@@ -205,14 +220,22 @@ public class DataRetentionImpactPresenter
         registerHandler(nestedViewButton.addClickHandler(event -> {
             // Get the user's rules without our default one
             isTableNested = true;
-            updateButtonStates();
             refreshVisibleData();
         }));
 
         registerHandler(flatViewButton.addClickHandler(event -> {
             // Get the user's rules without our default one
             isTableNested = false;
-            updateButtonStates();
+            refreshVisibleData();
+        }));
+
+        registerHandler(expandAllButton.addClickHandler(event -> {
+            treeAction.expandAll();
+            refreshVisibleData();
+        }));
+
+        registerHandler(collapseAllButton.addClickHandler(event -> {
+            treeAction.collapseAll();
             refreshVisibleData();
         }));
     }

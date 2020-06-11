@@ -382,7 +382,9 @@ public class DataRetentionImpactRow {
             row.getExpander().setExpanded(isExpanded);
         }
 
-        treeAction.setRowExpanded(row, isExpanded);
+        if (!isLeaf) {
+            treeAction.setRowExpanded(row, isExpanded);
+        }
     }
 
     private static boolean isExpanded(final DataRetentionImpactTreeAction treeAction,
