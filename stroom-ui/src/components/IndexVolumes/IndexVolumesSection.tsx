@@ -53,7 +53,7 @@ const IndexVolumesSection: React.FunctionComponent<Props> = ({
       prefixedId.slice(prefixedId.indexOf("_") + 1, prefixedId.length);
 
     const idToMove: string = removePrefix(result.draggableId);
-    let indexVolumeBeingMoved = indexVolumes.find(i => +i.id === +idToMove);
+    const indexVolumeBeingMoved = indexVolumes.find(i => +i.id === +idToMove);
     indexVolumeBeingMoved.indexVolumeGroupName = removePrefix(
       result.destination.droppableId,
     );

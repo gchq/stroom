@@ -13,7 +13,7 @@ import { CustomRouter } from "./lib/useRouter";
 import { createBrowserHistory as createHistory } from "history";
 import ConfigProvider from "startup/config/ConfigProvider";
 
-import "./styles/main.css";
+import "./styles/main.scss";
 import { AuthorisationContextProvider } from "startup/Authorisation";
 import { AuthenticationContextProvider } from "startup/Authentication";
 import { DocumentTreeContextProvider } from "components/DocumentEditors/api/explorer";

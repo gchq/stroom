@@ -16,7 +16,7 @@
 
 import * as React from "react";
 import { Account } from "components/users/types";
-import styled from "styled-components";
+// import styled from "styled-components";
 import { Select } from "antd";
 
 interface Props {
@@ -27,16 +27,17 @@ interface Props {
 
 const { Option } = Select;
 
-/**
- * We need to override the values of input because we have some CSS somewhere
- * that adds padding and margin, and this breaks the look of the antd Select.
- */
-const StyledSelect = styled(Select)`
-  input {
-    margin: 0;
-    padding: 0;
-  }
-`;
+// TODO : @66 FIX THIS
+// /**
+//  * We need to override the values of input because we have some CSS somewhere
+//  * that adds padding and margin, and this breaks the look of the antd Select.
+//  */
+// const StyledSelect = styled(Select)`
+//   input {
+//     margin: 0;
+//     padding: 0;
+//   }
+// `;
 
 const UserSelect: React.FunctionComponent<Props> = ({
   onChange,

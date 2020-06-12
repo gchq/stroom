@@ -16,9 +16,7 @@
 
 import * as React from "react";
 import { Route, RouteComponentProps, Switch } from "react-router";
-import {
-  PrivateRoute,
-} from "startup/Authentication";
+import { PrivateRoute } from "startup/Authentication";
 import AuthorisationManager, {
   UserAuthorisationEditor,
 } from "../AuthorisationManager";
@@ -28,7 +26,6 @@ import MetaBrowser from "components/MetaBrowser";
 import SwitchedDocRefEditor from "components/DocumentEditors/SwitchedDocRefEditor";
 import ErrorPage from "components/ErrorPage";
 import IndexVolumes from "components/IndexVolumes";
-import { SignIn } from "components/Authentication";
 import {
   ChangePassword,
   ResetPassword,
@@ -46,6 +43,7 @@ import Welcome from "components/Welcome";
 import AppChrome from "./AppChrome";
 import useAppNavigation from "lib/useAppNavigation";
 import DataVolumes from "components/DataVolumes/DataVolumesSectionContainer";
+import SignInFormContainer from "components/Authentication/SignInFormContainer";
 
 const renderWelcome = ({
   match: {
@@ -91,7 +89,11 @@ const Routes: React.FunctionComponent = () => {
         component={ConfirmPasswordResetEmail}
       />
 
-      <Route exact path={`${singlePagePrefix}/login`} component={SignIn} />
+      <Route
+        exact
+        path={`${singlePagePrefix}/login`}
+        component={SignInFormContainer}
+      />
       <Route
         exact
         path={`${singlePagePrefix}/changepassword`}

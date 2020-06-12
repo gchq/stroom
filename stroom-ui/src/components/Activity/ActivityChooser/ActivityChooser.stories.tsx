@@ -39,4 +39,4 @@ const TestHarness = () => (
 
 const stories = storiesOf("Sections/Activity", module);
 
-addThemedStories(stories, "Chooser",() => <TestHarness />);
+addThemedStories(stories, "Chooser", () => <TestHarness />);

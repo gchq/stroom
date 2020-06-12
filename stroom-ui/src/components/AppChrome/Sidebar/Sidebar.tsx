@@ -26,7 +26,7 @@ interface Props {
 
 const getMenuItems = (
   activeMenuItem: string,
-  isCollapsed: boolean = false,
+  isCollapsed = false,
   menuItems: MenuItemType[],
   menuItemIsOpenByKey: MenuItemsOpenState,
   menuItemToggled: MenuItemToggled,
@@ -35,7 +35,7 @@ const getMenuItems = (
   showMoveDialog: ShowCopyDocRefDialog,
   selectedItems: string[],
   highlightedItem?: MenuItemType,
-  depth: number = 0,
+  depth = 0,
 ) =>
   menuItems.map(menuItem => (
     <React.Fragment key={menuItem.key}>

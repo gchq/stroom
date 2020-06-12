@@ -32,8 +32,8 @@ import { IndexVolume } from "../indexVolumeApi";
 const stories = storiesOf("Sections", module);
 
 const TestHarness: React.FunctionComponent = () => {
-  var initialGroups = [indexVolumeGroup01, indexVolumeGroup02];
-  var initialVolumes = [indexVolume01, indexVolume02, indexVolume03];
+  const initialGroups = [indexVolumeGroup01, indexVolumeGroup02];
+  const initialVolumes = [indexVolume01, indexVolume02, indexVolume03];
 
   const [groups, setGroups] = React.useState<IndexVolumeGroup[]>(initialGroups);
   const handleAddGroup = useCallback(() => {

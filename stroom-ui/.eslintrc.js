@@ -7,9 +7,7 @@ module.exports = {
   parserOptions: {
     project: "./tsconfig.json",
   },
-  //extends: 'plugin:@typescript-eslint/recommended',
   extends: [
-    //"airbnb",
     "plugin:@typescript-eslint/recommended",
     "plugin:react/recommended",
     "prettier",

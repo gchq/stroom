@@ -36,7 +36,7 @@ const defaultValues: FormValues = {
   chosenDocRef: undefined,
 };
 
-let AppSearchAsForm: React.FunctionComponent<Props> = ({ typeFilter }) => {
+const AppSearchAsForm: React.FunctionComponent<Props> = ({ typeFilter }) => {
   const { value, useControlledInputProps } = useForm<FormValues>({
     initialValues: defaultValues,
   });

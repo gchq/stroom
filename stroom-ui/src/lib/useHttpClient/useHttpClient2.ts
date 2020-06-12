@@ -95,7 +95,7 @@ export const useHttpClient2 = (): HttpClient2 => {
         .then(r => r.json())
         .catch(catchImpl);
     },
-    [fetch],
+    [handle200, catchImpl],
   );
 
   return {

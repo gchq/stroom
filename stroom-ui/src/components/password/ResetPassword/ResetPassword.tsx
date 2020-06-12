@@ -27,31 +27,34 @@ const ResetPassword: React.FunctionComponent<{
     verifyPassword: string,
     email: string,
   ) => Promise<string>;
-}> = ({
-  isTokenExpired,
-  isTokenInvalid,
-  isTokenMissing,
-  onSubmit,
-  onValidate,
-}) => {
-  const failure = (
-    <div>
-      <h4>Unable to reset password!</h4>
-      {isTokenMissing || isTokenInvalid ? (
-        <p>I&apos;m afraid this password reset link is broken.</p>
-      ) : (
-        undefined
-      )}
-      {isTokenExpired ? (
-        <p>I&apos;m afraid this password reset link has expired.</p>
-      ) : (
-        undefined
-      )}
-    </div>
-  );
+}> = () => {
 
-  const showFailure = isTokenMissing || isTokenInvalid || isTokenExpired;
-  const showChangePasswordFields = !showFailure;
+  // TODO : @66 FIX THIS
+  // ({
+  // isTokenExpired,
+  // isTokenInvalid,
+  // isTokenMissing,
+  // onSubmit,
+  // onValidate,
+// }) => {
+  // const failure = (
+  //   <div>
+  //     <h4>Unable to reset password!</h4>
+  //     {isTokenMissing || isTokenInvalid ? (
+  //       <p>I&apos;m afraid this password reset link is broken.</p>
+  //     ) : (
+  //       undefined
+  //     )}
+  //     {isTokenExpired ? (
+  //       <p>I&apos;m afraid this password reset link has expired.</p>
+  //     ) : (
+  //       undefined
+  //     )}
+  //   </div>
+  // );
+  //
+  // const showFailure = isTokenMissing || isTokenInvalid || isTokenExpired;
+  // const showChangePasswordFields = !showFailure;
   return (
     <div className="container">
       <div className="section">
