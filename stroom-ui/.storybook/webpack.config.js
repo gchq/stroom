@@ -1,3 +1,5 @@
+const ForkTsCheckerWebpackPlugin = require('fork-ts-checker-webpack-plugin');
+
 const path = require("path");
 
 // Export a function. Accept the base config as the only param.
@@ -30,8 +32,20 @@ module.exports = ({ config, mode }) => {
     test: /\.(ts|tsx)$/,
     include: path.resolve(__dirname, "../src"),
     loader: require.resolve("ts-loader"),
+    options: {
+      // disable type checker - we will use it in fork plugin
+      transpileOnly: true,
+      // configFile: "tsconfig.storybook.json",
+      compilerOptions: {
+        "skipLibCheck": true,
+        "noEmit": false
+      }
+    },
   });
   config.resolve.extensions.push(".ts", ".tsx");
+
+  // Fork type checking.
+  config.plugins.push(new ForkTsCheckerWebpackPlugin());
 
   config.resolve.modules = [
     ...(config.resolve.modules || []),
