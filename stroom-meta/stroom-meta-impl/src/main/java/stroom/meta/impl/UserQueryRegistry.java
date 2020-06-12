@@ -2,13 +2,13 @@ package stroom.meta.impl;
 
 import stroom.task.api.TaskManager;
 import stroom.task.shared.TaskId;
-import stroom.util.logging.LogUtil;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import javax.inject.Inject;
 import javax.inject.Singleton;
+import java.util.Objects;
 import java.util.Optional;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ConcurrentMap;
@@ -18,7 +18,7 @@ class UserQueryRegistry {
 
     private static final Logger LOGGER = LoggerFactory.getLogger(UserQueryRegistry.class);
 
-    private final ConcurrentMap<String, ConcurrentMap<String, TaskId>> userToQueryIdsMap = new ConcurrentHashMap<>();
+    private final ConcurrentMap<Key, TaskId> userQueryToTaskMap = new ConcurrentHashMap<>();
 
     private final TaskManager taskManager;
 
@@ -27,41 +27,83 @@ class UserQueryRegistry {
         this.taskManager = taskManager;
     }
 
-    boolean cancelQuery(final String userId, final String queryId) {
-        return Optional.ofNullable(userToQueryIdsMap.get(userId))
-                .map(queryIdToTaskIdMap -> {
+    boolean terminateQuery(final String userId, final String queryId) {
+        Objects.requireNonNull(userId);
+        Objects.requireNonNull(queryId);
+        final Key key = new Key(userId, queryId);
 
-                    final TaskId taskId = queryIdToTaskIdMap.get(queryId);
-
-                    boolean result;
-                    if (taskId != null) {
-                        LOGGER.debug("Cancelling query {} for user {}", queryId, userId);
-                        taskManager.terminate(taskId);
-                        result = true;
-                    } else {
-                        LOGGER.debug("Future not found for queryId {}, userId {}", queryId, userId);
-                        result = false;
-                    }
-                    return result;
+        return Optional.ofNullable(userQueryToTaskMap.get(key))
+                .map(taskId -> {
+                    LOGGER.debug("Cancelling query {} for user {}", queryId, userId);
+                    taskManager.terminate(taskId);
+                    userQueryToTaskMap.remove(key);
+                    return true;
                 })
-                .orElse(false);
+                .orElseGet(() -> {
+                    LOGGER.debug("Future not found for queryId {}, userId {}", queryId, userId);
+                    return false;
+                });
     }
 
+    /**
+     * Marks a query as having been completed
+     */
+    void deRegisterQuery(final String userId, final String queryId) {
+        Objects.requireNonNull(userId);
+        Objects.requireNonNull(queryId);
+        userQueryToTaskMap.remove(new Key(userId, queryId));
+    }
+
+    /**
+     * Registers a query as in progress and holds its taskid
+     */
     void registerQuery(final String userId,
                        final String queryId,
                        final TaskId taskId) {
 
-        final ConcurrentMap<String, TaskId> queryIdToTaskIdMap = userToQueryIdsMap.computeIfAbsent(
-                userId,
-                k -> new ConcurrentHashMap<>());
+        Objects.requireNonNull(userId);
+        Objects.requireNonNull(queryId);
+        Objects.requireNonNull(taskId);
 
-        if (queryIdToTaskIdMap.containsKey(queryId)) {
-            throw new RuntimeException(LogUtil.message("Query {} already registered for user {}",
-                    queryId, userId));
+        TaskId previousTaskId = userQueryToTaskMap.putIfAbsent(new Key(userId, queryId), taskId);
+
+        if (previousTaskId != null) {
+            LOGGER.debug("Query {} already registered for user {}", queryId, userId);
         } else {
             // In case the query finishes very quickly
             LOGGER.debug("Registering taskId {}, queryId {}, userId {}", taskId, queryId, userId);
-            queryIdToTaskIdMap.put(queryId, taskId);
+        }
+    }
+
+    private static class Key {
+        private final String userId;
+        private final String queryId;
+
+        public Key(final String userId, final String queryId) {
+            this.userId = userId;
+            this.queryId = queryId;
+        }
+
+        @Override
+        public boolean equals(final Object o) {
+            if (this == o) return true;
+            if (o == null || getClass() != o.getClass()) return false;
+            final Key key = (Key) o;
+            return Objects.equals(userId, key.userId) &&
+                    Objects.equals(queryId, key.queryId);
+        }
+
+        @Override
+        public int hashCode() {
+            return Objects.hash(userId, queryId);
+        }
+
+        @Override
+        public String toString() {
+            return "Key{" +
+                    "userId='" + userId + '\'' +
+                    ", queryId='" + queryId + '\'' +
+                    '}';
         }
     }
 }

@@ -711,14 +711,13 @@ public class MetaServiceImpl implements MetaService, Searchable {
                             LOGGER.debug("Starting task {}", taskContext.getTaskId());
                             userQueryRegistry.registerQuery(userId, queryId, taskContext.getTaskId());
 
-//                            // TODO remove, here for dev testing to add a delay
-//                            while (!Thread.currentThread().isInterrupted()) {
-//                                try {
-//                                    Thread.sleep(1_000);
-//                                } catch (InterruptedException e) {
-//                                    Thread.currentThread().interrupt();
-//                                }
+                            // TODO remove, here for dev testing to add a big delay for cancellation testing
+//                            try {
+//                                Thread.sleep(10_000_000);
+//                            } catch (InterruptedException e) {
+//                                Thread.currentThread().interrupt();
 //                            }
+
                             return metaDao.getRetentionDeletionSummary(rules, criteria);
                         }));
 
@@ -735,7 +734,7 @@ public class MetaServiceImpl implements MetaService, Searchable {
                     throw new RuntimeException(e);
                 }
             } finally {
-                userQueryRegistry.cancelQuery(userId, queryId);
+                userQueryRegistry.deRegisterQuery(userId, queryId);
             }
             return summaries;
         });
@@ -744,7 +743,7 @@ public class MetaServiceImpl implements MetaService, Searchable {
     @Override
     public boolean cancelRetentionDeleteSummary(final String queryId) {
         return securityContext.secureResult(PermissionNames.MANAGE_POLICIES_PERMISSION, () ->
-                userQueryRegistry.cancelQuery(securityContext.getUserId(), queryId));
+                userQueryRegistry.terminateQuery(securityContext.getUserId(), queryId));
     }
 
     private List<MetaInfoSection.Entry> getStreamEntries(final Meta meta) {
