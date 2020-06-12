@@ -69,14 +69,14 @@ const ThemedContainer: React.FunctionComponent<Props> = ({
   // );
   //
 
-  const { theme, setTheme } = useTheme();
-
-  const onChange = useCallback(
-    (option: string) => {
-      setTheme(option);
-    },
-    [setTheme],
-  );
+  // const { theme, setTheme } = useTheme();
+  //
+  // const onChange = useCallback(
+  //   (option: string) => {
+  //     setTheme(option);
+  //   },
+  //   [setTheme],
+  // );
 
   // const onChange = React.useCallback(
   //   (d: ThemeOption) => {
@@ -85,25 +85,30 @@ const ThemedContainer: React.FunctionComponent<Props> = ({
   //   [setTheme],
   // );
 
-  return (
-    <div className={`${theme} raised-low ThemedStory__outer page`}>
-      <div className="ThemedStory__top">
-        <div>Theme:</div>
-        <ThemePicker
-          className="ThemedStory__themePicker"
-          value={theme}
-          onChange={onChange}
-        />
-      </div>
-      <div className="ThemedStory__bottom">
-        {centerComponent ? (
-          <div className="ThemedStory__inner-center">{component()}</div>
-        ) : (
-          <div className="ThemedStory__inner">{component()}</div>
-        )}
-      </div>
-    </div>
-  );
+  // return (
+  // <div className={`${theme} raised-low ThemedStory__outer page`}>
+  //   <div className="ThemedStory__top">
+  //     <div>Theme:</div>
+  //     <ThemePicker
+  //       className="ThemedStory__themePicker"
+  //       value={theme}
+  //       onChange={onChange}
+  //     />
+  //   </div>
+  //   <div className="ThemedStory__bottom">
+  //     {centerComponent ? (
+  //       <div className="ThemedStory__inner-center">{component()}</div>
+  //     ) : (
+  //       <div className="ThemedStory__inner">{component()}</div>
+  //     )}
+  //   </div>
+  // </div>
+  // );
+
+  if (centerComponent) {
+    return <div className="ThemedStory__inner-center">{component()}</div>;
+  }
+  return <div className="ThemedStory__inner">{component()}</div>;
 };
 
 export const addThemedStories = (

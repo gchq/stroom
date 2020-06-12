@@ -8,6 +8,13 @@
 // };
 //
 
+module.exports = {
+  addons: [
+    // Maybe other addons here...
+    'storybook-addon-themes'
+    // Or here...
+  ],
+};
 
 // module.exports = {
 //   stories: ['../src/**/*.stories.(ts|tsx|js|jsx)'],

@@ -126,6 +126,7 @@
     "react-docgen-typescript": "1.16.1",
     "react-docgen-typescript-loader": "3.6.0",
     "react-docgen-typescript-webpack-plugin": "1.1.0",
+    "storybook-addon-themes": "^5.4.1",
     "storybook-react-router": "^1.0.8",
     "tslint": "^5.20.1",
     "tslint-react-hooks": "2.2.1"

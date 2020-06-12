@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 import * as React from "react";
-import { configure, addDecorator } from "@storybook/react";
+import { configure, addDecorator, addParameters } from "@storybook/react"; // <- or your storybook framework
 import StroomDecorator from "../src/testing/storybook/StroomDecorator";
 
 import "../src/styles/main.scss";
@@ -26,5 +26,12 @@ function loadStories() {
 }
 
 addDecorator(StroomDecorator);
+
+addParameters({
+  themes: [
+    { name: "light", class: "theme-light", color: "#fff", default: true },
+    { name: "dark", class: "theme-dark", color: "#000" },
+  ],
+});
 
 configure(loadStories, module);
