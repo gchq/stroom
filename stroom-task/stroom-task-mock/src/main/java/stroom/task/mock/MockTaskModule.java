@@ -8,6 +8,7 @@ import stroom.task.shared.TaskId;
 import com.google.inject.AbstractModule;
 import com.google.inject.Provides;
 
+import java.util.UUID;
 import java.util.function.Consumer;
 import java.util.function.Function;
 import java.util.function.Supplier;
@@ -44,27 +45,45 @@ public class MockTaskModule extends AbstractModule {
         return new TaskContextFactory() {
             @Override
             public Runnable context(final String taskName, final Consumer<TaskContext> consumer) {
-                return null;
+                return () -> consumer.accept(createTaskContext());
             }
 
             @Override
             public Runnable context(final TaskContext parentContext, final String taskName, final Consumer<TaskContext> consumer) {
-                return null;
+                return () -> consumer.accept(createTaskContext());
             }
 
             @Override
             public <R> Supplier<R> contextResult(final String taskName, final Function<TaskContext, R> function) {
-                return null;
+                return () -> function.apply(createTaskContext());
             }
 
             @Override
             public <R> Supplier<R> contextResult(final TaskContext parentContext, final String taskName, final Function<TaskContext, R> function) {
-                return null;
+                return () -> function.apply(createTaskContext());
             }
 
             @Override
             public TaskContext currentContext() {
-                return null;
+                return createTaskContext();
+            }
+        };
+    }
+
+    private TaskContext createTaskContext() {
+        return new TaskContext() {
+            @Override
+            public void info(final Supplier<String> messageSupplier) {
+            }
+
+            @Override
+            public TaskId getTaskId() {
+                return new TaskId() {
+                    @Override
+                    public String getId() {
+                        return UUID.randomUUID().toString();
+                    }
+                };
             }
         };
     }
