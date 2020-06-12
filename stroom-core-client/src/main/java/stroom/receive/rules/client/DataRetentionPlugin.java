@@ -17,24 +17,28 @@
 
 package stroom.receive.rules.client;
 
-import com.google.inject.Inject;
-import com.google.inject.Provider;
-import com.google.web.bindery.event.shared.EventBus;
 import stroom.core.client.ContentManager;
 import stroom.core.client.MenuKeys;
-import stroom.menubar.client.event.BeforeRevealMenubarEvent;
 import stroom.core.client.presenter.MonitoringPlugin;
-import stroom.receive.rules.client.presenter.DataRetentionPolicyPresenter;
+import stroom.menubar.client.event.BeforeRevealMenubarEvent;
+import stroom.receive.rules.client.presenter.DataRetentionPresenter;
 import stroom.security.client.api.ClientSecurityContext;
 import stroom.security.shared.PermissionNames;
 import stroom.svg.client.SvgPresets;
 import stroom.widget.menu.client.presenter.IconMenuItem;
 import stroom.widget.menu.client.presenter.MenuItem;
 
-public class DataRetentionPolicyPlugin extends MonitoringPlugin<DataRetentionPolicyPresenter> {
+import com.google.inject.Inject;
+import com.google.inject.Provider;
+import com.google.web.bindery.event.shared.EventBus;
+
+public class DataRetentionPlugin extends MonitoringPlugin<DataRetentionPresenter> {
+
     @Inject
-    public DataRetentionPolicyPlugin(final EventBus eventBus, final ContentManager eventManager,
-                                     final Provider<DataRetentionPolicyPresenter> presenterProvider, final ClientSecurityContext securityContext) {
+    public DataRetentionPlugin(final EventBus eventBus,
+                               final ContentManager eventManager,
+                               final Provider<DataRetentionPresenter> presenterProvider,
+                               final ClientSecurityContext securityContext) {
         super(eventBus, eventManager, presenterProvider, securityContext);
     }
 
@@ -46,6 +50,13 @@ public class DataRetentionPolicyPlugin extends MonitoringPlugin<DataRetentionPol
     }
 
     private MenuItem createDataRetentionMenuItem() {
-        return new IconMenuItem(51, SvgPresets.HISTORY, SvgPresets.HISTORY, "Data Retention", null, true, () -> open());
+        return new IconMenuItem(
+                51,
+                SvgPresets.HISTORY,
+                SvgPresets.HISTORY,
+                "Data Retention",
+                null,
+                true,
+                this::open);
     }
 }

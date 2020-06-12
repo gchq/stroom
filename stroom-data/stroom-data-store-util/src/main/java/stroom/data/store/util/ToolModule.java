@@ -22,6 +22,7 @@ import stroom.dictionary.mock.MockWordListProviderModule;
 import stroom.docrefinfo.mock.MockDocRefInfoModule;
 import stroom.security.mock.MockSecurityContextModule;
 import stroom.statistics.mock.MockInternalStatisticsModule;
+import stroom.task.mock.MockTaskModule;
 import stroom.util.db.ForceCoreMigration;
 import stroom.util.entityevent.EntityEventBus;
 import stroom.util.servlet.MockServletModule;
@@ -46,6 +47,7 @@ public class ToolModule extends AbstractModule {
         install(new MockCollectionModule());
         install(new MockDocRefInfoModule());
         install(new MockWordListProviderModule());
+        install(new MockTaskModule());
 
         // Not using all the DB modules so just bind to an empty anonymous class
         bind(ForceCoreMigration.class).toInstance(new ForceCoreMigration() {

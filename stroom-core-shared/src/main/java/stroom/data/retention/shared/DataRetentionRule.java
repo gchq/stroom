@@ -94,7 +94,7 @@ public class DataRetentionRule {
                                                 final boolean enabled,
                                                 final ExpressionOperator expression) {
         // Forever so the age parts are ignored.
-        return new DataRetentionRule(ruleNumber, creationTime, name, enabled, expression, 1, TimeUnit.YEARS, true);
+        return new DataRetentionRule(ruleNumber, creationTime, name, enabled, expression, 50, TimeUnit.YEARS, true);
     }
 
     public static DataRetentionRule ageRule(final int ruleNumber,

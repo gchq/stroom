@@ -8,6 +8,10 @@ import stroom.dashboard.expression.v1.ValNull;
 import stroom.dashboard.expression.v1.ValString;
 import stroom.data.retention.api.DataRetentionConfig;
 import stroom.data.retention.api.DataRetentionRuleAction;
+import stroom.data.retention.shared.DataRetentionDeleteSummary;
+import stroom.data.retention.shared.DataRetentionRule;
+import stroom.data.retention.shared.DataRetentionRules;
+import stroom.data.retention.shared.FindDataRetentionImpactCriteria;
 import stroom.datasource.api.v2.AbstractField;
 import stroom.db.util.ExpressionMapper;
 import stroom.db.util.ExpressionMapperFactory;
@@ -28,6 +32,7 @@ import stroom.meta.shared.MetaFields;
 import stroom.meta.shared.SelectionSummary;
 import stroom.meta.shared.Status;
 import stroom.query.api.v2.ExpressionOperator;
+import stroom.query.api.v2.ExpressionOperator.Op;
 import stroom.query.api.v2.ExpressionUtil;
 import stroom.util.collections.BatchingIterator;
 import stroom.util.date.DateUtil;
@@ -409,6 +414,127 @@ class MetaDaoImpl implements MetaDao {
                     .execute());
         }
         return updateCount;
+    }
+
+    private Condition getFilterCriteriaCondition(final FindDataRetentionImpactCriteria criteria) {
+        final Condition filterCondition;
+        if (criteria != null
+                && criteria.getExpression() != null
+                && !criteria.getExpression().equals(new ExpressionOperator.Builder(Op.AND).build())) {
+
+            filterCondition = expressionMapper.apply(criteria.getExpression());
+        } else {
+            filterCondition = DSL.noCondition();
+        }
+        return filterCondition;
+    }
+
+    @Override
+    public List<DataRetentionDeleteSummary> getRetentionDeletionSummary(
+            final DataRetentionRules rules,
+            final FindDataRetentionImpactCriteria criteria) {
+
+        final List<DataRetentionDeleteSummary> result;
+
+        final List<DataRetentionRule> activeRules = Optional.ofNullable(rules)
+                .flatMap(rules2 -> Optional.ofNullable(rules2.getRules()))
+                .map(allRules -> allRules.stream()
+                        .filter(DataRetentionRule::isEnabled)
+                        .collect(Collectors.toList()))
+                .orElse(Collections.emptyList());
+
+        if (!activeRules.isEmpty()) {
+            CaseConditionStep<Integer> ruleNoCaseConditionStep = null;
+            final Map<Integer, DataRetentionRule> numberToRuleMap = new HashMap<>();
+            // Order is critical here as we are building a case statement
+            // Highest priority rules first, i.e. largest rule number
+            final Map<Integer, Condition> ruleNoToConditionMap = activeRules.stream()
+                    .collect(Collectors.toMap(
+                            DataRetentionRule::getRuleNumber,
+                            rule -> expressionMapper.apply(rule.getExpression())));
+
+            final List<Condition> orConditions = activeRules.stream()
+                    .map(rule -> ruleNoToConditionMap.get(rule.getRuleNumber()))
+                    .collect(Collectors.toList());
+
+            for (DataRetentionRule rule : activeRules) {
+                numberToRuleMap.put(rule.getRuleNumber(), rule);
+                final Condition ruleCondition = ruleNoToConditionMap.get(rule.getRuleNumber());
+
+                // We are not interested in counts for stuff being kept forever as they will never
+                // be deleted.
+                final Integer caseResult = rule.isForever()
+                        ? null
+                        : rule.getRuleNumber();
+
+                if (ruleNoCaseConditionStep == null) {
+                    ruleNoCaseConditionStep = DSL.when(ruleCondition, caseResult);
+                } else {
+                    ruleNoCaseConditionStep.when(ruleCondition, caseResult);
+                }
+            }
+            // If none of the rules matches then we don't to delete so return false
+            final Field<Integer> ruleNoCaseField = ruleNoCaseConditionStep.otherwise((Field<Integer>) null);
+
+            final byte statusIdDeleted = MetaStatusId.getPrimitiveValue(Status.DELETED);
+
+            final List<DataRetentionDeleteSummary> deleteSummaries = JooqUtil.contextResult(
+                    metaDbConnProvider, context -> {
+
+                        final String ruleNoFieldName = "rule_no";
+                        final String feedNameFieldName = "feed_name";
+                        final String typeNameFieldName = "type_name";
+
+                        // Get all meta records that are impacted by a rule and for each determine
+                        // which rule wins and get its rule number, along with feed and type
+                        // The OR condition is here to try and help the DB use indexes.
+                        // TODO Should maybe move the ruleNoCaseField into a sub select so we don't need
+                        //   to compute it for the select and the where
+                        final var detailTable = context
+                                .select(
+                                        metaFeed.NAME.as(feedNameFieldName),
+                                        metaType.NAME.as(typeNameFieldName),
+                                        ruleNoCaseField.as(ruleNoFieldName))
+                                .from(meta)
+                                .leftJoin(metaFeed).on(meta.FEED_ID.eq(metaFeed.ID))
+                                .leftJoin(metaType).on(meta.TYPE_ID.eq(metaType.ID))
+                                .where(meta.STATUS.notEqual(statusIdDeleted))
+                                .and(ruleNoCaseField.isNotNull()) // only want data that WILL be deleted
+                                .and(DSL.or(orConditions)) // Here to help use indexes
+                                .and(getFilterCriteriaCondition(criteria)) // UI filtering
+                                .asTable("detail");
+
+                        // Now get counts grouped by feed, type and rule
+                        return context
+                                .select(
+                                        detailTable.field(feedNameFieldName),
+                                        detailTable.field(typeNameFieldName),
+                                        detailTable.field(ruleNoFieldName),
+                                        DSL.count())
+                                .from(detailTable)
+                                .where(detailTable.field(ruleNoFieldName).isNotNull()) // ignore rows not impacted by a rule
+                                .groupBy(
+                                        detailTable.field(ruleNoFieldName),
+                                        detailTable.field(feedNameFieldName),
+                                        detailTable.field(typeNameFieldName))
+                                .fetch()
+                                .map(record -> {
+                                    int ruleNo = (int) record.get(ruleNoFieldName);
+
+                                    return new DataRetentionDeleteSummary(
+                                            (String) record.get(feedNameFieldName),
+                                            (String) record.get(typeNameFieldName),
+                                            ruleNo,
+                                            numberToRuleMap.get(ruleNo).getName(),
+                                            (int) record.get(DSL.count().getName()));
+                                });
+                    });
+            result = deleteSummaries;
+        } else {
+            // No rules so no point running a query
+            result = Collections.emptyList();
+        }
+        return result;
     }
 
     @Override
