@@ -7,6 +7,8 @@ and this project adheres to [Semantic Versioning](http://semver.org/).
 
 ## [Unreleased]
 
+* Change the fuzzy match filter to switch to a case sensitive wild-carded exact match when the input contains a `*`.
+
 * Issue **#1640** : Fix server error when clicking disabled delete/info icon for deleted streams.
 
 * Issue **#1639** : Default index volume group property changes.

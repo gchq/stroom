@@ -35,6 +35,8 @@ public class StringPredicateFactory {
             "((?<=[a-z])(?=[A-Z])|(?<=[0-9])(?=[A-Z])|(?<=[a-zA-Z])(?=[0-9])| )");
     private static final Pattern CAMEL_CASE_ABBREVIATIONS_PATTERN = Pattern.compile("([A-Z]+)([A-Z][a-z0-9])");
 
+    private static final String WILDCARD_CHAR = "*";
+
     // Static util methods only
     private StringPredicateFactory() {
     }
@@ -84,6 +86,8 @@ public class StringPredicateFactory {
         } else if (userInput.startsWith("^")) {
             // remove the ^ marker char from the beginning
             predicate = createCaseInsensitiveStartsWithPredicate(userInput.substring(1));
+        } else if (userInput.contains(WILDCARD_CHAR)) {
+            predicate = createWildCardedPredicate(userInput);
         } else {
             predicate = createCharsAnywherePredicate(userInput);
         }
@@ -297,16 +301,18 @@ public class StringPredicateFactory {
 
     @NotNull
     private static Predicate<String> createCharsAnywherePredicate(final String userInput) {
-        LOGGER.trace("creating chars appear anywhere in correct order predicate");
+        LOGGER.trace("Creating chars appear anywhere in correct order predicate");
         // All lower case so match on each char appearing somewhere in the text
         // in the correct order
         final String lowerCaseInput = userInput.toLowerCase();
         final StringBuilder patternBuilder = new StringBuilder();
         for (int i = 0; i < lowerCaseInput.length(); i++) {
-            patternBuilder.append(".*?");
+            patternBuilder.append(".*?"); // no-greedy match all
 
             char chr = userInput.charAt(i);
-            if (Character.isLetterOrDigit(chr)) {
+            if (chr == '*') {
+                patternBuilder.append(".*?"); // no-greedy match all
+            } else if (Character.isLetterOrDigit(chr)) {
                 patternBuilder.append(chr);
             } else {
                 // Might be a special char so escape it
@@ -315,14 +321,37 @@ public class StringPredicateFactory {
         }
         patternBuilder.append(".*?");
         final Pattern pattern = Pattern.compile(patternBuilder.toString(), Pattern.CASE_INSENSITIVE);
-        LOGGER.trace("Using pattern: {}", pattern);
+        LOGGER.trace("Using case insensitive pattern: {}", pattern);
         return toNullSafePredicate(false, pattern.asPredicate());
+    }
+
+    @NotNull
+    private static Predicate<String> createWildCardedPredicate(final String userInput) {
+        LOGGER.trace("Creating case sensitive wild-carded predicate");
+        // Like a case sensitive exact match but with wildcards
+        final StringBuilder patternBuilder = new StringBuilder();
+        for (int i = 0; i < userInput.length(); i++) {
+
+            char chr = userInput.charAt(i);
+            if (chr == '*') {
+                patternBuilder.append(".*?"); // no-greedy match all
+            } else if (Character.isLetterOrDigit(chr)) {
+                patternBuilder.append(chr);
+            } else {
+                // Might be a special char so escape it
+                patternBuilder.append(Pattern.quote(String.valueOf(chr)));
+            }
+        }
+        final Pattern pattern = Pattern.compile(patternBuilder.toString());
+        LOGGER.trace("Using pattern: {}", pattern);
+        // Use asMatchPredicate rather than asPredicate so we match on the full string
+        return toNullSafePredicate(false, pattern.asMatchPredicate());
     }
 
 
     @NotNull
     private static Predicate<String> createCaseInsensitiveExactMatchPredicate(final String userInput) {
-        LOGGER.trace("creating case insensitive exact match predicate");
+        LOGGER.trace("Creating case insensitive exact match predicate");
         final String lowerCaseInput = userInput.substring(1)
                 .substring(0, userInput.length() - 2);
         return toNullSafePredicate(false, stringUnderTest ->
