@@ -9,6 +9,10 @@ and this project adheres to [Semantic Versioning](http://semver.org/).
 
 * Add _Impact Summary_ tab to _Data Retention_ to show breakdown of counts of streams to be deleted.
 
+* Add support for the `.` separator in the word boundary fuzzy matching.
+
+* Change the fuzzy match filter to switch to a case sensitive wild-carded exact match when the input contains a `*`.
+
 * Issue **#1640** : Fix server error when clicking disabled delete/info icon for deleted streams.
 
 * Issue **#1639** : Default index volume group property changes.
