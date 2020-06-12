@@ -6,7 +6,6 @@ import stroom.task.shared.TaskId;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import javax.inject.Inject;
 import javax.inject.Singleton;
 import java.util.Objects;
 import java.util.Optional;
@@ -20,14 +19,7 @@ class UserQueryRegistry {
 
     private final ConcurrentMap<Key, TaskId> userQueryToTaskMap = new ConcurrentHashMap<>();
 
-    private final TaskManager taskManager;
-
-    @Inject
-    public UserQueryRegistry(final TaskManager taskManager) {
-        this.taskManager = taskManager;
-    }
-
-    boolean terminateQuery(final String userId, final String queryId) {
+    boolean terminateQuery(final String userId, final String queryId, final TaskManager taskManager) {
         Objects.requireNonNull(userId);
         Objects.requireNonNull(queryId);
         final Key key = new Key(userId, queryId);

@@ -743,7 +743,7 @@ public class MetaServiceImpl implements MetaService, Searchable {
     @Override
     public boolean cancelRetentionDeleteSummary(final String queryId) {
         return securityContext.secureResult(PermissionNames.MANAGE_POLICIES_PERMISSION, () ->
-                userQueryRegistry.terminateQuery(securityContext.getUserId(), queryId));
+                userQueryRegistry.terminateQuery(securityContext.getUserId(), queryId, taskManager));
     }
 
     private List<MetaInfoSection.Entry> getStreamEntries(final Meta meta) {
