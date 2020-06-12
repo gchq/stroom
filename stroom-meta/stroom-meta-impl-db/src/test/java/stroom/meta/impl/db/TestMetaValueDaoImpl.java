@@ -32,6 +32,7 @@ import stroom.meta.shared.MetaFields;
 import stroom.query.api.v2.ExpressionOperator;
 import stroom.query.api.v2.ExpressionTerm.Condition;
 import stroom.security.mock.MockSecurityContextModule;
+import stroom.task.mock.MockTaskModule;
 import stroom.test.common.util.db.DbTestModule;
 import stroom.util.date.DateUtil;
 
@@ -66,7 +67,8 @@ class TestMetaValueDaoImpl {
                 new MockWordListProviderModule(),
                 new CacheModule(),
                 new DbTestModule(),
-                new MetaTestModule())
+                new MetaTestModule(),
+                new MockTaskModule())
                 .injectMembers(this);
         metaValueConfig.setAddAsync(false);
         // Delete everything
