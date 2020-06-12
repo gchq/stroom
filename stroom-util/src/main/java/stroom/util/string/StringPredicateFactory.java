@@ -17,7 +17,7 @@ public class StringPredicateFactory {
     private static final LambdaLogger LOGGER = LambdaLoggerFactory.getLogger(StringPredicateFactory.class);
 
     // Treat brackets as word separators, e.g. "Events (XML)"
-    private static final Pattern DEFAULT_SEPARATOR_CHAR_CLASS = Pattern.compile("[ _\\-()\\[\\]]");
+    private static final Pattern DEFAULT_SEPARATOR_CHAR_CLASS = Pattern.compile("[ _\\-()\\[\\].]");
 
     private static final Pattern CASE_INSENS_WORD_LETTER_CHAR_CLASS = Pattern.compile("[a-z0-9]");
 
