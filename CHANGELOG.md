@@ -6,6 +6,10 @@ and this project adheres to [Semantic Versioning](http://semver.org/).
 
 ## [Unreleased]
 
+* Issue **#1627** : Fix Up/Down buttons on Rule Set screen. Now keeps selection after use.
+
+* Issue **#1277** : Fix Enable/Disable toggle button on Rule Set screen.
+
 
 ## [v7.0-beta.37] - 2020-06-15
 

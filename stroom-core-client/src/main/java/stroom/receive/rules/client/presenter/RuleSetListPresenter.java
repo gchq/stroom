@@ -17,22 +17,25 @@
 
 package stroom.receive.rules.client.presenter;
 
-import com.google.gwt.cell.client.TextCell;
-import com.google.gwt.user.cellview.client.Column;
-import com.google.inject.Inject;
-import com.google.web.bindery.event.shared.EventBus;
-import com.gwtplatform.mvp.client.MyPresenterWidget;
 import stroom.data.client.presenter.ColumnSizeConstants;
 import stroom.data.grid.client.DataGridView;
 import stroom.data.grid.client.DataGridViewImpl;
-import stroom.data.grid.client.EndColumn;
 import stroom.receive.rules.shared.ReceiveDataRule;
 import stroom.svg.client.SvgPreset;
 import stroom.util.client.BorderUtil;
+import stroom.util.client.DataGridUtil;
 import stroom.widget.button.client.ButtonView;
 import stroom.widget.util.client.MultiSelectionModel;
 
+import com.google.gwt.safehtml.shared.SafeHtml;
+import com.google.gwt.safehtml.shared.SafeHtmlBuilder;
+import com.google.gwt.safehtml.shared.SafeHtmlUtils;
+import com.google.inject.Inject;
+import com.google.web.bindery.event.shared.EventBus;
+import com.gwtplatform.mvp.client.MyPresenterWidget;
+
 import java.util.List;
+import java.util.function.Function;
 
 public class RuleSetListPresenter extends MyPresenterWidget<DataGridView<ReceiveDataRule>> {
     @Inject
@@ -50,43 +53,38 @@ public class RuleSetListPresenter extends MyPresenterWidget<DataGridView<Receive
      */
     private void initTableColumns() {
         // Rule.
-        final Column<ReceiveDataRule, String> ruleColumn = new Column<ReceiveDataRule, String>(new TextCell()) {
-            @Override
-            public String getValue(final ReceiveDataRule row) {
-                return String.valueOf(row.getRuleNumber());
-            }
-        };
-        getView().addResizableColumn(ruleColumn, "Rule", 40);
+        getView().addResizableColumn(
+                DataGridUtil.htmlColumnBuilder((ReceiveDataRule row) ->
+                        getSafeHtml(row, row2 -> Integer.toString(row2.getRuleNumber())))
+                        .rightAligned()
+                        .build(),
+                DataGridUtil.createRightAlignedHeader("Rule"),
+                40);
 
         // Name.
-        final Column<ReceiveDataRule, String> nameColumn = new Column<ReceiveDataRule, String>(new TextCell()) {
-            @Override
-            public String getValue(final ReceiveDataRule row) {
-                return String.valueOf(row.getName());
-            }
-        };
-        getView().addResizableColumn(nameColumn, "Name", ColumnSizeConstants.MEDIUM_COL);
+        getView().addResizableColumn(
+                DataGridUtil.htmlColumnBuilder((ReceiveDataRule row) ->
+                        getSafeHtml(row, ReceiveDataRule::getName))
+                        .build(),
+                "Name",
+                ColumnSizeConstants.MEDIUM_COL);
 
         // Expression.
-        final Column<ReceiveDataRule, String> expressionColumn = new Column<ReceiveDataRule, String>(new TextCell()) {
-            @Override
-            public String getValue(final ReceiveDataRule row) {
-                return row.getExpression().toString();
-            }
-        };
-        getView().addResizableColumn(expressionColumn, "Expression", 500);
+        getView().addResizableColumn(
+                DataGridUtil.htmlColumnBuilder((ReceiveDataRule row) ->
+                        getSafeHtml(row, row2 -> row2.getExpression().toString()))
+                        .build(),
+                "Expression",
+                500);
 
         // Action.
-        final Column<ReceiveDataRule, String> actionColumn = new Column<ReceiveDataRule, String>(new TextCell()) {
-            @Override
-            public String getValue(final ReceiveDataRule row) {
-                return row.getAction().getDisplayValue();
-            }
-        };
-        getView().addResizableColumn(actionColumn, "Action", ColumnSizeConstants.SMALL_COL);
+        getView().addResizableColumn(
+                DataGridUtil.safeHtmlColumn((ReceiveDataRule row) ->
+                        getSafeHtml(row, row2 -> row2.getAction().getDisplayValue())),
+                "Action",
+                ColumnSizeConstants.SMALL_COL);
 
-
-        getView().addEndColumn(new EndColumn<>());
+        DataGridUtil.addEndColumn(getView());
     }
 
     public void setData(final List<ReceiveDataRule> data) {
@@ -100,5 +98,19 @@ public class RuleSetListPresenter extends MyPresenterWidget<DataGridView<Receive
 
     public ButtonView add(final SvgPreset preset) {
         return getView().addButton(preset);
+    }
+
+    private SafeHtml getSafeHtml(final ReceiveDataRule row,
+                                 final Function<ReceiveDataRule, String> valueFunc) {
+        final String value = valueFunc.apply(row);
+        if (row.isEnabled()) {
+            return SafeHtmlUtils.fromString(value);
+        } else {
+            final SafeHtmlBuilder builder = new SafeHtmlBuilder();
+            builder.appendHtmlConstant("<span style=\"color:grey\">");
+            builder.appendEscaped(value);
+            builder.appendHtmlConstant("</span>");
+            return builder.toSafeHtml();
+        }
     }
 }
