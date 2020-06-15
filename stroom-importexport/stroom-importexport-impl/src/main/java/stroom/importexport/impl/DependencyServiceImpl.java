@@ -41,26 +41,34 @@ public class DependencyServiceImpl implements DependencyService {
                 getDependencies(criteria, taskContext)).get();
     }
 
-    private ResultPage<Dependency> getDependencies(final DependencyCriteria criteria, final TaskContext parentTaskContext) {
+    private ResultPage<Dependency> getDependencies(final DependencyCriteria criteria,
+                                                   final TaskContext parentTaskContext) {
         final Map<DocRef, Set<DocRef>> allDependencies = importExportActionHandlers
                 .getHandlers()
                 .values()
                 .parallelStream()
                 .map(handler ->
-                        taskContextFactory.contextResult(parentTaskContext, "Get " + handler.getType() + " dependencies", taskContext -> {
-                            Map<DocRef, Set<DocRef>> deps = null;
-                            try {
-                                deps = handler.getDependencies();
-                            } catch (final RuntimeException e) {
-                                LOGGER.error(e.getMessage(), e);
-                            }
-                            return deps;
-                        }).get())
+                        taskContextFactory.contextResult(
+                                parentTaskContext,
+                                "Get " + handler.getType() + " dependencies",
+                                taskContext -> {
+                                    Map<DocRef, Set<DocRef>> deps = null;
+                                    try {
+                                        deps = handler.getDependencies();
+                                    } catch (final RuntimeException e) {
+                                        LOGGER.error(e.getMessage(), e);
+                                    }
+                                    return deps;
+                                }).get())
                 .filter(Objects::nonNull)
                 .map(Map::entrySet)
                 .flatMap(Set::stream)
-                .collect(Collectors.toMap(Map.Entry::getKey, Map.Entry::getValue, (e1, e2) ->
-                        Stream.concat(e1.stream(), e2.stream()).collect(Collectors.toSet())));
+                .collect(Collectors.toMap(
+                        Map.Entry::getKey,
+                        Map.Entry::getValue,
+                        (e1, e2) ->
+                                Stream.concat(e1.stream(), e2.stream())
+                                        .collect(Collectors.toSet())));
 
         final List<Dependency> dependencies = new ArrayList<>();
         allDependencies.forEach((key, value) ->

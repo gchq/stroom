@@ -1,9 +1,11 @@
 package stroom.util.client;
 
 import stroom.cell.expander.client.ExpanderCell;
+import stroom.cell.info.client.SvgCell;
 import stroom.data.grid.client.DataGridView;
 import stroom.data.grid.client.EndColumn;
 import stroom.data.grid.client.OrderByColumn;
+import stroom.svg.client.SvgPreset;
 import stroom.util.shared.BaseCriteria;
 import stroom.util.shared.Expander;
 import stroom.util.shared.Sort;
@@ -73,6 +75,11 @@ public class DataGridUtil {
                 return cellValueExtractor.apply(row);
             }
         };
+    }
+
+    public static <T_ROW> Column<T_ROW, SvgPreset> svgPresetColumn(
+            final Function<T_ROW, SvgPreset> cellValueExtractor) {
+        return column(cellValueExtractor, SvgCell::new);
     }
 
     public static <T_ROW> Column<T_ROW, SafeHtml> safeHtmlColumn(
@@ -165,8 +172,11 @@ public class DataGridUtil {
                                             final BaseCriteria criteria,
                                             final Runnable onSortChange) {
 
-            view.addColumnSortHandler(event -> {
-            if (event.getColumn() instanceof OrderByColumn<?, ?> && event.getColumn().isSortable()) {
+        view.addColumnSortHandler(event -> {
+            if (event != null
+                    && event.getColumn() instanceof OrderByColumn<?, ?>
+                    && event.getColumn().isSortable()) {
+
                 final OrderByColumn<?, ?> orderByColumn = (OrderByColumn<?, ?>) event.getColumn();
                 if (event.isSortAscending()) {
                     criteria.setSort(
@@ -265,6 +275,12 @@ public class DataGridUtil {
         return new ColumnBuilder<>(cellExtractor, Function.identity(), SafeHtmlCell::new);
     }
 
+    public static <T_ROW> ColumnBuilder<T_ROW, SvgPreset, SvgPreset, Cell<SvgPreset>> svgPresetColumnBuilder(
+            final Function<T_ROW, SvgPreset> cellExtractor) {
+
+        return new ColumnBuilder<>(cellExtractor, Function.identity(), SvgCell::new);
+    }
+
     public static class ColumnBuilder<T_ROW, T_RAW_VAL, T_CELL_VAL, T_CELL extends Cell<T_CELL_VAL>> {
         private final Function<T_ROW, T_RAW_VAL> valueExtractor;
         private final Function<T_RAW_VAL, T_CELL_VAL> formatter;
@@ -308,6 +324,7 @@ public class DataGridUtil {
                 final boolean isIgnoreCase) {
             this.isSorted = true;
             this.isIgnoreCaseOrdering = isIgnoreCase;
+            this.isSortableSupplier = () -> true;
             this.fieldName = Objects.requireNonNull(fieldName);
             return this;
         }
