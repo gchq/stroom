@@ -1,44 +1,34 @@
 import * as React from "react";
 import { pipe } from "ramda";
-
+import { DragDropContext } from "react-dnd";
+import HTML5Backend from "react-dnd-html5-backend";
 import StoryRouter from "storybook-react-router";
 import ReactModal from "react-modal";
 
 import { useTestServer } from "./PollyDecorator";
-import testData from "../data";
-import { withRouter, RouteComponentProps } from "react-router";
-import { AuthenticationContext } from "startup/Authentication";
 
-import { DragDropContext } from "react-dnd";
-import HTML5Backend from "react-dnd-html5-backend";
-
-import { Routes } from "components/AppChrome";
 import setupFontAwesome from "lib/setupFontAwesome";
-
+import testData from "../data";
 import { ThemeContextProvider } from "lib/useTheme/useTheme";
+import { withRouter, RouteComponentProps } from "react-router";
 import { CustomRouter } from "lib/useRouter";
-
-import { createBrowserHistory as createHistory } from "history";
 import ConfigProvider from "startup/config/ConfigProvider";
-
-import "styles/main.scss";
 import { AuthorisationContextProvider } from "startup/Authorisation";
+import { AuthenticationContext } from "startup/Authentication";
 import { DocumentTreeContextProvider } from "components/DocumentEditors/api/explorer";
 import { ErrorReportingContextProvider } from "components/ErrorPage";
 
-export const history = createHistory();
-
-const DndRoutes = DragDropContext(HTML5Backend)(Routes);
-
+import "styles/main.scss";
+import { FunctionComponent } from "react";
 setupFontAwesome();
 
-const WithTestServer: React.FunctionComponent = ({ children }) => {
+const WithTestServer: FunctionComponent = ({ children }) => {
   useTestServer(testData);
 
   return <div>{children}</div>;
 };
 
-const RouteWrapper: React.StatelessComponent<RouteComponentProps> = ({
+const RouteWrapper: FunctionComponent<RouteComponentProps> = ({
   children,
   history,
 }) => {
@@ -54,8 +44,6 @@ const DragDropRouted = pipe(
 )(RouteWrapper);
 
 ReactModal.setAppElement("#root");
-
-setupFontAwesome();
 
 export default (storyFn: any) =>
   StoryRouter()(() => (
