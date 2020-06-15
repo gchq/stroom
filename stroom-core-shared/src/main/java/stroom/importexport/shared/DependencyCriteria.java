@@ -13,8 +13,12 @@ import java.util.List;
 
 @JsonInclude(Include.NON_NULL)
 public class DependencyCriteria extends BaseCriteria {
-    public static final String FIELD_FROM = "From";
-    public static final String FIELD_TO = "To";
+    public static final String FIELD_FROM_TYPE = "From (Type)";
+    public static final String FIELD_FROM_NAME = "From (Name)";
+    public static final String FIELD_FROM_UUID = "From (UUID)";
+    public static final String FIELD_TO_TYPE = "To (Type)";
+    public static final String FIELD_TO_NAME = "To (Name)";
+    public static final String FIELD_TO_UUID = "To (UUID)";
     public static final String FIELD_STATUS = "Status";
 
     public DependencyCriteria() {

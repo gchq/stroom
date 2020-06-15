@@ -21,7 +21,6 @@ import stroom.data.client.presenter.ColumnSizeConstants;
 import stroom.data.client.presenter.RestDataProvider;
 import stroom.data.grid.client.DataGridView;
 import stroom.data.grid.client.DataGridViewImpl;
-import stroom.data.grid.client.OrderByColumn;
 import stroom.dispatch.client.Rest;
 import stroom.dispatch.client.RestFactory;
 import stroom.docref.DocRef;
@@ -37,27 +36,32 @@ import stroom.svg.client.SvgPresets;
 import stroom.util.client.DataGridUtil;
 import stroom.util.client.ImageUtil;
 import stroom.util.shared.ResultPage;
-import stroom.util.shared.Sort.Direction;
 
 import com.google.gwt.core.client.GWT;
 import com.google.gwt.safehtml.shared.SafeHtml;
 import com.google.gwt.safehtml.shared.SafeHtmlBuilder;
-import com.google.gwt.user.cellview.client.ColumnSortEvent;
 import com.google.inject.Inject;
 import com.google.web.bindery.event.shared.EventBus;
 
 import java.util.HashMap;
 import java.util.Map;
 import java.util.function.Consumer;
+import java.util.function.Function;
 import java.util.stream.Collectors;
 
-public class DependenciesPresenter extends ContentTabPresenter<DataGridView<Dependency>> implements ColumnSortEvent.Handler {
+public class DependenciesPresenter extends ContentTabPresenter<DataGridView<Dependency>> {
     private static final ContentResource CONTENT_RESOURCE = GWT.create(ContentResource.class);
     private static final ExplorerResource EXPLORER_RESOURCE = GWT.create(ExplorerResource.class);
+
+    private static final int COL_WIDTH_TYPE = 100;
+    private static final int COL_WIDTH_NAME = 300;
+    private static final int COL_WIDTH_UUID = 270;
 
     private final RestFactory restFactory;
     private final DependencyCriteria criteria;
     private final RestDataProvider<Dependency, ResultPage<Dependency>> dataProvider;
+
+    // Holds all the doc type icons
     private Map<String, SvgPreset> typeToSvgMap = new HashMap<>();
 
     @Inject
@@ -68,10 +72,13 @@ public class DependenciesPresenter extends ContentTabPresenter<DataGridView<Depe
 
         refreshDocTypeIcons();
 
-        dataProvider = new RestDataProvider<Dependency, ResultPage<Dependency>>(eventBus, criteria.obtainPageRequest()) {
+        dataProvider = new RestDataProvider<Dependency, ResultPage<Dependency>>(
+                eventBus,
+                criteria.obtainPageRequest()) {
             @Override
             protected void exec(final Consumer<ResultPage<Dependency>> dataConsumer,
                                 final Consumer<Throwable> throwableConsumer) {
+
                 final Rest<ResultPage<Dependency>> rest = restFactory.create();
                 rest
                         .onSuccess(dataConsumer)
@@ -86,36 +93,75 @@ public class DependenciesPresenter extends ContentTabPresenter<DataGridView<Depe
 
     private void initColumns() {
 
-        getView().addColumn(DataGridUtil.svgPresetColumnBuilder((Dependency row) -> getDocTypeIcon(row.getFrom()))
+        // From (Icon)
+        getView().addColumn(DataGridUtil.svgPresetColumnBuilder((Dependency row) ->
+                        getDocTypeIcon(row.getFrom()))
                         .build(),
                 "<br/>",
                 ColumnSizeConstants.ICON_COL);
 
-        getView().addResizableColumn(DataGridUtil.htmlColumnBuilder((Dependency row) -> docRefToString(row.getFrom()))
-                        .withSorting(DependencyCriteria.FIELD_FROM, true)
+        // From (Type)
+        getView().addResizableColumn(DataGridUtil.textColumnBuilder((Dependency row) ->
+                        getValue(row, Dependency::getFrom, DocRef::getType))
+                        .withSorting(DependencyCriteria.FIELD_FROM_TYPE, true)
                         .build(),
-                DependencyCriteria.FIELD_FROM,
-                500);
+                DependencyCriteria.FIELD_FROM_TYPE,
+                COL_WIDTH_TYPE);
 
-        getView().addColumn(DataGridUtil.svgPresetColumnBuilder((Dependency row) -> getDocTypeIcon(row.getTo()))
+        // From (Name)
+        getView().addResizableColumn(DataGridUtil.textColumnBuilder((Dependency row) ->
+                        getValue(row, Dependency::getFrom, DocRef::getName))
+                        .withSorting(DependencyCriteria.FIELD_FROM_NAME, true)
+                        .build(),
+                DependencyCriteria.FIELD_FROM_NAME,
+                COL_WIDTH_NAME);
+
+        // From (UUID)
+        getView().addResizableColumn(DataGridUtil.htmlColumnBuilder((Dependency row) ->
+                        getUUID(row, Dependency::getFrom))
+                        .build(),
+                DependencyCriteria.FIELD_FROM_UUID,
+                COL_WIDTH_UUID);
+
+        // To (Icon)
+        getView().addColumn(DataGridUtil.svgPresetColumnBuilder((Dependency row) ->
+                        getDocTypeIcon(row.getTo()))
                         .build(),
                 "<br/>",
                 ColumnSizeConstants.ICON_COL);
 
-        getView().addResizableColumn(DataGridUtil.htmlColumnBuilder((Dependency row) -> docRefToString(row.getTo()))
-                        .withSorting(DependencyCriteria.FIELD_TO, true)
+        // To (Type)
+        getView().addResizableColumn(DataGridUtil.textColumnBuilder((Dependency row) ->
+                        getValue(row, Dependency::getTo, DocRef::getType))
+                        .withSorting(DependencyCriteria.FIELD_TO_TYPE, true)
                         .build(),
-                DependencyCriteria.FIELD_TO,
-                500);
+                DependencyCriteria.FIELD_TO_TYPE,
+                COL_WIDTH_TYPE);
 
+        // To (Name)
+        getView().addResizableColumn(DataGridUtil.textColumnBuilder((Dependency row) ->
+                        getValue(row, Dependency::getTo, DocRef::getName))
+                        .withSorting(DependencyCriteria.FIELD_TO_NAME, true)
+                        .build(),
+                DependencyCriteria.FIELD_TO_NAME,
+                COL_WIDTH_NAME);
+
+        // To (UUID)
+        getView().addResizableColumn(DataGridUtil.htmlColumnBuilder((Dependency row) ->
+                        getUUID(row, Dependency::getFrom))
+                        .build(),
+                DependencyCriteria.FIELD_TO_UUID,
+                COL_WIDTH_UUID);
+
+        // Status
         getView().addResizableColumn(DataGridUtil.htmlColumnBuilder(this::getStatusValue)
                         .withSorting(DependencyCriteria.FIELD_STATUS, false)
+                        .centerAligned()
                         .build(),
-                DependencyCriteria.FIELD_STATUS,
-                100);
+                DataGridUtil.createCenterAlignedHeader(DependencyCriteria.FIELD_STATUS),
+                60);
 
         DataGridUtil.addEndColumn(getView());
-
         DataGridUtil.addColumnSortHandler(getView(), criteria, dataProvider::refresh);
     }
 
@@ -137,21 +183,47 @@ public class DependenciesPresenter extends ContentTabPresenter<DataGridView<Depe
                 .fetchDocumentTypes();
     }
 
-    private SafeHtml docRefToString(final DocRef docRef) {
-        final SafeHtmlBuilder builder = new SafeHtmlBuilder();
-        builder.appendEscaped(docRef.getType());
-//        builder.appendEscaped(" ");
-        if (docRef.getName() != null && !docRef.getName().isEmpty()) {
-            builder.appendEscaped(" - ");
-            builder.appendEscaped(docRef.getName());
+//    private SafeHtml docRefToString(final DocRef docRef) {
+//        final SafeHtmlBuilder builder = new SafeHtmlBuilder();
+//        builder.appendEscaped(docRef.getType());
+////        builder.appendEscaped(" ");
+//        if (docRef.getName() != null && !docRef.getName().isEmpty()) {
+//            builder.appendEscaped(" - ");
+//            builder.appendEscaped(docRef.getName());
+//        }
+//        // UUIDs in grey to make the rest easier to read
+//        builder.appendHtmlConstant("<span style=\"color:grey\">");
+//        builder.appendEscaped(" {");
+//        builder.appendEscaped(docRef.getUuid());
+//        builder.appendEscaped("}");
+//        builder.appendHtmlConstant("</span>");
+//        return (builder.toSafeHtml());
+//    }
+
+    private String getValue(final Dependency row,
+                            final Function<Dependency, DocRef> docRefExtractor,
+                            final Function<DocRef, String> valueExtractor) {
+
+        final DocRef docRef = docRefExtractor.apply(row);
+
+        if (docRef != null) {
+            return valueExtractor.apply(docRef);
+        } else {
+            return null;
         }
-        // UUIDs in grey to make the rest easier to read
+    }
+
+    private SafeHtml getUUID(final Dependency row,
+                             final Function<Dependency, DocRef> docRefExtractor) {
+
+        final DocRef docRef = docRefExtractor.apply(row);
+        final String uuid = docRef != null ? docRef.getUuid() : null;
+
+        final SafeHtmlBuilder builder = new SafeHtmlBuilder();
         builder.appendHtmlConstant("<span style=\"color:grey\">");
-        builder.appendEscaped(" {");
-        builder.appendEscaped(docRef.getUuid());
-        builder.appendEscaped("}");
+        builder.appendEscaped(uuid);
         builder.appendHtmlConstant("</span>");
-        return (builder.toSafeHtml());
+        return builder.toSafeHtml();
     }
 
     private SvgPreset getDocTypeIcon(final DocRef docRef) {
@@ -170,31 +242,17 @@ public class DependenciesPresenter extends ContentTabPresenter<DataGridView<Depe
     private SafeHtml getStatusValue(final Dependency row) {
         final SafeHtmlBuilder builder = new SafeHtmlBuilder();
         final String value;
+        final String commonStyles = "font-weight:bold";
         if (row.isOk()) {
             value = "OK";
-            builder.appendHtmlConstant("<span style=\"color:green; font-weight:bold\">");
+            builder.appendHtmlConstant("<span style=\"color:green;" + commonStyles + "\">");
         } else {
             value = "Missing";
-            builder.appendHtmlConstant("<span style=\"color:red; font-weight:bold\">");
+            builder.appendHtmlConstant("<span style=\"color:red;" + commonStyles + "\">");
         }
         builder.appendEscaped(value);
         builder.appendHtmlConstant("</span>");
-        return (builder.toSafeHtml());
-    }
-
-    @Override
-    public void onColumnSort(final ColumnSortEvent event) {
-        if (event.getColumn() instanceof OrderByColumn<?, ?>) {
-            final OrderByColumn<?, ?> orderByColumn = (OrderByColumn<?, ?>) event.getColumn();
-            if (criteria != null) {
-                if (event.isSortAscending()) {
-                    criteria.setSort(orderByColumn.getField(), Direction.ASCENDING, orderByColumn.isIgnoreCase());
-                } else {
-                    criteria.setSort(orderByColumn.getField(), Direction.DESCENDING, orderByColumn.isIgnoreCase());
-                }
-                dataProvider.refresh();
-            }
-        }
+        return builder.toSafeHtml();
     }
 
     @Override
