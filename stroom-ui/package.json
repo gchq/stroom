@@ -77,17 +77,6 @@
     "yup": "^0.29.1",
     "zxcvbn": "^4.4.2"
   },
-  "lint-staged": {
-    "*.{ts,tsx,js,jsx}": [
-      "pretty-quick --staged",
-      "eslint --fix",
-      "git add"
-    ],
-    "*.{json,md,scss,yaml,yml}": [
-      "pretty-quick --staged",
-      "git add"
-    ]
-  },
   "scripts": {
     "start": "react-scripts start",
     "build": "react-scripts build",
@@ -103,38 +92,30 @@
     "@storybook/addons": "^5.3.19",
     "@storybook/preset-create-react-app": "^3.0.1",
     "@storybook/react": "^5.3.19",
-    "@types/node": "^13.1.2",
-    "@types/react": "16.9.17",
-    "@types/react-dom": "16.9.4",
-    "@typescript-eslint/eslint-plugin": "2.14.0",
-    "@typescript-eslint/parser": "2.14.0",
-    "awesome-typescript-loader": "5.2.1",
-    "babel-core": "6.26.3",
-    "css-loader": "2.1.1",
-    "eslint-config-prettier": "6.9.0",
-    "eslint-plugin-import": "2.19.1",
-    "eslint-plugin-jsx-a11y": "6.2.3",
-    "eslint-plugin-prettier": "3.1.2",
-    "eslint-plugin-react": "7.17.0",
-    "fibers": "^4.0.2",
+    "@typescript-eslint/eslint-plugin": "^3.2.0",
+    "@typescript-eslint/parser": "^3.2.0",
+    "eslint-config-prettier": "^6.11.0",
+    "eslint-plugin-prettier": "^3.1.4",
+    "eslint-plugin-react": "^7.20.0",
     "fork-ts-checker-webpack-plugin": "^4.1.6",
-    "lint-staged": "8.1.5",
-    "npm-run-all": "4.1.5",
-    "postcss-loader": "3.0.0",
-    "prettier": "1.19.1",
-    "pretty-quick": "1.10.0",
-    "react-docgen-typescript": "1.16.1",
-    "react-docgen-typescript-loader": "3.6.0",
-    "react-docgen-typescript-webpack-plugin": "1.1.0",
+    "prettier": "^2.0.5",
     "storybook-addon-themes": "^5.4.1",
-    "storybook-react-router": "^1.0.8",
-    "tslint": "^5.20.1",
-    "tslint-react-hooks": "2.2.1"
+    "storybook-react-router": "^1.0.8"
   },
   "browserslist": [
     ">0.2%",
     "not dead",
     "not ie <= 11",
     "not op_mini all"
-  ]
+  ],
+  "husky": {
+    "hooks": {
+      "pre-commit": "lint-staged"
+    }
+  },
+  "lint-staged": {
+    "*.{js,ts,tsx}": [
+      "eslint --fix"
+    ]
+  }
 }

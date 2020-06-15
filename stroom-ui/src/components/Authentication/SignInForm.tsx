@@ -33,8 +33,9 @@ export interface Props {
   allowPasswordResets?: boolean;
 }
 
-export const SignInForm: React.FunctionComponent<Props &
-  FormikProps<FormValues>> = ({
+export const SignInForm: React.FunctionComponent<
+  Props & FormikProps<FormValues>
+> = ({
   values,
   errors,
   touched,
@@ -103,9 +104,7 @@ export const SignInForm: React.FunctionComponent<Props &
             >
               Forgot password?
             </NavLink>
-          ) : (
-            undefined
-          )}
+          ) : undefined}
         </div>
       </form>
     </FormContainer>
