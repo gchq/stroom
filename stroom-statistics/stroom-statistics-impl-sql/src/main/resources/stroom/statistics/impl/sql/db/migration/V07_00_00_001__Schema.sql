@@ -67,12 +67,14 @@ MODIFY COLUMN VAL double;
 -- Table structure for table sql_stat_val_src (idempotent)
 --
 CREATE TABLE IF NOT EXISTS SQL_STAT_VAL_SRC (
+  ID 				bigint(20)   auto_increment,
   TIME_MS			bigint(20)   NOT NULL,
   NAME 				varchar(766) NOT NULL,
   VAL_TP 			tinyint(4)   NOT NULL,
   VAL				double       NOT NULL,
   CT				bigint(20)   NOT NULL,
-  PROCESSING        bit(1)       NOT NULL DEFAULT 0
+  PROCESSING        bit(1)       NOT NULL DEFAULT 0,
+  PRIMARY KEY (ID)
 ) ENGINE=InnoDB DEFAULT CHARSET=latin1;
 
 -- used for deletions of old data where the FK is not involved
