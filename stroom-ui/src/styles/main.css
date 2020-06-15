@@ -1074,7 +1074,7 @@ select {
   .theme-light .Button--default-primary {
     color: #2196f3; }
   .theme-dark .Button--default-primary {
-    color: #64b5f6; }
+    color: #2196f3; }
 
 .Button--default-primary.Button--selected {
   background-color: rgba(33, 150, 243, 0.1); }
@@ -1168,7 +1168,7 @@ select {
     color: #2196f3;
     border-color: rgba(33, 150, 243, 0.5); }
   .theme-dark .Button--outline-primary {
-    color: #64b5f6;
+    color: #2196f3;
     border-color: rgba(100, 181, 246, 0.8); }
 
 .Button--outline-primary.Button--selected {
@@ -1178,7 +1178,7 @@ select {
     border-color: #2196f3;
     background-color: rgba(33, 150, 243, 0.1); }
   .theme-dark .Button--outline-primary.Button--selected {
-    border-color: #64b5f6;
+    border-color: #2196f3;
     background-color: rgba(0, 181, 246, 0.3); }
 
 .Button--outline-primary:hover {
@@ -1189,7 +1189,7 @@ select {
     border-color: #2196f3;
     background-color: rgba(33, 150, 243, 0.2); }
   .theme-dark .Button--outline-primary:hover {
-    border-color: #64b5f6;
+    border-color: #2196f3;
     background-color: rgba(100, 181, 246, 0.4); }
 
 .Button--outline-primary.Button--disabled {
@@ -1309,7 +1309,7 @@ select {
   .theme-light .Button--icon-primary {
     color: #2196f3; }
   .theme-dark .Button--icon-primary {
-    color: #64b5f6; }
+    color: #2196f3; }
 
 .Button--icon-primary.Button--selected {
   background-color: rgba(33, 150, 243, 0.1); }
