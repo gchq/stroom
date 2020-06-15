@@ -21,7 +21,6 @@ import { storiesOf } from "@storybook/react";
 import AppPermissionPicker from "./AppPermissionPicker";
 
 import JsonDebug from "testing/JsonDebug";
-import { addThemedStories } from "testing/storybook/themedStoryGenerator";
 
 const TestForm = () => {
   const [value, setAppPermissions] = React.useState<string[]>(
@@ -36,7 +35,7 @@ const TestForm = () => {
   );
   const removePermission = React.useCallback(
     (permissionName: string) => {
-      setAppPermissions(value.filter(a => a !== permissionName));
+      setAppPermissions(value.filter((a) => a !== permissionName));
     },
     [setAppPermissions, value],
   );
@@ -55,9 +54,7 @@ const TestForm = () => {
   );
 };
 
-const stories = storiesOf(
-  "Sections/Authorisation Manager",
-  module,
+storiesOf("Sections/Authorisation Manager", module).add(
+  "App Permission Picker",
+  () => <TestForm />,
 );
-
-addThemedStories(stories, "App Permission Picker", () => <TestForm />);

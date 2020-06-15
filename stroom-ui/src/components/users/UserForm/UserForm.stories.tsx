@@ -10,7 +10,6 @@ import {
   wellUsedUser,
 } from "testing/data/users";
 import AccountForm from "./AccountForm";
-import { addThemedStories } from "testing/storybook/themedStoryGenerator";
 
 interface Props {
   user: Account;
@@ -52,10 +51,10 @@ const tests: Test = {
 const stories = storiesOf("Users/User Form", module);
 
 Object.entries(tests)
-  .map(k => ({
+  .map((k) => ({
     name: k[0],
     user: k[1],
   }))
   .forEach(({ name, user }) => {
-    addThemedStories(stories, name, () => <TestHarness user={user} />);
+    stories.add(name, () => <TestHarness user={user} />);
   });

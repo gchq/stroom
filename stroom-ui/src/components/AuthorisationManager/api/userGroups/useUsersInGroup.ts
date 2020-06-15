@@ -10,12 +10,9 @@ interface UseGroupsForUser {
 }
 
 const useGroupsForUser = (group: StroomUser): UseGroupsForUser => {
-  const {
-    items: users,
-    receiveItems,
-    addItem,
-    removeItem,
-  } = useListReducer<StroomUser>(u => u.uuid);
+  const { items: users, receiveItems, addItem, removeItem } = useListReducer<
+    StroomUser
+  >((u) => u.uuid);
 
   const {
     findUsersInGroup,

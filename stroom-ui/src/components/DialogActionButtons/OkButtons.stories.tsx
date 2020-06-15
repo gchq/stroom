@@ -15,11 +15,11 @@ const TestHarness: React.FunctionComponent = () => {
 
   return (
     <div>
-      <OkButtons onOk={onOk}/>
+      <OkButtons onOk={onOk} />
       <form>
         <div>
           <label>Ok?</label>
-          <input type="checkbox" readOnly checked={ok}/>
+          <input type="checkbox" readOnly checked={ok} />
         </div>
       </form>
       <button onClick={onReset}>Reset</button>
@@ -28,5 +28,5 @@ const TestHarness: React.FunctionComponent = () => {
 };
 
 storiesOf("General Purpose/Ok Button", module).add("simple", () => (
-  <TestHarness/>
+  <TestHarness />
 ));

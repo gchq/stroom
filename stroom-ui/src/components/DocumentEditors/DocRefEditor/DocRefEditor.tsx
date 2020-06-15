@@ -79,9 +79,7 @@ const DocRefEditor = <T extends {}>({
             onChange={goToEditDocRef}
           />
         </div>
-      ) : (
-        undefined
-      )}
+      ) : undefined}
       <div className="page__body">{children}</div>
     </div>
   );
@@ -105,7 +103,7 @@ export function useDocRefEditor<T extends object>({
 
   React.useEffect(() => {
     if (!!fetchDocument) {
-      fetchDocument(docRefUuid).then(d => {
+      fetchDocument(docRefUuid).then((d) => {
         setDocRefContents(d);
         setIsDirty(false);
       });

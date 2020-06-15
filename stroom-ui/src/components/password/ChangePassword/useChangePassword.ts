@@ -21,7 +21,7 @@ const useChangePassword = (): {
   const changePassword = useCallback(
     (changePasswordRequest: ChangePasswordRequest) => {
       setSubmitting(true);
-      changePasswordUsingApi(changePasswordRequest).then(response => {
+      changePasswordUsingApi(changePasswordRequest).then((response) => {
         if (response.changeSucceeded) {
           // // If we successfully changed the password then we want to redirect if there's a redirection URL
           // if (

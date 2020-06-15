@@ -24,7 +24,7 @@ const UserSettings: React.FunctionComponent = () => {
   const { theme, setTheme } = useTheme();
 
   const value: ThemeOption = React.useMemo(
-    () => themeOptions.find(t => t.value === theme) || themeOptions[0],
+    () => themeOptions.find((t) => t.value === theme) || themeOptions[0],
     [theme],
   );
   const onChange = React.useCallback(
@@ -44,8 +44,8 @@ const UserSettings: React.FunctionComponent = () => {
             onChange={onChange}
             value={value}
             options={themeOptions}
-            getOptionLabel={d => d.text}
-            getOptionValue={d => d.value}
+            getOptionLabel={(d) => d.text}
+            getOptionValue={(d) => d.value}
           />
         </div>
       </div>

@@ -19,14 +19,13 @@ import * as React from "react";
 import { storiesOf } from "@storybook/react";
 
 import Routes from "./Routes";
-import { addThemedStories } from "testing/storybook/themedStoryGenerator";
 import useAppNavigation from "lib/useAppNavigation";
 import { WithChromeContext } from "lib/useRouter/BrowserRouter";
 import Button from "components/Button";
 import useRouter from "lib/useRouter";
 
 const stories = storiesOf("App Chrome", module);
-addThemedStories(stories, "With Chrome", () => <Routes/>);
+stories.add("With Chrome", () => <Routes />);
 
 const TestHarness: React.FunctionComponent = () => {
   const {
@@ -59,15 +58,15 @@ const TestHarness: React.FunctionComponent = () => {
           onClick={goToAuthorisationGroups}
           text="Go To Authorisation for Groups"
         />
-        <Button onClick={goToIndexVolumes} text="Go To Index Volumes"/>
+        <Button onClick={goToIndexVolumes} text="Go To Index Volumes" />
         <Button
           onClick={goToIndexVolumeGroups}
           text="Go To Index Volume Groups"
         />
       </div>
-      <Routes/>
+      <Routes />
     </div>
   );
 };
 
-addThemedStories(stories, "Full Screen", () => <TestHarness/>);
+stories.add("Full Screen", () => <TestHarness />);

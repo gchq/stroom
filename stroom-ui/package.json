@@ -84,7 +84,8 @@
     "eject": "react-scripts eject",
     "storybook": "start-storybook -p 9009 -s public",
     "build-storybook": "build-storybook -s public",
-    "lint": "eslint '*/**/*.{js,ts,tsx}' --quiet --fix"
+    "lint": "eslint \"src/**\"",
+    "lint-fix": "eslint \"src/**\" --quiet --fix"
   },
   "devDependencies": {
     "@storybook/addon-actions": "^5.3.19",

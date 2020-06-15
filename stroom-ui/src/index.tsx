@@ -5,15 +5,15 @@ import { DragDropContext } from "react-dnd";
 import HTML5Backend from "react-dnd-html5-backend";
 
 import { Routes } from "components/AppChrome";
-import setupFontAwesome from "./lib/setupFontAwesome";
+import setupFontAwesome from "lib/setupFontAwesome";
 
-import { ThemeContextProvider } from "./lib/useTheme/useTheme";
-import { CustomRouter } from "./lib/useRouter";
+import { ThemeContextProvider } from "lib/useTheme/useTheme";
+import { CustomRouter } from "lib/useRouter";
 
 import { createBrowserHistory as createHistory } from "history";
 import ConfigProvider from "startup/config/ConfigProvider";
 
-import "./styles/main.scss";
+import "styles/main.scss";
 import { AuthorisationContextProvider } from "startup/Authorisation";
 import { AuthenticationContextProvider } from "startup/Authentication";
 import { DocumentTreeContextProvider } from "components/DocumentEditors/api/explorer";

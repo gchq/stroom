@@ -17,7 +17,7 @@ const useDocumentPermissionsForUser = (
     addItem,
     removeItem,
     receiveItems,
-  } = useListReducer<string>(g => g);
+  } = useListReducer<string>((g) => g);
 
   const {
     getPermissionsForDocumentForUser,

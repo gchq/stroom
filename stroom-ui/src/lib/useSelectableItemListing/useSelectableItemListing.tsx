@@ -77,7 +77,7 @@ const useSelectableItemListing = <TItem extends {}>({
   const toggleSelectionAndFocus = React.useCallback(
     (itemKey: string) => {
       toggleSelection(itemKey);
-      setByIndex(items.findIndex(item => getKey(item) === itemKey));
+      setByIndex(items.findIndex((item) => getKey(item) === itemKey));
     },
     [items, getKey, toggleSelection, setByIndex],
   );
@@ -98,7 +98,7 @@ const useSelectableItemListing = <TItem extends {}>({
   const selectedItem: TItem | undefined = React.useMemo(
     () =>
       selectedItems.length > 0 && !!lastSelectedKey
-        ? selectedItems.find(item => getKey(item) === lastSelectedKey)
+        ? selectedItems.find((item) => getKey(item) === lastSelectedKey)
         : undefined,
     [selectedItems, lastSelectedKey, getKey],
   );

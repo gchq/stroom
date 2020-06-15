@@ -1,8 +1,7 @@
 import * as React from "react";
-import * as uuidv4 from "uuid/v4";
+import v4 from "uuid/v4";
 
 import { storiesOf } from "@storybook/react";
-import { addThemedStories } from "testing/storybook/themedStoryGenerator";
 import AddElementModal, { useDialog } from "./AddElementModal";
 import Button from "components/Button";
 import JsonDebug from "testing/JsonDebug";
@@ -11,12 +10,12 @@ import useElements from "components/DocumentEditors/PipelineEditor/useElements";
 import { ElementDefinition } from "components/DocumentEditors/PipelineEditor/useElements/types";
 import Select from "react-select";
 
-const PARENT_ID = uuidv4();
+const PARENT_ID = v4();
 
 const TestHarness: React.FunctionComponent = () => {
   const { elementDefinitions } = useElements();
   const existingNames = React.useMemo(
-    () => elementDefinitions.map(e => e.type),
+    () => elementDefinitions.map((e) => e.type),
     [elementDefinitions],
   );
   const [
@@ -39,8 +38,8 @@ const TestHarness: React.FunctionComponent = () => {
         options={elementDefinitions}
         value={selectedElementDefinition}
         onChange={(x: ElementDefinition) => setSelectedElementDefinition(x)}
-        getOptionLabel={d => d.type}
-        getOptionValue={d => d.type}
+        getOptionLabel={(d) => d.type}
+        getOptionValue={(d) => d.type}
       />
       <Button onClick={onClick} text="Show" />
       <JsonDebug
@@ -56,9 +55,6 @@ const TestHarness: React.FunctionComponent = () => {
   );
 };
 
-const stories = storiesOf(
-  "Document Editors/Pipeline/Add Element",
-  module,
-);
-
-addThemedStories(stories, "Dialog", () => <TestHarness />);
+storiesOf("Document Editors/Pipeline/Add Element", module).add("Dialog", () => (
+  <TestHarness />
+));

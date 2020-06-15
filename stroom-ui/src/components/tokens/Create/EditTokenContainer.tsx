@@ -16,7 +16,6 @@
 
 import * as React from "react";
 import { useEffect } from "react";
-import "react-toggle/style.css";
 import useAppNavigation from "lib/useAppNavigation";
 import useIdFromPath from "lib/useIdFromPath";
 import useTokens from "./useTokens";
@@ -37,7 +36,7 @@ const EditTokenContainer = () => {
   }, [tokenId, fetchApiKey]);
 
   if (!token) {
-    return <CustomLoader title="Stroom" message="Loading. Please wait..."/>;
+    return <CustomLoader title="Stroom" message="Loading. Please wait..." />;
   }
 
   return (

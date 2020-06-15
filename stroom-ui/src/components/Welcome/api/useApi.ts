@@ -13,10 +13,10 @@ const useApi = (): UseApi => {
   const resource = apiUrl("/welcome/v1");
 
   return {
-    getWelcomeHtml: React.useCallback(
-      () => httpGetJson(resource),
-      [resource, httpGetJson],
-    ),
+    getWelcomeHtml: React.useCallback(() => httpGetJson(resource), [
+      resource,
+      httpGetJson,
+    ]),
   };
 };
 

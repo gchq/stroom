@@ -53,7 +53,7 @@ const IndexVolumesSection: React.FunctionComponent<Props> = ({
       prefixedId.slice(prefixedId.indexOf("_") + 1, prefixedId.length);
 
     const idToMove: string = removePrefix(result.draggableId);
-    const indexVolumeBeingMoved = indexVolumes.find(i => +i.id === +idToMove);
+    const indexVolumeBeingMoved = indexVolumes.find((i) => +i.id === +idToMove);
     indexVolumeBeingMoved.indexVolumeGroupName = removePrefix(
       result.destination.droppableId,
     );
@@ -81,10 +81,8 @@ const IndexVolumesSection: React.FunctionComponent<Props> = ({
                 Add index volume group
               </Button>
             </Empty>
-          ) : (
-            undefined
-          )}
-          {indexVolumeGroups.map(indexVolumeGroup => {
+          ) : undefined}
+          {indexVolumeGroups.map((indexVolumeGroup) => {
             return (
               <Droppable
                 key={"droppable_" + indexVolumeGroup.name}

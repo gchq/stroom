@@ -1,3 +1,1 @@
-export {
-  default as ConfirmPasswordResetEmail,
-} from "./ConfirmPasswordResetEmailContainer";
+export { default as ConfirmPasswordResetEmail } from "./ConfirmPasswordResetEmailContainer";

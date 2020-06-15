@@ -22,7 +22,6 @@ import { DocRefInfoModal } from ".";
 import { useDocRefInfoDialog } from "./DocRefInfoModal";
 import Button from "../Button";
 import fullTestData from "testing/data";
-import { addThemedStories } from "testing/storybook/themedStoryGenerator";
 
 const testFolder1 = fullTestData.documentTree.children![0];
 
@@ -37,6 +36,4 @@ const TestHarness: React.FunctionComponent = () => {
   );
 };
 
-const stories = storiesOf("Doc Ref/Info", module);
-
-addThemedStories(stories, "Dialog", () => <TestHarness />);
+storiesOf("Doc Ref/Info", module).add("Dialog", () => <TestHarness />);

@@ -35,7 +35,9 @@ const GroupsForUser: React.FunctionComponent<Props> = ({ user }) => {
   } = useThemedConfirm({
     onConfirm: React.useCallback(
       () =>
-        selectedItems.map(g => g.uuid).forEach(gUuid => removeFromGroup(gUuid)),
+        selectedItems
+          .map((g) => g.uuid)
+          .forEach((gUuid) => removeFromGroup(gUuid)),
       [removeFromGroup, selectedItems],
     ),
     getQuestion: React.useCallback(
@@ -43,7 +45,7 @@ const GroupsForUser: React.FunctionComponent<Props> = ({ user }) => {
       [],
     ),
     getDetails: React.useCallback(
-      () => selectedItems.map(s => s.name).join(", "),
+      () => selectedItems.map((s) => s.name).join(", "),
       [selectedItems],
     ),
   });
@@ -62,7 +64,9 @@ const GroupsForUser: React.FunctionComponent<Props> = ({ user }) => {
       addToGroup,
     ]),
     pickerBaseProps: {
-      valuesToFilterOut: React.useMemo(() => groups.map(g => g.uuid), [groups]),
+      valuesToFilterOut: React.useMemo(() => groups.map((g) => g.uuid), [
+        groups,
+      ]),
     },
   });
 

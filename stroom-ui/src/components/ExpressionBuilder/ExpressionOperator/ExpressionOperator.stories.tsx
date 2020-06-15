@@ -1,7 +1,6 @@
 import * as React from "react";
 
 import { storiesOf } from "@storybook/react";
-import { addThemedStories } from "testing/storybook/themedStoryGenerator";
 // import JsonDebug from "testing/JsonDebug";
 // import ExpressionOperator from ".";
 // import { getNewOperator } from "../expressionUtils";
@@ -10,8 +9,6 @@ import { addThemedStories } from "testing/storybook/themedStoryGenerator";
 // import Button from "components/Button";
 // import useToggle from "lib/useToggle";
 import { LineContainer } from "components/LineTo";
-
-const stories = storiesOf("Expression", module);
 
 // const newOperator: ExpressionOperatorType = getNewOperator();
 
@@ -46,4 +43,4 @@ const TestHarness: React.FunctionComponent = () => {
   );
 };
 
-addThemedStories(stories, "Operator", () => <TestHarness />);
+storiesOf("Expression", module).add("Operator", () => <TestHarness />);

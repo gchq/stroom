@@ -17,16 +17,11 @@ import * as React from "react";
 import { storiesOf } from "@storybook/react";
 
 import DataDisplay from "./DataDisplay";
-// import { errorData, eventData } from "testing/data/data/dataDisplay.testData";
-import { addThemedStories } from "testing/storybook/themedStoryGenerator";
 import fullTestData from "testing/data";
 
 const testError = fullTestData.dataList.streamAttributeMaps[0];
 const testData = fullTestData.dataList.streamAttributeMaps[1];
 
-const stories = storiesOf(
-  "Sections/Meta Browser/Data Display",
-  module,
-);
-addThemedStories(stories, "Errors", () => <DataDisplay metaRow={testError} />);
-addThemedStories(stories, "Events", () => <DataDisplay metaRow={testData} />);
+const stories = storiesOf("Sections/Meta Browser/Data Display", module);
+stories.add("Errors", () => <DataDisplay metaRow={testError} />);
+stories.add("Events", () => <DataDisplay metaRow={testData} />);

@@ -17,12 +17,9 @@ import * as React from "react";
 import { configure, addDecorator, addParameters } from "@storybook/react"; // <- or your storybook framework
 import StroomDecorator from "../src/testing/storybook/StroomDecorator";
 
-import "../src/styles/main.scss";
-
 const req = require.context("../src", true, /\.stories\.tsx$/);
-
 function loadStories() {
-  req.keys().forEach(filename => req(filename));
+  req.keys().forEach((filename) => req(filename));
 }
 
 addDecorator(StroomDecorator);

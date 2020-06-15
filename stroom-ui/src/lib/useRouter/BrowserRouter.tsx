@@ -53,9 +53,7 @@ const showChrome = (pathname: string) => {
   // If we're handling an Oldauthentication redirect then we need to get the path
   // from local storage.
   const referrer = localStorage.getItem("preAuthenticationRequestReferrer");
-  const actualPath = referrer
-      ? referrer
-      : pathname;
+  const actualPath = referrer ? referrer : pathname;
 
   const parts = actualPath.split("/");
   prefix = parts[1];
@@ -81,7 +79,7 @@ const CustomRouter: React.FunctionComponent<Props> = ({
   return (
     <Router history={history}>
       <Route>
-        {routeProps => (
+        {(routeProps) => (
           <WithChromeContext.Provider
             value={{
               urlPrefix,

@@ -37,7 +37,7 @@ const getMenuItems = (
   highlightedItem?: MenuItemType,
   depth = 0,
 ) =>
-  menuItems.map(menuItem => (
+  menuItems.map((menuItem) => (
     <React.Fragment key={menuItem.key}>
       {/* dnd_error: temporarily disable dnd-related code to get the build working */}
       {/*      <MenuItem
@@ -74,9 +74,7 @@ const getMenuItems = (
             depth + 1,
           )}
         </div>
-      ) : (
-        undefined
-      )}
+      ) : undefined}
     </React.Fragment>
   ));
 
@@ -98,7 +96,7 @@ const Sidebar: React.FunctionComponent<Props> = ({ activeMenuItem }) => {
     storeBoolean,
   );
   const toggleIsExpanded = React.useCallback(
-    () => setIsExpanded(existingIsExpanded => !existingIsExpanded),
+    () => setIsExpanded((existingIsExpanded) => !existingIsExpanded),
     [setIsExpanded],
   );
   const sidebarClassName = isExpanded
@@ -114,7 +112,7 @@ const Sidebar: React.FunctionComponent<Props> = ({ activeMenuItem }) => {
     },
     [menuItemsByKey],
   );
-  const enterItem = React.useCallback(m => menuItemOpened(m, true), [
+  const enterItem = React.useCallback((m) => menuItemOpened(m, true), [
     menuItemOpened,
   ]);
   const goBack = React.useCallback(
@@ -171,9 +169,7 @@ const Sidebar: React.FunctionComponent<Props> = ({ activeMenuItem }) => {
               alt="Stroom logo"
               src={require("../../../images/logo.svg")}
             />
-          ) : (
-            undefined
-          )}
+          ) : undefined}
           <div
             className="app-chrome__sidebar_header_icon"
             onClick={toggleIsExpanded}

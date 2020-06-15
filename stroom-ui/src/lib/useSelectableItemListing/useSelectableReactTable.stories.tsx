@@ -58,7 +58,7 @@ const TestTable = () => {
   const speciesProps = useTextInput("species");
   const nameProps = useTextInput("name");
   const onClickAddItem = React.useCallback(
-    e => {
+    (e) => {
       if (!!name && !!species) {
         addAnimal(species, name);
       }
@@ -71,7 +71,7 @@ const TestTable = () => {
     Animal
   >(
     {
-      getKey: React.useCallback(a => a.uuid, []),
+      getKey: React.useCallback((a) => a.uuid, []),
       items: animals,
       selectionBehaviour: SelectionBehaviour.MULTIPLE,
       preFocusWrap,

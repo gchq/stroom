@@ -15,8 +15,10 @@ import useUrlFactory from "lib/useUrlFactory";
  *
  * @param docRefType The doc ref type to retrieve/save
  */
-const useDocumentApi = <T extends keyof ResourcesByDocType,
-  D extends DocumentBase<T>>(
+const useDocumentApi = <
+  T extends keyof ResourcesByDocType,
+  D extends DocumentBase<T>
+>(
   docRefType: T,
 ): DocumentApi<D> => {
   const { apiUrl } = useUrlFactory();
@@ -25,18 +27,14 @@ const useDocumentApi = <T extends keyof ResourcesByDocType,
   const resource = apiUrl(resourcePath);
 
   const fetchDocument = React.useCallback(
-    (docRefUuid: string) =>
-      httpGetJson(`${resource}${docRefUuid}`),
+    (docRefUuid: string) => httpGetJson(`${resource}${docRefUuid}`),
     [resource, httpGetJson],
   );
   const saveDocument = React.useCallback(
     (docRefContents: D) =>
-      httpPostEmptyResponse(
-        `${resource}${docRefContents.uuid}`,
-        {
-          body: JSON.stringify(docRefContents),
-        },
-      ).then(() => cogoToast.info(`Document Saved ${docRefType}`)),
+      httpPostEmptyResponse(`${resource}${docRefContents.uuid}`, {
+        body: JSON.stringify(docRefContents),
+      }).then(() => cogoToast.info(`Document Saved ${docRefType}`)),
     [docRefType, resource, httpPostEmptyResponse],
   );
 

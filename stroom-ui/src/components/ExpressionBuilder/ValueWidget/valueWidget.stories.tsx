@@ -5,7 +5,6 @@ import SingleValueWidget from "./SingleValueWidget";
 import InValueWidget from "./InValueWidget";
 import BetweenValueWidget from "./BetweenValueWidget";
 import JsonDebug from "testing/JsonDebug";
-import { addThemedStories } from "testing/storybook/themedStoryGenerator";
 import { ChangeEventHandler, useCallback, useState } from "react";
 
 [
@@ -31,8 +30,9 @@ import { ChangeEventHandler, useCallback, useState } from "react";
     );
   };
 
-  const stories = storiesOf(    "Expression/Value Widgets/Single",    module);
-  addThemedStories(stories, valueType, () => <TestHarness />);
+  storiesOf("Expression/Value Widgets/Single", module).add(valueType, () => (
+    <TestHarness />
+  ));
 });
 
 [
@@ -51,8 +51,9 @@ import { ChangeEventHandler, useCallback, useState } from "react";
     );
   };
 
-  const stories = storiesOf("Expression/Value Widgets/In", module);
-  addThemedStories(stories, valueType, () => <TestHarness />);
+  storiesOf("Expression/Value Widgets/In", module).add(valueType, () => (
+    <TestHarness />
+  ));
 });
 
 [
@@ -75,6 +76,7 @@ import { ChangeEventHandler, useCallback, useState } from "react";
     );
   };
 
-  const stories = storiesOf(    "Expression/Value Widgets/Between", module);
-  addThemedStories(stories, valueType, () => <TestHarness />);
+  storiesOf("Expression/Value Widgets/Between", module).add(valueType, () => (
+    <TestHarness />
+  ));
 });

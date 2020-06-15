@@ -71,7 +71,7 @@ const reducer = (
     case "toggleEnabled":
       return {
         ...state,
-        results: state.results.map(result =>
+        results: state.results.map((result) =>
           result.id === action.tokenId
             ? { ...result, enabled: !result.enabled }
             : result,

@@ -17,7 +17,6 @@
 import * as React from "react";
 import { storiesOf } from "@storybook/react";
 import IndexVolumesSection from "../IndexVolumesSection";
-import { addThemedStories } from "testing/storybook/themedStoryGenerator";
 import JsonDebug from "testing/JsonDebug";
 import {
   indexVolume01,
@@ -29,7 +28,6 @@ import {
 import { IndexVolumeGroup } from "../indexVolumeGroupApi";
 import { useCallback } from "react";
 import { IndexVolume } from "../indexVolumeApi";
-const stories = storiesOf("Sections", module);
 
 const TestHarness: React.FunctionComponent = () => {
   const initialGroups = [indexVolumeGroup01, indexVolumeGroup02];
@@ -74,14 +72,14 @@ const TestHarness: React.FunctionComponent = () => {
 
   const handleDeleteVolume = useCallback(
     (volumeId: string) => {
-      setVolumes(volumes.filter(v => v.id !== volumeId));
+      setVolumes(volumes.filter((v) => v.id !== volumeId));
     },
     [setVolumes, volumes],
   );
 
   const handleVolumeChange = useCallback(
     (indexVolume: IndexVolume) => {
-      const otherVolumes = volumes.filter(v => v.id !== indexVolume.id);
+      const otherVolumes = volumes.filter((v) => v.id !== indexVolume.id);
       setVolumes([...otherVolumes, indexVolume]);
     },
     [volumes],
@@ -106,4 +104,4 @@ const TestHarness: React.FunctionComponent = () => {
   );
 };
 
-addThemedStories(stories, "Index Volumes 2", () => <TestHarness />);
+storiesOf("Sections", module).add("Index Volumes 2", () => <TestHarness />);

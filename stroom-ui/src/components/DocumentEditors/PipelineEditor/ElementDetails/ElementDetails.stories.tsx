@@ -25,7 +25,6 @@ import {
   PipelineDocumentType,
   PipelineElementType,
 } from "components/DocumentEditors/useDocumentApi/types/pipelineDoc";
-import { addThemedStories } from "testing/storybook/themedStoryGenerator";
 
 interface Props {
   pipelineId: string;
@@ -67,12 +66,12 @@ const stories = storiesOf(
 );
 
 Object.values(fullTestData.documents.Pipeline)
-  .map(p => p as PipelineDocumentType)
-  .forEach(pipeline => {
+  .map((p) => p as PipelineDocumentType)
+  .forEach((pipeline) => {
     pipeline.merged.elements
-      .add!.filter(e => testDeduplicator.isUnique(e))
-      .forEach(element => {
-        addThemedStories(stories, element.type, () => (
+      .add!.filter((e) => testDeduplicator.isUnique(e))
+      .forEach((element) => {
+        stories.add(element.type, () => (
           <TestHarness pipelineId={pipeline.uuid} testElementId={element.id} />
         ));
       });

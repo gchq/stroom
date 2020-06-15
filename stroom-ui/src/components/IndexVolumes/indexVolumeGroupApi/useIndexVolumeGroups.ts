@@ -17,7 +17,7 @@ const useIndexVolumeGroups = (): UseIndexVolumeGroups => {
     addItem,
     removeItem,
     updateItemAtIndex,
-  } = useListReducer<IndexVolumeGroup>(g => g.id);
+  } = useListReducer<IndexVolumeGroup>((g) => g.id);
 
   const {
     createIndexVolumeGroup,
@@ -42,9 +42,9 @@ const useIndexVolumeGroups = (): UseIndexVolumeGroups => {
     ),
     update: React.useCallback(
       (entity: IndexVolumeGroup) =>
-        update(entity).then(response => {
+        update(entity).then((response) => {
           updateItemAtIndex(
-            groups.findIndex(group => group.id === entity.id),
+            groups.findIndex((group) => group.id === entity.id),
             response,
           );
         }),

@@ -44,7 +44,7 @@ const reducer = (
     case "updated":
       return state.concat([action.activity]);
     case "deleted":
-      return state.filter(v => v.id !== action.id);
+      return state.filter((v) => v.id !== action.id);
     default:
       return state;
   }
@@ -61,7 +61,7 @@ const useActivities = (): UseActivities => {
   } = useApi();
 
   React.useEffect(() => {
-    getActivities().then(v =>
+    getActivities().then((v) =>
       dispatch({
         type: "received",
         activities: v,
@@ -73,7 +73,7 @@ const useActivities = (): UseActivities => {
     activities,
     createActivity: React.useCallback(
       (activity: Activity) =>
-        createActivity(activity).then(activity =>
+        createActivity(activity).then((activity) =>
           dispatch({
             type: "created",
             activity,
@@ -83,7 +83,7 @@ const useActivities = (): UseActivities => {
     ),
     updateActivity: React.useCallback(
       (activity: Activity) =>
-        updateActivity(activity).then(activity =>
+        updateActivity(activity).then((activity) =>
           dispatch({
             type: "updated",
             activity,

@@ -3,12 +3,11 @@ import { storiesOf } from "@storybook/react";
 import * as React from "react";
 import UserSearch from "./UserSearch";
 
-import { addThemedStories } from "testing/storybook/themedStoryGenerator";
 import fullTestData from "testing/data";
 
 const stories = storiesOf("Users", module);
 
-addThemedStories(stories, "Search", () => (
+stories.add("Search", () => (
   <UserSearch
     onNewUserClicked={() => action("onNewUserClicked")}
     onUserOpen={(userId: string) => action(`onUserOpen:${userId}`)}

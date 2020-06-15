@@ -2,7 +2,7 @@ import * as React from "react";
 import { ReactTableFunction, RowInfo, Column } from "react-table";
 import StateCell from "./StateCell";
 import { Account } from "../types";
-import * as moment from "moment";
+import moment from "moment";
 import useConfig from "startup/config/useConfig";
 
 moment.updateLocale("en", {
@@ -15,7 +15,9 @@ interface FilterProps {
   onChange: ReactTableFunction;
 }
 
-const useColumns = (selectedUserRowId: string | undefined): Column<Account>[] => {
+const useColumns = (
+  selectedUserRowId: string | undefined,
+): Column<Account>[] => {
   const { dateFormat } = useConfig();
   const IdCell: React.FunctionComponent<RowInfo> = React.useCallback(
     ({ row }) => (
@@ -30,7 +32,7 @@ const useColumns = (selectedUserRowId: string | undefined): Column<Account>[] =>
     ({ filter, onChange }: FilterProps) => {
       return (
         <select
-          onChange={event => onChange(event.target.value)}
+          onChange={(event) => onChange(event.target.value)}
           style={{ width: "100%" }}
           value={filter ? filter.value : "all"}
         >
@@ -45,7 +47,7 @@ const useColumns = (selectedUserRowId: string | undefined): Column<Account>[] =>
   );
 
   const filterRow = React.useCallback((row: any, filter: any) => {
-    var index = row[filter.id]
+    const index = row[filter.id]
       .toLowerCase()
       .indexOf(filter.value.toLowerCase());
     return index >= 0;

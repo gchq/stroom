@@ -47,8 +47,8 @@ export const useRipple = <T extends HTMLElement>(
     (evt: React.MouseEvent<T>): void => {
       const btn = evt.currentTarget;
       const rect = btn.getBoundingClientRect();
-      var x = evt.clientX - rect.left;
-      var y = evt.clientY - rect.top;
+      const x = evt.clientX - rect.left;
+      const y = evt.clientY - rect.top;
 
       dispatch({
         id: `${nextId++}`,

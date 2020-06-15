@@ -1,4 +1,4 @@
-import * as uuidv4 from "uuid/v4";
+import v4 from "uuid/v4";
 import { HttpRequest, HttpResponse } from "@pollyjs/adapter-fetch";
 
 import { TestCache } from "../PollyDecorator";
@@ -15,9 +15,9 @@ const resourceBuilder: ResourceBuilder = (
   server
     .get(`${resource}/:userUuid`)
     .intercept((req: HttpRequest, res: HttpResponse) => {
-      let userUuid = req.params.userUuid;
-      let user = testCache.data!.usersAndGroups.users.find(
-        u => u.uuid === userUuid,
+      const userUuid = req.params.userUuid;
+      const user = testCache.data!.usersAndGroups.users.find(
+        (u) => u.uuid === userUuid,
       );
 
       res.json(user);
@@ -26,13 +26,13 @@ const resourceBuilder: ResourceBuilder = (
   // Find Users
   server.get(resource).intercept((req: HttpRequest, res: HttpResponse) => {
     const { name, uuid, isGroup } = req.query;
-    let filtered = testCache
+    const filtered = testCache
       .data!.usersAndGroups.users.filter(
-        u => name === undefined || u.name.includes(name),
+        (u) => name === undefined || u.name.includes(name),
       )
-      .filter(u => uuid === undefined || u.uuid === uuid)
+      .filter((u) => uuid === undefined || u.uuid === uuid)
       .filter(
-        u => isGroup === undefined || Boolean(u.group).toString() === isGroup,
+        (u) => isGroup === undefined || Boolean(u.group).toString() === isGroup,
       );
     res.json(filtered);
   });
@@ -42,7 +42,7 @@ const resourceBuilder: ResourceBuilder = (
     .post(`${resource}/create/:name/:isGroup`)
     .intercept((req: HttpRequest, res: HttpResponse) => {
       const { name, group } = req.params;
-      let newUser = { name, group, uuid: uuidv4() };
+      const newUser = { name, group, uuid: v4() };
 
       testCache.data!.usersAndGroups.users = testCache.data!.usersAndGroups.users.concat(
         [newUser],
@@ -54,13 +54,13 @@ const resourceBuilder: ResourceBuilder = (
   server
     .delete(`${resource}/:userUuid`)
     .intercept((req: HttpRequest, res: HttpResponse) => {
-      let oldUuid = req.params.userUuid;
+      const oldUuid = req.params.userUuid;
       testCache.data!.usersAndGroups = {
         users: testCache.data!.usersAndGroups.users.filter(
-          u => u.uuid !== oldUuid,
+          (u) => u.uuid !== oldUuid,
         ),
         userGroupMemberships: testCache.data!.usersAndGroups.userGroupMemberships.filter(
-          m => m.groupUuid !== oldUuid && m.userUuid !== oldUuid,
+          (m) => m.groupUuid !== oldUuid && m.userUuid !== oldUuid,
         ),
       };
 
@@ -70,15 +70,15 @@ const resourceBuilder: ResourceBuilder = (
   server
     .get(`${resource}/usersInGroup/:groupUuid`)
     .intercept((req: HttpRequest, res: HttpResponse) => {
-      let users = testCache
+      const users = testCache
         .data!.usersAndGroups.userGroupMemberships.filter(
-          ugm => ugm.groupUuid === req.params.groupUuid,
+          (ugm) => ugm.groupUuid === req.params.groupUuid,
         )
-        .map(ugm => ugm.userUuid)
-        .map(userUuid =>
+        .map((ugm) => ugm.userUuid)
+        .map((userUuid) =>
           testCache
-            .data!.usersAndGroups.users.filter(user => !user.group)
-            .find(user => user.uuid === userUuid),
+            .data!.usersAndGroups.users.filter((user) => !user.group)
+            .find((user) => user.uuid === userUuid),
         );
 
       res.json(users);
@@ -88,15 +88,15 @@ const resourceBuilder: ResourceBuilder = (
   server
     .get(`${resource}/groupsForUser/:userUuid`)
     .intercept((req: HttpRequest, res: HttpResponse) => {
-      let users = testCache
+      const users = testCache
         .data!.usersAndGroups.userGroupMemberships.filter(
-          ugm => ugm.userUuid === req.params.userUuid,
+          (ugm) => ugm.userUuid === req.params.userUuid,
         )
-        .map(ugm => ugm.groupUuid)
-        .map(groupUuid =>
+        .map((ugm) => ugm.groupUuid)
+        .map((groupUuid) =>
           testCache
-            .data!.usersAndGroups.users.filter(user => user.group)
-            .find(user => user.uuid === groupUuid),
+            .data!.usersAndGroups.users.filter((user) => user.group)
+            .find((user) => user.uuid === groupUuid),
         );
       res.json(users);
     });
@@ -122,7 +122,7 @@ const resourceBuilder: ResourceBuilder = (
     .delete(`${resource}/:userUuid/:groupUuid`)
     .intercept((req: HttpRequest, res: HttpResponse) => {
       testCache.data!.usersAndGroups.userGroupMemberships = testCache.data!.usersAndGroups.userGroupMemberships.filter(
-        m =>
+        (m) =>
           !(
             m.groupUuid === req.params.groupUuid &&
             m.userUuid === req.params.userUuid

@@ -67,7 +67,7 @@ export const ChangePasswordFormContainer: React.FunctionComponent = () => {
     .label("Password")
     .required("Password is required")
     .min(thresholdLength, "Password is short")
-    .test("password-strength", "Password is weak", function(value) {
+    .test("password-strength", "Password is weak", function (value) {
       return new Promise<boolean | ValidationError>((resolve, reject) => {
         const { path, createError } = this;
         // ... test logic
@@ -81,7 +81,7 @@ export const ChangePasswordFormContainer: React.FunctionComponent = () => {
   const confirmPasswordSchema = Yup.string()
     .label("Confirm Password")
     .required("Required")
-    .test("password-match", "Passwords must match", function(value) {
+    .test("password-match", "Passwords must match", function (value) {
       const { resolve } = this;
       const ref = Yup.ref("password");
       return value === resolve(ref);
@@ -104,7 +104,7 @@ export const ChangePasswordFormContainer: React.FunctionComponent = () => {
           confirmNewPassword: values.confirmPassword,
         };
 
-        changePassword(request).then(response => {
+        changePassword(request).then((response) => {
           if (response.changeSucceeded) {
             // // Otherwise we'll extract what we expect to be the successful login redirect URL
             // Cookies.set("userId", values.userId);
@@ -128,7 +128,7 @@ export const ChangePasswordFormContainer: React.FunctionComponent = () => {
         // }, 1000);
       }}
     >
-      {props => (
+      {(props) => (
         <ChangePasswordForm
           strength={strength}
           minStrength={minStrength}

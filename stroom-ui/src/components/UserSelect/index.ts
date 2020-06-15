@@ -1,2 +1,2 @@
-import UserSelect from "./UserSelectContainer";;
+import UserSelect from "./UserSelectContainer";
 export default UserSelect;

@@ -31,7 +31,9 @@ const UsersInGroup = ({ group }: Props) => {
   } = useThemedConfirm({
     onConfirm: React.useCallback(
       () =>
-        selectedItems.map(s => s.uuid).forEach(uUuid => removeFromGroup(uUuid)),
+        selectedItems
+          .map((s) => s.uuid)
+          .forEach((uUuid) => removeFromGroup(uUuid)),
       [removeFromGroup, selectedItems],
     ),
     getQuestion: React.useCallback(
@@ -39,7 +41,7 @@ const UsersInGroup = ({ group }: Props) => {
       [],
     ),
     getDetails: React.useCallback(
-      () => selectedItems.map(s => s.name).join(", "),
+      () => selectedItems.map((s) => s.name).join(", "),
       [selectedItems],
     ),
   });

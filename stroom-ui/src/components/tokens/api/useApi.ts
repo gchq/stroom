@@ -43,7 +43,7 @@ export const useApi = (): Api => {
 
   return {
     deleteToken: useCallback(
-      tokenId => httpDeleteEmptyResponse(`${resource}/${tokenId}`),
+      (tokenId) => httpDeleteEmptyResponse(`${resource}/${tokenId}`),
       [resource, httpDeleteEmptyResponse],
     ),
 

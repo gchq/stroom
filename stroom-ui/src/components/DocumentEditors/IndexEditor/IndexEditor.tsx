@@ -47,7 +47,7 @@ const IndexEditor = ({ docRefUuid }: SwitchedDocRefEditorProps) => {
   const { docRefContents } = editorProps;
 
   const onVolumeGroupChange = React.useCallback(
-    volumeGroupName => {
+    (volumeGroupName) => {
       onDocumentChange({ volumeGroupName });
     },
     [onDocumentChange],
@@ -66,11 +66,11 @@ const IndexEditor = ({ docRefUuid }: SwitchedDocRefEditorProps) => {
     showDialog: showDeleteFieldsDialog,
   } = useThemedConfirm({
     onConfirm: React.useCallback(() => {
-      let fieldNamesToDelete = selectedItems.map(s => s.fieldName);
+      const fieldNamesToDelete = selectedItems.map((s) => s.fieldName);
       if (!!docRefContents) {
         onDocumentChange({
           fields: (docRefContents.fields || []).filter(
-            f => !fieldNamesToDelete.includes(f.fieldName),
+            (f) => !fieldNamesToDelete.includes(f.fieldName),
           ),
         });
       }
@@ -80,7 +80,7 @@ const IndexEditor = ({ docRefUuid }: SwitchedDocRefEditorProps) => {
       [],
     ),
     getDetails: React.useCallback(
-      () => selectedItems.map(s => s.fieldName).join(", "),
+      () => selectedItems.map((s) => s.fieldName).join(", "),
       [selectedItems],
     ),
   });
@@ -92,7 +92,7 @@ const IndexEditor = ({ docRefUuid }: SwitchedDocRefEditorProps) => {
     React.useCallback(
       (id: number, fieldUpdates: Partial<IndexField>) => {
         if (!!docRefContents) {
-          let updatedIndex: Partial<IndexDoc> = {
+          const updatedIndex: Partial<IndexDoc> = {
             fields: fields.map((f, _id) =>
               _id === id
                 ? {
@@ -111,7 +111,7 @@ const IndexEditor = ({ docRefUuid }: SwitchedDocRefEditorProps) => {
 
   const onCreateClick = React.useCallback(() => {
     if (!!docRefContents) {
-      let updatedIndex: Partial<IndexDoc> = {
+      const updatedIndex: Partial<IndexDoc> = {
         ...docRefContents,
         fields: [
           ...(docRefContents.fields || []),
@@ -146,14 +146,14 @@ const IndexEditor = ({ docRefUuid }: SwitchedDocRefEditorProps) => {
       lastSelectedIndex > 0 &&
       selectedItems.length > 0
     ) {
-      let f0 = fields[lastSelectedIndex - 1];
-      let f1 = fields[lastSelectedIndex];
+      const f0 = fields[lastSelectedIndex - 1];
+      const f1 = fields[lastSelectedIndex];
 
-      let newFields = [...fields];
+      const newFields = [...fields];
       newFields[lastSelectedIndex] = f0;
       newFields[lastSelectedIndex - 1] = f1;
 
-      let updatedIndex: Partial<IndexDoc> = {
+      const updatedIndex: Partial<IndexDoc> = {
         fields: newFields,
       };
       onDocumentChange(updatedIndex);
@@ -173,14 +173,14 @@ const IndexEditor = ({ docRefUuid }: SwitchedDocRefEditorProps) => {
       lastSelectedIndex > 0 &&
       selectedItems.length > 0
     ) {
-      let f0 = fields[lastSelectedIndex];
-      let f1 = fields[lastSelectedIndex + 1];
+      const f0 = fields[lastSelectedIndex];
+      const f1 = fields[lastSelectedIndex + 1];
 
-      let newFields = [...fields];
+      const newFields = [...fields];
       newFields[lastSelectedIndex + 1] = f0;
       newFields[lastSelectedIndex] = f1;
 
-      let updatedIndex: Partial<IndexDoc> = {
+      const updatedIndex: Partial<IndexDoc> = {
         fields: newFields,
       };
       onDocumentChange(updatedIndex);

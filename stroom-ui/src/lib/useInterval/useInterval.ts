@@ -10,7 +10,7 @@ interface Props {
 const useInterval = ({ callback, delay }: Props) => {
   // Set up the interval.
   React.useEffect(() => {
-    let id = setInterval(callback, delay);
+    const id = setInterval(callback, delay);
     return () => clearInterval(id);
   }, [callback, delay]);
 };

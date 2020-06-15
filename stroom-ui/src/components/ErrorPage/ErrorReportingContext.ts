@@ -12,6 +12,6 @@ export default React.createContext<ErrorReportingContextState>({
     stackTrace: "",
     httpErrorCode: 0,
   },
-  reportError: e =>
+  reportError: (e) =>
     console.error("Reporting error to disconnected default context", e),
 });

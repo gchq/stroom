@@ -23,19 +23,16 @@ export interface OkButtonProps {
   onOk: React.MouseEventHandler;
 }
 
-const OkButtons =
-  ({
-     onOk,
-   }: OkButtonProps) => (
-    <React.Fragment>
-      <Button
-        appearance="contained"
-        action="primary"
-        icon="check"
-        text="OK"
-        onClick={onOk}
-      />
-    </React.Fragment>
-  );
+const OkButtons = ({ onOk }: OkButtonProps) => (
+  <React.Fragment>
+    <Button
+      appearance="contained"
+      action="primary"
+      icon="check"
+      text="OK"
+      onClick={onOk}
+    />
+  </React.Fragment>
+);
 
 export default OkButtons;

@@ -1,22 +1,36 @@
 import * as React from "react";
 import { pipe } from "ramda";
-import { DragDropContext } from "react-dnd";
-import HTML5Backend from "react-dnd-html5-backend";
+
 import StoryRouter from "storybook-react-router";
-import * as ReactModal from "react-modal";
+import ReactModal from "react-modal";
 
 import { useTestServer } from "./PollyDecorator";
-
-import setupFontAwesome from "lib/setupFontAwesome";
 import testData from "../data";
-import { ThemeContextProvider } from "lib/useTheme/useTheme";
 import { withRouter, RouteComponentProps } from "react-router";
-import { CustomRouter } from "lib/useRouter";
-import ConfigProvider from "startup/config/ConfigProvider";
-import { AuthorisationContextProvider } from "startup/Authorisation";
 import { AuthenticationContext } from "startup/Authentication";
+
+import { DragDropContext } from "react-dnd";
+import HTML5Backend from "react-dnd-html5-backend";
+
+import { Routes } from "components/AppChrome";
+import setupFontAwesome from "lib/setupFontAwesome";
+
+import { ThemeContextProvider } from "lib/useTheme/useTheme";
+import { CustomRouter } from "lib/useRouter";
+
+import { createBrowserHistory as createHistory } from "history";
+import ConfigProvider from "startup/config/ConfigProvider";
+
+import "styles/main.scss";
+import { AuthorisationContextProvider } from "startup/Authorisation";
 import { DocumentTreeContextProvider } from "components/DocumentEditors/api/explorer";
 import { ErrorReportingContextProvider } from "components/ErrorPage";
+
+export const history = createHistory();
+
+const DndRoutes = DragDropContext(HTML5Backend)(Routes);
+
+setupFontAwesome();
 
 const WithTestServer: React.FunctionComponent = ({ children }) => {
   useTestServer(testData);

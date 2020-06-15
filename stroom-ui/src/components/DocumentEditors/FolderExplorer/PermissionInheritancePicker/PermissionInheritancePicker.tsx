@@ -5,14 +5,14 @@ import { PermissionInheritance } from "./types";
 import { ControlledInput } from "lib/useForm/types";
 import useReactSelect from "lib/useReactSelect";
 
-const options = Object.entries(PermissionInheritance).map(k => ({
+const options = Object.entries(PermissionInheritance).map((k) => ({
   value: k[0],
   label: k[1],
 }));
 
-const PermissionInheritancePicker: React.FunctionComponent<
-  ControlledInput<PermissionInheritance>
-> = ({ value, onChange }) => {
+const PermissionInheritancePicker: React.FunctionComponent<ControlledInput<
+  PermissionInheritance
+>> = ({ value, onChange }) => {
   const { _onChange, _value } = useReactSelect({
     options: [],
     onChange,

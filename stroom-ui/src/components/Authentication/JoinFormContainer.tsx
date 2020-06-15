@@ -20,7 +20,7 @@ import * as React from "react";
 import JoinForm, { FormValues } from "./JoinForm";
 import useAuthenticationApi from "./api/useAuthenticationApi";
 import { useState } from "react";
-import * as zxcvbn from "zxcvbn";
+import zxcvbn from "zxcvbn";
 
 export const JoinFormContainer: React.FunctionComponent = () => {
   const { login } = useAuthenticationApi();
@@ -63,7 +63,7 @@ export const JoinFormContainer: React.FunctionComponent = () => {
         }, 1000);
       }}
     >
-      {props => {
+      {(props) => {
         const handler = (e: React.ChangeEvent<HTMLInputElement>) => {
           if (e.target.id === "password") {
             const score = zxcvbn(e.target.value).score;

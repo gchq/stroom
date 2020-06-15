@@ -15,7 +15,7 @@
  */
 
 import * as React from "react";
-import * as Fuse from "fuse.js";
+import Fuse from "fuse.js";
 import { Account } from "components/users/types";
 import UserSelect from "./UserSelect";
 import useUserSearch from "components/users/SearchUsers/useUserSearch";
@@ -46,12 +46,12 @@ const UserSelectContainer: React.FunctionComponent<Props> = ({
       } else {
         let searchResults = [];
         if (fuzzy) {
-          var fuse = new Fuse(initialUsers, {
+          const fuse = new Fuse(initialUsers, {
             keys: [{ name: "email", weight: 1 }],
           });
           searchResults = fuse.search(criteria);
         } else {
-          searchResults = initialUsers.filter(user =>
+          searchResults = initialUsers.filter((user) =>
             user.email.includes(criteria),
           );
         }

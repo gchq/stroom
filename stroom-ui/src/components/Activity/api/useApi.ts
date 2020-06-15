@@ -28,10 +28,10 @@ const useApi = (): UseApi => {
   const { apiUrl } = useUrlFactory();
   const resource = apiUrl("/activity/v1");
   return {
-    getCurrentActivity: useCallback(
-      () => httpGetJson(`${resource}/current`),
-      [resource, httpGetJson],
-    ),
+    getCurrentActivity: useCallback(() => httpGetJson(`${resource}/current`), [
+      resource,
+      httpGetJson,
+    ]),
     setCurrentActivity: useCallback(
       (activity: Activity) =>
         httpPostJsonResponse(`${resource}/current`, {
@@ -40,10 +40,10 @@ const useApi = (): UseApi => {
       [resource, httpPostJsonResponse],
     ),
 
-    getActivities: React.useCallback(
-      () => httpGetJson(resource),
-      [resource, httpGetJson],
-    ),
+    getActivities: React.useCallback(() => httpGetJson(resource), [
+      resource,
+      httpGetJson,
+    ]),
 
     createActivity: React.useCallback(
       (activity: Activity) =>
@@ -64,8 +64,7 @@ const useApi = (): UseApi => {
       [resource, httpPostJsonResponse],
     ),
     deleteActivity: React.useCallback(
-      (id: string) =>
-        httpDeleteEmptyResponse(`${resource}/${id}`),
+      (id: string) => httpDeleteEmptyResponse(`${resource}/${id}`),
       [resource, httpDeleteEmptyResponse],
     ),
   };

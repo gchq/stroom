@@ -24,7 +24,7 @@ const cellStyle: React.CSSProperties = {
 };
 
 for (let y = 0; y < MAX_DIM; y++) {
-  let thisRow: Location[] = [];
+  const thisRow: Location[] = [];
   for (let x = 0; x < MAX_DIM; x++) {
     thisRow.push({ x, y });
   }
@@ -76,7 +76,7 @@ const TestHarness: React.FunctionComponent = () => {
     ArrowRight: goRight,
   });
 
-  const mainDiv = React.useCallback(node => {
+  const mainDiv = React.useCallback((node) => {
     if (node != null) {
       node.focus();
     }

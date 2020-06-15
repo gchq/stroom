@@ -16,7 +16,7 @@
 
 import { useTheme } from "lib/useTheme/useTheme";
 import * as React from "react";
-import * as ReactModal from "react-modal";
+import ReactModal from "react-modal";
 import reactModalOptions from "./reactModalOptions";
 
 interface ContentProps {

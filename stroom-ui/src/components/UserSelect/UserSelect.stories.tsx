@@ -16,9 +16,8 @@
 
 import * as React from "react";
 import { storiesOf } from "@storybook/react";
-import { addThemedStories } from "testing/storybook/themedStoryGenerator";
 import JsonDebug from "testing/JsonDebug";
-import * as Fuse from "fuse.js";
+import Fuse from "fuse.js";
 
 import { useCallback } from "react";
 import { Account } from "components/users/types";
@@ -33,8 +32,6 @@ import {
 
 import UserSelect from "./UserSelect";
 import styled from "styled-components";
-
-const stories = storiesOf("Users", module);
 
 const Container = styled.div`
   width: 30em;
@@ -63,7 +60,7 @@ const TestHarness: React.FunctionComponent = () => {
   );
   const handleSearch = useCallback(
     (criteria: string) => {
-      const searchResults = initialUsers.filter(user =>
+      const searchResults = initialUsers.filter((user) =>
         user.email.includes(criteria),
       );
       setUsers(searchResults);
@@ -73,7 +70,7 @@ const TestHarness: React.FunctionComponent = () => {
 
   const handleChange = useCallback(
     (user: string) => {
-      const result = users.find(u => user === u.email);
+      const result = users.find((u) => user === u.email);
       setSelectedUser(result);
     },
     [users, setSelectedUser],
@@ -99,4 +96,4 @@ const TestHarness: React.FunctionComponent = () => {
   );
 };
 
-addThemedStories(stories, "UserSelect", () => <TestHarness />);
+storiesOf("Users", module).add("UserSelect", () => <TestHarness />);

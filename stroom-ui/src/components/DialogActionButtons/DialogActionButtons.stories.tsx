@@ -3,7 +3,7 @@ import { storiesOf } from "@storybook/react";
 
 import DialogActionButtons from "./DialogActionButtons";
 
-let TestHarness: React.FunctionComponent = () => {
+const TestHarness: React.FunctionComponent = () => {
   const [hasConfirmed, setHasConfirmed] = React.useState<boolean>(false);
   const [hasCancelled, setHasCancelled] = React.useState<boolean>(false);
 

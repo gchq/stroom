@@ -22,8 +22,9 @@ export interface Props {
   thresholdLength: number;
 }
 
-export const JoinForm: React.FunctionComponent<Props &
-  FormikProps<FormValues>> = ({
+export const JoinForm: React.FunctionComponent<
+  Props & FormikProps<FormValues>
+> = ({
   values,
   errors,
   touched,

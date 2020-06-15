@@ -19,7 +19,7 @@ const resourceBuilder: ResourceBuilder = (
   server
     .get(`${resource}/names`)
     .intercept((req: HttpRequest, res: HttpResponse) => {
-      res.json(testCache.data!.indexVolumesAndGroups.groups.map(g => g.name));
+      res.json(testCache.data!.indexVolumesAndGroups.groups.map((g) => g.name));
     });
 
   // Get by Name
@@ -27,7 +27,7 @@ const resourceBuilder: ResourceBuilder = (
     .get(`${resource}/:name`)
     .intercept((req: HttpRequest, res: HttpResponse) => {
       const group = testCache.data!.indexVolumesAndGroups.groups.find(
-        g => g.name === req.params.name,
+        (g) => g.name === req.params.name,
       );
       if (!!group) {
         res.json(group);
@@ -68,7 +68,7 @@ const resourceBuilder: ResourceBuilder = (
       testCache.data!.indexVolumesAndGroups = {
         ...testCache.data!.indexVolumesAndGroups,
         groups: testCache.data!.indexVolumesAndGroups.groups.filter(
-          g => g.name !== oldName,
+          (g) => g.name !== oldName,
         ),
       };
 

@@ -26,7 +26,11 @@ import usePassword from "./useChangePassword";
 // import SignInForm from "../../Authentication/SignInForm";
 
 const ChangePasswordContainer = () => {
-  const { changePassword, showChangeConfirmation, isSubmitting } = usePassword();
+  const {
+    changePassword,
+    showChangeConfirmation,
+    isSubmitting,
+  } = usePassword();
   const { router } = useRouter();
   const [redirectUri, setRedirectUri] = useState("");
   const [email, setEmail] = useState("");

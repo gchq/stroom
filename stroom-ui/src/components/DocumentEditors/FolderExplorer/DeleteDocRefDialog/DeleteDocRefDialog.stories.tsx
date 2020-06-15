@@ -7,7 +7,6 @@ import { fromSetupSampleData } from "../test";
 
 import JsonDebug from "testing/JsonDebug";
 import { DocRefType } from "components/DocumentEditors/useDocumentApi/types/base";
-import { addThemedStories } from "testing/storybook/themedStoryGenerator";
 
 const testFolder2 = fromSetupSampleData.children![1];
 
@@ -29,12 +28,11 @@ const TestHarness: React.FunctionComponent<Props> = ({ testUuids }) => {
   );
 };
 
-const stories = storiesOf(
-  "Document Editors/Folder",
-  module,
+storiesOf("Document Editors/Folder", module).add(
+  "Delete Doc Ref Dialog",
+  () => (
+    <TestHarness
+      testUuids={testFolder2.children!.map((d: DocRefType) => d.uuid)}
+    />
+  ),
 );
-addThemedStories(stories, "Delete Doc Ref Dialog", () => (
-  <TestHarness
-    testUuids={testFolder2.children!.map((d: DocRefType) => d.uuid)}
-  />
-));

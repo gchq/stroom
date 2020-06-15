@@ -28,8 +28,11 @@ interface Props {
 const CustomLoader: React.FunctionComponent<Props> = ({ title, message }) => (
   <div id="loading">
     <div id="loadingBox">
-      <div id="loadingImage" className="mdl-spinner mdl-spinner--single-color mdl-js-spinner is-active is-upgraded"
-           data-upgraded=",MaterialSpinner">
+      <div
+        id="loadingImage"
+        className="mdl-spinner mdl-spinner--single-color mdl-js-spinner is-active is-upgraded"
+        data-upgraded=",MaterialSpinner"
+      >
         <div className="mdl-spinner__layer mdl-spinner__layer-1">
           <div className="mdl-spinner__circle-clipper mdl-spinner__left">
             <div className="mdl-spinner__circle"></div>

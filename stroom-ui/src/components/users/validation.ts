@@ -61,7 +61,7 @@ function validatePasswords(failedOn: string[]): PasswordValidationErrors {
   const passwordErrors: string[] = [];
   const oldPasswordErrors: string[] = [];
   if (failedOn.length > 0) {
-    failedOn.forEach(failureType => {
+    failedOn.forEach((failureType) => {
       if (failureType === "LENGTH") {
         passwordErrors.push("Your new password is not long enough.");
       } else if (failureType === "COMPLEXITY") {

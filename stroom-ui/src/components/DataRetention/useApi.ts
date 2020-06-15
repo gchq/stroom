@@ -29,9 +29,9 @@ export const useApi = (): Api => {
   const resource = apiUrl("/retention/v1");
 
   return {
-    fetchPolicy: useCallback(
-      () => httpGetJson(resource),
-      [resource, httpGetJson],
-    ),
+    fetchPolicy: useCallback(() => httpGetJson(resource), [
+      resource,
+      httpGetJson,
+    ]),
   };
 };

@@ -36,7 +36,7 @@ const XsltEditor: React.FunctionComponent<SwitchedDocRefEditorProps> = ({
   const { docRefContents } = editorProps;
 
   const onDataChange = React.useCallback(
-    value => onDocumentChange({ data: value }),
+    (value) => onDocumentChange({ data: value }),
     [onDocumentChange],
   );
 

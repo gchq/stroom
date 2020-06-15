@@ -9,9 +9,9 @@ export interface NewPasswordFieldProps {
   thresholdLength?: number;
 }
 
-const NewPasswordField: FunctionComponent<NewPasswordFieldProps &
-  FormFieldProps &
-  FormFieldState> = ({
+const NewPasswordField: FunctionComponent<
+  NewPasswordFieldProps & FormFieldProps & FormFieldState
+> = ({
   strength,
   minStrength = 3,
   thresholdLength = 7,

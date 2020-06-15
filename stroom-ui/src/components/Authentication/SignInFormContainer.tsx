@@ -36,7 +36,7 @@ export const SignInFormContainer: React.FunctionComponent = () => {
         password: Yup.string().required("Password is required"),
       })}
       onSubmit={(values, actions) => {
-        login(values).then(response => {
+        login(values).then((response) => {
           if (response.loginSuccessful) {
             // Otherwise we'll extract what we expect to be the successful login redirect URL
             Cookies.set("userId", values.userId);
@@ -60,7 +60,7 @@ export const SignInFormContainer: React.FunctionComponent = () => {
         // }, 1000);
       }}
     >
-      {props => <SignInForm allowPasswordResets={true} {...props} />}
+      {(props) => <SignInForm allowPasswordResets={true} {...props} />}
     </Formik>
   );
 };

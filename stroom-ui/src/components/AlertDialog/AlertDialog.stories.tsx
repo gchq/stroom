@@ -3,8 +3,6 @@ import { storiesOf } from "@storybook/react";
 
 import AlertDialog, { Alert, AlertType } from "./AlertDialog";
 
-import { addThemedStories } from "testing/storybook/themedStoryGenerator";
-
 const TestHarness: React.FunctionComponent = () => {
   const alert: Alert = {
     type: AlertType.ERROR,
@@ -12,13 +10,7 @@ const TestHarness: React.FunctionComponent = () => {
     message: "Ouch, that hurts!",
   };
 
-  return (
-    <AlertDialog alert={alert} isOpen={true} onCloseDialog={undefined}/>
-  );
+  return <AlertDialog alert={alert} isOpen={true} onCloseDialog={undefined} />;
 };
 
-const stories = storiesOf(
-  "AlertDialog",
-  module,
-);
-addThemedStories(stories, "Dialog", () => <TestHarness/>);
+storiesOf("AlertDialog", module).add("Dialog", () => <TestHarness />);

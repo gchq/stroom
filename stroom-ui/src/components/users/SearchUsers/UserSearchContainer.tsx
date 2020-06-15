@@ -15,8 +15,6 @@
  */
 
 import * as React from "react";
-import "react-table/react-table.css";
-import "react-toggle/style.css";
 import useAppNavigation from "lib/useAppNavigation";
 import UserSearch from "./UserSearch";
 import useUserSearch from "./useUserSearch";

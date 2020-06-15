@@ -17,15 +17,8 @@
 import * as React from "react";
 import { storiesOf } from "@storybook/react";
 
-import { addThemedStories } from "testing/storybook/themedStoryGenerator";
 import DocRefIconHeader from "./DocRefIconHeader";
 
-const stories = storiesOf("Doc Ref", module);
-addThemedStories(
-  stories,
-  "Icon Header",
-  () => (
-    <DocRefIconHeader docRefType="XSLT" text="Would anyone like any toast?"/>
-  ),
-  true,
-);
+storiesOf("Doc Ref", module).add("Icon Header", () => (
+  <DocRefIconHeader docRefType="XSLT" text="Would anyone like any toast?" />
+));

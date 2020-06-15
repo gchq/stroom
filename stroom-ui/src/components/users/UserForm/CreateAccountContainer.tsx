@@ -52,12 +52,7 @@ const CreateAccountContainer = () => {
       onBack={() => goToUsers()}
       onCancel={() => goToUsers()}
       onValidate={async (password, verifyPassword, email) => {
-        return await validateAsync(
-          email,
-          password,
-          verifyPassword,
-          resource,
-        );
+        return await validateAsync(email, password, verifyPassword, resource);
       }}
     />
   );

@@ -54,7 +54,7 @@ const useUsers = () => {
    */
   const fetchUser = useCallback(
     (userId: string) => {
-      fetchUserUsingApi(userId).then(account => {
+      fetchUserUsingApi(userId).then((account) => {
         setIsCreating(false);
         setAccount(account);
       });

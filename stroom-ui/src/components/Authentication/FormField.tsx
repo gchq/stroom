@@ -28,9 +28,9 @@ export interface FormFieldProps {
   onBlur?: FocusEventHandler<HTMLInputElement>;
 }
 
-const FormField: FunctionComponent<FormFieldProps &
-  FormFieldState &
-  FormFieldType> = ({
+const FormField: FunctionComponent<
+  FormFieldProps & FormFieldState & FormFieldType
+> = ({
   name,
   type,
   label,
@@ -75,7 +75,7 @@ const FormField: FunctionComponent<FormFieldProps &
         id={name}
         placeholder={placeholder}
         value={value}
-        onChange={e => {
+        onChange={(e) => {
           setFieldTouched(name);
           onChange(e);
         }}

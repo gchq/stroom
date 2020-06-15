@@ -2,7 +2,6 @@ import * as React from "react";
 
 import { storiesOf } from "@storybook/react";
 import ExpressionTerm from ".";
-import { addThemedStories } from "testing/storybook/themedStoryGenerator";
 
 import { testDataSource as dataSource } from "../test";
 import { ExpressionTermType } from "../types";
@@ -10,8 +9,6 @@ import { getNewTerm } from "../expressionUtils";
 import JsonDebug from "testing/JsonDebug";
 import Button from "components/Button";
 import useToggle from "lib/useToggle";
-
-const stories = storiesOf("Expression", module);
 
 const newTerm: ExpressionTermType = getNewTerm();
 
@@ -51,4 +48,4 @@ const TestHarness: React.FunctionComponent = () => {
   );
 };
 
-addThemedStories(stories, "Term", () => <TestHarness />);
+storiesOf("Expression", module).add("Term", () => <TestHarness />);

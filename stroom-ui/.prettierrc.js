@@ -1,4 +1,7 @@
+// Prettier and ESLint configured as per https://www.robertcooper.me/using-eslint-and-prettier-in-a-typescript-project
+
 module.exports = {
+  trailingComma: "all",
 };
 
 // {

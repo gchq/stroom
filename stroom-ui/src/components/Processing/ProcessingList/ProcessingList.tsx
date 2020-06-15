@@ -15,7 +15,6 @@
  */
 
 import * as React from "react";
-import "react-sweet-progress/lib/style.css";
 import ReactTable, {
   RowInfo,
   SortingRule,
@@ -139,7 +138,7 @@ const ProcessingList: React.FunctionComponent<Props> = ({
   const { tableProps, selectedItem } = useSelectableReactTable<StreamTaskType>(
     {
       items: tableData,
-      getKey: React.useCallback(t => `${t.filterId}`, []),
+      getKey: React.useCallback((t) => `${t.filterId}`, []),
       selectionBehaviour: SelectionBehaviour.SINGLE,
       preFocusWrap,
     },
@@ -176,7 +175,7 @@ const ProcessingList: React.FunctionComponent<Props> = ({
         showPagination={false}
         pageSize={pageSize}
         {...tableProps}
-        onFetchData={state => onHandleSort(state.sorted[0])}
+        onFetchData={(state) => onHandleSort(state.sorted[0])}
       />
     </div>
   );

@@ -18,13 +18,10 @@ const useUserSearch = (): UserSearchApi => {
     setSelectedUser,
     setUsers,
   } = useUserSearchState();
-  const {
-    search: searchApi,
-    remove: removeUserUsingApi,
-  } = useApi();
+  const { search: searchApi, remove: removeUserUsingApi } = useApi();
 
   React.useEffect(() => {
-    searchApi().then(resultPage => {
+    searchApi().then((resultPage) => {
       setUsers(resultPage.values);
     });
   }, [searchApi, setUsers]);
@@ -32,7 +29,7 @@ const useUserSearch = (): UserSearchApi => {
   const remove = React.useCallback(
     (userId: string) => {
       removeUserUsingApi(userId).then(() =>
-        searchApi().then(resultPage => setUsers(resultPage.values)),
+        searchApi().then((resultPage) => setUsers(resultPage.values)),
       );
     },
     [removeUserUsingApi, searchApi, setUsers],
@@ -40,7 +37,7 @@ const useUserSearch = (): UserSearchApi => {
 
   const search = React.useCallback(
     (userId: string) => {
-      searchApi(userId).then(resultPage => setUsers(resultPage.values));
+      searchApi(userId).then((resultPage) => setUsers(resultPage.values));
     },
     [searchApi, setUsers],
   );

@@ -32,7 +32,7 @@ export interface TestData {
   elements: ElementDefinition[];
   elementProperties: ElementPropertiesByElementIdType;
   documents: {
-    [docRefType in keyof ResourcesByDocType]: DocumentBase<docRefType>[]
+    [docRefType in keyof ResourcesByDocType]: DocumentBase<docRefType>[];
   };
   trackers: StreamTaskType[];
   dataList: StreamAttributeMapResult;

@@ -9,10 +9,12 @@ const themeStyles: CSSProperties = {
 };
 
 const config: Config = new (class implements Config {
-  allowPasswordResets: boolean = (process.env.REACT_APP_ALLOW_PASSWORD_RESETS === "true");
+  allowPasswordResets: boolean =
+    process.env.REACT_APP_ALLOW_PASSWORD_RESETS === "true";
   theme = themeStyles;
   dateFormat: string = process.env.REACT_APP_DATE_FORMAT;
-  defaultApiKeyExpiryInMinutes: string = process.env.REACT_APP_DEFAULT_API_KEY_EXPIRY_IN_MINUTES;
+  defaultApiKeyExpiryInMinutes: string =
+    process.env.REACT_APP_DEFAULT_API_KEY_EXPIRY_IN_MINUTES;
 })();
 
 const ConfigProvider: React.FunctionComponent = ({ children }) => {

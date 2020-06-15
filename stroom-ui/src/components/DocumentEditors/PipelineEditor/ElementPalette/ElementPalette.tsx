@@ -85,7 +85,7 @@ const ElementPalette: React.FunctionComponent<EnhancedProps> = ({
       ) : (
         <React.Fragment>
           <ElementCategory category="Bin" elementsWithData={recycleBinItems} />
-          {Object.entries(byCategory).map(k => (
+          {Object.entries(byCategory).map((k) => (
             <ElementCategory
               key={k[0]}
               category={k[0]}

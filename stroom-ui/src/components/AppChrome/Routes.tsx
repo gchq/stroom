@@ -150,7 +150,7 @@ const Routes: React.FunctionComponent = () => {
           />
         )}
       />
-      {[false, true].map(isGroup => (
+      {[false, true].map((isGroup) => (
         <PrivateRoute
           key={isGroup ? "Group" : "User"}
           exact

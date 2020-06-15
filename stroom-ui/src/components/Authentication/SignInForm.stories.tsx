@@ -1,7 +1,6 @@
 import { storiesOf } from "@storybook/react";
 import * as React from "react";
 import SignInForm from "./SignInForm";
-import { addThemedStories } from "../../testing/storybook/themedStoryGenerator";
 import { Formik } from "formik";
 import * as Yup from "yup";
 
@@ -26,7 +25,7 @@ const TestHarness: React.FunctionComponent<{
         }, 1000);
       }}
     >
-      {props => (
+      {(props) => (
         <SignInForm allowPasswordResets={allowPasswordResets} {...props} />
         // <form onSubmit={props.handleSubmit}>
         //   <input
@@ -45,9 +44,9 @@ const TestHarness: React.FunctionComponent<{
 };
 
 const stories = storiesOf("Authentication", module);
-addThemedStories(stories, "Sign In - allow password resets", () => (
+stories.add("Sign In - allow password resets", () => (
   <TestHarness allowPasswordResets={true} />
 ));
-addThemedStories(stories, "Sign In - disallow password resets", () => (
+stories.add("Sign In - disallow password resets", () => (
   <TestHarness allowPasswordResets={false} />
 ));

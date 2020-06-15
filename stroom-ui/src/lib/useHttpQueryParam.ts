@@ -1,7 +1,7 @@
 import useRouter from "./useRouter";
 import * as queryString from "query-string";
 
-export const useHttpQueryParam = function<String>(
+export const useHttpQueryParam = function <String>(
   param: string,
 ): string | undefined {
   const { router } = useRouter();

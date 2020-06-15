@@ -23,7 +23,7 @@ const useAppPermissionsForUser = (userUuid: string): UserAppPermissionApi => {
     receiveItems,
     addItem,
     removeItem,
-  } = useListReducer<string>(g => g);
+  } = useListReducer<string>((g) => g);
 
   const {
     getPermissionsForUser,

@@ -10,27 +10,24 @@ import useAppNavigation from "lib/useAppNavigation";
 const useCheckStatus = (status: number) =>
   React.useCallback(
     (response: Response): Promise<any> => {
-
-//       console.log(response.headers.get("Content-Type"));
-//       console.log(response.headers.get("Date"));
-//       console.log(response.status);
-//       console.log(response.statusText);
+      //       console.log(response.headers.get("Content-Type"));
+      //       console.log(response.headers.get("Date"));
+      //       console.log(response.status);
+      //       console.log(response.statusText);
 
       if (response.status === status) {
         return Promise.resolve(response);
       }
 
-      return response.text().then(text => {
+      return response.text().then((text) => {
         console.log(
           "Expected HTTP status " +
-          status +
-          " but received " +
-          response.status +
-          " - " +
-          response.statusText,
-          " (" +
-          response.url +
-          ") " + text,
+            status +
+            " but received " +
+            response.status +
+            " - " +
+            response.statusText,
+          " (" + response.url + ") " + text,
         );
 
         let message = text;
@@ -41,16 +38,8 @@ const useCheckStatus = (status: number) =>
           message = "Incorrect HTTP Response Code";
         }
 
-        return Promise.reject(
-          new HttpError(
-            response.status,
-            message,
-          ),
-        );
-
+        return Promise.reject(new HttpError(response.status, message));
       });
-
-
     },
     [status],
   );
@@ -127,16 +116,16 @@ export const useHttpClient = (): HttpClient => {
       options: {
         [s: string]: any;
       } = {},
-      forceGet: boolean = true, // default to true, take care with settings this to false, old promises can override the updated picture with old information if this is mis-used
-      addAuthentication: boolean = false, // most of the time we want authenticated requests, so we'll make that the default.
+      forceGet = true, // default to true, take care with settings this to false, old promises can override the updated picture with old information if this is mis-used
+      addAuthentication = false, // most of the time we want authenticated requests, so we'll make that the default.
     ): Promise<T | void> => {
       if (!idToken && addAuthentication) {
-        let p = Promise.reject();
+        const p = Promise.reject();
         p.catch(() => console.log("Missing ID Token, not making request"));
         return p;
       }
 
-      let headers = {
+      const headers = {
         Accept: "application/json",
         "Content-Type": "application/json",
         ...(options ? options.headers : {}),
@@ -156,7 +145,7 @@ export const useHttpClient = (): HttpClient => {
           headers,
         })
           .then(handle200)
-          .then(r => r.json())
+          .then((r) => r.json())
           //           .then(r => {
           //             try {
           //               return r.json();
@@ -196,8 +185,8 @@ export const useHttpClient = (): HttpClient => {
         options?: {
           [s: string]: any;
         },
-        forceGet: boolean = true, // default to true, take care with settings this to false, old promises can override the updated picture with old information if this is mis-used
-        addAuthentication: boolean = true, // most of the time we want authenticated requests, so we'll make that the default.
+        forceGet = true, // default to true, take care with settings this to false, old promises can override the updated picture with old information if this is mis-used
+        addAuthentication = true, // most of the time we want authenticated requests, so we'll make that the default.
       ): Promise<T | void> => {
         if (!idToken && addAuthentication) {
           const p = Promise.reject();
@@ -215,39 +204,41 @@ export const useHttpClient = (): HttpClient => {
           headers.Authorization = `Bearer ${idToken}`;
         }
 
-        return fetch(url, {
-          mode: "cors",
-          credentials: "include",
-          ...options,
-          method,
-          headers,
-        })
-          .then(handle200)
-          .then(r => r.json())
-          //           .then(r => {
-          //             try {
-          //               console.log(r.headers.get("Content-Type"));
-          //               console.log(r.headers.get("Date"));
-          //               console.log(r.status);
-          //               console.log(r.statusText);
-          //
-          //               return r.text();
-          //             } catch (e) {
-          //               console.error(e);
-          //               throw e;
-          //             }
-          //           })
-          //           .then(text => {
-          //             try {
-          //               return JSON.parse(text);
-          //             } catch (e) {
-          //               console.error(e);
-          //             }
-          //
-          //             return text;
-          //
-          //           })
-          .catch(catchImpl);
+        return (
+          fetch(url, {
+            mode: "cors",
+            credentials: "include",
+            ...options,
+            method,
+            headers,
+          })
+            .then(handle200)
+            .then((r) => r.json())
+            //           .then(r => {
+            //             try {
+            //               console.log(r.headers.get("Content-Type"));
+            //               console.log(r.headers.get("Date"));
+            //               console.log(r.status);
+            //               console.log(r.statusText);
+            //
+            //               return r.text();
+            //             } catch (e) {
+            //               console.error(e);
+            //               throw e;
+            //             }
+            //           })
+            //           .then(text => {
+            //             try {
+            //               return JSON.parse(text);
+            //             } catch (e) {
+            //               console.error(e);
+            //             }
+            //
+            //             return text;
+            //
+            //           })
+            .catch(catchImpl)
+        );
       },
       [method],
     );

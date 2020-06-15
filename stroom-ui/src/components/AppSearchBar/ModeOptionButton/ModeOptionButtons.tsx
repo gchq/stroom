@@ -35,17 +35,17 @@ const MODE_OPTIONS: ModeOption[] = [
 
 const ModeOptionButtons: React.FunctionComponent<Props> = ({ switchMode }) => (
   <React.Fragment>
-    {MODE_OPTIONS.map(modeOption => (
+    {MODE_OPTIONS.map((modeOption) => (
       <Button
         key={modeOption.mode}
         icon={modeOption.icon}
         appearance="icon"
-        onClick={e => {
+        onClick={(e) => {
           switchMode(modeOption.mode);
           e.stopPropagation();
           e.preventDefault();
         }}
-        onKeyDown={e => {
+        onKeyDown={(e) => {
           if (e.key === " ") {
             switchMode(modeOption.mode);
           }
@@ -62,7 +62,7 @@ interface UseModeOptionButtons {
 }
 
 export const useModeOptionButtons = (): UseModeOptionButtons => {
-  let [searchMode, switchMode] = React.useState<SearchMode>(
+  const [searchMode, switchMode] = React.useState<SearchMode>(
     SearchMode.NAVIGATION,
   );
 

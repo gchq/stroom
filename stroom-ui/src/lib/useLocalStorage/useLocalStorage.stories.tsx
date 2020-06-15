@@ -19,9 +19,7 @@ const TestHarnessSetValue: React.FunctionComponent = () => {
     useStoreObjectFactory(),
   );
 
-  const onName1Change: React.ChangeEventHandler<
-    HTMLInputElement
-  > = React.useCallback(
+  const onName1Change: React.ChangeEventHandler<HTMLInputElement> = React.useCallback(
     ({ target: { value } }) => {
       setValue({ name: value });
     },
@@ -58,11 +56,10 @@ const TestHarnessReducer: React.FunctionComponent = () => {
   const storageKey = "testWithReducer";
 
   const [newValue, setNewValue] = React.useState<string>("kochanski");
-  const onNewValueChange: React.ChangeEventHandler<
-    HTMLInputElement
-  > = React.useCallback(({ target: { value } }) => setNewValue(value), [
-    setNewValue,
-  ]);
+  const onNewValueChange: React.ChangeEventHandler<HTMLInputElement> = React.useCallback(
+    ({ target: { value } }) => setNewValue(value),
+    [setNewValue],
+  );
 
   const { value, reduceValue, resetValue } = useLocalStorage<TestStore2>(
     storageKey,
@@ -73,17 +70,17 @@ const TestHarnessReducer: React.FunctionComponent = () => {
   );
 
   const onAddValue = React.useCallback(
-    e => {
-      reduceValue(existing => ({ names: [newValue, ...existing.names] }));
+    (e) => {
+      reduceValue((existing) => ({ names: [newValue, ...existing.names] }));
       e.preventDefault();
     },
     [newValue, reduceValue],
   );
 
   const onRemoveValue = React.useCallback(
-    e => {
-      reduceValue(existing => ({
-        names: existing.names.filter(e => e !== newValue),
+    (e) => {
+      reduceValue((existing) => ({
+        names: existing.names.filter((e) => e !== newValue),
       }));
       e.preventDefault();
     },

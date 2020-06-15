@@ -93,14 +93,15 @@ const UserForm: React.FunctionComponent<EditUserFormProps> = ({
       { name: "password", type: "custom" },
       {
         required: true,
-        validate: async value => await onValidate(value, verifyPassword, email),
+        validate: async (value) =>
+          await onValidate(value, verifyPassword, email),
       },
     );
     register(
       { name: "verifyPassword", type: "custom" },
       {
         required: true,
-        validate: async value => await onValidate(password, value, email),
+        validate: async (value) => await onValidate(password, value, email),
       },
     );
   }, [register, verifyPassword, password, email, onValidate]);
@@ -126,7 +127,7 @@ const UserForm: React.FunctionComponent<EditUserFormProps> = ({
               <StyledInput
                 name="firstName"
                 type="text"
-                onChange={async e =>
+                onChange={async (e) =>
                   handleInputChange("firstName", e.target.value)
                 }
               />
@@ -138,7 +139,7 @@ const UserForm: React.FunctionComponent<EditUserFormProps> = ({
               <StyledInput
                 name="lastName"
                 type="text"
-                onChange={async e =>
+                onChange={async (e) =>
                   handleInputChange("lastName", e.target.value)
                 }
               />
@@ -152,7 +153,9 @@ const UserForm: React.FunctionComponent<EditUserFormProps> = ({
             <InputAndValidation>
               <StyledInput
                 name="email"
-                onChange={async e => handleInputChange("email", e.target.value)}
+                onChange={async (e) =>
+                  handleInputChange("email", e.target.value)
+                }
               />
               <ValidationMessage>
                 {errors.email && errors.email.message}
@@ -188,7 +191,7 @@ const UserForm: React.FunctionComponent<EditUserFormProps> = ({
                 name="password"
                 type="password"
                 prefix={<LockOutlined style={{ color: "rgba(0,0,0,.25)" }} />}
-                onChange={async e =>
+                onChange={async (e) =>
                   handleInputChange("password", e.target.value)
                 }
                 // ref={register({
@@ -211,7 +214,7 @@ const UserForm: React.FunctionComponent<EditUserFormProps> = ({
                 name="verifyPassword"
                 type="password"
                 prefix={<LockOutlined style={{ color: "rgba(0,0,0,.25)" }} />}
-                onChange={async e =>
+                onChange={async (e) =>
                   handleInputChange("verifyPassword", e.target.value)
                 }
                 // ref={register({
@@ -243,7 +246,7 @@ const UserForm: React.FunctionComponent<EditUserFormProps> = ({
                 rows={3}
                 className="section__fields__comments"
                 name="comments"
-                onChange={async e =>
+                onChange={async (e) =>
                   handleInputChange("comments", e.target.value)
                 }
               />

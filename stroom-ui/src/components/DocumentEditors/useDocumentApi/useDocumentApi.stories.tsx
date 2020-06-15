@@ -15,7 +15,7 @@ const TestHarness: React.FunctionComponent = () => {
     "Dictionary",
   );
   const setDocRefTypeSafe = React.useCallback(
-    d => setDocRefType(d as keyof ResourcesByDocType),
+    (d) => setDocRefType(d as keyof ResourcesByDocType),
     [setDocRefType],
   );
 
@@ -38,7 +38,7 @@ const TestHarness: React.FunctionComponent = () => {
 
   React.useEffect(() => {
     if (!!fetchDocument) {
-      fetchDocument(docRefUuid).then(d => {
+      fetchDocument(docRefUuid).then((d) => {
         setDocRefContents(d);
       });
     }

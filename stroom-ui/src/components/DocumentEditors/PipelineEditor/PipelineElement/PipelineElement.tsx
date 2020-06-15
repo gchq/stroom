@@ -14,24 +14,24 @@
  * limitations under the License.
  */
 import * as React from "react";
-import { pipe } from "ramda";
-import {
-  DragSource,
-  DropTarget,
-  DragSourceSpec,
-  DragSourceCollector,
-  DropTargetSpec,
-  DropTargetCollector,
-} from "react-dnd";
+// import { pipe } from "ramda";
+// import {
+//   DragSource,
+//   DropTarget,
+//   DragSourceSpec,
+//   DragSourceCollector,
+//   DropTargetSpec,
+//   DropTargetCollector,
+// } from "react-dnd";
 
 import ElementImage from "../ElementImage";
-import { canMovePipelineElement } from "../pipelineUtils";
+// import { canMovePipelineElement } from "../pipelineUtils";
 import {
-  DragDropTypes,
+  // DragDropTypes,
   DragCollectedProps,
   DropCollectedProps,
 } from "../types";
-import { isValidChildType } from "../elementUtils";
+// import { isValidChildType } from "../elementUtils";
 import Button from "components/Button";
 
 import { ShowDialog } from "../AddElementModal/types";
@@ -46,119 +46,119 @@ interface Props {
   elementDefinition: ElementDefinition;
 }
 
-interface DragObject {
-  pipelineId: string;
-  elementId: string;
-  elementDefinition: ElementDefinition;
-}
+// interface DragObject {
+//   pipelineId: string;
+//   elementId: string;
+//   elementDefinition: ElementDefinition;
+// }
 
 interface EnhancedProps extends Props, DropCollectedProps, DragCollectedProps {}
 
-const dragSource: DragSourceSpec<Props, DragObject> = {
-  canDrag() {
-    return true;
-  },
-  beginDrag(props) {
-    return {
-      pipelineId: props.pipelineEditApi.pipelineId,
-      elementId: props.elementId,
-      elementDefinition: props.elementDefinition,
-    };
-  },
-};
-
-const dragCollect: DragSourceCollector<DragCollectedProps, Props> = (
-  connect,
-  monitor,
-) => ({
-  connectDragSource: connect.dragSource(),
-  isDragging: monitor.isDragging(),
-});
-
-const dropTarget: DropTargetSpec<Props> = {
-  canDrop(props, monitor) {
-    const {
-      elementId,
-      elementDefinition,
-      pipelineEditApi: { pipeline, asTree },
-    } = props;
-
-    switch (monitor.getItemType()) {
-      case DragDropTypes.ELEMENT:
-        const dropeeId = monitor.getItem().elementId;
-        const dropeeDefinition = monitor.getItem().elementDefinition;
-        const isValidChild = isValidChildType(
-          elementDefinition,
-          dropeeDefinition,
-          0,
-        );
-
-        const isValid = canMovePipelineElement(
-          pipeline,
-          asTree,
-          dropeeId,
-          elementId,
-        );
-
-        return isValidChild && isValid;
-      case DragDropTypes.PALLETE_ELEMENT:
-        const dropeeType = monitor.getItem().element;
-        if (dropeeType) {
-          const isValidChild = isValidChildType(
-            elementDefinition,
-            dropeeType,
-            0,
-          );
-          return isValidChild;
-        }
-        return true;
-
-      default:
-        return false;
-    }
-  },
-  drop(props, monitor) {
-    const {
-      elementId,
-      pipelineEditApi: {
-        elementMoved,
-        elementReinstated,
-        existingElementNames,
-      },
-      showAddElementDialog,
-    } = props;
-
-    switch (monitor.getItemType()) {
-      case DragDropTypes.ELEMENT: {
-        const newElementId = monitor.getItem().elementId;
-        elementMoved(newElementId, elementId);
-        break;
-      }
-      case DragDropTypes.PALLETE_ELEMENT: {
-        const { element, recycleData } = monitor.getItem();
-
-        if (recycleData) {
-          elementReinstated(elementId, recycleData);
-        } else {
-          showAddElementDialog(elementId, element, existingElementNames);
-        }
-        break;
-      }
-      default:
-        break;
-    }
-  },
-};
-
-const dropCollect: DropTargetCollector<DropCollectedProps, Props> = (
-  connect,
-  monitor,
-) => ({
-  connectDropTarget: connect.dropTarget(),
-  isOver: monitor.isOver(),
-  canDrop: monitor.canDrop(),
-  draggingItemType: monitor.getItemType(),
-});
+// const dragSource: DragSourceSpec<Props, DragObject> = {
+//   canDrag() {
+//     return true;
+//   },
+//   beginDrag(props) {
+//     return {
+//       pipelineId: props.pipelineEditApi.pipelineId,
+//       elementId: props.elementId,
+//       elementDefinition: props.elementDefinition,
+//     };
+//   },
+// };
+//
+// const dragCollect: DragSourceCollector<DragCollectedProps, Props> = (
+//   connect,
+//   monitor,
+// ) => ({
+//   connectDragSource: connect.dragSource(),
+//   isDragging: monitor.isDragging(),
+// });
+//
+// const dropTarget: DropTargetSpec<Props> = {
+//   canDrop(props, monitor) {
+//     const {
+//       elementId,
+//       elementDefinition,
+//       pipelineEditApi: { pipeline, asTree },
+//     } = props;
+//
+//     switch (monitor.getItemType()) {
+//       case DragDropTypes.ELEMENT:
+//         const dropeeId = monitor.getItem().elementId;
+//         const dropeeDefinition = monitor.getItem().elementDefinition;
+//         const isValidChild = isValidChildType(
+//           elementDefinition,
+//           dropeeDefinition,
+//           0,
+//         );
+//
+//         const isValid = canMovePipelineElement(
+//           pipeline,
+//           asTree,
+//           dropeeId,
+//           elementId,
+//         );
+//
+//         return isValidChild && isValid;
+//       case DragDropTypes.PALLETE_ELEMENT:
+//         const dropeeType = monitor.getItem().element;
+//         if (dropeeType) {
+//           const isValidChild = isValidChildType(
+//             elementDefinition,
+//             dropeeType,
+//             0,
+//           );
+//           return isValidChild;
+//         }
+//         return true;
+//
+//       default:
+//         return false;
+//     }
+//   },
+//   drop(props, monitor) {
+//     const {
+//       elementId,
+//       pipelineEditApi: {
+//         elementMoved,
+//         elementReinstated,
+//         existingElementNames,
+//       },
+//       showAddElementDialog,
+//     } = props;
+//
+//     switch (monitor.getItemType()) {
+//       case DragDropTypes.ELEMENT: {
+//         const newElementId = monitor.getItem().elementId;
+//         elementMoved(newElementId, elementId);
+//         break;
+//       }
+//       case DragDropTypes.PALLETE_ELEMENT: {
+//         const { element, recycleData } = monitor.getItem();
+//
+//         if (recycleData) {
+//           elementReinstated(elementId, recycleData);
+//         } else {
+//           showAddElementDialog(elementId, element, existingElementNames);
+//         }
+//         break;
+//       }
+//       default:
+//         break;
+//     }
+//   },
+// };
+//
+// const dropCollect: DropTargetCollector<DropCollectedProps, Props> = (
+//   connect,
+//   monitor,
+// ) => ({
+//   connectDropTarget: connect.dropTarget(),
+//   isOver: monitor.isOver(),
+//   canDrop: monitor.canDrop(),
+//   draggingItemType: monitor.getItemType(),
+// });
 
 // dnd_error: temporarily disable dnd-related code to get the build working
 /* const enhance = pipe(

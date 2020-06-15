@@ -16,7 +16,6 @@
 import * as React from "react";
 
 import "simplebar";
-import "simplebar/dist/simplebar.css";
 
 import { ActiveMenuItem } from "./types";
 import { useTheme } from "lib/useTheme/useTheme";

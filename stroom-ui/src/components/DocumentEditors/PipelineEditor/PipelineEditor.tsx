@@ -66,7 +66,7 @@ const PipelineEditor = ({ docRefUuid }: SwitchedDocRefEditorProps) => {
   const {
     showDialog: showDeleteElementDialog,
     componentProps: deleteElementComponentProps,
-  } = useDeleteElementDialog(elementIdToDelete => {
+  } = useDeleteElementDialog((elementIdToDelete) => {
     elementDeleted(elementIdToDelete);
   });
 

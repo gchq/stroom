@@ -46,18 +46,12 @@ export const useApi = (): Api => {
   return {
     getPermissionForDocType: React.useCallback(
       (docRefType: string): Promise<string[]> =>
-        httpGetJson(
-          `${resource}/forDocType/${docRefType}`,
-          {},
-          false,
-        ),
+        httpGetJson(`${resource}/forDocType/${docRefType}`, {}, false),
       [resource, httpGetJson],
     ),
     getPermissionsForDocumentForUser: React.useCallback(
       (docRefUuid: string, userUuid: string): Promise<string[]> =>
-        httpGetJson(
-          `${resource}/forDocForUser/${docRefUuid}/${userUuid}`,
-        ),
+        httpGetJson(`${resource}/forDocForUser/${docRefUuid}/${userUuid}`),
       [resource, httpGetJson],
     ),
     addDocPermission: React.useCallback(
@@ -83,10 +77,7 @@ export const useApi = (): Api => {
       [resource, httpDeleteEmptyResponse],
     ),
     getPermissionForDoc: React.useCallback(
-      (docRefUuid: string) =>
-        httpGetJson(
-          `${resource}/forDoc/${docRefUuid}`,
-        ),
+      (docRefUuid: string) => httpGetJson(`${resource}/forDoc/${docRefUuid}`),
       [resource, httpGetJson],
     ),
     clearDocPermissionsForUser: React.useCallback(
@@ -98,9 +89,7 @@ export const useApi = (): Api => {
     ),
     clearDocPermissions: React.useCallback(
       (docRefUuid: string) =>
-        httpDeleteEmptyResponse(
-          `${resource}/forDoc/${docRefUuid}`,
-        ),
+        httpDeleteEmptyResponse(`${resource}/forDoc/${docRefUuid}`),
       [resource, httpDeleteEmptyResponse],
     ),
   };

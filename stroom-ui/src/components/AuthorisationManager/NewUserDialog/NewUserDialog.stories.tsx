@@ -16,17 +16,10 @@
 import * as React from "react";
 import { storiesOf } from "@storybook/react";
 
-import { addThemedStories } from "testing/storybook/themedStoryGenerator";
-
 import NewUserDialog, { useDialog } from "./NewUserDialog";
 import Button from "components/Button";
 
 import JsonDebug from "testing/JsonDebug";
-
-const stories = storiesOf(
-  "Sections/Authorisation Manager/New User",
-  module,
-);
 
 interface Props {
   isGroup: boolean;
@@ -52,4 +45,7 @@ const TestHarness: React.FunctionComponent<Props> = ({ isGroup }) => {
   );
 };
 
-addThemedStories(stories, "Dialog", () => <TestHarness isGroup={false} />);
+storiesOf("Sections/Authorisation Manager/New User", module).add(
+  "Dialog",
+  () => <TestHarness isGroup={false} />,
+);

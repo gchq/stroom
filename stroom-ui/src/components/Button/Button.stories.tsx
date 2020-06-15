@@ -16,7 +16,6 @@
 
 import { storiesOf } from "@storybook/react";
 import * as React from "react";
-import { addThemedStories } from "testing/storybook/themedStoryGenerator";
 import Button from "./Button";
 
 interface Variant {
@@ -222,6 +221,4 @@ const TestHarness: React.FunctionComponent = () => {
   );
 };
 
-const stories = storiesOf("General Purpose", module);
-
-addThemedStories(stories, "Button", () => <TestHarness />, true);
+storiesOf("General Purpose", module).add("Button", () => <TestHarness />);

@@ -49,17 +49,12 @@ const EditAccountContainer = () => {
         onSubmit={(a: Account) => updateUser(a)}
         onCancel={() => goToUsers()}
         onValidate={async (password, verifyPassword, email) => {
-          return validateAsync(
-            email,
-            password,
-            verifyPassword,
-            resource,
-          );
+          return validateAsync(email, password, verifyPassword, resource);
         }}
       />
     );
   } else {
-    return <Loader message=""/>;
+    return <Loader message="" />;
   }
 };
 

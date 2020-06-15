@@ -37,7 +37,7 @@ const AuthorisationContextProvider: React.FunctionComponent = ({
         body: JSON.stringify({
           permissionName,
         }),
-      }).then(response => {
+      }).then((response) => {
         if (response.status === 401) {
           setHasAppPermission(permissionName, false);
         } else if (response.status === 200) {

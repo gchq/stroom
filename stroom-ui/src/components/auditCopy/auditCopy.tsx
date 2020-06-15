@@ -15,13 +15,13 @@
  */
 
 import * as React from "react";
-import * as moment from "moment";
+import moment from "moment";
 
 export const LoginStatsCopy = ({
-                                 lastLogin,
-                                 loginCount,
-                                 dateFormat,
-                               }: {
+  lastLogin,
+  loginCount,
+  dateFormat,
+}: {
   lastLogin: string;
   loginCount: number;
   dateFormat: string;
@@ -44,12 +44,12 @@ export const LoginStatsCopy = ({
 };
 
 export const AuditCopy = ({
-                            createdBy,
-                            createdOn,
-                            updatedBy,
-                            updatedOn,
-                            dateFormat,
-                          }: {
+  createdBy,
+  createdOn,
+  updatedBy,
+  updatedOn,
+  dateFormat,
+}: {
   createdBy: string;
   createdOn: string;
   updatedBy: string;
@@ -58,25 +58,25 @@ export const AuditCopy = ({
 }) => {
   return (
     <div>
-      <OnCopy on={createdOn} verb="Created" dateFormat={dateFormat}/>
-      <ByCopy by={createdBy} verb="Created by"/>
+      <OnCopy on={createdOn} verb="Created" dateFormat={dateFormat} />
+      <ByCopy by={createdBy} verb="Created by" />
       <OnCopy
         on={updatedOn}
         verb="Updated"
         dateFormat={dateFormat}
         fallbackCopy="This has never been updated."
       />
-      <ByCopy by={updatedBy} verb="Updated by"/>
+      <ByCopy by={updatedBy} verb="Updated by" />
     </div>
   );
 };
 
 export const OnCopy = ({
-                         on,
-                         verb,
-                         dateFormat,
-                         fallbackCopy,
-                       }: {
+  on,
+  verb,
+  dateFormat,
+  fallbackCopy,
+}: {
   on: string;
   verb: string;
   dateFormat: string;
@@ -86,8 +86,7 @@ export const OnCopy = ({
     const onMoment = moment(on);
     return (
       <div className="copy">
-        <strong>{verb}</strong> at{" "}
-        {onMoment.format(dateFormat)}.{" "}
+        <strong>{verb}</strong> at {onMoment.format(dateFormat)}.{" "}
       </div>
     );
   } else {
@@ -96,11 +95,11 @@ export const OnCopy = ({
 };
 
 export const OnCopyMs = ({
-                           on,
-                           verb,
-                           dateFormat,
-                           fallbackCopy,
-                         }: {
+  on,
+  verb,
+  dateFormat,
+  fallbackCopy,
+}: {
   on: number;
   verb: string;
   dateFormat: string;
@@ -110,8 +109,7 @@ export const OnCopyMs = ({
     const onMoment = moment(on);
     return (
       <div className="copy">
-        <strong>{verb}</strong> at{" "}
-        {onMoment.format(dateFormat)}.{" "}
+        <strong>{verb}</strong> at {onMoment.format(dateFormat)}.{" "}
       </div>
     );
   } else {
@@ -120,10 +118,10 @@ export const OnCopyMs = ({
 };
 
 export const ByCopy = ({
-                         by,
-                         verb,
-                         fallbackCopy,
-                       }: {
+  by,
+  verb,
+  fallbackCopy,
+}: {
   by: string;
   verb: string;
   fallbackCopy?: string;

@@ -21,9 +21,7 @@ import ReactTable, {
   ComponentPropsGetterR,
   Column,
 } from "react-table";
-import "react-table/react-table.css";
 import Toggle from "react-toggle";
-import "react-toggle/style.css";
 import Button from "components/Button";
 import { Account } from "../types";
 import useColumns from "./useColumns";
@@ -97,7 +95,7 @@ const UserSearch: React.FunctionComponent<UserSearchProps> = ({
             <Toggle
               icons={false}
               checked={isFilteringEnabled}
-              onChange={event => setFilteringEnabled(event.target.checked)}
+              onChange={(event) => setFilteringEnabled(event.target.checked)}
             />
           </div>
         </div>

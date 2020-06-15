@@ -3,10 +3,7 @@ import * as React from "react";
 import { storiesOf } from "@storybook/react";
 
 import ModeOptionButtons, { useModeOptionButtons } from "./ModeOptionButtons";
-import { addThemedStories } from "testing/storybook/themedStoryGenerator";
 import JsonDebug from "testing/JsonDebug";
-
-const stories = storiesOf("App Search Bar", module);
 
 const TestHarness = () => {
   const { searchMode, componentProps } = useModeOptionButtons();
@@ -18,5 +15,4 @@ const TestHarness = () => {
     </div>
   );
 };
-
-addThemedStories(stories, "Mode Option", () => <TestHarness />);
+storiesOf("App Search Bar", module).add("Mode Option", () => <TestHarness />);

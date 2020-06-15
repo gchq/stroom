@@ -43,7 +43,7 @@ const AccountForm: React.FunctionComponent<EditUserFormProps> = ({
   account.password = "";
   return (
     <Formik
-      onSubmit={values => onSubmit(values)}
+      onSubmit={(values) => onSubmit(values)}
       initialValues={{
         ...account,
         verifyPassword: account.password,

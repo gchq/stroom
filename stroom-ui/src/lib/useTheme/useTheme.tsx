@@ -1,6 +1,7 @@
 import * as React from "react";
 
 import useLocalStorage, { storeString } from "../useLocalStorage";
+import { FunctionComponent } from "react";
 
 export interface ThemeOption {
   text: string;
@@ -34,7 +35,7 @@ const ThemeContext: React.Context<ThemeContextValue> = React.createContext({
     }),
 });
 
-const ThemeContextProvider: React.StatelessComponent<{}> = ({ children }) => {
+const ThemeContextProvider: FunctionComponent = ({ children }) => {
   const { value, setValue: setTheme } = useLocalStorage(
     "theme",
     themeOptions[0].value,

@@ -98,7 +98,7 @@ export const useDialog = (
         setDocRef(undefined);
       },
     },
-    showDialog: _docRef => {
+    showDialog: (_docRef) => {
       setIsOpen(true);
       setDocRef(_docRef);
     },

@@ -20,7 +20,6 @@ import { storiesOf } from "@storybook/react";
 import { Switch, Route, RouteComponentProps } from "react-router";
 
 import fullTestData from "testing/data";
-import { addThemedStories } from "testing/storybook/themedStoryGenerator";
 
 import DocumentPermissionEditor from "./DocumentPermissionEditor";
 import DocumentPermissionForUserEditor from "../DocumentPermissionForUserEditor";
@@ -53,9 +52,9 @@ const TestHarness: React.FunctionComponent<Props> = ({ docRefUuid }) => (
   </Switch>
 );
 
-const stories = storiesOf(
+storiesOf(
   "Sections/Authorisation Manager",
   module,
-);
-
-addThemedStories(stories, "Document Permission Editor", () => <TestHarness docRefUuid={testDocRef.uuid} />);
+).add("Document Permission Editor", () => (
+  <TestHarness docRefUuid={testDocRef.uuid} />
+));

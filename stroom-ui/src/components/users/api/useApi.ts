@@ -40,7 +40,7 @@ export const useApi = (): Api => {
   const resource = apiUrl("/account/v1");
 
   const change = useCallback(
-    account =>
+    (account) =>
       httpPutJsonResponse(`${resource}/${account.id}`, {
         body: JSON.stringify({
           email: account.email,
@@ -60,7 +60,7 @@ export const useApi = (): Api => {
   );
 
   const add = useCallback(
-    account =>
+    (account) =>
       httpPostJsonResponse(resource, {
         body: JSON.stringify({
           firstName: account.firstName,
@@ -92,10 +92,10 @@ export const useApi = (): Api => {
     [resource, httpGetJson],
   );
 
-  const search = useCallback(
-    (email: string) => httpGetJson(resource),
-    [resource, httpGetJson],
-  );
+  const search = useCallback((email: string) => httpGetJson(resource), [
+    resource,
+    httpGetJson,
+  ]);
 
   return {
     add,

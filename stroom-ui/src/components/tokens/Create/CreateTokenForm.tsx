@@ -19,7 +19,7 @@ import * as React from "react";
 import { DatePicker } from "antd";
 import styled from "styled-components";
 import UserSelect from "components/UserSelect";
-import * as moment from "moment";
+import moment from "moment";
 import useConfig from "startup/config/useConfig";
 
 const Field = styled.div`

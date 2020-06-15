@@ -29,11 +29,11 @@ interface OutProps {
   menuItemOpened: MenuItemOpened;
 }
 
-const iterateMenuItems = function(
+const iterateMenuItems = function (
   menuItems: MenuItemType[],
   callback: (menuItem: MenuItemType) => void,
 ) {
-  menuItems.forEach(menuItem => {
+  menuItems.forEach((menuItem) => {
     callback(menuItem);
     if (!!menuItem.children) {
       iterateMenuItems(menuItem.children, callback);
@@ -56,7 +56,7 @@ const useMenuItems = (): OutProps => {
   );
   const menuItemOpened: MenuItemOpened = React.useCallback(
     (name: string, isOpen: boolean) => {
-      modifyOpenMenuItems(existing => ({
+      modifyOpenMenuItems((existing) => ({
         ...existing,
         [name]: isOpen,
       }));
@@ -66,7 +66,7 @@ const useMenuItems = (): OutProps => {
 
   const menuItemToggled: MenuItemToggled = React.useCallback(
     (name: string) => {
-      modifyOpenMenuItems(existing => ({
+      modifyOpenMenuItems((existing) => ({
         ...existing,
         [name]: !existing[name],
       }));
@@ -90,8 +90,8 @@ const useMenuItems = (): OutProps => {
   const openMenuItemKeys: string[] = React.useMemo(
     () =>
       Object.entries(menuItemIsOpenByKey)
-        .filter(k => k[1])
-        .map(k => k[0]),
+        .filter((k) => k[1])
+        .map((k) => k[0]),
     [menuItemIsOpenByKey],
   );
 
@@ -100,7 +100,7 @@ const useMenuItems = (): OutProps => {
 
     iterateMenuItems(
       menuItems,
-      menuItem => (itemsByKey[menuItem.key] = menuItem),
+      (menuItem) => (itemsByKey[menuItem.key] = menuItem),
     );
 
     return itemsByKey;

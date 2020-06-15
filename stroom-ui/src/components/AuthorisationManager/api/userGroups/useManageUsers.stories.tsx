@@ -34,7 +34,7 @@ const TestHarness: React.FunctionComponent = () => {
       <Button onClick={onClickCreateUser} text="Create User" />
       <h2>Users</h2>
       <ul>
-        {users.map(user => (
+        {users.map((user) => (
           <div key={user.uuid}>
             <Button onClick={() => deleteUser(user.uuid)} text="Delete" />
             {JSON.stringify(user)}
@@ -45,7 +45,7 @@ const TestHarness: React.FunctionComponent = () => {
   );
 };
 
-storiesOf("Sections/Authorisation Manager/useManageUsers", module).add(
-  "Sample 1",
-  () => <TestHarness />,
-);
+storiesOf(
+  "Sections/Authorisation Manager/useManageUsers",
+  module,
+).add("Sample 1", () => <TestHarness />);

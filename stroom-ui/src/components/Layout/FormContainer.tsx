@@ -17,11 +17,7 @@
 import * as React from "react";
 
 const FormContainer: React.FunctionComponent = ({ children }) => {
-  return (
-    <div className="Layout__form-container">
-      {children}
-    </div>
-  );
+  return <div className="Layout__form-container">{children}</div>;
 };
 
 export default FormContainer;

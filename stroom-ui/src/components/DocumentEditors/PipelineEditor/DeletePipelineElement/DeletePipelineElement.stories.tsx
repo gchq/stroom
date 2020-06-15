@@ -2,13 +2,10 @@ import * as React from "react";
 import { useState } from "react";
 
 import { storiesOf } from "@storybook/react";
-import { addThemedStories } from "testing/storybook/themedStoryGenerator";
 
 import DeletePipelineElement, { useDialog } from ".";
 import Button from "components/Button";
 import JsonDebug from "testing/JsonDebug";
-
-const stories = storiesOf("Document Editors/Pipeline", module);
 
 let nextElementId = 12;
 
@@ -28,4 +25,6 @@ const TestHarness: React.FunctionComponent = () => {
   );
 };
 
-addThemedStories(stories, "Delete Element", () => <TestHarness />);
+storiesOf("Document Editors/Pipeline", module).add("Delete Element", () => (
+  <TestHarness />
+));

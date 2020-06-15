@@ -81,7 +81,7 @@ const dropTarget: DropTargetSpec<Props> = {
   },
 };
 
-let dropCollect: DropTargetCollector<
+const dropCollect: DropTargetCollector<
   DropCollectedProps,
   Props
 > = function dropCollect(connect, monitor) {
@@ -225,7 +225,7 @@ const ExpressionOperator: React.FunctionComponent<EnhancedProps> = ({
 
   const className = classNames.join(" ");
 
-  const operatorTypeValues = OperatorTypeValues.map(o => {
+  const operatorTypeValues = OperatorTypeValues.map((o) => {
     return { value: o, label: o };
   });
 
@@ -250,7 +250,7 @@ const ExpressionOperator: React.FunctionComponent<EnhancedProps> = ({
 
           <InlineSelect
             selected={value.op}
-            onChange={event => onOpChange(event.target.value as OperatorType)}
+            onChange={(event) => onOpChange(event.target.value as OperatorType)}
             options={operatorTypeValues}
           />
 
@@ -290,7 +290,7 @@ const ExpressionOperator: React.FunctionComponent<EnhancedProps> = ({
         {value.children &&
           value.children.map((c: ExpressionItem, i: number) => {
             let itemElement;
-            let itemLineEndpointId = `${idWithinExpression}-${i}`;
+            const itemLineEndpointId = `${idWithinExpression}-${i}`;
             switch (c.type) {
               case "term":
                 itemElement = (

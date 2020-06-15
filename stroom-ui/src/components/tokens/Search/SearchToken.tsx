@@ -17,9 +17,7 @@
 import * as React from "react";
 import { useState } from "react";
 import ReactTable, { Column, RowInfo } from "react-table";
-import "react-table/react-table.css";
 import Toggle from "react-toggle";
-import "react-toggle/style.css";
 import useAppNavigation from "lib/useAppNavigation";
 import Button from "components/Button";
 import useColumns from "./useColumns";
@@ -57,12 +55,12 @@ const TokenSearch = () => {
   return (
     <div className="page">
       <div className="page__header">
-        <IconHeader icon="key" text={`API Keys`}/>
+        <IconHeader icon="key" text={`API Keys`} />
         <div className="page__buttons Button__container">
-          <Button onClick={() => goToNewApiKey()} icon="plus" text="Create"/>
+          <Button onClick={() => goToNewApiKey()} icon="plus" text="Create" />
 
           {noTokenSelected ? (
-            <Button disabled={noTokenSelected} icon="edit" text="View/edit"/>
+            <Button disabled={noTokenSelected} icon="edit" text="View/edit" />
           ) : (
             <Button
               disabled={noTokenSelected}
@@ -82,7 +80,7 @@ const TokenSearch = () => {
             <Toggle
               icons={false}
               checked={isFilteringEnabled}
-              onChange={event => setFilteringEnabled(event.target.checked)}
+              onChange={(event) => setFilteringEnabled(event.target.checked)}
             />
           </div>
         </div>

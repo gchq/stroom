@@ -3,10 +3,7 @@ import { HttpRequest, HttpResponse } from "@pollyjs/adapter-fetch";
 import { ResourceBuilder } from "./types";
 import { PasswordValidationRequest } from "components/Authentication/api/types";
 
-const resourceBuilder: ResourceBuilder = (
-  server: any,
-  apiUrl: any,
-) => {
+const resourceBuilder: ResourceBuilder = (server: any, apiUrl: any) => {
   const resource = apiUrl("/Oldauthentication/v1");
   server
     .get(`${resource}/idToken`)

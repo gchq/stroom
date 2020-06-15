@@ -5,9 +5,6 @@ import * as React from "react";
 // There will be a bunch of default stuff for all stories globally registered in the .storybook/config.js file.
 import { storiesOf } from "@storybook/react";
 
-// This is a function we have written. It will generate a copy of the story for each theme in the system.
-import { addThemedStories } from "testing/storybook/themedStoryGenerator";
-
 // Import the component under test
 import Step1 from "./Step1";
 
@@ -17,4 +14,4 @@ import Step1 from "./Step1";
 const stories = storiesOf("New Developer", module);
 
 // This generates a 'theme-light' and 'theme-dark' story under our given location.
-addThemedStories(stories, "Step 1", () => <Step1 />);
+stories.add("Step 1", () => <Step1 />);

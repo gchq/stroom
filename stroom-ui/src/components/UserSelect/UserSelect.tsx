@@ -46,12 +46,12 @@ const UserSelect: React.FunctionComponent<Props> = ({
 }) => (
   // We don't need to specify a value because this is read only
   <Select
-    // showSearch
-    // placeholder="Search for a user"
-    // onChange={(email: string) => onChange(email)}
-    // onSearch={(search: string) => onSearch(search)}
+  // showSearch
+  // placeholder="Search for a user"
+  // onChange={(email: string) => onChange(email)}
+  // onSearch={(search: string) => onSearch(search)}
   >
-    {options.map(option => (
+    {options.map((option) => (
       <Option key={option.email}>{option.email}</Option>
     ))}
   </Select>

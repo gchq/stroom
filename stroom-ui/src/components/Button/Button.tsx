@@ -124,9 +124,7 @@ export const Button = ({
       <RippleContainer ripples={ripples} />
       {icon ? (
         <FontAwesomeIcon size={fontAwesomeSize} icon={icon} />
-      ) : (
-        undefined
-      )}
+      ) : undefined}
       {showText && icon ? <span className="Button__margin" /> : undefined}
       {showText ? <span className="Button__text">{text}</span> : undefined}
     </button>

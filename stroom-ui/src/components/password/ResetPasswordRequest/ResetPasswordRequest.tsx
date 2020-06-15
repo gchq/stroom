@@ -53,7 +53,7 @@ const ResetPasswordRequest: React.FunctionComponent<{
                     <Field name="email" type="text" />
                     <ErrorMessage
                       name="email"
-                      render={msg => (
+                      render={(msg) => (
                         <div className="validation-error">{msg}</div>
                       )}
                     />

@@ -1,3 +1,1 @@
-export {
-  default as ResetPasswordRequest,
-} from "./ResetPasswordRequestContainer";
+export { default as ResetPasswordRequest } from "./ResetPasswordRequestContainer";

@@ -1,14 +1,9 @@
 import { action } from "@storybook/addon-actions";
 import { storiesOf } from "@storybook/react";
 import * as React from "react";
-// import { addThemedStories } from "testing/storybook/themedStoryGenerator";
 import NewUserForm from "./NewUserForm";
 
-const onValidate = (
-  password: string,
-  verifyPassword: string,
-  email: string,
-) => {
+const onValidate = () => {
   action("onValidate");
   return new Promise<string>(() => "wat");
 };

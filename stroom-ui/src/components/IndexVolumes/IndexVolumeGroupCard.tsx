@@ -1,7 +1,6 @@
 import * as React from "react";
 import styled from "styled-components";
 import { Popconfirm, Button, Card, Empty } from "antd";
-import "antd/dist/antd.css";
 import { Draggable, DroppableProvided } from "react-beautiful-dnd";
 import { IndexVolume } from "./indexVolumeApi";
 import IndexVolumeCard from "./IndexVolumeCard";
@@ -75,7 +74,7 @@ const IndexVolumeGroupCard: React.FunctionComponent<Props> = ({
   isDraggingOver,
 }) => {
   const indexVolumesInThisGroup = indexVolumes.filter(
-    indexVolume => indexVolume.indexVolumeGroupName === indexVolumeGroup.name,
+    (indexVolume) => indexVolume.indexVolumeGroupName === indexVolumeGroup.name,
   );
 
   const StyledEmpty = styled(Empty)`
@@ -137,9 +136,7 @@ const IndexVolumeGroupCard: React.FunctionComponent<Props> = ({
               Add index volume
             </Button>
           </StyledEmpty>
-        ) : (
-          undefined
-        )}
+        ) : undefined}
         {indexVolumesInThisGroup.map((indexVolume, index) => {
           return (
             <CardContainer key={"draggable_" + indexVolume.id}>

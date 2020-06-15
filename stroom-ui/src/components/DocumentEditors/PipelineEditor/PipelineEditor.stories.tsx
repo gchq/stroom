@@ -19,12 +19,9 @@ import { storiesOf } from "@storybook/react";
 import PipelineEditor from "./PipelineEditor";
 
 import { testPipelines } from "testing/data/pipelines";
-import { addThemedStories } from "testing/storybook/themedStoryGenerator";
 
-Object.entries(testPipelines).forEach(k => {
-  const stories = storiesOf(
-    "Document Editors/Pipeline/Topologies",
-    module,
-  );
-  addThemedStories(stories, k[0], () => <PipelineEditor docRefUuid={k[1].uuid} />);
+Object.entries(testPipelines).forEach((k) => {
+  storiesOf("Document Editors/Pipeline/Topologies", module).add(k[0], () => (
+    <PipelineEditor docRefUuid={k[1].uuid} />
+  ));
 });

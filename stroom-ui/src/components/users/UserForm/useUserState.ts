@@ -52,7 +52,8 @@ const useUserState = (): AccountStateApi => {
   return {
     account: accountState.accountBeingEdited,
     isCreating: accountState.isCreating,
-    setAccount: (account: Account | undefined) => dispatch({ type: "set_account", account: account }),
+    setAccount: (account: Account | undefined) =>
+      dispatch({ type: "set_account", account: account }),
     clearAccount: () => dispatch({ type: "clear_account" }),
     setIsCreating: (isCreating: boolean) =>
       dispatch({ type: "set_is_creating", isCreating }),

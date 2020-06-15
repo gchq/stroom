@@ -18,7 +18,6 @@ import { AuditCopy, LoginStatsCopy } from "components/auditCopy";
 import { ErrorMessage, Field, FormikErrors, FormikTouched } from "formik";
 import * as React from "react";
 import Toggle from "react-toggle";
-import "react-toggle/style.css";
 import { Account } from "../types";
 import useConfig from "startup/config/useConfig";
 
@@ -82,7 +81,7 @@ const UserFields = ({
                   <Field name="email" label="Email" />
                   <ErrorMessage
                     name="email"
-                    render={msg => (
+                    render={(msg) => (
                       <div className="validation-error">{msg}</div>
                     )}
                   />
@@ -98,9 +97,6 @@ const UserFields = ({
           </div>
           <div className="section__fields">
             <div className="section__fields__row">
-
-
-
               <div className="field-container--with-validation">
                 <label>Enabled?</label>
                 <Field
@@ -110,15 +106,15 @@ const UserFields = ({
                 />
                 <ErrorMessage
                   name="enabled"
-                  render={msg => <div className="validation-error">{msg}</div>}
+                  render={(msg) => (
+                    <div className="validation-error">{msg}</div>
+                  )}
                 />
               </div>
-
             </div>
           </div>
           <div className="section__fields">
             <div className="section__fields__row">
-
               <div className="field-container--with-validation">
                 <label>Inactive?</label>
                 <Field
@@ -128,33 +124,29 @@ const UserFields = ({
                 />
                 <ErrorMessage
                   name="inactive"
-                  render={msg => <div className="validation-error">{msg}</div>}
+                  render={(msg) => (
+                    <div className="validation-error">{msg}</div>
+                  )}
                 />
               </div>
-
             </div>
           </div>
           <div className="section__fields">
             <div className="section__fields__row">
-
               <div className="field-container--with-validation">
                 <label>Locked?</label>
-                <Field
-                  name="locked"
-                  label="locked"
-                  component={CheckboxField}
-                />
+                <Field name="locked" label="locked" component={CheckboxField} />
                 <ErrorMessage
                   name="locked"
-                  render={msg => <div className="validation-error">{msg}</div>}
+                  render={(msg) => (
+                    <div className="validation-error">{msg}</div>
+                  )}
                 />
               </div>
-
             </div>
           </div>
           <div className="section__fields">
             <div className="section__fields__row">
-
               {/*<div className="field-container vertical">*/}
               {/*  <label>Account status</label>*/}
               {/*  <Field*/}
@@ -185,7 +177,9 @@ const UserFields = ({
                 />
                 <ErrorMessage
                   name="neverExpires"
-                  render={msg => <div className="validation-error">{msg}</div>}
+                  render={(msg) => (
+                    <div className="validation-error">{msg}</div>
+                  )}
                 />
               </div>
             </div>
@@ -204,7 +198,7 @@ const UserFields = ({
                   <Field name="password" type="password" label="Password" />
                   <ErrorMessage
                     name="password"
-                    render={msg => (
+                    render={(msg) => (
                       <div className="validation-error">{msg}</div>
                     )}
                   />
@@ -217,7 +211,7 @@ const UserFields = ({
                   <Field name="verifyPassword" type="password" />
                   <ErrorMessage
                     name="verifyPassword"
-                    render={msg => (
+                    render={(msg) => (
                       <div className="validation-error">{msg}</div>
                     )}
                   />
@@ -275,9 +269,7 @@ const UserFields = ({
                   </div>
                 </div>
               </div>
-            ) : (
-              undefined
-            )}
+            ) : undefined}
 
             <div className="section">
               <div className="section__title">
@@ -296,9 +288,7 @@ const UserFields = ({
               </div>
             </div>
           </React.Fragment>
-        ) : (
-          undefined
-        )}
+        ) : undefined}
       </div>
     </div>
   );

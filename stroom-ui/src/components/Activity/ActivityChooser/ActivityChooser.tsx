@@ -24,17 +24,13 @@ const ActivityChooser: React.FunctionComponent = () => {
     selectableTableProps: { selectedItems: selectedActivities },
   } = tableProps;
 
-  const onCreateClick: React.MouseEventHandler<
-    HTMLButtonElement
-  > = React.useCallback(() => {
+  const onCreateClick: React.MouseEventHandler<HTMLButtonElement> = React.useCallback(() => {
     if (selectedActivities.length === 1) {
       goToActivity(selectedActivities[0].id);
     }
   }, [goToActivity, selectedActivities]);
 
-  const onEditClick: React.MouseEventHandler<
-    HTMLButtonElement
-  > = React.useCallback(() => {
+  const onEditClick: React.MouseEventHandler<HTMLButtonElement> = React.useCallback(() => {
     if (selectedActivities.length === 1) {
       goToActivity(selectedActivities[0].id);
     }
@@ -77,7 +73,7 @@ const ActivityChooser: React.FunctionComponent = () => {
             <Toggle
               icons={false}
               checked={filterable}
-              onChange={event => setFilteringEnabled(event.target.checked)}
+              onChange={(event) => setFilteringEnabled(event.target.checked)}
             />
           </div>
         </div>

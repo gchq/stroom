@@ -32,7 +32,7 @@ export interface Alert {
 }
 
 interface Props {
-  alert?: Alert,
+  alert?: Alert;
   isOpen: boolean;
   onCloseDialog: () => void;
 }
@@ -43,16 +43,11 @@ interface ImageProps {
 }
 
 const ImageHeader: React.FunctionComponent<ImageProps> = ({
-                                                            text,
-                                                            imageSrc,
-                                                          }) => (
+  text,
+  imageSrc,
+}) => (
   <div className="ImageHeader">
-    <img
-      className="ImageHeader__icon"
-      alt={text}
-      title={text}
-      src={imageSrc}
-    />
+    <img className="ImageHeader__icon" alt={text} title={text} src={imageSrc} />
     <div className="ImageHeader__text">{text}</div>
   </div>
 );
@@ -60,46 +55,64 @@ const ImageHeader: React.FunctionComponent<ImageProps> = ({
 const AlertHeader: React.FunctionComponent<Alert> = (alert) => {
   switch (alert.type) {
     case AlertType.INFO: {
-      return <ImageHeader imageSrc={require("../../images/alert/info.svg")} text={alert.title}/>;
+      return (
+        <ImageHeader
+          imageSrc={require("../../images/alert/info.svg")}
+          text={alert.title}
+        />
+      );
     }
     case AlertType.WARNING: {
-      return <ImageHeader imageSrc={require("../../images/alert/warning.svg")} text={alert.title}/>;
+      return (
+        <ImageHeader
+          imageSrc={require("../../images/alert/warning.svg")}
+          text={alert.title}
+        />
+      );
     }
     case AlertType.ERROR: {
-      return <ImageHeader imageSrc={require("../../images/alert/error.svg")} text={alert.title}/>;
+      return (
+        <ImageHeader
+          imageSrc={require("../../images/alert/error.svg")}
+          text={alert.title}
+        />
+      );
     }
     case AlertType.FATAL: {
-      return <ImageHeader imageSrc={require("../../images/alert/fatal.svg")} text={alert.title}/>;
+      return (
+        <ImageHeader
+          imageSrc={require("../../images/alert/fatal.svg")}
+          text={alert.title}
+        />
+      );
     }
     default: {
-      return <ImageHeader imageSrc={require("../../images/alert/error.svg")} text={alert.title}/>;
+      return (
+        <ImageHeader
+          imageSrc={require("../../images/alert/error.svg")}
+          text={alert.title}
+        />
+      );
     }
   }
 };
 
 const AlertBody: React.FunctionComponent<Alert> = (alert) => {
-  return (
-    <div>{alert.message}</div>
-  );
+  return <div>{alert.message}</div>;
 };
 
 export const AlertDialog: React.FunctionComponent<Props> = ({
-                                                              alert,
-                                                              isOpen,
-                                                              onCloseDialog,
-                                                            }) => {
-
+  alert,
+  isOpen,
+  onCloseDialog,
+}) => {
   return (
     <ThemedModal
       isOpen={isOpen}
       onRequestClose={onCloseDialog}
-      header={<AlertHeader {...alert}/>}
-      content={<AlertBody {...alert}/>}
-      actions={
-        <OkButtons
-          onOk={onCloseDialog}
-        />
-      }
+      header={<AlertHeader {...alert} />}
+      content={<AlertBody {...alert} />}
+      actions={<OkButtons onOk={onCloseDialog} />}
     />
   );
 };

@@ -15,8 +15,8 @@
  */
 
 import * as React from "react";
-import * as ReactTooltip from "react-tooltip";
-import * as uuidv4 from "uuid/v4";
+import ReactTooltip from "react-tooltip";
+import v4 from "uuid/v4";
 
 interface Props {
   trigger: React.ReactNode;
@@ -24,7 +24,7 @@ interface Props {
 }
 
 const Tooltip: React.FunctionComponent<Props> = ({ trigger, content }) => {
-  const uuid = React.useMemo(() => uuidv4(), []);
+  const uuid = React.useMemo(() => v4(), []);
 
   return (
     <React.Fragment>

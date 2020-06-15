@@ -18,8 +18,9 @@ export interface Props {
   thresholdLength: number;
 }
 
-export const ChangePasswordForm: React.FunctionComponent<Props &
-  FormikProps<FormValues>> = ({
+export const ChangePasswordForm: React.FunctionComponent<
+  Props & FormikProps<FormValues>
+> = ({
   values,
   errors,
   touched,

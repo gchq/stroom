@@ -21,8 +21,6 @@ import { Switch, Route, RouteComponentProps } from "react-router";
 
 import AuthorisationManager from ".";
 
-import { addThemedStories } from "testing/storybook/themedStoryGenerator";
-
 import UserAuthorisationEditor from "./UserAuthorisationEditor";
 interface Props {
   isGroup: boolean;
@@ -41,11 +39,9 @@ const TestHarness: React.FunctionComponent<Props> = ({ isGroup }) => (
   </Switch>
 );
 
-[true, false].forEach(isGroup => {
-  const stories = storiesOf(
-    "Sections/Authorisation Manager",
-    module,
+[true, false].forEach((isGroup) => {
+  storiesOf("Sections/Authorisation Manager", module).add(
+    `${isGroup ? "Group" : "User"}`,
+    () => <TestHarness isGroup={isGroup} />,
   );
-
-  addThemedStories(stories, `${isGroup ? "Group" : "User"}`, () => <TestHarness isGroup={isGroup} />);
 });

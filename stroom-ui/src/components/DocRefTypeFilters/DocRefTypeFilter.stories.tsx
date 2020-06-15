@@ -20,7 +20,6 @@ import { storiesOf } from "@storybook/react";
 import DocRefTypeFilters from "./DocRefTypeFilters";
 
 import JsonDebug from "testing/JsonDebug";
-import { addThemedStories } from "testing/storybook/themedStoryGenerator";
 
 const TestForm = () => {
   const [chosenTypes, setChosenTypes] = React.useState<string[]>([]);
@@ -36,6 +35,4 @@ const TestForm = () => {
   );
 };
 
-const stories = storiesOf("Doc Ref", module);
-
-addThemedStories(stories, "Doc Ref Type Filters", () => <TestForm />);
+storiesOf("Doc Ref", module).add("Doc Ref Type Filters", () => <TestForm />);

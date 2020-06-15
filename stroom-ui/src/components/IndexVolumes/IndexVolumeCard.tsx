@@ -1,7 +1,6 @@
 import * as React from "react";
 import styled from "styled-components";
 import { Popconfirm, Button, Card } from "antd";
-import "antd/dist/antd.css";
 import DocRefImage from "../DocRefImage";
 import { IndexVolume } from "./indexVolumeApi";
 import MinimalInput from "components/MinimalInput";

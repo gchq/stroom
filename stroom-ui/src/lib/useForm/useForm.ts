@@ -58,7 +58,7 @@ export const useForm = <T extends {}>({
     s: keyof T,
   ): ControlledInput<FIELD_TYPE> => ({
     value: (value[s] as unknown) as FIELD_TYPE,
-    onChange: React.useCallback(v => onUpdate(({ [s]: v } as unknown) as T), [
+    onChange: React.useCallback((v) => onUpdate(({ [s]: v } as unknown) as T), [
       s,
     ]),
   });

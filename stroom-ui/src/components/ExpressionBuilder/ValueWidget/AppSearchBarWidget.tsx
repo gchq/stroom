@@ -13,7 +13,7 @@ interface Props extends ControlledInput<any> {
 const AppSearchBarWidget: FunctionComponent<Props> = ({ onChange, value }) => {
   const [isEditing, setEditing] = React.useState(false);
   const handleChange = useCallback(
-    value => {
+    (value) => {
       onChange(value);
       setEditing(false);
     },

@@ -35,8 +35,8 @@ const loadOptions = (
     method: "get",
     mode: "cors",
   })
-    .then(response => response.json())
-    .then(body => {
+    .then((response) => response.json())
+    .then((body) => {
       const options = body
         .sort((userA: Account, userB: Account) =>
           userA.email > userB.email ? 1 : -1,
@@ -88,11 +88,11 @@ const AsyncUserSelect = (props: {
       loadOptions={(inputValue, callback) =>
         loadOptions(inputValue, callback, idToken, userServiceUrl)
       }
-      onInputChange={value => {
+      onInputChange={(value) => {
         setInputValue(value);
         return value;
       }}
-      onChange={value => onChange("user", value)}
+      onChange={(value) => onChange("user", value)}
     />
   );
 };

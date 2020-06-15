@@ -14,7 +14,8 @@ const IndexVolumeGroupPicker: React.FunctionComponent<PickerProps> = ({
   const { groups, createIndexVolumeGroup } = useIndexVolumeGroups();
 
   const options: string[] = React.useMemo(
-    () => groups.map(g => g.name).filter(n => !valuesToFilterOut.includes(n)),
+    () =>
+      groups.map((g) => g.name).filter((n) => !valuesToFilterOut.includes(n)),
     [groups, valuesToFilterOut],
   );
   const { _options, _onChange, _value } = useReactSelect({

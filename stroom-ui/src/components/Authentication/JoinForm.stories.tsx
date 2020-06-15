@@ -3,9 +3,8 @@ import * as React from "react";
 import JoinForm from "./JoinForm";
 import { Formik } from "formik";
 import * as Yup from "yup";
-import { addThemedStories } from "../../testing/storybook/themedStoryGenerator";
 import { useState } from "react";
-import * as zxcvbn from "zxcvbn";
+import zxcvbn from "zxcvbn";
 
 const TestHarness: React.FunctionComponent = () => {
   const [strength, setStrength] = useState(0);
@@ -47,7 +46,7 @@ const TestHarness: React.FunctionComponent = () => {
         }, 1000);
       }}
     >
-      {props => {
+      {(props) => {
         const handler = (e: React.ChangeEvent<HTMLInputElement>) => {
           if (e.target.id === "password") {
             const score = zxcvbn(e.target.value).score;
@@ -71,5 +70,4 @@ const TestHarness: React.FunctionComponent = () => {
   );
 };
 
-const stories = storiesOf("Authentication", module);
-addThemedStories(stories, "Join Form", () => <TestHarness />);
+storiesOf("Authentication", module).add("Join Form", () => <TestHarness />);

@@ -16,7 +16,6 @@
 
 import * as React from "react";
 import { Tab, Tabs, TabList, TabPanel } from "react-tabs";
-import "react-tabs/style/react-tabs.css";
 
 import { useMetaRow } from "components/MetaBrowser/api";
 import Loader from "components/Loader";

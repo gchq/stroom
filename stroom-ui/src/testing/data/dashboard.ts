@@ -1,4 +1,4 @@
-import * as uuidv4 from "uuid/v4";
+import v4 from "uuid/v4";
 import { loremIpsum } from "lorem-ipsum";
 import {
   DashboardDoc,
@@ -7,7 +7,7 @@ import {
 
 export const generate = (): DashboardDoc => ({
   type: "Dashboard",
-  uuid: uuidv4(),
+  uuid: v4(),
   name: loremIpsum({ count: 2, units: "words" }),
   dashboardConfig: {
     components: [],

@@ -2,10 +2,9 @@ import { storiesOf } from "@storybook/react";
 import * as React from "react";
 import { Formik } from "formik";
 import * as Yup from "yup";
-import { addThemedStories } from "../../testing/storybook/themedStoryGenerator";
 import ChangePasswordForm from "./ChangePasswordForm";
 import { useState } from "react";
-import * as zxcvbn from "zxcvbn";
+import zxcvbn from "zxcvbn";
 
 const TestHarness: React.FunctionComponent = () => {
   const [strength, setStrength] = useState(0);
@@ -27,7 +26,7 @@ const TestHarness: React.FunctionComponent = () => {
   const confirmPasswordSchema = Yup.string()
     .label("Confirm Password")
     .required("Required")
-    .test("password-match", "Passwords must match", function(value) {
+    .test("password-match", "Passwords must match", function (value) {
       const { resolve } = this;
       const ref = Yup.ref("password");
       return value === resolve(ref);
@@ -49,7 +48,7 @@ const TestHarness: React.FunctionComponent = () => {
         }, 1000);
       }}
     >
-      {props => {
+      {(props) => {
         const handler = (e: React.ChangeEvent<HTMLInputElement>) => {
           if (e.target.id === "password") {
             const score = zxcvbn(e.target.value).score;
@@ -73,5 +72,6 @@ const TestHarness: React.FunctionComponent = () => {
   );
 };
 
-const stories = storiesOf("Authentication", module);
-addThemedStories(stories, "Change Password Form", () => <TestHarness />);
+storiesOf("Authentication", module).add("Change Password Form", () => (
+  <TestHarness />
+));

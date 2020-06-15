@@ -21,18 +21,18 @@ const useReactSelect = ({
 }: PropsIn): UseReactSelect => {
   const _options = React.useMemo(
     () =>
-      options.map(o => ({
+      options.map((o) => ({
         label: o,
         value: o,
       })),
     [options],
   );
   const _value: BasicOption | undefined = React.useMemo(
-    () => _options.find(o => o.value === value),
+    () => _options.find((o) => o.value === value),
     [_options, value],
   );
   const _onChange: (v: ValueType<BasicOption>) => void = React.useCallback(
-    v => {
+    (v) => {
       if (!!v && (v as BasicOption).value) {
         onChange((v as BasicOption).value);
       }

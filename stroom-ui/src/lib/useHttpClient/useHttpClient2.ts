@@ -17,7 +17,7 @@ const useCheckStatus = (status: number) =>
         return Promise.resolve(response);
       }
 
-      return response.text().then(text => {
+      return response.text().then((text) => {
         console.log(
           "Expected HTTP status " +
             status +
@@ -92,7 +92,7 @@ export const useHttpClient2 = (): HttpClient2 => {
         headers,
       })
         .then(handle200)
-        .then(r => r.json())
+        .then((r) => r.json())
         .catch(catchImpl);
     },
     [handle200, catchImpl],

@@ -16,14 +16,10 @@ export const OptionalRequiredFieldMessage: React.FunctionComponent<{
   visible: boolean;
 }> = ({ visible }) => {
   if (visible) {
-    return (
-      <ValidationMessage>{requiredFieldText}</ValidationMessage>
-    );
+    return <ValidationMessage>{requiredFieldText}</ValidationMessage>;
   }
 
-  return (
-    <ValidationMessage>&nbsp;</ValidationMessage>
-  );
+  return <ValidationMessage>&nbsp;</ValidationMessage>;
 };
 
 export const ErrorMessage = (message: string) => (

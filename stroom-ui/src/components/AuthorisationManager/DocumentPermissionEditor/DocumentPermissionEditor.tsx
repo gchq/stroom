@@ -77,13 +77,13 @@ export const DocumentPermissionEditor: React.FunctionComponent<Props> = ({
       } else {
         return (
           `From Document ${docRef.type} - ${docRefUuid} for users ` +
-          selectedUsers.map(u => u.name).join(", ")
+          selectedUsers.map((u) => u.name).join(", ")
         );
       }
     }, [docRefUuid, docRef, selectedUsers]),
     onConfirm: React.useCallback(() => {
       if (selectedUsers.length !== 0) {
-        selectedUsers.forEach(user => clearPermissionForUser(user.uuid));
+        selectedUsers.forEach((user) => clearPermissionForUser(user.uuid));
         clearSelection();
       } else {
         clearPermissions();

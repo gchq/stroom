@@ -16,7 +16,7 @@
 
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
 import * as React from "react";
-import * as ReactModal from "react-modal";
+import ReactModal from "react-modal";
 import Button from "components/Button";
 
 const BackConfirmation = ({
@@ -47,9 +47,7 @@ const BackConfirmation = ({
         <p className="warning">
           There are validation issues with this data and we can&#39;t save it.
         </p>
-      ) : (
-        undefined
-      )}
+      ) : undefined}
       <div className="BackConfirmation__actions">
         <Button
           type="button"

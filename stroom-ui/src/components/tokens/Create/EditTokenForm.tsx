@@ -15,9 +15,8 @@
  */
 
 import * as React from "react";
-import * as CopyToClipboard from "react-copy-to-clipboard";
+import CopyToClipboard from "react-copy-to-clipboard";
 import Toggle from "react-toggle";
-import "react-toggle/style.css";
 import { ByCopy, OnCopyMs } from "components/auditCopy";
 import Button from "components/Button";
 import Loader from "components/Loader";

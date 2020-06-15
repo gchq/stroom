@@ -21,9 +21,6 @@ import { Switch, Route } from "react-router";
 
 import ActivityChooser from "./ActivityChooser";
 
-// import IndexVolumeEditor from "./ActivityChooser";
-import { addThemedStories } from "testing/storybook/themedStoryGenerator";
-
 const TestHarness = () => (
   <Switch>
     {/* <Route
@@ -39,4 +36,4 @@ const TestHarness = () => (
 
 const stories = storiesOf("Sections/Activity", module);
 
-addThemedStories(stories, "Chooser", () => <TestHarness />);
+stories.add("Chooser", () => <TestHarness />);

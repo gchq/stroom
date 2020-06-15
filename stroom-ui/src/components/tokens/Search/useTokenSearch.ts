@@ -57,7 +57,7 @@ const useTokenSearch = () => {
       }
       setLastUsedSearchConfig(lastUsedSearchConfig);
 
-      performTokenSearchApi(searchConfig).then(data => {
+      performTokenSearchApi(searchConfig).then((data) => {
         setResults(data.tokens);
         setTotalPages(data.totalPages);
       });
