@@ -6,6 +6,8 @@ and this project adheres to [Semantic Versioning](http://semver.org/).
 
 ## [Unreleased]
 
+* Issue **#1650** : Use consitent blue colour.
+
 
 ## [v7.0-beta.37] - 2020-06-15
 
