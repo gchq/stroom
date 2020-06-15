@@ -202,10 +202,8 @@ public class RuleSetSettingsPresenter
             if (rule != null) {
                 int index = rules.indexOf(rule);
                 if (index > 0) {
-                    rules.remove(rule);
-                    rules.add(index - 1, rule);
-                    update();
-                    setDirty(true);
+                    index--;
+                    moveRule(rule, index);
                 }
             }
         }
@@ -217,13 +215,21 @@ public class RuleSetSettingsPresenter
             if (rule != null) {
                 int index = rules.indexOf(rule);
                 if (index < rules.size() - 1) {
-                    rules.remove(rule);
-                    rules.add(index + 1, rule);
-                    update();
-                    setDirty(true);
+                    index++;
+                    moveRule(rule, index);
                 }
             }
         }
+    }
+
+    private void moveRule(final ReceiveDataRule rule, final int index) {
+        rules.remove(rule);
+        rules.add(index, rule);
+        update();
+        setDirty(true);
+
+        // Re-select the rule.
+        listPresenter.getSelectionModel().setSelected(rules.get(index));
     }
 
     private void listSelectionHandler(final MultiSelectEvent selectEvent) {
