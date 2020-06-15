@@ -17,13 +17,6 @@
 
 package stroom.receive.rules.client.presenter;
 
-import com.google.gwt.dom.client.Style.BorderStyle;
-import com.google.inject.Inject;
-import com.google.inject.Provider;
-import com.google.web.bindery.event.shared.EventBus;
-import com.google.web.bindery.event.shared.HandlerRegistration;
-import com.gwtplatform.mvp.client.MyPresenterWidget;
-import com.gwtplatform.mvp.client.View;
 import stroom.alert.client.event.ConfirmEvent;
 import stroom.datasource.api.v2.AbstractField;
 import stroom.docref.DocRef;
@@ -48,9 +41,20 @@ import stroom.widget.popup.client.presenter.PopupSize;
 import stroom.widget.popup.client.presenter.PopupUiHandlers;
 import stroom.widget.popup.client.presenter.PopupView.PopupType;
 
+import com.google.gwt.dom.client.Style.BorderStyle;
+import com.google.inject.Inject;
+import com.google.inject.Provider;
+import com.google.web.bindery.event.shared.EventBus;
+import com.google.web.bindery.event.shared.HandlerRegistration;
+import com.gwtplatform.mvp.client.MyPresenterWidget;
+import com.gwtplatform.mvp.client.View;
+
 import java.util.List;
 
-public class RuleSetSettingsPresenter extends MyPresenterWidget<RuleSetSettingsView> implements HasDocumentRead<ReceiveDataRules>, HasWrite<ReceiveDataRules>, HasDirtyHandlers, ReadOnlyChangeHandler {
+public class RuleSetSettingsPresenter
+        extends MyPresenterWidget<RuleSetSettingsView>
+        implements HasDocumentRead<ReceiveDataRules>, HasWrite<ReceiveDataRules>, HasDirtyHandlers, ReadOnlyChangeHandler {
+
     private final RuleSetListPresenter listPresenter;
     private final ExpressionTreePresenter expressionPresenter;
     private final Provider<RulePresenter> editRulePresenterProvider;
@@ -118,7 +122,13 @@ public class RuleSetSettingsPresenter extends MyPresenterWidget<RuleSetSettingsV
             if (!readOnly && rules != null) {
                 final ReceiveDataRule selected = listPresenter.getSelectionModel().getSelected();
                 if (selected != null) {
-                    final ReceiveDataRule newRule = new ReceiveDataRule(selected.getRuleNumber() + 1, System.currentTimeMillis(), selected.getName(), selected.isEnabled(), selected.getExpression(), selected.getAction());
+                    final ReceiveDataRule newRule = new ReceiveDataRule(
+                            selected.getRuleNumber() + 1,
+                            System.currentTimeMillis(),
+                            selected.getName(),
+                            selected.isEnabled(),
+                            selected.getExpression(),
+                            selected.getAction());
 
                     final int index = rules.indexOf(selected);
 
@@ -137,7 +147,13 @@ public class RuleSetSettingsPresenter extends MyPresenterWidget<RuleSetSettingsV
             if (!readOnly && rules != null) {
                 final ReceiveDataRule selected = listPresenter.getSelectionModel().getSelected();
                 if (selected != null) {
-                    final ReceiveDataRule newRule = new ReceiveDataRule(selected.getRuleNumber(), selected.getCreationTime(), selected.getName(), !selected.isEnabled(), selected.getExpression(), selected.getAction());
+                    final ReceiveDataRule newRule = new ReceiveDataRule(
+                            selected.getRuleNumber(),
+                            selected.getCreationTime(),
+                            selected.getName(),
+                            !selected.isEnabled(),
+                            selected.getExpression(),
+                            selected.getAction());
                     final int index = rules.indexOf(selected);
                     rules.remove(index);
                     rules.add(index, newRule);
@@ -207,63 +223,97 @@ public class RuleSetSettingsPresenter extends MyPresenterWidget<RuleSetSettingsV
     }
 
     private void add() {
-        final ReceiveDataRule newRule = new ReceiveDataRule(0, System.currentTimeMillis(), "", true, new ExpressionOperator.Builder(Op.AND).build(), RuleAction.RECEIVE);
+        final ReceiveDataRule newRule = new ReceiveDataRule(
+                0,
+                System.currentTimeMillis(),
+                "",
+                true,
+                new ExpressionOperator.Builder(Op.AND).build(),
+                RuleAction.RECEIVE);
         final RulePresenter editRulePresenter = editRulePresenterProvider.get();
         editRulePresenter.read(newRule, fields);
 
-        final PopupSize popupSize = new PopupSize(800, 400, 300, 300, 2000, 2000, true);
-        ShowPopupEvent.fire(RuleSetSettingsPresenter.this, editRulePresenter, PopupType.OK_CANCEL_DIALOG, popupSize, "Add New Rule", new PopupUiHandlers() {
-            @Override
-            public void onHideRequest(final boolean autoClose, final boolean ok) {
-                if (ok) {
-                    final ReceiveDataRule rule = editRulePresenter.write();
-                    rules.add(0, rule);
-                    update();
-                    listPresenter.getSelectionModel().setSelected(rule);
-                    setDirty(true);
-                }
+        final PopupSize popupSize = new PopupSize(
+                800,
+                400,
+                300,
+                300,
+                2000,
+                2000,
+                true);
 
-                HidePopupEvent.fire(RuleSetSettingsPresenter.this, editRulePresenter);
-            }
+        ShowPopupEvent.fire(
+                RuleSetSettingsPresenter.this,
+                editRulePresenter,
+                PopupType.OK_CANCEL_DIALOG,
+                popupSize,
+                "Add New Rule",
+                new PopupUiHandlers() {
+                    @Override
+                    public void onHideRequest(final boolean autoClose, final boolean ok) {
+                        if (ok) {
+                            final ReceiveDataRule rule = editRulePresenter.write();
+                            rules.add(0, rule);
+                            update();
+                            listPresenter.getSelectionModel().setSelected(rule);
+                            setDirty(true);
+                        }
 
-            @Override
-            public void onHide(final boolean autoClose, final boolean ok) {
-                // Do nothing.
-            }
-        });
+                        HidePopupEvent.fire(RuleSetSettingsPresenter.this, editRulePresenter);
+                    }
+
+                    @Override
+                    public void onHide(final boolean autoClose, final boolean ok) {
+                        // Do nothing.
+                    }
+                });
     }
 
     private void edit(final ReceiveDataRule existingRule) {
         final RulePresenter editRulePresenter = editRulePresenterProvider.get();
         editRulePresenter.read(existingRule, fields);
 
-        final PopupSize popupSize = new PopupSize(800, 400, 300, 300, 2000, 2000, true);
-        ShowPopupEvent.fire(RuleSetSettingsPresenter.this, editRulePresenter, PopupType.OK_CANCEL_DIALOG, popupSize, "Edit Rule", new PopupUiHandlers() {
-            @Override
-            public void onHideRequest(final boolean autoClose, final boolean ok) {
-                if (ok) {
-                    final ReceiveDataRule rule = editRulePresenter.write();
-                    final int index = rules.indexOf(existingRule);
-                    rules.remove(index);
-                    rules.add(index, rule);
+        final PopupSize popupSize = new PopupSize(
+                800,
+                400,
+                300,
+                300,
+                2000,
+                2000,
+                true);
 
-                    update();
-                    listPresenter.getSelectionModel().setSelected(rule);
+        ShowPopupEvent.fire(
+                RuleSetSettingsPresenter.this,
+                editRulePresenter,
+                PopupType.OK_CANCEL_DIALOG,
+                popupSize,
+                "Edit Rule",
+                new PopupUiHandlers() {
+                    @Override
+                    public void onHideRequest(final boolean autoClose, final boolean ok) {
+                        if (ok) {
+                            final ReceiveDataRule rule = editRulePresenter.write();
+                            final int index = rules.indexOf(existingRule);
+                            rules.remove(index);
+                            rules.add(index, rule);
 
-                    // Only mark the policies as dirty if the rule was actually changed.
-                    if (!existingRule.equals(rule)) {
-                        setDirty(true);
+                            update();
+                            listPresenter.getSelectionModel().setSelected(rule);
+
+                            // Only mark the policies as dirty if the rule was actually changed.
+                            if (!existingRule.equals(rule)) {
+                                setDirty(true);
+                            }
+                        }
+
+                        HidePopupEvent.fire(RuleSetSettingsPresenter.this, editRulePresenter);
                     }
-                }
 
-                HidePopupEvent.fire(RuleSetSettingsPresenter.this, editRulePresenter);
-            }
-
-            @Override
-            public void onHide(final boolean autoClose, final boolean ok) {
-                // Do nothing.
-            }
-        });
+                    @Override
+                    public void onHide(final boolean autoClose, final boolean ok) {
+                        // Do nothing.
+                    }
+                });
     }
 
     @Override
@@ -292,7 +342,13 @@ public class RuleSetSettingsPresenter extends MyPresenterWidget<RuleSetSettingsV
             // Set rule numbers on all of the rules for display purposes.
             for (int i = 0; i < rules.size(); i++) {
                 final ReceiveDataRule rule = rules.get(i);
-                final ReceiveDataRule newRule = new ReceiveDataRule(i + 1, rule.getCreationTime(), rule.getName(), rule.isEnabled(), rule.getExpression(), rule.getAction());
+                final ReceiveDataRule newRule = new ReceiveDataRule(
+                        i + 1,
+                        rule.getCreationTime(),
+                        rule.getName(),
+                        rule.isEnabled(),
+                        rule.getExpression(),
+                        rule.getAction());
                 rules.set(i, newRule);
             }
             listPresenter.setData(rules);
