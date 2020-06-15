@@ -6,6 +6,8 @@ and this project adheres to [Semantic Versioning](http://semver.org/).
 
 ## [Unreleased]
 
+* Issue **#1248** : Add quick filter to dependencies screen.
+
 * Issue **#1627** : Fix Up/Down buttons on Rule Set screen. Now keeps selection after use.
 
 * Issue **#1277** : Fix Enable/Disable toggle button on Rule Set screen.
