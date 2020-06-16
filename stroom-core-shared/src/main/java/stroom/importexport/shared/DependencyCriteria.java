@@ -24,6 +24,7 @@ public class DependencyCriteria extends BaseCriteria {
     public static final String FIELD_FROM_NAME_PARTIAL_MATCH = "From (Name) Partial Match";
     public static final String FIELD_TO_NAME_PARTIAL_MATCH = "From (Name) Partial Match";
 
+    @JsonProperty
     private String partialName;
 
     public DependencyCriteria() {
