@@ -23,7 +23,13 @@ public class DocRefPredicateFactory {
 
     private DocRefPredicateFactory() {
     }
-    
+
+    /**
+     * @see DocRefPredicateFactory#createFuzzyMatchPredicate(String, MatchMode)
+     *
+     * Defaults to matching on DocRef.name unless it thinks (or has been told)
+     * the input is a UUID.
+     */
     public static Predicate<DocRef> createFuzzyMatchPredicate(final String userInput) {
         return createFuzzyMatchPredicate(userInput, MatchMode.NAME);
     }
@@ -36,7 +42,8 @@ public class DocRefPredicateFactory {
      * If userInput starts with '#' return a predicate that does a case insensitive
      * contains match on the UUID of the {@link DocRef}.
      * In all other cases it returns a predicate that does a fuzzy string match on the
-     * name of the {@link DocRef}, see {@link StringPredicateFactory}.
+     * name and/or type of the {@link DocRef} as defined by {@link MatchMode},
+     * see {@link StringPredicateFactory}.
      */
     public static Predicate<DocRef> createFuzzyMatchPredicate(
             final String userInput, 
