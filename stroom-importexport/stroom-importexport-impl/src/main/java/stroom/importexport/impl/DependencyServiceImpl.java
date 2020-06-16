@@ -7,11 +7,12 @@ import stroom.query.api.v2.ExpressionOperator;
 import stroom.query.api.v2.ExpressionOperator.Op;
 import stroom.task.api.TaskContext;
 import stroom.task.api.TaskContextFactory;
+import stroom.util.docref.DocRefPredicateFactory;
+import stroom.util.docref.DocRefPredicateFactory.MatchMode;
 import stroom.util.shared.PageRequest;
 import stroom.util.shared.ResultPage;
 import stroom.util.shared.Sort;
 import stroom.util.shared.Sort.Direction;
-import stroom.util.string.StringPredicateFactory;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -152,18 +153,18 @@ public class DependencyServiceImpl implements DependencyService {
     private Predicate<Dependency> buildFilterPredicate(final DependencyCriteria criteria) {
         final Predicate<Dependency> filterPredicate;
         if (criteria != null && criteria.getPartialName() != null) {
-            final Predicate<String> stringPredicate =
-                    StringPredicateFactory.createFuzzyMatchPredicate(criteria.getPartialName());
+            final Predicate<DocRef> docRefPredicate =
+                    DocRefPredicateFactory.createFuzzyMatchPredicate(
+                            criteria.getPartialName(),
+                            MatchMode.NAME_OR_TYPE);
 
             filterPredicate = dep -> {
                 if (dep == null) {
                     return false;
                 } else {
                     // Match on any of {from,to} {name,type}
-                    return applyPredicate(dep, Dependency::getFrom, DocRef::getName, stringPredicate)
-                            || applyPredicate(dep, Dependency::getFrom, DocRef::getType, stringPredicate)
-                            || applyPredicate(dep, Dependency::getTo, DocRef::getName, stringPredicate)
-                            || applyPredicate(dep, Dependency::getTo, DocRef::getType, stringPredicate);
+                    return docRefPredicate.test(dep.getFrom())
+                            || docRefPredicate.test(dep.getTo());
                 }
             };
         } else {
