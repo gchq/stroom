@@ -236,6 +236,13 @@ class TestStringPredicateFactory {
                                 "A MAN WALKED BY",
                                 "WOMAN")),
 
+                makeTest("Regex with null values",
+                        "/^man",
+                        List.of("MAN"),
+                        Arrays.asList(null,
+                                "A MAN",
+                                "WOMAN")),
+
                 makeTest("No user input",
                         "",
                         List.of("B", "BCD", "XX_BCD"),

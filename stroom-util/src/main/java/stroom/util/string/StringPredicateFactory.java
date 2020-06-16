@@ -6,6 +6,7 @@ import stroom.util.logging.LambdaLoggerFactory;
 import stroom.util.logging.LogUtil;
 
 import javax.validation.constraints.NotNull;
+import java.util.function.Function;
 import java.util.function.Predicate;
 import java.util.regex.Pattern;
 
@@ -46,6 +47,20 @@ public class StringPredicateFactory {
      */
     public static Predicate<String> createFuzzyMatchPredicate(final String userInput) {
         return createFuzzyMatchPredicate(userInput, DEFAULT_SEPARATOR_CHAR_CLASS);
+    }
+
+    public static <T> Predicate<T> createFuzzyMatchPredicate(final String userInput,
+                                                             final Function<T, String> valueExtractor) {
+        Predicate<String> stringPredicate = createFuzzyMatchPredicate(userInput);
+        return toNullSafePredicate(false,
+                (T obj) -> {
+                    final String valueUnderTest = valueExtractor.apply(obj);
+                    if (valueUnderTest == null) {
+                        return false;
+                    } else {
+                        return stringPredicate.test(valueUnderTest);
+                    }
+                });
     }
 
     /**
@@ -166,7 +181,15 @@ public class StringPredicateFactory {
             return str -> false;
         }
 
-        return pattern.asPredicate();
+        final Predicate<String> predicate;
+        try {
+            predicate = pattern.asPredicate();
+        } catch (Exception e) {
+            LOGGER.trace(() ->
+                    LogUtil.message("Error converting pattern {} to predicate, due to {}", userInput, e.getMessage()));
+            return str -> false;
+        }
+        return toNullSafePredicate(false, predicate);
     }
 
     @NotNull
