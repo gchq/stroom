@@ -19,7 +19,7 @@ package stroom.importexport.client;
 import stroom.core.client.ContentManager;
 import stroom.core.client.MenuKeys;
 import stroom.core.client.presenter.MonitoringPlugin;
-import stroom.importexport.client.presenter.DependenciesPresenter;
+import stroom.importexport.client.presenter.DependenciesTabPresenter;
 import stroom.menubar.client.event.BeforeRevealMenubarEvent;
 import stroom.security.client.api.ClientSecurityContext;
 import stroom.svg.client.SvgPresets;
@@ -29,11 +29,11 @@ import com.google.inject.Inject;
 import com.google.inject.Provider;
 import com.google.web.bindery.event.shared.EventBus;
 
-public class DependenciesPlugin extends MonitoringPlugin<DependenciesPresenter> {
+public class DependenciesPlugin extends MonitoringPlugin<DependenciesTabPresenter> {
     @Inject
     public DependenciesPlugin(final EventBus eventBus,
                               final ContentManager eventManager,
-                              final Provider<DependenciesPresenter> presenterProvider,
+                              final Provider<DependenciesTabPresenter> presenterProvider,
                               final ClientSecurityContext securityContext) {
         super(eventBus, eventManager, presenterProvider, securityContext);
     }

@@ -16,7 +16,6 @@
 
 package stroom.importexport.client.presenter;
 
-import stroom.content.client.presenter.ContentTabPresenter;
 import stroom.data.client.presenter.ColumnSizeConstants;
 import stroom.data.client.presenter.RestDataProvider;
 import stroom.data.grid.client.DataGridView;
@@ -30,7 +29,6 @@ import stroom.explorer.shared.ExplorerResource;
 import stroom.importexport.shared.ContentResource;
 import stroom.importexport.shared.Dependency;
 import stroom.importexport.shared.DependencyCriteria;
-import stroom.svg.client.Icon;
 import stroom.svg.client.SvgPreset;
 import stroom.svg.client.SvgPresets;
 import stroom.util.client.DataGridUtil;
@@ -42,6 +40,7 @@ import com.google.gwt.safehtml.shared.SafeHtml;
 import com.google.gwt.safehtml.shared.SafeHtmlBuilder;
 import com.google.inject.Inject;
 import com.google.web.bindery.event.shared.EventBus;
+import com.gwtplatform.mvp.client.MyPresenterWidget;
 
 import java.util.HashMap;
 import java.util.Map;
@@ -49,7 +48,8 @@ import java.util.function.Consumer;
 import java.util.function.Function;
 import java.util.stream.Collectors;
 
-public class DependenciesPresenter extends ContentTabPresenter<DataGridView<Dependency>> {
+public class DependenciesPresenter extends MyPresenterWidget<DataGridView<Dependency>> {
+
     private static final ContentResource CONTENT_RESOURCE = GWT.create(ContentResource.class);
     private static final ExplorerResource EXPLORER_RESOURCE = GWT.create(ExplorerResource.class);
 
@@ -183,23 +183,6 @@ public class DependenciesPresenter extends ContentTabPresenter<DataGridView<Depe
                 .fetchDocumentTypes();
     }
 
-//    private SafeHtml docRefToString(final DocRef docRef) {
-//        final SafeHtmlBuilder builder = new SafeHtmlBuilder();
-//        builder.appendEscaped(docRef.getType());
-////        builder.appendEscaped(" ");
-//        if (docRef.getName() != null && !docRef.getName().isEmpty()) {
-//            builder.appendEscaped(" - ");
-//            builder.appendEscaped(docRef.getName());
-//        }
-//        // UUIDs in grey to make the rest easier to read
-//        builder.appendHtmlConstant("<span style=\"color:grey\">");
-//        builder.appendEscaped(" {");
-//        builder.appendEscaped(docRef.getUuid());
-//        builder.appendEscaped("}");
-//        builder.appendHtmlConstant("</span>");
-//        return (builder.toSafeHtml());
-//    }
-
     private String getValue(final Dependency row,
                             final Function<Dependency, DocRef> docRefExtractor,
                             final Function<DocRef, String> valueExtractor) {
@@ -255,13 +238,15 @@ public class DependenciesPresenter extends ContentTabPresenter<DataGridView<Depe
         return builder.toSafeHtml();
     }
 
-    @Override
-    public Icon getIcon() {
-        return SvgPresets.DEPENDENCIES;
+    void setFilterInput(final String filterInput) {
+        this.criteria.setPartialName(filterInput);
     }
 
-    @Override
-    public String getLabel() {
-        return "Dependencies";
+    void clearFilterInput() {
+        this.criteria.setPartialName(null);
+    }
+
+    void refresh() {
+        this.dataProvider.refresh();
     }
 }

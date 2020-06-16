@@ -3,18 +3,20 @@ package stroom.importexport.impl;
 import stroom.docref.DocRef;
 import stroom.importexport.shared.Dependency;
 import stroom.importexport.shared.DependencyCriteria;
+import stroom.query.api.v2.ExpressionOperator;
+import stroom.query.api.v2.ExpressionOperator.Op;
 import stroom.task.api.TaskContext;
 import stroom.task.api.TaskContextFactory;
 import stroom.util.shared.PageRequest;
 import stroom.util.shared.ResultPage;
 import stroom.util.shared.Sort;
 import stroom.util.shared.Sort.Direction;
+import stroom.util.string.StringPredicateFactory;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import javax.inject.Inject;
-import java.util.ArrayList;
 import java.util.Comparator;
 import java.util.List;
 import java.util.Map;
@@ -22,6 +24,7 @@ import java.util.Objects;
 import java.util.Optional;
 import java.util.Set;
 import java.util.function.Function;
+import java.util.function.Predicate;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
@@ -49,9 +52,11 @@ public class DependencyServiceImpl implements DependencyService {
     );
 
     private static final Comparator<Dependency> DEFAULT_COMPARATOR = FROM_TYPE_COMPARATOR
-                    .thenComparing(FROM_NAME_COMPARATOR)
-                    .thenComparing(TO_TYPE_COMPARATOR)
-                    .thenComparing(TO_NAME_COMPARATOR);
+            .thenComparing(FROM_NAME_COMPARATOR)
+            .thenComparing(TO_TYPE_COMPARATOR)
+            .thenComparing(TO_NAME_COMPARATOR);
+
+    private static final ExpressionOperator SELECT_ALL_EXPRESSION_OP = new ExpressionOperator.Builder(Op.AND).build();
 
     @Inject
     public DependencyServiceImpl(final ImportExportActionHandlers importExportActionHandlers,
@@ -62,13 +67,61 @@ public class DependencyServiceImpl implements DependencyService {
 
     @Override
     public ResultPage<Dependency> getDependencies(final DependencyCriteria criteria) {
-        return taskContextFactory.contextResult("Get Dependencies", taskContext ->
-                getDependencies(criteria, taskContext)).get();
+        return taskContextFactory.contextResult(
+                "Get Dependencies",
+                taskContext -> {
+                    try {
+                        return getDependencies(criteria, taskContext);
+                    } catch (Exception e) {
+                        LOGGER.error("Error getting dependencies for criteria " + criteria, e);
+                        throw e;
+                    }
+                })
+                .get();
     }
 
     private ResultPage<Dependency> getDependencies(final DependencyCriteria criteria,
                                                    final TaskContext parentTaskContext) {
-        final Map<DocRef, Set<DocRef>> allDependencies = importExportActionHandlers
+        // Build a map of deps (parent to children)
+        final Map<DocRef, Set<DocRef>> allDependencies = buildDependencyMap(parentTaskContext);
+
+        final Comparator<Dependency> sortListComparator = getDependencyComparator(criteria);
+
+        final Predicate<Dependency> filterPredicate = buildFilterPredicate(criteria);
+
+        // Flatten the dependency map
+        final List<Dependency> flatDependencies = buildFlatDependencies(
+                allDependencies,
+                sortListComparator,
+                filterPredicate);
+
+        return ResultPage.createPageLimitedList(
+                flatDependencies,
+                Optional.ofNullable(criteria)
+                        .map(DependencyCriteria::getPageRequest)
+                        .orElse(new PageRequest()));
+    }
+
+    private List<Dependency> buildFlatDependencies(final Map<DocRef, Set<DocRef>> allDependencies,
+                                                   final Comparator<Dependency> sortListComparator,
+                                                   final Predicate<Dependency> filterPredicate) {
+        return allDependencies.entrySet().stream()
+                .flatMap(entry -> {
+                    final DocRef parentDocRef = entry.getKey();
+                    final Set<DocRef> childDocRefs = entry.getValue();
+                    return childDocRefs.stream()
+                            .map(childDocRef -> new Dependency(
+                                    parentDocRef,
+                                    childDocRef,
+                                    allDependencies.containsKey(childDocRef)));
+                })
+                .filter(filterPredicate)
+                .sorted(sortListComparator)
+                .collect(Collectors.toList());
+    }
+
+    private Map<DocRef, Set<DocRef>> buildDependencyMap(final TaskContext parentTaskContext) {
+        return importExportActionHandlers
                 .getHandlers()
                 .values()
                 .parallelStream()
@@ -94,29 +147,73 @@ public class DependencyServiceImpl implements DependencyService {
                         (e1, e2) ->
                                 Stream.concat(e1.stream(), e2.stream())
                                         .collect(Collectors.toSet())));
+    }
 
-        final List<Dependency> dependencies = new ArrayList<>();
-        allDependencies.forEach((key, value) ->
-                value.forEach(to ->
-                        dependencies.add(new Dependency(key, to, allDependencies.containsKey(to)))));
+    private Predicate<Dependency> buildFilterPredicate(final DependencyCriteria criteria) {
+        final Predicate<Dependency> filterPredicate;
+        if (criteria != null && criteria.getPartialName() != null) {
+            final Predicate<String> stringPredicate =
+                    StringPredicateFactory.createFuzzyMatchPredicate(criteria.getPartialName());
 
+            filterPredicate = dep -> {
+                if (dep == null) {
+                    return false;
+                } else {
+                    // Match on any of {from,to} {name,type}
+                    return applyPredicate(dep, Dependency::getFrom, DocRef::getName, stringPredicate)
+                            || applyPredicate(dep, Dependency::getFrom, DocRef::getType, stringPredicate)
+                            || applyPredicate(dep, Dependency::getTo, DocRef::getName, stringPredicate)
+                            || applyPredicate(dep, Dependency::getTo, DocRef::getType, stringPredicate);
+                }
+            };
+        } else {
+            filterPredicate = dep -> true;
+        }
+        return filterPredicate;
+    }
+
+    private boolean applyPredicate(final Dependency dependency,
+                                   final Function<Dependency, DocRef> docRefExtractor,
+                                   final Function<DocRef, String> valueExtractor,
+                                   final Predicate<String> stringPredicate) {
+        final boolean result;
+        if (dependency != null) {
+            DocRef docRef = docRefExtractor.apply(dependency);
+            if (docRef != null) {
+                String val = valueExtractor.apply(docRef);
+                if (val != null) {
+                    result = stringPredicate.test(val);
+                } else {
+                    // Null val
+                    result = false;
+                }
+            } else {
+                // Null docref
+                result = false;
+            }
+        } else {
+            // Null dep
+            result = false;
+        }
+        return result;
+    }
+
+    private Comparator<Dependency> getDependencyComparator(final DependencyCriteria criteria) {
+        // Make the sort comparator base on the criteria sort list
         final Comparator<Dependency> sortListComparator;
-        if (criteria != null && criteria.getSortList() != null && !criteria.getSortList().isEmpty()) {
+        if (criteria != null
+                && criteria.getSortList() != null
+                && !criteria.getSortList().isEmpty()) {
             sortListComparator = buildComparatorFromSortList(criteria);
         } else {
             sortListComparator = DEFAULT_COMPARATOR;
         }
-
-        dependencies.sort(sortListComparator);
-
-        return ResultPage.createPageLimitedList(
-                dependencies,
-                Optional.ofNullable(criteria)
-                        .map(DependencyCriteria::getPageRequest)
-                        .orElse(new PageRequest()));
+        return sortListComparator;
     }
 
-    private Comparator<Dependency> buildComparatorFromSortList(final DependencyCriteria dependencyCriteria) {
+    private Comparator<Dependency> buildComparatorFromSortList(
+            final DependencyCriteria dependencyCriteria) {
+
         if (dependencyCriteria != null && !dependencyCriteria.getSortList().isEmpty()) {
             Comparator<Dependency> compositeComparator = null;
 
@@ -140,7 +237,7 @@ public class DependencyServiceImpl implements DependencyService {
         }
     }
 
-    private static  Comparator<Dependency> getComparator(
+    private static Comparator<Dependency> getComparator(
             final Function<Dependency, DocRef> docRefExtractor,
             final Function<DocRef, String> valueExtractor) {
 
