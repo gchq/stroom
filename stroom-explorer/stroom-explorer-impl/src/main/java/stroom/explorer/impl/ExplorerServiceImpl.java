@@ -35,6 +35,7 @@ import stroom.explorer.shared.StandardTagNames;
 import stroom.security.api.SecurityContext;
 import stroom.security.shared.DocumentPermissionNames;
 import stroom.util.filter.FilterFieldMapper;
+import stroom.util.filter.FilterFieldMappers;
 import stroom.util.filter.QuickFilterPredicateFactory;
 import stroom.util.shared.PermissionException;
 import stroom.util.shared.filter.FilterFieldDefinition;
@@ -58,14 +59,14 @@ import java.util.stream.Collectors;
 @Singleton
 class ExplorerServiceImpl implements ExplorerService, CollectionService {
 
-    private static final Map<String, FilterFieldMapper<DocRef>> FIELD_MAPPERS = FilterFieldMapper.mappedByQualifier(
-            FilterFieldMapper.of(FilterFieldDefinition.defaultField("Name"), DocRef::getName),
-// Bit of a fudge to allow folder searching but you can't use it with name/type as folder is a parent of the other
+    // Bit of a fudge to allow folder searching but you can't use it with name/type as folder is a parent of the other
 // items
 //            FilterFieldMapper.of(FilterFieldDefinition.qualifiedField("Folder"), docRef ->
 //                    ExplorerConstants.FOLDER.equals(docRef.getType())
 //                            ? docRef.getName()
 //                            : null),
+    private static final FilterFieldMappers<DocRef> FIELD_MAPPERS = FilterFieldMappers.of(
+            FilterFieldMapper.of(FilterFieldDefinition.defaultField("Name"), DocRef::getName),
             FilterFieldMapper.of(FilterFieldDefinition.qualifiedField("Type"), DocRef::getType)
     );
 
@@ -109,7 +110,7 @@ class ExplorerServiceImpl implements ExplorerService, CollectionService {
 
         final TreeModel filteredModel = new TreeModel();
         // Create the predicate for the current filter value
-        final Predicate<DocRef> fuzzyMatchPredicate = QuickFilterPredicateFactory.createPredicate(
+        final Predicate<DocRef> fuzzyMatchPredicate = QuickFilterPredicateFactory.createFuzzyMatchPredicate(
                 filter.getNameFilter(), FIELD_MAPPERS);
 
         addDescendants(

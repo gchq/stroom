@@ -2,6 +2,9 @@ package stroom.util.filter;
 
 import stroom.util.shared.filter.FilterFieldDefinition;
 
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+
 import java.util.Arrays;
 import java.util.Collection;
 import java.util.Collections;
@@ -11,7 +14,14 @@ import java.util.Optional;
 import java.util.function.Function;
 import java.util.stream.Collectors;
 
+/**
+ * Defines the mapping between a FilterFieldDefinition and a property
+ * of T_ROW. The valueExtractor should return a value for the field
+ * from an instance of T_ROW.
+ */
 public class FilterFieldMapper<T_ROW> {
+    private static final Logger LOGGER = LoggerFactory.getLogger(FilterFieldMapper.class);
+
     private final FilterFieldDefinition fieldDefinition;
     private final Function<T_ROW, String> valueExtractor;
 
@@ -28,6 +38,11 @@ public class FilterFieldMapper<T_ROW> {
         return new FilterFieldMapper<>(fieldDefinition, valueExtractor);
     }
 
+    /**
+     * Overloaded factory method that allows you to define a nested value
+     * extractor that is null safe. The value of each function is chained
+     * in a null safe way.
+     */
     public static <T_ROW, T_FIELD> FilterFieldMapper<T_ROW> of(
             final FilterFieldDefinition fieldDefinition,
             final Function<T_ROW, T_FIELD> function1,
@@ -50,6 +65,11 @@ public class FilterFieldMapper<T_ROW> {
         return new FilterFieldMapper<>(fieldDefinition, valueExtractor);
     }
 
+    /**
+     * Overloaded factory method that allows you to define a nested value
+     * extractor that is null safe. The value of each function is chained
+     * in a null safe way.
+     */
     public static <T_ROW, T_FIELD, T_SUB_FIELD> FilterFieldMapper<T_ROW> of(
             final FilterFieldDefinition fieldDefinition,
             final Function<T_ROW, T_FIELD> function1,
@@ -83,7 +103,15 @@ public class FilterFieldMapper<T_ROW> {
     }
 
     public Function<T_ROW, String> getNullSafeStringValueExtractor() {
-        return valueExtractor;
+        if (LOGGER.isTraceEnabled()) {
+            return row -> {
+                String val = valueExtractor.apply(row);
+                LOGGER.trace("Extracted [{}] from field {} in [{}]", val, fieldDefinition, row);
+                return val;
+            };
+        } else {
+            return valueExtractor;
+        }
     }
 
 //        public Function<T_ROW, String> getNullSafeStringValueExtractor() {
@@ -105,9 +133,7 @@ public class FilterFieldMapper<T_ROW> {
 
     @Override
     public String toString() {
-        return "FieldMapper{" +
-                "fieldDefinition=" + fieldDefinition +
-                '}';
+        return fieldDefinition.toString();
     }
 
     @SafeVarargs

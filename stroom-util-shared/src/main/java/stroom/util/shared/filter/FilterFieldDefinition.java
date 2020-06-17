@@ -8,6 +8,9 @@ import java.util.Objects;
 import java.util.Optional;
 import java.util.stream.Collectors;
 
+/**
+ * Defines a field used in table filtering (quick filters).
+ */
 @JsonInclude(Include.NON_NULL)
 public class FilterFieldDefinition {
 
@@ -18,9 +21,14 @@ public class FilterFieldDefinition {
     @JsonProperty
     private final boolean defaultField;
 
-    public FilterFieldDefinition(@JsonProperty("displayName") final String displayName,
-                                 @JsonProperty("filterQualifier") final String filterQualifier,
-                                 @JsonProperty("defaultField") final boolean defaultField) {
+    /**
+     * @param displayName The display name or column heading for the field in the table.
+     * @param filterQualifier The
+     * @param defaultField
+     */
+    FilterFieldDefinition(@JsonProperty("displayName") final String displayName,
+                          @JsonProperty("filterQualifier") final String filterQualifier,
+                          @JsonProperty("defaultField") final boolean defaultField) {
         this.displayName = Objects.requireNonNull(displayName);
         this.filterQualifier = Objects.requireNonNull(filterQualifier);
         this.defaultField = defaultField;
@@ -29,7 +37,14 @@ public class FilterFieldDefinition {
     public static FilterFieldDefinition qualifiedField(final String displayName) {
         return new FilterFieldDefinition(displayName, toQualifiedName(displayName), false);
     }
-    public static FilterFieldDefinition qualifiedField(final String displayName, final String filterQualifier) {
+
+    /**
+     * Creates a field that has to be qualified, e.g. 'type:error'
+     * @param displayName The display name or column heading for the field in the table.
+     * @param filterQualifier The qualifier to use in the filter input, should match ^[a-zA-Z0-9]+$
+     */
+    public static FilterFieldDefinition qualifiedField(final String displayName,
+                                                       final String filterQualifier) {
         return new FilterFieldDefinition(displayName, filterQualifier, false);
     }
 
@@ -37,7 +52,14 @@ public class FilterFieldDefinition {
         return new FilterFieldDefinition(displayName, toQualifiedName(displayName), true);
     }
 
-    public static FilterFieldDefinition defaultField(final String displayName, final String filterQualifier) {
+    /**
+     * Creates a field that is a default field which does not havee to be qualified. You can have multiple
+     * default fields. If there are multiple then the predicate for each default field are OR'd together.
+     * @param displayName The display name or column heading for the field in the table.
+     * @param filterQualifier The qualifier to use in the filter input, should match ^[a-zA-Z0-9]+$
+     */
+    public static FilterFieldDefinition defaultField(final String displayName,
+                                                     final String filterQualifier) {
         return new FilterFieldDefinition(displayName, filterQualifier, true);
     }
 
@@ -89,10 +111,6 @@ public class FilterFieldDefinition {
 
     @Override
     public String toString() {
-        return "FieldDefinition{" +
-                "displayName='" + displayName + '\'' +
-                ", filterQualifier='" + filterQualifier + '\'' +
-                ", defaultField=" + defaultField +
-                '}';
+        return "[" + displayName + " (" + filterQualifier + ") " + (defaultField ? "DEFAULT" : "QUALIFIED") + "]";
     }
 }

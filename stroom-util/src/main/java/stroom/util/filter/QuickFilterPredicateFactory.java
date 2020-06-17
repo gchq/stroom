@@ -7,7 +7,6 @@ import org.slf4j.LoggerFactory;
 
 import java.util.ArrayList;
 import java.util.List;
-import java.util.Map;
 import java.util.Objects;
 import java.util.function.Predicate;
 import java.util.stream.Collectors;
@@ -16,19 +15,18 @@ public class QuickFilterPredicateFactory {
 
     private static final Logger LOGGER = LoggerFactory.getLogger(QuickFilterPredicateFactory.class);
 
-//    public static <T> Function<String, Predicate<T>> createPredicateFactory(
-//            final String userInput,
-//            final Collection<FilterFieldMapper<T>> fieldMappers) {
-//
-//        final Map<String, FilterFieldMapper<T>> qualifierToMapperMap = FilterFieldMapper.toMap(fieldMappers);
-//
-//        return userInput2 -> createPredicate(userInput2, fieldMappers);
-//    }
-
-
-    public static <T> Predicate<T> createPredicate(final String userInput,
-                                                   final Map<String, FilterFieldMapper<T>> fieldMappers) {
-       LOGGER.trace("userInput {}, mappers {}", userInput, fieldMappers);
+    /**
+     * Creates a match predicate based on userInput. userInput may be a single match string
+     * e.g. 'event', or a set of optionally qualified match strings, e.g. 'event type:pipe'.
+     * If the
+     * @param userInput
+     * @param fieldMappers
+     * @param <T>
+     * @return
+     */
+    public static <T> Predicate<T> createFuzzyMatchPredicate(final String userInput,
+                                                             final FilterFieldMappers<T> fieldMappers) {
+       LOGGER.trace("userInput [{}], mappers {}", userInput, fieldMappers);
 
        // user input like 'vent type:pipe' or just 'vent'
 
@@ -36,11 +34,11 @@ public class QuickFilterPredicateFactory {
         if (userInput == null || userInput.isEmpty()) {
             LOGGER.trace("Null/empty input");
             predicate = obj -> true;
-        } else if (userInput.contains(":")) {
-            LOGGER.trace("Found at least one qualified field");
+        } else if (userInput.contains(":") || userInput.contains("\"")) {
+            LOGGER.trace("Found at least one qualified field or quoted values");
             // We have some qualified fields so parse them
             final List<MatchToken> matchTokens = parseFullInput(userInput.trim());
-            LOGGER.trace("qualifiedMatchStrings {}", matchTokens);
+            LOGGER.trace("Parsed matchTokens {}", matchTokens);
 
             if (!matchTokens.isEmpty()) {
                 predicate = buildCompoundPredicate(matchTokens, fieldMappers);
@@ -61,7 +59,7 @@ public class QuickFilterPredicateFactory {
     }
 
     private static <T> Predicate<T> createDefaultPredicate(final String input,
-                                                           final Map<String, FilterFieldMapper<T>> fieldMappers) {
+                                                           final FilterFieldMappers<T> fieldMappers) {
         // Matching on the default field
         final List<FilterFieldMapper<T>> defaultFieldMapper = getDefaultFieldMappers(fieldMappers);
         LOGGER.trace("defaultFieldMapper {}", defaultFieldMapper);
@@ -71,6 +69,7 @@ public class QuickFilterPredicateFactory {
 
     private static <T> Predicate<T> createPredicate(final String input,
                                                     final FilterFieldMapper<T> fieldMapper) {
+        LOGGER.trace("Creating fuzzy match predicate for input [{}], fieldMapper {}", input, fieldMapper);
         return StringPredicateFactory.createFuzzyMatchPredicate(
                 input,
                 fieldMapper.getNullSafeStringValueExtractor());
@@ -81,29 +80,17 @@ public class QuickFilterPredicateFactory {
         if (fieldMappers == null || fieldMappers.isEmpty()) {
             return obj -> false;
         } else {
-            Predicate<T> compoundPredicate = fieldMappers.stream()
+            return fieldMappers.stream()
                     .map(fieldMapper -> createPredicate(input, fieldMapper))
                     .reduce(QuickFilterPredicateFactory::orPredicates)
                     .orElse(obj -> false);
-
-//            Predicate<T> compoundPredicate = StringPredicateFactory.createFuzzyMatchPredicate(
-//                    input, fieldMappers.get(0).getNullSafeStringValueExtractor());
-//
-//            if (fieldMappers.size() > 1) {
-//                for (int i = 1; i < fieldMappers.size(); i++) {
-//                    final Predicate<T> predicate = StringPredicateFactory.createFuzzyMatchPredicate(
-//                            input, fieldMappers.get(i).getNullSafeStringValueExtractor());
-//                    compoundPredicate = compoundPredicate.or(predicate);
-//                }
-//            }
-            return compoundPredicate;
         }
     }
 
     private static <T> List<FilterFieldMapper<T>> getDefaultFieldMappers(
-            final Map<String, FilterFieldMapper<T>> fieldMappers) {
+            final FilterFieldMappers<T> fieldMappers) {
 
-        final List<FilterFieldMapper<T>> defaultFieldMappers = fieldMappers.values().stream()
+        final List<FilterFieldMapper<T>> defaultFieldMappers = fieldMappers.getFieldMappers().stream()
                 .filter(fieldMapper2 -> fieldMapper2.getFieldDefinition().isDefaultField())
                 .collect(Collectors.toList());
 
@@ -139,8 +126,6 @@ public class QuickFilterPredicateFactory {
     private static List<String> extractTokens(final String userInput) {
         final List<String> tokens = new ArrayList<>();
 
-        // Credit to Fabian Steeg https://stackoverflow.com/questions/1757065/java-splitting-a-comma-separated-string-but-ignoring-commas-in-quotes
-        // for the parsing logic
         int start = 0;
         boolean insideQuotes = false;
         boolean wasInsideQuotes = false;
@@ -156,7 +141,12 @@ public class QuickFilterPredicateFactory {
             boolean atLastChar = (current == userInput.length() - 1);
 
             if (atLastChar) {
-                tokens.add(userInput.substring(start));
+                if (wasInsideQuotes) {
+                    // Strip the quotes off
+                    tokens.add(userInput.substring(start +1, userInput.length() -1));
+                } else {
+                    tokens.add(userInput.substring(start));
+                }
             } else if (userInput.charAt(current) == ' ' && !insideQuotes) {
                 if (wasInsideQuotes) {
                     // Strip the quotes off
@@ -174,7 +164,7 @@ public class QuickFilterPredicateFactory {
     }
 
     private static <T> Predicate<T> buildCompoundPredicate(final List<MatchToken> matchTokens,
-                                                           final Map<String, FilterFieldMapper<T>> fieldMappers) {
+                                                           final FilterFieldMappers<T> fieldMappers) {
 
         Predicate<T> compoundPredicate = null;
         boolean badMatchStringFound = false;
@@ -253,10 +243,7 @@ public class QuickFilterPredicateFactory {
 
         @Override
         public String toString() {
-            return "QualifiedMatchString{" +
-                    "qualifier='" + qualifier + '\'' +
-                    ", matchString='" + matchInput + '\'' +
-                    '}';
+            return "[" + qualifier + ":" + matchInput + "]";
         }
     }
 }

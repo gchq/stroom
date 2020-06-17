@@ -8,6 +8,7 @@ import stroom.query.api.v2.ExpressionOperator.Op;
 import stroom.task.api.TaskContext;
 import stroom.task.api.TaskContextFactory;
 import stroom.util.filter.FilterFieldMapper;
+import stroom.util.filter.FilterFieldMappers;
 import stroom.util.filter.QuickFilterPredicateFactory;
 import stroom.util.shared.CompareUtil;
 import stroom.util.shared.PageRequest;
@@ -66,7 +67,7 @@ public class DependencyServiceImpl implements DependencyService {
 
     private static final ExpressionOperator SELECT_ALL_EXPRESSION_OP = new ExpressionOperator.Builder(Op.AND).build();
 
-    private static Map<String, FilterFieldMapper<Dependency>> FIELD_MAPPERS = FilterFieldMapper.mappedByQualifier(
+    private static final FilterFieldMappers<Dependency> FIELD_MAPPERS = FilterFieldMappers.of(
             FilterFieldMapper.of(DependencyCriteria.FIELD_DEF_FROM_TYPE, Dependency::getFrom, DocRef::getType),
             FilterFieldMapper.of(DependencyCriteria.FIELD_DEF_FROM_NAME, Dependency::getFrom, DocRef::getName),
             FilterFieldMapper.of(DependencyCriteria.FIELD_DEF_FROM_UUID, Dependency::getFrom, DocRef::getUuid),
@@ -168,7 +169,7 @@ public class DependencyServiceImpl implements DependencyService {
     }
 
     private Predicate<Dependency> buildFilterPredicate(final DependencyCriteria criteria) {
-        return QuickFilterPredicateFactory.createPredicate(criteria.getPartialName(), FIELD_MAPPERS);
+        return QuickFilterPredicateFactory.createFuzzyMatchPredicate(criteria.getPartialName(), FIELD_MAPPERS);
 
 //        final Predicate<Dependency> filterPredicate;
 //        if (criteria != null && criteria.getPartialName() != null) {
