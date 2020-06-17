@@ -7,6 +7,8 @@ and this project adheres to [Semantic Versioning](http://semver.org/).
 
 ## [Unreleased]
 
+* Issue **#1668** : Fixed incorrect parameter count for XSLT `meta` function.
+
 * Issue **#1564** : Fix error in data retention section of stream info popup.
 
 * Change data retention delete batching approach to use time ranges.
@@ -227,7 +229,7 @@ and this project adheres to [Semantic Versioning](http://semver.org/).
 
 * Remove internal statistics from setup sample data.
 
-* Fix issue of pipeling structure not showing when it contains a StatisticsFilter.
+* Fix issue of pipeline structure not showing when it contains a StatisticsFilter.
 
 * Update auth flow for auth-into-stroom integration
 
