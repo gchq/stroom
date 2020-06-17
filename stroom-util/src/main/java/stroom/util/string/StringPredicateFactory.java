@@ -51,6 +51,7 @@ public class StringPredicateFactory {
 
     public static <T> Predicate<T> createFuzzyMatchPredicate(final String userInput,
                                                              final Function<T, String> valueExtractor) {
+
         Predicate<String> stringPredicate = createFuzzyMatchPredicate(userInput);
         return toNullSafePredicate(false,
                 (T obj) -> {

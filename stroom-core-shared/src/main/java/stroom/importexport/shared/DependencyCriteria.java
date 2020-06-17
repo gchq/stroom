@@ -3,6 +3,7 @@ package stroom.importexport.shared;
 import stroom.util.shared.BaseCriteria;
 import stroom.util.shared.PageRequest;
 import stroom.util.shared.Sort;
+import stroom.util.shared.filter.FilterFieldDefinition;
 
 import com.fasterxml.jackson.annotation.JsonCreator;
 import com.fasterxml.jackson.annotation.JsonInclude;
@@ -21,8 +22,24 @@ public class DependencyCriteria extends BaseCriteria {
     public static final String FIELD_TO_UUID = "To (UUID)";
     public static final String FIELD_STATUS = "Status";
 
-    public static final String FIELD_FROM_NAME_PARTIAL_MATCH = "From (Name) Partial Match";
-    public static final String FIELD_TO_NAME_PARTIAL_MATCH = "From (Name) Partial Match";
+    // Default fields
+    public static final FilterFieldDefinition FIELD_DEF_FROM_NAME = FilterFieldDefinition.defaultField(FIELD_FROM_NAME);
+    public static final FilterFieldDefinition FIELD_DEF_TO_NAME = FilterFieldDefinition.defaultField(FIELD_TO_NAME);
+    // Qualified Fields
+    public static final FilterFieldDefinition FIELD_DEF_FROM_TYPE = FilterFieldDefinition.qualifiedField(FIELD_FROM_TYPE);
+    public static final FilterFieldDefinition FIELD_DEF_FROM_UUID = FilterFieldDefinition.qualifiedField(FIELD_FROM_UUID);
+    public static final FilterFieldDefinition FIELD_DEF_TO_TYPE = FilterFieldDefinition.qualifiedField(FIELD_TO_TYPE);
+    public static final FilterFieldDefinition FIELD_DEF_TO_UUID = FilterFieldDefinition.qualifiedField(FIELD_TO_UUID);
+    public static final FilterFieldDefinition FIELD_DEF_STATUS = FilterFieldDefinition.qualifiedField(FIELD_STATUS);
+
+//    public static final List<FilterFieldDefinition> FIELD_DEFINITIONS = Arrays.asList(
+//            FIELD_DEF_FROM_TYPE,
+//            FIELD_DEF_FROM_NAME,
+//            FIELD_DEF_FROM_UUID,
+//            FIELD_DEF_TO_TYPE,
+//            FIELD_DEF_TO_NAME,
+//            FIELD_DEF_TO_UUID,
+//            FIELD_DEF_STATUS);
 
     @JsonProperty
     private String partialName;

@@ -7,8 +7,9 @@ import stroom.query.api.v2.ExpressionOperator;
 import stroom.query.api.v2.ExpressionOperator.Op;
 import stroom.task.api.TaskContext;
 import stroom.task.api.TaskContextFactory;
-import stroom.util.docref.DocRefPredicateFactory;
-import stroom.util.docref.DocRefPredicateFactory.MatchMode;
+import stroom.util.filter.FilterFieldMapper;
+import stroom.util.filter.QuickFilterPredicateFactory;
+import stroom.util.shared.CompareUtil;
 import stroom.util.shared.PageRequest;
 import stroom.util.shared.ResultPage;
 import stroom.util.shared.Sort;
@@ -35,12 +36,18 @@ public class DependencyServiceImpl implements DependencyService {
     private final ImportExportActionHandlers importExportActionHandlers;
     private final TaskContextFactory taskContextFactory;
 
-    private static final Comparator<Dependency> FROM_TYPE_COMPARATOR = getComparator(Dependency::getFrom, DocRef::getType);
-    private static final Comparator<Dependency> FROM_NAME_COMPARATOR = getComparator(Dependency::getFrom, DocRef::getName);
-    private static final Comparator<Dependency> FROM_UUID_COMPARATOR = getComparator(Dependency::getFrom, DocRef::getUuid);
-    private static final Comparator<Dependency> TO_TYPE_COMPARATOR = getComparator(Dependency::getTo, DocRef::getType);
-    private static final Comparator<Dependency> TO_NAME_COMPARATOR = getComparator(Dependency::getTo, DocRef::getName);
-    private static final Comparator<Dependency> TO_UUID_COMPARATOR = getComparator(Dependency::getTo, DocRef::getUuid);
+    private static final Comparator<Dependency> FROM_TYPE_COMPARATOR =
+            CompareUtil.getNullSafeCaseInsensitiveComparator(Dependency::getFrom, DocRef::getType);
+    private static final Comparator<Dependency> FROM_NAME_COMPARATOR =
+            CompareUtil.getNullSafeCaseInsensitiveComparator(Dependency::getFrom, DocRef::getName);
+    private static final Comparator<Dependency> FROM_UUID_COMPARATOR =
+            CompareUtil.getNullSafeCaseInsensitiveComparator(Dependency::getFrom, DocRef::getUuid);
+    private static final Comparator<Dependency> TO_TYPE_COMPARATOR =
+            CompareUtil.getNullSafeCaseInsensitiveComparator(Dependency::getTo, DocRef::getType);
+    private static final Comparator<Dependency> TO_NAME_COMPARATOR =
+            CompareUtil.getNullSafeCaseInsensitiveComparator(Dependency::getTo, DocRef::getName);
+    private static final Comparator<Dependency> TO_UUID_COMPARATOR =
+            CompareUtil.getNullSafeCaseInsensitiveComparator(Dependency::getTo, DocRef::getUuid);
 
     private static final Map<String, Comparator<Dependency>> COMPARATOR_MAP = Map.of(
             DependencyCriteria.FIELD_FROM_TYPE, FROM_TYPE_COMPARATOR,
@@ -58,6 +65,16 @@ public class DependencyServiceImpl implements DependencyService {
             .thenComparing(TO_NAME_COMPARATOR);
 
     private static final ExpressionOperator SELECT_ALL_EXPRESSION_OP = new ExpressionOperator.Builder(Op.AND).build();
+
+    private static Map<String, FilterFieldMapper<Dependency>> FIELD_MAPPERS = FilterFieldMapper.mappedByQualifier(
+            FilterFieldMapper.of(DependencyCriteria.FIELD_DEF_FROM_TYPE, Dependency::getFrom, DocRef::getType),
+            FilterFieldMapper.of(DependencyCriteria.FIELD_DEF_FROM_NAME, Dependency::getFrom, DocRef::getName),
+            FilterFieldMapper.of(DependencyCriteria.FIELD_DEF_FROM_UUID, Dependency::getFrom, DocRef::getUuid),
+            FilterFieldMapper.of(DependencyCriteria.FIELD_DEF_TO_TYPE, Dependency::getTo, DocRef::getType),
+            FilterFieldMapper.of(DependencyCriteria.FIELD_DEF_TO_NAME, Dependency::getTo, DocRef::getName),
+            FilterFieldMapper.of(DependencyCriteria.FIELD_DEF_TO_UUID, Dependency::getTo, DocRef::getUuid),
+            FilterFieldMapper.of(DependencyCriteria.FIELD_DEF_STATUS, Dependency::isOk, bool -> bool ? "OK" : "Missing")
+    );
 
     @Inject
     public DependencyServiceImpl(final ImportExportActionHandlers importExportActionHandlers,
@@ -151,26 +168,28 @@ public class DependencyServiceImpl implements DependencyService {
     }
 
     private Predicate<Dependency> buildFilterPredicate(final DependencyCriteria criteria) {
-        final Predicate<Dependency> filterPredicate;
-        if (criteria != null && criteria.getPartialName() != null) {
-            final Predicate<DocRef> docRefPredicate =
-                    DocRefPredicateFactory.createFuzzyMatchPredicate(
-                            criteria.getPartialName(),
-                            MatchMode.NAME_OR_TYPE);
+        return QuickFilterPredicateFactory.createPredicate(criteria.getPartialName(), FIELD_MAPPERS);
 
-            filterPredicate = dep -> {
-                if (dep == null) {
-                    return false;
-                } else {
-                    // Match on any of {from,to} {name,type}
-                    return docRefPredicate.test(dep.getFrom())
-                            || docRefPredicate.test(dep.getTo());
-                }
-            };
-        } else {
-            filterPredicate = dep -> true;
-        }
-        return filterPredicate;
+//        final Predicate<Dependency> filterPredicate;
+//        if (criteria != null && criteria.getPartialName() != null) {
+//            final Predicate<DocRef> docRefPredicate =
+//                    DocRefPredicateFactory.createFuzzyMatchPredicate(
+//                            criteria.getPartialName(),
+//                            MatchMode.NAME_OR_TYPE);
+//
+//            filterPredicate = dep -> {
+//                if (dep == null) {
+//                    return false;
+//                } else {
+//                    // Match on any of {from,to} {name,type}
+//                    return docRefPredicate.test(dep.getFrom())
+//                            || docRefPredicate.test(dep.getTo());
+//                }
+//            };
+//        } else {
+//            filterPredicate = dep -> true;
+//        }
+//        return filterPredicate;
     }
 
     private boolean applyPredicate(final Dependency dependency,
@@ -238,16 +257,17 @@ public class DependencyServiceImpl implements DependencyService {
         }
     }
 
-    private static Comparator<Dependency> getComparator(
-            final Function<Dependency, DocRef> docRefExtractor,
-            final Function<DocRef, String> valueExtractor) {
+//    private static  Comparator<Dependency> getComparator(
+//            final Function<Dependency, DocRef> docRefExtractor,
+//            final Function<DocRef, String> valueExtractor) {
+//
+//        // Sort with nulls first but also handle deps with null docref
+//        return Comparator.comparing(
+//                docRefExtractor,
+//                Comparator.nullsFirst(
+//                        Comparator.comparing(
+//                                valueExtractor,
+//                                Comparator.nullsFirst(String.CASE_INSENSITIVE_ORDER))));
+//    }
 
-        // Sort with nulls first but also handle deps with null docref
-        return Comparator.comparing(
-                docRefExtractor,
-                Comparator.nullsFirst(
-                        Comparator.comparing(
-                                valueExtractor,
-                                Comparator.nullsFirst(String.CASE_INSENSITIVE_ORDER))));
-    }
 }

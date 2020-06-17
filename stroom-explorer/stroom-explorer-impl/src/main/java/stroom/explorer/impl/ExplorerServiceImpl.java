@@ -34,8 +34,10 @@ import stroom.explorer.shared.PermissionInheritance;
 import stroom.explorer.shared.StandardTagNames;
 import stroom.security.api.SecurityContext;
 import stroom.security.shared.DocumentPermissionNames;
-import stroom.util.docref.DocRefPredicateFactory;
+import stroom.util.filter.FilterFieldMapper;
+import stroom.util.filter.QuickFilterPredicateFactory;
 import stroom.util.shared.PermissionException;
+import stroom.util.shared.filter.FilterFieldDefinition;
 
 import javax.inject.Inject;
 import javax.inject.Provider;
@@ -55,6 +57,18 @@ import java.util.stream.Collectors;
 
 @Singleton
 class ExplorerServiceImpl implements ExplorerService, CollectionService {
+
+    private static final Map<String, FilterFieldMapper<DocRef>> FIELD_MAPPERS = FilterFieldMapper.mappedByQualifier(
+            FilterFieldMapper.of(FilterFieldDefinition.defaultField("Name"), DocRef::getName),
+// Bit of a fudge to allow folder searching but you can't use it with name/type as folder is a parent of the other
+// items
+//            FilterFieldMapper.of(FilterFieldDefinition.qualifiedField("Folder"), docRef ->
+//                    ExplorerConstants.FOLDER.equals(docRef.getType())
+//                            ? docRef.getName()
+//                            : null),
+            FilterFieldMapper.of(FilterFieldDefinition.qualifiedField("Type"), DocRef::getType)
+    );
+
     private final ExplorerNodeService explorerNodeService;
     private final ExplorerTreeModel explorerTreeModel;
     private final ExplorerActionHandlers explorerActionHandlers;
@@ -95,9 +109,18 @@ class ExplorerServiceImpl implements ExplorerService, CollectionService {
 
         final TreeModel filteredModel = new TreeModel();
         // Create the predicate for the current filter value
-        final Predicate<DocRef> fuzzyMatchPredicate = DocRefPredicateFactory.createFuzzyMatchPredicate(filter.getNameFilter());
+        final Predicate<DocRef> fuzzyMatchPredicate = QuickFilterPredicateFactory.createPredicate(
+                filter.getNameFilter(), FIELD_MAPPERS);
 
-        addDescendants(null, masterTreeModel, filteredModel, filter, fuzzyMatchPredicate, false, allOpenItems, 0);
+        addDescendants(
+                null,
+                masterTreeModel,
+                filteredModel,
+                filter,
+                fuzzyMatchPredicate,
+                false,
+                allOpenItems,
+                0);
 
         // If the name filter has changed then we want to temporarily expand all nodes.
         if (filter.isNameFilterChange()) {
@@ -112,7 +135,12 @@ class ExplorerServiceImpl implements ExplorerService, CollectionService {
             addRoots(filteredModel, criteria.getOpenItems(), forcedOpenItems, temporaryOpenItems, result);
             result.setTemporaryOpenedItems(temporaryOpenItems);
         } else {
-            addRoots(filteredModel, criteria.getOpenItems(), forcedOpenItems, criteria.getTemporaryOpenedItems(), result);
+            addRoots(
+                    filteredModel,
+                    criteria.getOpenItems(),
+                    forcedOpenItems,
+                    criteria.getTemporaryOpenedItems(),
+                    result);
         }
 
         if (criteria.getFilter() != null &&
@@ -233,7 +261,8 @@ class ExplorerServiceImpl implements ExplorerService, CollectionService {
         final List<ExplorerNode> children = treeModelIn.getChildren(parent);
         if (children != null) {
             // Add all children if the name filter has changed or the parent item is open.
-            final boolean addAllChildren = (filter.isNameFilterChange() && filter.getNameFilter() != null) || parent == null || allOpenItems.contains(parent.getUuid());
+            final boolean addAllChildren = (filter.isNameFilterChange() && filter.getNameFilter() != null)
+                    || parent == null || allOpenItems.contains(parent.getUuid());
 
             // We need to add add least one item to the tree to be able to determine if the parent is a leaf node.
             final Iterator<ExplorerNode> iterator = children.iterator();
@@ -244,7 +273,15 @@ class ExplorerServiceImpl implements ExplorerService, CollectionService {
                 final boolean ignoreChildNameFilter = filterPredicate.test(child.getDocRef());
 
                 // Recurse right down to find out if a descendant is being added and therefore if we need to include this as an ancestor.
-                final boolean hasChildren = addDescendants(child, treeModelIn, treeModelOut, filter, filterPredicate, ignoreChildNameFilter, allOpenItems, currentDepth + 1);
+                final boolean hasChildren = addDescendants(
+                        child,
+                        treeModelIn,
+                        treeModelOut,
+                        filter,
+                        filterPredicate,
+                        ignoreChildNameFilter,
+                        allOpenItems,
+                        currentDepth + 1);
                 if (hasChildren) {
                     treeModelOut.add(parent, child);
                     added++;
@@ -350,7 +387,10 @@ class ExplorerServiceImpl implements ExplorerService, CollectionService {
     }
 
     @Override
-    public DocRef create(final String type, final String name, final DocRef destinationFolderRef, final PermissionInheritance permissionInheritance) {
+    public DocRef create(final String type,
+                         final String name,
+                         final DocRef destinationFolderRef,
+                         final PermissionInheritance permissionInheritance) {
         final DocRef folderRef = Optional.ofNullable(destinationFolderRef)
                 .orElse(explorerNodeService.getRoot()
                         .map(ExplorerNode::getDocRef)
