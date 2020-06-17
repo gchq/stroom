@@ -53,7 +53,7 @@ public class DependenciesPresenter extends MyPresenterWidget<DataGridView<Depend
     private static final ContentResource CONTENT_RESOURCE = GWT.create(ContentResource.class);
     private static final ExplorerResource EXPLORER_RESOURCE = GWT.create(ExplorerResource.class);
 
-    private static final int COL_WIDTH_TYPE = 100;
+    private static final int COL_WIDTH_TYPE = 120;
     private static final int COL_WIDTH_NAME = 300;
     private static final int COL_WIDTH_UUID = 270;
 
