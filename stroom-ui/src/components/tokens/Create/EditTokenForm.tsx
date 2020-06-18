@@ -28,7 +28,9 @@ const EditTokenForm: React.FunctionComponent<{
   onChangeState: (id: string, newState: boolean) => void;
   token: Token;
 }> = ({ onBack, onChangeState, token }) => {
-  const { dateFormat } = useConfig();
+  const {
+    uiPreferences: { dateFormat },
+  } = useConfig();
   return (
     <form>
       <div className="header">

@@ -9,13 +9,21 @@ import com.fasterxml.jackson.annotation.JsonProperty;
 public class ResetPasswordRequest {
     @JsonProperty
     private final String newPassword;
+    @JsonProperty
+    private final String confirmNewPassword;
 
     @JsonCreator
-    public ResetPasswordRequest(@JsonProperty("newPassword") final String newPassword) {
+    public ResetPasswordRequest(@JsonProperty("newPassword") final String newPassword,
+                                @JsonProperty("confirmNewPassword") final String confirmNewPassword) {
         this.newPassword = newPassword;
+        this.confirmNewPassword = confirmNewPassword;
     }
 
     public String getNewPassword() {
         return newPassword;
+    }
+
+    public String getConfirmNewPassword() {
+        return confirmNewPassword;
     }
 }

@@ -219,9 +219,4 @@ public class GlobalConfigResourceImpl implements GlobalConfigResource {
     public UiConfig fetchUiConfig() {
         return uiConfig;
     }
-
-    @Override
-    public UiPreferences uiPreferences() {
-        return uiPreferences;
-    }
 }

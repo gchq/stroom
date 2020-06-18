@@ -24,21 +24,21 @@ import com.fasterxml.jackson.annotation.JsonInclude.Include;
 import com.fasterxml.jackson.annotation.JsonProperty;
 
 @JsonInclude(Include.NON_NULL)
-public class Credentials {
+public class LoginRequest {
     @JsonProperty
-    private final String email;
+    private final String userId;
     @JsonProperty
     private final String password;
 
     @JsonCreator
-    public Credentials(@JsonProperty("email") final String email,
-                       @JsonProperty("password") final String password) {
-        this.email = email;
+    public LoginRequest(@JsonProperty("userId") final String userId,
+                        @JsonProperty("password") final String password) {
+        this.userId = userId;
         this.password = password;
     }
 
-    public final String getEmail() {
-        return this.email;
+    public final String getUserId() {
+        return this.userId;
     }
 
     public final String getPassword() {

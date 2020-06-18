@@ -8,11 +8,14 @@ public interface AuthenticationService {
 
     String UNAUTHORISED_URL_PATH = "/s/unauthorised";
     String LOGIN_URL_PATH = "/s/login";
+    String CONFIRM_PASSWORD_URL_PATH = "/s/confirmpassword";
     String CHANGE_PASSWORD_URL_PATH = "/s/changepassword";
 
     Optional<AuthState> currentAuthState(HttpServletRequest request);
 
     URI createLoginUri(String redirectUri);
+
+    URI createConfirmPasswordUri(String redirectUri);
 
     URI createChangePasswordUri(String redirectUri);
 
@@ -20,5 +23,7 @@ public interface AuthenticationService {
         String getSubject();
 
         boolean isRequirePasswordChange();
+
+        long getLastCredentialCheckMs();
     }
 }

@@ -19,19 +19,26 @@ import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
 import * as React from "react";
 import { ButtonProps } from "./types";
 import RippleContainer, { useRipple } from "./RippleContainer";
+import { forwardRef, ForwardRefRenderFunction } from "react";
 
-export const Button = ({
-  text,
-  icon,
-  className: rawClassName,
-  appearance,
-  action,
-  selected,
-  disabled,
-  size,
-  onClick,
-  ...rest
-}: ButtonProps) => {
+export const Button: ForwardRefRenderFunction<
+  HTMLButtonElement,
+  ButtonProps
+> = (
+  {
+    text,
+    icon,
+    className: rawClassName,
+    appearance,
+    action,
+    selected,
+    disabled,
+    size,
+    onClick,
+    ...rest
+  }: ButtonProps,
+  ref,
+) => {
   const className = React.useMemo(() => {
     const classNames = ["Button"];
 
@@ -120,7 +127,12 @@ export const Button = ({
   const { onClickWithRipple, ripples } = useRipple(onClick);
 
   return (
-    <button className={className} onClick={onClickWithRipple} {...rest}>
+    <button
+      className={className}
+      onClick={onClickWithRipple}
+      ref={ref}
+      {...rest}
+    >
       <RippleContainer ripples={ripples} />
       {icon ? (
         <FontAwesomeIcon size={fontAwesomeSize} icon={icon} />
@@ -131,4 +143,4 @@ export const Button = ({
   );
 };
 
-export default Button;
+export default forwardRef(Button);

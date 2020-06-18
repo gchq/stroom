@@ -27,7 +27,6 @@ import SwitchedDocRefEditor from "components/DocumentEditors/SwitchedDocRefEdito
 import ErrorPage from "components/ErrorPage";
 import IndexVolumes from "components/IndexVolumes";
 import {
-  ChangePassword,
   ResetPassword,
   ResetPasswordRequest,
   ConfirmPasswordResetEmail,
@@ -43,7 +42,9 @@ import Welcome from "components/Welcome";
 import AppChrome from "./AppChrome";
 import useAppNavigation from "lib/useAppNavigation";
 import DataVolumes from "components/DataVolumes/DataVolumesSectionContainer";
-import SignInFormContainer from "components/Authentication/SignInFormContainer";
+import SignInForm from "components/Authentication/SignInForm";
+import ConfirmCurrentPasswordForm from "components/Authentication/ConfirmCurrentPasswordForm";
+import ChangePasswordForm from "components/Authentication/ChangePasswordForm";
 
 const renderWelcome = ({
   match: {
@@ -89,15 +90,16 @@ const Routes: React.FunctionComponent = () => {
         component={ConfirmPasswordResetEmail}
       />
 
+      <Route exact path={`${singlePagePrefix}/login`} component={SignInForm} />
       <Route
         exact
-        path={`${singlePagePrefix}/login`}
-        component={SignInFormContainer}
+        path={`${singlePagePrefix}/confirmpassword`}
+        component={ConfirmCurrentPasswordForm}
       />
       <Route
         exact
         path={`${singlePagePrefix}/changepassword`}
-        component={ChangePassword}
+        component={ChangePasswordForm}
       />
       <PrivateRoute exact path="/" render={renderWelcome} />
       <PrivateRoute

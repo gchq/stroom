@@ -2,7 +2,7 @@ import { storiesOf } from "@storybook/react";
 import * as React from "react";
 import { Formik } from "formik";
 import * as Yup from "yup";
-import ChangePasswordForm from "./ChangePasswordForm";
+import { Page, Form } from "./ChangePasswordForm";
 import { useState } from "react";
 import zxcvbn from "zxcvbn";
 
@@ -38,37 +38,39 @@ const TestHarness: React.FunctionComponent = () => {
   });
 
   return (
-    <Formik
-      initialValues={{ password: "", confirmPassword: "" }}
-      validationSchema={validationSchema}
-      onSubmit={(values, actions) => {
-        setTimeout(() => {
-          alert(JSON.stringify(values, null, 2));
-          actions.setSubmitting(false);
-        }, 1000);
-      }}
-    >
-      {(props) => {
-        const handler = (e: React.ChangeEvent<HTMLInputElement>) => {
-          if (e.target.id === "password") {
-            const score = zxcvbn(e.target.value).score;
-            setStrength(score);
-            currentStrength = score;
-          }
-          props.handleChange(e);
-        };
+    <Page>
+      <Formik
+        initialValues={{ userId: "", password: "", confirmPassword: "" }}
+        validationSchema={validationSchema}
+        onSubmit={(values, actions) => {
+          setTimeout(() => {
+            alert(JSON.stringify(values, null, 2));
+            actions.setSubmitting(false);
+          }, 1000);
+        }}
+      >
+        {(props) => {
+          const handler = (e: React.ChangeEvent<HTMLInputElement>) => {
+            if (e.target.id === "password") {
+              const score = zxcvbn(e.target.value).score;
+              setStrength(score);
+              currentStrength = score;
+            }
+            props.handleChange(e);
+          };
 
-        return (
-          <ChangePasswordForm
-            {...props}
-            strength={strength}
-            minStrength={minStrength}
-            thresholdLength={thresholdLength}
-            handleChange={handler}
-          />
-        );
-      }}
-    </Formik>
+          return (
+            <Form
+              {...props}
+              strength={strength}
+              minStrength={minStrength}
+              thresholdLength={thresholdLength}
+              handleChange={handler}
+            />
+          );
+        }}
+      </Formik>
+    </Page>
   );
 };
 

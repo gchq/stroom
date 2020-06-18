@@ -18,7 +18,9 @@ interface FilterProps {
 const useColumns = (
   selectedUserRowId: string | undefined,
 ): Column<Account>[] => {
-  const { dateFormat } = useConfig();
+  const {
+    uiPreferences: { dateFormat },
+  } = useConfig();
   const IdCell: React.FunctionComponent<RowInfo> = React.useCallback(
     ({ row }) => (
       <div>

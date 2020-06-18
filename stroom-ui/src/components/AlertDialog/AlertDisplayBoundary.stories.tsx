@@ -3,20 +3,20 @@ import { storiesOf } from "@storybook/react";
 
 import {
   AlertDisplayBoundary,
-  ErrorOutlet,
-  UsingErrorHook,
-  UsingErrorInlet,
+  AlertOutlet,
+  UsingAlertHook,
+  UsingAlertInlet,
 } from "./AlertDisplayBoundary";
 
 const TestHarness: React.FunctionComponent = () => {
   return (
     <AlertDisplayBoundary>
       <p>Here be errors...</p>
-      <ErrorOutlet />
+      <AlertOutlet />
       <hr />
-      <UsingErrorInlet />
+      <UsingAlertInlet />
       <hr />
-      <UsingErrorHook />
+      <UsingAlertHook />
     </AlertDisplayBoundary>
   );
 };

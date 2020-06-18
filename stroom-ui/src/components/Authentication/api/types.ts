@@ -5,9 +5,8 @@ export interface LoginRequest {
 
 export interface LoginResponse {
   loginSuccessful: boolean;
-  redirectUri: string;
   message: string;
-  responseCode: number;
+  redirectUri: string;
 }
 
 export interface ConfirmPasswordRequest {
@@ -15,8 +14,9 @@ export interface ConfirmPasswordRequest {
 }
 
 export interface ConfirmPasswordResponse {
-  confirmed: boolean;
+  valid: boolean;
   message: string;
+  redirectUri: string;
 }
 
 export interface ChangePasswordRequest {
@@ -29,6 +29,7 @@ export interface ChangePasswordRequest {
 export interface ChangePasswordResponse {
   changeSucceeded: boolean;
   failedOn: string[];
+  redirectUri: string;
 }
 
 export interface ResetPasswordRequest {
@@ -36,12 +37,13 @@ export interface ResetPasswordRequest {
   confirmNewPassword: string;
 }
 
-export interface PasswordValidationRequest {
-  userId: string;
-  password: string;
-}
-
-export interface PasswordValidationResponse {
-  failedOn: string[];
-  strength: number;
+export interface PasswordPolicyConfig {
+  allowPasswordResets?: boolean;
+  neverUsedAccountDeactivationThreshold?: string;
+  unusedAccountDeactivationThreshold?: string;
+  mandatoryPasswordChangeDuration?: string;
+  forcePasswordChangeOnFirstLogin?: boolean;
+  passwordComplexityRegex?: string;
+  minimumPasswordStrength?: number;
+  minimumPasswordLength?: number;
 }

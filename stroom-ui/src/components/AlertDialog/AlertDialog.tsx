@@ -15,8 +15,11 @@
  */
 
 import * as React from "react";
-import ThemedModal from "../ThemedModal";
-import OkButtons from "../DialogActionButtons/OkButtons";
+import ReactModal from "react-modal";
+import reactModalOptions from "../ThemedModal/reactModalOptions";
+import { useTheme } from "../../lib/useTheme";
+import { createRef } from "react";
+import Button from "../Button/Button";
 
 export enum AlertType {
   INFO,
@@ -97,25 +100,61 @@ const AlertHeader: React.FunctionComponent<Alert> = (alert) => {
   }
 };
 
-const AlertBody: React.FunctionComponent<Alert> = (alert) => {
-  return <div>{alert.message}</div>;
-};
-
 export const AlertDialog: React.FunctionComponent<Props> = ({
   alert,
   isOpen,
   onCloseDialog,
 }) => {
+  const { theme } = useTheme();
+  const okButtonRef = createRef<HTMLButtonElement>();
+
   return (
-    <ThemedModal
+    <ReactModal
+      className={`themed-modal ${theme}`}
+      style={reactModalOptions}
       isOpen={isOpen}
-      onRequestClose={onCloseDialog}
-      header={<AlertHeader {...alert} />}
-      content={<AlertBody {...alert} />}
-      actions={<OkButtons onOk={onCloseDialog} />}
-    />
+      appElement={document.body}
+      shouldCloseOnOverlayClick={false}
+      shouldCloseOnEsc={true}
+      shouldFocusAfterRender={true}
+      shouldReturnFocusAfterClose={true}
+      onAfterOpen={() => okButtonRef.current.focus()}
+    >
+      <form onSubmit={() => onCloseDialog}>
+        <div className="themed-modal__container">
+          <header className="themed-modal__header">
+            <AlertHeader {...alert} />
+          </header>
+          <div className="themed-modal__content">{alert && alert.message}</div>
+          <div className="themed-modal__footer__actions">
+            <Button
+              appearance="contained"
+              action="primary"
+              icon="check"
+              text="OK"
+              type="submit"
+              ref={okButtonRef}
+            >
+              OK
+            </Button>
+          </div>
+        </div>
+      </form>
+    </ReactModal>
   );
 };
+
+// className="Button__ok"
+// type="primary"
+// htmlType="submit"
+// ref={okButtonRef}
+
+// // appearance="contained"
+// // action="primary"
+// // icon="check"
+// // text="OK"
+// // type="submit"
+// ref={(button) => (this.__button = button)}
 
 //
 // /**

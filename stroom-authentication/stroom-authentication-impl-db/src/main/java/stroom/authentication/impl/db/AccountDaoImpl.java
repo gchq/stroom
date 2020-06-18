@@ -409,13 +409,4 @@ class AccountDaoImpl implements AccountDao {
                 .map(RECORD_TO_ACCOUNT_MAPPER::apply));
         return ResultPage.createUnboundedList(list);
     }
-
-//    @Override
-//    public boolean exists(final String id) {
-//        AccountRecord record = JooqUtil.contextResult(authDbConnProvider, context -> context
-//                .selectFrom(ACCOUNT)
-//                .where(ACCOUNT.EMAIL.eq(id))
-//                .fetchOne());
-//        return record != null;
-//    }
 }

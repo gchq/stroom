@@ -1,10 +1,10 @@
 import { IconProp } from "@fortawesome/fontawesome-svg-core";
+import { ButtonHTMLAttributes } from "react";
 
 /**
  * Button Properties
  */
-export interface ButtonProps
-  extends React.ButtonHTMLAttributes<HTMLButtonElement> {
+export interface ButtonProps extends ButtonHTMLAttributes<HTMLButtonElement> {
   /** The Font Awesome Icon to use */
   icon?: IconProp;
   /** Choose the button appearance */

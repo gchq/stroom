@@ -1,5 +1,9 @@
 import { Filter, SortingRule } from "react-table";
 
+export interface TokenConfig {
+  defaultApiKeyExpiryInMinutes: number;
+}
+
 export interface Token {
   id: string;
   version: number;

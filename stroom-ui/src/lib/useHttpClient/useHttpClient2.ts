@@ -47,9 +47,11 @@ const useCheckStatus = (status: number) =>
  * and general common stuff like that.
  */
 
+type HttpGet = (url: string) => Promise<any>;
 type HttpPost = (url: string, object: any) => Promise<any>;
 
 interface HttpClient2 {
+  get: HttpGet;
   post: HttpPost;
 }
 
@@ -71,6 +73,29 @@ export const useHttpClient2 = (): HttpClient2 => {
       alert({ type: AlertType.ERROR, title: "Error", message: msg });
     },
     [alert],
+  );
+
+  const get = useCallback<HttpGet>(
+    <T>(url: string): Promise<T | void> => {
+      const headers = {
+        Accept: "application/json",
+        "Content-Type": "application/json",
+      };
+
+      const options = {};
+
+      return fetch(url, {
+        mode: "cors",
+        credentials: "include",
+        ...options,
+        method: "get",
+        headers,
+      })
+        .then(handle200)
+        .then((r) => r.json())
+        .catch(catchImpl);
+    },
+    [handle200, catchImpl],
   );
 
   const post = useCallback<HttpPost>(
@@ -99,6 +124,7 @@ export const useHttpClient2 = (): HttpClient2 => {
   );
 
   return {
+    get,
     post,
   };
 };

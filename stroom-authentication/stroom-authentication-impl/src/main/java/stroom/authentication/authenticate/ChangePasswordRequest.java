@@ -26,23 +26,27 @@ import com.fasterxml.jackson.annotation.JsonProperty;
 @JsonInclude(Include.NON_NULL)
 public class ChangePasswordRequest {
     @JsonProperty
-    private String email;
+    private String userId;
     @JsonProperty
     private String oldPassword;
     @JsonProperty
     private String newPassword;
+    @JsonProperty
+    private String confirmNewPassword;
 
     @JsonCreator
-    public ChangePasswordRequest(@JsonProperty("email") final String email,
+    public ChangePasswordRequest(@JsonProperty("email") final String userId,
                                  @JsonProperty("oldPassword") final String oldPassword,
-                                 @JsonProperty("newPassword") final String newPassword) {
-        this.email = email;
+                                 @JsonProperty("newPassword") final String newPassword,
+                                 @JsonProperty("confirmNewPassword") final String confirmNewPassword) {
+        this.userId = userId;
         this.oldPassword = oldPassword;
         this.newPassword = newPassword;
+        this.confirmNewPassword = confirmNewPassword;
     }
 
-    public String getEmail() {
-        return email;
+    public String getUserId() {
+        return userId;
     }
 
     public String getOldPassword() {
@@ -51,5 +55,9 @@ public class ChangePasswordRequest {
 
     public String getNewPassword() {
         return newPassword;
+    }
+
+    public String getConfirmNewPassword() {
+        return confirmNewPassword;
     }
 }

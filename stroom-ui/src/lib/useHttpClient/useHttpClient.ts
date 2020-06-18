@@ -1,11 +1,12 @@
 import * as React from "react";
 
 import { HttpError } from "lib/ErrorTypes";
-import cogoToast from "cogo-toast";
+import { useAlert } from "components/AlertDialog/AlertDisplayBoundary";
 
 import { useAuthenticationContext } from "startup/Authentication";
-import { useErrorReporting } from "components/ErrorPage";
-import useAppNavigation from "lib/useAppNavigation";
+// import { useErrorReporting } from "components/ErrorPage";
+// import useAppNavigation from "lib/useAppNavigation";
+import { AlertType } from "../../components/AlertDialog/AlertDialog";
 
 const useCheckStatus = (status: number) =>
   React.useCallback(
@@ -83,11 +84,12 @@ interface HttpClient {
 let cache = {};
 
 export const useHttpClient = (): HttpClient => {
+  const { alert } = useAlert();
   const { idToken } = useAuthenticationContext();
-  const { reportError } = useErrorReporting();
-  const {
-    nav: { goToError },
-  } = useAppNavigation();
+  // const { reportError } = useErrorReporting();
+  // const {
+  //   nav: { goToError },
+  // } = useAppNavigation();
 
   const handle200 = useCheckStatus(200);
   const handle204 = useCheckStatus(204);
@@ -95,19 +97,21 @@ export const useHttpClient = (): HttpClient => {
   const catchImpl = React.useCallback(
     (error: any) => {
       const msg = `Error, Status ${error.status}, Msg: ${error.message}`;
-      cogoToast.error(msg, {
-        hideAfter: 5,
-        onClick: () => {
-          reportError({
-            errorMessage: error.message,
-            stackTrace: error.stack,
-            httpErrorCode: error.status,
-          });
-          goToError();
-        },
-      });
+      alert({ type: AlertType.ERROR, title: "Error", message: msg });
+
+      // cogoToast.error(msg, {
+      //   hideAfter: 5,
+      //   onClick: () => {
+      //     reportError({
+      //       errorMessage: error.message,
+      //       stackTrace: error.stack,
+      //       httpErrorCode: error.status,
+      //     });
+      //     goToError();
+      //   },
+      // });
     },
-    [reportError, goToError],
+    [alert],
   );
 
   const httpGetJson = React.useCallback(

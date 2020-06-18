@@ -1,7 +1,7 @@
 import * as queryString from "query-string";
-import { useCallback } from "react";
+import { useCallback, useMemo } from "react";
 import { useHttpClient2 } from "lib/useHttpClient";
-import useRouter from "lib/useRouter";
+import { useLocation } from "react-router-dom";
 import {
   ChangePasswordRequest,
   ChangePasswordResponse,
@@ -9,8 +9,7 @@ import {
   ConfirmPasswordResponse,
   LoginRequest,
   LoginResponse,
-  PasswordValidationRequest,
-  PasswordValidationResponse,
+  PasswordPolicyConfig,
   ResetPasswordRequest,
 } from "./types";
 import useUrlFactory from "lib/useUrlFactory";
@@ -26,24 +25,31 @@ interface Api {
   resetPassword: (
     request: ResetPasswordRequest,
   ) => Promise<ChangePasswordResponse>;
-  validatePassword: (
-    request: PasswordValidationRequest,
-  ) => Promise<PasswordValidationResponse>;
+  fetchPasswordPolicyConfig: () => Promise<PasswordPolicyConfig>;
 }
 
 export const useAuthenticationApi = (): Api => {
-  const { post } = useHttpClient2();
+  const { get, post } = useHttpClient2();
   const { apiUrl } = useUrlFactory();
   const resource = apiUrl("/authentication/v1");
-  let redirectUri: string;
+  // let redirectUri: string;
 
-  const { router } = useRouter();
-  if (!!router && !!router.location) {
-    const query = queryString.parse(router.location.search);
-    if (!!query.redirect_uri) {
-      redirectUri = query.redirect_uri + "";
+  const location = useLocation();
+  // if (!!router && !!router.location) {
+  //   const query = queryString.parse(router.location.search);
+  //   if (!!query.redirect_uri) {
+  //     redirectUri = query.redirect_uri + "";
+  //   }
+  // }
+
+  const redirectUri: string = useMemo(() => {
+    if (!!location) {
+      const query = queryString.parse(location.search);
+      if (!!query.redirect_uri) {
+        return query.redirect_uri + "";
+      }
     }
-  }
+  }, [location]);
 
   const login = useCallback(
     (request: LoginRequest) => {
@@ -55,15 +61,21 @@ export const useAuthenticationApi = (): Api => {
   );
 
   const confirmPassword = useCallback(
-    (request: ConfirmPasswordRequest) =>
-      post(`${resource}/noauth/confirmPassword/`, request),
-    [resource, post],
+    (request: ConfirmPasswordRequest) => {
+      const uri = encodeURI(redirectUri);
+      const url = `${resource}/noauth/confirmPassword?redirect_uri=${uri}`;
+      return post(url, request);
+    },
+    [resource, redirectUri, post],
   );
 
   const changePassword = useCallback(
-    (request: ChangePasswordRequest) =>
-      post(`${resource}/noauth/changePassword/`, request),
-    [resource, post],
+    (request: ChangePasswordRequest) => {
+      const uri = encodeURI(redirectUri);
+      const url = `${resource}/noauth/changePassword?redirect_uri=${uri}`;
+      return post(url, request);
+    },
+    [resource, redirectUri, post],
   );
 
   const resetPassword = useCallback(
@@ -72,21 +84,9 @@ export const useAuthenticationApi = (): Api => {
     [resource, post],
   );
 
-  // const submitPasswordChangeRequest = useCallback(
-  //   (formData: any) =>
-  //     httpGetEmptyResponse(
-  //       `${resource}/reset/${formData.email}`,
-  //       {},
-  //       true,
-  //       false,
-  //     ),
-  //   [resource, httpGetEmptyResponse],
-  // );
-
-  const validatePassword = useCallback(
-    (request: PasswordValidationRequest) =>
-      post(`${resource}/noauth/validatePassword`, request),
-    [resource, post],
+  const fetchPasswordPolicyConfig = useCallback(
+    () => get(`${resource}/noauth/fetchPasswordPolicy/`),
+    [resource, get],
   );
 
   return {
@@ -94,7 +94,7 @@ export const useAuthenticationApi = (): Api => {
     confirmPassword,
     resetPassword,
     changePassword,
-    validatePassword,
+    fetchPasswordPolicyConfig,
   };
 };
 

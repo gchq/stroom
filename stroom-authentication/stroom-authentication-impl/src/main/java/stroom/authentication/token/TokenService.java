@@ -1,6 +1,7 @@
 package stroom.authentication.token;
 
 import stroom.authentication.account.Account;
+import stroom.authentication.config.TokenConfig;
 
 import java.util.Optional;
 
@@ -26,4 +27,6 @@ public interface TokenService {
 //    Optional<String> verifyToken(String token);
 
     String getPublicKey();
+
+    TokenConfig fetchTokenConfig();
 }

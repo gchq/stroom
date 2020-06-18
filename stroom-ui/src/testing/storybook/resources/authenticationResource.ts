@@ -1,7 +1,6 @@
 import { HttpRequest, HttpResponse } from "@pollyjs/adapter-fetch";
 
 import { ResourceBuilder } from "./types";
-import { PasswordValidationRequest } from "components/Authentication/api/types";
 
 const resourceBuilder: ResourceBuilder = (server: any, apiUrl: any) => {
   const resource = apiUrl("/Oldauthentication/v1");
@@ -60,14 +59,14 @@ const resourceBuilder: ResourceBuilder = (server: any, apiUrl: any) => {
       res.send(200);
     });
 
-  // Is Password Valid
-  server
-    .post(`${resource}/noauth/isPasswordValid`)
-    .intercept((req: HttpRequest, res: HttpResponse) => {
-      const validationReq: PasswordValidationRequest = JSON.parse(req.body);
-      console.log("Validation Request", validationReq);
-      res.send(200);
-    });
+  // // Is Password Valid
+  // server
+  //   .post(`${resource}/noauth/isPasswordValid`)
+  //   .intercept((req: HttpRequest, res: HttpResponse) => {
+  //     const validationReq: PasswordValidationRequest = JSON.parse(req.body);
+  //     console.log("Validation Request", validationReq);
+  //     res.send(200);
+  //   });
 };
 
 export default resourceBuilder;

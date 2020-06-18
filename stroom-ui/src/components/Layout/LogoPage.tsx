@@ -16,12 +16,19 @@
 
 import * as React from "react";
 import useConfig from "../../startup/config/useConfig";
+import { CSSProperties } from "react";
 
 const LogoPage: React.FunctionComponent = ({ children }) => {
+  console.log("Render: LogoPage");
+
   const { theme } = useConfig();
 
+  const t: CSSProperties = {
+    backgroundColor: theme.backgroundColor,
+  };
+
   return (
-    <div style={theme} className="LogoPage">
+    <div style={t} className="LogoPage">
       <img
         className="LogoPage__logo"
         alt="Stroom logo"

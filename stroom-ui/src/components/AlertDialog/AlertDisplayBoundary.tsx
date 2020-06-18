@@ -2,6 +2,7 @@ import * as React from "react";
 import {
   createContext,
   FunctionComponent,
+  useCallback,
   useContext,
   useEffect,
   useMemo,
@@ -10,27 +11,30 @@ import {
 } from "react";
 import AlertDialog, { Alert, AlertType } from "./AlertDialog";
 
-const ErrorContext = createContext(null);
+const AlertContext = createContext(null);
 
 export const useAlert = () => {
-  const errorCtx = useContext(ErrorContext);
+  const errorCtx = useContext(AlertContext);
 
-  const alert = (alert: Alert) => {
-    errorCtx.setError(alert);
-  };
+  const alert = useCallback(
+    (alert: Alert) => {
+      errorCtx.setError(alert);
+    },
+    [errorCtx],
+  );
 
   return { alert };
 };
 
 export const AlertDisplayBoundary: FunctionComponent = ({ children }) => {
-  const [error, setError] = useState<Alert>();
+  const [error, setError] = useState<Alert>(null);
   const ctx = useMemo(() => ({ error, setError }), [error]);
 
-  return <ErrorContext.Provider value={ctx}>{children}</ErrorContext.Provider>;
+  return <AlertContext.Provider value={ctx}>{children}</AlertContext.Provider>;
 };
 
-export const ErrorOutlet: FunctionComponent = () => {
-  const { error, setError } = useContext(ErrorContext);
+export const AlertOutlet: FunctionComponent = () => {
+  const { error, setError } = useContext(AlertContext);
 
   return (
     // error && (
@@ -64,9 +68,9 @@ interface ErrorInletProps {
   alert?: Alert;
 }
 
-export const ErrorInlet: FunctionComponent<ErrorInletProps> = ({ alert }) => {
+export const AlertInlet: FunctionComponent<ErrorInletProps> = ({ alert }) => {
   const ref = useRef();
-  const errorContext = useContext(ErrorContext);
+  const errorContext = useContext(AlertContext);
 
   useEffect(() => {
     if (errorContext === ref.current) {
@@ -79,7 +83,7 @@ export const ErrorInlet: FunctionComponent<ErrorInletProps> = ({ alert }) => {
   return null;
 };
 
-export const UsingErrorInlet: FunctionComponent = () => {
+export const UsingAlertInlet: FunctionComponent = () => {
   const [someError, setTheError] = useState(null);
 
   const alert: Alert = {
@@ -91,7 +95,7 @@ export const UsingErrorInlet: FunctionComponent = () => {
   return (
     <>
       <h2>Via component</h2>
-      <ErrorInlet alert={someError} />
+      <AlertInlet alert={someError} />
       <button onClick={() => setTheError(alert)}>
         Press to render an error message somewhere
       </button>
@@ -100,7 +104,7 @@ export const UsingErrorInlet: FunctionComponent = () => {
   );
 };
 
-export const UsingErrorHook: FunctionComponent = () => {
+export const UsingAlertHook: FunctionComponent = () => {
   const { alert } = useAlert();
 
   const info: Alert = {

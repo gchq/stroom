@@ -30,6 +30,7 @@ import java.util.regex.Pattern;
 class OAuth2Service {
     private static final Logger LOGGER = LoggerFactory.getLogger(OAuth2Service.class);
 
+    private static final long MIN_CREDENTIAL_CONFIRMATION_INTERVAL = 600000;
 
     private final UriFactory uriFactory;
     private final AuthenticationConfig authenticationConfig;
@@ -88,7 +89,12 @@ class OAuth2Service {
                 if (optionalAuthState.isPresent()) {
                     final AuthState authState = optionalAuthState.get();
                     if (authState.isRequirePasswordChange()) {
-                        result = authenticationService.createChangePasswordUri(redirectUri);
+                        // If we haven't verified credentials recently then force the user to do so.
+                        if (authState.getLastCredentialCheckMs() < System.currentTimeMillis() - MIN_CREDENTIAL_CONFIRMATION_INTERVAL) {
+                            result = authenticationService.createConfirmPasswordUri(redirectUri);
+                        } else {
+                            result = authenticationService.createChangePasswordUri(redirectUri);
+                        }
 
                     } else {
                         LOGGER.debug("User has a session, sending them back to the RP");

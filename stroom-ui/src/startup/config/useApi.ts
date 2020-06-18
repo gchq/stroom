@@ -15,23 +15,33 @@
  */
 import useHttpClient from "lib/useHttpClient";
 import * as React from "react";
-import { Config } from "./types";
+import { UiConfig } from "./types";
 import { useUrlFactory } from "../../lib/useUrlFactory";
+import { useEffect, useState } from "react";
 
 export interface Api {
-  fetchConfig: () => Promise<Config>;
+  config: UiConfig;
 }
 
 const useApi = (): Api => {
   const { httpGetJson } = useHttpClient();
   const { apiUrl } = useUrlFactory();
   const resource = apiUrl("/config/v1");
+  const [config, setConfig] = useState<UiConfig>();
 
   const fetchConfig = React.useCallback(() => {
-    return httpGetJson(`${resource}/noauth/uiPreferences`, {}, false);
-  }, [resource, httpGetJson, resource]);
+    return httpGetJson(`${resource}/noauth/fetchUiConfig`, {}, false);
+  }, [httpGetJson, resource]);
 
-  return { fetchConfig };
+  useEffect(() => {
+    console.log("Fetching config");
+    fetchConfig().then((c) => {
+      console.log("Setting config to " + JSON.stringify(c));
+      setConfig(c);
+    });
+  }, [fetchConfig]);
+
+  return { config };
 };
 
 export { useApi };

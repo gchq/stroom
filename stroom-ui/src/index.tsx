@@ -18,6 +18,10 @@ import { AuthorisationContextProvider } from "startup/Authorisation";
 import { AuthenticationContextProvider } from "startup/Authentication";
 import { DocumentTreeContextProvider } from "components/DocumentEditors/api/explorer";
 import { ErrorReportingContextProvider } from "components/ErrorPage";
+import {
+  AlertDisplayBoundary,
+  AlertOutlet,
+} from "./components/AlertDialog/AlertDisplayBoundary";
 
 export const history = createHistory();
 
@@ -27,19 +31,22 @@ setupFontAwesome();
 
 const App: React.FunctionComponent = () => (
   <ErrorReportingContextProvider>
-    <ConfigProvider>
-      <AuthenticationContextProvider>
-        <AuthorisationContextProvider>
-          <ThemeContextProvider>
-            <CustomRouter history={history}>
-              <DocumentTreeContextProvider>
-                <DndRoutes />
-              </DocumentTreeContextProvider>
-            </CustomRouter>
-          </ThemeContextProvider>
-        </AuthorisationContextProvider>
-      </AuthenticationContextProvider>
-    </ConfigProvider>
+    <AlertDisplayBoundary>
+      <ConfigProvider>
+        <AuthenticationContextProvider>
+          <AuthorisationContextProvider>
+            <ThemeContextProvider>
+              <CustomRouter history={history}>
+                <DocumentTreeContextProvider>
+                  <DndRoutes />
+                </DocumentTreeContextProvider>
+              </CustomRouter>
+              <AlertOutlet />
+            </ThemeContextProvider>
+          </AuthorisationContextProvider>
+        </AuthenticationContextProvider>
+      </ConfigProvider>
+    </AlertDisplayBoundary>
   </ErrorReportingContextProvider>
 );
 

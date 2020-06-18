@@ -16,9 +16,11 @@ interface FilterProps {
 
 const useColumns = (
   selectedTokenRowId: string | undefined,
-  setEnabledStateOnToken: Function,
+  setEnabledStateOnToken: (tokenId: string, enabled: boolean) => any,
 ): Column<Token>[] => {
-  const { dateFormat } = useConfig();
+  const {
+    uiPreferences: { dateFormat },
+  } = useConfig();
   const getEnabledCellFilter = React.useCallback(
     ({ filter, onChange }: FilterProps) => {
       return (

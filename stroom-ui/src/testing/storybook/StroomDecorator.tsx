@@ -12,7 +12,6 @@ import testData from "../data";
 import { ThemeContextProvider } from "lib/useTheme/useTheme";
 import { withRouter, RouteComponentProps } from "react-router";
 import { CustomRouter } from "lib/useRouter";
-import ConfigProvider from "startup/config/ConfigProvider";
 import { AuthorisationContextProvider } from "startup/Authorisation";
 import { AuthenticationContext } from "startup/Authentication";
 import { DocumentTreeContextProvider } from "components/DocumentEditors/api/explorer";
@@ -20,6 +19,10 @@ import { ErrorReportingContextProvider } from "components/ErrorPage";
 
 import "styles/main.scss";
 import { FunctionComponent } from "react";
+import {
+  AlertDisplayBoundary,
+  AlertOutlet,
+} from "../../components/AlertDialog/AlertDisplayBoundary";
 setupFontAwesome();
 
 const WithTestServer: FunctionComponent = ({ children }) => {
@@ -48,7 +51,7 @@ ReactModal.setAppElement("#root");
 export default (storyFn: any) =>
   StoryRouter()(() => (
     <ErrorReportingContextProvider>
-      <ConfigProvider>
+      <AlertDisplayBoundary>
         <AuthenticationContext.Provider
           value={{
             idToken: "PollyWannaCracker",
@@ -66,9 +69,10 @@ export default (storyFn: any) =>
                   {storyFn()}
                 </DocumentTreeContextProvider>
               </DragDropRouted>
+              <AlertOutlet />
             </ThemeContextProvider>
           </AuthorisationContextProvider>
         </AuthenticationContext.Provider>
-      </ConfigProvider>
+      </AlertDisplayBoundary>
     </ErrorReportingContextProvider>
   ));

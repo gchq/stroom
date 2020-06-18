@@ -53,7 +53,9 @@ const UserFields = ({
   setFieldTouched: Function;
   setFieldValue: Function;
 }) => {
-  const { dateFormat } = useConfig();
+  const {
+    uiPreferences: { dateFormat },
+  } = useConfig();
   return (
     <div className="container">
       <Field name="id" type="hidden" />

@@ -32,8 +32,7 @@ public interface GlobalConfigResource extends RestResource, DirectRestService {
     String YAML_OVERRIDE_VALUE_SUB_PATH = "/yamlOverrideValue";
     String DB_OVERRIDE_VALUE_SUB_PATH = "/dbOverrideValue";
     String CLUSTER_PROPERTIES_SUB_PATH = "/clusterProperties";
-    String FETCH_UI_CONFIG_SUB_PATH = "/fetchUiConfig";
-    String UI_PREFERENCES_SUB_PATH = "/noauth/uiPreferences";
+    String FETCH_UI_CONFIG_SUB_PATH = "/noauth/fetchUiConfig";
 
     String PROP_NAME_PATH_PARAM = "/{propertyName}";
     String NODE_NAME_PATH_PARAM = "/{nodeName}";
@@ -97,11 +96,4 @@ public interface GlobalConfigResource extends RestResource, DirectRestService {
             value = "Get config property",
             response = UiConfig.class)
     UiConfig fetchUiConfig();
-
-    @GET
-    @Path(UI_PREFERENCES_SUB_PATH)
-    @ApiOperation(
-            value = "Get UI preferences",
-            response = UiPreferences.class)
-    UiPreferences uiPreferences();
 }

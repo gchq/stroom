@@ -35,9 +35,10 @@ const ThemedModal: React.FunctionComponent<ContentProps & ReactModal.Props> = ({
 
   return (
     <ReactModal
-      className={`themed-modal ${theme}`}
       {...rest}
+      className={`themed-modal ${theme}`}
       style={reactModalOptions}
+      appElement={document.body}
     >
       <div className="themed-modal__container">
         <header className="themed-modal__header">{header}</header>

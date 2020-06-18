@@ -22,6 +22,8 @@ import com.codahale.metrics.annotation.Timed;
 import io.swagger.annotations.Api;
 import io.swagger.annotations.ApiOperation;
 import io.swagger.annotations.ApiParam;
+
+import stroom.authentication.config.TokenConfig;
 import stroom.util.shared.RestResource;
 
 import javax.servlet.http.HttpServletRequest;
@@ -143,4 +145,12 @@ public interface TokenResource extends RestResource {
     @Path("/publickey")
     @Timed
     String getPublicKey(@Context @NotNull HttpServletRequest httpServletRequest);
+
+    @GET
+    @Path("/noauth/fetchTokenConfig")
+    @Timed
+    @NotNull
+    @ApiOperation(value = "Get the token configuration",
+            response = TokenConfig.class, tags = {"Authentication"})
+    TokenConfig fetchTokenConfig();
 }

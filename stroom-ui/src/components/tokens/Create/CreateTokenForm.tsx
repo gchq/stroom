@@ -20,7 +20,9 @@ import { DatePicker } from "antd";
 import styled from "styled-components";
 import UserSelect from "components/UserSelect";
 import moment from "moment";
-import useConfig from "startup/config/useConfig";
+import { useEffect, useState } from "react";
+import { TokenConfig } from "../api/types";
+import { useApi } from "../api";
 
 const Field = styled.div`
   display: flex;
@@ -46,9 +48,24 @@ const CreateTokenForm: React.FunctionComponent<{
   onSubmit: (userId: string, expiryDate: string) => void;
   onBack: () => void;
 }> = ({ onSubmit, onBack }) => {
+  const { fetchTokenConfig } = useApi();
+
+  // Get token config
+  const [tokenConfig, setTokenConfig] = useState<TokenConfig>({
+    defaultApiKeyExpiryInMinutes: 525600,
+  });
+  useEffect(() => {
+    fetchTokenConfig().then((tokenConfig: TokenConfig) => {
+      setTokenConfig(tokenConfig);
+    });
+  }, [fetchTokenConfig, setTokenConfig]);
+
   // TODO: make default validity customisable
-  const { defaultApiKeyExpiryInMinutes } = useConfig();
-  const initialExpiryDate = moment().add(defaultApiKeyExpiryInMinutes, "m");
+  // const { defaultApiKeyExpiryInMinutes } = useConfig();
+  const initialExpiryDate = moment().add(
+    tokenConfig.defaultApiKeyExpiryInMinutes,
+    "m",
+  );
   const [expiryDate, setExpiryDate] = React.useState(initialExpiryDate);
   const [selectedUser, setSelectedUser] = React.useState("");
   const handleSubmit = (event: React.FormEvent<HTMLFormElement>) => {

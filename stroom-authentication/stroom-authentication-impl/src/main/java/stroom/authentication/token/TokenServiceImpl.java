@@ -280,4 +280,9 @@ public class TokenServiceImpl implements TokenService, HasHealthCheck {
 
         return builder.build();
     }
+
+    @Override
+    public TokenConfig fetchTokenConfig() {
+        return tokenConfig;
+    }
 }

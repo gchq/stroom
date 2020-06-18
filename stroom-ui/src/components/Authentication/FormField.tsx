@@ -20,6 +20,7 @@ export interface FormFieldProps {
   name: string;
   label: string;
   placeholder: string;
+  autoComplete?: string;
   leftIcon?: any;
   className?: string;
   children?: any;
@@ -35,6 +36,7 @@ const FormField: FunctionComponent<
   type,
   label,
   placeholder,
+  autoComplete,
   leftIcon,
   className = "",
   children,
@@ -80,6 +82,7 @@ const FormField: FunctionComponent<
           onChange(e);
         }}
         onBlur={onBlur}
+        autoComplete={autoComplete}
       />
       {leftIcon && <div className="FormField__icon-container">{leftIcon}</div>}
     </div>
