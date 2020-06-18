@@ -224,34 +224,38 @@ public class IndexShardPresenter extends MyPresenterWidget<DataGridView<IndexSha
         final InfoColumn<IndexShard> infoColumn = new InfoColumn<IndexShard>() {
             @Override
             protected void showInfo(final IndexShard indexShard, final int x, final int y) {
-                final StringBuilder html = new StringBuilder();
+                final TooltipUtil.Builder builder = TooltipUtil.builder();
 
                 if (index != null) {
-                    TooltipUtil.addRowData(html, "Index UUID", String.valueOf(index.getUuid()));
+                    builder.addRowData("Index UUID", String.valueOf(index.getUuid()));
                 }
-                TooltipUtil.addRowData(html, "Shard Id", String.valueOf(indexShard.getId()));
-                TooltipUtil.addRowData(html, "Node", indexShard.getNodeName());
-                TooltipUtil.addRowData(html, "Partition", indexShard.getPartition());
+                builder
+                        .addRowData("Shard Id", String.valueOf(indexShard.getId()))
+                        .addRowData("Node", indexShard.getNodeName())
+                        .addRowData("Partition", indexShard.getPartition());
+
                 if (indexShard.getPartitionFromTime() != null) {
-                    TooltipUtil.addRowData(html, "Partition From",
+                    builder.addRowData("Partition From",
                             ClientDateUtil.toISOString(indexShard.getPartitionFromTime()));
                 }
                 if (indexShard.getPartitionToTime() != null) {
-                    TooltipUtil.addRowData(html, "Partition To",
+                    builder.addRowData("Partition To",
                             ClientDateUtil.toISOString(indexShard.getPartitionToTime()));
                 }
-                TooltipUtil.addRowData(html, "Path", indexShard.getVolume().getPath());
-                TooltipUtil.addRowData(html, "Status", indexShard.getStatus().getDisplayValue());
-                TooltipUtil.addRowData(html, "Document Count", intToString(indexShard.getDocumentCount()));
-                TooltipUtil.addRowData(html, "File Size", indexShard.getFileSizeString());
-                TooltipUtil.addRowData(html, "Bytes Per Document", intToString(indexShard.getBytesPerDocument()));
-                TooltipUtil.addRowData(html, "Commit", ClientDateUtil.toISOString(indexShard.getCommitMs()));
-                TooltipUtil.addRowData(html, "Commit Duration",
-                        ModelStringUtil.formatDurationString(indexShard.getCommitDurationMs()));
-                TooltipUtil.addRowData(html, "Commit Document Count", intToString(indexShard.getCommitDocumentCount()));
-                TooltipUtil.addRowData(html, "Index Version", indexShard.getIndexVersion());
 
-                tooltipPresenter.setHTML(html.toString());
+                builder
+                        .addRowData("Path", indexShard.getVolume().getPath())
+                        .addRowData("Status", indexShard.getStatus().getDisplayValue())
+                        .addRowData("Document Count", intToString(indexShard.getDocumentCount()))
+                        .addRowData("File Size", indexShard.getFileSizeString())
+                        .addRowData("Bytes Per Document", intToString(indexShard.getBytesPerDocument()))
+                        .addRowData("Commit", ClientDateUtil.toISOString(indexShard.getCommitMs()))
+                        .addRowData("Commit Duration",
+                                ModelStringUtil.formatDurationString(indexShard.getCommitDurationMs()))
+                        .addRowData("Commit Document Count", intToString(indexShard.getCommitDocumentCount()))
+                        .addRowData("Index Version", indexShard.getIndexVersion());
+
+                tooltipPresenter.setHTML(builder.build());
 
                 final PopupPosition popupPosition = new PopupPosition(x, y);
                 ShowPopupEvent.fire(IndexShardPresenter.this, tooltipPresenter, PopupType.POPUP, popupPosition, null);

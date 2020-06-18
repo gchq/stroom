@@ -92,18 +92,18 @@ public class ProcessorTaskSummaryPresenter extends MyPresenterWidget<DataGridVie
         final InfoColumn<ProcessorTaskSummary> infoColumn = new InfoColumn<ProcessorTaskSummary>() {
             @Override
             protected void showInfo(final ProcessorTaskSummary row, final int x, final int y) {
-                final StringBuilder html = new StringBuilder();
+                final TooltipUtil.Builder builder = TooltipUtil.builder();
 
-                TooltipUtil.addHeading(html, "Key Data");
+                builder.addHeading("Key Data");
                 final DocRef pipeline = row.getPipeline();
                 if (pipeline != null) {
-                    TooltipUtil.addRowData(html, "Pipeline", DocRefUtil.createSimpleDocRefString(pipeline));
+                    builder.addRowData("Pipeline", DocRefUtil.createSimpleDocRefString(pipeline));
                 }
-                TooltipUtil.addRowData(html, "Feed", row.getFeed());
-                TooltipUtil.addRowData(html, "Priority", row.getPriority());
-                TooltipUtil.addRowData(html, "Status", row.getStatus());
+                builder.addRowData("Feed", row.getFeed());
+                builder.addRowData("Priority", row.getPriority());
+                builder.addRowData("Status", row.getStatus());
 
-                tooltipPresenter.setHTML(html.toString());
+                tooltipPresenter.setHTML(builder.build());
 
                 final PopupPosition popupPosition = new PopupPosition(x, y);
                 ShowPopupEvent.fire(ProcessorTaskSummaryPresenter.this, tooltipPresenter, PopupType.POPUP, popupPosition,

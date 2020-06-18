@@ -10,6 +10,7 @@ import com.fasterxml.jackson.annotation.JsonInclude;
 import com.fasterxml.jackson.annotation.JsonInclude.Include;
 import com.fasterxml.jackson.annotation.JsonProperty;
 
+import java.util.Arrays;
 import java.util.List;
 
 @JsonInclude(Include.NON_NULL)
@@ -32,14 +33,14 @@ public class DependencyCriteria extends BaseCriteria {
     public static final FilterFieldDefinition FIELD_DEF_TO_UUID = FilterFieldDefinition.qualifiedField(FIELD_TO_UUID);
     public static final FilterFieldDefinition FIELD_DEF_STATUS = FilterFieldDefinition.qualifiedField(FIELD_STATUS);
 
-//    public static final List<FilterFieldDefinition> FIELD_DEFINITIONS = Arrays.asList(
-//            FIELD_DEF_FROM_TYPE,
-//            FIELD_DEF_FROM_NAME,
-//            FIELD_DEF_FROM_UUID,
-//            FIELD_DEF_TO_TYPE,
-//            FIELD_DEF_TO_NAME,
-//            FIELD_DEF_TO_UUID,
-//            FIELD_DEF_STATUS);
+    public static final List<FilterFieldDefinition> FIELD_DEFINITIONS = Arrays.asList(
+            FIELD_DEF_FROM_TYPE,
+            FIELD_DEF_FROM_NAME,
+            FIELD_DEF_FROM_UUID,
+            FIELD_DEF_TO_TYPE,
+            FIELD_DEF_TO_NAME,
+            FIELD_DEF_TO_UUID,
+            FIELD_DEF_STATUS);
 
     @JsonProperty
     private String partialName;

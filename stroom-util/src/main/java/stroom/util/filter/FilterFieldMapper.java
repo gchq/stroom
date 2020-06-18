@@ -5,14 +5,8 @@ import stroom.util.shared.filter.FilterFieldDefinition;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import java.util.Arrays;
-import java.util.Collection;
-import java.util.Collections;
-import java.util.Map;
 import java.util.Objects;
-import java.util.Optional;
 import java.util.function.Function;
-import java.util.stream.Collectors;
 
 /**
  * Defines the mapping between a FilterFieldDefinition and a property
@@ -103,53 +97,19 @@ public class FilterFieldMapper<T_ROW> {
     }
 
     public Function<T_ROW, String> getNullSafeStringValueExtractor() {
-        if (LOGGER.isTraceEnabled()) {
-            return row -> {
-                String val = valueExtractor.apply(row);
-                LOGGER.trace("Extracted [{}] from field {} in [{}]", val, fieldDefinition, row);
-                return val;
-            };
-        } else {
-            return valueExtractor;
-        }
-    }
-
-//        public Function<T_ROW, String> getNullSafeStringValueExtractor() {
+        // Useful is unit tests, way too noisy otherwise
+//        if (LOGGER.isTraceEnabled()) {
 //            return row -> {
-//                final String result;
-//                if (row != null) {
-//                    T_FIELD fieldVal = valueExtractor.apply(row);
-//                    if (fieldVal != null) {
-//                        result = stringValueExtractor.apply(fieldVal);
-//                    } else {
-//                        result = null;
-//                    }
-//                } else {
-//                    result = null;
-//                }
-//                return result;
+//                String val = valueExtractor.apply(row);
+//                LOGGER.trace("Extracted [{}] from field {} in [{}]", val, fieldDefinition, row);
+//                return val;
 //            };
 //        }
+        return valueExtractor;
+    }
 
     @Override
     public String toString() {
         return fieldDefinition.toString();
-    }
-
-    @SafeVarargs
-    public static <T> Map<String, FilterFieldMapper<T>> mappedByQualifier(
-            final FilterFieldMapper<T>... fieldMappers) {
-        return mappedByQualifier(Arrays.asList(fieldMappers));
-    }
-
-    public static <T> Map<String, FilterFieldMapper<T>> mappedByQualifier(
-            final Collection<FilterFieldMapper<T>> fieldMappers) {
-
-        return Optional.ofNullable(fieldMappers)
-                .map(fieldMappers2 -> fieldMappers2.stream()
-                        .collect(Collectors.toMap(
-                                fieldMapper -> fieldMapper.getFieldDefinition().getFilterQualifier(),
-                                Function.identity())))
-                .orElseGet(Collections::emptyMap);
     }
 }

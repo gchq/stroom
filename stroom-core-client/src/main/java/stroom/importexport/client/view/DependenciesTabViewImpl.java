@@ -20,7 +20,7 @@ public class DependenciesTabViewImpl
         implements DependenciesTabView {
 
     @UiField
-    QuickFilter nameFilter;
+    QuickFilter quickFilter;
     @UiField
     ResizeSimplePanel dataGrid;
 
@@ -29,6 +29,7 @@ public class DependenciesTabViewImpl
     @Inject
     public DependenciesTabViewImpl(final EventBus eventBus, final Binder binder) {
         widget = binder.createAndBindUi(this);
+        quickFilter.registerPopupTextProvider(() -> "This is my dependencies popup text");
     }
 
 //    @Override
@@ -58,9 +59,14 @@ public class DependenciesTabViewImpl
         }
     }
 
-    @UiHandler("nameFilter")
+    @Override
+    public void setHelpTooltipText(final String helpTooltipText) {
+        quickFilter.registerPopupTextProvider(() -> helpTooltipText);
+    }
+
+    @UiHandler("quickFilter")
     void onFilterChange(final ValueChangeEvent<String> event) {
-        getUiHandlers().changeNameFilter(nameFilter.getText());
+        getUiHandlers().changeQuickFilter(quickFilter.getText());
     }
 
     public interface Binder extends UiBinder<Widget, DependenciesTabViewImpl> {

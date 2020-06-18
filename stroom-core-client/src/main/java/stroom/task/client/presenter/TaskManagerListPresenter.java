@@ -16,14 +16,6 @@
 
 package stroom.task.client.presenter;
 
-import com.google.gwt.cell.client.TextCell;
-import com.google.gwt.core.client.GWT;
-import com.google.gwt.user.cellview.client.Column;
-import com.google.gwt.user.client.Timer;
-import com.google.inject.Inject;
-import com.google.web.bindery.event.shared.EventBus;
-import com.google.web.bindery.event.shared.HandlerRegistration;
-import com.gwtplatform.mvp.client.MyPresenterWidget;
 import stroom.alert.client.event.ConfirmEvent;
 import stroom.cell.expander.client.ExpanderCell;
 import stroom.cell.info.client.InfoColumn;
@@ -64,6 +56,15 @@ import stroom.widget.popup.client.presenter.PopupPosition;
 import stroom.widget.popup.client.presenter.PopupView.PopupType;
 import stroom.widget.tooltip.client.presenter.TooltipPresenter;
 import stroom.widget.tooltip.client.presenter.TooltipUtil;
+
+import com.google.gwt.cell.client.TextCell;
+import com.google.gwt.core.client.GWT;
+import com.google.gwt.user.cellview.client.Column;
+import com.google.gwt.user.client.Timer;
+import com.google.inject.Inject;
+import com.google.web.bindery.event.shared.EventBus;
+import com.google.web.bindery.event.shared.HandlerRegistration;
+import com.gwtplatform.mvp.client.MyPresenterWidget;
 
 import java.util.HashMap;
 import java.util.HashSet;
@@ -166,26 +167,26 @@ public class TaskManagerListPresenter
         final InfoColumn<TaskProgress> furtherInfoColumn = new InfoColumn<TaskProgress>() {
             @Override
             protected void showInfo(final TaskProgress row, final int x, final int y) {
-                final StringBuilder html = new StringBuilder();
-                TooltipUtil.addHeading(html, "Task");
-                TooltipUtil.addRowData(html, "Name", row.getTaskName());
-                TooltipUtil.addRowData(html, "User", row.getUserName());
-                TooltipUtil.addRowData(html, "Submit Time", ClientDateUtil.toISOString(row.getSubmitTimeMs()));
-                TooltipUtil.addRowData(html, "Age", ModelStringUtil.formatDurationString(row.getAgeMs()));
-                TooltipUtil.addBreak(html);
-                TooltipUtil.addRowData(html, "Id", row.getId());
-                TooltipUtil.addRowData(html, "Thread Name", row.getThreadName());
+                final TooltipUtil.Builder builder = TooltipUtil.builder()
+                        .addHeading("Task")
+                        .addRowData("Name", row.getTaskName())
+                        .addRowData("User", row.getUserName())
+                        .addRowData("Submit Time", ClientDateUtil.toISOString(row.getSubmitTimeMs()))
+                        .addRowData("Age", ModelStringUtil.formatDurationString(row.getAgeMs()))
+                        .addBreak()
+                        .addRowData("Id", row.getId())
+                        .addRowData("Thread Name", row.getThreadName());
 
                 if (row.getId() != null) {
                     final TaskId parentId = row.getId().getParentId();
                     if (parentId != null) {
-                        TooltipUtil.addRowData(html, "Parent Id", parentId);
+                        builder.addRowData("Parent Id", parentId);
                     }
                 }
 
-                TooltipUtil.addRowData(html, row.getTaskInfo());
+                builder.addRowData(row.getTaskInfo());
 
-                tooltipPresenter.setHTML(html.toString());
+                tooltipPresenter.setHTML(builder.build());
 
                 final PopupPosition popupPosition = new PopupPosition(x, y);
                 ShowPopupEvent.fire(TaskManagerListPresenter.this, tooltipPresenter, PopupType.POPUP,

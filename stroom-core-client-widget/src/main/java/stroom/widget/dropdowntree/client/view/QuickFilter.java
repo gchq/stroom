@@ -16,6 +16,9 @@
 
 package stroom.widget.dropdowntree.client.view;
 
+import stroom.svg.client.SvgPresets;
+import stroom.widget.button.client.SvgButton;
+
 import com.google.gwt.core.shared.GWT;
 import com.google.gwt.event.logical.shared.HasValueChangeHandlers;
 import com.google.gwt.event.logical.shared.ValueChangeEvent;
@@ -28,19 +31,24 @@ import com.google.gwt.resources.client.ClientBundle;
 import com.google.gwt.resources.client.CssResource;
 import com.google.gwt.resources.client.CssResource.ImportedWithPrefix;
 import com.google.gwt.user.client.ui.FlowPanel;
+import com.google.gwt.user.client.ui.HTMLPanel;
 import com.google.gwt.user.client.ui.HasText;
 import com.google.gwt.user.client.ui.Label;
+import com.google.gwt.user.client.ui.PopupPanel;
 import com.google.gwt.user.client.ui.TextBox;
-import stroom.svg.client.SvgPresets;
-import stroom.widget.button.client.SvgButton;
+
+import java.util.function.Supplier;
 
 public class QuickFilter extends FlowPanel
         implements HasText, HasValueChangeHandlers<String> {
+
     private static final Resources RESOURCES = GWT.create(Resources.class);
     private final Label label = new Label("Quick Filter", false);
     private final TextBox textBox = new TextBox();
     private final SvgButton clearButton;
+    private final SvgButton helpButton;
     private EventBus eventBus;
+    private Supplier<String> popupTextSupplier;
 
     public QuickFilter() {
         RESOURCES.style().ensureInjected();
@@ -49,9 +57,13 @@ public class QuickFilter extends FlowPanel
         textBox.setStyleName(RESOURCES.style().textBox());
         label.setStyleName(RESOURCES.style().label());
 
-        clearButton = SvgButton.create(SvgPresets.CLEAR);
+        clearButton = SvgButton.create(SvgPresets.CLEAR.title("Clear Filter"));
         clearButton.addStyleName(RESOURCES.style().clear());
 
+        helpButton = SvgButton.create(SvgPresets.HELP.title("Quick Filter Syntax Help"));
+        helpButton.addStyleName(RESOURCES.style().infoButton());
+
+        add(helpButton);
         add(textBox);
         add(label);
         add(clearButton);
@@ -64,10 +76,22 @@ public class QuickFilter extends FlowPanel
         textBox.addFocusHandler(event -> label.setVisible(false));
         textBox.addBlurHandler(event -> reset());
         textBox.addKeyUpHandler(event -> onChange());
-
+        helpButton.addClickHandler(event -> showHelpPopup());
         clearButton.addClickHandler(event -> clear());
 
         onChange();
+    }
+
+    private void showHelpPopup() {
+        final HelpPopup popup = new HelpPopup(this::getPopupText);
+        popup.setStyleName(RESOURCES.style().tooltip());
+        popup.setPopupPositionAndShow((offsetWidth, offsetHeight) -> {
+
+            // Position it below the filter
+            popup.setPopupPosition(
+                    getAbsoluteLeft() + 4,
+                    getAbsoluteTop() + 26);
+        });
     }
 
     private void onChange() {
@@ -93,6 +117,18 @@ public class QuickFilter extends FlowPanel
         }
     }
 
+    private String getPopupText() {
+        return popupTextSupplier != null ? popupTextSupplier.get() : null;
+    }
+
+    public void registerPopupTextProvider(final Supplier<String> popupTextSupplier) {
+        this.popupTextSupplier = popupTextSupplier;
+    }
+
+//    public void registerClickHandler(final Supplier<String> popupTextProvider) {
+//        this.popupTextSupplier = popupTextSupplier;
+//    }
+
     @Override
     public String getText() {
         return textBox.getText();
@@ -115,21 +151,6 @@ public class QuickFilter extends FlowPanel
         return eventBus;
     }
 
-//    @Override
-//    public HandlerRegistration addKeyDownHandler(final KeyDownHandler handler) {
-//        return textBox.addKeyDownHandler(handler);
-//    }
-//
-//    @Override
-//    public HandlerRegistration addKeyUpHandler(final KeyUpHandler handler) {
-//        return textBox.addKeyUpHandler(handler);
-//    }
-//
-//    @Override
-//    public HandlerRegistration addKeyPressHandler(final KeyPressHandler handler) {
-//        return textBox.addKeyPressHandler(handler);
-//    }
-
     @Override
     public void fireEvent(final GwtEvent<?> event) {
         eventBus.fireEvent(event);
@@ -146,10 +167,27 @@ public class QuickFilter extends FlowPanel
         String label();
 
         String clear();
+
+        String infoButton();
+
+        String tooltip();
     }
 
     public interface Resources extends ClientBundle {
         @Source(Style.DEFAULT_CSS)
         Style style();
+    }
+
+    private static class HelpPopup extends PopupPanel {
+
+        public HelpPopup(final Supplier<String> popupTextSupplier) {
+            // PopupPanel's constructor takes 'auto-hide' as its boolean parameter.
+            // If this is set, the panel closes itself automatically when the user
+            // clicks outside of it.
+            super(true);
+
+//            setWidget(new Label(popupTextSupplier.get(), true));
+            setWidget(new HTMLPanel("div", popupTextSupplier.get()));
+        }
     }
 }
