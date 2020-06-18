@@ -40,12 +40,12 @@ CREATE TABLE IF NOT EXISTS SQL_STAT_KEY (
 -- Table structure for table sql_stat_val (idempotent)
 --
 CREATE TABLE IF NOT EXISTS SQL_STAT_VAL (
-  TIME_MS				bigint(20) NOT NULL,
-  PRES					tinyint(4) NOT NULL,
-  VAL_TP 				tinyint(4) NOT NULL,
-  VAL					double     NOT NULL,
-  CT					bigint(20) NOT NULL,
-  FK_SQL_STAT_KEY_ID	bigint(20) NOT NULL,
+  TIME_MS               bigint(20) NOT NULL,
+  PRES                  tinyint(4) NOT NULL,
+  VAL_TP                tinyint(4) NOT NULL,
+  VAL                   double     NOT NULL,
+  CT                    bigint(20) NOT NULL,
+  FK_SQL_STAT_KEY_ID    bigint(20) NOT NULL,
   PRIMARY KEY (FK_SQL_STAT_KEY_ID, TIME_MS, VAL_TP, PRES),
   CONSTRAINT 			SQL_STAT_VAL_FK_STAT_KEY_ID
       FOREIGN KEY (FK_SQL_STAT_KEY_ID)
@@ -94,6 +94,7 @@ ALTER TABLE SQL_STAT_VAL_SRC MODIFY COLUMN PROCESSING tinyint(1) NOT NULL DEFAUL
 -- Copy data into the job node table
 --
 DROP PROCEDURE IF EXISTS add_col_to_stat_val_src;
+DROP PROCEDURE IF EXISTS add_id_to_stat_val_src;
 DELIMITER //
 CREATE PROCEDURE add_col_to_stat_val_src ()
 BEGIN
@@ -119,8 +120,80 @@ BEGIN
     MODIFY COLUMN CT BIGINT(20) NOT NULL;
 
 END//
+CREATE PROCEDURE add_id_to_stat_val_src ()
+BEGIN
+    -- Idempotent
+    IF NOT EXISTS (
+            SELECT NULL
+            FROM INFORMATION_SCHEMA.COLUMNS
+            WHERE TABLE_NAME = 'SQL_STAT_VAL_SRC'
+            AND COLUMN_NAME = 'ID') THEN
+        SELECT CONCAT('Beginning migration of ',
+                          ' table SQL_STAT_VAL_SRC in database ',
+                          database(), ' to version 7 (adding id field to stats)'
+                          '.');
+        -- We are missing the ID (autoincrement, pk) col.
+        -- Create a new table and copy values back
+        RENAME TABLE SQL_STAT_VAL_SRC TO SQL_STAT_VAL_SRC_OLD;
+
+        -- Create the table with the new structure
+        CREATE TABLE IF NOT EXISTS SQL_STAT_VAL_SRC (
+          ID bigint(20) auto_increment,
+          TIME_MS bigint(20) NOT NULL,
+          NAME varchar(766) NOT NULL,
+          VAL_TP tinyint(4) NOT NULL,
+          VAL double NOT NULL,
+          CT bigint(20) NOT NULL,
+          PROCESSING bit(1) NOT NULL DEFAULT 0,
+          PRIMARY KEY (ID)
+        ) ENGINE=InnoDB DEFAULT CHARSET=latin1;
+
+        -- Copy the data over
+        INSERT INTO SQL_STAT_VAL_SRC (
+          TIME_MS, NAME, VAL_TP, VAL, CT, PROCESSING
+        ) SELECT TIME_MS, NAME, VAL_TP, VAL, CT, PROCESSING FROM SQL_STAT_VAL_SRC_OLD;
+
+        -- Check that the correct number of columns have been copied
+        BEGIN
+            DECLARE row_count_before integer;
+            DECLARE row_count_after integer;
+
+            SELECT COUNT(*)
+              INTO row_count_before
+              FROM SQL_STAT_VAL_SRC_OLD;
+
+            SELECT COUNT(*)
+              INTO row_count_after
+              FROM SQL_STAT_VAL_SRC;
+
+            SELECT CONCAT('There are ', row_count_before,
+                          ' records to migrate.');
+            -- Delete the old table if copy was successful
+            IF row_count_before = row_count_after THEN
+              DROP TABLE SQL_STAT_VAL_SRC_OLD;
+              SELECT CONCAT('Successfully migrated ',row_count_before,
+                            ' records into table SQL_STAT_VAL_SRC in database ',
+                            database(), ' to version 7 (added id field to stats)',
+                            '.');
+            ELSE
+            -- Attempt rollback
+              DROP TABLE SQL_STAT_VAL_SRC;
+              RENAME TABLE SQL_STAT_VAL_SRC_OLD TO SQL_STAT_VAL_SRC;
+
+              SELECT CONCAT('Failed to copy all records! Copied ',
+                          row_count_after,' of ',
+                          row_count_before,
+                          ' records from table SQL_STAT_VAL_SRC while migrating ',
+                          database(), ' to version 7 (adding id field to stats)',
+                          '.');
+            END IF;
+         END;
+    END IF;
+END//
 DELIMITER ;
 CALL add_col_to_stat_val_src();
+CALL add_id_to_stat_val_src();
 DROP PROCEDURE add_col_to_stat_val_src;
+DROP PROCEDURE add_id_to_stat_val_src;
 
 SET SQL_NOTES=@OLD_SQL_NOTES;
