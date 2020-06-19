@@ -94,7 +94,7 @@ public class DependenciesPresenter extends MyPresenterWidget<DataGridView<Depend
     private void initColumns() {
 
         // From (Icon)
-        getView().addColumn(DataGridUtil.svgPresetColumnBuilder((Dependency row) ->
+        getView().addColumn(DataGridUtil.svgPresetColumnBuilder( false, (Dependency row) ->
                         getDocTypeIcon(row.getFrom()))
                         .build(),
                 "<br/>",
@@ -124,7 +124,7 @@ public class DependenciesPresenter extends MyPresenterWidget<DataGridView<Depend
                 COL_WIDTH_UUID);
 
         // To (Icon)
-        getView().addColumn(DataGridUtil.svgPresetColumnBuilder((Dependency row) ->
+        getView().addColumn(DataGridUtil.svgPresetColumnBuilder(false, (Dependency row) ->
                         getDocTypeIcon(row.getTo()))
                         .build(),
                 "<br/>",

@@ -276,9 +276,12 @@ public class DataGridUtil {
     }
 
     public static <T_ROW> ColumnBuilder<T_ROW, SvgPreset, SvgPreset, Cell<SvgPreset>> svgPresetColumnBuilder(
+            final boolean isButton,
             final Function<T_ROW, SvgPreset> cellExtractor) {
 
-        return new ColumnBuilder<>(cellExtractor, Function.identity(), SvgCell::new);
+        return new ColumnBuilder<>(
+                cellExtractor, Function.identity(),
+                () -> new SvgCell(isButton));
     }
 
     public static class ColumnBuilder<T_ROW, T_RAW_VAL, T_CELL_VAL, T_CELL extends Cell<T_CELL_VAL>> {
