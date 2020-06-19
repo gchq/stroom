@@ -169,22 +169,22 @@ public class TaskManagerListPresenter
             protected void showInfo(final TaskProgress row, final int x, final int y) {
                 final TooltipUtil.Builder builder = TooltipUtil.builder()
                         .addHeading("Task")
-                        .addRowData("Name", row.getTaskName())
-                        .addRowData("User", row.getUserName())
-                        .addRowData("Submit Time", ClientDateUtil.toISOString(row.getSubmitTimeMs()))
-                        .addRowData("Age", ModelStringUtil.formatDurationString(row.getAgeMs()))
+                        .addLine("Name", row.getTaskName())
+                        .addLine("User", row.getUserName())
+                        .addLine("Submit Time", ClientDateUtil.toISOString(row.getSubmitTimeMs()))
+                        .addLine("Age", ModelStringUtil.formatDurationString(row.getAgeMs()))
                         .addBreak()
-                        .addRowData("Id", row.getId())
-                        .addRowData("Thread Name", row.getThreadName());
+                        .addLine("Id", row.getId())
+                        .addLine("Thread Name", row.getThreadName());
 
                 if (row.getId() != null) {
                     final TaskId parentId = row.getId().getParentId();
                     if (parentId != null) {
-                        builder.addRowData("Parent Id", parentId);
+                        builder.addLine("Parent Id", parentId);
                     }
                 }
 
-                builder.addRowData(row.getTaskInfo());
+                builder.addLine(row.getTaskInfo());
 
                 tooltipPresenter.setHTML(builder.build());
 

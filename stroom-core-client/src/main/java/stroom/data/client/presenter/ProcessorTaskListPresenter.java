@@ -196,27 +196,27 @@ public class ProcessorTaskListPresenter extends MyPresenterWidget<DataGridView<P
 
         final TooltipUtil.Builder builder = TooltipUtil.builder()
                 .addHeading("Stream Task")
-                .addRowData("Stream Task Id", processorTask.getId())
-                .addRowData("Status", processorTask.getStatus().getDisplayValue());
+                .addLine("Stream Task Id", processorTask.getId())
+                .addLine("Status", processorTask.getStatus().getDisplayValue());
 
         if (processorTask.getProcessorFilter() != null) {
-            builder.addRowData("Priority", processorTask.getProcessorFilter().getPriority());
+            builder.addLine("Priority", processorTask.getProcessorFilter().getPriority());
         }
 
         builder
-                .addRowData("Status Time", toDateString(processorTask.getStatusTimeMs()))
-                .addRowData("Start Time", toDateString(processorTask.getStartTimeMs()))
-                .addRowData("End Time", toDateString(processorTask.getEndTimeMs()))
-                .addRowData("Node", processorTask.getNodeName())
-                .addRowData("Feed", processorTask.getFeedName())
+                .addLine("Status Time", toDateString(processorTask.getStatusTimeMs()))
+                .addLine("Start Time", toDateString(processorTask.getStartTimeMs()))
+                .addLine("End Time", toDateString(processorTask.getEndTimeMs()))
+                .addLine("Node", processorTask.getNodeName())
+                .addLine("Feed", processorTask.getFeedName())
                 .addBreak()
                 .addHeading("Stream")
-                .addRowData("Stream Id", meta.getId())
-                .addRowData("Status", meta.getStatus().getDisplayValue())
-                .addRowData("Parent Stream Id", meta.getParentMetaId())
-                .addRowData("Created", toDateString(meta.getCreateMs()))
-                .addRowData("Effective", toDateString(meta.getEffectiveMs()))
-                .addRowData("Stream Type", meta.getTypeName());
+                .addLine("Stream Id", meta.getId())
+                .addLine("Status", meta.getStatus().getDisplayValue())
+                .addLine("Parent Stream Id", meta.getParentMetaId())
+                .addLine("Created", toDateString(meta.getCreateMs()))
+                .addLine("Effective", toDateString(meta.getEffectiveMs()))
+                .addLine("Stream Type", meta.getTypeName());
 
         if (processorTask.getProcessorFilter() != null) {
             if (processorTask.getProcessorFilter().getProcessor() != null) {
@@ -224,12 +224,12 @@ public class ProcessorTaskListPresenter extends MyPresenterWidget<DataGridView<P
                     builder
                             .addBreak()
                             .addHeading("Stream Processor")
-                            .addRowData("Stream Processor Id",
+                            .addLine("Stream Processor Id",
                                     processorTask.getProcessorFilter().getProcessor().getId())
-                            .addRowData("Stream Processor Filter Id",
+                            .addLine("Stream Processor Filter Id",
                                     processorTask.getProcessorFilter().getId());
                     if (processorTask.getProcessorFilter().getProcessor().getPipelineUuid() != null) {
-                        builder.addRowData("Stream Processor Pipeline",
+                        builder.addLine("Stream Processor Pipeline",
                                 DocRefUtil.createSimpleDocRefString(processorTask.getProcessorFilter().getPipeline()));
                     }
                 }

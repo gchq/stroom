@@ -221,18 +221,18 @@ public class NodeMonitoringPresenter extends ContentTabPresenter<DataGridView<No
 
         if (result != null) {
             final BuildInfo buildInfo = result.getBuildInfo();
-            builder.addRowData("Node Name", result.getNodeName(), true);
+            builder.addLine("Node Name", result.getNodeName(), true);
             if (buildInfo != null) {
                 builder
-                        .addRowData("Build Version", buildInfo.getBuildVersion(), true)
-                        .addRowData("Build Date", buildInfo.getBuildDate(), true)
-                        .addRowData("Up Date", buildInfo.getUpDate(), true);
+                        .addLine("Build Version", buildInfo.getBuildVersion(), true)
+                        .addLine("Build Date", buildInfo.getBuildDate(), true)
+                        .addLine("Up Date", buildInfo.getUpDate(), true);
             }
             builder
-                    .addRowData("Discover Time", result.getDiscoverTime(), true)
-                    .addRowData("Node Endpoint URL", result.getEndpointUrl(), true)
-                    .addRowData("Ping", ModelStringUtil.formatDurationString(result.getPing()))
-                    .addRowData("Error", result.getError())
+                    .addLine("Discover Time", result.getDiscoverTime(), true)
+                    .addLine("Node Endpoint URL", result.getEndpointUrl(), true)
+                    .addLine("Ping", ModelStringUtil.formatDurationString(result.getPing()))
+                    .addLine("Error", result.getError())
                     .addBreak()
                     .addHeading("Node List");
 
@@ -250,8 +250,8 @@ public class NodeMonitoringPresenter extends ContentTabPresenter<DataGridView<No
             }
 
         } else {
-            builder.addRowData("Node Name", node.getName(), true);
-            builder.addRowData("Cluster URL", node.getUrl(), true);
+            builder.addLine("Node Name", node.getName(), true);
+            builder.addLine("Cluster URL", node.getUrl(), true);
         }
 
         tooltipPresenter.setHTML(builder.build());

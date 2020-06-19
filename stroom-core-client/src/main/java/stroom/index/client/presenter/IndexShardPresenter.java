@@ -227,33 +227,33 @@ public class IndexShardPresenter extends MyPresenterWidget<DataGridView<IndexSha
                 final TooltipUtil.Builder builder = TooltipUtil.builder();
 
                 if (index != null) {
-                    builder.addRowData("Index UUID", String.valueOf(index.getUuid()));
+                    builder.addLine("Index UUID", String.valueOf(index.getUuid()));
                 }
                 builder
-                        .addRowData("Shard Id", String.valueOf(indexShard.getId()))
-                        .addRowData("Node", indexShard.getNodeName())
-                        .addRowData("Partition", indexShard.getPartition());
+                        .addLine("Shard Id", String.valueOf(indexShard.getId()))
+                        .addLine("Node", indexShard.getNodeName())
+                        .addLine("Partition", indexShard.getPartition());
 
                 if (indexShard.getPartitionFromTime() != null) {
-                    builder.addRowData("Partition From",
+                    builder.addLine("Partition From",
                             ClientDateUtil.toISOString(indexShard.getPartitionFromTime()));
                 }
                 if (indexShard.getPartitionToTime() != null) {
-                    builder.addRowData("Partition To",
+                    builder.addLine("Partition To",
                             ClientDateUtil.toISOString(indexShard.getPartitionToTime()));
                 }
 
                 builder
-                        .addRowData("Path", indexShard.getVolume().getPath())
-                        .addRowData("Status", indexShard.getStatus().getDisplayValue())
-                        .addRowData("Document Count", intToString(indexShard.getDocumentCount()))
-                        .addRowData("File Size", indexShard.getFileSizeString())
-                        .addRowData("Bytes Per Document", intToString(indexShard.getBytesPerDocument()))
-                        .addRowData("Commit", ClientDateUtil.toISOString(indexShard.getCommitMs()))
-                        .addRowData("Commit Duration",
+                        .addLine("Path", indexShard.getVolume().getPath())
+                        .addLine("Status", indexShard.getStatus().getDisplayValue())
+                        .addLine("Document Count", intToString(indexShard.getDocumentCount()))
+                        .addLine("File Size", indexShard.getFileSizeString())
+                        .addLine("Bytes Per Document", intToString(indexShard.getBytesPerDocument()))
+                        .addLine("Commit", ClientDateUtil.toISOString(indexShard.getCommitMs()))
+                        .addLine("Commit Duration",
                                 ModelStringUtil.formatDurationString(indexShard.getCommitDurationMs()))
-                        .addRowData("Commit Document Count", intToString(indexShard.getCommitDocumentCount()))
-                        .addRowData("Index Version", indexShard.getIndexVersion());
+                        .addLine("Commit Document Count", intToString(indexShard.getCommitDocumentCount()))
+                        .addLine("Index Version", indexShard.getIndexVersion());
 
                 tooltipPresenter.setHTML(builder.build());
 

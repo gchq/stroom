@@ -203,36 +203,36 @@ public class ProcessorListPresenter extends MyPresenterWidget<DataGridView<Proce
                     final ProcessorRow processorRow = (ProcessorRow) row;
                     final Processor processor = processorRow.getProcessor();
                     builder.addHeading("Stream Processor");
-                    builder.addRowData("Id", String.valueOf(processor.getId()));
-                    builder.addRowData("Created By", processor.getCreateUser());
+                    builder.addLine("Id", String.valueOf(processor.getId()));
+                    builder.addLine("Created By", processor.getCreateUser());
                     addRowDateString(builder, "Created On", processor.getCreateTimeMs());
-                    builder.addRowData("Updated By", processor.getUpdateUser());
+                    builder.addLine("Updated By", processor.getUpdateUser());
                     addRowDateString(builder, "Updated On", processor.getUpdateTimeMs());
-                    builder.addRowData("Pipeline", DocRefUtil.createSimpleDocRefString(processor.getPipeline()));
+                    builder.addLine("Pipeline", DocRefUtil.createSimpleDocRefString(processor.getPipeline()));
 
                 } else if (row instanceof ProcessorFilterRow) {
                     final ProcessorFilterRow processorFilterRow = (ProcessorFilterRow) row;
                     final ProcessorFilter filter = processorFilterRow.getProcessorFilter();
                     final ProcessorFilterTracker tracker = filter.getProcessorFilterTracker();
                     builder.addHeading("Stream Processor Filter");
-                    builder.addRowData("Id", filter.getId());
-                    builder.addRowData("Created By", filter.getCreateUser());
+                    builder.addLine("Id", filter.getId());
+                    builder.addLine("Created By", filter.getCreateUser());
                     addRowDateString(builder, "Created On", filter.getCreateTimeMs());
-                    builder.addRowData("Updated By", filter.getUpdateUser());
+                    builder.addLine("Updated By", filter.getUpdateUser());
                     addRowDateString(builder, "Updated On", filter.getUpdateTimeMs());
-                    builder.addRowData("Pipeline", DocRefUtil.createSimpleDocRefString(filter.getPipeline()));
+                    builder.addLine("Pipeline", DocRefUtil.createSimpleDocRefString(filter.getPipeline()));
                     addRowDateString(builder, "Min Stream Create Ms", tracker.getMinMetaCreateMs());
                     addRowDateString(builder, "Max Stream Create Ms", tracker.getMaxMetaCreateMs());
                     addRowDateString(builder, "Stream Create Ms", tracker.getMetaCreateMs());
-                    builder.addRowData("Stream Create %", tracker.getTrackerStreamCreatePercentage());
+                    builder.addLine("Stream Create %", tracker.getTrackerStreamCreatePercentage());
                     addRowDateString(builder, "Last Poll", tracker.getLastPollMs());
-                    builder.addRowData("Last Poll Age", tracker.getLastPollAge());
-                    builder.addRowData("Last Poll Task Count", tracker.getLastPollTaskCount());
-                    builder.addRowData("Min Stream Id", tracker.getMinMetaId());
-                    builder.addRowData("Min Event Id", tracker.getMinEventId());
-                    builder.addRowData("Streams", tracker.getMetaCount());
-                    builder.addRowData("Events", tracker.getEventCount());
-                    builder.addRowData("Status", tracker.getStatus());
+                    builder.addLine("Last Poll Age", tracker.getLastPollAge());
+                    builder.addLine("Last Poll Task Count", tracker.getLastPollTaskCount());
+                    builder.addLine("Min Stream Id", tracker.getMinMetaId());
+                    builder.addLine("Min Event Id", tracker.getMinEventId());
+                    builder.addLine("Streams", tracker.getMetaCount());
+                    builder.addLine("Events", tracker.getEventCount());
+                    builder.addLine("Status", tracker.getStatus());
                 }
 
                 tooltipPresenter.setHTML(builder.build());
@@ -564,7 +564,7 @@ public class ProcessorListPresenter extends MyPresenterWidget<DataGridView<Proce
 
     private void addRowDateString(final Builder builder, final String label, final Long ms) {
         if (ms != null) {
-            builder.addRowData(label, ClientDateUtil.toISOString(ms) + " (" + ms + ")");
+            builder.addLine(label, ClientDateUtil.toISOString(ms) + " (" + ms + ")");
         }
     }
 }

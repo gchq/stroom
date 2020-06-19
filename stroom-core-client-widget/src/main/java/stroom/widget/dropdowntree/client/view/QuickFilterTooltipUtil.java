@@ -4,6 +4,9 @@ import stroom.util.shared.filter.FilterFieldDefinition;
 import stroom.widget.tooltip.client.presenter.TooltipUtil;
 import stroom.widget.tooltip.client.presenter.TooltipUtil.Builder;
 
+import com.google.gwt.safehtml.shared.SafeHtml;
+import com.google.gwt.safehtml.shared.SafeHtmlBuilder;
+
 import java.util.Collections;
 import java.util.List;
 
@@ -19,18 +22,29 @@ public class QuickFilterTooltipUtil {
         final Builder builder = TooltipUtil.builder()
                 .addHeading(header)
                 .addBreak()
-                .addHeading("Match types:")
-                .addTable(tableBuilder -> tableBuilder
-                        .addRow("#87af", "UUID partial matching")
-                        .addRow("/xxx", "Regular expression matching")
-                        .addRow("?ABC", "Word boundary matching")
-                        .addRow("^abc$", "Exact match")
-                        .addRow("abc$", "Suffix match")
-                        .addRow("^abc", "Prefix matching")
-                        .addRow("abc", "Characters anywhere (in order) matching (default)")
-                        .build());
+                .addTable(tableBuilder -> {
+                    tableBuilder
+                            .addHeaderRow("Example input", "Match type")
+                            .addRow(TooltipUtil.fixedWidthText("#87af"), "UUID partial matching")
+                            .addRow(TooltipUtil.fixedWidthText("/xxx"), "Regular expression matching")
+                            .addRow(TooltipUtil.fixedWidthText("?ABC"), "Word boundary matching")
+                            .addRow(TooltipUtil.fixedWidthText("^abc$"), "Exact match")
+                            .addRow(TooltipUtil.fixedWidthText("abc$"), "Suffix match")
+                            .addRow(TooltipUtil.fixedWidthText("^abc"), "Prefix matching")
+                            .addRow(TooltipUtil.fixedWidthText("abc"), "Characters anywhere (in order) matching (default)");
 
-        addFieldDefinitions(fieldDefinitions, builder);
+                    if (fieldDefinitions != null && !fieldDefinitions.isEmpty()) {
+                        tableBuilder
+                                .addBlankRow()
+                                .addRow(
+                                        TooltipUtil.fixedWidthText("myfield:abc"),
+                                        "Named field matching (using above match types)");
+                    }
+
+                    return tableBuilder.build();
+                });
+
+        addFieldInfo(fieldDefinitions, builder);
 
         builder
                 .addBreak()
@@ -42,22 +56,23 @@ public class QuickFilterTooltipUtil {
         return builder.build();
     }
 
-    private static void addFieldDefinitions(final List<FilterFieldDefinition> fieldDefinitions,
-                                            final Builder builder) {
+    private static void addFieldInfo(final List<FilterFieldDefinition> fieldDefinitions,
+                                     final Builder builder) {
         if (fieldDefinitions != null && !fieldDefinitions.isEmpty()) {
             builder
                     .addBreak()
-                    .addRowData("myfield:abc", "Named field matching (using above match types)")
                     .addBreak()
-                    .addHeading("Supported fields (with qualifier name):")
                     .addTable(tableBuilder -> {
+                        tableBuilder.addHeaderRow("Filterable fields", "Field qualifier");
                         fieldDefinitions.forEach(fieldDefinition -> {
                             String suffix = fieldDefinition.isDefaultField()
                                     ? " (default field)"
                                     : "";
-                            tableBuilder.addRow(
-                                    fieldDefinition.getDisplayName(),
-                                    fieldDefinition.getFilterQualifier() + suffix);
+                            final SafeHtml value = new SafeHtmlBuilder()
+                                    .append(TooltipUtil.fixedWidthText(fieldDefinition.getFilterQualifier()))
+                                    .append(TooltipUtil.italicText(suffix))
+                                    .toSafeHtml();
+                            tableBuilder.addRow( (fieldDefinition.getDisplayName()), value);
                         });
                         return tableBuilder.build();
                     })
@@ -65,10 +80,10 @@ public class QuickFilterTooltipUtil {
                     .addHeading("Examples:")
                     .addTable(tableBuilder -> tableBuilder
                             .addRow(
-                                    "'/abc type:^err'",
+                                    TooltipUtil.fixedWidthText("/abc type:^err"),
                                     "Matches default field(s) with regex 'abc' and Type field with prefix 'err'")
                             .addRow(
-                                    "'name:abc type:/(error|warn)'",
+                                    TooltipUtil.fixedWidthText("name:abc type:/(error|warn)"),
                                     "Matches Name field with 'abc' chars anywhere and Type field with regex '(error|warn)'")
                             .build());
         }

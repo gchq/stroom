@@ -160,7 +160,7 @@ public class CacheNodeListPresenter extends MyPresenterWidget<DataGridView<Cache
                 .sorted(Comparator.naturalOrder())
                 .forEachOrdered(k -> {
                     final String v = map.get(k);
-                    builder.addRowData(k, v);
+                    builder.addLine(k, v);
                 });
 
         return builder.build();

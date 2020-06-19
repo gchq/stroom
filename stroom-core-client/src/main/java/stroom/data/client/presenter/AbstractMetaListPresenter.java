@@ -336,7 +336,7 @@ public abstract class AbstractMetaListPresenter extends MyPresenterWidget<DataGr
                                 builder.addHeading(section.getTitle());
                                 section.getEntries()
                                         .forEach(entry ->
-                                                builder.addRowData(entry.getKey(), entry.getValue()));
+                                                builder.addLine(entry.getKey(), entry.getValue()));
                                 if (i < result.size() - 1) {
                                     builder.addBreak();
                                 }

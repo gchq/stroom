@@ -97,11 +97,11 @@ public class ProcessorTaskSummaryPresenter extends MyPresenterWidget<DataGridVie
                 builder.addHeading("Key Data");
                 final DocRef pipeline = row.getPipeline();
                 if (pipeline != null) {
-                    builder.addRowData("Pipeline", DocRefUtil.createSimpleDocRefString(pipeline));
+                    builder.addLine("Pipeline", DocRefUtil.createSimpleDocRefString(pipeline));
                 }
-                builder.addRowData("Feed", row.getFeed());
-                builder.addRowData("Priority", row.getPriority());
-                builder.addRowData("Status", row.getStatus());
+                builder.addLine("Feed", row.getFeed());
+                builder.addLine("Priority", row.getPriority());
+                builder.addLine("Status", row.getStatus());
 
                 tooltipPresenter.setHTML(builder.build());
 
