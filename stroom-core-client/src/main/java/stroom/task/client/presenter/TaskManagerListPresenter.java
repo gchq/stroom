@@ -168,24 +168,26 @@ public class TaskManagerListPresenter
             @Override
             protected void showInfo(final TaskProgress row, final int x, final int y) {
                 final TooltipUtil.Builder builder = TooltipUtil.builder()
-                        .addHeading("Task")
-                        .addLine("Name", row.getTaskName())
-                        .addLine("User", row.getUserName())
-                        .addLine("Submit Time", ClientDateUtil.toISOString(row.getSubmitTimeMs()))
-                        .addLine("Age", ModelStringUtil.formatDurationString(row.getAgeMs()))
-                        .addBreak()
-                        .addLine("Id", row.getId())
-                        .addLine("Thread Name", row.getThreadName());
+                        .addTable(tableBuilder -> {
+                            tableBuilder.addHeaderRow("Task")
+                                    .addRow("Name", row.getTaskName())
+                                    .addRow("User", row.getUserName())
+                                    .addRow("Submit Time", ClientDateUtil.toISOString(row.getSubmitTimeMs()))
+                                    .addRow("Age", ModelStringUtil.formatDurationString(row.getAgeMs()))
+                                    .addBlankRow()
+                                    .addRow("Id", row.getId())
+                                    .addRow("Thread Name", row.getThreadName());
 
-                if (row.getId() != null) {
-                    final TaskId parentId = row.getId().getParentId();
-                    if (parentId != null) {
-                        builder.addLine("Parent Id", parentId);
-                    }
-                }
+                            if (row.getId() != null) {
+                                final TaskId parentId = row.getId().getParentId();
+                                if (parentId != null) {
+                                    tableBuilder.addRow("Parent Id", parentId);
+                                }
+                            }
+                            return tableBuilder.build();
+                        });
 
                 builder.addLine(row.getTaskInfo());
-
                 tooltipPresenter.setHTML(builder.build());
 
                 final PopupPosition popupPosition = new PopupPosition(x, y);

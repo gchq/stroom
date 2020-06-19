@@ -217,41 +217,47 @@ public class NodeMonitoringPresenter extends ContentTabPresenter<DataGridView<No
 
     private void showNodeInfoResult(final Node node, final ClusterNodeInfo result, final int x, final int y) {
         final TooltipUtil.Builder builder = TooltipUtil.builder();
-        builder.addHeading("Node Details");
 
         if (result != null) {
             final BuildInfo buildInfo = result.getBuildInfo();
-            builder.addLine("Node Name", result.getNodeName(), true);
-            if (buildInfo != null) {
-                builder
-                        .addLine("Build Version", buildInfo.getBuildVersion(), true)
-                        .addLine("Build Date", buildInfo.getBuildDate(), true)
-                        .addLine("Up Date", buildInfo.getUpDate(), true);
-            }
             builder
-                    .addLine("Discover Time", result.getDiscoverTime(), true)
-                    .addLine("Node Endpoint URL", result.getEndpointUrl(), true)
-                    .addLine("Ping", ModelStringUtil.formatDurationString(result.getPing()))
-                    .addLine("Error", result.getError())
+                    .addTable(tableBuilder -> {
+                        tableBuilder.addHeaderRow("Node Details");
+                        tableBuilder.addRow("Node Name", result.getNodeName(), true);
+                        if (buildInfo != null) {
+                            tableBuilder
+                                    .addRow("Build Version", buildInfo.getBuildVersion(), true)
+                                    .addRow("Build Date", buildInfo.getBuildDate(), true)
+                                    .addRow("Up Date", buildInfo.getUpDate(), true);
+                        }
+                        return tableBuilder
+                                .addRow("Discover Time", result.getDiscoverTime(), true)
+                                .addRow("Node Endpoint URL", result.getEndpointUrl(), true)
+                                .addRow("Ping", ModelStringUtil.formatDurationString(result.getPing()))
+                                .addRow("Error", result.getError())
+                                .build();
+                    })
                     .addBreak()
                     .addHeading("Node List");
 
             if (result.getItemList() != null) {
                 for (final ClusterNodeInfo.ClusterNodeInfoItem info : result.getItemList()) {
-                    builder.appendWithoutBreak(info.getNodeName());
+                    String nodeValue = info.getNodeName();
+
                     if (!info.isActive()) {
-                        builder.appendWithoutBreak(" (Unknown)");
+                        nodeValue += " (Unknown)";
                     }
                     if (info.isMaster()) {
-                        builder.appendWithoutBreak(" (Master)");
+                        nodeValue += " (Master)";
                     }
-                    builder.addBreak();
+                    builder.addLine(nodeValue);
                 }
             }
-
         } else {
-            builder.addLine("Node Name", node.getName(), true);
-            builder.addLine("Cluster URL", node.getUrl(), true);
+            builder.addTable(tableBuilder -> tableBuilder
+                    .addRow("Node Name", node.getName(), true)
+                    .addRow("Cluster URL", node.getUrl(), true)
+                    .build());
         }
 
         tooltipPresenter.setHTML(builder.build());

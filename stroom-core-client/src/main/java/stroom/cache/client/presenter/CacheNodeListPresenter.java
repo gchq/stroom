@@ -152,18 +152,20 @@ public class CacheNodeListPresenter extends MyPresenterWidget<DataGridView<Cache
     }
 
     private String getInfoHtml(final CacheInfo cacheInfo) {
-        final TooltipUtil.Builder builder = TooltipUtil.builder();
-        builder.addHeading(cacheInfo.getNodeName());
 
-        final Map<String, String> map = cacheInfo.getMap();
-        map.keySet().stream()
-                .sorted(Comparator.naturalOrder())
-                .forEachOrdered(k -> {
-                    final String v = map.get(k);
-                    builder.addLine(k, v);
-                });
-
-        return builder.build();
+        return TooltipUtil.builder()
+                .addTable(tableBuilder -> {
+                    tableBuilder.addHeaderRow(cacheInfo.getNodeName());
+                    final Map<String, String> map = cacheInfo.getMap();
+                    map.keySet().stream()
+                            .sorted(Comparator.naturalOrder())
+                            .forEachOrdered(k -> {
+                                final String v = map.get(k);
+                                tableBuilder.addRow(k, v);
+                            });
+                    return tableBuilder.build();
+                })
+                .build();
     }
 
     public void read(final String cacheName) {

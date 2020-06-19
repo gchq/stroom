@@ -331,16 +331,19 @@ public abstract class AbstractMetaListPresenter extends MyPresenterWidget<DataGr
                         .onSuccess(result -> {
                             final TooltipUtil.Builder builder = TooltipUtil.builder();
 
-                            for (int i = 0; i < result.size(); i++) {
-                                final MetaInfoSection section = result.get(i);
-                                builder.addHeading(section.getTitle());
-                                section.getEntries()
-                                        .forEach(entry ->
-                                                builder.addLine(entry.getKey(), entry.getValue()));
-                                if (i < result.size() - 1) {
-                                    builder.addBreak();
+                            builder.addTable(tableBuilder -> {
+                                for (int i = 0; i < result.size(); i++) {
+                                    final MetaInfoSection section = result.get(i);
+                                    tableBuilder.addHeaderRow(section.getTitle());
+                                    section.getEntries()
+                                            .forEach(entry ->
+                                                    tableBuilder.addRow(entry.getKey(), entry.getValue()));
+                                    if (i < result.size() - 1) {
+                                        tableBuilder.addBlankRow();
+                                    }
                                 }
-                            }
+                                return tableBuilder.build();
+                            });
 
                             tooltipPresenter.setHTML(builder.build());
                             final PopupPosition popupPosition = new PopupPosition(x, y);

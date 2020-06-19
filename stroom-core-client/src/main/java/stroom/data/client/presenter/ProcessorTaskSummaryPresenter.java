@@ -92,16 +92,19 @@ public class ProcessorTaskSummaryPresenter extends MyPresenterWidget<DataGridVie
         final InfoColumn<ProcessorTaskSummary> infoColumn = new InfoColumn<ProcessorTaskSummary>() {
             @Override
             protected void showInfo(final ProcessorTaskSummary row, final int x, final int y) {
-                final TooltipUtil.Builder builder = TooltipUtil.builder();
-
-                builder.addHeading("Key Data");
-                final DocRef pipeline = row.getPipeline();
-                if (pipeline != null) {
-                    builder.addLine("Pipeline", DocRefUtil.createSimpleDocRefString(pipeline));
-                }
-                builder.addLine("Feed", row.getFeed());
-                builder.addLine("Priority", row.getPriority());
-                builder.addLine("Status", row.getStatus());
+                final TooltipUtil.Builder builder = TooltipUtil.builder()
+                        .addTable(tableBuilder -> {
+                            tableBuilder.addHeaderRow("Key Data");
+                            final DocRef pipeline = row.getPipeline();
+                            if (pipeline != null) {
+                                tableBuilder.addRow("Pipeline", DocRefUtil.createSimpleDocRefString(pipeline));
+                            }
+                            return tableBuilder
+                                    .addRow("Feed", row.getFeed())
+                                    .addRow("Priority", row.getPriority())
+                                    .addRow("Status", row.getStatus())
+                                    .build();
+                        });
 
                 tooltipPresenter.setHTML(builder.build());
 

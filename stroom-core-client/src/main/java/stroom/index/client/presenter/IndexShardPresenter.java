@@ -224,36 +224,38 @@ public class IndexShardPresenter extends MyPresenterWidget<DataGridView<IndexSha
         final InfoColumn<IndexShard> infoColumn = new InfoColumn<IndexShard>() {
             @Override
             protected void showInfo(final IndexShard indexShard, final int x, final int y) {
-                final TooltipUtil.Builder builder = TooltipUtil.builder();
+                final TooltipUtil.Builder builder = TooltipUtil.builder()
+                        .addTable(tableBuilder -> {
+                            if (index != null) {
+                                tableBuilder.addRow("Index UUID", String.valueOf(index.getUuid()));
+                            }
+                            tableBuilder
+                                    .addRow("Shard Id", String.valueOf(indexShard.getId()))
+                                    .addRow("Node", indexShard.getNodeName())
+                                    .addRow("Partition", indexShard.getPartition());
 
-                if (index != null) {
-                    builder.addLine("Index UUID", String.valueOf(index.getUuid()));
-                }
-                builder
-                        .addLine("Shard Id", String.valueOf(indexShard.getId()))
-                        .addLine("Node", indexShard.getNodeName())
-                        .addLine("Partition", indexShard.getPartition());
+                            if (indexShard.getPartitionFromTime() != null) {
+                                tableBuilder.addRow("Partition From",
+                                        ClientDateUtil.toISOString(indexShard.getPartitionFromTime()));
+                            }
+                            if (indexShard.getPartitionToTime() != null) {
+                                tableBuilder.addRow("Partition To",
+                                        ClientDateUtil.toISOString(indexShard.getPartitionToTime()));
+                            }
 
-                if (indexShard.getPartitionFromTime() != null) {
-                    builder.addLine("Partition From",
-                            ClientDateUtil.toISOString(indexShard.getPartitionFromTime()));
-                }
-                if (indexShard.getPartitionToTime() != null) {
-                    builder.addLine("Partition To",
-                            ClientDateUtil.toISOString(indexShard.getPartitionToTime()));
-                }
-
-                builder
-                        .addLine("Path", indexShard.getVolume().getPath())
-                        .addLine("Status", indexShard.getStatus().getDisplayValue())
-                        .addLine("Document Count", intToString(indexShard.getDocumentCount()))
-                        .addLine("File Size", indexShard.getFileSizeString())
-                        .addLine("Bytes Per Document", intToString(indexShard.getBytesPerDocument()))
-                        .addLine("Commit", ClientDateUtil.toISOString(indexShard.getCommitMs()))
-                        .addLine("Commit Duration",
-                                ModelStringUtil.formatDurationString(indexShard.getCommitDurationMs()))
-                        .addLine("Commit Document Count", intToString(indexShard.getCommitDocumentCount()))
-                        .addLine("Index Version", indexShard.getIndexVersion());
+                            return tableBuilder
+                                    .addRow("Path", indexShard.getVolume().getPath())
+                                    .addRow("Status", indexShard.getStatus().getDisplayValue())
+                                    .addRow("Document Count", intToString(indexShard.getDocumentCount()))
+                                    .addRow("File Size", indexShard.getFileSizeString())
+                                    .addRow("Bytes Per Document", intToString(indexShard.getBytesPerDocument()))
+                                    .addRow("Commit", ClientDateUtil.toISOString(indexShard.getCommitMs()))
+                                    .addRow("Commit Duration",
+                                            ModelStringUtil.formatDurationString(indexShard.getCommitDurationMs()))
+                                    .addRow("Commit Document Count", intToString(indexShard.getCommitDocumentCount()))
+                                    .addRow("Index Version", indexShard.getIndexVersion())
+                                    .build();
+                        });
 
                 tooltipPresenter.setHTML(builder.build());
 

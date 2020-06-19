@@ -184,6 +184,9 @@ public final class TooltipUtil {
             buffer = new SafeHtmlBuilder()
                     .appendHtmlConstant("<Table>");
         }
+        public TableBuilder addHeaderRow(final String key) {
+            return addHeaderRow(key, "");
+        }
 
         public TableBuilder addHeaderRow(final String key, final String value) {
             buffer
@@ -193,6 +196,10 @@ public final class TooltipUtil {
                     .append(boldText(value))
                     .appendHtmlConstant("</th></tr>");
             return this;
+        }
+
+        public TableBuilder addHeaderRow(final SafeHtml key) {
+            return addHeaderRow(key, BLANK);
         }
 
         public TableBuilder addHeaderRow(final SafeHtml key, final SafeHtml value) {
@@ -209,6 +216,10 @@ public final class TooltipUtil {
             buffer.appendHtmlConstant("<tr><td>&nbsp;</td><td>&nbsp;</td></tr>");
             return this;
         }
+
+//        public TableBuilder addRow(final Object key) {
+//            return addRow(key, null, true);
+//        }
 
         public TableBuilder addRow(final Object key,
                                    final Object value) {

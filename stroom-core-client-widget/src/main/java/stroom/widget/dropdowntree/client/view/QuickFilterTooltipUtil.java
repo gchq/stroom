@@ -61,7 +61,6 @@ public class QuickFilterTooltipUtil {
         if (fieldDefinitions != null && !fieldDefinitions.isEmpty()) {
             builder
                     .addBreak()
-                    .addBreak()
                     .addTable(tableBuilder -> {
                         tableBuilder.addHeaderRow("Filterable fields", "Field qualifier");
                         fieldDefinitions.forEach(fieldDefinition -> {
