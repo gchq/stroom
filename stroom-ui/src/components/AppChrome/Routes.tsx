@@ -42,9 +42,8 @@ import Welcome from "components/Welcome";
 import AppChrome from "./AppChrome";
 import useAppNavigation from "lib/useAppNavigation";
 import DataVolumes from "components/DataVolumes/DataVolumesSectionContainer";
-import ConfirmCurrentPasswordForm from "components/Authentication/ConfirmCurrentPasswordForm";
-import ChangePasswordForm from "components/Authentication/ChangePasswordForm";
 import SignInManager from "../Authentication/SignInManager";
+import ChangePasswordManager from "../Authentication/ChangePasswordManager";
 
 const renderWelcome = ({
   match: {
@@ -92,18 +91,13 @@ const Routes: React.FunctionComponent = () => {
 
       <Route
         exact
-        path={`${singlePagePrefix}/login`}
+        path={`${singlePagePrefix}/signIn`}
         component={SignInManager}
       />
       <Route
         exact
-        path={`${singlePagePrefix}/confirmpassword`}
-        component={ConfirmCurrentPasswordForm}
-      />
-      <Route
-        exact
         path={`${singlePagePrefix}/changepassword`}
-        component={ChangePasswordForm}
+        component={ChangePasswordManager}
       />
       <PrivateRoute exact path="/" render={renderWelcome} />
       <PrivateRoute

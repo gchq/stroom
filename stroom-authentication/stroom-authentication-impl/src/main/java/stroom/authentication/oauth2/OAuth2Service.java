@@ -5,7 +5,6 @@ import stroom.authentication.api.OIDC;
 import stroom.authentication.api.OpenIdClientDetailsFactory;
 import stroom.authentication.authenticate.api.AuthenticationService;
 import stroom.authentication.authenticate.api.AuthenticationService.AuthState;
-import stroom.authentication.config.AuthenticationConfig;
 import stroom.authentication.exceptions.BadRequestException;
 import stroom.authentication.token.TokenBuilder;
 import stroom.authentication.token.TokenBuilderFactory;
@@ -74,7 +73,7 @@ class OAuth2Service {
 
             if (requireLoginPrompt) {
                 LOGGER.debug("Login has been requested by the RP");
-                result = authenticationService.createLoginUri(redirectUri);
+                result = authenticationService.createSignInUri(redirectUri);
 
             } else {
                 // We need to make sure our understanding of the session is correct
@@ -86,7 +85,7 @@ class OAuth2Service {
 
                     // If the users password still needs tp be changed then send them back to the login page.
                     if (authState.isRequirePasswordChange()) {
-                        result = authenticationService.createLoginUri(redirectUri);
+                        result = authenticationService.createSignInUri(redirectUri);
 
                     } else {
                         LOGGER.debug("User has a session, sending them back to the RP");
@@ -110,7 +109,7 @@ class OAuth2Service {
 
                 } else {
                     LOGGER.debug("User has no session and no certificate - sending them to login.");
-                    result = authenticationService.createLoginUri(redirectUri);
+                    result = authenticationService.createSignInUri(redirectUri);
                 }
             }
 

@@ -49,6 +49,6 @@ class NoCertificateExceptionMapper implements ExceptionMapper<NoCertificateExcep
     @Override
     public Response toResponse(NoCertificateException exception) {
         LOGGER.debug("Unable to create a token for this user. Redirecting to login as a backup method.", exception);
-        return Response.seeOther(uriFactory.uiUri(AuthenticationService.LOGIN_URL_PATH)).build();
+        return Response.seeOther(uriFactory.uiUri(AuthenticationService.SIGN_IN_URL_PATH)).build();
     }
 }

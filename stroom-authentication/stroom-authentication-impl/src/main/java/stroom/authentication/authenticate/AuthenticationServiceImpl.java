@@ -332,9 +332,12 @@ class AuthenticationServiceImpl implements AuthenticationService {
             return new ChangePasswordResponse(false, "It has been too long since you last signed in, please sign in again", true);
         }
 
+        // TODO : @66 At present the change password request doesn't always know the user id.
+        final String username = authState.getSubject();
+
         List<String> failedOn = new ArrayList<>();
         final CredentialValidationResult result = accountDao.validateCredentials(
-                changePasswordRequest.getUserId(),
+                username,
                 changePasswordRequest.getCurrentPassword());
 
         PasswordValidator.validateAuthenticity(result)
@@ -360,9 +363,9 @@ class AuthenticationServiceImpl implements AuthenticationService {
         }
 
         if (failedOn.size() == 0) {
-            accountDao.changePassword(changePasswordRequest.getUserId(), changePasswordRequest.getNewPassword());
+            accountDao.changePassword(username, changePasswordRequest.getNewPassword());
 
-            if (authState.getSubject().equals(changePasswordRequest.getUserId())) {
+            if (authState.getSubject().equals(username)) {
                 setAuthState(request.getSession(true), new AuthStateImpl(authState.getAccount(), false, System.currentTimeMillis()));
             }
 
@@ -500,9 +503,9 @@ class AuthenticationServiceImpl implements AuthenticationService {
     }
 
     @Override
-    public URI createLoginUri(final String redirectUri) {
+    public URI createSignInUri(final String redirectUri) {
         LOGGER.debug("Sending user to login.");
-        final UriBuilder uriBuilder = UriBuilder.fromUri(uriFactory.uiUri(AuthenticationService.LOGIN_URL_PATH))
+        final UriBuilder uriBuilder = UriBuilder.fromUri(uriFactory.uiUri(AuthenticationService.SIGN_IN_URL_PATH))
                 .queryParam("error", "login_required")
                 .queryParam(OIDC.REDIRECT_URI, redirectUri);
         return uriBuilder.build();

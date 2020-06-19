@@ -102,6 +102,9 @@ const FormikWrapper: React.FunctionComponent<AuthStateProps> = ({
           } else if (response.valid) {
             setAuthState({
               ...authState,
+              userId: values.userId,
+              currentPassword: values.password,
+              requirePasswordChange: true,
             });
           } else {
             actions.setSubmitting(false);
