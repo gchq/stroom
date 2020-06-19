@@ -1,6 +1,6 @@
 package stroom.authentication.account;
 
-import stroom.authentication.authenticate.LoginResult;
+import stroom.authentication.authenticate.CredentialValidationResult;
 import stroom.util.shared.ResultPage;
 
 import java.time.Duration;
@@ -11,7 +11,7 @@ public interface AccountDao {
 
     void recordSuccessfulLogin(String email);
 
-    LoginResult areCredentialsValid(String email, String password);
+    CredentialValidationResult validateCredentials(String username, String password);
 
     boolean incrementLoginFailures(String email);
 

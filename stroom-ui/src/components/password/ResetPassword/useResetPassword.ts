@@ -24,7 +24,7 @@ const useResetPassword = (): {
     (formData: any, formikBag: FormikBag<any, any>) => {
       submitPasswordChangeRequestUsingApi({
         userId: "sf",
-        oldPassword: "sdf",
+        currentPassword: "sdf",
         newPassword: "szdf",
         confirmNewPassword: "\fe",
       }).then(() => history.push("/s/confirmPasswordResetEmail"));
@@ -53,15 +53,15 @@ const useResetPassword = (): {
               console.error("No redirect URI available for redirect!");
             }
           } else {
-            const errorMessage = [];
-            if (response.failedOn.includes("COMPLEXITY")) {
-              errorMessage.push(
-                "Your new password does not meet the complexity requirements",
-              );
-            }
-            if (response.failedOn.includes("LENGTH")) {
-              errorMessage.push("Your new password is too short");
-            }
+            // const errorMessage = [];
+            // if (response.failedOn.includes("COMPLEXITY")) {
+            //   errorMessage.push(
+            //     "Your new password does not meet the complexity requirements",
+            //   );
+            // }
+            // if (response.failedOn.includes("LENGTH")) {
+            //   errorMessage.push("Your new password is too short");
+            // }
           }
         },
       );

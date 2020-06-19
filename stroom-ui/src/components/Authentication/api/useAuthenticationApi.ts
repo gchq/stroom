@@ -1,7 +1,5 @@
-import * as queryString from "query-string";
-import { useCallback, useMemo } from "react";
+import { useCallback } from "react";
 import { useHttpClient2 } from "lib/useHttpClient";
-import { useLocation } from "react-router-dom";
 import {
   ChangePasswordRequest,
   ChangePasswordResponse,
@@ -32,50 +30,26 @@ export const useAuthenticationApi = (): Api => {
   const { get, post } = useHttpClient2();
   const { apiUrl } = useUrlFactory();
   const resource = apiUrl("/authentication/v1");
-  // let redirectUri: string;
-
-  const location = useLocation();
-  // if (!!router && !!router.location) {
-  //   const query = queryString.parse(router.location.search);
-  //   if (!!query.redirect_uri) {
-  //     redirectUri = query.redirect_uri + "";
-  //   }
-  // }
-
-  const redirectUri: string = useMemo(() => {
-    if (!!location) {
-      const query = queryString.parse(location.search);
-      if (!!query.redirect_uri) {
-        return query.redirect_uri + "";
-      }
-    }
-  }, [location]);
 
   const login = useCallback(
     (request: LoginRequest) => {
-      const uri = encodeURI(redirectUri);
-      const url = `${resource}/noauth/login?redirect_uri=${uri}`;
-      return post(url, request);
+      return post(`${resource}/noauth/login`, request);
     },
-    [resource, redirectUri, post],
+    [resource, post],
   );
 
   const confirmPassword = useCallback(
     (request: ConfirmPasswordRequest) => {
-      const uri = encodeURI(redirectUri);
-      const url = `${resource}/noauth/confirmPassword?redirect_uri=${uri}`;
-      return post(url, request);
+      return post(`${resource}/noauth/confirmPassword`, request);
     },
-    [resource, redirectUri, post],
+    [resource, post],
   );
 
   const changePassword = useCallback(
     (request: ChangePasswordRequest) => {
-      const uri = encodeURI(redirectUri);
-      const url = `${resource}/noauth/changePassword?redirect_uri=${uri}`;
-      return post(url, request);
+      return post(`${resource}/noauth/changePassword`, request);
     },
-    [resource, redirectUri, post],
+    [resource, post],
   );
 
   const resetPassword = useCallback(

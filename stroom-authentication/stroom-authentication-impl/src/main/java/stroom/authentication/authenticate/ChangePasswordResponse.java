@@ -10,28 +10,28 @@ public class ChangePasswordResponse {
     @JsonProperty
     private final boolean changeSucceeded;
     @JsonProperty
-    private final String[] failedOn;
+    private final String message;
     @JsonProperty
-    private final String redirectUri;
+    private final boolean forceSignIn;
 
     @JsonCreator
     public ChangePasswordResponse(@JsonProperty("changeSucceeded") final boolean changeSucceeded,
-                                  @JsonProperty("failedOn") final String[] failedOn,
-                                  @JsonProperty("redirectUri")final String redirectUri) {
+                                  @JsonProperty("message") final String message,
+                                  @JsonProperty("forceSignIn") final boolean forceSignIn) {
         this.changeSucceeded = changeSucceeded;
-        this.failedOn = failedOn;
-        this.redirectUri = redirectUri;
+        this.message = message;
+        this.forceSignIn = forceSignIn;
     }
 
     public boolean isChangeSucceeded() {
         return changeSucceeded;
     }
 
-    public String[] getFailedOn() {
-        return failedOn;
+    public String getMessage() {
+        return message;
     }
 
-    public String getRedirectUri() {
-        return redirectUri;
+    public boolean isForceSignIn() {
+        return forceSignIn;
     }
 }

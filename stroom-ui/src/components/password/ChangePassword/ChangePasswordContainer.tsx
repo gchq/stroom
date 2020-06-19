@@ -47,11 +47,6 @@ const ChangePasswordContainer = () => {
         setRedirectUri(decodedRedirectUri);
       }
 
-      const userId: string = query.userId as string;
-      if (userId === undefined) {
-        // userId = Cookies.get("userId");
-      }
-
       if (email) {
         setEmail(email);
       } else {

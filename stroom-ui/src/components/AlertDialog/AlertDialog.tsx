@@ -19,7 +19,9 @@ import ReactModal from "react-modal";
 import reactModalOptions from "../ThemedModal/reactModalOptions";
 import { useTheme } from "../../lib/useTheme";
 import { createRef } from "react";
-import Button from "../Button/Button";
+// import Button from "../Button/Button";
+import { Button } from "antd";
+import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
 
 export enum AlertType {
   INFO,
@@ -100,6 +102,12 @@ const AlertHeader: React.FunctionComponent<Alert> = (alert) => {
   }
 };
 
+const Tick: React.FunctionComponent = () => (
+  <span className="Button__icon">
+    <FontAwesomeIcon size="1x" icon="check" />
+  </span>
+);
+
 export const AlertDialog: React.FunctionComponent<Props> = ({
   alert,
   isOpen,
@@ -120,7 +128,12 @@ export const AlertDialog: React.FunctionComponent<Props> = ({
       shouldReturnFocusAfterClose={true}
       onAfterOpen={() => okButtonRef.current.focus()}
     >
-      <form onSubmit={() => onCloseDialog}>
+      <form
+        onSubmit={(event) => {
+          event.preventDefault();
+          onCloseDialog();
+        }}
+      >
         <div className="themed-modal__container">
           <header className="themed-modal__header">
             <AlertHeader {...alert} />
@@ -128,15 +141,25 @@ export const AlertDialog: React.FunctionComponent<Props> = ({
           <div className="themed-modal__content">{alert && alert.message}</div>
           <div className="themed-modal__footer__actions">
             <Button
-              appearance="contained"
-              action="primary"
-              icon="check"
-              text="OK"
-              type="submit"
+              className="Button__ok"
+              type="primary"
+              htmlType="submit"
+              icon={<Tick />}
               ref={okButtonRef}
             >
               OK
             </Button>
+
+            {/*<Button*/}
+            {/*  appearance="contained"*/}
+            {/*  action="primary"*/}
+            {/*  icon="check"*/}
+            {/*  text="OK"*/}
+            {/*  type="submit"*/}
+            {/*  ref={okButtonRef}*/}
+            {/*>*/}
+            {/*  OK*/}
+            {/*</Button>*/}
           </div>
         </div>
       </form>

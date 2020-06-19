@@ -6,7 +6,7 @@ export interface LoginRequest {
 export interface LoginResponse {
   loginSuccessful: boolean;
   message: string;
-  redirectUri: string;
+  requirePasswordChange: boolean;
 }
 
 export interface ConfirmPasswordRequest {
@@ -16,20 +16,19 @@ export interface ConfirmPasswordRequest {
 export interface ConfirmPasswordResponse {
   valid: boolean;
   message: string;
-  redirectUri: string;
 }
 
 export interface ChangePasswordRequest {
   userId: string;
-  oldPassword: string;
+  currentPassword: string;
   newPassword: string;
   confirmNewPassword: string;
 }
 
 export interface ChangePasswordResponse {
   changeSucceeded: boolean;
-  failedOn: string[];
-  redirectUri: string;
+  message: string;
+  forceSignIn: boolean;
 }
 
 export interface ResetPasswordRequest {
@@ -46,4 +45,11 @@ export interface PasswordPolicyConfig {
   passwordComplexityRegex?: string;
   minimumPasswordStrength?: number;
   minimumPasswordLength?: number;
+}
+
+export interface AuthState {
+  userId: string;
+  currentPassword: string;
+  allowPasswordResets: boolean;
+  requirePasswordChange: boolean;
 }

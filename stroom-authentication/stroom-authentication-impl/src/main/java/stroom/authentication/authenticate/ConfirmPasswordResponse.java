@@ -11,16 +11,12 @@ public class ConfirmPasswordResponse {
     private final boolean valid;
     @JsonProperty
     private final String message;
-    @JsonProperty
-    private final String redirectUri;
 
     @JsonCreator
     public ConfirmPasswordResponse(@JsonProperty("valid") final boolean valid,
-                                   @JsonProperty("message") final String message,
-                                   @JsonProperty("redirectUri") final String redirectUri) {
+                                   @JsonProperty("message") final String message) {
         this.valid = valid;
         this.message = message;
-        this.redirectUri = redirectUri;
     }
 
     public boolean isValid() {
@@ -29,9 +25,5 @@ public class ConfirmPasswordResponse {
 
     public String getMessage() {
         return message;
-    }
-
-    public String getRedirectUri() {
-        return redirectUri;
     }
 }

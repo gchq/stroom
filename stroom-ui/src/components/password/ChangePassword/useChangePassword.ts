@@ -10,7 +10,6 @@ const useChangePassword = (): {
   isSubmitting: boolean;
 } => {
   const {
-    addErrorMessage,
     errorMessages,
     showChangeConfirmation,
     setShowChangeConfirmation,
@@ -34,24 +33,24 @@ const useChangePassword = (): {
           // }
         } else {
           setSubmitting(false);
-          if (response.failedOn.includes("BAD_OLD_PASSWORD")) {
-            addErrorMessage("Your old password is not correct");
-          }
-          if (response.failedOn.includes("COMPLEXITY")) {
-            addErrorMessage(
-              "Your new password does not meet the complexity requirements",
-            );
-          }
-          if (response.failedOn.includes("REUSE")) {
-            addErrorMessage("You may not reuse your previous password");
-          }
-          if (response.failedOn.includes("LENGTH")) {
-            addErrorMessage("Your new password is too short");
-          }
+          // if (response.failedOn.includes("BAD_OLD_PASSWORD")) {
+          //   addErrorMessage("Your old password is not correct");
+          // }
+          // if (response.failedOn.includes("COMPLEXITY")) {
+          //   addErrorMessage(
+          //     "Your new password does not meet the complexity requirements",
+          //   );
+          // }
+          // if (response.failedOn.includes("REUSE")) {
+          //   addErrorMessage("You may not reuse your previous password");
+          // }
+          // if (response.failedOn.includes("LENGTH")) {
+          //   addErrorMessage("Your new password is too short");
+          // }
         }
       });
     },
-    [changePasswordUsingApi, setShowChangeConfirmation, addErrorMessage],
+    [changePasswordUsingApi, setShowChangeConfirmation],
   );
 
   return {

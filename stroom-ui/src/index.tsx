@@ -18,10 +18,7 @@ import { AuthorisationContextProvider } from "startup/Authorisation";
 import { AuthenticationContextProvider } from "startup/Authentication";
 import { DocumentTreeContextProvider } from "components/DocumentEditors/api/explorer";
 import { ErrorReportingContextProvider } from "components/ErrorPage";
-import {
-  AlertDisplayBoundary,
-  AlertOutlet,
-} from "./components/AlertDialog/AlertDisplayBoundary";
+import { AlertDisplayBoundary } from "./components/AlertDialog/AlertDisplayBoundary";
 
 export const history = createHistory();
 
@@ -41,7 +38,6 @@ const App: React.FunctionComponent = () => (
                   <DndRoutes />
                 </DocumentTreeContextProvider>
               </CustomRouter>
-              <AlertOutlet />
             </ThemeContextProvider>
           </AuthorisationContextProvider>
         </AuthenticationContextProvider>

@@ -22,12 +22,8 @@ public class PasswordValidator {
                 : Optional.of(PasswordValidationFailureType.COMPLEXITY);
     }
 
-    static Optional<PasswordValidationFailureType> validateAuthenticity(final LoginResult loginResult) {
-        boolean isPasswordValid = loginResult != LoginResult.BAD_CREDENTIALS
-                && loginResult != LoginResult.DISABLED_BAD_CREDENTIALS
-                && loginResult != LoginResult.LOCKED_BAD_CREDENTIALS
-                && loginResult != LoginResult.USER_DOES_NOT_EXIST;
-        return isPasswordValid
+    static Optional<PasswordValidationFailureType> validateAuthenticity(final CredentialValidationResult result) {
+        return result.isAllOk()
                 ? Optional.empty()
                 : Optional.of(PasswordValidationFailureType.BAD_OLD_PASSWORD);
     }

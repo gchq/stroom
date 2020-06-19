@@ -20,7 +20,7 @@ package stroom.authentication.impl.db;
 
 import stroom.authentication.account.Account;
 import stroom.authentication.account.AccountDao;
-import stroom.authentication.authenticate.LoginResult;
+import stroom.authentication.authenticate.CredentialValidationResult;
 import stroom.authentication.config.AuthenticationConfig;
 import stroom.authentication.exceptions.NoSuchUserException;
 import stroom.authentication.impl.db.jooq.tables.records.AccountRecord;
@@ -35,6 +35,7 @@ import com.google.common.base.Strings;
 import org.jooq.Record;
 import org.jooq.Record1;
 import org.jooq.TableField;
+import org.jooq.impl.DSL;
 
 import javax.inject.Inject;
 import javax.inject.Singleton;
@@ -130,88 +131,63 @@ class AccountDaoImpl implements AccountDao {
 
     @Override
     public void recordSuccessfulLogin(final String email) {
-        AccountRecord user = JooqUtil.contextResult(authDbConnProvider, context -> context
-                .selectFrom(ACCOUNT)
-                .where(ACCOUNT.EMAIL.eq(email))
-                .fetchOne());
-
         // We reset the failed login count if we have a successful login
-        user.setLoginFailures(0);
-        user.setReactivatedMs(null);
-        user.setLoginCount(user.getLoginCount() + 1);
-        user.setLastLoginMs(System.currentTimeMillis());
         JooqUtil.context(authDbConnProvider, context -> context
                 .update(ACCOUNT)
-                .set(user)
-                .where(ACCOUNT.EMAIL.eq(user.getEmail()))
+                .set(ACCOUNT.LOGIN_FAILURES, 0)
+                .set(ACCOUNT.REACTIVATED_MS, (Long) null)
+                .set(ACCOUNT.LOGIN_COUNT, ACCOUNT.LOGIN_COUNT.plus(1))
+                .set(ACCOUNT.LAST_LOGIN_MS, System.currentTimeMillis())
+                .where(ACCOUNT.EMAIL.eq(email))
                 .execute());
     }
 
-    //    @Override
-    public LoginResult areCredentialsValid(String email, String password) {
-        if (Strings.isNullOrEmpty(email)
+    @Override
+    public CredentialValidationResult validateCredentials(final String username, final String password) {
+        if (Strings.isNullOrEmpty(username)
                 || Strings.isNullOrEmpty(password)) {
-            return LoginResult.BAD_CREDENTIALS;
+            return new CredentialValidationResult(false, true, false, false, false, false);
         }
 
         final Optional<AccountRecord> optionalRecord = JooqUtil.contextResult(authDbConnProvider, context -> context
                 .selectFrom(ACCOUNT)
-                .where(ACCOUNT.EMAIL.eq(email))
+                .where(ACCOUNT.EMAIL.eq(username))
                 .fetchOptional());
 
-        if (!optionalRecord.isPresent()) {
-            LOGGER.debug("Request to log in with invalid username: " + email);
-            return LoginResult.USER_DOES_NOT_EXIST;
-        } else {
-            final AccountRecord record = optionalRecord.get();
-            boolean isPasswordCorrect = PasswordHashUtil.checkPassword(password, record.getPasswordHash());
-            boolean isDisabled = !record.getEnabled();
-            boolean isInactive = record.getInactive();
-            boolean isLocked = record.getLocked();
-            boolean isProcessingAccount = record.getProcessingAccount();
-
-            if (isLocked) {
-                LOGGER.debug("Account {} tried to log in but it is locked.", email);
-                return isPasswordCorrect
-                        ? LoginResult.LOCKED_GOOD_CREDENTIALS
-                        : LoginResult.LOCKED_BAD_CREDENTIALS;
-            } else if (isDisabled) {
-                LOGGER.debug("Account {} tried to log in but it is disabled.", email);
-                return isPasswordCorrect
-                        ? LoginResult.DISABLED_GOOD_CREDENTIALS
-                        : LoginResult.DISABLED_BAD_CREDENTIALS;
-            } else if (isInactive) {
-                LOGGER.debug("Account {} tried to log in but it is inactive.", email);
-                return isPasswordCorrect
-                        ? LoginResult.INACTIVE_GOOD_CREDENTIALS
-                        : LoginResult.INACTIVE_BAD_CREDENTIALS;
-            } else if (isProcessingAccount) {
-                LOGGER.debug("Account {} tried to log in but it is a processing account.", email);
-                return LoginResult.PROCESSING_ACCOUNT;
-            } else {
-                return isPasswordCorrect
-                        ? LoginResult.GOOD_CREDENTIALS
-                        : LoginResult.BAD_CREDENTIALS;
-            }
+        if (optionalRecord.isEmpty()) {
+            LOGGER.debug("Request to log in with invalid username: " + username);
+            return new CredentialValidationResult(false, true, false, false, false, false);
         }
+
+        final AccountRecord record = optionalRecord.get();
+        boolean isPasswordCorrect = PasswordHashUtil.checkPassword(password, record.getPasswordHash());
+        boolean isDisabled = !record.getEnabled();
+        boolean isInactive = record.getInactive();
+        boolean isLocked = record.getLocked();
+        boolean isProcessingAccount = record.getProcessingAccount();
+
+        return new CredentialValidationResult(isPasswordCorrect, false, isLocked, isDisabled, isInactive, isProcessingAccount);
     }
 
     @Override
-    public boolean incrementLoginFailures(String email) {
-        JooqUtil.context(authDbConnProvider, context -> context
-                .update(ACCOUNT)
-                .set(ACCOUNT.LOGIN_FAILURES, ACCOUNT.LOGIN_FAILURES.plus(1))
-                .where(ACCOUNT.EMAIL.eq(email))
-                .execute());
-
+    public boolean incrementLoginFailures(final String email) {
         boolean locked = false;
+
         if (config.getFailedLoginLockThreshold() != null) {
-            // Set the locked field if we have exceeded threshold.
             JooqUtil.context(authDbConnProvider, context -> context
                     .update(ACCOUNT)
-                    .set(ACCOUNT.LOCKED, true)
+//                    .set(DSL.row(ACCOUNT.LOGIN_FAILURES, ACCOUNT.LOGIN_FAILURES),
+//                            DSL.row(DSL.select(ACCOUNT.LOGIN_FAILURES.plus(1),
+//                                    DSL.field(ACCOUNT.LOGIN_FAILURES.plus(2).ge(config.getFailedLoginLockThreshold())).fr).plus(1))
+//                    .set(ACCOUNT.LOCKED,
+//                            context.select(DSL.count())
+//                                    .from(ACCOUNT)
+//                                    .where(ACCOUNT.EMAIL.eq(email).and(ACCOUNT.LOGIN_FAILURES.plus(1).ge(config.getFailedLoginLockThreshold()))
+//                          ))
+
+                    .set(ACCOUNT.LOGIN_FAILURES, ACCOUNT.LOGIN_FAILURES.plus(1))
+                    .set(ACCOUNT.LOCKED, DSL.field(ACCOUNT.LOGIN_FAILURES.ge(config.getFailedLoginLockThreshold())))
                     .where(ACCOUNT.EMAIL.eq(email))
-                    .and(ACCOUNT.LOGIN_FAILURES.greaterOrEqual(config.getFailedLoginLockThreshold()))
                     .execute());
 
             // Query the field back to find out if we locked.
@@ -222,7 +198,35 @@ class AccountDaoImpl implements AccountDao {
                     .fetchOptional()
                     .map(Record1::value1)
                     .orElse(false));
+        } else {
+            JooqUtil.context(authDbConnProvider, context -> context
+                    .update(ACCOUNT)
+                    .set(ACCOUNT.LOGIN_FAILURES, ACCOUNT.LOGIN_FAILURES.plus(1))
+                    .where(ACCOUNT.EMAIL.eq(email))
+                    .execute());
         }
+
+
+//
+//        boolean locked = false;
+//        if (config.getFailedLoginLockThreshold() != null) {
+//            // Set the locked field if we have exceeded threshold.
+//            JooqUtil.context(authDbConnProvider, context -> context
+//                    .update(ACCOUNT)
+//                    .set(ACCOUNT.LOCKED, true)
+//                    .where(ACCOUNT.EMAIL.eq(email))
+//                    .and(ACCOUNT.LOGIN_FAILURES.greaterOrEqual(config.getFailedLoginLockThreshold()))
+//                    .execute());
+//
+//            // Query the field back to find out if we locked.
+//            locked = JooqUtil.contextResult(authDbConnProvider, context -> context
+//                    .select(ACCOUNT.LOCKED)
+//                    .from(ACCOUNT)
+//                    .where(ACCOUNT.EMAIL.eq(email))
+//                    .fetchOptional()
+//                    .map(Record1::value1)
+//                    .orElse(false));
+//        }
 
         if (locked) {
             LOGGER.debug("Account {} has had too many failed access attempts and is locked", email);

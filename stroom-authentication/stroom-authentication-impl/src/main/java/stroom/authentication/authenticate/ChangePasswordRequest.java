@@ -28,19 +28,19 @@ public class ChangePasswordRequest {
     @JsonProperty
     private String userId;
     @JsonProperty
-    private String oldPassword;
+    private String currentPassword;
     @JsonProperty
     private String newPassword;
     @JsonProperty
     private String confirmNewPassword;
 
     @JsonCreator
-    public ChangePasswordRequest(@JsonProperty("email") final String userId,
-                                 @JsonProperty("oldPassword") final String oldPassword,
+    public ChangePasswordRequest(@JsonProperty("userId") final String userId,
+                                 @JsonProperty("currentPassword") final String currentPassword,
                                  @JsonProperty("newPassword") final String newPassword,
                                  @JsonProperty("confirmNewPassword") final String confirmNewPassword) {
         this.userId = userId;
-        this.oldPassword = oldPassword;
+        this.currentPassword = currentPassword;
         this.newPassword = newPassword;
         this.confirmNewPassword = confirmNewPassword;
     }
@@ -49,8 +49,8 @@ public class ChangePasswordRequest {
         return userId;
     }
 
-    public String getOldPassword() {
-        return oldPassword;
+    public String getCurrentPassword() {
+        return currentPassword;
     }
 
     public String getNewPassword() {

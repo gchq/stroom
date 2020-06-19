@@ -20,7 +20,6 @@ package stroom.authentication.authenticate;
 
 import stroom.authentication.api.OIDC;
 import stroom.authentication.config.PasswordPolicyConfig;
-import stroom.authentication.config.TokenConfig;
 import stroom.util.shared.ResourcePaths;
 import stroom.util.shared.RestResource;
 
@@ -61,7 +60,6 @@ public interface AuthenticationResource extends RestResource {
             response = String.class, tags = {"Authentication"})
     LoginResponse login(
             @Context @NotNull HttpServletRequest request,
-            @QueryParam(OIDC.REDIRECT_URI) final String redirectUri,
             @ApiParam("Credentials") @NotNull LoginRequest loginRequest);
 
     @GET
@@ -81,7 +79,6 @@ public interface AuthenticationResource extends RestResource {
             response = String.class, tags = {"Authentication"})
     ConfirmPasswordResponse confirmPassword(
             @Context @NotNull HttpServletRequest request,
-            @QueryParam(OIDC.REDIRECT_URI) final String redirectUri,
             @ApiParam("confirmPasswordRequest") @NotNull ConfirmPasswordRequest confirmPasswordRequest);
 
 
@@ -93,7 +90,6 @@ public interface AuthenticationResource extends RestResource {
             response = String.class, tags = {"Authentication"})
     ChangePasswordResponse changePassword(
             @Context @NotNull HttpServletRequest request,
-            @QueryParam(OIDC.REDIRECT_URI) final String redirectUri,
             @ApiParam("changePasswordRequest") @NotNull ChangePasswordRequest changePasswordRequest);
 
     @GET
@@ -113,6 +109,7 @@ public interface AuthenticationResource extends RestResource {
     @ApiOperation(value = "Reset an authenticated user's password.",
             response = String.class, tags = {"Authentication"})
     ChangePasswordResponse resetPassword(
+            @Context @NotNull HttpServletRequest request,
             @ApiParam("changePasswordRequest") @NotNull ResetPasswordRequest req);
 
     @GET

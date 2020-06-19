@@ -19,9 +19,7 @@
 package stroom.authentication.authenticate;
 
 import stroom.authentication.config.PasswordPolicyConfig;
-import stroom.authentication.config.TokenConfig;
 import stroom.authentication.exceptions.NoSuchUserException;
-import stroom.ui.config.shared.UiConfig;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -49,10 +47,9 @@ class AuthenticationResourceImpl implements AuthenticationResource {
 
     @Override
     public LoginResponse login(final HttpServletRequest request,
-                               final String redirectUri,
                                final LoginRequest loginRequest) {
         LOGGER.debug("Received a login request");
-        return serviceProvider.get().handleLogin(loginRequest, request, redirectUri);
+        return serviceProvider.get().handleLogin(loginRequest, request);
     }
 
     @Override
@@ -72,16 +69,14 @@ class AuthenticationResourceImpl implements AuthenticationResource {
 
     @Override
     public ConfirmPasswordResponse confirmPassword(final HttpServletRequest request,
-                                                   final String redirectUri,
                                                    final ConfirmPasswordRequest confirmPasswordRequest) {
-        return serviceProvider.get().confirmPassword(request, redirectUri, confirmPasswordRequest);
+        return serviceProvider.get().confirmPassword(request, confirmPasswordRequest);
     }
 
     @Override
     public final ChangePasswordResponse changePassword(final HttpServletRequest request,
-                                                       final String redirectUri,
                                                        final ChangePasswordRequest changePasswordRequest) {
-        return serviceProvider.get().changePassword(request, redirectUri, changePasswordRequest);
+        return serviceProvider.get().changePassword(request, changePasswordRequest);
     }
 
     @Override
@@ -97,8 +92,9 @@ class AuthenticationResourceImpl implements AuthenticationResource {
     }
 
     @Override
-    public final ChangePasswordResponse resetPassword(final ResetPasswordRequest req) {
-        final ChangePasswordResponse changePasswordResponse = serviceProvider.get().resetPassword(req);
+    public final ChangePasswordResponse resetPassword(final HttpServletRequest request,
+                                                      final ResetPasswordRequest resetPasswordRequest) {
+        final ChangePasswordResponse changePasswordResponse = serviceProvider.get().resetPassword(request, resetPasswordRequest);
         if (changePasswordResponse != null) {
             return changePasswordResponse;
         }

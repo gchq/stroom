@@ -13,7 +13,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-import useHttpClient from "lib/useHttpClient";
+import { useHttpClient2 } from "lib/useHttpClient";
 import * as React from "react";
 import { UiConfig } from "./types";
 import { useUrlFactory } from "../../lib/useUrlFactory";
@@ -24,14 +24,14 @@ export interface Api {
 }
 
 const useApi = (): Api => {
-  const { httpGetJson } = useHttpClient();
+  const { get } = useHttpClient2();
   const { apiUrl } = useUrlFactory();
   const resource = apiUrl("/config/v1");
   const [config, setConfig] = useState<UiConfig>();
 
   const fetchConfig = React.useCallback(() => {
-    return httpGetJson(`${resource}/noauth/fetchUiConfig`, {}, false);
-  }, [httpGetJson, resource]);
+    return get(`${resource}/noauth/fetchUiConfig`);
+  }, [get, resource]);
 
   useEffect(() => {
     console.log("Fetching config");

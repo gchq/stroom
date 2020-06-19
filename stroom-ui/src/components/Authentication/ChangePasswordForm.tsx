@@ -1,7 +1,5 @@
 import * as React from "react";
 
-import LogoPage from "../Layout/LogoPage";
-import FormContainer from "../Layout/FormContainer";
 import { Button } from "antd";
 import { Formik, FormikProps } from "formik";
 import PasswordField from "./PasswordField";
@@ -10,11 +8,10 @@ import useAuthenticationApi from "./api/useAuthenticationApi";
 import { useEffect, useState } from "react";
 import { ChangePasswordRequest, PasswordPolicyConfig } from "./api/types";
 import { useAlert } from "../AlertDialog/AlertDisplayBoundary";
-import { useHistory } from "react-router-dom";
 import * as Yup from "yup";
 import { Alert, AlertType } from "../AlertDialog/AlertDialog";
 import zxcvbn from "zxcvbn";
-import Cookies from "cookies-js";
+import { AuthStateProps } from "./ConfirmCurrentPasswordForm";
 
 export interface FormValues {
   userId: string;
@@ -95,41 +92,41 @@ export const Form: React.FunctionComponent<Props & FormikProps<FormValues>> = ({
   </form>
 );
 
-const FormikWrapper: React.FunctionComponent = () => {
-  console.log("Render: ChangePasswordFormContainer");
-
+const FormikWrapper: React.FunctionComponent<AuthStateProps> = ({
+  authState,
+  setAuthState,
+}) => {
   const { changePassword, fetchPasswordPolicyConfig } = useAuthenticationApi();
 
   // Get token config
   const [passwordPolicyConfig, setPasswordPolicyConfig] = useState<
     PasswordPolicyConfig
-  >({
-    allowPasswordResets: true,
-    minimumPasswordStrength: 3,
-    minimumPasswordLength: 7,
-  });
+  >(undefined);
   useEffect(() => {
+    console.log("Fetching password policy config");
     fetchPasswordPolicyConfig().then(
       (passwordPolicyConfig: PasswordPolicyConfig) => {
         setPasswordPolicyConfig(passwordPolicyConfig);
       },
     );
   }, [fetchPasswordPolicyConfig]);
+  const { alert } = useAlert();
+  const [strength, setStrength] = useState(0);
+
+  if (passwordPolicyConfig === undefined) {
+    return <div>Loading...</div>;
+  }
+
   const {
     passwordComplexityRegex,
     minimumPasswordStrength,
     minimumPasswordLength,
   } = passwordPolicyConfig;
 
-  const { alert } = useAlert();
-
-  const [strength, setStrength] = useState(0);
   let currentStrength = strength;
 
   const minStrength = minimumPasswordStrength;
   const thresholdLength = minimumPasswordLength;
-
-  const history = useHistory();
 
   const passwordSchema = Yup.string()
     .label("Password")
@@ -156,10 +153,12 @@ const FormikWrapper: React.FunctionComponent = () => {
     confirmPassword: confirmPasswordSchema,
   });
 
+  console.log("Render: ChangePasswordFormContainer");
+
   return (
     <Formik
       initialValues={{
-        userId: Cookies.get("userId"),
+        userId: authState.userId,
         password: "",
         confirmPassword: "",
       }}
@@ -167,7 +166,7 @@ const FormikWrapper: React.FunctionComponent = () => {
       onSubmit={(values, actions) => {
         const request: ChangePasswordRequest = {
           userId: values.userId,
-          oldPassword: "asf",
+          currentPassword: authState.currentPassword,
           newPassword: values.password,
           confirmNewPassword: values.confirmPassword,
         };
@@ -176,15 +175,24 @@ const FormikWrapper: React.FunctionComponent = () => {
           if (!response) {
             actions.setSubmitting(false);
           } else if (response.changeSucceeded) {
-            history.push(response.redirectUri);
+            setAuthState({
+              ...authState,
+              currentPassword: undefined,
+              requirePasswordChange: false,
+            });
           } else {
             actions.setSubmitting(false);
             const error: Alert = {
               type: AlertType.ERROR,
               title: "Error",
-              message: response.failedOn[0],
+              message: response.message,
             };
             alert(error);
+
+            // If the user is asked to sign in again then unset the auth state.
+            if (response.forceSignIn) {
+              setAuthState(undefined);
+            }
           }
         });
       }}
@@ -214,22 +222,18 @@ const FormikWrapper: React.FunctionComponent = () => {
 };
 
 export const Page: React.FunctionComponent = ({ children }) => (
-  <LogoPage>
-    <FormContainer>
-      <div className="JoinForm__content">
-        <div className="d-flex flex-row justify-content-between align-items-center mb-3">
-          <legend className="form-label mb-0">Change Password</legend>
-        </div>
+  <div className="JoinForm__content">
+    <div className="d-flex flex-row justify-content-between align-items-center mb-3">
+      <legend className="form-label mb-0">Change Password</legend>
+    </div>
 
-        {children}
-      </div>
-    </FormContainer>
-  </LogoPage>
+    {children}
+  </div>
 );
 
-const ChangePasswordForm: React.FunctionComponent = () => (
+const ChangePasswordForm: React.FunctionComponent<AuthStateProps> = (props) => (
   <Page>
-    <FormikWrapper />
+    <FormikWrapper {...props} />
   </Page>
 );
 

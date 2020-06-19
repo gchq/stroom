@@ -19,10 +19,7 @@ import { ErrorReportingContextProvider } from "components/ErrorPage";
 
 import "styles/main.scss";
 import { FunctionComponent } from "react";
-import {
-  AlertDisplayBoundary,
-  AlertOutlet,
-} from "../../components/AlertDialog/AlertDisplayBoundary";
+import { AlertDisplayBoundary } from "../../components/AlertDialog/AlertDisplayBoundary";
 setupFontAwesome();
 
 const WithTestServer: FunctionComponent = ({ children }) => {
@@ -69,7 +66,6 @@ export default (storyFn: any) =>
                   {storyFn()}
                 </DocumentTreeContextProvider>
               </DragDropRouted>
-              <AlertOutlet />
             </ThemeContextProvider>
           </AuthorisationContextProvider>
         </AuthenticationContext.Provider>

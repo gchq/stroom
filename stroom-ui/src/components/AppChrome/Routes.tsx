@@ -42,9 +42,9 @@ import Welcome from "components/Welcome";
 import AppChrome from "./AppChrome";
 import useAppNavigation from "lib/useAppNavigation";
 import DataVolumes from "components/DataVolumes/DataVolumesSectionContainer";
-import SignInForm from "components/Authentication/SignInForm";
 import ConfirmCurrentPasswordForm from "components/Authentication/ConfirmCurrentPasswordForm";
 import ChangePasswordForm from "components/Authentication/ChangePasswordForm";
+import SignInManager from "../Authentication/SignInManager";
 
 const renderWelcome = ({
   match: {
@@ -90,7 +90,11 @@ const Routes: React.FunctionComponent = () => {
         component={ConfirmPasswordResetEmail}
       />
 
-      <Route exact path={`${singlePagePrefix}/login`} component={SignInForm} />
+      <Route
+        exact
+        path={`${singlePagePrefix}/login`}
+        component={SignInManager}
+      />
       <Route
         exact
         path={`${singlePagePrefix}/confirmpassword`}

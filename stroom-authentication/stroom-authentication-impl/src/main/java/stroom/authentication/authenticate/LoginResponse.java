@@ -10,28 +10,28 @@ public class LoginResponse {
     @JsonProperty
     private final boolean loginSuccessful;
     @JsonProperty
-    private final String redirectUri;
-    @JsonProperty
     private final String message;
+    @JsonProperty
+    private final boolean requirePasswordChange;
 
     @JsonCreator
     public LoginResponse(@JsonProperty("loginSuccessful") final boolean loginSuccessful,
-                         @JsonProperty("redirectUri") final String message,
-                         @JsonProperty("message") final String redirectUri) {
+                         @JsonProperty("message") final String message,
+                         @JsonProperty("requirePasswordChange") final boolean requirePasswordChange) {
         this.loginSuccessful = loginSuccessful;
-        this.redirectUri = redirectUri;
         this.message = message;
+        this.requirePasswordChange = requirePasswordChange;
     }
 
     public boolean isLoginSuccessful() {
         return loginSuccessful;
     }
 
-    public String getRedirectUri() {
-        return redirectUri;
-    }
-
     public String getMessage() {
         return message;
+    }
+
+    public boolean isRequirePasswordChange() {
+        return requirePasswordChange;
     }
 }
