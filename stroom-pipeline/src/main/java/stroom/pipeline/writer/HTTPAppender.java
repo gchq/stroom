@@ -55,6 +55,7 @@ public class HTTPAppender extends AbstractAppender {
 
     private String forwardUrl;
     private Long connectionTimeout;
+    private Long readTimeout;
     private Long forwardChunkSize;
     private boolean useCompression = true;
     private Set<String> metaKeySet = getMetaKeySet("guid,feed,system,environment,remotehost,remoteaddress");
@@ -116,9 +117,11 @@ public class HTTPAppender extends AbstractAppender {
 
             if (connectionTimeout != null) {
                 connection.setConnectTimeout(connectionTimeout.intValue());
+            }
+            if (readTimeout != null) {
+                connection.setReadTimeout(readTimeout.intValue());
+            } else {
                 connection.setReadTimeout(0);
-                // Don't set a read time out else big files will fail
-                // connection.setReadTimeout(forwardTimeoutMs);
             }
 
             connection.setRequestMethod(requestMethod);
@@ -284,14 +287,22 @@ public class HTTPAppender extends AbstractAppender {
         }
     }
 
+    @PipelineProperty(description = "How long to wait for data to be available before closing the connection",
+        displayPriority = 7)
+    public void setReadTimeout(final String string) {
+        readTimeout = null;
+        if (string != null && !string.isEmpty()) {
+            readTimeout = ModelStringUtil.parseDurationString(string);
+        }
+    }
     @PipelineProperty(description = "Should data be sent in chunks and if so how big should the chunks be",
-            displayPriority = 7)
+            displayPriority = 8)
     public void setForwardChunkSize(final String string) {
         this.forwardChunkSize = ModelStringUtil.parseIECByteSizeString(string);
     }
 
     @PipelineProperty(description = "Should data be compressed when sending", defaultValue = "true",
-            displayPriority = 8)
+            displayPriority = 9)
     public void setUseCompression(final boolean useCompression) {
         this.useCompression = useCompression;
     }
@@ -299,80 +310,80 @@ public class HTTPAppender extends AbstractAppender {
     @PipelineProperty(
             description = "Which meta data values will be logged in the send log",
             defaultValue = "guid,feed,system,environment,remotehost,remoteaddress",
-            displayPriority = 9)
+            displayPriority = 10)
     public void setLogMetaKeys(final String string) {
         metaKeySet = getMetaKeySet(string);
     }
 
     @PipelineProperty(description = "Use JVM SSL config",
             defaultValue = "true",
-            displayPriority = 10)
+            displayPriority = 11)
     public void setUseJvmSslConfig(final boolean useJvmSslConfig) {
         this.useJvmSslConfig = useJvmSslConfig;
     }
 
     @PipelineProperty(description = "The key store file path on the server",
-            displayPriority = 11)
+            displayPriority = 12)
     public void setKeyStorePath(final String keyStorePath) {
         sslConfig.setKeyStorePath(keyStorePath);
     }
 
     @PipelineProperty(description = "The key store type",
             defaultValue = "JKS",
-            displayPriority = 12)
+            displayPriority = 13)
     public void setKeyStoreType(final String keyStoreType) {
         sslConfig.setKeyStoreType(keyStoreType);
     }
 
     @PipelineProperty(description = "The key store password",
-            displayPriority = 13)
+            displayPriority = 14)
     public void setKeyStorePassword(final String keyStorePassword) {
         sslConfig.setKeyStorePassword(keyStorePassword);
     }
 
     @PipelineProperty(description = "The trust store file path on the server",
-            displayPriority = 14)
+            displayPriority = 15)
     public void setTrustStorePath(final String trustStorePath) {
         sslConfig.setTrustStorePath(trustStorePath);
     }
 
     @PipelineProperty(description = "The trust store type",
             defaultValue = "JKS",
-            displayPriority = 15)
+            displayPriority = 16)
     public void setTrustStoreType(final String trustStoreType) {
         sslConfig.setTrustStoreType(trustStoreType);
     }
 
     @PipelineProperty(description = "The trust store password",
-            displayPriority = 16)
+            displayPriority = 17)
     public void setTrustStorePassword(final String trustStorePassword) {
         sslConfig.setTrustStorePassword(trustStorePassword);
     }
 
     @PipelineProperty(description = "Verify host names",
             defaultValue = "true",
-            displayPriority = 17)
+            displayPriority = 18)
     public void setHostnameVerificationEnabled(final boolean hostnameVerificationEnabled) {
         sslConfig.setHostnameVerificationEnabled(hostnameVerificationEnabled);
     }
 
     @PipelineProperty(description = "The SSL protocol to use",
             defaultValue = "TLSv1.2",
-            displayPriority = 18)
+            displayPriority = 19)
     public void setSslProtocol(final String sslProtocol) {
         sslConfig.setSslProtocol(sslProtocol);
     }
 
     @PipelineProperty(description = "The request method, e.g. POST",
             defaultValue = "POST",
-            displayPriority = 19)
+            displayPriority = 20)
     public void setRequestMethod(String requestMethod) {
         this.requestMethod = requestMethod;
     }
 
     @PipelineProperty(description = "The content type",
             defaultValue = "application/json",
-            displayPriority = 20)
+            displayPriority = 21)
     public void setContentType(String contentType) {
         this.contentType = contentType;
     }
