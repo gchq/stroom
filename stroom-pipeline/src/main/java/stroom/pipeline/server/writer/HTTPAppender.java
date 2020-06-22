@@ -61,6 +61,7 @@ public class HTTPAppender extends AbstractAppender {
 
     private String forwardUrl;
     private Long connectionTimeout;
+    private Long readTimeout;
     private Long forwardChunkSize;
     private boolean useCompression = true;
     private Set<String> metaKeySet = getMetaKeySet("guid,feed,system,environment,remotehost,remoteaddress");
@@ -122,9 +123,11 @@ public class HTTPAppender extends AbstractAppender {
 
             if (connectionTimeout != null) {
                 connection.setConnectTimeout(connectionTimeout.intValue());
+            }
+            if (readTimeout != null) {
+                connection.setReadTimeout(readTimeout.intValue());
+            } else {
                 connection.setReadTimeout(0);
-                // Don't set a read time out else big files will fail
-                // connection.setReadTimeout(forwardTimeoutMs);
             }
 
             connection.setRequestMethod(requestMethod);
@@ -280,6 +283,14 @@ public class HTTPAppender extends AbstractAppender {
         connectionTimeout = null;
         if (string != null && string.length() > 0) {
             connectionTimeout = ModelStringUtil.parseDurationString(string);
+        }
+    }
+
+    @PipelineProperty(description = "How long to wait for data to be available before closing the connection")
+    public void setReadTimeout(final String string) {
+        readTimeout = null;
+        if (string != null && !string.isEmpty()) {
+            readTimeout = ModelStringUtil.parseDurationString(string);
         }
     }
 

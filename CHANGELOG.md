@@ -6,6 +6,8 @@ and this project adheres to [Semantic Versioning](http://semver.org/).
 
 ## [Unreleased]
 
+* Add `readTimeout` property to `HTTPAppender` 
+
 * Fix `Expecting a real user identity` errors on auto import of content packs.
 
 * Increase wait timeout to 240s in `start.sh`.
