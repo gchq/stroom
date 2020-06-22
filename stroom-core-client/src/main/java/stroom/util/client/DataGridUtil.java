@@ -27,9 +27,12 @@ import java.util.Objects;
 import java.util.Optional;
 import java.util.function.BooleanSupplier;
 import java.util.function.Function;
+import java.util.function.Predicate;
 import java.util.function.Supplier;
 
 public class DataGridUtil {
+
+    private static final String LOW_LIGHT_COLOUR = "#666666";
 
     private DataGridUtil() {
     }
@@ -55,6 +58,17 @@ public class DataGridUtil {
 
         final Header<SafeHtml> header = new SafeHtmlHeader(safeHtml);
         return header;
+    }
+
+    public static  <T_ROW> Function<T_ROW, SafeHtml> highlightedCellExtractor(
+            final Function<T_ROW, String> extractor,
+            final Predicate<T_ROW> isHighlightedPredicate) {
+
+        return row ->
+                SafeHtmlUtil.getColouredText(
+                        extractor.apply(row),
+                        LOW_LIGHT_COLOUR,
+                        !isHighlightedPredicate.test(row));
     }
 
 

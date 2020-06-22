@@ -16,6 +16,12 @@
 
 package stroom.task.client.view;
 
+import stroom.task.client.presenter.TaskManagerPresenter;
+import stroom.task.client.presenter.TaskManagerUiHandlers;
+import stroom.task.shared.FindTaskProgressCriteria;
+import stroom.widget.dropdowntree.client.view.QuickFilter;
+import stroom.widget.dropdowntree.client.view.QuickFilterTooltipUtil;
+
 import com.google.gwt.event.logical.shared.ValueChangeEvent;
 import com.google.gwt.uibinder.client.UiBinder;
 import com.google.gwt.uibinder.client.UiField;
@@ -24,9 +30,6 @@ import com.google.gwt.user.client.ui.SimplePanel;
 import com.google.gwt.user.client.ui.Widget;
 import com.google.inject.Inject;
 import com.gwtplatform.mvp.client.ViewWithUiHandlers;
-import stroom.task.client.presenter.TaskManagerPresenter;
-import stroom.task.client.presenter.TaskManagerUiHandlers;
-import stroom.widget.dropdowntree.client.view.QuickFilter;
 
 public class TaskManagerViewImpl extends ViewWithUiHandlers<TaskManagerUiHandlers>
         implements TaskManagerPresenter.TaskManagerView {
@@ -40,6 +43,10 @@ public class TaskManagerViewImpl extends ViewWithUiHandlers<TaskManagerUiHandler
     @Inject
     public TaskManagerViewImpl(final Binder binder) {
         widget = binder.createAndBindUi(this);
+//         TODO add this in when the server side filtering is implemented
+        nameFilter.registerPopupTextProvider(() -> QuickFilterTooltipUtil.createTooltip(
+                "Server Tasks Quick Filter",
+                FindTaskProgressCriteria.FIELD_DEFINITIONS));
     }
 
     @Override

@@ -7,6 +7,7 @@ import stroom.svg.client.Icon;
 import stroom.svg.client.SvgPresets;
 import stroom.widget.dropdowntree.client.view.QuickFilterTooltipUtil;
 
+import com.google.gwt.safehtml.shared.SafeHtml;
 import com.google.inject.Inject;
 import com.google.web.bindery.event.shared.EventBus;
 import com.gwtplatform.mvp.client.HasUiHandlers;
@@ -57,6 +58,6 @@ public class DependenciesTabPresenter
 
     public interface DependenciesTabView extends View, HasUiHandlers<DependenciesUiHandlers> {
 
-        void setHelpTooltipText(final String helpTooltipText);
+        void setHelpTooltipText(final SafeHtml helpTooltipText);
     }
 }

@@ -44,6 +44,7 @@ import stroom.task.shared.TaskProgress;
 import stroom.task.shared.TaskProgressResponse;
 import stroom.task.shared.TaskResource;
 import stroom.task.shared.TerminateTaskProgressRequest;
+import stroom.util.client.DataGridUtil;
 import stroom.util.shared.Expander;
 import stroom.util.shared.ModelStringUtil;
 import stroom.util.shared.ResultPage;
@@ -57,8 +58,8 @@ import stroom.widget.popup.client.presenter.PopupView.PopupType;
 import stroom.widget.tooltip.client.presenter.TooltipPresenter;
 import stroom.widget.tooltip.client.presenter.TooltipUtil;
 
-import com.google.gwt.cell.client.TextCell;
 import com.google.gwt.core.client.GWT;
+import com.google.gwt.safehtml.shared.SafeHtml;
 import com.google.gwt.user.cellview.client.Column;
 import com.google.gwt.user.client.Timer;
 import com.google.inject.Inject;
@@ -73,6 +74,7 @@ import java.util.Map;
 import java.util.Objects;
 import java.util.Set;
 import java.util.function.Consumer;
+import java.util.function.Function;
 
 public class TaskManagerListPresenter
         extends MyPresenterWidget<DataGridView<TaskProgress>>
@@ -167,28 +169,9 @@ public class TaskManagerListPresenter
         final InfoColumn<TaskProgress> furtherInfoColumn = new InfoColumn<TaskProgress>() {
             @Override
             protected void showInfo(final TaskProgress row, final int x, final int y) {
-                final TooltipUtil.Builder builder = TooltipUtil.builder()
-                        .addTable(tableBuilder -> {
-                            tableBuilder.addHeaderRow("Task")
-                                    .addRow("Name", row.getTaskName())
-                                    .addRow("User", row.getUserName())
-                                    .addRow("Submit Time", ClientDateUtil.toISOString(row.getSubmitTimeMs()))
-                                    .addRow("Age", ModelStringUtil.formatDurationString(row.getAgeMs()))
-                                    .addBlankRow()
-                                    .addRow("Id", row.getId())
-                                    .addRow("Thread Name", row.getThreadName());
+                final SafeHtml tooltipHtml = buildTooltipHtml(row);
 
-                            if (row.getId() != null) {
-                                final TaskId parentId = row.getId().getParentId();
-                                if (parentId != null) {
-                                    tableBuilder.addRow("Parent Id", parentId);
-                                }
-                            }
-                            return tableBuilder.build();
-                        });
-
-                builder.addLine(row.getTaskInfo());
-                tooltipPresenter.setHTML(builder.build());
+                tooltipPresenter.setHTML(tooltipHtml);
 
                 final PopupPosition popupPosition = new PopupPosition(x, y);
                 ShowPopupEvent.fire(TaskManagerListPresenter.this, tooltipPresenter, PopupType.POPUP,
@@ -209,68 +192,81 @@ public class TaskManagerListPresenter
         });
 
         // Node.
-        final Column<TaskProgress, String> nodeColumn = new OrderByColumn<TaskProgress, String>(
-                new TextCell(), FindTaskProgressCriteria.FIELD_NODE, false) {
-            @Override
-            public String getValue(final TaskProgress value) {
-                if (value.getNodeName() != null) {
-                    return value.getNodeName();
-                }
-                return "?";
-            }
-        };
-        getView().addResizableColumn(nodeColumn, FindTaskProgressCriteria.FIELD_NODE, 150);
+        getView().addResizableColumn(
+                DataGridUtil.htmlColumnBuilder(getColouredCellFunc(taskProgress ->
+                        taskProgress.getNodeName() != null ? taskProgress.getNodeName() : "?"))
+                        .build(),
+                FindTaskProgressCriteria.FIELD_NODE,
+                150);
 
         // Name.
-        final Column<TaskProgress, String> nameColumn = new OrderByColumn<TaskProgress, String>(
-                new TextCell(), FindTaskProgressCriteria.FIELD_NAME, false) {
-            @Override
-            public String getValue(final TaskProgress value) {
-                return value.getTaskName();
-            }
-        };
-        getView().addResizableColumn(nameColumn, FindTaskProgressCriteria.FIELD_NAME, 150);
+        getView().addResizableColumn(
+                DataGridUtil.htmlColumnBuilder(getColouredCellFunc(TaskProgress::getTaskName))
+                        .build(),
+                FindTaskProgressCriteria.FIELD_NAME,
+                150);
 
         // User.
-        final Column<TaskProgress, String> userColumn = new OrderByColumn<TaskProgress, String>(
-                new TextCell(), FindTaskProgressCriteria.FIELD_USER, false) {
-            @Override
-            public String getValue(final TaskProgress value) {
-                return value.getUserName();
-            }
-        };
-        getView().addResizableColumn(userColumn, FindTaskProgressCriteria.FIELD_USER, 80);
+        getView().addResizableColumn(
+                DataGridUtil.htmlColumnBuilder(getColouredCellFunc(TaskProgress::getUserName))
+                        .build(),
+                FindTaskProgressCriteria.FIELD_USER,
+                80);
 
         // Submit Time.
-        final Column<TaskProgress, String> submitTimeColumn = new OrderByColumn<TaskProgress, String>(
-                new TextCell(), FindTaskProgressCriteria.FIELD_SUBMIT_TIME, false) {
-            @Override
-            public String getValue(final TaskProgress value) {
-                return ClientDateUtil.toISOString(value.getSubmitTimeMs());
-            }
-        };
-        getView().addResizableColumn(submitTimeColumn, FindTaskProgressCriteria.FIELD_SUBMIT_TIME, ColumnSizeConstants.DATE_COL);
+        getView().addResizableColumn(
+                DataGridUtil.htmlColumnBuilder(getColouredCellFunc(taskProgress ->
+                                ClientDateUtil.toISOString(taskProgress.getSubmitTimeMs())))
+                        .build(),
+                FindTaskProgressCriteria.FIELD_SUBMIT_TIME,
+                ColumnSizeConstants.DATE_COL);
 
         // Age.
-        final Column<TaskProgress, String> ageColumn = new OrderByColumn<TaskProgress, String>(
-                new TextCell(), FindTaskProgressCriteria.FIELD_AGE, false) {
-            @Override
-            public String getValue(final TaskProgress value) {
-                return ModelStringUtil.formatDurationString(value.getAgeMs());
-            }
-        };
-        getView().addResizableColumn(ageColumn, FindTaskProgressCriteria.FIELD_AGE, ColumnSizeConstants.SMALL_COL);
+        getView().addResizableColumn(
+                DataGridUtil.htmlColumnBuilder(getColouredCellFunc(taskProgress ->
+                        ModelStringUtil.formatDurationString(taskProgress.getAgeMs())))
+                        .build(),
+                FindTaskProgressCriteria.FIELD_AGE,
+                ColumnSizeConstants.SMALL_COL);
 
-        // Info.
-        final Column<TaskProgress, String> infoColumn = new OrderByColumn<TaskProgress, String>(
-                new TextCell(), FindTaskProgressCriteria.FIELD_INFO, false) {
-            @Override
-            public String getValue(final TaskProgress value) {
-                return value.getTaskInfo();
-            }
-        };
-        getView().addResizableColumn(infoColumn, FindTaskProgressCriteria.FIELD_INFO, 1000);
+        // Info
+        getView().addResizableColumn(
+                DataGridUtil.htmlColumnBuilder(getColouredCellFunc(TaskProgress::getTaskInfo))
+                        .build(),
+                FindTaskProgressCriteria.FIELD_INFO,
+                1000);
+
         getView().addEndColumn(new EndColumn<>());
+    }
+
+    private SafeHtml buildTooltipHtml(final TaskProgress row) {
+        return TooltipUtil.builder()
+                .addTable(tableBuilder -> {
+                    tableBuilder.addHeaderRow("Task")
+                            .addRow("Name", row.getTaskName())
+                            .addRow("User", row.getUserName())
+                            .addRow("Submit Time", ClientDateUtil.toISOString(row.getSubmitTimeMs()))
+                            .addRow("Age", ModelStringUtil.formatDurationString(row.getAgeMs()))
+                            .addBlankRow()
+                            .addRow("Id", row.getId())
+                            .addRow("Thread Name", row.getThreadName());
+
+                    if (row.getId() != null) {
+                        final TaskId parentId = row.getId().getParentId();
+                        if (parentId != null) {
+                            tableBuilder.addRow("Parent Id", parentId);
+                        }
+                    }
+                    return tableBuilder.build();
+                })
+                .addLine(row.getTaskInfo())
+                .build();
+    }
+
+    private Function<TaskProgress, SafeHtml> getColouredCellFunc(final Function<TaskProgress, String> extractor) {
+        return DataGridUtil.highlightedCellExtractor(
+                extractor,
+                taskProgress -> !taskProgress.isFilteredOut());
     }
 
     private Expander buildExpander(final TaskProgress row) {
@@ -303,7 +299,8 @@ public class TaskManagerListPresenter
                         responseMap.remove(nodeName);
                         combineNodeTasks(dataConsumer, throwableConsumer);
                     })
-                    .call(TASK_RESOURCE).find(nodeName, request);
+                    .call(TASK_RESOURCE)
+                    .find(nodeName, request);
         }
     }
 
@@ -359,8 +356,9 @@ public class TaskManagerListPresenter
         final TerminateTaskProgressRequest request = new TerminateTaskProgressRequest(findTaskCriteria, kill);
 
         requestedTerminateTaskProgress.add(taskProgress);
-        final Rest<Boolean> rest = restFactory.create();
-        rest.call(TASK_RESOURCE).terminate(taskProgress.getNodeName(), request);
+        restFactory.create()
+                .call(TASK_RESOURCE)
+                .terminate(taskProgress.getNodeName(), request);
     }
 
     @Override

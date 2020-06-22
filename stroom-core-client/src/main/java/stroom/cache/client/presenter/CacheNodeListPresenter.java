@@ -39,6 +39,7 @@ import stroom.widget.tooltip.client.presenter.TooltipUtil;
 import com.google.gwt.cell.client.ButtonCell;
 import com.google.gwt.cell.client.TextCell;
 import com.google.gwt.core.client.GWT;
+import com.google.gwt.safehtml.shared.SafeHtml;
 import com.google.gwt.user.cellview.client.Column;
 import com.google.inject.Inject;
 import com.google.web.bindery.event.shared.EventBus;
@@ -141,7 +142,7 @@ public class CacheNodeListPresenter extends MyPresenterWidget<DataGridView<Cache
 
             @Override
             protected void showInfo(final CacheInfo row, final int x, final int y) {
-                final String html = getInfoHtml(row);
+                final SafeHtml html = getInfoHtml(row);
                 tooltipPresenter.setHTML(html);
                 final PopupPosition popupPosition = new PopupPosition(x, y);
                 ShowPopupEvent.fire(CacheNodeListPresenter.this, tooltipPresenter, PopupType.POPUP,
@@ -151,7 +152,7 @@ public class CacheNodeListPresenter extends MyPresenterWidget<DataGridView<Cache
         getView().addColumn(infoColumn, "<br/>", ColumnSizeConstants.ICON_COL);
     }
 
-    private String getInfoHtml(final CacheInfo cacheInfo) {
+    private SafeHtml getInfoHtml(final CacheInfo cacheInfo) {
 
         return TooltipUtil.builder()
                 .addTable(tableBuilder -> {

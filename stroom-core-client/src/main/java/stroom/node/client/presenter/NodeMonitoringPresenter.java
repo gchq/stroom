@@ -47,6 +47,7 @@ import stroom.widget.tooltip.client.presenter.TooltipUtil;
 
 import com.google.gwt.cell.client.TextCell;
 import com.google.gwt.core.client.GWT;
+import com.google.gwt.safehtml.shared.SafeHtmlUtils;
 import com.google.gwt.user.cellview.client.Column;
 import com.google.inject.Inject;
 import com.google.web.bindery.event.shared.EventBus;
@@ -267,7 +268,7 @@ public class NodeMonitoringPresenter extends ContentTabPresenter<DataGridView<No
     }
 
     private void showNodeInfoError(final Throwable caught, final int x, final int y) {
-        tooltipPresenter.setHTML(caught.getMessage());
+        tooltipPresenter.setHTML(SafeHtmlUtils.fromString(caught.getMessage()));
         final PopupPosition popupPosition = new PopupPosition(x, y);
         ShowPopupEvent.fire(NodeMonitoringPresenter.this, tooltipPresenter, PopupType.POPUP,
                 popupPosition, null);

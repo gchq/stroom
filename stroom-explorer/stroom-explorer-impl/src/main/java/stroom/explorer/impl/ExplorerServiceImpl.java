@@ -38,7 +38,6 @@ import stroom.util.filter.FilterFieldMapper;
 import stroom.util.filter.FilterFieldMappers;
 import stroom.util.filter.QuickFilterPredicateFactory;
 import stroom.util.shared.PermissionException;
-import stroom.util.shared.filter.FilterFieldDefinition;
 
 import javax.inject.Inject;
 import javax.inject.Provider;
@@ -66,8 +65,8 @@ class ExplorerServiceImpl implements ExplorerService, CollectionService {
 //                            ? docRef.getName()
 //                            : null),
     private static final FilterFieldMappers<DocRef> FIELD_MAPPERS = FilterFieldMappers.of(
-            FilterFieldMapper.of(FilterFieldDefinition.defaultField("Name"), DocRef::getName),
-            FilterFieldMapper.of(FilterFieldDefinition.qualifiedField("Type"), DocRef::getType)
+            FilterFieldMapper.of(ExplorerTreeFilter.FIELD_DEF_NAME, DocRef::getName),
+            FilterFieldMapper.of(ExplorerTreeFilter.FIELD_DEF_TYPE, DocRef::getType)
     );
 
     private final ExplorerNodeService explorerNodeService;

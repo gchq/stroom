@@ -97,14 +97,14 @@ public class FilterFieldMapper<T_ROW> {
     }
 
     public Function<T_ROW, String> getNullSafeStringValueExtractor() {
-        // Useful is unit tests, way too noisy otherwise
-//        if (LOGGER.isTraceEnabled()) {
-//            return row -> {
-//                String val = valueExtractor.apply(row);
-//                LOGGER.trace("Extracted [{}] from field {} in [{}]", val, fieldDefinition, row);
-//                return val;
-//            };
-//        }
+        // Useful is unit tests, VERY noisy with lots of data
+        if (LOGGER.isTraceEnabled()) {
+            return row -> {
+                String val = valueExtractor.apply(row);
+                LOGGER.trace("Extracted [{}] from field {} in [{}]", val, fieldDefinition, row);
+                return val;
+            };
+        }
         return valueExtractor;
     }
 

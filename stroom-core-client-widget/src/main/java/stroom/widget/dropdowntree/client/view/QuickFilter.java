@@ -18,6 +18,7 @@ package stroom.widget.dropdowntree.client.view;
 
 import stroom.svg.client.SvgPresets;
 import stroom.widget.button.client.SvgButton;
+import stroom.widget.tooltip.client.presenter.TooltipUtil;
 
 import com.google.gwt.core.shared.GWT;
 import com.google.gwt.event.logical.shared.HasValueChangeHandlers;
@@ -30,6 +31,7 @@ import com.google.gwt.event.shared.SimpleEventBus;
 import com.google.gwt.resources.client.ClientBundle;
 import com.google.gwt.resources.client.CssResource;
 import com.google.gwt.resources.client.CssResource.ImportedWithPrefix;
+import com.google.gwt.safehtml.shared.SafeHtml;
 import com.google.gwt.user.client.ui.FlowPanel;
 import com.google.gwt.user.client.ui.HTMLPanel;
 import com.google.gwt.user.client.ui.HasText;
@@ -37,18 +39,25 @@ import com.google.gwt.user.client.ui.Label;
 import com.google.gwt.user.client.ui.PopupPanel;
 import com.google.gwt.user.client.ui.TextBox;
 
+import java.util.Optional;
 import java.util.function.Supplier;
 
 public class QuickFilter extends FlowPanel
         implements HasText, HasValueChangeHandlers<String> {
 
     private static final Resources RESOURCES = GWT.create(Resources.class);
+
+    private static final SafeHtml DEFAULT_POPUP_TEXT = TooltipUtil.builder()
+            .addHeading("Quick Filter")
+            .addLine("Field values containing the characters input will be included.")
+            .build();
+
     private final Label label = new Label("Quick Filter", false);
     private final TextBox textBox = new TextBox();
     private final SvgButton clearButton;
     private final SvgButton helpButton;
     private EventBus eventBus;
-    private Supplier<String> popupTextSupplier;
+    private Supplier<SafeHtml> popupTextSupplier;
 
     public QuickFilter() {
         RESOURCES.style().ensureInjected();
@@ -83,7 +92,12 @@ public class QuickFilter extends FlowPanel
     }
 
     private void showHelpPopup() {
-        final HelpPopup popup = new HelpPopup(this::getPopupText);
+        final SafeHtml popupText = Optional.ofNullable(popupTextSupplier)
+                .map(Supplier::get)
+                .filter(safeHtml -> !safeHtml.asString().isEmpty())
+                .orElse(DEFAULT_POPUP_TEXT);
+
+        final HelpPopup popup = new HelpPopup(popupText);
         popup.setStyleName(RESOURCES.style().tooltip());
         popup.setPopupPositionAndShow((offsetWidth, offsetHeight) -> {
 
@@ -117,11 +131,11 @@ public class QuickFilter extends FlowPanel
         }
     }
 
-    private String getPopupText() {
+    private SafeHtml getPopupText() {
         return popupTextSupplier != null ? popupTextSupplier.get() : null;
     }
 
-    public void registerPopupTextProvider(final Supplier<String> popupTextSupplier) {
+    public void registerPopupTextProvider(final Supplier<SafeHtml> popupTextSupplier) {
         this.popupTextSupplier = popupTextSupplier;
     }
 
@@ -180,14 +194,16 @@ public class QuickFilter extends FlowPanel
 
     private static class HelpPopup extends PopupPanel {
 
-        public HelpPopup(final Supplier<String> popupTextSupplier) {
+        public HelpPopup(final SafeHtml content) {
+//        public HelpPopup(final Supplier<String> popupTextSupplier) {
             // PopupPanel's constructor takes 'auto-hide' as its boolean parameter.
             // If this is set, the panel closes itself automatically when the user
             // clicks outside of it.
             super(true);
 
 //            setWidget(new Label(popupTextSupplier.get(), true));
-            setWidget(new HTMLPanel("div", popupTextSupplier.get()));
+            setWidget(new HTMLPanel(content));
+//            setWidget(new HTMLPanel(SafeHtmlUtils.fromTrustedString("<b>hello</b>")));
         }
     }
 }

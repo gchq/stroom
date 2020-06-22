@@ -7,6 +7,7 @@ import stroom.widget.dropdowntree.client.view.QuickFilter;
 import stroom.widget.layout.client.view.ResizeSimplePanel;
 
 import com.google.gwt.event.logical.shared.ValueChangeEvent;
+import com.google.gwt.safehtml.shared.SafeHtml;
 import com.google.gwt.uibinder.client.UiBinder;
 import com.google.gwt.uibinder.client.UiField;
 import com.google.gwt.uibinder.client.UiHandler;
@@ -29,7 +30,6 @@ public class DependenciesTabViewImpl
     @Inject
     public DependenciesTabViewImpl(final EventBus eventBus, final Binder binder) {
         widget = binder.createAndBindUi(this);
-        quickFilter.registerPopupTextProvider(() -> "This is my dependencies popup text");
     }
 
 //    @Override
@@ -60,7 +60,7 @@ public class DependenciesTabViewImpl
     }
 
     @Override
-    public void setHelpTooltipText(final String helpTooltipText) {
+    public void setHelpTooltipText(final SafeHtml helpTooltipText) {
         quickFilter.registerPopupTextProvider(() -> helpTooltipText);
     }
 

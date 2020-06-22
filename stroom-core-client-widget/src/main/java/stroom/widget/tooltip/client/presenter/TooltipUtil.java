@@ -172,8 +172,8 @@ public final class TooltipUtil {
             return this;
         }
 
-        public String build() {
-            return buffer.toSafeHtml().asString();
+        public SafeHtml build() {
+            return buffer.toSafeHtml();
         }
     }
 

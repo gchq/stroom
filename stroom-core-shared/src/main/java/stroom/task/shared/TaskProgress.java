@@ -16,14 +16,15 @@
 
 package stroom.task.shared;
 
+import stroom.util.shared.Expander;
+import stroom.util.shared.ModelStringUtil;
+import stroom.util.shared.TreeRow;
+
 import com.fasterxml.jackson.annotation.JsonCreator;
 import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.fasterxml.jackson.annotation.JsonInclude;
 import com.fasterxml.jackson.annotation.JsonInclude.Include;
 import com.fasterxml.jackson.annotation.JsonProperty;
-import stroom.util.shared.Expander;
-import stroom.util.shared.ModelStringUtil;
-import stroom.util.shared.TreeRow;
 
 import java.util.Objects;
 
@@ -50,6 +51,10 @@ public class TaskProgress implements TreeRow {
     @JsonProperty
     private Expander expander;
 
+    // filteredOut as opposed to inFilter to avoid issues with bool serialisation as false is default
+    @JsonProperty
+    private boolean filteredOut;
+
     public TaskProgress() {
     }
 
@@ -62,7 +67,8 @@ public class TaskProgress implements TreeRow {
                         @JsonProperty("nodeName") final String nodeName,
                         @JsonProperty("submitTimeMs") final long submitTimeMs,
                         @JsonProperty("timeNowMs") final long timeNowMs,
-                        @JsonProperty("expander") final Expander expander) {
+                        @JsonProperty("expander") final Expander expander,
+                        @JsonProperty("filteredOut") final boolean filteredOut) {
         this.id = id;
         this.taskName = taskName;
         this.taskInfo = taskInfo;
@@ -72,6 +78,7 @@ public class TaskProgress implements TreeRow {
         this.submitTimeMs = submitTimeMs;
         this.timeNowMs = timeNowMs;
         this.expander = expander;
+        this.filteredOut = filteredOut;
     }
 
     public TaskId getId() {
@@ -147,10 +154,19 @@ public class TaskProgress implements TreeRow {
         this.expander = expander;
     }
 
+    public boolean isFilteredOut() {
+        return filteredOut;
+    }
+
+    public void setFilteredOut(final boolean filteredOut) {
+        this.filteredOut = filteredOut;
+    }
+
     @JsonIgnore
     public long getAgeMs() {
         return timeNowMs - submitTimeMs;
     }
+
 
     @Override
     public boolean equals(final Object o) {

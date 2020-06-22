@@ -12,14 +12,18 @@ import java.util.List;
 
 public class QuickFilterTooltipUtil {
 
-    public static String createTooltip(final String header) {
+    public static SafeHtml createTooltip(final String header) {
         return createTooltip(header, Collections.emptyList());
     }
 
-    public static String createTooltip(final String header, final List<FilterFieldDefinition> fieldDefinitions) {
+    public static SafeHtml createTooltip(final String header, final List<FilterFieldDefinition> fieldDefinitions) {
 
         // All this help content needs to match what happens in QuickFilterPredicateFactory
-        final Builder builder = TooltipUtil.builder()
+        final Builder builder = TooltipUtil.builder();
+
+        addFieldInfo(fieldDefinitions, builder);
+
+        builder
                 .addHeading(header)
                 .addBreak()
                 .addTable(tableBuilder -> {
@@ -44,14 +48,15 @@ public class QuickFilterTooltipUtil {
                     return tableBuilder.build();
                 });
 
-        addFieldInfo(fieldDefinitions, builder);
+        addFieldExamples(fieldDefinitions, builder);
 
         builder
                 .addBreak()
                 .appendWithoutBreak("For more information see the ")
                 .appendLinkWithoutBreak(
                         "https://gchq.github.io/stroom-docs/user-guide/finding-things/finding-things.html",
-                        "Help Documentation");
+                        "Help Documentation")
+                .appendWithoutBreak(".");
 
         return builder.build();
     }
@@ -60,21 +65,29 @@ public class QuickFilterTooltipUtil {
                                      final Builder builder) {
         if (fieldDefinitions != null && !fieldDefinitions.isEmpty()) {
             builder
-                    .addBreak()
                     .addTable(tableBuilder -> {
                         tableBuilder.addHeaderRow("Filterable fields", "Field qualifier");
                         fieldDefinitions.forEach(fieldDefinition -> {
                             String suffix = fieldDefinition.isDefaultField()
-                                    ? " (default field)"
+                                    ? " *"
                                     : "";
                             final SafeHtml value = new SafeHtmlBuilder()
                                     .append(TooltipUtil.fixedWidthText(fieldDefinition.getFilterQualifier()))
                                     .append(TooltipUtil.italicText(suffix))
                                     .toSafeHtml();
-                            tableBuilder.addRow( (fieldDefinition.getDisplayName()), value);
+                            tableBuilder.addRow((fieldDefinition.getDisplayName()), value);
                         });
                         return tableBuilder.build();
                     })
+                    .addBreak()
+                    .addLine("* indicates the field will be included in default matching.")
+                    .addBreak();
+        }
+    }
+
+    private static void addFieldExamples(final List<FilterFieldDefinition> fieldDefinitions, final Builder builder) {
+        if (fieldDefinitions != null && !fieldDefinitions.isEmpty()) {
+            builder
                     .addBreak()
                     .addHeading("Examples:")
                     .addTable(tableBuilder -> tableBuilder
@@ -86,6 +99,5 @@ public class QuickFilterTooltipUtil {
                                     "Matches Name field with 'abc' chars anywhere and Type field with regex '(error|warn)'")
                             .build());
         }
-
     }
 }
