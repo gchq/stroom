@@ -92,7 +92,12 @@ public class TaskManagerListPresenter
     private final Map<String, List<TaskProgress>> responseMap = new HashMap<>();
     private final RestDataProvider<TaskProgress, TaskProgressResponse> dataProvider;
 
+    private final ButtonView expandAllButton;
+    private final ButtonView collapseAllButton;
+
     private Column<TaskProgress, Expander> expanderColumn;
+
+    private TaskManagerTreeAction treeAction = new TaskManagerTreeAction();
 
     @Inject
     public TaskManagerListPresenter(final EventBus eventBus,
@@ -105,22 +110,27 @@ public class TaskManagerListPresenter
         this.nodeCache = nodeCache;
         this.criteria.setSort(FindTaskProgressCriteria.FIELD_AGE, Direction.DESCENDING, false);
 
-        final ButtonView terminateButton = getView().addButton(SvgPresets.DELETE);
+        final ButtonView terminateButton = getView().addButton(SvgPresets.DELETE.with("Terminate Task", true));
         terminateButton.addClickHandler(event -> endSelectedTask());
-        terminateButton.setEnabled(true);
+
+        expandAllButton = getView().addButton(SvgPresets.EXPAND_DOWN.with("Expand All", false));
+        collapseAllButton = getView().addButton(SvgPresets.COLLAPSE_UP.with("Collapse All", false));
+
+        updateButtonStates();
 
         initTableColumns();
 
         dataProvider = new RestDataProvider<TaskProgress, TaskProgressResponse>(eventBus) {
             @Override
-            protected void exec(final Consumer<TaskProgressResponse> dataConsumer, final Consumer<Throwable> throwableConsumer) {
+            protected void exec(final Consumer<TaskProgressResponse> dataConsumer,
+                                final Consumer<Throwable> throwableConsumer) {
                 fetchNodes(dataConsumer, throwableConsumer);
             }
         };
         dataProvider.addDataDisplay(getView().getDataDisplay());
 
         // Handle use of the expander column.
-        dataProvider.setTreeRowHandler(new TreeRowHandler<TaskProgress>(request, getView(), expanderColumn));
+        dataProvider.setTreeRowHandler(new TreeRowHandler<TaskProgress>(treeAction, getView(), expanderColumn));
 
         getView().addColumnSortHandler(event -> {
             if (event.getColumn() instanceof OrderByColumn<?, ?>) {
@@ -130,9 +140,30 @@ public class TaskManagerListPresenter
                 } else {
                     criteria.setSort(orderByColumn.getField(), Sort.Direction.DESCENDING, orderByColumn.isIgnoreCase());
                 }
+                // As we get data async from all nodes we can't be sure when we have finished so
+                // need to clear the expandAllRequestState prior to fetching
+                treeAction.resetExpandAllRequestState();
                 dataProvider.refresh();
             }
         });
+
+        expandAllButton.addClickHandler(event -> {
+            treeAction.expandAll();
+            dataProvider.refresh();
+            updateButtonStates();
+        });
+
+        collapseAllButton.addClickHandler(event -> {
+            treeAction.collapseAll();
+            dataProvider.refresh();
+            updateButtonStates();
+        });
+    }
+
+    private void updateButtonStates() {
+
+        expandAllButton.setEnabled(treeAction.hasCollapsedRows());
+        collapseAllButton.setEnabled(treeAction.hasExpandedRows());
     }
 
     /**
@@ -162,7 +193,11 @@ public class TaskManagerListPresenter
         getView().addColumn(expanderColumn, "");
 
         expanderColumn.setFieldUpdater((index, row, value) -> {
-            request.setRowExpanded(row, !value.isExpanded());
+            treeAction.setRowExpanded(row, !value.isExpanded());
+            // As we get data async from all nodes we can't be sure when we have finished so
+            // need to clear the expandAllRequestState prior to fetching
+            treeAction.resetExpandAllRequestState();
+            updateButtonStates();
             refresh();
         });
 
@@ -195,6 +230,7 @@ public class TaskManagerListPresenter
         getView().addResizableColumn(
                 DataGridUtil.htmlColumnBuilder(getColouredCellFunc(taskProgress ->
                         taskProgress.getNodeName() != null ? taskProgress.getNodeName() : "?"))
+                        .withSorting(FindTaskProgressCriteria.FIELD_NODE)
                         .build(),
                 FindTaskProgressCriteria.FIELD_NODE,
                 150);
@@ -202,6 +238,7 @@ public class TaskManagerListPresenter
         // Name.
         getView().addResizableColumn(
                 DataGridUtil.htmlColumnBuilder(getColouredCellFunc(TaskProgress::getTaskName))
+                        .withSorting(FindTaskProgressCriteria.FIELD_NAME)
                         .build(),
                 FindTaskProgressCriteria.FIELD_NAME,
                 150);
@@ -209,6 +246,7 @@ public class TaskManagerListPresenter
         // User.
         getView().addResizableColumn(
                 DataGridUtil.htmlColumnBuilder(getColouredCellFunc(TaskProgress::getUserName))
+                        .withSorting(FindTaskProgressCriteria.FIELD_USER)
                         .build(),
                 FindTaskProgressCriteria.FIELD_USER,
                 80);
@@ -217,6 +255,7 @@ public class TaskManagerListPresenter
         getView().addResizableColumn(
                 DataGridUtil.htmlColumnBuilder(getColouredCellFunc(taskProgress ->
                                 ClientDateUtil.toISOString(taskProgress.getSubmitTimeMs())))
+                        .withSorting(FindTaskProgressCriteria.FIELD_SUBMIT_TIME)
                         .build(),
                 FindTaskProgressCriteria.FIELD_SUBMIT_TIME,
                 ColumnSizeConstants.DATE_COL);
@@ -225,6 +264,7 @@ public class TaskManagerListPresenter
         getView().addResizableColumn(
                 DataGridUtil.htmlColumnBuilder(getColouredCellFunc(taskProgress ->
                         ModelStringUtil.formatDurationString(taskProgress.getAgeMs())))
+                        .withSorting(FindTaskProgressCriteria.FIELD_AGE)
                         .build(),
                 FindTaskProgressCriteria.FIELD_AGE,
                 ColumnSizeConstants.SMALL_COL);
@@ -232,6 +272,7 @@ public class TaskManagerListPresenter
         // Info
         getView().addResizableColumn(
                 DataGridUtil.htmlColumnBuilder(getColouredCellFunc(TaskProgress::getTaskInfo))
+                        .withSorting(FindTaskProgressCriteria.FIELD_INFO)
                         .build(),
                 FindTaskProgressCriteria.FIELD_INFO,
                 1000);
@@ -266,7 +307,7 @@ public class TaskManagerListPresenter
     private Function<TaskProgress, SafeHtml> getColouredCellFunc(final Function<TaskProgress, String> extractor) {
         return DataGridUtil.highlightedCellExtractor(
                 extractor,
-                taskProgress -> !taskProgress.isFilteredOut());
+                TaskProgress::isMatchedInFilter);
     }
 
     private Expander buildExpander(final TaskProgress row) {
@@ -275,6 +316,7 @@ public class TaskManagerListPresenter
 
     @Override
     public void refresh() {
+        treeAction.resetExpandAllRequestState();
         dataProvider.refresh();
     }
 
@@ -288,11 +330,13 @@ public class TaskManagerListPresenter
     private void fetchTasksForNodes(final Consumer<TaskProgressResponse> dataConsumer,
                                     final Consumer<Throwable> throwableConsumer,
                                     final List<String> nodeNames) {
+        responseMap.clear();
         for (final String nodeName : nodeNames) {
             final Rest<TaskProgressResponse> rest = restFactory.create();
             rest
                     .onSuccess(response -> {
                         responseMap.put(nodeName, response.getValues());
+//                        GWT.log("combining results for node " + nodeName);
                         combineNodeTasks(dataConsumer, throwableConsumer);
                     })
                     .onFailure(throwable -> {
@@ -307,14 +351,20 @@ public class TaskManagerListPresenter
     private void combineNodeTasks(final Consumer<TaskProgressResponse> dataConsumer,
                                   final Consumer<Throwable> throwableConsumer) {
         // Combine data from all nodes.
-        final ResultPage<TaskProgress> resultPage = TaskProgressUtil.combine(criteria, responseMap.values());
+        final ResultPage<TaskProgress> resultPage = TaskProgressUtil.combine(
+                criteria,
+                responseMap.values(),
+                treeAction);
 
         final HashSet<TaskProgress> currentTaskSet = new HashSet<TaskProgress>(resultPage.getValues());
         selectedTaskProgress.retainAll(currentTaskSet);
         requestedTerminateTaskProgress.retainAll(currentTaskSet);
 
-        final TaskProgressResponse response = new TaskProgressResponse(resultPage.getValues(), resultPage.getPageResponse());
+        final TaskProgressResponse response = new TaskProgressResponse(
+                resultPage.getValues(),
+                resultPage.getPageResponse());
         dataConsumer.accept(response);
+        updateButtonStates();
     }
 
     /**
@@ -380,6 +430,9 @@ public class TaskManagerListPresenter
             }
 
             if (!Objects.equals(filter, criteria.getNameFilter())) {
+
+                // This is a new filter so reset all the expander states
+                treeAction.reset();
                 criteria.setNameFilter(filter);
                 refresh();
             }

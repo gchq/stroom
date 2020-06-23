@@ -9,23 +9,37 @@ import com.google.gwt.safehtml.shared.SafeHtmlBuilder;
 
 import java.util.Collections;
 import java.util.List;
+import java.util.function.Consumer;
 
 public class QuickFilterTooltipUtil {
 
     public static SafeHtml createTooltip(final String header) {
         return createTooltip(header, Collections.emptyList());
     }
+    public static SafeHtml createTooltip(final String header,
+                                         final List<FilterFieldDefinition> fieldDefinitions) {
 
-    public static SafeHtml createTooltip(final String header, final List<FilterFieldDefinition> fieldDefinitions) {
+        return createTooltip(header, null, fieldDefinitions);
+    }
+
+    public static SafeHtml createTooltip(final String header,
+                                         final Consumer<Builder> preambleBuilder,
+                                         final List<FilterFieldDefinition> fieldDefinitions) {
 
         // All this help content needs to match what happens in QuickFilterPredicateFactory
-        final Builder builder = TooltipUtil.builder();
+        final Builder builder = TooltipUtil.builder()
+                .addHeading(header)
+                .addBreak();
 
+        // Add the supplied pre-amble
+        if (preambleBuilder != null) {
+            preambleBuilder.accept(builder);
+        }
+
+        // Adds a break at the end if there are fields
         addFieldInfo(fieldDefinitions, builder);
 
         builder
-                .addHeading(header)
-                .addBreak()
                 .addTable(tableBuilder -> {
                     tableBuilder
                             .addHeaderRow("Example input", "Match type")

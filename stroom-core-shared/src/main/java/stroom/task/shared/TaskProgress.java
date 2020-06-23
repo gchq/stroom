@@ -53,7 +53,7 @@ public class TaskProgress implements TreeRow {
 
     // filteredOut as opposed to inFilter to avoid issues with bool serialisation as false is default
     @JsonProperty
-    private boolean filteredOut;
+    private FilterMatchState filterMatchState;
 
     public TaskProgress() {
     }
@@ -68,7 +68,7 @@ public class TaskProgress implements TreeRow {
                         @JsonProperty("submitTimeMs") final long submitTimeMs,
                         @JsonProperty("timeNowMs") final long timeNowMs,
                         @JsonProperty("expander") final Expander expander,
-                        @JsonProperty("filteredOut") final boolean filteredOut) {
+                        @JsonProperty("filterMatchState") final FilterMatchState filterMatchState) {
         this.id = id;
         this.taskName = taskName;
         this.taskInfo = taskInfo;
@@ -78,7 +78,7 @@ public class TaskProgress implements TreeRow {
         this.submitTimeMs = submitTimeMs;
         this.timeNowMs = timeNowMs;
         this.expander = expander;
-        this.filteredOut = filteredOut;
+        this.filterMatchState = filterMatchState;
     }
 
     public TaskId getId() {
@@ -154,17 +154,22 @@ public class TaskProgress implements TreeRow {
         this.expander = expander;
     }
 
-    public boolean isFilteredOut() {
-        return filteredOut;
+    public FilterMatchState getFilterMatchState() {
+        return filterMatchState;
     }
 
-    public void setFilteredOut(final boolean filteredOut) {
-        this.filteredOut = filteredOut;
+    public void setFilterMatchState(final FilterMatchState filterMatchState) {
+        this.filterMatchState = filterMatchState;
     }
 
     @JsonIgnore
     public long getAgeMs() {
         return timeNowMs - submitTimeMs;
+    }
+
+    @JsonIgnore
+    public boolean isMatchedInFilter() {
+        return FilterMatchState.MATCHED.equals(filterMatchState);
     }
 
 
@@ -184,5 +189,22 @@ public class TaskProgress implements TreeRow {
     @Override
     public String toString() {
         return taskName + " " + ModelStringUtil.formatDurationString(getAgeMs());
+    }
+
+    /**
+     * This could be a boolean but due to the issues around (de)serialisation of primitive boolean
+     * and their default values this avoids having to have a prop called isFilteredOut and is
+     * explicitly clear.
+     */
+    public static enum FilterMatchState {
+        MATCHED,
+        NOT_MATCHED;
+
+        @JsonIgnore
+        public static FilterMatchState fromBoolean(final boolean isMatched) {
+            return isMatched
+                    ? MATCHED
+                    : NOT_MATCHED;
+        }
     }
 }

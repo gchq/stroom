@@ -24,6 +24,7 @@ import stroom.task.shared.FindTaskCriteria;
 import stroom.task.shared.FindTaskProgressCriteria;
 import stroom.task.shared.TaskId;
 import stroom.task.shared.TaskProgress;
+import stroom.task.shared.TaskProgress.FilterMatchState;
 import stroom.util.filter.FilterFieldMapper;
 import stroom.util.filter.FilterFieldMappers;
 import stroom.util.filter.QuickFilterPredicateFactory;
@@ -384,7 +385,7 @@ class TaskManagerImpl implements TaskManager {
         // are an ancestor of a filtered in task.
         // Filter state is worked out server side as GWT can't use the matching code due to all the
         // regex involved.
-        taskProgress.setFilteredOut(!fuzzyMatchPredicate.test(taskProgress));
+        taskProgress.setFilterMatchState(FilterMatchState.fromBoolean(fuzzyMatchPredicate.test(taskProgress)));
 
         return taskProgress;
     }
@@ -435,7 +436,7 @@ class TaskManagerImpl implements TaskManager {
                 "Yellow",
                 "Brown",
                 "Pink",
-                "Black");
+                "Orange");
 
         List<String> users = List.of(
                 "joebloggs",
@@ -443,12 +444,14 @@ class TaskManagerImpl implements TaskManager {
 
         Instant startTime = Instant.EPOCH;
         Instant now = Instant.now();
+        String nodeName = nodeInfo.getThisNodeName();
 
         return taskNames.stream()
                 .flatMap(taskname -> {
-                    TaskId grandparentTaskId = new TaskId(String.valueOf(id.incrementAndGet()), null);
-                    TaskId parentTaskId = new TaskId(String.valueOf(id.incrementAndGet()), grandparentTaskId);
-                    TaskId childTaskId = new TaskId(String.valueOf(id.incrementAndGet()), parentTaskId);
+                    // Need to make sure task IDs are unique over the cluster
+                    TaskId grandparentTaskId = new TaskId(String.valueOf(nodeName + "-" + id.incrementAndGet()), null);
+                    TaskId parentTaskId = new TaskId(String.valueOf(nodeName + "-" + id.incrementAndGet()), grandparentTaskId);
+                    TaskId childTaskId = new TaskId(String.valueOf(nodeName + "-" + id.incrementAndGet()), parentTaskId);
                     return Stream.of(
                             Tuple.of(taskname + "-grandparent", grandparentTaskId),
                             Tuple.of(taskname + "-parent", parentTaskId),
@@ -468,7 +471,7 @@ class TaskManagerImpl implements TaskManager {
                     taskProgress.setTimeNowMs(now.toEpochMilli());
                     taskProgress.setNodeName(nodeInfo.getThisNodeName());
 
-                    taskProgress.setFilteredOut(!fuzzyMatchPredicate.test(taskProgress));
+                    taskProgress.setFilterMatchState(FilterMatchState.fromBoolean(fuzzyMatchPredicate.test(taskProgress)));
                     return taskProgress;
 
                 })
