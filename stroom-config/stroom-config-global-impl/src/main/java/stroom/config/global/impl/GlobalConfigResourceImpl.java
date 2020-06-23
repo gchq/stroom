@@ -10,6 +10,9 @@ import stroom.node.api.NodeInfo;
 import stroom.node.api.NodeService;
 import stroom.ui.config.shared.UiConfig;
 import stroom.ui.config.shared.UiPreferences;
+import stroom.util.filter.FilterFieldMapper;
+import stroom.util.filter.FilterFieldMappers;
+import stroom.util.filter.QuickFilterPredicateFactory;
 import stroom.util.jersey.WebTargetFactory;
 import stroom.util.logging.LogUtil;
 import stroom.util.rest.RestUtil;
@@ -28,9 +31,23 @@ import javax.ws.rs.core.Response;
 import javax.ws.rs.core.Response.Status;
 import java.util.Objects;
 import java.util.Optional;
-import java.util.function.Predicate;
 
 public class GlobalConfigResourceImpl implements GlobalConfigResource {
+
+    private static final FilterFieldMappers<ConfigProperty> FIELD_MAPPERS = FilterFieldMappers.of(
+            FilterFieldMapper.of(
+                    GlobalConfigResource.FIELD_DEF_NAME,
+                    ConfigProperty::getNameAsString),
+            FilterFieldMapper.of(
+                    GlobalConfigResource.FIELD_DEF_EFFECTIVE_VALUE,
+                    configProperty -> configProperty.getEffectiveValue().orElse("")),
+            FilterFieldMapper.of(
+                    GlobalConfigResource.FIELD_DEF_SOURCE,
+                    configProperty -> configProperty.getSource().getName()),
+            FilterFieldMapper.of(
+                    GlobalConfigResource.FIELD_DEF_DESCRIPTION,
+                    ConfigProperty::getDescription));
+
     private final GlobalConfigService globalConfigService;
     private final NodeService nodeService;
     private final UiConfig uiConfig;
@@ -59,7 +76,7 @@ public class GlobalConfigResourceImpl implements GlobalConfigResource {
                                    final long offset,
                                    final Integer size) {
         final ListConfigResponse resultList = globalConfigService.list(
-                buildPredicate(partialName),
+                QuickFilterPredicateFactory.createFuzzyMatchPredicate(partialName, FIELD_MAPPERS),
                 new PageRequest(offset, size != null
                         ? size
                         : Integer.MAX_VALUE));
@@ -110,15 +127,6 @@ public class GlobalConfigResourceImpl implements GlobalConfigResource {
             throw NodeCallUtil.handleExceptionsOnNodeCall(nodeName, url, e);
         }
         return listConfigResponse;
-    }
-
-    private Predicate<ConfigProperty> buildPredicate(final String partialName) {
-        if (partialName != null && !partialName.isEmpty()) {
-            return configProperty ->
-                    configProperty.getNameAsString().toLowerCase().contains(partialName.toLowerCase());
-        } else {
-            return configProperty -> true;
-        }
     }
 
     @Timed

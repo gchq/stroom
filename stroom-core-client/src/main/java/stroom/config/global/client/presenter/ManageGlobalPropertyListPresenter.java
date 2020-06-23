@@ -16,20 +16,6 @@
 
 package stroom.config.global.client.presenter;
 
-import com.google.gwt.cell.client.Cell;
-import com.google.gwt.cell.client.SafeHtmlCell;
-import com.google.gwt.cell.client.TextCell;
-import com.google.gwt.core.client.GWT;
-import com.google.gwt.safehtml.shared.SafeHtml;
-import com.google.gwt.safehtml.shared.SafeHtmlUtils;
-import com.google.gwt.user.cellview.client.Column;
-import com.google.gwt.user.cellview.client.ColumnSortEvent;
-import com.google.gwt.user.client.Timer;
-import com.google.gwt.user.client.ui.HasVerticalAlignment;
-import com.google.gwt.view.client.Range;
-import com.google.inject.Inject;
-import com.google.web.bindery.event.shared.EventBus;
-import com.gwtplatform.mvp.client.MyPresenterWidget;
 import stroom.alert.client.event.AlertEvent;
 import stroom.config.global.shared.ConfigProperty;
 import stroom.config.global.shared.GlobalConfigResource;
@@ -44,10 +30,26 @@ import stroom.svg.client.SvgPreset;
 import stroom.util.client.SafeHtmlUtil;
 import stroom.widget.button.client.ButtonView;
 
+import com.google.gwt.cell.client.Cell;
+import com.google.gwt.cell.client.SafeHtmlCell;
+import com.google.gwt.cell.client.TextCell;
+import com.google.gwt.core.client.GWT;
+import com.google.gwt.safehtml.shared.SafeHtml;
+import com.google.gwt.safehtml.shared.SafeHtmlUtils;
+import com.google.gwt.user.cellview.client.Column;
+import com.google.gwt.user.cellview.client.ColumnSortEvent;
+import com.google.gwt.user.client.Timer;
+import com.google.gwt.user.client.ui.HasVerticalAlignment;
+import com.google.gwt.view.client.Range;
+import com.google.inject.Inject;
+import com.google.web.bindery.event.shared.EventBus;
+import com.gwtplatform.mvp.client.MyPresenterWidget;
+
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
+import java.util.Objects;
 import java.util.Set;
 import java.util.function.Function;
 import java.util.stream.Collectors;
@@ -92,6 +94,7 @@ public class ManageGlobalPropertyListPresenter
             updatePropertyKeyedMaps();
         }
     };
+    private final NameFilterTimer timer = new NameFilterTimer();
 
     @Inject
     public ManageGlobalPropertyListPresenter(final EventBus eventBus,
@@ -253,24 +256,29 @@ public class ManageGlobalPropertyListPresenter
         // Name.
         addColumn(buildSafeHtmlColumn(configPropertyRow ->
                         SafeHtmlUtils.fromString(configPropertyRow.getNameAsString())),
-                "Name",
+                GlobalConfigResource.FIELD_DEF_NAME.getDisplayName(),
                 450);
+
+        // Effective Value
         addColumn(buildSafeHtmlColumn(configPropertyRow ->
                         SafeHtmlUtil.getColouredText(
                                 configPropertyRow.getEffectiveValueAsString(),
                                 ERROR_CSS_COLOUR,
                                 MULTIPLE_VALUES_MSG.equals(configPropertyRow.getEffectiveValueAsString()))),
-                "Effective Value",
+                GlobalConfigResource.FIELD_DEF_EFFECTIVE_VALUE.getDisplayName(),
                 300);
+
+        // Source
         addColumn(buildSafeHtmlColumn(configPropertyRow ->
                         SafeHtmlUtil.getColouredText(
                                 configPropertyRow.getSourceAsString(),
                                 ERROR_CSS_COLOUR,
                                 MULTIPLE_SOURCES_MSG.equals(configPropertyRow.getSourceAsString()))),
-                "Source",
+                GlobalConfigResource.FIELD_DEF_SOURCE.getDisplayName(),
                 75);
 
-        addColumn(buildDescriptionColumn(), "Description", 750);
+        addColumn(buildDescriptionColumn(), GlobalConfigResource.FIELD_DEF_DESCRIPTION.getDisplayName(), 750);
+
         getView().addEndColumn(new EndColumn<>());
     }
 
@@ -336,11 +344,9 @@ public class ManageGlobalPropertyListPresenter
     }
 
     void setPartialName(final String partialName) {
-        this.partialName = partialName;
-        // Need to reset the range else the name criteria can push us outside the page we are on
-        Range range = getView().getVisibleRange();
-        getView().getDataDisplay().setVisibleRange(0, range.getLength());
-        refresh();
+        timer.setName(partialName);
+        timer.cancel();
+        timer.schedule(300);
     }
 
     void clearPartialName() {
@@ -402,6 +408,33 @@ public class ManageGlobalPropertyListPresenter
 
         public String getDescription() {
             return configProperty.getDescription();
+        }
+    }
+
+    private class NameFilterTimer extends Timer {
+        private String name;
+
+        @Override
+        public void run() {
+            String filter = name;
+            if (filter != null) {
+                filter = filter.trim();
+                if (filter.length() == 0) {
+                    filter = null;
+                }
+            }
+
+            if (!Objects.equals(filter, partialName)) {
+                partialName = filter;
+                // Need to reset the range else the name criteria can push us outside the page we are on
+                Range range = getView().getVisibleRange();
+                getView().getDataDisplay().setVisibleRange(0, range.getLength());
+                refresh();
+            }
+        }
+
+        public void setName(final String name) {
+            this.name = name;
         }
     }
 }

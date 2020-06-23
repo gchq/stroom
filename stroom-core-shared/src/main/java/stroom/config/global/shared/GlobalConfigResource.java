@@ -4,6 +4,7 @@ import stroom.ui.config.shared.UiConfig;
 import stroom.ui.config.shared.UiPreferences;
 import stroom.util.shared.ResourcePaths;
 import stroom.util.shared.RestResource;
+import stroom.util.shared.filter.FilterFieldDefinition;
 
 import io.swagger.annotations.Api;
 import io.swagger.annotations.ApiOperation;
@@ -20,6 +21,8 @@ import javax.ws.rs.PathParam;
 import javax.ws.rs.Produces;
 import javax.ws.rs.QueryParam;
 import javax.ws.rs.core.MediaType;
+import java.util.Arrays;
+import java.util.List;
 
 @Api(value = "config - /v1")
 @Path(GlobalConfigResource.BASE_PATH)
@@ -37,6 +40,20 @@ public interface GlobalConfigResource extends RestResource, DirectRestService {
 
     String PROP_NAME_PATH_PARAM = "/{propertyName}";
     String NODE_NAME_PATH_PARAM = "/{nodeName}";
+
+    FilterFieldDefinition FIELD_DEF_NAME = FilterFieldDefinition.defaultField("Name");
+    FilterFieldDefinition FIELD_DEF_EFFECTIVE_VALUE = FilterFieldDefinition.qualifiedField(
+            "Effective Value", "value");
+    FilterFieldDefinition FIELD_DEF_SOURCE = FilterFieldDefinition.qualifiedField("Source");
+    FilterFieldDefinition FIELD_DEF_DESCRIPTION = FilterFieldDefinition.qualifiedField(
+            "Description", "desc");
+
+    List<FilterFieldDefinition> FIELD_DEFINITIONS = Arrays.asList(
+            FIELD_DEF_NAME,
+            FIELD_DEF_EFFECTIVE_VALUE,
+            FIELD_DEF_SOURCE,
+            FIELD_DEF_DESCRIPTION);
+
 
     // TODO do we need this if the method returns a type?
     @ApiOperation(

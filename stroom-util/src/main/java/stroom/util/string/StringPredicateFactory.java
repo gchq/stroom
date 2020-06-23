@@ -209,30 +209,35 @@ public class StringPredicateFactory {
                 userInput, separatorCharacterClass);
 
         return toNullSafePredicate(false, stringUnderTest -> {
-            if (CAMEL_CASE_PATTERN.matcher(stringUnderTest).matches()) {
-                LOGGER.trace("stringUnderTest [{}] is (C|c)amelCase", stringUnderTest);
+            final String cleanedString = cleanStringUnderTestForWordBoundaryMatching(stringUnderTest);
 
-                // replace stuff like SQLScript with "SQL Script"
-                String separatedStringUnderTest = CAMEL_CASE_ABBREVIATIONS_PATTERN
-                        .matcher(stringUnderTest)
-                        .replaceAll("$1 $2");
-
-                LOGGER.trace("separatedStringUnderTest: [{}]", separatedStringUnderTest);
-
-                // Now split on camel case word boundaries (or spaces added above)
-                separatedStringUnderTest = CAMEL_CASE_SPLIT_PATTERN
-                        .matcher(separatedStringUnderTest)
-                        .replaceAll(" ");
-
-                LOGGER.trace("separatedStringUnderTest: [{}]", separatedStringUnderTest);
-
-                // Now we have split the words with spaces, use the separator predicate
-                return separatorPredicate.test(separatedStringUnderTest);
-            } else {
-                LOGGER.trace("stringUnderTest [{}] has word separators", stringUnderTest);
-                return separatorPredicate.test(stringUnderTest);
-            }
+            LOGGER.trace("cleaned stringUnderTest [{}] has word separators", stringUnderTest);
+            return separatorPredicate.test(cleanedString);
         });
+    }
+
+    private static String cleanStringUnderTestForWordBoundaryMatching(final String stringUnderTest) {
+        if (CAMEL_CASE_PATTERN.matcher(stringUnderTest).matches()) {
+            LOGGER.trace("stringUnderTest [{}] is (C|c)amelCase", stringUnderTest);
+
+            // replace stuff like SQLScript with "SQL Script"
+            String separatedStringUnderTest = CAMEL_CASE_ABBREVIATIONS_PATTERN
+                    .matcher(stringUnderTest)
+                    .replaceAll("$1 $2");
+
+            LOGGER.trace("separatedStringUnderTest: [{}]", separatedStringUnderTest);
+
+            // Now split on camel case word boundaries (or spaces added above)
+            separatedStringUnderTest = CAMEL_CASE_SPLIT_PATTERN
+                    .matcher(separatedStringUnderTest)
+                    .replaceAll(" ");
+
+            LOGGER.trace("separatedStringUnderTest: [{}]", separatedStringUnderTest);
+
+            return separatedStringUnderTest;
+        } else {
+            return stringUnderTest;
+        }
     }
 
     @NotNull

@@ -43,7 +43,6 @@ public class TaskManagerViewImpl extends ViewWithUiHandlers<TaskManagerUiHandler
     @Inject
     public TaskManagerViewImpl(final Binder binder) {
         widget = binder.createAndBindUi(this);
-//         TODO add this in when the server side filtering is implemented
         nameFilter.registerPopupTextProvider(() -> QuickFilterTooltipUtil.createTooltip(
                 "Server Tasks Quick Filter",
                 builder -> builder
