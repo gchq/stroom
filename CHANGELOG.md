@@ -6,6 +6,16 @@ and this project adheres to [Semantic Versioning](http://semver.org/).
 
 ## [Unreleased]
 
+* Add field searching to Explorer Tree quick filter.
+
+* Add field searching to Properties quick filter.
+
+* Add field searching to Sercer Tasks quick filter.
+
+* Add field searching to dependencies quick filter.
+
+* Improve info tooltip layouts.
+
 * Issue **#1248** : Add quick filter to dependencies screen.
 
 * Issue **#1650** : Use consitent blue colour.
