@@ -6,6 +6,8 @@ and this project adheres to [Semantic Versioning](http://semver.org/).
 
 ## [Unreleased]
 
+* Issue **#1671** :Fix XSLT function `hex-to-oct`.
+
 * Add `readTimeout` property to `HTTPAppender`.
 
 * Issue **#1632** : SQL stats now compatible with MySQL 8 Group Replication
