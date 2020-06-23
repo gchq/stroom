@@ -6,9 +6,11 @@ and this project adheres to [Semantic Versioning](http://semver.org/).
 
 ## [Unreleased]
 
+* Add `readTimeout` property to `HTTPAppender`.
+
 * Issue **#1632** : SQL stats now compatible with MySQL 8 Group Replication
 
-* Issue **#1650** : Use consitent blue colour.
+* Issue **#1650** : Use consistent blue colour.
 
 * Issue **#1627** : Fix Up/Down buttons on Rule Set screen. Now keeps selection after use.
 
