@@ -6,6 +6,10 @@ and this project adheres to [Semantic Versioning](http://semver.org/).
 
 ## [Unreleased]
 
+* Add field searching to entity selection popups.
+
+* Change entity selection popups to clear quick filter on show.
+
 * Add column sorting and field searching to Properties screen.
 
 * Add field searching to Explorer Tree quick filter.

@@ -17,10 +17,6 @@
 
 package stroom.explorer.client.presenter;
 
-import com.google.gwt.core.client.GWT;
-import com.google.gwt.core.client.Scheduler;
-import com.google.gwt.user.client.Timer;
-import com.google.gwt.user.client.ui.Widget;
 import stroom.dispatch.client.Rest;
 import stroom.dispatch.client.RestFactory;
 import stroom.docref.DocRef;
@@ -30,6 +26,11 @@ import stroom.explorer.shared.ExplorerResource;
 import stroom.explorer.shared.ExplorerTreeFilter;
 import stroom.explorer.shared.FetchExplorerNodeResult;
 import stroom.explorer.shared.FindExplorerNodeCriteria;
+
+import com.google.gwt.core.client.GWT;
+import com.google.gwt.core.client.Scheduler;
+import com.google.gwt.user.client.Timer;
+import com.google.gwt.user.client.ui.Widget;
 
 import java.util.ArrayList;
 import java.util.HashSet;
@@ -268,6 +269,7 @@ public class ExplorerTreeModel {
     }
 
     public void reset() {
+        explorerTreeFilterBuilder.setNameFilter(null);
         explorerTree.setData(new ArrayList<>());
         openItems.clear();
         minDepth = 1;

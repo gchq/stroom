@@ -70,6 +70,9 @@
 
   	/* All the above was copied form Tooltip.css */
   	box-shadow: 0 0 5px 1px rgba(0, 0, 0, 0.5);
+
+  	/* ensure it is above the glass used on some modals, e.g. EntityTreeViewImpl */
+  	z-index: 1000
 }
 
 /* Style any tables in the tooltip */

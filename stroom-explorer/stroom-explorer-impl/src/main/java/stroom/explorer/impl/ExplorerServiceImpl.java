@@ -25,6 +25,7 @@ import stroom.explorer.api.ExplorerNodeService;
 import stroom.explorer.api.ExplorerService;
 import stroom.explorer.shared.BulkActionResult;
 import stroom.explorer.shared.DocumentType;
+import stroom.explorer.shared.ExplorerConstants;
 import stroom.explorer.shared.ExplorerNode;
 import stroom.explorer.shared.ExplorerNode.NodeState;
 import stroom.explorer.shared.ExplorerTreeFilter;
@@ -38,6 +39,9 @@ import stroom.util.filter.FilterFieldMapper;
 import stroom.util.filter.FilterFieldMappers;
 import stroom.util.filter.QuickFilterPredicateFactory;
 import stroom.util.shared.PermissionException;
+
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import javax.inject.Inject;
 import javax.inject.Provider;
@@ -57,6 +61,8 @@ import java.util.stream.Collectors;
 
 @Singleton
 class ExplorerServiceImpl implements ExplorerService, CollectionService {
+
+    private static final Logger LOGGER = LoggerFactory.getLogger(ExplorerServiceImpl.class);
 
     // Bit of a fudge to allow folder searching but you can't use it with name/type as folder is a parent of the other
 // items
@@ -93,77 +99,129 @@ class ExplorerServiceImpl implements ExplorerService, CollectionService {
 
     @Override
     public FetchExplorerNodeResult getData(final FindExplorerNodeCriteria criteria) {
-        final ExplorerTreeFilter filter = criteria.getFilter();
-        final FetchExplorerNodeResult result = new FetchExplorerNodeResult();
+        try {
+            final ExplorerTreeFilter filter = criteria.getFilter();
+            final FetchExplorerNodeResult result = new FetchExplorerNodeResult();
 
-        // Get the master tree model.
-        final TreeModel masterTreeModel = explorerTreeModel.getModel();
+            // Get the master tree model.
+            final TreeModel masterTreeModel = explorerTreeModel.getModel();
 
-        // See if we need to open any more folders to see nodes we want to ensure are visible.
-        final Set<String> forcedOpenItems = getForcedOpenItems(masterTreeModel, criteria);
+            // See if we need to open any more folders to see nodes we want to ensure are visible.
+            final Set<String> forcedOpenItems = getForcedOpenItems(masterTreeModel, criteria);
 
-        final Set<String> allOpenItems = new HashSet<>();
-        allOpenItems.addAll(criteria.getOpenItems());
-        allOpenItems.addAll(criteria.getTemporaryOpenedItems());
-        allOpenItems.addAll(forcedOpenItems);
+            final Set<String> allOpenItems = new HashSet<>();
+            allOpenItems.addAll(criteria.getOpenItems());
+            allOpenItems.addAll(criteria.getTemporaryOpenedItems());
+            allOpenItems.addAll(forcedOpenItems);
 
-        final TreeModel filteredModel = new TreeModel();
-        // Create the predicate for the current filter value
-        final Predicate<DocRef> fuzzyMatchPredicate = QuickFilterPredicateFactory.createFuzzyMatchPredicate(
-                filter.getNameFilter(), FIELD_MAPPERS);
+            final TreeModel filteredModel = new TreeModel();
+            // Create the predicate for the current filter value
+            final Predicate<DocRef> fuzzyMatchPredicate = QuickFilterPredicateFactory.createFuzzyMatchPredicate(
+                    filter.getNameFilter(), FIELD_MAPPERS);
 
-        addDescendants(
-                null,
-                masterTreeModel,
-                filteredModel,
-                filter,
-                fuzzyMatchPredicate,
-                false,
-                allOpenItems,
-                0);
+            addDescendants(
+                    null,
+                    masterTreeModel,
+                    filteredModel,
+                    filter,
+                    fuzzyMatchPredicate,
+                    false,
+                    allOpenItems,
+                    0);
 
-        // If the name filter has changed then we want to temporarily expand all nodes.
-        if (filter.isNameFilterChange()) {
-            final Set<String> temporaryOpenItems;
+            // If the name filter has changed then we want to temporarily expand all nodes.
+            if (filter.isNameFilterChange()) {
+                final Set<String> temporaryOpenItems;
 
-            if (filter.getNameFilter() == null) {
-                temporaryOpenItems = new HashSet<>();
+                if (filter.getNameFilter() == null) {
+                    temporaryOpenItems = new HashSet<>();
+                } else {
+                    temporaryOpenItems = new HashSet<>(filteredModel.getAllParents());
+                }
+
+                addRoots(filteredModel, criteria.getOpenItems(), forcedOpenItems, temporaryOpenItems, result);
+                result.setTemporaryOpenedItems(temporaryOpenItems);
             } else {
-                temporaryOpenItems = new HashSet<>(filteredModel.getAllParents());
+                addRoots(
+                        filteredModel,
+                        criteria.getOpenItems(),
+                        forcedOpenItems,
+                        criteria.getTemporaryOpenedItems(),
+                        result);
             }
 
-            addRoots(filteredModel, criteria.getOpenItems(), forcedOpenItems, temporaryOpenItems, result);
-            result.setTemporaryOpenedItems(temporaryOpenItems);
-        } else {
-            addRoots(
-                    filteredModel,
-                    criteria.getOpenItems(),
-                    forcedOpenItems,
-                    criteria.getTemporaryOpenedItems(),
-                    result);
+            decorateTree(criteria, result, fuzzyMatchPredicate);
+
+            // Ensure root node is open if it has items
+            Optional.ofNullable(result.getRootNodes())
+                    .filter(rootNodes -> !rootNodes.isEmpty())
+                    .map(rootNodes -> rootNodes.get(0))
+                    .filter(rootNode -> rootNode.getChildren() != null
+                            && !rootNode.getChildren().isEmpty()
+                            && NodeState.CLOSED.equals(rootNode.getNodeState()))
+                    .ifPresent(rootNode -> rootNode.setNodeState(NodeState.OPEN));
+
+            return result;
+        } catch (Exception e) {
+            LOGGER.error("Error fetching nodes with criteria {}", criteria, e);
+            throw e;
         }
+    }
+
+    private void decorateTree(final FindExplorerNodeCriteria criteria,
+                              final FetchExplorerNodeResult result,
+                              final Predicate<DocRef> fuzzyMatchPredicate) {
 
         if (criteria.getFilter() != null &&
                 criteria.getFilter().getTags() != null &&
                 criteria.getFilter().getTags().contains(StandardTagNames.DATA_SOURCE)) {
+
             final ExplorerDecorator explorerDecorator = explorerDecoratorProvider.get();
             if (explorerDecorator != null) {
-                final List<DocRef> additionalDocRefs = explorerDecorator.list();
-                additionalDocRefs.forEach(docRef -> {
-                    final ExplorerNode node = new ExplorerNode(
-                            docRef.getType(),
-                            docRef.getUuid(),
-                            docRef.getName(),
-                            StandardTagNames.DATA_SOURCE);
-                    node.setNodeState(NodeState.LEAF);
-                    node.setDepth(1);
-                    node.setIconUrl(DocumentType.DOC_IMAGE_URL + "searchable.svg");
-                    result.getRootNodes().get(0).getChildren().add(node);
-                });
+                final List<DocRef> additionalDocRefs = explorerDecorator.list()
+                        .stream()
+                        .filter(fuzzyMatchPredicate)
+                        .collect(Collectors.toList());
+
+                if (!additionalDocRefs.isEmpty()) {
+                    // Try and create a root node
+                    if (result.getRootNodes().isEmpty()) {
+                        explorerNodeService.getRoot()
+                                .ifPresent(node -> {
+                                    Optional.ofNullable(explorerActionHandlers.getType(ExplorerConstants.SYSTEM))
+                                            .map(DocumentType::getIconUrl)
+                                            .ifPresent(node::setIconUrl);
+                                    node.setChildren(new ArrayList<>());
+                                    result.getRootNodes().add(node);
+                                });
+                    }
+                    final boolean hasRoot = (result.getRootNodes() != null
+                            && !result.getRootNodes().isEmpty());
+
+                    additionalDocRefs.forEach(docRef -> {
+                        final ExplorerNode node = new ExplorerNode(
+                                docRef.getType(),
+                                docRef.getUuid(),
+                                docRef.getName(),
+                                StandardTagNames.DATA_SOURCE);
+
+                        node.setNodeState(NodeState.LEAF);
+                        node.setDepth(1);
+                        node.setIconUrl(DocumentType.DOC_IMAGE_URL + "searchable.svg");
+
+                        if (hasRoot) {
+                            ExplorerNode rootNode = result.getRootNodes().get(0);
+                            if (rootNode.getChildren() == null) {
+                                rootNode.setChildren(new ArrayList<>());
+                            }
+                            rootNode.getChildren().add(node);
+                        } else {
+                            throw new RuntimeException("Missing root node");
+                        }
+                    });
+                }
             }
         }
-
-        return result;
     }
 
     @Override
