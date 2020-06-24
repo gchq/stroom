@@ -131,6 +131,17 @@ button:focus {
   opacity: 1;
 }
 
+.Button__content {
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
 ////////////////////////////////////////////////////////////////////////////////
 // Default buttons
 ////////////////////////////////////////////////////////////////////////////////
@@ -571,11 +582,8 @@ button:focus {
   background-color: #42a5f5; // material blue 400
   border-color: #2196f3; // material blue 500
   outline: 0;
-  box-shadow: 0 0 0 0.2rem rgba(33,150,243, 0.25) // material blue 500
+  box-shadow: 0 0 0 0.2rem rgba(33, 150, 243, 0.25) // material blue 500
 }
-
-
-
 
 .Button--contained-secondary {
   // .j1qgefk9
@@ -616,7 +624,7 @@ button:focus {
   background-color: #ec407a; // material pink 400
   border-color: #e91e63; // material pink 500
   outline: 0;
-  box-shadow: 0 0 0 0.2rem rgba(233,30,99, 0.25) // material pink 500
+  box-shadow: 0 0 0 0.2rem rgba(233, 30, 99, 0.25) // material pink 500
 }
 
 .Button--contained.Button--disabled {
@@ -638,6 +646,8 @@ button:focus {
 .ripple-container {
   position: absolute;
   overflow: hidden;
+  top: 0;
+  left: 0;
   width: 100%;
   height: 100%;
 }

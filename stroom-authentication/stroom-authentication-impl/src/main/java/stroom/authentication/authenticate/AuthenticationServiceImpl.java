@@ -181,6 +181,15 @@ class AuthenticationServiceImpl implements AuthenticationService {
 //        request.getSession(true).setAttribute(AUTHENTICATED_ACCOUNT, user);
 //    }
 
+    public AuthenticationState getAuthenticationState(final HttpServletRequest request) {
+        final AuthStateImpl authState = getAuthState(request);
+        String userId = null;
+        if (authState != null && !authState.isRequirePasswordChange()) {
+            userId = authState.getSubject();
+        }
+        return new AuthenticationState(userId, config.getPasswordPolicyConfig().isAllowPasswordResets());
+    }
+
     private void setAuthState(final HttpSession session, final AuthStateImpl authStateImpl) {
         if (session != null) {
             session.setAttribute(AUTH_STATE, authStateImpl);
@@ -255,13 +264,13 @@ class AuthenticationServiceImpl implements AuthenticationService {
         if (!result.isValidCredentials() && !result.isAccountDoesNotExist()) {
             LOGGER.debug("Password for {} is incorrect", loginRequest.getUserId());
             final boolean locked = accountDao.incrementLoginFailures(loginRequest.getUserId());
-                result = new CredentialValidationResult(
-                        result.isValidCredentials(),
-                        result.isAccountDoesNotExist(),
-                        locked,
-                        result.isDisabled(),
-                        result.isInactive(),
-                        result.isProcessingAccount());
+            result = new CredentialValidationResult(
+                    result.isValidCredentials(),
+                    result.isAccountDoesNotExist(),
+                    locked,
+                    result.isDisabled(),
+                    result.isInactive(),
+                    result.isProcessingAccount());
         }
 
         final String message = result.toString();

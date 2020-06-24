@@ -3,14 +3,14 @@ import { storiesOf } from "@storybook/react";
 import RippleContainer, { useRipple } from "./RippleContainer";
 
 const TestHarness: React.FunctionComponent = () => {
-  const onClick: React.MouseEventHandler<HTMLDivElement> = React.useCallback(
+  const onClick: React.MouseEventHandler<HTMLButtonElement> = React.useCallback(
     () => console.log("Clicked"),
     [],
   );
   const { onClickWithRipple, ripples } = useRipple(onClick);
 
   return (
-    <div
+    <button
       className="control"
       onClick={onClickWithRipple}
       style={{
@@ -21,7 +21,7 @@ const TestHarness: React.FunctionComponent = () => {
       }}
     >
       <RippleContainer ripples={ripples} />
-    </div>
+    </button>
   );
 };
 

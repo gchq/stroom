@@ -46,6 +46,11 @@ class AuthenticationResourceImpl implements AuthenticationResource {
     }
 
     @Override
+    public AuthenticationState getAuthenticationState(final HttpServletRequest request) {
+        return serviceProvider.get().getAuthenticationState(request);
+    }
+
+    @Override
     public LoginResponse login(final HttpServletRequest request,
                                final LoginRequest loginRequest) {
         LOGGER.debug("Received a login request");

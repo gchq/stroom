@@ -19,28 +19,26 @@ import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
 import * as React from "react";
 import { ButtonProps } from "./types";
 import RippleContainer, { useRipple } from "./RippleContainer";
-import { forwardRef, ForwardRefRenderFunction } from "react";
+import { forwardRef, ForwardRefRenderFunction, useEffect, useRef } from "react";
 import { Spinner } from "react-bootstrap";
 
 export const Button: ForwardRefRenderFunction<
   HTMLButtonElement,
   ButtonProps
-> = (
-  {
-    icon,
-    className: rawClassName,
-    appearance,
-    action,
-    selected,
-    disabled,
-    loading,
-    size,
-    onClick,
-    children,
-    ...rest
-  }: ButtonProps,
-  ref,
-) => {
+> = ({
+  icon,
+  className: rawClassName,
+  appearance,
+  action,
+  selected,
+  disabled,
+  loading,
+  size,
+  onClick,
+  children,
+  autoFocus = false,
+  ...rest
+}: ButtonProps) => {
   const className = React.useMemo(() => {
     const classNames = ["Button"];
 
@@ -138,39 +136,48 @@ export const Button: ForwardRefRenderFunction<
 
   const { onClickWithRipple, ripples } = useRipple(onClick);
 
+  // For some reason autofocus doesn't work inside bootstrap modal forms so we need to use an effect.
+  const element = useRef(null);
+  useEffect(() => {
+    if (autoFocus) {
+      element.current.focus();
+    }
+  }, [autoFocus]);
+
   return (
     <button
       className={className}
       onClick={onClickWithRipple}
-      ref={ref}
+      ref={element}
       {...rest}
     >
       <RippleContainer ripples={ripples} />
-      <span
-        className={
-          loading
-            ? "Button__spinner Button__spinner-loading"
-            : "Button__spinner"
-        }
-      >
-        <Spinner
-          as="span"
-          animation="border"
-          size="sm"
-          role="status"
-          aria-hidden="true"
-        />
-      </span>
+      <div className="Button__content">
+        <span
+          className={
+            loading
+              ? "Button__spinner Button__spinner-loading"
+              : "Button__spinner"
+          }
+        >
+          <Spinner
+            as="span"
+            animation="border"
+            size="sm"
+            role="status"
+            aria-hidden="true"
+          />
+        </span>
 
-      {/*{loading ? (*/}
-      {/*  <span className="Button__loading">{children}</span>*/}
-      {/*) : undefined}*/}
-      {icon ? (
-        <FontAwesomeIcon size={fontAwesomeSize} icon={icon} />
-      ) : undefined}
-      {showText && icon ? <span className="Button__margin" /> : undefined}
+        {icon ? (
+          <FontAwesomeIcon size={fontAwesomeSize} icon={icon} />
+        ) : undefined}
+        {showText && icon ? <span className="Button__margin" /> : undefined}
 
-      {showText ? <span className="Button__text">{children}</span> : undefined}
+        {showText ? (
+          <span className="Button__text">{children}</span>
+        ) : undefined}
+      </div>
     </button>
   );
 };

@@ -15,12 +15,9 @@
  */
 
 import * as React from "react";
-import ReactModal from "react-modal";
-import reactModalOptions from "../ThemedModal/reactModalOptions";
-import { useTheme } from "../../lib/useTheme";
-import { createRef } from "react";
 import Button from "../Button/Button";
-import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
+import { Form, Modal } from "react-bootstrap";
+import { CustomModal } from "../Authentication/FormField";
 
 export enum AlertType {
   INFO,
@@ -101,132 +98,43 @@ const AlertHeader: React.FunctionComponent<Alert> = (alert) => {
   }
 };
 
-const Tick: React.FunctionComponent = () => (
-  <span className="Button__icon">
-    <FontAwesomeIcon size="1x" icon="check" />
-  </span>
-);
-
 export const AlertDialog: React.FunctionComponent<Props> = ({
   alert,
   isOpen,
   onCloseDialog,
 }) => {
-  const { theme } = useTheme();
-  const okButtonRef = createRef<HTMLButtonElement>();
-
   return (
-    <ReactModal
-      className={`themed-modal ${theme}`}
-      style={reactModalOptions}
-      isOpen={isOpen}
-      appElement={document.body}
-      shouldCloseOnOverlayClick={false}
-      shouldCloseOnEsc={true}
-      shouldFocusAfterRender={true}
-      shouldReturnFocusAfterClose={true}
-      onAfterOpen={() => okButtonRef.current.focus()}
+    <CustomModal
+      show={isOpen}
+      centered={true}
+      aria-labelledby="contained-modal-title-vcenter"
     >
-      <form
+      <Form
+        noValidate={true}
         onSubmit={(event) => {
           event.preventDefault();
           onCloseDialog();
         }}
       >
-        <div className="themed-modal__container">
-          <header className="themed-modal__header">
-            <AlertHeader {...alert} />
-          </header>
-          <div className="themed-modal__content">{alert && alert.message}</div>
-          <div className="themed-modal__footer__actions">
-            <Button
-              className="Button__ok"
-              appearance="contained"
-              action="primary"
-              icon="check"
-              type="submit"
-              // loading={okClicked}
-              // disabled={cancelClicked}
-              // onClick={onOk}
-              ref={okButtonRef}
-            >
-              OK
-            </Button>
-
-            {/*<Button*/}
-            {/*  className="Button__ok"*/}
-            {/*  action="primary"*/}
-            {/*  type="submit"*/}
-            {/*  icon={<Tick />}*/}
-            {/*  ref={okButtonRef}*/}
-            {/*>*/}
-            {/*  OK*/}
-            {/*</Button>*/}
-
-            {/*<Button*/}
-            {/*  appearance="contained"*/}
-            {/*  action="primary"*/}
-            {/*  icon="check"*/}
-            {/*  text="OK"*/}
-            {/*  type="submit"*/}
-            {/*  ref={okButtonRef}*/}
-            {/*>*/}
-            {/*  OK*/}
-            {/*</Button>*/}
-          </div>
-        </div>
-      </form>
-    </ReactModal>
+        <Modal.Header closeButton={false}>
+          <AlertHeader {...alert} />
+        </Modal.Header>
+        <Modal.Body>{alert && alert.message} </Modal.Body>
+        <Modal.Footer>
+          <Button
+            className="Button__ok"
+            appearance="contained"
+            action="primary"
+            icon="check"
+            type="submit"
+            autoFocus={true}
+          >
+            OK
+          </Button>
+        </Modal.Footer>
+      </Form>
+    </CustomModal>
   );
 };
-
-// className="Button__ok"
-// type="primary"
-// htmlType="submit"
-// ref={okButtonRef}
-
-// // appearance="contained"
-// // action="primary"
-// // icon="check"
-// // text="OK"
-// // type="submit"
-// ref={(button) => (this.__button = button)}
-
-//
-// /**
-//  * These are the things returned by the custom hook that allow the owning component to interact
-//  * with this dialog.
-//  */
-// interface UseDialog {
-//   /**
-//    * The owning component is ready to start a deletion process.
-//    * Calling this will open the dialog, and setup the UUIDs
-//    */
-//   showDialog: () => void;
-//   /**
-//    * These are the properties that the owning component can just give to the Dialog component
-//    * using destructing.
-//    */
-//   componentProps: Props;
-// }
-//
-// /**
-//  * This is a React custom hook that sets up things required by the owning component.
-//  */
-// export const useDialog = (): UseDialog => {
-//   const [isOpen, setIsOpen] = React.useState<boolean>(false);
-//
-//   return {
-//     componentProps: {
-//       isOpen,
-//       onCloseDialog: () => {
-//         setIsOpen(false);
-//       },
-//     },
-//     showDialog: () => {
-//       setIsOpen(true);
-//     },
-//   };
-// };
 
 export default AlertDialog;
