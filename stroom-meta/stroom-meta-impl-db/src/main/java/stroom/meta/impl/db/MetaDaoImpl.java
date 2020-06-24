@@ -168,8 +168,27 @@ class MetaDaoImpl implements MetaDao {
         this.metaKeyDao = metaKeyDao;
         this.dataRetentionConfig = dataRetentionConfig;
 
+
+        // Extended meta fields.
+        metaExpressionMapper = new MetaExpressionMapper(
+                metaKeyDao,
+                metaVal.META_KEY_ID,
+                metaVal.VAL,
+                wordListProvider,
+                collectionService);
+        //Add term handlers
+        metaExpressionMapper.map(MetaFields.REC_READ);
+        metaExpressionMapper.map(MetaFields.REC_WRITE);
+        metaExpressionMapper.map(MetaFields.REC_INFO);
+        metaExpressionMapper.map(MetaFields.REC_WARN);
+        metaExpressionMapper.map(MetaFields.REC_ERROR);
+        metaExpressionMapper.map(MetaFields.REC_FATAL);
+        metaExpressionMapper.map(MetaFields.DURATION);
+        metaExpressionMapper.map(MetaFields.FILE_SIZE);
+        metaExpressionMapper.map(MetaFields.RAW_SIZE);
+
         // Standard fields.
-        expressionMapper = expressionMapperFactory.create();
+        expressionMapper = expressionMapperFactory.create(metaExpressionMapper);
         expressionMapper.map(MetaFields.ID, meta.ID, Long::valueOf);
         expressionMapper.map(MetaFields.PROCESSOR_ID, meta.PROCESSOR_ID, Integer::valueOf);
         expressionMapper.multiMap(MetaFields.FEED, meta.FEED_ID, this::getFeedIds, true);
@@ -196,25 +215,9 @@ class MetaDaoImpl implements MetaDao {
         expressionMapper.map(MetaFields.PARENT_CREATE_TIME, parent.CREATE_TIME, DateUtil::parseNormalDateTimeString);
         expressionMapper.multiMap(MetaFields.PARENT_FEED, parent.FEED_ID, this::getFeedIds);
 
-        // Extended meta fields.
-        metaExpressionMapper = new MetaExpressionMapper(
-                metaKeyDao,
-                metaVal.META_KEY_ID,
-                metaVal.VAL,
-                wordListProvider,
-                collectionService);
-//        metaTermHandlers.put(StreamDataSource.NODE, createMetaTermHandler(StreamDataSource.NODE));
-        metaExpressionMapper.map(MetaFields.REC_READ);
-        metaExpressionMapper.map(MetaFields.REC_WRITE);
-        metaExpressionMapper.map(MetaFields.REC_INFO);
-        metaExpressionMapper.map(MetaFields.REC_WARN);
-        metaExpressionMapper.map(MetaFields.REC_ERROR);
-        metaExpressionMapper.map(MetaFields.REC_FATAL);
-        metaExpressionMapper.map(MetaFields.DURATION);
-        metaExpressionMapper.map(MetaFields.FILE_SIZE);
-        metaExpressionMapper.map(MetaFields.RAW_SIZE);
 
         valueMapper = new ValueMapper();
+
         valueMapper.map(MetaFields.ID, meta.ID, ValLong::create);
         valueMapper.map(MetaFields.FEED, metaFeed.NAME, ValString::create);
         valueMapper.map(MetaFields.FEED_NAME, metaFeed.NAME, ValString::create);
@@ -1035,7 +1038,8 @@ class MetaDaoImpl implements MetaDao {
         int offset = JooqUtil.getOffset(pageRequest);
         int numberOfRows = JooqUtil.getLimit(pageRequest, false);
 
-        return getSelectionSummary(conditions, offset, numberOfRows);
+        SelectionSummary summary = getSelectionSummary(conditions, offset, numberOfRows);
+        return  summary;
     }
 
     private SelectionSummary getSelectionSummary(final Collection<Condition> conditions,
@@ -1162,20 +1166,7 @@ class MetaDaoImpl implements MetaDao {
     private Collection<Condition> createCondition(final ExpressionOperator expression) {
         Condition criteriaCondition = expressionMapper.apply(expression);
 
-//        // If we aren't being asked to match everything then add constraints to the expression.
-//        if (idSet != null && (idSet.getMatchAll() == null || !idSet.getMatchAll())) {
-//            condition = and(condition, meta.ID.in(idSet.getSet()));
-//        }
-
-        // Get additional selection criteria based on meta data attributes;
-        final Optional<SelectConditionStep<Record1<Long>>> metaConditionStep = getMetaCondition(expression);
-        List<Condition> conditions = new ArrayList<>();
-        conditions.add(criteriaCondition);
-
-        metaConditionStep.ifPresent(record1s ->
-                conditions.add(meta.ID.in(record1s)));
-
-        return conditions;
+        return Collections.singletonList(criteriaCondition);
     }
 
     private Collection<OrderField<?>> createOrderFields(final ExpressionCriteria criteria) {

@@ -28,7 +28,7 @@ class MetaExpressionMapper implements Function<ExpressionItem, Condition> {
                          final Field<Long> valueField,
                          final WordListProvider wordListProvider,
                          final CollectionService collectionService) {
-        expressionMapper = new CommonExpressionMapper(true);
+        expressionMapper = new CommonExpressionMapper();
         this.metaKeyDao = metaKeyDao;
         this.keyField = keyField;
         this.valueField = valueField;

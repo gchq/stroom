@@ -19,8 +19,9 @@ public class ExpressionMapper implements Function<ExpressionItem, Condition> {
     private final CollectionService collectionService;
 
     ExpressionMapper(final WordListProvider wordListProvider,
-                     final CollectionService collectionService) {
-        expressionMapper = new CommonExpressionMapper(false);
+                     final CollectionService collectionService,
+                     final Function<ExpressionItem, Condition> delegateItemHandler) {
+        expressionMapper = new CommonExpressionMapper(delegateItemHandler);
         this.wordListProvider = wordListProvider;
         this.collectionService = collectionService;
     }
