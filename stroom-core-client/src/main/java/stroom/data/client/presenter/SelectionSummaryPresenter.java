@@ -68,24 +68,31 @@ public class SelectionSummaryPresenter extends MyPresenterWidget<CommonAlertView
         appendRow(sb, "item", "items", result.getItemCount());
         sb.appendEscaped(" will be ");
         sb.appendEscaped(postAction);
-        sb.appendEscaped(":");
         sb.appendHtmlConstant("</br>");
         sb.appendHtmlConstant("</br>");
-        appendRow(sb, "feed", "feeds", result.getFeedCount());
+        sb.appendEscaped("The selected items include:");
         sb.appendHtmlConstant("</br>");
         appendRow(sb, "type", "types", result.getTypeCount());
+        sb.appendHtmlConstant(" of ");
+        appendRow(sb, "status", "statuses", result.getStatusCount());
         sb.appendHtmlConstant("</br>");
-        appendRow(sb, "processor", "processors", result.getProcessorCount());
+        sb.appendHtmlConstant("</br>");
+        sb.appendEscaped("That are associated with:");
         sb.appendHtmlConstant("</br>");
         appendRow(sb, "pipeline", "pipelines", result.getPipelineCount());
         sb.appendHtmlConstant("</br>");
-        appendRow(sb, "status", "statuses", result.getStatusCount());
+        appendRow(sb, "feed", "feeds", result.getFeedCount());
         sb.appendHtmlConstant("</br>");
-        sb.appendEscaped("Created Between: ");
         sb.appendHtmlConstant("</br>");
-        sb.appendEscaped(ClientDateUtil.toISOString(result.getAgeRange().getFrom()));
-        sb.appendHtmlConstant("</br>");
-        sb.appendEscaped(ClientDateUtil.toISOString(result.getAgeRange().getTo()));
+        if (result.getAgeRange().getFrom() != null || result.getAgeRange().getTo() != null) {
+            sb.appendEscaped("Created Between: ");
+            sb.appendHtmlConstant("</br>");
+            sb.appendEscaped(ClientDateUtil.toISOString(result.getAgeRange().getFrom()));
+            sb.appendHtmlConstant("</br>");
+            sb.appendEscaped(ClientDateUtil.toISOString(result.getAgeRange().getTo()));
+        } else {
+            sb.appendEscaped("Created at any time.");
+        }
         sb.appendHtmlConstant("</br>");
         sb.appendHtmlConstant("</br>");
         sb.appendEscaped("Are you sure you want to ");
