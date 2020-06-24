@@ -51,6 +51,8 @@
     "react": "16.13.1",
     "react-ace": "7.0.5",
     "react-beautiful-dnd": "12.2.0",
+    "react-bootstrap": "^1.0.1",
+    "react-bootstrap-icons": "^1.0.3-alpha4",
     "react-copy-to-clipboard": "5.0.2",
     "react-dnd": "7.4.5",
     "react-dnd-html5-backend": "7.4.4",

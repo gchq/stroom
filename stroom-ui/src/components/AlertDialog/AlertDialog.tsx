@@ -19,8 +19,7 @@ import ReactModal from "react-modal";
 import reactModalOptions from "../ThemedModal/reactModalOptions";
 import { useTheme } from "../../lib/useTheme";
 import { createRef } from "react";
-// import Button from "../Button/Button";
-import { Button } from "antd";
+import Button from "../Button/Button";
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
 
 export enum AlertType {
@@ -142,13 +141,27 @@ export const AlertDialog: React.FunctionComponent<Props> = ({
           <div className="themed-modal__footer__actions">
             <Button
               className="Button__ok"
-              type="primary"
-              htmlType="submit"
-              icon={<Tick />}
+              appearance="contained"
+              action="primary"
+              icon="check"
+              type="submit"
+              // loading={okClicked}
+              // disabled={cancelClicked}
+              // onClick={onOk}
               ref={okButtonRef}
             >
               OK
             </Button>
+
+            {/*<Button*/}
+            {/*  className="Button__ok"*/}
+            {/*  action="primary"*/}
+            {/*  type="submit"*/}
+            {/*  icon={<Tick />}*/}
+            {/*  ref={okButtonRef}*/}
+            {/*>*/}
+            {/*  OK*/}
+            {/*</Button>*/}
 
             {/*<Button*/}
             {/*  appearance="contained"*/}

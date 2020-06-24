@@ -1,0 +1,22 @@
+/* Customisations to standard bootstrap styles */
+.modal-header {
+  border-bottom: none;
+}
+
+.modal-footer {
+  border-top: none;
+}
+
+.invalid-feedback {
+  display: block;
+  min-height: 16px;
+}
+
+.label {
+  margin-bottom: .25rem;
+}
+
+.col {
+  padding-left: 1rem;
+  padding-right: 1rem;
+}

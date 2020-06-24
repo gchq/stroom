@@ -44,6 +44,7 @@ import useAppNavigation from "lib/useAppNavigation";
 import DataVolumes from "components/DataVolumes/DataVolumesSectionContainer";
 import SignInManager from "../Authentication/SignInManager";
 import ChangePasswordManager from "../Authentication/ChangePasswordManager";
+import StroomWrapper from "../Authentication/StroomWrapper";
 
 const renderWelcome = ({
   match: {
@@ -67,6 +68,11 @@ const Routes: React.FunctionComponent = () => {
   const { urlGenerator } = useAppNavigation();
   return (
     <Switch>
+      <Route
+        exact
+        path={`${singlePagePrefix}/stroomWrapper`}
+        component={StroomWrapper}
+      />
       <Route exact path={`${singlePagePrefix}/error`} component={ErrorPage} />
       <Route
         exact

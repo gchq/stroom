@@ -17,6 +17,8 @@ export interface ButtonProps extends ButtonHTMLAttributes<HTMLButtonElement> {
   selected?: boolean;
   /** Indicate the button has been disabled */
   disabled?: boolean;
+  /** Indicate the button is in a loading state */
+  loading?: boolean;
   /** Custom additional class to apply to the button */
   className?: string;
   /** The size of the icon*/

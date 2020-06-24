@@ -2,7 +2,7 @@ import * as React from "react";
 
 import Button from "components/Button";
 import IconHeader from "components/IconHeader";
-import ThemedModal from "components/ThemedModal";
+import { ThemedModal, DialogContent } from "components/ThemedModal";
 import useForm from "lib/useForm";
 import { PipelineSettingsValues } from "../types";
 
@@ -37,29 +37,29 @@ const PipelineSettings: React.FunctionComponent<Props> = ({
   }, [description, onCloseDialog, updateValues]);
 
   return (
-    <ThemedModal
-      isOpen={isOpen}
-      onRequestClose={onCloseDialog}
-      header={<IconHeader icon="cog" text="Pipeline Settings" />}
-      content={
-        <form>
-          <div>
-            <label>Description</label>
-            <input {...descriptionProps} autoFocus />
-          </div>
-        </form>
-      }
-      actions={
-        <React.Fragment>
-          <Button
-            text="Submit"
-            // disabled={invalid || submitting}
-            onClick={onConfirmLocal}
-          />
-          <Button text="Cancel" onClick={onCloseDialog} />
-        </React.Fragment>
-      }
-    />
+    <ThemedModal isOpen={isOpen} onRequestClose={onCloseDialog}>
+      <DialogContent
+        header={<IconHeader icon="cog" text="Pipeline Settings" />}
+        content={
+          <form>
+            <div>
+              <label>Description</label>
+              <input {...descriptionProps} autoFocus />
+            </div>
+          </form>
+        }
+        actions={
+          <React.Fragment>
+            <Button
+              text="Submit"
+              // disabled={invalid || submitting}
+              onClick={onConfirmLocal}
+            />
+            <Button text="Cancel" onClick={onCloseDialog} />
+          </React.Fragment>
+        }
+      />
+    </ThemedModal>
   );
 };
 

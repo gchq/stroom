@@ -18,25 +18,25 @@ import * as React from "react";
 import { storiesOf } from "@storybook/react";
 
 import Button from "../Button";
-import ThemedModal from "./ThemedModal";
+import { ThemedModal, DialogContent } from "./ThemedModal";
 
 const TestHarness: React.FunctionComponent = () => {
   const [isOpen, setIsOpen] = React.useState<boolean>(false);
 
   return (
     <React.Fragment>
-      <ThemedModal
-        isOpen={isOpen}
-        header={<h3>This is the header</h3>}
-        content={<div>Maybe put something helpful in here</div>}
-        actions={
-          <React.Fragment>
-            <Button text="Nothing" onClick={() => setIsOpen(false)} />
-            <Button text="Something" onClick={() => setIsOpen(false)} />
-          </React.Fragment>
-        }
-        onRequestClose={() => setIsOpen(false)}
-      />
+      <ThemedModal isOpen={isOpen} onRequestClose={() => setIsOpen(false)}>
+        <DialogContent
+          header={<h3>This is the header</h3>}
+          content={<div>Maybe put something helpful in here</div>}
+          actions={
+            <React.Fragment>
+              <Button text="Nothing" onClick={() => setIsOpen(false)} />
+              <Button text="Something" onClick={() => setIsOpen(false)} />
+            </React.Fragment>
+          }
+        />
+      </ThemedModal>
       <Button onClick={() => setIsOpen(!isOpen)} text="Open" />
     </React.Fragment>
   );

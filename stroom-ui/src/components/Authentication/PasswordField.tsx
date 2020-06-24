@@ -1,10 +1,11 @@
 import * as React from "react";
 import { FunctionComponent, useState } from "react";
-import FormField, { FormFieldProps, FormFieldState } from "./FormField";
+import { FormField, FormFieldProps, FormFieldState } from "./FormField";
 import ViewPassword from "./ViewPassword";
 
 const PasswordField: FunctionComponent<FormFieldProps & FormFieldState> = ({
   children,
+  className,
   ...restProps
 }) => {
   // initialize internal component state
@@ -14,14 +15,23 @@ const PasswordField: FunctionComponent<FormFieldProps & FormFieldState> = ({
     setState(viewText);
   };
 
+  const controlClass = [
+    className,
+    "right-icon-padding",
+    "hide-background-image",
+  ]
+    .join(" ")
+    .trim();
+
   return (
-    <div className="position-relative">
-      {/** Pass the validation and stateChanged functions as props to the form field **/}
-      <FormField {...restProps} type={state ? "text" : "password"}>
-        {children}
-        <ViewPassword state={state} onStateChanged={viewPasswordToggle} />
-      </FormField>
-    </div>
+    <FormField
+      {...restProps}
+      className={controlClass}
+      type={state ? "text" : "password"}
+    >
+      {children}
+      <ViewPassword state={state} onStateChanged={viewPasswordToggle} />
+    </FormField>
   );
 };
 

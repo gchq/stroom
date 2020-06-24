@@ -3,9 +3,9 @@
 
 import * as React from "react";
 
-import FormField from "./FormField";
+import { FormField } from "./FormField";
 import NewPasswordField from "./NewPasswordField";
-import LogoPage from "../Layout/LogoPage";
+import BackgroundLogo from "../Layout/BackgroundLogo";
 import FormContainer from "../Layout/FormContainer";
 import { FormikProps } from "formik";
 import { Button } from "antd";
@@ -37,7 +37,7 @@ export const JoinForm: React.FunctionComponent<
   minStrength,
   thresholdLength,
 }) => (
-  <LogoPage>
+  <BackgroundLogo>
     <FormContainer>
       <form onSubmit={handleSubmit}>
         <div className="JoinForm__content">
@@ -67,6 +67,7 @@ export const JoinForm: React.FunctionComponent<
               error={errors.fullname}
               touched={touched.fullname}
               setFieldTouched={setFieldTouched}
+              autoFocus={true}
             />
 
             {/** Render the email field component **/}
@@ -102,7 +103,7 @@ export const JoinForm: React.FunctionComponent<
         </div>
       </form>
     </FormContainer>
-  </LogoPage>
+  </BackgroundLogo>
 );
 
 export default JoinForm;

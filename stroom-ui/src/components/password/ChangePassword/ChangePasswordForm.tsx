@@ -15,7 +15,7 @@
  */
 
 import * as React from "react";
-import LogoPage from "../../Layout/LogoPage";
+import BackgroundLogo from "../../Layout/BackgroundLogo";
 import { ChangePasswordRequest } from "../../Authentication/api/types";
 import FormContainer from "../../Layout/FormContainer";
 
@@ -60,12 +60,12 @@ const ChangePasswordForm: React.FunctionComponent<{
   }
 
   return (
-    <LogoPage>
+    <BackgroundLogo>
       <FormContainer>
         <h3>{title}</h3>
         {content}
       </FormContainer>
-    </LogoPage>
+    </BackgroundLogo>
   );
 };
 

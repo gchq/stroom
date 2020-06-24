@@ -1,5 +1,13 @@
+.ReactModal__Overlay {
+  background-color: rgba(0, 0, 0, 0.65) !important;
+}
+
+.ReactModal__Content {
+  border-radius: 0.5rem !important;
+}
+
 .themed-modal {
-  box-shadow: 4px 4px 8px 0 rgba(0, 0, 0, 0.2);
+  //box-shadow: 4px 4px 8px 0 rgba(0, 0, 0, 0.2);
 }
 
 .themed-modal__container {

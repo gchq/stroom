@@ -17,26 +17,24 @@
 import * as React from "react";
 import { NavLink } from "react-router-dom";
 import { Formik, FormikProps } from "formik";
-import { Button } from "antd";
-import FormField from "./FormField";
+import { FormField } from "./FormField";
 import PasswordField from "./PasswordField";
-import { UserOutlined, LockOutlined } from "@ant-design/icons";
+import { Person, Lock } from "react-bootstrap-icons";
 import useAuthenticationApi from "./api/useAuthenticationApi";
 import { useAlert } from "../AlertDialog/AlertDisplayBoundary";
 import * as Yup from "yup";
 import { Alert, AlertType } from "../AlertDialog/AlertDialog";
-import { AuthStateProps } from "./ConfirmCurrentPasswordForm";
+import { AuthStateProps } from "./ConfirmCurrentPassword";
+import { Col, Form } from "react-bootstrap";
+import Button from "components/Button";
+import FormContainer from "../Layout/FormContainer";
 
 export interface FormValues {
   userId: string;
   password: string;
 }
 
-export interface PageProps {
-  allowPasswordResets?: boolean;
-}
-
-export const Form: React.FunctionComponent<FormikProps<FormValues>> = ({
+export const SignInForm: React.FunctionComponent<FormikProps<FormValues>> = ({
   values,
   errors,
   touched,
@@ -46,7 +44,7 @@ export const Form: React.FunctionComponent<FormikProps<FormValues>> = ({
   handleSubmit,
   isSubmitting,
 }) => (
-  <form onSubmit={handleSubmit}>
+  <Form noValidate={true} onSubmit={handleSubmit}>
     <FormField
       name="userId"
       type="text"
@@ -54,14 +52,16 @@ export const Form: React.FunctionComponent<FormikProps<FormValues>> = ({
       label="User Name"
       placeholder="Enter User Name"
       className="no-icon-padding left-icon-padding hide-background-image"
-      leftIcon={<UserOutlined />}
       onChange={handleChange}
       onBlur={handleBlur}
       value={values.userId}
       error={errors.userId}
       touched={touched.userId}
       setFieldTouched={setFieldTouched}
-    />
+      autoFocus={true}
+    >
+      <Person className="FormField__icon" />
+    </FormField>
 
     <PasswordField
       name="password"
@@ -69,29 +69,32 @@ export const Form: React.FunctionComponent<FormikProps<FormValues>> = ({
       autoComplete="current-password"
       placeholder="Enter Password"
       className="left-icon-padding right-icon-padding hide-background-image"
-      leftIcon={<LockOutlined />}
       onChange={handleChange}
       onBlur={handleBlur}
       value={values.password}
       error={errors.password}
       touched={touched.password}
       setFieldTouched={setFieldTouched}
-    />
-
-    <div className="SignIn__actions page__buttons Button__container">
+    >
+      <Lock className="FormField__icon" />
+    </PasswordField>
+    <Form.Group as={Col} controlId="signInButton" className="my-0">
       <Button
-        className="SignIn__button"
-        type="primary"
-        loading={isSubmitting}
-        htmlType="submit"
+        className="w-100"
+        appearance="contained"
+        action="primary"
+        // icon="check"
+        text="OK"
+        disabled={isSubmitting}
+        // onClick={onOk}
       >
         Sign In
       </Button>
-    </div>
-  </form>
+    </Form.Group>
+  </Form>
 );
 
-export const FormikWrapper: React.FunctionComponent<AuthStateProps> = ({
+const SignInFormikWrapper: React.FunctionComponent<AuthStateProps> = ({
   authState,
   setAuthState,
 }) => {
@@ -115,7 +118,7 @@ export const FormikWrapper: React.FunctionComponent<AuthStateProps> = ({
               ...authState,
               userId: values.userId,
               currentPassword: values.password,
-              requirePasswordChange: response.requirePasswordChange,
+              showChangePassword: response.requirePasswordChange,
             });
           } else {
             actions.setSubmitting(false);
@@ -136,16 +139,16 @@ export const FormikWrapper: React.FunctionComponent<AuthStateProps> = ({
         // }, 1000);
       }}
     >
-      {(props) => <Form {...props} />}
+      {(props) => <SignInForm {...props} />}
     </Formik>
   );
 };
 
-export const Page: React.FunctionComponent<PageProps> = ({
-  allowPasswordResets,
+export const SignInPage: React.FunctionComponent<AuthStateProps> = ({
+  authState: { allowPasswordResets },
   children,
 }) => (
-  <div className="SignIn__content">
+  <div className="SignIn">
     <div className="SignIn__icon-container">
       <img src={require("../../images/infinity_logo.svg")} alt="Stroom logo" />
     </div>
@@ -153,20 +156,22 @@ export const Page: React.FunctionComponent<PageProps> = ({
     {children}
 
     {allowPasswordResets ? (
-      <NavLink
-        className="SignIn__reset-password"
-        to={"/s/resetPasswordRequest"}
-      >
-        Forgot password?
-      </NavLink>
+      <div className="col text-center">
+        <NavLink
+          className="SignIn__reset-password"
+          to={"/s/resetPasswordRequest"}
+        >
+          Forgot password?
+        </NavLink>
+      </div>
     ) : undefined}
   </div>
 );
 
-const SignInForm: React.FunctionComponent<AuthStateProps> = (props) => (
-  <Page>
-    <FormikWrapper {...props} />
-  </Page>
+export const SignIn: React.FunctionComponent<AuthStateProps> = (props) => (
+  <FormContainer>
+    <SignInPage {...props}>
+      <SignInFormikWrapper {...props} />
+    </SignInPage>
+  </FormContainer>
 );
-
-export default SignInForm;

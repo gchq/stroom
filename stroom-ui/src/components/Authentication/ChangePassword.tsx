@@ -1,6 +1,5 @@
 import * as React from "react";
 
-import { Button } from "antd";
 import { Formik, FormikProps } from "formik";
 import PasswordField from "./PasswordField";
 import NewPasswordField from "./NewPasswordField";
@@ -11,21 +10,26 @@ import { useAlert } from "../AlertDialog/AlertDisplayBoundary";
 import * as Yup from "yup";
 import { Alert, AlertType } from "../AlertDialog/AlertDialog";
 import zxcvbn from "zxcvbn";
-import { AuthStateProps } from "./ConfirmCurrentPasswordForm";
+import { AuthStateProps } from "./ConfirmCurrentPassword";
+import { Form, Modal } from "react-bootstrap";
+import OkCancelButtons from "./OkCancelButtons";
+import { CustomModal } from "./FormField";
 
-export interface FormValues {
+export interface ChangePasswordFormValues {
   userId: string;
   password: string;
   confirmPassword: string;
 }
 
-export interface Props {
+export interface ChangePasswordFormProps {
   strength: number;
   minStrength: number;
   thresholdLength: number;
 }
 
-export const Form: React.FunctionComponent<Props & FormikProps<FormValues>> = ({
+export const ChangePasswordForm: React.FunctionComponent<
+  ChangePasswordFormProps & FormikProps<ChangePasswordFormValues>
+> = ({
   values,
   errors,
   touched,
@@ -38,61 +42,68 @@ export const Form: React.FunctionComponent<Props & FormikProps<FormValues>> = ({
   minStrength,
   thresholdLength,
 }) => (
-  <form onSubmit={handleSubmit}>
-    <input
-      type="text"
-      id="userId"
-      value={values.userId}
-      onChange={handleChange}
-      onBlur={handleBlur}
-      autoComplete="username"
-      hidden={true}
-    />
-
-    <NewPasswordField
-      name="password"
-      label="Password"
-      placeholder="Enter Password"
-      strength={strength}
-      minStrength={minStrength}
-      thresholdLength={thresholdLength}
-      onChange={handleChange}
-      onBlur={handleBlur}
-      value={values.password}
-      error={errors.password}
-      touched={touched.password}
-      setFieldTouched={setFieldTouched}
-      autoComplete="new-password"
-    />
-
-    <PasswordField
-      name="confirmPassword"
-      label="Confirm Password"
-      placeholder="Confirm Password"
-      className="no-icon-padding right-icon-padding hide-background-image"
-      onChange={handleChange}
-      onBlur={handleBlur}
-      value={values.confirmPassword}
-      error={errors.confirmPassword}
-      touched={touched.confirmPassword}
-      setFieldTouched={setFieldTouched}
-      autoComplete="confirm-password"
-    />
-
-    <div className="SignIn__actions page__buttons Button__container">
-      <Button
-        className="SignIn__button"
-        type="primary"
-        loading={isSubmitting}
-        htmlType="submit"
-      >
+  <Form noValidate={true} onSubmit={handleSubmit}>
+    <Modal.Header closeButton={false}>
+      <Modal.Title id="contained-modal-title-vcenter">
         Change Password
-      </Button>
-    </div>
-  </form>
+      </Modal.Title>
+    </Modal.Header>
+    <Modal.Body>
+      <input
+        type="text"
+        id="userId"
+        value={values.userId}
+        onChange={handleChange}
+        onBlur={handleBlur}
+        autoComplete="username"
+        hidden={true}
+      />
+      <Form.Row>
+        <NewPasswordField
+          name="password"
+          label="Password"
+          placeholder="Enter Password"
+          strength={strength}
+          minStrength={minStrength}
+          thresholdLength={thresholdLength}
+          onChange={handleChange}
+          onBlur={handleBlur}
+          value={values.password}
+          error={errors.password}
+          touched={touched.password}
+          setFieldTouched={setFieldTouched}
+          autoFocus={true}
+          autoComplete="new-password"
+        />
+      </Form.Row>
+      <Form.Row>
+        <PasswordField
+          name="confirmPassword"
+          label="Confirm Password"
+          placeholder="Confirm Password"
+          className="no-icon-padding right-icon-padding hide-background-image"
+          onChange={handleChange}
+          onBlur={handleBlur}
+          value={values.confirmPassword}
+          error={errors.confirmPassword}
+          touched={touched.confirmPassword}
+          setFieldTouched={setFieldTouched}
+          autoComplete="confirm-password"
+        />
+      </Form.Row>
+    </Modal.Body>
+    <Modal.Footer>
+      <OkCancelButtons
+        onOk={() => undefined}
+        onCancel={() => undefined}
+        okClicked={isSubmitting}
+        cancelClicked={false}
+      />
+    </Modal.Footer>
+  </Form>
 );
 
-const FormikWrapper: React.FunctionComponent<AuthStateProps> = ({
+const ChangePasswordFormik: React.FunctionComponent<AuthStateProps> = ({
   authState,
   setAuthState,
 }) => {
@@ -178,7 +189,7 @@ const FormikWrapper: React.FunctionComponent<AuthStateProps> = ({
             setAuthState({
               ...authState,
               currentPassword: undefined,
-              requirePasswordChange: false,
+              showChangePassword: false,
             });
           } else {
             actions.setSubmitting(false);
@@ -208,7 +219,7 @@ const FormikWrapper: React.FunctionComponent<AuthStateProps> = ({
         };
 
         return (
-          <Form
+          <ChangePasswordForm
             {...props}
             strength={strength}
             minStrength={minStrength}
@@ -221,7 +232,7 @@ const FormikWrapper: React.FunctionComponent<AuthStateProps> = ({
   );
 };
 
-export const Page: React.FunctionComponent = ({ children }) => (
+export const ChangePasswordPage: React.FunctionComponent = ({ children }) => (
   <div className="JoinForm__content">
     <div className="d-flex flex-row justify-content-between align-items-center mb-3">
       <legend className="form-label mb-0">Change Password</legend>
@@ -231,10 +242,32 @@ export const Page: React.FunctionComponent = ({ children }) => (
   </div>
 );
 
-const ChangePasswordForm: React.FunctionComponent<AuthStateProps> = (props) => (
-  <Page>
-    <FormikWrapper {...props} />
-  </Page>
-);
+// const ChangePassword: React.FunctionComponent<AuthStateProps> = (props) => (
+//   <CustomModal
+//     show={authState.showConfirmPassword}
+//     centered={true}
+//     aria-labelledby="contained-modal-title-vcenter"
+//   >
+//     <ChangePasswordFormik authState={authState} setAuthState={setAuthState} />
+//   </CustomModal>
+//
+//   // <ChangePasswordPage>
+//   //   <ChangePasswordFormik {...props} />
+//   // </ChangePasswordPage>
+// );
 
-export default ChangePasswordForm;
+export const ChangePassword: React.FunctionComponent<AuthStateProps> = (
+  props,
+) => {
+  return (
+    <CustomModal
+      show={props.authState.showConfirmPassword}
+      centered={true}
+      aria-labelledby="contained-modal-title-vcenter"
+    >
+      <ChangePasswordFormik {...props} />
+    </CustomModal>
+  );
+};
+
+export default ChangePassword;

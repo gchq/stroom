@@ -2,8 +2,7 @@ import * as React from "react";
 
 import IconHeader from "components/IconHeader";
 import Button from "components/Button";
-import ThemedModal from "components/ThemedModal";
-// import { required, minLength2 } from "lib/formUtils";
+import { ThemedModal, DialogContent } from "components/ThemedModal";
 import { Props, OnAddElement, UseDialog } from "./types";
 import { ElementDefinition } from "components/DocumentEditors/PipelineEditor/useElements/types";
 import AddElementForm, { useThisForm } from "./AddElementForm";
@@ -41,22 +40,22 @@ export const AddElementModal: React.FunctionComponent<Props> = ({
   // const submitDisabled = invalid || submitting;
 
   return (
-    <ThemedModal
-      isOpen={isOpen}
-      onRequestClose={onCloseDialog}
-      header={<IconHeader icon="file" text="Add New Element" />}
-      content={<AddElementForm {...componentProps} />}
-      actions={
-        <React.Fragment>
-          <Button
-            text="Submit"
-            // disabled={submitDisabled}
-            onClick={onAddElementLocal}
-          />
-          <Button text="Cancel" onClick={onCloseDialog} />
-        </React.Fragment>
-      }
-    />
+    <ThemedModal isOpen={isOpen} onRequestClose={onCloseDialog}>
+      <DialogContent
+        header={<IconHeader icon="file" text="Add New Element" />}
+        content={<AddElementForm {...componentProps} />}
+        actions={
+          <React.Fragment>
+            <Button
+              text="Submit"
+              // disabled={submitDisabled}
+              onClick={onAddElementLocal}
+            />
+            <Button text="Cancel" onClick={onCloseDialog} />
+          </React.Fragment>
+        }
+      />
+    </ThemedModal>
   );
 };
 

@@ -47,6 +47,13 @@ import javax.ws.rs.core.MediaType;
 public interface AuthenticationResource extends RestResource {
     String BASE_PATH = "/authentication" + ResourcePaths.V1;
 
+    @GET
+    @Path("/noauth/getAuthenticationState")
+    @Timed
+    @NotNull
+    @ApiOperation(value = "Get the current authentication state")
+    AuthenticationState getAuthenticationState(@Context @NotNull HttpServletRequest request);
+
     /**
      * We expect the user to have a session if they're trying to log in.
      * If they don't then they need to be directed to an application that will submit

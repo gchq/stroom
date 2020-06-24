@@ -9,10 +9,12 @@ import {
   LoginResponse,
   PasswordPolicyConfig,
   ResetPasswordRequest,
+  ServerAuthenticationState,
 } from "./types";
 import useUrlFactory from "lib/useUrlFactory";
 
 interface Api {
+  getAuthenticationState: () => Promise<ServerAuthenticationState>;
   login: (request: LoginRequest) => Promise<LoginResponse>;
   confirmPassword: (
     request: ConfirmPasswordRequest,
@@ -30,6 +32,11 @@ export const useAuthenticationApi = (): Api => {
   const { get, post } = useHttpClient2();
   const { apiUrl } = useUrlFactory();
   const resource = apiUrl("/authentication/v1");
+
+  const getAuthenticationState = useCallback(
+    () => get(`${resource}/noauth/getAuthenticationState/`),
+    [resource, get],
+  );
 
   const login = useCallback(
     (request: LoginRequest) => {
@@ -64,6 +71,7 @@ export const useAuthenticationApi = (): Api => {
   );
 
   return {
+    getAuthenticationState,
     login,
     confirmPassword,
     resetPassword,

@@ -14,16 +14,12 @@
  * limitations under the License.
  */
 // TODO : @66 FIX THIS
-// import * as Cookies from "cookies-js";
 import * as queryString from "query-string";
 import * as React from "react";
 import { useEffect, useState } from "react";
-// import { validateAsync } from "components/users/validation";
 import useRouter from "lib/useRouter";
 import ChangePasswordForm from "./ChangePasswordForm";
 import usePassword from "./useChangePassword";
-// import useUrlFactory from "lib/useUrlFactory";
-// import SignInForm from "../../Authentication/SignInForm";
 
 const ChangePasswordContainer = () => {
   const {

@@ -17,7 +17,7 @@ import * as React from "react";
 
 import IconHeader from "components/IconHeader";
 import DialogActionButtons from "components/DialogActionButtons";
-import ThemedModal from "components/ThemedModal";
+import { ThemedModal, DialogContent } from "components/ThemedModal";
 import { UseDialog, Props } from "./types";
 import { DocRefType } from "components/DocumentEditors/useDocumentApi/types/base";
 import { PermissionInheritance } from "../PermissionInheritancePicker/types";
@@ -48,22 +48,23 @@ export const CopyMoveDocRefDialog: React.FunctionComponent<Props> = ({
   }, [destination, permissionInheritance, uuids, onConfirm, onCloseDialog]);
 
   return (
-    <ThemedModal
-      isOpen={isOpen}
-      header={
-        <IconHeader
-          icon="copy"
-          text="Select a Destination Folder for the Copy"
-        />
-      }
-      content={<CopyMoveDocRefForm {...componentProps} />}
-      actions={
-        <DialogActionButtons
-          onCancel={onCloseDialog}
-          onConfirm={onConfirmLocal}
-        />
-      }
-    />
+    <ThemedModal isOpen={isOpen}>
+      <DialogContent
+        header={
+          <IconHeader
+            icon="copy"
+            text="Select a Destination Folder for the Copy"
+          />
+        }
+        content={<CopyMoveDocRefForm {...componentProps} />}
+        actions={
+          <DialogActionButtons
+            onCancel={onCloseDialog}
+            onConfirm={onConfirmLocal}
+          />
+        }
+      />
+    </ThemedModal>
   );
 };
 

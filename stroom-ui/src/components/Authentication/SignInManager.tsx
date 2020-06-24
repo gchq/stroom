@@ -15,15 +15,16 @@
  */
 
 import * as React from "react";
-import LogoPage from "../Layout/LogoPage";
-import FormContainer from "../Layout/FormContainer";
-import { useMemo, useState } from "react";
+import BackgroundLogo from "../Layout/BackgroundLogo";
+import { useEffect, useState } from "react";
 import { AuthState } from "./api/types";
-import SignInForm from "./SignInForm";
-import { AuthStateProps } from "./ConfirmCurrentPasswordForm";
-import ChangePasswordForm from "./ChangePasswordForm";
-import * as queryString from "query-string";
-import { useLocation } from "react-router-dom";
+import { SignIn } from "./SignIn";
+import { AuthStateProps } from "./ConfirmCurrentPassword";
+import ChangePassword from "./ChangePassword";
+import StroomWrapper from "./StroomWrapper";
+import Background from "../Layout/Background";
+import useAuthenticationApi from "./api/useAuthenticationApi";
+import FormContainer from "../Layout/FormContainer";
 
 export interface FormValues {
   userId: string;
@@ -35,50 +36,66 @@ export interface PageProps {
 }
 
 const Page: React.FunctionComponent = () => {
+  // Client state
   const [authState, setAuthState] = useState<AuthState>();
+
+  const { getAuthenticationState } = useAuthenticationApi();
+  useEffect(() => {
+    if (!authState) {
+      getAuthenticationState().then((response) => {
+        setAuthState({
+          ...authState,
+          userId: response.userId,
+          allowPasswordResets: response.allowPasswordResets,
+        });
+      });
+    }
+  }, [getAuthenticationState, authState, setAuthState]);
+
   const props: AuthStateProps = {
     authState,
     setAuthState,
   };
 
-  const location = useLocation();
-  const redirectUri: string = useMemo(() => {
-    if (!!location) {
-      const query = queryString.parse(location.search);
-      if (!!query.redirect_uri) {
-        return query.redirect_uri + "";
-      }
-    }
-  }, [location]);
-
   if (!authState) {
-    return <SignInForm {...props} />;
-  } else if (authState.requirePasswordChange) {
+    return (
+      <BackgroundLogo>
+        <FormContainer>Loading. Please wait...</FormContainer>
+      </BackgroundLogo>
+    );
+  } else if (!authState.userId) {
+    return (
+      <BackgroundLogo>
+        <SignIn {...props} />
+      </BackgroundLogo>
+    );
+  } else if (authState.showChangePassword) {
     // if (authState.requireCredentialConfirmation) {
     //   return <ConfirmCurrentPasswordForm {...props} />;
     // }
-    return <ChangePasswordForm {...props} />;
+    return (
+      <BackgroundLogo>
+        <ChangePassword {...props} />
+      </BackgroundLogo>
+    );
   }
 
-  window.location.href = redirectUri;
-  return (
-    <div className="JoinForm__content">
-      <div className="d-flex flex-row justify-content-between align-items-center mb-3">
-        <legend className="form-label mb-0">Loading. Please wait...</legend>
-      </div>
-    </div>
-  );
+  return <StroomWrapper />;
+
+  // window.location.href = redirectUri;
+  // return (
+  //   <div className="JoinForm__content">
+  //     <div className="d-flex flex-row justify-content-between align-items-center mb-3">
+  //       <legend className="form-label mb-0">Loading. Please wait...</legend>
+  //     </div>
+  //   </div>
+  // );
 };
 
-export const SignInManager: React.FunctionComponent<PageProps> = ({
-  allowPasswordResets,
-  children,
-}) => (
-  <LogoPage>
-    <FormContainer>
-      <Page />
-    </FormContainer>
-  </LogoPage>
+export const SignInManager: React.FunctionComponent<PageProps> = () => (
+  <Background>
+    <Page />
+  </Background>
 );
 
 export default SignInManager;

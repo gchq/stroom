@@ -17,8 +17,7 @@ import * as React from "react";
 
 import DialogActionButtons from "../../../DialogActionButtons";
 import IconHeader from "../../../IconHeader";
-import ThemedModal from "../../../ThemedModal";
-// import { required, minLength2 } from "lib/formUtils";
+import { ThemedModal, DialogContent } from "../../../ThemedModal";
 import { DocRefType } from "components/DocumentEditors/useDocumentApi/types/base";
 import RenameDocRefForm, { useThisForm } from "./RenameDocRefForm";
 
@@ -48,17 +47,18 @@ export const RenameDocRefDialog: React.FunctionComponent<Props> = ({
   }, [onConfirm, onCloseDialog, docRef, docRefName]);
 
   return (
-    <ThemedModal
-      isOpen={isOpen}
-      header={<IconHeader icon="edit" text="Enter New Name for Doc Ref" />}
-      content={<RenameDocRefForm {...componentProps} />}
-      actions={
-        <DialogActionButtons
-          onCancel={onCloseDialog}
-          onConfirm={onConfirmLocal}
-        />
-      }
-    />
+    <ThemedModal isOpen={isOpen}>
+      <DialogContent
+        header={<IconHeader icon="edit" text="Enter New Name for Doc Ref" />}
+        content={<RenameDocRefForm {...componentProps} />}
+        actions={
+          <DialogActionButtons
+            onCancel={onCloseDialog}
+            onConfirm={onConfirmLocal}
+          />
+        }
+      />
+    </ThemedModal>
   );
 };
 

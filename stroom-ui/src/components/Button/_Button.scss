@@ -6,6 +6,15 @@
 /////////////////
 //$button-margin: .2rem;
 
+
+button:focus {
+  color: #495057;
+  background-color: #fff;
+  border-color: #80bdff;
+  outline: 0;
+  box-shadow: 0 0 0 0.2rem rgba(0, 123, 255, 0.25);
+}
+
 ////////////////////
 // Inner elements //
 ////////////////////
@@ -15,11 +24,11 @@
 
 .Button__text {
   vertical-align: middle;
-  z-index: 1;
+  //z-index: 1;
 }
 
 .Button svg {
-  z-index: 1;
+  //z-index: 1;
 }
 
 ////////////////////////////////////////////////////////////////////////////////
@@ -75,7 +84,7 @@
   //font-size: 0.875rem;
   min-width: 7rem;
   box-sizing: border-box;
-  transition: background-color 250ms cubic-bezier(0.4, 0, 0.2, 1) 0ms, box-shadow 250ms cubic-bezier(0.4, 0, 0.2, 1) 0ms, border 250ms cubic-bezier(0.4, 0, 0.2, 1) 0ms;
+  transition: background-color 250ms ease-in-out, box-shadow 250ms ease-in-out, border 250ms ease-in-out, color 250ms ease-in-out;
   line-height: 1.75;
   // font-family: "Roboto", "Helvetica", "Arial", sans-serif;
   //font-weight: 500;
@@ -103,6 +112,23 @@
 .Button.Button--disabled {
   // .j9la4jl.j1p4cocs {
   color: rgba(0, 0, 0, 0.26);
+}
+
+.Button.Button--loading {
+  opacity: 0.8;
+}
+
+.Button .Button__spinner {
+  transition: width 0.5s ease-in-out, opacity 0.5s ease-in-out;
+  //transition: width 500ms;
+  width: 0;
+  overflow: hidden;
+  opacity: 0;
+}
+
+.Button.Button--loading .Button__spinner {
+  width: 2rem;
+  opacity: 1;
 }
 
 ////////////////////////////////////////////////////////////////////////////////
@@ -474,7 +500,7 @@
 
 .Button--contained {
   // .jpyw0mp
-  box-shadow: 0 .06rem .3rem 0 rgba(0, 0, 0, 0.2), 0 .125rem .125rem 0 rgba(0, 0, 0, 0.14), 0 .18rem .06rem -.125rem rgba(0, 0, 0, 0.12);
+  //box-shadow: 0 .06rem .3rem 0 rgba(0, 0, 0, 0.2), 0 .125rem .125rem 0 rgba(0, 0, 0, 0.14), 0 .18rem .06rem -.125rem rgba(0, 0, 0, 0.12);
   color: #424242; // material grey 800
   background-color: #e0e0e0; // material grey 300 
 
@@ -503,7 +529,7 @@
 
 .Button--contained:active {
   // .jpyw0mp:active
-  box-shadow: 0 .3rem .3rem -.18rem rgba(0, 0, 0, 0.2), 0 .5rem .625rem .06rem rgba(0, 0, 0, 0.14), 0 .18rem .875rem .125rem rgba(0, 0, 0, 0.12);
+  //box-shadow: 0 .3rem .3rem -.18rem rgba(0, 0, 0, 0.2), 0 .5rem .625rem .06rem rgba(0, 0, 0, 0.14), 0 .18rem .875rem .125rem rgba(0, 0, 0, 0.12);
 }
 
 .Button--contained-primary {
@@ -534,6 +560,23 @@
   }
 }
 
+.Button--contained-primary:focus {
+  //// .j1xs0a6r:hover
+  //background-color: #42a5f5; // material blue 400
+  //
+  //@include themify($themes) {
+  //  background-color: themed("button-contained-primary__background-color--hover");
+  //}
+  color: #fff;
+  background-color: #42a5f5; // material blue 400
+  border-color: #2196f3; // material blue 500
+  outline: 0;
+  box-shadow: 0 0 0 0.2rem rgba(33,150,243, 0.25) // material blue 500
+}
+
+
+
+
 .Button--contained-secondary {
   // .j1qgefk9
   color: #fff;
@@ -560,6 +603,20 @@
   @include themify($themes) {
     background-color: themed("button-contained-secondary__background-color--hover");
   }
+}
+
+.Button--contained-secondary:focus {
+  //// .j1xs0a6r:hover
+  //background-color: #42a5f5; // material blue 400
+  //
+  //@include themify($themes) {
+  //  background-color: themed("button-contained-primary__background-color--hover");
+  //}
+  color: #fff;
+  background-color: #ec407a; // material pink 400
+  border-color: #e91e63; // material pink 500
+  outline: 0;
+  box-shadow: 0 0 0 0.2rem rgba(233,30,99, 0.25) // material pink 500
 }
 
 .Button--contained.Button--disabled {

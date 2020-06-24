@@ -1,4 +1,4 @@
-.LogoPage {
+.Background {
   display: flex;
   align-items: center;
   justify-content: center;
@@ -6,7 +6,7 @@
   height: 100%;
 }
 
-.LogoPage__logo {
+.Background__logo {
   position: absolute;
   top: 0;
   left: 0;
@@ -15,7 +15,7 @@
 }
 
 .Layout__form-container {
-  padding: 2rem;
+  padding: 1rem;
   background: white;
   border-radius: .5rem;
 }

@@ -17,10 +17,11 @@
 import * as React from "react";
 import { useState } from "react";
 import { AuthState } from "./api/types";
-import ConfirmCurrentPasswordForm, {
+import {
+  ConfirmCurrentPassword,
   AuthStateProps,
-} from "./ConfirmCurrentPasswordForm";
-import ChangePasswordForm from "./ChangePasswordForm";
+} from "./ConfirmCurrentPassword";
+import ChangePassword from "./ChangePassword";
 
 export interface FormValues {
   userId: string;
@@ -32,17 +33,22 @@ const ChangePasswordManager: React.FunctionComponent = () => {
     userId: undefined,
     currentPassword: undefined,
     allowPasswordResets: true,
-    requirePasswordChange: false,
+    showConfirmPassword: true,
+    showChangePassword: false,
   });
   const props: AuthStateProps = {
     authState,
     setAuthState,
   };
 
-  if (!authState || !authState.currentPassword) {
-    return <ConfirmCurrentPasswordForm {...props} />;
-  } else if (authState.requirePasswordChange) {
-    return <ChangePasswordForm {...props} />;
+  if (
+    !authState ||
+    authState.showConfirmPassword ||
+    !authState.currentPassword
+  ) {
+    return <ConfirmCurrentPassword {...props} />;
+  } else if (authState.showChangePassword) {
+    return <ChangePassword {...props} />;
   }
 
   return (

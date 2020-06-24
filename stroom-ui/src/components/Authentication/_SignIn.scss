@@ -14,8 +14,11 @@
  * limitations under the License.
  */
 
-.SignIn__label {
-  margin-bottom: 0.25rem;
+.SignIn {
+  padding: 1rem 0rem;
+  background: white;
+  border-radius: .5rem;
+  width: 16rem;
 }
 
 .SignIn__icon-container {
@@ -30,31 +33,49 @@
   border-radius: 4rem;
 }
 
-.SignIn__content {
-  width: 16rem;
-  text-align: center;
-}
-
-.SignIn__actions {
-  padding: 1rem 0 .25rem 0;
-}
-
 .SignIn__input-container {
   display: flex;
   flex-direction: column;
 }
 
-.SignIn__button {
-  width: 100%;
-  border: none !important;
-  border-radius: .25rem;
-}
-
 .SignIn__reset-password {
   font-size: .7rem;
   text-align: center;
+  cursor: pointer;
 }
 
-.anticon {
-  vertical-align: middle !important;
+//.ConfirmCurrentPassword {
+//  min-width: 25rem;
+//}
+//
+//.ConfirmCurrentPassword {
+//  padding: 1rem;
+//}
+//
+//.ConfirmCurrentPassword form {
+//
+//}
+
+.OkCancelButtons {
+  display: flex;
+  flex-direction: row;
+  justify-content: flex-end;
+}
+
+.OkCancelButtons__ok {
+  min-width: 7rem;
+  margin-right: .5rem;
+}
+
+.OkCancelButtons__cancel {
+  min-width: 7rem;
+}
+
+.StroomWrapper__iframe {
+  width:100%;
+  height: 100%;
+  border: none;
+  margin: 0;
+  padding: 0;
+  overflow: hidden;
 }

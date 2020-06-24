@@ -47,9 +47,29 @@ export interface PasswordPolicyConfig {
   minimumPasswordLength?: number;
 }
 
+/**
+ * This interface holds the clients current authentication state.
+ */
 export interface AuthState {
+  // The current user id.
+  userId?: string;
+  // The current password, needed to confirm existing password when changing password should be undefined once password
+  // is changed.
+  currentPassword?: string;
+  // If we allow password resets then the sign in form will display a reset password link.
+  allowPasswordResets?: boolean;
+  // Should we show the confirm password dialog?
+  showConfirmPassword?: boolean;
+  // Should we show the change password dialog?
+  showChangePassword?: boolean;
+}
+
+/**
+ * This interface represents the servers current authentication state.
+ */
+export interface ServerAuthenticationState {
+  // If the server has an authenticated session what is the current user id.
   userId: string;
-  currentPassword: string;
+  // If we allow password resets then the sign in form will display a reset password link.
   allowPasswordResets: boolean;
-  requirePasswordChange: boolean;
 }

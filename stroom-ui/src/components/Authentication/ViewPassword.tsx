@@ -1,6 +1,7 @@
 import * as React from "react";
 import { FunctionComponent } from "react";
-import { EyeOutlined, EyeInvisibleOutlined } from "@ant-design/icons";
+
+import { Eye, EyeSlash } from "react-bootstrap-icons";
 
 export interface ViewPasswordProps {
   state: boolean;
@@ -12,19 +13,19 @@ const ViewPassword: FunctionComponent<ViewPasswordProps> = ({
   onStateChanged = (s: boolean) => s,
 }) => {
   return (
-    <div className="ViewPassword__icon-container">
+    <React.Fragment>
       {state ? (
-        <EyeInvisibleOutlined
+        <EyeSlash
           className="ViewPassword__icon"
           onClick={() => onStateChanged(!state)}
         />
       ) : (
-        <EyeOutlined
+        <Eye
           className="ViewPassword__icon"
           onClick={() => onStateChanged(!state)}
         />
       )}
-    </div>
+    </React.Fragment>
   );
 };
 
