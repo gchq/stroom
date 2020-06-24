@@ -6,7 +6,9 @@ and this project adheres to [Semantic Versioning](http://semver.org/).
 
 ## [Unreleased]
 
-* Issue **#1671** :Fix XSLT function `hex-to-oct`.
+* Issue **#1619** : Fix delete stream summary dialog.
+
+* Issue **#1671** : Fix XSLT function `hex-to-oct`.
 
 * Add `readTimeout` property to `HTTPAppender`.
 
