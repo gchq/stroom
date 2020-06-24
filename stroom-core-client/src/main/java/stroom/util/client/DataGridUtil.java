@@ -12,6 +12,7 @@ import stroom.util.shared.Sort;
 import stroom.util.shared.TreeAction;
 
 import com.google.gwt.cell.client.Cell;
+import com.google.gwt.cell.client.Cell.Context;
 import com.google.gwt.cell.client.SafeHtmlCell;
 import com.google.gwt.cell.client.TextCell;
 import com.google.gwt.safehtml.shared.SafeHtml;
@@ -21,8 +22,11 @@ import com.google.gwt.user.cellview.client.Header;
 import com.google.gwt.user.cellview.client.SafeHtmlHeader;
 import com.google.gwt.user.client.ui.HasHorizontalAlignment;
 import com.google.gwt.user.client.ui.HasHorizontalAlignment.HorizontalAlignmentConstant;
+import com.google.gwt.user.client.ui.HasVerticalAlignment;
 import com.google.gwt.user.client.ui.HasVerticalAlignment.VerticalAlignmentConstant;
 
+import java.util.ArrayList;
+import java.util.List;
 import java.util.Objects;
 import java.util.Optional;
 import java.util.function.BooleanSupplier;
@@ -69,6 +73,18 @@ public class DataGridUtil {
                         extractor.apply(row),
                         LOW_LIGHT_COLOUR,
                         !isHighlightedPredicate.test(row));
+    }
+
+    public static  <T_ROW> Function<T_ROW, SafeHtml> highlightedCellExtractor(
+            final Function<T_ROW, String> extractor,
+            final Predicate<T_ROW> isHighlightedPredicate,
+            final String highlightCssColour) {
+
+        return row ->
+                SafeHtmlUtil.getColouredText(
+                        extractor.apply(row),
+                        highlightCssColour,
+                        isHighlightedPredicate.test(row));
     }
 
 
@@ -289,6 +305,12 @@ public class DataGridUtil {
         return new ColumnBuilder<>(cellExtractor, Function.identity(), SafeHtmlCell::new);
     }
 
+//    public static <T_ROW> ColumnBuilder<T_ROW, String, SafeHtml, Cell<SafeHtml>> htmlColumnBuilder(
+//            final Function<T_ROW, String> stringExtractor) {
+//
+//        return new ColumnBuilder<>(stringExtractor, SafeHtmlUtils::fromString, SafeHtmlCell::new);
+//    }
+
     public static <T_ROW> ColumnBuilder<T_ROW, SvgPreset, SvgPreset, Cell<SvgPreset>> svgPresetColumnBuilder(
             final boolean isButton,
             final Function<T_ROW, SvgPreset> cellExtractor) {
@@ -308,6 +330,7 @@ public class DataGridUtil {
         private VerticalAlignmentConstant verticalAlignment = null;
         private String fieldName;
         private boolean isIgnoreCaseOrdering = false;
+        private List<String> styleNames = null;
 
         private ColumnBuilder(final Function<T_ROW, T_RAW_VAL> valueExtractor,
                              final Function<T_RAW_VAL, T_CELL_VAL> formatter,
@@ -368,9 +391,25 @@ public class DataGridUtil {
             return this;
         }
 
+        public ColumnBuilder<T_ROW, T_RAW_VAL, T_CELL_VAL, T_CELL> topAligned() {
+            return withVerticalAlignment(HasVerticalAlignment.ALIGN_TOP);
+        }
+
+        public ColumnBuilder<T_ROW, T_RAW_VAL, T_CELL_VAL, T_CELL> bottomAligned() {
+            return withVerticalAlignment(HasVerticalAlignment.ALIGN_BOTTOM);
+        }
+
+        public ColumnBuilder<T_ROW, T_RAW_VAL, T_CELL_VAL, T_CELL> withStyleName(final String styleName) {
+            if (styleNames == null) {
+                styleNames = new ArrayList<>();
+            }
+            styleNames.add(Objects.requireNonNull(styleName));
+            return this;
+        }
+
         public Column<T_ROW, T_CELL_VAL> build() {
 
-            final Function<T_ROW, T_CELL_VAL> formattedValueExtractor = row ->
+            final Function<T_ROW, T_CELL_VAL> nullSafeFormattedValExtractor = row ->
                     Optional.ofNullable(row)
                             .map(valueExtractor)
                             .map(formatter)
@@ -386,12 +425,23 @@ public class DataGridUtil {
 
                     @Override
                     public T_CELL_VAL getValue(final T_ROW row) {
-                        return formattedValueExtractor.apply(row);
+                        return nullSafeFormattedValExtractor.apply(row);
                     }
 
                     @Override
                     public boolean isSortable() {
                         return isSortableSupplier.getAsBoolean();
+                    }
+
+                    @Override
+                    public String getCellStyleNames(final Context context, final T_ROW object) {
+                        if (styleNames == null) {
+                            return super.getCellStyleNames(context, object);
+                        } else {
+                            return super.getCellStyleNames(context, object)
+                                    + " "
+                                    + String.join(" ", styleNames);
+                        }
                     }
                 };
             } else {
@@ -399,7 +449,18 @@ public class DataGridUtil {
                 column = new Column<T_ROW, T_CELL_VAL>(cellSupplier.get()) {
                     @Override
                     public T_CELL_VAL getValue(final T_ROW row) {
-                        return formattedValueExtractor.apply(row);
+                        return nullSafeFormattedValExtractor.apply(row);
+                    }
+
+                    @Override
+                    public String getCellStyleNames(final Context context, final T_ROW object) {
+                        if (styleNames == null) {
+                            return super.getCellStyleNames(context, object);
+                        } else {
+                            return super.getCellStyleNames(context, object)
+                                    + " "
+                                    + String.join(" ", styleNames);
+                        }
                     }
                 };
             }

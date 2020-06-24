@@ -3,6 +3,7 @@ package stroom.util.filter;
 import java.util.Arrays;
 import java.util.Collection;
 import java.util.Collections;
+import java.util.List;
 import java.util.Map;
 import java.util.Optional;
 import java.util.Set;
@@ -15,9 +16,14 @@ import java.util.stream.Collectors;
 public class FilterFieldMappers<T_ROW> {
 
     private final Map<String, FilterFieldMapper<T_ROW>> map;
+    private final List<FilterFieldMapper<T_ROW>> defaultFieldMappers;
 
     private FilterFieldMappers(final Map<String, FilterFieldMapper<T_ROW>> map) {
         this.map = map;
+        // Pre-compute the list of defaults to save doing it on each lookup
+        this.defaultFieldMappers = map.values().stream()
+                .filter(fieldMapper -> fieldMapper.getFieldDefinition().isDefaultField())
+                .collect(Collectors.toList());
     }
 
     @SafeVarargs
@@ -33,6 +39,10 @@ public class FilterFieldMappers<T_ROW> {
                                 fieldMapper -> fieldMapper.getFieldDefinition().getFilterQualifier().toLowerCase(),
                                 Function.identity())))
                 .orElseGet(Collections::emptyMap));
+    }
+
+    public static <T_ROW> FilterFieldMappers<T_ROW> none() {
+        return new FilterFieldMappers<>(Collections.emptyMap());
     }
 
     public int size() {
@@ -53,6 +63,10 @@ public class FilterFieldMappers<T_ROW> {
 
     public Collection<FilterFieldMapper<T_ROW>> getFieldMappers() {
         return map.values();
+    }
+
+    public Collection<FilterFieldMapper<T_ROW>> getDefaultFieldMappers() {
+        return defaultFieldMappers;
     }
 
     @Override

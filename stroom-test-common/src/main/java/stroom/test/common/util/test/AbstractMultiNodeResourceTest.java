@@ -1,5 +1,10 @@
 package stroom.test.common.util.test;
 
+import stroom.util.jersey.WebTargetFactory;
+import stroom.util.logging.LogUtil;
+import stroom.util.shared.ResourcePaths;
+import stroom.util.shared.RestResource;
+
 import org.assertj.core.api.Assertions;
 import org.glassfish.jersey.client.ClientConfig;
 import org.glassfish.jersey.logging.LoggingFeature;
@@ -18,10 +23,6 @@ import org.mockito.Mockito;
 import org.mockito.junit.jupiter.MockitoExtension;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import stroom.util.jersey.WebTargetFactory;
-import stroom.util.logging.LogUtil;
-import stroom.util.shared.ResourcePaths;
-import stroom.util.shared.RestResource;
 
 import javax.ws.rs.client.ClientBuilder;
 import javax.ws.rs.client.Entity;
@@ -327,9 +328,6 @@ public abstract class AbstractMultiNodeResourceTest<R extends RestResource> {
                                    final Class<T_RESP> responseType,
                                    final T_RESP expectedResponse,
                                    final Function<WebTarget, WebTarget>... builderMethods) {
-        LOGGER.info("Calling GET on {}{}, expecting {}",
-            getResourceBasePath(), subPath, expectedResponse);
-
         WebTarget webTarget = getJerseyTest()
             .target(getResourceBasePath())
             .path(subPath);

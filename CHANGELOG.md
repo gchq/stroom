@@ -6,6 +6,8 @@ and this project adheres to [Semantic Versioning](http://semver.org/).
 
 ## [Unreleased]
 
+* Add column sorting and field searching to Properties screen.
+
 * Add field searching to Explorer Tree quick filter.
 
 * Add field searching to Properties quick filter.

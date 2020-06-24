@@ -12,14 +12,12 @@ import io.swagger.annotations.ApiParam;
 import org.fusesource.restygwt.client.DirectRestService;
 
 import javax.ws.rs.Consumes;
-import javax.ws.rs.DefaultValue;
 import javax.ws.rs.GET;
 import javax.ws.rs.POST;
 import javax.ws.rs.PUT;
 import javax.ws.rs.Path;
 import javax.ws.rs.PathParam;
 import javax.ws.rs.Produces;
-import javax.ws.rs.QueryParam;
 import javax.ws.rs.core.MediaType;
 import java.util.Arrays;
 import java.util.List;
@@ -59,20 +57,15 @@ public interface GlobalConfigResource extends RestResource, DirectRestService {
     @ApiOperation(
         value = "TODO",
         response = ListConfigResponse.class)
-    @GET
+    @POST
     @Path(PROPERTIES_SUB_PATH)
-    ListConfigResponse list(
-        final @QueryParam("partialName") String partialName,
-        final @DefaultValue ("0") @QueryParam("offset") long offset,
-        final @QueryParam("size") Integer size);
+    ListConfigResponse list(final @ApiParam("criteria") GlobalConfigCriteria criteria);
 
-    @GET
+    @POST
     @Path(NODE_PROPERTIES_SUB_PATH + NODE_NAME_PATH_PARAM)
     ListConfigResponse listByNode(
-        final @PathParam("nodeName") String nodeName,
-        final @QueryParam("partialName") String partialName,
-        final @DefaultValue ("0") @QueryParam("offset") long offset,
-        final @QueryParam("size") Integer size);
+            final @PathParam("nodeName") String nodeName,
+            final @ApiParam("criteria") GlobalConfigCriteria criteria);
 
     @GET
     @Path(PROPERTIES_SUB_PATH + PROP_NAME_PATH_PARAM)

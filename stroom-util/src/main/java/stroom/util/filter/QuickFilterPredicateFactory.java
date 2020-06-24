@@ -6,6 +6,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import java.util.ArrayList;
+import java.util.Collection;
 import java.util.List;
 import java.util.Objects;
 import java.util.function.Predicate;
@@ -49,7 +50,7 @@ public class QuickFilterPredicateFactory {
         } else {
             LOGGER.trace("Doing default field only matching");
             // Matching on the default field
-            final List<FilterFieldMapper<T>> defaultFieldMapper = getDefaultFieldMappers(fieldMappers);
+            final Collection<FilterFieldMapper<T>> defaultFieldMapper = getDefaultFieldMappers(fieldMappers);
             LOGGER.trace("defaultFieldMapper {}", defaultFieldMapper);
 
             predicate = createDefaultPredicate(userInput, fieldMappers);
@@ -61,7 +62,7 @@ public class QuickFilterPredicateFactory {
     private static <T> Predicate<T> createDefaultPredicate(final String input,
                                                            final FilterFieldMappers<T> fieldMappers) {
         // Matching on the default field
-        final List<FilterFieldMapper<T>> defaultFieldMapper = getDefaultFieldMappers(fieldMappers);
+        final Collection<FilterFieldMapper<T>> defaultFieldMapper = getDefaultFieldMappers(fieldMappers);
         LOGGER.trace("defaultFieldMapper {}", defaultFieldMapper);
 
         return createOrPredicate(input, defaultFieldMapper);
@@ -76,7 +77,7 @@ public class QuickFilterPredicateFactory {
     }
 
     private static <T> Predicate<T> createOrPredicate(final String input,
-                                                      final List<FilterFieldMapper<T>> fieldMappers) {
+                                                      final Collection<FilterFieldMapper<T>> fieldMappers) {
         if (fieldMappers == null || fieldMappers.isEmpty()) {
             return obj -> false;
         } else {
@@ -87,12 +88,10 @@ public class QuickFilterPredicateFactory {
         }
     }
 
-    private static <T> List<FilterFieldMapper<T>> getDefaultFieldMappers(
+    private static <T> Collection<FilterFieldMapper<T>> getDefaultFieldMappers(
             final FilterFieldMappers<T> fieldMappers) {
 
-        final List<FilterFieldMapper<T>> defaultFieldMappers = fieldMappers.getFieldMappers().stream()
-                .filter(fieldMapper2 -> fieldMapper2.getFieldDefinition().isDefaultField())
-                .collect(Collectors.toList());
+        final Collection<FilterFieldMapper<T>> defaultFieldMappers = fieldMappers.getDefaultFieldMappers();
 
         if (defaultFieldMappers.isEmpty()) {
             throw new RuntimeException("No default field mappers(s) has/have been defined, fieldMappers" + fieldMappers);
