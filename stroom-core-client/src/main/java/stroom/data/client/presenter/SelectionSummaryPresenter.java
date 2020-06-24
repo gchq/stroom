@@ -73,7 +73,7 @@ public class SelectionSummaryPresenter extends MyPresenterWidget<CommonAlertView
         sb.appendEscaped("The selected items include:");
         sb.appendHtmlConstant("</br>");
         appendRow(sb, "type", "types", result.getTypeCount());
-        sb.appendHtmlConstant(" of ");
+        sb.appendEscaped(" of ");
         appendRow(sb, "status", "statuses", result.getStatusCount());
         sb.appendHtmlConstant("</br>");
         sb.appendHtmlConstant("</br>");
@@ -93,6 +93,10 @@ public class SelectionSummaryPresenter extends MyPresenterWidget<CommonAlertView
         } else {
             sb.appendEscaped("Created at any time.");
         }
+        sb.appendHtmlConstant("</br>");
+        sb.appendHtmlConstant("<b>");
+        sb.appendEscaped("Unless the database is modified in the meantime.");
+        sb.appendHtmlConstant("</b>");
         sb.appendHtmlConstant("</br>");
         sb.appendHtmlConstant("</br>");
         sb.appendEscaped("Are you sure you want to ");
