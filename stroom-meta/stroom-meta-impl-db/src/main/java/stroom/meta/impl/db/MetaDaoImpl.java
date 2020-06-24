@@ -955,7 +955,7 @@ class MetaDaoImpl implements MetaDao {
                             final int offset,
                             final int numberOfRows) {
         return JooqUtil.contextResult(metaDbConnProvider, context -> context
-                .select(
+                .selectDistinct(
                         meta.ID,
                         metaFeed.NAME,
                         metaType.NAME,
@@ -970,6 +970,7 @@ class MetaDaoImpl implements MetaDao {
                 .from(meta)
                 .join(metaFeed).on(meta.FEED_ID.eq(metaFeed.ID))
                 .join(metaType).on(meta.TYPE_ID.eq(metaType.ID))
+                .leftOuterJoin(metaVal).on(meta.ID.eq(metaVal.META_ID))
                 .leftOuterJoin(metaProcessor).on(meta.PROCESSOR_ID.eq(metaProcessor.ID))
                 .where(conditions)
                 .orderBy(orderFields)
