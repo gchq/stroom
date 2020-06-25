@@ -46,7 +46,7 @@ export const SignInForm: React.FunctionComponent<FormikProps<FormValues>> = ({
 }) => (
   <Form noValidate={true} onSubmit={handleSubmit}>
     <FormField
-      name="userId"
+      controlId="userId"
       type="text"
       autoComplete="username"
       label="User Name"
@@ -64,7 +64,7 @@ export const SignInForm: React.FunctionComponent<FormikProps<FormValues>> = ({
     </FormField>
 
     <PasswordField
-      name="password"
+      controlId="password"
       label="Password"
       autoComplete="current-password"
       placeholder="Enter Password"
@@ -85,7 +85,7 @@ export const SignInForm: React.FunctionComponent<FormikProps<FormValues>> = ({
         action="primary"
         // icon="check"
         text="OK"
-        disabled={isSubmitting}
+        loading={isSubmitting}
         // onClick={onOk}
       >
         Sign In
@@ -118,7 +118,7 @@ const SignInFormikWrapper: React.FunctionComponent<AuthStateProps> = ({
               ...authState,
               userId: values.userId,
               currentPassword: values.password,
-              showChangePassword: response.requirePasswordChange,
+              showInitialChangePassword: response.requirePasswordChange,
             });
           } else {
             actions.setSubmitting(false);

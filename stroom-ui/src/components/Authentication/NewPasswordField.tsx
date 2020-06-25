@@ -13,7 +13,7 @@ export interface NewPasswordFieldProps {
 const NewPasswordField: FunctionComponent<
   NewPasswordFieldProps & FormFieldProps & FormFieldState
 > = ({
-  name,
+  controlId,
   label,
   placeholder,
   autoComplete,
@@ -24,7 +24,6 @@ const NewPasswordField: FunctionComponent<
   error,
   touched,
   setFieldTouched,
-  controlId,
   strength,
   minStrength = 3,
   thresholdLength = 7,
@@ -82,14 +81,14 @@ const NewPasswordField: FunctionComponent<
         <div className="strength-meter-fill" data-strength={strength} />
       </div>
       <CustomControl
+        controlId={controlId}
         type={state ? "text" : "password"}
         className={controlClass}
-        name={name}
         placeholder={placeholder}
         value={value}
         error={error}
         onChange={(e) => {
-          setFieldTouched(name);
+          setFieldTouched(controlId);
           onChange(e);
         }}
         onBlur={onBlur}

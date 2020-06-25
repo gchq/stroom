@@ -19,13 +19,10 @@ import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
 import * as React from "react";
 import { ButtonProps } from "./types";
 import RippleContainer, { useRipple } from "./RippleContainer";
-import { forwardRef, ForwardRefRenderFunction, useEffect, useRef } from "react";
+import { FunctionComponent, useEffect, useRef } from "react";
 import { Spinner } from "react-bootstrap";
 
-export const Button: ForwardRefRenderFunction<
-  HTMLButtonElement,
-  ButtonProps
-> = ({
+export const Button: FunctionComponent<ButtonProps> = ({
   icon,
   className: rawClassName,
   appearance,
@@ -182,4 +179,4 @@ export const Button: ForwardRefRenderFunction<
   );
 };
 
-export default forwardRef(Button);
+export default Button;

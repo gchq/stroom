@@ -69,18 +69,32 @@ const Page: React.FunctionComponent = () => {
         <SignIn {...props} />
       </BackgroundLogo>
     );
-  } else if (authState.showChangePassword) {
+  } else if (authState.showInitialChangePassword) {
     // if (authState.requireCredentialConfirmation) {
     //   return <ConfirmCurrentPasswordForm {...props} />;
     // }
     return (
       <BackgroundLogo>
-        <ChangePassword {...props} />
+        <ChangePassword
+          userId={authState.userId}
+          currentPassword={authState.currentPassword}
+          onClose={(success: boolean) => {
+            if (success) {
+              setAuthState({
+                ...authState,
+                showInitialChangePassword: false,
+              });
+            } else {
+              setAuthState(undefined);
+            }
+          }}
+          {...props}
+        />
       </BackgroundLogo>
     );
   }
 
-  return <StroomWrapper />;
+  return <StroomWrapper userId={authState.userId} />;
 
   // window.location.href = redirectUri;
   // return (

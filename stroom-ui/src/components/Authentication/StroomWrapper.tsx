@@ -18,18 +18,26 @@ import * as React from "react";
 import { FunctionComponent, useEffect, useState } from "react";
 import ChangePasswordManager from "./ChangePasswordManager";
 
-export interface FormValues {
-  userId: string;
-  password: string;
+enum DialogType {
+  CHANGE_PASSWORD,
 }
 
-const StroomWrapper: FunctionComponent = () => {
-  const [message, setMessage] = useState<string>(undefined);
+const StroomWrapper: FunctionComponent<{
+  userId: string;
+}> = (props) => {
+  const [dialogType, setDialogType] = useState<DialogType>(undefined);
   useEffect(() => {
     const handler = (event) => {
-      const data = JSON.parse(event.data);
-      console.log("Hello World?", data);
-      setMessage(data.message);
+      try {
+        const data = JSON.parse(event.data);
+        console.log("Hello World?", data);
+
+        if (data.message && data.message === "changePassword") {
+          setDialogType(DialogType.CHANGE_PASSWORD);
+        }
+      } catch (err) {
+        // Ignore.
+      }
     };
 
     window.addEventListener("message", handler);
@@ -38,11 +46,11 @@ const StroomWrapper: FunctionComponent = () => {
     return () => window.removeEventListener("message", handler);
   }, []); // empty array => run only once
 
-  let content = null;
-  if (message && message === "changePassword") {
-    content = <ChangePasswordManager />;
-  }
+  const onClose = () => {
+    setDialogType(undefined);
+  };
 
+  console.log("Render: StroomWrapper");
   return (
     <React.Fragment>
       <iframe
@@ -50,7 +58,9 @@ const StroomWrapper: FunctionComponent = () => {
         title="stroom"
         src="http://localhost:8080/stroom/ui"
       />
-      {content}
+      {dialogType === DialogType.CHANGE_PASSWORD ? (
+        <ChangePasswordManager userId={props.userId} onClose={onClose} />
+      ) : undefined}
     </React.Fragment>
   );
 };

@@ -1,4 +1,8 @@
 /* Customisations to standard bootstrap styles */
+.modal {
+  z-index: 1040;
+}
+
 .modal-header {
   border-bottom: none;
 }

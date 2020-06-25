@@ -43,7 +43,6 @@ import AppChrome from "./AppChrome";
 import useAppNavigation from "lib/useAppNavigation";
 import DataVolumes from "components/DataVolumes/DataVolumesSectionContainer";
 import SignInManager from "../Authentication/SignInManager";
-import ChangePasswordManager from "../Authentication/ChangePasswordManager";
 import StroomWrapper from "../Authentication/StroomWrapper";
 
 const renderWelcome = ({
@@ -99,11 +98,6 @@ const Routes: React.FunctionComponent = () => {
         exact
         path={`${singlePagePrefix}/signIn`}
         component={SignInManager}
-      />
-      <Route
-        exact
-        path={`${singlePagePrefix}/changepassword`}
-        component={ChangePasswordManager}
       />
       <PrivateRoute exact path="/" render={renderWelcome} />
       <PrivateRoute

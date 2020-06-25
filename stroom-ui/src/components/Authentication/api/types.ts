@@ -58,10 +58,12 @@ export interface AuthState {
   currentPassword?: string;
   // If we allow password resets then the sign in form will display a reset password link.
   allowPasswordResets?: boolean;
+  // Should we show the initial change password screen?
+  showInitialChangePassword?: boolean;
   // Should we show the confirm password dialog?
-  showConfirmPassword?: boolean;
+  showConfirmPasswordDialog?: boolean;
   // Should we show the change password dialog?
-  showChangePassword?: boolean;
+  showChangePasswordDialog?: boolean;
 }
 
 /**

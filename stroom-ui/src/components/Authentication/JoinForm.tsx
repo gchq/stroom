@@ -57,7 +57,7 @@ export const JoinForm: React.FunctionComponent<
           <div className="py-5 border-gray border-top border-bottom">
             {/** Render the fullname form field passing the name validation fn **/}
             <FormField
-              name="fullname"
+              controlId="fullname"
               type="text"
               label="Full Name"
               placeholder="Enter Full Name"
@@ -72,7 +72,7 @@ export const JoinForm: React.FunctionComponent<
 
             {/** Render the email field component **/}
             <FormField
-              name="email"
+              controlId="email"
               type="text"
               label="Email"
               placeholder="Enter Email Address"
@@ -86,7 +86,7 @@ export const JoinForm: React.FunctionComponent<
 
             {/** Render the password field component using thresholdLength of 7 and minStrength of 3 **/}
             <NewPasswordField
-              name="password"
+              controlId="password"
               label="Password"
               placeholder="Enter Password"
               strength={strength}

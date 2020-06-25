@@ -10,9 +10,8 @@ import { useAlert } from "../AlertDialog/AlertDisplayBoundary";
 import * as Yup from "yup";
 import { Alert, AlertType } from "../AlertDialog/AlertDialog";
 import zxcvbn from "zxcvbn";
-import { AuthStateProps } from "./ConfirmCurrentPassword";
 import { Form, Modal } from "react-bootstrap";
-import OkCancelButtons from "./OkCancelButtons";
+import { OkCancelButtons, OkCancelProps } from "./OkCancelButtons";
 import { CustomModal } from "./FormField";
 
 export interface ChangePasswordFormValues {
@@ -28,7 +27,9 @@ export interface ChangePasswordFormProps {
 }
 
 export const ChangePasswordForm: React.FunctionComponent<
-  ChangePasswordFormProps & FormikProps<ChangePasswordFormValues>
+  ChangePasswordFormProps &
+    FormikProps<ChangePasswordFormValues> &
+    OkCancelProps
 > = ({
   values,
   errors,
@@ -41,6 +42,8 @@ export const ChangePasswordForm: React.FunctionComponent<
   strength,
   minStrength,
   thresholdLength,
+  onCancel,
+  cancelClicked,
 }) => (
   <Form noValidate={true} onSubmit={handleSubmit}>
     <Modal.Header closeButton={false}>
@@ -60,7 +63,7 @@ export const ChangePasswordForm: React.FunctionComponent<
       />
       <Form.Row>
         <NewPasswordField
-          name="password"
+          controlId="password"
           label="Password"
           placeholder="Enter Password"
           strength={strength}
@@ -78,7 +81,7 @@ export const ChangePasswordForm: React.FunctionComponent<
       </Form.Row>
       <Form.Row>
         <PasswordField
-          name="confirmPassword"
+          controlId="confirmPassword"
           label="Confirm Password"
           placeholder="Confirm Password"
           className="no-icon-padding right-icon-padding hide-background-image"
@@ -95,18 +98,19 @@ export const ChangePasswordForm: React.FunctionComponent<
     <Modal.Footer>
       <OkCancelButtons
         onOk={() => undefined}
-        onCancel={() => undefined}
+        onCancel={onCancel}
         okClicked={isSubmitting}
-        cancelClicked={false}
+        cancelClicked={cancelClicked}
       />
     </Modal.Footer>
   </Form>
 );
 
-const ChangePasswordFormik: React.FunctionComponent<AuthStateProps> = ({
-  authState,
-  setAuthState,
-}) => {
+const ChangePasswordFormik: React.FunctionComponent<{
+  userId: string;
+  currentPassword: string;
+  onClose: (success: boolean) => void;
+}> = (props) => {
   const { changePassword, fetchPasswordPolicyConfig } = useAuthenticationApi();
 
   // Get token config
@@ -166,10 +170,14 @@ const ChangePasswordFormik: React.FunctionComponent<AuthStateProps> = ({
 
   console.log("Render: ChangePasswordFormContainer");
 
+  const onCancel = () => {
+    props.onClose(false);
+  };
+
   return (
     <Formik
       initialValues={{
-        userId: authState.userId,
+        userId: props.userId,
         password: "",
         confirmPassword: "",
       }}
@@ -177,7 +185,7 @@ const ChangePasswordFormik: React.FunctionComponent<AuthStateProps> = ({
       onSubmit={(values, actions) => {
         const request: ChangePasswordRequest = {
           userId: values.userId,
-          currentPassword: authState.currentPassword,
+          currentPassword: props.currentPassword,
           newPassword: values.password,
           confirmNewPassword: values.confirmPassword,
         };
@@ -186,11 +194,7 @@ const ChangePasswordFormik: React.FunctionComponent<AuthStateProps> = ({
           if (!response) {
             actions.setSubmitting(false);
           } else if (response.changeSucceeded) {
-            setAuthState({
-              ...authState,
-              currentPassword: undefined,
-              showChangePassword: false,
-            });
+            props.onClose(true);
           } else {
             actions.setSubmitting(false);
             const error: Alert = {
@@ -202,7 +206,7 @@ const ChangePasswordFormik: React.FunctionComponent<AuthStateProps> = ({
 
             // If the user is asked to sign in again then unset the auth state.
             if (response.forceSignIn) {
-              setAuthState(undefined);
+              props.onClose(false);
             }
           }
         });
@@ -225,6 +229,7 @@ const ChangePasswordFormik: React.FunctionComponent<AuthStateProps> = ({
             minStrength={minStrength}
             thresholdLength={thresholdLength}
             handleChange={handler}
+            onCancel={onCancel}
           />
         );
       }}
@@ -232,36 +237,13 @@ const ChangePasswordFormik: React.FunctionComponent<AuthStateProps> = ({
   );
 };
 
-export const ChangePasswordPage: React.FunctionComponent = ({ children }) => (
-  <div className="JoinForm__content">
-    <div className="d-flex flex-row justify-content-between align-items-center mb-3">
-      <legend className="form-label mb-0">Change Password</legend>
-    </div>
-
-    {children}
-  </div>
-);
-
-// const ChangePassword: React.FunctionComponent<AuthStateProps> = (props) => (
-//   <CustomModal
-//     show={authState.showConfirmPassword}
-//     centered={true}
-//     aria-labelledby="contained-modal-title-vcenter"
-//   >
-//     <ChangePasswordFormik authState={authState} setAuthState={setAuthState} />
-//   </CustomModal>
-//
-//   // <ChangePasswordPage>
-//   //   <ChangePasswordFormik {...props} />
-//   // </ChangePasswordPage>
-// );
-
-export const ChangePassword: React.FunctionComponent<AuthStateProps> = (
-  props,
-) => {
+export const ChangePassword: React.FunctionComponent<{
+  userId: string;
+  currentPassword: string;
+  onClose: (success: boolean) => void;
+}> = (props) => {
   return (
     <CustomModal
-      show={props.authState.showConfirmPassword}
       centered={true}
       aria-labelledby="contained-modal-title-vcenter"
     >

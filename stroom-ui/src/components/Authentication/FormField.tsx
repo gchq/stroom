@@ -19,14 +19,12 @@ export interface FormFieldType {
   type: "text" | "password";
 }
 
-export interface FormFieldProps extends CustomFormControlProps {
+export interface FormFieldProps extends CustomControlProps {
   label: string;
-  className?: string;
-  controlId?: string;
 }
 
-export interface CustomFormControlProps {
-  name: string;
+export interface CustomControlProps {
+  controlId?: string;
   placeholder: string;
   autoComplete?: string;
   className?: string;
@@ -37,9 +35,9 @@ export interface CustomFormControlProps {
 }
 
 export const CustomControl: FunctionComponent<
-  CustomFormControlProps & FormFieldState & FormFieldType
+  CustomControlProps & FormFieldState & FormFieldType
 > = ({
-  name,
+  controlId,
   type,
   placeholder,
   autoComplete,
@@ -75,11 +73,10 @@ export const CustomControl: FunctionComponent<
       <Form.Control
         type={type}
         className={controlClass}
-        id={name}
         placeholder={placeholder}
         value={value}
         onChange={(e) => {
-          setFieldTouched(name);
+          setFieldTouched(controlId);
           onChange(e);
         }}
         onBlur={onBlur}
@@ -95,7 +92,7 @@ export const CustomControl: FunctionComponent<
 export const FormField: FunctionComponent<
   FormFieldProps & FormFieldState & FormFieldType
 > = ({
-  name,
+  controlId,
   type,
   label,
   placeholder,
@@ -108,7 +105,6 @@ export const FormField: FunctionComponent<
   error,
   touched,
   setFieldTouched,
-  controlId,
   children,
 }) => {
   const hasErrors = touched && error;
@@ -125,16 +121,16 @@ export const FormField: FunctionComponent<
       <Form.Label>{label}</Form.Label>
       <div className="FormField__input-container">
         <CustomControl
+          controlId={controlId}
           type={type}
           className={controlClass}
-          name={name}
           placeholder={placeholder}
           value={value}
           error={error}
           touched={touched}
           setFieldTouched={setFieldTouched}
           onChange={(e) => {
-            setFieldTouched(name);
+            setFieldTouched(controlId);
             onChange(e);
           }}
           onBlur={onBlur}
@@ -153,9 +149,14 @@ export const FormField: FunctionComponent<
 };
 
 export interface CustomModalProps extends ModalProps {
-  show: boolean;
+  show?: boolean;
 }
 
 export const CustomModal: FunctionComponent<CustomModalProps> = (props) => {
-  return <Modal {...props}>{props.children}</Modal>;
+  const p = {
+    show: true,
+    onHide: () => undefined,
+    ...props,
+  };
+  return <Modal {...p}>{props.children}</Modal>;
 };

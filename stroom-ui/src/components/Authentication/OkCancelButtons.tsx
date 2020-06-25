@@ -1,9 +1,15 @@
 import { FunctionComponent } from "react";
 import Button from "../Button/Button";
 import * as React from "react";
-import { OkCancelProps } from "./ConfirmCurrentPassword";
 
-const OkCancelButtons: FunctionComponent<OkCancelProps> = ({
+export interface OkCancelProps {
+  onOk?: () => void;
+  onCancel?: () => void;
+  okClicked?: boolean;
+  cancelClicked?: boolean;
+}
+
+export const OkCancelButtons: FunctionComponent<OkCancelProps> = ({
   onOk,
   onCancel,
   okClicked,
@@ -38,5 +44,3 @@ const OkCancelButtons: FunctionComponent<OkCancelProps> = ({
     </div>
   );
 };
-
-export default OkCancelButtons;

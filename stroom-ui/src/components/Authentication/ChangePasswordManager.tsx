@@ -15,12 +15,8 @@
  */
 
 import * as React from "react";
-import { useState } from "react";
-import { AuthState } from "./api/types";
-import {
-  ConfirmCurrentPassword,
-  AuthStateProps,
-} from "./ConfirmCurrentPassword";
+import { FunctionComponent, useState } from "react";
+import { ConfirmCurrentPassword } from "./ConfirmCurrentPassword";
 import ChangePassword from "./ChangePassword";
 
 export interface FormValues {
@@ -28,38 +24,37 @@ export interface FormValues {
   password: string;
 }
 
-const ChangePasswordManager: React.FunctionComponent = () => {
-  const [authState, setAuthState] = useState<AuthState>({
+const ChangePasswordManager: FunctionComponent<{
+  userId: string;
+  onClose: () => void;
+}> = (props) => {
+  const [state, setState] = useState({
     userId: undefined,
     currentPassword: undefined,
-    allowPasswordResets: true,
-    showConfirmPassword: true,
-    showChangePassword: false,
   });
-  const props: AuthStateProps = {
-    authState,
-    setAuthState,
-  };
 
-  if (
-    !authState ||
-    authState.showConfirmPassword ||
-    !authState.currentPassword
-  ) {
-    return <ConfirmCurrentPassword {...props} />;
-  } else if (authState.showChangePassword) {
-    return <ChangePassword {...props} />;
+  if (!state || !state.currentPassword) {
+    const onClose = (userId: string, password: string) => {
+      if (userId == null && password == null) {
+        props.onClose();
+      } else {
+        setState({ userId, currentPassword: password });
+      }
+    };
+    return <ConfirmCurrentPassword userId={props.userId} onClose={onClose} />;
+  } else {
+    const onClose = () => {
+      props.onClose();
+    };
+    return (
+      <ChangePassword
+        userId={state.userId}
+        currentPassword={state.currentPassword}
+        onClose={onClose}
+        {...props}
+      />
+    );
   }
-
-  return (
-    <div className="JoinForm__content">
-      <div className="d-flex flex-row justify-content-between align-items-center mb-3">
-        <legend className="form-label mb-0">
-          The password has been changed
-        </legend>
-      </div>
-    </div>
-  );
 };
 
 export default ChangePasswordManager;

@@ -7,10 +7,9 @@ import { useAlert } from "../AlertDialog/AlertDisplayBoundary";
 import * as Yup from "yup";
 import { AuthState, ConfirmPasswordRequest } from "./api/types";
 import { Alert, AlertType } from "../AlertDialog/AlertDialog";
-import { Ref } from "react";
 import { Form, Modal } from "react-bootstrap";
 import { CustomModal } from "./FormField";
-import OkCancelButtons from "./OkCancelButtons";
+import { OkCancelButtons, OkCancelProps } from "./OkCancelButtons";
 
 export interface FormValues {
   userId: string;
@@ -22,17 +21,9 @@ export interface AuthStateProps {
   setAuthState: (state: AuthState) => any;
 }
 
-export interface OkCancelProps {
-  onOk: () => void;
-  onCancel: () => void;
-  okClicked: boolean;
-  cancelClicked: boolean;
-  ref?: Ref<HTMLButtonElement>;
-}
-
-export const ConfirmCurrentPasswordForm: React.FunctionComponent<FormikProps<
-  FormValues
->> = ({
+export const ConfirmCurrentPasswordForm: React.FunctionComponent<
+  FormikProps<FormValues> & OkCancelProps
+> = ({
   values,
   errors,
   touched,
@@ -41,6 +32,8 @@ export const ConfirmCurrentPasswordForm: React.FunctionComponent<FormikProps<
   handleBlur,
   handleSubmit,
   isSubmitting,
+  onCancel,
+  cancelClicked,
 }) => (
   <Form noValidate={true} onSubmit={handleSubmit}>
     <Modal.Header closeButton={false}>
@@ -60,9 +53,8 @@ export const ConfirmCurrentPasswordForm: React.FunctionComponent<FormikProps<
       />
       <Form.Row>
         <PasswordField
-          controlId="validationFormik02"
+          controlId="password"
           label="Current Password"
-          name="password"
           placeholder="Enter Your Current Password"
           value={values.password}
           error={errors.password}
@@ -78,19 +70,18 @@ export const ConfirmCurrentPasswordForm: React.FunctionComponent<FormikProps<
     <Modal.Footer>
       <OkCancelButtons
         onOk={() => undefined}
-        onCancel={() => undefined}
+        onCancel={onCancel}
         okClicked={isSubmitting}
-        cancelClicked={false}
+        cancelClicked={cancelClicked}
       />
     </Modal.Footer>
   </Form>
 );
 
-const ConfirmCurrentPasswordFormik: React.FunctionComponent<AuthStateProps> = ({
-  authState,
-  setAuthState,
-  children,
-}) => {
+const ConfirmCurrentPasswordFormik: React.FunctionComponent<{
+  userId: string;
+  onClose: (userId: string, password: string) => void;
+}> = ({ userId, onClose, children }) => {
   const { confirmPassword } = useAuthenticationApi();
   const { alert } = useAlert();
 
@@ -102,9 +93,13 @@ const ConfirmCurrentPasswordFormik: React.FunctionComponent<AuthStateProps> = ({
     password: passwordSchema,
   });
 
+  const onCancel = () => {
+    onClose(null, null);
+  };
+
   return (
     <Formik
-      initialValues={{ userId: authState.userId, password: "" }}
+      initialValues={{ userId, password: "" }}
       validationSchema={validationSchema}
       onSubmit={(values, actions) => {
         const request: ConfirmPasswordRequest = {
@@ -115,13 +110,7 @@ const ConfirmCurrentPasswordFormik: React.FunctionComponent<AuthStateProps> = ({
           if (!response) {
             actions.setSubmitting(false);
           } else if (response.valid) {
-            setAuthState({
-              ...authState,
-              userId: values.userId,
-              currentPassword: values.password,
-              showConfirmPassword: false,
-              showChangePassword: true,
-            });
+            onClose(values.userId, values.password);
           } else {
             actions.setSubmitting(false);
             const error: Alert = {
@@ -135,7 +124,7 @@ const ConfirmCurrentPasswordFormik: React.FunctionComponent<AuthStateProps> = ({
       }}
     >
       {(props) => (
-        <ConfirmCurrentPasswordForm {...props}>
+        <ConfirmCurrentPasswordForm onCancel={onCancel} {...props}>
           {children}
         </ConfirmCurrentPasswordForm>
       )}
@@ -143,12 +132,14 @@ const ConfirmCurrentPasswordFormik: React.FunctionComponent<AuthStateProps> = ({
   );
 };
 
-export const ConfirmCurrentPassword: React.FunctionComponent<AuthStateProps> = (
-  props,
-) => {
+export const ConfirmCurrentPassword: React.FunctionComponent<{
+  userId: string;
+  onClose: (userId: string, password: string) => void;
+}> = (props) => {
   return (
     <CustomModal
-      show={props.authState.showConfirmPassword}
+      show={true}
+      // onHide={() => undefined}
       centered={true}
       aria-labelledby="contained-modal-title-vcenter"
     >
