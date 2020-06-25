@@ -1,5 +1,6 @@
 package stroom.util.shared.filter;
 
+import com.fasterxml.jackson.annotation.JsonCreator;
 import com.fasterxml.jackson.annotation.JsonInclude;
 import com.fasterxml.jackson.annotation.JsonInclude.Include;
 import com.fasterxml.jackson.annotation.JsonProperty;
@@ -21,14 +22,21 @@ public class FilterFieldDefinition {
     @JsonProperty
     private final boolean defaultField;
 
+//    public FilterFieldDefinition() {
+//        displayName = null;
+//        filterQualifier = null;
+//        defaultField = false;
+//    }
+
     /**
      * @param displayName The display name or column heading for the field in the table.
      * @param filterQualifier The
      * @param defaultField
      */
-    FilterFieldDefinition(@JsonProperty("displayName") final String displayName,
-                          @JsonProperty("filterQualifier") final String filterQualifier,
-                          @JsonProperty("defaultField") final boolean defaultField) {
+    @JsonCreator
+    public FilterFieldDefinition(@JsonProperty("displayName") final String displayName,
+                                 @JsonProperty("filterQualifier") final String filterQualifier,
+                                 @JsonProperty("defaultField") final boolean defaultField) {
         this.displayName = Objects.requireNonNull(displayName);
         this.filterQualifier = Objects.requireNonNull(filterQualifier);
         this.defaultField = defaultField;

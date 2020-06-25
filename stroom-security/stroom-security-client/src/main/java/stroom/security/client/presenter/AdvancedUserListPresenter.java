@@ -66,7 +66,7 @@ public class AdvancedUserListPresenter extends AbstractUserListPresenter {
             }
 
             findUserCriteria.getName().setString(filter);
-            findUserCriteria.getName().setMatchStyle(StringCriteria.MatchStyle.WildStandAndEnd);
+            findUserCriteria.getName().setMatchStyle(StringCriteria.MatchStyle.WildStartAndEnd);
 
             dataProvider.refresh();
         }

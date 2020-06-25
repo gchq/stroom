@@ -22,18 +22,31 @@ import stroom.activity.shared.Activity;
 import stroom.activity.shared.ActivityValidationResult;
 import stroom.security.api.SecurityContext;
 import stroom.util.AuditUtil;
+import stroom.util.filter.FilterFieldMapper;
+import stroom.util.filter.FilterFieldMappers;
+import stroom.util.filter.QuickFilterPredicateFactory;
+import stroom.util.logging.LambdaLogger;
+import stroom.util.logging.LambdaLoggerFactory;
+import stroom.util.logging.LogUtil;
 import stroom.util.shared.EntityServiceException;
 import stroom.util.shared.ResultPage;
+import stroom.util.shared.filter.FilterFieldDefinition;
 
 import com.google.common.base.Strings;
 
 import javax.inject.Inject;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Optional;
+import java.util.function.Predicate;
 import java.util.regex.Pattern;
 import java.util.regex.PatternSyntaxException;
+import java.util.stream.Collectors;
+import java.util.stream.Stream;
 
 public class ActivityServiceImpl implements ActivityService {
+    private static final LambdaLogger LOGGER = LambdaLoggerFactory.getLogger(ActivityServiceImpl.class);
+
     private final SecurityContext securityContext;
     private final ActivityDao dao;
 
@@ -72,7 +85,8 @@ public class ActivityServiceImpl implements ActivityService {
             throw new EntityServiceException("Attempt to read another persons activity");
         }
 
-        return dao.fetch(id).orElse(null);
+        return dao.fetch(id)
+                .orElse(null);
     }
 
     @Override
@@ -98,12 +112,71 @@ public class ActivityServiceImpl implements ActivityService {
     }
 
     @Override
-    public ResultPage<Activity> find(final FindActivityCriteria criteria) {
+    public ResultPage<Activity> find(final String filter) {
+
+        // We have to deser all the activities to be able to search them but hopefully
+        // there are not that many to worry about
+        final List<Activity> allActivities = getAllUserActivities();
+
+        final List<Activity> filteredActivities;
+        if (!Strings.isNullOrEmpty(filter)) {
+
+            final List<FilterFieldDefinition> fieldDefinitions = buildFieldDefinitions(allActivities);
+
+            final Predicate<Activity> filterPredicate = buildActivityPredicate(
+                    filter,
+                    fieldDefinitions);
+
+            filteredActivities = allActivities.stream()
+                    .filter(filterPredicate)
+                    .collect(Collectors.toList());
+        } else {
+            filteredActivities = allActivities;
+        }
+
+        return ResultPage.createCriterialBasedList(filteredActivities, new FindActivityCriteria());
+    }
+
+    @Override
+    public List<FilterFieldDefinition> listFieldDefinitions() {
+
+        final List<Activity> allActivities = getAllUserActivities();
+
+        return buildFieldDefinitions(allActivities);
+    }
+
+    private List<FilterFieldDefinition> buildFieldDefinitions(final List<Activity> activities) {
+        // In theory you could get the fields from the stroom.ui.activity.editorBody property
+        // but that would mean parsing the HTML which is non-trivial to do, outside of GWT.
+        return activities
+                .stream()
+                .flatMap(activity -> {
+                    if (activity != null
+                            && activity.getDetails() != null
+                            && activity.getDetails().getProperties() != null) {
+                        // We want to search all fields by default
+                        return activity.getDetails().getProperties().stream()
+                                .map(prop -> FilterFieldDefinition.defaultField(prop.getName()));
+                    } else {
+                        return Stream.empty();
+                    }
+                })
+                .distinct()
+                .collect(Collectors.toList());
+    }
+
+    private List<Activity> getAllUserActivities() {
         if (!securityContext.isLoggedIn()) {
             throw new EntityServiceException("No user is logged in");
         }
 
+        FindActivityCriteria criteria = new FindActivityCriteria();
+
+        // Only find activities for this user
         criteria.setUserId(securityContext.getUserId());
+
+        LOGGER.debug(() -> LogUtil.message("find({}, {})", criteria.getFilter(), criteria.getUserId()));
+
         return dao.find(criteria);
     }
 
@@ -125,18 +198,50 @@ public class ActivityServiceImpl implements ActivityService {
                     if (!pattern.matcher(value).matches()) {
                         valid = false;
                         if (Strings.isNullOrEmpty(prop.getValidationMessage())) {
-                            messages.add("Invalid value '" + value + "' for property '" + prop.getId() + "' must match '" + prop.getValidation() + "'");
+                            messages.add("Invalid value '" + value
+                                    + "' for property '" + prop.getId()
+                                    + "' must match '" + prop.getValidation() + "'");
                         } else {
                             messages.add(prop.getValidationMessage());
                         }
                     }
                 } catch (final PatternSyntaxException e) {
                     valid = false;
-                    messages.add("Unable to parse validation regex '" + prop.getValidation() + "' for property '" + prop.getId() + "'");
+                    messages.add("Unable to parse validation regex '"
+                            + prop.getValidation() + "' for property '"
+                            + prop.getId() + "'");
                 }
             }
         }
 
         return new ActivityValidationResult(valid, String.join("\n", messages));
+    }
+
+    private Predicate<Activity> buildActivityPredicate(final String filterInput,
+                                                       final List<FilterFieldDefinition> fieldDefinitions) {
+
+        LOGGER.debug("Building predicate for input [{}]", filterInput);
+
+        // Extracting the value out of the json details is not very efficient.  May be better to use
+        // something like jsoniter on the raw json.
+        final FilterFieldMappers<Activity> fieldMappers = FilterFieldMappers.of(fieldDefinitions.stream()
+                .map(fieldDefinition ->
+                        FilterFieldMapper.of(fieldDefinition, (Activity activity) -> {
+
+                            // Use the field displayname to look up the matching prop in the activity details
+                            final String value = Optional.ofNullable(activity)
+                                    .flatMap(activity2 ->
+                                            Optional.ofNullable(activity2.getDetails()))
+                                    .map(details ->
+                                            details.valueByName(fieldDefinition.getDisplayName()))
+                                    .orElse(null);
+
+                            LOGGER.trace("FilterFieldDefinition: {}, value {}",
+                                    fieldDefinition, value);
+                            return value;
+                        }))
+                .collect(Collectors.toList()));
+
+        return QuickFilterPredicateFactory.createFuzzyMatchPredicate(filterInput, fieldMappers);
     }
 }

@@ -2,7 +2,6 @@ package stroom.activity.impl;
 
 import stroom.activity.api.ActivityService;
 import stroom.activity.api.CurrentActivity;
-import stroom.activity.api.FindActivityCriteria;
 import stroom.activity.shared.AcknowledgeSplashRequest;
 import stroom.activity.shared.Activity;
 import stroom.activity.shared.ActivityResource;
@@ -12,7 +11,7 @@ import stroom.event.logging.api.PurposeUtil;
 import stroom.event.logging.api.StroomEventLoggingService;
 import stroom.security.api.SecurityContext;
 import stroom.util.shared.ResultPage;
-import stroom.util.shared.StringCriteria.MatchStyle;
+import stroom.util.shared.filter.FilterFieldDefinition;
 
 import event.logging.Banner;
 import event.logging.BaseAdvancedQueryOperator.And;
@@ -27,6 +26,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import javax.inject.Inject;
+import java.util.List;
 
 class ActivityResourceImpl implements ActivityResource {
     private static final Logger LOGGER = LoggerFactory.getLogger(ActivityResourceImpl.class);
@@ -51,28 +51,8 @@ class ActivityResourceImpl implements ActivityResource {
     }
 
     @Override
-    public ResultPage<Activity> list(final String name) {
-        final FindActivityCriteria criteria = new FindActivityCriteria();
-
-//        String filter = name;
-//        if (filter != null) {
-//            filter = filter.trim();
-//            if (filter.length() == 0) {
-//                filter = null;
-//            }
-//        }
-
-        if (name != null && name.length() > 0) {
-            criteria.getName().setString(name);
-            criteria.getName().setMatchStyle(MatchStyle.WildStandAndEnd);
-            criteria.getName().setCaseInsensitive(true);
-        } else {
-            criteria.getName().clear();
-        }
-
-//        if (name != null) {
-//            criteria.setName(new StringCriteria(name));
-//        }
+    public ResultPage<Activity> list(final String filter) {
+        LOGGER.debug("filter: {}", filter);
 
         return securityContext.secureResult(() -> {
             ResultPage<Activity> result;
@@ -81,18 +61,42 @@ class ActivityResourceImpl implements ActivityResource {
             final Advanced advanced = new Advanced();
             query.setAdvanced(advanced);
             final And and = new And();
-            advanced.getAdvancedQueryItems().add(and);
+            advanced.getAdvancedQueryItems()
+                    .add(and);
+
+            final String eventType = "ActivitySearch";
 
             try {
-                result = activityService.find(criteria);
-                documentEventLog.search(criteria.getClass().getSimpleName(), query, Activity.class.getSimpleName(), null, null);
+                try {
+                    result = activityService.find(filter);
+                } catch (Exception e) {
+                    LOGGER.error("Error listing activities with filter [{}]", filter, e);
+                    throw e;
+                }
+
+                documentEventLog.search(
+                        eventType,
+                        query,
+                        Activity.class.getSimpleName(),
+                        null,
+                        null);
             } catch (final RuntimeException e) {
-                documentEventLog.search(criteria.getClass().getSimpleName(), query, Activity.class.getSimpleName(), null, e);
+                documentEventLog.search(
+                        eventType,
+                        query,
+                        Activity.class.getSimpleName(),
+                        null,
+                        e);
                 throw e;
             }
 
             return result;
         });
+    }
+
+    @Override
+    public List<FilterFieldDefinition> listFieldDefinitions() {
+        return securityContext.secureResult(activityService::listFieldDefinitions);
     }
 
     @Override

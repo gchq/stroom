@@ -16,11 +16,13 @@
 
 package stroom.activity.shared;
 
+import stroom.util.shared.HasAuditInfo;
+
 import com.fasterxml.jackson.annotation.JsonCreator;
+import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.fasterxml.jackson.annotation.JsonInclude;
 import com.fasterxml.jackson.annotation.JsonInclude.Include;
 import com.fasterxml.jackson.annotation.JsonProperty;
-import stroom.util.shared.HasAuditInfo;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -202,6 +204,17 @@ public class Activity implements HasAuditInfo {
             }
             return null;
         }
+
+        @JsonIgnore
+        public String valueByName(final String propertyName) {
+            for (final Prop prop : properties) {
+                if (prop.getName() != null && prop.getName().equals(propertyName)) {
+                    return prop.getValue();
+                }
+            }
+            return null;
+        }
+
 
         @Override
         public String toString() {

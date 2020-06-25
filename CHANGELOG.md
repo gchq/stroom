@@ -6,6 +6,8 @@ and this project adheres to [Semantic Versioning](http://semver.org/).
 
 ## [Unreleased]
 
+* Add field searching to Activity quick filter.
+
 * Add field searching to entity selection popups.
 
 * Change entity selection popups to clear quick filter on show.
