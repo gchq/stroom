@@ -36,7 +36,9 @@ public class StringPredicateFactory {
             "((?<=[a-z])(?=[A-Z])|(?<=[0-9])(?=[A-Z])|(?<=[a-zA-Z])(?=[0-9])| )");
     private static final Pattern CAMEL_CASE_ABBREVIATIONS_PATTERN = Pattern.compile("([A-Z]+)([A-Z][a-z0-9])");
 
-    private static final String WILDCARD_CHAR = "*";
+    public static final String WILDCARD_STR = "*";
+    public static final char NOT_OPERATOR_CHAR = '!';
+    public static final String NOT_OPERATOR_STR = Character.toString(NOT_OPERATOR_CHAR);
 
     // Static util methods only
     private StringPredicateFactory() {
@@ -82,30 +84,53 @@ public class StringPredicateFactory {
      */
     public static Predicate<String> createFuzzyMatchPredicate(final String userInput,
                                                               final Pattern separatorCharacterClass) {
+        // TODO should we trim the input to remove leading/trailing spaces?
+
         LOGGER.trace("Creating predicate for userInput [{}] and separators {}", userInput, separatorCharacterClass);
+
+        String modifiedInput = userInput;
+        boolean isNegated = false;
+
         Predicate<String> predicate;
-        if (userInput == null || userInput.isEmpty()) {
+        if (modifiedInput == null || modifiedInput.isEmpty()) {
             LOGGER.trace("Creating null input predicate");
             // No input so get everything
             predicate = stringUnderTest -> true;
-        } else if (userInput.startsWith("/")) {
-            // remove the / marker char from the beginning
-            predicate = createRegexPredicate(userInput.substring(1));
-        } else if (userInput.startsWith("?")) {
-            // remove the ? marker char from the beginning
-            predicate = createWordBoundaryPredicate(userInput.substring(1), separatorCharacterClass);
-        } else if (userInput.startsWith("^") && userInput.endsWith("$")) {
-            predicate = createCaseInsensitiveExactMatchPredicate(userInput);
-        } else if (userInput.endsWith("$")) {
-            // remove the $ marker char from the end
-            predicate = createCaseInsensitiveEndsWithPredicate(userInput.substring(0, userInput.length() - 1));
-        } else if (userInput.startsWith("^")) {
-            // remove the ^ marker char from the beginning
-            predicate = createCaseInsensitiveStartsWithPredicate(userInput.substring(1));
-        } else if (userInput.contains(WILDCARD_CHAR)) {
-            predicate = createWildCardedPredicate(userInput);
-        } else {
-            predicate = createCharsAnywherePredicate(userInput);
+        }else {
+            if (modifiedInput.startsWith(NOT_OPERATOR_STR)) {
+                modifiedInput = modifiedInput.substring(1);
+                LOGGER.debug("Input after NOT operator removal [{}]", modifiedInput);
+                isNegated = true;
+            }
+
+            if (modifiedInput.isEmpty()) {
+                LOGGER.trace("Creating null input predicate");
+                // No input so get everything
+                predicate = stringUnderTest -> true;
+            } else if (modifiedInput.startsWith("/")) {
+                // remove the / marker char from the beginning
+                predicate = createRegexPredicate(modifiedInput.substring(1));
+            } else if (modifiedInput.startsWith("?")) {
+                // remove the ? marker char from the beginning
+                predicate = createWordBoundaryPredicate(modifiedInput.substring(1), separatorCharacterClass);
+            } else if (modifiedInput.startsWith("^") && modifiedInput.endsWith("$")) {
+                predicate = createCaseInsensitiveExactMatchPredicate(modifiedInput);
+            } else if (modifiedInput.endsWith("$")) {
+                // remove the $ marker char from the end
+                predicate = createCaseInsensitiveEndsWithPredicate(modifiedInput.substring(0, modifiedInput.length() - 1));
+            } else if (modifiedInput.startsWith("^")) {
+                // remove the ^ marker char from the beginning
+                predicate = createCaseInsensitiveStartsWithPredicate(modifiedInput.substring(1));
+            } else if (modifiedInput.contains(WILDCARD_STR)) {
+                predicate = createWildCardedPredicate(modifiedInput);
+            } else {
+                predicate = createCharsAnywherePredicate(modifiedInput);
+            }
+        }
+
+        if (isNegated) {
+            predicate = predicate.negate();
+            LOGGER.debug("Negating predicate");
         }
 
         if (LOGGER.isTraceEnabled()) {

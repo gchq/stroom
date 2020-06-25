@@ -80,12 +80,30 @@ class TestQuickFilterPredicateFactory {
     }
 
     @Test
+    void test_oneDefaultFieldNegated() {
+        doTest("!myname",
+                List.of(POJO_1_BAD_NAME),
+                List.of(POJO_1,
+                        POJO_1_MISSING,
+                        POJO_1_NOT_MY_TYPE));
+    }
+
+    @Test
     void test_qualifyDefaultField() {
         doTest(" simplestr1:myname ",
                 List.of(POJO_1,
                         POJO_1_MISSING,
                         POJO_1_NOT_MY_TYPE),
                 List.of(POJO_1_BAD_NAME));
+    }
+
+    @Test
+    void test_qualifyDefaultFieldNegated() {
+        doTest(" simplestr1:!myname ",
+                List.of(POJO_1_BAD_NAME),
+                List.of(POJO_1,
+                        POJO_1_MISSING,
+                        POJO_1_NOT_MY_TYPE));
     }
 
     @Test

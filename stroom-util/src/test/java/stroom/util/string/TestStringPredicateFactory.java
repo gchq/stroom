@@ -20,6 +20,8 @@ class TestStringPredicateFactory {
     @TestFactory
     List<DynamicTest> fuzzyMatcherTestFactory() {
         List<DynamicTest> tests = new ArrayList<>();
+
+        // Each test is run in normal ("foorbar") and negated form ("!foorbar")
         tests.addAll(List.of(
 
                 makeTest("Starts with",
@@ -261,6 +263,7 @@ class TestStringPredicateFactory {
                                   final List<String> expectedMatches,
                                   final List<String> expectedNonMatches) {
 
+        LOGGER.info("Testing input [{}]", userInput);
         final List<String> actualMatches = Stream.concat(expectedMatches.stream(),
                 expectedNonMatches.stream())
                 .filter(StringPredicateFactory.createFuzzyMatchPredicate(userInput))
@@ -268,6 +271,17 @@ class TestStringPredicateFactory {
 
         Assertions.assertThat(actualMatches)
                 .containsExactlyInAnyOrderElementsOf(expectedMatches);
+
+
+        final String negatedInput = StringPredicateFactory.NOT_OPERATOR_STR + userInput;
+
+        LOGGER.info("Testing negated input [{}]", negatedInput);
+        final List<String> actualNegatedMatches = Stream.concat(expectedMatches.stream(), expectedNonMatches.stream())
+                .filter(StringPredicateFactory.createFuzzyMatchPredicate(negatedInput))
+                .collect(Collectors.toList());
+
+        Assertions.assertThat(actualNegatedMatches)
+                .containsExactlyInAnyOrderElementsOf(expectedNonMatches);
     }
 
     private DynamicTest makeTest(final String testName,

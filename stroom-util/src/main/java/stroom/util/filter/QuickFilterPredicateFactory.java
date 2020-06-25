@@ -73,7 +73,13 @@ public class QuickFilterPredicateFactory {
         final Collection<FilterFieldMapper<T>> defaultFieldMapper = getDefaultFieldMappers(fieldMappers);
         LOGGER.trace("defaultFieldMapper {}", defaultFieldMapper);
 
-        return createOrPredicate(input, defaultFieldMapper);
+        if (input.startsWith(StringPredicateFactory.NOT_OPERATOR_STR)) {
+            LOGGER.debug("Negated match so AND the default fields");
+            return createAndPredicate(input, defaultFieldMapper);
+        } else {
+            LOGGER.debug("Normal match so OR the default fields");
+            return createOrPredicate(input, defaultFieldMapper);
+        }
     }
 
     private static <T> Predicate<T> createPredicate(final String input,
@@ -92,6 +98,18 @@ public class QuickFilterPredicateFactory {
             return fieldMappers.stream()
                     .map(fieldMapper -> createPredicate(input, fieldMapper))
                     .reduce(QuickFilterPredicateFactory::orPredicates)
+                    .orElse(obj -> false);
+        }
+    }
+
+    private static <T> Predicate<T> createAndPredicate(final String input,
+                                                       final Collection<FilterFieldMapper<T>> fieldMappers) {
+        if (fieldMappers == null || fieldMappers.isEmpty()) {
+            return obj -> false;
+        } else {
+            return fieldMappers.stream()
+                    .map(fieldMapper -> createPredicate(input, fieldMapper))
+                    .reduce(QuickFilterPredicateFactory::andPredicates)
                     .orElse(obj -> false);
         }
     }

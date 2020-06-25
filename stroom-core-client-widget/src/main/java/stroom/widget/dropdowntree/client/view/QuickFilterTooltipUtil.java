@@ -43,13 +43,14 @@ public class QuickFilterTooltipUtil {
                 .addTable(tableBuilder -> {
                     tableBuilder
                             .addHeaderRow("Example input", "Match type")
-                            .addRow(TooltipUtil.fixedWidthText("#87af"), "UUID partial matching")
-                            .addRow(TooltipUtil.fixedWidthText("/xxx"), "Regular expression matching")
-                            .addRow(TooltipUtil.fixedWidthText("?ABC"), "Word boundary matching")
-                            .addRow(TooltipUtil.fixedWidthText("^abc$"), "Exact match")
-                            .addRow(TooltipUtil.fixedWidthText("abc$"), "Suffix match")
-                            .addRow(TooltipUtil.fixedWidthText("^abc"), "Prefix matching")
-                            .addRow(TooltipUtil.fixedWidthText("abc"), "Characters anywhere (in order) matching (default)");
+                            .addRow(TooltipUtil.fixedWidthText("#87af"), "UUID partial matching.")
+                            .addRow(TooltipUtil.fixedWidthText("/xxx"), "Regular expression matching.")
+                            .addRow(TooltipUtil.fixedWidthText("?ABC"), "Word boundary matching.")
+                            .addRow(TooltipUtil.fixedWidthText("^abc$"), "Exact match.")
+                            .addRow(TooltipUtil.fixedWidthText("abc$"), "Suffix match.")
+                            .addRow(TooltipUtil.fixedWidthText("^abc"), "Prefix match.")
+                            .addRow(TooltipUtil.fixedWidthText("abc"), "Characters anywhere (in order) matching (default).")
+                            .addRow(TooltipUtil.fixedWidthText("!abc"), "Negated match.");
 
                     if (fieldDefinitions != null && !fieldDefinitions.isEmpty()) {
                         tableBuilder
@@ -111,6 +112,9 @@ public class QuickFilterTooltipUtil {
                             .addRow(
                                     TooltipUtil.fixedWidthText("name:abc type:/(error|warn)"),
                                     "Matches Name field with 'abc' chars anywhere and Type field with regex '(error|warn)'")
+                            .addRow(
+                                    TooltipUtil.fixedWidthText("name:?ABC type:!/error"),
+                                    "Matches Name field with word first letters A, B, C and Type field that doesn't match regex 'error'")
                             .build());
         }
     }

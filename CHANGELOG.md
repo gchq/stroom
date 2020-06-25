@@ -6,6 +6,8 @@ and this project adheres to [Semantic Versioning](http://semver.org/).
 
 ## [Unreleased]
 
+* Issue **#1683** : Add `!` NOT operator to fuzzy match filtering.
+
 * Add field searching to Activity quick filter.
 
 * Add field searching to entity selection popups.
