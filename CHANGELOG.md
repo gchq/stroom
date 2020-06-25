@@ -30,6 +30,14 @@ and this project adheres to [Semantic Versioning](http://semver.org/).
 
 * Issue **#1650** : Use consitent blue colour.
 
+* Issue **#1671** :Fix XSLT function `hex-to-oct`.
+
+* Add `readTimeout` property to `HTTPAppender`.
+
+* Issue **#1632** : SQL stats now compatible with MySQL 8 Group Replication
+
+* Issue **#1650** : Use consistent blue colour.
+
 * Issue **#1627** : Fix Up/Down buttons on Rule Set screen. Now keeps selection after use.
 
 * Issue **#1277** : Fix Enable/Disable toggle button on Rule Set screen.
