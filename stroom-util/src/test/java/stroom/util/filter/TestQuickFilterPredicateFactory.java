@@ -2,10 +2,13 @@ package stroom.util.filter;
 
 import stroom.docref.DocRef;
 import stroom.util.ConsoleColour;
+import stroom.util.filter.QuickFilterPredicateFactory.MatchToken;
 import stroom.util.shared.filter.FilterFieldDefinition;
 
 import org.assertj.core.api.Assertions;
+import org.junit.jupiter.api.DynamicTest;
 import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.TestFactory;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -104,6 +107,68 @@ class TestQuickFilterPredicateFactory {
                         POJO_1_MISSING,
                         POJO_1_NOT_MY_TYPE),
                 List.of(POJO_1_BAD_NAME));
+    }
+
+    @TestFactory
+    List<DynamicTest> testParseMatchTokens() {
+
+        return List.of(
+                makeTokenTest("\"",
+                        List.of(
+                        )),
+                makeTokenTest("a\\\"bc", // escaped dbl quote
+                        List.of(
+                                MatchToken.of("a\"bc")
+                        )),
+                makeTokenTest("\"abc", // un-matched dbl quote, should not parse
+                        List.of(
+                        )),
+                makeTokenTest(" a b c ",
+                        List.of(
+                                MatchToken.of("a"),
+                                MatchToken.of("b"),
+                                MatchToken.of("c")
+                                )),
+                makeTokenTest(" \"a b c\"  \"d e f\" ",
+                        List.of(
+                                MatchToken.of("a b c"),
+                                MatchToken.of("d e f")
+                        )),
+                makeTokenTest("foo:bar",
+                        List.of(
+                                MatchToken.of("foo", "bar")
+                        )),
+                makeTokenTest("foo:", // treat qualified match as empty str to give us an always true predicate
+                        List.of(
+                                MatchToken.of("foo", "")
+                        )),
+                makeTokenTest("colour:red size:big",
+                        List.of(
+                                MatchToken.of("colour", "red"),
+                                MatchToken.of("size", "big")
+                        )),
+                makeTokenTest("\"colour:red\"        \"size:big\"",
+                        List.of(
+                                MatchToken.of("colour", "red"),
+                                MatchToken.of("size", "big")
+                        )),
+                makeTokenTest("\"colour:red\"        big",
+                        List.of(
+                                MatchToken.of("colour", "red"),
+                                MatchToken.of( "big")
+                        ))
+        );
+    }
+
+    private DynamicTest makeTokenTest(final String input,
+                                      final List<MatchToken> expectedTokens) {
+        return DynamicTest.dynamicTest("[" + input + "]", () -> {
+            final List<MatchToken> matchTokens = QuickFilterPredicateFactory.extractMatchTokens(input);
+
+            LOGGER.info("Result: {}", matchTokens);
+            Assertions.assertThat(matchTokens)
+                    .containsExactlyElementsOf(expectedTokens);
+        });
     }
 
     private void doTest(final String input,

@@ -10,20 +10,28 @@ import java.util.Collection;
 import java.util.List;
 import java.util.Objects;
 import java.util.function.Predicate;
+import java.util.regex.Pattern;
 import java.util.stream.Collectors;
 
 public class QuickFilterPredicateFactory {
 
     private static final Logger LOGGER = LoggerFactory.getLogger(QuickFilterPredicateFactory.class);
 
+    private static final char QUALIFIER_DELIMITER_CHAR = ':';
+    private static final char SPLIT_CHAR = ' ';
+    private static final char QUOTE_CHAR = '\"';
+    private static final char ESCAPE_CHAR = '\\';
+
+    private static final String QUALIFIER_DELIMITER_STR = Character.toString(QUALIFIER_DELIMITER_CHAR);
+    private static final String QUOTE_STR = Character.toString(QUOTE_CHAR);
+    private static final String ESCAPED_QUOTE_STR = Character.toString(ESCAPE_CHAR) + QUOTE_CHAR;
+
+    private static final Pattern QUALIFIER_DELIMITER_PATTERN = Pattern.compile(QUALIFIER_DELIMITER_STR);
+
     /**
      * Creates a match predicate based on userInput. userInput may be a single match string
      * e.g. 'event', or a set of optionally qualified match strings, e.g. 'event type:pipe'.
-     * If the
-     * @param userInput
-     * @param fieldMappers
-     * @param <T>
-     * @return
+     * See the test for valid examples
      */
     public static <T> Predicate<T> createFuzzyMatchPredicate(final String userInput,
                                                              final FilterFieldMappers<T> fieldMappers) {
@@ -38,7 +46,7 @@ public class QuickFilterPredicateFactory {
         } else if (userInput.contains(":") || userInput.contains("\"")) {
             LOGGER.trace("Found at least one qualified field or quoted values");
             // We have some qualified fields so parse them
-            final List<MatchToken> matchTokens = parseFullInput(userInput.trim());
+            final List<MatchToken> matchTokens = extractMatchTokens(userInput.trim());
             LOGGER.trace("Parsed matchTokens {}", matchTokens);
 
             if (!matchTokens.isEmpty()) {
@@ -100,21 +108,27 @@ public class QuickFilterPredicateFactory {
     }
 
 
-    private static List<MatchToken> parseFullInput(final String userInput) {
-        final List<String> tokens = extractTokens(userInput);
+    public static List<MatchToken> extractMatchTokens(final String userInput) {
+        final List<String> tokens = splitInput(userInput);
 
         return tokens.stream()
                 .map(token -> {
                     try {
-                        if (token.contains(":")) {
-                            final String[] parts = token.split(":");
-                            return new MatchToken(parts[0], parts[1]);
+                        if (token.contains(QUALIFIER_DELIMITER_STR)) {
+                            final String[] parts = QUALIFIER_DELIMITER_PATTERN.split(token);
+                            if (token.endsWith(QUALIFIER_DELIMITER_STR)) {
+                                return new MatchToken(parts[0], "");
+                            } else if (token.startsWith(QUALIFIER_DELIMITER_STR)) {
+                                throw new RuntimeException("Invalid token " + token);
+                            } else {
+                                return new MatchToken(parts[0], parts[1]);
+                            }
                         } else {
                             return new MatchToken(null, token);
                         }
                     } catch (Exception e) {
                         // Probably due to the user not having finished typing yet
-                        LOGGER.trace("Unable to split [{}]", token);
+                        LOGGER.trace("Unable to split [{}], due to {}", token, e.getMessage(), e);
                         return null;
                     }
                 })
@@ -122,44 +136,73 @@ public class QuickFilterPredicateFactory {
                 .collect(Collectors.toList());
     }
 
-    private static List<String> extractTokens(final String userInput) {
+    /**
+     * Split the input on spaces with each chunk optionally enclosed with a double quotes.
+     * Should ignore leading, trailing repeated spaces.
+     * @return An empty list if it can't parse
+     */
+    private static List<String> splitInput(final String userInput) {
         final List<String> tokens = new ArrayList<>();
+        final String cleanedInput = userInput.trim();
 
         int start = 0;
         boolean insideQuotes = false;
         boolean wasInsideQuotes = false;
-        for (int current = 0; current < userInput.length(); current++) {
-            if (userInput.charAt(current) == '\"') {
-                if (!insideQuotes) {
-                    // start of quotes
-                    wasInsideQuotes = true;
-                }
-                insideQuotes = !insideQuotes; // toggle state
-            }
+        char lastChar = 0;
+        int unEscapedQuoteCount = 0;
 
-            boolean atLastChar = (current == userInput.length() - 1);
+        try {
+            for (int current = 0; current < cleanedInput.length(); current++) {
+                final char currentChar = cleanedInput.charAt(current);
+                if (currentChar == QUOTE_CHAR && lastChar != ESCAPE_CHAR) {
+                    unEscapedQuoteCount++;
+                    if (!insideQuotes) {
+                        // start of quotes
+                        wasInsideQuotes = true;
+                    }
+                    insideQuotes = !insideQuotes; // toggle state
+                }
 
-            if (atLastChar) {
-                if (wasInsideQuotes) {
-                    // Strip the quotes off
-                    tokens.add(userInput.substring(start +1, userInput.length() -1));
-                } else {
-                    tokens.add(userInput.substring(start));
+                boolean atLastChar = (current == cleanedInput.length() - 1);
+
+                if (atLastChar) {
+                    if (wasInsideQuotes) {
+                        // Strip the quotes off
+                        tokens.add(deEscape(cleanedInput.substring(start + 1, cleanedInput.length() - 1)));
+                    } else {
+                        tokens.add(deEscape(cleanedInput.substring(start)));
+                    }
+                } else if (currentChar == SPLIT_CHAR && !insideQuotes) {
+                    // allow for multiple spaces
+                    if (currentChar != lastChar) {
+                        if (wasInsideQuotes) {
+                            // Strip the quotes off
+                            tokens.add(deEscape(cleanedInput.substring(start + 1, current - 1)));
+                            // clear the state
+                            wasInsideQuotes = false;
+                        } else {
+                            tokens.add(deEscape(cleanedInput.substring(start, current)));
+                        }
+                    }
+                    start = current + 1;
                 }
-            } else if (userInput.charAt(current) == ' ' && !insideQuotes) {
-                if (wasInsideQuotes) {
-                    // Strip the quotes off
-                    tokens.add(userInput.substring(start + 1, current - 1));
-                    // clear the state
-                    wasInsideQuotes = false;
-                } else {
-                    tokens.add(userInput.substring(start, current));
-                }
-                start = current + 1;
+                lastChar = currentChar;
             }
+            if (unEscapedQuoteCount % 2 != 0) {
+                LOGGER.trace("Odd number of quotes ({}) in input [{}], can't parse",
+                        unEscapedQuoteCount, userInput);
+                tokens.clear();
+            }
+        } catch (Exception e) {
+            LOGGER.trace("Unable to parse [{}] due to: {}", userInput, e.getMessage(), e);
+            // Don't want to throw as it may be unfinished user input.
         }
         LOGGER.trace("tokens {}", tokens);
         return tokens;
+    }
+
+    private static String deEscape(final String input) {
+        return input.replace(ESCAPED_QUOTE_STR, QUOTE_STR);
     }
 
     private static <T> Predicate<T> buildCompoundPredicate(final List<MatchToken> matchTokens,
@@ -191,7 +234,10 @@ public class QuickFilterPredicateFactory {
                     }
                 }
             } else {
-                LOGGER.trace("Input is blank");
+                LOGGER.trace("Input is blank, treating as always true");
+                if (compoundPredicate == null) {
+                    compoundPredicate = andPredicates(compoundPredicate, obj -> true);
+                }
             }
         }
         if (badMatchStringFound || compoundPredicate == null) {
@@ -227,7 +273,7 @@ public class QuickFilterPredicateFactory {
     }
 
 
-    private static class MatchToken {
+    public static class MatchToken {
         private final String qualifier;
         private final String matchInput;
 
@@ -236,13 +282,35 @@ public class QuickFilterPredicateFactory {
             this.matchInput = Objects.requireNonNull(input);
         }
 
+        public static MatchToken of(final String matchInput) {
+            return new MatchToken(null, matchInput);
+        }
+
+        public static MatchToken of(final String qualifier, final String matchInput) {
+            return new MatchToken(qualifier, matchInput);
+        }
+
         private boolean isQualified() {
             return qualifier != null;
         }
 
         @Override
         public String toString() {
-            return "[" + qualifier + ":" + matchInput + "]";
+            return "[" + (qualifier != null ? qualifier : "") + "]:[" + matchInput + "]";
+        }
+
+        @Override
+        public boolean equals(final Object o) {
+            if (this == o) return true;
+            if (o == null || getClass() != o.getClass()) return false;
+            final MatchToken that = (MatchToken) o;
+            return Objects.equals(qualifier, that.qualifier) &&
+                    matchInput.equals(that.matchInput);
+        }
+
+        @Override
+        public int hashCode() {
+            return Objects.hash(qualifier, matchInput);
         }
     }
 }
