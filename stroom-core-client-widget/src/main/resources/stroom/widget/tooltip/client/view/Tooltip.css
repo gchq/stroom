@@ -16,7 +16,7 @@
 
 .tooltip {
 	background-color: #ffd;
-	padding: 0px 2px;
+	padding: 1px 3px;
 	-moz-user-focus: initial;
 	-moz-user-input: initial;
 	-webkit-user-focus: initial;

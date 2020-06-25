@@ -6,6 +6,30 @@ and this project adheres to [Semantic Versioning](http://semver.org/).
 
 ## [Unreleased]
 
+* Issue **#1683** : Add `!` NOT operator to fuzzy match filtering.
+
+* Add field searching to Activity quick filter.
+
+* Add field searching to entity selection popups.
+
+* Change entity selection popups to clear quick filter on show.
+
+* Add column sorting and field searching to Properties screen.
+
+* Add field searching to Explorer Tree quick filter.
+
+* Add field searching to Properties quick filter.
+
+* Add field searching to Sercer Tasks quick filter.
+
+* Add field searching to dependencies quick filter.
+
+* Improve info tooltip layouts.
+
+* Issue **#1248** : Add quick filter to dependencies screen.
+
+* Issue **#1650** : Use consitent blue colour.
+
 * Issue **#1671** :Fix XSLT function `hex-to-oct`.
 
 * Add `readTimeout` property to `HTTPAppender`.

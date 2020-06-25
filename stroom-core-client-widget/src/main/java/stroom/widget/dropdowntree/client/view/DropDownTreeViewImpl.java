@@ -16,7 +16,11 @@
 
 package stroom.widget.dropdowntree.client.view;
 
+import stroom.widget.dropdowntree.client.presenter.DropDownTreePresenter.DropDownTreeView;
+import stroom.widget.dropdowntree.client.presenter.DropDownTreeUiHandlers;
+
 import com.google.gwt.event.logical.shared.ValueChangeEvent;
+import com.google.gwt.safehtml.shared.SafeHtml;
 import com.google.gwt.uibinder.client.UiBinder;
 import com.google.gwt.uibinder.client.UiField;
 import com.google.gwt.uibinder.client.UiHandler;
@@ -25,8 +29,8 @@ import com.google.gwt.user.client.ui.SimplePanel;
 import com.google.gwt.user.client.ui.Widget;
 import com.google.inject.Inject;
 import com.gwtplatform.mvp.client.ViewWithUiHandlers;
-import stroom.widget.dropdowntree.client.presenter.DropDownTreePresenter.DropDownTreeView;
-import stroom.widget.dropdowntree.client.presenter.DropDownTreeUiHandlers;
+
+import java.util.function.Supplier;
 
 public class DropDownTreeViewImpl extends ViewWithUiHandlers<DropDownTreeUiHandlers> implements DropDownTreeView {
     private final Widget widget;
@@ -51,11 +55,21 @@ public class DropDownTreeViewImpl extends ViewWithUiHandlers<DropDownTreeUiHandl
         treeContainer.setWidget(widget);
     }
 
+    @Override
+    public void setQuickFilterTooltipSupplier(final Supplier<SafeHtml> tooltipSupplier) {
+        nameFilter.registerPopupTextProvider(tooltipSupplier);
+    }
+
     @UiHandler("nameFilter")
     public void onNameFilterChange(final ValueChangeEvent<String> event) {
         if (getUiHandlers() != null) {
             getUiHandlers().nameFilterChanged(nameFilter.getText());
         }
+    }
+
+    @Override
+    public void clearFilter() {
+        nameFilter.clear();
     }
 
     public interface Binder extends UiBinder<Widget, DropDownTreeViewImpl> {

@@ -19,6 +19,7 @@ package stroom.util.shared;
 import java.util.Comparator;
 import java.util.Map;
 import java.util.Objects;
+import java.util.function.Function;
 
 public final class CompareUtil {
     private CompareUtil() {
@@ -119,5 +120,58 @@ public final class CompareUtil {
             comparator = comparator.thenComparing(fieldComparator);
         }
         return comparator;
+    }
+
+    /**
+     * Creates a null safe case insensitive comparator that can work with stuff like
+     * getDocRef().getName()
+     */
+    public static <T1, T2> Comparator<T1> getNullSafeCaseInsensitiveComparator(
+            final Function<T1, T2> extractor1,
+            final Function<T2, String> extractor2) {
+        return getNullSafeComparator(extractor1, extractor2, String.CASE_INSENSITIVE_ORDER);
+    }
+
+    public static <T1, T2, T3 extends Comparable<T3>> Comparator<T1> getNullSafeComparator(
+            final Function<T1, T2> extractor1,
+            final Function<T2, T3> extractor2,
+            final Comparator<T3> comparator) {
+
+        // Sort with nulls first but also handle null intermediate values
+        return Comparator.comparing(
+                extractor1,
+                Comparator.nullsFirst(
+                        Comparator.comparing(
+                                extractor2,
+                                Comparator.nullsFirst(comparator))));
+    }
+
+    /**
+     * Creates a null safe case insensitive comparator that can work with stuff like
+     * getDocRef().getName().substring(1,3)
+     */
+    public static <T1, T2, T3> Comparator<T1> getNullSafeCaseInsensitiveComparator(
+            final Function<T1, T2> extractor1,
+            final Function<T2, T3> extractor2,
+            final Function<T3, String> extractor3) {
+        return getNullSafeComparator(extractor1, extractor2, extractor3, String.CASE_INSENSITIVE_ORDER);
+    }
+
+    public static <T1, T2, T3, T4 extends Comparable<T4>> Comparator<T1> getNullSafeComparator(
+            final Function<T1, T2> extractor1,
+            final Function<T2, T3> extractor2,
+            final Function<T3, T4> extractor3,
+            final Comparator<T4> comparator) {
+
+        // Sort with nulls first but also handle deps with null intermediate values
+        return Comparator.comparing(
+                extractor1,
+                Comparator.nullsFirst(
+                        Comparator.comparing(
+                                extractor2,
+                                Comparator.nullsFirst(
+                                        Comparator.comparing(
+                                                extractor3,
+                                                Comparator.nullsFirst(comparator))))));
     }
 }

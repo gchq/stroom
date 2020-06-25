@@ -20,12 +20,14 @@ import stroom.core.client.gin.PluginModule;
 import stroom.importexport.client.DependenciesPlugin;
 import stroom.importexport.client.ExportConfigPlugin;
 import stroom.importexport.client.ImportConfigPlugin;
+import stroom.importexport.client.presenter.DependenciesTabPresenter;
 import stroom.importexport.client.presenter.ExportConfigPresenter;
 import stroom.importexport.client.presenter.ExportConfigPresenter.ExportConfigView;
 import stroom.importexport.client.presenter.ImportConfigConfirmPresenter;
 import stroom.importexport.client.presenter.ImportConfigConfirmPresenter.ImportConfigConfirmView;
 import stroom.importexport.client.presenter.ImportConfigPresenter;
 import stroom.importexport.client.presenter.ImportConfigPresenter.ImportConfigView;
+import stroom.importexport.client.view.DependenciesTabViewImpl;
 import stroom.importexport.client.view.ExportConfigViewImpl;
 import stroom.importexport.client.view.ImportConfigConfirmViewImpl;
 import stroom.importexport.client.view.ImportConfigViewImpl;
@@ -36,17 +38,30 @@ public class ImportExportConfigModule extends PluginModule {
         // Import.
         bindPlugin(ImportConfigPlugin.class);
         bind(ImportConfigPresenter.ImportProxy.class).asEagerSingleton();
-        bindPresenterWidget(ImportConfigPresenter.class, ImportConfigView.class, ImportConfigViewImpl.class);
+        bindPresenterWidget(
+                ImportConfigPresenter.class,
+                ImportConfigView.class,
+                ImportConfigViewImpl.class);
         bind(ImportConfigConfirmPresenter.ImportConfirmProxy.class).asEagerSingleton();
-        bindPresenterWidget(ImportConfigConfirmPresenter.class, ImportConfigConfirmView.class,
+        bindPresenterWidget(
+                ImportConfigConfirmPresenter.class,
+                ImportConfigConfirmView.class,
                 ImportConfigConfirmViewImpl.class);
 
         // Export.
         bindPlugin(ExportConfigPlugin.class);
         bind(ExportConfigPresenter.ExportProxy.class).asEagerSingleton();
-        bindPresenterWidget(ExportConfigPresenter.class, ExportConfigView.class, ExportConfigViewImpl.class);
+        bindPresenterWidget(
+                ExportConfigPresenter.class,
+                ExportConfigView.class,
+                ExportConfigViewImpl.class);
 
         // Dependencies.
         bindPlugin(DependenciesPlugin.class);
+
+        bindPresenterWidget(
+                DependenciesTabPresenter.class,
+                DependenciesTabPresenter.DependenciesTabView.class,
+                DependenciesTabViewImpl.class);
     }
 }

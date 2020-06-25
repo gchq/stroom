@@ -16,16 +16,6 @@
 
 package stroom.task.client.presenter;
 
-import com.google.gwt.core.client.GWT;
-import com.google.gwt.user.client.Timer;
-import com.google.inject.Inject;
-import com.google.inject.Provider;
-import com.google.web.bindery.event.shared.EventBus;
-import com.gwtplatform.mvp.client.Presenter;
-import com.gwtplatform.mvp.client.View;
-import com.gwtplatform.mvp.client.annotations.ProxyCodeSplit;
-import com.gwtplatform.mvp.client.annotations.ProxyEvent;
-import com.gwtplatform.mvp.client.proxy.Proxy;
 import stroom.alert.client.event.ConfirmEvent;
 import stroom.dispatch.client.Rest;
 import stroom.dispatch.client.RestFactory;
@@ -48,6 +38,17 @@ import stroom.widget.popup.client.event.ShowPopupEvent;
 import stroom.widget.popup.client.presenter.DefaultPopupUiHandlers;
 import stroom.widget.popup.client.presenter.PopupUiHandlers;
 import stroom.widget.popup.client.presenter.PopupView.PopupType;
+
+import com.google.gwt.core.client.GWT;
+import com.google.gwt.user.client.Timer;
+import com.google.inject.Inject;
+import com.google.inject.Provider;
+import com.google.web.bindery.event.shared.EventBus;
+import com.gwtplatform.mvp.client.Presenter;
+import com.gwtplatform.mvp.client.View;
+import com.gwtplatform.mvp.client.annotations.ProxyCodeSplit;
+import com.gwtplatform.mvp.client.annotations.ProxyEvent;
+import com.gwtplatform.mvp.client.proxy.Proxy;
 
 import java.util.HashMap;
 import java.util.HashSet;
@@ -73,6 +74,8 @@ public class UserTaskManagerPresenter
     private final Map<String, List<TaskProgress>> responseMap = new HashMap<>();
 
     private final FindTaskProgressCriteria criteria;
+
+    private final TaskManagerTreeAction treeAction = new TaskManagerTreeAction();
 
     @Inject
     public UserTaskManagerPresenter(final EventBus eventBus,
@@ -152,7 +155,7 @@ public class UserTaskManagerPresenter
 
     private void update() {
         // Combine data from all nodes.
-        final ResultPage<TaskProgress> list = TaskProgressUtil.combine(criteria, responseMap.values());
+        final ResultPage<TaskProgress> list = TaskProgressUtil.combine(criteria, responseMap.values(), treeAction);
 
         final HashSet<TaskId> idSet = new HashSet<>();
         for (final TaskProgress value : list.getValues()) {

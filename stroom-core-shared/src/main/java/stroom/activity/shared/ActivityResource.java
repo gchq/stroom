@@ -19,6 +19,7 @@ package stroom.activity.shared;
 import stroom.util.shared.ResourcePaths;
 import stroom.util.shared.RestResource;
 import stroom.util.shared.ResultPage;
+import stroom.util.shared.filter.FilterFieldDefinition;
 
 import io.swagger.annotations.Api;
 import io.swagger.annotations.ApiOperation;
@@ -42,11 +43,19 @@ import java.util.List;
 @Produces(MediaType.APPLICATION_JSON)
 @Consumes(MediaType.APPLICATION_JSON)
 public interface ActivityResource extends RestResource, DirectRestService {
+
     @GET
     @ApiOperation(
             value = "Lists activities",
+            response = ResultPage.class)
+    ResultPage<Activity> list(@QueryParam("filter") String filter);
+
+    @GET
+    @Path("/fields")
+    @ApiOperation(
+            value = "Lists activity field definitions",
             response = List.class)
-    ResultPage<Activity> list(@QueryParam("name") String name);
+    List<FilterFieldDefinition> listFieldDefinitions();
 
     @POST
     @ApiOperation(

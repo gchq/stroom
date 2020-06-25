@@ -1,11 +1,7 @@
 package stroom.config.global.impl;
 
-import org.assertj.core.api.Assertions;
-import org.junit.jupiter.api.Test;
-import org.mockito.Mockito;
-import org.mockito.junit.jupiter.MockitoSettings;
-import org.mockito.quality.Strictness;
 import stroom.config.global.shared.ConfigProperty;
+import stroom.config.global.shared.GlobalConfigCriteria;
 import stroom.config.global.shared.GlobalConfigResource;
 import stroom.config.global.shared.ListConfigResponse;
 import stroom.config.global.shared.OverrideValue;
@@ -14,9 +10,17 @@ import stroom.node.api.NodeService;
 import stroom.test.common.util.test.AbstractMultiNodeResourceTest;
 import stroom.ui.config.shared.UiConfig;
 import stroom.ui.config.shared.UiPreferences;
-import stroom.util.shared.PageRequest;
+import stroom.util.filter.FilterFieldMapper;
+import stroom.util.filter.FilterFieldMappers;
+import stroom.util.filter.QuickFilterPredicateFactory;
 import stroom.util.shared.PropertyPath;
 import stroom.util.shared.ResourcePaths;
+
+import org.assertj.core.api.Assertions;
+import org.junit.jupiter.api.Test;
+import org.mockito.Mockito;
+import org.mockito.junit.jupiter.MockitoSettings;
+import org.mockito.quality.Strictness;
 
 import java.util.HashMap;
 import java.util.List;
@@ -67,16 +71,13 @@ class TestGlobalConfigResourceImpl extends AbstractMultiNodeResourceTest<GlobalC
 
         final ListConfigResponse expectedResponse = FULL_PROP_LIST;
 
-        doGetTest(
-                subPath,
+        doPostTest(subPath,
+                new GlobalConfigCriteria(),
                 ListConfigResponse.class,
-                expectedResponse,
-                webTarget -> webTarget.queryParam("partialName", (String) null),
-                webTarget -> webTarget.queryParam("offset", 0),
-                webTarget -> webTarget.queryParam("size", 100));
+                expectedResponse);
 
         verify(globalConfigServiceMap.get("node1"), times(1))
-                .list(Mockito.any(), eq(new PageRequest(0L, 100)));
+                .list(eq(new GlobalConfigCriteria()));
     }
 
     @Test
@@ -92,16 +93,12 @@ class TestGlobalConfigResourceImpl extends AbstractMultiNodeResourceTest<GlobalC
                 configProperty
         ));
 
-        doGetTest(
-                subPath,
-                ListConfigResponse.class,
-                expectedResponse,
-                webTarget -> webTarget.queryParam("partialName", "some"),
-                webTarget -> webTarget.queryParam("offset", 0),
-                webTarget -> webTarget.queryParam("size", 100));
+        final GlobalConfigCriteria criteria = new GlobalConfigCriteria("some");
+
+        doPostTest(subPath, criteria, ListConfigResponse.class, expectedResponse);
 
         verify(globalConfigServiceMap.get("node1"), times(1))
-                .list(Mockito.any(), eq(new PageRequest(0L, 100)));
+                .list(eq(criteria));
     }
 
     @Test
@@ -114,16 +111,14 @@ class TestGlobalConfigResourceImpl extends AbstractMultiNodeResourceTest<GlobalC
 
         final ListConfigResponse expectedResponse = FULL_PROP_LIST;
 
-        doGetTest(
+        doPostTest(
                 subPath,
+                new GlobalConfigCriteria(),
                 ListConfigResponse.class,
-                expectedResponse,
-                webTarget -> webTarget.queryParam("partialName", (String) null),
-                webTarget -> webTarget.queryParam("offset", 0),
-                webTarget -> webTarget.queryParam("size", 100));
+                expectedResponse);
 
         verify(globalConfigServiceMap.get("node1"), times(1))
-                .list(Mockito.any(), eq(new PageRequest(0L, 100)));
+                .list(new GlobalConfigCriteria());
 
         Assertions.assertThat(getRequestEvents("node1"))
                 .hasSize(1);
@@ -143,16 +138,14 @@ class TestGlobalConfigResourceImpl extends AbstractMultiNodeResourceTest<GlobalC
 
         final ListConfigResponse expectedResponse = FULL_PROP_LIST;
 
-        doGetTest(
+        doPostTest(
                 subPath,
+                new GlobalConfigCriteria(),
                 ListConfigResponse.class,
-                expectedResponse,
-                webTarget -> webTarget.queryParam("partialName", (String) null),
-                webTarget -> webTarget.queryParam("offset", 0),
-                webTarget -> webTarget.queryParam("size", 100));
+                expectedResponse);
 
         verify(globalConfigServiceMap.get("node2"), times(1))
-                .list(Mockito.any(), eq(new PageRequest(0L, 100)));
+                .list(eq(new GlobalConfigCriteria()));
 
         Assertions.assertThat(getRequestEvents("node1"))
                 .hasSize(1);
@@ -301,16 +294,28 @@ class TestGlobalConfigResourceImpl extends AbstractMultiNodeResourceTest<GlobalC
         // Set up the GlobalConfigResource mock
         final GlobalConfigService globalConfigService = createNamedMock(GlobalConfigService.class, node);
 
-        when(globalConfigService.list(Mockito.any(), Mockito.any()))
-                .thenAnswer(invocation -> {
-                    Predicate<ConfigProperty> predicate = invocation.getArgument(0);
+        final FilterFieldMappers<ConfigProperty> fieldMappers = FilterFieldMappers.of(
+                FilterFieldMapper.of(GlobalConfigResource.FIELD_DEF_NAME, ConfigProperty::getNameAsString)
+        );
 
-                    return new ListConfigResponse(FULL_PROP_LIST.stream()
-                            .peek(configProperty -> {
-                                configProperty.setYamlOverrideValue(node.getNodeName());
-                            })
-                            .filter(predicate)
-                            .collect(Collectors.toList()));
+        when(globalConfigService.list(Mockito.any(GlobalConfigCriteria.class)))
+                .thenAnswer(invocation -> {
+                    System.out.println("list called");
+                    try {
+                        GlobalConfigCriteria criteria = invocation.getArgument(0);
+                        Predicate<ConfigProperty> predicate = QuickFilterPredicateFactory.createFuzzyMatchPredicate(
+                                criteria.getQuickFilterInput(), fieldMappers);
+
+                        return new ListConfigResponse(FULL_PROP_LIST.stream()
+                                .peek(configProperty -> {
+                                    configProperty.setYamlOverrideValue(node.getNodeName());
+                                })
+                                .filter(predicate)
+                                .collect(Collectors.toList()));
+                    } catch (Exception e) {
+                        e.printStackTrace(System.err);
+                        throw e;
+                    }
                 });
 
         when(globalConfigService.fetch(Mockito.any()))
@@ -344,7 +349,8 @@ class TestGlobalConfigResourceImpl extends AbstractMultiNodeResourceTest<GlobalC
                                 .anyMatch(TestNode::isEnabled));
 
         when(nodeService.getBaseEndpointUrl(Mockito.anyString()))
-                .thenAnswer(invocation -> baseEndPointUrls.get((String) invocation.getArgument(0)));
+                .thenAnswer(invocation ->
+                        baseEndPointUrls.get((String) invocation.getArgument(0)));
 
         // Set up the NodeInfo mock
 

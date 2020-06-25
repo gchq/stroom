@@ -16,16 +16,26 @@
 
 package stroom.explorer.shared;
 
+import stroom.util.shared.filter.FilterFieldDefinition;
+
 import com.fasterxml.jackson.annotation.JsonCreator;
 import com.fasterxml.jackson.annotation.JsonInclude;
 import com.fasterxml.jackson.annotation.JsonInclude.Include;
 import com.fasterxml.jackson.annotation.JsonProperty;
 
+import java.util.Arrays;
+import java.util.List;
 import java.util.Objects;
 import java.util.Set;
 
 @JsonInclude(Include.NON_NULL)
 public class ExplorerTreeFilter {
+
+    public static FilterFieldDefinition FIELD_DEF_NAME = FilterFieldDefinition.defaultField("Name");
+    public static FilterFieldDefinition FIELD_DEF_TYPE = FilterFieldDefinition.qualifiedField("Type");
+    public static List<FilterFieldDefinition> FIELD_DEFINITIONS = Arrays.asList(
+            FIELD_DEF_NAME, FIELD_DEF_TYPE);
+
     @JsonProperty
     private final Set<String> includedTypes;
     @JsonProperty

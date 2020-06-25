@@ -16,13 +16,15 @@
 
 package stroom.widget.tooltip.client.view;
 
+import stroom.widget.tooltip.client.presenter.TooltipPresenter.TooltipView;
+
 import com.google.gwt.core.client.GWT;
 import com.google.gwt.resources.client.ClientBundle;
 import com.google.gwt.resources.client.CssResource;
+import com.google.gwt.safehtml.shared.SafeHtml;
 import com.google.gwt.user.client.ui.HTML;
 import com.google.gwt.user.client.ui.Widget;
 import com.gwtplatform.mvp.client.ViewImpl;
-import stroom.widget.tooltip.client.presenter.TooltipPresenter.TooltipView;
 
 public class TooltipViewImpl extends ViewImpl implements TooltipView {
     private static Resources resources;
@@ -44,7 +46,7 @@ public class TooltipViewImpl extends ViewImpl implements TooltipView {
     }
 
     @Override
-    public void setHTML(final String html) {
+    public void setHTML(final SafeHtml html) {
         content.setHTML(html);
     }
 
