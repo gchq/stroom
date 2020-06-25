@@ -6,6 +6,8 @@ and this project adheres to [Semantic Versioning](http://semver.org/).
 
 ## [Unreleased]
 
+* Issue **#1670** : Stop _parse-uri_ XSLT function returning -1 for missing port numbers.
+
 * Issue **#1673** : Increase limit for age spinner in retention rules to 9999.
 
 * Issue **#1683** : Add `!` NOT operator to fuzzy match filtering.
