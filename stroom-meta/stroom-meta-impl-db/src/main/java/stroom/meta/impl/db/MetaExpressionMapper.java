@@ -6,46 +6,88 @@ import stroom.db.util.CommonExpressionMapper;
 import stroom.db.util.CommonExpressionMapper.TermHandler;
 import stroom.dictionary.api.WordListProvider;
 import stroom.meta.impl.MetaKeyDao;
+import stroom.meta.impl.db.jooq.tables.MetaVal;
 import stroom.query.api.v2.ExpressionItem;
 import stroom.query.api.v2.ExpressionTerm;
 
+import com.google.gwt.codegen.server.LoggingCodeGenContext;
 import org.jooq.Condition;
 import org.jooq.Field;
+import org.jooq.SelectOnConditionStep;
+import org.jooq.impl.DSL;
 
+import java.util.ArrayList;
+import java.util.Collection;
+import java.util.HashSet;
 import java.util.List;
+import java.util.Optional;
 import java.util.function.Function;
 
 class MetaExpressionMapper implements Function<ExpressionItem, Condition> {
     private final CommonExpressionMapper expressionMapper;
     private final MetaKeyDao metaKeyDao;
-    private final Field<Integer> keyField;
-    private final Field<Long> valueField;
+    private final String keyFieldName;
+    private final String valueFieldName;
+    private final String metaIdFieldName;
     private final WordListProvider wordListProvider;
     private final CollectionService collectionService;
+    private final Collection<Integer> mappedIds = new HashSet<>();
 
     MetaExpressionMapper(final MetaKeyDao metaKeyDao,
-                         final Field<Integer> keyField,
-                         final Field<Long> valueField,
+                         final String keyFieldName,
+                         final String valueFieldName,
+                         final String metaIdFieldName,
+                         final int maxValKeyId,
                          final WordListProvider wordListProvider,
                          final CollectionService collectionService) {
         expressionMapper = new CommonExpressionMapper();
         this.metaKeyDao = metaKeyDao;
-        this.keyField = keyField;
-        this.valueField = valueField;
+        this.keyFieldName = keyFieldName;
+        this.metaIdFieldName = metaIdFieldName;
+        this.valueFieldName = valueFieldName;
         this.wordListProvider = wordListProvider;
         this.collectionService = collectionService;
     }
 
     public void map(final AbstractField dataSourceField) {
-        final TermHandler<Long> termHandler = new TermHandler<>(dataSourceField, valueField, value -> List.of(Long.valueOf(value)), wordListProvider, collectionService);
+        Optional<Integer> idOptional = metaKeyDao.getIdForName(dataSourceField.getName());
 
-        final MetaTermHandler handler = new MetaTermHandler(
-                metaKeyDao,
-                keyField,
-                dataSourceField.getName(),
-                termHandler);
+        if (idOptional.isPresent()) {
+            int id = idOptional.get();
+            Field valueField = createValueField(id);
 
-        expressionMapper.addHandler(dataSourceField, handler);
+            final TermHandler<Long> termHandler = new TermHandler<>(dataSourceField, valueField, value -> List.of(Long.valueOf(value)), wordListProvider, collectionService);
+
+            final MetaTermHandler handler = new MetaTermHandler(
+                        createKeyField(id),
+                        id,
+                        termHandler);
+            expressionMapper.addHandler(dataSourceField, handler);
+            mappedIds.add(id);
+        }
+    }
+
+    public SelectOnConditionStep<?> getJoins(SelectOnConditionStep<?> query, final Field metaIdField){
+        for (Integer id : mappedIds){
+            query = query.leftOuterJoin(MetaVal.META_VAL.as("v" + id)).on(metaIdField.eq(createMetaIdField(id))); //Join on meta_val
+        }
+        return query;
+    }
+
+    private String createTableName(final int valKeyId){
+        return "`v" + valKeyId + "`";
+    }
+
+    private Field createValueField(final int valKeyId){
+        return DSL.field(createTableName(valKeyId) + ".`" + valueFieldName + "`");
+    }
+
+    private Field createKeyField(final int valKeyId){
+        return DSL.field(createTableName(valKeyId) + ".`" + keyFieldName + "`");
+    }
+
+    private Field createMetaIdField(final int valKeyId){
+        return DSL.field(createTableName(valKeyId) + ".`" + metaIdFieldName + "`");
     }
 
     @Override
@@ -54,23 +96,19 @@ class MetaExpressionMapper implements Function<ExpressionItem, Condition> {
     }
 
     static class MetaTermHandler implements Function<ExpressionTerm, Condition> {
-        private final MetaKeyDao metaKeyDao;
         private final Field<Integer> keyField;
-        private final String key;
+        private final Integer id;
         private final TermHandler<Long> valueHandler;
 
-        MetaTermHandler(final MetaKeyDao metaKeyDao, final Field<Integer> keyField, final String key, final TermHandler<Long> valueHandler) {
-            this.metaKeyDao = metaKeyDao;
+        MetaTermHandler(final Field<Integer> keyField, final Integer id, final TermHandler<Long> valueHandler) {
             this.keyField = keyField;
             this.valueHandler = valueHandler;
-            this.key = key;
+            this.id = id;
         }
 
         @Override
         public Condition apply(final ExpressionTerm term) {
-            return metaKeyDao.getIdForName(key)
-                    .map(id -> keyField.equal(id).and(valueHandler.apply(term)))
-                    .orElse(null);
+             return keyField.equal(id).and(valueHandler.apply(term));
         }
     }
 }
