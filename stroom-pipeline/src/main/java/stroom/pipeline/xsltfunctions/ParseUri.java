@@ -46,7 +46,9 @@ class ParseUri extends StroomExtensionFunctionCall {
                 dataElement("fragment", uri.getFragment());
                 dataElement("host", uri.getHost());
                 dataElement("path", uri.getPath());
-                dataElement("port", String.valueOf(uri.getPort()));
+                dataElement("port", uri.getPort() != -1
+                        ? String.valueOf(uri.getPort())
+                        : null);
                 dataElement("query", uri.getQuery());
                 dataElement("scheme", uri.getScheme());
                 dataElement("schemeSpecificPart", uri.getSchemeSpecificPart());

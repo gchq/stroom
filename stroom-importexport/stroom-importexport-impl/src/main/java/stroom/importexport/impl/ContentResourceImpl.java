@@ -115,6 +115,7 @@ class ContentResourceImpl implements ContentResource {
 
     @Override
     public ResultPage<Dependency> fetchDependencies(final DependencyCriteria criteria) {
-        return securityContext.secureResult(() -> dependencyService.getDependencies(criteria));
+        return securityContext.secureResult(() ->
+                dependencyService.getDependencies(criteria));
     }
 }

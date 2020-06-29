@@ -25,7 +25,7 @@ public interface ExplorerTreeUiHandlers extends UiHandlers {
 
     void deleteItem();
 
-    void changeNameFilter(String name);
+    void changeQuickFilter(String name);
 
     void showTypeFilter(MouseDownEvent event);
 }

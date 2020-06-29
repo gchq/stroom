@@ -17,6 +17,13 @@
 
 package stroom.receive.rules.client.view;
 
+import stroom.cell.tickbox.shared.TickBoxState;
+import stroom.data.retention.shared.TimeUnit;
+import stroom.item.client.ItemListBox;
+import stroom.receive.rules.client.presenter.DataRetentionRulePresenter.DataRetentionRuleView;
+import stroom.widget.tickbox.client.view.TickBox;
+import stroom.widget.valuespinner.client.ValueSpinner;
+
 import com.google.gwt.event.logical.shared.ValueChangeEvent;
 import com.google.gwt.uibinder.client.UiBinder;
 import com.google.gwt.uibinder.client.UiField;
@@ -28,12 +35,6 @@ import com.google.gwt.user.client.ui.Widget;
 import com.google.inject.Inject;
 import com.gwtplatform.mvp.client.View;
 import com.gwtplatform.mvp.client.ViewImpl;
-import stroom.cell.tickbox.shared.TickBoxState;
-import stroom.data.retention.shared.TimeUnit;
-import stroom.item.client.ItemListBox;
-import stroom.receive.rules.client.presenter.DataRetentionRulePresenter.DataRetentionRuleView;
-import stroom.widget.tickbox.client.view.TickBox;
-import stroom.widget.valuespinner.client.ValueSpinner;
 
 public class DataRetentionRuleViewImpl extends ViewImpl implements DataRetentionRuleView {
     private final Widget widget;
@@ -56,7 +57,7 @@ public class DataRetentionRuleViewImpl extends ViewImpl implements DataRetention
         widget = binder.createAndBindUi(this);
 
         age.setMin(1);
-        age.setMax(100);
+        age.setMax(9999);
         age.setValue(1);
 
         timeUnit.addItem(TimeUnit.MINUTES);

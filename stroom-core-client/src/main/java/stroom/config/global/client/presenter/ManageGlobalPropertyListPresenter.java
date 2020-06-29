@@ -16,40 +16,37 @@
 
 package stroom.config.global.client.presenter;
 
-import com.google.gwt.cell.client.Cell;
-import com.google.gwt.cell.client.SafeHtmlCell;
-import com.google.gwt.cell.client.TextCell;
-import com.google.gwt.core.client.GWT;
-import com.google.gwt.safehtml.shared.SafeHtml;
-import com.google.gwt.safehtml.shared.SafeHtmlUtils;
-import com.google.gwt.user.cellview.client.Column;
-import com.google.gwt.user.cellview.client.ColumnSortEvent;
-import com.google.gwt.user.client.Timer;
-import com.google.gwt.user.client.ui.HasVerticalAlignment;
-import com.google.gwt.view.client.Range;
-import com.google.inject.Inject;
-import com.google.web.bindery.event.shared.EventBus;
-import com.gwtplatform.mvp.client.MyPresenterWidget;
 import stroom.alert.client.event.AlertEvent;
 import stroom.config.global.shared.ConfigProperty;
+import stroom.config.global.shared.GlobalConfigCriteria;
 import stroom.config.global.shared.GlobalConfigResource;
 import stroom.config.global.shared.ListConfigResponse;
 import stroom.data.grid.client.DataGridView;
 import stroom.data.grid.client.DataGridViewImpl;
-import stroom.data.grid.client.EndColumn;
 import stroom.dispatch.client.Rest;
 import stroom.dispatch.client.RestFactory;
 import stroom.node.client.NodeCache;
 import stroom.svg.client.SvgPreset;
-import stroom.util.client.SafeHtmlUtil;
+import stroom.util.client.DataGridUtil;
+import stroom.util.shared.PageRequest;
 import stroom.widget.button.client.ButtonView;
 
+import com.google.gwt.core.client.GWT;
+import com.google.gwt.safehtml.shared.SafeHtmlUtils;
+import com.google.gwt.user.cellview.client.ColumnSortEvent;
+import com.google.gwt.user.client.Timer;
+import com.google.gwt.view.client.Range;
+import com.google.inject.Inject;
+import com.google.web.bindery.event.shared.EventBus;
+import com.gwtplatform.mvp.client.MyPresenterWidget;
+
+import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
+import java.util.Objects;
 import java.util.Set;
-import java.util.function.Function;
 import java.util.stream.Collectors;
 
 public class ManageGlobalPropertyListPresenter
@@ -69,7 +66,6 @@ public class ManageGlobalPropertyListPresenter
     private final ListDataProvider<ConfigPropertyRow> dataProvider;
     private final RestFactory restFactory;
     private final NodeCache nodeCache;
-    private String partialName;
 
     // propName => (node => effectiveValue)
     private final Map<String, Map<String, String>> nodeToClusterEffectiveValuesMap = new HashMap<>();
@@ -86,12 +82,20 @@ public class ManageGlobalPropertyListPresenter
             refreshPropertiesForAllNodes();
         }
     };
+
     private final Timer updateChildMapsTimer = new Timer() {
         @Override
         public void run() {
             updatePropertyKeyedMaps();
         }
     };
+
+    private final NameFilterTimer nameFilterTimer = new NameFilterTimer();
+
+    private final GlobalConfigCriteria criteria = new GlobalConfigCriteria(
+            new PageRequest(0L, Integer.MAX_VALUE),
+            new ArrayList<>(),
+            null);
 
     @Inject
     public ManageGlobalPropertyListPresenter(final EventBus eventBus,
@@ -109,6 +113,8 @@ public class ManageGlobalPropertyListPresenter
     }
 
     private void refreshTable(final Range range) {
+
+        criteria.setPageRequest(new PageRequest((long) range.getStart(), range.getLength()));
 
         final Rest<ListConfigResponse> rest = restFactory.create();
         rest
@@ -134,7 +140,7 @@ public class ManageGlobalPropertyListPresenter
                     // TODO
                 })
                 .call(GLOBAL_CONFIG_RESOURCE_RESOURCE)
-                .list(partialName, range.getStart(), range.getLength());
+                .list(criteria);
     }
 
     private void refreshPropertiesForAllNodes() {
@@ -146,6 +152,10 @@ public class ManageGlobalPropertyListPresenter
 
     private void refreshPropertiesForNode(final String nodeName) {
         final Rest<ListConfigResponse> listPropertiesRest = restFactory.create();
+
+        criteria.setPageRequest(new PageRequest(
+                (long) getView().getVisibleRange().getStart(),
+                getView().getVisibleRange().getLength()));
 
         listPropertiesRest
                 .onSuccess(listConfigResponse -> {
@@ -168,11 +178,7 @@ public class ManageGlobalPropertyListPresenter
                         throwable -> nodeToClusterEffectiveValuesMap.keySet().forEach(
                                 propName -> updateNodeKeyedMaps(nodeName, propName, ERROR_VALUE, ERROR_VALUE)))
                 .call(GLOBAL_CONFIG_RESOURCE_RESOURCE)
-                .listByNode(
-                        nodeName,
-                        partialName,
-                        getView().getDataDisplay().getVisibleRange().getStart(),
-                        getView().getDataDisplay().getVisibleRange().getLength());
+                .listByNode(nodeName, criteria);
     }
 
     private void updateNodeKeyedMaps(final String nodeName,
@@ -251,71 +257,97 @@ public class ManageGlobalPropertyListPresenter
 
     private void initColumns() {
         // Name.
-        addColumn(buildSafeHtmlColumn(configPropertyRow ->
-                        SafeHtmlUtils.fromString(configPropertyRow.getNameAsString())),
-                "Name",
+        getView().addResizableColumn(
+                DataGridUtil.htmlColumnBuilder(ConfigPropertyRow::getNameAsString, SafeHtmlUtils::fromString)
+                        .topAligned()
+                        .withSorting(GlobalConfigResource.FIELD_DEF_NAME.getDisplayName())
+                        .withStyleName(getView().getResources().dataGridStyle().dataGridCellVerticalTop())
+                        .build(),
+                GlobalConfigResource.FIELD_DEF_NAME.getDisplayName(),
                 450);
-        addColumn(buildSafeHtmlColumn(configPropertyRow ->
-                        SafeHtmlUtil.getColouredText(
-                                configPropertyRow.getEffectiveValueAsString(),
-                                ERROR_CSS_COLOUR,
-                                MULTIPLE_VALUES_MSG.equals(configPropertyRow.getEffectiveValueAsString()))),
-                "Effective Value",
+
+        // Effective Value
+        getView().addResizableColumn(
+                DataGridUtil.htmlColumnBuilder(
+                        DataGridUtil.highlightedCellExtractor(
+                                ConfigPropertyRow::getEffectiveValueAsString,
+                                (ConfigPropertyRow row) -> MULTIPLE_VALUES_MSG.equals(row.getEffectiveValueAsString()),
+                                ERROR_CSS_COLOUR))
+                        .withSorting(GlobalConfigResource.FIELD_DEF_EFFECTIVE_VALUE.getDisplayName())
+                        .withStyleName(getView().getResources().dataGridStyle().dataGridCellVerticalTop())
+                        .build(),
+                GlobalConfigResource.FIELD_DEF_EFFECTIVE_VALUE.getDisplayName(),
                 300);
-        addColumn(buildSafeHtmlColumn(configPropertyRow ->
-                        SafeHtmlUtil.getColouredText(
-                                configPropertyRow.getSourceAsString(),
-                                ERROR_CSS_COLOUR,
-                                MULTIPLE_SOURCES_MSG.equals(configPropertyRow.getSourceAsString()))),
-                "Source",
+
+        // Source
+        getView().addResizableColumn(
+                DataGridUtil.htmlColumnBuilder(
+                        DataGridUtil.highlightedCellExtractor(
+                                ConfigPropertyRow::getSourceAsString,
+                                (ConfigPropertyRow row) -> MULTIPLE_SOURCES_MSG.equals(row.getSourceAsString()),
+                                ERROR_CSS_COLOUR))
+                        .withSorting(GlobalConfigResource.FIELD_DEF_SOURCE.getDisplayName())
+                        .withStyleName(getView().getResources().dataGridStyle().dataGridCellVerticalTop())
+                        .build(),
+                GlobalConfigResource.FIELD_DEF_SOURCE.getDisplayName(),
                 75);
 
-        addColumn(buildDescriptionColumn(), "Description", 750);
-        getView().addEndColumn(new EndColumn<>());
+        // Description
+        getView().addResizableColumn(
+                DataGridUtil.htmlColumnBuilder(ConfigPropertyRow::getDescription, SafeHtmlUtils::fromString)
+                        .topAligned()
+                        .withStyleName(getView().getResources().dataGridStyle().dataGridCellWrapText())
+                        .withStyleName(getView().getResources().dataGridStyle().dataGridCellVerticalTop())
+                        .build(),
+                GlobalConfigResource.FIELD_DEF_DESCRIPTION.getDisplayName(),
+                750);
+
+        DataGridUtil.addEndColumn(getView());
+        DataGridUtil.addColumnSortHandler(getView(), criteria, this::refresh);
     }
 
-    private Column<ConfigPropertyRow, String> buildDescriptionColumn() {
-        return new Column<ConfigPropertyRow, String>(new TextCell()) {
-            @Override
-            public String getValue(final ConfigPropertyRow row) {
-                if (row == null) {
-                    return null;
-                }
-                return row.getDescription();
-            }
-
-            @Override
-            public String getCellStyleNames(Cell.Context context, ConfigPropertyRow object) {
-                return super.getCellStyleNames(context, object) + " "
-                        + getView().getResources().dataGridStyle().dataGridCellWrapText() + " "
-                        + getView().getResources().dataGridStyle().dataGridCellVerticalTop();
-            }
-        };
-    }
-
-    private Column<ConfigPropertyRow, SafeHtml> buildSafeHtmlColumn(final Function<ConfigPropertyRow, SafeHtml> valueFunc) {
-        // TODO use OrderByColumn
-        return new Column<ConfigPropertyRow, SafeHtml>(new SafeHtmlCell()) {
-            @Override
-            public SafeHtml getValue(final ConfigPropertyRow row) {
-                if (row == null) {
-                    return null;
-                }
-                return valueFunc.apply(row);
-            }
-
-            @Override
-            public String getCellStyleNames(Cell.Context context, ConfigPropertyRow object) {
-                return super.getCellStyleNames(context, object) + " "
-                        + getView().getResources().dataGridStyle().dataGridCellVerticalTop();
-            }
-        };
-    }
-
-    private void addColumn(Column<ConfigPropertyRow, ?> column, String name, int width) {
-        column.setVerticalAlignment(HasVerticalAlignment.ALIGN_TOP);
-        getView().addResizableColumn(column, name, width);
-    }
+//    private Column<ConfigPropertyRow, String> buildDescriptionColumn() {
+//        return new Column<ConfigPropertyRow, String>(new TextCell()) {
+//            @Override
+//            public String getValue(final ConfigPropertyRow row) {
+//                if (row == null) {
+//                    return null;
+//                }
+//                return row.getDescription();
+//            }
+//
+//            @Override
+//            public String getCellStyleNames(Cell.Context context, ConfigPropertyRow object) {
+//                return super.getCellStyleNames(context, object) + " "
+//                        + getView().getResources().dataGridStyle().dataGridCellWrapText() + " "
+//                        + getView().getResources().dataGridStyle().dataGridCellVerticalTop();
+//            }
+//        };
+//    }
+//
+//    private Column<ConfigPropertyRow, SafeHtml> buildSafeHtmlColumn(final Function<ConfigPropertyRow, SafeHtml> valueFunc) {
+//        // TODO use OrderByColumn
+//        return new Column<ConfigPropertyRow, SafeHtml>(new SafeHtmlCell()) {
+//            @Override
+//            public SafeHtml getValue(final ConfigPropertyRow row) {
+//                if (row == null) {
+//                    return null;
+//                }
+//                return valueFunc.apply(row);
+//            }
+//
+//            @Override
+//            public String getCellStyleNames(Cell.Context context, ConfigPropertyRow object) {
+//                return super.getCellStyleNames(context, object) + " "
+//                        + getView().getResources().dataGridStyle().dataGridCellVerticalTop();
+//            }
+//        };
+//    }
+//
+//    private void addColumn(Column<ConfigPropertyRow, ?> column, String name, int width) {
+//        column.setVerticalAlignment(HasVerticalAlignment.ALIGN_TOP);
+//        getView().addResizableColumn(column, name, width);
+//    }
 
     public ButtonView addButton(final SvgPreset preset) {
         return getView().addButton(preset);
@@ -336,15 +368,13 @@ public class ManageGlobalPropertyListPresenter
     }
 
     void setPartialName(final String partialName) {
-        this.partialName = partialName;
-        // Need to reset the range else the name criteria can push us outside the page we are on
-        Range range = getView().getVisibleRange();
-        getView().getDataDisplay().setVisibleRange(0, range.getLength());
-        refresh();
+        nameFilterTimer.setName(partialName);
+        nameFilterTimer.cancel();
+        nameFilterTimer.schedule(400);
     }
 
-    void clearPartialName() {
-        this.partialName = null;
+    void clearFilter() {
+        this.criteria.setQuickFilterInput(null);
         refresh();
     }
 
@@ -402,6 +432,33 @@ public class ManageGlobalPropertyListPresenter
 
         public String getDescription() {
             return configProperty.getDescription();
+        }
+    }
+
+    private class NameFilterTimer extends Timer {
+        private String name;
+
+        @Override
+        public void run() {
+            String filter = name;
+            if (filter != null) {
+                filter = filter.trim();
+                if (filter.length() == 0) {
+                    filter = null;
+                }
+            }
+
+            if (!Objects.equals(filter, criteria.getQuickFilterInput())) {
+                criteria.setQuickFilterInput(filter);
+                // Need to reset the range else the name criteria can push us outside the page we are on
+                Range range = getView().getVisibleRange();
+                getView().getDataDisplay().setVisibleRange(0, range.getLength());
+                refresh();
+            }
+        }
+
+        public void setName(final String name) {
+            this.name = name;
         }
     }
 }

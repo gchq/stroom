@@ -16,14 +16,15 @@
 
 package stroom.explorer.client.presenter;
 
-import com.google.inject.Inject;
-import com.google.web.bindery.event.shared.EventBus;
-import com.google.web.bindery.event.shared.HandlerRegistration;
 import stroom.data.client.event.DataSelectionEvent.DataSelectionHandler;
 import stroom.data.client.event.HasDataSelectionHandlers;
 import stroom.docref.DocRef;
 import stroom.explorer.shared.ExplorerNode;
 import stroom.widget.dropdowntree.client.presenter.DropDownPresenter;
+
+import com.google.inject.Inject;
+import com.google.web.bindery.event.shared.EventBus;
+import com.google.web.bindery.event.shared.HandlerRegistration;
 
 public class EntityDropDownPresenter extends DropDownPresenter implements HasDataSelectionHandlers<ExplorerNode> {
     private final ExplorerDropDownTreePresenter explorerDropDownTreePresenter;
