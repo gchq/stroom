@@ -1156,8 +1156,8 @@ class MetaDaoImpl implements MetaDao {
                         DSL.countDistinct(parent.ID),
                         DSL.countDistinct(parent.FEED_ID),
                         DSL.countDistinct(parent.TYPE_ID),
-                        DSL.countDistinct(meta.PROCESSOR_ID), //todo Another bug - duplicated and unnecessary anyway
                         DSL.countDistinct(meta.PROCESSOR_ID),
+                        DSL.countDistinct(metaProcessor.PIPELINE_UUID),
                         DSL.countDistinct(parent.STATUS),
                         DSL.min(parent.CREATE_TIME),
                         DSL.max(parent.CREATE_TIME)
