@@ -54,6 +54,7 @@ import org.jooq.Condition;
 import org.jooq.Cursor;
 import org.jooq.DSLContext;
 import org.jooq.Field;
+import org.jooq.Operator;
 import org.jooq.OrderField;
 import org.jooq.Record;
 import org.jooq.Record1;
@@ -71,6 +72,7 @@ import java.util.Arrays;
 import java.util.Collection;
 import java.util.Collections;
 import java.util.HashMap;
+import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Objects;
@@ -82,10 +84,12 @@ import java.util.function.Consumer;
 import java.util.function.Function;
 import java.util.function.Predicate;
 import java.util.stream.Collectors;
+import java.util.stream.IntStream;
 import java.util.stream.Stream;
 
-import static org.jooq.impl.DSL.max;
-import static org.jooq.impl.DSL.selectDistinct;
+//import static org.jooq.impl.DSL.max;
+//import static org.jooq.impl.DSL.select;
+//import static org.jooq.impl.DSL.selectDistinct;
 import static stroom.meta.impl.db.jooq.tables.Meta.META;
 import static stroom.meta.impl.db.jooq.tables.MetaFeed.META_FEED;
 import static stroom.meta.impl.db.jooq.tables.MetaProcessor.META_PROCESSOR;
@@ -260,7 +264,7 @@ class MetaDaoImpl implements MetaDao {
     @Override
     public Long getMaxId() {
         return JooqUtil.contextResult(metaDbConnProvider, context -> context
-                .select(max(meta.ID))
+                .select(DSL.max(meta.ID))
                 .from(meta)
                 .fetchOptional()
                 .map(Record1::value1)
@@ -403,13 +407,32 @@ class MetaDaoImpl implements MetaDao {
                 conditions = Stream.of(criteriaCondition, meta.STATUS.ne(newStatusId))
                         .collect(Collectors.toList());
             }
-//todo Needs treatment
-            updateCount = JooqUtil.contextResult(metaDbConnProvider, context -> context
-                    .update(meta)
-                    .set(meta.STATUS, newStatusId)
-                    .set(meta.STATUS_TIME, statusTime)
-                    .where(conditions)
-                    .execute());
+
+            final Set<Integer> usedValKeys = identifyExtendedAttributesFields(criteria.getExpression(), new HashSet<>());
+
+            if (usedValKeys.isEmpty()) {
+                updateCount = JooqUtil.contextResult(metaDbConnProvider, context ->
+                        context
+                                .update(meta)
+                                .set(meta.STATUS, newStatusId)
+                                .set(meta.STATUS_TIME, statusTime)
+                                .where(conditions)
+                                .execute());
+            } else {
+                Condition extendedAttrCond = meta.ID.in(metaExpressionMapper.addJoins(
+                        DSL.select(meta.ID).from(meta),
+                        meta.ID,
+                        usedValKeys)
+                                .where(conditions).getResult()
+                        );
+                updateCount = JooqUtil.contextResult(metaDbConnProvider, context ->
+                        context
+                                .update(meta)
+                                .set(meta.STATUS, newStatusId)
+                                .set(meta.STATUS_TIME, statusTime)
+                                .where(extendedAttrCond)
+                                .execute());
+            }
         }
         return updateCount;
     }
@@ -759,18 +782,24 @@ class MetaDaoImpl implements MetaDao {
 
     @Override
     public int count(final FindMetaCriteria criteria) {
-        //todo needs treatment
-        final Collection<Condition> conditions = createCondition(criteria);
 
-        return JooqUtil.contextResult(metaDbConnProvider, context -> context
-                .selectCount()
-                .from(meta)
-                .join(metaFeed).on(meta.FEED_ID.eq(metaFeed.ID))
-                .join(metaType).on(meta.TYPE_ID.eq(metaType.ID))
-                .leftOuterJoin(metaProcessor).on(meta.PROCESSOR_ID.eq(metaProcessor.ID))
+        final Collection<Condition> conditions = createCondition(criteria);
+        final Set<Integer> usedValKeys = identifyExtendedAttributesFields(criteria.getExpression(), new HashSet<>());
+
+        final Object result = JooqUtil.contextResult(metaDbConnProvider, context ->
+                metaExpressionMapper.addJoins(
+                    context
+                        .selectCount()
+                        .from(meta)
+                        .join(metaFeed).on(meta.FEED_ID.eq(metaFeed.ID))
+                        .join(metaType).on(meta.TYPE_ID.eq(metaType.ID))
+                        .leftOuterJoin(metaProcessor).on(meta.PROCESSOR_ID.eq(metaProcessor.ID)),
+                    meta.ID,
+                    usedValKeys)
                 .where(conditions)
-                .fetchOne()
-                .value1());
+                .fetchOne().get(0));
+
+        return ((Long) result).intValue();
     }
 
     @Override
@@ -923,9 +952,9 @@ class MetaDaoImpl implements MetaDao {
         int offset = JooqUtil.getOffset(pageRequest);
         int numberOfRows = JooqUtil.getLimit(pageRequest, true, FIND_RECORD_LIMIT);
 
-        boolean extendedAttributesQuery = checkForExtendedAttributesFields (criteria.getExpression());
+        final Set<Integer> extendedAttributeIds = identifyExtendedAttributesFields (criteria.getExpression(), new HashSet<>());
 
-        final List<Meta> list = find(conditions, orderFields, offset, numberOfRows, extendedAttributesQuery);
+        final List<Meta> list = find(conditions, orderFields, offset, numberOfRows, extendedAttributeIds);
         if (list.size() >= FIND_RECORD_LIMIT) {
             LOGGER.warn("Hit max record limit of '" + FIND_RECORD_LIMIT + "' when finding meta records");
         }
@@ -936,26 +965,28 @@ class MetaDaoImpl implements MetaDao {
     private final Collection<String> extendedFieldNames =
             MetaFields.getExtendedFields().stream().map(f -> f.getName()).collect(Collectors.toList());
 
-    private boolean checkForExtendedAttributesFields (final ExpressionOperator expr){
+    private Set<Integer> identifyExtendedAttributesFields (final ExpressionOperator expr, final Set<Integer> identified){
+
+        if (expr == null || expr.getChildren() == null)
+            return identified;
         for (ExpressionItem child : expr.getChildren()){
             if (child instanceof ExpressionTerm) {
                 ExpressionTerm term = (ExpressionTerm) child;
 
                 if (extendedFieldNames.contains(term.getField())) {
-                    return true;
+                    Optional<Integer> key = metaKeyDao.getIdForName(term.getField());
+                    key.ifPresent(i -> identified.add(i));
                 }
             } else if (child instanceof ExpressionOperator){
-                if (checkForExtendedAttributesFields((ExpressionOperator) child)){
-                    return true;
-                }
+               identified.addAll(identifyExtendedAttributesFields((ExpressionOperator)child, identified));
             } else {
                 //Don't know what this is!
                 LOGGER.warn("Unknown ExpressionItem type " + child.getClass().getName() + " unable to optimise meta query");
                 //Allow search to succeed without optimisation
-                return true;
+                return IntStream.range(metaKeyDao.getMinId(),metaKeyDao.getMaxId()).boxed().collect(Collectors.toSet());
             }
         }
-        return  false;
+        return identified;
     }
 
 
@@ -963,59 +994,33 @@ class MetaDaoImpl implements MetaDao {
                             final Collection<OrderField<?>> orderFields,
                             final int offset,
                             final int numberOfRows,
-                            final boolean includeValTable) {
-        if (includeValTable) {
-            //N.B. The following statement is very similar to the one in the else block of this conditional (see below)
-            //If you change this query, you should consider whether you need to change it too.
-            return JooqUtil.contextResult(metaDbConnProvider, context ->
-                                metaExpressionMapper.getJoins(context
-                                        .selectDistinct(  //Distinct needed for duplicates caused by joining on meta_val (when some vals are misssing)
-                                                meta.ID,
-                                                metaFeed.NAME,
-                                                metaType.NAME,
-                                                metaProcessor.PROCESSOR_UUID,
-                                                metaProcessor.PIPELINE_UUID,
-                                                meta.PARENT_ID,
-                                                meta.STATUS,
-                                                meta.STATUS_TIME,
-                                                meta.CREATE_TIME,
-                                                meta.EFFECTIVE_TIME
-                                        )
-                                        .from(meta)
-                                        .join(metaFeed).on(meta.FEED_ID.eq(metaFeed.ID))
-                                        .join(metaType).on(meta.TYPE_ID.eq(metaType.ID))
-                                        .leftOuterJoin(metaProcessor).on(meta.PROCESSOR_ID.eq(metaProcessor.ID)),meta.ID)
-                                .where(conditions)
-                                .orderBy(orderFields)
-                                .limit(offset, numberOfRows)
-                                .fetch()
-                                .map(RECORD_TO_META_MAPPER::apply));
-        } else {
-            //N.B. The following statement is very similar to the one in the if block of this conditional (see above)
-            //If you change this query, you should consider whether you need to change it too.
-                return JooqUtil.contextResult(metaDbConnProvider, context -> context
-                        .select(
-                                meta.ID,
-                                metaFeed.NAME,
-                                metaType.NAME,
-                                metaProcessor.PROCESSOR_UUID,
-                                metaProcessor.PIPELINE_UUID,
-                                meta.PARENT_ID,
-                                meta.STATUS,
-                                meta.STATUS_TIME,
-                                meta.CREATE_TIME,
-                                meta.EFFECTIVE_TIME
-                        )
-                        .from(meta)
-                        .join(metaFeed).on(meta.FEED_ID.eq(metaFeed.ID))
-                        .join(metaType).on(meta.TYPE_ID.eq(metaType.ID))
-                        .leftOuterJoin(metaProcessor).on(meta.PROCESSOR_ID.eq(metaProcessor.ID))
-                        .where(conditions)
-                        .orderBy(orderFields)
-                        .limit(offset, numberOfRows)
-                        .fetch()
-                        .map(RECORD_TO_META_MAPPER::apply));
-        }
+                            final Set<Integer> usedValKeys) {
+
+        return JooqUtil.contextResult(metaDbConnProvider, context ->
+                    metaExpressionMapper.addJoins(context
+                                .select(
+                                        meta.ID,
+                                        metaFeed.NAME,
+                                        metaType.NAME,
+                                        metaProcessor.PROCESSOR_UUID,
+                                        metaProcessor.PIPELINE_UUID,
+                                        meta.PARENT_ID,
+                                        meta.STATUS,
+                                        meta.STATUS_TIME,
+                                        meta.CREATE_TIME,
+                                        meta.EFFECTIVE_TIME
+                                )
+                                .from(meta)
+                                .join(metaFeed).on(meta.FEED_ID.eq(metaFeed.ID))
+                                .join(metaType).on(meta.TYPE_ID.eq(metaType.ID))
+                                .leftOuterJoin(metaProcessor).on(meta.PROCESSOR_ID.eq(metaProcessor.ID)),
+                            meta.ID,
+                            usedValKeys)
+                    .where(conditions)
+                    .orderBy(orderFields)
+                    .limit(offset, numberOfRows)
+                    .fetch()
+                    .map(RECORD_TO_META_MAPPER::apply));
     }
 
 
@@ -1028,7 +1033,9 @@ class MetaDaoImpl implements MetaDao {
         int offset = JooqUtil.getOffset(pageRequest);
         int numberOfRows = JooqUtil.getLimit(pageRequest, true, FIND_RECORD_LIMIT);
 
-        final List<Meta> list = findReprocess(conditions, orderFields, offset, numberOfRows);
+        final Set<Integer> extendedAttributeIds = identifyExtendedAttributesFields (criteria.getExpression(), new HashSet<>());
+
+        final List<Meta> list = findReprocess(conditions, orderFields, offset, numberOfRows, extendedAttributeIds);
         if (list.size() >= FIND_RECORD_LIMIT) {
             LOGGER.warn("Hit max record limit of '" + FIND_RECORD_LIMIT + "' when finding meta records");
         }
@@ -1039,9 +1046,11 @@ class MetaDaoImpl implements MetaDao {
     private List<Meta> findReprocess(final Collection<Condition> conditions,
                                      final Collection<OrderField<?>> orderFields,
                                      final int offset,
-                                     final int numberOfRows) {
-        //todo Needs treatment
-        return JooqUtil.contextResult(metaDbConnProvider, context -> context
+                                     final int numberOfRows,
+                                     final Set<Integer> usedValKeys) {
+        return JooqUtil.contextResult(metaDbConnProvider, context ->
+                metaExpressionMapper.addJoins(
+                (context
                 .select(
                         parent.ID,
                         parentFeed.NAME,
@@ -1061,7 +1070,9 @@ class MetaDaoImpl implements MetaDao {
                 .leftOuterJoin(parent).on(meta.PARENT_ID.eq(parent.ID))
                 .leftOuterJoin(parentFeed).on(parent.FEED_ID.eq(parentFeed.ID))
                 .leftOuterJoin(parentType).on(parent.TYPE_ID.eq(parentType.ID))
-                .leftOuterJoin(parentProcessor).on(parent.PROCESSOR_ID.eq(parentProcessor.ID))
+                .leftOuterJoin(parentProcessor).on(parent.PROCESSOR_ID.eq(parentProcessor.ID))),
+                        meta.ID,
+                        usedValKeys)
                 .where(conditions)
                 .and(parent.ID.isNotNull())
                 .groupBy(parent.ID)
@@ -1075,20 +1086,22 @@ class MetaDaoImpl implements MetaDao {
     public SelectionSummary getSelectionSummary(final FindMetaCriteria criteria) {
         final PageRequest pageRequest = criteria.getPageRequest();
         final Collection<Condition> conditions = createCondition(criteria);
+        final Set<Integer> usedValKeys = identifyExtendedAttributesFields(criteria.getExpression(), new HashSet<>());
 
         int offset = JooqUtil.getOffset(pageRequest);
         int numberOfRows = JooqUtil.getLimit(pageRequest, false);
 
-        SelectionSummary summary = getSelectionSummary(conditions, offset, numberOfRows);
+        SelectionSummary summary = getSelectionSummary(conditions, offset, numberOfRows, usedValKeys);
         return  summary;
     }
 
     private SelectionSummary getSelectionSummary(final Collection<Condition> conditions,
                                                  final int offset,
-                                                 final int numberOfRows) {
-
-        //todo Needs treatment
-        return JooqUtil.contextResult(metaDbConnProvider, context -> context
+                                                 final int numberOfRows,
+                                                 final Set <Integer> usedValKeys) {
+        return JooqUtil.contextResult(metaDbConnProvider, context ->
+                metaExpressionMapper.addJoins(
+                context
                 .select(
                         DSL.count(),
                         DSL.countDistinct(metaFeed.NAME),
@@ -1102,18 +1115,20 @@ class MetaDaoImpl implements MetaDao {
                 .from(meta)
                 .join(metaFeed).on(meta.FEED_ID.eq(metaFeed.ID))
                 .join(metaType).on(meta.TYPE_ID.eq(metaType.ID))
-                .leftOuterJoin(metaProcessor).on(meta.PROCESSOR_ID.eq(metaProcessor.ID))
+                .leftOuterJoin(metaProcessor).on(meta.PROCESSOR_ID.eq(metaProcessor.ID)),
+                meta.ID,
+                usedValKeys)
                 .where(conditions)
                 .limit(offset, numberOfRows)
                 .fetchOptional()
                 .map(record -> new SelectionSummary(
-                        record.value1(),
-                        record.value2(),
-                        record.value3(),
-                        record.value4(),
-                        record.value5(),
-                        record.value6(),
-                        new Range<>(record.value7(), record.value8())))
+                        (Integer) record.get(0),
+                        (Integer) record.get(1),
+                        (Integer) record.get(2),
+                        (Integer) record.get(3),
+                        (Integer) record.get(4),
+                        (Integer) record.get(5),
+                        new Range<>((Long)record.get(6), (Long)record.get(7))))
                 .orElse(null));
     }
 
@@ -1122,17 +1137,21 @@ class MetaDaoImpl implements MetaDao {
         final PageRequest pageRequest = criteria.getPageRequest();
         final Collection<Condition> conditions = createCondition(criteria);
 
+        final Set<Integer> usedValKeys = identifyExtendedAttributesFields(criteria.getExpression(), new HashSet<>());
+
         int offset = JooqUtil.getOffset(pageRequest);
         int numberOfRows = JooqUtil.getLimit(pageRequest, false);
 
-        return getReprocessSelectionSummary(conditions, offset, numberOfRows);
+        return getReprocessSelectionSummary(conditions, offset, numberOfRows, usedValKeys);
     }
 
     private SelectionSummary getReprocessSelectionSummary(final Collection<Condition> conditions,
                                                           final int offset,
-                                                          final int numberOfRows) {
-        //todo Needs treatment
-        return JooqUtil.contextResult(metaDbConnProvider, context -> context
+                                                          final int numberOfRows,
+                                                          final Set<Integer> usedValKeys) {
+        return JooqUtil.contextResult(metaDbConnProvider, context ->
+                metaExpressionMapper.addJoins(
+                context
                 .select(
                         DSL.countDistinct(parent.ID),
                         DSL.countDistinct(parent.FEED_ID),
@@ -1147,20 +1166,22 @@ class MetaDaoImpl implements MetaDao {
                 .join(metaFeed).on(meta.FEED_ID.eq(metaFeed.ID))
                 .join(metaType).on(meta.TYPE_ID.eq(metaType.ID))
                 .leftOuterJoin(metaProcessor).on(meta.PROCESSOR_ID.eq(metaProcessor.ID))
-                .leftOuterJoin(parent).on(meta.PARENT_ID.eq(parent.ID))
+                .leftOuterJoin(parent).on(meta.PARENT_ID.eq(parent.ID)),
+                        meta.ID,
+                        usedValKeys)
                 .where(conditions)
                 .and(parent.ID.isNotNull())
                 .and(parent.STATUS.eq(MetaStatusId.getPrimitiveValue(Status.UNLOCKED)))
                 .limit(offset, numberOfRows)
                 .fetchOptional()
                 .map(record -> new SelectionSummary(
-                        record.value1(),
-                        record.value2(),
-                        record.value3(),
-                        record.value4(),
-                        record.value5(),
-                        record.value6(),
-                        new Range<>(record.value7(), record.value8())))
+                        (Integer)record.get(0),
+                        (Integer)record.get(1),
+                        (Integer)record.get(2),
+                        (Integer)record.get(3),
+                        (Integer)record.get(4),
+                        (Integer)record.get(5),
+                        new Range<>((Long)record.get(6), (Long)record.get(7))))
                 .orElse(null));
     }
 
@@ -1178,7 +1199,7 @@ class MetaDaoImpl implements MetaDao {
         final Condition condition = expressionMapper.apply(criteria.getExpression());
 
         return JooqUtil.contextResult(metaDbConnProvider, context -> context
-                .select(max(meta.ID))
+                .select(DSL.max(meta.ID))
                 .from(meta)
                 .where(condition)
                 .fetchOptional()

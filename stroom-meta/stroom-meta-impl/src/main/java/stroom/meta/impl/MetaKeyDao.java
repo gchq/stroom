@@ -25,4 +25,8 @@ public interface MetaKeyDao extends Clearable {
     Optional<String> getNameForId(final int keyId);
 
     Optional<Integer> getIdForName(final String name);
+
+    Integer getMinId ();
+
+    Integer getMaxId ();
 }

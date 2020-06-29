@@ -13,6 +13,7 @@ import stroom.query.api.v2.ExpressionTerm;
 import com.google.gwt.codegen.server.LoggingCodeGenContext;
 import org.jooq.Condition;
 import org.jooq.Field;
+import org.jooq.SelectJoinStep;
 import org.jooq.SelectOnConditionStep;
 import org.jooq.impl.DSL;
 
@@ -21,6 +22,7 @@ import java.util.Collection;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Optional;
+import java.util.Set;
 import java.util.function.Function;
 
 class MetaExpressionMapper implements Function<ExpressionItem, Condition> {
@@ -31,7 +33,6 @@ class MetaExpressionMapper implements Function<ExpressionItem, Condition> {
     private final String metaIdFieldName;
     private final WordListProvider wordListProvider;
     private final CollectionService collectionService;
-    private final Collection<Integer> mappedIds = new HashSet<>();
 
     MetaExpressionMapper(final MetaKeyDao metaKeyDao,
                          final String keyFieldName,
@@ -63,12 +64,12 @@ class MetaExpressionMapper implements Function<ExpressionItem, Condition> {
                         id,
                         termHandler);
             expressionMapper.addHandler(dataSourceField, handler);
-            mappedIds.add(id);
         }
     }
 
-    public SelectOnConditionStep<?> getJoins(SelectOnConditionStep<?> query, final Field metaIdField){
-        for (Integer id : mappedIds){
+    public SelectJoinStep<?> addJoins(SelectJoinStep<?> query, final Field metaIdField,
+                                             final Set<Integer> usedValKeys){
+        for (Integer id : usedValKeys){
             query = query.leftOuterJoin(MetaVal.META_VAL.as("v" + id)).on(metaIdField.eq(createMetaIdField(id))); //Join on meta_val
         }
         return query;
