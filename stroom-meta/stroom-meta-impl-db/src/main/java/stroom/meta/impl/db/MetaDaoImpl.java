@@ -799,7 +799,7 @@ class MetaDaoImpl implements MetaDao {
                 .where(conditions)
                 .fetchOne().get(0));
 
-        return ((Long) result).intValue();
+        return (Integer) result;
     }
 
     @Override
