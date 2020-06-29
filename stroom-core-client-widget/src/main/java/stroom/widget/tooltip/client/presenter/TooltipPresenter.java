@@ -16,6 +16,7 @@
 
 package stroom.widget.tooltip.client.presenter;
 
+import com.google.gwt.safehtml.shared.SafeHtml;
 import com.google.inject.Inject;
 import com.google.web.bindery.event.shared.EventBus;
 import com.gwtplatform.mvp.client.MyPresenterWidget;
@@ -31,13 +32,13 @@ public class TooltipPresenter extends MyPresenterWidget<TooltipPresenter.Tooltip
         getView().setText(text);
     }
 
-    public void setHTML(final String html) {
+    public void setHTML(final SafeHtml html) {
         getView().setHTML(html);
     }
 
     public interface TooltipView extends View {
         void setText(String text);
 
-        void setHTML(String html);
+        void setHTML(SafeHtml html);
     }
 }

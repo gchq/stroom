@@ -230,12 +230,20 @@ public class AsciiTable {
             return String.join("\n", headerAndValueStrings);
         }
 
-        private List<String> createValueRowStrings(final List<Map<Column<T_ROW, ?>, String>> rawRows, final Map<Column<T_ROW, ?>, Integer> maxColumnWidths) {
+        private List<String> createValueRowStrings(
+                final List<Map<Column<T_ROW, ?>, String>> rawRows,
+                final Map<Column<T_ROW, ?>, Integer> maxColumnWidths) {
+
             return rawRows.stream()
                             .limit(rowLimit)
                             .map(rowMap -> columns.stream()
-                                    .map(column -> formatCell(column, rowMap.get(column), maxColumnWidths.get(column)))
-                                    .collect(Collectors.joining(String.valueOf(TABLE_COLUMN_DELIMITER))))
+                                    .map(column ->
+                                            formatCell(
+                                                    column,
+                                                    rowMap.get(column),
+                                                    maxColumnWidths.get(column)))
+                                    .collect(Collectors.joining(
+                                            String.valueOf(TABLE_COLUMN_DELIMITER))))
                             .collect(Collectors.toList());
         }
 
@@ -251,7 +259,8 @@ public class AsciiTable {
 
         private String createHeaderRowString(final Map<Column<T_ROW, ?>, Integer> maxColumnWidths) {
             return columns.stream()
-                            .map(column -> formatCell(column, column.getName(), maxColumnWidths.get(column)))
+                            .map(column ->
+                                    formatCell(column, column.getName(), maxColumnWidths.get(column)))
                             .collect(Collectors.joining(String.valueOf(TABLE_COLUMN_DELIMITER)));
         }
     }
@@ -285,16 +294,20 @@ public class AsciiTable {
             this.alignment = alignment;
         }
 
-        public static <T_ROW, T_COL> Column<T_ROW, T_COL> of(final String name,
-                                                             final Function<T_ROW, T_COL> columnExtractor) {
+        public static <T_ROW, T_COL> Column<T_ROW, T_COL> of(
+                final String name,
+                final Function<T_ROW, T_COL> columnExtractor) {
+
             return new ColumnBuilder<>(
                     Objects.requireNonNull(name),
                     Objects.requireNonNull(columnExtractor))
                     .build();
         }
 
-        public static <T_ROW, T_COL> ColumnBuilder<T_ROW, T_COL> builder(final String name,
-                                                                         final Function<T_ROW, T_COL> columnExtractor) {
+        public static <T_ROW, T_COL> ColumnBuilder<T_ROW, T_COL> builder(
+                final String name,
+                final Function<T_ROW, T_COL> columnExtractor) {
+
             return new ColumnBuilder<>(
                     Objects.requireNonNull(name),
                     Objects.requireNonNull(columnExtractor));
@@ -369,12 +382,16 @@ public class AsciiTable {
                 this.columnExtractor = columnExtractor;
             }
 
-            public ColumnBuilder<T_ROW, T_COL> withFormat(final Function<T_COL, String> columnFormatter) {
+            public ColumnBuilder<T_ROW, T_COL> withFormat(
+                    final Function<T_COL, String> columnFormatter) {
+
                 this.columnFormatter = columnFormatter;
                 return this;
             }
 
-            public ColumnBuilder<T_ROW, T_COL> withNullValueSupplier(final Supplier<String> nullValueSupplier) {
+            public ColumnBuilder<T_ROW, T_COL> withNullValueSupplier(
+                    final Supplier<String> nullValueSupplier) {
+
                 this.nullValueSupplier = nullValueSupplier;
                 return this;
             }

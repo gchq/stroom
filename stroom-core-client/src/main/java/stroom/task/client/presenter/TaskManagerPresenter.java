@@ -16,16 +16,17 @@
 
 package stroom.task.client.presenter;
 
+import stroom.content.client.presenter.ContentTabPresenter;
+import stroom.data.table.client.Refreshable;
+import stroom.svg.client.Icon;
+import stroom.svg.client.SvgPresets;
+import stroom.task.client.presenter.TaskManagerPresenter.TaskManagerView;
+
 import com.google.gwt.user.client.ui.Widget;
 import com.google.inject.Inject;
 import com.google.web.bindery.event.shared.EventBus;
 import com.gwtplatform.mvp.client.HasUiHandlers;
 import com.gwtplatform.mvp.client.View;
-import stroom.content.client.presenter.ContentTabPresenter;
-import stroom.data.table.client.Refreshable;
-import stroom.task.client.presenter.TaskManagerPresenter.TaskManagerView;
-import stroom.svg.client.Icon;
-import stroom.svg.client.SvgPresets;
 
 public class TaskManagerPresenter extends ContentTabPresenter<TaskManagerView>
         implements Refreshable, TaskManagerUiHandlers {

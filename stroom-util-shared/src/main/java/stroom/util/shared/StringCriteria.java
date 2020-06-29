@@ -122,7 +122,7 @@ public class StringCriteria implements Serializable, HasIsConstrained, Clearable
         if (MatchStyle.WildEnd == matchStyle) {
             return test.startsWith(compareString);
         }
-        if (MatchStyle.WildStandAndEnd == matchStyle) {
+        if (MatchStyle.WildStartAndEnd == matchStyle) {
             return test.contains(compareString);
         }
         return test.equals(compareString);
@@ -145,7 +145,7 @@ public class StringCriteria implements Serializable, HasIsConstrained, Clearable
                     return "%" + rtnString.replace('*', '%');
                 case WildEnd:
                     return rtnString.replace('*', '%') + "%";
-                case WildStandAndEnd:
+                case WildStartAndEnd:
                     return "%" + rtnString.replace('*', '%') + "%";
                 default:
                     return rtnString;
@@ -211,6 +211,6 @@ public class StringCriteria implements Serializable, HasIsConstrained, Clearable
     }
 
     public enum MatchStyle {
-        Wild, WildStart, WildEnd, WildStandAndEnd
+        Wild, WildStart, WildEnd, WildStartAndEnd
     }
 }

@@ -117,7 +117,7 @@ public class GlobalPropertyTabPresenter extends ContentTabPresenter<GlobalProper
 //                .setMatchStyle(StringCriteria.MatchStyle.WildStandAndEnd);
 //            listPresenter.getFindGlobalPropertyCriteria().getName().setCaseInsensitive(true);
         } else {
-            listPresenter.clearPartialName();
+            listPresenter.clearFilter();
 //            listPresenter.getFindGlobalPropertyCriteria().getName().clear();
         }
         listPresenter.refresh();

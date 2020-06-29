@@ -18,29 +18,38 @@
 package stroom.config.global.impl;
 
 
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 import stroom.config.global.impl.validation.ConfigValidator;
 import stroom.config.global.shared.ConfigProperty;
 import stroom.config.global.shared.ConfigPropertyValidationException;
+import stroom.config.global.shared.GlobalConfigCriteria;
+import stroom.config.global.shared.GlobalConfigResource;
 import stroom.config.global.shared.ListConfigResponse;
 import stroom.security.api.SecurityContext;
 import stroom.security.shared.PermissionNames;
 import stroom.util.AuditUtil;
 import stroom.util.config.PropertyUtil;
+import stroom.util.filter.FilterFieldMapper;
+import stroom.util.filter.FilterFieldMappers;
+import stroom.util.filter.QuickFilterPredicateFactory;
 import stroom.util.logging.LambdaLogUtil;
 import stroom.util.logging.LambdaLogger;
 import stroom.util.logging.LambdaLoggerFactory;
 import stroom.util.logging.LogUtil;
 import stroom.util.shared.AbstractConfig;
+import stroom.util.shared.CompareUtil;
 import stroom.util.shared.PageRequest;
 import stroom.util.shared.PropertyPath;
+
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import javax.inject.Inject;
 import javax.inject.Singleton;
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.Comparator;
 import java.util.List;
+import java.util.Map;
 import java.util.Objects;
 import java.util.Optional;
 import java.util.function.Predicate;
@@ -49,6 +58,30 @@ import java.util.function.Predicate;
 public class GlobalConfigService {
     private static final Logger LOGGER = LoggerFactory.getLogger(GlobalConfigService.class);
     private static final LambdaLogger LAMBDA_LOGGER = LambdaLoggerFactory.getLogger(GlobalConfigService.class);
+
+    private static final FilterFieldMappers<ConfigProperty> FIELD_MAPPERS = FilterFieldMappers.of(
+            FilterFieldMapper.of(
+                    GlobalConfigResource.FIELD_DEF_NAME,
+                    ConfigProperty::getNameAsString),
+            FilterFieldMapper.of(
+                    GlobalConfigResource.FIELD_DEF_EFFECTIVE_VALUE,
+                    configProperty -> configProperty.getEffectiveValue().orElse("")),
+            FilterFieldMapper.of(
+                    GlobalConfigResource.FIELD_DEF_SOURCE,
+                    configProperty -> configProperty.getSource().getName()),
+            FilterFieldMapper.of(
+                    GlobalConfigResource.FIELD_DEF_DESCRIPTION,
+                    ConfigProperty::getDescription));
+
+    private static Comparator<ConfigProperty> com = Comparator.comparing(configProperty -> configProperty.getEffectiveValueMasked().orElse(""));
+
+    private static final Map<String, Comparator<ConfigProperty>> FIELD_COMPARATORS = Map.of(
+            GlobalConfigResource.FIELD_DEF_NAME.getDisplayName(), Comparator.comparing(
+                    ConfigProperty::getNameAsString, String::compareToIgnoreCase),
+            GlobalConfigResource.FIELD_DEF_EFFECTIVE_VALUE.getDisplayName(), Comparator.comparing(
+                    (ConfigProperty prop) -> prop.getEffectiveValueMasked().orElse(""), String::compareToIgnoreCase),
+            GlobalConfigResource.FIELD_DEF_SOURCE.getDisplayName(), Comparator.comparing(
+                    ConfigProperty::getSource));
 
     private final ConfigPropertyDao dao;
     private final SecurityContext securityContext;
@@ -120,9 +153,8 @@ public class GlobalConfigService {
 //        }
 //    }
 
-    public ListConfigResponse list(final Predicate<ConfigProperty> filter,
-                                   final PageRequest pageRequest) {
-        Objects.requireNonNull(filter);
+    public ListConfigResponse list(final GlobalConfigCriteria criteria) {
+        Objects.requireNonNull(criteria);
 
         return securityContext.secureResult(PermissionNames.MANAGE_PROPERTIES_PERMISSION, () -> {
             // Ensure the global config properties are up to date with the db values
@@ -130,15 +162,33 @@ public class GlobalConfigService {
             //   update the config props.
             updateConfigFromDb();
 
+            final Predicate<ConfigProperty> quickFilterPredicate = QuickFilterPredicateFactory.createFuzzyMatchPredicate(
+                    criteria.getQuickFilterInput(), FIELD_MAPPERS);
+
+            final PageRequest pageRequest = criteria.getPageRequest() != null
+                    ? criteria.getPageRequest()
+                    : new PageRequest(0L, Integer.MAX_VALUE);
+
             return configMapper.getGlobalProperties().stream()
-                    .sorted(Comparator.comparing(ConfigProperty::getName))
-                    .filter(filter)
+                    .sorted(buildComparator(criteria))
+                    .filter(quickFilterPredicate)
                     .collect(ListConfigResponse.collector(pageRequest, ListConfigResponse::new));
         });
     }
 
+    private Comparator<ConfigProperty> buildComparator(final GlobalConfigCriteria criteria) {
+        if (criteria != null && criteria.getSortList() != null && !criteria.getSortList().isEmpty()) {
+            return CompareUtil.buildCriteriaComparator(FIELD_COMPARATORS, criteria);
+        } else {
+            return Comparator.comparing(ConfigProperty::getNameAsString, String::compareToIgnoreCase);
+        }
+    }
+
     public ListConfigResponse list() {
-        return list(v -> true, null);
+        return list(new GlobalConfigCriteria(
+                new PageRequest(0L, Integer.MAX_VALUE),
+                Collections.emptyList(),
+                null));
     }
 
     /**

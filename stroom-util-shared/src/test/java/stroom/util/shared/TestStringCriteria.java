@@ -50,7 +50,7 @@ class TestStringCriteria {
         assertThat(criteria.isMatch("XYZ")).isTrue();
         assertThat(criteria.isMatch("123XYZ123")).isFalse();
 
-        criteria.setMatchStyle(MatchStyle.WildStandAndEnd);
+        criteria.setMatchStyle(MatchStyle.WildStartAndEnd);
 
         assertThat(criteria.isMatch("XYZ123")).isTrue();
         assertThat(criteria.isMatch("123XYZ123")).isTrue();

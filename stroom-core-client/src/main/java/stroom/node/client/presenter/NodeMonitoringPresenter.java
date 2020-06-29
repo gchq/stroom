@@ -17,11 +17,6 @@
 
 package stroom.node.client.presenter;
 
-import com.google.gwt.cell.client.TextCell;
-import com.google.gwt.core.client.GWT;
-import com.google.gwt.user.cellview.client.Column;
-import com.google.inject.Inject;
-import com.google.web.bindery.event.shared.EventBus;
 import stroom.cell.info.client.InfoColumn;
 import stroom.cell.tickbox.client.TickBoxCell;
 import stroom.cell.tickbox.shared.TickBoxState;
@@ -49,6 +44,13 @@ import stroom.widget.popup.client.presenter.PopupPosition;
 import stroom.widget.popup.client.presenter.PopupView.PopupType;
 import stroom.widget.tooltip.client.presenter.TooltipPresenter;
 import stroom.widget.tooltip.client.presenter.TooltipUtil;
+
+import com.google.gwt.cell.client.TextCell;
+import com.google.gwt.core.client.GWT;
+import com.google.gwt.safehtml.shared.SafeHtmlUtils;
+import com.google.gwt.user.cellview.client.Column;
+import com.google.inject.Inject;
+import com.google.web.bindery.event.shared.EventBus;
 
 import java.util.HashMap;
 import java.util.Map;
@@ -215,50 +217,58 @@ public class NodeMonitoringPresenter extends ContentTabPresenter<DataGridView<No
     }
 
     private void showNodeInfoResult(final Node node, final ClusterNodeInfo result, final int x, final int y) {
-        final StringBuilder html = new StringBuilder();
-        TooltipUtil.addHeading(html, "Node Details");
+        final TooltipUtil.Builder builder = TooltipUtil.builder();
 
         if (result != null) {
             final BuildInfo buildInfo = result.getBuildInfo();
-            TooltipUtil.addRowData(html, "Node Name", result.getNodeName(), true);
-            if (buildInfo != null) {
-                TooltipUtil.addRowData(html, "Build Version", buildInfo.getBuildVersion(), true);
-                TooltipUtil.addRowData(html, "Build Date", buildInfo.getBuildDate(), true);
-                TooltipUtil.addRowData(html, "Up Date", buildInfo.getUpDate(), true);
-            }
-            TooltipUtil.addRowData(html, "Discover Time", result.getDiscoverTime(), true);
-            TooltipUtil.addRowData(html, "Node Endpoint URL", result.getEndpointUrl(), true);
-            TooltipUtil.addRowData(html, "Ping", ModelStringUtil.formatDurationString(result.getPing()));
-            TooltipUtil.addRowData(html, "Error", result.getError());
+            builder
+                    .addTable(tableBuilder -> {
+                        tableBuilder.addHeaderRow("Node Details");
+                        tableBuilder.addRow("Node Name", result.getNodeName(), true);
+                        if (buildInfo != null) {
+                            tableBuilder
+                                    .addRow("Build Version", buildInfo.getBuildVersion(), true)
+                                    .addRow("Build Date", buildInfo.getBuildDate(), true)
+                                    .addRow("Up Date", buildInfo.getUpDate(), true);
+                        }
+                        return tableBuilder
+                                .addRow("Discover Time", result.getDiscoverTime(), true)
+                                .addRow("Node Endpoint URL", result.getEndpointUrl(), true)
+                                .addRow("Ping", ModelStringUtil.formatDurationString(result.getPing()))
+                                .addRow("Error", result.getError())
+                                .build();
+                    })
+                    .addBreak()
+                    .addHeading("Node List");
 
-            TooltipUtil.addBreak(html);
-            TooltipUtil.addHeading(html, "Node List");
             if (result.getItemList() != null) {
                 for (final ClusterNodeInfo.ClusterNodeInfoItem info : result.getItemList()) {
-                    html.append(info.getNodeName());
+                    String nodeValue = info.getNodeName();
+
                     if (!info.isActive()) {
-                        html.append(" (Unknown)");
+                        nodeValue += " (Unknown)";
                     }
                     if (info.isMaster()) {
-                        html.append(" (Master)");
+                        nodeValue += " (Master)";
                     }
-                    html.append("<br/>");
+                    builder.addLine(nodeValue);
                 }
             }
-
         } else {
-            TooltipUtil.addRowData(html, "Node Name", node.getName(), true);
-            TooltipUtil.addRowData(html, "Cluster URL", node.getUrl(), true);
+            builder.addTable(tableBuilder -> tableBuilder
+                    .addRow("Node Name", node.getName(), true)
+                    .addRow("Cluster URL", node.getUrl(), true)
+                    .build());
         }
 
-        tooltipPresenter.setHTML(html.toString());
+        tooltipPresenter.setHTML(builder.build());
         final PopupPosition popupPosition = new PopupPosition(x, y);
         ShowPopupEvent.fire(NodeMonitoringPresenter.this, tooltipPresenter, PopupType.POPUP,
                 popupPosition, null);
     }
 
     private void showNodeInfoError(final Throwable caught, final int x, final int y) {
-        tooltipPresenter.setHTML(caught.getMessage());
+        tooltipPresenter.setHTML(SafeHtmlUtils.fromString(caught.getMessage()));
         final PopupPosition popupPosition = new PopupPosition(x, y);
         ShowPopupEvent.fire(NodeMonitoringPresenter.this, tooltipPresenter, PopupType.POPUP,
                 popupPosition, null);

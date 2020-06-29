@@ -57,7 +57,9 @@ public class ActivityListPresenter
         getView().addResizableColumn(new Column<Activity, SafeHtml>(new SafeHtmlCell()) {
             @Override
             public SafeHtml getValue(final Activity activity) {
-                if (activity == null || activity.getDetails() == null || activity.getDetails().getProperties() == null) {
+                if (activity == null
+                        || activity.getDetails() == null
+                        || activity.getDetails().getProperties() == null) {
                     return null;
                 }
 
@@ -86,12 +88,14 @@ public class ActivityListPresenter
 
         dataProvider = new RestDataProvider<Activity, ResultPage<Activity>>(eventBus) {
             @Override
-            protected void exec(final Consumer<ResultPage<Activity>> dataConsumer, final Consumer<Throwable> throwableConsumer) {
+            protected void exec(final Consumer<ResultPage<Activity>> dataConsumer,
+                                final Consumer<Throwable> throwableConsumer) {
                 final Rest<ResultPage<Activity>> rest = restFactory.create();
                 rest
                         .onSuccess(dataConsumer)
                         .onFailure(throwableConsumer)
-                        .call(ACTIVITY_RESOURCE).list(name);
+                        .call(ACTIVITY_RESOURCE)
+                        .list(name);
             }
         };
         dataProvider.addDataDisplay(getView().getDataDisplay());
@@ -112,5 +116,9 @@ public class ActivityListPresenter
 
     void setCriteria(final String name) {
         this.name = name;
+    }
+
+    String getCriteria() {
+        return name;
     }
 }

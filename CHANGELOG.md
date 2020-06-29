@@ -6,9 +6,38 @@ and this project adheres to [Semantic Versioning](http://semver.org/).
 
 ## [Unreleased]
 
-* Issue **#1619** : Fix delete stream summary dialog.
 
-* Issue **#1671** : Fix XSLT function `hex-to-oct`.
+## [v7.0-beta.38] - 2020-06-25
+
+* Issue **#1670** : Stop _parse-uri_ XSLT function returning -1 for missing port numbers.
+
+* Issue **#1673** : Increase limit for age spinner in retention rules to 9999.
+
+* Issue **#1683** : Add `!` NOT operator to fuzzy match filtering.
+
+* Add field searching to Activity quick filter.
+
+* Add field searching to entity selection popups.
+
+* Change entity selection popups to clear quick filter on show.
+
+* Add column sorting and field searching to Properties screen.
+
+* Add field searching to Explorer Tree quick filter.
+
+* Add field searching to Properties quick filter.
+
+* Add field searching to Sercer Tasks quick filter.
+
+* Add field searching to dependencies quick filter.
+
+* Improve info tooltip layouts.
+
+* Issue **#1248** : Add quick filter to dependencies screen.
+
+* Issue **#1650** : Use consitent blue colour.
+
+* Issue **#1671** :Fix XSLT function `hex-to-oct`.
 
 * Add `readTimeout` property to `HTTPAppender`.
 
@@ -2299,7 +2328,8 @@ Issue **gchq/stroom-expression#22** : Add `typeOf(...)` function to dashboard.
 
 * Issue **#202** : Initial release of the new data retention policy functionality.
 
-[Unreleased]: https://github.com/gchq/stroom/compare/v7.0-beta.37...HEAD
+[Unreleased]: https://github.com/gchq/stroom/compare/v7.0-beta.38...HEAD
+[v7.0-beta.38]: https://github.com/gchq/stroom/compare/v7.0-beta.37...v7.0-beta.38
 [v7.0-beta.37]: https://github.com/gchq/stroom/compare/v7.0-beta.36...v7.0-beta.37
 [v7.0-beta.36]: https://github.com/gchq/stroom/compare/v7.0-beta.35...v7.0-beta.36
 [v7.0-beta.35]: https://github.com/gchq/stroom/compare/v7.0-beta.34...v7.0-beta.35

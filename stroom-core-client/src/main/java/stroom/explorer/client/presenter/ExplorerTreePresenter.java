@@ -185,7 +185,7 @@ public class ExplorerTreePresenter
     }
 
     @Override
-    public void changeNameFilter(final String name) {
+    public void changeQuickFilter(final String name) {
         explorerTree.changeNameFilter(name);
     }
 

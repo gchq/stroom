@@ -16,14 +16,6 @@
 
 package stroom.activity.client;
 
-import com.google.gwt.core.client.GWT;
-import com.google.gwt.dom.client.NativeEvent;
-import com.google.gwt.event.shared.HasHandlers;
-import com.google.inject.Provider;
-import com.google.web.bindery.event.shared.EventBus;
-import com.gwtplatform.mvp.client.HasUiHandlers;
-import com.gwtplatform.mvp.client.MyPresenterWidget;
-import com.gwtplatform.mvp.client.View;
 import stroom.activity.client.ManageActivityPresenter.ManageActivityView;
 import stroom.activity.shared.Activity;
 import stroom.activity.shared.ActivityResource;
@@ -33,7 +25,9 @@ import stroom.dispatch.client.Rest;
 import stroom.dispatch.client.RestFactory;
 import stroom.svg.client.SvgPresets;
 import stroom.ui.config.client.UiConfigCache;
+import stroom.util.shared.filter.FilterFieldDefinition;
 import stroom.widget.button.client.ButtonView;
+import stroom.widget.dropdowntree.client.view.QuickFilterTooltipUtil;
 import stroom.widget.popup.client.event.DisablePopupEvent;
 import stroom.widget.popup.client.event.EnablePopupEvent;
 import stroom.widget.popup.client.event.HidePopupEvent;
@@ -43,8 +37,22 @@ import stroom.widget.popup.client.presenter.PopupSize;
 import stroom.widget.popup.client.presenter.PopupUiHandlers;
 import stroom.widget.popup.client.presenter.PopupView.PopupType;
 
+import com.google.gwt.core.client.GWT;
+import com.google.gwt.dom.client.NativeEvent;
+import com.google.gwt.event.shared.HasHandlers;
+import com.google.gwt.safehtml.shared.SafeHtml;
+import com.google.gwt.user.client.Timer;
+import com.google.inject.Provider;
+import com.google.web.bindery.event.shared.EventBus;
+import com.gwtplatform.mvp.client.HasUiHandlers;
+import com.gwtplatform.mvp.client.MyPresenterWidget;
+import com.gwtplatform.mvp.client.View;
+
 import javax.inject.Inject;
+import java.util.List;
+import java.util.Objects;
 import java.util.function.Consumer;
+import java.util.function.Supplier;
 
 public class ManageActivityPresenter extends
         MyPresenterWidget<ManageActivityView> implements ManageActivityUiHandlers, HasHandlers {
@@ -60,6 +68,9 @@ public class ManageActivityPresenter extends
     private ButtonView newButton;
     private ButtonView openButton;
     private ButtonView deleteButton;
+
+    private final NameFilterTimer timer = new NameFilterTimer();
+    private Supplier<SafeHtml> quickFilterTooltipSupplier;
 
     @Inject
     public ManageActivityPresenter(final EventBus eventBus,
@@ -85,10 +96,15 @@ public class ManageActivityPresenter extends
         newButton = listPresenter.addButton(SvgPresets.NEW_ITEM);
         openButton = listPresenter.addButton(SvgPresets.EDIT);
         deleteButton = listPresenter.addButton(SvgPresets.DELETE);
+
+        updateQuickFilterTooltipContentSupplier();
+
     }
 
     @Override
     protected void onBind() {
+        getView().setTooltipContentSupplier(this::getQuickFilterTooltipSupplier);
+
         registerHandler(listPresenter.getView().getSelectionModel().addSelectionHandler(event -> {
             enableButtons();
             if (event.getSelectionType().isDoubleSelect()) {
@@ -143,6 +159,24 @@ public class ManageActivityPresenter extends
                 consumer.accept(null);
             }
         });
+    }
+
+    private void updateQuickFilterTooltipContentSupplier() {
+        final Rest<List<FilterFieldDefinition>> rest = restFactory.create();
+        // Separate to aid type inference
+        rest
+                .onSuccess(fieldDefinitions -> {
+                    quickFilterTooltipSupplier = () -> QuickFilterTooltipUtil.createTooltip(
+                            "Choose Activity Quick Filter",
+                            fieldDefinitions);
+                })
+                .onFailure(throwable -> {
+                    // Just use the basic tooltip content
+                    quickFilterTooltipSupplier = () -> QuickFilterTooltipUtil.createTooltip(
+                            "Choose Activity Quick Filter");
+                })
+                .call(ACTIVITY_RESOURCE)
+                .listFieldDefinitions();
     }
 
     public void show(final Consumer<Activity> consumer) {
@@ -213,6 +247,7 @@ public class ManageActivityPresenter extends
                 editor.show(e, activity -> {
                     listPresenter.refresh();
                     setSelected(activity);
+                    updateQuickFilterTooltipContentSupplier();
                 });
             }
         }
@@ -230,6 +265,7 @@ public class ManageActivityPresenter extends
                                     .onSuccess(success -> {
                                         listPresenter.refresh();
                                         listPresenter.getView().getSelectionModel().clear();
+                                        updateQuickFilterTooltipContentSupplier();
                                     })
                                     .call(ACTIVITY_RESOURCE)
                                     .delete(entity.getId());
@@ -244,8 +280,9 @@ public class ManageActivityPresenter extends
 
     @Override
     public void changeNameFilter(final String name) {
-        listPresenter.setCriteria(name);
-        listPresenter.refresh();
+        timer.setName(name);
+        timer.cancel();
+        timer.schedule(350);
     }
 
     private void onNew() {
@@ -263,6 +300,37 @@ public class ManageActivityPresenter extends
         return listPresenter.getSelectionModel().getSelected();
     }
 
+    public SafeHtml getQuickFilterTooltipSupplier() {
+        return quickFilterTooltipSupplier.get();
+    }
+
     interface ManageActivityView extends View, HasUiHandlers<ManageActivityUiHandlers> {
+
+        void setTooltipContentSupplier(final Supplier<SafeHtml> tooltipSupplier);
+    }
+
+    private class NameFilterTimer extends Timer {
+        private String name;
+
+        @Override
+        public void run() {
+            String filter = name;
+            if (filter != null) {
+                filter = filter.trim();
+                if (filter.length() == 0) {
+                    filter = null;
+                }
+            }
+
+            if (!Objects.equals(filter, listPresenter.getCriteria())) {
+
+                listPresenter.setCriteria(name);
+                listPresenter.refresh();
+            }
+        }
+
+        public void setName(final String name) {
+            this.name = name;
+        }
     }
 }

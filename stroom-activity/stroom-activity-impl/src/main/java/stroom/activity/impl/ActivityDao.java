@@ -3,8 +3,9 @@ package stroom.activity.impl;
 import stroom.activity.api.FindActivityCriteria;
 import stroom.activity.shared.Activity;
 import stroom.util.shared.HasIntCrud;
-import stroom.util.shared.ResultPage;
+
+import java.util.List;
 
 public interface ActivityDao extends HasIntCrud<Activity> {
-    ResultPage<Activity> find(FindActivityCriteria criteria);
+    List<Activity> find(FindActivityCriteria criteria);
 }
