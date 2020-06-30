@@ -6,9 +6,12 @@ and this project adheres to [Semantic Versioning](http://semver.org/).
 
 ## [Unreleased]
 
+* Issue **#1695** : Fix Records stream types not being identified correctly.
+
 * Issue **#1668** : Fixed incorrect parameter count for XSLT `meta` function.
 
 * Issue **#1619** : Fix delete stream summary.
+
 
 ## [v7.0-beta.38] - 2020-06-25
 

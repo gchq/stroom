@@ -1,5 +1,7 @@
 package stroom.data.store.impl.fs;
 
+import stroom.data.shared.StreamTypeNames;
+
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -11,19 +13,20 @@ class StreamTypeExtensions {
     private static final Map<String, String> EXTENSION_MAP = new HashMap<>();
 
     static {
-        EXTENSION_MAP.put("Manifest", "mf");
-        EXTENSION_MAP.put("Raw Events", "revt");
-        EXTENSION_MAP.put("Raw Reference", "rref");
-        EXTENSION_MAP.put("Events", "evt");
-        EXTENSION_MAP.put("Reference", "ref");
-        EXTENSION_MAP.put("Test Events", "tevt");
-        EXTENSION_MAP.put("Test Reference", "tref");
-        EXTENSION_MAP.put("Segment Index", "seg");
-        EXTENSION_MAP.put("Boundary Index", "bdy");
-        EXTENSION_MAP.put("Meta Data", "meta");
-        EXTENSION_MAP.put("Error", "err");
-        EXTENSION_MAP.put("Context", "ctx");
-        EXTENSION_MAP.put("Detections", "dtxn");
+        EXTENSION_MAP.put(InternalStreamTypeNames.MANIFEST, "mf");
+        EXTENSION_MAP.put(InternalStreamTypeNames.SEGMENT_INDEX, "seg");
+        EXTENSION_MAP.put(InternalStreamTypeNames.BOUNDARY_INDEX, "bdy");
+        EXTENSION_MAP.put(StreamTypeNames.RAW_EVENTS, "revt");
+        EXTENSION_MAP.put(StreamTypeNames.RAW_REFERENCE, "rref");
+        EXTENSION_MAP.put(StreamTypeNames.EVENTS, "evt");
+        EXTENSION_MAP.put(StreamTypeNames.REFERENCE, "ref");
+        EXTENSION_MAP.put(StreamTypeNames.TEST_EVENTS, "tevt");
+        EXTENSION_MAP.put(StreamTypeNames.TEST_REFERENCE, "tref");
+        EXTENSION_MAP.put(StreamTypeNames.META, "meta");
+        EXTENSION_MAP.put(StreamTypeNames.ERROR, "err");
+        EXTENSION_MAP.put(StreamTypeNames.CONTEXT, "ctx");
+        EXTENSION_MAP.put(StreamTypeNames.DETECTIONS, "dtxn");
+        EXTENSION_MAP.put(StreamTypeNames.RECORDS, "rec");
     }
 
     static String getExtension(final String streamType) {
