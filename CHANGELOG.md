@@ -6,7 +6,7 @@ and this project adheres to [Semantic Versioning](http://semver.org/).
 
 ## [Unreleased]
 
-* Issue **#1695** : Fix Records stream types not being identified correctly.
+* Issue **#1695** : Fix `Records` stream types not being identified correctly.
 
 * Issue **#1668** : Fixed incorrect parameter count for XSLT `meta` function.
 
