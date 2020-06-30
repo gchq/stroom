@@ -268,7 +268,7 @@ public class CommonXsltFunctionModule extends AbstractXsltFunctionModule {
     private static class MetaFunction extends StroomExtensionFunctionDefinition<Meta> {
         @Inject
         MetaFunction(final Provider<Meta> functionCallProvider) {
-            super("meta", 2, 5, new SequenceType[]{
+            super("meta", 1, 1, new SequenceType[]{
                     SequenceType.SINGLE_STRING
             }, SequenceType.OPTIONAL_STRING, functionCallProvider);
         }
