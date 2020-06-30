@@ -33,4 +33,20 @@ public class StreamTypeNames {
      * Context file for use with an events file.
      */
     public static final String CONTEXT = "Context";
+
+    /**
+     * Processed test events data files
+     */
+    public static final String TEST_EVENTS = "Test Events";
+
+    /**
+     * Processed test reference data files
+     */
+    public static final String TEST_REFERENCE = "Test Reference";
+
+    /**
+     * Processed detections
+     */
+    public static final String DETECTIONS = "Detections";
+
 }
