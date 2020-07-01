@@ -1,5 +1,8 @@
 package stroom.importexport;
 
+import stroom.util.json.JsonUtil;
+import stroom.util.shared.RestResource;
+
 import com.fasterxml.jackson.annotation.JsonCreator;
 import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.fasterxml.jackson.annotation.JsonInclude;
@@ -14,9 +17,8 @@ import org.fusesource.restygwt.client.DirectRestService;
 import org.junit.jupiter.api.Test;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import stroom.util.json.JsonUtil;
-import stroom.util.shared.RestResource;
 
+import java.lang.annotation.Annotation;
 import java.lang.reflect.Constructor;
 import java.lang.reflect.Field;
 import java.lang.reflect.Method;
@@ -24,6 +26,8 @@ import java.lang.reflect.Modifier;
 import java.lang.reflect.ParameterizedType;
 import java.lang.reflect.Type;
 import java.lang.reflect.TypeVariable;
+import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.Collection;
 import java.util.Comparator;
 import java.util.HashMap;
@@ -252,7 +256,7 @@ class TestJsonSerialisation {
 
     private void dumpErrors(final Map<String, String> classErrors) {
         classErrors.forEach((className, msg) ->
-            LOGGER.error("Class {} has error: {}", className, msg));
+            LOGGER.error("Class {} has error(s): \n{}", className, msg));
     }
 
     /**
@@ -271,15 +275,33 @@ class TestJsonSerialisation {
                     final boolean hasJsonInclude = clazz.getAnnotation(JsonInclude.class) != null;
                     final boolean hasJsonPropertyOrder = clazz.getAnnotation(JsonPropertyOrder.class) != null;
                     int jsonCreatorCount = 0;
+
                     final Set<String> fieldsWithoutAnnotations = new HashSet<>();
                     final Set<String> methodsWithAnnotations = new HashSet<>();
+                    final Set<String> constructorPropNames = new HashSet<>();
+                    final Set<String> fieldPropNames;
 
                     for (final Constructor<?> constructor : clazz.getDeclaredConstructors()) {
                         final JsonCreator jsonCreator = constructor.getAnnotation(JsonCreator.class);
                         if (jsonCreator != null) {
                             jsonCreatorCount++;
+                            constructorPropNames.addAll(getConstructorPropNames(constructor));
                         }
                     }
+                    fieldPropNames = getAllFields(clazz).stream()
+                            .filter(field -> field.getDeclaredAnnotation(JsonIgnore.class) == null
+                            && field.getDeclaredAnnotation(JsonProperty.class) != null)
+                            .map(field -> {
+                                final JsonProperty jsonProperty = field.getDeclaredAnnotation(JsonProperty.class);
+                                if (!jsonProperty.value().isEmpty()) {
+                                    return jsonProperty.value();
+                                } else {
+                                    return field.getName();
+                                }
+                            })
+                            .collect(Collectors.toSet());
+
+//                    LOGGER.info("{}", fieldPropNames);
 
                     final Field[] fields = clazz.getDeclaredFields();
                     for (final Field field : fields) {
@@ -289,6 +311,10 @@ class TestJsonSerialisation {
                             String fieldName = field.getName();
                             fieldsWithoutAnnotations.add(fieldName);
                         }
+//                        if (jsonIgnore == null && !Modifier.isStatic(field.getModifiers())) {
+//                            // A json prop
+//                            fieldPropNames.add(field.getName());
+//                        }
                     }
 
                     final Method[] methods = clazz.getDeclaredMethods();
@@ -300,6 +326,15 @@ class TestJsonSerialisation {
                     }
 
                     final StringBuilder sb = new StringBuilder();
+
+                    constructorPropNames.stream()
+                            .filter(constructorPropName -> !fieldPropNames.contains(constructorPropName))
+                            .forEach(propName -> sb
+                                    .append("\nJsonProperty ")
+                                    .append(propName)
+                                    .append(" is defined in the constructor but there is no corresponding field. Found fields: ")
+                                    .append(fieldPropNames));
+
                     if (!hasJsonInclude) {
                         sb.append("\nNo JsonInclude");
                     }
@@ -350,6 +385,21 @@ class TestJsonSerialisation {
 
         LOGGER.info(sharedClasses.toString());
 
+    }
+
+    private Set<String> getConstructorPropNames(final Constructor<?> constructor) {
+        final Annotation[][] parameterAnnotations = constructor.getParameterAnnotations();
+        final HashSet<String> propNames = new HashSet<>();
+        for (Annotation[] singleParamAnnos : parameterAnnotations) {
+            for (Annotation annotation : singleParamAnnos) {
+                if (JsonProperty.class.isAssignableFrom(annotation.annotationType())) {
+                    JsonProperty jsonProperty = (JsonProperty) annotation;
+                    propNames.add(jsonProperty.value());
+                    break;
+                }
+            }
+        }
+        return propNames;
     }
 
     private String checkAllGettersAndSetters(final Class<?> clazz) {
@@ -604,6 +654,19 @@ class TestJsonSerialisation {
                 .stream()
                 .sorted(Comparator.comparing(Class::getName))
                 .collect(Collectors.toList());
+    }
+
+    /**
+     * Gets all @{@link JsonProperty} annotated fields on this obj and its supers
+     */
+    private <T> List<Field> getAllFields(final Class<T> clazz) {
+        final List<Field> fields = new ArrayList<>();
+        Class<?> clazz2 = clazz;
+        while (clazz2 != Object.class) {
+            fields.addAll(Arrays.asList(clazz2.getDeclaredFields()));
+            clazz2 = clazz2.getSuperclass();
+        }
+        return fields;
     }
 }
 
