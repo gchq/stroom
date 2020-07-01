@@ -264,7 +264,7 @@ const UserFields = ({
                       attemptCount={userBeingEdited.loginCount}
                     />
                     <LoginStatsCopy
-                      lastLogin={userBeingEdited.lastLogin}
+                      lastLogin={userBeingEdited.lastLoginMs + ""}
                       loginCount={userBeingEdited.loginCount}
                       dateFormat={dateFormat}
                     />
@@ -280,10 +280,10 @@ const UserFields = ({
               <div className="section__fields--copy-only">
                 <div className="section__fields__rows">
                   <AuditCopy
-                    createdOn={userBeingEdited.createdOn}
-                    createdBy={userBeingEdited.createdByUser}
-                    updatedOn={userBeingEdited.updatedOn}
-                    updatedBy={userBeingEdited.updatedByUser}
+                    createdOn={userBeingEdited.createTimeMs + ""}
+                    createdBy={userBeingEdited.createUser}
+                    updatedOn={userBeingEdited.updateTimeMs + ""}
+                    updatedBy={userBeingEdited.updateUser}
                     dateFormat={dateFormat}
                   />
                 </div>

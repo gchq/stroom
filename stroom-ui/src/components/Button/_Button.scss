@@ -406,8 +406,8 @@ button:focus {
 .Button--icon.small {
   // .j1g2vga5
   padding: 0.2rem 0.3rem 0.2rem 0.3rem;
-  height: 1rem;
-  width: 1rem;
+  height: 1.2rem;
+  width: 1.2rem;
   min-width: 0.25rem;
   min-height: 0.25rem;
   padding: 0.2rem;
@@ -436,12 +436,15 @@ button:focus {
 }
 
 .Button--icon:hover {
-  // .j1g2vga5:hover
-  background-color: rgba(158, 158, 158, 0.3); // material grey 500 30%
+  //// .j1g2vga5:hover
+  //background-color: rgba(158, 158, 158, 0.3); // material grey 500 30%
+  //
+  //@include themify($themes) {
+  //  background: themed("button-icon__background-color--hover");
+  //}
 
-  @include themify($themes) {
-    background: themed("button-icon__background-color--hover");
-  }
+  background-color: transparent;
+  box-shadow: 0 0 0 0.2rem rgba(0, 123, 255, 0.1);
 }
 
 .Button--icon-primary {
@@ -462,12 +465,12 @@ button:focus {
 }
 
 .Button--icon-primary:hover {
-  // .j42ua74:hover
-  background-color: rgba(33, 150, 243, 0.2); // material blue 500 20%
-
-  @include themify($themes) {
-    background: themed("button-icon-primary__background-color--hover");
-  }
+  //// .j42ua74:hover
+  //background-color: rgba(33, 150, 243, 0.2); // material blue 500 20%
+  //
+  //@include themify($themes) {
+  //  background: themed("button-icon-primary__background-color--hover");
+  //}
 }
 
 .Button--icon-secondary {
@@ -488,21 +491,25 @@ button:focus {
 }
 
 .Button--icon-secondary:hover {
-  // .j1q4g7ue:hover
-  background-color: rgba(233, 30, 99, 0.2); // material pink 500 20%
-
-  @include themify($themes) {
-    background: themed("button-icon-secondary__background-color--hover");
-  }
+  //// .j1q4g7ue:hover
+  //background-color: rgba(233, 30, 99, 0.2); // material pink 500 20%
+  //
+  //@include themify($themes) {
+  //  background: themed("button-icon-secondary__background-color--hover");
+  //}
 }
 
 .Button--icon.Button--disabled {
-  // .j1g2vga5.j1p4cocs
-  color: rgba(0, 0, 0, 0.26);
+  opacity: .4;
+  background-color: transparent;
+  box-shadow: none;
 
-  @include themify($themes) {
-    color: themed("button-icon__color--disabled");
-  }
+  //// .j1g2vga5.j1p4cocs
+  //color: rgba(0, 0, 0, 0.26);
+  //
+  //@include themify($themes) {
+  //  color: themed("button-icon__color--disabled");
+  //}
 }
 
 ////////////////////////////////////////////////////////////////////////////////

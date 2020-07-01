@@ -36,6 +36,22 @@
   height: 0 !important;
 }
 
+.UserList__buttons {
+  display: inline-flex;
+  flex-wrap: wrap;
+  width: 100%;
+  justify-content: space-between
+}
+
+.UserList__table {
+  width: 700px;
+  height: 500px;
+  outline: none;
+  border: 1px solid #ced4da;
+  border-radius: .25rem;
+  overflow: hidden;
+}
+
 p.warning {
   font-style: italic;
   padding: 3px;

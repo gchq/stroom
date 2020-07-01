@@ -16,16 +16,16 @@
  */
 import { useCallback } from "react";
 import { Account } from "../types";
-import useHttpClient from "lib/useHttpClient";
+import { useHttpClient, useHttpClient2 } from "lib/useHttpClient";
 import useUrlFactory from "lib/useUrlFactory";
-import { ResultPage } from "./types";
+import { ResultPage, UserSearchRequest } from "./types";
 
 interface Api {
   add: (account: Account) => Promise<void>;
   change: (account: Account) => Promise<void>;
   fetch: (accountId: string) => Promise<Account>;
   remove: (accountId: string) => Promise<void>;
-  search: (email?: string) => Promise<ResultPage<Account>>;
+  search: (request: UserSearchRequest) => Promise<ResultPage<Account>>;
 }
 
 export const useApi = (): Api => {
@@ -35,6 +35,8 @@ export const useApi = (): Api => {
     httpPostJsonResponse,
     httpDeleteJsonResponse,
   } = useHttpClient();
+
+  const { post } = useHttpClient2();
 
   const { apiUrl } = useUrlFactory();
   const resource = apiUrl("/account/v1");
@@ -92,10 +94,10 @@ export const useApi = (): Api => {
     [resource, httpGetJson],
   );
 
-  const search = useCallback((email: string) => httpGetJson(resource), [
-    resource,
-    httpGetJson,
-  ]);
+  const search = useCallback(
+    (request: UserSearchRequest) => post(`${resource}/search`, request),
+    [resource, post],
+  );
 
   return {
     add,

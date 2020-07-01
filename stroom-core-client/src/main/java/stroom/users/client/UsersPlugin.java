@@ -48,13 +48,15 @@ public class UsersPlugin extends NodeToolsPlugin {
         final String usersUiUrl = uiConfig.getUrl().getUsers();
         if (usersUiUrl != null && usersUiUrl.trim().length() > 0) {
             usersMenuItem = new IconMenuItem(5, icon, null, "Users", null, true, () -> {
-                final Hyperlink hyperlink = new Builder()
-                        .text("Users")
-                        .href(usersUiUrl)
-                        .type(HyperlinkType.TAB + "|Users")
-                        .icon(icon)
-                        .build();
-                HyperlinkEvent.fire(this, hyperlink);
+                postMessage("manageUsers");
+
+//                final Hyperlink hyperlink = new Builder()
+//                        .text("Users")
+//                        .href(usersUiUrl)
+//                        .type(HyperlinkType.TAB + "|Users")
+//                        .icon(icon)
+//                        .build();
+//                HyperlinkEvent.fire(this, hyperlink);
             });
         } else {
             usersMenuItem = new IconMenuItem(5, icon, icon, "Users is not configured!", null, false, null);

@@ -15,23 +15,25 @@
  */
 
 import * as React from "react";
-import useAppNavigation from "lib/useAppNavigation";
-import UserSearch from "./UserSearch";
-import useUserSearch from "./useUserSearch";
+// import useAppNavigation from "lib/useAppNavigation";
+// import UserListDialog from "./UserListDialog";
+// import useUserSearch from "./useUserSearch";
 
 const UserSearchContainer: React.FunctionComponent = () => {
-  const { users, remove } = useUserSearch();
-  const {
-    nav: { goToNewUser, goToUser },
-  } = useAppNavigation();
-  return (
-    <UserSearch
-      onNewUserClicked={goToNewUser}
-      onUserOpen={goToUser}
-      users={users}
-      onDeleteUser={remove}
-    />
-  );
+  // const { users, remove } = useUserSearch();
+  // const {
+  //   nav: { goToNewUser, goToUser },
+  // } = useAppNavigation();
+  return null;
+  // return (
+  //   <UserListDialog
+  //     onNewUserClicked={goToNewUser}
+  //     onUserOpen={goToUser}
+  //     users={users.values}
+  //     onUserDelete={remove}
+  //     onClose={() => undefined}
+  //   />
+  // );
 };
 
 export default UserSearchContainer;

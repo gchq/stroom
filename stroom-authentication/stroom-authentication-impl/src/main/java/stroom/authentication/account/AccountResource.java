@@ -35,7 +35,6 @@ import javax.ws.rs.PUT;
 import javax.ws.rs.Path;
 import javax.ws.rs.PathParam;
 import javax.ws.rs.Produces;
-import javax.ws.rs.QueryParam;
 import javax.ws.rs.core.Context;
 import javax.ws.rs.core.MediaType;
 
@@ -58,13 +57,11 @@ public interface AccountResource extends RestResource {
             value = "Search for an account by email.",
             response = String.class,
             tags = {"Account"})
-    @GET
+    @POST
     @Path("search")
     @Timed
     @NotNull
-    ResultPage<Account> search(
-            @Context @NotNull HttpServletRequest httpServletRequest,
-            @QueryParam("email") String email);
+    ResultPage<Account> search(SearchAccountRequest request);
 
     @ApiOperation(
             value = "Create an account.",

@@ -1,5 +1,5 @@
 @import "~bootstrap/dist/css/bootstrap.min.css";
-@import "~react-table/react-table.css";
+//@import "~react-table/react-table.css";
 @import "~react-tabs/style/react-tabs.css";
 @import "~react-toggle/style.css";
 @import "~simplebar/dist/simplebar.css";
@@ -12,7 +12,7 @@
 @import "./custom-bootstrap";
 @import "./variables";
 @import "./base";
-@import "./table";
+@import "./dialog";
 @import "./page";
 @import "./dropdown";
 @import "./webkit-scrollbar";
@@ -50,6 +50,8 @@
 @import "../components/Layout/Layout";
 @import "../components/LineTo/LineTo";
 @import "../components/Loader/Loader";
+@import "../components/Pager/Pager";
+@import "../components/Table/Table";
 @import "../components/Authentication/SignIn";
 @import "../components/PathNotFound/PathNotFound";
 @import "../components/ThemedModal/ThemedModal";

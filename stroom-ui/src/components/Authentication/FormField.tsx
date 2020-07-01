@@ -9,10 +9,10 @@ import {
 import { Col, Form, Modal, ModalProps } from "react-bootstrap";
 
 export interface FormFieldState {
-  value: string;
-  error: string;
-  touched: boolean;
-  setFieldTouched: (name: string) => void;
+  value?: string;
+  error?: string;
+  touched?: boolean;
+  setFieldTouched?: (name: string) => void;
 }
 
 export interface FormFieldType {
@@ -47,8 +47,8 @@ export const CustomControl: FunctionComponent<
   autoFocus = false,
   value,
   error,
-  touched,
-  setFieldTouched,
+  touched = false,
+  setFieldTouched = () => undefined,
   children,
 }) => {
   const hasErrors = touched && error;
@@ -156,7 +156,12 @@ export const CustomModal: FunctionComponent<CustomModalProps> = (props) => {
   const p = {
     show: true,
     onHide: () => undefined,
+    centered: true,
     ...props,
   };
-  return <Modal {...p}>{props.children}</Modal>;
+  return (
+    <Modal {...p} aria-labelledby="contained-modal-title-vcenter">
+      {props.children}
+    </Modal>
+  );
 };

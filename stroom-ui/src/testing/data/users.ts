@@ -1,10 +1,11 @@
 import { loremIpsum } from "lorem-ipsum";
 import { Account } from "components/users/types";
+import { now } from "moment";
 
 const lr = (count: number) => loremIpsum({ count, units: "words" });
 const getUser = (): Account => {
   return {
-    id: lr(1),
+    id: Math.floor(Math.random() * 1000),
     email: lr(1),
     enabled: true,
     inactive: false,
@@ -13,12 +14,11 @@ const getUser = (): Account => {
     firstName: lr(1),
     lastName: lr(1),
     comments: lr(20),
-    password: "",
     forcePasswordChange: true,
     neverExpires: false,
     loginCount: 0,
-    createdByUser: lr(1),
-    createdOn: "2019-01-01T23:01:01.111Z",
+    createUser: lr(1),
+    createTimeMs: now(),
   };
 };
 
@@ -27,9 +27,9 @@ const newUser = getUser();
 const wellUsedUser = getUser();
 wellUsedUser.forcePasswordChange = false;
 wellUsedUser.loginCount = 99;
-wellUsedUser.updatedOn = "2019-02-02T23:01:01.111Z";
-wellUsedUser.updatedByUser = lr(1);
-wellUsedUser.lastLogin = "2019-04-03T23:01:01.222Z";
+wellUsedUser.updateTimeMs = now();
+wellUsedUser.updateUser = lr(1);
+wellUsedUser.lastLoginMs = now();
 
 const disabledUser = getUser();
 disabledUser.enabled = false;

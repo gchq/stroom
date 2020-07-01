@@ -7,7 +7,7 @@ import java.util.Optional;
 public interface AccountService {
     ResultPage<Account> list();
 
-    ResultPage<Account> search(String email);
+    ResultPage<Account> search(SearchAccountRequest request);
 
     Account create(CreateAccountRequest request);
 

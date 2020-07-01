@@ -26,11 +26,7 @@ const FormikWrapper: React.FunctionComponent = () => {
 
 export const ConfirmCurrentPasswordDialog: React.FunctionComponent = () => {
   return (
-    <CustomModal
-      show={true}
-      centered={true}
-      aria-labelledby="contained-modal-title-vcenter"
-    >
+    <CustomModal>
       <FormikWrapper />
     </CustomModal>
   );

@@ -137,12 +137,7 @@ export const ConfirmCurrentPassword: React.FunctionComponent<{
   onClose: (userId: string, password: string) => void;
 }> = (props) => {
   return (
-    <CustomModal
-      show={true}
-      // onHide={() => undefined}
-      centered={true}
-      aria-labelledby="contained-modal-title-vcenter"
-    >
+    <CustomModal>
       <ConfirmCurrentPasswordFormik {...props} />
     </CustomModal>
   );

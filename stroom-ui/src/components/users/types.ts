@@ -1,27 +1,22 @@
-export interface StoreState {
-  changePasswordErrorMessage: any;
-  errorStatus?: string;
-  errorText?: string;
-  password: string;
-}
-
 export interface Account {
+  id?: number;
+  version?: number;
+  createTimeMs?: number;
+  updateTimeMs?: number;
+  createUser?: string;
+  updateUser?: string;
   email: string;
+  firstName: string;
+  lastName: string;
+  comments?: string;
+  loginCount?: number;
+  loginFailures?: number;
+  lastLoginMs?: number;
+  reactivatedMs?: number;
+  forcePasswordChange: boolean;
+  neverExpires: boolean;
   enabled: boolean;
   inactive: boolean;
   locked: boolean;
   processingAccount: boolean;
-  firstName: string;
-  lastName: string;
-  comments: string;
-  password: string;
-  forcePasswordChange: boolean;
-  id?: string;
-  lastLogin?: any;
-  loginCount?: number;
-  neverExpires?: boolean;
-  createdByUser?: any;
-  createdOn?: any;
-  updatedByUser?: any;
-  updatedOn?: any;
 }

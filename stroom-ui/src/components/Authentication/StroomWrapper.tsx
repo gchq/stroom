@@ -17,9 +17,11 @@
 import * as React from "react";
 import { FunctionComponent, useEffect, useState } from "react";
 import ChangePasswordManager from "./ChangePasswordManager";
+import UsersManager from "../users/SearchUsers/UsersManager";
 
 enum DialogType {
   CHANGE_PASSWORD,
+  MANAGE_USERS,
 }
 
 const StroomWrapper: FunctionComponent<{
@@ -30,10 +32,14 @@ const StroomWrapper: FunctionComponent<{
     const handler = (event) => {
       try {
         const data = JSON.parse(event.data);
-        console.log("Hello World?", data);
+        console.log("Message from Stroom:", data);
 
-        if (data.message && data.message === "changePassword") {
-          setDialogType(DialogType.CHANGE_PASSWORD);
+        if (data.message) {
+          if (data.message === "changePassword") {
+            setDialogType(DialogType.CHANGE_PASSWORD);
+          } else if (data.message === "manageUsers") {
+            setDialogType(DialogType.MANAGE_USERS);
+          }
         }
       } catch (err) {
         // Ignore.
@@ -60,6 +66,9 @@ const StroomWrapper: FunctionComponent<{
       />
       {dialogType === DialogType.CHANGE_PASSWORD ? (
         <ChangePasswordManager userId={props.userId} onClose={onClose} />
+      ) : undefined}
+      {dialogType === DialogType.MANAGE_USERS ? (
+        <UsersManager onClose={onClose} />
       ) : undefined}
     </React.Fragment>
   );

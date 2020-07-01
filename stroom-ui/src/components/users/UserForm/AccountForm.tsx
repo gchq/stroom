@@ -40,13 +40,13 @@ const AccountForm: React.FunctionComponent<EditUserFormProps> = ({
       setShowBackConfirmation(true);
     }
   };
-  account.password = "";
+  // account.password = "";
   return (
     <Formik
       onSubmit={(values) => onSubmit(values)}
       initialValues={{
         ...account,
-        verifyPassword: account.password,
+        verifyPassword: "", //account.password,
         neverExpires: account.neverExpires || false,
       }}
       validateOnBlur

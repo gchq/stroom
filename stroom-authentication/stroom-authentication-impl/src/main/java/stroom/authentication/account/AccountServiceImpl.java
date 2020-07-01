@@ -30,10 +30,10 @@ public class AccountServiceImpl implements AccountService {
         return accountDao.list();
     }
 
-    public ResultPage<Account> search(final String email) {
+    public ResultPage<Account> search(final SearchAccountRequest request) {
         checkPermission();
 
-        return accountDao.searchUsersForDisplay(email);
+        return accountDao.searchUsersForDisplay(request);
     }
 
     public Account create(final CreateAccountRequest request) {

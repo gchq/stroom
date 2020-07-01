@@ -129,7 +129,7 @@ export const Button: FunctionComponent<ButtonProps> = ({
     return "lg";
   }, [size]);
 
-  const showText = children && appearance !== "icon";
+  const showText = children !== undefined; // && appearance !== "icon";
 
   const { onClickWithRipple, ripples } = useRipple(onClick);
 

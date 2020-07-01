@@ -1,15 +1,25 @@
-import * as React from "react";
 import { useApi } from "../api";
 import { Account } from "../types";
 import { useUserSearchState } from "./useUserSearchState";
+import { useCallback, useEffect, useState } from "react";
+import { ResultPage, UserSearchRequest } from "../api/types";
 
 interface UserSearchApi {
-  users: Account[];
+  users: ResultPage<Account>;
   selectedUser: string;
   remove: (userId: string) => void;
   changeSelectedUser: (userId: string) => void;
-  search: (email: string) => void;
+  currentRequest: UserSearchRequest;
+  setCurrentRequest: (request: UserSearchRequest) => void;
+  search: (request: UserSearchRequest) => void;
 }
+
+const defaultRequest: UserSearchRequest = {
+  pageRequest: {
+    offset: 0,
+    length: 100,
+  },
+};
 
 const useUserSearch = (): UserSearchApi => {
   const {
@@ -18,26 +28,29 @@ const useUserSearch = (): UserSearchApi => {
     setSelectedUser,
     setUsers,
   } = useUserSearchState();
+  const [currentRequest, setCurrentRequest] = useState(defaultRequest);
   const { search: searchApi, remove: removeUserUsingApi } = useApi();
 
-  React.useEffect(() => {
-    searchApi().then((resultPage) => {
-      setUsers(resultPage.values);
+  useEffect(() => {
+    searchApi(currentRequest).then((resultPage) => {
+      if (resultPage) {
+        setUsers(resultPage);
+      }
     });
-  }, [searchApi, setUsers]);
+  }, [searchApi, setUsers, currentRequest]);
 
-  const remove = React.useCallback(
+  const remove = useCallback(
     (userId: string) => {
       removeUserUsingApi(userId).then(() =>
-        searchApi().then((resultPage) => setUsers(resultPage.values)),
+        searchApi(currentRequest).then((resultPage) => setUsers(resultPage)),
       );
     },
-    [removeUserUsingApi, searchApi, setUsers],
+    [removeUserUsingApi, searchApi, currentRequest, setUsers],
   );
 
-  const search = React.useCallback(
-    (userId: string) => {
-      searchApi(userId).then((resultPage) => setUsers(resultPage.values));
+  const search = useCallback(
+    (request: UserSearchRequest) => {
+      searchApi(request).then((resultPage) => setUsers(resultPage));
     },
     [searchApi, setUsers],
   );
@@ -47,6 +60,8 @@ const useUserSearch = (): UserSearchApi => {
     selectedUser,
     remove,
     changeSelectedUser: setSelectedUser,
+    currentRequest,
+    setCurrentRequest,
     search,
   };
 };

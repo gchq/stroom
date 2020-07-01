@@ -45,7 +45,7 @@ public class ChangePasswordPlugin extends Plugin {
 //                                    .icon(icon)
 //                                    .build();
 //                            HyperlinkEvent.fire(this, hyperlink);
-                            postMessage();
+                            postMessage("changePassword");
 
                         });
                     } else {
@@ -56,17 +56,4 @@ public class ChangePasswordPlugin extends Plugin {
                 })
                 .onFailure(caught -> AlertEvent.fireError(ChangePasswordPlugin.this, caught.getMessage(), null));
     }
-
-    /**
-     * Sort a native integer array numerically.
-     *
-     * @param array the array to sort
-     */
-    private static native void postMessage() /*-{
-        window.top.postMessage(
-            JSON.stringify({
-                message: "changePassword"
-             }
-        ), '*');
-    }-*/;
 }

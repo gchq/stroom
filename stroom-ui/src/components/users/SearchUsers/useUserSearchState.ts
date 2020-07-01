@@ -1,29 +1,22 @@
 import * as React from "react";
 import { Account } from "../types";
+import { ResultPage } from "../api/types";
 
 interface UserSearchStateApi {
-  users: Account[];
-  setUsers: (users: Account[]) => void;
-  totalPages: number;
-  setTotalPages: (totalPages: number) => void;
+  users: ResultPage<Account>;
+  setUsers: (users: ResultPage<Account>) => void;
   selectedUser: string;
   setSelectedUser: (userId: string) => void;
 }
 
 interface UserSearchState {
-  users: Account[];
-  totalPages: number;
+  users: ResultPage<Account>;
   selectedUser: string;
 }
 
 interface SetUsersAction {
   type: "set_user";
-  users: Account[];
-}
-
-interface SetTotalPagesAction {
-  type: "set_total_pages";
-  totalPages: number;
+  users: ResultPage<Account>;
 }
 
 interface ChangeSelectedUserAction {
@@ -33,15 +26,13 @@ interface ChangeSelectedUserAction {
 
 const reducer = (
   state: UserSearchState,
-  action: SetUsersAction | SetTotalPagesAction | ChangeSelectedUserAction,
+  action: SetUsersAction | ChangeSelectedUserAction,
 ) => {
   switch (action.type) {
     case "set_user":
       return { ...state, users: action.users };
     case "change_selected_user":
       return { ...state, selectedUser: action.userId };
-    case "set_total_pages":
-      return { ...state, totalPages: action.totalPages };
     default:
       return state;
   }
@@ -49,16 +40,19 @@ const reducer = (
 
 const useUserSearchState = (): UserSearchStateApi => {
   const [userState, dispatch] = React.useReducer(reducer, {
-    users: [],
-    totalPages: 0,
+    users: {
+      values: [],
+      pageResponse: {
+        offset: 0,
+        length: 0,
+        total: undefined,
+        exact: false,
+      },
+    },
     selectedUser: "",
   });
   const setUsers = React.useCallback(
-    (users: Account[]) => dispatch({ type: "set_user", users }),
-    [dispatch],
-  );
-  const setTotalPages = React.useCallback(
-    (totalPages: number) => dispatch({ type: "set_total_pages", totalPages }),
+    (users: ResultPage<Account>) => dispatch({ type: "set_user", users }),
     [dispatch],
   );
   const setSelectedUser = React.useCallback(
@@ -68,10 +62,8 @@ const useUserSearchState = (): UserSearchStateApi => {
 
   return {
     users: userState.users,
-    totalPages: userState.totalPages,
     selectedUser: userState.selectedUser,
     setUsers,
-    setTotalPages,
     setSelectedUser,
   };
 };

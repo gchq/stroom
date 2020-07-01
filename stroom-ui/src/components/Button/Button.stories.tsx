@@ -76,10 +76,10 @@ const TestHarness: React.FunctionComponent = () => {
     <div>
       {variants.map(({ appearance }, i) => (
         <div key={i} style={styles.appearanceContainer}>
-          <h1 style={styles.appearanceHeader}>
+          <h2 style={styles.appearanceHeader}>
             appearance=&#34;{appearance}&#34;
-          </h1>
-          <h2 style={styles.propertyHeader}>Simple</h2>
+          </h2>
+          <h3 style={styles.propertyHeader}>Simple</h3>
           <Button
             style={styles.firstButton}
             appearance={appearance}
@@ -104,7 +104,7 @@ const TestHarness: React.FunctionComponent = () => {
             title="Permissions"
           />
 
-          <h2 style={styles.propertyHeader}>selected=&#123;true&#125;</h2>
+          <h3 style={styles.propertyHeader}>selected=&#123;true&#125;</h3>
           <Button
             style={styles.firstButton}
             appearance={appearance}
@@ -132,7 +132,7 @@ const TestHarness: React.FunctionComponent = () => {
             selected={true}
           />
 
-          <h2 style={styles.propertyHeader}>disabled=&#123;true&#125;</h2>
+          <h3 style={styles.propertyHeader}>disabled=&#123;true&#125;</h3>
           <Button
             style={styles.firstButton}
             appearance={appearance}
@@ -160,7 +160,7 @@ const TestHarness: React.FunctionComponent = () => {
             disabled={true}
           />
 
-          <h2 style={styles.propertyHeader}>size=&#34;small&#34;</h2>
+          <h3 style={styles.propertyHeader}>size=&#34;small&#34;</h3>
           <Button
             style={styles.firstButton}
             size="small"
@@ -188,7 +188,7 @@ const TestHarness: React.FunctionComponent = () => {
             title="Permissions"
           />
 
-          <h2 style={styles.propertyHeader}>size=&#34;large&#34;</h2>
+          <h3 style={styles.propertyHeader}>size=&#34;large&#34;</h3>
           <Button
             style={styles.firstButton}
             size="large"

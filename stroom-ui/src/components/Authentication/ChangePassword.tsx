@@ -243,10 +243,7 @@ export const ChangePassword: React.FunctionComponent<{
   onClose: (success: boolean) => void;
 }> = (props) => {
   return (
-    <CustomModal
-      centered={true}
-      aria-labelledby="contained-modal-title-vcenter"
-    >
+    <CustomModal>
       <ChangePasswordFormik {...props} />
     </CustomModal>
   );

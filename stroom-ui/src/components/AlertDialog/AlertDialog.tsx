@@ -33,8 +33,7 @@ export interface Alert {
 }
 
 interface Props {
-  alert?: Alert;
-  isOpen: boolean;
+  alert: Alert;
   onCloseDialog: () => void;
 }
 
@@ -100,15 +99,10 @@ const AlertHeader: React.FunctionComponent<Alert> = (alert) => {
 
 export const AlertDialog: React.FunctionComponent<Props> = ({
   alert,
-  isOpen,
   onCloseDialog,
 }) => {
   return (
-    <CustomModal
-      show={isOpen}
-      centered={true}
-      aria-labelledby="contained-modal-title-vcenter"
-    >
+    <CustomModal>
       <Form
         noValidate={true}
         onSubmit={(event) => {

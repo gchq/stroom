@@ -20,6 +20,7 @@ package stroom.authentication.impl.db;
 
 import stroom.authentication.account.Account;
 import stroom.authentication.account.AccountDao;
+import stroom.authentication.account.SearchAccountRequest;
 import stroom.authentication.authenticate.CredentialValidationResult;
 import stroom.authentication.config.AuthenticationConfig;
 import stroom.authentication.exceptions.NoSuchUserException;
@@ -32,6 +33,7 @@ import stroom.util.logging.LambdaLoggerFactory;
 import stroom.util.shared.ResultPage;
 
 import com.google.common.base.Strings;
+import org.jooq.Condition;
 import org.jooq.Record;
 import org.jooq.Record1;
 import org.jooq.TableField;
@@ -404,13 +406,23 @@ class AccountDaoImpl implements AccountDao {
     }
 
     @Override
-    public ResultPage<Account> searchUsersForDisplay(final String email) {
+    public ResultPage<Account> searchUsersForDisplay(final SearchAccountRequest request) {
+        final Condition condition = createCondition(request);
         final List<Account> list = JooqUtil.contextResult(authDbConnProvider, context -> context
                 .selectFrom(ACCOUNT)
-                .where(ACCOUNT.EMAIL.contains(email))
-                .and(ACCOUNT.PROCESSING_ACCOUNT.isFalse())
+                .where(condition)
+                .offset(JooqUtil.getOffset(request.getPageRequest()))
+                .limit(JooqUtil.getLimit(request.getPageRequest(), true))
                 .fetch()
                 .map(RECORD_TO_ACCOUNT_MAPPER::apply));
-        return ResultPage.createUnboundedList(list);
+        return ResultPage.createCriterialBasedList(list, request);
+    }
+
+    private Condition createCondition(final SearchAccountRequest request) {
+        Condition condition = ACCOUNT.PROCESSING_ACCOUNT.isFalse();
+        if (request.getQuickFilter() != null) {
+            condition = condition.and(ACCOUNT.EMAIL.contains(request.getQuickFilter()));
+        }
+        return condition;
     }
 }

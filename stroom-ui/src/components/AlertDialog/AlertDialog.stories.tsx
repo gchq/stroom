@@ -10,7 +10,7 @@ const TestHarness: React.FunctionComponent = () => {
     message: "Ouch, that hurts!",
   };
 
-  return <AlertDialog alert={alert} isOpen={true} onCloseDialog={undefined} />;
+  return <AlertDialog alert={alert} onCloseDialog={() => undefined} />;
 };
 
 storiesOf("AlertDialog", module).add("Dialog", () => <TestHarness />);

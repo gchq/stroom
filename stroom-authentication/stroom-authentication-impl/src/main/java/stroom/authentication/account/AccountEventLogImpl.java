@@ -114,11 +114,11 @@ public class AccountEventLogImpl implements AccountEventLog {
     }
 
     @Override
-    public void search(final String email, final ResultPage<Account> result, final Throwable ex) {
+    public void search(final SearchAccountRequest request, final ResultPage<Account> result, final Throwable ex) {
         securityContext.insecure(() -> {
             try {
                 final BaseAdvancedQueryOperator operator = new BaseAdvancedQueryOperator.And();
-                operator.getAdvancedQueryItems().add( EventLoggingUtil.createTerm("Email", TermCondition.EQUALS, email));
+                operator.getAdvancedQueryItems().add( EventLoggingUtil.createTerm("Email", TermCondition.EQUALS, request.getQuickFilter()));
 
                 final Query.Advanced advanced = new Query.Advanced();
                 advanced.getAdvancedQueryItems().add(operator);

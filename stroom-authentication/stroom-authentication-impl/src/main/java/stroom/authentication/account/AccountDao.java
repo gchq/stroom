@@ -35,5 +35,5 @@ public interface AccountDao {
 
     int deactivateInactiveUsers(Duration unusedAccountDeactivationThreshold);
 
-    ResultPage<Account> searchUsersForDisplay(String email);
+    ResultPage<Account> searchUsersForDisplay(SearchAccountRequest request);
 }

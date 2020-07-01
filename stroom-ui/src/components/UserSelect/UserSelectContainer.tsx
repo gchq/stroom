@@ -30,28 +30,28 @@ const UserSelectContainer: React.FunctionComponent<Props> = ({
   fuzzy,
 }) => {
   const { users: initialUsers } = useUserSearch();
-  const [users, setUsers] = React.useState<Account[]>(initialUsers);
+  const [users, setUsers] = React.useState<Account[]>(initialUsers.values);
 
   // initialUsers is [] on first render. So when the values finally
   // arrive from the api we need to setUsers.
   React.useEffect(() => {
-    setUsers(initialUsers);
+    setUsers(initialUsers.values);
   }, [initialUsers]);
 
   const handleSearch = React.useCallback(
     (criteria: string) => {
-      // If we don't have any critera we want to show all users in the drop-down.
+      // If we don't have any criteria we want to show all users in the drop-down.
       if (criteria.length === 0) {
-        setUsers(initialUsers);
+        setUsers(initialUsers.values);
       } else {
-        let searchResults = [];
+        let searchResults;
         if (fuzzy) {
-          const fuse = new Fuse(initialUsers, {
+          const fuse = new Fuse(initialUsers.values, {
             keys: [{ name: "email", weight: 1 }],
           });
           searchResults = fuse.search(criteria);
         } else {
-          searchResults = initialUsers.filter((user) =>
+          searchResults = initialUsers.values.filter((user) =>
             user.email.includes(criteria),
           );
         }

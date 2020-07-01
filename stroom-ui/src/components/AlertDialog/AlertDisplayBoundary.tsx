@@ -30,14 +30,14 @@ export const useAlert = () => {
 
 const AlertOutlet: FunctionComponent = () => {
   const { alert, setAlert } = useContext(AlertContext);
-
-  return (
-    <AlertDialog
-      alert={alert}
-      isOpen={alert !== undefined}
-      onCloseDialog={() => setAlert(undefined)}
-    />
-  );
+  console.log("Render: AlertDialog");
+  if (alert !== undefined) {
+    return (
+      <AlertDialog alert={alert} onCloseDialog={() => setAlert(undefined)} />
+    );
+  } else {
+    return null;
+  }
 };
 
 export const AlertDisplayBoundary: FunctionComponent = ({ children }) => {
