@@ -16,12 +16,13 @@
 
 package stroom.pipeline.shared;
 
+import stroom.util.shared.CompareBuilder;
+import stroom.util.shared.Highlight;
+
 import com.fasterxml.jackson.annotation.JsonCreator;
 import com.fasterxml.jackson.annotation.JsonInclude;
 import com.fasterxml.jackson.annotation.JsonInclude.Include;
 import com.fasterxml.jackson.annotation.JsonProperty;
-import stroom.util.shared.CompareBuilder;
-import stroom.util.shared.Highlight;
 
 import java.util.Objects;
 
@@ -37,6 +38,12 @@ public class SourceLocation implements Comparable<SourceLocation> {
     private final long recordNo;
     @JsonProperty
     private final Highlight highlight;
+
+
+    // TODO add DataRange into here for both the dataRange and the highlightedRange
+    //   Then remove the id, partno, segment no, type from it.
+    //   Not sure how we deal with comparable if we have different means of specifying the
+    //   Start and end location
 
     @JsonCreator
     public SourceLocation(@JsonProperty("id") final long id,

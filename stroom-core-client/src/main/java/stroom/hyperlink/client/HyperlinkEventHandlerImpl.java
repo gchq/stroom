@@ -1,22 +1,13 @@
 package stroom.hyperlink.client;
 
-import com.google.gwt.core.client.GWT;
-import com.google.gwt.event.shared.GwtEvent;
-import com.google.gwt.event.shared.HasHandlers;
-import com.google.gwt.http.client.URL;
-import com.google.gwt.user.client.Window;
-import com.google.inject.Inject;
-import com.google.inject.Provider;
-import com.google.inject.Singleton;
-import com.google.web.bindery.event.shared.EventBus;
-import com.google.web.bindery.event.shared.HandlerRegistration;
-import com.gwtplatform.mvp.client.HandlerContainerImpl;
 import stroom.alert.client.event.ConfirmEvent;
 import stroom.annotation.client.ShowAnnotationEvent;
 import stroom.annotation.shared.Annotation;
 import stroom.annotation.shared.EventId;
 import stroom.core.client.ContentManager;
 import stroom.data.client.presenter.ShowDataEvent;
+import stroom.data.shared.DataRange;
+import stroom.data.shared.DataRange.Builder;
 import stroom.iframe.client.presenter.IFrameContentPresenter;
 import stroom.iframe.client.presenter.IFramePresenter;
 import stroom.pipeline.shared.SourceLocation;
@@ -30,6 +21,18 @@ import stroom.widget.popup.client.event.ShowPopupEvent;
 import stroom.widget.popup.client.presenter.PopupSize;
 import stroom.widget.popup.client.presenter.PopupUiHandlers;
 import stroom.widget.popup.client.presenter.PopupView.PopupType;
+
+import com.google.gwt.core.client.GWT;
+import com.google.gwt.event.shared.GwtEvent;
+import com.google.gwt.event.shared.HasHandlers;
+import com.google.gwt.http.client.URL;
+import com.google.gwt.user.client.Window;
+import com.google.inject.Inject;
+import com.google.inject.Provider;
+import com.google.inject.Singleton;
+import com.google.web.bindery.event.shared.EventBus;
+import com.google.web.bindery.event.shared.HandlerRegistration;
+import com.gwtplatform.mvp.client.HandlerContainerImpl;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -164,9 +167,19 @@ public class HyperlinkEventHandlerImpl extends HandlerContainerImpl implements H
                     final int colTo = (int) getParam(href, "colTo", -1);
 
                     Highlight highlight = null;
-                    if (lineFrom != -1 && colFrom != -1 && lineTo != -1 && colTo != -1) {
-                        highlight = new Highlight(new DefaultLocation(lineFrom, colFrom), new DefaultLocation(lineTo, colTo));
+                    final Builder builder = DataRange.builder(id)
+                            .withPartNumber(partNo)
+                            .withSegmentNumber(recordNo);
+
+                    if (lineFrom != -1 && colFrom != -1) {
+                        builder.fromLocation(new DefaultLocation(lineFrom, colFrom));
                     }
+
+                    if (lineTo != -1 && colTo != -1) {
+                        builder.toLocation(new DefaultLocation(lineTo, colTo));
+                    }
+
+                    DataRange dataRange = builder.build();
 
                     final SourceLocation sourceLocation = new SourceLocation(id, null, partNo, recordNo, highlight);
                     ShowDataEvent.fire(this, sourceLocation);

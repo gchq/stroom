@@ -39,6 +39,10 @@ public class DefaultLocation implements Location {
         this.colNo = colNo;
     }
 
+    public static Location of(final int lineNo, final int colNo) {
+        return new DefaultLocation(lineNo, colNo);
+    }
+
     @Override
     public int getLineNo() {
         return lineNo;

@@ -16,34 +16,43 @@
 
 package stroom.pipeline.shared;
 
+import stroom.data.shared.DataRange;
+import stroom.data.shared.DataType;
+import stroom.util.shared.RowCount;
+
 import com.fasterxml.jackson.annotation.JsonCreator;
 import com.fasterxml.jackson.annotation.JsonInclude;
 import com.fasterxml.jackson.annotation.JsonProperty;
-import stroom.util.shared.OffsetRange;
-import stroom.util.shared.RowCount;
 
 import java.util.List;
 
 @JsonInclude(JsonInclude.Include.NON_NULL)
 public class FetchDataResult extends AbstractFetchDataResult {
+
     @JsonProperty
     private final String data;
     @JsonProperty
     private final boolean html;
+    @JsonProperty
+    private final DataType dataType;
 
     @JsonCreator
     public FetchDataResult(@JsonProperty("streamTypeName") final String streamTypeName,
                            @JsonProperty("classification") final String classification,
-                           @JsonProperty("streamRange") final OffsetRange<Long> streamRange,
+                           @JsonProperty("dataRange") final DataRange dataRange,
+//                           @JsonProperty("streamRange") final OffsetRange<Long> streamRange,
                            @JsonProperty("streamRowCount") final RowCount<Long> streamRowCount,
-                           @JsonProperty("pageRange") final OffsetRange<Long> pageRange,
+//                           @JsonProperty("pageRange") final OffsetRange<Long> pageRange,
                            @JsonProperty("pageRowCount") final RowCount<Long> pageRowCount,
                            @JsonProperty("availableChildStreamTypes") final List<String> availableChildStreamTypes,
                            @JsonProperty("data") final String data,
-                           @JsonProperty("html") final boolean html) {
-        super(streamTypeName, classification, streamRange, streamRowCount, pageRange, pageRowCount, availableChildStreamTypes);
+                           @JsonProperty("html") final boolean html,
+                           @JsonProperty("dataType") final DataType dataType) {
+//        super(streamTypeName, classification, streamRange, streamRowCount, pageRange, pageRowCount, availableChildStreamTypes);
+        super(streamTypeName, classification, dataRange, streamRowCount, pageRowCount, availableChildStreamTypes);
         this.data = data;
         this.html = html;
+        this.dataType = dataType;
     }
 
     public String getData() {
@@ -52,5 +61,9 @@ public class FetchDataResult extends AbstractFetchDataResult {
 
     public boolean isHtml() {
         return html;
+    }
+
+    public DataType getDataType() {
+        return dataType;
     }
 }

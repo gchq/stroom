@@ -16,6 +16,29 @@
 
 package stroom.data.client.presenter;
 
+import stroom.dispatch.client.Rest;
+import stroom.dispatch.client.RestFactory;
+import stroom.meta.shared.Meta;
+import stroom.pipeline.shared.AbstractFetchDataResult;
+import stroom.pipeline.shared.FetchDataRequest;
+import stroom.pipeline.shared.FetchDataResult;
+import stroom.pipeline.shared.FetchMarkerResult;
+import stroom.pipeline.shared.SourceLocation;
+import stroom.pipeline.shared.ViewDataResource;
+import stroom.pipeline.shared.stepping.StepLocation;
+import stroom.security.client.api.ClientSecurityContext;
+import stroom.security.shared.PermissionNames;
+import stroom.util.shared.EqualsUtil;
+import stroom.util.shared.Highlight;
+import stroom.util.shared.Location;
+import stroom.util.shared.Marker;
+import stroom.util.shared.OffsetRange;
+import stroom.util.shared.RowCount;
+import stroom.util.shared.Severity;
+import stroom.widget.tab.client.presenter.TabBar;
+import stroom.widget.tab.client.presenter.TabData;
+import stroom.widget.tab.client.presenter.TabDataImpl;
+
 import com.google.gwt.core.client.GWT;
 import com.google.gwt.dom.client.Style.Unit;
 import com.google.gwt.event.shared.GwtEvent;
@@ -31,27 +54,6 @@ import com.google.web.bindery.event.shared.EventBus;
 import com.gwtplatform.mvp.client.LayerContainer;
 import com.gwtplatform.mvp.client.MyPresenterWidget;
 import com.gwtplatform.mvp.client.View;
-import stroom.dispatch.client.Rest;
-import stroom.dispatch.client.RestFactory;
-import stroom.meta.shared.Meta;
-import stroom.pipeline.shared.AbstractFetchDataResult;
-import stroom.pipeline.shared.FetchDataRequest;
-import stroom.pipeline.shared.FetchDataResult;
-import stroom.pipeline.shared.FetchMarkerResult;
-import stroom.pipeline.shared.SourceLocation;
-import stroom.pipeline.shared.ViewDataResource;
-import stroom.pipeline.shared.stepping.StepLocation;
-import stroom.security.client.api.ClientSecurityContext;
-import stroom.security.shared.PermissionNames;
-import stroom.util.shared.EqualsUtil;
-import stroom.util.shared.Highlight;
-import stroom.util.shared.Marker;
-import stroom.util.shared.OffsetRange;
-import stroom.util.shared.RowCount;
-import stroom.util.shared.Severity;
-import stroom.widget.tab.client.presenter.TabBar;
-import stroom.widget.tab.client.presenter.TabData;
-import stroom.widget.tab.client.presenter.TabDataImpl;
 
 import java.util.ArrayList;
 import java.util.HashMap;
@@ -102,8 +104,11 @@ public class DataPresenter extends MyPresenterWidget<DataPresenter.DataView> imp
     private boolean ignoreActions;
 
     @Inject
-    public DataPresenter(final EventBus eventBus, final DataView view, final TextPresenter textPresenter,
-                         final MarkerListPresenter markerListPresenter, final ClientSecurityContext securityContext,
+    public DataPresenter(final EventBus eventBus,
+                         final DataView view,
+                         final TextPresenter textPresenter,
+                         final MarkerListPresenter markerListPresenter,
+                         final ClientSecurityContext securityContext,
                          final RestFactory restFactory) {
         super(eventBus, view);
         this.textPresenter = textPresenter;
@@ -249,7 +254,8 @@ public class DataPresenter extends MyPresenterWidget<DataPresenter.DataView> imp
 
         // Update the stream source.
         if (!EqualsUtil.isEquals(currentMetaId, highlightId)
-                || !EqualsUtil.isEquals(currentChildDataType, highlightChildDataType) || oldPartNo != newPartNo
+                || !EqualsUtil.isEquals(currentChildDataType, highlightChildDataType)
+                || oldPartNo != newPartNo
                 || oldRecordOffset != newRecordOffset) {
             currentDataRange = new OffsetRange<>(newPartNo - 1, 1L);
             currentPageRange = new OffsetRange<>(newRecordOffset, recordLength);
@@ -290,11 +296,16 @@ public class DataPresenter extends MyPresenterWidget<DataPresenter.DataView> imp
         if (!ignoreActions) {
             final Severity[] expandedSeverities = markerListPresenter.getExpandedSeverities();
 
-            final FetchDataRequest request = new FetchDataRequest();
-            request.setStreamId(currentMetaId);
-            request.setStreamRange(currentDataRange);
-            request.setPageRange(currentPageRange);
-            request.setChildStreamType(currentChildDataType);
+            final FetchDataRequest request = new FetchDataRequest(currentMetaId, builder -> builder
+                    .withPartNumber(currentDataRange.getOffset())
+                    .withSegmentNumber(currentPageRange.getOffset())
+                    .withChildStreamType(currentChildDataType)
+            );
+
+//            request.setStreamId(currentMetaId);
+//            request.setStreamRange(currentDataRange);
+//            request.setPageRange(currentPageRange);
+//            request.setChildStreamType(currentChildDataType);
             request.setMarkerMode(errorMarkerMode);
             request.setExpandedSeverities(expandedSeverities);
             request.setFireEvents(fireEvents);
@@ -372,7 +383,10 @@ public class DataPresenter extends MyPresenterWidget<DataPresenter.DataView> imp
                 data = fetchDataResult.getData();
             }
 
-            startLineNo = result.getPageRange().getOffset().intValue() + 1;
+//            startLineNo = result.getPageRange().getOffset().intValue() + 1;
+            startLineNo = result.getDataRange().getOptLocationFrom()
+                    .map(Location::getLineNo)
+                    .orElse(1);
 
             // Update the paging controls.
             getView().showSegmentPager(result.getStreamRowCount().getCount() > 1);
@@ -467,12 +481,13 @@ public class DataPresenter extends MyPresenterWidget<DataPresenter.DataView> imp
 
         // Update paging info from the current result.
         if (result != null) {
-            streamOffset = result.getStreamRange().getOffset().intValue();
-            streamLength = result.getStreamRange().getLength().intValue();
+            streamOffset = (int) result.getDataRange().getPartNo();
+//            streamLength = result.getStreamRange().getLength().intValue();
+            streamLength = 1;
             streamCount = result.getStreamRowCount().getCount().intValue();
             streamCountExact = result.getStreamRowCount().isExact();
-            pageOffset = result.getPageRange().getOffset().intValue();
-            pageLength = result.getPageRange().getLength().intValue();
+//            pageOffset = result.getPageRange().getOffset().intValue();
+//            pageLength = result.getPageRange().getLength().intValue();
             pageCount = result.getPageRowCount().getCount().intValue();
             pageCountExact = result.getPageRowCount().isExact();
         }
@@ -494,7 +509,7 @@ public class DataPresenter extends MyPresenterWidget<DataPresenter.DataView> imp
         int streamNo = 0;
 
         if (result != null) {
-            streamNo = result.getStreamRange().getOffset().intValue() + 1;
+            streamNo = (int) (result.getDataRange().getPartNo() + 1);
         }
 
         // Make sure we have a highlight section to add and that the stream id
@@ -518,15 +533,17 @@ public class DataPresenter extends MyPresenterWidget<DataPresenter.DataView> imp
         int pageCount = 0;
 
         if (result != null) {
-            pageOffset = result.getPageRange().getOffset().intValue();
+//            pageOffset = result.getPageRange().getOffset().intValue();
             pageCount = result.getPageRowCount().getCount().intValue();
         }
 
         markerListPresenter.setData(markers, pageOffset, pageCount);
     }
 
-    public void showStepSource(final Integer taskOffset, final StepLocation stepLocation,
-                               final String childStreamType, final List<Highlight> highlights) {
+    public void showStepSource(final Integer taskOffset,
+                               final StepLocation stepLocation,
+                               final String childStreamType,
+                               final List<Highlight> highlights) {
         this.highlights = highlights;
         this.highlightId = stepLocation.getId();
         this.highlightPartNo = stepLocation.getPartNo();

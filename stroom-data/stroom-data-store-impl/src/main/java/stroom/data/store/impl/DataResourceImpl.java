@@ -34,10 +34,8 @@ import stroom.resource.api.ResourceStore;
 import stroom.security.api.SecurityContext;
 import stroom.security.shared.PermissionNames;
 import stroom.util.pipeline.scope.PipelineScopeRunnable;
-import stroom.util.shared.OffsetRange;
 import stroom.util.shared.ResourceGeneration;
 import stroom.util.shared.ResourceKey;
-import stroom.util.shared.Severity;
 
 import javax.inject.Inject;
 import javax.inject.Provider;
@@ -153,27 +151,35 @@ class DataResourceImpl implements DataResource {
                                               final Long pageOffset,
                                               final Long pageSize) {
 
-        final OffsetRange<Long> pageRange = new OffsetRange<>(pageOffset, pageSize);
-        final OffsetRange<Long> streamRange = new OffsetRange<>(streamsOffset, streamsLength);
+        // TODO doesn't appear to be used anywhere, new UI ? Commenting out for now
 
-        final boolean isMarkerMode = true; // Used for organising errors but only relevant when the data is in fact errors
-        final boolean showAsHtml = false; // Used for dashboards so false here.
-        final Severity[] expandedSeverities = new Severity[]{Severity.INFO, Severity.WARNING, Severity.ERROR, Severity.FATAL_ERROR};
+//        final OffsetRange<Long> pageRange = new OffsetRange<>(pageOffset, pageSize);
+//        final OffsetRange<Long> streamRange = new OffsetRange<>(streamsOffset, streamsLength);
+//
+//        final boolean isMarkerMode = true; // Used for organising errors but only relevant when the data is in fact errors
+//        final boolean showAsHtml = false; // Used for dashboards so false here.
+//        final Severity[] expandedSeverities = new Severity[]{
+//                Severity.INFO,
+//                Severity.WARNING,
+//                Severity.ERROR,
+//                Severity.FATAL_ERROR};
+//
+//        //TODO Used for child streams. Needs implementing.
+//        String childStreamTypeName = null;
+//
+//        return securityContext.secureResult(PermissionNames.VIEW_DATA_PERMISSION, () -> {
+//            dataFetcher.reset();
+//            return dataFetcher.getData(
+//                    streamId,
+//                    childStreamTypeName,
+//                    streamRange,
+//                    pageRange,
+//                    isMarkerMode,
+//                    null,
+//                    showAsHtml,
+//                    expandedSeverities);
+//        });
 
-        //TODO Used for child streams. Needs implementing.
-        String childStreamTypeName = null;
-
-        return securityContext.secureResult(PermissionNames.VIEW_DATA_PERMISSION, () -> {
-            dataFetcher.reset();
-            return dataFetcher.getData(
-                    streamId,
-                    childStreamTypeName,
-                    streamRange,
-                    pageRange,
-                    isMarkerMode,
-                    null,
-                    showAsHtml,
-                    expandedSeverities);
-        });
+        return null;
     }
 }

@@ -16,11 +16,12 @@
 
 package stroom.data.store.impl.fs;
 
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 import stroom.data.store.api.InputStreamProvider;
 import stroom.data.store.api.SegmentInputStream;
 import stroom.meta.shared.Meta;
+
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 public class InputStreamProviderImpl implements InputStreamProvider {
     private static final Logger LOGGER = LoggerFactory.getLogger(InputStreamProviderImpl.class);
@@ -31,8 +32,8 @@ public class InputStreamProviderImpl implements InputStreamProvider {
     private final long index;
 
     public InputStreamProviderImpl(final Meta meta,
-                            final SegmentInputStreamProviderFactory factory,
-                            final long index) {
+                                   final SegmentInputStreamProviderFactory factory,
+                                   final long index) {
         this.meta = meta;
         this.factory = factory;
         this.index = index;

@@ -16,12 +16,13 @@
 
 package stroom.pipeline.shared;
 
+import stroom.data.shared.DataRange;
+import stroom.util.shared.Marker;
+import stroom.util.shared.RowCount;
+
 import com.fasterxml.jackson.annotation.JsonCreator;
 import com.fasterxml.jackson.annotation.JsonInclude;
 import com.fasterxml.jackson.annotation.JsonProperty;
-import stroom.util.shared.Marker;
-import stroom.util.shared.OffsetRange;
-import stroom.util.shared.RowCount;
 
 import java.util.List;
 
@@ -36,13 +37,15 @@ public class FetchMarkerResult extends AbstractFetchDataResult {
     @JsonCreator
     public FetchMarkerResult(@JsonProperty("streamTypeName") final String streamTypeName,
                              @JsonProperty("classification") final String classification,
-                             @JsonProperty("streamRange") final OffsetRange<Long> streamRange,
+                             @JsonProperty("dataRange") final DataRange dataRange,
+//                             @JsonProperty("streamRange") final OffsetRange<Long> streamRange,
                              @JsonProperty("streamRowCount") final RowCount<Long> streamRowCount,
-                             @JsonProperty("pageRange") final OffsetRange<Long> pageRange,
+//                             @JsonProperty("pageRange") final OffsetRange<Long> pageRange,
                              @JsonProperty("pageRowCount") final RowCount<Long> pageRowCount,
                              @JsonProperty("availableChildStreamTypes") final List<String> availableChildStreamTypes,
                              @JsonProperty("markers") final List<Marker> markers) {
-        super(streamTypeName, classification, streamRange, streamRowCount, pageRange, pageRowCount, availableChildStreamTypes);
+//        super(streamTypeName, classification, streamRange, streamRowCount, pageRange, pageRowCount, availableChildStreamTypes);
+        super(streamTypeName, classification, dataRange, streamRowCount, pageRowCount, availableChildStreamTypes);
         this.markers = markers;
     }
 

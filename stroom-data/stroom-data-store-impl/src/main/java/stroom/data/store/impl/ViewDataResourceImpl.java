@@ -73,29 +73,11 @@ class ViewDataResourceImpl implements ViewDataResource {
 
     @Override
     public AbstractFetchDataResult fetch(final FetchDataRequest request) {
-        if (request.getPipeline() != null) {
-            return securityContext.secureResult(PermissionNames.VIEW_DATA_WITH_PIPELINE_PERMISSION, () -> {
-                final Long streamId = request.getStreamId();
+        final String permissionName = request.getPipeline() != null
+                ? PermissionNames.VIEW_DATA_WITH_PIPELINE_PERMISSION
+                : PermissionNames.VIEW_DATA_PERMISSION;
 
-                if (streamId != null) {
-                    return dataFetcher.getData(streamId, request.getChildStreamType(), request.getStreamRange(), request.getPageRange(),
-                            request.isMarkerMode(), request.getPipeline(), request.isShowAsHtml());
-                }
-
-                return null;
-            });
-
-        } else {
-            return securityContext.secureResult(PermissionNames.VIEW_DATA_PERMISSION, () -> {
-                final Long streamId = request.getStreamId();
-
-                if (streamId != null) {
-                    return dataFetcher.getData(streamId, request.getChildStreamType(), request.getStreamRange(), request.getPageRange(),
-                            request.isMarkerMode(), null, request.isShowAsHtml(), request.getExpandedSeverities());
-                }
-
-                return null;
-            });
-        }
+        return securityContext.secureResult(permissionName, () ->
+                dataFetcher.getData(request));
     }
 }

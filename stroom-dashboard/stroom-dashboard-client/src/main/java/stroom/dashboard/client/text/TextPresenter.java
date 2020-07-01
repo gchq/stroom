@@ -16,28 +16,20 @@
 
 package stroom.dashboard.client.text;
 
-import com.google.gwt.core.client.GWT;
-import com.google.gwt.core.client.Scheduler;
-import com.google.gwt.dom.client.Element;
-import com.google.gwt.event.dom.client.ClickEvent;
-import com.google.gwt.user.client.Timer;
-import com.google.inject.Inject;
-import com.google.inject.Provider;
-import com.google.web.bindery.event.shared.EventBus;
-import com.gwtplatform.mvp.client.HasUiHandlers;
-import com.gwtplatform.mvp.client.View;
 import stroom.alert.client.event.AlertEvent;
 import stroom.dashboard.client.main.AbstractComponentPresenter;
 import stroom.dashboard.client.main.Component;
 import stroom.dashboard.client.main.ComponentRegistry.ComponentType;
 import stroom.dashboard.client.main.Components;
+import stroom.dashboard.client.main.IndexConstants;
 import stroom.dashboard.client.table.TablePresenter;
 import stroom.dashboard.shared.ComponentConfig;
 import stroom.dashboard.shared.ComponentSettings;
 import stroom.dashboard.shared.Field;
-import stroom.dashboard.client.main.IndexConstants;
 import stroom.dashboard.shared.Row;
 import stroom.dashboard.shared.TextComponentSettings;
+import stroom.data.shared.DataRange;
+import stroom.data.shared.DataRange.Builder;
 import stroom.dispatch.client.Rest;
 import stroom.dispatch.client.RestFactory;
 import stroom.editor.client.presenter.EditorPresenter;
@@ -56,7 +48,17 @@ import stroom.security.shared.PermissionNames;
 import stroom.util.shared.DefaultLocation;
 import stroom.util.shared.EqualsUtil;
 import stroom.util.shared.Highlight;
-import stroom.util.shared.OffsetRange;
+
+import com.google.gwt.core.client.GWT;
+import com.google.gwt.core.client.Scheduler;
+import com.google.gwt.dom.client.Element;
+import com.google.gwt.event.dom.client.ClickEvent;
+import com.google.gwt.user.client.Timer;
+import com.google.inject.Inject;
+import com.google.inject.Provider;
+import com.google.web.bindery.event.shared.EventBus;
+import com.gwtplatform.mvp.client.HasUiHandlers;
+import com.gwtplatform.mvp.client.View;
 
 import java.util.ArrayList;
 import java.util.Collections;
@@ -104,7 +106,9 @@ public class TextPresenter extends AbstractComponentPresenter<TextPresenter.Text
         view.setUiHandlers(this);
     }
 
-    private void showData(final String data, final String classification, final Set<String> highlightStrings,
+    private void showData(final String data,
+                          final String classification,
+                          final Set<String> highlightStrings,
                           final boolean isHtml) {
         final List<Highlight> highlights = getHighlights(data, highlightStrings);
 
@@ -292,21 +296,37 @@ public class TextPresenter extends AbstractComponentPresenter<TextPresenter.Text
 
                         currentHighlightStrings = tablePresenter.getHighlights();
 
-                        OffsetRange<Long> currentStreamRange = new OffsetRange<>(sourceLocation.getPartNo() - 1, 1L);
-                        OffsetRange<Long> currentPageRange;
+//                        OffsetRange<Long> currentStreamRange = new OffsetRange<>(sourceLocation.getPartNo() - 1, 1L);
+
+                        Builder dataRangeBuilder = DataRange.builder(currentStreamId)
+                                .withPartNumber(sourceLocation.getPartNo() - 1) // make zero based
+                                .withChildStreamType(null);
+
+//                        request.setStreamId(currentStreamId);
+//                        request.setStreamRange(currentStreamRange);
+//                        request.setChildStreamType(null);
 
                         // If we have a source highlight then use it.
                         if (highlight != null) {
-                            currentPageRange = new OffsetRange<>(highlight.getFrom().getLineNo() - 1L, (long) highlight.getTo().getLineNo() - highlight.getFrom().getLineNo());
+//                            currentPageRange = new OffsetRange<>(highlight.getFrom().getLineNo() - 1L, (long) highlight.getTo().getLineNo() - highlight.getFrom().getLineNo());
+//                            currentPageRange = new OffsetRange<>(getStartLine(highlight), getLineCount(highlight));
+//                            request.setLocationFrom(highlight.getFrom());
+//                            request.setLocationTo(highlight.getTo());
+                            dataRangeBuilder
+                                    .fromLocation(highlight.getFrom())
+                                    .toLocation(highlight.getTo());
+
                         } else {
-                            currentPageRange = new OffsetRange<>(sourceLocation.getRecordNo() - 1L, 1L);
+                            // TODO assume this is segmented data
+//                            currentPageRange = new OffsetRange<>(sourceLocation.getRecordNo() - 0L, 1L);
+//                            request.setPageRange(new OffsetRange<>(sourceLocation.getRecordNo() - 1L, 1L));
+
+                            // Convert it to zero based
+                            dataRangeBuilder.withSegmentNumber(sourceLocation.getRecordNo() - 1L);
                         }
 
-                        final FetchDataRequest request = new FetchDataRequest();
-                        request.setStreamId(currentStreamId);
-                        request.setStreamRange(currentStreamRange);
-                        request.setPageRange(currentPageRange);
-                        request.setChildStreamType(null);
+                        final FetchDataRequest request = new FetchDataRequest(dataRangeBuilder.build());
+
                         request.setPipeline(textSettings.getPipeline());
                         request.setShowAsHtml(textSettings.isShowAsHtml());
 
@@ -323,6 +343,27 @@ public class TextPresenter extends AbstractComponentPresenter<TextPresenter.Text
         // If we aren't updating the data display then clear it.
         if (!updating) {
             showData("", null, null, isHtml);
+        }
+    }
+
+    private long getStartLine(final Highlight highlight) {
+        int lineNoFrom = highlight.getFrom().getLineNo();
+        if (lineNoFrom == 1) {
+            // Content starts on first line so convert to an offset as the server code
+            // works in zero based line numbers
+            return lineNoFrom - 1;
+        } else {
+            //
+            return lineNoFrom;
+        }
+    }
+
+    private long getLineCount(final Highlight highlight) {
+        int lineNoFrom = highlight.getFrom().getLineNo();
+        if (lineNoFrom == 1) {
+            return highlight.getTo().getLineNo() - highlight.getFrom().getLineNo() + 1;
+        } else {
+            return highlight.getTo().getLineNo() - highlight.getFrom().getLineNo();
         }
     }
 
@@ -484,7 +525,13 @@ public class TextPresenter extends AbstractComponentPresenter<TextPresenter.Text
                     currentStreamId,
                     currentPartNo != null ? currentPartNo : 1,
                     currentRecordNo != null ? currentRecordNo : 1);
-            BeginPipelineSteppingEvent.fire(this, currentStreamId, null, null, stepLocation, null);
+            BeginPipelineSteppingEvent.fire(
+                    this,
+                    currentStreamId,
+                    null,
+                    null,
+                    stepLocation,
+                    null);
         } else {
             AlertEvent.fireError(this, "No stream id", null);
         }

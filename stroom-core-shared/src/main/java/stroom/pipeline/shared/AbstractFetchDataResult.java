@@ -17,14 +17,15 @@
 package stroom.pipeline.shared;
 
 
+import stroom.data.shared.DataRange;
+import stroom.util.shared.RowCount;
+
 import com.fasterxml.jackson.annotation.JsonCreator;
 import com.fasterxml.jackson.annotation.JsonInclude;
 import com.fasterxml.jackson.annotation.JsonInclude.Include;
 import com.fasterxml.jackson.annotation.JsonProperty;
 import com.fasterxml.jackson.annotation.JsonSubTypes;
 import com.fasterxml.jackson.annotation.JsonTypeInfo;
-import stroom.util.shared.OffsetRange;
-import stroom.util.shared.RowCount;
 
 import java.util.List;
 
@@ -43,11 +44,13 @@ public abstract class AbstractFetchDataResult {
     @JsonProperty
     private final String classification;
     @JsonProperty
-    private final OffsetRange<Long> streamRange;
+    private final DataRange dataRange;
+//    @JsonProperty
+//    private final OffsetRange<Long> streamRange;
     @JsonProperty
     private final RowCount<Long> streamRowCount;
-    @JsonProperty
-    private final OffsetRange<Long> pageRange;
+//    @JsonProperty
+//    private final OffsetRange<Long> pageRange;
     @JsonProperty
     private final RowCount<Long> pageRowCount;
     @JsonProperty
@@ -56,16 +59,18 @@ public abstract class AbstractFetchDataResult {
     @JsonCreator
     public AbstractFetchDataResult(@JsonProperty("streamTypeName") final String streamTypeName,
                                    @JsonProperty("classification") final String classification,
-                                   @JsonProperty("streamRange") final OffsetRange<Long> streamRange,
+                                   @JsonProperty("dataRange") final DataRange dataRange,
+//                                   @JsonProperty("streamRange") final OffsetRange<Long> streamRange,
                                    @JsonProperty("streamRowCount") final RowCount<Long> streamRowCount,
-                                   @JsonProperty("pageRange") final OffsetRange<Long> pageRange,
+//                                   @JsonProperty("pageRange") final OffsetRange<Long> pageRange,
                                    @JsonProperty("pageRowCount") final RowCount<Long> pageRowCount,
                                    @JsonProperty("availableChildStreamTypes") final List<String> availableChildStreamTypes) {
         this.streamTypeName = streamTypeName;
         this.classification = classification;
-        this.streamRange = streamRange;
+        this.dataRange = dataRange;
+//        this.streamRange = streamRange;
         this.streamRowCount = streamRowCount;
-        this.pageRange = pageRange;
+//        this.pageRange = pageRange;
         this.pageRowCount = pageRowCount;
         this.availableChildStreamTypes = availableChildStreamTypes;
     }
@@ -78,17 +83,21 @@ public abstract class AbstractFetchDataResult {
         return classification;
     }
 
-    public OffsetRange<Long> getStreamRange() {
-        return streamRange;
+    public DataRange getDataRange() {
+        return dataRange;
     }
+
+//    public OffsetRange<Long> getStreamRange() {
+//        return streamRange;
+//    }
 
     public RowCount<Long> getStreamRowCount() {
         return streamRowCount;
     }
 
-    public OffsetRange<Long> getPageRange() {
-        return pageRange;
-    }
+//    public OffsetRange<Long> getPageRange() {
+//        return pageRange;
+//    }
 
     public RowCount<Long> getPageRowCount() {
         return pageRowCount;

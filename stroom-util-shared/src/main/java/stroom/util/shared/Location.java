@@ -29,7 +29,13 @@ import com.fasterxml.jackson.annotation.JsonTypeInfo;
         @JsonSubTypes.Type(value = DefaultLocation.class, name = "default")
 })
 public interface Location extends Comparable<Location> {
+    /**
+     * @return The line number of the location, one based.
+     */
     int getLineNo();
 
+    /**
+     * @return The column number of the location, one based.
+     */
     int getColNo();
 }
