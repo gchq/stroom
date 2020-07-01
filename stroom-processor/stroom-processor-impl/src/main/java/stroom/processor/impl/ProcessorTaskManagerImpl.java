@@ -17,6 +17,7 @@
 
 package stroom.processor.impl;
 
+import stroom.docref.DocRef;
 import stroom.entity.shared.ExpressionCriteria;
 import stroom.meta.api.MetaService;
 import stroom.meta.shared.FindMetaCriteria;
@@ -844,6 +845,7 @@ class ProcessorTaskManagerImpl implements ProcessorTaskManager {
                 updatedTracker.getMinMetaId(),
                 updatedTracker.getMinMetaCreateMs(),
                 updatedTracker.getMaxMetaCreateMs(),
+                filter.getPipeline(),
                 filter.isReprocess(),
                 requiredTasks);
 
@@ -933,6 +935,7 @@ class ProcessorTaskManagerImpl implements ProcessorTaskManager {
                                   final long minMetaId,
                                   final Long minMetaCreateMs,
                                   final Long maxMetaCreateMs,
+                                  final DocRef pipelineDocRef,
                                   final boolean reprocess,
                                   final int length) {
         if (reprocess) {
@@ -945,6 +948,10 @@ class ProcessorTaskManagerImpl implements ProcessorTaskManager {
             ExpressionOperator.Builder builder = new ExpressionOperator.Builder(Op.AND)
                     .addOperator(expression)
                     .addTerm(MetaFields.PARENT_ID, Condition.GREATER_THAN_OR_EQUAL_TO, minMetaId);
+
+            if (pipelineDocRef != null)
+                    builder.addTerm(MetaFields.PIPELINE, Condition.IS_DOC_REF, pipelineDocRef);
+
             if (minMetaCreateMs != null) {
                 builder = builder.addTerm(MetaFields.PARENT_CREATE_TIME, Condition.GREATER_THAN_OR_EQUAL_TO, DateUtil.createNormalDateTimeString(minMetaCreateMs));
             }
