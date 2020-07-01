@@ -198,7 +198,7 @@ class MetaDaoImpl implements MetaDao {
         // Standard fields.
         expressionMapper = expressionMapperFactory.create(metaExpressionMapper);
         expressionMapper.map(MetaFields.ID, meta.ID, Long::valueOf);
-        expressionMapper.map(MetaFields.PROCESSOR_ID, meta.PROCESSOR_ID, Integer::valueOf);
+        expressionMapper.map(MetaFields.META_INTERNAL_PROCESSOR_ID, meta.PROCESSOR_ID, Integer::valueOf);
         expressionMapper.multiMap(MetaFields.FEED, meta.FEED_ID, this::getFeedIds, true);
         expressionMapper.multiMap(MetaFields.FEED_NAME, meta.FEED_ID, this::getFeedIds);
         expressionMapper.multiMap(MetaFields.TYPE_NAME, meta.TYPE_ID, this::getTypeIds);
@@ -223,7 +223,7 @@ class MetaDaoImpl implements MetaDao {
         valueMapper.map(MetaFields.TYPE_NAME, metaType.NAME, ValString::create);
         valueMapper.map(MetaFields.PIPELINE, metaProcessor.PIPELINE_UUID, ValString::create);
         valueMapper.map(MetaFields.PARENT_ID, meta.PARENT_ID, ValLong::create);
-        valueMapper.map(MetaFields.PROCESSOR_ID, meta.PROCESSOR_ID, ValInteger::create);
+        valueMapper.map(MetaFields.META_INTERNAL_PROCESSOR_ID, meta.PROCESSOR_ID, ValInteger::create);
         valueMapper.map(MetaFields.STATUS, meta.STATUS, v -> Optional.ofNullable(MetaStatusId.getStatus(v))
                 .map(w -> (Val) ValString.create(w.getDisplayValue()))
                 .orElse(ValNull.INSTANCE));

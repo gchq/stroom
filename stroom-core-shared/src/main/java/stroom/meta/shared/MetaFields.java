@@ -42,7 +42,7 @@ public class MetaFields {
 
     // Id's
     public static final IdField ID = new IdField("Id");
-    public static final IdField PROCESSOR_ID = new IdField("Processor Id");
+    public static final IdField META_INTERNAL_PROCESSOR_ID = new IdField("Processor Id");
 
     // Times
     public static final DateField CREATE_TIME = new DateField("Create Time");
@@ -78,7 +78,7 @@ public class MetaFields {
         // Id's
         FIELDS.add(ID);
         FIELDS.add(PARENT_ID);
-        FIELDS.add(PROCESSOR_ID);
+        FIELDS.add(META_INTERNAL_PROCESSOR_ID);
 
         // Times
         FIELDS.add(CREATE_TIME);
