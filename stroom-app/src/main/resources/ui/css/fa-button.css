@@ -39,7 +39,7 @@
 	padding: 0;
 	overflow: hidden;
 	position: relative;
-	color: #5398ff;
+	color: #2196f3; /* Not applicable to SVG buttons */
 	font-size: 16px;
 	opacity: 1;
 }

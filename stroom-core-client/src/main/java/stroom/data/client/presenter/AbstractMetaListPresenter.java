@@ -329,21 +329,30 @@ public abstract class AbstractMetaListPresenter extends MyPresenterWidget<DataGr
                 final Rest<List<MetaInfoSection>> rest = restFactory.create();
                 rest
                         .onSuccess(result -> {
-                            final StringBuilder html = new StringBuilder();
+                            final TooltipUtil.Builder builder = TooltipUtil.builder();
 
-                            for (int i = 0; i < result.size(); i++) {
-                                final MetaInfoSection section = result.get(i);
-                                TooltipUtil.addHeading(html, section.getTitle());
-                                section.getEntries().forEach(entry -> TooltipUtil.addRowData(html, entry.getKey(), entry.getValue()));
-                                if (i < result.size() - 1) {
-                                    TooltipUtil.addBreak(html);
+                            builder.addTable(tableBuilder -> {
+                                for (int i = 0; i < result.size(); i++) {
+                                    final MetaInfoSection section = result.get(i);
+                                    tableBuilder.addHeaderRow(section.getTitle());
+                                    section.getEntries()
+                                            .forEach(entry ->
+                                                    tableBuilder.addRow(entry.getKey(), entry.getValue()));
+                                    if (i < result.size() - 1) {
+                                        tableBuilder.addBlankRow();
+                                    }
                                 }
-                            }
+                                return tableBuilder.build();
+                            });
 
-                            tooltipPresenter.setHTML(html.toString());
+                            tooltipPresenter.setHTML(builder.build());
                             final PopupPosition popupPosition = new PopupPosition(x, y);
-                            ShowPopupEvent.fire(AbstractMetaListPresenter.this, tooltipPresenter, PopupType.POPUP,
-                                    popupPosition, null);
+                            ShowPopupEvent.fire(
+                                    AbstractMetaListPresenter.this,
+                                    tooltipPresenter,
+                                    PopupType.POPUP,
+                                    popupPosition,
+                                    null);
                         })
                         .call(META_RESOURCE)
                         .fetchFullMetaInfo(row.getMeta().getId());

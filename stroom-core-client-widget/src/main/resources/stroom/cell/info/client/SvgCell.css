@@ -15,6 +15,10 @@
  */
 
 .icon {
+	cursor: default;
+}
+
+.button {
 	cursor: pointer;
 }
 

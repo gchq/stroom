@@ -38,11 +38,23 @@ public class SvgPreset extends SvgIcon {
         return enabled;
     }
 
+    public boolean hasTitle() {
+        return title != null && !title.isEmpty();
+    }
+
+    public SvgPreset withoutTitle() {
+        return new SvgPreset(getUrl(), getWidth(), getHeight(), null, isEnabled());
+    }
+
     public SvgPreset title(final String title) {
         return new SvgPreset(getUrl(), getWidth(), getHeight(), title, isEnabled());
     }
 
     public SvgPreset enabled(final boolean enabled) {
         return new SvgPreset(getUrl(), getWidth(), getHeight(), getTitle(), enabled);
+    }
+
+    public SvgPreset with(final String title, final boolean enabled) {
+        return new SvgPreset(getUrl(), getWidth(), getHeight(), title, enabled);
     }
 }

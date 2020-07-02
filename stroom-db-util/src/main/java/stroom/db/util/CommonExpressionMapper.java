@@ -41,10 +41,13 @@ public final class CommonExpressionMapper implements Function<ExpressionItem, Co
 
     private final Map<String, Function<ExpressionTerm, Condition>> termHandlers = new HashMap<>();
     private final Set<String> ignoredFields = new HashSet<>();
-    private final boolean ignoreMissingHandler;
+    private final Function<ExpressionItem, Condition> delegateItemHandler;
 
-    public CommonExpressionMapper(final boolean ignoreMissingHandler) {
-        this.ignoreMissingHandler = ignoreMissingHandler;
+    public CommonExpressionMapper(){
+        this.delegateItemHandler = null;
+    }
+    public CommonExpressionMapper(final Function<ExpressionItem, Condition> delegateItemHandler) {
+        this.delegateItemHandler = delegateItemHandler;
     }
 
     public void addHandler(final AbstractField dataSourceField,
@@ -78,7 +81,10 @@ public final class CommonExpressionMapper implements Function<ExpressionItem, Co
                 if (termHandler != null) {
                     result = termHandler.apply(term);
 
-                } else if (!ignoreMissingHandler && !ignoredFields.contains(term.getField())) {
+                } else if (delegateItemHandler != null){
+                    result = delegateItemHandler.apply(term);
+                }
+                else if (!ignoredFields.contains(term.getField())) {
                     throw new RuntimeException("No term handler supplied for term '" + term.getField() + "'");
                 }
 

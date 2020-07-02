@@ -16,18 +16,6 @@
 
 package stroom.importexport.client.presenter;
 
-import com.google.gwt.cell.client.TextCell;
-import com.google.gwt.core.shared.GWT;
-import com.google.gwt.user.cellview.client.Column;
-import com.google.gwt.user.cellview.client.Header;
-import com.google.gwt.user.client.ui.Widget;
-import com.google.inject.Inject;
-import com.google.web.bindery.event.shared.EventBus;
-import com.gwtplatform.mvp.client.MyPresenter;
-import com.gwtplatform.mvp.client.View;
-import com.gwtplatform.mvp.client.annotations.ProxyCodeSplit;
-import com.gwtplatform.mvp.client.annotations.ProxyEvent;
-import com.gwtplatform.mvp.client.proxy.Proxy;
 import stroom.alert.client.event.AlertEvent;
 import stroom.alert.client.event.ConfirmEvent;
 import stroom.cell.info.client.InfoColumn;
@@ -58,6 +46,21 @@ import stroom.widget.popup.client.presenter.PopupSize;
 import stroom.widget.popup.client.presenter.PopupUiHandlers;
 import stroom.widget.popup.client.presenter.PopupView.PopupType;
 import stroom.widget.tooltip.client.presenter.TooltipPresenter;
+import stroom.widget.tooltip.client.presenter.TooltipUtil;
+import stroom.widget.tooltip.client.presenter.TooltipUtil.Builder;
+
+import com.google.gwt.cell.client.TextCell;
+import com.google.gwt.core.shared.GWT;
+import com.google.gwt.user.cellview.client.Column;
+import com.google.gwt.user.cellview.client.Header;
+import com.google.gwt.user.client.ui.Widget;
+import com.google.inject.Inject;
+import com.google.web.bindery.event.shared.EventBus;
+import com.gwtplatform.mvp.client.MyPresenter;
+import com.gwtplatform.mvp.client.View;
+import com.gwtplatform.mvp.client.annotations.ProxyCodeSplit;
+import com.gwtplatform.mvp.client.annotations.ProxyEvent;
+import com.gwtplatform.mvp.client.proxy.Proxy;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -271,32 +274,37 @@ public class ImportConfigConfirmPresenter extends
 
             @Override
             protected void showInfo(final ImportState action, final int x, final int y) {
-                final StringBuilder builder = new StringBuilder();
+
+                final Builder builder = TooltipUtil.builder();
                 if (action.getMessageList().size() > 0) {
-                    builder.append("<b>Messages:</b><br/>");
-                    for (final Message msg : action.getMessageList()) {
-                        builder.append(msg.getSeverity().getDisplayValue());
-                        builder.append(": ");
-                        builder.append(msg.getMessage());
-                        builder.append("<br/>");
-                    }
+                    builder
+                            .addHeading("Messages:")
+                            .addTable(tableBuilder -> {
+                                for (final Message msg : action.getMessageList()) {
+                                    tableBuilder.addRow(
+                                            msg.getSeverity().getDisplayValue(),
+                                            msg.getMessage());
+                                }
+                                return tableBuilder.build();
+                            });
                 }
 
                 if (action.getUpdatedFieldList().size() > 0) {
-                    if (builder.length() > 0) {
-                        builder.append("<br/>");
+                    if (action.getMessageList().size() > 0) {
+                        builder.addBreak();
                     }
 
-                    builder.append("<b>Fields Updated:</b><br/>");
-                    for (final String string : action.getUpdatedFieldList()) {
-                        builder.append(string);
-                        builder.append("<br/>");
-                    }
+                    builder.addHeading("Fields Updated:");
+                    action.getUpdatedFieldList().forEach(builder::addLine);
                 }
-                tooltipPresenter.setHTML(builder.toString());
+                tooltipPresenter.setHTML(builder.build());
 
                 final PopupPosition popupPosition = new PopupPosition(x, y);
-                ShowPopupEvent.fire(ImportConfigConfirmPresenter.this, tooltipPresenter, PopupType.POPUP, popupPosition,
+                ShowPopupEvent.fire(
+                        ImportConfigConfirmPresenter.this,
+                        tooltipPresenter,
+                        PopupType.POPUP,
+                        popupPosition,
                         null);
             }
         };
@@ -395,9 +403,13 @@ public class ImportConfigConfirmPresenter extends
 
     public interface ImportConfigConfirmView extends View {
         void setDataGridView(View view);
+
         Long getEnableFromDate();
+
         boolean isEnableFilters();
-        void setEnableFilters (boolean enableFilters);
+
+        void setEnableFilters(boolean enableFilters);
+
         Widget getDataGridViewWidget();
     }
 

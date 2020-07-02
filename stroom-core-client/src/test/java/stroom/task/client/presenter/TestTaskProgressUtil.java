@@ -17,12 +17,13 @@
 package stroom.task.client.presenter;
 
 
-import org.junit.jupiter.api.Test;
 import stroom.node.shared.Node;
 import stroom.task.shared.FindTaskProgressCriteria;
 import stroom.task.shared.TaskId;
 import stroom.task.shared.TaskProgress;
 import stroom.util.shared.Sort.Direction;
+
+import org.junit.jupiter.api.Test;
 
 import java.util.HashMap;
 import java.util.List;
@@ -35,53 +36,54 @@ class TestTaskProgressUtil {
     @Test
     void testSortByAge() {
         final FindTaskProgressCriteria criteria = new FindTaskProgressCriteria();
+        final TaskManagerTreeAction treeAction = new TaskManagerTreeAction();
 
         final Map<TaskId, TaskProgress> totalMap = createMap(criteria);
         List<TaskProgress> sortedList;
 
         // Test sorting by age.
         criteria.setSort(FindTaskProgressCriteria.FIELD_AGE, Direction.ASCENDING, false);
-        sortedList = TaskProgressUtil.createList(totalMap, criteria);
+        sortedList = TaskProgressUtil.createList(totalMap, criteria, treeAction);
         testList(sortedList, (v1, v2) -> v1.getAgeMs() <= v2.getAgeMs());
 
         criteria.setSort(FindTaskProgressCriteria.FIELD_AGE, Direction.DESCENDING, false);
-        sortedList = TaskProgressUtil.createList(totalMap, criteria);
+        sortedList = TaskProgressUtil.createList(totalMap, criteria, treeAction);
         testList(sortedList, (v1, v2) -> v1.getAgeMs() >= v2.getAgeMs());
 
         // Test sorting by submit time.
         criteria.setSort(FindTaskProgressCriteria.FIELD_SUBMIT_TIME, Direction.ASCENDING, false);
-        sortedList = TaskProgressUtil.createList(totalMap, criteria);
+        sortedList = TaskProgressUtil.createList(totalMap, criteria, treeAction);
         testList(sortedList, (v1, v2) -> v1.getSubmitTimeMs() <= v2.getSubmitTimeMs());
 
         criteria.setSort(FindTaskProgressCriteria.FIELD_SUBMIT_TIME, Direction.DESCENDING, false);
-        sortedList = TaskProgressUtil.createList(totalMap, criteria);
+        sortedList = TaskProgressUtil.createList(totalMap, criteria, treeAction);
         testList(sortedList, (v1, v2) -> v1.getSubmitTimeMs() >= v2.getSubmitTimeMs());
 
         // Test sorting by name.
         criteria.setSort(FindTaskProgressCriteria.FIELD_NAME, Direction.ASCENDING, false);
-        sortedList = TaskProgressUtil.createList(totalMap, criteria);
+        sortedList = TaskProgressUtil.createList(totalMap, criteria, treeAction);
         testList(sortedList, (v1, v2) -> v1.getTaskName().compareTo(v2.getTaskName()) <= 0);
 
         criteria.setSort(FindTaskProgressCriteria.FIELD_NAME, Direction.DESCENDING, false);
-        sortedList = TaskProgressUtil.createList(totalMap, criteria);
+        sortedList = TaskProgressUtil.createList(totalMap, criteria, treeAction);
         testList(sortedList, (v1, v2) -> v1.getTaskName().compareTo(v2.getTaskName()) >= 0);
 
         // Test sorting by user.
         criteria.setSort(FindTaskProgressCriteria.FIELD_USER, Direction.ASCENDING, false);
-        sortedList = TaskProgressUtil.createList(totalMap, criteria);
+        sortedList = TaskProgressUtil.createList(totalMap, criteria, treeAction);
         testList(sortedList, (v1, v2) -> v1.getUserName().compareTo(v2.getUserName()) <= 0);
 
         criteria.setSort(FindTaskProgressCriteria.FIELD_USER, Direction.DESCENDING, false);
-        sortedList = TaskProgressUtil.createList(totalMap, criteria);
+        sortedList = TaskProgressUtil.createList(totalMap, criteria, treeAction);
         testList(sortedList, (v1, v2) -> v1.getUserName().compareTo(v2.getUserName()) >= 0);
 
         // Test sorting by node.
         criteria.setSort(FindTaskProgressCriteria.FIELD_NODE, Direction.ASCENDING, false);
-        sortedList = TaskProgressUtil.createList(totalMap, criteria);
+        sortedList = TaskProgressUtil.createList(totalMap, criteria, treeAction);
         testList(sortedList, (v1, v2) -> v1.getNodeName().compareTo(v2.getNodeName()) <= 0);
 
         criteria.setSort(FindTaskProgressCriteria.FIELD_NODE, Direction.DESCENDING, false);
-        sortedList = TaskProgressUtil.createList(totalMap, criteria);
+        sortedList = TaskProgressUtil.createList(totalMap, criteria, treeAction);
         testList(sortedList, (v1, v2) -> v1.getNodeName().compareTo(v2.getNodeName()) >= 0);
     }
 

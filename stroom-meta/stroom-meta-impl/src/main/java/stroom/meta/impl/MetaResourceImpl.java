@@ -40,7 +40,10 @@ class MetaResourceImpl implements MetaResource {
 
     @Override
     public Integer updateStatus(final UpdateStatusRequest request) {
-        return metaServiceProvider.get().updateStatus(request.getCriteria(), request.getCurrentStatus(), request.getNewStatus());
+        return metaServiceProvider.get().updateStatus(
+                request.getCriteria(),
+                request.getCurrentStatus(),
+                request.getNewStatus());
     }
 
     @Override
@@ -62,4 +65,5 @@ class MetaResourceImpl implements MetaResource {
     public List<MetaInfoSection> fetchFullMetaInfo(final long id) {
         return metaServiceProvider.get().fetchFullMetaInfo(id);
     }
+
 }

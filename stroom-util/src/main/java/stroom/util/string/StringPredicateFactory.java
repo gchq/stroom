@@ -6,6 +6,7 @@ import stroom.util.logging.LambdaLoggerFactory;
 import stroom.util.logging.LogUtil;
 
 import javax.validation.constraints.NotNull;
+import java.util.function.Function;
 import java.util.function.Predicate;
 import java.util.regex.Pattern;
 
@@ -17,7 +18,7 @@ public class StringPredicateFactory {
     private static final LambdaLogger LOGGER = LambdaLoggerFactory.getLogger(StringPredicateFactory.class);
 
     // Treat brackets as word separators, e.g. "Events (XML)"
-    private static final Pattern DEFAULT_SEPARATOR_CHAR_CLASS = Pattern.compile("[ _\\-()\\[\\]]");
+    private static final Pattern DEFAULT_SEPARATOR_CHAR_CLASS = Pattern.compile("[ _\\-()\\[\\].]");
 
     private static final Pattern CASE_INSENS_WORD_LETTER_CHAR_CLASS = Pattern.compile("[a-z0-9]");
 
@@ -35,6 +36,10 @@ public class StringPredicateFactory {
             "((?<=[a-z])(?=[A-Z])|(?<=[0-9])(?=[A-Z])|(?<=[a-zA-Z])(?=[0-9])| )");
     private static final Pattern CAMEL_CASE_ABBREVIATIONS_PATTERN = Pattern.compile("([A-Z]+)([A-Z][a-z0-9])");
 
+    public static final String WILDCARD_STR = "*";
+    public static final char NOT_OPERATOR_CHAR = '!';
+    public static final String NOT_OPERATOR_STR = Character.toString(NOT_OPERATOR_CHAR);
+
     // Static util methods only
     private StringPredicateFactory() {
     }
@@ -44,6 +49,21 @@ public class StringPredicateFactory {
      */
     public static Predicate<String> createFuzzyMatchPredicate(final String userInput) {
         return createFuzzyMatchPredicate(userInput, DEFAULT_SEPARATOR_CHAR_CLASS);
+    }
+
+    public static <T> Predicate<T> createFuzzyMatchPredicate(final String userInput,
+                                                             final Function<T, String> valueExtractor) {
+
+        Predicate<String> stringPredicate = createFuzzyMatchPredicate(userInput);
+        return toNullSafePredicate(false,
+                (T obj) -> {
+                    final String valueUnderTest = valueExtractor.apply(obj);
+                    if (valueUnderTest == null) {
+                        return false;
+                    } else {
+                        return stringPredicate.test(valueUnderTest);
+                    }
+                });
     }
 
     /**
@@ -64,28 +84,53 @@ public class StringPredicateFactory {
      */
     public static Predicate<String> createFuzzyMatchPredicate(final String userInput,
                                                               final Pattern separatorCharacterClass) {
+        // TODO should we trim the input to remove leading/trailing spaces?
+
         LOGGER.trace("Creating predicate for userInput [{}] and separators {}", userInput, separatorCharacterClass);
+
+        String modifiedInput = userInput;
+        boolean isNegated = false;
+
         Predicate<String> predicate;
-        if (userInput == null || userInput.isEmpty()) {
+        if (modifiedInput == null || modifiedInput.isEmpty()) {
             LOGGER.trace("Creating null input predicate");
             // No input so get everything
             predicate = stringUnderTest -> true;
-        } else if (userInput.startsWith("/")) {
-            // remove the / marker char from the beginning
-            predicate = createRegexPredicate(userInput.substring(1));
-        } else if (userInput.startsWith("?")) {
-            // remove the ? marker char from the beginning
-            predicate = createWordBoundaryPredicate(userInput.substring(1), separatorCharacterClass);
-        } else if (userInput.startsWith("^") && userInput.endsWith("$")) {
-            predicate = createCaseInsensitiveExactMatchPredicate(userInput);
-        } else if (userInput.endsWith("$")) {
-            // remove the $ marker char from the end
-            predicate = createCaseInsensitiveEndsWithPredicate(userInput.substring(0, userInput.length() - 1));
-        } else if (userInput.startsWith("^")) {
-            // remove the ^ marker char from the beginning
-            predicate = createCaseInsensitiveStartsWithPredicate(userInput.substring(1));
-        } else {
-            predicate = createCharsAnywherePredicate(userInput);
+        }else {
+            if (modifiedInput.startsWith(NOT_OPERATOR_STR)) {
+                modifiedInput = modifiedInput.substring(1);
+                LOGGER.debug("Input after NOT operator removal [{}]", modifiedInput);
+                isNegated = true;
+            }
+
+            if (modifiedInput.isEmpty()) {
+                LOGGER.trace("Creating null input predicate");
+                // No input so get everything
+                predicate = stringUnderTest -> true;
+            } else if (modifiedInput.startsWith("/")) {
+                // remove the / marker char from the beginning
+                predicate = createRegexPredicate(modifiedInput.substring(1));
+            } else if (modifiedInput.startsWith("?")) {
+                // remove the ? marker char from the beginning
+                predicate = createWordBoundaryPredicate(modifiedInput.substring(1), separatorCharacterClass);
+            } else if (modifiedInput.startsWith("^") && modifiedInput.endsWith("$")) {
+                predicate = createCaseInsensitiveExactMatchPredicate(modifiedInput);
+            } else if (modifiedInput.endsWith("$")) {
+                // remove the $ marker char from the end
+                predicate = createCaseInsensitiveEndsWithPredicate(modifiedInput.substring(0, modifiedInput.length() - 1));
+            } else if (modifiedInput.startsWith("^")) {
+                // remove the ^ marker char from the beginning
+                predicate = createCaseInsensitiveStartsWithPredicate(modifiedInput.substring(1));
+            } else if (modifiedInput.contains(WILDCARD_STR)) {
+                predicate = createWildCardedPredicate(modifiedInput);
+            } else {
+                predicate = createCharsAnywherePredicate(modifiedInput);
+            }
+        }
+
+        if (isNegated) {
+            predicate = predicate.negate();
+            LOGGER.debug("Negating predicate");
         }
 
         if (LOGGER.isTraceEnabled()) {
@@ -162,7 +207,15 @@ public class StringPredicateFactory {
             return str -> false;
         }
 
-        return pattern.asPredicate();
+        final Predicate<String> predicate;
+        try {
+            predicate = pattern.asPredicate();
+        } catch (Exception e) {
+            LOGGER.trace(() ->
+                    LogUtil.message("Error converting pattern {} to predicate, due to {}", userInput, e.getMessage()));
+            return str -> false;
+        }
+        return toNullSafePredicate(false, predicate);
     }
 
     @NotNull
@@ -181,30 +234,35 @@ public class StringPredicateFactory {
                 userInput, separatorCharacterClass);
 
         return toNullSafePredicate(false, stringUnderTest -> {
-            if (CAMEL_CASE_PATTERN.matcher(stringUnderTest).matches()) {
-                LOGGER.trace("stringUnderTest [{}] is (C|c)amelCase", stringUnderTest);
+            final String cleanedString = cleanStringUnderTestForWordBoundaryMatching(stringUnderTest);
 
-                // replace stuff like SQLScript with "SQL Script"
-                String separatedStringUnderTest = CAMEL_CASE_ABBREVIATIONS_PATTERN
-                        .matcher(stringUnderTest)
-                        .replaceAll("$1 $2");
-
-                LOGGER.trace("separatedStringUnderTest: [{}]", separatedStringUnderTest);
-
-                // Now split on camel case word boundaries (or spaces added above)
-                separatedStringUnderTest = CAMEL_CASE_SPLIT_PATTERN
-                        .matcher(separatedStringUnderTest)
-                        .replaceAll(" ");
-
-                LOGGER.trace("separatedStringUnderTest: [{}]", separatedStringUnderTest);
-
-                // Now we have split the words with spaces, use the separator predicate
-                return separatorPredicate.test(separatedStringUnderTest);
-            } else {
-                LOGGER.trace("stringUnderTest [{}] has word separators", stringUnderTest);
-                return separatorPredicate.test(stringUnderTest);
-            }
+            LOGGER.trace("cleaned stringUnderTest [{}] has word separators", stringUnderTest);
+            return separatorPredicate.test(cleanedString);
         });
+    }
+
+    private static String cleanStringUnderTestForWordBoundaryMatching(final String stringUnderTest) {
+        if (CAMEL_CASE_PATTERN.matcher(stringUnderTest).matches()) {
+            LOGGER.trace("stringUnderTest [{}] is (C|c)amelCase", stringUnderTest);
+
+            // replace stuff like SQLScript with "SQL Script"
+            String separatedStringUnderTest = CAMEL_CASE_ABBREVIATIONS_PATTERN
+                    .matcher(stringUnderTest)
+                    .replaceAll("$1 $2");
+
+            LOGGER.trace("separatedStringUnderTest: [{}]", separatedStringUnderTest);
+
+            // Now split on camel case word boundaries (or spaces added above)
+            separatedStringUnderTest = CAMEL_CASE_SPLIT_PATTERN
+                    .matcher(separatedStringUnderTest)
+                    .replaceAll(" ");
+
+            LOGGER.trace("separatedStringUnderTest: [{}]", separatedStringUnderTest);
+
+            return separatedStringUnderTest;
+        } else {
+            return stringUnderTest;
+        }
     }
 
     @NotNull
@@ -297,16 +355,18 @@ public class StringPredicateFactory {
 
     @NotNull
     private static Predicate<String> createCharsAnywherePredicate(final String userInput) {
-        LOGGER.trace("creating chars appear anywhere in correct order predicate");
+        LOGGER.trace("Creating chars appear anywhere in correct order predicate");
         // All lower case so match on each char appearing somewhere in the text
         // in the correct order
         final String lowerCaseInput = userInput.toLowerCase();
         final StringBuilder patternBuilder = new StringBuilder();
         for (int i = 0; i < lowerCaseInput.length(); i++) {
-            patternBuilder.append(".*?");
+            patternBuilder.append(".*?"); // no-greedy match all
 
             char chr = userInput.charAt(i);
-            if (Character.isLetterOrDigit(chr)) {
+            if (chr == '*') {
+                patternBuilder.append(".*?"); // no-greedy match all
+            } else if (Character.isLetterOrDigit(chr)) {
                 patternBuilder.append(chr);
             } else {
                 // Might be a special char so escape it
@@ -315,14 +375,37 @@ public class StringPredicateFactory {
         }
         patternBuilder.append(".*?");
         final Pattern pattern = Pattern.compile(patternBuilder.toString(), Pattern.CASE_INSENSITIVE);
-        LOGGER.trace("Using pattern: {}", pattern);
+        LOGGER.trace("Using case insensitive pattern: {}", pattern);
         return toNullSafePredicate(false, pattern.asPredicate());
+    }
+
+    @NotNull
+    private static Predicate<String> createWildCardedPredicate(final String userInput) {
+        LOGGER.trace("Creating case sensitive wild-carded predicate");
+        // Like a case sensitive exact match but with wildcards
+        final StringBuilder patternBuilder = new StringBuilder();
+        for (int i = 0; i < userInput.length(); i++) {
+
+            char chr = userInput.charAt(i);
+            if (chr == '*') {
+                patternBuilder.append(".*?"); // no-greedy match all
+            } else if (Character.isLetterOrDigit(chr)) {
+                patternBuilder.append(chr);
+            } else {
+                // Might be a special char so escape it
+                patternBuilder.append(Pattern.quote(String.valueOf(chr)));
+            }
+        }
+        final Pattern pattern = Pattern.compile(patternBuilder.toString());
+        LOGGER.trace("Using pattern: {}", pattern);
+        // Use asMatchPredicate rather than asPredicate so we match on the full string
+        return toNullSafePredicate(false, pattern.asMatchPredicate());
     }
 
 
     @NotNull
     private static Predicate<String> createCaseInsensitiveExactMatchPredicate(final String userInput) {
-        LOGGER.trace("creating case insensitive exact match predicate");
+        LOGGER.trace("Creating case insensitive exact match predicate");
         final String lowerCaseInput = userInput.substring(1)
                 .substring(0, userInput.length() - 2);
         return toNullSafePredicate(false, stringUnderTest ->

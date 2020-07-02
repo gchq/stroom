@@ -2,6 +2,9 @@ package stroom.meta.impl;
 
 import stroom.dashboard.expression.v1.Val;
 import stroom.data.retention.api.DataRetentionRuleAction;
+import stroom.data.retention.shared.DataRetentionDeleteSummary;
+import stroom.data.retention.shared.DataRetentionRules;
+import stroom.data.retention.shared.FindDataRetentionImpactCriteria;
 import stroom.datasource.api.v2.AbstractField;
 import stroom.entity.shared.ExpressionCriteria;
 import stroom.meta.api.MetaProperties;
@@ -63,6 +66,9 @@ public interface MetaDao extends Clearable {
     int updateStatus(FindMetaCriteria criteria, Status currentStatus, Status newStatus, long statusTime);
 
     int delete(List<Long> metaIdList);
+
+    List<DataRetentionDeleteSummary> getRetentionDeletionSummary(final DataRetentionRules rules,
+                                                                 final FindDataRetentionImpactCriteria criteria);
 
     /**
      * @param ruleActions Must be sorted with highest priority rule first

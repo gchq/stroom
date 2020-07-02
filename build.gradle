@@ -279,7 +279,7 @@ ext.libs = [
         //hibernate_validator            : "org.hibernate:hibernate-validator", // version controlled by DW BOM
         //hibernate_validator            : "org.hibernate:hibernate-validator:6.1.0.Final",
         hibernate_validator            : "org.hibernate:hibernate-validator:5.4.3.Final",
-        vavr                           : "io.vavr:vavr:0.9.0",
+        vavr                           : "io.vavr:vavr:0.10.3",
         wiremock                       : 'com.github.tomakehurst:wiremock:2.12.0',
         wix_embedded_mysql             : "com.wix:wix-embedded-mysql:4.6.1",
         ws_rs_api                      : "javax.ws.rs:javax.ws.rs-api:2.1",

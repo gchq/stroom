@@ -69,7 +69,8 @@ public class ExplorerTreeFilterBuilder {
             }
         }
 
-        if ((filter == null && this.nameFilter == null) || (filter != null && filter.equals(this.nameFilter))) {
+        if ((filter == null && this.nameFilter == null)
+                || (filter != null && filter.equals(this.nameFilter))) {
             return false;
         }
 
@@ -83,6 +84,11 @@ public class ExplorerTreeFilterBuilder {
         final boolean nameFilterChange = this.nameFilterChange;
         this.nameFilterChange = false;
 
-        return new ExplorerTreeFilter(SetUtil.copySet(includedTypes), SetUtil.copySet(tags), SetUtil.copySet(requiredPermissions), nameFilter, nameFilterChange);
+        return new ExplorerTreeFilter(
+                SetUtil.copySet(includedTypes),
+                SetUtil.copySet(tags),
+                SetUtil.copySet(requiredPermissions),
+                nameFilter,
+                nameFilterChange);
     }
 }

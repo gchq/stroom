@@ -20,6 +20,8 @@ import stroom.db.util.JooqUtil;
 import stroom.meta.impl.MetaKeyDao;
 import stroom.meta.shared.MetaFields;
 
+import org.jooq.impl.DSL;
+
 import javax.inject.Inject;
 import javax.inject.Singleton;
 import java.util.HashMap;
@@ -82,6 +84,20 @@ class MetaKeyDaoImpl implements MetaKeyDao {
     @Override
     public Optional<Integer> getIdForName(final String name) {
         return Optional.ofNullable(nameToIdCache.get(name));
+    }
+
+    @Override
+    public Integer getMinId() {
+        return JooqUtil.contextResult(metaDbConnProvider, context ->
+                context.select(DSL.min(META_KEY.ID)).from(META_KEY).
+                        fetchOptional().map(r -> r.value1())).orElse(1);
+    }
+
+    @Override
+    public Integer getMaxId() {
+        return JooqUtil.contextResult(metaDbConnProvider, context ->
+                context.select(DSL.max(META_KEY.ID)).from(META_KEY).
+                        fetchOptional().map(r -> r.value1())).orElse(MetaFields.getExtendedFields().size());
     }
 
     private void setup() {

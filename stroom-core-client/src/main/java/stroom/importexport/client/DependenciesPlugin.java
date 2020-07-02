@@ -16,22 +16,24 @@
 
 package stroom.importexport.client;
 
-import com.google.inject.Inject;
-import com.google.inject.Provider;
-import com.google.web.bindery.event.shared.EventBus;
 import stroom.core.client.ContentManager;
 import stroom.core.client.MenuKeys;
-import stroom.importexport.client.presenter.DependenciesPresenter;
-import stroom.menubar.client.event.BeforeRevealMenubarEvent;
 import stroom.core.client.presenter.MonitoringPlugin;
+import stroom.importexport.client.presenter.DependenciesTabPresenter;
+import stroom.menubar.client.event.BeforeRevealMenubarEvent;
 import stroom.security.client.api.ClientSecurityContext;
 import stroom.svg.client.SvgPresets;
 import stroom.widget.menu.client.presenter.IconMenuItem;
 
-public class DependenciesPlugin extends MonitoringPlugin<DependenciesPresenter> {
+import com.google.inject.Inject;
+import com.google.inject.Provider;
+import com.google.web.bindery.event.shared.EventBus;
+
+public class DependenciesPlugin extends MonitoringPlugin<DependenciesTabPresenter> {
     @Inject
-    public DependenciesPlugin(final EventBus eventBus, final ContentManager eventManager,
-                              final Provider<DependenciesPresenter> presenterProvider,
+    public DependenciesPlugin(final EventBus eventBus,
+                              final ContentManager eventManager,
+                              final Provider<DependenciesTabPresenter> presenterProvider,
                               final ClientSecurityContext securityContext) {
         super(eventBus, eventManager, presenterProvider, securityContext);
     }
@@ -40,7 +42,14 @@ public class DependenciesPlugin extends MonitoringPlugin<DependenciesPresenter> 
     protected void addChildItems(final BeforeRevealMenubarEvent event) {
 //        if (getSecurityContext().hasAppPermission(DBTableStatus.MANAGE_DB_PERMISSION)) {
         event.getMenuItems().addMenuItem(MenuKeys.TOOLS_MENU,
-                new IconMenuItem(150, SvgPresets.DEPENDENCIES, SvgPresets.DEPENDENCIES, "Dependencies", null, true, this::open));
+                new IconMenuItem(
+                        150,
+                        SvgPresets.DEPENDENCIES,
+                        SvgPresets.DEPENDENCIES,
+                        "Dependencies",
+                        null,
+                        true,
+                        this::open));
 //        }
     }
 }

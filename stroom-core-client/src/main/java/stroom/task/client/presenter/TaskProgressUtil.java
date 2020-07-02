@@ -19,13 +19,12 @@ package stroom.task.client.presenter;
 import stroom.task.shared.FindTaskProgressCriteria;
 import stroom.task.shared.TaskId;
 import stroom.task.shared.TaskProgress;
-import stroom.util.shared.ResultPage;
 import stroom.util.shared.CompareUtil;
 import stroom.util.shared.Expander;
 import stroom.util.shared.PageRequest;
+import stroom.util.shared.ResultPage;
 import stroom.util.shared.Sort;
 import stroom.util.shared.Sort.Direction;
-import stroom.widget.customdatebox.client.ClientDateUtil;
 
 import java.util.ArrayList;
 import java.util.Collection;
@@ -42,7 +41,9 @@ class TaskProgressUtil {
     private TaskProgressUtil() {
     }
 
-    static ResultPage<TaskProgress> combine(final FindTaskProgressCriteria criteria, final Collection<List<TaskProgress>> input) {
+    static ResultPage<TaskProgress> combine(final FindTaskProgressCriteria criteria,
+                                            final Collection<List<TaskProgress>> input,
+                                            final TaskManagerTreeAction treeAction) {
         // Validate criteria.
         criteria.validateSortField();
 
@@ -56,7 +57,7 @@ class TaskProgressUtil {
                     .flatMap(List::stream)
                     .collect(Collectors.toMap(TaskProgress::getId, Function.identity()));
 
-            final List<TaskProgress> resultList = createList(totalMap, criteria);
+            final List<TaskProgress> resultList = createList(totalMap, criteria, treeAction);
 
             return ResultPage.createCriterialBasedList(resultList, criteria);
 
@@ -65,12 +66,16 @@ class TaskProgressUtil {
         }
     }
 
-    static List<TaskProgress> createList(final Map<TaskId, TaskProgress> taskProgressMap, final FindTaskProgressCriteria criteria) {
+    static List<TaskProgress> createList(final Map<TaskId, TaskProgress> taskProgressMap,
+                                         final FindTaskProgressCriteria criteria,
+                                         final TaskManagerTreeAction treeAction) {
         final Map<TaskId, TaskProgress> completeIdMap = new HashMap<>(taskProgressMap);
         final Map<TaskId, Set<TaskProgress>> childMap = new HashMap<>();
 
         taskProgressMap.forEach((taskId, taskProgress) -> {
-            childMap.computeIfAbsent(taskProgress.getId().getParentId(), k -> new HashSet<>()).add(taskProgress);
+            childMap.computeIfAbsent(
+                    taskProgress.getId().getParentId(),
+                    k -> new HashSet<>()).add(taskProgress);
 
             // Build relationships to parents creating dummy dead
             // parents if necessary.
@@ -90,48 +95,58 @@ class TaskProgressUtil {
                     return parent;
                 });
 
-                childMap.computeIfAbsent(taskProgress.getId().getParentId(), k -> new HashSet<>()).add(taskProgress);
+                childMap.computeIfAbsent(
+                        taskProgress.getId().getParentId(),
+                        k -> new HashSet<>()).add(taskProgress);
             }
         });
 
         // Filter the child map.
         Map<TaskId, Set<TaskProgress>> filteredMap = childMap;
         if (criteria.getNameFilter() != null && !criteria.getNameFilter().isEmpty()) {
-            final String name = criteria.getNameFilter().toLowerCase();
-            filteredMap = filter(completeIdMap, childMap, name);
+            filteredMap = filter(completeIdMap, childMap);
         }
 
         final List<TaskProgress> returnList = new ArrayList<>();
-        buildTree(filteredMap, null, -1, returnList, criteria);
+        buildTree(filteredMap, null, -1, returnList, criteria, treeAction);
 
         return returnList;
     }
 
     private static Map<TaskId, Set<TaskProgress>> filter(final Map<TaskId, TaskProgress> completeIdMap,
-                                                         final Map<TaskId, Set<TaskProgress>> childMapIn,
-                                                         final String name) {
+                                                         final Map<TaskId, Set<TaskProgress>> childMapIn) {
         final Map<TaskId, Set<TaskProgress>> childMapOut = new HashMap<>();
 
-        childMapIn.forEach((taskId, set) -> set.forEach(taskProgress -> {
-            if (checkName(taskProgress, name)) {
-                childMapOut.computeIfAbsent(taskId, k -> new HashSet<>()).add(taskProgress);
+        // For any task that matches the filter, we also want to see its ancestors/descendants
+        childMapIn.forEach((taskId, set) ->
+                set.forEach(taskProgress -> {
+                    if (taskProgress.isMatchedInFilter()) {
+                        childMapOut.computeIfAbsent(
+                                taskId,
+                                k -> new HashSet<>())
+                                .add(taskProgress);
 
-                // Add children
-                addChildren(taskProgress.getId(), childMapIn, childMapOut);
+                        // Add children
+                        addChildren(taskProgress.getId(), childMapIn, childMapOut);
 
-                // Add parents.
-                TaskId parent = taskId;
-                while (parent != null) {
-                    childMapOut.computeIfAbsent(parent.getParentId(), k -> new HashSet<>()).add(completeIdMap.get(parent));
-                    parent = parent.getParentId();
-                }
-            }
-        }));
+                        // Add parents.
+                        TaskId parent = taskId;
+                        while (parent != null) {
+                            childMapOut.computeIfAbsent(
+                                    parent.getParentId(),
+                                    k -> new HashSet<>())
+                                    .add(completeIdMap.get(parent));
+                            parent = parent.getParentId();
+                        }
+                    }
+                }));
 
         return childMapOut;
     }
 
-    private static void addChildren(final TaskId parentId, final Map<TaskId, Set<TaskProgress>> childMapIn, final Map<TaskId, Set<TaskProgress>> childMapOut) {
+    private static void addChildren(final TaskId parentId,
+                                    final Map<TaskId, Set<TaskProgress>> childMapIn,
+                                    final Map<TaskId, Set<TaskProgress>> childMapOut) {
         final Set<TaskProgress> children = childMapIn.get(parentId);
         if (children != null) {
             children.forEach(child -> {
@@ -141,58 +156,123 @@ class TaskProgressUtil {
         }
     }
 
-    private static boolean checkName(final TaskProgress taskProgress, final String name) {
-        if (checkName(taskProgress.getNodeName(), name)) {
-            return true;
-        }
-        if (checkName(taskProgress.getTaskName(), name)) {
-            return true;
-        }
-        if (checkName(ClientDateUtil.toISOString(taskProgress.getSubmitTimeMs()), name)) {
-            return true;
-        }
-        if (checkName(taskProgress.getUserName(), name)) {
-            return true;
-        }
-        if (checkName(taskProgress.getTaskInfo(), name)) {
-            return true;
-        }
-        return checkName(taskProgress.getThreadName(), name);
-    }
-
-    private static boolean checkName(final String value, final String name) {
-        return value != null && value.toLowerCase().contains(name);
-    }
-
     private static void buildTree(final Map<TaskId, Set<TaskProgress>> childMap,
                                   final TaskProgress parent,
                                   final int depth,
                                   final List<TaskProgress> returnList,
-                                  FindTaskProgressCriteria criteria) {
+                                  final FindTaskProgressCriteria criteria,
+                                  final TaskManagerTreeAction treeAction) {
         TaskId parentId = null;
         if (parent != null) {
             parentId = parent.getId();
-            parent.setExpander(new Expander(depth, false, true));
             returnList.add(parent);
         }
 
         final Set<TaskProgress> childSet = childMap.get(parentId);
-        if (childSet != null) {
-            boolean state = true;
+        if (childSet != null && !childSet.isEmpty()) {
+            final boolean state;
             if (parent != null) {
-                // Force expansion on tasks that are younger than a second.
-                final boolean forceExpansion = parent.getAgeMs() < 1000;
-                final boolean expanded = criteria.isExpanded(parent);
-                state = expanded || forceExpansion;
+                if (treeAction.isExpandAllRequested()) {
+                    state = true;
+                } else if (treeAction.hasExpandedState(parent)) {
+                    state = treeAction.isRowExpanded(parent);
+//                    GWT.log(ClientDateUtil.toISOString(System.currentTimeMillis()) + ": " + parentId.getId() + " " + parent.getTaskName() + " hasExpandedState:" + state);
+                } else {
+                    // Expansion state has not been set so decide the initial state here
+                    state = getDefaultExpansionState(criteria, parent, childMap);
+                    treeAction.setRowExpanded(parent, state);
+                }
+//                GWT.log(ClientDateUtil.toISOString(System.currentTimeMillis()) + ": " + parentId.getId() + " " + parent.getTaskName() + " " + childSet.size() + " " + state);
                 parent.setExpander(new Expander(depth, state, false));
+            } else {
+                state = true;
             }
 
             if (state) {
                 childSet.stream()
                         .sorted(new TaskProgressComparator(criteria))
-                        .forEach(child -> buildTree(childMap, child, depth + 1, returnList, criteria));
+                        .forEach(child -> buildTree(
+                                childMap,
+                                child,
+                                depth + 1,
+                                returnList,
+                                criteria,
+                                treeAction));
+            }
+        } else {
+            // no children
+            if (parent != null) {
+                // This is a leaf so no need to do anything with the treeAction
+                parent.setExpander(new Expander(depth, false, true));
             }
         }
+    }
+
+    private static boolean getDefaultExpansionState(final FindTaskProgressCriteria criteria,
+                                                    final TaskProgress parent,
+                                                    final Map<TaskId, Set<TaskProgress>> childTasksMap) {
+
+        boolean isExpanded = false;
+        if (criteria != null && criteria.getNameFilter() != null && !criteria.getNameFilter().isEmpty()) {
+            // We want to expand all ancestors of a task that is a match of the filter so it
+            // is clear to the user what is matching
+            final Set<TaskProgress> childTasks = childTasksMap.get(parent.getId());
+            if (childTasks != null && !childTasks.isEmpty()) {
+                for (final TaskProgress childTask : childTasks) {
+                    if (hasMatchedDescendant(childTask, childTasksMap)) {
+                        isExpanded = true;
+                        break;
+                    }
+                }
+            }
+        }
+
+        if (!isExpanded && parent.getAgeMs() < 1_000) {
+            // Force expansion on tasks that are younger than a second.
+            isExpanded = true;
+        }
+        return isExpanded;
+    }
+
+    /**
+     * Return true if taskProgress is a match in the filter or one of its descendants is
+     */
+    private static boolean hasMatchedDescendant(final TaskProgress taskProgress,
+                                                final Map<TaskId, Set<TaskProgress>> childTasksMap) {
+
+        boolean result = false;
+        if (taskProgress != null) {
+            if (taskProgress.isMatchedInFilter()) {
+                // This task is a match so return true
+
+//            GWT.log(ClientDateUtil.toISOString(System.currentTimeMillis()) + ": "
+//                    + (root != null ? root.getId().getId() : "null")
+//                    + " " + (root != null ? root.getTaskName() : "null") + " - "
+//                    + (taskProgress != null ? taskProgress.getId().getId() : "null")
+//                    + " " + (taskProgress != null ? taskProgress.getTaskName() : "null")
+//                    + " returning:" + true + "FILTERED OUT");
+
+                result = true;
+            } else {
+                // See if any of this task's children are a match
+                final Set<TaskProgress> childTasks = childTasksMap.get(taskProgress.getId());
+                if (childTasks != null && !childTasks.isEmpty()) {
+                    for (final TaskProgress childTask : childTasks) {
+                        if (hasMatchedDescendant(childTask, childTasksMap)) {
+                            result = true;
+                            break;
+                        }
+                    }
+//                GWT.log(ClientDateUtil.toISOString(System.currentTimeMillis()) + ": "
+//                        + (root != null ? root.getId().getId() : "null")
+//                        + " " + (root != null ? root.getTaskName() : "null") + " - "
+//                        + (taskProgress != null ? taskProgress.getId().getId() : "null")
+//                        + " " + (taskProgress != null ? taskProgress.getTaskName() : "null")
+//                        + " returning:" + result + "HAS_MATCHED_KIDS");
+                }
+            }
+        }
+        return result;
     }
 
     private static class TaskProgressComparator implements Comparator<TaskProgress> {

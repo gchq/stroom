@@ -16,16 +16,20 @@
 
 package stroom.widget.dropdowntree.client.presenter;
 
-import com.google.gwt.user.client.ui.Widget;
-import com.google.web.bindery.event.shared.EventBus;
-import com.gwtplatform.mvp.client.HasUiHandlers;
-import com.gwtplatform.mvp.client.MyPresenterWidget;
-import com.gwtplatform.mvp.client.View;
 import stroom.widget.popup.client.event.HidePopupEvent;
 import stroom.widget.popup.client.event.ShowPopupEvent;
 import stroom.widget.popup.client.presenter.PopupSize;
 import stroom.widget.popup.client.presenter.PopupUiHandlers;
 import stroom.widget.popup.client.presenter.PopupView.PopupType;
+
+import com.google.gwt.safehtml.shared.SafeHtml;
+import com.google.gwt.user.client.ui.Widget;
+import com.google.web.bindery.event.shared.EventBus;
+import com.gwtplatform.mvp.client.HasUiHandlers;
+import com.gwtplatform.mvp.client.MyPresenterWidget;
+import com.gwtplatform.mvp.client.View;
+
+import java.util.function.Supplier;
 
 public abstract class DropDownTreePresenter extends MyPresenterWidget<DropDownTreePresenter.DropDownTreeView>
         implements DropDownTreeUiHandlers, PopupUiHandlers {
@@ -37,6 +41,7 @@ public abstract class DropDownTreePresenter extends MyPresenterWidget<DropDownTr
     }
 
     public void show() {
+        getView().clearFilter();
         refresh();
         final PopupSize popupSize = new PopupSize(350, 400, 350, 350, 2000, 2000, true);
         ShowPopupEvent.fire(this, this, PopupType.OK_CANCEL_DIALOG, popupSize, caption, this);
@@ -63,5 +68,9 @@ public abstract class DropDownTreePresenter extends MyPresenterWidget<DropDownTr
 
     public interface DropDownTreeView extends View, HasUiHandlers<DropDownTreeUiHandlers> {
         void setCellTree(Widget widget);
+
+        void setQuickFilterTooltipSupplier(final Supplier<SafeHtml> tooltipSupplier);
+
+        void clearFilter();
     }
 }

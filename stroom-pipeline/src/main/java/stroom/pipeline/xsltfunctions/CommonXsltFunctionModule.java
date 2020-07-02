@@ -181,9 +181,9 @@ public class CommonXsltFunctionModule extends AbstractXsltFunctionModule {
         }
     }
 
-    private static class HexToOctFunction extends StroomExtensionFunctionDefinition<HexToDec> {
+    private static class HexToOctFunction extends StroomExtensionFunctionDefinition<HexToOct> {
         @Inject
-        HexToOctFunction(final Provider<HexToDec> functionCallProvider) {
+        HexToOctFunction(final Provider<HexToOct> functionCallProvider) {
             super("hex-to-oct", 1, 1, new SequenceType[]{
                     SequenceType.SINGLE_STRING
             }, SequenceType.OPTIONAL_STRING, functionCallProvider);
@@ -268,7 +268,7 @@ public class CommonXsltFunctionModule extends AbstractXsltFunctionModule {
     private static class MetaFunction extends StroomExtensionFunctionDefinition<Meta> {
         @Inject
         MetaFunction(final Provider<Meta> functionCallProvider) {
-            super("meta", 2, 5, new SequenceType[]{
+            super("meta", 1, 1, new SequenceType[]{
                     SequenceType.SINGLE_STRING
             }, SequenceType.OPTIONAL_STRING, functionCallProvider);
         }

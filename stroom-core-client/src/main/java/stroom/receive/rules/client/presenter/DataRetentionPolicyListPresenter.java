@@ -16,7 +16,6 @@
 
 package stroom.receive.rules.client.presenter;
 
-import stroom.data.client.presenter.ColumnSizeConstants;
 import stroom.data.grid.client.DataGridView;
 import stroom.data.grid.client.DataGridViewImpl;
 import stroom.data.grid.client.EndColumn;
@@ -56,7 +55,7 @@ public class DataRetentionPolicyListPresenter extends MyPresenterWidget<DataGrid
 
         addColumn("Rule", 40, row -> String.valueOf(row.getRuleNumber()));
         addColumn("Name", 200, DataRetentionRule::getName);
-        addColumn("Retention", ColumnSizeConstants.SMALL_COL, DataRetentionRule::getAgeString);
+        addColumn("Retention", 90, DataRetentionRule::getAgeString);
         addColumn("Expression", 500, row -> row.getExpression().toString());
         getView().addEndColumn(new EndColumn<>());
     }
