@@ -6,6 +6,8 @@ and this project adheres to [Semantic Versioning](http://semver.org/).
 
 ## [Unreleased]
 
+* Issue **#1638** : Suppress error when searching deleted streams.
+
 * Issue **#1696** : Fix reprocessing from unfiltered meta data view.
 
 * Issue **#1648** : Fix streams not being deleted following reprocessing.
