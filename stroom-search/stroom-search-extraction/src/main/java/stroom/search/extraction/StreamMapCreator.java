@@ -74,16 +74,15 @@ class StreamMapCreator {
             final long longStreamId = getLong(storedData, streamIdIndex);
             final long longEventId = getLong(storedData, eventIdIndex);
             final Values data = getData(longStreamId, longEventId, storedData);
-            if (data != null) {
-                final Event event = new Event(longStreamId, longEventId, data);
-                storedDataMap.compute(longStreamId, (k, v) -> {
-                    if (v == null) {
-                        v = new ArrayList<>();
-                    }
-                    v.add(event);
-                    return v;
-                });
-            }
+
+            final Event event = new Event(longStreamId, longEventId, data);
+            storedDataMap.compute(longStreamId, (k, v) -> {
+                if (v == null) {
+                    v = new ArrayList<>();
+                }
+                v.add(event);
+                return v;
+            });
         }
     }
 
@@ -109,7 +108,7 @@ class StreamMapCreator {
 
             if (!optional.isPresent()) {
                 //Meta record not found - stream deleted.
-                return null;
+                return new Values(null);
             }
 
             final Object cached = optional.get();
