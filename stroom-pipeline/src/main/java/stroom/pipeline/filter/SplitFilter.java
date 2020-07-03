@@ -115,13 +115,11 @@ public class SplitFilter extends AbstractXMLFilter {
     private final LocationHolder locationHolder;
 
     public SplitFilter() {
-        super(false);
         this.locationHolder = null;
     }
 
     @Inject
     SplitFilter(final LocationHolder locationHolder) {
-        super(false);
         this.locationHolder = locationHolder;
     }
 
