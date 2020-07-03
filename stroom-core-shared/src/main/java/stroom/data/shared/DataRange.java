@@ -16,56 +16,33 @@ import java.util.OptionalLong;
 @JsonInclude(Include.NON_NULL)
 public class DataRange {
 
-    // TODO Presume we are always working with stream No 0, i.e the data stream?
-
-    // These three should get you an input stream
-    @JsonProperty
-    private long metaId;
-
-    @JsonProperty
-    private long partNo; // optional for multipart data only, aka streamNo
-
-    @JsonProperty
-    private String childStreamType; // null for actual data, else non null (e.g. context/meta)
-
-    @JsonProperty
-    private Long segmentNumber; // optional for segmented data only (segment aka record)
-
     // The start of the data range
     // Need one of these
     @JsonProperty
-    private Location locationFrom;
+    private final Location locationFrom;
 
     @JsonProperty
-    private Long charOffsetFrom;
+    private final Long charOffsetFrom;
 
     // The extent of the data range, absolute or relative
     // Need one of these
     @JsonProperty
-    private Location locationTo;
+    private final Location locationTo;
 
     @JsonProperty
-    private Long charOffsetTo;
+    private final Long charOffsetTo;
 
     @JsonProperty
-    private Long length; // number of chars from the start position
+    private final Long length; // number of chars from the start position
 
     // data range limited by a hard max length set in config to protect UI
 
     @JsonCreator
-    public DataRange(@JsonProperty("metaId") final long metaId,
-                     @JsonProperty("partNo") final long partNo,
-                     @JsonProperty("childStreamType") final String childStreamType,
-                     @JsonProperty("segmentNumber") final Long segmentNumber,
-                     @JsonProperty("locationFrom") final Location locationFrom,
+    public DataRange(@JsonProperty("locationFrom") final Location locationFrom,
                      @JsonProperty("charOffsetFrom") final Long charOffsetFrom,
                      @JsonProperty("locationTo") final Location locationTo,
                      @JsonProperty("charOffsetTo") final Long charOffsetTo,
                      @JsonProperty("length") final Long length) {
-        this.metaId = metaId;
-        this.partNo = partNo;
-        this.childStreamType = childStreamType;
-        this.segmentNumber = segmentNumber;
         this.locationFrom = locationFrom;
         this.charOffsetFrom = charOffsetFrom;
         this.locationTo = locationTo;
@@ -74,10 +51,6 @@ public class DataRange {
     }
 
     private DataRange(final Builder builder) {
-        metaId = builder.metaId;
-        partNo = builder.partNumber;
-        childStreamType = builder.childStreamType;
-        segmentNumber = builder.segmentNumber;
         locationFrom = builder.locationFrom;
         charOffsetFrom = builder.charOffsetFrom;
         locationTo = builder.locationTo;
@@ -85,46 +58,40 @@ public class DataRange {
         length = builder.length;
     }
 
-    public static Builder builder(final long metaId) {
-        return new Builder(metaId);
+    public static DataRange between(final Location fromInclusive, final Location toInclusive) {
+        return new DataRange(fromInclusive,
+                null,
+                toInclusive,
+                null,
+                null);
     }
 
-    public long getMetaId() {
-        return metaId;
+    public static DataRange from(final Location fromInclusive) {
+        return new DataRange(fromInclusive,
+                null,
+                null,
+                null,
+                null);
     }
 
-    /**
-     * @return Part number in the stream (aka streamNo), zero based. Non multi-part streams would have
-     * a single part with number zero.
-     */
-    public long getPartNo() {
-        return partNo;
+    public static DataRange from(final long charOffsetFrom, final long length) {
+        return new DataRange(null,
+                charOffsetFrom,
+                null,
+                null,
+                length);
     }
 
-    /**
-     * @return The type of the child stream that is being requested.
-     */
-    @JsonIgnore
-    public Optional<String> getOptChildStreamType() {
-        return Optional.ofNullable(childStreamType);
+    public static DataRange from(final long charOffsetFrom) {
+        return new DataRange(null,
+                charOffsetFrom,
+                null,
+                null,
+                null);
     }
 
-    public String getChildStreamType() {
-        return childStreamType;
-    }
-
-    /**
-     * @return The segment number, zero based
-     */
-    @JsonIgnore
-    public OptionalLong getOptSegmentNumber() {
-        return segmentNumber != null
-                ? OptionalLong.of(segmentNumber)
-                : OptionalLong.empty();
-    }
-
-    public Long getSegmentNumber() {
-        return segmentNumber;
+    public static Builder builder() {
+        return new Builder();
     }
 
     /**
@@ -189,6 +156,9 @@ public class DataRange {
                 : OptionalLong.empty();
     }
 
+    /**
+     * @return The number of chars in the range
+     */
     public Long getLength() {
         return length;
     }
@@ -215,11 +185,7 @@ public class DataRange {
         if (this == o) return true;
         if (o == null || getClass() != o.getClass()) return false;
         final DataRange dataRange = (DataRange) o;
-        return metaId == dataRange.metaId &&
-                partNo == dataRange.partNo &&
-                Objects.equals(childStreamType, dataRange.childStreamType) &&
-                Objects.equals(segmentNumber, dataRange.segmentNumber) &&
-                Objects.equals(locationFrom, dataRange.locationFrom) &&
+        return Objects.equals(locationFrom, dataRange.locationFrom) &&
                 Objects.equals(charOffsetFrom, dataRange.charOffsetFrom) &&
                 Objects.equals(locationTo, dataRange.locationTo) &&
                 Objects.equals(charOffsetTo, dataRange.charOffsetTo) &&
@@ -228,17 +194,13 @@ public class DataRange {
 
     @Override
     public int hashCode() {
-        return Objects.hash(metaId, partNo, childStreamType, segmentNumber, locationFrom, charOffsetFrom, locationTo, charOffsetTo, length);
+        return Objects.hash(locationFrom, charOffsetFrom, locationTo, charOffsetTo, length);
     }
 
     @Override
     public String toString() {
         return "DataRange{" +
-                "metaId=" + metaId +
-                ", partNo=" + partNo +
-                ", childStreamType='" + childStreamType + '\'' +
-                ", segmentNumber=" + segmentNumber +
-                ", locationFrom=" + locationFrom +
+                "locationFrom=" + locationFrom +
                 ", charOffsetFrom=" + charOffsetFrom +
                 ", locationTo=" + locationTo +
                 ", charOffsetTo=" + charOffsetTo +
@@ -247,33 +209,13 @@ public class DataRange {
     }
 
     public static final class Builder {
-        private final long metaId;
-        private Long partNumber;
-        private String childStreamType;
-        private Long segmentNumber;
         private Location locationFrom;
         private Long charOffsetFrom;
         private Location locationTo;
         private Long charOffsetTo;
         private Long length;
 
-        private Builder(final long metaId) {
-            this.metaId = metaId;
-        }
-
-        public Builder withPartNumber(final Long partNumber) {
-            this.partNumber = partNumber;
-            return this;
-        }
-
-        public Builder withChildStreamType(final String childStreamType) {
-            this.childStreamType = childStreamType;
-            return this;
-        }
-
-        public Builder withSegmentNumber(final Long segmentNumber) {
-            this.segmentNumber = segmentNumber;
-            return this;
+        private Builder() {
         }
 
         public Builder fromLocation(final Location locationFrom) {
@@ -302,21 +244,6 @@ public class DataRange {
         }
 
         public DataRange build() {
-//            if (locationFrom != null && charOffsetFrom != null) {
-//                throw new RuntimeException("Can't set both location and char offset from positions");
-//            }
-//            if (locationTo != null && charOffsetTo != null) {
-//                throw new RuntimeException("Can't set both location and char offset to positions");
-//            }
-//            if (locationTo != null && length != null) {
-//                throw new RuntimeException("Can't set both location to and length");
-//            }
-//            if (charOffsetTo != null && length != null) {
-//                throw new RuntimeException("Can't set both location to and length");
-//            }
-            if (partNumber == null) {
-                partNumber = 0L;
-            }
             return new DataRange(this);
         }
     }

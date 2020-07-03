@@ -17,7 +17,7 @@
 package stroom.pipeline.shared;
 
 
-import stroom.data.shared.DataRange;
+import stroom.util.shared.OffsetRange;
 import stroom.util.shared.RowCount;
 
 import com.fasterxml.jackson.annotation.JsonCreator;
@@ -44,34 +44,46 @@ public abstract class AbstractFetchDataResult {
     @JsonProperty
     private final String classification;
     @JsonProperty
-    private final DataRange dataRange;
+    private final SourceLocation sourceLocation;
 //    @JsonProperty
 //    private final OffsetRange<Long> streamRange;
-    @JsonProperty
-    private final RowCount<Long> streamRowCount;
+//    @JsonProperty
+//    private final RowCount<Long> streamRowCount;
 //    @JsonProperty
 //    private final OffsetRange<Long> pageRange;
+//    @JsonProperty
+//    private final RowCount<Long> pageRowCount;
     @JsonProperty
-    private final RowCount<Long> pageRowCount;
+    private final OffsetRange<Long> itemRange; // part/segment/marker
+    @JsonProperty
+    private final RowCount<Long> totalItemCount; // part/segment/marker
+    @JsonProperty
+    private final RowCount<Long> totalCharacterCount; // Total chars in part/segment
     @JsonProperty
     private final List<String> availableChildStreamTypes;
 
     @JsonCreator
     public AbstractFetchDataResult(@JsonProperty("streamTypeName") final String streamTypeName,
                                    @JsonProperty("classification") final String classification,
-                                   @JsonProperty("dataRange") final DataRange dataRange,
+                                   @JsonProperty("sourceLocation") final SourceLocation sourceLocation,
 //                                   @JsonProperty("streamRange") final OffsetRange<Long> streamRange,
-                                   @JsonProperty("streamRowCount") final RowCount<Long> streamRowCount,
+//                                   @JsonProperty("streamRowCount") final RowCount<Long> streamRowCount,
 //                                   @JsonProperty("pageRange") final OffsetRange<Long> pageRange,
-                                   @JsonProperty("pageRowCount") final RowCount<Long> pageRowCount,
+//                                   @JsonProperty("pageRowCount") final RowCount<Long> pageRowCount,
+                                   @JsonProperty("itemRange") final OffsetRange<Long> itemRange,
+                                   @JsonProperty("totalItemCount") final RowCount<Long> totalItemCount,
+                                   @JsonProperty("totalCharacterCount") final RowCount<Long> totalCharacterCount,
                                    @JsonProperty("availableChildStreamTypes") final List<String> availableChildStreamTypes) {
         this.streamTypeName = streamTypeName;
         this.classification = classification;
-        this.dataRange = dataRange;
+        this.sourceLocation = sourceLocation;
 //        this.streamRange = streamRange;
-        this.streamRowCount = streamRowCount;
+//        this.streamRowCount = streamRowCount;
 //        this.pageRange = pageRange;
-        this.pageRowCount = pageRowCount;
+//        this.pageRowCount = pageRowCount;
+        this.itemRange = itemRange;
+        this.totalItemCount = totalItemCount;
+        this.totalCharacterCount = totalCharacterCount;
         this.availableChildStreamTypes = availableChildStreamTypes;
     }
 
@@ -83,25 +95,45 @@ public abstract class AbstractFetchDataResult {
         return classification;
     }
 
-    public DataRange getDataRange() {
-        return dataRange;
+    public SourceLocation getSourceLocation() {
+        return sourceLocation;
     }
 
 //    public OffsetRange<Long> getStreamRange() {
 //        return streamRange;
 //    }
 
-    public RowCount<Long> getStreamRowCount() {
-        return streamRowCount;
-    }
+//    public RowCount<Long> getStreamRowCount() {
+//        return streamRowCount;
+//    }
 
+    /**
+     * This is the offset and count for the items on the page. An item may
+     * be a character, record, segment, marker, etc.
+     */
 //    public OffsetRange<Long> getPageRange() {
 //        return pageRange;
 //    }
 
-    public RowCount<Long> getPageRowCount() {
-        return pageRowCount;
+    public OffsetRange<Long> getItemRange() {
+        return itemRange;
     }
+
+    public RowCount<Long> getTotalItemCount() {
+        return totalItemCount;
+    }
+
+    public RowCount<Long> getTotalCharacterCount() {
+        return totalCharacterCount;
+    }
+
+    /**
+     * The total number of items that can be paged. An item may
+     * be a character, record, segment, marker, etc.
+     */
+//    public RowCount<Long> getPageRowCount() {
+//        return pageRowCount;
+//    }
 
     public List<String> getAvailableChildStreamTypes() {
         return availableChildStreamTypes;

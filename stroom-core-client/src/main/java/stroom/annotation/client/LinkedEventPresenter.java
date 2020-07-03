@@ -1,11 +1,5 @@
 package stroom.annotation.client;
 
-import com.google.gwt.cell.client.TextCell;
-import com.google.gwt.core.client.GWT;
-import com.google.gwt.user.cellview.client.Column;
-import com.google.web.bindery.event.shared.EventBus;
-import com.gwtplatform.mvp.client.MyPresenterWidget;
-import com.gwtplatform.mvp.client.View;
 import stroom.annotation.client.LinkedEventPresenter.LinkedEventView;
 import stroom.annotation.shared.Annotation;
 import stroom.annotation.shared.AnnotationResource;
@@ -26,6 +20,13 @@ import stroom.widget.popup.client.event.ShowPopupEvent;
 import stroom.widget.popup.client.presenter.PopupSize;
 import stroom.widget.popup.client.presenter.PopupUiHandlers;
 import stroom.widget.popup.client.presenter.PopupView.PopupType;
+
+import com.google.gwt.cell.client.TextCell;
+import com.google.gwt.core.client.GWT;
+import com.google.gwt.user.cellview.client.Column;
+import com.google.web.bindery.event.shared.EventBus;
+import com.gwtplatform.mvp.client.MyPresenterWidget;
+import com.gwtplatform.mvp.client.View;
 
 import javax.inject.Inject;
 import java.util.List;
@@ -167,7 +168,11 @@ public class LinkedEventPresenter extends MyPresenterWidget<LinkedEventView> {
     private void onSelection() {
         final EventId selected = eventList.getSelectionModel().getSelected();
         if (selected != null) {
-            final SourceLocation sourceLocation = new SourceLocation(selected.getStreamId(), null, 1L, selected.getEventId(), null);
+            final SourceLocation sourceLocation = SourceLocation.builder(selected.getStreamId())
+                    .withPartNo(1L)
+                    .withSegmentNumber(selected.getEventId())
+                    .build();
+
             dataPresenter.fetchData(sourceLocation);
         } else {
             dataPresenter.clear();

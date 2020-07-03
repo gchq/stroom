@@ -30,7 +30,7 @@ class RecordNo extends AbstractLocationFunction {
 
     @Override
     String getValue(final SourceLocation location) {
-        return String.valueOf(location.getRecordNo());
+        return String.valueOf(location.getSegmentNo());
     }
 
     @Override

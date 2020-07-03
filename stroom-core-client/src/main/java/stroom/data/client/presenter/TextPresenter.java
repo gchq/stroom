@@ -16,13 +16,14 @@
 
 package stroom.data.client.presenter;
 
+import stroom.editor.client.presenter.EditorPresenter;
+import stroom.util.shared.Highlight;
+
 import com.google.inject.Inject;
 import com.google.web.bindery.event.shared.EventBus;
 import com.gwtplatform.mvp.client.HasUiHandlers;
 import com.gwtplatform.mvp.client.MyPresenterWidget;
 import com.gwtplatform.mvp.client.View;
-import stroom.editor.client.presenter.EditorPresenter;
-import stroom.util.shared.Highlight;
 
 import java.util.List;
 
@@ -64,6 +65,11 @@ public class TextPresenter extends MyPresenterWidget<TextPresenter.TextView> {
         getView().setPlayVisible(controlsVisible);
         textPresenter.setControlsVisible(controlsVisible);
     }
+
+    public void setWrapLines(final boolean isWrapped) {
+        textPresenter.getLineWrapOption().setOn(isWrapped);
+    }
+
 
     public interface TextView extends View, HasUiHandlers<TextUiHandlers> {
         void setTextView(View view);

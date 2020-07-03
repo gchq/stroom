@@ -16,6 +16,7 @@
 
 package stroom.pipeline.stepping;
 
+import stroom.data.shared.DataRange;
 import stroom.pipeline.errorhandler.ErrorReceiver;
 import stroom.pipeline.errorhandler.ErrorReceiverProxy;
 import stroom.pipeline.errorhandler.LoggingErrorReceiver;
@@ -131,7 +132,8 @@ public class SteppingController {
 
         // Update the progress monitor.
         if (getTaskContext() != null) {
-            getTaskContext().info(LambdaLogUtil.message("Processing stream - {} : [{}:{}]", streamInfo, currentStreamNo, currentRecordNo));
+            getTaskContext().info(LambdaLogUtil.message(
+                    "Processing stream - {} : [{}:{}]", streamInfo, currentStreamNo, currentRecordNo));
         }
 
         // Figure out what the highlighted portion of the input stream should be.
@@ -172,12 +174,16 @@ public class SteppingController {
 
                 // Create a location for each monitoring filter to store data
                 // against.
-                foundLocation = new StepLocation(metaHolder.getMeta().getId(), currentStreamNo, currentRecordNo);
+                foundLocation = new StepLocation(
+                        metaHolder.getMeta().getId(),
+                        currentStreamNo,
+                        currentRecordNo);
                 steppingResponseCache.setStepData(foundLocation, stepData);
 
                 // We want to exit early if we have found a record and are
                 // stepping first, forward or refreshing.
-                if (!StepType.BACKWARD.equals(request.getStepType()) && !StepType.LAST.equals(request.getStepType())) {
+                if (!StepType.BACKWARD.equals(request.getStepType())
+                        && !StepType.LAST.equals(request.getStepType())) {
                     return true;
                 }
             }
@@ -188,19 +194,34 @@ public class SteppingController {
 
         // We want to exit early from backward stepping if we have got to the
         // previous record number.
-        return StepType.BACKWARD.equals(request.getStepType()) && stepLocation != null
-                && currentStreamNo == stepLocation.getPartNo() && currentRecordNo >= stepLocation.getRecordNo() - 1;
+        return StepType.BACKWARD.equals(request.getStepType())
+                && stepLocation != null
+                && currentStreamNo == stepLocation.getPartNo()
+                && currentRecordNo >= stepLocation.getRecordNo() - 1;
 
     }
 
     StepData createStepData(final Highlight highlight) {
         SourceLocation sourceLocation = null;
         if (stepLocation != null) {
-            sourceLocation = new SourceLocation(stepLocation.getId(),
-                    metaHolder.getChildDataType(),
-                    stepLocation.getPartNo(),
-                    stepLocation.getRecordNo(),
-                    highlight);
+            DataRange dataRange;
+
+            if (highlight != null) {
+                // TODO @AT Need to get the highlighted range + some context either side
+                //   or if there is no highlight then get default range
+
+                dataRange = DataRange.from(DefaultLocation.of(1, 1));
+            } else {
+                dataRange = DataRange.from(DefaultLocation.of(1, 1));
+            }
+
+            sourceLocation = SourceLocation.builder(stepLocation.getId())
+                    .withChildStreamType(metaHolder.getChildDataType())
+                    .withPartNo(stepLocation.getPartNo())
+                    .withSegmentNumber(stepLocation.getRecordNo())
+                    .withDataRange(dataRange)
+                    .withHighlight(highlight)
+                    .build();
         }
 
         final StepData stepData = new StepData();

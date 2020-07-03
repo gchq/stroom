@@ -16,8 +16,8 @@
 
 package stroom.pipeline.shared;
 
-import stroom.data.shared.DataRange;
 import stroom.util.shared.Marker;
+import stroom.util.shared.OffsetRange;
 import stroom.util.shared.RowCount;
 
 import com.fasterxml.jackson.annotation.JsonCreator;
@@ -37,15 +37,24 @@ public class FetchMarkerResult extends AbstractFetchDataResult {
     @JsonCreator
     public FetchMarkerResult(@JsonProperty("streamTypeName") final String streamTypeName,
                              @JsonProperty("classification") final String classification,
-                             @JsonProperty("dataRange") final DataRange dataRange,
+                             @JsonProperty("sourceLocation") final SourceLocation sourceLocation,
 //                             @JsonProperty("streamRange") final OffsetRange<Long> streamRange,
-                             @JsonProperty("streamRowCount") final RowCount<Long> streamRowCount,
-//                             @JsonProperty("pageRange") final OffsetRange<Long> pageRange,
-                             @JsonProperty("pageRowCount") final RowCount<Long> pageRowCount,
+//                                   @JsonProperty("streamRowCount") final RowCount<Long> streamRowCount,
+//                                   @JsonProperty("pageRange") final OffsetRange<Long> pageRange,
+//                                   @JsonProperty("pageRowCount") final RowCount<Long> pageRowCount,
+                             @JsonProperty("itemRange") final OffsetRange<Long> itemRange,
+                             @JsonProperty("totalItemCount") final RowCount<Long> totalItemCount,
+                             @JsonProperty("totalCharacterCount") final RowCount<Long> totalCharacterCount,
                              @JsonProperty("availableChildStreamTypes") final List<String> availableChildStreamTypes,
                              @JsonProperty("markers") final List<Marker> markers) {
 //        super(streamTypeName, classification, streamRange, streamRowCount, pageRange, pageRowCount, availableChildStreamTypes);
-        super(streamTypeName, classification, dataRange, streamRowCount, pageRowCount, availableChildStreamTypes);
+        super(streamTypeName,
+                classification,
+                sourceLocation,
+                itemRange,
+                totalItemCount,
+                totalCharacterCount,
+                availableChildStreamTypes);
         this.markers = markers;
     }
 

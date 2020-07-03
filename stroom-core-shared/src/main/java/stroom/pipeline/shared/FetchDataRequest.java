@@ -16,8 +16,6 @@
 
 package stroom.pipeline.shared;
 
-import stroom.data.shared.DataRange;
-import stroom.data.shared.DataRange.Builder;
 import stroom.docref.DocRef;
 import stroom.util.shared.Severity;
 
@@ -32,7 +30,9 @@ import java.util.function.Consumer;
 public class FetchDataRequest {
 
     @JsonProperty
-    private DataRange dataRange;
+    private SourceLocation sourceLocation;
+    @JsonProperty
+    private long segmentCount = 1;
 //    @JsonProperty
 //    private Long streamId;
 //    @JsonProperty
@@ -89,18 +89,19 @@ public class FetchDataRequest {
 //    }
 
 
-    public FetchDataRequest(final DataRange dataRange) {
-        this.dataRange = dataRange;
+    public FetchDataRequest(final SourceLocation sourceLocation) {
+        this.sourceLocation = sourceLocation;
     }
 
-    public FetchDataRequest(final long metaId, final Consumer<Builder> dataRangeBuilder) {
-        final Builder builder = DataRange.builder(metaId);
-        dataRangeBuilder.accept(builder);
-        this.dataRange = builder.build();
+    public FetchDataRequest(final long metaId, final Consumer<SourceLocation.Builder> sourceLocationBuilder) {
+        final SourceLocation.Builder builder = SourceLocation.builder(metaId);
+        sourceLocationBuilder.accept(builder);
+        this.sourceLocation = builder.build();
     }
 
     @JsonCreator
-    public FetchDataRequest( @JsonProperty("dataRange") final DataRange dataRange,
+    public FetchDataRequest( @JsonProperty("sourceLocation") final SourceLocation sourceLocation,
+                             @JsonProperty("segmentCount") final long segmentCount,
 //            @JsonProperty("streamId") final Long streamId,
 //                            @JsonProperty("childStreamType") final String childStreamType,
                              @JsonProperty("pipeline") final DocRef pipeline,
@@ -111,7 +112,8 @@ public class FetchDataRequest {
                              @JsonProperty("showAsHtml") final boolean showAsHtml,
                              @JsonProperty("markerMode") final boolean markerMode,
                              @JsonProperty("expandedSeverities") final Severity[] expandedSeverities) {
-        this.dataRange = dataRange;
+        this.sourceLocation = sourceLocation;
+        this.segmentCount = segmentCount;
 //        this.streamId = streamId;
 //        this.childStreamType = childStreamType;
         this.pipeline = pipeline;
@@ -124,12 +126,20 @@ public class FetchDataRequest {
         this.expandedSeverities = expandedSeverities;
     }
 
-    public DataRange getDataRange() {
-        return dataRange;
+    public SourceLocation getSourceLocation() {
+        return sourceLocation;
     }
 
-    public void setDataRange(final DataRange dataRange) {
-        this.dataRange = dataRange;
+    public void setSourceLocation(final SourceLocation sourceLocation) {
+        this.sourceLocation = sourceLocation;
+    }
+
+    public long getSegmentCount() {
+        return segmentCount;
+    }
+
+    public void setSegmentCount(final long segmentCount) {
+        this.segmentCount = segmentCount;
     }
 
     //    public Long getStreamId() {

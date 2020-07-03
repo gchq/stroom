@@ -17,18 +17,6 @@
 
 package stroom.dashboard.client.table;
 
-import com.google.gwt.cell.client.Cell;
-import com.google.gwt.core.client.GWT;
-import com.google.gwt.dom.client.NativeEvent;
-import com.google.gwt.dom.client.Style.Unit;
-import com.google.gwt.event.dom.client.ClickEvent;
-import com.google.gwt.user.cellview.client.Column;
-import com.google.gwt.view.client.SelectionChangeEvent;
-import com.google.inject.Inject;
-import com.google.inject.Provider;
-import com.google.web.bindery.event.shared.EventBus;
-import com.google.web.bindery.event.shared.HandlerRegistration;
-import com.gwtplatform.mvp.client.View;
 import stroom.alert.client.event.AlertEvent;
 import stroom.alert.client.event.ConfirmEvent;
 import stroom.annotation.shared.EventId;
@@ -89,6 +77,19 @@ import stroom.widget.popup.client.presenter.PopupPosition;
 import stroom.widget.popup.client.presenter.PopupSize;
 import stroom.widget.popup.client.presenter.PopupUiHandlers;
 import stroom.widget.popup.client.presenter.PopupView.PopupType;
+
+import com.google.gwt.cell.client.Cell;
+import com.google.gwt.core.client.GWT;
+import com.google.gwt.dom.client.NativeEvent;
+import com.google.gwt.dom.client.Style.Unit;
+import com.google.gwt.event.dom.client.ClickEvent;
+import com.google.gwt.user.cellview.client.Column;
+import com.google.gwt.view.client.SelectionChangeEvent;
+import com.google.inject.Inject;
+import com.google.inject.Provider;
+import com.google.web.bindery.event.shared.EventBus;
+import com.google.web.bindery.event.shared.HandlerRegistration;
+import com.gwtplatform.mvp.client.View;
 
 import java.util.ArrayList;
 import java.util.Collections;
@@ -663,7 +664,8 @@ public class TablePresenter extends AbstractComponentPresenter<TableView>
     }
 
     private DataSourceFieldsMap getIndexFieldsMap() {
-        if (currentSearchModel != null && currentSearchModel.getIndexLoader() != null
+        if (currentSearchModel != null
+                && currentSearchModel.getIndexLoader() != null
                 && currentSearchModel.getIndexLoader().getDataSourceFieldsMap() != null) {
             return currentSearchModel.getIndexLoader().getDataSourceFieldsMap();
         }
@@ -839,7 +841,8 @@ public class TablePresenter extends AbstractComponentPresenter<TableView>
     }
 
     public Set<String> getHighlights() {
-        if (currentSearchModel != null && currentSearchModel.getCurrentResult() != null
+        if (currentSearchModel != null
+                && currentSearchModel.getCurrentResult() != null
                 && currentSearchModel.getCurrentResult().getHighlights() != null) {
             return currentSearchModel.getCurrentResult().getHighlights();
         }

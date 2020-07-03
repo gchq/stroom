@@ -16,15 +16,6 @@
 
 package stroom.editor.client.presenter;
 
-import com.google.gwt.event.logical.shared.HasValueChangeHandlers;
-import com.google.gwt.event.logical.shared.ValueChangeHandler;
-import com.google.gwt.event.shared.HandlerRegistration;
-import com.google.gwt.user.client.ui.HasText;
-import com.google.inject.Inject;
-import com.google.web.bindery.event.shared.EventBus;
-import com.gwtplatform.mvp.client.MyPresenterWidget;
-import edu.ycp.cs.dh.acegwt.client.ace.AceEditorMode;
-import edu.ycp.cs.dh.acegwt.client.ace.AceEditorTheme;
 import stroom.editor.client.event.ChangeFilterEvent;
 import stroom.editor.client.event.ChangeFilterEvent.ChangeFilterHandler;
 import stroom.editor.client.event.FormatEvent.FormatHandler;
@@ -34,7 +25,16 @@ import stroom.editor.client.model.XmlFormatter;
 import stroom.editor.client.view.EditorMenuPresenter;
 import stroom.editor.client.view.IndicatorLines;
 import stroom.util.shared.Highlight;
-import stroom.util.shared.Indicators;
+
+import com.google.gwt.event.logical.shared.HasValueChangeHandlers;
+import com.google.gwt.event.logical.shared.ValueChangeHandler;
+import com.google.gwt.event.shared.HandlerRegistration;
+import com.google.gwt.user.client.ui.HasText;
+import com.google.inject.Inject;
+import com.google.web.bindery.event.shared.EventBus;
+import com.gwtplatform.mvp.client.MyPresenterWidget;
+import edu.ycp.cs.dh.acegwt.client.ace.AceEditorMode;
+import edu.ycp.cs.dh.acegwt.client.ace.AceEditorTheme;
 
 import java.util.List;
 
@@ -46,14 +46,16 @@ public class EditorPresenter extends MyPresenterWidget<EditorView>
     private boolean input;
 
     @Inject
-    public EditorPresenter(final EventBus eventBus, final EditorView view,
+    public EditorPresenter(final EventBus eventBus,
+                           final EditorView view,
                            final EditorMenuPresenter contextMenu) {
         super(eventBus, view);
         this.contextMenu = contextMenu;
         view.setUiHandlers(this);
 
         registerHandler(view.addMouseDownHandler(event -> contextMenu.hide()));
-        registerHandler(view.addContextMenuHandler(event -> contextMenu.show(EditorPresenter.this, event.getX(), event.getY())));
+        registerHandler(view.addContextMenuHandler(event ->
+                contextMenu.show(EditorPresenter.this, event.getX(), event.getY())));
         registerHandler(view.addKeyDownHandler(event -> {
             if (event.isAltKeyDown() || event.isControlKeyDown()) {
                 eventBus.fireEvent(event);

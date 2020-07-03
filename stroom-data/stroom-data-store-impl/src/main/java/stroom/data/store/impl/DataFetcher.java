@@ -19,7 +19,6 @@
 package stroom.data.store.impl;
 
 import stroom.data.shared.DataRange;
-import stroom.data.shared.DataRange.Builder;
 import stroom.data.shared.DataType;
 import stroom.data.shared.StreamTypeNames;
 import stroom.data.store.api.InputStreamProvider;
@@ -45,6 +44,7 @@ import stroom.pipeline.shared.FetchDataRequest;
 import stroom.pipeline.shared.FetchDataResult;
 import stroom.pipeline.shared.FetchMarkerResult;
 import stroom.pipeline.shared.PipelineDoc;
+import stroom.pipeline.shared.SourceLocation;
 import stroom.pipeline.shared.data.PipelineData;
 import stroom.pipeline.state.FeedHolder;
 import stroom.pipeline.state.MetaDataHolder;
@@ -64,6 +64,7 @@ import stroom.util.shared.Marker;
 import stroom.util.shared.OffsetRange;
 import stroom.util.shared.RowCount;
 import stroom.util.shared.Severity;
+import stroom.util.shared.Summary;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -84,15 +85,19 @@ import java.util.List;
 public class DataFetcher {
     private static final Logger LOGGER = LoggerFactory.getLogger(DataFetcher.class);
 
-    private static final int MAX_LINE_LENGTH = 1000;
+    private static final String TRUNCATED_SUFFIX = "...[TRUNCATED IN USER INTERFACE]";
+//    private static final int MAX_LINE_LENGTH = 1000;
     /**
      * How big our buffers are. This should always be a multiple of 8.
      */
     private static final int STREAM_BUFFER_SIZE = 1024 * 100;
 
+    // Max chars we can return
+    private static final long MAX_CHARS = 10_000; // TODO get from config
+    private static final long MAX_ERRORS_ON_PAGE = 10; // TODO get from config
+
     private final Long partsToReturn = 1L;
     private final Long segmentsToReturn = 1L;
-    private final boolean partsTotalIsExact = true;
 
     private final Store streamStore;
     private final FeedProperties feedProperties;
@@ -115,7 +120,7 @@ public class DataFetcher {
 
     // This is either the number of segments or the number of lines
     private Long pageTotal = 0L;
-    private boolean pageTotalIsExact = false;
+//    private boolean pageTotalIsExact = false;
 
     private Long segmentNumber;
 
@@ -172,21 +177,29 @@ public class DataFetcher {
             List<String> availableChildStreamTypes;
             String feedName = null;
             String streamTypeName = null;
-            String eventId = String.valueOf(fetchDataRequest.getDataRange().getMetaId());
+            String eventId = String.valueOf(fetchDataRequest.getSourceLocation().getId());
             Meta meta = null;
-            final DataRange dataRange = fetchDataRequest.getDataRange();
+            final SourceLocation sourceLocation = fetchDataRequest.getSourceLocation();
+            final DataRange dataRange = sourceLocation.getDataRange();
 
             // Get the stream source.
-            try (final Source source = streamStore.openSource(fetchDataRequest.getDataRange().getMetaId(), true)) {
+            try (final Source source = streamStore.openSource(fetchDataRequest.getSourceLocation().getId(), true)) {
                 // If we have no stream then let the client know it has been
                 // deleted.
                 if (source == null) {
-                    final OffsetRange<Long> resultStreamsRange = new OffsetRange<>(dataRange.getPartNo(), partsToReturn);
-                    final RowCount<Long> streamsRowCount = new RowCount<>(0L, partsTotalIsExact);
-                    final OffsetRange<Long> resultPageRange = new OffsetRange<>(0L, (long) 1);
-                    final RowCount<Long> pageRowCount = new RowCount<>((long) 1, true);
+                    final String msg = "Stream has been deleted";
+                    final OffsetRange<Long> resultStreamsRange = new OffsetRange<>(
+                            sourceLocation.getPartNo(), partsToReturn);
+                    final RowCount<Long> totalItemCount = new RowCount<>(0L, true);
+                    final OffsetRange<Long> itemRange = new OffsetRange<>(0L, (long) 1);
+                    final RowCount<Long> totalCharCount = new RowCount<>((long) msg.length(), true);
 
-                    writeEventLog(eventId, feedName, streamTypeName, fetchDataRequest.getPipeline(), new IOException("Stream has been deleted"));
+                    writeEventLog(
+                            eventId,
+                            feedName,
+                            streamTypeName,
+                            fetchDataRequest.getPipeline(),
+                            new IOException(msg));
 
 //                    return new FetchDataResult(null, null, resultStreamsRange,
 //                            streamsRowCount, resultPageRange, pageRowCount, null,
@@ -194,12 +207,12 @@ public class DataFetcher {
                     return new FetchDataResult(
                             null,
                             null,
-                            dataRange,
-                            streamsRowCount,
-//                            resultPageRange,
-                            pageRowCount,
+                            sourceLocation,
+                            itemRange,
+                            totalItemCount,
+                            totalCharCount,
                             null,
-                            "Stream has been deleted",
+                            msg,
                             fetchDataRequest.isShowAsHtml(),
                             null);  // Don't really know segmented state as stream is gone
                 }
@@ -208,7 +221,7 @@ public class DataFetcher {
                 feedName = meta.getFeedName();
                 streamTypeName = meta.getTypeName();
                 // See if a specific child stream type was requested
-                streamTypeName = fetchDataRequest.getDataRange().getOptChildStreamType()
+                streamTypeName = sourceLocation.getOptChildType()
                         .orElse(meta.getTypeName());
 
 //                // Are we getting and are we able to get the child stream?
@@ -229,7 +242,7 @@ public class DataFetcher {
 //                streamCloser.add(compoundInputStream);
 
 //                index = fetchDataRequest.getStreamRange().getOffset();
-                long partNo = fetchDataRequest.getDataRange().getPartNo();
+                long partNo = fetchDataRequest.getSourceLocation().getPartNo();
                 partCount = source.count();
 
                 // Prevent user going past last part
@@ -241,7 +254,7 @@ public class DataFetcher {
                     // Find out which child stream types are available.
                     availableChildStreamTypes = getAvailableChildStreamTypes(inputStreamProvider);
 
-                    String requestedChildStreamType = fetchDataRequest.getDataRange().getOptChildStreamType().orElse(null);
+                    String requestedChildStreamType = sourceLocation.getOptChildType().orElse(null);
                     try (final SegmentInputStream segmentInputStream = inputStreamProvider.get(requestedChildStreamType)) {
                         // Get the event id.
                         eventId = String.valueOf(meta.getId());
@@ -249,8 +262,8 @@ public class DataFetcher {
                             eventId += ":" + partNo;
                         }
 //                        final OffsetRange<Long> pageRange = fetchDataRequest.getDataRange().getSegmentNumber();
-                        if (fetchDataRequest.getDataRange().getOptSegmentNumber().isPresent()) {
-                            eventId = ":" + fetchDataRequest.getDataRange().getOptSegmentNumber().getAsLong();
+                        if (sourceLocation.getOptSegmentNo().isPresent()) {
+                            eventId = ":" + sourceLocation.getOptSegmentNo().getAsLong();
                         }
 
 //                        if (pageRange != null && pageRange.getLength() != null && pageRange.getLength() == 1) {
@@ -266,7 +279,7 @@ public class DataFetcher {
                                     feedName,
                                     streamTypeName,
                                     segmentInputStream,
-                                    fetchDataRequest.getDataRange(),
+                                    fetchDataRequest.getSourceLocation(),
                                     availableChildStreamTypes,
                                     fetchDataRequest.getExpandedSeverities());
                         }
@@ -290,14 +303,14 @@ public class DataFetcher {
 
                 if (meta != null) {
                     if (Status.LOCKED.equals(meta.getStatus())) {
-                        return createErrorResult(dataRange, "You cannot view locked streams.");
+                        return createErrorResult(sourceLocation, "You cannot view locked streams.");
                     }
                     if (Status.DELETED.equals(meta.getStatus())) {
-                        return createErrorResult(dataRange, "This data may no longer exist.");
+                        return createErrorResult(sourceLocation, "This data may no longer exist.");
                     }
                 }
 
-                return createErrorResult(dataRange, e.getMessage());
+                return createErrorResult(sourceLocation, e.getMessage());
             }
         });
     }
@@ -305,7 +318,7 @@ public class DataFetcher {
     private FetchMarkerResult createMarkerResult(final String feedName,
                                                  final String streamTypeName,
                                                  final SegmentInputStream segmentInputStream,
-                                                 final DataRange dataRange,
+                                                 final SourceLocation sourceLocation,
                                                  final List<String> availableChildStreamTypes,
                                                  final Severity... expandedSeverities) throws IOException {
         List<Marker> markersList;
@@ -324,24 +337,28 @@ public class DataFetcher {
 
         // Create a list just for the request.
 //        int pageOffset = pageRange.getOffset().intValue();
-        long pageOffset = dataRange.getOptSegmentNumber().orElse(0);
+        long pageOffset = sourceLocation.getOptSegmentNo().orElse(0);
         if (pageOffset >= markersList.size()) {
             pageOffset = markersList.size() - 1;
         }
-//        final int max = pageOffset + pageRange.getLength().intValue();
-        final long max = pageOffset + 1;  // TODO do we only want one error at a time?
-        final int totalResults = markersList.size();
+        final long max = pageOffset + MAX_ERRORS_ON_PAGE;
+//        final long max = pageOffset + 1;  // TODO do we only want one error at a time?
+        final long totalResults = markersList.size();
+        final long nonSummaryResults = markersList.stream()
+                .filter(marker -> !(marker instanceof Summary))
+                .count();
         final List<Marker> resultList = new ArrayList<>();
         for (long i = pageOffset; i < max && i < totalResults; i++) {
             resultList.add(markersList.get((int) i));
         }
 
         final String classification = feedProperties.getDisplayClassification(feedName);
-        final OffsetRange<Long> resultStreamsRange = new OffsetRange<>(dataRange.getPartNo(), partsToReturn);
-        final RowCount<Long> streamsRowCount = new RowCount<>(partCount, partsTotalIsExact);
-        final OffsetRange<Long> resultPageRange = new OffsetRange<>((long) pageOffset,
-                (long) resultList.size());
-        final RowCount<Long> pageRowCount = new RowCount<>((long) markersList.size(), true);
+        final OffsetRange<Long> itemRange = new OffsetRange<>(sourceLocation.getSegmentNo(), (long) resultList.size());
+//        final RowCount<Long> streamsRowCount = new RowCount<>(partCount, true);
+        final RowCount<Long> totalItemCount = new RowCount<>((long)totalResults, true);
+//        final OffsetRange<Long> resultPageRange = new OffsetRange<>((long) pageOffset,
+//                (long) resultList.size());
+        final RowCount<Long> totalCharCount = new RowCount<>(0L, true);
 
 //        return new FetchMarkerResult(streamTypeName, classification, resultStreamsRange,
 //                streamsRowCount, resultPageRange, pageRowCount, availableChildStreamTypes,
@@ -349,10 +366,10 @@ public class DataFetcher {
         return new FetchMarkerResult(
                 streamTypeName,
                 classification,
-                dataRange,
-                streamsRowCount,
-//                resultPageRange,
-                pageRowCount,
+                sourceLocation,
+                itemRange,
+                totalItemCount,
+                totalCharCount,
                 availableChildStreamTypes,
                 new ArrayList<>(resultList));
     }
@@ -367,7 +384,7 @@ public class DataFetcher {
                                              final Source streamSource,
                                              final InputStreamProvider inputStreamProvider,
                                              final FetchDataRequest fetchDataRequest) throws IOException {
-        final DataRange dataRange = fetchDataRequest.getDataRange();
+        final SourceLocation sourceLocation = fetchDataRequest.getSourceLocation();
         // Read the input stream into a string.
         // If the input stream has multiple segments then we are going to
         // read it in segment mode.
@@ -380,10 +397,10 @@ public class DataFetcher {
         final String encoding = feedProperties.getEncoding(feedName, streamTypeName);
 
         if (DataType.SEGMENTED.equals(dataType)) {
-            rawResult = getSegmentedData(dataRange, segmentInputStream, encoding);
+            rawResult = getSegmentedData(sourceLocation, segmentInputStream, encoding);
         } else {
             // Non-segmented data
-            rawResult = getNonSegmentedData(dataRange, segmentInputStream, encoding);
+            rawResult = getNonSegmentedData(sourceLocation, segmentInputStream, encoding);
         }
 
         String output;
@@ -392,7 +409,13 @@ public class DataFetcher {
         if (pipeline != null) {
             try {
                 // If we have a pipeline then use it.
-                output = usePipeline(streamSource, rawResult.getRawData(), feedName, pipeline, inputStreamProvider);
+                output = usePipeline(
+                        streamSource,
+                        rawResult.getRawData(),
+                        feedName,
+                        pipeline,
+                        inputStreamProvider);
+
             } catch (final RuntimeException e) {
                 output = e.getMessage();
                 if (output == null || output.length() == 0) {
@@ -417,25 +440,50 @@ public class DataFetcher {
         // Set the result.
         final String classification = feedProperties.getDisplayClassification(feedName);
 //        final OffsetRange<Long> resultStreamsRange = new OffsetRange<>(dataRange.getPartNo(), partsToReturn);
-        final RowCount<Long> streamsRowCount = new RowCount<>(partCount, partsTotalIsExact);
+        final RowCount<Long> streamsRowCount = new RowCount<>(partCount, true);
 //        final OffsetRange<Long> resultPageRange = new OffsetRange<>(pageOffset, pageLength);
-        final RowCount<Long> pageRowCount = new RowCount<>(segmentsToReturn, true);
+//        final RowCount<Long> pageRowCount;
+//        final OffsetRange<Long> resultPageRange;
+//        if (DataType.SEGMENTED.equals(dataType)) {
+//                pageRowCount = new RowCount<>(rawResult.getSegmentsInPartCount(), true);
+//                // Always one segment per result
+//                resultPageRange = OffsetRange.of(
+//                        rawResult.getSourceLocation().getSegmentNo(),
+//                        1L);
+//
+//        } else {
+////            long charsInResult = rawResult.getSourceLocation().getOptDataRange()
+////                    .map(DataRange::getOptLength)
+////                    .filter(OptionalLong::isPresent)
+////                    .map(OptionalLong::getAsLong)
+////                    .orElse(0L);
+//
+//            // TODO @AT can we get a total count of all chars available
+//            // Make it one bigger than what we currently know
+////            long charTotal = rawResult.getSourceLocation().getDataRange().getCharOffsetFrom() +
+////                    rawResult.getSourceLocation().getDataRange().getLength() + 1;
+//            pageRowCount = new RowCount<>(null, false);
+//
+//            resultPageRange = OffsetRange.of(
+//                    rawResult.getSourceLocation().getDataRange().getCharOffsetFrom(),
+//                    rawResult.getSourceLocation().getDataRange().getLength());
+//        }
 
         return new FetchDataResult(
                 streamTypeName,
                 classification,
-                rawResult.getDataRange(),
+                rawResult.getSourceLocation(),
 //                resultStreamsRange,
-                streamsRowCount,
-//                resultPageRange,
-                pageRowCount,
+                rawResult.getItemRange(),
+                rawResult.getTotalItemCount(),
+                rawResult.getTotalCharacterCount(),
                 availableChildStreamTypes,
                 output,
                 fetchDataRequest.isShowAsHtml(),
                 dataType);
     }
 
-    private FetchDataResult createErrorResult(final DataRange dataRange, final String error) {
+    private FetchDataResult createErrorResult(final SourceLocation sourceLocation, final String error) {
         final OffsetRange<Long> resultStreamsRange = new OffsetRange<>(0L, 0L);
         final RowCount<Long> streamsRowCount = new RowCount<>(0L, true);
         final OffsetRange<Long> resultPageRange = new OffsetRange<>(0L, 0L);
@@ -446,10 +494,10 @@ public class DataFetcher {
         return new FetchDataResult(
                 StreamTypeNames.RAW_EVENTS,
                 null,
-                dataRange,
-                streamsRowCount,
-//                resultPageRange,
-                pageRowCount,
+                sourceLocation,
+                OffsetRange.of(0L, 0L),
+                RowCount.of(0L, true),
+                RowCount.of(0L, true),
                 null,
                 error,
                 false,
@@ -468,7 +516,7 @@ public class DataFetcher {
         }
     }
 
-    private RawResult getSegmentedData(final DataRange dataRange,
+    private RawResult getSegmentedData(final SourceLocation sourceLocation,
                                        final SegmentInputStream segmentInputStream,
                                        final String encoding) throws IOException {
 //        // Get the appropriate encoding for the stream type.
@@ -481,10 +529,10 @@ public class DataFetcher {
         } else {
             pageTotal = segmentInputStream.count();
         }
-        pageTotalIsExact = true;
+//        pageTotalIsExact = true;
 
         // Make sure we can't exceed the page total.
-        segmentNumber = dataRange.getOptSegmentNumber()
+        segmentNumber = sourceLocation.getOptSegmentNo()
                 .orElse(0);
 
         if (segmentNumber >= pageTotal) {
@@ -509,21 +557,30 @@ public class DataFetcher {
 
         // Get the data from the stream.
 //        return StreamUtil.streamToString(segmentInputStream, Charset.forName(encoding));
-        return extractDataRange(dataRange, segmentInputStream, encoding);
+        RawResult rawResult = extractDataRange(sourceLocation, segmentInputStream, encoding);
+
+        // Override the page items range/total as we are dealing in segments/records
+        rawResult.setItemRange(OffsetRange.of(segmentNumber, 1L));
+        rawResult.setTotalItemCount(RowCount.of(segmentInputStream.count() - 2, true));
+        return rawResult;
     }
 
-    private RawResult getNonSegmentedData(final DataRange dataRange,
+    private RawResult getNonSegmentedData(final SourceLocation sourceLocation,
                                           final SegmentInputStream segmentInputStream,
                                           final String encoding) throws IOException {
 
 //        final String encoding = feedProperties.getEncoding(feedName, streamTypeName);
 
         try (BOMRemovalInputStream bomRemovalIS = new BOMRemovalInputStream(segmentInputStream, encoding)) {
-            return extractDataRange(dataRange, bomRemovalIS, encoding);
+            final RawResult rawResult = extractDataRange(sourceLocation, bomRemovalIS, encoding);
+            // Non-segmented data exists within parts so set the item info
+            rawResult.setItemRange(OffsetRange.of(sourceLocation.getPartNo(), 1L));
+            rawResult.setTotalItemCount(RowCount.of(partCount, true));
+            return rawResult;
         }
     }
 
-    private RawResult extractDataRange(final DataRange dataRange,
+    private RawResult extractDataRange(final SourceLocation sourceLocation,
                                        final InputStream inputStream,
                                        final String encoding) throws IOException {
         // Get the appropriate encoding for the stream type.
@@ -542,8 +599,6 @@ public class DataFetcher {
 //        long lineCount = 0;
 //        long currLineLen = 0;
 
-        // Max chars we can return
-        final long maxChars = 10_000; // TODO get from config
 
         // TODO do we need a make line count, e.g. if we have loads of tiny lines?
 
@@ -556,37 +611,66 @@ public class DataFetcher {
         int lastColNo = -1; // one based
         long startCharOffset = -1;
 
+        int currBufferLen = 0;
+
+        boolean wasTruncated = false;
         try (final Reader reader = new InputStreamReader(inputStream, encoding)) {
             final char[] buffer = new char[STREAM_BUFFER_SIZE];
-            int currBufferLen = 0;
 
 //            final long maxLength = MAX_LINE_LENGTH * pageRange.getLength();
 
-            final NonSegmentedIncludeCharPredicate predicate = buildInsideRangePredicate(dataRange);
+            final NonSegmentedIncludeCharPredicate fromInclusivePredicate = buildFromInclusivePredicate(
+                    sourceLocation.getDataRange());
+            final NonSegmentedIncludeCharPredicate toInclusivePredicate = buildToInclusivePredicate(
+                    sourceLocation.getDataRange());
 
-            while (sb.length() < maxChars && (currBufferLen = reader.read(buffer)) != -1) {
+            // If we have a char offset start point it is quicker to jump to that than
+            // scanning through
+            if (sourceLocation.getOptDataRange().isPresent()
+                    && sourceLocation.getDataRange().getOptCharOffsetFrom().isPresent()
+                    && sourceLocation.getDataRange().getCharOffsetFrom() != 0) {
+                currCharOffset = currCharOffset + reader.skip(sourceLocation.getDataRange().getCharOffsetFrom() - 1);
+            }
+
+            while (sb.length() < MAX_CHARS && (currBufferLen = reader.read(buffer)) != -1) {
 //                for (int i = 0; i < currBufferLen && sb.length() < maxLength && currLineNo < maxLineNo; i++) {
-                for (int i = 0; i < currBufferLen && sb.length() < maxChars; i++) {
-                    final char c = buffer[i];
+                for (int i = 0; i < currBufferLen; i++) {
+                    if (sb.length() < MAX_CHARS) {
+                        final char c = buffer[i];
 
-                    // See if this char is in the desired range
-                    if (predicate.test(currLineNo, currColNo, currCharOffset, sb.length())) {
-                        if (startCharOffset == -1) {
-                            startCharOffset = currCharOffset;
+                        if (fromInclusivePredicate.test(currLineNo, currColNo, currCharOffset, sb.length())) {
+                            // On or after the first requested char
+
+                            if (toInclusivePredicate.test(currLineNo, currColNo, currCharOffset, sb.length())) {
+                                // Before or on our required char
+                                if (startCharOffset == -1) {
+                                    startCharOffset = currCharOffset;
+                                }
+                                sb.append(c);
+
+                                lastLineNo = currLineNo;
+                                lastColNo = currColNo;
+                            } else {
+                                // No need to scan any further
+                                break;
+                            }
+                        } else {
+                            // Need to carry on scanning
                         }
-                        sb.append(c);
-                        lastLineNo = currLineNo;
-                        lastColNo = currColNo;
-                    }
 
-                    currCharOffset++;
+                        currCharOffset++;
 
-                    // end of line
-                    if (c == '\n') {
-                        currLineNo++;
-                        currColNo = 0;
+                        // end of line
+                        if (c == '\n') {
+                            currLineNo++;
+                            currColNo = 0;
+                        } else {
+                            currColNo++;
+                        }
+
                     } else {
-                        currColNo++;
+                        wasTruncated = true;
+                        break;
                     }
                 }
             }
@@ -599,42 +683,102 @@ public class DataFetcher {
 //
 //        pageTotal = pageOffset + pageLength;
 //        // If there was no more content then the page total has been reached.
-//        pageTotalIsExact = currBufferLen == -1;
+        final boolean isTotalPageableItemsExact = currBufferLen == -1 && !wasTruncated;
+
+        final RowCount<Long> totalCharCount = RowCount.of(
+                startCharOffset + sb.length(),
+                isTotalPageableItemsExact);
+        final OffsetRange<Long> pageCharsRange = OffsetRange.of(startCharOffset, (long) sb.length());
 
         // Make sure we can't exceed the page total.
 //        if (pageOffset >= pageTotal) {
 //            pageOffset = pageTotal - 1;
 //        }
 
-        // Define the range that we are actually returning, which may be smaller than requested
-        final Builder builder = DataRange.builder(dataRange.getMetaId())
-                .withPartNumber(dataRange.getPartNo())
-                .withChildStreamType(dataRange.getOptChildStreamType()
-                        .orElse(null))
+        final DataRange actualDataRange = DataRange.builder()
                 .fromCharOffset(startCharOffset)
-                .fromLocation(dataRange.getOptLocationFrom()
+                .fromLocation(sourceLocation.getOptDataRange()
+                        .flatMap(DataRange::getOptLocationFrom)
                         .orElse(DefaultLocation.of(1,1)))
                 .toLocation(DefaultLocation.of(lastLineNo, lastColNo))
-                .toCharOffset(currCharOffset - 1) // undo the last ++ op
-                .withLength((long) sb.length());
+//                .toCharOffset(currCharOffset - 1) // undo the last ++ op
+                .toCharOffset(currCharOffset) // undo the last ++ op
+                .withLength((long) sb.length())
+                .build();
+
+        // Define the range that we are actually returning, which may be smaller than requested
+        final SourceLocation.Builder builder = SourceLocation.builder(sourceLocation.getId())
+                .withPartNo(sourceLocation.getPartNo())
+                .withChildStreamType(sourceLocation.getOptChildType()
+                        .orElse(null))
+                .withDataRange(actualDataRange);
 
         if (segmentNumber != null) {
             builder.withSegmentNumber(segmentNumber);
         }
 
-        final DataRange actualRange = builder.build();
-
-        return new RawResult(actualRange, sb.toString());
+        if (wasTruncated) {
+            sb.append(TRUNCATED_SUFFIX);
+        }
+        final RawResult rawResult = new RawResult(builder.build(), sb.toString());
+        rawResult.setTotalCharacterCount(totalCharCount);
+//        rawResult.setPageItemsRange(pageCharsRange);
+        return rawResult;
     }
 
+    private NonSegmentedIncludeCharPredicate buildFromInclusivePredicate(final DataRange dataRange) {
+        // FROM (inclusive)
+        final NonSegmentedIncludeCharPredicate fromInclusivePredicate;
+        if (dataRange == null || !dataRange.hasBoundedStart()) {
+            // No start bound
+            fromInclusivePredicate = (currLineNo, currColNo, currCharOffset, charCount) -> true;
+        } else if (dataRange.getOptCharOffsetFrom().isPresent()) {
+            final long startCharOffset = dataRange.getOptCharOffsetFrom().getAsLong();
+            fromInclusivePredicate = (currLineNo, currColNo, currCharOffset, charCount) ->
+                    currCharOffset >= startCharOffset;
+        } else if (dataRange.getOptLocationFrom().isPresent()) {
+            final int lineNoFrom = dataRange.getOptLocationFrom().get().getLineNo();
+            final int colNoFrom = dataRange.getOptLocationFrom().get().getColNo();
+            fromInclusivePredicate = (currLineNo, currColNo, currCharOffset, charCount) ->
+                    currLineNo > lineNoFrom || (currLineNo == lineNoFrom && currColNo >= colNoFrom);
+        } else {
+            throw new RuntimeException("No start point specified");
+        }
+        return fromInclusivePredicate;
+    }
+
+    private NonSegmentedIncludeCharPredicate buildToInclusivePredicate(final DataRange dataRange) {
+        // TO (inclusive)
+        final NonSegmentedIncludeCharPredicate toInclusivePredicate;
+        if (dataRange == null || !dataRange.hasBoundedEnd()) {
+            // No end bound
+            toInclusivePredicate = (currLineNo, currColNo, currCharOffset, charCount) -> true;
+        } else if (dataRange.getOptLength().isPresent()) {
+            final long dataLength = dataRange.getOptLength().getAsLong();
+            toInclusivePredicate = (currLineNo, currColNo, currCharOffset, charCount) ->
+                    charCount <= dataLength;
+        } else if (dataRange.getOptCharOffsetTo().isPresent()) {
+            final long charOffsetTo = dataRange.getOptCharOffsetTo().getAsLong();
+            toInclusivePredicate = (currLineNo, currColNo, currCharOffset, charCount) ->
+                    currCharOffset <= charOffsetTo;
+        } else if (dataRange.getOptLocationTo().isPresent()) {
+            final int lineNoTo = dataRange.getOptLocationTo().get().getLineNo();
+            final int colNoTo = dataRange.getOptLocationTo().get().getColNo();
+            toInclusivePredicate = (currLineNo, currColNo, currCharOffset, charCount) ->
+                    currLineNo < lineNoTo || (currLineNo == lineNoTo && currColNo <= colNoTo);
+        } else {
+            throw new RuntimeException("No start point specified");
+        }
+        return toInclusivePredicate;
+    }
 
     private NonSegmentedIncludeCharPredicate buildInsideRangePredicate(final DataRange dataRange) {
 
         // FROM (inclusive)
         final NonSegmentedIncludeCharPredicate afterStartPosPredicate;
-        if (!dataRange.hasBoundedStart()) {
+        if (dataRange == null || !dataRange.hasBoundedStart()) {
             // No start bound
-            return (currLineNo, currColNo, currCharOffset, charCount) -> true;
+            afterStartPosPredicate = (currLineNo, currColNo, currCharOffset, charCount) -> true;
         } else if (dataRange.getOptCharOffsetFrom().isPresent()) {
             final long startCharOffset = dataRange.getOptCharOffsetFrom().getAsLong();
             afterStartPosPredicate = (currLineNo, currColNo, currCharOffset, charCount) ->
@@ -650,9 +794,9 @@ public class DataFetcher {
 
         // TO (inclusive)
         final NonSegmentedIncludeCharPredicate beforeEndPosPredicate;
-        if (!dataRange.hasBoundedEnd()) {
+        if (dataRange == null || !dataRange.hasBoundedEnd()) {
             // No end bound
-            return (currLineNo, currColNo, currCharOffset, charCount) -> true;
+            beforeEndPosPredicate = (currLineNo, currColNo, currCharOffset, charCount) -> true;
         } else if (dataRange.getOptLength().isPresent()) {
             final long dataLength = dataRange.getOptLength().getAsLong();
             beforeEndPosPredicate = (currLineNo, currColNo, currCharOffset, charCount) ->
@@ -811,20 +955,69 @@ public class DataFetcher {
     }
 
     private static class RawResult {
-        private final DataRange dataRange;
+        private final SourceLocation sourceLocation;
         private final String rawData;
 
-        public RawResult(final DataRange dataRange, final String rawData) {
-            this.dataRange = dataRange;
+//        private OffsetRange<Long> pageItemsRange;
+//        private RowCount<Long> totalPageableItems;
+
+        private OffsetRange<Long> itemRange; // part/segment/marker
+        private RowCount<Long> totalItemCount; // part/segment/marker
+        private RowCount<Long> totalCharacterCount; // Total chars in part/segment
+
+        public RawResult(final SourceLocation sourceLocation,
+                         final String rawData) {
+            this.sourceLocation = sourceLocation;
             this.rawData = rawData;
         }
 
-        public DataRange getDataRange() {
-            return dataRange;
+        public SourceLocation getSourceLocation() {
+            return sourceLocation;
         }
 
         public String getRawData() {
             return rawData;
+        }
+
+//        public OffsetRange<Long> getPageItemsRange() {
+//            return pageItemsRange;
+//        }
+
+//        public void setPageItemsRange(final OffsetRange<Long> pageItemsRange) {
+//            this.pageItemsRange = pageItemsRange;
+//        }
+//
+//        public RowCount<Long> getTotalPageableItems() {
+//            return totalPageableItems;
+//        }
+//
+//        public void setTotalPageableItems(final RowCount<Long> totalPageableItems) {
+//            this.totalPageableItems = totalPageableItems;
+//        }
+
+
+        public OffsetRange<Long> getItemRange() {
+            return itemRange;
+        }
+
+        public void setItemRange(final OffsetRange<Long> itemRange) {
+            this.itemRange = itemRange;
+        }
+
+        public RowCount<Long> getTotalItemCount() {
+            return totalItemCount;
+        }
+
+        public void setTotalItemCount(final RowCount<Long> totalItemCount) {
+            this.totalItemCount = totalItemCount;
+        }
+
+        public RowCount<Long> getTotalCharacterCount() {
+            return totalCharacterCount;
+        }
+
+        public void setTotalCharacterCount(final RowCount<Long> totalCharacterCount) {
+            this.totalCharacterCount = totalCharacterCount;
         }
     }
 

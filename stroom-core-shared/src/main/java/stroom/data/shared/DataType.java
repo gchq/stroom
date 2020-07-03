@@ -8,5 +8,7 @@ public enum DataType {
     /**
      * Data that has not been demarcated into segments, i.e. raw un-cooked data.
      */
-    NON_SEGMENTED;
+    NON_SEGMENTED,
+
+    MARKER
 }

@@ -39,6 +39,10 @@ public class RowCount<T extends Number> {
         this.exact = exact;
     }
 
+    public static <T extends Number> RowCount<T> of(final T count, final boolean exact) {
+        return new RowCount<>(count, exact);
+    }
+
     public T getCount() {
         return count;
     }

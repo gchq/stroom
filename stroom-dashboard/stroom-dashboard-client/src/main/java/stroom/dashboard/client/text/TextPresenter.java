@@ -29,7 +29,6 @@ import stroom.dashboard.shared.Field;
 import stroom.dashboard.shared.Row;
 import stroom.dashboard.shared.TextComponentSettings;
 import stroom.data.shared.DataRange;
-import stroom.data.shared.DataRange.Builder;
 import stroom.dispatch.client.Rest;
 import stroom.dispatch.client.RestFactory;
 import stroom.editor.client.presenter.EditorPresenter;
@@ -146,6 +145,7 @@ public class TextPresenter extends AbstractComponentPresenter<TextPresenter.Text
                     rawPresenter = rawPresenterProvider.get();
                     rawPresenter.setReadOnly(true);
                     rawPresenter.getLineNumbersOption().setOn(false);
+                    rawPresenter.getLineWrapOption().setOn(true);
                 }
 
                 getView().setContent(rawPresenter.getView());
@@ -281,51 +281,60 @@ public class TextPresenter extends AbstractComponentPresenter<TextPresenter.Text
                     final Long currentColTo = getLong(textSettings.getColToField(), fields, selected);
 
                     if (currentStreamId != null) {
+                        DataRange dataRange = null;
                         Highlight highlight = null;
-                        if (currentLineFrom != null && currentColFrom != null && currentLineTo != null && currentColTo != null) {
+                        if (currentLineFrom != null
+                                && currentColFrom != null
+                                && currentLineTo != null
+                                && currentColTo != null) {
+                            dataRange = DataRange.between(
+                                    new DefaultLocation(currentLineFrom.intValue(), currentColFrom.intValue()),
+                                    new DefaultLocation(currentLineTo.intValue(), currentColTo.intValue()));
+
                             highlight = new Highlight(
                                     new DefaultLocation(currentLineFrom.intValue(), currentColFrom.intValue()),
                                     new DefaultLocation(currentLineTo.intValue(), currentColTo.intValue()));
                         }
-                        final SourceLocation sourceLocation = new SourceLocation(
-                                currentStreamId,
-                                null,
-                                currentPartNo != null ? currentPartNo : 1,
-                                currentRecordNo != null ? currentRecordNo : 1,
-                                highlight);
+
+                        final SourceLocation sourceLocation = SourceLocation.builder(currentStreamId)
+                                .withPartNo(currentPartNo != null ? currentPartNo - 1: 0) // make zero based
+                                .withSegmentNumber(currentRecordNo != null ? currentRecordNo - 1: 0) // make zero based
+                                .withDataRange(dataRange)
+                                .withHighlight(highlight)
+                                .build();
 
                         currentHighlightStrings = tablePresenter.getHighlights();
 
 //                        OffsetRange<Long> currentStreamRange = new OffsetRange<>(sourceLocation.getPartNo() - 1, 1L);
 
-                        Builder dataRangeBuilder = DataRange.builder(currentStreamId)
-                                .withPartNumber(sourceLocation.getPartNo() - 1) // make zero based
-                                .withChildStreamType(null);
+//                        Builder dataRangeBuilder = DataRange.builder(currentStreamId)
+//                                .withPartNumber(sourceLocation.getPartNo() - 1) // make zero based
+//                                .withChildStreamType(null);
 
 //                        request.setStreamId(currentStreamId);
 //                        request.setStreamRange(currentStreamRange);
 //                        request.setChildStreamType(null);
 
                         // If we have a source highlight then use it.
-                        if (highlight != null) {
-//                            currentPageRange = new OffsetRange<>(highlight.getFrom().getLineNo() - 1L, (long) highlight.getTo().getLineNo() - highlight.getFrom().getLineNo());
-//                            currentPageRange = new OffsetRange<>(getStartLine(highlight), getLineCount(highlight));
-//                            request.setLocationFrom(highlight.getFrom());
-//                            request.setLocationTo(highlight.getTo());
-                            dataRangeBuilder
-                                    .fromLocation(highlight.getFrom())
-                                    .toLocation(highlight.getTo());
+//                        if (highlight != null) {
+////                            currentPageRange = new OffsetRange<>(highlight.getFrom().getLineNo() - 1L, (long) highlight.getTo().getLineNo() - highlight.getFrom().getLineNo());
+////                            currentPageRange = new OffsetRange<>(getStartLine(highlight), getLineCount(highlight));
+////                            request.setLocationFrom(highlight.getFrom());
+////                            request.setLocationTo(highlight.getTo());
+//                            dataRangeBuilder
+//                                    .fromLocation(highlight.getFrom())
+//                                    .toLocation(highlight.getTo());
+//
+//                        } else {
+//                            // TODO assume this is segmented data
+////                            currentPageRange = new OffsetRange<>(sourceLocation.getRecordNo() - 0L, 1L);
+////                            request.setPageRange(new OffsetRange<>(sourceLocation.getRecordNo() - 1L, 1L));
+//
+//                            // Convert it to zero based
+//                            dataRangeBuilder.withSegmentNumber(sourceLocation.getSegmentNo() - 1L);
+//                        }
 
-                        } else {
-                            // TODO assume this is segmented data
-//                            currentPageRange = new OffsetRange<>(sourceLocation.getRecordNo() - 0L, 1L);
-//                            request.setPageRange(new OffsetRange<>(sourceLocation.getRecordNo() - 1L, 1L));
-
-                            // Convert it to zero based
-                            dataRangeBuilder.withSegmentNumber(sourceLocation.getRecordNo() - 1L);
-                        }
-
-                        final FetchDataRequest request = new FetchDataRequest(dataRangeBuilder.build());
+                        final FetchDataRequest request = new FetchDataRequest(sourceLocation);
 
                         request.setPipeline(textSettings.getPipeline());
                         request.setShowAsHtml(textSettings.isShowAsHtml());
@@ -524,7 +533,8 @@ public class TextPresenter extends AbstractComponentPresenter<TextPresenter.Text
             final StepLocation stepLocation = new StepLocation(
                     currentStreamId,
                     currentPartNo != null ? currentPartNo : 1,
-                    currentRecordNo != null ? currentRecordNo : 1);
+                    currentRecordNo != null ? currentRecordNo : -1);
+
             BeginPipelineSteppingEvent.fire(
                     this,
                     currentStreamId,

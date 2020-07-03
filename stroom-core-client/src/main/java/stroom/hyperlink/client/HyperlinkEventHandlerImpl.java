@@ -6,15 +6,12 @@ import stroom.annotation.shared.Annotation;
 import stroom.annotation.shared.EventId;
 import stroom.core.client.ContentManager;
 import stroom.data.client.presenter.ShowDataEvent;
-import stroom.data.shared.DataRange;
-import stroom.data.shared.DataRange.Builder;
 import stroom.iframe.client.presenter.IFrameContentPresenter;
 import stroom.iframe.client.presenter.IFramePresenter;
 import stroom.pipeline.shared.SourceLocation;
 import stroom.pipeline.shared.stepping.StepLocation;
 import stroom.pipeline.stepping.client.event.BeginPipelineSteppingEvent;
 import stroom.util.shared.DefaultLocation;
-import stroom.util.shared.Highlight;
 import stroom.widget.popup.client.event.HidePopupEvent;
 import stroom.widget.popup.client.event.RenamePopupEvent;
 import stroom.widget.popup.client.event.ShowPopupEvent;
@@ -166,22 +163,20 @@ public class HyperlinkEventHandlerImpl extends HandlerContainerImpl implements H
                     final int lineTo = (int) getParam(href, "lineTo", -1);
                     final int colTo = (int) getParam(href, "colTo", -1);
 
-                    Highlight highlight = null;
-                    final Builder builder = DataRange.builder(id)
-                            .withPartNumber(partNo)
-                            .withSegmentNumber(recordNo);
+//                    Highlight highlight = null;
+                    final SourceLocation sourceLocation = SourceLocation.builder(id)
+                            .withPartNo(partNo)
+                            .withSegmentNumber(recordNo)
+                            .withDataRange(dataRangeBuilder -> {
+                                if (lineFrom != -1 && colFrom != -1) {
+                                    dataRangeBuilder.fromLocation(new DefaultLocation(lineFrom, colFrom));
+                                }
+                                if (lineTo != -1 && colTo != -1) {
+                                    dataRangeBuilder.toLocation(new DefaultLocation(lineTo, colTo));
+                                }
+                            })
+                            .build();
 
-                    if (lineFrom != -1 && colFrom != -1) {
-                        builder.fromLocation(new DefaultLocation(lineFrom, colFrom));
-                    }
-
-                    if (lineTo != -1 && colTo != -1) {
-                        builder.toLocation(new DefaultLocation(lineTo, colTo));
-                    }
-
-                    DataRange dataRange = builder.build();
-
-                    final SourceLocation sourceLocation = new SourceLocation(id, null, partNo, recordNo, highlight);
                     ShowDataEvent.fire(this, sourceLocation);
                     break;
                 }

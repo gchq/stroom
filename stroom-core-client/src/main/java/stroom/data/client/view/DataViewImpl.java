@@ -16,6 +16,10 @@
 
 package stroom.data.client.view;
 
+import stroom.data.client.presenter.DataPresenter.DataView;
+import stroom.data.pager.client.Pager;
+import stroom.widget.tab.client.view.LinkTabBar;
+
 import com.google.gwt.uibinder.client.UiBinder;
 import com.google.gwt.uibinder.client.UiField;
 import com.google.gwt.user.client.ui.Widget;
@@ -23,9 +27,6 @@ import com.google.gwt.view.client.HasRows;
 import com.google.inject.Inject;
 import com.gwtplatform.mvp.client.LayerContainer;
 import com.gwtplatform.mvp.client.ViewImpl;
-import stroom.data.client.presenter.DataPresenter.DataView;
-import stroom.data.pager.client.Pager;
-import stroom.widget.tab.client.view.LinkTabBar;
 
 public class DataViewImpl extends ViewImpl implements DataView {
     private final Widget widget;
@@ -41,6 +42,7 @@ public class DataViewImpl extends ViewImpl implements DataView {
     public DataViewImpl(final Binder binder) {
         widget = binder.createAndBindUi(this);
         layerContainer.setFade(true);
+        segmentPager.setTitle("Segment");
     }
 
     @Override
@@ -54,13 +56,38 @@ public class DataViewImpl extends ViewImpl implements DataView {
     }
 
     @Override
+    public void showDataPager(final boolean show) {
+        dataPager.setVisible(show);
+    }
+
+    @Override
     public void setSegmentPagerRows(final HasRows display) {
         segmentPager.setDisplay(display);
     }
 
     @Override
+    public void setSegmentPagerToVisibleState(final boolean isVisible) {
+        segmentPager.setToVisibleState(isVisible);
+    }
+
+    @Override
     public void setDataPagerRows(final HasRows display) {
         dataPager.setDisplay(display);
+    }
+
+    @Override
+    public void setSegmentPagerTitle(final String title) {
+        segmentPager.setTitle(title);
+    }
+
+    @Override
+    public void setDataPagerTitle(final String title) {
+        dataPager.setTitle(title);
+    }
+
+    @Override
+    public void setDataPagerToVisibleState(final boolean isVisible) {
+        dataPager.setToVisibleState(isVisible);
     }
 
     @Override

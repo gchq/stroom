@@ -16,13 +16,15 @@
 
 package stroom.pipeline.state;
 
-import org.xml.sax.Locator;
+import stroom.data.shared.DataRange;
 import stroom.pipeline.shared.SourceLocation;
+import stroom.pipeline.xml.converter.ds3.DSLocator;
 import stroom.util.pipeline.scope.PipelineScoped;
 import stroom.util.shared.DefaultLocation;
 import stroom.util.shared.Highlight;
 import stroom.util.shared.Location;
-import stroom.pipeline.xml.converter.ds3.DSLocator;
+
+import org.xml.sax.Locator;
 
 import javax.inject.Inject;
 import java.util.ArrayList;
@@ -84,9 +86,17 @@ public class LocationHolder implements Holder {
     public void storeLocation() {
         if (storeLocations && locator != null && metaHolder != null && metaHolder.getMeta() != null) {
             final Highlight highlight = createHighlight();
+            final DataRange dataRange = createDataRange();
 
             recordNo++;
-            final SourceLocation sourceLocation = new SourceLocation(metaHolder.getMeta().getId(), metaHolder.getChildDataType(), metaHolder.getStreamNo(), recordNo, highlight);
+            final SourceLocation sourceLocation = SourceLocation.builder(metaHolder.getMeta().getId())
+                    .withChildStreamType(metaHolder.getChildDataType())
+                    .withPartNo(metaHolder.getStreamNo())
+                    .withSegmentNumber(recordNo)
+                    .withDataRange(dataRange)
+                    .withHighlight(highlight)
+                    .build();
+
             if (maxSize <= 1) {
                 currentLocation = sourceLocation;
 
@@ -117,6 +127,16 @@ public class LocationHolder implements Holder {
             currentEndLocation = location;
         }
         return new Highlight(currentStartLocation, currentEndLocation);
+    }
+
+    private DataRange createDataRange() {
+        final Location location = new DefaultLocation(locator.getLineNumber(), locator.getColumnNumber());
+        // Only change if we have moved forward.
+        if (currentEndLocation.getLineNo() != location.getLineNo() || currentEndLocation.getColNo() != location.getColNo()) {
+            currentStartLocation = currentEndLocation;
+            currentEndLocation = location;
+        }
+        return DataRange.between(currentStartLocation, currentEndLocation);
     }
 
     public enum FunctionType {

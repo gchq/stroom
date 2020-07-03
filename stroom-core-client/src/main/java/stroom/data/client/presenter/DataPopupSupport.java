@@ -16,23 +16,36 @@
 
 package stroom.data.client.presenter;
 
-import com.google.inject.Inject;
-import com.google.web.bindery.event.shared.EventBus;
 import stroom.widget.popup.client.event.ShowPopupEvent;
 import stroom.widget.popup.client.presenter.PopupSize;
 import stroom.widget.popup.client.presenter.PopupView.PopupType;
+
+import com.google.inject.Inject;
+import com.google.web.bindery.event.shared.EventBus;
 
 import javax.inject.Provider;
 
 public class DataPopupSupport {
     @Inject
-    public DataPopupSupport(final EventBus eventBus, final Provider<ClassificationWrappedDataPresenter> dataPresenterProvider) {
+    public DataPopupSupport(final EventBus eventBus,
+                            final Provider<ClassificationWrappedDataPresenter> dataPresenterProvider) {
         eventBus.addHandler(ShowDataEvent.getType(), e -> {
             final ClassificationWrappedDataPresenter dataPresenter = dataPresenterProvider.get();
             dataPresenter.setFormatOnLoad(true);
             dataPresenter.fetchData(e.getSourceLocation());
-            final PopupSize popupSize = new PopupSize(800, 600, 800, 600, true);
-            ShowPopupEvent.fire(dataPresenter, dataPresenter, PopupType.OK_CANCEL_DIALOG, popupSize, "Data", null);
+            final PopupSize popupSize = new PopupSize(
+                    800,
+                    600,
+                    800,
+                    600,
+                    true);
+            ShowPopupEvent.fire(
+                    dataPresenter,
+                    dataPresenter,
+                    PopupType.OK_CANCEL_DIALOG,
+                    popupSize,
+                    "Data",
+                    null);
         });
     }
 }

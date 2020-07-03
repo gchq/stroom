@@ -39,6 +39,11 @@ public class OffsetRange<T extends Number> {
         this.length = length;
     }
 
+    public static <T extends Number> OffsetRange<T> of(final T offset,
+                                                       final T length) {
+        return new OffsetRange<T>(offset, length);
+    }
+
     public T getOffset() {
         return offset;
     }

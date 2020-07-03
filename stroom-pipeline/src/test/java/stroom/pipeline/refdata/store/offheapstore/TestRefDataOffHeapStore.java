@@ -17,16 +17,6 @@
 
 package stroom.pipeline.refdata.store.offheapstore;
 
-import com.google.inject.AbstractModule;
-import com.google.inject.Guice;
-import com.google.inject.Injector;
-import io.vavr.Tuple;
-import io.vavr.Tuple2;
-import io.vavr.Tuple3;
-import org.junit.jupiter.api.BeforeEach;
-import org.junit.jupiter.api.Test;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 import stroom.pipeline.refdata.ReferenceDataConfig;
 import stroom.pipeline.refdata.store.MapDefinition;
 import stroom.pipeline.refdata.store.ProcessingState;
@@ -54,6 +44,17 @@ import stroom.util.logging.LogUtil;
 import stroom.util.pipeline.scope.PipelineScopeModule;
 import stroom.util.shared.Range;
 import stroom.util.time.StroomDuration;
+
+import com.google.inject.AbstractModule;
+import com.google.inject.Guice;
+import com.google.inject.Injector;
+import io.vavr.Tuple;
+import io.vavr.Tuple2;
+import io.vavr.Tuple3;
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Test;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import javax.inject.Inject;
 import java.io.IOException;
@@ -670,6 +671,7 @@ class TestRefDataOffHeapStore extends AbstractLmdbDbTest {
 
     /**
      * Make entryCount very big for manual performance testing or profiling
+     * 50_000 takes about 4mins and makes a 250Mb db file.
      */
     @Test
     void testBigLoadForPerfTesting() {
@@ -680,12 +682,14 @@ class TestRefDataOffHeapStore extends AbstractLmdbDbTest {
         int refStreamDefCount = 5;
         int keyValueMapCount = 2;
         int rangeValueMapCount = 2;
-        int entryCount = 50;
+        int entryCount = 5;
         int totalMapEntries = (refStreamDefCount * keyValueMapCount) + (refStreamDefCount * rangeValueMapCount);
 
         int totalKeyValueEntryCount = refStreamDefCount * keyValueMapCount * entryCount;
         int totalRangeValueEntryCount = refStreamDefCount * rangeValueMapCount * entryCount;
         int totalValueEntryCount = (totalKeyValueEntryCount + totalRangeValueEntryCount) / refStreamDefCount;
+
+        final Instant startInstant = Instant.now();
 
         LOGGER.info("-------------------------load starts here--------------------------------------");
         List<RefStreamDefinition> refStreamDefs1 = loadBulkData(
@@ -715,6 +719,9 @@ class TestRefDataOffHeapStore extends AbstractLmdbDbTest {
                 totalKeyValueEntryCount * 2,
                 totalRangeValueEntryCount * 2,
                 totalValueEntryCount);
+
+        LAMBDA_LOGGER.info("COmpleted both loads in {}",
+                Duration.between(startInstant, Instant.now()).toString());
 
         LOGGER.info("-------------------------gets start here---------------------------------------");
 
@@ -871,9 +878,11 @@ class TestRefDataOffHeapStore extends AbstractLmdbDbTest {
 
         List<RefStreamDefinition> refStreamDefinitions = new ArrayList<>();
 
+        final Instant startInstant = Instant.now();
+
         for (int i = 0; i < refStreamDefinitionCount; i++) {
 
-            RefStreamDefinition refStreamDefinition = buildRefStreamDefintion(i + refStreamDefinitionOffset);
+            RefStreamDefinition refStreamDefinition = buildRefStreamDefinition(i + refStreamDefinitionOffset);
 
             refStreamDefinitions.add(refStreamDefinition);
 
@@ -890,10 +899,17 @@ class TestRefDataOffHeapStore extends AbstractLmdbDbTest {
                         loader.completeProcessing();
                     });
         }
+        LAMBDA_LOGGER.info("Loaded {} ref stream definitions in {}",
+                refStreamDefinitionCount, Duration.between(startInstant, Instant.now()).toString());
+
+        LOGGER.info("Counts:, KeyValue: {}, KeyRangeValue: {}, ProcInfo: {}",
+                refDataStore.getKeyValueEntryCount(),
+                refDataStore.getKeyRangeValueEntryCount(),
+                refDataStore.getProcessingInfoEntryCount());
         return refStreamDefinitions;
     }
 
-    private RefStreamDefinition buildRefStreamDefintion(final long i) {
+    private RefStreamDefinition buildRefStreamDefinition(final long i) {
         return new RefStreamDefinition(
                 FIXED_PIPELINE_UUID,
                 FIXED_PIPELINE_VERSION,
