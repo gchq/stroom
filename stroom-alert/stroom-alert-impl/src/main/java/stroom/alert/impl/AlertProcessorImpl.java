@@ -45,11 +45,15 @@ import stroom.query.common.v2.CompiledField;
 import stroom.query.common.v2.CompiledFields;
 import stroom.query.common.v2.format.FieldFormatter;
 import stroom.query.common.v2.format.FormatterFactory;
+
 import stroom.search.impl.SearchException;
 import stroom.search.impl.SearchExpressionQueryBuilder;
+import stroom.task.api.TaskContext;
+import stroom.task.shared.TaskId;
 import stroom.util.logging.LambdaLogger;
 import stroom.util.logging.LambdaLoggerFactory;
 
+import javax.inject.Provider;
 import java.io.IOException;
 import java.io.Reader;
 import java.util.ArrayList;
@@ -58,6 +62,7 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
+import java.util.function.Supplier;
 import java.util.stream.Collectors;
 
 public class AlertProcessorImpl implements AlertProcessor {
@@ -121,10 +126,11 @@ public class AlertProcessorImpl implements AlertProcessor {
         checkRules (createVals(document), memoryIndex);
     }
 
-    private static Val[] createVals (final Document document){
+    private Val[] createVals (final Document document){
 
-        //Run Searchextraction pipeline over the document
-
+        //todo allow a different search extraction pipeline to be used.
+        //Currently the indexing pipeline must contain a superset of the values as the extraction pipeline
+        //This is possible when the same translation is used.
 
         Val[] result = new Val[document.getFields().size()];
         int fieldIndex = 0;
