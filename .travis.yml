@@ -1,7 +1,5 @@
 language: java
-dist: trusty
-group: edge
-jdk: openjdk12
+##jdk: openjdk-12
 sudo: required #to ensure we get a VM rather than a container for more memory and for all the apt-get stuff
 
 env:
@@ -21,6 +19,12 @@ env:
     - STROOM_RESOURCES_GIT_REF=cfb0fc812c196b98b43db7f7612b21c49d64c7f8
 
 before_install:
+   - sudo apt-key adv --keyserver hkp://keyserver.ubuntu.com:80 --recv-keys 0xB1998361219BD9C9
+   - sudo apt-add-repository 'deb http://repos.azulsystems.com/ubuntu stable main'
+   - sudo apt-get update
+   - sudo apt-get install zulu-12
+   - echo "Will use the following jdk..."
+   - java --version
 #  - wget https://raw.githubusercontent.com/creationix/nvm/v0.31.0/nvm.sh -O ~/.nvm/nvm.sh
 #  - source ~/.nvm/nvm.sh
 #  - nvm install $NODE_VERSION
