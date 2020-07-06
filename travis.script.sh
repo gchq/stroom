@@ -248,7 +248,7 @@ else
     ./local.yml.sh
 
 
-    export JAVA_HOME=/usr/lib/jvm/zulu-12-amd
+    export JAVA_HOME=/usr/lib/jvm/zulu-12-amd64
 
     # Do the gradle build
     # Use custom gwt compile jvm settings to avoid blowing the ram limit in
