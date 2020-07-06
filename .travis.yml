@@ -25,6 +25,8 @@ before_install:
   - sudo apt-get install zulu-12
   - java --version
   - echo $PATH
+  - export PATH=/usr/bin:$PATH
+  - echo $PATH
   - echo $JAVAHOME
   - ls -l `which java`
   - update-alternatives --list java
