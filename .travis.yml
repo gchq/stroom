@@ -1,4 +1,4 @@
-language: java
+#language: java
 #jdk: zulu-12
 sudo: required #to ensure we get a VM rather than a container for more memory and for all the apt-get stuff
 
@@ -23,7 +23,6 @@ before_install:
   - sudo apt-add-repository 'deb http://repos.azulsystems.com/ubuntu stable main'
   - sudo apt-get update
   - sudo apt-get install zulu-12
-  - sudo update-alternatives --set java /usr/lib/jvm/zulu-12/bin/java
 #  - wget https://raw.githubusercontent.com/creationix/nvm/v0.31.0/nvm.sh -O ~/.nvm/nvm.sh
 #  - source ~/.nvm/nvm.sh
 #  - nvm install $NODE_VERSION
