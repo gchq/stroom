@@ -6,7 +6,7 @@ import {
   ChangePasswordResponse,
   ResetPasswordRequest,
 } from "../../Authentication/api/types";
-import useAuthenticationApi from "../../Authentication/api/useAuthenticationApi";
+import useAuthenticationResource from "../../Authentication/api/useAuthenticationResource";
 
 const useResetPassword = (): {
   submitPasswordChangeRequest: (
@@ -19,7 +19,7 @@ const useResetPassword = (): {
   const {
     changePassword: submitPasswordChangeRequestUsingApi,
     resetPassword: resetPasswordUsingApi,
-  } = useAuthenticationApi();
+  } = useAuthenticationResource();
   const submitPasswordChangeRequest = useCallback(
     (formData: any, formikBag: FormikBag<any, any>) => {
       submitPasswordChangeRequestUsingApi({

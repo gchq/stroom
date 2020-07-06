@@ -1,9 +1,9 @@
 import * as React from "react";
 
 import { Formik, FormikProps } from "formik";
-import PasswordField from "./PasswordField";
-import NewPasswordField from "./NewPasswordField";
-import useAuthenticationApi from "./api/useAuthenticationApi";
+import { PasswordField } from "../Form/PasswordField";
+import { NewPasswordField } from "../Form/NewPasswordField";
+import useAuthenticationResource from "./api/useAuthenticationResource";
 import { useEffect, useState } from "react";
 import { ChangePasswordRequest, PasswordPolicyConfig } from "./api/types";
 import { useAlert } from "../AlertDialog/AlertDisplayBoundary";
@@ -11,8 +11,8 @@ import * as Yup from "yup";
 import { Alert, AlertType } from "../AlertDialog/AlertDialog";
 import zxcvbn from "zxcvbn";
 import { Form, Modal } from "react-bootstrap";
-import { OkCancelButtons, OkCancelProps } from "./OkCancelButtons";
-import { CustomModal } from "./FormField";
+import { OkCancelButtons, OkCancelProps } from "../Dialog/OkCancelButtons";
+import { Dialog } from "components/Dialog/Dialog";
 
 export interface ChangePasswordFormValues {
   userId: string;
@@ -111,7 +111,10 @@ const ChangePasswordFormik: React.FunctionComponent<{
   currentPassword: string;
   onClose: (success: boolean) => void;
 }> = (props) => {
-  const { changePassword, fetchPasswordPolicyConfig } = useAuthenticationApi();
+  const {
+    changePassword,
+    fetchPasswordPolicyConfig,
+  } = useAuthenticationResource();
 
   // Get token config
   const [passwordPolicyConfig, setPasswordPolicyConfig] = useState<
@@ -243,9 +246,9 @@ export const ChangePassword: React.FunctionComponent<{
   onClose: (success: boolean) => void;
 }> = (props) => {
   return (
-    <CustomModal>
+    <Dialog>
       <ChangePasswordFormik {...props} />
-    </CustomModal>
+    </Dialog>
   );
 };
 

@@ -1,15 +1,15 @@
 import * as React from "react";
 
 import { Formik, FormikProps } from "formik";
-import PasswordField from "./PasswordField";
-import useAuthenticationApi from "./api/useAuthenticationApi";
+import { PasswordField } from "../Form/PasswordField";
+import useAuthenticationResource from "./api/useAuthenticationResource";
 import { useAlert } from "../AlertDialog/AlertDisplayBoundary";
 import * as Yup from "yup";
 import { AuthState, ConfirmPasswordRequest } from "./api/types";
 import { Alert, AlertType } from "../AlertDialog/AlertDialog";
 import { Form, Modal } from "react-bootstrap";
-import { CustomModal } from "./FormField";
-import { OkCancelButtons, OkCancelProps } from "./OkCancelButtons";
+import { Dialog } from "components/Dialog/Dialog";
+import { OkCancelButtons, OkCancelProps } from "../Dialog/OkCancelButtons";
 
 export interface FormValues {
   userId: string;
@@ -82,7 +82,7 @@ const ConfirmCurrentPasswordFormik: React.FunctionComponent<{
   userId: string;
   onClose: (userId: string, password: string) => void;
 }> = ({ userId, onClose, children }) => {
-  const { confirmPassword } = useAuthenticationApi();
+  const { confirmPassword } = useAuthenticationResource();
   const { alert } = useAlert();
 
   const passwordSchema = Yup.string()
@@ -137,8 +137,8 @@ export const ConfirmCurrentPassword: React.FunctionComponent<{
   onClose: (userId: string, password: string) => void;
 }> = (props) => {
   return (
-    <CustomModal>
+    <Dialog>
       <ConfirmCurrentPasswordFormik {...props} />
-    </CustomModal>
+    </Dialog>
   );
 };

@@ -1,6 +1,6 @@
 import * as React from "react";
 
-import { FunctionComponent } from "react";
+import { PropsWithChildren, ReactElement } from "react";
 import {
   useTable,
   useBlockLayout,
@@ -9,17 +9,23 @@ import {
 } from "react-table";
 import { useSticky } from "react-table-sticky";
 
-export interface TableProps {
+export interface TableProps<T> {
   columns: any[];
-  data: any[];
-  onSelect?: (selected: any[]) => void;
+  data: T[];
+  onSelect?: (selected: T[]) => void;
+  onDoubleSelect?: (selected: T[]) => void;
 }
 
-export const Table: FunctionComponent<TableProps> = ({
-  columns,
-  data,
-  onSelect = () => undefined,
-}) => {
+export const Table = <T,>(
+  props: PropsWithChildren<TableProps<T>>,
+): ReactElement<any, any> | null => {
+  const {
+    columns,
+    data,
+    onSelect = () => undefined,
+    onDoubleSelect = () => undefined,
+  } = props;
+
   const defaultColumn = React.useMemo(
     () => ({
       minWidth: 30,
@@ -44,6 +50,7 @@ export const Table: FunctionComponent<TableProps> = ({
       initialState: {
         hiddenColumns: ["id"],
       },
+      autoResetSelectedRows: false,
     },
     useBlockLayout,
     useResizeColumns,
@@ -60,13 +67,13 @@ export const Table: FunctionComponent<TableProps> = ({
       <div className="header">
         {headerGroups.map((headerGroup) => (
           <div
-            key={headerGroup}
+            key={headerGroup.id}
             {...headerGroup.getHeaderGroupProps()}
             className="tr"
           >
             {headerGroup.headers.map((column) => (
-              <div key={column} {...column.getHeaderProps()} className="th">
-                {column.render("Header")}
+              <div key={column.id} {...column.getHeaderProps()} className="th">
+                <div className="cell">{column.render("Header")}</div>
                 <div
                   {...column.getResizerProps()}
                   className={`resizer ${column.isResizing ? "isResizing" : ""}`}
@@ -81,18 +88,27 @@ export const Table: FunctionComponent<TableProps> = ({
           prepareRow(row);
           return (
             <div
-              key={row}
+              key={row.id}
               {...row.getRowProps()}
               className={`tr ${row.isSelected ? "selected" : ""}`}
               onClick={() => {
-                toggleAllRowsSelected(false);
-                row.toggleRowSelected();
-                onSelect(row.id);
+                if (!row.isSelected) {
+                  toggleAllRowsSelected(false);
+                  row.toggleRowSelected();
+                }
+                onSelect([row.original]);
+              }}
+              onDoubleClick={() => {
+                if (!row.isSelected) {
+                  toggleAllRowsSelected(false);
+                  row.toggleRowSelected();
+                }
+                onDoubleSelect([row.original]);
               }}
             >
               {row.cells.map((cell) => (
-                <div key={cell} {...cell.getCellProps()} className="td">
-                  {cell.render("Cell")}
+                <div key={cell.id} {...cell.getCellProps()} className="td">
+                  <div className="cell">{cell.render("Cell")}</div>
                 </div>
               ))}
             </div>
@@ -102,5 +118,3 @@ export const Table: FunctionComponent<TableProps> = ({
     </div>
   );
 };
-
-export default Table;

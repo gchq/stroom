@@ -20,7 +20,7 @@ import JsonDebug from "testing/JsonDebug";
 import Fuse from "fuse.js";
 
 import { useCallback } from "react";
-import { Account } from "components/users/types";
+import { Account } from "components/Account/types";
 
 import {
   disabledUser,

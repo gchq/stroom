@@ -1,10 +1,10 @@
 import * as React from "react";
 
 import ConfigContext from "./ConfigContext";
-import useApi from "./useApi";
+import useGlobalConfigResource from "./useGlobalConfigResource";
 
 const ConfigProvider: React.FunctionComponent = ({ children }) => {
-  const { config } = useApi();
+  const { config } = useGlobalConfigResource();
 
   if (!config) {
     return <div>Loading. Please wait...</div>;

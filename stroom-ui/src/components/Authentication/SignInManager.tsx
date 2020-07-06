@@ -21,10 +21,12 @@ import { AuthState } from "./api/types";
 import { SignIn } from "./SignIn";
 import { AuthStateProps } from "./ConfirmCurrentPassword";
 import ChangePassword from "./ChangePassword";
-import StroomWrapper from "./StroomWrapper";
 import Background from "../Layout/Background";
-import useAuthenticationApi from "./api/useAuthenticationApi";
+import useAuthenticationResource from "./api/useAuthenticationResource";
 import FormContainer from "../Layout/FormContainer";
+import useRouter from "../../lib/useRouter";
+import * as queryString from "query-string";
+import CustomLoader from "../CustomLoader";
 
 export interface FormValues {
   userId: string;
@@ -36,10 +38,19 @@ export interface PageProps {
 }
 
 const Page: React.FunctionComponent = () => {
+  let redirectUri: string;
+
+  const { router } = useRouter();
+  if (!!router && !!router.location) {
+    const query = queryString.parse(router.location.search);
+    if (!!query.redirect_uri) {
+      redirectUri = query.redirect_uri + "";
+    }
+  }
+
   // Client state
   const [authState, setAuthState] = useState<AuthState>();
-
-  const { getAuthenticationState } = useAuthenticationApi();
+  const { getAuthenticationState } = useAuthenticationResource();
   useEffect(() => {
     if (!authState) {
       getAuthenticationState().then((response) => {
@@ -57,58 +68,54 @@ const Page: React.FunctionComponent = () => {
     setAuthState,
   };
 
-  if (!authState) {
+  if (!redirectUri) {
+    throw new Error(
+      "This page must include a redirect_uri param in the URL and can only be visited as part of an auth flow",
+    );
+  } else if (!authState) {
     return (
-      <BackgroundLogo>
-        <FormContainer>Loading. Please wait...</FormContainer>
-      </BackgroundLogo>
+      <CustomLoader
+        title="Stroom"
+        message="Loading Application. Please wait..."
+      />
     );
   } else if (!authState.userId) {
-    return (
-      <BackgroundLogo>
-        <SignIn {...props} />
-      </BackgroundLogo>
-    );
+    return <SignIn {...props} />;
   } else if (authState.showInitialChangePassword) {
-    // if (authState.requireCredentialConfirmation) {
-    //   return <ConfirmCurrentPasswordForm {...props} />;
-    // }
     return (
-      <BackgroundLogo>
-        <ChangePassword
-          userId={authState.userId}
-          currentPassword={authState.currentPassword}
-          onClose={(success: boolean) => {
-            if (success) {
-              setAuthState({
-                ...authState,
-                showInitialChangePassword: false,
-              });
-            } else {
-              setAuthState(undefined);
-            }
-          }}
-          {...props}
-        />
-      </BackgroundLogo>
+      <ChangePassword
+        userId={authState.userId}
+        currentPassword={authState.currentPassword}
+        onClose={(success: boolean) => {
+          if (success) {
+            setAuthState({
+              ...authState,
+              showInitialChangePassword: false,
+            });
+          } else {
+            setAuthState(undefined);
+          }
+        }}
+        {...props}
+      />
+    );
+  } else {
+    window.location.href = redirectUri;
+
+    return (
+      <CustomLoader
+        title="Stroom"
+        message="Loading Application. Please wait..."
+      />
     );
   }
-
-  return <StroomWrapper userId={authState.userId} />;
-
-  // window.location.href = redirectUri;
-  // return (
-  //   <div className="JoinForm__content">
-  //     <div className="d-flex flex-row justify-content-between align-items-center mb-3">
-  //       <legend className="form-label mb-0">Loading. Please wait...</legend>
-  //     </div>
-  //   </div>
-  // );
 };
 
 export const SignInManager: React.FunctionComponent<PageProps> = () => (
   <Background>
-    <Page />
+    <BackgroundLogo>
+      <Page />
+    </BackgroundLogo>
   </Background>
 );
 

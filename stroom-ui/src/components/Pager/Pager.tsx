@@ -1,7 +1,7 @@
 import * as React from "react";
 import Button from "components/Button/Button";
 import { useEffect, useState } from "react";
-import { PageRequest } from "../users/api/types";
+import { PageRequest } from "../Account/api/types";
 
 export interface Page {
   from: number;
@@ -90,10 +90,11 @@ export const Pager: React.FunctionComponent<PagerProps> = ({
 
       <Button
         size="small"
-        appearance="contained"
+        appearance="icon"
         action="primary"
         title="First"
         disabled={page.from === 0}
+        allowFocus={false}
         onClick={onFirst}
       >
         <img
@@ -105,10 +106,11 @@ export const Pager: React.FunctionComponent<PagerProps> = ({
       </Button>
       <Button
         size="small"
-        appearance="contained"
+        appearance="icon"
         action="primary"
         title="Back"
         disabled={page.from === 0}
+        allowFocus={false}
         onClick={onBack}
       >
         <img
@@ -120,9 +122,13 @@ export const Pager: React.FunctionComponent<PagerProps> = ({
       </Button>
       <Button
         size="small"
-        appearance="contained"
+        appearance="icon"
         action="primary"
         title="Forward"
+        disabled={
+          page.to !== undefined && page.of !== undefined && page.to >= page.of
+        }
+        allowFocus={false}
         onClick={onForward}
       >
         <img
@@ -134,9 +140,13 @@ export const Pager: React.FunctionComponent<PagerProps> = ({
       </Button>
       <Button
         size="small"
-        appearance="contained"
+        appearance="icon"
         action="primary"
         title="Last"
+        disabled={
+          page.of === undefined || (page.to !== undefined && page.to >= page.of)
+        }
+        allowFocus={false}
         onClick={onLast}
       >
         <img
@@ -148,9 +158,10 @@ export const Pager: React.FunctionComponent<PagerProps> = ({
       </Button>
       <Button
         size="small"
-        appearance="contained"
+        appearance="icon"
         action="primary"
         title="Refresh"
+        allowFocus={false}
         onClick={onRefresh}
       >
         <img
@@ -163,5 +174,3 @@ export const Pager: React.FunctionComponent<PagerProps> = ({
     </div>
   );
 };
-
-export default Pager;

@@ -17,16 +17,51 @@
 import * as React from "react";
 import { FunctionComponent, useEffect, useState } from "react";
 import ChangePasswordManager from "./ChangePasswordManager";
-import UsersManager from "../users/SearchUsers/UsersManager";
+import AccountManager from "../Account/AccountManager/AccountManager";
+import BackgroundLogo from "../Layout/BackgroundLogo";
+import FormContainer from "../Layout/FormContainer";
+import useStroomSessionResource from "./api/useStroomSessionResource";
+import CustomLoader from "../CustomLoader";
+import Background from "../Layout/Background";
 
 enum DialogType {
   CHANGE_PASSWORD,
   MANAGE_USERS,
 }
 
-const StroomWrapper: FunctionComponent<{
-  userId: string;
-}> = (props) => {
+const stroomUrl = process.env.REACT_APP_STROOM_URL;
+
+const StroomWrapper: FunctionComponent = () => {
+  // Client state
+  const [userId, setUserId] = useState<string>();
+  const { validateSession } = useStroomSessionResource();
+  useEffect(() => {
+    if (!userId) {
+      validateSession(window.location.href).then((response) => {
+        if (response) {
+          if (response.valid) {
+            setUserId(response.userId);
+          } else {
+            // If we fail to get the current user and permissions then we might
+            // not have an authenticated session. Under normal circumstances the
+            // server would have already sent a redirect response to initiate an
+            // auth flow but in development when we are serving the UI outside of
+            // Dropwizard we will not receive a redirect as the UI server has no
+            // idea that we aren't authenticated. For this reason we must perform
+            // manual redirection in development.
+            window.location.href = response.redirectUri;
+
+            // const redirectUri = window.location.href;
+            // let url = redirectUri.split("/")[0];
+            // url += "/s/signIn?redirect_uri=";
+            // url += encodeURI(redirectUri);
+            // window.location.href = url;
+          }
+        }
+      });
+    }
+  }, [validateSession, userId, setUserId]);
+
   const [dialogType, setDialogType] = useState<DialogType>(undefined);
   useEffect(() => {
     const handler = (event) => {
@@ -57,21 +92,36 @@ const StroomWrapper: FunctionComponent<{
   };
 
   console.log("Render: StroomWrapper");
-  return (
-    <React.Fragment>
-      <iframe
-        className="StroomWrapper__iframe"
-        title="stroom"
-        src="http://localhost:8080/stroom/ui"
-      />
-      {dialogType === DialogType.CHANGE_PASSWORD ? (
-        <ChangePasswordManager userId={props.userId} onClose={onClose} />
-      ) : undefined}
-      {dialogType === DialogType.MANAGE_USERS ? (
-        <UsersManager onClose={onClose} />
-      ) : undefined}
-    </React.Fragment>
-  );
+
+  // If we have no user and permissions yet then show loading.
+  if (!userId) {
+    return (
+      <Background>
+        <BackgroundLogo>
+          <CustomLoader
+            title="Stroom"
+            message="Loading Application. Please wait..."
+          />
+        </BackgroundLogo>
+      </Background>
+    );
+  } else {
+    return (
+      <React.Fragment>
+        <iframe
+          className="StroomWrapper__iframe"
+          title="stroom"
+          src={stroomUrl + window.location.search}
+        />
+        {dialogType === DialogType.CHANGE_PASSWORD ? (
+          <ChangePasswordManager userId={userId} onClose={onClose} />
+        ) : undefined}
+        {dialogType === DialogType.MANAGE_USERS ? (
+          <AccountManager onClose={onClose} />
+        ) : undefined}
+      </React.Fragment>
+    );
+  }
 };
 
 export default StroomWrapper;

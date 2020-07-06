@@ -73,7 +73,7 @@ public class SecurityModule extends AbstractModule {
 
         RestResourcesBinder.create(binder())
                 .bind(AppPermissionResourceImpl.class)
-                .bind(AuthenticationResourceImpl.class)
+                .bind(StroomSessionResourceImpl.class)
                 .bind(AuthorisationResource.class)
                 .bind(DocPermissionResourceImpl.class)
                 .bind(DocumentPermissionResourceImpl.class)

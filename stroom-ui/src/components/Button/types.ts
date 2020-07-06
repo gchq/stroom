@@ -4,7 +4,7 @@ import { ButtonHTMLAttributes } from "react";
 /**
  * Button Properties
  */
-export interface ButtonProps extends ButtonHTMLAttributes<HTMLButtonElement> {
+export interface ButtonProps extends ButtonHTMLAttributes<HTMLElement> {
   /** The Font Awesome Icon to use */
   icon?: IconProp;
   /** Choose the button appearance */
@@ -21,6 +21,8 @@ export interface ButtonProps extends ButtonHTMLAttributes<HTMLButtonElement> {
   loading?: boolean;
   /** Custom additional class to apply to the button */
   className?: string;
-  /** The size of the icon*/
+  /** The size of the icon */
   size?: "small" | "medium" | "large" | "xlarge";
+  /** Allow focus */
+  allowFocus?: boolean;
 }

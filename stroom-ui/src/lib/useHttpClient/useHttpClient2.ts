@@ -1,9 +1,9 @@
 import * as React from "react";
+import { useCallback } from "react";
 
 import { HttpError } from "lib/ErrorTypes";
 import { useAlert } from "components/AlertDialog/AlertDisplayBoundary";
 import { AlertType } from "components/AlertDialog/AlertDialog";
-import { useCallback } from "react";
 
 const useCheckStatus = (status: number) =>
   React.useCallback(
@@ -49,10 +49,14 @@ const useCheckStatus = (status: number) =>
 
 type HttpGet = (url: string) => Promise<any>;
 type HttpPost = (url: string, object: any) => Promise<any>;
+type HttpPut = (url: string, object: any) => Promise<any>;
+type HttpDelete = (url: string) => Promise<any>;
 
 interface HttpClient2 {
-  get: HttpGet;
-  post: HttpPost;
+  httpGet: HttpGet;
+  httpPost: HttpPost;
+  httpPut: HttpPut;
+  httpDelete: HttpDelete;
 }
 
 export const useHttpClient2 = (): HttpClient2 => {
@@ -75,7 +79,7 @@ export const useHttpClient2 = (): HttpClient2 => {
     [alert],
   );
 
-  const get = useCallback<HttpGet>(
+  const httpGet = useCallback<HttpGet>(
     <T>(url: string): Promise<T | void> => {
       const headers = {
         Accept: "application/json",
@@ -98,7 +102,7 @@ export const useHttpClient2 = (): HttpClient2 => {
     [handle200, catchImpl],
   );
 
-  const post = useCallback<HttpPost>(
+  const httpPost = useCallback<HttpPost>(
     <T>(url: string, object: any): Promise<T | void> => {
       const headers = {
         Accept: "application/json",
@@ -123,9 +127,59 @@ export const useHttpClient2 = (): HttpClient2 => {
     [handle200, catchImpl],
   );
 
+  const httpPut = useCallback<HttpPut>(
+    <T>(url: string, object: any): Promise<T | void> => {
+      const headers = {
+        Accept: "application/json",
+        "Content-Type": "application/json",
+      };
+
+      const options = {
+        body: JSON.stringify(object),
+      };
+
+      return fetch(url, {
+        mode: "cors",
+        credentials: "include",
+        ...options,
+        method: "put",
+        headers,
+      })
+        .then(handle200)
+        .then((r) => r.json())
+        .catch(catchImpl);
+    },
+    [handle200, catchImpl],
+  );
+
+  const httpDelete = useCallback<HttpDelete>(
+    <T>(url: string): Promise<T | void> => {
+      const headers = {
+        Accept: "application/json",
+        "Content-Type": "application/json",
+      };
+
+      const options = {};
+
+      return fetch(url, {
+        mode: "cors",
+        credentials: "include",
+        ...options,
+        method: "delete",
+        headers,
+      })
+        .then(handle200)
+        .then((r) => r.json())
+        .catch(catchImpl);
+    },
+    [handle200, catchImpl],
+  );
+
   return {
-    get,
-    post,
+    httpGet,
+    httpPost,
+    httpPut,
+    httpDelete,
   };
 };
 

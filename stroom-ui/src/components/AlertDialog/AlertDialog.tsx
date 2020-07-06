@@ -17,7 +17,7 @@
 import * as React from "react";
 import Button from "../Button/Button";
 import { Form, Modal } from "react-bootstrap";
-import { CustomModal } from "../Authentication/FormField";
+import { Dialog } from "components/Dialog/Dialog";
 
 export enum AlertType {
   INFO,
@@ -102,7 +102,7 @@ export const AlertDialog: React.FunctionComponent<Props> = ({
   onCloseDialog,
 }) => {
   return (
-    <CustomModal>
+    <Dialog>
       <Form
         noValidate={true}
         onSubmit={(event) => {
@@ -127,7 +127,7 @@ export const AlertDialog: React.FunctionComponent<Props> = ({
           </Button>
         </Modal.Footer>
       </Form>
-    </CustomModal>
+    </Dialog>
   );
 };
 

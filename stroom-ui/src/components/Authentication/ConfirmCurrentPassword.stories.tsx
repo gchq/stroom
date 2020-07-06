@@ -3,7 +3,7 @@ import * as React from "react";
 import { ConfirmCurrentPasswordForm } from "./ConfirmCurrentPassword";
 import { Formik } from "formik";
 import * as Yup from "yup";
-import { CustomModal } from "./FormField";
+import { Dialog } from "components/Dialog/Dialog";
 
 const FormikWrapper: React.FunctionComponent = () => {
   return (
@@ -26,9 +26,9 @@ const FormikWrapper: React.FunctionComponent = () => {
 
 export const ConfirmCurrentPasswordDialog: React.FunctionComponent = () => {
   return (
-    <CustomModal>
+    <Dialog>
       <FormikWrapper />
-    </CustomModal>
+    </Dialog>
   );
 };
 

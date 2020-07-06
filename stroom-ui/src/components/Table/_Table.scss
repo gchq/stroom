@@ -213,7 +213,7 @@
 
   .th,
   .td {
-    padding: 0 5px;
+    //margin-right: 10px;
     //border-bottom: 1px solid #ddd;
     //border-right: 1px solid #ddd;
     //background-color: #fff;
@@ -222,9 +222,24 @@
     //:last-child {
     //  border-right: 0;
     //}
-    white-space: nowrap;
-    overflow: hidden;
+
   }
+
+  //.th {
+  //  padding-right: .8rem;
+  //}
+  //
+  //.td {
+  //  padding-right: .8rem;
+  //}
+  //
+  //.th:first-child,{
+  //  padding-left: .4rem;
+  //}
+  //
+  //.td:first-child {
+  //  padding-left: .4rem;
+  //}
 
   .th {
     background-color: white;
@@ -234,6 +249,13 @@
 
   .td {
 
+  }
+
+  .cell {
+    width: 100%;
+    padding-left: 5px;
+    white-space: nowrap;
+    overflow: hidden;
   }
 
   &.sticky {
@@ -279,9 +301,8 @@
     width: 20px;
     top: 0;
     bottom: 0;
-    right: 0;
+    right: -10px;
     z-index: 10;
-    padding-left: 9px;
     user-select: none;
   }
 

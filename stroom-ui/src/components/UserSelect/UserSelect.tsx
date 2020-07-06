@@ -15,7 +15,7 @@
  */
 
 import * as React from "react";
-import { Account } from "components/users/types";
+import { Account } from "components/Account/types";
 // import styled from "styled-components";
 import { Select } from "antd";
 

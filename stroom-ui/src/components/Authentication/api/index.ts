@@ -1,1 +1,1 @@
-export { default } from "./useAuthenticationApi";
+export { default } from "./useAuthenticationResource";

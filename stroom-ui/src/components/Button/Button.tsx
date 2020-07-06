@@ -34,6 +34,7 @@ export const Button: FunctionComponent<ButtonProps> = ({
   onClick,
   children,
   autoFocus = false,
+  allowFocus,
   ...rest
 }: ButtonProps) => {
   const className = React.useMemo(() => {
@@ -141,13 +142,8 @@ export const Button: FunctionComponent<ButtonProps> = ({
     }
   }, [autoFocus]);
 
-  return (
-    <button
-      className={className}
-      onClick={onClickWithRipple}
-      ref={element}
-      {...rest}
-    >
+  const content = (
+    <React.Fragment>
       <RippleContainer ripples={ripples} />
       <div className="Button__content">
         <span
@@ -175,7 +171,31 @@ export const Button: FunctionComponent<ButtonProps> = ({
           <span className="Button__text">{children}</span>
         ) : undefined}
       </div>
-    </button>
+    </React.Fragment>
+  );
+
+  if (allowFocus === undefined || allowFocus) {
+    return (
+      <button
+        className={className}
+        onClick={onClickWithRipple}
+        ref={element}
+        {...rest}
+      >
+        {content}
+      </button>
+    );
+  }
+
+  return (
+    <div
+      className={className}
+      onClick={onClickWithRipple}
+      ref={element}
+      {...rest}
+    >
+      {content}
+    </div>
   );
 };
 

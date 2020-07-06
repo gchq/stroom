@@ -36,7 +36,7 @@ import { Processing } from "components/Processing";
 import { CreateToken } from "components/tokens";
 import { EditToken } from "components/tokens/Create";
 import TokenSearch from "components/tokens/Search/SearchToken";
-import { UserCreate, UserEdit, UserSearch } from "components/users";
+// import { UserCreate, UserEdit, UserSearch } from "components/Account";
 import UserSettings from "components/UserSettings";
 import Welcome from "components/Welcome";
 import AppChrome from "./AppChrome";
@@ -67,11 +67,7 @@ const Routes: React.FunctionComponent = () => {
   const { urlGenerator } = useAppNavigation();
   return (
     <Switch>
-      <Route
-        exact
-        path={`${singlePagePrefix}/stroomWrapper`}
-        component={StroomWrapper}
-      />
+      <Route path={`${singlePagePrefix}/stroom`} component={StroomWrapper} />
       <Route exact path={`${singlePagePrefix}/error`} component={ErrorPage} />
       <Route
         exact
@@ -283,51 +279,51 @@ const Routes: React.FunctionComponent = () => {
         )}
       />
 
-      <PrivateRoute
-        exact
-        path={urlGenerator.goToUsers()}
-        render={({
-          match: {
-            params: { urlPrefix },
-          },
-        }) => (
-          <AppChrome
-            urlPrefix={urlPrefix}
-            activeMenuItem="userIdentities"
-            content={<UserSearch />}
-          />
-        )}
-      />
-      <PrivateRoute
-        exact
-        path={urlGenerator.goToNewUser()}
-        render={({
-          match: {
-            params: { urlPrefix },
-          },
-        }) => (
-          <AppChrome
-            urlPrefix={urlPrefix}
-            activeMenuItem="userIdentities"
-            content={<UserCreate />}
-          />
-        )}
-      />
-      <PrivateRoute
-        exact
-        path={urlGenerator.goToUser(":userId")}
-        render={({
-          match: {
-            params: { urlPrefix },
-          },
-        }) => (
-          <AppChrome
-            activeMenuItem="userIdentities"
-            content={<UserEdit />}
-            urlPrefix={urlPrefix}
-          />
-        )}
-      />
+      {/*<PrivateRoute*/}
+      {/*  exact*/}
+      {/*  path={urlGenerator.goToUsers()}*/}
+      {/*  render={({*/}
+      {/*    match: {*/}
+      {/*      params: { urlPrefix },*/}
+      {/*    },*/}
+      {/*  }) => (*/}
+      {/*    <AppChrome*/}
+      {/*      urlPrefix={urlPrefix}*/}
+      {/*      activeMenuItem="userIdentities"*/}
+      {/*      content={<UserSearch />}*/}
+      {/*    />*/}
+      {/*  )}*/}
+      {/*/>*/}
+      {/*<PrivateRoute*/}
+      {/*  exact*/}
+      {/*  path={urlGenerator.goToNewUser()}*/}
+      {/*  render={({*/}
+      {/*    match: {*/}
+      {/*      params: { urlPrefix },*/}
+      {/*    },*/}
+      {/*  }) => (*/}
+      {/*    <AppChrome*/}
+      {/*      urlPrefix={urlPrefix}*/}
+      {/*      activeMenuItem="userIdentities"*/}
+      {/*      content={<UserCreate />}*/}
+      {/*    />*/}
+      {/*  )}*/}
+      {/*/>*/}
+      {/*<PrivateRoute*/}
+      {/*  exact*/}
+      {/*  path={urlGenerator.goToUser(":userId")}*/}
+      {/*  render={({*/}
+      {/*    match: {*/}
+      {/*      params: { urlPrefix },*/}
+      {/*    },*/}
+      {/*  }) => (*/}
+      {/*    <AppChrome*/}
+      {/*      activeMenuItem="userIdentities"*/}
+      {/*      content={<UserEdit />}*/}
+      {/*      urlPrefix={urlPrefix}*/}
+      {/*    />*/}
+      {/*  )}*/}
+      {/*/>*/}
 
       <PrivateRoute
         exact

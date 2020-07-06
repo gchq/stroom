@@ -17,10 +17,10 @@
 import * as React from "react";
 import { NavLink } from "react-router-dom";
 import { Formik, FormikProps } from "formik";
-import { FormField } from "./FormField";
-import PasswordField from "./PasswordField";
+import { TextBoxField } from "../Form/TextBoxField";
+import { PasswordField } from "../Form/PasswordField";
 import { Person, Lock } from "react-bootstrap-icons";
-import useAuthenticationApi from "./api/useAuthenticationApi";
+import useAuthenticationResource from "./api/useAuthenticationResource";
 import { useAlert } from "../AlertDialog/AlertDisplayBoundary";
 import * as Yup from "yup";
 import { Alert, AlertType } from "../AlertDialog/AlertDialog";
@@ -45,7 +45,7 @@ export const SignInForm: React.FunctionComponent<FormikProps<FormValues>> = ({
   isSubmitting,
 }) => (
   <Form noValidate={true} onSubmit={handleSubmit}>
-    <FormField
+    <TextBoxField
       controlId="userId"
       type="text"
       autoComplete="username"
@@ -61,7 +61,7 @@ export const SignInForm: React.FunctionComponent<FormikProps<FormValues>> = ({
       autoFocus={true}
     >
       <Person className="FormField__icon" />
-    </FormField>
+    </TextBoxField>
 
     <PasswordField
       controlId="password"
@@ -98,7 +98,7 @@ const SignInFormikWrapper: React.FunctionComponent<AuthStateProps> = ({
   authState,
   setAuthState,
 }) => {
-  const { login } = useAuthenticationApi();
+  const { login } = useAuthenticationResource();
   const { alert } = useAlert();
   return (
     <Formik

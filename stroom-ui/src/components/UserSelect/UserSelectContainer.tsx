@@ -16,9 +16,9 @@
 
 import * as React from "react";
 import Fuse from "fuse.js";
-import { Account } from "components/users/types";
+import { Account } from "components/Account/types";
 import UserSelect from "./UserSelect";
-import useUserSearch from "components/users/SearchUsers/useUserSearch";
+import useAccountManager from "components/Account/AccountManager/useAccountManager";
 
 interface Props {
   onChange: (user: string) => void;
@@ -29,7 +29,7 @@ const UserSelectContainer: React.FunctionComponent<Props> = ({
   onChange,
   fuzzy,
 }) => {
-  const { users: initialUsers } = useUserSearch();
+  const { resultPage: initialUsers } = useAccountManager();
   const [users, setUsers] = React.useState<Account[]>(initialUsers.values);
 
   // initialUsers is [] on first render. So when the values finally
