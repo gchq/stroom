@@ -22,8 +22,10 @@ before_install:
   - sudo apt-key adv --keyserver hkp://keyserver.ubuntu.com:80 --recv-keys 0xB1998361219BD9C9
   - sudo apt-add-repository 'deb http://repos.azulsystems.com/ubuntu stable main'
   - sudo apt-get update
-  - sudo apt-get install zulu-14
+  - sudo apt-get install zulu-12
   - java --version
+  - echo $PATH
+  - echo $JAVAHOME
   - ls -l `which java`
   - update-alternatives --list java
 #  - wget https://raw.githubusercontent.com/creationix/nvm/v0.31.0/nvm.sh -O ~/.nvm/nvm.sh
