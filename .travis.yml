@@ -22,11 +22,12 @@ before_install:
   - sudo apt-key adv --keyserver hkp://keyserver.ubuntu.com:80 --recv-keys 0xB1998361219BD9C9
   - sudo apt-add-repository 'deb http://repos.azulsystems.com/ubuntu stable main'
   - apt list | grep openjdk
-    #  - sudo apt remove -y openjdk-11-jdk
+  - sudo apt-get -y purge openjdk-\*
   - sudo apt-get update
   - sudo apt-get install zulu-12
   - java --version
   - ls -l `which java`
+  - sudo apt-get purge openjdk-\*
 #  - wget https://raw.githubusercontent.com/creationix/nvm/v0.31.0/nvm.sh -O ~/.nvm/nvm.sh
 #  - source ~/.nvm/nvm.sh
 #  - nvm install $NODE_VERSION
