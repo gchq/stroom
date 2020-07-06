@@ -1,5 +1,5 @@
 language: java
-jdk: openjdk12
+jdk: zulu12.2.3-ca-jdk12.0.12
 sudo: required #to ensure we get a VM rather than a container for more memory and for all the apt-get stuff
 
 env:
