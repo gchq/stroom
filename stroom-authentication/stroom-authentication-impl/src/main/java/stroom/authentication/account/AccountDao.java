@@ -9,15 +9,15 @@ import java.util.Optional;
 public interface AccountDao {
     Account create(Account account, String password);
 
-    void recordSuccessfulLogin(String email);
+    void recordSuccessfulLogin(String userId);
 
     CredentialValidationResult validateCredentials(String username, String password);
 
-    boolean incrementLoginFailures(String email);
+    boolean incrementLoginFailures(String userId);
 
-    Optional<Integer> getId(String email);
+    Optional<Integer> getId(String userId);
 
-    Optional<Account> get(String email);
+    Optional<Account> get(String userId);
 
     void update(Account account);
 
@@ -27,9 +27,9 @@ public interface AccountDao {
 
     ResultPage<Account> list();
 
-    void changePassword(String email, String newPassword);
+    void changePassword(String userId, String newPassword);
 
-    Boolean needsPasswordChange(String email, Duration mandatoryPasswordChangeDuration, boolean forcePasswordChangeOnFirstLogin);
+    Boolean needsPasswordChange(String userId, Duration mandatoryPasswordChangeDuration, boolean forcePasswordChangeOnFirstLogin);
 
     int deactivateNewInactiveUsers(Duration neverUsedAccountDeactivationThreshold);
 

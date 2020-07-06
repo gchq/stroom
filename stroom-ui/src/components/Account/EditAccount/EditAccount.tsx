@@ -28,16 +28,16 @@ import useAccountResource from "../api/useAccountResource";
 import { Alert, AlertType } from "../../AlertDialog/AlertDialog";
 import { Account } from "components/Account/types";
 
-export interface EditAccountFormValues {
-  userId: string;
-  email: string;
-  firstName: string;
-  lastName: string;
-  comments: string;
-}
+// export interface EditAccountFormValues {
+//   userId: string;
+//   email: string;
+//   firstName: string;
+//   lastName: string;
+//   comments: string;
+// }
 
 export const EditAccountForm: React.FunctionComponent<
-  FormikProps<EditAccountFormValues> & OkCancelProps
+  FormikProps<Account> & OkCancelProps
 > = ({
   values,
   errors,
@@ -155,13 +155,7 @@ const EditAccountFormik: React.FunctionComponent<{
 
   return (
     <Formik
-      initialValues={{
-        userId: "",
-        email: "",
-        firstName: "",
-        lastName: "",
-        comments: "",
-      }}
+      initialValues={props.account}
       validationSchema={newAccountValidationSchema}
       onSubmit={(values, actions) => {
         const handleResponse = (response: any) => {
@@ -187,8 +181,10 @@ const EditAccountFormik: React.FunctionComponent<{
 
         if (!!props.account.id) {
           const request: CreateAccountRequest = {
+            ...props.account,
             firstName: values.firstName,
             lastName: values.lastName,
+            userId: values.userId,
             email: values.email,
             comments: values.comments,
             password: "",
@@ -201,6 +197,7 @@ const EditAccountFormik: React.FunctionComponent<{
             ...props.account,
             firstName: values.firstName,
             lastName: values.lastName,
+            userId: values.userId,
             email: values.email,
             comments: values.comments,
             forcePasswordChange: true,

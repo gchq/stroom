@@ -26,6 +26,7 @@ export interface SearchAccountRequest extends BaseCriteria {
 export interface CreateAccountRequest {
   firstName: string;
   lastName: string;
+  userId: string;
   email: string;
   comments: string;
   password: string;

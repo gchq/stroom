@@ -496,16 +496,16 @@ class AuthenticationServiceImpl implements AuthenticationService {
         // Make sure the session is authenticated and ready for use
         clearSession(request);
 
-        final String username = account.getEmail();
-        LOGGER.debug("Login for {} succeeded", username);
+        final String userId = account.getUserId();
+        LOGGER.debug("Login for {} succeeded", userId);
 
         final boolean userNeedsToChangePassword = accountDao.needsPasswordChange(
-                username,
+                userId,
                 config.getPasswordPolicyConfig().getMandatoryPasswordChangeDuration().getDuration(),
                 config.getPasswordPolicyConfig().isForcePasswordChangeOnFirstLogin());
 
         // Reset last access, login failures, etc...
-        accountDao.recordSuccessfulLogin(username);
+        accountDao.recordSuccessfulLogin(userId);
         setAuthState(request.getSession(true), new AuthStateImpl(account, userNeedsToChangePassword, System.currentTimeMillis()));
 
         return new LoginResponse(true, message, userNeedsToChangePassword);
@@ -628,7 +628,7 @@ class AuthenticationServiceImpl implements AuthenticationService {
 
         @Override
         public String getSubject() {
-            return account.getEmail();
+            return account.getUserId();
         }
 
         @Override

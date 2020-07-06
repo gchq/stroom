@@ -216,7 +216,7 @@ public class AccountEventLogImpl implements AccountEventLog {
         final Object object = new Object();
         object.setType("Account");
         object.setId(String.valueOf(account.getId()));
-        object.setName(account.getEmail());
+        object.setName(account.getUserId());
 //        object.setDescription(description);
 
         try {

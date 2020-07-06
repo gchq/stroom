@@ -61,6 +61,11 @@ class TokenDaoImpl implements TokenDao {
         token.setCreateUser(record.get(TOKEN.CREATE_USER));
         token.setUpdateUser(record.get(TOKEN.UPDATE_USER));
         try {
+            token.setUserId(record.get(ACCOUNT.USER_ID));
+        } catch (final IllegalArgumentException e) {
+            // Ignore
+        }
+        try {
             token.setUserEmail(record.get(ACCOUNT.EMAIL));
         } catch (final IllegalArgumentException e) {
             // Ignore
@@ -142,9 +147,9 @@ class TokenDaoImpl implements TokenDao {
             // Why is this a special case? Because the property on the target table is 'email' but the param is 'user_email'
             // 'user_email' is a clearer param
             if (orderDirection.equals("asc")) {
-                orderByField = new SortField[]{ACCOUNT.EMAIL.asc()};
+                orderByField = new SortField[]{ACCOUNT.USER_ID.asc()};
             } else {
-                orderByField = new SortField[]{ACCOUNT.EMAIL.desc()};
+                orderByField = new SortField[]{ACCOUNT.USER_ID.desc()};
             }
         } else {
             orderByField = getOrderBy(orderBy, orderDirection);
@@ -162,7 +167,7 @@ class TokenDaoImpl implements TokenDao {
                             TOKEN.UPDATE_TIME_MS,
                             TOKEN.CREATE_USER,
                             TOKEN.UPDATE_USER,
-                            ACCOUNT.EMAIL,
+                            ACCOUNT.USER_ID,
                             TOKEN_TYPE.TYPE,
                             TOKEN.DATA,
                             TOKEN.EXPIRES_ON_MS,
@@ -208,7 +213,7 @@ class TokenDaoImpl implements TokenDao {
     public int deleteAllTokensExceptAdmins() {
         final Integer adminUserId = JooqUtil.contextResult(authDbConnProvider, context -> context
                 .select(ACCOUNT.ID).from(ACCOUNT)
-                .where(ACCOUNT.EMAIL.eq("admin"))
+                .where(ACCOUNT.USER_ID.eq("admin"))
                 .fetchOne()
                 .map(r -> r.get(ACCOUNT.ID)));
 
@@ -238,6 +243,7 @@ class TokenDaoImpl implements TokenDao {
                         TOKEN.UPDATE_TIME_MS,
                         TOKEN.CREATE_USER,
                         TOKEN.UPDATE_USER,
+                        ACCOUNT.USER_ID,
                         ACCOUNT.EMAIL,
                         TOKEN_TYPE.TYPE,
                         TOKEN.DATA,
@@ -263,6 +269,7 @@ class TokenDaoImpl implements TokenDao {
                         TOKEN.UPDATE_TIME_MS,
                         TOKEN.CREATE_USER,
                         TOKEN.UPDATE_USER,
+                        ACCOUNT.USER_ID,
                         ACCOUNT.EMAIL,
                         TOKEN_TYPE.TYPE,
                         TOKEN.DATA,
@@ -288,6 +295,7 @@ class TokenDaoImpl implements TokenDao {
                         TOKEN.UPDATE_TIME_MS,
                         TOKEN.CREATE_USER,
                         TOKEN.UPDATE_USER,
+                        ACCOUNT.USER_ID,
                         ACCOUNT.EMAIL,
                         TOKEN_TYPE.TYPE,
                         TOKEN.DATA,
@@ -309,7 +317,7 @@ class TokenDaoImpl implements TokenDao {
                 .update(TOKEN)
                 .set(TOKEN.ENABLED, enabled)
                 .set(TOKEN.UPDATE_TIME_MS, System.currentTimeMillis())
-                .set(TOKEN.UPDATE_USER, updatingAccount.getEmail())
+                .set(TOKEN.UPDATE_USER, updatingAccount.getUserId())
                 .where(TOKEN.ID.eq((tokenId)))
                 .execute());
     }
@@ -335,7 +343,7 @@ class TokenDaoImpl implements TokenDao {
                     case "issuedOn":
                     case "updatedOn":
                     case "userId":
-                        throw new UnsupportedFilterException(unsupportedFilterMessage + key);
+                        condition = ACCOUNT.USER_ID.contains(filters.get(key));
                     case "userEmail":
                         condition = ACCOUNT.EMAIL.contains(filters.get(key));
                         break;
@@ -369,6 +377,8 @@ class TokenDaoImpl implements TokenDao {
         SortField<?> orderByField = TOKEN.CREATE_TIME_MS.desc();
         if (orderBy != null) {
             switch (orderBy) {
+                case "userId":
+                    orderByField = orderDirection.equals("asc") ? ACCOUNT.USER_ID.asc() : ACCOUNT.USER_ID.desc();
                 case "userEmail":
                     orderByField = orderDirection.equals("asc") ? ACCOUNT.EMAIL.asc() : ACCOUNT.EMAIL.desc();
                     break;

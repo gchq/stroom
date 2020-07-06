@@ -59,6 +59,7 @@ public class AccountServiceImpl implements AccountService {
         account.setUpdateUser(userId);
         account.setFirstName(request.getFirstName());
         account.setLastName(request.getLastName());
+        account.setUserId(request.getUserId());
         account.setEmail(request.getEmail());
         account.setComments(request.getComments());
         account.setForcePasswordChange(request.isForcePasswordChange());
@@ -77,7 +78,7 @@ public class AccountServiceImpl implements AccountService {
         if (optionalUser.isPresent()) {
             Account foundAccount = optionalUser.get();
             // We only need to check auth permissions if the user is trying to access a different user.
-            final boolean isUserAccessingThemselves = loggedInUser.equals(foundAccount.getEmail());
+            final boolean isUserAccessingThemselves = loggedInUser.equals(foundAccount.getUserId());
             boolean canManageUsers = securityContext.hasAppPermission(PermissionNames.MANAGE_USERS_PERMISSION);
             if (!isUserAccessingThemselves && !canManageUsers) {
                 throw new RuntimeException("Unauthorized");

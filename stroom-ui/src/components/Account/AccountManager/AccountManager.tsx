@@ -69,7 +69,7 @@ const AccountManager: FunctionComponent<{
             data: resultPage.values,
           },
           actions: {
-            onCreate: () => undefined,
+            onCreate: () => (u) => setEditingAccount({}),
             onEdit: (account) => setEditingAccount(account),
             onRemove: (account) => remove(account.id),
           },

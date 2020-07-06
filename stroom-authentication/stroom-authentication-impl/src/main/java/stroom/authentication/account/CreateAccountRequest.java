@@ -12,6 +12,8 @@ public class CreateAccountRequest {
     @JsonProperty
     private final String lastName;
     @JsonProperty
+    private final String userId;
+    @JsonProperty
     private final String email;
     @JsonProperty
     private final String comments;
@@ -25,6 +27,7 @@ public class CreateAccountRequest {
     @JsonCreator
     public CreateAccountRequest(@JsonProperty("firstName") final String firstName,
                                 @JsonProperty("lastName") final String lastName,
+                                @JsonProperty("userId") final String userId,
                                 @JsonProperty("email") final String email,
                                 @JsonProperty("comments") final String comments,
                                 @JsonProperty("password") final String password,
@@ -32,6 +35,7 @@ public class CreateAccountRequest {
                                 @JsonProperty("neverExpires") final boolean neverExpires) {
         this.firstName = firstName;
         this.lastName = lastName;
+        this.userId = userId;
         this.email = email;
         this.comments = comments;
         this.password = password;
@@ -45,6 +49,10 @@ public class CreateAccountRequest {
 
     public String getLastName() {
         return lastName;
+    }
+
+    public String getUserId() {
+        return userId;
     }
 
     public String getEmail() {

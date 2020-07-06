@@ -5,18 +5,19 @@ export interface Account {
   updateTimeMs?: number;
   createUser?: string;
   updateUser?: string;
-  email: string;
-  firstName: string;
-  lastName: string;
+  userId?: string;
+  email?: string;
+  firstName?: string;
+  lastName?: string;
   comments?: string;
   loginCount?: number;
   loginFailures?: number;
   lastLoginMs?: number;
   reactivatedMs?: number;
-  forcePasswordChange: boolean;
-  neverExpires: boolean;
-  enabled: boolean;
-  inactive: boolean;
-  locked: boolean;
-  processingAccount: boolean;
+  forcePasswordChange?: boolean;
+  neverExpires?: boolean;
+  enabled?: boolean;
+  inactive?: boolean;
+  locked?: boolean;
+  processingAccount?: boolean;
 }

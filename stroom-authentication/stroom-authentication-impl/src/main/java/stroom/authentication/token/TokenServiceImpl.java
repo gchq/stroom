@@ -142,6 +142,7 @@ public class TokenServiceImpl implements TokenService, HasHealthCheck {
         token.setUpdateTimeMs(now);
         token.setCreateUser(userId);
         token.setUpdateUser(userId);
+        token.setUserId(userId);
         token.setUserEmail(account.getEmail());
         token.setTokenType(tokenType.getText().toLowerCase());
         token.setData(idToken);

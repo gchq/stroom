@@ -8,13 +8,7 @@ import { newAccountValidationSchema } from "./validation";
 const FormikWrapper: React.FunctionComponent = () => {
   return (
     <Formik
-      initialValues={{
-        userId: "",
-        email: "",
-        firstName: "",
-        lastName: "",
-        comments: "",
-      }}
+      initialValues={{}}
       validationSchema={newAccountValidationSchema}
       onSubmit={(values, actions) => {
         setTimeout(() => {

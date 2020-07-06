@@ -63,6 +63,7 @@ class AccountDaoImpl implements AccountDao {
         account.setUpdateTimeMs(record.get(ACCOUNT.UPDATE_TIME_MS));
         account.setCreateUser(record.get(ACCOUNT.CREATE_USER));
         account.setUpdateUser(record.get(ACCOUNT.UPDATE_USER));
+        account.setUserId(record.get(ACCOUNT.USER_ID));
         account.setEmail(record.get(ACCOUNT.EMAIL));
         account.setFirstName(record.get(ACCOUNT.FIRST_NAME));
         account.setLastName(record.get(ACCOUNT.LAST_NAME));
@@ -87,6 +88,7 @@ class AccountDaoImpl implements AccountDao {
         record.setUpdateTimeMs(account.getUpdateTimeMs());
         record.setCreateUser(account.getCreateUser());
         record.setUpdateUser(account.getUpdateUser());
+        record.setUserId(account.getUserId());
         record.setEmail(account.getEmail());
         record.setFirstName(account.getFirstName());
         record.setLastName(account.getLastName());
@@ -132,7 +134,7 @@ class AccountDaoImpl implements AccountDao {
     }
 
     @Override
-    public void recordSuccessfulLogin(final String email) {
+    public void recordSuccessfulLogin(final String userId) {
         // We reset the failed login count if we have a successful login
         JooqUtil.context(authDbConnProvider, context -> context
                 .update(ACCOUNT)
@@ -140,24 +142,24 @@ class AccountDaoImpl implements AccountDao {
                 .set(ACCOUNT.REACTIVATED_MS, (Long) null)
                 .set(ACCOUNT.LOGIN_COUNT, ACCOUNT.LOGIN_COUNT.plus(1))
                 .set(ACCOUNT.LAST_LOGIN_MS, System.currentTimeMillis())
-                .where(ACCOUNT.EMAIL.eq(email))
+                .where(ACCOUNT.USER_ID.eq(userId))
                 .execute());
     }
 
     @Override
-    public CredentialValidationResult validateCredentials(final String username, final String password) {
-        if (Strings.isNullOrEmpty(username)
+    public CredentialValidationResult validateCredentials(final String userId, final String password) {
+        if (Strings.isNullOrEmpty(userId)
                 || Strings.isNullOrEmpty(password)) {
             return new CredentialValidationResult(false, true, false, false, false, false);
         }
 
         final Optional<AccountRecord> optionalRecord = JooqUtil.contextResult(authDbConnProvider, context -> context
                 .selectFrom(ACCOUNT)
-                .where(ACCOUNT.EMAIL.eq(username))
+                .where(ACCOUNT.USER_ID.eq(userId))
                 .fetchOptional());
 
         if (optionalRecord.isEmpty()) {
-            LOGGER.debug("Request to log in with invalid username: " + username);
+            LOGGER.debug("Request to log in with invalid user id: " + userId);
             return new CredentialValidationResult(false, true, false, false, false, false);
         }
 
@@ -172,7 +174,7 @@ class AccountDaoImpl implements AccountDao {
     }
 
     @Override
-    public boolean incrementLoginFailures(final String email) {
+    public boolean incrementLoginFailures(final String userId) {
         boolean locked = false;
 
         if (config.getFailedLoginLockThreshold() != null) {
@@ -189,14 +191,14 @@ class AccountDaoImpl implements AccountDao {
 
                     .set(ACCOUNT.LOGIN_FAILURES, ACCOUNT.LOGIN_FAILURES.plus(1))
                     .set(ACCOUNT.LOCKED, DSL.field(ACCOUNT.LOGIN_FAILURES.ge(config.getFailedLoginLockThreshold())))
-                    .where(ACCOUNT.EMAIL.eq(email))
+                    .where(ACCOUNT.USER_ID.eq(userId))
                     .execute());
 
             // Query the field back to find out if we locked.
             locked = JooqUtil.contextResult(authDbConnProvider, context -> context
                     .select(ACCOUNT.LOCKED)
                     .from(ACCOUNT)
-                    .where(ACCOUNT.EMAIL.eq(email))
+                    .where(ACCOUNT.USER_ID.eq(userId))
                     .fetchOptional()
                     .map(Record1::value1)
                     .orElse(false));
@@ -204,7 +206,7 @@ class AccountDaoImpl implements AccountDao {
             JooqUtil.context(authDbConnProvider, context -> context
                     .update(ACCOUNT)
                     .set(ACCOUNT.LOGIN_FAILURES, ACCOUNT.LOGIN_FAILURES.plus(1))
-                    .where(ACCOUNT.EMAIL.eq(email))
+                    .where(ACCOUNT.USER_ID.eq(userId))
                     .execute());
         }
 
@@ -231,27 +233,27 @@ class AccountDaoImpl implements AccountDao {
 //        }
 
         if (locked) {
-            LOGGER.debug("Account {} has had too many failed access attempts and is locked", email);
+            LOGGER.debug("Account {} has had too many failed access attempts and is locked", userId);
         }
 
         return locked;
     }
 
     @Override
-    public Optional<Account> get(final String email) {
+    public Optional<Account> get(final String userId) {
         return JooqUtil.contextResult(authDbConnProvider, context -> context
                 .selectFrom(ACCOUNT)
-                .where(ACCOUNT.EMAIL.eq(email))
+                .where(ACCOUNT.USER_ID.eq(userId))
                 .fetchOptional()
                 .map(RECORD_TO_ACCOUNT_MAPPER));
     }
 
     @Override
-    public Optional<Integer> getId(final String email) {
+    public Optional<Integer> getId(final String userId) {
         return JooqUtil.contextResult(authDbConnProvider, context -> context
                 .select(ACCOUNT.ID)
                 .from(ACCOUNT)
-                .where(ACCOUNT.EMAIL.eq(email))
+                .where(ACCOUNT.USER_ID.eq(userId))
                 .fetchOptional()
                 .map(r -> r.getValue(ACCOUNT.ID)));
     }
@@ -298,18 +300,18 @@ class AccountDaoImpl implements AccountDao {
 
     @Override
     public ResultPage<Account> list() {
-        final TableField<AccountRecord, String> orderByEmailField = ACCOUNT.EMAIL;
+        final TableField<AccountRecord, String> orderByUserIdField = ACCOUNT.USER_ID;
         final List<Account> list = JooqUtil.contextResult(authDbConnProvider, context -> context
                 .selectFrom(ACCOUNT)
                 .where(ACCOUNT.PROCESSING_ACCOUNT.isFalse())
-                .orderBy(orderByEmailField)
+                .orderBy(orderByUserIdField)
                 .fetch()
                 .map(RECORD_TO_ACCOUNT_MAPPER::apply));
         return ResultPage.createUnboundedList(list);
     }
 
     @Override
-    public void changePassword(final String email, final String newPassword) {
+    public void changePassword(final String userId, final String newPassword) {
         final String newPasswordHash = PasswordHashUtil.hash(newPassword);
 
         final int count = JooqUtil.contextResult(authDbConnProvider, context -> context
@@ -317,7 +319,7 @@ class AccountDaoImpl implements AccountDao {
                 .set(ACCOUNT.PASSWORD_HASH, newPasswordHash)
                 .set(ACCOUNT.PASSWORD_LAST_CHANGED_MS, System.currentTimeMillis())
                 .set(ACCOUNT.FORCE_PASSWORD_CHANGE, false)
-                .where(ACCOUNT.EMAIL.eq(email))
+                .where(ACCOUNT.USER_ID.eq(userId))
                 .execute());
 
         if (count == 0) {
@@ -326,14 +328,14 @@ class AccountDaoImpl implements AccountDao {
     }
 
     @Override
-    public Boolean needsPasswordChange(final String email,
+    public Boolean needsPasswordChange(final String userId,
                                        final Duration mandatoryPasswordChangeDuration,
                                        final boolean forcePasswordChangeOnFirstLogin) {
-        Objects.requireNonNull(email, "email must not be null");
+        Objects.requireNonNull(userId, "userId must not be null");
 
         final AccountRecord user = JooqUtil.contextResult(authDbConnProvider, context -> context
                 .selectFrom(ACCOUNT)
-                .where(ACCOUNT.EMAIL.eq(email))
+                .where(ACCOUNT.USER_ID.eq(userId))
                 .fetchOne());
 
         if (user == null) {
@@ -357,7 +359,7 @@ class AccountDaoImpl implements AccountDao {
         if (thresholdBreached
                 || (forcePasswordChangeOnFirstLogin && isFirstLogin)
                 || user.getForcePasswordChange()) {
-            LOGGER.debug("User {} needs a password change.", email);
+            LOGGER.debug("User {} needs a password change.", userId);
             return true;
         } else return false;
     }
@@ -421,7 +423,7 @@ class AccountDaoImpl implements AccountDao {
     private Condition createCondition(final SearchAccountRequest request) {
         Condition condition = ACCOUNT.PROCESSING_ACCOUNT.isFalse();
         if (request.getQuickFilter() != null) {
-            condition = condition.and(ACCOUNT.EMAIL.contains(request.getQuickFilter()));
+            condition = condition.and(ACCOUNT.USER_ID.contains(request.getQuickFilter()));
         }
         return condition;
     }
