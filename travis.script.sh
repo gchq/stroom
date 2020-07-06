@@ -247,6 +247,9 @@ else
     # Ensure we have a local.yml file as the integration tests will need it
     ./local.yml.sh
 
+
+    export JAVA_HOME=/usr/lib/jvm/zulu-12-amd
+
     # Do the gradle build
     # Use custom gwt compile jvm settings to avoid blowing the ram limit in
     # travis. At time of writing a sudo VM in travis has 7.5gb ram.
