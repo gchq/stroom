@@ -29,6 +29,9 @@ public final class ProcessorFilterUtil {
                 processorFilter.getQueryData().getExpression() == null)
             return false;
 
+        if (processorFilter.isReprocess() || processorFilter.isDeleted())
+            return false;
+
         ExpressionOperator expression = processorFilter.getQueryData().getExpression();
 
         return containsIdField(expression) == false;
