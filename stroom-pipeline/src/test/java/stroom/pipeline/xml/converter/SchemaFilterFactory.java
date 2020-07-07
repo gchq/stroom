@@ -18,6 +18,7 @@
 package stroom.pipeline.xml.converter;
 
 import stroom.cache.MockSchemaPool;
+import stroom.docref.DocRef;
 import stroom.docstore.impl.Persistence;
 import stroom.docstore.impl.Serialiser2FactoryImpl;
 import stroom.docstore.impl.StoreFactoryImpl;
@@ -36,28 +37,51 @@ import stroom.pipeline.xmlschema.XmlSchemaStore;
 import stroom.pipeline.xmlschema.XmlSchemaStoreImpl;
 import stroom.security.api.SecurityContext;
 import stroom.security.mock.MockSecurityContext;
+import stroom.test.common.util.test.FileSystemTestUtil;
+import stroom.util.io.FileUtil;
+import stroom.util.io.StreamUtil;
+import stroom.util.logging.LogUtil;
+import stroom.util.zip.ZipUtil;
+import stroom.xmlschema.shared.XmlSchemaDoc;
+
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+
+import java.io.IOException;
+import java.nio.file.Files;
+import java.nio.file.Path;
+import java.util.Optional;
 
 public class SchemaFilterFactory {
+
+    private static final Logger LOGGER = LoggerFactory.getLogger(SchemaFilterFactory.class);
+
+    private static final String SCHEMAS_BASE = "stroomContent/XML Schemas/";
     private final SecurityContext securityContext = new MockSecurityContext();
     private final Persistence persistence = new MemoryPersistence();
     private final XmlSchemaSerialiser serialiser = new XmlSchemaSerialiser(new Serialiser2FactoryImpl());
     private final XmlSchemaStore xmlSchemaStore = new XmlSchemaStoreImpl(
-            new StoreFactoryImpl(persistence, null, null, securityContext), serialiser);
+            new StoreFactoryImpl(
+                    persistence,
+                    null,
+                    null,
+                    securityContext),
+            serialiser);
     private final XmlSchemaCache xmlSchemaCache = new XmlSchemaCache(xmlSchemaStore);
     private final SchemaLoaderImpl schemaLoader = new SchemaLoaderImpl(xmlSchemaCache);
 
     public SchemaFilterFactory() {
-        // loadXMLSchema(DataSplitterParserFactory.SCHEMA_GROUP,
-        // DataSplitterParserFactory.SCHEMA_NAME,
-        // DataSplitterParserFactory.NAMESPACE_URI,
-        // DataSplitterParserFactory.SYSTEM_ID,
-        // "data-splitter/v1.4/data-splitter-v1.4.xsd");
-        // loadXMLSchema(DS2ParserFactory.SCHEMA_GROUP,
-        // DS2ParserFactory.SCHEMA_NAME, DS2ParserFactory.NAMESPACE_URI,
-        // DS2ParserFactory.SYSTEM_ID,
-        // "data-splitter/v2.0/data-splitter-v2.0.xsd");
-        loadXMLSchema(DS3ParserFactory.SCHEMA_GROUP, DS3ParserFactory.SCHEMA_NAME, DS3ParserFactory.NAMESPACE_URI,
-                DS3ParserFactory.SYSTEM_ID, "data-splitter/v3.0/data-splitter-v3.0.xsd");
+        loadSchemas();
+    }
+
+    private void loadSchemas() {
+        loadXMLSchema(
+                DS3ParserFactory.SCHEMA_GROUP,
+                DS3ParserFactory.SCHEMA_NAME,
+                DS3ParserFactory.NAMESPACE_URI,
+                DS3ParserFactory.SYSTEM_ID,
+                "core-xml-schemas-v2.2",
+                SCHEMAS_BASE + "data-splitter/data-splitter v3.0.XMLSchema.data.xsd");
     }
 
     public SchemaFilter getSchemaFilter(final String namespaceURI, final ErrorReceiverProxy errorReceiverProxy) {
@@ -77,18 +101,59 @@ public class SchemaFilterFactory {
                                final String schemaName,
                                final String namespaceURI,
                                final String systemId,
+                               final String packName,
                                final String fileName) {
-//        final Path dir = FileSystemTestUtil.getConfigXSDDir();
-//
-//        final Path file = dir.resolve(fileName);
-//
-//        final DocRef docRef = xmlSchemaStore.createDocument(schemaName);
-//        final XmlSchemaDoc xmlSchema = xmlSchemaStore.readDocument(docRef);
-//        xmlSchema.setSchemaGroup(schemaGroup);
-//        xmlSchema.setName(schemaName);
-//        xmlSchema.setNamespaceURI(namespaceURI);
-//        xmlSchema.setSystemId(systemId);
-//        xmlSchema.setMeta(StreamUtil.fileToString(file));
-//        xmlSchemaStore.writeDocument(xmlSchema);
+        final Path schemaFile = Optional.of(getSchemaFile(packName, fileName))
+                .filter(Files::isRegularFile)
+                .orElseGet(() -> {
+                    explodePack(packName);
+
+                    final Path schemaFile2 = getSchemaFile(packName, fileName);
+
+                    if (!Files.isRegularFile(schemaFile2)) {
+                        throw new RuntimeException(LogUtil.message(
+                                "Expecting to find {}", FileUtil.getCanonicalPath(schemaFile2)));
+                    }
+                    return schemaFile2;
+                });
+
+        final DocRef docRef = xmlSchemaStore.createDocument(schemaName);
+        final XmlSchemaDoc xmlSchema = xmlSchemaStore.readDocument(docRef);
+        xmlSchema.setSchemaGroup(schemaGroup);
+        xmlSchema.setName(schemaName);
+        xmlSchema.setNamespaceURI(namespaceURI);
+        xmlSchema.setSystemId(systemId);
+        xmlSchema.setData(StreamUtil.fileToString(schemaFile));
+        xmlSchemaStore.writeDocument(xmlSchema);
+    }
+
+    private Path getSchemaFile(final String packName,
+                               final String fileName) {
+        return FileSystemTestUtil.getExplodedContentPacksDir()
+                .resolve(packName)
+                .resolve(fileName);
+    }
+
+    private void explodePack(final String packName) {
+        final Path downloadsDir = FileSystemTestUtil.getContentPackDownloadsDir();
+        final Path explodedPackDir = downloadsDir.resolve("exploded")
+                .resolve(packName);
+
+        try {
+            Files.createDirectories(explodedPackDir);
+        } catch (IOException e) {
+            throw new RuntimeException(LogUtil.message(
+                    "Unable to create dir {}", FileUtil.getCanonicalPath(explodedPackDir)), e);
+        }
+
+        final Path packZip = downloadsDir.resolve(packName + ".zip");
+
+        try {
+            LOGGER.info("Unzipping {} into {}",
+                    FileUtil.getCanonicalPath(packZip), FileUtil.getCanonicalPath(explodedPackDir));
+            ZipUtil.unzip(packZip, explodedPackDir);
+        } catch (IOException e) {
+            throw new RuntimeException(e);
+        }
     }
 }

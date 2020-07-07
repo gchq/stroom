@@ -17,13 +17,6 @@
 package stroom.pipeline.xml.converter.ds3;
 
 
-import org.junit.jupiter.api.Disabled;
-import org.junit.jupiter.api.Test;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
-import org.xml.sax.InputSource;
-import org.xml.sax.SAXException;
-import org.xml.sax.XMLReader;
 import stroom.pipeline.DefaultLocationFactory;
 import stroom.pipeline.LocationFactory;
 import stroom.pipeline.StreamLocationFactory;
@@ -43,6 +36,15 @@ import stroom.util.io.StreamUtil;
 import stroom.util.shared.Indicators;
 import stroom.util.xml.XMLUtil;
 
+import org.junit.jupiter.api.DynamicTest;
+import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.TestFactory;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+import org.xml.sax.InputSource;
+import org.xml.sax.SAXException;
+import org.xml.sax.XMLReader;
+
 import javax.xml.transform.TransformerConfigurationException;
 import javax.xml.transform.sax.TransformerHandler;
 import javax.xml.transform.stream.StreamResult;
@@ -56,8 +58,11 @@ import java.nio.file.DirectoryStream;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.ArrayList;
+import java.util.Collection;
 import java.util.List;
 import java.util.Map.Entry;
+import java.util.Optional;
+import java.util.stream.Collectors;
 import java.util.zip.ZipEntry;
 import java.util.zip.ZipInputStream;
 
@@ -65,7 +70,7 @@ import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.fail;
 
 // TODO : Reinstate tests.
-@Disabled("Removed test data")
+//@Disabled("Removed test data")
 class TestDS3 extends StroomUnitTest {
     private static final Logger LOGGER = LoggerFactory.getLogger(TestDS3.class);
 
@@ -94,55 +99,77 @@ class TestDS3 extends StroomUnitTest {
 
     // TODO : Add new test data to fully exercise DS3.
 
-    @Test
-    void testProcessAll() throws IOException, TransformerConfigurationException, SAXException {
+    @TestFactory
+    Collection<DynamicTest> testProcessAll() throws IOException, TransformerConfigurationException, SAXException {
         // Get the testing directory.
         final Path testDir = getTestDir();
         final List<Path> paths = new ArrayList<>();
-        try (final DirectoryStream<Path> stream = Files.newDirectoryStream(testDir, "*.ds2")) {
+        try (final DirectoryStream<Path> stream = Files.newDirectoryStream(testDir, "*.ds3")) {
             stream.forEach(paths::add);
         }
 
-        for (final Path path : paths) {
-            final String name = path.getFileName().toString();
-            if (name.endsWith(".ds2")) {
-                String type = null;
-                String variant = null;
-                // String extension = null;
+        final List<DynamicTest> dynamicTests = paths.stream()
+                .peek(path -> LOGGER.info("Found: " + FileUtil.getCanonicalPath(path)))
+                .filter(path -> path.getFileName().toString().endsWith(".ds3"))
+                .map(path -> {
+                    final String name = path.getFileName().toString();
+                    String type = null;
+                    String variant = null;
+                    // String extension = null;
 
-                int index = name.lastIndexOf(".");
-                if (index != -1) {
-                    type = name.substring(0, index);
-                    // extension = name.substring(index + 1);
-
-                    index = type.indexOf("~");
+                    int index = name.lastIndexOf(".");
                     if (index != -1) {
-                        variant = type.substring(index + 1);
-                        type = type.substring(0, index);
+                        type = name.substring(0, index);
+                        // extension = name.substring(index + 1);
+
+                        index = type.indexOf("~");
+                        if (index != -1) {
+                            variant = type.substring(index + 1);
+                            type = type.substring(0, index);
+                        }
                     }
-                }
 
-                // Only process non variants.
-                if (variant == null) {
-                    positiveTest(type);
-                }
-            }
+                    LOGGER.info("name: {}, type: {}, variant: {}", name, type, variant);
+
+                    // Only process non variants.
+                    if (variant == null) {
+                        return Optional.of(positiveTest(type));
+                    } else {
+                        return Optional.<DynamicTest>empty();
+                    }
+                })
+                .filter(Optional::isPresent)
+                .map(Optional::get)
+                .collect(Collectors.toList());
+
+        if (dynamicTests.isEmpty()) {
+            LOGGER.warn("No tests created");
+        } else {
+            LOGGER.info("Created {} tests", dynamicTests.size());
         }
+
+        return dynamicTests;
     }
 
-    private void negativeTest(final String stem, final String type) throws IOException, TransformerConfigurationException, SAXException {
-        test(stem, "~" + type, true);
+    private DynamicTest negativeTest(final String stem, final String type) {
+        return createTest(stem, "~" + type, true);
     }
 
-    private void positiveTest(final String stem) throws IOException, TransformerConfigurationException, SAXException {
-        test(stem, "", false);
+    private DynamicTest positiveTest(final String stem) {
+        return createTest(stem, "", false);
     }
 
-    private void positiveTest(final String stem, final String type) throws IOException, TransformerConfigurationException, SAXException {
-        test(stem, "~" + type, false);
+    private DynamicTest positiveTest(final String stem, final String type) {
+        return createTest(stem, "~" + type, false);
     }
 
-    private void test(final String stem, final String testType, final boolean expectedErrors) throws IOException, TransformerConfigurationException, SAXException {
+    private DynamicTest createTest(final String stem, final String testType, final boolean expectedErrors) {
+        return DynamicTest.dynamicTest(stem, () -> test(stem, testType, expectedErrors));
+    }
+
+    private void test(final String stem,
+                      final String testType,
+                      final boolean expectedErrors) throws IOException, TransformerConfigurationException, SAXException {
         // Get the testing directory.
         final Path testDir = getTestDir();
 
@@ -158,18 +185,28 @@ class TestDS3 extends StroomUnitTest {
             }
         }
 
-        final Path config = testDir.resolve(stem + testType + ".ds2");
+        final Path config = testDir.resolve(stem + testType + ".ds3");
         final Path out = testDir.resolve(stem + testType + ".out");
         final Path outtmp = testDir.resolve(stem + testType + ".out_tmp");
         final Path err = testDir.resolve(stem + testType + ".err");
         final Path errtmp = testDir.resolve(stem + testType + ".err_tmp");
 
+        LOGGER.info("Data Splitter config: {}", config);
+        LOGGER.info("Expected output: {}", out);
+        LOGGER.info("Actual output: {}", outtmp);
+        LOGGER.info("Expected errors: {}", err);
+        LOGGER.info("Actual errors: {}", err);
+
         // Delete temporary files.
         FileUtil.deleteFile(outtmp);
         FileUtil.deleteFile(errtmp);
 
-        assertThat(Files.isRegularFile(config)).as(FileUtil.getCanonicalPath(config) + " does not exist").isTrue();
-        assertThat(Files.isRegularFile(input)).as(FileUtil.getCanonicalPath(input) + " does not exist").isTrue();
+        assertThat(Files.isRegularFile(config))
+                .as(FileUtil.getCanonicalPath(config) + " does not exist")
+                .isTrue();
+        assertThat(Files.isRegularFile(input))
+                .as(FileUtil.getCanonicalPath(input) + " does not exist")
+                .isTrue();
 
         final OutputStream os = new BufferedOutputStream(Files.newOutputStream(outtmp));
 
@@ -180,6 +217,7 @@ class TestDS3 extends StroomUnitTest {
         final MergeFilter mergeFilter = new MergeFilter();
         mergeFilter.setContentHandler(th);
 
+        LOGGER.debug("Creating reader for {}", config.toAbsolutePath().normalize().toString());
         // Create a reader from the config.
         final XMLReader reader = createReader(config);
         reader.setContentHandler(mergeFilter);
@@ -276,7 +314,9 @@ class TestDS3 extends StroomUnitTest {
         factory.configure(Files.newBufferedReader(config),
                 new ErrorHandlerAdaptor("DS3ParserFactory", locationFactory, errorReceiver));
 
-        assertThat(errorReceiver.isAllOk()).as("Configuration of parser failed: " + errorReceiver.getMessage()).isTrue();
+        assertThat(errorReceiver.isAllOk())
+                .as("Configuration of parser failed: " + errorReceiver.getMessage())
+                .isTrue();
 
         final XMLReader reader = factory.getParser();
         reader.setErrorHandler(new ErrorHandlerAdaptor("DS3Parser", locationFactory, errorReceiver));
@@ -284,8 +324,16 @@ class TestDS3 extends StroomUnitTest {
     }
 
     private void compareFiles(final Path actualFile, final Path expectedFile) {
-        ComparisonHelper.compareFiles(expectedFile, actualFile);
-        // If the files matched then delete the temporary file.
-        FileUtil.deleteFile(actualFile);
+
+        boolean areFilesTheSame = ComparisonHelper.unifiedDiff(expectedFile, actualFile);
+
+        if (areFilesTheSame) {
+            // If the files matched then delete the temporary file.
+            FileUtil.deleteFile(actualFile);
+        } else {
+            fail("Files did not match, see diff");
+        }
+//        ComparisonHelper.compareFiles(expectedFile, actualFile);
     }
+
 }

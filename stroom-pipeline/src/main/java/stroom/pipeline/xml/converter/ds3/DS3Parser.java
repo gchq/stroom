@@ -16,12 +16,6 @@
 
 package stroom.pipeline.xml.converter.ds3;
 
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
-import org.xml.sax.Attributes;
-import org.xml.sax.InputSource;
-import org.xml.sax.SAXException;
-import org.xml.sax.helpers.AttributesImpl;
 import stroom.pipeline.errorhandler.ErrorHandlerAdaptor;
 import stroom.pipeline.xml.NamespaceConstants;
 import stroom.pipeline.xml.converter.AbstractParser;
@@ -30,6 +24,13 @@ import stroom.pipeline.xml.converter.ds3.NodeFactory.NodeType;
 import stroom.util.CharBuffer;
 import stroom.util.shared.ModelStringUtil;
 import stroom.util.shared.Severity;
+
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+import org.xml.sax.Attributes;
+import org.xml.sax.InputSource;
+import org.xml.sax.SAXException;
+import org.xml.sax.helpers.AttributesImpl;
 
 import java.io.IOException;
 import java.util.concurrent.Executors;
@@ -496,9 +497,31 @@ public class DS3Parser extends AbstractParser {
             // Make sure we consumed all of the sub buffer (ignoring trailing
             // whitespace).
             if (!node.isIgnoreErrors() && !subBuffer.isBlank()) {
+
+                // Limit the amount of unmatched content we put in the msg in case
+                // it is mahoosive.
+                final int maxBuffLen = 200;
+                final boolean isTruncated;
+                final Buffer unmatchedBuffer;
+                if (subBuffer.length() > maxBuffLen) {
+                    unmatchedBuffer = subBuffer.subSequence(0, maxBuffLen);
+                    isTruncated = true;
+                } else {
+                    unmatchedBuffer = subBuffer;
+                    isTruncated = false;
+                }
+
                 messageBuffer.clear();
-                messageBuffer.append("Expressions failed to match all of the content provided by group: ");
-                messageBuffer.append(node.getDebugId());
+                messageBuffer
+                        .append("Expressions failed to match all of the content provided by group: ")
+                        .append(node.getDebugId())
+                        .append(" unmatched content: [")
+                        .append(unmatchedBuffer.toString().replace("\n", "\\n"));
+                if (isTruncated) {
+                    messageBuffer.append("...TRUNCATED");
+                }
+                messageBuffer.append("]");
+
                 log(Severity.ERROR, messageBuffer.toString());
             }
         }
