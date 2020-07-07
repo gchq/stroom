@@ -429,6 +429,8 @@ subprojects {
     }
 
     test {
+        dependsOn downloadStroomContent
+
         useJUnitPlatform()
 
         // Report duration of tests that take over 1s
