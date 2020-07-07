@@ -8,10 +8,15 @@
   <split delimiter="\n">
 
     <group value="$1">
-      <regex pattern="^([0-9]+) \[([^\]]*)\] (.*)$">
+      <regex id="threeFields" pattern="^([0-9]+) \[([^\]]*)\] (.*)$" minMatch="1">
         <data name="number" value="$1" />
         <data name="type" value="$2" />
         <data name="text" value="$3" />
+      </regex>
+
+      <regex id="twoFields" pattern="^\[([^\]]*)\] (.*)$">
+        <data name="type" value="$1" />
+        <data name="text" value="$2" />
       </regex>
     </group>
   </split>
