@@ -108,6 +108,7 @@ class TestDS3 extends StroomUnitTest {
             stream.forEach(paths::add);
         }
 
+        // Build a dynamic test for each data splitter config found
         final List<DynamicTest> dynamicTests = paths.stream()
                 .peek(path -> LOGGER.info("Found: " + FileUtil.getCanonicalPath(path)))
                 .filter(path -> path.getFileName().toString().endsWith(CONFIG_EXTENSION))

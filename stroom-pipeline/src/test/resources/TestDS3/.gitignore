@@ -1,2 +1,2 @@
-*.out_tmp
-*.err_tmp
+*.out.tmp.xml
+*.err.tmp
