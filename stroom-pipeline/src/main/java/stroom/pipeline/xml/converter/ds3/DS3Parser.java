@@ -152,8 +152,13 @@ public class DS3Parser extends AbstractParser {
         stopProfiling();
     }
 
-    private void process(final Node parent, final Buffer buffer, final Match parentMatch, final int parentMatchCount,
-                         final int level, final MatchOrder matchOrder, final boolean ignoreErrors) throws IOException, SAXException {
+    private void process(final Node parent,
+                         final Buffer buffer,
+                         final Match parentMatch,
+                         final int parentMatchCount,
+                         final int level,
+                         final MatchOrder matchOrder,
+                         final boolean ignoreErrors) throws IOException, SAXException {
         int advance = 1;
         boolean firstPass = true;
         int matchCount = 0;
@@ -236,9 +241,14 @@ public class DS3Parser extends AbstractParser {
         int start = -1;
         int end = -1;
 
+        // We don't know if this is a match yet so plus one to the matches so far to
+        // get the match number this would be if it matches
+        final int potentialMatchNumber = parentMatchCount + 1;
+
         // Check that we haven't already exceeded the maximum match count for
         // this expression.
-        if (expression.checkMaxMatch() && expression.checkOnlyMatch(parentMatchCount)) {
+        if (expression.checkMaxMatch()
+                && expression.checkOnlyMatch(potentialMatchNumber)) {
             // Set the input that this expression will use.
             expression.setInput(buffer);
 
@@ -331,7 +341,12 @@ public class DS3Parser extends AbstractParser {
         // Make sure the expression matched the minimum number of times.
         if (end != RECOVERY_MODE && !expression.checkMinMatch()) {
             messageBuffer.clear();
-            messageBuffer.append("Expression did not match the required number of times: ");
+            messageBuffer.append("Expression did not match the required number of times (match count: ");
+            messageBuffer.append(expression.getMatchCount());
+//            messageBuffer.append(" content: [");
+//            appendBufferContents(messageBuffer, buffer);
+//            messageBuffer.append("]");
+            messageBuffer.append("): ");
             messageBuffer.append(expression.getDebugId());
             log(Severity.ERROR, messageBuffer.toString());
         }
@@ -551,8 +566,13 @@ public class DS3Parser extends AbstractParser {
      * Outputs a data element if required using the current match or another
      * stored match.
      */
-    private void processData(final StoreNode node, final Buffer buffer, final Match parentMatch,
-                             final int parentMatchCount, final int level, final MatchOrder matchOrder, final boolean ignoreErrors)
+    private void processData(final StoreNode node,
+                             final Buffer buffer,
+                             final Match parentMatch,
+                             final int parentMatchCount,
+                             final int level,
+                             final MatchOrder matchOrder,
+                             final boolean ignoreErrors)
             throws IOException, SAXException {
         boolean outputEndElement = false;
         if (node.getNodeType() == NodeType.DATA) {
