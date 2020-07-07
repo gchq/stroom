@@ -731,14 +731,17 @@ public class DataFetcher {
         final NonSegmentedIncludeCharPredicate fromInclusivePredicate;
         if (dataRange == null || !dataRange.hasBoundedStart()) {
             // No start bound
+            LOGGER.debug("Unbounded from predicate");
             fromInclusivePredicate = (currLineNo, currColNo, currCharOffset, charCount) -> true;
         } else if (dataRange.getOptCharOffsetFrom().isPresent()) {
             final long startCharOffset = dataRange.getOptCharOffsetFrom().getAsLong();
+            LOGGER.debug("Char offset (inc.) from predicate [{}]", startCharOffset);
             fromInclusivePredicate = (currLineNo, currColNo, currCharOffset, charCount) ->
                     currCharOffset >= startCharOffset;
         } else if (dataRange.getOptLocationFrom().isPresent()) {
             final int lineNoFrom = dataRange.getOptLocationFrom().get().getLineNo();
             final int colNoFrom = dataRange.getOptLocationFrom().get().getColNo();
+            LOGGER.debug("Line/col (inc.) from predicate [{}, {}]", lineNoFrom, colNoFrom);
             fromInclusivePredicate = (currLineNo, currColNo, currCharOffset, charCount) ->
                     currLineNo > lineNoFrom || (currLineNo == lineNoFrom && currColNo >= colNoFrom);
         } else {
@@ -752,18 +755,22 @@ public class DataFetcher {
         final NonSegmentedIncludeCharPredicate toInclusivePredicate;
         if (dataRange == null || !dataRange.hasBoundedEnd()) {
             // No end bound
+            LOGGER.debug("Unbounded to predicate");
             toInclusivePredicate = (currLineNo, currColNo, currCharOffset, charCount) -> true;
         } else if (dataRange.getOptLength().isPresent()) {
             final long dataLength = dataRange.getOptLength().getAsLong();
+            LOGGER.debug("Length (inc.) to predicate [{}]", dataLength);
             toInclusivePredicate = (currLineNo, currColNo, currCharOffset, charCount) ->
                     charCount <= dataLength;
         } else if (dataRange.getOptCharOffsetTo().isPresent()) {
             final long charOffsetTo = dataRange.getOptCharOffsetTo().getAsLong();
+            LOGGER.debug("Char offset (inc.) to predicate [{}]", charOffsetTo);
             toInclusivePredicate = (currLineNo, currColNo, currCharOffset, charCount) ->
                     currCharOffset <= charOffsetTo;
         } else if (dataRange.getOptLocationTo().isPresent()) {
             final int lineNoTo = dataRange.getOptLocationTo().get().getLineNo();
             final int colNoTo = dataRange.getOptLocationTo().get().getColNo();
+            LOGGER.debug("Line/col (inc.) to predicate [{}, {}]", lineNoTo, colNoTo);
             toInclusivePredicate = (currLineNo, currColNo, currCharOffset, charCount) ->
                     currLineNo < lineNoTo || (currLineNo == lineNoTo && currColNo <= colNoTo);
         } else {
@@ -771,55 +778,6 @@ public class DataFetcher {
         }
         return toInclusivePredicate;
     }
-
-    private NonSegmentedIncludeCharPredicate buildInsideRangePredicate(final DataRange dataRange) {
-
-        // FROM (inclusive)
-        final NonSegmentedIncludeCharPredicate afterStartPosPredicate;
-        if (dataRange == null || !dataRange.hasBoundedStart()) {
-            // No start bound
-            afterStartPosPredicate = (currLineNo, currColNo, currCharOffset, charCount) -> true;
-        } else if (dataRange.getOptCharOffsetFrom().isPresent()) {
-            final long startCharOffset = dataRange.getOptCharOffsetFrom().getAsLong();
-            afterStartPosPredicate = (currLineNo, currColNo, currCharOffset, charCount) ->
-                    currCharOffset >= startCharOffset;
-        } else if (dataRange.getOptLocationFrom().isPresent()) {
-            final int lineNoFrom = dataRange.getOptLocationFrom().get().getLineNo();
-            final int colNoFrom = dataRange.getOptLocationFrom().get().getColNo();
-            afterStartPosPredicate = (currLineNo, currColNo, currCharOffset, charCount) ->
-                    currLineNo > lineNoFrom || (currLineNo == lineNoFrom && currColNo >= colNoFrom);
-        } else {
-            throw new RuntimeException("No start point specified");
-        }
-
-        // TO (inclusive)
-        final NonSegmentedIncludeCharPredicate beforeEndPosPredicate;
-        if (dataRange == null || !dataRange.hasBoundedEnd()) {
-            // No end bound
-            beforeEndPosPredicate = (currLineNo, currColNo, currCharOffset, charCount) -> true;
-        } else if (dataRange.getOptLength().isPresent()) {
-            final long dataLength = dataRange.getOptLength().getAsLong();
-            beforeEndPosPredicate = (currLineNo, currColNo, currCharOffset, charCount) ->
-                    charCount <= dataLength;
-        } else if (dataRange.getOptCharOffsetTo().isPresent()) {
-            final long charOffsetTo = dataRange.getOptCharOffsetTo().getAsLong();
-            beforeEndPosPredicate = (currLineNo, currColNo, currCharOffset, charCount) ->
-                    currCharOffset <= charOffsetTo;
-        } else if (dataRange.getOptLocationTo().isPresent()) {
-            final int lineNoTo = dataRange.getOptLocationTo().get().getLineNo();
-            final int colNoTo = dataRange.getOptLocationTo().get().getColNo();
-            beforeEndPosPredicate = (currLineNo, currColNo, currCharOffset, charCount) ->
-                    currLineNo < lineNoTo || (currLineNo == lineNoTo && currColNo <= colNoTo);
-        } else {
-            throw new RuntimeException("No start point specified");
-        }
-
-        // Now combine the two predicates
-        return (currLineNo, currColNo, currCharOffset, charCount) ->
-                afterStartPosPredicate.test(currLineNo, currColNo, currCharOffset, charCount)
-                        && beforeEndPosPredicate.test(currLineNo, currColNo, currCharOffset, charCount);
-    }
-
 
     private String usePipeline(final Source streamSource,
                                final String string,
