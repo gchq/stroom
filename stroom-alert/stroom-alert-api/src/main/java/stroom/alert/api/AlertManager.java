@@ -4,7 +4,8 @@ import org.apache.lucene.document.Document;
 import stroom.docref.DocRef;
 
 import java.util.List;
+import java.util.Optional;
 
 public interface AlertManager {
-    AlertProcessor createAlertProcessor (final DocRef indexDocRef);
+    Optional<AlertProcessor> createAlertProcessor (final DocRef indexDocRef);
 }

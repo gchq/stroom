@@ -34,6 +34,7 @@ import javax.inject.Singleton;
 import java.io.IOException;
 import java.util.Arrays;
 import java.util.List;
+import java.util.Optional;
 import java.util.concurrent.locks.Lock;
 
 /**
@@ -67,10 +68,11 @@ public class IndexerImpl implements Indexer {
         if (document != null) {
             //First create any alerts
             try {
-                final AlertProcessor processor = alertManager.createAlertProcessor(
+                final Optional<AlertProcessor> processor = alertManager.createAlertProcessor(
                         new DocRef(IndexDoc.DOCUMENT_TYPE,
                                 indexShardKey.getIndexUuid()));
-                processor.createAlerts(document);
+                if (processor.isPresent())
+                    processor.get().createAlerts(document);
             } catch (RuntimeException ex){
                 LOGGER.error(ex::getMessage, ex);
             }
