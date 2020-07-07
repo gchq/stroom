@@ -1,6 +1,12 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <!-- maxBuffer needs setting as some records are very long -->
-<dataSplitter bufferSize="5000000" xmlns="data-splitter:3" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="data-splitter:3 file://data-splitter-v3.0.xsd" version="3.0">
+<dataSplitter
+    bufferSize="5000000"
+    xmlns="data-splitter:3"
+    xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+    xsi:schemaLocation="data-splitter:3 file://data-splitter-v3.0.xsd"
+    version="3.0">
+
   <split delimiter="\n----\n">
     <group value="$1">
       <split delimiter="\n">
@@ -28,7 +34,7 @@
             </data>
           </regex>
           <!-- Include this just to discard the initial record delimiter -->
-          <regex pattern="^----\n" dotAll="true" />
+          <regex pattern="^----\n"/>
         </group>
       </split>
     </group>

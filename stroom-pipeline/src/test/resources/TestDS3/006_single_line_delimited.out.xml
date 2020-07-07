@@ -1,0 +1,42 @@
+<?xml version="1.1" encoding="UTF-8"?>
+<records xmlns="records:2"
+         xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+         xsi:schemaLocation="records:2 file://records-v2.0.xsd"
+         version="2.0">
+   <record>
+      <data value="2020-06-17T08:00:00.000Z"/>
+      <data value="jim"/>
+      <data value="warehouse"/>
+      <data value="logon"/>
+   </record>
+   <record>
+      <data value="2020-06-17T08:10:00.000Z"/>
+      <data value="bob"/>
+      <data value="office"/>
+      <data value="logon"/>
+   </record>
+   <record>
+      <data value="2020-06-17T08:11:00.000Z"/>
+      <data value="pete"/>
+      <data value="shop"/>
+      <data value="logon"/>
+   </record>
+   <record>
+      <data value="2020-06-17T08:12:00.000Z"/>
+      <data value="dave"/>
+      <data value="office"/>
+      <data value="logon"/>
+   </record>
+   <record>
+      <data value="2020-06-17T08:13:00.000Z"/>
+      <data value="sam"/>
+      <data value="shop"/>
+      <data value="logon"/>
+   </record>
+   <record>
+      <data value="2020-06-17T08:14:00.000Z"/>
+      <data value="fred"/>
+      <data value="office"/>
+      <data value="logon"/>
+   </record>
+</records>

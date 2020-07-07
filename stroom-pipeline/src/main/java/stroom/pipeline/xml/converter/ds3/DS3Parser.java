@@ -225,8 +225,13 @@ public class DS3Parser extends AbstractParser {
         }
     }
 
-    private int processExpression(final Expression expression, final Buffer buffer, final int parentMatchCount,
-                                  final int matchCount, final int level, final MatchOrder matchOrder, final boolean ignoreErrors)
+    private int processExpression(final Expression expression,
+                                  final Buffer buffer,
+                                  final int parentMatchCount,
+                                  final int matchCount,
+                                  final int level,
+                                  final MatchOrder matchOrder,
+                                  final boolean ignoreErrors)
             throws IOException, SAXException {
         int start = -1;
         int end = -1;
@@ -265,7 +270,11 @@ public class DS3Parser extends AbstractParser {
                 // are matching in sequence.
                 if (matchOrder == MatchOrder.SEQUENCE && !ignoreErrors && start != 0) {
                     messageBuffer.clear();
-                    messageBuffer.append("Expression failed to match from the start of the content: ");
+                    messageBuffer.append("Expression failed to match from the start of the content (matched at char ");
+                    messageBuffer.append(start + 1); // make one based
+                    messageBuffer.append(" [one based], unmatched content [");
+                    appendBufferContents(messageBuffer, buffer.subSequence(0, start));
+                    messageBuffer.append("]): ");
                     messageBuffer.append(expression.getDebugId());
                     log(Severity.ERROR, messageBuffer.toString());
                 }
@@ -477,8 +486,11 @@ public class DS3Parser extends AbstractParser {
         }
     }
 
-    private void processGroup(final Group node, final Buffer buffer, final Match parentMatch,
-                              final int parentMatchCount, final int level) throws IOException, SAXException {
+    private void processGroup(final Group node,
+                              final Buffer buffer,
+                              final Match parentMatch,
+                              final int parentMatchCount,
+                              final int level) throws IOException, SAXException {
         // Pull back the stored value.
         Buffer subBuffer = node.lookupValue(parentMatchCount);
         if (subBuffer != null) {
@@ -498,32 +510,58 @@ public class DS3Parser extends AbstractParser {
             // whitespace).
             if (!node.isIgnoreErrors() && !subBuffer.isBlank()) {
 
-                // Limit the amount of unmatched content we put in the msg in case
-                // it is mahoosive.
-                final int maxBuffLen = 200;
-                final boolean isTruncated;
-                final Buffer unmatchedBuffer;
-                if (subBuffer.length() > maxBuffLen) {
-                    unmatchedBuffer = subBuffer.subSequence(0, maxBuffLen);
-                    isTruncated = true;
-                } else {
-                    unmatchedBuffer = subBuffer;
-                    isTruncated = false;
-                }
+//                // Limit the amount of unmatched content we put in the msg in case
+//                // it is mahoosive.
+//                final int maxBuffLen = 200;
+//                final int tailLen = 10;
+//                final int headLen = maxBuffLen - tailLen;
 
                 messageBuffer.clear();
                 messageBuffer
                         .append("Expressions failed to match all of the content provided by group: ")
                         .append(node.getDebugId())
-                        .append(" unmatched content: [")
-                        .append(unmatchedBuffer.toString().replace("\n", "\\n"));
-                if (isTruncated) {
-                    messageBuffer.append("...TRUNCATED");
-                }
+                        .append(" unmatched content: [");
+
+                appendBufferContents(messageBuffer, subBuffer);
+
+//                if (subBuffer.length() > maxBuffLen) {
+//                    messageBuffer
+//                            .append(subBuffer.subSequence(0, headLen)
+//                                    .toString()
+//                                    .replace("\n", "\\n"))
+//                            .append("...TRUNCATED...")
+//                            .append(subBuffer.subSequence(subBuffer.length() - tailLen, tailLen)
+//                                    .toString()
+//                                    .replace("\n", "\\n"));
+//                } else {
+//                    messageBuffer.append(subBuffer.unsafeCopy().toString().replace("\n", "\\n"));
+//                }
                 messageBuffer.append("]");
 
                 log(Severity.ERROR, messageBuffer.toString());
             }
+        }
+    }
+
+    private void appendBufferContents(final CharBuffer messageBuffer,
+                                      final Buffer buffer) {
+        // Limit the amount of unmatched content we put in the msg in case
+        // it is mahoosive.
+        final int maxBuffLen = 200;
+        final int tailLen = 10;
+        final int headLen = maxBuffLen - tailLen;
+
+        if (buffer.length() > maxBuffLen) {
+            messageBuffer
+                    .append(buffer.subSequence(0, headLen)
+                            .toString()
+                            .replace("\n", "\\n"))
+                    .append("...TRUNCATED...")
+                    .append(buffer.subSequence(buffer.length() - tailLen, tailLen)
+                            .toString()
+                            .replace("\n", "\\n"));
+        } else {
+            messageBuffer.append(buffer.unsafeCopy().toString().replace("\n", "\\n"));
         }
     }
 

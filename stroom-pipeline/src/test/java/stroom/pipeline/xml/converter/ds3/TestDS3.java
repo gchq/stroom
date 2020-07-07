@@ -61,7 +61,6 @@ import java.util.ArrayList;
 import java.util.Collection;
 import java.util.List;
 import java.util.Map.Entry;
-import java.util.Optional;
 import java.util.stream.Collectors;
 import java.util.zip.ZipEntry;
 import java.util.zip.ZipInputStream;
@@ -73,6 +72,7 @@ import static org.assertj.core.api.Assertions.fail;
 //@Disabled("Removed test data")
 class TestDS3 extends StroomUnitTest {
     private static final Logger LOGGER = LoggerFactory.getLogger(TestDS3.class);
+    private static final String CONFIG_EXTENSION = ".ds3.xml";
 
     private final SchemaFilterFactory schemaFilterFactory = new SchemaFilterFactory();
 
@@ -104,46 +104,30 @@ class TestDS3 extends StroomUnitTest {
         // Get the testing directory.
         final Path testDir = getTestDir();
         final List<Path> paths = new ArrayList<>();
-        try (final DirectoryStream<Path> stream = Files.newDirectoryStream(testDir, "*.ds3")) {
+        try (final DirectoryStream<Path> stream = Files.newDirectoryStream(testDir, "*" + CONFIG_EXTENSION)) {
             stream.forEach(paths::add);
         }
 
         final List<DynamicTest> dynamicTests = paths.stream()
                 .peek(path -> LOGGER.info("Found: " + FileUtil.getCanonicalPath(path)))
-                .filter(path -> path.getFileName().toString().endsWith(".ds3"))
+                .filter(path -> path.getFileName().toString().endsWith(CONFIG_EXTENSION))
                 .map(path -> {
                     final String name = path.getFileName().toString();
-                    String type = null;
-                    String variant = null;
-                    // String extension = null;
+                    final String stem = name.substring(0, name.indexOf("."));
 
-                    int index = name.lastIndexOf(".");
-                    if (index != -1) {
-                        type = name.substring(0, index);
-                        // extension = name.substring(index + 1);
-
-                        index = type.indexOf("~");
-                        if (index != -1) {
-                            variant = type.substring(index + 1);
-                            type = type.substring(0, index);
-                        }
-                    }
-
-                    LOGGER.info("name: {}, type: {}, variant: {}", name, type, variant);
+                    LOGGER.info("stem: {}", stem);
 
                     // Only process non variants.
-                    if (variant == null) {
-                        return Optional.of(positiveTest(type));
+                    if (stem.contains("_FAIL")) {
+                        return negativeTest(stem);
                     } else {
-                        return Optional.<DynamicTest>empty();
+                        return positiveTest(stem);
                     }
                 })
-                .filter(Optional::isPresent)
-                .map(Optional::get)
                 .collect(Collectors.toList());
 
         if (dynamicTests.isEmpty()) {
-            LOGGER.warn("No tests created");
+            fail("No %s files found to create test from", CONFIG_EXTENSION);
         } else {
             LOGGER.info("Created {} tests", dynamicTests.size());
         }
@@ -153,6 +137,10 @@ class TestDS3 extends StroomUnitTest {
 
     private DynamicTest negativeTest(final String stem, final String type) {
         return createTest(stem, "~" + type, true);
+    }
+
+    private DynamicTest negativeTest(final String stem) {
+        return createTest(stem, "", true);
     }
 
     private DynamicTest positiveTest(final String stem) {
@@ -173,7 +161,7 @@ class TestDS3 extends StroomUnitTest {
         // Get the testing directory.
         final Path testDir = getTestDir();
 
-        LOGGER.info("Testing: " + stem);
+        LOGGER.info("Testing: {}, expecting errors: {}", stem, expectedErrors);
 
         boolean zipInput = false;
         Path input = testDir.resolve(stem + ".in");
@@ -185,16 +173,19 @@ class TestDS3 extends StroomUnitTest {
             }
         }
 
-        final Path config = testDir.resolve(stem + testType + ".ds3");
-        final Path out = testDir.resolve(stem + testType + ".out");
-        final Path outtmp = testDir.resolve(stem + testType + ".out_tmp");
+        final Path config = testDir.resolve(stem + testType + CONFIG_EXTENSION);
+        final Path out = testDir.resolve(stem + testType + ".out.xml");
+        final Path outtmp = testDir.resolve(stem + testType + ".out.tmp.xml");
         final Path err = testDir.resolve(stem + testType + ".err");
-        final Path errtmp = testDir.resolve(stem + testType + ".err_tmp");
+        final Path errtmp = testDir.resolve(stem + testType + ".err.tmp");
 
         LOGGER.info("Data Splitter config: {}", config);
         LOGGER.info("Expected output: {}", out);
         LOGGER.info("Actual output: {}", outtmp);
-        LOGGER.info("Expected errors: {}", err);
+
+        if (expectedErrors) {
+            LOGGER.info("Expected errors: {}", err);
+        }
         LOGGER.info("Actual errors: {}", err);
 
         // Delete temporary files.
@@ -219,79 +210,84 @@ class TestDS3 extends StroomUnitTest {
 
         LOGGER.debug("Creating reader for {}", config.toAbsolutePath().normalize().toString());
         // Create a reader from the config.
-        final XMLReader reader = createReader(config);
-        reader.setContentHandler(mergeFilter);
-
-        final LoggingErrorReceiver errorReceiver = new LoggingErrorReceiver();
-
         try {
-            mergeFilter.startProcessing();
+            final XMLReader reader = createReader(config, expectedErrors);
+            reader.setContentHandler(mergeFilter);
 
-            if (zipInput) {
-                final StreamLocationFactory locationFactory = new StreamLocationFactory();
-                reader.setErrorHandler(new ErrorHandlerAdaptor("DS3Parser", locationFactory, errorReceiver));
+            final LoggingErrorReceiver errorReceiver = new LoggingErrorReceiver();
 
-                final ZipInputStream zipInputStream = new ZipInputStream(Files.newInputStream(input));
-                try {
-                    ZipEntry entry = zipInputStream.getNextEntry();
-                    long streamNo = 0;
-                    while (entry != null) {
-                        streamNo++;
-                        locationFactory.setStreamNo(streamNo);
+            try {
+                mergeFilter.startProcessing();
 
-                        try {
-                            if (entry.getName().endsWith(".dat")) {
-                                reader.parse(new InputSource(new BufferedReader(new InputStreamReader(
-                                        new IgnoreCloseInputStream(zipInputStream), StreamUtil.DEFAULT_CHARSET))));
+                if (zipInput) {
+                    final StreamLocationFactory locationFactory = new StreamLocationFactory();
+                    reader.setErrorHandler(new ErrorHandlerAdaptor("DS3Parser", locationFactory, errorReceiver));
+
+                    try (ZipInputStream zipInputStream = new ZipInputStream(Files.newInputStream(input))) {
+                        ZipEntry entry = zipInputStream.getNextEntry();
+                        long streamNo = 0;
+                        while (entry != null) {
+                            streamNo++;
+                            locationFactory.setStreamNo(streamNo);
+
+                            try {
+                                if (entry.getName().endsWith(".dat")) {
+                                    reader.parse(new InputSource(new BufferedReader(new InputStreamReader(
+                                            new IgnoreCloseInputStream(zipInputStream), StreamUtil.DEFAULT_CHARSET))));
+                                }
+                            } finally {
+                                zipInputStream.closeEntry();
+                                entry = zipInputStream.getNextEntry();
                             }
-                        } finally {
-                            zipInputStream.closeEntry();
-                            entry = zipInputStream.getNextEntry();
                         }
                     }
-                } finally {
-                    zipInputStream.close();
+
+                } else {
+                    final DefaultLocationFactory locationFactory = new DefaultLocationFactory();
+                    reader.setErrorHandler(new ErrorHandlerAdaptor("DS3Parser", locationFactory, errorReceiver));
+
+                    reader.parse(new InputSource(Files.newBufferedReader(input)));
+                }
+            } catch (final RuntimeException e) {
+                e.printStackTrace();
+
+            } finally {
+                mergeFilter.endProcessing();
+            }
+
+            os.flush();
+            os.close();
+
+            // Write errors.
+            if (!errorReceiver.isAllOk()) {
+                final Writer errWriter = Files.newBufferedWriter(errtmp);
+
+                for (final Entry<String, Indicators> entry : errorReceiver.getIndicatorsMap().entrySet()) {
+                    final Indicators indicators = entry.getValue();
+                    errWriter.write(indicators.toString());
                 }
 
+                errWriter.flush();
+                errWriter.close();
+            }
+
+            // Only output errors if there were any.
+            if (expectedErrors && errorReceiver.isAllOk()) {
+                fail("Expected errors but none were found");
+            } else if (!expectedErrors && !errorReceiver.isAllOk()) {
+                fail("Did not expect any errors but some were found.");
+            }
+
+            compareFiles(outtmp, out);
+            if (expectedErrors) {
+                compareFiles(errtmp, err);
+            }
+        } catch (ReaderConfigurationException e) {
+            if (expectedErrors) {
+                // Do nothing, expected
             } else {
-                final DefaultLocationFactory locationFactory = new DefaultLocationFactory();
-                reader.setErrorHandler(new ErrorHandlerAdaptor("DS3Parser", locationFactory, errorReceiver));
-
-                reader.parse(new InputSource(Files.newBufferedReader(input)));
+                throw e;
             }
-        } catch (final RuntimeException e) {
-            e.printStackTrace();
-
-        } finally {
-            mergeFilter.endProcessing();
-        }
-
-        os.flush();
-        os.close();
-
-        // Write errors.
-        if (!errorReceiver.isAllOk()) {
-            final Writer errWriter = Files.newBufferedWriter(errtmp);
-
-            for (final Entry<String, Indicators> entry : errorReceiver.getIndicatorsMap().entrySet()) {
-                final Indicators indicators = entry.getValue();
-                errWriter.write(indicators.toString());
-            }
-
-            errWriter.flush();
-            errWriter.close();
-        }
-
-        // Only output errors if there were any.
-        if (expectedErrors && errorReceiver.isAllOk()) {
-            fail("Expected errors but none were found");
-        } else if (!expectedErrors && !errorReceiver.isAllOk()) {
-            fail("Did not expect any errors but some were found.");
-        }
-
-        compareFiles(outtmp, out);
-        if (expectedErrors) {
-            compareFiles(errtmp, err);
         }
     }
 
@@ -302,7 +298,7 @@ class TestDS3 extends StroomUnitTest {
         return testDir;
     }
 
-    private XMLReader createReader(final Path config) throws IOException {
+    private XMLReader createReader(final Path config, final boolean expectingErrors) throws IOException {
         final LoggingErrorReceiver errorReceiver = new LoggingErrorReceiver();
         final ErrorReceiverProxy errorReceiverProxy = new ErrorReceiverProxy(errorReceiver);
 
@@ -314,7 +310,14 @@ class TestDS3 extends StroomUnitTest {
         factory.configure(Files.newBufferedReader(config),
                 new ErrorHandlerAdaptor("DS3ParserFactory", locationFactory, errorReceiver));
 
-        assertThat(errorReceiver.isAllOk())
+        if (!errorReceiver.isAllOk()) {
+            if (!expectingErrors) {
+                fail("Configuration of parser failed: " + errorReceiver.getMessage());
+            } else {
+                throw new ReaderConfigurationException();
+            }
+        }
+        assertThat(errorReceiver.isAllOk() || expectingErrors)
                 .as("Configuration of parser failed: " + errorReceiver.getMessage())
                 .isTrue();
 
@@ -330,10 +333,14 @@ class TestDS3 extends StroomUnitTest {
         if (areFilesTheSame) {
             // If the files matched then delete the temporary file.
             FileUtil.deleteFile(actualFile);
+            LOGGER.info("Files {} and {} matched", actualFile.getFileName(), expectedFile.getFileName());
         } else {
             fail("Files did not match, see diff");
         }
-//        ComparisonHelper.compareFiles(expectedFile, actualFile);
+    }
+
+    private static class ReaderConfigurationException extends RuntimeException {
+
     }
 
 }
