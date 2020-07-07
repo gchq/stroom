@@ -81,7 +81,5 @@ dependencies {
     testRuntimeOnly libs.logback_core
 }
 
-test {
-    // Need the schemas for the DataSplitter tests
-    test dependsOn rootProject.downloadStroomContent
-}
+// Need the schemas for the DataSplitter tests
+tasks.test.dependsOn rootProject.downloadStroomContent
