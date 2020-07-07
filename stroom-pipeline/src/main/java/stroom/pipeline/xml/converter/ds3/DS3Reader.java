@@ -22,17 +22,19 @@ import java.io.IOException;
 import java.io.Reader;
 
 public class DS3Reader extends CharBuffer implements DSLocator {
+    private static final int LINE_NO_BASE = 1;
+    private static final int COL_NO_BASE = 1;
     private final int initialSize;
     private final int capacity;
     private final int halfCapacity;
 
     private Reader reader;
     private boolean eof;
-    private int lineNo = 1;
-    private int colNo = 0;
+    private int lineNo = LINE_NO_BASE;
+    private int colNo = COL_NO_BASE;
 
-    private int currentLineNo = 1;
-    private int currentColNo = 0;
+    private int currentLineNo = LINE_NO_BASE;
+    private int currentColNo = COL_NO_BASE;
 
     public DS3Reader(final Reader reader, final int initialSize, final int capacity) {
         super(initialSize);
@@ -57,10 +59,10 @@ public class DS3Reader extends CharBuffer implements DSLocator {
         this.reader = reader;
         offset = 0;
         length = 0;
-        lineNo = 1;
-        colNo = 0;
-        currentLineNo = 1;
-        currentColNo = 0;
+        lineNo = LINE_NO_BASE;
+        colNo = COL_NO_BASE;
+        currentLineNo = LINE_NO_BASE;
+        currentColNo = COL_NO_BASE;
         eof = false;
     }
 
@@ -132,7 +134,7 @@ public class DS3Reader extends CharBuffer implements DSLocator {
             final char c = buffer[offset + i];
             if (c == '\n') {
                 currentLineNo++;
-                currentColNo = 0;
+                currentColNo = COL_NO_BASE;
             } else {
                 currentColNo++;
             }

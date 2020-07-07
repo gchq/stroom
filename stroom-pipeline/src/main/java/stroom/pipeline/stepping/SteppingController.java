@@ -39,8 +39,8 @@ import java.util.Set;
 @PipelineScoped
 public class SteppingController {
     private static final Highlight DEFAULT_HIGHLIGHT = new Highlight(
-            new DefaultLocation(1, 0),
-            new DefaultLocation(1, 0));
+            new DefaultLocation(1, 1),
+            new DefaultLocation(1, 1));
 
     private final Set<ElementMonitor> monitors = new HashSet<>();
 

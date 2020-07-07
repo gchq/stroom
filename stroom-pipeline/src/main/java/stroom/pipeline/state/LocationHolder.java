@@ -79,8 +79,8 @@ public class LocationHolder implements Holder {
 
     public void reset() {
         recordNo = 0;
-        currentStartLocation = new DefaultLocation(1, 0);
-        currentEndLocation = new DefaultLocation(1, 0);
+        currentStartLocation = new DefaultLocation(1, 1);
+        currentEndLocation = new DefaultLocation(1, 1);
     }
 
     public void storeLocation() {
