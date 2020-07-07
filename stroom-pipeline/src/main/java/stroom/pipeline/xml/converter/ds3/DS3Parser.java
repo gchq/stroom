@@ -510,12 +510,6 @@ public class DS3Parser extends AbstractParser {
             // whitespace).
             if (!node.isIgnoreErrors() && !subBuffer.isBlank()) {
 
-//                // Limit the amount of unmatched content we put in the msg in case
-//                // it is mahoosive.
-//                final int maxBuffLen = 200;
-//                final int tailLen = 10;
-//                final int headLen = maxBuffLen - tailLen;
-
                 messageBuffer.clear();
                 messageBuffer
                         .append("Expressions failed to match all of the content provided by group: ")
@@ -524,18 +518,6 @@ public class DS3Parser extends AbstractParser {
 
                 appendBufferContents(messageBuffer, subBuffer);
 
-//                if (subBuffer.length() > maxBuffLen) {
-//                    messageBuffer
-//                            .append(subBuffer.subSequence(0, headLen)
-//                                    .toString()
-//                                    .replace("\n", "\\n"))
-//                            .append("...TRUNCATED...")
-//                            .append(subBuffer.subSequence(subBuffer.length() - tailLen, tailLen)
-//                                    .toString()
-//                                    .replace("\n", "\\n"));
-//                } else {
-//                    messageBuffer.append(subBuffer.unsafeCopy().toString().replace("\n", "\\n"));
-//                }
                 messageBuffer.append("]");
 
                 log(Severity.ERROR, messageBuffer.toString());
