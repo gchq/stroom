@@ -23,7 +23,6 @@ import { AuthStateProps } from "./ConfirmCurrentPassword";
 import ChangePassword from "./ChangePassword";
 import Background from "../Layout/Background";
 import useAuthenticationResource from "./api/useAuthenticationResource";
-import FormContainer from "../Layout/FormContainer";
 import useRouter from "../../lib/useRouter";
 import * as queryString from "query-string";
 import CustomLoader from "../CustomLoader";

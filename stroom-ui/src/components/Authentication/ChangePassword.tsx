@@ -6,9 +6,8 @@ import { NewPasswordField } from "../Form/NewPasswordField";
 import useAuthenticationResource from "./api/useAuthenticationResource";
 import { useEffect, useState } from "react";
 import { ChangePasswordRequest, PasswordPolicyConfig } from "./api/types";
-import { useAlert } from "../AlertDialog/AlertDisplayBoundary";
+import { usePrompt } from "../Prompt/PromptDisplayBoundary";
 import * as Yup from "yup";
-import { Alert, AlertType } from "../AlertDialog/AlertDialog";
 import zxcvbn from "zxcvbn";
 import { Form, Modal } from "react-bootstrap";
 import { OkCancelButtons, OkCancelProps } from "../Dialog/OkCancelButtons";
@@ -45,7 +44,7 @@ export const ChangePasswordForm: React.FunctionComponent<
   onCancel,
   cancelClicked,
 }) => (
-  <Form noValidate={true} onSubmit={handleSubmit}>
+  <Form noValidate={true} onSubmit={handleSubmit} className="ChangePassword">
     <Modal.Header closeButton={false}>
       <Modal.Title id="contained-modal-title-vcenter">
         Change Password
@@ -128,7 +127,7 @@ const ChangePasswordFormik: React.FunctionComponent<{
       },
     );
   }, [fetchPasswordPolicyConfig]);
-  const { alert } = useAlert();
+  const { showError } = usePrompt();
   const [strength, setStrength] = useState(0);
 
   if (passwordPolicyConfig === undefined) {
@@ -200,12 +199,9 @@ const ChangePasswordFormik: React.FunctionComponent<{
             props.onClose(true);
           } else {
             actions.setSubmitting(false);
-            const error: Alert = {
-              type: AlertType.ERROR,
-              title: "Error",
+            showError({
               message: response.message,
-            };
-            alert(error);
+            });
 
             // If the user is asked to sign in again then unset the auth state.
             if (response.forceSignIn) {

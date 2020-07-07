@@ -26,9 +26,17 @@
   border-bottom: none;
 }
 
+.modal-body {
+  padding: 0 1rem;
+}
+
 .modal-footer {
   border-top: none;
   padding: 1rem;
+}
+
+.modal-footer > * {
+  margin: 0;
 }
 
 .modal-title {

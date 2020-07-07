@@ -18,7 +18,7 @@ import { AuthorisationContextProvider } from "startup/Authorisation";
 import { AuthenticationContextProvider } from "startup/Authentication";
 import { DocumentTreeContextProvider } from "components/DocumentEditors/api/explorer";
 import { ErrorReportingContextProvider } from "components/ErrorPage";
-import { AlertDisplayBoundary } from "./components/AlertDialog/AlertDisplayBoundary";
+import { PromptDisplayBoundary } from "./components/Prompt/PromptDisplayBoundary";
 
 export const history = createHistory();
 
@@ -28,7 +28,7 @@ setupFontAwesome();
 
 const App: React.FunctionComponent = () => (
   <ErrorReportingContextProvider>
-    <AlertDisplayBoundary>
+    <PromptDisplayBoundary>
       <ConfigProvider>
         <AuthenticationContextProvider>
           <AuthorisationContextProvider>
@@ -42,7 +42,7 @@ const App: React.FunctionComponent = () => (
           </AuthorisationContextProvider>
         </AuthenticationContextProvider>
       </ConfigProvider>
-    </AlertDisplayBoundary>
+    </PromptDisplayBoundary>
   </ErrorReportingContextProvider>
 );
 

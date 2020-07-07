@@ -3,10 +3,9 @@ import * as React from "react";
 import { Formik, FormikProps } from "formik";
 import { PasswordField } from "../Form/PasswordField";
 import useAuthenticationResource from "./api/useAuthenticationResource";
-import { useAlert } from "../AlertDialog/AlertDisplayBoundary";
+import { usePrompt } from "../Prompt/PromptDisplayBoundary";
 import * as Yup from "yup";
 import { AuthState, ConfirmPasswordRequest } from "./api/types";
-import { Alert, AlertType } from "../AlertDialog/AlertDialog";
 import { Form, Modal } from "react-bootstrap";
 import { Dialog } from "components/Dialog/Dialog";
 import { OkCancelButtons, OkCancelProps } from "../Dialog/OkCancelButtons";
@@ -83,7 +82,7 @@ const ConfirmCurrentPasswordFormik: React.FunctionComponent<{
   onClose: (userId: string, password: string) => void;
 }> = ({ userId, onClose, children }) => {
   const { confirmPassword } = useAuthenticationResource();
-  const { alert } = useAlert();
+  const { showError } = usePrompt();
 
   const passwordSchema = Yup.string()
     .label("Password")
@@ -113,12 +112,9 @@ const ConfirmCurrentPasswordFormik: React.FunctionComponent<{
             onClose(values.userId, values.password);
           } else {
             actions.setSubmitting(false);
-            const error: Alert = {
-              type: AlertType.ERROR,
-              title: "Error",
+            showError({
               message: response.message,
-            };
-            alert(error);
+            });
           }
         });
       }}

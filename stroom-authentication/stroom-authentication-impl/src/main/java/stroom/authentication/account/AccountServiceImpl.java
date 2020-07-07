@@ -1,27 +1,29 @@
 package stroom.authentication.account;
 
+import stroom.authentication.authenticate.PasswordValidator;
+import stroom.authentication.config.AuthenticationConfig;
 import stroom.security.api.SecurityContext;
-import stroom.util.shared.PermissionException;
 import stroom.security.shared.PermissionNames;
+import stroom.util.shared.PermissionException;
 import stroom.util.shared.ResultPage;
 
 import com.google.common.base.Strings;
-import org.apache.commons.lang3.tuple.Pair;
 
 import javax.inject.Inject;
-import javax.ws.rs.BadRequestException;
-import java.util.ArrayList;
 import java.util.Optional;
 
 public class AccountServiceImpl implements AccountService {
     private final AccountDao accountDao;
     private final SecurityContext securityContext;
+    private final AuthenticationConfig config;
 
     @Inject
     AccountServiceImpl(final AccountDao accountDao,
-                       final SecurityContext securityContext) {
+                       final SecurityContext securityContext,
+                       final AuthenticationConfig config) {
         this.accountDao = accountDao;
         this.securityContext = securityContext;
+        this.config = config;
     }
 
     public ResultPage<Account> list() {
@@ -38,17 +40,10 @@ public class AccountServiceImpl implements AccountService {
 
     public Account create(final CreateAccountRequest request) {
         checkPermission();
+        validateCreateRequest(request);
 
         // Validate
         final String userId = securityContext.getUserId();
-        Pair<Boolean, String> validationResults = isValidForCreate(request);
-        boolean isUserValid = validationResults.getLeft();
-        if (!isUserValid) {
-            throw new BadRequestException(validationResults.getRight());
-        }
-//        if (accountDao.exists(account.getEmail())) {
-//            throw new ConflictException(AccountValidationError.USER_ALREADY_EXISTS.getMessage());
-//        }
 
         final long now = System.currentTimeMillis();
 
@@ -108,7 +103,6 @@ public class AccountServiceImpl implements AccountService {
         account.setUpdateTimeMs(System.currentTimeMillis());
         account.setId(accountId);
         accountDao.update(account);
-
     }
 
     public void delete(final int accountId) {
@@ -116,26 +110,20 @@ public class AccountServiceImpl implements AccountService {
         accountDao.delete(accountId);
     }
 
-    public static Pair<Boolean, String> isValidForCreate(final CreateAccountRequest account) {
-        ArrayList<AccountValidationError> validationErrors = new ArrayList<>();
-
-        if (account == null) {
-            validationErrors.add(AccountValidationError.NO_USER);
+    public void validateCreateRequest(final CreateAccountRequest request) {
+        if (request == null) {
+            throw new RuntimeException("Null request");
         } else {
-            if (Strings.isNullOrEmpty(account.getEmail())) {
-                validationErrors.add(AccountValidationError.NO_NAME);
+            if (Strings.isNullOrEmpty(request.getUserId())) {
+                throw new RuntimeException("No user id has been provided");
             }
 
-//            if (Strings.isNullOrEmpty(account.getPassword())) {
-//                validationErrors.add(AccountValidationError.NO_PASSWORD);
-//            }
+            if (request.getPassword() != null || request.getConfirmPassword() != null) {
+                PasswordValidator.validateLength(request.getPassword(), config.getPasswordPolicyConfig().getMinimumPasswordLength());
+                PasswordValidator.validateComplexity(request.getPassword(), config.getPasswordPolicyConfig().getPasswordComplexityRegex());
+                PasswordValidator.validateConfirmation(request.getPassword(), request.getConfirmPassword());
+            }
         }
-
-        String validationMessages = validationErrors.stream()
-                .map(AccountValidationError::getMessage)
-                .reduce((validationMessage1, validationMessage2) -> validationMessage1 + validationMessage2).orElse("");
-        boolean isValid = validationErrors.size() == 0;
-        return Pair.of(isValid, validationMessages);
     }
 
     private void checkPermission() {

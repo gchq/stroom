@@ -30,6 +30,7 @@ export interface CreateAccountRequest {
   email: string;
   comments: string;
   password: string;
+  confirmPassword: string;
   forcePasswordChange: boolean;
   neverExpires: boolean;
 }

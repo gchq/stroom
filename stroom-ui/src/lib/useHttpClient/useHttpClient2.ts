@@ -2,8 +2,7 @@ import * as React from "react";
 import { useCallback } from "react";
 
 import { HttpError } from "lib/ErrorTypes";
-import { useAlert } from "components/AlertDialog/AlertDisplayBoundary";
-import { AlertType } from "components/AlertDialog/AlertDialog";
+import { usePrompt } from "components/Prompt/PromptDisplayBoundary";
 
 const useCheckStatus = (status: number) =>
   React.useCallback(
@@ -61,7 +60,7 @@ interface HttpClient2 {
 
 export const useHttpClient2 = (): HttpClient2 => {
   // const { idToken } = useAuthenticationContext();
-  const { alert } = useAlert();
+  const { showError } = usePrompt();
 
   // const { reportError } = useErrorReporting();
   // const {
@@ -74,9 +73,19 @@ export const useHttpClient2 = (): HttpClient2 => {
   const catchImpl = React.useCallback(
     (error: any) => {
       const msg = `Error, Status ${error.status}, Msg: ${error.message}`;
-      alert({ type: AlertType.ERROR, title: "Error", message: msg });
+      console.log(msg);
+      if (error.message !== undefined) {
+        try {
+          const json = JSON.parse(error.message);
+          showError({ message: json.message });
+        } catch (e) {
+          showError({ message: error.message });
+        }
+      } else {
+        showError({ message: msg });
+      }
     },
-    [alert],
+    [showError],
   );
 
   const httpGet = useCallback<HttpGet>(

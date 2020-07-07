@@ -3,8 +3,7 @@ import * as React from "react";
 import { SignInForm, SignInPage } from "./SignIn";
 import { Formik } from "formik";
 import * as Yup from "yup";
-import { useAlert } from "components/AlertDialog/AlertDisplayBoundary";
-import { AlertType } from "../AlertDialog/AlertDialog";
+import { usePrompt } from "components/Prompt/PromptDisplayBoundary";
 import { useState } from "react";
 import { AuthState } from "./api/types";
 import BackgroundLogo from "../Layout/BackgroundLogo";
@@ -14,7 +13,7 @@ import Background from "../Layout/Background";
 const TestHarness: React.FunctionComponent<{
   allowPasswordResets?: boolean;
 }> = ({ allowPasswordResets = false }) => {
-  const { alert } = useAlert();
+  const { showInfo } = usePrompt();
   const [authState, setAuthState] = useState<AuthState>({
     allowPasswordResets,
   });
@@ -34,8 +33,7 @@ const TestHarness: React.FunctionComponent<{
               })}
               onSubmit={(values, actions) => {
                 setTimeout(() => {
-                  alert({
-                    type: AlertType.INFO,
+                  showInfo({
                     title: "Submitted",
                     message: JSON.stringify(values, null, 2),
                   });

@@ -59,6 +59,11 @@ const AccountManager: FunctionComponent<{
       });
     },
   };
+  const refresh = () => {
+    setRequest({
+      ...request,
+    });
+  };
 
   return (
     <React.Fragment>
@@ -69,7 +74,7 @@ const AccountManager: FunctionComponent<{
             data: resultPage.values,
           },
           actions: {
-            onCreate: () => (u) => setEditingAccount({}),
+            onCreate: () => setEditingAccount({}),
             onEdit: (account) => setEditingAccount(account),
             onRemove: (account) => remove(account.id),
           },
@@ -79,10 +84,13 @@ const AccountManager: FunctionComponent<{
         onClose={onClose}
       />
 
-      {editingAccount && (
+      {editingAccount !== undefined && (
         <EditAccount
           account={editingAccount}
-          onClose={() => setEditingAccount(undefined)}
+          onClose={() => {
+            setEditingAccount(undefined);
+            refresh();
+          }}
         />
       )}
     </React.Fragment>

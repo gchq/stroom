@@ -84,13 +84,19 @@ const useAccountManager = (): UserSearchApi => {
         show: false,
       },
       {
-        Header: "Email",
-        accessor: "email",
-        maxWidth: 190,
+        Header: "User Id",
+        accessor: "userId",
+        maxWidth: 150,
         // filterMethod: (filter: any, row: any) => filterRow(row, filter),
       },
       {
-        Header: "Account Status",
+        Header: "Email",
+        accessor: "email",
+        maxWidth: 200,
+        // filterMethod: (filter: any, row: any) => filterRow(row, filter),
+      },
+      {
+        Header: "Status",
         accessor: ({ locked, inactive, enabled }) =>
           locked
             ? "Locked"

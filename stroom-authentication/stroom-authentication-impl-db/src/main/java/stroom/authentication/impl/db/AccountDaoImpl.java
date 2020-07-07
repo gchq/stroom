@@ -124,10 +124,11 @@ class AccountDaoImpl implements AccountDao {
 
     @Override
     public Account create(final Account account, final String password) {
+        final String passwordHash = hashPassword(password);
         return JooqUtil.contextResult(authDbConnProvider, context -> {
             LOGGER.debug(LambdaLogUtil.message("Creating a {}", ACCOUNT.getName()));
             final AccountRecord record = ACCOUNT_TO_RECORD_MAPPER.apply(account, context.newRecord(ACCOUNT));
-            record.setPasswordHash(PasswordHashUtil.hash(password));
+            record.setPasswordHash(passwordHash);
             record.store();
             return RECORD_TO_ACCOUNT_MAPPER.apply(record);
         });
@@ -426,5 +427,12 @@ class AccountDaoImpl implements AccountDao {
             condition = condition.and(ACCOUNT.USER_ID.contains(request.getQuickFilter()));
         }
         return condition;
+    }
+
+    private String hashPassword(final String password) {
+        if (password == null) {
+            return null;
+        }
+        return PasswordHashUtil.hash(password);
     }
 }

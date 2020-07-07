@@ -19,7 +19,7 @@ import { ErrorReportingContextProvider } from "components/ErrorPage";
 
 import "styles/main.scss";
 import { FunctionComponent } from "react";
-import { AlertDisplayBoundary } from "../../components/AlertDialog/AlertDisplayBoundary";
+import { PromptDisplayBoundary } from "../../components/Prompt/PromptDisplayBoundary";
 setupFontAwesome();
 
 const WithTestServer: FunctionComponent = ({ children }) => {
@@ -48,7 +48,7 @@ ReactModal.setAppElement("#root");
 export default (storyFn: any) =>
   StoryRouter()(() => (
     <ErrorReportingContextProvider>
-      <AlertDisplayBoundary>
+      <PromptDisplayBoundary>
         <AuthenticationContext.Provider
           value={{
             idToken: "PollyWannaCracker",
@@ -69,6 +69,6 @@ export default (storyFn: any) =>
             </ThemeContextProvider>
           </AuthorisationContextProvider>
         </AuthenticationContext.Provider>
-      </AlertDisplayBoundary>
+      </PromptDisplayBoundary>
     </ErrorReportingContextProvider>
   ));

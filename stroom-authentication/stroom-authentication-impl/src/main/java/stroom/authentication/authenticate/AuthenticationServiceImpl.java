@@ -23,9 +23,6 @@ import javax.servlet.http.HttpSession;
 import javax.validation.constraints.NotNull;
 import javax.ws.rs.core.UriBuilder;
 import java.net.URI;
-import java.util.ArrayList;
-import java.util.List;
-import java.util.Objects;
 import java.util.Optional;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
@@ -314,11 +311,10 @@ class AuthenticationServiceImpl implements AuthenticationService {
     public ConfirmPasswordResponse confirmPassword(final HttpServletRequest request,
                                                    final ConfirmPasswordRequest confirmPasswordRequest) {
         final AuthStateImpl authState = getAuthState(request);
-
-        final CredentialValidationResult result = accountDao.validateCredentials(
-                authState.getSubject(),
-                confirmPasswordRequest.getPassword());
-
+        if (authState == null) {
+            return new ConfirmPasswordResponse(false, "No user is currently signed in");
+        }
+        final CredentialValidationResult result = accountDao.validateCredentials(authState.getSubject(), confirmPasswordRequest.getPassword());
         final String message = result.toString();
         if (result.isAllOk()) {
             // Update tha last credential confirmation time.
@@ -334,57 +330,29 @@ class AuthenticationServiceImpl implements AuthenticationService {
         // Record that the password no longer needs changing.
         final AuthStateImpl authState = getAuthState(request);
         if (authState == null) {
-            return new ChangePasswordResponse(false, "Not user is currently signed in", true);
+            return new ChangePasswordResponse(false, "No user is currently signed in", true);
         }
         final boolean forceSignIn = shouldForceSignIn(authState);
         if (forceSignIn) {
             return new ChangePasswordResponse(false, "It has been too long since you last signed in, please sign in again", true);
         }
 
-        // TODO : @66 At present the change password request doesn't always know the user id.
-        final String username = authState.getSubject();
+        final String userId = authState.getSubject();
+        final CredentialValidationResult result = accountDao.validateCredentials(userId, changePasswordRequest.getCurrentPassword());
 
-        List<String> failedOn = new ArrayList<>();
-        final CredentialValidationResult result = accountDao.validateCredentials(
-                username,
-                changePasswordRequest.getCurrentPassword());
+        PasswordValidator.validateCredentials(result);
+        PasswordValidator.validateReuse(changePasswordRequest.getCurrentPassword(), changePasswordRequest.getNewPassword());
+        PasswordValidator.validateLength(changePasswordRequest.getNewPassword(), config.getPasswordPolicyConfig().getMinimumPasswordLength());
+        PasswordValidator.validateComplexity(changePasswordRequest.getNewPassword(), config.getPasswordPolicyConfig().getPasswordComplexityRegex());
+        PasswordValidator.validateConfirmation(changePasswordRequest.getNewPassword(), changePasswordRequest.getConfirmNewPassword());
 
-        PasswordValidator.validateAuthenticity(result)
-                .map(PasswordValidationFailureType::name)
-                .ifPresent(failedOn::add);
-        PasswordValidator.validateReuse(
-                changePasswordRequest.getCurrentPassword(),
-                changePasswordRequest.getNewPassword())
-                .map(PasswordValidationFailureType::name)
-                .ifPresent(failedOn::add);
-        PasswordValidator.validateLength(
-                changePasswordRequest.getNewPassword(),
-                config.getPasswordPolicyConfig().getMinimumPasswordLength())
-                .map(PasswordValidationFailureType::name)
-                .ifPresent(failedOn::add);
-        PasswordValidator.validateComplexity(
-                changePasswordRequest.getNewPassword(),
-                config.getPasswordPolicyConfig().getPasswordComplexityRegex())
-                .map(PasswordValidationFailureType::name)
-                .ifPresent(failedOn::add);
-        if (!Objects.equals(changePasswordRequest.getNewPassword(), changePasswordRequest.getConfirmNewPassword())) {
-            failedOn.add("Confirmation password does not match new password");
+        accountDao.changePassword(userId, changePasswordRequest.getNewPassword());
+
+        if (authState.getSubject().equals(userId)) {
+            setAuthState(request.getSession(true), new AuthStateImpl(authState.getAccount(), false, System.currentTimeMillis()));
         }
 
-        if (failedOn.size() == 0) {
-            accountDao.changePassword(username, changePasswordRequest.getNewPassword());
-
-            if (authState.getSubject().equals(username)) {
-                setAuthState(request.getSession(true), new AuthStateImpl(authState.getAccount(), false, System.currentTimeMillis()));
-            }
-
-            return new ChangePasswordResponse(true, null, false);
-
-//            final URI result = URI.create(redirectUri);//service.auth(request, scope, responseType, clientId, redirectUri, nonce, state, prompt);
-//            throw new RedirectionException(Status.SEE_OTHER, result);
-        }
-
-        return new ChangePasswordResponse(false, failedOn.get(0), false);
+        return new ChangePasswordResponse(true, null, false);
     }
 
     public boolean resetEmail(final String emailAddress) {
@@ -404,26 +372,14 @@ class AuthenticationServiceImpl implements AuthenticationService {
         final boolean forceSignIn = shouldForceSignIn(authState);
 
         final String loggedInUser = securityContext.getUserId();
-        List<String> failedOn = new ArrayList<>();
         PasswordPolicyConfig conf = config.getPasswordPolicyConfig();
 
-        PasswordValidator.validateLength(
-                resetPasswordRequest.getNewPassword(),
-                conf.getMinimumPasswordLength())
-                .map(PasswordValidationFailureType::name)
-                .ifPresent(failedOn::add);
-        PasswordValidator.validateComplexity(
-                resetPasswordRequest.getNewPassword(),
-                conf.getPasswordComplexityRegex())
-                .map(PasswordValidationFailureType::name)
-                .ifPresent(failedOn::add);
+        PasswordValidator.validateLength(resetPasswordRequest.getNewPassword(), conf.getMinimumPasswordLength());
+        PasswordValidator.validateComplexity(resetPasswordRequest.getNewPassword(), conf.getPasswordComplexityRegex());
+        PasswordValidator.validateConfirmation(resetPasswordRequest.getNewPassword(), resetPasswordRequest.getConfirmNewPassword());
 
-        if (failedOn.size() == 0) {
-            accountDao.changePassword(loggedInUser, resetPasswordRequest.getNewPassword());
-            return new ChangePasswordResponse(true, null, forceSignIn);
-        }
-
-        return new ChangePasswordResponse(false, failedOn.get(0), forceSignIn);
+        accountDao.changePassword(loggedInUser, resetPasswordRequest.getNewPassword());
+        return new ChangePasswordResponse(true, null, forceSignIn);
     }
 
     public boolean needsPasswordChange(String email) {

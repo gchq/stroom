@@ -1,38 +1,50 @@
 package stroom.authentication.authenticate;
 
-
-import java.util.Optional;
-
+import java.util.Objects;
 
 public class PasswordValidator {
-
-    static Optional<PasswordValidationFailureType> validateLength(final String newPassword,
-                                                                  int minimumLength) {
-        boolean isLengthValid = newPassword != null && (newPassword.length() >= minimumLength);
-        return isLengthValid
-                ? Optional.empty()
-                : Optional.of(PasswordValidationFailureType.LENGTH);
+    public static void validateLength(final String newPassword,
+                                      int minimumLength) {
+        if (newPassword == null) {
+            throw new RuntimeException("Password is null");
+        }
+        if (newPassword.length() < minimumLength) {
+            throw new RuntimeException("Password does not meet the minimum length requirement of " + minimumLength + " characters");
+        }
     }
 
-    static Optional<PasswordValidationFailureType> validateComplexity(final String newPassword,
-                                                                      final String complexityRegex) {
-        boolean isPasswordComplexEnough = newPassword.matches(complexityRegex);
-        return isPasswordComplexEnough
-                ? Optional.empty()
-                : Optional.of(PasswordValidationFailureType.COMPLEXITY);
+    public static void validateComplexity(final String newPassword,
+                                          final String complexityRegex) {
+        if (newPassword == null) {
+            throw new RuntimeException("Password is null");
+        }
+        if (!newPassword.matches(complexityRegex)) {
+            throw new RuntimeException("Password does not meet the minimum complexity requirements");
+        }
     }
 
-    static Optional<PasswordValidationFailureType> validateAuthenticity(final CredentialValidationResult result) {
-        return result.isAllOk()
-                ? Optional.empty()
-                : Optional.of(PasswordValidationFailureType.BAD_OLD_PASSWORD);
+    public static void validateConfirmation(final String password, final String confirmationPassword) {
+        if (password == null) {
+            throw new RuntimeException("Password is null");
+        }
+        if (!Objects.equals(password, confirmationPassword)) {
+            throw new RuntimeException("The confirmation password does not match");
+        }
     }
 
-    static Optional<PasswordValidationFailureType> validateReuse(final String oldPassword,
-                                                                 final String newPassword) {
-        boolean isPasswordReused = oldPassword.equalsIgnoreCase(newPassword);
-        return isPasswordReused
-                ? Optional.of(PasswordValidationFailureType.REUSE)
-                : Optional.empty();
+    public static void validateReuse(final String oldPassword,
+                                     final String newPassword) {
+        if (newPassword == null) {
+            throw new RuntimeException("Password is null");
+        }
+        if (oldPassword.equalsIgnoreCase(newPassword)) {
+            throw new RuntimeException("You cannot reuse the previous password");
+        }
+    }
+
+    public static void validateCredentials(final CredentialValidationResult result) {
+        if (!result.isAllOk()) {
+            throw new RuntimeException("Invalid credentials");
+        }
     }
 }

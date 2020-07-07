@@ -20,6 +20,8 @@ public class CreateAccountRequest {
     @JsonProperty
     private final String password;
     @JsonProperty
+    private final String confirmPassword;
+    @JsonProperty
     private final boolean forcePasswordChange;
     @JsonProperty
     private final boolean neverExpires;
@@ -31,6 +33,7 @@ public class CreateAccountRequest {
                                 @JsonProperty("email") final String email,
                                 @JsonProperty("comments") final String comments,
                                 @JsonProperty("password") final String password,
+                                @JsonProperty("confirmPassword") final String confirmPassword,
                                 @JsonProperty("forcePasswordChange") final boolean forcePasswordChange,
                                 @JsonProperty("neverExpires") final boolean neverExpires) {
         this.firstName = firstName;
@@ -39,6 +42,7 @@ public class CreateAccountRequest {
         this.email = email;
         this.comments = comments;
         this.password = password;
+        this.confirmPassword = confirmPassword;
         this.forcePasswordChange = forcePasswordChange;
         this.neverExpires = neverExpires;
     }
@@ -65,6 +69,10 @@ public class CreateAccountRequest {
 
     public String getPassword() {
         return password;
+    }
+
+    public String getConfirmPassword() {
+        return confirmPassword;
     }
 
     public boolean isForcePasswordChange() {

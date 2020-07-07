@@ -1,12 +1,8 @@
 import * as React from "react";
 
 import { HttpError } from "lib/ErrorTypes";
-import { useAlert } from "components/AlertDialog/AlertDisplayBoundary";
-
 import { useAuthenticationContext } from "startup/Authentication";
-// import { useErrorReporting } from "components/ErrorPage";
-// import useAppNavigation from "lib/useAppNavigation";
-import { AlertType } from "../../components/AlertDialog/AlertDialog";
+import { usePrompt } from "components/Prompt/PromptDisplayBoundary";
 
 const useCheckStatus = (status: number) =>
   React.useCallback(
@@ -84,12 +80,8 @@ interface HttpClient {
 let cache = {};
 
 export const useHttpClient = (): HttpClient => {
-  const { alert } = useAlert();
+  const { showError } = usePrompt();
   const { idToken } = useAuthenticationContext();
-  // const { reportError } = useErrorReporting();
-  // const {
-  //   nav: { goToError },
-  // } = useAppNavigation();
 
   const handle200 = useCheckStatus(200);
   const handle204 = useCheckStatus(204);
@@ -97,21 +89,10 @@ export const useHttpClient = (): HttpClient => {
   const catchImpl = React.useCallback(
     (error: any) => {
       const msg = `Error, Status ${error.status}, Msg: ${error.message}`;
-      alert({ type: AlertType.ERROR, title: "Error", message: msg });
-
-      // cogoToast.error(msg, {
-      //   hideAfter: 5,
-      //   onClick: () => {
-      //     reportError({
-      //       errorMessage: error.message,
-      //       stackTrace: error.stack,
-      //       httpErrorCode: error.status,
-      //     });
-      //     goToError();
-      //   },
-      // });
+      console.log(msg);
+      showError({ message: error.message });
     },
-    [alert],
+    [showError],
   );
 
   const httpGetJson = React.useCallback(

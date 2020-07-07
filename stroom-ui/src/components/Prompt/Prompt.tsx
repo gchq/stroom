@@ -19,21 +19,24 @@ import Button from "../Button/Button";
 import { Form, Modal } from "react-bootstrap";
 import { Dialog } from "components/Dialog/Dialog";
 
-export enum AlertType {
+export enum PromptType {
   INFO,
   WARNING,
   ERROR,
   FATAL,
 }
 
-export interface Alert {
-  type: AlertType;
-  title: string;
-  message: string;
+export interface ContentProps {
+  title?: string;
+  message?: string;
+}
+
+export interface PromptProps extends ContentProps {
+  type: PromptType;
 }
 
 interface Props {
-  alert: Alert;
+  promptProps: PromptProps;
   onCloseDialog: () => void;
 }
 
@@ -52,53 +55,53 @@ const ImageHeader: React.FunctionComponent<ImageProps> = ({
   </div>
 );
 
-const AlertHeader: React.FunctionComponent<Alert> = (alert) => {
-  switch (alert.type) {
-    case AlertType.INFO: {
+const PromptHeader: React.FunctionComponent<PromptProps> = (prompt) => {
+  switch (prompt.type) {
+    case PromptType.INFO: {
       return (
         <ImageHeader
-          imageSrc={require("../../images/alert/info.svg")}
-          text={alert.title}
+          imageSrc={require("../../images/prompt/info.svg")}
+          text={prompt.title}
         />
       );
     }
-    case AlertType.WARNING: {
+    case PromptType.WARNING: {
       return (
         <ImageHeader
-          imageSrc={require("../../images/alert/warning.svg")}
-          text={alert.title}
+          imageSrc={require("../../images/prompt/warning.svg")}
+          text={prompt.title}
         />
       );
     }
-    case AlertType.ERROR: {
+    case PromptType.ERROR: {
       return (
         <ImageHeader
-          imageSrc={require("../../images/alert/error.svg")}
-          text={alert.title}
+          imageSrc={require("../../images/prompt/error.svg")}
+          text={prompt.title}
         />
       );
     }
-    case AlertType.FATAL: {
+    case PromptType.FATAL: {
       return (
         <ImageHeader
-          imageSrc={require("../../images/alert/fatal.svg")}
-          text={alert.title}
+          imageSrc={require("../../images/prompt/fatal.svg")}
+          text={prompt.title}
         />
       );
     }
     default: {
       return (
         <ImageHeader
-          imageSrc={require("../../images/alert/error.svg")}
-          text={alert.title}
+          imageSrc={require("../../images/prompt/error.svg")}
+          text={prompt.title}
         />
       );
     }
   }
 };
 
-export const AlertDialog: React.FunctionComponent<Props> = ({
-  alert,
+export const Prompt: React.FunctionComponent<Props> = ({
+  promptProps,
   onCloseDialog,
 }) => {
   return (
@@ -111,9 +114,9 @@ export const AlertDialog: React.FunctionComponent<Props> = ({
         }}
       >
         <Modal.Header closeButton={false}>
-          <AlertHeader {...alert} />
+          <PromptHeader {...promptProps} />
         </Modal.Header>
-        <Modal.Body>{alert && alert.message} </Modal.Body>
+        <Modal.Body>{promptProps && promptProps.message} </Modal.Body>
         <Modal.Footer>
           <Button
             className="Button__ok"
@@ -131,4 +134,4 @@ export const AlertDialog: React.FunctionComponent<Props> = ({
   );
 };
 
-export default AlertDialog;
+export default Prompt;

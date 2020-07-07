@@ -144,7 +144,7 @@ export const AccountListDialog: React.FunctionComponent<{
           Manage Accounts
         </Modal.Title>
       </Modal.Header>
-      <Modal.Body className="py-0">
+      <Modal.Body>
         <ItemManager {...itemManagerProps} />
       </Modal.Body>
       <Modal.Footer>

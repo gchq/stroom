@@ -25,7 +25,6 @@ import { TextAreaField } from "../../Form/TextAreaField";
 import { newAccountValidationSchema } from "./validation";
 import { CreateAccountRequest } from "../api/types";
 import useAccountResource from "../api/useAccountResource";
-import { Alert, AlertType } from "../../AlertDialog/AlertDialog";
 import { Account } from "components/Account/types";
 
 // export interface EditAccountFormValues {
@@ -161,35 +160,22 @@ const EditAccountFormik: React.FunctionComponent<{
         const handleResponse = (response: any) => {
           if (!response) {
             actions.setSubmitting(false);
-          } else if (response.changeSucceeded) {
-            props.onClose(true);
           } else {
-            actions.setSubmitting(false);
-            const error: Alert = {
-              type: AlertType.ERROR,
-              title: "Error",
-              message: response.message,
-            };
-            alert(error);
-
-            // If the user is asked to sign in again then unset the auth state.
-            if (response.forceSignIn) {
-              props.onClose(false);
-            }
+            props.onClose(true);
           }
         };
 
-        if (!!props.account.id) {
+        if (props.account.id === undefined) {
           const request: CreateAccountRequest = {
-            ...props.account,
             firstName: values.firstName,
             lastName: values.lastName,
             userId: values.userId,
             email: values.email,
             comments: values.comments,
-            password: "",
-            forcePasswordChange: true,
-            neverExpires: false,
+            password: undefined,
+            confirmPassword: undefined,
+            forcePasswordChange: values.forcePasswordChange,
+            neverExpires: values.neverExpires,
           };
           create(request).then(handleResponse);
         } else {

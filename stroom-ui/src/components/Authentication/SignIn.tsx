@@ -21,9 +21,8 @@ import { TextBoxField } from "../Form/TextBoxField";
 import { PasswordField } from "../Form/PasswordField";
 import { Person, Lock } from "react-bootstrap-icons";
 import useAuthenticationResource from "./api/useAuthenticationResource";
-import { useAlert } from "../AlertDialog/AlertDisplayBoundary";
+import { usePrompt } from "../Prompt/PromptDisplayBoundary";
 import * as Yup from "yup";
-import { Alert, AlertType } from "../AlertDialog/AlertDialog";
 import { AuthStateProps } from "./ConfirmCurrentPassword";
 import { Col, Form } from "react-bootstrap";
 import Button from "components/Button";
@@ -99,7 +98,7 @@ const SignInFormikWrapper: React.FunctionComponent<AuthStateProps> = ({
   setAuthState,
 }) => {
   const { login } = useAuthenticationResource();
-  const { alert } = useAlert();
+  const { showError } = usePrompt();
   return (
     <Formik
       initialValues={{ userId: "", password: "" }}
@@ -122,12 +121,9 @@ const SignInFormikWrapper: React.FunctionComponent<AuthStateProps> = ({
             });
           } else {
             actions.setSubmitting(false);
-            const error: Alert = {
-              type: AlertType.ERROR,
-              title: "Error",
+            showError({
               message: response.message,
-            };
-            alert(error);
+            });
             // setLoginResultMessage(response.message);
           }
         });
