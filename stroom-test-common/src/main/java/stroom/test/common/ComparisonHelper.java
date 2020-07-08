@@ -104,8 +104,11 @@ public final class ComparisonHelper {
 
         return -1;
     }
-
     public static boolean unifiedDiff(final Path expectedFile, final Path actualFile) {
+        return unifiedDiff(expectedFile, actualFile, 3);
+    }
+
+    public static boolean unifiedDiff(final Path expectedFile, final Path actualFile, final int context) {
 
         boolean areFilesTheSame = true;
         try (final Stream<String> expectedStream = Files.lines(expectedFile);
@@ -121,7 +124,7 @@ public final class ComparisonHelper {
                     actualFile.toString(),
                     expectedLines,
                     patch,
-                    3);
+                    context);
 
             if (!unifiedDiff.isEmpty()) {
                 areFilesTheSame = false;
