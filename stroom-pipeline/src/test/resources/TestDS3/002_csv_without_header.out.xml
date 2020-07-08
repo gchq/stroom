@@ -35,7 +35,7 @@
    </record>
    <record>
       <data value="2020-06-17T08:14:00.000Z"/>
-      <data value="fred"/>
+      <data value="&#34;Big, Bad Fred&#34;"/>
       <data value="office"/>
       <data value="logon"/>
    </record>

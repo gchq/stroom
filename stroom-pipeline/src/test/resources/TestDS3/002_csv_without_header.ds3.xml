@@ -7,8 +7,9 @@
 
   <split delimiter="\n">
     <group value="$1">
-      <split delimiter="," containerStart="&#34;" containerEnd="&#34;">
-        <data value="$1" />
+      <split delimiter="," containerStart="&#34;" containerEnd="&#34;" escape="\">
+        <!-- Use group $2 to strip the escape chars from the output, $1 will not. -->
+        <data value="$2" />
       </split>
     </group>
   </split>

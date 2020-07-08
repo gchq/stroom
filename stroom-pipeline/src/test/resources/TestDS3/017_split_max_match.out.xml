@@ -21,8 +21,8 @@
    <record>
       <data name="name" value="bob">
          <data name="roles">
-            <data name="role" value="programmer"/>
             <data name="role" value="tea boy"/>
+            <data name="role" value="shredder operative"/>
          </data>
       </data>
    </record>
