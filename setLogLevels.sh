@@ -14,7 +14,7 @@ YELLOW='\033[1;33m'
 BLUE='\033[1;34m'
 NC='\033[0m' # No Colour 
 
-readonly URL="http://127.0.0.1:8081/admin/tasks/log-level"
+readonly URL="http://127.0.0.1:8081/stroomAdmin/tasks/log-level"
 readonly CURL="curl"
 readonly HTTPIE="http"
 

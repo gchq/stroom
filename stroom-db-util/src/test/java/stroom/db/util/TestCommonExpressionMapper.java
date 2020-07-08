@@ -51,7 +51,7 @@ class TestCommonExpressionMapper {
                                 opType,
                                 Collections.emptyList());
 
-                        final CommonExpressionMapper mapper = new CommonExpressionMapper(true);
+                        final CommonExpressionMapper mapper = new CommonExpressionMapper();
 
                         final Condition condition = mapper.apply(expressionOperator);
 
@@ -296,7 +296,7 @@ class TestCommonExpressionMapper {
             return DSL.condition(expressionTerm.getField() + "=" + expressionTerm.getValue());
         };
 
-        final CommonExpressionMapper mapper = new CommonExpressionMapper(false);
+        final CommonExpressionMapper mapper = new CommonExpressionMapper();
 
         // Set up some noddy term handlers so we can test expression terms
         FIELD_NAMES.forEach(fieldName ->

@@ -6,6 +6,25 @@ and this project adheres to [Semantic Versioning](http://semver.org/).
 
 ## [Unreleased]
 
+* Issue **#1725** : Fix Data Splitter onlyMatch using zero based instead of one based numbers.
+
+
+## [v7.0-beta.39] - 2020-07-06
+
+* Issue **#1716** : Prevent export of processor filters that are reprocess or deleted.
+
+* Issue **#1638** : Suppress error when searching deleted streams.
+
+* Issue **#1696** : Fix reprocessing from unfiltered meta data view.
+
+* Issue **#1648** : Fix streams not being deleted following reprocessing.
+
+* Issue **#1695** : Fix `Records` stream types not being identified correctly.
+
+* Issue **#1668** : Fixed incorrect parameter count for XSLT `meta` function.
+
+* Issue **#1619** : Fix delete stream summary.
+
 
 ## [v7.0-beta.38] - 2020-06-25
 
@@ -27,7 +46,7 @@ and this project adheres to [Semantic Versioning](http://semver.org/).
 
 * Add field searching to Properties quick filter.
 
-* Add field searching to Sercer Tasks quick filter.
+* Add field searching to Server Tasks quick filter.
 
 * Add field searching to dependencies quick filter.
 
@@ -35,7 +54,7 @@ and this project adheres to [Semantic Versioning](http://semver.org/).
 
 * Issue **#1248** : Add quick filter to dependencies screen.
 
-* Issue **#1650** : Use consitent blue colour.
+* Issue **#1650** : Use consistent blue colour.
 
 * Issue **#1671** :Fix XSLT function `hex-to-oct`.
 
@@ -2328,7 +2347,8 @@ Issue **gchq/stroom-expression#22** : Add `typeOf(...)` function to dashboard.
 
 * Issue **#202** : Initial release of the new data retention policy functionality.
 
-[Unreleased]: https://github.com/gchq/stroom/compare/v7.0-beta.38...HEAD
+[Unreleased]: https://github.com/gchq/stroom/compare/v7.0-beta.39...HEAD
+[v7.0-beta.39]: https://github.com/gchq/stroom/compare/v7.0-beta.38...v7.0-beta.39
 [v7.0-beta.38]: https://github.com/gchq/stroom/compare/v7.0-beta.37...v7.0-beta.38
 [v7.0-beta.37]: https://github.com/gchq/stroom/compare/v7.0-beta.36...v7.0-beta.37
 [v7.0-beta.36]: https://github.com/gchq/stroom/compare/v7.0-beta.35...v7.0-beta.36

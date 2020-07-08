@@ -70,22 +70,22 @@ class TestProcessorTaskManager2 extends AbstractCoreIntegrationTest {
         assertThat(streams.size()).isEqualTo(1);
 
         ExpressionOperator expression = new ExpressionOperator.Builder(Op.AND).build();
-        assertThat(processorTaskManager.runSelectMetaQuery(expression, 0, null, null, false, 100).size()).isEqualTo(1);
+        assertThat(processorTaskManager.runSelectMetaQuery(expression, 0, null, null, null, false, 100).size()).isEqualTo(1);
 
         expression = new ExpressionOperator.Builder(Op.AND).addTerm(MetaFields.FEED_NAME, Condition.EQUALS, feedName).build();
-        assertThat(processorTaskManager.runSelectMetaQuery(expression, 0, null, null, false, 100).size()).isEqualTo(1);
+        assertThat(processorTaskManager.runSelectMetaQuery(expression, 0, null, null, null, false, 100).size()).isEqualTo(1);
 
         expression = new ExpressionOperator.Builder(Op.AND).addTerm(MetaFields.FEED_NAME, Condition.EQUALS, "otherFed").build();
-        assertThat(processorTaskManager.runSelectMetaQuery(expression, 0, null, null, false, 100).size()).isEqualTo(0);
+        assertThat(processorTaskManager.runSelectMetaQuery(expression, 0, null, null, null, false, 100).size()).isEqualTo(0);
 
         expression = new ExpressionOperator.Builder(Op.AND).addTerm(MetaFields.PIPELINE, Condition.EQUALS, new DocRef(PipelineDoc.DOCUMENT_TYPE, "1234")).build();
-        assertThat(processorTaskManager.runSelectMetaQuery(expression, 0, null, null, false, 100).size()).isEqualTo(0);
+        assertThat(processorTaskManager.runSelectMetaQuery(expression, 0, null, null, null,false, 100).size()).isEqualTo(0);
 
         // Check DB cleanup.
         expression = new ExpressionOperator.Builder(Op.AND).build();
-        assertThat(processorTaskManager.runSelectMetaQuery(expression, 0, null, null, false, 100).size()).isEqualTo(1);
+        assertThat(processorTaskManager.runSelectMetaQuery(expression, 0, null, null, null, false, 100).size()).isEqualTo(1);
         streamTaskDeleteExecutor.delete(Instant.EPOCH);
-        assertThat(processorTaskManager.runSelectMetaQuery(expression, 0, null, null, false, 100).size()).isEqualTo(1);
+        assertThat(processorTaskManager.runSelectMetaQuery(expression, 0, null, null, null,false, 100).size()).isEqualTo(1);
     }
 
 //    @Test

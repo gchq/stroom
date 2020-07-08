@@ -1,0 +1,3 @@
+123 [abc] (This is some text)
+----THIS IS A BAD LINE WE WANT TO IGNORE----
+4567 [defg] (This is some other text)
