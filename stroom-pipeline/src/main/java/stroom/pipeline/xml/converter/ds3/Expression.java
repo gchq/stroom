@@ -50,7 +50,8 @@ public abstract class Expression extends Node {
     }
 
     public boolean checkOnlyMatch(final int parentMatchCount) {
-        return factory.getOnlyMatch() == null || factory.getOnlyMatch().contains(parentMatchCount);
+        return factory.getOnlyMatch() == null ||
+                factory.getOnlyMatch().contains(parentMatchCount);
     }
 
     public int getAdvance() {

@@ -16,17 +16,16 @@
 
 package stroom.test.common.util.test;
 
-import stroom.util.io.FileUtil;
-
-import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
 
 public abstract class FileSystemTestUtil {
     private static final String CONFIG_PATH = "../stroom-config";
 
-    private static final Path configDir = Paths.get(CONFIG_PATH);
-    private static final Path configXSDDir = configDir.resolve("xsd");
+    // These zips are downloaded by the gradle task downloadStroomContent
+    private static final Path CONTENT_PACK_DOWNLOADS_DIR = Paths.get("../build/contentPackDownload");
+    private static final Path EXPLODED_DIR = CONTENT_PACK_DOWNLOADS_DIR.resolve("exploded");
+
     private static final long TEST_PREFIX = System.currentTimeMillis();
     private static long testSuffix = 0;
 
@@ -42,10 +41,11 @@ public abstract class FileSystemTestUtil {
         return TEST_PREFIX + "_" + testSuffix;
     }
 
-    public static Path getConfigXSDDir() {
-        if (!Files.isDirectory(configXSDDir)) {
-            throw new RuntimeException("Directory not found: " + FileUtil.getCanonicalPath(configXSDDir));
-        }
-        return configXSDDir;
+    public static Path getContentPackDownloadsDir() {
+        return CONTENT_PACK_DOWNLOADS_DIR;
+    }
+
+    public static Path getExplodedContentPacksDir() {
+        return EXPLODED_DIR;
     }
 }

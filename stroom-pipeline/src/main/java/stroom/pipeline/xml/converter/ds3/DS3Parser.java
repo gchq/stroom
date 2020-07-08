@@ -16,12 +16,6 @@
 
 package stroom.pipeline.xml.converter.ds3;
 
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
-import org.xml.sax.Attributes;
-import org.xml.sax.InputSource;
-import org.xml.sax.SAXException;
-import org.xml.sax.helpers.AttributesImpl;
 import stroom.pipeline.errorhandler.ErrorHandlerAdaptor;
 import stroom.pipeline.xml.NamespaceConstants;
 import stroom.pipeline.xml.converter.AbstractParser;
@@ -30,6 +24,13 @@ import stroom.pipeline.xml.converter.ds3.NodeFactory.NodeType;
 import stroom.util.CharBuffer;
 import stroom.util.shared.ModelStringUtil;
 import stroom.util.shared.Severity;
+
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+import org.xml.sax.Attributes;
+import org.xml.sax.InputSource;
+import org.xml.sax.SAXException;
+import org.xml.sax.helpers.AttributesImpl;
 
 import java.io.IOException;
 import java.util.concurrent.Executors;
@@ -151,8 +152,13 @@ public class DS3Parser extends AbstractParser {
         stopProfiling();
     }
 
-    private void process(final Node parent, final Buffer buffer, final Match parentMatch, final int parentMatchCount,
-                         final int level, final MatchOrder matchOrder, final boolean ignoreErrors) throws IOException, SAXException {
+    private void process(final Node parent,
+                         final Buffer buffer,
+                         final Match parentMatch,
+                         final int parentMatchCount,
+                         final int level,
+                         final MatchOrder matchOrder,
+                         final boolean ignoreErrors) throws IOException, SAXException {
         int advance = 1;
         boolean firstPass = true;
         int matchCount = 0;
@@ -224,15 +230,25 @@ public class DS3Parser extends AbstractParser {
         }
     }
 
-    private int processExpression(final Expression expression, final Buffer buffer, final int parentMatchCount,
-                                  final int matchCount, final int level, final MatchOrder matchOrder, final boolean ignoreErrors)
+    private int processExpression(final Expression expression,
+                                  final Buffer buffer,
+                                  final int parentMatchCount,
+                                  final int matchCount,
+                                  final int level,
+                                  final MatchOrder matchOrder,
+                                  final boolean ignoreErrors)
             throws IOException, SAXException {
         int start = -1;
         int end = -1;
 
+        // We don't know if this is a match yet so plus one to the matches so far to
+        // get the match number this would be if it matches
+        final int potentialMatchNumber = parentMatchCount + 1;
+
         // Check that we haven't already exceeded the maximum match count for
         // this expression.
-        if (expression.checkMaxMatch() && expression.checkOnlyMatch(parentMatchCount)) {
+        if (expression.checkMaxMatch()
+                && expression.checkOnlyMatch(potentialMatchNumber)) {
             // Set the input that this expression will use.
             expression.setInput(buffer);
 
@@ -264,7 +280,11 @@ public class DS3Parser extends AbstractParser {
                 // are matching in sequence.
                 if (matchOrder == MatchOrder.SEQUENCE && !ignoreErrors && start != 0) {
                     messageBuffer.clear();
-                    messageBuffer.append("Expression failed to match from the start of the content: ");
+                    messageBuffer.append("Expression failed to match from the start of the content (matched at char ");
+                    messageBuffer.append(start + 1); // make one based
+                    messageBuffer.append(" [one based], unmatched content [");
+                    appendBufferContents(messageBuffer, buffer.subSequence(0, start));
+                    messageBuffer.append("]): ");
                     messageBuffer.append(expression.getDebugId());
                     log(Severity.ERROR, messageBuffer.toString());
                 }
@@ -321,7 +341,12 @@ public class DS3Parser extends AbstractParser {
         // Make sure the expression matched the minimum number of times.
         if (end != RECOVERY_MODE && !expression.checkMinMatch()) {
             messageBuffer.clear();
-            messageBuffer.append("Expression did not match the required number of times: ");
+            messageBuffer.append("Expression did not match the required number of times (match count: ");
+            messageBuffer.append(expression.getMatchCount());
+//            messageBuffer.append(" content: [");
+//            appendBufferContents(messageBuffer, buffer);
+//            messageBuffer.append("]");
+            messageBuffer.append("): ");
             messageBuffer.append(expression.getDebugId());
             log(Severity.ERROR, messageBuffer.toString());
         }
@@ -476,8 +501,11 @@ public class DS3Parser extends AbstractParser {
         }
     }
 
-    private void processGroup(final Group node, final Buffer buffer, final Match parentMatch,
-                              final int parentMatchCount, final int level) throws IOException, SAXException {
+    private void processGroup(final Group node,
+                              final Buffer buffer,
+                              final Match parentMatch,
+                              final int parentMatchCount,
+                              final int level) throws IOException, SAXException {
         // Pull back the stored value.
         Buffer subBuffer = node.lookupValue(parentMatchCount);
         if (subBuffer != null) {
@@ -496,11 +524,41 @@ public class DS3Parser extends AbstractParser {
             // Make sure we consumed all of the sub buffer (ignoring trailing
             // whitespace).
             if (!node.isIgnoreErrors() && !subBuffer.isBlank()) {
+
                 messageBuffer.clear();
-                messageBuffer.append("Expressions failed to match all of the content provided by group: ");
-                messageBuffer.append(node.getDebugId());
+                messageBuffer
+                        .append("Expressions failed to match all of the content provided by group: ")
+                        .append(node.getDebugId())
+                        .append(" unmatched content: [");
+
+                appendBufferContents(messageBuffer, subBuffer);
+
+                messageBuffer.append("]");
+
                 log(Severity.ERROR, messageBuffer.toString());
             }
+        }
+    }
+
+    private void appendBufferContents(final CharBuffer messageBuffer,
+                                      final Buffer buffer) {
+        // Limit the amount of unmatched content we put in the msg in case
+        // it is mahoosive.
+        final int maxBuffLen = 200;
+        final int tailLen = 10;
+        final int headLen = maxBuffLen - tailLen;
+
+        if (buffer.length() > maxBuffLen) {
+            messageBuffer
+                    .append(buffer.subSequence(0, headLen)
+                            .toString()
+                            .replace("\n", "\\n"))
+                    .append("...TRUNCATED...")
+                    .append(buffer.subSequence(buffer.length() - tailLen, tailLen)
+                            .toString()
+                            .replace("\n", "\\n"));
+        } else {
+            messageBuffer.append(buffer.unsafeCopy().toString().replace("\n", "\\n"));
         }
     }
 
@@ -508,8 +566,13 @@ public class DS3Parser extends AbstractParser {
      * Outputs a data element if required using the current match or another
      * stored match.
      */
-    private void processData(final StoreNode node, final Buffer buffer, final Match parentMatch,
-                             final int parentMatchCount, final int level, final MatchOrder matchOrder, final boolean ignoreErrors)
+    private void processData(final StoreNode node,
+                             final Buffer buffer,
+                             final Match parentMatch,
+                             final int parentMatchCount,
+                             final int level,
+                             final MatchOrder matchOrder,
+                             final boolean ignoreErrors)
             throws IOException, SAXException {
         boolean outputEndElement = false;
         if (node.getNodeType() == NodeType.DATA) {

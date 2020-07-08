@@ -110,7 +110,7 @@ RUN \
 
 # Those that are most likely to have changed get copied last to speed up build
 
-# Copy in all the content packs downloaded in the intermediate build stage
+# Copy in the content packs downloaded by gradle
 COPY --chown=stroom:stroom ./build/contentPacks /stroom/contentPackImport
 
 # Copy all the fat jars for the application and connectors

@@ -1,0 +1,39 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<dataSplitter
+        xmlns="data-splitter:3"
+        xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+        xsi:schemaLocation="data-splitter:3 file://data-splitter-v3.0.xsd"
+        version="3.0">
+
+  <split delimiter="\n----\n">
+    <data name="section">
+      <group value="$1">
+        <split delimiter="\n">
+          <group value="$1">
+
+            <!-- onlyMatch should be one based -->
+            <regex id="threeFields" pattern="^([0-9]+) \[([^\]]*)\] (.*)$" onlyMatch="1,3">
+              <data name="threeColRow">
+                <data name="number" value="$1" />
+                <data name="type" value="$2" />
+                <data name="text" value="$3" />
+              </data>
+            </regex>
+
+            <!-- onlyMatch should be one based -->
+            <regex id="twoFields" pattern="^\[([^\]]*)\] (.*)$" onlyMatch="4,6">
+              <data name="twoColRow">
+                <data name="type" value="$1" />
+                <data name="text" value="$2" />
+              </data>
+            </regex>
+
+            <!-- Consume and drop all the ones we didn't want to stop errors-->
+            <all/>
+
+          </group>
+        </split>
+      </group>
+    </data>
+  </split>
+</dataSplitter>

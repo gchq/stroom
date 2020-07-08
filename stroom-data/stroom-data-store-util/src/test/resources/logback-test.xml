@@ -10,11 +10,6 @@
 
     <logger name="stroom" level="info" />
 
-    <logger name="stroom.pipeline" level="debug" />
-
-    <logger name="stroom.pipeline.refdata" level="info" />
-
-
     <root level="error">
         <appender-ref ref="STDOUT" />
     </root>

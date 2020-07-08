@@ -32,6 +32,8 @@ public class ImportExportModule extends AbstractModule {
         bind(ImportExportSerializer.class).to(ImportExportSerializerImpl.class);
         bind(ImportExportDocumentEventLog.class).to(ImportExportDocumentEventLogImpl.class);
 
+        //Startup with very low priority to ensure it starts after everything else
+        //in particular
         LifecycleBinder.create(binder())
                 .bindStartupTaskTo(ContentPackImportStartup.class, -1_000);
     }

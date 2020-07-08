@@ -1,0 +1,15 @@
+<?xml version="1.1" encoding="UTF-8"?>
+<dataSplitter
+  xmlns="data-splitter:3"
+  xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+  xsi:schemaLocation="data-splitter:3 file://data-splitter-v3.0.xsd"
+  version="3.0">
+
+  <split delimiter="|">
+    <group value="$1">
+      <split delimiter="," containerStart="&#34;" containerEnd="&#34;">
+        <data value="$1" />
+      </split>
+    </group>
+  </split>
+</dataSplitter>

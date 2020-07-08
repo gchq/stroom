@@ -17,11 +17,15 @@
 package stroom.test.common;
 
 
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
+import stroom.util.ConsoleColour;
 import stroom.util.io.FileUtil;
 import stroom.util.io.StreamUtil;
 import stroom.util.logging.LogUtil;
+
+import org.assertj.core.util.diff.DiffUtils;
+import org.assertj.core.util.diff.Patch;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import java.io.BufferedReader;
 import java.io.IOException;
@@ -35,6 +39,8 @@ import java.nio.file.Path;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
+import java.util.stream.Collectors;
+import java.util.stream.Stream;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.fail;
@@ -97,6 +103,55 @@ public final class ComparisonHelper {
         }
 
         return -1;
+    }
+
+    public static boolean unifiedDiff(final Path expectedFile, final Path actualFile) {
+
+        boolean areFilesTheSame = true;
+        try (final Stream<String> expectedStream = Files.lines(expectedFile);
+                final Stream<String> actualStream = Files.lines(actualFile)) {
+
+            final List<String> expectedLines = expectedStream.collect(Collectors.toList());
+            final List<String> actualLines = actualStream.collect(Collectors.toList());
+
+            final Patch<String> patch = DiffUtils.diff(expectedLines, actualLines);
+
+            final List<String> unifiedDiff = DiffUtils.generateUnifiedDiff(
+                    expectedFile.toString(),
+                    actualFile.toString(),
+                    expectedLines,
+                    patch,
+                    3);
+
+            if (!unifiedDiff.isEmpty()) {
+                areFilesTheSame = false;
+
+                LOGGER.error("Differences exist between expected {} and actual {}",
+                        FileUtil.getCanonicalPath(expectedFile),
+                        FileUtil.getCanonicalPath(actualFile));
+
+                System.out.println("");
+                unifiedDiff.forEach(diffLine -> {
+
+                    final ConsoleColour lineColour;
+                    if (diffLine.startsWith("+")) {
+                        lineColour = ConsoleColour.GREEN;
+                    } else if (diffLine.startsWith("-")) {
+                        lineColour = ConsoleColour.RED;
+                    } else {
+                        lineColour = ConsoleColour.NO_COLOUR;
+                    }
+
+                    System.out.println(ConsoleColour.colourise(diffLine, lineColour));
+                });
+                System.out.println(LogUtil.message("\nvimdiff {} {}",
+                        FileUtil.getCanonicalPath(expectedFile), FileUtil.getCanonicalPath(actualFile)));
+            }
+
+        } catch (Exception e) {
+            throw new RuntimeException(e);
+        }
+        return areFilesTheSame;
     }
 
     private static String getComparisonString(final String str, final int index) {

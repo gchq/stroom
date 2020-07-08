@@ -6,6 +6,8 @@ and this project adheres to [Semantic Versioning](http://semver.org/).
 
 ## [Unreleased]
 
+* Issue **#1725** : Fix Data Splitter onlyMatch using zero based instead of one based numbers.
+
 
 ## [v7.0-beta.39] - 2020-07-06
 
