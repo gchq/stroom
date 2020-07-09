@@ -19,7 +19,7 @@ import { NavLink } from "react-router-dom";
 import { Formik, FormikProps } from "formik";
 import { TextBoxFormField, PasswordFormField } from "components/FormField";
 import { Person, Lock } from "react-bootstrap-icons";
-import useAuthenticationResource from "./api/useAuthenticationResource";
+import { useAuthenticationResource } from "./api";
 import { usePrompt } from "../Prompt/PromptDisplayBoundary";
 import * as Yup from "yup";
 import { AuthStateProps } from "./ConfirmCurrentPassword";

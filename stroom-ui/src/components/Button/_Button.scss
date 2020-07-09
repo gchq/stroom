@@ -1,5 +1,6 @@
 @import "themes.scss";
 @import "../../styles/themify.scss";
+@import "../../styles/colours.scss";
 
 /////////////////
 //// Variables //
@@ -9,10 +10,21 @@
 
 button:focus {
   color: #495057;
-  background-color: #fff;
-  border-color: #80bdff;
+  background-color: $white;
+  //border-color: #80bdff;
+  //outline: 0;
+  //box-shadow: 0 0 0 0.2rem rgba(0, 123, 255, 0.25);
+
+  //border-color: $primary;
+  //outline: 0;
+  //-webkit-box-shadow: inset 0 1px 1px rgba(0,0,0,.075), 0 0 8px rgba($primary,.6);
+  //box-shadow: inset 0 1px 1px rgba(0,0,0,.075), 0 0 8px rgba($primary,.6);
+
+
+  border-color: $button-primary;
   outline: 0;
-  box-shadow: 0 0 0 0.2rem rgba(0, 123, 255, 0.25);
+  -webkit-box-shadow: inset 0 1px 1px rgba(0,0,0,.075), 0 0 8px rgba($button-primary,.6);
+  box-shadow: inset 0 1px 1px rgba(0,0,0,.075), 0 0 8px rgba($button-primary,.6);
 }
 
 ////////////////////
@@ -148,7 +160,7 @@ button:focus {
 .Button--default {
   // .j1hrif9t
   padding: .375rem .5rem;
-  color: #424242; // material grey 800
+  color: $grey-800; // material grey 800
 
   @include themify($themes) {
     color: themed("button-default__color");
@@ -156,7 +168,7 @@ button:focus {
 }
 
 .Button--default.Button--selected {
-  background-color: rgba(158, 158, 158, 0.2); // material grey 500 20%
+  background-color: rgba($button, 0.2);
 
   @include themify($themes) {
     background-color: themed("button-default__background-color--selected");
@@ -164,7 +176,7 @@ button:focus {
 }
 
 .Button--default:hover {
-  background-color: rgba(158, 158, 158, 0.3); // material grey 500 30%
+  background-color: rgba($button, 0.3);
 
   @include themify($themes) {
     background-color: themed("button-default__background-color--hover");
@@ -173,7 +185,7 @@ button:focus {
 
 .Button--default-primary {
   // .j14bbh75
-  color: #2196f3; // material blue 500 
+  color: $button-primary;
 
   @include themify($themes) {
     color: themed("button-default-primary__color");
@@ -181,7 +193,7 @@ button:focus {
 }
 
 .Button--default-primary.Button--selected {
-  background-color: rgba(33, 150, 243, 0.1); // material blue 500 10%
+  background-color: rgba($button-primary, 0.1);
 
   @include themify($themes) {
     background-color: themed("button-default-primary__background-color--selected");
@@ -190,7 +202,7 @@ button:focus {
 
 .Button--default-primary:hover {
   // .j14bbh75:hover
-  background-color: rgba(33, 150, 243, 0.2); // material blue 500 20%
+  background-color: rgba($button-primary, 0.2);
 
   @include themify($themes) {
     background-color: themed("button-default-primary__background-color--hover");
@@ -199,7 +211,7 @@ button:focus {
 
 .Button--default-secondary {
   // .j1y9307j
-  color: #e91e63; // material pink 500 
+  color: $button-secondary;
 
   @include themify($themes) {
     color: themed("button-default-secondary__color");
@@ -207,7 +219,7 @@ button:focus {
 }
 
 .Button--default-secondary.Button--selected {
-  background-color: rgba(233, 30, 99, 0.1); // material pink 500 10%
+  background-color: rgba($button-secondary, 0.1);
 
   @include themify($themes) {
     background-color: themed("button-default-secondary__background-color--selected");
@@ -216,7 +228,7 @@ button:focus {
 
 .Button--default-secondary:hover {
   // .j1y9307j:hover
-  background-color: rgba(233, 30, 99, 0.2); // material pink 500 20%
+  background-color: rgba($button-secondary, 0.2);
 
   @include themify($themes) {
     background-color: themed("button-default-secondary__background-color--hover");
@@ -239,8 +251,8 @@ button:focus {
   // .j5jkmku
   border: thin solid;
   padding: .3rem 1rem;
-  color: #424242; // material grey 800
-  border-color: rgba(158, 158, 158, 0.8); // material grey 500 80%
+  color: $grey-800; // material grey 800
+  border-color: rgba($button, 0.8);
 
   @include themify($themes) {
     color: themed("button-outline__color");
@@ -249,8 +261,8 @@ button:focus {
 }
 
 .Button--outline.Button--selected {
-  border-color: rgba(158, 158, 158, 1.0); // material grey 500 100%
-  background-color: rgba(158, 158, 158, 0.2); // material grey 500 20%
+  border-color: rgba($button, 1.0);
+  background-color: rgba($button, 0.2);
 
   @include themify($themes) {
     border-color: themed("button-outline__border-color--hover");
@@ -259,8 +271,8 @@ button:focus {
 }
 
 .Button--outline:hover {
-  border-color: rgba(158, 158, 158, 1.0); // material grey 500 100%
-  background-color: rgba(158, 158, 158, 0.3); // material grey 500 30%
+  border-color: rgba($button, 1.0);
+  background-color: rgba($button, 0.3);
 
   @include themify($themes) {
     border-color: themed("button-outline__border-color--hover");
@@ -281,8 +293,8 @@ button:focus {
 .Button--outline-primary {
   // .j9ze19u
   border: thin solid;
-  color: #2196f3; // material blue 500 
-  border-color: rgba(33, 150, 243, 0.5); // material blue 500 50%
+  color:  $button-primary;
+  border-color: rgba($button-primary, 0.5);
 
   @include themify($themes) {
     color: themed("button-outline-primary__color");
@@ -291,8 +303,8 @@ button:focus {
 }
 
 .Button--outline-primary.Button--selected {
-  border-color: rgba(33, 150, 243, 1.0); // material blue 500 100%
-  background-color: rgba(33, 150, 243, 0.1); // material blue 500 10%
+  border-color: rgba($button-primary, 1.0);
+  background-color: rgba($button-primary, 0.1);
 
   @include themify($themes) {
     border-color: themed("button-outline-primary__border-color--hover");
@@ -303,8 +315,8 @@ button:focus {
 .Button--outline-primary:hover {
   // .j9ze19u:hover
   border: thin solid;
-  border-color: rgba(33, 150, 243, 1.0); // material blue 500 100%
-  background-color: rgba(33, 150, 243, 0.2); // material blue 500 20%
+  border-color: rgba($button-primary, 1.0);
+  background-color: rgba($button-primary, 0.2);
 
   @include themify($themes) {
     border-color: themed("button-outline-primary__border-color--hover");
@@ -325,8 +337,8 @@ button:focus {
 .Button--outline-secondary {
   // .j1xxvqug
   border: thin solid;
-  color: #e91e63; // material pink 500 
-  border-color: rgba(233, 30, 99, 0.5); // material pink 500 50%
+  color: $button-secondary;
+  border-color: rgba($button-secondary, 0.5);
 
   @include themify($themes) {
     color: themed("button-outline-secondary__color");
@@ -335,8 +347,8 @@ button:focus {
 }
 
 .Button--outline-secondary.Button--selected {
-  border-color: rgba(233, 30, 99, 1.0); // material pink 500 100%
-  background-color: rgba(233, 30, 99, 0.1); // material pink 500 10%
+  border-color: rgba($button-secondary, 1.0);
+  background-color: rgba($button-secondary, 0.1);
 
   @include themify($themes) {
     border-color: themed("button-outline-secondary__border-color--hover");
@@ -346,8 +358,8 @@ button:focus {
 
 .Button--outline-secondary:hover {
   border: thin solid;
-  border-color: rgba(233, 30, 99, 1.0); // material pink 500 100%
-  background-color: rgba(233, 30, 99, 0.2); // material pink 500 20%
+  border-color: rgba($button-secondary, 1.0);
+  background-color: rgba($button-secondary, 0.2);
 
   @include themify($themes) {
     border-color: themed("button-outline-secondary__border-color--hover");
@@ -390,7 +402,7 @@ button:focus {
   height: 1rem;
   width: 1rem;
 
-  color: #424242; // material grey 800
+  color: $grey-800; // material grey 800
 
   @include themify($themes) {
     color: themed("button-icon__color");
@@ -429,7 +441,7 @@ button:focus {
 }
 
 .Button--icon.Button--selected {
-  background-color: rgba(158, 158, 158, 0.2); // material grey 500 20%
+  background-color: rgba($button, 0.2);
 
   @include themify($themes) {
     background-color: themed("button-icon__background-color--selected");
@@ -438,7 +450,7 @@ button:focus {
 
 .Button--icon:hover {
   // .j1g2vga5:hover
-  background-color: rgba(158, 158, 158, 0.3); // material grey 500 30%
+  background-color: rgba($button, 0.3);
 
   @include themify($themes) {
     background: themed("button-icon__background-color--hover");
@@ -450,7 +462,7 @@ button:focus {
 
 .Button--icon-primary {
   // .j42ua74
-  color: #2196f3; // material blue 500 
+  color: $button-primary;
 
   @include themify($themes) {
     color: themed("button-icon-primary__color");
@@ -458,7 +470,7 @@ button:focus {
 }
 
 .Button--icon-primary.Button--selected {
-  background-color: rgba(33, 150, 243, 0.1); // material blue 500 10%
+  background-color: rgba($button-primary, .1);
 
   @include themify($themes) {
     background-color: themed("button-icon-primary__background-color--selected");
@@ -467,7 +479,7 @@ button:focus {
 
 .Button--icon-primary:hover {
   // .j42ua74:hover
-  background-color: rgba(33, 150, 243, 0.2); // material blue 500 20%
+  background-color: rgba($button-primary, .2);
 
   @include themify($themes) {
     background: themed("button-icon-primary__background-color--hover");
@@ -476,7 +488,7 @@ button:focus {
 
 .Button--icon-secondary {
   // j1q4g7ue
-  color: #e91e63; // material pink 500 
+  color: $button-secondary;
 
   @include themify($themes) {
     color: themed("button-icon-secondary__color");
@@ -484,7 +496,7 @@ button:focus {
 }
 
 .Button--icon-secondary.Button--selected {
-  background-color: rgba(233, 30, 99, 0.1); // material pink 500 10%
+  background-color: rgba($button-secondary, 0.1);
 
   @include themify($themes) {
     background-color: themed("button-icon-secondary__background-color--selected");
@@ -493,7 +505,7 @@ button:focus {
 
 .Button--icon-secondary:hover {
   // .j1q4g7ue:hover
-  background-color: rgba(233, 30, 99, 0.2); // material pink 500 20%
+  background-color: rgba($button-secondary, 0.2);
 
   @include themify($themes) {
     background: themed("button-icon-secondary__background-color--hover");
@@ -520,8 +532,8 @@ button:focus {
 .Button--contained {
   // .jpyw0mp
   //box-shadow: 0 .06rem .3rem 0 rgba(0, 0, 0, 0.2), 0 .125rem .125rem 0 rgba(0, 0, 0, 0.14), 0 .18rem .06rem -.125rem rgba(0, 0, 0, 0.12);
-  color: #424242; // material grey 800
-  background-color: #e0e0e0; // material grey 300 
+  color: $grey-800; // material grey 800
+  background-color: $button;
 
   @include themify($themes) {
     color: themed("button-contained__color");
@@ -530,7 +542,7 @@ button:focus {
 }
 
 .Button--contained.Button--selected {
-  background-color: #bdbdbd; // material grey 400 
+  background-color: $button-light;
 
   @include themify($themes) {
     background-color: themed("button-contained__background-color--selected");
@@ -539,7 +551,7 @@ button:focus {
 
 .Button--contained:hover {
   // .jpyw0mp:hover
-  background-color: #eeeeee; // material grey 200
+  background-color: $grey-200; // material grey 200
 
   @include themify($themes) {
     background-color: themed("button-contained__background-color--hover");
@@ -553,8 +565,8 @@ button:focus {
 
 .Button--contained-primary {
   // .j1xs0a6r
-  color: #fff;
-  background-color: #2196f3; // material blue 500
+  color: $white;
+  background-color:  $button-primary;
 
   @include themify($themes) {
     color: themed("button-contained-primary__color");
@@ -563,7 +575,7 @@ button:focus {
 }
 
 .Button--contained-primary.Button--selected {
-  background-color: #1e88e5; // material blue 600
+  background-color: $button-primary-dark;
 
   @include themify($themes) {
     background-color: themed("button-contained-primary__background-color--selected");
@@ -572,7 +584,7 @@ button:focus {
 
 .Button--contained-primary:hover {
   // .j1xs0a6r:hover
-  background-color: #42a5f5; // material blue 400
+  background-color: $button-primary-light;
 
   @include themify($themes) {
     background-color: themed("button-contained-primary__background-color--hover");
@@ -581,22 +593,27 @@ button:focus {
 
 .Button--contained-primary:focus {
   //// .j1xs0a6r:hover
-  //background-color: #42a5f5; // material blue 400
+  //background-color: $button-primary-light;
   //
   //@include themify($themes) {
   //  background-color: themed("button-contained-primary__background-color--hover");
   //}
-  color: #fff;
-  background-color: #42a5f5; // material blue 400
-  border-color: #2196f3; // material blue 500
+  color: $white;
+  background-color: $button-primary-light;
+  //border-color: $button-primary;
+  //outline: 0;
+  //box-shadow: 0 0 0 0.2rem rgba($button-primary, 0.25)
+
+  border-color: $button-primary;
   outline: 0;
-  box-shadow: 0 0 0 0.2rem rgba(33, 150, 243, 0.25) // material blue 500
+  -webkit-box-shadow: inset 0 1px 1px rgba(0,0,0,.075), 0 0 8px rgba($button-primary,.6);
+  box-shadow: inset 0 1px 1px rgba(0,0,0,.075), 0 0 8px rgba($button-primary,.6);
 }
 
 .Button--contained-secondary {
   // .j1qgefk9
-  color: #fff;
-  background-color: #e91e63; // material pink 500 
+  color: $white;
+  background-color: $button-secondary;
 
   @include themify($themes) {
     color: themed("button-contained-secondary__color");
@@ -605,7 +622,7 @@ button:focus {
 }
 
 .Button--contained-secondary.Button--selected {
-  background-color: #d81b60; // material pink 600
+  background-color: $button-secondary-dark;
 
   @include themify($themes) {
     background-color: themed("button-contained-secondary__background-color--selected");
@@ -614,7 +631,7 @@ button:focus {
 
 .Button--contained-secondary:hover {
   // .j1qgefk9:hover
-  background-color: #ec407a; // material pink 400
+  background-color: $button-secondary-light;
 
   @include themify($themes) {
     background-color: themed("button-contained-secondary__background-color--hover");
@@ -623,16 +640,21 @@ button:focus {
 
 .Button--contained-secondary:focus {
   //// .j1xs0a6r:hover
-  //background-color: #42a5f5; // material blue 400
+  //background-color: $button-primary-light;
   //
   //@include themify($themes) {
   //  background-color: themed("button-contained-primary__background-color--hover");
   //}
-  color: #fff;
-  background-color: #ec407a; // material pink 400
-  border-color: #e91e63; // material pink 500
+  color: $white;
+  background-color:$button-secondary-light;
+  //border-color: $button-secondary;
+  //outline: 0;
+  //box-shadow: 0 0 0 0.2rem rgba($button-secondary, 0.25);
+
+  border-color: $button-secondary;
   outline: 0;
-  box-shadow: 0 0 0 0.2rem rgba(233, 30, 99, 0.25) // material pink 500
+  -webkit-box-shadow: inset 0 1px 1px rgba(0,0,0,.075), 0 0 8px rgba($button-secondary,.6);
+  box-shadow: inset 0 1px 1px rgba(0,0,0,.075), 0 0 8px rgba($button-secondary,.6);
 }
 
 .Button--contained.Button--disabled {

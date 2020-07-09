@@ -7,7 +7,7 @@ storiesOf("FormField", module).add("DatePicker", () => (
     controlId="datePicker"
     label="Date Picker"
     placeholder="Choose Date"
-    className="left-icon-padding right-icon-padding hide-background-image"
+    className="hide-background-image"
     onChange={() => undefined}
     onBlur={() => undefined}
     value={0}

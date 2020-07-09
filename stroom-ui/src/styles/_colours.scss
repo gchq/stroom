@@ -1,0 +1,25 @@
+@import "./material_design_colors";
+
+// Some bootstrap defaults.
+$bootstrap-error: #dc3545;
+$bootstrap-warning: #ffc107;
+$bootstrap-success: #28a745;
+
+$ok: $blue-500;
+$warn: $bootstrap-warning;
+$error: $bootstrap-error;
+$fatal: $black;
+
+$primary: $blue-500;
+$valid: $bootstrap-success;
+$invalid: $bootstrap-error;
+
+$button: $grey-500;
+$button-light: $grey-400;
+$button-dark: $grey-600;
+$button-primary: $blue-500;
+$button-primary-light: $blue-400;
+$button-primary-dark: $blue-600;
+$button-secondary: $pink-500;
+$button-secondary-light: $pink-400;
+$button-secondary-dark: $pink-600;

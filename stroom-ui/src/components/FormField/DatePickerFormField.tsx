@@ -1,22 +1,21 @@
 import * as React from "react";
-import {
-  ChangeEventHandler,
-  FocusEventHandler,
-  FunctionComponent,
-  useEffect,
-  useRef,
-} from "react";
+import { FocusEventHandler, FunctionComponent, useEffect, useRef } from "react";
 import { FormField, FormFieldProps } from "./FormField";
-import { DateTime } from "react-datetime-bootstrap";
-import moment from "moment";
+// import DatePicker from "react-datepicker";
+
+import DatePicker, { registerLocale } from "react-datepicker";
+
+// The following lines are required to start the datepicker week on a Monday.
+import enGb from "date-fns/locale/en-GB";
+registerLocale("en-gb", enGb);
 
 export interface DatePickerProps {
   controlId?: string;
-  placeholder: string;
+  placeholder?: string;
   autoComplete?: string;
   className?: string;
   validator?: (label: string, value: string) => void;
-  onChange?: ChangeEventHandler<any>;
+  onChange?: (value: number) => void;
   onBlur?: FocusEventHandler<any>;
   autoFocus?: boolean;
 }
@@ -25,13 +24,11 @@ export interface DatePickerState {
   value?: number;
   error?: string;
   touched?: boolean;
-  setFieldTouched?: (name: string) => void;
 }
 
 export const DatePickerControl: FunctionComponent<
   DatePickerProps & DatePickerState
 > = ({
-  controlId,
   placeholder,
   autoComplete,
   className = "",
@@ -41,7 +38,6 @@ export const DatePickerControl: FunctionComponent<
   value,
   error,
   touched = false,
-  setFieldTouched = () => undefined,
   children,
 }) => {
   const hasErrors = touched && error;
@@ -63,18 +59,22 @@ export const DatePickerControl: FunctionComponent<
 
   return (
     <div className="FormField__input-container">
-      <DateTime
-        className={controlClass}
-        placeholder={placeholder}
-        value={moment(value, "X").format()}
-        onChange={(e) => {
-          setFieldTouched(controlId);
-          onChange(e);
+      <DatePicker
+        selected={value ? new Date(value) : new Date()}
+        onChange={(date) => {
+          onChange(date.getTime());
         }}
+        className={controlClass}
+        placeholderText={placeholder}
         onBlur={onBlur}
         autoComplete={autoComplete}
         autoFocus={autoFocus}
         ref={inputEl}
+        // showYearDropdown
+        // todayButton="Today"
+
+        dateFormat="yyyy-MM-dd"
+        locale="en-gb" // Start on a Monday
       />
       {children}
     </div>
@@ -95,7 +95,6 @@ export const DatePickerFormField: FunctionComponent<
   value,
   error,
   touched,
-  setFieldTouched,
   children,
 }) => {
   const hasErrors = touched && error;
@@ -121,11 +120,7 @@ export const DatePickerFormField: FunctionComponent<
         value={value}
         error={error}
         touched={touched}
-        setFieldTouched={setFieldTouched}
-        onChange={(e) => {
-          setFieldTouched(controlId);
-          onChange(e);
-        }}
+        onChange={onChange}
         onBlur={onBlur}
         autoComplete={autoComplete}
         autoFocus={autoFocus}

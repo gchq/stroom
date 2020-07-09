@@ -12,6 +12,11 @@ import { Dialog } from "components/Dialog/Dialog";
 import { FormikHelpers } from "formik/dist/types";
 import FormContainer from "../Layout/FormContainer";
 import { LockFill } from "react-bootstrap-icons";
+import {
+  DatePickerProps,
+  DatePickerState,
+} from "../FormField/DatePickerFormField";
+import { FormFieldProps, FormFieldState } from "../FormField/FormField";
 
 export interface ChangePasswordFormValues {
   userId: string;
@@ -43,6 +48,41 @@ interface ChangePasswordFormProps {
   okCancelProps: OkCancelProps;
 }
 
+export interface FormControlProps<T> {
+  controlId: string;
+  onChange?: (value: T) => void;
+  onBlur?: (e: any) => void;
+  value?: T;
+  error?: any;
+  touched?: any;
+}
+
+const datePickerProps = (
+  controlId: string,
+  formikProps: FormikProps<any>,
+): FormControlProps<string> => {
+  const {
+    values,
+    setFieldValue,
+    errors,
+    touched,
+    setFieldTouched,
+    handleBlur,
+  } = formikProps;
+
+  return {
+    controlId: controlId,
+    onChange: (val) => {
+      setFieldTouched(controlId, true, true);
+      setFieldValue(controlId, val, false);
+    },
+    onBlur: handleBlur,
+    value: values[controlId],
+    error: errors[controlId],
+    touched: touched[controlId],
+  };
+};
+
 export const ChangePasswordForm: FunctionComponent<ChangePasswordFormProps> = ({
   title = "Change Password",
   passwordRequirements,
@@ -52,6 +92,7 @@ export const ChangePasswordForm: FunctionComponent<ChangePasswordFormProps> = ({
   const { strength, minStrength, thresholdLength } = passwordRequirements;
   const {
     values,
+    setFieldValue,
     errors,
     touched,
     setFieldTouched,

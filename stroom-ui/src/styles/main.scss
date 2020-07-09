@@ -1,3 +1,4 @@
+@import "~react-datepicker/dist/react-datepicker.min.css";
 @import "~bootstrap/dist/css/bootstrap.min.css";
 //@import "~react-table/react-table.css";
 @import "~react-tabs/style/react-tabs.css";
@@ -43,6 +44,7 @@
 @import "../components/ErrorPage/ErrorPage";
 @import "../components/ExpressionBuilder/ExpressionBuilder";
 @import "../components/ExpressionSearchBar/ExpressionSearchBar";
+@import "../components/FormField/DatePicker";
 @import "../components/HorizontalPanel/HorizontalPanel";
 @import "../components/IconHeader/IconHeader";
 @import "../components/InlineInput/InlineInput";

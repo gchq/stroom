@@ -1,4 +1,70 @@
 /* Customisations to standard bootstrap styles */
+@import "./colours";
+
+.badge-success {
+  background-color: $valid;
+}
+
+.badge-warning {
+  background-color: $warn;
+}
+
+.badge-danger {
+  background-color: $error;
+}
+
+.form-control {
+  //border-color: rgb(33, 150, 243); // material blue 500
+}
+
+.form-control:focus {
+
+  //border-color: rgb(102,175,233);
+  //outline: 0;
+  //-webkit-box-shadow: inset 0 1px 1px rgba(0,0,0,.075), 0 0 8px rgba(102,175,233,.6);
+  //box-shadow: inset 0 1px 1px rgba(0,0,0,.075), 0 0 8px rgba(102,175,233,.6);
+
+  border-color: $primary;
+  outline: 0;
+  -webkit-box-shadow: inset 0 1px 1px rgba(0,0,0,.075), 0 0 8px rgba($primary,.6);
+  box-shadow: inset 0 1px 1px rgba(0,0,0,.075), 0 0 8px rgba($primary,.6);
+
+}
+
+.form-control.is-invalid {
+  // border-color: #dc354;
+  border-color: $invalid;
+}
+
+.form-control.is-invalid:focus {
+  border-color: $invalid;
+  outline: 0;
+  -webkit-box-shadow: inset 0 1px 1px rgba(0,0,0,.075), 0 0 8px rgba($invalid,.6);
+  box-shadow: inset 0 1px 1px rgba(0,0,0,.075), 0 0 8px rgba($invalid,.6);
+}
+
+.form-control.is-valid {
+  border-color: $valid;
+}
+
+.form-control.is-valid:focus {
+  border-color: $valid;
+  outline: 0;
+  -webkit-box-shadow: inset 0 1px 1px rgba(0,0,0,.075), 0 0 8px rgba($valid,.6);
+  box-shadow: inset 0 1px 1px rgba(0,0,0,.075), 0 0 8px rgba($valid,.6);
+}
+
+.form-check > input:focus {
+  border-color: $primary;
+  outline: 0;
+  -webkit-box-shadow: inset 0 1px 1px rgba(0,0,0,.075), 0 0 8px rgba($primary,.6);
+  box-shadow: inset 0 1px 1px rgba(0,0,0,.075), 0 0 8px rgba($primary,.6);
+}
+
+.invalid-feedback {
+  color: $invalid;
+}
+
 .modal {
   z-index: 1040;
 }

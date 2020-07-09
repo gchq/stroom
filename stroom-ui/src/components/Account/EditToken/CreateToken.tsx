@@ -45,6 +45,7 @@ const CreateTokenForm: FunctionComponent<CreateTokenFormProps> = ({
 }) => {
   const {
     values,
+    setFieldValue,
     errors,
     touched,
     setFieldTouched,
@@ -66,15 +67,17 @@ const CreateTokenForm: FunctionComponent<CreateTokenFormProps> = ({
       <Modal.Body>
         <Form.Row>
           <DatePickerFormField
-            controlId="expiryDate"
+            controlId="expiresOnMs"
             label="Expiry date"
             placeholder="Choose Expiry Date"
-            onChange={handleChange}
+            onChange={(val) => {
+              // setFieldTouched("expiresOnMs", true, true);
+              setFieldValue("expiresOnMs", val, false);
+            }}
             onBlur={handleBlur}
             value={values.expiresOnMs}
             error={errors.expiresOnMs}
             touched={touched.expiresOnMs}
-            setFieldTouched={setFieldTouched}
           />
         </Form.Row>
         <Form.Row>
