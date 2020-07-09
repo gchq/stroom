@@ -134,7 +134,13 @@ public class DS3Parser extends AbstractParser {
 
         // Loop round the top level expressions as many times as necessary to
         // match as much content as possible.
-        process(root, reader, null, 0, 0, MatchOrder.SEQUENCE, root.isIgnoreErrors());
+        process(root,
+                reader,
+                null,
+                0,
+                0,
+                MatchOrder.SEQUENCE,
+                root.isIgnoreErrors());
 
         // Make sure we consumed all of the input (ignoring trailing
         // whitespace).
@@ -183,7 +189,13 @@ public class DS3Parser extends AbstractParser {
                     // try and match any other expressions until the next pass.
                     if (advance <= 0 && advance != RECOVERY_MODE) {
                         expression = (Expression) node;
-                        advance = processExpression(expression, buffer, parentMatchCount, matchCount, level, matchOrder,
+                        advance = processExpression(
+                                expression,
+                                buffer,
+                                parentMatchCount,
+                                matchCount,
+                                level,
+                                matchOrder,
                                 ignoreErrors);
                         // If we found a match then increase the match count.
                         if (advance > 0) {
@@ -196,7 +208,13 @@ public class DS3Parser extends AbstractParser {
                         processGroup((Group) node, buffer, parentMatch, parentMatchCount, level);
                     } else if (node.getNodeType() == NodeType.DATA) {
                         storeData((Data) node, buffer, parentMatch, parentMatchCount);
-                        processData((Data) node, buffer, parentMatch, parentMatchCount, level, matchOrder,
+                        processData(
+                                (Data) node,
+                                buffer,
+                                parentMatch,
+                                parentMatchCount,
+                                level,
+                                matchOrder,
                                 ignoreErrors);
                     } else if (node.getNodeType() == NodeType.VAR) {
                         storeData((Var) node, buffer, parentMatch, parentMatchCount);
@@ -441,7 +459,9 @@ public class DS3Parser extends AbstractParser {
      * Store data against a node for future retrieval by this node or by remote
      * reference from another node in the case of var elements.
      */
-    private void storeData(final StoreNode node, final Buffer buffer, final Match parentMatch,
+    private void storeData(final StoreNode node,
+                           final Buffer buffer,
+                           final Match parentMatch,
                            final int parentMatchCount) throws IOException, SAXException {
         final int referencedGroups[] = node.getAllReferencedGroups();
 
@@ -519,7 +539,13 @@ public class DS3Parser extends AbstractParser {
             }
 
             // Process the sub buffer with sub expressions.
-            process(node, subBuffer, null, parentMatchCount, level + 1, node.getMatchOrder(), node.isIgnoreErrors());
+            process(node,
+                    subBuffer,
+                    null,
+                    parentMatchCount,
+                    level + 1,
+                    node.getMatchOrder(),
+                    node.isIgnoreErrors());
 
             // Make sure we consumed all of the sub buffer (ignoring trailing
             // whitespace).
@@ -558,7 +584,9 @@ public class DS3Parser extends AbstractParser {
                             .toString()
                             .replace("\n", "\\n"));
         } else {
-            messageBuffer.append(buffer.unsafeCopy().toString().replace("\n", "\\n"));
+            messageBuffer.append(buffer.unsafeCopy()
+                    .toString()
+                    .replace("\n", "\\n"));
         }
     }
 
@@ -593,7 +621,13 @@ public class DS3Parser extends AbstractParser {
         }
 
         // Process the buffer with sub expressions.
-        process(node, buffer, parentMatch, parentMatchCount, level + 1, matchOrder, ignoreErrors);
+        process(node,
+                buffer,
+                parentMatch,
+                parentMatchCount,
+                level + 1,
+                matchOrder,
+                ignoreErrors);
         // Output the end element for data if we outputted a start element.
         if (outputEndElement) {
             endData();
