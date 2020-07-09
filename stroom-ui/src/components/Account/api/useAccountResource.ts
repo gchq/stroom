@@ -22,6 +22,7 @@ import {
   CreateAccountRequest,
   ResultPage,
   SearchAccountRequest,
+  UpdateAccountRequest,
 } from "./types";
 
 interface AccountResource {
@@ -29,7 +30,10 @@ interface AccountResource {
   search: (request: SearchAccountRequest) => Promise<ResultPage<Account>>;
   create: (request: CreateAccountRequest) => Promise<number>;
   read: (accountId: number) => Promise<Account>;
-  update: (account: Account, accountId: number) => Promise<boolean>;
+  update: (
+    request: UpdateAccountRequest,
+    accountId: number,
+  ) => Promise<boolean>;
   remove: (accountId: number) => Promise<boolean>;
 }
 
@@ -57,8 +61,8 @@ export const useAccountResource = (): AccountResource => {
   );
 
   const update = useCallback(
-    (account: Account, accountId: number) =>
-      httpPut(`${resource}/${accountId}`, account),
+    (request: UpdateAccountRequest, accountId: number) =>
+      httpPut(`${resource}/${accountId}`, request),
     [resource, httpPut],
   );
 
@@ -130,5 +134,3 @@ export const useAccountResource = (): AccountResource => {
     remove,
   };
 };
-
-export default useAccountResource;

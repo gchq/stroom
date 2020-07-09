@@ -26,18 +26,19 @@ public class AccountServiceImpl implements AccountService {
         this.config = config;
     }
 
+    @Override
     public ResultPage<Account> list() {
         checkPermission();
-
         return accountDao.list();
     }
 
+    @Override
     public ResultPage<Account> search(final SearchAccountRequest request) {
         checkPermission();
-
-        return accountDao.searchUsersForDisplay(request);
+        return accountDao.search(request);
     }
 
+    @Override
     public Account create(final CreateAccountRequest request) {
         checkPermission();
         validateCreateRequest(request);
@@ -66,6 +67,7 @@ public class AccountServiceImpl implements AccountService {
         return accountDao.create(account, request.getPassword());
     }
 
+    @Override
     public Optional<Account> read(final int accountId) {
         final String loggedInUser = securityContext.getUserId();
 
@@ -82,13 +84,16 @@ public class AccountServiceImpl implements AccountService {
         return optionalUser;
     }
 
+    @Override
     public Optional<Account> read(final String email) {
         checkPermission();
         return accountDao.get(email);
     }
 
-    public void update(final Account account, final int accountId) {
+    @Override
+    public void update(final UpdateAccountRequest request, final int accountId) {
         checkPermission();
+        validateUpdateRequest(request);
 
 //        // Update Stroom user
 //        Optional<Account> optionalUser = accountDao.get(userId);
@@ -99,22 +104,45 @@ public class AccountServiceImpl implements AccountService {
 //        securityUserService.update(userToUpdate);
 
         final String loggedInUser = securityContext.getUserId();
+        final Account account = request.getAccount();
         account.setUpdateUser(loggedInUser);
         account.setUpdateTimeMs(System.currentTimeMillis());
         account.setId(accountId);
         accountDao.update(account);
+
+        // Change the account password if the update request includes a new password.
+        if (!Strings.isNullOrEmpty(request.getPassword()) && request.getPassword().equals(request.getConfirmPassword())) {
+            accountDao.changePassword(account.getUserId(), request.getPassword());
+        }
     }
 
+    @Override
     public void delete(final int accountId) {
         checkPermission();
         accountDao.delete(accountId);
     }
 
-    public void validateCreateRequest(final CreateAccountRequest request) {
+    private void validateCreateRequest(final CreateAccountRequest request) {
         if (request == null) {
             throw new RuntimeException("Null request");
         } else {
             if (Strings.isNullOrEmpty(request.getUserId())) {
+                throw new RuntimeException("No user id has been provided");
+            }
+
+            if (request.getPassword() != null || request.getConfirmPassword() != null) {
+                PasswordValidator.validateLength(request.getPassword(), config.getPasswordPolicyConfig().getMinimumPasswordLength());
+                PasswordValidator.validateComplexity(request.getPassword(), config.getPasswordPolicyConfig().getPasswordComplexityRegex());
+                PasswordValidator.validateConfirmation(request.getPassword(), request.getConfirmPassword());
+            }
+        }
+    }
+
+    private void validateUpdateRequest(final UpdateAccountRequest request) {
+        if (request == null) {
+            throw new RuntimeException("Null request");
+        } else {
+            if (request.getAccount() == null || request.getAccount().getId() == null) {
                 throw new RuntimeException("No user id has been provided");
             }
 

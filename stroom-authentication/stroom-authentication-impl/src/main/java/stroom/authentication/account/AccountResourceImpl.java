@@ -91,14 +91,14 @@ class AccountResourceImpl implements AccountResource {
 
     @Override
     public Boolean update(final HttpServletRequest httpServletRequest,
-                          final Account account,
-                          final int userId) {
+                          final UpdateAccountRequest request,
+                          final int accountId) {
         try {
-            serviceProvider.get().update(account, userId);
-            eventLog.update(account, userId, null);
+            serviceProvider.get().update(request, accountId);
+            eventLog.update(request, accountId, null);
             return true;
         } catch (final RuntimeException e) {
-            eventLog.update(null, userId, e);
+            eventLog.update(null, accountId, e);
             throw e;
         }
     }

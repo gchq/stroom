@@ -1,8 +1,8 @@
 import * as React from "react";
 
 import { Formik, FormikProps } from "formik";
-import { PasswordField } from "../Form/PasswordField";
-import useAuthenticationResource from "./api/useAuthenticationResource";
+import { PasswordFormField } from "components/FormField";
+import { useAuthenticationResource } from "./api";
 import { usePrompt } from "../Prompt/PromptDisplayBoundary";
 import * as Yup from "yup";
 import { AuthState, ConfirmPasswordRequest } from "./api/types";
@@ -51,7 +51,7 @@ export const ConfirmCurrentPasswordForm: React.FunctionComponent<
         hidden={true}
       />
       <Form.Row>
-        <PasswordField
+        <PasswordFormField
           controlId="password"
           label="Current Password"
           placeholder="Enter Your Current Password"

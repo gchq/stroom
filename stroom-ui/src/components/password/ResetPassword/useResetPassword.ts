@@ -6,7 +6,7 @@ import {
   ChangePasswordResponse,
   ResetPasswordRequest,
 } from "../../Authentication/api/types";
-import useAuthenticationResource from "../../Authentication/api/useAuthenticationResource";
+import { useAuthenticationResource } from "../../Authentication/api";
 
 const useResetPassword = (): {
   submitPasswordChangeRequest: (

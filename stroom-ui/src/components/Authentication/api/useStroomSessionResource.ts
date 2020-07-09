@@ -27,5 +27,3 @@ export const useStroomSessionResource = (): StroomSessionResource => {
     validateSession,
   };
 };
-
-export default useStroomSessionResource;

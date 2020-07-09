@@ -17,8 +17,7 @@
 import * as React from "react";
 import { NavLink } from "react-router-dom";
 import { Formik, FormikProps } from "formik";
-import { TextBoxField } from "../Form/TextBoxField";
-import { PasswordField } from "../Form/PasswordField";
+import { TextBoxFormField, PasswordFormField } from "components/FormField";
 import { Person, Lock } from "react-bootstrap-icons";
 import useAuthenticationResource from "./api/useAuthenticationResource";
 import { usePrompt } from "../Prompt/PromptDisplayBoundary";
@@ -44,7 +43,7 @@ export const SignInForm: React.FunctionComponent<FormikProps<FormValues>> = ({
   isSubmitting,
 }) => (
   <Form noValidate={true} onSubmit={handleSubmit}>
-    <TextBoxField
+    <TextBoxFormField
       controlId="userId"
       type="text"
       autoComplete="username"
@@ -60,9 +59,9 @@ export const SignInForm: React.FunctionComponent<FormikProps<FormValues>> = ({
       autoFocus={true}
     >
       <Person className="FormField__icon" />
-    </TextBoxField>
+    </TextBoxFormField>
 
-    <PasswordField
+    <PasswordFormField
       controlId="password"
       label="Password"
       autoComplete="current-password"
@@ -76,7 +75,7 @@ export const SignInForm: React.FunctionComponent<FormikProps<FormValues>> = ({
       setFieldTouched={setFieldTouched}
     >
       <Lock className="FormField__icon" />
-    </PasswordField>
+    </PasswordFormField>
     <Form.Group as={Col} controlId="signInButton" className="my-0">
       <Button
         className="w-100"

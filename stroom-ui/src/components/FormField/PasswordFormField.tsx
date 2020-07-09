@@ -5,11 +5,11 @@ import {
   FunctionComponent,
   useState,
 } from "react";
-import { TextBoxField } from "./TextBoxField";
+import { TextBoxFormField } from "./TextBoxFormField";
 import { ViewPassword } from "./ViewPassword";
 import { FormFieldProps, FormFieldState } from "./FormField";
 
-export interface PasswordFieldProps {
+export interface PasswordFormFieldProps {
   controlId?: string;
   placeholder: string;
   autoComplete?: string;
@@ -20,8 +20,8 @@ export interface PasswordFieldProps {
   autoFocus?: boolean;
 }
 
-export const PasswordField: FunctionComponent<
-  PasswordFieldProps & FormFieldProps & FormFieldState
+export const PasswordFormField: FunctionComponent<
+  PasswordFormFieldProps & FormFieldProps & FormFieldState
 > = ({ children, className, ...restProps }) => {
   // initialize internal component state
   const [state, setState] = useState<boolean>(false);
@@ -39,13 +39,13 @@ export const PasswordField: FunctionComponent<
     .trim();
 
   return (
-    <TextBoxField
+    <TextBoxFormField
       {...restProps}
       className={controlClass}
       type={state ? "text" : "password"}
     >
       {children}
       <ViewPassword state={state} onStateChanged={viewPasswordToggle} />
-    </TextBoxField>
+    </TextBoxFormField>
   );
 };

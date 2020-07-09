@@ -178,7 +178,7 @@ public class AccountEventLogImpl implements AccountEventLog {
     }
 
     @Override
-    public void update(final Account account, final int accountId, final Throwable ex) {
+    public void update(final UpdateAccountRequest request, final int accountId, final Throwable ex) {
 //        stroomEventLoggingService.createAction("UpdateUser",
 //                "Toggle whether a token is enabled or not.");
     }

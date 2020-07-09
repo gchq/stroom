@@ -30,7 +30,7 @@ public interface AccountEventLog {
 
     void read(String email, Account result, Throwable ex);
 
-    void update(Account account, int accountId, Throwable ex);
+    void update(UpdateAccountRequest request, int accountId, Throwable ex);
 
     void delete(int accountId, Throwable ex);
 }

@@ -79,5 +79,3 @@ export const useAuthenticationResource = (): AuthenticationResource => {
     fetchPasswordPolicyConfig,
   };
 };
-
-export default useAuthenticationResource;

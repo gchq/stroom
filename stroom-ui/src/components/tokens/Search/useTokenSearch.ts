@@ -89,7 +89,7 @@ const useTokenSearch = () => {
   );
 
   const toggleState = useCallback(
-    (tokenId: string, nextState: boolean) => {
+    (tokenId: number, nextState: boolean) => {
       toggleStateApi(tokenId, nextState).then(() => toggleEnabled(tokenId));
     },
     [toggleStateApi, toggleEnabled],

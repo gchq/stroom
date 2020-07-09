@@ -17,7 +17,15 @@
 import * as React from "react";
 import { FunctionComponent, useState } from "react";
 import { ConfirmCurrentPassword } from "./ConfirmCurrentPassword";
-import ChangePassword from "./ChangePassword";
+import {
+  ChangePasswordDialog,
+  ChangePasswordFormValues,
+} from "./ChangePassword";
+import { FormikHelpers } from "formik/dist/types";
+import { ChangePasswordRequest } from "./api/types";
+import { useAuthenticationResource } from "./api";
+import { usePrompt } from "../Prompt/PromptDisplayBoundary";
+import { usePasswordPolicy } from "./usePasswordPolicy";
 
 export interface FormValues {
   userId: string;
@@ -33,6 +41,10 @@ const ChangePasswordManager: FunctionComponent<{
     currentPassword: undefined,
   });
 
+  const passwordPolicyConfig = usePasswordPolicy();
+  const { changePassword } = useAuthenticationResource();
+  const { showError } = usePrompt();
+
   if (!state || !state.currentPassword) {
     const onClose = (userId: string, password: string) => {
       if (userId == null && password == null) {
@@ -43,13 +55,49 @@ const ChangePasswordManager: FunctionComponent<{
     };
     return <ConfirmCurrentPassword userId={props.userId} onClose={onClose} />;
   } else {
+    const onSubmit = (
+      values: ChangePasswordFormValues,
+      actions: FormikHelpers<ChangePasswordFormValues>,
+    ) => {
+      const request: ChangePasswordRequest = {
+        userId: values.userId,
+        currentPassword: state.currentPassword,
+        newPassword: values.password,
+        confirmNewPassword: values.confirmPassword,
+      };
+
+      changePassword(request).then((response) => {
+        if (!response) {
+          actions.setSubmitting(false);
+        } else if (response.changeSucceeded) {
+          props.onClose();
+        } else {
+          actions.setSubmitting(false);
+          showError({
+            message: response.message,
+          });
+
+          // If the user is asked to sign in again then unset the auth state.
+          if (response.forceSignIn) {
+            props.onClose();
+          }
+        }
+      });
+    };
+
     const onClose = () => {
       props.onClose();
     };
+
     return (
-      <ChangePassword
-        userId={state.userId}
-        currentPassword={state.currentPassword}
+      <ChangePasswordDialog
+        initialValues={{
+          userId: state.userId,
+          password: "",
+          confirmPassword: "",
+        }}
+        passwordPolicyConfig={passwordPolicyConfig}
+        onSubmit={onSubmit}
         onClose={onClose}
         {...props}
       />

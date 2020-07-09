@@ -6,11 +6,10 @@ import {
   useEffect,
   useRef,
 } from "react";
-import { Form } from "react-bootstrap";
 import { FormField, FormFieldProps, FormFieldState } from "./FormField";
+import UserSelect from "../UserSelect";
 
-export interface TextBoxProps {
-  type: "text" | "password";
+export interface UserProps {
   controlId?: string;
   placeholder: string;
   autoComplete?: string;
@@ -21,9 +20,8 @@ export interface TextBoxProps {
   autoFocus?: boolean;
 }
 
-export const TextBox: FunctionComponent<TextBoxProps & FormFieldState> = ({
+export const UserControl: FunctionComponent<UserProps & FormFieldState> = ({
   controlId,
-  type,
   placeholder,
   autoComplete,
   className = "",
@@ -55,30 +53,26 @@ export const TextBox: FunctionComponent<TextBoxProps & FormFieldState> = ({
 
   return (
     <div className="FormField__input-container">
-      <Form.Control
-        type={type}
-        className={controlClass}
-        placeholder={placeholder}
-        value={value}
+      <UserSelect
+        // className={controlClass}
         onChange={(e) => {
           setFieldTouched(controlId);
-          onChange(e);
+          // onChange(e);
         }}
-        onBlur={onBlur}
-        autoComplete={autoComplete}
-        autoFocus={autoFocus}
-        ref={inputEl}
+        // onBlur={onBlur}
+        // autoComplete={autoComplete}
+        // autoFocus={autoFocus}
+        fuzzy={false}
       />
       {children}
     </div>
   );
 };
 
-export const TextBoxField: FunctionComponent<
-  TextBoxProps & FormFieldProps & FormFieldState
+export const UserFormField: FunctionComponent<
+  UserProps & FormFieldProps & FormFieldState
 > = ({
   controlId,
-  type,
   label,
   placeholder,
   autoComplete,
@@ -108,9 +102,8 @@ export const TextBoxField: FunctionComponent<
       error={error}
       touched={touched}
     >
-      <TextBox
+      <UserControl
         controlId={controlId}
-        type={type}
         className={controlClass}
         placeholder={placeholder}
         value={value}
@@ -126,7 +119,7 @@ export const TextBoxField: FunctionComponent<
         autoFocus={autoFocus}
       >
         {children}
-      </TextBox>
+      </UserControl>
     </FormField>
   );
 };

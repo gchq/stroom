@@ -5,19 +5,19 @@ export interface TokenConfig {
 }
 
 export interface Token {
-  id: string;
-  version: number;
-  createTimeMs: number;
-  updateTimeMs: number;
-  createUser: string;
-  updateUser: string;
+  id?: number;
+  version?: number;
+  createTimeMs?: number;
+  updateTimeMs?: number;
+  createUser?: string;
+  updateUser?: string;
 
-  userEmail: string;
-  tokenType: string;
-  data: string;
-  expiresOnMs: number;
-  comments: string;
-  enabled: boolean;
+  userId?: string;
+  tokenType?: "user" | "api" | "email_reset";
+  data?: string;
+  expiresOnMs?: number;
+  comments?: string;
+  enabled?: boolean;
 }
 
 export interface SearchConfig {

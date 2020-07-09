@@ -17,15 +17,18 @@
 import * as React from "react";
 import BackgroundLogo from "../Layout/BackgroundLogo";
 import { useEffect, useState } from "react";
-import { AuthState } from "./api/types";
+import { AuthState, ChangePasswordRequest } from "./api/types";
 import { SignIn } from "./SignIn";
 import { AuthStateProps } from "./ConfirmCurrentPassword";
-import ChangePassword from "./ChangePassword";
+import { ChangePasswordFormValues, ChangePasswordPage } from "./ChangePassword";
 import Background from "../Layout/Background";
-import useAuthenticationResource from "./api/useAuthenticationResource";
+import { useAuthenticationResource } from "./api";
 import useRouter from "../../lib/useRouter";
 import * as queryString from "query-string";
 import CustomLoader from "../CustomLoader";
+import { FormikHelpers } from "formik/dist/types";
+import { usePrompt } from "../Prompt/PromptDisplayBoundary";
+import { usePasswordPolicy } from "./usePasswordPolicy";
 
 export interface FormValues {
   userId: string;
@@ -49,7 +52,12 @@ const Page: React.FunctionComponent = () => {
 
   // Client state
   const [authState, setAuthState] = useState<AuthState>();
-  const { getAuthenticationState } = useAuthenticationResource();
+  const {
+    getAuthenticationState,
+    changePassword,
+  } = useAuthenticationResource();
+  const { showError } = usePrompt();
+
   useEffect(() => {
     if (!authState) {
       getAuthenticationState().then((response) => {
@@ -61,6 +69,8 @@ const Page: React.FunctionComponent = () => {
       });
     }
   }, [getAuthenticationState, authState, setAuthState]);
+
+  const passwordPolicyConfig = usePasswordPolicy();
 
   const props: AuthStateProps = {
     authState,
@@ -81,32 +91,64 @@ const Page: React.FunctionComponent = () => {
   } else if (!authState.userId) {
     return <SignIn {...props} />;
   } else if (authState.showInitialChangePassword) {
-    return (
-      <ChangePassword
-        userId={authState.userId}
-        currentPassword={authState.currentPassword}
-        onClose={(success: boolean) => {
-          if (success) {
-            setAuthState({
-              ...authState,
-              showInitialChangePassword: false,
-            });
-          } else {
-            setAuthState(undefined);
+    const onClose = (success: boolean) => {
+      if (success) {
+        setAuthState({
+          ...authState,
+          showInitialChangePassword: false,
+        });
+      } else {
+        setAuthState(undefined);
+      }
+    };
+
+    const onSubmit = (
+      values: ChangePasswordFormValues,
+      actions: FormikHelpers<ChangePasswordFormValues>,
+    ) => {
+      const request: ChangePasswordRequest = {
+        userId: authState.userId,
+        currentPassword: authState.currentPassword,
+        newPassword: values.password,
+        confirmNewPassword: values.confirmPassword,
+      };
+
+      changePassword(request).then((response) => {
+        if (!response) {
+          actions.setSubmitting(false);
+        } else if (response.changeSucceeded) {
+          onClose(true);
+        } else {
+          actions.setSubmitting(false);
+          showError({
+            message: response.message,
+          });
+
+          // If the user is asked to sign in again then unset the auth state.
+          if (response.forceSignIn) {
+            onClose(false);
           }
+        }
+      });
+    };
+
+    return (
+      <ChangePasswordPage
+        initialValues={{
+          userId: authState.userId,
+          password: "",
+          confirmPassword: "",
         }}
+        passwordPolicyConfig={passwordPolicyConfig}
+        onSubmit={onSubmit}
+        onClose={onClose}
         {...props}
       />
     );
   } else {
     window.location.href = redirectUri;
 
-    return (
-      <CustomLoader
-        title="Stroom"
-        message="Loading Application. Please wait..."
-      />
-    );
+    return <CustomLoader title="Stroom" message="Signing in. Please wait..." />;
   }
 };
 

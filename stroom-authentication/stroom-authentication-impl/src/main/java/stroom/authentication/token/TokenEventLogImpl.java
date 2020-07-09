@@ -1,13 +1,15 @@
 package stroom.authentication.token;
 
+import stroom.util.shared.ResultPage;
+
 public class TokenEventLogImpl implements TokenEventLog {
     @Override
-    public void search(final SearchRequest searchRequest, final SearchResponse searchResponse, final Throwable ex) {
+    public void search(final SearchTokenRequest request, final ResultPage<Token> response, final Throwable ex) {
         //        stroomEventLoggingService.createAction("SearchTokens", "The user searched for an API token");
     }
 
     @Override
-    public void create(final CreateTokenRequest createTokenRequest, final Token token, final Throwable ex) {
+    public void create(final CreateTokenRequest request, final Token token, final Throwable ex) {
 //        stroomEventLoggingService.createAction("CreateUser", "Create a user");
     }
 

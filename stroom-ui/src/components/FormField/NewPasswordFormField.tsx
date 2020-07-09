@@ -1,19 +1,19 @@
 import * as React from "react";
 import { FunctionComponent, useState } from "react";
-import { TextBox } from "./TextBoxField";
+import { TextBox } from "./TextBoxFormField";
 import { ViewPassword } from "./ViewPassword";
 import { Col, Form } from "react-bootstrap";
 import { FormFieldProps, FormFieldState } from "./FormField";
-import { PasswordFieldProps } from "./PasswordField";
+import { PasswordFormFieldProps } from "./PasswordFormField";
 
-export interface NewPasswordFieldProps extends PasswordFieldProps {
+export interface NewPasswordFormFieldProps extends PasswordFormFieldProps {
   strength?: number;
   minStrength?: number;
   thresholdLength?: number;
 }
 
-export const NewPasswordField: FunctionComponent<
-  NewPasswordFieldProps & FormFieldProps & FormFieldState
+export const NewPasswordFormField: FunctionComponent<
+  NewPasswordFormFieldProps & FormFieldProps & FormFieldState
 > = ({
   controlId,
   label,

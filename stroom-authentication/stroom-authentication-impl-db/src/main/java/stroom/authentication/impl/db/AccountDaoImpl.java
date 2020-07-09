@@ -123,6 +123,31 @@ class AccountDaoImpl implements AccountDao {
     }
 
     @Override
+    public ResultPage<Account> list() {
+        final TableField<AccountRecord, String> orderByUserIdField = ACCOUNT.USER_ID;
+        final List<Account> list = JooqUtil.contextResult(authDbConnProvider, context -> context
+                .selectFrom(ACCOUNT)
+                .where(ACCOUNT.PROCESSING_ACCOUNT.isFalse())
+                .orderBy(orderByUserIdField)
+                .fetch()
+                .map(RECORD_TO_ACCOUNT_MAPPER::apply));
+        return ResultPage.createUnboundedList(list);
+    }
+
+    @Override
+    public ResultPage<Account> search(final SearchAccountRequest request) {
+        final Condition condition = createCondition(request);
+        final List<Account> list = JooqUtil.contextResult(authDbConnProvider, context -> context
+                .selectFrom(ACCOUNT)
+                .where(condition)
+                .offset(JooqUtil.getOffset(request.getPageRequest()))
+                .limit(JooqUtil.getLimit(request.getPageRequest(), true))
+                .fetch()
+                .map(RECORD_TO_ACCOUNT_MAPPER::apply));
+        return ResultPage.createCriterialBasedList(list, request);
+    }
+
+    @Override
     public Account create(final Account account, final String password) {
         final String passwordHash = hashPassword(password);
         return JooqUtil.contextResult(authDbConnProvider, context -> {
@@ -299,17 +324,7 @@ class AccountDaoImpl implements AccountDao {
 //        });
     }
 
-    @Override
-    public ResultPage<Account> list() {
-        final TableField<AccountRecord, String> orderByUserIdField = ACCOUNT.USER_ID;
-        final List<Account> list = JooqUtil.contextResult(authDbConnProvider, context -> context
-                .selectFrom(ACCOUNT)
-                .where(ACCOUNT.PROCESSING_ACCOUNT.isFalse())
-                .orderBy(orderByUserIdField)
-                .fetch()
-                .map(RECORD_TO_ACCOUNT_MAPPER::apply));
-        return ResultPage.createUnboundedList(list);
-    }
+
 
     @Override
     public void changePassword(final String userId, final String newPassword) {
@@ -406,19 +421,6 @@ class AccountDaoImpl implements AccountDao {
                 // We don't want to disable accounts that have been recently reactivated.
                 .and(ACCOUNT.REACTIVATED_MS.isNull().or(ACCOUNT.REACTIVATED_MS.lessThan(activityThreshold)))
                 .execute());
-    }
-
-    @Override
-    public ResultPage<Account> searchUsersForDisplay(final SearchAccountRequest request) {
-        final Condition condition = createCondition(request);
-        final List<Account> list = JooqUtil.contextResult(authDbConnProvider, context -> context
-                .selectFrom(ACCOUNT)
-                .where(condition)
-                .offset(JooqUtil.getOffset(request.getPageRequest()))
-                .limit(JooqUtil.getLimit(request.getPageRequest(), true))
-                .fetch()
-                .map(RECORD_TO_ACCOUNT_MAPPER::apply));
-        return ResultPage.createCriterialBasedList(list, request);
     }
 
     private Condition createCondition(final SearchAccountRequest request) {

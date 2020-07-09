@@ -3,8 +3,7 @@
 
 import * as React from "react";
 
-import { TextBoxField } from "../Form/TextBoxField";
-import { NewPasswordField } from "../Form/NewPasswordField";
+import { TextBoxFormField, NewPasswordFormField } from "components/FormField";
 import BackgroundLogo from "../Layout/BackgroundLogo";
 import FormContainer from "../Layout/FormContainer";
 import { FormikProps } from "formik";
@@ -56,7 +55,7 @@ export const JoinForm: React.FunctionComponent<
 
           <div className="py-5 border-gray border-top border-bottom">
             {/** Render the fullname form field passing the name validation fn **/}
-            <TextBoxField
+            <TextBoxFormField
               controlId="fullname"
               type="text"
               label="Full Name"
@@ -71,7 +70,7 @@ export const JoinForm: React.FunctionComponent<
             />
 
             {/** Render the email field component **/}
-            <TextBoxField
+            <TextBoxFormField
               controlId="email"
               type="text"
               label="Email"
@@ -85,7 +84,7 @@ export const JoinForm: React.FunctionComponent<
             />
 
             {/** Render the password field component using thresholdLength of 7 and minStrength of 3 **/}
-            <NewPasswordField
+            <NewPasswordFormField
               controlId="password"
               label="Password"
               placeholder="Enter Password"

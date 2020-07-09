@@ -7,25 +7,27 @@ import java.time.Duration;
 import java.util.Optional;
 
 public interface AccountDao {
+    ResultPage<Account> list();
+
+    ResultPage<Account> search(SearchAccountRequest request);
+
     Account create(Account account, String password);
+
+    Optional<Integer> getId(String userId);
+
+    Optional<Account> get(String userId);
+
+    Optional<Account> get(int id);
+
+    void update(Account account);
+
+    void delete(int id);
 
     void recordSuccessfulLogin(String userId);
 
     CredentialValidationResult validateCredentials(String username, String password);
 
     boolean incrementLoginFailures(String userId);
-
-    Optional<Integer> getId(String userId);
-
-    Optional<Account> get(String userId);
-
-    void update(Account account);
-
-    void delete(int id);
-
-    Optional<Account> get(int id);
-
-    ResultPage<Account> list();
 
     void changePassword(String userId, String newPassword);
 
@@ -34,6 +36,4 @@ public interface AccountDao {
     int deactivateNewInactiveUsers(Duration neverUsedAccountDeactivationThreshold);
 
     int deactivateInactiveUsers(Duration unusedAccountDeactivationThreshold);
-
-    ResultPage<Account> searchUsersForDisplay(SearchAccountRequest request);
 }

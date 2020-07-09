@@ -97,7 +97,7 @@ public interface AccountResource extends RestResource {
     @NotNull
     Boolean update(
             @Context @NotNull HttpServletRequest httpServletRequest,
-            @ApiParam("account") @NotNull Account account,
+            @ApiParam("account") @NotNull UpdateAccountRequest request,
             @PathParam("id") int accountId);
 
     @ApiOperation(

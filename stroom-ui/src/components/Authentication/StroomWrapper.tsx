@@ -22,10 +22,12 @@ import BackgroundLogo from "../Layout/BackgroundLogo";
 import useStroomSessionResource from "./api/useStroomSessionResource";
 import CustomLoader from "../CustomLoader";
 import Background from "../Layout/Background";
+import TokenManager from "../Account/TokenManager/TokenManager";
 
 enum DialogType {
   CHANGE_PASSWORD,
   MANAGE_USERS,
+  MANAGE_TOKENS,
 }
 
 const stroomUrl = process.env.REACT_APP_STROOM_URL;
@@ -73,6 +75,8 @@ const StroomWrapper: FunctionComponent = () => {
             setDialogType(DialogType.CHANGE_PASSWORD);
           } else if (data.message === "manageUsers") {
             setDialogType(DialogType.MANAGE_USERS);
+          } else if (data.message === "manageTokens") {
+            setDialogType(DialogType.MANAGE_TOKENS);
           }
         }
       } catch (err) {
@@ -99,7 +103,7 @@ const StroomWrapper: FunctionComponent = () => {
         <BackgroundLogo>
           <CustomLoader
             title="Stroom"
-            message="Loading Application. Please wait..."
+            message="Authenticating. Please wait..."
           />
         </BackgroundLogo>
       </Background>
@@ -117,6 +121,9 @@ const StroomWrapper: FunctionComponent = () => {
         ) : undefined}
         {dialogType === DialogType.MANAGE_USERS ? (
           <AccountManager onClose={onClose} />
+        ) : undefined}
+        {dialogType === DialogType.MANAGE_TOKENS ? (
+          <TokenManager onClose={onClose} />
         ) : undefined}
       </React.Fragment>
     );

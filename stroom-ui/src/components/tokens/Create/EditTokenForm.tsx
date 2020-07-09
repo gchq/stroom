@@ -25,7 +25,7 @@ import useConfig from "startup/config/useConfig";
 
 const EditTokenForm: React.FunctionComponent<{
   onBack: () => void;
-  onChangeState: (id: string, newState: boolean) => void;
+  onChangeState: (id: number, newState: boolean) => void;
   token: Token;
 }> = ({ onBack, onChangeState, token }) => {
   const {
@@ -63,7 +63,7 @@ const EditTokenForm: React.FunctionComponent<{
                   />
                 </div>
               </div>
-              <ByCopy by={token.userEmail} verb="Issued to" />
+              <ByCopy by={token.userId} verb="Issued to" />
               <OnCopyMs
                 on={token.expiresOnMs}
                 verb="Expires"

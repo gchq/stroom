@@ -28,7 +28,7 @@ interface Api {
   performTokenSearch: (
     tokenSearchRequest: Partial<SearchConfig>,
   ) => Promise<TokenSearchResponse>;
-  toggleState: (tokenId: string, nextState: boolean) => Promise<void>;
+  toggleState: (tokenId: number, nextState: boolean) => Promise<void>;
 }
 
 export const useApi = (): Api => {
@@ -72,7 +72,7 @@ export const useApi = (): Api => {
     ),
 
     toggleState: useCallback(
-      (tokenId: string, nextState: boolean) =>
+      (tokenId: number, nextState: boolean) =>
         httpGetEmptyResponse(
           `${resource}/${tokenId}/state/?enabled=${nextState}`,
         ),

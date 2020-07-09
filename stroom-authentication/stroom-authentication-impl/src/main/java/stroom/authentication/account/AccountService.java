@@ -15,7 +15,7 @@ public interface AccountService {
 
     Optional<Account> read(String email);
 
-    void update(Account account, int accountId);
+    void update(UpdateAccountRequest request, int accountId);
 
     void delete(int accountId);
 }

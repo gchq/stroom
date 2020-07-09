@@ -16,7 +16,7 @@ interface FilterProps {
 
 const useColumns = (
   selectedTokenRowId: string | undefined,
-  setEnabledStateOnToken: (tokenId: string, enabled: boolean) => any,
+  setEnabledStateOnToken: (tokenId: number, enabled: boolean) => any,
 ): Column<Token>[] => {
   const {
     uiPreferences: { dateFormat },

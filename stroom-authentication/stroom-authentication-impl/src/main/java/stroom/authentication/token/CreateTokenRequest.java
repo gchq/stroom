@@ -26,7 +26,7 @@ import java.util.Date;
 public class CreateTokenRequest {
 
     @NotNull
-    private String userEmail;
+    private String userId;
 
     // TODO should be an enum really
     @NotNull
@@ -35,9 +35,8 @@ public class CreateTokenRequest {
             message = "tokenType must be one of: 'user', 'api', 'email_reset'")
     private String tokenType;
 
-    // TODO why are we using java.util.Date
     @Nullable
-    private Date expiryDate;
+    private Long expiresOnMs;
 
     @Nullable
     private String comments;
@@ -49,36 +48,34 @@ public class CreateTokenRequest {
     public CreateTokenRequest() {
     }
 
-    public CreateTokenRequest(final String userEmail,
+    public CreateTokenRequest(final String userId,
                               final String tokenType,
                               final boolean enabled,
                               final String comments) {
-        this.userEmail = userEmail;
+        this.userId = userId;
         this.tokenType = tokenType;
         this.enabled = enabled;
         this.comments = comments;
     }
 
-    public CreateTokenRequest(final String clientId,
-                              final String userEmail,
+    public CreateTokenRequest(final String userId,
                               final String tokenType,
                               final boolean enabled,
                               final String comments,
-                              final Date expiryDate) {
-        this.userEmail = userEmail;
+                              final Long expiresOnMs) {
+        this.userId = userId;
         this.tokenType = tokenType;
         this.enabled = enabled;
         this.comments = comments;
-        this.expiryDate = expiryDate;
+        this.expiresOnMs = expiresOnMs;
     }
 
-    @Nullable
-    public String getUserEmail() {
-        return userEmail;
+    public String getUserId() {
+        return userId;
     }
 
-    public void setUserEmail(String userEmail) {
-        this.userEmail = userEmail;
+    public void setUserId(final String userId) {
+        this.userId = userId;
     }
 
     @Nullable
@@ -108,11 +105,11 @@ public class CreateTokenRequest {
     }
 
     @Nullable
-    public Date getExpiryDate() {
-        return expiryDate;
+    public Long getExpiresOnMs() {
+        return expiresOnMs;
     }
 
-    public void setExpiryDate(@Nullable Date expiryDate) {
-        this.expiryDate = expiryDate;
+    public void setExpiresOnMs(@Nullable final Long expiresOnMs) {
+        this.expiresOnMs = expiresOnMs;
     }
 }

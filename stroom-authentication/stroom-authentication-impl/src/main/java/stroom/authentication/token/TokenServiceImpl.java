@@ -12,6 +12,7 @@ import stroom.security.api.TokenVerifier;
 import stroom.security.shared.PermissionNames;
 import stroom.util.HasHealthCheck;
 import stroom.util.shared.PermissionException;
+import stroom.util.shared.ResultPage;
 
 import com.codahale.metrics.health.HealthCheck;
 import org.jose4j.jwk.JsonWebKey;
@@ -56,20 +57,28 @@ public class TokenServiceImpl implements TokenService, HasHealthCheck {
     }
 
     @Override
-    public SearchResponse search(SearchRequest searchRequest) {
+    public ResultPage<Token> list() {
         checkPermission();
-        // Validate filters
-        if (searchRequest.getFilters() != null) {
-            for (String key : searchRequest.getFilters().keySet()) {
-                switch (key) {
-                    case "expiresOn":
-                    case "issuedOn":
-                    case "updatedOn":
-                        throw new BadRequestException("Filtering by date is not supported.");
-                }
-            }
-        }
-        return tokenDao.searchTokens(searchRequest);
+        return tokenDao.list();
+    }
+
+    @Override
+    public ResultPage<Token> search(final SearchTokenRequest request) {
+        checkPermission();
+        return tokenDao.search(request);
+
+//        // Validate filters
+//        if (searchRequest.getFilters() != null) {
+//            for (String key : searchRequest.getFilters().keySet()) {
+//                switch (key) {
+//                    case "expiresOn":
+//                    case "issuedOn":
+//                    case "updatedOn":
+//                        throw new BadRequestException("Filtering by date is not supported.");
+//                }
+//            }
+//        }
+//        return tokenDao.searchTokens(searchRequest);
     }
 
     @Override
@@ -78,7 +87,7 @@ public class TokenServiceImpl implements TokenService, HasHealthCheck {
 
         final String userId = securityContext.getUserId();
 
-        final Optional<Integer> optionalAccountId = accountDao.getId(createTokenRequest.getUserEmail());
+        final Optional<Integer> optionalAccountId = accountDao.getId(createTokenRequest.getUserId());
         final Integer accountId = optionalAccountId.orElseThrow(() ->
                 new NoSuchUserException("Cannot find user to associate with this API key!"));
 
@@ -87,9 +96,9 @@ public class TokenServiceImpl implements TokenService, HasHealthCheck {
         final TokenType tokenType = optionalTokenType.orElseThrow(() ->
                 new BadRequestException("Unknown token type:" + createTokenRequest.getTokenType()));
 
-        final Instant expiryInstant = createTokenRequest.getExpiryDate() == null
+        final Instant expiryInstant = createTokenRequest.getExpiresOnMs() == null
                 ? null
-                : createTokenRequest.getExpiryDate().toInstant();
+                : Instant.ofEpochMilli(createTokenRequest.getExpiresOnMs());
 
         final long now = System.currentTimeMillis();
 
@@ -101,7 +110,7 @@ public class TokenServiceImpl implements TokenService, HasHealthCheck {
                 .expiryDateForApiKeys(expiryInstant)
                 .newBuilder(tokenType)
                 .clientId(clientId)
-                .subject(createTokenRequest.getUserEmail());
+                .subject(createTokenRequest.getUserId());
 
         final Instant actualExpiryDate = tokenBuilder.getExpiryDate();
         final String data = tokenBuilder.build();
@@ -111,7 +120,7 @@ public class TokenServiceImpl implements TokenService, HasHealthCheck {
         token.setCreateUser(userId);
         token.setUpdateTimeMs(now);
         token.setUpdateUser(userId);
-        token.setUserEmail(createTokenRequest.getUserEmail());
+        token.setUserId(createTokenRequest.getUserId());
         token.setTokenType(tokenType.getText());
         token.setData(data);
         token.setExpiresOnMs(actualExpiryDate.toEpochMilli());
@@ -240,17 +249,14 @@ public class TokenServiceImpl implements TokenService, HasHealthCheck {
     @Override
     public HealthCheck.Result getHealth() {
         // Check all our enabled tokens are valid
-        final SearchResponse searchResponse = tokenDao.searchTokens(
-                new SearchRequest.SearchRequestBuilder()
-                        .limit(Integer.MAX_VALUE)
-                        .build());
+        final ResultPage<Token> resultPage = tokenDao.list();
 
         final HealthCheck.ResultBuilder builder = HealthCheck.Result.builder();
 
         boolean isHealthy = true;
 
         final Map<String, Object> invalidTokenDetails = new HashMap<>();
-        for (final Token token : searchResponse.getTokens()) {
+        for (final Token token : resultPage.getValues()) {
             if (token.isEnabled()) {
                 try {
                     tokenVerifier.verifyToken(

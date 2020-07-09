@@ -38,5 +38,3 @@ export const useAppPermissionResource = (): AppPermissionResource => {
     getUserAndPermissions,
   };
 };
-
-export default useAppPermissionResource;

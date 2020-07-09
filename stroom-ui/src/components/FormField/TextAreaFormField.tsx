@@ -58,7 +58,7 @@ export const TextArea: FunctionComponent<TextAreaProps & FormFieldState> = ({
         rows={5}
         className={controlClass}
         placeholder={placeholder}
-        value={value}
+        value={value ? value : ""}
         onChange={(e) => {
           setFieldTouched(controlId);
           onChange(e);
@@ -73,7 +73,7 @@ export const TextArea: FunctionComponent<TextAreaProps & FormFieldState> = ({
   );
 };
 
-export const TextAreaField: FunctionComponent<
+export const TextAreaFormField: FunctionComponent<
   TextAreaProps & FormFieldProps & FormFieldState
 > = ({
   controlId,

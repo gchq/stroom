@@ -19,6 +19,7 @@
 package stroom.authentication.token;
 
 import stroom.authentication.config.TokenConfig;
+import stroom.util.shared.ResultPage;
 
 import javax.inject.Inject;
 import javax.inject.Provider;
@@ -37,21 +38,19 @@ public class TokenResourceImpl implements TokenResource {
         this.tokenEventLog = tokenEventLog;
     }
 
-    /**
-     * Default ordering is by ISSUED_ON date, in descending order so the most recent tokens are shown first.
-     * If orderBy is specified but orderDirection is not this will default to ascending.
-     * <p>
-     * The user must have the 'Manage Users' permission to call this.
-     */
     @Override
-    public final SearchResponse search(final HttpServletRequest httpServletRequest,
-                                       final SearchRequest searchRequest) {
+    public ResultPage<Token> list(final HttpServletRequest httpServletRequest) {
+        return null;
+    }
+
+    @Override
+    public ResultPage<Token> search(final HttpServletRequest httpServletRequest, final SearchTokenRequest request) {
         try {
-            final SearchResponse searchResponse = serviceProvider.get().search(searchRequest);
-            tokenEventLog.search(searchRequest, searchResponse, null);
-            return searchResponse;
+            final ResultPage<Token> result = serviceProvider.get().search(request);
+            tokenEventLog.search(request, result, null);
+            return result;
         } catch (final RuntimeException e) {
-            tokenEventLog.search(searchRequest, null, e);
+            tokenEventLog.search(request, null, e);
             throw e;
         }
     }

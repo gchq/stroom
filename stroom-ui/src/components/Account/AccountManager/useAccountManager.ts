@@ -4,15 +4,12 @@ import { useCallback, useEffect, useMemo, useState } from "react";
 import { ResultPage, SearchAccountRequest } from "../api/types";
 import useDateUtil from "../../../lib/useDateUtil";
 
-interface UserSearchApi {
+interface UseAccountManager {
   columns: any[];
   resultPage: ResultPage<Account>;
-  // selectedUser: string;
   remove: (userId: number) => void;
-  // changeSelectedUser: (userId: string) => void;
   request: SearchAccountRequest;
   setRequest: (request: SearchAccountRequest) => void;
-  // search: (request: SearchAccountRequest) => void;
 }
 
 const defaultResultPage: ResultPage<Account> = {
@@ -32,13 +29,7 @@ const defaultRequest: SearchAccountRequest = {
   },
 };
 
-const useAccountManager = (): UserSearchApi => {
-  // const {
-  //   users,
-  //   selectedUser,
-  //   setSelectedUser,
-  //   setUsers,
-  // } = useAccountManagerState();
+const useAccountManager = (): UseAccountManager => {
   const [resultPage, setResultPage] = useState<ResultPage<Account>>(
     defaultResultPage,
   );
@@ -64,13 +55,6 @@ const useAccountManager = (): UserSearchApi => {
     },
     [removeUserUsingApi, searchApi, request, setResultPage],
   );
-
-  // const search = useCallback(
-  //   (request: SearchAccountRequest) => {
-  //     searchApi(request).then((resultPage) => setUsers(resultPage));
-  //   },
-  //   [searchApi, setUsers],
-  // );
 
   const { toDateString } = useDateUtil();
 

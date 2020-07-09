@@ -1,3 +1,4 @@
-import useAccountResource from "./useAccountResource";
+import { useAccountResource } from "./useAccountResource";
+import { useTokenResource } from "./useTokenResource";
 
-export { useAccountResource };
+export { useAccountResource, useTokenResource };

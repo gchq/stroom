@@ -16,16 +16,21 @@
 
 import * as React from "react";
 import { FunctionComponent, useState } from "react";
-import { AccountListDialog, QuickFilterProps } from "./AccountListDialog";
+import { AccountListDialog } from "./AccountListDialog";
 import useAccountManager from "./useAccountManager";
 import { PagerProps } from "../../Pager/Pager";
 import { EditAccount } from "../EditAccount/EditAccount";
 import { Account } from "../types";
+import { usePasswordPolicy } from "../../Authentication/usePasswordPolicy";
+import { QuickFilterProps } from "./QuickFilter";
 
-export interface FormValues {
-  userId: string;
-  password: string;
-}
+const initialAccount: Account = {
+  userId: "",
+  email: "",
+  firstName: "",
+  lastName: "",
+  comments: "",
+};
 
 const AccountManager: FunctionComponent<{
   onClose: () => void;
@@ -37,6 +42,7 @@ const AccountManager: FunctionComponent<{
     request,
     setRequest,
   } = useAccountManager();
+  const passwordPolicyConfig = usePasswordPolicy();
   const [editingAccount, setEditingAccount] = useState<Account>();
   const quickFilterProps: QuickFilterProps = {
     onChange: (value) => {
@@ -74,7 +80,7 @@ const AccountManager: FunctionComponent<{
             data: resultPage.values,
           },
           actions: {
-            onCreate: () => setEditingAccount({}),
+            onCreate: () => setEditingAccount(initialAccount),
             onEdit: (account) => setEditingAccount(account),
             onRemove: (account) => remove(account.id),
           },
@@ -87,6 +93,7 @@ const AccountManager: FunctionComponent<{
       {editingAccount !== undefined && (
         <EditAccount
           account={editingAccount}
+          passwordPolicyConfig={passwordPolicyConfig}
           onClose={() => {
             setEditingAccount(undefined);
             refresh();

@@ -6,13 +6,13 @@ import { Token } from "../api/types";
 import moment from "moment";
 
 const token: Token = {
-  id: "1",
+  id: 1,
   version: 1,
   createTimeMs: moment().milliseconds(),
   updateTimeMs: moment().milliseconds(),
   createUser: "test user",
   updateUser: "test user",
-  userEmail: "userEmail",
+  userId: "userId",
   tokenType: "api",
   data: "token string",
   expiresOnMs: moment().milliseconds(),

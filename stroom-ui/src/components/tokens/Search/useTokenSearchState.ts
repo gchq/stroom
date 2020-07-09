@@ -19,7 +19,7 @@ interface TokenSearchStateApi extends TokenSearchState {
   setResults: (results: Token[]) => void;
   setTotalPages: (totalPages: number) => void;
   setLastUsedSearchConfig: (searchConfig: SearchConfig) => void;
-  toggleEnabled: (tokenId: string) => void;
+  toggleEnabled: (tokenId: number) => void;
 }
 
 interface SetTokensAction {
@@ -40,7 +40,7 @@ interface SetTotalPagesAction {
 }
 interface ToggleEnabledAction {
   type: "toggleEnabled";
-  tokenId: string;
+  tokenId: number;
 }
 interface SetLastUsedSearchConfig {
   type: "lastUsedSearchConfig";
@@ -109,7 +109,7 @@ const useTokenSearchState = (): TokenSearchStateApi => {
     setResults: (results: Token[]) => dispatch({ type: "results", results }),
     setTotalPages: (totalPages: number) =>
       dispatch({ type: "totalPages", totalPages }),
-    toggleEnabled: (tokenId: string) =>
+    toggleEnabled: (tokenId: number) =>
       dispatch({ type: "toggleEnabled", tokenId }),
     setLastUsedSearchConfig: (searchConfig: SearchConfig) =>
       dispatch({ type: "lastUsedSearchConfig", searchConfig }),

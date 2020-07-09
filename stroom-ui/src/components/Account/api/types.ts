@@ -1,3 +1,5 @@
+import { Account } from "../types";
+
 export enum Direction {
   ASCENDING,
   DESCENDING,
@@ -33,6 +35,24 @@ export interface CreateAccountRequest {
   confirmPassword: string;
   forcePasswordChange: boolean;
   neverExpires: boolean;
+}
+
+export interface UpdateAccountRequest {
+  account: Account;
+  password: string;
+  confirmPassword: string;
+}
+
+export interface SearchTokenRequest extends BaseCriteria {
+  quickFilter?: string;
+}
+
+export interface CreateTokenRequest {
+  userId: string;
+  tokenType: "user" | "api" | "email_reset";
+  expiresOnMs: number;
+  comments: string;
+  enabled: boolean;
 }
 
 export interface PageResponse {

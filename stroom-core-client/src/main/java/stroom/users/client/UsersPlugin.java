@@ -1,13 +1,7 @@
 package stroom.users.client;
 
-import com.google.inject.Inject;
-import com.google.web.bindery.event.shared.EventBus;
 import stroom.alert.client.event.AlertEvent;
 import stroom.core.client.MenuKeys;
-import stroom.hyperlink.client.Hyperlink;
-import stroom.hyperlink.client.Hyperlink.Builder;
-import stroom.hyperlink.client.HyperlinkEvent;
-import stroom.hyperlink.client.HyperlinkType;
 import stroom.menubar.client.event.BeforeRevealMenubarEvent;
 import stroom.node.client.NodeToolsPlugin;
 import stroom.security.client.api.ClientSecurityContext;
@@ -17,6 +11,9 @@ import stroom.svg.client.SvgPresets;
 import stroom.ui.config.client.UiConfigCache;
 import stroom.ui.config.shared.UiConfig;
 import stroom.widget.menu.client.presenter.IconMenuItem;
+
+import com.google.inject.Inject;
+import com.google.web.bindery.event.shared.EventBus;
 
 public class UsersPlugin extends NodeToolsPlugin {
     private final UiConfigCache clientPropertyCache;
@@ -41,6 +38,7 @@ public class UsersPlugin extends NodeToolsPlugin {
                     .onFailure(caught -> AlertEvent.fireError(UsersPlugin.this, caught.getMessage(), null));
         }
     }
+
     private void addManageUsers(final BeforeRevealMenubarEvent event,
                                 final UiConfig uiConfig) {
         final IconMenuItem usersMenuItem;

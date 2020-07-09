@@ -1,13 +1,7 @@
 package stroom.apikeys.client;
 
-import com.google.inject.Inject;
-import com.google.web.bindery.event.shared.EventBus;
 import stroom.alert.client.event.AlertEvent;
 import stroom.core.client.MenuKeys;
-import stroom.hyperlink.client.Hyperlink;
-import stroom.hyperlink.client.Hyperlink.Builder;
-import stroom.hyperlink.client.HyperlinkEvent;
-import stroom.hyperlink.client.HyperlinkType;
 import stroom.menubar.client.event.BeforeRevealMenubarEvent;
 import stroom.node.client.NodeToolsPlugin;
 import stroom.security.client.api.ClientSecurityContext;
@@ -16,6 +10,9 @@ import stroom.svg.client.SvgPreset;
 import stroom.svg.client.SvgPresets;
 import stroom.ui.config.client.UiConfigCache;
 import stroom.widget.menu.client.presenter.IconMenuItem;
+
+import com.google.inject.Inject;
+import com.google.web.bindery.event.shared.EventBus;
 
 public class ApiKeysPlugin extends NodeToolsPlugin {
     private final UiConfigCache clientPropertyCache;
@@ -38,13 +35,15 @@ public class ApiKeysPlugin extends NodeToolsPlugin {
                         final String apiKeysUi = result.getUrl().getApiKeys();
                         if (apiKeysUi != null && apiKeysUi.trim().length() > 0) {
                             apiKeysMenuItem = new IconMenuItem(5, icon, null, "API Keys", null, true, () -> {
-                                final Hyperlink hyperlink = new Builder()
-                                        .text("API Keys")
-                                        .href(apiKeysUi)
-                                        .type(HyperlinkType.TAB + "|API Keys")
-                                        .icon(icon)
-                                        .build();
-                                HyperlinkEvent.fire(this, hyperlink);
+                                postMessage("manageTokens");
+
+//                                final Hyperlink hyperlink = new Builder()
+//                                        .text("API Keys")
+//                                        .href(apiKeysUi)
+//                                        .type(HyperlinkType.TAB + "|API Keys")
+//                                        .icon(icon)
+//                                        .build();
+//                                HyperlinkEvent.fire(this, hyperlink);
                             });
                         } else {
                             apiKeysMenuItem = new IconMenuItem(5, icon, icon, "API Keys is not configured!", null, false, null);
