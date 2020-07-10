@@ -16,8 +16,6 @@
 
 package stroom.pipeline.reader;
 
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 import stroom.pipeline.destination.DestinationProvider;
 import stroom.pipeline.factory.PipelineFactoryException;
 import stroom.pipeline.factory.TakesInput;
@@ -25,6 +23,9 @@ import stroom.pipeline.factory.TakesReader;
 import stroom.pipeline.factory.Target;
 import stroom.pipeline.stepping.Recorder;
 import stroom.util.shared.Highlight;
+
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import java.io.ByteArrayOutputStream;
 import java.io.FilterInputStream;
@@ -243,11 +244,14 @@ public class ReaderRecorder extends AbstractIOElement implements TakesInput, Tak
 
     private static class InputBuffer extends FilterInputStream implements Buffer {
         private static final int MAX_BUFFER_SIZE = 1000000;
+        private static final int BASE_LINE_NO = 1;
+        private static final int BASE_COL_NO = 1;
         private final String encoding;
         private final ByteBuffer byteBuffer = new ByteBuffer();
 
-        private int lineNo = 1;
-        private int colNo = 0;
+        private int lineNo = BASE_LINE_NO;
+//        private int colNo = 0;
+        private int colNo = BASE_COL_NO;
 
         InputBuffer(final InputStream in, final String encoding) {
             super(in);
@@ -316,6 +320,7 @@ public class ReaderRecorder extends AbstractIOElement implements TakesInput, Tak
         }
 
         private void consumeHighlightedSection(final Highlight highlight, final Consumer<Byte> consumer) {
+            // range is inclusive at both ends
             final int lineFrom = highlight.getFrom().getLineNo();
             final int colFrom = highlight.getFrom().getColNo();
             final int lineTo = highlight.getTo().getLineNo();
@@ -331,14 +336,14 @@ public class ReaderRecorder extends AbstractIOElement implements TakesInput, Tak
 
                 if (!inRecord) {
                     if (lineNo > lineFrom ||
-                            (lineNo >= lineFrom && colNo >= colFrom)) {
+                            (lineNo == lineFrom && colNo >= colFrom)) {
                         inRecord = true;
                     }
                 }
 
                 if (inRecord) {
                     if (lineNo > lineTo ||
-                            (lineNo >= lineTo && colNo >= colTo)) {
+                            (lineNo == lineTo && colNo > colTo)) {
                         inRecord = false;
                         found = true;
                         advance = i;
@@ -353,7 +358,7 @@ public class ReaderRecorder extends AbstractIOElement implements TakesInput, Tak
                 if (!found) {
                     if (c == '\n') {
                         lineNo++;
-                        colNo = 0;
+                        colNo = BASE_COL_NO;
                     } else {
                         colNo++;
                     }
@@ -371,8 +376,8 @@ public class ReaderRecorder extends AbstractIOElement implements TakesInput, Tak
 
         @Override
         public void reset() {
-            lineNo = 1;
-            colNo = 0;
+            lineNo = BASE_LINE_NO;
+            colNo = BASE_COL_NO;
             clear();
         }
 
