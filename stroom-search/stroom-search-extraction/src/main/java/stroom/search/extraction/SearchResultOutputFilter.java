@@ -62,8 +62,16 @@ public class SearchResultOutputFilter extends AbstractSearchResultOutputFilter {
     @Override
     public void endElement(final String uri, final String localName, final String qName) throws SAXException {
         if (RECORD.equals(localName)) {
-            consumer.accept(new Values(values));
-            values = null;
+
+            if (alertTableDefinitions != null) {
+
+                //todo if alerting pass through the table coprocessors and create zero to many records
+                //for this one record
+            } else {
+                //Non-alert creation search extraction
+                consumer.accept(new Values(values));
+                values = null;
+            }
         }
 
         super.endElement(uri, localName, qName);

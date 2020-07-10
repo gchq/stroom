@@ -20,7 +20,6 @@ import org.apache.lucene.document.Document;
 import org.apache.lucene.store.AlreadyClosedException;
 import stroom.alert.api.AlertProcessor;
 import stroom.docref.DocRef;
-import stroom.explorer.shared.ExplorerConstants;
 import stroom.index.shared.IndexDoc;
 import stroom.index.shared.IndexException;
 import stroom.index.shared.IndexShard.IndexShardStatus;
@@ -32,8 +31,6 @@ import stroom.alert.api.AlertManager;
 import javax.inject.Inject;
 import javax.inject.Singleton;
 import java.io.IOException;
-import java.util.Arrays;
-import java.util.List;
 import java.util.Optional;
 import java.util.concurrent.locks.Lock;
 
@@ -52,6 +49,8 @@ public class IndexerImpl implements Indexer {
 
     private final StripedLock keyLocks = new StripedLock();
 
+    private AlertProcessor alertProcessor = null;
+
     @Inject
     public IndexerImpl(final IndexStore indexStore,
                        final IndexShardWriterCache indexShardWriterCache,
@@ -68,11 +67,18 @@ public class IndexerImpl implements Indexer {
         if (document != null) {
             //First create any alerts
             try {
-                final Optional<AlertProcessor> processor = alertManager.createAlertProcessor(
-                        new DocRef(IndexDoc.DOCUMENT_TYPE,
-                                indexShardKey.getIndexUuid()));
-                if (processor.isPresent())
-                    processor.get().createAlerts(document);
+                if (alertProcessor == null) {
+                    final Optional<AlertProcessor> processor = alertManager.createAlertProcessor(
+                            new DocRef(IndexDoc.DOCUMENT_TYPE,
+                                    indexShardKey.getIndexUuid()));
+                    if (processor.isPresent()) {
+                        alertProcessor = processor.get();
+                    }
+                }
+                if (alertProcessor != null){
+                    alertProcessor.addIfNeeded(document);
+                }
+
             } catch (RuntimeException ex){
                 LOGGER.error(ex::getMessage, ex);
             }
@@ -155,5 +161,10 @@ public class IndexerImpl implements Indexer {
         }
 
         return success;
+    }
+
+    @Override
+    public void endIndexing() {
+        alertProcessor.createAlerts();
     }
 }

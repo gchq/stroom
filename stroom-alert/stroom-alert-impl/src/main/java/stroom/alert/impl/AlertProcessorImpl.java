@@ -37,6 +37,7 @@ import stroom.query.common.v2.CompiledFields;
 import stroom.query.common.v2.format.FieldFormatter;
 import stroom.query.common.v2.format.FormatterFactory;
 
+import stroom.search.extraction.ExtractionDecoratorFactory;
 import stroom.search.impl.SearchException;
 import stroom.search.impl.SearchExpressionQueryBuilder;
 import stroom.util.logging.LambdaLogger;
@@ -47,11 +48,13 @@ import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.Random;
 import java.util.stream.Collectors;
 
 public class AlertProcessorImpl implements AlertProcessor {
     private static final LambdaLogger LOGGER = LambdaLoggerFactory.getLogger(AlertProcessorImpl.class);
 
+    private final AlertQueryHits alertQueryHits;
 
     private final WordListProvider wordListProvider;
     private final int maxBooleanClauseCount;
@@ -63,7 +66,12 @@ public class AlertProcessorImpl implements AlertProcessor {
 
     private final Map<String, Analyzer> analyzerMap;
 
-    public AlertProcessorImpl (final List<RuleConfig> rules,
+    private final ExtractionDecoratorFactory extractionDecoratorFactory;
+
+    private Long currentStreamId = null;
+
+    public AlertProcessorImpl (final ExtractionDecoratorFactory extractionDecoratorFactory,
+                               final List<RuleConfig> rules,
                                final IndexStructure indexStructure,
                                final WordListProvider wordListProvider,
                                final int maxBooleanClauseCount){
@@ -80,15 +88,24 @@ public class AlertProcessorImpl implements AlertProcessor {
                 analyzerMap.put(indexField.getFieldName(), analyzer);
             }
         }
+        alertQueryHits = new AlertQueryHits();
+        this.extractionDecoratorFactory = extractionDecoratorFactory;
     }
 
     @Override
-    public void createAlerts(final Document document) {
+    public void addIfNeeded(final Document document) {
         MemoryIndex memoryIndex = new MemoryIndex();
         if (analyzerMap == null || analyzerMap.size() == 0){
             //Don't create alerts if index isn't configured
             return;
         }
+
+        Long eventId = findEventId (document);
+        if (eventId == null)
+            return;
+        Long streamId = findStreamId (document);
+        if (streamId == null)
+            return;
 
         for (IndexableField field : document){
 
@@ -102,30 +119,42 @@ public class AlertProcessorImpl implements AlertProcessor {
             }
         }
 
-        checkRules (document, memoryIndex);
+        checkRules (streamId, eventId, memoryIndex);
     }
 
-    private Val[] createVals (final Document document){
 
-        //todo allow a different search extraction pipeline to be used.
-        //Currently the indexing pipeline must contain a superset of the values as the extraction pipeline
-        //This is possible when the same translation is used.
+//    private Val[] createVals (final Document document){
+//
+//        //todo allow a different search extraction pipeline to be used.
+//        //Currently the indexing pipeline must contain a superset of the values as the extraction pipeline
+//        //This is possible when the same translation is used.
+//
+//        Val[] result = new Val[document.getFields().size()];
+//        int fieldIndex = 0;
+//        //See SearchResultOutputFilter for creation of Values
+//        for (IndexableField field : document.getFields()){
+//            if (field.numericValue() != null){
+//                result[fieldIndex] = ValLong.create(field.numericValue().longValue());
+//            } else {
+//                result[fieldIndex] = ValString.create(field.stringValue());
+//            }
+//            fieldIndex++;
+//        }
+//        return result;
+//    }
 
-        Val[] result = new Val[document.getFields().size()];
-        int fieldIndex = 0;
-        //See SearchResultOutputFilter for creation of Values
-        for (IndexableField field : document.getFields()){
-            if (field.numericValue() != null){
-                result[fieldIndex] = ValLong.create(field.numericValue().longValue());
-            } else {
-                result[fieldIndex] = ValString.create(field.stringValue());
-            }
-            fieldIndex++;
+    private void checkRules (final long streamId, final long eventId, final MemoryIndex memoryIndex){
+        if (rules == null) {
+            return;
         }
-        return result;
-    }
+        if (currentStreamId == null){
+            currentStreamId = streamId;
+        } else {
+            if (streamId != currentStreamId) {
+                throw new IllegalArgumentException("Unable to select a different stream within a single AlertProcessor");
+            }
+        }
 
-    private void checkRules (final Document document, final MemoryIndex memoryIndex){
         IndexSearcher indexSearcher = memoryIndex.createSearcher();
         final IndexFieldsMap indexFieldsMap = new IndexFieldsMap(indexStructure.getIndex().getFields());
         try {
@@ -137,24 +166,7 @@ public class AlertProcessorImpl implements AlertProcessor {
 
    //                 System.out.println ("Found a matching query rule");
 
-
-                    //Now apply filters and formatting
-                    final String[] filteredVals = mapHit(rule, document);
-
-
-                    //A match
-                    if (filteredVals != null){
-                        System.out.println ("Got a filtered match ");
-                        for (String val : filteredVals){
-                            if (val != null){
-                                System.out.println("***" + val);
-                            } else {
-                                System.out.println("*NULL*");
-                            }
-
-                        }
-                    }
-
+                    alertQueryHits.addQueryHitForRule(rule,eventId);
                 } else {
      //               System.out.println ("This doesn't match");
                 }
@@ -164,19 +176,29 @@ public class AlertProcessorImpl implements AlertProcessor {
         }
     }
 
+    @Override
+    public void createAlerts() {
+        for (DocRef pipeline : alertQueryHits.getExtractionPipelines()) {
+            for (RuleConfig ruleConfig : alertQueryHits.getRulesForPipeline(pipeline)){
+                extractionDecoratorFactory.createAlertExtractionTask (currentStreamId,
+                        alertQueryHits.getSortedQueryHitsForRule(ruleConfig), pipeline,
+                        ruleConfig.getTableSettings());
+            }
 
+        }
+    }
 
     private boolean matchQuery (final IndexSearcher indexSearcher, final IndexFieldsMap indexFieldsMap,
-                               final ExpressionOperator query) throws IOException {
+                                final ExpressionOperator query) throws IOException {
 
         try {
 
             final SearchExpressionQueryBuilder searchExpressionQueryBuilder = new SearchExpressionQueryBuilder(
                     wordListProvider, indexFieldsMap, maxBooleanClauseCount, DATE_TIME_LOCALE_SHOULD_BE_FROM_SEARCH, System.currentTimeMillis());
-            final SearchExpressionQueryBuilder.SearchExpressionQuery lucenetQuery = searchExpressionQueryBuilder
+            final SearchExpressionQueryBuilder.SearchExpressionQuery luceneQuery = searchExpressionQueryBuilder
                     .buildQuery(LuceneVersionUtil.CURRENT_LUCENE_VERSION, query);
 
-            TopDocs docs = indexSearcher.search(lucenetQuery.getQuery(), 100);
+            TopDocs docs = indexSearcher.search(luceneQuery.getQuery(), 100);
 
             if (docs.totalHits == 0) {
                 return false; //Doc does not match
@@ -192,78 +214,68 @@ public class AlertProcessorImpl implements AlertProcessor {
         return false;
     }
 
+    //todo remove this
+    private long madeupeventid = 0;
+    private Long findEventId(Document document){
+        final IndexFieldsMap indexFieldsMap = indexStructure.getIndexFieldsMap();
 
-
-
-    private String[] mapHit (final RuleConfig ruleConfig, final Document doc) {
-        final List<Field> fields = ruleConfig.getTableSettings().getFields();
-
-//        FieldIndexMap fieldIndexMap = new FieldIndexMap(true);
         FieldIndexMap fieldIndexMap = FieldIndexMap.forFields
-                (doc.getFields().stream().map(f -> f.name()).
-                        collect(Collectors.toList()).toArray(new String[doc.getFields().size()]));
+                (document.getFields().stream().map(f -> f.name()).
+                        collect(Collectors.toList()).toArray(new String[document.getFields().size()]));
         final FieldFormatter fieldFormatter = new FieldFormatter(new FormatterFactory(DATE_TIME_LOCALE_SHOULD_BE_FROM_SEARCH));
         //See CoprocessorsFactory for creation of field Index Map
-        final CompiledFields compiledFields = new CompiledFields(fields, fieldIndexMap, ruleConfig.getParamMap());
-//        final Generator[] generators = new Generator[ruleConfig.getTableSettings().getFields().size()];
 
-        final String[] output = new String [ruleConfig.getTableSettings().getFields().size()];
-        int index = 0;
-        final Val[] inputVals = createVals (doc);
-        for (final CompiledField compiledField : compiledFields) {
-            final Expression expression = compiledField.getExpression();
-
-            if (expression != null) {
-                if (expression.hasAggregate()) {
-                    LOGGER.error("Aggregate functions not supported for dashboards in rules");
-                } else {
-                    final Generator generator = expression.createGenerator();
-
-                    generator.set(inputVals);
-                    Val value = generator.eval();
-                    output[index] = fieldFormatter.format(compiledField.getField(), value); //From TableResultCreator
-
-                    if (compiledField.getCompiledFilter() != null) {
-                        // If we are filtering then we need to evaluate this field
-                        // now so that we can filter the resultant value.
-
-                        if (compiledField.getCompiledFilter() != null && value != null && !compiledField.getCompiledFilter().match(value.toString())) {
-                            // We want to exclude this item.
-                            return null;
-                        }
-                    }
-                }
-            }
-
-            index++;
-        }
-
-        return output;
+        return madeupeventid++;
+    }
+    private long findStreamId(Document document){
+        return 10l;
     }
 
-    private Val[] findVals(CompiledFields compiledFields, Document doc){
-        Val[] output = new Val[compiledFields.size()];
-        int index = 0;
-        for (CompiledField field : compiledFields){
-            IndexableField[] matchingFields = doc.getFields(field.getField().getName());
-            if (matchingFields == null || matchingFields.length == 0)
-            {
-                LOGGER.warn("Unable to find field " + field.getField().getName());
-            } else if (matchingFields.length > 1) {
-                LOGGER.warn("Multiple field (" + matchingFields.length +") found for field " + field.getField().getName());
-            }
-            else {
-                 if (matchingFields[0].numericValue() != null){
-                     output[index] = ValLong.create(matchingFields[0].numericValue().longValue());
-                 } else {
-                    output[index] = ValString.create(matchingFields[0].stringValue());
-                 }
-            }
-
-            index++;
-        }
-
-        return output;
-    }
+//
+//    private String[] mapHit (final RuleConfig ruleConfig, final Document doc) {
+//        final List<Field> fields = ruleConfig.getTableSettings().getFields();
+//
+//
+//        FieldIndexMap fieldIndexMap = FieldIndexMap.forFields
+//                (doc.getFields().stream().map(f -> f.name()).
+//                        collect(Collectors.toList()).toArray(new String[doc.getFields().size()]));
+//        final FieldFormatter fieldFormatter = new FieldFormatter(new FormatterFactory(DATE_TIME_LOCALE_SHOULD_BE_FROM_SEARCH));
+//        //See CoprocessorsFactory for creation of field Index Map
+//        final CompiledFields compiledFields = new CompiledFields(fields, fieldIndexMap, ruleConfig.getParamMap());
+//
+//
+//        final String[] output = new String [ruleConfig.getTableSettings().getFields().size()];
+//        int index = 0;
+//        final Val[] inputVals = createVals (doc);
+//        for (final CompiledField compiledField : compiledFields) {
+//            final Expression expression = compiledField.getExpression();
+//
+//            if (expression != null) {
+//                if (expression.hasAggregate()) {
+//                    LOGGER.error("Aggregate functions not supported for dashboards in rules");
+//                } else {
+//                    final Generator generator = expression.createGenerator();
+//
+//                    generator.set(inputVals);
+//                    Val value = generator.eval();
+//                    output[index] = fieldFormatter.format(compiledField.getField(), value); //From TableResultCreator
+//
+//                    if (compiledField.getCompiledFilter() != null) {
+//                        // If we are filtering then we need to evaluate this field
+//                        // now so that we can filter the resultant value.
+//
+//                        if (compiledField.getCompiledFilter() != null && value != null && !compiledField.getCompiledFilter().match(value.toString())) {
+//                            // We want to exclude this item.
+//                            return null;
+//                        }
+//                    }
+//                }
+//            }
+//
+//            index++;
+//        }
+//
+//        return output;
+//    }
 
 }

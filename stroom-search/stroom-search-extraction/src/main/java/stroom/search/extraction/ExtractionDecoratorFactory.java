@@ -4,6 +4,7 @@ import stroom.dashboard.expression.v1.FieldIndexMap;
 import stroom.docref.DocRef;
 import stroom.meta.api.MetaService;
 import stroom.query.api.v2.Query;
+import stroom.query.api.v2.TableSettings;
 import stroom.search.coprocessor.Error;
 import stroom.search.coprocessor.*;
 import stroom.security.api.SecurityContext;
@@ -15,6 +16,7 @@ import javax.inject.Inject;
 import javax.inject.Provider;
 import java.util.HashMap;
 import java.util.HashSet;
+import java.util.List;
 import java.util.Map;
 import java.util.Set;
 import java.util.function.Consumer;
@@ -114,5 +116,22 @@ public class ExtractionDecoratorFactory {
 
         // Begin processing.
         return extractionTaskProducer.process();
+    }
+
+    public void createAlertExtractionTask (final long streamId, final long[] sortedEventIds, DocRef extractionPipeline,
+                                           List<TableSettings> alertDefinitions ){
+        final ExtractionTaskProducer extractionTaskProducer = new ExtractionTaskProducer(
+                extractionTaskExecutor,
+                null,
+                null,
+                null,
+                extractionConfig.getMaxStoredDataQueueSize(),
+                extractionConfig.getMaxThreadsPerTask(),
+                executorProvider,
+                taskContextFactory,
+                null,
+                extractionTaskHandlerProvider,
+                securityContext);
+        extractionTaskProducer.createAlertExtractionTask(streamId, sortedEventIds, extractionPipeline, alertDefinitions);
     }
 }

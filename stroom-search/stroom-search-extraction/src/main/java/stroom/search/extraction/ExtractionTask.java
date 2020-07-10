@@ -17,13 +17,19 @@
 package stroom.search.extraction;
 
 import stroom.docref.DocRef;
+import stroom.query.api.v2.TableSettings;
 import stroom.search.coprocessor.Receiver;
+
+import com.google.common.collect.Table;
+
+import java.util.List;
 
 class ExtractionTask {
     private final long streamId;
     private final long[] eventIds;
     private final DocRef pipelineRef;
     private final Receiver receiver;
+    private final List<TableSettings> alertTableSettings;
 
     ExtractionTask(final long streamId,
                    final long[] eventIds,
@@ -33,6 +39,19 @@ class ExtractionTask {
         this.eventIds = eventIds;
         this.pipelineRef = pipelineRef;
         this.receiver = receiver;
+        this.alertTableSettings = null;
+    }
+
+    ExtractionTask(final long streamId,
+                   final long[] eventIds,
+                   final DocRef pipelineRef,
+                   final Receiver receiver,
+                   final List<TableSettings> alertTableSettings) {
+        this.streamId = streamId;
+        this.eventIds = eventIds;
+        this.pipelineRef = pipelineRef;
+        this.receiver = receiver;
+        this.alertTableSettings = alertTableSettings;
     }
 
     long getStreamId() {
@@ -49,5 +68,13 @@ class ExtractionTask {
 
     Receiver getReceiver() {
         return receiver;
+    }
+
+    boolean isAlerting(){
+        return alertTableSettings != null;
+    }
+
+    final List<TableSettings> getAlertTableSettings(){
+        return alertTableSettings;
     }
 }

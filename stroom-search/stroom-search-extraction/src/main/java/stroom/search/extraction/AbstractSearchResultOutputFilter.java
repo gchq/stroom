@@ -19,17 +19,25 @@ package stroom.search.extraction;
 import stroom.dashboard.expression.v1.FieldIndexMap;
 import stroom.dashboard.expression.v1.Val;
 import stroom.pipeline.filter.AbstractXMLFilter;
+import stroom.query.api.v2.TableSettings;
+import stroom.query.common.v2.TableCoprocessorSettings;
 import stroom.search.coprocessor.Receiver;
 import stroom.search.coprocessor.Values;
 
+import java.util.List;
 import java.util.function.Consumer;
 
 public abstract class AbstractSearchResultOutputFilter extends AbstractXMLFilter {
     FieldIndexMap fieldIndexes;
     Consumer<Values> consumer;
+    List<TableSettings> alertTableDefinitions = null;
 
     public void setup(final FieldIndexMap fieldIndexes, final Consumer<Values> consumer) {
         this.fieldIndexes = fieldIndexes;
         this.consumer = consumer;
+    }
+
+    public void setupForAlerting(final List<TableSettings> alertTableDefinitions){
+        this.alertTableDefinitions = alertTableDefinitions;
     }
 }

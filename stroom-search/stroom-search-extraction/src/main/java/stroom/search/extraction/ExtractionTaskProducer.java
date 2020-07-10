@@ -19,6 +19,7 @@ package stroom.search.extraction;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import stroom.docref.DocRef;
+import stroom.query.api.v2.TableSettings;
 import stroom.search.coprocessor.CompletionState;
 import stroom.search.coprocessor.Error;
 import stroom.search.coprocessor.Receiver;
@@ -188,6 +189,12 @@ class ExtractionTaskProducer extends TaskProducer {
             }
         }
         return completedEventMapping;
+    }
+
+    public void createAlertExtractionTask (final long streamId, final long[] sortedEventIds, DocRef extractionPipeline,
+                                           List<TableSettings> alertDefinitions ){
+        final ExtractionTask task = new ExtractionTask(streamId, sortedEventIds, extractionPipeline, null, alertDefinitions);
+        taskQueue.offer(new ExtractionRunnable(task, handlerProvider));
     }
 
     private int createTasks(final long streamId, final List<Event> events) {

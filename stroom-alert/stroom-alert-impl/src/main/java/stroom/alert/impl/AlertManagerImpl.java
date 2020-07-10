@@ -19,7 +19,9 @@ import stroom.explorer.shared.ExplorerNode;
 import stroom.index.impl.IndexStructure;
 import stroom.index.impl.IndexStructureCache;
 import stroom.query.api.v2.ExpressionOperator;
+import stroom.query.api.v2.ExpressionOperator.Op;
 import stroom.query.api.v2.TableSettings;
+import stroom.search.extraction.ExtractionDecoratorFactory;
 import stroom.search.impl.SearchConfig;
 import stroom.util.logging.LambdaLogger;
 import stroom.util.logging.LambdaLoggerFactory;
@@ -42,9 +44,10 @@ public class AlertManagerImpl implements AlertManager {
     private final int maxBooleanClauseCount;
     private final WordListProvider wordListProvider;
     private final IndexStructureCache indexStructureCache;
-
+    private final ExtractionDecoratorFactory extractionDecoratorFactory;
+    private Map<DocRef, List<RuleConfig>> indexToRules = new HashMap<>();
     //todo make into a clearable cache, and periodically refresh
-    private final Map<DocRef,AlertProcessor> alertProcessorMap = new HashMap<>();
+
     private boolean initialised = false;
 
     @Inject
@@ -52,12 +55,14 @@ public class AlertManagerImpl implements AlertManager {
                       final DashboardStore dashboardStore,
                       final WordListProvider wordListProvider,
                       final SearchConfig searchConfig,
-                      final IndexStructureCache indexStructureCache){
+                      final IndexStructureCache indexStructureCache,
+                      final ExtractionDecoratorFactory extractionDecoratorFactory){
         this.explorerNodeService = explorerNodeService;
         this.dashboardStore = dashboardStore;
         this.wordListProvider = wordListProvider;
         this.maxBooleanClauseCount = searchConfig.getMaxBooleanClauseCount();
         this.indexStructureCache = indexStructureCache;
+        this.extractionDecoratorFactory = extractionDecoratorFactory;
     }
 
     @Override
@@ -67,9 +72,19 @@ public class AlertManagerImpl implements AlertManager {
             initialised = true;
         }
 
-        return Optional.ofNullable(alertProcessorMap.get(indexDocRef));
-    }
+        IndexStructure indexStructure = indexStructureCache.get(indexDocRef);
 
+        if (indexStructure == null) {
+            LOGGER.warn ("Unable to locate index " + indexDocRef + " specified in rule");
+            return Optional.empty();
+        }
+        else {
+            AlertProcessorImpl processor = new AlertProcessorImpl(extractionDecoratorFactory, indexToRules.get(indexDocRef), indexStructure,
+                    wordListProvider, maxBooleanClauseCount);
+            return Optional.of(processor);
+        }
+
+    }
 
     private final DocRef findRulesFolder(){
 
@@ -126,9 +141,11 @@ public class AlertManagerImpl implements AlertManager {
                 for (ComponentConfig componentConfig : componentConfigs){
                     if (componentConfig.getSettings() instanceof QueryComponentSettings){
                         QueryComponentSettings queryComponentSettings = (QueryComponentSettings) componentConfig.getSettings();
-
+                        final String queryId = componentConfig.getId();
                         ExpressionOperator expression = queryComponentSettings.getExpression();
                         DocRef dataSource = queryComponentSettings.getDataSource();
+
+                        Map<DocRef, List<TableSettings>> pipelineTableSettings = new HashMap<>();
 
                         //Find all the tables associated with this query
                         for (ComponentConfig associatedComponentConfig : componentConfigs){
@@ -136,35 +153,43 @@ public class AlertManagerImpl implements AlertManager {
                                 TableComponentSettings tableComponentSettings = (TableComponentSettings) associatedComponentConfig.getSettings();
 
                                 TableSettings tableSetting = TableSettingsUtil.mapTableSettings(tableComponentSettings);
-
-                                if (tableSetting.getQueryId().equals(componentConfig.getId())){
-                                    RuleConfig rule = new RuleConfig(expression,tableSetting,paramMap);
-                                    if (!indexToRules.containsKey(dataSource))
-                                        indexToRules.put(dataSource, new ArrayList<>());
-                                    indexToRules.get(dataSource).add(rule);
+                                DocRef pipeline = tableSetting.getExtractionPipeline();
+                                if (pipeline != null && tableSetting.getQueryId().equals(queryId)){
+                                    if (!pipelineTableSettings.containsKey(pipeline)){
+                                        pipelineTableSettings.put(pipeline, new ArrayList<>());
+                                    }
+                                    pipelineTableSettings.get(pipeline).add(tableSetting);
                                 }
                             }
                         }
 
-
+                        //Now split out by pipeline
+                        for (DocRef pipeline : pipelineTableSettings.keySet()){
+                            final RuleConfig rule = new RuleConfig(queryId, expression, pipeline,
+                                    pipelineTableSettings.get(pipeline), paramMap);
+                            if (!indexToRules.containsKey(dataSource))
+                                indexToRules.put(dataSource, new ArrayList<>());
+                            indexToRules.get(dataSource).add(rule);
+                        }
                     }
                 }
             }
         }
 
-        //Create AlertProcessorImpls for each Datasource
-        for (DocRef dataSourceRef : indexToRules.keySet()){
-            IndexStructure indexStructure = indexStructureCache.get(dataSourceRef);
-
-            if (indexStructure == null) {
-               LOGGER.warn ("Unable to locate index " + dataSourceRef + " specified in rule");
-            }
-            else {
-                AlertProcessorImpl processor = new AlertProcessorImpl(indexToRules.get(dataSourceRef), indexStructure,
-                        wordListProvider, maxBooleanClauseCount);
-                alertProcessorMap.put(dataSourceRef, processor);
-            }
-        }
+        this.indexToRules = indexToRules;
+        //Create AlertProcessorImpls for each Datasource (index)
+//        for (DocRef dataSourceRef : indexToRules.keySet()){
+//            IndexStructure indexStructure = indexStructureCache.get(dataSourceRef);
+//
+//            if (indexStructure == null) {
+//               LOGGER.warn ("Unable to locate index " + dataSourceRef + " specified in rule");
+//            }
+//            else {
+//                AlertProcessorImpl processor = new AlertProcessorImpl(indexToRules.get(dataSourceRef), indexStructure,
+//                        wordListProvider, maxBooleanClauseCount);
+//                alertProcessorMap.put(dataSourceRef, processor);
+//            }
+//        }
 
     }
 }

@@ -274,6 +274,12 @@ class IndexingFilter extends AbstractXMLFilter {
         }
     }
 
+    @Override
+    public void endProcessing() {
+        indexer.endIndexing();
+        super.endProcessing();
+    }
+
     @PipelineProperty(description = "The index to send records to.", displayPriority = 1)
     @PipelinePropertyDocRef(types = IndexDoc.DOCUMENT_TYPE)
     public void setIndex(final DocRef indexRef) {
