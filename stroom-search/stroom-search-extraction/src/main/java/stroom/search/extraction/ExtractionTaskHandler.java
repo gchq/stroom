@@ -160,7 +160,7 @@ class ExtractionTaskHandler {
 
             searchResultOutputFilter.setup(task.getReceiver().getFieldIndexMap(), task.getReceiver().getValuesConsumer());
             if (task.isAlerting()) {
-                searchResultOutputFilter.setupForAlerting(task.getAlertTableSettings());
+                searchResultOutputFilter.setupForAlerting(task.getAlertTableSettings(), task.getParamMapForAlerting());
             }
 
             // Process the stream segments.

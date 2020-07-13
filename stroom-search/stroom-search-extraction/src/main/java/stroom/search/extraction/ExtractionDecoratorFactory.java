@@ -118,20 +118,23 @@ public class ExtractionDecoratorFactory {
         return extractionTaskProducer.process();
     }
 
-    public void createAlertExtractionTask (final long streamId, final long[] sortedEventIds, DocRef extractionPipeline,
-                                           List<TableSettings> alertDefinitions ){
+    public Receiver createAlertExtractionTask(final Receiver receiver, final Receiver parentReceiver,
+                                              final long streamId, final long[] sortedEventIds, DocRef extractionPipeline,
+                                              List<TableSettings> alertDefinitions, final Map<String, String> params){
         final ExtractionTaskProducer extractionTaskProducer = new ExtractionTaskProducer(
                 extractionTaskExecutor,
                 null,
-                null,
+                parentReceiver,
                 null,
                 extractionConfig.getMaxStoredDataQueueSize(),
                 extractionConfig.getMaxThreadsPerTask(),
                 executorProvider,
                 taskContextFactory,
-                null,
+                taskContextFactory.currentContext(),
                 extractionTaskHandlerProvider,
                 securityContext);
-        extractionTaskProducer.createAlertExtractionTask(streamId, sortedEventIds, extractionPipeline, alertDefinitions);
+        extractionTaskProducer.createAlertExtractionTask(streamId, sortedEventIds,
+                extractionPipeline, alertDefinitions, params, receiver);
+        return extractionTaskProducer.process();
     }
 }

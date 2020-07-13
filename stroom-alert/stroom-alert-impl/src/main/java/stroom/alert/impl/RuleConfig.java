@@ -10,18 +10,22 @@ import java.util.Map;
 import java.util.Objects;
 
 class RuleConfig {
+    private final String dashboardName;
     private final String queryId;
     private final ExpressionOperator expression;
     private final DocRef pipeline;
     private final List<TableSettings> tableSettings;
     private final Map<String, String> params;
 
-    RuleConfig(final String queryId,
+    RuleConfig(final String dashboardUUID,
+               final String dashboardName,
+               final String queryId,
                final ExpressionOperator expression,
                final DocRef pipeline,
                final List<TableSettings> tableSettings,
                final Map<String, String> params){
-        this.queryId = queryId;
+        this.dashboardName = dashboardName;
+        this.queryId = dashboardUUID+ "/" + queryId;
         this.expression = expression;
         this.pipeline = pipeline;
         this.tableSettings = tableSettings;
@@ -34,6 +38,10 @@ class RuleConfig {
 
     public DocRef getPipeline() {
         return pipeline;
+    }
+
+    public String getDashboardName() {
+        return dashboardName;
     }
 
     public List<TableSettings> getTableSettings() {

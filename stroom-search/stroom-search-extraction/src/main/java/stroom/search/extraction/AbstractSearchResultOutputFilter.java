@@ -25,19 +25,22 @@ import stroom.search.coprocessor.Receiver;
 import stroom.search.coprocessor.Values;
 
 import java.util.List;
+import java.util.Map;
 import java.util.function.Consumer;
 
 public abstract class AbstractSearchResultOutputFilter extends AbstractXMLFilter {
     FieldIndexMap fieldIndexes;
     Consumer<Values> consumer;
     List<TableSettings> alertTableDefinitions = null;
+    Map<String,String> paramMapForAlerting = null;
 
     public void setup(final FieldIndexMap fieldIndexes, final Consumer<Values> consumer) {
         this.fieldIndexes = fieldIndexes;
         this.consumer = consumer;
     }
 
-    public void setupForAlerting(final List<TableSettings> alertTableDefinitions){
+    public void setupForAlerting(final List<TableSettings> alertTableDefinitions, final Map<String, String> paramMap){
         this.alertTableDefinitions = alertTableDefinitions;
+        this.paramMapForAlerting = paramMap;
     }
 }

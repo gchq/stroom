@@ -4,20 +4,9 @@ import org.apache.lucene.analysis.Analyzer;
 import org.apache.lucene.analysis.TokenStream;
 import org.apache.lucene.document.Document;
 import stroom.alert.api.AlertProcessor;
-import stroom.dashboard.expression.v1.Expression;
 import stroom.dashboard.expression.v1.FieldIndexMap;
-import stroom.dashboard.expression.v1.Generator;
-import stroom.dashboard.expression.v1.Val;
-import stroom.dashboard.expression.v1.ValLong;
-import stroom.dashboard.expression.v1.ValString;
-import stroom.dashboard.impl.TableSettingsUtil;
-import stroom.dashboard.shared.ComponentConfig;
-import stroom.dashboard.shared.DashboardDoc;
-import stroom.dashboard.shared.QueryComponentSettings;
-import stroom.dashboard.shared.TableComponentSettings;
 import stroom.dictionary.api.WordListProvider;
 import stroom.docref.DocRef;
-import stroom.explorer.shared.ExplorerNode;
 
 import org.apache.lucene.index.IndexableField;
 import org.apache.lucene.index.memory.MemoryIndex;
@@ -30,13 +19,12 @@ import stroom.index.impl.analyzer.AnalyzerFactory;
 import stroom.index.shared.IndexField;
 import stroom.index.shared.IndexFieldsMap;
 import stroom.query.api.v2.ExpressionOperator;
-import stroom.query.api.v2.Field;
-import stroom.query.api.v2.TableSettings;
-import stroom.query.common.v2.CompiledField;
-import stroom.query.common.v2.CompiledFields;
 import stroom.query.common.v2.format.FieldFormatter;
 import stroom.query.common.v2.format.FormatterFactory;
 
+import stroom.search.coprocessor.Error;
+import stroom.search.coprocessor.Receiver;
+import stroom.search.coprocessor.Values;
 import stroom.search.extraction.ExtractionDecoratorFactory;
 import stroom.search.impl.SearchException;
 import stroom.search.impl.SearchExpressionQueryBuilder;
@@ -44,11 +32,10 @@ import stroom.util.logging.LambdaLogger;
 import stroom.util.logging.LambdaLoggerFactory;
 
 import java.io.IOException;
-import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
-import java.util.Random;
+import java.util.function.Consumer;
 import java.util.stream.Collectors;
 
 public class AlertProcessorImpl implements AlertProcessor {
@@ -68,17 +55,19 @@ public class AlertProcessorImpl implements AlertProcessor {
 
     private final ExtractionDecoratorFactory extractionDecoratorFactory;
 
-    private Long currentStreamId = null;
+    private final long streamId;
 
     public AlertProcessorImpl (final ExtractionDecoratorFactory extractionDecoratorFactory,
                                final List<RuleConfig> rules,
                                final IndexStructure indexStructure,
+                               final long streamId,
                                final WordListProvider wordListProvider,
                                final int maxBooleanClauseCount){
         this.rules = rules;
         this.wordListProvider = wordListProvider;
         this.maxBooleanClauseCount = maxBooleanClauseCount;
         this.indexStructure = indexStructure;
+        this.streamId = streamId;
         this.analyzerMap = new HashMap<>();
         if (indexStructure.getIndexFields() != null) {
             for (final IndexField indexField : indexStructure.getIndexFields()) {
@@ -101,11 +90,10 @@ public class AlertProcessorImpl implements AlertProcessor {
         }
 
         Long eventId = findEventId (document);
-        if (eventId == null)
+        if (eventId == null) {
+            LOGGER.warn("Unable to locate event id processing alerts for stream " + streamId);
             return;
-        Long streamId = findStreamId (document);
-        if (streamId == null)
-            return;
+        }
 
         for (IndexableField field : document){
 
@@ -119,7 +107,7 @@ public class AlertProcessorImpl implements AlertProcessor {
             }
         }
 
-        checkRules (streamId, eventId, memoryIndex);
+        checkRules (eventId, memoryIndex);
     }
 
 
@@ -143,16 +131,9 @@ public class AlertProcessorImpl implements AlertProcessor {
 //        return result;
 //    }
 
-    private void checkRules (final long streamId, final long eventId, final MemoryIndex memoryIndex){
+    private void checkRules (final long eventId, final MemoryIndex memoryIndex){
         if (rules == null) {
             return;
-        }
-        if (currentStreamId == null){
-            currentStreamId = streamId;
-        } else {
-            if (streamId != currentStreamId) {
-                throw new IllegalArgumentException("Unable to select a different stream within a single AlertProcessor");
-            }
         }
 
         IndexSearcher indexSearcher = memoryIndex.createSearcher();
@@ -167,6 +148,7 @@ public class AlertProcessorImpl implements AlertProcessor {
    //                 System.out.println ("Found a matching query rule");
 
                     alertQueryHits.addQueryHitForRule(rule,eventId);
+                    LOGGER.debug("Adding " + streamId + ":" + eventId + " to rule dashboard containing query " + rule.getQueryId());
                 } else {
      //               System.out.println ("This doesn't match");
                 }
@@ -178,13 +160,42 @@ public class AlertProcessorImpl implements AlertProcessor {
 
     @Override
     public void createAlerts() {
-        for (DocRef pipeline : alertQueryHits.getExtractionPipelines()) {
-            for (RuleConfig ruleConfig : alertQueryHits.getRulesForPipeline(pipeline)){
-                extractionDecoratorFactory.createAlertExtractionTask (currentStreamId,
-                        alertQueryHits.getSortedQueryHitsForRule(ruleConfig), pipeline,
-                        ruleConfig.getTableSettings());
+        final FieldIndexMap fieldIndexMap = new FieldIndexMap(true);
+        final Receiver receiver = new Receiver() {
+            @Override
+            public FieldIndexMap getFieldIndexMap() {
+                return fieldIndexMap;
             }
 
+            @Override
+            public Consumer<Values> getValuesConsumer() {
+                return values -> {};
+            }
+
+            @Override
+            public Consumer<Error> getErrorConsumer() {
+                return error -> LOGGER.error(error.getMessage(), error.getThrowable());
+            }
+
+            @Override
+            public Consumer<Long> getCompletionCountConsumer() {
+                return count -> {};
+            }
+        };
+
+        synchronized (alertQueryHits){
+            for (DocRef pipeline : alertQueryHits.getExtractionPipelines()) {
+                for (RuleConfig ruleConfig : alertQueryHits.getRulesForPipeline(pipeline)){
+                    long[] eventIds = alertQueryHits.getSortedQueryHitsForRule(ruleConfig);
+                    if (eventIds != null && eventIds.length > 0) {
+                        extractionDecoratorFactory.createAlertExtractionTask(receiver, receiver,
+                                streamId, eventIds, pipeline,
+                                ruleConfig.getTableSettings(), ruleConfig.getParams());
+                    }
+                }
+
+            }
+            alertQueryHits.clearHits();
         }
     }
 
@@ -214,21 +225,12 @@ public class AlertProcessorImpl implements AlertProcessor {
         return false;
     }
 
-    //todo remove this
-    private long madeupeventid = 0;
-    private Long findEventId(Document document){
-        final IndexFieldsMap indexFieldsMap = indexStructure.getIndexFieldsMap();
-
-        FieldIndexMap fieldIndexMap = FieldIndexMap.forFields
-                (document.getFields().stream().map(f -> f.name()).
-                        collect(Collectors.toList()).toArray(new String[document.getFields().size()]));
-        final FieldFormatter fieldFormatter = new FieldFormatter(new FormatterFactory(DATE_TIME_LOCALE_SHOULD_BE_FROM_SEARCH));
-        //See CoprocessorsFactory for creation of field Index Map
-
-        return madeupeventid++;
-    }
-    private long findStreamId(Document document){
-        return 10l;
+    private static Long findEventId(final Document document){
+        try {
+            return document.getField("EventId").numericValue().longValue();
+        } catch (RuntimeException ex){
+            return null;
+        }
     }
 
 //

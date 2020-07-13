@@ -8,3 +8,4 @@ public interface AlertProcessor {
     void addIfNeeded(final Document document);
     void createAlerts();
 }
+

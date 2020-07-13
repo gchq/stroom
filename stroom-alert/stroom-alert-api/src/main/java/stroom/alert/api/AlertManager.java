@@ -7,5 +7,5 @@ import java.util.List;
 import java.util.Optional;
 
 public interface AlertManager {
-    Optional<AlertProcessor> createAlertProcessor (final DocRef indexDocRef);
+    Optional<AlertProcessor> createAlertProcessor (final DocRef indexDocRef, final long streamId);
 }

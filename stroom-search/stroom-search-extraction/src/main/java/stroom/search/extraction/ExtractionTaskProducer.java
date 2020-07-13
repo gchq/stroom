@@ -154,6 +154,9 @@ class ExtractionTaskProducer extends TaskProducer {
         // Tell the supplied executor that we are ready to deliver tasks.
         signalAvailable();
 
+        if (parentReceiver == null) {
+            return null;
+        }
         return new ReceiverImpl(topic, parentReceiver.getErrorConsumer(), parentReceiver.getCompletionCountConsumer(), parentReceiver.getFieldIndexMap());
     }
 
@@ -191,9 +194,9 @@ class ExtractionTaskProducer extends TaskProducer {
         return completedEventMapping;
     }
 
-    public void createAlertExtractionTask (final long streamId, final long[] sortedEventIds, DocRef extractionPipeline,
-                                           List<TableSettings> alertDefinitions ){
-        final ExtractionTask task = new ExtractionTask(streamId, sortedEventIds, extractionPipeline, null, alertDefinitions);
+    public void createAlertExtractionTask(final long streamId, final long[] sortedEventIds, DocRef extractionPipeline,
+                                          List<TableSettings> alertDefinitions, final Map<String, String> params, final Receiver receiver){
+        final ExtractionTask task = new ExtractionTask(streamId, sortedEventIds, extractionPipeline, receiver, alertDefinitions, params);
         taskQueue.offer(new ExtractionRunnable(task, handlerProvider));
     }
 

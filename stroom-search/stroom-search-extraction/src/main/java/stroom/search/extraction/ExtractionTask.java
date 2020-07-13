@@ -23,6 +23,7 @@ import stroom.search.coprocessor.Receiver;
 import com.google.common.collect.Table;
 
 import java.util.List;
+import java.util.Map;
 
 class ExtractionTask {
     private final long streamId;
@@ -30,6 +31,7 @@ class ExtractionTask {
     private final DocRef pipelineRef;
     private final Receiver receiver;
     private final List<TableSettings> alertTableSettings;
+    private final Map<String, String> paramMapForAlerting;
 
     ExtractionTask(final long streamId,
                    final long[] eventIds,
@@ -40,18 +42,21 @@ class ExtractionTask {
         this.pipelineRef = pipelineRef;
         this.receiver = receiver;
         this.alertTableSettings = null;
+        this.paramMapForAlerting = null;
     }
 
     ExtractionTask(final long streamId,
                    final long[] eventIds,
                    final DocRef pipelineRef,
                    final Receiver receiver,
-                   final List<TableSettings> alertTableSettings) {
+                   final List<TableSettings> alertTableSettings,
+                   final Map<String, String> paramMap) {
         this.streamId = streamId;
         this.eventIds = eventIds;
         this.pipelineRef = pipelineRef;
         this.receiver = receiver;
         this.alertTableSettings = alertTableSettings;
+        this.paramMapForAlerting = paramMap;
     }
 
     long getStreamId() {
@@ -76,5 +81,9 @@ class ExtractionTask {
 
     final List<TableSettings> getAlertTableSettings(){
         return alertTableSettings;
+    }
+
+    final Map<String, String> getParamMapForAlerting(){
+        return paramMapForAlerting;
     }
 }

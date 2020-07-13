@@ -24,6 +24,7 @@ import stroom.index.shared.IndexDoc;
 import stroom.index.shared.IndexException;
 import stroom.index.shared.IndexShard.IndexShardStatus;
 import stroom.index.shared.IndexShardKey;
+import stroom.pipeline.errorhandler.ErrorReceiverProxy;
 import stroom.util.logging.LambdaLogger;
 import stroom.util.logging.LambdaLoggerFactory;
 import stroom.alert.api.AlertManager;
@@ -62,26 +63,41 @@ public class IndexerImpl implements Indexer {
         this.indexStore = indexStore;
     }
 
+
+    private static Long findStreamId(final Document document){
+        try {
+          return document.getField("StreamId").numericValue().longValue();
+        } catch (RuntimeException ex){
+            return null;
+        }
+    }
+
     @Override
     public void addDocument(final IndexShardKey indexShardKey, final Document document) {
         if (document != null) {
             //First create any alerts
-            try {
-                if (alertProcessor == null) {
-                    final Optional<AlertProcessor> processor = alertManager.createAlertProcessor(
-                            new DocRef(IndexDoc.DOCUMENT_TYPE,
-                                    indexShardKey.getIndexUuid()));
-                    if (processor.isPresent()) {
-                        alertProcessor = processor.get();
+            Long streamId = findStreamId(document);
+            if (streamId != null) {
+                try {
+                    if (alertProcessor == null) {
+                        final Optional<AlertProcessor> processor = alertManager.createAlertProcessor(
+                                new DocRef(IndexDoc.DOCUMENT_TYPE,
+                                        indexShardKey.getIndexUuid()), streamId);
+                        if (processor.isPresent()) {
+                            alertProcessor = processor.get();
+                        }
                     }
-                }
-                if (alertProcessor != null){
-                    alertProcessor.addIfNeeded(document);
-                }
+                    if (alertProcessor != null) {
+                        alertProcessor.addIfNeeded(document);
+                    }
 
-            } catch (RuntimeException ex){
-                LOGGER.error(ex::getMessage, ex);
+                } catch (RuntimeException ex) {
+                    LOGGER.error(ex::getMessage, ex);
+                }
+            } else {
+                LOGGER.warn("Unable to locate StreamId for document, alerting disabled for this stream");
             }
+
 
             // Try and add the document silently without locking.
             boolean success = false;

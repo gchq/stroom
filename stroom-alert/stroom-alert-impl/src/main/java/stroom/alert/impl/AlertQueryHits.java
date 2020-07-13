@@ -31,13 +31,17 @@ public class AlertQueryHits {
         return hitSet.stream().mapToLong(i -> i).toArray();
     }
 
-    public void addQueryHitForRule (final RuleConfig rule, final Long eventId) {
+    public synchronized void addQueryHitForRule (final RuleConfig rule, final Long eventId) {
         addRuleForPipeline (rule.getPipeline(), rule);
         final String queryId = rule.getQueryId();
         if (!queryHitsMap.containsKey(queryId)){
             queryHitsMap.put(queryId,new HashSet<>());
         }
         queryHitsMap.get(queryId).add(eventId);
+    }
+
+    public synchronized void clearHits(){
+        queryHitsMap.clear();
     }
 
     private void addRuleForPipeline (final DocRef pipeline, final RuleConfig ruleConfig){

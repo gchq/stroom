@@ -66,7 +66,7 @@ public class AlertManagerImpl implements AlertManager {
     }
 
     @Override
-    public Optional<AlertProcessor> createAlertProcessor(final DocRef indexDocRef) {
+    public Optional<AlertProcessor> createAlertProcessor(final DocRef indexDocRef, long streamId) {
         if (!initialised){
             initialiseCache();
             initialised = true;
@@ -80,7 +80,7 @@ public class AlertManagerImpl implements AlertManager {
         }
         else {
             AlertProcessorImpl processor = new AlertProcessorImpl(extractionDecoratorFactory, indexToRules.get(indexDocRef), indexStructure,
-                    wordListProvider, maxBooleanClauseCount);
+                    streamId, wordListProvider, maxBooleanClauseCount);
             return Optional.of(processor);
         }
 
@@ -165,7 +165,7 @@ public class AlertManagerImpl implements AlertManager {
 
                         //Now split out by pipeline
                         for (DocRef pipeline : pipelineTableSettings.keySet()){
-                            final RuleConfig rule = new RuleConfig(queryId, expression, pipeline,
+                            final RuleConfig rule = new RuleConfig(dashboard.getUuid(), dashboard.getName(), queryId, expression, pipeline,
                                     pipelineTableSettings.get(pipeline), paramMap);
                             if (!indexToRules.containsKey(dataSource))
                                 indexToRules.put(dataSource, new ArrayList<>());
