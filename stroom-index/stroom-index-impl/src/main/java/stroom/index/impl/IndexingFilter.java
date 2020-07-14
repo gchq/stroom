@@ -305,15 +305,16 @@ class IndexingFilter extends AbstractXMLFilter {
 
 
 
-    //todo remove debug var
-    private int numEnds = 0;
-
+    //For debug purposes, todo remove at some point
+    private int numberOfEndProcessingCalls = 0;
     @Override
     public void endProcessing() {
         alertProcessor.createAlerts();
         super.endProcessing();
-        numEnds++;
-        System.out.println("Indexing filter in " + indexRef.getName()  + " finish processing number " + numEnds);
+        numberOfEndProcessingCalls++;
+        if (numberOfEndProcessingCalls > 1) {
+            LOGGER.warn("Indexing filter in " + indexRef.getName() + " finish processing number " + numberOfEndProcessingCalls);
+        }
     }
 
     @PipelineProperty(description = "The index to send records to.", displayPriority = 1)

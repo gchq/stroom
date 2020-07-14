@@ -16,18 +16,24 @@
 
 package stroom.search.extraction;
 
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.xml.sax.Attributes;
+import org.xml.sax.Locator;
 import org.xml.sax.SAXException;
+import org.xml.sax.helpers.AttributesImpl;
 
 import stroom.dashboard.expression.v1.Expression;
-import stroom.dashboard.expression.v1.FieldIndexMap;
 import stroom.dashboard.expression.v1.Generator;
 import stroom.dashboard.expression.v1.Val;
 import stroom.dashboard.expression.v1.ValString;
+import stroom.pipeline.LocationFactoryProxy;
+import stroom.pipeline.errorhandler.ErrorReceiverProxy;
 import stroom.pipeline.factory.ConfigurableElement;
 import stroom.pipeline.shared.ElementIcons;
 import stroom.pipeline.shared.data.PipelineElementType;
 import stroom.pipeline.shared.data.PipelineElementType.Category;
+//import stroom.pipeline.xml.event.simple.AttributesImpl;
 import stroom.query.api.v2.Field;
 import stroom.query.api.v2.TableSettings;
 import stroom.query.common.v2.CompiledField;
@@ -35,7 +41,9 @@ import stroom.query.common.v2.CompiledFields;
 import stroom.query.common.v2.format.FieldFormatter;
 import stroom.query.common.v2.format.FormatterFactory;
 import stroom.search.coprocessor.Values;
+import stroom.util.shared.Severity;
 
+import javax.inject.Inject;
 import java.util.Arrays;
 import java.util.List;
 import java.util.stream.Collectors;
@@ -43,16 +51,36 @@ import java.util.stream.Collectors;
 @ConfigurableElement(type = "SearchResultOutputFilter", category = Category.FILTER, roles = {
         PipelineElementType.ROLE_TARGET}, icon = ElementIcons.SEARCH)
 public class SearchResultOutputFilter extends AbstractSearchResultOutputFilter {
+    private static final Logger LOGGER = LoggerFactory.getLogger(SearchResultOutputFilter.class);
+
+    private static final String RECORDS = "records";
     private static final String RECORD = "record";
     private static final String DATA = "data";
     private static final String NAME = "name";
     private static final String VALUE = "value";
 
+    private final LocationFactoryProxy locationFactory;
+    private final ErrorReceiverProxy errorReceiverProxy;
+
+    private Locator locator;
+
     private Val[] values;
+    private String nsUri = null;
+
+    @Inject
+    SearchResultOutputFilter (final LocationFactoryProxy locationFactory, final ErrorReceiverProxy errorReceiverProxy){
+        this.locationFactory = locationFactory;
+        this.errorReceiverProxy = errorReceiverProxy;
+    }
+
+    public boolean isConfiguredForAlerting(){
+        return alertTableDefinitions != null;
+    }
 
     @Override
     public void startElement(final String uri, final String localName, final String qName, final Attributes atts)
             throws SAXException {
+        //Hold values for later use
         if (DATA.equals(localName) && values != null) {
             String name = atts.getValue(NAME);
             String value = atts.getValue(VALUE);
@@ -70,41 +98,74 @@ public class SearchResultOutputFilter extends AbstractSearchResultOutputFilter {
         } else if (RECORD.equals(localName)) {
             values = new Val[fieldIndexes.size()];
         }
-        super.startElement(uri, localName, qName, atts);
+
+        if (isConfiguredForAlerting()) {
+            if (nsUri == null) {
+                nsUri = uri;
+            }
+            if (!nsUri.equals(uri)){
+                throw new IllegalStateException("Unable to process alerts from multiple XML namespaces," +
+                        " changed from " + nsUri + " to " + uri);
+            }
+        }
+
+        if (!isConfiguredForAlerting() || RECORDS.equals(localName)){
+            super.startElement(uri, localName, qName, atts);
+        }
     }
 
     @Override
     public void endElement(final String uri, final String localName, final String qName) throws SAXException {
         if (RECORD.equals(localName)) {
 
-            if (alertTableDefinitions != null) {
-
+            if (isConfiguredForAlerting()) {
+                //Alert generation search extraction - create records when filters match
                 if (values == null || values.length == 0) {
-                    System.out.println("No values to extract from " );
+                    log(Severity.WARNING,"No values to extract from ",null );
                     return;
                 }
-
-                System.out.println("Going to do some extraction alert stuff " + alertTableDefinitions);
 
                 Values vals = new Values (values);
                 for (TableSettings rule : alertTableDefinitions){
                     String [] outputFields = extractAlert(rule, vals);
                     if (outputFields != null){
-                        System.out.println ("Reporting an alert with vals" +
+                        writeRecord (outputFields);
+                        LOGGER.debug ("Reporting an alert with vals" +
                                 Arrays.stream(outputFields).collect(Collectors.joining(", ")));
                     }
                 }
 
             } else {
-                //Non-alert creation search extraction
+                //Standard (typically dashboard populating) search extraction, pass onto consumers (e.g. dashboards)
                 consumer.accept(new Values(values));
                 values = null;
             }
         }
 
-        super.endElement(uri, localName, qName);
+        if (!isConfiguredForAlerting() || RECORDS.equals(localName)){
+            super.endElement(uri, localName, qName);
+        }
     }
 
+    private void writeRecord(String[] fieldVals) throws SAXException {
+        if (fieldVals == null || fieldVals.length == 0) {
+            return;
+        }
+
+        LOGGER.debug("Creating an alert following filtering");
+        super.startElement(nsUri, RECORD, RECORD, new AttributesImpl());
+        for (String fieldName: fieldIndexes.getMap().keySet()){
+            String fieldVal = fieldVals[fieldIndexes.get(fieldName)];
+            if (fieldVal != null) {
+                AttributesImpl attrs = new AttributesImpl();
+                attrs.addAttribute(nsUri, NAME, NAME, "xs:string", fieldName);
+                attrs.addAttribute(nsUri, VALUE, VALUE, "xs:string", fieldVal);
+                super.startElement(nsUri, DATA, DATA, attrs);
+                super.endElement(nsUri, DATA, DATA);
+            }
+        }
+        super.endElement(nsUri, RECORD, RECORD);
+    }
 
     //todo use the timezone in the dashboard?
     private final static String DATE_TIME_LOCALE_SHOULD_BE_FROM_SEARCH = "UTC";
@@ -152,5 +213,20 @@ public class SearchResultOutputFilter extends AbstractSearchResultOutputFilter {
         }
 
         return output;
+    }
+
+    /**
+     * Sets the locator to use when reporting errors.
+     *
+     * @param locator The locator to use.
+     */
+    @Override
+    public void setDocumentLocator(final Locator locator) {
+        this.locator = locator;
+        super.setDocumentLocator(locator);
+    }
+
+    private void log(final Severity severity, final String message, final Exception e) {
+        errorReceiverProxy.log(severity, locationFactory.create(locator), getElementId(), message, e);
     }
 }

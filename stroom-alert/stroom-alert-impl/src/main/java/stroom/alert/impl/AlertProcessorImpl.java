@@ -47,7 +47,7 @@ public class AlertProcessorImpl implements AlertProcessor {
     private final int maxBooleanClauseCount;
     private final IndexStructure indexStructure;
     //todo  work out how to use the timezone in the query
-    private final String DATE_TIME_LOCALE_SHOULD_BE_FROM_SEARCH = "UTC";
+    private static final String DATE_TIME_LOCALE_SHOULD_BE_FROM_SEARCH = "UTC";
 
     private final List <RuleConfig> rules;
 
@@ -183,13 +183,17 @@ public class AlertProcessorImpl implements AlertProcessor {
                 LOGGER.trace("--Iterating ruleConfig {}", ruleConfig.getQueryId());
                 long[] eventIds = alertQueryHits.getSortedQueryHitsForRule(ruleConfig);
                 if (eventIds != null && eventIds.length > 0) {
-                    for (TableSettings tableSettings : ruleConfig.getTableSettings()){
-                        LOGGER.trace("----Iterating tablesettings {}", tableSettings);
+
+                    //todo - confirm that all tables share the same field map (and remove commented out code)
+//                    for (TableSettings tableSettings : ruleConfig.getTableSettings()){
+//                        LOGGER.trace("----Iterating tablesettings {}", tableSettings);
                         numTasks++;
                         final Receiver receiver = new Receiver() {
                             @Override
                             public FieldIndexMap getFieldIndexMap() {
-                                return FieldIndexMap.forFields(tableSettings.getFields().stream().map(t->t.getName())
+//                                return FieldIndexMap.forFields(tableSettings.getFields().stream().map(t->t.getName())
+//                                        .collect(Collectors.toList()).toArray(new String[0]));
+                                return FieldIndexMap.forFields(ruleConfig.getTableSettings().get(0).getFields().stream().map(t->t.getName())
                                         .collect(Collectors.toList()).toArray(new String[0]));
                             }
 
@@ -213,7 +217,7 @@ public class AlertProcessorImpl implements AlertProcessor {
                                 currentStreamId, eventIds, pipeline,
                                 ruleConfig.getTableSettings(), ruleConfig.getParams());
                         LOGGER.trace("This AlertProcessorImpl has now created {} tasks during this call ", numTasks);
-                    }
+//                    }
 
 
                 }
