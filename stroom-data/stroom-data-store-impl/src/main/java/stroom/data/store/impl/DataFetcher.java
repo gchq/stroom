@@ -610,6 +610,8 @@ public class DataFetcher {
         int lastLineNo = -1; // one based
         int lastColNo = -1; // one based
         long startCharOffset = -1;
+        int startLineNo = -1;
+        int startColNo = -1;
 
         int currBufferLen = 0;
         boolean isFirstChar = true;
@@ -627,11 +629,14 @@ public class DataFetcher {
 
             // If we have a char offset start point it is quicker to jump to that than
             // scanning through
-            if (sourceLocation.getOptDataRange().isPresent()
-                    && sourceLocation.getDataRange().getOptCharOffsetFrom().isPresent()
-                    && sourceLocation.getDataRange().getCharOffsetFrom() != 0) {
-                currCharOffset = currCharOffset + reader.skip(sourceLocation.getDataRange().getCharOffsetFrom() - 1);
-            }
+            // If we jump then we can't rack the line/col info for the requested range, i.e.
+            // to show the right line numbers in the editor.
+
+//            if (sourceLocation.getOptDataRange().isPresent()
+//                    && sourceLocation.getDataRange().getOptCharOffsetFrom().isPresent()
+//                    && sourceLocation.getDataRange().getCharOffsetFrom() != 0) {
+//                currCharOffset = currCharOffset + reader.skip(sourceLocation.getDataRange().getCharOffsetFrom() - 1);
+//            }
 
             while (sb.length() < MAX_CHARS && (currBufferLen = reader.read(buffer)) != -1) {
 //                for (int i = 0; i < currBufferLen && sb.length() < maxLength && currLineNo < maxLineNo; i++) {
@@ -644,9 +649,11 @@ public class DataFetcher {
 
                             if (toInclusivePredicate.test(currLineNo, currColNo, currCharOffset, sb.length())) {
                                 // Before or on our required char
-                                // Record the start offset for the requested text
+                                // Record the start position for the requested text
                                 if (startCharOffset == -1) {
                                     startCharOffset = currCharOffset;
+                                    startLineNo = currLineNo;
+                                    startColNo = currColNo;
                                 }
                                 sb.append(c);
 
@@ -702,12 +709,10 @@ public class DataFetcher {
 
         final DataRange actualDataRange = DataRange.builder()
                 .fromCharOffset(startCharOffset)
-                .fromLocation(sourceLocation.getOptDataRange()
-                        .flatMap(DataRange::getOptLocationFrom)
-                        .orElse(DefaultLocation.of(1,1)))
+                .fromLocation(DefaultLocation.of(startLineNo, startColNo))
                 .toLocation(DefaultLocation.of(lastLineNo, lastColNo))
-//                .toCharOffset(currCharOffset - 1) // undo the last ++ op
-                .toCharOffset(currCharOffset) // undo the last ++ op
+                .toCharOffset(currCharOffset - 1) // undo the last ++ op
+//                .toCharOffset(currCharOffset) // undo the last ++ op
                 .withLength((long) sb.length())
                 .build();
 
