@@ -30,7 +30,7 @@ import stroom.task.api.TaskContext;
 import stroom.util.logging.LambdaLogUtil;
 import stroom.util.pipeline.scope.PipelineScoped;
 import stroom.util.shared.DefaultLocation;
-import stroom.util.shared.Highlight;
+import stroom.util.shared.TextRange;
 
 import javax.inject.Inject;
 import java.util.HashSet;
@@ -38,7 +38,7 @@ import java.util.Set;
 
 @PipelineScoped
 public class SteppingController {
-    private static final Highlight DEFAULT_HIGHLIGHT = new Highlight(
+    private static final TextRange DEFAULT_TEXT_RANGE = new TextRange(
             new DefaultLocation(1, 1),
             new DefaultLocation(1, 1));
 
@@ -137,7 +137,7 @@ public class SteppingController {
         }
 
         // Figure out what the highlighted portion of the input stream should be.
-        Highlight highlight = DEFAULT_HIGHLIGHT;
+        TextRange highlight = DEFAULT_TEXT_RANGE;
         if (locationHolder != null && locationHolder.getCurrentLocation() != null) {
             highlight = locationHolder.getCurrentLocation().getHighlight();
         }
@@ -201,12 +201,12 @@ public class SteppingController {
 
     }
 
-    StepData createStepData(final Highlight highlight) {
+    StepData createStepData(final TextRange textRange) {
         SourceLocation sourceLocation = null;
         if (stepLocation != null) {
             DataRange dataRange;
 
-            if (highlight != null) {
+            if (textRange != null) {
                 // TODO @AT Need to get the highlighted range + some context either side
                 //   or if there is no highlight then get default range
 
@@ -221,7 +221,7 @@ public class SteppingController {
                     .withPartNo(stepLocation.getPartNo())
                     .withSegmentNumber(stepLocation.getRecordNo())
                     .withDataRange(dataRange)
-                    .withHighlight(highlight)
+                    .withHighlight(textRange)
                     .build();
         }
 
@@ -231,7 +231,7 @@ public class SteppingController {
         // Store the current data and reset for each filter.
         final LoggingErrorReceiver errorReceiver = getErrorReceiver();
         for (final ElementMonitor monitor : monitors) {
-            final ElementData elementData = monitor.getElementData(errorReceiver, highlight);
+            final ElementData elementData = monitor.getElementData(errorReceiver, textRange);
             stepData.getElementMap().put(monitor.getElementId(), elementData);
         }
 
@@ -241,7 +241,7 @@ public class SteppingController {
     /**
      * This method resets all filters so they are ready for the next record.
      */
-    void clearAllFilters(final Highlight highlight) {
+    void clearAllFilters(final TextRange highlight) {
         // Store the current data for each filter.
         monitors.forEach(elementMonitor -> elementMonitor.clear(highlight));
 

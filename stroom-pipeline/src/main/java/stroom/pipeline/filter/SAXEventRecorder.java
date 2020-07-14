@@ -16,25 +16,26 @@
 
 package stroom.pipeline.filter;
 
-import net.sf.saxon.Configuration;
-import net.sf.saxon.om.NodeInfo;
-import net.sf.saxon.xpath.XPathEvaluator;
-import org.xml.sax.Attributes;
-import org.xml.sax.SAXException;
 import stroom.pipeline.errorhandler.ErrorReceiver;
 import stroom.pipeline.errorhandler.ErrorReceiverProxy;
 import stroom.pipeline.errorhandler.LoggingErrorReceiver;
 import stroom.pipeline.errorhandler.ProcessException;
 import stroom.pipeline.shared.Record;
-import stroom.pipeline.shared.stepping.SteppingFilterSettings;
 import stroom.pipeline.shared.XPathFilter;
+import stroom.pipeline.shared.stepping.SteppingFilterSettings;
 import stroom.pipeline.state.MetaHolder;
 import stroom.pipeline.stepping.Recorder;
 import stroom.pipeline.stepping.SteppingFilter;
-import stroom.util.shared.Highlight;
 import stroom.util.shared.Indicators;
 import stroom.util.shared.OutputState;
 import stroom.util.shared.Severity;
+import stroom.util.shared.TextRange;
+
+import net.sf.saxon.Configuration;
+import net.sf.saxon.om.NodeInfo;
+import net.sf.saxon.xpath.XPathEvaluator;
+import org.xml.sax.Attributes;
+import org.xml.sax.SAXException;
 
 import javax.inject.Inject;
 import javax.xml.namespace.NamespaceContext;
@@ -297,7 +298,7 @@ public class SAXEventRecorder extends TinyTreeBufferFilter implements Recorder, 
     }
 
     @Override
-    public Object getData(final Highlight highlight) {
+    public Object getData(final TextRange textRange) {
         final NodeInfo events = getEvents();
         if (events == null) {
             return null;
@@ -307,7 +308,7 @@ public class SAXEventRecorder extends TinyTreeBufferFilter implements Recorder, 
     }
 
     @Override
-    public void clear(final Highlight highlight) {
+    public void clear(final TextRange textRange) {
         // Clear the event buffer as this is a new record.
         clearBuffer();
 

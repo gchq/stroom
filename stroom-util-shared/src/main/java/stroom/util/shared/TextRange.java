@@ -26,14 +26,14 @@ import java.util.Objects;
 
 @JsonPropertyOrder({"from", "to"})
 @JsonInclude(Include.NON_NULL)
-public class Highlight implements Comparable<Highlight> {
+public class TextRange implements Comparable<TextRange> {
     @JsonProperty
     private final Location from;
     @JsonProperty
     private final Location to;
 
     @JsonCreator
-    public Highlight(@JsonProperty("from") final Location from,
+    public TextRange(@JsonProperty("from") final Location from,
                      @JsonProperty("to") final Location to) {
         this.from = from;
         this.to = to;
@@ -57,7 +57,7 @@ public class Highlight implements Comparable<Highlight> {
     public boolean equals(final Object o) {
         if (this == o) return true;
         if (o == null || getClass() != o.getClass()) return false;
-        final Highlight highlight = (Highlight) o;
+        final TextRange highlight = (TextRange) o;
         return Objects.equals(from, highlight.from) &&
                 Objects.equals(to, highlight.to);
     }
@@ -68,7 +68,7 @@ public class Highlight implements Comparable<Highlight> {
     }
 
     @Override
-    public int compareTo(final Highlight o) {
+    public int compareTo(final TextRange o) {
         final CompareBuilder builder = new CompareBuilder();
         builder.append(from, o.from);
         builder.append(to, o.to);
@@ -82,5 +82,32 @@ public class Highlight implements Comparable<Highlight> {
                 "][" +
                 to +
                 "]";
+    }
+
+    /**
+     * @param lineNo One based.
+     * @param colNo One based.
+     */
+    public boolean isOnOrAfterFromLocation(final int lineNo, int colNo) {
+        return lineNo > from.getLineNo()
+                || (lineNo == from.getLineNo() && colNo >= from.getColNo());
+    }
+
+    /**
+     * @param lineNo One based.
+     * @param colNo One based.
+     */
+    public boolean isOnOrBeforeToLocation(final int lineNo, int colNo) {
+        return lineNo < to.getLineNo()
+                || (lineNo == to.getLineNo() && colNo >= to.getColNo());
+    }
+
+    /**
+     * Inclusive at both ends.
+     * One based.
+     */
+    public boolean isInsideRange(final int lineNo, int colNo) {
+        return isOnOrAfterFromLocation(lineNo, colNo)
+                && isOnOrBeforeToLocation(lineNo, colNo);
     }
 }

@@ -93,8 +93,8 @@ public class DataFetcher {
     private static final int STREAM_BUFFER_SIZE = 1024 * 100;
 
     // Max chars we can return
-    private static final long MAX_CHARS = 10_000; // TODO get from config
-    private static final long MAX_ERRORS_ON_PAGE = 10; // TODO get from config
+    private static final long MAX_CHARS = 10_000L; // TODO get from config
+    private static final long MAX_ERRORS_ON_PAGE = 500L; // TODO get from config
 
     private final Long partsToReturn = 1L;
     private final Long segmentsToReturn = 1L;
@@ -355,7 +355,7 @@ public class DataFetcher {
         final String classification = feedProperties.getDisplayClassification(feedName);
         final OffsetRange<Long> itemRange = new OffsetRange<>(sourceLocation.getSegmentNo(), (long) resultList.size());
 //        final RowCount<Long> streamsRowCount = new RowCount<>(partCount, true);
-        final RowCount<Long> totalItemCount = new RowCount<>((long)totalResults, true);
+        final RowCount<Long> totalItemCount = new RowCount<>((long) totalResults, true);
 //        final OffsetRange<Long> resultPageRange = new OffsetRange<>((long) pageOffset,
 //                (long) resultList.size());
         final RowCount<Long> totalCharCount = new RowCount<>(0L, true);
@@ -583,24 +583,12 @@ public class DataFetcher {
     private RawResult extractDataRange(final SourceLocation sourceLocation,
                                        final InputStream inputStream,
                                        final String encoding) throws IOException {
-        // Get the appropriate encoding for the stream type.
-//        final String encoding = feedProperties.getEncoding(feedName, streamTypeName);
-
-//        pageOffset = pageRange.getOffset();
-//        final long minLineNo = dataRange.getLocationFrom();
-//        final long maxLineNo = pageOffset + pageRange.getLength();
-
         // We could have:
         // One potentially VERY long line, too big to display
         // Lots of small lines
         // Multiple long lines that are too big to display
-        final StringBuilder sb = new StringBuilder();
-
-//        long lineCount = 0;
-//        long currLineLen = 0;
-
-
-        // TODO do we need a make line count, e.g. if we have loads of tiny lines?
+        final StringBuilder strBuilderRange = new StringBuilder();
+        final StringBuilder strBuilderLine = new StringBuilder();
 
         // Trackers for what we have so far and where we are
         int currLineNo = 1; // one based
@@ -609,9 +597,11 @@ public class DataFetcher {
 
         int lastLineNo = -1; // one based
         int lastColNo = -1; // one based
+        int lastCompleteLineEndColNo = -1; // one based
         long startCharOffset = -1;
         int startLineNo = -1;
         int startColNo = -1;
+        long charsInRangeCount = 0;
 
         int currBufferLen = 0;
         boolean isFirstChar = true;
@@ -620,100 +610,100 @@ public class DataFetcher {
         try (final Reader reader = new InputStreamReader(inputStream, encoding)) {
             final char[] buffer = new char[STREAM_BUFFER_SIZE];
 
-//            final long maxLength = MAX_LINE_LENGTH * pageRange.getLength();
-
-            final NonSegmentedIncludeCharPredicate fromInclusivePredicate = buildFromInclusivePredicate(
+            final NonSegmentedIncludeCharPredicate fromInclusivePredicate = buildInclusiveFromPredicate(
                     sourceLocation.getDataRange());
-            final NonSegmentedIncludeCharPredicate toInclusivePredicate = buildToInclusivePredicate(
+            final NonSegmentedIncludeCharPredicate toInclusivePredicate = buildInclusiveToPredicate(
                     sourceLocation.getDataRange());
 
-            // If we have a char offset start point it is quicker to jump to that than
-            // scanning through
-            // If we jump then we can't rack the line/col info for the requested range, i.e.
+            // We could jump to the requested offset, but if we do, we can't
+            // track the line/col info for the requested range, i.e.
             // to show the right line numbers in the editor.
 
-//            if (sourceLocation.getOptDataRange().isPresent()
-//                    && sourceLocation.getDataRange().getOptCharOffsetFrom().isPresent()
-//                    && sourceLocation.getDataRange().getCharOffsetFrom() != 0) {
-//                currCharOffset = currCharOffset + reader.skip(sourceLocation.getDataRange().getCharOffsetFrom() - 1);
-//            }
+            boolean reachedEndOfRange = false;
 
-            while (sb.length() < MAX_CHARS && (currBufferLen = reader.read(buffer)) != -1) {
-//                for (int i = 0; i < currBufferLen && sb.length() < maxLength && currLineNo < maxLineNo; i++) {
+            while (!reachedEndOfRange
+                    && !wasTruncated
+                    && (currBufferLen = reader.read(buffer)) != -1) {
+
                 for (int i = 0; i < currBufferLen; i++) {
-                    if (sb.length() < MAX_CHARS) {
-                        final char c = buffer[i];
+                    final char c = buffer[i];
 
-                        if (fromInclusivePredicate.test(currLineNo, currColNo, currCharOffset, sb.length())) {
-                            // On or after the first requested char
+                    if (fromInclusivePredicate.test(currLineNo, currColNo, currCharOffset, charsInRangeCount)) {
+                        // On or after the first requested char
 
-                            if (toInclusivePredicate.test(currLineNo, currColNo, currCharOffset, sb.length())) {
+                        if (toInclusivePredicate.test(currLineNo, currColNo, currCharOffset, charsInRangeCount)) {
+                            if (charsInRangeCount < MAX_CHARS) {
+                                charsInRangeCount++;
                                 // Before or on our required char
-                                // Record the start position for the requested text
+                                // Record the start position for the requested range
                                 if (startCharOffset == -1) {
                                     startCharOffset = currCharOffset;
                                     startLineNo = currLineNo;
                                     startColNo = currColNo;
                                 }
-                                sb.append(c);
+                                // Append the char that is in range to our line builder
+                                strBuilderLine.append(c);
 
                                 // Need the prev location so when we test the first char after the range
                                 // we can get the last one in the range
                                 lastLineNo = currLineNo;
                                 lastColNo = currColNo;
                             } else {
-                                // No need to scan any further
+                                //
+                                wasTruncated = true;
                                 break;
                             }
                         } else {
-                            // Need to carry on scanning
+                            reachedEndOfRange = true;
+                            break;
                         }
+                    }
 
-                        currCharOffset++;
+                    // Now advance the counters/trackers for the next char
+                    currCharOffset++;
 
-                        if (isFirstChar) {
-                            isFirstChar = false;
-                        } else if (c == '\n') {
-                            currLineNo++;
-                            currColNo = 1;
-                        } else {
-                            currColNo++;
-                        }
+                    if (isFirstChar) {
+                        isFirstChar = false;
+                    } else if (c == '\n') {
+                        // Add the current line to our master StringBuilder, then clear the line
+                        strBuilderRange.append(strBuilderLine);
+                        strBuilderLine.setLength(0);
 
+                        lastCompleteLineEndColNo = currColNo;
+                        currLineNo++;
+                        currColNo = 1;
                     } else {
-                        wasTruncated = true;
-                        break;
+                        currColNo++;
                     }
                 }
             }
         }
 
-        // Increment the line count by one more if we have some content.
-//        if (currLineNo < maxLineNo && sb.length() > 0) {
-//            pageLength++;
-//        }
-//
-//        pageTotal = pageOffset + pageLength;
-//        // If there was no more content then the page total has been reached.
-        final boolean isTotalPageableItemsExact = currBufferLen == -1 && !wasTruncated;
+        final boolean isTotalPageableItemsExact = currBufferLen == -1;
+
+        if (wasTruncated && lastLineNo > 1) {
+            // Multi line data that has been truncated so we don't want a partial line.
+            // strBuilderRange won't include the partial line but we need to adjust the
+            // line/col numbers down to match what is in strBuilderRange.
+            lastLineNo--;
+            lastColNo = lastCompleteLineEndColNo;
+            currCharOffset = currCharOffset - strBuilderLine.length();
+        } else {
+            // Add the last line read
+            strBuilderRange.append(strBuilderLine);
+            currCharOffset = currCharOffset - 1; // undo the last ++ op
+        }
 
         final RowCount<Long> totalCharCount = RowCount.of(
-                startCharOffset + sb.length(),
+                startCharOffset + strBuilderRange.length(),
                 isTotalPageableItemsExact);
-        final OffsetRange<Long> pageCharsRange = OffsetRange.of(startCharOffset, (long) sb.length());
-
-        // Make sure we can't exceed the page total.
-//        if (pageOffset >= pageTotal) {
-//            pageOffset = pageTotal - 1;
-//        }
 
         final DataRange actualDataRange = DataRange.builder()
                 .fromCharOffset(startCharOffset)
                 .fromLocation(DefaultLocation.of(startLineNo, startColNo))
                 .toLocation(DefaultLocation.of(lastLineNo, lastColNo))
-                .toCharOffset(currCharOffset - 1) // undo the last ++ op
-//                .toCharOffset(currCharOffset) // undo the last ++ op
-                .withLength((long) sb.length())
+                .toCharOffset(currCharOffset)
+                .withLength((long) strBuilderRange.length())
                 .build();
 
         // Define the range that we are actually returning, which may be smaller than requested
@@ -727,66 +717,96 @@ public class DataFetcher {
             builder.withSegmentNumber(segmentNumber);
         }
 
-        if (wasTruncated) {
-            sb.append(TRUNCATED_SUFFIX);
-        }
-        final RawResult rawResult = new RawResult(builder.build(), sb.toString());
+//        if (wasTruncated) {
+//            strBuilderRange.append(TRUNCATED_SUFFIX);
+//        }
+        final RawResult rawResult = new RawResult(builder.build(), strBuilderRange.toString());
         rawResult.setTotalCharacterCount(totalCharCount);
 //        rawResult.setPageItemsRange(pageCharsRange);
         return rawResult;
     }
 
-    private NonSegmentedIncludeCharPredicate buildFromInclusivePredicate(final DataRange dataRange) {
+    private NonSegmentedIncludeCharPredicate buildInclusiveFromPredicate(final DataRange dataRange) {
         // FROM (inclusive)
-        final NonSegmentedIncludeCharPredicate fromInclusivePredicate;
+        final NonSegmentedIncludeCharPredicate inclusiveFromPredicate;
         if (dataRange == null || !dataRange.hasBoundedStart()) {
             // No start bound
             LOGGER.debug("Unbounded from predicate");
-            fromInclusivePredicate = (currLineNo, currColNo, currCharOffset, charCount) -> true;
+            inclusiveFromPredicate = (currLineNo, currColNo, currCharOffset, charCount) -> true;
         } else if (dataRange.getOptCharOffsetFrom().isPresent()) {
             final long startCharOffset = dataRange.getOptCharOffsetFrom().getAsLong();
             LOGGER.debug("Char offset (inc.) from predicate [{}]", startCharOffset);
-            fromInclusivePredicate = (currLineNo, currColNo, currCharOffset, charCount) ->
+            inclusiveFromPredicate = (currLineNo, currColNo, currCharOffset, charCount) ->
                     currCharOffset >= startCharOffset;
         } else if (dataRange.getOptLocationFrom().isPresent()) {
             final int lineNoFrom = dataRange.getOptLocationFrom().get().getLineNo();
             final int colNoFrom = dataRange.getOptLocationFrom().get().getColNo();
             LOGGER.debug("Line/col (inc.) from predicate [{}, {}]", lineNoFrom, colNoFrom);
-            fromInclusivePredicate = (currLineNo, currColNo, currCharOffset, charCount) ->
+            inclusiveFromPredicate = (currLineNo, currColNo, currCharOffset, charCount) ->
                     currLineNo > lineNoFrom || (currLineNo == lineNoFrom && currColNo >= colNoFrom);
         } else {
             throw new RuntimeException("No start point specified");
         }
-        return fromInclusivePredicate;
+        return inclusiveFromPredicate;
     }
 
-    private NonSegmentedIncludeCharPredicate buildToInclusivePredicate(final DataRange dataRange) {
+    private NonSegmentedIncludeCharPredicate buildInclusiveToPredicate(final DataRange dataRange) {
         // TO (inclusive)
-        final NonSegmentedIncludeCharPredicate toInclusivePredicate;
+        final NonSegmentedIncludeCharPredicate inclusiveToPredicate;
         if (dataRange == null || !dataRange.hasBoundedEnd()) {
             // No end bound
             LOGGER.debug("Unbounded to predicate");
-            toInclusivePredicate = (currLineNo, currColNo, currCharOffset, charCount) -> true;
+            inclusiveToPredicate = (currLineNo, currColNo, currCharOffset, charCount) -> true;
         } else if (dataRange.getOptLength().isPresent()) {
             final long dataLength = dataRange.getOptLength().getAsLong();
             LOGGER.debug("Length (inc.) to predicate [{}]", dataLength);
-            toInclusivePredicate = (currLineNo, currColNo, currCharOffset, charCount) ->
+            inclusiveToPredicate = (currLineNo, currColNo, currCharOffset, charCount) ->
                     charCount <= dataLength;
         } else if (dataRange.getOptCharOffsetTo().isPresent()) {
             final long charOffsetTo = dataRange.getOptCharOffsetTo().getAsLong();
             LOGGER.debug("Char offset (inc.) to predicate [{}]", charOffsetTo);
-            toInclusivePredicate = (currLineNo, currColNo, currCharOffset, charCount) ->
+            inclusiveToPredicate = (currLineNo, currColNo, currCharOffset, charCount) ->
                     currCharOffset <= charOffsetTo;
         } else if (dataRange.getOptLocationTo().isPresent()) {
             final int lineNoTo = dataRange.getOptLocationTo().get().getLineNo();
             final int colNoTo = dataRange.getOptLocationTo().get().getColNo();
             LOGGER.debug("Line/col (inc.) to predicate [{}, {}]", lineNoTo, colNoTo);
-            toInclusivePredicate = (currLineNo, currColNo, currCharOffset, charCount) ->
+            inclusiveToPredicate = (currLineNo, currColNo, currCharOffset, charCount) ->
                     currLineNo < lineNoTo || (currLineNo == lineNoTo && currColNo <= colNoTo);
         } else {
             throw new RuntimeException("No start point specified");
         }
-        return toInclusivePredicate;
+        return inclusiveToPredicate;
+    }
+
+    private NonSegmentedIncludeCharPredicate buildExclusiveToPredicate(final DataRange dataRange) {
+        // TO (exclusive)
+
+        final NonSegmentedIncludeCharPredicate exclusiveToPredicate;
+        if (dataRange == null || !dataRange.hasBoundedEnd()) {
+            // No end bound
+            LOGGER.debug("Unbounded to predicate");
+            exclusiveToPredicate = (currLineNo, currColNo, currCharOffset, charCount) -> true;
+        } else if (dataRange.getOptLength().isPresent()) {
+            final long dataLength = dataRange.getOptLength().getAsLong();
+            LOGGER.debug("Length (inc.) to predicate [{}]", dataLength);
+            exclusiveToPredicate = (currLineNo, currColNo, currCharOffset, charCount) ->
+                    charCount > dataLength;
+        } else if (dataRange.getOptCharOffsetTo().isPresent()) {
+            final long charOffsetTo = dataRange.getOptCharOffsetTo().getAsLong();
+            LOGGER.debug("Char offset (inc.) to predicate [{}]", charOffsetTo);
+            exclusiveToPredicate = (currLineNo, currColNo, currCharOffset, charCount) ->
+                    currCharOffset > charOffsetTo;
+        } else if (dataRange.getOptLocationTo().isPresent()) {
+            final int lineNoTo = dataRange.getOptLocationTo().get().getLineNo();
+            final int colNoTo = dataRange.getOptLocationTo().get().getColNo();
+            LOGGER.debug("Line/col (inc.) to predicate [{}, {}]", lineNoTo, colNoTo);
+            exclusiveToPredicate = (currLineNo, currColNo, currCharOffset, charCount) ->
+                    currLineNo > lineNoTo || (currLineNo == lineNoTo && currColNo > colNoTo);
+        } else {
+            throw new RuntimeException("No start point specified");
+        }
+        return exclusiveToPredicate;
     }
 
     private String usePipeline(final Source streamSource,

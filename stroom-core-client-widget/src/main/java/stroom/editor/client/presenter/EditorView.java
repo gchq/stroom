@@ -26,8 +26,7 @@ import edu.ycp.cs.dh.acegwt.client.ace.AceEditorMode;
 import edu.ycp.cs.dh.acegwt.client.ace.AceEditorTheme;
 import stroom.editor.client.event.HasFormatHandlers;
 import stroom.editor.client.view.IndicatorLines;
-import stroom.util.shared.Highlight;
-import stroom.util.shared.Indicators;
+import stroom.util.shared.TextRange;
 import stroom.widget.contextmenu.client.event.HasContextMenuHandlers;
 
 import java.util.List;
@@ -40,7 +39,7 @@ public interface EditorView extends View, HasKeyDownHandlers, HasFormatHandlers,
 
     void setIndicators(IndicatorLines indicators);
 
-    void setHighlights(List<Highlight> highlights);
+    void setHighlights(List<TextRange> highlights);
 
     void setReadOnly(boolean readOnly);
 

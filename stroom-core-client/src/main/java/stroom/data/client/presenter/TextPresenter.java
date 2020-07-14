@@ -17,7 +17,7 @@
 package stroom.data.client.presenter;
 
 import stroom.editor.client.presenter.EditorPresenter;
-import stroom.util.shared.Highlight;
+import stroom.util.shared.TextRange;
 
 import com.google.inject.Inject;
 import com.google.web.bindery.event.shared.EventBus;
@@ -57,7 +57,7 @@ public class TextPresenter extends MyPresenterWidget<TextPresenter.TextView> {
         textPresenter.setFirstLineNumber(firstLineNumber);
     }
 
-    public void setHighlights(final List<Highlight> highlights) {
+    public void setHighlights(final List<TextRange> highlights) {
         textPresenter.setHighlights(highlights);
     }
 

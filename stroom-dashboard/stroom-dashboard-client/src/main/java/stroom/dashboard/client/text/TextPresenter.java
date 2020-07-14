@@ -46,7 +46,7 @@ import stroom.security.client.api.ClientSecurityContext;
 import stroom.security.shared.PermissionNames;
 import stroom.util.shared.DefaultLocation;
 import stroom.util.shared.EqualsUtil;
-import stroom.util.shared.Highlight;
+import stroom.util.shared.TextRange;
 
 import com.google.gwt.core.client.GWT;
 import com.google.gwt.core.client.Scheduler;
@@ -109,7 +109,7 @@ public class TextPresenter extends AbstractComponentPresenter<TextPresenter.Text
                           final String classification,
                           final Set<String> highlightStrings,
                           final boolean isHtml) {
-        final List<Highlight> highlights = getHighlights(data, highlightStrings);
+        final List<TextRange> highlights = getHighlights(data, highlightStrings);
 
         // Defer showing data to be sure that the data display has been made
         // visible first.
@@ -157,10 +157,10 @@ public class TextPresenter extends AbstractComponentPresenter<TextPresenter.Text
         });
     }
 
-    private List<Highlight> getHighlights(final String input, final Set<String> highlightStrings) {
+    private List<TextRange> getHighlights(final String input, final Set<String> highlightStrings) {
         // final StringBuilder output = new StringBuilder(input);
 
-        final List<Highlight> highlights = new ArrayList<>();
+        final List<TextRange> highlights = new ArrayList<>();
 
         // See if we are going to add highlights.
         if (highlightStrings != null && highlightStrings.size() > 0) {
@@ -204,7 +204,7 @@ public class TextPresenter extends AbstractComponentPresenter<TextPresenter.Text
                             }
 
                             if (found) {
-                                final Highlight hl = new Highlight(
+                                final TextRange hl = new TextRange(
                                         new DefaultLocation(lineNo, colNo),
                                         new DefaultLocation(lineNo, colNo + highlightLength));
                                 highlights.add(hl);
@@ -282,7 +282,7 @@ public class TextPresenter extends AbstractComponentPresenter<TextPresenter.Text
 
                     if (currentStreamId != null) {
                         DataRange dataRange = null;
-                        Highlight highlight = null;
+                        TextRange highlight = null;
                         if (currentLineFrom != null
                                 && currentColFrom != null
                                 && currentLineTo != null
@@ -291,7 +291,7 @@ public class TextPresenter extends AbstractComponentPresenter<TextPresenter.Text
                                     new DefaultLocation(currentLineFrom.intValue(), currentColFrom.intValue()),
                                     new DefaultLocation(currentLineTo.intValue(), currentColTo.intValue()));
 
-                            highlight = new Highlight(
+                            highlight = new TextRange(
                                     new DefaultLocation(currentLineFrom.intValue(), currentColFrom.intValue()),
                                     new DefaultLocation(currentLineTo.intValue(), currentColTo.intValue()));
                         }
@@ -355,7 +355,7 @@ public class TextPresenter extends AbstractComponentPresenter<TextPresenter.Text
         }
     }
 
-    private long getStartLine(final Highlight highlight) {
+    private long getStartLine(final TextRange highlight) {
         int lineNoFrom = highlight.getFrom().getLineNo();
         if (lineNoFrom == 1) {
             // Content starts on first line so convert to an offset as the server code
@@ -367,7 +367,7 @@ public class TextPresenter extends AbstractComponentPresenter<TextPresenter.Text
         }
     }
 
-    private long getLineCount(final Highlight highlight) {
+    private long getLineCount(final TextRange highlight) {
         int lineNoFrom = highlight.getFrom().getLineNo();
         if (lineNoFrom == 1) {
             return highlight.getTo().getLineNo() - highlight.getFrom().getLineNo() + 1;

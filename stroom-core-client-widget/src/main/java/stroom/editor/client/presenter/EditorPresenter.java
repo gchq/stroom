@@ -24,7 +24,7 @@ import stroom.editor.client.event.HasFormatHandlers;
 import stroom.editor.client.model.XmlFormatter;
 import stroom.editor.client.view.EditorMenuPresenter;
 import stroom.editor.client.view.IndicatorLines;
-import stroom.util.shared.Highlight;
+import stroom.util.shared.TextRange;
 
 import com.google.gwt.event.logical.shared.HasValueChangeHandlers;
 import com.google.gwt.event.logical.shared.ValueChangeHandler;
@@ -121,7 +121,7 @@ public class EditorPresenter extends MyPresenterWidget<EditorView>
         getView().setIndicators(indicators);
     }
 
-    public void setHighlights(final List<Highlight> highlights) {
+    public void setHighlights(final List<TextRange> highlights) {
         getView().setHighlights(highlights);
     }
 

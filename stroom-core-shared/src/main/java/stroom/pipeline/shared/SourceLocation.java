@@ -17,7 +17,7 @@
 package stroom.pipeline.shared;
 
 import stroom.data.shared.DataRange;
-import stroom.util.shared.Highlight;
+import stroom.util.shared.TextRange;
 
 import com.fasterxml.jackson.annotation.JsonCreator;
 import com.fasterxml.jackson.annotation.JsonIgnore;
@@ -50,7 +50,9 @@ public class SourceLocation {
     @JsonProperty
     private final DataRange dataRange; // The optional specified range of the character data which may be a subset
     @JsonProperty
-    private final Highlight highlight; // The optional highlighted range of the character data which may be a subset
+    private final TextRange highlight; // The optional highlighted range of the character data which may be a subset
+    @JsonProperty
+    private final boolean truncateToWholeLines;
 
     @JsonCreator
     public SourceLocation(@JsonProperty("id") final long id,
@@ -59,7 +61,8 @@ public class SourceLocation {
                           @JsonProperty("segmentNo") final long segmentNo,
 //                          @JsonProperty("segmentNoRage") final OffsetRange<Long> segmentNoRange,
                           @JsonProperty("dataRange") final DataRange dataRange,
-                          @JsonProperty("highlight") final Highlight highlight) {
+                          @JsonProperty("highlight") final TextRange highlight,
+                          @JsonProperty("truncateToWholeLines") final boolean truncateToWholeLines) {
         this.id = id;
         this.childType = childType;
         this.partNo = partNo;
@@ -67,6 +70,7 @@ public class SourceLocation {
 //        this.segmentNoRange = segmentNoRange;
         this.dataRange = dataRange;
         this.highlight = highlight;
+        this.truncateToWholeLines = truncateToWholeLines;
     }
 
     private SourceLocation(final Builder builder) {
@@ -77,6 +81,7 @@ public class SourceLocation {
 //        segmentNoRange = builder.segmentNoRange;
         dataRange = builder.dataRange;
         highlight = builder.highlight;
+        truncateToWholeLines = builder.truncateToWholeLines;
     }
 
     public static Builder builder(final long id) {
@@ -146,13 +151,17 @@ public class SourceLocation {
     /**
      * @return The range of data that is highlighted, may be null.
      */
-    public Highlight getHighlight() {
+    public TextRange getHighlight() {
         return highlight;
     }
 
     @JsonIgnore
-    public Optional<Highlight> getOptHighlight() {
+    public Optional<TextRange> getOptHighlight() {
         return Optional.ofNullable(highlight);
+    }
+
+    public boolean isTruncateToWholeLines() {
+        return truncateToWholeLines;
     }
 
     @Override
@@ -204,7 +213,8 @@ public class SourceLocation {
         private long segmentNo = -1; // Non-segmented date has no segment no.
 //        private OffsetRange<Long> segmentNoRange = null;
         private DataRange dataRange;
-        private Highlight highlight;
+        private TextRange highlight;
+        private boolean truncateToWholeLines = false;
 
         private Builder(final long id) {
             this.id = id;
@@ -255,8 +265,13 @@ public class SourceLocation {
             return this;
         }
 
-        public Builder withHighlight(final Highlight highlight) {
+        public Builder withHighlight(final TextRange highlight) {
             this.highlight = highlight;
+            return this;
+        }
+
+        public Builder truncateToWholeLines() {
+            this.truncateToWholeLines = true;
             return this;
         }
 

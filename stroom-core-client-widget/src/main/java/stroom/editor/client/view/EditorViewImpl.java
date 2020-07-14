@@ -22,7 +22,7 @@ import stroom.editor.client.model.XmlFormatter;
 import stroom.editor.client.presenter.EditorUiHandlers;
 import stroom.editor.client.presenter.EditorView;
 import stroom.editor.client.presenter.Option;
-import stroom.util.shared.Highlight;
+import stroom.util.shared.TextRange;
 import stroom.util.shared.Location;
 import stroom.util.shared.Severity;
 import stroom.util.shared.StoredError;
@@ -232,13 +232,13 @@ public class EditorViewImpl extends ViewWithUiHandlers<EditorUiHandlers> impleme
     }
 
     @Override
-    public void setHighlights(final List<Highlight> highlights) {
+    public void setHighlights(final List<TextRange> highlights) {
         Scheduler.get().scheduleDeferred(() -> {
             if (highlights != null && highlights.size() > 0) {
                 final List<Marker> markers = new ArrayList<>();
                 int minLineNo = Integer.MAX_VALUE;
 
-                for (final Highlight highlight : highlights) {
+                for (final TextRange highlight : highlights) {
                     minLineNo = Math.min(minLineNo, highlight.getFrom().getLineNo());
                     final AceRange range = AceRange.create(
                             highlight.getFrom().getLineNo() - firstLineNumber,

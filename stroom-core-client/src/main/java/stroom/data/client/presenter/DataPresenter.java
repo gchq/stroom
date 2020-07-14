@@ -30,7 +30,7 @@ import stroom.pipeline.shared.ViewDataResource;
 import stroom.security.client.api.ClientSecurityContext;
 import stroom.security.shared.PermissionNames;
 import stroom.util.shared.EqualsUtil;
-import stroom.util.shared.Highlight;
+import stroom.util.shared.TextRange;
 import stroom.util.shared.Location;
 import stroom.util.shared.Marker;
 import stroom.util.shared.RowCount;
@@ -117,7 +117,7 @@ public class DataPresenter extends MyPresenterWidget<DataPresenter.DataView> imp
     private List<Marker> markers;
     private int startLineNo;
 
-    private List<Highlight> highlights;
+    private List<TextRange> highlights;
     private Long highlightId;
     private Long highlightPartNo;
     private String highlightChildDataType;
@@ -665,51 +665,6 @@ public class DataPresenter extends MyPresenterWidget<DataPresenter.DataView> imp
 
         setPagers(result);
 
-//        int streamOffset = 0;
-//        int streamLength = 0;
-//        int streamCount = 0;
-//        boolean streamCountExact = true;
-//        int pageOffset = 0;
-//        int pageLength = 0;
-//        int pageCount = 0;
-//        boolean pageCountExact = true;
-
-        // Update paging info from the current result.
-//        if (result != null) {
-//            streamOffset = (int) result.getSourceLocation().getPartNo();
-////            streamLength = result.getStreamRange().getLength().intValue();
-//            streamLength = 1;
-//            streamCount = result.getStreamRowCount().getCount().intValue();
-//            streamCountExact = result.getStreamRowCount().isExact();
-////            pageOffset = result.getSourceLocation().getDataRange().getCharOffsetFrom().intValue();
-//            pageOffset = result.getPageRange().getOffset().intValue();
-//            pageLength = result.getPageRange().getLength().intValue();
-//            pageCount = result.getPageRowCount().getCount().intValue();
-//            pageCountExact = result.getPageRowCount().isExact();
-
-//            if (result instanceof FetchDataResult) {
-//                final FetchDataResult fetchDataResult = (FetchDataResult) result;
-//                if (DataType.SEGMENTED.equals(fetchDataResult.getDataType())) {
-//                    pageOffset = (int) fetchDataResult.getSourceLocation().getSegmentNo();
-//                    pageCount = Math.toIntExact(fetchDataResult.getPageRowCount().getCount());
-//                } else {
-//                    pageOffset = fetchDataResult.getSourceLocation().getDataRange().getCharOffsetFrom().intValue();
-//                    pageCount = Math.toIntExact(fetchDataResult.getSourceLocation().getDataRange().getLength());
-//                }
-//            } else if (result instanceof FetchMarkerResult) {
-//                pageOffset = (int) fetchDataResult.getSourceLocation().getSegmentNo();
-//                pageCount = Math.toIntExact(fetchDataResult.getPageRowCount().getCount());
-//
-//                // TODO @AT implement
-//            }
-//        }
-
-//        segmentPagerRows.updateRowData(streamOffset, streamLength);
-//        segmentPagerRows.updateRowCount(streamCount, streamCountExact);
-//
-//        dataPagerRows.updateRowData(pageOffset, pageLength);
-//        dataPagerRows.updateRowCount(pageCount, pageCountExact);
-
         textPresenter.setText(data, formatOnLoad);
         textPresenter.setFirstLineNumber(startLineNo);
         textPresenter.setControlsVisible(playButtonVisible);
@@ -979,5 +934,12 @@ public class DataPresenter extends MyPresenterWidget<DataPresenter.DataView> imp
         public SimplePagerRows(final int length) {
             super(length);
         }
+
+//        @Override
+//        public Range getVisibleRange() {
+//            final Range range = super.getVisibleRange();
+//            // TODO @AT should be consistent with DataFetcher
+//            return new Range(range.getStart(), 10_000);
+//        }
     }
 }

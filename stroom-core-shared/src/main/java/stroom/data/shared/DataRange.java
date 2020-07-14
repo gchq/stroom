@@ -35,6 +35,9 @@ public class DataRange {
     @JsonProperty
     private final Long length; // number of chars from the start position
 
+    // TODO could add a totalLines prop so you can set a start point and a number of lines to include
+    //   the start point.
+
     // data range limited by a hard max length set in config to protect UI
 
     @JsonCreator
@@ -74,6 +77,9 @@ public class DataRange {
                 null);
     }
 
+    /**
+     * @param charOffsetFrom Zero based
+     */
     public static DataRange from(final long charOffsetFrom, final long length) {
         return new DataRange(null,
                 charOffsetFrom,
@@ -82,6 +88,9 @@ public class DataRange {
                 length);
     }
 
+    /**
+     * @param charOffsetFrom Zero based
+     */
     public static DataRange from(final long charOffsetFrom) {
         return new DataRange(null,
                 charOffsetFrom,
@@ -107,7 +116,7 @@ public class DataRange {
     }
 
     /**
-     * @return The start of the data range, inclusive
+     * @return The start of the data range, inclusive, zero based
      */
     @JsonIgnore
     public OptionalLong getOptCharOffsetFrom() {
@@ -116,6 +125,9 @@ public class DataRange {
                 : OptionalLong.empty();
     }
 
+    /**
+     * @return The start of the data range, inclusive, zero based
+     */
     public Long getCharOffsetFrom() {
         return charOffsetFrom;
     }
@@ -133,7 +145,7 @@ public class DataRange {
     }
 
     /**
-     * @return The end of the data range, inclusive
+     * @return The end of the data range, inclusive, zero based
      */
     @JsonIgnore
     public OptionalLong getOptCharOffsetTo() {
@@ -142,6 +154,9 @@ public class DataRange {
                 : OptionalLong.empty();
     }
 
+    /**
+     * @return The end of the data range, inclusive, zero based
+     */
     public Long getCharOffsetTo() {
         return charOffsetTo;
     }

@@ -36,7 +36,7 @@ import stroom.util.io.StreamUtil;
 import stroom.util.logging.AsciiTable;
 import stroom.util.logging.AsciiTable.Column;
 import stroom.util.shared.DefaultLocation;
-import stroom.util.shared.Highlight;
+import stroom.util.shared.TextRange;
 import stroom.util.shared.Indicators;
 import stroom.util.shared.Location;
 import stroom.util.xml.XMLUtil;
@@ -205,7 +205,7 @@ class TestDS3 extends StroomUnitTest {
 
     private LoggingContentHandler doLocationTest(final Root root,
                                                  final String inputStr,
-                                                 final List<Highlight> expectedRanges) throws IOException, SAXException {
+                                                 final List<TextRange> expectedRanges) throws IOException, SAXException {
         LOGGER.info("root:\n{}", root.toString());
 
         DS3Parser ds3Parser = new DS3Parser(root, 1_000, 10_000);
@@ -232,10 +232,10 @@ class TestDS3 extends StroomUnitTest {
         return contentHandler;
     }
 
-    private String rangesToString(final List<Highlight> ranges, final String inputStr) {
+    private String rangesToString(final List<TextRange> ranges, final String inputStr) {
 
         return AsciiTable.builder(ranges)
-                .withColumn(Column.of( "Source", (Highlight range) ->
+                .withColumn(Column.of( "Source", (TextRange range) ->
                         "[" + extractRange(inputStr, range.getFrom(), range.getTo()) + "]"))
                 .withColumn(Column.of("From", range ->
                         range.getFrom().toString()))
@@ -244,11 +244,11 @@ class TestDS3 extends StroomUnitTest {
                 .build();
     }
 
-    private Highlight makeRange(final int fromLine,
+    private TextRange makeRange(final int fromLine,
                                 final int fromCol,
                                 final int toLine,
                                 final int toCol) {
-        return new Highlight(
+        return new TextRange(
                 DefaultLocation.of(fromLine, fromCol),
                 DefaultLocation.of(toLine, toCol));
     }
@@ -568,13 +568,13 @@ class TestDS3 extends StroomUnitTest {
 
         private final DS3Parser ds3Parser;
         private Locator locator;
-        private List<Highlight> textRanges = new ArrayList<>();
+        private List<TextRange> textRanges = new ArrayList<>();
 
         private LoggingContentHandler(final DS3Parser ds3Parser) {
             this.ds3Parser = ds3Parser;
         }
 
-        public List<Highlight> getTextRanges() {
+        public List<TextRange> getTextRanges() {
             return textRanges;
         }
 
@@ -626,7 +626,7 @@ class TestDS3 extends StroomUnitTest {
                             dsLocator.getRecordEndLocator().getLineNumber(),
                             dsLocator.getRecordEndLocator().getColumnNumber());
 
-                    textRanges.add(new Highlight(
+                    textRanges.add(new TextRange(
                             DefaultLocation.of(dsLocator.getLineNumber(), dsLocator.getColumnNumber()),
                             DefaultLocation.of(
                                     dsLocator.getRecordEndLocator().getLineNumber(),

@@ -21,7 +21,7 @@ import stroom.pipeline.shared.SourceLocation;
 import stroom.pipeline.xml.converter.ds3.DSLocator;
 import stroom.util.pipeline.scope.PipelineScoped;
 import stroom.util.shared.DefaultLocation;
-import stroom.util.shared.Highlight;
+import stroom.util.shared.TextRange;
 import stroom.util.shared.Location;
 
 import org.slf4j.Logger;
@@ -131,7 +131,7 @@ public class LocationHolder implements Holder {
                 currentEndLocation = endLocation;
             }
 
-            final Highlight highlight = new Highlight(currentStartLocation, currentEndLocation);
+            final TextRange highlight = new TextRange(currentStartLocation, currentEndLocation);
             final DataRange dataRange = DataRange.between(currentStartLocation, currentEndLocation);
 
             LOGGER.trace("Storing range: {}", highlight);

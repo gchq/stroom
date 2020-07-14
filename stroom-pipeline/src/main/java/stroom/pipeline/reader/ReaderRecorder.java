@@ -23,7 +23,7 @@ import stroom.pipeline.factory.TakesReader;
 import stroom.pipeline.factory.Target;
 import stroom.pipeline.reader.ByteStreamDecoder.SizedString;
 import stroom.pipeline.stepping.Recorder;
-import stroom.util.shared.Highlight;
+import stroom.util.shared.TextRange;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -74,17 +74,17 @@ public class ReaderRecorder extends AbstractIOElement implements TakesInput, Tak
     }
 
     @Override
-    public Object getData(final Highlight highlight) {
+    public Object getData(final TextRange textRange) {
         if (buffer == null) {
             return null;
         }
-        return buffer.getData(highlight);
+        return buffer.getData(textRange);
     }
 
     @Override
-    public void clear(final Highlight highlight) {
+    public void clear(final TextRange textRange) {
         if (buffer != null) {
-            buffer.clear(highlight);
+            buffer.clear(textRange);
         }
     }
 
@@ -142,10 +142,10 @@ public class ReaderRecorder extends AbstractIOElement implements TakesInput, Tak
         }
 
         @Override
-        public Object getData(final Highlight highlight) {
-            if (highlight != null) {
+        public Object getData(final TextRange textRange) {
+            if (textRange != null) {
                 final StringBuilder sb = new StringBuilder();
-                consumeHighlightedSection(highlight, sb::append);
+                consumeHighlightedSection(textRange, sb::append);
                 return sb.toString();
             }
 
@@ -153,11 +153,11 @@ public class ReaderRecorder extends AbstractIOElement implements TakesInput, Tak
         }
 
         @Override
-        public void clear(final Highlight highlight) {
-            if (highlight == null) {
+        public void clear(final TextRange textRange) {
+            if (textRange == null) {
                 clear();
             } else {
-                consumeHighlightedSection(highlight, c -> {
+                consumeHighlightedSection(textRange, c -> {
                 });
             }
         }
@@ -169,12 +169,13 @@ public class ReaderRecorder extends AbstractIOElement implements TakesInput, Tak
             clear();
         }
 
-        private void consumeHighlightedSection(final Highlight highlight, final Consumer<Character> consumer) {
+        private void consumeHighlightedSection(final TextRange textRange,
+                                               final Consumer<Character> consumer) {
             // range is inclusive at both ends
-            final int lineFrom = highlight.getFrom().getLineNo();
-            final int colFrom = highlight.getFrom().getColNo();
-            final int lineTo = highlight.getTo().getLineNo();
-            final int colTo = highlight.getTo().getColNo();
+            final int lineFrom = textRange.getFrom().getLineNo();
+            final int colFrom = textRange.getFrom().getColNo();
+            final int lineTo = textRange.getTo().getLineNo();
+            final int colTo = textRange.getTo().getColNo();
 
             boolean found = false;
             boolean inRecord = false;
@@ -183,18 +184,6 @@ public class ReaderRecorder extends AbstractIOElement implements TakesInput, Tak
             int i = 0;
             for (; i < length() && !found; i++) {
                 final char c = charAt(i);
-
-//                // Remember the previous line and column numbers in case we need to go back to them.
-//                final int previousLineNo = lineNo;
-//                final int previousColNo = colNo;
-
-                // Advance the line or column number.
-//                if (c == '\n') {
-//                    lineNo++;
-//                    colNo = BASE_COL_NO;
-//                } else {
-//                    colNo++;
-//                }
 
                 if (!inRecord) {
                     // Inclusive from
@@ -212,10 +201,6 @@ public class ReaderRecorder extends AbstractIOElement implements TakesInput, Tak
                         inRecord = false;
                         found = true;
                         advance = i; // offset of the first char outside the range
-
-                        // We won't be consuming the current char so revert to the previous line and column numbers.
-//                        lineNo = previousLineNo;
-//                        colNo = previousColNo;
                     }
                 }
 
@@ -320,18 +305,18 @@ public class ReaderRecorder extends AbstractIOElement implements TakesInput, Tak
         }
 
         @Override
-        public Object getData(final Highlight highlight) {
-            if (highlight != null) {
-                return getHighlightedSection(highlight);
+        public Object getData(final TextRange textRange) {
+            if (textRange != null) {
+                return getHighlightedSection(textRange);
             }
 
             return null;
         }
 
-        private String getHighlightedSection(final Highlight highlight) {
+        private String getHighlightedSection(final TextRange textRange) {
             try {
                 final ByteArrayOutputStream baos = new ByteArrayOutputStream();
-                consumeHighlightedSection(highlight, baos::write);
+                consumeHighlightedSection(textRange, baos::write);
                 return baos.toString(encoding);
             } catch (final UnsupportedEncodingException e) {
                 LOGGER.error(e.getMessage(), e);
@@ -340,21 +325,22 @@ public class ReaderRecorder extends AbstractIOElement implements TakesInput, Tak
         }
 
         @Override
-        public void clear(final Highlight highlight) {
-            if (highlight == null) {
+        public void clear(final TextRange textRange) {
+            if (textRange == null) {
                 clear();
             } else {
-                consumeHighlightedSection(highlight, c -> {
+                consumeHighlightedSection(textRange, c -> {
                 });
             }
         }
 
-        private void consumeHighlightedSection(final Highlight highlight, final Consumer<Byte> consumer) {
+        private void consumeHighlightedSection(final TextRange textRange,
+                                               final Consumer<Byte> consumer) {
             // range is inclusive at both ends
-            final int lineFrom = highlight.getFrom().getLineNo();
-            final int colFrom = highlight.getFrom().getColNo();
-            final int lineTo = highlight.getTo().getLineNo();
-            final int colTo = highlight.getTo().getColNo();
+            final int lineFrom = textRange.getFrom().getLineNo();
+            final int colFrom = textRange.getFrom().getColNo();
+            final int lineTo = textRange.getTo().getLineNo();
+            final int colTo = textRange.getTo().getColNo();
 
             boolean found = false;
             boolean inRecord = false;
@@ -472,9 +458,9 @@ public class ReaderRecorder extends AbstractIOElement implements TakesInput, Tak
 
 
     private interface Buffer {
-        Object getData(Highlight highlight);
+        Object getData(TextRange textRange);
 
-        void clear(Highlight highlight);
+        void clear(TextRange textRange);
 
         void reset();
     }
