@@ -29,6 +29,7 @@ import stroom.pipeline.shared.SourceLocation;
 import stroom.pipeline.shared.ViewDataResource;
 import stroom.security.client.api.ClientSecurityContext;
 import stroom.security.shared.PermissionNames;
+import stroom.util.shared.EqualsUtil;
 import stroom.util.shared.Highlight;
 import stroom.util.shared.Location;
 import stroom.util.shared.Marker;
@@ -115,10 +116,12 @@ public class DataPresenter extends MyPresenterWidget<DataPresenter.DataView> imp
     private String data;
     private List<Marker> markers;
     private int startLineNo;
+
     private List<Highlight> highlights;
-    //    private Long highlightId;
-//    private Long highlightPartNo;
-//    private String highlightChildDataType;
+    private Long highlightId;
+    private Long highlightPartNo;
+    private String highlightChildDataType;
+
     private boolean playButtonVisible;
     private ClassificationUiHandlers classificationUiHandlers;
     private BeginSteppingHandler beginSteppingHandler;
@@ -247,9 +250,9 @@ public class DataPresenter extends MyPresenterWidget<DataPresenter.DataView> imp
             this.highlights.add(sourceLocation.getHighlight());
         }
 
-//        this.highlightId = sourceLocation.getId();
-//        this.highlightPartNo = sourceLocation.getPartNo();
-//        this.highlightChildDataType = sourceLocation.getChildType();
+        this.highlightId = sourceLocation.getId();
+        this.highlightPartNo = sourceLocation.getPartNo();
+        this.highlightChildDataType = sourceLocation.getChildType();
 
         // Make sure the right page is shown when the source is displayed.
 //        final long oldPartNo = currentDataRange.getOffset() + 1;
@@ -356,6 +359,7 @@ public class DataPresenter extends MyPresenterWidget<DataPresenter.DataView> imp
                     .withDataRange(currentDataRange != null
                             ? currentDataRange
                             : DEFAULT_DATA_RANGE)
+//                    .withHighlight(highlights.get(0))
                     .withChildStreamType(currentChildDataType));
 
 //            request.setStreamId(currentMetaId);
@@ -715,16 +719,30 @@ public class DataPresenter extends MyPresenterWidget<DataPresenter.DataView> imp
     }
 
     private void refreshHighlights(final AbstractFetchDataResult result) {
-        int streamNo = 0;
+        int partNo = 0;
 
         if (result != null) {
-            streamNo = (int) (result.getSourceLocation().getPartNo() + 1);
+//            partNo = (int) (result.getSourceLocation().getPartNo() + 1);
+            partNo = (int) (result.getSourceLocation().getPartNo());
         }
 
         // Make sure we have a highlight section to add and that the stream id
         // matches that of the current page, and that the stream number matches
         // the stream number of the current page.
         // TODO @AT fix highlighting
+        if (highlights != null
+                && currentMetaId != null
+                && currentMetaId.equals(highlightId)
+                && partNo == highlightPartNo
+                && EqualsUtil.isEquals(currentChildDataType, highlightChildDataType)) {
+            // Set the content to be displayed in the source view with a
+            // highlight.
+            textPresenter.setHighlights(highlights);
+        } else {
+            // Set the content to be displayed in the source view without a
+            // highlight.
+            textPresenter.setHighlights(null);
+        }
 //        if (highlights != null && currentMetaId != null && currentMetaId.equals(highlightId)
 //                && streamNo == highlightPartNo
 //                && EqualsUtil.isEquals(currentChildDataType, highlightChildDataType)) {

@@ -22,11 +22,12 @@ import stroom.pipeline.xml.converter.AbstractParser;
 import stroom.pipeline.xml.converter.ds3.GroupFactory.MatchOrder;
 import stroom.pipeline.xml.converter.ds3.NodeFactory.NodeType;
 import stroom.util.CharBuffer;
+import stroom.util.logging.LambdaLogger;
+import stroom.util.logging.LambdaLoggerFactory;
+import stroom.util.logging.LogUtil;
 import stroom.util.shared.ModelStringUtil;
 import stroom.util.shared.Severity;
 
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 import org.xml.sax.Attributes;
 import org.xml.sax.InputSource;
 import org.xml.sax.SAXException;
@@ -61,7 +62,7 @@ public class DS3Parser extends AbstractParser {
 
     private static final Attributes EMPTY_ATTS = new AttributesImpl();
     private static final AttributesImpl ROOT_ATTS = new AttributesImpl();
-    private static final Logger LOGGER = LoggerFactory.getLogger(DS3Parser.class);
+    private static final LambdaLogger LOGGER = LambdaLoggerFactory.getLogger(DS3Parser.class);
     private static final int RECOVERY_MODE = -99;
 
     static {
@@ -662,6 +663,7 @@ public class DS3Parser extends AbstractParser {
         if (!inRecord) {
             inRecord = true;
 
+            LOGGER.trace(() -> LogUtil.message("startRecord location: {}", reader.getCurrentLocationAsStart()));
             getContentHandler().startElement(NAMESPACE, XML_ELEMENT_RECORD, XML_ELEMENT_RECORD, EMPTY_ATTS);
         }
     }
@@ -670,6 +672,7 @@ public class DS3Parser extends AbstractParser {
         if (inRecord) {
             inRecord = false;
 
+            LOGGER.trace(() -> LogUtil.message("endRecord location: {}", reader.getCurrentLocationAsEnd()));
             getContentHandler().endElement(NAMESPACE, XML_ELEMENT_RECORD, XML_ELEMENT_RECORD);
         }
     }
@@ -690,17 +693,24 @@ public class DS3Parser extends AbstractParser {
             // regex's.
             final Runnable command = () -> {
                 final ExecutionProfilerTopN top10 = new ExecutionProfilerTopN(root, 10);
-                final StringBuilder debugLine = new StringBuilder();
-                debugLine.append("process() - Top 10 executions : ");
-                for (final ExecutionProfiler ex : top10.getTopN()) {
-                    debugLine.append("\n\t");
-                    debugLine.append(ex.getExecutionString());
-                    debugLine.append(" (");
-                    debugLine.append(ModelStringUtil.formatCsv(ex.getTotalExecutionCount()));
-                    debugLine.append(") ");
-                    debugLine.append(ModelStringUtil.formatDurationString(ex.getTotalExecutionTime()));
+                // No point logging if we have no executions
+                long totalExecutionTime = top10.getTopN().stream()
+                        .mapToLong(ExecutionProfiler::getTotalExecutionTime)
+                        .sum();
+
+                if (!top10.getTopN().isEmpty() || totalExecutionTime > 0) {
+                    final StringBuilder debugLine = new StringBuilder();
+                    debugLine.append("process() - Top 10 executions : ");
+                    for (final ExecutionProfiler ex : top10.getTopN()) {
+                        debugLine.append("\n\t");
+                        debugLine.append(ex.getExecutionString());
+                        debugLine.append(" (");
+                        debugLine.append(ModelStringUtil.formatCsv(ex.getTotalExecutionCount()));
+                        debugLine.append(") ");
+                        debugLine.append(ModelStringUtil.formatDurationString(ex.getTotalExecutionTime()));
+                    }
+                    LOGGER.debug(debugLine.toString());
                 }
-                LOGGER.debug(debugLine.toString());
             };
 
             profilingExecutor = Executors.newSingleThreadScheduledExecutor();

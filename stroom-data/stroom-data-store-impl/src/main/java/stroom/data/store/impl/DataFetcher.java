@@ -612,6 +612,7 @@ public class DataFetcher {
         long startCharOffset = -1;
 
         int currBufferLen = 0;
+        boolean isFirstChar = true;
 
         boolean wasTruncated = false;
         try (final Reader reader = new InputStreamReader(inputStream, encoding)) {
@@ -643,11 +644,14 @@ public class DataFetcher {
 
                             if (toInclusivePredicate.test(currLineNo, currColNo, currCharOffset, sb.length())) {
                                 // Before or on our required char
+                                // Record the start offset for the requested text
                                 if (startCharOffset == -1) {
                                     startCharOffset = currCharOffset;
                                 }
                                 sb.append(c);
 
+                                // Need the prev location so when we test the first char after the range
+                                // we can get the last one in the range
                                 lastLineNo = currLineNo;
                                 lastColNo = currColNo;
                             } else {
@@ -660,10 +664,11 @@ public class DataFetcher {
 
                         currCharOffset++;
 
-                        // end of line
-                        if (c == '\n') {
+                        if (isFirstChar) {
+                            isFirstChar = false;
+                        } else if (c == '\n') {
                             currLineNo++;
-                            currColNo = 0;
+                            currColNo = 1;
                         } else {
                             currColNo++;
                         }

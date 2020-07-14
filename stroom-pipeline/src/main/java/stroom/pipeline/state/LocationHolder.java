@@ -24,6 +24,8 @@ import stroom.util.shared.DefaultLocation;
 import stroom.util.shared.Highlight;
 import stroom.util.shared.Location;
 
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.xml.sax.Locator;
 
 import javax.inject.Inject;
@@ -32,12 +34,15 @@ import java.util.List;
 
 @PipelineScoped
 public class LocationHolder implements Holder {
+    private static final Logger LOGGER = LoggerFactory.getLogger(LocationHolder.class);
     private final MetaHolder metaHolder;
     private List<SourceLocation> locations;
     private SourceLocation currentLocation;
     private FunctionType functionType;
 
-    private Locator locator;
+//    private Locator locator;
+    private Locator startLocator;
+    private Locator endLocator;
     private int maxSize = 1;
     private boolean storeLocations = true;
     private long recordNo;
@@ -52,10 +57,16 @@ public class LocationHolder implements Holder {
 
     public void setDocumentLocator(final Locator locator, final int maxSize) {
         this.maxSize = maxSize;
+//        this.locator = locator;
         if (locator instanceof DSLocator) {
-            this.locator = ((DSLocator) locator).getRecordEndLocator();
+//            this.locator = ((DSLocator) locator).getRecordStartLocator();
+//            this.startLocator = locator;
+            this.startLocator = ((DSLocator) locator).getRecordStartLocator();
+            this.endLocator = ((DSLocator) locator).getRecordEndLocator();
         } else {
-            this.locator = locator;
+//            this.locator = locator;
+            this.startLocator = locator;
+            this.endLocator = locator;
         }
     }
 
@@ -84,11 +95,38 @@ public class LocationHolder implements Holder {
     }
 
     public void storeLocation() {
-        if (storeLocations && locator != null && metaHolder != null && metaHolder.getMeta() != null) {
-            final Highlight highlight = createHighlight();
-            final DataRange dataRange = createDataRange();
+//        if (storeLocations && locator != null && metaHolder != null && metaHolder.getMeta() != null) {
+        if (storeLocations
+                && startLocator != null
+                && endLocator != null
+                && metaHolder != null
+                && metaHolder.getMeta() != null) {
+//            final Highlight highlight = createHighlight();
+//            final DataRange dataRange = createDataRange();
+
+            final Location endLocation = new DefaultLocation(
+                    endLocator.getLineNumber(),
+                    endLocator.getColumnNumber());
+
+            // Only change if we have moved forward.
+//        if (currentEndLocation.getLineNo() != location.getLineNo() || currentEndLocation.getColNo() != location.getColNo()) {
+//            currentStartLocation = currentEndLocation;
+//            currentEndLocation = location;
+//        }
+//        return new Highlight(currentStartLocation, currentEndLocation);
+            if (currentEndLocation.getLineNo() != endLocation.getLineNo()
+                    || currentEndLocation.getColNo() != endLocation.getColNo()) {
+
+                currentStartLocation = DefaultLocation.of(startLocator.getLineNumber(), startLocator.getColumnNumber());
+                currentEndLocation = endLocation;
+            }
+            Highlight highlight = new Highlight(currentStartLocation, currentEndLocation);
+            DataRange dataRange = DataRange.between(currentStartLocation, currentEndLocation);
+
+            LOGGER.trace("Storing range: {}", highlight);
 
             recordNo++;
+            // TODO do I need to capture a highlight? DataRange should suffice?
             final SourceLocation sourceLocation = SourceLocation.builder(metaHolder.getMeta().getId())
                     .withChildStreamType(metaHolder.getChildDataType())
                     .withPartNo(metaHolder.getStreamNo())
@@ -119,25 +157,30 @@ public class LocationHolder implements Holder {
         this.storeLocations = storeLocations;
     }
 
-    private Highlight createHighlight() {
-        final Location location = new DefaultLocation(locator.getLineNumber(), locator.getColumnNumber());
-        // Only change if we have moved forward.
-        if (currentEndLocation.getLineNo() != location.getLineNo() || currentEndLocation.getColNo() != location.getColNo()) {
-            currentStartLocation = currentEndLocation;
-            currentEndLocation = location;
-        }
-        return new Highlight(currentStartLocation, currentEndLocation);
-    }
-
-    private DataRange createDataRange() {
-        final Location location = new DefaultLocation(locator.getLineNumber(), locator.getColumnNumber());
-        // Only change if we have moved forward.
-        if (currentEndLocation.getLineNo() != location.getLineNo() || currentEndLocation.getColNo() != location.getColNo()) {
-            currentStartLocation = currentEndLocation;
-            currentEndLocation = location;
-        }
-        return DataRange.between(currentStartLocation, currentEndLocation);
-    }
+//    private Highlight createHighlight() {
+//        final Location endLocation = new DefaultLocation(endLocator.getLineNumber(), endLocator.getColumnNumber());
+//        // Only change if we have moved forward.
+////        if (currentEndLocation.getLineNo() != location.getLineNo() || currentEndLocation.getColNo() != location.getColNo()) {
+////            currentStartLocation = currentEndLocation;
+////            currentEndLocation = location;
+////        }
+////        return new Highlight(currentStartLocation, currentEndLocation);
+//        if (currentEndLocation.getLineNo() != endLocation.getLineNo() || currentEndLocation.getColNo() != endLocation.getColNo()) {
+//            currentStartLocation = DefaultLocation.of(startLocator.getLineNumber(), startLocator.getColumnNumber());
+//            currentEndLocation = endLocation;
+//        }
+//        return new Highlight(currentStartLocation, currentEndLocation);
+//    }
+//
+//    private DataRange createDataRange() {
+//        final Location location = new DefaultLocation(locator.getLineNumber(), locator.getColumnNumber());
+//        // Only change if we have moved forward.
+//        if (currentEndLocation.getLineNo() != location.getLineNo() || currentEndLocation.getColNo() != location.getColNo()) {
+//            currentStartLocation = currentEndLocation;
+//            currentEndLocation = location;
+//        }
+//        return DataRange.between(currentStartLocation, currentEndLocation);
+//    }
 
     public enum FunctionType {
         LOCATION, RECORD_NO, LINE_FROM, COL_FROM, LINE_TO, COL_TO

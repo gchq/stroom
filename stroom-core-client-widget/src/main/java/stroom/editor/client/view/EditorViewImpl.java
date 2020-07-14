@@ -242,9 +242,9 @@ public class EditorViewImpl extends ViewWithUiHandlers<EditorUiHandlers> impleme
                     minLineNo = Math.min(minLineNo, highlight.getFrom().getLineNo());
                     final AceRange range = AceRange.create(
                             highlight.getFrom().getLineNo() - firstLineNumber,
-                            highlight.getFrom().getColNo() - 1,
+                            highlight.getFrom().getColNo() - 1, // appears to be zero-based & inclusive
                             highlight.getTo().getLineNo() - firstLineNumber,
-                            highlight.getTo().getColNo() - 1);
+                            highlight.getTo().getColNo()); // appears to be zero-based & exclusive
                     markers.add(new Marker(range, "hl", AceMarkerType.TEXT, false));
                 }
                 editor.setMarkers(markers);

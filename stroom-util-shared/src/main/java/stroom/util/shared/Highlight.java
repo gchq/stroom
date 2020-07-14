@@ -39,10 +39,16 @@ public class Highlight implements Comparable<Highlight> {
         this.to = to;
     }
 
+    /**
+     * @return Inclusive from location
+     */
     public Location getFrom() {
         return from;
     }
 
+    /**
+     * @return Inclusive to location
+     */
     public Location getTo() {
         return to;
     }

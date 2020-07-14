@@ -210,6 +210,7 @@ public class SteppingController {
                 // TODO @AT Need to get the highlighted range + some context either side
                 //   or if there is no highlight then get default range
 
+//                dataRange = DataRange.between(highlight.getFrom(), highlight.getTo());
                 dataRange = DataRange.from(DefaultLocation.of(1, 1));
             } else {
                 dataRange = DataRange.from(DefaultLocation.of(1, 1));

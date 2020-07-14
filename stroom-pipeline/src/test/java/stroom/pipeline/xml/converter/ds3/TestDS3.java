@@ -33,15 +33,24 @@ import stroom.test.common.util.test.StroomUnitTest;
 import stroom.util.io.FileUtil;
 import stroom.util.io.IgnoreCloseInputStream;
 import stroom.util.io.StreamUtil;
+import stroom.util.logging.AsciiTable;
+import stroom.util.logging.AsciiTable.Column;
+import stroom.util.shared.DefaultLocation;
+import stroom.util.shared.Highlight;
 import stroom.util.shared.Indicators;
+import stroom.util.shared.Location;
 import stroom.util.xml.XMLUtil;
 
+import org.assertj.core.api.Assertions;
 import org.junit.jupiter.api.DynamicTest;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.TestFactory;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.xml.sax.Attributes;
+import org.xml.sax.ContentHandler;
 import org.xml.sax.InputSource;
+import org.xml.sax.Locator;
 import org.xml.sax.SAXException;
 import org.xml.sax.XMLReader;
 
@@ -53,6 +62,7 @@ import java.io.BufferedReader;
 import java.io.IOException;
 import java.io.InputStreamReader;
 import java.io.OutputStream;
+import java.io.StringReader;
 import java.io.Writer;
 import java.nio.file.DirectoryStream;
 import java.nio.file.Files;
@@ -97,7 +107,152 @@ class TestDS3 extends StroomUnitTest {
         LOGGER.debug("\n" + linkedConfig.toString());
     }
 
-    // TODO : Add new test data to fully exercise DS3.
+    @Test
+    void testLocation_rows() throws IOException, SAXException {
+        final RootFactory rootFactory = new RootFactory();
+        final SplitFactory splitFactory = new SplitFactory(rootFactory, "split", "\n");
+        new DataFactory(splitFactory, "rowData", "row", "$1");
+
+        rootFactory.compile();
+
+        final Root root = rootFactory.newInstance(new VarMap());
+
+        final String inputStr = "hello\nworld\ngoodbye\nworld";
+
+        final LoggingContentHandler loggingContentHandler = doLocationTest(
+                root,
+                inputStr,
+                List.of(
+                        makeRange(1,1, 1, 5),
+                        makeRange(2,1, 2, 5),
+                        makeRange(3,1, 3, 7),
+                        makeRange(4,1, 4, 5)));
+    }
+
+    @Test
+    void testLocation_singleLine() throws IOException, SAXException {
+        final RootFactory rootFactory = new RootFactory();
+        final SplitFactory splitFactory = new SplitFactory(rootFactory, "split", "|");
+        new DataFactory(splitFactory, "rowData", "row", "$1");
+
+        rootFactory.compile();
+
+        final Root root = rootFactory.newInstance(new VarMap());
+
+        final String inputStr = "hello|world|goodbye|world";
+        //                       000000000011111111112222222222
+        //                       123456789012345678901234567890
+
+        // source record is taken to be word + delim, e.g. hello|
+        final LoggingContentHandler loggingContentHandler = doLocationTest(
+                root,
+                inputStr,
+                List.of(makeRange(1,1, 1, 6),
+                        makeRange(1,7, 1, 12),
+                        makeRange(1,13, 1, 20),
+                        makeRange(1,21, 1, 25)));
+    }
+
+    @Test
+    void testLocation_singleLine_2charDelim() throws IOException, SAXException {
+        final RootFactory rootFactory = new RootFactory();
+        final SplitFactory splitFactory = new SplitFactory(rootFactory, "split", "||");
+        new DataFactory(splitFactory, "rowData", "row", "$1");
+
+        rootFactory.compile();
+
+        final Root root = rootFactory.newInstance(new VarMap());
+
+        final String inputStr = "hello||world||goodbye||world";
+        //                       000000000011111111112222222222
+        //                       123456789012345678901234567890
+
+        // Make sure the location ranges for each record are correct
+        // source record is taken to be word + delim, e.g. hello||
+        final LoggingContentHandler loggingContentHandler = doLocationTest(
+                root,
+                inputStr,
+                List.of(
+                        makeRange(1,1, 1, 7),
+                        makeRange(1,8, 1, 14),
+                        makeRange(1,15, 1, 23),
+                        makeRange(1,24, 1, 28)));
+    }
+
+    @Test
+    void testLocation_singleLine_regex() throws IOException, SAXException {
+        final RootFactory rootFactory = new RootFactory();
+        final RegexFactory regexFactory = new RegexFactory(rootFactory, "regex", "[A-Z][a-z]{2}");
+        new DataFactory(regexFactory, "rowData", "row", "$0");
+
+        rootFactory.compile();
+
+        final Root root = rootFactory.newInstance(new VarMap());
+
+        final String inputStr = "FriSatSunMon";
+        //                       000000000011
+        //                       123456789012
+
+        // Make sure the location ranges for each record are correct
+        // source record is taken to be word + delim, e.g. hello||
+        final LoggingContentHandler loggingContentHandler = doLocationTest(
+                root,
+                inputStr,
+                List.of(makeRange(1,1, 1, 3),
+                        makeRange(1,4, 1, 6),
+                        makeRange(1,7, 1, 9),
+                        makeRange(1,10, 1, 12)));
+    }
+
+    private LoggingContentHandler doLocationTest(final Root root,
+                                                 final String inputStr,
+                                                 final List<Highlight> expectedRanges) throws IOException, SAXException {
+        LOGGER.info("root:\n{}", root.toString());
+
+        DS3Parser ds3Parser = new DS3Parser(root, 1_000, 10_000);
+
+        LOGGER.info("Input:\n-----\n{}\n-----", inputStr);
+
+        final LoggingErrorReceiver errorReceiver = new LoggingErrorReceiver();
+        final LocationFactory locationFactory = new DefaultLocationFactory();
+        final LoggingContentHandler contentHandler = new LoggingContentHandler(ds3Parser);
+
+        ds3Parser.setContentHandler(contentHandler);
+        ds3Parser.setErrorHandler(new ErrorHandlerAdaptor("DS3Parser", locationFactory, errorReceiver));
+        ds3Parser.parse(new InputSource(new StringReader(inputStr)));
+
+        LOGGER.info("Expecting source ranges:\n{}",
+                rangesToString(expectedRanges, inputStr));
+
+        LOGGER.info("Actual source ranges:\n{}",
+                rangesToString(contentHandler.textRanges, inputStr));
+
+        Assertions.assertThat(contentHandler.getTextRanges())
+                .containsExactlyElementsOf(expectedRanges);
+
+        return contentHandler;
+    }
+
+    private String rangesToString(final List<Highlight> ranges, final String inputStr) {
+
+        return AsciiTable.builder(ranges)
+                .withColumn(Column.of( "Source", (Highlight range) ->
+                        "[" + extractRange(inputStr, range.getFrom(), range.getTo()) + "]"))
+                .withColumn(Column.of("From", range ->
+                        range.getFrom().toString()))
+                .withColumn(Column.of("To", range ->
+                        range.getTo().toString()))
+                .build();
+    }
+
+    private Highlight makeRange(final int fromLine,
+                                final int fromCol,
+                                final int toLine,
+                                final int toCol) {
+        return new Highlight(
+                DefaultLocation.of(fromLine, fromCol),
+                DefaultLocation.of(toLine, toCol));
+    }
 
     @TestFactory
     Collection<DynamicTest> testProcessAll() throws IOException, TransformerConfigurationException, SAXException {
@@ -340,8 +495,176 @@ class TestDS3 extends StroomUnitTest {
         }
     }
 
+    /**
+     * @param input The string to extract the range from
+     * @param from Inclusive
+     * @param to Inclusive
+     * @return The extracted string
+     */
+    public String extractRange(final String input, final Location from, final Location to) {
+        final StringReader stringReader = new StringReader(input);
+        final StringBuilder output = new StringBuilder();
+        int line = 1;
+        int col = 1;
+        int lastChar = -1;
+        boolean isFirstChar = true;
+
+        int chr;
+
+        try {
+            while (true) {
+                chr = stringReader.read();
+                if (chr == -1) {
+                    break;
+                }
+
+                if (isFirstChar) {
+                    isFirstChar = false;
+                } else if (lastChar == '\n') {
+                    line++;
+                    col = 1;
+                } else if (chr == '\n') {
+                    // Do nothing
+                } else {
+                    col++;
+                }
+                lastChar = chr;
+
+                boolean isOnOrPastFromLocation = line > from.getLineNo()
+                        || (line == from.getLineNo() && col >= from.getColNo());
+                boolean isBeforeOrOnToLocation = line < to.getLineNo()
+                        || (line == to.getLineNo() && col <= to.getColNo());
+
+                if (isOnOrPastFromLocation && isBeforeOrOnToLocation) {
+                    output.append(charToVisible((char) chr));
+                }
+                if (!isBeforeOrOnToLocation) {
+                    break;
+                }
+            }
+        } catch (IOException e) {
+            throw new RuntimeException(e);
+        }
+        return output.toString();
+    }
+
+    private String charToVisible(final char c) {
+        if (c == 0) {
+            return "";
+        } else if (c == '\n') {
+            return "↵";
+        } else if (c == '\t') {
+            return "↹";
+        } else {
+            return String.valueOf(c);
+        }
+    }
+
+
     private static class ReaderConfigurationException extends RuntimeException {
 
+    }
+
+    private static class LoggingContentHandler implements ContentHandler {
+
+        private final DS3Parser ds3Parser;
+        private Locator locator;
+        private List<Highlight> textRanges = new ArrayList<>();
+
+        private LoggingContentHandler(final DS3Parser ds3Parser) {
+            this.ds3Parser = ds3Parser;
+        }
+
+        public List<Highlight> getTextRanges() {
+            return textRanges;
+        }
+
+        @Override
+        public void setDocumentLocator(final Locator locator) {
+//            LOGGER.info("setDocumentLocator() called");
+            this.locator = locator;
+        }
+
+        @Override
+        public void startDocument() throws SAXException {
+            LOGGER.info("startDocument() called");
+        }
+
+        @Override
+        public void endDocument() throws SAXException {
+            LOGGER.info("endDocument() called");
+        }
+
+        @Override
+        public void startPrefixMapping(final String prefix, final String uri) throws SAXException {
+//            LOGGER.info("startPrefixMapping() called");
+        }
+
+        @Override
+        public void endPrefixMapping(final String prefix) throws SAXException {
+//            LOGGER.info("endPrefixMapping() called");
+        }
+
+        @Override
+        public void startElement(final String uri, final String localName, final String qName, final Attributes atts) throws SAXException {
+            LOGGER.info("startElement({}) called", localName);
+            if (localName.equals("record")) {
+//                LOGGER.info("  [{}:{}]", locator.getLineNumber(), locator.getColumnNumber());
+//                stringBuilder = new StringBuilder();
+            }
+        }
+
+        @Override
+        public void endElement(final String uri, final String localName, final String qName) throws SAXException {
+            LOGGER.info("endElement({}) called", localName);
+            if (localName.equals("record")) {
+
+                if (locator instanceof DSLocator) {
+                    DSLocator dsLocator = (DSLocator) locator;
+                    LOGGER.info("  [{}:{}] => [{}:{}]",
+                            dsLocator.getLineNumber(),
+                            dsLocator.getColumnNumber(),
+                            dsLocator.getRecordEndLocator().getLineNumber(),
+                            dsLocator.getRecordEndLocator().getColumnNumber());
+
+                    textRanges.add(new Highlight(
+                            DefaultLocation.of(dsLocator.getLineNumber(), dsLocator.getColumnNumber()),
+                            DefaultLocation.of(
+                                    dsLocator.getRecordEndLocator().getLineNumber(),
+                                    dsLocator.getRecordEndLocator().getColumnNumber())));
+                } else {
+                    throw new RuntimeException("Expecting a DSLocator");
+                }
+            }
+        }
+
+//        private void logLocation(final Locator from, final Locator to) {
+//            LOGGER.info("  Line: {}, col: {}", locator.getLineNumber(), locator.getColumnNumber());
+//        }
+//
+//        private void logLocation(final Locator from, final Locator to) {
+//            LOGGER.info("  Line: {}, col: {}", locator.getLineNumber(), locator.getColumnNumber());
+//        }
+
+        @Override
+        public void characters(final char[] ch, final int start, final int length) throws SAXException {
+//            LOGGER.info("characters() called");
+        }
+
+        @Override
+        public void ignorableWhitespace(final char[] ch, final int start, final int length) throws SAXException {
+//            LOGGER.info("ignorableWhitespace() called");
+        }
+
+        @Override
+        public void processingInstruction(final String target, final String data) throws SAXException {
+//            LOGGER.info("processingInstruction() called");
+        }
+
+        @Override
+        public void skippedEntity(final String name) throws SAXException {
+//            LOGGER.info("skippedEntity() called");
+        }
     }
 
 }

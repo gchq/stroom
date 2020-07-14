@@ -12,6 +12,8 @@
 
     <logger name="stroom.pipeline" level="debug" />
 
+    <logger name="stroom.pipeline.reader" level="trace" />
+
     <logger name="stroom.pipeline.refdata" level="info" />
 
 

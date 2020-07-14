@@ -129,7 +129,7 @@ public final class ComparisonHelper {
             if (!unifiedDiff.isEmpty()) {
                 areFilesTheSame = false;
 
-                LOGGER.error("Differences exist between expected {} and actual {}",
+                LOGGER.error("Differences exist between:\nexpected - {}\nand\nactual - {}",
                         FileUtil.getCanonicalPath(expectedFile),
                         FileUtil.getCanonicalPath(actualFile));
 

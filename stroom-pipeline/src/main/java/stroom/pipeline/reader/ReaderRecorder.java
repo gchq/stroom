@@ -21,6 +21,7 @@ import stroom.pipeline.factory.PipelineFactoryException;
 import stroom.pipeline.factory.TakesInput;
 import stroom.pipeline.factory.TakesReader;
 import stroom.pipeline.factory.Target;
+import stroom.pipeline.reader.ByteStreamDecoder.SizedString;
 import stroom.pipeline.stepping.Recorder;
 import stroom.util.shared.Highlight;
 
@@ -34,17 +35,23 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.io.Reader;
 import java.io.UnsupportedEncodingException;
+import java.util.concurrent.atomic.AtomicInteger;
 import java.util.function.Consumer;
 
 public class ReaderRecorder extends AbstractIOElement implements TakesInput, TakesReader, Target, Recorder {
     private static final Logger LOGGER = LoggerFactory.getLogger(ReaderRecorder.class);
+
+    private static final int BASE_LINE_NO = 1;
+    private static final int BASE_COL_NO = 1;
 
     private Buffer buffer;
 
     @Override
     public void addTarget(final Target target) {
         if (target != null) {
-            if (!(target instanceof DestinationProvider) && !(target instanceof TakesInput) && !(target instanceof TakesReader)) {
+            if (!(target instanceof DestinationProvider)
+                    && !(target instanceof TakesInput)
+                    && !(target instanceof TakesReader)) {
                 throw new PipelineFactoryException("Attempt to link to an element that does not accept input or reader: "
                         + getElementId() + " > " + target.getElementId());
             }
@@ -89,12 +96,15 @@ public class ReaderRecorder extends AbstractIOElement implements TakesInput, Tak
         }
     }
 
+
+    // ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
     private static class ReaderBuffer extends FilterReader implements Buffer {
         private static final int MAX_BUFFER_SIZE = 1000000;
         private final StringBuilder stringBuilder = new StringBuilder();
 
-        private int lineNo = 1;
-        private int colNo = 0;
+        private int lineNo = BASE_LINE_NO;
+        private int colNo = BASE_COL_NO;
 
         ReaderBuffer(final Reader in) {
             super(in);
@@ -154,12 +164,13 @@ public class ReaderRecorder extends AbstractIOElement implements TakesInput, Tak
 
         @Override
         public void reset() {
-            lineNo = 1;
-            colNo = 0;
+            lineNo = BASE_LINE_NO;
+            colNo = BASE_COL_NO;
             clear();
         }
 
         private void consumeHighlightedSection(final Highlight highlight, final Consumer<Character> consumer) {
+            // range is inclusive at both ends
             final int lineFrom = highlight.getFrom().getLineNo();
             final int colFrom = highlight.getFrom().getColNo();
             final int lineTo = highlight.getTo().getLineNo();
@@ -173,40 +184,53 @@ public class ReaderRecorder extends AbstractIOElement implements TakesInput, Tak
             for (; i < length() && !found; i++) {
                 final char c = charAt(i);
 
-                // Remember the previous line and column numbers in case we need to go back to them.
-                final int previousLineNo = lineNo;
-                final int previousColNo = colNo;
+//                // Remember the previous line and column numbers in case we need to go back to them.
+//                final int previousLineNo = lineNo;
+//                final int previousColNo = colNo;
 
                 // Advance the line or column number.
-                if (c == '\n') {
-                    lineNo++;
-                    colNo = 0;
-                } else {
-                    colNo++;
-                }
+//                if (c == '\n') {
+//                    lineNo++;
+//                    colNo = BASE_COL_NO;
+//                } else {
+//                    colNo++;
+//                }
 
                 if (!inRecord) {
+                    // Inclusive from
                     if (lineNo > lineFrom ||
-                            (lineNo >= lineFrom && colNo >= colFrom)) {
+                            (lineNo == lineFrom && colNo >= colFrom)) {
                         inRecord = true;
                     }
                 }
 
                 if (inRecord) {
+                    // Inclusive to
                     if (lineNo > lineTo ||
-                            (lineNo >= lineTo && colNo >= colTo)) {
+                            (lineNo == lineTo && colNo > colTo)) {
+                        // Gone past the desired range
                         inRecord = false;
                         found = true;
-                        advance = i;
+                        advance = i; // offset of the first char outside the range
 
                         // We won't be consuming the current char so revert to the previous line and column numbers.
-                        lineNo = previousLineNo;
-                        colNo = previousColNo;
+//                        lineNo = previousLineNo;
+//                        colNo = previousColNo;
                     }
                 }
 
                 if (inRecord) {
                     consumer.accept(c);
+                }
+
+                // Advance the line or column number if we haven't found the record.
+                if (!found) {
+                    if (c == '\n') {
+                        lineNo++;
+                        colNo = BASE_COL_NO;
+                    } else {
+                        colNo++;
+                    }
                 }
             }
 
@@ -242,20 +266,26 @@ public class ReaderRecorder extends AbstractIOElement implements TakesInput, Tak
         }
     }
 
+
+    // ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+
     private static class InputBuffer extends FilterInputStream implements Buffer {
         private static final int MAX_BUFFER_SIZE = 1000000;
-        private static final int BASE_LINE_NO = 1;
-        private static final int BASE_COL_NO = 1;
         private final String encoding;
         private final ByteBuffer byteBuffer = new ByteBuffer();
+        private final ByteStreamDecoder byteStreamDecoder;
+        private final AtomicInteger offset = new AtomicInteger(0);
 
         private int lineNo = BASE_LINE_NO;
-//        private int colNo = 0;
         private int colNo = BASE_COL_NO;
 
         InputBuffer(final InputStream in, final String encoding) {
             super(in);
             this.encoding = encoding;
+            this.byteStreamDecoder = new ByteStreamDecoder(
+                    encoding,
+                    () -> byteBuffer.getByte(offset.getAndIncrement()));
         }
 
         @Override
@@ -331,9 +361,18 @@ public class ReaderRecorder extends AbstractIOElement implements TakesInput, Tak
 
             int advance = 0;
             int i = 0;
-            for (; i < length() && !found; i++) {
+            offset.set(0);
+
+            for (; offset.get() < length() && !found; i++) {
                 final byte c = byteAt(i);
 
+                // The offset where our potentially multi-byte char starts
+                final int startOffset = offset.get();
+
+                // This will move offset by the number of bytes in the 'character', i.e. 1-4
+                final SizedString sizedString = byteStreamDecoder.decodeNextChar();
+
+                // Inclusive
                 if (!inRecord) {
                     if (lineNo > lineFrom ||
                             (lineNo == lineFrom && colNo >= colFrom)) {
@@ -341,17 +380,24 @@ public class ReaderRecorder extends AbstractIOElement implements TakesInput, Tak
                     }
                 }
 
+                // Inclusive
                 if (inRecord) {
                     if (lineNo > lineTo ||
                             (lineNo == lineTo && colNo > colTo)) {
+                        // Gone past the desired range
                         inRecord = false;
                         found = true;
-                        advance = i;
+                        // Work out offset of the first char outside the range
+                        advance = startOffset + sizedString.getByteCount() - 1;
                     }
                 }
 
                 if (inRecord) {
-                    consumer.accept(c);
+                    // Pass all the bytes that make up our char onto the consumer
+                    for (int j = 0; j < sizedString.getByteCount(); j++) {
+                        final byte b = byteAt(startOffset + j);
+                        consumer.accept(b);
+                    }
                 }
 
                 // Advance the line or column number if we haven't found the record.
@@ -404,7 +450,11 @@ public class ReaderRecorder extends AbstractIOElement implements TakesInput, Tak
         }
     }
 
+
+    // ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
     private static class ByteBuffer extends ByteArrayOutputStream {
+
         byte getByte(final int index) {
             return buf[index];
         }
@@ -416,6 +466,10 @@ public class ReaderRecorder extends AbstractIOElement implements TakesInput, Tak
             }
         }
     }
+
+
+    // ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
 
     private interface Buffer {
         Object getData(Highlight highlight);
