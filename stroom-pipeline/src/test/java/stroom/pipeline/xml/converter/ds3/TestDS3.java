@@ -78,8 +78,7 @@ import java.util.zip.ZipInputStream;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.fail;
 
-// TODO : Reinstate tests.
-//@Disabled("Removed test data")
+// TODO : Need to try and migrate tests from v4 code base to give better coverage
 class TestDS3 extends StroomUnitTest {
     private static final Logger LOGGER = LoggerFactory.getLogger(TestDS3.class);
     private static final String CONFIG_EXTENSION = ".ds3.xml";

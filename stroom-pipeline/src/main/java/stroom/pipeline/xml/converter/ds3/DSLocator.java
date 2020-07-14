@@ -4,5 +4,6 @@ import org.xml.sax.Locator;
 
 public interface DSLocator extends DefaultLocator {
     Locator getRecordStartLocator();
+
     Locator getRecordEndLocator();
 }

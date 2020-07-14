@@ -40,9 +40,7 @@ public class LocationHolder implements Holder {
     private SourceLocation currentLocation;
     private FunctionType functionType;
 
-//    private Locator locator;
-    private Locator startLocator;
-    private Locator endLocator;
+    private Locator locator;
     private int maxSize = 1;
     private boolean storeLocations = true;
     private long recordNo;
@@ -57,17 +55,7 @@ public class LocationHolder implements Holder {
 
     public void setDocumentLocator(final Locator locator, final int maxSize) {
         this.maxSize = maxSize;
-//        this.locator = locator;
-        if (locator instanceof DSLocator) {
-//            this.locator = ((DSLocator) locator).getRecordStartLocator();
-//            this.startLocator = locator;
-            this.startLocator = ((DSLocator) locator).getRecordStartLocator();
-            this.endLocator = ((DSLocator) locator).getRecordEndLocator();
-        } else {
-//            this.locator = locator;
-            this.startLocator = locator;
-            this.endLocator = locator;
-        }
+        this.locator = locator;
     }
 
     public void move(final FunctionType functionType) {
@@ -95,38 +83,60 @@ public class LocationHolder implements Holder {
     }
 
     public void storeLocation() {
-//        if (storeLocations && locator != null && metaHolder != null && metaHolder.getMeta() != null) {
+        LOGGER.trace("currentStartLocation: {}, currentEndLocation: {}, startLocator.getLineNo: {}, startLocator.getColNo: {}",
+                currentStartLocation,
+                currentEndLocation,
+                locator.getLineNumber(),
+                locator.getColumnNumber());
+
         if (storeLocations
-                && startLocator != null
-                && endLocator != null
+                && locator != null
                 && metaHolder != null
                 && metaHolder.getMeta() != null) {
-//            final Highlight highlight = createHighlight();
-//            final DataRange dataRange = createDataRange();
 
-            final Location endLocation = new DefaultLocation(
-                    endLocator.getLineNumber(),
-                    endLocator.getColumnNumber());
+            final Location startLocation;
+            final Location endLocation;
+
+            // TODO This is all a bit grim.  The storing of locations should be done by the parsers
+            //   as they understand their data better and can provide better location info when they call
+            //   (start|end)Element. Not sure how that would fit with the SplitFilter splitting at different
+            //   levels as you could have a split filter after a DS parser splitting at a lower level.
+            if (locator instanceof DSLocator) {
+                // The DSLocator has a proper start and end location for each record which is more
+                // accurate than just treating the last end as the new start as it takes into account
+                // line breaks.
+                final DSLocator dsLocator = (DSLocator) locator;
+
+                endLocation = DefaultLocation.of(
+                        dsLocator.getRecordEndLocator().getLineNumber(),
+                        dsLocator.getRecordEndLocator().getColumnNumber());
+                startLocation = DefaultLocation.of(
+                        dsLocator.getRecordStartLocator().getLineNumber(),
+                        dsLocator.getRecordStartLocator().getColumnNumber());
+            } else {
+                endLocation = DefaultLocation.of(
+                        locator.getLineNumber(),
+                        locator.getColumnNumber());
+                // Locator can provide only one location so we have to work off out previous endLocation.
+                startLocation = DefaultLocation.of(
+                        currentEndLocation.getLineNo(),
+                        currentEndLocation.getColNo());
+            }
 
             // Only change if we have moved forward.
-//        if (currentEndLocation.getLineNo() != location.getLineNo() || currentEndLocation.getColNo() != location.getColNo()) {
-//            currentStartLocation = currentEndLocation;
-//            currentEndLocation = location;
-//        }
-//        return new Highlight(currentStartLocation, currentEndLocation);
             if (currentEndLocation.getLineNo() != endLocation.getLineNo()
                     || currentEndLocation.getColNo() != endLocation.getColNo()) {
 
-                currentStartLocation = DefaultLocation.of(startLocator.getLineNumber(), startLocator.getColumnNumber());
+                currentStartLocation = startLocation;
                 currentEndLocation = endLocation;
             }
-            Highlight highlight = new Highlight(currentStartLocation, currentEndLocation);
-            DataRange dataRange = DataRange.between(currentStartLocation, currentEndLocation);
+
+            final Highlight highlight = new Highlight(currentStartLocation, currentEndLocation);
+            final DataRange dataRange = DataRange.between(currentStartLocation, currentEndLocation);
 
             LOGGER.trace("Storing range: {}", highlight);
 
             recordNo++;
-            // TODO do I need to capture a highlight? DataRange should suffice?
             final SourceLocation sourceLocation = SourceLocation.builder(metaHolder.getMeta().getId())
                     .withChildStreamType(metaHolder.getChildDataType())
                     .withPartNo(metaHolder.getStreamNo())
@@ -156,31 +166,6 @@ public class LocationHolder implements Holder {
     public void setStoreLocations(final boolean storeLocations) {
         this.storeLocations = storeLocations;
     }
-
-//    private Highlight createHighlight() {
-//        final Location endLocation = new DefaultLocation(endLocator.getLineNumber(), endLocator.getColumnNumber());
-//        // Only change if we have moved forward.
-////        if (currentEndLocation.getLineNo() != location.getLineNo() || currentEndLocation.getColNo() != location.getColNo()) {
-////            currentStartLocation = currentEndLocation;
-////            currentEndLocation = location;
-////        }
-////        return new Highlight(currentStartLocation, currentEndLocation);
-//        if (currentEndLocation.getLineNo() != endLocation.getLineNo() || currentEndLocation.getColNo() != endLocation.getColNo()) {
-//            currentStartLocation = DefaultLocation.of(startLocator.getLineNumber(), startLocator.getColumnNumber());
-//            currentEndLocation = endLocation;
-//        }
-//        return new Highlight(currentStartLocation, currentEndLocation);
-//    }
-//
-//    private DataRange createDataRange() {
-//        final Location location = new DefaultLocation(locator.getLineNumber(), locator.getColumnNumber());
-//        // Only change if we have moved forward.
-//        if (currentEndLocation.getLineNo() != location.getLineNo() || currentEndLocation.getColNo() != location.getColNo()) {
-//            currentStartLocation = currentEndLocation;
-//            currentEndLocation = location;
-//        }
-//        return DataRange.between(currentStartLocation, currentEndLocation);
-//    }
 
     public enum FunctionType {
         LOCATION, RECORD_NO, LINE_FROM, COL_FROM, LINE_TO, COL_TO
