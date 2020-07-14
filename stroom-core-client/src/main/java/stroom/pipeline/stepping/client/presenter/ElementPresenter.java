@@ -17,13 +17,6 @@
 
 package stroom.pipeline.stepping.client.presenter;
 
-import com.google.gwt.core.client.Scheduler;
-import com.google.inject.Inject;
-import com.google.inject.Provider;
-import com.google.web.bindery.event.shared.EventBus;
-import com.google.web.bindery.event.shared.HandlerRegistration;
-import com.gwtplatform.mvp.client.MyPresenterWidget;
-import com.gwtplatform.mvp.client.View;
 import stroom.alert.client.event.AlertEvent;
 import stroom.docref.DocRef;
 import stroom.document.client.DocumentPlugin;
@@ -39,9 +32,16 @@ import stroom.pipeline.shared.stepping.SteppingFilterSettings;
 import stroom.pipeline.stepping.client.event.ShowSteppingFilterSettingsEvent;
 import stroom.pipeline.stepping.client.presenter.ElementPresenter.ElementView;
 import stroom.util.shared.HasData;
-import stroom.util.shared.Indicators;
 import stroom.widget.util.client.Future;
 import stroom.widget.util.client.FutureImpl;
+
+import com.google.gwt.core.client.Scheduler;
+import com.google.inject.Inject;
+import com.google.inject.Provider;
+import com.google.web.bindery.event.shared.EventBus;
+import com.google.web.bindery.event.shared.HandlerRegistration;
+import com.gwtplatform.mvp.client.MyPresenterWidget;
+import com.gwtplatform.mvp.client.View;
 
 public class ElementPresenter extends MyPresenterWidget<ElementView> implements HasDirtyHandlers {
     private final Provider<EditorPresenter> editorProvider;
@@ -340,11 +340,13 @@ public class ElementPresenter extends MyPresenterWidget<ElementView> implements 
             outputPresenter.setReadOnly(true);
             setOptions(outputPresenter);
 
-            // Turn on line numbers for the output presenter if this is a validation step as the output needs to show
-            // validation errors in the gutter.
-            if (elementType != null && elementType.hasRole(PipelineElementType.ROLE_VALIDATOR)) {
-                outputPresenter.getLineNumbersOption().setOn(true);
-            }
+            // Always show line numbers
+            outputPresenter.getLineNumbersOption().setAvailable(true);
+            outputPresenter.getLineNumbersOption().setOn(true);
+
+            // Default to wrapped lines as a lot of output is un-formatted xml
+            outputPresenter.getLineWrapOption().setAvailable(true);
+            outputPresenter.getLineWrapOption().setOn(true);
 
             outputPresenter.setShowFilterSettings(true);
             outputPresenter.setInput(false);
