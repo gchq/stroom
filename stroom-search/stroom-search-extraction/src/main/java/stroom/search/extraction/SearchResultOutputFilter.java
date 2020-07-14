@@ -79,9 +79,13 @@ public class SearchResultOutputFilter extends AbstractSearchResultOutputFilter {
 
             if (alertTableDefinitions != null) {
 
-                //todo if alerting pass through the table coprocessors and create zero to many records
-                //for this one record
+                if (values == null || values.length == 0) {
+                    System.out.println("No values to extract from " );
+                    return;
+                }
+
                 System.out.println("Going to do some extraction alert stuff " + alertTableDefinitions);
+
                 Values vals = new Values (values);
                 for (TableSettings rule : alertTableDefinitions){
                     String [] outputFields = extractAlert(rule, vals);

@@ -19,7 +19,6 @@ import stroom.explorer.shared.ExplorerNode;
 import stroom.index.impl.IndexStructure;
 import stroom.index.impl.IndexStructureCache;
 import stroom.query.api.v2.ExpressionOperator;
-import stroom.query.api.v2.ExpressionOperator.Op;
 import stroom.query.api.v2.TableSettings;
 import stroom.search.extraction.ExtractionDecoratorFactory;
 import stroom.search.impl.SearchConfig;
@@ -66,7 +65,7 @@ public class AlertManagerImpl implements AlertManager {
     }
 
     @Override
-    public Optional<AlertProcessor> createAlertProcessor(final DocRef indexDocRef, long streamId) {
+    public Optional<AlertProcessor> createAlertProcessor(final DocRef indexDocRef) {
         if (!initialised){
             initialiseCache();
             initialised = true;
@@ -79,8 +78,8 @@ public class AlertManagerImpl implements AlertManager {
             return Optional.empty();
         }
         else {
-            AlertProcessorImpl processor = new AlertProcessorImpl(extractionDecoratorFactory, indexToRules.get(indexDocRef), indexStructure,
-                    streamId, wordListProvider, maxBooleanClauseCount);
+            AlertProcessorImpl processor =
+                    new AlertProcessorImpl(extractionDecoratorFactory, indexToRules.get(indexDocRef), indexStructure, wordListProvider, maxBooleanClauseCount);
             return Optional.of(processor);
         }
 

@@ -23,6 +23,9 @@ import org.slf4j.LoggerFactory;
 import org.xml.sax.Attributes;
 import org.xml.sax.Locator;
 import org.xml.sax.SAXException;
+
+import stroom.alert.api.AlertManager;
+import stroom.alert.api.AlertProcessor;
 import stroom.docref.DocRef;
 import stroom.index.shared.IndexDoc;
 import stroom.index.shared.IndexField;
@@ -46,6 +49,7 @@ import stroom.util.date.DateUtil;
 import stroom.util.shared.Severity;
 
 import javax.inject.Inject;
+import java.util.Optional;
 
 /**
  * The index filter... takes the index XML and builds the LUCENE documents
@@ -65,6 +69,7 @@ class IndexingFilter extends AbstractXMLFilter {
     private final Indexer indexer;
     private final ErrorReceiverProxy errorReceiverProxy;
     private final IndexStructureCache indexStructureCache;
+    private final AlertManager alertManager;
     private final CharBuffer debugBuffer = new CharBuffer(10);
     private IndexFieldsMap indexFieldsMap;
     private DocRef indexRef;
@@ -75,17 +80,22 @@ class IndexingFilter extends AbstractXMLFilter {
 
     private Locator locator;
 
+
+    private AlertProcessor alertProcessor = null;
+
     @Inject
     IndexingFilter(final MetaHolder metaHolder,
                    final LocationFactoryProxy locationFactory,
                    final Indexer indexer,
                    final ErrorReceiverProxy errorReceiverProxy,
-                   final IndexStructureCache indexStructureCache) {
+                   final IndexStructureCache indexStructureCache,
+                   final AlertManager alertManager) {
         this.metaHolder = metaHolder;
         this.locationFactory = locationFactory;
         this.indexer = indexer;
         this.errorReceiverProxy = errorReceiverProxy;
         this.indexStructureCache = indexStructureCache;
+        this.alertManager = alertManager;
     }
 
     /**
@@ -190,6 +200,7 @@ class IndexingFilter extends AbstractXMLFilter {
         // have indexed some fields.
         if (fieldsIndexed > 0) {
             try {
+                checkAlerts();
                 indexer.addDocument(indexShardKey, document);
             } catch (final RuntimeException e) {
                 log(Severity.FATAL_ERROR, e.getMessage(), e);
@@ -274,10 +285,35 @@ class IndexingFilter extends AbstractXMLFilter {
         }
     }
 
+    private void checkAlerts (){
+        try {
+            if (alertProcessor == null) {
+                final Optional<AlertProcessor> processor =
+                        alertManager.createAlertProcessor(new DocRef(IndexDoc.DOCUMENT_TYPE, indexShardKey.getIndexUuid()));
+                if (processor.isPresent()) {
+                    alertProcessor = processor.get();
+                }
+            }
+            if (alertProcessor != null) {
+                alertProcessor.addIfNeeded(document);
+            }
+
+        } catch (RuntimeException ex) {
+            LOGGER.error(ex.getMessage(), ex);
+        }
+    }
+
+
+
+    //todo remove debug var
+    private int numEnds = 0;
+
     @Override
     public void endProcessing() {
-        indexer.endIndexing();
+        alertProcessor.createAlerts();
         super.endProcessing();
+        numEnds++;
+        System.out.println("Indexing filter in " + indexRef.getName()  + " finish processing number " + numEnds);
     }
 
     @PipelineProperty(description = "The index to send records to.", displayPriority = 1)

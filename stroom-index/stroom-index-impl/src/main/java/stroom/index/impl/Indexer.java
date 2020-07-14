@@ -23,5 +23,4 @@ import stroom.index.shared.IndexShardKey;
 
 public interface Indexer {
     void addDocument(IndexShardKey key, Document document);
-    void endIndexing();
 }

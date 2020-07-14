@@ -12,7 +12,7 @@ import java.util.Map;
 import java.util.Set;
 
 public class AlertQueryHits {
-    private final Map<DocRef, List<RuleConfig>> pipelineRulesMap = new HashMap<>();
+    private final Map<DocRef, Set<RuleConfig>> pipelineRulesMap = new HashMap<>();
     private final Map<String, Set<Long>> queryHitsMap = new HashMap<>();
 
     public AlertQueryHits() {
@@ -46,7 +46,7 @@ public class AlertQueryHits {
 
     private void addRuleForPipeline (final DocRef pipeline, final RuleConfig ruleConfig){
         if (!pipelineRulesMap.containsKey(pipeline)){
-            pipelineRulesMap.put(pipeline, new ArrayList<>());
+            pipelineRulesMap.put(pipeline, new HashSet<>());
         }
         pipelineRulesMap.get(pipeline).add(ruleConfig);
     }

@@ -19,9 +19,8 @@ import stroom.index.impl.analyzer.AnalyzerFactory;
 import stroom.index.shared.IndexField;
 import stroom.index.shared.IndexFieldsMap;
 import stroom.query.api.v2.ExpressionOperator;
-import stroom.query.common.v2.format.FieldFormatter;
-import stroom.query.common.v2.format.FormatterFactory;
 
+import stroom.query.api.v2.TableSettings;
 import stroom.search.coprocessor.Error;
 import stroom.search.coprocessor.Receiver;
 import stroom.search.coprocessor.Values;
@@ -32,6 +31,7 @@ import stroom.util.logging.LambdaLogger;
 import stroom.util.logging.LambdaLoggerFactory;
 
 import java.io.IOException;
+import java.util.Collection;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -55,19 +55,17 @@ public class AlertProcessorImpl implements AlertProcessor {
 
     private final ExtractionDecoratorFactory extractionDecoratorFactory;
 
-    private final long streamId;
+    private Long currentStreamId = null;
 
     public AlertProcessorImpl (final ExtractionDecoratorFactory extractionDecoratorFactory,
                                final List<RuleConfig> rules,
                                final IndexStructure indexStructure,
-                               final long streamId,
                                final WordListProvider wordListProvider,
                                final int maxBooleanClauseCount){
         this.rules = rules;
         this.wordListProvider = wordListProvider;
         this.maxBooleanClauseCount = maxBooleanClauseCount;
         this.indexStructure = indexStructure;
-        this.streamId = streamId;
         this.analyzerMap = new HashMap<>();
         if (indexStructure.getIndexFields() != null) {
             for (final IndexField indexField : indexStructure.getIndexFields()) {
@@ -83,6 +81,21 @@ public class AlertProcessorImpl implements AlertProcessor {
 
     @Override
     public void addIfNeeded(final Document document) {
+
+        Long streamId = findStreamId(document);
+        if (streamId == null){
+            LOGGER.warn("Unable to locate StreamId for document, alerting disabled for this stream");
+            return;
+        }
+        if (currentStreamId == null){
+            currentStreamId = streamId;
+        }
+        if (currentStreamId.longValue() != streamId.longValue()){
+            throw new IllegalStateException("Unable to reuse AlertProcessorImpl for more than single stream" +
+                    " was created with streamid " + currentStreamId +
+                    " now applied to streamid " + streamId);
+        }
+
         MemoryIndex memoryIndex = new MemoryIndex();
         if (analyzerMap == null || analyzerMap.size() == 0){
             //Don't create alerts if index isn't configured
@@ -148,9 +161,9 @@ public class AlertProcessorImpl implements AlertProcessor {
    //                 System.out.println ("Found a matching query rule");
 
                     alertQueryHits.addQueryHitForRule(rule,eventId);
-                    LOGGER.debug("Adding " + streamId + ":" + eventId + " to rule dashboard containing query " + rule.getQueryId());
+                    LOGGER.debug("Adding {}:{} to rule {} from dashboard {}", currentStreamId, eventId, rule.getQueryId(), rule.getDashboardName());
                 } else {
-     //               System.out.println ("This doesn't match");
+                    LOGGER.trace("Not adding {}:{} to rule {} from dashboard {}", currentStreamId, eventId, rule.getQueryId(), rule.getDashboardName());
                 }
             }
         } catch (IOException ex){
@@ -160,43 +173,55 @@ public class AlertProcessorImpl implements AlertProcessor {
 
     @Override
     public void createAlerts() {
-        final FieldIndexMap fieldIndexMap = new FieldIndexMap(true);
-        final Receiver receiver = new Receiver() {
-            @Override
-            public FieldIndexMap getFieldIndexMap() {
-                return fieldIndexMap;
-            }
+        LOGGER.trace("Creating alerts...");
 
-            @Override
-            public Consumer<Values> getValuesConsumer() {
-                return values -> {};
-            }
+        int numTasks = 0;
+        for (DocRef pipeline : alertQueryHits.getExtractionPipelines()) {
+            LOGGER.trace("Iterating pipeline {}", pipeline.getName());
+            Collection<RuleConfig> rulesForPipeline = alertQueryHits.getRulesForPipeline(pipeline);
+            for (RuleConfig ruleConfig : rulesForPipeline){
+                LOGGER.trace("--Iterating ruleConfig {}", ruleConfig.getQueryId());
+                long[] eventIds = alertQueryHits.getSortedQueryHitsForRule(ruleConfig);
+                if (eventIds != null && eventIds.length > 0) {
+                    for (TableSettings tableSettings : ruleConfig.getTableSettings()){
+                        LOGGER.trace("----Iterating tablesettings {}", tableSettings);
+                        numTasks++;
+                        final Receiver receiver = new Receiver() {
+                            @Override
+                            public FieldIndexMap getFieldIndexMap() {
+                                return FieldIndexMap.forFields(tableSettings.getFields().stream().map(t->t.getName())
+                                        .collect(Collectors.toList()).toArray(new String[0]));
+                            }
 
-            @Override
-            public Consumer<Error> getErrorConsumer() {
-                return error -> LOGGER.error(error.getMessage(), error.getThrowable());
-            }
+                            @Override
+                            public Consumer<Values> getValuesConsumer() {
+                                return values -> {};
+                            }
 
-            @Override
-            public Consumer<Long> getCompletionCountConsumer() {
-                return count -> {};
-            }
-        };
+                            @Override
+                            public Consumer<Error> getErrorConsumer() {
+                                return error -> LOGGER.error(error.getMessage(), error.getThrowable());
+                            }
 
-        synchronized (alertQueryHits){
-            for (DocRef pipeline : alertQueryHits.getExtractionPipelines()) {
-                for (RuleConfig ruleConfig : alertQueryHits.getRulesForPipeline(pipeline)){
-                    long[] eventIds = alertQueryHits.getSortedQueryHitsForRule(ruleConfig);
-                    if (eventIds != null && eventIds.length > 0) {
+                            @Override
+                            public Consumer<Long> getCompletionCountConsumer() {
+                                return count -> {};
+                            }
+                        };
+
                         extractionDecoratorFactory.createAlertExtractionTask(receiver, receiver,
-                                streamId, eventIds, pipeline,
+                                currentStreamId, eventIds, pipeline,
                                 ruleConfig.getTableSettings(), ruleConfig.getParams());
+                        LOGGER.trace("This AlertProcessorImpl has now created {} tasks during this call ", numTasks);
                     }
-                }
 
+
+                }
             }
-            alertQueryHits.clearHits();
+
         }
+        alertQueryHits.clearHits();
+
     }
 
     private boolean matchQuery (final IndexSearcher indexSearcher, final IndexFieldsMap indexFieldsMap,
@@ -216,7 +241,7 @@ public class AlertProcessorImpl implements AlertProcessor {
             } else if (docs.totalHits == 1) {
                 return true; //Doc matches
             } else {
-                LOGGER.error("Unexpected number of documents (" + docs.totalHits + " found by rule, should be 1 or 0 ");
+                LOGGER.error("Unexpected number of documents {}  found by rule, should be 1 or 0.", docs.totalHits);
             }
         }
         catch (SearchException se){
@@ -228,6 +253,14 @@ public class AlertProcessorImpl implements AlertProcessor {
     private static Long findEventId(final Document document){
         try {
             return document.getField("EventId").numericValue().longValue();
+        } catch (RuntimeException ex){
+            return null;
+        }
+    }
+
+    private static Long findStreamId(final Document document){
+        try {
+            return document.getField("StreamId").numericValue().longValue();
         } catch (RuntimeException ex){
             return null;
         }

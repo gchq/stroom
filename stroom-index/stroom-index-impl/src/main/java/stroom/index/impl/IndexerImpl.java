@@ -45,60 +45,24 @@ public class IndexerImpl implements Indexer {
 
     private final IndexShardWriterCache indexShardWriterCache;
     private final IndexShardManager indexShardManager;
-    private final AlertManager alertManager;
     private final IndexStore indexStore;
 
     private final StripedLock keyLocks = new StripedLock();
 
-    private AlertProcessor alertProcessor = null;
+
 
     @Inject
     public IndexerImpl(final IndexStore indexStore,
                        final IndexShardWriterCache indexShardWriterCache,
-                final IndexShardManager indexShardManager,
-                       final AlertManager alertManager) {
+                final IndexShardManager indexShardManager) {
         this.indexShardWriterCache = indexShardWriterCache;
         this.indexShardManager = indexShardManager;
-        this.alertManager = alertManager;
         this.indexStore = indexStore;
-    }
-
-
-    private static Long findStreamId(final Document document){
-        try {
-          return document.getField("StreamId").numericValue().longValue();
-        } catch (RuntimeException ex){
-            return null;
-        }
     }
 
     @Override
     public void addDocument(final IndexShardKey indexShardKey, final Document document) {
         if (document != null) {
-            //First create any alerts
-            Long streamId = findStreamId(document);
-            if (streamId != null) {
-                try {
-                    if (alertProcessor == null) {
-                        final Optional<AlertProcessor> processor = alertManager.createAlertProcessor(
-                                new DocRef(IndexDoc.DOCUMENT_TYPE,
-                                        indexShardKey.getIndexUuid()), streamId);
-                        if (processor.isPresent()) {
-                            alertProcessor = processor.get();
-                        }
-                    }
-                    if (alertProcessor != null) {
-                        alertProcessor.addIfNeeded(document);
-                    }
-
-                } catch (RuntimeException ex) {
-                    LOGGER.error(ex::getMessage, ex);
-                }
-            } else {
-                LOGGER.warn("Unable to locate StreamId for document, alerting disabled for this stream");
-            }
-
-
             // Try and add the document silently without locking.
             boolean success = false;
             try {
@@ -179,8 +143,4 @@ public class IndexerImpl implements Indexer {
         return success;
     }
 
-    @Override
-    public void endIndexing() {
-        alertProcessor.createAlerts();
-    }
 }
