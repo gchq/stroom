@@ -158,8 +158,8 @@ public class SearchResultOutputFilter extends AbstractSearchResultOutputFilter {
             String fieldVal = fieldVals[fieldIndexes.get(fieldName)];
             if (fieldVal != null) {
                 AttributesImpl attrs = new AttributesImpl();
-                attrs.addAttribute(nsUri, NAME, NAME, "xs:string", fieldName);
-                attrs.addAttribute(nsUri, VALUE, VALUE, "xs:string", fieldVal);
+                attrs.addAttribute("", NAME, NAME, "xs:string", fieldName);
+                attrs.addAttribute("", VALUE, VALUE, "xs:string", fieldVal);
                 super.startElement(nsUri, DATA, DATA, attrs);
                 super.endElement(nsUri, DATA, DATA);
             }
