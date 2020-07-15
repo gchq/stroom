@@ -74,7 +74,7 @@
     "simplebar-react": "^1.1.0",
     "sjcl": "1.0.8",
     "styled-components": "^4.4.1",
-    "ts-loader": "5.4.3",
+    "ts-loader": "^8.0.1",
     "typescript": "^3.9.6",
     "uuid": "3.3.3",
     "yup": "^0.29.1",
