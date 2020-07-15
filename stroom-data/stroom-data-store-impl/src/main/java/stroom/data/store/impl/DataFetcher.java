@@ -93,8 +93,9 @@ public class DataFetcher {
     private static final int STREAM_BUFFER_SIZE = 1024 * 100;
 
     // Max chars we can return
-    private static final long MAX_CHARS = 10_000L; // TODO get from config
-    private static final long MAX_ERRORS_ON_PAGE = 500L; // TODO get from config
+    private static final int MAX_CHARS = 10_000; // TODO get from config
+    private static final int MAX_ERRORS_ON_PAGE = 500; // TODO get from config
+    private static final int MAX_EXTRA_CHARS_TO_COMPLETE_LINE = 1000; // TODO get from config
 
     private final Long partsToReturn = 1L;
     private final Long segmentsToReturn = 1L;
@@ -603,6 +604,7 @@ public class DataFetcher {
 
         int currBufferLen = 0;
         boolean isFirstChar = true;
+        int extraCharCount = 0;
 
         try (final Reader reader = new InputStreamReader(inputStream, encoding)) {
             final char[] buffer = new char[STREAM_BUFFER_SIZE];
@@ -631,7 +633,15 @@ public class DataFetcher {
                         boolean isCharAfterRequestedRange = exclusiveToPredicate.test(
                                 currLineNo, currColNo, currCharOffset, charsInRangeCount);
 
-                        if (isCharAfterRequestedRange && (!continueToLineEnd || c == '\n') ) {
+                        if (isCharAfterRequestedRange) {
+                            extraCharCount++;
+                        }
+
+                        // For multi-line data continue past the desired range a bit to try to complete the line
+                        // to make it look better in the UI.
+                        if (isCharAfterRequestedRange
+                                && (!continueToLineEnd
+                                    || (extraCharCount > MAX_EXTRA_CHARS_TO_COMPLETE_LINE || c == '\n'))) {
                             // This is the char after our requested range
                             // or requested range continued to the end of the line
                             // or we have blown the max chars limit
