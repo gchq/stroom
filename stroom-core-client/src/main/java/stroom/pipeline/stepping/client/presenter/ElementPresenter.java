@@ -328,6 +328,14 @@ public class ElementPresenter extends MyPresenterWidget<ElementView> implements 
             inputPresenter.setReadOnly(true);
             setOptions(inputPresenter);
 
+            // Always show line numbers
+            inputPresenter.getLineNumbersOption().setAvailable(true);
+            inputPresenter.getLineNumbersOption().setOn(true);
+
+            // Default to wrapped lines as a lot of output is un-formatted xml
+            inputPresenter.getLineWrapOption().setAvailable(true);
+            inputPresenter.getLineWrapOption().setOn(true);
+
             inputPresenter.setShowFilterSettings(false);
             inputPresenter.setInput(true);
         }
