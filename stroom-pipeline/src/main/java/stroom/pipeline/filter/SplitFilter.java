@@ -16,9 +16,6 @@
 
 package stroom.pipeline.filter;
 
-import org.xml.sax.Attributes;
-import org.xml.sax.Locator;
-import org.xml.sax.SAXException;
 import stroom.pipeline.factory.ConfigurableElement;
 import stroom.pipeline.factory.PipelineProperty;
 import stroom.pipeline.shared.ElementIcons;
@@ -28,6 +25,10 @@ import stroom.pipeline.state.LocationHolder;
 import stroom.pipeline.xml.event.Event;
 import stroom.pipeline.xml.event.simple.StartElement;
 import stroom.pipeline.xml.event.simple.StartPrefixMapping;
+
+import org.xml.sax.Attributes;
+import org.xml.sax.Locator;
+import org.xml.sax.SAXException;
 
 import javax.inject.Inject;
 

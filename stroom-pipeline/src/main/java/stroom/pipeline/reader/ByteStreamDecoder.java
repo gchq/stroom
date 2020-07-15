@@ -19,7 +19,7 @@ public class ByteStreamDecoder {
 
     private final Charset charset;
     private final CharsetDecoder charsetDecoder;
-    private final Supplier<Byte> byteSupplier;
+//    private final Supplier<Byte> byteSupplier;
 
     private static final int MAX_BYTES_PER_CHAR = 10;
 
@@ -32,16 +32,15 @@ public class ByteStreamDecoder {
 
     /**
      * @param encoding The charset to use
-     * @param byteSupplier A function to return the next byte on each call.
+//     * @param byteSupplier A function to return the next byte on each call.
      */
-    public ByteStreamDecoder(final String encoding,
-                             final Supplier<Byte> byteSupplier) {
-        this.byteSupplier = Objects.requireNonNull(byteSupplier);
+    public ByteStreamDecoder(final String encoding) {
+//        this.byteSupplier = Objects.requireNonNull(byteSupplier);
         this.charset = Objects.requireNonNull(Charset.forName(encoding));
         this.charsetDecoder = charset.newDecoder();
     }
 
-    public SizedString decodeNextChar() {
+    public DecodedChar decodeNextChar(final Supplier<Byte> byteSupplier) {
         boolean charDecoded = false;
         int loopCnt = 0;
         int byteCnt = 0;
@@ -52,7 +51,7 @@ public class ByteStreamDecoder {
         outputBuffer.put((char) 0);
         outputBuffer.clear();
 
-        SizedString result = null;
+        DecodedChar result = null;
 
         // Start trying to decode a char from this position
 //            int byteOffset = startOffset;
@@ -99,7 +98,6 @@ public class ByteStreamDecoder {
                     int codePoint = Character.toCodePoint(
                             outputBuffer.array()[0],
                             outputBuffer.array()[1]);
-                    char[] chars = Character.toChars(codePoint);
                     decodedStr = new String(new int[]{codePoint}, 0, 1);
 
                     LOGGER.trace("Multi-char character found with codePoint: [{}], decodedStr: [{}]",
@@ -109,7 +107,7 @@ public class ByteStreamDecoder {
                 }
 
                 LOGGER.trace("Decoded char {}, with byte count {}", decodedStr, byteCnt);
-                result = new SizedString(decodedStr, byteCnt);
+                result = new DecodedChar(decodedStr, byteCnt);
             } else {
                 // Malformed so go round again as we obvs don't have enough bytes to form the char
                 // Update the input buffer to take the next byte
@@ -129,11 +127,16 @@ public class ByteStreamDecoder {
     // ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
 
-    static class SizedString {
+    /**
+     * Holds a single 'character' (which may be represented as two char primitives)
+     * along with the number of bytes used to represent that char.
+     */
+    static class DecodedChar {
         private final String str;
         private final int byteCount;
+        private static final char BYTE_ORDER_MARK = '\ufeff';
 
-        public SizedString(final String str, final int byteCount) {
+        public DecodedChar(final String str, final int byteCount) {
             this.str = str;
             this.byteCount = byteCount;
         }
@@ -144,6 +147,38 @@ public class ByteStreamDecoder {
 
         public int getByteCount() {
             return byteCount;
+        }
+
+        public boolean isByteOrderMark() {
+            return str.length() == 1 && str.charAt(0) == BYTE_ORDER_MARK;
+        }
+
+        public boolean isLineBreak() {
+            return str.length() == 1 && str.charAt(0) == '\n';
+        }
+
+        public boolean isNonVisibleCharacter() {
+            return str.codePoints()
+                    .anyMatch(chr -> {
+                        switch (Character.getType(chr)) {
+                            case Character.CONTROL:
+                            case Character.FORMAT:
+                            case Character.PRIVATE_USE:
+                            case Character.SURROGATE:
+                            case Character.UNASSIGNED:
+                                return true;
+                            default:
+                                return false;
+                        }
+                    });
+        }
+
+        @Override
+        public String toString() {
+            return "SizedString{" +
+                    "str='" + str + '\'' +
+                    ", byteCount=" + byteCount +
+                    '}';
         }
     }
 }

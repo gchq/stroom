@@ -21,7 +21,7 @@ import stroom.pipeline.factory.PipelineFactoryException;
 import stroom.pipeline.factory.TakesInput;
 import stroom.pipeline.factory.TakesReader;
 import stroom.pipeline.factory.Target;
-import stroom.pipeline.reader.ByteStreamDecoder.SizedString;
+import stroom.pipeline.reader.ByteStreamDecoder.DecodedChar;
 import stroom.pipeline.stepping.Recorder;
 import stroom.util.shared.TextRange;
 
@@ -37,6 +37,7 @@ import java.io.Reader;
 import java.io.UnsupportedEncodingException;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.function.Consumer;
+import java.util.function.Supplier;
 
 public class ReaderRecorder extends AbstractIOElement implements TakesInput, TakesReader, Target, Recorder {
     private static final Logger LOGGER = LoggerFactory.getLogger(ReaderRecorder.class);
@@ -268,9 +269,7 @@ public class ReaderRecorder extends AbstractIOElement implements TakesInput, Tak
         InputBuffer(final InputStream in, final String encoding) {
             super(in);
             this.encoding = encoding;
-            this.byteStreamDecoder = new ByteStreamDecoder(
-                    encoding,
-                    () -> byteBuffer.getByte(offset.getAndIncrement()));
+            this.byteStreamDecoder = new ByteStreamDecoder(encoding);
         }
 
         @Override
@@ -349,6 +348,9 @@ public class ReaderRecorder extends AbstractIOElement implements TakesInput, Tak
             int i = 0;
             offset.set(0);
 
+            Supplier<Byte> byteSupplier = () ->
+                    byteBuffer.getByte(offset.getAndIncrement());
+
             for (; offset.get() < length() && !found; i++) {
                 final byte c = byteAt(i);
 
@@ -356,7 +358,7 @@ public class ReaderRecorder extends AbstractIOElement implements TakesInput, Tak
                 final int startOffset = offset.get();
 
                 // This will move offset by the number of bytes in the 'character', i.e. 1-4
-                final SizedString sizedString = byteStreamDecoder.decodeNextChar();
+                final DecodedChar decodedChar = byteStreamDecoder.decodeNextChar(byteSupplier);
 
                 // Inclusive
                 if (!inRecord) {
@@ -374,13 +376,13 @@ public class ReaderRecorder extends AbstractIOElement implements TakesInput, Tak
                         inRecord = false;
                         found = true;
                         // Work out offset of the first char outside the range
-                        advance = startOffset + sizedString.getByteCount() - 1;
+                        advance = startOffset + decodedChar.getByteCount() - 1;
                     }
                 }
 
                 if (inRecord) {
                     // Pass all the bytes that make up our char onto the consumer
-                    for (int j = 0; j < sizedString.getByteCount(); j++) {
+                    for (int j = 0; j < decodedChar.getByteCount(); j++) {
                         final byte b = byteAt(startOffset + j);
                         consumer.accept(b);
                     }
@@ -388,9 +390,14 @@ public class ReaderRecorder extends AbstractIOElement implements TakesInput, Tak
 
                 // Advance the line or column number if we haven't found the record.
                 if (!found) {
-                    if (c == '\n') {
+                    if (decodedChar.isLineBreak()) {
                         lineNo++;
                         colNo = BASE_COL_NO;
+                    } else if (decodedChar.isByteOrderMark() || decodedChar.isNonVisibleCharacter()) {
+                        // We don't want to advance the line/col position if it is a non visual char
+                        // but we still need to pass the non visual char on to the consumer
+                        // as they might want to do something with it.
+                        LOGGER.debug("BOM found at [{}:{}]", lineNo, colNo);
                     } else {
                         colNo++;
                     }
