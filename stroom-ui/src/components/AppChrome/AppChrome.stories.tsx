@@ -19,7 +19,7 @@ import * as React from "react";
 import { storiesOf } from "@storybook/react";
 
 import Routes from "./Routes";
-import useAppNavigation from "lib/useAppNavigation";
+import { useAppNavigation } from "lib/useAppNavigation";
 import { WithChromeContext } from "lib/useRouter/BrowserRouter";
 import Button from "components/Button";
 import useRouter from "lib/useRouter";

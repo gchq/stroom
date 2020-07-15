@@ -31,7 +31,7 @@ interface Props {
   showAddElementDialog: ShowAddElementDialog;
 }
 
-export const Pipeline: React.FunctionComponent<Props> = ({
+export const PipelineDisplay: React.FunctionComponent<Props> = ({
   pipelineStateProps,
   showAddElementDialog,
 }) => {
@@ -105,5 +105,3 @@ export const Pipeline: React.FunctionComponent<Props> = ({
     </LineContainer>
   );
 };
-
-export default Pipeline;

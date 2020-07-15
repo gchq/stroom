@@ -16,7 +16,7 @@
 
 import * as React from "react";
 import { useEffect } from "react";
-import useAppNavigation from "lib/useAppNavigation";
+import { useAppNavigation } from "lib/useAppNavigation";
 import useIdFromPath from "lib/useIdFromPath";
 import useTokens from "./useTokens";
 import EditTokenForm from "./EditTokenForm";

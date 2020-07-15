@@ -1,4 +1,4 @@
-import useListReducer from "lib/useListReducer/useListReducer";
+import { useListReducer } from "lib/useListReducer/useListReducer";
 import * as React from "react";
 import useApi from "./useApi";
 
@@ -17,7 +17,9 @@ interface UserAppPermissionApi {
  *
  * @param userUuid The UUID of the user or group
  */
-const useAppPermissionsForUser = (userUuid: string): UserAppPermissionApi => {
+export const useAppPermissionsForUser = (
+  userUuid: string,
+): UserAppPermissionApi => {
   const {
     items: userAppPermissions,
     receiveItems,
@@ -57,5 +59,3 @@ const useAppPermissionsForUser = (userUuid: string): UserAppPermissionApi => {
     removePermission,
   };
 };
-
-export default useAppPermissionsForUser;

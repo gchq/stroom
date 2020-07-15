@@ -39,7 +39,7 @@ import useSelectableItemListing, {
 } from "lib/useSelectableItemListing";
 import { useDocRefInfoDialog } from "../../DocRefInfoModal/DocRefInfoModal";
 import { useDocumentTree } from "components/DocumentEditors/api/explorer";
-import useAppNavigation from "lib/useAppNavigation";
+import { useAppNavigation } from "lib/useAppNavigation";
 import { ButtonProps } from "components/Button/types";
 /* import useKeyIsDown from "lib/useKeyIsDown"; */
 

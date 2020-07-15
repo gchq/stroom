@@ -14,7 +14,7 @@ interface UseReactSelect {
   _onChange: (v: ValueType<BasicOption>) => void;
 }
 
-const useReactSelect = ({
+export const useReactSelect = ({
   options,
   value,
   onChange,
@@ -46,5 +46,3 @@ const useReactSelect = ({
     _onChange,
   };
 };
-
-export default useReactSelect;

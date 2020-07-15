@@ -1,6 +1,6 @@
 import * as React from "react";
 
-import useAppNavigation from "lib/useAppNavigation";
+import { useAppNavigation } from "lib/useAppNavigation";
 import useLocalStorage, { useStoreObjectFactory } from "lib/useLocalStorage";
 import {
   MenuItemsOpenState,
@@ -10,7 +10,7 @@ import {
 } from "../MenuItem/types";
 import useDocumentMenu from "./useDocumentMenu";
 import useAdminMenu from "./useAdminMenu";
-import useWelcomeMenu from "./useWelcomeMenu";
+import { useWelcomeMenu } from "./useWelcomeMenu";
 import useIndexingMenu from "./useIndexingMenu";
 import { SubMenuProps } from "./types";
 import useDataViewerMenu from "./useDataViewerMenu";
@@ -43,7 +43,7 @@ const iterateMenuItems = function (
 
 const DEFAULT_MENU_OPEN_STATE: MenuItemsOpenState = {};
 
-const useMenuItems = (): OutProps => {
+export const useMenuItems = (): OutProps => {
   const navigateApp = useAppNavigation();
 
   const {
@@ -115,5 +115,3 @@ const useMenuItems = (): OutProps => {
     menuItemsByKey,
   };
 };
-
-export default useMenuItems;

@@ -3,7 +3,7 @@ import * as React from "react";
 import Loader from "../../Loader";
 import DocRefEditor, { useDocRefEditor } from "../DocRefEditor";
 import { SwitchedDocRefEditorProps } from "../DocRefEditor/types";
-import useDocumentApi from "components/DocumentEditors/useDocumentApi";
+import { useDocumentApi } from "components/DocumentEditors/useDocumentApi";
 import ThemedAceEditor from "components/ThemedAceEditor";
 import { DictionaryDoc } from "components/DocumentEditors/useDocumentApi/types/dictionaryDoc";
 

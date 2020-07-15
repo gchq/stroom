@@ -26,7 +26,9 @@ interface RippleProps {
   ripples: Ripple[];
 }
 
-const RippleContainer: React.FunctionComponent<RippleProps> = ({ ripples }) => (
+export const RippleContainer: React.FunctionComponent<RippleProps> = ({
+  ripples,
+}) => (
   <div className="ripple-container">
     {ripples.map(({ id, x, y }) => (
       <span
@@ -73,5 +75,3 @@ export const useRipple = <T extends HTMLElement>(
     ripples,
   };
 };
-
-export default RippleContainer;

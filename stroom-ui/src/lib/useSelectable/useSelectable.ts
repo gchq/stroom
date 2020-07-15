@@ -151,7 +151,7 @@ const reducer = (state: ReducerState, action: ActionType): ReducerState => {
 
 const keyDownFilters: string[] = ["Control", "Shift", "Meta"];
 
-const useSelectable = <T extends {}>({
+export const useSelectable = <T extends {}>({
   items,
   getKey,
 }: InProps<T>): OutProps<T> => {
@@ -201,5 +201,3 @@ const useSelectable = <T extends {}>({
     clearSelection,
   };
 };
-
-export default useSelectable;

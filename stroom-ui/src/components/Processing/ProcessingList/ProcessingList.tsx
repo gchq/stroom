@@ -40,7 +40,7 @@ interface Props {
   onSelectionChanged: (selectedTask: StreamTaskType | undefined) => void;
 }
 
-const ProcessingList: React.FunctionComponent<Props> = ({
+export const ProcessingList: React.FunctionComponent<Props> = ({
   streamTasksApi,
   onSelectionChanged,
 }) => {
@@ -180,5 +180,3 @@ const ProcessingList: React.FunctionComponent<Props> = ({
     </div>
   );
 };
-
-export default ProcessingList;

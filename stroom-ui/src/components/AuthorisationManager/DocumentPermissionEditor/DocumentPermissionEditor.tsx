@@ -14,7 +14,7 @@ import ThemedConfirm, {
   useDialog as useThemedConfirm,
 } from "components/ThemedConfirm";
 import useRouter from "lib/useRouter";
-import useAppNavigation from "lib/useAppNavigation";
+import { useAppNavigation } from "lib/useAppNavigation";
 import UsersTable, { useTable as useUsersTable } from "../UsersTable";
 
 interface Props {

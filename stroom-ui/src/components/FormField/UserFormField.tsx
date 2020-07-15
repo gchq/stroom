@@ -1,44 +1,41 @@
 import * as React from "react";
-import {
-  ChangeEventHandler,
-  FocusEventHandler,
-  FunctionComponent,
-  useEffect,
-  useRef,
-} from "react";
-import { FormField, FormFieldProps, FormFieldState } from "./FormField";
-import UserSelect from "../UserSelect";
+import { FunctionComponent, useEffect, useRef } from "react";
+import { FormFieldState, FormField } from "./FormField";
+import { FormikProps } from "formik";
+import { createFormFieldState } from "./util";
+// import { UserSelect } from "../UserSelect";
 
-export interface UserProps {
-  controlId?: string;
+export interface UserSelectControlProps {
+  className?: string;
   placeholder: string;
   autoComplete?: string;
-  className?: string;
-  validator?: (label: string, value: string) => void;
-  onChange?: ChangeEventHandler<any>;
-  onBlur?: FocusEventHandler<any>;
   autoFocus?: boolean;
+  state: FormFieldState<string>;
 }
 
-export const UserControl: FunctionComponent<UserProps & FormFieldState> = ({
-  controlId,
+interface UserSelectFormFieldProps {
+  controlId: string;
+  label: string;
+  className?: string;
+  placeholder: string;
+  autoComplete?: string;
+  autoFocus?: boolean;
+  formikProps: FormikProps<any>;
+}
+
+export const UserSelectControl: FunctionComponent<UserSelectControlProps> = ({
+  className = "",
   placeholder,
   autoComplete,
-  className = "",
-  onChange,
-  onBlur,
   autoFocus = false,
-  value,
-  error,
-  touched = false,
-  setFieldTouched = () => undefined,
+  state,
   children,
 }) => {
-  const hasErrors = touched && error;
+  const { value, error, touched, onChange, onBlur } = state;
   const controlClass = [
     "form-control",
     className,
-    touched ? (hasErrors ? "is-invalid" : "is-valid") : "",
+    touched ? (error ? "is-invalid" : "is-valid") : "",
   ]
     .join(" ")
     .trim();
@@ -53,73 +50,44 @@ export const UserControl: FunctionComponent<UserProps & FormFieldState> = ({
 
   return (
     <div className="FormField__input-container">
-      <UserSelect
-        // className={controlClass}
-        onChange={(e) => {
-          setFieldTouched(controlId);
-          // onChange(e);
-        }}
-        // onBlur={onBlur}
-        // autoComplete={autoComplete}
-        // autoFocus={autoFocus}
-        fuzzy={false}
-      />
+      {/*<UserSelect*/}
+      {/*  // className={controlClass}*/}
+      {/*  placeholder={placeholder}*/}
+      {/*  autoComplete={autoComplete}*/}
+      {/*  autoFocus={autoFocus}*/}
+      {/*  value={value}*/}
+      {/*  onChange={(val) => onChange(val)}*/}
+      {/*  onBlur={onBlur}*/}
+      {/*  ref={inputEl}*/}
+      {/*  fuzzy={false}*/}
+      {/*/>*/}
       {children}
     </div>
   );
 };
 
-export const UserFormField: FunctionComponent<
-  UserProps & FormFieldProps & FormFieldState
-> = ({
+export const UserFormField: FunctionComponent<UserSelectFormFieldProps> = ({
   controlId,
   label,
+  className,
   placeholder,
   autoComplete,
-  className = "",
-  onChange,
-  onBlur,
-  autoFocus = false,
-  value,
-  error,
-  touched,
-  setFieldTouched,
+  autoFocus,
+  formikProps,
   children,
 }) => {
-  const hasErrors = touched && error;
-  const controlClass = [
-    "form-control",
-    className,
-    touched ? (hasErrors ? "is-invalid" : "is-valid") : "",
-  ]
-    .join(" ")
-    .trim();
-
+  const formFieldState = createFormFieldState(controlId, formikProps);
   return (
-    <FormField
-      controlId={controlId}
-      label={label}
-      error={error}
-      touched={touched}
-    >
-      <UserControl
-        controlId={controlId}
-        className={controlClass}
+    <FormField controlId={controlId} label={label} error={formFieldState.error}>
+      <UserSelectControl
+        className={className}
         placeholder={placeholder}
-        value={value}
-        error={error}
-        touched={touched}
-        setFieldTouched={setFieldTouched}
-        onChange={(e) => {
-          setFieldTouched(controlId);
-          onChange(e);
-        }}
-        onBlur={onBlur}
         autoComplete={autoComplete}
         autoFocus={autoFocus}
+        state={formFieldState}
       >
         {children}
-      </UserControl>
+      </UserSelectControl>
     </FormField>
   );
 };

@@ -58,7 +58,7 @@ const getDisplayValue = (value: any, type: string): string => {
  * @param {string} defaultValue The default property
  * @param {string} type The type of the property
  */
-const ElementPropertyFieldDetails: React.FunctionComponent<Props> = ({
+export const ElementPropertyFieldDetails: React.FunctionComponent<Props> = ({
   pipelineEditApi: {
     selectedElementId,
     elementPropertyRevertToDefault,
@@ -263,5 +263,3 @@ const ElementPropertyFieldDetails: React.FunctionComponent<Props> = ({
     </div>
   );
 };
-
-export default ElementPropertyFieldDetails;

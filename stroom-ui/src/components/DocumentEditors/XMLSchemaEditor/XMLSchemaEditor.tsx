@@ -2,7 +2,7 @@ import * as React from "react";
 import { SwitchedDocRefEditorProps } from "../DocRefEditor/types";
 import DocRefEditor, { useDocRefEditor } from "../DocRefEditor";
 
-const XMLSchemaEditor: React.FunctionComponent<SwitchedDocRefEditorProps> = ({
+export const XMLSchemaEditor: React.FunctionComponent<SwitchedDocRefEditorProps> = ({
   docRefUuid,
 }) => {
   const { editorProps } = useDocRefEditor({ docRefUuid });
@@ -13,5 +13,3 @@ const XMLSchemaEditor: React.FunctionComponent<SwitchedDocRefEditorProps> = ({
     </DocRefEditor>
   );
 };
-
-export default XMLSchemaEditor;

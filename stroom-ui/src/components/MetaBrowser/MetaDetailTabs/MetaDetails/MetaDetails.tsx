@@ -7,7 +7,7 @@ interface Props {
   dataRow: MetaRow;
 }
 
-const MetaDetails: React.FunctionComponent<Props> = ({ dataRow }) => (
+export const MetaDetails: React.FunctionComponent<Props> = ({ dataRow }) => (
   <div className="tab-pane">
     <div className="StreamDetails__container">
       <div className="StreamDetails__table__container">
@@ -77,5 +77,3 @@ const MetaDetails: React.FunctionComponent<Props> = ({ dataRow }) => (
     </div>
   </div>
 );
-
-export default MetaDetails;

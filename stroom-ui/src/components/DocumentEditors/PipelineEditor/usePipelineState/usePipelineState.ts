@@ -1,6 +1,6 @@
 import * as React from "react";
 
-import useDocumentApi from "components/DocumentEditors/useDocumentApi";
+import { useDocumentApi } from "components/DocumentEditors/useDocumentApi";
 import { useDocRefEditor } from "../../DocRefEditor";
 import {
   getPipelineAsTree,
@@ -18,7 +18,7 @@ import {
   PipelineDocumentType,
   PipelineElementType,
 } from "components/DocumentEditors/useDocumentApi/types/pipelineDoc";
-import useElement from "../useElement";
+import { useElement } from "../useElement";
 
 export const usePipelineState = (pipelineId: string): PipelineProps => {
   const documentApi = useDocumentApi<"Pipeline", PipelineDocumentType>(

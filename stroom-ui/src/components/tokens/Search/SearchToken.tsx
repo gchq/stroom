@@ -18,7 +18,7 @@ import * as React from "react";
 import { useState } from "react";
 import ReactTable, { Column, RowInfo } from "react-table";
 import Toggle from "react-toggle";
-import useAppNavigation from "lib/useAppNavigation";
+import { useAppNavigation } from "lib/useAppNavigation";
 import Button from "components/Button";
 import useColumns from "./useColumns";
 import useTokenSearch from "./useTokenSearch";

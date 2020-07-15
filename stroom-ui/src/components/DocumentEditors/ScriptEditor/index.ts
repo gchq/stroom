@@ -1,1 +1,1 @@
-export { default } from "./ScriptEditor";
+export { ScriptEditor } from "./ScriptEditor";

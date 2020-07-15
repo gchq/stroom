@@ -19,7 +19,7 @@ import { FunctionComponent, useEffect, useState } from "react";
 import ChangePasswordManager from "./ChangePasswordManager";
 import AccountManager from "../Account/AccountManager/AccountManager";
 import BackgroundLogo from "../Layout/BackgroundLogo";
-import useStroomSessionResource from "./api/useStroomSessionResource";
+import { useStroomSessionResource } from "./api";
 import CustomLoader from "../CustomLoader";
 import Background from "../Layout/Background";
 import TokenManager from "../Account/TokenManager/TokenManager";

@@ -17,7 +17,7 @@
 import * as React from "react";
 import { storiesOf } from "@storybook/react";
 
-import ActivitySummary from "./ActivitySummary";
+import { ActivitySummary } from "./ActivitySummary";
 
 storiesOf("Sections/Activity", module).add("Summary", () => (
   <ActivitySummary />

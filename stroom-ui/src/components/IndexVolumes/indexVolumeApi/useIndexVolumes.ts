@@ -2,7 +2,7 @@ import * as React from "react";
 
 import useApi from "./useApi";
 import { IndexVolume, NewIndexVolume } from "./types";
-import useListReducer from "lib/useListReducer";
+import { useListReducer } from "lib/useListReducer";
 
 /**
  * Convenience function for using Index Volume.

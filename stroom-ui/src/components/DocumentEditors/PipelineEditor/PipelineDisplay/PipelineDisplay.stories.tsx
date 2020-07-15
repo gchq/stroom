@@ -17,7 +17,7 @@
 import * as React from "react";
 import { storiesOf } from "@storybook/react";
 
-import PipelineDisplay from "./PipelineDisplay";
+import { PipelineDisplay } from "./PipelineDisplay";
 import { testPipelines } from "testing/data/pipelines";
 
 import usePipelineState from "../usePipelineState/usePipelineState";

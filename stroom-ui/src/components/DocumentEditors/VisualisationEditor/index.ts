@@ -1,1 +1,1 @@
-export { default } from "./VisualisationEditor";
+export { VisualisationEditor } from "./VisualisationEditor";

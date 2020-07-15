@@ -7,7 +7,7 @@ import ElementCategory from "./ElementCategory";
 import { getBinItems } from "../pipelineUtils";
 import { DragDropTypes, DropCollectedProps } from "../types";
 
-import useElements from "components/DocumentEditors/PipelineEditor/useElements";
+import { useElements } from "components/DocumentEditors/PipelineEditor/useElements";
 import { groupByCategory, keyByType } from "../elementUtils";
 import { PipelineDocumentType } from "components/DocumentEditors/useDocumentApi/types/pipelineDoc";
 import {

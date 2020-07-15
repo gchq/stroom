@@ -1,6 +1,6 @@
 import * as React from "react";
 
-import useApi from "./useApi";
+import { useApi } from "./useApi";
 import { Activity } from "./types";
 
 /**

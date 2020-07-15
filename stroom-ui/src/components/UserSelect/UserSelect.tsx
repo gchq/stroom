@@ -51,9 +51,9 @@ const UserSelect: React.FunctionComponent<Props> = ({
   // onChange={(email: string) => onChange(email)}
   // onSearch={(search: string) => onSearch(search)}
   >
-    {options.map((option) => (
-      <Option key={option.email}>{option.email}</Option>
-    ))}
+    {/*{options.map((option) => (*/}
+    {/*  <Option key={option.email}>{option.email}</Option>*/}
+    {/*))}*/}
   </Select>
 );
 

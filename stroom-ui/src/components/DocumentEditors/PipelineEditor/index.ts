@@ -14,9 +14,5 @@
  * limitations under the License.
  */
 
-import PipelineEditor from "./PipelineEditor";
-import PipelineDisplay from "./PipelineDisplay";
-
-export { PipelineEditor, PipelineDisplay };
-
-export default PipelineEditor;
+export { PipelineEditor } from "./PipelineEditor";
+export { PipelineDisplay } from "./PipelineDisplay";

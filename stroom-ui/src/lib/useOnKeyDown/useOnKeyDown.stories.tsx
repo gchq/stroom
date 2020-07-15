@@ -1,7 +1,7 @@
 import * as React from "react";
 
 import { storiesOf } from "@storybook/react";
-import useOnKeyDown from "./useOnKeyDown";
+import { useOnKeyDown } from "./useOnKeyDown";
 
 interface Location {
   x: number;

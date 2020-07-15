@@ -1,9 +1,9 @@
 import * as React from "react";
 import { InProps, OutProps } from "./types";
 import { SelectionBehaviour } from "./enums";
-import useOnKeyDown from "lib/useOnKeyDown";
-import useCustomFocus from "lib/useCustomFocus";
-import useSelectable from "lib/useSelectable/useSelectable";
+import { useOnKeyDown } from "lib/useOnKeyDown";
+import { useCustomFocus } from "lib/useCustomFocus";
+import { useSelectable } from "lib/useSelectable/useSelectable";
 
 const useSelectableItemListing = <TItem extends {}>({
   getKey,

@@ -1,1 +1,1 @@
-export { default } from "./SessionInfo";
+export { SessionInfo } from "./SessionInfo";

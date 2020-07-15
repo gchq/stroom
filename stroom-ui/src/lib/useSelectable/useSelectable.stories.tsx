@@ -1,7 +1,7 @@
 import * as React from "react";
 import { loremIpsum } from "lorem-ipsum";
 import { storiesOf } from "@storybook/react";
-import useSelectable from "./useSelectable";
+import { useSelectable } from "./useSelectable";
 import JsonDebug from "testing/JsonDebug";
 
 const TEST_ITEMS: string[] = Array(10)

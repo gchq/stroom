@@ -17,7 +17,7 @@
 import Button from "components/Button";
 import InlineInput from "components/InlineInput/InlineInput";
 import { ControlledInput } from "lib/useForm/types";
-import useListReducer from "lib/useListReducer";
+import { useListReducer } from "lib/useListReducer";
 import * as React from "react";
 import { ChangeEvent, useCallback, useEffect, useMemo } from "react";
 

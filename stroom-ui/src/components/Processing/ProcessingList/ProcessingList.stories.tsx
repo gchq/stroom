@@ -1,7 +1,7 @@
 import * as React from "react";
 
 import { storiesOf } from "@storybook/react";
-import ProcessingList from "./ProcessingList";
+import { ProcessingList } from "./ProcessingList";
 import useStreamTasks from "components/Processing/useStreamTasks";
 import JsonDebug from "testing/JsonDebug";
 import { StreamTaskType } from "../types";

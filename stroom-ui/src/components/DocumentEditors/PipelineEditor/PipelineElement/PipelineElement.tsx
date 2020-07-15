@@ -170,7 +170,7 @@ interface EnhancedProps extends Props, DropCollectedProps, DragCollectedProps {}
  *   ),
  * ); */
 
-const PipelineElement: React.FunctionComponent<EnhancedProps> = ({
+export const PipelineElement: React.FunctionComponent<EnhancedProps> = ({
   elementId,
   connectDragSource,
   connectDropTarget,
@@ -235,6 +235,3 @@ const PipelineElement: React.FunctionComponent<EnhancedProps> = ({
     ),
   );
 };
-
-export default PipelineElement;
-/* export default enhance(PipelineElement); */

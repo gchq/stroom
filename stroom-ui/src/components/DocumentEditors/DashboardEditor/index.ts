@@ -1,1 +1,1 @@
-export { default } from "./DashboardEditor";
+export { DashboardEditor } from "./DashboardEditor";

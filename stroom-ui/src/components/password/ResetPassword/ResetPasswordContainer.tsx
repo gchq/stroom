@@ -21,7 +21,7 @@ import useResetPassword from "./useResetPassword";
 import { useTokenValidityCheck } from "./useTokenValidityCheck";
 import useUrlFactory from "lib/useUrlFactory";
 
-const ResetPasswordContainer = () => {
+export const ResetPasswordContainer = () => {
   const { resetPassword } = useResetPassword();
   const { apiUrl } = useUrlFactory();
   const resource = apiUrl("/Oldauthentication/v1");
@@ -57,5 +57,3 @@ const ResetPasswordContainer = () => {
     />
   );
 };
-
-export default ResetPasswordContainer;

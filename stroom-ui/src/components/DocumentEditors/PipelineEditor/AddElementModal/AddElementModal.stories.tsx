@@ -6,7 +6,7 @@ import AddElementModal, { useDialog } from "./AddElementModal";
 import Button from "components/Button";
 import JsonDebug from "testing/JsonDebug";
 import { NewElement } from "../types";
-import useElements from "components/DocumentEditors/PipelineEditor/useElements";
+import { useElements } from "components/DocumentEditors/PipelineEditor/useElements";
 import { ElementDefinition } from "components/DocumentEditors/PipelineEditor/useElements/types";
 import Select from "react-select";
 

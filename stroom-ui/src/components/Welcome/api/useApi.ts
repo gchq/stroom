@@ -7,7 +7,7 @@ interface UseApi {
   getWelcomeHtml: () => Promise<WelcomeData>;
 }
 
-const useApi = (): UseApi => {
+export const useApi = (): UseApi => {
   const { httpGetJson } = useHttpClient();
   const { apiUrl } = useUrlFactory();
   const resource = apiUrl("/welcome/v1");
@@ -19,5 +19,3 @@ const useApi = (): UseApi => {
     ]),
   };
 };
-
-export default useApi;

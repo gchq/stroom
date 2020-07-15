@@ -43,17 +43,7 @@ const CreateTokenForm: FunctionComponent<CreateTokenFormProps> = ({
   formikProps,
   okCancelProps,
 }) => {
-  const {
-    values,
-    setFieldValue,
-    errors,
-    touched,
-    setFieldTouched,
-    handleChange,
-    handleBlur,
-    handleSubmit,
-    isSubmitting,
-  } = formikProps;
+  const { handleSubmit, isSubmitting } = formikProps;
   const { onCancel, cancelClicked } = okCancelProps;
 
   return (
@@ -70,14 +60,7 @@ const CreateTokenForm: FunctionComponent<CreateTokenFormProps> = ({
             controlId="expiresOnMs"
             label="Expiry date"
             placeholder="Choose Expiry Date"
-            onChange={(val) => {
-              // setFieldTouched("expiresOnMs", true, true);
-              setFieldValue("expiresOnMs", val, false);
-            }}
-            onBlur={handleBlur}
-            value={values.expiresOnMs}
-            error={errors.expiresOnMs}
-            touched={touched.expiresOnMs}
+            formikProps={formikProps}
           />
         </Form.Row>
         <Form.Row>
@@ -85,13 +68,8 @@ const CreateTokenForm: FunctionComponent<CreateTokenFormProps> = ({
             controlId="userId"
             label="User Id"
             placeholder="Select User"
-            onChange={handleChange}
-            onBlur={handleBlur}
-            value={values.userId}
-            error={errors.userId}
-            touched={touched.userId}
-            setFieldTouched={setFieldTouched}
             autoComplete="userId"
+            formikProps={formikProps}
           />
         </Form.Row>
       </Modal.Body>
@@ -119,10 +97,10 @@ export const CreateTokenFormik: React.FunctionComponent<CreateTokenProps> = ({
       validationSchema={newTokenValidationSchema}
       onSubmit={onSubmit}
     >
-      {(props) => {
+      {(formikProps) => {
         return (
           <CreateTokenForm
-            formikProps={props}
+            formikProps={formikProps}
             okCancelProps={{ onCancel: () => onClose(false) }}
           />
         );

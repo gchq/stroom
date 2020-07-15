@@ -1,4 +1,4 @@
-import useListReducer from "lib/useListReducer/useListReducer";
+import { useListReducer } from "lib/useListReducer/useListReducer";
 import * as React from "react";
 import useApi from "./useApi";
 

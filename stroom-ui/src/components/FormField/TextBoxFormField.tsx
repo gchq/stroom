@@ -1,46 +1,44 @@
 import * as React from "react";
-import {
-  ChangeEventHandler,
-  FocusEventHandler,
-  FunctionComponent,
-  useEffect,
-  useRef,
-} from "react";
+import { FunctionComponent, useEffect, useRef } from "react";
 import { Form } from "react-bootstrap";
-import { FormField, FormFieldProps, FormFieldState } from "./FormField";
+import { FormField, FormFieldState } from "./FormField";
+import { FormikProps } from "formik";
+import { createFormFieldState } from "./util";
 
-export interface TextBoxProps {
+interface TextBoxProps {
+  className?: string;
   type: "text" | "password";
-  controlId?: string;
   placeholder: string;
   autoComplete?: string;
-  className?: string;
-  validator?: (label: string, value: string) => void;
-  onChange?: ChangeEventHandler<any>;
-  onBlur?: FocusEventHandler<any>;
   autoFocus?: boolean;
+  state: FormFieldState<string>;
 }
 
-export const TextBox: FunctionComponent<TextBoxProps & FormFieldState> = ({
-  controlId,
+interface TextBoxFormFieldProps {
+  controlId: string;
+  label: string;
+  className?: string;
+  type: "text" | "password";
+  placeholder: string;
+  autoComplete?: string;
+  autoFocus?: boolean;
+  formikProps: FormikProps<any>;
+}
+
+export const TextBox: FunctionComponent<TextBoxProps> = ({
+  className = "",
   type,
   placeholder,
   autoComplete,
-  className = "",
-  onChange,
-  onBlur,
   autoFocus = false,
-  value,
-  error,
-  touched = false,
-  setFieldTouched = () => undefined,
+  state,
   children,
 }) => {
-  const hasErrors = touched && error;
+  const { value, error, touched, onChange, onBlur } = state;
   const controlClass = [
     "form-control",
     className,
-    touched ? (hasErrors ? "is-invalid" : "is-valid") : "",
+    touched ? (error ? "is-invalid" : "is-valid") : "",
   ]
     .join(" ")
     .trim();
@@ -56,17 +54,14 @@ export const TextBox: FunctionComponent<TextBoxProps & FormFieldState> = ({
   return (
     <div className="FormField__input-container">
       <Form.Control
-        type={type}
         className={controlClass}
+        type={type}
         placeholder={placeholder}
-        value={value}
-        onChange={(e) => {
-          setFieldTouched(controlId);
-          onChange(e);
-        }}
-        onBlur={onBlur}
         autoComplete={autoComplete}
         autoFocus={autoFocus}
+        value={value}
+        onChange={(e) => onChange(e.target.value)}
+        onBlur={onBlur}
         ref={inputEl}
       />
       {children}
@@ -74,56 +69,27 @@ export const TextBox: FunctionComponent<TextBoxProps & FormFieldState> = ({
   );
 };
 
-export const TextBoxFormField: FunctionComponent<
-  TextBoxProps & FormFieldProps & FormFieldState
-> = ({
+export const TextBoxFormField: FunctionComponent<TextBoxFormFieldProps> = ({
   controlId,
-  type,
   label,
+  className,
+  type,
   placeholder,
   autoComplete,
-  className = "",
-  onChange,
-  onBlur,
-  autoFocus = false,
-  value,
-  error,
-  touched,
-  setFieldTouched,
+  autoFocus,
+  formikProps,
   children,
 }) => {
-  const hasErrors = touched && error;
-  const controlClass = [
-    "form-control",
-    className,
-    touched ? (hasErrors ? "is-invalid" : "is-valid") : "",
-  ]
-    .join(" ")
-    .trim();
-
+  const formFieldState = createFormFieldState(controlId, formikProps);
   return (
-    <FormField
-      controlId={controlId}
-      label={label}
-      error={error}
-      touched={touched}
-    >
+    <FormField controlId={controlId} label={label} error={formFieldState.error}>
       <TextBox
-        controlId={controlId}
+        className={className}
         type={type}
-        className={controlClass}
         placeholder={placeholder}
-        value={value}
-        error={error}
-        touched={touched}
-        setFieldTouched={setFieldTouched}
-        onChange={(e) => {
-          setFieldTouched(controlId);
-          onChange(e);
-        }}
-        onBlur={onBlur}
         autoComplete={autoComplete}
         autoFocus={autoFocus}
+        state={formFieldState}
       >
         {children}
       </TextBox>

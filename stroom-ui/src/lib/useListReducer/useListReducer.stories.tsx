@@ -1,6 +1,6 @@
 import { storiesOf } from "@storybook/react";
 import * as React from "react";
-import useListReducer from "./useListReducer";
+import { useListReducer } from "./useListReducer";
 import { loremIpsum } from "lorem-ipsum";
 
 const generateItem = () => loremIpsum({ count: 3, units: "words" });

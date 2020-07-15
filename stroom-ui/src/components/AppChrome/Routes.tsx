@@ -27,9 +27,9 @@ import SwitchedDocRefEditor from "components/DocumentEditors/SwitchedDocRefEdito
 import ErrorPage from "components/ErrorPage";
 import IndexVolumes from "components/IndexVolumes";
 import {
-  ResetPassword,
-  ResetPasswordRequest,
-  ConfirmPasswordResetEmail,
+  ResetPasswordContainer,
+  ResetPasswordRequestContainer,
+  ConfirmPasswordResetEmailContainer,
 } from "components/password";
 import PathNotFound from "components/PathNotFound";
 import { Processing } from "components/Processing";
@@ -38,9 +38,9 @@ import { EditToken } from "components/tokens/Create";
 import TokenSearch from "components/tokens/Search/SearchToken";
 // import { UserCreate, UserEdit, UserSearch } from "components/Account";
 import UserSettings from "components/UserSettings";
-import Welcome from "components/Welcome";
+import { Welcome } from "components/Welcome";
 import AppChrome from "./AppChrome";
-import useAppNavigation from "lib/useAppNavigation";
+import { useAppNavigation } from "lib/useAppNavigation";
 import DataVolumes from "components/DataVolumes/DataVolumesSectionContainer";
 import SignInManager from "../Authentication/SignInManager";
 import StroomWrapper from "../Authentication/StroomWrapper";
@@ -77,17 +77,17 @@ const Routes: React.FunctionComponent = () => {
       <Route
         exact
         path={`${singlePagePrefix}/resetPassword`}
-        component={ResetPassword}
+        component={ResetPasswordContainer}
       />
       <Route
         exact
         path={`${singlePagePrefix}/resetPasswordRequest`}
-        component={ResetPasswordRequest}
+        component={ResetPasswordRequestContainer}
       />
       <Route
         exact
         path={`${singlePagePrefix}/confirmPasswordResetEmail`}
-        component={ConfirmPasswordResetEmail}
+        component={ConfirmPasswordResetEmailContainer}
       />
 
       <Route

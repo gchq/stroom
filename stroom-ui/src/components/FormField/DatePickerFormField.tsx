@@ -1,50 +1,46 @@
 import * as React from "react";
-import { FocusEventHandler, FunctionComponent, useEffect, useRef } from "react";
-import { FormField, FormFieldProps } from "./FormField";
-// import DatePicker from "react-datepicker";
+import { FunctionComponent, useEffect, useRef } from "react";
+import { FormFieldState, FormField } from "./FormField";
 
 import DatePicker, { registerLocale } from "react-datepicker";
 
 // The following lines are required to start the datepicker week on a Monday.
 import enGb from "date-fns/locale/en-GB";
+import { FormikProps } from "formik";
+import { createFormFieldState } from "./util";
 registerLocale("en-gb", enGb);
 
 export interface DatePickerProps {
-  controlId?: string;
-  placeholder?: string;
-  autoComplete?: string;
   className?: string;
-  validator?: (label: string, value: string) => void;
-  onChange?: (value: number) => void;
-  onBlur?: FocusEventHandler<any>;
+  placeholder: string;
+  autoComplete?: string;
   autoFocus?: boolean;
+  state: FormFieldState<number>;
 }
 
-export interface DatePickerState {
-  value?: number;
-  error?: string;
-  touched?: boolean;
+interface DatePickerFormFieldProps {
+  controlId: string;
+  label: string;
+  className?: string;
+  placeholder: string;
+  autoComplete?: string;
+  autoFocus?: boolean;
+  formikProps: FormikProps<any>;
 }
 
-export const DatePickerControl: FunctionComponent<
-  DatePickerProps & DatePickerState
-> = ({
+export const DatePickerControl: FunctionComponent<DatePickerProps> = ({
+  className = "",
   placeholder,
   autoComplete,
-  className = "",
-  onChange,
-  onBlur,
   autoFocus = false,
-  value,
-  error,
-  touched = false,
+  state,
   children,
 }) => {
-  const hasErrors = touched && error;
+  const { value, error, touched, onChange, onBlur } = state;
   const controlClass = [
     "form-control",
     className,
-    touched ? (hasErrors ? "is-invalid" : "is-valid") : "",
+    touched ? (error ? "is-invalid" : "is-valid") : "",
   ]
     .join(" ")
     .trim();
@@ -60,19 +56,18 @@ export const DatePickerControl: FunctionComponent<
   return (
     <div className="FormField__input-container">
       <DatePicker
+        className={controlClass}
+        placeholderText={placeholder}
+        autoComplete={autoComplete}
+        autoFocus={autoFocus}
         selected={value ? new Date(value) : new Date()}
         onChange={(date) => {
           onChange(date.getTime());
         }}
-        className={controlClass}
-        placeholderText={placeholder}
         onBlur={onBlur}
-        autoComplete={autoComplete}
-        autoFocus={autoFocus}
         ref={inputEl}
         // showYearDropdown
         // todayButton="Today"
-
         dateFormat="yyyy-MM-dd"
         locale="en-gb" // Start on a Monday
       />
@@ -81,49 +76,25 @@ export const DatePickerControl: FunctionComponent<
   );
 };
 
-export const DatePickerFormField: FunctionComponent<
-  DatePickerProps & FormFieldProps & DatePickerState
-> = ({
+export const DatePickerFormField: FunctionComponent<DatePickerFormFieldProps> = ({
   controlId,
   label,
+  className,
   placeholder,
   autoComplete,
-  className = "",
-  onChange,
-  onBlur,
-  autoFocus = false,
-  value,
-  error,
-  touched,
+  autoFocus,
+  formikProps,
   children,
 }) => {
-  const hasErrors = touched && error;
-  const controlClass = [
-    "form-control",
-    className,
-    touched ? (hasErrors ? "is-invalid" : "is-valid") : "",
-  ]
-    .join(" ")
-    .trim();
-
+  const formFieldState = createFormFieldState(controlId, formikProps);
   return (
-    <FormField
-      controlId={controlId}
-      label={label}
-      error={error}
-      touched={touched}
-    >
+    <FormField controlId={controlId} label={label} error={formFieldState.error}>
       <DatePickerControl
-        controlId={controlId}
-        className={controlClass}
+        className={className}
         placeholder={placeholder}
-        value={value}
-        error={error}
-        touched={touched}
-        onChange={onChange}
-        onBlur={onBlur}
         autoComplete={autoComplete}
         autoFocus={autoFocus}
+        state={formFieldState}
       >
         {children}
       </DatePickerControl>

@@ -2,7 +2,7 @@ import * as React from "react";
 
 import * as Cookies from "cookies-js";
 import { storiesOf } from "@storybook/react";
-import useAuthenticationResource from "./useAuthenticationResource";
+import { useAuthenticationResource } from "./useAuthenticationResource";
 import useForm from "lib/useForm";
 import JsonDebug from "testing/JsonDebug";
 

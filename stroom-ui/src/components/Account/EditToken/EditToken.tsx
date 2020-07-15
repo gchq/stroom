@@ -21,7 +21,6 @@ import { Formik, FormikProps } from "formik";
 import { Col, Form, Modal } from "react-bootstrap";
 import { TextAreaFormField } from "components/FormField";
 import { FormikHelpers } from "formik/dist/types";
-import { PasswordPolicyConfig } from "../../Authentication/api/types";
 import { newTokenValidationSchema } from "./validation";
 import { CreateTokenRequest } from "../api/types";
 import { FunctionComponent } from "react";
@@ -46,16 +45,7 @@ const EditTokenForm: FunctionComponent<EditTokenFormProps> = ({
   formikProps,
   okCancelProps,
 }) => {
-  const {
-    values,
-    errors,
-    touched,
-    setFieldTouched,
-    handleChange,
-    handleBlur,
-    handleSubmit,
-    isSubmitting,
-  } = formikProps;
+  const { values, handleChange, handleSubmit, isSubmitting } = formikProps;
   const { onCancel, cancelClicked } = okCancelProps;
 
   return (
@@ -129,13 +119,8 @@ const EditTokenForm: FunctionComponent<EditTokenFormProps> = ({
             controlId="data"
             label="Data"
             placeholder="Add Comments"
-            onChange={handleChange}
-            onBlur={handleBlur}
-            value={values.data}
-            error={errors.data}
-            touched={touched.data}
-            setFieldTouched={setFieldTouched}
             autoComplete="data"
+            formikProps={formikProps}
           />
           <CopyToClipboard text={values.data}>
             <Button
@@ -152,13 +137,8 @@ const EditTokenForm: FunctionComponent<EditTokenFormProps> = ({
             controlId="comments"
             label="Comments"
             placeholder="Add Comments"
-            onChange={handleChange}
-            onBlur={handleBlur}
-            value={values.comments}
-            error={errors.comments}
-            touched={touched.comments}
-            setFieldTouched={setFieldTouched}
             autoComplete="comments"
+            formikProps={formikProps}
           />
         </Form.Row>
         <Form.Row>

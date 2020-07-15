@@ -18,7 +18,7 @@ import { SizeProp } from "@fortawesome/fontawesome-svg-core";
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
 import * as React from "react";
 import { ButtonProps } from "./types";
-import RippleContainer, { useRipple } from "./RippleContainer";
+import { RippleContainer, useRipple } from "./RippleContainer";
 import { FunctionComponent, useEffect, useRef } from "react";
 import { Spinner } from "react-bootstrap";
 

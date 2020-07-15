@@ -55,16 +55,7 @@ const EditAccountForm: React.FunctionComponent<EditAccountFormProps> = ({
   okCancelProps,
   changePasswordProps,
 }) => {
-  const {
-    values,
-    errors,
-    touched,
-    setFieldTouched,
-    handleChange,
-    handleBlur,
-    handleSubmit,
-    isSubmitting,
-  } = formikProps;
+  const { values, handleChange, handleSubmit, isSubmitting } = formikProps;
   const { onCancel, cancelClicked } = okCancelProps;
   const { onPasswordChange } = changePasswordProps;
 
@@ -79,59 +70,39 @@ const EditAccountForm: React.FunctionComponent<EditAccountFormProps> = ({
       <Modal.Body>
         <Form.Row>
           <TextBoxFormField
-            type="text"
             controlId="userId"
+            type="text"
             label="User Id"
             placeholder="Enter A User Id"
-            onChange={handleChange}
-            onBlur={handleBlur}
-            value={values.userId}
-            error={errors.userId}
-            touched={touched.userId}
-            setFieldTouched={setFieldTouched}
             autoFocus={true}
             autoComplete="user-id"
+            formikProps={formikProps}
           />
           <TextBoxFormField
-            type="text"
             controlId="email"
+            type="text"
             label="Email"
             placeholder="Enter An Email Address"
-            onChange={handleChange}
-            onBlur={handleBlur}
-            value={values.email}
-            error={errors.email}
-            touched={touched.email}
-            setFieldTouched={setFieldTouched}
             autoComplete="email"
+            formikProps={formikProps}
           />
         </Form.Row>
         <Form.Row>
           <TextBoxFormField
-            type="text"
             controlId="firstName"
+            type="text"
             label="First Name"
             placeholder="Enter First Name"
-            onChange={handleChange}
-            onBlur={handleBlur}
-            value={values.firstName}
-            error={errors.firstName}
-            touched={touched.firstName}
-            setFieldTouched={setFieldTouched}
             autoComplete="first-name"
+            formikProps={formikProps}
           />
           <TextBoxFormField
-            type="text"
             controlId="lastName"
+            type="text"
             label="Last Name"
             placeholder="Enter Last Name"
-            onChange={handleChange}
-            onBlur={handleBlur}
-            value={values.lastName}
-            error={errors.lastName}
-            touched={touched.lastName}
-            setFieldTouched={setFieldTouched}
             autoComplete="last-name"
+            formikProps={formikProps}
           />
         </Form.Row>
         <Form.Row>
@@ -139,13 +110,8 @@ const EditAccountForm: React.FunctionComponent<EditAccountFormProps> = ({
             controlId="comments"
             label="Comments"
             placeholder="Add Comments"
-            onChange={handleChange}
-            onBlur={handleBlur}
-            value={values.comments}
-            error={errors.comments}
-            touched={touched.comments}
-            setFieldTouched={setFieldTouched}
             autoComplete="comments"
+            formikProps={formikProps}
           />
         </Form.Row>
         <Form.Row>
@@ -245,7 +211,7 @@ export const EditAccount: React.FunctionComponent<{
   passwordPolicyConfig: PasswordPolicyConfig;
   onClose: (success: boolean) => void;
 }> = ({ account, passwordPolicyConfig, onClose }) => {
-  const [showPasswordDialog, setShowPasswordDialog] = useState();
+  const [showPasswordDialog, setShowPasswordDialog] = useState<boolean>();
   const [passwordState, setPasswordState] = useState<
     ChangePasswordFormValues
   >();

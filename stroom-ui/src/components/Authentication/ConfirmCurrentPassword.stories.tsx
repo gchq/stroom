@@ -19,7 +19,12 @@ const FormikWrapper: React.FunctionComponent = () => {
         }, 1000);
       }}
     >
-      {(props) => <ConfirmCurrentPasswordForm {...props} />}
+      {(formikProps) => (
+        <ConfirmCurrentPasswordForm
+          formikProps={formikProps}
+          okCancelProps={{}}
+        />
+      )}
     </Formik>
   );
 };

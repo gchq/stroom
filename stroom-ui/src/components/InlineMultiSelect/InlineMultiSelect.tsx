@@ -18,7 +18,7 @@ import Button from "components/Button";
 import InlineSelect, {
   SelectOption,
 } from "components/InlineSelect/InlineSelect";
-import useListReducer from "lib/useListReducer";
+import { useListReducer } from "lib/useListReducer";
 import * as React from "react";
 import { ChangeEvent, useEffect, useMemo, useCallback } from "react";
 

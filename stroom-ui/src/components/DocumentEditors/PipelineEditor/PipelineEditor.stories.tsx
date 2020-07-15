@@ -16,7 +16,7 @@
 import * as React from "react";
 import { storiesOf } from "@storybook/react";
 
-import PipelineEditor from "./PipelineEditor";
+import { PipelineEditor } from "./PipelineEditor";
 
 import { testPipelines } from "testing/data/pipelines";
 

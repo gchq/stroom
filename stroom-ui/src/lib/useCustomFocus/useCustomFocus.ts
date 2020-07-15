@@ -80,7 +80,7 @@ const reducer = (
   }
 };
 
-const useCustomFocus = <T extends {}>({
+export const useCustomFocus = <T extends {}>({
   items,
   preFocusWrap,
 }: InProps<T>): OutProps<T> => {
@@ -132,5 +132,3 @@ const useCustomFocus = <T extends {}>({
     clear,
   };
 };
-
-export default useCustomFocus;

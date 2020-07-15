@@ -20,7 +20,7 @@ import { Tab, Tabs, TabList, TabPanel } from "react-tabs";
 import { useMetaRow } from "components/MetaBrowser/api";
 import Loader from "components/Loader";
 import { MetaRow } from "../types";
-import MetaDetails from "./MetaDetails";
+import { MetaDetails } from "./MetaDetails";
 import MetaAttributes from "./MetaAttributes";
 import DataRetention from "./DataRetention";
 import DataDisplay from "../DataDisplay";

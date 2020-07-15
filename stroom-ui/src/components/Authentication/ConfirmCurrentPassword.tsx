@@ -20,62 +20,49 @@ export interface AuthStateProps {
   setAuthState: (state: AuthState) => any;
 }
 
-export const ConfirmCurrentPasswordForm: React.FunctionComponent<
-  FormikProps<FormValues> & OkCancelProps
-> = ({
-  values,
-  errors,
-  touched,
-  setFieldTouched,
-  handleChange,
-  handleBlur,
-  handleSubmit,
-  isSubmitting,
-  onCancel,
-  cancelClicked,
-}) => (
-  <Form noValidate={true} onSubmit={handleSubmit}>
-    <Modal.Header closeButton={false}>
-      <Modal.Title id="contained-modal-title-vcenter">
-        Enter Your Current Password
-      </Modal.Title>
-    </Modal.Header>
-    <Modal.Body>
-      <input
-        type="text"
-        id="userId"
-        value={values.userId}
-        onChange={handleChange}
-        onBlur={handleBlur}
-        autoComplete="username"
-        hidden={true}
-      />
-      <Form.Row>
-        <PasswordFormField
-          controlId="password"
-          label="Current Password"
-          placeholder="Enter Your Current Password"
-          value={values.password}
-          error={errors.password}
-          onChange={handleChange}
-          onBlur={handleBlur}
-          touched={touched.password}
-          setFieldTouched={setFieldTouched}
-          autoComplete="current-password"
-          autoFocus={true}
+export const ConfirmCurrentPasswordForm: React.FunctionComponent<{
+  formikProps: FormikProps<FormValues>;
+  okCancelProps: OkCancelProps;
+}> = ({ formikProps, okCancelProps }) => {
+  const { values, handleSubmit, isSubmitting } = formikProps;
+  const { onCancel, cancelClicked } = okCancelProps;
+  return (
+    <Form noValidate={true} onSubmit={handleSubmit}>
+      <Modal.Header closeButton={false}>
+        <Modal.Title id="contained-modal-title-vcenter">
+          Enter Your Current Password
+        </Modal.Title>
+      </Modal.Header>
+      <Modal.Body>
+        <input
+          type="text"
+          id="userId"
+          value={values.userId}
+          autoComplete="username"
+          hidden={true}
         />
-      </Form.Row>
-    </Modal.Body>
-    <Modal.Footer>
-      <OkCancelButtons
-        onOk={() => undefined}
-        onCancel={onCancel}
-        okClicked={isSubmitting}
-        cancelClicked={cancelClicked}
-      />
-    </Modal.Footer>
-  </Form>
-);
+        <Form.Row>
+          <PasswordFormField
+            controlId="password"
+            label="Current Password"
+            placeholder="Enter Your Current Password"
+            autoComplete="current-password"
+            autoFocus={true}
+            formikProps={formikProps}
+          />
+        </Form.Row>
+      </Modal.Body>
+      <Modal.Footer>
+        <OkCancelButtons
+          onOk={() => undefined}
+          onCancel={onCancel}
+          okClicked={isSubmitting}
+          cancelClicked={cancelClicked}
+        />
+      </Modal.Footer>
+    </Form>
+  );
+};
 
 const ConfirmCurrentPasswordFormik: React.FunctionComponent<{
   userId: string;
@@ -119,8 +106,11 @@ const ConfirmCurrentPasswordFormik: React.FunctionComponent<{
         });
       }}
     >
-      {(props) => (
-        <ConfirmCurrentPasswordForm onCancel={onCancel} {...props}>
+      {(formikProps) => (
+        <ConfirmCurrentPasswordForm
+          formikProps={formikProps}
+          okCancelProps={{ onCancel }}
+        >
           {children}
         </ConfirmCurrentPasswordForm>
       )}

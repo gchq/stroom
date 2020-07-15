@@ -1,7 +1,7 @@
 import * as React from "react";
 
 import Button from "components/Button";
-import useAppNavigation from "lib/useAppNavigation";
+import { useAppNavigation } from "lib/useAppNavigation";
 import useActivities from "../api/useActivities";
 import Toggle from "react-toggle";
 import { useDialog as useThemedConfirmDialog } from "components/ThemedConfirm";

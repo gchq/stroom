@@ -1,33 +1,29 @@
 import * as React from "react";
-import {
-  ChangeEventHandler,
-  FocusEventHandler,
-  FunctionComponent,
-  useState,
-} from "react";
+import { FunctionComponent, useState } from "react";
 import { TextBoxFormField } from "./TextBoxFormField";
 import { ViewPassword } from "./ViewPassword";
-import { FormFieldProps, FormFieldState } from "./FormField";
+import { FormikProps } from "formik";
 
-export interface PasswordFormFieldProps {
-  controlId?: string;
+interface PasswordFieldProps {
+  controlId: string;
+  label: string;
+  className?: string;
   placeholder: string;
   autoComplete?: string;
-  className?: string;
-  validator?: (label: string, value: string) => void;
-  onChange?: ChangeEventHandler<any>;
-  onBlur?: FocusEventHandler<any>;
   autoFocus?: boolean;
+  formikProps: FormikProps<any>;
 }
 
-export const PasswordFormField: FunctionComponent<
-  PasswordFormFieldProps & FormFieldProps & FormFieldState
-> = ({ children, className, ...restProps }) => {
+export const PasswordFormField: FunctionComponent<PasswordFieldProps> = ({
+  children,
+  className,
+  ...restProps
+}) => {
   // initialize internal component state
-  const [state, setState] = useState<boolean>(false);
+  const [passwordVisible, setPasswordVisible] = useState<boolean>(false);
 
-  const viewPasswordToggle = (viewText: boolean) => {
-    setState(viewText);
+  const viewPasswordToggle = (visible: boolean) => {
+    setPasswordVisible(visible);
   };
 
   const controlClass = [
@@ -42,10 +38,13 @@ export const PasswordFormField: FunctionComponent<
     <TextBoxFormField
       {...restProps}
       className={controlClass}
-      type={state ? "text" : "password"}
+      type={passwordVisible ? "text" : "password"}
     >
       {children}
-      <ViewPassword state={state} onStateChanged={viewPasswordToggle} />
+      <ViewPassword
+        state={passwordVisible}
+        onStateChanged={viewPasswordToggle}
+      />
     </TextBoxFormField>
   );
 };

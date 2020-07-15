@@ -8,7 +8,7 @@ import { ExpressionTermType } from "../types";
 import { getNewTerm } from "../expressionUtils";
 import JsonDebug from "testing/JsonDebug";
 import Button from "components/Button";
-import useToggle from "lib/useToggle";
+import { useToggle } from "lib/useToggle";
 
 const newTerm: ExpressionTermType = getNewTerm();
 

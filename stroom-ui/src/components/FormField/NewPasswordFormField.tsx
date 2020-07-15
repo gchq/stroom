@@ -3,38 +3,74 @@ import { FunctionComponent, useState } from "react";
 import { TextBox } from "./TextBoxFormField";
 import { ViewPassword } from "./ViewPassword";
 import { Col, Form } from "react-bootstrap";
-import { FormFieldProps, FormFieldState } from "./FormField";
-import { PasswordFormFieldProps } from "./PasswordFormField";
+import { FormikProps } from "formik";
+import { createFormFieldState } from "./util";
+import zxcvbn from "zxcvbn";
+import { FormFieldState } from "./FormField";
 
-export interface NewPasswordFormFieldProps extends PasswordFormFieldProps {
+export interface PasswordStrengthProps {
   strength?: number;
   minStrength?: number;
   thresholdLength?: number;
+  onStrengthChanged?: (strength: number) => void;
 }
 
-export const NewPasswordFormField: FunctionComponent<
-  NewPasswordFormFieldProps & FormFieldProps & FormFieldState
-> = ({
+interface NewPasswordFormFieldProps {
+  controlId: string;
+  label: string;
+  className?: string;
+  placeholder: string;
+  autoComplete?: string;
+  autoFocus?: boolean;
+  passwordStrengthProps: PasswordStrengthProps;
+  formikProps: FormikProps<any>;
+}
+
+export const NewPasswordFormField: FunctionComponent<NewPasswordFormFieldProps> = ({
   controlId,
   label,
   placeholder,
   autoComplete,
-  onChange,
-  onBlur,
-  autoFocus = false,
-  value,
-  error,
-  touched,
-  setFieldTouched,
-  strength,
-  minStrength = 3,
-  thresholdLength = 7,
+  autoFocus,
+  formikProps,
+  passwordStrengthProps,
+  children,
 }) => {
-  // initialize internal component state
-  const [state, setState] = useState<boolean>(false);
+  // const [strength, setStrength] = useState(0);
+  const createdState = createFormFieldState(controlId, formikProps);
+  const changeHandler = (val: string) => {
+    // if (e.target.id === "password") {
+    const score = zxcvbn(val).score;
+    passwordStrengthProps.onStrengthChanged(score);
+    // setStrength(score);
+    // createdState.onChange(val);
+    // formikProps.validateField(controlId);
+    // formikProps.setFieldError(controlId, )
+    // currentStrength = score;
+    // }
+    // formikProps.handleChange(e);
+    createdState.onChange(val);
+    // formikProps.setFieldValue(controlId, val, true);
+    // formikProps.validateField(controlId);
+  };
 
-  const viewPasswordToggle = (viewText: boolean) => {
-    setState(viewText);
+  const formFieldState: FormFieldState<string> = {
+    ...createdState,
+    onChange: changeHandler,
+  };
+
+  const { value, error, touched } = formFieldState;
+  const {
+    strength,
+    minStrength = 3,
+    thresholdLength = 7,
+  } = passwordStrengthProps;
+
+  // initialize internal component state
+  const [passwordVisible, setPasswordVisible] = useState<boolean>(false);
+
+  const viewPasswordToggle = (visible: boolean) => {
+    setPasswordVisible(visible);
   };
 
   const passwordLength = value.length;
@@ -61,11 +97,10 @@ export const NewPasswordFormField: FunctionComponent<
     .join(" ")
     .trim();
 
-  const hasErrors = touched && error;
   const controlClass = [
     "form-control",
     "hide-background-image length-indicator-padding",
-    touched ? (hasErrors ? "is-invalid" : "is-valid") : "",
+    touched ? (error ? "is-invalid" : "is-valid") : "",
   ]
     .join(" ")
     .trim();
@@ -83,23 +118,18 @@ export const NewPasswordFormField: FunctionComponent<
         <div className="strength-meter-fill" data-strength={strength} />
       </div>
       <TextBox
-        controlId={controlId}
-        type={state ? "text" : "password"}
         className={controlClass}
+        type={passwordVisible ? "text" : "password"}
         placeholder={placeholder}
-        value={value}
-        error={error}
-        onChange={(e) => {
-          setFieldTouched(controlId);
-          onChange(e);
-        }}
-        onBlur={onBlur}
         autoComplete={autoComplete}
         autoFocus={autoFocus}
-        touched={touched}
-        setFieldTouched={setFieldTouched}
+        state={formFieldState}
       >
-        <ViewPassword state={state} onStateChanged={viewPasswordToggle} />
+        {children}
+        <ViewPassword
+          state={passwordVisible}
+          onStateChanged={viewPasswordToggle}
+        />
         <div className="NewPasswordField__password-count position-absolute mx-3">
           {/** Render the password length counter indicator **/}
           <span className={counterClass}>
@@ -112,9 +142,7 @@ export const NewPasswordFormField: FunctionComponent<
         </div>
       </TextBox>
       {/** Render the first error if there are any errors **/}
-      <Form.Control.Feedback type="invalid">
-        {touched ? error : ""}
-      </Form.Control.Feedback>
+      <Form.Control.Feedback type="invalid">{error}</Form.Control.Feedback>
     </Form.Group>
   );
 };

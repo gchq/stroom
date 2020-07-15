@@ -15,7 +15,7 @@
  */
 
 import { ControlledInput } from "lib/useForm/types";
-import useListReducer from "lib/useListReducer";
+import { useListReducer } from "lib/useListReducer";
 import * as React from "react";
 import { useCallback, useEffect, useMemo } from "react";
 import { DragDropContext, Droppable, DropResult } from "react-beautiful-dnd";

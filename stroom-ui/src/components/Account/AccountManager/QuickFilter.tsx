@@ -2,6 +2,7 @@ import { FunctionComponent, useState } from "react";
 import { TextBox } from "components/FormField";
 import { Search } from "react-bootstrap-icons";
 import * as React from "react";
+import { FormFieldState } from "../../FormField/FormField";
 
 export interface QuickFilterProps {
   initialValue?: string;
@@ -13,18 +14,21 @@ export const QuickFilter: FunctionComponent<QuickFilterProps> = ({
   onChange,
 }) => {
   const [value, setValue] = useState(initialValue);
+  const state: FormFieldState<string> = {
+    value,
+    onChange: (val) => {
+      setValue(val);
+      onChange && onChange(val);
+    },
+  };
+
   return (
     <TextBox
-      controlId="quickFilter"
       type="text"
       className="QuickFilter left-icon-padding hide-background-image"
       placeholder="Quick Filter"
-      value={value}
-      onChange={(e) => {
-        setValue(e.target.value);
-        onChange && onChange(e.target.value);
-      }}
       autoFocus={true}
+      state={state}
     >
       <Search className="FormField__icon" />
     </TextBox>

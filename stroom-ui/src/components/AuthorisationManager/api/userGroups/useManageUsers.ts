@@ -1,4 +1,4 @@
-import useListReducer from "lib/useListReducer";
+import { useListReducer } from "lib/useListReducer";
 import * as React from "react";
 import { StroomUser } from ".";
 import useApi from "./useApi";

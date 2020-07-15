@@ -1,44 +1,41 @@
 import * as React from "react";
-import {
-  ChangeEventHandler,
-  FocusEventHandler,
-  FunctionComponent,
-  useEffect,
-  useRef,
-} from "react";
+import { FunctionComponent, useEffect, useRef } from "react";
 import { Form } from "react-bootstrap";
-import { FormField, FormFieldProps, FormFieldState } from "./FormField";
+import { FormFieldState, FormField } from "./FormField";
+import { FormikProps } from "formik";
+import { createFormFieldState } from "./util";
 
-export interface TextAreaProps {
-  controlId?: string;
+interface TextAreaProps {
+  className?: string;
   placeholder: string;
   autoComplete?: string;
-  className?: string;
-  validator?: (label: string, value: string) => void;
-  onChange?: ChangeEventHandler<any>;
-  onBlur?: FocusEventHandler<any>;
   autoFocus?: boolean;
+  state: FormFieldState<string>;
 }
 
-export const TextArea: FunctionComponent<TextAreaProps & FormFieldState> = ({
-  controlId,
+interface TextAreaFormFieldProps {
+  controlId: string;
+  label: string;
+  className?: string;
+  placeholder: string;
+  autoComplete?: string;
+  autoFocus?: boolean;
+  formikProps: FormikProps<any>;
+}
+
+export const TextArea: FunctionComponent<TextAreaProps> = ({
+  className = "",
   placeholder,
   autoComplete,
-  className = "",
-  onChange,
-  onBlur,
   autoFocus = false,
-  value,
-  error,
-  touched = false,
-  setFieldTouched = () => undefined,
+  state,
   children,
 }) => {
-  const hasErrors = touched && error;
+  const { value, error, touched, onChange, onBlur } = state;
   const controlClass = [
     "form-control",
     className,
-    touched ? (hasErrors ? "is-invalid" : "is-valid") : "",
+    touched ? (error ? "is-invalid" : "is-valid") : "",
   ]
     .join(" ")
     .trim();
@@ -58,14 +55,11 @@ export const TextArea: FunctionComponent<TextAreaProps & FormFieldState> = ({
         rows={5}
         className={controlClass}
         placeholder={placeholder}
-        value={value ? value : ""}
-        onChange={(e) => {
-          setFieldTouched(controlId);
-          onChange(e);
-        }}
-        onBlur={onBlur}
         autoComplete={autoComplete}
         autoFocus={autoFocus}
+        value={value}
+        onChange={(e) => onChange(e.target.value)}
+        onBlur={onBlur}
         ref={inputEl}
       />
       {children}
@@ -73,54 +67,25 @@ export const TextArea: FunctionComponent<TextAreaProps & FormFieldState> = ({
   );
 };
 
-export const TextAreaFormField: FunctionComponent<
-  TextAreaProps & FormFieldProps & FormFieldState
-> = ({
+export const TextAreaFormField: FunctionComponent<TextAreaFormFieldProps> = ({
   controlId,
   label,
+  className,
   placeholder,
   autoComplete,
-  className = "",
-  onChange,
-  onBlur,
-  autoFocus = false,
-  value,
-  error,
-  touched,
-  setFieldTouched,
+  autoFocus,
+  formikProps,
   children,
 }) => {
-  const hasErrors = touched && error;
-  const controlClass = [
-    "form-control",
-    className,
-    touched ? (hasErrors ? "is-invalid" : "is-valid") : "",
-  ]
-    .join(" ")
-    .trim();
-
+  const formFieldState = createFormFieldState(controlId, formikProps);
   return (
-    <FormField
-      controlId={controlId}
-      label={label}
-      error={error}
-      touched={touched}
-    >
+    <FormField controlId={controlId} label={label} error={formFieldState.error}>
       <TextArea
-        controlId={controlId}
-        className={controlClass}
+        className={className}
         placeholder={placeholder}
-        value={value}
-        error={error}
-        touched={touched}
-        setFieldTouched={setFieldTouched}
-        onChange={(e) => {
-          setFieldTouched(controlId);
-          onChange(e);
-        }}
-        onBlur={onBlur}
         autoComplete={autoComplete}
         autoFocus={autoFocus}
+        state={formFieldState}
       >
         {children}
       </TextArea>

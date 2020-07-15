@@ -5,7 +5,7 @@ import useDocRefTypes from "components/DocumentEditors/api/explorer/useDocRefTyp
 import Select, { components } from "react-select";
 import { OptionProps, SingleValueProps } from "react-select";
 import { ControlledInput } from "lib/useForm/types";
-import useReactSelect from "lib/useReactSelect";
+import { useReactSelect } from "lib/useReactSelect";
 import { BasicOption } from "lib/useReactSelect/types";
 
 interface Props extends ControlledInput<string> {

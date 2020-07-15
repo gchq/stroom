@@ -1,4 +1,4 @@
-import useElements from "../useElements";
+import { useElements } from "../useElements";
 import { ElementDefinition, ElementPropertyType } from "../useElements/types";
 
 interface UseElement {
@@ -6,7 +6,7 @@ interface UseElement {
   properties: ElementPropertyType[];
 }
 
-const useElement = (type?: string): UseElement => {
+export const useElement = (type?: string): UseElement => {
   const { elementDefinitions, elementProperties } = useElements();
 
   return {
@@ -18,5 +18,3 @@ const useElement = (type?: string): UseElement => {
     ),
   };
 };
-
-export default useElement;

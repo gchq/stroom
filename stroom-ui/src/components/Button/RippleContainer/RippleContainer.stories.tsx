@@ -1,6 +1,6 @@
 import * as React from "react";
 import { storiesOf } from "@storybook/react";
-import RippleContainer, { useRipple } from "./RippleContainer";
+import { RippleContainer, useRipple } from "./RippleContainer";
 
 const TestHarness: React.FunctionComponent = () => {
   const onClick: React.MouseEventHandler<HTMLButtonElement> = React.useCallback(

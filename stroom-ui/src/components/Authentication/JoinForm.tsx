@@ -8,6 +8,7 @@ import BackgroundLogo from "../Layout/BackgroundLogo";
 import FormContainer from "../Layout/FormContainer";
 import { FormikProps } from "formik";
 import { Button } from "antd";
+import { PasswordStrengthProps } from "../FormField/NewPasswordFormField";
 
 export interface FormValues {
   fullname: string;
@@ -15,94 +16,61 @@ export interface FormValues {
   password: string;
 }
 
-export interface Props {
-  strength: number;
-  minStrength: number;
-  thresholdLength: number;
-}
+export const JoinForm: React.FunctionComponent<{
+  formikProps: FormikProps<FormValues>;
+  passwordStrengthProps: PasswordStrengthProps;
+}> = ({ formikProps, passwordStrengthProps }) => {
+  const { handleSubmit, isSubmitting } = formikProps;
+  return (
+    <BackgroundLogo>
+      <FormContainer>
+        <form onSubmit={handleSubmit}>
+          <div className="JoinForm__content">
+            <div className="d-flex flex-row justify-content-between align-items-center px-3 mb-5">
+              <legend className="form-label mb-0">Support Team</legend>
+              {/** Show the form button only if all fields are valid **/}
+              <Button
+                className="btn btn-primary text-uppercase px-3 py-2"
+                type="primary"
+                loading={isSubmitting}
+                htmlType="submit"
+              >
+                Join
+              </Button>
+            </div>
 
-export const JoinForm: React.FunctionComponent<
-  Props & FormikProps<FormValues>
-> = ({
-  values,
-  errors,
-  touched,
-  setFieldTouched,
-  handleChange,
-  handleBlur,
-  handleSubmit,
-  isSubmitting,
-  strength,
-  minStrength,
-  thresholdLength,
-}) => (
-  <BackgroundLogo>
-    <FormContainer>
-      <form onSubmit={handleSubmit}>
-        <div className="JoinForm__content">
-          <div className="d-flex flex-row justify-content-between align-items-center px-3 mb-5">
-            <legend className="form-label mb-0">Support Team</legend>
-            {/** Show the form button only if all fields are valid **/}
-            <Button
-              className="btn btn-primary text-uppercase px-3 py-2"
-              type="primary"
-              loading={isSubmitting}
-              htmlType="submit"
-            >
-              Join
-            </Button>
+            <div className="py-5 border-gray border-top border-bottom">
+              {/** Render the fullname form field passing the name validation fn **/}
+              <TextBoxFormField
+                controlId="fullname"
+                type="text"
+                label="Full Name"
+                placeholder="Enter Full Name"
+                autoFocus={true}
+                formikProps={formikProps}
+              />
+
+              {/** Render the email field component **/}
+              <TextBoxFormField
+                controlId="email"
+                type="text"
+                label="Email"
+                placeholder="Enter Email Address"
+                formikProps={formikProps}
+              />
+
+              {/** Render the password field component using thresholdLength of 7 and minStrength of 3 **/}
+              <NewPasswordFormField
+                controlId="password"
+                label="Password"
+                placeholder="Enter Password"
+                passwordStrengthProps={passwordStrengthProps}
+                formikProps={formikProps}
+              />
+            </div>
           </div>
-
-          <div className="py-5 border-gray border-top border-bottom">
-            {/** Render the fullname form field passing the name validation fn **/}
-            <TextBoxFormField
-              controlId="fullname"
-              type="text"
-              label="Full Name"
-              placeholder="Enter Full Name"
-              onChange={handleChange}
-              onBlur={handleBlur}
-              value={values.fullname}
-              error={errors.fullname}
-              touched={touched.fullname}
-              setFieldTouched={setFieldTouched}
-              autoFocus={true}
-            />
-
-            {/** Render the email field component **/}
-            <TextBoxFormField
-              controlId="email"
-              type="text"
-              label="Email"
-              placeholder="Enter Email Address"
-              onChange={handleChange}
-              onBlur={handleBlur}
-              value={values.email}
-              error={errors.email}
-              touched={touched.email}
-              setFieldTouched={setFieldTouched}
-            />
-
-            {/** Render the password field component using thresholdLength of 7 and minStrength of 3 **/}
-            <NewPasswordFormField
-              controlId="password"
-              label="Password"
-              placeholder="Enter Password"
-              strength={strength}
-              minStrength={minStrength}
-              thresholdLength={thresholdLength}
-              onChange={handleChange}
-              onBlur={handleBlur}
-              value={values.password}
-              error={errors.password}
-              touched={touched.password}
-              setFieldTouched={setFieldTouched}
-            />
-          </div>
-        </div>
-      </form>
-    </FormContainer>
-  </BackgroundLogo>
-);
-
-export default JoinForm;
+        </form>
+      </FormContainer>
+    </BackgroundLogo>
+  );
+};

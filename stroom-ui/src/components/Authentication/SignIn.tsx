@@ -32,65 +32,51 @@ export interface FormValues {
   password: string;
 }
 
-export const SignInForm: React.FunctionComponent<FormikProps<FormValues>> = ({
-  values,
-  errors,
-  touched,
-  setFieldTouched,
-  handleChange,
-  handleBlur,
-  handleSubmit,
-  isSubmitting,
-}) => (
-  <Form noValidate={true} onSubmit={handleSubmit}>
-    <TextBoxFormField
-      controlId="userId"
-      type="text"
-      autoComplete="username"
-      label="User Name"
-      placeholder="Enter User Name"
-      className="no-icon-padding left-icon-padding hide-background-image"
-      onChange={handleChange}
-      onBlur={handleBlur}
-      value={values.userId}
-      error={errors.userId}
-      touched={touched.userId}
-      setFieldTouched={setFieldTouched}
-      autoFocus={true}
-    >
-      <Person className="FormField__icon" />
-    </TextBoxFormField>
-
-    <PasswordFormField
-      controlId="password"
-      label="Password"
-      autoComplete="current-password"
-      placeholder="Enter Password"
-      className="left-icon-padding right-icon-padding hide-background-image"
-      onChange={handleChange}
-      onBlur={handleBlur}
-      value={values.password}
-      error={errors.password}
-      touched={touched.password}
-      setFieldTouched={setFieldTouched}
-    >
-      <Lock className="FormField__icon" />
-    </PasswordFormField>
-    <Form.Group as={Col} controlId="signInButton" className="my-0">
-      <Button
-        className="w-100"
-        appearance="contained"
-        action="primary"
-        // icon="check"
-        text="OK"
-        loading={isSubmitting}
-        // onClick={onOk}
+export const SignInForm: React.FunctionComponent<FormikProps<FormValues>> = (
+  formikProps,
+) => {
+  const { handleSubmit, isSubmitting } = formikProps;
+  return (
+    <Form noValidate={true} onSubmit={handleSubmit}>
+      <TextBoxFormField
+        controlId="userId"
+        className="no-icon-padding left-icon-padding hide-background-image"
+        type="text"
+        label="User Name"
+        placeholder="Enter User Name"
+        autoComplete="username"
+        autoFocus={true}
+        formikProps={formikProps}
       >
-        Sign In
-      </Button>
-    </Form.Group>
-  </Form>
-);
+        <Person className="FormField__icon" />
+      </TextBoxFormField>
+
+      <PasswordFormField
+        controlId="password"
+        className="left-icon-padding right-icon-padding hide-background-image"
+        label="Password"
+        placeholder="Enter Password"
+        autoComplete="current-password"
+        formikProps={formikProps}
+      >
+        <Lock className="FormField__icon" />
+      </PasswordFormField>
+      <Form.Group as={Col} controlId="signInButton" className="my-0">
+        <Button
+          className="w-100"
+          appearance="contained"
+          action="primary"
+          // icon="check"
+          text="OK"
+          loading={isSubmitting}
+          // onClick={onOk}
+        >
+          Sign In
+        </Button>
+      </Form.Group>
+    </Form>
+  );
+};
 
 const SignInFormikWrapper: React.FunctionComponent<AuthStateProps> = ({
   authState,

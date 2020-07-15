@@ -5,7 +5,8 @@ import DocRefEditor, { useDocRefEditor } from ".";
 import { useDocumentTree } from "components/DocumentEditors/api/explorer";
 import { iterateNodes } from "lib/treeUtils/treeUtils";
 import DocRefTypePicker from "components/DocRefTypePicker";
-import useDocumentApi, {
+import {
+  useDocumentApi,
   ResourcesByDocType,
 } from "components/DocumentEditors/useDocumentApi";
 import JsonDebug from "testing/JsonDebug";

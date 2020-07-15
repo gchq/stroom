@@ -22,7 +22,7 @@ import {
   getCurrentValue,
   getElementValue,
 } from "../../pipelineUtils";
-import ElementPropertyInheritanceInfo from "./ElementPropertyInheritanceInfo";
+import { ElementPropertyFieldDetails } from "./ElementPropertyInheritanceInfo";
 import ElementPropertyField from "./ElementPropertyField";
 import { PipelineEditApi } from "../../types";
 import { ElementPropertyType } from "components/DocumentEditors/PipelineEditor/useElements/types";
@@ -83,7 +83,7 @@ const ElementProperty: React.FunctionComponent<Props> = ({
         <p>
           The <em>field name</em> of this property is <strong>{name}</strong>
         </p>
-        <ElementPropertyInheritanceInfo
+        <ElementPropertyFieldDetails
           pipelineEditApi={pipelineEditApi}
           name={name}
           value={value}

@@ -2,7 +2,7 @@ import * as React from "react";
 import { storiesOf } from "@storybook/react";
 
 import AddElementForm, { useThisForm } from "./AddElementForm";
-import useElements from "../useElements";
+import { useElements } from "../useElements";
 import JsonDebug from "testing/JsonDebug";
 
 const existingNames: string[] = ["Tom", "Dick", "Harry"];

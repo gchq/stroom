@@ -1,5 +1,5 @@
 import * as React from "react";
-import useAppNavigation from "lib/useAppNavigation";
+import { useAppNavigation } from "lib/useAppNavigation";
 import Button from "components/Button";
 import ThemedConfirm, {
   useDialog as useThemedConfirm,

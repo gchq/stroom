@@ -1,1 +1,1 @@
-export { default } from "./ActivitySummary";
+export { ActivitySummary } from "./ActivitySummary";

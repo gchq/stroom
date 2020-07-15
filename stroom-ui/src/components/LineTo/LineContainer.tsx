@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-import useListReducer from "lib/useListReducer";
+import { useListReducer } from "lib/useListReducer";
 import * as React from "react";
 import v4 from "uuid/v4";
 import LineContext from "./LineContext";

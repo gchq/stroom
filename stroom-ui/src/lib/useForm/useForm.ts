@@ -35,7 +35,7 @@ export const useForm = <T extends {}>({
     }
   }, [value, onValidate]);
 
-  const useTextInput = (s: keyof T) => ({
+  const useTextInput = (s: string) => ({
     type: "text",
     onChange: React.useCallback(
       ({ target: { value } }) => onUpdate({ [s]: value } as T),
@@ -44,7 +44,7 @@ export const useForm = <T extends {}>({
     value: `${value[s]}`,
   });
 
-  const useCheckboxInput = (s: keyof T) => ({
+  const useCheckboxInput = (s: string) => ({
     type: "checkbox",
     checked: value[s],
     onChange: React.useCallback(() => {
@@ -55,7 +55,7 @@ export const useForm = <T extends {}>({
   });
 
   const useControlledInputProps = <FIELD_TYPE>(
-    s: keyof T,
+    s: string,
   ): ControlledInput<FIELD_TYPE> => ({
     value: (value[s] as unknown) as FIELD_TYPE,
     onChange: React.useCallback((v) => onUpdate(({ [s]: v } as unknown) as T), [

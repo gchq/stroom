@@ -1,7 +1,7 @@
 import * as React from "react";
 import { storiesOf } from "@storybook/react";
 
-import useMenuItems from "./useMenuItems";
+import { useMenuItems } from "./useMenuItems";
 import JsonDebug from "testing/JsonDebug";
 import {
   MenuItemType,

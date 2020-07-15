@@ -3,7 +3,7 @@ import Button from "components/Button/Button";
 import { useEffect, useState } from "react";
 import { PageRequest } from "../Account/api/types";
 
-export interface Page {
+interface Page {
   from: number;
   to: number;
   of?: number;

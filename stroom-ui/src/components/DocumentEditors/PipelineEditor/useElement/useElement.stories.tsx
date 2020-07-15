@@ -2,7 +2,7 @@ import * as React from "react";
 
 import { storiesOf } from "@storybook/react";
 import JsonDebug from "testing/JsonDebug";
-import useElement from "./useElement";
+import { useElement } from "./useElement";
 
 import { fullTestData } from "testing/data";
 

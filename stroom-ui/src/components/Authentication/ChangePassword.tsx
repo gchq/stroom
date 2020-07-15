@@ -5,29 +5,18 @@ import { Formik, FormikProps } from "formik";
 import { PasswordFormField, NewPasswordFormField } from "components/FormField";
 import { PasswordPolicyConfig } from "./api/types";
 import * as Yup from "yup";
-import zxcvbn from "zxcvbn";
 import { Form, Modal } from "react-bootstrap";
 import { OkCancelButtons, OkCancelProps } from "../Dialog/OkCancelButtons";
 import { Dialog } from "components/Dialog/Dialog";
 import { FormikHelpers } from "formik/dist/types";
 import FormContainer from "../Layout/FormContainer";
 import { LockFill } from "react-bootstrap-icons";
-import {
-  DatePickerProps,
-  DatePickerState,
-} from "../FormField/DatePickerFormField";
-import { FormFieldProps, FormFieldState } from "../FormField/FormField";
+import { PasswordStrengthProps } from "../FormField/NewPasswordFormField";
 
 export interface ChangePasswordFormValues {
   userId: string;
   password: string;
   confirmPassword: string;
-}
-
-interface PasswordRequirements {
-  strength: number;
-  minStrength: number;
-  thresholdLength: number;
 }
 
 export interface ChangePasswordProps {
@@ -43,64 +32,18 @@ export interface ChangePasswordProps {
 
 interface ChangePasswordFormProps {
   title: string;
-  passwordRequirements: PasswordRequirements;
+  passwordStrengthProps: PasswordStrengthProps;
   formikProps: FormikProps<ChangePasswordFormValues>;
   okCancelProps: OkCancelProps;
 }
 
-export interface FormControlProps<T> {
-  controlId: string;
-  onChange?: (value: T) => void;
-  onBlur?: (e: any) => void;
-  value?: T;
-  error?: any;
-  touched?: any;
-}
-
-const datePickerProps = (
-  controlId: string,
-  formikProps: FormikProps<any>,
-): FormControlProps<string> => {
-  const {
-    values,
-    setFieldValue,
-    errors,
-    touched,
-    setFieldTouched,
-    handleBlur,
-  } = formikProps;
-
-  return {
-    controlId: controlId,
-    onChange: (val) => {
-      setFieldTouched(controlId, true, true);
-      setFieldValue(controlId, val, false);
-    },
-    onBlur: handleBlur,
-    value: values[controlId],
-    error: errors[controlId],
-    touched: touched[controlId],
-  };
-};
-
 export const ChangePasswordForm: FunctionComponent<ChangePasswordFormProps> = ({
   title = "Change Password",
-  passwordRequirements,
+  passwordStrengthProps,
   formikProps,
   okCancelProps,
 }) => {
-  const { strength, minStrength, thresholdLength } = passwordRequirements;
-  const {
-    values,
-    setFieldValue,
-    errors,
-    touched,
-    setFieldTouched,
-    handleChange,
-    handleBlur,
-    handleSubmit,
-    isSubmitting,
-  } = formikProps;
+  const { values, handleSubmit, isSubmitting } = formikProps;
   const { onCancel, cancelClicked } = okCancelProps;
 
   return (
@@ -116,8 +59,6 @@ export const ChangePasswordForm: FunctionComponent<ChangePasswordFormProps> = ({
           type="text"
           id="userId"
           value={values.userId}
-          onChange={handleChange}
-          onBlur={handleBlur}
           autoComplete="username"
           hidden={true}
         />
@@ -126,17 +67,10 @@ export const ChangePasswordForm: FunctionComponent<ChangePasswordFormProps> = ({
             controlId="password"
             label="Password"
             placeholder="Enter Password"
-            strength={strength}
-            minStrength={minStrength}
-            thresholdLength={thresholdLength}
-            onChange={handleChange}
-            onBlur={handleBlur}
-            value={values.password}
-            error={errors.password}
-            touched={touched.password}
-            setFieldTouched={setFieldTouched}
+            passwordStrengthProps={passwordStrengthProps}
             autoFocus={true}
             autoComplete="new-password"
+            formikProps={formikProps}
           />
         </Form.Row>
         <Form.Row>
@@ -145,13 +79,8 @@ export const ChangePasswordForm: FunctionComponent<ChangePasswordFormProps> = ({
             label="Confirm Password"
             placeholder="Confirm Password"
             className="no-icon-padding right-icon-padding hide-background-image"
-            onChange={handleChange}
-            onBlur={handleBlur}
-            value={values.confirmPassword}
-            error={errors.confirmPassword}
-            touched={touched.confirmPassword}
-            setFieldTouched={setFieldTouched}
             autoComplete="confirm-password"
+            formikProps={formikProps}
           />
         </Form.Row>
       </Modal.Body>
@@ -189,10 +118,14 @@ const ChangePasswordFormik: React.FunctionComponent<ChangePasswordProps> = ({
   let currentStrength = strength;
   const minStrength = minimumPasswordStrength;
   const thresholdLength = minimumPasswordLength;
-  const passwordRequirements: PasswordRequirements = {
-    strength,
+  const passwordStrengthProps: PasswordStrengthProps = {
+    strength: currentStrength,
     minStrength,
     thresholdLength,
+    onStrengthChanged: (s) => {
+      currentStrength = s;
+      setStrength(s);
+    },
   };
 
   const passwordSchema = Yup.string()
@@ -200,11 +133,9 @@ const ChangePasswordFormik: React.FunctionComponent<ChangePasswordProps> = ({
     .required("Password is required")
     .min(thresholdLength, "Password is short")
     .matches(new RegExp(passwordComplexityRegex), "Password is invalid")
-    .test(
-      "password-strength",
-      "Password is weak",
-      () => currentStrength > minStrength,
-    );
+    .test("password-strength", "Password is weak", function (value) {
+      return currentStrength >= minStrength;
+    });
 
   const confirmPasswordSchema = Yup.string()
     .label("Confirm Password")
@@ -232,21 +163,22 @@ const ChangePasswordFormik: React.FunctionComponent<ChangePasswordProps> = ({
       validationSchema={validationSchema}
       onSubmit={onSubmit}
     >
-      {(props) => {
-        const handler = (e: React.ChangeEvent<HTMLInputElement>) => {
-          if (e.target.id === "password") {
-            const score = zxcvbn(e.target.value).score;
-            setStrength(score);
-            currentStrength = score;
-          }
-          props.handleChange(e);
-        };
+      {(formikProps) => {
+        // const handler = (e: React.ChangeEvent<HTMLInputElement>) => {
+        //   if (e.target.id === "password") {
+        //     const score = zxcvbn(e.target.value).score;
+        //     setStrength(score);
+        //     currentStrength = score;
+        //   }
+        //   formikProps.handleChange(e);
+        // };
 
         return (
           <ChangePasswordForm
             title={title}
-            passwordRequirements={passwordRequirements}
-            formikProps={{ ...props, handleChange: handler }}
+            passwordStrengthProps={passwordStrengthProps}
+            // formikProps={{ ...formikProps, handleChange: handler }}
+            formikProps={formikProps}
             okCancelProps={{ onCancel: onCancel }}
           />
         );

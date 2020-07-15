@@ -2,7 +2,7 @@ import * as React from "react";
 import { storiesOf } from "@storybook/react";
 import { Switch, Route, RouteComponentProps } from "react-router";
 
-import useAppNavigation from "./useAppNavigation";
+import { useAppNavigation } from "./useAppNavigation";
 
 interface Props {
   routing: RouteComponentProps<any>;

@@ -15,7 +15,7 @@ import useUrlFactory from "lib/useUrlFactory";
  *
  * @param docRefType The doc ref type to retrieve/save
  */
-const useDocumentApi = <
+export const useDocumentApi = <
   T extends keyof ResourcesByDocType,
   D extends DocumentBase<T>
 >(
@@ -49,5 +49,3 @@ const useDocumentApi = <
     saveDocument,
   };
 };
-
-export default useDocumentApi;

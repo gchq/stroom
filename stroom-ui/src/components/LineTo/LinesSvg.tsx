@@ -1,7 +1,7 @@
 import * as React from "react";
 
 import { LineType, LineElementCreator, LineDefinition } from "./types";
-import useInterval from "lib/useInterval";
+import { useInterval } from "lib/useInterval";
 import LineContext from "./LineContext";
 
 interface Props {

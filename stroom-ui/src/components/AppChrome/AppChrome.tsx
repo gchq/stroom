@@ -20,7 +20,7 @@ import "simplebar";
 import { ActiveMenuItem } from "./types";
 import { useTheme } from "lib/useTheme/useTheme";
 import { useIncludeSidebar } from "lib/useRouter/BrowserRouter";
-import Sidebar from "./Sidebar";
+import { Sidebar } from "./Sidebar";
 
 export interface AppChromeProps {
   content: React.ReactNode;

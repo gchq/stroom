@@ -1,6 +1,6 @@
 import { storiesOf } from "@storybook/react";
 import * as React from "react";
-import JoinForm from "./JoinForm";
+import { JoinForm } from "./JoinForm";
 import { Formik } from "formik";
 import * as Yup from "yup";
 import { useState } from "react";
@@ -46,23 +46,20 @@ const TestHarness: React.FunctionComponent = () => {
         }, 1000);
       }}
     >
-      {(props) => {
+      {(formikProps) => {
         const handler = (e: React.ChangeEvent<HTMLInputElement>) => {
           if (e.target.id === "password") {
             const score = zxcvbn(e.target.value).score;
             setStrength(score);
             currentStrength = score;
           }
-          props.handleChange(e);
+          formikProps.handleChange(e);
         };
 
         return (
           <JoinForm
-            {...props}
-            strength={strength}
-            minStrength={minStrength}
-            thresholdLength={thresholdLength}
-            handleChange={handler}
+            formikProps={{ ...formikProps, handleChange: handler }}
+            passwordStrengthProps={{ strength, minStrength, thresholdLength }}
           />
         );
       }}

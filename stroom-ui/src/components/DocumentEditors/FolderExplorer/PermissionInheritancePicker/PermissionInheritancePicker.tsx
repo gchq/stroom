@@ -3,7 +3,7 @@ import * as React from "react";
 import Select from "react-select";
 import { PermissionInheritance } from "./types";
 import { ControlledInput } from "lib/useForm/types";
-import useReactSelect from "lib/useReactSelect";
+import { useReactSelect } from "lib/useReactSelect";
 
 const options = Object.entries(PermissionInheritance).map((k) => ({
   value: k[0],

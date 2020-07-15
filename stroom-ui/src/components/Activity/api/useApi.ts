@@ -19,7 +19,7 @@ interface UseApi {
   deleteActivity: (id: string) => Promise<void>;
 }
 
-const useApi = (): UseApi => {
+export const useApi = (): UseApi => {
   const {
     httpGetJson,
     httpPostJsonResponse,
@@ -69,5 +69,3 @@ const useApi = (): UseApi => {
     ),
   };
 };
-
-export default useApi;

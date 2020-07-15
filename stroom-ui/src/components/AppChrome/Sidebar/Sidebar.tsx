@@ -2,7 +2,7 @@ import * as React from "react";
 
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
 import useLocalStorage, { storeBoolean } from "lib/useLocalStorage";
-import useMenuItems from "./useMenuItems";
+import { useMenuItems } from "./useMenuItems";
 import { ShowDialog as ShowCopyDocRefDialog } from "components/DocumentEditors/FolderExplorer/CopyMoveDocRefDialog/types";
 import {
   CopyMoveDocRefDialog,
@@ -18,7 +18,7 @@ import {
 /* import MenuItem from "./MenuItem"; */
 import { useDocumentTree } from "components/DocumentEditors/api/explorer";
 import { ActiveMenuItem } from "../types";
-import ActivitySummary from "components/Activity/ActivitySummary";
+import { ActivitySummary } from "components/Activity/ActivitySummary";
 
 interface Props {
   activeMenuItem: ActiveMenuItem;
@@ -78,7 +78,7 @@ const getMenuItems = (
     </React.Fragment>
   ));
 
-const Sidebar: React.FunctionComponent<Props> = ({ activeMenuItem }) => {
+export const Sidebar: React.FunctionComponent<Props> = ({ activeMenuItem }) => {
   const {
     menuItems,
     openMenuItemKeys,
@@ -211,5 +211,3 @@ const Sidebar: React.FunctionComponent<Props> = ({ activeMenuItem }) => {
     </div>
   );
 };
-
-export default Sidebar;

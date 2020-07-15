@@ -19,7 +19,7 @@ import * as React from "react";
 import DocRefEditor, { useDocRefEditor } from "../DocRefEditor";
 import { SwitchedDocRefEditorProps } from "../DocRefEditor/types";
 import Loader from "../../Loader";
-import useDocumentApi from "components/DocumentEditors/useDocumentApi";
+import { useDocumentApi } from "components/DocumentEditors/useDocumentApi";
 import IndexFieldsTable, {
   useTable as useFieldsTable,
 } from "./IndexFieldsTable";

@@ -2,7 +2,7 @@ import * as React from "react";
 import { SwitchedDocRefEditorProps } from "../DocRefEditor/types";
 import DocRefEditor, { useDocRefEditor } from "../DocRefEditor";
 
-const ElasticIndexEditor: React.FunctionComponent<SwitchedDocRefEditorProps> = ({
+export const ElasticIndexEditor: React.FunctionComponent<SwitchedDocRefEditorProps> = ({
   docRefUuid,
 }) => {
   const { editorProps } = useDocRefEditor({ docRefUuid });
@@ -13,5 +13,3 @@ const ElasticIndexEditor: React.FunctionComponent<SwitchedDocRefEditorProps> = (
     </DocRefEditor>
   );
 };
-
-export default ElasticIndexEditor;

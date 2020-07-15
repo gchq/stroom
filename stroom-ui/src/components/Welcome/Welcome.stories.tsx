@@ -17,6 +17,6 @@
 import * as React from "react";
 import { storiesOf } from "@storybook/react";
 
-import Welcome from "./Welcome";
+import { Welcome } from "./Welcome";
 
 storiesOf("Sections", module).add("Welcome", () => <Welcome />);

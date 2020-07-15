@@ -17,8 +17,8 @@
 import { Formik } from "formik";
 import * as Yup from "yup";
 import * as React from "react";
-import JoinForm, { FormValues } from "./JoinForm";
-import useAuthenticationResource from "./api/useAuthenticationResource";
+import { JoinForm } from "./JoinForm";
+import { useAuthenticationResource } from "./api";
 import { useState } from "react";
 import zxcvbn from "zxcvbn";
 
@@ -63,28 +63,23 @@ export const JoinFormContainer: React.FunctionComponent = () => {
         }, 1000);
       }}
     >
-      {(props) => {
+      {(formikProps) => {
         const handler = (e: React.ChangeEvent<HTMLInputElement>) => {
           if (e.target.id === "password") {
             const score = zxcvbn(e.target.value).score;
             setStrength(score);
             currentStrength = score;
           }
-          props.handleChange(e);
+          formikProps.handleChange(e);
         };
 
         return (
           <JoinForm
-            {...props}
-            strength={strength}
-            minStrength={minStrength}
-            thresholdLength={thresholdLength}
-            handleChange={handler}
+            formikProps={{ ...formikProps, handleChange: handler }}
+            passwordStrengthProps={{ strength, minStrength, thresholdLength }}
           />
         );
       }}
     </Formik>
   );
 };
-
-export default JoinFormContainer;
