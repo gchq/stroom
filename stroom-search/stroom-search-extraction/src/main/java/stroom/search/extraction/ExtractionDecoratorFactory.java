@@ -1,6 +1,7 @@
 package stroom.search.extraction;
 
 import stroom.dashboard.expression.v1.FieldIndexMap;
+import stroom.dashboard.shared.TableComponentSettings;
 import stroom.docref.DocRef;
 import stroom.meta.api.MetaService;
 import stroom.query.api.v2.Query;
@@ -120,7 +121,7 @@ public class ExtractionDecoratorFactory {
 
     public Receiver createAlertExtractionTask(final Receiver receiver, final Receiver parentReceiver,
                                               final long streamId, final long[] sortedEventIds, DocRef extractionPipeline,
-                                              List<TableSettings> alertDefinitions, final Map<String, String> params){
+                                              List<AlertDefinition> alertDefinitions, final Map<String, String> params){
         final ExtractionTaskProducer extractionTaskProducer = new ExtractionTaskProducer(
                 extractionTaskExecutor,
                 null,
@@ -136,5 +137,29 @@ public class ExtractionDecoratorFactory {
         extractionTaskProducer.createAlertExtractionTask(streamId, sortedEventIds,
                 extractionPipeline, alertDefinitions, params, receiver);
         return extractionTaskProducer.process();
+    }
+
+    static public class AlertDefinition {
+        private final Map<String,String> attributes;
+        private final TableComponentSettings tableComponentSettings;
+
+        public AlertDefinition(final TableComponentSettings tableComponentSettings){
+            this(tableComponentSettings, null);
+        }
+        public AlertDefinition(final TableComponentSettings tableComponentSettings, final Map<String, String> attributes) {
+            this.tableComponentSettings = tableComponentSettings;
+            this.attributes = attributes;
+        }
+
+        public Map<String, String> getAttributes() {
+            if (attributes == null) {
+                return Map.of();
+            }
+            return attributes;
+        }
+
+        public final TableComponentSettings getTableComponentSettings() {
+            return tableComponentSettings;
+        }
     }
 }

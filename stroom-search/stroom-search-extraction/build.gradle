@@ -27,6 +27,9 @@ dependencies {
     compile project(':stroom-util')
     compile project(':stroom-util-shared')
 
+    //For TableSettingsUtil - should be extracted into different package
+    compile project(':stroom-dashboard:stroom-dashboard-impl')
+
     compile libs.stroomQueryApi
     compile libs.stroomQueryCommon
     compile libs.stroomExpression

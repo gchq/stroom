@@ -17,12 +17,9 @@
 package stroom.search.extraction;
 
 import stroom.dashboard.expression.v1.FieldIndexMap;
-import stroom.dashboard.expression.v1.Val;
 import stroom.pipeline.filter.AbstractXMLFilter;
-import stroom.query.api.v2.TableSettings;
-import stroom.query.common.v2.TableCoprocessorSettings;
-import stroom.search.coprocessor.Receiver;
 import stroom.search.coprocessor.Values;
+import stroom.search.extraction.ExtractionDecoratorFactory.AlertDefinition;
 
 import java.util.List;
 import java.util.Map;
@@ -31,7 +28,7 @@ import java.util.function.Consumer;
 public abstract class AbstractSearchResultOutputFilter extends AbstractXMLFilter {
     FieldIndexMap fieldIndexes;
     Consumer<Values> consumer;
-    List<TableSettings> alertTableDefinitions = null;
+    List<AlertDefinition> alertDefinitions = null;
     Map<String,String> paramMapForAlerting = null;
 
     public void setup(final FieldIndexMap fieldIndexes, final Consumer<Values> consumer) {
@@ -39,8 +36,8 @@ public abstract class AbstractSearchResultOutputFilter extends AbstractXMLFilter
         this.consumer = consumer;
     }
 
-    public void setupForAlerting(final List<TableSettings> alertTableDefinitions, final Map<String, String> paramMap){
-        this.alertTableDefinitions = alertTableDefinitions;
+    public void setupForAlerting(final List<AlertDefinition> alertDefinitions, final Map<String, String> paramMap){
+        this.alertDefinitions = alertDefinitions;
         this.paramMapForAlerting = paramMap;
     }
 }

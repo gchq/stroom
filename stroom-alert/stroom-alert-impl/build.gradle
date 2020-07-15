@@ -3,6 +3,8 @@ ext.moduleName = 'stroom.alert.impl'
 dependencies {
     compile project(':stroom-alert:stroom-alert-api')
     compile project(':stroom-explorer:stroom-explorer-api')
+
+    //todo remove these impl dependencies, also in stroom-search:stroom-search-extraction
     compile project(':stroom-dashboard:stroom-dashboard-impl')
     compile project(':stroom-index:stroom-index-impl')
     compile project(':stroom-search:stroom-search-impl')

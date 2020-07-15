@@ -24,9 +24,12 @@ import org.xml.sax.SAXException;
 import org.xml.sax.helpers.AttributesImpl;
 
 import stroom.dashboard.expression.v1.Expression;
+import stroom.dashboard.expression.v1.FieldIndexMap;
 import stroom.dashboard.expression.v1.Generator;
 import stroom.dashboard.expression.v1.Val;
 import stroom.dashboard.expression.v1.ValString;
+import stroom.dashboard.impl.TableSettingsUtil;
+import stroom.dashboard.shared.TableComponentSettings;
 import stroom.pipeline.LocationFactoryProxy;
 import stroom.pipeline.errorhandler.ErrorReceiverProxy;
 import stroom.pipeline.factory.ConfigurableElement;
@@ -34,13 +37,14 @@ import stroom.pipeline.shared.ElementIcons;
 import stroom.pipeline.shared.data.PipelineElementType;
 import stroom.pipeline.shared.data.PipelineElementType.Category;
 //import stroom.pipeline.xml.event.simple.AttributesImpl;
-import stroom.query.api.v2.Field;
+//import stroom.query.api.v2.Field;
 import stroom.query.api.v2.TableSettings;
 import stroom.query.common.v2.CompiledField;
 import stroom.query.common.v2.CompiledFields;
 import stroom.query.common.v2.format.FieldFormatter;
 import stroom.query.common.v2.format.FormatterFactory;
 import stroom.search.coprocessor.Values;
+import stroom.search.extraction.ExtractionDecoratorFactory.AlertDefinition;
 import stroom.util.shared.Severity;
 
 import javax.inject.Inject;
@@ -74,7 +78,7 @@ public class SearchResultOutputFilter extends AbstractSearchResultOutputFilter {
     }
 
     public boolean isConfiguredForAlerting(){
-        return alertTableDefinitions != null;
+        return alertDefinitions != null;
     }
 
     @Override
@@ -126,10 +130,11 @@ public class SearchResultOutputFilter extends AbstractSearchResultOutputFilter {
                 }
 
                 Values vals = new Values (values);
-                for (TableSettings rule : alertTableDefinitions){
-                    String [] outputFields = extractAlert(rule, vals);
+                for (AlertDefinition rule : alertDefinitions){
+                    TableSettings tableSettings = TableSettingsUtil.mapTableSettings(rule.getTableComponentSettings());
+                    String [] outputFields = extractAlert(tableSettings, vals);
                     if (outputFields != null){
-                        writeRecord (outputFields);
+                        writeRecord (rule, outputFields);
                         LOGGER.debug ("Reporting an alert with vals" +
                                 Arrays.stream(outputFields).collect(Collectors.joining(", ")));
                     }
@@ -147,21 +152,33 @@ public class SearchResultOutputFilter extends AbstractSearchResultOutputFilter {
         }
     }
 
-    private void writeRecord(String[] fieldVals) throws SAXException {
+    private void createDataElement(String name, String value) throws SAXException{
+        AttributesImpl attrs = new AttributesImpl();
+        attrs.addAttribute("", NAME, NAME, "xs:string", name);
+        attrs.addAttribute("", VALUE, VALUE, "xs:string", value);
+        super.startElement(nsUri, DATA, DATA, attrs);
+        super.endElement(nsUri, DATA, DATA);
+    }
+
+    private void writeRecord(AlertDefinition alertDefinition, String[] fieldVals) throws SAXException {
         if (fieldVals == null || fieldVals.length == 0) {
             return;
         }
 
         LOGGER.debug("Creating an alert following filtering");
         super.startElement(nsUri, RECORD, RECORD, new AttributesImpl());
-        for (String fieldName: fieldIndexes.getMap().keySet()){
-            String fieldVal = fieldVals[fieldIndexes.get(fieldName)];
-            if (fieldVal != null) {
-                AttributesImpl attrs = new AttributesImpl();
-                attrs.addAttribute("", NAME, NAME, "xs:string", fieldName);
-                attrs.addAttribute("", VALUE, VALUE, "xs:string", fieldVal);
-                super.startElement(nsUri, DATA, DATA, attrs);
-                super.endElement(nsUri, DATA, DATA);
+
+        for (String attrName : alertDefinition.getAttributes().keySet()){
+            createDataElement (attrName, alertDefinition.getAttributes().get(attrName));
+        }
+
+        for (stroom.dashboard.shared.Field field: alertDefinition.getTableComponentSettings().getFields()){
+            if (field.isVisible()) {
+                String fieldName = field.getName();
+                String fieldVal = fieldVals[fieldIndexes.get(fieldName)];
+                if (fieldVal != null) {
+                    createDataElement(field.getDisplayValue(), fieldVal);
+                }
             }
         }
         super.endElement(nsUri, RECORD, RECORD);
@@ -171,16 +188,17 @@ public class SearchResultOutputFilter extends AbstractSearchResultOutputFilter {
     private final static String DATE_TIME_LOCALE_SHOULD_BE_FROM_SEARCH = "UTC";
 
     private String[] extractAlert (TableSettings rule, Values vals) {
-        final List<Field> fields = rule.getFields();
+        final List<stroom.query.api.v2.Field> fields = rule.getFields();
 //
 //        FieldIndexMap fieldIndexMap = FieldIndexMap.forFields
 //                (doc.getFields().stream().map(f -> f.name()).
 //                        collect(Collectors.toList()).toArray(new String[doc.getFields().size()]));
         final FieldFormatter fieldFormatter = new FieldFormatter(new FormatterFactory(DATE_TIME_LOCALE_SHOULD_BE_FROM_SEARCH));
         //See CoprocessorsFactory for creation of field Index Map
-        final CompiledFields compiledFields = new CompiledFields(fields, fieldIndexes, paramMapForAlerting);
+        final CompiledFields compiledFields = new CompiledFields(fields, fieldIndexes,
+                paramMapForAlerting);
 
-
+//See also ItemMapper:addItem()
         final String[] output = new String [vals.getValues().length];
         int index = 0;
 

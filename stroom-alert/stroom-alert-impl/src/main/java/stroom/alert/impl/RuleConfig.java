@@ -3,6 +3,7 @@ package stroom.alert.impl;
 import stroom.docref.DocRef;
 import stroom.query.api.v2.ExpressionOperator;
 import stroom.query.api.v2.TableSettings;
+import stroom.search.extraction.ExtractionDecoratorFactory.AlertDefinition;
 
 import java.util.Collection;
 import java.util.List;
@@ -10,25 +11,22 @@ import java.util.Map;
 import java.util.Objects;
 
 class RuleConfig {
-    private final String dashboardName;
     private final String queryId;
     private final ExpressionOperator expression;
     private final DocRef pipeline;
-    private final List<TableSettings> tableSettings;
+    private final List<AlertDefinition> alertDefinitions;
     private final Map<String, String> params;
 
     RuleConfig(final String dashboardUUID,
-               final String dashboardName,
                final String queryId,
                final ExpressionOperator expression,
                final DocRef pipeline,
-               final List<TableSettings> tableSettings,
+               final List<AlertDefinition> alertDefinitions,
                final Map<String, String> params){
-        this.dashboardName = dashboardName;
         this.queryId = dashboardUUID+ "/" + queryId;
         this.expression = expression;
         this.pipeline = pipeline;
-        this.tableSettings = tableSettings;
+        this.alertDefinitions = alertDefinitions;
         this.params = params;
     }
 
@@ -40,12 +38,8 @@ class RuleConfig {
         return pipeline;
     }
 
-    public String getDashboardName() {
-        return dashboardName;
-    }
-
-    public List<TableSettings> getTableSettings() {
-        return tableSettings;
+    public List<AlertDefinition> getAlertDefinitions() {
+        return alertDefinitions;
     }
 
     public Map<String, String> getParams() {

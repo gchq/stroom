@@ -25,6 +25,7 @@ import stroom.search.coprocessor.Error;
 import stroom.search.coprocessor.Receiver;
 import stroom.search.coprocessor.ReceiverImpl;
 import stroom.search.coprocessor.Values;
+import stroom.search.extraction.ExtractionDecoratorFactory.AlertDefinition;
 import stroom.security.api.SecurityContext;
 import stroom.task.api.ExecutorProvider;
 import stroom.task.api.TaskContext;
@@ -195,7 +196,7 @@ class ExtractionTaskProducer extends TaskProducer {
     }
 
     public void createAlertExtractionTask(final long streamId, final long[] sortedEventIds, DocRef extractionPipeline,
-                                          List<TableSettings> alertDefinitions, final Map<String, String> params, final Receiver receiver){
+                                          List<AlertDefinition> alertDefinitions, final Map<String, String> params, final Receiver receiver){
         final ExtractionTask task = new ExtractionTask(streamId, sortedEventIds, extractionPipeline, receiver, alertDefinitions, params);
         taskQueue.offer(new ExtractionRunnable(task, handlerProvider));
     }

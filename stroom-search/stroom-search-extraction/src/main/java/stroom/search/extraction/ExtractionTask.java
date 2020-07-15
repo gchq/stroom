@@ -17,10 +17,9 @@
 package stroom.search.extraction;
 
 import stroom.docref.DocRef;
-import stroom.query.api.v2.TableSettings;
 import stroom.search.coprocessor.Receiver;
+import stroom.search.extraction.ExtractionDecoratorFactory.AlertDefinition;
 
-import com.google.common.collect.Table;
 
 import java.util.List;
 import java.util.Map;
@@ -30,7 +29,7 @@ class ExtractionTask {
     private final long[] eventIds;
     private final DocRef pipelineRef;
     private final Receiver receiver;
-    private final List<TableSettings> alertTableSettings;
+    private final List<AlertDefinition> alertDefinitions;
     private final Map<String, String> paramMapForAlerting;
 
     ExtractionTask(final long streamId,
@@ -41,7 +40,7 @@ class ExtractionTask {
         this.eventIds = eventIds;
         this.pipelineRef = pipelineRef;
         this.receiver = receiver;
-        this.alertTableSettings = null;
+        this.alertDefinitions = null;
         this.paramMapForAlerting = null;
     }
 
@@ -49,13 +48,13 @@ class ExtractionTask {
                    final long[] eventIds,
                    final DocRef pipelineRef,
                    final Receiver receiver,
-                   final List<TableSettings> alertTableSettings,
+                   final List<AlertDefinition> alertTableSettings,
                    final Map<String, String> paramMap) {
         this.streamId = streamId;
         this.eventIds = eventIds;
         this.pipelineRef = pipelineRef;
         this.receiver = receiver;
-        this.alertTableSettings = alertTableSettings;
+        this.alertDefinitions = alertTableSettings;
         this.paramMapForAlerting = paramMap;
     }
 
@@ -76,14 +75,15 @@ class ExtractionTask {
     }
 
     boolean isAlerting(){
-        return alertTableSettings != null;
+        return alertDefinitions != null;
     }
 
-    final List<TableSettings> getAlertTableSettings(){
-        return alertTableSettings;
+    final List<AlertDefinition> getAlertTableSettings(){
+        return alertDefinitions;
     }
 
     final Map<String, String> getParamMapForAlerting(){
         return paramMapForAlerting;
     }
+
 }

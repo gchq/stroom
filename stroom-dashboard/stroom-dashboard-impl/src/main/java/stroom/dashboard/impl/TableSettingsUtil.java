@@ -37,7 +37,7 @@ public final class TableSettingsUtil {
         return tableSettings;
     }
 
-    private static List<Field> mapFields(final List<stroom.dashboard.shared.Field> fields) {
+    public static List<Field> mapFields(final List<stroom.dashboard.shared.Field> fields) {
         if (fields == null || fields.size() == 0) {
             return Collections.emptyList();
         }

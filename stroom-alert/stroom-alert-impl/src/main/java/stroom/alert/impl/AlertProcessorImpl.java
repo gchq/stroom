@@ -5,6 +5,7 @@ import org.apache.lucene.analysis.TokenStream;
 import org.apache.lucene.document.Document;
 import stroom.alert.api.AlertProcessor;
 import stroom.dashboard.expression.v1.FieldIndexMap;
+import stroom.dashboard.impl.TableSettingsUtil;
 import stroom.dictionary.api.WordListProvider;
 import stroom.docref.DocRef;
 
@@ -20,17 +21,20 @@ import stroom.index.shared.IndexField;
 import stroom.index.shared.IndexFieldsMap;
 import stroom.query.api.v2.ExpressionOperator;
 
-import stroom.query.api.v2.TableSettings;
+import stroom.query.api.v2.Field;
+import stroom.query.common.v2.CompiledFields;
 import stroom.search.coprocessor.Error;
 import stroom.search.coprocessor.Receiver;
 import stroom.search.coprocessor.Values;
 import stroom.search.extraction.ExtractionDecoratorFactory;
+import stroom.search.extraction.ExtractionDecoratorFactory.AlertDefinition;
 import stroom.search.impl.SearchException;
 import stroom.search.impl.SearchExpressionQueryBuilder;
 import stroom.util.logging.LambdaLogger;
 import stroom.util.logging.LambdaLoggerFactory;
 
 import java.io.IOException;
+import java.util.ArrayList;
 import java.util.Collection;
 import java.util.HashMap;
 import java.util.List;
@@ -161,9 +165,9 @@ public class AlertProcessorImpl implements AlertProcessor {
    //                 System.out.println ("Found a matching query rule");
 
                     alertQueryHits.addQueryHitForRule(rule,eventId);
-                    LOGGER.debug("Adding {}:{} to rule {} from dashboard {}", currentStreamId, eventId, rule.getQueryId(), rule.getDashboardName());
+                    LOGGER.debug("Adding {}:{} to rule {} from dashboard {}", currentStreamId, eventId, rule.getQueryId(), rule.getParams().get(AlertManagerImpl.DASHBOARD_NAME_KEY));
                 } else {
-                    LOGGER.trace("Not adding {}:{} to rule {} from dashboard {}", currentStreamId, eventId, rule.getQueryId(), rule.getDashboardName());
+                    LOGGER.trace("Not adding {}:{} to rule {} from dashboard {}", currentStreamId, eventId, rule.getQueryId(), rule.getParams().get(AlertManagerImpl.DASHBOARD_NAME_KEY));
                 }
             }
         } catch (IOException ex){
@@ -188,34 +192,41 @@ public class AlertProcessorImpl implements AlertProcessor {
 //                    for (TableSettings tableSettings : ruleConfig.getTableSettings()){
 //                        LOGGER.trace("----Iterating tablesettings {}", tableSettings);
                         numTasks++;
-                        final Receiver receiver = new Receiver() {
-                            @Override
-                            public FieldIndexMap getFieldIndexMap() {
-//                                return FieldIndexMap.forFields(tableSettings.getFields().stream().map(t->t.getName())
+//                        final Receiver receiver = new Receiver() {
+//                            @Override
+//                            public FieldIndexMap getFieldIndexMap() {
+//                                return FieldIndexMap.forFields(ruleConfig.getAlertDefinitions().get(0).getTableComponentSettings()
+//                                        .getFields().stream().map(t->t.getName())
 //                                        .collect(Collectors.toList()).toArray(new String[0]));
-                                return FieldIndexMap.forFields(ruleConfig.getTableSettings().get(0).getFields().stream().map(t->t.getName())
-                                        .collect(Collectors.toList()).toArray(new String[0]));
-                            }
+//
+//                                //The extraction pipeline's index map (wrong?)
+////                                return FieldIndexMap.forFields(ruleConfig.getAlertDefinitions().get(0)
+////                                        .getTableComponentSettings().getFields().stream().map(t->t.getName())
+////                                        .collect(Collectors.toList()).toArray(new String[0]));
+//                            }
+//
+//                            @Override
+//                            public Consumer<Values> getValuesConsumer() {
+//                                return values -> {};
+//                            }
+//
+//                            @Override
+//                            public Consumer<Error> getErrorConsumer() {
+//                                return error -> LOGGER.error(error.getMessage(), error.getThrowable());
+//                            }
+//
+//                            @Override
+//                            public Consumer<Long> getCompletionCountConsumer() {
+//                                return count -> {};
+//                            }
+//                        };
 
-                            @Override
-                            public Consumer<Values> getValuesConsumer() {
-                                return values -> {};
-                            }
-
-                            @Override
-                            public Consumer<Error> getErrorConsumer() {
-                                return error -> LOGGER.error(error.getMessage(), error.getThrowable());
-                            }
-
-                            @Override
-                            public Consumer<Long> getCompletionCountConsumer() {
-                                return count -> {};
-                            }
-                        };
+                    final Receiver receiver = new AlertProcessorReceiver(ruleConfig.getAlertDefinitions(),
+                            ruleConfig.getParams());
 
                         extractionDecoratorFactory.createAlertExtractionTask(receiver, receiver,
                                 currentStreamId, eventIds, pipeline,
-                                ruleConfig.getTableSettings(), ruleConfig.getParams());
+                                ruleConfig.getAlertDefinitions(), ruleConfig.getParams());
                         LOGGER.trace("This AlertProcessorImpl has now created {} tasks during this call ", numTasks);
 //                    }
 
@@ -316,5 +327,40 @@ public class AlertProcessorImpl implements AlertProcessor {
 //
 //        return output;
 //    }
+
+    private static class AlertProcessorReceiver implements Receiver {
+        private final CompiledFields compiledFields;
+        private final FieldIndexMap fieldIndexMap = new FieldIndexMap(true);
+
+        AlertProcessorReceiver (final List<AlertDefinition> alertDefinitions,
+                                final Map<String, String> paramMap){
+
+            final List<Field> fields = TableSettingsUtil.mapFields(
+                    alertDefinitions.stream().map(a -> a.getTableComponentSettings().getFields())
+                    .reduce(new ArrayList<>(), (a,b)->{a.addAll(b); return a;}));
+
+            compiledFields = new CompiledFields(fields, fieldIndexMap, paramMap);
+        }
+
+        @Override
+        public FieldIndexMap getFieldIndexMap() {
+            return fieldIndexMap;
+        }
+
+        @Override
+        public Consumer<Values> getValuesConsumer() {
+            return values -> {};
+        }
+
+        @Override
+        public Consumer<Error> getErrorConsumer() {
+            return error -> LOGGER.error(error.getMessage(), error.getThrowable());
+        }
+
+        @Override
+        public Consumer<Long> getCompletionCountConsumer() {
+            return count -> {};
+        }
+    };
 
 }
