@@ -81,9 +81,10 @@ const CreateTokenForm: React.FunctionComponent<{
           <Button
             appearance="default"
             icon="arrow-left"
-            text="Back"
             onClick={() => onBack()}
-          />
+          >
+            Back
+          </Button>
         </div>
         <div className="container">
           <div className="section">
@@ -114,8 +115,9 @@ const CreateTokenForm: React.FunctionComponent<{
             disabled={submitIsDisabled}
             icon="plus"
             type="submit"
-            text="Create"
-          />
+          >
+            Create
+          </Button>
         </div>
       </form>
     </div>

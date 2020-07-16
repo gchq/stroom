@@ -47,11 +47,12 @@ export const AddElementModal: React.FunctionComponent<Props> = ({
         actions={
           <React.Fragment>
             <Button
-              text="Submit"
               // disabled={submitDisabled}
               onClick={onAddElementLocal}
-            />
-            <Button text="Cancel" onClick={onCloseDialog} />
+            >
+              Submit
+            </Button>
+            <Button onClick={onCloseDialog}>Cancel</Button>
           </React.Fragment>
         }
       />

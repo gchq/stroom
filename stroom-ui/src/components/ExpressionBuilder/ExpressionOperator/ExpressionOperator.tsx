@@ -255,13 +255,12 @@ const ExpressionOperator: React.FunctionComponent<EnhancedProps> = ({
           />
 
           <div className="ExpressionItem__buttons">
-            <Button size="small" icon="plus" text="Term" onClick={onAddTerm} />
-            <Button
-              size="small"
-              icon="plus"
-              text="Group"
-              onClick={onAddOperator}
-            />
+            <Button size="small" icon="plus" onClick={onAddTerm}>
+              Term
+            </Button>
+            <Button size="small" icon="plus" onClick={onAddOperator}>
+              Group
+            </Button>
             {!isRoot && (
               <React.Fragment>
                 <Button

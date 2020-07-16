@@ -40,7 +40,7 @@ const TestHarness: React.FunctionComponent<Props> = ({ isGroup }) => {
 
   return (
     <div>
-      <Button text="Show Dialog" onClick={showDialog} />
+      <Button onClick={showDialog}>Show Dialog</Button>
       <JsonDebug value={{ pickedUser }} />
       <UserPickerDialog {...componentProps} />
     </div>

@@ -76,8 +76,9 @@ export const ProcessingList: React.FunctionComponent<Props> = ({
           disabled={allRecordsRetrieved}
           className="border hoverable clickable processing-list__load-more-button"
           onClick={fetchMore}
-          text={retrievalStave}
-        />
+        >
+          {retrievalStave}
+        </Button>
       ),
     [allRecordsRetrieved, fetchMore, retrievalStave],
   );

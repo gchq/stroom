@@ -40,7 +40,7 @@ const TestHarness: React.FunctionComponent = () => {
   return (
     <div>
       <h2>Index Field Editor</h2>
-      <Button text="Edit" onClick={onClick} />
+      <Button onClick={onClick}>Edit</Button>
       <IndexFieldEditor {...componentProps} />
       <JsonDebug value={{ FIELD_ID, lastId, indexField }} />
     </div>

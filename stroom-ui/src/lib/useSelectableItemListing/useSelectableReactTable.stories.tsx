@@ -83,7 +83,7 @@ const TestTable = () => {
 
   return (
     <div className="fill-space" tabIndex={0} onKeyDown={onKeyDown}>
-      <Button text="Reset" onClick={reset} />
+      <Button onClick={reset}>Reset</Button>
       <ReactTable
         className="useSelectableReactTable -striped -highlight"
         {...tableProps}
@@ -94,7 +94,7 @@ const TestTable = () => {
         <label>Name</label>
         <input {...nameProps} />
 
-        <Button onClick={onClickAddItem} text="Add Item" />
+        <Button onClick={onClickAddItem}>Add Item</Button>
       </form>
 
       <JsonDebug

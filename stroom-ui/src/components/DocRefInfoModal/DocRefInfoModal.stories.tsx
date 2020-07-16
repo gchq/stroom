@@ -30,7 +30,7 @@ const TestHarness: React.FunctionComponent = () => {
 
   return (
     <div>
-      <Button text="show" onClick={() => showDialog(testFolder1)} />
+      <Button onClick={() => showDialog(testFolder1)}>show</Button>
       <DocRefInfoModal {...componentProps} />
     </div>
   );

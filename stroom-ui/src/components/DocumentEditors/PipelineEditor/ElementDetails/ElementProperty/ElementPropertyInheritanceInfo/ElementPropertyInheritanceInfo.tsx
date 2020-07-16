@@ -73,15 +73,17 @@ export const ElementPropertyFieldDetails: React.FunctionComponent<Props> = ({
 }) => {
   const RevertToDefaultButton = (
     <Button
-      text="Revert to default"
       onClick={() => elementPropertyRevertToDefault(selectedElementId, name)}
-    />
+    >
+      Revert to default
+    </Button>
   );
   const RevertToParentButton = (
     <Button
-      text="Revert to parent"
       onClick={() => elementPropertyRevertToParent(selectedElementId, name)}
-    />
+    >
+      Revert to parent
+    </Button>
   );
 
   // Parse the value if it's a boolean.

@@ -99,11 +99,12 @@ const InlineMultiSelect: React.FunctionComponent<Props> = ({
               type="button"
               appearance="icon"
               action="secondary"
-              text="Remove"
               icon="times"
               title="Remove"
               onClick={onRemove}
-            />
+            >
+              Remove
+            </Button>
             {/* we only want to display this if we're not at the end of the list */}
             {index !== options.length - 1 ? (
               <span>,{"\u00A0"}</span>
@@ -118,11 +119,12 @@ const InlineMultiSelect: React.FunctionComponent<Props> = ({
           type="button"
           appearance="icon"
           action="primary"
-          text="Add"
           icon="plus"
           title="Add"
           onClick={addNewItem}
-        />
+        >
+          Add
+        </Button>
       ) : undefined}
       ]
     </span>

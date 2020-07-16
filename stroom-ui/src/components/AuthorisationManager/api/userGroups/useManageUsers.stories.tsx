@@ -31,12 +31,12 @@ const TestHarness: React.FunctionComponent = () => {
 
   return (
     <div>
-      <Button onClick={onClickCreateUser} text="Create User" />
+      <Button onClick={onClickCreateUser}>Create User</Button>
       <h2>Users</h2>
       <ul>
         {users.map((user) => (
           <div key={user.uuid}>
-            <Button onClick={() => deleteUser(user.uuid)} text="Delete" />
+            <Button onClick={() => deleteUser(user.uuid)}>Delete</Button>
             {JSON.stringify(user)}
           </div>
         ))}

@@ -42,7 +42,7 @@ const TestHarness = () => {
 
   return (
     <div>
-      <Button onClick={switchList} text="Switch List" />
+      <Button onClick={switchList}>Switch List</Button>
       <h2>User UUIDS</h2>
       <ul>
         {userUuids.map((userUuid) => (

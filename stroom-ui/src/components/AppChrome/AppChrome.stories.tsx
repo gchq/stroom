@@ -50,19 +50,16 @@ const TestHarness: React.FunctionComponent = () => {
     <div>
       <div style={{ backgroundColor: "lightblue", padding: "0.7rem" }}>
         <h4>Test Navigation {location.pathname}</h4>
-        <Button
-          onClick={goToAuthorisationUsers}
-          text="Go To Authorisation for Users"
-        />
-        <Button
-          onClick={goToAuthorisationGroups}
-          text="Go To Authorisation for Groups"
-        />
-        <Button onClick={goToIndexVolumes} text="Go To Index Volumes" />
-        <Button
-          onClick={goToIndexVolumeGroups}
-          text="Go To Index Volume Groups"
-        />
+        <Button onClick={goToAuthorisationUsers}>
+          Go To Authorisation for Users
+        </Button>
+        <Button onClick={goToAuthorisationGroups}>
+          Go To Authorisation for Groups
+        </Button>
+        <Button onClick={goToIndexVolumes}>Go To Index Volumes</Button>
+        <Button onClick={goToIndexVolumeGroups}>
+          Go To Index Volume Groups
+        </Button>
       </div>
       <Routes />
     </div>

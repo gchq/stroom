@@ -111,14 +111,12 @@ export const DocumentPermissionEditor: React.FunctionComponent<Props> = ({
         text={`Document Permissions for ${docRef.type} - ${docRef.name}`}
       />
       <div>
-        <Button text="Back" onClick={history.goBack} />
-        <Button text="Add" onClick={showUserPicker} />
-        <Button
-          text="View/Edit"
-          disabled={selectedUsers.length !== 1}
-          onClick={onClickEdit}
-        />
-        <Button text={clearButtonText} onClick={showConfirmClear} />
+        <Button onClick={history.goBack}>Back</Button>
+        <Button onClick={showUserPicker}>Add</Button>
+        <Button disabled={selectedUsers.length !== 1} onClick={onClickEdit}>
+          View/Edit
+        </Button>
+        <Button onClick={showConfirmClear}>{clearButtonText}</Button>
 
         <h2>Users</h2>
         <UsersTable {...usersTableProps} />

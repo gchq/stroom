@@ -37,11 +37,12 @@ const TestHarness: React.FunctionComponent = () => {
         dataSource={dataSource}
       />
       <Button
-        text="Reset"
         onClick={React.useCallback(() => {
           setLastSearch(undefined);
         }, [setLastSearch])}
-      />
+      >
+        Reset
+      </Button>
       <JsonDebug value={{ lastSearch, dataSource }} />
     </div>
   );

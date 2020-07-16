@@ -26,7 +26,7 @@ const TestHarness: React.FunctionComponent = () => {
 
   return (
     <div>
-      <Button onClick={onClickAddNext} text="Add" />
+      <Button onClick={onClickAddNext}>Add</Button>
       <ul>
         {recentItems.map((recentItem) => (
           <li key={recentItem.uuid}>

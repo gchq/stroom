@@ -133,7 +133,7 @@ const FolderExplorer: React.FunctionComponent<SwitchedDocRefEditorProps> = ({
       icon: "file",
       onClick: onClickCreate,
       title: "Create a Document",
-      text: "Create",
+      children: "Create",
     },
   ];
 
@@ -145,32 +145,32 @@ const FolderExplorer: React.FunctionComponent<SwitchedDocRefEditorProps> = ({
     if (singleSelectedDocRef) {
       additionalActionBarItems.push({
         icon: "info",
-        text: "Info",
+        children: "Info",
         onClick: () => showDocRefInfoDialog(singleSelectedDocRef),
         title: "View Information about this document",
       });
       additionalActionBarItems.push({
         icon: "edit",
-        text: "Rename",
+        children: "Rename",
         onClick: () => showRenameDialog(singleSelectedDocRef),
         title: "Rename this document",
       });
     }
     additionalActionBarItems.push({
       icon: "copy",
-      text: "Copy",
+      children: "Copy",
       onClick: () => showCopyDialog(selectedDocRefUuids),
       title: "Copy selected documents",
     });
     additionalActionBarItems.push({
       icon: "arrows-alt",
-      text: "Move",
+      children: "Move",
       onClick: () => showMoveDialog(selectedDocRefUuids),
       title: "Move selected documents",
     });
     additionalActionBarItems.push({
       icon: "trash",
-      text: "Delete",
+      children: "Delete",
       onClick: () => showDeleteDialog(selectedDocRefUuids),
       title: "Delete selected documents",
     });

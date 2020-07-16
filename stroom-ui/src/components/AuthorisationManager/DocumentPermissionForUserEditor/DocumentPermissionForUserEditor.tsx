@@ -37,7 +37,7 @@ export const DocumentPermissionForUserEditor: React.FunctionComponent<Props> = (
       <h2>{`Document Permissions for Doc ${docRef.type}-${docRef.name}, user ${
         user && user.name
       }`}</h2>
-      <Button text="Back" onClick={history.goBack} />
+      <Button onClick={history.goBack}>Back</Button>
 
       <CheckboxSeries
         allValues={permissionsForType}

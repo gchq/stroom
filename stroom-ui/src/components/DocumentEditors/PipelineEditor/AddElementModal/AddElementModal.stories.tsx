@@ -41,7 +41,7 @@ const TestHarness: React.FunctionComponent = () => {
         getOptionLabel={(d) => d.type}
         getOptionValue={(d) => d.type}
       />
-      <Button onClick={onClick} text="Show" />
+      <Button onClick={onClick}>Show</Button>
       <JsonDebug
         value={{
           PARENT_ID,

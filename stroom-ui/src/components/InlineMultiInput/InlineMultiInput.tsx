@@ -72,11 +72,12 @@ const InlineMultiInput: React.FunctionComponent<ControlledInput<string[]>> = ({
             size="small"
             appearance="icon"
             action="secondary"
-            text="Remove"
             icon="times"
             title="Remove"
             onClick={onRemove}
-          />
+          >
+            Remove
+          </Button>
           {index !== values.length - 1 ? <span>,{"\u00A0"}</span> : undefined}
         </React.Fragment>
       ))}
@@ -85,11 +86,12 @@ const InlineMultiInput: React.FunctionComponent<ControlledInput<string[]>> = ({
         type="button"
         appearance="icon"
         action="primary"
-        text="Add"
         icon="plus"
         title="Add"
         onClick={addNewItem}
-      />
+      >
+        Add
+      </Button>
       ]
     </span>
   );

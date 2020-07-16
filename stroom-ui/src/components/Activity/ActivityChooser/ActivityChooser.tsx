@@ -55,19 +55,23 @@ const ActivityChooser: React.FunctionComponent = () => {
       <div className="page__header">
         <IconHeader text="Activities" icon="tasks" />
         <div className="page__buttons Button__container">
-          <Button onClick={onCreateClick} icon="plus" text="Create" />
+          <Button onClick={onCreateClick} icon="plus">
+            Create
+          </Button>
           <Button
             disabled={selectedActivities.length !== 1}
             onClick={onEditClick}
             icon="edit"
-            text="Edit"
-          />
+          >
+            Edit
+          </Button>
           <Button
             disabled={selectedActivities.length !== 1}
             onClick={onDeleteClick}
             icon="trash"
-            text="Delete"
-          />
+          >
+            Delete
+          </Button>
           <div className="UserSearch-filteringToggle">
             <label>Show filtering</label>
             <Toggle

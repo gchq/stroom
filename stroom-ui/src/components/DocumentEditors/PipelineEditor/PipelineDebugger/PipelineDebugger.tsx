@@ -73,8 +73,12 @@ const PipelineDebugger: React.FunctionComponent<Props> = ({
   return (
     <div className="PipelineDebugger">
       <div>
-        <Button icon="chevron-left" text="Previous" onClick={onPrevious} />
-        <Button icon="chevron-right" text="Next" onClick={onNext} />
+        <Button icon="chevron-left" onClick={onPrevious}>
+          Previous
+        </Button>
+        <Button icon="chevron-right" onClick={onNext}>
+          Next
+        </Button>
       </div>
       <PipelineDisplay
         pipelineStateProps={pipelineStateProps}

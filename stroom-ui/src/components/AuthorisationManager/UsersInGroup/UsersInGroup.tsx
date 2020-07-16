@@ -63,17 +63,16 @@ const UsersInGroup = ({ group }: Props) => {
   return (
     <div>
       <h2>Users in Group {group.name}</h2>
-      <Button text="Add" onClick={showUserPicker} />
+      <Button onClick={showUserPicker}>Add</Button>
       <Button
-        text="Remove Users"
         disabled={selectedItems.length === 0}
         onClick={showDeleteGroupMembershipDialog}
-      />
-      <Button
-        text="View/Edit"
-        disabled={selectedItems.length !== 1}
-        onClick={goToSelectedUser}
-      />
+      >
+        Remove Users
+      </Button>
+      <Button disabled={selectedItems.length !== 1} onClick={goToSelectedUser}>
+        View/Edit
+      </Button>
       <UsersTable {...tableProps} />
       <UserPickerDialog {...userPickerProps} />
       <ThemedConfirm {...deleteGroupMembershipComponentProps} />

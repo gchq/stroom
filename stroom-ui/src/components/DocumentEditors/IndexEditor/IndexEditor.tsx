@@ -208,30 +208,31 @@ const IndexEditor = ({ docRefUuid }: SwitchedDocRefEditorProps) => {
       </form>
 
       <h2>Fields</h2>
-      <Button text="Create" onClick={onCreateClick} />
+      <Button onClick={onCreateClick}>Create</Button>
+      <Button disabled={selectedItems.length !== 1} onClick={onEditClick}>
+        Edit
+      </Button>
       <Button
-        text="Edit"
-        disabled={selectedItems.length !== 1}
-        onClick={onEditClick}
-      />
-      <Button
-        text="Move Up"
         disabled={lastSelectedIndex === undefined || lastSelectedIndex === 0}
         onClick={onMoveUpClick}
-      />
+      >
+        Move Up
+      </Button>
       <Button
-        text="Move Down"
         disabled={
           lastSelectedIndex === undefined ||
           lastSelectedIndex === fields.length - 1
         }
         onClick={onMoveDownClick}
-      />
+      >
+        Move Down
+      </Button>
       <Button
-        text="Delete"
         disabled={selectedItems.length === 0}
         onClick={showDeleteFieldsDialog}
-      />
+      >
+        Delete
+      </Button>
 
       <IndexFieldEditor {...fieldEditorProps} />
       <ThemedConfirm {...deleteFieldComponentProps} />

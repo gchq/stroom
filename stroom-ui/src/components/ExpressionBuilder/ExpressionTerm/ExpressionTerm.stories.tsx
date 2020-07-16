@@ -41,8 +41,8 @@ const TestHarness: React.FunctionComponent = () => {
           onChange,
         }}
       />
-      <Button text="Toggle Parent Enable" onClick={toggleIsEnabled} />
-      <Button text="Reset Delete" onClick={resetDelete} />
+      <Button onClick={toggleIsEnabled}>Toggle Parent Enable</Button>
+      <Button onClick={resetDelete}>Reset Delete</Button>
       <JsonDebug value={{ index, value, isEnabled, deletedId }} />
     </div>
   );

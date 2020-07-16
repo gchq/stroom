@@ -66,10 +66,7 @@ export const SignInForm: React.FunctionComponent<FormikProps<FormValues>> = (
           className="w-100"
           appearance="contained"
           action="primary"
-          // icon="check"
-          text="OK"
           loading={isSubmitting}
-          // onClick={onOk}
         >
           Sign In
         </Button>

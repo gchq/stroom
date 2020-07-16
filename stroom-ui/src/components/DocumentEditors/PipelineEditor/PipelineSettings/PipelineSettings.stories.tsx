@@ -21,7 +21,7 @@ const TestHarness: React.FunctionComponent = () => {
 
   return (
     <div>
-      <Button onClick={onClick} text="Show" />
+      <Button onClick={onClick}>Show</Button>
       <JsonDebug value={value} />
       <PipelineSettings {...componentProps} />
     </div>

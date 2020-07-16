@@ -1,27 +1,31 @@
 /* Customisations to standard bootstrap styles */
-@import "./colours";
+@import "themes.scss";
+@import "themify.scss";
 
 .badge-success {
-  background-color: $valid;
+  @include themify($themes) {
+    background-color: themed("valid");
+  }
 }
 
 .badge-warning {
-  background-color: $warn;
+  @include themify($themes) {
+    background-color: themed("warn");
+  }
 }
 
 .badge-danger {
-  background-color: $error;
+  @include themify($themes) {
+    background-color: themed("error");
+  }
 }
 
 .dropdown-menu {
   margin: 0;
   font-size: inherit;
-
   -webkit-background-clip: padding-box;
   background-clip: padding-box;
-  border: 1px solid rgba(0,0,0,.2);
-  -webkit-box-shadow: 0 5px 10px rgba(0,0,0,.2);
-  box-shadow: 0 5px 10px rgba(0,0,0,.2);
+  @include dialog($themes);
 }
 
 .dropdown-item {
@@ -29,59 +33,68 @@
 }
 
 .dropdown-item:active {
-  background-color: $primary;
+  @include themify($themes) {
+    background-color: themed("primary");
+  }
 }
 
 .form-control {
-  //border-color: rgb(33, 150, 243); // material blue 500
+  @include themify($themes) {
+    background-color: themed("control__background-color");
+    color: themed("control__text-color");
+    border-color: themed("control__border-color");
+  }
 }
 
 .form-control:focus {
+  @include themify($themes) {
+    background-color: themed("control__background-color");
+    color: themed("control__text-color");
+    border-color: themed("control__border-color");
+  }
 
   //border-color: rgb(102,175,233);
   //outline: 0;
   //-webkit-box-shadow: inset 0 1px 1px rgba(0,0,0,.075), 0 0 8px rgba(102,175,233,.6);
   //box-shadow: inset 0 1px 1px rgba(0,0,0,.075), 0 0 8px rgba(102,175,233,.6);
-
-  border-color: $primary;
-  outline: 0;
-  -webkit-box-shadow: inset 0 1px 1px rgba(0,0,0,.075), 0 0 8px rgba($primary,.6);
-  box-shadow: inset 0 1px 1px rgba(0,0,0,.075), 0 0 8px rgba($primary,.6);
-
+  @include focus-ring($themes, "primary")
 }
 
 .form-control.is-invalid {
   // border-color: #dc354;
-  border-color: $invalid;
+  @include themify($themes) {
+    border-color: themed("invalid");
+  }
 }
 
 .form-control.is-invalid:focus {
-  border-color: $invalid;
-  outline: 0;
-  -webkit-box-shadow: inset 0 1px 1px rgba(0,0,0,.075), 0 0 8px rgba($invalid,.6);
-  box-shadow: inset 0 1px 1px rgba(0,0,0,.075), 0 0 8px rgba($invalid,.6);
+  @include focus-ring($themes, "invalid")
 }
 
 .form-control.is-valid {
-  border-color: $valid;
+  @include themify($themes) {
+    border-color: themed("valid");
+  }
 }
 
 .form-control.is-valid:focus {
-  border-color: $valid;
-  outline: 0;
-  -webkit-box-shadow: inset 0 1px 1px rgba(0,0,0,.075), 0 0 8px rgba($valid,.6);
-  box-shadow: inset 0 1px 1px rgba(0,0,0,.075), 0 0 8px rgba($valid,.6);
+  @include focus-ring($themes, "valid")
 }
 
 .form-check > input:focus {
-  border-color: $primary;
-  outline: 0;
-  -webkit-box-shadow: inset 0 1px 1px rgba(0,0,0,.075), 0 0 8px rgba($primary,.6);
-  box-shadow: inset 0 1px 1px rgba(0,0,0,.075), 0 0 8px rgba($primary,.6);
+  @include focus-ring($themes, "primary")
 }
 
 .invalid-feedback {
-  color: $invalid;
+  @include themify($themes) {
+    color: themed("feedback");
+  }
+}
+
+label {
+  @include themify($themes) {
+    color: themed("page__text-color");
+  }
 }
 
 .modal {
@@ -105,6 +118,7 @@
 
 .modal-content {
   width: auto;
+  @include page($themes)
 }
 
 .modal-header {

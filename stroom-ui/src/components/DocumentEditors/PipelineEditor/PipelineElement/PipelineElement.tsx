@@ -230,7 +230,7 @@ export const PipelineElement: React.FunctionComponent<EnhancedProps> = ({
             icon={elementDefinition.icon}
           />
         )}
-        <Button className="Pipeline-element__type" text={elementId} />
+        <Button className="Pipeline-element__type">{elementId}</Button>
       </div>,
     ),
   );

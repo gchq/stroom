@@ -34,7 +34,9 @@ const EditTokenForm: React.FunctionComponent<{
   return (
     <form>
       <div className="header">
-        <Button icon="arrow-left" text="Back" onClick={() => onBack()} />
+        <Button icon="arrow-left" onClick={() => onBack()}>
+          Back
+        </Button>
       </div>
       {token === undefined ? (
         <div className="loader-container">
@@ -102,8 +104,9 @@ const EditTokenForm: React.FunctionComponent<{
                   action="primary"
                   type="button"
                   icon="copy"
-                  text="Copy key"
-                />
+                >
+                  Copy key
+                </Button>
               </CopyToClipboard>
             </div>
           </div>

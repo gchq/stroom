@@ -47,7 +47,7 @@ const TestHarness: React.FunctionComponent<Props> = ({ isGroup }) => {
 
   return (
     <div>
-      <Button text="reset" onClick={reset} />
+      <Button onClick={reset}>reset</Button>
       <UserPicker {...pickerProps} />
       <JsonDebug value={{ value, userNamesToFilterOut }} />
     </div>

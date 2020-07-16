@@ -31,13 +31,13 @@ const TestHarness: React.FunctionComponent = () => {
           content={<div>Maybe put something helpful in here</div>}
           actions={
             <React.Fragment>
-              <Button text="Nothing" onClick={() => setIsOpen(false)} />
-              <Button text="Something" onClick={() => setIsOpen(false)} />
+              <Button onClick={() => setIsOpen(false)}>Nothing</Button>
+              <Button onClick={() => setIsOpen(false)}>Something</Button>
             </React.Fragment>
           }
         />
       </ThemedModal>
-      <Button onClick={() => setIsOpen(!isOpen)} text="Open" />
+      <Button onClick={() => setIsOpen(!isOpen)}>Open</Button>
     </React.Fragment>
   );
 };

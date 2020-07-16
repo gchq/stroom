@@ -51,11 +51,12 @@ const PipelineSettings: React.FunctionComponent<Props> = ({
         actions={
           <React.Fragment>
             <Button
-              text="Submit"
               // disabled={invalid || submitting}
               onClick={onConfirmLocal}
-            />
-            <Button text="Cancel" onClick={onCloseDialog} />
+            >
+              Submit
+            </Button>
+            <Button onClick={onCloseDialog}>Cancel</Button>
           </React.Fragment>
         }
       />

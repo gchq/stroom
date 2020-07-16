@@ -1,7 +1,7 @@
 @import "../../styles/colours";
 
 // Password strength meter color for the different levels
-$strength-colors: ($red-600, $deep-orange-600, $orange-600, $amber-600, $valid);
+$strength-colors: ($red-600, $deep-orange-600, $orange-600, $amber-600, $bootstrap-success);
 
 // Gap width between strength meter bars
 $strength-gap: 6px;
@@ -30,13 +30,13 @@ $strength-gap: 6px;
 
 legend.form-label {
   font-size: 1.5rem;
-  color: desaturate(darken($primary, 10%), 60%);
+  color: desaturate(darken($blue-500, 10%), 60%);
 }
 
 .control-label {
   font-size: 0.8rem;
   font-weight: bold;
-  color: desaturate(darken($primary, 10%), 80%);
+  color: desaturate(darken($blue-500, 10%), 80%);
 }
 
 .form-control {

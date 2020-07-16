@@ -37,7 +37,7 @@ const DocRefEditor = <T extends {}>({
   if (!!onClickSave) {
     actionBarItems.push({
       icon: "save",
-      text: "Save",
+      children: "Save",
       disabled: !isDirty,
       title: isDirty ? "Save" : "Saved",
       onClick: onClickSave,
@@ -48,7 +48,7 @@ const DocRefEditor = <T extends {}>({
 
   actionBarItems.push({
     icon: "key",
-    text: "Permissions",
+    children: "Permissions",
     title: "Permissions",
     onClick: openDocRefPermissions,
   });

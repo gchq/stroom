@@ -103,7 +103,7 @@ const TestDocRefListingEntry: React.FunctionComponent<Props> = ({
             </DocRefListingEntry>
           ))}
       </div>
-      <Button text="Clear" onClick={onClickClear} />
+      <Button onClick={onClickClear}>Clear</Button>
       <JsonDebug value={{ wentBack, openedDocRef, enteredFolder }} />
     </div>
   );

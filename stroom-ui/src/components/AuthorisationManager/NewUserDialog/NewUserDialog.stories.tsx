@@ -35,7 +35,7 @@ const TestHarness: React.FunctionComponent<Props> = ({ isGroup }) => {
   return (
     <div>
       <h2>New User Test</h2>
-      <Button text="Edit" onClick={showDialog} />
+      <Button onClick={showDialog}>Edit</Button>
       <fieldset>
         <label>Last Value</label>
         <JsonDebug value={newUser} />

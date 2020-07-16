@@ -41,7 +41,7 @@ const DocRefInfoModal: React.FunctionComponent<Props> = ({
       <DialogContent
         header={<IconHeader icon="info" text="Document Information" />}
         content={<DocRefInfoForm docRef={docRef} />}
-        actions={<Button onClick={onCloseDialog} text="Close" />}
+        actions={<Button onClick={onCloseDialog}>Close</Button>}
       />
     </ThemedModal>
   );

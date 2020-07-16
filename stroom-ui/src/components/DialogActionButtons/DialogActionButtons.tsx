@@ -32,16 +32,18 @@ const DialogActionButtons = ({
       appearance="contained"
       action="primary"
       icon="check"
-      text="Choose"
       onClick={onConfirm}
-    />
+    >
+      Choose
+    </Button>
     <Button
       appearance="contained"
       action="secondary"
       icon="times"
-      text="Cancel"
       onClick={onCancel}
-    />
+    >
+      Cancel
+    </Button>
   </React.Fragment>
 );
 

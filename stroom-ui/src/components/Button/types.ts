@@ -11,8 +11,6 @@ export interface ButtonProps extends ButtonHTMLAttributes<HTMLElement> {
   appearance?: "default" | "outline" | "icon" | "contained";
   /** Choose the button action */
   action?: "default" | "primary" | "secondary";
-  /** Place this text on the button */
-  text?: string;
   /** Indicate the button has been selected */
   selected?: boolean;
   /** Indicate the button has been disabled */

@@ -45,7 +45,9 @@ const DataRetentionSection: React.FunctionComponent<Props> = ({
       <div className="page__header">
         <IconHeader text="Data Retention Policy" icon="trash-alt" />
         <div className="page__buttons Button__container">
-          <Button onClick={onCreate} icon="plus" text="Create" />
+          <Button onClick={onCreate} icon="plus">
+            Create
+          </Button>
         </div>
       </div>
       <div className="page__search" />

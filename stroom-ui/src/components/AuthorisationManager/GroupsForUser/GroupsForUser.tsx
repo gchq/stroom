@@ -73,17 +73,16 @@ const GroupsForUser: React.FunctionComponent<Props> = ({ user }) => {
   return (
     <div>
       <h2>Groups for User {user.name}</h2>
-      <Button text="Add to Group" onClick={showUserGroupPicker} />
+      <Button onClick={showUserGroupPicker}>Add to Group</Button>
       <Button
-        text="Remove from Group"
         disabled={selectedItems.length === 0}
         onClick={showDeleteGroupMembershipDialog}
-      />
-      <Button
-        text="View/Edit"
-        disabled={selectedItems.length !== 1}
-        onClick={goToSelectedUser}
-      />
+      >
+        Remove from Group
+      </Button>
+      <Button disabled={selectedItems.length !== 1} onClick={goToSelectedUser}>
+        View/Edit
+      </Button>
       <ThemedConfirm {...deleteGroupMembershipComponentProps} />
       <UsersTable {...tableProps} />
       <UserPickerDialog {...userGroupPickerProps} />

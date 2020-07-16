@@ -37,7 +37,7 @@ const TestHarness: React.FunctionComponent = () => {
   return (
     <React.Fragment>
       <ThemedConfirm {...componentProps} />
-      <Button onClick={showDialog} text="Check" />
+      <Button onClick={showDialog}>Check</Button>
       <div>Number of Confirmations: {confirmCount}</div>
     </React.Fragment>
   );

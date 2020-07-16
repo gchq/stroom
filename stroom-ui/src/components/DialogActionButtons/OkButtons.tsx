@@ -25,13 +25,9 @@ export interface OkButtonProps {
 
 const OkButtons = ({ onOk }: OkButtonProps) => (
   <React.Fragment>
-    <Button
-      appearance="contained"
-      action="primary"
-      icon="check"
-      text="OK"
-      onClick={onOk}
-    />
+    <Button appearance="contained" action="primary" icon="check" onClick={onOk}>
+      OK
+    </Button>
   </React.Fragment>
 );
 

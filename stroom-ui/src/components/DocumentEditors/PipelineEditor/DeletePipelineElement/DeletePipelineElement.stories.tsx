@@ -18,7 +18,7 @@ const TestHarness: React.FunctionComponent = () => {
 
   return (
     <div>
-      <Button text="Show" onClick={() => showDialog(`${nextElementId++}`)} />
+      <Button onClick={() => showDialog(`${nextElementId++}`)}>Show</Button>
       <DeletePipelineElement {...componentProps} />
       <JsonDebug value={{ elementDeleted }} />
     </div>

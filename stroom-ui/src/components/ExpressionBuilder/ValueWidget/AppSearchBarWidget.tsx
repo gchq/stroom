@@ -32,9 +32,10 @@ const AppSearchBarWidget: FunctionComponent<Props> = ({ onChange, value }) => {
           appearance="contained"
           action="secondary"
           icon="times"
-          text="Cancel"
           onClick={() => setEditing(false)}
-        />
+        >
+          Cancel
+        </Button>
       </div>
     );
   } else {
