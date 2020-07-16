@@ -17,7 +17,12 @@
 import { useCallback } from "react";
 import { useHttpClient2 } from "lib/useHttpClient";
 import useUrlFactory from "lib/useUrlFactory";
-import { CreateTokenRequest, ResultPage, SearchTokenRequest } from "./types";
+import {
+  CreateTokenRequest,
+  ResultPage,
+  SearchTokenRequest,
+  TokenConfig,
+} from "./types";
 import { Token } from "../../tokens/api/types";
 
 interface TokenResource {
@@ -27,6 +32,7 @@ interface TokenResource {
   read: (tokenId: number) => Promise<Token>;
   toggleEnabled: (tokenId: number, enabled: boolean) => Promise<boolean>;
   remove: (tokenId: number) => Promise<boolean>;
+  fetchTokenConfig: () => Promise<TokenConfig>;
 }
 
 export const useTokenResource = (): TokenResource => {
@@ -63,6 +69,11 @@ export const useTokenResource = (): TokenResource => {
     [resource, httpDelete],
   );
 
+  const fetchTokenConfig = useCallback(
+    () => httpGet(`${resource}/noauth/fetchTokenConfig`),
+    [resource, httpGet],
+  );
+
   return {
     list,
     search,
@@ -70,5 +81,6 @@ export const useTokenResource = (): TokenResource => {
     read,
     toggleEnabled,
     remove,
+    fetchTokenConfig,
   };
 };

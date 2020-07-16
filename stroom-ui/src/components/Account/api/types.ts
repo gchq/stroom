@@ -66,3 +66,7 @@ export interface ResultPage<T> {
   values: T[];
   pageResponse: PageResponse;
 }
+
+export interface TokenConfig {
+  defaultApiKeyExpiryInMinutes: number;
+}

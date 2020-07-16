@@ -21,11 +21,13 @@ import { Formik, FormikProps } from "formik";
 import { Form, Modal } from "react-bootstrap";
 import { FormikHelpers } from "formik/dist/types";
 import { newTokenValidationSchema } from "./validation";
-import { CreateTokenRequest } from "../api/types";
-import { FunctionComponent } from "react";
+import { CreateTokenRequest, TokenConfig } from "../api/types";
+import { FunctionComponent, useEffect, useState } from "react";
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
 import { useTokenResource } from "../api";
 import { DatePickerFormField, UserFormField } from "components/FormField";
+import CustomLoader from "../../CustomLoader";
+import moment from "moment";
 
 export interface CreateTokenFormValues {
   expiresOnMs: number;
@@ -120,7 +122,14 @@ export const CreateTokenFormik: React.FunctionComponent<CreateTokenProps> = ({
 export const CreateToken: React.FunctionComponent<{
   onClose: (success: boolean) => void;
 }> = ({ onClose }) => {
-  const { create } = useTokenResource();
+  const { create, fetchTokenConfig } = useTokenResource();
+
+  const [tokenConfig, setTokenConfig] = useState<TokenConfig>();
+  useEffect(() => {
+    if (tokenConfig === undefined) {
+      fetchTokenConfig().then((conf) => setTokenConfig(conf));
+    }
+  }, [tokenConfig, setTokenConfig, fetchTokenConfig]);
 
   const onSubmit = (
     values: CreateTokenFormValues,
@@ -150,18 +159,26 @@ export const CreateToken: React.FunctionComponent<{
     create(request).then(handleResponse);
   };
 
+  if (tokenConfig === undefined) {
+    return (
+      <CustomLoader title="Stroom" message="Loading Config. Please wait..." />
+    );
+  }
+
+  const expiresOnMs = moment()
+    .add(tokenConfig.defaultApiKeyExpiryInMinutes, "minutes")
+    .valueOf();
+
   return (
-    <React.Fragment>
-      <Dialog>
-        <CreateTokenFormik
-          initialValues={{
-            expiresOnMs: new Date().getTime(),
-            userId: undefined,
-          }}
-          onSubmit={onSubmit}
-          onClose={onClose}
-        />
-      </Dialog>
-    </React.Fragment>
+    <Dialog>
+      <CreateTokenFormik
+        initialValues={{
+          expiresOnMs: expiresOnMs,
+          userId: undefined,
+        }}
+        onSubmit={onSubmit}
+        onClose={onClose}
+      />
+    </Dialog>
   );
 };
