@@ -109,6 +109,7 @@ public class AppConfigModule extends AbstractModule {
 
         bindConfig(AppConfig::getActivityConfig, stroom.activity.impl.db.ActivityConfig.class);
         bindConfig(AppConfig::getAnnotationConfig, stroom.annotation.impl.AnnotationConfig.class);
+        bindConfig(AppConfig::getAlertConfig, stroom.alert.impl.AlertConfig.class);
         bindConfig(AppConfig::getAuthenticationConfig, stroom.authentication.config.AuthenticationConfig.class, authenticationConfig -> {
             bindConfig(authenticationConfig, stroom.authentication.config.AuthenticationConfig::getOAuth2Config, OAuth2Config.class);
             bindConfig(authenticationConfig, stroom.authentication.config.AuthenticationConfig::getPasswordIntegrityChecksConfig, PasswordIntegrityChecksConfig.class);

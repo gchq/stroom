@@ -57,6 +57,7 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.function.Consumer;
+import java.util.stream.Collectors;
 
 public class AlertProcessorImpl implements AlertProcessor {
     private static final LambdaLogger LOGGER = LambdaLoggerFactory.getLogger(AlertProcessorImpl.class);
@@ -162,9 +163,16 @@ public class AlertProcessorImpl implements AlertProcessor {
    //                 System.out.println ("Found a matching query rule");
 
                     alertQueryHits.addQueryHitForRule(rule,eventId);
-                    LOGGER.debug("Adding {}:{} to rule {} from dashboard {}", currentStreamId, eventId, rule.getQueryId(), rule.getParams().get(AlertManager.DASHBOARD_NAME_KEY));
+                    LOGGER.debug("Adding {}:{} to rule {} from dashboards {}", currentStreamId, eventId, rule.getQueryId(),
+                            rule.getAlertDefinitions().stream()
+                                .map(a -> a.getAttributes().get(AlertManager.DASHBOARD_NAME_KEY))
+                                .collect(Collectors.joining(", ")));
+                    ;
                 } else {
-                    LOGGER.trace("Not adding {}:{} to rule {} from dashboard {}", currentStreamId, eventId, rule.getQueryId(), rule.getParams().get(AlertManager.DASHBOARD_NAME_KEY));
+                    LOGGER.trace("Not adding {}:{} to rule {} from dashboards {}", currentStreamId, eventId, rule.getQueryId(),
+                            rule.getAlertDefinitions().stream()
+                                    .map(a -> a.getAttributes().get(AlertManager.DASHBOARD_NAME_KEY))
+                                    .collect(Collectors.joining(", ")));
                 }
             }
         } catch (IOException ex){

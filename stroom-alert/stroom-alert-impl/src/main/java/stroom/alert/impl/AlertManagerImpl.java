@@ -60,18 +60,21 @@ public class AlertManagerImpl implements AlertManager {
     private final WordListProvider wordListProvider;
     private final IndexStructureCache indexStructureCache;
     private final ExtractionDecoratorFactory extractionDecoratorFactory;
+    private final AlertConfig alertConfig;
     private Map<DocRef, List<RuleConfig>> indexToRules = new HashMap<>();
     //todo make into a clearable cache, and periodically refresh
 
     private boolean initialised = false;
 
     @Inject
-    AlertManagerImpl (final ExplorerNodeService explorerNodeService,
+    AlertManagerImpl (final AlertConfig config,
+                      final ExplorerNodeService explorerNodeService,
                       final DashboardStore dashboardStore,
                       final WordListProvider wordListProvider,
                       final SearchConfig searchConfig,
                       final IndexStructureCache indexStructureCache,
                       final ExtractionDecoratorFactory extractionDecoratorFactory){
+        this.alertConfig = config;
         this.explorerNodeService = explorerNodeService;
         this.dashboardStore = dashboardStore;
         this.wordListProvider = wordListProvider;
@@ -103,15 +106,16 @@ public class AlertManagerImpl implements AlertManager {
 
     @Override
     public String getTimeZoneId() {
-        //todo get from property
-        return "UTC";
+        return alertConfig.getTimezone();
     }
 
-    //todo introduce a new AlertConfig class with props under AppConfig
-    private String commaDelimitedRulesRoots = "Rules/Active";
     private final List<String> findRulesPaths(){
-        String[] allRulesRoots = commaDelimitedRulesRoots.split(",");
+        String commaDelimitedRulesRoots = alertConfig.getRulesFolderList();
+        if (commaDelimitedRulesRoots == null) {
+            return List.of();
+        }
 
+        String[] allRulesRoots = commaDelimitedRulesRoots.split(",");
         return Arrays.stream(allRulesRoots).map(s -> s.trim()).collect(Collectors.toList());
     }
 
@@ -164,8 +168,9 @@ public class AlertManagerImpl implements AlertManager {
             return;
 
         for (String rulesPath : rulesPaths){
+            LOGGER.info("Loading alerting rules from " + rulesPath);
             final DocRef rulesFolder = getFolderForPath(rulesPath);
-            List<ExplorerNode> childNodes = explorerNodeService.getChildren(rulesFolder);
+            List<ExplorerNode> childNodes = explorerNodeService.getDescendants(rulesFolder);
             for (ExplorerNode childNode : childNodes){
                 if (DashboardDoc.DOCUMENT_TYPE.equals(childNode.getDocRef().getType())){
                     DashboardDoc dashboard = dashboardStore.readDocument(childNode.getDocRef());
