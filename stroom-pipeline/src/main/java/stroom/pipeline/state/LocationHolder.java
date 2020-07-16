@@ -21,8 +21,8 @@ import stroom.pipeline.shared.SourceLocation;
 import stroom.pipeline.xml.converter.ds3.DSLocator;
 import stroom.util.pipeline.scope.PipelineScoped;
 import stroom.util.shared.DefaultLocation;
-import stroom.util.shared.TextRange;
 import stroom.util.shared.Location;
+import stroom.util.shared.TextRange;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -30,6 +30,7 @@ import org.xml.sax.Locator;
 
 import javax.inject.Inject;
 import java.util.ArrayList;
+import java.util.Comparator;
 import java.util.List;
 
 @PipelineScoped
@@ -46,6 +47,10 @@ public class LocationHolder implements Holder {
     private long recordNo;
     private Location currentStartLocation;
     private Location currentEndLocation;
+    private Location markedStartLocation;
+    private boolean hasMarkedStartLocation;
+    private static final Comparator<Location> LOCATION_COMPARATOR = Comparator.comparing(Location::getLineNo)
+            .thenComparing(Location::getColNo);
 
     @Inject
     public LocationHolder(final MetaHolder metaHolder) {
@@ -80,6 +85,18 @@ public class LocationHolder implements Holder {
         recordNo = 0;
         currentStartLocation = new DefaultLocation(1, 1);
         currentEndLocation = new DefaultLocation(1, 1);
+        markedStartLocation = new DefaultLocation(1, 1);
+        hasMarkedStartLocation = false;
+    }
+
+    public void markStartLocation() {
+        if (locator != null) {
+            markedStartLocation = DefaultLocation.of(
+                    locator.getLineNumber(),
+                    locator.getColumnNumber());
+            LOGGER.trace("Marking location: {}", markedStartLocation);
+            hasMarkedStartLocation = true;
+        }
     }
 
     public void storeLocation() {
@@ -117,10 +134,22 @@ public class LocationHolder implements Holder {
                 endLocation = DefaultLocation.of(
                         locator.getLineNumber(),
                         locator.getColumnNumber());
-                // Locator can provide only one location so we have to work off out previous endLocation.
-                startLocation = DefaultLocation.of(
-                        currentEndLocation.getLineNo(),
-                        currentEndLocation.getColNo());
+
+                // TODO The location comparator test is a bit of a hack to deal with the XML
+                //  fragment parser as that seems
+                //  to skip forward then back, presumably where it is reading each entity.
+                if (hasMarkedStartLocation
+                        && (LOCATION_COMPARATOR.compare(markedStartLocation, endLocation) <= 0)) {
+                    // The start location has been marked so use that
+                    startLocation = DefaultLocation.of(
+                            markedStartLocation.getLineNo(),
+                            markedStartLocation.getColNo());
+                } else {
+                    // Locator can provide only one location so we have to work off out previous endLocation.
+                    startLocation = DefaultLocation.of(
+                            currentEndLocation.getLineNo(),
+                            currentEndLocation.getColNo());
+                }
             }
 
             // Only change if we have moved forward.

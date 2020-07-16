@@ -26,6 +26,8 @@ import stroom.pipeline.xml.event.Event;
 import stroom.pipeline.xml.event.simple.StartElement;
 import stroom.pipeline.xml.event.simple.StartPrefixMapping;
 
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.xml.sax.Attributes;
 import org.xml.sax.Locator;
 import org.xml.sax.SAXException;
@@ -41,6 +43,9 @@ import javax.inject.Inject;
 @ConfigurableElement(type = "SplitFilter", category = Category.FILTER, roles = {PipelineElementType.ROLE_TARGET,
         PipelineElementType.ROLE_HAS_TARGETS}, icon = ElementIcons.SPLIT)
 public class SplitFilter extends AbstractXMLFilter {
+
+    private static final Logger LOGGER = LoggerFactory.getLogger(SplitFilter.class);
+
     /**
      * The default depth to split XML. Set to 2 as we normally split on second
      * level elements.
@@ -114,6 +119,9 @@ public class SplitFilter extends AbstractXMLFilter {
     private boolean hasFiredEvents;
 
     private final LocationHolder locationHolder;
+
+    private int lastEndElementLineNo;
+    private int lastEndElementColNo;
 
     public SplitFilter() {
         this.locationHolder = null;
@@ -238,7 +246,16 @@ public class SplitFilter extends AbstractXMLFilter {
             throws SAXException {
         depth++;
 
-        if (depth == splitDepth) {
+        // Mark the start location on every start element with a depth lower (closer to root)
+        // than our split depth so we can get the start position to be just before
+        // our record start element
+        if (depth < splitDepth) {
+            LOGGER.trace("startElement({}), depth: {}", localName, depth);
+            if (locationHolder != null) {
+                locationHolder.markStartLocation();
+            }
+        } else if (depth == splitDepth) {
+            LOGGER.trace("startElement({}), depth: {}", localName, depth);
             buffer = false;
 
             // We are going to fire some events at the child filter so set this
@@ -310,6 +327,12 @@ public class SplitFilter extends AbstractXMLFilter {
 
         if (depth == splitDepth) {
             if (locationHolder != null) {
+                // The location reported by the locator held in locationHolder may not be the same as the actual
+                // location of the (start|end)Element. It depends on how the parser in question reads the source
+                // data and closely tied the locator is to the parser.  For XML parsing it will be accurate. The
+                // fragment parser locations are partially messed up by the reading of the entity. The data splitter
+                // is ok if DSLocator is used. Json parsing is completely wrong as large chunks of the stream
+                // are read at once.
                 locationHolder.storeLocation();
             }
 
@@ -326,6 +349,16 @@ public class SplitFilter extends AbstractXMLFilter {
                 // If the count has not yet reached the split count then we only
                 // need to fire end SAX events down to the root element.
                 fireEndEvents(length, afterRoot);
+            }
+        }
+
+        // Mark the start location on every end element so when storeLocation is called
+        // it will get the range from the end of the element just before this record to the end
+        // of this record.  This is because the locator gets the location of '<myElement>'.
+        if (depth <= splitDepth) {
+            LOGGER.trace("endElement({}), depth: {}", localName, depth);
+            if (locationHolder != null) {
+                locationHolder.markStartLocation();
             }
         }
 
