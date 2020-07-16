@@ -261,7 +261,6 @@ public class ReaderRecorder extends AbstractIOElement implements TakesInput, Tak
         private final String encoding;
         private final ByteBuffer byteBuffer = new ByteBuffer();
         private final ByteStreamDecoder byteStreamDecoder;
-        private final AtomicInteger offset = new AtomicInteger(0);
 
         private int lineNo = BASE_LINE_NO;
         private int colNo = BASE_COL_NO;
@@ -345,14 +344,17 @@ public class ReaderRecorder extends AbstractIOElement implements TakesInput, Tak
             boolean inRecord = false;
 
             int advance = 0;
-            int i = 0;
-            offset.set(0);
+            final AtomicInteger offset = new AtomicInteger(0);
 
-            Supplier<Byte> byteSupplier = () ->
+            final Supplier<Byte> byteSupplier = () ->
                     byteBuffer.getByte(offset.getAndIncrement());
 
-            for (; offset.get() < length() && !found; i++) {
-                final byte c = byteAt(i);
+            // TODO This could be made more efficient if scans the stream to look for the
+            //  byte value (which may differ for different encodings) of the \n 'chars' until
+            //  we get to the line of interest.  From that point we need to decode each char to
+            //  see how may bytes it occupies.
+            //  Need a kind of jumpToLine method
+            while (offset.get() < length() && !found) {
 
                 // The offset where our potentially multi-byte char starts
                 final int startOffset = offset.get();
