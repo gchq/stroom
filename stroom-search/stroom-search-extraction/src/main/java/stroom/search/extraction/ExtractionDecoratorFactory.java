@@ -1,5 +1,6 @@
 package stroom.search.extraction;
 
+import stroom.alert.api.AlertDefinition;
 import stroom.dashboard.expression.v1.FieldIndexMap;
 import stroom.dashboard.shared.TableComponentSettings;
 import stroom.docref.DocRef;
@@ -139,27 +140,4 @@ public class ExtractionDecoratorFactory {
         return extractionTaskProducer.process();
     }
 
-    static public class AlertDefinition {
-        private final Map<String,String> attributes;
-        private final TableComponentSettings tableComponentSettings;
-
-        public AlertDefinition(final TableComponentSettings tableComponentSettings){
-            this(tableComponentSettings, null);
-        }
-        public AlertDefinition(final TableComponentSettings tableComponentSettings, final Map<String, String> attributes) {
-            this.tableComponentSettings = tableComponentSettings;
-            this.attributes = attributes;
-        }
-
-        public Map<String, String> getAttributes() {
-            if (attributes == null) {
-                return Map.of();
-            }
-            return attributes;
-        }
-
-        public final TableComponentSettings getTableComponentSettings() {
-            return tableComponentSettings;
-        }
-    }
 }

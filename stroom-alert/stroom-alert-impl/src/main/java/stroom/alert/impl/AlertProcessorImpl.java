@@ -1,8 +1,26 @@
+/*
+ * Copyright 2020 Crown Copyright
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ *     http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
 package stroom.alert.impl;
 
 import org.apache.lucene.analysis.Analyzer;
 import org.apache.lucene.analysis.TokenStream;
 import org.apache.lucene.document.Document;
+
+import stroom.alert.api.AlertDefinition;
+import stroom.alert.api.AlertManager;
 import stroom.alert.api.AlertProcessor;
 import stroom.dashboard.expression.v1.FieldIndexMap;
 import stroom.dashboard.impl.TableSettingsUtil;
@@ -27,7 +45,6 @@ import stroom.search.coprocessor.Error;
 import stroom.search.coprocessor.Receiver;
 import stroom.search.coprocessor.Values;
 import stroom.search.extraction.ExtractionDecoratorFactory;
-import stroom.search.extraction.ExtractionDecoratorFactory.AlertDefinition;
 import stroom.search.impl.SearchException;
 import stroom.search.impl.SearchExpressionQueryBuilder;
 import stroom.util.logging.LambdaLogger;
@@ -40,7 +57,6 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.function.Consumer;
-import java.util.stream.Collectors;
 
 public class AlertProcessorImpl implements AlertProcessor {
     private static final LambdaLogger LOGGER = LambdaLoggerFactory.getLogger(AlertProcessorImpl.class);
@@ -50,8 +66,6 @@ public class AlertProcessorImpl implements AlertProcessor {
     private final WordListProvider wordListProvider;
     private final int maxBooleanClauseCount;
     private final IndexStructure indexStructure;
-    //todo  work out how to use the timezone in the query
-    private static final String DATE_TIME_LOCALE_SHOULD_BE_FROM_SEARCH = "UTC";
 
     private final List <RuleConfig> rules;
 
@@ -61,11 +75,14 @@ public class AlertProcessorImpl implements AlertProcessor {
 
     private Long currentStreamId = null;
 
+    private final String locale;
+
     public AlertProcessorImpl (final ExtractionDecoratorFactory extractionDecoratorFactory,
                                final List<RuleConfig> rules,
                                final IndexStructure indexStructure,
                                final WordListProvider wordListProvider,
-                               final int maxBooleanClauseCount){
+                               final int maxBooleanClauseCount,
+                               final String locale){
         this.rules = rules;
         this.wordListProvider = wordListProvider;
         this.maxBooleanClauseCount = maxBooleanClauseCount;
@@ -81,6 +98,7 @@ public class AlertProcessorImpl implements AlertProcessor {
         }
         alertQueryHits = new AlertQueryHits();
         this.extractionDecoratorFactory = extractionDecoratorFactory;
+        this.locale = locale;
     }
 
     @Override
@@ -127,27 +145,6 @@ public class AlertProcessorImpl implements AlertProcessor {
         checkRules (eventId, memoryIndex);
     }
 
-
-//    private Val[] createVals (final Document document){
-//
-//        //todo allow a different search extraction pipeline to be used.
-//        //Currently the indexing pipeline must contain a superset of the values as the extraction pipeline
-//        //This is possible when the same translation is used.
-//
-//        Val[] result = new Val[document.getFields().size()];
-//        int fieldIndex = 0;
-//        //See SearchResultOutputFilter for creation of Values
-//        for (IndexableField field : document.getFields()){
-//            if (field.numericValue() != null){
-//                result[fieldIndex] = ValLong.create(field.numericValue().longValue());
-//            } else {
-//                result[fieldIndex] = ValString.create(field.stringValue());
-//            }
-//            fieldIndex++;
-//        }
-//        return result;
-//    }
-
     private void checkRules (final long eventId, final MemoryIndex memoryIndex){
         if (rules == null) {
             return;
@@ -165,9 +162,9 @@ public class AlertProcessorImpl implements AlertProcessor {
    //                 System.out.println ("Found a matching query rule");
 
                     alertQueryHits.addQueryHitForRule(rule,eventId);
-                    LOGGER.debug("Adding {}:{} to rule {} from dashboard {}", currentStreamId, eventId, rule.getQueryId(), rule.getParams().get(AlertManagerImpl.DASHBOARD_NAME_KEY));
+                    LOGGER.debug("Adding {}:{} to rule {} from dashboard {}", currentStreamId, eventId, rule.getQueryId(), rule.getParams().get(AlertManager.DASHBOARD_NAME_KEY));
                 } else {
-                    LOGGER.trace("Not adding {}:{} to rule {} from dashboard {}", currentStreamId, eventId, rule.getQueryId(), rule.getParams().get(AlertManagerImpl.DASHBOARD_NAME_KEY));
+                    LOGGER.trace("Not adding {}:{} to rule {} from dashboard {}", currentStreamId, eventId, rule.getQueryId(), rule.getParams().get(AlertManager.DASHBOARD_NAME_KEY));
                 }
             }
         } catch (IOException ex){
@@ -187,40 +184,6 @@ public class AlertProcessorImpl implements AlertProcessor {
                 LOGGER.trace("--Iterating ruleConfig {}", ruleConfig.getQueryId());
                 long[] eventIds = alertQueryHits.getSortedQueryHitsForRule(ruleConfig);
                 if (eventIds != null && eventIds.length > 0) {
-
-                    //todo - confirm that all tables share the same field map (and remove commented out code)
-//                    for (TableSettings tableSettings : ruleConfig.getTableSettings()){
-//                        LOGGER.trace("----Iterating tablesettings {}", tableSettings);
-                        numTasks++;
-//                        final Receiver receiver = new Receiver() {
-//                            @Override
-//                            public FieldIndexMap getFieldIndexMap() {
-//                                return FieldIndexMap.forFields(ruleConfig.getAlertDefinitions().get(0).getTableComponentSettings()
-//                                        .getFields().stream().map(t->t.getName())
-//                                        .collect(Collectors.toList()).toArray(new String[0]));
-//
-//                                //The extraction pipeline's index map (wrong?)
-////                                return FieldIndexMap.forFields(ruleConfig.getAlertDefinitions().get(0)
-////                                        .getTableComponentSettings().getFields().stream().map(t->t.getName())
-////                                        .collect(Collectors.toList()).toArray(new String[0]));
-//                            }
-//
-//                            @Override
-//                            public Consumer<Values> getValuesConsumer() {
-//                                return values -> {};
-//                            }
-//
-//                            @Override
-//                            public Consumer<Error> getErrorConsumer() {
-//                                return error -> LOGGER.error(error.getMessage(), error.getThrowable());
-//                            }
-//
-//                            @Override
-//                            public Consumer<Long> getCompletionCountConsumer() {
-//                                return count -> {};
-//                            }
-//                        };
-
                     final Receiver receiver = new AlertProcessorReceiver(ruleConfig.getAlertDefinitions(),
                             ruleConfig.getParams());
 
@@ -228,9 +191,6 @@ public class AlertProcessorImpl implements AlertProcessor {
                                 currentStreamId, eventIds, pipeline,
                                 ruleConfig.getAlertDefinitions(), ruleConfig.getParams());
                         LOGGER.trace("This AlertProcessorImpl has now created {} tasks during this call ", numTasks);
-//                    }
-
-
                 }
             }
 
@@ -243,9 +203,8 @@ public class AlertProcessorImpl implements AlertProcessor {
                                 final ExpressionOperator query) throws IOException {
 
         try {
-
             final SearchExpressionQueryBuilder searchExpressionQueryBuilder = new SearchExpressionQueryBuilder(
-                    wordListProvider, indexFieldsMap, maxBooleanClauseCount, DATE_TIME_LOCALE_SHOULD_BE_FROM_SEARCH, System.currentTimeMillis());
+                    wordListProvider, indexFieldsMap, maxBooleanClauseCount, locale, System.currentTimeMillis());
             final SearchExpressionQueryBuilder.SearchExpressionQuery luceneQuery = searchExpressionQueryBuilder
                     .buildQuery(LuceneVersionUtil.CURRENT_LUCENE_VERSION, query);
 
@@ -280,53 +239,6 @@ public class AlertProcessorImpl implements AlertProcessor {
             return null;
         }
     }
-
-//
-//    private String[] mapHit (final RuleConfig ruleConfig, final Document doc) {
-//        final List<Field> fields = ruleConfig.getTableSettings().getFields();
-//
-//
-//        FieldIndexMap fieldIndexMap = FieldIndexMap.forFields
-//                (doc.getFields().stream().map(f -> f.name()).
-//                        collect(Collectors.toList()).toArray(new String[doc.getFields().size()]));
-//        final FieldFormatter fieldFormatter = new FieldFormatter(new FormatterFactory(DATE_TIME_LOCALE_SHOULD_BE_FROM_SEARCH));
-//        //See CoprocessorsFactory for creation of field Index Map
-//        final CompiledFields compiledFields = new CompiledFields(fields, fieldIndexMap, ruleConfig.getParamMap());
-//
-//
-//        final String[] output = new String [ruleConfig.getTableSettings().getFields().size()];
-//        int index = 0;
-//        final Val[] inputVals = createVals (doc);
-//        for (final CompiledField compiledField : compiledFields) {
-//            final Expression expression = compiledField.getExpression();
-//
-//            if (expression != null) {
-//                if (expression.hasAggregate()) {
-//                    LOGGER.error("Aggregate functions not supported for dashboards in rules");
-//                } else {
-//                    final Generator generator = expression.createGenerator();
-//
-//                    generator.set(inputVals);
-//                    Val value = generator.eval();
-//                    output[index] = fieldFormatter.format(compiledField.getField(), value); //From TableResultCreator
-//
-//                    if (compiledField.getCompiledFilter() != null) {
-//                        // If we are filtering then we need to evaluate this field
-//                        // now so that we can filter the resultant value.
-//
-//                        if (compiledField.getCompiledFilter() != null && value != null && !compiledField.getCompiledFilter().match(value.toString())) {
-//                            // We want to exclude this item.
-//                            return null;
-//                        }
-//                    }
-//                }
-//            }
-//
-//            index++;
-//        }
-//
-//        return output;
-//    }
 
     private static class AlertProcessorReceiver implements Receiver {
         private final CompiledFields compiledFields;

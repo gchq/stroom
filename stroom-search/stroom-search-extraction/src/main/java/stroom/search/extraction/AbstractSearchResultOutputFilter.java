@@ -16,10 +16,10 @@
 
 package stroom.search.extraction;
 
+import stroom.alert.api.AlertDefinition;
 import stroom.dashboard.expression.v1.FieldIndexMap;
 import stroom.pipeline.filter.AbstractXMLFilter;
 import stroom.search.coprocessor.Values;
-import stroom.search.extraction.ExtractionDecoratorFactory.AlertDefinition;
 
 import java.util.List;
 import java.util.Map;

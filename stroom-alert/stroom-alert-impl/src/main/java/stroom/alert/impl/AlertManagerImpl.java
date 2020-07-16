@@ -1,12 +1,27 @@
+/*
+ * Copyright 2020 Crown Copyright
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ *     http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
 package stroom.alert.impl;
 
 
+import stroom.alert.api.AlertDefinition;
 import stroom.alert.api.AlertManager;
 
 
 import stroom.alert.api.AlertProcessor;
 import stroom.dashboard.impl.DashboardStore;
-import stroom.dashboard.impl.TableSettingsUtil;
 import stroom.dashboard.shared.ComponentConfig;
 import stroom.dashboard.shared.DashboardDoc;
 import stroom.dashboard.shared.QueryComponentSettings;
@@ -19,9 +34,7 @@ import stroom.explorer.shared.ExplorerNode;
 import stroom.index.impl.IndexStructure;
 import stroom.index.impl.IndexStructureCache;
 import stroom.query.api.v2.ExpressionOperator;
-import stroom.query.api.v2.TableSettings;
 import stroom.search.extraction.ExtractionDecoratorFactory;
-import stroom.search.extraction.ExtractionDecoratorFactory.AlertDefinition;
 import stroom.search.impl.SearchConfig;
 import stroom.util.logging.LambdaLogger;
 import stroom.util.logging.LambdaLoggerFactory;
@@ -38,9 +51,6 @@ import java.util.stream.Collectors;
 
 @Singleton
 public class AlertManagerImpl implements AlertManager {
-    public static final String DASHBOARD_NAME_KEY = "alertDashboardName";
-    public static final String RULES_FOLDER_KEY = "alertRulesFolder";
-    public static final String TABLE_NAME_KEY = "alertTableName";
 
     private static final LambdaLogger LOGGER = LambdaLoggerFactory.getLogger(AlertManagerImpl.class);
 
@@ -85,10 +95,16 @@ public class AlertManagerImpl implements AlertManager {
         }
         else {
             AlertProcessorImpl processor =
-                    new AlertProcessorImpl(extractionDecoratorFactory, indexToRules.get(indexDocRef), indexStructure, wordListProvider, maxBooleanClauseCount);
+                    new AlertProcessorImpl(extractionDecoratorFactory, indexToRules.get(indexDocRef), indexStructure, wordListProvider, maxBooleanClauseCount, getTimeZoneId());
             return Optional.of(processor);
         }
 
+    }
+
+    @Override
+    public String getTimeZoneId() {
+        //todo get from property
+        return "UTC";
     }
 
     //todo introduce a new AlertConfig class with props under AppConfig
@@ -178,9 +194,9 @@ public class AlertManagerImpl implements AlertManager {
                                         }
 
                                         AlertDefinition alertDefinition = new AlertDefinition(tableComponentSettings,
-                                                Map.of(DASHBOARD_NAME_KEY, dashboard.getName(),
-                                                        RULES_FOLDER_KEY, rulesPath,
-                                                        TABLE_NAME_KEY, associatedComponentConfig.getName()));
+                                                Map.of(AlertManager.DASHBOARD_NAME_KEY, dashboard.getName(),
+                                                        AlertManager.RULES_FOLDER_KEY, rulesPath,
+                                                        AlertManager.TABLE_NAME_KEY, associatedComponentConfig.getName()));
                                         pipelineTableSettings.get(pipeline).add(alertDefinition);
                                     }
                                 }

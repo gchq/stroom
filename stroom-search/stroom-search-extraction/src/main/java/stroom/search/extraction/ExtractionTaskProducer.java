@@ -18,14 +18,14 @@ package stroom.search.extraction;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+
+import stroom.alert.api.AlertDefinition;
 import stroom.docref.DocRef;
-import stroom.query.api.v2.TableSettings;
 import stroom.search.coprocessor.CompletionState;
 import stroom.search.coprocessor.Error;
 import stroom.search.coprocessor.Receiver;
 import stroom.search.coprocessor.ReceiverImpl;
 import stroom.search.coprocessor.Values;
-import stroom.search.extraction.ExtractionDecoratorFactory.AlertDefinition;
 import stroom.security.api.SecurityContext;
 import stroom.task.api.ExecutorProvider;
 import stroom.task.api.TaskContext;

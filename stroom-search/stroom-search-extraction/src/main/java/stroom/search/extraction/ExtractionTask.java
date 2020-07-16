@@ -16,10 +16,9 @@
 
 package stroom.search.extraction;
 
+import stroom.alert.api.AlertDefinition;
 import stroom.docref.DocRef;
 import stroom.search.coprocessor.Receiver;
-import stroom.search.extraction.ExtractionDecoratorFactory.AlertDefinition;
-
 
 import java.util.List;
 import java.util.Map;

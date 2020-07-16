@@ -309,7 +309,9 @@ class IndexingFilter extends AbstractXMLFilter {
     private int numberOfEndProcessingCalls = 0;
     @Override
     public void endProcessing() {
-        alertProcessor.createAlerts();
+        if (alertProcessor != null) {
+            alertProcessor.createAlerts();
+        }
         super.endProcessing();
         numberOfEndProcessingCalls++;
         if (numberOfEndProcessingCalls > 1) {
