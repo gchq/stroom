@@ -64,9 +64,9 @@ public class ContentSecurityFilter implements Filter {
         Objects.requireNonNull(response);
         Objects.requireNonNull(chain);
 
-//        if (request instanceof HttpServletRequest && response instanceof HttpServletResponse) {
-//            addHeaders((HttpServletRequest) request, (HttpServletResponse) response);
-//        }
+        if (request instanceof HttpServletRequest && response instanceof HttpServletResponse) {
+            addHeaders((HttpServletRequest) request, (HttpServletResponse) response);
+        }
 
         chain.doFilter(request, response);
     }
