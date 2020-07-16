@@ -41,6 +41,7 @@ import javax.inject.Singleton;
 import java.io.IOException;
 import java.nio.file.Path;
 import java.nio.file.Paths;
+import java.util.Collections;
 import java.util.Map;
 import java.util.Objects;
 
@@ -336,8 +337,10 @@ class FsStore implements Store, AttributeMapFactory {
 
     @Override
     public Map<String, String> getAttributes(final Meta meta) {
-        try (final Source source = openSource(meta.getId())) {
-            return source.getAttributes();
+        try (final Source source = openSource(meta.getId(), true)) {
+            return source != null
+                    ? source.getAttributes()
+                    : Collections.emptyMap();
         } catch (final IOException e) {
             throw new RuntimeException(e.getMessage(), e);
         }

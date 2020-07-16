@@ -33,6 +33,7 @@ import org.junit.jupiter.api.Test;
 
 import javax.inject.Inject;
 import java.util.List;
+import java.util.stream.Collectors;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
@@ -63,10 +64,17 @@ class TestIndexStoreImpl extends AbstractCoreIntegrationTest {
 
     @Test
     void testIndexRetrieval() {
-        assertThat(indexStore.list().size()).isEqualTo(2);
+        List<DocRef> list = indexStore.list();
+        assertThat(list.size()).isEqualTo(2);
 
-        final IndexDoc index = indexStore.readDocument(indexStore.list().get(1));
+        assertThat(list.stream().filter(docRef -> docRef.getName().equals("Test index")).
+                collect(Collectors.toList()).size()).isEqualTo(1);
+        assertThat(list.stream().filter(docRef -> docRef.getName().equals("Ref index")).
+                collect(Collectors.toList()).size()).isEqualTo(1);
 
+        final IndexDoc index = indexStore.readDocument(list.stream().
+                filter(docRef -> docRef.getName().equals("Test index")).findFirst().get());
+        
         assertThat(index).isNotNull();
         assertThat(index.getName()).isEqualTo("Test index");
 

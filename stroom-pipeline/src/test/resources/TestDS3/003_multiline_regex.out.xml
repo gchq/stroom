@@ -1,0 +1,159 @@
+<?xml version="1.1" encoding="UTF-8"?>
+<records xmlns="records:2"
+         xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+         xsi:schemaLocation="records:2 file://records-v2.0.xsd"
+         version="2.0">
+   <record>
+      <data name="type" value="DAEMON_ROTATE">
+         <data name="type" value="DAEMON_ROTATE"/>
+         <data name="node" value="artix2"/>
+         <data name="eventTime" value="06/07/20 14:10:01.787"/>
+         <data name="eventId" value="6069"/>
+         <data name="op" value="rotate-logs"/>
+         <data name="auid" value="unset"/>
+         <data name="pid" value="-1"/>
+         <data name="subj" value="?"/>
+      </data>
+   </record>
+   <record>
+      <data name="type" value="USER_END">
+         <data name="type" value="USER_END"/>
+         <data name="node" value="artix2"/>
+         <data name="eventTime" value="06/07/20 14:10:06.885"/>
+         <data name="eventId" value="337"/>
+         <data name="pid" value="104859"/>
+         <data name="uid" value="root"/>
+         <data name="auid" value="unset"/>
+         <data name="ses" value="unset"/>
+         <data name="msg" value="'op=PAM:session_close"/>
+         <data name="grantors" value="pam_limits,pam_unix"/>
+         <data name="acct" value="root"/>
+         <data name="exe" value="/usr/bin/crond"/>
+         <data name="hostname" value="?"/>
+         <data name="addr" value="?"/>
+         <data name="terminal" value="cron"/>
+         <data name="res" value="success'"/>
+      </data>
+   </record>
+   <record>
+      <data name="type" value="PROCTITLE">
+         <data name="type" value="PROCTITLE"/>
+         <data name="node" value="artix"/>
+         <data name="eventTime" value="06/07/20 14:11:35.793"/>
+         <data name="eventId" value="10591"/>
+         <data name="proctitle" value="/proc/self/exe"/>
+         <data name="--type" value="utility"/>
+         <data name="--field-trial-handle"
+               value="14965002579265685713,8315097743634133468,131072"/>
+         <data name="--disable-features" value="SpareRende"/>
+      </data>
+      <data name="type" value="PATH">
+         <data name="type" value="PATH"/>
+         <data name="node" value="artix"/>
+         <data name="eventTime" value="06/07/20 14:11:35.793"/>
+         <data name="eventId" value="10591"/>
+         <data name="item" value="1"/>
+         <data name="name" value="/lib64/ld-linux-x86-64.so.2"/>
+         <data name="inode" value="265206"/>
+         <data name="dev" value="08:02"/>
+         <data name="mode" value="file,755"/>
+         <data name="ouid" value="root"/>
+         <data name="ogid" value="root"/>
+         <data name="rdev" value="00:00"/>
+         <data name="nametype" value="NORMAL"/>
+         <data name="cap_fp" value="none"/>
+         <data name="cap_fi" value="none"/>
+         <data name="cap_fe" value="0"/>
+         <data name="cap_fver" value="0"/>
+         <data name="cap_frootid" value="0"/>
+      </data>
+      <data name="type" value="PATH">
+         <data name="type" value="PATH"/>
+         <data name="node" value="artix"/>
+         <data name="eventTime" value="06/07/20 14:11:35.793"/>
+         <data name="eventId" value="10591"/>
+         <data name="item" value="0"/>
+         <data name="name" value="/proc/self/exe"/>
+         <data name="inode" value="310083"/>
+         <data name="dev" value="08:02"/>
+         <data name="mode" value="file,755"/>
+         <data name="ouid" value="root"/>
+         <data name="ogid" value="root"/>
+         <data name="rdev" value="00:00"/>
+         <data name="nametype" value="NORMAL"/>
+         <data name="cap_fp" value="none"/>
+         <data name="cap_fi" value="none"/>
+         <data name="cap_fe" value="0"/>
+         <data name="cap_fver" value="0"/>
+         <data name="cap_frootid" value="0"/>
+      </data>
+      <data name="type" value="CWD">
+         <data name="type" value="CWD"/>
+         <data name="node" value="artix"/>
+         <data name="eventTime" value="06/07/20 14:11:35.793"/>
+         <data name="eventId" value="10591"/>
+         <data name="cwd" value="/home/dave"/>
+      </data>
+      <data name="type" value="EXECVE">
+         <data name="type" value="EXECVE"/>
+         <data name="node" value="artix"/>
+         <data name="eventTime" value="06/07/20 14:11:35.793"/>
+         <data name="eventId" value="10591"/>
+         <data name="argc" value="8"/>
+         <data name="a0" value="/proc/self/exe"/>
+         <data name="a1"
+               value="a1=--type=utility a2=--field-trial-handle=14965002579265685713,8315097743634133468,131072 a3=--disable-features=SpareRendererForSitePerProcess,WebRtcHideLocalIpsWithMdns a4=--lang=en-GB a5=--service-sandbox-type=audio a6=--service-request-channel-token=9331621691371633224 a7=--shared-files=v8_context_snapshot_data:100,v8_natives_data:101"/>
+      </data>
+      <data name="type" value="SYSCALL">
+         <data name="type" value="SYSCALL"/>
+         <data name="node" value="artix"/>
+         <data name="eventTime" value="06/07/20 14:11:35.793"/>
+         <data name="eventId" value="10591"/>
+         <data name="arch" value="x86_64"/>
+         <data name="syscall" value="execve"/>
+         <data name="success" value="yes"/>
+         <data name="exit" value="0"/>
+         <data name="a0" value="0x9ab9bb200c0"/>
+         <data name="a1" value="0x9ab9b860b40"/>
+         <data name="a2" value="0x9ab99d9e640"/>
+         <data name="a3" value="0x0"/>
+         <data name="items" value="2"/>
+         <data name="ppid" value="3089"/>
+         <data name="pid" value="64556"/>
+         <data name="auid" value="dave"/>
+         <data name="uid" value="dave"/>
+         <data name="gid" value="dave"/>
+         <data name="euid" value="dave"/>
+         <data name="suid" value="dave"/>
+         <data name="fsuid" value="dave"/>
+         <data name="egid" value="dave"/>
+         <data name="sgid" value="dave"/>
+         <data name="fsgid" value="dave"/>
+         <data name="tty" value="(none)"/>
+         <data name="ses" value="1"/>
+         <data name="comm" value="exe"/>
+         <data name="exe" value="/usr/lib/slack/slack"/>
+         <data name="key" value="(null)"/>
+      </data>
+   </record>
+   <record>
+      <data name="type" value="USER_START">
+         <data name="type" value="USER_START"/>
+         <data name="node" value="artix2"/>
+         <data name="eventTime" value="06/07/20 14:20:01.912"/>
+         <data name="eventId" value="338"/>
+         <data name="pid" value="107564"/>
+         <data name="uid" value="root"/>
+         <data name="auid" value="unset"/>
+         <data name="ses" value="unset"/>
+         <data name="msg" value="'op=PAM:session_open"/>
+         <data name="grantors" value="pam_limits,pam_unix"/>
+         <data name="acct" value="root"/>
+         <data name="exe" value="/usr/bin/crond"/>
+         <data name="hostname" value="?"/>
+         <data name="addr" value="?"/>
+         <data name="terminal" value="cron"/>
+         <data name="res" value="success'"/>
+      </data>
+   </record>
+</records>

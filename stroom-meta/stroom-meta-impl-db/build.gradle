@@ -29,6 +29,7 @@ dependencies {
     testCompile project(':stroom-explorer:stroom-collection-mock')
     testCompile project(':stroom-explorer:stroom-docrefinfo-mock')
     testCompile project(':stroom-security:stroom-security-mock')
+    testCompile project(':stroom-task:stroom-task-mock')
     testCompile project(':stroom-test-common')
     testCompile project(':stroom-util')
 

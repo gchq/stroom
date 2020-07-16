@@ -4,6 +4,7 @@ import stroom.ui.config.shared.UiConfig;
 import stroom.ui.config.shared.UiPreferences;
 import stroom.util.shared.ResourcePaths;
 import stroom.util.shared.RestResource;
+import stroom.util.shared.filter.FilterFieldDefinition;
 
 import io.swagger.annotations.Api;
 import io.swagger.annotations.ApiOperation;
@@ -11,15 +12,15 @@ import io.swagger.annotations.ApiParam;
 import org.fusesource.restygwt.client.DirectRestService;
 
 import javax.ws.rs.Consumes;
-import javax.ws.rs.DefaultValue;
 import javax.ws.rs.GET;
 import javax.ws.rs.POST;
 import javax.ws.rs.PUT;
 import javax.ws.rs.Path;
 import javax.ws.rs.PathParam;
 import javax.ws.rs.Produces;
-import javax.ws.rs.QueryParam;
 import javax.ws.rs.core.MediaType;
+import java.util.Arrays;
+import java.util.List;
 
 @Api(value = "config - /v1")
 @Path(GlobalConfigResource.BASE_PATH)
@@ -37,24 +38,33 @@ public interface GlobalConfigResource extends RestResource, DirectRestService {
     String PROP_NAME_PATH_PARAM = "/{propertyName}";
     String NODE_NAME_PATH_PARAM = "/{nodeName}";
 
+    FilterFieldDefinition FIELD_DEF_NAME = FilterFieldDefinition.defaultField("Name");
+    FilterFieldDefinition FIELD_DEF_EFFECTIVE_VALUE = FilterFieldDefinition.qualifiedField(
+            "Effective Value", "value");
+    FilterFieldDefinition FIELD_DEF_SOURCE = FilterFieldDefinition.qualifiedField("Source");
+    FilterFieldDefinition FIELD_DEF_DESCRIPTION = FilterFieldDefinition.qualifiedField(
+            "Description", "desc");
+
+    List<FilterFieldDefinition> FIELD_DEFINITIONS = Arrays.asList(
+            FIELD_DEF_NAME,
+            FIELD_DEF_EFFECTIVE_VALUE,
+            FIELD_DEF_SOURCE,
+            FIELD_DEF_DESCRIPTION);
+
+
     // TODO do we need this if the method returns a type?
     @ApiOperation(
         value = "TODO",
         response = ListConfigResponse.class)
-    @GET
+    @POST
     @Path(PROPERTIES_SUB_PATH)
-    ListConfigResponse list(
-        final @QueryParam("partialName") String partialName,
-        final @DefaultValue ("0") @QueryParam("offset") long offset,
-        final @QueryParam("size") Integer size);
+    ListConfigResponse list(final @ApiParam("criteria") GlobalConfigCriteria criteria);
 
-    @GET
+    @POST
     @Path(NODE_PROPERTIES_SUB_PATH + NODE_NAME_PATH_PARAM)
     ListConfigResponse listByNode(
-        final @PathParam("nodeName") String nodeName,
-        final @QueryParam("partialName") String partialName,
-        final @DefaultValue ("0") @QueryParam("offset") long offset,
-        final @QueryParam("size") Integer size);
+            final @PathParam("nodeName") String nodeName,
+            final @ApiParam("criteria") GlobalConfigCriteria criteria);
 
     @GET
     @Path(PROPERTIES_SUB_PATH + PROP_NAME_PATH_PARAM)

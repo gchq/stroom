@@ -1,0 +1,52 @@
+<?xml version="1.1" encoding="UTF-8"?>
+<records xmlns="records:2"
+         xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+         xsi:schemaLocation="records:2 file://records-v2.0.xsd"
+         version="2.0">
+   <record>
+      <data name="query">
+         <data name="date" value="09/07/2016"/>
+         <data name="time" value="14:49:36"/>
+         <data name="User" value="user1"/>
+         <data name="Query" value="some query"/>
+      </data>
+      <data name="results">
+         <data name="date" value="09/07/2016"/>
+         <data name="time" value="16:34:40"/>
+         <data name="Line 1" value="result1"/>
+         <data name="Line 2" value="result2"/>
+         <data name="Line 3" value="result3"/>
+         <data name="Line 4" value="result4"/>
+      </data>
+   </record>
+   <record>
+      <data name="query">
+         <data name="date" value="09/07/2009"/>
+         <data name="time" value="16:35:21"/>
+         <data name="User" value="user2"/>
+         <data name="Query" value="some other query"/>
+      </data>
+      <data name="results">
+         <data name="date" value="09/07/2009"/>
+         <data name="time" value="16:45:36"/>
+         <data name="Line 1" value="result1"/>
+         <data name="Line 2" value="result2"/>
+         <data name="Line 3" value="result3"/>
+         <data name="Line 4" value="result5"/>
+      </data>
+   </record>
+   <record>
+      <data name="query">
+         <data name="date" value="09/07/2009"/>
+         <data name="time" value="16:35:21"/>
+         <data name="User" value="user3"/>
+         <data name="Query" value="some great query"/>
+      </data>
+      <data name="results">
+         <data name="date" value="09/07/2009"/>
+         <data name="time" value="16:45:36"/>
+         <data name="Line 1" value="result1"/>
+         <data name="Line 2" value="result2"/>
+      </data>
+   </record>
+</records>

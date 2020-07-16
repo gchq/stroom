@@ -1,0 +1,7 @@
+ext.moduleName = 'stroom.task.mock'
+
+dependencies {
+    compile project(':stroom-task:stroom-task-api')
+
+    compile libs.guice4
+}

@@ -16,14 +16,15 @@
 
 package stroom.task.shared;
 
+import stroom.util.shared.Expander;
+import stroom.util.shared.ModelStringUtil;
+import stroom.util.shared.TreeRow;
+
 import com.fasterxml.jackson.annotation.JsonCreator;
 import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.fasterxml.jackson.annotation.JsonInclude;
 import com.fasterxml.jackson.annotation.JsonInclude.Include;
 import com.fasterxml.jackson.annotation.JsonProperty;
-import stroom.util.shared.Expander;
-import stroom.util.shared.ModelStringUtil;
-import stroom.util.shared.TreeRow;
 
 import java.util.Objects;
 
@@ -50,6 +51,10 @@ public class TaskProgress implements TreeRow {
     @JsonProperty
     private Expander expander;
 
+    // filteredOut as opposed to inFilter to avoid issues with bool serialisation as false is default
+    @JsonProperty
+    private FilterMatchState filterMatchState;
+
     public TaskProgress() {
     }
 
@@ -62,7 +67,8 @@ public class TaskProgress implements TreeRow {
                         @JsonProperty("nodeName") final String nodeName,
                         @JsonProperty("submitTimeMs") final long submitTimeMs,
                         @JsonProperty("timeNowMs") final long timeNowMs,
-                        @JsonProperty("expander") final Expander expander) {
+                        @JsonProperty("expander") final Expander expander,
+                        @JsonProperty("filterMatchState") final FilterMatchState filterMatchState) {
         this.id = id;
         this.taskName = taskName;
         this.taskInfo = taskInfo;
@@ -72,6 +78,7 @@ public class TaskProgress implements TreeRow {
         this.submitTimeMs = submitTimeMs;
         this.timeNowMs = timeNowMs;
         this.expander = expander;
+        this.filterMatchState = filterMatchState;
     }
 
     public TaskId getId() {
@@ -147,10 +154,24 @@ public class TaskProgress implements TreeRow {
         this.expander = expander;
     }
 
+    public FilterMatchState getFilterMatchState() {
+        return filterMatchState;
+    }
+
+    public void setFilterMatchState(final FilterMatchState filterMatchState) {
+        this.filterMatchState = filterMatchState;
+    }
+
     @JsonIgnore
     public long getAgeMs() {
         return timeNowMs - submitTimeMs;
     }
+
+    @JsonIgnore
+    public boolean isMatchedInFilter() {
+        return FilterMatchState.MATCHED.equals(filterMatchState);
+    }
+
 
     @Override
     public boolean equals(final Object o) {
@@ -168,5 +189,22 @@ public class TaskProgress implements TreeRow {
     @Override
     public String toString() {
         return taskName + " " + ModelStringUtil.formatDurationString(getAgeMs());
+    }
+
+    /**
+     * This could be a boolean but due to the issues around (de)serialisation of primitive boolean
+     * and their default values this avoids having to have a prop called isFilteredOut and is
+     * explicitly clear.
+     */
+    public static enum FilterMatchState {
+        MATCHED,
+        NOT_MATCHED;
+
+        @JsonIgnore
+        public static FilterMatchState fromBoolean(final boolean isMatched) {
+            return isMatched
+                    ? MATCHED
+                    : NOT_MATCHED;
+        }
     }
 }

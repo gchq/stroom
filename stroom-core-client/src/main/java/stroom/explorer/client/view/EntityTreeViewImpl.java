@@ -16,6 +16,12 @@
 
 package stroom.explorer.client.view;
 
+import stroom.explorer.client.presenter.EntityTreePresenter;
+import stroom.explorer.client.presenter.EntityTreeUiHandlers;
+import stroom.explorer.shared.ExplorerTreeFilter;
+import stroom.widget.dropdowntree.client.view.QuickFilter;
+import stroom.widget.dropdowntree.client.view.QuickFilterTooltipUtil;
+
 import com.google.gwt.event.logical.shared.ValueChangeEvent;
 import com.google.gwt.uibinder.client.UiBinder;
 import com.google.gwt.uibinder.client.UiField;
@@ -24,9 +30,6 @@ import com.google.gwt.user.client.ui.MaxScrollPanel;
 import com.google.gwt.user.client.ui.Widget;
 import com.google.inject.Inject;
 import com.gwtplatform.mvp.client.ViewWithUiHandlers;
-import stroom.explorer.client.presenter.EntityTreePresenter;
-import stroom.explorer.client.presenter.EntityTreeUiHandlers;
-import stroom.widget.dropdowntree.client.view.QuickFilter;
 
 public class EntityTreeViewImpl extends ViewWithUiHandlers<EntityTreeUiHandlers>
         implements EntityTreePresenter.EntityTreeView {
@@ -38,6 +41,11 @@ public class EntityTreeViewImpl extends ViewWithUiHandlers<EntityTreeUiHandlers>
     @Inject
     public EntityTreeViewImpl(final Binder binder) {
         widget = binder.createAndBindUi(this);
+
+        // Same field defs as the Explorer Tree
+        nameFilter.registerPopupTextProvider(() -> QuickFilterTooltipUtil.createTooltip(
+                "Choose Item Quick Filter",
+                ExplorerTreeFilter.FIELD_DEFINITIONS));
     }
 
     @Override

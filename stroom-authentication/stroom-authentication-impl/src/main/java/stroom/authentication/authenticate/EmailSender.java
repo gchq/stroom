@@ -18,6 +18,11 @@
 
 package stroom.authentication.authenticate;
 
+import stroom.authentication.config.AuthenticationConfig;
+import stroom.authentication.config.EmailConfig;
+import stroom.authentication.config.SmtpConfig;
+import stroom.config.common.UriFactory;
+
 import com.google.common.base.Preconditions;
 import com.google.common.base.Strings;
 import org.simplejavamail.email.Email;
@@ -26,10 +31,6 @@ import org.simplejavamail.mailer.config.ServerConfig;
 import org.simplejavamail.mailer.config.TransportStrategy;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import stroom.authentication.config.AuthenticationConfig;
-import stroom.authentication.config.EmailConfig;
-import stroom.authentication.config.SmtpConfig;
-import stroom.config.common.UriFactory;
 
 import javax.inject.Inject;
 import javax.mail.Message;
@@ -52,7 +53,6 @@ class EmailSender {
                 .getSmtpConfig();
 
         if (!Strings.isNullOrEmpty(smtpConfig.getUsername()) && !Strings.isNullOrEmpty(smtpConfig.getPassword())) {
-            LOGGER.info("Sending reset email using username and password");
             serverConfig = new ServerConfig(
                     authenticationConfig.getEmailConfig().getSmtpConfig().getHost(),
                     authenticationConfig.getEmailConfig().getSmtpConfig().getPort(),
@@ -83,6 +83,8 @@ class EmailSender {
         email.setSubject(emailConfig.getPasswordResetSubject());
         email.setText(passwordResetEmailText);
 
+        LOGGER.info("Sending reset email to user {} at {}:{}",
+                serverConfig.getHost(), serverConfig.getPort(), serverConfig.getUsername());
         new Mailer(serverConfig, transportStrategy).sendMail(email);
     }
 }

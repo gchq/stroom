@@ -89,7 +89,7 @@ public class SupersededOutputHelperImpl implements SupersededOutputHelper {
             if (!superseded) {
                 final ExpressionOperator findMetaExpression = new ExpressionOperator.Builder(Op.AND)
                         .addTerm(MetaFields.PARENT_ID, Condition.EQUALS, sourceMeta.getId())
-                        .addTerm(MetaFields.PROCESSOR_ID, Condition.EQUALS, processor.getId())
+                        .addTerm(MetaFields.PIPELINE, Condition.IS_DOC_REF, processor.getPipeline())
                         .build();
                 final FindMetaCriteria findMetaCriteria = new FindMetaCriteria(findMetaExpression);
                 final List<Meta> streamList = dataMetaService.find(findMetaCriteria).getValues();

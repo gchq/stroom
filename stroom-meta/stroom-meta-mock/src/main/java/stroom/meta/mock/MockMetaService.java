@@ -2,6 +2,9 @@ package stroom.meta.mock;
 
 import stroom.data.retention.api.DataRetentionRuleAction;
 import stroom.data.retention.api.DataRetentionTracker;
+import stroom.data.retention.shared.DataRetentionDeleteSummary;
+import stroom.data.retention.shared.DataRetentionRules;
+import stroom.data.retention.shared.FindDataRetentionImpactCriteria;
 import stroom.expression.matcher.ExpressionMatcher;
 import stroom.meta.api.AttributeMap;
 import stroom.meta.api.EffectiveMetaDataCriteria;
@@ -20,6 +23,7 @@ import stroom.util.time.TimePeriod;
 
 import javax.inject.Singleton;
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.Comparator;
 import java.util.HashMap;
 import java.util.HashSet;
@@ -333,5 +337,17 @@ public class MockMetaService implements MetaService, Clearable {
     @Override
     public List<String> getProcessorUuidList(final FindMetaCriteria criteria) {
         return null;
+    }
+
+    @Override
+    public List<DataRetentionDeleteSummary> getRetentionDeleteSummary(final String queryId,
+                                                                      final DataRetentionRules rules,
+                                                                      final FindDataRetentionImpactCriteria criteria) {
+        return Collections.emptyList();
+    }
+
+    @Override
+    public boolean cancelRetentionDeleteSummary(final String queryId) {
+        return true;
     }
 }

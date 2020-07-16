@@ -1,0 +1,28 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<dataSplitter
+        xmlns="data-splitter:3"
+        xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+        xsi:schemaLocation="data-splitter:3 file://data-splitter-v3.0.xsd"
+        version="3.0">
+
+  <split delimiter="\n">
+    <group value="$1">
+      <regex id="rootPattern" pattern="(^\S+) - (.*)">
+        <data name="name" value="$1">
+          <data name="roles">
+            <group id="roles" value="$2">
+
+              <regex id="rolesPattern" pattern="([\w ]+)((?>,|$))" maxMatch="2">
+                <data name="role" value="$1" />
+              </regex>
+
+              <!-- Consume and drop all the ones we didn't want to stop errors-->
+              <all />
+
+            </group>
+          </data>
+        </data>
+      </regex>
+    </group>
+  </split>
+</dataSplitter>

@@ -1,0 +1,28 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<dataSplitter
+        xmlns="data-splitter:3"
+        xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+        xsi:schemaLocation="data-splitter:3 file://data-splitter-v3.0.xsd"
+        version="3.0">
+
+  <split delimiter="\n----\n">
+    <data name="section">
+      <group value="$1">
+        <split delimiter="\n">
+          <data name="row">
+            <group value="$1">
+
+              <split delimiter=" " onlyMatch="2,4">
+                <data name="val" value="$1" />
+              </split>
+
+              <!-- Consume and drop all the ones we didn't want to stop errors-->
+              <all/>
+
+            </group>
+          </data>
+        </split>
+      </group>
+    </data>
+  </split>
+</dataSplitter>

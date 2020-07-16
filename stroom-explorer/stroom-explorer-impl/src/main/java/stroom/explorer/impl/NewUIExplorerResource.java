@@ -11,9 +11,9 @@ import stroom.explorer.shared.ExplorerTreeFilter;
 import stroom.explorer.shared.PermissionInheritance;
 import stroom.security.api.SecurityContext;
 import stroom.security.shared.DocumentPermissionNames;
+import stroom.util.docref.DocRefPredicateFactory;
 import stroom.util.shared.ResourcePaths;
 import stroom.util.shared.RestResource;
-import stroom.util.string.StringPredicateFactory;
 
 import com.fasterxml.jackson.annotation.JsonCreator;
 import com.fasterxml.jackson.annotation.JsonInclude;
@@ -82,7 +82,7 @@ public class NewUIExplorerResource implements RestResource {
                 true);
 
         // Getting all the tree
-        Predicate<String> filterPredicate = str -> true;
+        Predicate<DocRef> filterPredicate = str -> true;
 
         filterDescendants(null, treeModel, filteredModel, 0, filter, filterPredicate);
 
@@ -109,8 +109,7 @@ public class NewUIExplorerResource implements RestResource {
                 null,
                 true);
 
-        final Predicate<String> filterPredicate = StringPredicateFactory.createFuzzyMatchPredicate(
-                filter.getNameFilter());
+        final Predicate<DocRef> filterPredicate = DocRefPredicateFactory.createFuzzyMatchPredicate(filter.getNameFilter());
 
         filterDescendants(null, treeModel, filteredModel, 0, filter, filterPredicate);
         final SimpleDocRefTreeDTO result = getRoot(filteredModel);
@@ -326,7 +325,7 @@ public class NewUIExplorerResource implements RestResource {
                                       final TreeModel treeModelOut,
                                       final int currentDepth,
                                       final ExplorerTreeFilter filter,
-                                      final Predicate<String> filterPredicate) {
+                                      final Predicate<DocRef> filterPredicate) {
         int added = 0;
 
         final List<ExplorerNode> children = treeModelIn.getChildren(parent);
@@ -339,9 +338,10 @@ public class NewUIExplorerResource implements RestResource {
                     treeModelOut.add(parent, child);
                     added++;
 
+                    // Not ideal creating a new DocRef instance each time we want to compare an entity
                 } else if (ExplorerServiceImpl.checkType(child, filter.getIncludedTypes())
                         && ExplorerServiceImpl.checkTags(child, filter.getTags())
-                        && (ExplorerServiceImpl.checkName(child, filterPredicate))
+                        && (filterPredicate.test(child.getDocRef()))
                         && checkSecurity(child, filter.getRequiredPermissions())) {
                     treeModelOut.add(parent, child);
                     added++;

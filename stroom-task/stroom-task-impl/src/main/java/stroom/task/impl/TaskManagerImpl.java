@@ -24,21 +24,41 @@ import stroom.task.shared.FindTaskCriteria;
 import stroom.task.shared.FindTaskProgressCriteria;
 import stroom.task.shared.TaskId;
 import stroom.task.shared.TaskProgress;
+import stroom.task.shared.TaskProgress.FilterMatchState;
+import stroom.util.filter.FilterFieldMapper;
+import stroom.util.filter.FilterFieldMappers;
+import stroom.util.filter.QuickFilterPredicateFactory;
 import stroom.util.logging.LambdaLogger;
 import stroom.util.logging.LambdaLoggerFactory;
 import stroom.util.logging.LogUtil;
 import stroom.util.servlet.SessionIdProvider;
 import stroom.util.shared.ResultPage;
 
+import io.vavr.Tuple;
+
 import javax.inject.Inject;
 import javax.inject.Singleton;
+import java.time.Instant;
+import java.time.temporal.ChronoUnit;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.concurrent.atomic.AtomicInteger;
+import java.util.function.Predicate;
 import java.util.stream.Collectors;
+import java.util.stream.Stream;
 
 @Singleton
 class TaskManagerImpl implements TaskManager {
     private static final LambdaLogger LOGGER = LambdaLoggerFactory.getLogger(TaskManagerImpl.class);
+
+    public static final FilterFieldMappers<TaskProgress> FIELD_MAPPERS = FilterFieldMappers.of(
+            FilterFieldMapper.of(FindTaskProgressCriteria.FIELD_DEF_NODE, TaskProgress::getNodeName),
+            FilterFieldMapper.of(FindTaskProgressCriteria.FIELD_DEF_NAME, TaskProgress::getTaskName),
+            FilterFieldMapper.of(FindTaskProgressCriteria.FIELD_DEF_USER, TaskProgress::getUserName),
+            FilterFieldMapper.of(FindTaskProgressCriteria.FIELD_DEF_SUBMIT_TIME, (TaskProgress taskProgress) ->
+                            Instant.ofEpochMilli(taskProgress.getSubmitTimeMs()).toString()),
+            FilterFieldMapper.of(FindTaskProgressCriteria.FIELD_DEF_INFO, TaskProgress::getTaskInfo)
+    );
 
     private final NodeInfo nodeInfo;
     private final SessionIdProvider sessionIdProvider;
@@ -302,24 +322,44 @@ class TaskManagerImpl implements TaskManager {
         // This can change a little between servers.
         final long timeNowMs = System.currentTimeMillis();
 
-        final List<TaskProgress> taskProgressList = new ArrayList<>();
-
-        for (final TaskContextImpl taskContext : taskRegistry.list()) {
-            final TaskId taskId = taskContext.getTaskId();
-            final TaskProgress taskProgress = buildTaskProgress(timeNowMs, taskContext, taskId);
-
-            // Only add this task progress if it matches the supplied criteria.
-            if (findTaskProgressCriteria == null ||
-                    findTaskProgressCriteria.getSessionId() == null ||
-                    findTaskProgressCriteria.getSessionId().equals(taskContext.getSessionId())) {
-                taskProgressList.add(taskProgress);
-            }
+        final Predicate<TaskProgress> fuzzyMatchPredicate;
+        if (findTaskProgressCriteria != null ) {
+            fuzzyMatchPredicate = QuickFilterPredicateFactory.createFuzzyMatchPredicate(
+                    findTaskProgressCriteria.getNameFilter(),
+                    FIELD_MAPPERS);
+        } else {
+            fuzzyMatchPredicate = taskProgress -> true;
         }
+
+        final List<TaskProgress> taskProgressList = taskRegistry.list().stream()
+                .filter(taskContext -> {
+                    // Only add this task progress if it matches the supplied criteria.
+                    return (findTaskProgressCriteria == null ||
+                            findTaskProgressCriteria.getSessionId() == null ||
+                            findTaskProgressCriteria.getSessionId().equals(taskContext.getSessionId()));
+                })
+                .map(taskContext -> {
+                    final TaskId taskId = taskContext.getTaskId();
+                    return buildFilteredTaskProgress(timeNowMs, taskContext, taskId, fuzzyMatchPredicate);
+                })
+                .collect(Collectors.toList());
+
+        // For DEV testing uncomment this line to send dummy data to UI so you have some thing to
+        // look at in the UI.
+//        final List<TaskProgress> taskProgressList = buildDummyTaskDataForTesting(fuzzyMatchPredicate);
+//        if (LOGGER.isDebugEnabled()) {
+//            LOGGER.debug("taskProgressList:\n" + AsciiTable.from(taskProgressList));
+//        }
 
         return ResultPage.createUnboundedList(taskProgressList);
     }
 
-    private TaskProgress buildTaskProgress(final long timeNowMs, final TaskContextImpl taskContext, final TaskId taskId) {
+
+    private TaskProgress buildTaskProgress(
+            final long timeNowMs,
+            final TaskContextImpl taskContext,
+            final TaskId taskId) {
+
         final TaskProgress taskProgress = new TaskProgress();
         taskProgress.setId(taskId);
         taskProgress.setTaskName(taskContext.getName());
@@ -329,6 +369,24 @@ class TaskManagerImpl implements TaskManager {
         taskProgress.setSubmitTimeMs(taskContext.getSubmitTimeMs());
         taskProgress.setTimeNowMs(timeNowMs);
         taskProgress.setNodeName(nodeInfo.getThisNodeName());
+        return taskProgress;
+    }
+
+    private TaskProgress buildFilteredTaskProgress(
+            final long timeNowMs,
+            final TaskContextImpl taskContext,
+            final TaskId taskId,
+            final Predicate<TaskProgress> fuzzyMatchPredicate) {
+        final TaskProgress taskProgress = buildTaskProgress(timeNowMs, taskContext, taskId);
+
+        // Because the UI needs to display the ancestors of filtered in tasks and the ancestor tasks
+        // may exist on another node, we can't just remove filtered out tasks. We need to let the UI
+        // aggregate all the tasks from each node and then remove tasks that are filtered out or
+        // are an ancestor of a filtered in task.
+        // Filter state is worked out server side as GWT can't use the matching code due to all the
+        // regex involved.
+        taskProgress.setFilterMatchState(FilterMatchState.fromBoolean(fuzzyMatchPredicate.test(taskProgress)));
+
         return taskProgress;
     }
 
@@ -362,5 +420,61 @@ class TaskManagerImpl implements TaskManager {
         }
 
         return sb.toString();
+    }
+
+    /**
+     * This code is here to help UI testing in dev when you have no tasks to look at in the UI.
+     * It produces a load of made up tasks
+     */
+    private List<TaskProgress> buildDummyTaskDataForTesting(final Predicate<TaskProgress> fuzzyMatchPredicate) {
+
+        AtomicInteger id = new AtomicInteger(0);
+        List<String> taskNames = List.of(
+                "Red",
+                "Blue",
+                "Green",
+                "Yellow",
+                "Brown",
+                "Pink",
+                "Orange");
+
+        List<String> users = List.of(
+                "joebloggs",
+                "johndoe");
+
+        Instant startTime = Instant.EPOCH;
+        Instant now = Instant.now();
+        String nodeName = nodeInfo.getThisNodeName();
+
+        return taskNames.stream()
+                .flatMap(taskname -> {
+                    // Need to make sure task IDs are unique over the cluster
+                    TaskId grandparentTaskId = new TaskId(String.valueOf(nodeName + "-" + id.incrementAndGet()), null);
+                    TaskId parentTaskId = new TaskId(String.valueOf(nodeName + "-" + id.incrementAndGet()), grandparentTaskId);
+                    TaskId childTaskId = new TaskId(String.valueOf(nodeName + "-" + id.incrementAndGet()), parentTaskId);
+                    return Stream.of(
+                            Tuple.of(taskname + "-grandparent", grandparentTaskId),
+                            Tuple.of(taskname + "-parent", parentTaskId),
+                            Tuple.of(taskname + "-child", childTaskId));
+                })
+                .map(tuple2 -> {
+                    String taskName = tuple2._1();
+                    TaskId taskId = tuple2._2();
+                    final TaskProgress taskProgress = new TaskProgress();
+                    taskProgress.setId(taskId);
+                    taskProgress.setTaskName(taskName);
+                    taskProgress.setUserName(users.get(id.get() % 2));
+                    taskProgress.setThreadName("threadX");
+                    taskProgress.setTaskInfo("taskInfo-" + taskName);
+                    taskProgress.setSubmitTimeMs(startTime.plus(id.get() * 100, ChronoUnit.DAYS)
+                            .toEpochMilli());
+                    taskProgress.setTimeNowMs(now.toEpochMilli());
+                    taskProgress.setNodeName(nodeInfo.getThisNodeName());
+
+                    taskProgress.setFilterMatchState(FilterMatchState.fromBoolean(fuzzyMatchPredicate.test(taskProgress)));
+                    return taskProgress;
+
+                })
+                .collect(Collectors.toList());
     }
 }

@@ -194,48 +194,52 @@ public class ProcessorTaskListPresenter extends MyPresenterWidget<DataGridView<P
     private void showTooltip(final int x, final int y, final ProcessorTask processorTask, final MetaRow metaRow) {
         final Meta meta = metaRow.getMeta();
 
-        final StringBuilder html = new StringBuilder();
-        TooltipUtil.addHeading(html, "Stream Task");
-        TooltipUtil.addRowData(html, "Stream Task Id", processorTask.getId());
-        TooltipUtil.addRowData(html, "Status", processorTask.getStatus().getDisplayValue());
+        final TooltipUtil.Builder builder = TooltipUtil.builder()
+                .addTable(tableBuilder -> {
+                tableBuilder.addHeaderRow("Stream Task")
+                            .addRow("Stream Task Id", processorTask.getId())
+                            .addRow("Status", processorTask.getStatus().getDisplayValue());
 
-        if (processorTask.getProcessorFilter() != null) {
-            TooltipUtil.addRowData(html, "Priority", processorTask.getProcessorFilter().getPriority());
-        }
-
-        TooltipUtil.addRowData(html, "Status Time", toDateString(processorTask.getStatusTimeMs()));
-        TooltipUtil.addRowData(html, "Start Time", toDateString(processorTask.getStartTimeMs()));
-        TooltipUtil.addRowData(html, "End Time", toDateString(processorTask.getEndTimeMs()));
-        TooltipUtil.addRowData(html, "Node", processorTask.getNodeName());
-        TooltipUtil.addRowData(html, "Feed", processorTask.getFeedName());
-
-        TooltipUtil.addBreak(html);
-        TooltipUtil.addHeading(html, "Stream");
-        TooltipUtil.addRowData(html, "Stream Id", meta.getId());
-        TooltipUtil.addRowData(html, "Status", meta.getStatus().getDisplayValue());
-        TooltipUtil.addRowData(html, "Parent Stream Id", meta.getParentMetaId());
-        TooltipUtil.addRowData(html, "Created", toDateString(meta.getCreateMs()));
-        TooltipUtil.addRowData(html, "Effective", toDateString(meta.getEffectiveMs()));
-        TooltipUtil.addRowData(html, "Stream Type", meta.getTypeName());
-
-        if (processorTask.getProcessorFilter() != null) {
-            if (processorTask.getProcessorFilter().getProcessor() != null) {
-                if (processorTask.getProcessorFilter().getProcessor().getPipelineUuid() != null) {
-                    TooltipUtil.addBreak(html);
-                    TooltipUtil.addHeading(html, "Stream Processor");
-                    TooltipUtil.addRowData(html, "Stream Processor Id",
-                            processorTask.getProcessorFilter().getProcessor().getId());
-                    TooltipUtil.addRowData(html, "Stream Processor Filter Id",
-                            processorTask.getProcessorFilter().getId());
-                    if (processorTask.getProcessorFilter().getProcessor().getPipelineUuid() != null) {
-                        TooltipUtil.addRowData(html, "Stream Processor Pipeline",
-                                DocRefUtil.createSimpleDocRefString(processorTask.getProcessorFilter().getPipeline()));
+                    if (processorTask.getProcessorFilter() != null) {
+                        tableBuilder.addRow("Priority", processorTask.getProcessorFilter().getPriority());
                     }
-                }
-            }
-        }
 
-        tooltipPresenter.setHTML(html.toString());
+                    tableBuilder
+                            .addRow("Status Time", toDateString(processorTask.getStatusTimeMs()))
+                            .addRow("Start Time", toDateString(processorTask.getStartTimeMs()))
+                            .addRow("End Time", toDateString(processorTask.getEndTimeMs()))
+                            .addRow("Node", processorTask.getNodeName())
+                            .addRow("Feed", processorTask.getFeedName())
+                            .addBlankRow()
+                            .addHeaderRow("Stream")
+                            .addRow("Stream Id", meta.getId())
+                            .addRow("Status", meta.getStatus().getDisplayValue())
+                            .addRow("Parent Stream Id", meta.getParentMetaId())
+                            .addRow("Created", toDateString(meta.getCreateMs()))
+                            .addRow("Effective", toDateString(meta.getEffectiveMs()))
+                            .addRow("Stream Type", meta.getTypeName());
+
+                    if (processorTask.getProcessorFilter() != null) {
+                        if (processorTask.getProcessorFilter().getProcessor() != null) {
+                            if (processorTask.getProcessorFilter().getProcessor().getPipelineUuid() != null) {
+                                tableBuilder
+                                        .addBlankRow()
+                                        .addHeaderRow("Stream Processor")
+                                        .addRow("Stream Processor Id",
+                                                processorTask.getProcessorFilter().getProcessor().getId())
+                                        .addRow("Stream Processor Filter Id",
+                                                processorTask.getProcessorFilter().getId());
+                                if (processorTask.getProcessorFilter().getProcessor().getPipelineUuid() != null) {
+                                    tableBuilder.addRow("Stream Processor Pipeline",
+                                            DocRefUtil.createSimpleDocRefString(processorTask.getProcessorFilter().getPipeline()));
+                                }
+                            }
+                        }
+                    }
+                   return tableBuilder.build();
+                });
+
+        tooltipPresenter.setHTML(builder.build());
 
         final PopupPosition popupPosition = new PopupPosition(x, y);
         ShowPopupEvent.fire(ProcessorTaskListPresenter.this, tooltipPresenter, PopupType.POPUP, popupPosition,

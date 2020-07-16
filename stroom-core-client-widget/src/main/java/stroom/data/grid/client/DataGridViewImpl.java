@@ -16,6 +16,19 @@
 
 package stroom.data.grid.client;
 
+import stroom.data.pager.client.Pager;
+import stroom.hyperlink.client.Hyperlink;
+import stroom.hyperlink.client.HyperlinkEvent;
+import stroom.svg.client.SvgPreset;
+import stroom.widget.button.client.ButtonPanel;
+import stroom.widget.button.client.ButtonView;
+import stroom.widget.util.client.DoubleSelectTester;
+import stroom.widget.util.client.MultiSelectEvent;
+import stroom.widget.util.client.MultiSelectionModel;
+import stroom.widget.util.client.MultiSelectionModelImpl;
+import stroom.widget.util.client.Selection;
+import stroom.widget.util.client.SelectionType;
+
 import com.google.gwt.cell.client.Cell;
 import com.google.gwt.core.client.GWT;
 import com.google.gwt.dom.client.Element;
@@ -50,18 +63,6 @@ import com.google.gwt.view.client.HasData;
 import com.google.gwt.view.client.Range;
 import com.google.gwt.view.client.RangeChangeEvent.Handler;
 import com.gwtplatform.mvp.client.ViewImpl;
-import stroom.data.pager.client.Pager;
-import stroom.hyperlink.client.Hyperlink;
-import stroom.hyperlink.client.HyperlinkEvent;
-import stroom.svg.client.SvgPreset;
-import stroom.widget.button.client.ButtonPanel;
-import stroom.widget.button.client.ButtonView;
-import stroom.widget.util.client.DoubleSelectTester;
-import stroom.widget.util.client.MultiSelectEvent;
-import stroom.widget.util.client.MultiSelectionModel;
-import stroom.widget.util.client.MultiSelectionModelImpl;
-import stroom.widget.util.client.Selection;
-import stroom.widget.util.client.SelectionType;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -649,6 +650,13 @@ public class DataGridViewImpl<R> extends ViewImpl implements DataGridView<R>, Na
     @Override
     public MultiSelectionModel<R> getSelectionModel() {
         return selectionModel;
+    }
+
+    @Override
+    public void clearColumnSortList() {
+        if (dataGrid != null && dataGrid.getColumnSortList() != null) {
+            dataGrid.getColumnSortList().clear();
+        }
     }
 
     public interface Binder extends UiBinder<Widget, DataGridViewImpl<?>> {

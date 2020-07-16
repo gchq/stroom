@@ -27,34 +27,35 @@ import stroom.receive.rules.shared.ReceiveDataRuleSetResource;
 import stroom.receive.rules.shared.ReceiveDataRules;
 
 import javax.inject.Inject;
+import javax.inject.Provider;
 import java.util.ArrayList;
 import java.util.Map;
 import java.util.Set;
 
 public class ReceiveDataRuleSetResourceImpl implements ReceiveDataRuleSetResource {
-    private final ReceiveDataRuleSetService ruleSetService;
-    private final DocumentResourceHelper documentResourceHelper;
+    private final Provider<ReceiveDataRuleSetService> ruleSetServiceProvider;
+    private final Provider<DocumentResourceHelper> documentResourceHelperProvider;
 
     @Inject
-    ReceiveDataRuleSetResourceImpl(final ReceiveDataRuleSetService ruleSetService,
-                                   final DocumentResourceHelper documentResourceHelper) {
-        this.ruleSetService = ruleSetService;
-        this.documentResourceHelper = documentResourceHelper;
+    ReceiveDataRuleSetResourceImpl(final Provider<ReceiveDataRuleSetService> ruleSetServiceProvider,
+                                   final Provider<DocumentResourceHelper> documentResourceHelperProvider) {
+        this.ruleSetServiceProvider = ruleSetServiceProvider;
+        this.documentResourceHelperProvider = documentResourceHelperProvider;
     }
 
     @Override
     public ReceiveDataRules read(final DocRef docRef) {
-        return documentResourceHelper.read(ruleSetService, docRef);
+        return documentResourceHelperProvider.get().read(ruleSetServiceProvider.get(), docRef);
     }
 
     @Override
     public ReceiveDataRules update(final ReceiveDataRules doc) {
-        return documentResourceHelper.update(ruleSetService, doc);
+        return documentResourceHelperProvider.get().update(ruleSetServiceProvider.get(), doc);
     }
 
     @Override
     public Set<DocRef> listDocuments() {
-        return ruleSetService.listDocuments();
+        return ruleSetServiceProvider.get().listDocuments();
     }
 
     @Override
@@ -63,7 +64,7 @@ public class ReceiveDataRuleSetResourceImpl implements ReceiveDataRuleSetResourc
         final ImportState importState = new ImportState
                 (documentData.getDocRef(),
                         documentData.getDocRef().getName());
-        final ImportExportActionHandler.ImpexDetails result = ruleSetService.importDocument(
+        final ImportExportActionHandler.ImpexDetails result = ruleSetServiceProvider.get().importDocument(
                 documentData.getDocRef(),
                 documentData.getDataMap(),
                 importState,
@@ -76,7 +77,7 @@ public class ReceiveDataRuleSetResourceImpl implements ReceiveDataRuleSetResourc
 
     @Override
     public Base64EncodedDocumentData exportDocument(final DocRef docRef) {
-        final Map<String, byte[]> map = ruleSetService.exportDocument(
+        final Map<String, byte[]> map = ruleSetServiceProvider.get().exportDocument(
                 docRef,
                 true,
                 new ArrayList<>());

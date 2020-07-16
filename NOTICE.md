@@ -2,11 +2,20 @@
 
 Copyright 2016 Crown Copyright
 
-This software project uses libraries which fall under several licences. The purpose of this `NOTICE.md` file is to contain notices that are required by copyright owners and their licences. The full texts of all the licences used by third party libraries are included in the `licences` folder.
+This software project uses libraries which fall under several licences.
+The purpose of this `NOTICE.md` file is to contain notices that are required by copyright owners and their licences.
+The full texts of all the licences used by third party libraries are included in the `licences` folder.
 
 See the file [LICENCE.txt](./LICENCE.txt) for licensing information for this project.
 
-The table below includes licences for all Maven dependencies. Not included in that list is the licence for the NeoMetric typeface from which the Stroom logo was derived. The typeface was created by [Andres Sanchez](http://andres.nyc/), and is licensed under the Creative Commons Public Licence. This licence is included in the _licences/custom_ folder.
+The _Stroom_ logo was derirved from the NeoMetric typeface. 
+This typeface was created by [Andres Sanchez](http://andres.nyc/), and is licensed under the Creative Commons Public Licence.
+This licence is included in the _licences/custom_ folder.
+
+Some of the SVG icons used in _Stroom_ are taken from or derived from [FontAwesome](https://github.com/FortAwesome/Font-Awesome).
+These icons are licenced under [CC BY 4.0 License](https://creativecommons.org/licenses/by/4.0/).
+
+The table below includes licences for all Maven dependencies. 
 
 | Group                                     | Artifact                                     | Version          | Licence       | Licence   | Licence       |
 |-------------------------------------------|----------------------------------------------|------------------|---------------|-----------|---------------|

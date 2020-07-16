@@ -17,9 +17,6 @@
 
 package stroom.explorer.client.presenter;
 
-import com.google.inject.Inject;
-import com.google.web.bindery.event.shared.EventBus;
-import com.google.web.bindery.event.shared.HandlerRegistration;
 import stroom.alert.client.event.AlertEvent;
 import stroom.data.client.event.DataSelectionEvent;
 import stroom.data.client.event.DataSelectionEvent.DataSelectionHandler;
@@ -28,9 +25,15 @@ import stroom.dispatch.client.RestFactory;
 import stroom.docref.DocRef;
 import stroom.explorer.shared.DocumentTypes;
 import stroom.explorer.shared.ExplorerNode;
+import stroom.explorer.shared.ExplorerTreeFilter;
 import stroom.widget.dropdowntree.client.presenter.DropDownTreePresenter;
+import stroom.widget.dropdowntree.client.view.QuickFilterTooltipUtil;
 import stroom.widget.popup.client.event.HidePopupEvent;
 import stroom.widget.util.client.SelectionType;
+
+import com.google.inject.Inject;
+import com.google.web.bindery.event.shared.EventBus;
+import com.google.web.bindery.event.shared.HandlerRegistration;
 
 class ExplorerDropDownTreePresenter extends DropDownTreePresenter
         implements HasDataSelectionHandlers<ExplorerNode> {
@@ -39,7 +42,8 @@ class ExplorerDropDownTreePresenter extends DropDownTreePresenter
     private ExplorerNode selectedExplorerNode;
 
     @Inject
-    ExplorerDropDownTreePresenter(final EventBus eventBus, final DropDownTreeView view,
+    ExplorerDropDownTreePresenter(final EventBus eventBus,
+                                  final DropDownTreeView view,
                                   final RestFactory restFactory) {
         super(eventBus, view);
 
@@ -48,6 +52,10 @@ class ExplorerDropDownTreePresenter extends DropDownTreePresenter
 
         // Add views.
         view.setCellTree(explorerTree);
+
+        view.setQuickFilterTooltipSupplier(() -> QuickFilterTooltipUtil.createTooltip(
+                "Choose Item Quick Filter",
+                ExplorerTreeFilter.FIELD_DEFINITIONS));
     }
 
     protected void setIncludeNullSelection(final boolean includeNullSelection) {
@@ -55,7 +63,8 @@ class ExplorerDropDownTreePresenter extends DropDownTreePresenter
     }
 
     protected void setSelectedTreeItem(final ExplorerNode selectedItem,
-                                       final SelectionType selectionType, final boolean initial) {
+                                       final SelectionType selectionType,
+                                       final boolean initial) {
         // Is the selection type valid?
         if (isSelectionAllowed(selectedItem)) {
             // Drop down presenters need to know what the initial selection was so that they can update the name of their selected item properly.

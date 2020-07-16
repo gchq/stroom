@@ -16,13 +16,14 @@ dependencies {
     compile libs.jackson_core
     compile libs.jackson_databind
     compile libs.javassist
-    compile libs.javax_servlet_api
     compile libs.javax_inject
+    compile libs.javax_servlet_api
     compile libs.jaxb_api
     compile libs.saxon_he
     compile libs.slf4j_api
+    compile libs.vavr
     compile libs.ws_rs_api
-    
+
     testCompile libs.assertj_core
     testCompile libs.commons_lang
     testCompile libs.junit_jupiter_api

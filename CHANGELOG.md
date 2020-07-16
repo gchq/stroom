@@ -4,14 +4,103 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](http://keepachangelog.com/) 
 and this project adheres to [Semantic Versioning](http://semver.org/).
 
-
 ## [Unreleased]
 
+* Issue **#1725** : Fix Data Splitter onlyMatch using zero based instead of one based numbers.
+
+
+## [v7.0-beta.39] - 2020-07-06
+
+* Issue **#1716** : Prevent export of processor filters that are reprocess or deleted.
+
+* Issue **#1638** : Suppress error when searching deleted streams.
+
+* Issue **#1696** : Fix reprocessing from unfiltered meta data view.
+
+* Issue **#1648** : Fix streams not being deleted following reprocessing.
+
+* Issue **#1695** : Fix `Records` stream types not being identified correctly.
+
 * Issue **#1668** : Fixed incorrect parameter count for XSLT `meta` function.
+
+* Issue **#1619** : Fix delete stream summary.
+
+
+## [v7.0-beta.38] - 2020-06-25
+
+* Issue **#1670** : Stop _parse-uri_ XSLT function returning -1 for missing port numbers.
+
+* Issue **#1673** : Increase limit for age spinner in retention rules to 9999.
+
+* Issue **#1683** : Add `!` NOT operator to fuzzy match filtering.
+
+* Add field searching to Activity quick filter.
+
+* Add field searching to entity selection popups.
+
+* Change entity selection popups to clear quick filter on show.
+
+* Add column sorting and field searching to Properties screen.
+
+* Add field searching to Explorer Tree quick filter.
+
+* Add field searching to Properties quick filter.
+
+* Add field searching to Server Tasks quick filter.
+
+* Add field searching to dependencies quick filter.
+
+* Improve info tooltip layouts.
+
+* Issue **#1248** : Add quick filter to dependencies screen.
+
+* Issue **#1650** : Use consistent blue colour.
+
+* Issue **#1671** :Fix XSLT function `hex-to-oct`.
+
+* Add `readTimeout` property to `HTTPAppender`.
+
+* Issue **#1632** : SQL stats now compatible with MySQL 8 Group Replication
+
+* Issue **#1650** : Use consistent blue colour.
+
+* Issue **#1627** : Fix Up/Down buttons on Rule Set screen. Now keeps selection after use.
+
+* Issue **#1277** : Fix Enable/Disable toggle button on Rule Set screen.
+
+
+## [v7.0-beta.37] - 2020-06-15
+
+* Add _Impact Summary_ tab to _Data Retention_ to show breakdown of counts of streams to be deleted.
+
+* Add support for the `.` separator in the word boundary fuzzy matching.
+
+* Change the fuzzy match filter to switch to a case sensitive wild-carded exact match when the input contains a `*`.
+
+* Issue **#1640** : Fix server error when clicking disabled delete/info icon for deleted streams.
+
+* Issue **#1639** : Default index volume group property changes.
+
+* Issue **#1636** : Fix data retention deletion using wrong action for rules.
+
+* Issue **#1280** : Fix creation of default index volumes.
+
+
+## [v7.0-beta.36] - 2020-06-02
+
+* Issue **#1621** : Fix NPE in proxy content syncing.
+
+* Issue **#1462** : Stroom not working with MySQL 8.0 due to SQLException
 
 * Issue **#1564** : Fix error in data retention section of stream info popup.
 
 * Change data retention delete batching approach to use time ranges.
+
+* Issue **#1611** : Change explorer tree filtering to also filter on an exact match of the entity's UUID.
+
+* Add regex filtering with `/` prefix to fuzzy matching.
+
+* Change word boundary matching to require a `?` prefix.
 
 
 ## [v7.0-beta.35] - 2020-05-28
@@ -39,7 +128,7 @@ and this project adheres to [Semantic Versioning](http://semver.org/).
 
 ## [v7.0-beta.34] - 2020-05-26
 
-* Issue **#1569** : Removed recursive multi threading from file system clean as thread limit was being reached.
+* Issue **#1569** : Removed recursive multi threading from file system clean as thread limit was being reached. 
 
 * Issue **#1478** : Fixed data volume creation and other resource methods.
 
@@ -2258,7 +2347,11 @@ Issue **gchq/stroom-expression#22** : Add `typeOf(...)` function to dashboard.
 
 * Issue **#202** : Initial release of the new data retention policy functionality.
 
-[Unreleased]: https://github.com/gchq/stroom/compare/v7.0-beta.35...HEAD
+[Unreleased]: https://github.com/gchq/stroom/compare/v7.0-beta.39...HEAD
+[v7.0-beta.39]: https://github.com/gchq/stroom/compare/v7.0-beta.38...v7.0-beta.39
+[v7.0-beta.38]: https://github.com/gchq/stroom/compare/v7.0-beta.37...v7.0-beta.38
+[v7.0-beta.37]: https://github.com/gchq/stroom/compare/v7.0-beta.36...v7.0-beta.37
+[v7.0-beta.36]: https://github.com/gchq/stroom/compare/v7.0-beta.35...v7.0-beta.36
 [v7.0-beta.35]: https://github.com/gchq/stroom/compare/v7.0-beta.34...v7.0-beta.35
 [v7.0-beta.34]: https://github.com/gchq/stroom/compare/v7.0-beta.33...v7.0-beta.34
 [v7.0-beta.33]: https://github.com/gchq/stroom/compare/v7.0-beta.32...v7.0-beta.33

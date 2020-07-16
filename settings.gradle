@@ -240,6 +240,7 @@ include 'stroom-statistics:stroom-statistics-impl-sql'
 // Task execution
 include 'stroom-task:stroom-task-api'
 include 'stroom-task:stroom-task-impl'
+include 'stroom-task:stroom-task-mock'
 
 // Test project
 include 'stroom-test-common'

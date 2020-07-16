@@ -16,6 +16,8 @@
 
 package stroom.cell.info.client;
 
+import stroom.svg.client.SvgPreset;
+
 import com.google.gwt.cell.client.AbstractCell;
 import com.google.gwt.cell.client.ValueUpdater;
 import com.google.gwt.core.client.GWT;
@@ -34,14 +36,20 @@ import com.google.gwt.safehtml.shared.SafeHtmlBuilder;
 import com.google.gwt.safehtml.shared.SafeHtmlUtils;
 import com.google.gwt.safehtml.shared.SafeUri;
 import com.google.gwt.safehtml.shared.UriUtils;
-import stroom.svg.client.SvgPreset;
 
 public class SvgCell extends AbstractCell<SvgPreset> {
     private static Resources resources;
     private static Template template;
 
+    private final boolean isButton;
+
     public SvgCell() {
-        super("click");
+        this(true);
+    }
+    public SvgCell(final boolean isButton) {
+        super(isButton ? "click" : null);
+        this.isButton = isButton;
+
         if (resources == null) {
             resources = GWT.create(Resources.class);
             resources.style().ensureInjected();
@@ -52,26 +60,36 @@ public class SvgCell extends AbstractCell<SvgPreset> {
     }
 
     @Override
-    public void onBrowserEvent(final Context context, final Element parent, final SvgPreset value, final NativeEvent event,
+    public void onBrowserEvent(final Context context,
+                               final Element parent,
+                               final SvgPreset value,
+                               final NativeEvent event,
                                final ValueUpdater<SvgPreset> valueUpdater) {
-        super.onBrowserEvent(context, parent, value, event, valueUpdater);
-        if ("click".equals(event.getType())) {
-            EventTarget eventTarget = event.getEventTarget();
-            if (!Element.is(eventTarget)) {
-                return;
-            }
-            if (parent.getFirstChildElement().isOrHasChild(Element.as(eventTarget))) {
-                // Ignore clicks that occur outside of the main element.
-                onEnterKeyDown(context, parent, value, event, valueUpdater);
+        if (isButton) {
+            super.onBrowserEvent(context, parent, value, event, valueUpdater);
+            if ("click".equals(event.getType())) {
+                EventTarget eventTarget = event.getEventTarget();
+                if (!Element.is(eventTarget)) {
+                    return;
+                }
+                if (parent.getFirstChildElement().isOrHasChild(Element.as(eventTarget))) {
+                    // Ignore clicks that occur outside of the main element.
+                    onEnterKeyDown(context, parent, value, event, valueUpdater);
+                }
             }
         }
     }
 
     @Override
-    protected void onEnterKeyDown(final Context context, final Element parent, final SvgPreset value,
-                                  final NativeEvent event, final ValueUpdater<SvgPreset> valueUpdater) {
-        if (valueUpdater != null) {
-            valueUpdater.update(value);
+    protected void onEnterKeyDown(final Context context,
+                                  final Element parent,
+                                  final SvgPreset value,
+                                  final NativeEvent event,
+                                  final ValueUpdater<SvgPreset> valueUpdater) {
+        if (isButton) {
+            if (valueUpdater != null) {
+                valueUpdater.update(value);
+            }
         }
     }
 
@@ -84,12 +102,26 @@ public class SvgCell extends AbstractCell<SvgPreset> {
             builder.append(SafeStylesUtils.forWidth(value.getWidth(), Unit.PX));
             builder.append(SafeStylesUtils.forHeight(value.getHeight(), Unit.PX));
 
-            String className = resources.style().icon();
+            String className = isButton
+                    ? resources.style().button()
+                    : resources.style().icon();
+
             if (!value.isEnabled()) {
                 className += " " + resources.style().disabled();
             }
 
-            sb.append(template.icon(className, builder.toSafeStyles(), UriUtils.fromString(value.getUrl())));
+            if (value.getTitle() != null && !value.getTitle().isEmpty()) {
+                sb.append(template.icon(
+                        className,
+                        builder.toSafeStyles(),
+                        UriUtils.fromString(value.getUrl()),
+                        value.getTitle()));
+            } else {
+                sb.append(template.icon(
+                        className,
+                        builder.toSafeStyles(),
+                        UriUtils.fromString(value.getUrl())));
+            }
         }
     }
 
@@ -97,6 +129,8 @@ public class SvgCell extends AbstractCell<SvgPreset> {
         String DEFAULT_CSS = "SvgCell.css";
 
         String icon();
+
+        String button();
 
         String face();
 
@@ -111,5 +145,8 @@ public class SvgCell extends AbstractCell<SvgPreset> {
     interface Template extends SafeHtmlTemplates {
         @Template("<img class=\"{0}\" style=\"{1}\" src=\"{2}\"/>")
         SafeHtml icon(String className, SafeStyles style, SafeUri url);
+
+        @Template("<img class=\"{0}\" style=\"{1}\" src=\"{2}\" title=\"{3}\"/>")
+        SafeHtml icon(String className, SafeStyles style, SafeUri url, String title);
     }
 }

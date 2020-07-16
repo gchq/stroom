@@ -29,6 +29,9 @@ public final class ProcessorFilterUtil {
                 processorFilter.getQueryData().getExpression() == null)
             return false;
 
+        if (processorFilter.isReprocess() || processorFilter.isDeleted())
+            return false;
+
         ExpressionOperator expression = processorFilter.getQueryData().getExpression();
 
         return containsIdField(expression) == false;
@@ -44,7 +47,7 @@ public final class ProcessorFilterUtil {
                     return true;
                 if (MetaFields.PARENT_ID.getName().equals(term.getField()))
                     return true;
-                if (MetaFields.PROCESSOR_ID.getName().equals(term.getField()))
+                if (MetaFields.META_INTERNAL_PROCESSOR_ID.equals(term.getField()))
                     return true;
             } else if (item instanceof ExpressionOperator) {
                 if (containsIdField((ExpressionOperator) item))

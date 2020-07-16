@@ -16,30 +16,53 @@
 
 package stroom.data.retention.impl;
 
+import stroom.data.retention.shared.DataRetentionDeleteSummaryRequest;
+import stroom.data.retention.shared.DataRetentionDeleteSummaryResponse;
 import stroom.data.retention.shared.DataRetentionRules;
 import stroom.data.retention.shared.DataRetentionRulesResource;
-import stroom.security.api.SecurityContext;
+import stroom.meta.api.MetaService;
+
+import io.swagger.annotations.ApiParam;
 
 import javax.inject.Inject;
+import javax.inject.Provider;
 
 class DataRetentionRulesResourceImpl implements DataRetentionRulesResource {
-    private final DataRetentionRulesService dataRetentionRulesService;
-    private final SecurityContext securityContext;
+    private final Provider<DataRetentionRulesService> dataRetentionRulesServiceProvider;
+    private final Provider<MetaService> metaServiceProvider;
 
     @Inject
-    DataRetentionRulesResourceImpl(final DataRetentionRulesService dataRetentionRulesService,
-                                   final SecurityContext securityContext) {
-        this.dataRetentionRulesService = dataRetentionRulesService;
-        this.securityContext = securityContext;
+    DataRetentionRulesResourceImpl(final Provider<DataRetentionRulesService> dataRetentionRulesServiceProvider,
+                                   final Provider<MetaService> metaServiceProvider) {
+        this.dataRetentionRulesServiceProvider = dataRetentionRulesServiceProvider;
+        this.metaServiceProvider = metaServiceProvider;
     }
 
     @Override
     public DataRetentionRules read() {
-        return securityContext.secureResult(dataRetentionRulesService::getOrCreate);
+        return dataRetentionRulesServiceProvider.get().getOrCreate();
     }
 
     @Override
     public DataRetentionRules update(final DataRetentionRules dataRetentionRules) {
-        return securityContext.secureResult(() -> dataRetentionRulesService.writeDocument(dataRetentionRules));
+        return dataRetentionRulesServiceProvider.get().writeDocument(dataRetentionRules);
+    }
+
+    @Override
+    public DataRetentionDeleteSummaryResponse getRetentionDeletionSummary(
+            @ApiParam("request") DataRetentionDeleteSummaryRequest request) {
+
+        return new DataRetentionDeleteSummaryResponse(
+                metaServiceProvider.get()
+                        .getRetentionDeleteSummary(
+                                request.getQueryId(),
+                                request.getDataRetentionRules(),
+                                request.getCriteria()),
+                request.getQueryId());
+    }
+
+    @Override
+    public Boolean cancelQuery(final String queryId) {
+        return metaServiceProvider.get().cancelRetentionDeleteSummary(queryId);
     }
 }

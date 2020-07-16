@@ -16,10 +16,11 @@
 
 package stroom.config.global.client.presenter;
 
+import stroom.entity.client.presenter.TreeRowHandler;
+
 import com.google.gwt.view.client.AsyncDataProvider;
 import com.google.gwt.view.client.HasData;
 import com.google.gwt.view.client.Range;
-import stroom.entity.client.presenter.TreeRowHandler;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -67,7 +68,7 @@ public class ListDataProvider<R> extends AsyncDataProvider<R> {
      * @param listUpdater This consumer is expected to get new data and
      *                    call setCompleteList or setPartialList with the new data
      */
-    void setListUpdater(final Consumer<Range> listUpdater) {
+    public void setListUpdater(final Consumer<Range> listUpdater) {
         this.listUpdater = listUpdater;
     }
 
@@ -127,7 +128,7 @@ public class ListDataProvider<R> extends AsyncDataProvider<R> {
         return treeRowHandler;
     }
 
-    void setTreeRowHandler(final TreeRowHandler<R> treeRowHandler) {
+    public void setTreeRowHandler(final TreeRowHandler<R> treeRowHandler) {
         this.treeRowHandler = treeRowHandler;
     }
 }

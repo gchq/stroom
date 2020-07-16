@@ -3,6 +3,9 @@ package stroom.meta.impl;
 import stroom.dashboard.expression.v1.Val;
 import stroom.data.retention.api.DataRetentionRuleAction;
 import stroom.data.retention.api.DataRetentionTracker;
+import stroom.data.retention.shared.DataRetentionDeleteSummary;
+import stroom.data.retention.shared.DataRetentionRules;
+import stroom.data.retention.shared.FindDataRetentionImpactCriteria;
 import stroom.datasource.api.v2.AbstractField;
 import stroom.datasource.api.v2.DataSource;
 import stroom.docref.DocRef;
@@ -32,6 +35,8 @@ import stroom.searchable.api.Searchable;
 import stroom.security.api.SecurityContext;
 import stroom.security.shared.DocumentPermissionNames;
 import stroom.security.shared.PermissionNames;
+import stroom.task.api.TaskContextFactory;
+import stroom.task.api.TaskManager;
 import stroom.util.date.DateUtil;
 import stroom.util.shared.PageRequest;
 import stroom.util.shared.ResultPage;
@@ -52,6 +57,9 @@ import java.util.Map;
 import java.util.Objects;
 import java.util.Optional;
 import java.util.Set;
+import java.util.concurrent.CancellationException;
+import java.util.concurrent.CompletableFuture;
+import java.util.concurrent.ExecutionException;
 import java.util.function.Consumer;
 import java.util.stream.Collectors;
 
@@ -72,6 +80,9 @@ public class MetaServiceImpl implements MetaService, Searchable {
     private final Optional<AttributeMapFactory> attributeMapFactory;
     private final Optional<MetaSecurityFilter> metaSecurityFilter;
     private final SecurityContext securityContext;
+    private final TaskContextFactory taskContextFactory;
+    private final UserQueryRegistry userQueryRegistry;
+    private final TaskManager taskManager;
 
     @Inject
     MetaServiceImpl(final MetaDao metaDao,
@@ -83,7 +94,10 @@ public class MetaServiceImpl implements MetaService, Searchable {
                     final Provider<StreamAttributeMapRetentionRuleDecorator> decoratorProvider,
                     final Optional<AttributeMapFactory> attributeMapFactory,
                     final Optional<MetaSecurityFilter> metaSecurityFilter,
-                    final SecurityContext securityContext) {
+                    final SecurityContext securityContext,
+                    final TaskContextFactory taskContextFactory,
+                    final UserQueryRegistry userQueryRegistry,
+                    final TaskManager taskManager) {
         this.metaDao = metaDao;
         this.metaFeedDao = metaFeedDao;
         this.metaTypeDao = metaTypeDao;
@@ -94,6 +108,9 @@ public class MetaServiceImpl implements MetaService, Searchable {
         this.attributeMapFactory = attributeMapFactory;
         this.metaSecurityFilter = metaSecurityFilter;
         this.securityContext = securityContext;
+        this.taskContextFactory = taskContextFactory;
+        this.userQueryRegistry = userQueryRegistry;
+        this.taskManager = taskManager;
     }
 
     @Override
@@ -678,6 +695,57 @@ public class MetaServiceImpl implements MetaService, Searchable {
         metaRetentionTrackerDao.createOrUpdate(dataRetentionTracker);
     }
 
+    @Override
+    public List<DataRetentionDeleteSummary> getRetentionDeleteSummary(final String queryId,
+                                                                      final DataRetentionRules rules,
+                                                                      final FindDataRetentionImpactCriteria criteria) {
+        return securityContext.secureResult(PermissionNames.MANAGE_POLICIES_PERMISSION, () -> {
+
+            final String userId = securityContext.getUserId();
+
+            List<DataRetentionDeleteSummary> summaries;
+            try {
+                final CompletableFuture<List<DataRetentionDeleteSummary>> future = CompletableFuture.supplyAsync(
+                        taskContextFactory.contextResult("Data retention Delete Summary Query", taskContext -> {
+
+                            LOGGER.debug("Starting task {}", taskContext.getTaskId());
+                            userQueryRegistry.registerQuery(userId, queryId, taskContext.getTaskId());
+
+                            // TODO remove, here for dev testing to add a big delay for cancellation testing
+//                            try {
+//                                Thread.sleep(10_000_000);
+//                            } catch (InterruptedException e) {
+//                                Thread.currentThread().interrupt();
+//                            }
+
+                            return metaDao.getRetentionDeletionSummary(rules, criteria);
+                        }));
+
+                try {
+                    // Wait for completion
+                    summaries = future.get();
+                } catch (InterruptedException e) {
+                    LOGGER.debug("Thread interrupted");
+                    summaries = Collections.emptyList();
+                } catch (CancellationException e) {
+                    LOGGER.debug("Query cancelled");
+                    summaries = Collections.emptyList();
+                } catch (ExecutionException e) {
+                    throw new RuntimeException(e);
+                }
+            } finally {
+                userQueryRegistry.deRegisterQuery(userId, queryId);
+            }
+            return summaries;
+        });
+    }
+
+    @Override
+    public boolean cancelRetentionDeleteSummary(final String queryId) {
+        return securityContext.secureResult(PermissionNames.MANAGE_POLICIES_PERMISSION, () ->
+                userQueryRegistry.terminateQuery(securityContext.getUserId(), queryId, taskManager));
+    }
+
     private List<MetaInfoSection.Entry> getStreamEntries(final Meta meta) {
         final List<MetaInfoSection.Entry> entries = new ArrayList<>();
 
@@ -705,16 +773,19 @@ public class MetaServiceImpl implements MetaService, Searchable {
         return DateUtil.createNormalDateTimeString(ms) + " (" + ms + ")";
     }
 
-    private List<MetaInfoSection.Entry> getDataRententionEntries(final Meta meta, final Map<String, String> attributeMap) {
+    private List<MetaInfoSection.Entry> getDataRententionEntries(final Meta meta,
+                                                                 final Map<String, String> attributeMap) {
         final List<MetaInfoSection.Entry> entries = new ArrayList<>();
 
-        // Add additional data retention information.
-        final StreamAttributeMapRetentionRuleDecorator decorator = decoratorProvider.get();
-        decorator.addMatchingRetentionRuleInfo(meta, attributeMap);
+        if (attributeMap != null && !attributeMap.isEmpty()) {
+            // Add additional data retention information.
+            final StreamAttributeMapRetentionRuleDecorator decorator = decoratorProvider.get();
+            decorator.addMatchingRetentionRuleInfo(meta, attributeMap);
 
-        entries.add(new MetaInfoSection.Entry(DataRetentionFields.RETENTION_AGE, attributeMap.get(DataRetentionFields.RETENTION_AGE)));
-        entries.add(new MetaInfoSection.Entry(DataRetentionFields.RETENTION_UNTIL, attributeMap.get(DataRetentionFields.RETENTION_UNTIL)));
-        entries.add(new MetaInfoSection.Entry(DataRetentionFields.RETENTION_RULE, attributeMap.get(DataRetentionFields.RETENTION_RULE)));
+            entries.add(new MetaInfoSection.Entry(DataRetentionFields.RETENTION_AGE, attributeMap.get(DataRetentionFields.RETENTION_AGE)));
+            entries.add(new MetaInfoSection.Entry(DataRetentionFields.RETENTION_UNTIL, attributeMap.get(DataRetentionFields.RETENTION_UNTIL)));
+            entries.add(new MetaInfoSection.Entry(DataRetentionFields.RETENTION_RULE, attributeMap.get(DataRetentionFields.RETENTION_RULE)));
+        }
 
         return entries;
     }

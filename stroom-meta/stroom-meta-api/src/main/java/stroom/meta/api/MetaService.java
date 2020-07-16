@@ -2,6 +2,9 @@ package stroom.meta.api;
 
 import stroom.data.retention.api.DataRetentionRuleAction;
 import stroom.data.retention.api.DataRetentionTracker;
+import stroom.data.retention.shared.DataRetentionDeleteSummary;
+import stroom.data.retention.shared.DataRetentionRules;
+import stroom.data.retention.shared.FindDataRetentionImpactCriteria;
 import stroom.meta.shared.FindMetaCriteria;
 import stroom.meta.shared.Meta;
 import stroom.meta.shared.MetaInfoSection;
@@ -168,6 +171,7 @@ public interface MetaService {
      */
     SelectionSummary getSelectionSummary(FindMetaCriteria criteria);
 
+
     /**
      * Get a summary of the parent items of the current selection for reprocessing purposes.
      *
@@ -205,4 +209,10 @@ public interface MetaService {
     Optional<DataRetentionTracker> getRetentionTracker();
 
     void setTracker(final DataRetentionTracker dataRetentionTracker);
+
+    List<DataRetentionDeleteSummary> getRetentionDeleteSummary(final String queryId,
+                                                               final DataRetentionRules rules,
+                                                               final FindDataRetentionImpactCriteria criteria);
+
+    boolean cancelRetentionDeleteSummary(final String queryId);
 }

@@ -16,15 +16,16 @@
 
 package stroom.content.client;
 
-import com.google.inject.Inject;
-import com.google.inject.Provider;
-import com.google.web.bindery.event.shared.EventBus;
-import com.gwtplatform.mvp.client.MyPresenterWidget;
 import stroom.core.client.ContentManager;
 import stroom.core.client.ContentManager.CloseHandler;
 import stroom.core.client.presenter.Plugin;
 import stroom.data.table.client.Refreshable;
 import stroom.widget.tab.client.presenter.TabData;
+
+import com.google.inject.Inject;
+import com.google.inject.Provider;
+import com.google.web.bindery.event.shared.EventBus;
+import com.gwtplatform.mvp.client.MyPresenterWidget;
 
 public abstract class ContentPlugin<P extends MyPresenterWidget<?>> extends Plugin {
     private final ContentManager contentManager;
@@ -46,13 +47,23 @@ public abstract class ContentPlugin<P extends MyPresenterWidget<?>> extends Plug
             presenter = presenterProvider.get();
         }
 
-        final CloseHandler closeHandler = callback -> {
-            // Give the content manager the ok to close the tab.
-            callback.closeTab(true);
-
-            // After we close the tab set the presenter back to null so
-            // that we can open it again.
-            presenter = null;
+        final CloseHandler closeHandler = closeCallback -> {
+            if (presenter instanceof CloseHandler) {
+                ((CloseHandler) presenter).onCloseRequest(ok -> {
+                    closeCallback.closeTab(ok);
+                    // After we close the tab set the presenter back to null so
+                    // that we can open it again.
+                    if (ok) {
+                        presenter = null;
+                    }
+                });
+                // Give the content manager the ok to close the tab.
+            } else {
+                closeCallback.closeTab(true);
+                // After we close the tab set the presenter back to null so
+                // that we can open it again.
+                presenter = null;
+            }
         };
 
         // Tell the content manager to open the tab.

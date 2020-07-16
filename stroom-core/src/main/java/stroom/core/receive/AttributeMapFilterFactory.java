@@ -20,6 +20,7 @@ import stroom.docref.DocRef;
 import stroom.receive.common.AttributeMapFilter;
 import stroom.receive.common.DataReceiptPolicyAttributeMapFilterFactory;
 import stroom.receive.common.FeedStatusAttributeMapFilter;
+import stroom.receive.rules.shared.ReceiveDataRules;
 
 import javax.inject.Inject;
 import javax.inject.Singleton;
@@ -51,7 +52,8 @@ public class AttributeMapFilterFactory {
             lastPolicyUuid.compareAndSet(last, receiptPolicyUuid);
 
             if (receiptPolicyUuid != null && receiptPolicyUuid.length() > 0) {
-                attributeMapFilter = dataReceiptPolicyAttributeMapFilterFactory.create(new DocRef("RuleSet", receiptPolicyUuid));
+                attributeMapFilter = dataReceiptPolicyAttributeMapFilterFactory.create(
+                        new DocRef(ReceiveDataRules.DOCUMENT_TYPE, receiptPolicyUuid));
             } else {
                 attributeMapFilter = feedStatusAttributeMapFilter;
             }

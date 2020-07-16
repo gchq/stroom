@@ -74,6 +74,7 @@ class StreamMapCreator {
             final long longStreamId = getLong(storedData, streamIdIndex);
             final long longEventId = getLong(storedData, eventIdIndex);
             final Values data = getData(longStreamId, longEventId, storedData);
+
             final Event event = new Event(longStreamId, longEventId, data);
             storedDataMap.compute(longStreamId, (k, v) -> {
                 if (v == null) {
@@ -106,7 +107,8 @@ class StreamMapCreator {
             });
 
             if (!optional.isPresent()) {
-                throw new ExtractionException("Stream not found with id=" + longStreamId);
+                //Meta record not found - stream deleted.
+                return new Values(null);
             }
 
             final Object cached = optional.get();

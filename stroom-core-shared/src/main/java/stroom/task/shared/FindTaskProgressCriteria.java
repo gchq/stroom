@@ -16,15 +16,16 @@
 
 package stroom.task.shared;
 
-import com.fasterxml.jackson.annotation.JsonCreator;
-import com.fasterxml.jackson.annotation.JsonIgnore;
-import com.fasterxml.jackson.annotation.JsonInclude;
-import com.fasterxml.jackson.annotation.JsonInclude.Include;
-import com.fasterxml.jackson.annotation.JsonProperty;
 import stroom.util.shared.BaseCriteria;
 import stroom.util.shared.PageRequest;
 import stroom.util.shared.Sort;
 import stroom.util.shared.Sort.Direction;
+import stroom.util.shared.filter.FilterFieldDefinition;
+
+import com.fasterxml.jackson.annotation.JsonCreator;
+import com.fasterxml.jackson.annotation.JsonInclude;
+import com.fasterxml.jackson.annotation.JsonInclude.Include;
+import com.fasterxml.jackson.annotation.JsonProperty;
 
 import java.util.Arrays;
 import java.util.HashSet;
@@ -39,6 +40,19 @@ public class FindTaskProgressCriteria extends BaseCriteria {
     public static final String FIELD_SUBMIT_TIME = "Submit Time";
     public static final String FIELD_AGE = "Age";
     public static final String FIELD_INFO = "Info";
+
+    public static final FilterFieldDefinition FIELD_DEF_NODE = FilterFieldDefinition.qualifiedField(FIELD_NODE);
+    public static final FilterFieldDefinition FIELD_DEF_NAME = FilterFieldDefinition.defaultField(FIELD_NAME);
+    public static final FilterFieldDefinition FIELD_DEF_USER = FilterFieldDefinition.qualifiedField(FIELD_USER);
+    public static final FilterFieldDefinition FIELD_DEF_SUBMIT_TIME = FilterFieldDefinition.qualifiedField(FIELD_SUBMIT_TIME, "time");
+    public static final FilterFieldDefinition FIELD_DEF_INFO = FilterFieldDefinition.qualifiedField(FIELD_INFO);
+
+    public static final List<FilterFieldDefinition> FIELD_DEFINITIONS = Arrays.asList(
+            FIELD_DEF_NODE,
+            FIELD_DEF_NAME,
+            FIELD_DEF_USER,
+            FIELD_DEF_SUBMIT_TIME,
+            FIELD_DEF_INFO);
 
     @JsonProperty
     private Set<TaskProgress> expandedTasks;

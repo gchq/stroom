@@ -31,6 +31,7 @@ import stroom.docstore.api.UniqueNameUtil;
 import stroom.explorer.shared.DocumentType;
 import stroom.importexport.shared.ImportState;
 import stroom.importexport.shared.ImportState.ImportMode;
+import stroom.security.api.SecurityContext;
 import stroom.util.shared.Message;
 
 import org.slf4j.Logger;
@@ -50,10 +51,13 @@ class DataRetentionRulesServiceImpl implements DataRetentionRulesService {
     private static final String POLICY_NAME = "Data Retention";
 
     private final Store<DataRetentionRules> store;
+    private final SecurityContext securityContext;
 
     @Inject
     DataRetentionRulesServiceImpl(final StoreFactory storeFactory,
-                                  final Serialiser2Factory serialiser2Factory) {
+                                  final Serialiser2Factory serialiser2Factory,
+                                  final SecurityContext securityContext) {
+        this.securityContext = securityContext;
         DocumentSerialiser2<DataRetentionRules> serialiser = serialiser2Factory.createSerialiser(DataRetentionRules.class);
         this.store = storeFactory.createStore(serialiser, DataRetentionRules.DOCUMENT_TYPE, DataRetentionRules.class);
     }
@@ -145,12 +149,14 @@ class DataRetentionRulesServiceImpl implements DataRetentionRulesService {
 
     @Override
     public DataRetentionRules readDocument(final DocRef docRef) {
-        return store.readDocument(docRef);
+        return securityContext.secureResult(() ->
+                store.readDocument(docRef));
     }
 
     @Override
     public DataRetentionRules writeDocument(final DataRetentionRules document) {
-        return store.writeDocument(document);
+        return securityContext.secureResult(() ->
+                store.writeDocument(document));
     }
 
     ////////////////////////////////////////////////////////////////////////

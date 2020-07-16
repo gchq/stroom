@@ -18,7 +18,6 @@ package stroom.activity.impl.db;
 
 
 import stroom.activity.api.ActivityService;
-import stroom.activity.api.FindActivityCriteria;
 import stroom.activity.impl.ActivityDao;
 import stroom.activity.impl.ActivityServiceImpl;
 import stroom.activity.shared.Activity;
@@ -64,7 +63,7 @@ class TestActivityServiceImpl {
     @Test
     void test() {
         // Delete all existing.
-        ResultPage<Activity> list = activityService.find(new FindActivityCriteria());
+        ResultPage<Activity> list = activityService.find(null);
         list.forEach(activity -> activityService.delete(activity.getId()));
 
         // Create 1
@@ -86,7 +85,7 @@ class TestActivityServiceImpl {
         }).isInstanceOf(DataChangedException.class);
 
         // Find one
-        list = activityService.find(new FindActivityCriteria());
+        list = activityService.find(null);
         assertThat(list.size()).isEqualTo(1);
 
         // Save 2
@@ -95,26 +94,26 @@ class TestActivityServiceImpl {
         activity2 = activityService.update(activity2);
 
         // Find both
-        final ResultPage<Activity> list1 = activityService.find(new FindActivityCriteria());
+        final ResultPage<Activity> list1 = activityService.find(null);
         assertThat(list1.size()).isEqualTo(2);
 
         // Find each
-        final ResultPage<Activity> list2 = activityService.find(FindActivityCriteria.create("bar"));
+        final ResultPage<Activity> list2 = activityService.find("bar");
         assertThat(list2.size()).isEqualTo(1);
         assertThat(list2.getFirst().getId()).isEqualTo(activity1.getId());
 
-        final ResultPage<Activity> list3 = activityService.find(FindActivityCriteria.create("ipsum"));
+        final ResultPage<Activity> list3 = activityService.find("ipsum");
         assertThat(list3.size()).isEqualTo(1);
         assertThat(list3.getFirst().getId()).isEqualTo(activity2.getId());
 
         // Delete one
         activityService.delete(activity1.getId());
-        final ResultPage<Activity> list4 = activityService.find(new FindActivityCriteria());
+        final ResultPage<Activity> list4 = activityService.find(null);
         assertThat(list4.size()).isEqualTo(1);
 
         // Delete the other
         activityService.delete(activity2.getId());
-        final ResultPage<Activity> list5 = activityService.find(new FindActivityCriteria());
+        final ResultPage<Activity> list5 = activityService.find(null);
         assertThat(list5.size()).isEqualTo(0);
     }
 
