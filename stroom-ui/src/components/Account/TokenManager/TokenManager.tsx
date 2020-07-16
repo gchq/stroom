@@ -101,7 +101,6 @@ const TokenManager: FunctionComponent<{
       )}
       {editingToken !== undefined && editingToken.id === undefined && (
         <CreateToken
-          token={editingToken}
           onClose={() => {
             setEditingToken(undefined);
             refresh();

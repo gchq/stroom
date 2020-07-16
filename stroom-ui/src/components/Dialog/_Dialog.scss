@@ -1,0 +1,13 @@
+.Dialog__buttons {
+  display: flex;
+  flex-direction: row;
+  justify-content: flex-end;
+}
+
+.Dialog__button {
+  min-width: 7rem;
+}
+
+.Dialog__button--margin {
+  margin-right: .5rem;
+}

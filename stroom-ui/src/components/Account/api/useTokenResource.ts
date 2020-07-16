@@ -25,12 +25,12 @@ interface TokenResource {
   search: (request: SearchTokenRequest) => Promise<ResultPage<Token>>;
   create: (request: CreateTokenRequest) => Promise<number>;
   read: (tokenId: number) => Promise<Token>;
-  update: (token: Token, tokenId: number) => Promise<boolean>;
+  toggleEnabled: (tokenId: number, enabled: boolean) => Promise<boolean>;
   remove: (tokenId: number) => Promise<boolean>;
 }
 
 export const useTokenResource = (): TokenResource => {
-  const { httpGet, httpPost, httpPut, httpDelete } = useHttpClient2();
+  const { httpGet, httpPost, httpDelete } = useHttpClient2();
 
   const { apiUrl } = useUrlFactory();
   const resource = apiUrl("/token/v1");
@@ -52,9 +52,10 @@ export const useTokenResource = (): TokenResource => {
     [resource, httpGet],
   );
 
-  const update = useCallback(
-    (token: Token, tokenId: number) => httpPut(`${resource}/${tokenId}`, token),
-    [resource, httpPut],
+  const toggleEnabled = useCallback(
+    (tokenId: number, enabled: boolean) =>
+      httpGet(`${resource}/${tokenId}/enabled?enabled=${enabled}`),
+    [resource, httpGet],
   );
 
   const remove = useCallback(
@@ -67,7 +68,7 @@ export const useTokenResource = (): TokenResource => {
     search,
     create,
     read,
-    update,
+    toggleEnabled,
     remove,
   };
 };

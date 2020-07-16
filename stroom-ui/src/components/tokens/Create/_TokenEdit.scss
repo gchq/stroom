@@ -27,3 +27,10 @@
 textarea {
   width: 300px;
 }
+
+.EditToken__copyButtonContainer {
+  display: flex;
+  flex-direction: row-reverse;
+  width: 100%;
+  margin-top: .4rem;
+}

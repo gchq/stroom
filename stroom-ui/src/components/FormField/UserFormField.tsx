@@ -1,9 +1,12 @@
 import * as React from "react";
-import { FunctionComponent, useEffect, useRef } from "react";
+import { FunctionComponent, useEffect, useRef, useState } from "react";
 import { FormFieldState, FormField } from "./FormField";
 import { FormikProps } from "formik";
 import { createFormFieldState } from "./util";
-// import { UserSelect } from "../UserSelect";
+import { useAccountResource } from "../Account/api";
+import { SearchAccountRequest } from "../Account/api/types";
+import { AsyncTypeahead, Hint } from "react-bootstrap-typeahead";
+import { Form } from "react-bootstrap";
 
 export interface UserSelectControlProps {
   className?: string;
@@ -48,19 +51,95 @@ export const UserSelectControl: FunctionComponent<UserSelectControlProps> = ({
     }
   }, [autoFocus]);
 
+  // return (
+  //   <div className="FormField__input-container">
+  //     {/*<UserSelect*/}
+  //     {/*  // className={controlClass}*/}
+  //     {/*  placeholder={placeholder}*/}
+  //     {/*  autoComplete={autoComplete}*/}
+  //     {/*  autoFocus={autoFocus}*/}
+  //     {/*  value={value}*/}
+  //     {/*  onChange={(val) => onChange(val)}*/}
+  //     {/*  onBlur={onBlur}*/}
+  //     {/*  ref={inputEl}*/}
+  //     {/*  fuzzy={false}*/}
+  //     {/*/>*/}
+  //     {children}
+  //   </div>
+  // );
+
+  const { search } = useAccountResource();
+  const [isLoading, setIsLoading] = useState(false);
+  const [options, setOptions] = useState([]);
+
+  const handleSearch = (query) => {
+    setIsLoading(true);
+
+    const request: SearchAccountRequest = {
+      quickFilter: query,
+    };
+
+    search(request).then((result) => {
+      const options = result.values.map((i) => ({
+        id: i.id,
+        userId: i.userId,
+      }));
+
+      setOptions(options);
+      setIsLoading(false);
+    });
+  };
+
+  const renderInput = ({ inputRef, referenceElementRef, ...inputProps }) => (
+    <div className="FormField__input-container">
+      <Hint>
+        <Form.Control
+          {...inputProps}
+          className={controlClass}
+          // type="text"
+          // placeholder={placeholder}
+          // autoComplete={autoComplete}
+          // autoFocus={autoFocus}
+          // value={value}
+          // onChange={(e) => onChange(e.target.value)}
+          // onBlur={onBlur}
+          ref={(node) => {
+            inputRef(node);
+            referenceElementRef(node);
+          }}
+        />
+      </Hint>
+      {children}
+    </div>
+  );
+
   return (
     <div className="FormField__input-container">
-      {/*<UserSelect*/}
-      {/*  // className={controlClass}*/}
-      {/*  placeholder={placeholder}*/}
-      {/*  autoComplete={autoComplete}*/}
-      {/*  autoFocus={autoFocus}*/}
-      {/*  value={value}*/}
-      {/*  onChange={(val) => onChange(val)}*/}
-      {/*  onBlur={onBlur}*/}
-      {/*  ref={inputEl}*/}
-      {/*  fuzzy={false}*/}
-      {/*/>*/}
+      <AsyncTypeahead
+        id="userSelect"
+        placeholder={placeholder}
+        autoComplete={autoComplete}
+        autoFocus={autoFocus}
+        value={value}
+        onChange={(selected) =>
+          onChange(
+            selected
+              ? selected.length > 0
+                ? selected[0].userId
+                : undefined
+              : undefined,
+          )
+        }
+        onBlur={onBlur}
+        ref={inputEl}
+        isLoading={isLoading}
+        labelKey="userId"
+        minLength={3}
+        onSearch={handleSearch}
+        options={options}
+        renderInput={renderInput}
+        renderMenuItemChildren={(option) => <span>{option.userId}</span>}
+      />
       {children}
     </div>
   );
@@ -85,9 +164,8 @@ export const UserFormField: FunctionComponent<UserSelectFormFieldProps> = ({
         autoComplete={autoComplete}
         autoFocus={autoFocus}
         state={formFieldState}
-      >
-        {children}
-      </UserSelectControl>
+      />
+      {children}
     </FormField>
   );
 };

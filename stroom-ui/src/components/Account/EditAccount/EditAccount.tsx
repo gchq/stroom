@@ -15,7 +15,11 @@
  */
 
 import * as React from "react";
-import { TextBoxFormField, TextAreaFormField } from "components/FormField";
+import {
+  TextBoxFormField,
+  TextAreaFormField,
+  CheckBoxFormField,
+} from "components/FormField";
 import { Dialog } from "components/Dialog/Dialog";
 import { PersonFill } from "react-bootstrap-icons";
 import { OkCancelButtons, OkCancelProps } from "../../Dialog/OkCancelButtons";
@@ -55,7 +59,7 @@ const EditAccountForm: React.FunctionComponent<EditAccountFormProps> = ({
   okCancelProps,
   changePasswordProps,
 }) => {
-  const { values, handleChange, handleSubmit, isSubmitting } = formikProps;
+  const { values, handleSubmit, isSubmitting } = formikProps;
   const { onCancel, cancelClicked } = okCancelProps;
   const { onPasswordChange } = changePasswordProps;
 
@@ -115,42 +119,30 @@ const EditAccountForm: React.FunctionComponent<EditAccountFormProps> = ({
           />
         </Form.Row>
         <Form.Row>
-          <Form.Group as={Col} controlId="neverExpires">
-            <Form.Check
-              contentEditable
-              type="checkbox"
-              label="Never Expires"
-              onChange={handleChange}
-              checked={values.neverExpires}
-            />
-          </Form.Group>
-          <Form.Group as={Col} controlId="enabled">
-            <Form.Check
-              contentEditable
-              type="checkbox"
-              label="Enabled"
-              onChange={handleChange}
-              checked={values.enabled}
-            />
-          </Form.Group>
-          <Form.Group as={Col} controlId="inactive">
-            <Form.Check
-              contentEditable
-              type="checkbox"
-              label="Inactive"
-              onChange={handleChange}
-              checked={values.inactive}
-            />
-          </Form.Group>
-          <Form.Group as={Col} controlId="locked">
-            <Form.Check
-              contentEditable
-              type="checkbox"
-              label="Locked"
-              onChange={handleChange}
-              checked={values.locked}
-            />
-          </Form.Group>
+          <CheckBoxFormField
+            controlId="neverExpires"
+            label="Never Expires"
+            formikProps={formikProps}
+          />
+          {values.id && (
+            <React.Fragment>
+              <CheckBoxFormField
+                controlId="enabled"
+                label="Enabled"
+                formikProps={formikProps}
+              />
+              <CheckBoxFormField
+                controlId="inactive"
+                label="Inactive"
+                formikProps={formikProps}
+              />
+              <CheckBoxFormField
+                controlId="locked"
+                label="Locked"
+                formikProps={formikProps}
+              />
+            </React.Fragment>
+          )}
         </Form.Row>
         <Form.Row>
           <Form.Group as={Col}>
@@ -267,7 +259,7 @@ export const EditAccount: React.FunctionComponent<{
           email: values.email,
           comments: values.comments,
           // forcePasswordChange: values.forcePasswordChange,
-          neverExpires: values.name,
+          neverExpires: values.neverExpires,
           enabled: values.enabled,
           inactive: values.inactive,
           locked: values.locked,

@@ -9,6 +9,7 @@ import { AuthState, ConfirmPasswordRequest } from "./api/types";
 import { Form, Modal } from "react-bootstrap";
 import { Dialog } from "components/Dialog/Dialog";
 import { OkCancelButtons, OkCancelProps } from "../Dialog/OkCancelButtons";
+import { LockFill } from "react-bootstrap-icons";
 
 export interface FormValues {
   userId: string;
@@ -30,6 +31,7 @@ export const ConfirmCurrentPasswordForm: React.FunctionComponent<{
     <Form noValidate={true} onSubmit={handleSubmit}>
       <Modal.Header closeButton={false}>
         <Modal.Title id="contained-modal-title-vcenter">
+          <LockFill className="mr-3" />
           Enter Your Current Password
         </Modal.Title>
       </Modal.Header>

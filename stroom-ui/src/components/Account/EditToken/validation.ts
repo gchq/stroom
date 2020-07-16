@@ -1,7 +1,12 @@
 import * as Yup from "yup";
 
-const dataSchema = Yup.string().label("Data").required("Required");
+const expiresOnMsSchema = Yup.string()
+  .label("expiresOnMs")
+  .required("Required");
+
+const userIdSchema = Yup.string().label("userId").required("Required");
 
 export const newTokenValidationSchema = Yup.object().shape({
-  data: dataSchema,
+  expiresOnMs: expiresOnMsSchema,
+  userId: userIdSchema,
 });

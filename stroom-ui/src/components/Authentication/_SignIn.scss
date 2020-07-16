@@ -56,20 +56,6 @@
 //
 //}
 
-.OkCancelButtons {
-  display: flex;
-  flex-direction: row;
-  justify-content: flex-end;
-}
-
-.OkCancelButtons__ok {
-  min-width: 7rem;
-  margin-right: .5rem;
-}
-
-.OkCancelButtons__cancel {
-  min-width: 7rem;
-}
 
 .StroomWrapper__iframe {
   width:100%;

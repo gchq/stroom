@@ -25,7 +25,7 @@ export const FormField: FunctionComponent<FormFieldProps> = ({
   return (
     <Form.Group as={Col} controlId={controlId}>
       <Form.Label>{label}</Form.Label>
-      <div className="FormField__input-container">{children}</div>
+      {children}
       <Form.Control.Feedback type="invalid">{error}</Form.Control.Feedback>
     </Form.Group>
   );

@@ -16,9 +16,9 @@ export const OkCancelButtons: FunctionComponent<OkCancelProps> = ({
   cancelClicked,
 }: OkCancelProps) => {
   return (
-    <div className="OkCancelButtons page__buttons Button__container">
+    <div className="Button__container Dialog__buttons">
       <Button
-        className="OkCancelButtons__ok"
+        className="Dialog__button Dialog__button--margin"
         appearance="contained"
         action="primary"
         icon="check"
@@ -30,7 +30,7 @@ export const OkCancelButtons: FunctionComponent<OkCancelProps> = ({
         OK
       </Button>
       <Button
-        className="OkCancelButtons__cancel"
+        className="Dialog__button"
         appearance="contained"
         action="secondary"
         icon="times"

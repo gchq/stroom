@@ -6,7 +6,10 @@ import { CreateTokenFormik } from "./CreateToken";
 storiesOf("Token", module).add("Create Token", () => (
   <Dialog>
     <CreateTokenFormik
-      initialValues={{}}
+      initialValues={{
+        expiresOnMs: new Date().getTime(),
+        userId: undefined,
+      }}
       onSubmit={() => undefined}
       onClose={() => undefined}
     />

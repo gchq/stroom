@@ -11,7 +11,6 @@ export const createFormFieldState = (
     errors,
     touched,
     setFieldTouched,
-    handleBlur,
   } = formikProps;
 
   return {
@@ -19,7 +18,7 @@ export const createFormFieldState = (
       setFieldTouched(controlId, true, false);
       setFieldValue(controlId, val, true);
     },
-    onBlur: handleBlur,
+    onBlur: () => setFieldTouched(controlId, true, true),
     value: values[controlId],
     error: touched[controlId] ? errors[controlId] : undefined,
     touched: touched[controlId],

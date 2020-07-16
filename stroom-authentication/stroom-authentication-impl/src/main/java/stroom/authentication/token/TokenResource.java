@@ -100,7 +100,7 @@ public interface TokenResource extends RestResource {
             response = String.class,
             tags = {"ApiKey"})
     @GET
-    @Path("/{id}/state")
+    @Path("/{id}/enabled")
     @Timed
     Integer toggleEnabled(@Context @NotNull HttpServletRequest httpServletRequest,
                           @NotNull @PathParam("id") int tokenId,

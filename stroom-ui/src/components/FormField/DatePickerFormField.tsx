@@ -62,7 +62,7 @@ export const DatePickerControl: FunctionComponent<DatePickerProps> = ({
         autoFocus={autoFocus}
         selected={value ? new Date(value) : new Date()}
         onChange={(date) => {
-          onChange(date.getTime());
+          onChange(date ? date.getTime() : undefined);
         }}
         onBlur={onBlur}
         ref={inputEl}

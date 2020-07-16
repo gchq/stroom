@@ -23,19 +23,26 @@ import { FormikHelpers } from "formik/dist/types";
 import { newTokenValidationSchema } from "./validation";
 import { CreateTokenRequest } from "../api/types";
 import { FunctionComponent } from "react";
-import { Token } from "../types";
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
 import { useTokenResource } from "../api";
 import { DatePickerFormField, UserFormField } from "components/FormField";
 
+export interface CreateTokenFormValues {
+  expiresOnMs: number;
+  userId: string;
+}
+
 export interface CreateTokenProps {
-  initialValues: Token;
-  onSubmit: (values: Token, actions: FormikHelpers<Token>) => void;
+  initialValues: CreateTokenFormValues;
+  onSubmit: (
+    values: CreateTokenFormValues,
+    actions: FormikHelpers<CreateTokenFormValues>,
+  ) => void;
   onClose: (success: boolean) => void;
 }
 
 export interface CreateTokenFormProps {
-  formikProps: FormikProps<Token>;
+  formikProps: FormikProps<CreateTokenFormValues>;
   okCancelProps: OkCancelProps;
 }
 
@@ -51,7 +58,7 @@ const CreateTokenForm: FunctionComponent<CreateTokenFormProps> = ({
       <Modal.Header closeButton={false}>
         <Modal.Title id="contained-modal-title-vcenter">
           <FontAwesomeIcon icon="key" className="mr-3" />
-          Create Token
+          Create API Key
         </Modal.Title>
       </Modal.Header>
       <Modal.Body>
@@ -91,8 +98,9 @@ export const CreateTokenFormik: React.FunctionComponent<CreateTokenProps> = ({
   onClose,
 }) => {
   console.log("Render: CreateTokenFormContainer");
+
   return (
-    <Formik
+    <Formik<CreateTokenFormValues>
       initialValues={initialValues}
       validationSchema={newTokenValidationSchema}
       onSubmit={onSubmit}
@@ -110,12 +118,20 @@ export const CreateTokenFormik: React.FunctionComponent<CreateTokenProps> = ({
 };
 
 export const CreateToken: React.FunctionComponent<{
-  token: Token;
   onClose: (success: boolean) => void;
-}> = ({ token, onClose }) => {
+}> = ({ onClose }) => {
   const { create } = useTokenResource();
 
-  const onSubmit = (values, actions) => {
+  const onSubmit = (
+    values: CreateTokenFormValues,
+    actions: FormikHelpers<CreateTokenFormValues>,
+  ) => {
+    //   setPasswordState(values);
+    //   actions.setSubmitting(false);
+    //   setShowPasswordDialog(false);
+    // };
+    //
+    // const onSubmit = (values, actions) => {
     const handleResponse = (response: any) => {
       if (!response) {
         actions.setSubmitting(false);
@@ -126,10 +142,10 @@ export const CreateToken: React.FunctionComponent<{
 
     const request: CreateTokenRequest = {
       userId: values.userId,
-      tokenType: values.tokenType,
+      tokenType: "api",
       expiresOnMs: values.expiresOnMs,
-      comments: values.comments,
-      enabled: values.enabled,
+      comments: undefined,
+      enabled: true,
     };
     create(request).then(handleResponse);
   };
@@ -138,7 +154,10 @@ export const CreateToken: React.FunctionComponent<{
     <React.Fragment>
       <Dialog>
         <CreateTokenFormik
-          initialValues={token}
+          initialValues={{
+            expiresOnMs: new Date().getTime(),
+            userId: undefined,
+          }}
           onSubmit={onSubmit}
           onClose={onClose}
         />
