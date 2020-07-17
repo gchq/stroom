@@ -200,11 +200,13 @@ public class GlobalConfigResourceImpl implements GlobalConfigResource {
     @Override
     public UiConfig fetchUiConfig() {
         // Temporary code to fix url paths.
-        final UrlConfig urlConfig = new UrlConfig(
-                uriFactory.uiUri(AuthenticationService.USERS_URL_PATH).toString(),
-                uriFactory.uiUri(AuthenticationService.API_KEYS_URL_PATH).toString(),
-                uriFactory.uiUri(AuthenticationService.CHANGE_PASSWORD_URL_PATH).toString());
-        uiConfig.setUrl(urlConfig);
+        if (uriFactory != null) {
+            final UrlConfig urlConfig = new UrlConfig(
+                    uriFactory.uiUri(AuthenticationService.USERS_URL_PATH).toString(),
+                    uriFactory.uiUri(AuthenticationService.API_KEYS_URL_PATH).toString(),
+                    uriFactory.uiUri(AuthenticationService.CHANGE_PASSWORD_URL_PATH).toString());
+            uiConfig.setUrl(urlConfig);
+        }
 
         return uiConfig;
     }
