@@ -34,6 +34,7 @@ import stroom.explorer.shared.ExplorerNode;
 import stroom.index.impl.IndexStructure;
 import stroom.index.impl.IndexStructureCache;
 import stroom.query.api.v2.ExpressionOperator;
+import stroom.query.api.v2.ExpressionOperator.Op;
 import stroom.search.extraction.ExtractionDecoratorFactory;
 import stroom.search.impl.SearchConfig;
 import stroom.util.logging.LambdaLogger;
@@ -41,6 +42,7 @@ import stroom.util.logging.LambdaLoggerFactory;
 
 import javax.inject.Inject;
 import javax.inject.Singleton;
+import javax.swing.text.html.Option;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.HashMap;
@@ -90,18 +92,22 @@ public class AlertManagerImpl implements AlertManager {
             initialised = true;
         }
 
-        IndexStructure indexStructure = indexStructureCache.get(indexDocRef);
+        List<RuleConfig> rules = indexToRules.get(indexDocRef);
 
-        if (indexStructure == null) {
-            LOGGER.warn ("Unable to locate index " + indexDocRef + " specified in rule");
-            return Optional.empty();
-        }
-        else {
-            AlertProcessorImpl processor =
-                    new AlertProcessorImpl(extractionDecoratorFactory, indexToRules.get(indexDocRef), indexStructure, wordListProvider, maxBooleanClauseCount, getTimeZoneId());
-            return Optional.of(processor);
-        }
+        if (rules != null && rules.size() > 0) {
 
+            IndexStructure indexStructure = indexStructureCache.get(indexDocRef);
+
+            if (indexStructure == null) {
+                LOGGER.warn("Unable to locate index " + indexDocRef + " specified in rule");
+                return Optional.empty();
+            } else {
+                AlertProcessorImpl processor = new AlertProcessorImpl(extractionDecoratorFactory, rules, indexStructure,
+                                wordListProvider, maxBooleanClauseCount, getTimeZoneId());
+                return Optional.of(processor);
+            }
+        }
+        return Optional.empty();
     }
 
     @Override

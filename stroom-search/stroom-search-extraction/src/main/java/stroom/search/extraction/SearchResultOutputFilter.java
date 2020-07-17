@@ -49,8 +49,12 @@ import stroom.util.shared.Severity;
 import javax.inject.Inject;
 import java.text.SimpleDateFormat;
 import java.time.ZoneId;
+import java.util.ArrayList;
 import java.util.Date;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
+import java.util.Set;
 import java.util.TimeZone;
 
 @ConfigurableElement(type = "SearchResultOutputFilter", category = Category.FILTER, roles = {
@@ -72,6 +76,7 @@ public class SearchResultOutputFilter extends AbstractSearchResultOutputFilter {
     private final SimpleDateFormat isoFormat;
 
     private Val[] values;
+    private Map<String, String> indexVals = new HashMap<>();
     private String nsUri = null;
 
     @Inject
@@ -98,6 +103,8 @@ public class SearchResultOutputFilter extends AbstractSearchResultOutputFilter {
                 name = name.trim();
                 value = value.trim();
 
+                indexVals.put(name, value);
+
                 if (name.length() > 0 && value.length() > 0) {
                     final int fieldIndex = fieldIndexes.get(name);
                     if (fieldIndex >= 0) {
@@ -107,6 +114,7 @@ public class SearchResultOutputFilter extends AbstractSearchResultOutputFilter {
             }
         } else if (RECORD.equals(localName)) {
             values = new Val[fieldIndexes.size()];
+            indexVals.clear();
         }
 
         if (isConfiguredForAlerting()) {
@@ -185,18 +193,33 @@ public class SearchResultOutputFilter extends AbstractSearchResultOutputFilter {
             createDataElement (attrName, alertDefinition.getAttributes().get(attrName));
         }
 
+        //Output all the dashboard fields
+        List<String> skipFields = new ArrayList<>();
         final FieldFormatter fieldFormatter = new FieldFormatter(new FormatterFactory(timeZoneId));
         int index = 0;
         for (stroom.dashboard.shared.Field field: alertDefinition.getTableComponentSettings().getFields()){
             if (field.isVisible()) {
+                String fieldName = field.getDisplayValue();
                 Val fieldVal = fieldVals[index].getVal();
+
+                //Remember this field so not to output again
+                skipFields.add(fieldName);
                 if (fieldVal != null) {
                     String fieldValStr = fieldFormatter.format(fieldVals[index].getCompiledField().getField(), fieldVal);
-                    createDataElement(field.getDisplayValue(), fieldValStr);
+                    createDataElement(fieldName, fieldValStr);
                 }
             }
             index++;
         }
+
+        //Output the standard index fields
+        Set<String> toOutput = indexVals.keySet();
+        toOutput.removeAll(skipFields);
+        for (String fieldName : toOutput){
+            createDataElement(fieldName, indexVals.get(fieldName));
+        }
+
+
         super.endElement(nsUri, RECORD, RECORD);
     }
 
