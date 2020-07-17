@@ -42,6 +42,9 @@ const ThemeContextProvider: FunctionComponent = ({ children }) => {
     storeString,
   );
 
+  const body = document.getElementsByTagName("body")[0] as HTMLElement;
+  body.className = value;
+
   return (
     <ThemeContext.Provider value={{ theme: value, setTheme }}>
       <div className={value}>{children}</div>

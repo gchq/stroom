@@ -7,7 +7,7 @@ import HTML5Backend from "react-dnd-html5-backend";
 import { Routes } from "components/AppChrome";
 import setupFontAwesome from "lib/setupFontAwesome";
 
-import { ThemeContextProvider } from "lib/useTheme/useTheme";
+import { ThemeContextProvider, themeOptions } from "lib/useTheme/useTheme";
 import { CustomRouter } from "lib/useRouter";
 
 import { createBrowserHistory as createHistory } from "history";
@@ -19,6 +19,7 @@ import { AuthenticationContextProvider } from "startup/Authentication";
 import { DocumentTreeContextProvider } from "components/DocumentEditors/api/explorer";
 import { ErrorReportingContextProvider } from "components/ErrorPage";
 import { PromptDisplayBoundary } from "./components/Prompt/PromptDisplayBoundary";
+import useLocalStorage, { storeString } from "./lib/useLocalStorage";
 
 export const history = createHistory();
 
