@@ -32,8 +32,8 @@ export const Table = <T,>(
   const {
     columns,
     data,
-    initialSortBy,
-    onChangeSort,
+    initialSortBy = [],
+    onChangeSort = () => undefined,
     onSelect = () => undefined,
     onDoubleSelect = () => undefined,
   } = props;
