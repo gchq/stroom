@@ -15,7 +15,7 @@
  */
 
 import * as React from "react";
-import { FunctionComponent, useState } from "react";
+import { FunctionComponent, useCallback, useState } from "react";
 import { AccountListDialog } from "./AccountListDialog";
 import useAccountManager from "./useAccountManager";
 import { PagerProps } from "../../Pager/Pager";
@@ -23,6 +23,7 @@ import { EditAccount } from "../EditAccount/EditAccount";
 import { Account } from "../types";
 import { usePasswordPolicy } from "../../Authentication/usePasswordPolicy";
 import { QuickFilterProps } from "./QuickFilter";
+import { TableProps } from "../../Table/Table";
 
 const initialAccount: Account = {
   userId: "",
@@ -39,6 +40,7 @@ const AccountManager: FunctionComponent<{
     columns,
     resultPage,
     remove,
+    initialRequest,
     request,
     setRequest,
   } = useAccountManager();
@@ -65,6 +67,22 @@ const AccountManager: FunctionComponent<{
       });
     },
   };
+  const tableProps: TableProps<Account> = {
+    columns: columns,
+    data: resultPage.values,
+    initialSortBy: request.sortList,
+    onChangeSort: useCallback(
+      (sort) => {
+        if (request.sortList !== sort) {
+          setRequest({
+            ...request,
+            sortList: sort,
+          });
+        }
+      },
+      [setRequest, request],
+    ),
+  };
   const refresh = () => {
     setRequest({
       ...request,
@@ -75,10 +93,7 @@ const AccountManager: FunctionComponent<{
     <React.Fragment>
       <AccountListDialog
         itemManagerProps={{
-          tableProps: {
-            columns: columns,
-            data: resultPage.values,
-          },
+          tableProps,
           actions: {
             onCreate: () => setEditingAccount(initialAccount),
             onEdit: (account) => setEditingAccount(account),

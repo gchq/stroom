@@ -251,6 +251,12 @@
 
   }
 
+  .th .cell {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+  }
+
   .cell {
     width: 100%;
     padding-left: 5px;

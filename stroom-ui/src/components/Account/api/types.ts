@@ -1,13 +1,8 @@
 import { Account } from "../types";
 
-export enum Direction {
-  ASCENDING,
-  DESCENDING,
-}
-
 export interface Sort {
   field: string;
-  direction?: Direction;
+  direction?: "ASCENDING" | "DESCENDING";
   ignoreCase?: boolean;
 }
 

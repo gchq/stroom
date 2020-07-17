@@ -8,11 +8,12 @@ interface UseAccountManager {
   columns: any[];
   resultPage: ResultPage<Account>;
   remove: (userId: number) => void;
+  initialRequest: SearchAccountRequest;
   request: SearchAccountRequest;
   setRequest: (request: SearchAccountRequest) => void;
 }
 
-const defaultResultPage: ResultPage<Account> = {
+const initialResultPage: ResultPage<Account> = {
   values: [],
   pageResponse: {
     offset: 0,
@@ -22,18 +23,24 @@ const defaultResultPage: ResultPage<Account> = {
   },
 };
 
-const defaultRequest: SearchAccountRequest = {
+const initialRequest: SearchAccountRequest = {
   pageRequest: {
     offset: 0,
     length: 100,
   },
+  sortList: [
+    {
+      field: "userId",
+      direction: "ASCENDING",
+    },
+  ],
 };
 
 const useAccountManager = (): UseAccountManager => {
   const [resultPage, setResultPage] = useState<ResultPage<Account>>(
-    defaultResultPage,
+    initialResultPage,
   );
-  const [request, setRequest] = useState(defaultRequest);
+  const [request, setRequest] = useState(initialRequest);
   const {
     search: searchApi,
     remove: removeUserUsingApi,
@@ -68,6 +75,7 @@ const useAccountManager = (): UseAccountManager => {
         show: false,
       },
       {
+        id: "userId",
         Header: "User Id",
         accessor: "userId",
         maxWidth: 150,
@@ -120,6 +128,7 @@ const useAccountManager = (): UseAccountManager => {
     // selectedUser,
     remove,
     // changeSelectedUser: setSelectedUser,
+    initialRequest,
     request,
     setRequest,
     // search,

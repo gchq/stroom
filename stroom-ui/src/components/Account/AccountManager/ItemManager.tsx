@@ -64,8 +64,7 @@ export const ItemManager = <T,>(
       </div>
       <div className="ItemManager__table" tabIndex={0}>
         <Table<T>
-          columns={tableProps.columns}
-          data={tableProps.data}
+          {...tableProps}
           onSelect={(selected) => handleSelection(selected)}
           onDoubleSelect={(selected) => {
             handleSelection(selected);

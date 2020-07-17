@@ -1,17 +1,27 @@
 import * as React from "react";
 
-import { PropsWithChildren, ReactElement } from "react";
+import { PropsWithChildren, ReactElement, useEffect, useMemo } from "react";
 import {
   useTable,
   useBlockLayout,
   useResizeColumns,
   useRowSelect,
+  useSortBy,
 } from "react-table";
 import { useSticky } from "react-table-sticky";
+import { Sort } from "../Account/api/types";
+import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
+
+export interface TableSort {
+  id: string;
+  desc?: boolean;
+}
 
 export interface TableProps<T> {
   columns: any[];
   data: T[];
+  initialSortBy?: Sort[];
+  onChangeSort?: (sort: Sort[]) => void;
   onSelect?: (selected: T[]) => void;
   onDoubleSelect?: (selected: T[]) => void;
 }
@@ -22,11 +32,13 @@ export const Table = <T,>(
   const {
     columns,
     data,
+    initialSortBy,
+    onChangeSort,
     onSelect = () => undefined,
     onDoubleSelect = () => undefined,
   } = props;
 
-  const defaultColumn = React.useMemo(
+  const defaultColumn = useMemo(
     () => ({
       minWidth: 30,
       width: 150,
@@ -35,28 +47,63 @@ export const Table = <T,>(
     [],
   );
 
+  // Convert the supplied initial sort object to a React Table sort array.
+  const initialSort: TableSort[] = useMemo(() => {
+    if (!initialSortBy) {
+      return undefined;
+    }
+    return initialSortBy.map((i) => {
+      return {
+        id: i.field,
+        desc: i.direction === "DESCENDING",
+      };
+    });
+  }, [initialSortBy]);
+
+  const initialState = useMemo(() => {
+    return {
+      hiddenColumns: ["id"],
+      sortBy: initialSort,
+    };
+  }, [initialSort]);
+
   const {
     getTableProps,
     getTableBodyProps,
     headerGroups,
     rows,
     prepareRow,
+    state: { sortBy },
     toggleAllRowsSelected,
   } = useTable(
     {
       columns,
       data,
       defaultColumn,
-      initialState: {
-        hiddenColumns: ["id"],
-      },
+      initialState,
       autoResetSelectedRows: false,
+      manualSorting: true,
     },
     useBlockLayout,
     useResizeColumns,
     useSticky,
+    useSortBy,
     useRowSelect,
   );
+
+  useEffect(() => {
+    if (sortBy !== initialSort) {
+      // Convert the table sort into our sort object.
+      const sort: Sort[] = sortBy.map((i) => {
+        return {
+          field: i.id,
+          direction: i.desc ? "DESCENDING" : "ASCENDING",
+        };
+      });
+
+      onChangeSort(sort);
+    }
+  }, [sortBy]);
 
   return (
     <div
@@ -72,8 +119,23 @@ export const Table = <T,>(
             className="tr"
           >
             {headerGroup.headers.map((column) => (
-              <div key={column.id} {...column.getHeaderProps()} className="th">
-                <div className="cell">{column.render("Header")}</div>
+              <div
+                key={column.id}
+                {...column.getHeaderProps(column.getSortByToggleProps())}
+                className="th"
+              >
+                <div className="cell">
+                  {column.render("Header")}
+                  {column.isSorted ? (
+                    column.isSortedDesc ? (
+                      <FontAwesomeIcon icon={"sort-alpha-down-alt"} size="lg" />
+                    ) : (
+                      <FontAwesomeIcon icon={"sort-alpha-down"} size="lg" />
+                    )
+                  ) : (
+                    ""
+                  )}
+                </div>
                 <div
                   {...column.getResizerProps()}
                   className={`resizer ${column.isResizing ? "isResizing" : ""}`}
