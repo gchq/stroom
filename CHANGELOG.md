@@ -7,6 +7,9 @@ and this project adheres to [Semantic Versioning](http://semver.org/).
 
 ## [Unreleased]
 
+
+## [v6.1.7] - 2020-07-17
+
 * Issue **#1740** : `CombinedParser` now removes invalid XML 1.0 characters when `fixInvalidChars` is set and not XML 1.1.
 
 
@@ -2135,7 +2138,8 @@ and this project adheres to [Semantic Versioning](http://semver.org/).
 
 * Issue **#202** : Initial release of the new data retention policy functionality.
 
-[Unreleased]: https://github.com/gchq/stroom/compare/v6.1.6...6.1
+[Unreleased]: https://github.com/gchq/stroom/compare/v6.1.7...6.1
+[v6.1.7]: https://github.com/gchq/stroom/compare/v6.1.6...v6.1.7
 [v6.1.6]: https://github.com/gchq/stroom/compare/v6.1.5...v6.1.6
 [v6.1.5]: https://github.com/gchq/stroom/compare/v6.1.4...v6.1.5
 [v6.1.4]: https://github.com/gchq/stroom/compare/v6.1.3...v6.1.4
