@@ -36,7 +36,7 @@ import stroom.pipeline.server.factory.ConfigurableElement;
 import stroom.pipeline.server.factory.PipelineProperty;
 import stroom.pipeline.server.factory.PipelinePropertyDocRef;
 import stroom.pipeline.server.reader.InvalidXmlCharFilter;
-import stroom.pipeline.server.reader.Xml11Chars;
+import stroom.pipeline.server.reader.Xml10Chars;
 import stroom.pipeline.shared.ElementIcons;
 import stroom.pipeline.shared.TextConverter;
 import stroom.pipeline.shared.data.PipelineElementType;
@@ -197,7 +197,7 @@ public class CombinedParser extends AbstractParser implements SupportsCodeInject
 
             Reader inputStreamReader = new InputStreamReader(bris, charsetName);
             if (fixInvalidChars) {
-                inputStreamReader = new InvalidXmlCharFilter(inputStreamReader, new Xml11Chars());
+                inputStreamReader = new InvalidXmlCharFilter(inputStreamReader, new Xml10Chars());
             }
 
             final BufferedReader bufferedReader = new BufferedReader(inputStreamReader);
@@ -236,7 +236,7 @@ public class CombinedParser extends AbstractParser implements SupportsCodeInject
     }
 
     @PipelineProperty(description = "The text converter configuration that should be used to parse the input data.")
-    @PipelinePropertyDocRef(types=TextConverter.ENTITY_TYPE)
+    @PipelinePropertyDocRef(types = TextConverter.ENTITY_TYPE)
     public void setTextConverter(final DocRef textConverterRef) {
         this.textConverterRef = textConverterRef;
     }

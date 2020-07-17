@@ -5,6 +5,11 @@ The format is based on [Keep a Changelog](http://keepachangelog.com/)
 and this project adheres to [Semantic Versioning](http://semver.org/).
 
 
+## [Unreleased]
+
+* Issue **#1740** : `CombinedParser` now removes invalid XML 1.0 characters when `fixInvalidChars` is set and not XML 1.1.
+
+
 ## [v6.1.6] - 2020-06-23
 
 * Add `readTimeout` property to `HTTPAppender` 
@@ -18,7 +23,7 @@ and this project adheres to [Semantic Versioning](http://semver.org/).
 
 ## [v6.1.5] - 2020-03-12
 
-* Issue **#1413* : Attempt to fix search hanging issue.
+* Issue **#1413** : Attempt to fix search hanging issue.
 
 * Issue **#1393** : The annotations data popup now formats content on load.
 
