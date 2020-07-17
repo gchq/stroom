@@ -5,6 +5,8 @@ import stroom.util.shared.validation.ValidRegex;
 import stroom.util.time.StroomDuration;
 
 import com.fasterxml.jackson.annotation.JsonCreator;
+import com.fasterxml.jackson.annotation.JsonInclude;
+import com.fasterxml.jackson.annotation.JsonInclude.Include;
 import com.fasterxml.jackson.annotation.JsonProperty;
 import com.fasterxml.jackson.annotation.JsonPropertyDescription;
 import com.fasterxml.jackson.annotation.JsonPropertyOrder;
@@ -16,6 +18,7 @@ import javax.validation.constraints.NotNull;
 
 @Singleton
 @JsonPropertyOrder(alphabetic = true)
+@JsonInclude(Include.NON_NULL)
 public class PasswordPolicyConfig extends AbstractConfig {
     @JsonProperty
     @JsonPropertyDescription("Will the UI allow password resets")

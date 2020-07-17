@@ -4,7 +4,9 @@ import stroom.util.shared.ModelStringUtil;
 
 import com.fasterxml.jackson.annotation.JsonCreator;
 import com.fasterxml.jackson.annotation.JsonIgnore;
-import com.fasterxml.jackson.annotation.JsonValue;
+import com.fasterxml.jackson.annotation.JsonInclude;
+import com.fasterxml.jackson.annotation.JsonInclude.Include;
+import com.fasterxml.jackson.annotation.JsonProperty;
 
 import javax.annotation.Nullable;
 import java.time.Duration;
@@ -18,22 +20,25 @@ import java.util.Objects;
  * Class to represent a duration. Internally it stores the duration as a {@link Duration} object.
  * It can be parsed from an ISO-8601 string (e.g. P30D or P1DT6H or PT60S), a stroom {@link ModelStringUtil}
  * type duration string (e.g. 30d), or a raw milliseconds value.
- *
+ * <p>
  * Typically suited for durations up to numbers of days.  A day is considered as 24hrs. Does NOT
  * support ISO 8601 units of Months and Years.
- *
+ * <p>
  * If {@link StroomDuration} is created from a string then the original string representation
  * is held and used for later serialisation. This avoids java's desire to serialise P30D as P720H.
- *
+ * <p>
  * Delegates most methods of {@link Duration} so can be used anywhere a Duration can.
  */
+@JsonInclude(Include.NON_NULL)
 public class StroomDuration implements Comparable<StroomDuration>, TemporalAmount {
 
+    @JsonProperty
     @Nullable
     // Allows us to hold the original serialised form of the duration as a duration can have more
     // than one serialised form. Can be null.
     private final String valueAsStr;
 
+    @JsonIgnore
     private final Duration duration;
 
     public static final StroomDuration ZERO = new StroomDuration(Duration.ZERO);
@@ -63,7 +68,7 @@ public class StroomDuration implements Comparable<StroomDuration>, TemporalAmoun
         // which is a bit grim, so do a simple hack to deal with whole numbers of days.
         if (durationStr.matches("^PT[0-9]+[hH]$")) {
             // get the number of hours
-            int hours = Integer.parseInt(durationStr.substring(2,durationStr.length() - 1));
+            int hours = Integer.parseInt(durationStr.substring(2, durationStr.length() - 1));
             int remainderHours = hours % 24;
 //            if (hours >= 24 && hours % 24 == 0) {
             if (hours >= 24) {
@@ -83,63 +88,58 @@ public class StroomDuration implements Comparable<StroomDuration>, TemporalAmoun
     }
 
     @JsonCreator
-    public static StroomDuration parse(final String value) {
-        return new StroomDuration(value, parseToDuration(value));
+    public StroomDuration(@Nullable @JsonProperty("valueAsStr") final String valueAsStr) {
+        this.valueAsStr = valueAsStr;
+        this.duration = parseToDuration(valueAsStr);
     }
 
-    @JsonIgnore
+    public static StroomDuration parse(final String valueAsStr) {
+        return new StroomDuration(valueAsStr, parseToDuration(valueAsStr));
+    }
+
     public static StroomDuration of(final TemporalAmount temporalAmount) {
         return new StroomDuration(temporalAmount);
     }
 
-    @JsonIgnore
     public static StroomDuration of(final long amount, final TemporalUnit unit) {
         return new StroomDuration(Duration.of(amount, unit));
     }
 
-    @JsonIgnore
     public static StroomDuration ofDays(final long days) {
         return new StroomDuration(Duration.ofDays(days));
     }
 
-    @JsonIgnore
     public static StroomDuration ofHours(final long hours) {
         return new StroomDuration(Duration.ofHours(hours));
     }
 
-    @JsonIgnore
     public static StroomDuration ofMinutes(final long minutes) {
         return new StroomDuration(Duration.ofMinutes(minutes));
     }
 
-    @JsonIgnore
     public static StroomDuration ofSeconds(final long seconds) {
         return new StroomDuration(Duration.ofSeconds(seconds));
     }
 
-    @JsonIgnore
     public static StroomDuration ofMillis(final long millis) {
         return new StroomDuration(Duration.ofMillis(millis));
     }
 
-    @JsonIgnore
     public static StroomDuration ofNanos(final long nanos) {
         return new StroomDuration(Duration.ofNanos(nanos));
     }
 
-    @SuppressWarnings("unused")
-    @JsonValue
     public String getValueAsStr() {
         return valueAsStr != null
-            ? valueAsStr
-            : duration.toString();
+                ? valueAsStr
+                : duration.toString();
     }
 
+    @JsonIgnore
     public Duration getDuration() {
         return duration;
     }
 
-    @JsonIgnore
     private static Duration parseToDuration(final String value) {
         if (value == null) {
             return null;
@@ -154,12 +154,10 @@ public class StroomDuration implements Comparable<StroomDuration>, TemporalAmoun
         }
     }
 
-    @JsonIgnore
     public long toMillis() {
         return duration.toMillis();
     }
 
-    @JsonIgnore
     public long toNanos() {
         return duration.toNanos();
     }
@@ -187,13 +185,11 @@ public class StroomDuration implements Comparable<StroomDuration>, TemporalAmoun
         return Objects.hash(duration);
     }
 
-    @JsonIgnore
     @Override
     public int compareTo(final StroomDuration o) {
         return duration.compareTo(o.duration);
     }
 
-    @JsonIgnore
     @Override
     public long get(final TemporalUnit unit) {
         return duration.get(unit);
@@ -205,13 +201,11 @@ public class StroomDuration implements Comparable<StroomDuration>, TemporalAmoun
         return duration.getUnits();
     }
 
-    @JsonIgnore
     @Override
     public Temporal addTo(final Temporal temporal) {
         return duration.addTo(temporal);
     }
 
-    @JsonIgnore
     @Override
     public Temporal subtractFrom(final Temporal temporal) {
         return duration.subtractFrom(temporal);
