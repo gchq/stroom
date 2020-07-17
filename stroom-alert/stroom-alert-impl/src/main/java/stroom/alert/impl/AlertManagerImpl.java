@@ -171,10 +171,12 @@ public class AlertManagerImpl implements AlertManager {
             LOGGER.info("Loading alerting rules from " + rulesPath);
             final DocRef rulesFolder = getFolderForPath(rulesPath);
             List<ExplorerNode> childNodes = explorerNodeService.getDescendants(rulesFolder);
+
             for (ExplorerNode childNode : childNodes){
                 if (DashboardDoc.DOCUMENT_TYPE.equals(childNode.getDocRef().getType())){
                     DashboardDoc dashboard = dashboardStore.readDocument(childNode.getDocRef());
-
+                    String childPath = explorerNodeService.getPath(childNode.getDocRef()).stream().map(n -> n.getName())
+                            .collect(Collectors.joining("/"));
                     Map<String, String> paramMap = parseParms (dashboard.getDashboardConfig().getParameters());
 
                     final List<ComponentConfig> componentConfigs = dashboard.getDashboardConfig().getComponents();
@@ -200,7 +202,7 @@ public class AlertManagerImpl implements AlertManager {
 
                                         AlertDefinition alertDefinition = new AlertDefinition(tableComponentSettings,
                                                 Map.of(AlertManager.DASHBOARD_NAME_KEY, dashboard.getName(),
-                                                        AlertManager.RULES_FOLDER_KEY, rulesPath,
+                                                        AlertManager.RULES_FOLDER_KEY, childPath,
                                                         AlertManager.TABLE_NAME_KEY, associatedComponentConfig.getName()));
                                         pipelineTableSettings.get(pipeline).add(alertDefinition);
                                     }
