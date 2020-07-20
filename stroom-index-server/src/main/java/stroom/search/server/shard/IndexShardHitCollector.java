@@ -28,7 +28,6 @@ import java.io.IOException;
 import java.util.OptionalInt;
 import java.util.concurrent.LinkedBlockingQueue;
 import java.util.concurrent.TimeUnit;
-import java.util.concurrent.atomic.AtomicLong;
 
 class IndexShardHitCollector extends SimpleCollector {
     private static final Logger LOGGER = LoggerFactory.getLogger(IndexShardHitCollector.class);
@@ -36,13 +35,13 @@ class IndexShardHitCollector extends SimpleCollector {
     private final TaskContext taskContext;
     //an empty optional is used as a marker to indicate no more items will be added
     private final LinkedBlockingQueue<OptionalInt> docIdStore;
-    private final Tracker hitCount;
+    private final HitCount hitCount;
     private int docBase;
     private Long pauseTime;
 
     IndexShardHitCollector(final TaskContext taskContext,
-                                  final LinkedBlockingQueue<OptionalInt> docIdStore,
-                                  final Tracker hitCount) {
+                           final LinkedBlockingQueue<OptionalInt> docIdStore,
+                           final HitCount hitCount) {
         this.docIdStore = docIdStore;
         this.taskContext = taskContext;
         this.hitCount = hitCount;
@@ -76,7 +75,7 @@ class IndexShardHitCollector extends SimpleCollector {
         }
 
         // Add to the hit count.
-        hitCount.incrementHitCount();
+        hitCount.increment();
 
         // Quit searching if the task monitor is set to stop.
         if (taskContext.isTerminated()) {

@@ -7,6 +7,8 @@ and this project adheres to [Semantic Versioning](http://semver.org/).
 
 ## [Unreleased]
 
+* Issue **#1741** : Fix for search hanging issue.
+
 
 ## [v6.1.7] - 2020-07-17
 

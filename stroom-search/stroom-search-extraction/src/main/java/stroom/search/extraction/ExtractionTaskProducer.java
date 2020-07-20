@@ -27,7 +27,6 @@ import stroom.search.coprocessor.Values;
 import stroom.security.SecurityContext;
 import stroom.security.SecurityHelper;
 import stroom.util.concurrent.ExecutorProvider;
-import stroom.util.shared.HasTerminate;
 import stroom.util.task.TaskWrapper;
 import stroom.util.task.taskqueue.TaskExecutor;
 import stroom.util.task.taskqueue.TaskProducer;
@@ -47,7 +46,6 @@ import java.util.concurrent.atomic.AtomicInteger;
 class ExtractionTaskProducer extends TaskProducer {
     private static final Logger LOGGER = LoggerFactory.getLogger(ExtractionTaskProducer.class);
 
-    private final HasTerminate clusterSearchTask;
     private final Receiver parentReceiver;
     private final Map<DocRef, Receiver> receivers;
     private final Provider<ExtractionTaskHandler> handlerProvider;
@@ -56,9 +54,9 @@ class ExtractionTaskProducer extends TaskProducer {
     private final CompletionState streamMapCreatorCompletionState = new CompletionState();
     private final Map<Long, List<Event>> streamEventMap = new ConcurrentHashMap<>();
     private final Topic<Values> topic;
+    private final ExtractionProgressTracker tracker;
 
     ExtractionTaskProducer(final TaskExecutor taskExecutor,
-                           final HasTerminate hasTerminate,
                            final StreamMapCreator streamMapCreator,
                            final Receiver parentReceiver,
                            final Map<DocRef, Receiver> receivers,
@@ -67,15 +65,16 @@ class ExtractionTaskProducer extends TaskProducer {
                            final ExecutorProvider executorProvider,
                            final Provider<TaskWrapper> taskWrapperProvider,
                            final Provider<ExtractionTaskHandler> handlerProvider,
-                           final SecurityContext securityContext) {
+                           final SecurityContext securityContext,
+                           final ExtractionProgressTracker tracker) {
         super(taskExecutor, maxThreadsPerTask, taskWrapperProvider);
         this.parentReceiver = parentReceiver;
         this.receivers = receivers;
-        this.clusterSearchTask = hasTerminate;
         this.handlerProvider = handlerProvider;
+        this.tracker = tracker;
 
         // Create a queue to receive values and store them for asynchronous processing.
-        topic = new LinkedBlockingQueueTopic<>(maxStoredDataQueueSize, hasTerminate);
+        topic = new LinkedBlockingQueueTopic<>(maxStoredDataQueueSize, tracker);
 
 //        // Group coprocessors by extraction pipeline.
 //        final Map<DocRef, Set<NewCoprocessor>> map = new HashMap<>();
@@ -103,7 +102,7 @@ class ExtractionTaskProducer extends TaskProducer {
 
             // Elevate permissions so users with only `Use` feed permission can `Read` streams.
             try (final SecurityHelper securityHelper = SecurityHelper.elevate(securityContext)) {
-                while (!streamMapCreatorCompletionState.isComplete() && !hasTerminate.isTerminated() && !Thread.currentThread().isInterrupted()) {
+                while (!streamMapCreatorCompletionState.isComplete() && !tracker.isTerminated() && !Thread.currentThread().isInterrupted()) {
                     try {
                         // Poll for the next set of values.
                         final Values values = topic.get();
@@ -129,7 +128,7 @@ class ExtractionTaskProducer extends TaskProducer {
                 }
 
                 // Clear the event map if we have terminated so that other processing does not occur.
-                if (hasTerminate.isTerminated() || Thread.currentThread().isInterrupted()) {
+                if (tracker.isTerminated() || Thread.currentThread().isInterrupted()) {
                     streamEventMap.clear();
                 }
 
@@ -157,18 +156,18 @@ class ExtractionTaskProducer extends TaskProducer {
     }
 
     protected boolean isComplete() {
-        return clusterSearchTask.isTerminated() || super.isComplete();
+        return tracker.isComplete();
     }
 
     @Override
     protected Runnable getNext() {
         ExtractionRunnable task = null;
 
-        if (!clusterSearchTask.isTerminated()) {
+        if (!tracker.isComplete()) {
             task = taskQueue.poll();
             if (task == null) {
                 if (addTasks()) {
-                    finishedAddingTasks();
+                    tracker.finishedAddingTasks();
                 }
                 task = taskQueue.poll();
             }
@@ -196,9 +195,9 @@ class ExtractionTaskProducer extends TaskProducer {
         final long[] eventIds = createEventIdArray(events, receivers);
         receivers.forEach((docRef, receiver) -> {
             if (docRef != null) {
-                incrementTasksTotal();
+                tracker.incrementTasksTotal();
                 final ExtractionTask task = new ExtractionTask(streamId, eventIds, docRef, receiver);
-                taskQueue.offer(new ExtractionRunnable(task, handlerProvider));
+                taskQueue.offer(new ExtractionRunnable(task, handlerProvider, tracker));
                 tasksCreated.incrementAndGet();
 
             } else {
@@ -231,19 +230,34 @@ class ExtractionTaskProducer extends TaskProducer {
         return eventIds;
     }
 
+    @Override
+    public String toString() {
+        return "ExtractionTaskProducer{" +
+                "tracker=" + tracker +
+                '}';
+    }
+
     private static class ExtractionRunnable implements Runnable {
         private final ExtractionTask task;
         private final Provider<ExtractionTaskHandler> handlerProvider;
+        private final ExtractionProgressTracker tracker;
 
-        ExtractionRunnable(final ExtractionTask task, final Provider<ExtractionTaskHandler> handlerProvider) {
+        ExtractionRunnable(final ExtractionTask task,
+                           final Provider<ExtractionTaskHandler> handlerProvider,
+                           final ExtractionProgressTracker tracker) {
             this.task = task;
             this.handlerProvider = handlerProvider;
+            this.tracker = tracker;
         }
 
         @Override
         public void run() {
-            final ExtractionTaskHandler handler = handlerProvider.get();
-            handler.exec(task);
+            try {
+                final ExtractionTaskHandler handler = handlerProvider.get();
+                handler.exec(task);
+            } finally {
+                tracker.incrementTasksCompleted();
+            }
         }
 
         public ExtractionTask getTask() {

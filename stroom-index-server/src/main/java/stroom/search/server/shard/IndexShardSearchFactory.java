@@ -84,8 +84,7 @@ public class IndexShardSearchFactory {
         // Create a map of index fields keyed by name.
         final IndexFieldsMap indexFieldsMap = new IndexFieldsMap(index.getIndexFieldsObject());
 
-        final Tracker tracker = new Tracker();
-
+        final IndexShardSearchProgressTracker tracker = new IndexShardSearchProgressTracker(hasTerminate, task.getShards().size());
         if (task.getShards().size() > 0) {
             // Update config for the index shard search task executor.
             indexShardSearchTaskExecutor.setMaxThreads(indexShardSearchTaskProperties.getMaxThreads());
@@ -103,20 +102,17 @@ public class IndexShardSearchFactory {
                     indexShardSearchTaskProperties.getMaxThreadsPerTask(),
                     taskWrapperProvider,
                     indexShardSearchTaskHandlerProvider,
-                    tracker,
-                    hasTerminate);
+                    tracker);
 
             indexShardSearchTaskProducer.process();
-
-        } else {
-            tracker.complete();
         }
 
         // Wait until we finish.
-        while (!hasTerminate.isTerminated() && (!tracker.isCompleted())) {
+        while (!tracker.isComplete()) {
             taskContext.info(
                     "Searching... " +
                             "found " + tracker.getHitCount() + " hits");
+            LOGGER.debug(tracker::toString);
             ThreadUtil.sleep(1000);
         }
     }

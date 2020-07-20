@@ -82,11 +82,7 @@ public abstract class TaskExecutor {
                             if (LOGGER.isDebugEnabled()) {
                                 try {
                                     if (!didWait) {
-                                        if (getRemainingTaskCount() > 0) {
-                                            LOGGER.debug(getDebugMessage());
-                                        } else if (LOGGER.isTraceEnabled()) {
-                                            LOGGER.trace(getDebugMessage());
-                                        }
+                                        LOGGER.debug(getDebugMessage());
                                     }
                                 } catch (final RuntimeException e) {
                                     LOGGER.trace(e.getMessage(), e);
@@ -115,28 +111,11 @@ public abstract class TaskExecutor {
         for (final TaskProducer producer : producers) {
             if (producer != null) {
                 sb.append("\n\t");
-                sb.append(producer.getClass().getSimpleName());
-                sb.append(" (remaining=");
-                sb.append(producer.getRemainingTasks());
-                sb.append(", completed=");
-                sb.append(producer.getTasksCompleted());
-                sb.append(", total=");
-                sb.append(producer.getTasksTotal());
-                sb.append(")");
+                sb.append(producer.toString());
             }
         }
 
         return sb.toString();
-    }
-
-    private int getRemainingTaskCount() {
-        int count = 0;
-        for (final TaskProducer producer : producers) {
-            if (producer != null) {
-                count += producer.getRemainingTasks();
-            }
-        }
-        return count;
     }
 
     private synchronized void stop() {

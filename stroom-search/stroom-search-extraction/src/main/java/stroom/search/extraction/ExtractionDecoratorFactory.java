@@ -122,9 +122,9 @@ public class ExtractionDecoratorFactory {
         });
 
         // Make a task producer that will create event data extraction tasks when requested by the executor.
+        final ExtractionProgressTracker tracker = new ExtractionProgressTracker(hasTerminate);
         final ExtractionTaskProducer extractionTaskProducer = new ExtractionTaskProducer(
                 extractionTaskExecutor,
-                hasTerminate,
                 streamMapCreator,
                 parentReceiver,
                 receivers,
@@ -133,7 +133,8 @@ public class ExtractionDecoratorFactory {
                 executorProvider,
                 taskWrapperProvider,
                 extractionTaskHandlerProvider,
-                securityContext);
+                securityContext,
+                tracker);
 
         // Begin processing.
         return extractionTaskProducer.process();

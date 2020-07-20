@@ -152,7 +152,7 @@ class IndexShardSearchTaskHandler {
             final LinkedBlockingQueue<OptionalInt> docIdStore = new LinkedBlockingQueue<>(maxDocIdQueueSize);
 
             // Create a collector.
-            final IndexShardHitCollector collector = new IndexShardHitCollector(taskContext, docIdStore, task.getTracker());
+            final IndexShardHitCollector collector = new IndexShardHitCollector(taskContext, docIdStore, task.getHitCount());
 
             try {
                 final SearcherManager searcherManager = indexShardSearcher.getSearcherManager();
@@ -187,7 +187,7 @@ class IndexShardSearchTaskHandler {
                         final OptionalInt optDocId;
                         // Poll for the next item
                         optDocId = docIdStore.poll(5, TimeUnit.SECONDS);
-                        //if we get null back the queue is empty and we need to try polling again
+                        // If we get null back the queue is empty and we need to try polling again
                         if (optDocId != null) {
                             if (optDocId.isPresent()) {
                                 // If we have a doc id then retrieve the stored data for it.

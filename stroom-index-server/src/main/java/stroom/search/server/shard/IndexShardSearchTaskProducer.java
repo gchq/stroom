@@ -20,7 +20,6 @@ import stroom.search.coprocessor.Receiver;
 import stroom.search.server.shard.IndexShardSearchTask.IndexShardQueryFactory;
 import stroom.util.logging.LambdaLogger;
 import stroom.util.logging.LambdaLoggerFactory;
-import stroom.util.shared.HasTerminate;
 import stroom.util.task.TaskWrapper;
 import stroom.util.task.taskqueue.TaskExecutor;
 import stroom.util.task.taskqueue.TaskProducer;
@@ -37,8 +36,7 @@ class IndexShardSearchTaskProducer extends TaskProducer {
     private final Queue<IndexShardSearchRunnable> taskQueue = new ConcurrentLinkedQueue<>();
     private final AtomicInteger tasksRequested = new AtomicInteger();
 
-    private final Tracker tracker;
-    private final HasTerminate hasTerminate;
+    private final IndexShardSearchProgressTracker tracker;
 
     IndexShardSearchTaskProducer(final TaskExecutor taskExecutor,
                                  final Receiver receiver,
@@ -48,15 +46,13 @@ class IndexShardSearchTaskProducer extends TaskProducer {
                                  final int maxThreadsPerTask,
                                  final Provider<TaskWrapper> taskWrapperProvider,
                                  final Provider<IndexShardSearchTaskHandler> handlerProvider,
-                                 final Tracker tracker,
-                                 final HasTerminate hasTerminate) {
+                                 final IndexShardSearchProgressTracker tracker) {
         super(taskExecutor, maxThreadsPerTask, taskWrapperProvider);
         this.tracker = tracker;
-        this.hasTerminate = hasTerminate;
 
         for (final Long shard : shards) {
-            final IndexShardSearchTask task = new IndexShardSearchTask(queryFactory, shard, fieldNames, receiver, tracker);
-            final IndexShardSearchRunnable runnable = new IndexShardSearchRunnable(task, handlerProvider);
+            final IndexShardSearchTask task = new IndexShardSearchTask(queryFactory, shard, fieldNames, receiver, tracker.getHitCount());
+            final IndexShardSearchRunnable runnable = new IndexShardSearchRunnable(task, handlerProvider, tracker);
             taskQueue.add(runnable);
         }
     }
@@ -70,64 +66,57 @@ class IndexShardSearchTaskProducer extends TaskProducer {
 
         // Tell the supplied executor that we are ready to deliver tasks.
         signalAvailable();
-
-        // Set the total number of index shards we are searching.
-        // We set this here so that any errors that might have occurred adding shard search tasks would prevent this producer having work to do.
-        setTasksTotal(count);
-
-        // Let consumers know there will be no more tasks.
-        finishedAddingTasks();
     }
 
     protected boolean isComplete() {
-        return hasTerminate.isTerminated() || super.isComplete();
+        return tracker.isComplete();
     }
 
     @Override
     protected Runnable getNext() {
         IndexShardSearchRunnable task = null;
 
-        if (!hasTerminate.isTerminated()) {
+        if (!isComplete()) {
             // If there are no open shards that can be used for any tasks then just get the task at the head of the queue.
             task = taskQueue.poll();
             if (task != null) {
                 final int no = tasksRequested.incrementAndGet();
-                task.getTask().setShardTotal(getTasksTotal());
+                task.getTask().setShardTotal(tracker.getShardCount());
                 task.getTask().setShardNumber(no);
             }
         }
-
-        checkCompletion();
 
         return task;
     }
 
     @Override
-    protected void incrementTasksCompleted() {
-        super.incrementTasksCompleted();
-        checkCompletion();
-    }
-
-    private void checkCompletion() {
-        if (isComplete()) {
-            // Set complete.
-            tracker.complete();
-        }
+    public String toString() {
+        return "IndexShardSearchTaskProducer{" +
+                "tracker=" + tracker +
+                '}';
     }
 
     private static class IndexShardSearchRunnable implements Runnable {
         private final IndexShardSearchTask task;
         private final Provider<IndexShardSearchTaskHandler> handlerProvider;
+        private final IndexShardSearchProgressTracker tracker;
 
-        IndexShardSearchRunnable(final IndexShardSearchTask task, final Provider<IndexShardSearchTaskHandler> handlerProvider) {
+        IndexShardSearchRunnable(final IndexShardSearchTask task,
+                                 final Provider<IndexShardSearchTaskHandler> handlerProvider,
+                                 final IndexShardSearchProgressTracker tracker) {
             this.task = task;
             this.handlerProvider = handlerProvider;
+            this.tracker = tracker;
         }
 
         @Override
         public void run() {
-            final IndexShardSearchTaskHandler handler = handlerProvider.get();
-            handler.exec(task);
+            try {
+                final IndexShardSearchTaskHandler handler = handlerProvider.get();
+                handler.exec(task);
+            } finally {
+                tracker.incrementCompleteShardCount();
+            }
         }
 
         public IndexShardSearchTask getTask() {
