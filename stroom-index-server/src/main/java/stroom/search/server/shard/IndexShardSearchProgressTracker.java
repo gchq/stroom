@@ -1,10 +1,14 @@
 package stroom.search.server.shard;
 
+import stroom.util.logging.LambdaLogger;
+import stroom.util.logging.LambdaLoggerFactory;
 import stroom.util.shared.HasTerminate;
 
 import java.util.concurrent.atomic.AtomicInteger;
 
 class IndexShardSearchProgressTracker {
+    private static final LambdaLogger LOGGER = LambdaLoggerFactory.getLogger(IndexShardSearchProgressTracker.class);
+
     private final int shardCount;
     private final AtomicInteger completeShardCount = new AtomicInteger();
     private final HitCount hitCount = new HitCount();
@@ -25,6 +29,7 @@ class IndexShardSearchProgressTracker {
     }
 
     boolean isComplete() {
+        LOGGER.debug(this::toString);
         return hasTerminate.isTerminated() || completeShardCount.get() == shardCount;
     }
 
