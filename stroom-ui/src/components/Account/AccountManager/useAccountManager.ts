@@ -8,7 +8,6 @@ interface UseAccountManager {
   columns: any[];
   resultPage: ResultPage<Account>;
   remove: (userId: number) => void;
-  initialRequest: SearchAccountRequest;
   request: SearchAccountRequest;
   setRequest: (request: SearchAccountRequest) => void;
 }
@@ -125,13 +124,9 @@ const useAccountManager = (): UseAccountManager => {
   return {
     columns,
     resultPage,
-    // selectedUser,
     remove,
-    // changeSelectedUser: setSelectedUser,
-    initialRequest,
     request,
     setRequest,
-    // search,
   };
 };
 

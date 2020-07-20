@@ -8,7 +8,6 @@ import {
   useRowSelect,
   useSortBy,
 } from "react-table";
-import { useSticky } from "react-table-sticky";
 import { Sort } from "../Account/api/types";
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
 
@@ -86,7 +85,6 @@ export const Table = <T,>(
     },
     useBlockLayout,
     useResizeColumns,
-    useSticky,
     useSortBy,
     useRowSelect,
   );
@@ -106,12 +104,8 @@ export const Table = <T,>(
   }, [sortBy]);
 
   return (
-    <div
-      {...getTableProps()}
-      className="table sticky w-100 h-100"
-      // style={{ width: 300, height: 300 }}
-    >
-      <div className="header">
+    <div className="table sticky w-100 h-100">
+      <div className="header" {...getTableProps()}>
         {headerGroups.map((headerGroup) => (
           <div
             key={headerGroup.id}
@@ -119,12 +113,8 @@ export const Table = <T,>(
             className="tr"
           >
             {headerGroup.headers.map((column) => (
-              <div
-                key={column.id}
-                {...column.getHeaderProps(column.getSortByToggleProps())}
-                className="th"
-              >
-                <div className="cell">
+              <div key={column.id} {...column.getHeaderProps()} className="th">
+                <div className="cell" {...column.getSortByToggleProps()}>
                   {column.render("Header")}
                   {column.isSorted ? (
                     column.isSortedDesc ? (
@@ -136,10 +126,15 @@ export const Table = <T,>(
                     ""
                   )}
                 </div>
-                <div
-                  {...column.getResizerProps()}
-                  className={`resizer ${column.isResizing ? "isResizing" : ""}`}
-                />
+                {/* Use column.getResizerProps to hook up the events correctly */}
+                {column.canResize && (
+                  <div
+                    {...column.getResizerProps()}
+                    className={`resizer ${
+                      column.isResizing ? "isResizing" : ""
+                    }`}
+                  />
+                )}
               </div>
             ))}
           </div>

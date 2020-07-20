@@ -50,11 +50,13 @@ const renderWelcome = ({
     params: { urlPrefix },
   },
 }: RouteComponentProps<{ urlPrefix: string }>) => (
-  <AppChrome
-    activeMenuItem="welcome"
-    urlPrefix={urlPrefix}
-    content={<Welcome />}
-  />
+  // <AppChrome
+  //   activeMenuItem="welcome"
+  //   urlPrefix={urlPrefix}
+  //   content={<Welcome />}
+  // />
+
+  <StroomWrapper />
 );
 
 /**

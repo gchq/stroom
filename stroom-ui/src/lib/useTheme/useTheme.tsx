@@ -47,7 +47,7 @@ const ThemeContextProvider: FunctionComponent = ({ children }) => {
 
   return (
     <ThemeContext.Provider value={{ theme: value, setTheme }}>
-      <div className={value}>{children}</div>
+      {children}
     </ThemeContext.Provider>
   );
 };

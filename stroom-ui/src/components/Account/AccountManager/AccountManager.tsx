@@ -40,7 +40,6 @@ const AccountManager: FunctionComponent<{
     columns,
     resultPage,
     remove,
-    initialRequest,
     request,
     setRequest,
   } = useAccountManager();

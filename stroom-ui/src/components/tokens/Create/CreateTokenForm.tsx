@@ -18,7 +18,6 @@ import Button from "components/Button";
 import * as React from "react";
 import { DatePicker } from "antd";
 import styled from "styled-components";
-import UserSelect from "components/UserSelect";
 import moment from "moment";
 import { useEffect, useState } from "react";
 import { TokenConfig } from "../api/types";
@@ -38,10 +37,6 @@ const SectionFields = styled.div`
 `;
 const Label = styled.div`
   width: 15em;
-`;
-
-const UserSelectContainer = styled.div`
-  width: 25em;
 `;
 
 const CreateTokenForm: React.FunctionComponent<{
@@ -67,7 +62,7 @@ const CreateTokenForm: React.FunctionComponent<{
     "m",
   );
   const [expiryDate, setExpiryDate] = React.useState(initialExpiryDate);
-  const [selectedUser, setSelectedUser] = React.useState("");
+  const [selectedUser] = React.useState("");
   const handleSubmit = (event: React.FormEvent<HTMLFormElement>) => {
     onSubmit(selectedUser, expiryDate.toISOString());
     event.preventDefault();
@@ -101,9 +96,9 @@ const CreateTokenForm: React.FunctionComponent<{
               </Field>
               <Field>
                 <Label>User</Label>
-                <UserSelectContainer>
-                  <UserSelect fuzzy={false} onChange={setSelectedUser} />
-                </UserSelectContainer>
+                {/*<UserSelectContainer>*/}
+                {/*  <UserSelect fuzzy={false} onChange={setSelectedUser} />*/}
+                {/*</UserSelectContainer>*/}
               </Field>
             </SectionFields>
           </div>

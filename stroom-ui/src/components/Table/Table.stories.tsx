@@ -3,6 +3,7 @@ import * as React from "react";
 import { Table } from "./Table";
 import { useMemo } from "react";
 import makeData from "./makeData";
+import styled from "styled-components";
 
 const stories = storiesOf("Table", module);
 stories.add("Table", () => {
@@ -39,7 +40,18 @@ stories.add("Table", () => {
     [],
   );
 
-  const data = useMemo(() => makeData(20), []);
+  const data = useMemo(() => makeData(1000), []);
 
-  return <Table columns={columns} data={data} />;
+  const Field = styled.div`
+    position: relative;
+    width: 400px;
+    height: 400px;
+    border: 1px solid red;
+  `;
+
+  return (
+    <Field>
+      <Table columns={columns} data={data} />
+    </Field>
+  );
 });

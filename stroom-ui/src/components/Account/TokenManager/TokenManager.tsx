@@ -15,7 +15,7 @@
  */
 
 import * as React from "react";
-import { FunctionComponent, useState } from "react";
+import { FunctionComponent, useCallback, useState } from "react";
 import { TokenListDialog } from "./TokenListDialog";
 import { useTokenManager } from "./useTokenManager";
 import { PagerProps } from "../../Pager/Pager";
@@ -23,6 +23,7 @@ import { EditToken } from "../EditToken/EditToken";
 import { Token } from "../types";
 import { QuickFilterProps } from "../AccountManager/QuickFilter";
 import { CreateToken } from "../EditToken/CreateToken";
+import { TableProps } from "../../Table/Table";
 
 const initialToken: Token = {
   userId: "",
@@ -65,6 +66,22 @@ const TokenManager: FunctionComponent<{
       });
     },
   };
+  const tableProps: TableProps<Token> = {
+    columns: columns,
+    data: resultPage.values,
+    initialSortBy: request.sortList,
+    onChangeSort: useCallback(
+      (sort) => {
+        if (request.sortList !== sort) {
+          setRequest({
+            ...request,
+            sortList: sort,
+          });
+        }
+      },
+      [setRequest, request],
+    ),
+  };
   const refresh = () => {
     setRequest({
       ...request,
@@ -75,10 +92,7 @@ const TokenManager: FunctionComponent<{
     <React.Fragment>
       <TokenListDialog
         itemManagerProps={{
-          tableProps: {
-            columns: columns,
-            data: resultPage.values,
-          },
+          tableProps,
           actions: {
             onCreate: () => setEditingToken(initialToken),
             onEdit: (token) => setEditingToken(token),

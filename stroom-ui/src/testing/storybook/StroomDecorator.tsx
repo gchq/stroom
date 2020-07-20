@@ -24,8 +24,7 @@ setupFontAwesome();
 
 const WithTestServer: FunctionComponent = ({ children }) => {
   useTestServer(testData);
-
-  return <div>{children}</div>;
+  return <React.Fragment>{children}</React.Fragment>;
 };
 
 const RouteWrapper: FunctionComponent<RouteComponentProps> = ({
