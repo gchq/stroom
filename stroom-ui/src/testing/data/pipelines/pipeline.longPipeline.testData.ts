@@ -1,8 +1,8 @@
-import * as uuidv4 from "uuid/v4";
+import v4 from "uuid/v4";
 import { PipelineDocumentType } from "components/DocumentEditors/useDocumentApi/types/pipelineDoc";
 
 export default {
-  uuid: uuidv4(),
+  uuid: v4(),
   name: "Long Pipeline",
   type: "Pipeline",
   description: "This pipeline is long enough to stress out the rendering",

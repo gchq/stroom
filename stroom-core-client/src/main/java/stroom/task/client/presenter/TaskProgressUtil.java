@@ -24,7 +24,6 @@ import stroom.util.shared.Expander;
 import stroom.util.shared.PageRequest;
 import stroom.util.shared.ResultPage;
 import stroom.util.shared.Sort;
-import stroom.util.shared.Sort.Direction;
 
 import java.util.ArrayList;
 import java.util.Collection;
@@ -286,7 +285,7 @@ class TaskProgressUtil {
         public int compare(final TaskProgress o1, final TaskProgress o2) {
             if (criteria.getSortList() != null) {
                 for (final Sort sort : criteria.getSortList()) {
-                    final String field = sort.getField();
+                    final String field = sort.getId();
 
                     int compare = 0;
                     switch (field) {
@@ -310,7 +309,7 @@ class TaskProgressUtil {
                             break;
                     }
 
-                    if (Direction.DESCENDING.equals(sort.getDirection())) {
+                    if (sort.isDesc()) {
                         compare = compare * -1;
                     }
 

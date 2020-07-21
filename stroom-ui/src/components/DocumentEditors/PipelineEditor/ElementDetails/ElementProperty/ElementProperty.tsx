@@ -22,7 +22,7 @@ import {
   getCurrentValue,
   getElementValue,
 } from "../../pipelineUtils";
-import ElementPropertyInheritanceInfo from "./ElementPropertyInheritanceInfo";
+import { ElementPropertyFieldDetails } from "./ElementPropertyInheritanceInfo";
 import ElementPropertyField from "./ElementPropertyField";
 import { PipelineEditApi } from "../../types";
 import { ElementPropertyType } from "components/DocumentEditors/PipelineEditor/useElements/types";
@@ -59,13 +59,13 @@ const ElementProperty: React.FunctionComponent<Props> = ({
     elementPropertyType.type,
   );
 
-  let type: string = elementPropertyType.type.toLowerCase();
+  const type: string = elementPropertyType.type.toLowerCase();
 
-  let defaultValue: any = elementPropertyType.defaultValue;
-  let docRefType: string | undefined =
+  const defaultValue: any = elementPropertyType.defaultValue;
+  const docRefType: string | undefined =
     elementPropertyType.docRefTypes && elementPropertyType.docRefTypes[0];
-  let name: string = elementPropertyType.name;
-  let description: string = elementPropertyType.description;
+  const name: string = elementPropertyType.name;
+  const description: string = elementPropertyType.description;
 
   return (
     <React.Fragment>
@@ -83,7 +83,7 @@ const ElementProperty: React.FunctionComponent<Props> = ({
         <p>
           The <em>field name</em> of this property is <strong>{name}</strong>
         </p>
-        <ElementPropertyInheritanceInfo
+        <ElementPropertyFieldDetails
           pipelineEditApi={pipelineEditApi}
           name={name}
           value={value}

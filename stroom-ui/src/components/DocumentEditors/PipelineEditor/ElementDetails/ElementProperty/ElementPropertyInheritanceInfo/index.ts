@@ -1,1 +1,1 @@
-export { default } from "./ElementPropertyInheritanceInfo";
+export { ElementPropertyFieldDetails } from "./ElementPropertyInheritanceInfo";

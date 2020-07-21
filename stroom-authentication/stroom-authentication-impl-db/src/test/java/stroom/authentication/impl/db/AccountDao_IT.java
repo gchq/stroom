@@ -317,25 +317,25 @@ public class AccountDao_IT extends Database_IT {
         }
     }
 
-    private static void createUserAccount(AccountDao accountDao, String email) {
-        createUserAccount(accountDao, email, false, true, false, false);
+    private static void createUserAccount(AccountDao accountDao, String userId) {
+        createUserAccount(accountDao, userId, false, true, false, false);
     }
 
-    private static void createUserAccount(AccountDao accountDao, String email, boolean neverExpires) {
-        createUserAccount(accountDao, email, neverExpires, true, false, false);
+    private static void createUserAccount(AccountDao accountDao, String userId, boolean neverExpires) {
+        createUserAccount(accountDao, userId, neverExpires, true, false, false);
     }
 
     private static void createUserAccount(AccountDao accountDao,
-                                          String email,
+                                          String userId,
                                           boolean neverExpires,
                                           boolean enabled,
                                           boolean inactive,
                                           boolean locked) {
-        createUserAccount(accountDao, email, neverExpires, enabled, inactive, locked, null);
+        createUserAccount(accountDao, userId, neverExpires, enabled, inactive, locked, null);
     }
 
     private static void createUserAccount(AccountDao accountDao,
-                                          String email,
+                                          String userId,
                                           boolean neverExpires,
                                           boolean enabled,
                                           boolean inactive,
@@ -345,15 +345,14 @@ public class AccountDao_IT extends Database_IT {
         account.setCreateTimeMs(System.currentTimeMillis());
         account.setCreateUser("UserDao_IT");
         account.setLoginCount(0);
-        account.setEnabled(true);
-        account.setEmail(email);
+        account.setUserId(userId);
         account.setEnabled(enabled);
         account.setInactive(inactive);
         account.setLocked(locked);
         account.setNeverExpires(neverExpires);
         account.setReactivatedMs(reactivatedDate);
         accountDao.create(account, "test");
-        final Account newAccount = accountDao.get(email).get();
+        final Account newAccount = accountDao.get(userId).get();
         assertThat(newAccount.isEnabled()).isEqualTo(enabled);
         assertThat(newAccount.isInactive()).isEqualTo(inactive);
         assertThat(newAccount.isLocked()).isEqualTo(locked);

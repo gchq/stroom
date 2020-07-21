@@ -208,9 +208,7 @@ const MenuItem: React.FunctionComponent<EnhancedProps> = ({
             <FontAwesomeIcon size="lg" icon={menuItem.icon} />
           </div>
         )}
-        {isCollapsed ? (
-          undefined
-        ) : (
+        {isCollapsed ? undefined : (
           <span onClick={onSelect} className="menu-item__text">
             {menuItem.title}
           </span>
@@ -221,9 +219,11 @@ const MenuItem: React.FunctionComponent<EnhancedProps> = ({
 };
 
 const enhance = (d: React.FunctionComponent<EnhancedProps>) =>
-  DropTarget<Props>([DragDropTypes.DOC_REF_UUIDS], dropTarget, dropCollect)(
-    DragSource<Props>(DragDropTypes.DOC_REF_UUIDS, dragSource, dragCollect)(d),
-  );
+  DropTarget<Props>(
+    [DragDropTypes.DOC_REF_UUIDS],
+    dropTarget,
+    dropCollect,
+  )(DragSource<Props>(DragDropTypes.DOC_REF_UUIDS, dragSource, dragCollect)(d));
 
 // dnd_error: temporarily disable dnd-related code to get the build working
 export default enhance;

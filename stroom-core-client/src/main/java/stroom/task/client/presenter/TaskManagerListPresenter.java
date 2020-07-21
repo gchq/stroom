@@ -48,8 +48,6 @@ import stroom.util.client.DataGridUtil;
 import stroom.util.shared.Expander;
 import stroom.util.shared.ModelStringUtil;
 import stroom.util.shared.ResultPage;
-import stroom.util.shared.Sort;
-import stroom.util.shared.Sort.Direction;
 import stroom.widget.button.client.ButtonView;
 import stroom.widget.customdatebox.client.ClientDateUtil;
 import stroom.widget.popup.client.event.ShowPopupEvent;
@@ -108,7 +106,7 @@ public class TaskManagerListPresenter
         this.tooltipPresenter = tooltipPresenter;
         this.restFactory = restFactory;
         this.nodeCache = nodeCache;
-        this.criteria.setSort(FindTaskProgressCriteria.FIELD_AGE, Direction.DESCENDING, false);
+        this.criteria.setSort(FindTaskProgressCriteria.FIELD_AGE, true, false);
 
         final ButtonView terminateButton = getView().addButton(SvgPresets.DELETE.with("Terminate Task", true));
         terminateButton.addClickHandler(event -> endSelectedTask());
@@ -136,9 +134,9 @@ public class TaskManagerListPresenter
             if (event.getColumn() instanceof OrderByColumn<?, ?>) {
                 final OrderByColumn<?, ?> orderByColumn = (OrderByColumn<?, ?>) event.getColumn();
                 if (event.isSortAscending()) {
-                    criteria.setSort(orderByColumn.getField(), Sort.Direction.ASCENDING, orderByColumn.isIgnoreCase());
+                    criteria.setSort(orderByColumn.getField(), false, orderByColumn.isIgnoreCase());
                 } else {
-                    criteria.setSort(orderByColumn.getField(), Sort.Direction.DESCENDING, orderByColumn.isIgnoreCase());
+                    criteria.setSort(orderByColumn.getField(), true, orderByColumn.isIgnoreCase());
                 }
                 // As we get data async from all nodes we can't be sure when we have finished so
                 // need to clear the expandAllRequestState prior to fetching

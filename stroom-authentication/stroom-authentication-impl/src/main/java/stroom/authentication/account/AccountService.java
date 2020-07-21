@@ -7,7 +7,7 @@ import java.util.Optional;
 public interface AccountService {
     ResultPage<Account> list();
 
-    ResultPage<Account> search(String email);
+    ResultPage<Account> search(SearchAccountRequest request);
 
     Account create(CreateAccountRequest request);
 
@@ -15,7 +15,7 @@ public interface AccountService {
 
     Optional<Account> read(String email);
 
-    void update(Account account, int accountId);
+    void update(UpdateAccountRequest request, int accountId);
 
     void delete(int accountId);
 }

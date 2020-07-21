@@ -24,7 +24,7 @@ const resourceBuilder: ResourceBuilder = (
     .intercept((req: HttpRequest, res: HttpResponse) => {
       const indexVolumeId: string = req.params.indexVolumeId;
       const indexVolume = testCache.data!.indexVolumesAndGroups.volumes.find(
-        v => `${v.id}` === indexVolumeId,
+        (v) => `${v.id}` === indexVolumeId,
       );
       if (!!indexVolume) {
         res.json(indexVolume);
@@ -71,7 +71,7 @@ const resourceBuilder: ResourceBuilder = (
       testCache.data!.indexVolumesAndGroups = {
         ...testCache.data!.indexVolumesAndGroups,
         volumes: testCache.data!.indexVolumesAndGroups.volumes.filter(
-          v => v.id !== oldIndexVolumeId,
+          (v) => v.id !== oldIndexVolumeId,
         ),
       };
 

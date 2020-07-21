@@ -2,7 +2,7 @@ import * as React from "react";
 
 import { storiesOf } from "@storybook/react";
 
-import useApi from "./useApi";
+import { useApi } from "./useApi";
 import JsonDebug from "testing/JsonDebug";
 import { WelcomeData } from "./types";
 const TestHarness: React.FunctionComponent = () => {
@@ -19,4 +19,7 @@ const TestHarness: React.FunctionComponent = () => {
   );
 };
 
-storiesOf("Sections/Welcome/useApi", module).add("test", () => <TestHarness />);
+storiesOf("Sections/Welcome/useAuthenticationResource", module).add(
+  "test",
+  () => <TestHarness />,
+);

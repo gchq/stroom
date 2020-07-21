@@ -13,10 +13,10 @@ const useApi = (): UseApi => {
   const resource = apiUrl("/sessionInfo/v1");
 
   return {
-    getSessionInfo: React.useCallback(
-      () => httpGetJson(resource),
-      [resource, httpGetJson],
-    ),
+    getSessionInfo: React.useCallback(() => httpGetJson(resource), [
+      resource,
+      httpGetJson,
+    ]),
   };
 };
 

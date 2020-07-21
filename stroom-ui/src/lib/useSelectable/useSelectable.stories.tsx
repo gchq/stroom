@@ -1,7 +1,7 @@
 import * as React from "react";
 import { loremIpsum } from "lorem-ipsum";
 import { storiesOf } from "@storybook/react";
-import useSelectable from "./useSelectable";
+import { useSelectable } from "./useSelectable";
 import JsonDebug from "testing/JsonDebug";
 
 const TEST_ITEMS: string[] = Array(10)
@@ -24,13 +24,13 @@ interface ItemWithClick<T> {
 const TestHarness: React.FunctionComponent<Props> = ({ items }) => {
   const selectable = useSelectable({
     items,
-    getKey: React.useCallback(d => d, []),
+    getKey: React.useCallback((d) => d, []),
   });
   const { selectedItems, toggleSelection, clearSelection } = selectable;
 
   const itemsWithOnClick: ItemWithClick<string>[] = React.useMemo(
     () =>
-      items.map(item => ({
+      items.map((item) => ({
         item,
         onClick: () => toggleSelection(item),
       })),

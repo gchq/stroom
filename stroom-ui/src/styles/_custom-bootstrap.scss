@@ -1,0 +1,158 @@
+/* Customisations to standard bootstrap styles */
+@import "themes.scss";
+@import "themify.scss";
+
+.badge-success {
+  @include themify($themes) {
+    background-color: themed("valid");
+  }
+}
+
+.badge-warning {
+  @include themify($themes) {
+    background-color: themed("warn");
+  }
+}
+
+.badge-danger {
+  @include themify($themes) {
+    background-color: themed("error");
+  }
+}
+
+.dropdown-menu {
+  margin: 0;
+  font-size: inherit;
+  -webkit-background-clip: padding-box;
+  background-clip: padding-box;
+  @include dialog($themes);
+}
+
+.dropdown-item {
+  transition: none;
+}
+
+.dropdown-item:active {
+  @include themify($themes) {
+    background-color: themed("primary");
+  }
+}
+
+.form-control {
+  @include themify($themes) {
+    background-color: themed("control__background-color");
+    color: themed("control__text-color");
+    border-color: themed("control__border-color");
+  }
+}
+
+.form-control:focus {
+  @include themify($themes) {
+    background-color: themed("control__background-color");
+    color: themed("control__text-color");
+    border-color: themed("control__border-color");
+  }
+
+  //border-color: rgb(102,175,233);
+  //outline: 0;
+  //-webkit-box-shadow: inset 0 1px 1px rgba(0,0,0,.075), 0 0 8px rgba(102,175,233,.6);
+  //box-shadow: inset 0 1px 1px rgba(0,0,0,.075), 0 0 8px rgba(102,175,233,.6);
+  @include focus-ring($themes, "primary")
+}
+
+.form-control.is-invalid {
+  // border-color: #dc354;
+  @include themify($themes) {
+    border-color: themed("invalid");
+  }
+}
+
+.form-control.is-invalid:focus {
+  @include focus-ring($themes, "invalid")
+}
+
+.form-control.is-valid {
+  @include themify($themes) {
+    border-color: themed("valid");
+  }
+}
+
+.form-control.is-valid:focus {
+  @include focus-ring($themes, "valid")
+}
+
+.form-check > input:focus {
+  @include focus-ring($themes, "primary")
+}
+
+.invalid-feedback {
+  @include themify($themes) {
+    color: themed("feedback");
+  }
+}
+
+label {
+  @include themify($themes) {
+    color: themed("page__text-color");
+  }
+}
+
+.modal {
+  z-index: 1040;
+}
+
+.modal-dialog {
+  max-width: 100%;
+  max-height: 100%;
+  min-width: 10rem;
+  min-height: 10rem;
+
+  width: 100%;
+  height: 100%;
+  margin: 0;
+
+  display: flex;
+  align-content: center;
+  justify-content: center;
+}
+
+.modal-content {
+  width: auto;
+  @include page($themes)
+}
+
+.modal-header {
+  border-bottom: none;
+}
+
+.modal-body {
+  padding: 0 1rem;
+}
+
+.modal-footer {
+  border-top: none;
+  padding: 1rem;
+}
+
+.modal-footer > * {
+  margin: 0;
+}
+
+.modal-title {
+  display: flex;
+  align-items: center;
+}
+
+.invalid-feedback {
+  display: block;
+  min-height: 16px;
+}
+
+.label,label,.form-label {
+  margin-bottom: .25rem;
+}
+
+.col {
+  padding-left: 1rem;
+  padding-right: 1rem;
+}

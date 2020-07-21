@@ -18,12 +18,8 @@ import * as React from "react";
 
 import useBuildInfo from "./api/useSessionInfo";
 
-const SessionInfo: React.FunctionComponent = () => {
-  const {
-    userName,
-    nodeName,
-    buildInfo,
-  } = useBuildInfo();
+export const SessionInfo: React.FunctionComponent = () => {
+  const { userName, nodeName, buildInfo } = useBuildInfo();
   return (
     <div className="SessionInfo">
       <div>User Name: {userName}</div>
@@ -34,5 +30,3 @@ const SessionInfo: React.FunctionComponent = () => {
     </div>
   );
 };
-
-export default SessionInfo;

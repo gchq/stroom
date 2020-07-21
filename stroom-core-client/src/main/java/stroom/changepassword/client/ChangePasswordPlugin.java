@@ -1,19 +1,16 @@
 package stroom.changepassword.client;
 
-import com.google.inject.Inject;
-import com.google.web.bindery.event.shared.EventBus;
 import stroom.alert.client.event.AlertEvent;
 import stroom.core.client.MenuKeys;
 import stroom.core.client.presenter.Plugin;
-import stroom.hyperlink.client.Hyperlink;
-import stroom.hyperlink.client.Hyperlink.Builder;
-import stroom.hyperlink.client.HyperlinkEvent;
-import stroom.hyperlink.client.HyperlinkType;
 import stroom.menubar.client.event.BeforeRevealMenubarEvent;
 import stroom.svg.client.SvgPreset;
 import stroom.svg.client.SvgPresets;
 import stroom.ui.config.client.UiConfigCache;
 import stroom.widget.menu.client.presenter.IconMenuItem;
+
+import com.google.inject.Inject;
+import com.google.web.bindery.event.shared.EventBus;
 
 public class ChangePasswordPlugin extends Plugin {
     private final UiConfigCache clientPropertyCache;
@@ -41,13 +38,15 @@ public class ChangePasswordPlugin extends Plugin {
                     final String changePasswordUiUrl = result.getUrl().getChangepassword();
                     if (changePasswordUiUrl != null && changePasswordUiUrl.trim().length() > 0) {
                         changePasswordMenuItem = new IconMenuItem(5, icon, null, "Change password", null, true, () -> {
-                            final Hyperlink hyperlink = new Builder()
-                                    .text("Change password")
-                                    .href(changePasswordUiUrl)
-                                    .type(HyperlinkType.TAB + "|Change password")
-                                    .icon(icon)
-                                    .build();
-                            HyperlinkEvent.fire(this, hyperlink);
+//                            final Hyperlink hyperlink = new Builder()
+//                                    .text("Change password")
+//                                    .href(changePasswordUiUrl)
+//                                    .type(HyperlinkType.TAB + "|Change password")
+//                                    .icon(icon)
+//                                    .build();
+//                            HyperlinkEvent.fire(this, hyperlink);
+                            postMessage("changePassword");
+
                         });
                     } else {
                         changePasswordMenuItem = new IconMenuItem(5, icon, icon, "'Change Password' is not configured!", null, false, null);

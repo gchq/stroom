@@ -28,7 +28,6 @@ import java.util.Map;
 @Produces(MediaType.APPLICATION_JSON)
 @Consumes(MediaType.APPLICATION_JSON)
 public interface OAuth2Resource extends RestResource {
-
     @GET
     @Path("auth")
     @Timed

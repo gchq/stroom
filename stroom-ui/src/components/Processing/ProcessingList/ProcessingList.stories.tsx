@@ -1,13 +1,10 @@
 import * as React from "react";
 
 import { storiesOf } from "@storybook/react";
-import ProcessingList from "./ProcessingList";
-import { addThemedStories } from "testing/storybook/themedStoryGenerator";
+import { ProcessingList } from "./ProcessingList";
 import useStreamTasks from "components/Processing/useStreamTasks";
 import JsonDebug from "testing/JsonDebug";
 import { StreamTaskType } from "../types";
-
-const stories = storiesOf("Sections/Processing/List", module);
 
 const TestHarness = () => {
   const streamTasksApi = useStreamTasks();
@@ -28,4 +25,4 @@ const TestHarness = () => {
   );
 };
 
-addThemedStories(stories, () => <TestHarness />);
+storiesOf("Sections/Processing", module).add("List", () => <TestHarness />);

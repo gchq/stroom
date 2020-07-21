@@ -16,6 +16,16 @@
 
 package stroom.security.client;
 
+import stroom.alert.client.event.AlertEvent;
+import stroom.dispatch.client.Rest;
+import stroom.dispatch.client.RestFactory;
+import stroom.security.client.api.event.LogoutEvent;
+import stroom.security.shared.AppPermissionResource;
+import stroom.security.shared.InvalidateSessionResource;
+import stroom.security.shared.UserAndPermissions;
+import stroom.task.client.TaskEndEvent;
+import stroom.task.client.TaskStartEvent;
+
 import com.google.gwt.core.client.GWT;
 import com.google.gwt.event.shared.GwtEvent;
 import com.google.gwt.event.shared.HasHandlers;
@@ -23,18 +33,9 @@ import com.google.gwt.http.client.URL;
 import com.google.gwt.user.client.Window;
 import com.google.inject.Inject;
 import com.google.web.bindery.event.shared.EventBus;
-import stroom.alert.client.event.AlertEvent;
-import stroom.dispatch.client.Rest;
-import stroom.dispatch.client.RestFactory;
-import stroom.security.client.api.event.LogoutEvent;
-import stroom.security.shared.AppPermissionResource;
-import stroom.security.shared.AuthenticationResource;
-import stroom.security.shared.UserAndPermissions;
-import stroom.task.client.TaskEndEvent;
-import stroom.task.client.TaskStartEvent;
 
 public class LoginManager implements HasHandlers {
-    private static final AuthenticationResource AUTHENTICATION_RESOURCE = GWT.create(AuthenticationResource.class);
+    private static final InvalidateSessionResource STROOM_SESSION_RESOURCE = GWT.create(InvalidateSessionResource.class);
     private static final AppPermissionResource APP_PERMISSION_RESOURCE = GWT.create(AppPermissionResource.class);
 
     private final EventBus eventBus;
@@ -88,8 +89,8 @@ public class LoginManager implements HasHandlers {
                     Window.Location.replace(redirectUrl);
                 })
                 .onFailure(throwable -> AlertEvent.fireErrorFromException(LoginManager.this, throwable, null))
-                .call(AUTHENTICATION_RESOURCE)
-                .logout();
+                .call(STROOM_SESSION_RESOURCE)
+                .invalidate();
     }
 
     @Override

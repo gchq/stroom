@@ -52,7 +52,7 @@ public class Keys {
     // -------------------------------------------------------------------------
 
     public static final UniqueKey<AccountRecord> KEY_ACCOUNT_PRIMARY = UniqueKeys0.KEY_ACCOUNT_PRIMARY;
-    public static final UniqueKey<AccountRecord> KEY_ACCOUNT_EMAIL = UniqueKeys0.KEY_ACCOUNT_EMAIL;
+    public static final UniqueKey<AccountRecord> KEY_ACCOUNT_USER_ID = UniqueKeys0.KEY_ACCOUNT_USER_ID;
     public static final UniqueKey<JsonWebKeyRecord> KEY_JSON_WEB_KEY_PRIMARY = UniqueKeys0.KEY_JSON_WEB_KEY_PRIMARY;
     public static final UniqueKey<OauthClientRecord> KEY_OAUTH_CLIENT_PRIMARY = UniqueKeys0.KEY_OAUTH_CLIENT_PRIMARY;
     public static final UniqueKey<OauthClientRecord> KEY_OAUTH_CLIENT_NAME = UniqueKeys0.KEY_OAUTH_CLIENT_NAME;
@@ -82,7 +82,7 @@ public class Keys {
 
     private static class UniqueKeys0 {
         public static final UniqueKey<AccountRecord> KEY_ACCOUNT_PRIMARY = Internal.createUniqueKey(Account.ACCOUNT, "KEY_account_PRIMARY", Account.ACCOUNT.ID);
-        public static final UniqueKey<AccountRecord> KEY_ACCOUNT_EMAIL = Internal.createUniqueKey(Account.ACCOUNT, "KEY_account_email", Account.ACCOUNT.EMAIL);
+        public static final UniqueKey<AccountRecord> KEY_ACCOUNT_USER_ID = Internal.createUniqueKey(Account.ACCOUNT, "KEY_account_user_id", Account.ACCOUNT.USER_ID);
         public static final UniqueKey<JsonWebKeyRecord> KEY_JSON_WEB_KEY_PRIMARY = Internal.createUniqueKey(JsonWebKey.JSON_WEB_KEY, "KEY_json_web_key_PRIMARY", JsonWebKey.JSON_WEB_KEY.ID);
         public static final UniqueKey<OauthClientRecord> KEY_OAUTH_CLIENT_PRIMARY = Internal.createUniqueKey(OauthClient.OAUTH_CLIENT, "KEY_oauth_client_PRIMARY", OauthClient.OAUTH_CLIENT.ID);
         public static final UniqueKey<OauthClientRecord> KEY_OAUTH_CLIENT_NAME = Internal.createUniqueKey(OauthClient.OAUTH_CLIENT, "KEY_oauth_client_name", OauthClient.OAUTH_CLIENT.NAME);

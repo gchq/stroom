@@ -9,4 +9,3 @@ export interface SessionInfo {
   nodeName: string;
   buildInfo: BuildInfo;
 }
-

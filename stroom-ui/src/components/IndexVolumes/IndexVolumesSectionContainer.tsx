@@ -24,14 +24,16 @@ const IndexVolumes: React.FunctionComponent = () => {
     <IndexVolumesSection
       onGroupAdd={() => createIndexVolumeGroup()}
       onGroupChange={(indexVolumeGroup: IndexVolumeGroup) =>
-        updateIndexVolumeGroup(indexVolumeGroup).then(() => refreshIndexVolumes())
+        updateIndexVolumeGroup(indexVolumeGroup).then(() =>
+          refreshIndexVolumes(),
+        )
       }
       onGroupDelete={(id: string) => deleteIndexVolumeGroup(id)}
-      onVolumeAdd={indexVolumeGroupName =>
+      onVolumeAdd={(indexVolumeGroupName) =>
         createIndexVolume({ indexVolumeGroupName })
       }
       onVolumeChange={(indexVolume: IndexVolume) => update(indexVolume)}
-      onVolumeDelete={id => deleteIndexVolume(id)}
+      onVolumeDelete={(id) => deleteIndexVolume(id)}
       indexVolumeGroups={groups}
       indexVolumes={indexVolumes}
     />

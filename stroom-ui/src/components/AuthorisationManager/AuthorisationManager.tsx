@@ -4,7 +4,7 @@ import Button from "components/Button";
 import ThemedConfirm, {
   useDialog as useThemedConfim,
 } from "components/ThemedConfirm";
-import useAppNavigation from "lib/useAppNavigation";
+import { useAppNavigation } from "lib/useAppNavigation";
 import NewUserDialog, {
   useDialog as useNewUserDialog,
 } from "./NewUserDialog/NewUserDialog";
@@ -53,11 +53,11 @@ const Authorisation: React.FunctionComponent<Props> = ({ isGroup }) => {
       [],
     ),
     getDetails: React.useCallback(
-      () => selectedUsers.map(v => v.name).join(", "),
+      () => selectedUsers.map((v) => v.name).join(", "),
       [selectedUsers],
     ),
     onConfirm: React.useCallback(() => {
-      selectedUsers.forEach(v => deleteUser(v.uuid));
+      selectedUsers.forEach((v) => deleteUser(v.uuid));
     }, [selectedUsers, deleteUser]),
   });
 
@@ -67,7 +67,7 @@ const Authorisation: React.FunctionComponent<Props> = ({ isGroup }) => {
   } = useUserPickerDialog({
     onConfirm: React.useCallback(
       (groupUuid: string) =>
-        selectedUsers.forEach(u => {
+        selectedUsers.forEach((u) => {
           addUserToGroup(u.uuid, groupUuid);
         }),
       [addUserToGroup, selectedUsers],
@@ -88,33 +88,38 @@ const Authorisation: React.FunctionComponent<Props> = ({ isGroup }) => {
       <div className="page__header">
         <IconHeader text={isGroup ? "User Groups" : "Users"} icon="user" />
         <div className="page__buttons Button__container">
-          <Button onClick={showNewDialog} icon="plus" text="Create" />
+          <Button onClick={showNewDialog} icon="plus">
+            Create
+          </Button>
           <Button
             disabled={selectedUsers.length !== 1}
             onClick={onViewEditClick}
             icon="edit"
-            text="View/edit"
-          />
+          >
+            View/edit
+          </Button>
           <Button
             disabled={selectedUsers.length !== 1}
             onClick={showDeleteDialog}
             icon="trash"
-            text="Delete"
-          />
+          >
+            Delete
+          </Button>
           <Button
-            text="To Group"
             icon="plus"
             disabled={
-              selectedUsers.length === 0 || !!selectedUsers.find(u => u.group)
+              selectedUsers.length === 0 || !!selectedUsers.find((u) => u.group)
             }
             onClick={showGroupPicker}
-          />
+          >
+            To Group
+          </Button>
           <div className="UserSearch-filteringToggle">
             <label>Show filtering</label>
             <Toggle
               icons={false}
               checked={filterable}
-              onChange={event => setFilteringEnabled(event.target.checked)}
+              onChange={(event) => setFilteringEnabled(event.target.checked)}
             />
           </div>
         </div>

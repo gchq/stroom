@@ -83,7 +83,7 @@ const ElementPropertyField: React.FunctionComponent<Props> = ({
         <AppSearchBar
           typeFilter={docRefType}
           value={value}
-          onChange={node =>
+          onChange={(node) =>
             elementPropertyUpdated(selectedElementId, name, "entity", node)
           }
         />

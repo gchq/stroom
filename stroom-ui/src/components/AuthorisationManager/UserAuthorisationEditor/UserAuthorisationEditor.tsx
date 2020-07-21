@@ -34,7 +34,7 @@ const UserAuthorisationEditor: React.FunctionComponent<Props> = ({
   return (
     <div>
       <IconHeader text={title} icon="user" />
-      <Button text="Back" onClick={history.goBack} />
+      <Button onClick={history.goBack}>Back</Button>
 
       <section>
         <h2>Application Permissions</h2>

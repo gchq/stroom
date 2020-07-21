@@ -1,4 +1,4 @@
-import AppSearchBar from './AppSearchBar';
+import AppSearchBar from "./AppSearchBar";
 
 export { AppSearchBar };
 

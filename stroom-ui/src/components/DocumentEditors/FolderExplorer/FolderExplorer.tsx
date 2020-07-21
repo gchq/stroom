@@ -39,7 +39,7 @@ import useSelectableItemListing, {
 } from "lib/useSelectableItemListing";
 import { useDocRefInfoDialog } from "../../DocRefInfoModal/DocRefInfoModal";
 import { useDocumentTree } from "components/DocumentEditors/api/explorer";
-import useAppNavigation from "lib/useAppNavigation";
+import { useAppNavigation } from "lib/useAppNavigation";
 import { ButtonProps } from "components/Button/types";
 /* import useKeyIsDown from "lib/useKeyIsDown"; */
 
@@ -110,17 +110,17 @@ const FolderExplorer: React.FunctionComponent<SwitchedDocRefEditorProps> = ({
     componentProps: createDialogComponentProps,
   } = useCreateDialog(onCreateDocument);
   const {
-      /* onKeyDown, */
+    /* onKeyDown, */
     selectedItems: selectedDocRefs,
-      /* toggleSelection, */
+    /* toggleSelection, */
   } = useSelectableItemListing({
     items: folder.node.children || [],
     selectionBehaviour: SelectionBehaviour.MULTIPLE,
-    getKey: React.useCallback(d => d.uuid, []),
+    getKey: React.useCallback((d) => d.uuid, []),
     openItem: goToEditDocRef,
     goBack: goBack,
   });
-    /* const keyIsDown = useKeyIsDown(); */
+  /* const keyIsDown = useKeyIsDown(); */
 
   const onClickCreate = React.useCallback(() => {
     if (!!folder) {
@@ -133,44 +133,44 @@ const FolderExplorer: React.FunctionComponent<SwitchedDocRefEditorProps> = ({
       icon: "file",
       onClick: onClickCreate,
       title: "Create a Document",
-      text: "Create",
+      children: "Create",
     },
   ];
 
   const singleSelectedDocRef =
     selectedDocRefs.length === 1 ? selectedDocRefs[0] : undefined;
-  const selectedDocRefUuids = selectedDocRefs.map(d => d.uuid);
+  const selectedDocRefUuids = selectedDocRefs.map((d) => d.uuid);
 
   if (selectedDocRefs.length > 0) {
     if (singleSelectedDocRef) {
       additionalActionBarItems.push({
         icon: "info",
-        text: "Info",
+        children: "Info",
         onClick: () => showDocRefInfoDialog(singleSelectedDocRef),
         title: "View Information about this document",
       });
       additionalActionBarItems.push({
         icon: "edit",
-        text: "Rename",
+        children: "Rename",
         onClick: () => showRenameDialog(singleSelectedDocRef),
         title: "Rename this document",
       });
     }
     additionalActionBarItems.push({
       icon: "copy",
-      text: "Copy",
+      children: "Copy",
       onClick: () => showCopyDialog(selectedDocRefUuids),
       title: "Copy selected documents",
     });
     additionalActionBarItems.push({
       icon: "arrows-alt",
-      text: "Move",
+      children: "Move",
       onClick: () => showMoveDialog(selectedDocRefUuids),
       title: "Move selected documents",
     });
     additionalActionBarItems.push({
       icon: "trash",
-      text: "Delete",
+      children: "Delete",
       onClick: () => showDeleteDialog(selectedDocRefUuids),
       title: "Delete selected documents",
     });

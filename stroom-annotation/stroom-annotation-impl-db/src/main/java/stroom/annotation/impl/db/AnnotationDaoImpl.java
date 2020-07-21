@@ -531,32 +531,32 @@ class AnnotationDaoImpl implements AnnotationDao {
 
         return criteria.getSortList().stream().map(sort -> {
             Field<?> field;
-            if (AnnotationFields.CREATED_ON.equals(sort.getField())) {
+            if (AnnotationFields.CREATED_ON.equals(sort.getId())) {
                 field = ANNOTATION.CREATE_TIME_MS;
-            } else if (AnnotationFields.CREATED_BY.equals(sort.getField())) {
+            } else if (AnnotationFields.CREATED_BY.equals(sort.getId())) {
                 field = ANNOTATION.CREATE_USER;
-            } else if (AnnotationFields.UPDATED_ON.equals(sort.getField())) {
+            } else if (AnnotationFields.UPDATED_ON.equals(sort.getId())) {
                 field = ANNOTATION.UPDATE_TIME_MS;
-            } else if (AnnotationFields.UPDATED_BY.equals(sort.getField())) {
+            } else if (AnnotationFields.UPDATED_BY.equals(sort.getId())) {
                 field = ANNOTATION.UPDATE_USER;
-            } else if (AnnotationFields.TITLE.equals(sort.getField())) {
+            } else if (AnnotationFields.TITLE.equals(sort.getId())) {
                 field = ANNOTATION.TITLE;
-            } else if (AnnotationFields.SUBJECT.equals(sort.getField())) {
+            } else if (AnnotationFields.SUBJECT.equals(sort.getId())) {
                 field = ANNOTATION.SUBJECT;
-            } else if (AnnotationFields.STATUS.equals(sort.getField())) {
+            } else if (AnnotationFields.STATUS.equals(sort.getId())) {
                 field = ANNOTATION.STATUS;
-            } else if (AnnotationFields.ASSIGNED_TO.equals(sort.getField())) {
+            } else if (AnnotationFields.ASSIGNED_TO.equals(sort.getId())) {
                 field = ANNOTATION.ASSIGNED_TO;
-            } else if (AnnotationFields.COMMENT.equals(sort.getField())) {
+            } else if (AnnotationFields.COMMENT.equals(sort.getId())) {
                 field = ANNOTATION.COMMENT;
-            } else if (AnnotationFields.HISTORY.equals(sort.getField())) {
+            } else if (AnnotationFields.HISTORY.equals(sort.getId())) {
                 field = ANNOTATION.HISTORY;
             } else {
                 field = ANNOTATION.ID;
             }
 
             OrderField<?> orderField = field;
-            if (Sort.Direction.DESCENDING.equals(sort.getDirection())) {
+            if (sort.isDesc()) {
                 orderField = field.desc();
             }
 

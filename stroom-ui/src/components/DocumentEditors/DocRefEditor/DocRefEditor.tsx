@@ -10,7 +10,7 @@ import AppSearchBar from "../../AppSearchBar";
 import DocRefIconHeader from "../../DocRefIconHeader";
 import DocRefBreadcrumb from "../../DocRefBreadcrumb";
 import Button from "../../Button";
-import useAppNavigation from "lib/useAppNavigation";
+import { useAppNavigation } from "lib/useAppNavigation";
 import { DocumentApi } from "components/DocumentEditors/useDocumentApi/types/documentApi";
 import { ButtonProps } from "components/Button/types";
 import useDocument from "../api/explorer/useDocument";
@@ -37,7 +37,7 @@ const DocRefEditor = <T extends {}>({
   if (!!onClickSave) {
     actionBarItems.push({
       icon: "save",
-      text: "Save",
+      children: "Save",
       disabled: !isDirty,
       title: isDirty ? "Save" : "Saved",
       onClick: onClickSave,
@@ -48,7 +48,7 @@ const DocRefEditor = <T extends {}>({
 
   actionBarItems.push({
     icon: "key",
-    text: "Permissions",
+    children: "Permissions",
     title: "Permissions",
     onClick: openDocRefPermissions,
   });
@@ -79,9 +79,7 @@ const DocRefEditor = <T extends {}>({
             onChange={goToEditDocRef}
           />
         </div>
-      ) : (
-        undefined
-      )}
+      ) : undefined}
       <div className="page__body">{children}</div>
     </div>
   );
@@ -105,7 +103,7 @@ export function useDocRefEditor<T extends object>({
 
   React.useEffect(() => {
     if (!!fetchDocument) {
-      fetchDocument(docRefUuid).then(d => {
+      fetchDocument(docRefUuid).then((d) => {
         setDocRefContents(d);
         setIsDirty(false);
       });

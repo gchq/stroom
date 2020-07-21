@@ -49,4 +49,17 @@ public abstract class Plugin extends HandlerContainerImpl implements HasHandlers
     public void onReveal(final BeforeRevealMenubarEvent event) {
         // Override to act on menu bar reveal.
     }
+
+    /**
+     * Sort a native integer array numerically.
+     *
+     * @param array the array to sort
+     */
+    public static native void postMessage(String msg) /*-{
+        window.top.postMessage(
+            JSON.stringify({
+                message: msg
+             }
+        ), '*');
+    }-*/;
 }

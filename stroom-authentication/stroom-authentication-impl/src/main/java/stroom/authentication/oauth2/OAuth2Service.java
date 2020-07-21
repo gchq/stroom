@@ -5,7 +5,6 @@ import stroom.authentication.api.OIDC;
 import stroom.authentication.api.OpenIdClientDetailsFactory;
 import stroom.authentication.authenticate.api.AuthenticationService;
 import stroom.authentication.authenticate.api.AuthenticationService.AuthState;
-import stroom.authentication.config.AuthenticationConfig;
 import stroom.authentication.exceptions.BadRequestException;
 import stroom.authentication.token.TokenBuilder;
 import stroom.authentication.token.TokenBuilderFactory;
@@ -30,9 +29,7 @@ import java.util.regex.Pattern;
 class OAuth2Service {
     private static final Logger LOGGER = LoggerFactory.getLogger(OAuth2Service.class);
 
-
     private final UriFactory uriFactory;
-    private final AuthenticationConfig authenticationConfig;
     private final AccessCodeCache accessCodeCache;
     private final TokenBuilderFactory tokenBuilderFactory;
     private final AuthenticationService authenticationService;
@@ -40,13 +37,11 @@ class OAuth2Service {
 
     @Inject
     OAuth2Service(final UriFactory uriFactory,
-                  final AuthenticationConfig authenticationConfig,
                   final AccessCodeCache accessCodeCache,
                   final TokenBuilderFactory tokenBuilderFactory,
                   final AuthenticationService authenticationService,
                   final OpenIdClientDetailsFactory openIdClientDetailsFactory) {
         this.uriFactory = uriFactory;
-        this.authenticationConfig = authenticationConfig;
         this.accessCodeCache = accessCodeCache;
         this.tokenBuilderFactory = tokenBuilderFactory;
         this.authenticationService = authenticationService;
@@ -78,7 +73,7 @@ class OAuth2Service {
 
             if (requireLoginPrompt) {
                 LOGGER.debug("Login has been requested by the RP");
-                result = authenticationService.createLoginUri(redirectUri);
+                result = authenticationService.createSignInUri(redirectUri);
 
             } else {
                 // We need to make sure our understanding of the session is correct
@@ -87,8 +82,10 @@ class OAuth2Service {
                 // If we have an authenticated session then the user is logged in
                 if (optionalAuthState.isPresent()) {
                     final AuthState authState = optionalAuthState.get();
+
+                    // If the users password still needs tp be changed then send them back to the login page.
                     if (authState.isRequirePasswordChange()) {
-                        result = authenticationService.createChangePasswordUri(redirectUri);
+                        result = authenticationService.createSignInUri(redirectUri);
 
                     } else {
                         LOGGER.debug("User has a session, sending them back to the RP");
@@ -112,7 +109,7 @@ class OAuth2Service {
 
                 } else {
                     LOGGER.debug("User has no session and no certificate - sending them to login.");
-                    result = authenticationService.createLoginUri(redirectUri);
+                    result = authenticationService.createSignInUri(redirectUri);
                 }
             }
 

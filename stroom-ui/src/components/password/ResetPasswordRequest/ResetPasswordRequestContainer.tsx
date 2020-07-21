@@ -20,7 +20,7 @@ import ResetPasswordRequest from "./ResetPasswordRequest";
 import * as queryString from "query-string";
 import { useRouter } from "../../../lib/useRouter";
 
-const ResetPasswordRequestContainer = () => {
+export const ResetPasswordRequestContainer = () => {
   let redirectUri: string;
 
   const { router } = useRouter();
@@ -44,5 +44,3 @@ const ResetPasswordRequestContainer = () => {
     />
   );
 };
-
-export default ResetPasswordRequestContainer;

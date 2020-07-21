@@ -14,7 +14,7 @@ const useData = (metaId: number): UseData => {
   const [data, setData] = React.useState<AnyFetchDataResult>(undefined);
 
   const _getDataForSelectedRow = React.useCallback(() => {
-    getDataForSelectedRow({ metaId, ...defaultFetchParams }).then(d => {
+    getDataForSelectedRow({ metaId, ...defaultFetchParams }).then((d) => {
       console.log("D", d);
       // setPagedData({
       //   streamAttributeMaps: d.

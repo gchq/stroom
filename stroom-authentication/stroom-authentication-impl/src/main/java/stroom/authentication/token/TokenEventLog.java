@@ -1,9 +1,11 @@
 package stroom.authentication.token;
 
-public interface TokenEventLog {
-    void search(SearchRequest searchRequest, SearchResponse searchResponse, Throwable ex);
+import stroom.util.shared.ResultPage;
 
-    void create(CreateTokenRequest createTokenRequest, Token token, Throwable ex);
+public interface TokenEventLog {
+    void search(SearchTokenRequest request, ResultPage<Token> response, Throwable ex);
+
+    void create(CreateTokenRequest request, Token token, Throwable ex);
 
     void deleteAll(int count, Throwable ex);
 

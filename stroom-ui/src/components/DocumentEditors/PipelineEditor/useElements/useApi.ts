@@ -15,17 +15,11 @@ export const useApi = (): Api => {
   const resource = apiUrl("/elements/v1");
 
   const fetchElements = React.useCallback(
-    () =>
-      httpGetJson(`${resource}/elements`, {}, false),
+    () => httpGetJson(`${resource}/elements`, {}, false),
     [resource, httpGetJson],
   );
   const fetchElementProperties = React.useCallback(
-    () =>
-      httpGetJson(
-        `${resource}/elementProperties`,
-        {},
-        false,
-      ),
+    () => httpGetJson(`${resource}/elementProperties`, {}, false),
     [resource, httpGetJson],
   );
 

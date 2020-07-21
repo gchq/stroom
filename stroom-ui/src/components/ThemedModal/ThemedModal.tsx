@@ -16,7 +16,7 @@
 
 import { useTheme } from "lib/useTheme/useTheme";
 import * as React from "react";
-import * as ReactModal from "react-modal";
+import ReactModal from "react-modal";
 import reactModalOptions from "./reactModalOptions";
 
 interface ContentProps {
@@ -25,25 +25,34 @@ interface ContentProps {
   actions: JSX.Element;
 }
 
-const ThemedModal: React.FunctionComponent<ContentProps & ReactModal.Props> = ({
+export const DialogContent: React.FunctionComponent<ContentProps> = ({
   header,
   content,
   actions,
+}) => {
+  return (
+    <div className="themed-modal__container">
+      <header className="themed-modal__header">{header}</header>
+      <div className="themed-modal__content">{content}</div>
+      <div className="themed-modal__footer__actions">{actions}</div>
+    </div>
+  );
+};
+
+export const ThemedModal: React.FunctionComponent<ReactModal.Props> = ({
+  children,
   ...rest
 }) => {
   const { theme } = useTheme();
 
   return (
     <ReactModal
-      className={`themed-modal ${theme}`}
       {...rest}
+      className={`themed-modal ${theme}`}
       style={reactModalOptions}
+      appElement={document.body}
     >
-      <div className="themed-modal__container">
-        <header className="themed-modal__header">{header}</header>
-        <div className="themed-modal__content">{content}</div>
-        <div className="themed-modal__footer__actions">{actions}</div>
-      </div>
+      {children}
     </ReactModal>
   );
 };

@@ -2,7 +2,7 @@ import * as React from "react";
 
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
 import useLocalStorage, { storeBoolean } from "lib/useLocalStorage";
-import useMenuItems from "./useMenuItems";
+import { useMenuItems } from "./useMenuItems";
 import { ShowDialog as ShowCopyDocRefDialog } from "components/DocumentEditors/FolderExplorer/CopyMoveDocRefDialog/types";
 import {
   CopyMoveDocRefDialog,
@@ -18,7 +18,7 @@ import {
 /* import MenuItem from "./MenuItem"; */
 import { useDocumentTree } from "components/DocumentEditors/api/explorer";
 import { ActiveMenuItem } from "../types";
-import ActivitySummary from "components/Activity/ActivitySummary";
+import { ActivitySummary } from "components/Activity/ActivitySummary";
 
 interface Props {
   activeMenuItem: ActiveMenuItem;
@@ -26,7 +26,7 @@ interface Props {
 
 const getMenuItems = (
   activeMenuItem: string,
-  isCollapsed: boolean = false,
+  isCollapsed = false,
   menuItems: MenuItemType[],
   menuItemIsOpenByKey: MenuItemsOpenState,
   menuItemToggled: MenuItemToggled,
@@ -35,9 +35,9 @@ const getMenuItems = (
   showMoveDialog: ShowCopyDocRefDialog,
   selectedItems: string[],
   highlightedItem?: MenuItemType,
-  depth: number = 0,
+  depth = 0,
 ) =>
-  menuItems.map(menuItem => (
+  menuItems.map((menuItem) => (
     <React.Fragment key={menuItem.key}>
       {/* dnd_error: temporarily disable dnd-related code to get the build working */}
       {/*      <MenuItem
@@ -74,13 +74,11 @@ const getMenuItems = (
             depth + 1,
           )}
         </div>
-      ) : (
-        undefined
-      )}
+      ) : undefined}
     </React.Fragment>
   ));
 
-const Sidebar: React.FunctionComponent<Props> = ({ activeMenuItem }) => {
+export const Sidebar: React.FunctionComponent<Props> = ({ activeMenuItem }) => {
   const {
     menuItems,
     openMenuItemKeys,
@@ -98,7 +96,7 @@ const Sidebar: React.FunctionComponent<Props> = ({ activeMenuItem }) => {
     storeBoolean,
   );
   const toggleIsExpanded = React.useCallback(
-    () => setIsExpanded(existingIsExpanded => !existingIsExpanded),
+    () => setIsExpanded((existingIsExpanded) => !existingIsExpanded),
     [setIsExpanded],
   );
   const sidebarClassName = isExpanded
@@ -114,7 +112,7 @@ const Sidebar: React.FunctionComponent<Props> = ({ activeMenuItem }) => {
     },
     [menuItemsByKey],
   );
-  const enterItem = React.useCallback(m => menuItemOpened(m, true), [
+  const enterItem = React.useCallback((m) => menuItemOpened(m, true), [
     menuItemOpened,
   ]);
   const goBack = React.useCallback(
@@ -171,9 +169,7 @@ const Sidebar: React.FunctionComponent<Props> = ({ activeMenuItem }) => {
               alt="Stroom logo"
               src={require("../../../images/logo.svg")}
             />
-          ) : (
-            undefined
-          )}
+          ) : undefined}
           <div
             className="app-chrome__sidebar_header_icon"
             onClick={toggleIsExpanded}
@@ -215,5 +211,3 @@ const Sidebar: React.FunctionComponent<Props> = ({ activeMenuItem }) => {
     </div>
   );
 };
-
-export default Sidebar;

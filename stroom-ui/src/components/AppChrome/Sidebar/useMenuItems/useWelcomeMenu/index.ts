@@ -1,1 +1,1 @@
-export { default } from "./useWelcomeMenu";
+export { useWelcomeMenu } from "./useWelcomeMenu";

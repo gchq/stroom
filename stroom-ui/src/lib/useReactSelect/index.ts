@@ -1,1 +1,1 @@
-export { default } from "./useReactSelect";
+export { useReactSelect } from "./useReactSelect";

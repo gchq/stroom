@@ -9,7 +9,7 @@ function reducer(state: boolean) {
   return !state;
 }
 
-const useToggle = (defaultValue: boolean = false): UseToggle => {
+export const useToggle = (defaultValue = false): UseToggle => {
   const [value, dispatch] = React.useReducer(reducer, defaultValue);
   const toggle = React.useCallback(() => dispatch(), [dispatch]);
 
@@ -18,5 +18,3 @@ const useToggle = (defaultValue: boolean = false): UseToggle => {
     toggle,
   };
 };
-
-export default useToggle;

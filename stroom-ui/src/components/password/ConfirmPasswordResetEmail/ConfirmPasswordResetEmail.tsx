@@ -28,7 +28,7 @@ const ConfirmPasswordResetEmail: React.FunctionComponent<{
       receive a message with a link that will let you change your password.
     </p>
     <div className="footer">
-      <Button onClick={() => onBack()} text="Back to Stroom" />
+      <Button onClick={() => onBack()}>Back to Stroom</Button>
     </div>
   </div>
 );

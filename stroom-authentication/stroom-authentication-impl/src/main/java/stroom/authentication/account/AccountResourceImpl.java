@@ -21,26 +21,27 @@ package stroom.authentication.account;
 import stroom.util.shared.ResultPage;
 
 import javax.inject.Inject;
+import javax.inject.Provider;
 import javax.servlet.http.HttpServletRequest;
 import javax.ws.rs.NotFoundException;
 import java.util.Optional;
 
 // TODO : @66 Add audit logging
 class AccountResourceImpl implements AccountResource {
-    private final AccountService service;
+    private final Provider<AccountService> serviceProvider;
     private final AccountEventLog eventLog;
 
     @Inject
-    public AccountResourceImpl(final AccountService service,
+    public AccountResourceImpl(final Provider<AccountService> serviceProvider,
                                final AccountEventLog eventLog) {
-        this.service = service;
+        this.serviceProvider = serviceProvider;
         this.eventLog = eventLog;
     }
 
     @Override
     public ResultPage<Account> list(final HttpServletRequest httpServletRequest) {
         try {
-            final ResultPage<Account> result = service.list();
+            final ResultPage<Account> result = serviceProvider.get().list();
             eventLog.list(result, null);
             return result;
         } catch (final RuntimeException e) {
@@ -50,14 +51,13 @@ class AccountResourceImpl implements AccountResource {
     }
 
     @Override
-    public ResultPage<Account> search(final HttpServletRequest httpServletRequest,
-                                      final String email) {
+    public ResultPage<Account> search(final SearchAccountRequest request) {
         try {
-            final ResultPage<Account> result = service.search(email);
-            eventLog.search(email, result, null);
+            final ResultPage<Account> result = serviceProvider.get().search(request);
+            eventLog.search(request, result, null);
             return result;
         } catch (final RuntimeException e) {
-            eventLog.search(email, null, e);
+            eventLog.search(request, null, e);
             throw e;
         }
     }
@@ -66,7 +66,7 @@ class AccountResourceImpl implements AccountResource {
     public Integer create(final HttpServletRequest httpServletRequest,
                           final CreateAccountRequest request) {
         try {
-            final Account account = service.create(request);
+            final Account account = serviceProvider.get().create(request);
             eventLog.create(request, account, null);
             return account.getId();
         } catch (final RuntimeException e) {
@@ -79,7 +79,7 @@ class AccountResourceImpl implements AccountResource {
     public Account read(final HttpServletRequest httpServletRequest,
                         final int userId) {
         try {
-            final Optional<Account> optionalAccount = service.read(userId);
+            final Optional<Account> optionalAccount = serviceProvider.get().read(userId);
             final Account account = optionalAccount.orElseThrow(NotFoundException::new);
             eventLog.read(userId, account, null);
             return account;
@@ -91,14 +91,14 @@ class AccountResourceImpl implements AccountResource {
 
     @Override
     public Boolean update(final HttpServletRequest httpServletRequest,
-                          final Account account,
-                          final int userId) {
+                          final UpdateAccountRequest request,
+                          final int accountId) {
         try {
-            service.update(account, userId);
-            eventLog.update(account, userId, null);
+            serviceProvider.get().update(request, accountId);
+            eventLog.update(request, accountId, null);
             return true;
         } catch (final RuntimeException e) {
-            eventLog.update(null, userId, e);
+            eventLog.update(null, accountId, e);
             throw e;
         }
     }
@@ -107,7 +107,7 @@ class AccountResourceImpl implements AccountResource {
     public Boolean delete(final HttpServletRequest httpServletRequest,
                           final int userId) {
         try {
-            service.delete(userId);
+            serviceProvider.get().delete(userId);
             eventLog.delete(userId, null);
             return true;
         } catch (final RuntimeException e) {

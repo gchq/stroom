@@ -1,8 +1,6 @@
 import * as React from "react";
-import * as moment from "moment";
+import moment from "moment";
 import { Column, ReactTableFunction, RowInfo } from "react-table";
-import "react-table/react-table.css";
-import "react-toggle/style.css";
 import { Token } from "../api/types";
 import useConfig from "startup/config/useConfig";
 
@@ -18,14 +16,16 @@ interface FilterProps {
 
 const useColumns = (
   selectedTokenRowId: string | undefined,
-  setEnabledStateOnToken: Function,
+  setEnabledStateOnToken: (tokenId: number, enabled: boolean) => any,
 ): Column<Token>[] => {
-  const { dateFormat } = useConfig();
+  const {
+    uiPreferences: { dateFormat },
+  } = useConfig();
   const getEnabledCellFilter = React.useCallback(
     ({ filter, onChange }: FilterProps) => {
       return (
         <select
-          onChange={event => onChange(event.target.value)}
+          onChange={(event) => onChange(event.target.value)}
           style={{ width: "100%" }}
           value={filter ? filter.value : "all"}
         >

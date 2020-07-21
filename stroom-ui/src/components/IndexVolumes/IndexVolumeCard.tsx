@@ -1,13 +1,12 @@
 import * as React from "react";
 import styled from "styled-components";
 import { Popconfirm, Button, Card } from "antd";
-import "antd/dist/antd.css";
 import DocRefImage from "../DocRefImage";
 import { IndexVolume } from "./indexVolumeApi";
 import MinimalInput from "components/MinimalInput";
 
 interface Props {
-  indexVolume: IndexVolume
+  indexVolume: IndexVolume;
   onDelete: (volumeId: string) => void;
   onChange: (indexVolume: IndexVolume) => void;
 }
@@ -75,7 +74,7 @@ const DraggableIndexVolumeCard: React.FunctionComponent<Props> = ({
         >
           <Button
             ghost
-            type="danger"
+            // type="danger"
             shape="circle"
             icon="delete"
             size="small"
@@ -91,7 +90,12 @@ const DraggableIndexVolumeCard: React.FunctionComponent<Props> = ({
           cancelText="No"
           placement="left"
         >
-          <Button type="danger" shape="circle" icon="delete" size="small" />
+          <Button
+            // type="danger"
+            shape="circle"
+            icon="delete"
+            size="small"
+          />
         </Popconfirm>
       </TopRightButtons>
       <Contents>

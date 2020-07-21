@@ -1,6 +1,6 @@
 import * as React from "react";
 
-import ThemedModal from "components/ThemedModal";
+import { ThemedModal, DialogContent } from "components/ThemedModal";
 import DialogActionButtons from "components/DialogActionButtons";
 import IndexFieldTypePicker from "../IndexFieldTypePicker/IndexFieldTypePicker";
 import AnalyzerPicker from "../AnalyzerPicker";
@@ -48,31 +48,32 @@ export const IndexFieldEditor: React.FunctionComponent<Props> = ({
   );
 
   return !!indexField ? (
-    <ThemedModal
-      isOpen={!!indexField}
-      header={<h2>Index Field {indexField.fieldName}</h2>}
-      content={
-        <React.Fragment>
-          <form>
-            <label>Field Name</label>
-            <input {...fieldNameProps} />
-            <label>Field Type</label>
-            <IndexFieldTypePicker {...fieldTypeProps} />
-            <label>Stored</label>
-            <input {...storedProps} />
-            <label>Positions</label>
-            <input {...termPositionsProps} />
-            <label>Analyzer</label>
-            <AnalyzerPicker {...analyzerTypeProps} />
-            <label>Case Sensitive</label>
-            <input {...caseSensitiveProps} />
-          </form>
-        </React.Fragment>
-      }
-      actions={
-        <DialogActionButtons onConfirm={onConfirm} onCancel={onCloseDialog} />
-      }
-    />
+    <ThemedModal isOpen={!!indexField}>
+      <DialogContent
+        header={<h2>Index Field {indexField.fieldName}</h2>}
+        content={
+          <React.Fragment>
+            <form>
+              <label>Field Name</label>
+              <input {...fieldNameProps} />
+              <label>Field Type</label>
+              <IndexFieldTypePicker {...fieldTypeProps} />
+              <label>Stored</label>
+              <input {...storedProps} />
+              <label>Positions</label>
+              <input {...termPositionsProps} />
+              <label>Analyzer</label>
+              <AnalyzerPicker {...analyzerTypeProps} />
+              <label>Case Sensitive</label>
+              <input {...caseSensitiveProps} />
+            </form>
+          </React.Fragment>
+        }
+        actions={
+          <DialogActionButtons onConfirm={onConfirm} onCancel={onCloseDialog} />
+        }
+      />
+    </ThemedModal>
   ) : null;
 };
 

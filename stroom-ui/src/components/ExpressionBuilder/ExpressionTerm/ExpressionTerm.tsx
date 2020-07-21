@@ -159,7 +159,7 @@ const ExpressionTerm: React.FunctionComponent<EnhancedProps> = ({
         )}
         <div className="ExpressionOperator__expression">
           <InlineSelect
-            options={dataSource.fields.map(field => {
+            options={dataSource.fields.map((field) => {
               return { value: field.name, label: field.name };
             })}
             selected={value.field}

@@ -1,5 +1,8 @@
 package stroom.importexport;
 
+import stroom.util.json.JsonUtil;
+import stroom.util.shared.RestResource;
+
 import com.fasterxml.jackson.annotation.JsonCreator;
 import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.fasterxml.jackson.annotation.JsonInclude;
@@ -14,8 +17,6 @@ import org.fusesource.restygwt.client.DirectRestService;
 import org.junit.jupiter.api.Test;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import stroom.util.json.JsonUtil;
-import stroom.util.shared.RestResource;
 
 import java.lang.reflect.Constructor;
 import java.lang.reflect.Field;
@@ -510,7 +511,7 @@ class TestJsonSerialisation {
                 addType(stroomClasses, arg);
             }
 
-        } else if (clazz.getName().startsWith(PACKAGE_START)) {
+        } else if (clazz.getName().startsWith(PACKAGE_START) && !clazz.getName().contains("StroomDuration")) { // Non POJO
             // IF the class references sub classes then include those too.
             final JsonSubTypes jsonSubTypes = clazz.getAnnotation(JsonSubTypes.class);
             if (jsonSubTypes != null) {

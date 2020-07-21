@@ -1,13 +1,9 @@
 import { HttpRequest, HttpResponse } from "@pollyjs/adapter-fetch";
 
 import { ResourceBuilder } from "./types";
-import { PasswordValidationRequest } from "components/authentication/types";
 
-const resourceBuilder: ResourceBuilder = (
-  server: any,
-  apiUrl: any,
-) => {
-  const resource = apiUrl("/authentication/v1");
+const resourceBuilder: ResourceBuilder = (server: any, apiUrl: any) => {
+  const resource = apiUrl("/Oldauthentication/v1");
   server
     .get(`${resource}/idToken`)
     .intercept((req: HttpRequest, res: HttpResponse) => {
@@ -17,16 +13,16 @@ const resourceBuilder: ResourceBuilder = (
       res.sendStatus(200);
     });
 
-  // Login
+  // SignIn
   server
     .post(`${resource}/noauth/login`)
     .intercept((req: HttpRequest, res: HttpResponse) => {
-      const { email, password, sessionId, requestingClientId } = JSON.parse(
+      const { userId, password, sessionId, requestingClientId } = JSON.parse(
         req.body,
       );
 
       console.log("Received ", {
-        email,
+        userId,
         password,
         sessionId,
         requestingClientId,
@@ -63,14 +59,14 @@ const resourceBuilder: ResourceBuilder = (
       res.send(200);
     });
 
-  // Is Password Valid
-  server
-    .post(`${resource}/noauth/isPasswordValid`)
-    .intercept((req: HttpRequest, res: HttpResponse) => {
-      const validationReq: PasswordValidationRequest = JSON.parse(req.body);
-      console.log("Validation Request", validationReq);
-      res.send(200);
-    });
+  // // Is Password Valid
+  // server
+  //   .post(`${resource}/noauth/isPasswordValid`)
+  //   .intercept((req: HttpRequest, res: HttpResponse) => {
+  //     const validationReq: PasswordValidationRequest = JSON.parse(req.body);
+  //     console.log("Validation Request", validationReq);
+  //     res.send(200);
+  //   });
 };
 
 export default resourceBuilder;

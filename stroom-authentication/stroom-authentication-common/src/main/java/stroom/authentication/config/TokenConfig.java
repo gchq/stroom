@@ -42,6 +42,10 @@ public class TokenConfig extends AbstractConfig {
     @JsonPropertyDescription("The time before an email reset token will expire.")
     private StroomDuration timeUntilExpirationForEmailResetToken = StroomDuration.ofMinutes(5);
 
+    @JsonProperty
+    @JsonPropertyDescription("The default API key expiry time")
+    private Long defaultApiKeyExpiryInMinutes = 525600L;
+
     @NotNull
     @JsonProperty
     @JsonPropertyDescription("The Issuer value used in Json Web Tokens.")
@@ -75,6 +79,14 @@ public class TokenConfig extends AbstractConfig {
     @SuppressWarnings("unused")
     public void setTimeUntilExpirationForEmailResetToken(final StroomDuration timeUntilExpirationForEmailResetToken) {
         this.timeUntilExpirationForEmailResetToken = timeUntilExpirationForEmailResetToken;
+    }
+
+    public Long getDefaultApiKeyExpiryInMinutes() {
+        return defaultApiKeyExpiryInMinutes;
+    }
+
+    public void setDefaultApiKeyExpiryInMinutes(final Long defaultApiKeyExpiryInMinutes) {
+        this.defaultApiKeyExpiryInMinutes = defaultApiKeyExpiryInMinutes;
     }
 
     public String getJwsIssuer() {

@@ -15,9 +15,9 @@
  */
 
 import * as React from "react";
-import * as ReactLoader from "react-loader";
+import ReactLoader from "react-loader";
 
-var options = {
+const options = {
   lines: 13,
   length: 20,
   width: 10,

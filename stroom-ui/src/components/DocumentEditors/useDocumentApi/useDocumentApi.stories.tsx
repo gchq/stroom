@@ -2,7 +2,7 @@ import * as React from "react";
 
 import { storiesOf } from "@storybook/react";
 import DocRefTypePicker from "components/DocRefTypePicker";
-import useDocumentApi from "./useDocumentApi";
+import { useDocumentApi } from "./useDocumentApi";
 import { ResourcesByDocType } from "./types/resourceUrls";
 import { useDocumentTree } from "components/DocumentEditors/api/explorer";
 import { iterateNodes } from "lib/treeUtils/treeUtils";
@@ -15,7 +15,7 @@ const TestHarness: React.FunctionComponent = () => {
     "Dictionary",
   );
   const setDocRefTypeSafe = React.useCallback(
-    d => setDocRefType(d as keyof ResourcesByDocType),
+    (d) => setDocRefType(d as keyof ResourcesByDocType),
     [setDocRefType],
   );
 
@@ -38,7 +38,7 @@ const TestHarness: React.FunctionComponent = () => {
 
   React.useEffect(() => {
     if (!!fetchDocument) {
-      fetchDocument(docRefUuid).then(d => {
+      fetchDocument(docRefUuid).then((d) => {
         setDocRefContents(d);
       });
     }

@@ -182,9 +182,9 @@ public class ProcessorTaskListPresenter extends MyPresenterWidget<DataGridView<P
             if (event.getColumn() instanceof OrderByColumn<?, ?>) {
                 final OrderByColumn<?, ?> orderByColumn = (OrderByColumn<?, ?>) event.getColumn();
                 if (event.isSortAscending()) {
-                    criteria.setSort(orderByColumn.getField(), Sort.Direction.ASCENDING, orderByColumn.isIgnoreCase());
+                    criteria.setSort(orderByColumn.getField(), false, orderByColumn.isIgnoreCase());
                 } else {
-                    criteria.setSort(orderByColumn.getField(), Sort.Direction.DESCENDING, orderByColumn.isIgnoreCase());
+                    criteria.setSort(orderByColumn.getField(), true, orderByColumn.isIgnoreCase());
                 }
                 refresh();
             }

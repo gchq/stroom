@@ -1,1 +1,1 @@
-export { default } from "./PipelineDisplay";
+export { PipelineDisplay } from "./PipelineDisplay";

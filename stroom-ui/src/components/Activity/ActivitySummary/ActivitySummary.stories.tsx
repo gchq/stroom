@@ -17,10 +17,8 @@
 import * as React from "react";
 import { storiesOf } from "@storybook/react";
 
-import ActivitySummary from "./ActivitySummary";
+import { ActivitySummary } from "./ActivitySummary";
 
-import { addThemedStories } from "testing/storybook/themedStoryGenerator";
-
-const stories = storiesOf("Sections/Activity/Summary", module);
-
-addThemedStories(stories, () => <ActivitySummary />);
+storiesOf("Sections/Activity", module).add("Summary", () => (
+  <ActivitySummary />
+));

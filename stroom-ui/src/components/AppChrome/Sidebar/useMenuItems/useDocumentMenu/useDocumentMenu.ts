@@ -25,8 +25,8 @@ const getDocumentTreeMenuItems = (
   children:
     treeNode.children && treeNode.children.length > 0
       ? treeNode.children
-          .filter(t => t.type === "Folder")
-          .map(t => getDocumentTreeMenuItems(openDocRef, treeNode, t, true))
+          .filter((t) => t.type === "Folder")
+          .map((t) => getDocumentTreeMenuItems(openDocRef, treeNode, t, true))
       : undefined,
 });
 

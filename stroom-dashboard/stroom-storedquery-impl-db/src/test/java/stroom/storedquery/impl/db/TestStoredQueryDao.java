@@ -33,7 +33,6 @@ import stroom.task.api.SimpleTaskContextFactory;
 import stroom.test.common.util.db.DbTestUtil;
 import stroom.util.AuditUtil;
 import stroom.util.shared.ResultPage;
-import stroom.util.shared.Sort.Direction;
 
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
@@ -112,7 +111,7 @@ class TestStoredQueryDao {
         final FindStoredQueryCriteria criteria = new FindStoredQueryCriteria();
         criteria.setDashboardUuid(dashboardRef.getUuid());
         criteria.setComponentId(QUERY_COMPONENT);
-        criteria.setSort(FindStoredQueryCriteria.FIELD_TIME, Direction.DESCENDING, false);
+        criteria.setSort(FindStoredQueryCriteria.FIELD_TIME, true, false);
 
         final ResultPage<StoredQuery> list = storedQueryDao.find(criteria);
 
@@ -155,7 +154,7 @@ class TestStoredQueryDao {
         final FindStoredQueryCriteria criteria = new FindStoredQueryCriteria();
         criteria.setDashboardUuid(dashboardRef.getUuid());
         criteria.setComponentId(QUERY_COMPONENT);
-        criteria.setSort(FindStoredQueryCriteria.FIELD_TIME, Direction.DESCENDING, false);
+        criteria.setSort(FindStoredQueryCriteria.FIELD_TIME, true, false);
 
         ResultPage<StoredQuery> list = storedQueryDao.find(criteria);
         assertThat(list.size()).isEqualTo(2);

@@ -16,11 +16,8 @@
 
 import * as React from "react";
 import { storiesOf } from "@storybook/react";
-import { addThemedStories } from "testing/storybook/themedStoryGenerator";
 import FsVolume from "./types/FsVolume";
 import DataVolumeCard from "./DataVolumeCard";
-
-const stories = storiesOf("Sections/Data Volumes/DataVolumeCard", module);
 
 const volume01: FsVolume = {
   id: "123",
@@ -42,7 +39,7 @@ const volume01: FsVolume = {
   createUser: "Creating user",
 };
 
-addThemedStories(stories, () => (
+storiesOf("Sections/Data Volumes", module).add("DataVolumeCard", () => (
   <div style={{ padding: "1em" }}>
     <DataVolumeCard
       volume={volume01}

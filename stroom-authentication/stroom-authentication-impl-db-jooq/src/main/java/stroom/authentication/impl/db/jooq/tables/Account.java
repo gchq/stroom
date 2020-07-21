@@ -15,7 +15,6 @@ import org.jooq.Identity;
 import org.jooq.Index;
 import org.jooq.Name;
 import org.jooq.Record;
-import org.jooq.Row22;
 import org.jooq.Schema;
 import org.jooq.Table;
 import org.jooq.TableField;
@@ -42,7 +41,7 @@ import stroom.authentication.impl.db.jooq.tables.records.AccountRecord;
 @SuppressWarnings({ "all", "unchecked", "rawtypes" })
 public class Account extends TableImpl<AccountRecord> {
 
-    private static final long serialVersionUID = -563586338;
+    private static final long serialVersionUID = -963281162;
 
     /**
      * The reference instance of <code>stroom.account</code>
@@ -88,14 +87,19 @@ public class Account extends TableImpl<AccountRecord> {
     public final TableField<AccountRecord, String> UPDATE_USER = createField(DSL.name("update_user"), org.jooq.impl.SQLDataType.VARCHAR(255).nullable(false), this, "");
 
     /**
+     * The column <code>stroom.account.user_id</code>.
+     */
+    public final TableField<AccountRecord, String> USER_ID = createField(DSL.name("user_id"), org.jooq.impl.SQLDataType.VARCHAR(255).nullable(false), this, "");
+
+    /**
      * The column <code>stroom.account.email</code>.
      */
-    public final TableField<AccountRecord, String> EMAIL = createField(DSL.name("email"), org.jooq.impl.SQLDataType.VARCHAR(255).nullable(false), this, "");
+    public final TableField<AccountRecord, String> EMAIL = createField(DSL.name("email"), org.jooq.impl.SQLDataType.VARCHAR(255), this, "");
 
     /**
      * The column <code>stroom.account.password_hash</code>.
      */
-    public final TableField<AccountRecord, String> PASSWORD_HASH = createField(DSL.name("password_hash"), org.jooq.impl.SQLDataType.VARCHAR(255).nullable(false), this, "");
+    public final TableField<AccountRecord, String> PASSWORD_HASH = createField(DSL.name("password_hash"), org.jooq.impl.SQLDataType.VARCHAR(255), this, "");
 
     /**
      * The column <code>stroom.account.password_last_changed_ms</code>.
@@ -207,7 +211,7 @@ public class Account extends TableImpl<AccountRecord> {
 
     @Override
     public List<Index> getIndexes() {
-        return Arrays.<Index>asList(Indexes.ACCOUNT_EMAIL, Indexes.ACCOUNT_PRIMARY);
+        return Arrays.<Index>asList(Indexes.ACCOUNT_PRIMARY, Indexes.ACCOUNT_USER_ID);
     }
 
     @Override
@@ -222,7 +226,7 @@ public class Account extends TableImpl<AccountRecord> {
 
     @Override
     public List<UniqueKey<AccountRecord>> getKeys() {
-        return Arrays.<UniqueKey<AccountRecord>>asList(Keys.KEY_ACCOUNT_PRIMARY, Keys.KEY_ACCOUNT_EMAIL);
+        return Arrays.<UniqueKey<AccountRecord>>asList(Keys.KEY_ACCOUNT_PRIMARY, Keys.KEY_ACCOUNT_USER_ID);
     }
 
     @Override
@@ -254,14 +258,5 @@ public class Account extends TableImpl<AccountRecord> {
     @Override
     public Account rename(Name name) {
         return new Account(name, null);
-    }
-
-    // -------------------------------------------------------------------------
-    // Row22 type methods
-    // -------------------------------------------------------------------------
-
-    @Override
-    public Row22<Integer, Integer, Long, String, Long, String, String, String, Long, String, String, String, Integer, Integer, Long, Long, Boolean, Boolean, Boolean, Boolean, Boolean, Boolean> fieldsRow() {
-        return (Row22) super.fieldsRow();
     }
 }

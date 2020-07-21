@@ -34,8 +34,8 @@ public class Indexes {
     // INDEX definitions
     // -------------------------------------------------------------------------
 
-    public static final Index ACCOUNT_EMAIL = Indexes0.ACCOUNT_EMAIL;
     public static final Index ACCOUNT_PRIMARY = Indexes0.ACCOUNT_PRIMARY;
+    public static final Index ACCOUNT_USER_ID = Indexes0.ACCOUNT_USER_ID;
     public static final Index JSON_WEB_KEY_JSON_WEB_KEY_FK_TOKEN_TYPE_ID = Indexes0.JSON_WEB_KEY_JSON_WEB_KEY_FK_TOKEN_TYPE_ID;
     public static final Index JSON_WEB_KEY_PRIMARY = Indexes0.JSON_WEB_KEY_PRIMARY;
     public static final Index OAUTH_CLIENT_CLIENT_ID = Indexes0.OAUTH_CLIENT_CLIENT_ID;
@@ -51,8 +51,8 @@ public class Indexes {
     // -------------------------------------------------------------------------
 
     private static class Indexes0 {
-        public static Index ACCOUNT_EMAIL = Internal.createIndex("email", Account.ACCOUNT, new OrderField[] { Account.ACCOUNT.EMAIL }, true);
         public static Index ACCOUNT_PRIMARY = Internal.createIndex("PRIMARY", Account.ACCOUNT, new OrderField[] { Account.ACCOUNT.ID }, true);
+        public static Index ACCOUNT_USER_ID = Internal.createIndex("user_id", Account.ACCOUNT, new OrderField[] { Account.ACCOUNT.USER_ID }, true);
         public static Index JSON_WEB_KEY_JSON_WEB_KEY_FK_TOKEN_TYPE_ID = Internal.createIndex("json_web_key_fk_token_type_id", JsonWebKey.JSON_WEB_KEY, new OrderField[] { JsonWebKey.JSON_WEB_KEY.FK_TOKEN_TYPE_ID }, false);
         public static Index JSON_WEB_KEY_PRIMARY = Internal.createIndex("PRIMARY", JsonWebKey.JSON_WEB_KEY, new OrderField[] { JsonWebKey.JSON_WEB_KEY.ID }, true);
         public static Index OAUTH_CLIENT_CLIENT_ID = Internal.createIndex("client_id", OauthClient.OAUTH_CLIENT, new OrderField[] { OauthClient.OAUTH_CLIENT.CLIENT_ID }, true);

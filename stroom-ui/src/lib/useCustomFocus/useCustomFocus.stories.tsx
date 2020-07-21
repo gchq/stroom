@@ -1,15 +1,13 @@
 import { storiesOf } from "@storybook/react";
-import useListReducer from "lib/useListReducer";
+import { useListReducer } from "lib/useListReducer";
 import { loremIpsum } from "lorem-ipsum";
 import * as React from "react";
 import JsonDebug from "testing/JsonDebug";
-import useCustomFocus from "./useCustomFocus";
+import { useCustomFocus } from "./useCustomFocus";
 
 const generateItem = () => loremIpsum({ count: 3, units: "words" });
 
-const TEST_ITEMS: string[] = Array(5)
-  .fill(null)
-  .map(generateItem);
+const TEST_ITEMS: string[] = Array(5).fill(null).map(generateItem);
 
 const focusStyle: React.CSSProperties = {
   border: "solid thin black",
@@ -26,7 +24,7 @@ interface ItemWithClick<T> {
 
 const TestHarness: React.FunctionComponent<Props> = ({ initialItems }) => {
   const { items, removeItemAtIndex, addItem } = useListReducer(
-    d => d,
+    (d) => d,
     initialItems,
   );
 

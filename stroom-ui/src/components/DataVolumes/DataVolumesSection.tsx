@@ -59,10 +59,8 @@ const DataVolumesSection: React.FunctionComponent<Props> = ({
                   Add data volume
                 </Button>
               </Empty>
-            ) : (
-              undefined
-            )}
-            {volumes.map(volume => {
+            ) : undefined}
+            {volumes.map((volume) => {
               return (
                 <DataVolumeCard
                   key={volume.id}

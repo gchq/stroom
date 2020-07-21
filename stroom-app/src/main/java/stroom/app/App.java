@@ -90,7 +90,6 @@ public class App extends Application<Config> {
     private ManagedServices managedServices;
     @Inject
     private BuildInfo buildInfo;
-    
 
     private final Path configFile;
 
@@ -145,8 +144,6 @@ public class App extends Application<Config> {
         // then we will need to do something with bootstrap.setValidatorFactory()
         // and our CustomConstraintValidatorFactory
     }
-
-
 
     @Override
     public void run(final Config configuration, final Environment environment) {
@@ -218,9 +215,9 @@ public class App extends Application<Config> {
         warnAboutDefaultOpenIdCreds(configuration);
 
         showBuildInfo();
-        
+
     }
-    
+
     private void showBuildInfo() {
         Objects.requireNonNull(buildInfo);
         LOGGER.info("Build version: {}, date: {}",

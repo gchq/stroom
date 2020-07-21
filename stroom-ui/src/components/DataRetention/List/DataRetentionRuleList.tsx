@@ -15,7 +15,7 @@
  */
 
 import { ControlledInput } from "lib/useForm/types";
-import useListReducer from "lib/useListReducer";
+import { useListReducer } from "lib/useListReducer";
 import * as React from "react";
 import { useCallback, useEffect, useMemo } from "react";
 import { DragDropContext, Droppable, DropResult } from "react-beautiful-dnd";
@@ -30,9 +30,9 @@ interface ValueAndChangeHandler {
   onRemove: () => void;
 }
 
-const DataRetentionRuleList: React.FunctionComponent<
-  ControlledInput<DataRetentionRule[]>
-> = ({ value: values, onChange }) => {
+const DataRetentionRuleList: React.FunctionComponent<ControlledInput<
+  DataRetentionRule[]
+>> = ({ value: values, onChange }) => {
   const sortedRules = useMemo(
     () => values.sort((l, r) => (l.ruleNumber >= r.ruleNumber ? 1 : -1)),
     [values],
@@ -80,7 +80,7 @@ const DataRetentionRuleList: React.FunctionComponent<
   return (
     <DragDropContext onDragEnd={handleOnDragEnd}>
       <Droppable droppableId="dataRetentionRuleListDroppable">
-        {provided => (
+        {(provided) => (
           <div ref={provided.innerRef} {...provided.droppableProps}>
             {valuesAndChangeHandlers
               .sort((l, r) =>

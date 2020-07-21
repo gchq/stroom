@@ -18,8 +18,6 @@ import { storiesOf } from "@storybook/react";
 
 import PermissionInheritancePicker from "./PermissionInheritancePicker";
 
-import { addThemedStories } from "testing/storybook/themedStoryGenerator";
-
 import useForm from "lib/useForm";
 import JsonDebug from "testing/JsonDebug";
 import { PermissionInheritance } from "./types";
@@ -49,9 +47,7 @@ const TestHarness: React.FunctionComponent = () => {
   );
 };
 
-const stories = storiesOf(
-  "Document Editors/Folder/Permission Inheritance Picker",
+storiesOf(
+  "Document Editors/Folder",
   module,
-);
-
-addThemedStories(stories, () => <TestHarness />);
+).add("Permission Inheritance Picker", () => <TestHarness />);

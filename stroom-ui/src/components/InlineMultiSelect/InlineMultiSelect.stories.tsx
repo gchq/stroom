@@ -19,10 +19,7 @@ import { SelectOption } from "components/InlineSelect/InlineSelect";
 import * as React from "react";
 import { useState } from "react";
 import JsonDebug from "testing/JsonDebug";
-import { addThemedStories } from "testing/storybook/themedStoryGenerator";
 import InlineMultiSelect from "./InlineMultiSelect";
-
-const stories = storiesOf("General Purpose/InlineMultiSelect", module);
 
 const options: SelectOption[] = [
   { value: "leia", label: "Princess Leia" },
@@ -32,7 +29,7 @@ const options: SelectOption[] = [
   { value: "everyone", label: "everyone" },
 ];
 
-addThemedStories(stories, () => {
+storiesOf("General Purpose", module).add("InlineMultiSelect", () => {
   const [emptySelection, setEmptySelection] = useState<string[]>([]);
   const [singleSelection, setSingleSelection] = useState<string[]>(["leia"]);
   const [multiSelection, setMultiSelection] = useState<string[]>([

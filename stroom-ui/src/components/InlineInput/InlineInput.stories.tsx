@@ -18,32 +18,26 @@ import { storiesOf } from "@storybook/react";
 import * as React from "react";
 import { ChangeEventHandler } from "react";
 import JsonDebug from "testing/JsonDebug";
-import { addThemedStories } from "testing/storybook/themedStoryGenerator";
 import InlineInput from "./InlineInput";
 
-const stories = storiesOf("General Purpose/InlineInput", module);
-
-addThemedStories(stories, () => {
+storiesOf("General Purpose", module).add("InlineInput", () => {
   const [stringValue, setStringValue] = React.useState<string>("Yoda");
-  const onStringValueChange: ChangeEventHandler<
-    HTMLInputElement
-  > = React.useCallback(({ target: { value } }) => setStringValue(value), [
-    setStringValue,
-  ]);
+  const onStringValueChange: ChangeEventHandler<HTMLInputElement> = React.useCallback(
+    ({ target: { value } }) => setStringValue(value),
+    [setStringValue],
+  );
 
   const [numericValue, setNumericValue] = React.useState<string>("10");
-  const onNumericValueChange: ChangeEventHandler<
-    HTMLInputElement
-  > = React.useCallback(({ target: { value } }) => setNumericValue(value), [
-    setNumericValue,
-  ]);
+  const onNumericValueChange: ChangeEventHandler<HTMLInputElement> = React.useCallback(
+    ({ target: { value } }) => setNumericValue(value),
+    [setNumericValue],
+  );
 
   const [dateValue, setDateValue] = React.useState<string>("2019-01-01");
-  const onDateValueChange: ChangeEventHandler<
-    HTMLInputElement
-  > = React.useCallback(({ target: { value } }) => setDateValue(value), [
-    setDateValue,
-  ]);
+  const onDateValueChange: ChangeEventHandler<HTMLInputElement> = React.useCallback(
+    ({ target: { value } }) => setDateValue(value),
+    [setDateValue],
+  );
   return (
     <div style={{ padding: "5em" }}>
       <h1>InlineInput</h1>

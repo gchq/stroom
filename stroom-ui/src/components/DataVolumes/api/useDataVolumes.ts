@@ -1,7 +1,7 @@
 import * as React from "react";
 
 import useApi from "./useApi";
-import useListReducer from "lib/useListReducer";
+import { useListReducer } from "lib/useListReducer";
 import FsVolume from "../types/FsVolume";
 
 /**
@@ -24,12 +24,12 @@ const useDataVolumes = (): UseDataVolumes => {
     receiveItems,
     addItem,
     removeItem,
-  } = useListReducer<FsVolume>(iv => iv.id);
+  } = useListReducer<FsVolume>((iv) => iv.id);
 
   const { getVolumes, deleteVolume, createVolume, update } = useApi();
   const [isLoading, setIsLoading] = React.useState<boolean>(true);
   React.useEffect(() => {
-    getVolumes().then(items => {
+    getVolumes().then((items) => {
       receiveItems(items);
       setIsLoading(false);
     });
@@ -48,9 +48,9 @@ const useDataVolumes = (): UseDataVolumes => {
     ),
     update: React.useCallback(
       (volume: FsVolume) =>
-        update(volume).then(response => {
+        update(volume).then((response) => {
           const indexToUpdate = volumes.findIndex(
-            item => item.id === response.id,
+            (item) => item.id === response.id,
           );
           return updateItemAtIndex(indexToUpdate, response);
         }),

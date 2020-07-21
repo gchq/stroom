@@ -15,9 +15,8 @@
  */
 
 import * as React from "react";
-import * as CopyToClipboard from "react-copy-to-clipboard";
+import CopyToClipboard from "react-copy-to-clipboard";
 import Toggle from "react-toggle";
-import "react-toggle/style.css";
 import { ByCopy, OnCopyMs } from "components/auditCopy";
 import Button from "components/Button";
 import Loader from "components/Loader";
@@ -26,14 +25,18 @@ import useConfig from "startup/config/useConfig";
 
 const EditTokenForm: React.FunctionComponent<{
   onBack: () => void;
-  onChangeState: (id: string, newState: boolean) => void;
+  onChangeState: (id: number, newState: boolean) => void;
   token: Token;
 }> = ({ onBack, onChangeState, token }) => {
-  const { dateFormat } = useConfig();
+  const {
+    uiPreferences: { dateFormat },
+  } = useConfig();
   return (
     <form>
       <div className="header">
-        <Button icon="arrow-left" text="Back" onClick={() => onBack()} />
+        <Button icon="arrow-left" onClick={() => onBack()}>
+          Back
+        </Button>
       </div>
       {token === undefined ? (
         <div className="loader-container">
@@ -62,7 +65,7 @@ const EditTokenForm: React.FunctionComponent<{
                   />
                 </div>
               </div>
-              <ByCopy by={token.userEmail} verb="Issued to" />
+              <ByCopy by={token.userId} verb="Issued to" />
               <OnCopyMs
                 on={token.expiresOnMs}
                 verb="Expires"
@@ -101,8 +104,9 @@ const EditTokenForm: React.FunctionComponent<{
                   action="primary"
                   type="button"
                   icon="copy"
-                  text="Copy key"
-                />
+                >
+                  Copy key
+                </Button>
               </CopyToClipboard>
             </div>
           </div>

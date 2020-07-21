@@ -467,7 +467,7 @@ public class MetaServiceImpl implements MetaService, Searchable {
 
 //            final FindMetaCriteria findMetaCriteria = new FindMetaCriteria();
 //            findMetaCriteria.copyFrom(criteria);
-//            findMetaCriteria.setSort(MetaFields.CREATE_TIME.getName(), Direction.DESCENDING, false);
+//            findMetaCriteria.setSort(MetaFields.CREATE_TIME.getName(), true, false);
 
 //            findDataCriteria.setFetchSet(new HashSet<>());
 

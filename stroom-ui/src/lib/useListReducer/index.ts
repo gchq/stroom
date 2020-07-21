@@ -1,1 +1,1 @@
-export { default } from "./useListReducer";
+export { useListReducer } from "./useListReducer";

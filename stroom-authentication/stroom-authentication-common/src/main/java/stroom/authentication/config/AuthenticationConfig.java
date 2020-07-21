@@ -51,7 +51,7 @@ public final class AuthenticationConfig extends AbstractConfig {
     private EmailConfig emailConfig = new EmailConfig();
     private TokenConfig tokenConfig = new TokenConfig();
     private OAuth2Config oAuth2Config = new OAuth2Config();
-    private PasswordIntegrityChecksConfig passwordIntegrityChecksConfig = new PasswordIntegrityChecksConfig();
+    private PasswordPolicyConfig passwordPolicyConfig = new PasswordPolicyConfig();
 
     @AssertFalse(
             message = "Using default OpenId authentication credentials. These should only be used " +
@@ -153,13 +153,13 @@ public final class AuthenticationConfig extends AbstractConfig {
 
     @NotNull
     @JsonProperty(PROP_NAME_PASSWORD_INTEGRITY_CHECKS)
-    public PasswordIntegrityChecksConfig getPasswordIntegrityChecksConfig() {
-        return passwordIntegrityChecksConfig;
+    public PasswordPolicyConfig getPasswordPolicyConfig() {
+        return passwordPolicyConfig;
     }
 
     @SuppressWarnings("unused")
-    public void setPasswordIntegrityChecksConfig(PasswordIntegrityChecksConfig passwordIntegrityChecksConfig) {
-        this.passwordIntegrityChecksConfig = passwordIntegrityChecksConfig;
+    public void setPasswordPolicyConfig(PasswordPolicyConfig passwordPolicyConfig) {
+        this.passwordPolicyConfig = passwordPolicyConfig;
     }
 
 }

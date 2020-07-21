@@ -1,3 +1,3 @@
-import ThemedAceEditor from './ThemedAceEditor';
+import ThemedAceEditor from "./ThemedAceEditor";
 
 export default ThemedAceEditor;

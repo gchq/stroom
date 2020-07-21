@@ -21,6 +21,6 @@ import XsltEditor from "./XsltEditor";
 
 const stories = storiesOf("Document Editors/XSLT", module);
 
-let uuid: string = fullTestData.documents.XSLT[0].uuid;
+const uuid: string = fullTestData.documents.XSLT[0].uuid;
 
 stories.add("editor", () => <XsltEditor docRefUuid={uuid} />);

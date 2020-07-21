@@ -64,7 +64,7 @@ export const ConditionDisplayValues: ConditionTypes<string> = {
 export type ConditionType = keyof ConditionTypes<any>;
 export const conditionTypes: ConditionType[] = Object.keys(
   ConditionDisplayValues,
-).map(d => d as ConditionType);
+).map((d) => d as ConditionType);
 
 export interface DataSourceFieldType {
   type: "ID" | "FIELD" | "NUMERIC_FIELD" | "DATE_FIELD";

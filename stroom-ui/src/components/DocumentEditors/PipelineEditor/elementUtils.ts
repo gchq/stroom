@@ -29,7 +29,7 @@ export function groupByCategory(
   elements: ElementDefinition[],
 ): ElementDefinitionsByCategory {
   return Object.entries(elements)
-    .map(k => k[1])
+    .map((k) => k[1])
     .reduce(
       (acc, next) => ({
         ...acc,
@@ -48,7 +48,7 @@ export function keyByType(
   elements: ElementDefinition[],
 ): ElementDefinitionsByType {
   return Object.entries(elements)
-    .map(k => k[1])
+    .map((k) => k[1])
     .reduce(
       (acc, next) => ({
         ...acc,

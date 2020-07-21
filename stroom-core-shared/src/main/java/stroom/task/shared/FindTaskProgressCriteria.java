@@ -19,7 +19,6 @@ package stroom.task.shared;
 import stroom.util.shared.BaseCriteria;
 import stroom.util.shared.PageRequest;
 import stroom.util.shared.Sort;
-import stroom.util.shared.Sort.Direction;
 import stroom.util.shared.filter.FilterFieldDefinition;
 
 import com.fasterxml.jackson.annotation.JsonCreator;
@@ -125,7 +124,7 @@ public class FindTaskProgressCriteria extends BaseCriteria {
 
     public void validateSortField() {
         if (this.getSortList().isEmpty()) {
-            Sort defaultSort = new Sort(FindTaskProgressCriteria.FIELD_SUBMIT_TIME, Direction.ASCENDING, true);
+            Sort defaultSort = new Sort(FindTaskProgressCriteria.FIELD_SUBMIT_TIME, false, true);
             this.getSortList().add(defaultSort);
         } else {
             for (Sort sort : this.getSortList()) {
@@ -135,9 +134,9 @@ public class FindTaskProgressCriteria extends BaseCriteria {
                         FindTaskProgressCriteria.FIELD_NAME,
                         FindTaskProgressCriteria.FIELD_NODE,
                         FindTaskProgressCriteria.FIELD_SUBMIT_TIME,
-                        FindTaskProgressCriteria.FIELD_USER).contains(sort.getField())) {
+                        FindTaskProgressCriteria.FIELD_USER).contains(sort.getId())) {
                     throw new IllegalArgumentException(
-                            "A sort field of " + sort.getField() + " is not valid! It must be one of FindTaskProgressCriteria.FIELD_xxx");
+                            "A sort field of " + sort.getId() + " is not valid! It must be one of FindTaskProgressCriteria.FIELD_xxx");
                 }
             }
         }

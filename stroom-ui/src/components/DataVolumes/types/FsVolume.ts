@@ -11,4 +11,4 @@ export default interface FsVolume extends HasAuditInfo {
   status: "ACTIVE" | "INACTIVE" | "CLOSED";
   byteLimit: number;
   readonly volumeState: FsVolumeState;
-};
+}

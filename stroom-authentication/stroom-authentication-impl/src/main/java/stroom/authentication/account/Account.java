@@ -31,6 +31,7 @@ public class Account {
     private Long updateTimeMs;
     private String createUser;
     private String updateUser;
+    private String userId;
     private String email;
     private String firstName;
     private String lastName;
@@ -123,6 +124,14 @@ public class Account {
 
     public void setUpdateUser(final String updateUser) {
         this.updateUser = updateUser;
+    }
+
+    public String getUserId() {
+        return userId;
+    }
+
+    public void setUserId(final String userId) {
+        this.userId = userId;
     }
 
     public String getEmail() {
@@ -246,6 +255,7 @@ public class Account {
                 ", updateTimeMs=" + updateTimeMs +
                 ", createUser='" + createUser + '\'' +
                 ", updateUser='" + updateUser + '\'' +
+                ", userId='" + userId + '\'' +
                 ", email='" + email + '\'' +
                 ", firstName='" + firstName + '\'' +
                 ", lastName='" + lastName + '\'' +

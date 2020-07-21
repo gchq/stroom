@@ -28,7 +28,7 @@ const PopulatedEditable = () => {
   const [value, onChange] = React.useState<ExpressionOperatorType>(
     testExpression,
   );
-  const handleChange = useCallback(value => onChange(value), [onChange]);
+  const handleChange = useCallback((value) => onChange(value), [onChange]);
 
   return (
     <ExpressionBuilder

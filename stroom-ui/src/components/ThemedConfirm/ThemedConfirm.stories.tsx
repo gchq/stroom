@@ -20,9 +20,7 @@ import { storiesOf } from "@storybook/react";
 import Button from "../Button";
 import ThemedConfirm, { useDialog } from "./ThemedConfirm";
 
-import { addThemedStories } from "testing/storybook/themedStoryGenerator";
-
-let TestHarness: React.FunctionComponent = () => {
+const TestHarness: React.FunctionComponent = () => {
   const [confirmCount, setConfirmCount] = React.useState<number>(0);
 
   const { showDialog, componentProps } = useDialog({
@@ -39,12 +37,12 @@ let TestHarness: React.FunctionComponent = () => {
   return (
     <React.Fragment>
       <ThemedConfirm {...componentProps} />
-      <Button onClick={showDialog} text="Check" />
+      <Button onClick={showDialog}>Check</Button>
       <div>Number of Confirmations: {confirmCount}</div>
     </React.Fragment>
   );
 };
 
-const stories = storiesOf("General Purpose/Themed Confirm", module);
-
-addThemedStories(stories, () => <TestHarness />);
+storiesOf("General Purpose", module).add("Themed Confirm", () => (
+  <TestHarness />
+));

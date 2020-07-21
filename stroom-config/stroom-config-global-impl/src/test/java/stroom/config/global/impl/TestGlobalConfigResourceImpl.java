@@ -363,8 +363,8 @@ class TestGlobalConfigResourceImpl extends AbstractMultiNodeResourceTest<GlobalC
                 globalConfigService,
                 nodeService,
                 new UiConfig(),
-                new UiPreferences(),
                 nodeInfo,
-                webTargetFactory());
+                webTargetFactory(),
+                null);
     }
 }

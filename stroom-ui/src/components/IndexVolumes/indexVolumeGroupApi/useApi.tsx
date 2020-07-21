@@ -26,40 +26,31 @@ export const useApi = (): Api => {
 
   return {
     getIndexVolumeGroupNames: React.useCallback(
-      () =>
-        httpGetJson(`${resource}/names`),
+      () => httpGetJson(`${resource}/names`),
       [resource, httpGetJson],
     ),
-    getIndexVolumeGroups: React.useCallback(
-      () => httpGetJson(resource),
-      [resource, httpGetJson],
-    ),
+    getIndexVolumeGroups: React.useCallback(() => httpGetJson(resource), [
+      resource,
+      httpGetJson,
+    ]),
     getIndexVolumeGroup: React.useCallback(
-      (name: string) =>
-        httpGetJson(`${resource}/${name}`),
-      [resource,  httpGetJson],
+      (name: string) => httpGetJson(`${resource}/${name}`),
+      [resource, httpGetJson],
     ),
     createIndexVolumeGroup: React.useCallback(
       (name?: string) =>
-        httpPostJsonResponse(
-          resource,
-          { body: JSON.stringify({ name }) },
-        ),
+        httpPostJsonResponse(resource, { body: JSON.stringify({ name }) }),
       [resource, httpPostJsonResponse],
     ),
     deleteIndexVolumeGroup: React.useCallback(
-      (id: string) =>
-        httpDeleteEmptyResponse(
-          `${resource}/${id}`,
-        ),
+      (id: string) => httpDeleteEmptyResponse(`${resource}/${id}`),
       [resource, httpDeleteEmptyResponse],
     ),
     update: React.useCallback(
       (indexVolumeGroup: IndexVolumeGroup) =>
-        httpPutJsonResponse(
-          resource,
-          { body: JSON.stringify(indexVolumeGroup) },
-        ),
+        httpPutJsonResponse(resource, {
+          body: JSON.stringify(indexVolumeGroup),
+        }),
       [resource, httpPutJsonResponse],
     ),
   };

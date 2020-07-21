@@ -20,3 +20,27 @@
 @function themed($key) {
   @return map-get($theme-map, $key);
 }
+
+@mixin dialog($themes) {
+  @include themify($themes) {
+    border: 1px solid themed("dialog__border-color");
+    -webkit-box-shadow: 0 5px 10px themed("dialog__border-color");
+    box-shadow: 0 5px 10px themed("dialog__border-color");
+  }
+}
+
+@mixin focus-ring($themes, $type) {
+  @include themify($themes) {
+    border-color: themed($type);
+    outline: 0;
+    -webkit-box-shadow: inset 0 1px 1px rgba(0,0,0,.075), 0 0 8px rgba(themed($type),.6);
+    box-shadow: inset 0 1px 1px rgba(0,0,0,.075), 0 0 8px rgba(themed($type),.6);
+  }
+}
+
+@mixin page($themes) {
+  @include themify($themes) {
+    background-color: themed("page__background-color");
+    color: themed("page__text-color");
+  }
+}

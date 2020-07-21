@@ -85,7 +85,7 @@ class JobService {
 
         if (findJobCriteria.getSortList().size() > 0) {
             final Sort sort = findJobCriteria.getSortList().get(0);
-            if (sort.getField().equals(FindJobCriteria.FIELD_ADVANCED)) {
+            if (sort.getId().equals(FindJobCriteria.FIELD_ADVANCED)) {
                 results.getValues().sort(Comparator.comparing(Job::isAdvanced).thenComparing(Job::getName));
             }
         }

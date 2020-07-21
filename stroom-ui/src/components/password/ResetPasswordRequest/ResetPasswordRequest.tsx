@@ -53,7 +53,7 @@ const ResetPasswordRequest: React.FunctionComponent<{
                     <Field name="email" type="text" />
                     <ErrorMessage
                       name="email"
-                      render={msg => (
+                      render={(msg) => (
                         <div className="validation-error">{msg}</div>
                       )}
                     />
@@ -67,14 +67,16 @@ const ResetPasswordRequest: React.FunctionComponent<{
                 action="primary"
                 type="submit"
                 disabled={isPristine || hasErrors}
-                text="Send"
-              />
+              >
+                Send
+              </Button>
               <Button
                 appearance="contained"
                 action="secondary"
                 onClick={() => onBack()}
-                text="Back to Stroom"
-              />
+              >
+                Back to Stroom
+              </Button>
             </div>
           </div>
         </Form>

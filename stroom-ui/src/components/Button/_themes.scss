@@ -1,172 +1,173 @@
+@import "../../styles/colours";
 $themes: (
   light: (
     ////////////////////////////////////////////////////////////////////////////////
     // Default buttons
     ////////////////////////////////////////////////////////////////////////////////
-    button-default_color: #424242,  // material grey 800
-    button-default__background-color--hover: rgba(158, 158, 158, 0.3), // material grey 500 30%
-    button-default__background-color--selected: rgba(158, 158, 158, 0.2), // material grey 500 20%
+    button-default__color: $grey-800,  // material grey 800
+    button-default__background-color--hover: rgba($grey-500, 0.3), // material grey 500 30%
+    button-default__background-color--selected: rgba($grey-500, 0.2), // material grey 500 20%
 
-    button-default-primary__color: #2196f3, // material blue 500 
-    button-default-primary__background-color--hover: rgba(33, 150, 243, 0.2), // material blue 500 20%
-    button-default-primary__background-color--selected: rgba(33, 150, 243, 0.1), // material blue 500 10%
+    button-default-primary__color: $blue-500, // material blue 500 
+    button-default-primary__background-color--hover: rgba($blue-500, 0.2), // material blue 500 20%
+    button-default-primary__background-color--selected: rgba($blue-500, 0.1), // material blue 500 10%
 
-    button-default-secondary__color: #e91e63, // material pink 500 
-    button-default-secondary__background-color--hover: rgba(233, 30, 99, 0.2), // material pink 500 20%
-    button-default-secondary__background-color--selected: rgba(233, 30, 99, 0.1), // material pink 500 10%
+    button-default-secondary__color: $pink-500, // material pink 500 
+    button-default-secondary__background-color--hover: rgba($pink-500, 0.2), // material pink 500 20%
+    button-default-secondary__background-color--selected: rgba($pink-500, 0.1), // material pink 500 10%
 
-    button-default__color--disabled: rgba(0, 0, 0, 0.26),
+    button-default__color--disabled: rgba($black, 0.26),
 
     ////////////////////////////////////////////////////////////////////////////////
     // Outline buttons
     ////////////////////////////////////////////////////////////////////////////////
-    button-outline__color: #424242,  // material grey 800
-    button-outline__border-color: rgba(158, 158, 158, 0.8), // material grey 500 80%
-    button-outline__border-color--hover: rgba(158, 158, 158, 1.0), // material grey 500 100%
-    button-outline__background-color--hover: rgba(158, 158, 158, 0.3), // material grey 500 30%
-    button-outline__background-color--selected: rgba(158, 158, 158, 0.2), // material grey 500 20%
+    button-outline__color: $grey-800,  // material grey 800
+    button-outline__border-color: rgba($grey-500, 0.8), // material grey 500 80%
+    button-outline__border-color--hover: rgba($grey-500, 1.0), // material grey 500 100%
+    button-outline__background-color--hover: rgba($grey-500, 0.3), // material grey 500 30%
+    button-outline__background-color--selected: rgba($grey-500, 0.2), // material grey 500 20%
 
-    button-outline-primary__color: #2196f3, // material blue 500 
-    button-outline-primary__border-color: rgba(33, 150, 243, 0.5), // material blue 500 50%
-    button-outline-primary__border-color--hover: rgba(33, 150, 243, 1.0), // material blue 500 100%
-    button-outline-primary__background-color--hover: rgba(33, 150, 243, 0.2), // material blue 500 20%
-    button-outline-primary__background-color--selected: rgba(33, 150, 243, 0.1), // material blue 500 10%
+    button-outline-primary__color: $blue-500, // material blue 500 
+    button-outline-primary__border-color: rgba($blue-500, 0.5), // material blue 500 50%
+    button-outline-primary__border-color--hover: rgba($blue-500, 1.0), // material blue 500 100%
+    button-outline-primary__background-color--hover: rgba($blue-500, 0.2), // material blue 500 20%
+    button-outline-primary__background-color--selected: rgba($blue-500, 0.1), // material blue 500 10%
     
-    button-outline-secondary__color: #e91e63, // material pink 500 
-    button-outline-secondary__border-color: rgba(233, 30, 99, 0.5), // material pink 500 50%
-    button-outline-secondary__border-color--hover: rgba(233, 30, 99, 1.0), // material pink 500 100%
-    button-outline-secondary__background-color--hover: rgba(233, 30, 99, 0.2), // material pink 500 20%
-    button-outline-secondary__background-color--selected: rgba(233, 30, 99, 0.1), // material pink 500 10%
+    button-outline-secondary__color: $pink-500, // material pink 500 
+    button-outline-secondary__border-color: rgba($pink-500, 0.5), // material pink 500 50%
+    button-outline-secondary__border-color--hover: rgba($pink-500, 1.0), // material pink 500 100%
+    button-outline-secondary__background-color--hover: rgba($pink-500, 0.2), // material pink 500 20%
+    button-outline-secondary__background-color--selected: rgba($pink-500, 0.1), // material pink 500 10%
 
-    button-outline__border-color--disabled: rgba(0, 0, 0, 0.26),
-    button-outline__color--disabled: rgba(0, 0, 0, 0.26),
+    button-outline__border-color--disabled: rgba($black, 0.26),
+    button-outline__color--disabled: rgba($black, 0.26),
 
     ////////////////////////////////////////////////////////////////////////////////
     // Icon buttons
     ////////////////////////////////////////////////////////////////////////////////
-    button-icon__color: #424242, // material grey 800
-    button-icon__background-color--hover: rgba(158, 158, 158,0.3), // material grey 500 30%
-    button-icon__background-color--selected: rgba(158, 158, 158,0.2), // material grey 500 20%
+    button-icon__color: $grey-800, // material grey 800
+    button-icon__background-color--hover: rgba($grey-500,0.3), // material grey 500 30%
+    button-icon__background-color--selected: rgba($grey-500,0.2), // material grey 500 20%
     
-    button-icon-primary__color: #2196f3, // material blue 500 
-    button-icon-primary__background-color--hover: rgba(33, 150, 243,0.2), // material blue 500 20%
-    button-icon-primary__background-color--selected: rgba(33, 150, 243,0.1), // material blue 500 10%
+    button-icon-primary__color: $blue-500, // material blue 500 
+    button-icon-primary__background-color--hover: rgba($blue-500,0.2), // material blue 500 20%
+    button-icon-primary__background-color--selected: rgba($blue-500,0.1), // material blue 500 10%
 
-    button-icon-secondary__color: #e91e63, // material pink 500 
-    button-icon-secondary__background-color--hover: rgba(233, 30, 99,0.2), // material pink 500 20%
-    button-icon-secondary__background-color--selected: rgba(233, 30, 99,0.1), // material pink 500 10%
+    button-icon-secondary__color: $pink-500, // material pink 500 
+    button-icon-secondary__background-color--hover: rgba($pink-500,0.2), // material pink 500 20%
+    button-icon-secondary__background-color--selected: rgba($pink-500,0.1), // material pink 500 10%
 
-    button-icon__color--disabled: rgba(0, 0, 0, 0.26),
+    button-icon__color--disabled: rgba($black, 0.26),
 
     ////////////////////////////////////////////////////////////////////////////////
     // Contained buttons
     ////////////////////////////////////////////////////////////////////////////////
-    button-contained__color: #424242,  // material grey 800
-    button-contained__background-color: #e0e0e0, // material grey 300 
-    button-contained__background-color--hover: #eeeeee, // material grey 200 
-    button-contained__background-color--selected: #bdbdbd, // material grey 400 
+    button-contained__color: $grey-800,  // material grey 800
+    button-contained__background-color: $grey-300, // material grey 300 
+    button-contained__background-color--hover: $grey-200, // material grey 200 
+    button-contained__background-color--selected:$grey-400, // material grey 400 
   
-    button-contained-primary__color: #fff,
-    button-contained-primary__background-color: #2196f3, // material blue 500 
-    button-contained-primary__background-color--hover: #42a5f5, // material blue 400 
-    button-contained-primary__background-color--selected: #1e88e5, // material blue 600
+    button-contained-primary__color: $white,
+    button-contained-primary__background-color: $blue-500, // material blue 500 
+    button-contained-primary__background-color--hover: $blue-400, // material blue 400 
+    button-contained-primary__background-color--selected: $blue-600, // material blue 600
 
-    button-contained-secondary__color: #fff,
-    button-contained-secondary__background-color: #e91e63, // material pink 500 
-    button-contained-secondary__background-color--hover: #ec407a, // material pink 400 
-    button-contained-secondary__background-color--selected: #d81b60, // material pink 600
+    button-contained-secondary__color: $white,
+    button-contained-secondary__background-color: $pink-500, // material pink 500 
+    button-contained-secondary__background-color--hover: $pink-400, // material pink 400 
+    button-contained-secondary__background-color--selected: $pink-600, // material pink 600
 
-    button-contained__color--disabled: rgba(0, 0, 0, 0.26),
-    button-contained__background-color--disabled: rgba(0, 0, 0, 0.12),
+    button-contained__color--disabled: rgba($black, 0.26),
+    button-contained__background-color--disabled: rgba($black, 0.12),
 
     ////////////////////////////////////////////////////////////////////////////////
     // Ripple effect
     ////////////////////////////////////////////////////////////////////////////////
-    ripple__background-color: rgba(0, 0, 0, 0.1),
+    ripple__background-color: rgba($black, 0.1),
   ),
   dark: (
     ////////////////////////////////////////////////////////////////////////////////
     // Default buttons
     ////////////////////////////////////////////////////////////////////////////////
-    button-default__color: #e0e0e0, // material grey 300 
-    button-default__background-color--hover: rgba(224, 224, 224, 0.4), // material grey 300 40%
-    button-default__background-color--selected: rgba(224, 224, 224, 0.3), // material grey 300 30%
+    button-default__color: $grey-300, // material grey 300 
+    button-default__background-color--hover: rgba($grey-300, 0.4), // material grey 300 40%
+    button-default__background-color--selected: rgba($grey-300, 0.3), // material grey 300 30%
 
-    button-default-primary__color: #64b5f6, // material blue 300
-    button-default-primary__background-color--hover: rgba(100,181,246, 0.4), // material blue 300 40%
-    button-default-primary__background-color--selected: rgba(00,181,246, 0.3), // material blue 300 30%
+    button-default-primary__color: $blue-300, // material blue 300
+    button-default-primary__background-color--hover: rgba($blue-300, 0.4), // material blue 300 40%
+    button-default-primary__background-color--selected: rgba($blue-300, 0.3), // material blue 300 30%
 
-    button-default-secondary__color: #f06292, // material pink 300
-    button-default-secondary__background-color--hover: rgba(240, 98, 146, 0.4), // material pink 300 40%
-    button-default-secondary__background-color--selected: rgba(240, 98, 146, 0.3), // material pink 300 30%
+    button-default-secondary__color: $pink-300, // material pink 300
+    button-default-secondary__background-color--hover: rgba($pink-300, 0.4), // material pink 300 40%
+    button-default-secondary__background-color--selected: rgba($pink-300, 0.3), // material pink 300 30%
 
-    button-default__color--disabled: rgba(255, 255, 255, 0.26),
+    button-default__color--disabled: rgba($white, 0.26),
 
     ////////////////////////////////////////////////////////////////////////////////
     // Outline buttons
     ////////////////////////////////////////////////////////////////////////////////
-    button-outline__color: #e0e0e0, // material grey 300 
-    button-outline__border-color: rgba(224, 224, 224, 0.8), // material grey 300 80% 
-    button-outline__border-color--hover: #e0e0e0, // material grey 300 
-    button-outline__background-color--hover: rgba(224, 224, 224, 0.4), // material grey 300 40%
-    button-outline__background-color--selected: rgba(224, 224, 224, 0.3), // material grey 300 30%
+    button-outline__color: $grey-300, // material grey 300 
+    button-outline__border-color: rgba($grey-300, 0.8), // material grey 300 80% 
+    button-outline__border-color--hover: $grey-300, // material grey 300 
+    button-outline__background-color--hover: rgba($grey-300, 0.4), // material grey 300 40%
+    button-outline__background-color--selected: rgba($grey-300, 0.3), // material grey 300 30%
 
-    button-outline-primary__color: #64b5f6, // material blue 300
-    button-outline-primary__border-color: rgba(100,181,246, 0.8), // material blue 300 80%
-    button-outline-primary__border-color--hover: #64b5f6, // material blue 300
-    button-outline-primary__background-color--hover: rgba(100,181,246, 0.4), // material blue 300 40%
-    button-outline-primary__background-color--selected: rgba(00,181,246, 0.3), // material blue 300 30%
+    button-outline-primary__color: $blue-300, // material blue 300
+    button-outline-primary__border-color: rgba($blue-300, 0.8), // material blue 300 80%
+    button-outline-primary__border-color--hover: $blue-300, // material blue 300
+    button-outline-primary__background-color--hover: rgba($blue-300, 0.4), // material blue 300 40%
+    button-outline-primary__background-color--selected: rgba($blue-300, 0.3), // material blue 300 30%
 
-    button-outline-secondary__color: #f06292, // material pink 300
-    button-outline-secondary__border-color: rgba(240, 98, 146, 0.8), // material pink 300 80%
-    button-outline-secondary__border-color--hover: #f06292, // material pink 300
-    button-outline-secondary__background-color--hover: rgba(240, 98, 146, 0.4), // material pink 300 40%
-    button-outline-secondary__background-color--selected: rgba(240, 98, 146, 0.3), // material pink 300 30%
+    button-outline-secondary__color: $pink-300, // material pink 300
+    button-outline-secondary__border-color: rgba($pink-300, 0.8), // material pink 300 80%
+    button-outline-secondary__border-color--hover: $pink-300, // material pink 300
+    button-outline-secondary__background-color--hover: rgba($pink-300, 0.4), // material pink 300 40%
+    button-outline-secondary__background-color--selected: rgba($pink-300, 0.3), // material pink 300 30%
 
-    button-outline__color--disabled: rgba(255, 255, 255, 0.26),
-    button-outline__border-color--disabled: rgba(255, 255, 255, 0.26),
+    button-outline__color--disabled: rgba($white, 0.26),
+    button-outline__border-color--disabled: rgba($white, 0.26),
 
     ////////////////////////////////////////////////////////////////////////////////
     // Icon buttons
     ////////////////////////////////////////////////////////////////////////////////
-    button-icon__color: #e0e0e0, // material grey 300 
-    button-icon__background-color--hover: rgba(224, 224, 224, 0.4), // material grey 300 40%
-    button-icon__background-color--selected: rgba(224, 224, 224, 0.3), // material grey 300 30%
+    button-icon__color: $grey-300, // material grey 300 
+    button-icon__background-color--hover: rgba($grey-300, 0.4), // material grey 300 40%
+    button-icon__background-color--selected: rgba($grey-300, 0.3), // material grey 300 30%
 
-    button-icon-primary__color: #64b5f6, // material blue 300
-    button-icon-primary__background-color--hover: rgba(100,181,246, 0.4), // material blue 300 40%
-    button-icon-primary__background-color--selected: rgba(00,181,246, 0.3), // material blue 300 30%
+    button-icon-primary__color: $blue-300, // material blue 300
+    button-icon-primary__background-color--hover: rgba($blue-300, 0.4), // material blue 300 40%
+    button-icon-primary__background-color--selected: rgba($blue-300, 0.3), // material blue 300 30%
 
-    button-icon-secondary__color: #f06292, // material pink 300
-    button-icon-secondary__background-color--hover: rgba(240, 98, 146, 0.4), // material pink 300 40%
-    button-icon-secondary__background-color--selected: rgba(240, 98, 146, 0.3), // material pink 300 30%
+    button-icon-secondary__color: $pink-300, // material pink 300
+    button-icon-secondary__background-color--hover: rgba($pink-300, 0.4), // material pink 300 40%
+    button-icon-secondary__background-color--selected: rgba($pink-300, 0.3), // material pink 300 30%
 
-    button-icon__color--disabled: rgba(255, 255, 255, 0.26),
+    button-icon__color--disabled: rgba($white, 0.26),
 
     ////////////////////////////////////////////////////////////////////////////////
     // Contained buttons
     ////////////////////////////////////////////////////////////////////////////////
-    button-contained__color: #e0e0e0, // material grey 300
-    button-contained__background-color: #424242, // material grey 800
-    button-contained__background-color--hover: #616161, // material grey 700
-    button-contained__background-color--selected: #212121, // material grey 900
+    button-contained__color: $grey-300, // material grey 300
+    button-contained__background-color: $grey-800, // material grey 800
+    button-contained__background-color--hover: $grey-700, // material grey 700
+    button-contained__background-color--selected: $grey-900, // material grey 900
 
-    button-contained-primary__color: #fff,
-    button-contained-primary__background-color: #1565c0, // material blue 800
-    button-contained-primary__background-color--hover: #1976d2, // material blue 700
-    button-contained-primary__background-color--selected: #0d47a1,  // material blue 900
+    button-contained-primary__color: $white,
+    button-contained-primary__background-color: $blue-800, // material blue 800
+    button-contained-primary__background-color--hover: $blue-700, // material blue 700
+    button-contained-primary__background-color--selected: $blue-900,  // material blue 900
 
-    button-contained-secondary__color: #fff,
-    button-contained-secondary__background-color: #ad1457, // material pink 800 
-    button-contained-secondary__background-color--hover: #c2185b, // material pink 700 
-    button-contained-secondary__background-color--selected: #880e4f, // material pink 900
+    button-contained-secondary__color: $white,
+    button-contained-secondary__background-color: $pink-800, // material pink 800 
+    button-contained-secondary__background-color--hover: $pink-700, // material pink 700 
+    button-contained-secondary__background-color--selected: $pink-900, // material pink 900
 
-    button-contained__color--disabled: rgba(255, 255, 255, 0.26),
-    button-contained__background-color--disabled: rgba(255, 255, 255, 0.12),
+    button-contained__color--disabled: rgba($white, 0.26),
+    button-contained__background-color--disabled: rgba($white, 0.12),
 
     ////////////////////////////////////////////////////////////////////////////////
     // Ripple effect
     ////////////////////////////////////////////////////////////////////////////////
-    ripple__background-color: rgba(255, 255, 255, 0.3),
+    ripple__background-color: rgba($white, 0.3),
   )
 );

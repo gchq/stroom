@@ -30,22 +30,17 @@ export const useApi = (): Api => {
       [resource, httpGetJson],
     ),
     getAllPermissionNames: React.useCallback(
-      (): Promise<string[]> =>
-        httpGetJson(resource),
+      (): Promise<string[]> => httpGetJson(resource),
       [resource, httpGetJson],
     ),
     addAppPermission: React.useCallback(
       (userUuid: string, permissionName: string): Promise<void> =>
-        httpPostEmptyResponse(
-          `${resource}/${userUuid}/${permissionName}`,
-        ),
+        httpPostEmptyResponse(`${resource}/${userUuid}/${permissionName}`),
       [resource, httpPostEmptyResponse],
     ),
     removeAppPermission: React.useCallback(
       (userUuid: string, permissionName: string): Promise<void> =>
-        httpDeleteEmptyResponse(
-          `${resource}/${userUuid}/${permissionName}`,
-        ),
+        httpDeleteEmptyResponse(`${resource}/${userUuid}/${permissionName}`),
       [resource, httpDeleteEmptyResponse],
     ),
   };

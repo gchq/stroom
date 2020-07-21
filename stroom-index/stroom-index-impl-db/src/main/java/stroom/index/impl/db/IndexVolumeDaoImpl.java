@@ -216,16 +216,16 @@ class IndexVolumeDaoImpl implements IndexVolumeDao {
 
         return criteria.getSortList().stream().map(sort -> {
             Field<?> field;
-            if (IndexVolumeFields.FIELD_ID.equals(sort.getField())) {
+            if (IndexVolumeFields.FIELD_ID.equals(sort.getId())) {
                 field = INDEX_VOLUME.ID;
-            } else if (IndexVolumeFields.FIELD_NODE_NAME.equals(sort.getField())) {
+            } else if (IndexVolumeFields.FIELD_NODE_NAME.equals(sort.getId())) {
                 field = INDEX_VOLUME.NODE_NAME;
             } else {
                 field = INDEX_VOLUME.ID;
             }
 
             OrderField<?> orderField = field;
-            if (Sort.Direction.DESCENDING.equals(sort.getDirection())) {
+            if (sort.isDesc()) {
                 orderField = field.desc();
             }
 

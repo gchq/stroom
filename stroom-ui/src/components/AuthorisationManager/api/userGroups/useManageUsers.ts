@@ -1,4 +1,4 @@
-import useListReducer from "lib/useListReducer";
+import { useListReducer } from "lib/useListReducer";
 import * as React from "react";
 import { StroomUser } from ".";
 import useApi from "./useApi";
@@ -12,12 +12,9 @@ interface ManageUsers {
 }
 
 const useManageUsers = (): ManageUsers => {
-  const {
-    items: users,
-    addItem,
-    removeItem,
-    receiveItems,
-  } = useListReducer<StroomUser>(u => u.uuid);
+  const { items: users, addItem, removeItem, receiveItems } = useListReducer<
+    StroomUser
+  >((u) => u.uuid);
 
   const { createUser, deleteUser, addUserToGroup, findUsers } = useApi();
 
@@ -37,7 +34,7 @@ const useManageUsers = (): ManageUsers => {
     ),
     createUser: React.useCallback(
       (name: string, isGroup: boolean) => {
-        let p = createUser(name, isGroup);
+        const p = createUser(name, isGroup);
         p.then(addItem);
         return p;
       },

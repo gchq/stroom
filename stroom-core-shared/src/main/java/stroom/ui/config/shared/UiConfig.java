@@ -128,6 +128,7 @@ public class UiConfig extends AbstractConfig {
         this.splash = splash;
         this.activity = activity;
         this.url = url;
+        this.uiPreferences = uiPreferences;
 
         setDefaults();
     }

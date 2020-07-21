@@ -17,10 +17,9 @@
 import * as React from "react";
 
 import IconHeader from "../../../IconHeader";
-import ThemedModal from "../../../ThemedModal";
+import { ThemedModal, DialogContent } from "../../../ThemedModal";
 import DialogActionButtons from "../../../DialogActionButtons";
 import CreateDocRefForm, { useThisForm } from "./CreateDocRefForm";
-// import { required, minLength2 } from "lib/formUtils";
 
 interface Props {
   isOpen: boolean;
@@ -56,18 +55,18 @@ export const CreateDocRefDialog: React.FunctionComponent<Props> = ({
   }, [docRefType, docRefName, permissionInheritance, onConfirm, onCloseDialog]);
 
   return (
-    <ThemedModal
-      isOpen={isOpen}
-      onRequestClose={onCloseDialog}
-      header={<IconHeader icon="plus" text="Create a New Doc Ref" />}
-      content={<CreateDocRefForm {...componentProps} />}
-      actions={
-        <DialogActionButtons
-          onCancel={onCloseDialog}
-          onConfirm={onConfirmLocal}
-        />
-      }
-    />
+    <ThemedModal isOpen={isOpen} onRequestClose={onCloseDialog}>
+      <DialogContent
+        header={<IconHeader icon="plus" text="Create a New Doc Ref" />}
+        content={<CreateDocRefForm {...componentProps} />}
+        actions={
+          <DialogActionButtons
+            onCancel={onCloseDialog}
+            onConfirm={onConfirmLocal}
+          />
+        }
+      />
+    </ThemedModal>
   );
 };
 

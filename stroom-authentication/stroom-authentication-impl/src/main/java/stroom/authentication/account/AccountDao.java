@@ -1,39 +1,39 @@
 package stroom.authentication.account;
 
-import stroom.authentication.authenticate.LoginResult;
+import stroom.authentication.authenticate.CredentialValidationResult;
 import stroom.util.shared.ResultPage;
 
 import java.time.Duration;
 import java.util.Optional;
 
 public interface AccountDao {
+    ResultPage<Account> list();
+
+    ResultPage<Account> search(SearchAccountRequest request);
+
     Account create(Account account, String password);
 
-    void recordSuccessfulLogin(String email);
+    Optional<Integer> getId(String userId);
 
-    LoginResult areCredentialsValid(String email, String password);
+    Optional<Account> get(String userId);
 
-    boolean incrementLoginFailures(String email);
-
-    Optional<Integer> getId(String email);
-
-    Optional<Account> get(String email);
+    Optional<Account> get(int id);
 
     void update(Account account);
 
     void delete(int id);
 
-    Optional<Account> get(int id);
+    void recordSuccessfulLogin(String userId);
 
-    ResultPage<Account> list();
+    CredentialValidationResult validateCredentials(String username, String password);
 
-    void changePassword(String email, String newPassword);
+    boolean incrementLoginFailures(String userId);
 
-    Boolean needsPasswordChange(String email, Duration mandatoryPasswordChangeDuration, boolean forcePasswordChangeOnFirstLogin);
+    void changePassword(String userId, String newPassword);
+
+    Boolean needsPasswordChange(String userId, Duration mandatoryPasswordChangeDuration, boolean forcePasswordChangeOnFirstLogin);
 
     int deactivateNewInactiveUsers(Duration neverUsedAccountDeactivationThreshold);
 
     int deactivateInactiveUsers(Duration unusedAccountDeactivationThreshold);
-
-    ResultPage<Account> searchUsersForDisplay(String email);
 }

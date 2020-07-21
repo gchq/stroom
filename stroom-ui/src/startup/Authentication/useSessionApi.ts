@@ -29,7 +29,13 @@ export const useSessionApi = (): Api => {
 
   return {
     login: (redirectUri: string) =>
-      httpGetJson(`${resource}/noauth/login?redirect_uri=${encodeURIComponent(redirectUri)}`, {}, true),
+      httpGetJson(
+        `${resource}/noauth/login?redirect_uri=${encodeURIComponent(
+          redirectUri,
+        )}`,
+        {},
+        true,
+      ),
   };
 };
 

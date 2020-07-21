@@ -1,1 +1,1 @@
-export { default } from "./useSelectable";
+export { useSelectable } from "./useSelectable";

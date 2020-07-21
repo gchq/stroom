@@ -23,31 +23,30 @@ interface Props {
   loginUrl: string;
 }
 
-const AuthenticationRequest: React.FunctionComponent<Props> =
-  ({
-     referrer,
-     loginUrl,
-   }) => {
-    const { login } = useSessionApi();
-    const { setIdToken } = useAuthenticationContext();
+const AuthenticationRequest: React.FunctionComponent<Props> = ({
+  referrer,
+  loginUrl,
+}) => {
+  const { login } = useSessionApi();
+  const { setIdToken } = useAuthenticationContext();
 
-    React.useEffect(() => {
-      login(referrer).then(response => {
-        if (response.authenticated) {
-          setIdToken("Session authenticated");
-        } else {
-          window.location.href = response.redirectUri;
-        }
-      });
+  React.useEffect(() => {
+    login(referrer).then((response) => {
+      if (response.authenticated) {
+        setIdToken("Session authenticated");
+      } else {
+        window.location.href = response.redirectUri;
+      }
+    });
 
-      // sendAuthenticationRequest(
-      //     referrer,
-      //     uiUrl,
-      //     loginUrl,
-      // );
-    }, [login, setIdToken, referrer, loginUrl]);
+    // sendAuthenticationRequest(
+    //     referrer,
+    //     uiUrl,
+    //     loginUrl,
+    // );
+  }, [login, setIdToken, referrer, loginUrl]);
 
-    return null;
-  };
+  return null;
+};
 
 export default AuthenticationRequest;

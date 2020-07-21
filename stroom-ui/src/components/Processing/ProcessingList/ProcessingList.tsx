@@ -15,7 +15,6 @@
  */
 
 import * as React from "react";
-import "react-sweet-progress/lib/style.css";
 import ReactTable, {
   RowInfo,
   SortingRule,
@@ -41,7 +40,7 @@ interface Props {
   onSelectionChanged: (selectedTask: StreamTaskType | undefined) => void;
 }
 
-const ProcessingList: React.FunctionComponent<Props> = ({
+export const ProcessingList: React.FunctionComponent<Props> = ({
   streamTasksApi,
   onSelectionChanged,
 }) => {
@@ -77,8 +76,9 @@ const ProcessingList: React.FunctionComponent<Props> = ({
           disabled={allRecordsRetrieved}
           className="border hoverable clickable processing-list__load-more-button"
           onClick={fetchMore}
-          text={retrievalStave}
-        />
+        >
+          {retrievalStave}
+        </Button>
       ),
     [allRecordsRetrieved, fetchMore, retrievalStave],
   );
@@ -139,7 +139,7 @@ const ProcessingList: React.FunctionComponent<Props> = ({
   const { tableProps, selectedItem } = useSelectableReactTable<StreamTaskType>(
     {
       items: tableData,
-      getKey: React.useCallback(t => `${t.filterId}`, []),
+      getKey: React.useCallback((t) => `${t.filterId}`, []),
       selectionBehaviour: SelectionBehaviour.SINGLE,
       preFocusWrap,
     },
@@ -176,10 +176,8 @@ const ProcessingList: React.FunctionComponent<Props> = ({
         showPagination={false}
         pageSize={pageSize}
         {...tableProps}
-        onFetchData={state => onHandleSort(state.sorted[0])}
+        onFetchData={(state) => onHandleSort(state.sorted[0])}
       />
     </div>
   );
 };
-
-export default ProcessingList;

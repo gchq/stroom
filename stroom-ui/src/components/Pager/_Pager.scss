@@ -1,0 +1,35 @@
+.Pager {
+  position: relative;
+  width: 250px;
+  display: flex;
+  align-items: center;
+  justify-content: flex-end;
+
+  .Pager__label {
+    display: inline-block;
+    margin-right: .4rem;
+    cursor: pointer;
+  }
+
+  .Pager__textBox {
+    display: inline-block;
+    width: 30px;
+    height: 14px;
+    padding: 0px;
+    margin: 0 .2rem;
+    border: none;
+  }
+
+  //.Pager__space {
+  //  display: inline;
+  //  width: 8px;
+  //}
+
+  .Pager__button {
+    padding: 0.1rem;
+    text-align: center;
+    width: 1.2rem;
+    height: 1.2rem;
+    cursor: pointer;
+  }
+}

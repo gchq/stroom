@@ -20,7 +20,6 @@ import { storiesOf } from "@storybook/react";
 import DocRefTypePicker from "./DocRefTypePicker";
 
 import JsonDebug from "testing/JsonDebug";
-import { addThemedStories } from "testing/storybook/themedStoryGenerator";
 
 const invalidTypes: string[] = ["Folder", "Dictionary", "XSLT"];
 
@@ -43,6 +42,4 @@ const TestForm = () => {
   );
 };
 
-const stories = storiesOf("Doc Ref/Doc Ref Type Picker", module);
-
-addThemedStories(stories, () => <TestForm />);
+storiesOf("Doc Ref", module).add("Doc Ref Type Picker", () => <TestForm />);
