@@ -6,6 +6,30 @@ and this project adheres to [Semantic Versioning](http://semver.org/).
 
 ## [Unreleased]
 
+* Issue **#1501** : Multiple fixes for new UI.
+
+* Issue **#1506** : Multiple fixes for new UI.
+
+* Issue **#1561** : Multiple fixes for new UI.
+
+* Issue **#1483** : Multiple fixes for new UI.
+
+* Issue **#1525** : Multiple fixes for new UI.
+
+* Issue **#1587** : Multiple fixes for new UI.
+
+* Issue **#1526** : Multiple fixes for new UI.
+
+* Issue **#1499** : Multiple fixes for new UI.
+
+* Issue **#1481** : Multiple fixes for new UI.
+
+* Issue **#1498** : Multiple fixes for new UI.
+
+* Issue **#1660** : Multiple fixes for new UI.
+
+* Issue **#1659** : Multiple fixes for new UI.
+
 * Issue **#1725** : Fix Data Splitter onlyMatch using zero based instead of one based numbers.
 
 
