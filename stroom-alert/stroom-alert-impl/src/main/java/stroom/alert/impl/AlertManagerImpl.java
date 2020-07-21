@@ -176,6 +176,11 @@ public class AlertManagerImpl implements AlertManager {
         for (String rulesPath : rulesPaths){
             LOGGER.info("Loading alerting rules from " + rulesPath);
             final DocRef rulesFolder = getFolderForPath(rulesPath);
+
+            if (rulesFolder == null){
+                return;
+            }
+
             List<ExplorerNode> childNodes = explorerNodeService.getDescendants(rulesFolder);
 
             for (ExplorerNode childNode : childNodes){
@@ -231,19 +236,15 @@ public class AlertManagerImpl implements AlertManager {
         }
 
         this.indexToRules = indexToRules;
-        //Create AlertProcessorImpls for each Datasource (index)
-//        for (DocRef dataSourceRef : indexToRules.keySet()){
-//            IndexStructure indexStructure = indexStructureCache.get(dataSourceRef);
-//
-//            if (indexStructure == null) {
-//               LOGGER.warn ("Unable to locate index " + dataSourceRef + " specified in rule");
-//            }
-//            else {
-//                AlertProcessorImpl processor = new AlertProcessorImpl(indexToRules.get(dataSourceRef), indexStructure,
-//                        wordListProvider, maxBooleanClauseCount);
-//                alertProcessorMap.put(dataSourceRef, processor);
-//            }
-//        }
+    }
 
+    @Override
+    public String getAdditionalFieldsPrefix() {
+        return alertConfig.getAdditionalFieldsPrefix();
+    }
+
+    @Override
+    public boolean isReportAllExtractedFieldsEnabled() {
+        return alertConfig.isReportAllExtractedFieldsEnabled();
     }
 }

@@ -24,8 +24,14 @@ public interface AlertManager {
     String RULES_FOLDER_KEY = "alertRulesFolder";
     String TABLE_NAME_KEY = "alertTableName";
     String DETECT_TIME_DATA_ELEMENT_NAME_ATTR = "alertDetectTime";
+    String EVENT_ID_DATA_ELEMENT_NAME_ATTR = "alertOriginalEventId";
+    String STREAM_ID_DATA_ELEMENT_NAME_ATTR = "alertOriginalStreamId";
 
     String getTimeZoneId();
 
     Optional<AlertProcessor> createAlertProcessor(final DocRef indexDocRef);
+
+    String getAdditionalFieldsPrefix();
+
+    boolean isReportAllExtractedFieldsEnabled();
 }
