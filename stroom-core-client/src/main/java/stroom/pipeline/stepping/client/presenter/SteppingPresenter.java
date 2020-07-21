@@ -17,18 +17,6 @@
 
 package stroom.pipeline.stepping.client.presenter;
 
-import com.google.gwt.core.client.GWT;
-import com.google.gwt.core.client.Scheduler;
-import com.google.gwt.user.client.ui.Widget;
-import com.google.inject.Inject;
-import com.google.inject.Provider;
-import com.google.web.bindery.event.shared.EventBus;
-import com.google.web.bindery.event.shared.HandlerRegistration;
-import com.gwtplatform.mvp.client.Layer;
-import com.gwtplatform.mvp.client.LayerContainer;
-import com.gwtplatform.mvp.client.MyPresenterWidget;
-import com.gwtplatform.mvp.client.PresenterWidget;
-import com.gwtplatform.mvp.client.View;
 import stroom.alert.client.event.AlertEvent;
 import stroom.data.client.presenter.ClassificationUiHandlers;
 import stroom.data.client.presenter.DataPresenter;
@@ -41,7 +29,6 @@ import stroom.document.client.event.HasDirtyHandlers;
 import stroom.editor.client.view.IndicatorLines;
 import stroom.meta.shared.FindMetaCriteria;
 import stroom.meta.shared.Meta;
-import stroom.meta.shared.MetaExpressionUtil;
 import stroom.pipeline.shared.PipelineModelException;
 import stroom.pipeline.shared.PipelineResource;
 import stroom.pipeline.shared.SharedElementData;
@@ -57,7 +44,6 @@ import stroom.pipeline.shared.stepping.SteppingResource;
 import stroom.pipeline.shared.stepping.SteppingResult;
 import stroom.pipeline.structure.client.presenter.PipelineModel;
 import stroom.pipeline.structure.client.presenter.PipelineTreePresenter;
-import stroom.query.api.v2.ExpressionOperator;
 import stroom.svg.client.SvgPreset;
 import stroom.svg.client.SvgPresets;
 import stroom.task.client.TaskEndEvent;
@@ -65,6 +51,19 @@ import stroom.task.client.TaskStartEvent;
 import stroom.util.shared.Indicators;
 import stroom.widget.button.client.ButtonPanel;
 import stroom.widget.button.client.ButtonView;
+
+import com.google.gwt.core.client.GWT;
+import com.google.gwt.core.client.Scheduler;
+import com.google.gwt.user.client.ui.Widget;
+import com.google.inject.Inject;
+import com.google.inject.Provider;
+import com.google.web.bindery.event.shared.EventBus;
+import com.google.web.bindery.event.shared.HandlerRegistration;
+import com.gwtplatform.mvp.client.Layer;
+import com.gwtplatform.mvp.client.LayerContainer;
+import com.gwtplatform.mvp.client.MyPresenterWidget;
+import com.gwtplatform.mvp.client.PresenterWidget;
+import com.gwtplatform.mvp.client.View;
 
 import java.util.ArrayList;
 import java.util.HashMap;
@@ -319,15 +318,20 @@ public class SteppingPresenter extends MyPresenterWidget<SteppingPresenter.Stepp
                         pipelineModel.setPipelineData(pipelineData);
                         pipelineModel.setBaseStack(baseStack);
                         pipelineModel.build();
-                        pipelineTreePresenter.getSelectionModel().setSelected(PipelineModel.SOURCE_ELEMENT, true);
+                        pipelineTreePresenter.getSelectionModel()
+                                .setSelected(PipelineModel.SOURCE_ELEMENT, true);
 
-                        Scheduler.get().scheduleDeferred(() -> getView().setTreeHeight(pipelineTreePresenter.getTreeHeight() + 3));
+                        Scheduler.get().scheduleDeferred(() ->
+                                getView().setTreeHeight(pipelineTreePresenter.getTreeHeight() + 3));
                     } catch (final PipelineModelException e) {
                         AlertEvent.fireError(SteppingPresenter.this, e.getMessage(), null);
                     }
 
                     if (stepLocation != null) {
-                        step(StepType.REFRESH, new StepLocation(meta.getId(), stepLocation.getPartNo(), stepLocation.getRecordNo()));
+                        step(StepType.REFRESH, new StepLocation(
+                                        meta.getId(),
+                                        stepLocation.getPartNo(),
+                                        stepLocation.getRecordNo()));
                     }
                 })
                 .call(PIPELINE_RESOURCE)

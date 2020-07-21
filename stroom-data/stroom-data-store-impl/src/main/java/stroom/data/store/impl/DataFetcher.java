@@ -589,6 +589,7 @@ public class DataFetcher {
         // Lots of small lines
         // Multiple long lines that are too big to display
         final StringBuilder strBuilderRange = new StringBuilder();
+        final StringBuilder strBuilderLineSoFar = new StringBuilder();
 
         // Trackers for what we have so far and where we are
         int currLineNo = 1; // one based
@@ -602,9 +603,15 @@ public class DataFetcher {
         int startColNo = -1;
         long charsInRangeCount = 0;
 
+        long startOfCurrLineCharOffset = -1;
+
         int currBufferLen = 0;
         boolean isFirstChar = true;
         int extraCharCount = 0;
+
+        boolean foundRange = false;
+        boolean reachedEndOfRange = false;
+        boolean isMultiLine = false;
 
         try (final Reader reader = new InputStreamReader(inputStream, encoding)) {
             final char[] buffer = new char[STREAM_BUFFER_SIZE];
@@ -614,21 +621,20 @@ public class DataFetcher {
             final NonSegmentedIncludeCharPredicate exclusiveToPredicate = buildExclusiveToPredicate(
                     sourceLocation.getDataRange());
 
-            // We could jump to the requested offset, but if we do, we can't
+            // Ideally we would jump to the requested offset, but if we do, we can't
             // track the line/col info for the requested range, i.e.
             // to show the right line numbers in the editor. Thus we need
             // to advance through char by char
-
-            boolean reachedEndOfRange = false;
-            boolean continueToLineEnd = false;
 
             while (!reachedEndOfRange && (currBufferLen = reader.read(buffer)) != -1) {
 
                 for (int i = 0; i < currBufferLen; i++) {
                     final char c = buffer[i];
 
+
                     if (inclusiveFromPredicate.test(currLineNo, currColNo, currCharOffset, charsInRangeCount)) {
                         // On or after the first requested char
+                        foundRange = true;
 
                         boolean isCharAfterRequestedRange = exclusiveToPredicate.test(
                                 currLineNo, currColNo, currCharOffset, charsInRangeCount);
@@ -640,7 +646,7 @@ public class DataFetcher {
                         // For multi-line data continue past the desired range a bit to try to complete the line
                         // to make it look better in the UI.
                         if (isCharAfterRequestedRange
-                                && (!continueToLineEnd
+                                && (!isMultiLine
                                     || (extraCharCount > MAX_EXTRA_CHARS_TO_COMPLETE_LINE || c == '\n'))) {
                             // This is the char after our requested range
                             // or requested range continued to the end of the line
@@ -663,6 +669,10 @@ public class DataFetcher {
                             lastLineNo = currLineNo;
                             lastColNo = currColNo;
                         }
+                    } else {
+                        // Hold the chars for the line so far up to the requested range so we can
+                        // tack it on when we find our range
+                        strBuilderLineSoFar.append(c);
                     }
 
                     // Now advance the counters/trackers for the next char
@@ -674,10 +684,15 @@ public class DataFetcher {
                         currLineNo++;
                         currColNo = 1;
 
-                        if (!continueToLineEnd && currLineNo > 1) {
+                        if (!isMultiLine && currLineNo > 1) {
                             // Multi line data so we want to keep adding chars all the way to the end
                             // of the line so we don't get part lines in the UI.
-                            continueToLineEnd = true;
+                            isMultiLine = true;
+                        }
+                        if (!foundRange) {
+                            // Not found our requested range yet so reset the current line so far
+                            startOfCurrLineCharOffset = currCharOffset;
+                            strBuilderLineSoFar.setLength(0);
                         }
                     } else {
                         currColNo++;
@@ -686,12 +701,23 @@ public class DataFetcher {
             }
         }
 
+        final String charData;
+
+        if (isMultiLine && strBuilderRange.charAt(0) != '\n') {
+            startCharOffset = startOfCurrLineCharOffset;
+            startColNo = 1;
+            // Tack on the beginning of the line up to the range
+            charData = strBuilderLineSoFar.append(strBuilderRange).toString();
+        } else {
+            charData = strBuilderRange.toString();
+        }
+
         final boolean isTotalPageableItemsExact = currBufferLen == -1;
 
         currCharOffset = currCharOffset - 1; // undo the last ++ op
 
         final RowCount<Long> totalCharCount = RowCount.of(
-                startCharOffset + strBuilderRange.length(),
+                startCharOffset + charData.length(),
                 isTotalPageableItemsExact);
 
         // The range returned may differ to that requested if we have continued to the end of the line
@@ -700,7 +726,7 @@ public class DataFetcher {
                 .fromLocation(DefaultLocation.of(startLineNo, startColNo))
                 .toLocation(DefaultLocation.of(lastLineNo, lastColNo))
                 .toCharOffset(currCharOffset)
-                .withLength((long) strBuilderRange.length())
+                .withLength((long) charData.length())
                 .build();
 
         // Define the range that we are actually returning, which may be smaller than requested
@@ -714,7 +740,7 @@ public class DataFetcher {
             builder.withSegmentNumber(segmentNumber);
         }
 
-        final RawResult rawResult = new RawResult(builder.build(), strBuilderRange.toString());
+        final RawResult rawResult = new RawResult(builder.build(), charData);
         rawResult.setTotalCharacterCount(totalCharCount);
         return rawResult;
     }
@@ -730,7 +756,7 @@ public class DataFetcher {
             LOGGER.debug("Unbounded from predicate");
             inclusiveFromPredicate = (currLineNo, currColNo, currCharOffset, charCount) -> true;
         } else if (dataRange.getOptCharOffsetFrom().isPresent()) {
-            final long startCharOffset = dataRange.getOptCharOffsetFrom().getAsLong();
+            final long startCharOffset = dataRange.getOptCharOffsetFrom().get();
             LOGGER.debug("Char offset (inc.) from predicate [{}]", startCharOffset);
             inclusiveFromPredicate = (currLineNo, currColNo, currCharOffset, charCount) ->
                     currCharOffset >= startCharOffset;
@@ -788,12 +814,12 @@ public class DataFetcher {
             exclusiveToPredicate = (currLineNo, currColNo, currCharOffset, charCount) ->
                     charCount >= MAX_CHARS;
         } else if (dataRange.getOptLength().isPresent()) {
-            final long dataLength = dataRange.getOptLength().getAsLong();
+            final long dataLength = dataRange.getOptLength().get();
             LOGGER.debug("Length (inc.) to predicate [{}]", dataLength);
             exclusiveToPredicate = (currLineNo, currColNo, currCharOffset, charCount) ->
                     charCount > dataLength || charCount >= MAX_CHARS;
         } else if (dataRange.getOptCharOffsetTo().isPresent()) {
-            final long charOffsetTo = dataRange.getOptCharOffsetTo().getAsLong();
+            final long charOffsetTo = dataRange.getOptCharOffsetTo().get();
             LOGGER.debug("Char offset (inc.) to predicate [{}]", charOffsetTo);
             exclusiveToPredicate = (currLineNo, currColNo, currCharOffset, charCount) ->
                     currCharOffset > charOffsetTo || charCount >= MAX_CHARS;

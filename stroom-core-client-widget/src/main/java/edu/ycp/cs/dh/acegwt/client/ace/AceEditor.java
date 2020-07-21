@@ -1,4 +1,3 @@
-// Copyright (c) 2011-2014, David H. Hovemeyer <david.hovemeyer@gmail.com>
 //
 // Permission is hereby granted, free of charge, to any person obtaining a copy
 // of this software and associated documentation files (the "Software"), to deal
@@ -671,6 +670,37 @@ public class AceEditor extends Composite implements RequiresResize, HasText, Tak
 		var editor = this.@edu.ycp.cs.dh.acegwt.client.ace.AceEditor::editor;
 		editor.getSession().setUseWrapMode(useWrapMode);
 	}-*/;
+
+
+
+	// Added by at055612 START
+
+    /**
+     * Set whether to show hidden chars or not
+     *
+     * @param showInvisibles true if hidden chars should be displayed
+     */
+    public native void setShowInvisibles(boolean showInvisibles) /*-{
+		var editor = this.@edu.ycp.cs.dh.acegwt.client.ace.AceEditor::editor;
+		if (showInvisibles) {
+			editor.setOptions({ showInvisibles: true });
+		} else {
+			editor.setOptions({ showInvisibles: false });
+		}
+	}-*/;
+
+    public native void setUseVimBindings(boolean useVimBindings) /*-{
+		var editor = this.@edu.ycp.cs.dh.acegwt.client.ace.AceEditor::editor;
+		if (useVimBindings) {
+            editor.setKeyboardHandler('ace/keyboard/vim');
+        } else {
+            editor.setKeyboardHandler(null);
+        }
+	}-*/;
+
+    // Added by at055612 END
+
+
 
     /* (non-Javadoc)
      * @see com.google.gwt.user.client.ui.ResizeComposite#onResize()

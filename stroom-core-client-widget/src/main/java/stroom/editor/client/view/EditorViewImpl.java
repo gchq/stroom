@@ -76,6 +76,9 @@ public class EditorViewImpl extends ViewWithUiHandlers<EditorUiHandlers> impleme
     private final Option lineNumbersOption;
     private final Option indicatorsOption;
     private final Option lineWrapOption;
+    private final Option showInvisiblesOption;
+    private final Option useVimBindingsOption;
+
     @UiField(provided = true)
     DockLayoutPanel layout;
     @UiField
@@ -132,7 +135,9 @@ public class EditorViewImpl extends ViewWithUiHandlers<EditorUiHandlers> impleme
         stylesOption = new Option("Styles", true, true, (on) -> setMode(mode));
         lineNumbersOption = new Option("Line Numbers", true, true, (on) -> updateGutter());
         indicatorsOption = new Option("Indicators", false, false, (on) -> doLayout());
-        lineWrapOption = new Option("Wrap Lines", false, false, (on) -> editor.setUseWrapMode(on));
+        lineWrapOption = new Option("Wrap Lines", false, true, (on) -> editor.setUseWrapMode(on));
+        showInvisiblesOption = new Option("Show Hidden Characters", false, true, (on) -> editor.setShowInvisibles(on));
+        useVimBindingsOption = new Option("Use Vim Key Bindings", false, true, (on) -> editor.setUseVimBindings(on));
 
         editor.getElement().setClassName("editor");
         editor.addDomHandler(event -> handleMouseDown(event), MouseDownEvent.getType());
@@ -322,6 +327,16 @@ public class EditorViewImpl extends ViewWithUiHandlers<EditorUiHandlers> impleme
     @Override
     public Option getLineWrapOption() {
         return lineWrapOption;
+    }
+
+    @Override
+    public Option getShowInvisiblesOption() {
+        return showInvisiblesOption;
+    }
+
+    @Override
+    public Option getUseVimBindingsOption() {
+        return useVimBindingsOption;
     }
 
     @Override

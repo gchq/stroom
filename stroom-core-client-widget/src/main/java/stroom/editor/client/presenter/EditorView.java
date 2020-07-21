@@ -16,6 +16,11 @@
 
 package stroom.editor.client.presenter;
 
+import stroom.editor.client.event.HasFormatHandlers;
+import stroom.editor.client.view.IndicatorLines;
+import stroom.util.shared.TextRange;
+import stroom.widget.contextmenu.client.event.HasContextMenuHandlers;
+
 import com.google.gwt.event.dom.client.HasKeyDownHandlers;
 import com.google.gwt.event.dom.client.HasMouseDownHandlers;
 import com.google.gwt.event.logical.shared.HasValueChangeHandlers;
@@ -24,10 +29,6 @@ import com.gwtplatform.mvp.client.HasUiHandlers;
 import com.gwtplatform.mvp.client.View;
 import edu.ycp.cs.dh.acegwt.client.ace.AceEditorMode;
 import edu.ycp.cs.dh.acegwt.client.ace.AceEditorTheme;
-import stroom.editor.client.event.HasFormatHandlers;
-import stroom.editor.client.view.IndicatorLines;
-import stroom.util.shared.TextRange;
-import stroom.widget.contextmenu.client.event.HasContextMenuHandlers;
 
 import java.util.List;
 
@@ -56,6 +57,10 @@ public interface EditorView extends View, HasKeyDownHandlers, HasFormatHandlers,
     Option getIndicatorsOption();
 
     Option getLineWrapOption();
+
+    Option getShowInvisiblesOption();
+
+    Option getUseVimBindingsOption();
 
     void showFilterButton(boolean show);
 

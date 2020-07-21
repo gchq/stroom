@@ -1,7 +1,9 @@
 <!DOCTYPE ui:UiBinder SYSTEM "http://dl.google.com/gwt/DTD/xhtml.ent">
 <ui:UiBinder xmlns:ui="urn:ui:com.google.gwt.uibinder"
-	xmlns:g="urn:import:com.google.gwt.user.client.ui" xmlns:v="urn:import:stroom.widget.layout.client.view"
-	xmlns:pager="urn:import:stroom.data.pager.client" xmlns:tab="urn:import:stroom.widget.tab.client.view">
+			 xmlns:g="urn:import:com.google.gwt.user.client.ui"
+			 xmlns:v="urn:import:stroom.widget.layout.client.view"
+			 xmlns:pager="urn:import:stroom.data.pager.client"
+			 xmlns:tab="urn:import:stroom.widget.tab.client.view">
 
 	<ui:style>
 		.layout {
@@ -27,12 +29,18 @@
 		height: 100%;
 		}
 
-		.segmentPager {
-		float:
-		right;
-		}
+<!--		.segmentPager {-->
+<!--		float:-->
+<!--		right;-->
+<!--		}-->
 
-		.dataPager {
+<!--		.dataPager {-->
+<!--		min-width: 250px;-->
+<!--		float: right;-->
+<!--		text-align: right;-->
+<!--		}-->
+
+		.dataNavigator {
 		min-width: 250px;
 		float: right;
 		text-align: right;
@@ -46,11 +54,17 @@
 		</g:center>
 		<g:north size="20">
 			<g:DockLayoutPanel unit="PX" width="100%" height="100%">
-				<g:east size="500">
+<!--				<g:east size="500">-->
+<!--					<v:ResizeFlowPanel width="100%" height="100%">-->
+
+<!--						<pager:Pager ui:field="dataPager" styleName="{style.dataPager}" />-->
+<!--						<pager:Pager ui:field="segmentPager" styleName="{style.segmentPager}"-->
+<!--							visible="false" />-->
+<!--					</v:ResizeFlowPanel>-->
+<!--				</g:east>-->
+				<g:east size="650">
 					<v:ResizeFlowPanel width="100%" height="100%">
-						<pager:Pager ui:field="dataPager" styleName="{style.dataPager}" />
-						<pager:Pager ui:field="segmentPager" styleName="{style.segmentPager}"
-							visible="false" />
+						<pager:DataNavigator ui:field="dataNavigator" styleName="{style.dataNavigator}" visible="false"/>
 					</v:ResizeFlowPanel>
 				</g:east>
 				<g:center>

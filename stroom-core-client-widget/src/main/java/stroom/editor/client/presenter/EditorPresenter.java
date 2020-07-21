@@ -113,6 +113,14 @@ public class EditorPresenter extends MyPresenterWidget<EditorView>
         return getView().getLineWrapOption();
     }
 
+    public Option getShowInvisiblesOption() {
+        return getView().getShowInvisiblesOption();
+    }
+
+    public Option getUseVimBindingsOption() {
+        return getView().getUseVimBindingsOption();
+    }
+
     public void setFirstLineNumber(final int firstLineNumber) {
         getView().setFirstLineNumber(firstLineNumber);
     }

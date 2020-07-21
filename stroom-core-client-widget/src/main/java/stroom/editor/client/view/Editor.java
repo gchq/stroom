@@ -53,6 +53,10 @@ public class Editor extends Composite implements HasValueChangeHandlers<String> 
     private boolean scrollMarginDirty;
     private boolean useWrapMode;
     private boolean useWrapModeDirty;
+    private boolean showInvisibles = false;
+    private boolean showInvisiblesDirty;
+    private boolean useVimBindings = false;
+    private boolean useVimBindingsDirty;
     private boolean addChangeHandler;
     private boolean addedChangeHandler;
     private boolean started;
@@ -271,6 +275,32 @@ public class Editor extends Composite implements HasValueChangeHandlers<String> 
         if (editor.isAttached() && useWrapModeDirty) {
             editor.setUseWrapMode(useWrapMode);
             useWrapModeDirty = false;
+        }
+    }
+
+    public void setShowInvisibles(final boolean showInvisibles) {
+        showInvisiblesDirty = true;
+        this.showInvisibles = showInvisibles;
+        updateShowInvisibles();
+    }
+
+    private void updateShowInvisibles() {
+        if (editor.isAttached() && showInvisiblesDirty) {
+            editor.setShowInvisibles(showInvisibles);
+            showInvisiblesDirty = false;
+        }
+    }
+
+    public void setUseVimBindings(final boolean useVimBindings) {
+        useVimBindingsDirty = true;
+        this.useVimBindings = useVimBindings;
+        updateUseVimBindings();
+    }
+
+    private void updateUseVimBindings() {
+        if (editor.isAttached() && useVimBindingsDirty) {
+            editor.setUseVimBindings(useVimBindings);
+            useVimBindingsDirty = false;
         }
     }
 

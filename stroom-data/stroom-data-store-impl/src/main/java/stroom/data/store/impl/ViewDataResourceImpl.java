@@ -31,12 +31,19 @@ import stroom.pipeline.state.MetaHolder;
 import stroom.pipeline.state.PipelineHolder;
 import stroom.security.api.SecurityContext;
 import stroom.security.shared.PermissionNames;
+import stroom.util.logging.LogUtil;
 import stroom.util.pipeline.scope.PipelineScopeRunnable;
+
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import javax.inject.Inject;
 import javax.inject.Provider;
 
 class ViewDataResourceImpl implements ViewDataResource {
+
+    private static final Logger LOGGER = LoggerFactory.getLogger(ViewDataResourceImpl.class);
+
     private final SecurityContext securityContext;
     private final DataFetcher dataFetcher;
 
@@ -73,11 +80,16 @@ class ViewDataResourceImpl implements ViewDataResource {
 
     @Override
     public AbstractFetchDataResult fetch(final FetchDataRequest request) {
-        final String permissionName = request.getPipeline() != null
-                ? PermissionNames.VIEW_DATA_WITH_PIPELINE_PERMISSION
-                : PermissionNames.VIEW_DATA_PERMISSION;
+        try {
+            final String permissionName = request.getPipeline() != null
+                    ? PermissionNames.VIEW_DATA_WITH_PIPELINE_PERMISSION
+                    : PermissionNames.VIEW_DATA_PERMISSION;
 
-        return securityContext.secureResult(permissionName, () ->
-                dataFetcher.getData(request));
+            return securityContext.secureResult(permissionName, () ->
+                    dataFetcher.getData(request));
+        } catch (Exception e) {
+            LOGGER.error(LogUtil.message("Error fetching data {}", request), e);
+            throw e;
+        }
     }
 }

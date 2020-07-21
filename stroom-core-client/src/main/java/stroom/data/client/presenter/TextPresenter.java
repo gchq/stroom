@@ -24,6 +24,7 @@ import com.google.web.bindery.event.shared.EventBus;
 import com.gwtplatform.mvp.client.HasUiHandlers;
 import com.gwtplatform.mvp.client.MyPresenterWidget;
 import com.gwtplatform.mvp.client.View;
+import edu.ycp.cs.dh.acegwt.client.ace.AceEditorMode;
 
 import java.util.List;
 
@@ -40,6 +41,8 @@ public class TextPresenter extends MyPresenterWidget<TextPresenter.TextView> {
         textPresenter.getLineNumbersOption().setAvailable(true);
         textPresenter.getLineNumbersOption().setOn(true);
         textPresenter.getLineWrapOption().setAvailable(true);
+        textPresenter.getShowInvisiblesOption().setAvailable(true);
+        textPresenter.getUseVimBindingsOption().setAvailable(true);
         textPresenter.setReadOnly(true);
 
         view.setTextView(textPresenter.getView());
@@ -70,6 +73,9 @@ public class TextPresenter extends MyPresenterWidget<TextPresenter.TextView> {
         textPresenter.getLineWrapOption().setOn(isWrapped);
     }
 
+    public void setMode(final AceEditorMode mode) {
+        textPresenter.setMode(mode);
+    }
 
     public interface TextView extends View, HasUiHandlers<TextUiHandlers> {
         void setTextView(View view);

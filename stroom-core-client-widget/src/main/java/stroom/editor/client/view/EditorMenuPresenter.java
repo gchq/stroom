@@ -16,9 +16,8 @@
 
 package stroom.editor.client.view;
 
-import com.google.gwt.user.client.Command;
-import com.google.inject.Inject;
 import stroom.editor.client.presenter.EditorPresenter;
+import stroom.editor.client.presenter.Option;
 import stroom.widget.menu.client.presenter.IconMenuItem;
 import stroom.widget.menu.client.presenter.Item;
 import stroom.widget.menu.client.presenter.MenuListPresenter;
@@ -26,6 +25,9 @@ import stroom.widget.popup.client.event.HidePopupEvent;
 import stroom.widget.popup.client.event.ShowPopupEvent;
 import stroom.widget.popup.client.presenter.PopupPosition;
 import stroom.widget.popup.client.presenter.PopupView.PopupType;
+
+import com.google.gwt.user.client.Command;
+import com.google.inject.Inject;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -66,22 +68,12 @@ public class EditorMenuPresenter {
     private void updateText() {
         int position = 0;
         final List<Item> menuItems = new ArrayList<>();
-        if (xmlEditorPresenter.getStylesOption().isAvailable()) {
-            menuItems.add(createItem(xmlEditorPresenter.getStylesOption().getText(), () ->
-                    xmlEditorPresenter.getStylesOption().setOn(!xmlEditorPresenter.getStylesOption().isOn()), position++));
-        }
-        if (xmlEditorPresenter.getIndicatorsOption().isAvailable()) {
-            menuItems.add(createItem(xmlEditorPresenter.getIndicatorsOption().getText(), () ->
-                    xmlEditorPresenter.getIndicatorsOption().setOn(!xmlEditorPresenter.getIndicatorsOption().isOn()), position++));
-        }
-        if (xmlEditorPresenter.getLineNumbersOption().isAvailable()) {
-            menuItems.add(createItem(xmlEditorPresenter.getLineNumbersOption().getText(), () ->
-                    xmlEditorPresenter.getLineNumbersOption().setOn(!xmlEditorPresenter.getLineNumbersOption().isOn()), position++));
-        }
-        if (xmlEditorPresenter.getLineWrapOption().isAvailable()) {
-            menuItems.add(createItem(xmlEditorPresenter.getLineWrapOption().getText(), () ->
-                    xmlEditorPresenter.getLineWrapOption().setOn(!xmlEditorPresenter.getLineWrapOption().isOn()), position++));
-        }
+        addMenuItem(position++, menuItems, xmlEditorPresenter.getStylesOption());
+        addMenuItem(position++, menuItems, xmlEditorPresenter.getIndicatorsOption());
+        addMenuItem(position++, menuItems, xmlEditorPresenter.getLineNumbersOption());
+        addMenuItem(position++, menuItems, xmlEditorPresenter.getLineWrapOption());
+        addMenuItem(position++, menuItems, xmlEditorPresenter.getShowInvisiblesOption());
+        addMenuItem(position++, menuItems, xmlEditorPresenter.getUseVimBindingsOption());
 
         if (showFormatOption) {
             menuItems.add(createItem("Format", () -> xmlEditorPresenter.format(), position++));
@@ -99,6 +91,13 @@ public class EditorMenuPresenter {
         }
 
         menuListPresenter.setData(menuItems);
+    }
+
+    private void addMenuItem(int position, final List<Item> menuItems, final Option option) {
+        if (option.isAvailable()) {
+            menuItems.add(createItem(option.getText(), () ->
+                    option.setOn(!option.isOn()), position));
+        }
     }
 
     private Item createItem(final String text, final Command command, final int position) {

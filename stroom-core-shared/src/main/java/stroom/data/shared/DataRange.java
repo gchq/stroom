@@ -10,8 +10,6 @@ import com.fasterxml.jackson.annotation.JsonProperty;
 
 import java.util.Objects;
 import java.util.Optional;
-import java.util.OptionalInt;
-import java.util.OptionalLong;
 
 @JsonInclude(Include.NON_NULL)
 public class DataRange {
@@ -119,10 +117,8 @@ public class DataRange {
      * @return The start of the data range, inclusive, zero based
      */
     @JsonIgnore
-    public OptionalLong getOptCharOffsetFrom() {
-        return charOffsetFrom != null
-                ? OptionalLong.of(charOffsetFrom)
-                : OptionalLong.empty();
+    public Optional<Long> getOptCharOffsetFrom() {
+        return Optional.ofNullable(charOffsetFrom);
     }
 
     /**
@@ -148,10 +144,8 @@ public class DataRange {
      * @return The end of the data range, inclusive, zero based
      */
     @JsonIgnore
-    public OptionalLong getOptCharOffsetTo() {
-        return charOffsetTo != null
-                ? OptionalLong.of(charOffsetTo)
-                : OptionalLong.empty();
+    public Optional<Long> getOptCharOffsetTo() {
+        return Optional.ofNullable(charOffsetTo);
     }
 
     /**
@@ -165,10 +159,8 @@ public class DataRange {
      * @return The number of chars of data to get
      */
     @JsonIgnore
-    public OptionalLong getOptLength() {
-        return length != null
-                ? OptionalLong.of(length)
-                : OptionalLong.empty();
+    public Optional<Long> getOptLength() {
+        return Optional.ofNullable(length);
     }
 
     /**
@@ -187,11 +179,11 @@ public class DataRange {
     }
 
     @JsonIgnore
-    public OptionalInt getLineCount() {
+    public Optional<Integer> getLineCount() {
         if (locationFrom != null && locationTo != null) {
-            return OptionalInt.of(locationTo.getLineNo() - locationFrom.getLineNo() + 1);
+            return Optional.of(locationTo.getLineNo() - locationFrom.getLineNo() + 1);
         } else {
-            return OptionalInt.empty();
+            return Optional.empty();
         }
     }
 

@@ -8,6 +8,20 @@ and this project adheres to [Semantic Versioning](http://semver.org/).
 
 * Issue **#1725** : Fix Data Splitter onlyMatch using zero based instead of one based numbers.
 
+* Issue **#1678** : Fix range of data displayed in dashboard text pane.
+
+* Add labels to data display pagers.
+
+* Change data display to show one record at a time.
+
+* Change data display and data fetching to work with character ranges instead of line ranges.
+
+* Add 'Show Hidden Characters' and 'Use Vim Key Bindings' to the editor context menu.
+
+* Change data splitter to record the source of records (line/col range) without the line breaks.
+
+* Change stepping so that the source header row is not included with the first record for csv type data.
+
 
 ## [v7.0-beta.39] - 2020-07-06
 

@@ -30,44 +30,42 @@ import stroom.pipeline.shared.ViewDataResource;
 import stroom.security.client.api.ClientSecurityContext;
 import stroom.security.shared.PermissionNames;
 import stroom.util.shared.EqualsUtil;
-import stroom.util.shared.TextRange;
+import stroom.util.shared.HasCharacterData;
 import stroom.util.shared.Location;
 import stroom.util.shared.Marker;
+import stroom.util.shared.OffsetRange;
 import stroom.util.shared.RowCount;
 import stroom.util.shared.Severity;
+import stroom.util.shared.TextRange;
 import stroom.widget.tab.client.presenter.TabBar;
 import stroom.widget.tab.client.presenter.TabData;
 import stroom.widget.tab.client.presenter.TabDataImpl;
 
 import com.google.gwt.core.client.GWT;
 import com.google.gwt.dom.client.Style.Unit;
-import com.google.gwt.event.shared.GwtEvent;
-import com.google.gwt.event.shared.SimpleEventBus;
 import com.google.gwt.user.client.Timer;
-import com.google.gwt.view.client.HasRows;
-import com.google.gwt.view.client.Range;
-import com.google.gwt.view.client.RangeChangeEvent;
-import com.google.gwt.view.client.RangeChangeEvent.Handler;
-import com.google.gwt.view.client.RowCountChangeEvent;
 import com.google.inject.Inject;
 import com.google.web.bindery.event.shared.EventBus;
 import com.gwtplatform.mvp.client.LayerContainer;
 import com.gwtplatform.mvp.client.MyPresenterWidget;
 import com.gwtplatform.mvp.client.View;
+import edu.ycp.cs.dh.acegwt.client.ace.AceEditorMode;
 
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Objects;
-import java.util.OptionalInt;
-import java.util.function.Consumer;
+import java.util.Optional;
 
 public class DataPresenter extends MyPresenterWidget<DataPresenter.DataView> implements TextUiHandlers {
     private static final ViewDataResource VIEW_DATA_RESOURCE = GWT.create(ViewDataResource.class);
 
-    // First char to unbounded
-    private static final DataRange DEFAULT_DATA_RANGE = DataRange.from(0);
+    // TODO @AT These need to come from config
+    private static final long MAX_INITIAL_CHARS = 1_000L;
+    private static final long MAX_CHARS_PER_FETCH = 10_000L;
+
+    private static final DataRange DEFAULT_DATA_RANGE = DataRange.from(0, MAX_INITIAL_CHARS);
 
     private static final String META = "Meta";
     private static final String META_DATA = "Meta Data";
@@ -84,12 +82,15 @@ public class DataPresenter extends MyPresenterWidget<DataPresenter.DataView> imp
     private final MarkerListPresenter markerListPresenter;
 
     private final RestFactory restFactory;
-    private final PagerRows dataPagerRows;
+//    private final PagerRows dataPagerRows;
     // TODO @AT rename to commonPagerRows
-    private final PagerRows segmentPagerRows;
+//    private final PagerRows segmentPagerRows;
     //    private final Map<String, OffsetRange<Long>> dataTypeOffsetRangeMap = new HashMap<>();
+
     private final Map<String, DataRange> dataTypeRangeMap = new HashMap<>();
     private final boolean userHasPipelineSteppingPermission;
+
+    DataNavigatorData dataNavigatorData = new DataNavigatorData();
 
     private boolean errorMarkerMode = true;
 
@@ -114,6 +115,7 @@ public class DataPresenter extends MyPresenterWidget<DataPresenter.DataView> imp
     private List<FetchDataRequest> actionQueue;
     private Timer delayedFetchDataTimer;
     private String data;
+    private AceEditorMode editorMode = AceEditorMode.XML;
     private List<Marker> markers;
     private int startLineNo;
 
@@ -138,6 +140,7 @@ public class DataPresenter extends MyPresenterWidget<DataPresenter.DataView> imp
                          final RestFactory restFactory) {
         super(eventBus, view);
         this.textPresenter = textPresenter;
+        // Use properties mode for meta
         this.markerListPresenter = markerListPresenter;
         this.restFactory = restFactory;
 
@@ -147,15 +150,19 @@ public class DataPresenter extends MyPresenterWidget<DataPresenter.DataView> imp
 
         textPresenter.setUiHandlers(this);
 
-        dataPagerRows = new PageRows();
+//        dataPagerRows = new PageRows();
 //        segmentPagerRows = new SegmentRows();
-        segmentPagerRows = new SimplePagerRows(1);
-        view.setDataPagerRows(dataPagerRows);
-        view.setSegmentPagerRows(segmentPagerRows);
+//        segmentPagerRows = new SimplePagerRows(1);
+//        view.setDataPagerRows(dataPagerRows);
+//        view.setSegmentPagerRows(segmentPagerRows);
 
         // Don't want to see x to y of z, want x of y for the part pager
-        view.setSegmentPagerToVisibleState(false);
-        view.setDataPagerTitle(CHARACTERS_PAGER_TITLE);
+//        view.setSegmentPagerToVisibleState(false);
+//        view.setDataPagerTitle(CHARACTERS_PAGER_TITLE);
+
+        dataNavigatorData = new DataNavigatorData();
+
+        view.setNavigatorData(dataNavigatorData);
 
         addTab(errorTab);
         addTab(dataTab);
@@ -188,17 +195,25 @@ public class DataPresenter extends MyPresenterWidget<DataPresenter.DataView> imp
         if (!steppingSource) {
             if (tab != null) {
                 if (META.equals(tab.getLabel())) {
+                    editorMode = AceEditorMode.PROPERTIES;
                     fetchDataForCurrentStreamNo(META_DATA);
                 } else if (CONTEXT.equals(tab.getLabel())) {
+                    editorMode = AceEditorMode.XML;
                     fetchDataForCurrentStreamNo(CONTEXT);
                 } else if (ERROR.equals(tab.getLabel())) {
                     errorMarkerMode = true;
+                    editorMode = AceEditorMode.TEXT;
                     fetchDataForCurrentStreamNo(null);
                 } else {
                     // Turn off error marker mode if we are currently looking at
                     // an error and switching to the data tab.
                     if (ERROR.equals(currentStreamType) && errorMarkerMode) {
                         errorMarkerMode = false;
+                        // Error textual data so display as text
+                        editorMode = AceEditorMode.TEXT;
+                    } else {
+                        // Any old data so treat as XML
+                        editorMode = AceEditorMode.XML;
                     }
 
                     fetchDataForCurrentStreamNo(null);
@@ -276,11 +291,11 @@ public class DataPresenter extends MyPresenterWidget<DataPresenter.DataView> imp
 
 //        long newRecordOffset;
 //        if (sourceLocation.getSegmentNo() != -1) {
-            // Segmented data
+        // Segmented data
 //            recordLength = 1L;
 //            newRecordOffset = sourceLocation.getSegmentNo();
 //        } else {
-            // Non segmented data, aka raw
+        // Non segmented data, aka raw
 //            final long page = lineNo / recordLength;
 //            newRecordOffset = oldSegmentNo % recordLength;
 //            final long tmp = page * recordLength;
@@ -440,35 +455,42 @@ public class DataPresenter extends MyPresenterWidget<DataPresenter.DataView> imp
 
             if (result instanceof FetchMarkerResult) {
                 // Error: a of b
-                getView().showSegmentPager(true);
-                getView().showDataPager(false);
+//                getView().showSegmentPager(true);
+//                getView().showDataPager(false);
 
-                getView().setSegmentPagerTitle("Error");
-                segmentPagerRows.setVisibleRangeHandler(this::handleSegmentNoRangeChange);
-                getView().setSegmentPagerToVisibleState(true);
+//                getView().setSegmentPagerTitle("Error");
+//                segmentPagerRows.setVisibleRangeHandler(this::handleSegmentNoRangeChange);
+//                getView().setSegmentPagerToVisibleState(true);
+
+                dataNavigatorData.updateSegmentsCount(result.getTotalItemCount());
 
 //                commonPagerOffset = result.getPageRange().getOffset().intValue();
 
             } else if (result instanceof FetchDataResult) {
                 // Make it one based
-                dataPagerOffset = result.getSourceLocation().getDataRange().getOptCharOffsetFrom().orElse(0);
+                dataPagerOffset = result.getSourceLocation()
+                        .getDataRange()
+                        .getOptCharOffsetFrom()
+                        .orElse(0L);
                 dataPagerLength = result.getSourceLocation().getDataRange().getLength();
                 dataPagerCount = result.getTotalCharacterCount().getCount();
                 dataPagerCountExact = result.getTotalCharacterCount().isExact();
 
                 FetchDataResult fetchDataResult = (FetchDataResult) result;
-                getView().showDataPager(true);
-                getView().setDataPagerToVisibleState(true);
+//                getView().showDataPager(true);
+//                getView().setDataPagerToVisibleState(true);
 
                 if (DataType.SEGMENTED.equals(fetchDataResult.getDataType())) {
                     // Record: a of b   Characters: x to y of z
 
-                    getView().showSegmentPager(true);
+//                    getView().showSegmentPager(true);
 
-                    getView().setSegmentPagerTitle("Record");
-                    segmentPagerRows.setVisibleRangeHandler(this::handleSegmentNoRangeChange);
+//                    getView().setSegmentPagerTitle("Record");
+//                    segmentPagerRows.setVisibleRangeHandler(this::handleSegmentNoRangeChange);
 
-                    getView().setSegmentPagerToVisibleState(false);
+//                    getView().setSegmentPagerToVisibleState(false);
+
+                    dataNavigatorData.updateSegmentsCount(result.getTotalItemCount());
 
                 } else {
                     // non-segmented
@@ -476,32 +498,39 @@ public class DataPresenter extends MyPresenterWidget<DataPresenter.DataView> imp
                     // OR                Characters: x to y of z
 
                     // Only show part pager
-                    getView().showSegmentPager(result.getTotalItemCount().getCount() > 1);
+//                    getView().showSegmentPager(result.getTotalItemCount().getCount() > 1);
 
-                    getView().setSegmentPagerTitle("Part");
-                    segmentPagerRows.setVisibleRangeHandler(this::handlePartNoRangeChange);
+//                    getView().setSegmentPagerTitle("Part");
+//                    segmentPagerRows.setVisibleRangeHandler(this::handlePartNoRangeChange);
+
+                    dataNavigatorData.updatePartsCount(result.getTotalItemCount());
                 }
             }
-            GWT.log("Segment Pager Offset: " + dataPagerOffset
-                    + " Length: " + dataPagerLength
-                    + " Total: " + dataPagerCount
-                    + " Exact: " + (dataPagerCountExact ? "EXACT" : "NON-EXACT")
-                    + " type: " + (result instanceof FetchDataResult ? ((FetchDataResult) result).getDataType() : "-"));
 
-            GWT.log("Data Pager Offset: " + commonPagerOffset
-                    + " Length: " + commonPagerLength
-                    + " Total: " + commonPagerCount
-                    + " Exact: " + (commonPagerCountExact ? "EXACT" : "NON-EXACT")
-                    + " type: " + (result instanceof FetchDataResult ? ((FetchDataResult) result).getDataType() : "-"));
 
-            segmentPagerRows.updateRowData((int)commonPagerOffset, (int)commonPagerLength);
-            segmentPagerRows.updateRowCount((int)commonPagerCount, commonPagerCountExact);
+//            GWT.log("Segment Pager Offset: " + dataPagerOffset
+//                    + " Length: " + dataPagerLength
+//                    + " Total: " + dataPagerCount
+//                    + " Exact: " + (dataPagerCountExact ? "EXACT" : "NON-EXACT")
+//                    + " type: " + (result instanceof FetchDataResult ? ((FetchDataResult) result).getDataType() : "-"));
+//
+//            GWT.log("Data Pager Offset: " + commonPagerOffset
+//                    + " Length: " + commonPagerLength
+//                    + " Total: " + commonPagerCount
+//                    + " Exact: " + (commonPagerCountExact ? "EXACT" : "NON-EXACT")
+//                    + " type: " + (result instanceof FetchDataResult ? ((FetchDataResult) result).getDataType() : "-"));
 
-            dataPagerRows.updateRowData((int)dataPagerOffset, (int)dataPagerLength);
-            dataPagerRows.updateRowCount((int)dataPagerCount, dataPagerCountExact);
+
+
+
+//            segmentPagerRows.updateRowData((int) commonPagerOffset, (int) commonPagerLength);
+//            segmentPagerRows.updateRowCount((int) commonPagerCount, commonPagerCountExact);
+
+//            dataPagerRows.updateRowData((int) dataPagerOffset, (int) dataPagerLength);
+//            dataPagerRows.updateRowCount((int) dataPagerCount, dataPagerCountExact);
         } else {
-            getView().showSegmentPager(false);
-            getView().showDataPager(false);
+//            getView().showSegmentPager(false);
+//            getView().showDataPager(false);
         }
     }
 
@@ -511,17 +540,17 @@ public class DataPresenter extends MyPresenterWidget<DataPresenter.DataView> imp
 //        update(false);
 //    }
 
-    private void handlePartNoRangeChange(final Range range) {
-        GWT.log("Part range: " + range.getStart() + ":" + range.getLength());
-        currentPartNo = range.getStart();
-        update(false);
-    }
-
-    private void handleSegmentNoRangeChange(final Range range) {
-        GWT.log("Segment range: " + range.getStart() + ":" + range.getLength());
-        currentSegmentNo = range.getStart();
-        update(false);
-    }
+//    private void handlePartNoRangeChange(final Range range) {
+//        GWT.log("Part range: " + range.getStart() + ":" + range.getLength());
+//        currentPartNo = range.getStart();
+//        update(false);
+//    }
+//
+//    private void handleSegmentNoRangeChange(final Range range) {
+//        GWT.log("Segment range: " + range.getStart() + ":" + range.getLength());
+//        currentSegmentNo = range.getStart();
+//        update(false);
+//    }
 
     private void setPageResponse(final AbstractFetchDataResult result,
                                  final boolean fireEvents) {
@@ -542,6 +571,7 @@ public class DataPresenter extends MyPresenterWidget<DataPresenter.DataView> imp
             if (result instanceof FetchMarkerResult) {
                 final FetchMarkerResult fetchMarkerResult = (FetchMarkerResult) result;
                 markers = fetchMarkerResult.getMarkers();
+                curDataType = DataType.MARKER;
 
 //                getView().setDataPagerTitle("Errors");
 //                getView().setDataPagerToVisibleState(true);
@@ -559,9 +589,7 @@ public class DataPresenter extends MyPresenterWidget<DataPresenter.DataView> imp
 //                    getView().setDataPagerTitle("Characters");
 //                    getView().setDataPagerToVisibleState(true);
                     final int lineCount = result.getSourceLocation().getOptDataRange()
-                            .map(DataRange::getLineCount)
-                            .filter(OptionalInt::isPresent)
-                            .map(OptionalInt::getAsInt)
+                            .flatMap(DataRange::getLineCount)
                             .orElse(0);
 
                     // This may conflict with what the user has selected with the right click menu
@@ -665,9 +693,15 @@ public class DataPresenter extends MyPresenterWidget<DataPresenter.DataView> imp
 
         setPagers(result);
 
-        textPresenter.setText(data, formatOnLoad);
+        textPresenter.setMode(editorMode);
+        // Only want to try to format (which formats as XML) if we know the
+        // data is likely to be XML, else it can mess up the formatting of error text.
+        boolean isFormatted = formatOnLoad && AceEditorMode.XML.equals(editorMode);
+        textPresenter.setText(data, isFormatted);
         textPresenter.setFirstLineNumber(startLineNo);
         textPresenter.setControlsVisible(playButtonVisible);
+
+        getView().refreshNavigator();
 
         refreshHighlights(result);
         refreshMarkers(result);
@@ -790,156 +824,336 @@ public class DataPresenter extends MyPresenterWidget<DataPresenter.DataView> imp
         this.formatOnLoad = formatOnLoad;
     }
 
+    private long getCurrentPartNo() {
+        return currentPartNo;
+    }
+
+    private long getCurrentSegmentNo() {
+        return currentSegmentNo;
+    }
+
+    private DataType getCurDataType() {
+        return curDataType;
+    }
+
+    private DataRange getCurrentDataRange() {
+        return currentDataRange;
+    }
+
+    private AbstractFetchDataResult getLastResult() {
+        return lastResult;
+    }
+
     public interface DataView extends View {
 
-        void setSegmentPagerRows(HasRows display);
+//        void setSegmentPagerRows(HasRows display);
 
-        void showSegmentPager(boolean show);
-
-        void showDataPager(boolean show);
-
-        // TODO @AT
-        void setSegmentPagerToVisibleState(final boolean isVisible);
-
-        void setDataPagerRows(HasRows display);
-
-        void setSegmentPagerTitle(final String title);
-
-        void setDataPagerTitle(final String title);
-
-        void setDataPagerToVisibleState(final boolean isVisible);
+//        void showSegmentPager(boolean show);
+//
+//        void showDataPager(boolean show);
+//
+//        // TODO @AT
+//        void setSegmentPagerToVisibleState(final boolean isVisible);
+//
+//        void setDataPagerRows(HasRows display);
+//
+//        void setSegmentPagerTitle(final String title);
+//
+//        void setDataPagerTitle(final String title);
+//
+//        void setDataPagerToVisibleState(final boolean isVisible);
 
         TabBar getTabBar();
 
         LayerContainer getLayerContainer();
 
+        void setNavigatorData(final HasCharacterData dataNavigatorData);
+
+        void refreshNavigator();
+
         void setRefreshing(boolean refreshing);
     }
 
-    private static abstract class PagerRows implements HasRows {
-        private final SimpleEventBus simpleEventBus = new SimpleEventBus();
-        private Range visibleRange;
-        private RowCount<Integer> rowCount = new RowCount<>(0, false);
-        private Consumer<Range> visibleRangeHandler;
+//    private static abstract class PagerRows implements HasRows {
+//        private final SimpleEventBus simpleEventBus = new SimpleEventBus();
+//        private Range visibleRange;
+//        private RowCount<Integer> rowCount = new RowCount<>(0, false);
+//        private Consumer<Range> visibleRangeHandler;
+//
+//        public PagerRows(final int length) {
+//            visibleRange = new Range(0, length);
+//        }
+//
+//        @Override
+//        public void fireEvent(final GwtEvent<?> event) {
+//            simpleEventBus.fireEvent(event);
+//        }
+//
+//        @Override
+//        public void setVisibleRange(final int start, final int length) {
+//            visibleRange = new Range(start, length);
+//            setVisibleRange(visibleRange);
+//        }
+//
+//        @Override
+//        public void setVisibleRange(final Range visibleRange) {
+//            if (visibleRangeHandler != null) {
+//                visibleRangeHandler.accept(visibleRange);
+//            }
+//        }
+//
+//        public void setVisibleRangeHandler(final Consumer<Range> visibleRangeHandler) {
+//            this.visibleRangeHandler = visibleRangeHandler;
+//        }
+//
+//        @Override
+//        public Range getVisibleRange() {
+//            return visibleRange;
+//        }
+//
+//        @Override
+//        public void setRowCount(final int count, final boolean exact) {
+//            rowCount = new RowCount<>(count, exact);
+//        }
+//
+//        @Override
+//        public boolean isRowCountExact() {
+//            return rowCount.isExact();
+//        }
+//
+//        @Override
+//        public int getRowCount() {
+//            return rowCount.getCount();
+//        }
+//
+//        @Override
+//        public void setRowCount(final int count) {
+//            setRowCount(count, true);
+//        }
+//
+//        @Override
+//        public com.google.gwt.event.shared.HandlerRegistration addRowCountChangeHandler(
+//                final com.google.gwt.view.client.RowCountChangeEvent.Handler handler) {
+//            return simpleEventBus.addHandler(RowCountChangeEvent.getType(), handler);
+//        }
+//
+//        @Override
+//        public com.google.gwt.event.shared.HandlerRegistration addRangeChangeHandler(final Handler handler) {
+//            return simpleEventBus.addHandler(RangeChangeEvent.getType(), handler);
+//        }
+//
+//        public void updateRowData(final int start, final int length) {
+//            visibleRange = new Range(start, length);
+//            RangeChangeEvent.fire(this, new Range(start, length));
+//        }
+//
+//        public void updateRowCount(final int count, final boolean exact) {
+//            rowCount = new RowCount<>(count, exact);
+//            RowCountChangeEvent.fire(this, count, exact);
+//        }
+//    }
+//
+//
+//    private class PageRows extends PagerRows {
+//        // TODO @AT Get from config, same one as DataFetcher
+//        private static final int SOURCE_PAGE_SIZE = 1000;
+//
+//        public PageRows() {
+//            super(SOURCE_PAGE_SIZE);
+//        }
+//
+//        @Override
+//        public void setVisibleRange(final Range range) {
+//            GWT.log("Data range: " + range.getStart() + ":" + range.getLength());
+//            // TODO @AT fix paging
+////            currentPageRange = new OffsetRange<>((long) range.getStart(), (long) range.getLength());
+//            currentDataRange = DataRange.from(range.getStart(), range.getLength());
+//            update(false);
+//        }
+//    }
 
-        public PagerRows(final int length) {
-            visibleRange = new Range(0, length);
-        }
 
-        @Override
-        public void fireEvent(final GwtEvent<?> event) {
-            simpleEventBus.fireEvent(event);
-        }
+//    private class SegmentRows extends PagerRows {
+//        public SegmentRows() {
+//            super(1);
+//        }
+//
+//        @Override
+//        public void setVisibleRange(final Range range) {
+//            GWT.log("Part range: " + range.getStart() + ":" + range.getLength());
+//            // Only one part at a time so don't care about range length
+//            currentPartNo = range.getStart();
+//            update(false);
+//        }
+//    }
 
-        @Override
-        public void setVisibleRange(final int start, final int length) {
-            visibleRange = new Range(start, length);
-            setVisibleRange(visibleRange);
-        }
-
-        @Override
-        public void setVisibleRange(final Range visibleRange) {
-            if (visibleRangeHandler != null) {
-                visibleRangeHandler.accept(visibleRange);
-            }
-        }
-
-        public void setVisibleRangeHandler(final Consumer<Range> visibleRangeHandler) {
-            this.visibleRangeHandler = visibleRangeHandler;
-        }
-
-        @Override
-        public Range getVisibleRange() {
-            return visibleRange;
-        }
-
-        @Override
-        public void setRowCount(final int count, final boolean exact) {
-            rowCount = new RowCount<>(count, exact);
-        }
-
-        @Override
-        public boolean isRowCountExact() {
-            return rowCount.isExact();
-        }
-
-        @Override
-        public int getRowCount() {
-            return rowCount.getCount();
-        }
-
-        @Override
-        public void setRowCount(final int count) {
-            setRowCount(count, true);
-        }
-
-        @Override
-        public com.google.gwt.event.shared.HandlerRegistration addRowCountChangeHandler(
-                final com.google.gwt.view.client.RowCountChangeEvent.Handler handler) {
-            return simpleEventBus.addHandler(RowCountChangeEvent.getType(), handler);
-        }
-
-        @Override
-        public com.google.gwt.event.shared.HandlerRegistration addRangeChangeHandler(final Handler handler) {
-            return simpleEventBus.addHandler(RangeChangeEvent.getType(), handler);
-        }
-
-        public void updateRowData(final int start, final int length) {
-            visibleRange = new Range(start, length);
-            RangeChangeEvent.fire(this, new Range(start, length));
-        }
-
-        public void updateRowCount(final int count, final boolean exact) {
-            rowCount = new RowCount<>(count, exact);
-            RowCountChangeEvent.fire(this, count, exact);
-        }
-    }
-
-
-    private class PageRows extends PagerRows {
-        // TODO @AT Get from config, same one as DataFetcher
-        private static final int SOURCE_PAGE_SIZE = 1000;
-
-        public PageRows() {
-            super(SOURCE_PAGE_SIZE);
-        }
-
-        @Override
-        public void setVisibleRange(final Range range) {
-            GWT.log("Data range: " + range.getStart() + ":" + range.getLength());
-            // TODO @AT fix paging
-//            currentPageRange = new OffsetRange<>((long) range.getStart(), (long) range.getLength());
-            currentDataRange = DataRange.from(range.getStart(), range.getLength());
-            update(false);
-        }
-    }
-
-
-    private class SegmentRows extends PagerRows {
-        public SegmentRows() {
-            super(1);
-        }
-
-        @Override
-        public void setVisibleRange(final Range range) {
-            GWT.log("Part range: " + range.getStart() + ":" + range.getLength());
-            // Only one part at a time so don't care about range length
-            currentPartNo = range.getStart();
-            update(false);
-        }
-    }
-
-    private class SimplePagerRows extends PagerRows {
-
-        public SimplePagerRows(final int length) {
-            super(length);
-        }
-
+//    private class SimplePagerRows extends PagerRows {
+//
+//        public SimplePagerRows(final int length) {
+//            super(length);
+//        }
+//
 //        @Override
 //        public Range getVisibleRange() {
 //            final Range range = super.getVisibleRange();
 //            // TODO @AT should be consistent with DataFetcher
 //            return new Range(range.getStart(), 10_000);
 //        }
+//    }
+
+    private class DataNavigatorData implements HasCharacterData {
+
+        private RowCount<Long> partsCount = RowCount.of(0L, false);
+        private RowCount<Long> segmentsCount = RowCount.of(0L, false);
+
+        public void updatePartsCount(final RowCount<Long> partsCount) {
+            this.partsCount = partsCount;
+        }
+
+        public void updateSegmentsCount(final RowCount<Long> segmentsCount) {
+            this.segmentsCount = segmentsCount;
+        }
+
+        @Override
+        public boolean isMultiPart() {
+            // For now assume segmented and multi-part are mutually exclusive
+            return DataType.NON_SEGMENTED.equals(getCurDataType());
+        }
+
+        @Override
+        public Optional<Long> getPartNo() {
+            return Optional.of(getCurrentPartNo());
+//            return Optional.ofNullable(currentSourceLocation)
+//                    .map(SourceLocation::getPartNo);
+        }
+
+        @Override
+        public Optional<Long> getTotalParts() {
+            return Optional.ofNullable(partsCount)
+                    .filter(RowCount::isExact)
+                    .map(RowCount::getCount);
+        }
+
+        @Override
+        public void setPartNo(final long partNo) {
+            currentPartNo = partNo;
+            showHeadCharacters();
+        }
+
+        @Override
+        public boolean isSegmented() {
+            return DataType.SEGMENTED.equals(getCurDataType())
+                    || DataType.MARKER.equals(getCurDataType());
+        }
+
+        @Override
+        public Optional<Long> getSegmentNoFrom() {
+            final AbstractFetchDataResult lastResult = getLastResult();
+
+            if (lastResult != null && isSegmented()) {
+                return Optional.ofNullable(lastResult)
+                        .map(AbstractFetchDataResult::getItemRange)
+                        .map(OffsetRange::getOffset);
+            } else {
+                return Optional.empty();
+            }
+        }
+
+        @Override
+        public Optional<Long> getSegmentNoTo() {
+            final AbstractFetchDataResult lastResult = getLastResult();
+
+            if (lastResult != null && isSegmented()) {
+                return Optional.ofNullable(lastResult)
+                        .map(AbstractFetchDataResult::getItemRange)
+                        .map(range -> range.getOffset() + range.getLength() - 1);
+            } else {
+                return Optional.empty();
+            }
+        }
+
+        @Override
+        public Optional<Long> getTotalSegments() {
+            return Optional.ofNullable(segmentsCount)
+                    .filter(RowCount::isExact)
+                    .map(RowCount::getCount);
+        }
+
+        @Override
+        public Optional<String> getSegmentName() {
+            final AbstractFetchDataResult lastResult = getLastResult();
+            if (lastResult == null) {
+                return Optional.empty();
+            } else if (DataType.MARKER.equals(curDataType)) {
+                return Optional.of(ERROR);
+            } else if (DataType.SEGMENTED.equals(curDataType)) {
+                return Optional.of("Record");
+            } else {
+                return Optional.empty();
+            }
+        }
+
+        @Override
+        public void setSegmentNoFrom(final long segmentNo) {
+            currentSegmentNo = segmentNo;
+            update(false);
+        }
+
+        @Override
+        public Optional<Long> getCharFrom() {
+            return Optional.ofNullable(getLastResult())
+                    .map(AbstractFetchDataResult::getSourceLocation)
+                    .flatMap(SourceLocation::getOptDataRange)
+                    .flatMap(DataRange::getOptCharOffsetFrom);
+        }
+
+        @Override
+        public Optional<Long> getCharTo() {
+            return Optional.ofNullable(getLastResult())
+                    .map(AbstractFetchDataResult::getSourceLocation)
+                    .flatMap(SourceLocation::getOptDataRange)
+                    .flatMap(DataRange::getOptCharOffsetTo);
+        }
+
+        @Override
+        public Optional<Long> getTotalChars() {
+            return Optional.ofNullable(getLastResult())
+                    .flatMap(result -> Optional.ofNullable(result.getTotalCharacterCount()))
+                    .filter(RowCount::isExact)
+                    .map(RowCount::getCount);
+        }
+
+        @Override
+        public void showHeadCharacters() {
+            currentDataRange = DataRange.from(0, MAX_INITIAL_CHARS - 1);
+            update(false);
+        }
+
+        @Override
+        public void advanceCharactersForward() {
+            if (Long.valueOf(0).equals(currentDataRange.getCharOffsetFrom())) {
+                currentDataRange = DataRange.from(
+                        currentDataRange.getCharOffsetFrom() + MAX_INITIAL_CHARS,
+                        MAX_CHARS_PER_FETCH);
+            } else {
+                currentDataRange = DataRange.from(
+                        currentDataRange.getCharOffsetFrom() + MAX_CHARS_PER_FETCH,
+                        MAX_CHARS_PER_FETCH);
+            }
+            update(false);
+        }
+
+        @Override
+        public void advanceCharactersBackwards() {
+            currentDataRange = DataRange.from(
+                    currentDataRange.getCharOffsetFrom() - MAX_CHARS_PER_FETCH,
+                    MAX_CHARS_PER_FETCH);
+            update(false);
+        }
+
+        @Override
+        public void refresh() {
+            update(false);
+        }
     }
 }
