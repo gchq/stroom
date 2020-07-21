@@ -4,9 +4,7 @@ import stroom.util.shared.ModelStringUtil;
 
 import com.fasterxml.jackson.annotation.JsonCreator;
 import com.fasterxml.jackson.annotation.JsonIgnore;
-import com.fasterxml.jackson.annotation.JsonInclude;
-import com.fasterxml.jackson.annotation.JsonInclude.Include;
-import com.fasterxml.jackson.annotation.JsonProperty;
+import com.fasterxml.jackson.annotation.JsonValue;
 
 import javax.annotation.Nullable;
 import java.time.Duration;
@@ -29,16 +27,12 @@ import java.util.Objects;
  * <p>
  * Delegates most methods of {@link Duration} so can be used anywhere a Duration can.
  */
-@JsonInclude(Include.NON_NULL)
 public class StroomDuration implements Comparable<StroomDuration>, TemporalAmount {
-
-    @JsonProperty
     @Nullable
     // Allows us to hold the original serialised form of the duration as a duration can have more
     // than one serialised form. Can be null.
     private final String valueAsStr;
 
-    @JsonIgnore
     private final Duration duration;
 
     public static final StroomDuration ZERO = new StroomDuration(Duration.ZERO);
@@ -88,13 +82,8 @@ public class StroomDuration implements Comparable<StroomDuration>, TemporalAmoun
     }
 
     @JsonCreator
-    public StroomDuration(@Nullable @JsonProperty("valueAsStr") final String valueAsStr) {
-        this.valueAsStr = valueAsStr;
-        this.duration = parseToDuration(valueAsStr);
-    }
-
-    public static StroomDuration parse(final String valueAsStr) {
-        return new StroomDuration(valueAsStr, parseToDuration(valueAsStr));
+    public static StroomDuration parse(final String value) {
+        return new StroomDuration(value, parseToDuration(value));
     }
 
     public static StroomDuration of(final TemporalAmount temporalAmount) {
@@ -129,6 +118,8 @@ public class StroomDuration implements Comparable<StroomDuration>, TemporalAmoun
         return new StroomDuration(Duration.ofNanos(nanos));
     }
 
+    @SuppressWarnings("unused")
+    @JsonValue
     public String getValueAsStr() {
         return valueAsStr != null
                 ? valueAsStr
