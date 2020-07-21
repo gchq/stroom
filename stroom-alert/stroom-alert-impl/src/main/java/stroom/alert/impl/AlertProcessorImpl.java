@@ -182,7 +182,7 @@ public class AlertProcessorImpl implements AlertProcessor {
 
     @Override
     public void createAlerts() {
-        LOGGER.trace("Creating alerts...");
+        LOGGER.debug("Creating alerts...");
 
         int numTasks = 0;
         for (DocRef pipeline : alertQueryHits.getExtractionPipelines()) {
@@ -194,15 +194,15 @@ public class AlertProcessorImpl implements AlertProcessor {
                 if (eventIds != null && eventIds.length > 0) {
                     final Receiver receiver = new AlertProcessorReceiver(ruleConfig.getAlertDefinitions(),
                             ruleConfig.getParams());
-
-                        extractionDecoratorFactory.createAlertExtractionTask(receiver, receiver,
+                    extractionDecoratorFactory.createAlertExtractionTask(receiver, receiver,
                                 currentStreamId, eventIds, pipeline,
                                 ruleConfig.getAlertDefinitions(), ruleConfig.getParams());
-                        LOGGER.trace("This AlertProcessorImpl has now created {} tasks during this call ", numTasks);
+                    numTasks++;
                 }
             }
 
         }
+        LOGGER.debug("Created {} search extraction tasks.", numTasks);
         alertQueryHits.clearHits();
 
     }
