@@ -62,6 +62,8 @@ public interface EditorView extends View, HasKeyDownHandlers, HasFormatHandlers,
 
     Option getUseVimBindingsOption();
 
+    Option getCodeCompletionOption();
+
     void showFilterButton(boolean show);
 
     void setFilterActive(boolean active);

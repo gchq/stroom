@@ -33,13 +33,17 @@ public class Option {
         return on;
     }
 
-    public void setOn(final boolean on) {
-        if (this.on != on) {
+    public void setOn(final boolean on, final boolean force) {
+        if (this.on != on || force) {
             this.on = on;
             if (changeHandler != null) {
                 changeHandler.onChange(on);
             }
         }
+    }
+
+    public void setOn(final boolean on) {
+        setOn(on, false);
     }
 
     public boolean isAvailable() {

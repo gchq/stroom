@@ -17,9 +17,6 @@
 
 package stroom.script.client.presenter;
 
-import com.google.inject.Inject;
-import com.google.web.bindery.event.shared.EventBus;
-import edu.ycp.cs.dh.acegwt.client.ace.AceEditorMode;
 import stroom.dashboard.client.vis.ClearFunctionCacheEvent;
 import stroom.dashboard.client.vis.ClearScriptCacheEvent;
 import stroom.docref.DocRef;
@@ -31,6 +28,10 @@ import stroom.script.shared.ScriptDoc;
 import stroom.security.client.api.ClientSecurityContext;
 import stroom.widget.tab.client.presenter.TabData;
 import stroom.widget.tab.client.presenter.TabDataImpl;
+
+import com.google.inject.Inject;
+import com.google.web.bindery.event.shared.EventBus;
+import edu.ycp.cs.dh.acegwt.client.ace.AceEditorMode;
 
 import javax.inject.Provider;
 
@@ -112,6 +113,8 @@ public class ScriptPresenter extends DocumentEditTabPresenter<LinkTabPanelView, 
         if (codePresenter != null) {
             codePresenter.setReadOnly(readOnly);
             codePresenter.getContextMenu().setShowFormatOption(!readOnly);
+            codePresenter.getCodeCompletionOption().setAvailable(!readOnly);
+            codePresenter.getCodeCompletionOption().setOn(!readOnly);
         }
     }
 

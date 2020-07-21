@@ -57,6 +57,8 @@ public class Editor extends Composite implements HasValueChangeHandlers<String> 
     private boolean showInvisiblesDirty;
     private boolean useVimBindings = false;
     private boolean useVimBindingsDirty;
+    private boolean useCodeCompletion = false;
+    private boolean useCodeCompletionDirty;
     private boolean addChangeHandler;
     private boolean addedChangeHandler;
     private boolean started;
@@ -301,6 +303,20 @@ public class Editor extends Composite implements HasValueChangeHandlers<String> 
         if (editor.isAttached() && useVimBindingsDirty) {
             editor.setUseVimBindings(useVimBindings);
             useVimBindingsDirty = false;
+        }
+    }
+
+    public void setUseCodeCompletion(final boolean useCodeCompletion) {
+        useCodeCompletionDirty = true;
+        this.useCodeCompletion = useCodeCompletion;
+        updateUseCodeCompletion();
+    }
+
+    private void updateUseCodeCompletion() {
+//        if (useCodeCompletionDirty) {
+        if (editor.isAttached() && useCodeCompletionDirty) {
+            editor.setAutocompleteEnabled(useCodeCompletion);
+            useCodeCompletionDirty = false;
         }
     }
 

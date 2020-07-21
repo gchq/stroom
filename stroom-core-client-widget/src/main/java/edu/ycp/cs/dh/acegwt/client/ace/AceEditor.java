@@ -731,9 +731,17 @@ public class AceEditor extends Composite implements RequiresResize, HasText, Tak
 		var editor = this.@edu.ycp.cs.dh.acegwt.client.ace.AceEditor::editor;
 		if (b) {
 			$wnd.ace.require("ace/ext/language_tools");
-			editor.setOptions({ enableBasicAutocompletion: true });
+			editor.setOptions({
+                enableBasicAutocompletion: true,
+                enableLiveAutocompletion: true,
+                enableSnippets: true
+            });
 		} else {
-			editor.setOptions({ enableBasicAutocompletion: false });
+			editor.setOptions({
+                enableBasicAutocompletion: false,
+                enableLiveAutocompletion: false,
+                enableSnippets: false
+            });
 		}
 	}-*/;
 

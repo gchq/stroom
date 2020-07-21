@@ -121,6 +121,10 @@ public class EditorPresenter extends MyPresenterWidget<EditorView>
         return getView().getUseVimBindingsOption();
     }
 
+    public Option getCodeCompletionOption() {
+        return getView().getCodeCompletionOption();
+    }
+
     public void setFirstLineNumber(final int firstLineNumber) {
         getView().setFirstLineNumber(firstLineNumber);
     }

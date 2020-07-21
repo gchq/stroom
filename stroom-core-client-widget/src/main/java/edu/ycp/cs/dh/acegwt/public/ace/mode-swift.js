@@ -69,7 +69,7 @@ var SwiftHighlightRules = function() {
             + "|convenience|dynamic|final|infix|lazy|mutating|nonmutating|optional|override|postfix"
             + "|prefix|required|static|guard|defer",
         "storage.type": "bool|double|Double"
-            + "|extension|float|Float|int|Int|private|public|string|String",
+            + "|extension|float|Float|int|Int|open|internal|fileprivate|private|public|string|String",
         "constant.language":
             "false|Infinity|NaN|nil|no|null|null|off|on|super|this|true|undefined|yes",
         "support.function":
@@ -165,6 +165,12 @@ var SwiftHighlightRules = function() {
 
     this.$rules = {
         start: [
+            string('"""', {
+                escape: /\\(?:[0\\tnr"']|u{[a-fA-F1-9]{0,8}})/,
+                interpolation: {lead: "\\", open: "(", close: ")"},
+                error: /\\./,
+                multiline: true
+            }),
             string('"', {
                 escape: /\\(?:[0\\tnr"']|u{[a-fA-F1-9]{0,8}})/,
                 interpolation: {lead: "\\", open: "(", close: ")"},

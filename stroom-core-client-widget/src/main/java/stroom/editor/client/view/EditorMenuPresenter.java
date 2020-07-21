@@ -74,6 +74,7 @@ public class EditorMenuPresenter {
         addMenuItem(position++, menuItems, xmlEditorPresenter.getLineWrapOption());
         addMenuItem(position++, menuItems, xmlEditorPresenter.getShowInvisiblesOption());
         addMenuItem(position++, menuItems, xmlEditorPresenter.getUseVimBindingsOption());
+        addMenuItem(position++, menuItems, xmlEditorPresenter.getCodeCompletionOption());
 
         if (showFormatOption) {
             menuItems.add(createItem("Format", () -> xmlEditorPresenter.format(), position++));

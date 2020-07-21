@@ -16,9 +16,6 @@
 
 package stroom.dictionary.client.presenter;
 
-import com.google.gwt.core.client.GWT;
-import com.google.inject.Inject;
-import com.google.web.bindery.event.shared.EventBus;
 import stroom.core.client.LocationManager;
 import stroom.dictionary.shared.DictionaryDoc;
 import stroom.dictionary.shared.DictionaryResource;
@@ -36,6 +33,11 @@ import stroom.util.shared.ResourceGeneration;
 import stroom.widget.button.client.ButtonView;
 import stroom.widget.tab.client.presenter.TabData;
 import stroom.widget.tab.client.presenter.TabDataImpl;
+
+import com.google.gwt.core.client.GWT;
+import com.google.inject.Inject;
+import com.google.web.bindery.event.shared.EventBus;
+import edu.ycp.cs.dh.acegwt.client.ace.AceEditorMode;
 
 import javax.inject.Provider;
 
@@ -115,6 +117,7 @@ public class DictionaryPresenter extends DocumentEditTabPresenter<LinkTabPanelVi
         settingsPresenter.read(docRef, doc);
         if (codePresenter != null) {
             codePresenter.setText(doc.getData());
+            codePresenter.setMode(AceEditorMode.TEXT);
         }
     }
 
@@ -134,6 +137,8 @@ public class DictionaryPresenter extends DocumentEditTabPresenter<LinkTabPanelVi
         codePresenter.setReadOnly(readOnly);
         if (getEntity() != null) {
             codePresenter.setText(getEntity().getData());
+            codePresenter.getCodeCompletionOption().setAvailable(!readOnly);
+            codePresenter.getCodeCompletionOption().setOn(!readOnly);
         }
     }
 

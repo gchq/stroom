@@ -78,6 +78,7 @@ public class EditorViewImpl extends ViewWithUiHandlers<EditorUiHandlers> impleme
     private final Option lineWrapOption;
     private final Option showInvisiblesOption;
     private final Option useVimBindingsOption;
+    private final Option codeCompletionOption;
 
     @UiField(provided = true)
     DockLayoutPanel layout;
@@ -132,12 +133,20 @@ public class EditorViewImpl extends ViewWithUiHandlers<EditorUiHandlers> impleme
         filterInactive.getElement().getStyle().setTop(top, Unit.PX);
         filterActive.getElement().getStyle().setTop(top, Unit.PX);
 
-        stylesOption = new Option("Styles", true, true, (on) -> setMode(mode));
-        lineNumbersOption = new Option("Line Numbers", true, true, (on) -> updateGutter());
-        indicatorsOption = new Option("Indicators", false, false, (on) -> doLayout());
-        lineWrapOption = new Option("Wrap Lines", false, true, (on) -> editor.setUseWrapMode(on));
-        showInvisiblesOption = new Option("Show Hidden Characters", false, true, (on) -> editor.setShowInvisibles(on));
-        useVimBindingsOption = new Option("Use Vim Key Bindings", false, true, (on) -> editor.setUseVimBindings(on));
+        stylesOption = new Option(
+                "Styles", true, true, (on) -> setMode(mode));
+        lineNumbersOption = new Option(
+                "Line Numbers", true, true, (on) -> updateGutter());
+        indicatorsOption = new Option(
+                "Indicators", false, false, (on) -> doLayout());
+        lineWrapOption = new Option(
+                "Wrap Lines", false, true, (on) -> editor.setUseWrapMode(on));
+        showInvisiblesOption = new Option(
+                "Show Hidden Characters", false, true, (on) -> editor.setShowInvisibles(on));
+        useVimBindingsOption = new Option(
+                "Vim Key Bindings", false, true, (on) -> editor.setUseVimBindings(on));
+        codeCompletionOption = new Option(
+                "Code Completion", false, true, (on) -> editor.setUseCodeCompletion(on));
 
         editor.getElement().setClassName("editor");
         editor.addDomHandler(event -> handleMouseDown(event), MouseDownEvent.getType());
@@ -337,6 +346,11 @@ public class EditorViewImpl extends ViewWithUiHandlers<EditorUiHandlers> impleme
     @Override
     public Option getUseVimBindingsOption() {
         return useVimBindingsOption;
+    }
+
+    @Override
+    public Option getCodeCompletionOption() {
+        return codeCompletionOption;
     }
 
     @Override

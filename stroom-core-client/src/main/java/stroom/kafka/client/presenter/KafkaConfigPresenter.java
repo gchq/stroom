@@ -17,10 +17,6 @@
 
 package stroom.kafka.client.presenter;
 
-import com.google.gwt.core.client.GWT;
-import com.google.inject.Inject;
-import com.google.web.bindery.event.shared.EventBus;
-import edu.ycp.cs.dh.acegwt.client.ace.AceEditorMode;
 import stroom.core.client.LocationManager;
 import stroom.dispatch.client.ExportFileCompleteUtil;
 import stroom.dispatch.client.Rest;
@@ -38,6 +34,11 @@ import stroom.util.shared.ResourceGeneration;
 import stroom.widget.button.client.ButtonView;
 import stroom.widget.tab.client.presenter.TabData;
 import stroom.widget.tab.client.presenter.TabDataImpl;
+
+import com.google.gwt.core.client.GWT;
+import com.google.inject.Inject;
+import com.google.web.bindery.event.shared.EventBus;
+import edu.ycp.cs.dh.acegwt.client.ace.AceEditorMode;
 
 import javax.inject.Provider;
 
@@ -136,6 +137,8 @@ public class KafkaConfigPresenter extends DocumentEditTabPresenter<LinkTabPanelV
         if (editorPresenter != null) {
             editorPresenter.setReadOnly(readOnly);
             editorPresenter.getContextMenu().setShowFormatOption(!readOnly);
+            editorPresenter.getCodeCompletionOption().setOn(!readOnly);
+            editorPresenter.getCodeCompletionOption().setAvailable(!readOnly);
         }
     }
 

@@ -212,7 +212,8 @@ public class ElementPresenter extends MyPresenterWidget<ElementView> implements 
         return codePresenter.getText();
     }
 
-    public void setCode(final String code, final IndicatorLines codeIndicators) {
+    public void setCode(final String code,
+                        final IndicatorLines codeIndicators) {
         if (codePresenter != null) {
             this.codeIndicators = codeIndicators;
 
@@ -221,6 +222,10 @@ public class ElementPresenter extends MyPresenterWidget<ElementView> implements 
             }
 
             codePresenter.setIndicators(codeIndicators);
+
+            // Done here to ensure the editor is attached
+            codePresenter.getCodeCompletionOption().setAvailable(true);
+            codePresenter.getCodeCompletionOption().setOn(true, true);
         }
     }
 
@@ -231,7 +236,9 @@ public class ElementPresenter extends MyPresenterWidget<ElementView> implements 
         }
     }
 
-    public void setInput(final String input, final int inputStartLineNo, final boolean formatInput,
+    public void setInput(final String input,
+                         final int inputStartLineNo,
+                         final boolean formatInput,
                          final IndicatorLines inputIndicators) {
         if (inputPresenter != null) {
             inputPresenter.getStylesOption().setOn(formatInput);
@@ -242,10 +249,15 @@ public class ElementPresenter extends MyPresenterWidget<ElementView> implements 
 
             inputPresenter.setFirstLineNumber(inputStartLineNo);
             inputPresenter.setIndicators(inputIndicators);
+
+            inputPresenter.getCodeCompletionOption().setAvailable(false);
+            inputPresenter.getCodeCompletionOption().setOn(false);
         }
     }
 
-    public void setOutput(final String output, final int outputStartLineNo, final boolean formatOutput,
+    public void setOutput(final String output,
+                          final int outputStartLineNo,
+                          final boolean formatOutput,
                           final IndicatorLines outputIndicators) {
         if (outputPresenter != null) {
             outputPresenter.getStylesOption().setOn(formatOutput);
@@ -256,6 +268,9 @@ public class ElementPresenter extends MyPresenterWidget<ElementView> implements 
 
             outputPresenter.setFirstLineNumber(outputStartLineNo);
             outputPresenter.setIndicators(outputIndicators);
+
+            outputPresenter.getCodeCompletionOption().setAvailable(false);
+            outputPresenter.getCodeCompletionOption().setOn(false);
         }
     }
 
@@ -307,7 +322,8 @@ public class ElementPresenter extends MyPresenterWidget<ElementView> implements 
     private EditorPresenter getCodePresenter() {
         if (codePresenter == null) {
             codePresenter = editorProvider.get();
-            setCommonOptions(codePresenter);
+            setCommonEditorOptions(codePresenter);
+
 
             registerHandler(codePresenter.addValueChangeHandler(event -> {
                 dirtyCode = true;
@@ -324,11 +340,8 @@ public class ElementPresenter extends MyPresenterWidget<ElementView> implements 
     private EditorPresenter getInputPresenter() {
         if (inputPresenter == null) {
             inputPresenter = editorProvider.get();
-            inputPresenter.setReadOnly(true);
-            setCommonOptions(inputPresenter);
-
-            // Default to wrapped lines as a lot of output is un-formatted xml
-            inputPresenter.getLineWrapOption().setOn(true);
+            setCommonEditorOptions(inputPresenter);
+            setReadOnlyEditorOptions(inputPresenter);
 
             inputPresenter.setShowFilterSettings(false);
             inputPresenter.setInput(true);
@@ -339,11 +352,8 @@ public class ElementPresenter extends MyPresenterWidget<ElementView> implements 
     private EditorPresenter getOutputPresenter() {
         if (outputPresenter == null) {
             outputPresenter = editorProvider.get();
-            outputPresenter.setReadOnly(true);
-            setCommonOptions(outputPresenter);
-
-            // Default to wrapped lines as a lot of output is un-formatted xml
-            outputPresenter.getLineWrapOption().setOn(true);
+            setCommonEditorOptions(outputPresenter);
+            setReadOnlyEditorOptions(outputPresenter);
 
             outputPresenter.setShowFilterSettings(true);
             outputPresenter.setInput(false);
@@ -357,7 +367,13 @@ public class ElementPresenter extends MyPresenterWidget<ElementView> implements 
         return outputPresenter;
     }
 
-    private void setCommonOptions(final EditorPresenter editorPresenter) {
+    private void setReadOnlyEditorOptions(final EditorPresenter editorPresenter) {
+        editorPresenter.setReadOnly(true);
+        // Default to wrapped lines as a lot of output is un-formatted xml
+        editorPresenter.getLineWrapOption().setOn(true);
+    }
+
+    private void setCommonEditorOptions(final EditorPresenter editorPresenter) {
         editorPresenter.getIndicatorsOption().setAvailable(true);
         editorPresenter.getIndicatorsOption().setOn(true);
 
