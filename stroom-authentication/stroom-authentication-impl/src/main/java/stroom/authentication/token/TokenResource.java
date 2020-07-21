@@ -21,6 +21,7 @@ package stroom.authentication.token;
 import stroom.authentication.config.TokenConfig;
 import stroom.util.shared.RestResource;
 import stroom.util.shared.ResultPage;
+import stroom.util.shared.filter.FilterFieldDefinition;
 
 import com.codahale.metrics.annotation.Timed;
 import io.swagger.annotations.Api;
@@ -46,6 +47,12 @@ import javax.ws.rs.core.MediaType;
 @Consumes(MediaType.APPLICATION_JSON)
 @Api(description = "Stroom API Key API", tags = {"ApiKey"})
 public interface TokenResource extends RestResource {
+    FilterFieldDefinition FIELD_DEF_USER_ID = FilterFieldDefinition.defaultField("UserId");
+    FilterFieldDefinition FIELD_DEF_USER_EMAIL = FilterFieldDefinition.qualifiedField(
+            "UserEmail", "userEmail");
+    FilterFieldDefinition FIELD_DEF_COMMENTS = FilterFieldDefinition.qualifiedField(
+            "Comments", "comments");
+
     @ApiOperation(
             value = "Get all tokens.",
             response = String.class,

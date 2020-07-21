@@ -24,6 +24,7 @@ import io.swagger.annotations.ApiOperation;
 import io.swagger.annotations.ApiParam;
 import stroom.util.shared.RestResource;
 import stroom.util.shared.ResultPage;
+import stroom.util.shared.filter.FilterFieldDefinition;
 
 import javax.servlet.http.HttpServletRequest;
 import javax.validation.constraints.NotNull;
@@ -37,12 +38,27 @@ import javax.ws.rs.PathParam;
 import javax.ws.rs.Produces;
 import javax.ws.rs.core.Context;
 import javax.ws.rs.core.MediaType;
+import java.util.Arrays;
+import java.util.List;
 
 @Path("/account/v1")
 @Produces(MediaType.APPLICATION_JSON)
 @Consumes(MediaType.APPLICATION_JSON)
 @Api(description = "Stroom Account API", tags = {"Account"})
 public interface AccountResource extends RestResource {
+    FilterFieldDefinition FIELD_DEF_USER_ID = FilterFieldDefinition.defaultField("UserId");
+    FilterFieldDefinition FIELD_DEF_EMAIL = FilterFieldDefinition.qualifiedField(
+            "Email", "email");
+    FilterFieldDefinition FIELD_DEF_FIRST_NAME = FilterFieldDefinition.qualifiedField(
+            "FirstName", "firstName");
+    FilterFieldDefinition FIELD_DEF_LAST_NAME = FilterFieldDefinition.qualifiedField("LastName", "lastName");
+
+    List<FilterFieldDefinition> FIELD_DEFINITIONS = Arrays.asList(
+            FIELD_DEF_USER_ID,
+            FIELD_DEF_EMAIL,
+            FIELD_DEF_FIRST_NAME,
+            FIELD_DEF_LAST_NAME);
+
     @ApiOperation(
             value = "Get all accounts.",
             response = String.class,

@@ -81,7 +81,7 @@ export const Table = <T,>(
       defaultColumn,
       initialState,
       autoResetSelectedRows: false,
-      manualSorting: true,
+      manualSortBy: true,
     },
     useBlockLayout,
     useResizeColumns,

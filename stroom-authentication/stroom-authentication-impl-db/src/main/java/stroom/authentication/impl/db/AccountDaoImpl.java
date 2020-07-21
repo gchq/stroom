@@ -20,6 +20,7 @@ package stroom.authentication.impl.db;
 
 import stroom.authentication.account.Account;
 import stroom.authentication.account.AccountDao;
+import stroom.authentication.account.AccountResource;
 import stroom.authentication.account.SearchAccountRequest;
 import stroom.authentication.authenticate.CredentialValidationResult;
 import stroom.authentication.config.AuthenticationConfig;
@@ -27,13 +28,21 @@ import stroom.authentication.exceptions.NoSuchUserException;
 import stroom.authentication.impl.db.jooq.tables.records.AccountRecord;
 import stroom.db.util.GenericDao;
 import stroom.db.util.JooqUtil;
+import stroom.util.collections.ResultPageCollector;
+import stroom.util.filter.FilterFieldMapper;
+import stroom.util.filter.FilterFieldMappers;
+import stroom.util.filter.QuickFilterPredicateFactory;
 import stroom.util.logging.LambdaLogUtil;
 import stroom.util.logging.LambdaLogger;
 import stroom.util.logging.LambdaLoggerFactory;
+import stroom.util.shared.PageRequest;
+import stroom.util.shared.PageResponse;
 import stroom.util.shared.ResultPage;
 
 import com.google.common.base.Strings;
 import org.jooq.Condition;
+import org.jooq.Field;
+import org.jooq.OrderField;
 import org.jooq.Record;
 import org.jooq.Record1;
 import org.jooq.TableField;
@@ -43,12 +52,20 @@ import javax.inject.Inject;
 import javax.inject.Singleton;
 import java.time.Duration;
 import java.time.Instant;
+import java.util.ArrayList;
+import java.util.Collection;
 import java.util.List;
+import java.util.Map;
 import java.util.Objects;
 import java.util.Optional;
 import java.util.function.BiFunction;
 import java.util.function.Function;
+import java.util.function.Predicate;
+import java.util.stream.Collector;
+import java.util.stream.Collector.Characteristics;
+import java.util.stream.Stream;
 
+import static java.util.Map.entry;
 import static stroom.authentication.impl.db.jooq.tables.Account.ACCOUNT;
 
 @Singleton
@@ -107,6 +124,43 @@ class AccountDaoImpl implements AccountDao {
         return record;
     };
 
+    private static final Map<String, Field<?>> FIELD_MAP = Map.ofEntries(
+            entry("id", ACCOUNT.ID),
+            entry("version", ACCOUNT.VERSION),
+            entry("createTimeMs", ACCOUNT.CREATE_TIME_MS),
+            entry("updateTimeMs", ACCOUNT.UPDATE_TIME_MS),
+            entry("createUser", ACCOUNT.CREATE_USER),
+            entry("updateUser", ACCOUNT.UPDATE_USER),
+            entry("userId", ACCOUNT.USER_ID),
+            entry("email", ACCOUNT.EMAIL),
+            entry("firstName", ACCOUNT.FIRST_NAME),
+            entry("lastName", ACCOUNT.LAST_NAME),
+            entry("comments", ACCOUNT.COMMENTS),
+            entry("loginCount", ACCOUNT.LOGIN_COUNT),
+            entry("loginFailures", ACCOUNT.LOGIN_FAILURES),
+            entry("lastLoginMs", ACCOUNT.LAST_LOGIN_MS),
+            entry("reactivatedMs", ACCOUNT.REACTIVATED_MS),
+            entry("forcePasswordChange", ACCOUNT.FORCE_PASSWORD_CHANGE),
+            entry("neverExpires", ACCOUNT.NEVER_EXPIRES),
+            entry("enabled", ACCOUNT.ENABLED),
+            entry("inactive", ACCOUNT.INACTIVE),
+            entry("locked", ACCOUNT.LOCKED),
+            entry("processingAccount", ACCOUNT.PROCESSING_ACCOUNT));
+
+    private static final FilterFieldMappers<Account> FIELD_MAPPERS = FilterFieldMappers.of(
+            FilterFieldMapper.of(
+                    AccountResource.FIELD_DEF_USER_ID,
+                    Account::getUserId),
+            FilterFieldMapper.of(
+                    AccountResource.FIELD_DEF_EMAIL,
+                    Account::getEmail),
+            FilterFieldMapper.of(
+                    AccountResource.FIELD_DEF_FIRST_NAME,
+                    Account::getFirstName),
+            FilterFieldMapper.of(
+                    AccountResource.FIELD_DEF_LAST_NAME,
+                    Account::getLastName));
+
     private final AuthenticationConfig config;
     private final AuthDbConnProvider authDbConnProvider;
     private final GenericDao<AccountRecord, Account, Integer> genericDao;
@@ -137,14 +191,50 @@ class AccountDaoImpl implements AccountDao {
     @Override
     public ResultPage<Account> search(final SearchAccountRequest request) {
         final Condition condition = createCondition(request);
-        final List<Account> list = JooqUtil.contextResult(authDbConnProvider, context -> context
-                .selectFrom(ACCOUNT)
-                .where(condition)
-                .offset(JooqUtil.getOffset(request.getPageRequest()))
-                .limit(JooqUtil.getLimit(request.getPageRequest(), true))
-                .fetch()
-                .map(RECORD_TO_ACCOUNT_MAPPER::apply));
-        return ResultPage.createCriterialBasedList(list, request);
+
+        final Collection<OrderField<?>> orderFields = JooqUtil.getOrderFields(FIELD_MAP, request);
+
+        return JooqUtil.contextResult(authDbConnProvider, context -> {
+            if (request.getQuickFilter() == null || request.getQuickFilter().length() == 0) {
+                final List<Account> list = context
+                        .selectFrom(ACCOUNT)
+                        .where(condition)
+                        .orderBy(orderFields)
+                        .offset(JooqUtil.getOffset(request.getPageRequest()))
+                        .limit(JooqUtil.getLimit(request.getPageRequest(), true))
+                        .fetch()
+                        .map(RECORD_TO_ACCOUNT_MAPPER::apply);
+
+                // Finally we need to get the number of tokens so we can calculate the total number of pages
+                final int count = context
+                        .selectCount()
+                        .from(ACCOUNT)
+                        .where(condition)
+                        .fetchOptional()
+                        .map(Record1::value1)
+                        .orElse(0);
+
+                return ResultPage.createCriterialBasedList(list, request, (long) count);
+
+            } else {
+                // Create the predicate for the current filter value
+                final Predicate<Account> fuzzyMatchPredicate = QuickFilterPredicateFactory.createFuzzyMatchPredicate(
+                        request.getQuickFilter(), FIELD_MAPPERS);
+
+                try (final Stream<AccountRecord> stream = context
+                        .selectFrom(ACCOUNT)
+                        .where(condition)
+                        .orderBy(orderFields)
+                        .stream()) {
+
+                    return stream
+                            .map(RECORD_TO_ACCOUNT_MAPPER)
+                            .filter(fuzzyMatchPredicate)
+                            .collect(ResultPageCollector.create(request.getPageRequest()))
+                            .build();
+                }
+            }
+        });
     }
 
     @Override
@@ -325,7 +415,6 @@ class AccountDaoImpl implements AccountDao {
     }
 
 
-
     @Override
     public void changePassword(final String userId, final String newPassword) {
         final String newPasswordHash = PasswordHashUtil.hash(newPassword);
@@ -425,9 +514,9 @@ class AccountDaoImpl implements AccountDao {
 
     private Condition createCondition(final SearchAccountRequest request) {
         Condition condition = ACCOUNT.PROCESSING_ACCOUNT.isFalse();
-        if (request.getQuickFilter() != null) {
-            condition = condition.and(ACCOUNT.USER_ID.contains(request.getQuickFilter()));
-        }
+//        if (request.getQuickFilter() != null) {
+//            condition = condition.and(ACCOUNT.USER_ID.contains(request.getQuickFilter()));
+//        }
         return condition;
     }
 
