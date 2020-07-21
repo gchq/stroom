@@ -30,6 +30,7 @@ import stroom.dashboard.expression.v1.Generator;
 import stroom.dashboard.expression.v1.Val;
 import stroom.dashboard.expression.v1.ValString;
 import stroom.dashboard.impl.TableSettingsUtil;
+import stroom.index.shared.IndexConstants;
 import stroom.pipeline.LocationFactoryProxy;
 import stroom.pipeline.errorhandler.ErrorReceiverProxy;
 import stroom.pipeline.factory.ConfigurableElement;
@@ -71,6 +72,8 @@ public class SearchResultOutputFilter extends AbstractSearchResultOutputFilter {
     private final LocationFactoryProxy locationFactory;
     private final ErrorReceiverProxy errorReceiverProxy;
     private final String timeZoneId;
+    private final String additionalFieldsPrefix;
+    private final boolean outputIndexFields;
 
     private Locator locator;
     private final SimpleDateFormat isoFormat;
@@ -86,6 +89,9 @@ public class SearchResultOutputFilter extends AbstractSearchResultOutputFilter {
         this.timeZoneId = alertManager.getTimeZoneId();
         isoFormat = new SimpleDateFormat("YYYY-MM-dd'T'HH:mm:ss.SSS'Z'");
         isoFormat.setTimeZone(TimeZone.getTimeZone(ZoneId.of(timeZoneId)));
+        additionalFieldsPrefix = alertManager.getAdditionalFieldsPrefix() != null ? alertManager.getAdditionalFieldsPrefix() : "";
+        outputIndexFields = alertManager.isReportAllExtractedFieldsEnabled();
+
     }
 
     public boolean isConfiguredForAlerting(){
@@ -103,7 +109,9 @@ public class SearchResultOutputFilter extends AbstractSearchResultOutputFilter {
                 name = name.trim();
                 value = value.trim();
 
-                indexVals.put(name, value);
+                if (isConfiguredForAlerting()) {
+                    indexVals.put(name, value);
+                } 
 
                 if (name.length() > 0 && value.length() > 0) {
                     final int fieldIndex = fieldIndexes.get(name);
@@ -212,12 +220,20 @@ public class SearchResultOutputFilter extends AbstractSearchResultOutputFilter {
             index++;
         }
 
-        //Output the standard index fields
-        Set<String> toOutput = indexVals.keySet();
-        toOutput.removeAll(skipFields);
-        for (String fieldName : toOutput){
-            createDataElement(fieldName, indexVals.get(fieldName));
-        }
+
+            //Output the standard index fields
+            Set<String> toOutput = indexVals.keySet();
+            toOutput.removeAll(skipFields);
+
+            for (String fieldName : toOutput) {
+                if (IndexConstants.STREAM_ID.equals(fieldName)){
+                    createDataElement(AlertManager.STREAM_ID_DATA_ELEMENT_NAME_ATTR, indexVals.get(fieldName));
+                } else if (IndexConstants.EVENT_ID.equals(fieldName)){
+                    createDataElement(AlertManager.EVENT_ID_DATA_ELEMENT_NAME_ATTR, indexVals.get(fieldName));
+                } else if (outputIndexFields) {
+                    createDataElement(additionalFieldsPrefix + fieldName, indexVals.get(fieldName));
+                }
+            }
 
 
         super.endElement(nsUri, RECORD, RECORD);
