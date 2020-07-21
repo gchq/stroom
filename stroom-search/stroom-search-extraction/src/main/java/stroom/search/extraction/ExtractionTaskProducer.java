@@ -102,13 +102,19 @@ class ExtractionTaskProducer extends TaskProducer {
             // Elevate permissions so users with only `Use` feed permission can `Read` streams.
             securityContext.asProcessingUser(() -> {
                 LOGGER.debug("Starting extraction task producer");
+                if(streamMapCreatorCompletionState.isComplete()){
+                    LOGGER.debug("streamMapCreatorCompletionState is initially complete");
+                }
 
                 try {
                     while (!streamMapCreatorCompletionState.isComplete() && !Thread.currentThread().isInterrupted()) {
+                        LOGGER.debug("Starting to poll for values");
                         try {
                             // Poll for the next set of values.
                             final Values values = topic.get();
+
                             if (values != null) {
+                                LOGGER.trace("Received values, now mapping.");
                                 try {
                                     // If we have some values then map them.
                                     streamMapCreator.addEvent(streamEventMap, values.getValues());
@@ -119,6 +125,8 @@ class ExtractionTaskProducer extends TaskProducer {
                                         receiver.getCompletionCountConsumer().accept(1L);
                                     });
                                 }
+                            } else {
+                                LOGGER.trace("Received null values.");
                             }
                         } catch (final RuntimeException e) {
                             LOGGER.debug(e.getMessage(), e);
@@ -158,6 +166,8 @@ class ExtractionTaskProducer extends TaskProducer {
         if (parentReceiver == null) {
             return null;
         }
+
+        LOGGER.debug("Creating receiver for topic");
         return new ReceiverImpl(topic, parentReceiver.getErrorConsumer(), parentReceiver.getCompletionCountConsumer(), parentReceiver.getFieldIndexMap());
     }
 
@@ -176,7 +186,14 @@ class ExtractionTaskProducer extends TaskProducer {
                     finishedAddingTasks();
                 }
                 task = taskQueue.poll();
+                if (task==null){
+                    LOGGER.trace ("No more tasks");
+                }
             }
+        }
+
+        if (task != null) {
+            LOGGER.trace("Supplied a task from the queue.");
         }
 
         return task;
@@ -198,7 +215,11 @@ class ExtractionTaskProducer extends TaskProducer {
     public void createAlertExtractionTask(final long streamId, final long[] sortedEventIds, DocRef extractionPipeline,
                                           List<AlertDefinition> alertDefinitions, final Map<String, String> params, final Receiver receiver){
         final ExtractionTask task = new ExtractionTask(streamId, sortedEventIds, extractionPipeline, receiver, alertDefinitions, params);
-        taskQueue.offer(new ExtractionRunnable(task, handlerProvider));
+        if (taskQueue.offer(new ExtractionRunnable(task, handlerProvider))){
+            LOGGER.debug("Created extraction task and submitted to queue");
+        } else {
+            LOGGER.error("Unable to submit extraction task for alert");
+        }
     }
 
     private int createTasks(final long streamId, final List<Event> events) {
@@ -254,6 +275,7 @@ class ExtractionTaskProducer extends TaskProducer {
         @Override
         public void accept(final TaskContext taskContext) {
             final ExtractionTaskHandler handler = handlerProvider.get();
+            LOGGER.debug("Starting extraction handler");
             handler.exec(taskContext, task);
         }
 
