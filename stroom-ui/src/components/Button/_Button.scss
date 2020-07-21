@@ -458,7 +458,7 @@ button:focus {
 }
 
 .Button--contained-primary:focus {
-  @include focus-ring($themes, "button-contained-secondary__background-color")
+  @include focus-ring($themes, "button-contained-primary__background-color")
 }
 
 .Button--contained-secondary {
