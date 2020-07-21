@@ -39,7 +39,6 @@ import stroom.svg.client.SvgPreset;
 import stroom.svg.client.SvgPresets;
 import stroom.util.shared.PageRequest;
 import stroom.util.shared.ResultPage;
-import stroom.util.shared.Sort.Direction;
 import stroom.widget.button.client.ButtonView;
 import stroom.widget.popup.client.event.HidePopupEvent;
 import stroom.widget.popup.client.event.ShowPopupEvent;
@@ -219,7 +218,7 @@ public class QueryFavouritesPresenter extends MyPresenterWidget<QueryFavouritesP
 
         criteria.setDashboardUuid(currentDashboardUuid);
         criteria.setComponentId(queryPresenter.getId());
-        criteria.setSort(FindStoredQueryCriteria.FIELD_NAME, Direction.ASCENDING, true);
+        criteria.setSort(FindStoredQueryCriteria.FIELD_NAME, false, true);
         criteria.setFavourite(true);
         criteria.setPageRequest(new PageRequest(0L, 100));
 

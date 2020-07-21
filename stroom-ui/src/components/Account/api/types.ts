@@ -1,8 +1,8 @@
 import { Account } from "../types";
 
 export interface Sort {
-  field: string;
-  direction?: "ASCENDING" | "DESCENDING";
+  id: string;
+  desc: boolean;
   ignoreCase?: boolean;
 }
 

@@ -19,8 +19,6 @@
 
 package stroom.processor.impl;
 
-import com.fasterxml.jackson.databind.ObjectMapper;
-import io.swagger.annotations.Api;
 import stroom.entity.shared.ExpressionCriteria;
 import stroom.processor.api.ProcessorFilterService;
 import stroom.processor.shared.ProcessorFilter;
@@ -34,8 +32,9 @@ import stroom.util.logging.LogUtil;
 import stroom.util.shared.ResourcePaths;
 import stroom.util.shared.RestResource;
 import stroom.util.shared.ResultPage;
-import stroom.util.shared.Sort;
-import stroom.util.shared.Sort.Direction;
+
+import com.fasterxml.jackson.databind.ObjectMapper;
+import io.swagger.annotations.Api;
 
 import javax.inject.Inject;
 import javax.ws.rs.Consumes;
@@ -113,23 +112,17 @@ public class StreamTaskResource implements RestResource {
             @QueryParam("offset") Integer offset,
             @QueryParam("pageSize") Integer pageSize,
             @QueryParam("sortBy") String sortBy,
-            @QueryParam("sortDirection") String sortDirection,
+            @QueryParam("desc") boolean desc,
             @QueryParam("filter") String filter) {
         // TODO: Authorisation
 
         final ExpressionCriteria criteria = new ExpressionCriteria();
 
         // SORTING
-        Sort.Direction direction = Direction.ASCENDING;
         if (sortBy != null) {
-            try {
-                direction = Sort.Direction.valueOf(sortDirection.toUpperCase());
-            } catch (IllegalArgumentException exception) {
-                return Response.status(Response.Status.BAD_REQUEST).entity("Invalid sortDirection field").build();
-            }
             if (sortBy.equalsIgnoreCase(ProcessorTaskFields.FIELD_PIPELINE)
                     || sortBy.equalsIgnoreCase(ProcessorTaskFields.FIELD_PRIORITY)) {
-                criteria.setSort(sortBy, direction, false);
+                criteria.setSort(sortBy, desc, false);
             } else if (sortBy.equalsIgnoreCase(FIELD_PROGRESS)) {
                 // Sorting progress is done below -- this is here for completeness.
                 // Percentage is a calculated variable so it has to be done after retrieval.
@@ -164,10 +157,10 @@ public class StreamTaskResource implements RestResource {
         if (sortBy != null) {
             // If the user is requesting a sort:next then we don't want to apply any other sorting.
             if (sortBy.equalsIgnoreCase(FIELD_PROGRESS) && !filter.contains(SORT_NEXT)) {
-                if (direction == Direction.ASCENDING) {
-                    values.sort(comparingInt(StreamTask::getTrackerPercent));
-                } else {
+                if (desc) {
                     values.sort(comparingInt(StreamTask::getTrackerPercent).reversed());
+                } else {
+                    values.sort(comparingInt(StreamTask::getTrackerPercent));
                 }
             }
         }

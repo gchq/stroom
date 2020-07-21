@@ -371,14 +371,13 @@ public final class JooqUtil {
     }
 
     private static Optional<OrderField<?>> getOrderField(final Map<String, Field<?>> fieldMap, final Sort sort) {
-        final Field<?> field = fieldMap.get(sort.getField());
+        final Field<?> field = fieldMap.get(sort.getId());
 
-        if (null != field) {
-            switch (sort.getDirection()) {
-                case ASCENDING:
-                    return Optional.of(field.asc());
-                case DESCENDING:
-                    return Optional.of(field.desc());
+        if (field != null) {
+            if (sort.isDesc()) {
+                return Optional.of(field.desc());
+            } else {
+                return Optional.of(field.asc());
             }
         }
 

@@ -28,40 +28,30 @@ public class Sort implements Serializable {
     private static final long serialVersionUID = -5994197736743037915L;
 
     @JsonProperty
-    private String field;
+    private final String id;
     @JsonProperty
-    private Direction direction;
+    private final boolean desc;
     @JsonProperty
-    private boolean ignoreCase;
-
-    public Sort() {
-    }
+    private final boolean ignoreCase;
 
     @JsonCreator
-    public Sort(@JsonProperty("field") final String field,
-                @JsonProperty("direction") final Direction direction,
+    public Sort(@JsonProperty("id") final String id,
+                @JsonProperty("desc") final boolean desc,
                 @JsonProperty("ignoreCase") final boolean ignoreCase) {
-        this.field = field;
-        this.direction = direction;
+        this.id = id;
+        this.desc = desc;
         this.ignoreCase = ignoreCase;
     }
 
-    public String getField() {
-        return field;
+    public String getId() {
+        return id;
     }
 
-    public Direction getDirection() {
-        return direction;
+    public boolean isDesc() {
+        return desc;
     }
 
     public boolean isIgnoreCase() {
         return ignoreCase;
-    }
-
-    /**
-     * The direction of the sort.
-     */
-    public enum Direction {
-        ASCENDING, DESCENDING
     }
 }

@@ -61,7 +61,6 @@ import stroom.util.logging.LambdaLogger;
 import stroom.util.logging.LambdaLoggerFactory;
 import stroom.util.logging.LogExecutionTime;
 import stroom.util.shared.PermissionException;
-import stroom.util.shared.Sort.Direction;
 
 import javax.inject.Inject;
 import javax.inject.Provider;
@@ -650,7 +649,7 @@ class ProcessorTaskManagerImpl implements ProcessorTaskManager {
                         .build();
 
                 final FindMetaCriteria findMetaCriteria = new FindMetaCriteria(findMetaExpression);
-                findMetaCriteria.setSort(MetaFields.ID.getName(), Direction.ASCENDING, false);
+                findMetaCriteria.setSort(MetaFields.ID.getName(), false, false);
                 final List<Meta> metaList = metaService.find(findMetaCriteria).getValues();
 
                 if (metaList.size() > 0) {
@@ -961,7 +960,7 @@ class ProcessorTaskManagerImpl implements ProcessorTaskManager {
             builder = builder.addOperator(statusExpression);
 
             final FindMetaCriteria findMetaCriteria = new FindMetaCriteria(builder.build());
-            findMetaCriteria.setSort(MetaFields.PARENT_ID.getName(), Direction.ASCENDING, false);
+            findMetaCriteria.setSort(MetaFields.PARENT_ID.getName(), false, false);
             findMetaCriteria.obtainPageRequest().setLength(length);
 
             return metaService.findReprocess(findMetaCriteria).getValues();
@@ -986,7 +985,7 @@ class ProcessorTaskManagerImpl implements ProcessorTaskManager {
             builder = builder.addOperator(statusExpression);
 
             final FindMetaCriteria findMetaCriteria = new FindMetaCriteria(builder.build());
-            findMetaCriteria.setSort(MetaFields.ID.getName(), Direction.ASCENDING, false);
+            findMetaCriteria.setSort(MetaFields.ID.getName(), false, false);
             findMetaCriteria.obtainPageRequest().setLength(length);
 
             return metaService.find(findMetaCriteria).getValues();

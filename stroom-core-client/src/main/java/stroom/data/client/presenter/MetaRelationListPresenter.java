@@ -32,7 +32,6 @@ import stroom.query.api.v2.ExpressionTerm.Condition;
 import stroom.util.shared.Expander;
 import stroom.util.shared.ModelStringUtil;
 import stroom.util.shared.ResultPage;
-import stroom.util.shared.Sort.Direction;
 import stroom.widget.tooltip.client.presenter.TooltipPresenter;
 
 import com.google.gwt.dom.client.Style.Unit;
@@ -75,7 +74,7 @@ public class MetaRelationListPresenter extends AbstractMetaListPresenter {
                                   final boolean showSystemFiles) {
         if (metaRow == null) {
             getCriteria().setExpression(null);
-            getCriteria().setSort(MetaFields.CREATE_TIME.getName(), Direction.ASCENDING, false);
+            getCriteria().setSort(MetaFields.CREATE_TIME.getName(), false, false);
             refresh();
 
         } else {
@@ -86,7 +85,7 @@ public class MetaRelationListPresenter extends AbstractMetaListPresenter {
             builder.addTerm(MetaFields.ID, Condition.EQUALS, metaRow.getMeta().getId());
 
             getCriteria().setExpression(builder.build());
-            getCriteria().setSort(MetaFields.CREATE_TIME.getName(), Direction.ASCENDING, false);
+            getCriteria().setSort(MetaFields.CREATE_TIME.getName(), false, false);
             getCriteria().setFetchRelationships(true);
             refresh();
         }

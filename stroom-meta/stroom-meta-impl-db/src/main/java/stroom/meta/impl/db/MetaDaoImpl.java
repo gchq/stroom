@@ -54,12 +54,10 @@ import org.jooq.Condition;
 import org.jooq.Cursor;
 import org.jooq.DSLContext;
 import org.jooq.Field;
-import org.jooq.Operator;
 import org.jooq.OrderField;
 import org.jooq.Record;
 import org.jooq.Record1;
 import org.jooq.Result;
-import org.jooq.SelectConditionStep;
 import org.jooq.Table;
 import org.jooq.impl.DSL;
 
@@ -1241,24 +1239,24 @@ class MetaDaoImpl implements MetaDao {
 
         return criteria.getSortList().stream().map(sort -> {
             Field<?> field;
-            if (MetaFields.ID.getName().equals(sort.getField())) {
+            if (MetaFields.ID.getName().equals(sort.getId())) {
                 field = meta.ID;
-            } else if (MetaFields.CREATE_TIME.getName().equals(sort.getField())) {
+            } else if (MetaFields.CREATE_TIME.getName().equals(sort.getId())) {
                 field = meta.CREATE_TIME;
-            } else if (MetaFields.FEED_NAME.getName().equals(sort.getField())) {
+            } else if (MetaFields.FEED_NAME.getName().equals(sort.getId())) {
                 field = metaFeed.NAME;
-            } else if (MetaFields.TYPE_NAME.getName().equals(sort.getField())) {
+            } else if (MetaFields.TYPE_NAME.getName().equals(sort.getId())) {
                 field = metaType.NAME;
-            } else if (MetaFields.PARENT_ID.getName().equals(sort.getField())) {
+            } else if (MetaFields.PARENT_ID.getName().equals(sort.getId())) {
                 field = meta.PARENT_ID;
-            } else if (MetaFields.PARENT_CREATE_TIME.getName().equals(sort.getField())) {
+            } else if (MetaFields.PARENT_CREATE_TIME.getName().equals(sort.getId())) {
                 field = parent.CREATE_TIME;
             } else {
                 field = meta.ID;
             }
 
             OrderField<?> orderField = field;
-            if (Sort.Direction.DESCENDING.equals(sort.getDirection())) {
+            if (sort.isDesc()) {
                 orderField = field.desc();
             }
 

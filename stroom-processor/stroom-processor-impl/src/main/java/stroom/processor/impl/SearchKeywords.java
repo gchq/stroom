@@ -33,7 +33,6 @@ import com.google.common.base.Strings;
 import java.util.Arrays;
 
 import static java.util.stream.Collectors.joining;
-import static stroom.util.shared.Sort.Direction.DESCENDING;
 
 /**
  * Users can search for stream tasks using key words. This class defines what keywords are
@@ -101,8 +100,8 @@ public class SearchKeywords {
                 if (terms[1].equalsIgnoreCase(NEXT)) {
                     // We don't want any other sorts happening here, so we'll get rid of them.
                     criteria.removeSorts();
-                    criteria.addSort(ProcessorTaskFields.FIELD_PRIORITY, DESCENDING, false);
-                    criteria.addSort(ProcessorTaskFields.FIELD_POLL_AGE, Sort.Direction.ASCENDING, false);
+                    criteria.addSort(ProcessorTaskFields.FIELD_PRIORITY, true, false);
+                    criteria.addSort(ProcessorTaskFields.FIELD_POLL_AGE, false, false);
                 }
             }
         }

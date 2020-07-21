@@ -11,11 +11,6 @@ import {
 import { Sort } from "../Account/api/types";
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
 
-export interface TableSort {
-  id: string;
-  desc?: boolean;
-}
-
 export interface TableProps<T> {
   columns: any[];
   data: T[];
@@ -46,25 +41,12 @@ export const Table = <T,>(
     [],
   );
 
-  // Convert the supplied initial sort object to a React Table sort array.
-  const initialSort: TableSort[] = useMemo(() => {
-    if (!initialSortBy) {
-      return undefined;
-    }
-    return initialSortBy.map((i) => {
-      return {
-        id: i.field,
-        desc: i.direction === "DESCENDING",
-      };
-    });
-  }, [initialSortBy]);
-
   const initialState = useMemo(() => {
     return {
       hiddenColumns: ["id"],
-      sortBy: initialSort,
+      sortBy: initialSortBy,
     };
-  }, [initialSort]);
+  }, [initialSortBy]);
 
   const {
     getTableProps,
@@ -90,18 +72,10 @@ export const Table = <T,>(
   );
 
   useEffect(() => {
-    if (sortBy !== initialSort) {
-      // Convert the table sort into our sort object.
-      const sort: Sort[] = sortBy.map((i) => {
-        return {
-          field: i.id,
-          direction: i.desc ? "DESCENDING" : "ASCENDING",
-        };
-      });
-
-      onChangeSort(sort);
+    if (sortBy !== initialSortBy) {
+      onChangeSort(sortBy);
     }
-  }, [sortBy]);
+  }, [sortBy, initialSortBy, onChangeSort]);
 
   return (
     <div className="table sticky w-100 h-100">

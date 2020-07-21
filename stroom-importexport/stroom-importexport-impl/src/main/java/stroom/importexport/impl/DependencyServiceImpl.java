@@ -14,7 +14,6 @@ import stroom.util.shared.CompareUtil;
 import stroom.util.shared.PageRequest;
 import stroom.util.shared.ResultPage;
 import stroom.util.shared.Sort;
-import stroom.util.shared.Sort.Direction;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -239,9 +238,9 @@ public class DependencyServiceImpl implements DependencyService {
             Comparator<Dependency> compositeComparator = null;
 
             for (final Sort sort : dependencyCriteria.getSortList()) {
-                Comparator<Dependency> comparator = COMPARATOR_MAP.get(sort.getField());
+                Comparator<Dependency> comparator = COMPARATOR_MAP.get(sort.getId());
                 if (comparator != null) {
-                    if (Direction.DESCENDING.equals(sort.getDirection())) {
+                    if (sort.isDesc()) {
                         comparator = comparator.reversed();
                     }
                     compositeComparator = compositeComparator != null

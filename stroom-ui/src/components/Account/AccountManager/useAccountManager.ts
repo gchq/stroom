@@ -29,8 +29,8 @@ const initialRequest: SearchAccountRequest = {
   },
   sortList: [
     {
-      field: "userId",
-      direction: "ASCENDING",
+      id: "userId",
+      desc: false,
     },
   ],
 };

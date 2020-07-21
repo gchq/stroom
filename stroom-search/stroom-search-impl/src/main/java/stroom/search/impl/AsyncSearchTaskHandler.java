@@ -35,7 +35,6 @@ import stroom.task.api.TaskContext;
 import stroom.task.api.TaskManager;
 import stroom.task.shared.TaskId;
 import stroom.util.shared.ResultPage;
-import stroom.util.shared.Sort.Direction;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -109,8 +108,8 @@ class AsyncSearchTaskHandler {
                     // Only non deleted indexes.
                     findIndexShardCriteria.getIndexShardStatusSet().addAll(IndexShard.NON_DELETED_INDEX_SHARD_STATUS);
                     // Order by partition name and key.
-                    findIndexShardCriteria.addSort(FindIndexShardCriteria.FIELD_PARTITION, Direction.DESCENDING, false);
-                    findIndexShardCriteria.addSort(FindIndexShardCriteria.FIELD_ID, Direction.DESCENDING, false);
+                    findIndexShardCriteria.addSort(FindIndexShardCriteria.FIELD_PARTITION, true, false);
+                    findIndexShardCriteria.addSort(FindIndexShardCriteria.FIELD_ID, true, false);
                     final ResultPage<IndexShard> indexShards = indexShardService.find(findIndexShardCriteria);
 
                     // Build a map of nodes that will deal with each set of shards.
