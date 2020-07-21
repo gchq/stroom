@@ -18,21 +18,15 @@ package stroom.index.impl;
 
 import org.apache.lucene.document.Document;
 import org.apache.lucene.store.AlreadyClosedException;
-import stroom.alert.api.AlertProcessor;
-import stroom.docref.DocRef;
-import stroom.index.shared.IndexDoc;
 import stroom.index.shared.IndexException;
 import stroom.index.shared.IndexShard.IndexShardStatus;
 import stroom.index.shared.IndexShardKey;
-import stroom.pipeline.errorhandler.ErrorReceiverProxy;
 import stroom.util.logging.LambdaLogger;
 import stroom.util.logging.LambdaLoggerFactory;
-import stroom.alert.api.AlertManager;
 
 import javax.inject.Inject;
 import javax.inject.Singleton;
 import java.io.IOException;
-import java.util.Optional;
 import java.util.concurrent.locks.Lock;
 
 /**
@@ -45,19 +39,14 @@ public class IndexerImpl implements Indexer {
 
     private final IndexShardWriterCache indexShardWriterCache;
     private final IndexShardManager indexShardManager;
-    private final IndexStore indexStore;
 
     private final StripedLock keyLocks = new StripedLock();
 
-
-
     @Inject
-    public IndexerImpl(final IndexStore indexStore,
-                       final IndexShardWriterCache indexShardWriterCache,
+    public IndexerImpl(final IndexShardWriterCache indexShardWriterCache,
                 final IndexShardManager indexShardManager) {
         this.indexShardWriterCache = indexShardWriterCache;
         this.indexShardManager = indexShardManager;
-        this.indexStore = indexStore;
     }
 
     @Override
@@ -67,9 +56,7 @@ public class IndexerImpl implements Indexer {
             boolean success = false;
             try {
                 final IndexShardWriter indexShardWriter = indexShardWriterCache.getWriterByShardKey(indexShardKey);
-
                 indexShardWriter.addDocument(document);
-
                 success = true;
             } catch (final IOException | RuntimeException e) {
                 LOGGER.trace(e::getMessage, e);
@@ -142,5 +129,4 @@ public class IndexerImpl implements Indexer {
 
         return success;
     }
-
 }

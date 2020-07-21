@@ -40,11 +40,6 @@ public class PipelineImpl implements Pipeline {
         this.elementInstances = elementInstances;
         this.rootElement = rootElement;
         this.stepping = stepping;
-        if (elementInstances != null){
-            for (Element element : elementInstances.values()){
-                element.setPipeline(this);
-            }
-        }
     }
 
     @Override

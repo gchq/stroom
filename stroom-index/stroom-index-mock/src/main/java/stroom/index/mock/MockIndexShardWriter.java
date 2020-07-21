@@ -16,7 +16,6 @@
 
 package stroom.index.mock;
 
-import org.apache.lucene.analysis.Analyzer;
 import org.apache.lucene.document.Document;
 import org.apache.lucene.index.IndexWriter;
 import org.apache.lucene.index.IndexableField;
@@ -28,7 +27,6 @@ import stroom.index.shared.IndexShardKey;
 
 import java.util.ArrayList;
 import java.util.List;
-import java.util.Map;
 import java.util.concurrent.atomic.AtomicInteger;
 
 public class MockIndexShardWriter implements IndexShardWriter {

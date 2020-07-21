@@ -54,10 +54,4 @@ public interface Element extends HasElementId {
      * @param terminator An object to check for early process termination.
      */
     void setTerminator(Terminator terminator);
-
-    /**
-     * Set the pipeline on the element
-     * @param pipeline
-     */
-    void setPipeline(Pipeline pipeline);
 }
