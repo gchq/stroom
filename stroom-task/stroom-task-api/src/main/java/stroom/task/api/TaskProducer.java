@@ -90,6 +90,10 @@ public abstract class TaskProducer implements Comparable<TaskProducer> {
             }
         }
 
+        if (runnable != null){
+            LOGGER.trace("Returning a runnable of class " + runnable.getClass().getName());
+        }
+
         return runnable;
     }
 
