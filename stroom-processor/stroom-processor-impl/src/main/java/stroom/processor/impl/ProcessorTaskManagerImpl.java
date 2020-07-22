@@ -421,9 +421,11 @@ class ProcessorTaskManagerImpl implements ProcessorTaskManager {
 
         final LogExecutionTime logExecutionTime = new LogExecutionTime();
         LOGGER.debug("doCreateTasks() - Starting");
+        taskContext.info(() -> "Starting");
 
         // Get an up to date list of all enabled stream processor filters.
-        LOGGER.trace("Getting enabled non deleted processor filters");
+        LOGGER.trace("Getting enabled non deleted filters");
+        taskContext.info(() -> "Getting enabled non deleted filters");
         final ExpressionOperator expression = new Builder()
                 .addTerm(ProcessorFields.ENABLED, Condition.EQUALS, true)
                 .addTerm(ProcessorFields.DELETED, Condition.EQUALS, false)
@@ -434,7 +436,8 @@ class ProcessorTaskManagerImpl implements ProcessorTaskManager {
         final ExpressionCriteria findProcessorFilterCriteria = new ExpressionCriteria(expression);
         final List<ProcessorFilter> filters = processorFilterService
                 .find(findProcessorFilterCriteria).getValues();
-        LOGGER.trace("Found {} stream processor filters", filters.size());
+        LOGGER.trace("Found {} filters", filters.size());
+        taskContext.info(() -> "Found " + filters.size() + " filters");
 
         // Sort the stream processor filters by priority.
         filters.sort(ProcessorFilter.HIGHEST_PRIORITY_FIRST_COMPARATOR);
@@ -475,6 +478,7 @@ class ProcessorTaskManagerImpl implements ProcessorTaskManager {
         }
 
         // Release items from the queue that no longer have an enabled filter
+        taskContext.info(() -> "Releasing tasks for disabled filters");
         final Set<ProcessorFilter> enabledFilterSet = new HashSet<>(filters);
         for (final ProcessorFilter filter : queueMap.keySet()) {
             if (!enabledFilterSet.contains(filter)) {
@@ -496,6 +500,7 @@ class ProcessorTaskManagerImpl implements ProcessorTaskManager {
 //        // Set the last stream details for the next call to this method.
 //        processorTaskManagerRecentStreamDetails = recentStreamInfo;
 
+        taskContext.info(() -> "Finished");
         LOGGER.debug("doCreateTasks() - Finished in {}", logExecutionTime);
     }
 
@@ -519,6 +524,8 @@ class ProcessorTaskManagerImpl implements ProcessorTaskManager {
 
                     // Only try and create tasks if the processor is enabled.
                     if (loadedFilter.isEnabled() && loadedFilter.getProcessor().isEnabled()) {
+                        taskContext.info(() -> "Creating tasks: " + loadedFilter.toString());
+
                         int tasksToCreate = maxQueueSize - queue.size();
                         int count = 0;
 
@@ -593,6 +600,9 @@ class ProcessorTaskManagerImpl implements ProcessorTaskManager {
                                     loadedFilter.getId());
                             exhaustedFilterMap.put(loadedFilter.getId(), Boolean.FALSE);
                         }
+
+                        final long c = count;
+                        taskContext.info(() -> "Created " + c + " tasks: " + loadedFilter.toString());
                     }
                 });
             });
@@ -949,7 +959,7 @@ class ProcessorTaskManagerImpl implements ProcessorTaskManager {
                     .addTerm(MetaFields.PARENT_ID, Condition.GREATER_THAN_OR_EQUAL_TO, minMetaId);
 
             if (pipelineDocRef != null)
-                    builder.addTerm(MetaFields.PIPELINE, Condition.IS_DOC_REF, pipelineDocRef);
+                builder.addTerm(MetaFields.PIPELINE, Condition.IS_DOC_REF, pipelineDocRef);
 
             if (minMetaCreateMs != null) {
                 builder = builder.addTerm(MetaFields.PARENT_CREATE_TIME, Condition.GREATER_THAN_OR_EQUAL_TO, DateUtil.createNormalDateTimeString(minMetaCreateMs));

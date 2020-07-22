@@ -6,6 +6,8 @@ and this project adheres to [Semantic Versioning](http://semver.org/).
 
 ## [Unreleased]
 
+* Issue **#1718** : Added server task info for some tasks.
+
 * Issue **#1731** : Fixed calendar date picker style that was broken by tooltip CSS changes.
 
 * Issue **#1657** : `INTERNAL_PROCESSING_USER` is no longer visible in the UI.
