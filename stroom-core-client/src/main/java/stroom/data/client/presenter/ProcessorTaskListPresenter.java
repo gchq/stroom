@@ -78,8 +78,10 @@ public class ProcessorTaskListPresenter extends MyPresenterWidget<DataGridView<P
         dataProvider = new RestDataProvider<ProcessorTask, ResultPage<ProcessorTask>>(eventBus, criteria.obtainPageRequest()) {
             @Override
             protected void exec(final Consumer<ResultPage<ProcessorTask>> dataConsumer, final Consumer<Throwable> throwableConsumer) {
-                final Rest<ResultPage<ProcessorTask>> rest = restFactory.create();
-                rest.onSuccess(dataConsumer).onFailure(throwableConsumer).call(PROCESSOR_TASK_RESOURCE).find(criteria);
+                if (criteria.getExpression() != null) {
+                    final Rest<ResultPage<ProcessorTask>> rest = restFactory.create();
+                    rest.onSuccess(dataConsumer).onFailure(throwableConsumer).call(PROCESSOR_TASK_RESOURCE).find(criteria);
+                }
             }
         };
 
