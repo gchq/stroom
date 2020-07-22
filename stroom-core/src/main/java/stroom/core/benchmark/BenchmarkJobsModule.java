@@ -17,7 +17,7 @@ public class BenchmarkJobsModule extends AbstractModule {
         ScheduledJobsBinder.create(binder())
                 .bindJobTo(BenchmarkSystem.class, builder -> builder
                         .withName("XX Benchmark System XX")
-                        .withDescription("Job to generate data in the system in order to benchmark it's performance (do not run in live!!)")
+                        .withDescription("Job to generate data in the system in order to benchmark its performance (do not run in live!!)")
                         .withEnabledState(false)
                         .withSchedule(CRON, "* * *"));
     }

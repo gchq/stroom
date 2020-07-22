@@ -6,6 +6,8 @@ and this project adheres to [Semantic Versioning](http://semver.org/).
 
 ## [Unreleased]
 
+* Issue **#1727** : Typo.
+
 * Issue **#1501** : Multiple fixes for new UI.
 
 * Issue **#1506** : Multiple fixes for new UI.
