@@ -6,6 +6,8 @@ and this project adheres to [Semantic Versioning](http://semver.org/).
 
 ## [Unreleased]
 
+* Issue **#1731** : Fixed calendar date picker style that was broken by tooltip CSS changes.
+
 * Issue **#1657** : `INTERNAL_PROCESSING_USER` is no longer visible in the UI.
 
 * Issue **#1449** : You can now create users to associate permissions by clicking the create button in the `User Permissions` page.

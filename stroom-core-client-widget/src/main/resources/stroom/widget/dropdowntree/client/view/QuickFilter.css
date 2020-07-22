@@ -76,6 +76,6 @@
 }
 
 /* Style any tables in the tooltip */
-.tooltip th, td {
+.tooltip th, .tooltip td {
     padding-right: 1em;
 }
