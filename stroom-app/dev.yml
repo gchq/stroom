@@ -80,6 +80,19 @@ appConfig:
     name: node1a
   path:
     temp: "/tmp/stroom"
+
+  # Uncomment the following to develop React code with `yarn start`
+#  uiUri:
+#    scheme: http
+#    hostname: localhost
+#    port: 3000
+#  security:
+#    webContent:
+#      contentSecurityPolicy: ""
+#      contentTypeOptions: ""
+#      frameOptions: ""
+#      xssProtection: ""
+
   # Comment out the publicUri block if you are not running with nginx
   publicUri:
     hostname: ${API_GATEWAY_HOST:-localhost}
