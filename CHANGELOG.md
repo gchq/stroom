@@ -6,6 +6,8 @@ and this project adheres to [Semantic Versioning](http://semver.org/).
 
 ## [Unreleased]
 
+* Issue **#1449** : You can now create users to associate permissions by clicking the create button in the `User Permissions` page.
+
 * Issue **#1727** : Typo.
 
 * Issue **#1501** : Multiple fixes for new UI.
