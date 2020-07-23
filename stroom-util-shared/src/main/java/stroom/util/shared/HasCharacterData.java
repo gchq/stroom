@@ -5,7 +5,6 @@ import java.util.Optional;
 public interface HasCharacterData {
 
     boolean isMultiPart();
-
     /**
      * zero based
      */
@@ -15,8 +14,10 @@ public interface HasCharacterData {
 
     void setPartNo(final long partNo);
 
+
     boolean isSegmented();
 
+    boolean canDisplayMultipleSegments();
     /**
      * zero based, inclusive
      */
@@ -33,6 +34,8 @@ public interface HasCharacterData {
 
     void setSegmentNoFrom(final long partNo);
 
+    Optional<Long> getTotalLines();
+
     /**
      * One based, inclusive
      */
@@ -44,6 +47,8 @@ public interface HasCharacterData {
     Optional<Long> getCharTo();
 
     Optional<Long> getTotalChars();
+
+
 
     void showHeadCharacters();
 

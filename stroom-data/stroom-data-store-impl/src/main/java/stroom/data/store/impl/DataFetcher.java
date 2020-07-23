@@ -740,7 +740,10 @@ public class DataFetcher {
             builder.withSegmentNumber(segmentNumber);
         }
 
-        final RawResult rawResult = new RawResult(builder.build(), charData);
+        SourceLocation resultLocation = builder.build();
+        LOGGER.debug("resultLocation {}", resultLocation);
+
+        final RawResult rawResult = new RawResult(resultLocation, charData);
         rawResult.setTotalCharacterCount(totalCharCount);
         return rawResult;
     }

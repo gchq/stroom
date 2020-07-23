@@ -35,16 +35,16 @@ public class SourceLocationPresenter extends MyPresenterWidget<SourceLocationVie
         getView().setIdEnabled(isEnabled);
     }
 
-    public void setPartNoEnabled(final boolean isEnabled) {
-        getView().setPartNoEnabled(isEnabled);
-    }
-
-    public void setSegmentNoEnabled(final boolean isEnabled) {
-        getView().setSegmentNoEnabled(isEnabled);
+    public void setPartNoVisible(final boolean isVisible) {
+        getView().setPartNoVisible(isVisible);
     }
 
     public void setSegmentNoVisible(final boolean isVisible) {
         getView().setSegmentNoVisible(isVisible);
+    }
+
+    public void setCharacterControlsVisible(final boolean isVisible) {
+        getView().setCharacterControlsVisible(isVisible);
     }
 
     public void setPartsCount(final RowCount<Long> partsCount) {
@@ -96,9 +96,7 @@ public class SourceLocationPresenter extends MyPresenterWidget<SourceLocationVie
 
         void setIdEnabled(final boolean isEnabled);
 
-        void setPartNoEnabled(final boolean isEnabled);
-
-        void setSegmentNoEnabled(final boolean isEnabled);
+        void setPartNoVisible(final boolean isVisible);
 
         void setSegmentNoVisible(final boolean isVisible);
 
@@ -107,5 +105,7 @@ public class SourceLocationPresenter extends MyPresenterWidget<SourceLocationVie
         void setSegmentsCount(final RowCount<Long> segmentCount);
 
         void setTotalCharsCount(final RowCount<Long> totalCharCount);
+
+        void setCharacterControlsVisible(final boolean isVisible);
     }
 }

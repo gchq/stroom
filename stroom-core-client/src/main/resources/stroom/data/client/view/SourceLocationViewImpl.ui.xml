@@ -42,147 +42,153 @@
         padding-left: 6px;
         }
     </ui:style>
+    <g:FlowPanel>
 
-    <g:Grid ui:field="grid" styleName="stroom-control-grid {style.max}">
 
-        <!-- SOURCE  -->
-        <g:row>
-            <g:cell styleName="{style.headingRow}">Source:</g:cell>
-            <g:cell />
-        </g:row>
-        <g:row>
-            <g:cell>ID:</g:cell>
-            <g:customCell>
-                <v:ValueSpinner ui:field="idField"/>
-            </g:customCell>
-        </g:row>
-        <!-- multi-part and multi-segment are mutually exclusive so just put them
-             on the same row as only one will be visible -->
-        <g:row>
-            <g:customCell>
-                <g:FlowPanel width="100%" height="100%">
-                    <!-- parts -->
-                    <g:Label ui:field="partTitleLbl" />
-                    <!-- segments -->
-                    <g:Label ui:field="segmentTitleLbl" />
-                </g:FlowPanel>
-            </g:customCell>
-            <g:customCell>
-                <g:FlowPanel width="100%" height="100%">
-                    <!-- parts -->
-                    <v:ValueSpinner
-                            ui:field="partNoField"
-                            addStyleNames="{style.panelChild}"/>
-                    <g:Label
-                            ui:field="partCountLbl"
-                            addStyleNames="{style.panelChild} {style.countLabel}"/>
-                    <!-- segments -->
-                    <v:ValueSpinner
-                            ui:field="segmentNoField"
-                            addStyleNames="{style.panelChild}"/>
-                    <g:Label
-                            ui:field="segmentCountLbl"
-                            addStyleNames="{style.panelChild} {style.countLabel}"/>
-                </g:FlowPanel>
-            </g:customCell>
-        </g:row>
+        <g:Grid ui:field="sourceGrid" styleName="stroom-control-grid {style.max}">
 
-        <!-- FROM  -->
-        <g:row>
-            <g:cell styleName="{style.headingRow} {style.paddedRow}">From:</g:cell>
-            <g:cell />
-        </g:row>
-        <g:row>
-            <g:cell> Line : Column(inc.):</g:cell>
-            <g:customCell>
-                <g:FlowPanel width="100%" height="100%">
-                    <g:CheckBox
-                            ui:field="lineColFromCheckBox"
-                            addStyleNames="{style.panelChild}"/>
-                    <v:ValueSpinner
-                            ui:field="lineNoFromSpinner"
-                            addStyleNames="{style.lineColPanelChild}"/>
-                    <g:HTML addStyleNames="{style.lineColSpacer} {style.lineColPanelChild}">:</g:HTML>
-                    <v:ValueSpinner
-                            ui:field="colNoFromSpinner"
-                            addStyleNames="{style.lineColPanelChild}"/>
-                </g:FlowPanel>
-            </g:customCell>
-        </g:row>
-        <g:row>
-            <g:cell>Character Position (inc.): </g:cell>
-            <g:customCell>
-                <g:FlowPanel width="100%" height="100%">
-                    <g:CheckBox
-                            ui:field="charOffsetFromCheckBox"
-                            addStyleNames="{style.panelChild}"/>
-                    <v:ValueSpinner
-                            ui:field="charOffsetFromSpinner"
-                            addStyleNames="{style.charSpinner} {style.panelChild}"/>
-                    <g:Label
-                            ui:field="charCountFromLbl"
-                            addStyleNames="{style.panelChild} {style.countLabel}"/>
-                </g:FlowPanel>
-            </g:customCell>
-        </g:row>
+            <!-- SOURCE  -->
+            <g:row>
+                <g:cell styleName="{style.headingRow}">Source:</g:cell>
+                <g:cell/>
+            </g:row>
+            <g:row>
+                <g:cell>ID:</g:cell>
+                <g:customCell>
+                    <v:ValueSpinner ui:field="idField"/>
+                </g:customCell>
+            </g:row>
+            <!-- multi-part and multi-segment are mutually exclusive so just put them
+                 on the same row as only one will be visible -->
+            <g:row>
+                <g:customCell>
+                    <g:FlowPanel width="100%" height="100%">
+                        <!-- parts -->
+                        <g:Label ui:field="partTitleLbl"/>
+                        <!-- segments -->
+                        <g:Label ui:field="segmentTitleLbl"/>
+                    </g:FlowPanel>
+                </g:customCell>
+                <g:customCell>
+                    <g:FlowPanel width="100%" height="100%">
+                        <!-- parts -->
+                        <v:ValueSpinner
+                                ui:field="partNoField"
+                                addStyleNames="{style.panelChild}"/>
+                        <g:Label
+                                ui:field="partCountLbl"
+                                addStyleNames="{style.panelChild} {style.countLabel}"/>
+                        <!-- segments -->
+                        <v:ValueSpinner
+                                ui:field="segmentNoField"
+                                addStyleNames="{style.panelChild}"/>
+                        <g:Label
+                                ui:field="segmentCountLbl"
+                                addStyleNames="{style.panelChild} {style.countLabel}"/>
+                    </g:FlowPanel>
+                </g:customCell>
+            </g:row>
+        </g:Grid>
 
-        <!-- TO  -->
-        <g:row>
-            <g:cell styleName="{style.headingRow} {style.paddedRow}">To:</g:cell>
-            <g:cell />
-        </g:row>
-        <g:row>
-            <g:cell> Line : Column (inc.):</g:cell>
-            <g:customCell>
-                <g:FlowPanel width="100%" height="100%">
-                    <g:CheckBox
-                            ui:field="lineColToCheckBox"
-                            addStyleNames="{style.panelChild}"/>
-                    <v:ValueSpinner
-                            ui:field="lineNoToSpinner"
-                            addStyleNames="{style.lineColPanelChild}"/>
-                    <g:HTML addStyleNames="{style.lineColSpacer} {style.lineColPanelChild}">:</g:HTML>
-                    <v:ValueSpinner
-                            ui:field="colNoToSpinner"
-                            addStyleNames="{style.lineColPanelChild}"/>
-                </g:FlowPanel>
-            </g:customCell>
-        </g:row>
-        <g:row>
-            <g:cell>Character Position(inc.):</g:cell>
-            <g:customCell>
-                <g:FlowPanel width="100%" height="100%">
-                    <g:CheckBox
-                            ui:field="charOffsetToCheckBox"
-                            addStyleNames="{style.panelChild}"/>
-                    <v:ValueSpinner
-                            ui:field="charOffsetToSpinner"
-                            addStyleNames="{style.charSpinner} {style.panelChild}"/>
-                    <g:Label
-                            ui:field="charCountToLbl"
-                            addStyleNames="{style.panelChild} {style.countLabel}"/>
-                </g:FlowPanel>
-            </g:customCell>
-        </g:row>
 
-        <!-- Size  -->
-        <g:row>
-            <g:cell styleName="{style.headingRow} {style.paddedRow}">Size:</g:cell>
-            <g:cell />
-        </g:row>
-        <g:row>
-            <g:cell>Character Count:</g:cell>
-            <g:customCell>
-                <g:FlowPanel width="100%" height="100%">
-                    <g:CheckBox
-                            ui:field="charCountCheckBox"
-                            addStyleNames="{style.panelChild}"/>
-                    <v:ValueSpinner
-                            ui:field="charCountSpinner"
-                            addStyleNames="{style.charSpinner} {style.panelChild}"/>
-                </g:FlowPanel>
-            </g:customCell>
-        </g:row>
+        <g:Grid ui:field="characterGrid" styleName="stroom-control-grid {style.max}">
+            <!-- FROM  -->
+            <g:row>
+                <g:cell styleName="{style.headingRow} {style.paddedRow}">From:</g:cell>
+                <g:cell/>
+            </g:row>
+            <g:row>
+                <g:cell>Line : Column(inc.):</g:cell>
+                <g:customCell>
+                    <g:FlowPanel width="100%" height="100%">
+                        <g:CheckBox
+                                ui:field="lineColFromCheckBox"
+                                addStyleNames="{style.panelChild}"/>
+                        <v:ValueSpinner
+                                ui:field="lineNoFromSpinner"
+                                addStyleNames="{style.lineColPanelChild}"/>
+                        <g:HTML addStyleNames="{style.lineColSpacer} {style.lineColPanelChild}">:</g:HTML>
+                        <v:ValueSpinner
+                                ui:field="colNoFromSpinner"
+                                addStyleNames="{style.lineColPanelChild}"/>
+                    </g:FlowPanel>
+                </g:customCell>
+            </g:row>
+            <g:row>
+                <g:cell>Character Position (inc.):</g:cell>
+                <g:customCell>
+                    <g:FlowPanel width="100%" height="100%">
+                        <g:CheckBox
+                                ui:field="charOffsetFromCheckBox"
+                                addStyleNames="{style.panelChild}"/>
+                        <v:ValueSpinner
+                                ui:field="charOffsetFromSpinner"
+                                addStyleNames="{style.charSpinner} {style.panelChild}"/>
+                        <g:Label
+                                ui:field="charCountFromLbl"
+                                addStyleNames="{style.panelChild} {style.countLabel}"/>
+                    </g:FlowPanel>
+                </g:customCell>
+            </g:row>
 
-    </g:Grid>
+            <!-- TO  -->
+            <g:row>
+                <g:cell styleName="{style.headingRow} {style.paddedRow}">To:</g:cell>
+                <g:cell/>
+            </g:row>
+            <g:row>
+                <g:cell>Line : Column (inc.):</g:cell>
+                <g:customCell>
+                    <g:FlowPanel width="100%" height="100%">
+                        <g:CheckBox
+                                ui:field="lineColToCheckBox"
+                                addStyleNames="{style.panelChild}"/>
+                        <v:ValueSpinner
+                                ui:field="lineNoToSpinner"
+                                addStyleNames="{style.lineColPanelChild}"/>
+                        <g:HTML addStyleNames="{style.lineColSpacer} {style.lineColPanelChild}">:</g:HTML>
+                        <v:ValueSpinner
+                                ui:field="colNoToSpinner"
+                                addStyleNames="{style.lineColPanelChild}"/>
+                    </g:FlowPanel>
+                </g:customCell>
+            </g:row>
+            <g:row>
+                <g:cell>Character Position(inc.):</g:cell>
+                <g:customCell>
+                    <g:FlowPanel width="100%" height="100%">
+                        <g:CheckBox
+                                ui:field="charOffsetToCheckBox"
+                                addStyleNames="{style.panelChild}"/>
+                        <v:ValueSpinner
+                                ui:field="charOffsetToSpinner"
+                                addStyleNames="{style.charSpinner} {style.panelChild}"/>
+                        <g:Label
+                                ui:field="charCountToLbl"
+                                addStyleNames="{style.panelChild} {style.countLabel}"/>
+                    </g:FlowPanel>
+                </g:customCell>
+            </g:row>
+
+            <!-- Size  -->
+            <g:row>
+                <g:cell styleName="{style.headingRow} {style.paddedRow}">Size:</g:cell>
+                <g:cell/>
+            </g:row>
+            <g:row>
+                <g:cell>Character Count:</g:cell>
+                <g:customCell>
+                    <g:FlowPanel width="100%" height="100%">
+                        <g:CheckBox
+                                ui:field="charCountCheckBox"
+                                addStyleNames="{style.panelChild}"/>
+                        <v:ValueSpinner
+                                ui:field="charCountSpinner"
+                                addStyleNames="{style.charSpinner} {style.panelChild}"/>
+                    </g:FlowPanel>
+                </g:customCell>
+            </g:row>
+
+        </g:Grid>
+    </g:FlowPanel>
 </ui:UiBinder>

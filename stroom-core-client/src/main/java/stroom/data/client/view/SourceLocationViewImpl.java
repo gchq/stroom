@@ -7,6 +7,7 @@ import stroom.util.shared.DefaultLocation;
 import stroom.util.shared.RowCount;
 import stroom.widget.valuespinner.client.ValueSpinner;
 
+import com.google.gwt.dom.client.Style.Display;
 import com.google.gwt.uibinder.client.UiBinder;
 import com.google.gwt.uibinder.client.UiField;
 import com.google.gwt.user.client.ui.CheckBox;
@@ -24,7 +25,10 @@ public class SourceLocationViewImpl extends ViewImpl implements SourceLocationVi
     private final Widget widget;
 
     @UiField
-    Grid grid;
+    Grid sourceGrid;
+
+    @UiField
+    Grid characterGrid;
 
     // TODO @AT Do we want the meta id in here?
     @UiField
@@ -39,6 +43,8 @@ public class SourceLocationViewImpl extends ViewImpl implements SourceLocationVi
     Label segmentTitleLbl;
     @UiField
     ValueSpinner segmentNoField;
+//    @UiField
+//    ValueSpinner segmentNoToField;
     @UiField
     Label segmentCountLbl;
 
@@ -86,14 +92,8 @@ public class SourceLocationViewImpl extends ViewImpl implements SourceLocationVi
 
         widget = binder.createAndBindUi(this);
 
-        idField.setMin(1);
-        partNoField.setMin(1);
-        segmentNoField.setMin(1);
-        lineNoFromSpinner.setMin(1);
-        colNoFromSpinner.setMin(1);
-        lineNoToSpinner.setMin(1);
-        colNoToSpinner.setMin(1);
-        
+        setInitialMinMax();
+
         idField.setEnabled(false);
         partNoField.setEnabled(false);
         segmentNoField.setEnabled(false);
@@ -101,6 +101,7 @@ public class SourceLocationViewImpl extends ViewImpl implements SourceLocationVi
         idField.setValue(1);
         partNoField.setValue(1);
         segmentNoField.setValue(1);
+//        segmentNoToField.setValue(1);
 
         partTitleLbl.setText("Part Number:");
         segmentTitleLbl.setText("Record Number:");
@@ -127,6 +128,26 @@ public class SourceLocationViewImpl extends ViewImpl implements SourceLocationVi
                 charCountSpinner.setEnabled(event.getValue()));
     }
 
+    private void setInitialMinMax() {
+        idField.setMin(1);
+        partNoField.setMin(1);
+        segmentNoField.setMin(1);
+//        segmentNoToField.setMin(1);
+        lineNoFromSpinner.setMin(1);
+        colNoFromSpinner.setMin(1);
+        lineNoToSpinner.setMin(1);
+        colNoToSpinner.setMin(1);
+
+        idField.setMax(Long.MAX_VALUE);
+        partNoField.setMax(Long.MAX_VALUE);
+        segmentNoField.setMax(Long.MAX_VALUE);
+//        segmentNoToField.setMax(Long.MAX_VALUE);
+        lineNoFromSpinner.setMax(Long.MAX_VALUE);
+        colNoFromSpinner.setMax(Long.MAX_VALUE);
+        lineNoToSpinner.setMax(Long.MAX_VALUE);
+        colNoToSpinner.setMax(Long.MAX_VALUE);
+    }
+
     @Override
     public Widget asWidget() {
         return widget;
@@ -142,7 +163,7 @@ public class SourceLocationViewImpl extends ViewImpl implements SourceLocationVi
                     colNoFromSpinner.getValue()));
         }
         if (charOffsetFromCheckBox.getValue()) {
-            dataRangeBuilder.fromCharOffset((long) charOffsetFromSpinner.getValue() - ZERO_TO_ONE_BASE_INCREMENT);
+            dataRangeBuilder.fromCharOffset(toZeroBased(charOffsetFromSpinner.getValue()));
         }
         if (lineColToCheckBox.getValue()) {
             dataRangeBuilder.toLocation(DefaultLocation.of(
@@ -150,7 +171,7 @@ public class SourceLocationViewImpl extends ViewImpl implements SourceLocationVi
                     colNoToSpinner.getValue()));
         }
         if (charOffsetToCheckBox.getValue()) {
-            dataRangeBuilder.toCharOffset((long) charOffsetToSpinner.getValue() - ZERO_TO_ONE_BASE_INCREMENT);
+            dataRangeBuilder.toCharOffset(toZeroBased(charOffsetToSpinner.getValue()));
         }
         if (charCountCheckBox.getValue()) {
             dataRangeBuilder.withLength((long) charCountSpinner.getValue());
@@ -158,10 +179,10 @@ public class SourceLocationViewImpl extends ViewImpl implements SourceLocationVi
         final SourceLocation.Builder sourceLocationBuilder = SourceLocation.builder(idField.getValue());
 
         if (partNoField.isEnabled()) {
-            sourceLocationBuilder.withPartNo((long) partNoField.getValue() - ZERO_TO_ONE_BASE_INCREMENT);
+            sourceLocationBuilder.withPartNo(toZeroBased(partNoField.getValue()));
         }
         if (segmentNoField.isEnabled()) {
-            sourceLocationBuilder.withSegmentNumber((long) segmentNoField.getValue() - ZERO_TO_ONE_BASE_INCREMENT);
+            sourceLocationBuilder.withSegmentNumber(toZeroBased(segmentNoField.getValue()));
         }
 
         return sourceLocationBuilder
@@ -174,24 +195,24 @@ public class SourceLocationViewImpl extends ViewImpl implements SourceLocationVi
         setEnabledAndCheckedStates(sourceLocation);
 
         idField.setValue(sourceLocation.getId());
-        partNoField.setValue(sourceLocation.getPartNo() + ZERO_TO_ONE_BASE_INCREMENT);
-        segmentNoField.setValue(sourceLocation.getSegmentNo() + ZERO_TO_ONE_BASE_INCREMENT);
+        partNoField.setValue(toOneBased(sourceLocation.getPartNo()));
+        segmentNoField.setValue(toOneBased(sourceLocation.getSegmentNo()));
 
         sourceLocation.getOptDataRange().ifPresent(dataRange -> {
             lineColFromCheckBox.setValue(true);
             dataRange.getOptLocationFrom().ifPresent(location -> {
                 lineNoFromSpinner.setValue(location.getLineNo());
-                colNoFromSpinner.setValue(location.getLineNo());
+                colNoFromSpinner.setValue(location.getColNo());
                     });
             dataRange.getOptCharOffsetFrom().ifPresent(offset ->
-                    charOffsetFromSpinner.setValue(offset + ZERO_TO_ONE_BASE_INCREMENT));
+                    charOffsetFromSpinner.setValue(toOneBased(offset)));
 
             dataRange.getOptLocationTo().ifPresent(location -> {
                 lineNoToSpinner.setValue(location.getLineNo());
-                colNoToSpinner.setValue(location.getLineNo());
+                colNoToSpinner.setValue(location.getColNo());
             });
             dataRange.getOptCharOffsetTo().ifPresent(offset ->
-                    charOffsetToSpinner.setValue(offset + ZERO_TO_ONE_BASE_INCREMENT));
+                    charOffsetToSpinner.setValue(toOneBased(offset)));
 
             dataRange.getOptLength().ifPresent(charCountSpinner::setValue);
         });
@@ -252,32 +273,37 @@ public class SourceLocationViewImpl extends ViewImpl implements SourceLocationVi
     }
 
     @Override
-    public void setPartNoEnabled(final boolean isEnabled) {
-        partNoField.setEnabled(isEnabled);
-        partNoField.setVisible(isEnabled);
-        partTitleLbl.setVisible(isEnabled);
-        partCountLbl.setVisible(isEnabled);
-    }
-
-    @Override
-    public void setSegmentNoEnabled(final boolean isEnabled) {
-        segmentNoField.setEnabled(isEnabled);
-        segmentNoField.setVisible(isEnabled);
-        segmentTitleLbl.setVisible(isEnabled);
-        segmentCountLbl.setVisible(isEnabled);
+    public void setPartNoVisible(final boolean isVisible) {
+        partNoField.setEnabled(isVisible);
+        partNoField.setVisible(isVisible);
+        partTitleLbl.setVisible(isVisible);
+        partCountLbl.setVisible(isVisible);
     }
 
     @Override
     public void setSegmentNoVisible(final boolean isVisible) {
+        segmentNoField.setEnabled(isVisible);
         segmentNoField.setVisible(isVisible);
+        segmentTitleLbl.setVisible(isVisible);
+        segmentCountLbl.setVisible(isVisible);
+    }
+
+    @Override
+    public void setCharacterControlsVisible(final boolean isVisible) {
+        final Display display = isVisible
+                ? Display.TABLE
+                : Display.NONE;
+        characterGrid.getElement().getStyle().setDisplay(display);
     }
 
     @Override
     public void setPartCount(final RowCount<Long> partCount) {
         this.partCount = partCount;
-        if (partCount.isExact()) {
+        if (partCount.isExact() && partCount.getCount() != null) {
             partNoField.setMax(partCount.getCount());
-            partNoField.setEnabled(!Long.valueOf(1).equals(partCount.getCount()));
+            partNoField.setEnabled(partCount.getCount() != 1);
+        } else {
+            partNoField.setMax(Long.MAX_VALUE);
         }
         updateCountLabels();
     }
@@ -285,9 +311,11 @@ public class SourceLocationViewImpl extends ViewImpl implements SourceLocationVi
     @Override
     public void setSegmentsCount(final RowCount<Long> segmentCount) {
         this.segmentCount = segmentCount;
-        if (segmentCount.isExact()) {
+        if (segmentCount.isExact() && segmentCount.getCount() != null) {
             segmentNoField.setMax(segmentCount.getCount());
-            segmentNoField.setEnabled(!Long.valueOf(1).equals(segmentCount.getCount()));
+            segmentNoField.setEnabled(segmentCount.getCount() != 1);
+        } else {
+            segmentNoField.setMax(Long.MAX_VALUE);
         }
         updateCountLabels();
     }
@@ -295,7 +323,28 @@ public class SourceLocationViewImpl extends ViewImpl implements SourceLocationVi
     @Override
     public void setTotalCharsCount(final RowCount<Long> totalCharCount) {
         this.totalCharCount = totalCharCount;
+        if (totalCharCount.isExact() && totalCharCount.getCount() != null) {
+            charOffsetFromSpinner.setMax(totalCharCount.getCount());
+            charOffsetToSpinner.setMax(totalCharCount.getCount());
+            charCountSpinner.setMax(totalCharCount.getCount());
+        } else {
+            charOffsetFromSpinner.setMax(Long.MAX_VALUE);
+            charOffsetToSpinner.setMax(Long.MAX_VALUE);
+            charCountSpinner.setMax(Long.MAX_VALUE);
+        }
         updateCountLabels();
+    }
+
+    private long toOneBased(final long zeroBasedValue) {
+        return zeroBasedValue + 1;
+    }
+
+    private long toOneBased(final int zeroBasedValue) {
+        return zeroBasedValue + 1;
+    }
+
+    private long toZeroBased(final long oneBasedValue) {
+        return oneBasedValue - 1;
     }
 
     public interface Binder extends UiBinder<Widget, SourceLocationViewImpl> {

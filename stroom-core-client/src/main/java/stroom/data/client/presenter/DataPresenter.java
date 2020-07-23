@@ -232,8 +232,8 @@ public class DataPresenter extends MyPresenterWidget<DataPresenter.DataView> imp
         if (lastResult != null && lastResult.getSourceLocation() != null) {
             sourceLocationPresenter.setSourceLocation(lastResult.getSourceLocation());
 
-            sourceLocationPresenter.setPartNoEnabled(isCurrentDataMultiPart());
-            sourceLocationPresenter.setSegmentNoEnabled(isCurrentDataSegmented());
+            sourceLocationPresenter.setPartNoVisible(isCurrentDataMultiPart());
+            sourceLocationPresenter.setSegmentNoVisible(isCurrentDataSegmented());
 
             if (isCurrentDataMultiPart()) {
                 sourceLocationPresenter.setPartsCount(lastResult.getTotalItemCount());
@@ -247,6 +247,7 @@ public class DataPresenter extends MyPresenterWidget<DataPresenter.DataView> imp
                 sourceLocationPresenter.setSegmentsCount(RowCount.of(0L, false));
             }
             sourceLocationPresenter.setTotalCharsCount(lastResult.getTotalCharacterCount());
+            sourceLocationPresenter.setCharacterControlsVisible(! (lastResult instanceof FetchMarkerResult));
         }
 
         final PopupUiHandlers popupUiHandlers = new PopupUiHandlers() {
@@ -258,15 +259,14 @@ public class DataPresenter extends MyPresenterWidget<DataPresenter.DataView> imp
             @Override
             public void onHide(final boolean autoClose, final boolean ok) {
                 if (ok) {
-                    SourceLocation sourceLocation = sourceLocationPresenter.getSourceLocation();
-                    currentPartNo = sourceLocation.getPartNo();
-                    currentSegmentNo = sourceLocation.getSegmentNo();
+                    final SourceLocation newSourceLocation = sourceLocationPresenter.getSourceLocation();
+                    currentPartNo = newSourceLocation.getPartNo();
+                    currentSegmentNo = newSourceLocation.getSegmentNo();
+                    currentDataRange = newSourceLocation.getOptDataRange().orElse(DEFAULT_DATA_RANGE);
 
                     update(false);
 
                     // TODO @AT set all the values
-
-
 
 //                    final String schedule = schedulePresenter.getScheduleString();
 //                    jobNode.setSchedule(schedule);
@@ -1110,6 +1110,12 @@ public class DataPresenter extends MyPresenterWidget<DataPresenter.DataView> imp
         @Override
         public boolean isSegmented() {
             return isCurrentDataSegmented();
+        }
+
+        @Override
+        public boolean canDisplayMultipleSegments() {
+            return isCurrentDataSegmented()
+                    && getCurDataType().equals(DataType.MARKER);
         }
 
         @Override
