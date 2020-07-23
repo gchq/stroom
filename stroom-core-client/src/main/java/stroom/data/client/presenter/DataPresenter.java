@@ -37,6 +37,7 @@ import stroom.util.shared.OffsetRange;
 import stroom.util.shared.RowCount;
 import stroom.util.shared.Severity;
 import stroom.util.shared.TextRange;
+import stroom.widget.popup.client.presenter.PopupUiHandlers;
 import stroom.widget.tab.client.presenter.TabBar;
 import stroom.widget.tab.client.presenter.TabData;
 import stroom.widget.tab.client.presenter.TabDataImpl;
@@ -79,6 +80,7 @@ public class DataPresenter extends MyPresenterWidget<DataPresenter.DataView> imp
     private final TabData contextTab = new TabDataImpl("Context");
 
     private final TextPresenter textPresenter;
+    private final SourceLocationPresenter sourceLocationPresenter;
     private final MarkerListPresenter markerListPresenter;
 
     private final RestFactory restFactory;
@@ -136,12 +138,14 @@ public class DataPresenter extends MyPresenterWidget<DataPresenter.DataView> imp
                          final DataView view,
                          final TextPresenter textPresenter,
                          final MarkerListPresenter markerListPresenter,
+                         final SourceLocationPresenter sourceLocationPresenter,
                          final ClientSecurityContext securityContext,
                          final RestFactory restFactory) {
         super(eventBus, view);
         this.textPresenter = textPresenter;
         // Use properties mode for meta
         this.markerListPresenter = markerListPresenter;
+        this.sourceLocationPresenter = sourceLocationPresenter;
         this.restFactory = restFactory;
 
         markerListPresenter.getWidget().getElement().getStyle().setWidth(100, Unit.PCT);
@@ -170,6 +174,8 @@ public class DataPresenter extends MyPresenterWidget<DataPresenter.DataView> imp
         addTab(contextTab);
 
         userHasPipelineSteppingPermission = securityContext.hasAppPermission(PermissionNames.STEPPING_PERMISSION);
+
+        view.setNavigatorClickHandler(this::showSourceLocationPopup);
     }
 
     private void addTab(final TabData tab) {
@@ -220,6 +226,56 @@ public class DataPresenter extends MyPresenterWidget<DataPresenter.DataView> imp
                 }
             }
         }
+    }
+
+    private void showSourceLocationPopup() {
+        if (lastResult != null && lastResult.getSourceLocation() != null) {
+            sourceLocationPresenter.setSourceLocation(lastResult.getSourceLocation());
+
+            sourceLocationPresenter.setPartNoEnabled(isCurrentDataMultiPart());
+            sourceLocationPresenter.setSegmentNoEnabled(isCurrentDataSegmented());
+
+            if (isCurrentDataMultiPart()) {
+                sourceLocationPresenter.setPartsCount(lastResult.getTotalItemCount());
+            } else {
+                sourceLocationPresenter.setPartsCount(RowCount.of(0L, false));
+            }
+
+            if (isCurrentDataSegmented()) {
+                sourceLocationPresenter.setSegmentsCount(lastResult.getTotalItemCount());
+            } else {
+                sourceLocationPresenter.setSegmentsCount(RowCount.of(0L, false));
+            }
+            sourceLocationPresenter.setTotalCharsCount(lastResult.getTotalCharacterCount());
+        }
+
+        final PopupUiHandlers popupUiHandlers = new PopupUiHandlers() {
+            @Override
+            public void onHideRequest(final boolean autoClose, final boolean ok) {
+                sourceLocationPresenter.hide(autoClose, ok);
+            }
+
+            @Override
+            public void onHide(final boolean autoClose, final boolean ok) {
+                if (ok) {
+                    SourceLocation sourceLocation = sourceLocationPresenter.getSourceLocation();
+                    currentPartNo = sourceLocation.getPartNo();
+                    currentSegmentNo = sourceLocation.getSegmentNo();
+
+                    update(false);
+
+                    // TODO @AT set all the values
+
+
+
+//                    final String schedule = schedulePresenter.getScheduleString();
+//                    jobNode.setSchedule(schedule);
+//                    final Rest<JobNode> rest = restFactory.create();
+//                    rest.onSuccess(result -> dataProvider.refresh()).call(JOB_NODE_RESOURCE).setSchedule(jobNode.getId(), schedule);
+                }
+            }
+        };
+        sourceLocationPresenter.show(popupUiHandlers);
     }
 
     @Override
@@ -836,6 +892,15 @@ public class DataPresenter extends MyPresenterWidget<DataPresenter.DataView> imp
         return curDataType;
     }
 
+    private boolean isCurrentDataSegmented() {
+        return DataType.SEGMENTED.equals(getCurDataType())
+                || DataType.MARKER.equals(getCurDataType());
+    }
+    private boolean isCurrentDataMultiPart() {
+        // For now assume segmented and multi-part are mutually exclusive
+        return DataType.NON_SEGMENTED.equals(getCurDataType());
+    }
+
     private DataRange getCurrentDataRange() {
         return currentDataRange;
     }
@@ -872,6 +937,8 @@ public class DataPresenter extends MyPresenterWidget<DataPresenter.DataView> imp
         void refreshNavigator();
 
         void setRefreshing(boolean refreshing);
+
+        void setNavigatorClickHandler(final Runnable clickHandler);
     }
 
 //    private static abstract class PagerRows implements HasRows {
@@ -1017,7 +1084,7 @@ public class DataPresenter extends MyPresenterWidget<DataPresenter.DataView> imp
         @Override
         public boolean isMultiPart() {
             // For now assume segmented and multi-part are mutually exclusive
-            return DataType.NON_SEGMENTED.equals(getCurDataType());
+            return isCurrentDataMultiPart();
         }
 
         @Override
@@ -1042,8 +1109,7 @@ public class DataPresenter extends MyPresenterWidget<DataPresenter.DataView> imp
 
         @Override
         public boolean isSegmented() {
-            return DataType.SEGMENTED.equals(getCurDataType())
-                    || DataType.MARKER.equals(getCurDataType());
+            return isCurrentDataSegmented();
         }
 
         @Override
@@ -1084,9 +1150,9 @@ public class DataPresenter extends MyPresenterWidget<DataPresenter.DataView> imp
             final AbstractFetchDataResult lastResult = getLastResult();
             if (lastResult == null) {
                 return Optional.empty();
-            } else if (DataType.MARKER.equals(curDataType)) {
+            } else if (DataType.MARKER.equals(getCurDataType())) {
                 return Optional.of(ERROR);
-            } else if (DataType.SEGMENTED.equals(curDataType)) {
+            } else if (DataType.SEGMENTED.equals(getCurDataType())) {
                 return Optional.of("Record");
             } else {
                 return Optional.empty();
@@ -1131,13 +1197,13 @@ public class DataPresenter extends MyPresenterWidget<DataPresenter.DataView> imp
 
         @Override
         public void advanceCharactersForward() {
-            if (Long.valueOf(0).equals(currentDataRange.getCharOffsetFrom())) {
+            if (Long.valueOf(0).equals(getCurrentDataRange().getCharOffsetFrom())) {
                 currentDataRange = DataRange.from(
-                        currentDataRange.getCharOffsetFrom() + MAX_INITIAL_CHARS,
+                        getCurrentDataRange().getCharOffsetFrom() + MAX_INITIAL_CHARS,
                         MAX_CHARS_PER_FETCH);
             } else {
                 currentDataRange = DataRange.from(
-                        currentDataRange.getCharOffsetFrom() + MAX_CHARS_PER_FETCH,
+                        getCurrentDataRange().getCharOffsetFrom() + MAX_CHARS_PER_FETCH,
                         MAX_CHARS_PER_FETCH);
             }
             update(false);
@@ -1146,7 +1212,7 @@ public class DataPresenter extends MyPresenterWidget<DataPresenter.DataView> imp
         @Override
         public void advanceCharactersBackwards() {
             currentDataRange = DataRange.from(
-                    currentDataRange.getCharOffsetFrom() - MAX_CHARS_PER_FETCH,
+                    getCurrentDataRange().getCharOffsetFrom() - MAX_CHARS_PER_FETCH,
                     MAX_CHARS_PER_FETCH);
             update(false);
         }

@@ -48,6 +48,8 @@ public class DataNavigator extends Composite {
 
     private static Binder binder;
 
+    private Runnable clickHandler;
+
     // Part selection controls for multi-part streams (typically non-segmented)
     // May not be visible
     @UiField
@@ -137,9 +139,9 @@ public class DataNavigator extends Composite {
         showHeadCharactersBtn = SvgButton.create(
                 SvgPresets.FAST_BACKWARD_BLUE.title("Show Beginning"));
         advanceCharactersBackwardBtn = SvgButton.create(
-                SvgPresets.STEP_BACKWARD_BLUE.title("Advance Range Forwards"));
+                SvgPresets.STEP_BACKWARD_BLUE.title("Advance Range Backwards"));
         advanceCharactersForwardBtn = SvgButton.create(
-                SvgPresets.STEP_FORWARD_BLUE.title("Advance Range Backwards"));
+                SvgPresets.STEP_FORWARD_BLUE.title("Advance Range Forwards"));
 
         setupButton(showHeadCharactersBtn, true, false);
         setupButton(advanceCharactersBackwardBtn, true, false);
@@ -327,7 +329,7 @@ public class DataNavigator extends Composite {
 
     @UiHandler("lblParts")
     public void onClickPartsLabel(final ClickEvent event) {
-        // TODO @AT Open source selection popup
+        clickHandler.run();
     }
 
     @UiHandler("firstPart")
@@ -368,7 +370,7 @@ public class DataNavigator extends Composite {
 
     @UiHandler("lblSegments")
     public void onClickSegmentsLabel(final ClickEvent event) {
-        // TODO @AT Open source selection popup
+        clickHandler.run();
     }
 
     @UiHandler("firstSegment")
@@ -408,7 +410,7 @@ public class DataNavigator extends Composite {
 
     @UiHandler("lblCharacters")
     public void onClickCharactersLabel(final ClickEvent event) {
-        // TODO @AT Open source selection popup
+        clickHandler.run();
     }
 
     @UiHandler("showHeadCharactersBtn")
@@ -501,6 +503,10 @@ public class DataNavigator extends Composite {
         } else {
             refresh.getElement().removeClassName("fa-spin");
         }
+    }
+
+    public void setClickHandler(final Runnable clickHandler) {
+        this.clickHandler = clickHandler;
     }
 
     public interface Binder extends UiBinder<Widget, DataNavigator> {

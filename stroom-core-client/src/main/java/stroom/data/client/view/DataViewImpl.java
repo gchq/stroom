@@ -187,6 +187,11 @@ public class DataViewImpl extends ViewImpl implements DataView {
         dataNavigator.refresh();
     }
 
+    @Override
+    public void setNavigatorClickHandler(final Runnable clickHandler) {
+        dataNavigator.setClickHandler(clickHandler);
+    }
+
     public interface Binder extends UiBinder<Widget, DataViewImpl> {
     }
 }
