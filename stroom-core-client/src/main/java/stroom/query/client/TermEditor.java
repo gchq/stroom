@@ -16,6 +16,17 @@
 
 package stroom.query.client;
 
+import stroom.datasource.api.v2.AbstractField;
+import stroom.datasource.api.v2.DocRefField;
+import stroom.datasource.api.v2.FieldTypes;
+import stroom.dispatch.client.RestFactory;
+import stroom.docref.DocRef;
+import stroom.explorer.client.presenter.EntityDropDownPresenter;
+import stroom.item.client.ItemListBox;
+import stroom.query.api.v2.ExpressionTerm.Condition;
+import stroom.util.shared.EqualsUtil;
+import stroom.widget.customdatebox.client.MyDateBox;
+
 import com.google.gwt.core.client.GWT;
 import com.google.gwt.core.client.Scheduler;
 import com.google.gwt.dom.client.Style.Unit;
@@ -31,16 +42,6 @@ import com.google.gwt.user.client.ui.Label;
 import com.google.gwt.user.client.ui.SuggestBox;
 import com.google.gwt.user.client.ui.Widget;
 import com.google.web.bindery.event.shared.HandlerRegistration;
-import stroom.datasource.api.v2.AbstractField;
-import stroom.datasource.api.v2.DocRefField;
-import stroom.datasource.api.v2.FieldTypes;
-import stroom.dispatch.client.RestFactory;
-import stroom.docref.DocRef;
-import stroom.explorer.client.presenter.EntityDropDownPresenter;
-import stroom.item.client.ItemListBox;
-import stroom.query.api.v2.ExpressionTerm.Condition;
-import stroom.util.shared.EqualsUtil;
-import stroom.widget.customdatebox.client.MyDateBox;
 
 import java.util.ArrayList;
 import java.util.Arrays;
@@ -180,7 +181,7 @@ public class TermEditor extends Composite {
         }
 
         fieldListBox.setSelectedItem(termField);
-        changeField(termField);
+        changeField(termField, false);
 
         reading = false;
     }
@@ -220,7 +221,7 @@ public class TermEditor extends Composite {
         }
     }
 
-    private void changeField(final AbstractField field) {
+    private void changeField(final AbstractField field, final boolean useDefaultCondition) {
         suggestOracle.setField(field);
         final List<Condition> conditions = getConditions(field);
 
@@ -228,9 +229,16 @@ public class TermEditor extends Composite {
         conditionListBox.addItems(conditions);
 
         // Set the condition.
-        Condition selected = conditions.get(0);
-        if (term.getCondition() != null && conditions.contains(term.getCondition())) {
+        Condition selected;
+
+        if (!useDefaultCondition && term.getCondition() != null && conditions.contains(term.getCondition())) {
             selected = term.getCondition();
+        } else if (conditions.contains(Condition.IS_DOC_REF)) {
+            selected = Condition.IS_DOC_REF;
+        } else if (conditions.contains(Condition.EQUALS)) {
+            selected = Condition.EQUALS;
+        } else {
+            selected = conditions.get(0);
         }
 
         conditionListBox.setSelectedItem(selected);
@@ -526,7 +534,7 @@ public class TermEditor extends Composite {
         registerHandler(fieldListBox.addSelectionHandler(event -> {
             if (!reading) {
                 write(term);
-                changeField(event.getSelectedItem());
+                changeField(event.getSelectedItem(), true);
                 fireDirty();
             }
         }));

@@ -53,9 +53,12 @@ class JobService {
         this.securityContext = securityContext;
 
         scheduledJobsMap.keySet().forEach(scheduledJob -> {
-            jobDescriptionMap.put(scheduledJob.getName(), scheduledJob.getDescription());
-            if (scheduledJob.isAdvanced()) {
-                jobAdvancedSet.add(scheduledJob.getName());
+            // We only add managed jobs to the descriptions as only managed ones can accept user changes.
+            if (scheduledJob.isManaged()) {
+                jobDescriptionMap.put(scheduledJob.getName(), scheduledJob.getDescription());
+                if (scheduledJob.isAdvanced()) {
+                    jobAdvancedSet.add(scheduledJob.getName());
+                }
             }
         });
 

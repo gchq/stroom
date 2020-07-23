@@ -40,14 +40,8 @@ class ScheduleService {
 
         if (JobType.CRON.equals(jobType)) {
             final SimpleCron cron = SimpleCron.compile(expression);
-
-            Long time = scheduleReferenceTime;
-            if (time == null) {
-                time = System.currentTimeMillis();
-            }
-            if (time != null) {
-                time = cron.getNextTime(time);
-            }
+            Long time = System.currentTimeMillis();
+            time = cron.getNextTime(time);
             scheduledTimes = getScheduledTimes(lastExecutedTime, time);
 
         } else if (JobType.FREQUENCY.equals(jobType)) {

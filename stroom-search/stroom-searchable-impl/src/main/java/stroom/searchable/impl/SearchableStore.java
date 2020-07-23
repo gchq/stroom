@@ -1,14 +1,24 @@
 package stroom.searchable.impl;
 
-import com.google.common.base.Preconditions;
-import com.google.common.collect.Maps;
 import stroom.dashboard.expression.v1.FieldIndexMap;
 import stroom.datasource.api.v2.AbstractField;
 import stroom.entity.shared.ExpressionCriteria;
 import stroom.query.api.v2.ExpressionOperator;
 import stroom.query.api.v2.Param;
 import stroom.query.api.v2.SearchRequest;
-import stroom.query.common.v2.*;
+import stroom.query.common.v2.CompletionState;
+import stroom.query.common.v2.Coprocessor;
+import stroom.query.common.v2.CoprocessorSettings;
+import stroom.query.common.v2.CoprocessorSettingsMap;
+import stroom.query.common.v2.Data;
+import stroom.query.common.v2.Payload;
+import stroom.query.common.v2.ResultHandler;
+import stroom.query.common.v2.SearchResultHandler;
+import stroom.query.common.v2.Sizes;
+import stroom.query.common.v2.Store;
+import stroom.query.common.v2.TableCoprocessor;
+import stroom.query.common.v2.TableCoprocessorSettings;
+import stroom.query.common.v2.TablePayload;
 import stroom.searchable.api.Searchable;
 import stroom.task.api.TaskContext;
 import stroom.task.api.TaskContextFactory;
@@ -17,9 +27,17 @@ import stroom.util.logging.LambdaLogger;
 import stroom.util.logging.LambdaLoggerFactory;
 import stroom.util.logging.LogUtil;
 
+import com.google.common.base.Preconditions;
+import com.google.common.collect.Maps;
+
 import java.time.Duration;
 import java.time.Instant;
-import java.util.*;
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.Collections;
+import java.util.List;
+import java.util.Map;
+import java.util.OptionalInt;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.Executor;
 import java.util.concurrent.TimeUnit;
@@ -105,11 +123,13 @@ class SearchableStore implements Store {
         }
 
         final LongAdder counter = new LongAdder();
-        final AtomicLong nextProcessPayloadsTime = new AtomicLong(Instant.now().plus(RESULT_SEND_INTERVAL).toEpochMilli());
-        final AtomicLong countSinceLastSend = new AtomicLong(0);
         final Instant queryStart = Instant.now();
+        try {
+            final AtomicLong nextProcessPayloadsTime = new AtomicLong(Instant.now().plus(RESULT_SEND_INTERVAL).toEpochMilli());
+            final AtomicLong countSinceLastSend = new AtomicLong(0);
 
-        searchable.search(criteria, fieldArray, data -> {
+
+            searchable.search(criteria, fieldArray, data -> {
 //                final Val[] data = new Val[v.length];
 //                for (int i = 0; i < v.length; i++) {
 //                    Val val = ValNull.INSTANCE;
@@ -128,29 +148,33 @@ class SearchableStore implements Store {
 //                    data[i] = val;
 //                }
 
-            counter.increment();
-            countSinceLastSend.incrementAndGet();
-            LOGGER.trace(() -> String.format("data: [%s]", Arrays.toString(data)));
+                counter.increment();
+                countSinceLastSend.incrementAndGet();
+                LOGGER.trace(() -> String.format("data: [%s]", Arrays.toString(data)));
 
-            // Give the data array to each of our coprocessors
-            coprocessorMap.values().forEach(coprocessor ->
-                    coprocessor.receive(data));
-            // Send what we have every 1s or when the batch reaches a set size
-            long now = System.currentTimeMillis();
-            if (now >= nextProcessPayloadsTime.get() ||
-                    countSinceLastSend.get() >= resultHandlerBatchSize) {
+                // Give the data array to each of our coprocessors
+                coprocessorMap.values().forEach(coprocessor ->
+                        coprocessor.receive(data));
+                // Send what we have every 1s or when the batch reaches a set size
+                long now = System.currentTimeMillis();
+                if (now >= nextProcessPayloadsTime.get() ||
+                        countSinceLastSend.get() >= resultHandlerBatchSize) {
 
-                LOGGER.debug(LambdaLogUtil.message("{} vs {}, {} vs {}",
-                        now, nextProcessPayloadsTime,
-                        countSinceLastSend.get(), resultHandlerBatchSize));
+                    LOGGER.debug(LambdaLogUtil.message("{} vs {}, {} vs {}",
+                            now, nextProcessPayloadsTime,
+                            countSinceLastSend.get(), resultHandlerBatchSize));
 
-                processPayloads(resultHandler, coprocessorMap);
-                taskContext.info(() -> searchKey +
-                        " - running database query (" + counter.longValue() + " rows fetched)");
-                nextProcessPayloadsTime.set(Instant.now().plus(RESULT_SEND_INTERVAL).toEpochMilli());
-                countSinceLastSend.set(0);
-            }
-        });
+                    processPayloads(resultHandler, coprocessorMap);
+                    taskContext.info(() -> searchKey +
+                            " - running database query (" + counter.longValue() + " rows fetched)");
+                    nextProcessPayloadsTime.set(Instant.now().plus(RESULT_SEND_INTERVAL).toEpochMilli());
+                    countSinceLastSend.set(0);
+                }
+            });
+
+        } catch (final RuntimeException e) {
+            errors.add(e.getMessage());
+        }
 
         LOGGER.debug(() ->
                 String.format("complete called, counter: %s",

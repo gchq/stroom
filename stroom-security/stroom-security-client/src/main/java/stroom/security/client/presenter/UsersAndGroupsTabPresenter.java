@@ -111,8 +111,6 @@ public class UsersAndGroupsTabPresenter extends
     public void setGroup(final boolean group) {
         criteria.setGroup(group);
         listPresenter.setup(criteria);
-        newButton.setVisible(group);
-        newButton.setEnabled(group);
     }
 
     private void enableButtons() {

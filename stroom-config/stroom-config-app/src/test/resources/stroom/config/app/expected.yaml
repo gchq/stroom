@@ -180,8 +180,8 @@ appConfig:
       metaValue:
         addAsync: true
         deleteAge: "P30D"
-        deleteBatchSize: 1000
-        flushBatchSize: 1000
+        deleteBatchSize: 500
+        flushBatchSize: 500
     retention:
       deleteBatchSize: 1000
       useQueryOptimisation: true

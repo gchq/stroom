@@ -17,8 +17,6 @@
 
 package stroom.pipeline.stepping;
 
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 import stroom.data.store.api.InputStreamProvider;
 import stroom.data.store.api.SizeAwareInputStream;
 import stroom.data.store.api.Source;
@@ -45,16 +43,28 @@ import stroom.pipeline.shared.stepping.PipelineStepRequest;
 import stroom.pipeline.shared.stepping.StepLocation;
 import stroom.pipeline.shared.stepping.StepType;
 import stroom.pipeline.shared.stepping.SteppingResult;
-import stroom.pipeline.state.*;
+import stroom.pipeline.state.CurrentUserHolder;
+import stroom.pipeline.state.FeedHolder;
+import stroom.pipeline.state.MetaDataHolder;
+import stroom.pipeline.state.MetaHolder;
+import stroom.pipeline.state.PipelineContext;
+import stroom.pipeline.state.PipelineHolder;
 import stroom.pipeline.task.StreamMetaDataProvider;
 import stroom.security.api.SecurityContext;
 import stroom.security.shared.PermissionNames;
 import stroom.task.api.TaskContext;
 import stroom.util.date.DateUtil;
 
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+
 import javax.inject.Inject;
 import java.io.IOException;
-import java.util.*;
+import java.util.ArrayList;
+import java.util.Collections;
+import java.util.HashSet;
+import java.util.List;
+import java.util.Set;
 
 class SteppingRequestHandler {
     private static final Logger LOGGER = LoggerFactory.getLogger(SteppingRequestHandler.class);
@@ -126,6 +136,8 @@ class SteppingRequestHandler {
     }
 
     public SteppingResult exec(final TaskContext taskContext, final PipelineStepRequest request) {
+        taskContext.info(() -> "Started stepping");
+
         return securityContext.secureResult(PermissionNames.STEPPING_PERMISSION, () -> {
             // Elevate user permissions so that inherited pipelines that the user only has 'Use' permission on can be read.
             return securityContext.useAsReadResult(() -> {
@@ -185,6 +197,8 @@ class SteppingRequestHandler {
                     // that caused the system not to step.
                     stepData = controller.createStepData(null);
                 }
+
+                taskContext.info(() -> "Finished stepping");
 
                 return new SteppingResult(request.getStepFilterMap(), currentLocation, stepData.convertToShared(),
                         curentStreamOffset, controller.isFound(), generalErrors);
@@ -283,6 +297,7 @@ class SteppingRequestHandler {
 
                 // Get the appropriate stream and source based on the type of
                 // translation.
+                controller.getTaskContext().info(() -> "Opening source: " + streamId);
                 try (final Source source = streamStore.openSource(streamId)) {
                     if (source != null) {
                         // Load the feed.
@@ -380,11 +395,11 @@ class SteppingRequestHandler {
             }
 
 //            if (criteria.getSelectedIdSet() == null || Boolean.TRUE.equals(criteria.getSelectedIdSet().getMatchAll())) {
-                // If we are including all tasks then don't filter the list.
-                filteredList = new ArrayList<>(allStreamList.size());
-                for (final Meta meta : allStreamList) {
-                    filteredList.add(meta.getId());
-                }
+            // If we are including all tasks then don't filter the list.
+            filteredList = new ArrayList<>(allStreamList.size());
+            for (final Meta meta : allStreamList) {
+                filteredList.add(meta.getId());
+            }
 
 //            }
 //            else if (criteria.getSelectedIdSet() != null && criteria.getSelectedIdSet().getSet() != null
@@ -593,12 +608,12 @@ class SteppingRequestHandler {
 
     private String createStreamInfo(final String feedName, final Meta meta) {
         return "" +
-                "Feed: " +
+                "id=" +
+                meta.getId() +
+                ", feed=" +
                 feedName +
-                " Received: " +
-                DateUtil.createNormalDateTimeString(meta.getCreateMs()) +
-                " [" +
-                meta.getId();
+                ", received=" +
+                DateUtil.createNormalDateTimeString(meta.getCreateMs());
     }
 
 //    private String getSourceData(final StepLocation location, final List<Highlight> highlights) {
