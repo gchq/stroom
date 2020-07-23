@@ -6,6 +6,8 @@ and this project adheres to [Semantic Versioning](http://semver.org/).
 
 ## [Unreleased]
 
+* Issue **#1533** : Improved meta data attribute value flushing to DB.
+
 * Issue **#1634** : `FileSystemClean` will now only examine active data volumes.
 
 * Issue **#1672** : Index shards are now only updated in the DB on flush when the document count or shard size changes.

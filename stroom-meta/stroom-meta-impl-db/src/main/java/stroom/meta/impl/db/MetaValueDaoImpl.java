@@ -21,10 +21,10 @@ import stroom.db.util.JooqUtil;
 import stroom.meta.api.AttributeMap;
 import stroom.meta.impl.MetaKeyDao;
 import stroom.meta.impl.MetaValueDao;
-import stroom.meta.impl.db.jooq.tables.records.MetaValRecord;
 import stroom.meta.shared.Meta;
 import stroom.util.logging.LogExecutionTime;
 
+import org.jooq.BatchBindStep;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -32,12 +32,11 @@ import javax.inject.Inject;
 import javax.inject.Singleton;
 import java.time.Duration;
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
-import java.util.Queue;
-import java.util.concurrent.ConcurrentLinkedQueue;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
@@ -54,7 +53,7 @@ class MetaValueDaoImpl implements MetaValueDao {
     private final MetaValueConfig metaValueConfig;
     private final ClusterLockService clusterLockService;
 
-    private final Queue<MetaValRecord> queue = new ConcurrentLinkedQueue<>();
+    private volatile List<Row> queue = new ArrayList<>();
 
     @Inject
     MetaValueDaoImpl(final MetaDbConnProvider metaDbConnProvider,
@@ -69,7 +68,7 @@ class MetaValueDaoImpl implements MetaValueDao {
 
     @Override
     public void addAttributes(final Meta meta, final AttributeMap attributes) {
-        final Stream<MetaValRecord> stream = attributes.entrySet()
+        final Stream<Row> stream = attributes.entrySet()
                 .stream()
                 .map(entry ->
                         metaKeyService.getIdForName(entry.getKey())
@@ -77,13 +76,9 @@ class MetaValueDaoImpl implements MetaValueDao {
                                     try {
                                         final Long longValue = Long.valueOf(entry.getValue());
 
-                                        final MetaValRecord record = new MetaValRecord();
-                                        record.setCreateTime(meta.getCreateMs());
-                                        record.setMetaId(meta.getId());
-                                        record.setMetaKeyId(keyId);
-                                        record.setVal(longValue);
+                                        final Row row = new Row(meta.getCreateMs(), meta.getId(), keyId, longValue);
 
-                                        return Optional.of(record);
+                                        return Optional.of(row);
                                     } catch (final NumberFormatException e) {
                                         LOGGER.debug(e.getMessage(), e);
                                         return Optional.empty();
@@ -92,139 +87,52 @@ class MetaValueDaoImpl implements MetaValueDao {
                 .filter(Optional::isPresent)
                 .map(Optional::get);
 
+        final List<Row> records = stream.collect(Collectors.toList());
         if (metaValueConfig.isAddAsync()) {
-            stream.forEach(queue::add);
+            final Optional<List<Row>> optional = add(records, metaValueConfig.getFlushBatchSize());
+            optional.ifPresent(this::insertRecords);
         } else {
-            insertRecords(stream.collect(Collectors.toList()));
+            insertRecords(records);
         }
+    }
+
+    private synchronized Optional<List<Row>> add(final List<Row> records, final int batchSize) {
+        List<Row> readyForFlush = null;
+        queue.addAll(records);
+        if (queue.size() >= batchSize) {
+            // Switch out the current queue.
+            readyForFlush = queue;
+            queue = new ArrayList<>();
+        }
+        // Return the old queue for flushing if it was switched.
+        return Optional.ofNullable(readyForFlush);
     }
 
     @Override
     public void flush() {
-        boolean ranOutOfItems = false;
-
-//        final long applicableStreamAgeMs = getApplicableStreamAgeMs();
-
-        while (!ranOutOfItems) {
-            final List<MetaValRecord> records = new ArrayList<>();
-            MetaValRecord record;
-            while ((record = queue.poll()) != null
-                    && records.size() < metaValueConfig.getFlushBatchSize()) {
-                records.add(record);
-            }
-
-            if (records.size() < metaValueConfig.getFlushBatchSize()) {
-                ranOutOfItems = true;
-            }
-
-            if (records.size() > 0) {
-                insertRecords(records);
-            }
-
-
-//            final FindStreamCriteria criteria = new FindStreamCriteria();
-//
-//            final ArrayList<AsyncFlush> batchInsert = new ArrayList<>();
-//            final Set<Long> idSet = new HashSet<>();
-//            AsyncFlush item;
-//            while ((item = queue.poll()) != null && batchInsert.size() < DEFAULT_FLUSH_BATCH_SIZE) {
-//                batchInsert.add(item);
-//                idSet.add(item.getMetaId());
-//            }
-//
-//            if (batchInsert.size() < DEFAULT_FLUSH_BATCH_SIZE) {
-//                ranOutOfItems = true;
-//            }
-//
-//            if (batchInsert.size() > 0) {
-//
-//
-//                int skipCount = 0;
-//
-//                // Key by the MetaKey pk
-//                final Map<Long, Map<Long, Meta>> dataToAttributeMap = new HashMap<>();
-//                for (final Meta value : metaValueService.find(criteria)) {
-//                    dataToAttributeMap.computeIfAbsent(value.getMetaId(), k -> new HashMap<>())
-//                            .put(value.getMetaKeyId(), value);
-//                }
-//
-//                final List<Meta> batchUpdate = new ArrayList<>();
-//
-//                // Work out the batch inserts
-//                for (final MetaKey metaKey : keys) {
-//                    for (final AsyncFlush asyncFlush : batchInsert) {
-//                        if (asyncFlush.getMeta().getCreateTimeMs() > applicableStreamAgeMs) {
-//                            // Found a key
-//                            if (asyncFlush.getAttributeMap().containsKey(metaKey.getName())) {
-//                                final String newValue = asyncFlush.getAttributeMap().get(metaKey.getName());
-//                                boolean dirty = false;
-//                                Meta metaValue = null;
-//                                final Map<Long, Meta> map = dataToAttributeMap
-//                                        .get(asyncFlush.getMeta().getId());
-//                                if (map != null) {
-//                                    metaValue = map.get(metaKey.getId());
-//                                }
-//
-//                                // Existing Item
-//                                if (metaValue != null) {
-//                                    if (metaKey.getFieldType().isNumeric()) {
-//                                        final Long oldValueLong = metaValue.getValueNumber();
-//                                        final Long newValueLong = Long.parseLong(newValue);
-//
-//                                        if (!oldValueLong.equals(newValueLong)) {
-//                                            dirty = true;
-//                                            metaValue.setValueNumber(newValueLong);
-//                                        }
-//                                    } else {
-//                                        final String oldValue = metaValue.getValueString();
-//
-//                                        if (!oldValue.equals(newValue)) {
-//                                            dirty = true;
-//                                            metaValue.setValueString(newValue);
-//                                        }
-//                                    }
-//
-//                                } else {
-//                                    dirty = true;
-//                                    metaValue = new Meta(asyncFlush.getMeta().getId(), metaKey,
-//                                            newValue);
-//                                }
-//
-//                                if (dirty) {
-//                                    batchUpdate.add(metaValue);
-//                                }
-//
-//                            }
-//                        } else {
-//                            skipCount++;
-//                            LOGGER.debug("flush() - Skipping flush of old data attributes {} {}",
-//                                    asyncFlush.getMeta(), DateUtil.createNormalDateTimeString(applicableStreamAgeMs));
-//                        }
-//                    }
-//                }
-//
-//                // We might have no keys so will not have built any batch
-//                // updates.
-//                if (batchUpdate.size() > 0) {
-//                    metaValueServiceTransactionHelper.saveBatch(batchUpdate);
-//                }
-
-
-        }
+        final Optional<List<Row>> optional = add(Collections.emptyList(), 1);
+        optional.ifPresent(this::insertRecords);
     }
 
-    private void insertRecords(final List<MetaValRecord> records) {
+    private void insertRecords(final List<Row> rows) {
         final LogExecutionTime logExecutionTime = new LogExecutionTime();
-        LOGGER.debug("Processing batch of {}, queue size is {}", records.size(), queue.size());
+        LOGGER.debug("Processing batch of {}", rows.size());
 
-        JooqUtil.context(metaDbConnProvider, context -> context
-                .batchStore(records)
-                .execute());
+        JooqUtil.context(metaDbConnProvider, context -> {
+            BatchBindStep batchBindStep = context
+                    .batch(context
+                            .insertInto(META_VAL, META_VAL.CREATE_TIME, META_VAL.META_ID, META_VAL.META_KEY_ID, META_VAL.VAL)
+                            .values((Long) null, (Long) null, (Integer) null, (Long) null));
+            for (final Row row : rows) {
+                batchBindStep = batchBindStep.bind(row.getCreateMs(), row.getMetaId(), row.getKeyId(), row.getValue());
+            }
+            batchBindStep.execute();
+        });
 
         if (logExecutionTime.getDuration() > 1000) {
-            LOGGER.warn("Saved {} updates, queue size is {}, completed in {}", records.size(), queue.size(), logExecutionTime);
+            LOGGER.warn("Saved {} updates, completed in {}", rows.size(), logExecutionTime);
         } else {
-            LOGGER.debug("Saved {} updates, queue size is {}, completed in {}", records.size(), queue.size(), logExecutionTime);
+            LOGGER.debug("Saved {} updates, completed in {}", rows.size(), logExecutionTime);
         }
     }
 
@@ -383,8 +291,12 @@ class MetaValueDaoImpl implements MetaValueDao {
 
     @Override
     public void clear() {
-        queue.clear();
+        clearQueue();
         deleteAll();
+    }
+
+    private synchronized void clearQueue() {
+        queue.clear();
     }
 
     private void deleteAll() {
@@ -392,5 +304,38 @@ class MetaValueDaoImpl implements MetaValueDao {
 //        return JooqUtil.contextResult(metaDbConnProvider, context -> context
 //                .truncate(META_VAL)
 //                .execute());
+    }
+
+    private static final class Row {
+        private final long createMs;
+        private final long metaId;
+        private final int keyId;
+        private final Long value;
+
+        Row(final long createMs,
+            final long metaId,
+            final int keyId,
+            final Long value) {
+            this.createMs = createMs;
+            this.metaId = metaId;
+            this.keyId = keyId;
+            this.value = value;
+        }
+
+        long getCreateMs() {
+            return createMs;
+        }
+
+        long getMetaId() {
+            return metaId;
+        }
+
+        int getKeyId() {
+            return keyId;
+        }
+
+        Long getValue() {
+            return value;
+        }
     }
 }
