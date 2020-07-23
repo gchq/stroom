@@ -25,7 +25,7 @@ class RecordToProcessorTaskMapper implements Function<Record, ProcessorTask> {
             processorTask.setFeedName(record.get(PROCESSOR_FEED.NAME));
         }
         processorTask.setStatus(TaskStatus.PRIMITIVE_VALUE_CONVERTER.fromPrimitiveValue(record.get(PROCESSOR_TASK.STATUS)));
-        processorTask.setStartTimeMs(record.get(PROCESSOR_TASK.STATUS_TIME_MS));
+        processorTask.setStartTimeMs(record.get(PROCESSOR_TASK.START_TIME_MS));
         processorTask.setCreateTimeMs(record.get(PROCESSOR_TASK.CREATE_TIME_MS));
         processorTask.setStatusTimeMs(record.get(PROCESSOR_TASK.STATUS_TIME_MS));
         processorTask.setEndTimeMs(record.get(PROCESSOR_TASK.END_TIME_MS));

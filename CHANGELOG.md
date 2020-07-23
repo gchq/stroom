@@ -6,6 +6,8 @@ and this project adheres to [Semantic Versioning](http://semver.org/).
 
 ## [Unreleased]
 
+* Issue **#1713** : Fixed issue where processor task start times were being displayed incorrectly.
+
 * Issue **#1748** : Removed border from explorer quick filter.
 
 * Issue **#1656** : Only managed jobs will now appear on the jobs page.
