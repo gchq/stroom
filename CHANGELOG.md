@@ -6,6 +6,8 @@ and this project adheres to [Semantic Versioning](http://semver.org/).
 
 ## [Unreleased]
 
+* Issue **#1656** : Only managed jobs will now appear on the jobs page.
+
 * Issue **#1669** : Changed the way next scheduled time is calculated based on current time.
 
 * Issue **#1662** : Processor tasks and meta data sources now correctly show pipeline names in dashboard results.
