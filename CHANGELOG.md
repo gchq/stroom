@@ -6,6 +6,8 @@ and this project adheres to [Semantic Versioning](http://semver.org/).
 
 ## [Unreleased]
 
+* Issue **#1662** : Processor tasks and meta data sources now correctly show pipeline names in dashboard results.
+
 * Issue **#1677** : Active tasks are now correctly filtered.
 
 * Issue **#1718** : Added server task info for some tasks.

@@ -187,10 +187,18 @@ class ProcessorTaskDaoImpl implements ProcessorTaskDao {
         valueMapper.map(ProcessorTaskFields.NODE_NAME, PROCESSOR_NODE.NAME, ValString::create);
         valueMapper.map(ProcessorTaskFields.FEED, PROCESSOR_FEED.NAME, ValString::create);
         valueMapper.map(ProcessorTaskFields.FEED_NAME, PROCESSOR_FEED.NAME, ValString::create);
-        valueMapper.map(ProcessorTaskFields.PIPELINE, PROCESSOR.PIPELINE_UUID, ValString::create);
+        valueMapper.map(ProcessorTaskFields.PIPELINE, PROCESSOR.PIPELINE_UUID, this::getPipelineName);
         valueMapper.map(ProcessorTaskFields.PROCESSOR_FILTER_ID, PROCESSOR_FILTER.ID, ValInteger::create);
         valueMapper.map(ProcessorTaskFields.STATUS, PROCESSOR_TASK.STATUS, v -> ValString.create(TaskStatus.PRIMITIVE_VALUE_CONVERTER.fromPrimitiveValue(v).getDisplayValue()));
         valueMapper.map(ProcessorTaskFields.TASK_ID, PROCESSOR_TASK.ID, ValLong::create);
+    }
+
+    private Val getPipelineName(final String uuid) {
+        String val = uuid;
+        if (docRefInfoService != null) {
+            val = docRefInfoService.name(new DocRef("Pipeline", uuid)).orElse(uuid);
+        }
+        return ValString.create(val);
     }
 
     /**
@@ -915,8 +923,10 @@ class ProcessorTaskDaoImpl implements ProcessorTaskDao {
         final List<AbstractField> fieldList = Arrays.asList(fields);
         final int nodeTermCount = ExpressionUtil.termCount(criteria.getExpression(), ProcessorTaskFields.NODE_NAME);
         final boolean nodeValueExists = fieldList.stream().anyMatch(Predicate.isEqual(ProcessorTaskFields.NODE_NAME));
-        final int feedTermCount = ExpressionUtil.termCount(criteria.getExpression(), ProcessorTaskFields.FEED_NAME);
-        final boolean feedValueExists = fieldList.stream().anyMatch(Predicate.isEqual(ProcessorTaskFields.FEED_NAME));
+        final int feedTermCount = ExpressionUtil.termCount(criteria.getExpression(), ProcessorTaskFields.FEED) +
+                ExpressionUtil.termCount(criteria.getExpression(), ProcessorTaskFields.FEED_NAME);
+        final boolean feedValueExists = fieldList.stream().anyMatch(Predicate.isEqual(ProcessorTaskFields.FEED)) ||
+                fieldList.stream().anyMatch(Predicate.isEqual(ProcessorTaskFields.FEED_NAME));
         final int pipelineTermCount = ExpressionUtil.termCount(criteria.getExpression(), ProcessorTaskFields.PIPELINE);
         final boolean pipelineValueExists = fieldList.stream().anyMatch(Predicate.isEqual(ProcessorTaskFields.PIPELINE));
 
