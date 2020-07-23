@@ -18,6 +18,7 @@
     position: relative;
 	border-style: solid;
 	padding: 1px;
+	overflow: hidden;
 }
 
 .textBox {
