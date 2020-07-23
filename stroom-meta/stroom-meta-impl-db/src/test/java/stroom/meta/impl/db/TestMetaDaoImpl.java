@@ -20,8 +20,8 @@ package stroom.meta.impl.db;
 import stroom.cache.impl.CacheModule;
 import stroom.cluster.lock.mock.MockClusterLockModule;
 import stroom.collection.mock.MockCollectionModule;
-import stroom.db.util.JooqUtil;
 import stroom.dictionary.mock.MockWordListProviderModule;
+import stroom.docrefinfo.mock.MockDocRefInfoModule;
 import stroom.meta.api.AttributeMap;
 import stroom.meta.api.MetaProperties;
 import stroom.meta.impl.MetaValueDao;
@@ -43,8 +43,6 @@ import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 
 import javax.inject.Inject;
-
-import java.util.Map;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
@@ -71,6 +69,7 @@ class TestMetaDaoImpl {
                 new MockClusterLockModule(),
                 new MockSecurityContextModule(),
                 new MockCollectionModule(),
+                new MockDocRefInfoModule(),
                 new MockWordListProviderModule(),
                 new CacheModule(),
                 new DbTestModule())
@@ -84,16 +83,16 @@ class TestMetaDaoImpl {
             Meta myMeta = metaDao.create(createProcessedProperties(parent, TEST1_FEED_NAME));
 
             AttributeMap attributeMap = new AttributeMap();
-            attributeMap.put(MetaFields.REC_READ.getName(),"" + 100 * i);
-            attributeMap.put(MetaFields.REC_WRITE.getName(),"" + 10 * i);
+            attributeMap.put(MetaFields.REC_READ.getName(), "" + 100 * i);
+            attributeMap.put(MetaFields.REC_WRITE.getName(), "" + 10 * i);
             metaValueDao.addAttributes(myMeta, attributeMap);
         }
         for (int i = 0; i < 10; i++) {
             final Meta parent = metaDao.create(createRawProperties(TEST2_FEED_NAME));
             Meta myMeta = metaDao.create(createProcessedProperties(parent, TEST2_FEED_NAME));
             AttributeMap attributeMap = new AttributeMap();
-            attributeMap.put(MetaFields.REC_READ.getName(),"" + 1000 * i);
-            attributeMap.put(MetaFields.REC_WRITE.getName(),"" + 100 * i);
+            attributeMap.put(MetaFields.REC_READ.getName(), "" + 1000 * i);
+            attributeMap.put(MetaFields.REC_WRITE.getName(), "" + 100 * i);
             metaValueDao.addAttributes(myMeta, attributeMap);
         }
 
@@ -175,9 +174,9 @@ class TestMetaDaoImpl {
 
         final ExpressionOperator expression = new ExpressionOperator.Builder(Op.AND)
                 .addOperator(new ExpressionOperator.Builder(Op.OR)
-                    .addTerm(MetaFields.FEED_NAME, Condition.EQUALS, TEST1_FEED_NAME)
-                    .addTerm(MetaFields.FEED_NAME, Condition.EQUALS, TEST2_FEED_NAME)
-                    .build())
+                        .addTerm(MetaFields.FEED_NAME, Condition.EQUALS, TEST1_FEED_NAME)
+                        .addTerm(MetaFields.FEED_NAME, Condition.EQUALS, TEST2_FEED_NAME)
+                        .build())
                 .addTerm(MetaFields.TYPE_NAME, Condition.EQUALS, RAW_STREAM_TYPE_NAME)
                 .build();
         resultPage = metaDao.findReprocess(new FindMetaCriteria(expression));
@@ -194,7 +193,7 @@ class TestMetaDaoImpl {
         selectionSummary = metaDao.getSelectionSummary(new FindMetaCriteria(MetaExpressionUtil.createFeedExpression(TEST2_FEED_NAME)));
         assertThat(selectionSummary.getItemCount()).isEqualTo(20);
 
-        selectionSummary = metaDao.getSelectionSummary(new FindMetaCriteria(MetaExpressionUtil.createFeedsExpression(TEST1_FEED_NAME,TEST2_FEED_NAME)));
+        selectionSummary = metaDao.getSelectionSummary(new FindMetaCriteria(MetaExpressionUtil.createFeedsExpression(TEST1_FEED_NAME, TEST2_FEED_NAME)));
         assertThat(selectionSummary.getItemCount()).isEqualTo(40);
 
         selectionSummary = metaDao.getSelectionSummary(new FindMetaCriteria(MetaExpressionUtil.createFeedsExpression()));
