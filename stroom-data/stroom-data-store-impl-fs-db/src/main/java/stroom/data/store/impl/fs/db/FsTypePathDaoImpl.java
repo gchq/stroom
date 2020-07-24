@@ -67,7 +67,7 @@ class FsTypePathDaoImpl implements FsTypePathDao {
     private void createPath(final String name) {
         final String path = name.toUpperCase().replaceAll("[^A-Z0-9_-]", "_");
         if (!path.equals(name)) {
-            LOGGER.warn(LambdaLogUtil.message("A non standard feed name was found when registering a file path '{}'", name));
+            LOGGER.warn(LambdaLogUtil.message("A non standard type name was found when registering a file path '{}'", name));
         }
 
         JooqUtil.context(fsDataStoreDbConnProvider, context -> context
