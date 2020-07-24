@@ -1,0 +1,411 @@
+@import "themes.scss";
+@import "themify.scss";
+
+.ReactTable {
+  width: 100%;
+  border: none;
+  border-top: thin solid rgba(0, 0, 0, 0.1);
+}
+
+.ReactTable .rt-thead.-filters input {
+  @include themify($themes) {
+    background-color: themed("control__background-color");
+    color: themed("control__text-color");
+    border-color: themed("control__border-color");
+  }
+}
+
+.ReactTable .-pagination {
+  display: grid;
+  grid-template-columns: 4rem 1fr 4rem;
+  box-shadow: 0 0 4px 0 rgba(0, 0, 0, 0.1);
+}
+
+//.ReactTable .rt-thead {
+//  flex: 0 0 auto; // Stop rows expanding to fit all vertical space
+//}
+//
+//.ReactTable .rt-tbody {
+//  flex: 0 1 auto; // Stop rows expanding to fit all vertical space
+//}
+//
+//// // Style table headers
+//.ReactTable .rt-th {
+//  font-weight: 600;
+//  text-align: left;
+//}
+//
+//.ReactTable .rt-tr {
+//  // Add invisible borders to all rows so we can change them to highlight borders when focussed without changing spacing.
+//  border: solid thin transparent;
+//}
+//
+//.ReactTable .rt-tr.-odd {
+//  @include themify($themes) {
+//    background-color: themed("odd-row__background-color");
+//  }
+//}
+//
+//.ReactTable .rt-td {
+//  // Make the table much more compact
+//  padding: 1px 5px;
+//}
+//
+//.ReactTable .rt-tbody .rt-td {
+//  border-right: none; // Clean up lines
+//}
+//
+//.ReactTable .header {
+//  // We don't need the line under the header
+//  border-bottom: none;
+//}
+//
+//.ReactTable .rt-thead.-header {
+//  // box-shadow: 0 1px 0 0 rgba(0, 0, 0, 0.15) !important;
+//
+//  // border-bottom: 2px solid rgba(0,0,0,0.1);
+//  box-shadow: 0 0 4px 0 rgba(0, 0, 0, 0.15) !important;
+//}
+//
+//.ReactTable .rt-tbody .rt-tr-group {
+//  // We don't need lines between the rows
+//  border-bottom: none;
+//}
+//
+//.table-row-dimmed {
+//  color: darkgray;
+//}
+//
+//
+//// .ReactTable .rt-tbody .rt-tr-group {
+////   max-height: 23px;
+//// }
+//
+//// .ReactTable .rt-th,
+//// .ReactTable .rt-td {
+////   padding: 2px 2px;
+//// }
+//
+//// .ReactTable .rt-thead.header {
+////   box-shadow: none;
+////   border-bottom: thin solid lightgrey;
+//// }
+//
+//.CustomTable {
+//  width: 300px;
+//  height: 300px;
+//  overflow: auto;
+//}
+//
+//.CustomTable table {
+//  //border: 1px solid black;
+//  table-layout: fixed;
+//  //width: 600px;
+//}
+//
+////.CustomTable__tr {
+////  display: table-row;
+////}
+//
+//.CustomTable table thead {
+//  //background-color: red;
+//}
+//
+////.CustomTable table thead tr {
+////  //background-color: green;
+////  display: table-row !important;
+////}
+////
+////.CustomTable table thead tr th {
+////  position: sticky !important;
+////  display: table-cell !important;
+////  top: 0;
+////  background-color: white;
+////  //background-color: pink;
+////}
+//
+////.CustomTable table thead tr th .CustomTable__header {
+////  overflow: hidden;
+////}
+//
+//.CustomTable table tbody {
+//  //background-color: blue;
+//}
+//
+//.CustomTable table tbody tr {
+//  //background-color: green;
+//}
+//
+//.CustomTable table tbody tr td {
+//  //background-color: yellow;
+//  overflow: hidden;
+//}
+//
+//.CustomTable table tbody tr:nth-of-type(odd) {
+//  background-color: rgba(0, 0, 0, .05);
+//}
+//
+//.CustomTable th,
+//td {
+//  //border: 1px solid orange;
+//  //border-bottom: 1px red solid;
+//  //overflow: hidden;
+//  white-space: nowrap;
+//  padding: 0 5px;
+//}
+//
+//.CustomTable__resizer {
+//  display: inline-block;
+//  position: absolute;
+//  width: 12px;
+//  top: 0;
+//  bottom: 0;
+//  right: -8px;
+//  z-index: 10;
+//  padding-left: 6px;
+//}
+//
+//.CustomTable__resizer span {
+//  border: 1px solid rgba(0, 0, 0, 0.1);
+//}
+//
+//
+//
+//
+//
+
+
+
+
+
+
+
+
+.table-container {
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  overflow: auto;
+}
+
+.table {
+  margin: 0;
+  //border: 1px solid rgba(0, 0, 0, .1);
+
+  //border: 1px solid #ced4da;
+  //border-radius: .25rem;
+  //border: 1px solid #ddd;
+
+  //.tr {
+  //  :last-child {
+  //    .td {
+  //      border-bottom: 0;
+  //    }
+  //  }
+  //}
+
+  .tr:nth-of-type(odd) {
+    background-color: rgba(0, 0, 0, .05);
+  }
+
+  //.tr.odd {
+  //  background-color: rgba(0, 0, 0, .05);
+  //}
+
+  .tr:hover {
+    background-color: rgba(184,	218, 255, .5);
+  }
+
+  .tr.selected {
+    background-color: #b8daff !important;
+  }
+
+  .th,
+  .td {
+    //margin-right: 10px;
+    //border-bottom: 1px solid #ddd;
+    //border-right: 1px solid #ddd;
+    //background-color: #fff;
+    //overflow: hidden;
+
+    //:last-child {
+    //  border-right: 0;
+    //}
+
+  }
+
+  //.th {
+  //  padding-right: .8rem;
+  //}
+  //
+  //.td {
+  //  padding-right: .8rem;
+  //}
+  //
+  //.th:first-child,{
+  //  padding-left: .4rem;
+  //}
+  //
+  //.td:first-child {
+  //  padding-left: .4rem;
+  //}
+
+  .th {
+    background-color: white;
+    user-select: none;
+    font-weight: 600;
+  }
+
+  .td {
+
+  }
+
+  .th .cell {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+  }
+
+  .cell {
+    width: 100%;
+    padding-left: 5px;
+    white-space: nowrap;
+    overflow: hidden;
+  }
+
+  &.sticky {
+    overflow: auto;
+    .header,
+    .footer {
+      position: sticky;
+      z-index: 1;
+      width: fit-content;
+    }
+
+    .header {
+      top: 0;
+      box-shadow: 0px 3px 3px rgba(0, 0, 0, .05);
+    }
+
+    .footer {
+      bottom: 0;
+      box-shadow: 0px -3px 3px rgba(0, 0, 0, .05);
+    }
+
+    .body {
+      position: relative;
+      z-index: 0;
+    }
+
+    [data-sticky-td] {
+      position: sticky;
+    }
+
+    [data-sticky-last-left-td] {
+      box-shadow: 2px 0px 3px rgba(0, 0, 0, .05)c;
+    }
+
+    [data-sticky-first-right-td] {
+      box-shadow: -2px 0px 3px rgba(0, 0, 0, .05);
+    }
+  }
+
+  .resizer {
+    display: inline-block;
+    position: absolute;
+    width: 20px;
+    top: 0;
+    bottom: 0;
+    right: -10px;
+    z-index: 10;
+    user-select: none;
+  }
+
+  //.resizer span {
+  //  border: 1px solid rgba(0, 0, 0, 0.1);
+  //}
+}
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+//
+//
+//
+//
+//
+//$padding: 1rem;
+//
+//.CustomTable2 {
+//  width: 300px;
+//  height: 300px;
+//  overflow: auto;
+//}
+//
+//.CustomTable2__table {
+//  display: inline-block;
+//  border-spacing: 0;
+//  border: 1px solid black;
+//  table-layout: fixed;
+//
+//  .tr {
+//    :last-child {
+//      .td {
+//        border-bottom: 0;
+//      }
+//    }
+//  }
+//
+//  .th,
+//  .td {
+//    margin: 0;
+//    padding: 0.5rem;
+//    border-bottom: 1px solid black;
+//    border-right: 1px solid black;
+//
+//    // In this example we use an absolutely position resizer, so this is required.
+//    position: relative;
+//
+//    :last-child {
+//      border-right: 0;
+//    }
+//
+//    .resizer {
+//      display: inline-block;
+//      background: blue;
+//      width: 10px;
+//      height: 100%;
+//      position: absolute;
+//      right: 0;
+//      top: 0;
+//      transform: translateX(50%);
+//      z-index: 1;
+//      touch-action: none; // prevents from scrolling while dragging on touch devices.
+//
+//      &.isResizing {
+//        background: red;
+//      }
+//    }
+//  }
+//}

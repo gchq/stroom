@@ -19,6 +19,7 @@ package stroom.data.store.impl.fs;
 
 import stroom.data.store.impl.fs.shared.FindFsVolumeCriteria;
 import stroom.data.store.impl.fs.shared.FsVolume;
+import stroom.data.store.impl.fs.shared.FsVolume.VolumeUseStatus;
 import stroom.task.api.ExecutorProvider;
 import stroom.task.api.TaskContext;
 import stroom.task.api.TaskContextFactory;
@@ -96,10 +97,12 @@ class FsCleanExecutor {
                 final CompletableFuture<?>[] completableFutures = new CompletableFuture<?>[volumeList.size()];
                 int i = 0;
                 for (final FsVolume volume : volumeList) {
-                    final Runnable runnable = taskContextFactory.context(parentContext, "Cleaning: " + volume.getPath(), taskContext ->
-                            cleanVolume(taskContext, volume));
-                    final CompletableFuture<Void> completableFuture = CompletableFuture.runAsync(runnable, executor);
-                    completableFutures[i++] = completableFuture;
+                    if (VolumeUseStatus.ACTIVE.equals(volume.getStatus())) {
+                        final Runnable runnable = taskContextFactory.context(parentContext, "Cleaning: " + volume.getPath(), taskContext ->
+                                cleanVolume(taskContext, volume));
+                        final CompletableFuture<Void> completableFuture = CompletableFuture.runAsync(runnable, executor);
+                        completableFutures[i++] = completableFuture;
+                    }
                 }
                 CompletableFuture.allOf(completableFutures).join();
             }

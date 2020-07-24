@@ -18,11 +18,15 @@
 
 package stroom.authentication.token;
 
+import stroom.authentication.config.TokenConfig;
+import stroom.util.shared.RestResource;
+import stroom.util.shared.ResultPage;
+import stroom.util.shared.filter.FilterFieldDefinition;
+
 import com.codahale.metrics.annotation.Timed;
 import io.swagger.annotations.Api;
 import io.swagger.annotations.ApiOperation;
 import io.swagger.annotations.ApiParam;
-import stroom.util.shared.RestResource;
 
 import javax.servlet.http.HttpServletRequest;
 import javax.validation.Valid;
@@ -43,22 +47,31 @@ import javax.ws.rs.core.MediaType;
 @Consumes(MediaType.APPLICATION_JSON)
 @Api(description = "Stroom API Key API", tags = {"ApiKey"})
 public interface TokenResource extends RestResource {
-    /**
-     * Default ordering is by ISSUED_ON date, in descending order so the most recent tokens are shown first.
-     * If orderBy is specified but orderDirection is not this will default to ascending.
-     * <p>
-     * The user must have the 'Manage Users' permission to call this.
-     */
+    FilterFieldDefinition FIELD_DEF_USER_ID = FilterFieldDefinition.defaultField("UserId");
+    FilterFieldDefinition FIELD_DEF_USER_EMAIL = FilterFieldDefinition.qualifiedField(
+            "UserEmail", "userEmail");
+    FilterFieldDefinition FIELD_DEF_COMMENTS = FilterFieldDefinition.qualifiedField(
+            "Comments", "comments");
+
+    @ApiOperation(
+            value = "Get all tokens.",
+            response = String.class,
+            tags = {"Token"})
+    @GET
+    @Path("/")
+    @Timed
+    @NotNull
+    ResultPage<Token> list(@Context @NotNull HttpServletRequest httpServletRequest);
+
     @POST
-    @Path("/search")
+    @Path("search")
     @Timed
     @ApiOperation(
             value = "Submit a search request for tokens",
-            response = SearchResponse.class,
+            response = ResultPage.class,
             tags = {"ApiKey"})
-    SearchResponse search(
-            @Context @NotNull HttpServletRequest httpServletRequest,
-            @ApiParam("SearchRequest") @NotNull @Valid SearchRequest searchRequest);
+    ResultPage<Token> search(@Context @NotNull HttpServletRequest httpServletRequest,
+                             @ApiParam("SearchRequest") @NotNull @Valid SearchTokenRequest request);
 
     @POST
     @Timed
@@ -66,9 +79,59 @@ public interface TokenResource extends RestResource {
             value = "Create a new token.",
             response = Token.class,
             tags = {"ApiKey"})
-    Token create(
-            @Context @NotNull HttpServletRequest httpServletRequest,
-            @ApiParam("CreateTokenRequest") @NotNull CreateTokenRequest createTokenRequest);
+    Token create(@Context @NotNull HttpServletRequest httpServletRequest,
+                 @ApiParam("CreateTokenRequest") @NotNull CreateTokenRequest createTokenRequest);
+
+    @ApiOperation(
+            value = "Read a token by the token string itself.",
+            response = Token.class,
+            tags = {"ApiKey"})
+    @GET
+    @Path("/byToken/{token}")
+    @Timed
+    Token read(@Context @NotNull HttpServletRequest httpServletRequest,
+               @PathParam("token") String token);
+
+    @ApiOperation(
+            value = "Read a token by ID.",
+            response = Token.class,
+            tags = {"ApiKey"})
+    @GET
+    @Path("/{id}")
+    @Timed
+    Token read(@Context @NotNull HttpServletRequest httpServletRequest,
+               @PathParam("id") int tokenId);
+
+    @ApiOperation(
+            value = "Enable or disable the state of a token.",
+            response = String.class,
+            tags = {"ApiKey"})
+    @GET
+    @Path("/{id}/enabled")
+    @Timed
+    Integer toggleEnabled(@Context @NotNull HttpServletRequest httpServletRequest,
+                          @NotNull @PathParam("id") int tokenId,
+                          @NotNull @QueryParam("enabled") boolean enabled);
+
+    @ApiOperation(
+            value = "Delete a token by ID.",
+            response = String.class,
+            tags = {"ApiKey"})
+    @DELETE
+    @Path("/{id}")
+    @Timed
+    Integer delete(@Context @NotNull HttpServletRequest httpServletRequest,
+                   @PathParam("id") int tokenId);
+
+    @ApiOperation(
+            value = "Delete a token by the token string itself.",
+            response = String.class,
+            tags = {"ApiKey"})
+    @DELETE
+    @Path("/byToken/{token}")
+    @Timed
+    Integer delete(@Context @NotNull HttpServletRequest httpServletRequest,
+                   @PathParam("token") String token);
 
     @ApiOperation(
             value = "Delete all tokens.",
@@ -78,61 +141,6 @@ public interface TokenResource extends RestResource {
     @Timed
     Integer deleteAll(@Context @NotNull HttpServletRequest httpServletRequest);
 
-    @ApiOperation(
-            value = "Delete a token by ID.",
-            response = String.class,
-            tags = {"ApiKey"})
-    @DELETE
-    @Path("/{id}")
-    @Timed
-    Integer delete(
-            @Context @NotNull HttpServletRequest httpServletRequest,
-            @PathParam("id") int tokenId);
-
-    @ApiOperation(
-            value = "Delete a token by the token string itself.",
-            response = String.class,
-            tags = {"ApiKey"})
-    @DELETE
-    @Path("/byToken/{token}")
-    @Timed
-    Integer delete(
-            @Context @NotNull HttpServletRequest httpServletRequest,
-            @PathParam("token") String token);
-
-    @ApiOperation(
-            value = "Read a token by the token string itself.",
-            response = Token.class,
-            tags = {"ApiKey"})
-    @GET
-    @Path("/byToken/{token}")
-    @Timed
-    Token read(
-            @Context @NotNull HttpServletRequest httpServletRequest,
-            @PathParam("token") String token);
-
-    @ApiOperation(
-            value = "Read a token by ID.",
-            response = Token.class,
-            tags = {"ApiKey"})
-    @GET
-    @Path("/{id}")
-    @Timed
-    Token read(
-            @Context @NotNull HttpServletRequest httpServletRequest,
-            @PathParam("id") int tokenId);
-
-    @ApiOperation(
-            value = "Enable or disable the state of a token.",
-            response = String.class,
-            tags = {"ApiKey"})
-    @GET
-    @Path("/{id}/state")
-    @Timed
-    Integer toggleEnabled(
-            @Context @NotNull HttpServletRequest httpServletRequest,
-            @NotNull @PathParam("id") int tokenId,
-            @NotNull @QueryParam("enabled") boolean enabled);
 
     @ApiOperation(
             value = "Provides access to this service's current public key. " +
@@ -143,4 +151,12 @@ public interface TokenResource extends RestResource {
     @Path("/publickey")
     @Timed
     String getPublicKey(@Context @NotNull HttpServletRequest httpServletRequest);
+
+    @GET
+    @Path("/noauth/fetchTokenConfig")
+    @Timed
+    @NotNull
+    @ApiOperation(value = "Get the token configuration",
+            response = TokenConfig.class, tags = {"Authentication"})
+    TokenConfig fetchTokenConfig();
 }

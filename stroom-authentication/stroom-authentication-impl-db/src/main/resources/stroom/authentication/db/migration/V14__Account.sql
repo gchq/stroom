@@ -52,8 +52,9 @@ CREATE TABLE IF NOT EXISTS account (
   create_user               varchar(255) NOT NULL,
   update_time_ms            bigint(20) NOT NULL,
   update_user               varchar(255) NOT NULL,
-  email                     varchar(255) NOT NULL,
-  password_hash             varchar(255) NOT NULL,
+  user_id                   varchar(255) NOT NULL,
+  email                     varchar(255) DEFAULT NULL,
+  password_hash             varchar(255) DEFAULT NULL,
   password_last_changed_ms  bigint(20) DEFAULT NULL,
   first_name                varchar(255) DEFAULT NULL,
   last_name                 varchar(255) DEFAULT NULL,
@@ -69,7 +70,7 @@ CREATE TABLE IF NOT EXISTS account (
   locked                    tinyint(1) NOT NULL DEFAULT '0',
   processing_account        tinyint(1) NOT NULL DEFAULT '0',
   PRIMARY KEY               (id),
-  UNIQUE KEY                email (email)
+  UNIQUE KEY                user_id (user_id)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8;
 
 --
@@ -91,6 +92,7 @@ BEGIN
             create_user,
             update_time_ms,
             update_user,
+            user_id,
             email,
             password_hash,
             password_last_changed_ms,
@@ -114,6 +116,7 @@ BEGIN
             created_by_user,
             IFNULL(UNIX_TIMESTAMP(updated_on) * 1000, UNIX_TIMESTAMP(created_on) * 1000),
             IFNULL(updated_by_user, created_by_user),
+            email,
             email,
             password_hash,
             UNIX_TIMESTAMP(password_last_changed) * 1000,

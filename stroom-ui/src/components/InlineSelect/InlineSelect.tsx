@@ -57,7 +57,7 @@ const InlineSelect: FunctionComponent<
         <option disabled value="__default__">
           --please select--
         </option>
-        {options.map(option => (
+        {options.map((option) => (
           <option key={option.value} value={option.value}>
             {option.label}
           </option>
@@ -65,10 +65,12 @@ const InlineSelect: FunctionComponent<
       </select>
     );
   } else {
-    let placeholderText = placeholder || <em>click to choose</em>;
+    const placeholderText = placeholder || <em>click to choose</em>;
     let textToDisplay: string = undefined;
     if (!!selected && selected !== "__default__") {
-      const selectedOption = options.find(option => option.value === selected);
+      const selectedOption = options.find(
+        (option) => option.value === selected,
+      );
       textToDisplay = !!selectedOption
         ? selectedOption.label
         : "Error: unknown option: " + selected;

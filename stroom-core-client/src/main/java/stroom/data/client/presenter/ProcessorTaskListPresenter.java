@@ -78,8 +78,10 @@ public class ProcessorTaskListPresenter extends MyPresenterWidget<DataGridView<P
         dataProvider = new RestDataProvider<ProcessorTask, ResultPage<ProcessorTask>>(eventBus, criteria.obtainPageRequest()) {
             @Override
             protected void exec(final Consumer<ResultPage<ProcessorTask>> dataConsumer, final Consumer<Throwable> throwableConsumer) {
-                final Rest<ResultPage<ProcessorTask>> rest = restFactory.create();
-                rest.onSuccess(dataConsumer).onFailure(throwableConsumer).call(PROCESSOR_TASK_RESOURCE).find(criteria);
+                if (criteria.getExpression() != null) {
+                    final Rest<ResultPage<ProcessorTask>> rest = restFactory.create();
+                    rest.onSuccess(dataConsumer).onFailure(throwableConsumer).call(PROCESSOR_TASK_RESOURCE).find(criteria);
+                }
             }
         };
 
@@ -182,9 +184,9 @@ public class ProcessorTaskListPresenter extends MyPresenterWidget<DataGridView<P
             if (event.getColumn() instanceof OrderByColumn<?, ?>) {
                 final OrderByColumn<?, ?> orderByColumn = (OrderByColumn<?, ?>) event.getColumn();
                 if (event.isSortAscending()) {
-                    criteria.setSort(orderByColumn.getField(), Sort.Direction.ASCENDING, orderByColumn.isIgnoreCase());
+                    criteria.setSort(orderByColumn.getField(), false, orderByColumn.isIgnoreCase());
                 } else {
-                    criteria.setSort(orderByColumn.getField(), Sort.Direction.DESCENDING, orderByColumn.isIgnoreCase());
+                    criteria.setSort(orderByColumn.getField(), true, orderByColumn.isIgnoreCase());
                 }
                 refresh();
             }

@@ -73,11 +73,11 @@ const Option: React.FunctionComponent<OptionProps<DocRefType>> = (
   );
 };
 
-const DropdownIndicator: React.FunctionComponent<any> = props => {
+const DropdownIndicator: React.FunctionComponent<any> = (props) => {
   return <ModeOptionButtons {...props.selectProps.modeOptionProps} />;
 };
 
-const Menu: React.FunctionComponent<MenuProps<DocRefType>> = props => {
+const Menu: React.FunctionComponent<MenuProps<DocRefType>> = (props) => {
   const { headerIcon, headerTitle } = props.selectProps;
   return (
     <React.Fragment>
@@ -103,7 +103,7 @@ const AppSearchBar: React.FunctionComponent<Props> = ({
   className,
 }) => {
   const onChange: (d: DocRefType) => void = React.useCallback(
-    d => onChangeRaw(copyDocRef(d)),
+    (d) => onChangeRaw(copyDocRef(d)),
     [onChangeRaw],
   );
   const [searchTerm, setSearchTerm] = React.useState<string>("");
@@ -115,7 +115,7 @@ const AppSearchBar: React.FunctionComponent<Props> = ({
   const recentItems: DocRefType[] = React.useMemo(
     () =>
       !!typeFilter
-        ? recentItemsAll.filter(r => r.type === typeFilter)
+        ? recentItemsAll.filter((r) => r.type === typeFilter)
         : recentItemsAll,
     [recentItemsAll, typeFilter],
   );
@@ -124,7 +124,7 @@ const AppSearchBar: React.FunctionComponent<Props> = ({
     componentProps: modeOptionProps,
   } = useModeOptionButtons();
   const { switchMode } = modeOptionProps;
-  let [navFolder, setNavFolder] = React.useState<DocRefType | undefined>(
+  const [navFolder, setNavFolder] = React.useState<DocRefType | undefined>(
     undefined,
   );
 
@@ -156,13 +156,13 @@ const AppSearchBar: React.FunctionComponent<Props> = ({
 
   const documentTreeToUse: DocRefTree = React.useMemo(() => {
     return typeFilter !== undefined
-      ? filterTree(documentTree, d => typeFilter === d.type)!
+      ? filterTree(documentTree, (d) => typeFilter === d.type)!
       : documentTree;
   }, [typeFilter, documentTree]);
   const navFolderToUse = navFolder || documentTreeToUse;
   let docRefs: DocRefType[] = [];
   let parentFolder: DocRefType | undefined = undefined;
-  let provideBreadcrumbs = searchMode !== SearchMode.NAVIGATION;
+  const provideBreadcrumbs = searchMode !== SearchMode.NAVIGATION;
 
   switch (searchMode) {
     case SearchMode.NAVIGATION: {
@@ -231,7 +231,7 @@ const AppSearchBar: React.FunctionComponent<Props> = ({
   }
 
   const onKeyDown: KeyboardEventHandler = React.useCallback(
-    e => {
+    (e) => {
       if (e.key === "ArrowRight" || e.key === "l") {
         if (!!highlightedDocRef && highlightedDocRef.type === "Folder") {
           setNavFolder(highlightedDocRef);

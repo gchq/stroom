@@ -35,7 +35,7 @@ const resourceBuilder: ResourceBuilder = (
     .get(`${resource}/:metaId`)
     .intercept(({ params: { metaId } }: HttpRequest, res: HttpResponse) => {
       const row = testCache.data!.dataList.streamAttributeMaps.find(
-        s => `${s.meta.id}` === metaId,
+        (s) => `${s.meta.id}` === metaId,
       );
       res.json(row);
     });
@@ -47,7 +47,7 @@ const resourceBuilder: ResourceBuilder = (
     .get(`${resource}/:metaId/:anyStatus/relations`)
     .intercept(({ params: { metaId } }: HttpRequest, res: HttpResponse) => {
       const row = testCache.data!.dataList.streamAttributeMaps.find(
-        s => `${s.meta.id}` === metaId,
+        (s) => `${s.meta.id}` === metaId,
       );
       res.json([row]);
     });

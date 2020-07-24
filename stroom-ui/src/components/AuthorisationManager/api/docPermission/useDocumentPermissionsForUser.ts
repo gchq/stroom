@@ -1,4 +1,4 @@
-import useListReducer from "lib/useListReducer/useListReducer";
+import { useListReducer } from "lib/useListReducer/useListReducer";
 import * as React from "react";
 import useApi from "./useApi";
 
@@ -17,7 +17,7 @@ const useDocumentPermissionsForUser = (
     addItem,
     removeItem,
     receiveItems,
-  } = useListReducer<string>(g => g);
+  } = useListReducer<string>((g) => g);
 
   const {
     getPermissionsForDocumentForUser,

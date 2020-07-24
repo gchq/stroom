@@ -5,7 +5,6 @@ import RenameDocRefDialog, { useDialog } from "./RenameDocRefDialog";
 
 import JsonDebug from "testing/JsonDebug";
 import { DocRefType } from "components/DocumentEditors/useDocumentApi/types/base";
-import { addThemedStories } from "testing/storybook/themedStoryGenerator";
 import fullTestData from "testing/data";
 
 const testDocRef = fullTestData.documentTree.children![0].children![0]
@@ -32,9 +31,7 @@ const TestHarness: React.FunctionComponent<Props> = ({ testDocRef }) => {
   );
 };
 
-const stories = storiesOf(
-  "Document Editors/Folder/Rename Doc Ref/Dialog",
-  module,
+storiesOf("Document Editors/Folder/Rename Doc Ref", module).add(
+  "Dialog",
+  () => <TestHarness testDocRef={testDocRef} />,
 );
-
-addThemedStories(stories, () => <TestHarness testDocRef={testDocRef} />);

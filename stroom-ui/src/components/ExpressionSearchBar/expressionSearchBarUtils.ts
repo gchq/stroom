@@ -49,7 +49,7 @@ const operatorMap = {
  */
 const parse = (criterion: string) => {
   let split;
-  Object.keys(operatorMap).forEach(key => {
+  Object.keys(operatorMap).forEach((key) => {
     if (criterion.includes(key)) {
       split = criterion.split(key);
       split.splice(1, 0, operatorMap[key]);
@@ -66,8 +66,8 @@ const parse = (criterion: string) => {
 const split = (criteria: string) =>
   criteria
     .split(" ")
-    .filter(criterion => criterion !== "" && criterion !== " ")
-    .map(criterion => ({ criterion, splitCriterion: parse(criterion) }));
+    .filter((criterion) => criterion !== "" && criterion !== " ")
+    .map((criterion) => ({ criterion, splitCriterion: parse(criterion) }));
 
 /**
  * Returns an ExpressionBuilder term
@@ -117,16 +117,16 @@ export const processSearchString = (
       // Field validation
       const field = criterionObj.splitCriterion[0];
       const foundField = dataSource.fields.filter(
-        availableField => availableField.name === field,
+        (availableField) => availableField.name === field,
       );
       const fieldIsValid = foundField.length > 0;
 
       // Condition/operator validation
       const operator = criterionObj.splitCriterion[1];
       const foundCondition = dataSource.fields.filter(
-        availableField =>
+        (availableField) =>
           availableField.name === field &&
-          availableField.conditions.find(condition => condition === operator),
+          availableField.conditions.find((condition) => condition === operator),
       );
       const conditionIsValid = foundCondition.length > 0;
 

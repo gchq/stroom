@@ -18,7 +18,7 @@ import * as React from "react";
 
 import IconHeader from "components/IconHeader";
 import useStreamTasks from "components/Processing/useStreamTasks";
-import ProcessingList from "./ProcessingList";
+import { ProcessingList } from "./ProcessingList";
 import { StreamTaskType } from "./types";
 import ProcessingDetails from "./ProcessingDetails";
 import ProcessingSearchHelp from "./ProcessingSearchHelp";
@@ -34,9 +34,7 @@ const ProcessingContainer: React.FunctionComponent = () => {
     fetchParameters: { searchCriteria },
   } = streamTasksApi;
 
-  const onHandleSearchChange: React.ChangeEventHandler<
-    HTMLInputElement
-  > = React.useCallback(
+  const onHandleSearchChange: React.ChangeEventHandler<HTMLInputElement> = React.useCallback(
     ({ target: { value } }) => {
       console.log({ value });
       resetPaging();
@@ -97,8 +95,9 @@ const ProcessingContainer: React.FunctionComponent = () => {
       <div className="page__body">
         <HorizontalMainDetails
           storageKey="processing"
-          title={`Processing Details ${selectedTracker &&
-            selectedTracker.pipelineName}`}
+          title={`Processing Details ${
+            selectedTracker && selectedTracker.pipelineName
+          }`}
           isOpen={!!selectedTracker}
           onClose={onClearSelection}
           mainContent={

@@ -15,21 +15,30 @@
  */
 
 import * as React from "react";
-import ChangePasswordFields from "../ChangePasswordFields";
+import BackgroundLogo from "../../Layout/BackgroundLogo";
+import { ChangePasswordRequest } from "../../Authentication/api/types";
+import FormContainer from "../../Layout/FormContainer";
 
 const ChangePasswordForm: React.FunctionComponent<{
   email: string;
-  onSubmit: Function;
+  onSubmit: (request: ChangePasswordRequest) => void;
+  isSubmitting: boolean;
   showChangeConfirmation?: boolean;
   redirectUri?: string;
-  onValidate: (
-    oldPassword: string,
-    newPassword: string,
-    verifyPassword: string,
-    email: string,
-  ) => Promise<string>;
-}> = ({ showChangeConfirmation, redirectUri, email, onSubmit, onValidate }) => {
-  let title = "Change your password";
+  // onValidate: (
+  //   oldPassword: string,
+  //   newPassword: string,
+  //   verifyPassword: string,
+  //   email: string,
+  // ) => Promise<string>;
+}> = ({
+  showChangeConfirmation,
+  redirectUri,
+  email,
+  onSubmit,
+  isSubmitting,
+}) => {
+  let title = "Change Password";
   if (showChangeConfirmation && redirectUri) {
     title = "Your password has been changed";
     window.location.href = redirectUri;
@@ -37,28 +46,26 @@ const ChangePasswordForm: React.FunctionComponent<{
 
   let content;
   if (!showChangeConfirmation) {
-    content = (
-      <ChangePasswordFields
-        email={email}
-        redirectUri={redirectUri}
-        showOldPasswordField={true}
-        onSubmit={onSubmit}
-        onValidate={onValidate}
-      />
-    );
+    // content = (
+    //   <ChangePasswordFields
+    //     email={email}
+    //     redirectUri={redirectUri}
+    //     showOldPasswordField={true}
+    //     onSubmit={onSubmit}
+    //     isSubmitting={isSubmitting}
+    //   />
+    // );
   } else if (showChangeConfirmation && !redirectUri) {
     content = <p>Your password has been changed.</p>;
   }
 
   return (
-    <div className="container">
-      <div className="section">
-        <div className="section__title">
-          <h3>{title} </h3>
-        </div>
+    <BackgroundLogo>
+      <FormContainer>
+        <h3>{title}</h3>
         {content}
-      </div>
-    </div>
+      </FormContainer>
+    </BackgroundLogo>
   );
 };
 

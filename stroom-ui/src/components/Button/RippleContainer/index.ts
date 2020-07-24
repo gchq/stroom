@@ -1,1 +1,1 @@
-export { default, useRipple } from "./RippleContainer";
+export { RippleContainer, useRipple } from "./RippleContainer";

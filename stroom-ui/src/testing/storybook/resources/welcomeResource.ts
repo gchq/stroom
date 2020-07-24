@@ -7,10 +7,7 @@ const ABOUT_HTML: WelcomeData = {
 <p>Stroom is designed to receive data from multiple systems.</p>`,
 };
 
-const resourceBuilder: ResourceBuilder = (
-  server: any,
-  apiUrl: any,
-) => {
+const resourceBuilder: ResourceBuilder = (server, apiUrl) => {
   const resource = apiUrl("/welcome/v1");
 
   server.get(resource).intercept((req: HttpRequest, res: HttpResponse) => {

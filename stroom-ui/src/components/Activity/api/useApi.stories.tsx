@@ -2,7 +2,7 @@ import * as React from "react";
 
 import { storiesOf } from "@storybook/react";
 
-import useApi from "./useApi";
+import { useApi } from "./useApi";
 import JsonDebug from "testing/JsonDebug";
 import { Activity } from "./types";
 const CurrentActivityTestHarness: React.FunctionComponent = () => {
@@ -37,9 +37,12 @@ const ActivitiesTestHarness: React.FunctionComponent = () => {
   );
 };
 
-storiesOf("Sections/Activity/useApi", module).add("test", () => (
-  <div>
-    <CurrentActivityTestHarness />
-    <ActivitiesTestHarness />
-  </div>
-));
+storiesOf("Sections/Activity/useAuthenticationResource", module).add(
+  "test",
+  () => (
+    <div>
+      <CurrentActivityTestHarness />
+      <ActivitiesTestHarness />
+    </div>
+  ),
+);

@@ -1,10 +1,9 @@
 import * as React from "react";
 
 import { storiesOf } from "@storybook/react";
-import { addThemedStories } from "testing/storybook/themedStoryGenerator";
 import Step4, { Car } from "./Step4";
 
-const stories = storiesOf("New Developer/Step 4", module);
+const stories = storiesOf("New Developer", module);
 
 const CARS: Car[] = [
   {
@@ -21,6 +20,6 @@ const CARS: Car[] = [
   },
 ];
 
-addThemedStories(stories, () => (
+stories.add("Step 4", () => (
   <Step4 cars={CARS} loadCars={() => console.log("Loading Cars")} />
 ));

@@ -31,7 +31,6 @@ import stroom.query.api.v2.ExpressionOperator;
 import stroom.query.client.ExpressionTreePresenter;
 import stroom.util.shared.PageRequest;
 import stroom.util.shared.ResultPage;
-import stroom.util.shared.Sort.Direction;
 import stroom.widget.popup.client.event.HidePopupEvent;
 import stroom.widget.popup.client.event.ShowPopupEvent;
 import stroom.widget.popup.client.presenter.PopupSize;
@@ -94,7 +93,7 @@ public class QueryHistoryPresenter extends MyPresenterWidget<QueryHistoryPresent
         final FindStoredQueryCriteria criteria = new FindStoredQueryCriteria();
         criteria.setDashboardUuid(currentDashboardUuid);
         criteria.setComponentId(queryPresenter.getId());
-        criteria.setSort(FindStoredQueryCriteria.FIELD_TIME, Direction.DESCENDING, false);
+        criteria.setSort(FindStoredQueryCriteria.FIELD_TIME, true, false);
         criteria.setFavourite(false);
         criteria.setPageRequest(new PageRequest(0L, 100));
 

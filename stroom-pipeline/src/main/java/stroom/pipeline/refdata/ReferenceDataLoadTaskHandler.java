@@ -44,6 +44,7 @@ import stroom.pipeline.state.MetaHolder;
 import stroom.pipeline.state.PipelineHolder;
 import stroom.pipeline.task.StreamMetaDataProvider;
 import stroom.security.api.SecurityContext;
+import stroom.task.api.TaskContext;
 import stroom.util.shared.Severity;
 
 import javax.inject.Inject;
@@ -112,7 +113,7 @@ class ReferenceDataLoadTaskHandler {
      * Loads reference data that meets the supplied criteria into the current
      * reference data key, value maps.
      */
-    public void exec(final RefStreamDefinition refStreamDefinition) {
+    public void exec(final TaskContext taskContext, final RefStreamDefinition refStreamDefinition) {
         securityContext.secure(() -> {
             // Elevate user permissions so that inherited pipelines that the user only has 'Use' permission on can be read.
             securityContext.useAsRead(() -> {
@@ -122,6 +123,7 @@ class ReferenceDataLoadTaskHandler {
                 errorReceiverProxy.setErrorReceiver(errorReceiver);
 
                 LOGGER.debug("Loading reference data: {}", refStreamDefinition);
+                taskContext.info(() -> "Loading " + refStreamDefinition);
 
                 // Open the stream source.
                 try (final Source source = streamStore.openSource(refStreamDefinition.getStreamId())) {
@@ -153,6 +155,7 @@ class ReferenceDataLoadTaskHandler {
                                 refStreamDefinition);
 
                         LOGGER.debug("Finished loading reference data: {}", refStreamDefinition);
+                        taskContext.info(() -> "Finished " + refStreamDefinition);
                     }
                 } catch (final IOException | RuntimeException e) {
                     log(Severity.FATAL_ERROR, e.getMessage(), e);

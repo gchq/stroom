@@ -29,6 +29,7 @@ public class Token {
     private String createUser;
     private String updateUser;
 
+    private String userId;
     private String userEmail;
     private String tokenType;
     private String data;
@@ -82,6 +83,14 @@ public class Token {
 
     public void setUpdateUser(final String updateUser) {
         this.updateUser = updateUser;
+    }
+
+    public String getUserId() {
+        return userId;
+    }
+
+    public void setUserId(final String userId) {
+        this.userId = userId;
     }
 
     public String getUserEmail() {

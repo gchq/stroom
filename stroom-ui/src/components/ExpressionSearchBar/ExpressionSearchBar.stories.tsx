@@ -19,13 +19,10 @@ import { storiesOf } from "@storybook/react";
 
 import { testDataSource as dataSource } from "../ExpressionBuilder/test";
 import ExpressionSearchBar from "./ExpressionSearchBar";
-import { addThemedStories } from "testing/storybook/themedStoryGenerator";
 
 import JsonDebug from "testing/JsonDebug";
 import Button from "../Button";
 import { ExpressionOperatorType } from "../ExpressionBuilder/types";
-
-const stories = storiesOf("Expression/Search Bar", module);
 
 const TestHarness: React.FunctionComponent = () => {
   const [lastSearch, setLastSearch] = React.useState<
@@ -40,14 +37,15 @@ const TestHarness: React.FunctionComponent = () => {
         dataSource={dataSource}
       />
       <Button
-        text="Reset"
         onClick={React.useCallback(() => {
           setLastSearch(undefined);
         }, [setLastSearch])}
-      />
+      >
+        Reset
+      </Button>
       <JsonDebug value={{ lastSearch, dataSource }} />
     </div>
   );
 };
 
-addThemedStories(stories, () => <TestHarness />);
+storiesOf("Expression", module).add("Search Bar", () => <TestHarness />);

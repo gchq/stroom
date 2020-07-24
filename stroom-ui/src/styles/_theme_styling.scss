@@ -5,38 +5,38 @@
 // General-use styles //
 ////////////////////////
 
-.header {
-  @include themify($themes) {
-    color: themed("page__text-color");
-  }
-}
+//.header {
+//  @include themify($themes) {
+//    color: themed("page__text-color");
+//  }
+//}
+//
+//.header > .icon {
+//  @include themify($themes) {
+//    color: themed("header__icon-color");
+//  }
+//}
 
-.header > .icon {
-  @include themify($themes) {
-    color: themed("header__icon-color");
-  }
-}
-
-table {
-  @include themify($themes) {
-    background-color: themed("page__background-color");
-    color: themed("page__text-color");
-    border: thin solid themed("border-color");
-  }
-
-  td {
-    @include themify($themes) {
-      color: themed("page__text-color");
-    }
-  }
-
-  th {
-    @include themify($themes) {
-      background-color: themed("page__background-color");
-      color: themed("page__text-color");
-    }
-  }
-}
+//table {
+//  @include themify($themes) {
+//    background-color: themed("page__background-color");
+//    color: themed("page__text-color");
+//    border: thin solid themed("border-color");
+//  }
+//
+//  td {
+//    @include themify($themes) {
+//      color: themed("page__text-color");
+//    }
+//  }
+//
+//  th {
+//    @include themify($themes) {
+//      background-color: themed("page__background-color");
+//      color: themed("page__text-color");
+//    }
+//  }
+//}
 
 // .dropdown__content {
 //   @include themify($themes) {

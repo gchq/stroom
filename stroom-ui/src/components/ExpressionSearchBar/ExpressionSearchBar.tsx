@@ -75,13 +75,13 @@ const ExpressionSearchBar: React.FunctionComponent<Props> = ({
   }) => {
     const { fields, expression } = processSearchString(dataSource, value);
     const invalidFields = fields.filter(
-      field =>
+      (field) =>
         !field.conditionIsValid || !field.fieldIsValid || !field.valueIsValid,
     );
 
     const searchStringValidationMessages: string[] = [];
     if (invalidFields.length > 0) {
-      invalidFields.forEach(invalidField => {
+      invalidFields.forEach((invalidField) => {
         searchStringValidationMessages.push(
           `'${invalidField.original}' is not a valid search term`,
         );
@@ -133,20 +133,22 @@ const ExpressionSearchBar: React.FunctionComponent<Props> = ({
       >
         <div className="search-bar__content__header">
           <Button
-            text="Text search"
             selected={!isExpression}
             icon="i-cursor"
             className="search-bar__modeButton raised-low bordered hoverable"
             onClick={onClickSetTextSearch}
-          />
+          >
+            Text search
+          </Button>
           <Button
-            text="Expression search"
             selected={isExpression}
             disabled={!isSearchStringValid}
             className="search-bar__modeButton raised-low bordered hoverable"
             icon="edit"
             onClick={onClickSetExpressionSearch}
-          />
+          >
+            Expression search
+          </Button>
         </div>
         {isExpression && !!expression ? (
           <ExpressionBuilder

@@ -1,7 +1,7 @@
 #!/usr/bin/env bash
 
 #Exit script on first error
-set -e 
+set -e
 
 # Copies dev.yml to local.yml and substitutes some variables, e.g. STROOM_HOST
 
@@ -63,7 +63,7 @@ checkSourceExists(){
 
 backupCurrentLocalFile(){
   local backupFile="$1"; shift
-  
+
   if [ -f "${LOCAL_CONF_FILE}" ]; then
     backupFile="${LOCAL_CONF_FILE}.$(date +"%Y%m%dT%H%M")"
     echo

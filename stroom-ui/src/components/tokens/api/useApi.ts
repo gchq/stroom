@@ -18,16 +18,17 @@ import { useCallback } from "react";
 import { Filter } from "react-table";
 import useHttpClient from "lib/useHttpClient";
 import useUrlFactory from "lib/useUrlFactory";
-import { SearchConfig, Token, TokenSearchResponse } from "./types";
+import { SearchConfig, Token, TokenConfig, TokenSearchResponse } from "./types";
 
 interface Api {
   deleteToken: (tokenId: string) => Promise<void>;
   createToken: (email: string, expiryDate: string) => Promise<Token>;
   fetchApiKey: (tokenId: string) => Promise<Token>;
+  fetchTokenConfig: () => Promise<TokenConfig>;
   performTokenSearch: (
     tokenSearchRequest: Partial<SearchConfig>,
   ) => Promise<TokenSearchResponse>;
-  toggleState: (tokenId: string, nextState: boolean) => Promise<void>;
+  toggleState: (tokenId: number, nextState: boolean) => Promise<void>;
 }
 
 export const useApi = (): Api => {
@@ -43,7 +44,7 @@ export const useApi = (): Api => {
 
   return {
     deleteToken: useCallback(
-      tokenId => httpDeleteEmptyResponse(`${resource}/${tokenId}`),
+      (tokenId) => httpDeleteEmptyResponse(`${resource}/${tokenId}`),
       [resource, httpDeleteEmptyResponse],
     ),
 
@@ -65,8 +66,13 @@ export const useApi = (): Api => {
       [resource, httpGetJson],
     ),
 
+    fetchTokenConfig: useCallback(
+      () => httpGetJson(`${resource}/noauth/fetchTokenConfig`),
+      [resource, httpGetJson],
+    ),
+
     toggleState: useCallback(
-      (tokenId: string, nextState: boolean) =>
+      (tokenId: number, nextState: boolean) =>
         httpGetEmptyResponse(
           `${resource}/${tokenId}/state/?enabled=${nextState}`,
         ),

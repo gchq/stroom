@@ -5,7 +5,6 @@ import stroom.data.retention.shared.DataRetentionRule;
 import stroom.data.retention.shared.FindDataRetentionImpactCriteria;
 import stroom.data.retention.shared.TimeUnit;
 import stroom.util.shared.Expander;
-import stroom.util.shared.Sort.Direction;
 
 import java.util.ArrayList;
 import java.util.Arrays;
@@ -36,6 +35,7 @@ public class DataRetentionImpactRow {
     public static final Comparator<DataRetentionImpactRow> RULE_AGE_COMPARATOR = Comparator.comparingLong(row -> timeUnitToMillis(row.ruleAge, row.timeUnit));
 
     public static final Map<String, Comparator<DataRetentionImpactRow>> FIELD_TO_COMPARATOR_MAP = new HashMap<>();
+
     // GWT doesn't like Map.of()
     static {
         FIELD_TO_COMPARATOR_MAP.put(FIELD_NAME_RULE_NO, RULE_NO_COMPARATOR);
@@ -131,9 +131,9 @@ public class DataRetentionImpactRow {
             List<Comparator<DataRetentionImpactRow>> comparators = criteria.getSortList().stream()
                     .filter(Objects::nonNull)
                     .map(sort ->
-                            Optional.ofNullable(FIELD_TO_COMPARATOR_MAP.get(sort.getField()))
+                            Optional.ofNullable(FIELD_TO_COMPARATOR_MAP.get(sort.getId()))
                                     .map(comparator -> {
-                                        if (Direction.DESCENDING.equals(sort.getDirection())) {
+                                        if (sort.isDesc()) {
                                             return comparator.reversed();
                                         } else {
                                             return comparator;
@@ -247,7 +247,7 @@ public class DataRetentionImpactRow {
 
                                         rows.addAll(summariesForRuleAndType.stream()
                                                 .map(summaryForRuleTypeAndFeed ->
-                                                        buildFeedRow(summaryForRuleTypeAndFeed,treeAction))
+                                                        buildFeedRow(summaryForRuleTypeAndFeed, treeAction))
                                                 .sorted(feedRowComparator)
                                                 .collect(Collectors.toList()));
                                     }
@@ -271,11 +271,11 @@ public class DataRetentionImpactRow {
                     .filter(sort ->
                             Arrays.stream(sortableFieldNames)
                                     .anyMatch(fieldName ->
-                                            fieldName.equals(sort.getField())))
+                                            fieldName.equals(sort.getId())))
                     .findAny()
                     .map(sort -> {
-                        final Comparator<DataRetentionImpactRow> comparator = FIELD_TO_COMPARATOR_MAP.get(sort.getField());
-                        return Direction.DESCENDING.equals(sort.getDirection())
+                        final Comparator<DataRetentionImpactRow> comparator = FIELD_TO_COMPARATOR_MAP.get(sort.getId());
+                        return sort.isDesc()
                                 ? comparator.reversed()
                                 : comparator;
                     })

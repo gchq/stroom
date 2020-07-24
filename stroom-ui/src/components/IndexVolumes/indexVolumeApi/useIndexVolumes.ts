@@ -2,7 +2,7 @@ import * as React from "react";
 
 import useApi from "./useApi";
 import { IndexVolume, NewIndexVolume } from "./types";
-import useListReducer from "lib/useListReducer";
+import { useListReducer } from "lib/useListReducer";
 
 /**
  * Convenience function for using Index Volume.
@@ -19,8 +19,10 @@ interface UseIndexVolumes {
 const useIndexVolumes = (): UseIndexVolumes => {
   const {
     items: indexVolumes,
-    receiveItems, addItem, removeItem,
-  } = useListReducer<IndexVolume>(iv => iv.id);
+    receiveItems,
+    addItem,
+    removeItem,
+  } = useListReducer<IndexVolume>((iv) => iv.id);
 
   const {
     getIndexVolumes,
@@ -54,10 +56,10 @@ const useIndexVolumes = (): UseIndexVolumes => {
         }),
       [update],
     ),
-    refresh: React.useCallback(
-        () => getIndexVolumes().then(receiveItems),
-        [getIndexVolumes, receiveItems],
-    ),
+    refresh: React.useCallback(() => getIndexVolumes().then(receiveItems), [
+      getIndexVolumes,
+      receiveItems,
+    ]),
   };
 };
 

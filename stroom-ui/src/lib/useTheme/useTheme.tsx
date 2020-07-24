@@ -1,19 +1,23 @@
 import * as React from "react";
 
 import useLocalStorage, { storeString } from "../useLocalStorage";
+import { FunctionComponent } from "react";
 
 export interface ThemeOption {
   text: string;
+  label: string;
   value: string;
 }
 
 export const themeOptions: ThemeOption[] = [
   {
     text: "Light",
+    label: "Light",
     value: "theme-light",
   },
   {
     text: "Dark",
+    label: "Dark",
     value: "theme-dark",
   },
 ];
@@ -23,7 +27,7 @@ interface ThemeContextValue {
   setTheme: (t: string) => void;
 }
 
-let ThemeContext: React.Context<ThemeContextValue> = React.createContext({
+const ThemeContext: React.Context<ThemeContextValue> = React.createContext({
   theme: themeOptions[0].value,
   setTheme: (t: string) =>
     console.log("Theme Change Ignored, something wrong with context setup", {
@@ -31,12 +35,15 @@ let ThemeContext: React.Context<ThemeContextValue> = React.createContext({
     }),
 });
 
-const ThemeContextProvider: React.StatelessComponent<{}> = ({ children }) => {
+const ThemeContextProvider: FunctionComponent = ({ children }) => {
   const { value, setValue: setTheme } = useLocalStorage(
     "theme",
     themeOptions[0].value,
     storeString,
   );
+
+  const body = document.getElementsByTagName("body")[0] as HTMLElement;
+  body.className = value;
 
   return (
     <ThemeContext.Provider value={{ theme: value, setTheme }}>

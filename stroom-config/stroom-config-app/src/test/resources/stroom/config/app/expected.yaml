@@ -64,14 +64,17 @@ appConfig:
         expireAfterAccess: "PT10M"
         expireAfterWrite: null
     passwordIntegrityChecks:
+      allowPasswordResets: true
       forcePasswordChangeOnFirstLogin: true
       mandatoryPasswordChangeDuration: "P90D"
-      minimumPasswordLength: 0
+      minimumPasswordLength: 8
+      minimumPasswordStrength: 3
       neverUsedAccountDeactivationThreshold: "P30D"
       passwordComplexityRegex: ".*"
       unusedAccountDeactivationThreshold: "P90D"
     token:
       algorithm: "RS256"
+      defaultApiKeyExpiryInMinutes: 525600
       jwsIssuer: "stroom"
       timeUntilExpirationForEmailResetToken: "PT5M"
       timeUntilExpirationForUserToken: "P30D"
@@ -177,8 +180,8 @@ appConfig:
       metaValue:
         addAsync: true
         deleteAge: "P30D"
-        deleteBatchSize: 1000
-        flushBatchSize: 1000
+        deleteBatchSize: 500
+        flushBatchSize: 500
     retention:
       deleteBatchSize: 1000
       useQueryOptimisation: true
@@ -784,9 +787,7 @@ appConfig:
       tubeOpacity: "0.6"
       labelColours: "TEST1=#FF0000,TEST2=#FF9900"
     uiPreferences:
-      allowPasswordResets: true
       dateFormat: "YYYY-MM-DDTHH:mm:ss.SSSZ"
-      defaultApiKeyExpiryInMinutes: 525600
     url:
       apiKeys: "../../../s/apiKeys"
       changepassword: "../../../s/changepassword"

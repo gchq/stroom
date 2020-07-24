@@ -15,7 +15,7 @@
  */
 
 import * as React from "react";
-import * as moment from "moment";
+import moment from "moment";
 
 import ExpressionBuilder from "components/ExpressionBuilder";
 import { StreamTaskType } from "../types";
@@ -73,9 +73,7 @@ const ProcessingDetails: React.FunctionComponent<Props> = ({
               </li>
               <li>
                 was <strong>last active</strong>
-                {moment(tracker.trackerMs)
-                  .calendar()
-                  .toLowerCase()}
+                {moment(tracker.trackerMs).calendar().toLowerCase()}
               </li>
               <li>
                 {tracker.status ? (
@@ -117,16 +115,12 @@ const ProcessingDetails: React.FunctionComponent<Props> = ({
           <li>
             was <strong>created</strong> by &lsquo;{tracker.createUser}
             &lsquo;
-            {moment(tracker.createdOn)
-              .calendar()
-              .toLowerCase()}
+            {moment(tracker.createdOn).calendar().toLowerCase()}
           </li>
           <li>
             was <strong>updated</strong> by &lsquo;{tracker.updateUser}
             &lsquo;
-            {moment(tracker.updatedOn)
-              .calendar()
-              .toLowerCase()}
+            {moment(tracker.updatedOn).calendar().toLowerCase()}
           </li>
         </ul>
       </div>

@@ -211,12 +211,12 @@ public class DataGridUtil {
                 if (event.isSortAscending()) {
                     criteria.setSort(
                             orderByColumn.getField(),
-                            Sort.Direction.ASCENDING,
+                            false,
                             orderByColumn.isIgnoreCase());
                 } else {
                     criteria.setSort(
                             orderByColumn.getField(),
-                            Sort.Direction.DESCENDING,
+                            true,
                             orderByColumn.isIgnoreCase());
                 }
                 onSortChange.run();

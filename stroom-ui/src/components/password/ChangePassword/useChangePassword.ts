@@ -1,23 +1,28 @@
-import { useCallback } from "react";
-import { ChangePasswordRequest } from "components/authentication/types";
-import useApi from "components/authentication";
+import { useCallback, useState } from "react";
+import { ChangePasswordRequest } from "components/Authentication/api/types";
+import { useAuthenticationResource } from "components/Authentication/api";
 import usePasswordState from "./useChangePasswordState";
 
 const useChangePassword = (): {
   errorMessages: string[];
   showChangeConfirmation: boolean;
   changePassword: (changePasswordRequest: ChangePasswordRequest) => void;
+  isSubmitting: boolean;
 } => {
   const {
-    addErrorMessage,
     errorMessages,
     showChangeConfirmation,
     setShowChangeConfirmation,
   } = usePasswordState();
-  const { changePassword: changePasswordUsingApi } = useApi();
+  const {
+    changePassword: changePasswordUsingApi,
+  } = useAuthenticationResource();
+  const [isSubmitting, setSubmitting] = useState(false);
+
   const changePassword = useCallback(
     (changePasswordRequest: ChangePasswordRequest) => {
-      changePasswordUsingApi(changePasswordRequest).then(response => {
+      setSubmitting(true);
+      changePasswordUsingApi(changePasswordRequest).then((response) => {
         if (response.changeSucceeded) {
           // // If we successfully changed the password then we want to redirect if there's a redirection URL
           // if (
@@ -26,30 +31,36 @@ const useChangePassword = (): {
           // ) {
           //   window.location.href = changePasswordRequest.redirectUri;
           // } else {
-            setShowChangeConfirmation(true);
+          setShowChangeConfirmation(true);
           // }
         } else {
-          if (response.failedOn.includes("BAD_OLD_PASSWORD")) {
-            addErrorMessage("Your old password is not correct");
-          }
-          if (response.failedOn.includes("COMPLEXITY")) {
-            addErrorMessage(
-              "Your new password does not meet the complexity requirements",
-            );
-          }
-          if (response.failedOn.includes("REUSE")) {
-            addErrorMessage("You may not reuse your previous password");
-          }
-          if (response.failedOn.includes("LENGTH")) {
-            addErrorMessage("Your new password is too short");
-          }
+          setSubmitting(false);
+          // if (response.failedOn.includes("BAD_OLD_PASSWORD")) {
+          //   addErrorMessage("Your old password is not correct");
+          // }
+          // if (response.failedOn.includes("COMPLEXITY")) {
+          //   addErrorMessage(
+          //     "Your new password does not meet the complexity requirements",
+          //   );
+          // }
+          // if (response.failedOn.includes("REUSE")) {
+          //   addErrorMessage("You may not reuse your previous password");
+          // }
+          // if (response.failedOn.includes("LENGTH")) {
+          //   addErrorMessage("Your new password is too short");
+          // }
         }
       });
     },
-    [changePasswordUsingApi, setShowChangeConfirmation, addErrorMessage],
+    [changePasswordUsingApi, setShowChangeConfirmation],
   );
 
-  return { changePassword, errorMessages, showChangeConfirmation };
+  return {
+    changePassword,
+    errorMessages,
+    showChangeConfirmation,
+    isSubmitting,
+  };
 };
 
 export default useChangePassword;

@@ -67,9 +67,7 @@ class ProcessingUserIdentityProviderImpl implements ProcessingUserIdentityProvid
             account.setCreateUser(INTERNAL_PROCESSING_USER);
             account.setUpdateTimeMs(now);
             account.setUpdateUser(INTERNAL_PROCESSING_USER);
-            account.setFirstName(INTERNAL_PROCESSING_USER);
-            account.setLastName(INTERNAL_PROCESSING_USER);
-            account.setEmail(INTERNAL_PROCESSING_USER);
+            account.setUserId(INTERNAL_PROCESSING_USER);
             account.setComments(INTERNAL_PROCESSING_USER);
             account.setForcePasswordChange(false);
             account.setNeverExpires(true);

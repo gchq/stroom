@@ -7,17 +7,15 @@ interface UseApi {
   getWelcomeHtml: () => Promise<WelcomeData>;
 }
 
-const useApi = (): UseApi => {
+export const useApi = (): UseApi => {
   const { httpGetJson } = useHttpClient();
   const { apiUrl } = useUrlFactory();
   const resource = apiUrl("/welcome/v1");
 
   return {
-    getWelcomeHtml: React.useCallback(
-      () => httpGetJson(resource),
-      [resource, httpGetJson],
-    ),
+    getWelcomeHtml: React.useCallback(() => httpGetJson(resource), [
+      resource,
+      httpGetJson,
+    ]),
   };
 };
-
-export default useApi;

@@ -25,16 +25,13 @@ import stroom.job.shared.JobNode.JobType;
 @JsonInclude(Include.NON_NULL)
 public class GetScheduledTimesRequest {
     @JsonProperty
-    private JobType jobType;
+    private final JobType jobType;
     @JsonProperty
-    private Long scheduleReferenceTime;
+    private final Long scheduleReferenceTime;
     @JsonProperty
-    private Long lastExecutedTime;
+    private final Long lastExecutedTime;
     @JsonProperty
-    private String schedule;
-
-    public GetScheduledTimesRequest() {
-    }
+    private final String schedule;
 
     @JsonCreator
     public GetScheduledTimesRequest(@JsonProperty("jobType") final JobType jobType,
@@ -51,31 +48,15 @@ public class GetScheduledTimesRequest {
         return jobType;
     }
 
-    public void setJobType(final JobType jobType) {
-        this.jobType = jobType;
-    }
-
     public Long getScheduleReferenceTime() {
         return scheduleReferenceTime;
-    }
-
-    public void setScheduleReferenceTime(final Long scheduleReferenceTime) {
-        this.scheduleReferenceTime = scheduleReferenceTime;
     }
 
     public Long getLastExecutedTime() {
         return lastExecutedTime;
     }
 
-    public void setLastExecutedTime(final Long lastExecutedTime) {
-        this.lastExecutedTime = lastExecutedTime;
-    }
-
     public String getSchedule() {
         return schedule;
-    }
-
-    public void setSchedule(final String schedule) {
-        this.schedule = schedule;
     }
 }

@@ -1,13 +1,10 @@
 import * as React from "react";
 
 import { storiesOf } from "@storybook/react";
-import { addThemedStories } from "../../../storybook/themedStoryGenerator";
 
 import PillChoice from "./PillChoice";
 
-const stories = storiesOf("New Developer/Step 2/Pill Choice", module);
-
-addThemedStories(stories, () => {
+storiesOf("New Developer/Step 2", module).add("Pill Choice", () => {
   return (
     <div>
       <h2>Pill Choice Test Harness</h2>
@@ -20,7 +17,7 @@ addThemedStories(stories, () => {
         to the console. So now i&apos;s time to open the Chrome Developer tools
         and observe the console when the buttons are clicked.
       </p>
-      <PillChoice onChoice={p => console.log("Pill Chosen", p)} />
+      <PillChoice onChoice={(p) => console.log("Pill Chosen", p)} />
     </div>
   );
 });

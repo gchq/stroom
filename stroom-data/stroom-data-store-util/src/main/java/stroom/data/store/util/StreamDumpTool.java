@@ -32,7 +32,6 @@ import stroom.task.shared.TaskId;
 import stroom.util.AbstractCommandLineTool;
 import stroom.util.io.BufferFactory;
 import stroom.util.shared.ModelStringUtil;
-import stroom.util.shared.Sort.Direction;
 
 import java.io.IOException;
 import java.nio.file.Files;
@@ -166,8 +165,8 @@ public class StreamDumpTool extends AbstractCommandLineTool {
 
         final FindMetaCriteria criteria = new FindMetaCriteria();
         criteria.setExpression(builder.build());
-        criteria.addSort(MetaFields.FIELD_FEED, Direction.ASCENDING, true);
-        criteria.addSort(MetaFields.FIELD_ID, Direction.ASCENDING, true);
+        criteria.addSort(MetaFields.FIELD_FEED, false, true);
+        criteria.addSort(MetaFields.FIELD_ID, false, true);
 
         final DataDownloadSettings dataDownloadSettings = new DataDownloadSettings();
         dataDownloadSettings.setMultipleFiles(true);

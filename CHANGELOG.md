@@ -6,6 +6,58 @@ and this project adheres to [Semantic Versioning](http://semver.org/).
 
 ## [Unreleased]
 
+* Issue **#1533** : Improved meta data attribute value flushing to DB.
+
+* Issue **#1634** : `FileSystemClean` will now only examine active data volumes.
+
+* Issue **#1672** : Index shards are now only updated in the DB on flush when the document count or shard size changes.
+
+* Issue **#1713** : Fixed issue where processor task start times were being displayed incorrectly.
+
+* Issue **#1748** : Removed border from explorer quick filter.
+
+* Issue **#1656** : Only managed jobs will now appear on the jobs page.
+
+* Issue **#1669** : Changed the way next scheduled time is calculated based on current time.
+
+* Issue **#1662** : Processor tasks and meta data sources now correctly show pipeline names in dashboard results.
+
+* Issue **#1677** : Active tasks are now correctly filtered.
+
+* Issue **#1718** : Added server task info for some tasks.
+
+* Issue **#1731** : Fixed calendar date picker style that was broken by tooltip CSS changes.
+
+* Issue **#1657** : `INTERNAL_PROCESSING_USER` is no longer visible in the UI.
+
+* Issue **#1449** : You can now create users to associate permissions by clicking the create button in the `User Permissions` page.
+
+* Issue **#1727** : Typo.
+
+* Issue **#1501** : Multiple fixes for new UI.
+
+* Issue **#1506** : Multiple fixes for new UI.
+
+* Issue **#1561** : Multiple fixes for new UI.
+
+* Issue **#1483** : Multiple fixes for new UI.
+
+* Issue **#1525** : Multiple fixes for new UI.
+
+* Issue **#1587** : Multiple fixes for new UI.
+
+* Issue **#1526** : Multiple fixes for new UI.
+
+* Issue **#1499** : Multiple fixes for new UI.
+
+* Issue **#1481** : Multiple fixes for new UI.
+
+* Issue **#1498** : Multiple fixes for new UI.
+
+* Issue **#1660** : Multiple fixes for new UI.
+
+* Issue **#1659** : Multiple fixes for new UI.
+
 * Issue **#1725** : Fix Data Splitter onlyMatch using zero based instead of one based numbers.
 
 * Issue **#1678** : Fix range of data displayed in dashboard text pane.
@@ -332,7 +384,7 @@ and this project adheres to [Semantic Versioning](http://semver.org/).
 
 * Remove internal statistics from setup sample data.
 
-* Fix issue of pipeling structure not showing when it contains a StatisticsFilter.
+* Fix issue of pipeline structure not showing when it contains a StatisticsFilter.
 
 * Update auth flow for auth-into-stroom integration
 

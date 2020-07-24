@@ -37,7 +37,7 @@ interface Props {
   provideBreadcrumbs?: boolean;
 }
 
-let TestDocRefListingEntry: React.FunctionComponent<Props> = ({
+const TestDocRefListingEntry: React.FunctionComponent<Props> = ({
   docRefs,
   dndIsOver,
   dndCanDrop,
@@ -66,7 +66,7 @@ let TestDocRefListingEntry: React.FunctionComponent<Props> = ({
   } = useSelectableItemListing<DocRefType>({
     items: docRefs,
     openItem: openDocRef,
-    getKey: React.useCallback(d => d.uuid, []),
+    getKey: React.useCallback((d) => d.uuid, []),
     enterItem: enterFolder,
     goBack,
     selectionBehaviour: SelectionBehaviour.MULTIPLE,
@@ -80,7 +80,7 @@ let TestDocRefListingEntry: React.FunctionComponent<Props> = ({
         style={{ borderStyle: "dashed", borderWidth: "2px" }}
       >
         {docRefs &&
-          docRefs.map(docRef => (
+          docRefs.map((docRef) => (
             <DocRefListingEntry
               key={docRef.uuid}
               {...{
@@ -103,7 +103,7 @@ let TestDocRefListingEntry: React.FunctionComponent<Props> = ({
             </DocRefListingEntry>
           ))}
       </div>
-      <Button text="Clear" onClick={onClickClear} />
+      <Button onClick={onClickClear}>Clear</Button>
       <JsonDebug value={{ wentBack, openedDocRef, enteredFolder }} />
     </div>
   );

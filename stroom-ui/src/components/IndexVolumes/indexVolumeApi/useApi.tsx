@@ -26,25 +26,23 @@ export const useApi = (): Api => {
   return {
     createIndexVolume: React.useCallback(
       ({ nodeName, path, indexVolumeGroupName }: NewIndexVolume) =>
-        httpPostJsonResponse(resource,
-          { body: JSON.stringify({ nodeName, path, indexVolumeGroupName }) },
-        ),
+        httpPostJsonResponse(resource, {
+          body: JSON.stringify({ nodeName, path, indexVolumeGroupName }),
+        }),
       [resource, httpPostJsonResponse],
     ),
     deleteIndexVolume: React.useCallback(
-      (id: string) =>
-        httpDeleteEmptyResponse(`${resource}/${id}`),
+      (id: string) => httpDeleteEmptyResponse(`${resource}/${id}`),
       [resource, httpDeleteEmptyResponse],
     ),
     getIndexVolumeById: React.useCallback(
-      (id: string) =>
-        httpGetJson(`${resource}/${id}`),
+      (id: string) => httpGetJson(`${resource}/${id}`),
       [resource, httpGetJson],
     ),
-    getIndexVolumes: React.useCallback(
-      () => httpGetJson(resource),
-      [resource, httpGetJson],
-    ),
+    getIndexVolumes: React.useCallback(() => httpGetJson(resource), [
+      resource,
+      httpGetJson,
+    ]),
     update: React.useCallback(
       (indexVolume: UpdateIndexVolumeDTO) =>
         httpPutJsonResponse(resource, {

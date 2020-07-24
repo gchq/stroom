@@ -18,13 +18,15 @@
 
 package stroom.authentication.authenticate;
 
+import stroom.authentication.api.OIDC;
+import stroom.authentication.config.PasswordPolicyConfig;
+import stroom.util.shared.ResourcePaths;
+import stroom.util.shared.RestResource;
+
 import com.codahale.metrics.annotation.Timed;
 import io.swagger.annotations.Api;
 import io.swagger.annotations.ApiOperation;
 import io.swagger.annotations.ApiParam;
-import stroom.authentication.api.OIDC;
-import stroom.util.shared.ResourcePaths;
-import stroom.util.shared.RestResource;
 
 import javax.servlet.http.HttpServletRequest;
 import javax.validation.constraints.NotNull;
@@ -44,7 +46,13 @@ import javax.ws.rs.core.MediaType;
 @Api(description = "Stroom Authentication API", tags = {"Authentication"})
 public interface AuthenticationResource extends RestResource {
     String BASE_PATH = "/authentication" + ResourcePaths.V1;
-//    String PATH_POST_AUTHENTICATION_REDIRECT = "/noauth/postAuthenticationRedirect";
+
+    @GET
+    @Path("/noauth/getAuthenticationState")
+    @Timed
+    @NotNull
+    @ApiOperation(value = "Get the current authentication state")
+    AuthenticationState getAuthenticationState(@Context @NotNull HttpServletRequest request);
 
     /**
      * We expect the user to have a session if they're trying to log in.
@@ -59,8 +67,7 @@ public interface AuthenticationResource extends RestResource {
             response = String.class, tags = {"Authentication"})
     LoginResponse login(
             @Context @NotNull HttpServletRequest request,
-            @QueryParam(OIDC.REDIRECT_URI) final String redirectUri,
-            @ApiParam("Credentials") @NotNull Credentials credentials);
+            @ApiParam("Credentials") @NotNull LoginRequest loginRequest);
 
     @GET
     @Path("/logout")
@@ -70,6 +77,27 @@ public interface AuthenticationResource extends RestResource {
     Boolean logout(
             @Context @NotNull HttpServletRequest request,
             @QueryParam(OIDC.REDIRECT_URI) @NotNull String redirectUri);
+
+    @POST
+    @Path("/noauth/confirmPassword")
+    @Timed
+    @NotNull
+    @ApiOperation(value = "Confirm an authenticated users current password.",
+            response = String.class, tags = {"Authentication"})
+    ConfirmPasswordResponse confirmPassword(
+            @Context @NotNull HttpServletRequest request,
+            @ApiParam("confirmPasswordRequest") @NotNull ConfirmPasswordRequest confirmPasswordRequest);
+
+
+    @POST
+    @Path("/noauth/changePassword")
+    @Timed
+    @NotNull
+    @ApiOperation(value = "Change a user's password.",
+            response = String.class, tags = {"Authentication"})
+    ChangePasswordResponse changePassword(
+            @Context @NotNull HttpServletRequest request,
+            @ApiParam("changePasswordRequest") @NotNull ChangePasswordRequest changePasswordRequest);
 
     @GET
     @Path("/noauth/reset/{email}")
@@ -82,22 +110,13 @@ public interface AuthenticationResource extends RestResource {
             @PathParam("email") String emailAddress);
 
     @POST
-    @Path("noauth/changePassword")
-    @Timed
-    @NotNull
-    @ApiOperation(value = "Change a user's password.",
-            response = String.class, tags = {"Authentication"})
-    ChangePasswordResponse changePassword(
-            @Context @NotNull HttpServletRequest request,
-            @ApiParam("changePasswordRequest") @NotNull ChangePasswordRequest changePasswordRequest);
-
-    @POST
     @Path("resetPassword")
     @Timed
     @NotNull
     @ApiOperation(value = "Reset an authenticated user's password.",
             response = String.class, tags = {"Authentication"})
     ChangePasswordResponse resetPassword(
+            @Context @NotNull HttpServletRequest request,
             @ApiParam("changePasswordRequest") @NotNull ResetPasswordRequest req);
 
     @GET
@@ -108,13 +127,11 @@ public interface AuthenticationResource extends RestResource {
             response = Boolean.class, tags = {"Authentication"})
     Boolean needsPasswordChange(@QueryParam("email") String email);
 
-    @POST
-    @Path("noauth/isPasswordValid")
+    @GET
+    @Path("/noauth/fetchPasswordPolicy")
     @Timed
     @NotNull
-    @ApiOperation(value = "Returns the length and complexity rules.",
-            response = Boolean.class, tags = {"Authentication"})
-    PasswordValidationResponse isPasswordValid(
-            @Context @NotNull HttpServletRequest request,
-            @ApiParam("passwordValidationRequest") @NotNull PasswordValidationRequest passwordValidationRequest);
+    @ApiOperation(value = "Get the password policy",
+            response = PasswordPolicyConfig.class, tags = {"Authentication"})
+    PasswordPolicyConfig fetchPasswordPolicy();
 }

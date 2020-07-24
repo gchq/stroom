@@ -1,13 +1,16 @@
 package stroom.authentication.token;
 
 import stroom.authentication.account.Account;
-import stroom.authentication.exceptions.NoSuchUserException;
+import stroom.util.shared.ResultPage;
 
-import java.time.Instant;
 import java.util.List;
 import java.util.Optional;
 
 public interface TokenDao {
+    ResultPage<Token> list();
+
+    ResultPage<Token> search(SearchTokenRequest request);
+
     Token create(int accountId, Token token);
 
     Optional<Token> readById(int tokenId);
@@ -23,6 +26,4 @@ public interface TokenDao {
     int deleteTokenById(int tokenId);
 
     int deleteTokenByTokenString(String token);
-
-    SearchResponse searchTokens(SearchRequest searchRequest);
 }

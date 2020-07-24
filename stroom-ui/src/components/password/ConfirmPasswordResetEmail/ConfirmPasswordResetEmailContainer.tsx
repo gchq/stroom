@@ -19,7 +19,7 @@ import ConfirmPasswordResetEmail from "./ConfirmPasswordResetEmail";
 import * as queryString from "query-string";
 import useRouter from "../../../lib/useRouter";
 
-const ConfirmPasswordResetEmailContainer = () => {
+export const ConfirmPasswordResetEmailContainer = () => {
   let redirectUri: string;
 
   const { router } = useRouter();
@@ -38,5 +38,3 @@ const ConfirmPasswordResetEmailContainer = () => {
     />
   );
 };
-
-export default ConfirmPasswordResetEmailContainer;

@@ -1,4 +1,4 @@
-import useListReducer from "lib/useListReducer/useListReducer";
+import { useListReducer } from "lib/useListReducer/useListReducer";
 import * as React from "react";
 import { StroomUser } from ".";
 import useApi from "./useApi";
@@ -10,12 +10,9 @@ interface UseGroupsForUser {
 }
 
 const useGroupsForUser = (user: StroomUser): UseGroupsForUser => {
-  const {
-    items: groups,
-    receiveItems,
-    addItem,
-    removeItem,
-  } = useListReducer<StroomUser>(g => g.uuid);
+  const { items: groups, receiveItems, addItem, removeItem } = useListReducer<
+    StroomUser
+  >((g) => g.uuid);
 
   const {
     findGroupsForUser,

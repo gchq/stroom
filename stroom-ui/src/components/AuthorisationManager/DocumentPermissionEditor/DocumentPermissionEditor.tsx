@@ -14,7 +14,7 @@ import ThemedConfirm, {
   useDialog as useThemedConfirm,
 } from "components/ThemedConfirm";
 import useRouter from "lib/useRouter";
-import useAppNavigation from "lib/useAppNavigation";
+import { useAppNavigation } from "lib/useAppNavigation";
 import UsersTable, { useTable as useUsersTable } from "../UsersTable";
 
 interface Props {
@@ -77,13 +77,13 @@ export const DocumentPermissionEditor: React.FunctionComponent<Props> = ({
       } else {
         return (
           `From Document ${docRef.type} - ${docRefUuid} for users ` +
-          selectedUsers.map(u => u.name).join(", ")
+          selectedUsers.map((u) => u.name).join(", ")
         );
       }
     }, [docRefUuid, docRef, selectedUsers]),
     onConfirm: React.useCallback(() => {
       if (selectedUsers.length !== 0) {
-        selectedUsers.forEach(user => clearPermissionForUser(user.uuid));
+        selectedUsers.forEach((user) => clearPermissionForUser(user.uuid));
         clearSelection();
       } else {
         clearPermissions();
@@ -111,14 +111,12 @@ export const DocumentPermissionEditor: React.FunctionComponent<Props> = ({
         text={`Document Permissions for ${docRef.type} - ${docRef.name}`}
       />
       <div>
-        <Button text="Back" onClick={history.goBack} />
-        <Button text="Add" onClick={showUserPicker} />
-        <Button
-          text="View/Edit"
-          disabled={selectedUsers.length !== 1}
-          onClick={onClickEdit}
-        />
-        <Button text={clearButtonText} onClick={showConfirmClear} />
+        <Button onClick={history.goBack}>Back</Button>
+        <Button onClick={showUserPicker}>Add</Button>
+        <Button disabled={selectedUsers.length !== 1} onClick={onClickEdit}>
+          View/Edit
+        </Button>
+        <Button onClick={showConfirmClear}>{clearButtonText}</Button>
 
         <h2>Users</h2>
         <UsersTable {...usersTableProps} />

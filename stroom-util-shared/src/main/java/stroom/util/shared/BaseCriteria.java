@@ -16,12 +16,10 @@
 
 package stroom.util.shared;
 
-
 import com.fasterxml.jackson.annotation.JsonCreator;
 import com.fasterxml.jackson.annotation.JsonInclude;
 import com.fasterxml.jackson.annotation.JsonInclude.Include;
 import com.fasterxml.jackson.annotation.JsonProperty;
-import stroom.util.shared.Sort.Direction;
 
 import java.util.ArrayList;
 import java.util.HashSet;
@@ -87,11 +85,11 @@ public abstract class BaseCriteria {
     }
 
     public void setSort(final String field) {
-        setSort(new Sort(field, Direction.ASCENDING, false));
+        setSort(new Sort(field, false, false));
     }
 
-    public void setSort(final String field, final Direction direction, final boolean ignoreCase) {
-        setSort(new Sort(field, direction, ignoreCase));
+    public void setSort(final String field, final boolean desc, final boolean ignoreCase) {
+        setSort(new Sort(field, desc, ignoreCase));
     }
 
     public void setSort(final Sort sort) {
@@ -100,11 +98,11 @@ public abstract class BaseCriteria {
     }
 
     public void addSort(final String field) {
-        addSort(new Sort(field, Direction.ASCENDING, false));
+        addSort(new Sort(field, false, false));
     }
 
-    public void addSort(final String field, final Direction direction, final boolean ignoreCase) {
-        addSort(new Sort(field, direction, ignoreCase));
+    public void addSort(final String field, final boolean desc, final boolean ignoreCase) {
+        addSort(new Sort(field, desc, ignoreCase));
     }
 
     public void addSort(final Sort sort) {

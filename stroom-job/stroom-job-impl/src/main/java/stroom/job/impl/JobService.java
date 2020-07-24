@@ -53,9 +53,12 @@ class JobService {
         this.securityContext = securityContext;
 
         scheduledJobsMap.keySet().forEach(scheduledJob -> {
-            jobDescriptionMap.put(scheduledJob.getName(), scheduledJob.getDescription());
-            if (scheduledJob.isAdvanced()) {
-                jobAdvancedSet.add(scheduledJob.getName());
+            // We only add managed jobs to the descriptions as only managed ones can accept user changes.
+            if (scheduledJob.isManaged()) {
+                jobDescriptionMap.put(scheduledJob.getName(), scheduledJob.getDescription());
+                if (scheduledJob.isAdvanced()) {
+                    jobAdvancedSet.add(scheduledJob.getName());
+                }
             }
         });
 
@@ -85,7 +88,7 @@ class JobService {
 
         if (findJobCriteria.getSortList().size() > 0) {
             final Sort sort = findJobCriteria.getSortList().get(0);
-            if (sort.getField().equals(FindJobCriteria.FIELD_ADVANCED)) {
+            if (sort.getId().equals(FindJobCriteria.FIELD_ADVANCED)) {
                 results.getValues().sort(Comparator.comparing(Job::isAdvanced).thenComparing(Job::getName));
             }
         }

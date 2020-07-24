@@ -21,12 +21,12 @@ public class MetaValueConfig extends AbstractConfig {
 
     @JsonProperty
     @JsonPropertyDescription("How many stream attributes we want to try and delete in a single batch.")
-    private int deleteBatchSize = 1000;
+    private int deleteBatchSize = 500;
 
     @JsonProperty
     @JsonPropertyDescription("The number of stream attributes to queue before flushing to the database. " +
             "Only applicable if property 'addAsync' is true.")
-    private int flushBatchSize = 1000;
+    private int flushBatchSize = 500;
 
     @JsonProperty
     @JsonPropertyDescription("If true, stream attributes will be queued in memory until the queue " +

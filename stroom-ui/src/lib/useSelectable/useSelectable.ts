@@ -55,7 +55,9 @@ const innerReducer = (
       // If CTRL is down (includes Meta) then simply add the keys
       if (isCtrlDown) {
         if (selectedKeys.includes(key)) {
-          const newSelectedKeys: string[] = selectedKeys.filter(k => k !== key);
+          const newSelectedKeys: string[] = selectedKeys.filter(
+            (k) => k !== key,
+          );
           return {
             rawKeys,
             selectedKeys: newSelectedKeys,
@@ -114,7 +116,7 @@ const innerReducer = (
     case "updateRawKeys":
       return {
         rawKeys: action.rawKeys,
-        selectedKeys: selectedKeys.filter(s => action.rawKeys.includes(s)),
+        selectedKeys: selectedKeys.filter((s) => action.rawKeys.includes(s)),
         lastSelectedKey: action.rawKeys.includes(lastSelectedKey)
           ? lastSelectedKey
           : undefined,
@@ -142,14 +144,14 @@ const reducer = (state: ReducerState, action: ActionType): ReducerState => {
     ...innerState,
     selectedIndexes: rawKeys
       .map((k, i) => (selectedKeys.includes(k) ? i : undefined))
-      .filter(i => i !== undefined),
-    lastSelectedIndex: rawKeys.findIndex(d => d === lastSelectedKey),
+      .filter((i) => i !== undefined),
+    lastSelectedIndex: rawKeys.findIndex((d) => d === lastSelectedKey),
   };
 };
 
 const keyDownFilters: string[] = ["Control", "Shift", "Meta"];
 
-const useSelectable = <T extends {}>({
+export const useSelectable = <T extends {}>({
   items,
   getKey,
 }: InProps<T>): OutProps<T> => {
@@ -185,7 +187,7 @@ const useSelectable = <T extends {}>({
   );
 
   const selectedItems: T[] = React.useMemo(
-    () => items.filter(item => selectedKeys.includes(getKey(item))),
+    () => items.filter((item) => selectedKeys.includes(getKey(item))),
     [selectedKeys, getKey, items],
   );
 
@@ -199,5 +201,3 @@ const useSelectable = <T extends {}>({
     clearSelection,
   };
 };
-
-export default useSelectable;

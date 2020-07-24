@@ -57,7 +57,7 @@ const useTokenSearch = () => {
       }
       setLastUsedSearchConfig(lastUsedSearchConfig);
 
-      performTokenSearchApi(searchConfig).then(data => {
+      performTokenSearchApi(searchConfig).then((data) => {
         setResults(data.tokens);
         setTotalPages(data.totalPages);
       });
@@ -89,7 +89,7 @@ const useTokenSearch = () => {
   );
 
   const toggleState = useCallback(
-    (tokenId: string, nextState: boolean) => {
+    (tokenId: number, nextState: boolean) => {
       toggleStateApi(tokenId, nextState).then(() => toggleEnabled(tokenId));
     },
     [toggleStateApi, toggleEnabled],

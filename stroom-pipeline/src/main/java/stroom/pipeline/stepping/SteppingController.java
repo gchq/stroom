@@ -27,7 +27,6 @@ import stroom.pipeline.shared.stepping.StepType;
 import stroom.pipeline.state.LocationHolder;
 import stroom.pipeline.state.MetaHolder;
 import stroom.task.api.TaskContext;
-import stroom.util.logging.LambdaLogUtil;
 import stroom.util.pipeline.scope.PipelineScoped;
 import stroom.util.shared.DefaultLocation;
 import stroom.util.shared.TextRange;
@@ -132,8 +131,8 @@ public class SteppingController {
 
         // Update the progress monitor.
         if (getTaskContext() != null) {
-            getTaskContext().info(LambdaLogUtil.message(
-                    "Processing stream - {} : [{}:{}]", streamInfo, currentStreamNo, currentRecordNo));
+            getTaskContext().info(() ->
+                    "Stepping {" + streamInfo + "} [" + currentStreamNo + ":" + currentRecordNo + "]");
         }
 
         // Figure out what the highlighted portion of the input stream should be.

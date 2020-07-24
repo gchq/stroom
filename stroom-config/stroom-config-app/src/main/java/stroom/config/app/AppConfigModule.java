@@ -2,7 +2,7 @@ package stroom.config.app;
 
 import com.google.inject.AbstractModule;
 import stroom.authentication.config.OAuth2Config;
-import stroom.authentication.config.PasswordIntegrityChecksConfig;
+import stroom.authentication.config.PasswordPolicyConfig;
 import stroom.authentication.config.TokenConfig;
 import stroom.cluster.api.ClusterConfig;
 import stroom.cluster.lock.impl.db.ClusterLockConfig;
@@ -111,7 +111,7 @@ public class AppConfigModule extends AbstractModule {
         bindConfig(AppConfig::getAnnotationConfig, stroom.annotation.impl.AnnotationConfig.class);
         bindConfig(AppConfig::getAuthenticationConfig, stroom.authentication.config.AuthenticationConfig.class, authenticationConfig -> {
             bindConfig(authenticationConfig, stroom.authentication.config.AuthenticationConfig::getOAuth2Config, OAuth2Config.class);
-            bindConfig(authenticationConfig, stroom.authentication.config.AuthenticationConfig::getPasswordIntegrityChecksConfig, PasswordIntegrityChecksConfig.class);
+            bindConfig(authenticationConfig, stroom.authentication.config.AuthenticationConfig::getPasswordPolicyConfig, PasswordPolicyConfig.class);
             bindConfig(authenticationConfig, stroom.authentication.config.AuthenticationConfig::getTokenConfig, TokenConfig.class);
         });
         bindConfig(AppConfig::getBenchmarkClusterConfig, BenchmarkClusterConfig.class);

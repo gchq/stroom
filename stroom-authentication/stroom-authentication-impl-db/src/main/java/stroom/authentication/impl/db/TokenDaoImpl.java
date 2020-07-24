@@ -18,32 +18,43 @@
 
 package stroom.authentication.impl.db;
 
-import org.jooq.Condition;
-import org.jooq.Record;
-import org.jooq.Record1;
-import org.jooq.SortField;
 import stroom.authentication.account.Account;
-import stroom.authentication.exceptions.UnsupportedFilterException;
 import stroom.authentication.impl.db.jooq.tables.records.TokenRecord;
-import stroom.authentication.token.SearchRequest;
-import stroom.authentication.token.SearchResponse;
+import stroom.authentication.token.SearchTokenRequest;
 import stroom.authentication.token.Token;
 import stroom.authentication.token.TokenDao;
+import stroom.authentication.token.TokenResource;
+import stroom.authentication.token.TokenType;
 import stroom.authentication.token.TokenTypeDao;
 import stroom.db.util.JooqUtil;
+import stroom.util.collections.ResultPageCollector;
+import stroom.util.filter.FilterFieldMapper;
+import stroom.util.filter.FilterFieldMappers;
+import stroom.util.filter.QuickFilterPredicateFactory;
 import stroom.util.logging.LambdaLogUtil;
 import stroom.util.logging.LambdaLogger;
 import stroom.util.logging.LambdaLoggerFactory;
+import stroom.util.shared.ResultPage;
+
+import org.jooq.Condition;
+import org.jooq.Field;
+import org.jooq.OrderField;
+import org.jooq.Record;
+import org.jooq.Record1;
+import org.jooq.Record12;
 
 import javax.inject.Inject;
 import javax.inject.Singleton;
-import java.util.ArrayList;
+import java.util.Collection;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
 import java.util.function.BiFunction;
 import java.util.function.Function;
+import java.util.function.Predicate;
+import java.util.stream.Stream;
 
+import static java.util.Map.entry;
 import static stroom.authentication.impl.db.jooq.tables.Account.ACCOUNT;
 import static stroom.authentication.impl.db.jooq.tables.Token.TOKEN;
 import static stroom.authentication.impl.db.jooq.tables.TokenType.TOKEN_TYPE;
@@ -60,6 +71,11 @@ class TokenDaoImpl implements TokenDao {
         token.setUpdateTimeMs(record.get(TOKEN.UPDATE_TIME_MS));
         token.setCreateUser(record.get(TOKEN.CREATE_USER));
         token.setUpdateUser(record.get(TOKEN.UPDATE_USER));
+        try {
+            token.setUserId(record.get(ACCOUNT.USER_ID));
+        } catch (final IllegalArgumentException e) {
+            // Ignore
+        }
         try {
             token.setUserEmail(record.get(ACCOUNT.EMAIL));
         } catch (final IllegalArgumentException e) {
@@ -93,6 +109,32 @@ class TokenDaoImpl implements TokenDao {
         return record;
     };
 
+    private static final Map<String, Field<?>> FIELD_MAP = Map.ofEntries(
+            entry("id", TOKEN.ID),
+            entry("version", TOKEN.VERSION),
+            entry("createTimeMs", TOKEN.CREATE_TIME_MS),
+            entry("updateTimeMs", TOKEN.UPDATE_TIME_MS),
+            entry("createUser", TOKEN.CREATE_USER),
+            entry("updateUser", TOKEN.UPDATE_USER),
+            entry("userId", ACCOUNT.USER_ID),
+            entry("userEmail", ACCOUNT.EMAIL),
+            entry("tokenType", TOKEN.FK_TOKEN_TYPE_ID),
+            entry("data", TOKEN.DATA),
+            entry("expiresOnMs", TOKEN.EXPIRES_ON_MS),
+            entry("comments", TOKEN.COMMENTS),
+            entry("enabled", TOKEN.ENABLED));
+
+    private static final FilterFieldMappers<Token> FIELD_MAPPERS = FilterFieldMappers.of(
+            FilterFieldMapper.of(
+                    TokenResource.FIELD_DEF_USER_ID,
+                    Token::getUserId),
+            FilterFieldMapper.of(
+                    TokenResource.FIELD_DEF_USER_EMAIL,
+                    Token::getUserEmail),
+            FilterFieldMapper.of(
+                    TokenResource.FIELD_DEF_COMMENTS,
+                    Token::getComments));
+
     private final AuthDbConnProvider authDbConnProvider;
     private final TokenTypeDao tokenTypeDao;
 
@@ -101,6 +143,104 @@ class TokenDaoImpl implements TokenDao {
                  final TokenTypeDao tokenTypeDao) {
         this.authDbConnProvider = authDbConnProvider;
         this.tokenTypeDao = tokenTypeDao;
+    }
+
+    @Override
+    public ResultPage<Token> list() {
+        final List<Token> list = JooqUtil.contextResult(authDbConnProvider, context -> context
+                .selectFrom(TOKEN)
+                .where(TOKEN.FK_TOKEN_TYPE_ID.eq(tokenTypeDao.getTokenTypeId(TokenType.USER.getText().toLowerCase())))
+                .orderBy(TOKEN.CREATE_TIME_MS)
+                .fetch()
+                .map(RECORD_TO_TOKEN_MAPPER::apply));
+        return ResultPage.createUnboundedList(list);
+    }
+
+    @Override
+    public ResultPage<Token> search(final SearchTokenRequest request) {
+        final Condition condition = createCondition(request);
+
+        final Collection<OrderField<?>> orderFields = JooqUtil.getOrderFields(FIELD_MAP, request);
+
+        return JooqUtil.contextResult(authDbConnProvider, context -> {
+            if (request.getQuickFilter() == null || request.getQuickFilter().length() == 0) {
+                final List<Token> list = context
+                        .select(
+                                TOKEN.ID,
+                                TOKEN.VERSION,
+                                TOKEN.CREATE_TIME_MS,
+                                TOKEN.UPDATE_TIME_MS,
+                                TOKEN.CREATE_USER,
+                                TOKEN.UPDATE_USER,
+                                ACCOUNT.USER_ID,
+                                TOKEN_TYPE.TYPE,
+                                TOKEN.DATA,
+                                TOKEN.EXPIRES_ON_MS,
+                                TOKEN.COMMENTS,
+                                TOKEN.ENABLED)
+                        .from(TOKEN
+                                .join(TOKEN_TYPE)
+                                .on(TOKEN.FK_TOKEN_TYPE_ID.eq(TOKEN_TYPE.ID))
+                                .join(ACCOUNT)
+                                .on(TOKEN.FK_ACCOUNT_ID.eq(ACCOUNT.ID)))
+                        .where(condition)
+                        .orderBy(orderFields)
+                        .offset(JooqUtil.getOffset(request.getPageRequest()))
+                        .limit(JooqUtil.getLimit(request.getPageRequest(), true))
+                        .fetch()
+                        .map(RECORD_TO_TOKEN_MAPPER::apply);
+
+                // Finally we need to get the number of tokens so we can calculate the total number of pages
+                final int count = context
+                        .selectCount()
+                        .from(TOKEN
+                                .join(TOKEN_TYPE)
+                                .on(TOKEN.FK_TOKEN_TYPE_ID.eq(TOKEN_TYPE.ID))
+                                .join(ACCOUNT)
+                                .on(TOKEN.FK_ACCOUNT_ID.eq(ACCOUNT.ID)))
+                        .where(condition)
+                        .fetchOptional()
+                        .map(Record1::value1)
+                        .orElse(0);
+
+                return ResultPage.createCriterialBasedList(list, request, (long) count);
+
+            } else {
+                // Create the predicate for the current filter value
+                final Predicate<Token> fuzzyMatchPredicate = QuickFilterPredicateFactory.createFuzzyMatchPredicate(
+                        request.getQuickFilter(), FIELD_MAPPERS);
+
+                try (final Stream<Record12<Integer, Integer, Long, Long, String, String, String, String, String, Long, String, Boolean>> stream = context
+                        .select(
+                                TOKEN.ID,
+                                TOKEN.VERSION,
+                                TOKEN.CREATE_TIME_MS,
+                                TOKEN.UPDATE_TIME_MS,
+                                TOKEN.CREATE_USER,
+                                TOKEN.UPDATE_USER,
+                                ACCOUNT.USER_ID,
+                                TOKEN_TYPE.TYPE,
+                                TOKEN.DATA,
+                                TOKEN.EXPIRES_ON_MS,
+                                TOKEN.COMMENTS,
+                                TOKEN.ENABLED)
+                        .from(TOKEN
+                                .join(TOKEN_TYPE)
+                                .on(TOKEN.FK_TOKEN_TYPE_ID.eq(TOKEN_TYPE.ID))
+                                .join(ACCOUNT)
+                                .on(TOKEN.FK_ACCOUNT_ID.eq(ACCOUNT.ID)))
+                        .where(condition)
+                        .orderBy(orderFields)
+                        .stream()) {
+
+                    return stream
+                            .map(RECORD_TO_TOKEN_MAPPER)
+                            .filter(fuzzyMatchPredicate)
+                            .collect(ResultPageCollector.create(request.getPageRequest()))
+                            .build();
+                }
+            }
+        });
     }
 
     @Override
@@ -122,93 +262,99 @@ class TokenDaoImpl implements TokenDao {
         });
     }
 
-    @Override
-    public SearchResponse searchTokens(SearchRequest searchRequest) {
-        // Create some vars to allow the rest of this method to be more succinct.
-        int page = searchRequest.getPage();
-        int limit = searchRequest.getLimit();
-        String orderBy = searchRequest.getOrderBy();
-        String orderDirection = searchRequest.getOrderDirection();
-        Map<String, String> filters = searchRequest.getFilters();
-
-        // Use a default if there's no order direction specified in the request
-        if (orderDirection == null) {
-            orderDirection = "asc";
-        }
-
-        // Special cases
-        SortField<?>[] orderByField;
-        if (orderBy != null && orderBy.equals("userEmail")) {
-            // Why is this a special case? Because the property on the target table is 'email' but the param is 'user_email'
-            // 'user_email' is a clearer param
-            if (orderDirection.equals("asc")) {
-                orderByField = new SortField[]{ACCOUNT.EMAIL.asc()};
-            } else {
-                orderByField = new SortField[]{ACCOUNT.EMAIL.desc()};
-            }
-        } else {
-            orderByField = getOrderBy(orderBy, orderDirection);
-        }
-
-        final List<Condition> conditions = getConditions(filters);
-        final int offset = limit * page;
-
-        return JooqUtil.contextResult(authDbConnProvider, context -> {
-            final List<Token> tokens = context
-                    .select(
-                            TOKEN.ID,
-                            TOKEN.VERSION,
-                            TOKEN.CREATE_TIME_MS,
-                            TOKEN.UPDATE_TIME_MS,
-                            TOKEN.CREATE_USER,
-                            TOKEN.UPDATE_USER,
-                            ACCOUNT.EMAIL,
-                            TOKEN_TYPE.TYPE,
-                            TOKEN.DATA,
-                            TOKEN.EXPIRES_ON_MS,
-                            TOKEN.COMMENTS,
-                            TOKEN.ENABLED)
-                    .from(TOKEN
-                            .join(TOKEN_TYPE)
-                            .on(TOKEN.FK_TOKEN_TYPE_ID.eq(TOKEN_TYPE.ID))
-                            .join(ACCOUNT)
-                            .on(TOKEN.FK_ACCOUNT_ID.eq(ACCOUNT.ID)))
-                    .where(conditions)
-                    .orderBy(orderByField)
-                    .limit(limit)
-                    .offset(offset)
-                    .fetch()
-                    .map(RECORD_TO_TOKEN_MAPPER::apply);
-
-
-            // Finally we need to get the number of tokens so we can calculate the total number of pages
-            final int count = context
-                    .selectCount()
-                    .from(TOKEN
-                            .join(TOKEN_TYPE)
-                            .on(TOKEN.FK_TOKEN_TYPE_ID.eq(TOKEN_TYPE.ID))
-                            .join(ACCOUNT)
-                            .on(TOKEN.FK_ACCOUNT_ID.eq(ACCOUNT.ID)))
-                    .where(conditions)
-                    .fetchOptional()
-                    .map(Record1::value1)
-                    .orElse(0);
-
-            // We need to round up so we always have enough pages even if there's a remainder.
-            int pages = (int) Math.ceil((double) count / limit);
-
-            final SearchResponse searchResponse = new SearchResponse();
-            searchResponse.setTokens(tokens);
-            searchResponse.setTotalPages(pages);
-            return searchResponse;
-        });
-    }
+//    /**
+//     * Default ordering is by ISSUED_ON date, in descending order so the most recent tokens are shown first.
+//     * If orderBy is specified but orderDirection is not this will default to ascending.
+//     * <p>
+//     * The user must have the 'Manage Users' permission to call this.
+//     */
+//    @Override
+//    public SearchResponse searchTokens(SearchRequest searchRequest) {
+//        // Create some vars to allow the rest of this method to be more succinct.
+//        int page = searchRequest.getPage();
+//        int limit = searchRequest.getLimit();
+//        String orderBy = searchRequest.getOrderBy();
+//        String orderDirection = searchRequest.getOrderDirection();
+//        Map<String, String> filters = searchRequest.getFilters();
+//
+//        // Use a default if there's no order direction specified in the request
+//        if (orderDirection == null) {
+//            orderDirection = "asc";
+//        }
+//
+//        // Special cases
+//        SortField<?>[] orderByField;
+//        if (orderBy != null && orderBy.equals("userEmail")) {
+//            // Why is this a special case? Because the property on the target table is 'email' but the param is 'user_email'
+//            // 'user_email' is a clearer param
+//            if (orderDirection.equals("asc")) {
+//                orderByField = new SortField[]{ACCOUNT.USER_ID.asc()};
+//            } else {
+//                orderByField = new SortField[]{ACCOUNT.USER_ID.desc()};
+//            }
+//        } else {
+//            orderByField = getOrderBy(orderBy, orderDirection);
+//        }
+//
+//        final List<Condition> conditions = getConditions(filters);
+//        final int offset = limit * page;
+//
+//        return JooqUtil.contextResult(authDbConnProvider, context -> {
+//            final List<Token> tokens = context
+//                    .select(
+//                            TOKEN.ID,
+//                            TOKEN.VERSION,
+//                            TOKEN.CREATE_TIME_MS,
+//                            TOKEN.UPDATE_TIME_MS,
+//                            TOKEN.CREATE_USER,
+//                            TOKEN.UPDATE_USER,
+//                            ACCOUNT.USER_ID,
+//                            TOKEN_TYPE.TYPE,
+//                            TOKEN.DATA,
+//                            TOKEN.EXPIRES_ON_MS,
+//                            TOKEN.COMMENTS,
+//                            TOKEN.ENABLED)
+//                    .from(TOKEN
+//                            .join(TOKEN_TYPE)
+//                            .on(TOKEN.FK_TOKEN_TYPE_ID.eq(TOKEN_TYPE.ID))
+//                            .join(ACCOUNT)
+//                            .on(TOKEN.FK_ACCOUNT_ID.eq(ACCOUNT.ID)))
+//                    .where(conditions)
+//                    .orderBy(orderByField)
+//                    .limit(limit)
+//                    .offset(offset)
+//                    .fetch()
+//                    .map(RECORD_TO_TOKEN_MAPPER::apply);
+//
+//
+//            // Finally we need to get the number of tokens so we can calculate the total number of pages
+//            final int count = context
+//                    .selectCount()
+//                    .from(TOKEN
+//                            .join(TOKEN_TYPE)
+//                            .on(TOKEN.FK_TOKEN_TYPE_ID.eq(TOKEN_TYPE.ID))
+//                            .join(ACCOUNT)
+//                            .on(TOKEN.FK_ACCOUNT_ID.eq(ACCOUNT.ID)))
+//                    .where(conditions)
+//                    .fetchOptional()
+//                    .map(Record1::value1)
+//                    .orElse(0);
+//
+//            // We need to round up so we always have enough pages even if there's a remainder.
+//            int pages = (int) Math.ceil((double) count / limit);
+//
+//            final SearchResponse searchResponse = new SearchResponse();
+//            searchResponse.setTokens(tokens);
+//            searchResponse.setTotalPages(pages);
+//            return searchResponse;
+//        });
+//    }
 
     @Override
     public int deleteAllTokensExceptAdmins() {
         final Integer adminUserId = JooqUtil.contextResult(authDbConnProvider, context -> context
                 .select(ACCOUNT.ID).from(ACCOUNT)
-                .where(ACCOUNT.EMAIL.eq("admin"))
+                .where(ACCOUNT.USER_ID.eq("admin"))
                 .fetchOne()
                 .map(r -> r.get(ACCOUNT.ID)));
 
@@ -238,6 +384,7 @@ class TokenDaoImpl implements TokenDao {
                         TOKEN.UPDATE_TIME_MS,
                         TOKEN.CREATE_USER,
                         TOKEN.UPDATE_USER,
+                        ACCOUNT.USER_ID,
                         ACCOUNT.EMAIL,
                         TOKEN_TYPE.TYPE,
                         TOKEN.DATA,
@@ -263,6 +410,7 @@ class TokenDaoImpl implements TokenDao {
                         TOKEN.UPDATE_TIME_MS,
                         TOKEN.CREATE_USER,
                         TOKEN.UPDATE_USER,
+                        ACCOUNT.USER_ID,
                         ACCOUNT.EMAIL,
                         TOKEN_TYPE.TYPE,
                         TOKEN.DATA,
@@ -288,6 +436,7 @@ class TokenDaoImpl implements TokenDao {
                         TOKEN.UPDATE_TIME_MS,
                         TOKEN.CREATE_USER,
                         TOKEN.UPDATE_USER,
+                        ACCOUNT.USER_ID,
                         ACCOUNT.EMAIL,
                         TOKEN_TYPE.TYPE,
                         TOKEN.DATA,
@@ -309,81 +458,91 @@ class TokenDaoImpl implements TokenDao {
                 .update(TOKEN)
                 .set(TOKEN.ENABLED, enabled)
                 .set(TOKEN.UPDATE_TIME_MS, System.currentTimeMillis())
-                .set(TOKEN.UPDATE_USER, updatingAccount.getEmail())
+                .set(TOKEN.UPDATE_USER, updatingAccount.getUserId())
                 .where(TOKEN.ID.eq((tokenId)))
                 .execute());
     }
 
-    /**
-     * How do we match on dates? Must match exactly? Must match part of the date? What if the given date is invalid?
-     * Is this what a user would want? Maybe they want greater than or less than? This would need additional UI
-     * For now we can't sensible implement anything unless we have a better idea of requirements.
-     */
-    private static List<Condition> getConditions(Map<String, String> filters) {
-        // We need to set up conditions
-        List<Condition> conditions = new ArrayList<>();
-        final String unsupportedFilterMessage = "Unsupported filter: ";
-        final String unknownFilterMessage = "Unknown filter: ";
-        if (filters != null) {
-            for (String key : filters.keySet()) {
-                Condition condition;
-                switch (key) {
-                    case "enabled":
-                        condition = TOKEN.ENABLED.eq(Boolean.valueOf(filters.get(key)));
-                        break;
-                    case "expiresOn":
-                    case "issuedOn":
-                    case "updatedOn":
-                    case "userId":
-                        throw new UnsupportedFilterException(unsupportedFilterMessage + key);
-                    case "userEmail":
-                        condition = ACCOUNT.EMAIL.contains(filters.get(key));
-                        break;
-                    case "issuedByUser":
-                        condition = TOKEN.CREATE_USER.eq(filters.get(key));
-                        break;
-                    case "token":
-                        // It didn't initially make sense that one might want to filter on token, because it's encrypted.
-                        // But if someone has a token copy/pasting some or all of it into the search might be the
-                        // fastest way to find the token.
-                        condition = TOKEN.DATA.contains(filters.get(key));
-                        break;
-                    case "tokenType":
-                        condition = TOKEN_TYPE.TYPE.eq(filters.get(key).toLowerCase());
-                        break;
-                    case "updatedByUser":
-                        condition = TOKEN.UPDATE_USER.eq(filters.get(key));
-                        break;
-                    default:
-                        throw new UnsupportedFilterException(unknownFilterMessage + key);
-                }
-
-                conditions.add(condition);
-            }
-        }
-        return conditions;
+    private Condition createCondition(final SearchTokenRequest request) {
+        Condition condition = null;
+//        if (request.getQuickFilter() != null) {
+//            condition = ACCOUNT.USER_ID.contains(request.getQuickFilter());
+//        }
+        return condition;
     }
 
-    static SortField<?>[] getOrderBy(String orderBy, String orderDirection) {
-        // We might be ordering by TOKEN or ACCOUNT or TOKEN_TYPE - we join and select on all
-        SortField<?> orderByField = TOKEN.CREATE_TIME_MS.desc();
-        if (orderBy != null) {
-            switch (orderBy) {
-                case "userEmail":
-                    orderByField = orderDirection.equals("asc") ? ACCOUNT.EMAIL.asc() : ACCOUNT.EMAIL.desc();
-                    break;
-                case "enabled":
-                    orderByField = orderDirection.equals("asc") ? TOKEN.ENABLED.asc() : TOKEN.ENABLED.desc();
-                    break;
-                case "tokenType":
-                    orderByField = orderDirection.equals("asc") ? TOKEN_TYPE.TYPE.asc() : TOKEN_TYPE.TYPE.desc();
-                    break;
-                case "issuedOn":
-                default:
-                    orderByField = orderDirection.equals("asc") ? TOKEN.CREATE_TIME_MS.asc() : TOKEN.CREATE_TIME_MS.desc();
-            }
-        }
-        return new SortField[]{orderByField};
-    }
+//    /**
+//     * How do we match on dates? Must match exactly? Must match part of the date? What if the given date is invalid?
+//     * Is this what a user would want? Maybe they want greater than or less than? This would need additional UI
+//     * For now we can't sensible implement anything unless we have a better idea of requirements.
+//     */
+//    private static List<Condition> getConditions(Map<String, String> filters) {
+//        // We need to set up conditions
+//        List<Condition> conditions = new ArrayList<>();
+//        final String unsupportedFilterMessage = "Unsupported filter: ";
+//        final String unknownFilterMessage = "Unknown filter: ";
+//        if (filters != null) {
+//            for (String key : filters.keySet()) {
+//                Condition condition;
+//                switch (key) {
+//                    case "enabled":
+//                        condition = TOKEN.ENABLED.eq(Boolean.valueOf(filters.get(key)));
+//                        break;
+//                    case "expiresOn":
+//                    case "issuedOn":
+//                    case "updatedOn":
+//                    case "userId":
+//                        condition = ACCOUNT.USER_ID.contains(filters.get(key));
+//                    case "userEmail":
+//                        condition = ACCOUNT.EMAIL.contains(filters.get(key));
+//                        break;
+//                    case "issuedByUser":
+//                        condition = TOKEN.CREATE_USER.eq(filters.get(key));
+//                        break;
+//                    case "token":
+//                        // It didn't initially make sense that one might want to filter on token, because it's encrypted.
+//                        // But if someone has a token copy/pasting some or all of it into the search might be the
+//                        // fastest way to find the token.
+//                        condition = TOKEN.DATA.contains(filters.get(key));
+//                        break;
+//                    case "tokenType":
+//                        condition = TOKEN_TYPE.TYPE.eq(filters.get(key).toLowerCase());
+//                        break;
+//                    case "updatedByUser":
+//                        condition = TOKEN.UPDATE_USER.eq(filters.get(key));
+//                        break;
+//                    default:
+//                        throw new UnsupportedFilterException(unknownFilterMessage + key);
+//                }
+//
+//                conditions.add(condition);
+//            }
+//        }
+//        return conditions;
+//    }
+//
+//    static SortField<?>[] getOrderBy(String orderBy, String orderDirection) {
+//        // We might be ordering by TOKEN or ACCOUNT or TOKEN_TYPE - we join and select on all
+//        SortField<?> orderByField = TOKEN.CREATE_TIME_MS.desc();
+//        if (orderBy != null) {
+//            switch (orderBy) {
+//                case "userId":
+//                    orderByField = orderDirection.equals("asc") ? ACCOUNT.USER_ID.asc() : ACCOUNT.USER_ID.desc();
+//                case "userEmail":
+//                    orderByField = orderDirection.equals("asc") ? ACCOUNT.EMAIL.asc() : ACCOUNT.EMAIL.desc();
+//                    break;
+//                case "enabled":
+//                    orderByField = orderDirection.equals("asc") ? TOKEN.ENABLED.asc() : TOKEN.ENABLED.desc();
+//                    break;
+//                case "tokenType":
+//                    orderByField = orderDirection.equals("asc") ? TOKEN_TYPE.TYPE.asc() : TOKEN_TYPE.TYPE.desc();
+//                    break;
+//                case "issuedOn":
+//                default:
+//                    orderByField = orderDirection.equals("asc") ? TOKEN.CREATE_TIME_MS.asc() : TOKEN.CREATE_TIME_MS.desc();
+//            }
+//        }
+//        return new SortField[]{orderByField};
+//    }
 
 }

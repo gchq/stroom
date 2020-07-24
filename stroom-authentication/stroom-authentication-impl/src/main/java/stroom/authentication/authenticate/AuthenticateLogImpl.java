@@ -33,7 +33,7 @@ public class AuthenticateLogImpl implements AuthenticateLog {
     }
 
     @Override
-    public void login(final LoginResult loginResult, final Throwable ex) {
+    public void login(final CredentialValidationResult result, final Throwable ex) {
 
 //            // Check the credentials
 //            switch (loginResult) {

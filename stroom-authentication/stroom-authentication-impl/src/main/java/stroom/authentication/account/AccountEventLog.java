@@ -22,7 +22,7 @@ import stroom.util.shared.ResultPage;
 public interface AccountEventLog {
     void list(ResultPage<Account> result, Throwable ex);
 
-    void search(String email, ResultPage<Account> result, Throwable ex);
+    void search(SearchAccountRequest request, ResultPage<Account> result, Throwable ex);
 
     void create(CreateAccountRequest request, Account result, Throwable ex);
 
@@ -30,7 +30,7 @@ public interface AccountEventLog {
 
     void read(String email, Account result, Throwable ex);
 
-    void update(Account account, int accountId, Throwable ex);
+    void update(UpdateAccountRequest request, int accountId, Throwable ex);
 
     void delete(int accountId, Throwable ex);
 }

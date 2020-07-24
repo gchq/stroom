@@ -114,11 +114,11 @@ public class AccountEventLogImpl implements AccountEventLog {
     }
 
     @Override
-    public void search(final String email, final ResultPage<Account> result, final Throwable ex) {
+    public void search(final SearchAccountRequest request, final ResultPage<Account> result, final Throwable ex) {
         securityContext.insecure(() -> {
             try {
                 final BaseAdvancedQueryOperator operator = new BaseAdvancedQueryOperator.And();
-                operator.getAdvancedQueryItems().add( EventLoggingUtil.createTerm("Email", TermCondition.EQUALS, email));
+                operator.getAdvancedQueryItems().add( EventLoggingUtil.createTerm("Email", TermCondition.EQUALS, request.getQuickFilter()));
 
                 final Query.Advanced advanced = new Query.Advanced();
                 advanced.getAdvancedQueryItems().add(operator);
@@ -178,7 +178,7 @@ public class AccountEventLogImpl implements AccountEventLog {
     }
 
     @Override
-    public void update(final Account account, final int accountId, final Throwable ex) {
+    public void update(final UpdateAccountRequest request, final int accountId, final Throwable ex) {
 //        stroomEventLoggingService.createAction("UpdateUser",
 //                "Toggle whether a token is enabled or not.");
     }
@@ -216,7 +216,7 @@ public class AccountEventLogImpl implements AccountEventLog {
         final Object object = new Object();
         object.setType("Account");
         object.setId(String.valueOf(account.getId()));
-        object.setName(account.getEmail());
+        object.setName(account.getUserId());
 //        object.setDescription(description);
 
         try {

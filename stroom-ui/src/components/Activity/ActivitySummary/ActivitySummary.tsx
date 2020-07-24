@@ -22,7 +22,7 @@ interface Props {
   value: string;
 }
 
-const ActivitySummary: React.FunctionComponent = () => {
+export const ActivitySummary: React.FunctionComponent = () => {
   const activity = useActivitySummary();
 
   return (
@@ -44,5 +44,3 @@ const ActivitySummary: React.FunctionComponent = () => {
     </button>
   );
 };
-
-export default ActivitySummary;

@@ -5,14 +5,18 @@ import java.net.URI;
 import java.util.Optional;
 
 public interface AuthenticationService {
-
     String UNAUTHORISED_URL_PATH = "/s/unauthorised";
-    String LOGIN_URL_PATH = "/s/login";
+    String SIGN_IN_URL_PATH = "/s/signIn";
+    String CONFIRM_PASSWORD_URL_PATH = "/s/confirmpassword";
     String CHANGE_PASSWORD_URL_PATH = "/s/changepassword";
+    String API_KEYS_URL_PATH = "/s/apiKeys";
+    String USERS_URL_PATH = "/s/users";
 
     Optional<AuthState> currentAuthState(HttpServletRequest request);
 
-    URI createLoginUri(String redirectUri);
+    URI createSignInUri(String redirectUri);
+
+    URI createConfirmPasswordUri(String redirectUri);
 
     URI createChangePasswordUri(String redirectUri);
 
@@ -20,5 +24,7 @@ public interface AuthenticationService {
         String getSubject();
 
         boolean isRequirePasswordChange();
+
+        long getLastCredentialCheckMs();
     }
 }

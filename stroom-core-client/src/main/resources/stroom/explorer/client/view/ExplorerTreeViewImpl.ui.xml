@@ -15,7 +15,7 @@
 
         .nameFilter {
         width: 100%;
-        border-bottom: none !important;
+        border: none !important;
         }
 
         .buttonContainer {

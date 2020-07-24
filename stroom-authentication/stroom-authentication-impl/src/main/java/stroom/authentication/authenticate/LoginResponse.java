@@ -1,57 +1,37 @@
 package stroom.authentication.authenticate;
 
+import com.fasterxml.jackson.annotation.JsonCreator;
+import com.fasterxml.jackson.annotation.JsonInclude;
+import com.fasterxml.jackson.annotation.JsonInclude.Include;
+import com.fasterxml.jackson.annotation.JsonProperty;
+
+@JsonInclude(Include.NON_NULL)
 public class LoginResponse {
-    private boolean loginSuccessful;
-    private String redirectUri;
-    private String message;
-    private int responseCode;
+    @JsonProperty
+    private final boolean loginSuccessful;
+    @JsonProperty
+    private final String message;
+    @JsonProperty
+    private final boolean requirePasswordChange;
 
-    public LoginResponse() {
-
-    }
-
-    public LoginResponse(final boolean loginSuccessful, String message, String redirectUri) {
+    @JsonCreator
+    public LoginResponse(@JsonProperty("loginSuccessful") final boolean loginSuccessful,
+                         @JsonProperty("message") final String message,
+                         @JsonProperty("requirePasswordChange") final boolean requirePasswordChange) {
         this.loginSuccessful = loginSuccessful;
-        this.redirectUri = redirectUri;
         this.message = message;
-    }
-
-    public LoginResponse(final boolean loginSuccessful, String message, String redirectUri, int responseCode) {
-        this.loginSuccessful = loginSuccessful;
-        this.redirectUri = redirectUri;
-        this.message = message;
-        this.responseCode = responseCode;
+        this.requirePasswordChange = requirePasswordChange;
     }
 
     public boolean isLoginSuccessful() {
         return loginSuccessful;
     }
 
-    public void setLoginSuccessful(boolean loginSuccessful) {
-        this.loginSuccessful = loginSuccessful;
-    }
-
-    public String getRedirectUri() {
-        return redirectUri;
-    }
-
-    public void setRedirectUri(String redirectUri) {
-        this.redirectUri = redirectUri;
-    }
-
     public String getMessage() {
         return message;
     }
 
-    public void setMessage(String message) {
-        this.message = message;
-    }
-
-    public int getResponseCode() {
-        return responseCode;
-    }
-
-    public void setResponseCode(int responseCode) {
-        this.responseCode = responseCode;
+    public boolean isRequirePasswordChange() {
+        return requirePasswordChange;
     }
 }

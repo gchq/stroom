@@ -13,7 +13,7 @@ export const SingleValueWidget: React.FunctionComponent<Props> = ({
   valueType,
 }) => {
   const handleChange = useCallback(
-    value => {
+    (value) => {
       onChange(value);
     },
     [onChange],

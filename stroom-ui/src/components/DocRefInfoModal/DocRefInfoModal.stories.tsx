@@ -22,7 +22,6 @@ import { DocRefInfoModal } from ".";
 import { useDocRefInfoDialog } from "./DocRefInfoModal";
 import Button from "../Button";
 import fullTestData from "testing/data";
-import { addThemedStories } from "testing/storybook/themedStoryGenerator";
 
 const testFolder1 = fullTestData.documentTree.children![0];
 
@@ -31,12 +30,10 @@ const TestHarness: React.FunctionComponent = () => {
 
   return (
     <div>
-      <Button text="show" onClick={() => showDialog(testFolder1)} />
+      <Button onClick={() => showDialog(testFolder1)}>show</Button>
       <DocRefInfoModal {...componentProps} />
     </div>
   );
 };
 
-const stories = storiesOf("Doc Ref/Info/Dialog", module);
-
-addThemedStories(stories, () => <TestHarness />);
+storiesOf("Doc Ref/Info", module).add("Dialog", () => <TestHarness />);

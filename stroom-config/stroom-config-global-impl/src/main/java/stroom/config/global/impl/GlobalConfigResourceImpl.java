@@ -1,5 +1,7 @@
 package stroom.config.global.impl;
 
+import stroom.authentication.authenticate.api.AuthenticationService;
+import stroom.config.common.UriFactory;
 import stroom.config.global.shared.ConfigProperty;
 import stroom.config.global.shared.ConfigPropertyValidationException;
 import stroom.config.global.shared.GlobalConfigCriteria;
@@ -10,7 +12,7 @@ import stroom.node.api.NodeCallUtil;
 import stroom.node.api.NodeInfo;
 import stroom.node.api.NodeService;
 import stroom.ui.config.shared.UiConfig;
-import stroom.ui.config.shared.UiPreferences;
+import stroom.ui.config.shared.UrlConfig;
 import stroom.util.jersey.WebTargetFactory;
 import stroom.util.logging.LogUtil;
 import stroom.util.rest.RestUtil;
@@ -36,23 +38,23 @@ public class GlobalConfigResourceImpl implements GlobalConfigResource {
     private final GlobalConfigService globalConfigService;
     private final NodeService nodeService;
     private final UiConfig uiConfig;
-    private final UiPreferences uiPreferences;
     private final NodeInfo nodeInfo;
     private final WebTargetFactory webTargetFactory;
+    private final UriFactory uriFactory;
 
     @Inject
     GlobalConfigResourceImpl(final GlobalConfigService globalConfigService,
                              final NodeService nodeService,
                              final UiConfig uiConfig,
-                             final UiPreferences uiPreferences,
                              final NodeInfo nodeInfo,
-                             final WebTargetFactory webTargetFactory) {
+                             final WebTargetFactory webTargetFactory,
+                             final UriFactory uriFactory) {
         this.globalConfigService = Objects.requireNonNull(globalConfigService);
         this.nodeService = Objects.requireNonNull(nodeService);
         this.uiConfig = uiConfig;
-        this.uiPreferences = uiPreferences;
         this.nodeInfo = Objects.requireNonNull(nodeInfo);
         this.webTargetFactory = webTargetFactory;
+        this.uriFactory = uriFactory;
     }
 
     @Timed
@@ -197,11 +199,15 @@ public class GlobalConfigResourceImpl implements GlobalConfigResource {
     @Timed
     @Override
     public UiConfig fetchUiConfig() {
-        return uiConfig;
-    }
+        // Temporary code to fix url paths.
+        if (uriFactory != null) {
+            final UrlConfig urlConfig = new UrlConfig(
+                    uriFactory.uiUri(AuthenticationService.USERS_URL_PATH).toString(),
+                    uriFactory.uiUri(AuthenticationService.API_KEYS_URL_PATH).toString(),
+                    uriFactory.uiUri(AuthenticationService.CHANGE_PASSWORD_URL_PATH).toString());
+            uiConfig.setUrl(urlConfig);
+        }
 
-    @Override
-    public UiPreferences uiPreferences() {
-        return uiPreferences;
+        return uiConfig;
     }
 }

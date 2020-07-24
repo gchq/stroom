@@ -49,7 +49,7 @@ const testCache: TestCache = {};
 server.get("*.hot-update.json").passthrough();
 
 // Build all the resources
-resources.forEach(r => r(server, apiUrl, testCache));
+resources.forEach((r) => r(server, apiUrl, testCache));
 
 export interface Props {
   testData: TestData;

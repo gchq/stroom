@@ -29,14 +29,14 @@ import DeletePipelineElement, {
   useDialog as useDeleteElementDialog,
 } from "./DeletePipelineElement";
 import { ElementDetails } from "./ElementDetails";
-import PipelineDisplay from "./PipelineDisplay";
+import { PipelineDisplay } from "./PipelineDisplay";
 import DocRefEditor from "../DocRefEditor";
 import { SwitchedDocRefEditorProps } from "../DocRefEditor/types";
 import usePipelineState from "./usePipelineState/usePipelineState";
 import { ButtonProps } from "components/Button/types";
 import HorizontalMainDetails from "components/HorizontalMainDetails";
 
-const PipelineEditor = ({ docRefUuid }: SwitchedDocRefEditorProps) => {
+export const PipelineEditor = ({ docRefUuid }: SwitchedDocRefEditorProps) => {
   const piplineStateProps = usePipelineState(docRefUuid);
   const {
     pipelineEditApi,
@@ -66,7 +66,7 @@ const PipelineEditor = ({ docRefUuid }: SwitchedDocRefEditorProps) => {
   const {
     showDialog: showDeleteElementDialog,
     componentProps: deleteElementComponentProps,
-  } = useDeleteElementDialog(elementIdToDelete => {
+  } = useDeleteElementDialog((elementIdToDelete) => {
     elementDeleted(elementIdToDelete);
   });
 
@@ -137,5 +137,3 @@ const PipelineEditor = ({ docRefUuid }: SwitchedDocRefEditorProps) => {
     </DocRefEditor>
   );
 };
-
-export default PipelineEditor;

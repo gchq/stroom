@@ -8,4 +8,4 @@ export default interface FsVolumeState {
   readonly bytesFree: number;
   readonly bytesTotal: number;
   readonly updateTimeMs: number;
-};
+}

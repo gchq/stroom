@@ -5,7 +5,9 @@ interface KeyHandlersByKey {
   [key: string]: KeyboardEventHandler;
 }
 
-const useOnKeyDown = (handlers: KeyHandlersByKey): KeyboardEventHandler => {
+export const useOnKeyDown = (
+  handlers: KeyHandlersByKey,
+): KeyboardEventHandler => {
   return React.useCallback(
     (e: React.KeyboardEvent) => {
       const handler = handlers[e.key];
@@ -15,5 +17,3 @@ const useOnKeyDown = (handlers: KeyHandlersByKey): KeyboardEventHandler => {
     [handlers],
   );
 };
-
-export default useOnKeyDown;

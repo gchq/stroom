@@ -18,7 +18,7 @@ import * as React from "react";
 /* import ExpressionOperator from "./ExpressionOperator"; */
 import { DataSourceType, ExpressionOperatorType } from "./types";
 import { LineContainer } from "../LineTo";
-import useToggle from "lib/useToggle";
+import { useToggle } from "lib/useToggle";
 /* import ReadOnlyExpressionOperator from "./ReadOnlyExpressionOperator"; */
 import ElbowDown from "../LineTo/lineCreators/ElbowDown";
 

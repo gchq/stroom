@@ -70,8 +70,9 @@ const NewElement: React.FunctionComponent<EnhancedProps> = ({
         className="Pipeline-element__type"
         onFocus={() => setHasFocus(true)}
         onBlur={() => setHasFocus(false)}
-        text={recycleData ? recycleData.id : element.type}
-      />
+      >
+        {recycleData ? recycleData.id : element.type}
+      </Button>
     </div>,
   );
 };

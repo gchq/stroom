@@ -15,7 +15,7 @@
  */
 
 import * as React from "react";
-import * as moment from "moment";
+import moment from "moment";
 
 export const LoginStatsCopy = ({
   lastLogin,
@@ -86,8 +86,7 @@ export const OnCopy = ({
     const onMoment = moment(on);
     return (
       <div className="copy">
-        <strong>{verb}</strong> {onMoment.from()}, at{" "}
-        {onMoment.format(dateFormat)}.{" "}
+        <strong>{verb}</strong> at {onMoment.format(dateFormat)}.{" "}
       </div>
     );
   } else {
@@ -96,11 +95,11 @@ export const OnCopy = ({
 };
 
 export const OnCopyMs = ({
-                         on,
-                         verb,
-                         dateFormat,
-                         fallbackCopy,
-                       }: {
+  on,
+  verb,
+  dateFormat,
+  fallbackCopy,
+}: {
   on: number;
   verb: string;
   dateFormat: string;
@@ -110,8 +109,7 @@ export const OnCopyMs = ({
     const onMoment = moment(on);
     return (
       <div className="copy">
-        <strong>{verb}</strong> {onMoment.from()}, at{" "}
-        {onMoment.format(dateFormat)}.{" "}
+        <strong>{verb}</strong> at {onMoment.format(dateFormat)}.{" "}
       </div>
     );
   } else {

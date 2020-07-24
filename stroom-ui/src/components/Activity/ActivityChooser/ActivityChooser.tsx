@@ -1,7 +1,7 @@
 import * as React from "react";
 
 import Button from "components/Button";
-import useAppNavigation from "lib/useAppNavigation";
+import { useAppNavigation } from "lib/useAppNavigation";
 import useActivities from "../api/useActivities";
 import Toggle from "react-toggle";
 import { useDialog as useThemedConfirmDialog } from "components/ThemedConfirm";
@@ -24,17 +24,13 @@ const ActivityChooser: React.FunctionComponent = () => {
     selectableTableProps: { selectedItems: selectedActivities },
   } = tableProps;
 
-  const onCreateClick: React.MouseEventHandler<
-    HTMLButtonElement
-  > = React.useCallback(() => {
+  const onCreateClick: React.MouseEventHandler<HTMLButtonElement> = React.useCallback(() => {
     if (selectedActivities.length === 1) {
       goToActivity(selectedActivities[0].id);
     }
   }, [goToActivity, selectedActivities]);
 
-  const onEditClick: React.MouseEventHandler<
-    HTMLButtonElement
-  > = React.useCallback(() => {
+  const onEditClick: React.MouseEventHandler<HTMLButtonElement> = React.useCallback(() => {
     if (selectedActivities.length === 1) {
       goToActivity(selectedActivities[0].id);
     }
@@ -59,25 +55,29 @@ const ActivityChooser: React.FunctionComponent = () => {
       <div className="page__header">
         <IconHeader text="Activities" icon="tasks" />
         <div className="page__buttons Button__container">
-          <Button onClick={onCreateClick} icon="plus" text="Create" />
+          <Button onClick={onCreateClick} icon="plus">
+            Create
+          </Button>
           <Button
             disabled={selectedActivities.length !== 1}
             onClick={onEditClick}
             icon="edit"
-            text="Edit"
-          />
+          >
+            Edit
+          </Button>
           <Button
             disabled={selectedActivities.length !== 1}
             onClick={onDeleteClick}
             icon="trash"
-            text="Delete"
-          />
+          >
+            Delete
+          </Button>
           <div className="UserSearch-filteringToggle">
             <label>Show filtering</label>
             <Toggle
               icons={false}
               checked={filterable}
-              onChange={event => setFilteringEnabled(event.target.checked)}
+              onChange={(event) => setFilteringEnabled(event.target.checked)}
             />
           </div>
         </div>

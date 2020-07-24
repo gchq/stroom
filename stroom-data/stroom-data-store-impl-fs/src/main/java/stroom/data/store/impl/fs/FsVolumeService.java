@@ -23,7 +23,6 @@ import stroom.util.logging.LambdaLoggerFactory;
 import stroom.util.shared.Clearable;
 import stroom.util.shared.Flushable;
 import stroom.util.shared.ResultPage;
-import stroom.util.shared.Sort.Direction;
 
 import com.google.common.collect.ImmutableMap;
 
@@ -298,7 +297,7 @@ public class FsVolumeService implements EntityEvent.Handler, Clearable, Flushabl
         final List<FsVolume> volumes = new ArrayList<>();
 
         final FindFsVolumeCriteria findVolumeCriteria = FindFsVolumeCriteria.matchAll();
-        findVolumeCriteria.addSort(FindFsVolumeCriteria.FIELD_ID, Direction.ASCENDING, false);
+        findVolumeCriteria.addSort(FindFsVolumeCriteria.FIELD_ID, false, false);
         final List<FsVolume> volumeList = find(findVolumeCriteria).getValues();
         for (final FsVolume volume : volumeList) {
             FsVolumeState volumeState = updateVolumeState(volume);
@@ -414,7 +413,7 @@ public class FsVolumeService implements EntityEvent.Handler, Clearable, Flushabl
                     final boolean isEnabled = volumeConfig.isCreateDefaultStreamVolumesOnStart();
                     if (isEnabled) {
                         final FindFsVolumeCriteria findVolumeCriteria = FindFsVolumeCriteria.matchAll();
-                        findVolumeCriteria.addSort(FindFsVolumeCriteria.FIELD_ID, Direction.ASCENDING, false);
+                        findVolumeCriteria.addSort(FindFsVolumeCriteria.FIELD_ID, false, false);
                         final List<FsVolume> existingVolumes = doFind(findVolumeCriteria).getValues();
                         if (existingVolumes.size() == 0) {
 

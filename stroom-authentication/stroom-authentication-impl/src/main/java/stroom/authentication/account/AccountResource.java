@@ -24,6 +24,7 @@ import io.swagger.annotations.ApiOperation;
 import io.swagger.annotations.ApiParam;
 import stroom.util.shared.RestResource;
 import stroom.util.shared.ResultPage;
+import stroom.util.shared.filter.FilterFieldDefinition;
 
 import javax.servlet.http.HttpServletRequest;
 import javax.validation.constraints.NotNull;
@@ -35,15 +36,29 @@ import javax.ws.rs.PUT;
 import javax.ws.rs.Path;
 import javax.ws.rs.PathParam;
 import javax.ws.rs.Produces;
-import javax.ws.rs.QueryParam;
 import javax.ws.rs.core.Context;
 import javax.ws.rs.core.MediaType;
+import java.util.Arrays;
+import java.util.List;
 
 @Path("/account/v1")
 @Produces(MediaType.APPLICATION_JSON)
 @Consumes(MediaType.APPLICATION_JSON)
 @Api(description = "Stroom Account API", tags = {"Account"})
 public interface AccountResource extends RestResource {
+    FilterFieldDefinition FIELD_DEF_USER_ID = FilterFieldDefinition.defaultField("UserId");
+    FilterFieldDefinition FIELD_DEF_EMAIL = FilterFieldDefinition.qualifiedField(
+            "Email", "email");
+    FilterFieldDefinition FIELD_DEF_FIRST_NAME = FilterFieldDefinition.qualifiedField(
+            "FirstName", "firstName");
+    FilterFieldDefinition FIELD_DEF_LAST_NAME = FilterFieldDefinition.qualifiedField("LastName", "lastName");
+
+    List<FilterFieldDefinition> FIELD_DEFINITIONS = Arrays.asList(
+            FIELD_DEF_USER_ID,
+            FIELD_DEF_EMAIL,
+            FIELD_DEF_FIRST_NAME,
+            FIELD_DEF_LAST_NAME);
+
     @ApiOperation(
             value = "Get all accounts.",
             response = String.class,
@@ -58,13 +73,11 @@ public interface AccountResource extends RestResource {
             value = "Search for an account by email.",
             response = String.class,
             tags = {"Account"})
-    @GET
+    @POST
     @Path("search")
     @Timed
     @NotNull
-    ResultPage<Account> search(
-            @Context @NotNull HttpServletRequest httpServletRequest,
-            @QueryParam("email") String email);
+    ResultPage<Account> search(SearchAccountRequest request);
 
     @ApiOperation(
             value = "Create an account.",
@@ -100,7 +113,7 @@ public interface AccountResource extends RestResource {
     @NotNull
     Boolean update(
             @Context @NotNull HttpServletRequest httpServletRequest,
-            @ApiParam("account") @NotNull Account account,
+            @ApiParam("account") @NotNull UpdateAccountRequest request,
             @PathParam("id") int accountId);
 
     @ApiOperation(

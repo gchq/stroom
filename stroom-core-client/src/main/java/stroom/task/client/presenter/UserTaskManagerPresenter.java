@@ -32,7 +32,6 @@ import stroom.task.shared.TaskProgressResponse;
 import stroom.task.shared.TaskResource;
 import stroom.task.shared.TerminateTaskProgressRequest;
 import stroom.util.shared.ResultPage;
-import stroom.util.shared.Sort.Direction;
 import stroom.widget.popup.client.event.HidePopupEvent;
 import stroom.widget.popup.client.event.ShowPopupEvent;
 import stroom.widget.popup.client.presenter.DefaultPopupUiHandlers;
@@ -97,7 +96,7 @@ public class UserTaskManagerPresenter
         };
 
         criteria = new FindTaskProgressCriteria();
-        criteria.setSort(FindTaskProgressCriteria.FIELD_AGE, Direction.DESCENDING, false);
+        criteria.setSort(FindTaskProgressCriteria.FIELD_AGE, true, false);
     }
 
     @ProxyEvent

@@ -16,7 +16,7 @@ const Step4: React.FunctionComponent<Props> = ({ cars, loadCars }) => {
     [],
   );
 
-  const carModels: string[] = React.useMemo(() => cars.map(c => c.model), [
+  const carModels: string[] = React.useMemo(() => cars.map((c) => c.model), [
     cars,
   ]);
 

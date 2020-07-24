@@ -1,9 +1,5 @@
 package stroom.index.impl.db;
 
-import org.jooq.Condition;
-import org.jooq.Field;
-import org.jooq.OrderField;
-import org.jooq.Record;
 import stroom.db.util.GenericDao;
 import stroom.db.util.JooqUtil;
 import stroom.index.impl.IndexShardDao;
@@ -16,8 +12,13 @@ import stroom.index.shared.IndexShard;
 import stroom.index.shared.IndexShard.IndexShardStatus;
 import stroom.index.shared.IndexShardKey;
 import stroom.index.shared.IndexVolume;
-import stroom.util.shared.Selection;
 import stroom.util.shared.ResultPage;
+import stroom.util.shared.Selection;
+
+import org.jooq.Condition;
+import org.jooq.Field;
+import org.jooq.OrderField;
+import org.jooq.Record;
 
 import javax.inject.Inject;
 import java.util.Collection;
@@ -283,6 +284,9 @@ class IndexShardDaoImpl implements IndexShardDao {
                 .set(INDEX_SHARD.COMMIT_MS, commitMs)
                 .set(INDEX_SHARD.FILE_SIZE, fileSize)
                 .where(INDEX_SHARD.ID.eq(id))
+                .and(INDEX_SHARD.DOCUMENT_COUNT.ne(documentCount)
+                        .or(INDEX_SHARD.FILE_SIZE.ne(fileSize))
+                )
                 .execute());
     }
 

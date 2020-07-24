@@ -17,12 +17,9 @@
 import { storiesOf } from "@storybook/react";
 import * as React from "react";
 import JsonDebug from "testing/JsonDebug";
-import { addThemedStories } from "testing/storybook/themedStoryGenerator";
 import { DataRetentionRule } from "../types/DataRetentionRule";
 import DataRetentionRuleList from "./DataRetentionRuleList";
 import { useCallback } from "react";
-
-const stories = storiesOf("Sections/DataRetention/List", module);
 
 // These are out of order in this list because they should be
 // correctly ordered by ruleNumber the component
@@ -99,9 +96,9 @@ const rules1: DataRetentionRule[] = [
   },
 ];
 
-addThemedStories(stories, () => {
+storiesOf("Sections/DataRetention", module).add("List", () => {
   const [rules, setRules] = React.useState<DataRetentionRule[]>(rules1);
-  const onRulesChange = useCallback(rules => setRules(rules), [setRules]);
+  const onRulesChange = useCallback((rules) => setRules(rules), [setRules]);
   return (
     <div>
       <DataRetentionRuleList value={rules} onChange={onRulesChange} />

@@ -1,5 +1,5 @@
 import * as React from "react";
-import * as jwtDecode from "jwt-decode";
+import jwtDecode from "jwt-decode";
 
 import useHttpQueryParam from "lib/useHttpQueryParam";
 

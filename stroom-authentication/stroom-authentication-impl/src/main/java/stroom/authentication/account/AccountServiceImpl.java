@@ -1,54 +1,50 @@
 package stroom.authentication.account;
 
+import stroom.authentication.authenticate.PasswordValidator;
+import stroom.authentication.config.AuthenticationConfig;
 import stroom.security.api.SecurityContext;
-import stroom.util.shared.PermissionException;
 import stroom.security.shared.PermissionNames;
+import stroom.util.shared.PermissionException;
 import stroom.util.shared.ResultPage;
 
 import com.google.common.base.Strings;
-import org.apache.commons.lang3.tuple.Pair;
 
 import javax.inject.Inject;
-import javax.ws.rs.BadRequestException;
-import java.util.ArrayList;
 import java.util.Optional;
 
 public class AccountServiceImpl implements AccountService {
     private final AccountDao accountDao;
     private final SecurityContext securityContext;
+    private final AuthenticationConfig config;
 
     @Inject
     AccountServiceImpl(final AccountDao accountDao,
-                       final SecurityContext securityContext) {
+                       final SecurityContext securityContext,
+                       final AuthenticationConfig config) {
         this.accountDao = accountDao;
         this.securityContext = securityContext;
+        this.config = config;
     }
 
+    @Override
     public ResultPage<Account> list() {
         checkPermission();
-
         return accountDao.list();
     }
 
-    public ResultPage<Account> search(final String email) {
+    @Override
+    public ResultPage<Account> search(final SearchAccountRequest request) {
         checkPermission();
-
-        return accountDao.searchUsersForDisplay(email);
+        return accountDao.search(request);
     }
 
+    @Override
     public Account create(final CreateAccountRequest request) {
         checkPermission();
+        validateCreateRequest(request);
 
         // Validate
         final String userId = securityContext.getUserId();
-        Pair<Boolean, String> validationResults = isValidForCreate(request);
-        boolean isUserValid = validationResults.getLeft();
-        if (!isUserValid) {
-            throw new BadRequestException(validationResults.getRight());
-        }
-//        if (accountDao.exists(account.getEmail())) {
-//            throw new ConflictException(AccountValidationError.USER_ALREADY_EXISTS.getMessage());
-//        }
 
         final long now = System.currentTimeMillis();
 
@@ -59,6 +55,7 @@ public class AccountServiceImpl implements AccountService {
         account.setUpdateUser(userId);
         account.setFirstName(request.getFirstName());
         account.setLastName(request.getLastName());
+        account.setUserId(request.getUserId());
         account.setEmail(request.getEmail());
         account.setComments(request.getComments());
         account.setForcePasswordChange(request.isForcePasswordChange());
@@ -70,6 +67,7 @@ public class AccountServiceImpl implements AccountService {
         return accountDao.create(account, request.getPassword());
     }
 
+    @Override
     public Optional<Account> read(final int accountId) {
         final String loggedInUser = securityContext.getUserId();
 
@@ -77,7 +75,7 @@ public class AccountServiceImpl implements AccountService {
         if (optionalUser.isPresent()) {
             Account foundAccount = optionalUser.get();
             // We only need to check auth permissions if the user is trying to access a different user.
-            final boolean isUserAccessingThemselves = loggedInUser.equals(foundAccount.getEmail());
+            final boolean isUserAccessingThemselves = loggedInUser.equals(foundAccount.getUserId());
             boolean canManageUsers = securityContext.hasAppPermission(PermissionNames.MANAGE_USERS_PERMISSION);
             if (!isUserAccessingThemselves && !canManageUsers) {
                 throw new RuntimeException("Unauthorized");
@@ -86,13 +84,16 @@ public class AccountServiceImpl implements AccountService {
         return optionalUser;
     }
 
+    @Override
     public Optional<Account> read(final String email) {
         checkPermission();
         return accountDao.get(email);
     }
 
-    public void update(final Account account, final int accountId) {
+    @Override
+    public void update(final UpdateAccountRequest request, final int accountId) {
         checkPermission();
+        validateUpdateRequest(request);
 
 //        // Update Stroom user
 //        Optional<Account> optionalUser = accountDao.get(userId);
@@ -103,38 +104,54 @@ public class AccountServiceImpl implements AccountService {
 //        securityUserService.update(userToUpdate);
 
         final String loggedInUser = securityContext.getUserId();
+        final Account account = request.getAccount();
         account.setUpdateUser(loggedInUser);
         account.setUpdateTimeMs(System.currentTimeMillis());
         account.setId(accountId);
         accountDao.update(account);
 
+        // Change the account password if the update request includes a new password.
+        if (!Strings.isNullOrEmpty(request.getPassword()) && request.getPassword().equals(request.getConfirmPassword())) {
+            accountDao.changePassword(account.getUserId(), request.getPassword());
+        }
     }
 
+    @Override
     public void delete(final int accountId) {
         checkPermission();
         accountDao.delete(accountId);
     }
 
-    public static Pair<Boolean, String> isValidForCreate(final CreateAccountRequest account) {
-        ArrayList<AccountValidationError> validationErrors = new ArrayList<>();
-
-        if (account == null) {
-            validationErrors.add(AccountValidationError.NO_USER);
+    private void validateCreateRequest(final CreateAccountRequest request) {
+        if (request == null) {
+            throw new RuntimeException("Null request");
         } else {
-            if (Strings.isNullOrEmpty(account.getEmail())) {
-                validationErrors.add(AccountValidationError.NO_NAME);
+            if (Strings.isNullOrEmpty(request.getUserId())) {
+                throw new RuntimeException("No user id has been provided");
             }
 
-//            if (Strings.isNullOrEmpty(account.getPassword())) {
-//                validationErrors.add(AccountValidationError.NO_PASSWORD);
-//            }
+            if (request.getPassword() != null || request.getConfirmPassword() != null) {
+                PasswordValidator.validateLength(request.getPassword(), config.getPasswordPolicyConfig().getMinimumPasswordLength());
+                PasswordValidator.validateComplexity(request.getPassword(), config.getPasswordPolicyConfig().getPasswordComplexityRegex());
+                PasswordValidator.validateConfirmation(request.getPassword(), request.getConfirmPassword());
+            }
         }
+    }
 
-        String validationMessages = validationErrors.stream()
-                .map(AccountValidationError::getMessage)
-                .reduce((validationMessage1, validationMessage2) -> validationMessage1 + validationMessage2).orElse("");
-        boolean isValid = validationErrors.size() == 0;
-        return Pair.of(isValid, validationMessages);
+    private void validateUpdateRequest(final UpdateAccountRequest request) {
+        if (request == null) {
+            throw new RuntimeException("Null request");
+        } else {
+            if (request.getAccount() == null || request.getAccount().getId() == null) {
+                throw new RuntimeException("No user id has been provided");
+            }
+
+            if (request.getPassword() != null || request.getConfirmPassword() != null) {
+                PasswordValidator.validateLength(request.getPassword(), config.getPasswordPolicyConfig().getMinimumPasswordLength());
+                PasswordValidator.validateComplexity(request.getPassword(), config.getPasswordPolicyConfig().getPasswordComplexityRegex());
+                PasswordValidator.validateConfirmation(request.getPassword(), request.getConfirmPassword());
+            }
+        }
     }
 
     private void checkPermission() {

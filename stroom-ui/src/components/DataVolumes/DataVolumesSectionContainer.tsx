@@ -17,7 +17,7 @@ const DataVolumes: React.FunctionComponent = () => {
     <DataVolumesSection
       onVolumeAdd={() => createVolume()}
       onVolumeChange={(volume: FsVolume) => update(volume)}
-      onVolumeDelete={volume => deleteVolume(volume.id)}
+      onVolumeDelete={(volume) => deleteVolume(volume.id)}
       volumes={volumes}
       isLoading={isLoading}
     />

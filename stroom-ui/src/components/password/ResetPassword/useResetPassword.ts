@@ -1,9 +1,12 @@
 import { FormikBag } from "formik";
 import { useCallback } from "react";
-import { ChangePasswordResponse, ResetPasswordRequest } from "components/authentication/types";
-import useApi from "components/authentication";
 import { useRouter } from "lib/useRouter";
 import * as queryString from "query-string";
+import {
+  ChangePasswordResponse,
+  ResetPasswordRequest,
+} from "../../Authentication/api/types";
+import { useAuthenticationResource } from "../../Authentication/api";
 
 const useResetPassword = (): {
   submitPasswordChangeRequest: (
@@ -14,14 +17,17 @@ const useResetPassword = (): {
 } => {
   const { history } = useRouter();
   const {
-    submitPasswordChangeRequest: submitPasswordChangeRequestUsingApi,
+    changePassword: submitPasswordChangeRequestUsingApi,
     resetPassword: resetPasswordUsingApi,
-  } = useApi();
+  } = useAuthenticationResource();
   const submitPasswordChangeRequest = useCallback(
     (formData: any, formikBag: FormikBag<any, any>) => {
-      submitPasswordChangeRequestUsingApi(formData, formikBag).then(() =>
-        history.push("/s/confirmPasswordResetEmail"),
-      );
+      submitPasswordChangeRequestUsingApi({
+        userId: "sf",
+        currentPassword: "sdf",
+        newPassword: "szdf",
+        confirmNewPassword: "\fe",
+      }).then(() => history.push("/s/confirmPasswordResetEmail"));
     },
     [history, submitPasswordChangeRequestUsingApi],
   );
@@ -32,7 +38,6 @@ const useResetPassword = (): {
       resetPasswordUsingApi(resetPasswordRequest).then(
         (response: ChangePasswordResponse) => {
           if (response.changeSucceeded) {
-
             let redirectUri: string;
 
             if (!!router && !!router.location) {
@@ -47,17 +52,16 @@ const useResetPassword = (): {
             } else {
               console.error("No redirect URI available for redirect!");
             }
-
           } else {
-            const errorMessage = [];
-            if (response.failedOn.includes("COMPLEXITY")) {
-              errorMessage.push(
-                "Your new password does not meet the complexity requirements",
-              );
-            }
-            if (response.failedOn.includes("LENGTH")) {
-              errorMessage.push("Your new password is too short");
-            }
+            // const errorMessage = [];
+            // if (response.failedOn.includes("COMPLEXITY")) {
+            //   errorMessage.push(
+            //     "Your new password does not meet the complexity requirements",
+            //   );
+            // }
+            // if (response.failedOn.includes("LENGTH")) {
+            //   errorMessage.push("Your new password is too short");
+            // }
           }
         },
       );

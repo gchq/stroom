@@ -82,7 +82,7 @@ public class StreamAttributeMapResource implements RestResource {
             // Configure default criteria
             FindMetaCriteria criteria = new FindMetaCriteria();
             criteria.setPageRequest(new PageRequest(itemOffset, pageSize));
-            criteria.setSort(new Sort("Create Time", Sort.Direction.DESCENDING, false));
+            criteria.setSort(new Sort("Create Time", true, false));
 
             // Set status to unlocked
             ExpressionTerm expressionTerm = new ExpressionTerm("Status", Condition.EQUALS, "Unlocked");
@@ -114,7 +114,7 @@ public class StreamAttributeMapResource implements RestResource {
             // Configure default criteria
             FindMetaCriteria criteria = new FindMetaCriteria();
             criteria.setPageRequest(new PageRequest(itemOffset, pageSize));
-            criteria.setSort(new Sort("Create Time", Sort.Direction.DESCENDING, false));
+            criteria.setSort(new Sort("Create Time", true, false));
 
             //TODO disable this and have it as a default field
             // Set status to unlocked

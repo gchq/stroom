@@ -19,7 +19,7 @@ interface NameWithOnClick {
 const Step6: React.FunctionComponent<Props> = ({ names, onNameClick }) => {
   const namesWithOnClicks: NameWithOnClick[] = React.useMemo(
     () =>
-      names.map(name => ({
+      names.map((name) => ({
         name,
         onClick: () => onNameClick(name),
       })),

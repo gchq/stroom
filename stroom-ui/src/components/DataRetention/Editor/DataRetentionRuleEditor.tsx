@@ -15,7 +15,6 @@
  */
 
 import { Card, Button, Popconfirm, Tooltip, Switch } from "antd";
-import "antd/dist/antd.css";
 import ExpressionBuilder from "components/ExpressionBuilder";
 import InlineInput from "components/InlineInput/InlineInput";
 import { useMetaDataSource } from "components/MetaBrowser/api";
@@ -49,14 +48,14 @@ const DataRetentionRuleEditor: React.FunctionComponent<Props> = ({
     handleForeverChange,
   } = useHandlers(rule, onChange);
 
-  const handleDelete = useCallback(e => onDelete(e.target.value), [onDelete]);
+  const handleDelete = useCallback((e) => onDelete(e.target.value), [onDelete]);
   return (
     <Draggable
       draggableId={rule.ruleNumber.toString()}
       index={index}
       key={rule.ruleNumber.toString()}
     >
-      {provided => (
+      {(provided) => (
         <div
           {...provided.draggableProps}
           {...provided.dragHandleProps}
@@ -79,7 +78,11 @@ const DataRetentionRuleEditor: React.FunctionComponent<Props> = ({
                     cancelText="No"
                     placement="left"
                   >
-                    <Button shape="circle" icon="delete" type="danger" />
+                    <Button
+                      shape="circle"
+                      icon="delete"
+                      // type="danger"
+                    />
                   </Popconfirm>
                   <Tooltip
                     placement="rightBottom"

@@ -32,7 +32,6 @@ import stroom.util.logging.LambdaLoggerFactory;
 import stroom.util.servlet.SessionIdProvider;
 import stroom.util.shared.ResourcePaths;
 import stroom.util.shared.ResultPage;
-import stroom.util.shared.Sort.Direction;
 
 import javax.inject.Inject;
 import javax.ws.rs.WebApplicationException;
@@ -114,7 +113,7 @@ class TaskResourceImpl implements TaskResource {
             final String sessionId = sessionIdProvider.get();
             if (sessionId != null) {
                 final FindTaskProgressCriteria criteria = new FindTaskProgressCriteria();
-                criteria.setSort(FindTaskProgressCriteria.FIELD_AGE, Direction.DESCENDING, false);
+                criteria.setSort(FindTaskProgressCriteria.FIELD_AGE, true, false);
                 criteria.setSessionId(sessionId);
                 final FindTaskProgressRequest findTaskProgressRequest = new FindTaskProgressRequest(criteria);
                 return find(nodeName, findTaskProgressRequest);

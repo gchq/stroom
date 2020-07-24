@@ -12,11 +12,11 @@ export interface Form<T> {
   onUpdate: (updates: Partial<T>) => void;
   value: Partial<T>;
   useControlledInputProps: <FIELD_TYPE>(
-    s: keyof T,
+    s: string,
   ) => ControlledInput<FIELD_TYPE>;
-  useTextInput: (s: keyof T) => InputProps;
+  useTextInput: (s: string) => InputProps;
   useCheckboxInput: (
-    s: keyof T,
+    s: string,
   ) => {
     onChange: React.ChangeEventHandler<HTMLElement>;
     checked: any;

@@ -1,3 +1,5 @@
+@import "./colours";
+
 $themes: (
   light: (
     // Page
@@ -35,25 +37,25 @@ $themes: (
     raised-element__border: thin solid #fff,
 
     // Sidebar
-    sidebar__header-color: #fff,
-    sidebar__background-color: #01579B, // material light blue 900
-    menu-item__text-color: rgba(255,255,255,0.8),
+    sidebar__header-color: $white,
+    sidebar__background-color: $light-blue-500, // material light blue 900
+    menu-item__text-color: rgba($white,0.8),
     menu-item__background-color--focus--highlighted: rgba(2,136,209,0.3),
-    menu-item__text-color--focus--highlighted: #fff,
+    menu-item__text-color--focus--highlighted: $white,
     menu-item__background-color--focus--highlighted--hover: rgba(2,136,209,0.3),//rgba(24,94,144,0.4),
-    menu-item__text-color--focus--highlighted--hover: #fff,
+    menu-item__text-color--focus--highlighted--hover: $white,
     menu-item__background-color--focus--selected: rgba(2,136,209,0.9),
-    menu-item__text-color--focus--selected: #fff,
+    menu-item__text-color--focus--selected: $white,
     menu-item__background-color--focus--highlighted--selected: rgba(2,136,209,1), // material light blue 700
-    menu-item__text-color--focus--highlighted--selected: #fff,
+    menu-item__text-color--focus--highlighted--selected: $white,
     menu-item__background-color--hover: rgba(2,136,209,.2),//rgba(24,94,144,0.3),
-    menu-item__text-color--hover: #fff,
+    menu-item__text-color--hover: $white,
     menu-item__background-color--selected: rgba(2,136,209,.5),//rgba(24,94,144,0.6),
-    menu-item__text-color--selected: #fff,//#cacbcb,//#fff,
+    menu-item__text-color--selected: $white,
     menu-item__background-color--selected--hover: rgba(2,136,209,.6),//rgba(24,94,144,0.7),
     menu-item__text-color--selected--hover: #fff,//#cacbcb,//#fff,
 
-    border-color: rgba(0,0,0,0.1),
+    border-color: rgba($black,0.1),
 
     // Specific
     header__icon-color: #2185d0,
@@ -61,8 +63,23 @@ $themes: (
 
 
     // React table
-    odd-row__background-color: rgba(0,0,0,0.03),
-  ),
+    table__odd-row__background-color: rgba($black, .05),
+
+    // Dialog
+    dialog__border-color: rgba($black, .2),
+
+    // Status
+    ok: $blue-500,
+    warn: $bootstrap-warning,
+    error: $bootstrap-error,
+    fatal: $black,
+
+    // Form fields
+    primary: $blue-500,
+    valid: $bootstrap-success,
+    invalid: $bootstrap-error,
+    feedback: $bootstrap-error,
+),
   dark: (
     // Page
     page__background-color: #212121,
@@ -122,6 +139,21 @@ $themes: (
     header__icon-color: #2185d0,
 
     // React table
-    odd-row__background-color: rgba(0,0,0,0.2),
+    table__odd-row__background-colo: rgba(0,0,0,0.2),
+
+    // Dialog
+    dialog__border-color: rgba($black, .2),
+
+    // Status
+    ok: $blue-500,
+    warn: $bootstrap-warning,
+    error: $bootstrap-error,
+    fatal: $black,
+
+    // Form fields
+    primary: $blue-500,
+    valid: $bootstrap-success,
+    invalid: $bootstrap-error,
+    feedback: $red-200,
   )
 );

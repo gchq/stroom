@@ -21,6 +21,7 @@ import stroom.cluster.lock.mock.MockClusterLockModule;
 import stroom.collection.mock.MockCollectionModule;
 import stroom.data.retention.api.DataRetentionTracker;
 import stroom.dictionary.mock.MockWordListProviderModule;
+import stroom.docrefinfo.mock.MockDocRefInfoModule;
 import stroom.security.mock.MockSecurityContextModule;
 import stroom.test.common.util.db.DbTestModule;
 
@@ -44,15 +45,16 @@ class TestMetaRetentionTrackerDaoImpl {
     @BeforeEach
     void setup() {
         Guice.createInjector(
-            new MetaTestModule(),
-            new MetaDbModule(),
-            new MockClusterLockModule(),
-            new MockSecurityContextModule(),
-            new MockCollectionModule(),
-            new MockWordListProviderModule(),
-            new CacheModule(),
-            new DbTestModule())
-            .injectMembers(this);
+                new MetaTestModule(),
+                new MetaDbModule(),
+                new MockClusterLockModule(),
+                new MockSecurityContextModule(),
+                new MockCollectionModule(),
+                new MockDocRefInfoModule(),
+                new MockWordListProviderModule(),
+                new CacheModule(),
+                new DbTestModule())
+                .injectMembers(this);
 
         // Delete everything
         cleanup.clear();

@@ -106,14 +106,14 @@ public final class CompareUtil {
         Comparator<T> comparator = Comparator.comparingInt(dbTableStatus -> 1);
 
         for (final Sort sort : criteria.getSortList()) {
-            final String field = sort.getField();
+            final String field = sort.getId();
 
             Comparator<T> fieldComparator = fieldComparatorsMap.get(field);
 
             Objects.requireNonNull(fieldComparator,() ->
                 "Missing comparator for field " + field);
 
-            if (sort.getDirection().equals(Sort.Direction.DESCENDING)) {
+            if (sort.isDesc()) {
                 fieldComparator = fieldComparator.reversed();
             }
 

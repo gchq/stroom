@@ -560,7 +560,7 @@ class TestJsonSerialisation {
                 addType(stroomClasses, arg);
             }
 
-        } else if (clazz.getName().startsWith(PACKAGE_START)) {
+        } else if (clazz.getName().startsWith(PACKAGE_START) && !clazz.getName().contains("StroomDuration")) { // Non POJO
             // IF the class references sub classes then include those too.
             final JsonSubTypes jsonSubTypes = clazz.getAnnotation(JsonSubTypes.class);
             if (jsonSubTypes != null) {

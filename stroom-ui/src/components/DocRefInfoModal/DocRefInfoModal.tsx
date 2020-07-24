@@ -15,7 +15,7 @@
  */
 import * as React from "react";
 
-import ThemedModal from "../ThemedModal";
+import { ThemedModal, DialogContent } from "../ThemedModal";
 import IconHeader from "../IconHeader";
 import Button from "../Button";
 import { DocRefType } from "components/DocumentEditors/useDocumentApi/types/base";
@@ -37,13 +37,13 @@ const DocRefInfoModal: React.FunctionComponent<Props> = ({
   }
 
   return (
-    <ThemedModal
-      isOpen={isOpen}
-      onRequestClose={onCloseDialog}
-      header={<IconHeader icon="info" text="Document Information" />}
-      content={<DocRefInfoForm docRef={docRef} />}
-      actions={<Button onClick={onCloseDialog} text="Close" />}
-    />
+    <ThemedModal isOpen={isOpen} onRequestClose={onCloseDialog}>
+      <DialogContent
+        header={<IconHeader icon="info" text="Document Information" />}
+        content={<DocRefInfoForm docRef={docRef} />}
+        actions={<Button onClick={onCloseDialog}>Close</Button>}
+      />
+    </ThemedModal>
   );
 };
 

@@ -23,15 +23,14 @@ import {
 import ReactTable, { Column } from "react-table";
 import { TableOutProps } from "lib/useSelectableItemListing/types";
 
-// import * as moment from "moment";
+// import moment from "moment";
 // import { path } from "ramda";
 // import * as Mousetrap from "mousetrap";
 // import ReactTable from "react-table";
-// import "react-table/react-table.css";
 // import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
 
-// import useStreamAttributeMapApi from "components/MetaBrowser/api/streamAttributeMap/useApi";
-// import useDataApi from "api/data/useApi";
+// import useStreamAttributeMapApi from "components/MetaBrowser/api/streamAttributeMap/useAuthenticationApi";
+// import useDataApi from "api/data/useAuthenticationApi";
 
 // import Loader from "components/Loader";
 // import Button from "components/Button";
@@ -299,7 +298,7 @@ export const useTable = (
     {
       items: streams.streamAttributeMaps,
       getKey: React.useCallback(
-        d => `${(d && d.meta && d.meta.id) || "none"}`,
+        (d) => `${(d && d.meta && d.meta.id) || "none"}`,
         [],
       ),
       selectionBehaviour: SelectionBehaviour.SINGLE,
