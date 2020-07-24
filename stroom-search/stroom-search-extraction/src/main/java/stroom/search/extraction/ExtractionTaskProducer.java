@@ -175,6 +175,14 @@ class ExtractionTaskProducer extends TaskProducer {
         return Thread.currentThread().isInterrupted() || super.isComplete();
     }
 
+    protected final Queue<ExtractionRunnable> getTaskQueue() {
+        return taskQueue;
+    }
+
+    protected final Provider<ExtractionTaskHandler> getHandlerProvider(){
+        return handlerProvider;
+    }
+
     @Override
     protected Consumer<TaskContext> getNext() {
         ExtractionRunnable task = null;
@@ -210,16 +218,6 @@ class ExtractionTaskProducer extends TaskProducer {
             }
         }
         return completedEventMapping;
-    }
-
-    public void createAlertExtractionTask(final long streamId, final long[] sortedEventIds, DocRef extractionPipeline,
-                                          List<AlertDefinition> alertDefinitions, final Map<String, String> params, final Receiver receiver){
-        final ExtractionTask task = new ExtractionTask(streamId, sortedEventIds, extractionPipeline, receiver, alertDefinitions, params);
-        if (taskQueue.offer(new ExtractionRunnable(task, handlerProvider))){
-            LOGGER.debug("Created extraction task and submitted to queue");
-        } else {
-            LOGGER.error("Unable to submit extraction task for alert");
-        }
     }
 
     private int createTasks(final long streamId, final List<Event> events) {
@@ -263,7 +261,7 @@ class ExtractionTaskProducer extends TaskProducer {
         return eventIds;
     }
 
-    private static class ExtractionRunnable implements Consumer<TaskContext> {
+    static class ExtractionRunnable implements Consumer<TaskContext> {
         private final ExtractionTask task;
         private final Provider<ExtractionTaskHandler> handlerProvider;
 

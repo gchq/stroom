@@ -123,7 +123,7 @@ public class ExtractionDecoratorFactory {
     public Receiver createAlertExtractionTask(final Receiver receiver, final Receiver parentReceiver,
                                               final long streamId, final long[] sortedEventIds, DocRef extractionPipeline,
                                               List<AlertDefinition> alertDefinitions, final Map<String, String> params){
-        final ExtractionTaskProducer extractionTaskProducer = new ExtractionTaskProducer(
+        final AlertExtractionTaskProducer extractionTaskProducer = new AlertExtractionTaskProducer(
                 extractionTaskExecutor,
                 null,
                 parentReceiver,
