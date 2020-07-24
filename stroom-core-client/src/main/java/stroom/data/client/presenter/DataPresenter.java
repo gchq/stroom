@@ -63,8 +63,8 @@ public class DataPresenter extends MyPresenterWidget<DataPresenter.DataView> imp
     private static final ViewDataResource VIEW_DATA_RESOURCE = GWT.create(ViewDataResource.class);
 
     // TODO @AT These need to come from config
-    private static final long MAX_INITIAL_CHARS = 1_000L;
-    private static final long MAX_CHARS_PER_FETCH = 10_000L;
+    private static final long MAX_INITIAL_CHARS = 5_000L;
+    private static final long MAX_CHARS_PER_FETCH = 20_000L;
 
     private static final DataRange DEFAULT_DATA_RANGE = DataRange.from(0, MAX_INITIAL_CHARS);
 
@@ -1193,6 +1193,18 @@ public class DataPresenter extends MyPresenterWidget<DataPresenter.DataView> imp
                     .flatMap(result -> Optional.ofNullable(result.getTotalCharacterCount()))
                     .filter(RowCount::isExact)
                     .map(RowCount::getCount);
+        }
+
+        @Override
+        public Optional<Long> getTotalLines() {
+            return Optional.ofNullable(getLastResult())
+                    .map(AbstractFetchDataResult::getSourceLocation)
+                    .flatMap(SourceLocation::getOptDataRange)
+                    .filter(dataRange -> dataRange.getOptLocationFrom().isPresent()
+                            && dataRange.getOptLocationTo().isPresent())
+                    .map(dataRange -> dataRange.getLocationTo().getLineNo()
+                            - dataRange.getLocationFrom().getLineNo()
+                            + 1L); // line nos are inclusive, so add 1
         }
 
         @Override
