@@ -80,7 +80,6 @@ public class SearchResultOutputFilter extends AbstractSearchResultOutputFilter {
 
     private Val[] values;
     private Map<String, String> indexVals = new HashMap<>();
-    private String nsUri = null;
 
     @Inject
     SearchResultOutputFilter (final AlertManager alertManager, final LocationFactoryProxy locationFactory, final ErrorReceiverProxy errorReceiverProxy){
@@ -125,17 +124,7 @@ public class SearchResultOutputFilter extends AbstractSearchResultOutputFilter {
             indexVals.clear();
         }
 
-        if (isConfiguredForAlerting()) {
-            if (nsUri == null) {
-                nsUri = uri;
-            }
-            if (!nsUri.equals(uri)){
-                throw new IllegalStateException("Unable to process alerts from multiple XML namespaces," +
-                        " changed from " + nsUri + " to " + uri);
-            }
-        }
-
-        if (!isConfiguredForAlerting() || RECORDS.equals(localName)){
+        if (isConfiguredForAlerting() &&  !DATA.equals(localName)){
             super.startElement(uri, localName, qName, atts);
         }
     }
@@ -156,24 +145,33 @@ public class SearchResultOutputFilter extends AbstractSearchResultOutputFilter {
                    if (!rule.isDisabled()) {
                        CompiledFieldValue[] outputFields = extractAlert(rule, vals);
                        if (outputFields != null) {
-                           writeRecord(rule, outputFields);
+                           writeRecord(uri, qName, rule, outputFields);
                        }
                    }
                 }
-
             } else {
                 //Standard (typically dashboard populating) search extraction, pass onto consumers (e.g. dashboards)
                 consumer.accept(new Values(values));
                 values = null;
             }
+
         }
 
-        if (!isConfiguredForAlerting() || RECORDS.equals(localName)){
+        if (isConfiguredForAlerting() &&  !DATA.equals(localName)){
             super.endElement(uri, localName, qName);
+        }
+
+    }
+
+    @Override
+    public void characters(final char[] ch, final int start, final int length) throws SAXException {
+        //Extraction pipeline ends at this element if not alerting (i.e. interactive searching)
+        if (isConfiguredForAlerting()){
+            super.characters(ch, start, length);
         }
     }
 
-    private void createDataElement(String name, String value) throws SAXException{
+    private void createDataElement(String nsUri, String name, String value) throws SAXException{
         AttributesImpl attrs = new AttributesImpl();
         attrs.addAttribute("", NAME, NAME, "xs:string", name);
         attrs.addAttribute("", VALUE, VALUE, "xs:string", value);
@@ -181,7 +179,7 @@ public class SearchResultOutputFilter extends AbstractSearchResultOutputFilter {
         super.endElement(nsUri, DATA, DATA);
     }
 
-    private void writeRecord(AlertDefinition alertDefinition, CompiledFieldValue[] fieldVals) throws SAXException {
+    private void writeRecord(String nsUri, String recordsQName, AlertDefinition alertDefinition, CompiledFieldValue[] fieldVals) throws SAXException {
         if (fieldVals == null || fieldVals.length == 0) {
             return;
         }
@@ -194,11 +192,11 @@ public class SearchResultOutputFilter extends AbstractSearchResultOutputFilter {
         }
 
         LOGGER.debug("Creating an alert following filtering");
-        super.startElement(nsUri, RECORD, RECORD, new AttributesImpl());
+        super.startElement(nsUri, RECORD, recordsQName, new AttributesImpl());
 
-        createDataElement (AlertManager.DETECT_TIME_DATA_ELEMENT_NAME_ATTR, isoFormat.format(new Date()));
+        createDataElement (nsUri, AlertManager.DETECT_TIME_DATA_ELEMENT_NAME_ATTR, isoFormat.format(new Date()));
         for (String attrName : alertDefinition.getAttributes().keySet()){
-            createDataElement (attrName, alertDefinition.getAttributes().get(attrName));
+            createDataElement (nsUri, attrName, alertDefinition.getAttributes().get(attrName));
         }
 
         //Output all the dashboard fields
@@ -214,7 +212,7 @@ public class SearchResultOutputFilter extends AbstractSearchResultOutputFilter {
                 skipFields.add(fieldName);
                 if (fieldVal != null) {
                     String fieldValStr = fieldFormatter.format(fieldVals[index].getCompiledField().getField(), fieldVal);
-                    createDataElement(fieldName, fieldValStr);
+                    createDataElement(nsUri, fieldName, fieldValStr);
                 }
             }
             index++;
@@ -227,11 +225,11 @@ public class SearchResultOutputFilter extends AbstractSearchResultOutputFilter {
 
             for (String fieldName : toOutput) {
                 if (IndexConstants.STREAM_ID.equals(fieldName)){
-                    createDataElement(AlertManager.STREAM_ID_DATA_ELEMENT_NAME_ATTR, indexVals.get(fieldName));
+                    createDataElement(nsUri, AlertManager.STREAM_ID_DATA_ELEMENT_NAME_ATTR, indexVals.get(fieldName));
                 } else if (IndexConstants.EVENT_ID.equals(fieldName)){
-                    createDataElement(AlertManager.EVENT_ID_DATA_ELEMENT_NAME_ATTR, indexVals.get(fieldName));
+                    createDataElement(nsUri, AlertManager.EVENT_ID_DATA_ELEMENT_NAME_ATTR, indexVals.get(fieldName));
                 } else if (outputIndexFields) {
-                    createDataElement(additionalFieldsPrefix + fieldName, indexVals.get(fieldName));
+                    createDataElement(nsUri,additionalFieldsPrefix + fieldName, indexVals.get(fieldName));
                 }
             }
 
