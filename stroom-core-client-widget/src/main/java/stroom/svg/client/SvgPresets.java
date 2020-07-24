@@ -44,6 +44,7 @@ public final class SvgPresets {
     public static final SvgPreset FILTER = new SvgPreset("images/filter.svg", "Filter", true);
     public static final SvgPreset FOLDER = new SvgPreset("images/folder.svg", "Folder", true);
     public static final SvgPreset FOLDER_TREE = new SvgPreset("images/folder-tree.svg", "Folder Tree", true);
+    public static final SvgPreset FORMAT = new SvgPreset("images/format.svg", "Format & Indent", true);
     public static final SvgPreset GENERATE = new SvgPreset("images/generate.svg", "Auto-generate roll-up permutations", true);
     public static final SvgPreset HELP = new SvgPreset("images/help.svg", "Help", true);
     public static final SvgPreset HISTORY = new SvgPreset("images/history.svg", "History", false);
@@ -64,6 +65,7 @@ public final class SvgPresets {
     public static final SvgPreset PERMISSIONS = new SvgPreset("images/permissions.svg", "Permissions", true);
     public static final SvgPreset PROCESS = new SvgPreset("images/process.svg", "Process", false);
     public static final SvgPreset PROPERTIES = new SvgPreset("images/properties.svg", "Properties", true);
+    public static final SvgPreset RAW = new SvgPreset("images/raw.svg", "Raw", false);
     public static final SvgPreset REMOVE = new SvgPreset("images/remove.svg", "Remove", false);
     public static final SvgPreset RULESET = new SvgPreset("images/ruleset.svg", "Rule Set", true);
     public static final SvgPreset RUN = new SvgPreset("images/play-green.svg", "Run", true);
