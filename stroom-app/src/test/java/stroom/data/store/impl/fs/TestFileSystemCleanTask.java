@@ -142,6 +142,9 @@ class TestFileSystemCleanTask extends AbstractCoreIntegrationTest {
         }
     }
 
+    /**
+     * NOTE ERROR LOGGING "processDirectory() - Missing Files for..." is expected.
+     */
     @Test
     void testArchiveRemovedFile() {
         final String feedName = FileSystemTestUtil.getUniqueTestString();

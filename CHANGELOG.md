@@ -6,6 +6,8 @@ and this project adheres to [Semantic Versioning](http://semver.org/).
 
 ## [Unreleased]
 
+* Issue **#1310** : Improved file cleanup between tests.
+
 * Issue **#1533** : Improved meta data attribute value flushing to DB.
 
 * Issue **#1634** : `FileSystemClean` will now only examine active data volumes.

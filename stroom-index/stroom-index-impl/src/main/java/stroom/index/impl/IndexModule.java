@@ -49,7 +49,8 @@ public class IndexModule extends AbstractModule {
         bind(Indexer.class).to(IndexerImpl.class);
 
         GuiceUtil.buildMultiBinder(binder(), Clearable.class)
-                .addBinding(IndexStructureCacheImpl.class);
+                .addBinding(IndexStructureCacheImpl.class)
+                .addBinding(IndexVolumeServiceImpl.class);
 
         GuiceUtil.buildMultiBinder(binder(), EntityEvent.Handler.class)
                 .addBinding(IndexConfigCacheEntityEventHandler.class);
