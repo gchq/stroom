@@ -38,6 +38,7 @@ import stroom.security.shared.PermissionNames;
 import stroom.task.api.TaskContextFactory;
 import stroom.task.api.TaskManager;
 import stroom.util.date.DateUtil;
+import stroom.util.shared.ModelStringUtil;
 import stroom.util.shared.PageRequest;
 import stroom.util.shared.ResultPage;
 import stroom.util.time.TimePeriod;
@@ -675,7 +676,20 @@ public class MetaServiceImpl implements MetaService, Searchable {
 
             final List<MetaInfoSection.Entry> entries = new ArrayList<>();
             final List<String> sortedKeys = attributeMap.keySet().stream().sorted(Comparator.naturalOrder()).collect(Collectors.toList());
-            sortedKeys.forEach(key -> entries.add(new MetaInfoSection.Entry(key, attributeMap.get(key))));
+            sortedKeys.forEach(key -> {
+                final String value = attributeMap.get(key);
+                if (value != null) {
+                    if (MetaFields.DURATION.getName().equals(key)) {
+                        entries.add(new MetaInfoSection.Entry(key, convertDuration(value)));
+                    } else if (key.toLowerCase().contains("time")) {
+                        entries.add(new MetaInfoSection.Entry(key, convertTime(value)));
+                    } else if (key.toLowerCase().contains("size")) {
+                        entries.add(new MetaInfoSection.Entry(key, convertSize(value)));
+                    } else {
+                        entries.add(new MetaInfoSection.Entry(key, value));
+                    }
+                }
+            });
             sections.add(new MetaInfoSection("Attributes", entries));
 
             // Add additional data retention information.
@@ -683,6 +697,33 @@ public class MetaServiceImpl implements MetaService, Searchable {
         }
 
         return sections;
+    }
+
+    private String convertDuration(final String value) {
+        try {
+            return ModelStringUtil.formatDurationString(Long.parseLong(value));
+        } catch (RuntimeException e) {
+            // Ignore.
+        }
+        return value;
+    }
+
+    private String convertTime(final String value) {
+        try {
+            return DateUtil.createNormalDateTimeString(Long.parseLong(value));
+        } catch (RuntimeException e) {
+            // Ignore.
+        }
+        return value;
+    }
+
+    private String convertSize(final String value) {
+        try {
+            return ModelStringUtil.formatIECByteSizeString(Long.parseLong(value));
+        } catch (RuntimeException e) {
+            // Ignore.
+        }
+        return value;
     }
 
     @Override

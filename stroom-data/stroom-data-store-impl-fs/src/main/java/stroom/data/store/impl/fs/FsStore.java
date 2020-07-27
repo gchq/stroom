@@ -32,7 +32,6 @@ import stroom.meta.shared.Meta;
 import stroom.meta.shared.MetaFields;
 import stroom.meta.shared.Status;
 
-import event.logging.util.DateUtil;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -323,9 +322,9 @@ class FsStore implements Store, AttributeMapFactory {
 
         updateAttribute(target, MetaFields.FEED_NAME, meta.getFeedName());
         updateAttribute(target, MetaFields.TYPE_NAME, meta.getTypeName());
-        updateAttribute(target, MetaFields.CREATE_TIME, DateUtil.createNormalDateTimeString(meta.getCreateMs()));
+        updateAttribute(target, MetaFields.CREATE_TIME, String.valueOf(meta.getCreateMs()));
         if (meta.getEffectiveMs() != null) {
-            updateAttribute(target, MetaFields.EFFECTIVE_TIME, DateUtil.createNormalDateTimeString(meta.getEffectiveMs()));
+            updateAttribute(target, MetaFields.EFFECTIVE_TIME, String.valueOf(meta.getEffectiveMs()));
         }
     }
 

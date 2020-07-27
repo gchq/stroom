@@ -86,7 +86,7 @@ public class ProcessStatisticsFactory {
             return result;
         }
 
-        public ProcessStatistics substract(final ProcessStatistics stats) {
+        public ProcessStatistics subtract(final ProcessStatistics stats) {
             if (stats == null) {
                 return this;
             }
