@@ -6,6 +6,8 @@ and this project adheres to [Semantic Versioning](http://semver.org/).
 
 ## [Unreleased]
 
+* The `admin` account is now auto created if it doesn't exist.
+
 * Issue **#1310** : Improved file cleanup between tests.
 
 * Issue **#1533** : Improved meta data attribute value flushing to DB.
