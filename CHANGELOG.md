@@ -7,6 +7,8 @@ and this project adheres to [Semantic Versioning](http://semver.org/).
 
 ## [Unreleased]
 
+* Issue **#1756** : Fix for IdEnrichmentFilter where is attempts to change attribute values that already exist.
+
 
 ## [v6.1.8] - 2020-07-20
 
