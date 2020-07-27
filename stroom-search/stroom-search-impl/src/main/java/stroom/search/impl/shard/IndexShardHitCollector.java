@@ -34,12 +34,12 @@ class IndexShardHitCollector extends SimpleCollector {
     private final TaskContext taskContext;
     //an empty optional is used as a marker to indicate no more items will be added
     private final LinkedBlockingQueue<OptionalInt> docIdStore;
-    private final Tracker hitCount;
+    private final HitCount hitCount;
     private int docBase;
 
     IndexShardHitCollector(final TaskContext taskContext,
                            final LinkedBlockingQueue<OptionalInt> docIdStore,
-                           final Tracker hitCount) {
+                           final HitCount hitCount) {
         this.docIdStore = docIdStore;
         this.taskContext = taskContext;
         this.hitCount = hitCount;
@@ -60,7 +60,7 @@ class IndexShardHitCollector extends SimpleCollector {
 
         try {
             docIdStore.put(OptionalInt.of(docId));
-            info(() -> "Found " + hitCount.getHitCount() + " hits");
+            info(() -> "Found " + hitCount + " hits");
         } catch (final InterruptedException e) {
             // Continue to interrupt.
             info(() -> "Quitting...");
@@ -72,7 +72,7 @@ class IndexShardHitCollector extends SimpleCollector {
         }
 
         // Add to the hit count.
-        hitCount.incrementHitCount();
+        hitCount.increment();
     }
 
     private void info(final Supplier<String> message) {

@@ -4,7 +4,16 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](http://keepachangelog.com/) 
 and this project adheres to [Semantic Versioning](http://semver.org/).
 
+
 ## [Unreleased]
+
+* Issue **#1756** : Fix for IdEnrichmentFilter where is attempts to change attribute values that already exist.
+
+* Issue **#1741** : Fix for search hanging issue.
+
+* Issue **#1740** : `CombinedParser` now removes invalid XML 1.0 characters when `fixInvalidChars` is set and not XML 1.1.
+
+* Add `readTimeout` property to `HTTPAppender` 
 
 * Issue **#1747** : Nodes are now notified about changes to document permissions so that caches are cleared etc.
 

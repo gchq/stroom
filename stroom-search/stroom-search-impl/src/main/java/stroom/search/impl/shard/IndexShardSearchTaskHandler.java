@@ -134,7 +134,7 @@ public class IndexShardSearchTaskHandler {
             final LinkedBlockingQueue<OptionalInt> docIdStore = new LinkedBlockingQueue<>(maxDocIdQueueSize);
 
             // Create a collector.
-            final IndexShardHitCollector collector = new IndexShardHitCollector(parentTaskContext, docIdStore, task.getTracker());
+            final IndexShardHitCollector collector = new IndexShardHitCollector(parentTaskContext, docIdStore, task.getHitCount());
 
             try {
                 final SearcherManager searcherManager = indexShardSearcher.getSearcherManager();

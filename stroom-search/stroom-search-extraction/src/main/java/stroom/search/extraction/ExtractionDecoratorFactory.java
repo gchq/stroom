@@ -4,8 +4,12 @@ import stroom.dashboard.expression.v1.FieldIndexMap;
 import stroom.docref.DocRef;
 import stroom.meta.api.MetaService;
 import stroom.query.api.v2.Query;
+import stroom.search.coprocessor.Coprocessors;
 import stroom.search.coprocessor.Error;
-import stroom.search.coprocessor.*;
+import stroom.search.coprocessor.NewCoprocessor;
+import stroom.search.coprocessor.Receiver;
+import stroom.search.coprocessor.ReceiverImpl;
+import stroom.search.coprocessor.Values;
 import stroom.security.api.SecurityContext;
 import stroom.task.api.ExecutorProvider;
 import stroom.task.api.TaskContext;
@@ -99,6 +103,7 @@ public class ExtractionDecoratorFactory {
         });
 
         // Make a task producer that will create event data extraction tasks when requested by the executor.
+        final ExtractionProgressTracker tracker = new ExtractionProgressTracker();
         final ExtractionTaskProducer extractionTaskProducer = new ExtractionTaskProducer(
                 extractionTaskExecutor,
                 streamMapCreator,
@@ -110,7 +115,8 @@ public class ExtractionDecoratorFactory {
                 taskContextFactory,
                 parentContext,
                 extractionTaskHandlerProvider,
-                securityContext);
+                securityContext,
+                tracker);
 
         // Begin processing.
         return extractionTaskProducer.process();
