@@ -17,13 +17,18 @@
 
 package stroom.security.impl;
 
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 import stroom.security.api.DocumentPermissionService;
 import stroom.security.api.UserIdentity;
+import stroom.security.impl.event.AddPermissionEvent;
+import stroom.security.impl.event.ClearDocumentPermissionsEvent;
+import stroom.security.impl.event.PermissionChangeEventBus;
+import stroom.security.impl.event.RemovePermissionEvent;
 import stroom.security.shared.DocumentPermissionNames;
 import stroom.security.shared.DocumentPermissions;
 import stroom.security.shared.User;
+
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import javax.inject.Inject;
 import javax.inject.Singleton;
@@ -39,14 +44,17 @@ public class DocumentPermissionServiceImpl implements DocumentPermissionService 
 
     private final DocumentPermissionDao documentPermissionDao;
     private final UserDao userDao;
+    private final PermissionChangeEventBus permissionChangeEventBus;
     private final SecurityContextImpl securityContext;
 
     @Inject
     DocumentPermissionServiceImpl(final DocumentPermissionDao documentPermissionDao,
                                   final UserDao userDao,
+                                  final PermissionChangeEventBus permissionChangeEventBus,
                                   final SecurityContextImpl securityContext) {
         this.documentPermissionDao = documentPermissionDao;
         this.userDao = userDao;
+        this.permissionChangeEventBus = permissionChangeEventBus;
         this.securityContext = securityContext;
     }
 
@@ -81,30 +89,27 @@ public class DocumentPermissionServiceImpl implements DocumentPermissionService 
             throw e;
         }
 
-//        final String[] permissions = documentTypePermissions.getPermissions(document.getType());
         return new DocumentPermissions(docUuid, users, groups, userPermissions);
     }
-
-//    public UserDocumentPermissions getPermissionsForUser(final String userUuid) {
-//        return documentPermissionDao.getPermissionsForUser(userUuid);
-//    }
 
     public void addPermission(final String docUuid,
                               final String userUuid,
                               final String permission) {
         documentPermissionDao.addPermission(docUuid, userUuid, permission);
+        AddPermissionEvent.fire(permissionChangeEventBus, userUuid, docUuid, permission);
     }
 
     public void removePermission(final String docUuid,
                                  final String userUuid,
                                  final String permission) {
         documentPermissionDao.removePermission(docUuid, userUuid, permission);
+        RemovePermissionEvent.fire(permissionChangeEventBus, userUuid, docUuid, permission);
     }
 
     void clearDocumentPermissionsForUser(final String docUuid,
                                          final String userUuid) {
         documentPermissionDao.clearDocumentPermissionsForUser(docUuid, userUuid);
-
+        RemovePermissionEvent.fire(permissionChangeEventBus, userUuid, docUuid, null);
     }
 
     @Override
@@ -118,6 +123,8 @@ public class DocumentPermissionServiceImpl implements DocumentPermissionService 
                 documentPermissionDao.clearDocumentPermissions(docUuid);
             }
         }
+
+        ClearDocumentPermissionsEvent.fire(permissionChangeEventBus, docUuid);
     }
 
     @Override

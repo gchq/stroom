@@ -6,6 +6,8 @@ and this project adheres to [Semantic Versioning](http://semver.org/).
 
 ## [Unreleased]
 
+* Issue **#1747** : Nodes are now notified about changes to document permissions so that caches are cleared etc.
+
 * Issue **#1752** : Meta info tooltips now show appropriate units for values.
 
 * The `admin` account is now auto created if it doesn't exist.
