@@ -7,6 +7,9 @@ and this project adheres to [Semantic Versioning](http://semver.org/).
 
 ## [Unreleased]
 
+
+## [v6.1.9] - 2020-07-27
+
 * Issue **#1756** : Fix for IdEnrichmentFilter where is attempts to change attribute values that already exist.
 
 
@@ -2145,7 +2148,8 @@ and this project adheres to [Semantic Versioning](http://semver.org/).
 
 * Issue **#202** : Initial release of the new data retention policy functionality.
 
-[Unreleased]: https://github.com/gchq/stroom/compare/v6.1.8...6.1
+[Unreleased]: https://github.com/gchq/stroom/compare/v6.1.9...6.1
+[v6.1.9]: https://github.com/gchq/stroom/compare/v6.1.8...v6.1.9
 [v6.1.8]: https://github.com/gchq/stroom/compare/v6.1.7...v6.1.8
 [v6.1.7]: https://github.com/gchq/stroom/compare/v6.1.6...v6.1.7
 [v6.1.6]: https://github.com/gchq/stroom/compare/v6.1.5...v6.1.6
