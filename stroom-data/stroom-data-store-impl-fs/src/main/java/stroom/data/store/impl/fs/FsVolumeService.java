@@ -59,9 +59,6 @@ public class FsVolumeService implements EntityEvent.Handler, Clearable, Flushabl
     static final String ENTITY_TYPE = "FILE_SYSTEM_VOLUME";
     private static final DocRef EVENT_DOCREF = new DocRef(ENTITY_TYPE, null, null);
 
-//    public static final Path DEFAULT_VOLUMES_SUBDIR = Paths.get("volumes");
-//    public static final Path DEFAULT_STREAM_VOLUME_SUBDIR = Paths.get("defaultStreamVolume");
-
     private static final Map<String, FsVolumeSelector> volumeSelectorMap;
 
     private static final FsVolumeSelector DEFAULT_VOLUME_SELECTOR;
@@ -119,6 +116,13 @@ public class FsVolumeService implements EntityEvent.Handler, Clearable, Flushabl
             try {
                 if (pathString != null) {
                     Path path = Paths.get(pathString);
+                    if (Files.isDirectory(path)) {
+                        final long count = FileUtil.count(path);
+                        if (count > 0) {
+                            throw new IOException("Attempt to create volume in a directory that is not empty: " + path);
+                        }
+                    }
+
                     Files.createDirectories(path);
                     LOGGER.info(LambdaLogUtil.message("Creating volume in {}", pathString));
 
@@ -265,6 +269,23 @@ public class FsVolumeService implements EntityEvent.Handler, Clearable, Flushabl
 
     @Override
     public void clear() {
+        final List<FsVolume> volumeList = doFind(FindFsVolumeCriteria.matchAll()).getValues();
+        for (final FsVolume volume : volumeList) {
+            final String path = volume.getPath();
+            FileUtil.deleteDir(Paths.get(path));
+        }
+
+        // Delete default volumes.
+        final Optional<Path> defaultVolumesPath = getDefaultVolumesPath();
+        if (volumeConfig.getDefaultStreamVolumePaths() != null && defaultVolumesPath.isPresent()) {
+            LOGGER.info(() -> "Deleting default volumes");
+            String[] paths = volumeConfig.getDefaultStreamVolumePaths().split(",");
+            for (String path : paths) {
+                Path resolvedPath = defaultVolumesPath.get().resolve(path.trim());
+                FileUtil.deleteDir(resolvedPath);
+            }
+        }
+
         // Clear state between tests.
         currentVolumeList.set(null);
         createdDefaultVolumes = false;
@@ -416,14 +437,13 @@ public class FsVolumeService implements EntityEvent.Handler, Clearable, Flushabl
                         findVolumeCriteria.addSort(FindFsVolumeCriteria.FIELD_ID, false, false);
                         final List<FsVolume> existingVolumes = doFind(findVolumeCriteria).getValues();
                         if (existingVolumes.size() == 0) {
-
-                            if (volumeConfig.getDefaultStreamVolumePaths() != null) {
+                            final Optional<Path> defaultVolumesPath = getDefaultVolumesPath();
+                            if (defaultVolumesPath.isPresent() && volumeConfig.getDefaultStreamVolumePaths() != null) {
                                 LOGGER.info(() -> "Creating default volumes");
 
                                 String[] paths = volumeConfig.getDefaultStreamVolumePaths().split(",");
-                                for (String path : paths){
-                                    Path resolvedPath = getDefaultVolumesPath().get().resolve(path.trim());
-
+                                for (String path : paths) {
+                                    Path resolvedPath = defaultVolumesPath.get().resolve(path.trim());
                                     createVolume(resolvedPath);
                                 }
 
@@ -525,7 +545,6 @@ public class FsVolumeService implements EntityEvent.Handler, Clearable, Flushabl
             }
         }
     }
-
 
     private Optional<Path> getApplicationJarDir() {
         try {

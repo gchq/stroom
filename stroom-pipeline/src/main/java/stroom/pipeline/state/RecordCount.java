@@ -24,7 +24,7 @@ import java.util.concurrent.atomic.AtomicLong;
 public class RecordCount {
     private final AtomicLong readCount = new AtomicLong();
     private final AtomicLong writeCount = new AtomicLong();
-    private volatile long startMs;
+    private volatile long startMs = System.currentTimeMillis();
 
     public Incrementor getReadIncrementor() {
         return readCount::incrementAndGet;

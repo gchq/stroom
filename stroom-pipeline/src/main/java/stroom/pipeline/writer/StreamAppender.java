@@ -193,7 +193,7 @@ public class StreamAppender extends AbstractAppender {
             // Get current process statistics
             final ProcessStatistics processStatistics = ProcessStatisticsFactory.create(recordCount, errorReceiverProxy);
             // Diff the current statistics with the last captured statistics.
-            final ProcessStatistics currentStatistics = processStatistics.substract(lastProcessStatistics);
+            final ProcessStatistics currentStatistics = processStatistics.subtract(lastProcessStatistics);
             // Set the last statistics.
             lastProcessStatistics = processStatistics;
 

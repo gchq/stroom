@@ -30,8 +30,7 @@ public class PermissionChangeEventModule extends AbstractModule {
         // Ensure the multibinder is created.
         GuiceUtil.buildMultiBinder(binder(), PermissionChangeEvent.Handler.class);
 
-        RestResourcesBinder.create(binder())
-                .bind(PermissionChangeResourceImpl.class);
+        RestResourcesBinder.create(binder()).bind(PermissionChangeResourceImpl.class);
     }
 
     @Override
