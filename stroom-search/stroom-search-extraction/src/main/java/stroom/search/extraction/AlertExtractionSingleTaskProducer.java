@@ -81,13 +81,6 @@ class AlertExtractionSingleTaskProducer extends TaskProducer {
     }
 
     @Override
-    protected Runnable next() {
-        LOGGER.trace("Runnable requested for stream " + task.getStreamId() +
-                (taskSupplied.get()? " Repeat" : "First time"));
-        return super.next();
-    }
-
-    @Override
     public int compareTo(final TaskProducer o) {
         if (! (o instanceof AlertExtractionSingleTaskProducer)){
             return super.compareTo(o);
