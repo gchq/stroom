@@ -171,6 +171,10 @@ class ExtractionTaskProducer extends TaskProducer {
         return new ReceiverImpl(topic, parentReceiver.getErrorConsumer(), parentReceiver.getCompletionCountConsumer(), parentReceiver.getFieldIndexMap());
     }
 
+    protected void setTopicComplete(){
+        streamMapCreatorCompletionState.complete();
+    }
+
     protected boolean isComplete() {
         return Thread.currentThread().isInterrupted() || super.isComplete();
     }
@@ -273,7 +277,7 @@ class ExtractionTaskProducer extends TaskProducer {
         @Override
         public void accept(final TaskContext taskContext) {
             final ExtractionTaskHandler handler = handlerProvider.get();
-            LOGGER.debug("Starting extraction handler");
+            LOGGER.debug("Starting extraction handler for Stream " + task.getStreamId());
             handler.exec(taskContext, task);
         }
 

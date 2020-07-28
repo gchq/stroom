@@ -58,7 +58,8 @@ public abstract class TaskProducer implements Comparable<TaskProducer> {
      *
      * @return The next task to execute or null if no tasks are available at this time.
      */
-    final Runnable next() {
+    //todo replace final modifier on method
+     protected Runnable next() {
         Runnable runnable = null;
 
         final int count = threadsUsed.incrementAndGet();
@@ -76,12 +77,15 @@ public abstract class TaskProducer implements Comparable<TaskProducer> {
             } else {
                 final Consumer<TaskContext> consumer = tc -> {
                     try {
+                        LOGGER.trace("Producing a task of class " + task.getClass().getName());
                         task.accept(tc);
+                        LOGGER.trace("Task produced");
                     } catch (final Throwable e) {
                         LOGGER.debug(e.getMessage(), e);
                     } finally {
                         threadsUsed.decrementAndGet();
                         incrementTasksCompleted();
+                        LOGGER.trace("Now completed " + getTasksCompleted() + " with " + getRemainingTasks() + " remaining.");
                     }
                 };
 

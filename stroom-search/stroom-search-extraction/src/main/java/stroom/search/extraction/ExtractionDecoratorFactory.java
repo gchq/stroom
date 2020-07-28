@@ -2,11 +2,9 @@ package stroom.search.extraction;
 
 import stroom.alert.api.AlertDefinition;
 import stroom.dashboard.expression.v1.FieldIndexMap;
-import stroom.dashboard.shared.TableComponentSettings;
 import stroom.docref.DocRef;
 import stroom.meta.api.MetaService;
 import stroom.query.api.v2.Query;
-import stroom.query.api.v2.TableSettings;
 import stroom.search.coprocessor.Error;
 import stroom.search.coprocessor.*;
 import stroom.security.api.SecurityContext;
@@ -120,23 +118,18 @@ public class ExtractionDecoratorFactory {
         return extractionTaskProducer.process();
     }
 
-    public Receiver createAlertExtractionTask(final Receiver receiver, final Receiver parentReceiver,
+    public Receiver createAlertExtractionTask(final Receiver receiver,
                                               final long streamId, final long[] sortedEventIds, DocRef extractionPipeline,
                                               List<AlertDefinition> alertDefinitions, final Map<String, String> params){
-        final AlertExtractionTaskProducer extractionTaskProducer = new AlertExtractionTaskProducer(
+        final AlertExtractionSingleTaskProducer extractionTaskProducer =
+                new AlertExtractionSingleTaskProducer(streamId, sortedEventIds,
+                        extractionPipeline, receiver,
+                alertDefinitions, params,
                 extractionTaskExecutor,
-                null,
-                parentReceiver,
-                null,
-                extractionConfig.getMaxStoredDataQueueSize(),
-                extractionConfig.getMaxThreadsPerTask(),
-                executorProvider,
-                taskContextFactory,
-                taskContextFactory.currentContext(),
                 extractionTaskHandlerProvider,
-                securityContext);
-        extractionTaskProducer.createAlertExtractionTask(streamId, sortedEventIds,
-                extractionPipeline, alertDefinitions, params, receiver);
+                taskContextFactory,
+                taskContextFactory.currentContext());
+
         return extractionTaskProducer.process();
     }
 

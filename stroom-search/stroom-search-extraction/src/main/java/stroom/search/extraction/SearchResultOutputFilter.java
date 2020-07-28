@@ -79,6 +79,7 @@ public class SearchResultOutputFilter extends AbstractSearchResultOutputFilter {
     private final SimpleDateFormat isoFormat;
 
     private Val[] values;
+    private Attributes recordAtts;
     private Map<String, String> indexVals = new HashMap<>();
 
     @Inject
@@ -121,10 +122,9 @@ public class SearchResultOutputFilter extends AbstractSearchResultOutputFilter {
             }
         } else if (RECORD.equals(localName)) {
             values = new Val[fieldIndexes.size()];
+            recordAtts = atts;
             indexVals.clear();
-        }
-
-        if (isConfiguredForAlerting() &&  !DATA.equals(localName)){
+        } else if (isConfiguredForAlerting() &&  !DATA.equals(localName)){
             super.startElement(uri, localName, qName, atts);
         }
     }
@@ -155,9 +155,7 @@ public class SearchResultOutputFilter extends AbstractSearchResultOutputFilter {
                 values = null;
             }
 
-        }
-
-        if (isConfiguredForAlerting() &&  !DATA.equals(localName)){
+        } else if (isConfiguredForAlerting() &&  !DATA.equals(localName)){
             super.endElement(uri, localName, qName);
         }
 
@@ -191,8 +189,8 @@ public class SearchResultOutputFilter extends AbstractSearchResultOutputFilter {
             return;
         }
 
-        LOGGER.debug("Creating an alert following filtering");
-        super.startElement(nsUri, RECORD, recordsQName, new AttributesImpl());
+
+        super.startElement(nsUri, RECORD, recordsQName, recordAtts);
 
         createDataElement (nsUri, AlertManager.DETECT_TIME_DATA_ELEMENT_NAME_ATTR, isoFormat.format(new Date()));
         for (String attrName : alertDefinition.getAttributes().keySet()){
@@ -219,20 +217,25 @@ public class SearchResultOutputFilter extends AbstractSearchResultOutputFilter {
         }
 
 
-            //Output the standard index fields
-            Set<String> toOutput = indexVals.keySet();
-            toOutput.removeAll(skipFields);
+        //Output the standard index fields
+        Set<String> toOutput = indexVals.keySet();
+        toOutput.removeAll(skipFields);
 
-            for (String fieldName : toOutput) {
-                if (IndexConstants.STREAM_ID.equals(fieldName)){
-                    createDataElement(nsUri, AlertManager.STREAM_ID_DATA_ELEMENT_NAME_ATTR, indexVals.get(fieldName));
-                } else if (IndexConstants.EVENT_ID.equals(fieldName)){
-                    createDataElement(nsUri, AlertManager.EVENT_ID_DATA_ELEMENT_NAME_ATTR, indexVals.get(fieldName));
-                } else if (outputIndexFields) {
-                    createDataElement(nsUri,additionalFieldsPrefix + fieldName, indexVals.get(fieldName));
-                }
+        String streamId = "Unknown";
+        String eventId = "Unknown";
+        for (String fieldName : toOutput) {
+            if (IndexConstants.STREAM_ID.equals(fieldName)){
+                streamId = indexVals.get(fieldName);
+                createDataElement(nsUri, AlertManager.STREAM_ID_DATA_ELEMENT_NAME_ATTR, streamId);
+            } else if (IndexConstants.EVENT_ID.equals(fieldName)){
+                eventId = indexVals.get(fieldName);
+                createDataElement(nsUri, AlertManager.EVENT_ID_DATA_ELEMENT_NAME_ATTR, eventId);
+            } else if (outputIndexFields) {
+                createDataElement(nsUri,additionalFieldsPrefix + fieldName, indexVals.get(fieldName));
             }
+        }
 
+        LOGGER.debug("Creating an alert following filtering for event " + streamId + ":" + eventId);
 
         super.endElement(nsUri, RECORD, RECORD);
     }
