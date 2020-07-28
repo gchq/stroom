@@ -58,8 +58,7 @@ public abstract class TaskProducer implements Comparable<TaskProducer> {
      *
      * @return The next task to execute or null if no tasks are available at this time.
      */
-    //todo replace final modifier on method
-     protected Runnable next() {
+     final Runnable next() {
         Runnable runnable = null;
 
         final int count = threadsUsed.incrementAndGet();
