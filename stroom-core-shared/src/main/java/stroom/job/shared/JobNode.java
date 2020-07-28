@@ -39,8 +39,7 @@ public class JobNode implements HasAuditInfo {
     private boolean enabled;
 
     public JobNode() {
-        //Temp hack to simplfy debugging
-        taskLimit = 1;
+        taskLimit = 20;
     }
 
     public JobNode(final Integer id,
