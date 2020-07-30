@@ -23,10 +23,8 @@ import stroom.util.task.TaskWrapper;
 import javax.inject.Provider;
 import java.util.concurrent.atomic.AtomicInteger;
 
-public abstract class TaskProducer implements Comparable<TaskProducer> {
+public abstract class TaskProducer {
     private static final Logger LOGGER = LoggerFactory.getLogger(TaskProducer.class);
-
-    private final long now = System.currentTimeMillis();
 
     private final AtomicInteger threadsUsed = new AtomicInteger();
 
@@ -103,10 +101,5 @@ public abstract class TaskProducer implements Comparable<TaskProducer> {
 
     protected void signalAvailable() {
         taskExecutor.signalAll();
-    }
-
-    @Override
-    public int compareTo(final TaskProducer o) {
-        return Long.compare(now, o.now);
     }
 }

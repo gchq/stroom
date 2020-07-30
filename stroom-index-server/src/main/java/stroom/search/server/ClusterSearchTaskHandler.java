@@ -160,11 +160,10 @@ class ClusterSearchTaskHandler implements TaskHandler<ClusterSearchTask, NodeRes
         taskContext.info("Searching...");
         LOGGER.debug(() -> "Incoming search request:\n" + query.getExpression().toString());
 
+        // Create a monitor to terminate all sub tasks on completion.
+        final HasTerminate hasTerminate = new MonitorImpl(task.getMonitor());
         try {
             if (task.getShards().size() > 0) {
-                // Create a monitor to terminate all sub tasks on completion.
-                final HasTerminate hasTerminate = new MonitorImpl();
-
                 final AtomicLong allDocumentCount = new AtomicLong();
                 final Receiver rootReceiver = new ReceiverImpl(null, this, allDocumentCount::addAndGet, null);
                 final Receiver extractionReceiver = extractionDecoratorFactory.create(rootReceiver, task.getStoredFields(), coprocessors, query, allDocumentCount, hasTerminate);
@@ -190,12 +189,13 @@ class ClusterSearchTaskHandler implements TaskHandler<ClusterSearchTask, NodeRes
                     extractionCount = getMinExtractions(coprocessors.getSet());
                     documentCount = allDocumentCount.get();
                 }
-
-                LOGGER.debug(() -> "Complete");
-                hasTerminate.terminate();
             }
+
+            LOGGER.debug(() -> "Complete");
         } catch (final Exception pEx) {
             throw SearchException.wrap(pEx);
+        } finally {
+            hasTerminate.terminate();
         }
     }
 

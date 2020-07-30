@@ -7,6 +7,8 @@ and this project adheres to [Semantic Versioning](http://semver.org/).
 
 ## [Unreleased]
 
+* Issue **#1762** : Fix for search jobs that do not terminate correctly.
+
 
 ## [v6.1.9] - 2020-07-27
 
