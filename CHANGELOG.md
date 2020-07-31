@@ -7,6 +7,7 @@ and this project adheres to [Semantic Versioning](http://semver.org/).
 
 ## [Unreleased]
 
+* Issue **#1701** : Fix crash when alternative pipeline is selected/used for processing.
 
 ## [v7.0-beta.40] - 2020-07-27
 
