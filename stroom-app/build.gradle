@@ -257,9 +257,9 @@ tasks.getByPath(':stroom-app-gwt:gwtCompile').mustRunAfter test
 tasks.getByPath(':stroom-dashboard-gwt:gwtCompile').mustRunAfter test
 tasks.getByPath(':stroom-ui:copyYarnBuild').mustRunAfter test
 // Make sure GWT compilation doesn't run before processResources.
-tasks.getByPath(':stroom-app-gwt:gwtCompile').mustRunAfter processResources
-tasks.getByPath(':stroom-dashboard-gwt:gwtCompile').mustRunAfter processResources
-tasks.getByPath(':stroom-ui:copyYarnBuild').mustRunAfter processResources
+tasks.getByPath(':stroom-app-gwt:gwtClean').mustRunAfter processResources
+tasks.getByPath(':stroom-dashboard-gwt:gwtClean').mustRunAfter processResources
+tasks.getByPath(':stroom-ui:removeYarnBuild').mustRunAfter processResources
 
 run {
     //Ensure we have the latest kafka plugin jar available for runtime
