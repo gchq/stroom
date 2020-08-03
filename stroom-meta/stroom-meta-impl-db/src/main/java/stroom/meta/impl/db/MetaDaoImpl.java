@@ -58,6 +58,7 @@ import org.jooq.OrderField;
 import org.jooq.Record;
 import org.jooq.Record1;
 import org.jooq.Result;
+import org.jooq.Select;
 import org.jooq.Table;
 import org.jooq.impl.DSL;
 
@@ -414,7 +415,7 @@ class MetaDaoImpl implements MetaDao {
 
             final Set<Integer> usedValKeys = identifyExtendedAttributesFields(criteria.getExpression(), new HashSet<>());
 
-            if (usedValKeys.isEmpty()) {
+            if (usedValKeys.isEmpty() && !containsPipelineCondition (criteria.getExpression())) {
                 updateCount = JooqUtil.contextResult(metaDbConnProvider, context ->
                         context
                                 .update(meta)
@@ -423,12 +424,14 @@ class MetaDaoImpl implements MetaDao {
                                 .where(conditions)
                                 .execute());
             } else {
-                Condition extendedAttrCond = meta.ID.in(metaExpressionMapper.addJoins(
-                        DSL.select(meta.ID).from(meta),
+                Select ids = metaExpressionMapper.addJoins(
+                        DSL.select(meta.ID).
+                                from(meta).leftOuterJoin(metaProcessor).on(meta.PROCESSOR_ID.eq(metaProcessor.ID)),
                         meta.ID,
                         usedValKeys)
-                        .where(conditions).getResult()
-                );
+                        .where(conditions);
+
+                Condition extendedAttrCond = meta.ID.in(ids);
                 updateCount = JooqUtil.contextResult(metaDbConnProvider, context ->
                         context
                                 .update(meta)
@@ -440,6 +443,31 @@ class MetaDaoImpl implements MetaDao {
         }
         return updateCount;
     }
+
+    private boolean containsPipelineCondition(final ExpressionOperator expr) {
+        if (expr == null || expr.getChildren() == null)
+            return false;
+        for (ExpressionItem child : expr.getChildren()) {
+            if (child instanceof ExpressionTerm) {
+                ExpressionTerm term = (ExpressionTerm) child;
+
+                if (MetaFields.PIPELINE.getName().equals(term.getField())) {
+                    return true;
+                }
+            } else if (child instanceof ExpressionOperator) {
+                if (containsPipelineCondition((ExpressionOperator)child)){
+                    return true;
+                }
+            } else {
+                //Don't know what this is!
+                LOGGER.warn("Unknown ExpressionItem type " + child.getClass().getName() + " unable to optimise meta query");
+                //Allow search to succeed without optimisation
+                return true;
+            }
+        }
+        return false;
+    }
+
 
     private Condition getFilterCriteriaCondition(final FindDataRetentionImpactCriteria criteria) {
         final Condition filterCondition;
