@@ -261,7 +261,8 @@ else
       clean \
       build \
       buildDistribution \
-      "${extraBuildArgs[@]}"
+      "${extraBuildArgs[@]}" \
+      --scan -s
 
 # IF WE WANT TO SKIP SOME PARTS OF THE BUILD INCLUDE THESE LINES
 #      -x gwtCompile \
