@@ -1,11 +1,8 @@
 language: java
-install: skip
 
 os: linux
 dist: bionic
 jdk: openjdk12
-
-sudo: required #to ensure we get a VM rather than a container for more memory and for all the apt-get stuff
 
 env:
   global:
@@ -57,7 +54,8 @@ before_install:
   - export PATH="$HOME/.yarn/bin:$HOME/.config/yarn/global/node_modules/.bin:$PATH"
   - yarn --version
 
-install: echo "skip 'gradle assemble' step to speed up build"
+install: skip
+#install: echo "skip 'gradle assemble' step to speed up build"
 
 before_script: ./travis.before_script.sh
 
@@ -66,7 +64,6 @@ script: ./travis.script.sh
 deploy:
   # Deploy the swagger-ui content and swagger specs to gh-pages
   - provider: pages
-    skip_cleanup: true
     github_token: $GITHUB_TOKEN
     local_dir: gh-pages
     target_branch: gh-pages
@@ -87,7 +84,6 @@ deploy:
       - stroom-app/src/main/resources/ui/swagger/swagger.yaml
       - stroom-headless/build/libs/stroom-headless-all.jar
       - stroom-headless/build/libs/stroom-headless-all.jar.sha256
-    skip_cleanup: true
     on:
       tags: true
 
