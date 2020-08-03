@@ -118,7 +118,7 @@ ext.versions = [
         gwt               : '2.8.2',
         hikari            : '3.2.0',
         jooq              : '3.12.3',
-        junit_jupiter     : '5.6.0',
+        junit_jupiter     : '5.6.2',
         kafka             : '2.2.1', // CDH 6.3 uses kafka 2.2.1
         lucene            : '5.5.3',
         mockito           : '2.23.4',
@@ -431,6 +431,8 @@ subprojects {
     test {
         useJUnitPlatform()
 
+        maxParallelForks = Runtime.runtime.availableProcessors().intdiv(2) ?: 1
+
         // Report duration of tests that take over 1s
         afterTest { descriptor, result ->
             def durationSecs = (result.endTime - result.startTime) / 1000
@@ -446,8 +448,8 @@ subprojects {
                     && descriptor.className != null 
                     && result.resultType.toString() == "FAILURE") {
 
-                //test class failed so add its project info and test report file to a global list for
-                //processing at the end of the build
+                // test class failed so add its project info and test report file to a global list for
+                // processing at the end of the build
                 def reportFileName = "${reports.junitXml.destination}/TEST-${descriptor.className}.xml"
                 def reportFile = file(reportFileName)
                 def pair = new Tuple2("${project.name} ${descriptor.name}", reportFile)
@@ -455,7 +457,7 @@ subprojects {
             }
         }
 
-        //Use full logging for test exceptions so we can see where the failure occurred 
+        // Use full logging for test exceptions so we can see where the failure occurred
         testLogging {
             events "failed"
             exceptionFormat = 'full'
@@ -464,7 +466,7 @@ subprojects {
     }
 
     clean {
-        //clear out the 'out' dirs used by intelliJ
+        // clear out the 'out' dirs used by intelliJ
         delete "out"
     }
 
@@ -819,11 +821,6 @@ task clean() {
     dependsOn clearContentPackImportDir
     dependsOn clearContentPackDownloadDir
 }
-
-
-
-
-
 
 //import com.vanniktech.dependency.graph.generator.DependencyGraphGeneratorPlugin
 //import com.vanniktech.dependency.graph.generator.DependencyGraphGeneratorExtension.Generator

@@ -16,6 +16,7 @@
 
 package stroom.util.io;
 
+import java.io.BufferedOutputStream;
 import java.io.BufferedReader;
 import java.io.ByteArrayInputStream;
 import java.io.ByteArrayOutputStream;
@@ -221,7 +222,7 @@ public final class StreamUtil {
             }
             Files.createDirectories(file.getParent());
 
-            try (final OutputStream fos = Files.newOutputStream(file)) {
+            try (final OutputStream fos = new BufferedOutputStream(Files.newOutputStream(file))) {
                 streamToStream(inputStream, fos);
             }
         } catch (final IOException ioEx) {

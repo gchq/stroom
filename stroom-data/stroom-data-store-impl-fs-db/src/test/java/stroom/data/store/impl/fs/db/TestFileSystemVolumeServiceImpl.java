@@ -34,6 +34,7 @@ import stroom.util.io.FileUtil;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
+import org.junit.jupiter.api.io.TempDir;
 import org.mockito.junit.jupiter.MockitoExtension;
 import org.mockito.junit.jupiter.MockitoSettings;
 import org.mockito.quality.Strictness;
@@ -46,33 +47,36 @@ import static org.assertj.core.api.Assertions.assertThat;
 @ExtendWith(MockitoExtension.class)
 @MockitoSettings(strictness = Strictness.LENIENT)
 class TestFileSystemVolumeServiceImpl extends StroomUnitTest {
-    private static final Path DEFAULT_VOLUMES_PATH;
-    private static final Path DEFAULT_STREAM_VOLUME_PATH;
-
-    static {
-        DEFAULT_VOLUMES_PATH = FileUtil.getTempDir().resolve("volumes");
-        DEFAULT_STREAM_VOLUME_PATH = DEFAULT_VOLUMES_PATH.resolve("defaultStreamVolume");
-    }
-
-    private final FsVolume public1a = FsVolume.create(
-            FileUtil.getCanonicalPath(FileUtil.getTempDir().resolve("PUBLIC_1A")),
-            FsVolumeState.create(0, 1000));
-    private final FsVolume public1b = FsVolume.create(
-            FileUtil.getCanonicalPath(FileUtil.getTempDir().resolve("PUBLIC_1A")),
-            FsVolumeState.create(0, 1000));
-    private final FsVolume public2a = FsVolume.create(
-            FileUtil.getCanonicalPath(FileUtil.getTempDir().resolve("PUBLIC_2A")),
-            FsVolumeState.create(0, 1000));
-    private final FsVolume public2b = FsVolume.create(
-            FileUtil.getCanonicalPath(FileUtil.getTempDir().resolve("PUBLIC_2B")),
-            FsVolumeState.create(0, 1000));
-    //    private final SecurityContext securityContext = new MockSecurityContext();
-//    private FileSystemVolumeConfig volumeConfig = new FileSystemVolumeConfig();
+    //    private static final Path DEFAULT_VOLUMES_PATH;
+//    private static final Path DEFAULT_STREAM_VOLUME_PATH;
+//
+//    static {
+//        DEFAULT_VOLUMES_PATH = tempDir.resolve("volumes");
+//        DEFAULT_STREAM_VOLUME_PATH = DEFAULT_VOLUMES_PATH.resolve("defaultStreamVolume");
+//    }
+//
+//    private final FsVolume public1a = FsVolume.create(
+//            FileUtil.getCanonicalPath(tempDir.resolve("PUBLIC_1A")),
+//            FsVolumeState.create(0, 1000));
+//    private final FsVolume public1b = FsVolume.create(
+//            FileUtil.getCanonicalPath(tempDir.resolve("PUBLIC_1A")),
+//            FsVolumeState.create(0, 1000));
+//    private final FsVolume public2a = FsVolume.create(
+//            FileUtil.getCanonicalPath(tempDir.resolve("PUBLIC_2A")),
+//            FsVolumeState.create(0, 1000));
+//    private final FsVolume public2b = FsVolume.create(
+//            FileUtil.getCanonicalPath(tempDir.resolve("PUBLIC_2B")),
+//            FsVolumeState.create(0, 1000));
+//    //    private final SecurityContext securityContext = new MockSecurityContext();
+////    private FileSystemVolumeConfig volumeConfig = new FileSystemVolumeConfig();
     private FsVolumeService volumeService = null;
+
+    @TempDir
+    static Path tempDir;
 
     @BeforeEach
     void init() {
-        deleteDefaultVolumesDir();
+//        deleteDefaultVolumesDir();
 
 //        final List<FileVolume> volumeList = new ArrayList<>();
 //        volumeList.add(public1a);
@@ -93,7 +97,8 @@ class TestFileSystemVolumeServiceImpl extends StroomUnitTest {
                 new FsVolumeConfig(),
                 null,
                 null,
-                null);
+                null,
+                () -> tempDir);
 
 //        volumeService.volumeList = volumeList;
     }
@@ -107,6 +112,9 @@ class TestFileSystemVolumeServiceImpl extends StroomUnitTest {
         assertThat(list.size()).isZero();
 
         // Create
+        final FsVolume public1a = FsVolume.create(
+                FileUtil.getCanonicalPath(tempDir.resolve("PUBLIC_1A")),
+                FsVolumeState.create(0, 1000));
         FsVolume fileVolume = volumeService.create(public1a);
         fileVolume.setByteLimit(2000000L);
 
@@ -220,9 +228,9 @@ class TestFileSystemVolumeServiceImpl extends StroomUnitTest {
 //        assertThat(Files.exists(DEFAULT_INDEX_VOLUME_PATH)).isTrue();
 //        assertThat(Files.exists(DEFAULT_STREAM_VOLUME_PATH)).isTrue();
 //    }
-
-    private void deleteDefaultVolumesDir() {
-        FileUtil.deleteDir(DEFAULT_STREAM_VOLUME_PATH);
-        FileUtil.deleteDir(DEFAULT_VOLUMES_PATH);
-    }
+//
+//    private void deleteDefaultVolumesDir() {
+//        FileUtil.deleteDir(DEFAULT_STREAM_VOLUME_PATH);
+//        FileUtil.deleteDir(DEFAULT_VOLUMES_PATH);
+//    }
 }

@@ -127,6 +127,10 @@ task copyFilesForProxyDockerBuild() {
     }
 }
 tasks.build.dependsOn copyFilesForProxyDockerBuild
+
+test {
+    maxParallelForks = 1
+}
 //
 //war {
 //    exclude 'WEB-INF/lib/**'

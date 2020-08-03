@@ -25,7 +25,6 @@ import stroom.pipeline.refdata.store.RefStreamDefinition;
 import static org.assertj.core.api.Assertions.assertThat;
 
 class TestKeyValueMapKey {
-
     @Test
     void testEqualsAndHashcode() {
         KeyValueMapKey key1 = new KeyValueMapKey(

@@ -38,7 +38,12 @@ public class MetaDbModule extends AbstractFlyWayDbModule<MetaServiceConfig, Meta
         bind(MetaRetentionTrackerDao.class).to(MetaRetentionTrackerDaoImpl.class);
 
         GuiceUtil.buildMultiBinder(binder(), Clearable.class)
-                .addBinding(Cleanup.class);
+                .addBinding(MetaValueDaoImpl.class)
+                .addBinding(MetaKeyDaoImpl.class)
+                .addBinding(MetaDaoImpl.class)
+                .addBinding(MetaProcessorDaoImpl.class)
+                .addBinding(MetaTypeDaoImpl.class)
+                .addBinding(MetaFeedDaoImpl.class);
 
         LifecycleBinder.create(binder())
                 .bindShutdownTaskTo(MetaValueServiceFlush.class);

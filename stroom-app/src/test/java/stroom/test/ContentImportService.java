@@ -16,7 +16,7 @@ import java.util.List;
 /**
  * This class should be used when integration tests require stroom content that is available as
  * released content packs from the stroom-content git repo.
- *
+ * <p>
  * The setupSampleData gradle task should be used when you need stroom content for manual testing
  * inside stroom. See {@link SetupSampleData} for details.
  */
@@ -88,7 +88,6 @@ public class ContentImportService {
     }
 
     public void importContentPacks(final List<ContentPack> packs) {
-
         packs.forEach(pack -> {
             Path packPath = ContentPackDownloader.downloadContentPack(
                     pack.getNameAsStr(), pack.getVersion(), getContentPackDirPath());

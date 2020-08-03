@@ -18,8 +18,6 @@ package stroom.util.io;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import org.slf4j.MarkerFactory;
-import stroom.util.logging.LogUtil;
 
 import java.io.IOException;
 import java.nio.file.DirectoryStream;
@@ -28,7 +26,6 @@ import java.nio.file.FileVisitResult;
 import java.nio.file.Files;
 import java.nio.file.NotDirectoryException;
 import java.nio.file.Path;
-import java.nio.file.Paths;
 import java.nio.file.attribute.BasicFileAttributes;
 import java.nio.file.attribute.FileTime;
 import java.nio.file.attribute.PosixFilePermission;
@@ -45,110 +42,9 @@ public final class FileUtil {
     public static final int MKDIR_RETRY_COUNT = 2;
     public static final int MKDIR_RETRY_SLEEP_MS = 100;
     private static final Logger LOGGER = LoggerFactory.getLogger(FileUtil.class);
-    /**
-     * JVM wide temp dir
-     */
-    private volatile static Path tempDir = null;
 
     private FileUtil() {
         // Utility.
-    }
-
-    private static String getTempPath() {
-        return System.getProperty("java.io.tmpdir");
-    }
-
-    private static Path getInitialTempDir() {
-        final String pathString = getTempPath();
-        if (pathString == null) {
-            throw new RuntimeException("No temp path is specified");
-        }
-
-        final Path path = Paths.get(pathString);
-        if (!Files.exists(path)) {
-            try {
-                Files.createDirectory(path);
-            } catch (IOException e) {
-                LOGGER.error(MarkerFactory.getMarker("FATAL"), "Unable to create temp directory.", e);
-                throw new RuntimeException("Unable to create temp directory", e);
-            }
-        }
-
-        return path;
-    }
-
-    public static Path getTempDir() {
-        if (tempDir == null) {
-            synchronized (FileUtil.class) {
-                if (tempDir == null) {
-                    tempDir = getInitialTempDir();
-                    LOGGER.info("Setting FileUtil.tempDir to {}", tempDir.toAbsolutePath());
-                }
-            }
-        }
-
-        return tempDir;
-    }
-
-    /**
-     * Creates a new directory in the default temporary-file directory, using the given prefix to generate its name.
-     * The directory, if empty, will be deleted on a clean JVM exit.
-     * @param prefix The prefix for the new directory's name, e.g. createTempDir(this.getClass().getSimpleName());
-     * @return The path to the new temp directory
-     */
-    public static Path createTempDir(final String prefix) {
-        final Path tempDir;
-        try {
-            tempDir = Files.createTempDirectory(prefix);
-        } catch (IOException e) {
-            throw new RuntimeException(
-                    LogUtil.message("Error creating temporary directory with prefix {}", prefix), e);
-        }
-        // make the jvm delete the file on jvm exit
-        tempDir.toFile().deleteOnExit();
-        LOGGER.debug("Created temp directory {}", tempDir.toAbsolutePath().toString());
-        return tempDir;
-    }
-
-    public static void setTempDir(final Path tempDir) {
-        if (tempDir != null) {
-            if (FileUtil.tempDir == null
-                    || !tempDir.toAbsolutePath().normalize().equals(FileUtil.tempDir.toAbsolutePath().normalize())) {
-                LOGGER.info("Setting FileUtil.tempDir to {}", tempDir.toAbsolutePath().normalize());
-                FileUtil.tempDir = tempDir;
-            }
-        }
-    }
-
-    //    public static void useDevTempDir() {
-//        try {
-//            final Path tempDir = getTempDir();
-//
-//            final Path devDir = tempDir.resolve("dev");
-//            Files.createDirectories(devDir);
-//
-//            final String path = FileUtil.getCanonicalPath(devDir);
-//
-//            // Redirect the temp dir for dev.
-//
-//            StroomProperties.setOverrideProperty(StroomProperties.STROOM_TEMP, path, StroomProperties.Source.USER_CONF);
-//            // Also set the temp dir as a system property as EclipseDevMode
-//            // starts a new JVM and will forget this property otherwise.
-//            System.setProperty(StroomProperties.STROOM_TEMP, path);
-//
-//            LOGGER.info("Using temp dir '" + path + "'");
-//
-//            forgetTempDir();
-//
-//        } catch (final IOException e) {
-//            throw new UncheckedIOException(e);
-//        }
-//    }
-
-    public static void forgetTempDir() {
-        synchronized (FileUtil.class) {
-            tempDir = null;
-        }
     }
 
     public static boolean delete(final Path file) {

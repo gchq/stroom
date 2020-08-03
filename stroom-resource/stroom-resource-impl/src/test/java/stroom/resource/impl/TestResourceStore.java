@@ -16,8 +16,10 @@
 
 package stroom.resource.impl;
 
-import org.junit.jupiter.api.Test;
 import stroom.util.shared.ResourceKey;
+
+import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.io.TempDir;
 
 import java.io.IOException;
 import java.nio.file.Files;
@@ -26,9 +28,12 @@ import java.nio.file.Path;
 import static org.assertj.core.api.Assertions.assertThat;
 
 class TestResourceStore {
+    @TempDir
+    static Path tempDir;
+
     @Test
     void testSimple() throws IOException {
-        final ResourceStoreImpl resourceStore = new ResourceStoreImpl();
+        final ResourceStoreImpl resourceStore = new ResourceStoreImpl(() -> tempDir);
         resourceStore.execute();
 
         final ResourceKey key1 = resourceStore.createTempFile("TestResourceStore1.dat");

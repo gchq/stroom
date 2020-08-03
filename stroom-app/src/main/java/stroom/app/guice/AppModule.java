@@ -8,6 +8,8 @@ import stroom.config.app.AppConfigModule.ConfigHolder;
 import stroom.config.app.Config;
 import stroom.db.util.DbModule;
 import stroom.dropwizard.common.LogLevelInspector;
+import stroom.index.impl.IndexShardWriterExecutorProvider;
+import stroom.index.impl.IndexShardWriterExecutorProviderImpl;
 import stroom.lifecycle.impl.LifecycleServiceModule;
 import stroom.meta.statistics.impl.MetaStatisticsModule;
 import stroom.resource.impl.SessionResourceModule;
@@ -64,6 +66,7 @@ public class AppModule extends AbstractModule {
         install(new SQLStatisticSearchModule());
         install(new SessionResourceModule());
         install(new JerseyModule());
+        bind(IndexShardWriterExecutorProvider.class).to(IndexShardWriterExecutorProviderImpl.class);
 
         HasSystemInfoBinder.create(binder())
                 .bind(LogLevelInspector.class);

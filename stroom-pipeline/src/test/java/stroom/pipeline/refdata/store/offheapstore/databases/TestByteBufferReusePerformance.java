@@ -18,11 +18,6 @@
 package stroom.pipeline.refdata.store.offheapstore.databases;
 
 
-import org.junit.jupiter.api.BeforeEach;
-import org.junit.jupiter.api.Disabled;
-import org.junit.jupiter.api.Test;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 import stroom.pipeline.refdata.store.offheapstore.lmdb.BasicLmdbDb;
 import stroom.pipeline.refdata.store.offheapstore.lmdb.LmdbUtils;
 import stroom.pipeline.refdata.store.offheapstore.lmdb.serde.Serde;
@@ -32,7 +27,12 @@ import stroom.util.io.ByteSize;
 import stroom.util.logging.LambdaLogger;
 import stroom.util.logging.LambdaLoggerFactory;
 
-import java.io.IOException;
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Disabled;
+import org.junit.jupiter.api.Test;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+
 import java.nio.ByteBuffer;
 import java.util.HashMap;
 import java.util.Map;
@@ -44,7 +44,6 @@ import java.util.concurrent.LinkedBlockingQueue;
 
 @Disabled
 class TestByteBufferReusePerformance extends AbstractLmdbDbTest {
-
     private static final Logger LOGGER = LoggerFactory.getLogger(TestByteBufferReusePerformance.class);
     private static final LambdaLogger LAMBDA_LOGGER = LambdaLoggerFactory.getLogger(TestByteBufferReusePerformance.class);
 
@@ -55,10 +54,7 @@ class TestByteBufferReusePerformance extends AbstractLmdbDbTest {
     private BasicLmdbDb<String, String> basicLmdbDb;
 
     @BeforeEach
-    @Override
-    public void setup() throws IOException {
-        super.setup();
-
+    void setup() {
         basicLmdbDb = new BasicLmdbDb<>(lmdbEnv, new ByteBufferPool(), stringSerde, stringSerde, "basicDb");
 
         //just to ensure the DB is created and ready to use

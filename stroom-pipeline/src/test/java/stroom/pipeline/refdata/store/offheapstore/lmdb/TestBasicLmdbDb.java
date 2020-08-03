@@ -47,10 +47,7 @@ class TestBasicLmdbDb extends AbstractLmdbDbTest {
     private BasicLmdbDb<String, String> basicLmdbDb2;
 
     @BeforeEach
-    @Override
-    public void setup() throws IOException {
-        super.setup();
-
+    void setup() {
         basicLmdbDb = new BasicLmdbDb<>(
                 lmdbEnv,
                 new ByteBufferPool(),

@@ -29,6 +29,7 @@ import stroom.legacy.impex_6_1.LegacyXmlSerialiser;
 import stroom.legacy.impex_6_1.MappingUtil;
 import stroom.test.AbstractCoreIntegrationTest;
 
+import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 
 import javax.inject.Inject;
@@ -48,8 +49,8 @@ class TestIndexStoreImpl extends AbstractCoreIntegrationTest {
     private DocRef testIndex;
     private DocRef refIndex;
 
-    @Override
-    protected void onBefore() {
+    @BeforeEach
+    void setup() {
         refIndex = indexStore.createDocument("Ref index");
         testIndex = indexStore.createDocument("Test index");
 

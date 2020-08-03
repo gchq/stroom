@@ -1,6 +1,8 @@
 package stroom.app.guice;
 
 import stroom.core.db.DbStatusModule;
+import stroom.util.io.TempDirProvider;
+import stroom.util.io.TempDirProviderImpl;
 
 import com.google.inject.AbstractModule;
 
@@ -101,5 +103,8 @@ public class CoreModule extends AbstractModule {
         install(new stroom.storedquery.impl.db.StoredQueryDbModule());
         install(new stroom.task.impl.TaskModule());
         install(new stroom.util.pipeline.scope.PipelineScopeModule());
+
+        // Bind the temporary directory provider.
+        bind(TempDirProvider.class).to(TempDirProviderImpl.class);
     }
 }

@@ -1,10 +1,5 @@
 package stroom.storedquery.impl.db;
 
-import org.jooq.Condition;
-import org.jooq.Field;
-import org.jooq.OrderField;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 import stroom.dashboard.shared.FindStoredQueryCriteria;
 import stroom.dashboard.shared.StoredQuery;
 import stroom.db.util.GenericDao;
@@ -12,6 +7,12 @@ import stroom.db.util.JooqUtil;
 import stroom.storedquery.impl.StoredQueryDao;
 import stroom.storedquery.impl.db.jooq.tables.records.QueryRecord;
 import stroom.util.shared.ResultPage;
+
+import org.jooq.Condition;
+import org.jooq.Field;
+import org.jooq.OrderField;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import javax.annotation.Nonnull;
 import javax.inject.Inject;
@@ -162,12 +163,5 @@ class StoredQueryDaoImpl implements StoredQueryDao {
 //        }
 
         return optional.orElse(null);
-    }
-
-    @Override
-    public void clear() {
-        JooqUtil.context(storedQueryDbConnProvider, context -> context
-                .deleteFrom(QUERY)
-                .execute());
     }
 }

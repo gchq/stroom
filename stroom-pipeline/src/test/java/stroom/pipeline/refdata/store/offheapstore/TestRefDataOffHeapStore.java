@@ -17,16 +17,6 @@
 
 package stroom.pipeline.refdata.store.offheapstore;
 
-import com.google.inject.AbstractModule;
-import com.google.inject.Guice;
-import com.google.inject.Injector;
-import io.vavr.Tuple;
-import io.vavr.Tuple2;
-import io.vavr.Tuple3;
-import org.junit.jupiter.api.BeforeEach;
-import org.junit.jupiter.api.Test;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 import stroom.pipeline.refdata.ReferenceDataConfig;
 import stroom.pipeline.refdata.store.MapDefinition;
 import stroom.pipeline.refdata.store.ProcessingState;
@@ -47,6 +37,7 @@ import stroom.pipeline.refdata.store.offheapstore.databases.ProcessingInfoDb;
 import stroom.pipeline.refdata.store.offheapstore.databases.RangeStoreDb;
 import stroom.pipeline.refdata.store.offheapstore.databases.ValueStoreDb;
 import stroom.util.io.ByteSize;
+import stroom.util.io.TempDirProvider;
 import stroom.util.logging.LambdaLogUtil;
 import stroom.util.logging.LambdaLogger;
 import stroom.util.logging.LambdaLoggerFactory;
@@ -55,9 +46,21 @@ import stroom.util.pipeline.scope.PipelineScopeModule;
 import stroom.util.shared.Range;
 import stroom.util.time.StroomDuration;
 
+import com.google.inject.AbstractModule;
+import com.google.inject.Guice;
+import com.google.inject.Injector;
+import io.vavr.Tuple;
+import io.vavr.Tuple2;
+import io.vavr.Tuple3;
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.io.TempDir;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+
 import javax.inject.Inject;
-import java.io.IOException;
 import java.nio.charset.StandardCharsets;
+import java.nio.file.Path;
 import java.time.Duration;
 import java.time.Instant;
 import java.time.temporal.ChronoUnit;
@@ -83,7 +86,6 @@ import java.util.stream.Stream;
 import static org.assertj.core.api.Assertions.assertThat;
 
 class TestRefDataOffHeapStore extends AbstractLmdbDbTest {
-
     public static final String FIXED_PIPELINE_UUID = UUID.randomUUID().toString();
     public static final String FIXED_PIPELINE_VERSION = UUID.randomUUID().toString();
     private static final Logger LOGGER = LoggerFactory.getLogger(TestRefDataOffHeapStore.class);
@@ -108,9 +110,7 @@ class TestRefDataOffHeapStore extends AbstractLmdbDbTest {
     }
 
     @BeforeEach
-    public void setup() throws IOException {
-        super.setup();
-
+    void setup() {
         LOGGER.debug("Creating LMDB environment in dbDir {}", getDbDir().toAbsolutePath().toString());
 
         referenceDataConfig.setLocalDir(getDbDir().toAbsolutePath().toString());
@@ -122,6 +122,7 @@ class TestRefDataOffHeapStore extends AbstractLmdbDbTest {
                     @Override
                     protected void configure() {
                         bind(ReferenceDataConfig.class).toInstance(referenceDataConfig);
+                        bind(TempDirProvider.class).toInstance(() -> getCurrentTestDir());
                         install(new RefDataStoreModule());
                         install(new PipelineScopeModule());
                     }

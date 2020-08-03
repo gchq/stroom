@@ -21,6 +21,7 @@ import stroom.index.impl.IndexShardWriter;
 import stroom.index.impl.IndexShardWriterCache;
 import stroom.index.impl.Indexer;
 import stroom.index.shared.IndexShardKey;
+import stroom.util.io.TempDirProvider;
 
 import javax.inject.Inject;
 import java.io.IOException;
@@ -29,8 +30,8 @@ import java.io.UncheckedIOException;
 public class MockIndexer implements Indexer {
     private final IndexShardWriterCache indexShardWriterCache;
 
-    MockIndexer() {
-        this.indexShardWriterCache = new MockIndexShardWriterCache();
+    MockIndexer(final TempDirProvider tempDirProvider) {
+        this.indexShardWriterCache = new MockIndexShardWriterCache(tempDirProvider);
     }
 
     @Inject

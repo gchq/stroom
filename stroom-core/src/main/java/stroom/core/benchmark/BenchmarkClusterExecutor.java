@@ -40,6 +40,7 @@ import stroom.processor.shared.ProcessorFilter;
 import stroom.processor.shared.ProcessorTask;
 import stroom.processor.shared.ProcessorTaskExpressionUtil;
 import stroom.processor.shared.ProcessorTaskFields;
+import stroom.processor.shared.ProcessorTaskSummary;
 import stroom.processor.shared.QueryData;
 import stroom.query.api.v2.ExpressionOperator;
 import stroom.query.api.v2.ExpressionOperator.Op;
@@ -52,6 +53,7 @@ import stroom.task.api.TaskContextFactory;
 import stroom.util.Period;
 import stroom.util.date.DateUtil;
 import stroom.util.logging.LogExecutionTime;
+import stroom.util.shared.ResultPage;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -122,54 +124,58 @@ public class BenchmarkClusterExecutor extends AbstractBenchmark {
 
     public void exec() {
         final Runnable runnable = taskContextFactory.context("Benchmark", taskContext -> {
-            info(taskContext, () -> "Starting benchmark");
+            try {
+                info(taskContext, () -> "Starting benchmark");
 
-            // Find out what translation jobs are enabled and how many tasks are
-            // possible across the cluster. If execution of no tasks are possible
-            // then we should skip this benchmark as we won't be able to process
-            // anything.
-            LOGGER.info("Using benchmark stream count of {}", benchmarkClusterConfig.getStreamCount());
-            LOGGER.info("Using benchmark record count of {}", benchmarkClusterConfig.getRecordCount());
-            LOGGER.info("Using benchmark concurrent writers of {}", benchmarkClusterConfig.getConcurrentWriters());
+                // Find out what translation jobs are enabled and how many tasks are
+                // possible across the cluster. If execution of no tasks are possible
+                // then we should skip this benchmark as we won't be able to process
+                // anything.
+                LOGGER.info("Using benchmark stream count of {}", benchmarkClusterConfig.getStreamCount());
+                LOGGER.info("Using benchmark record count of {}", benchmarkClusterConfig.getRecordCount());
+                LOGGER.info("Using benchmark concurrent writers of {}", benchmarkClusterConfig.getConcurrentWriters());
 
-            // // Remove all old benchmark data.
-            // removeOldData(folder, null);
+                // // Remove all old benchmark data.
+                // removeOldData(folder, null);
 
-            final boolean wasProcessing = jobManager.isJobEnabled(JobNames.DATA_PROCESSOR);
+                final boolean wasProcessing = jobManager.isJobEnabled(JobNames.DATA_PROCESSOR);
 
-            // Stop all translations and indexing so that data isn't translated
-            // or indexed as soon as we
-            // add it to the cluster.
-            jobManager.setJobEnabled(JobNames.DATA_PROCESSOR, false);
+                // Stop all translations and indexing so that data isn't translated
+                // or indexed as soon as we
+                // add it to the cluster.
+                taskContext.info(() -> "Stopping processing");
+                LOGGER.info("Stopping processing");
+                jobManager.setJobEnabled(JobNames.DATA_PROCESSOR, false);
+                Thread.sleep(5000);
 
-            // FIXME : MAKE SURE ALL TASKS HAVE STOPPED BEFORE WE EXECUTE THE
-            // BENCHMARK.
-            // try {
-            // // Wait for all job instances to stop.
-            // int instances = jobManager.getRunningInstances(
-            // TranslationTask.JOB_NAME, true)
-            // + jobManager.getRunningInstances(IndexingTask.JOB_NAME,
-            // true);
-            // while (!isStopping() && instances > 0) {
-            // // Wait five seconds.
-            // ThreadUtil.sleep(5000);
-            // instances = jobManager.getRunningInstances(
-            // TranslationTask.JOB_NAME, true)
-            // + jobManager.getRunningInstances(
-            // IndexingTask.JOB_NAME, true);
-            // }
+                ExpressionOperator expression = new ExpressionOperator.Builder(Op.AND)
+                        .addTerm(ProcessorTaskFields.STATUS, Condition.EQUALS, "Processing")
+                        .build();
+                ResultPage<ProcessorTaskSummary> summary = processorTaskService.findSummary(new ExpressionCriteria(expression));
 
-            // Create the benchmark.
-            createBenchmark(taskContext);
+                while (!Thread.currentThread().isInterrupted() && summary.size() > 0) {
+                    taskContext.info(() -> "Waiting for processing to stop");
+                    LOGGER.info("Waiting for processing to stop");
+                    // Wait five seconds.
+                    Thread.sleep(5000);
+                    summary = processorTaskService.findSummary(new ExpressionCriteria(expression));
+                }
 
-            // // Don't delete data if we were asked to stop.
-            // if (!isStopping()) {
-            // // Remove all old benchmark data.
-            // removeOldData(folder, null);
-            // }
+                // Create the benchmark.
+                createBenchmark(taskContext);
 
-            // Go back to the original job state.
-            jobManager.setJobEnabled(JobNames.DATA_PROCESSOR, wasProcessing);
+//                 // Don't delete data if we were asked to stop.
+//                 if (!Thread.currentThread().isInterrupted()) {
+//                     // Remove all old benchmark data.
+//                     removeOldData(folder, null);
+//                 }
+
+                // Go back to the original job state.
+                jobManager.setJobEnabled(JobNames.DATA_PROCESSOR, wasProcessing);
+            } catch (final InterruptedException e) {
+                // Continue interrupting.
+                Thread.currentThread().interrupt();
+            }
         });
         runnable.run();
     }

@@ -43,7 +43,7 @@ import stroom.pipeline.refdata.util.PooledByteBufferPair;
 import stroom.pipeline.writer.PathCreator;
 import stroom.util.HasHealthCheck;
 import stroom.util.io.ByteSize;
-import stroom.util.io.FileUtil;
+import stroom.util.io.TempDirProvider;
 import stroom.util.logging.LambdaLogUtil;
 import stroom.util.logging.LambdaLogger;
 import stroom.util.logging.LambdaLoggerFactory;
@@ -99,6 +99,8 @@ public class RefDataOffHeapStore extends AbstractRefDataStore implements RefData
 
     private static final long PROCESSING_INFO_UPDATE_DELAY_MS = Duration.of(1, ChronoUnit.HOURS).toMillis();
 
+    private final TempDirProvider tempDirProvider;
+    private final PathCreator pathCreator;
     private final Path dbDir;
     private final ByteSize maxSize;
     private final int maxReaders;
@@ -125,6 +127,8 @@ public class RefDataOffHeapStore extends AbstractRefDataStore implements RefData
 
     @Inject
     RefDataOffHeapStore(
+            final TempDirProvider tempDirProvider,
+            final PathCreator pathCreator,
             final ReferenceDataConfig referenceDataConfig,
             final ByteBufferPool byteBufferPool,
             final KeyValueStoreDb.Factory keyValueStoreDbFactory,
@@ -135,6 +139,8 @@ public class RefDataOffHeapStore extends AbstractRefDataStore implements RefData
             final MapUidReverseDb.Factory mapUidReverseDbFactory,
             final ProcessingInfoDb.Factory processingInfoDbFactory) {
 
+        this.tempDirProvider = tempDirProvider;
+        this.pathCreator = pathCreator;
         this.referenceDataConfig = referenceDataConfig;
         this.dbDir = getStoreDir();
         this.maxSize = referenceDataConfig.getMaxStoreSize();
@@ -819,15 +825,15 @@ public class RefDataOffHeapStore extends AbstractRefDataStore implements RefData
     }
 
     private Path getStoreDir() {
-        String storeDirStr = PathCreator.replaceSystemProperties(referenceDataConfig.getLocalDir());
+        String storeDirStr = pathCreator.replaceSystemProperties(referenceDataConfig.getLocalDir());
         Path storeDir;
         if (storeDirStr == null) {
-            LOGGER.info("Off heap store dir is not set, falling back to {}", FileUtil.getTempDir());
-            storeDir = FileUtil.getTempDir();
+            LOGGER.info("Off heap store dir is not set, falling back to {}", tempDirProvider.get());
+            storeDir = tempDirProvider.get();
             Objects.requireNonNull(storeDir, "Temp dir is not set");
             storeDir = storeDir.resolve(DEFAULT_STORE_SUB_DIR_NAME);
         } else {
-            storeDirStr = PathCreator.replaceSystemProperties(storeDirStr);
+            storeDirStr = pathCreator.replaceSystemProperties(storeDirStr);
             storeDir = Paths.get(storeDirStr);
         }
 

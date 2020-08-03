@@ -42,7 +42,6 @@ import java.nio.ByteBuffer;
 import static org.assertj.core.api.Assertions.assertThat;
 
 class TestValueStore extends AbstractLmdbDbTest {
-
     private static final Logger LOGGER = LoggerFactory.getLogger(TestValueStore.class);
     private final RefDataValueSerdeFactory refDataValueSerdeFactory = new RefDataValueSerdeFactory();
     private final ByteBufferPool byteBufferPool = new ByteBufferPool();
@@ -51,10 +50,7 @@ class TestValueStore extends AbstractLmdbDbTest {
     private ValueStoreMetaDb valueStoreMetaDb = null;
 
     @BeforeEach
-    @Override
-    public void setup() throws IOException {
-        super.setup();
-
+    void setup() {
         valueStoreDb = new ValueStoreDb(
                 lmdbEnv,
                 byteBufferPool,
