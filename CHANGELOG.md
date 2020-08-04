@@ -7,6 +7,8 @@ and this project adheres to [Semantic Versioning](http://semver.org/).
 
 ## [Unreleased]
 
+* Issue **#1751** : Display correct UUID for "to" dependency in UI dependency screen.
+
 * Issue **#1664** : Fix crash when all streams for pipeline are deleted.
 
 * Issue **#1701** : Fix crash when alternative pipeline is selected/used for processing.
