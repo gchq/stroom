@@ -148,7 +148,7 @@ public class DependenciesPresenter extends MyPresenterWidget<DataGridView<Depend
 
         // To (UUID)
         getView().addResizableColumn(DataGridUtil.htmlColumnBuilder((Dependency row) ->
-                        getUUID(row, Dependency::getFrom))
+                        getUUID(row, Dependency::getTo))
                         .build(),
                 DependencyCriteria.FIELD_TO_UUID,
                 COL_WIDTH_UUID);
