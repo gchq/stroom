@@ -16,17 +16,19 @@
 
 package stroom.test;
 
+import stroom.security.api.SecurityContext;
+import stroom.test.common.util.test.StroomTest;
+import stroom.util.io.FileUtil;
+import stroom.util.io.TempDirProviderImpl;
 
-import org.junit.jupiter.api.AfterAll;
 import org.junit.jupiter.api.AfterEach;
-import org.junit.jupiter.api.BeforeAll;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.TestInfo;
 import org.junit.jupiter.api.io.TempDir;
-import stroom.test.common.util.test.StroomTest;
 
 import javax.inject.Inject;
 import java.nio.file.Path;
+import java.util.Objects;
 
 /**
  * This class should be common to all component and integration tests.
@@ -35,66 +37,45 @@ public abstract class StroomIntegrationTest implements StroomTest {
     private Path testTempDir;
 
     @Inject
-    private IntegrationTestSetupUtil integrationTestSetupUtil;
+    private CommonTestControl commonTestControl;
+    @Inject
+    private ContentImportService contentImportService;
+    @Inject
+    private SecurityContext securityContext;
+    @Inject
+    private TempDirProviderImpl tempDirProvider;
+    @TempDir
+    static Path tempDir; // Static makes the temp dir remain constant for the life of the test class.
 
-    @BeforeAll
-    public static void beforeClass() {
-        IntegrationTestSetupUtil.reset();
-    }
-
-    @AfterAll
-    public static void afterClass() {
-    }
-
-    protected void onBefore() {
-    }
-
-    protected void onAfter() {
-    }
+    private static Class<?> currentTestClass;
 
     /**
      * Initialise required database entities.
      */
     @BeforeEach
-    void before(final TestInfo testInfo, @TempDir final Path tempDir) {
-        if (tempDir == null) {
-            throw new NullPointerException("Temp dir is null");
+    final void setup(final TestInfo testInfo) {
+        if (setupBetweenTests() || !Objects.equals(testInfo.getTestClass().orElse(null), currentTestClass)) {
+            currentTestClass = testInfo.getTestClass().orElse(null);
+
+            if (tempDir == null) {
+                throw new NullPointerException("Temp dir is null");
+            }
+            this.testTempDir = tempDir;
+            tempDirProvider.setTempDir(tempDir);
+            securityContext.asProcessingUser(() -> {
+                commonTestControl.cleanup();
+                commonTestControl.setup(tempDir);
+            });
         }
-        this.testTempDir = tempDir;
-        integrationTestSetupUtil.cleanup(this::onAfterSetup);
-        onBefore();
     }
 
-    /**
-     * Remove all entities from the database.
-     */
     @AfterEach
-    public void after() {
-        onAfter();
-    }
-
-    /**
-     * Some tests only want some setup to be performed before the first test is
-     * executed and then no teardown to occur. If this is the case then they
-     * should override this method, perform their one time setup task and then
-     * return true.
-     */
-    protected boolean onAfterSetup() {
-        return false;
-    }
-
-    /**
-     * Remove all entities from the database and reinitialise required entities.
-     */
-    public final void clean() {
-        clean(false);
-    }
-
-    /**
-     * Remove all entities from the database and reinitialise required entities.
-     */
-    public final void clean(final boolean force) {
-        integrationTestSetupUtil.clean(force);
+    final void cleanup(final TestInfo testInfo) {
+        if (setupBetweenTests() || !Objects.equals(testInfo.getTestClass().orElse(null), currentTestClass)) {
+            securityContext.asProcessingUser(() -> commonTestControl.cleanup());
+            // We need to delete the contents of the temp dir here as it is the same for the whole of a test class.
+            FileUtil.deleteContents(tempDir);
+        }
     }
 
     @Override
@@ -102,7 +83,7 @@ public abstract class StroomIntegrationTest implements StroomTest {
         return testTempDir;
     }
 
-    protected boolean teardownEnabled() {
-        return integrationTestSetupUtil.teardownEnabled();
+    protected boolean setupBetweenTests() {
+        return true;
     }
 }

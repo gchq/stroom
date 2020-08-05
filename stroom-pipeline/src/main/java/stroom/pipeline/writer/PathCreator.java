@@ -16,13 +16,10 @@
 
 package stroom.pipeline.writer;
 
-import com.google.common.base.Strings;
-import stroom.node.api.NodeInfo;
-import stroom.pipeline.state.FeedHolder;
-import stroom.pipeline.state.MetaHolder;
-import stroom.pipeline.state.PipelineHolder;
-import stroom.pipeline.state.SearchIdHolder;
 import stroom.util.io.FileUtil;
+import stroom.util.io.TempDirProvider;
+
+import com.google.common.base.Strings;
 
 import javax.inject.Inject;
 import java.time.ZoneOffset;
@@ -61,32 +58,20 @@ public class PathCreator {
 
     private static final Set<String> NON_ENV_VARS_SET = Set.of(NON_ENV_VARS);
 
-    private final FeedHolder feedHolder;
-    private final PipelineHolder pipelineHolder;
-    private final MetaHolder metaHolder;
-    private final SearchIdHolder searchIdHolder;
-    private final NodeInfo nodeInfo;
+    private final TempDirProvider tempDirProvider;
 
     @Inject
-    PathCreator(final FeedHolder feedHolder,
-                final PipelineHolder pipelineHolder,
-                final MetaHolder metaHolder,
-                final SearchIdHolder searchIdHolder,
-                final NodeInfo nodeInfo) {
-        this.feedHolder = feedHolder;
-        this.pipelineHolder = pipelineHolder;
-        this.metaHolder = metaHolder;
-        this.searchIdHolder = searchIdHolder;
-        this.nodeInfo = nodeInfo;
+    public PathCreator(final TempDirProvider tempDirProvider) {
+        this.tempDirProvider = tempDirProvider;
     }
 
-    public static String replaceTimeVars(String path) {
+    public String replaceTimeVars(String path) {
         // Replace some of the path elements with time variables.
         final ZonedDateTime dateTime = ZonedDateTime.now(ZoneOffset.UTC);
         return replaceTimeVars(path, dateTime);
     }
 
-    static String replaceTimeVars(String path, final ZonedDateTime dateTime) {
+    String replaceTimeVars(String path, final ZonedDateTime dateTime) {
         // Replace some of the path elements with time variables.
         path = replace(path, "year", dateTime::getYear, 4);
         path = replace(path, "month", dateTime::getMonthValue, 2);
@@ -100,24 +85,20 @@ public class PathCreator {
         return path;
     }
 
-    public static String replaceSystemProperties(String path) {
-        // Replace stroom.temp
+    public String replaceSystemProperties(String path) {
         path = replace(
                 path,
                 STROOM_TEMP,
-                () -> FileUtil.getCanonicalPath(FileUtil.getTempDir()));
-//        () -> FileUtil.getCanonicalPath(FileUtil.getTempDir()));
-
+                () -> FileUtil.getCanonicalPath(tempDirProvider.get()));
         return SystemPropertyUtil.replaceSystemProperty(path, NON_ENV_VARS_SET);
     }
 
-    public static String replaceUUIDVars(String path) {
+    public String replaceUUIDVars(String path) {
         path = replace(path, "uuid", () -> UUID.randomUUID().toString());
         return path;
     }
 
-    public static String replaceFileName(String path, final String fileName) {
-
+    public String replaceFileName(String path, final String fileName) {
         path = replace(path, "fileName", () -> fileName);
 
         path = replace(path, "fileStem", () -> {
@@ -140,7 +121,7 @@ public class PathCreator {
         return path;
     }
 
-    public static String[] findVars(final String path) {
+    public String[] findVars(final String path) {
         final List<String> vars = new ArrayList<>();
         final char[] arr = path.toCharArray();
         char lastChar = 0;
@@ -160,10 +141,10 @@ public class PathCreator {
         return vars.toArray(new String[0]);
     }
 
-    private static String replace(final String path,
-                                  final String type,
-                                  final LongSupplier replacementSupplier,
-                                  final int pad) {
+    String replace(final String path,
+                   final String type,
+                   final LongSupplier replacementSupplier,
+                   final int pad) {
 
         //convert the long supplier into a string supplier to prevent the
         //evaluation of the long supplier
@@ -177,9 +158,9 @@ public class PathCreator {
         return replace(path, type, stringReplacementSupplier);
     }
 
-    public static String replace(final String path,
-                                 final String type,
-                                 final Supplier<String> replacementSupplier) {
+    public String replace(final String path,
+                          final String type,
+                          final Supplier<String> replacementSupplier) {
         String newPath = path;
         final String param = "${" + type + "}";
         int start = newPath.indexOf(param);
@@ -201,31 +182,6 @@ public class PathCreator {
     }
 
     public String replaceContextVars(String path) {
-        if (feedHolder != null && feedHolder.getFeedName() != null) {
-            path = replace(path, "feed", feedHolder::getFeedName);
-        }
-        if (pipelineHolder != null && pipelineHolder.getPipeline() != null) {
-            path = replace(path, "pipeline", () -> pipelineHolder.getPipeline().getName());
-        }
-        if (metaHolder != null && metaHolder.getMeta() != null) {
-            path = replace(path, "sourceId", () -> metaHolder.getMeta().getId(), 0);
-
-            // TODO : DEPRECATED ALIAS FOR SOURCE ID.
-            path = replace(path, "streamId", () -> metaHolder.getMeta().getId(), 0);
-        }
-        if (metaHolder != null) {
-            path = replace(path, "partNo", () -> String.valueOf(metaHolder.getStreamNo()));
-
-            // TODO : DEPRECATED ALIAS FOR PART NO.
-            path = replace(path, "streamNo", () -> String.valueOf(metaHolder.getStreamNo()));
-        }
-        if (searchIdHolder != null && searchIdHolder.getSearchId() != null) {
-            path = replace(path, "searchId", searchIdHolder::getSearchId);
-        }
-        if (nodeInfo != null) {
-            path = replace(path, "node", () -> nodeInfo.getThisNodeName());
-        }
-
         return path;
     }
 }

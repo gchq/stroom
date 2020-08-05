@@ -17,7 +17,6 @@
 
 package stroom.data.store.impl.fs;
 
-import org.junit.jupiter.api.Test;
 import stroom.data.retention.impl.DataRetentionPolicyExecutor;
 import stroom.data.retention.impl.DataRetentionRulesService;
 import stroom.data.retention.shared.DataRetentionRule;
@@ -40,6 +39,10 @@ import stroom.query.api.v2.ExpressionTerm.Condition;
 import stroom.test.AbstractCoreIntegrationTest;
 import stroom.test.common.util.test.FileSystemTestUtil;
 import stroom.util.time.StroomDuration;
+
+import org.junit.jupiter.api.AfterEach;
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Test;
 
 import javax.inject.Inject;
 import java.io.IOException;
@@ -84,14 +87,14 @@ class TestDataRetentionPolicyExecutor extends AbstractCoreIntegrationTest {
 
     private int initialReplicationCount = 1;
 
-    @Override
-    protected void onBefore() {
+    @BeforeEach
+    void beforeEach() {
         initialReplicationCount = volumeConfig.getResilientReplicationCount();
         volumeConfig.setResilientReplicationCount(REPLICATION_COUNT);
     }
 
-    @Override
-    protected void onAfter() {
+    @AfterEach
+    void afterEach() {
         volumeConfig.setResilientReplicationCount(initialReplicationCount);
     }
 

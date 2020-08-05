@@ -35,7 +35,6 @@ public class TestProxyGuiceBindings extends AbstractApplicationTest {
         //test all the constructors to make sure guice can bind them
         findConstructors(injector::getProvider, "stroom", javax.inject.Inject.class);
         findConstructors(injector::getProvider, "stroom", com.google.inject.Inject.class);
-
     }
 
     private void findConstructors(final Consumer<Class<?>> actionPerClass,
@@ -65,7 +64,6 @@ public class TestProxyGuiceBindings extends AbstractApplicationTest {
                 }
             });
     }
-
 
     public static class MyApp extends Application<Config> {
 

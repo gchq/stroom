@@ -16,14 +16,14 @@
 
 package stroom.data.store.impl.fs;
 
-import org.junit.jupiter.api.AfterEach;
-import org.junit.jupiter.api.BeforeEach;
-import org.junit.jupiter.api.Test;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 import stroom.data.store.api.SegmentOutputStream;
 import stroom.util.io.FileUtil;
 import stroom.util.io.StreamUtil;
+
+import org.junit.jupiter.api.AfterEach;
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.io.TempDir;
 
 import java.io.ByteArrayOutputStream;
 import java.io.IOException;
@@ -35,9 +35,6 @@ import java.nio.file.Path;
 import static org.assertj.core.api.Assertions.assertThat;
 
 class TestRASegmentStreams {
-
-    private static final Logger LOGGER = LoggerFactory.getLogger(TestRASegmentStreams.class);
-
     private static final String A = "A";
     private static final String B = "B";
     private static final String C = "C";
@@ -53,8 +50,8 @@ class TestRASegmentStreams {
     private RASegmentInputStream is;
 
     @BeforeEach
-    void setup() throws IOException {
-        dir = FileUtil.createTempDir(this.getClass().getSimpleName());
+    void setup(@TempDir Path tempDir) throws IOException {
+        dir = tempDir;
 
         try (final OutputStream datStream = new BlockGZIPOutputFile(dir.resolve("test.dat"))) {
             try (final SegmentOutputStream os = new RASegmentOutputStream(datStream, () -> Files.newOutputStream(dir.resolve("test.idx")))) {

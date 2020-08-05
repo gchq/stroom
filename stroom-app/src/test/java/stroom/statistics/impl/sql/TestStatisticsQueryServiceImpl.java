@@ -21,7 +21,9 @@ import com.google.common.collect.ImmutableMap;
 import com.google.common.collect.ImmutableSet;
 import io.vavr.Tuple;
 import io.vavr.Tuple2;
+import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.io.TempDir;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import stroom.docref.DocRef;
@@ -42,6 +44,7 @@ import stroom.test.AbstractCoreIntegrationTest;
 import stroom.test.CommonTestControl;
 
 import javax.inject.Inject;
+import java.nio.file.Path;
 import java.sql.Connection;
 import java.sql.PreparedStatement;
 import java.sql.ResultSet;
@@ -116,19 +119,19 @@ class TestStatisticsQueryServiceImpl extends AbstractCoreIntegrationTest {
 
     private boolean ignoreAllTests = false;
 
-    @Override
-    public void onBefore() {
-        try {
-            sqlStatisticAggregationTransactionHelper
-                    .clearTable(SQLStatisticNames.SQL_STATISTIC_VALUE_SOURCE_TABLE_NAME);
-            sqlStatisticAggregationTransactionHelper.clearTable(SQLStatisticNames.SQL_STATISTIC_VALUE_TABLE_NAME);
-            sqlStatisticAggregationTransactionHelper.clearTable(SQLStatisticNames.SQL_STATISTIC_KEY_TABLE_NAME);
-        } catch (final SQLException e) {
-            throw new RuntimeException("Error tearing down tables", e);
-        }
-
-        commonTestControl.teardown();
-        commonTestControl.setup();
+    @BeforeEach
+    void setup() {
+//        try {
+//            sqlStatisticAggregationTransactionHelper
+//                    .clearTable(SQLStatisticNames.SQL_STATISTIC_VALUE_SOURCE_TABLE_NAME);
+//            sqlStatisticAggregationTransactionHelper.clearTable(SQLStatisticNames.SQL_STATISTIC_VALUE_TABLE_NAME);
+//            sqlStatisticAggregationTransactionHelper.clearTable(SQLStatisticNames.SQL_STATISTIC_KEY_TABLE_NAME);
+//        } catch (final SQLException e) {
+//            throw new RuntimeException("Error tearing down tables", e);
+//        }
+//
+//        commonTestControl.teardown();
+//        commonTestControl.setup(tempDir);
 
         final DocRef statisticStoreRef = statisticStoreStore.createDocument(STAT_NAME);
         final StatisticStoreDoc statisticStoreDoc = statisticStoreStore.readDocument(statisticStoreRef);

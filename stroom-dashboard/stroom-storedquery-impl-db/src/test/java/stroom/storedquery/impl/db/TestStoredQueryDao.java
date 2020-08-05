@@ -75,7 +75,6 @@ class TestStoredQueryDao {
         DbTestUtil.clearAllTables(storedQueryDbConnProvider.getConnection());
 
         storedQueryDao = new StoredQueryDaoImpl(storedQueryDbConnProvider);
-        storedQueryDao.clear();
 
         queryHistoryCleanExecutor = new StoredQueryHistoryCleanExecutor(storedQueryDao, new StoredQueryConfig(), new SimpleTaskContextFactory());
 

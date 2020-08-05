@@ -19,6 +19,7 @@ package stroom.test;
 import stroom.util.shared.Clearable;
 
 import javax.inject.Inject;
+import java.nio.file.Path;
 import java.util.Set;
 
 /**
@@ -33,11 +34,16 @@ public class MockCommonTestControl implements CommonTestControl {
     }
 
     @Override
-    public void setup() {
+    public void setup(final Path tempDir) {
     }
 
     @Override
-    public void teardown() {
+    public void cleanup() {
+        clearables.forEach(Clearable::clear);
+    }
+
+    @Override
+    public void clear() {
         clearables.forEach(Clearable::clear);
     }
 

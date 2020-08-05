@@ -16,7 +16,6 @@
 
 package stroom.statistics.impl.sql;
 
-
 import stroom.security.api.SecurityContext;
 import stroom.statistics.impl.sql.exception.StatisticsEventValidationException;
 import stroom.statistics.impl.sql.rollup.RolledUpStatisticEvent;
@@ -51,8 +50,6 @@ class TestSQLStatisticAggregationManager extends AbstractCoreIntegrationTest {
     private static final String COL_NAME_CNT = "CT";
 
     @Inject
-    private CommonTestControl commonTestControl;
-    @Inject
     private SQLStatisticsDbConnProvider sqlStatisticsDbConnProvider;
     @Inject
     private SQLStatisticValueBatchSaveService sqlStatisticValueBatchSaveService;
@@ -66,21 +63,6 @@ class TestSQLStatisticAggregationManager extends AbstractCoreIntegrationTest {
     private SQLStatisticsConfig sqlStatisticsConfig;
     @Inject
     private TaskContextFactory taskContextFactory;
-
-    @Override
-    public void onBefore() {
-        try {
-            sqlStatisticAggregationTransactionHelper
-                    .clearTable(SQLStatisticNames.SQL_STATISTIC_VALUE_SOURCE_TABLE_NAME);
-            sqlStatisticAggregationTransactionHelper.clearTable(SQLStatisticNames.SQL_STATISTIC_VALUE_TABLE_NAME);
-            sqlStatisticAggregationTransactionHelper.clearTable(SQLStatisticNames.SQL_STATISTIC_KEY_TABLE_NAME);
-        } catch (final SQLException e) {
-            throw new RuntimeException("Error tearing down tables", e);
-        }
-
-        commonTestControl.teardown();
-        commonTestControl.setup();
-    }
 
     /**
      * Test loads data into stat val src, with stats aged so that there are

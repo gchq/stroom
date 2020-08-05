@@ -16,13 +16,14 @@
 
 package stroom.pipeline.destination;
 
-import com.google.common.base.Strings;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 import stroom.pipeline.writer.PathCreator;
 import stroom.util.io.ByteCountOutputStream;
 import stroom.util.io.FileUtil;
 import stroom.util.scheduler.SimpleCron;
+
+import com.google.common.base.Strings;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import java.io.BufferedOutputStream;
 import java.io.IOException;
@@ -36,13 +37,15 @@ public class RollingFileDestination extends RollingDestination {
 
     private static final int MAX_FAILED_RENAME_ATTEMPTS = 100;
 
+    private final PathCreator pathCreator;
     private final String fileName;
     private final String rolledFileName;
 
     private final Path dir;
     private final Path file;
 
-    public RollingFileDestination(final String key,
+    public RollingFileDestination(final PathCreator pathCreator,
+                                  final String key,
                                   final Long frequency,
                                   final SimpleCron schedule,
                                   final long rollSize,
@@ -54,6 +57,7 @@ public class RollingFileDestination extends RollingDestination {
             throws IOException {
         super(key, frequency, schedule, rollSize, creationTime);
 
+        this.pathCreator = pathCreator;
         this.fileName = fileName;
         this.rolledFileName = rolledFileName;
 
@@ -91,9 +95,9 @@ public class RollingFileDestination extends RollingDestination {
         boolean success = false;
 
         String destFileName = rolledFileName;
-        destFileName = PathCreator.replaceTimeVars(destFileName);
-        destFileName = PathCreator.replaceUUIDVars(destFileName);
-        destFileName = PathCreator.replaceFileName(destFileName, fileName);
+        destFileName = pathCreator.replaceTimeVars(destFileName);
+        destFileName = pathCreator.replaceUUIDVars(destFileName);
+        destFileName = pathCreator.replaceFileName(destFileName, fileName);
 
         // Create the destination file.
         final Path destFile = dir.resolve(destFileName);

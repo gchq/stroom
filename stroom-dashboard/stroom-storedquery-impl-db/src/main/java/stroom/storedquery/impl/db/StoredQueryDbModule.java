@@ -4,8 +4,6 @@ import stroom.db.util.AbstractFlyWayDbModule;
 import stroom.db.util.DataSourceProxy;
 import stroom.storedquery.impl.StoredQueryConfig;
 import stroom.storedquery.impl.StoredQueryDao;
-import stroom.util.guice.GuiceUtil;
-import stroom.util.shared.Clearable;
 
 import javax.sql.DataSource;
 
@@ -18,9 +16,6 @@ public class StoredQueryDbModule extends AbstractFlyWayDbModule<StoredQueryConfi
     protected void configure() {
         super.configure();
         bind(StoredQueryDao.class).to(StoredQueryDaoImpl.class);
-
-        GuiceUtil.buildMultiBinder(binder(), Clearable.class)
-                .addBinding(StoredQueryDaoImpl.class);
     }
 
     @Override

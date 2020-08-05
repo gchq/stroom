@@ -18,19 +18,19 @@
 package stroom.pipeline.refdata.store.offheapstore.lmdb;
 
 
-import org.junit.jupiter.api.BeforeEach;
-import org.junit.jupiter.api.Disabled;
-import org.junit.jupiter.api.Test;
-import org.lmdbjava.KeyRange;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 import stroom.pipeline.refdata.store.offheapstore.databases.AbstractLmdbDbTest;
 import stroom.pipeline.refdata.store.offheapstore.serdes.StringSerde;
 import stroom.pipeline.refdata.util.ByteBufferPool;
 import stroom.pipeline.refdata.util.ByteBufferUtils;
 import stroom.pipeline.refdata.util.PooledByteBuffer;
 
-import java.io.IOException;
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Disabled;
+import org.junit.jupiter.api.Test;
+import org.lmdbjava.KeyRange;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+
 import java.nio.ByteBuffer;
 import java.util.List;
 import java.util.Optional;
@@ -47,10 +47,7 @@ class TestBasicLmdbDb extends AbstractLmdbDbTest {
     private BasicLmdbDb<String, String> basicLmdbDb2;
 
     @BeforeEach
-    @Override
-    public void setup() throws IOException {
-        super.setup();
-
+    void setup() {
         basicLmdbDb = new BasicLmdbDb<>(
                 lmdbEnv,
                 new ByteBufferPool(),

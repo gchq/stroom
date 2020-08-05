@@ -26,9 +26,7 @@ import stroom.util.shared.Clearable;
 
 import javax.inject.Inject;
 import javax.inject.Singleton;
-import java.util.Map;
 import java.util.Optional;
-import java.util.concurrent.ConcurrentHashMap;
 
 import static stroom.processor.impl.db.jooq.tables.ProcessorNode.PROCESSOR_NODE;
 
@@ -96,13 +94,6 @@ class ProcessorNodeCache implements Clearable {
 
     @Override
     public void clear() {
-        deleteAll();
         cache.clear();
-    }
-
-    int deleteAll() {
-        return JooqUtil.contextResult(processorDbConnProvider, context -> context
-                .delete(PROCESSOR_NODE)
-                .execute());
     }
 }

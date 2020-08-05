@@ -16,28 +16,33 @@
 
 package stroom.data.store.util;
 
+import stroom.data.shared.StreamTypeNames;
+import stroom.data.store.api.Store;
+import stroom.data.store.api.Target;
+import stroom.data.store.api.TargetUtil;
+import stroom.data.store.impl.fs.FsVolumeConfig;
+import stroom.data.store.impl.fs.FsVolumeService;
+import stroom.meta.api.MetaProperties;
+import stroom.meta.impl.db.MetaDbConnProvider;
+import stroom.test.common.util.db.DbTestModule;
+import stroom.test.common.util.db.DbTestUtil;
+import stroom.test.common.util.test.FileSystemTestUtil;
+import stroom.util.io.TempDirProviderImpl;
+
 import com.google.inject.Guice;
 import com.google.inject.Injector;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
+import org.junit.jupiter.api.io.TempDir;
 import org.mockito.Mock;
 import org.mockito.Mockito;
 import org.mockito.junit.jupiter.MockitoExtension;
-import stroom.data.shared.StreamTypeNames;
-import stroom.data.store.api.Store;
-import stroom.data.store.api.Target;
-import stroom.data.store.api.TargetUtil;
-import stroom.data.store.impl.fs.FsVolumeService;
-import stroom.meta.impl.db.MetaDbConnProvider;
-import stroom.meta.api.MetaProperties;
-import stroom.test.common.util.db.DbTestUtil;
-import stroom.test.common.util.db.DbTestModule;
-import stroom.test.common.util.test.FileSystemTestUtil;
 
 import javax.inject.Inject;
 import java.io.IOException;
 import java.io.UncheckedIOException;
+import java.nio.file.Path;
 import java.sql.Connection;
 import java.sql.SQLException;
 
@@ -48,18 +53,32 @@ class TestStreamGrepTool {
     @Inject
     private Store streamStore;
     @Inject
+    private FsVolumeConfig volumeConfig;
+    @Inject
     private FsVolumeService fsVolumeService;
+    @Inject
+    private TempDirProviderImpl tempDirProvider;
+
     @Mock
     private ToolInjector toolInjector;
+
+    @TempDir
+    static Path tempDir;
 
     @BeforeEach
     void setup() {
         final Injector injector = Guice.createInjector(
-            new DbTestModule(),
-            new ToolModule());
+                new DbTestModule(),
+                new ToolModule());
         injector.injectMembers(this);
 
         // Clear any lingering volumes or data.
+        tempDirProvider.setTempDir(tempDir);
+        final String path = tempDir
+                .resolve("volumes/defaultStreamVolume")
+                .toAbsolutePath()
+                .toString();
+        volumeConfig.setDefaultStreamVolumePaths(path);
         fsVolumeService.clear();
 
         Mockito.when(toolInjector.getInjector())

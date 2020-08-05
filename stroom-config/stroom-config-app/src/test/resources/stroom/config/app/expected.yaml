@@ -63,7 +63,7 @@ appConfig:
         maximumSize: 1000
         expireAfterAccess: "PT10M"
         expireAfterWrite: null
-    passwordIntegrityChecks:
+    passwordPolicy:
       allowPasswordResets: true
       forcePasswordChangeOnFirstLogin: true
       mandatoryPasswordChangeDuration: "P90D"

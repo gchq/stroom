@@ -1,16 +1,18 @@
 package stroom.proxy.repo;
 
-import com.codahale.metrics.health.HealthCheck;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 import stroom.data.zip.StroomZipOutputStream;
 import stroom.meta.api.AttributeMap;
 import stroom.util.HasHealthCheck;
 import stroom.util.date.DateUtil;
 import stroom.util.io.FileNameUtil;
 import stroom.util.io.FileUtil;
+import stroom.util.io.TempDirProvider;
 import stroom.util.scheduler.Scheduler;
 import stroom.util.scheduler.SimpleCron;
+
+import com.codahale.metrics.health.HealthCheck;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import javax.inject.Inject;
 import java.io.IOException;
@@ -41,8 +43,9 @@ public class ProxyRepositoryManager implements HasHealthCheck {
     private volatile boolean finish = false;
 
     @Inject
-    public ProxyRepositoryManager(final ProxyRepositoryConfig proxyRepositoryConfig) {
-        this(getPath(proxyRepositoryConfig.getDir()), getFormat(proxyRepositoryConfig.getFormat()), createScheduler(proxyRepositoryConfig.getRollCron()));
+    public ProxyRepositoryManager(final TempDirProvider tempDirProvider,
+                                  final ProxyRepositoryConfig proxyRepositoryConfig) {
+        this(getPath(tempDirProvider.get(), proxyRepositoryConfig.getDir()), getFormat(proxyRepositoryConfig.getFormat()), createScheduler(proxyRepositoryConfig.getRollCron()));
     }
 
     ProxyRepositoryManager(final Path repoDir,
@@ -53,13 +56,13 @@ public class ProxyRepositoryManager implements HasHealthCheck {
         this.scheduler = scheduler;
     }
 
-    private static Path getPath(final String repoDir) {
+    private static Path getPath(final Path tempDir, final String repoDir) {
         Path path;
 
         if (repoDir != null && !repoDir.isEmpty()) {
             path = Paths.get(repoDir);
         } else {
-            path = FileUtil.getTempDir().resolve("stroom-proxy");
+            path = tempDir.resolve("stroom-proxy");
             LOGGER.warn("setRepoDir() - Using temp dir as repoDir is not set. " + FileUtil.getCanonicalPath(path));
         }
 
