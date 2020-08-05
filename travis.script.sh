@@ -255,7 +255,7 @@ else
     ./gradlew \
       -PdumpFailedTestXml=true \
       -Pversion="${TRAVIS_TAG}" \
-      -PgwtCompilerWorkers=2 \
+      -PgwtCompilerWorkers=1 \
       -PgwtCompilerMinHeap=50M \
       -PgwtCompilerMaxHeap=1G \
       clean \
@@ -263,6 +263,7 @@ else
       buildDistribution \
       "${extraBuildArgs[@]}" \
       -x gwtCompile \
+      -x copyYarnBuild \
       --scan -s
 
 # IF WE WANT TO SKIP SOME PARTS OF THE BUILD INCLUDE THESE LINES
