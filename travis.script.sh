@@ -265,9 +265,9 @@ else
     ./gradlew \
       -PdumpFailedTestXml=true \
       -Pversion="${TRAVIS_TAG}" \
-      -PgwtCompilerWorkers=1 \
+      -PgwtCompilerWorkers=2 \
       -PgwtCompilerMinHeap=50M \
-      -PgwtCompilerMaxHeap=1G \
+      -PgwtCompilerMaxHeap=2G \
       clean \
       build \
       shadowJar \
