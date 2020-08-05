@@ -243,7 +243,7 @@ shadowJar {
     // Allows us to build fat jars with lots of files
     zip64 true
 
-    // Ensure we include the GWT generated resources.
+    // Ensure we include the GWT and Rest generated resources.
     from './src/main/resources'
 
     // A transformer to merges files in META-INF/services
