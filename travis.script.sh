@@ -262,7 +262,7 @@ else
       build \
       buildDistribution \
       "${extraBuildArgs[@]}" \
-      --debug \
+      -x gwtCompile \
       --scan -s
 
 # IF WE WANT TO SKIP SOME PARTS OF THE BUILD INCLUDE THESE LINES
