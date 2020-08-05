@@ -440,8 +440,8 @@ task prepareSwaggerClasses {
 }
 generateSwaggerDocumentation.dependsOn prepareSwaggerClasses
 
-
 task copyJar(type: Copy) {
+    dependsOn shadowJar
     from shadowJar.outputs.files
     into "${releaseBuildDir}/bin"
 }
@@ -528,10 +528,9 @@ rootProject.subprojects { subProj ->
 // Ensure all projects have built their jars so swagger can see them
 tasks.prepareSwaggerClasses.dependsOn rootProject.getTasksByName('jar', true)
 
-tasks.build.dependsOn generateSwaggerDocumentation
-tasks.build.dependsOn copyFilesForStroomDockerBuild
-tasks.build.dependsOn shadowJar
-tasks.build.dependsOn buildDistribution
+//tasks.build.dependsOn generateSwaggerDocumentation
+//tasks.build.dependsOn copyFilesForStroomDockerBuild
+//tasks.build.dependsOn buildDistribution
 
 // The gradle application plugin enables the distribution plugin
 // which creates .zip/tar archives by default, as does the shadow plugin

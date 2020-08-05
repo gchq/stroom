@@ -84,6 +84,8 @@ deploy:
       - stroom-app/src/main/resources/ui/swagger/swagger.yaml
       - stroom-headless/build/libs/stroom-headless-all.jar
       - stroom-headless/build/libs/stroom-headless-all.jar.sha256
+      - stroom-proxy/stroom-proxy-app/build/libs/stroom-proxy-app-all-*.jar
+      - stroom-proxy/stroom-proxy-app/build/libs/stroom-proxy-app-all-*.jar.sha256
     on:
       tags: true
 

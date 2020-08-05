@@ -2,6 +2,8 @@ apply plugin: 'com.github.johnrengelman.shadow'
 
 ext.moduleName = 'stroom.headless'
 
+def releaseBuildDir = 'build/release'
+
 dependencies {
     compile project(':stroom-activity:stroom-activity-mock')
     compile project(':stroom-cache:stroom-cache-api')
@@ -62,4 +64,18 @@ shadowJar {
     archiveName fatJarName
 }
 
+//task copyJar(type: Copy) {
+//    dependsOn shadowJar
+//    from shadowJar.outputs.files
+//    into "${releaseBuildDir}/bin"
+//}
+//
+//task buildDistribution(type: Zip) {
+//
+//    // run all the tasks that produce content for the zip
+//    dependsOn copyJar
+//
+//    from releaseBuildDir
+//}
+//
 //tasks.build.dependsOn shadowJar

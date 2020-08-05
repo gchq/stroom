@@ -218,8 +218,8 @@ task gwtSuperDevMode(dependsOn: classes, type: JavaExec) {
 
 task gwtClean {
     doLast {
-        println 'Deleting GWT unit cache: ' + unitCacheDir.toString()
-        delete unitCacheDir
+//        println 'Deleting GWT unit cache: ' + unitCacheDir.toString()
+//        delete unitCacheDir
         println 'Deleting GWT compiled output: ' + outputDir.toString()
         delete outputDir
         println 'Deleting GWT build dir: ' + gwtBuildDir.toString()
