@@ -823,6 +823,13 @@ task clean() {
     dependsOn clearContentPackDownloadDir
 }
 
+if (hasProperty('buildScan')) {
+    buildScan {
+        termsOfServiceUrl = 'https://gradle.com/terms-of-service'
+        termsOfServiceAgree = 'yes'
+    }
+}
+
 //import com.vanniktech.dependency.graph.generator.DependencyGraphGeneratorPlugin
 //import com.vanniktech.dependency.graph.generator.DependencyGraphGeneratorExtension.Generator
 //import guru.nidi.graphviz.attribute.Color
