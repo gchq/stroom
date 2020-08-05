@@ -264,8 +264,6 @@ else
       "${extraBuildArgs[@]}" \
       -x gwtCompile \
       -x copyYarnBuild \
-      -x test \
-      --info \
       --scan -s
 
 # IF WE WANT TO SKIP SOME PARTS OF THE BUILD INCLUDE THESE LINES
