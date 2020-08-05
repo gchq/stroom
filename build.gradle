@@ -437,9 +437,9 @@ subprojects {
         // Report duration of tests that take over 1s
         afterTest { descriptor, result ->
             def durationSecs = (result.endTime - result.startTime) / 1000
-//            if (durationSecs > 1) {
+            if (durationSecs > 1) {
                 println "Test ${descriptor.className}.${descriptor.name}, took longer than 1s, result: ${result.resultType}, duration: ${durationSecs}s"
-//            }
+            }
         }
 
         reports.html.destination = file("${reporting.baseDir}/${name}")

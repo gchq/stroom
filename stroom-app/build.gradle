@@ -229,14 +229,19 @@ jar {
     exclude '**/gwt-unitCache'
 }
 
+// We often run out of memory when running the UI builds in parallel so create tasks that will build them one after another.
+task copyYarnBuild(dependsOn: ":stroom-ui:copyYarnBuild") {}
+task stroomAppGWTCompile(dependsOn: ":stroom-app-gwt:gwtCompile") {}
+task stroomDashboardGWTCompile(dependsOn: ":stroom-dashboard-gwt:gwtCompile") {}
+task buildUi(dependsOn: copyYarnBuild) {}
+copyYarnBuild.finalizedBy stroomAppGWTCompile
+stroomAppGWTCompile.finalizedBy stroomDashboardGWTCompile
+
 shadowJar {
     // We want to run the tests before we build the fat jar.
     dependsOn test
-    // We want to compile all GWT content before we build the fat jar.
-    dependsOn ':stroom-app-gwt:gwtCompile'
-    dependsOn ':stroom-dashboard-gwt:gwtCompile'
-    // We need the React UI artifacts
-    dependsOn ':stroom-ui:copyYarnBuild'
+    // We want to compile all GWT and React content before we build the fat jar.
+    dependsOn buildUi
     // The jar needs to include the swagger.(json|yaml) files that swagger gen produces
     dependsOn generateSwaggerDocumentation
 
@@ -253,9 +258,9 @@ shadowJar {
     exclude '**/gwt-unitCache'
 }
 // Make sure GWT compilation doesn't run before tests.
-tasks.getByPath(':stroom-app-gwt:gwtCompile').mustRunAfter test
-tasks.getByPath(':stroom-dashboard-gwt:gwtCompile').mustRunAfter test
-tasks.getByPath(':stroom-ui:copyYarnBuild').mustRunAfter test
+tasks.getByPath(':stroom-app-gwt:gwtClean').mustRunAfter test
+tasks.getByPath(':stroom-dashboard-gwt:gwtClean').mustRunAfter test
+tasks.getByPath(':stroom-ui:removeYarnBuild').mustRunAfter test
 // Make sure GWT compilation doesn't run before processResources.
 tasks.getByPath(':stroom-app-gwt:gwtClean').mustRunAfter processResources
 tasks.getByPath(':stroom-dashboard-gwt:gwtClean').mustRunAfter processResources
