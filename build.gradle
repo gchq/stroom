@@ -823,6 +823,7 @@ task clean() {
     dependsOn clearContentPackDownloadDir
 }
 
+// Accept the T&Cs for publishing build scans
 if (hasProperty('buildScan')) {
     buildScan {
         termsOfServiceUrl = 'https://gradle.com/terms-of-service'
