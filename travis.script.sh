@@ -262,6 +262,7 @@ else
       build \
       buildDistribution \
       "${extraBuildArgs[@]}" \
+      -x test \
       -x gwtCompile \
       --scan -s
 
