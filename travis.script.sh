@@ -60,13 +60,7 @@ generate_file_hashes() {
    for file in "${TRAVIS_BUILD_DIR}/stroom-app/build/libs"/*.jar; do
        create_file_hash "${file}"
    done
-   for file in "${TRAVIS_BUILD_DIR}/stroom-proxy/stroom-proxy-app/build/distributions"/*.zip; do
-       create_file_hash "${file}"
-   done
    for file in "${TRAVIS_BUILD_DIR}/stroom-proxy/stroom-proxy-app/build/libs"/*.jar; do
-       create_file_hash "${file}"
-   done
-   for file in "${TRAVIS_BUILD_DIR}/stroom-headless/build/distributions"/*.zip; do
        create_file_hash "${file}"
    done
    for file in "${TRAVIS_BUILD_DIR}/stroom-headless/build/libs"/*.jar; do
