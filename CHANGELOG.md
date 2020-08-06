@@ -7,6 +7,15 @@ and this project adheres to [Semantic Versioning](http://semver.org/).
 
 ## [Unreleased]
 
+* Issue **#1761** : Allow processor id to be displayed when searching processor tasks data source.
+
+* Issue **#1693** : Fix dependencies screen listing links to internal searchables as "missing".
+
+* Issue **#1751** : Display correct UUID for "to" dependency in UI dependency screen.
+
+* Issue **#1664** : Fix crash when all streams for pipeline are deleted.
+
+* Issue **#1701** : Fix crash when alternative pipeline is selected/used for processing.
 
 ## [v7.0-beta.40] - 2020-07-27
 

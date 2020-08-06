@@ -173,8 +173,10 @@ class ProcessorFilterServiceImpl implements ProcessorFilterService {
 
     @Override
     public ProcessorFilter create(final ProcessorFilter processorFilter) {
-        return securityContext.secureResult(PERMISSION, () ->
+        ProcessorFilter createdFilter = securityContext.secureResult(PERMISSION, () ->
                 processorFilterDao.create(ensureValid(processorFilter)));
+        createdFilter.setProcessor(processorFilter.getProcessor());
+        return createdFilter;
     }
 
     @Override

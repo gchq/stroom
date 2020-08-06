@@ -50,12 +50,13 @@ class ProcessorFilterResourceImpl implements ProcessorFilterResource {
 
     @Override
     public ProcessorFilter create(final CreateProcessFilterRequest request) {
-        return processorFilterService.create(
+        ProcessorFilter filter = processorFilterService.create(
                 request.getPipeline(),
                 request.getQueryData(),
                 request.getPriority(),
                 request.isAutoPriority(),
                 request.isEnabled());
+        return filter;
     }
 
     @Override
