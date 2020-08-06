@@ -63,7 +63,6 @@ script: ./travis.script.sh
 deploy:
   # Deploy the swagger-ui content and swagger specs to gh-pages
   - provider: pages
-    strategy: git
     token: $GITHUB_TOKEN
     local_dir: gh-pages
     target_branch: gh-pages
