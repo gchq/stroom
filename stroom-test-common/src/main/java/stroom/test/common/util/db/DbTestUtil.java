@@ -20,7 +20,6 @@ import com.wix.mysql.distribution.Version;
 import javax.sql.DataSource;
 import java.io.IOException;
 import java.io.UncheckedIOException;
-import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.sql.Connection;
@@ -107,31 +106,25 @@ public class DbTestUtil {
         try {
             final String schemaName = "stroom";
 
-            Path cacheDir = Paths.get(getClassContainer(DbTestUtil.class));
+            Path path = Paths.get(getClassContainer(DbTestUtil.class));
 
-            LOGGER.info(LambdaLogUtil.message("Current class path = {}", cacheDir.toAbsolutePath().toString()));
+            LOGGER.info(LambdaLogUtil.message("Current class path = {}", path.toAbsolutePath().toString()));
 
-            while (!cacheDir.getFileName().toString().equals("stroom-test-common")) {
-                cacheDir = cacheDir.getParent();
+            while (!path.getFileName().toString().equals("stroom-test-common")) {
+                path = path.getParent();
             }
-            cacheDir = cacheDir.getParent().resolve("embedmysql");
-            cacheDir = cacheDir.toAbsolutePath();
-            final Path destinationCacheDir = cacheDir;
+            path = path.getParent().resolve("embedmysql");
+            path = path.toAbsolutePath();
 
-            // If the cache directory doesn't exist then create a temp directory to download embedded MySQL into.
-            // Doing this avoids conflicts with other test threads that might be trying to download MySQL.
-            if (!Files.isDirectory(destinationCacheDir)) {
-                cacheDir = Files.createTempDirectory("embedmysql");
-            }
-
-            LOGGER.info(LambdaLogUtil.message("Embedded MySQL dir = {}", cacheDir.toString()));
+            final String dir = path.toString();
+            LOGGER.info(LambdaLogUtil.message("Embedded MySQL dir = {}", dir));
 
             final DownloadConfig downloadConfig = DownloadConfig.aDownloadConfig()
 //                        .withProxy(aHttpProxy("remote.host", 8080))
-                    .withCacheDir(cacheDir.toString())
+                    .withCacheDir(dir)
                     .build();
 
-            final MysqldConfig config = MysqldConfig.aMysqldConfig(Version.v8_0_17)
+            final MysqldConfig config = MysqldConfig.aMysqldConfig(Version.v5_5_52)
                     .withCharset(Charset.UTF8)
                     .withFreePort()
                     .withUser(EMBEDDED_MYSQL_DB_USERNAME, EMBEDDED_MYSQL_DB_PASSWORD)
@@ -147,11 +140,6 @@ public class DbTestUtil {
 //                        .addSchema("aschema2", ScriptResolver.classPathScripts("db/*.sql"))
                     .addSchema(schemaConfig)
                     .start();
-
-            // Copy download over to the cache dir so it is available for further use.
-            if (!Files.isDirectory(destinationCacheDir)) {
-                Files.move(cacheDir, destinationCacheDir);
-            }
 
             final String url = "jdbc:mysql://localhost:" +
                     config.getPort() +
