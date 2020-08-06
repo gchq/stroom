@@ -1,7 +1,6 @@
 ext.moduleName = 'stroom.dashboard.gwt'
 
 def resourcesDir = project(':stroom-app').file('src/main/resources')
-def unitCacheDir = "${resourcesDir}/gwt-unitCache"
 def warDir = "${resourcesDir}/ui"
 def outputDir = "${warDir}/dashboard"
 
@@ -11,6 +10,24 @@ def workDir = "${gwtBuildDir}/work"
 def deployDir = "${gwtBuildDir}/deploy"
 def extraDir = "${gwtBuildDir}/extra"
 
+configurations.all {
+    resolutionStrategy {
+        eachDependency { DependencyResolveDetails details ->
+            if (details.requested.group == 'javax.xml.bind') {
+                details.useVersion "2.3.1"
+            }
+            if (details.requested.group == 'com.fasterxml.jackson.core') {
+                details.useVersion "2.9.6"
+            }
+        }
+    }
+}
+
+// Declare a source set just for our GWT compile that is separate from teh Java compilation source set.
+sourceSets {
+    gwtSource
+}
+
 dependencies {
     compile project(':stroom-core-client')
     compile project(':stroom-core-client-widget')
@@ -19,10 +36,7 @@ dependencies {
 
     // These source deps are all needed for the GWT transpiling to javascript
     compile libs.stroomDocRef
-    compile "${libs.stroomDocRef}:sources"
     compile libs.stroomQueryApi
-    compile "${libs.stroomQueryApi}:sources"
-    compile "${libs.stroomQueryCommon}:sources"
 
     compile libs.gin
     compile libs.guice3
@@ -32,22 +46,47 @@ dependencies {
     compile libs.jackson_annotations
     compile libs.jaxb_api
     compile libs.swagger_annotations // needed so gwt can compile the stroom-query code that contains swagger annotations
+
+    gwtSourceCompile libs.gin
+    gwtSourceCompile libs.gwt_dev
+    gwtSourceCompile libs.gwt_user
+    gwtSourceCompile libs.gwtp_mvp_client
+    gwtSourceCompile libs.jaxb_api
+    gwtSourceCompile libs.swagger_annotations // needed so gwt can compile the stroom-query code that contains swagger annotations
+    gwtSourceCompile libs.restygwt
+    gwtSourceCompile libs.ws_rs_api
+
+    gwtSourceCompile libs.stroomDocRef
+    gwtSourceCompile "${libs.stroomDocRef}:sources"
+    gwtSourceCompile libs.stroomQueryApi
+    gwtSourceCompile "${libs.stroomQueryApi}:sources"
+    gwtSourceCompile libs.stroomQueryCommon
+    gwtSourceCompile "${libs.stroomQueryCommon}:sources"
 }
 
+// Create a list of source directories where source for GWT can be found.
 def gwtSourceDirs = []
-parent.subprojects.each { p ->
-    if (p.name != 'stroom-app-gwt') {
-        gwtSourceDirs.addAll(p.sourceSets.main.output.classesDirs)
-        gwtSourceDirs.addAll(p.sourceSets.main.java.srcDirs)
-        gwtSourceDirs.addAll(p.sourceSets.main.resources.srcDirs)
-    }
-}
-gwtSourceDirs.addAll(sourceSets.main.compileClasspath)
+// Add all of the library sources from the gwtSource source set defined above.
+gwtSourceDirs.addAll(sourceSets.gwtSource.compileClasspath)
 
-//println "Dumping gwtSourceDirs contents"
-//gwtSourceDirs.each { dir -> 
-    //println dir
-//}
+// Define a list of projects that contain the source code we want to compile with GWT.
+def projList = [
+    project(':stroom-dashboard-gwt'),
+    project(':stroom-core-client'),
+    project(':stroom-core-client-widget'),
+    project(':stroom-core-shared'),
+    project(':stroom-dashboard:stroom-dashboard-client'),
+    project(':stroom-security:stroom-security-client'),
+    project(':stroom-security:stroom-security-client-api'),
+    project(':stroom-util-shared')
+]
+
+// Add source from each of the defined projects.
+projList.each { p ->
+    gwtSourceDirs.addAll(p.sourceSets.main.output.classesDirs)
+    gwtSourceDirs.addAll(p.sourceSets.main.java.srcDirs)
+    gwtSourceDirs.addAll(p.sourceSets.main.resources.srcDirs)
+}
 
 task gwtCompile(dependsOn: classes, type: JavaExec) {
     dependsOn 'gwtClean'
@@ -71,10 +110,10 @@ task gwtCompile(dependsOn: classes, type: JavaExec) {
         println "Making directory extraDir $extraDir"
         file(extraDir).mkdirs()
 
-        //println "Dumping gwtSourceDirs"
-        //gwtSourceDirs.each {
-            //println "${it.toString()}"
-        //}
+        println "Dumping $gwtSourceDirs.size gwtSourceDirs"
+        gwtSourceDirs.each {
+            println "${it.toString()}"
+        }
     }
 
     main = gwtCompilerProps.mainClass
@@ -165,6 +204,17 @@ task gwtSuperDevMode(dependsOn: classes, type: JavaExec) {
         file(deployDir).mkdirs()
         println "Making directory extraDir $extraDir"
         file(extraDir).mkdirs()
+
+        def GREEN='\033[1;32m'
+        def NC='\033[0m'
+
+        println """
+        To run stroom in SuperDevMode:${GREEN}
+          * Set appConfig.security.authenticationRequired to false in local.yml
+          * Vist the code server (link further down) and copy the dev mode buttons to your browser bookmarks
+          * Visit stroom at http://localhost:8080/stroom/ui (NOTE: http, not https)
+          * Click 'Dev Mode On'${NC}
+        """.stripIndent().trim()
     }
 
     main = 'com.google.gwt.dev.DevMode'
@@ -205,5 +255,3 @@ task gwtClean {
         file(tmpDir).mkdirs()
     }
 }
-
-gwtCompile.onlyIf { !project.hasProperty('skipGWT') }
