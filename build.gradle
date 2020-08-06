@@ -76,8 +76,8 @@ ext.getPropertyOrDefault = { propName, defaultValue ->
 
 ext.gwtCompilerProps = [
         mainClass: 'stroom.gwt.GwtCompilerWrapper',
-        minHeap  : getPropertyOrDefault('gwtCompilerMinHeap', '1G'),
-        maxHeap  : getPropertyOrDefault('gwtCompilerMaxHeap', '4G'),
+        minHeap  : getPropertyOrDefault('gwtCompilerMinHeap', '50M'),
+        maxHeap  : getPropertyOrDefault('gwtCompilerMaxHeap', '2G'),
         workers  : getPropertyOrDefault('gwtCompilerWorkers', '5')
 ]
 

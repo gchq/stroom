@@ -261,7 +261,7 @@ else
       -Pversion="${TRAVIS_TAG}" \
       -PgwtCompilerWorkers=2 \
       -PgwtCompilerMinHeap=50M \
-      -PgwtCompilerMaxHeap=2G \
+      -PgwtCompilerMaxHeap=500M \
       clean \
       build \
       shadowJar \
