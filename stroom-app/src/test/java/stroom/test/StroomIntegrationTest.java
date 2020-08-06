@@ -19,6 +19,8 @@ package stroom.test;
 import stroom.security.api.SecurityContext;
 import stroom.test.common.util.test.StroomTest;
 import stroom.util.io.FileUtil;
+import stroom.util.io.PathConfig;
+import stroom.util.io.TempDirProvider;
 import stroom.util.io.TempDirProviderImpl;
 
 import org.junit.jupiter.api.AfterEach;
