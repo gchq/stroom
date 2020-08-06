@@ -118,7 +118,7 @@ ext.versions = [
         gwt               : '2.8.2',
         hikari            : '3.2.0',
         jooq              : '3.12.3',
-        junit_jupiter     : '5.6.2',
+        junit_jupiter     : '5.6.0',
         kafka             : '2.2.1', // CDH 6.3 uses kafka 2.2.1
         lucene            : '5.5.3',
         mockito           : '2.23.4',
@@ -258,7 +258,7 @@ ext.libs = [
         mbknor_jackson_jsonSchema      : "com.kjetland:mbknor-jackson-jsonschema_2.12:1.0.36",
         mockito_core                   : "org.mockito:mockito-core:$versions.mockito",
         mockito_junit_jupiter          : "org.mockito:mockito-junit-jupiter:$versions.mockito",
-        mysql_connector_java           : "mysql:mysql-connector-java:8.0.21",
+        mysql_connector_java           : "mysql:mysql-connector-java:8.0.16",
         objenesis                      : "org.objenesis:objenesis", // version controlled by DW BOM
         okhttp                         : "com.squareup.okhttp3:okhttp:4.3.0",
         okhttp_logging_interceptor     : 'com.squareup.okhttp:logging-interceptor:2.7.5',
