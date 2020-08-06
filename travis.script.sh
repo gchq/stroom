@@ -9,8 +9,6 @@ GITHUB_REPO="gchq/stroom"
 GITHUB_API_URL="https://api.github.com/repos/gchq/stroom/releases"
 STROOM_DOCKER_CONTEXT_ROOT="stroom-app/docker/."
 STROOM_PROXY_DOCKER_CONTEXT_ROOT="stroom-proxy/stroom-proxy-app/docker/."
-DISTRIBUTIONS_DIR="stroom-app/build/distributions"
-JARS_DIR="stroom-app/build/libs"
 VERSION_FIXED_TAG=""
 SNAPSHOT_FLOATING_TAG=""
 MAJOR_VER_FLOATING_TAG=""
@@ -56,10 +54,16 @@ create_file_hash() {
 }
 
 generate_file_hashes() {
-   for file in "${TRAVIS_BUILD_DIR}/${DISTRIBUTIONS_DIR}"/*.zip; do
+   for file in "${TRAVIS_BUILD_DIR}/stroom-app/build/distributions"/*.zip; do
        create_file_hash "${file}"
    done
-   for file in "${TRAVIS_BUILD_DIR}/${JARS_DIR}"/*.jar; do
+   for file in "${TRAVIS_BUILD_DIR}/stroom-app/build/libs"/*.jar; do
+       create_file_hash "${file}"
+   done
+   for file in "${TRAVIS_BUILD_DIR}/stroom-proxy/stroom-proxy-app/build/libs"/*.jar; do
+       create_file_hash "${file}"
+   done
+   for file in "${TRAVIS_BUILD_DIR}/stroom-headless/build/libs"/*.jar; do
        create_file_hash "${file}"
    done
 }
@@ -257,11 +261,14 @@ else
       -Pversion="${TRAVIS_TAG}" \
       -PgwtCompilerWorkers=2 \
       -PgwtCompilerMinHeap=50M \
-      -PgwtCompilerMaxHeap=1G \
+      -PgwtCompilerMaxHeap=2G \
       clean \
       build \
-      -x gwtCompile \
-      -x copyYarnBuild \
+      shadowJar \
+      generateSwaggerDocumentation \
+      copyFilesForStroomDockerBuild \
+      copyFilesForProxyDockerBuild \
+      buildDistribution \
       "${extraBuildArgs[@]}" \
       --scan -s
 

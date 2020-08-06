@@ -125,7 +125,7 @@ task copyFilesForProxyDockerBuild() {
         }
     }
 }
-tasks.build.dependsOn copyFilesForProxyDockerBuild
+//tasks.build.dependsOn copyFilesForProxyDockerBuild
 
 test {
     maxParallelForks = 1
