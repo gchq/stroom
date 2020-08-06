@@ -260,9 +260,15 @@ else
       -PgwtCompilerMaxHeap=1G \
       clean \
       build \
+<<<<<<< HEAD
       buildDistribution \
       "${extraBuildArgs[@]}" \
       --scan -s
+=======
+      -x gwtCompile \
+      -x copyYarnBuild \
+      "${extraBuildArgs[@]}"
+>>>>>>> e689769b8dbb42ffa30a3040c553c497da8c4953
 
 # IF WE WANT TO SKIP SOME PARTS OF THE BUILD INCLUDE THESE LINES
 #      -x gwtCompile \
