@@ -431,6 +431,9 @@ subprojects {
     test {
         useJUnitPlatform()
 
+//        maxParallelForks = Runtime.runtime.availableProcessors().intdiv(2) ?: 1
+        maxParallelForks = Runtime.runtime.availableProcessors() ?: 1
+
         // Report duration of tests that take over 1s
         afterTest { descriptor, result ->
             def durationSecs = (result.endTime - result.startTime) / 1000
