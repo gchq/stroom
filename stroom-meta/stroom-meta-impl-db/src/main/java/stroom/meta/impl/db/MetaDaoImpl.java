@@ -13,6 +13,7 @@ import stroom.data.retention.shared.DataRetentionRule;
 import stroom.data.retention.shared.DataRetentionRules;
 import stroom.data.retention.shared.FindDataRetentionImpactCriteria;
 import stroom.datasource.api.v2.AbstractField;
+import stroom.datasource.api.v2.DateField;
 import stroom.db.util.ExpressionMapper;
 import stroom.db.util.ExpressionMapperFactory;
 import stroom.db.util.JooqUtil;
@@ -37,6 +38,7 @@ import stroom.query.api.v2.ExpressionOperator;
 import stroom.query.api.v2.ExpressionOperator.Op;
 import stroom.query.api.v2.ExpressionTerm;
 import stroom.query.api.v2.ExpressionUtil;
+import stroom.query.common.v2.DateExpressionParser;
 import stroom.util.collections.BatchingIterator;
 import stroom.util.date.DateUtil;
 import stroom.util.logging.LambdaLogger;
@@ -67,6 +69,8 @@ import javax.inject.Inject;
 import javax.inject.Singleton;
 import java.time.Duration;
 import java.time.Instant;
+import java.time.ZoneOffset;
+import java.time.ZonedDateTime;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collection;
@@ -203,14 +207,14 @@ class MetaDaoImpl implements MetaDao, Clearable {
         expressionMapper.multiMap(MetaFields.TYPE_NAME, meta.TYPE_ID, this::getTypeIds);
         expressionMapper.map(MetaFields.PIPELINE, metaProcessor.PIPELINE_UUID, value -> value);
         expressionMapper.map(MetaFields.STATUS, meta.STATUS, value -> MetaStatusId.getPrimitiveValue(Status.valueOf(value.toUpperCase())));
-        expressionMapper.map(MetaFields.STATUS_TIME, meta.STATUS_TIME, DateUtil::parseNormalDateTimeString);
-        expressionMapper.map(MetaFields.CREATE_TIME, meta.CREATE_TIME, DateUtil::parseNormalDateTimeString);
-        expressionMapper.map(MetaFields.EFFECTIVE_TIME, meta.EFFECTIVE_TIME, DateUtil::parseNormalDateTimeString);
+        expressionMapper.map(MetaFields.STATUS_TIME, meta.STATUS_TIME, value -> getDate(MetaFields.STATUS_TIME, value));
+        expressionMapper.map(MetaFields.CREATE_TIME, meta.CREATE_TIME, value -> getDate(MetaFields.CREATE_TIME, value));
+        expressionMapper.map(MetaFields.EFFECTIVE_TIME, meta.EFFECTIVE_TIME, value -> getDate(MetaFields.EFFECTIVE_TIME, value));
 
         // Parent fields.
         expressionMapper.map(MetaFields.PARENT_ID, meta.PARENT_ID, Long::valueOf);
         expressionMapper.map(MetaFields.PARENT_STATUS, parent.STATUS, value -> MetaStatusId.getPrimitiveValue(Status.valueOf(value.toUpperCase())));
-        expressionMapper.map(MetaFields.PARENT_CREATE_TIME, parent.CREATE_TIME, DateUtil::parseNormalDateTimeString);
+        expressionMapper.map(MetaFields.PARENT_CREATE_TIME, parent.CREATE_TIME, value -> getDate(MetaFields.PARENT_CREATE_TIME, value));
         expressionMapper.multiMap(MetaFields.PARENT_FEED, parent.FEED_ID, this::getFeedIds);
 
 
@@ -229,6 +233,18 @@ class MetaDaoImpl implements MetaDao, Clearable {
         valueMapper.map(MetaFields.STATUS_TIME, meta.STATUS_TIME, ValLong::create);
         valueMapper.map(MetaFields.CREATE_TIME, meta.CREATE_TIME, ValLong::create);
         valueMapper.map(MetaFields.EFFECTIVE_TIME, meta.EFFECTIVE_TIME, ValLong::create);
+    }
+
+    private long getDate(final DateField field, final String value) {
+        try {
+            final Optional<ZonedDateTime> optional = DateExpressionParser.parse(value, ZoneOffset.UTC.getId(), System.currentTimeMillis());
+
+            return optional.orElseThrow(() -> new RuntimeException("Expected a standard date value for field \"" + field.getName()
+                    + "\" but was given string \"" + value + "\"")).toInstant().toEpochMilli();
+        } catch (final Exception e) {
+            throw new RuntimeException("Expected a standard date value for field \"" + field.getName()
+                    + "\" but was given string \"" + value + "\"", e);
+        }
     }
 
     private Val getPipelineName(final String uuid) {

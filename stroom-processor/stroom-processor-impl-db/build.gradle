@@ -22,6 +22,7 @@ dependencies {
     // Stroom external bintray libs
     compile libs.stroomDocRef
     compile libs.stroomQueryApi
+    compile libs.stroomQueryCommon
 
     // 3rd party libs
     compile libs.dropwizard_metrics_healthchecks

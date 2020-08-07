@@ -261,7 +261,7 @@ else
       -Pversion="${TRAVIS_TAG}" \
       -PgwtCompilerWorkers=2 \
       -PgwtCompilerMinHeap=50M \
-      -PgwtCompilerMaxHeap=500M \
+      -PgwtCompilerMaxHeap=1G \
       clean \
       build \
       shadowJar \
@@ -270,7 +270,11 @@ else
       copyFilesForProxyDockerBuild \
       buildDistribution \
       "${extraBuildArgs[@]}" \
+      -Dorg.gradle.parallel=false \
       --scan -s
+
+# Disable parallel build execution in travis. Note this is seprate to prallel test execution.
+# -Dorg.gradle.parallel=false \
 
 # IF WE WANT TO SKIP SOME PARTS OF THE BUILD INCLUDE THESE LINES
 #      -x gwtCompile \

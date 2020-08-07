@@ -38,11 +38,12 @@ import java.util.stream.Collectors;
 public class DbTestUtil {
     private static final LambdaLogger LOGGER = LambdaLoggerFactory.getLogger(DbTestUtil.class);
 
+    public static final String SCHEMA_NAME = "stroom";
     private static final String USE_EMBEDDED_MYSQL_PROP_NAME = "useEmbeddedMySql";
     private static final String EMBEDDED_MYSQL_DB_PASSWORD = "test";
     private static final String EMBEDDED_MYSQL_DB_USERNAME = "test";
 
-    private static ConnectionConfig currentConfig;
+    private static final ThreadLocal<ConnectionConfig> THREAD_LOCAL = new ThreadLocal<>();
 
     private static volatile boolean HAVE_ALREADY_SHOWN_DB_MSG = false;
 
@@ -58,17 +59,19 @@ public class DbTestUtil {
 
         // We are only running one module so just pass in any empty ForceCoreMigration
         return dbModule.getConnectionProvider(
-            () -> config,
-            new EmbeddedDbDataSourceFactory(new CommonDbConfig()),
-            new ForceCoreMigration() { });
+                () -> config,
+                new EmbeddedDbDataSourceFactory(new CommonDbConfig()),
+                new ForceCoreMigration() {
+                });
     }
 
-    public static synchronized ConnectionConfig getOrCreateEmbeddedConnectionConfig() {
-        if (currentConfig == null) {
-            currentConfig = createEmbeddedDbConfig();
+    public static ConnectionConfig getOrCreateEmbeddedConnectionConfig() {
+        ConnectionConfig connectionConfig = THREAD_LOCAL.get();
+        if (connectionConfig == null) {
+            connectionConfig = createEmbeddedMySqlInstsance(SCHEMA_NAME).getConnectionConfig();
+            THREAD_LOCAL.set(connectionConfig);
         }
-
-        return currentConfig;
+        return connectionConfig;
     }
 
     static boolean isUseEmbeddedDb() {
@@ -102,11 +105,30 @@ public class DbTestUtil {
         return useEmbeddedDb;
     }
 
-    private static ConnectionConfig createEmbeddedDbConfig() {
-        final ConnectionConfig connectionConfig = new ConnectionConfig();
-        try {
-            final String schemaName = "stroom";
+    public static EmbeddedMySqlInstance createEmbeddedMySqlInstsance(final String schemaName) {
+        final EmbeddedMysql embeddedMysql = createEmbeddedMysql(schemaName);
+        final MysqldConfig mysqlConfig = embeddedMysql.getConfig();
+        final ConnectionConfig connectionConfig = createConnectionConfig(schemaName, mysqlConfig);
+        return new EmbeddedMySqlInstance(embeddedMysql, connectionConfig);
+    }
 
+    private static ConnectionConfig createConnectionConfig(final String schemaName, final MysqldConfig mysqlConfig) {
+        final String url = "jdbc:mysql://localhost:" +
+                mysqlConfig.getPort() +
+                "/" +
+                schemaName +
+                "?useUnicode=yes&characterEncoding=UTF-8";
+
+        final ConnectionConfig connectionConfig = new ConnectionConfig();
+        connectionConfig.setJdbcDriverUrl(url);
+        connectionConfig.setJdbcDriverUsername(mysqlConfig.getUsername());
+        connectionConfig.setJdbcDriverPassword(mysqlConfig.getPassword());
+
+        return connectionConfig;
+    }
+
+    private static EmbeddedMysql createEmbeddedMysql(final String schemaName) {
+        try {
             Path cacheDir = Paths.get(getClassContainer(DbTestUtil.class));
 
             LOGGER.info(LambdaLogUtil.message("Current class path = {}", cacheDir.toAbsolutePath().toString()));
@@ -124,7 +146,10 @@ public class DbTestUtil {
                 cacheDir = Files.createTempDirectory("embedmysql");
             }
 
-            LOGGER.info(LambdaLogUtil.message("Embedded MySQL dir = {}", cacheDir.toString()));
+            final Path tempDir = Files.createTempDirectory("embedmysql");
+
+            LOGGER.info(LambdaLogUtil.message("Embedded MySQL cache dir = {}", cacheDir.toString()));
+            LOGGER.info(LambdaLogUtil.message("Embedded MySQL temp dir = {}", tempDir.toString()));
 
             final DownloadConfig downloadConfig = DownloadConfig.aDownloadConfig()
 //                        .withProxy(aHttpProxy("remote.host", 8080))
@@ -135,14 +160,15 @@ public class DbTestUtil {
                     .withCharset(Charset.UTF8)
                     .withFreePort()
                     .withUser(EMBEDDED_MYSQL_DB_USERNAME, EMBEDDED_MYSQL_DB_PASSWORD)
-//                        .withTimeZone("Europe/London")
+                    .withTimeZone("Europe/London")
                     .withTimeout(2, TimeUnit.MINUTES)
                     .withServerVariable("max_connect_errors", 666)
+                    .withTempDir(tempDir.toAbsolutePath().toString())
                     .build();
 
             final SchemaConfig schemaConfig = SchemaConfig.aSchemaConfig(schemaName).build();
 
-            final EmbeddedMysql mysqld = EmbeddedMysql.anEmbeddedMysql(config, downloadConfig)
+            final EmbeddedMysql embeddedMysql = EmbeddedMysql.anEmbeddedMysql(config, downloadConfig)
 //                        .addSchema("aschema", ScriptResolver.classPathScript("db/001_init.sql"))
 //                        .addSchema("aschema2", ScriptResolver.classPathScripts("db/*.sql"))
                     .addSchema(schemaConfig)
@@ -153,22 +179,12 @@ public class DbTestUtil {
                 Files.move(cacheDir, destinationCacheDir);
             }
 
-            final String url = "jdbc:mysql://localhost:" +
-                    config.getPort() +
-                    "/" +
-                    schemaConfig.getName() +
-                    "?useUnicode=yes&characterEncoding=UTF-8";
-
-            connectionConfig.setJdbcDriverUrl(url);
-            connectionConfig.setJdbcDriverUsername(config.getUsername());
-            connectionConfig.setJdbcDriverPassword(config.getPassword());
+            return embeddedMysql;
 
         } catch (final IOException e) {
             LOGGER.error(e::getMessage, e);
             throw new UncheckedIOException(e);
         }
-
-        return connectionConfig;
     }
 
     private static String getClassContainer(Class c) {
@@ -265,6 +281,25 @@ public class DbTestUtil {
         } catch (final SQLException e) {
             LOGGER.error(() -> "executeStatement() - " + sqlStatements, e);
             throw new RuntimeException(e.getMessage(), e);
+        }
+    }
+
+    public static class EmbeddedMySqlInstance {
+        private final EmbeddedMysql embeddedMysql;
+        private final ConnectionConfig connectionConfig;
+
+        public EmbeddedMySqlInstance(final EmbeddedMysql embeddedMysql,
+                                     final ConnectionConfig connectionConfig) {
+            this.embeddedMysql = embeddedMysql;
+            this.connectionConfig = connectionConfig;
+        }
+
+        public EmbeddedMysql getEmbeddedMysql() {
+            return embeddedMysql;
+        }
+
+        public ConnectionConfig getConnectionConfig() {
+            return connectionConfig;
         }
     }
 }

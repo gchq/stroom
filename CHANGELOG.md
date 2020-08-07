@@ -7,6 +7,10 @@ and this project adheres to [Semantic Versioning](http://semver.org/).
 
 ## [Unreleased]
 
+* Added support for time based expressions when searching for streams from UI. 
+
+* Issue **#1760** : Support time based expressions for ProcessorTask datas ource
+
 * Issue **#1761** : Allow processor id to be displayed when searching processor tasks data source.
 
 * Issue **#1693** : Fix dependencies screen listing links to internal searchables as "missing".

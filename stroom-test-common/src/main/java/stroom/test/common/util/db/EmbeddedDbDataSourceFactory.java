@@ -6,6 +6,7 @@ import stroom.config.common.DbConfig;
 import stroom.config.common.HasDbConfig;
 import stroom.db.util.DataSourceFactoryImpl;
 import stroom.db.util.HikariUtil;
+import stroom.test.common.util.db.DbTestUtil.EmbeddedMySqlInstance;
 import stroom.util.config.FieldMapper;
 import stroom.util.shared.Clearable;
 
@@ -41,8 +42,11 @@ class EmbeddedDbDataSourceFactory extends DataSourceFactoryImpl implements Clear
                 // Create a merged config using the common db config as a base.
                 final DbConfig mergedConfig = mergeConfig(dbConfig);
 
+                final EmbeddedMySqlInstance embeddedMysqlInstance =
+                        DbTestUtil.createEmbeddedMySqlInstsance(DbTestUtil.SCHEMA_NAME);
+
                 FieldMapper.copyNonDefaults(
-                        DbTestUtil.getOrCreateEmbeddedConnectionConfig(),
+                        embeddedMysqlInstance.getConnectionConfig(),
                         mergedConfig.getConnectionConfig(),
                         new ConnectionConfig());
 
