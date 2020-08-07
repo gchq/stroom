@@ -7,6 +7,8 @@ and this project adheres to [Semantic Versioning](http://semver.org/).
 
 ## [Unreleased]
 
+* Issue **#1749** : Removed old benchmark job.
+
 * Issue **#1778** : Remove error streams following reprocessing when no new streams are created.
 
 * Added support for time based expressions when searching for streams from UI. 
