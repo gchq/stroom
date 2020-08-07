@@ -156,7 +156,7 @@ public class DbTestUtil {
                     .withCacheDir(cacheDir.toString())
                     .build();
 
-            final MysqldConfig config = MysqldConfig.aMysqldConfig(Version.v5_5_52)
+            final MysqldConfig config = MysqldConfig.aMysqldConfig(Version.v8_0_17)
                     .withCharset(Charset.UTF8)
                     .withFreePort()
                     .withUser(EMBEDDED_MYSQL_DB_USERNAME, EMBEDDED_MYSQL_DB_PASSWORD)
@@ -184,6 +184,9 @@ public class DbTestUtil {
         } catch (final IOException e) {
             LOGGER.error(e::getMessage, e);
             throw new UncheckedIOException(e);
+        } catch (final RuntimeException e) {
+            LOGGER.error(e::getMessage, e);
+            throw e;
         }
     }
 
