@@ -96,6 +96,7 @@ public class PipelineDataProcessorTaskExecutor implements DataProcessorTaskExecu
     private static final Logger LOGGER = LoggerFactory.getLogger(PipelineDataProcessorTaskExecutor.class);
     private static final String PROCESSING = "Processing:";
     private static final String FINISHED = "Finished:";
+    private static final String SUPERCEDED = "Superceded:";
     private static final int PREVIEW_SIZE = 100;
     private static final int MIN_STREAM_SIZE = 1;
     private static final Pattern XML_DECL_PATTERN = Pattern.compile("<\\?\\s*xml[^>]*>", Pattern.CASE_INSENSITIVE);
@@ -284,12 +285,21 @@ public class PipelineDataProcessorTaskExecutor implements DataProcessorTaskExecu
             final Pipeline pipeline = pipelineFactory.create(pipelineData);
             processNestedStreams(pipeline, meta, streamSource);
 
-            // Create processing finished message.
-            final String finishedInfo = "" +
-                    FINISHED +
-                    info +
-                    ", finished in " +
-                    ModelStringUtil.formatDurationString(System.currentTimeMillis() - startTime);
+            final String finishedInfo;
+            //Calling isSuperceded() now always ensures that it is called, even in cases when there is no output.
+            if (supersededOutputHelper.isSuperseded()){
+             finishedInfo =
+                        SUPERCEDED +
+                        info +
+                        ", finished in " +
+                        ModelStringUtil.formatDurationString(System.currentTimeMillis() - startTime);
+            } else {
+                finishedInfo =
+                        FINISHED +
+                        info +
+                        ", finished in  " +
+                        ModelStringUtil.formatDurationString(System.currentTimeMillis() - startTime);
+            }
 
             // Log that we have finished processing.
             taskContext.info(() -> finishedInfo);

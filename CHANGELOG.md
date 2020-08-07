@@ -7,9 +7,11 @@ and this project adheres to [Semantic Versioning](http://semver.org/).
 
 ## [Unreleased]
 
+* Issue **#1778** : Remove error streams following reprocessing when no new streams are created.
+
 * Added support for time based expressions when searching for streams from UI. 
 
-* Issue **#1760** : Support time based expressions for ProcessorTask datas ource
+* Issue **#1760** : Support time based expressions for ProcessorTask data source
 
 * Issue **#1761** : Allow processor id to be displayed when searching processor tasks data source.
 
