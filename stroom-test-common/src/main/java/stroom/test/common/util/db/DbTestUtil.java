@@ -18,8 +18,11 @@ import com.wix.mysql.config.SchemaConfig;
 import com.wix.mysql.distribution.Version;
 
 import javax.sql.DataSource;
+import java.io.FileOutputStream;
 import java.io.IOException;
 import java.io.UncheckedIOException;
+import java.nio.channels.FileChannel;
+import java.nio.channels.FileLock;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
@@ -128,24 +131,35 @@ public class DbTestUtil {
     }
 
     private static EmbeddedMysql createEmbeddedMysql(final String schemaName) {
+        final String systemTempDir = System.getProperty("java.io.tmpdir");
+        final Path parentDir = Paths.get(systemTempDir);
+        final Path lockFile = parentDir.resolve("embedmysql.lock");
+        final Path cacheDir = parentDir.resolve("embedmysql");
+
+        EmbeddedMysql embeddedMysql = null;
+        while (embeddedMysql == null) {
+            try (final FileOutputStream fileOutputStream = new FileOutputStream(lockFile.toFile())) {
+                FileChannel channel = fileOutputStream.getChannel();
+                LOGGER.info("LOCK");
+                channel.lock();
+                embeddedMysql = doCreateEmbeddedMysql(schemaName, cacheDir);
+            } catch (final IOException e) {
+                LOGGER.trace(e.getMessage(), e);
+            }
+            LOGGER.info("UNLOCK");
+
+            try {
+                Thread.sleep(500);
+            } catch (final InterruptedException e) {
+                LOGGER.error(e.getMessage(), e);
+                throw new RuntimeException(e.getMessage(), e);
+            }
+        }
+        return embeddedMysql;
+    }
+
+    private static EmbeddedMysql doCreateEmbeddedMysql(final String schemaName, final Path cacheDir) {
         try {
-            Path cacheDir = Paths.get(getClassContainer(DbTestUtil.class));
-
-            LOGGER.info(LambdaLogUtil.message("Current class path = {}", cacheDir.toAbsolutePath().toString()));
-
-            while (!cacheDir.getFileName().toString().equals("stroom-test-common")) {
-                cacheDir = cacheDir.getParent();
-            }
-            cacheDir = cacheDir.getParent().resolve("embedmysql");
-            cacheDir = cacheDir.toAbsolutePath();
-            final Path destinationCacheDir = cacheDir;
-
-            // If the cache directory doesn't exist then create a temp directory to download embedded MySQL into.
-            // Doing this avoids conflicts with other test threads that might be trying to download MySQL.
-            if (!Files.isDirectory(destinationCacheDir)) {
-                cacheDir = Files.createTempDirectory("embedmysql");
-            }
-
             final Path tempDir = Files.createTempDirectory("embedmysql");
 
             LOGGER.info(LambdaLogUtil.message("Embedded MySQL cache dir = {}", cacheDir.toString()));
@@ -173,11 +187,6 @@ public class DbTestUtil {
 //                        .addSchema("aschema2", ScriptResolver.classPathScripts("db/*.sql"))
                     .addSchema(schemaConfig)
                     .start();
-
-            // Copy download over to the cache dir so it is available for further use.
-            if (!Files.isDirectory(destinationCacheDir)) {
-                Files.move(cacheDir, destinationCacheDir);
-            }
 
             return embeddedMysql;
 
