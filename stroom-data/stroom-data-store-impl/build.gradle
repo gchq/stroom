@@ -8,6 +8,7 @@ dependencies {
     compile project(':stroom-dictionary:stroom-dictionary-api')
     compile project(':stroom-docstore:stroom-docstore-api')
     compile project(':stroom-event-logging:stroom-event-logging-api')
+    compile project(':stroom-explorer:stroom-docrefinfo-api')
     compile project(':stroom-feed:stroom-feed-api')
     compile project(':stroom-job:stroom-job-api')
     compile project(':stroom-meta:stroom-meta-api')

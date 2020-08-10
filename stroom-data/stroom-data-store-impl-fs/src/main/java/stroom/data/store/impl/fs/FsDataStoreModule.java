@@ -17,8 +17,8 @@
 package stroom.data.store.impl.fs;
 
 import stroom.data.store.api.Store;
+import stroom.data.store.impl.AttributeMapFactory;
 import stroom.data.store.impl.DataStoreMaintenanceService;
-import stroom.meta.api.AttributeMapFactory;
 import stroom.util.guice.GuiceUtil;
 import stroom.util.guice.RestResourcesBinder;
 import stroom.util.guice.ServletBinder;

@@ -182,8 +182,9 @@ public final class TooltipUtil {
 
         public TableBuilder() {
             buffer = new SafeHtmlBuilder()
-                    .appendHtmlConstant("<Table>");
+                    .appendHtmlConstant("<table>");
         }
+
         public TableBuilder addHeaderRow(final String key) {
             return addHeaderRow(key, "");
         }
@@ -237,7 +238,7 @@ public final class TooltipUtil {
 
                 if (safeValue.asString().length() > 0 || showBlank) {
                     buffer
-                            .appendHtmlConstant("<tr><td>")
+                            .appendHtmlConstant("<tr><td style=\"padding-right:5px\">")
                             .append(safeKey)
                             .appendHtmlConstant("</td>")
                             .appendHtmlConstant("<td>")
@@ -247,7 +248,7 @@ public final class TooltipUtil {
             } else {
                 if (showBlank) {
                     buffer
-                            .appendHtmlConstant("<tr><td>")
+                            .appendHtmlConstant("<tr><td style=\"padding-right:5px\">")
                             .append(safeKey)
                             .appendHtmlConstant("</td>")
                             .appendHtmlConstant("<td/></tr>");
@@ -258,7 +259,7 @@ public final class TooltipUtil {
         }
 
         public SafeHtml build() {
-            return buffer.appendHtmlConstant("<Table>")
+            return buffer.appendHtmlConstant("<table>")
                     .toSafeHtml();
         }
 

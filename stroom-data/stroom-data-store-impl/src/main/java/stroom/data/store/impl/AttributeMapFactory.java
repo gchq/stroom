@@ -1,4 +1,4 @@
-package stroom.meta.api;
+package stroom.data.store.impl;
 
 import stroom.meta.shared.Meta;
 

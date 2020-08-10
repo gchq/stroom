@@ -1,6 +1,7 @@
 package stroom.app.guice;
 
 import stroom.core.db.DbStatusModule;
+import stroom.data.store.impl.DataStoreModule;
 
 import com.google.inject.AbstractModule;
 
@@ -34,7 +35,7 @@ public class CoreModule extends AbstractModule {
         install(new stroom.dashboard.impl.script.ScriptModule());
         install(new stroom.dashboard.impl.visualisation.VisualisationModule());
         install(new stroom.data.retention.impl.DataRetentionModule());
-        install(new stroom.data.store.impl.DataStoreHandlerModule());
+        install(new DataStoreModule());
         install(new stroom.data.store.impl.fs.FsDataStoreModule());
         install(new stroom.data.store.impl.fs.FsDataStoreTaskHandlerModule());
         install(new stroom.data.store.impl.fs.db.FsDataStoreDbModule());

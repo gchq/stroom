@@ -21,13 +21,14 @@ import stroom.util.guice.ServletBinder;
 
 import com.google.inject.AbstractModule;
 
-public class DataStoreHandlerModule extends AbstractModule {
+public class DataStoreModule extends AbstractModule {
     @Override
     protected void configure() {
+        bind(DataService.class).to(DataServiceImpl.class);
+
         ServletBinder.create(binder())
                 .bind(ImportFileServlet.class);
 
-        // TODO probably not the right place for this binding
         RestResourcesBinder.create(binder())
                 .bind(DataResourceImpl.class)
                 .bind(ViewDataResourceImpl.class);
