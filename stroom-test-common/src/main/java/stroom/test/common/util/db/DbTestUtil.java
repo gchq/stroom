@@ -170,7 +170,7 @@ public class DbTestUtil {
                     .withCacheDir(cacheDir.toString())
                     .build();
 
-            final MysqldConfig config = MysqldConfig.aMysqldConfig(Version.v8_0_17)
+            final MysqldConfig config = MysqldConfig.aMysqldConfig(Version.v5_5_52)
                     .withCharset(Charset.UTF8)
                     .withFreePort()
                     .withUser(EMBEDDED_MYSQL_DB_USERNAME, EMBEDDED_MYSQL_DB_PASSWORD)
