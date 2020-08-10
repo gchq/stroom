@@ -22,11 +22,11 @@ import stroom.meta.api.AttributeMap;
 import stroom.meta.impl.MetaKeyDao;
 import stroom.meta.impl.MetaValueDao;
 import stroom.meta.shared.Meta;
+import stroom.util.logging.LambdaLogger;
+import stroom.util.logging.LambdaLoggerFactory;
 import stroom.util.logging.LogExecutionTime;
 
 import org.jooq.BatchBindStep;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 
 import javax.inject.Inject;
 import javax.inject.Singleton;
@@ -44,7 +44,7 @@ import static stroom.meta.impl.db.jooq.tables.MetaVal.META_VAL;
 
 @Singleton
 class MetaValueDaoImpl implements MetaValueDao {
-    private static final Logger LOGGER = LoggerFactory.getLogger(MetaValueDaoImpl.class);
+    private static final LambdaLogger LOGGER = LambdaLoggerFactory.getLogger(MetaValueDaoImpl.class);
 
     private static final String LOCK_NAME = "MetaDeleteExecutor";
 
@@ -80,7 +80,7 @@ class MetaValueDaoImpl implements MetaValueDao {
 
                                         return Optional.of(row);
                                     } catch (final NumberFormatException e) {
-                                        LOGGER.debug(e.getMessage(), e);
+                                        LOGGER.debug(e::getMessage, e);
                                         return Optional.empty();
                                     }
                                 }))
@@ -116,7 +116,7 @@ class MetaValueDaoImpl implements MetaValueDao {
 
     private void insertRecords(final List<Row> rows) {
         final LogExecutionTime logExecutionTime = new LogExecutionTime();
-        LOGGER.debug("Processing batch of {}", rows.size());
+        LOGGER.debug(() -> "Processing batch of " + rows.size());
 
         JooqUtil.context(metaDbConnProvider, context -> {
             BatchBindStep batchBindStep = context
@@ -130,9 +130,9 @@ class MetaValueDaoImpl implements MetaValueDao {
         });
 
         if (logExecutionTime.getDuration() > 1000) {
-            LOGGER.warn("Saved {} updates, completed in {}", rows.size(), logExecutionTime);
+            LOGGER.warn(() -> "Saved " + rows.size() + " updates, completed in " + logExecutionTime);
         } else {
-            LOGGER.debug("Saved {} updates, completed in {}", rows.size(), logExecutionTime);
+            LOGGER.debug(() -> "Saved " + rows.size() + " updates, completed in " + logExecutionTime);
         }
     }
 
@@ -151,7 +151,7 @@ class MetaValueDaoImpl implements MetaValueDao {
 
     private int deleteBatchOfOldValues(final long createTimeThresholdEpochMs, final int batchSize) {
         final LogExecutionTime logExecutionTime = new LogExecutionTime();
-        LOGGER.debug("Processing batch age {}, batch size is {}", createTimeThresholdEpochMs, batchSize);
+        LOGGER.debug(() -> "Processing batch age " + createTimeThresholdEpochMs + ", batch size is " + batchSize);
 
         final int count = JooqUtil.contextResult(metaDbConnProvider, context -> context
                         // TODO : @66 Maybe try delete with limits again after un upgrade to MySQL 5.7.
@@ -176,9 +176,9 @@ class MetaValueDaoImpl implements MetaValueDao {
         );
 
         if (logExecutionTime.getDuration() > 1000) {
-            LOGGER.warn("Deleted {}, completed in {}", count, logExecutionTime);
+            LOGGER.warn(() -> "Deleted " + count + ", completed in " + logExecutionTime);
         } else {
-            LOGGER.debug("Deleted {}, completed in {}", count, logExecutionTime);
+            LOGGER.debug(() -> "Deleted " + count + ", completed in " + logExecutionTime);
         }
 
         return count;

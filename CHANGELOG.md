@@ -4,7 +4,42 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](http://keepachangelog.com/) 
 and this project adheres to [Semantic Versioning](http://semver.org/).
 
+
 ## [Unreleased]
+
+* Issue **#1778** : Remove error streams following reprocessing when no new streams are created.
+
+* Added support for time based expressions when searching for streams from UI. 
+
+* Issue **#1760** : Support time based expressions for ProcessorTask data source
+
+* Issue **#1761** : Allow processor id to be displayed when searching processor tasks data source.
+
+* Issue **#1693** : Fix dependencies screen listing links to internal searchables as "missing".
+
+* Issue **#1751** : Display correct UUID for "to" dependency in UI dependency screen.
+
+* Issue **#1664** : Fix crash when all streams for pipeline are deleted.
+
+* Issue **#1701** : Fix crash when alternative pipeline is selected/used for processing.
+
+## [v7.0-beta.40] - 2020-07-27
+
+* Issue **#1756** : Fix for IdEnrichmentFilter where is attempts to change attribute values that already exist.
+
+* Issue **#1741** : Fix for search hanging issue.
+
+* Issue **#1740** : `CombinedParser` now removes invalid XML 1.0 characters when `fixInvalidChars` is set and not XML 1.1.
+
+* Add `readTimeout` property to `HTTPAppender` 
+
+* Issue **#1747** : Nodes are now notified about changes to document permissions so that caches are cleared etc.
+
+* Issue **#1752** : Meta info tooltips now show appropriate units for values.
+
+* The `admin` account is now auto created if it doesn't exist.
+
+* Issue **#1310** : Improved file cleanup between tests.
 
 * Issue **#1533** : Improved meta data attribute value flushing to DB.
 
@@ -2413,7 +2448,8 @@ Issue **gchq/stroom-expression#22** : Add `typeOf(...)` function to dashboard.
 
 * Issue **#202** : Initial release of the new data retention policy functionality.
 
-[Unreleased]: https://github.com/gchq/stroom/compare/v7.0-beta.39...HEAD
+[Unreleased]: https://github.com/gchq/stroom/compare/v7.0-beta.40...HEAD
+[v7.0-beta.40]: https://github.com/gchq/stroom/compare/v7.0-beta.39...v7.0-beta.40
 [v7.0-beta.39]: https://github.com/gchq/stroom/compare/v7.0-beta.38...v7.0-beta.39
 [v7.0-beta.38]: https://github.com/gchq/stroom/compare/v7.0-beta.37...v7.0-beta.38
 [v7.0-beta.37]: https://github.com/gchq/stroom/compare/v7.0-beta.36...v7.0-beta.37

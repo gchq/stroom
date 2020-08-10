@@ -28,6 +28,7 @@ import stroom.authentication.exceptions.NoSuchUserException;
 import stroom.authentication.impl.db.jooq.tables.records.AccountRecord;
 import stroom.db.util.GenericDao;
 import stroom.db.util.JooqUtil;
+import stroom.security.shared.User;
 import stroom.util.collections.ResultPageCollector;
 import stroom.util.filter.FilterFieldMapper;
 import stroom.util.filter.FilterFieldMappers;
@@ -35,8 +36,6 @@ import stroom.util.filter.QuickFilterPredicateFactory;
 import stroom.util.logging.LambdaLogUtil;
 import stroom.util.logging.LambdaLogger;
 import stroom.util.logging.LambdaLoggerFactory;
-import stroom.util.shared.PageRequest;
-import stroom.util.shared.PageResponse;
 import stroom.util.shared.ResultPage;
 
 import com.google.common.base.Strings;
@@ -52,7 +51,6 @@ import javax.inject.Inject;
 import javax.inject.Singleton;
 import java.time.Duration;
 import java.time.Instant;
-import java.util.ArrayList;
 import java.util.Collection;
 import java.util.List;
 import java.util.Map;
@@ -61,8 +59,6 @@ import java.util.Optional;
 import java.util.function.BiFunction;
 import java.util.function.Function;
 import java.util.function.Predicate;
-import java.util.stream.Collector;
-import java.util.stream.Collector.Characteristics;
 import java.util.stream.Stream;
 
 import static java.util.Map.entry;
@@ -269,10 +265,30 @@ class AccountDaoImpl implements AccountDao {
             return new CredentialValidationResult(false, true, false, false, false, false);
         }
 
-        final Optional<AccountRecord> optionalRecord = JooqUtil.contextResult(authDbConnProvider, context -> context
+        Optional<AccountRecord> optionalRecord = JooqUtil.contextResult(authDbConnProvider, context -> context
                 .selectFrom(ACCOUNT)
                 .where(ACCOUNT.USER_ID.eq(userId))
                 .fetchOptional());
+
+        // Create the admin account if it doesn't exist.
+        if (optionalRecord.isEmpty() && User.ADMIN_USER_NAME.equals(userId)) {
+            final long now = System.currentTimeMillis();
+            final Account account = new Account();
+            account.setUserId(User.ADMIN_USER_NAME);
+            account.setNeverExpires(true);
+            account.setForcePasswordChange(true);
+            account.setCreateTimeMs(now);
+            account.setCreateUser("INTERNAL_PROCESSING_USER");
+            account.setUpdateTimeMs(now);
+            account.setUpdateUser("INTERNAL_PROCESSING_USER");
+            account.setEnabled(true);
+            create(account, User.ADMIN_USER_NAME);
+
+            optionalRecord = JooqUtil.contextResult(authDbConnProvider, context -> context
+                    .selectFrom(ACCOUNT)
+                    .where(ACCOUNT.USER_ID.eq(userId))
+                    .fetchOptional());
+        }
 
         if (optionalRecord.isEmpty()) {
             LOGGER.debug("Request to log in with invalid user id: " + userId);

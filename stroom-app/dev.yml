@@ -65,6 +65,9 @@ logging:
 appConfig:
   authentication:
     useDefaultOpenIdCredentials: ${USE_DEFAULT_OPEN_ID_CREDENTIALS:-true}
+    passwordPolicy:
+      minimumPasswordStrength: 1
+      minimumPasswordLength: 1
   commonDbDetails:
     connection:
       jdbcDriverClassName: ${STROOM_JDBC_DRIVER_CLASS_NAME:-com.mysql.cj.jdbc.Driver}

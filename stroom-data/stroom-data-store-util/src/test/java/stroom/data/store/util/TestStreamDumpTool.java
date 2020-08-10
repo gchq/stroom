@@ -29,6 +29,7 @@ import stroom.data.shared.StreamTypeNames;
 import stroom.data.store.api.Store;
 import stroom.data.store.api.Target;
 import stroom.data.store.api.TargetUtil;
+import stroom.data.store.impl.fs.FsVolumeService;
 import stroom.meta.impl.db.MetaDbConnProvider;
 import stroom.meta.api.MetaProperties;
 import stroom.test.common.util.db.DbTestModule;
@@ -48,9 +49,10 @@ class TestStreamDumpTool {
 
     @Inject
     private MetaDbConnProvider metaDbConnProvider;
-
     @Inject
     private Store streamStore;
+    @Inject
+    private FsVolumeService fsVolumeService;
 
     @Mock
     private ToolInjector toolInjector;
@@ -61,6 +63,9 @@ class TestStreamDumpTool {
             new DbTestModule(),
             new ToolModule());
         injector.injectMembers(this);
+
+        // Clear any lingering volumes or data.
+        fsVolumeService.clear();
 
         Mockito.when(toolInjector.getInjector())
                 .thenReturn(injector);

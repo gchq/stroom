@@ -47,14 +47,14 @@ public class ResolvedOpenIdConfig {
 
     public String getTokenEndpoint() {
         if (openIdConfig.isUseInternal()) {
-            return uriFactory.localUri(INTERNAL_TOKEN_ENDPOINT).toString();
+            return uriFactory.nodeUri(INTERNAL_TOKEN_ENDPOINT).toString();
         }
         return openIdConfig.getTokenEndpoint();
     }
 
     public String getJwksUri() {
         if (openIdConfig.isUseInternal()) {
-            return uriFactory.localUri(INTERNAL_JWKS_URI).toString();
+            return uriFactory.nodeUri(INTERNAL_JWKS_URI).toString();
         }
         return openIdConfig.getJwksUri();
     }

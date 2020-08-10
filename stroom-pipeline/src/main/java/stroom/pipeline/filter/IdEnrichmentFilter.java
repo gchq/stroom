@@ -151,11 +151,11 @@ public class IdEnrichmentFilter extends AbstractXMLFilter {
                 final AttributesImpl idAtts = new AttributesImpl(newAtts);
 
                 // Remove any existing id attribute.
-                int index = atts.getIndex(STREAM_ID);
+                int index = idAtts.getIndex(STREAM_ID);
                 if (index != -1) {
                     idAtts.removeAttribute(index);
                 }
-                index = atts.getIndex(EVENT_ID);
+                index = idAtts.getIndex(EVENT_ID);
                 if (index != -1) {
                     idAtts.removeAttribute(index);
                 }

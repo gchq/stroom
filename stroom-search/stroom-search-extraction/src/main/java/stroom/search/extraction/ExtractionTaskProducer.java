@@ -56,6 +56,7 @@ class ExtractionTaskProducer extends TaskProducer {
     private final CompletionState streamMapCreatorCompletionState = new CompletionState();
     private final Map<Long, List<Event>> streamEventMap = new ConcurrentHashMap<>();
     private final Topic<Values> topic;
+    private final ExtractionProgressTracker tracker;
 
     ExtractionTaskProducer(final TaskExecutor taskExecutor,
                            final StreamMapCreator streamMapCreator,
@@ -67,11 +68,13 @@ class ExtractionTaskProducer extends TaskProducer {
                            final TaskContextFactory taskContextFactory,
                            final TaskContext parentContext,
                            final Provider<ExtractionTaskHandler> handlerProvider,
-                           final SecurityContext securityContext) {
+                           final SecurityContext securityContext,
+                           final ExtractionProgressTracker tracker) {
         super(taskExecutor, maxThreadsPerTask, taskContextFactory, parentContext, TASK_NAME);
         this.parentReceiver = parentReceiver;
         this.receivers = receivers;
         this.handlerProvider = handlerProvider;
+        this.tracker = tracker;
 
         // Create a queue to receive values and store them for asynchronous processing.
         topic = new LinkedBlockingQueueTopic<>(maxStoredDataQueueSize);
@@ -157,18 +160,18 @@ class ExtractionTaskProducer extends TaskProducer {
     }
 
     protected boolean isComplete() {
-        return Thread.currentThread().isInterrupted() || super.isComplete();
+        return Thread.currentThread().isInterrupted() || tracker.isComplete();
     }
 
     @Override
     protected Consumer<TaskContext> getNext() {
         ExtractionRunnable task = null;
 
-        if (!Thread.currentThread().isInterrupted()) {
+        if (!isComplete()) {
             task = taskQueue.poll();
             if (task == null) {
                 if (addTasks()) {
-                    finishedAddingTasks();
+                    tracker.finishedAddingTasks();
                 }
                 task = taskQueue.poll();
             }
@@ -196,9 +199,9 @@ class ExtractionTaskProducer extends TaskProducer {
         final long[] eventIds = createEventIdArray(events, receivers);
         receivers.forEach((docRef, receiver) -> {
             if (docRef != null) {
-                incrementTasksTotal();
+                tracker.incrementTasksTotal();
                 final ExtractionTask task = new ExtractionTask(streamId, eventIds, docRef, receiver);
-                taskQueue.offer(new ExtractionRunnable(task, handlerProvider));
+                taskQueue.offer(new ExtractionRunnable(task, handlerProvider, tracker));
                 tasksCreated.incrementAndGet();
 
             } else {
@@ -231,19 +234,34 @@ class ExtractionTaskProducer extends TaskProducer {
         return eventIds;
     }
 
+    @Override
+    public String toString() {
+        return "ExtractionTaskProducer{" +
+                "tracker=" + tracker +
+                '}';
+    }
+
     private static class ExtractionRunnable implements Consumer<TaskContext> {
         private final ExtractionTask task;
         private final Provider<ExtractionTaskHandler> handlerProvider;
+        private final ExtractionProgressTracker tracker;
 
-        ExtractionRunnable(final ExtractionTask task, final Provider<ExtractionTaskHandler> handlerProvider) {
+        ExtractionRunnable(final ExtractionTask task,
+                           final Provider<ExtractionTaskHandler> handlerProvider,
+                           final ExtractionProgressTracker tracker) {
             this.task = task;
             this.handlerProvider = handlerProvider;
+            this.tracker = tracker;
         }
 
         @Override
         public void accept(final TaskContext taskContext) {
-            final ExtractionTaskHandler handler = handlerProvider.get();
-            handler.exec(taskContext, task);
+            try {
+                final ExtractionTaskHandler handler = handlerProvider.get();
+                handler.exec(taskContext, task);
+            } finally {
+                tracker.incrementTasksCompleted();
+            }
         }
 
         public ExtractionTask getTask() {

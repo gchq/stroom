@@ -13,6 +13,7 @@ import stroom.data.retention.shared.DataRetentionRule;
 import stroom.data.retention.shared.DataRetentionRules;
 import stroom.data.retention.shared.FindDataRetentionImpactCriteria;
 import stroom.datasource.api.v2.AbstractField;
+import stroom.datasource.api.v2.DateField;
 import stroom.db.util.ExpressionMapper;
 import stroom.db.util.ExpressionMapperFactory;
 import stroom.db.util.JooqUtil;
@@ -37,6 +38,7 @@ import stroom.query.api.v2.ExpressionOperator;
 import stroom.query.api.v2.ExpressionOperator.Op;
 import stroom.query.api.v2.ExpressionTerm;
 import stroom.query.api.v2.ExpressionUtil;
+import stroom.query.common.v2.DateExpressionParser;
 import stroom.util.collections.BatchingIterator;
 import stroom.util.date.DateUtil;
 import stroom.util.logging.LambdaLogger;
@@ -58,6 +60,7 @@ import org.jooq.OrderField;
 import org.jooq.Record;
 import org.jooq.Record1;
 import org.jooq.Result;
+import org.jooq.Select;
 import org.jooq.Table;
 import org.jooq.impl.DSL;
 
@@ -65,6 +68,8 @@ import javax.inject.Inject;
 import javax.inject.Singleton;
 import java.time.Duration;
 import java.time.Instant;
+import java.time.ZoneOffset;
+import java.time.ZonedDateTime;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collection;
@@ -201,14 +206,14 @@ class MetaDaoImpl implements MetaDao {
         expressionMapper.multiMap(MetaFields.TYPE_NAME, meta.TYPE_ID, this::getTypeIds);
         expressionMapper.map(MetaFields.PIPELINE, metaProcessor.PIPELINE_UUID, value -> value);
         expressionMapper.map(MetaFields.STATUS, meta.STATUS, value -> MetaStatusId.getPrimitiveValue(Status.valueOf(value.toUpperCase())));
-        expressionMapper.map(MetaFields.STATUS_TIME, meta.STATUS_TIME, DateUtil::parseNormalDateTimeString);
-        expressionMapper.map(MetaFields.CREATE_TIME, meta.CREATE_TIME, DateUtil::parseNormalDateTimeString);
-        expressionMapper.map(MetaFields.EFFECTIVE_TIME, meta.EFFECTIVE_TIME, DateUtil::parseNormalDateTimeString);
+        expressionMapper.map(MetaFields.STATUS_TIME, meta.STATUS_TIME, value -> getDate(MetaFields.STATUS_TIME, value));
+        expressionMapper.map(MetaFields.CREATE_TIME, meta.CREATE_TIME, value -> getDate(MetaFields.CREATE_TIME, value));
+        expressionMapper.map(MetaFields.EFFECTIVE_TIME, meta.EFFECTIVE_TIME, value -> getDate(MetaFields.EFFECTIVE_TIME, value));
 
         // Parent fields.
         expressionMapper.map(MetaFields.PARENT_ID, meta.PARENT_ID, Long::valueOf);
         expressionMapper.map(MetaFields.PARENT_STATUS, parent.STATUS, value -> MetaStatusId.getPrimitiveValue(Status.valueOf(value.toUpperCase())));
-        expressionMapper.map(MetaFields.PARENT_CREATE_TIME, parent.CREATE_TIME, DateUtil::parseNormalDateTimeString);
+        expressionMapper.map(MetaFields.PARENT_CREATE_TIME, parent.CREATE_TIME, value -> getDate(MetaFields.PARENT_CREATE_TIME, value));
         expressionMapper.multiMap(MetaFields.PARENT_FEED, parent.FEED_ID, this::getFeedIds);
 
 
@@ -227,6 +232,18 @@ class MetaDaoImpl implements MetaDao {
         valueMapper.map(MetaFields.STATUS_TIME, meta.STATUS_TIME, ValLong::create);
         valueMapper.map(MetaFields.CREATE_TIME, meta.CREATE_TIME, ValLong::create);
         valueMapper.map(MetaFields.EFFECTIVE_TIME, meta.EFFECTIVE_TIME, ValLong::create);
+    }
+
+    private long getDate(final DateField field, final String value) {
+        try {
+            final Optional<ZonedDateTime> optional = DateExpressionParser.parse(value, ZoneOffset.UTC.getId(), System.currentTimeMillis());
+
+            return optional.orElseThrow(() -> new RuntimeException("Expected a standard date value for field \"" + field.getName()
+                    + "\" but was given string \"" + value + "\"")).toInstant().toEpochMilli();
+        } catch (final Exception e) {
+            throw new RuntimeException("Expected a standard date value for field \"" + field.getName()
+                    + "\" but was given string \"" + value + "\"", e);
+        }
     }
 
     private Val getPipelineName(final String uuid) {
@@ -414,7 +431,7 @@ class MetaDaoImpl implements MetaDao {
 
             final Set<Integer> usedValKeys = identifyExtendedAttributesFields(criteria.getExpression(), new HashSet<>());
 
-            if (usedValKeys.isEmpty()) {
+            if (usedValKeys.isEmpty() && !containsPipelineCondition (criteria.getExpression())) {
                 updateCount = JooqUtil.contextResult(metaDbConnProvider, context ->
                         context
                                 .update(meta)
@@ -423,12 +440,14 @@ class MetaDaoImpl implements MetaDao {
                                 .where(conditions)
                                 .execute());
             } else {
-                Condition extendedAttrCond = meta.ID.in(metaExpressionMapper.addJoins(
-                        DSL.select(meta.ID).from(meta),
+                Select ids = metaExpressionMapper.addJoins(
+                        DSL.select(meta.ID).
+                                from(meta).leftOuterJoin(metaProcessor).on(meta.PROCESSOR_ID.eq(metaProcessor.ID)),
                         meta.ID,
                         usedValKeys)
-                        .where(conditions).getResult()
-                );
+                        .where(conditions);
+
+                Condition extendedAttrCond = meta.ID.in(ids);
                 updateCount = JooqUtil.contextResult(metaDbConnProvider, context ->
                         context
                                 .update(meta)
@@ -440,6 +459,31 @@ class MetaDaoImpl implements MetaDao {
         }
         return updateCount;
     }
+
+    private boolean containsPipelineCondition(final ExpressionOperator expr) {
+        if (expr == null || expr.getChildren() == null)
+            return false;
+        for (ExpressionItem child : expr.getChildren()) {
+            if (child instanceof ExpressionTerm) {
+                ExpressionTerm term = (ExpressionTerm) child;
+
+                if (MetaFields.PIPELINE.getName().equals(term.getField())) {
+                    return true;
+                }
+            } else if (child instanceof ExpressionOperator) {
+                if (containsPipelineCondition((ExpressionOperator)child)){
+                    return true;
+                }
+            } else {
+                //Don't know what this is!
+                LOGGER.warn("Unknown ExpressionItem type " + child.getClass().getName() + " unable to optimise meta query");
+                //Allow search to succeed without optimisation
+                return true;
+            }
+        }
+        return false;
+    }
+
 
     private Condition getFilterCriteriaCondition(final FindDataRetentionImpactCriteria criteria) {
         final Condition filterCondition;

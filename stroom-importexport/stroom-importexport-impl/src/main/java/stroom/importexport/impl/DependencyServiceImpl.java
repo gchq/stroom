@@ -19,6 +19,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import javax.inject.Inject;
+import java.util.Arrays;
 import java.util.Comparator;
 import java.util.List;
 import java.util.Map;
@@ -76,6 +77,14 @@ public class DependencyServiceImpl implements DependencyService {
             FilterFieldMapper.of(DependencyCriteria.FIELD_DEF_STATUS, Dependency::isOk, bool -> bool ? "OK" : "Missing")
     );
 
+    //todo maybe better to introduce dependencies between packages in order to avoid this duplication
+    private static final DocRef [] ALL_PSEUDO_DOCREFS = {
+        new DocRef("Searchable", "Annotations", "Annotations"),
+        new DocRef("Searchable", "Meta Store", "Meta Store"),
+        new DocRef("Searchable", "Processor Tasks", "Processor Tasks"),
+        new DocRef("Searchable", "Task Manager", "Task Manager")
+    };
+
     @Inject
     public DependencyServiceImpl(final ImportExportActionHandlers importExportActionHandlers,
                                  final TaskContextFactory taskContextFactory) {
@@ -110,6 +119,7 @@ public class DependencyServiceImpl implements DependencyService {
         // Flatten the dependency map
         final List<Dependency> flatDependencies = buildFlatDependencies(
                 allDependencies,
+                Arrays.stream(ALL_PSEUDO_DOCREFS).collect(Collectors.toSet()),
                 sortListComparator,
                 filterPredicate);
 
@@ -120,7 +130,9 @@ public class DependencyServiceImpl implements DependencyService {
                         .orElse(new PageRequest()));
     }
 
+
     private List<Dependency> buildFlatDependencies(final Map<DocRef, Set<DocRef>> allDependencies,
+                                                   final Set<DocRef> pseudoDocRefs,
                                                    final Comparator<Dependency> sortListComparator,
                                                    final Predicate<Dependency> filterPredicate) {
         return allDependencies.entrySet().stream()
@@ -131,6 +143,7 @@ public class DependencyServiceImpl implements DependencyService {
                             .map(childDocRef -> new Dependency(
                                     parentDocRef,
                                     childDocRef,
+                                    pseudoDocRefs.contains(childDocRef) ||
                                     allDependencies.containsKey(childDocRef)));
                 })
                 .filter(filterPredicate)

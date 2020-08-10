@@ -359,16 +359,16 @@ class FsDataStoreMaintenanceService implements DataStoreMaintenanceService {
                                     final Path directory,
                                     final long oldFileTime,
                                     final Map<String, List<String>> filesKeyedByBaseName,
-                                    final Map<String, DataVolume> streamsKeyedByBaseName) {
+                                    final Map<String, DataVolume> dataVolumesKeyedByBaseName) {
         // OK now we can go through all the files that exist on the file
         // system and delete out as required
         for (final Entry<String, List<String>> entry : filesKeyedByBaseName.entrySet()) {
             final String fsBaseName = entry.getKey();
             final List<String> files = entry.getValue();
 
-            final DataVolume md = streamsKeyedByBaseName.get(fsBaseName);
+            final DataVolume dataVolume = dataVolumesKeyedByBaseName.get(fsBaseName);
             // Case 1 - No stream volume found !
-            if (md == null) {
+            if (dataVolume == null) {
                 for (final String file : files) {
                     tryDelete(result, doDelete, directory.resolve(file), oldFileTime);
                 }
@@ -379,7 +379,7 @@ class FsDataStoreMaintenanceService implements DataStoreMaintenanceService {
                         LOGGER.debug("processDirectory() - {}/{} belongs to stream {}",
                                 directory,
                                 file,
-                                md.getStreamId()
+                                dataVolume.getStreamId()
                         );
                     }
                 }
@@ -387,7 +387,7 @@ class FsDataStoreMaintenanceService implements DataStoreMaintenanceService {
         }
 
         // Update any streams that don't have a matching file
-        streamsKeyedByBaseName.keySet().stream()
+        dataVolumesKeyedByBaseName.keySet().stream()
                 .filter(streamBaseName -> !filesKeyedByBaseName.containsKey(streamBaseName))
                 .forEach(streamBaseName -> LOGGER.error("processDirectory() - Missing Files for {}/{}", directory,
                         streamBaseName));

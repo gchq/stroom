@@ -16,13 +16,14 @@
 
 package stroom.security.impl.event;
 
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 import stroom.cluster.task.api.NodeNotFoundException;
 import stroom.cluster.task.api.NullClusterStateException;
 import stroom.cluster.task.api.TargetNodeSetFactory;
 import stroom.security.api.SecurityContext;
 import stroom.task.api.TaskContextFactory;
+
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import javax.inject.Inject;
 import javax.inject.Singleton;
@@ -65,7 +66,7 @@ class PermissionChangeEventBusImpl implements PermissionChangeEventBus {
     @Override
     public void fire(final PermissionChangeEvent event) {
         if (started) {
-            fireGlobally(event);
+            securityContext.asProcessingUser(() -> fireGlobally(event));
         }
     }
 

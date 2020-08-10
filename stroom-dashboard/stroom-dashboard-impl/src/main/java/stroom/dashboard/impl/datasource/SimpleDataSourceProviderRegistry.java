@@ -75,7 +75,7 @@ class SimpleDataSourceProviderRegistry implements DataSourceProviderRegistry {
         // be able to go via nginx. A node calling itself is fine as we know the
         // node is available.
         return () ->
-                uriFactory.localUri(pathSupplier.get())
+                uriFactory.nodeUri(pathSupplier.get())
                         .toString();
     }
 

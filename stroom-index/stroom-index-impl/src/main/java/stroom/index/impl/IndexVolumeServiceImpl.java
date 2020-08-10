@@ -1,6 +1,5 @@
 package stroom.index.impl;
 
-import com.google.common.collect.ImmutableMap;
 import stroom.entity.shared.ExpressionCriteria;
 import stroom.index.shared.IndexVolume;
 import stroom.index.shared.IndexVolumeFields;
@@ -18,7 +17,10 @@ import stroom.util.io.FileUtil;
 import stroom.util.logging.LambdaLogUtil;
 import stroom.util.logging.LambdaLogger;
 import stroom.util.logging.LambdaLoggerFactory;
+import stroom.util.shared.Clearable;
 import stroom.util.shared.ResultPage;
+
+import com.google.common.collect.ImmutableMap;
 
 import javax.inject.Inject;
 import java.io.IOException;
@@ -29,15 +31,11 @@ import java.nio.file.Paths;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
-import java.util.Optional;
-import java.util.function.Supplier;
-import java.util.regex.Pattern;
 import java.util.stream.Collectors;
-import java.util.stream.Stream;
 
 import static com.google.common.base.Strings.isNullOrEmpty;
 
-public class IndexVolumeServiceImpl implements IndexVolumeService {
+public class IndexVolumeServiceImpl implements IndexVolumeService, Clearable {
     private static final LambdaLogger LOGGER = LambdaLoggerFactory.getLogger(IndexVolumeServiceImpl.class);
 
     private final IndexVolumeDao indexVolumeDao;
@@ -197,6 +195,15 @@ public class IndexVolumeServiceImpl implements IndexVolumeService {
         }
     }
 
-
-
+    @Override
+    public void clear() {
+        // Delete the contents of all index volumes.
+        find(new ExpressionCriteria()).getValues()
+                .forEach(volume -> {
+                    // The parent will also pick up the index shard (as well as the
+                    // store)
+                    LOGGER.info("Clearing index volume {}", volume.getPath());
+                    FileUtil.deleteContents(Paths.get(volume.getPath()));
+                });
+    }
 }

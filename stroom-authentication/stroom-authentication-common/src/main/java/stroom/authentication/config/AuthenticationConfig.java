@@ -41,7 +41,7 @@ public final class AuthenticationConfig extends AbstractConfig {
     public static final String PROP_NAME_EMAIL = "email";
     public static final String PROP_NAME_TOKEN = "token";
     public static final String PROP_NAME_OAUTH2 = "oauth2";
-    public static final String PROP_NAME_PASSWORD_INTEGRITY_CHECKS = "passwordIntegrityChecks";
+    public static final String PROP_NAME_PASSWORD_POLICY = "passwordPolicy";
 
     private boolean useDefaultOpenIdCredentials = true;
     private String certificateCnPattern = ".*\\((.*)\\)";
@@ -152,7 +152,7 @@ public final class AuthenticationConfig extends AbstractConfig {
     }
 
     @NotNull
-    @JsonProperty(PROP_NAME_PASSWORD_INTEGRITY_CHECKS)
+    @JsonProperty(PROP_NAME_PASSWORD_POLICY)
     public PasswordPolicyConfig getPasswordPolicyConfig() {
         return passwordPolicyConfig;
     }

@@ -43,7 +43,7 @@ class UriFactoryImpl implements UriFactory {
     }
 
     @Override
-    public URI localUri(final String path) {
+    public URI nodeUri(final String path) {
         return toUri(buildAbsoluteUrl(getLocalBaseUri(), path));
     }
 
