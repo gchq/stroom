@@ -209,17 +209,17 @@ public final class GlobalPropertyEditViewImpl
 
     @Override
     public ButtonView addYamlValueWarningIcon(final SvgPreset preset) {
-        return yamlValueButtonPanel.add(preset);
+        return yamlValueButtonPanel.addButton(preset);
     }
 
     @Override
     public ButtonView addEffectiveValueIcon(final SvgPreset preset) {
-        return effectiveValueButtonPanel.add(preset);
+        return effectiveValueButtonPanel.addButton(preset);
     }
 
     @Override
     public ButtonView addDataTypeHelpIcon(final SvgPreset preset) {
-        return dataTypeButtonPanel.add(preset);
+        return dataTypeButtonPanel.addButton(preset);
     }
 
     public interface Binder extends UiBinder<Widget, GlobalPropertyEditViewImpl> {

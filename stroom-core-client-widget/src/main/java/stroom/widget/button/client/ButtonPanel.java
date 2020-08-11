@@ -40,14 +40,14 @@ public class ButtonPanel extends FlowPanel {
         setStyleName(resources.style().layout());
     }
 
-    public ButtonView add(final SvgPreset preset) {
+    public ButtonView addButton(final SvgPreset preset) {
         final SvgButton button = createButton(preset);
         add(button);
         return button;
     }
 
     public ToggleButtonView addToggleButton(final SvgPreset primaryPreset,
-                                      final SvgPreset secondaryPreset) {
+                                            final SvgPreset secondaryPreset) {
         final SvgToggleButton button = createToggleButton(primaryPreset, secondaryPreset);
         add(button);
         return button;

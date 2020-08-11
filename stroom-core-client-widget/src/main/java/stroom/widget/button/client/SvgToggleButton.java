@@ -22,69 +22,74 @@ import com.google.gwt.event.dom.client.ClickHandler;
 import com.google.gwt.event.dom.client.MouseDownHandler;
 import com.google.gwt.event.shared.HandlerRegistration;
 
-public class SvgToggleButton extends SvgButton implements ToggleButtonView {
+public class SvgToggleButton extends BaseSvgButton implements ToggleButtonView {
 
-    private SvgPreset primaryPreset;
-    private SvgPreset secondaryPreset;
-    private boolean isInPrimaryState = true;
+    private SvgPreset onPreset;
+    private SvgPreset offPreset;
+    private boolean isOn = false;
 
-    public SvgToggleButton(final SvgPreset primaryPreset,
-                           final SvgPreset secondaryPreset) {
-        super(primaryPreset);
-        this.primaryPreset = primaryPreset;
-        this.secondaryPreset = secondaryPreset;
+    private SvgToggleButton(final SvgPreset onPreset,
+                           final SvgPreset offPreset) {
+        super(offPreset);
+        this.onPreset = onPreset;
+        this.offPreset = offPreset;
 
         addClickHandler(event -> {
             toggleState();
         });
     }
 
-    public static SvgToggleButton create(final SvgPreset primaryPreset,
-                                         final SvgPreset secondaryPreset) {
-        return new SvgToggleButton(primaryPreset, secondaryPreset);
+    /**
+     * @param onPreset The face to display when in the ON state, e.g. an OFF icon
+     * @param offPreset The face to display when in the OFF state, e.g. an ON icon
+     */
+    public static SvgToggleButton create(final SvgPreset onPreset,
+                                         final SvgPreset offPreset) {
+        return new SvgToggleButton(onPreset, offPreset);
     }
 
-    public SvgPreset setIsInPrimaryState(final boolean isInPrimaryState) {
-        final SvgPreset newState;
-        if (isInPrimaryState) {
-            newState = primaryPreset;
-        } else {
-            newState = secondaryPreset;
-        }
-        if (this.isInPrimaryState != isInPrimaryState) {
-            this.isInPrimaryState = isInPrimaryState;
+    public void setState(final boolean isOn) {
+        if (this.isOn != isOn) {
+            final SvgPreset newState = isOn
+                    ? onPreset
+                    : offPreset;
+            this.isOn = isOn;
             super.setSvgPreset(newState);
         }
-        return newState;
-    }
-    public boolean isInPrimaryState() {
-        return isInPrimaryState;
     }
 
-    private SvgPreset toggleState() {
-        return setIsInPrimaryState(!isInPrimaryState);
+    public boolean isOn() {
+        return isOn;
     }
 
-    public HandlerRegistration addClickHandler(final ClickHandler primaryHandler,
-                                               final ClickHandler secondaryHandler) {
+    public boolean isOff() {
+        return !isOn;
+    }
+
+    private void toggleState() {
+        setState(!isOn);
+    }
+
+    public HandlerRegistration addClickHandler(final ClickHandler onClickedHandler,
+                                               final ClickHandler offClickedHandler) {
         return super.addClickHandler(event -> {
             // The state will already have been toggled in toggleState by this point so
             // need to do the opposite
-            if (isInPrimaryState) {
-                secondaryHandler.onClick(event);
+            if (isOn) {
+                offClickedHandler.onClick(event);
             } else {
-                primaryHandler.onClick(event);
+                onClickedHandler.onClick(event);
             }
         });
     }
 
-    public HandlerRegistration addMouseDownHandler(final MouseDownHandler primaryHandler,
-                                                   final MouseDownHandler secondaryHandler) {
+    public HandlerRegistration addMouseDownHandler(final MouseDownHandler onMouseDownedHandler,
+                                                   final MouseDownHandler offMouseDownedHandler) {
         return super.addMouseDownHandler(event -> {
-            if (isInPrimaryState) {
-                primaryHandler.onMouseDown(event);
+            if (isOn) {
+                onMouseDownedHandler.onMouseDown(event);
             } else {
-                secondaryHandler.onMouseDown(event);
+                offMouseDownedHandler.onMouseDown(event);
             }
         });
     }

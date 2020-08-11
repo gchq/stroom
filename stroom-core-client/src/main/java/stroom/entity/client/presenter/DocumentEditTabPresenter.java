@@ -103,7 +103,7 @@ public abstract class DocumentEditTabPresenter<V extends LinkTabPanelView, D>
             addWidgetLeft(leftButtons);
         }
 
-        return leftButtons.add(preset);
+        return leftButtons.addButton(preset);
     }
 
 //    public ImageButtonView addButtonRight(final String title, final ImageResource enabledImage,

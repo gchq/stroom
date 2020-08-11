@@ -16,34 +16,21 @@
 
 package stroom.editor.client.presenter;
 
-public class Option {
-    private ChangeHandler changeHandler;
+public class Action {
+    private Runnable executeHandler;
     private String text;
-    private boolean on;
     private boolean available;
 
-    public Option(final String text, final boolean on, final boolean available, final ChangeHandler changeHandler) {
+    public Action(final String text, final boolean available, final Runnable executeHandler) {
         this.text = text;
-        this.on = on;
         this.available = available;
-        this.changeHandler = changeHandler;
+        this.executeHandler = executeHandler;
     }
 
-    public boolean isOn() {
-        return on;
-    }
-
-    public void setOn(final boolean on, final boolean force) {
-        if (this.on != on || force) {
-            this.on = on;
-            if (changeHandler != null) {
-                changeHandler.onChange(on);
-            }
+    public void execute() {
+        if (executeHandler != null) {
+            executeHandler.run();
         }
-    }
-
-    public void setOn(final boolean on) {
-        setOn(on, false);
     }
 
     public boolean isAvailable() {
@@ -55,18 +42,6 @@ public class Option {
     }
 
     public String getText() {
-        if (on) {
-            return text + " (<span style=\"color: green\">ON</span>)";
-        } else {
-            return text + " (<span style=\"color: red\">OFF</span>)";
-        }
-    }
-
-    public boolean isOk() {
-        return available && on;
-    }
-
-    public interface ChangeHandler {
-        void onChange(boolean setting);
+        return text;
     }
 }

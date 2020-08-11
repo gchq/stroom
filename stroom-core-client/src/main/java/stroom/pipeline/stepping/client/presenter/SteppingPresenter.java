@@ -162,7 +162,7 @@ public class SteppingPresenter extends MyPresenterWidget<SteppingPresenter.Stepp
             getView().addWidgetLeft(leftButtons);
         }
 
-        return leftButtons.add(preset);
+        return leftButtons.addButton(preset);
     }
 
     private PresenterWidget<?> getContent(final PipelineElement element) {

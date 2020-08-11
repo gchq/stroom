@@ -324,6 +324,7 @@ public class ElementPresenter extends MyPresenterWidget<ElementView> implements 
             codePresenter = editorProvider.get();
             setCommonEditorOptions(codePresenter);
 
+            codePresenter.getFormatAction().setAvailable(true);
 
             registerHandler(codePresenter.addValueChangeHandler(event -> {
                 dirtyCode = true;
@@ -371,6 +372,8 @@ public class ElementPresenter extends MyPresenterWidget<ElementView> implements 
         editorPresenter.setReadOnly(true);
         // Default to wrapped lines as a lot of output is un-formatted xml
         editorPresenter.getLineWrapOption().setOn(true);
+
+        editorPresenter.getFormatAction().setAvailable(false);
     }
 
     private void setCommonEditorOptions(final EditorPresenter editorPresenter) {

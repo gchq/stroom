@@ -133,13 +133,13 @@ public class DataViewImpl extends ViewImpl implements DataView {
 
     @Override
     public ButtonView addButton(final SvgPreset preset) {
-        return buttonPanel.add(preset);
+        return buttonPanel.addButton(preset);
     }
 
     @Override
-    public ToggleButtonView addToggleButton(final SvgPreset primaryPreset,
-                                            final SvgPreset secondaryPreset) {
-        return buttonPanel.addToggleButton(primaryPreset, secondaryPreset);
+    public ToggleButtonView addToggleButton(final SvgPreset onPreset,
+                                            final SvgPreset offPreset) {
+        return buttonPanel.addToggleButton(onPreset, offPreset);
     }
 
     @Override

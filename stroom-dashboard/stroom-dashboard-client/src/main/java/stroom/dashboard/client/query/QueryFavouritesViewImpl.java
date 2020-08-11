@@ -64,7 +64,7 @@ public class QueryFavouritesViewImpl extends ViewImpl implements QueryFavourites
 
     @Override
     public ButtonView addButton(final SvgPreset preset) {
-        return buttonPanel.add(preset);
+        return buttonPanel.addButton(preset);
     }
 
     public interface Binder extends UiBinder<Widget, QueryFavouritesViewImpl> {

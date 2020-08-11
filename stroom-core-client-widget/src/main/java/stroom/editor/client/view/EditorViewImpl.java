@@ -19,6 +19,7 @@ package stroom.editor.client.view;
 import stroom.editor.client.event.FormatEvent;
 import stroom.editor.client.event.FormatEvent.FormatHandler;
 import stroom.editor.client.model.XmlFormatter;
+import stroom.editor.client.presenter.Action;
 import stroom.editor.client.presenter.EditorUiHandlers;
 import stroom.editor.client.presenter.EditorView;
 import stroom.editor.client.presenter.Option;
@@ -72,6 +73,7 @@ public class EditorViewImpl extends ViewWithUiHandlers<EditorUiHandlers> impleme
     private static final IndicatorPopup indicatorPopup = new IndicatorPopup();
     private static volatile Binder binder;
     private static volatile Resources resources;
+    private final Action formatAction;
     private final Option stylesOption;
     private final Option lineNumbersOption;
     private final Option indicatorsOption;
@@ -133,6 +135,8 @@ public class EditorViewImpl extends ViewWithUiHandlers<EditorUiHandlers> impleme
         filterInactive.getElement().getStyle().setTop(top, Unit.PX);
         filterActive.getElement().getStyle().setTop(top, Unit.PX);
 
+        formatAction = new Action("Format", false, this::format);
+
         stylesOption = new Option(
                 "Styles", true, true, (on) -> setMode(mode));
         lineNumbersOption = new Option(
@@ -147,6 +151,7 @@ public class EditorViewImpl extends ViewWithUiHandlers<EditorUiHandlers> impleme
                 "Vim Key Bindings", false, true, (on) -> editor.setUseVimBindings(on));
         codeCompletionOption = new Option(
                 "Code Completion", false, true, (on) -> editor.setUseCodeCompletion(on));
+
 
         editor.getElement().setClassName("editor");
         editor.addDomHandler(event -> handleMouseDown(event), MouseDownEvent.getType());
@@ -292,8 +297,7 @@ public class EditorViewImpl extends ViewWithUiHandlers<EditorUiHandlers> impleme
     /**
      * Formats the currently displayed text.
      */
-    @Override
-    public void format() {
+    private void format() {
         Scheduler.get().scheduleDeferred(() -> {
             final int scrollTop = editor.getScrollTop();
             final AceEditorCursorPosition cursorPosition = editor.getCursorPosition();
@@ -316,6 +320,11 @@ public class EditorViewImpl extends ViewWithUiHandlers<EditorUiHandlers> impleme
 
             FormatEvent.fire(this);
         });
+    }
+
+    @Override
+    public Action getFormatAction() {
+        return formatAction;
     }
 
     @Override

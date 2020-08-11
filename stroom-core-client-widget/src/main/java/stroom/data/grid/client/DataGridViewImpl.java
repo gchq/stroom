@@ -537,7 +537,7 @@ public class DataGridViewImpl<R> extends ViewImpl implements DataGridView<R>, Na
 
     @Override
     public ButtonView addButton(final SvgPreset preset) {
-        return buttonPanel.add(preset);
+        return buttonPanel.addButton(preset);
     }
 
     @Override

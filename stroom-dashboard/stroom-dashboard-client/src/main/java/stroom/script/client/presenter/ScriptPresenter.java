@@ -112,7 +112,7 @@ public class ScriptPresenter extends DocumentEditTabPresenter<LinkTabPanelView, 
         settingsPresenter.onReadOnly(readOnly);
         if (codePresenter != null) {
             codePresenter.setReadOnly(readOnly);
-            codePresenter.getContextMenu().setShowFormatOption(!readOnly);
+            codePresenter.getFormatAction().setAvailable(!readOnly);
             codePresenter.getCodeCompletionOption().setAvailable(!readOnly);
             codePresenter.getCodeCompletionOption().setOn(!readOnly);
         }
@@ -130,7 +130,7 @@ public class ScriptPresenter extends DocumentEditTabPresenter<LinkTabPanelView, 
             registerHandler(codePresenter.addValueChangeHandler(event -> setDirty(true)));
             registerHandler(codePresenter.addFormatHandler(event -> setDirty(true)));
             codePresenter.setReadOnly(readOnly);
-            codePresenter.getContextMenu().setShowFormatOption(!readOnly);
+            codePresenter.getFormatAction().setAvailable(!readOnly);
             if (getEntity() != null && getEntity().getData() != null) {
                 codePresenter.setText(getEntity().getData());
             }

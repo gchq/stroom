@@ -90,11 +90,8 @@ public class EditorPresenter extends MyPresenterWidget<EditorView>
         }
     }
 
-    /**
-     * Formats the currently displayed XML.
-     */
-    public void format() {
-        getView().format();
+    public Action getFormatAction() {
+        return getView().getFormatAction();
     }
 
     public Option getStylesOption() {

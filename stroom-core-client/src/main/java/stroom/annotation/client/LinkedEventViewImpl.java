@@ -58,7 +58,7 @@ public class LinkedEventViewImpl extends ViewImpl implements LinkedEventView, Re
 
     @Override
     public ButtonView addButton(final SvgPreset preset) {
-        return buttonPanel.add(preset);
+        return buttonPanel.addButton(preset);
     }
 
     @Override

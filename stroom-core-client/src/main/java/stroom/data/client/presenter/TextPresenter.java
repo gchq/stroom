@@ -36,14 +36,20 @@ public class TextPresenter extends MyPresenterWidget<TextPresenter.TextView> {
         super(eventBus, view);
         this.textPresenter = textPresenter;
 
+        textPresenter.getCodeCompletionOption().setAvailable(false);
         textPresenter.getIndicatorsOption().setAvailable(false);
         textPresenter.getIndicatorsOption().setOn(false);
+
         textPresenter.getLineNumbersOption().setAvailable(true);
         textPresenter.getLineNumbersOption().setOn(true);
         textPresenter.getLineWrapOption().setAvailable(true);
         textPresenter.getShowInvisiblesOption().setAvailable(true);
         textPresenter.getUseVimBindingsOption().setAvailable(true);
+
         textPresenter.setReadOnly(true);
+
+        // Should not be formatting read-only content
+        textPresenter.getFormatAction().setAvailable(false);
 
         view.setTextView(textPresenter.getView());
     }

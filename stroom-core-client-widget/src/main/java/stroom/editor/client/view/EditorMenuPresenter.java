@@ -16,6 +16,7 @@
 
 package stroom.editor.client.view;
 
+import stroom.editor.client.presenter.Action;
 import stroom.editor.client.presenter.EditorPresenter;
 import stroom.editor.client.presenter.Option;
 import stroom.widget.menu.client.presenter.IconMenuItem;
@@ -76,9 +77,7 @@ public class EditorMenuPresenter {
         addMenuItem(position++, menuItems, xmlEditorPresenter.getUseVimBindingsOption());
         addMenuItem(position++, menuItems, xmlEditorPresenter.getCodeCompletionOption());
 
-        if (showFormatOption) {
-            menuItems.add(createItem("Format", () -> xmlEditorPresenter.format(), position++));
-        }
+        addMenuItem(position++, menuItems, xmlEditorPresenter.getFormatAction());
 
         if (xmlEditorPresenter.isShowFilterSettings()) {
             String title;
@@ -101,11 +100,14 @@ public class EditorMenuPresenter {
         }
     }
 
+    private void addMenuItem(int position, final List<Item> menuItems, final Action action) {
+        if (action.isAvailable()) {
+            menuItems.add(createItem(action.getText(), action::execute, position));
+        }
+    }
+
     private Item createItem(final String text, final Command command, final int position) {
         return new IconMenuItem(position, text, null, true, command);
     }
 
-    public void setShowFormatOption(final boolean showFormatOption) {
-        this.showFormatOption = showFormatOption;
-    }
 }

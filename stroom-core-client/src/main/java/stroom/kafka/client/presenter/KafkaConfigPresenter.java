@@ -136,7 +136,7 @@ public class KafkaConfigPresenter extends DocumentEditTabPresenter<LinkTabPanelV
         settingsPresenter.onReadOnly(readOnly);
         if (editorPresenter != null) {
             editorPresenter.setReadOnly(readOnly);
-            editorPresenter.getContextMenu().setShowFormatOption(!readOnly);
+            editorPresenter.getFormatAction().setAvailable(!readOnly);
             editorPresenter.getCodeCompletionOption().setOn(!readOnly);
             editorPresenter.getCodeCompletionOption().setAvailable(!readOnly);
         }
@@ -155,7 +155,7 @@ public class KafkaConfigPresenter extends DocumentEditTabPresenter<LinkTabPanelV
             registerHandler(editorPresenter.addValueChangeHandler(event -> setDirty(true)));
             registerHandler(editorPresenter.addFormatHandler(event -> setDirty(true)));
             editorPresenter.setReadOnly(readOnly);
-            editorPresenter.getContextMenu().setShowFormatOption(!readOnly);
+            editorPresenter.getFormatAction().setAvailable(!readOnly);
             if (getEntity() != null && getEntity().getData() != null) {
                 editorPresenter.setText(getEntity().getData());
             }

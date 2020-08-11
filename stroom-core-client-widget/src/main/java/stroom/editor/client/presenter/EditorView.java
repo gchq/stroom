@@ -34,6 +34,7 @@ import java.util.List;
 
 public interface EditorView extends View, HasKeyDownHandlers, HasFormatHandlers, HasText, HasMouseDownHandlers,
         HasContextMenuHandlers, HasUiHandlers<EditorUiHandlers>, HasValueChangeHandlers<String> {
+
     void setText(String text);
 
     void setFirstLineNumber(int firstLineNumber);
@@ -48,7 +49,7 @@ public interface EditorView extends View, HasKeyDownHandlers, HasFormatHandlers,
 
     void setTheme(AceEditorTheme theme);
 
-    void format();
+    Action getFormatAction();
 
     Option getStylesOption();
 

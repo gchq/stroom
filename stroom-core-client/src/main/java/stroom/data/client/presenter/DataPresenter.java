@@ -136,9 +136,6 @@ public class DataPresenter extends MyPresenterWidget<DataPresenter.DataView> imp
     private boolean steppingSource;
     private boolean formatOnLoad;
     private boolean ignoreActions;
-
-//    private ButtonView rawBtn;
-//    private ButtonView formattedBtn;
     private ToggleButtonView formatToggleBtn;
 
     @Inject
@@ -162,33 +159,19 @@ public class DataPresenter extends MyPresenterWidget<DataPresenter.DataView> imp
 
         textPresenter.setUiHandlers(this);
 
-//        rawBtn = view.addButton(SvgPresets.RAW.title("View Raw"));
-//        formattedBtn = view.addButton(SvgPresets.FORMAT.title("View Formatted"));
-//        rawBtn.addClickHandler(event -> {
-//            formatOnLoad = false;
-//            refresh(lastResult);
-//        });
-//        formattedBtn.addClickHandler(event -> {
-//            formatOnLoad = true;
-//            refresh(lastResult);
-//        });
-
         formatToggleBtn = view.addToggleButton(
-                SvgPresets.RAW.title("View Raw"),
-                SvgPresets.FORMAT.title("View Formatted"));
+                SvgPresets.RAW.title("Show original un-formatted data"),
+                SvgPresets.FORMAT.title("Show formatted data"));
 
+        formatToggleBtn.setState(true); // formatted by default
         formatToggleBtn.addClickHandler(
                 event -> {
                     formatOnLoad = false;
-//                    textPresenter.setWrapLines(true);
                     refresh(lastResult);
-//                    refreshTextPresenterContent();
                 },
                 event -> {
                     formatOnLoad = true;
-//                    textPresenter.setWrapLines(false);
                     refresh(lastResult);
-//                    refreshTextPresenterContent();
                 });
         formatToggleBtn.setEnabled(true);
         formatToggleBtn.setVisible(false);
@@ -808,6 +791,7 @@ public class DataPresenter extends MyPresenterWidget<DataPresenter.DataView> imp
         textPresenter.setFirstLineNumber(startLineNo);
         textPresenter.setControlsVisible(playButtonVisible);
 
+
     }
 
     private void refreshFormatButtons(final AbstractFetchDataResult result) {
@@ -849,7 +833,7 @@ public class DataPresenter extends MyPresenterWidget<DataPresenter.DataView> imp
                 && currentMetaId.equals(highlightId)
                 && partNo == highlightPartNo
                 && EqualsUtil.isEquals(currentChildDataType, highlightChildDataType)
-                && !formatToggleBtn.isInPrimaryState()) {
+                && formatToggleBtn.isOff()) {
             // Set the content to be displayed in the source view with a
             // highlight.
             textPresenter.setHighlights(highlights);
@@ -946,7 +930,7 @@ public class DataPresenter extends MyPresenterWidget<DataPresenter.DataView> imp
         errorMarkerMode = !steppingSource;
         if (steppingSource) {
             // Default to un-formatted for stepping so highlighting works
-            formatToggleBtn.setIsInPrimaryState(false);
+            formatToggleBtn.setState(false);
         }
     }
 
@@ -985,10 +969,10 @@ public class DataPresenter extends MyPresenterWidget<DataPresenter.DataView> imp
 
     public interface DataView extends View {
 
-        ButtonView addButton(SvgPreset preset);
+        ButtonView addButton(final SvgPreset preset);
 
-        ToggleButtonView addToggleButton(final SvgPreset primaryPreset,
-                                         final SvgPreset secondaryPreset);
+        ToggleButtonView addToggleButton(final SvgPreset onPreset,
+                                         final SvgPreset offPreset);
 
 //        void setSegmentPagerRows(HasRows display);
 

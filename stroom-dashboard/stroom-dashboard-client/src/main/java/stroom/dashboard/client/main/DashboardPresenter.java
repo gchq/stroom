@@ -151,7 +151,7 @@ public class DashboardPresenter extends DocumentEditPresenter<DashboardView, Das
             addWidgetLeft(leftButtons);
         }
 
-        return leftButtons.add(preset);
+        return leftButtons.addButton(preset);
     }
 
     private void addWidgetLeft(final Widget widget) {
