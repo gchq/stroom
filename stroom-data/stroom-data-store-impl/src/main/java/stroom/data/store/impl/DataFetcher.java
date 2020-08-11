@@ -85,7 +85,7 @@ import java.util.List;
 public class DataFetcher {
     private static final Logger LOGGER = LoggerFactory.getLogger(DataFetcher.class);
 
-    private static final String TRUNCATED_SUFFIX = "...[TRUNCATED IN USER INTERFACE]";
+    private static final String TRUNCATED_TEXT = "...[TRUNCATED IN USER INTERFACE]...";
 //    private static final int MAX_LINE_LENGTH = 1000;
     /**
      * How big our buffers are. This should always be a multiple of 8.
@@ -95,7 +95,7 @@ public class DataFetcher {
     // Max chars we can return
     private static final int MAX_CHARS = 10_000; // TODO get from config
     private static final int MAX_ERRORS_ON_PAGE = 500; // TODO get from config
-    private static final int MAX_EXTRA_CHARS_TO_COMPLETE_LINE = 1000; // TODO get from config
+    private static final int MAX_EXTRA_CHARS_TO_COMPLETE_LINE = 5000; // TODO get from config
 
     private final Long partsToReturn = 1L;
     private final Long segmentsToReturn = 1L;
@@ -485,6 +485,7 @@ public class DataFetcher {
     }
 
     private FetchDataResult createErrorResult(final SourceLocation sourceLocation, final String error) {
+
         final OffsetRange<Long> resultStreamsRange = new OffsetRange<>(0L, 0L);
         final RowCount<Long> streamsRowCount = new RowCount<>(0L, true);
         final OffsetRange<Long> resultPageRange = new OffsetRange<>(0L, 0L);
@@ -588,7 +589,7 @@ public class DataFetcher {
         // One potentially VERY long line, too big to display
         // Lots of small lines
         // Multiple long lines that are too big to display
-        final StringBuilder strBuilderRange = new StringBuilder();
+        StringBuilder strBuilderRange = new StringBuilder();
         final StringBuilder strBuilderLineSoFar = new StringBuilder();
 
         // Trackers for what we have so far and where we are
@@ -606,6 +607,7 @@ public class DataFetcher {
         long startOfCurrLineCharOffset = -1;
 
         int currBufferLen = 0;
+        char currChar = (char) -1;
         boolean isFirstChar = true;
         int extraCharCount = 0;
 
@@ -629,8 +631,7 @@ public class DataFetcher {
             while (!reachedEndOfRange && (currBufferLen = reader.read(buffer)) != -1) {
 
                 for (int i = 0; i < currBufferLen; i++) {
-                    final char c = buffer[i];
-
+                    currChar = buffer[i];
 
                     if (inclusiveFromPredicate.test(currLineNo, currColNo, currCharOffset, charsInRangeCount)) {
                         // On or after the first requested char
@@ -647,7 +648,7 @@ public class DataFetcher {
                         // to make it look better in the UI.
                         if (isCharAfterRequestedRange
                                 && (!isMultiLine
-                                    || (extraCharCount > MAX_EXTRA_CHARS_TO_COMPLETE_LINE || c == '\n'))) {
+                                    || (extraCharCount > MAX_EXTRA_CHARS_TO_COMPLETE_LINE || currChar == '\n'))) {
                             // This is the char after our requested range
                             // or requested range continued to the end of the line
                             // or we have blown the max chars limit
@@ -662,7 +663,7 @@ public class DataFetcher {
                                 startLineNo = currLineNo;
                                 startColNo = currColNo;
                             }
-                            strBuilderRange.append(c);
+                            strBuilderRange.append(currChar);
 
                             // Need the prev location so when we test the first char after the range
                             // we can get the last one in the range
@@ -672,7 +673,7 @@ public class DataFetcher {
                     } else {
                         // Hold the chars for the line so far up to the requested range so we can
                         // tack it on when we find our range
-                        strBuilderLineSoFar.append(c);
+                        strBuilderLineSoFar.append(currChar);
                     }
 
                     // Now advance the counters/trackers for the next char
@@ -680,7 +681,7 @@ public class DataFetcher {
 
                     if (isFirstChar) {
                         isFirstChar = false;
-                    } else if (c == '\n') {
+                    } else if (currChar == '\n') {
                         currLineNo++;
                         currColNo = 1;
 
@@ -701,18 +702,39 @@ public class DataFetcher {
             }
         }
 
-        final String charData;
+        final StringBuilder strBuilderResultRange = new StringBuilder();
+
+        if (isMultiLine && startLineNo != 1) {
+            strBuilderResultRange.append(TRUNCATED_TEXT + "\n");
+            startLineNo--;
+        } else if (!isMultiLine && startCharOffset != 0) {
+            strBuilderResultRange.append(TRUNCATED_TEXT);
+        }
 
         if (isMultiLine && strBuilderRange.charAt(0) != '\n') {
             startCharOffset = startOfCurrLineCharOffset;
             startColNo = 1;
             // Tack on the beginning of the line up to the range
-            charData = strBuilderLineSoFar.append(strBuilderRange).toString();
+            strBuilderResultRange
+                    .append(strBuilderLineSoFar)
+                    .append(strBuilderRange);
         } else {
-            charData = strBuilderRange.toString();
+            strBuilderResultRange.append(strBuilderRange);
         }
 
         final boolean isTotalPageableItemsExact = currBufferLen == -1;
+
+        if (isMultiLine && !isTotalPageableItemsExact) {
+            if (currChar == '\n') {
+                strBuilderResultRange.append(TRUNCATED_TEXT);
+            } else {
+                strBuilderResultRange.append("\n" + TRUNCATED_TEXT);
+            }
+        } else if (!isMultiLine && !isTotalPageableItemsExact) {
+            strBuilderResultRange.append(TRUNCATED_TEXT);
+        }
+
+        final String charData = strBuilderResultRange.toString();
 
         currCharOffset = currCharOffset - 1; // undo the last ++ op
 
@@ -729,7 +751,8 @@ public class DataFetcher {
                 .withLength((long) charData.length())
                 .build();
 
-        // Define the range that we are actually returning, which may be smaller than requested
+        // Define the range that we are actually returning, which may be bigger or smaller than requested
+        // e.g. if we have continued to the end of the line or we have hit a char limit
         final SourceLocation.Builder builder = SourceLocation.builder(sourceLocation.getId())
                 .withPartNo(sourceLocation.getPartNo())
                 .withChildStreamType(sourceLocation.getOptChildType()

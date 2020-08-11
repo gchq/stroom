@@ -161,7 +161,7 @@ public class DataPresenter extends MyPresenterWidget<DataPresenter.DataView> imp
 
         formatToggleBtn = view.addToggleButton(
                 SvgPresets.RAW.title("Show original un-formatted data"),
-                SvgPresets.FORMAT.title("Show formatted data"));
+                SvgPresets.FORMAT.title("Show formatted data (as XML)"));
 
         formatToggleBtn.setState(true); // formatted by default
         formatToggleBtn.addClickHandler(
