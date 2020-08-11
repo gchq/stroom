@@ -29,6 +29,8 @@ import stroom.pipeline.shared.SourceLocation;
 import stroom.pipeline.shared.ViewDataResource;
 import stroom.security.client.api.ClientSecurityContext;
 import stroom.security.shared.PermissionNames;
+import stroom.svg.client.SvgPreset;
+import stroom.svg.client.SvgPresets;
 import stroom.util.shared.EqualsUtil;
 import stroom.util.shared.HasCharacterData;
 import stroom.util.shared.Location;
@@ -37,6 +39,8 @@ import stroom.util.shared.OffsetRange;
 import stroom.util.shared.RowCount;
 import stroom.util.shared.Severity;
 import stroom.util.shared.TextRange;
+import stroom.widget.button.client.ButtonView;
+import stroom.widget.button.client.ToggleButtonView;
 import stroom.widget.popup.client.presenter.PopupUiHandlers;
 import stroom.widget.tab.client.presenter.TabBar;
 import stroom.widget.tab.client.presenter.TabData;
@@ -133,6 +137,10 @@ public class DataPresenter extends MyPresenterWidget<DataPresenter.DataView> imp
     private boolean formatOnLoad;
     private boolean ignoreActions;
 
+//    private ButtonView rawBtn;
+//    private ButtonView formattedBtn;
+    private ToggleButtonView formatToggleBtn;
+
     @Inject
     public DataPresenter(final EventBus eventBus,
                          final DataView view,
@@ -153,6 +161,37 @@ public class DataPresenter extends MyPresenterWidget<DataPresenter.DataView> imp
         markerListPresenter.setDataPresenter(this);
 
         textPresenter.setUiHandlers(this);
+
+//        rawBtn = view.addButton(SvgPresets.RAW.title("View Raw"));
+//        formattedBtn = view.addButton(SvgPresets.FORMAT.title("View Formatted"));
+//        rawBtn.addClickHandler(event -> {
+//            formatOnLoad = false;
+//            refresh(lastResult);
+//        });
+//        formattedBtn.addClickHandler(event -> {
+//            formatOnLoad = true;
+//            refresh(lastResult);
+//        });
+
+        formatToggleBtn = view.addToggleButton(
+                SvgPresets.RAW.title("View Raw"),
+                SvgPresets.FORMAT.title("View Formatted"));
+
+        formatToggleBtn.addClickHandler(
+                event -> {
+                    formatOnLoad = false;
+//                    textPresenter.setWrapLines(true);
+                    refresh(lastResult);
+//                    refreshTextPresenterContent();
+                },
+                event -> {
+                    formatOnLoad = true;
+//                    textPresenter.setWrapLines(false);
+                    refresh(lastResult);
+//                    refreshTextPresenterContent();
+                });
+        formatToggleBtn.setEnabled(true);
+        formatToggleBtn.setVisible(false);
 
 //        dataPagerRows = new PageRows();
 //        segmentPagerRows = new SegmentRows();
@@ -749,18 +788,47 @@ public class DataPresenter extends MyPresenterWidget<DataPresenter.DataView> imp
 
         setPagers(result);
 
-        textPresenter.setMode(editorMode);
-        // Only want to try to format (which formats as XML) if we know the
-        // data is likely to be XML, else it can mess up the formatting of error text.
-        boolean isFormatted = formatOnLoad && AceEditorMode.XML.equals(editorMode);
-        textPresenter.setText(data, isFormatted);
-        textPresenter.setFirstLineNumber(startLineNo);
-        textPresenter.setControlsVisible(playButtonVisible);
+        refreshFormatButtons(result);
+
+        refreshTextPresenterContent();
 
         getView().refreshNavigator();
 
         refreshHighlights(result);
         refreshMarkers(result);
+    }
+
+    private void refreshTextPresenterContent() {
+        textPresenter.setMode(editorMode);
+        // Only want to try to format (which formats as XML) if we know the
+        // data is likely to be XML, else it can mess up the formatting of error text.
+        boolean isFormatted = formatOnLoad && AceEditorMode.XML.equals(editorMode);
+
+        textPresenter.setText(data, isFormatted);
+        textPresenter.setFirstLineNumber(startLineNo);
+        textPresenter.setControlsVisible(playButtonVisible);
+
+    }
+
+    private void refreshFormatButtons(final AbstractFetchDataResult result) {
+        formatToggleBtn.setVisible(
+                !data.isEmpty() &&
+                        AceEditorMode.XML.equals(editorMode) &&
+                        (DataType.NON_SEGMENTED.equals(curDataType) || DataType.SEGMENTED.equals(curDataType)));
+
+
+//        if (AceEditorMode.XML.equals(editorMode) &&
+//                (DataType.NON_SEGMENTED.equals(curDataType) || DataType.SEGMENTED.equals(curDataType))) {
+////            rawBtn.setVisible(true);
+////            formattedBtn.setVisible(true);
+//            formatToggleBtn.setVisible(true);
+////            rawBtn.setEnabled(isFormatted);
+////            formattedBtn.setEnabled(!isFormatted);
+//        } else {
+//            formatToggleBtn.setVisible(false);
+////            rawBtn.setVisible(false);
+////            formattedBtn.setVisible(false);
+//        }
     }
 
     private void refreshHighlights(final AbstractFetchDataResult result) {
@@ -774,12 +842,14 @@ public class DataPresenter extends MyPresenterWidget<DataPresenter.DataView> imp
         // Make sure we have a highlight section to add and that the stream id
         // matches that of the current page, and that the stream number matches
         // the stream number of the current page.
+        // Only show highlights when not formatted
         // TODO @AT fix highlighting
         if (highlights != null
                 && currentMetaId != null
                 && currentMetaId.equals(highlightId)
                 && partNo == highlightPartNo
-                && EqualsUtil.isEquals(currentChildDataType, highlightChildDataType)) {
+                && EqualsUtil.isEquals(currentChildDataType, highlightChildDataType)
+                && !formatToggleBtn.isInPrimaryState()) {
             // Set the content to be displayed in the source view with a
             // highlight.
             textPresenter.setHighlights(highlights);
@@ -874,6 +944,10 @@ public class DataPresenter extends MyPresenterWidget<DataPresenter.DataView> imp
     public void setSteppingSource(final boolean steppingSource) {
         this.steppingSource = steppingSource;
         errorMarkerMode = !steppingSource;
+        if (steppingSource) {
+            // Default to un-formatted for stepping so highlighting works
+            formatToggleBtn.setIsInPrimaryState(false);
+        }
     }
 
     public void setFormatOnLoad(final boolean formatOnLoad) {
@@ -910,6 +984,11 @@ public class DataPresenter extends MyPresenterWidget<DataPresenter.DataView> imp
     }
 
     public interface DataView extends View {
+
+        ButtonView addButton(SvgPreset preset);
+
+        ToggleButtonView addToggleButton(final SvgPreset primaryPreset,
+                                         final SvgPreset secondaryPreset);
 
 //        void setSegmentPagerRows(HasRows display);
 

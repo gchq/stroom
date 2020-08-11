@@ -43,7 +43,7 @@ public class SvgButton extends ButtonBase implements ButtonView {
      */
     private boolean allowClick;
 
-    private SvgButton(final SvgPreset preset) {
+    SvgButton(final SvgPreset preset) {
         super(Document.get().createDivElement());
         this.preset = preset;
 
@@ -57,16 +57,23 @@ public class SvgButton extends ButtonBase implements ButtonView {
 
         getElement().appendChild(face);
 
-        face.setInnerHTML("<img class=\"icon\" src=\"" + preset.getUrl() + "\" />");
+        setSvgPreset(preset);
+
+        setEnabled(preset.isEnabled());
+    }
+
+    void setSvgPreset(final SvgPreset svgPreset) {
+        face.setInnerHTML("<img class=\"icon\" src=\"" + svgPreset.getUrl() + "\" />");
 
 //        setWidth(preset.getWidth() + "px");
 //        setHeight(preset.getHeight() + "px");
 
         // Add the button tool-tip
-        if (preset.hasTitle()) {
-            setTitle(preset.getTitle());
+        if (svgPreset.hasTitle()) {
+            setTitle(svgPreset.getTitle());
+        } else {
+            setTitle("");
         }
-        setEnabled(preset.isEnabled());
     }
 
     public static SvgButton create(final SvgPreset preset) {

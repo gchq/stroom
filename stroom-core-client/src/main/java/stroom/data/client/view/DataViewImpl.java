@@ -18,7 +18,11 @@ package stroom.data.client.view;
 
 import stroom.data.client.presenter.DataPresenter.DataView;
 import stroom.data.pager.client.DataNavigator;
+import stroom.svg.client.SvgPreset;
 import stroom.util.shared.HasCharacterData;
+import stroom.widget.button.client.ButtonPanel;
+import stroom.widget.button.client.ButtonView;
+import stroom.widget.button.client.ToggleButtonView;
 import stroom.widget.tab.client.view.LinkTabBar;
 
 import com.google.gwt.uibinder.client.UiBinder;
@@ -32,6 +36,13 @@ public class DataViewImpl extends ViewImpl implements DataView {
     private final Widget widget;
     @UiField
     LinkTabBar tabBar;
+
+//    @UiField(provided = true)
+//    SvgButton rawBtn;
+//    @UiField(provided = true)
+//    SvgButton formattedBtn;
+    @UiField
+    ButtonPanel buttonPanel;
 
     @UiField
     DataNavigator dataNavigator;
@@ -47,6 +58,9 @@ public class DataViewImpl extends ViewImpl implements DataView {
         widget = binder.createAndBindUi(this);
         layerContainer.setFade(true);
 //        segmentPager.setTitle("Segment");
+
+//        rawBtn = SvgButton.create(SvgPresets.RAW.title("View Raw"));
+//        formattedBtn = SvgButton.create(SvgPresets.FORMAT.title("View Formatted"));
 
         dataNavigator.setVisible(true);
 //        dataNavigator.setDisplay(new HasCharacterData() {
@@ -115,6 +129,17 @@ public class DataViewImpl extends ViewImpl implements DataView {
 //            }
 //        });
         dataNavigator.refresh();
+    }
+
+    @Override
+    public ButtonView addButton(final SvgPreset preset) {
+        return buttonPanel.add(preset);
+    }
+
+    @Override
+    public ToggleButtonView addToggleButton(final SvgPreset primaryPreset,
+                                            final SvgPreset secondaryPreset) {
+        return buttonPanel.addToggleButton(primaryPreset, secondaryPreset);
     }
 
     @Override

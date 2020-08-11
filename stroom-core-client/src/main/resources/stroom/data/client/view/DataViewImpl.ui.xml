@@ -3,7 +3,8 @@
 			 xmlns:g="urn:import:com.google.gwt.user.client.ui"
 			 xmlns:v="urn:import:stroom.widget.layout.client.view"
 			 xmlns:pager="urn:import:stroom.data.pager.client"
-			 xmlns:tab="urn:import:stroom.widget.tab.client.view">
+			 xmlns:tab="urn:import:stroom.widget.tab.client.view"
+			 xmlns:btn="urn:import:stroom.widget.button.client">
 
 	<ui:style>
 		.layout {
@@ -27,6 +28,11 @@
 		position: relative;
 		width: 100%;
 		height: 100%;
+		}
+
+		.buttonPanel {
+		float: right;
+		padding-right: 2em;
 		}
 
 <!--		.segmentPager {-->
@@ -65,6 +71,7 @@
 				<g:east size="650">
 					<v:ResizeFlowPanel width="100%" height="100%">
 						<pager:DataNavigator ui:field="dataNavigator" styleName="{style.dataNavigator}" visible="false"/>
+						<btn:ButtonPanel ui:field="buttonPanel" styleName="{style.buttonPanel}"/>
 					</v:ResizeFlowPanel>
 				</g:east>
 				<g:center>
