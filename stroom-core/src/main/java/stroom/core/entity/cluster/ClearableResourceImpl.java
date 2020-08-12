@@ -52,7 +52,7 @@ class ClearableResourceImpl implements ClearableResource {
             clearEventHandler.clearLocally();
             return true;
         } else {
-            final String url = NodeCallUtil.getBaseEndpointUrl(nodeService, nodeName)
+            final String url = NodeCallUtil.getBaseEndpointUrl(nodeInfo, nodeService, nodeName)
                     + ResourcePaths.buildAuthenticatedApiPath(
                     ClearableResource.BASE_PATH,
                     nodeName);

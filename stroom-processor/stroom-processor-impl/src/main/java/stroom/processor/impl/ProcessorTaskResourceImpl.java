@@ -112,7 +112,7 @@ class ProcessorTaskResourceImpl implements ProcessorTaskResource {
         if (NodeCallUtil.shouldExecuteLocally(nodeInfo, nodeName)) {
             return processorTaskManager.assignTasks(request.getNodeName(), request.getCount());
         } else {
-            final String url = NodeCallUtil.getBaseEndpointUrl(nodeService, nodeName)
+            final String url = NodeCallUtil.getBaseEndpointUrl(nodeInfo, nodeService, nodeName)
                     + ResourcePaths.buildAuthenticatedApiPath(
                     ProcessorTaskResource.BASE_PATH,
                     ProcessorTaskResource.ASSIGN_TASKS_PATH_PART,
@@ -139,7 +139,7 @@ class ProcessorTaskResourceImpl implements ProcessorTaskResource {
         if (NodeCallUtil.shouldExecuteLocally(nodeInfo, nodeName)) {
             return processorTaskManager.abandonTasks(request);
         } else {
-            final String url = NodeCallUtil.getBaseEndpointUrl(nodeService, nodeName)
+            final String url = NodeCallUtil.getBaseEndpointUrl(nodeInfo, nodeService, nodeName)
                     + ResourcePaths.buildAuthenticatedApiPath(
                     ProcessorTaskResource.BASE_PATH,
                     ProcessorTaskResource.ABANDON_TASKS_PATH_PART,

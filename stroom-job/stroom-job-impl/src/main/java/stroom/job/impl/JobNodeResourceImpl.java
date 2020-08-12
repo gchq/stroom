@@ -87,7 +87,7 @@ class JobNodeResourceImpl implements JobNodeResource {
     @Override
     public JobNodeInfo info(final String jobName, final String nodeName) {
         JobNodeInfo jobNodeInfo;
-        final String url = NodeCallUtil.getBaseEndpointUrl(nodeService, nodeName)
+        final String url = NodeCallUtil.getBaseEndpointUrl(nodeInfo, nodeService, nodeName)
                 + ResourcePaths.buildAuthenticatedApiPath(JobNodeResource.INFO_PATH);
         try {
             // If this is the node that was contacted then just return our local info.

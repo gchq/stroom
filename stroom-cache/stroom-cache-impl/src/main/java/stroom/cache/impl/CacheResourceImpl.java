@@ -82,7 +82,7 @@ class CacheResourceImpl implements CacheResource {
             result = new CacheInfoResponse(list);
 
         } else {
-            final String url = NodeCallUtil.getBaseEndpointUrl(nodeService, nodeName)
+            final String url = NodeCallUtil.getBaseEndpointUrl(nodeInfo, nodeService, nodeName)
                     + ResourcePaths.buildAuthenticatedApiPath(CacheResource.INFO_PATH);
             try {
                 final Response response = webTargetFactory
@@ -175,7 +175,7 @@ class CacheResourceImpl implements CacheResource {
             result = cacheManagerService.clear(criteria);
 
         } else {
-            final String url = NodeCallUtil.getBaseEndpointUrl(nodeService, nodeName)
+            final String url = NodeCallUtil.getBaseEndpointUrl(nodeInfo, nodeService, nodeName)
                     + ResourcePaths.buildAuthenticatedApiPath(CacheResource.BASE_PATH);
 
             try {

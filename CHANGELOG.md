@@ -7,6 +7,8 @@ and this project adheres to [Semantic Versioning](http://semver.org/).
 
 ## [Unreleased]
 
+* Issue **#1783** : Made change to prevent nodes called by the cluster from using localhost, 127.0.0.1 or the same URL as other nodes.
+
 * Issue **#1675** : All dashboard table fields are now present in text pane settings even if they are hidden or special, e.g. internally added mandatory fields like StreamId and EventId. This change prevents the field settings from being altered incorrectly when these fields were not found.
 
 * Issue **#1758** : Added file locations to meta details and improved tooltip layout.

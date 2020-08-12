@@ -79,7 +79,7 @@ class TaskResourceImpl implements TaskResource {
             result = new TaskProgressResponse(resultPage.getValues(), resultPage.getPageResponse());
 
         } else {
-            final String url = NodeCallUtil.getBaseEndpointUrl(nodeService, nodeName)
+            final String url = NodeCallUtil.getBaseEndpointUrl(nodeInfo, nodeService, nodeName)
                     + ResourcePaths.buildAuthenticatedApiPath(
                     TaskResource.BASE_PATH,
                     TaskResource.FIND_PATH_PART,
@@ -132,7 +132,7 @@ class TaskResourceImpl implements TaskResource {
         if (NodeCallUtil.shouldExecuteLocally(nodeInfo, nodeName)) {
             taskManager.terminate(request.getCriteria(), request.isKill());
         } else {
-            final String url = NodeCallUtil.getBaseEndpointUrl(nodeService, nodeName)
+            final String url = NodeCallUtil.getBaseEndpointUrl(nodeInfo, nodeService, nodeName)
                     + ResourcePaths.buildAuthenticatedApiPath(
                     TaskResource.BASE_PATH,
                     TaskResource.TERMINATE_PATH_PART,

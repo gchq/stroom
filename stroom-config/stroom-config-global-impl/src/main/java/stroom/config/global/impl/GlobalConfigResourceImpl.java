@@ -71,7 +71,7 @@ public class GlobalConfigResourceImpl implements GlobalConfigResource {
 
         ListConfigResponse listConfigResponse;
 
-        final String url = NodeCallUtil.getBaseEndpointUrl(nodeService, nodeName)
+        final String url = NodeCallUtil.getBaseEndpointUrl(nodeInfo, nodeService, nodeName)
                 + ResourcePaths.buildAuthenticatedApiPath(
                 GlobalConfigResource.BASE_PATH,
                 GlobalConfigResource.NODE_PROPERTIES_SUB_PATH,
@@ -131,7 +131,7 @@ public class GlobalConfigResourceImpl implements GlobalConfigResource {
 
         OverrideValue<String> yamlOverride;
 
-        final String url = NodeCallUtil.getBaseEndpointUrl(nodeService, nodeName)
+        final String url = NodeCallUtil.getBaseEndpointUrl(nodeInfo, nodeService, nodeName)
                 + ResourcePaths.buildAuthenticatedApiPath(
                 GlobalConfigResource.BASE_PATH,
                 GlobalConfigResource.CLUSTER_PROPERTIES_SUB_PATH,

@@ -134,7 +134,7 @@ class NodeResourceImpl implements NodeResource {
                 clusterNodeInfo = clusterNodeManager.getClusterNodeInfo();
 
             } else {
-                String url = NodeCallUtil.getBaseEndpointUrl(nodeService, nodeName)
+                String url = NodeCallUtil.getBaseEndpointUrl(nodeInfo, nodeService, nodeName)
                         + ResourcePaths.buildAuthenticatedApiPath(
                         NodeResource.BASE_PATH,
                         NodeResource.INFO_PATH_PART,
@@ -176,7 +176,7 @@ class NodeResourceImpl implements NodeResource {
         if (NodeCallUtil.shouldExecuteLocally(nodeInfo, nodeName)) {
             return System.currentTimeMillis() - now;
         } else {
-            final String url = NodeCallUtil.getBaseEndpointUrl(nodeService, nodeName)
+            final String url = NodeCallUtil.getBaseEndpointUrl(nodeInfo, nodeService, nodeName)
                     + ResourcePaths.buildAuthenticatedApiPath(
                     NodeResource.BASE_PATH,
                     NodeResource.PING_PATH_PART,
