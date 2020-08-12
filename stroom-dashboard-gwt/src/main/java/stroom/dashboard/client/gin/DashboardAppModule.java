@@ -16,14 +16,6 @@
 
 package stroom.dashboard.client.gin;
 
-import com.google.inject.Singleton;
-import com.google.web.bindery.event.shared.EventBus;
-import com.google.web.bindery.event.shared.SimpleEventBus;
-import com.gwtplatform.mvp.client.RootPresenter;
-import com.gwtplatform.mvp.client.gin.AbstractPresenterModule;
-import com.gwtplatform.mvp.client.proxy.ParameterTokenFormatter;
-import com.gwtplatform.mvp.client.proxy.PlaceManager;
-import com.gwtplatform.mvp.client.proxy.TokenFormatter;
 import stroom.core.client.UrlParameters;
 import stroom.core.client.gin.InactivePlaceManager;
 import stroom.core.client.presenter.CorePresenter;
@@ -38,10 +30,13 @@ import stroom.data.client.presenter.ClassificationWrapperPresenter;
 import stroom.data.client.presenter.ClassificationWrapperPresenter.ClassificationWrapperView;
 import stroom.data.client.presenter.DataPresenter;
 import stroom.data.client.presenter.DataPresenter.DataView;
+import stroom.data.client.presenter.SourceLocationPresenter;
+import stroom.data.client.presenter.SourceLocationPresenter.SourceLocationView;
 import stroom.data.client.presenter.TextPresenter;
 import stroom.data.client.presenter.TextPresenter.TextView;
 import stroom.data.client.view.ClassificationWrapperViewImpl;
 import stroom.data.client.view.DataViewImpl;
+import stroom.data.client.view.SourceLocationViewImpl;
 import stroom.data.client.view.TextViewImpl;
 import stroom.editor.client.presenter.EditorPresenter;
 import stroom.editor.client.presenter.EditorView;
@@ -58,6 +53,15 @@ import stroom.widget.dropdowntree.client.presenter.DropDownPresenter;
 import stroom.widget.dropdowntree.client.presenter.DropDownTreePresenter;
 import stroom.widget.dropdowntree.client.view.DropDownTreeViewImpl;
 import stroom.widget.dropdowntree.client.view.DropDownViewImpl;
+
+import com.google.inject.Singleton;
+import com.google.web.bindery.event.shared.EventBus;
+import com.google.web.bindery.event.shared.SimpleEventBus;
+import com.gwtplatform.mvp.client.RootPresenter;
+import com.gwtplatform.mvp.client.gin.AbstractPresenterModule;
+import com.gwtplatform.mvp.client.proxy.ParameterTokenFormatter;
+import com.gwtplatform.mvp.client.proxy.PlaceManager;
+import com.gwtplatform.mvp.client.proxy.TokenFormatter;
 
 public class DashboardAppModule extends AbstractPresenterModule {
     @Override
@@ -84,5 +88,6 @@ public class DashboardAppModule extends AbstractPresenterModule {
         bindPresenterWidget(ClassificationWrapperPresenter.class, ClassificationWrapperView.class, ClassificationWrapperViewImpl.class);
         bindPresenterWidget(DataPresenter.class, DataView.class, DataViewImpl.class);
         bindPresenterWidget(TextPresenter.class, TextView.class, TextViewImpl.class);
+        bindPresenterWidget(SourceLocationPresenter.class, SourceLocationView.class, SourceLocationViewImpl.class);
     }
 }
