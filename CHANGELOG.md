@@ -7,6 +7,8 @@ and this project adheres to [Semantic Versioning](http://semver.org/).
 
 ## [Unreleased]
 
+* Issue **#1706** : Terminating processing jobs early now writes appropriate termination errors to the processing info (error) stream and deletes other outputs.
+
 * Issue **#1675** : All dashboard table fields are now present in text pane settings even if they are hidden or special, e.g. internally added mandatory fields like StreamId and EventId. This change prevents the field settings from being altered incorrectly when these fields were not found.
 
 * Issue **#1758** : Added file locations to meta details and improved tooltip layout.
