@@ -28,7 +28,8 @@ BEGIN
     IF EXISTS (
             SELECT NULL
             FROM INFORMATION_SCHEMA.TABLES
-            WHERE TABLE_NAME = 'DOC_PERM') THEN
+            WHERE TABLE_SCHEMA = database()
+            AND TABLE_NAME = 'DOC_PERM') THEN
 
         RENAME TABLE DOC_PERM TO OLD_DOC_PERM;
     END IF;
@@ -37,7 +38,8 @@ BEGIN
     IF EXISTS (
             SELECT NULL
             FROM INFORMATION_SCHEMA.TABLES
-            WHERE TABLE_NAME = 'USR') THEN
+            WHERE TABLE_SCHEMA = database()
+            AND TABLE_NAME = 'USR') THEN
 
         RENAME TABLE USR TO OLD_USR;
     END IF;
@@ -45,7 +47,8 @@ BEGIN
     IF EXISTS (
             SELECT NULL
             FROM INFORMATION_SCHEMA.TABLES
-            WHERE TABLE_NAME = 'OLD_DOC_PERM') THEN
+            WHERE TABLE_SCHEMA = database()
+            AND TABLE_NAME = 'OLD_DOC_PERM') THEN
 
         -- Ignore perms linked to users that don't exist
         INSERT INTO doc_permission (

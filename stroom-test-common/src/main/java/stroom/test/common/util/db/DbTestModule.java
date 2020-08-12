@@ -10,9 +10,9 @@ public class DbTestModule extends AbstractModule {
     @Override
     protected void configure() {
         super.configure();
-        bind(DataSourceFactory.class).to(EmbeddedDbDataSourceFactory.class);
+        bind(DataSourceFactory.class).to(TestDataSourceFactory.class);
 
         GuiceUtil.buildMultiBinder(binder(), Clearable.class)
-                .addBinding(EmbeddedDbDataSourceFactory.class);
+                .addBinding(TestDataSourceFactory.class);
     }
 }

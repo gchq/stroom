@@ -43,7 +43,6 @@ import org.mockito.junit.jupiter.MockitoExtension;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import java.sql.SQLException;
 import java.util.Collections;
 
 import static org.assertj.core.api.Assertions.assertThat;
@@ -51,7 +50,7 @@ import static org.assertj.core.api.Assertions.assertThat;
 @ExtendWith(MockitoExtension.class)
 class TestStoredQueryDao {
     private static final String QUERY_COMPONENT = "Test Component";
-    private static Logger LOGGER = LoggerFactory.getLogger(TestStoredQueryDao.class);
+    private static final Logger LOGGER = LoggerFactory.getLogger(TestStoredQueryDao.class);
 
     @Mock
     private SecurityContext securityContext;
@@ -65,14 +64,15 @@ class TestStoredQueryDao {
     private DocRef indexRef;
 
     @BeforeEach
-    void beforeEach() throws SQLException {
+    void beforeEach() {
         Mockito.when(securityContext.getUserId()).thenReturn("testuser");
 
         // need an explicit teardown and setup of the DB before each test method
         final StoredQueryDbConnProvider storedQueryDbConnProvider = DbTestUtil.getTestDbDatasource(
                 new StoredQueryDbModule(), new StoredQueryConfig());
 
-        DbTestUtil.clearAllTables(storedQueryDbConnProvider.getConnection());
+        // Clear the current DB.
+        DbTestUtil.clear();
 
         storedQueryDao = new StoredQueryDaoImpl(storedQueryDbConnProvider);
 

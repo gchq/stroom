@@ -13,6 +13,7 @@ import javax.inject.Provider;
 import javax.inject.Singleton;
 import javax.sql.DataSource;
 import java.util.Collections;
+import java.util.HashSet;
 import java.util.Map;
 import java.util.Set;
 import java.util.concurrent.ConcurrentHashMap;
@@ -30,7 +31,7 @@ public abstract class AbstractDataSourceProviderModule<T_Config extends HasDbCon
 
     protected abstract T_ConnProvider createConnectionProvider(DataSource dataSource);
 
-    private static final Map<DataSource, Set<String>> COMPLETED_MIGRATIONS = new ConcurrentHashMap<>();
+    private static final ThreadLocal<Set<String>> COMPLETED_MIGRATIONS = new ThreadLocal<>();
 
     @Override
     protected void configure() {
@@ -56,9 +57,16 @@ public abstract class AbstractDataSourceProviderModule<T_Config extends HasDbCon
         final DataSource dataSource = dataSourceFactory.create(configProvider.get());
 
         // Prevent migrations from being re-run for each test
-        final boolean required = COMPLETED_MIGRATIONS
-                .computeIfAbsent(dataSource, k -> Collections.newSetFromMap(new ConcurrentHashMap<>()))
-                .add(getModuleName());
+        Set<String> set = COMPLETED_MIGRATIONS.get();
+        if (set == null) {
+            set = new HashSet<>();
+            COMPLETED_MIGRATIONS.set(set);
+        }
+        final boolean required = set.add(getModuleName());
+
+//        final boolean required = COMPLETED_MIGRATIONS
+//                .computeIfAbsent(dataSource, k -> Collections.newSetFromMap(new ConcurrentHashMap<>()))
+//                .add(getModuleName());
 
         if (required) {
             performMigration(dataSource);
@@ -67,7 +75,7 @@ public abstract class AbstractDataSourceProviderModule<T_Config extends HasDbCon
         return createConnectionProvider(dataSource);
     }
 
-    protected abstract void performMigration(final DataSource dataSource);
+    protected abstract void performMigration(DataSource dataSource);
 
     @Override
     public boolean equals(final Object o) {

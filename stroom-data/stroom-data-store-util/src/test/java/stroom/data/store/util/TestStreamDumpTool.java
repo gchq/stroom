@@ -44,14 +44,9 @@ import javax.inject.Inject;
 import java.io.IOException;
 import java.io.UncheckedIOException;
 import java.nio.file.Path;
-import java.sql.Connection;
-import java.sql.SQLException;
 
 @ExtendWith({MockitoExtension.class})
 class TestStreamDumpTool {
-
-    @Inject
-    private MetaDbConnProvider metaDbConnProvider;
     @Inject
     private Store streamStore;
     @Inject
@@ -86,11 +81,8 @@ class TestStreamDumpTool {
         Mockito.when(toolInjector.getInjector())
                 .thenReturn(injector);
 
-        try (final Connection connection = metaDbConnProvider.getConnection()) {
-            DbTestUtil.clearAllTables(connection);
-        } catch (final SQLException e) {
-            throw new RuntimeException(e.getMessage(), e);
-        }
+        // Clear the current DB.
+        DbTestUtil.clear();
     }
 
     @Test

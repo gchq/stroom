@@ -50,7 +50,8 @@ BEGIN
     IF EXISTS (
             SELECT NULL
             FROM INFORMATION_SCHEMA.TABLES
-            WHERE TABLE_NAME = 'STRM_PROC_FILT') THEN
+            WHERE TABLE_SCHEMA = database()
+            AND TABLE_NAME = 'STRM_PROC_FILT') THEN
 
         RENAME TABLE STRM_PROC_FILT TO OLD_STRM_PROC_FILT;
     END IF;
@@ -59,7 +60,8 @@ BEGIN
     IF EXISTS (
             SELECT NULL
             FROM INFORMATION_SCHEMA.TABLES
-            WHERE TABLE_NAME = 'OLD_STRM_PROC_FILT') THEN
+            WHERE TABLE_SCHEMA = database()
+            AND TABLE_NAME = 'OLD_STRM_PROC_FILT') THEN
         --
         -- Copy data into the table, use ID predicate to make it re-runnable
         --

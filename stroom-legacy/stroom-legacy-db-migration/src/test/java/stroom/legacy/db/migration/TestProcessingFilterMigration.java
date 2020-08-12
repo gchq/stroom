@@ -1,8 +1,5 @@
 package stroom.legacy.db.migration;
 
-import stroom.config.common.ConnectionConfig;
-import stroom.db.util.DbUtil;
-import stroom.legacy.db.migration.V6_0_0_9__ProcessingFilter;
 import stroom.test.common.util.db.DbTestUtil;
 
 import org.junit.jupiter.api.Disabled;
@@ -24,9 +21,7 @@ class TestProcessingFilterMigration {
     void testMigrateOnDockerImage() throws Exception {
         final V6_0_0_9__ProcessingFilter filter = new V6_0_0_9__ProcessingFilter(false);
 
-        final ConnectionConfig connectionConfig = DbTestUtil.getOrCreateEmbeddedConnectionConfig();
-        DbUtil.validate(connectionConfig);
-        try (final Connection conn = DbUtil.getSingleConnection(connectionConfig)) {
+        try (final Connection conn = DbTestUtil.createTestDataSource().getConnection()) {
             filter.migrate(conn);
         }
     }

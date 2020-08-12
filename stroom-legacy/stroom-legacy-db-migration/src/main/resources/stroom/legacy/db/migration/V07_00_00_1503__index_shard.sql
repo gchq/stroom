@@ -51,7 +51,8 @@ BEGIN
     IF EXISTS (
             SELECT NULL
             FROM INFORMATION_SCHEMA.TABLES
-            WHERE TABLE_NAME = 'IDX_SHRD') THEN
+            WHERE TABLE_SCHEMA = database()
+            AND TABLE_NAME = 'IDX_SHRD') THEN
 
         RENAME TABLE IDX_SHRD TO OLD_IDX_SHRD;
     END IF;
@@ -60,7 +61,8 @@ BEGIN
     IF EXISTS (
             SELECT NULL
             FROM INFORMATION_SCHEMA.TABLES
-            WHERE TABLE_NAME = 'ND') THEN
+            WHERE TABLE_SCHEMA = database()
+            AND TABLE_NAME = 'ND') THEN
 
         RENAME TABLE ND TO OLD_ND;
     END IF;
@@ -69,7 +71,8 @@ BEGIN
     IF EXISTS (
             SELECT NULL
             FROM INFORMATION_SCHEMA.TABLES 
-            WHERE TABLE_NAME = 'OLD_IDX_SHRD') THEN
+            WHERE TABLE_SCHEMA = database()
+            AND TABLE_NAME = 'OLD_IDX_SHRD') THEN
         --
         -- Copy data into the table, use ID predicate to make it re-runnable
         --

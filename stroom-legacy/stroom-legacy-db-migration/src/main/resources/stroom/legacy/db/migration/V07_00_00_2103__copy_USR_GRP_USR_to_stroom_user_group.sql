@@ -28,7 +28,8 @@ BEGIN
     IF EXISTS (
             SELECT NULL
             FROM INFORMATION_SCHEMA.TABLES
-            WHERE TABLE_NAME = 'USR_GRP_USR') THEN
+            WHERE TABLE_SCHEMA = database()
+            AND TABLE_NAME = 'USR_GRP_USR') THEN
 
         RENAME TABLE USR_GRP_USR TO OLD_USR_GRP_USR;
     END IF;
@@ -36,7 +37,8 @@ BEGIN
     IF EXISTS (
             SELECT NULL
             FROM INFORMATION_SCHEMA.TABLES
-            WHERE TABLE_NAME = 'OLD_USR_GRP_USR') THEN
+            WHERE TABLE_SCHEMA = database()
+            AND TABLE_NAME = 'OLD_USR_GRP_USR') THEN
 
         -- There is no FK on the OLD_USR_GRP_USR table so ignore orphaned records
         INSERT INTO stroom_user_group (

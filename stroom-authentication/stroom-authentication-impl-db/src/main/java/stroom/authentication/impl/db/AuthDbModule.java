@@ -52,8 +52,8 @@ public class AuthDbModule extends AbstractFlyWayDbModule<AuthenticationDbConfig,
         return new DataSourceImpl(dataSource);
     }
 
-    private static class DataSourceImpl extends DataSourceProxy implements AuthDbConnProvider {
-        private DataSourceImpl(final DataSource dataSource) {
+    public static class DataSourceImpl extends DataSourceProxy implements AuthDbConnProvider {
+        public DataSourceImpl(final DataSource dataSource) {
             super(dataSource);
         }
     }
