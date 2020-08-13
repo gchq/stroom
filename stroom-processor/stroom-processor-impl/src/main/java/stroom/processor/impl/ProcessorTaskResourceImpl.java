@@ -111,6 +111,7 @@ class ProcessorTaskResourceImpl implements ProcessorTaskResource {
         // If this is the node that was contacted then just return the latency we have incurred within this method.
         if (NodeCallUtil.shouldExecuteLocally(nodeInfo, nodeName)) {
             return processorTaskManager.assignTasks(request.getNodeName(), request.getCount());
+
         } else {
             final String url = NodeCallUtil.getBaseEndpointUrl(nodeInfo, nodeService, nodeName)
                     + ResourcePaths.buildAuthenticatedApiPath(
@@ -138,6 +139,7 @@ class ProcessorTaskResourceImpl implements ProcessorTaskResource {
         // If this is the node that was contacted then just return the latency we have incurred within this method.
         if (NodeCallUtil.shouldExecuteLocally(nodeInfo, nodeName)) {
             return processorTaskManager.abandonTasks(request);
+
         } else {
             final String url = NodeCallUtil.getBaseEndpointUrl(nodeInfo, nodeService, nodeName)
                     + ResourcePaths.buildAuthenticatedApiPath(

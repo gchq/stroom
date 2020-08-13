@@ -71,19 +71,18 @@ public class GlobalConfigResourceImpl implements GlobalConfigResource {
 
         ListConfigResponse listConfigResponse;
 
-        final String url = NodeCallUtil.getBaseEndpointUrl(nodeInfo, nodeService, nodeName)
-                + ResourcePaths.buildAuthenticatedApiPath(
-                GlobalConfigResource.BASE_PATH,
-                GlobalConfigResource.NODE_PROPERTIES_SUB_PATH,
-                nodeName);
+        // If this is the node that was contacted then just resolve it locally
+        if (NodeCallUtil.shouldExecuteLocally(nodeInfo, nodeName)) {
+            listConfigResponse = list(criteria);
 
-        try {
-            // If this is the node that was contacted then just resolve it locally
-            if (NodeCallUtil.shouldExecuteLocally(nodeInfo, nodeName)) {
-                listConfigResponse = list(criteria);
-            } else {
-                // A different node to make a rest call to the required node
-
+        } else {
+            // A different node to make a rest call to the required node
+            final String url = NodeCallUtil.getBaseEndpointUrl(nodeInfo, nodeService, nodeName)
+                    + ResourcePaths.buildAuthenticatedApiPath(
+                    GlobalConfigResource.BASE_PATH,
+                    GlobalConfigResource.NODE_PROPERTIES_SUB_PATH,
+                    nodeName);
+            try {
                 final Response response = webTargetFactory
                         .create(url)
                         .request(MediaType.APPLICATION_JSON)
@@ -96,9 +95,9 @@ public class GlobalConfigResourceImpl implements GlobalConfigResource {
                 listConfigResponse = response.readEntity(ListConfigResponse.class);
 
                 Objects.requireNonNull(listConfigResponse, "Null listConfigResponse");
+            } catch (final Throwable e) {
+                throw NodeCallUtil.handleExceptionsOnNodeCall(nodeName, url, e);
             }
-        } catch (final Throwable e) {
-            throw NodeCallUtil.handleExceptionsOnNodeCall(nodeName, url, e);
         }
         return listConfigResponse;
     }
@@ -131,19 +130,19 @@ public class GlobalConfigResourceImpl implements GlobalConfigResource {
 
         OverrideValue<String> yamlOverride;
 
-        final String url = NodeCallUtil.getBaseEndpointUrl(nodeInfo, nodeService, nodeName)
-                + ResourcePaths.buildAuthenticatedApiPath(
-                GlobalConfigResource.BASE_PATH,
-                GlobalConfigResource.CLUSTER_PROPERTIES_SUB_PATH,
-                propertyName,
-                GlobalConfigResource.YAML_OVERRIDE_VALUE_SUB_PATH,
-                nodeName);
+        // If this is the node that was contacted then just resolve it locally
+        if (NodeCallUtil.shouldExecuteLocally(nodeInfo, nodeName)) {
+            yamlOverride = getYamlValueByName(propertyName);
 
-        try {
-            // If this is the node that was contacted then just resolve it locally
-            if (NodeCallUtil.shouldExecuteLocally(nodeInfo, nodeName)) {
-                yamlOverride = getYamlValueByName(propertyName);
-            } else {
+        } else {
+            final String url = NodeCallUtil.getBaseEndpointUrl(nodeInfo, nodeService, nodeName)
+                    + ResourcePaths.buildAuthenticatedApiPath(
+                    GlobalConfigResource.BASE_PATH,
+                    GlobalConfigResource.CLUSTER_PROPERTIES_SUB_PATH,
+                    propertyName,
+                    GlobalConfigResource.YAML_OVERRIDE_VALUE_SUB_PATH,
+                    nodeName);
+            try {
                 // A different node to make a rest call to the required node
                 final Response response = webTargetFactory
                         .create(url)
@@ -158,9 +157,9 @@ public class GlobalConfigResourceImpl implements GlobalConfigResource {
                 yamlOverride = response.readEntity(OverrideValue.class);
 
                 Objects.requireNonNull(yamlOverride, "Null yamlOverride");
+            } catch (final Throwable e) {
+                throw NodeCallUtil.handleExceptionsOnNodeCall(nodeName, url, e);
             }
-        } catch (final Throwable e) {
-            throw NodeCallUtil.handleExceptionsOnNodeCall(nodeName, url, e);
         }
         return yamlOverride;
     }

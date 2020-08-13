@@ -108,6 +108,7 @@ class SessionListListener implements HttpSessionListener, SessionListService {
         if (NodeCallUtil.shouldExecuteLocally(nodeInfo, nodeName)) {
             // This is our node so execute locally
             sessionList = listSessionsOnThisNode();
+
         } else {
             // This is a different node so make a rest call to it to get the result
 

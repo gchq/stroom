@@ -28,21 +28,17 @@ public final class NodeCallUtil {
      * @return The base endpoint url for inter-node communications, e.g. http://some-fqdn:8080
      */
     public static String getBaseEndpointUrl(final NodeInfo nodeInfo, final NodeService nodeService, final String nodeName) {
+        // A normal url is something like "http://fqdn:8080"
         final String url = nodeService.getBaseEndpointUrl(nodeName);
+
         if (url == null || url.isBlank()) {
             throw new RuntimeException("Remote node '" + nodeName + "' has no URL set");
         }
-//        if (url.contains("localhost")) {
-//            throw new RuntimeException("Remote node '" + nodeName + "' is using localhost");
-//        }
-//        if (url.contains("127.0.0.1")) {
-//            throw new RuntimeException("Remote node '" + nodeName + "' is using 127.0.0.1");
-//        }
+
         final String thisNodeUrl = nodeService.getBaseEndpointUrl(nodeInfo.getThisNodeName());
         if (url.equals(thisNodeUrl)) {
             throw new RuntimeException("Remote node '" + nodeName + "' is using the same URL as this node");
         }
-        // A normal url is something like "http://fqdn:8080"
 
         return url;
     }

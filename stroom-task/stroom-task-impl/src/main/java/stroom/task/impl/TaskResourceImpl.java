@@ -72,7 +72,7 @@ class TaskResourceImpl implements TaskResource {
 
     @Override
     public TaskProgressResponse find(final String nodeName, final FindTaskProgressRequest request) {
-        TaskProgressResponse result = null;
+        TaskProgressResponse result;
         // If this is the node that was contacted then just return our local info.
         if (NodeCallUtil.shouldExecuteLocally(nodeInfo, nodeName)) {
             final ResultPage<TaskProgress> resultPage = taskManager.find(request.getCriteria());
@@ -131,6 +131,7 @@ class TaskResourceImpl implements TaskResource {
         // If this is the node that was contacted then just return our local info.
         if (NodeCallUtil.shouldExecuteLocally(nodeInfo, nodeName)) {
             taskManager.terminate(request.getCriteria(), request.isKill());
+
         } else {
             final String url = NodeCallUtil.getBaseEndpointUrl(nodeInfo, nodeService, nodeName)
                     + ResourcePaths.buildAuthenticatedApiPath(

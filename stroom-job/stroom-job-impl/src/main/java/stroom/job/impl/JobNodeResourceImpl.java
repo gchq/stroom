@@ -87,14 +87,14 @@ class JobNodeResourceImpl implements JobNodeResource {
     @Override
     public JobNodeInfo info(final String jobName, final String nodeName) {
         JobNodeInfo jobNodeInfo;
-        final String url = NodeCallUtil.getBaseEndpointUrl(nodeInfo, nodeService, nodeName)
-                + ResourcePaths.buildAuthenticatedApiPath(JobNodeResource.INFO_PATH);
-        try {
-            // If this is the node that was contacted then just return our local info.
-            if (nodeInfo.getThisNodeName().equals(nodeName)) {
-                jobNodeInfo = jobNodeService.getInfo(jobName);
+        // If this is the node that was contacted then just return our local info.
+        if (NodeCallUtil.shouldExecuteLocally(nodeInfo, nodeName)) {
+            jobNodeInfo = jobNodeService.getInfo(jobName);
 
-            } else {
+        } else {
+            final String url = NodeCallUtil.getBaseEndpointUrl(nodeInfo, nodeService, nodeName)
+                    + ResourcePaths.buildAuthenticatedApiPath(JobNodeResource.INFO_PATH);
+            try {
                 final Response response = webTargetFactory
                         .create(url)
                         .queryParam("jobName", jobName)
@@ -108,10 +108,9 @@ class JobNodeResourceImpl implements JobNodeResource {
                 if (jobNodeInfo == null) {
                     throw new RuntimeException("Unable to contact node \"" + nodeName + "\" at URL: " + url);
                 }
+            } catch (final Throwable e) {
+                throw NodeCallUtil.handleExceptionsOnNodeCall(nodeName, url, e);
             }
-
-        } catch (final Throwable e) {
-            throw NodeCallUtil.handleExceptionsOnNodeCall(nodeName, url, e);
         }
 
         return jobNodeInfo;

@@ -75,7 +75,7 @@ class CacheResourceImpl implements CacheResource {
     public CacheInfoResponse info(final String cacheName, final String nodeName) {
         CacheInfoResponse result;
         // If this is the node that was contacted then just return our local info.
-        if (nodeInfo.getThisNodeName().equals(nodeName)) {
+        if (NodeCallUtil.shouldExecuteLocally(nodeInfo, nodeName)) {
             final FindCacheInfoCriteria criteria = new FindCacheInfoCriteria();
             criteria.setName(new StringCriteria(cacheName, null));
             final List<CacheInfo> list = cacheManagerService.find(criteria);

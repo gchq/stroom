@@ -175,6 +175,7 @@ class NodeResourceImpl implements NodeResource {
         // If this is the node that was contacted then just return the latency we have incurred within this method.
         if (NodeCallUtil.shouldExecuteLocally(nodeInfo, nodeName)) {
             return System.currentTimeMillis() - now;
+
         } else {
             final String url = NodeCallUtil.getBaseEndpointUrl(nodeInfo, nodeService, nodeName)
                     + ResourcePaths.buildAuthenticatedApiPath(
