@@ -35,9 +35,7 @@ import static org.mockito.Mockito.when;
 
 @MockitoSettings(strictness = Strictness.LENIENT)
 class TestGlobalConfigResourceImpl extends AbstractMultiNodeResourceTest<GlobalConfigResource> {
-
     private final Map<String, GlobalConfigService> globalConfigServiceMap = new HashMap<>();
-
 
     public static final ConfigProperty CONFIG_PROPERTY_1;
     public static final ConfigProperty CONFIG_PROPERTY_2;
@@ -62,6 +60,12 @@ class TestGlobalConfigResourceImpl extends AbstractMultiNodeResourceTest<GlobalC
             CONFIG_PROPERTY_2,
             CONFIG_PROPERTY_3
     ));
+
+    private static final int BASE_PORT = 7000;
+
+    public TestGlobalConfigResourceImpl() {
+        super(createNodeList(BASE_PORT));
+    }
 
     @Test
     void list() {

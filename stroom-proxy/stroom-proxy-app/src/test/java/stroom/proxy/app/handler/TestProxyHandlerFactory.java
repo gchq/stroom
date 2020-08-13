@@ -1,10 +1,5 @@
 package stroom.proxy.app.handler;
 
-import org.junit.jupiter.api.Test;
-import org.junit.jupiter.api.extension.ExtendWith;
-import org.mockito.junit.jupiter.MockitoExtension;
-import org.mockito.junit.jupiter.MockitoSettings;
-import org.mockito.quality.Strictness;
 import stroom.proxy.repo.ProxyRepositoryConfig;
 import stroom.proxy.repo.ProxyRepositoryManager;
 import stroom.proxy.repo.ProxyRepositoryStreamHandler;
@@ -14,7 +9,15 @@ import stroom.test.common.util.test.StroomUnitTest;
 import stroom.util.io.FileUtil;
 import stroom.util.shared.BuildInfo;
 
+import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.extension.ExtendWith;
+import org.junit.jupiter.api.io.TempDir;
+import org.mockito.junit.jupiter.MockitoExtension;
+import org.mockito.junit.jupiter.MockitoSettings;
+import org.mockito.quality.Strictness;
+
 import javax.inject.Provider;
+import java.nio.file.Path;
 import java.util.ArrayList;
 import java.util.List;
 
@@ -24,8 +27,8 @@ import static org.assertj.core.api.Assertions.assertThat;
 @MockitoSettings(strictness = Strictness.LENIENT)
 class TestProxyHandlerFactory extends StroomUnitTest {
     @Test
-    void testStoreAndForward() {
-        final MasterStreamHandlerFactory proxyHandlerFactory = getProxyHandlerFactory(true, true);
+    void testStoreAndForward(@TempDir final Path tempDir) {
+        final MasterStreamHandlerFactory proxyHandlerFactory = getProxyHandlerFactory(tempDir, true, true);
         final List<StreamHandler> incomingHandlers = proxyHandlerFactory.addReceiveHandlers(new ArrayList<>());
 
         assertThat(incomingHandlers.size() == 1 && incomingHandlers.get(0) instanceof ProxyRepositoryStreamHandler).as("Expecting 1 handler that saves to the repository").isTrue();
@@ -36,8 +39,8 @@ class TestProxyHandlerFactory extends StroomUnitTest {
     }
 
     @Test
-    void testForward() {
-        final MasterStreamHandlerFactory proxyHandlerFactory = getProxyHandlerFactory(false, true);
+    void testForward(@TempDir final Path tempDir) {
+        final MasterStreamHandlerFactory proxyHandlerFactory = getProxyHandlerFactory(tempDir, false, true);
 
         for (int i = 0; i < 2; i++) {
             final List<StreamHandler> incomingHandlers = proxyHandlerFactory.addReceiveHandlers(new ArrayList<>());
@@ -53,8 +56,8 @@ class TestProxyHandlerFactory extends StroomUnitTest {
     }
 
     @Test
-    void testStore() {
-        final MasterStreamHandlerFactory proxyHandlerFactory = getProxyHandlerFactory(true, false);
+    void testStore(@TempDir final Path tempDir) {
+        final MasterStreamHandlerFactory proxyHandlerFactory = getProxyHandlerFactory(tempDir, true, false);
 
         final List<StreamHandler> incomingHandlers = proxyHandlerFactory.addReceiveHandlers(new ArrayList<>());
         assertThat(incomingHandlers.size() == 1 && incomingHandlers.get(0) instanceof ProxyRepositoryStreamHandler).as("Expecting 1 handler that stores incoming data").isTrue();
@@ -63,7 +66,8 @@ class TestProxyHandlerFactory extends StroomUnitTest {
         assertThat(outgoingHandlers.size() == 0).as("Expecting 1 handlers that forward to other URLS").isTrue();
     }
 
-    private MasterStreamHandlerFactory getProxyHandlerFactory(final boolean isStoringEnabled,
+    private MasterStreamHandlerFactory getProxyHandlerFactory(final Path tempDir,
+                                                              final boolean isStoringEnabled,
                                                               final boolean isForwardingenabled) {
         final LogStreamConfig logRequestConfig = null;
         final ProxyRepositoryConfig proxyRepositoryConfig = new ProxyRepositoryConfig();
@@ -81,7 +85,7 @@ class TestProxyHandlerFactory extends StroomUnitTest {
         forwardRequestConfig.getForwardDestinations().add(destinationConfig1);
         forwardRequestConfig.getForwardDestinations().add(destinationConfig2);
 
-        final ProxyRepositoryManager proxyRepositoryManager = new ProxyRepositoryManager(proxyRepositoryConfig);
+        final ProxyRepositoryManager proxyRepositoryManager = new ProxyRepositoryManager(() -> tempDir, proxyRepositoryConfig);
         final Provider<ProxyRepositoryStreamHandler> proxyRepositoryRequestHandlerProvider = () ->
                 new ProxyRepositoryStreamHandler(proxyRepositoryManager);
 

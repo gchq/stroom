@@ -72,7 +72,7 @@ class TestMetaValueDaoImpl {
                 .injectMembers(this);
         metaValueConfig.setAddAsync(false);
         // Delete everything
-        cleanup.clear();
+        cleanup.cleanup();
     }
 
     @AfterEach

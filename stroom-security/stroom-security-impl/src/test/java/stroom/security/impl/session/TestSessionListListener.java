@@ -26,13 +26,18 @@ import static org.mockito.Mockito.when;
 
 @MockitoSettings(strictness = Strictness.LENIENT)
 class TestSessionListListener extends AbstractMultiNodeResourceTest<SessionResource> {
-
     private static final Logger LOGGER = LoggerFactory.getLogger(TestSessionListListener.class);
 
     @Mock
     private AuthenticationEventLog authenticationEventLog;
 
-    private Map<String, SessionListService> sessionListServiceMap = new HashMap<>();
+    private final Map<String, SessionListService> sessionListServiceMap = new HashMap<>();
+
+    private static final int BASE_PORT = 7030;
+
+    public TestSessionListListener() {
+        super(createNodeList(BASE_PORT));
+    }
 
     @BeforeEach
     void beforeEach() {

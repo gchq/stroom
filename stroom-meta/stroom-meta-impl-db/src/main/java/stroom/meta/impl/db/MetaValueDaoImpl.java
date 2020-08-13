@@ -25,6 +25,7 @@ import stroom.meta.shared.Meta;
 import stroom.util.logging.LambdaLogger;
 import stroom.util.logging.LambdaLoggerFactory;
 import stroom.util.logging.LogExecutionTime;
+import stroom.util.shared.Clearable;
 
 import org.jooq.BatchBindStep;
 
@@ -43,7 +44,7 @@ import java.util.stream.Stream;
 import static stroom.meta.impl.db.jooq.tables.MetaVal.META_VAL;
 
 @Singleton
-class MetaValueDaoImpl implements MetaValueDao {
+class MetaValueDaoImpl implements MetaValueDao, Clearable {
     private static final LambdaLogger LOGGER = LambdaLoggerFactory.getLogger(MetaValueDaoImpl.class);
 
     private static final String LOCK_NAME = "MetaDeleteExecutor";
@@ -292,18 +293,10 @@ class MetaValueDaoImpl implements MetaValueDao {
     @Override
     public void clear() {
         clearQueue();
-        deleteAll();
     }
 
     private synchronized void clearQueue() {
         queue.clear();
-    }
-
-    private void deleteAll() {
-        JooqUtil.truncateTable(metaDbConnProvider, META_VAL);
-//        return JooqUtil.contextResult(metaDbConnProvider, context -> context
-//                .truncate(META_VAL)
-//                .execute());
     }
 
     private static final class Row {

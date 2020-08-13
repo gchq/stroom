@@ -281,7 +281,7 @@ class TestImportExportDashboards extends AbstractCoreIntegrationTest {
     }
 
     private void deleteAllAndCheck() {
-        clean(true);
+        commonTestControl.clear();
 
         assertThat(visualisationStore.list().size()).isEqualTo(0);
         assertThat(pipelineStore.list().size()).isEqualTo(0);

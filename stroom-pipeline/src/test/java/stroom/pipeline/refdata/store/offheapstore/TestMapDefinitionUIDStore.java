@@ -54,7 +54,6 @@ import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.fail;
 
 class TestMapDefinitionUIDStore extends AbstractLmdbDbTest {
-
     private static final Logger LOGGER = LoggerFactory.getLogger(TestMapDefinitionUIDStore.class);
 
     private MapDefinitionUIDStore mapDefinitionUIDStore = null;
@@ -62,10 +61,7 @@ class TestMapDefinitionUIDStore extends AbstractLmdbDbTest {
     private MapUidReverseDb mapUidReverseDb;
 
     @BeforeEach
-    @Override
-    public void setup() throws IOException {
-        super.setup();
-
+    void setup() {
         final MapDefinitionSerde mapDefinitionSerde = new MapDefinitionSerde();
         final UIDSerde uidSerde = new UIDSerde();
         final ByteBufferPool byteBufferPool = new ByteBufferPool();

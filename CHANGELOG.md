@@ -7,6 +7,9 @@ and this project adheres to [Semantic Versioning](http://semver.org/).
 
 ## [Unreleased]
 
+* Issue **#1749** : Removed old benchmark job.
+
+
 ## [v7.0-beta.41] - 2020-08-12
 
 * Issue **#1785** : Fix proxy not forwarding any data.

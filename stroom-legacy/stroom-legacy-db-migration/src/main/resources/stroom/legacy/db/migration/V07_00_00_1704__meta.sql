@@ -54,7 +54,8 @@ BEGIN
     IF EXISTS (
             SELECT NULL
             FROM INFORMATION_SCHEMA.TABLES
-            WHERE TABLE_NAME = 'STRM') THEN
+            WHERE TABLE_SCHEMA = database()
+            AND TABLE_NAME = 'STRM') THEN
 
         RENAME TABLE STRM TO OLD_STRM;
     END IF;
@@ -62,7 +63,8 @@ BEGIN
     IF EXISTS (
             SELECT NULL 
             FROM INFORMATION_SCHEMA.TABLES 
-            where TABLE_NAME = 'OLD_STRM') THEN
+            WHERE TABLE_SCHEMA = database()
+            AND TABLE_NAME = 'OLD_STRM') THEN
 
         INSERT INTO meta (
             id,

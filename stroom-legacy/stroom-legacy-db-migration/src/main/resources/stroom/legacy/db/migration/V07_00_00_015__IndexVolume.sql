@@ -26,7 +26,8 @@ BEGIN
     IF EXISTS (
             SELECT NULL
             FROM INFORMATION_SCHEMA.TABLES
-            WHERE TABLE_NAME = 'IDX') THEN
+            WHERE TABLE_SCHEMA = database()
+            AND TABLE_NAME = 'IDX') THEN
 
         RENAME TABLE IDX TO OLD_IDX;
     END IF;
@@ -45,7 +46,8 @@ BEGIN
     IF EXISTS (
             SELECT NULL
             FROM INFORMATION_SCHEMA.TABLES
-            WHERE TABLE_NAME = 'IDX_VOL') THEN
+            WHERE TABLE_SCHEMA = database()
+            AND TABLE_NAME = 'IDX_VOL') THEN
 
         RENAME TABLE IDX_VOL TO OLD_IDX_VOL;
     END IF;

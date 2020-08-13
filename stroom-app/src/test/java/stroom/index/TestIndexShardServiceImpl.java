@@ -43,10 +43,10 @@ class TestIndexShardServiceImpl extends AbstractCoreIntegrationTest {
     @Inject
     private IndexVolumeService indexVolumeService;
 
-    @Override
-    protected void onBefore() {
-        clean();
-    }
+//    @Override
+//    protected void onBefore() {
+//        clean();
+//    }
 
 //    /**
 //     * Test.

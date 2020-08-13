@@ -17,19 +17,20 @@
 
 package stroom.index;
 
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 import stroom.entity.shared.ExpressionCriteria;
 import stroom.index.impl.IndexVolumeGroupService;
 import stroom.index.impl.IndexVolumeService;
 import stroom.index.shared.IndexVolume;
 import stroom.index.shared.IndexVolumeGroup;
 import stroom.node.impl.NodeConfig;
-import stroom.pipeline.writer.PathCreator;
+
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import javax.inject.Inject;
 import java.io.IOException;
 import java.nio.file.Files;
+import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.util.ArrayList;
 import java.util.List;
@@ -53,28 +54,28 @@ class VolumeCreatorForTesting implements VolumeCreator {
         this.indexVolumeGroupService = indexVolumeGroupService;
     }
 
-    private List<IndexVolume> getInitialVolumeList() {
+    private List<IndexVolume> getInitialVolumeList(final Path tempDir) {
         final List<IndexVolume> volumes = new ArrayList<>();
-        volumes.add(createVolume("${stroom.temp}/rack1/node1a/v1", NODE1));
-        volumes.add(createVolume("${stroom.temp}/rack1/node1a/v2", NODE1));
-        volumes.add(createVolume("${stroom.temp}/rack2/node2a/v1", NODE2));
-        volumes.add(createVolume("${stroom.temp}/rack2/node2a/v2", NODE2));
+        volumes.add(createVolume(tempDir, "rack1/node1a/v1", NODE1));
+        volumes.add(createVolume(tempDir, "rack1/node1a/v2", NODE1));
+        volumes.add(createVolume(tempDir, "rack2/node2a/v1", NODE2));
+        volumes.add(createVolume(tempDir, "rack2/node2a/v2", NODE2));
         return volumes;
     }
 
-    private IndexVolume createVolume(final String path, final String nodeName) {
+    private IndexVolume createVolume(final Path tempDir, final String path, final String nodeName) {
         final IndexVolume vol = new IndexVolume();
-        final String p = PathCreator.replaceSystemProperties(path);
+        final String p = tempDir.resolve(path).toAbsolutePath().toString();
         vol.setPath(p);
         vol.setNodeName(nodeName);
         return vol;
     }
 
     @Override
-    public void setup() {
+    public void setup(final Path tempDir) {
         try {
             final IndexVolumeGroup indexVolumeGroup = indexVolumeGroupService.getOrCreate(DEFAULT_VOLUME_GROUP);
-            final List<IndexVolume> initialVolumeList = getInitialVolumeList();
+            final List<IndexVolume> initialVolumeList = getInitialVolumeList(tempDir);
             final List<IndexVolume> existingVolumes = volumeService.find(new ExpressionCriteria()).getValues();
             for (final IndexVolume volume : initialVolumeList) {
                 boolean found = false;
@@ -82,6 +83,7 @@ class VolumeCreatorForTesting implements VolumeCreator {
                     if (existingVolume.getNodeName().equals(volume.getNodeName())
                             && existingVolume.getPath().equals(volume.getPath())) {
                         found = true;
+                        break;
                     }
                 }
 

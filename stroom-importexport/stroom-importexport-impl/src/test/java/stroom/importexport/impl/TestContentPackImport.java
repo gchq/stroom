@@ -237,6 +237,6 @@ class TestContentPackImport {
 
     private ContentPackImport getContentPackImport() {
         return new ContentPackImport(
-                importExportService, contentPackImportConfig, securityContext);
+                importExportService, contentPackImportConfig, () -> tempDir, securityContext);
     }
 }

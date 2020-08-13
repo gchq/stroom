@@ -14,18 +14,15 @@
  * limitations under the License.
  */
 
-package stroom.core.entity.cluster;
+package stroom.index.mock;
 
-import stroom.util.guice.RestResourcesBinder;
+import stroom.index.impl.IndexShardWriterExecutorProvider;
 
 import com.google.inject.AbstractModule;
 
-public class EntityClusterModule extends AbstractModule {
+public class MockIndexShardWriterExecutorModule extends AbstractModule {
     @Override
     protected void configure() {
-        bind(ClearableResource.class).to(ClearableResourceImpl.class);
-
-        RestResourcesBinder.create(binder())
-                .bind(ClearableResourceImpl.class);
+        bind(IndexShardWriterExecutorProvider.class).to(MockIndexShardWriterExecutorProvider.class);
     }
 }

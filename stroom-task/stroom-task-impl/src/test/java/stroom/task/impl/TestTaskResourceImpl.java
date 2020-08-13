@@ -31,9 +31,14 @@ import static org.mockito.Mockito.when;
 
 @MockitoSettings(strictness = Strictness.LENIENT)
 class TestTaskResourceImpl extends AbstractMultiNodeResourceTest<TaskResource> {
-
     private final Map<String, TaskManagerImpl> taskManagerMap = new HashMap<>();
     private final Map<String, DocumentEventLog> documentEventLogMap = new HashMap<>();
+
+    private static final int BASE_PORT = 7050;
+
+    public TestTaskResourceImpl() {
+        super(createNodeList(BASE_PORT));
+    }
 
     @BeforeEach
     void setUp() {

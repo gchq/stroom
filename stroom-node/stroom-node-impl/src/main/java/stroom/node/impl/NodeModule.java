@@ -17,13 +17,15 @@
 package stroom.node.impl;
 
 import stroom.event.logging.api.ObjectInfoProviderBinder;
-import stroom.util.RunnableWrapper;
 import stroom.job.api.Schedule;
 import stroom.job.api.ScheduledJobsBinder;
 import stroom.node.api.NodeInfo;
 import stroom.node.api.NodeService;
 import stroom.node.shared.Node;
 import stroom.node.shared.NodeResource;
+import stroom.pipeline.writer.ExtendedPathCreator;
+import stroom.pipeline.writer.PathCreator;
+import stroom.util.RunnableWrapper;
 import stroom.util.entityevent.EntityEvent;
 import stroom.util.guice.GuiceUtil;
 import stroom.util.guice.RestResourcesBinder;
@@ -39,6 +41,7 @@ public class NodeModule extends AbstractModule {
         bind(NodeInfo.class).to(NodeInfoImpl.class);
         bind(NodeService.class).to(NodeServiceImpl.class);
         bind(NodeResource.class).to(NodeResourceImpl.class);
+        bind(PathCreator.class).to(ExtendedPathCreator.class);
 
         GuiceUtil.buildMultiBinder(binder(), Clearable.class).addBinding(NodeServiceImpl.class);
 

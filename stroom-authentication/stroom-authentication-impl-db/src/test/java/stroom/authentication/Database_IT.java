@@ -28,7 +28,7 @@ public abstract class Database_IT {
 
     private static final String MYSQL_DOCKER_IMAGE = "mysql:5.6.43";
 
-    protected AuthDbConnProvider authDbConnProvider;
+//    protected AuthDbConnProvider authDbConnProvider;
 
 //    @ClassRule
 //    public static MySQLContainer mysql = new MySQLContainer(MYSQL_DOCKER_IMAGE)
@@ -43,8 +43,8 @@ public abstract class Database_IT {
 
     @Before
     public void before() {
-        authDbConnProvider = new TestAuthDbConnProvider();
-        Map<String, String> flywayConfiguration = new HashMap<String, String>();
+//        authDbConnProvider = new TestAuthDbConnProvider();
+//        Map<String, String> flywayConfiguration = new HashMap<String, String>();
 //        flywayConfiguration.put("flyway.driver", JDBC_DRIVER);
 //        flywayConfiguration.put("flyway.url", mysql.getJdbcUrl());
 //        flywayConfiguration.put("flyway.user", JDBC_USER);
@@ -96,8 +96,6 @@ public abstract class Database_IT {
 //    }
 
     public Connection getConnection() throws SQLException {
-        final ConnectionConfig connectionConfig = DbTestUtil.getOrCreateEmbeddedConnectionConfig();
-        DbUtil.validate(connectionConfig);
-        return DbUtil.getSingleConnection(connectionConfig);
+        return DbTestUtil.createTestDataSource().getConnection();
     }
 }

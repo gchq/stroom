@@ -44,6 +44,7 @@ import stroom.util.date.DateUtil;
 import stroom.util.logging.LambdaLogger;
 import stroom.util.logging.LambdaLoggerFactory;
 import stroom.util.logging.LogUtil;
+import stroom.util.shared.Clearable;
 import stroom.util.shared.PageRequest;
 import stroom.util.shared.Range;
 import stroom.util.shared.ResultPage;
@@ -97,7 +98,7 @@ import static stroom.meta.impl.db.jooq.tables.MetaType.META_TYPE;
 import static stroom.meta.impl.db.jooq.tables.MetaVal.META_VAL;
 
 @Singleton
-class MetaDaoImpl implements MetaDao {
+class MetaDaoImpl implements MetaDao, Clearable {
     private static final LambdaLogger LOGGER = LambdaLoggerFactory.getLogger(MetaDaoImpl.class);
 
     // This is currently only used for testing so no need to put it in config,
@@ -1075,14 +1076,13 @@ class MetaDaoImpl implements MetaDao {
     public ResultPage<Meta> findReprocess(final FindMetaCriteria criteria) {
         final PageRequest pageRequest = criteria.getPageRequest();
         final Collection<Condition> conditions = createCondition(criteria);
-        final Collection<OrderField<?>> orderFields = createOrderFields(criteria);
 
         int offset = JooqUtil.getOffset(pageRequest);
         int numberOfRows = JooqUtil.getLimit(pageRequest, true, FIND_RECORD_LIMIT);
 
         final Set<Integer> extendedAttributeIds = identifyExtendedAttributesFields(criteria.getExpression(), new HashSet<>());
 
-        final List<Meta> list = findReprocess(conditions, orderFields, offset, numberOfRows, extendedAttributeIds);
+        final List<Meta> list = findReprocess(conditions, offset, numberOfRows, extendedAttributeIds);
         if (list.size() >= FIND_RECORD_LIMIT) {
             LOGGER.warn("Hit max record limit of '" + FIND_RECORD_LIMIT + "' when finding meta records");
         }
@@ -1091,7 +1091,6 @@ class MetaDaoImpl implements MetaDao {
     }
 
     private List<Meta> findReprocess(final Collection<Condition> conditions,
-                                     final Collection<OrderField<?>> orderFields,
                                      final int offset,
                                      final int numberOfRows,
                                      final Set<Integer> usedValKeys) {
@@ -1123,7 +1122,7 @@ class MetaDaoImpl implements MetaDao {
                         .where(conditions)
                         .and(parent.ID.isNotNull())
                         .groupBy(parent.ID)
-                        .orderBy(orderFields)
+                        .orderBy(parent.ID)
                         .limit(offset, numberOfRows)
                         .fetch()
                         .map(RECORD_TO_PARENT_META_MAPPER::apply));
@@ -1264,7 +1263,6 @@ class MetaDaoImpl implements MetaDao {
 
     @Override
     public void clear() {
-        JooqUtil.truncateTable(metaDbConnProvider, META);
         feedIdCache.clear();
         typeIdCache.clear();
     }

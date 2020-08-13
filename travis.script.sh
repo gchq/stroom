@@ -9,8 +9,6 @@ GITHUB_REPO="gchq/stroom"
 GITHUB_API_URL="https://api.github.com/repos/gchq/stroom/releases"
 STROOM_DOCKER_CONTEXT_ROOT="stroom-app/docker/."
 STROOM_PROXY_DOCKER_CONTEXT_ROOT="stroom-proxy/stroom-proxy-app/docker/."
-DISTRIBUTIONS_DIR="stroom-app/build/distributions"
-JARS_DIR="stroom-app/build/libs"
 VERSION_FIXED_TAG=""
 SNAPSHOT_FLOATING_TAG=""
 MAJOR_VER_FLOATING_TAG=""
@@ -56,10 +54,16 @@ create_file_hash() {
 }
 
 generate_file_hashes() {
-   for file in "${TRAVIS_BUILD_DIR}/${DISTRIBUTIONS_DIR}"/*.zip; do
+   for file in "${TRAVIS_BUILD_DIR}/stroom-app/build/distributions"/*.zip; do
        create_file_hash "${file}"
    done
-   for file in "${TRAVIS_BUILD_DIR}/${JARS_DIR}"/*.jar; do
+   for file in "${TRAVIS_BUILD_DIR}/stroom-app/build/libs"/*.jar; do
+       create_file_hash "${file}"
+   done
+   for file in "${TRAVIS_BUILD_DIR}/stroom-proxy/stroom-proxy-app/build/libs"/*.jar; do
+       create_file_hash "${file}"
+   done
+   for file in "${TRAVIS_BUILD_DIR}/stroom-headless/build/libs"/*.jar; do
        create_file_hash "${file}"
    done
 }
@@ -260,8 +264,17 @@ else
       -PgwtCompilerMaxHeap=1G \
       clean \
       build \
+      shadowJar \
+      generateSwaggerDocumentation \
+      copyFilesForStroomDockerBuild \
+      copyFilesForProxyDockerBuild \
       buildDistribution \
-      "${extraBuildArgs[@]}"
+      "${extraBuildArgs[@]}" \
+      -Dorg.gradle.parallel=false \
+      --scan -s
+
+# Disable parallel build execution in travis. Note this is seprate to prallel test execution.
+# -Dorg.gradle.parallel=false \
 
 # IF WE WANT TO SKIP SOME PARTS OF THE BUILD INCLUDE THESE LINES
 #      -x gwtCompile \

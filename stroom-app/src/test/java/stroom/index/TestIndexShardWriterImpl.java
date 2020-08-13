@@ -17,10 +17,6 @@
 
 package stroom.index;
 
-import org.apache.lucene.document.Document;
-import org.apache.lucene.document.Field;
-import org.apache.lucene.document.FieldType;
-import org.junit.jupiter.api.Test;
 import stroom.docref.DocRef;
 import stroom.index.impl.FieldTypeFactory;
 import stroom.index.impl.IndexShardKeyUtil;
@@ -40,6 +36,12 @@ import stroom.index.shared.IndexShardKey;
 import stroom.test.AbstractCoreIntegrationTest;
 import stroom.test.CommonTestControl;
 import stroom.test.CommonTestScenarioCreator;
+
+import org.apache.lucene.document.Document;
+import org.apache.lucene.document.Field;
+import org.apache.lucene.document.FieldType;
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Test;
 
 import javax.inject.Inject;
 import java.io.IOException;
@@ -63,8 +65,8 @@ class TestIndexShardWriterImpl extends AbstractCoreIntegrationTest {
     @Inject
     private IndexStore indexStore;
 
-    @Override
-    public void onBefore() {
+    @BeforeEach
+    void onBefore() {
         indexShardWriterCache.shutdown();
     }
 

@@ -42,7 +42,8 @@ BEGIN
     IF EXISTS (
             SELECT NULL
             FROM INFORMATION_SCHEMA.TABLES
-            WHERE TABLE_NAME = 'explorerTreePath') THEN
+            WHERE TABLE_SCHEMA = database()
+            AND TABLE_NAME = 'explorerTreePath') THEN
 
         RENAME TABLE explorerTreePath TO OLD_explorertreepath;
     END IF;
@@ -51,7 +52,8 @@ BEGIN
     IF EXISTS (
             SELECT NULL
             FROM INFORMATION_SCHEMA.TABLES
-            WHERE TABLE_NAME = 'OLD_explorerTreePath') THEN
+            WHERE TABLE_SCHEMA = database()
+            AND TABLE_NAME = 'OLD_explorerTreePath') THEN
 
         INSERT INTO explorer_path (
             ancestor, 

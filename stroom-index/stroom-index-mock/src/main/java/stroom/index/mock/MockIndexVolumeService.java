@@ -51,8 +51,4 @@ public class MockIndexVolumeService implements IndexVolumeService {
     @Override
     public void rescan() {
     }
-
-    @Override
-    public void clear() {
-    }
 }

@@ -25,10 +25,7 @@ import stroom.index.shared.IndexShard.IndexShardStatus;
 import stroom.index.shared.IndexShardKey;
 import stroom.node.api.NodeInfo;
 import stroom.security.api.SecurityContext;
-import stroom.task.api.ExecutorProvider;
 import stroom.task.api.TaskContextFactory;
-import stroom.task.api.ThreadPoolImpl;
-import stroom.task.shared.ThreadPool;
 import stroom.util.logging.LambdaLogger;
 import stroom.util.logging.LambdaLoggerFactory;
 import stroom.util.logging.LogExecutionTime;
@@ -73,8 +70,7 @@ public class IndexShardWriterCacheImpl implements IndexShardWriterCache {
     private final Map<IndexShardKey, IndexShardWriter> openWritersByShardKey = new ConcurrentHashMap<>();
     private final StripedLock existingShardQueryLocks = new StripedLock();
     private final AtomicLong closing = new AtomicLong();
-    private final Runner asyncRunner;
-    private final Runner syncRunner;
+    private final IndexShardWriterExecutorProvider executorProvider;
     private final TaskContextFactory taskContextFactory;
     private final SecurityContext securityContext;
 
@@ -86,7 +82,7 @@ public class IndexShardWriterCacheImpl implements IndexShardWriterCache {
                                      final IndexConfig indexConfig,
                                      final IndexStructureCache indexStructureCache,
                                      final IndexShardManager indexShardManager,
-                                     final ExecutorProvider executorProvider,
+                                     final IndexShardWriterExecutorProvider executorProvider,
                                      final TaskContextFactory taskContextFactory,
                                      final SecurityContext securityContext) {
         this.nodeInfo = nodeInfo;
@@ -94,12 +90,7 @@ public class IndexShardWriterCacheImpl implements IndexShardWriterCache {
         this.indexConfig = indexConfig;
         this.indexStructureCache = indexStructureCache;
         this.indexShardManager = indexShardManager;
-
-        final ThreadPool threadPool = new ThreadPoolImpl("Index Shard Writer Cache", 3, 0, Integer.MAX_VALUE);
-        final Executor executor = securityContext.asProcessingUserResult(() -> executorProvider.get(threadPool));
-        asyncRunner = new AsyncRunner(executor);
-        syncRunner = new SyncRunner();
-
+        this.executorProvider = executorProvider;
         this.taskContextFactory = taskContextFactory;
         this.securityContext = securityContext;
     }
@@ -259,7 +250,7 @@ public class IndexShardWriterCacheImpl implements IndexShardWriterCache {
                 final CountDownLatch countDownLatch = new CountDownLatch(openWriters.size());
                 openWriters.forEach(indexShardWriter -> {
                     try {
-                        flush(indexShardWriter, asyncRunner).thenRun(countDownLatch::countDown);
+                        flush(indexShardWriter, executorProvider.getAsyncExecutor()).thenRun(countDownLatch::countDown);
                     } catch (final RuntimeException e) {
                         LOGGER.error(e::getMessage, e);
                         countDownLatch.countDown();
@@ -320,22 +311,22 @@ public class IndexShardWriterCacheImpl implements IndexShardWriterCache {
             while (overflow > 0 && lruList.size() > 0) {
                 final IndexShardWriter indexShardWriter = lruList.remove(0);
                 overflow--;
-                close(indexShardWriter, asyncRunner);
+                close(indexShardWriter, executorProvider.getAsyncExecutor());
             }
         }
     }
 
     private void removeElementsExceedingCore() {
         final Settings settings = getSettings();
-        trim(settings.coreItems, asyncRunner);
+        trim(settings.coreItems, executorProvider.getAsyncExecutor());
     }
 
     private void removeElementsExceedingMax() {
         final Settings settings = getSettings();
-        trim(settings.maxItems, syncRunner);
+        trim(settings.maxItems, executorProvider.getSyncExecutor());
     }
 
-    private void trim(final long trimSize, final Runner runner) {
+    private void trim(final long trimSize, final Executor executor) {
         // Deal with exceeding trim size.
         long overflow = openWritersByShardKey.size() - trimSize;
         if (overflow > 0) {
@@ -344,7 +335,7 @@ public class IndexShardWriterCacheImpl implements IndexShardWriterCache {
             while (overflow > 0 && lruList.size() > 0) {
                 final IndexShardWriter indexShardWriter = lruList.remove(0);
                 overflow--;
-                close(indexShardWriter, runner);
+                close(indexShardWriter, executor);
             }
         }
     }
@@ -355,7 +346,7 @@ public class IndexShardWriterCacheImpl implements IndexShardWriterCache {
 
     @Override
     public void close(final IndexShardWriter indexShardWriter) {
-        close(indexShardWriter, asyncRunner);
+        close(indexShardWriter, executorProvider.getAsyncExecutor());
     }
 
     @Override
@@ -368,7 +359,7 @@ public class IndexShardWriterCacheImpl implements IndexShardWriterCache {
         });
     }
 
-    private CompletableFuture<IndexShardWriter> flush(final IndexShardWriter indexShardWriter, final Runner exec) {
+    private CompletableFuture<IndexShardWriter> flush(final IndexShardWriter indexShardWriter, final Executor executor) {
         final Supplier<IndexShardWriter> supplier = taskContextFactory.contextResult("Flushing writer", taskContext -> {
             try {
                 taskContext.info(() -> "Flushing writer for index shard " + indexShardWriter.getIndexShardId());
@@ -381,10 +372,10 @@ public class IndexShardWriterCacheImpl implements IndexShardWriterCache {
 
             return indexShardWriter;
         });
-        return exec.exec(supplier);
+        return CompletableFuture.supplyAsync(supplier, executor);
     }
 
-    private void close(final IndexShardWriter indexShardWriter, final Runner exec) {
+    private void close(final IndexShardWriter indexShardWriter, final Executor executor) {
         final long indexShardId = indexShardWriter.getIndexShardId();
 
         // Remove the shard from the map.
@@ -423,7 +414,7 @@ public class IndexShardWriterCacheImpl implements IndexShardWriterCache {
 
                         return null;
                     });
-                    final CompletableFuture<IndexShardWriter> completableFuture = exec.exec(supplier);
+                    final CompletableFuture<IndexShardWriter> completableFuture = CompletableFuture.supplyAsync(supplier, executor);
                     completableFuture.thenRun(closing::decrementAndGet);
                     completableFuture.exceptionally(t -> {
                         LOGGER.error(t::getMessage, t);
@@ -474,7 +465,7 @@ public class IndexShardWriterCacheImpl implements IndexShardWriterCache {
 
             try {
                 // Close any remaining writers.
-                openWritersByShardKey.values().forEach(indexShardWriter -> close(indexShardWriter, asyncRunner));
+                openWritersByShardKey.values().forEach(indexShardWriter -> close(indexShardWriter, executorProvider.getAsyncExecutor()));
 
                 // Report on closing progress.
                 if (closing.get() > 0) {
@@ -538,30 +529,6 @@ public class IndexShardWriterCacheImpl implements IndexShardWriterCache {
         }
 
         return settings;
-    }
-
-    private static class AsyncRunner implements Runner {
-        private final Executor executor;
-
-        AsyncRunner(final Executor executor) {
-            this.executor = executor;
-        }
-
-        @Override
-        public CompletableFuture<IndexShardWriter> exec(final Supplier<IndexShardWriter> supplier) {
-            return CompletableFuture.supplyAsync(supplier, executor);
-        }
-    }
-
-    private static class SyncRunner implements Runner {
-        @Override
-        public CompletableFuture<IndexShardWriter> exec(final Supplier<IndexShardWriter> supplier) {
-            return CompletableFuture.completedFuture(supplier.get());
-        }
-    }
-
-    private interface Runner {
-        CompletableFuture<IndexShardWriter> exec(Supplier<IndexShardWriter> supplier);
     }
 
     private static class Settings {

@@ -38,6 +38,8 @@ class TestMetaTypeDaoImpl {
     private Cleanup cleanup;
     @Inject
     private MetaTypeDaoImpl metaTypeDao;
+    @Inject
+    private MetaDbConnProvider metaDbConnProvider;
 
     @BeforeEach
     void setup() {
@@ -53,11 +55,13 @@ class TestMetaTypeDaoImpl {
                 new DbTestModule())
                 .injectMembers(this);
         // Delete everything`
-        cleanup.clear();
+        cleanup.cleanup();
     }
 
     @Test
     void test() {
+        assertThat(metaTypeDao.list().size()).isEqualTo(0);
+
         String typeName = "TEST";
         Integer id1 = metaTypeDao.getOrCreate(typeName);
         Integer id2 = metaTypeDao.getOrCreate(typeName);

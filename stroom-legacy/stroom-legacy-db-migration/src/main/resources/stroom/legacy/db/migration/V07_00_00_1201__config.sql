@@ -45,7 +45,8 @@ BEGIN
     IF EXISTS (
             SELECT NULL
             FROM INFORMATION_SCHEMA.TABLES
-            WHERE TABLE_NAME = 'GLOB_PROP') THEN
+            WHERE TABLE_SCHEMA = database()
+            AND TABLE_NAME = 'GLOB_PROP') THEN
 
         RENAME TABLE GLOB_PROP TO OLD_GLOB_PROP;
     END IF;
@@ -55,7 +56,8 @@ BEGIN
     IF EXISTS (
             SELECT COUNT(*)
             FROM INFORMATION_SCHEMA.TABLES
-            WHERE TABLE_NAME = 'OLD_GLOB_PROP') THEN
+            WHERE TABLE_SCHEMA = database()
+            AND TABLE_NAME = 'OLD_GLOB_PROP') THEN
 
         INSERT INTO config (
             id,
