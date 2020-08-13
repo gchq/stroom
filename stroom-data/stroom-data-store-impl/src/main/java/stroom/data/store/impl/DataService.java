@@ -1,5 +1,5 @@
 /*
- * Copyright 2016 Crown Copyright
+ * Copyright 2017 Crown Copyright
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -14,26 +14,20 @@
  * limitations under the License.
  */
 
-.tooltip {
-	background-color: #ffd;
-	padding: 1px 3px;
-	-moz-user-focus: initial;
-	-moz-user-input: initial;
-	-webkit-user-focus: initial;
-	-webkit-user-input: initial;
-	user-focus: initial;
-	user-input: initial;
+package stroom.data.store.impl;
 
-  	-webkit-user-select: text;
-  	-moz-user-select: text;
-  	user-select: text;
+import stroom.data.shared.DataInfoSection;
+import stroom.data.shared.UploadDataRequest;
+import stroom.meta.shared.FindMetaCriteria;
+import stroom.util.shared.ResourceGeneration;
+import stroom.util.shared.ResourceKey;
 
-  	max-width: 500px;
-  	max-height: 500px;
-  	overflow: auto;
-}
+import java.util.List;
 
-.tooltip table {
-    white-space: pre;
-    table-layout: fixed;
+interface DataService {
+    ResourceGeneration download(FindMetaCriteria criteria);
+
+    ResourceKey upload(UploadDataRequest request);
+
+    List<DataInfoSection> info(long id);
 }

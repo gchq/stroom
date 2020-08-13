@@ -40,7 +40,7 @@ import stroom.meta.shared.FindMetaCriteria;
 import stroom.meta.shared.Meta;
 import stroom.meta.shared.MetaExpressionUtil;
 import stroom.meta.shared.MetaFields;
-import stroom.meta.shared.MetaInfoSection;
+import stroom.data.shared.DataInfoSection;
 import stroom.meta.shared.MetaResource;
 import stroom.meta.shared.MetaRow;
 import stroom.meta.shared.Status;
@@ -65,7 +65,6 @@ import stroom.util.shared.ResourceGeneration;
 import stroom.util.shared.ResultPage;
 import stroom.util.shared.Selection;
 import stroom.util.shared.Severity;
-import stroom.util.shared.Sort;
 import stroom.widget.button.client.ButtonView;
 import stroom.widget.customdatebox.client.ClientDateUtil;
 import stroom.widget.popup.client.event.ShowPopupEvent;
@@ -326,14 +325,14 @@ public abstract class AbstractMetaListPresenter extends MyPresenterWidget<DataGr
 
             @Override
             protected void showInfo(final MetaRow row, final int x, final int y) {
-                final Rest<List<MetaInfoSection>> rest = restFactory.create();
+                final Rest<List<DataInfoSection>> rest = restFactory.create();
                 rest
                         .onSuccess(result -> {
                             final TooltipUtil.Builder builder = TooltipUtil.builder();
 
                             builder.addTable(tableBuilder -> {
                                 for (int i = 0; i < result.size(); i++) {
-                                    final MetaInfoSection section = result.get(i);
+                                    final DataInfoSection section = result.get(i);
                                     tableBuilder.addHeaderRow(section.getTitle());
                                     section.getEntries()
                                             .forEach(entry ->
@@ -354,8 +353,8 @@ public abstract class AbstractMetaListPresenter extends MyPresenterWidget<DataGr
                                     popupPosition,
                                     null);
                         })
-                        .call(META_RESOURCE)
-                        .fetchFullMetaInfo(row.getMeta().getId());
+                        .call(DATA_RESOURCE)
+                        .info(row.getMeta().getId());
             }
         };
         getView().addColumn(infoColumn, "<br/>", ColumnSizeConstants.ICON_COL);

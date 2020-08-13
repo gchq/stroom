@@ -7,7 +7,6 @@ import stroom.data.retention.shared.DataRetentionRules;
 import stroom.data.retention.shared.FindDataRetentionImpactCriteria;
 import stroom.meta.shared.FindMetaCriteria;
 import stroom.meta.shared.Meta;
-import stroom.meta.shared.MetaInfoSection;
 import stroom.meta.shared.MetaRow;
 import stroom.meta.shared.SelectionSummary;
 import stroom.meta.shared.Status;
@@ -188,14 +187,6 @@ public interface MetaService {
      * @return the list of matches
      */
     Set<Meta> findEffectiveData(final EffectiveMetaDataCriteria criteria);
-
-    /**
-     * Get more detailed meta data for a specific item.
-     *
-     * @param id The id of the item.
-     * @return More detailed meta data.
-     */
-    List<MetaInfoSection> fetchFullMetaInfo(long id);
 
     /**
      * Get a distinct list of processor UUIds for meta data matching the supplied criteria.

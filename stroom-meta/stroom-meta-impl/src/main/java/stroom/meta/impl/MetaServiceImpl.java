@@ -10,23 +10,18 @@ import stroom.datasource.api.v2.AbstractField;
 import stroom.datasource.api.v2.DataSource;
 import stroom.docref.DocRef;
 import stroom.docrefinfo.api.DocRefInfoService;
-import stroom.docstore.shared.DocRefUtil;
 import stroom.entity.shared.ExpressionCriteria;
 import stroom.meta.api.AttributeMap;
-import stroom.meta.api.AttributeMapFactory;
 import stroom.meta.api.EffectiveMetaDataCriteria;
 import stroom.meta.api.MetaProperties;
 import stroom.meta.api.MetaSecurityFilter;
 import stroom.meta.api.MetaService;
-import stroom.meta.shared.DataRetentionFields;
 import stroom.meta.shared.FindMetaCriteria;
 import stroom.meta.shared.Meta;
 import stroom.meta.shared.MetaFields;
-import stroom.meta.shared.MetaInfoSection;
 import stroom.meta.shared.MetaRow;
 import stroom.meta.shared.SelectionSummary;
 import stroom.meta.shared.Status;
-import stroom.pipeline.shared.PipelineDoc;
 import stroom.query.api.v2.ExpressionOperator;
 import stroom.query.api.v2.ExpressionOperator.Builder;
 import stroom.query.api.v2.ExpressionOperator.Op;
@@ -38,7 +33,6 @@ import stroom.security.shared.PermissionNames;
 import stroom.task.api.TaskContextFactory;
 import stroom.task.api.TaskManager;
 import stroom.util.date.DateUtil;
-import stroom.util.shared.ModelStringUtil;
 import stroom.util.shared.PageRequest;
 import stroom.util.shared.ResultPage;
 import stroom.util.time.TimePeriod;
@@ -78,7 +72,6 @@ public class MetaServiceImpl implements MetaService, Searchable {
     private final MetaRetentionTrackerDao metaRetentionTrackerDao;
     private final DocRefInfoService docRefInfoService;
     private final Provider<StreamAttributeMapRetentionRuleDecorator> decoratorProvider;
-    private final Optional<AttributeMapFactory> attributeMapFactory;
     private final Optional<MetaSecurityFilter> metaSecurityFilter;
     private final SecurityContext securityContext;
     private final TaskContextFactory taskContextFactory;
@@ -93,7 +86,6 @@ public class MetaServiceImpl implements MetaService, Searchable {
                     final MetaRetentionTrackerDao metaRetentionTrackerDao,
                     final DocRefInfoService docRefInfoService,
                     final Provider<StreamAttributeMapRetentionRuleDecorator> decoratorProvider,
-                    final Optional<AttributeMapFactory> attributeMapFactory,
                     final Optional<MetaSecurityFilter> metaSecurityFilter,
                     final SecurityContext securityContext,
                     final TaskContextFactory taskContextFactory,
@@ -106,7 +98,6 @@ public class MetaServiceImpl implements MetaService, Searchable {
         this.metaRetentionTrackerDao = metaRetentionTrackerDao;
         this.docRefInfoService = docRefInfoService;
         this.decoratorProvider = decoratorProvider;
-        this.attributeMapFactory = attributeMapFactory;
         this.metaSecurityFilter = metaSecurityFilter;
         this.securityContext = securityContext;
         this.taskContextFactory = taskContextFactory;
@@ -661,72 +652,6 @@ public class MetaServiceImpl implements MetaService, Searchable {
     }
 
     @Override
-    public List<MetaInfoSection> fetchFullMetaInfo(final long id) {
-        final Meta meta = getMeta(id, true);
-        final List<MetaInfoSection> sections = new ArrayList<>();
-
-        final Map<String, String> attributeMap = attributeMapFactory.map(amf -> amf.getAttributes(meta)).orElse(null);
-        if (attributeMap == null) {
-            final List<MetaInfoSection.Entry> entries = new ArrayList<>(1);
-            entries.add(new MetaInfoSection.Entry("Deleted Stream Id", String.valueOf(meta.getId())));
-            sections.add(new MetaInfoSection("Stream", entries));
-
-        } else {
-            sections.add(new MetaInfoSection("Stream", getStreamEntries(meta)));
-
-            final List<MetaInfoSection.Entry> entries = new ArrayList<>();
-            final List<String> sortedKeys = attributeMap.keySet().stream().sorted(Comparator.naturalOrder()).collect(Collectors.toList());
-            sortedKeys.forEach(key -> {
-                final String value = attributeMap.get(key);
-                if (value != null) {
-                    if (MetaFields.DURATION.getName().equals(key)) {
-                        entries.add(new MetaInfoSection.Entry(key, convertDuration(value)));
-                    } else if (key.toLowerCase().contains("time")) {
-                        entries.add(new MetaInfoSection.Entry(key, convertTime(value)));
-                    } else if (key.toLowerCase().contains("size")) {
-                        entries.add(new MetaInfoSection.Entry(key, convertSize(value)));
-                    } else {
-                        entries.add(new MetaInfoSection.Entry(key, value));
-                    }
-                }
-            });
-            sections.add(new MetaInfoSection("Attributes", entries));
-
-            // Add additional data retention information.
-            sections.add(new MetaInfoSection("Retention", getDataRententionEntries(meta, attributeMap)));
-        }
-
-        return sections;
-    }
-
-    private String convertDuration(final String value) {
-        try {
-            return ModelStringUtil.formatDurationString(Long.parseLong(value));
-        } catch (RuntimeException e) {
-            // Ignore.
-        }
-        return value;
-    }
-
-    private String convertTime(final String value) {
-        try {
-            return DateUtil.createNormalDateTimeString(Long.parseLong(value));
-        } catch (RuntimeException e) {
-            // Ignore.
-        }
-        return value;
-    }
-
-    private String convertSize(final String value) {
-        try {
-            return ModelStringUtil.formatIECByteSizeString(Long.parseLong(value));
-        } catch (RuntimeException e) {
-            // Ignore.
-        }
-        return value;
-    }
-
-    @Override
     public Optional<DataRetentionTracker> getRetentionTracker() {
         return metaRetentionTrackerDao.getTracker();
     }
@@ -785,50 +710,6 @@ public class MetaServiceImpl implements MetaService, Searchable {
     public boolean cancelRetentionDeleteSummary(final String queryId) {
         return securityContext.secureResult(PermissionNames.MANAGE_POLICIES_PERMISSION, () ->
                 userQueryRegistry.terminateQuery(securityContext.getUserId(), queryId, taskManager));
-    }
-
-    private List<MetaInfoSection.Entry> getStreamEntries(final Meta meta) {
-        final List<MetaInfoSection.Entry> entries = new ArrayList<>();
-
-        entries.add(new MetaInfoSection.Entry("Stream Id", String.valueOf(meta.getId())));
-        entries.add(new MetaInfoSection.Entry("Status", meta.getStatus().getDisplayValue()));
-        entries.add(new MetaInfoSection.Entry("Status Ms", getDateTimeString(meta.getStatusMs())));
-        entries.add(new MetaInfoSection.Entry("Parent Data Id", String.valueOf(meta.getParentMetaId())));
-        entries.add(new MetaInfoSection.Entry("Created", getDateTimeString(meta.getCreateMs())));
-        entries.add(new MetaInfoSection.Entry("Effective", getDateTimeString(meta.getEffectiveMs())));
-        entries.add(new MetaInfoSection.Entry("Stream Type", meta.getTypeName()));
-        entries.add(new MetaInfoSection.Entry("Feed", meta.getFeedName()));
-
-        if (meta.getProcessorUuid() != null) {
-            entries.add(new MetaInfoSection.Entry("Processor", meta.getProcessorUuid()));
-        }
-        if (meta.getPipelineUuid() != null) {
-            final String pipelineName = getPipelineName(meta);
-            final String pipeline = DocRefUtil.createSimpleDocRefString(new DocRef(PipelineDoc.DOCUMENT_TYPE, meta.getPipelineUuid(), pipelineName));
-            entries.add(new MetaInfoSection.Entry("Processor Pipeline", pipeline));
-        }
-        return entries;
-    }
-
-    private String getDateTimeString(final long ms) {
-        return DateUtil.createNormalDateTimeString(ms) + " (" + ms + ")";
-    }
-
-    private List<MetaInfoSection.Entry> getDataRententionEntries(final Meta meta,
-                                                                 final Map<String, String> attributeMap) {
-        final List<MetaInfoSection.Entry> entries = new ArrayList<>();
-
-        if (attributeMap != null && !attributeMap.isEmpty()) {
-            // Add additional data retention information.
-            final StreamAttributeMapRetentionRuleDecorator decorator = decoratorProvider.get();
-            decorator.addMatchingRetentionRuleInfo(meta, attributeMap);
-
-            entries.add(new MetaInfoSection.Entry(DataRetentionFields.RETENTION_AGE, attributeMap.get(DataRetentionFields.RETENTION_AGE)));
-            entries.add(new MetaInfoSection.Entry(DataRetentionFields.RETENTION_UNTIL, attributeMap.get(DataRetentionFields.RETENTION_UNTIL)));
-            entries.add(new MetaInfoSection.Entry(DataRetentionFields.RETENTION_RULE, attributeMap.get(DataRetentionFields.RETENTION_RULE)));
-        }
-
-        return entries;
     }
 
     @Override

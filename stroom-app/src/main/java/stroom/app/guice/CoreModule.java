@@ -1,6 +1,5 @@
 package stroom.app.guice;
 
-import stroom.core.db.DbStatusModule;
 import stroom.util.io.TempDirProvider;
 import stroom.util.io.TempDirProviderImpl;
 
@@ -20,7 +19,7 @@ public class CoreModule extends AbstractModule {
         install(new stroom.cluster.task.impl.ClusterTaskModule());
         install(new stroom.config.global.impl.db.GlobalConfigDbModule());
         install(new stroom.core.dataprocess.PipelineStreamTaskModule());
-        install(new DbStatusModule());
+        install(new stroom.core.db.DbStatusModule());
         install(new stroom.core.entity.event.EntityEventModule());
         install(new stroom.core.query.QueryModule());
         install(new stroom.core.receive.ReceiveDataModule());
@@ -34,7 +33,7 @@ public class CoreModule extends AbstractModule {
         install(new stroom.dashboard.impl.script.ScriptModule());
         install(new stroom.dashboard.impl.visualisation.VisualisationModule());
         install(new stroom.data.retention.impl.DataRetentionModule());
-        install(new stroom.data.store.impl.DataStoreHandlerModule());
+        install(new stroom.data.store.impl.DataStoreModule());
         install(new stroom.data.store.impl.fs.FsDataStoreModule());
         install(new stroom.data.store.impl.fs.FsDataStoreTaskHandlerModule());
         install(new stroom.data.store.impl.fs.db.FsDataStoreDbModule());

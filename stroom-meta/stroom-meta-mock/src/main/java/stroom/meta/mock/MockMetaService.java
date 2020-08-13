@@ -13,7 +13,6 @@ import stroom.meta.api.MetaService;
 import stroom.meta.shared.FindMetaCriteria;
 import stroom.meta.shared.Meta;
 import stroom.meta.shared.MetaFields;
-import stroom.meta.shared.MetaInfoSection;
 import stroom.meta.shared.MetaRow;
 import stroom.meta.shared.SelectionSummary;
 import stroom.meta.shared.Status;
@@ -313,11 +312,6 @@ public class MockMetaService implements MetaService, Clearable {
         types.clear();
         metaMap.clear();
         currentId = 0;
-    }
-
-    @Override
-    public List<MetaInfoSection> fetchFullMetaInfo(final long id) {
-        return null;
     }
 
     @Override

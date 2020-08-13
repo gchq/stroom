@@ -9,6 +9,15 @@ and this project adheres to [Semantic Versioning](http://semver.org/).
 
 * Issue **#1749** : Removed old benchmark job.
 
+
+## [v7.0-beta.41] - 2020-08-12
+
+* Issue **#1785** : Fix proxy not forwarding any data.
+
+* Issue **#1675** : All dashboard table fields are now present in text pane settings even if they are hidden or special, e.g. internally added mandatory fields like StreamId and EventId. This change prevents the field settings from being altered incorrectly when these fields were not found.
+
+* Issue **#1758** : Added file locations to meta details and improved tooltip layout.
+
 * Issue **#1778** : Remove error streams following reprocessing when no new streams are created.
 
 * Added support for time based expressions when searching for streams from UI. 
@@ -2436,7 +2445,8 @@ Issue **gchq/stroom-expression#22** : Add `typeOf(...)` function to dashboard.
 
 * Issue **#202** : Initial release of the new data retention policy functionality.
 
-[Unreleased]: https://github.com/gchq/stroom/compare/v7.0-beta.40...HEAD
+[Unreleased]: https://github.com/gchq/stroom/compare/v7.0-beta.41...HEAD
+[v7.0-beta.41]: https://github.com/gchq/stroom/compare/v7.0-beta.40...v7.0-beta.41
 [v7.0-beta.40]: https://github.com/gchq/stroom/compare/v7.0-beta.39...v7.0-beta.40
 [v7.0-beta.39]: https://github.com/gchq/stroom/compare/v7.0-beta.38...v7.0-beta.39
 [v7.0-beta.38]: https://github.com/gchq/stroom/compare/v7.0-beta.37...v7.0-beta.38

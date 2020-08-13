@@ -27,14 +27,11 @@ import io.swagger.annotations.ApiParam;
 import org.fusesource.restygwt.client.DirectRestService;
 
 import javax.ws.rs.Consumes;
-import javax.ws.rs.GET;
 import javax.ws.rs.POST;
 import javax.ws.rs.PUT;
 import javax.ws.rs.Path;
-import javax.ws.rs.PathParam;
 import javax.ws.rs.Produces;
 import javax.ws.rs.core.MediaType;
-import java.util.List;
 
 @Api(value = "meta - /v1")
 @Path("/meta" + ResourcePaths.V1)
@@ -68,12 +65,4 @@ public interface MetaResource extends RestResource, DirectRestService {
             value = "Get a summary of the parent items of the selected meta data",
             response = ResourceGeneration.class)
     SelectionSummary getReprocessSelectionSummary(@ApiParam("criteria") FindMetaCriteria criteria);
-
-    @GET
-    @Path("info/{id}")
-    @ApiOperation(
-            value = "Find full info about some meta item",
-            response = MetaInfoSection.class)
-    List<MetaInfoSection> fetchFullMetaInfo(@PathParam("id") long id);
-
 }
