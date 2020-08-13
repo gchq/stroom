@@ -7,6 +7,8 @@ and this project adheres to [Semantic Versioning](http://semver.org/).
 
 ## [Unreleased]
 
+* Issue **#1783** : Made change to prevent nodes called by the cluster from using localhost, 127.0.0.1 or the same URL as other nodes.
+
 * Issue **#1706** : Terminating processing jobs early now writes appropriate termination errors to the processing info (error) stream and deletes other outputs.
 
 * Issue **#1749** : Removed old benchmark job.

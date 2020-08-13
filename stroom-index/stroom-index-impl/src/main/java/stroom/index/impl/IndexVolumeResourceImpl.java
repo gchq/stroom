@@ -68,7 +68,7 @@ class IndexVolumeResourceImpl implements IndexVolumeResource {
         if (NodeCallUtil.shouldExecuteLocally(nodeInfo, nodeName)) {
             indexVolumeService.rescan();
         } else {
-            final String url = NodeCallUtil.getBaseEndpointUrl(nodeService, nodeName)
+            final String url = NodeCallUtil.getBaseEndpointUrl(nodeInfo, nodeService, nodeName)
                     + ResourcePaths.buildAuthenticatedApiPath(
                     IndexVolumeResource.BASE_PATH,
                     IndexVolumeResource.RESCAN_SUB_PATH);
