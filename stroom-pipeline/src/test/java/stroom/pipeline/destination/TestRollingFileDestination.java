@@ -17,9 +17,12 @@
 package stroom.pipeline.destination;
 
 
-import org.junit.jupiter.api.Test;
+import stroom.pipeline.writer.PathCreator;
 import stroom.util.date.DateUtil;
 import stroom.util.scheduler.SimpleCron;
+
+import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.io.TempDir;
 
 import java.io.IOException;
 import java.nio.file.Files;
@@ -29,12 +32,14 @@ import static org.assertj.core.api.Assertions.assertThat;
 
 class TestRollingFileDestination {
     @Test
-    void testFrequency() throws IOException {
+    void testFrequency(@TempDir Path tempDir) throws IOException {
         final long time = DateUtil.parseNormalDateTimeString("2010-01-01T00:00:00.000Z");
         final Path dir = Files.createTempDirectory("stroom");
         final Path file = dir.resolve("test.log");
 
+        final PathCreator pathCreator = new PathCreator(() -> tempDir);
         final RollingFileDestination rollingFileDestination = new RollingFileDestination(
+                pathCreator,
                 "test",
                 60000L,
                 null,
@@ -51,11 +56,13 @@ class TestRollingFileDestination {
     }
 
     @Test
-    void testSchedule() throws IOException {
+    void testSchedule(@TempDir Path tempDir) throws IOException {
         final long time = DateUtil.parseNormalDateTimeString("2010-01-01T00:00:00.000Z");
         final Path dir = Files.createTempDirectory("stroom");
         final Path file = dir.resolve("test.log");
+        final PathCreator pathCreator = new PathCreator(() -> tempDir);
         final RollingFileDestination rollingFileDestination = new RollingFileDestination(
+                pathCreator,
                 "test",
                 null,
                 SimpleCron.compile("* * *"),

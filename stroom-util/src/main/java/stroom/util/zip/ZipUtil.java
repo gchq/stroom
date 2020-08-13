@@ -16,11 +16,12 @@
 
 package stroom.util.zip;
 
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 import stroom.util.io.AbstractFileVisitor;
 import stroom.util.io.CloseableUtil;
 import stroom.util.io.StreamUtil;
+
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import java.io.BufferedInputStream;
 import java.io.BufferedOutputStream;
@@ -48,11 +49,6 @@ public final class ZipUtil {
 
     private ZipUtil() {
         // Utility class.
-    }
-
-    public static Path workingZipDir(final Path zipFile) {
-        final String name = zipFile.getFileName().toString();
-        return zipFile.resolveSibling(name.substring(0, name.length() - ".zip".length()));
     }
 
     public static void zip(final Path zipFile, final Path dir) throws IOException {

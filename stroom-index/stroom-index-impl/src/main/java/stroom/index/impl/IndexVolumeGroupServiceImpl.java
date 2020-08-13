@@ -9,10 +9,10 @@ import stroom.security.shared.PermissionNames;
 import stroom.util.AuditUtil;
 import stroom.util.NextNameGenerator;
 import stroom.util.io.FileUtil;
+import stroom.util.io.TempDirProvider;
 import stroom.util.logging.LambdaLogUtil;
 import stroom.util.logging.LambdaLogger;
 import stroom.util.logging.LambdaLoggerFactory;
-import stroom.util.shared.ModelStringUtil;
 
 import javax.inject.Inject;
 import java.io.File;
@@ -35,6 +35,7 @@ public class IndexVolumeGroupServiceImpl implements IndexVolumeGroupService {
     private final SecurityContext securityContext;
     private final VolumeConfig volumeConfig;
     private final ProcessingUserIdentityProvider processingUserIdentityProvider;
+    private final TempDirProvider tempDirProvider;
 
     private volatile boolean createdDefaultVolumes;
     private volatile boolean creatingDefaultVolumes;
@@ -44,12 +45,14 @@ public class IndexVolumeGroupServiceImpl implements IndexVolumeGroupService {
                                        final IndexVolumeDao indexVolumeDao,
                                        final SecurityContext securityContext,
                                        final VolumeConfig volumeConfig,
-                                       final ProcessingUserIdentityProvider processingUserIdentityProvider) {
+                                       final ProcessingUserIdentityProvider processingUserIdentityProvider,
+                                       final TempDirProvider tempDirProvider) {
         this.indexVolumeGroupDao = indexVolumeGroupDao;
         this.indexVolumeDao = indexVolumeDao;
         this.securityContext = securityContext;
         this.volumeConfig = volumeConfig;
         this.processingUserIdentityProvider = processingUserIdentityProvider;
+        this.tempDirProvider = tempDirProvider;
     }
 
     @Override
@@ -132,9 +135,9 @@ public class IndexVolumeGroupServiceImpl implements IndexVolumeGroupService {
                 securityContext.insecure(() -> {
                     final boolean isEnabled = volumeConfig.isCreateDefaultIndexVolumesOnStart();
                     if (isEnabled) {
-                        List<String> allVolGroups = getNames ();
+                        List<String> allVolGroups = getNames();
 
-                        if (allVolGroups == null || allVolGroups.size() == 0){
+                        if (allVolGroups == null || allVolGroups.size() == 0) {
                             if (volumeConfig.getDefaultIndexVolumeGroupName() != null) {
                                 LOGGER.info(() -> "Creating default index volume group");
                                 final IndexVolumeGroup indexVolumeGroup = new IndexVolumeGroup();
@@ -145,15 +148,14 @@ public class IndexVolumeGroupServiceImpl implements IndexVolumeGroupService {
                                 IndexVolumeGroup newGroup = indexVolumeGroupDao.getOrCreate(indexVolumeGroup);
 
 
-
                                 //Now create associated volumes within the group
                                 if (volumeConfig.getDefaultIndexVolumeGroupPaths() != null &&
                                         volumeConfig.getDefaultIndexVolumeGroupNodes() != null) {
 
                                     String[] paths = volumeConfig.getDefaultIndexVolumeGroupPaths().split(",");
                                     String[] nodes = volumeConfig.getDefaultIndexVolumeGroupNodes().split(",");
-                                    if (nodes.length == paths.length){
-                                        for (int i = 0; i < paths.length; i++){
+                                    if (nodes.length == paths.length) {
+                                        for (int i = 0; i < paths.length; i++) {
                                             String resolvedPath = getDefaultVolumesPath().get().resolve(paths[i].trim()).toString();
 
                                             OptionalLong byteLimitOption = getDefaultVolumeLimit(resolvedPath);
@@ -181,8 +183,7 @@ public class IndexVolumeGroupServiceImpl implements IndexVolumeGroupService {
                                             "Properties defaultVolumeGroupPaths defaultVolumeGroupNodes " +
                                             "and defaultVolumeGroupLimit must all be defined.");
                                 }
-                            }
-                            else {
+                            } else {
                                 LOGGER.warn(() -> "Unable to create default index " +
                                         "Property defaultVolumeGroupName must be defined.");
                             }
@@ -207,7 +208,7 @@ public class IndexVolumeGroupServiceImpl implements IndexVolumeGroupService {
         return Stream.<Supplier<Optional<Path>>>of(
                 this::getApplicationJarDir,
                 this::getDotStroomDir,
-                () -> Optional.of(FileUtil.getTempDir()),
+                () -> Optional.of(tempDirProvider.get()),
                 Optional::empty
         )
                 .map(Supplier::get)

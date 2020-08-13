@@ -16,10 +16,13 @@
 
 package stroom.util.io;
 
-import org.apache.commons.lang3.RandomUtils;
-import org.junit.jupiter.api.Test;
 import stroom.util.concurrent.SimpleExecutor;
 
+import org.apache.commons.lang3.RandomUtils;
+import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.io.TempDir;
+
+import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.util.concurrent.atomic.AtomicBoolean;
 
@@ -27,12 +30,14 @@ import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.fail;
 
 class TestFileUtil {
+    @TempDir
+    static Path tempDir;
+
     @Test
     void testMkdirs() throws InterruptedException {
-        final String tempDir = FileUtil.getTempDir().toAbsolutePath().toString();
-        final String rootDir = tempDir + "/TestFileUtil_" + System.currentTimeMillis();
+        final Path rootDir = tempDir.resolve("TestFileUtil_" + System.currentTimeMillis());
 
-        final String[] dirArray = new String[10];
+        final Path[] dirArray = new Path[10];
         for (int i = 0; i < dirArray.length; i++) {
             dirArray[i] = buildDir(rootDir);
         }
@@ -43,9 +48,8 @@ class TestFileUtil {
             final int count = i;
             simpleExecutor.execute(() -> {
                 try {
-                    final String dir = dirArray[count % dirArray.length];
-                    System.out.println(dir);
-                    FileUtil.mkdirs(Paths.get(dir));
+                    final Path dir = dirArray[count % dirArray.length];
+                    FileUtil.mkdirs(dir);
                 } catch (final RuntimeException e) {
                     e.printStackTrace();
                     exception.set(true);
@@ -57,18 +61,15 @@ class TestFileUtil {
 
         assertThat(exception.get()).isFalse();
 
-        FileUtil.deleteDir(Paths.get(rootDir));
+        FileUtil.deleteDir(rootDir);
     }
 
-    private String buildDir(final String rootDir) {
-        final StringBuilder stringBuilder = new StringBuilder();
-        stringBuilder.append(rootDir);
+    private Path buildDir(final Path rootDir) {
+        Path path = rootDir;
         for (int i = 0; i < 10; i++) {
-            stringBuilder.append("/");
-            stringBuilder.append(RandomUtils.nextInt(0, 10));
+            path = path.resolve(String.valueOf(RandomUtils.nextInt(0, 10)));
         }
-        final String dirToCreate = stringBuilder.toString();
-        return dirToCreate;
+        return path;
     }
 
     @Test

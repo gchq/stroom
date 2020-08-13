@@ -35,12 +35,12 @@ public class DbHealthCheck implements HasHealthCheck {
         final HealthCheck.ResultBuilder builder = HealthCheck.Result.builder()
                 .withDetail(
                         "jdbcUrl",
-                        Optional.ofNullable(commonConnectionConfig.getJdbcDriverUrl())
-                                .orElse(coreConnectionConfig.getJdbcDriverUrl()))
+                        Optional.ofNullable(commonConnectionConfig.getUrl())
+                                .orElse(coreConnectionConfig.getUrl()))
                 .withDetail(
                         "username",
-                        Optional.ofNullable(commonConnectionConfig.getJdbcDriverUsername())
-                                .orElse(coreConnectionConfig.getJdbcDriverUsername()));
+                        Optional.ofNullable(commonConnectionConfig.getUser())
+                                .orElse(coreConnectionConfig.getUser()));
 
         try (Connection connection = legacyDbConnProvider.getConnection()){
             builder.healthy();

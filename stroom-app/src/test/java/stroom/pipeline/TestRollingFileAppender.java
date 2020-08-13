@@ -16,10 +16,9 @@
 
 package stroom.pipeline;
 
-
 import org.junit.jupiter.api.Test;
 
-class TestRollingFileAppender extends AbstractFileAppenderTest {
+class TestRollingFileAppender extends AbstractAppenderTest {
     @Test
     void testXML() {
         test("TestRollingFileAppender", "XML");

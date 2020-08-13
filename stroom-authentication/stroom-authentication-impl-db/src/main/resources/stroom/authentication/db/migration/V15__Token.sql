@@ -27,12 +27,14 @@ BEGIN
     IF NOT EXISTS (
             SELECT NULL
             FROM INFORMATION_SCHEMA.TABLES
-            WHERE TABLE_NAME = 'OLD_token_types') THEN
+            WHERE TABLE_SCHEMA = database()
+            AND TABLE_NAME = 'OLD_token_types') THEN
 
         IF EXISTS (
                 SELECT NULL
                 FROM INFORMATION_SCHEMA.TABLES
-                WHERE TABLE_NAME = 'token_types') THEN
+                WHERE TABLE_SCHEMA = database()
+                AND TABLE_NAME = 'token_types') THEN
 
             RENAME TABLE token_types TO OLD_token_types;
         END IF;
@@ -61,7 +63,8 @@ BEGIN
     IF EXISTS (
             SELECT NULL
             FROM INFORMATION_SCHEMA.TABLES
-            WHERE TABLE_NAME = 'OLD_token_types') THEN
+            WHERE TABLE_SCHEMA = database()
+            AND TABLE_NAME = 'OLD_token_types') THEN
 
         INSERT INTO token_type (
             id,
@@ -113,12 +116,14 @@ BEGIN
     IF NOT EXISTS (
             SELECT NULL
             FROM INFORMATION_SCHEMA.TABLES
-            WHERE TABLE_NAME = 'OLD_tokens') THEN
+            WHERE TABLE_SCHEMA = database()
+            AND TABLE_NAME = 'OLD_tokens') THEN
 
         IF EXISTS (
                 SELECT NULL
                 FROM INFORMATION_SCHEMA.TABLES
-                WHERE TABLE_NAME = 'tokens') THEN
+                WHERE TABLE_SCHEMA = database()
+                AND TABLE_NAME = 'tokens') THEN
 
             RENAME TABLE tokens TO OLD_tokens;
         END IF;
@@ -161,7 +166,8 @@ BEGIN
     IF EXISTS (
             SELECT NULL
             FROM INFORMATION_SCHEMA.TABLES
-            WHERE TABLE_NAME = 'OLD_tokens') THEN
+            WHERE TABLE_SCHEMA = database()
+            AND TABLE_NAME = 'OLD_tokens') THEN
 
         INSERT INTO token (
             id,
@@ -243,12 +249,14 @@ BEGIN
     IF NOT EXISTS (
             SELECT NULL
             FROM INFORMATION_SCHEMA.TABLES
-            WHERE TABLE_NAME = 'OLD_json_web_key') THEN
+            WHERE TABLE_SCHEMA = database()
+            AND TABLE_NAME = 'OLD_json_web_key') THEN
 
         IF EXISTS (
                 SELECT NULL
                 FROM INFORMATION_SCHEMA.TABLES
-                WHERE TABLE_NAME = 'json_web_key') THEN
+                WHERE TABLE_SCHEMA = database()
+                AND TABLE_NAME = 'json_web_key') THEN
 
             RENAME TABLE json_web_key TO OLD_json_web_key;
         END IF;
@@ -288,7 +296,8 @@ BEGIN
     IF EXISTS (
             SELECT NULL
             FROM INFORMATION_SCHEMA.TABLES
-            WHERE TABLE_NAME = 'OLD_json_web_key') THEN
+            WHERE TABLE_SCHEMA = database()
+            AND TABLE_NAME = 'OLD_json_web_key') THEN
 
         INSERT INTO json_web_key (
             id,

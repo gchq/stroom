@@ -38,16 +38,12 @@ import java.util.UUID;
 import static org.assertj.core.api.Assertions.assertThat;
 
 class TestProcessingInfoDb extends AbstractLmdbDbTest {
-
     private static final Logger LOGGER = LoggerFactory.getLogger(TestProcessingInfoDb.class);
 
     private ProcessingInfoDb processingInfoDb = null;
 
     @BeforeEach
-    @Override
-    public void setup() throws IOException {
-        super.setup();
-
+    void setup() {
         processingInfoDb = new ProcessingInfoDb(
                 lmdbEnv,
                 new ByteBufferPool(),

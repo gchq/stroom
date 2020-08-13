@@ -5,8 +5,6 @@ import stroom.db.util.JooqUtil;
 import stroom.meta.impl.MetaRetentionTrackerDao;
 
 import org.jooq.Record;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 
 import javax.inject.Inject;
 import java.util.List;
@@ -16,9 +14,6 @@ import java.util.function.Function;
 import static stroom.meta.impl.db.jooq.tables.MetaRetentionTracker.META_RETENTION_TRACKER;
 
 public class MetaRetentionTrackerDaoImpl implements MetaRetentionTrackerDao {
-
-    private static final Logger LOGGER = LoggerFactory.getLogger(MetaRetentionTrackerDaoImpl.class);
-
     private static final Function<Record, DataRetentionTracker> RECORD_MAPPER = record ->
             new DataRetentionTracker(
                     record.get(META_RETENTION_TRACKER.LAST_RUN_TIME),
@@ -67,13 +62,5 @@ public class MetaRetentionTrackerDaoImpl implements MetaRetentionTrackerDao {
                             dataRetentionTracker.getRulesVersion())
                     .execute());
         }
-    }
-
-    @Override
-    public void clear() {
-        JooqUtil.truncateTable(metaDbConnProvider, META_RETENTION_TRACKER);
-//        JooqUtil.context(metaDbConnProvider, context -> context
-//                .truncate(META_RETENTION_TRACKER)
-//                .execute());
     }
 }

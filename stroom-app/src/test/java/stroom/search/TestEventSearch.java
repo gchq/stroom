@@ -18,6 +18,7 @@
 package stroom.search;
 
 
+import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import stroom.docref.DocRef;
 import stroom.index.impl.IndexStore;
@@ -52,17 +53,18 @@ import java.util.UUID;
 import static org.assertj.core.api.Assertions.assertThat;
 
 class TestEventSearch extends AbstractSearchTest {
-    private static boolean doneSetup;
     @Inject
     private CommonIndexingTestHelper commonIndexingTestHelper;
     @Inject
     private IndexStore indexStore;
 
-    @Override
-    public void onBefore() {
+    private boolean doneSetup;
+
+    @BeforeEach
+    void setup() {
         if (!doneSetup) {
-            doneSetup = true;
             commonIndexingTestHelper.setup();
+            doneSetup = true;
         }
     }
 

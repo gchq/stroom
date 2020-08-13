@@ -92,7 +92,7 @@ class TestMetaServiceImpl {
                 new MockTaskModule())
                 .injectMembers(this);
         // Delete everything
-        cleanup.clear();
+        cleanup.cleanup();
     }
     @Test
     void testSummary() {

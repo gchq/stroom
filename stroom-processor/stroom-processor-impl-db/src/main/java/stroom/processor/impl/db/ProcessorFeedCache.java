@@ -94,13 +94,6 @@ class ProcessorFeedCache implements Clearable {
 
     @Override
     public void clear() {
-        deleteAll();
         cache.clear();
-    }
-
-    int deleteAll() {
-        return JooqUtil.contextResult(processorDbConnProvider, context -> context
-                .delete(PROCESSOR_FEED)
-                .execute());
     }
 }

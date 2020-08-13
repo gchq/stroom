@@ -18,6 +18,7 @@
 package stroom.search;
 
 
+import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -52,17 +53,19 @@ import static org.assertj.core.api.Assertions.assertThat;
 
 class TestTagCloudSearch extends AbstractSearchTest {
     private static final Logger LOGGER = LoggerFactory.getLogger(TestTagCloudSearch.class);
-    private static boolean doneSetup;
+
     @Inject
     private CommonIndexingTestHelper commonIndexingTestHelper;
     @Inject
     private IndexStore indexStore;
 
-    @Override
-    public void onBefore() {
+    private boolean doneSetup;
+
+    @BeforeEach
+    void setup() {
         if (!doneSetup) {
-            doneSetup = true;
             commonIndexingTestHelper.setup();
+            doneSetup = true;
         }
     }
 

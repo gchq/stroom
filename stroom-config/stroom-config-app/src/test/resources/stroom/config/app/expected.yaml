@@ -79,10 +79,6 @@ appConfig:
       timeUntilExpirationForEmailResetToken: "PT5M"
       timeUntilExpirationForUserToken: "P30D"
     useDefaultOpenIdCredentials: true
-  benchmark:
-    streamCount: 1000
-    recordCount: 10000
-    concurrentWriters: 10
   cluster:
     clusterCallUseLocal: true
     clusterCallReadTimeout: "PT30S"

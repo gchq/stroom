@@ -17,21 +17,20 @@
 
 package stroom.pipeline.refdata.store;
 
+import stroom.pipeline.refdata.ReferenceDataConfig;
+import stroom.pipeline.refdata.store.offheapstore.databases.AbstractLmdbDbTest;
+import stroom.util.io.ByteSize;
+import stroom.util.pipeline.scope.PipelineScopeModule;
+import stroom.util.time.StroomDuration;
+
 import com.google.inject.AbstractModule;
 import com.google.inject.Guice;
 import com.google.inject.Injector;
 import org.junit.jupiter.api.BeforeEach;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import stroom.pipeline.refdata.ReferenceDataConfig;
-import stroom.pipeline.refdata.store.offheapstore.databases.AbstractLmdbDbTest;
-import stroom.util.io.ByteSize;
-import stroom.util.io.ByteSizeUnit;
-import stroom.util.pipeline.scope.PipelineScopeModule;
-import stroom.util.time.StroomDuration;
 
 import javax.inject.Inject;
-import java.io.IOException;
 
 public abstract class AbstractRefDataOffHeapStoreTest extends AbstractLmdbDbTest {
     private static final Logger LOGGER = LoggerFactory.getLogger(AbstractRefDataOffHeapStoreTest.class);
@@ -48,9 +47,7 @@ public abstract class AbstractRefDataOffHeapStoreTest extends AbstractLmdbDbTest
     }
 
     @BeforeEach
-    public void setup() throws IOException {
-        super.setup();
-
+    void setup() {
         LOGGER.debug("Creating LMDB environment in dbDir {}", getDbDir().toAbsolutePath().toString());
 
         referenceDataConfig.setLocalDir(getDbDir().toAbsolutePath().toString());

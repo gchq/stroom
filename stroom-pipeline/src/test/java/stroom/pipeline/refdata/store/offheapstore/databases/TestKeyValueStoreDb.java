@@ -42,10 +42,7 @@ class TestKeyValueStoreDb extends AbstractLmdbDbTest {
     private KeyValueStoreDb keyValueStoreDb = null;
 
     @BeforeEach
-    @Override
-    public void setup() throws IOException {
-        super.setup();
-
+    void setup() {
         keyValueStoreDb = new KeyValueStoreDb(
                 lmdbEnv,
                 new ByteBufferPool(),

@@ -25,7 +25,7 @@ SELECT
 		ssvs.PROCESSING = 1,
 		"YES",
 		"NO") IS_PROCESSING_NOW
-FROM stroom.SQL_STAT_VAL_SRC ssvs
+FROM SQL_STAT_VAL_SRC ssvs
 ORDER BY
     ssvs.NAME,
     ssvs.TIME_MS;
