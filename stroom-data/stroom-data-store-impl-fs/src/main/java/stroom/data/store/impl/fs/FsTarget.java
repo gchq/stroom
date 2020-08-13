@@ -36,6 +36,7 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.io.OutputStream;
 import java.io.UncheckedIOException;
+import java.nio.channels.ClosedByInterruptException;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.HashMap;
@@ -220,6 +221,10 @@ final class FsTarget implements InternalTarget, SegmentOutputStreamProviderFacto
                     // closes kids (the caller can also close the kid off if they like).
                     childMap.forEach((k, v) -> v.close());
                     childMap.clear();
+                } catch (final ClosedByInterruptException e) {
+                    // WE expect these exceptions if a user is trying to terminate.
+                    LOGGER.debug("closeStreamTarget() - Error on closing stream {}", this, e);
+                    streamCloseException = e;
                 } catch (final IOException e) {
                     LOGGER.error("closeStreamTarget() - Error on closing stream {}", this, e);
                     streamCloseException = e;
