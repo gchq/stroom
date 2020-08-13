@@ -26,28 +26,28 @@ public class DbUtil {
     }
 
     public static void validate(final ConnectionConfig connectionConfig) {
-        Preconditions.checkNotNull(connectionConfig.getJdbcDriverClassName(),
+        Preconditions.checkNotNull(connectionConfig.getClassName(),
             "The JDBC driver class has not been supplied");
-        Preconditions.checkNotNull(connectionConfig.getJdbcDriverUrl(),
+        Preconditions.checkNotNull(connectionConfig.getUrl(),
             "The JDBC URL has not been supplied");
-        Preconditions.checkNotNull(connectionConfig.getJdbcDriverUsername(),
+        Preconditions.checkNotNull(connectionConfig.getUser(),
             "The JDBC username has not been supplied");
-        Preconditions.checkNotNull(connectionConfig.getJdbcDriverPassword(),
+        Preconditions.checkNotNull(connectionConfig.getPassword(),
             "The JDBC password has not been supplied");
 
         try {
-            Class.forName(connectionConfig.getJdbcDriverClassName());
+            Class.forName(connectionConfig.getClassName());
         } catch (ClassNotFoundException e) {
             throw new RuntimeException(LogUtil.message(
-                    "Invalid JDBC driver class name {}", connectionConfig.getJdbcDriverClassName()), e);
+                    "Invalid JDBC driver class name {}", connectionConfig.getClassName()), e);
         }
     }
 
     public static Connection getSingleConnection(final ConnectionConfig connectionConfig) throws SQLException {
         return DriverManager.getConnection(
-                connectionConfig.getJdbcDriverUrl(),
-                connectionConfig.getJdbcDriverUsername(),
-                connectionConfig.getJdbcDriverPassword());
+                connectionConfig.getUrl(),
+                connectionConfig.getUser(),
+                connectionConfig.getPassword());
     }
 
     /**
@@ -58,10 +58,10 @@ public class DbUtil {
      * retry pointless, e.g. invalid password, then an exception will be thrown.
      */
     public static void waitForConnection(ConnectionConfig connectionConfig) {
-        final String jdbcUrl = connectionConfig.getJdbcDriverUrl();
-        final String username = connectionConfig.getJdbcDriverUsername();
+        final String jdbcUrl = connectionConfig.getUrl();
+        final String username = connectionConfig.getUser();
         LOGGER.info("Ensuring database connection to {} with username {} and driver class {}",
-                jdbcUrl, username, connectionConfig.getJdbcDriverClassName());
+                jdbcUrl, username, connectionConfig.getClassName());
 
         long sleepMs = 500;
         Throwable lastThrowable = null;

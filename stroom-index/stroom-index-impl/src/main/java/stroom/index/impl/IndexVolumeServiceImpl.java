@@ -63,7 +63,7 @@ public class IndexVolumeServiceImpl implements IndexVolumeService, Clearable {
     public IndexVolume create(IndexVolume indexVolume) {
         AuditUtil.stamp(securityContext.getUserId(), indexVolume);
 
-        var names = indexVolumeDao.getAll().stream().map(i -> isNullOrEmpty(i.getNodeName()) ? "" : i.getNodeName())
+        final List<String> names = indexVolumeDao.getAll().stream().map(i -> isNullOrEmpty(i.getNodeName()) ? "" : i.getNodeName())
                 .collect(Collectors.toList());
         indexVolume.setNodeName(isNullOrEmpty(indexVolume.getNodeName())
                 ? NextNameGenerator.getNextName(names, "New index volume")

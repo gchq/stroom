@@ -16,11 +16,11 @@
 
 package stroom.test;
 
+import stroom.data.store.impl.fs.FsVolumeConfig;
 import stroom.data.store.impl.fs.FsVolumeService;
 import stroom.index.VolumeCreator;
 import stroom.index.impl.IndexShardManager;
 import stroom.index.impl.IndexShardWriterCache;
-import stroom.index.impl.IndexVolumeService;
 import stroom.processor.impl.ProcessorTaskManager;
 import stroom.util.shared.Clearable;
 
@@ -28,6 +28,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import javax.inject.Inject;
+import java.nio.file.Path;
 import java.time.Duration;
 import java.time.Instant;
 import java.util.Set;
@@ -40,54 +41,65 @@ import java.util.Set;
 public class DatabaseCommonTestControl implements CommonTestControl {
     private static final Logger LOGGER = LoggerFactory.getLogger(DatabaseCommonTestControl.class);
 
-    private final IndexVolumeService indexVolumeService;
     private final ContentImportService contentImportService;
     private final IndexShardManager indexShardManager;
     private final IndexShardWriterCache indexShardWriterCache;
-    private final DatabaseCommonTestControlTransactionHelper databaseCommonTestControlTransactionHelper;
-    private final VolumeCreator nodeConfig;
+    private final VolumeCreator volumeCreator;
     private final ProcessorTaskManager processorTaskManager;
     private final Set<Clearable> clearables;
+    private final FsVolumeConfig volumeConfig;
     private final FsVolumeService fsVolumeService;
 
+    private static boolean needsCleanup;
+
     @Inject
-    DatabaseCommonTestControl(final IndexVolumeService indexVolumeService,
-                              final ContentImportService contentImportService,
+    DatabaseCommonTestControl(final ContentImportService contentImportService,
                               final IndexShardManager indexShardManager,
                               final IndexShardWriterCache indexShardWriterCache,
-                              final DatabaseCommonTestControlTransactionHelper databaseCommonTestControlTransactionHelper,
-                              final VolumeCreator nodeConfig,
+                              final VolumeCreator volumeCreator,
                               final ProcessorTaskManager processorTaskManager,
                               final Set<Clearable> clearables,
+                              final FsVolumeConfig volumeConfig,
                               final FsVolumeService fsVolumeService) {
-        this.indexVolumeService = indexVolumeService;
         this.contentImportService = contentImportService;
         this.indexShardManager = indexShardManager;
         this.indexShardWriterCache = indexShardWriterCache;
-        this.databaseCommonTestControlTransactionHelper = databaseCommonTestControlTransactionHelper;
-        this.nodeConfig = nodeConfig;
+        this.volumeCreator = volumeCreator;
         this.processorTaskManager = processorTaskManager;
         this.clearables = clearables;
+        this.volumeConfig = volumeConfig;
         this.fsVolumeService = fsVolumeService;
     }
 
     @Override
-    public void setup() {
+    public void setup(final Path tempDir) {
         Instant startTime = Instant.now();
-        nodeConfig.setup();
+        volumeConfig.setDefaultStreamVolumePaths(tempDir.resolve("volumes/defaultStreamVolume").toAbsolutePath().toString());
+        volumeCreator.setup(tempDir);
 
         // Ensure we can create tasks.
         processorTaskManager.startup();
         // Only allow tasks to be created synchronously for the purposes of testing.
         processorTaskManager.setAllowAsyncTaskCreation(false);
         LOGGER.info("test environment setup completed in {}", Duration.between(startTime, Instant.now()));
+
+        needsCleanup = true;
+    }
+
+
+    @Override
+    public void cleanup() {
+        if (needsCleanup) {
+            clear();
+            needsCleanup = false;
+        }
     }
 
     /**
      * Clear down the database.
      */
     @Override
-    public void teardown() {
+    public void clear() {
         Instant startTime = Instant.now();
         // Make sure we are no longer creating tasks.
         processorTaskManager.shutdown();
@@ -96,16 +108,8 @@ public class DatabaseCommonTestControl implements CommonTestControl {
         indexShardWriterCache.shutdown();
         indexShardManager.deleteFromDisk();
 
-        // Delete the contents of all index volumes.
-        indexVolumeService.clear();
-
         // Delete the contents of all stream store volumes.
         fsVolumeService.clear();
-
-        // Clear all the tables using direct sql on a different connection
-        // in theory truncating the tables should be quicker but it was taking 1.5s to truncate all the tables
-        // so used delete with no constraint checks instead
-        databaseCommonTestControlTransactionHelper.clearAllTables();
 
         // Clear all caches or files that might have been created by previous tests.
         clearables.forEach(Clearable::clear);

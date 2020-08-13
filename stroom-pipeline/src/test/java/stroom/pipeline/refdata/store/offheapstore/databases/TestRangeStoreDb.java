@@ -17,16 +17,6 @@
 
 package stroom.pipeline.refdata.store.offheapstore.databases;
 
-import com.google.common.util.concurrent.Striped;
-import io.vavr.Tuple;
-import io.vavr.Tuple2;
-import org.apache.hadoop.util.ThreadUtil;
-import org.junit.jupiter.api.BeforeEach;
-import org.junit.jupiter.api.Disabled;
-import org.junit.jupiter.api.Test;
-import org.lmdbjava.Txn;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 import stroom.pipeline.refdata.store.offheapstore.RangeStoreKey;
 import stroom.pipeline.refdata.store.offheapstore.UID;
 import stroom.pipeline.refdata.store.offheapstore.ValueStoreKey;
@@ -37,7 +27,17 @@ import stroom.pipeline.refdata.util.ByteBufferPool;
 import stroom.pipeline.refdata.util.ByteBufferUtils;
 import stroom.util.shared.Range;
 
-import java.io.IOException;
+import com.google.common.util.concurrent.Striped;
+import io.vavr.Tuple;
+import io.vavr.Tuple2;
+import org.apache.hadoop.util.ThreadUtil;
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Disabled;
+import org.junit.jupiter.api.Test;
+import org.lmdbjava.Txn;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+
 import java.nio.ByteBuffer;
 import java.util.Arrays;
 import java.util.List;
@@ -55,7 +55,6 @@ import java.util.stream.IntStream;
 import static org.assertj.core.api.Assertions.assertThat;
 
 class TestRangeStoreDb extends AbstractLmdbDbTest {
-
     private static final Logger LOGGER = LoggerFactory.getLogger(TestRangeStoreDb.class);
     final UID uid1 = UID.of(0, 0, 0, 1);
     final UID uid2 = UID.of(0, 0, 0, 2);
@@ -63,10 +62,7 @@ class TestRangeStoreDb extends AbstractLmdbDbTest {
     private RangeStoreDb rangeStoreDb;
 
     @BeforeEach
-    @Override
-    public void setup() throws IOException {
-        super.setup();
-
+    void setup() {
         rangeStoreDb = new RangeStoreDb(
                 lmdbEnv,
                 new ByteBufferPool(),

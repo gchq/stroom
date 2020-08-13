@@ -103,7 +103,6 @@ shadowJar {
     archiveName fatJarName
 }
 
-
 def proxyDockerBuildDir = "${projectDir}/docker/build"
 clean {
     delete proxyDockerBuildDir
@@ -126,7 +125,11 @@ task copyFilesForProxyDockerBuild() {
         }
     }
 }
-tasks.build.dependsOn copyFilesForProxyDockerBuild
+//tasks.build.dependsOn copyFilesForProxyDockerBuild
+
+test {
+    maxParallelForks = 1
+}
 //
 //war {
 //    exclude 'WEB-INF/lib/**'

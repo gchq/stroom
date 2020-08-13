@@ -30,13 +30,17 @@ import static org.mockito.Mockito.when;
 
 @MockitoSettings(strictness = Strictness.LENIENT)
 class TestNodeResourceImpl extends AbstractMultiNodeResourceTest<NodeResource> {
-
     private final Map<String, ClusterNodeInfo> expectedClusterNodeInfoMap = new HashMap<>();
     private final Map<String, NodeServiceImpl> nodeServiceMap = new HashMap<>();
 
+    private static final int BASE_PORT = 7040;
+
+    public TestNodeResourceImpl() {
+        super(createNodeList(BASE_PORT));
+    }
+
     @Test
     void list() {
-
         initNodes();
 
         final String subPath = "";

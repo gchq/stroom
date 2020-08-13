@@ -17,8 +17,6 @@
 
 package stroom.search;
 
-import org.apache.hadoop.util.ThreadUtil;
-import org.junit.jupiter.api.Test;
 import stroom.annotation.api.AnnotationFields;
 import stroom.dictionary.impl.DictionaryStore;
 import stroom.dictionary.shared.DictionaryDoc;
@@ -40,6 +38,10 @@ import stroom.search.impl.EventSearchTask;
 import stroom.search.impl.EventSearchTaskHandler;
 import stroom.task.api.TaskContextFactory;
 import stroom.task.impl.ExecutorProviderImpl;
+
+import org.apache.hadoop.util.ThreadUtil;
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Test;
 
 import javax.inject.Inject;
 import javax.inject.Provider;
@@ -72,10 +74,19 @@ class TestInteractiveSearch extends AbstractSearchTest {
     @Inject
     private ExecutorProviderImpl executorProvider;
 
+    private static boolean doneSetup;
+
+    @BeforeEach
+    void setup() {
+        if (!doneSetup) {
+            commonIndexingTestHelper.setup();
+            doneSetup = true;
+        }
+    }
+
     @Override
-    protected boolean onAfterSetup() {
-        commonIndexingTestHelper.setup();
-        return true;
+    protected boolean setupBetweenTests() {
+        return false;
     }
 
     /**

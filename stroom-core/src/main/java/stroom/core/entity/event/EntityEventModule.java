@@ -43,18 +43,6 @@ public class EntityEventModule extends AbstractModule {
                 .bindStartupTaskTo(EntityEventBusInit.class);
     }
 
-    @Override
-    public boolean equals(final Object o) {
-        if (this == o) return true;
-        if (o == null || getClass() != o.getClass()) return false;
-        return true;
-    }
-
-    @Override
-    public int hashCode() {
-        return 0;
-    }
-
     private static class EntityEventBusInit extends RunnableWrapper {
         @Inject
         EntityEventBusInit(final EntityEventBusImpl entityEventBus) {

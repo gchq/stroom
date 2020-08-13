@@ -38,7 +38,8 @@ BEGIN
     IF EXISTS (
             SELECT NULL
             FROM INFORMATION_SCHEMA.TABLES
-            WHERE TABLE_NAME = 'ND') THEN
+            WHERE TABLE_SCHEMA = database()
+            AND TABLE_NAME = 'ND') THEN
 
         RENAME TABLE ND TO OLD_ND;
     END IF;
@@ -47,7 +48,8 @@ BEGIN
     IF EXISTS (
             SELECT NULL
             FROM INFORMATION_SCHEMA.TABLES
-            WHERE TABLE_NAME = 'OLD_ND') THEN
+            WHERE TABLE_SCHEMA = database()
+            AND TABLE_NAME = 'OLD_ND') THEN
 
         INSERT INTO processor_node (id, name)
         SELECT ID, NAME

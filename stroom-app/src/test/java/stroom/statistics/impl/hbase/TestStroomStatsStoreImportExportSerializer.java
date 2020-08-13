@@ -29,6 +29,7 @@ import stroom.statistics.impl.hbase.shared.StatisticType;
 import stroom.statistics.impl.hbase.shared.StroomStatsStoreDoc;
 import stroom.statistics.impl.hbase.shared.StroomStatsStoreEntityData;
 import stroom.test.AbstractCoreIntegrationTest;
+import stroom.test.CommonTestControl;
 import stroom.util.io.FileUtil;
 
 import javax.inject.Inject;
@@ -45,6 +46,8 @@ class TestStroomStatsStoreImportExportSerializer extends AbstractCoreIntegration
     private StroomStatsStoreStore stroomStatsStoreStore;
     @Inject
     private ExplorerService explorerService;
+    @Inject
+    private CommonTestControl commonTestControl;
 
     /**
      * Create a populated {@link StatisticStore} object, serialise it to file,
@@ -74,7 +77,7 @@ class TestStroomStatsStoreImportExportSerializer extends AbstractCoreIntegration
         assertThat(FileUtil.count(testDataDir)).isEqualTo(2);
 
         // now clear out the java entities and import from file
-        clean(true);
+        commonTestControl.clear();
 
         assertThat(stroomStatsStoreStore.list().size()).isEqualTo(0);
 

@@ -42,7 +42,8 @@ BEGIN
     IF EXISTS (
             SELECT NULL
             FROM INFORMATION_SCHEMA.TABLES
-            WHERE TABLE_NAME = 'STRM_ATR_VAL') THEN
+            WHERE TABLE_SCHEMA = database()
+            AND TABLE_NAME = 'STRM_ATR_VAL') THEN
 
         RENAME TABLE STRM_ATR_VAL TO OLD_STRM_ATR_VAL;
     END IF;
@@ -50,7 +51,8 @@ BEGIN
     IF EXISTS (
             SELECT NULL 
             FROM INFORMATION_SCHEMA.TABLES 
-            WHERE TABLE_NAME = 'OLD_STRM_ATR_VAL') THEN
+            WHERE TABLE_SCHEMA = database()
+            AND TABLE_NAME = 'OLD_STRM_ATR_VAL') THEN
 
         INSERT INTO meta_val (
             id,

@@ -20,6 +20,7 @@ import stroom.docref.DocRef;
 import stroom.importexport.shared.ImportState;
 import stroom.importexport.shared.ImportState.ImportMode;
 import stroom.util.io.FileUtil;
+import stroom.util.io.TempDirProvider;
 import stroom.util.shared.Message;
 import stroom.util.zip.ZipUtil;
 
@@ -34,14 +35,17 @@ import java.util.Set;
 
 /**
  * Service to export standing data in and out from Stroom. It uses a ZIP format to
- * hold a HSQLDB database.
+ * hold serialised Stroom content.
  */
 public class ImportExportServiceImpl implements ImportExportService {
     private final ImportExportSerializer importExportSerializer;
+    private final TempDirProvider tempDirProvider;
 
     @Inject
-    public ImportExportServiceImpl(final ImportExportSerializer importExportSerializer) {
+    public ImportExportServiceImpl(final ImportExportSerializer importExportSerializer,
+                                   final TempDirProvider tempDirProvider) {
         this.importExportSerializer = importExportSerializer;
+        this.tempDirProvider = tempDirProvider;
     }
 
     @Override
@@ -67,8 +71,7 @@ public class ImportExportServiceImpl implements ImportExportService {
 
     private void doImport(final Path zipFile, final List<ImportState> confirmList,
                           final ImportMode importMode) {
-        final Path explodeDir = ZipUtil.workingZipDir(zipFile);
-
+        final Path explodeDir = workingZipDir(zipFile);
         try {
             Files.createDirectories(explodeDir);
 
@@ -89,8 +92,7 @@ public class ImportExportServiceImpl implements ImportExportService {
     @Override
     public void exportConfig(final Set<DocRef> docRefs, final Path zipFile,
                              final List<Message> messageList) {
-        final Path explodeDir = ZipUtil.workingZipDir(zipFile);
-
+        final Path explodeDir = workingZipDir(zipFile);
         try {
             Files.createDirectories(explodeDir);
 
@@ -105,5 +107,10 @@ public class ImportExportServiceImpl implements ImportExportService {
         } finally {
             FileUtil.deleteDir(explodeDir);
         }
+    }
+
+    private Path workingZipDir(final Path zipFile) {
+        final String name = zipFile.getFileName().toString();
+        return tempDirProvider.get().resolve(name.substring(0, name.length() - ".zip".length()));
     }
 }

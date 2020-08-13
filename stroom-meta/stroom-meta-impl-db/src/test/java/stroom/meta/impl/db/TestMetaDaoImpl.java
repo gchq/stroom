@@ -75,7 +75,7 @@ class TestMetaDaoImpl {
                 new DbTestModule())
                 .injectMembers(this);
         // Delete everything`
-        cleanup.clear();
+        cleanup.cleanup();
 
         // Add some test data.
         for (int i = 0; i < 10; i++) {

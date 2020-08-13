@@ -48,7 +48,8 @@ BEGIN
     IF EXISTS (
             SELECT NULL
             FROM INFORMATION_SCHEMA.TABLES
-            WHERE TABLE_NAME = 'STRM_TASK') THEN
+            WHERE TABLE_SCHEMA = database()
+            AND TABLE_NAME = 'STRM_TASK') THEN
 
         RENAME TABLE STRM_TASK TO OLD_STRM_TASK;
 
@@ -57,7 +58,8 @@ BEGIN
     IF EXISTS (
         SELECT NULL 
         FROM INFORMATION_SCHEMA.TABLES 
-        WHERE TABLE_NAME = 'OLD_STRM_TASK') THEN
+        WHERE TABLE_SCHEMA = database()
+        AND TABLE_NAME = 'OLD_STRM_TASK') THEN
         -- Copy data into the table, use ID predicate to make it re-runnable
         INSERT
         INTO processor_task (

@@ -16,10 +16,6 @@
 
 package stroom.headless;
 
-import com.google.inject.Guice;
-import com.google.inject.Injector;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 import stroom.data.zip.StroomZipFile;
 import stroom.data.zip.StroomZipFileType;
 import stroom.data.zip.StroomZipNameSet;
@@ -31,11 +27,16 @@ import stroom.util.AbstractCommandLineTool;
 import stroom.util.io.AbstractFileVisitor;
 import stroom.util.io.FileUtil;
 import stroom.util.io.IgnoreCloseInputStream;
-import stroom.util.io.PathConfig;
 import stroom.util.io.StreamUtil;
+import stroom.util.io.TempDirProviderImpl;
 import stroom.util.pipeline.scope.PipelineScopeRunnable;
 import stroom.util.shared.ModelStringUtil;
 import stroom.util.xml.XMLUtil;
+
+import com.google.inject.Guice;
+import com.google.inject.Injector;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import javax.inject.Inject;
 import javax.inject.Provider;
@@ -75,7 +76,7 @@ public class Cli extends AbstractCommandLineTool {
     private Path tmpDir;
 
     @Inject
-    private PathConfig pathConfig;
+    private TempDirProviderImpl tempDirProvider;
     @Inject
     private FSPersistenceConfig fsPersistenceConfig;
     @Inject
@@ -173,7 +174,7 @@ public class Cli extends AbstractCommandLineTool {
 
             // Setup temp dir.
             final Path tempDir = Paths.get(tmp);
-            pathConfig.setTemp(FileUtil.getCanonicalPath(tempDir));
+            tempDirProvider.setTempDir(tempDir);
 
             process();
         } finally {

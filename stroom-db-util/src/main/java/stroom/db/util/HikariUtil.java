@@ -39,9 +39,9 @@ public class HikariUtil {
         copyAndMapProp(connectionPoolConfig::getMinimumIdle, config::setMinimumIdle, Integer::intValue);
         copyAndMapProp(connectionPoolConfig::getMaxPoolSize, config::setMaximumPoolSize, Integer::intValue);
 
-        copyAndMapProp(connectionConfig::getJdbcDriverUrl, config::setJdbcUrl, Function.identity());
-        copyAndMapProp(connectionConfig::getJdbcDriverUsername, config::setUsername, Function.identity());
-        copyAndMapProp(connectionConfig::getJdbcDriverPassword, config::setPassword, Function.identity());
+        copyAndMapProp(connectionConfig::getUrl, config::setJdbcUrl, Function.identity());
+        copyAndMapProp(connectionConfig::getUser, config::setUsername, Function.identity());
+        copyAndMapProp(connectionConfig::getPassword, config::setPassword, Function.identity());
 
         // JDBC Driver properties
         copyAndMapProp(connectionPoolConfig::getCachePrepStmts,

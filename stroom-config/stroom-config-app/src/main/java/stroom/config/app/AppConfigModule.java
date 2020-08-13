@@ -11,7 +11,6 @@ import stroom.config.common.CommonDbConfig;
 import stroom.config.common.NodeUriConfig;
 import stroom.config.common.PublicUriConfig;
 import stroom.config.common.UiUriConfig;
-import stroom.core.benchmark.BenchmarkClusterConfig;
 import stroom.core.receive.ProxyAggregationConfig;
 import stroom.core.receive.ReceiveDataConfig;
 import stroom.dashboard.impl.DashboardConfig;
@@ -114,7 +113,6 @@ public class AppConfigModule extends AbstractModule {
             bindConfig(authenticationConfig, stroom.authentication.config.AuthenticationConfig::getPasswordPolicyConfig, PasswordPolicyConfig.class);
             bindConfig(authenticationConfig, stroom.authentication.config.AuthenticationConfig::getTokenConfig, TokenConfig.class);
         });
-        bindConfig(AppConfig::getBenchmarkClusterConfig, BenchmarkClusterConfig.class);
         bindConfig(AppConfig::getClusterConfig, ClusterConfig.class);
         bindConfig(AppConfig::getClusterLockConfig, ClusterLockConfig.class);
         bindConfig(AppConfig::getClusterTaskConfig, ClusterTaskConfig.class);

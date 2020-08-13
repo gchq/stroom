@@ -214,6 +214,11 @@ public class PipelineDataProcessorTaskExecutor implements DataProcessorTaskExecu
 
             } catch (final Exception e) {
                 outputError(e);
+            } finally {
+                // Ensure we are no longer interrupting if necessary.
+                if (Thread.interrupted()) {
+                    LOGGER.debug("Cleared interrupt flag");
+                }
             }
         } catch (final IOException e) {
             LOGGER.error(e.getMessage(), e);

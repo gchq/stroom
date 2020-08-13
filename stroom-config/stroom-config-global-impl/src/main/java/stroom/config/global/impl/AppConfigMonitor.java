@@ -38,7 +38,6 @@ import static java.nio.file.StandardWatchEventKinds.OVERFLOW;
 
 @Singleton
 public class AppConfigMonitor implements Managed, HasHealthCheck {
-
     private static final Logger LOGGER = LoggerFactory.getLogger(AppConfigMonitor.class);
 
     private final AppConfig appConfig;

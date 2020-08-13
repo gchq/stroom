@@ -29,6 +29,12 @@ class TestCacheResourceImpl extends AbstractMultiNodeResourceTest<CacheResource>
 
     private Map<String, CacheManagerService> cacheManagerServiceMocks = new HashMap<>();
 
+    private static final int BASE_PORT = 7010;
+
+    public TestCacheResourceImpl() {
+        super(createNodeList(BASE_PORT));
+    }
+
     @Override
     public String getResourceBasePath() {
         return CacheResource.BASE_PATH;

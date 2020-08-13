@@ -191,7 +191,7 @@ public final class ProxyRepositoryReader {
         final List<StroomZipRepository> readyToProcessList = proxyRepositoryManager.getReadableRepository();
 
         for (final StroomZipRepository readyToProcess : readyToProcessList) {
-            if (!isTerminated()) {
+            if (isTerminated()) {
                 return;
             }
 

@@ -17,16 +17,14 @@
 
 package stroom.meta.impl;
 
-import stroom.util.shared.Clearable;
-
 import java.util.Optional;
 
-public interface MetaKeyDao extends Clearable {
+public interface MetaKeyDao {
     Optional<String> getNameForId(final int keyId);
 
     Optional<Integer> getIdForName(final String name);
 
-    Integer getMinId ();
+    Integer getMinId();
 
-    Integer getMaxId ();
+    Integer getMaxId();
 }
