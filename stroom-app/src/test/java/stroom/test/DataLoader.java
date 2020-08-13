@@ -103,10 +103,7 @@ public class DataLoader {
         if (isReference == mandateEffectiveDate) {
             LOGGER.info("Loading data: " + info);
 
-            String streamTypeName = StreamTypeNames.RAW_EVENTS;
-            if (isReference) {
-                streamTypeName = StreamTypeNames.RAW_REFERENCE;
-            }
+            final String streamTypeName = feedProperties.getStreamTypeName(feedName);
 
             final MetaProperties metaProperties = new MetaProperties.Builder()
                     .feedName(feedName)
