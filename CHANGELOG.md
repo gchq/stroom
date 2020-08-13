@@ -7,6 +7,9 @@ and this project adheres to [Semantic Versioning](http://semver.org/).
 
 ## [Unreleased]
 
+
+## [v7.0-beta.42] - 2020-08-13
+
 * Issue **#1783** : Made change to prevent nodes called by the cluster from using localhost, 127.0.0.1 or the same URL as other nodes.
 
 * Issue **#1706** : Terminating processing jobs early now writes appropriate termination errors to the processing info (error) stream and deletes other outputs.
@@ -2449,7 +2452,8 @@ Issue **gchq/stroom-expression#22** : Add `typeOf(...)` function to dashboard.
 
 * Issue **#202** : Initial release of the new data retention policy functionality.
 
-[Unreleased]: https://github.com/gchq/stroom/compare/v7.0-beta.41...HEAD
+[Unreleased]: https://github.com/gchq/stroom/compare/v7.0-beta.42...HEAD
+[v7.0-beta.42]: https://github.com/gchq/stroom/compare/v7.0-beta.41...v7.0-beta.42
 [v7.0-beta.41]: https://github.com/gchq/stroom/compare/v7.0-beta.40...v7.0-beta.41
 [v7.0-beta.40]: https://github.com/gchq/stroom/compare/v7.0-beta.39...v7.0-beta.40
 [v7.0-beta.39]: https://github.com/gchq/stroom/compare/v7.0-beta.38...v7.0-beta.39
