@@ -7,6 +7,8 @@ and this project adheres to [Semantic Versioning](http://semver.org/).
 
 ## [Unreleased]
 
+* Issue **#1791** : Fixed Solr connection test response.
+
 * Update Gradle to v6.6
 
 * Revert back to full build.
