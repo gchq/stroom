@@ -18,6 +18,7 @@ package stroom.search.solr;
 
 import stroom.docref.DocRef;
 import stroom.docstore.api.DocumentResourceHelper;
+import stroom.search.solr.shared.SolrConnectionTestResponse;
 import stroom.search.solr.shared.SolrIndexDoc;
 import stroom.search.solr.shared.SolrIndexResource;
 import stroom.util.shared.ModelStringUtil;
@@ -77,7 +78,7 @@ class SolrIndexResourceImpl implements SolrIndexResource {
     }
 
     @Override
-    public String solrConnectionTest(final SolrIndexDoc solrIndexDoc) {
+    public SolrConnectionTestResponse solrConnectionTest(final SolrIndexDoc solrIndexDoc) {
         try {
             final SolrClient solrClient = new SolrClientFactory().create(
                     solrIndexDoc.getSolrConnectionConfig());
@@ -104,9 +105,10 @@ class SolrIndexResourceImpl implements SolrIndexResource {
                 sb.append(response.getException().toString());
             }
 
-            return sb.toString();
-        } catch (final IOException | SolrServerException e) {
-            throw new RuntimeException(e.getMessage(), e);
+            return new SolrConnectionTestResponse(true, sb.toString());
+
+        } catch (final IOException | SolrServerException | RuntimeException e) {
+            return new SolrConnectionTestResponse(false, e.getMessage());
         }
     }
 }

@@ -133,7 +133,7 @@ public class XsltFilter extends AbstractXMLFilter implements SupportsCodeInjecti
                 // Resolve replacement variables.
                 final String resolvedName = pathCreator.replaceContextVars(xsltNamePattern.trim());
                 // Make sure there are no replacement vars left.
-                final String[] vars = PathCreator.findVars(resolvedName);
+                final String[] vars = pathCreator.findVars(resolvedName);
                 if (vars.length > 0) {
                     final StringBuilder sb = new StringBuilder();
                     sb.append("XSLT name pattern \"");

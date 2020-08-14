@@ -23,6 +23,7 @@ import stroom.data.shared.StreamTypeNames;
 import stroom.db.util.JooqUtil;
 import stroom.meta.impl.MetaTypeDao;
 import stroom.meta.impl.db.jooq.tables.records.MetaTypeRecord;
+import stroom.util.shared.Clearable;
 
 import org.jooq.Condition;
 import org.jooq.Field;
@@ -35,7 +36,7 @@ import java.util.Optional;
 import static stroom.meta.impl.db.jooq.tables.MetaType.META_TYPE;
 
 @Singleton
-class MetaTypeDaoImpl implements MetaTypeDao {
+class MetaTypeDaoImpl implements MetaTypeDao, Clearable {
     private static final String CACHE_NAME = "Meta Type Cache";
 
     private final ICache<String, Integer> cache;
@@ -126,14 +127,6 @@ class MetaTypeDaoImpl implements MetaTypeDao {
 
     @Override
     public void clear() {
-        deleteAll();
         cache.clear();
-    }
-
-    private void deleteAll() {
-        JooqUtil.truncateTable(metaDbConnProvider, META_TYPE);
-//        return JooqUtil.contextResult(metaDbConnProvider, context -> context
-//                .truncate(META_TYPE)
-//                .execute());
     }
 }

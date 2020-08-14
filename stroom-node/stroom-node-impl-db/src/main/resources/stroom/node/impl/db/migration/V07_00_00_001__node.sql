@@ -27,12 +27,13 @@ CREATE TABLE IF NOT EXISTS node (
     create_user           varchar(255) NOT NULL,
     update_time_ms        bigint(20) NOT NULL,
     update_user           varchar(255) NOT NULL,
-    url                   varchar(255) DEFAULT NULL,
+    url                   varchar(255) NOT NULL,
     name                  varchar(255) NOT NULL,
     priority              smallint(6) NOT NULL,
     enabled               tinyint(1) NOT NULL DEFAULT '0',
     PRIMARY KEY           (id),
-    UNIQUE KEY            name (name)
+    UNIQUE KEY            name (name),
+    UNIQUE KEY            url (url)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8;
 
 SET SQL_NOTES=@OLD_SQL_NOTES;

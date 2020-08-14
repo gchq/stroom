@@ -41,7 +41,8 @@ BEGIN
     IF EXISTS (
             SELECT NULL
             FROM INFORMATION_SCHEMA.TABLES
-            WHERE TABLE_NAME = 'explorerTreeNode') THEN
+            WHERE TABLE_SCHEMA = database()
+            AND TABLE_NAME = 'explorerTreeNode') THEN
 
         RENAME TABLE explorerTreeNode TO OLD_explorerTreeNode;
     END IF;
@@ -50,7 +51,8 @@ BEGIN
     IF EXISTS (
             SELECT NULL
             FROM INFORMATION_SCHEMA.TABLES
-            WHERE TABLE_NAME = 'OLD_explorerTreeNode') THEN
+            WHERE TABLE_SCHEMA = database()
+            AND TABLE_NAME = 'OLD_explorerTreeNode') THEN
 
         INSERT INTO explorer_node (
             id, 

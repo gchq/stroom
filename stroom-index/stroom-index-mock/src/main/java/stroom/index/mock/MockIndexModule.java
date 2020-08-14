@@ -30,7 +30,6 @@ import stroom.index.impl.IndexVolumeService;
 import stroom.index.impl.Indexer;
 import stroom.index.shared.IndexDoc;
 import stroom.util.guice.GuiceUtil;
-import stroom.util.shared.Clearable;
 
 import com.google.inject.AbstractModule;
 
@@ -46,8 +45,6 @@ public class MockIndexModule extends AbstractModule {
         bind(IndexVolumeGroupService.class).to(MockIndexVolumeGroupService.class);
         bind(IndexShardService.class).to(MockIndexShardService.class);
         bind(Indexer.class).to(MockIndexer.class);
-
-        GuiceUtil.buildMultiBinder(binder(), Clearable.class).addBinding(MockIndexShardService.class);
 
         GuiceUtil.buildMultiBinder(binder(), ImportExportActionHandler.class)
                 .addBinding(IndexStoreImpl.class);

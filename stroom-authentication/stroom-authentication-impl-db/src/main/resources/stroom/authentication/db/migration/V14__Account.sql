@@ -27,12 +27,14 @@ BEGIN
     IF NOT EXISTS (
             SELECT NULL
             FROM INFORMATION_SCHEMA.TABLES
-            WHERE TABLE_NAME = 'OLD_users') THEN
+            WHERE TABLE_SCHEMA = database()
+            AND TABLE_NAME = 'OLD_users') THEN
 
         IF EXISTS (
                 SELECT NULL
                 FROM INFORMATION_SCHEMA.TABLES
-                WHERE TABLE_NAME = 'users') THEN
+                WHERE TABLE_SCHEMA = database()
+                AND TABLE_NAME = 'users') THEN
 
             RENAME TABLE users TO OLD_users;
         END IF;
@@ -83,7 +85,8 @@ BEGIN
     IF EXISTS (
             SELECT NULL
             FROM INFORMATION_SCHEMA.TABLES
-            WHERE TABLE_NAME = 'OLD_users') THEN
+            WHERE TABLE_SCHEMA = database()
+            AND TABLE_NAME = 'OLD_users') THEN
 
         INSERT INTO account (
             id,

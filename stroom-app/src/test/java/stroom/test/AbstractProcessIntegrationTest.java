@@ -19,22 +19,18 @@ package stroom.test;
 import name.falgout.jeffrey.testing.junit.guice.GuiceExtension;
 import name.falgout.jeffrey.testing.junit.guice.IncludeModule;
 import org.junit.jupiter.api.BeforeEach;
-import org.junit.jupiter.api.TestInfo;
 import org.junit.jupiter.api.extension.ExtendWith;
-import org.junit.jupiter.api.io.TempDir;
 
 import javax.inject.Inject;
-import java.nio.file.Path;
 
 @ExtendWith(GuiceExtension.class)
 @IncludeModule(MockServiceModule.class)
 public abstract class AbstractProcessIntegrationTest extends StroomIntegrationTest {
     @Inject
-    private IntegrationTestSetupUtil integrationTestSetupUtil;
+    private ContentImportService contentImportService;
 
     @BeforeEach
-    void before(final TestInfo testInfo, @TempDir final Path tempDir) {
-        super.before(testInfo, tempDir);
-        integrationTestSetupUtil.importSchemas(true);
+    final void importSchemas() {
+        contentImportService.importStandardPacks();
     }
 }

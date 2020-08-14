@@ -1,7 +1,7 @@
 ext.moduleName = 'stroom.proxy.app'
 
-def jarName = 'stroom-proxy-app.jar'
 def fatJarName = 'stroom-proxy-app-all.jar'
+def releaseBuildDir = 'build/release'
 
 apply plugin: 'application'
 apply plugin: 'com.github.johnrengelman.shadow'
@@ -78,8 +78,6 @@ dependencies {
 }
 
 jar {
-    //we need to first generate the swagger spec files so they can be added in to the jar
-//    mustRunAfter generateSwaggerDocumentation
     manifest {
         attributes(
                 "Implementation-Title": "Stroom Proxy",
@@ -87,7 +85,6 @@ jar {
                 "Main-Class": "stroom.proxy.app.App"
         )
     }
-    archiveName jarName
 }
 
 shadowJar {
@@ -102,7 +99,6 @@ shadowJar {
 
     archiveName fatJarName
 }
-
 
 def proxyDockerBuildDir = "${projectDir}/docker/build"
 clean {
@@ -126,9 +122,88 @@ task copyFilesForProxyDockerBuild() {
         }
     }
 }
-tasks.build.dependsOn copyFilesForProxyDockerBuild
-//
-//war {
-//    exclude 'WEB-INF/lib/**'
-//    exclude 'WEB-INF/classes/**'
-//}
+//tasks.build.dependsOn copyFilesForProxyDockerBuild
+
+test {
+    maxParallelForks = 1
+}
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+// The gradle application plugin enables the distribution plugin
+// which creates .zip/tar archives by default, as does the shadow plugin
+// We have our own buildDistribution task so disable the standard ones to avoid confusion
+distZip.enabled = false
+distTar.enabled = false
+shadowDistZip.enabled = false
+shadowDistTar.enabled = false
+
+task copyJar(type: Copy) {
+    dependsOn shadowJar
+    from shadowJar.outputs.files
+    into "${releaseBuildDir}/bin"
+}
+
+task copyCommonSupportingFiles(type: Copy) {
+    from '../../dist'
+    into releaseBuildDir
+}
+
+task copySupportingFiles(type: Copy) {
+    dependsOn copyCommonSupportingFiles
+
+    from 'src/dist'
+    into releaseBuildDir
+
+    doLast {
+        // This is a sym-link so it seems to go into the zip with +x perms
+        // which we don't want
+        exec {
+            commandLine 'chmod', '644', "${releaseBuildDir}/config/config.yml"
+        }
+    }
+}
+
+// Build the release distribution zip for stroom proxy
+task buildDistribution(type: Zip) {
+
+    // run all the tasks that produce content for the zip
+    dependsOn copyJar
+    dependsOn copySupportingFiles
+
+    from releaseBuildDir
+}

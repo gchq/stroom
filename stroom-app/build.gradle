@@ -14,7 +14,6 @@ plugins {
     //id "io.swagger.core.v3.swagger-gradle-plugin" version "2.1.1"
 }
 
-
 import org.reflections.Reflections
 import org.reflections.scanners.SubTypesScanner
 import org.reflections.scanners.TypeAnnotationsScanner
@@ -28,7 +27,7 @@ ext.moduleName = 'stroom.app'
 def uiDir = project.file('src/main/resources/ui')
 def swaggerDir = "${uiDir}/noauth/swagger"
 def restResourceClassNames = []
-def jarName = 'stroom-app.jar'
+//def jarName = 'stroom-app.jar'
 def fatJarName = 'stroom-app-all.jar'
 def sendToStroomScriptVersion = 'send-to-stroom-v2.0'
 def releaseBuildDir = 'build/release'
@@ -225,25 +224,30 @@ jar {
                 "Main-Class": "stroom.app.App"
         )
     }
-    archiveName jarName
+//    archiveName jarName
     exclude '**/gwt-unitCache'
 }
+
+// We often run out of memory when running the UI builds in parallel so create tasks that will build them one after another.
+task buildUiPart1(dependsOn: ":stroom-ui:copyYarnBuild") {}
+task buildUiPart2(dependsOn: ":stroom-app-gwt:gwtCompile") {}
+task buildUiPart3(dependsOn: ":stroom-dashboard-gwt:gwtCompile") {}
+buildUiPart1.finalizedBy buildUiPart2
+buildUiPart2.finalizedBy buildUiPart3
+task buildUi(dependsOn: buildUiPart1) {}
 
 shadowJar {
     // We want to run the tests before we build the fat jar.
     dependsOn test
-    // We want to compile all GWT content before we build the fat jar.
-    dependsOn ':stroom-app-gwt:gwtCompile'
-    dependsOn ':stroom-dashboard-gwt:gwtCompile'
-    // We need the React UI artifacts
-    dependsOn ':stroom-ui:copyYarnBuild'
+    // We want to compile all GWT and React content before we build the fat jar.
+    dependsOn buildUi
     // The jar needs to include the swagger.(json|yaml) files that swagger gen produces
     dependsOn generateSwaggerDocumentation
 
     // Allows us to build fat jars with lots of files
     zip64 true
 
-    // Ensure we include the GWT generated resources.
+    // Ensure we include the GWT and Rest generated resources.
     from './src/main/resources'
 
     // A transformer to merges files in META-INF/services
@@ -253,9 +257,13 @@ shadowJar {
     exclude '**/gwt-unitCache'
 }
 // Make sure GWT compilation doesn't run before tests.
-tasks.getByPath(':stroom-app-gwt:gwtCompile').mustRunAfter test
-tasks.getByPath(':stroom-dashboard-gwt:gwtCompile').mustRunAfter test
-tasks.getByPath(':stroom-ui:copyYarnBuild').mustRunAfter test
+tasks.getByPath(':stroom-app-gwt:gwtClean').mustRunAfter test
+tasks.getByPath(':stroom-dashboard-gwt:gwtClean').mustRunAfter test
+tasks.getByPath(':stroom-ui:removeYarnBuild').mustRunAfter test
+// Make sure GWT compilation doesn't run before processResources.
+tasks.getByPath(':stroom-app-gwt:gwtClean').mustRunAfter processResources
+tasks.getByPath(':stroom-dashboard-gwt:gwtClean').mustRunAfter processResources
+tasks.getByPath(':stroom-ui:removeYarnBuild').mustRunAfter processResources
 
 run {
     //Ensure we have the latest kafka plugin jar available for runtime
@@ -436,15 +444,22 @@ task prepareSwaggerClasses {
 }
 generateSwaggerDocumentation.dependsOn prepareSwaggerClasses
 
-
 task copyJar(type: Copy) {
+    dependsOn shadowJar
     from shadowJar.outputs.files
     into "${releaseBuildDir}/bin"
 }
 
+task copyCommonSupportingFiles(type: Copy) {
+    from '../dist'
+    into releaseBuildDir
+}
+
 task copySupportingFiles(type: Copy) {
+    dependsOn copyCommonSupportingFiles
+
     from 'src/dist'
-    into releaseBuildDir 
+    into releaseBuildDir
 
     doLast {
         // This is a sym-link so it seems to go into the zip with +x perms
@@ -524,10 +539,9 @@ rootProject.subprojects { subProj ->
 // Ensure all projects have built their jars so swagger can see them
 tasks.prepareSwaggerClasses.dependsOn rootProject.getTasksByName('jar', true)
 
-tasks.build.dependsOn generateSwaggerDocumentation
-tasks.build.dependsOn copyFilesForStroomDockerBuild
-tasks.build.dependsOn shadowJar
-tasks.build.dependsOn buildDistribution
+//tasks.build.dependsOn generateSwaggerDocumentation
+//tasks.build.dependsOn copyFilesForStroomDockerBuild
+//tasks.build.dependsOn buildDistribution
 
 // The gradle application plugin enables the distribution plugin
 // which creates .zip/tar archives by default, as does the shadow plugin

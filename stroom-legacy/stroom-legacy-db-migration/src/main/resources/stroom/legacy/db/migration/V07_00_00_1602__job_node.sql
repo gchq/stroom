@@ -47,7 +47,8 @@ BEGIN
     IF EXISTS (
             SELECT NULL
             FROM INFORMATION_SCHEMA.TABLES
-            WHERE TABLE_NAME = 'JB_ND') THEN
+            WHERE TABLE_SCHEMA = database()
+            AND TABLE_NAME = 'JB_ND') THEN
 
         RENAME TABLE JB_ND TO OLD_JB_ND;
     END IF;
@@ -55,7 +56,8 @@ BEGIN
     IF EXISTS (
             SELECT NULL
             FROM INFORMATION_SCHEMA.TABLES
-            WHERE TABLE_NAME = 'ND') THEN
+            WHERE TABLE_SCHEMA = database()
+            AND TABLE_NAME = 'ND') THEN
 
         RENAME TABLE ND TO OLD_ND;
     END IF;
@@ -63,7 +65,8 @@ BEGIN
     IF EXISTS (
             SELECT NULL
             FROM INFORMATION_SCHEMA.TABLES
-            WHERE TABLE_NAME = 'OLD_JB_ND') THEN
+            WHERE TABLE_SCHEMA = database()
+            AND TABLE_NAME = 'OLD_JB_ND') THEN
 
         INSERT INTO job_node (
             id,

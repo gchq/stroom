@@ -22,7 +22,6 @@ import org.junit.jupiter.api.io.TempDir;
 import java.nio.file.Path;
 
 public abstract class StroomUnitTest implements StroomTest {
-
     private Path testDir;
 
     @BeforeEach

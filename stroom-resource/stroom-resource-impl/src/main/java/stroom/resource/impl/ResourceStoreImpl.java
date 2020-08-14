@@ -18,8 +18,10 @@ package stroom.resource.impl;
 
 import stroom.resource.api.ResourceStore;
 import stroom.util.io.FileUtil;
+import stroom.util.io.TempDirProvider;
 import stroom.util.shared.ResourceKey;
 
+import javax.inject.Inject;
 import javax.inject.Singleton;
 import java.io.IOException;
 import java.io.UncheckedIOException;
@@ -35,34 +37,38 @@ import java.util.Set;
  */
 @Singleton
 public class ResourceStoreImpl implements ResourceStore {
+    private final TempDirProvider tempDirProvider;
+
     private Set<ResourceKey> currentFiles = new HashSet<>();
     private Set<ResourceKey> oldFiles = new HashSet<>();
     private long sequence;
-    private Path tempDir = null;
 
-    private Path getTempFile() {
-        if (tempDir == null) {
-            tempDir = FileUtil.getTempDir().resolve("resources");
-            try {
-                Files.createDirectories(tempDir);
-            } catch (final IOException e) {
-                throw new UncheckedIOException(e);
-            }
+    @Inject
+    public ResourceStoreImpl(final TempDirProvider tempDirProvider) {
+        this.tempDirProvider = tempDirProvider;
+    }
+
+    private Path getTempDir() {
+        final Path tempDir = tempDirProvider.get().resolve("resources");
+        try {
+            Files.createDirectories(tempDir);
+        } catch (final IOException e) {
+            throw new UncheckedIOException(e);
         }
         return tempDir;
     }
 
     void startup() {
-        FileUtil.deleteContents(getTempFile());
+        FileUtil.deleteContents(getTempDir());
     }
 
     void shutdown() {
-        FileUtil.deleteContents(getTempFile());
+        FileUtil.deleteContents(getTempDir());
     }
 
     @Override
     public synchronized ResourceKey createTempFile(final String name) {
-        final String fileName = FileUtil.getCanonicalPath(getTempFile().resolve((sequence++) + name));
+        final String fileName = FileUtil.getCanonicalPath(getTempDir().resolve((sequence++) + name));
         final ResourceKey resourceKey = new ResourceKey(name, fileName);
         currentFiles.add(resourceKey);
 

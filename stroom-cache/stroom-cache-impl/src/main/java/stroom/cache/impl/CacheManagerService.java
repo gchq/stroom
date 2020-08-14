@@ -18,14 +18,13 @@
 package stroom.cache.impl;
 
 import stroom.cache.shared.CacheInfo;
-import stroom.util.shared.Clearable;
 
 import java.util.List;
 
 /**
  * This class maintains several caches used throughout the application.
  */
-public interface CacheManagerService extends Clearable {
+public interface CacheManagerService {
     List<String> getCacheNames();
 
     List<CacheInfo> find(FindCacheInfoCriteria criteria);

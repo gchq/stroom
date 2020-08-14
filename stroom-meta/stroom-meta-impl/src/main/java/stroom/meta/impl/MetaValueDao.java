@@ -18,14 +18,12 @@ package stroom.meta.impl;
 
 import stroom.meta.api.AttributeMap;
 import stroom.meta.shared.Meta;
-import stroom.meta.shared.MetaRow;
-import stroom.util.shared.Clearable;
 import stroom.util.shared.Flushable;
 
 import java.util.List;
 import java.util.Map;
 
-public interface MetaValueDao extends Clearable, Flushable {
+public interface MetaValueDao extends Flushable {
     void addAttributes(Meta meta, AttributeMap attributes);
 
     Map<Long, Map<String, String>> getAttributes(List<Meta> list);

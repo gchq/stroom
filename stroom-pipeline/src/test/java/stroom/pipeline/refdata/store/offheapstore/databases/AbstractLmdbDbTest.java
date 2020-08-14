@@ -17,14 +17,15 @@
 
 package stroom.pipeline.refdata.store.offheapstore.databases;
 
+import stroom.test.common.util.test.StroomUnitTest;
+import stroom.util.io.ByteSize;
+import stroom.util.io.FileUtil;
+
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
 import org.lmdbjava.Env;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import stroom.test.common.util.test.StroomUnitTest;
-import stroom.util.io.ByteSize;
-import stroom.util.io.FileUtil;
 
 import java.io.IOException;
 import java.nio.ByteBuffer;
@@ -38,7 +39,7 @@ public abstract class AbstractLmdbDbTest extends StroomUnitTest {
     private Path dbDir = null;
 
     @BeforeEach
-    protected void setup() throws IOException {
+    final void createEnv() throws IOException {
         dbDir = Files.createTempDirectory("stroom");
         LOGGER.debug("Creating LMDB environment with maxSize: {}, dbDir {}",
                 getMaxSizeBytes(), dbDir.toAbsolutePath().toString());
@@ -50,7 +51,7 @@ public abstract class AbstractLmdbDbTest extends StroomUnitTest {
     }
 
     @AfterEach
-    public void teardown() throws IOException {
+    final void teardown() {
         if (lmdbEnv != null) {
             lmdbEnv.close();
         }

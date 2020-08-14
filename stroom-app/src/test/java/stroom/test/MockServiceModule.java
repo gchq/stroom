@@ -21,6 +21,8 @@ import stroom.security.shared.User;
 import stroom.statistics.mock.MockInternalStatisticsModule;
 import stroom.task.impl.MockTaskModule;
 import stroom.util.entityevent.EntityEventBus;
+import stroom.util.io.TempDirProvider;
+import stroom.util.io.TempDirProviderImpl;
 import stroom.util.pipeline.scope.PipelineScopeModule;
 import stroom.util.servlet.MockServletModule;
 
@@ -102,6 +104,7 @@ public class MockServiceModule extends AbstractModule {
             return mockUserService.update(user);
         });
         bind(UserService.class).toInstance(mockUserService);
+        bind(TempDirProvider.class).to(TempDirProviderImpl.class);
     }
 
     @Provides

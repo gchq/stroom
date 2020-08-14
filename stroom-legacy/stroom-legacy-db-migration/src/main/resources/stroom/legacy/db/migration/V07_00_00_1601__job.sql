@@ -44,7 +44,8 @@ BEGIN
     IF EXISTS (
             SELECT NULL
             FROM INFORMATION_SCHEMA.TABLES
-            WHERE TABLE_NAME = 'JB') THEN
+            WHERE TABLE_SCHEMA = database()
+            AND TABLE_NAME = 'JB') THEN
 
         RENAME TABLE JB TO OLD_JB;
     END IF;
@@ -53,7 +54,8 @@ BEGIN
     IF EXISTS (
         SELECT TABLE_NAME
         FROM INFORMATION_SCHEMA.TABLES
-        WHERE TABLE_NAME = 'OLD_JB') THEN
+        WHERE TABLE_SCHEMA = database()
+        AND TABLE_NAME = 'OLD_JB') THEN
 
         INSERT INTO job (
             id,

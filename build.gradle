@@ -44,9 +44,9 @@ plugins {
 //    id "com.vanniktech.dependency.graph.generator" version "0.5.0"
 }
 
-wrapper {
-    gradleVersion = '5.6.4'
-}
+//wrapper {
+//    gradleVersion = '5.6.4'
+//}
 
 apply plugin: 'ca.cutterslade.analyze'
 apply plugin: 'de.undercouch.download'
@@ -76,7 +76,7 @@ ext.getPropertyOrDefault = { propName, defaultValue ->
 
 ext.gwtCompilerProps = [
         mainClass: 'stroom.gwt.GwtCompilerWrapper',
-        minHeap  : getPropertyOrDefault('gwtCompilerMinHeap', '1G'),
+        minHeap  : getPropertyOrDefault('gwtCompilerMinHeap', '50M'),
         maxHeap  : getPropertyOrDefault('gwtCompilerMaxHeap', '4G'),
         workers  : getPropertyOrDefault('gwtCompilerWorkers', '5')
 ]
@@ -118,7 +118,7 @@ ext.versions = [
         gwt               : '2.8.2',
         hikari            : '3.2.0',
         jooq              : '3.12.3',
-        junit_jupiter     : '5.6.0',
+        junit_jupiter     : '5.6.2',
         kafka             : '2.2.1', // CDH 6.3 uses kafka 2.2.1
         lucene            : '5.5.3',
         mockito           : '2.23.4',
@@ -258,7 +258,7 @@ ext.libs = [
         mbknor_jackson_jsonSchema      : "com.kjetland:mbknor-jackson-jsonschema_2.12:1.0.36",
         mockito_core                   : "org.mockito:mockito-core:$versions.mockito",
         mockito_junit_jupiter          : "org.mockito:mockito-junit-jupiter:$versions.mockito",
-        mysql_connector_java           : "mysql:mysql-connector-java:8.0.16",
+        mysql_connector_java           : "mysql:mysql-connector-java:8.0.21",
         objenesis                      : "org.objenesis:objenesis", // version controlled by DW BOM
         okhttp                         : "com.squareup.okhttp3:okhttp:4.3.0",
         okhttp_logging_interceptor     : 'com.squareup.okhttp:logging-interceptor:2.7.5',
@@ -431,6 +431,9 @@ subprojects {
     test {
         useJUnitPlatform()
 
+        maxParallelForks = Runtime.runtime.availableProcessors().intdiv(2) ?: 1
+//        maxParallelForks = Runtime.runtime.availableProcessors() ?: 1
+
         // Report duration of tests that take over 1s
         afterTest { descriptor, result ->
             def durationSecs = (result.endTime - result.startTime) / 1000
@@ -446,8 +449,8 @@ subprojects {
                     && descriptor.className != null 
                     && result.resultType.toString() == "FAILURE") {
 
-                //test class failed so add its project info and test report file to a global list for
-                //processing at the end of the build
+                // test class failed so add its project info and test report file to a global list for
+                // processing at the end of the build
                 def reportFileName = "${reports.junitXml.destination}/TEST-${descriptor.className}.xml"
                 def reportFile = file(reportFileName)
                 def pair = new Tuple2("${project.name} ${descriptor.name}", reportFile)
@@ -455,7 +458,7 @@ subprojects {
             }
         }
 
-        //Use full logging for test exceptions so we can see where the failure occurred 
+        // Use full logging for test exceptions so we can see where the failure occurred
         testLogging {
             events "failed"
             exceptionFormat = 'full'
@@ -464,7 +467,7 @@ subprojects {
     }
 
     clean {
-        //clear out the 'out' dirs used by intelliJ
+        // clear out the 'out' dirs used by intelliJ
         delete "out"
     }
 
@@ -820,10 +823,13 @@ task clean() {
     dependsOn clearContentPackDownloadDir
 }
 
-
-
-
-
+// Accept the T&Cs for publishing build scans
+if (hasProperty('buildScan')) {
+    buildScan {
+        termsOfServiceUrl = 'https://gradle.com/terms-of-service'
+        termsOfServiceAgree = 'yes'
+    }
+}
 
 //import com.vanniktech.dependency.graph.generator.DependencyGraphGeneratorPlugin
 //import com.vanniktech.dependency.graph.generator.DependencyGraphGeneratorExtension.Generator

@@ -210,14 +210,13 @@ class TestGroupedCountsInteractiveSearch extends AbstractCoreIntegrationTest {
         return tableSettings;
     }
 
-
-    @Test
-    @Disabled
-    void tearDownAndSetupOnly() {
-        LOGGER.info("before() - commonTestControl.setup()");
-        commonTestControl.teardown();
-        commonTestControl.setup();
-
-        onAfterSetup();
-    }
+//    @Test
+//    @Disabled
+//    void tearDownAndSetupOnly(@TempDir final Path tempDir) {
+//        LOGGER.info("before() - commonTestControl.setup()");
+//        commonTestControl.teardown();
+//        commonTestControl.setup(tempDir);
+//
+//        onAfterSetup();
+//    }
 }

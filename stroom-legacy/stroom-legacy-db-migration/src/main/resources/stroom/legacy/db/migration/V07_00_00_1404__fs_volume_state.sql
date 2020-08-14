@@ -41,7 +41,8 @@ BEGIN
     IF EXISTS (
             SELECT NULL
             FROM INFORMATION_SCHEMA.TABLES
-            WHERE TABLE_NAME = 'VOL_STATE') THEN
+            WHERE TABLE_SCHEMA = database()
+            AND TABLE_NAME = 'VOL_STATE') THEN
 
         RENAME TABLE VOL_STATE TO OLD_VOL_STATE;
     END IF;
@@ -50,7 +51,8 @@ BEGIN
     IF EXISTS (
             SELECT TABLE_NAME
             FROM INFORMATION_SCHEMA.TABLES
-            WHERE TABLE_NAME = 'OLD_VOL_STATE') THEN
+            WHERE TABLE_SCHEMA = database()
+            AND TABLE_NAME = 'OLD_VOL_STATE') THEN
 
         INSERT INTO fs_volume_state (
             id,

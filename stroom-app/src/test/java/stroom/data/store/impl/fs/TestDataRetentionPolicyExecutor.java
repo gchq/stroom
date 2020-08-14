@@ -17,6 +17,9 @@
 
 package stroom.data.store.impl.fs;
 
+import org.junit.jupiter.api.AfterAll;
+import org.junit.jupiter.api.AfterEach;
+import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import stroom.data.retention.impl.DataRetentionPolicyExecutor;
 import stroom.data.retention.impl.DataRetentionRulesService;
@@ -84,14 +87,14 @@ class TestDataRetentionPolicyExecutor extends AbstractCoreIntegrationTest {
 
     private int initialReplicationCount = 1;
 
-    @Override
-    protected void onBefore() {
+    @BeforeEach
+    void beforeEach() {
         initialReplicationCount = volumeConfig.getResilientReplicationCount();
         volumeConfig.setResilientReplicationCount(REPLICATION_COUNT);
     }
 
-    @Override
-    protected void onAfter() {
+    @AfterEach
+    void afterEach() {
         volumeConfig.setResilientReplicationCount(initialReplicationCount);
     }
 

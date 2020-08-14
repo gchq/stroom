@@ -108,10 +108,11 @@ class SessionListListener implements HttpSessionListener, SessionListService {
         if (NodeCallUtil.shouldExecuteLocally(nodeInfo, nodeName)) {
             // This is our node so execute locally
             sessionList = listSessionsOnThisNode();
+
         } else {
             // This is a different node so make a rest call to it to get the result
 
-            final String url = NodeCallUtil.getBaseEndpointUrl(nodeService, nodeName) +
+            final String url = NodeCallUtil.getBaseEndpointUrl(nodeInfo, nodeService, nodeName) +
                     ResourcePaths.buildAuthenticatedApiPath(
                             SessionResource.BASE_PATH,
                             SessionResource.LIST_PATH_PART);

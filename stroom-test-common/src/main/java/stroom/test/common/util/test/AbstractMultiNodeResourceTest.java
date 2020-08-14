@@ -44,17 +44,11 @@ import java.util.stream.Collectors;
 
 @ExtendWith(MockitoExtension.class)
 public abstract class AbstractMultiNodeResourceTest<R extends RestResource> {
-
     private static final Logger LOGGER = LoggerFactory.getLogger(AbstractMultiNodeResourceTest.class);
 
-    private static final List<TestNode> DEFAULT_NODES = List.of(
-        new TestNode("node1", 8080, true),
-        new TestNode("node2", 8081, true),
-        new TestNode("node3", 8082, false));
-
     private static final WebTargetFactory WEB_TARGET_FACTORY = url -> ClientBuilder.newClient(
-        new ClientConfig().register(LoggingFeature.class))
-        .target(url);
+            new ClientConfig().register(LoggingFeature.class))
+            .target(url);
 
     private static final String CONTAINER_FACTORY = "org.glassfish.jersey.test.grizzly.GrizzlyTestContainerFactory";
 
@@ -62,11 +56,11 @@ public abstract class AbstractMultiNodeResourceTest<R extends RestResource> {
     private final Map<String, JerseyTest> nodeToJerseyTestMap = new HashMap<>();
     private final Map<String, RequestListener> nodeToListenerMap = new HashMap<>();
 
-    /**
-     * Uses a 3 node cluster with node3 being disabled. Node1 is the default node.
-     */
-    protected AbstractMultiNodeResourceTest() {
-        this.testNodes = DEFAULT_NODES;
+    public static List<TestNode> createNodeList(final int base) {
+        return List.of(
+                new TestNode("node1", base, true),
+                new TestNode("node2", base + 1, true),
+                new TestNode("node3", base + 2, false));
     }
 
     /**
@@ -86,7 +80,7 @@ public abstract class AbstractMultiNodeResourceTest<R extends RestResource> {
             Class.forName(CONTAINER_FACTORY);
         } catch (ClassNotFoundException e) {
             throw new RuntimeException("You are missing a test runtime dependency for " +
-                "jersey-test-framework-provider-grizzly2");
+                    "jersey-test-framework-provider-grizzly2");
         }
 
         this.testNodes = testNodes;
@@ -116,9 +110,9 @@ public abstract class AbstractMultiNodeResourceTest<R extends RestResource> {
 
     private Map<String, String> getBaseEndPointUrls() {
         return testNodes.stream()
-            .collect(Collectors.toMap(
-                TestNode::getNodeName,
-                this::getBaseEndPointUrl));
+                .collect(Collectors.toMap(
+                        TestNode::getNodeName,
+                        this::getBaseEndPointUrl));
     }
 
     public void stopNodes() {
@@ -158,39 +152,39 @@ public abstract class AbstractMultiNodeResourceTest<R extends RestResource> {
     private void initNodes(final int maxNodeCount) {
 
         testNodes.stream()
-            .limit(maxNodeCount)
-            .forEach(node -> {
+                .limit(maxNodeCount)
+                .forEach(node -> {
 
-            final String baseEndPointUrl = getBaseEndPointUrl(node);
+                    final String baseEndPointUrl = getBaseEndPointUrl(node);
 
-            RequestListener requestListener = new RequestListener(node);
-            nodeToListenerMap.put(node.getNodeName(), requestListener);
+                    RequestListener requestListener = new RequestListener(node);
+                    nodeToListenerMap.put(node.getNodeName(), requestListener);
 
-            final JerseyTest jerseyTest = new JerseyTestBuilder<>(
-                () -> getRestResource(node, testNodes, getBaseEndPointUrls()),
-                node.getPort(),
-                requestListener)
-                .build();
+                    final JerseyTest jerseyTest = new JerseyTestBuilder<>(
+                            () -> getRestResource(node, testNodes, getBaseEndPointUrls()),
+                            node.getPort(),
+                            requestListener)
+                            .build();
 
-            nodeToJerseyTestMap.put(node.getNodeName(), jerseyTest);
+                    nodeToJerseyTestMap.put(node.getNodeName(), jerseyTest);
 
-            try {
-                if (node.isEnabled) {
-                    LOGGER.info("Starting node [{}] (enabled: {}) at {}",
-                        node.getNodeName(), node.isEnabled, baseEndPointUrl);
-                    jerseyTest.setUp();
-                }
-            } catch (Exception e) {
-                throw new RuntimeException("Error starting jersey test on " + baseEndPointUrl, e);
-            }
-        });
+                    try {
+                        if (node.isEnabled) {
+                            LOGGER.info("Starting node [{}] (enabled: {}) at {}",
+                                    node.getNodeName(), node.isEnabled, baseEndPointUrl);
+                            jerseyTest.setUp();
+                        }
+                    } catch (Exception e) {
+                        throw new RuntimeException("Error starting jersey test on " + baseEndPointUrl, e);
+                    }
+                });
     }
 
     /**
      * Override if you want to use more nodes or different ports
      */
     public List<TestNode> getTestNodes() {
-        return DEFAULT_NODES;
+        return testNodes;
     }
 
     public List<RequestEvent> getRequestEvents(final String nodeName) {
@@ -215,112 +209,112 @@ public abstract class AbstractMultiNodeResourceTest<R extends RestResource> {
         return WEB_TARGET_FACTORY;
     }
 
-    public  <T_RESP> T_RESP doGetTest(final String subPath,
-                            final Class<T_RESP> responseType,
-                            final T_RESP expectedResponse,
-                            final Function<WebTarget, WebTarget>... builderMethods) {
+    public <T_RESP> T_RESP doGetTest(final String subPath,
+                                     final Class<T_RESP> responseType,
+                                     final T_RESP expectedResponse,
+                                     final Function<WebTarget, WebTarget>... builderMethods) {
         LOGGER.info("Calling GET on {}{}, expecting {}",
-            getResourceBasePath(), subPath, expectedResponse);
+                getResourceBasePath(), subPath, expectedResponse);
 
         return doTest(Invocation.Builder::get,
-            subPath,
-            responseType,
-            expectedResponse,
-            builderMethods);
+                subPath,
+                responseType,
+                expectedResponse,
+                builderMethods);
     }
 
-    public  <T_REQ, T_RESP> T_RESP doPostTest(final String subPath,
-                                              final T_REQ requestEntity,
-                                              final Class<T_RESP> responseType,
-                                              final T_RESP expectedResponse,
-                                              final Function<WebTarget, WebTarget>... builderMethods) {
-        LOGGER.info("Calling POST on {}{}, expecting {}",
-            getResourceBasePath(), subPath, expectedResponse);
-
-        return doTest(builder -> builder.post(Entity.json(requestEntity)),
-            subPath,
-            responseType,
-            expectedResponse,
-            builderMethods);
-    }
-
-    public  <T_REQ> void doPostTest(final String subPath,
-                                    final T_REQ requestEntity,
-                                    final Function<WebTarget, WebTarget>... builderMethods) {
-
-        LOGGER.info("Calling POST on {}{}, passing {}",
-            getResourceBasePath(), subPath, requestEntity);
-
-        WebTarget webTarget = getJerseyTest()
-            .target(getResourceBasePath())
-            .path(subPath);
-
-        for (Function<WebTarget, WebTarget> method : builderMethods) {
-            webTarget = method.apply(webTarget);
-        }
-
-        Invocation.Builder builder = webTarget
-            .request();
-
-        Response response = builder.post(Entity.json(requestEntity));
-
-        if (! isSuccessful(response.getStatus())) {
-            throw new RuntimeException(LogUtil.message("Error: {} {}", response.getStatus(), response));
-        }
-    }
-
-    public  <T_REQ, T_RESP> T_RESP doPutTest(final String subPath,
+    public <T_REQ, T_RESP> T_RESP doPostTest(final String subPath,
                                              final T_REQ requestEntity,
                                              final Class<T_RESP> responseType,
                                              final T_RESP expectedResponse,
                                              final Function<WebTarget, WebTarget>... builderMethods) {
-        LOGGER.info("Calling PUT on {}{}, expecting {}",
-            getResourceBasePath(), subPath, expectedResponse);
+        LOGGER.info("Calling POST on {}{}, expecting {}",
+                getResourceBasePath(), subPath, expectedResponse);
 
-        return doTest(builder -> builder.put(Entity.json(requestEntity)),
-            subPath,
-            responseType,
-            expectedResponse,
-            builderMethods);
+        return doTest(builder -> builder.post(Entity.json(requestEntity)),
+                subPath,
+                responseType,
+                expectedResponse,
+                builderMethods);
     }
 
-    public  <T_REQ> void doPutTest(final String subPath,
+    public <T_REQ> void doPostTest(final String subPath,
                                    final T_REQ requestEntity,
                                    final Function<WebTarget, WebTarget>... builderMethods) {
 
-        LOGGER.info("Calling PUT on {}{}, passing {}",
-            getResourceBasePath(), subPath, requestEntity);
+        LOGGER.info("Calling POST on {}{}, passing {}",
+                getResourceBasePath(), subPath, requestEntity);
 
         WebTarget webTarget = getJerseyTest()
-            .target(getResourceBasePath())
-            .path(subPath);
+                .target(getResourceBasePath())
+                .path(subPath);
 
         for (Function<WebTarget, WebTarget> method : builderMethods) {
             webTarget = method.apply(webTarget);
         }
 
         Invocation.Builder builder = webTarget
-            .request();
+                .request();
 
-        Response response = builder.put(Entity.json(requestEntity));
+        Response response = builder.post(Entity.json(requestEntity));
 
-        if (! isSuccessful(response.getStatus())) {
+        if (!isSuccessful(response.getStatus())) {
             throw new RuntimeException(LogUtil.message("Error: {} {}", response.getStatus(), response));
         }
     }
 
-    public  <T_RESP> T_RESP doDeleteTest(final String subPath,
-                               final Class<T_RESP> responseType,
-                               final T_RESP expectedResponse,
-                               final Function<WebTarget, WebTarget>... builderMethods) {
+    public <T_REQ, T_RESP> T_RESP doPutTest(final String subPath,
+                                            final T_REQ requestEntity,
+                                            final Class<T_RESP> responseType,
+                                            final T_RESP expectedResponse,
+                                            final Function<WebTarget, WebTarget>... builderMethods) {
+        LOGGER.info("Calling PUT on {}{}, expecting {}",
+                getResourceBasePath(), subPath, expectedResponse);
+
+        return doTest(builder -> builder.put(Entity.json(requestEntity)),
+                subPath,
+                responseType,
+                expectedResponse,
+                builderMethods);
+    }
+
+    public <T_REQ> void doPutTest(final String subPath,
+                                  final T_REQ requestEntity,
+                                  final Function<WebTarget, WebTarget>... builderMethods) {
+
+        LOGGER.info("Calling PUT on {}{}, passing {}",
+                getResourceBasePath(), subPath, requestEntity);
+
+        WebTarget webTarget = getJerseyTest()
+                .target(getResourceBasePath())
+                .path(subPath);
+
+        for (Function<WebTarget, WebTarget> method : builderMethods) {
+            webTarget = method.apply(webTarget);
+        }
+
+        Invocation.Builder builder = webTarget
+                .request();
+
+        Response response = builder.put(Entity.json(requestEntity));
+
+        if (!isSuccessful(response.getStatus())) {
+            throw new RuntimeException(LogUtil.message("Error: {} {}", response.getStatus(), response));
+        }
+    }
+
+    public <T_RESP> T_RESP doDeleteTest(final String subPath,
+                                        final Class<T_RESP> responseType,
+                                        final T_RESP expectedResponse,
+                                        final Function<WebTarget, WebTarget>... builderMethods) {
         LOGGER.info("Calling DELETE on {}{}, expecting {}",
-            getResourceBasePath(), subPath, expectedResponse);
+                getResourceBasePath(), subPath, expectedResponse);
 
         return doTest(Invocation.Builder::delete,
-            subPath,
-            responseType,
-            expectedResponse,
-            builderMethods);
+                subPath,
+                responseType,
+                expectedResponse,
+                builderMethods);
     }
 
     private <T_RESP> T_RESP doTest(final Function<Invocation.Builder, Response> operation,
@@ -329,52 +323,52 @@ public abstract class AbstractMultiNodeResourceTest<R extends RestResource> {
                                    final T_RESP expectedResponse,
                                    final Function<WebTarget, WebTarget>... builderMethods) {
         WebTarget webTarget = getJerseyTest()
-            .target(getResourceBasePath())
-            .path(subPath);
+                .target(getResourceBasePath())
+                .path(subPath);
 
         for (Function<WebTarget, WebTarget> method : builderMethods) {
             webTarget = method.apply(webTarget);
         }
 
         final Invocation.Builder builder = webTarget
-            .request();
+                .request();
 
         final Response response = operation.apply(builder);
 
-        if (! isSuccessful(response.getStatus())) {
+        if (!isSuccessful(response.getStatus())) {
             throw new RuntimeException(LogUtil.message("Error: {} {}",
-                response.getStatus(), response));
+                    response.getStatus(), response));
         }
 
         final T_RESP entity = response.readEntity(responseType);
 
         if (expectedResponse != null) {
             Assertions.assertThat(entity)
-                .isEqualTo(expectedResponse);
+                    .isEqualTo(expectedResponse);
         }
 
         return entity;
     }
 
     private <T_REQ, T_RESP> T_RESP doTest(final Function<Invocation.Builder, Response> operation,
-                         final String subPath,
-                         final T_REQ requestEntity,
-                         final Class<T_RESP> responseType,
-                         final T_RESP expectedResponse,
-                         final Function<WebTarget, WebTarget>... builderMethods) {
+                                          final String subPath,
+                                          final T_REQ requestEntity,
+                                          final Class<T_RESP> responseType,
+                                          final T_RESP expectedResponse,
+                                          final Function<WebTarget, WebTarget>... builderMethods) {
         LOGGER.info("Calling GET on {}{}, expecting {}",
-            getResourceBasePath(), subPath, expectedResponse);
+                getResourceBasePath(), subPath, expectedResponse);
 
         WebTarget webTarget = getJerseyTest()
-            .target(getResourceBasePath())
-            .path(subPath);
+                .target(getResourceBasePath())
+                .path(subPath);
 
         for (Function<WebTarget, WebTarget> method : builderMethods) {
             webTarget = method.apply(webTarget);
         }
 
         Invocation.Builder builder = webTarget
-            .request();
+                .request();
 
         final Response response = operation.apply(builder);
 
@@ -382,7 +376,7 @@ public abstract class AbstractMultiNodeResourceTest<R extends RestResource> {
 
         if (expectedResponse != null) {
             Assertions.assertThat(response)
-                .isEqualTo(expectedResponse);
+                    .isEqualTo(expectedResponse);
         }
 
         return entity;
@@ -392,8 +386,8 @@ public abstract class AbstractMultiNodeResourceTest<R extends RestResource> {
     public WebTarget getWebTarget(final String subPath) {
 
         return getJerseyTest()
-            .target(getFullResourcePath())
-            .path(subPath);
+                .target(getFullResourcePath())
+                .path(subPath);
     }
 
     public static <T> T createNamedMock(final Class<T> clazz, final TestNode node) {
@@ -430,23 +424,23 @@ public abstract class AbstractMultiNodeResourceTest<R extends RestResource> {
                 @Override
                 protected Application configure() {
                     return new ResourceConfig()
-                        .register(resourceSupplier.get())
-                        .register(listener)
-                        .register(
-                            new LoggingFeature(
-                                java.util.logging.Logger.getLogger(LoggingFeature.DEFAULT_LOGGER_NAME),
-                                Level.INFO,
-                                LoggingFeature.Verbosity.PAYLOAD_ANY,
-                                LoggingFeature.DEFAULT_MAX_ENTITY_SIZE));
+                            .register(resourceSupplier.get())
+                            .register(listener)
+                            .register(
+                                    new LoggingFeature(
+                                            java.util.logging.Logger.getLogger(LoggingFeature.DEFAULT_LOGGER_NAME),
+                                            Level.INFO,
+                                            LoggingFeature.Verbosity.PAYLOAD_ANY,
+                                            LoggingFeature.DEFAULT_MAX_ENTITY_SIZE));
                 }
 
                 @Override
                 protected URI getBaseUri() {
                     return UriBuilder
-                        .fromUri("http://localhost")
-                        .port(port)
-                        .path(ResourcePaths.API_ROOT_PATH)
-                        .build();
+                            .fromUri("http://localhost")
+                            .port(port)
+                            .path(ResourcePaths.API_ROOT_PATH)
+                            .build();
                 }
             };
         }
@@ -481,8 +475,8 @@ public abstract class AbstractMultiNodeResourceTest<R extends RestResource> {
             if (o == null || getClass() != o.getClass()) return false;
             final TestNode testNode = (TestNode) o;
             return port == testNode.port &&
-                isEnabled == testNode.isEnabled &&
-                Objects.equals(nodeName, testNode.nodeName);
+                    isEnabled == testNode.isEnabled &&
+                    Objects.equals(nodeName, testNode.nodeName);
         }
 
         @Override
@@ -493,10 +487,10 @@ public abstract class AbstractMultiNodeResourceTest<R extends RestResource> {
         @Override
         public String toString() {
             return "TestNode{" +
-                "nodeName='" + nodeName + '\'' +
-                ", port=" + port +
-                ", isEnabled=" + isEnabled +
-                '}';
+                    "nodeName='" + nodeName + '\'' +
+                    ", port=" + port +
+                    ", isEnabled=" + isEnabled +
+                    '}';
         }
     }
 
@@ -517,7 +511,7 @@ public abstract class AbstractMultiNodeResourceTest<R extends RestResource> {
         @Override
         public RequestEventListener onRequest(final RequestEvent requestEvent) {
             LOGGER.debug("{} to {} request received on node {} ",
-                requestEvent.getType(), requestEvent.getUriInfo().getPath(), node.getNodeName());
+                    requestEvent.getType(), requestEvent.getUriInfo().getPath(), node.getNodeName());
 
             requestLog.add(requestEvent);
             return null;
