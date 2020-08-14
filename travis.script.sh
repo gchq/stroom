@@ -267,7 +267,8 @@ else
       copyFilesForProxyDockerBuild \
       buildDistribution \
       "${extraBuildArgs[@]}" \
-      -Dorg.gradle.parallel=false \
+      -Dorg.gradle.parallel=true \
+      -Dorg.gradle.daemon=false \
       --scan -s
 
 # Disable parallel build execution in travis. Note this is seprate to prallel test execution.
