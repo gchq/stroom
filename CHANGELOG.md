@@ -13,6 +13,10 @@ and this project adheres to [Semantic Versioning](http://semver.org/).
 
 * Fixed SQL statistics upsert statements for MySQL 5.7.
 
+* Issue **#1793** : Fixed Solr search query creation.
+
+* Issue **#1791** : Fixed Solr connection test response.
+
 
 ## [v6.1.28] - 2020-11-25
 
