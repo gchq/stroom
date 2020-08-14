@@ -232,19 +232,33 @@ jar {
 task buildUiPart1(dependsOn: ":stroom-ui:copyYarnBuild") {}
 task buildUiPart2(dependsOn: ":stroom-app-gwt:gwtCompile") {}
 task buildUiPart3(dependsOn: ":stroom-dashboard-gwt:gwtCompile") {}
-buildUiPart1.finalizedBy buildUiPart2
-buildUiPart2.finalizedBy buildUiPart3
-task buildUi {
-    dependsOn buildUiPart1
-    dependsOn buildUiPart2
-    dependsOn buildUiPart3
-}
+//task buildUiPart1Jar(dependsOn: ":stroom-ui:jar") {}
+//task buildUiPart2Jar(dependsOn: ":stroom-app-gwt:jar") {}
+//task buildUiPart3Jar(dependsOn: ":stroom-dashboard-gwt:jar") {}
+//
+//buildUiPart1Jar.finalizedBy buildUiPart1
+//buildUiPart2Jar.finalizedBy buildUiPart2
+//buildUiPart3Jar.finalizedBy buildUiPart3
+//
+//buildUiPart1.finalizedBy buildUiPart2
+//buildUiPart2.finalizedBy buildUiPart3
+//task buildUi {
+//    dependsOn buildUiPart1
+//    dependsOn buildUiPart2
+//    dependsOn buildUiPart3
+//}
+
+buildUiPart1.mustRunAfter  ":stroom-ui:jar"
+buildUiPart2.mustRunAfter  ":stroom-app-gwt:jar"
+buildUiPart3.mustRunAfter  ":stroom-dashboard-gwt:jar"
+buildUiPart2.mustRunAfter buildUiPart1
+buildUiPart3.mustRunAfter buildUiPart2
 
 shadowJar {
     // We want to run the tests before we build the fat jar.
     dependsOn test
     // We want to compile all GWT and React content before we build the fat jar.
-    dependsOn buildUi
+    dependsOn buildUiPart3
     // The jar needs to include the swagger.(json|yaml) files that swagger gen produces
     dependsOn generateSwaggerDocumentation
 

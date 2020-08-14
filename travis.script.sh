@@ -261,6 +261,7 @@ else
       -PgwtCompilerMaxHeap=1G \
       clean \
       build \
+      -x test \
       shadowJar \
       generateSwaggerDocumentation \
       copyFilesForStroomDockerBuild \
