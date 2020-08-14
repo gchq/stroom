@@ -576,6 +576,10 @@ td {
   background-color: rgba(255, 255, 255, 0.5);
 }
 
+.gwt-Label-disabled {
+  color: #666;
+}
+
 /* .gwt-TextBox,.gwt-PasswordTextBox,.gwt-TextArea,.gwt-DateBox,.stroom-DropDownTree { */
 /* 	padding: 1px; */
 /* } */

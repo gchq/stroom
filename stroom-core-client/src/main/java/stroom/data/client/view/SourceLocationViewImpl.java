@@ -3,16 +3,16 @@ package stroom.data.client.view;
 import stroom.data.client.presenter.SourceLocationPresenter.SourceLocationView;
 import stroom.data.shared.DataRange;
 import stroom.pipeline.shared.SourceLocation;
-import stroom.util.shared.DefaultLocation;
 import stroom.util.shared.RowCount;
+import stroom.widget.linecolinput.client.LineColInput;
 import stroom.widget.valuespinner.client.ValueSpinner;
 
 import com.google.gwt.dom.client.Style.Display;
 import com.google.gwt.uibinder.client.UiBinder;
 import com.google.gwt.uibinder.client.UiField;
-import com.google.gwt.user.client.ui.CheckBox;
 import com.google.gwt.user.client.ui.Grid;
 import com.google.gwt.user.client.ui.Label;
+import com.google.gwt.user.client.ui.RadioButton;
 import com.google.gwt.user.client.ui.Widget;
 import com.google.inject.Inject;
 import com.google.web.bindery.event.shared.EventBus;
@@ -20,15 +20,9 @@ import com.gwtplatform.mvp.client.ViewImpl;
 
 public class SourceLocationViewImpl extends ViewImpl implements SourceLocationView {
 
-    private static final int ZERO_TO_ONE_BASE_INCREMENT = 1;
+    private static final String RADIO_BUTTON_GROUP = "RadioBtnGrp";
 
     private final Widget widget;
-
-    @UiField
-    Grid sourceGrid;
-
-    @UiField
-    Grid characterGrid;
 
     // TODO @AT Do we want the meta id in here?
     @UiField
@@ -43,44 +37,57 @@ public class SourceLocationViewImpl extends ViewImpl implements SourceLocationVi
     Label segmentTitleLbl;
     @UiField
     ValueSpinner segmentNoField;
-//    @UiField
-//    ValueSpinner segmentNoToField;
     @UiField
     Label segmentCountLbl;
+    @UiField
+    Label lblTotalCharCount;
 
-    // From
     @UiField
-    CheckBox  lineColFromCheckBox;
-    @UiField
-    ValueSpinner lineNoFromSpinner; // one based
-    @UiField
-    ValueSpinner colNoFromSpinner; // one based
-    @UiField
-    CheckBox  charOffsetFromCheckBox;
-    @UiField
-    ValueSpinner charOffsetFromSpinner; // one based
-    @UiField
-    Label charCountFromLbl;
+    Grid grid;
 
-    // To
+    @UiField(provided = true)
+    RadioButton radioLocationToLocation;
     @UiField
-    CheckBox  lineColToCheckBox;
+    Label lblLineColFrom1;
     @UiField
-    ValueSpinner lineNoToSpinner;
+    LineColInput lineColFrom1;
     @UiField
-    ValueSpinner colNoToSpinner;
+    Label lblLineColTo;
     @UiField
-    CheckBox  charOffsetToCheckBox;
-    @UiField
-    ValueSpinner charOffsetToSpinner; // one based
-    @UiField
-    Label charCountToLbl;
+    LineColInput lineColTo;
 
-    // Size
+    @UiField(provided = true)
+    RadioButton radioLocationWithCount;
     @UiField
-    CheckBox  charCountCheckBox;
+    Label lblLineColFrom2;
     @UiField
-    ValueSpinner charCountSpinner;
+    LineColInput lineColFrom2;
+    @UiField
+    Label lblCharCountSpinner1;
+    @UiField
+    ValueSpinner charCountSpinner1;
+
+    @UiField(provided = true)
+    RadioButton radioOffsetToOffset;
+    @UiField
+    Label lblCharOffsetFromSpinner1;
+    @UiField
+    ValueSpinner charOffsetFromSpinner1; // one based
+    @UiField
+    Label lblCharOffsetToSpinner1;
+    @UiField
+    ValueSpinner charOffsetToSpinner1; // one based
+
+    @UiField(provided = true)
+    RadioButton radioOffsetWithCount;
+    @UiField
+    Label lblCharOffsetFromSpinner2;
+    @UiField
+    ValueSpinner charOffsetFromSpinner2; // one based
+    @UiField
+    Label lblCharCountSpinner2;
+    @UiField
+    ValueSpinner charCountSpinner2;
 
     private RowCount<Long> partCount = RowCount.of(0L, false);
     private RowCount<Long> segmentCount = RowCount.of(0L, false);
@@ -89,6 +96,11 @@ public class SourceLocationViewImpl extends ViewImpl implements SourceLocationVi
     @Inject
     public SourceLocationViewImpl(final EventBus eventBus,
                                   final Binder binder) {
+
+        radioLocationToLocation = new RadioButton(RADIO_BUTTON_GROUP);
+        radioLocationWithCount = new RadioButton(RADIO_BUTTON_GROUP);
+        radioOffsetToOffset = new RadioButton(RADIO_BUTTON_GROUP);
+        radioOffsetWithCount = new RadioButton(RADIO_BUTTON_GROUP);
 
         widget = binder.createAndBindUi(this);
 
@@ -101,51 +113,60 @@ public class SourceLocationViewImpl extends ViewImpl implements SourceLocationVi
         idField.setValue(1);
         partNoField.setValue(1);
         segmentNoField.setValue(1);
-//        segmentNoToField.setValue(1);
 
         partTitleLbl.setText("Part Number:");
         segmentTitleLbl.setText("Record Number:");
         partCountLbl.setText("");
         segmentCountLbl.setText("");
 
-        lineColFromCheckBox.addValueChangeHandler(event -> {
-            lineNoFromSpinner.setEnabled(event.getValue());
-            colNoFromSpinner.setEnabled(event.getValue());
-            colNoFromSpinner.getTextBox().setValue("");
-        });
-        charOffsetFromCheckBox.addValueChangeHandler(event ->
-                charOffsetFromSpinner.setEnabled(event.getValue()));
-
-        lineColToCheckBox.addValueChangeHandler(event -> {
-            lineNoToSpinner.setEnabled(event.getValue());
-            colNoToSpinner.setEnabled(event.getValue());
-        });
-
-        charOffsetToCheckBox.addValueChangeHandler(event ->
-                charOffsetToSpinner.setEnabled(event.getValue()));
-
-        charCountCheckBox.addValueChangeHandler(event ->
-                charCountSpinner.setEnabled(event.getValue()));
+        radioLocationToLocation.addValueChangeHandler(event -> updateRadioGroup());
+        radioLocationWithCount.addValueChangeHandler(event -> updateRadioGroup());
+        radioOffsetToOffset.addValueChangeHandler(event -> updateRadioGroup());
+        radioOffsetWithCount.addValueChangeHandler(event -> updateRadioGroup());
+        updateRadioGroup();
     }
+
+    private void updateRadioGroup() {
+        lineColFrom1.setEnabled(radioLocationToLocation.getValue());
+        lblLineColFrom1.setStyleDependentName("disabled", !radioLocationToLocation.getValue());
+        lineColTo.setEnabled(radioLocationToLocation.getValue());
+        lblLineColTo.setStyleDependentName("disabled", !radioLocationToLocation.getValue());
+
+        lineColFrom2.setEnabled(radioLocationWithCount.getValue());
+        lblLineColFrom2.setStyleDependentName("disabled", !radioLocationWithCount.getValue());
+        charCountSpinner1.setEnabled(radioLocationWithCount.getValue());
+        lblCharCountSpinner1.setStyleDependentName("disabled", !radioLocationWithCount.getValue());
+
+        charOffsetFromSpinner1.setEnabled(radioOffsetToOffset.getValue());
+        lblCharOffsetFromSpinner1.setStyleDependentName("disabled", !radioOffsetToOffset.getValue());
+        charOffsetToSpinner1.setEnabled(radioOffsetToOffset.getValue());
+        lblCharOffsetToSpinner1.setStyleDependentName("disabled", !radioOffsetToOffset.getValue());
+
+        charOffsetFromSpinner2.setEnabled(radioOffsetWithCount.getValue());
+        lblCharOffsetFromSpinner2.setStyleDependentName("disabled", !radioOffsetWithCount.getValue());
+        charCountSpinner2.setEnabled(radioOffsetWithCount.getValue());
+        lblCharCountSpinner2.setStyleDependentName("disabled", !radioOffsetWithCount.getValue());
+   }
 
     private void setInitialMinMax() {
         idField.setMin(1);
         partNoField.setMin(1);
         segmentNoField.setMin(1);
-//        segmentNoToField.setMin(1);
-        lineNoFromSpinner.setMin(1);
-        colNoFromSpinner.setMin(1);
-        lineNoToSpinner.setMin(1);
-        colNoToSpinner.setMin(1);
 
         idField.setMax(Long.MAX_VALUE);
         partNoField.setMax(Long.MAX_VALUE);
         segmentNoField.setMax(Long.MAX_VALUE);
-//        segmentNoToField.setMax(Long.MAX_VALUE);
-        lineNoFromSpinner.setMax(Long.MAX_VALUE);
-        colNoFromSpinner.setMax(Long.MAX_VALUE);
-        lineNoToSpinner.setMax(Long.MAX_VALUE);
-        colNoToSpinner.setMax(Long.MAX_VALUE);
+
+        charCountSpinner1.setMin(1);
+        charCountSpinner1.setMax(Long.MAX_VALUE);
+        charCountSpinner2.setMin(1);
+        charCountSpinner2.setMax(Long.MAX_VALUE);
+        charOffsetFromSpinner1.setMin(1);
+        charOffsetFromSpinner1.setMax(Long.MAX_VALUE);
+        charOffsetFromSpinner2.setMin(1);
+        charOffsetFromSpinner2.setMax(Long.MAX_VALUE);
+        charOffsetToSpinner1.setMin(1);
+        charOffsetToSpinner1.setMax(Long.MAX_VALUE);
     }
 
     @Override
@@ -155,34 +176,30 @@ public class SourceLocationViewImpl extends ViewImpl implements SourceLocationVi
 
     @Override
     public SourceLocation getSourceLocation() {
-        DataRange.Builder dataRangeBuilder = DataRange.builder();
-
-        if (lineColFromCheckBox.getValue()) {
-            dataRangeBuilder.fromLocation(DefaultLocation.of(
-                    lineNoFromSpinner.getValue(),
-                    colNoFromSpinner.getValue()));
-        }
-        if (charOffsetFromCheckBox.getValue()) {
-            dataRangeBuilder.fromCharOffset(toZeroBased(charOffsetFromSpinner.getValue()));
-        }
-        if (lineColToCheckBox.getValue()) {
-            dataRangeBuilder.toLocation(DefaultLocation.of(
-                    lineNoToSpinner.getValue(),
-                    colNoToSpinner.getValue()));
-        }
-        if (charOffsetToCheckBox.getValue()) {
-            dataRangeBuilder.toCharOffset(toZeroBased(charOffsetToSpinner.getValue()));
-        }
-        if (charCountCheckBox.getValue()) {
-            dataRangeBuilder.withLength((long) charCountSpinner.getValue());
-        }
         final SourceLocation.Builder sourceLocationBuilder = SourceLocation.builder(idField.getValue());
+        final DataRange.Builder dataRangeBuilder = DataRange.builder();
 
         if (partNoField.isEnabled()) {
             sourceLocationBuilder.withPartNo(toZeroBased(partNoField.getValue()));
         }
         if (segmentNoField.isEnabled()) {
             sourceLocationBuilder.withSegmentNumber(toZeroBased(segmentNoField.getValue()));
+        }
+
+        if (radioLocationToLocation.getValue()) {
+            lineColFrom1.getLocation().ifPresent(dataRangeBuilder::fromLocation);
+            lineColTo.getLocation().ifPresent(dataRangeBuilder::toLocation);
+        } else if (radioLocationWithCount.getValue()) {
+            lineColFrom2.getLocation().ifPresent(dataRangeBuilder::fromLocation);
+            dataRangeBuilder.withLength((long) charCountSpinner1.getValue());
+        } else if (radioOffsetToOffset.getValue()) {
+            dataRangeBuilder
+                    .fromCharOffset((long) charOffsetFromSpinner1.getValue())
+                    .toCharOffset((long) charOffsetToSpinner1.getValue());
+        } else if (radioOffsetWithCount.getValue()) {
+            dataRangeBuilder
+                    .fromCharOffset((long) charOffsetFromSpinner2.getValue())
+                    .withLength((long) charCountSpinner2.getValue());
         }
 
         return sourceLocationBuilder
@@ -193,65 +210,49 @@ public class SourceLocationViewImpl extends ViewImpl implements SourceLocationVi
     @Override
     public void setSourceLocation(final SourceLocation sourceLocation) {
         setEnabledAndCheckedStates(sourceLocation);
+        updateRadioGroup();
 
         idField.setValue(sourceLocation.getId());
         partNoField.setValue(toOneBased(sourceLocation.getPartNo()));
         segmentNoField.setValue(toOneBased(sourceLocation.getSegmentNo()));
 
         sourceLocation.getOptDataRange().ifPresent(dataRange -> {
-            lineColFromCheckBox.setValue(true);
             dataRange.getOptLocationFrom().ifPresent(location -> {
-                lineNoFromSpinner.setValue(location.getLineNo());
-                colNoFromSpinner.setValue(location.getColNo());
-                    });
-            dataRange.getOptCharOffsetFrom().ifPresent(offset ->
-                    charOffsetFromSpinner.setValue(toOneBased(offset)));
-
-            dataRange.getOptLocationTo().ifPresent(location -> {
-                lineNoToSpinner.setValue(location.getLineNo());
-                colNoToSpinner.setValue(location.getColNo());
+                lineColFrom1.setValue(location);
+                lineColFrom2.setValue(location);
             });
-            dataRange.getOptCharOffsetTo().ifPresent(offset ->
-                    charOffsetToSpinner.setValue(toOneBased(offset)));
+            dataRange.getOptCharOffsetFrom().ifPresent(offset -> {
+                charOffsetFromSpinner1.setValue(toOneBased(offset));
+                charOffsetFromSpinner2.setValue(toOneBased(offset));
+            });
+            dataRange.getOptLocationTo().ifPresent(location -> {
+                lineColTo.setValue(location);
+            });
+            dataRange.getOptCharOffsetTo().ifPresent(offset -> {
+                charOffsetToSpinner1.setValue(toOneBased(offset));
+            });
 
-            dataRange.getOptLength().ifPresent(charCountSpinner::setValue);
+            dataRange.getOptLength().ifPresent(count -> {
+                charCountSpinner1.setValue(count);
+                charCountSpinner2.setValue(count);
+            });
         });
     }
 
     private void setEnabledAndCheckedStates(final SourceLocation sourceLocation) {
-        final boolean hasLineColFrom = sourceLocation.getOptDataRange()
+        if (sourceLocation.getOptDataRange()
                 .flatMap(DataRange::getOptLocationFrom)
-                .isPresent();
-        lineColFromCheckBox.setValue(hasLineColFrom);
-        lineNoFromSpinner.setEnabled(hasLineColFrom);
-        colNoFromSpinner.setEnabled(hasLineColFrom);
-
-        final boolean hasCharOffsetFrom = sourceLocation.getOptDataRange()
-                .flatMap(DataRange::getOptCharOffsetFrom)
-                .isPresent();
-        charOffsetFromCheckBox.setValue(hasCharOffsetFrom);
-        charOffsetFromSpinner.setEnabled(hasCharOffsetFrom);
-
-        final boolean hasLineColTo = sourceLocation.getOptDataRange()
-                .flatMap(DataRange::getOptLocationTo)
-                .isPresent();
-        lineColToCheckBox.setValue(hasLineColTo);
-        lineNoToSpinner.setEnabled(hasLineColTo);
-        colNoToSpinner.setEnabled(hasLineColTo);
-
-        final boolean hasCharOffsetTo = sourceLocation.getOptDataRange()
-                .flatMap(DataRange::getOptCharOffsetTo)
-                .isPresent();
-
-        charOffsetToCheckBox.setValue(hasCharOffsetTo);
-        charOffsetToSpinner.setEnabled(hasCharOffsetTo);
-
-        final boolean hasCharCountCheckBox = sourceLocation.getOptDataRange()
-                .flatMap(DataRange::getOptLength)
-                .isPresent();
-
-        charCountCheckBox.setValue(hasCharCountCheckBox);
-        charCountSpinner.setEnabled(hasCharCountCheckBox);
+                .isPresent()) {
+            radioLocationToLocation.setValue(true, true);
+            radioLocationWithCount.setValue(false, true);
+            radioOffsetToOffset.setValue(false, true);
+            radioOffsetWithCount.setValue(false, true);
+        } else {
+            radioLocationToLocation.setValue(false, true);
+            radioLocationWithCount.setValue(false, true);
+            radioOffsetToOffset.setValue(false, true);
+            radioOffsetWithCount.setValue(true, true);
+        }
     }
 
     private String getCountText(final RowCount<Long> count) {
@@ -263,8 +264,9 @@ public class SourceLocationViewImpl extends ViewImpl implements SourceLocationVi
     private void updateCountLabels() {
         partCountLbl.setText(getCountText(partCount));
         segmentCountLbl.setText(getCountText(segmentCount));
-        charCountFromLbl.setText(getCountText(totalCharCount));
-        charCountToLbl.setText(getCountText(totalCharCount));
+        lblTotalCharCount.setText(totalCharCount.isExact()
+                ? totalCharCount.getCount().toString()
+                : "?");
     }
 
     @Override
@@ -293,7 +295,9 @@ public class SourceLocationViewImpl extends ViewImpl implements SourceLocationVi
         final Display display = isVisible
                 ? Display.TABLE
                 : Display.NONE;
-        characterGrid.getElement().getStyle().setDisplay(display);
+        // TODO @AT Don't think we need this as it was only used for marker data which should not use
+        // this screen
+//        characterGrid.getElement().getStyle().setDisplay(display);
     }
 
     @Override
@@ -324,13 +328,17 @@ public class SourceLocationViewImpl extends ViewImpl implements SourceLocationVi
     public void setTotalCharsCount(final RowCount<Long> totalCharCount) {
         this.totalCharCount = totalCharCount;
         if (totalCharCount.isExact() && totalCharCount.getCount() != null) {
-            charOffsetFromSpinner.setMax(totalCharCount.getCount());
-            charOffsetToSpinner.setMax(totalCharCount.getCount());
-            charCountSpinner.setMax(totalCharCount.getCount());
+            charOffsetFromSpinner1.setMax(totalCharCount.getCount());
+            charOffsetFromSpinner2.setMax(totalCharCount.getCount());
+            charOffsetToSpinner1.setMax(totalCharCount.getCount());
+            charCountSpinner1.setMax(totalCharCount.getCount());
+            charCountSpinner2.setMax(totalCharCount.getCount());
         } else {
-            charOffsetFromSpinner.setMax(Long.MAX_VALUE);
-            charOffsetToSpinner.setMax(Long.MAX_VALUE);
-            charCountSpinner.setMax(Long.MAX_VALUE);
+            charOffsetFromSpinner1.setMax(Long.MAX_VALUE);
+            charOffsetFromSpinner2.setMax(Long.MAX_VALUE);
+            charOffsetToSpinner1.setMax(Long.MAX_VALUE);
+            charCountSpinner1.setMax(Long.MAX_VALUE);
+            charCountSpinner2.setMax(Long.MAX_VALUE);
         }
         updateCountLabels();
     }

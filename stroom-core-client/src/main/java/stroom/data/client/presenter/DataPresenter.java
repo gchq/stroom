@@ -796,23 +796,9 @@ public class DataPresenter extends MyPresenterWidget<DataPresenter.DataView> imp
 
     private void refreshFormatButtons(final AbstractFetchDataResult result) {
         formatToggleBtn.setVisible(
-                !data.isEmpty() &&
+                data != null && !data.isEmpty() &&
                         AceEditorMode.XML.equals(editorMode) &&
                         (DataType.NON_SEGMENTED.equals(curDataType) || DataType.SEGMENTED.equals(curDataType)));
-
-
-//        if (AceEditorMode.XML.equals(editorMode) &&
-//                (DataType.NON_SEGMENTED.equals(curDataType) || DataType.SEGMENTED.equals(curDataType))) {
-////            rawBtn.setVisible(true);
-////            formattedBtn.setVisible(true);
-//            formatToggleBtn.setVisible(true);
-////            rawBtn.setEnabled(isFormatted);
-////            formattedBtn.setEnabled(!isFormatted);
-//        } else {
-//            formatToggleBtn.setVisible(false);
-////            rawBtn.setVisible(false);
-////            formattedBtn.setVisible(false);
-//        }
     }
 
     private void refreshHighlights(final AbstractFetchDataResult result) {

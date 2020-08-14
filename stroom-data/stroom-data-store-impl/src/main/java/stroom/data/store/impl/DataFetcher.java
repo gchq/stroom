@@ -604,7 +604,7 @@ public class DataFetcher {
         int startColNo = -1;
         long charsInRangeCount = 0;
 
-        long startOfCurrLineCharOffset = -1;
+        long startOfCurrLineCharOffset = 0;
 
         int currBufferLen = 0;
         char currChar = (char) -1;

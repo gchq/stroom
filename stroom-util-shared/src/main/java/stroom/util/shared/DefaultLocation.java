@@ -23,6 +23,7 @@ import com.fasterxml.jackson.annotation.JsonProperty;
 import com.fasterxml.jackson.annotation.JsonPropertyOrder;
 
 import java.util.Objects;
+import java.util.Optional;
 
 @JsonPropertyOrder({"lineNo", "colNo"})
 @JsonInclude(Include.NON_NULL)
@@ -88,5 +89,22 @@ public class DefaultLocation implements Location {
         return lineNo +
                 ":" +
                 colNo;
+    }
+
+    public static Optional<Location> parse(final String value) {
+        if (value == null || value.isEmpty()) {
+            return Optional.empty();
+        } else {
+            final String[] parts = value.split(":");
+            if (parts.length == 1) {
+                return Optional.of(DefaultLocation.of(Integer.parseInt(parts[0]), 1));
+            } else if (parts.length == 2) {
+                return Optional.of(DefaultLocation.of(
+                        Integer.parseInt(parts[0]),
+                        Integer.parseInt(parts[1])));
+            } else {
+                throw new NumberFormatException("Value [" + value + "] is not valid");
+            }
+        }
     }
 }
