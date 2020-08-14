@@ -14,7 +14,6 @@ plugins {
     //id "io.swagger.core.v3.swagger-gradle-plugin" version "2.1.1"
 }
 
-
 import org.reflections.Reflections
 import org.reflections.scanners.SubTypesScanner
 import org.reflections.scanners.TypeAnnotationsScanner
@@ -28,7 +27,7 @@ ext.moduleName = 'stroom.app'
 def uiDir = project.file('src/main/resources/ui')
 def swaggerDir = "${uiDir}/noauth/swagger"
 def restResourceClassNames = []
-def jarName = 'stroom-app.jar'
+//def jarName = 'stroom-app.jar'
 def fatJarName = 'stroom-app-all.jar'
 def sendToStroomScriptVersion = 'send-to-stroom-v2.0'
 def releaseBuildDir = 'build/release'
@@ -225,7 +224,7 @@ jar {
                 "Main-Class": "stroom.app.App"
         )
     }
-    archiveName jarName
+//    archiveName jarName
     exclude '**/gwt-unitCache'
 }
 
@@ -451,9 +450,16 @@ task copyJar(type: Copy) {
     into "${releaseBuildDir}/bin"
 }
 
+task copyCommonSupportingFiles(type: Copy) {
+    from '../dist'
+    into releaseBuildDir
+}
+
 task copySupportingFiles(type: Copy) {
+    dependsOn copyCommonSupportingFiles
+
     from 'src/dist'
-    into releaseBuildDir 
+    into releaseBuildDir
 
     doLast {
         // This is a sym-link so it seems to go into the zip with +x perms
