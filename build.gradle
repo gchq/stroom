@@ -44,9 +44,9 @@ plugins {
 //    id "com.vanniktech.dependency.graph.generator" version "0.5.0"
 }
 
-wrapper {
-    gradleVersion = '5.6.4'
-}
+//wrapper {
+//    gradleVersion = '5.6.4'
+//}
 
 apply plugin: 'ca.cutterslade.analyze'
 apply plugin: 'de.undercouch.download'
