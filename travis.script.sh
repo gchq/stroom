@@ -270,7 +270,8 @@ else
       "${extraBuildArgs[@]}" \
       -Dorg.gradle.parallel=true \
       -Dorg.gradle.daemon=false \
-      --scan -s
+      --scan -s \
+      --info
 
 # Disable parallel build execution in travis. Note this is seprate to prallel test execution.
 # -Dorg.gradle.parallel=false \
