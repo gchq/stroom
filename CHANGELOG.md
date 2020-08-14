@@ -7,7 +7,9 @@ and this project adheres to [Semantic Versioning](http://semver.org/).
 
 ## [Unreleased]
 
-Update Gradle to v6.6
+* Update Gradle to v6.6
+
+* Revert back to full build.
 
 
 ## [v7.0-beta.44] - 2020-08-14
