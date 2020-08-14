@@ -229,12 +229,12 @@ jar {
 }
 
 // We often run out of memory when running the UI builds in parallel so create tasks that will build them one after another.
-task copyYarnBuild(dependsOn: ":stroom-ui:copyYarnBuild") {}
-task stroomAppGWTCompile(dependsOn: ":stroom-app-gwt:gwtCompile") {}
-task stroomDashboardGWTCompile(dependsOn: ":stroom-dashboard-gwt:gwtCompile") {}
-task buildUi(dependsOn: copyYarnBuild) {}
-copyYarnBuild.finalizedBy stroomAppGWTCompile
-stroomAppGWTCompile.finalizedBy stroomDashboardGWTCompile
+task buildUiPart1(dependsOn: ":stroom-ui:copyYarnBuild") {}
+task buildUiPart2(dependsOn: ":stroom-app-gwt:gwtCompile") {}
+task buildUiPart3(dependsOn: ":stroom-dashboard-gwt:gwtCompile") {}
+buildUiPart1.finalizedBy buildUiPart2
+buildUiPart2.finalizedBy buildUiPart3
+task buildUi(dependsOn: buildUiPart1) {}
 
 shadowJar {
     // We want to run the tests before we build the fat jar.
