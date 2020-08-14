@@ -234,7 +234,11 @@ task buildUiPart2(dependsOn: ":stroom-app-gwt:gwtCompile") {}
 task buildUiPart3(dependsOn: ":stroom-dashboard-gwt:gwtCompile") {}
 buildUiPart1.finalizedBy buildUiPart2
 buildUiPart2.finalizedBy buildUiPart3
-task buildUi(dependsOn: buildUiPart1) {}
+task buildUi {
+    dependsOn buildUiPart1
+    dependsOn buildUiPart2
+    dependsOn buildUiPart3
+}
 
 shadowJar {
     // We want to run the tests before we build the fat jar.
@@ -257,9 +261,9 @@ shadowJar {
     exclude '**/gwt-unitCache'
 }
 // Make sure GWT compilation doesn't run before tests.
-tasks.getByPath(':stroom-app-gwt:gwtClean').mustRunAfter test
-tasks.getByPath(':stroom-dashboard-gwt:gwtClean').mustRunAfter test
-tasks.getByPath(':stroom-ui:removeYarnBuild').mustRunAfter test
+//tasks.getByPath(':stroom-app-gwt:gwtClean').mustRunAfter test
+//tasks.getByPath(':stroom-dashboard-gwt:gwtClean').mustRunAfter test
+//tasks.getByPath(':stroom-ui:removeYarnBuild').mustRunAfter test
 // Make sure GWT compilation doesn't run before processResources.
 tasks.getByPath(':stroom-app-gwt:gwtClean').mustRunAfter processResources
 tasks.getByPath(':stroom-dashboard-gwt:gwtClean').mustRunAfter processResources
