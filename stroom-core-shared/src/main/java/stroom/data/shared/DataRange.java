@@ -33,9 +33,6 @@ public class DataRange {
     @JsonProperty
     private final Long length; // number of chars from the start position
 
-    // TODO could add a totalLines prop so you can set a start point and a number of lines to include
-    //   the start point.
-
     // data range limited by a hard max length set in config to protect UI
 
     @JsonCreator

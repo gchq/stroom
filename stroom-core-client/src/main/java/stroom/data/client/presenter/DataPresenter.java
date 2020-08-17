@@ -645,6 +645,14 @@ public class DataPresenter extends MyPresenterWidget<DataPresenter.DataView> imp
         markers = null;
         startLineNo = 1;
 
+        // The range returned may differ from that requested so update it.
+        if (result != null
+                && result.getSourceLocation() != null
+                && result.getSourceLocation().getOptDataRange().isPresent()) {
+                currentDataRange = result.getSourceLocation()
+                        .getDataRange();
+        }
+
         if (result != null) {
             if (result instanceof FetchMarkerResult) {
                 final FetchMarkerResult fetchMarkerResult = (FetchMarkerResult) result;
@@ -1258,21 +1266,24 @@ public class DataPresenter extends MyPresenterWidget<DataPresenter.DataView> imp
 
         @Override
         public void showHeadCharacters() {
-            currentDataRange = DataRange.from(0, MAX_INITIAL_CHARS - 1);
+            currentDataRange = DataRange.from(0, MAX_INITIAL_CHARS);
             update(false);
         }
 
         @Override
         public void advanceCharactersForward() {
-            if (Long.valueOf(0).equals(getCurrentDataRange().getCharOffsetFrom())) {
-                currentDataRange = DataRange.from(
-                        getCurrentDataRange().getCharOffsetFrom() + MAX_INITIAL_CHARS,
-                        MAX_CHARS_PER_FETCH);
-            } else {
-                currentDataRange = DataRange.from(
-                        getCurrentDataRange().getCharOffsetFrom() + MAX_CHARS_PER_FETCH,
-                        MAX_CHARS_PER_FETCH);
-            }
+            currentDataRange = DataRange.from(
+                    getCurrentDataRange().getCharOffsetTo() + 1,
+                    MAX_CHARS_PER_FETCH);
+//            if (Long.valueOf(0).equals(getCurrentDataRange().getCharOffsetFrom())) {
+//                currentDataRange = DataRange.from(
+//                        getCurrentDataRange().getCharOffsetFrom() + MAX_INITIAL_CHARS,
+//                        MAX_CHARS_PER_FETCH);
+//            } else {
+//                currentDataRange = DataRange.from(
+//                        getCurrentDataRange().getCharOffsetFrom() + MAX_CHARS_PER_FETCH,
+//                        MAX_CHARS_PER_FETCH);
+//            }
             update(false);
         }
 

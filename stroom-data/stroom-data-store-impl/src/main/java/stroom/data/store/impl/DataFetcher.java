@@ -85,7 +85,12 @@ import java.util.List;
 public class DataFetcher {
     private static final Logger LOGGER = LoggerFactory.getLogger(DataFetcher.class);
 
-    private static final String TRUNCATED_TEXT = "...[TRUNCATED IN USER INTERFACE]...";
+    // TODO @AT Need to implement showing the data has been truncated, either
+    //   here by modifying the returned data or by setting some flags in the
+    //   result obj to indicate there is more data at the start and/or end
+    //   and let the UI do it.
+    private static final String TRUNCATED_TEXT = "";
+//    private static final String TRUNCATED_TEXT = "...[TRUNCATED IN USER INTERFACE]...";
 //    private static final int MAX_LINE_LENGTH = 1000;
     /**
      * How big our buffers are. This should always be a multiple of 8.
@@ -310,6 +315,8 @@ public class DataFetcher {
                         return createErrorResult(sourceLocation, "This data may no longer exist.");
                     }
                 }
+
+                LOGGER.error("Error fetching data", e);
 
                 return createErrorResult(sourceLocation, e.getMessage());
             }
@@ -653,6 +660,10 @@ public class DataFetcher {
                             // or requested range continued to the end of the line
                             // or we have blown the max chars limit
                             reachedEndOfRange = true;
+                            if (currChar == '\n') {
+                                // need to ensure we count the line break in our offset position.
+                                currCharOffset++;
+                            }
                             break;
                         } else {
                             // Inside the requested range
@@ -692,6 +703,7 @@ public class DataFetcher {
                         }
                         if (!foundRange) {
                             // Not found our requested range yet so reset the current line so far
+                            // to the offset of the next char
                             startOfCurrLineCharOffset = currCharOffset;
                             strBuilderLineSoFar.setLength(0);
                         }
@@ -705,13 +717,14 @@ public class DataFetcher {
         final StringBuilder strBuilderResultRange = new StringBuilder();
 
         if (isMultiLine && startLineNo != 1) {
-            strBuilderResultRange.append(TRUNCATED_TEXT + "\n");
+            // TODO @AT See TODO next to TRUNCATED_TEXT declaration
+//            strBuilderResultRange.append(TRUNCATED_TEXT + "\n");
             startLineNo--;
         } else if (!isMultiLine && startCharOffset != 0) {
             strBuilderResultRange.append(TRUNCATED_TEXT);
         }
 
-        if (isMultiLine && strBuilderRange.charAt(0) != '\n') {
+        if (isMultiLine && strBuilderRange.length() > 0 && strBuilderRange.charAt(0) != '\n') {
             startCharOffset = startOfCurrLineCharOffset;
             startColNo = 1;
             // Tack on the beginning of the line up to the range
@@ -728,7 +741,8 @@ public class DataFetcher {
             if (currChar == '\n') {
                 strBuilderResultRange.append(TRUNCATED_TEXT);
             } else {
-                strBuilderResultRange.append("\n" + TRUNCATED_TEXT);
+                // TODO @AT See TODO next to TRUNCATED_TEXT declaration
+//                strBuilderResultRange.append("\n" + TRUNCATED_TEXT);
             }
         } else if (!isMultiLine && !isTotalPageableItemsExact) {
             strBuilderResultRange.append(TRUNCATED_TEXT);
@@ -1000,9 +1014,6 @@ public class DataFetcher {
         private final SourceLocation sourceLocation;
         private final String rawData;
 
-//        private OffsetRange<Long> pageItemsRange;
-//        private RowCount<Long> totalPageableItems;
-
         private OffsetRange<Long> itemRange; // part/segment/marker
         private RowCount<Long> totalItemCount; // part/segment/marker
         private RowCount<Long> totalCharacterCount; // Total chars in part/segment
@@ -1020,23 +1031,6 @@ public class DataFetcher {
         public String getRawData() {
             return rawData;
         }
-
-//        public OffsetRange<Long> getPageItemsRange() {
-//            return pageItemsRange;
-//        }
-
-//        public void setPageItemsRange(final OffsetRange<Long> pageItemsRange) {
-//            this.pageItemsRange = pageItemsRange;
-//        }
-//
-//        public RowCount<Long> getTotalPageableItems() {
-//            return totalPageableItems;
-//        }
-//
-//        public void setTotalPageableItems(final RowCount<Long> totalPageableItems) {
-//            this.totalPageableItems = totalPageableItems;
-//        }
-
 
         public OffsetRange<Long> getItemRange() {
             return itemRange;
