@@ -7,7 +7,10 @@ and this project adheres to [Semantic Versioning](http://semver.org/).
 
 ## [Unreleased]
 
+* Issue **#1702** : Fix namespace handling in XML reference data values.
+
 * Issue **#1789** : Prevent dashboards without an extraction pipeline showing as "Missing" on dependency screen.
+
 
 ## [v7.0-beta.45] - 2020-08-14
 
