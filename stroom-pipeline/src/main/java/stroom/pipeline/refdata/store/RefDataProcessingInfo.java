@@ -17,20 +17,28 @@
 
 package stroom.pipeline.refdata.store;
 
+import com.fasterxml.jackson.annotation.JsonCreator;
+import com.fasterxml.jackson.annotation.JsonProperty;
+
 import java.time.Instant;
 import java.util.Objects;
 
 public class RefDataProcessingInfo {
 
+    @JsonProperty
     private final long createTimeEpochMs;
+    @JsonProperty
     private final long lastAccessedTimeEpochMs;
+    @JsonProperty
     private final long effectiveTimeEpochMs;
+    @JsonProperty
     private final ProcessingState processingState;
 
-    public RefDataProcessingInfo(final long createTimeEpochMs,
-                                 final long lastAccessedTimeEpochMs,
-                                 final long effectiveTimeEpochMs,
-                                 final ProcessingState processingState) {
+    @JsonCreator
+    public RefDataProcessingInfo(@JsonProperty("createTimeEpochMs") final long createTimeEpochMs,
+                                 @JsonProperty("lastAccessedTimeEpochMs") final long lastAccessedTimeEpochMs,
+                                 @JsonProperty("effectiveTimeEpochMs") final long effectiveTimeEpochMs,
+                                 @JsonProperty("processingState") final ProcessingState processingState) {
         this.createTimeEpochMs = createTimeEpochMs;
         this.lastAccessedTimeEpochMs = lastAccessedTimeEpochMs;
         this.effectiveTimeEpochMs = effectiveTimeEpochMs;

@@ -25,8 +25,11 @@ import stroom.pipeline.refdata.store.RefDataLoader;
 import stroom.pipeline.refdata.store.RefDataProcessingInfo;
 import stroom.pipeline.refdata.store.RefDataStore;
 import stroom.pipeline.refdata.store.RefDataValue;
+import stroom.pipeline.refdata.store.RefDataValueConverter;
+import stroom.pipeline.refdata.store.RefStoreEntry;
 import stroom.pipeline.refdata.store.RefStreamDefinition;
 import stroom.pipeline.refdata.store.offheapstore.databases.KeyValueStoreDb;
+import stroom.pipeline.refdata.store.offheapstore.databases.KeyValueStoreDb.Factory;
 import stroom.pipeline.refdata.store.offheapstore.databases.MapUidForwardDb;
 import stroom.pipeline.refdata.store.offheapstore.databases.MapUidReverseDb;
 import stroom.pipeline.refdata.store.offheapstore.databases.ProcessingInfoDb;
@@ -61,6 +64,7 @@ import io.vavr.Tuple4;
 import org.apache.hadoop.hbase.util.Bytes;
 import org.lmdbjava.Env;
 import org.lmdbjava.EnvFlags;
+import org.lmdbjava.KeyRange;
 import org.lmdbjava.Txn;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -76,8 +80,10 @@ import java.nio.file.Paths;
 import java.time.Duration;
 import java.time.Instant;
 import java.time.temporal.ChronoUnit;
+import java.util.ArrayList;
 import java.util.Comparator;
 import java.util.HashMap;
+import java.util.List;
 import java.util.Map;
 import java.util.Objects;
 import java.util.Optional;
@@ -118,6 +124,9 @@ public class RefDataOffHeapStore extends AbstractRefDataStore implements RefData
     private final MapDefinitionUIDStore mapDefinitionUIDStore;
 
     private final ReferenceDataConfig referenceDataConfig;
+
+    private final RefDataValueConverter refDataValueConverter;
+
     private final Map<String, LmdbDb> databaseMap = new HashMap<>();
 
     // For synchronising access to the data belonging to a MapDefinition
@@ -131,17 +140,19 @@ public class RefDataOffHeapStore extends AbstractRefDataStore implements RefData
             final PathCreator pathCreator,
             final ReferenceDataConfig referenceDataConfig,
             final ByteBufferPool byteBufferPool,
-            final KeyValueStoreDb.Factory keyValueStoreDbFactory,
+            final Factory keyValueStoreDbFactory,
             final ValueStoreDb.Factory valueStoreDbFactory,
             final ValueStoreMetaDb.Factory valueStoreMetaDbFactory,
             final RangeStoreDb.Factory rangeStoreDbFactory,
             final MapUidForwardDb.Factory mapUidForwardDbFactory,
             final MapUidReverseDb.Factory mapUidReverseDbFactory,
+            final RefDataValueConverter refDataValueConverter,
             final ProcessingInfoDb.Factory processingInfoDbFactory) {
 
         this.tempDirProvider = tempDirProvider;
         this.pathCreator = pathCreator;
         this.referenceDataConfig = referenceDataConfig;
+        this.refDataValueConverter = refDataValueConverter;
         this.dbDir = getStoreDir();
         this.maxSize = referenceDataConfig.getMaxStoreSize();
         this.maxReaders = referenceDataConfig.getMaxReaders();
@@ -745,6 +756,85 @@ public class RefDataOffHeapStore extends AbstractRefDataStore implements RefData
             throw new IllegalArgumentException(LogUtil.message("No database with name {} exists", dbName));
         }
         return lmdbDb.getEntryCount();
+    }
+
+
+    @Override
+    public List<RefStoreEntry> list(final int limit) {
+        return list(limit, refStoreEntry -> true);
+    }
+
+    public List<RefStoreEntry> list(final int limit,
+                                    final Predicate<RefStoreEntry> filter) {
+
+        final List<RefStoreEntry> entries = new ArrayList<>();
+
+
+        // TODO @AT This is all VERY crude. We should only be hitting the other DBs if we are returning
+        //   a field from them or filtering on one of their fields. Also we should not be scanning over the
+        //   whole of the kv/rv DBs, instead using start/stop keys built from the query expression.
+
+        // TODO @AT This is not ideal holding a txn open for the whole query (if the query takes a long time)
+        //   as read txns prevent writers from writing to reclaimed space in the db, so the store can get quite big.
+        //   see https://lmdb.readthedocs.io/en/release/#transaction-management
+
+        LmdbUtils.doWithReadTxn(lmdbEnvironment, readTxn -> {
+            // Get all the KeyValue entries
+            final List<RefStoreEntry> kvEntries = keyValueStoreDb.streamEntries(
+                    readTxn,
+                    KeyRange.all(),
+                    entryStream -> entryStream
+                            .map(entry -> {
+                                final KeyValueStoreKey keyValueStoreKey = entry._1();
+                                final ValueStoreKey valueStoreKey = entry._2();
+                                final String keyStr = keyValueStoreKey.getKey();
+                                return buildEntry(readTxn, keyValueStoreKey.getMapUid(), keyStr, valueStoreKey);
+                            })
+                            .filter(filter)
+                            .limit(limit)
+                            .collect(Collectors.toList()));
+            entries.addAll(kvEntries);
+
+            // If we haven't blown our limit then get the range entries
+            final int rangeEntriesLimit = Math.min(limit, limit - entries.size());
+
+            // Get all the KeyRangeValue entries
+            final List<RefStoreEntry> rangeEntries = rangeStoreDb.streamEntries(
+                    readTxn,
+                    KeyRange.all(),
+                    entryStream -> entryStream
+                            .limit(rangeEntriesLimit)
+                            .map(entry-> {
+                                final RangeStoreKey rangeStoreKey = entry._1();
+                                final ValueStoreKey valueStoreKey = entry._2();
+                                final String keyStr = rangeStoreKey.getKeyRange().getFrom() + "-"
+                                        + rangeStoreKey.getKeyRange().getTo();
+                                return buildEntry(readTxn, rangeStoreKey.getMapUid(), keyStr, valueStoreKey);
+                            })
+                            .collect(Collectors.toList()));
+            entries.addAll(rangeEntries);
+        });
+
+        return entries;
+    }
+
+    private RefStoreEntry buildEntry(final Txn<ByteBuffer> readTxn,
+                                     final UID mapUid,
+                                     final String key,
+                                     final ValueStoreKey valueStoreKey) {
+
+        final MapDefinition mapDefinition = mapDefinitionUIDStore.get(readTxn, mapUid)
+                .orElseThrow(() -> new RuntimeException("No MapDefinition for UID " + mapUid.toString()));
+
+        final RefDataProcessingInfo refDataProcessingInfo = processingInfoDb.get(readTxn, mapDefinition.getRefStreamDefinition())
+                .orElse(null);
+
+        final RefDataValue refDataValue = valueStore.get(readTxn, valueStoreKey)
+                .orElse(null);
+
+        final String value = refDataValueConverter.refDataValueToString(refDataValue);
+
+        return new RefStoreEntry(mapDefinition, key, value, refDataProcessingInfo);
     }
 
 //    private Instant getPurgeCutOffEpoch(final StroomDuration purgeAge) {

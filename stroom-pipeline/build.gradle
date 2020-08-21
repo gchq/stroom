@@ -21,6 +21,8 @@ dependencies {
     compile project(':stroom-importexport:stroom-importexport-api')
     compile project(':stroom-task:stroom-task-api')
     compile project(':stroom-job:stroom-job-api')
+    compile project(':stroom-search:stroom-searchable-api')
+
 
     compile libs.commons_io
     compile libs.commons_lang
@@ -49,6 +51,7 @@ dependencies {
     compile libs.saxon_he
     compile libs.slf4j_api
     compile libs.stroomDocRef
+    compile libs.stroomQueryCommon
     compile libs.swagger_annotations
     compile libs.vavr
     compile libs.ws_rs_api

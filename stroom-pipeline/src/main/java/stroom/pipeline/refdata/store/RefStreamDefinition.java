@@ -21,6 +21,9 @@ package stroom.pipeline.refdata.store;
 import stroom.docref.DocRef;
 import stroom.pipeline.shared.PipelineDoc;
 
+import com.fasterxml.jackson.annotation.JsonCreator;
+import com.fasterxml.jackson.annotation.JsonProperty;
+
 import java.util.Objects;
 
 public class RefStreamDefinition {
@@ -28,9 +31,13 @@ public class RefStreamDefinition {
     private static final int DEFAULT_STREAM_NO = 0;
 
     // TODO consider getting rid of DocRef and just storing the uuid
+    @JsonProperty
     private final DocRef pipelineDocRef;
+    @JsonProperty
     private final String pipelineVersion;
+    @JsonProperty
     private final long streamId;
+    @JsonProperty
     private final long streamNo;
     private final int hashCode;
 
@@ -54,10 +61,11 @@ public class RefStreamDefinition {
         this(pipelineDocRef, pipelineVersion, streamId, DEFAULT_STREAM_NO);
     }
 
-    public RefStreamDefinition(final DocRef pipelineDocRef,
-                               final String pipelineVersion,
-                               final long streamId,
-                               final long streamNo) {
+    @JsonCreator
+    public RefStreamDefinition(@JsonProperty("pipelineDocRef") final DocRef pipelineDocRef,
+                               @JsonProperty("pipelineVersion") final String pipelineVersion,
+                               @JsonProperty("streamId") final long streamId,
+                               @JsonProperty("streamNo") final long streamNo) {
         this.pipelineDocRef = pipelineDocRef;
         this.pipelineVersion = pipelineVersion;
         this.streamId = streamId;

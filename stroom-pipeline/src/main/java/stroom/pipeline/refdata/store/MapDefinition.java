@@ -17,11 +17,14 @@
 
 package stroom.pipeline.refdata.store;
 
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 import stroom.docref.DocRef;
 import stroom.util.logging.LambdaLogger;
 import stroom.util.logging.LambdaLoggerFactory;
+
+import com.fasterxml.jackson.annotation.JsonCreator;
+import com.fasterxml.jackson.annotation.JsonProperty;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import java.util.Objects;
 
@@ -30,12 +33,16 @@ public class MapDefinition {
     private static final Logger LOGGER = LoggerFactory.getLogger(MapDefinition.class);
     private static final LambdaLogger LAMBDA_LOGGER = LambdaLoggerFactory.getLogger(MapDefinition.class);
 
+    @JsonProperty
     private final RefStreamDefinition refStreamDefinition;
+    @JsonProperty
     private final String mapName;
 
     private final int hashCode;
 
-    public MapDefinition(final RefStreamDefinition refStreamDefinition, final String mapName) {
+    @JsonCreator
+    public MapDefinition(@JsonProperty("refStreamDefinition") final RefStreamDefinition refStreamDefinition,
+                         @JsonProperty("mapName") final String mapName) {
         this.refStreamDefinition = refStreamDefinition;
         this.mapName = mapName;
         this.hashCode = buildHashCode();
