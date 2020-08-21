@@ -9,6 +9,9 @@ and this project adheres to [Semantic Versioning](http://semver.org/).
 
 * Issue **#1789** : Prevent dashboards without an extraction pipeline showing as "Missing" on dependency screen.
 
+* Issue **#1803** : Fix `/api/export/v1` failing with NoSuchFileException.
+
+
 ## [v7.0-beta.45] - 2020-08-14
 
 * Issue **#1793** : Fixed Solr search query creation.
