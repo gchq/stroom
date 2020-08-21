@@ -11,6 +11,8 @@ and this project adheres to [Semantic Versioning](http://semver.org/).
 
 * Issue **#1789** : Prevent dashboards without an extraction pipeline showing as "Missing" on dependency screen.
 
+* Issue **#1803** : Fix `/api/export/v1` failing with NoSuchFileException.
+
 * Issue **#1719** : Create rest endpoint to get rererence data store entries. Experimental feature at the moment.
 
 * Issue **#1649** : Make the local reference data store searchable from the dashboard. Experimental feature at the moment.
