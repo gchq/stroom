@@ -22,10 +22,14 @@ import stroom.docref.DocRef;
 import stroom.pipeline.shared.PipelineDoc;
 
 import com.fasterxml.jackson.annotation.JsonCreator;
+import com.fasterxml.jackson.annotation.JsonIgnore;
+import com.fasterxml.jackson.annotation.JsonInclude;
+import com.fasterxml.jackson.annotation.JsonInclude.Include;
 import com.fasterxml.jackson.annotation.JsonProperty;
 
 import java.util.Objects;
 
+@JsonInclude(Include.NON_NULL)
 public class RefStreamDefinition {
 
     private static final int DEFAULT_STREAM_NO = 0;
@@ -39,6 +43,7 @@ public class RefStreamDefinition {
     private final long streamId;
     @JsonProperty
     private final long streamNo;
+    @JsonIgnore
     private final int hashCode;
 
 
