@@ -1,10 +1,5 @@
 package stroom.pipeline.refdata.store.offheapstore;
 
-import com.google.common.base.Preconditions;
-import org.lmdbjava.Env;
-import org.lmdbjava.Txn;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 import stroom.pipeline.refdata.store.MapDefinition;
 import stroom.pipeline.refdata.store.RefStreamDefinition;
 import stroom.pipeline.refdata.store.offheapstore.databases.MapUidForwardDb;
@@ -17,8 +12,17 @@ import stroom.util.logging.LambdaLogger;
 import stroom.util.logging.LambdaLoggerFactory;
 import stroom.util.logging.LogUtil;
 
+import com.google.common.base.Preconditions;
+import io.vavr.Tuple2;
+import org.lmdbjava.Env;
+import org.lmdbjava.KeyRange;
+import org.lmdbjava.Txn;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+
 import java.nio.ByteBuffer;
 import java.util.Optional;
+import java.util.function.Consumer;
 import java.util.function.Supplier;
 
 /**
@@ -99,6 +103,10 @@ public class MapDefinitionUIDStore {
         return mapUidForwardDb.get(txn, mapDefinition);
     }
 
+    Optional<MapDefinition> get(final Txn<ByteBuffer> txn, final UID mapUid) {
+        return mapUidReverseDb.get(txn, mapUid);
+    }
+
     public long getEntryCount() {
         long entryCountForward = mapUidForwardDb.getEntryCount();
         long entryCountReverse = mapUidReverseDb.getEntryCount();
@@ -128,6 +136,12 @@ public class MapDefinitionUIDStore {
         // these two MUST be done in the same txn to ensure data consistency
         mapUidForwardDb.delete(writeTxn, mapDefinitionBuffer);
         mapUidReverseDb.delete(writeTxn, mapUid.getBackingBuffer());
+    }
+
+    void forEach(final Txn<ByteBuffer> txn,
+                 final Consumer<Tuple2<MapDefinition, UID>> entryConsumer) {
+
+        mapUidForwardDb.forEachEntry( txn, KeyRange.all(), entryConsumer);
     }
 
     private UID createForwardReversePair(final Txn<ByteBuffer> writeTxn, final ByteBuffer mapDefinitionBuffer) {
@@ -173,5 +187,6 @@ public class MapDefinitionUIDStore {
         LOGGER.trace("Creating UID mapping for {}", mapUid);
         return mapUid;
     }
+
 
 }

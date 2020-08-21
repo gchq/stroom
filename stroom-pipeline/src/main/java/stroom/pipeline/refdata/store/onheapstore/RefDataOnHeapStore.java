@@ -7,6 +7,7 @@ import stroom.pipeline.refdata.store.RefDataLoader;
 import stroom.pipeline.refdata.store.RefDataProcessingInfo;
 import stroom.pipeline.refdata.store.RefDataStore;
 import stroom.pipeline.refdata.store.RefDataValue;
+import stroom.pipeline.refdata.store.RefStoreEntry;
 import stroom.pipeline.refdata.store.RefStreamDefinition;
 import stroom.pipeline.refdata.store.offheapstore.TypedByteBuffer;
 import stroom.util.logging.LambdaLogUtil;
@@ -21,12 +22,14 @@ import org.slf4j.LoggerFactory;
 import javax.annotation.concurrent.NotThreadSafe;
 import java.util.HashMap;
 import java.util.HashSet;
+import java.util.List;
 import java.util.Map;
 import java.util.NavigableMap;
 import java.util.Optional;
 import java.util.Set;
 import java.util.SortedMap;
 import java.util.function.Consumer;
+import java.util.function.Predicate;
 
 /**
  * A heap based implementation of the {@link RefDataStore}
@@ -183,6 +186,16 @@ public class RefDataOnHeapStore extends AbstractRefDataStore {
                 "This implementation doesn't support this method as the values are heap objects ");
     }
 
+    @Override
+    public List<RefStoreEntry> list(final int limit) {
+        throw new UnsupportedOperationException("Not yet implemented");
+    }
+
+    @Override
+    public List<RefStoreEntry> list(final int limit,
+                                    final Predicate<RefStoreEntry> filter) {
+        throw new UnsupportedOperationException("Not yet implemented");
+    }
 
     @Override
     public long getKeyValueEntryCount() {

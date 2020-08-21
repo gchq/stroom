@@ -17,12 +17,13 @@
 
 package stroom.pipeline.refdata.store;
 
-import net.sf.saxon.trans.XPathException;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 import stroom.pipeline.refdata.store.offheapstore.RefDataValueProxyConsumer;
 import stroom.pipeline.refdata.store.offheapstore.TypedByteBuffer;
 import stroom.util.logging.LogUtil;
+
+import net.sf.saxon.trans.XPathException;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import java.util.Objects;
 import java.util.Optional;
@@ -91,7 +92,7 @@ public class SingleRefDataValueProxy implements RefDataValueProxy {
             return refDataValueProxyConsumer.consume(this);
         } catch (XPathException e) {
             throw new RuntimeException(LogUtil.message(
-                    "Error handing rerence data value: {}", e.getMessage()), e);
+                    "Error handling reference data value: {}", e.getMessage()), e);
         }
     }
 

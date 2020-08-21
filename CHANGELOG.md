@@ -7,7 +7,14 @@ and this project adheres to [Semantic Versioning](http://semver.org/).
 
 ## [Unreleased]
 
+* Issue **#1702** : Fix namespace handling in XML reference data values.
+
 * Issue **#1789** : Prevent dashboards without an extraction pipeline showing as "Missing" on dependency screen.
+
+* Issue **#1719** : Create rest endpoint to get rererence data store entries. Experimental feature at the moment.
+
+* Issue **#1649** : Make the local reference data store searchable from the dashboard. Experimental feature at the moment.
+
 
 ## [v7.0-beta.45] - 2020-08-14
 

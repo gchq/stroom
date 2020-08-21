@@ -16,20 +16,27 @@
 
 package stroom.pipeline.xsltfunctions;
 
-import net.sf.saxon.expr.XPathContext;
-import net.sf.saxon.om.Sequence;
-import net.sf.saxon.trans.XPathException;
 import stroom.pipeline.refdata.LookupIdentifier;
 import stroom.pipeline.refdata.ReferenceData;
 import stroom.pipeline.refdata.ReferenceDataResult;
 import stroom.pipeline.refdata.store.RefDataValueProxy;
 import stroom.pipeline.refdata.store.RefDataValueProxyConsumerFactory;
 import stroom.pipeline.state.MetaHolder;
+import stroom.util.logging.LambdaLogger;
+import stroom.util.logging.LambdaLoggerFactory;
+import stroom.util.logging.LogUtil;
 import stroom.util.shared.Severity;
 
+import net.sf.saxon.expr.XPathContext;
+import net.sf.saxon.om.Sequence;
+import net.sf.saxon.trans.XPathException;
+
 import javax.inject.Inject;
+import java.time.Instant;
 
 class Lookup extends AbstractLookup {
+
+    private static final LambdaLogger LOGGER = LambdaLoggerFactory.getLogger(Lookup.class);
 
     @Inject
     Lookup(final ReferenceData referenceData,
@@ -43,6 +50,10 @@ class Lookup extends AbstractLookup {
                                 final boolean ignoreWarnings,
                                 final boolean trace,
                                 final LookupIdentifier lookupIdentifier) throws XPathException {
+
+        LOGGER.debug(() -> LogUtil.message("Looking up {}, {}",
+                lookupIdentifier, Instant.ofEpochMilli(lookupIdentifier.getEventTime())));
+
         // TODO rather than putting the proxy in the result we could just put the refStreamDefinition
         // in there and then do the actual lookup in the sequenceMaker by passing an injected RefDataStore
         // into it.
