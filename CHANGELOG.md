@@ -15,6 +15,10 @@ and this project adheres to [Semantic Versioning](http://semver.org/).
 
 * Issue **#1649** : Make the local reference data store searchable from the dashboard. Experimental feature at the moment.
 
+* Issue **#1805** : Fix missing alert popup when document is saved but has been updated by another user/tab.
+
+* Fix _No appende for stroom.docref.DocRef_ ERRORs in the log.
+
 
 ## [v7.0-beta.45] - 2020-08-14
 

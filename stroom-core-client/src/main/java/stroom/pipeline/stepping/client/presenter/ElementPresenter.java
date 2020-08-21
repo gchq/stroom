@@ -17,13 +17,6 @@
 
 package stroom.pipeline.stepping.client.presenter;
 
-import com.google.gwt.core.client.Scheduler;
-import com.google.inject.Inject;
-import com.google.inject.Provider;
-import com.google.web.bindery.event.shared.EventBus;
-import com.google.web.bindery.event.shared.HandlerRegistration;
-import com.gwtplatform.mvp.client.MyPresenterWidget;
-import com.gwtplatform.mvp.client.View;
 import stroom.alert.client.event.AlertEvent;
 import stroom.docref.DocRef;
 import stroom.document.client.DocumentPlugin;
@@ -39,9 +32,16 @@ import stroom.pipeline.shared.stepping.SteppingFilterSettings;
 import stroom.pipeline.stepping.client.event.ShowSteppingFilterSettingsEvent;
 import stroom.pipeline.stepping.client.presenter.ElementPresenter.ElementView;
 import stroom.util.shared.HasData;
-import stroom.util.shared.Indicators;
 import stroom.widget.util.client.Future;
 import stroom.widget.util.client.FutureImpl;
+
+import com.google.gwt.core.client.Scheduler;
+import com.google.inject.Inject;
+import com.google.inject.Provider;
+import com.google.web.bindery.event.shared.EventBus;
+import com.google.web.bindery.event.shared.HandlerRegistration;
+import com.gwtplatform.mvp.client.MyPresenterWidget;
+import com.gwtplatform.mvp.client.View;
 
 public class ElementPresenter extends MyPresenterWidget<ElementView> implements HasDirtyHandlers {
     private final Provider<EditorPresenter> editorProvider;
@@ -189,6 +189,10 @@ public class ElementPresenter extends MyPresenterWidget<ElementView> implements 
                         dirtyCode = false;
                     },
                     throwable -> {
+                        AlertEvent.fireError(
+                                this,
+                                "Unable to save document " + loadedDoc,
+                                ((Throwable) throwable).getMessage(), null);
                     });
         }
     }
