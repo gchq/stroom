@@ -37,7 +37,7 @@ def outputDir = "${resourcesDir}/new-ui"
 //    nodeModulesDir = file("${project.projectDir}")
 //}
 
-task removeYarnBuild() {
+task removeYarnBuild {
     doLast {
         println 'Deleting compiled output: ' + outputDir.toString()
         delete outputDir

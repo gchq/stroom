@@ -17,7 +17,6 @@
 
 package stroom.pipeline.refdata.store;
 
-import stroom.util.RunnableWrapper;
 import stroom.job.api.ScheduledJobsBinder;
 import stroom.pipeline.refdata.store.offheapstore.FastInfosetByteBufferConsumer;
 import stroom.pipeline.refdata.store.offheapstore.OffHeapRefDataValueProxyConsumer;
@@ -35,6 +34,7 @@ import stroom.pipeline.refdata.store.onheapstore.OnHeapRefDataValueProxyConsumer
 import stroom.pipeline.refdata.store.onheapstore.StringValueConsumer;
 import stroom.pipeline.refdata.util.ByteBufferPool;
 import stroom.pipeline.refdata.util.PooledByteBufferOutputStream;
+import stroom.util.RunnableWrapper;
 import stroom.util.guice.HasSystemInfoBinder;
 
 import com.google.inject.AbstractModule;
@@ -80,6 +80,7 @@ public class RefDataStoreModule extends AbstractModule {
                         .withName("Ref Data Off-heap Store Purge")
                         .withDescription("Purge old reference data from the off heap store as configured")
                         .withSchedule(CRON, "0 2 *"));
+
     }
 
     private static class RefDataPurge extends RunnableWrapper {

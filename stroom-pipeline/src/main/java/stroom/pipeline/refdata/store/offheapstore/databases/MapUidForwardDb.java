@@ -17,11 +17,6 @@
 
 package stroom.pipeline.refdata.store.offheapstore.databases;
 
-import com.google.inject.assistedinject.Assisted;
-import org.lmdbjava.CursorIterator;
-import org.lmdbjava.Env;
-import org.lmdbjava.KeyRange;
-import org.lmdbjava.Txn;
 import stroom.pipeline.refdata.store.MapDefinition;
 import stroom.pipeline.refdata.store.RefStreamDefinition;
 import stroom.pipeline.refdata.store.offheapstore.UID;
@@ -32,6 +27,12 @@ import stroom.pipeline.refdata.util.ByteBufferPool;
 import stroom.pipeline.refdata.util.ByteBufferUtils;
 import stroom.pipeline.refdata.util.PooledByteBuffer;
 import stroom.util.logging.LogUtil;
+
+import com.google.inject.assistedinject.Assisted;
+import org.lmdbjava.CursorIterator;
+import org.lmdbjava.Env;
+import org.lmdbjava.KeyRange;
+import org.lmdbjava.Txn;
 
 import javax.inject.Inject;
 import java.nio.ByteBuffer;
@@ -102,8 +103,6 @@ public class MapUidForwardDb extends AbstractLmdbDb<MapDefinition, UID> {
         }
         return optMatchedMapUid;
     }
-
-
 
     public interface Factory {
         MapUidForwardDb create(final Env<ByteBuffer> lmdbEnvironment);

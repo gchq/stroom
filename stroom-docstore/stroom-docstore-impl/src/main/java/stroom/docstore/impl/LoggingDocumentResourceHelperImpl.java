@@ -77,7 +77,7 @@ public class LoggingDocumentResourceHelperImpl implements DocumentResourceHelper
                 documentEventLog.update(before, after, null);
                 return after;
             } catch (final RuntimeException e) {
-                documentEventLog.update(null, docRef, e);
+                documentEventLog.update(null, doc, e);
                 throw e;
             }
         });

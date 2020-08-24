@@ -16,14 +16,13 @@
 
 package stroom.pipeline.refdata;
 
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 import stroom.data.shared.StreamTypeNames;
 import stroom.data.store.api.InputStreamProvider;
 import stroom.data.store.api.SizeAwareInputStream;
 import stroom.docref.DocRef;
 import stroom.meta.shared.Meta;
 import stroom.pipeline.PipelineStore;
+import stroom.pipeline.cache.DocumentPermissionCache;
 import stroom.pipeline.refdata.store.MapDefinition;
 import stroom.pipeline.refdata.store.MultiRefDataValueProxy;
 import stroom.pipeline.refdata.store.RefDataStore;
@@ -34,7 +33,6 @@ import stroom.pipeline.refdata.store.StringValue;
 import stroom.pipeline.shared.data.PipelineReference;
 import stroom.pipeline.state.FeedHolder;
 import stroom.pipeline.state.MetaHolder;
-import stroom.pipeline.cache.DocumentPermissionCache;
 import stroom.security.api.SecurityContext;
 import stroom.security.shared.DocumentPermissionNames;
 import stroom.util.logging.LambdaLogUtil;
@@ -43,13 +41,18 @@ import stroom.util.logging.LambdaLoggerFactory;
 import stroom.util.logging.LogUtil;
 import stroom.util.shared.Severity;
 
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+
 import javax.inject.Inject;
+import java.time.Instant;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.NavigableSet;
 import java.util.Optional;
+import java.util.stream.Collectors;
 
 public class ReferenceData {
     private static final Logger LOGGER = LoggerFactory.getLogger(ReferenceData.class);
@@ -360,6 +363,14 @@ public class ReferenceData {
 
             if (streamSet != null && streamSet.size() > 0) {
                 result.log(Severity.INFO, () -> "Got " + streamSet.size() + " effective streams (" + effectiveStreamKey + ")");
+
+                if (LOGGER.isDebugEnabled()) {
+                    String streams = streamSet.stream()
+                            .map(effectiveStream -> effectiveStream.getStreamId() + " - "
+                                    + Instant.ofEpochMilli(effectiveStream.getEffectiveMs()))
+                            .collect(Collectors.joining("\n"));
+                    LOGGER.debug("Comparing {} to Effective streams:\n{}", Instant.ofEpochMilli(time), streams);
+                }
 
                 // Try and find the stream before the requested time that is less
                 // than or equal to it.

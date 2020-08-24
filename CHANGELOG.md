@@ -9,6 +9,26 @@ and this project adheres to [Semantic Versioning](http://semver.org/).
 
 * Issue **#1665** : Recognised meta types can now be specified in config and drop downs now allow selection in the pipeline editor.
 
+
+## [v7.0-beta.46] - 2020-08-23
+
+* Issue **#1702** : Fix namespace handling in XML reference data values.
+
+* Issue **#1789** : Prevent dashboards without an extraction pipeline showing as "Missing" on dependency screen.
+
+* Issue **#1803** : Fix `/api/export/v1` failing with NoSuchFileException.
+
+* Issue **#1719** : Create rest endpoint to get rererence data store entries. Experimental feature at the moment.
+
+* Issue **#1649** : Make the local reference data store searchable from the dashboard. Experimental feature at the moment.
+
+* Issue **#1805** : Fix missing alert popup when document is saved but has been updated by another user/tab.
+
+* Fix _No appender for stroom.docref.DocRef_ ERRORs in the log.
+
+
+## [v7.0-beta.45] - 2020-08-14
+
 * Issue **#1793** : Fixed Solr search query creation.
 
 * Issue **#1791** : Fixed Solr connection test response.
@@ -2472,7 +2492,9 @@ Issue **gchq/stroom-expression#22** : Add `typeOf(...)` function to dashboard.
 
 * Issue **#202** : Initial release of the new data retention policy functionality.
 
-[Unreleased]: https://github.com/gchq/stroom/compare/v7.0-beta.44...HEAD
+[Unreleased]: https://github.com/gchq/stroom/compare/v7.0-beta.46...HEAD
+[v7.0-beta.46]: https://github.com/gchq/stroom/compare/v7.0-beta.45...v7.0-beta.46
+[v7.0-beta.45]: https://github.com/gchq/stroom/compare/v7.0-beta.44...v7.0-beta.45
 [v7.0-beta.44]: https://github.com/gchq/stroom/compare/v7.0-beta.43...v7.0-beta.44
 [v7.0-beta.43]: https://github.com/gchq/stroom/compare/v7.0-beta.42...v7.0-beta.43
 [v7.0-beta.42]: https://github.com/gchq/stroom/compare/v7.0-beta.41...v7.0-beta.42
