@@ -139,7 +139,7 @@ public class DataLoader {
                 final StroomZipFile stroomZipFile = new StroomZipFile(file);
                 final byte[] buffer = new byte[1024];
                 final StreamTargetStroomStreamHandler streamTargetStroomStreamHandler = new StreamTargetStroomStreamHandler(
-                        streamStore, feedProperties, null, feedName, feedProperties.getStreamTypeName(feedName));
+                        streamStore, feedProperties, null, feedName, feedProperties.getStreamTypeName(feedName), false);
 
                 final AttributeMap map = new AttributeMap();
                 map.put("TestData", "Loaded By SetupSampleData");

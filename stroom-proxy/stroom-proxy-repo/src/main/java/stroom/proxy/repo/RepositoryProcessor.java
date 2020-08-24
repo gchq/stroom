@@ -16,8 +16,6 @@
 
 package stroom.proxy.repo;
 
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 import stroom.task.api.ExecutorProvider;
 import stroom.task.api.TaskContext;
 import stroom.task.api.TaskContextFactory;
@@ -30,11 +28,23 @@ import stroom.util.logging.LambdaLogUtil;
 import stroom.util.logging.LogExecutionTime;
 import stroom.util.shared.ModelStringUtil;
 
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+
 import javax.inject.Provider;
 import java.io.IOException;
-import java.nio.file.*;
+import java.nio.file.FileVisitOption;
+import java.nio.file.FileVisitResult;
+import java.nio.file.Files;
+import java.nio.file.Path;
+import java.nio.file.Paths;
 import java.nio.file.attribute.BasicFileAttributes;
-import java.util.*;
+import java.util.Collections;
+import java.util.Comparator;
+import java.util.EnumSet;
+import java.util.List;
+import java.util.Map;
+import java.util.Set;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.Executor;
@@ -272,7 +282,7 @@ public final class RepositoryProcessor {
         private final TaskContext parentContext;
         private final TaskContextFactory taskContextFactory;
 
-        private final Map<String, FileSet> fileSetMap = new ConcurrentHashMap<>();
+        private final Map<FileSetKey, FileSet> fileSetMap = new ConcurrentHashMap<>();
         private final Set<CompletableFuture<Void>> futures = Collections.newSetFromMap(new ConcurrentHashMap<>());
 
         private int totalMappedFiles;
@@ -305,14 +315,14 @@ public final class RepositoryProcessor {
 
         @Override
         public synchronized void accept(final ZipInfo zipInfo) {
-            final String feedName = zipInfo.getFeedName();
-            if (feedName == null || feedName.length() == 0) {
+            final FileSetKey key = zipInfo.getKey();
+            if (key.getFeedName() == null || key.getFeedName().isBlank()) {
                 errorReceiver.onError(zipInfo.getPath(), "Unable to find feed in header??");
 
             } else {
-                LOGGER.debug("{} belongs to feed {}", zipInfo.getPath(), feedName);
+                LOGGER.debug("{} belongs to {}", zipInfo.getPath(), key);
 
-                FileSet fileSet = fileSetMap.computeIfAbsent(feedName, k -> new FileSet(feedName));
+                FileSet fileSet = fileSetMap.computeIfAbsent(key, FileSet::new);
 
                 // See if the file set will overflow if we add this file.
                 if (fileSet.getFiles().size() > 0 &&
@@ -323,7 +333,7 @@ public final class RepositoryProcessor {
                     processFileSet(fileSet);
 
                     // Create a new file set.
-                    fileSet = fileSetMap.computeIfAbsent(feedName, k -> new FileSet(feedName));
+                    fileSet = fileSetMap.computeIfAbsent(key, FileSet::new);
                 }
 
                 // The file set is not full so add the file.
@@ -359,7 +369,7 @@ public final class RepositoryProcessor {
 
         private synchronized void processFileSet(final FileSet fileSet) {
             // Remove the full file set.
-            fileSetMap.remove(fileSet.getFeed());
+            fileSetMap.remove(fileSet.getKey());
 
             // Reduce the total number of files we have mapped.
             totalMappedFiles -= fileSet.getFiles().size();

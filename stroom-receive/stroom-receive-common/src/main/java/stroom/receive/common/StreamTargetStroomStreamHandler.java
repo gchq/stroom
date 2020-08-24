@@ -76,13 +76,13 @@ public class StreamTargetStroomStreamHandler implements StroomStreamHandler, Str
     private final Map<String, Target> targetMap = new HashMap<>();
     //    private final Map<String, Target> feedStreamTarget = new HashMap<>();
     private final ByteArrayOutputStream currentHeaderByteArrayOutputStream = new ByteArrayOutputStream();
-    private boolean oneByOne;
+    private final boolean oneByOne;
     private StroomZipFileType currentFileType = null;
     private StroomZipEntry currentStroomZipEntry = null;
     private StroomZipEntry lastDatStroomZipEntry = null;
     private StroomZipEntry lastCtxStroomZipEntry = null;
     private String currentFeedName;
-    private final String streamTypeName;
+    private final String typeName;
     private AttributeMap globalAttributeMap;
     private AttributeMap currentAttributeMap;
 
@@ -94,28 +94,26 @@ public class StreamTargetStroomStreamHandler implements StroomStreamHandler, Str
                                            final FeedProperties feedProperties,
                                            final MetaStatistics metaDataStatistics,
                                            final String feedName,
-                                           final String streamTypeName) {
+                                           final String typeName,
+                                           final boolean oneByOne) {
         this.store = store;
         this.feedProperties = feedProperties;
         this.metaDataStatistics = metaDataStatistics;
         this.currentFeedName = feedName;
-        this.streamTypeName = streamTypeName;
+        this.typeName = typeName;
         this.streamSet = new HashSet<>();
         this.stroomZipNameSet = new StroomZipNameSet(true);
+        this.oneByOne = oneByOne;
     }
 
     public static List<StreamTargetStroomStreamHandler> buildSingleHandlerList(final Store streamStore,
                                                                                final FeedProperties feedProperties,
                                                                                final MetaStatistics metaDataStatistics,
                                                                                final String feedName,
-                                                                               final String streamTypeName) {
+                                                                               final String typeName) {
         final ArrayList<StreamTargetStroomStreamHandler> list = new ArrayList<>();
-        list.add(new StreamTargetStroomStreamHandler(streamStore, feedProperties, metaDataStatistics, feedName, streamTypeName));
+        list.add(new StreamTargetStroomStreamHandler(streamStore, feedProperties, metaDataStatistics, feedName, typeName, false));
         return list;
-    }
-
-    public void setOneByOne(final boolean oneByOne) {
-        this.oneByOne = oneByOne;
     }
 
     @Override
@@ -333,7 +331,7 @@ public class StreamTargetStroomStreamHandler implements StroomStreamHandler, Str
 
             final MetaProperties metaProperties = new MetaProperties.Builder()
                     .feedName(currentFeedName)
-                    .typeName(streamTypeName)
+                    .typeName(typeName)
                     .effectiveMs(effectiveMs)
                     .build();
 
