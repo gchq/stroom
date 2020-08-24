@@ -338,6 +338,7 @@ public class ReferenceData {
                 pipelineReference.getFeed().getUuid().isEmpty() ||
                 pipelineReference.getStreamType() == null ||
                 pipelineReference.getStreamType().isEmpty()) {
+
             result.log(Severity.ERROR, () ->
                     LogUtil.message("pipelineReference is not fully formed, {}", pipelineReference));
         }
@@ -362,7 +363,14 @@ public class ReferenceData {
             final NavigableSet<EffectiveStream> streamSet = effectiveStreamCache.get(effectiveStreamKey);
 
             if (streamSet != null && streamSet.size() > 0) {
-                result.log(Severity.INFO, () -> "Got " + streamSet.size() + " effective streams (" + effectiveStreamKey + ")");
+                result.log(Severity.INFO, () -> {
+                    final String maxEffectiveDate = Instant.ofEpochMilli(streamSet.last().getEffectiveMs()).toString();
+                    final String minEffectiveDate = Instant.ofEpochMilli(streamSet.first().getEffectiveMs()).toString();
+
+                    return "Got " + streamSet.size() +
+                            " effective streams (from " + minEffectiveDate + " to " + maxEffectiveDate +
+                            ") for effective stream key: " + effectiveStreamKey;
+                });
 
                 if (LOGGER.isDebugEnabled()) {
                     String streams = streamSet.stream()
@@ -377,6 +385,11 @@ public class ReferenceData {
                 final EffectiveStream effectiveStream = streamSet.floor(new EffectiveStream(0, time));
                 // If we have an effective time then use it.
                 if (effectiveStream != null) {
+
+                    result.log(Severity.INFO, () ->
+                            "Using stream: " + effectiveStream.getStreamId() +
+                            " (effective date: " + Instant.ofEpochMilli(effectiveStream.getEffectiveMs()).toString() +
+                            ") for feed: " + effectiveStreamKey.getFeed());
 
                     final RefStreamDefinition refStreamDefinition = new RefStreamDefinition(
                             pipelineReference.getPipeline(),
