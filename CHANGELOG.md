@@ -7,6 +7,8 @@ and this project adheres to [Semantic Versioning](http://semver.org/).
 
 ## [Unreleased]
 
+* Issue **#1707** : Fix reference data lookups picking the wrong effective stream.
+
 
 ## [v7.0-beta.46] - 2020-08-23
 
