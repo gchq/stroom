@@ -26,6 +26,7 @@ import stroom.util.shared.ResultPage;
 
 import javax.inject.Inject;
 import javax.inject.Provider;
+import java.util.List;
 
 // TODO : @66 Add event logging
 class MetaResourceImpl implements MetaResource {
@@ -57,5 +58,10 @@ class MetaResourceImpl implements MetaResource {
     @Override
     public SelectionSummary getReprocessSelectionSummary(final FindMetaCriteria criteria) {
         return metaServiceProvider.get().getReprocessSelectionSummary(criteria);
+    }
+
+    @Override
+    public List<String> getTypes() {
+        return metaServiceProvider.get().getTypes();
     }
 }

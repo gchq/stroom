@@ -82,7 +82,7 @@ public class StreamTargetStroomStreamHandler implements StroomStreamHandler, Str
     private StroomZipEntry lastDatStroomZipEntry = null;
     private StroomZipEntry lastCtxStroomZipEntry = null;
     private String currentFeedName;
-    private String currentStreamTypeName;
+    private final String streamTypeName;
     private AttributeMap globalAttributeMap;
     private AttributeMap currentAttributeMap;
 
@@ -99,7 +99,7 @@ public class StreamTargetStroomStreamHandler implements StroomStreamHandler, Str
         this.feedProperties = feedProperties;
         this.metaDataStatistics = metaDataStatistics;
         this.currentFeedName = feedName;
-        this.currentStreamTypeName = streamTypeName;
+        this.streamTypeName = streamTypeName;
         this.streamSet = new HashSet<>();
         this.stroomZipNameSet = new StroomZipNameSet(true);
     }
@@ -240,7 +240,6 @@ public class StreamTargetStroomStreamHandler implements StroomStreamHandler, Str
                 if (currentFeedName == null || !currentFeedName.equals(feedName)) {
                     // Yes ... load the new feed
                     currentFeedName = feedName;
-                    currentStreamTypeName = feedProperties.getStreamTypeName(currentFeedName);
 
                     final String currentBaseName = currentStroomZipEntry.getBaseName();
 
@@ -332,14 +331,9 @@ public class StreamTargetStroomStreamHandler implements StroomStreamHandler, Str
             // Get the effective time if one has been provided.
             final Long effectiveMs = StreamFactory.getReferenceEffectiveTime(getCurrentAttributeMap(), true);
 
-            // Make sure the stream type is not null.
-            if (currentStreamTypeName == null) {
-                currentStreamTypeName = feedProperties.getStreamTypeName(currentFeedName);
-            }
-
             final MetaProperties metaProperties = new MetaProperties.Builder()
                     .feedName(currentFeedName)
-                    .typeName(currentStreamTypeName)
+                    .typeName(streamTypeName)
                     .effectiveMs(effectiveMs)
                     .build();
 

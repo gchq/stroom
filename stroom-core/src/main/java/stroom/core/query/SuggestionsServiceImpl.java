@@ -35,7 +35,6 @@ import java.util.stream.Stream;
 @Singleton
 @SuppressWarnings("unused")
 public class SuggestionsServiceImpl implements SuggestionsService {
-
     private static final Logger LOGGER = LoggerFactory.getLogger(SuggestionsServiceImpl.class);
     private static final int LIMIT = 20;
 
@@ -117,9 +116,8 @@ public class SuggestionsServiceImpl implements SuggestionsService {
         // TODO this seems pretty inefficient as each call hits the db to get ALL feeds
         //   then limits/filters in java.  Needs to work off a cached feed name list
 
-        return taskContextFactory.contextResult("Get all feed names", parentTaskContext -> {
-            return createFeedList(parentTaskContext, userInput);
-        }).get();
+        return taskContextFactory.contextResult("Get all feed names", parentTaskContext ->
+                createFeedList(parentTaskContext, userInput)).get();
     }
 
     private List<String> createFeedList(final TaskContext parentTaskContext, final String userInput) {

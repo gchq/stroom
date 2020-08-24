@@ -20,16 +20,12 @@ import stroom.docref.DocRef;
 import stroom.docstore.api.DocumentActionHandler;
 import stroom.docstore.api.DocumentResourceHelper;
 import stroom.docstore.shared.Doc;
-import stroom.util.shared.PermissionException;
 import stroom.security.api.SecurityContext;
-import stroom.util.logging.LambdaLogger;
-import stroom.util.logging.LambdaLoggerFactory;
+import stroom.util.shared.PermissionException;
 
 import javax.inject.Inject;
 
 public class DocumentResourceHelperImpl implements DocumentResourceHelper {
-    private static final LambdaLogger LOGGER = LambdaLoggerFactory.getLogger(DocumentResourceHelperImpl.class);
-
     private final SecurityContext securityContext;
 
     @Inject
@@ -46,8 +42,8 @@ public class DocumentResourceHelperImpl implements DocumentResourceHelper {
                         return documentActionHandler.readDocument(docRef);
                     } catch (final PermissionException e) {
                         throw new PermissionException(
-                            e.getUser(),
-                            e.getMessage().replaceAll("permission to read", "permission to use"));
+                                e.getUser(),
+                                e.getMessage().replaceAll("permission to read", "permission to use"));
                     } catch (final RuntimeException e) {
                         throw e;
                     }

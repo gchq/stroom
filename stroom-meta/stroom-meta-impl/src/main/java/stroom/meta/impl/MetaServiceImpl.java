@@ -70,6 +70,7 @@ public class MetaServiceImpl implements MetaService, Searchable {
     private final MetaTypeDao metaTypeDao;
     private final MetaValueDao metaValueDao;
     private final MetaRetentionTrackerDao metaRetentionTrackerDao;
+    private final MetaServiceConfig metaServiceConfig;
     private final DocRefInfoService docRefInfoService;
     private final Provider<StreamAttributeMapRetentionRuleDecorator> decoratorProvider;
     private final Optional<MetaSecurityFilter> metaSecurityFilter;
@@ -84,6 +85,7 @@ public class MetaServiceImpl implements MetaService, Searchable {
                     final MetaTypeDao metaTypeDao,
                     final MetaValueDao metaValueDao,
                     final MetaRetentionTrackerDao metaRetentionTrackerDao,
+                    final MetaServiceConfig metaServiceConfig,
                     final DocRefInfoService docRefInfoService,
                     final Provider<StreamAttributeMapRetentionRuleDecorator> decoratorProvider,
                     final Optional<MetaSecurityFilter> metaSecurityFilter,
@@ -96,6 +98,7 @@ public class MetaServiceImpl implements MetaService, Searchable {
         this.metaTypeDao = metaTypeDao;
         this.metaValueDao = metaValueDao;
         this.metaRetentionTrackerDao = metaRetentionTrackerDao;
+        this.metaServiceConfig = metaServiceConfig;
         this.docRefInfoService = docRefInfoService;
         this.decoratorProvider = decoratorProvider;
         this.metaSecurityFilter = metaSecurityFilter;
@@ -443,7 +446,7 @@ public class MetaServiceImpl implements MetaService, Searchable {
 
     @Override
     public List<String> getTypes() {
-        return metaTypeDao.list();
+        return metaServiceConfig.getMetaTypeList();
     }
 
     @Override

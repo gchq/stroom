@@ -16,38 +16,48 @@
 
 package stroom.pipeline.structure.client.presenter;
 
+import stroom.dispatch.client.Rest;
+import stroom.dispatch.client.RestFactory;
+import stroom.docref.DocRef;
+import stroom.explorer.client.presenter.EntityDropDownPresenter;
+import stroom.feed.shared.FeedDoc;
+import stroom.item.client.StringListBox;
+import stroom.meta.shared.MetaResource;
+import stroom.pipeline.shared.PipelineDoc;
+import stroom.pipeline.shared.data.PipelineReference;
+import stroom.security.shared.DocumentPermissionNames;
+
+import com.google.gwt.core.client.GWT;
 import com.google.gwt.dom.client.Style.Unit;
-import com.google.gwt.user.client.ui.TextBox;
 import com.google.gwt.user.client.ui.Widget;
 import com.google.inject.Inject;
 import com.google.web.bindery.event.shared.EventBus;
 import com.gwtplatform.mvp.client.MyPresenterWidget;
 import com.gwtplatform.mvp.client.View;
-import stroom.docref.DocRef;
-import stroom.explorer.client.presenter.EntityDropDownPresenter;
-import stroom.feed.shared.FeedDoc;
-import stroom.pipeline.shared.PipelineDoc;
-import stroom.pipeline.shared.data.PipelineReference;
-import stroom.security.shared.DocumentPermissionNames;
+
+import java.util.List;
 
 public class NewPipelineReferencePresenter
         extends MyPresenterWidget<NewPipelineReferencePresenter.NewPipelineReferenceView> {
+    private static final MetaResource META_RESOURCE = GWT.create(MetaResource.class);
+
     private final EntityDropDownPresenter pipelinePresenter;
     private final EntityDropDownPresenter feedPresenter;
-    //    private final ClientDispatchAsync dispatcher;
-    private final TextBox typeWidget;
+    private final RestFactory restFactory;
+    private final StringListBox dataTypeWidget;
     private boolean dirty;
-//    private boolean initialised;
+    private boolean initialised;
 
     @Inject
     public NewPipelineReferencePresenter(final EventBus eventBus,
                                          final NewPipelineReferenceView view,
                                          final EntityDropDownPresenter pipelinePresenter,
-                                         final EntityDropDownPresenter feedPresenter) {
+                                         final EntityDropDownPresenter feedPresenter,
+                                         final RestFactory restFactory) {
         super(eventBus, view);
         this.pipelinePresenter = pipelinePresenter;
         this.feedPresenter = feedPresenter;
-//        this.dispatcher = dispatcher;
+        this.restFactory = restFactory;
 
         pipelinePresenter.setIncludedTypes(PipelineDoc.DOCUMENT_TYPE);
         pipelinePresenter.setRequiredPermissions(DocumentPermissionNames.USE);
@@ -60,9 +70,9 @@ public class NewPipelineReferencePresenter
         feedPresenter.getWidget().getElement().getStyle().setMarginBottom(0, Unit.PX);
         getView().setFeedView(feedPresenter.getView());
 
-        typeWidget = new TextBox();
-        typeWidget.getElement().getStyle().setMarginBottom(0, Unit.PX);
-        getView().setTypeWidget(typeWidget);
+        dataTypeWidget = new StringListBox();
+        dataTypeWidget.getElement().getStyle().setMarginBottom(0, Unit.PX);
+        getView().setTypeWidget(dataTypeWidget);
     }
 
     public void read(final PipelineReference pipelineReference) {
@@ -70,66 +80,64 @@ public class NewPipelineReferencePresenter
 
         pipelinePresenter.setSelectedEntityReference(pipelineReference.getPipeline());
         feedPresenter.setSelectedEntityReference(pipelineReference.getFeed());
-//        updateStreamTypes(pipelineReference.getType());
+        updateDataTypes(pipelineReference.getStreamType());
 
         pipelinePresenter.addDataSelectionHandler(event -> {
-//            if (initialised) {
-            final DocRef selection = pipelinePresenter.getSelectedEntityReference();
-            if ((pipelineReference.getPipeline() == null && selection != null)
-                    || (pipelineReference.getPipeline() != null
-                    && !pipelineReference.getPipeline().equals(selection))) {
-                setDirty(true);
+            if (initialised) {
+                final DocRef selection = pipelinePresenter.getSelectedEntityReference();
+                if ((pipelineReference.getPipeline() == null && selection != null)
+                        || (pipelineReference.getPipeline() != null
+                        && !pipelineReference.getPipeline().equals(selection))) {
+                    setDirty(true);
+                }
             }
-//            }
         });
         feedPresenter.addDataSelectionHandler(event -> {
-//            if (initialised) {
-            final DocRef selection = feedPresenter.getSelectedEntityReference();
-            if ((pipelineReference.getFeed() == null && selection != null)
-                    || (pipelineReference.getFeed() != null && !pipelineReference.getFeed().equals(selection))) {
-                setDirty(true);
+            if (initialised) {
+                final DocRef selection = feedPresenter.getSelectedEntityReference();
+                if ((pipelineReference.getFeed() == null && selection != null)
+                        || (pipelineReference.getFeed() != null && !pipelineReference.getFeed().equals(selection))) {
+                    setDirty(true);
+                }
             }
-//            }
         });
-        typeWidget.addChangeHandler(event -> {
-//            if (initialised) {
-//                final String selection = typeWidget.getSelected();
-//                if ((pipelineReference.getType() == null && selection != null)
-//                        || (pipelineReference.getType() != null
-//                        && !pipelineReference.getType().equals(selection))) {
-            setDirty(true);
-//                }
-//            }
+        dataTypeWidget.addChangeHandler(event -> {
+            if (initialised) {
+                final String selection = dataTypeWidget.getSelected();
+                if ((pipelineReference.getStreamType() == null && selection != null)
+                        || (pipelineReference.getStreamType() != null
+                        && !pipelineReference.getStreamType().equals(selection))) {
+                    setDirty(true);
+                }
+            }
         });
     }
 
     public void write(final PipelineReference pipelineReference) {
         pipelineReference.setPipeline(pipelinePresenter.getSelectedEntityReference());
         pipelineReference.setFeed(feedPresenter.getSelectedEntityReference());
-        pipelineReference.setStreamType(typeWidget.getText());
+        pipelineReference.setStreamType(dataTypeWidget.getSelected());
     }
 
-//    private void updateStreamTypes(final String selectedStreamType) {
-//        typeWidget.clear();
-//
-//        final FindStreamTypeCriteria findStreamTypeCriteria = new FindStreamTypeCriteria();
-//        findStreamTypeCriteria.obtainPurpose().add(Purpose.RAW);
-//        findStreamTypeCriteria.obtainPurpose().add(Purpose.PROCESSED);
-//        findStreamTypeCriteria.obtainPurpose().add(Purpose.CONTEXT);
-//        dispatcher.exec(new EntityReferenceFindAction<>(findStreamTypeCriteria)).onSuccess(result -> {
-//            if (result != null && result.size() > 0) {
-//                for (final DocRef docRef : result) {
-//                    typeWidget.addItem(docRef.getName());
-//                }
-//            }
-//
-//            if (selectedStreamType != null) {
-//                typeWidget.setSelected(selectedStreamType);
-//            }
-//
-//            initialised = true;
-//        });
-//    }
+    private void updateDataTypes(final String selectedDataType) {
+        dataTypeWidget.clear();
+
+        final Rest<List<String>> rest = restFactory.create();
+        rest
+                .onSuccess(result -> {
+                    if (result != null) {
+                        dataTypeWidget.addItems(result);
+                    }
+
+                    if (selectedDataType != null) {
+                        dataTypeWidget.setSelected(selectedDataType);
+                    }
+
+                    initialised = true;
+                })
+                .call(META_RESOURCE)
+                .getTypes();
+    }
 
     public boolean isDirty() {
         return dirty;

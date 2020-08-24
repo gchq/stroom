@@ -20,7 +20,7 @@ package stroom.data.store.impl.fs;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
-import org.lmdbjava.Stat;
+
 import stroom.data.shared.StreamTypeNames;
 import stroom.data.store.api.InputStreamProvider;
 import stroom.data.store.api.Source;
@@ -34,7 +34,7 @@ import stroom.explorer.shared.ExplorerNode;
 import stroom.explorer.shared.PermissionInheritance;
 import stroom.feed.api.FeedStore;
 import stroom.index.impl.selection.VolumeConfig;
-import stroom.meta.impl.db.MetaValueConfig;
+import stroom.meta.impl.MetaValueConfig;
 import stroom.meta.api.EffectiveMetaDataCriteria;
 import stroom.meta.shared.FindMetaCriteria;
 import stroom.meta.shared.Meta;
