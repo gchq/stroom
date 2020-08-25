@@ -8,6 +8,7 @@ import stroom.util.time.StroomDuration;
 
 import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.fasterxml.jackson.annotation.JsonProperty;
+import com.fasterxml.jackson.annotation.JsonPropertyDescription;
 
 import javax.inject.Singleton;
 import java.util.Arrays;
@@ -76,6 +77,7 @@ public class MetaServiceConfig extends AbstractConfig implements HasDbConfig {
         this.metaTypeCache = metaTypeCache;
     }
 
+    @JsonPropertyDescription("List of accepted meta type names.")
     public String getMetaTypes() {
         return metaTypes;
     }
