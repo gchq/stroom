@@ -77,7 +77,7 @@ public class MetaServiceConfig extends AbstractConfig implements HasDbConfig {
         this.metaTypeCache = metaTypeCache;
     }
 
-    @JsonPropertyDescription("List of accepted meta type names")
+    @JsonPropertyDescription("List of accepted meta type names.")
     public String getMetaTypes() {
         return metaTypes;
     }
