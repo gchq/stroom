@@ -103,10 +103,7 @@ public class DataLoader {
         if (isReference == mandateEffectiveDate) {
             LOGGER.info("Loading data: " + info);
 
-            String streamTypeName = StreamTypeNames.RAW_EVENTS;
-            if (isReference) {
-                streamTypeName = StreamTypeNames.RAW_REFERENCE;
-            }
+            final String streamTypeName = feedProperties.getStreamTypeName(feedName);
 
             final MetaProperties metaProperties = new MetaProperties.Builder()
                     .feedName(feedName)
@@ -142,7 +139,7 @@ public class DataLoader {
                 final StroomZipFile stroomZipFile = new StroomZipFile(file);
                 final byte[] buffer = new byte[1024];
                 final StreamTargetStroomStreamHandler streamTargetStroomStreamHandler = new StreamTargetStroomStreamHandler(
-                        streamStore, feedProperties, null, feedName, feedProperties.getStreamTypeName(feedName));
+                        streamStore, feedProperties, null, feedName, feedProperties.getStreamTypeName(feedName), false);
 
                 final AttributeMap map = new AttributeMap();
                 map.put("TestData", "Loaded By SetupSampleData");

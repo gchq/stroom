@@ -74,10 +74,9 @@ public class TermEditor extends Composite {
     private boolean editing;
     private ExpressionUiHandlers uiHandlers;
 
-    private AsyncSuggestOracle suggestOracle = new AsyncSuggestOracle();
+    private final AsyncSuggestOracle suggestOracle = new AsyncSuggestOracle();
 
-    public TermEditor(final EntityDropDownPresenter docRefPresenter,
-                      final EntityDropDownPresenter dictionaryPresenter) {
+    public TermEditor(final EntityDropDownPresenter docRefPresenter) {
         if (resources == null) {
             resources = GWT.create(Resources.class);
             resources.style().ensureInjected();

@@ -4,7 +4,7 @@ import com.fasterxml.jackson.annotation.JsonProperty;
 import stroom.data.retention.api.DataRetentionConfig;
 import stroom.data.store.impl.fs.DataStoreServiceConfig;
 import stroom.data.store.impl.fs.FsVolumeConfig;
-import stroom.meta.impl.db.MetaServiceConfig;
+import stroom.meta.impl.MetaServiceConfig;
 import stroom.util.shared.AbstractConfig;
 
 import javax.inject.Singleton;
@@ -12,7 +12,6 @@ import javax.inject.Singleton;
 @Singleton
 public class DataConfig extends AbstractConfig {
     public static final String NAME = "data";
-    
 
     public static final String PROP_NAME_META = "meta";
     public static final String PROP_NAME_RETENTION = "retention";

@@ -1,13 +1,18 @@
-package stroom.meta.impl.db;
+package stroom.meta.impl;
 
-import com.fasterxml.jackson.annotation.JsonProperty;
 import stroom.config.common.DbConfig;
 import stroom.config.common.HasDbConfig;
 import stroom.util.cache.CacheConfig;
 import stroom.util.shared.AbstractConfig;
 import stroom.util.time.StroomDuration;
 
+import com.fasterxml.jackson.annotation.JsonIgnore;
+import com.fasterxml.jackson.annotation.JsonProperty;
+
 import javax.inject.Singleton;
+import java.util.Arrays;
+import java.util.List;
+import java.util.stream.Collectors;
 
 @Singleton
 public class MetaServiceConfig extends AbstractConfig implements HasDbConfig {
@@ -25,6 +30,9 @@ public class MetaServiceConfig extends AbstractConfig implements HasDbConfig {
             .maximumSize(1000L)
             .expireAfterAccess(StroomDuration.ofMinutes(10))
             .build();
+    private volatile String metaTypes = "Raw Events\nRaw Reference\nEvents\nReference\nRecords\nError";
+
+    private volatile List<String> metaTypeList;
 
     @JsonProperty("db")
     public DbConfig getDbConfig() {
@@ -66,5 +74,31 @@ public class MetaServiceConfig extends AbstractConfig implements HasDbConfig {
 
     public void setMetaTypeCache(final CacheConfig metaTypeCache) {
         this.metaTypeCache = metaTypeCache;
+    }
+
+    public String getMetaTypes() {
+        return metaTypes;
+    }
+
+    public void setMetaTypes(final String metaTypes) {
+        this.metaTypes = metaTypes;
+        metaTypeList = null;
+    }
+
+    @JsonIgnore
+    public List<String> getMetaTypeList() {
+        List<String> list = metaTypeList;
+        if (list == null) {
+            final String mt = metaTypes;
+            if (mt != null) {
+                list = Arrays
+                        .stream(mt.split("\n"))
+                        .map(String::trim)
+                        .filter(s -> !s.isEmpty())
+                        .collect(Collectors.toList());
+                metaTypeList = list;
+            }
+        }
+        return list;
     }
 }
