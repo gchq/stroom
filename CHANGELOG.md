@@ -7,6 +7,8 @@ and this project adheres to [Semantic Versioning](http://semver.org/).
 
 ## [Unreleased]
 
+* The build should now ensure GWT compilation only occurs after test has completed.
+
 * Issue **#1790** : You can now provide `TYPE` as an optional HTTP header when sending data to Stroom. If provided this attribute is used to determine what data type to assign to the data being received. Data forwarding and aggregation also maintains this attribute and behaviour. 
 
 * Issue **#1665** : Recognised meta types can now be specified in config and drop downs now allow selection in the pipeline editor.
