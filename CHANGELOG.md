@@ -9,6 +9,8 @@ and this project adheres to [Semantic Versioning](http://semver.org/).
 
 * Issue **#1707** : Fix reference data lookups picking the wrong effective stream.
 
+* The build should now ensure GWT compilation only occurs after test has completed.
+
 
 ## [v7.0-beta.46] - 2020-08-23
 
