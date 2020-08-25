@@ -141,6 +141,8 @@ class TestByteBufferPool {
         final ByteBufferPool byteBufferPool = new ByteBufferPool();
 
         assertPoolSizeAfterMultipleConcurrentGetRequests(threadCount, minCapacity, byteBufferPool);
+        
+        LOGGER.info("-------------------");
 
         //re-run the same thing and the pool size should be the same at the end
         assertPoolSizeAfterMultipleConcurrentGetRequests(threadCount, minCapacity, byteBufferPool);
@@ -222,8 +224,8 @@ class TestByteBufferPool {
 
             completableFutures.add(CompletableFuture.runAsync(() -> {
 
-                PooledByteBuffer pooledByteBuffer = byteBufferPool.getPooledByteBuffer(minCapacity);
-                ByteBuffer byteBuffer = pooledByteBuffer.getByteBuffer();
+                final PooledByteBuffer pooledByteBuffer = byteBufferPool.getPooledByteBuffer(minCapacity);
+                pooledByteBuffer.getByteBuffer();
                 countDownLatch.countDown();
 //                LOGGER.debug("latch count {}", countDownLatch.getCount());
 

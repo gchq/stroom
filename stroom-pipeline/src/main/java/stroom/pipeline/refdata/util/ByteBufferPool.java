@@ -30,8 +30,9 @@ import java.nio.ByteBuffer;
 import java.util.Map;
 import java.util.Objects;
 import java.util.SortedMap;
-import java.util.TreeMap;
 import java.util.concurrent.CompletableFuture;
+import java.util.concurrent.ConcurrentNavigableMap;
+import java.util.concurrent.ConcurrentSkipListMap;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.TimeoutException;
@@ -75,32 +76,45 @@ public class ByteBufferPool implements Clearable, HasSystemInfo {
 
     private static final Logger LOGGER = LoggerFactory.getLogger(ByteBufferPool.class);
 
-    // TODO it would be preferable to use different concurrency constructs to avoid the use
-    //   of synchronized methods.
-
-    private final TreeMap<Key, ByteBuffer> bufferMap = new TreeMap<>();
+    private final ConcurrentNavigableMap<Key, ByteBuffer> bufferMap = new ConcurrentSkipListMap<>();
 
     public PooledByteBuffer getPooledByteBuffer(final int minCapacity) {
         return new PooledByteBuffer(() -> getBuffer(minCapacity), this);
     }
 
-    private synchronized ByteBuffer getBuffer(final int minCapacity) {
+    private ByteBuffer getBuffer(final int minCapacity) {
         // This method is called a LOT so needs to be performant
 
-        // get a buffer at least as big as minCapacity with the smallest insertionTime
-        final Map.Entry<Key, ByteBuffer> entry = bufferMap.ceilingEntry(new Key(minCapacity, 0));
+        ByteBuffer buffer = null;
+        int count = 0;
+        while (buffer == null) {
+            count++;
+            // Get a buffer at least as big as minCapacity with the smallest insertionTime.
+            // We don't really care about the insertTime, it is just there to give us a unique
+            // key.  As the map is sorted on capacity then insertTime we will get the lowest insertTime
+            // for a given capacity
+            final Map.Entry<Key, ByteBuffer> entry = bufferMap.ceilingEntry(new Key(minCapacity, 0));
 
-        final ByteBuffer buffer;
-        if (entry == null) {
-            buffer = ByteBuffer.allocateDirect(minCapacity);
-        } else {
-            bufferMap.remove(entry.getKey());
-            buffer = entry.getValue();
+            if (entry == null) {
+                // No suitable buffer in the pool so make a new one
+                buffer = ByteBuffer.allocateDirect(minCapacity);
+            } else {
+                // Now try and remove the entry we found, another thread may have stolen it
+                final ByteBuffer poolBuffer = bufferMap.remove(entry.getKey());
+                if (poolBuffer == null) {
+                    // Another thread has beaten us to it and taken the entry, so go round again
+                } else {
+                    buffer = poolBuffer;
+                }
+            }
+        }
+        if (count > 1) {
+            LOGGER.warn("Obtained buffer after {} iterations", count);
         }
         return buffer;
     }
 
-    synchronized void release(ByteBuffer buffer) {
+    void release(ByteBuffer buffer) {
         // This method is called a LOT so needs to be performant
         if (buffer != null) {
             if (!buffer.isDirect()) {
@@ -114,17 +128,24 @@ public class ByteBufferPool implements Clearable, HasSystemInfo {
             buffer.clear();
 
             try {
+                int count = 0;
+                int capacity = buffer.capacity();
                 while (true) {
-                    final Key key = new Key(buffer.capacity(), System.nanoTime());
-                    if (!bufferMap.containsKey(key)) {
-                        bufferMap.put(key, buffer);
-                        return;
+                    count++;
+                    final Key key = new Key(capacity, System.nanoTime());
+                    final ByteBuffer prevValue = bufferMap.putIfAbsent(key, buffer);
+                    if (prevValue == null) {
+                        // No existing mapping
+                        break;
                     }
                     // Buffers are indexed by (capacity, time) to ensure unique keys.
                     // If our key is not unique on the first try, we try again, since the
                     // time will be different.  Since we use nanoseconds, it's pretty
                     // unlikely that we'll loop even once, unless the system clock has a
                     // poor granularity.
+                }
+                if (count > 1) {
+                    LOGGER.warn("Took {} iterations to put buffer", count);
                 }
             } catch (Exception e) {
                 // if a buffer is not released back to the pool then it is not the end of the world
@@ -172,7 +193,7 @@ public class ByteBufferPool implements Clearable, HasSystemInfo {
         }
     }
 
-    public synchronized int getCurrentPoolSize() {
+    public int getCurrentPoolSize() {
         return bufferMap.size();
     }
 
@@ -184,7 +205,7 @@ public class ByteBufferPool implements Clearable, HasSystemInfo {
     }
 
     @Override
-    public synchronized void clear() {
+    public void clear() {
         bufferMap.clear();
     }
 
@@ -199,15 +220,13 @@ public class ByteBufferPool implements Clearable, HasSystemInfo {
                 // getting the counts requires synchronising and we don't want to hold up all
                 // the other health checks
                 capacityCountsMap = CompletableFuture.supplyAsync(() -> {
-                    synchronized (this) {
-                        return bufferMap.entrySet().stream()
-                                .collect(Collectors.groupingBy(entry ->
-                                                entry.getValue().capacity(),
-                                        Collectors.counting()))
-                                .entrySet()
-                                .stream()
-                                .collect(HasHealthCheck.buildTreeMapCollector(Map.Entry::getKey, Map.Entry::getValue));
-                    }
+                    return bufferMap.entrySet().stream()
+                            .collect(Collectors.groupingBy(entry ->
+                                            entry.getValue().capacity(),
+                                    Collectors.counting()))
+                            .entrySet()
+                            .stream()
+                            .collect(HasHealthCheck.buildTreeMapCollector(Map.Entry::getKey, Map.Entry::getValue));
 
                 })
                         .get(5, TimeUnit.SECONDS);
@@ -265,6 +284,14 @@ public class ByteBufferPool implements Clearable, HasSystemInfo {
         public int hashCode() {
             // No need to precompute this as it is not called by the map
             return Objects.hash(capacity, insertionTime);
+        }
+
+        @Override
+        public String toString() {
+            return "Key{" +
+                    "capacity=" + capacity +
+                    ", insertionTime=" + insertionTime +
+                    '}';
         }
     }
 }
