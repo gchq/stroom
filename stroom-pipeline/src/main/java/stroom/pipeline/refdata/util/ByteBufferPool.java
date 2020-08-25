@@ -27,7 +27,6 @@ import org.slf4j.LoggerFactory;
 
 import javax.inject.Singleton;
 import java.nio.ByteBuffer;
-import java.util.Comparator;
 import java.util.Map;
 import java.util.Objects;
 import java.util.SortedMap;
@@ -77,7 +76,7 @@ public class ByteBufferPool implements Clearable, HasSystemInfo {
     private static final Logger LOGGER = LoggerFactory.getLogger(ByteBufferPool.class);
 
     // TODO it would be preferable to use different concurrency constructs to avoid the use
-    // of synchronized methods.
+    //   of synchronized methods.
 
     private final TreeMap<Key, ByteBuffer> bufferMap = new TreeMap<>();
 
@@ -86,6 +85,8 @@ public class ByteBufferPool implements Clearable, HasSystemInfo {
     }
 
     private synchronized ByteBuffer getBuffer(final int minCapacity) {
+        // This method is called a LOT so needs to be performant
+
         // get a buffer at least as big as minCapacity with the smallest insertionTime
         final Map.Entry<Key, ByteBuffer> entry = bufferMap.ceilingEntry(new Key(minCapacity, 0));
 
@@ -100,10 +101,13 @@ public class ByteBufferPool implements Clearable, HasSystemInfo {
     }
 
     synchronized void release(ByteBuffer buffer) {
+        // This method is called a LOT so needs to be performant
         if (buffer != null) {
             if (!buffer.isDirect()) {
                 throw new RuntimeException("Expecting a direct ByteBuffer");
             }
+            // Not certain we need to zero the buffer if clear is called as any users of it
+            // should be immediately writing to part of it and setting the limit/pos
             for (int i = buffer.position(); i < buffer.limit(); i++) {
                 buffer.put((byte)0);
             }
@@ -116,7 +120,7 @@ public class ByteBufferPool implements Clearable, HasSystemInfo {
                         bufferMap.put(key, buffer);
                         return;
                     }
-                    // Buffers are indexed by (capacity, time).
+                    // Buffers are indexed by (capacity, time) to ensure unique keys.
                     // If our key is not unique on the first try, we try again, since the
                     // time will be different.  Since we use nanoseconds, it's pretty
                     // unlikely that we'll loop even once, unless the system clock has a
@@ -131,8 +135,8 @@ public class ByteBufferPool implements Clearable, HasSystemInfo {
     }
 
     public PooledByteBufferPair getPooledBufferPair(final int minKeyCapacity, final int minValueCapacity) {
-        ByteBuffer keyBuffer = getBuffer(minKeyCapacity);
-        ByteBuffer valueBuffer = getBuffer(minValueCapacity);
+        final ByteBuffer keyBuffer = getBuffer(minKeyCapacity);
+        final ByteBuffer valueBuffer = getBuffer(minValueCapacity);
         return new PooledByteBufferPair(this, keyBuffer, valueBuffer);
     }
 
@@ -225,29 +229,27 @@ public class ByteBufferPool implements Clearable, HasSystemInfo {
         private final int capacity;
         private final long insertionTime;
 
-        private final Comparator<Key> comparator = Comparator
-                .comparingInt(Key::getCapacity)
-                .thenComparingLong(Key::getInsertionTime);
-
-        private final int hashCode;
-
         Key(int capacity, long insertionTime) {
             this.capacity = capacity;
             this.insertionTime = insertionTime;
-            this.hashCode = Objects.hash(capacity, insertionTime);
-        }
-
-        int getCapacity() {
-            return capacity;
-        }
-
-        long getInsertionTime() {
-            return insertionTime;
         }
 
         @Override
         public int compareTo(Key other) {
-            return comparator.compare(this, other);
+            // This method is called many millions of times, hence no use of (Integer|Long).compareTo
+            if (capacity < other.capacity) {
+                return -1;
+            } else if (capacity > other.capacity) {
+                return 1;
+            } else {
+                if (insertionTime < other.insertionTime) {
+                    return -1;
+                } else if (insertionTime > other.insertionTime) {
+                    return 1;
+                } else {
+                    return 0;
+                }
+            }
         }
 
         @Override
@@ -261,7 +263,8 @@ public class ByteBufferPool implements Clearable, HasSystemInfo {
 
         @Override
         public int hashCode() {
-            return hashCode;
+            // No need to precompute this as it is not called by the map
+            return Objects.hash(capacity, insertionTime);
         }
     }
 }
