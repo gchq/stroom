@@ -25,16 +25,16 @@ import stroom.data.zip.StroomZipEntry;
 import stroom.data.zip.StroomZipFileType;
 import stroom.data.zip.StroomZipNameSet;
 import stroom.feed.api.FeedProperties;
-import stroom.meta.api.AttributeMapUtil;
 import stroom.meta.api.AttributeMap;
-import stroom.meta.shared.Meta;
+import stroom.meta.api.AttributeMapUtil;
 import stroom.meta.api.MetaProperties;
 import stroom.meta.api.StandardHeaderArguments;
+import stroom.meta.shared.Meta;
 import stroom.meta.statistics.api.MetaStatistics;
 import stroom.util.io.CloseableUtil;
-import stroom.util.logging.LambdaLogUtil;
 import stroom.util.logging.LambdaLogger;
 import stroom.util.logging.LambdaLoggerFactory;
+import stroom.util.logging.LogUtil;
 
 import java.io.ByteArrayOutputStream;
 import java.io.Closeable;
@@ -136,7 +136,7 @@ public class StreamTargetStroomStreamHandler implements StroomStreamHandler, Str
 
     @Override
     public void handleEntryStart(final StroomZipEntry stroomZipEntry) {
-        LOGGER.debug(LambdaLogUtil.message("handleEntryStart() - {}", stroomZipEntry));
+        LOGGER.debug(() -> LogUtil.message("handleEntryStart() - {}", stroomZipEntry));
 
         // Ensure we close the current output stream.
         closeCurrentOutput();
@@ -152,7 +152,10 @@ public class StreamTargetStroomStreamHandler implements StroomStreamHandler, Str
         if (singleEntry && currentStroomZipEntry != null && !nextEntry.equalsBaseName(currentStroomZipEntry)) {
             // Close it if we have opened it.
             if (targetMap.containsKey(currentFeedName)) {
-                LOGGER.debug(LambdaLogUtil.message("handleEntryStart() - Closing due to singleEntry={} currentFeedName={} currentStroomZipEntry={} nextEntry={}", singleEntry, currentFeedName, currentStroomZipEntry, nextEntry));
+                LOGGER.debug(() -> LogUtil.message(
+                        "handleEntryStart() - Closing due to singleEntry={} currentFeedName={} " +
+                                "currentStroomZipEntry={} nextEntry={}",
+                        singleEntry, currentFeedName, currentStroomZipEntry, nextEntry));
                 closeCurrentFeed();
             }
         }
@@ -218,7 +221,7 @@ public class StreamTargetStroomStreamHandler implements StroomStreamHandler, Str
     public void handleEntryEnd() throws IOException {
 //        final String streamTypeName = convertType(currentFileType);
 
-        LOGGER.debug(LambdaLogUtil.message("handleEntryEnd() - {}", currentFileType));
+        LOGGER.debug(() -> LogUtil.message("handleEntryEnd() - {}", currentFileType));
 
         if (StroomZipFileType.Meta.equals(currentFileType)) {
             final byte[] headerBytes = currentHeaderByteArrayOutputStream.toByteArray();
@@ -296,7 +299,7 @@ public class StreamTargetStroomStreamHandler implements StroomStreamHandler, Str
     }
 
     private void closeCurrentFeed() {
-        LOGGER.debug(LambdaLogUtil.message("closeCurrentFeed() - {}", currentFeedName));
+        LOGGER.debug(() -> LogUtil.message("closeCurrentFeed() - {}", currentFeedName));
         CloseableUtil.closeLogAndIgnoreException(targetMap.remove(currentFeedName));
     }
 
@@ -327,7 +330,7 @@ public class StreamTargetStroomStreamHandler implements StroomStreamHandler, Str
 
     private Target getTarget() {
         return targetMap.computeIfAbsent(currentFeedName, k -> {
-            LOGGER.debug(LambdaLogUtil.message("getOutputStreamProvider() - open stream for {}", currentFeedName));
+            LOGGER.debug(() -> LogUtil.message("getOutputStreamProvider() - open stream for {}", currentFeedName));
 
             // Get the effective time if one has been provided.
             final Long effectiveMs = StreamFactory.getReferenceEffectiveTime(getCurrentAttributeMap(), true);

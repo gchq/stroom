@@ -31,7 +31,6 @@ import stroom.util.config.PropertyUtil;
 import stroom.util.filter.FilterFieldMapper;
 import stroom.util.filter.FilterFieldMappers;
 import stroom.util.filter.QuickFilterPredicateFactory;
-import stroom.util.logging.LambdaLogUtil;
 import stroom.util.logging.LambdaLogger;
 import stroom.util.logging.LambdaLoggerFactory;
 import stroom.util.logging.LogUtil;
@@ -254,7 +253,7 @@ public class GlobalConfigService {
     public ConfigProperty update(final ConfigProperty configProperty) {
         return securityContext.secureResult(PermissionNames.MANAGE_PROPERTIES_PERMISSION, () -> {
 
-            LAMBDA_LOGGER.debug(LambdaLogUtil.message(
+            LAMBDA_LOGGER.debug(() -> LogUtil.message(
                     "Saving property [{}] with new database value [{}]",
                     configProperty.getName(), configProperty.getDatabaseOverrideValue()));
 

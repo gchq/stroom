@@ -17,14 +17,6 @@
 
 package stroom.pipeline.refdata.store.offheapstore.databases;
 
-import com.google.common.base.Preconditions;
-import com.google.inject.assistedinject.Assisted;
-import org.lmdbjava.Cursor;
-import org.lmdbjava.Env;
-import org.lmdbjava.GetOp;
-import org.lmdbjava.Txn;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 import stroom.pipeline.refdata.store.RefDataValue;
 import stroom.pipeline.refdata.store.offheapstore.ValueStoreKey;
 import stroom.pipeline.refdata.store.offheapstore.lmdb.AbstractLmdbDb;
@@ -35,10 +27,18 @@ import stroom.pipeline.refdata.store.offheapstore.serdes.ValueStoreKeySerde;
 import stroom.pipeline.refdata.util.ByteBufferPool;
 import stroom.pipeline.refdata.util.ByteBufferUtils;
 import stroom.pipeline.refdata.util.PooledByteBuffer;
-import stroom.util.logging.LambdaLogUtil;
 import stroom.util.logging.LambdaLogger;
 import stroom.util.logging.LambdaLoggerFactory;
 import stroom.util.logging.LogUtil;
+
+import com.google.common.base.Preconditions;
+import com.google.inject.assistedinject.Assisted;
+import org.lmdbjava.Cursor;
+import org.lmdbjava.Env;
+import org.lmdbjava.GetOp;
+import org.lmdbjava.Txn;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import javax.inject.Inject;
 import java.nio.ByteBuffer;
@@ -215,7 +215,7 @@ public class ValueStoreDb extends AbstractLmdbDb<ValueStoreKey, RefDataValue> {
                     }
                     lastKeyId = thisKeyId;
 
-                    LAMBDA_LOGGER.trace(LambdaLogUtil.message("Our value {}, db value {}",
+                    LAMBDA_LOGGER.trace(() -> LogUtil.message("Our value {}, db value {}",
                             LmdbUtils.byteBufferToHex(valueBuffer),
                             LmdbUtils.byteBufferToHex(valueFromDbBuf)));
 
@@ -247,7 +247,7 @@ public class ValueStoreDb extends AbstractLmdbDb<ValueStoreKey, RefDataValue> {
                 }
             }
 
-            LAMBDA_LOGGER.trace(LambdaLogUtil.message("isValueInMap: {}, valuesCount {}",
+            LAMBDA_LOGGER.trace(() -> LogUtil.message("isValueInMap: {}, valuesCount {}",
                     isValueInDb.get(),
                     valuesCount.get()));
 

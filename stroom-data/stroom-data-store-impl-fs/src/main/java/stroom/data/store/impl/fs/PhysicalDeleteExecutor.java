@@ -33,7 +33,6 @@ import stroom.task.api.ThreadPoolImpl;
 import stroom.task.shared.ThreadPool;
 import stroom.util.date.DateUtil;
 import stroom.util.io.FileUtil;
-import stroom.util.logging.LambdaLogUtil;
 import stroom.util.logging.LambdaLogger;
 import stroom.util.logging.LambdaLoggerFactory;
 import stroom.util.logging.LogExecutionTime;
@@ -160,7 +159,10 @@ public class PhysicalDeleteExecutor {
                 } while (!Thread.currentThread().isInterrupted() && count >= deleteBatchSize);
             }
 
-            LOGGER.debug(LambdaLogUtil.message("Deleted {} streams in {}.", total, logExecutionTime));
+            // Done with if as total is not final so can't be in a lambda
+            if (LOGGER.isDebugEnabled()) {
+                LOGGER.debug("Deleted {} streams in {}.", total, logExecutionTime);
+            }
         }
     }
 

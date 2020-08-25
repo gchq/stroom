@@ -17,26 +17,26 @@
 
 package stroom.pipeline.refdata.store.offheapstore;
 
+import stroom.pipeline.refdata.RefDataValueByteBufferConsumer;
+import stroom.pipeline.refdata.store.offheapstore.serdes.StringValueSerde;
+import stroom.pipeline.refdata.util.ByteBufferUtils;
+import stroom.util.logging.LambdaLogger;
+import stroom.util.logging.LambdaLoggerFactory;
+import stroom.util.logging.LogUtil;
+
 import net.sf.saxon.event.PipelineConfiguration;
 import net.sf.saxon.event.Receiver;
 import net.sf.saxon.event.ReceiverOptions;
 import net.sf.saxon.trans.XPathException;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import stroom.pipeline.refdata.RefDataValueByteBufferConsumer;
-import stroom.pipeline.refdata.store.offheapstore.serdes.StringValueSerde;
-import stroom.pipeline.refdata.util.ByteBufferUtils;
-import stroom.util.logging.LambdaLogUtil;
-import stroom.util.logging.LambdaLogger;
-import stroom.util.logging.LambdaLoggerFactory;
-import stroom.util.logging.LogUtil;
 
 import javax.inject.Inject;
 import java.nio.ByteBuffer;
 
 public class StringByteBufferConsumer implements RefDataValueByteBufferConsumer {
-    private static final Logger LOGGER = LoggerFactory.getLogger(StringByteBufferConsumer.class);
 
+    private static final Logger LOGGER = LoggerFactory.getLogger(StringByteBufferConsumer.class);
     private static final LambdaLogger LAMBDA_LOGGER = LambdaLoggerFactory.getLogger(StringByteBufferConsumer.class);
 
     private final StringValueSerde stringValueSerde;
@@ -52,7 +52,7 @@ public class StringByteBufferConsumer implements RefDataValueByteBufferConsumer 
         // we should only be consuming string type values
         final String str = stringValueSerde.extractValue(byteBuffer);
 
-        LAMBDA_LOGGER.trace(LambdaLogUtil.message("str {}, byteBuffer {}",
+        LAMBDA_LOGGER.trace(() -> LogUtil.message("str {}, byteBuffer {}",
                 str, ByteBufferUtils.byteBufferInfo(byteBuffer)));
 
         try {

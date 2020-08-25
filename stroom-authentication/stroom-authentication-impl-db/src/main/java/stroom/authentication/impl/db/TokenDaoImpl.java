@@ -31,9 +31,9 @@ import stroom.util.collections.ResultPageCollector;
 import stroom.util.filter.FilterFieldMapper;
 import stroom.util.filter.FilterFieldMappers;
 import stroom.util.filter.QuickFilterPredicateFactory;
-import stroom.util.logging.LambdaLogUtil;
 import stroom.util.logging.LambdaLogger;
 import stroom.util.logging.LambdaLoggerFactory;
+import stroom.util.logging.LogUtil;
 import stroom.util.shared.ResultPage;
 
 import org.jooq.Condition;
@@ -249,7 +249,7 @@ class TokenDaoImpl implements TokenDao {
         final int tokenTypeId = tokenTypeDao.getTokenTypeId(tokenType);
 
         return JooqUtil.contextResult(authDbConnProvider, context -> {
-            LOGGER.debug(LambdaLogUtil.message("Creating a {}", TOKEN.getName()));
+            LOGGER.debug(() -> LogUtil.message("Creating a {}", TOKEN.getName()));
             final TokenRecord record = TOKEN_TO_RECORD_MAPPER.apply(token, context.newRecord(TOKEN));
             record.setFkAccountId(accountId);
             record.setFkTokenTypeId(tokenTypeId);

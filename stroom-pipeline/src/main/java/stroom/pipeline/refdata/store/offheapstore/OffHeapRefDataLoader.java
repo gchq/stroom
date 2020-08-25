@@ -17,12 +17,6 @@
 
 package stroom.pipeline.refdata.store.offheapstore;
 
-import com.google.common.base.Preconditions;
-import com.google.common.util.concurrent.Striped;
-import org.lmdbjava.Env;
-import org.lmdbjava.Txn;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 import stroom.pipeline.refdata.store.MapDefinition;
 import stroom.pipeline.refdata.store.ProcessingState;
 import stroom.pipeline.refdata.store.RefDataLoader;
@@ -34,11 +28,17 @@ import stroom.pipeline.refdata.store.offheapstore.databases.KeyValueStoreDb;
 import stroom.pipeline.refdata.store.offheapstore.databases.ProcessingInfoDb;
 import stroom.pipeline.refdata.store.offheapstore.databases.RangeStoreDb;
 import stroom.pipeline.refdata.util.PooledByteBuffer;
-import stroom.util.logging.LambdaLogUtil;
 import stroom.util.logging.LambdaLogger;
 import stroom.util.logging.LambdaLoggerFactory;
 import stroom.util.logging.LogUtil;
 import stroom.util.shared.Range;
+
+import com.google.common.base.Preconditions;
+import com.google.common.util.concurrent.Striped;
+import org.lmdbjava.Env;
+import org.lmdbjava.Txn;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import java.nio.ByteBuffer;
 import java.time.Duration;
@@ -144,7 +144,7 @@ public class OffHeapRefDataLoader implements RefDataLoader {
                                 refStreamDefinition));
                     }
                 },
-                LambdaLogUtil.message("Acquiring lock for {}", refStreamDefinition));
+                () -> LogUtil.message("Acquiring lock for {}", refStreamDefinition));
     }
 
     @Override

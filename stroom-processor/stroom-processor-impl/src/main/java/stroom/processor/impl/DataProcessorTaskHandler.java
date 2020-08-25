@@ -33,7 +33,6 @@ import stroom.security.api.SecurityContext;
 import stroom.task.api.TaskContext;
 import stroom.task.api.TaskContextFactory;
 import stroom.util.date.DateUtil;
-import stroom.util.logging.LambdaLogUtil;
 import stroom.util.logging.LambdaLogger;
 import stroom.util.logging.LambdaLoggerFactory;
 
@@ -88,7 +87,11 @@ public class DataProcessorTaskHandler {
         boolean complete = false;
         ProcessorResult processorResult = new ProcessorResultImpl(0, 0, Collections.emptyMap());
         final long startTime = System.currentTimeMillis();
-        LOGGER.trace(LambdaLogUtil.message("Executing processor task: {}", processorTask.getId()));
+
+        // Have to do the if as processorTask is not final so can't use a lambda
+        if (LOGGER.isTraceEnabled()) {
+            LOGGER.trace("Executing processor task: {}", processorTask.getId());
+        }
 
         // Open the stream source.
         try (Source source = streamStore.openSource(processorTask.getMetaId())) {
@@ -113,8 +116,11 @@ public class DataProcessorTaskHandler {
                 // Don't process any streams that we have already created
                 if (meta.getProcessorUuid() != null && meta.getProcessorUuid().equals(destStreamProcessor.getUuid())) {
                     complete = true;
-                    LOGGER.warn(LambdaLogUtil.message("Skipping data that we seem to have created (avoid processing forever) {} {}", meta,
-                            destStreamProcessor));
+                    // Have to do the if as processorTask is not final so can't use a lambda
+                    if (LOGGER.isWarnEnabled()) {
+                        LOGGER.warn("Skipping data that we seem to have created (avoid processing forever) {} {}",
+                                meta, destStreamProcessor);
+                    }
 
                 } else {
                     // Change the task status.... and save
@@ -136,7 +142,7 @@ public class DataProcessorTaskHandler {
                         }
 
                     } catch (final RuntimeException e) {
-                        LOGGER.error(LambdaLogUtil.message("Task failed {} {}", new Object[]{destStreamProcessor, meta}, e));
+                        LOGGER.error("Task failed {} {}", new Object[]{destStreamProcessor, meta}, e);
                     }
                 }
             }

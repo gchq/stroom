@@ -5,9 +5,9 @@ import stroom.cache.api.ICache;
 import stroom.data.store.impl.fs.FsFeedPathDao;
 import stroom.data.store.impl.fs.FsVolumeConfig;
 import stroom.db.util.JooqUtil;
-import stroom.util.logging.LambdaLogUtil;
 import stroom.util.logging.LambdaLogger;
 import stroom.util.logging.LambdaLoggerFactory;
+import stroom.util.logging.LogUtil;
 
 import javax.inject.Inject;
 import javax.inject.Singleton;
@@ -53,7 +53,7 @@ class FsFeedPathDaoImpl implements FsFeedPathDao {
     private void createPath(final String name) {
         final String path = name.toUpperCase().replaceAll("[^A-Z0-9_-]", "_");
         if (!path.equals(name)) {
-            LOGGER.warn(LambdaLogUtil.message("A non standard feed name was found when registering a file path '{}'", name));
+            LOGGER.warn(() -> LogUtil.message("A non standard feed name was found when registering a file path '{}'", name));
         }
 
         JooqUtil.context(fsDataStoreDbConnProvider, context -> context

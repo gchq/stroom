@@ -1,5 +1,29 @@
 package stroom.statistics.impl.sql.search;
 
+import stroom.dashboard.expression.v1.FieldIndexMap;
+import stroom.dashboard.expression.v1.Val;
+import stroom.query.api.v2.Param;
+import stroom.query.api.v2.SearchRequest;
+import stroom.query.common.v2.CompletionState;
+import stroom.query.common.v2.Coprocessor;
+import stroom.query.common.v2.CoprocessorSettings;
+import stroom.query.common.v2.CoprocessorSettingsMap;
+import stroom.query.common.v2.Data;
+import stroom.query.common.v2.Payload;
+import stroom.query.common.v2.ResultHandler;
+import stroom.query.common.v2.SearchResultHandler;
+import stroom.query.common.v2.Sizes;
+import stroom.query.common.v2.Store;
+import stroom.query.common.v2.TableCoprocessor;
+import stroom.query.common.v2.TableCoprocessorSettings;
+import stroom.query.common.v2.TablePayload;
+import stroom.statistics.impl.sql.shared.StatisticStoreDoc;
+import stroom.task.api.TaskContext;
+import stroom.task.api.TaskContextFactory;
+import stroom.util.logging.LambdaLogger;
+import stroom.util.logging.LambdaLoggerFactory;
+import stroom.util.logging.LogUtil;
+
 import com.google.common.base.Preconditions;
 import com.google.common.collect.Maps;
 import io.reactivex.Flowable;
@@ -9,22 +33,14 @@ import io.reactivex.disposables.Disposable;
 import io.reactivex.schedulers.Schedulers;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import stroom.dashboard.expression.v1.FieldIndexMap;
-import stroom.dashboard.expression.v1.Val;
-import stroom.query.api.v2.Param;
-import stroom.query.api.v2.SearchRequest;
-import stroom.query.common.v2.*;
-import stroom.statistics.impl.sql.shared.StatisticStoreDoc;
-import stroom.task.api.TaskContext;
-import stroom.task.api.TaskContextFactory;
-import stroom.util.logging.LambdaLogUtil;
-import stroom.util.logging.LambdaLogger;
-import stroom.util.logging.LambdaLoggerFactory;
-import stroom.util.logging.LogUtil;
 
 import java.time.Duration;
 import java.time.Instant;
-import java.util.*;
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.Collections;
+import java.util.List;
+import java.util.Map;
 import java.util.concurrent.Executor;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicLong;
@@ -208,7 +224,7 @@ public class SqlStatisticsStore implements Store {
                                     if (now >= nextProcessPayloadsTime.get() ||
                                             countSinceLastSend.get() >= resultHandlerBatchSize) {
 
-                                        LAMBDA_LOGGER.debug(LambdaLogUtil.message("{} vs {}, {} vs {}",
+                                        LAMBDA_LOGGER.debug(() -> LogUtil.message("{} vs {}, {} vs {}",
                                                 now, nextProcessPayloadsTime,
                                                 countSinceLastSend.get(), resultHandlerBatchSize));
 

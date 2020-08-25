@@ -56,10 +56,10 @@ import stroom.task.api.TaskContext;
 import stroom.task.api.TaskContextFactory;
 import stroom.task.shared.ThreadPool;
 import stroom.util.date.DateUtil;
-import stroom.util.logging.LambdaLogUtil;
 import stroom.util.logging.LambdaLogger;
 import stroom.util.logging.LambdaLoggerFactory;
 import stroom.util.logging.LogExecutionTime;
+import stroom.util.logging.LogUtil;
 import stroom.util.shared.PermissionException;
 
 import javax.inject.Inject;
@@ -676,7 +676,8 @@ class ProcessorTaskManagerImpl implements ProcessorTaskManager {
                             if (modified != null) {
                                 queue.add(modified);
                                 count++;
-                                taskContext.info(LambdaLogUtil.message("Adding {}/{} non owned Tasks", count, size));
+                                final int finalCount = count;
+                                taskContext.info(() -> LogUtil.message("Adding {}/{} non owned Tasks", finalCount, size));
                             }
 
                             if (Thread.currentThread().isInterrupted()) {

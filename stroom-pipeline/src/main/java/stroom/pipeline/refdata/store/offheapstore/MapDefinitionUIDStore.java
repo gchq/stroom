@@ -7,7 +7,6 @@ import stroom.pipeline.refdata.store.offheapstore.databases.MapUidReverseDb;
 import stroom.pipeline.refdata.store.offheapstore.lmdb.LmdbUtils;
 import stroom.pipeline.refdata.util.ByteBufferUtils;
 import stroom.pipeline.refdata.util.PooledByteBuffer;
-import stroom.util.logging.LambdaLogUtil;
 import stroom.util.logging.LambdaLogger;
 import stroom.util.logging.LambdaLoggerFactory;
 import stroom.util.logging.LogUtil;
@@ -162,28 +161,28 @@ public class MapDefinitionUIDStore {
                 );
 
         // put the reverse entry
-        LAMBDA_LOGGER.trace(LambdaLogUtil.message(
-                "nextUidKeyBuffer {}", ByteBufferUtils.byteBufferInfo(nextUidKeyBuffer)));
-        LAMBDA_LOGGER.trace(LambdaLogUtil.message(
-                "mapDefinitionBuffer {}", ByteBufferUtils.byteBufferInfo(mapDefinitionBuffer)));
         mapUidReverseDb.putReverseEntry(writeTxn, nextUidKeyBuffer, mapDefinitionBuffer);
 
         // We are not changing the buffers so can just reuse them
 
-        LAMBDA_LOGGER.trace(LambdaLogUtil.message(
-                "mapDefinitionKeyBuffer {}", ByteBufferUtils.byteBufferInfo(mapDefinitionBuffer)));
-        LAMBDA_LOGGER.trace(LambdaLogUtil.message(
-                "nextUidValueBuffer {}", ByteBufferUtils.byteBufferInfo(nextUidKeyBuffer)));
 
         // put the forward entry
         mapUidForwardDb.putForwardEntry(writeTxn, mapDefinitionBuffer, nextUidKeyBuffer);
 
         // this buffer is 'owned' by LMDB now but we are still in a txn so can pass it back
-        LAMBDA_LOGGER.trace(LambdaLogUtil.message(
-                "nextUidValueBuffer {}", ByteBufferUtils.byteBufferInfo(nextUidKeyBuffer)));
+
 
         // ensure it is ready for reading again as we are returning it
         UID mapUid = UID.wrap(nextUidKeyBuffer);
+
+        if (LOGGER.isTraceEnabled()) {
+            LOGGER.trace("nextUidKeyBuffer {}", ByteBufferUtils.byteBufferInfo(nextUidKeyBuffer));
+            LOGGER.trace("mapDefinitionBuffer {}", ByteBufferUtils.byteBufferInfo(mapDefinitionBuffer));
+            LOGGER.trace("mapDefinitionKeyBuffer {}", ByteBufferUtils.byteBufferInfo(mapDefinitionBuffer));
+            LOGGER.trace("nextUidValueBuffer {}", ByteBufferUtils.byteBufferInfo(nextUidKeyBuffer));
+            LOGGER.trace("nextUidValueBuffer {}", ByteBufferUtils.byteBufferInfo(nextUidKeyBuffer));
+            LOGGER.trace("Creating UID mapping for {}", mapUid);
+        }
         LOGGER.trace("Creating UID mapping for {}", mapUid);
         return mapUid;
     }

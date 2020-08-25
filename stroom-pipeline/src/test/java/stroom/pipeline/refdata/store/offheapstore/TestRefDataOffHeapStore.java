@@ -38,7 +38,6 @@ import stroom.pipeline.refdata.store.offheapstore.databases.RangeStoreDb;
 import stroom.pipeline.refdata.store.offheapstore.databases.ValueStoreDb;
 import stroom.util.io.ByteSize;
 import stroom.util.io.TempDirProvider;
-import stroom.util.logging.LambdaLogUtil;
 import stroom.util.logging.LambdaLogger;
 import stroom.util.logging.LambdaLoggerFactory;
 import stroom.util.logging.LogUtil;
@@ -353,7 +352,7 @@ class TestRefDataOffHeapStore extends AbstractLmdbDbTest {
                                 optValue = refDataStore.getValue(mapDefinitionKey, Integer.toString((i * 10) + 5));
                                 assertThat(optValue.isPresent());
                             });
-                }, LambdaLogUtil.message("Getting {} entries, twice", recCount));
+                }, () -> LogUtil.message("Getting {} entries, twice", recCount));
 
             } catch (Exception e) {
                 throw new RuntimeException(e);
@@ -429,7 +428,7 @@ class TestRefDataOffHeapStore extends AbstractLmdbDbTest {
                                 optValue = refDataStore.getValue(mapDefinitionKey, Integer.toString((i * 10) + 5));
                                 assertThat(optValue.isPresent());
                             });
-                }, LambdaLogUtil.message("Getting {} entries, twice", recCount));
+                }, () -> LogUtil.message("Getting {} entries, twice", recCount));
 
             } catch (Exception e) {
                 throw new RuntimeException(e);
@@ -684,7 +683,7 @@ class TestRefDataOffHeapStore extends AbstractLmdbDbTest {
         int refStreamDefCount = 5;
         int keyValueMapCount = 2;
         int rangeValueMapCount = 2;
-        int entryCount = 5_000;
+        int entryCount = 50_000;
         int totalMapEntries = (refStreamDefCount * keyValueMapCount) + (refStreamDefCount * rangeValueMapCount);
 
         int totalKeyValueEntryCount = refStreamDefCount * keyValueMapCount * entryCount;

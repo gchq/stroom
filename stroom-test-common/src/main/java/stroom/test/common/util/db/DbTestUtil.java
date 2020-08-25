@@ -10,9 +10,9 @@ import stroom.db.util.DbUrl.Builder;
 import stroom.db.util.HikariUtil;
 import stroom.util.ConsoleColour;
 import stroom.util.db.ForceCoreMigration;
-import stroom.util.logging.LambdaLogUtil;
 import stroom.util.logging.LambdaLogger;
 import stroom.util.logging.LambdaLoggerFactory;
+import stroom.util.logging.LogUtil;
 
 import com.wix.mysql.EmbeddedMysql;
 import com.wix.mysql.config.Charset;
@@ -295,8 +295,8 @@ public class DbTestUtil {
         try {
             final Path tempDir = Files.createTempDirectory("embedmysql_");
 
-            LOGGER.info(LambdaLogUtil.message("Embedded MySQL cache dir = {}", cacheDir.toString()));
-            LOGGER.info(LambdaLogUtil.message("Embedded MySQL temp dir = {}", tempDir.toString()));
+            LOGGER.info(() -> LogUtil.message("Embedded MySQL cache dir = {}", cacheDir.toString()));
+            LOGGER.info(() -> LogUtil.message("Embedded MySQL temp dir = {}", tempDir.toString()));
 
             final DownloadConfig downloadConfig = DownloadConfig.aDownloadConfig()
 //                        .withProxy(aHttpProxy("remote.host", 8080))

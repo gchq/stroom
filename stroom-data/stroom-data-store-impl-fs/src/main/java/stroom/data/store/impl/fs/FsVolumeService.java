@@ -18,9 +18,9 @@ import stroom.util.entityevent.EntityEventBus;
 import stroom.util.entityevent.EntityEventHandler;
 import stroom.util.io.FileUtil;
 import stroom.util.io.TempDirProvider;
-import stroom.util.logging.LambdaLogUtil;
 import stroom.util.logging.LambdaLogger;
 import stroom.util.logging.LambdaLoggerFactory;
+import stroom.util.logging.LogUtil;
 import stroom.util.shared.Clearable;
 import stroom.util.shared.Flushable;
 import stroom.util.shared.ResultPage;
@@ -128,7 +128,7 @@ public class FsVolumeService implements EntityEvent.Handler, Clearable, Flushabl
                     }
 
                     Files.createDirectories(path);
-                    LOGGER.info(LambdaLogUtil.message("Creating volume in {}", pathString));
+                    LOGGER.info(() -> LogUtil.message("Creating volume in {}", pathString));
 
                     if (fileVolume.getByteLimit() == null) {
                         //set an arbitrary default limit size of 250MB on each volume to prevent the
@@ -145,7 +145,7 @@ public class FsVolumeService implements EntityEvent.Handler, Clearable, Flushabl
                 result = fsVolumeDao.create(fileVolume);
                 result.setVolumeState(fileVolume.getVolumeState());
             } catch (IOException e) {
-                LOGGER.error(LambdaLogUtil.message("Unable to create volume due to an error creating directory {}", pathString), e);
+                LOGGER.error("Unable to create volume due to an error creating directory {}", pathString, e);
             }
 
             fireChange(EntityAction.CREATE);
@@ -389,19 +389,19 @@ public class FsVolumeService implements EntityEvent.Handler, Clearable, Flushabl
 
         // Ensure the path exists
         if (Files.isDirectory(path)) {
-            LOGGER.debug(LambdaLogUtil.message("updateVolumeState() path exists: {}", path));
+            LOGGER.debug(() -> LogUtil.message("updateVolumeState() path exists: {}", path));
             setSizes(path, volumeState);
         } else {
             try {
                 Files.createDirectories(path);
-                LOGGER.debug(LambdaLogUtil.message("updateVolumeState() path created: {}", path));
+                LOGGER.debug(() -> LogUtil.message("updateVolumeState() path created: {}", path));
                 setSizes(path, volumeState);
             } catch (final IOException e) {
-                LOGGER.error(LambdaLogUtil.message("updateVolumeState() path not created: {}", path));
+                LOGGER.error(() -> LogUtil.message("updateVolumeState() path not created: {}", path));
             }
         }
 
-        LOGGER.debug(LambdaLogUtil.message("updateVolumeState() exit {}", volume));
+        LOGGER.debug(() -> LogUtil.message("updateVolumeState() exit {}", volume));
         return volumeState;
     }
 
@@ -527,7 +527,8 @@ public class FsVolumeService implements EntityEvent.Handler, Clearable, Flushabl
             // this.updateVolumeState()
             return OptionalLong.of((long) (totalBytes * volumeConfig.getDefaultStreamVolumeFilesystemUtilisation()));
         } catch (IOException e) {
-            LOGGER.warn(LambdaLogUtil.message("Unable to determine the total space on the filesystem for path: {}", FileUtil.getCanonicalPath(path)));
+            LOGGER.warn(() -> LogUtil.message("Unable to determine the total space on the filesystem for path: {}",
+                    FileUtil.getCanonicalPath(path)));
             return OptionalLong.empty();
         }
     }
@@ -569,7 +570,7 @@ public class FsVolumeService implements EntityEvent.Handler, Clearable, Flushabl
                 return Optional.empty();
             }
         } catch (final RuntimeException e) {
-            LOGGER.warn(LambdaLogUtil.message("Unable to determine application jar directory due to: {}", e.getMessage()));
+            LOGGER.warn("Unable to determine application jar directory due to: {}", e.getMessage());
             return Optional.empty();
         }
     }

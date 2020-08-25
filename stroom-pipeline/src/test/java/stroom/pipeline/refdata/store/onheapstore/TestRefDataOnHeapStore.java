@@ -30,7 +30,6 @@ import stroom.pipeline.refdata.store.RefDataValueProxy;
 import stroom.pipeline.refdata.store.RefStreamDefinition;
 import stroom.pipeline.refdata.store.StringValue;
 import stroom.util.io.TempDirProvider;
-import stroom.util.logging.LambdaLogUtil;
 import stroom.util.logging.LambdaLogger;
 import stroom.util.logging.LambdaLoggerFactory;
 import stroom.util.logging.LogUtil;
@@ -359,7 +358,7 @@ class TestRefDataOnHeapStore {
                                 optValue = refDataStore.getValue(mapDefinitionKey, Integer.toString((i * 10) + 5));
                                 assertThat(optValue.isPresent());
                             });
-                }, LambdaLogUtil.message("Getting {} entries, twice", recCount));
+                }, () -> LogUtil.message("Getting {} entries, twice", recCount));
 
             } catch (Exception e) {
                 throw new RuntimeException(e);
@@ -437,7 +436,7 @@ class TestRefDataOnHeapStore {
                                 optValue = refDataStore.getValue(mapDefinitionKey, Integer.toString((i * 10) + 5));
                                 assertThat(optValue.isPresent());
                             });
-                }, LambdaLogUtil.message("Getting {} entries, twice", recCount));
+                }, () -> LogUtil.message("Getting {} entries, twice", recCount));
 
             } catch (Exception e) {
                 throw new RuntimeException(e);
