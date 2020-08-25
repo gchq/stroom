@@ -54,13 +54,11 @@ import io.vavr.Tuple2;
 import io.vavr.Tuple3;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
-import org.junit.jupiter.api.io.TempDir;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import javax.inject.Inject;
 import java.nio.charset.StandardCharsets;
-import java.nio.file.Path;
 import java.time.Duration;
 import java.time.Instant;
 import java.time.temporal.ChronoUnit;
@@ -667,13 +665,57 @@ class TestRefDataOffHeapStore extends AbstractLmdbDbTest {
                 totalRangeValueEntryCount,
                 totalValueEntryCount);
     }
+    /**
+     * Make entryCount very big for manual performance testing or profiling
+     */
+    @Test
+    void testBigLoadForPerfTesting() {
+
+        // Wait for visualvm to spin up
+        try {
+            Thread.sleep(0_000);
+        } catch (InterruptedException e) {
+            e.printStackTrace();
+        }
+
+        MapNamFunc mapNamFunc = this::buildMapNameWithoutRefStreamDef;
+
+        setPurgeAgeProperty(StroomDuration.ofDays(1));
+        int refStreamDefCount = 5;
+        int keyValueMapCount = 2;
+        int rangeValueMapCount = 2;
+        int entryCount = 5_000;
+        int totalMapEntries = (refStreamDefCount * keyValueMapCount) + (refStreamDefCount * rangeValueMapCount);
+
+        int totalKeyValueEntryCount = refStreamDefCount * keyValueMapCount * entryCount;
+        int totalRangeValueEntryCount = refStreamDefCount * rangeValueMapCount * entryCount;
+        int totalValueEntryCount = (totalKeyValueEntryCount + totalRangeValueEntryCount) / refStreamDefCount;
+
+        LOGGER.info("-------------------------load starts here--------------------------------------");
+        LAMBDA_LOGGER.logDurationIfInfoEnabled(() -> {
+            List<RefStreamDefinition> refStreamDefs1 = loadBulkData(
+                    refStreamDefCount, keyValueMapCount, rangeValueMapCount, entryCount, 0, mapNamFunc);
+        }, "Load");
+
+        assertDbCounts(
+                refStreamDefCount,
+                totalMapEntries,
+                totalKeyValueEntryCount,
+                totalRangeValueEntryCount,
+                totalValueEntryCount);
+
+        // here to aid debugging problems at low volumes
+        if (entryCount < 10) {
+            refDataStore.logAllContents(LOGGER::info);
+        }
+    }
 
 
     /**
      * Make entryCount very big for manual performance testing or profiling
      */
     @Test
-    void testBigLoadForPerfTesting() {
+    void testBigLoadAndGetForPerfTesting() {
 
         MapNamFunc mapNamFunc = this::buildMapNameWithoutRefStreamDef;
 

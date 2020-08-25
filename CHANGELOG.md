@@ -7,6 +7,8 @@ and this project adheres to [Semantic Versioning](http://semver.org/).
 
 ## [Unreleased]
 
+* Fix instances of trace logging that are not using lambdas for complex args. This is particularly a problem in the ref data store code.
+
 
 ## [v7.0-beta.46] - 2020-08-23
 
