@@ -7,6 +7,8 @@ and this project adheres to [Semantic Versioning](http://semver.org/).
 
 ## [Unreleased]
 
+* The build should now ensure GWT compilation only occurs after test has completed.
+
 
 ## [v7.0-beta.46] - 2020-08-23
 
