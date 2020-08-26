@@ -1,8 +1,8 @@
 package stroom.search.resultsender;
 
+import stroom.query.common.v2.CompletionState;
 import stroom.query.common.v2.CoprocessorSettingsMap.CoprocessorKey;
 import stroom.query.common.v2.Payload;
-import stroom.search.coprocessor.CompletionState;
 import stroom.search.coprocessor.Coprocessors;
 import stroom.task.server.TaskContext;
 import stroom.util.logging.LambdaLogger;
@@ -109,7 +109,7 @@ class ResultSenderImpl implements ResultSender {
                             boolean awaitResult = LOGGER.logDurationIfTraceEnabled(
                                     () -> {
                                         try {
-                                            return searchComplete.await(waitTime, TimeUnit.MILLISECONDS);
+                                            return searchComplete.awaitCompletion(waitTime, TimeUnit.MILLISECONDS);
                                         } catch (InterruptedException e) {
                                             //Don't want to reset interrupt status as this thread will go back into
                                             //the executor's pool. Throwing an exception will terminate the task

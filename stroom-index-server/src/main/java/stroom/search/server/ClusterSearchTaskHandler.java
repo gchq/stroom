@@ -21,7 +21,7 @@ import org.springframework.context.annotation.Scope;
 import stroom.annotation.api.AnnotationDataSource;
 import stroom.pipeline.server.errorhandler.MessageUtil;
 import stroom.query.api.v2.ExpressionOperator;
-import stroom.search.coprocessor.CompletionState;
+import stroom.query.common.v2.CompletionState;
 import stroom.search.coprocessor.Coprocessors;
 import stroom.search.coprocessor.CoprocessorsFactory;
 import stroom.search.coprocessor.Error;
@@ -143,7 +143,7 @@ class ClusterSearchTaskHandler implements TaskHandler<ClusterSearchTask, NodeRes
                 try {
                     taskContext.info("Sending final results");
                     while (!task.isTerminated() && !sendingDataCompletionState.isComplete()) {
-                        sendingDataCompletionState.await(1, TimeUnit.SECONDS);
+                        sendingDataCompletionState.awaitCompletion(1, TimeUnit.SECONDS);
                     }
                 } catch (InterruptedException e) {
                     //Don't want to reset interrupt status as this thread will go back into

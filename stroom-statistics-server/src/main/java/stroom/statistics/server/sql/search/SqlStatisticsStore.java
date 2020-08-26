@@ -14,7 +14,7 @@ import stroom.dashboard.expression.v1.FieldIndexMap;
 import stroom.dashboard.expression.v1.Val;
 import stroom.query.api.v2.Param;
 import stroom.query.api.v2.SearchRequest;
-import stroom.query.common.v2.CompletionListener;
+import stroom.query.common.v2.CompletionState;
 import stroom.query.common.v2.Coprocessor;
 import stroom.query.common.v2.CoprocessorSettings;
 import stroom.query.common.v2.CoprocessorSettingsMap;
@@ -32,7 +32,6 @@ import stroom.task.server.TaskContext;
 import stroom.util.logging.LambdaLogger;
 import stroom.util.logging.LambdaLoggerFactory;
 import stroom.util.shared.HasTerminate;
-import stroom.util.task.TaskWrapper;
 
 import java.time.Duration;
 import java.time.Instant;
@@ -41,17 +40,13 @@ import java.util.Arrays;
 import java.util.Collections;
 import java.util.List;
 import java.util.Map;
-import java.util.Objects;
-import java.util.Queue;
-import java.util.concurrent.ConcurrentLinkedQueue;
 import java.util.concurrent.Executor;
-import java.util.concurrent.atomic.AtomicBoolean;
+import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicLong;
 import java.util.concurrent.atomic.LongAdder;
 import java.util.stream.Collectors;
 
 public class SqlStatisticsStore implements Store {
-
     private static final Logger LOGGER = LoggerFactory.getLogger(SqlStatisticsStore.class);
     private static final LambdaLogger LAMBDA_LOGGER = LambdaLoggerFactory.getLogger(SqlStatisticsStore.class);
 
@@ -63,11 +58,9 @@ public class SqlStatisticsStore implements Store {
     private final int resultHandlerBatchSize;
     private final Sizes defaultMaxResultsSizes;
     private final Sizes storeSize;
-    private final AtomicBoolean isComplete;
-    private final Queue<CompletionListener> completionListeners = new ConcurrentLinkedQueue<>();
     private final List<String> errors = Collections.synchronizedList(new ArrayList<>());
+    private final CompletionState completionState = new CompletionState();
     private final HasTerminate terminationMonitor;
-    private final TaskContext taskContext;
     private final String searchKey;
     private final CompositeDisposable compositeDisposable;
 
@@ -82,9 +75,7 @@ public class SqlStatisticsStore implements Store {
 
         this.defaultMaxResultsSizes = defaultMaxResultsSizes;
         this.storeSize = storeSize;
-        this.isComplete = new AtomicBoolean(false);
         this.searchKey = searchRequest.getKey().toString();
-        this.taskContext = taskContext;
         this.resultHandlerBatchSize = resultHandlerBatchSize;
 
         final CoprocessorSettingsMap coprocessorSettingsMap = CoprocessorSettingsMap.create(searchRequest);
@@ -113,10 +104,12 @@ public class SqlStatisticsStore implements Store {
         LOGGER.debug("Async search task started for key {}", searchKey);
     }
 
-
     @Override
     public void destroy() {
         LOGGER.debug("destroy called");
+
+        complete();
+
         //terminate the search
         // TODO this may need to change in 6.1
         if (compositeDisposable != null) {
@@ -124,10 +117,28 @@ public class SqlStatisticsStore implements Store {
         }
     }
 
+    public void complete() {
+        LOGGER.debug("complete called");
+        completionState.complete();
+
+//        // We have to wrap the cluster termination task in another task or
+//        // ClusterDispatchAsyncImpl
+//        // will not execute it if the parent task is terminated.
+//        if (taskId != null) {
+//            clusterTaskTerminator.terminate(task.getSearchName(), taskId, TASK_NAME);
+//        }
+    }
+
     @Override
     public boolean isComplete() {
-        return isComplete.get();
+        return completionState.isComplete();
     }
+
+    @Override
+    public boolean awaitCompletion(final long timeout, final TimeUnit unit) throws InterruptedException {
+        return completionState.awaitCompletion(timeout, unit);
+    }
+
 
     @Override
     public Data getData(String componentId) {
@@ -157,21 +168,11 @@ public class SqlStatisticsStore implements Store {
     }
 
     @Override
-    public void registerCompletionListener(final CompletionListener completionListener) {
-        completionListeners.add(Objects.requireNonNull(completionListener));
-
-        if (isComplete.get()) {
-            //immediate notification
-            notifyListenersOfCompletion();
-        }
-    }
-
-    @Override
     public String toString() {
         return "SqlStatisticsStore{" +
                 "defaultMaxResultsSizes=" + defaultMaxResultsSizes +
                 ", storeSize=" + storeSize +
-                ", isComplete=" + isComplete +
+                ", completionState=" + completionState +
 //                ", isTerminated=" + isTerminated +
                 ", searchKey='" + searchKey + '\'' +
                 '}';
@@ -256,7 +257,7 @@ public class SqlStatisticsStore implements Store {
                             // data we have gathered so far
                             processPayloads(resultHandler, coprocessorMap, terminationMonitor);
                             taskContext.info(searchKey + " - complete");
-                            completeSearch();
+                            complete();
 
                             LAMBDA_LOGGER.debug(() ->
                                     LambdaLogger.buildMessage("Query finished in {}", Duration.between(queryStart, Instant.now())));
@@ -282,27 +283,6 @@ public class SqlStatisticsStore implements Store {
                         createCoprocessor(entry.getValue(), fieldIndexMap, paramMap, terminationMonitor)))
                 .filter(entry -> entry.getKey() != null)
                 .collect(ImmutableMap.toImmutableMap(Map.Entry::getKey, Map.Entry::getValue));
-    }
-
-    private void notifyListenersOfCompletion() {
-        //Call isComplete to ensure we are complete and not terminated
-        LAMBDA_LOGGER.debug(() -> LambdaLogger.buildMessage("notifyListenersOfCompletion called for {} listeners",
-                completionListeners.size()));
-
-        if (isComplete()) {
-            for (CompletionListener listener; (listener = completionListeners.poll()) != null; ) {
-                //when notified they will check isComplete
-                LOGGER.debug("Notifying {} {} that we are complete", listener.getClass().getName(), listener);
-                listener.onCompletion();
-            }
-        }
-    }
-
-    private void completeSearch() {
-        LOGGER.debug("completeSearch called");
-        isComplete.set(true);
-        notifyListenersOfCompletion();
-        resultHandler.setComplete(true);
     }
 
     /**
@@ -361,12 +341,9 @@ public class SqlStatisticsStore implements Store {
                                                  final HasTerminate taskMonitor) {
         if (settings instanceof TableCoprocessorSettings) {
             final TableCoprocessorSettings tableCoprocessorSettings = (TableCoprocessorSettings) settings;
-            final TableCoprocessor tableCoprocessor = new TableCoprocessor(
+            return new TableCoprocessor(
                     tableCoprocessorSettings, fieldIndexMap, taskMonitor, paramMap);
-            return tableCoprocessor;
         }
         return null;
     }
-
-
 }

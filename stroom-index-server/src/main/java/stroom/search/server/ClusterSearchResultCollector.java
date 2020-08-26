@@ -19,7 +19,7 @@ package stroom.search.server;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import stroom.node.shared.Node;
-import stroom.query.common.v2.CompletionListener;
+import stroom.query.common.v2.CompletionState;
 import stroom.query.common.v2.CoprocessorSettingsMap.CoprocessorKey;
 import stroom.query.common.v2.Data;
 import stroom.query.common.v2.Payload;
@@ -34,30 +34,34 @@ import stroom.task.cluster.CollectorIdFactory;
 import stroom.task.server.TaskCallback;
 import stroom.task.server.TaskManager;
 import stroom.task.server.TaskTerminatedException;
+import stroom.util.logging.LambdaLogger;
+import stroom.util.logging.LambdaLoggerFactory;
 import stroom.util.shared.Task;
 import stroom.util.shared.VoidResult;
 
 import java.util.ArrayList;
-import java.util.Collections;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Map.Entry;
-import java.util.Objects;
-import java.util.Queue;
 import java.util.Set;
 import java.util.concurrent.ConcurrentHashMap;
-import java.util.concurrent.ConcurrentLinkedQueue;
+import java.util.concurrent.TimeUnit;
+import java.util.concurrent.atomic.AtomicInteger;
+import java.util.concurrent.atomic.AtomicLong;
 
-public class ClusterSearchResultCollector implements Store, ClusterResultCollector<NodeResult>, CompletionListener {
+public class ClusterSearchResultCollector implements Store, ClusterResultCollector<NodeResult> {
     private static final Logger LOGGER = LoggerFactory.getLogger(ClusterSearchResultCollector.class);
+    private static final LambdaLogger LAMBDA_LOGGER = LambdaLoggerFactory.getLogger(ClusterSearchResultCollector.class);
 
     public static final String PROP_KEY_STORE_SIZE = "stroom.search.storeSize";
 
     private final ClusterResultCollectorCache clusterResultCollectorCache;
     private final CollectorId id;
     private final ConcurrentHashMap<Node, Set<String>> errors = new ConcurrentHashMap<>();
-    private final Set<Node> completedNodes = Collections.newSetFromMap(new ConcurrentHashMap<>());
+    private final Map<Node, AtomicLong> remainingNodes = new ConcurrentHashMap<>();
+    private final AtomicInteger remainingNodeCount = new AtomicInteger();
+    private final CompletionState completionState = new CompletionState();
     private final TaskManager taskManager;
     private final Task<VoidResult> task;
     private final Node node;
@@ -65,11 +69,6 @@ public class ClusterSearchResultCollector implements Store, ClusterResultCollect
     private final ResultHandler resultHandler;
     private final Sizes defaultMaxResultsSizes;
     private final Sizes storeSize;
-
-    private volatile boolean terminated;
-
-    private final Queue<CompletionListener> completionListeners = new ConcurrentLinkedQueue<>();
-    private final Queue<Runnable> changeListeners = new ConcurrentLinkedQueue<>();
 
     private ClusterSearchResultCollector(final TaskManager taskManager,
                                          final Task<VoidResult> task,
@@ -87,7 +86,6 @@ public class ClusterSearchResultCollector implements Store, ClusterResultCollect
         this.resultHandler = resultHandler;
         this.defaultMaxResultsSizes = defaultMaxResultsSizes;
         this.storeSize = storeSize;
-        this.resultHandler.registerCompletionListener(this);
 
         id = CollectorIdFactory.create();
 
@@ -121,11 +119,11 @@ public class ClusterSearchResultCollector implements Store, ClusterResultCollect
                 if (!(t instanceof TaskTerminatedException)) {
                     LOGGER.error(t.getMessage(), t);
                     getErrorSet(node).add(t.getMessage());
-                    resultHandler.setComplete(true);
+                    complete();
                     throw new RuntimeException(t.getMessage(), t);
                 }
 
-                resultHandler.setComplete(true);
+                complete();
             }
         });
     }
@@ -134,12 +132,21 @@ public class ClusterSearchResultCollector implements Store, ClusterResultCollect
     public void destroy() {
         clusterResultCollectorCache.remove(id);
         task.terminate();
-        completionListeners.clear();
+        complete();
+    }
+
+    public void complete() {
+        completionState.complete();
     }
 
     @Override
     public boolean isComplete() {
-        return terminated || resultHandler.isComplete();
+        return completionState.isComplete();
+    }
+
+    @Override
+    public boolean awaitCompletion(final long timeout, final TimeUnit unit) throws InterruptedException {
+        return completionState.awaitCompletion(timeout, unit);
     }
 
     @Override
@@ -154,33 +161,57 @@ public class ClusterSearchResultCollector implements Store, ClusterResultCollect
 
     @Override
     public void onSuccess(final Node node, final NodeResult result) {
-        final Map<CoprocessorKey, Payload> payloadMap = result.getPayloadMap();
-        final List<String> errors = result.getErrors();
+        try {
+            final Map<CoprocessorKey, Payload> payloadMap = result.getPayloadMap();
+            final List<String> errors = result.getErrors();
 
-        if (payloadMap != null) {
-            resultHandler.handle(payloadMap, task);
+            if (payloadMap != null) {
+                resultHandler.handle(payloadMap, task);
+            }
+
+            if (errors != null) {
+                getErrorSet(node).addAll(errors);
+            }
+
+            if (result.isComplete()) {
+                nodeComplete(node);
+            }
+        } catch (final RuntimeException e) {
+            getErrorSet(node).add(e.getMessage());
+            nodeComplete(node);
+
+        } finally {
+            if (remainingNodeCount.compareAndSet(0, 0)) {
+                // All the results are in but we may still have work pending, so wait
+                waitForPendingWork();
+                complete();
+            }
         }
-        if (errors != null) {
-            getErrorSet(node).addAll(errors);
-        }
-        if (result.isComplete()) {
-            completedNodes.add(node);
-        }
-        notifyListenersOfChange();
+    }
+
+    private void waitForPendingWork() {
+        LAMBDA_LOGGER.logDurationIfTraceEnabled(() -> {
+            LOGGER.trace("No remaining nodes so wait for the result handler to clear any pending work");
+            resultHandler.waitForPendingWork(task);
+        }, "Waiting for resultHandler to finish pending work");
     }
 
     @Override
     public void onFailure(final Node node, final Throwable throwable) {
-        completedNodes.add(node);
-        getErrorSet(node).add(throwable.getMessage());
-        notifyListenersOfChange();
+        try {
+            nodeComplete(node);
+            getErrorSet(node).add(throwable.getMessage());
+        } finally {
+            if (remainingNodeCount.compareAndSet(0, 0)) {
+                completionState.complete();
+            }
+        }
     }
 
-    @Override
-    public void terminate() {
-        terminated = true;
-        notifyListenersOfCompletion();
-        notifyListenersOfChange();
+    private void nodeComplete(final Node node) {
+        if (remainingNodes.remove(node) != null) {
+            remainingNodeCount.decrementAndGet();
+        }
     }
 
     public Set<String> getErrorSet(final Node node) {
@@ -197,7 +228,7 @@ public class ClusterSearchResultCollector implements Store, ClusterResultCollect
 
     @Override
     public List<String> getErrors() {
-        if (errors == null || errors.size() == 0) {
+        if (errors.size() == 0) {
             return null;
         }
 
@@ -236,7 +267,6 @@ public class ClusterSearchResultCollector implements Store, ClusterResultCollect
         return storeSize;
     }
 
-
     @Override
     public Data getData(final String componentId) {
         // Keep the cluster result collector cache fresh.
@@ -245,56 +275,16 @@ public class ClusterSearchResultCollector implements Store, ClusterResultCollect
         return resultHandler.getResultStore(componentId);
     }
 
-    public Set<Node> getCompletedNodes() {
-        return completedNodes;
-    }
-
-    public ResultHandler getResultHandler() {
-        return resultHandler;
-    }
-
-    @Override
-    public void registerCompletionListener(final CompletionListener completionListener) {
-        if (isComplete()) {
-            //immediate notification
-            completionListener.onCompletion();
-        } else {
-            completionListeners.add(Objects.requireNonNull(completionListener));
-        }
-    }
-
-    @Override
-    public void onCompletion() {
-        //fired on completion of the resultHandler that we registered an in interest in
-        //'this' is both a completion listener (on the ResultHandler) and has completionListeners of its own
-        notifyListenersOfCompletion();
-    }
-
-    private void notifyListenersOfCompletion() {
-        //Call isComplete to ensure we are complete and not terminated
-        if (isComplete()) {
-            for (CompletionListener listener; (listener = completionListeners.poll()) != null; ) {
-                //when notified they will check isComplete
-                LOGGER.debug("Notifying {} {} that we are complete", listener.getClass().getName(), listener);
-                listener.onCompletion();
-            }
-        }
-    }
-
-    public void registerChangeListner(final Runnable changeListener) {
-        changeListeners.add(Objects.requireNonNull(changeListener));
-        notifyListenersOfChange();
-    }
-
-    private void notifyListenersOfChange() {
-        changeListeners.forEach(Runnable::run);
-    }
-
     @Override
     public String toString() {
         return "ClusterSearchResultCollector{" +
                 "task=" + task +
-                ", terminated=" + terminated +
+                ", complete=" + completionState.isComplete() +
                 '}';
+    }
+
+    void setExpectedNodes(final Set<Node> expectedNodes) {
+        expectedNodes.forEach(node -> remainingNodes.put(node, new AtomicLong()));
+        remainingNodeCount.set(expectedNodes.size());
     }
 }

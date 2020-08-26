@@ -72,7 +72,7 @@ ext.versions = [
     hadoopHdfsShaded: 'v2.6.4-4',
     stroomAuth: 'v6.0.25-1', // Needed for the correct version of the client API
     stroomExpression: 'v1.5.5',
-    stroomQuery: 'v2.2.9', // Same version for both stroom-query-api and stroom-query-common
+    stroomQuery: 'v2.2.14', // Same version for both stroom-query-api and stroom-query-common
     stroomStats: 'v0.6.0-alpha.2',
     stroomProxyApi: 'v5.1.2',
 

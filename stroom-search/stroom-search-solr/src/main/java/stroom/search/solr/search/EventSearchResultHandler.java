@@ -18,7 +18,6 @@ package stroom.search.solr.search;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import stroom.query.common.v2.CompletionListener;
 import stroom.query.common.v2.CoprocessorSettingsMap.CoprocessorKey;
 import stroom.query.common.v2.Data;
 import stroom.query.common.v2.Payload;
@@ -29,27 +28,24 @@ import stroom.util.shared.HasTerminate;
 
 import java.util.Map;
 import java.util.Map.Entry;
-import java.util.Objects;
-import java.util.Queue;
-import java.util.concurrent.ConcurrentLinkedQueue;
 import java.util.concurrent.LinkedBlockingQueue;
-import java.util.concurrent.atomic.AtomicBoolean;
+import java.util.concurrent.locks.Lock;
+import java.util.concurrent.locks.ReentrantLock;
 
 public class EventSearchResultHandler implements ResultHandler {
     private static final Logger LOGGER = LoggerFactory.getLogger(EventSearchResultHandler.class);
 
-    private final AtomicBoolean complete = new AtomicBoolean();
     private final LinkedBlockingQueue<EventRefs> pendingMerges = new LinkedBlockingQueue<>();
-    private final AtomicBoolean merging = new AtomicBoolean();
-    private volatile EventRefs streamReferences;
-    private final Queue<CompletionListener> completionListeners = new ConcurrentLinkedQueue<>();
+    private final Lock lock = new ReentrantLock();
+
+    private volatile EventRefs eventRefs;
 
     @Override
     public void handle(final Map<CoprocessorKey, Payload> payloadMap, final HasTerminate hasTerminate) {
         if (payloadMap != null) {
             for (final Entry<CoprocessorKey, Payload> entry : payloadMap.entrySet()) {
                 final Payload payload = entry.getValue();
-                if (payload != null && payload instanceof EventRefsPayload) {
+                if (payload instanceof EventRefsPayload) {
                     final EventRefsPayload eventRefsPayload = (EventRefsPayload) payload;
                     add(eventRefsPayload.getEventRefs(), hasTerminate);
                 }
@@ -61,108 +57,66 @@ public class EventSearchResultHandler implements ResultHandler {
     public void add(final EventRefs eventRefs, final HasTerminate hasTerminate) {
         if (eventRefs != null) {
             if (hasTerminate.isTerminated()) {
-                terminate();
+                pendingMerges.clear();
 
             } else {
                 // Add the new queue to the pending merge queue ready for merging.
                 try {
                     pendingMerges.put(eventRefs);
-                } catch (final InterruptedException e) {
-                    LOGGER.error(e.getMessage(), e);
-                } catch (final RuntimeException e) {
+                } catch (final InterruptedException | RuntimeException e) {
                     LOGGER.error(e.getMessage(), e);
                 }
 
                 // Try and merge all of the items on the pending merge queue.
-                mergePending(hasTerminate);
+                tryMergePending(hasTerminate);
             }
+        }
+    }
+
+    private void tryMergePending(final HasTerminate hasTerminate) {
+        // Only 1 thread will get to do a merge.
+        if (lock.tryLock()) {
+            try {
+                mergePending(hasTerminate);
+            } finally {
+                lock.unlock();
+            }
+        } else {
+            LOGGER.trace("Another thread is busy merging, so will let it merge my items");
         }
     }
 
     private void mergePending(final HasTerminate hasTerminate) {
-        // Only 1 thread will get to do a merge.
-        if (merging.compareAndSet(false, true)) {
-            try {
-                if (hasTerminate.isTerminated()) {
-                    terminate();
-
-                } else {
-                    EventRefs eventRefs = pendingMerges.poll();
-                    while (eventRefs != null) {
-                        try {
-                            mergeRefs(eventRefs);
-                        } catch (final RuntimeException e) {
-                            LOGGER.error(e.getMessage(), e);
-                            throw e;
-                        }
-
-                        if (hasTerminate.isTerminated()) {
-                            terminate();
-                        }
-
-                        eventRefs = pendingMerges.poll();
-                    }
-                }
-            } finally {
-                merging.set(false);
-            }
-
+        EventRefs eventRefs = pendingMerges.poll();
+        while (eventRefs != null) {
             if (hasTerminate.isTerminated()) {
-                terminate();
+                // Clear the queue if we are done.
+                pendingMerges.clear();
+
+            } else {
+                try {
+                    mergeRefs(eventRefs);
+                } catch (final RuntimeException e) {
+                    LOGGER.error(e.getMessage(), e);
+                    throw e;
+                }
             }
 
-            // Make sure we don't fail to merge items from the queue that have
-            // just been added by another thread that didn't get to do the
-            // merge.
-            if (pendingMerges.peek() != null) {
-                mergePending(hasTerminate);
-            }
+            // Poll the next item.
+            eventRefs = pendingMerges.poll();
         }
     }
 
     private void mergeRefs(final EventRefs newEventRefs) {
-        if (streamReferences == null) {
-            streamReferences = newEventRefs;
+        if (eventRefs == null) {
+            eventRefs = newEventRefs;
         } else {
-            streamReferences.add(newEventRefs);
+            eventRefs.add(newEventRefs);
         }
     }
 
-    @Override
-    public boolean shouldTerminateSearch() {
-        return false;
-    }
-
-    @Override
-    public boolean isComplete() {
-        return complete.get();
-    }
-
-    @Override
-    public void setComplete(final boolean complete) {
-        boolean previousValue = this.complete.get();
-        this.complete.set(complete);
-        if (complete && previousValue != complete) {
-            //now notify any listeners
-            for (CompletionListener listener; (listener = completionListeners.poll()) != null;){
-                //when notified they will check isComplete
-                listener.onCompletion();
-            }
-        }
-    }
-
-    @Override
-    public void registerCompletionListener(final CompletionListener completionListener) {
-        if (isComplete()) {
-            //immediate notification
-            completionListener.onCompletion();
-        } else {
-            completionListeners.add(Objects.requireNonNull(completionListener));
-        }
-    }
-
-    public EventRefs getStreamReferences() {
-        return streamReferences;
+    public EventRefs getEventRefs() {
+        return eventRefs;
     }
 
     @Override
@@ -170,9 +124,16 @@ public class EventSearchResultHandler implements ResultHandler {
         return null;
     }
 
-    private void terminate() {
-        // Clear the queue if we should terminate.
-        pendingMerges.clear();
-        completionListeners.clear();
+    @Override
+    public void waitForPendingWork(final HasTerminate hasTerminate) {
+        // This assumes that when this method has been called, all calls to addQueue
+        // have been made, thus we will lock and perform a final merge.
+        lock.lock();
+        try {
+            // Perform final merge.
+            mergePending(hasTerminate);
+        } finally {
+            lock.unlock();
+        }
     }
 }

@@ -38,7 +38,6 @@ import javax.inject.Inject;
 import java.util.Arrays;
 import java.util.HashMap;
 import java.util.Map;
-import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.TimeUnit;
 import java.util.stream.Collectors;
 
@@ -94,18 +93,13 @@ class SolrEventSearchTaskHandler extends AbstractTaskHandler<SolrEventSearchTask
         asyncSearchTask.setResultCollector(searchResultCollector);
 
         try {
-            final CountDownLatch completionLatch = new CountDownLatch(1);
-
-            //when the search completes reduce our latch to zero to release the block below
-            resultHandler.registerCompletionListener(completionLatch::countDown);
-
             // Start asynchronous search execution.
             searchResultCollector.start();
 
             LOGGER.debug("Started searchResultCollector {}", searchResultCollector);
 
             // Wait for completion or termination
-            while (!task.isTerminated() && !resultHandler.isComplete()) {
+            while (!task.isTerminated() && !searchResultCollector.isComplete()) {
                 //Drop out of the waiting state every 30s to check we haven't been terminated.
                 //This is a bit of extra protection as the resultHandler should notify our
                 //completion listener if it is terminated.
@@ -113,7 +107,7 @@ class SolrEventSearchTaskHandler extends AbstractTaskHandler<SolrEventSearchTask
                 boolean awaitResult = LAMBDA_LOGGER.logDurationIfTraceEnabled(
                         () -> {
                             try {
-                                return completionLatch.await(30, TimeUnit.SECONDS);
+                                return searchResultCollector.awaitCompletion(30, TimeUnit.SECONDS);
                             } catch (InterruptedException e) {
                                 //Don't want to reset interrupt status as this thread will go back into
                                 //the executor's pool. Throwing an exception will terminate the task
@@ -127,7 +121,7 @@ class SolrEventSearchTaskHandler extends AbstractTaskHandler<SolrEventSearchTask
                 LOGGER.trace("await finished with result {}", awaitResult);
             }
 
-            eventRefs = resultHandler.getStreamReferences();
+            eventRefs = resultHandler.getEventRefs();
             if (eventRefs != null) {
                 eventRefs.trim();
             }

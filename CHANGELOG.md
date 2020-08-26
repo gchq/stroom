@@ -7,6 +7,8 @@ and this project adheres to [Semantic Versioning](http://semver.org/).
 
 ## [Unreleased]
 
+* Issue **#1797** : Altered how search completion is recorded to try and prevent hanging. 
+
 
 ## [v6.1.10] - 2020-07-31
 

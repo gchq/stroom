@@ -9,7 +9,7 @@ import stroom.entity.shared.ExpressionCriteria;
 import stroom.query.api.v2.ExpressionOperator;
 import stroom.query.api.v2.Param;
 import stroom.query.api.v2.SearchRequest;
-import stroom.query.common.v2.CompletionListener;
+import stroom.query.common.v2.CompletionState;
 import stroom.query.common.v2.Coprocessor;
 import stroom.query.common.v2.CoprocessorSettings;
 import stroom.query.common.v2.CoprocessorSettingsMap;
@@ -38,6 +38,7 @@ import java.util.Collections;
 import java.util.List;
 import java.util.Map;
 import java.util.OptionalInt;
+import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.concurrent.atomic.AtomicLong;
 import java.util.concurrent.atomic.LongAdder;
@@ -54,11 +55,7 @@ class SearchableStore implements Store {
     private final Sizes storeSize;
     private final String searchKey;
     private final TaskContext taskContext;
-
-//    private final CompletionState completionState = new CompletionState();
-
-    private final AtomicBoolean complete = new AtomicBoolean();
-    private CompletionListener completionListener;
+    private final CompletionState completionState = new CompletionState();
 
     private final ResultHandler resultHandler;
     private final List<String> errors = Collections.synchronizedList(new ArrayList<>());
@@ -169,11 +166,8 @@ class SearchableStore implements Store {
             processPayloads(resultHandler, coprocessorMap);
             taskContext.info(searchKey + " - complete");
             LOGGER.debug(() -> "completeSearch called");
-//            completionState.complete();
-            complete.set(true);
-            if (completionListener != null) {
-                completionListener.onCompletion();
-            }
+            resultHandler.waitForPendingWork(taskContext);
+            complete();
 
             LOGGER.debug(() -> "Query finished in " + Duration.between(queryStart, Instant.now()));
         };
@@ -276,24 +270,23 @@ class SearchableStore implements Store {
             if (thread != null) {
                 thread.interrupt();
             }
+            complete();
         }
+    }
+
+    public void complete() {
+        completionState.complete();
     }
 
     @Override
     public boolean isComplete() {
-        return complete.get();
+        return completionState.isComplete();
     }
 
-//    @Override
-//    public void awaitCompletion() throws InterruptedException {
-//        completionState.awaitCompletion();
-//    }
-//
-//    @Override
-//    public boolean awaitCompletion(final long timeout, final TimeUnit unit) throws InterruptedException {
-//        // Results are currently assembled synchronously in getMeta so the store is always complete.
-//        return completionState.awaitCompletion(timeout, unit);
-//    }
+    @Override
+    public boolean awaitCompletion(final long timeout, final TimeUnit unit) throws InterruptedException {
+        return completionState.awaitCompletion(timeout, unit);
+    }
 
     @Override
     public Data getData(String componentId) {
@@ -322,19 +315,11 @@ class SearchableStore implements Store {
     }
 
     @Override
-    public void registerCompletionListener(final CompletionListener completionListener) {
-        this.completionListener = completionListener;
-        if (complete.get()) {
-            completionListener.onCompletion();
-        }
-    }
-
-    @Override
     public String toString() {
         return "DbStore{" +
                 "defaultMaxResultsSizes=" + defaultMaxResultsSizes +
                 ", storeSize=" + storeSize +
-                ", completionState=" + complete.get() +
+                ", completionState=" + completionState +
 //                ", isTerminated=" + isTerminated +
                 ", searchKey='" + searchKey + '\'' +
                 '}';

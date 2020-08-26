@@ -18,8 +18,7 @@ package stroom.search.solr.search;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import org.springframework.stereotype.Component;
-import stroom.query.common.v2.CompletionListener;
+import stroom.query.common.v2.CompletionState;
 import stroom.query.common.v2.CoprocessorSettingsMap.CoprocessorKey;
 import stroom.query.common.v2.Data;
 import stroom.query.common.v2.Payload;
@@ -30,6 +29,8 @@ import stroom.search.resultsender.NodeResult;
 import stroom.task.server.TaskCallback;
 import stroom.task.server.TaskManager;
 import stroom.task.server.TaskTerminatedException;
+import stroom.util.logging.LambdaLogger;
+import stroom.util.logging.LambdaLoggerFactory;
 import stroom.util.shared.Task;
 import stroom.util.shared.VoidResult;
 
@@ -37,29 +38,24 @@ import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
 import java.util.Map;
-import java.util.Objects;
-import java.util.Queue;
 import java.util.Set;
 import java.util.concurrent.ConcurrentHashMap;
-import java.util.concurrent.ConcurrentLinkedQueue;
+import java.util.concurrent.TimeUnit;
 
-public class SolrSearchResultCollector implements Store, CompletionListener, TaskCallback<NodeResult> {
+public class SolrSearchResultCollector implements Store, TaskCallback<NodeResult> {
     private static final Logger LOGGER = LoggerFactory.getLogger(SolrSearchResultCollector.class);
+    private static final LambdaLogger LAMBDA_LOGGER = LambdaLoggerFactory.getLogger(SolrSearchResultCollector.class);
 
     public static final String PROP_KEY_STORE_SIZE = "stroom.search.storeSize";
 
     private final Set<String> errors = Collections.newSetFromMap(new ConcurrentHashMap<>());
+    private final CompletionState completionState = new CompletionState();
     private final TaskManager taskManager;
     private final Task<VoidResult> task;
     private final Set<String> highlights;
     private final ResultHandler resultHandler;
     private final Sizes defaultMaxResultsSizes;
     private final Sizes storeSize;
-
-    private volatile boolean terminated;
-
-    private final Queue<CompletionListener> completionListeners = new ConcurrentLinkedQueue<>();
-    private final Queue<Runnable> changeListeners = new ConcurrentLinkedQueue<>();
 
     private SolrSearchResultCollector(final TaskManager taskManager,
                                       final Task<VoidResult> task,
@@ -73,7 +69,6 @@ public class SolrSearchResultCollector implements Store, CompletionListener, Tas
         this.resultHandler = resultHandler;
         this.defaultMaxResultsSizes = defaultMaxResultsSizes;
         this.storeSize = storeSize;
-        this.resultHandler.registerCompletionListener(this);
     }
 
     public static SolrSearchResultCollector create(final TaskManager taskManager,
@@ -101,11 +96,11 @@ public class SolrSearchResultCollector implements Store, CompletionListener, Tas
                 if (!(t instanceof TaskTerminatedException)) {
                     LOGGER.error(t.getMessage(), t);
                     getErrorSet().add(t.getMessage());
-                    resultHandler.setComplete(true);
+                    complete();
                     throw new RuntimeException(t.getMessage(), t);
                 }
 
-                resultHandler.setComplete(true);
+                complete();
             }
         });
     }
@@ -113,12 +108,21 @@ public class SolrSearchResultCollector implements Store, CompletionListener, Tas
     @Override
     public void destroy() {
         task.terminate();
-        completionListeners.clear();
+        complete();
+    }
+
+    public void complete() {
+        completionState.complete();
     }
 
     @Override
     public boolean isComplete() {
-        return terminated || resultHandler.isComplete();
+        return completionState.isComplete();
+    }
+
+    @Override
+    public boolean awaitCompletion(final long timeout, final TimeUnit unit) throws InterruptedException {
+        return completionState.awaitCompletion(timeout, unit);
     }
 
     @Override
@@ -133,22 +137,27 @@ public class SolrSearchResultCollector implements Store, CompletionListener, Tas
             getErrorSet().addAll(errors);
         }
         if (result.isComplete()) {
-            resultHandler.setComplete(true);
+            // All the results are in but we may still have work pending, so wait
+            waitForPendingWork();
+            complete();
         }
-        notifyListenersOfChange();
+    }
+
+    private void waitForPendingWork() {
+        LAMBDA_LOGGER.logDurationIfTraceEnabled(() -> {
+            LOGGER.trace("No remaining nodes so wait for the result handler to clear any pending work");
+            resultHandler.waitForPendingWork(task);
+        }, "Waiting for resultHandler to finish pending work");
     }
 
     @Override
     public void onFailure(final Throwable throwable) {
-        resultHandler.setComplete(true);
+        complete();
         errors.add(throwable.getMessage());
-        notifyListenersOfChange();
     }
 
     public void terminate() {
-        terminated = true;
-        notifyListenersOfCompletion();
-        notifyListenersOfChange();
+        complete();
     }
 
     public Set<String> getErrorSet() {
@@ -187,58 +196,16 @@ public class SolrSearchResultCollector implements Store, CompletionListener, Tas
         return storeSize;
     }
 
-
     @Override
     public Data getData(final String componentId) {
         return resultHandler.getResultStore(componentId);
-    }
-
-    public ResultHandler getResultHandler() {
-        return resultHandler;
-    }
-
-    @Override
-    public void registerCompletionListener(final CompletionListener completionListener) {
-        if (isComplete()) {
-            //immediate notification
-            completionListener.onCompletion();
-        } else {
-            completionListeners.add(Objects.requireNonNull(completionListener));
-        }
-    }
-
-    @Override
-    public void onCompletion() {
-        //fired on completion of the resultHandler that we registered an in interest in
-        //'this' is both a completion listener (on the ResultHandler) and has completionListeners of its own
-        notifyListenersOfCompletion();
-    }
-
-    private void notifyListenersOfCompletion() {
-        //Call isComplete to ensure we are complete and not terminated
-        if (isComplete()) {
-            for (CompletionListener listener; (listener = completionListeners.poll()) != null; ) {
-                //when notified they will check isComplete
-                LOGGER.debug("Notifying {} {} that we are complete", listener.getClass().getName(), listener);
-                listener.onCompletion();
-            }
-        }
-    }
-
-    public void registerChangeListner(final Runnable changeListener) {
-        changeListeners.add(Objects.requireNonNull(changeListener));
-        notifyListenersOfChange();
-    }
-
-    private void notifyListenersOfChange() {
-        changeListeners.forEach(Runnable::run);
     }
 
     @Override
     public String toString() {
         return "ClusterSearchResultCollector{" +
                 "task=" + task +
-                ", terminated=" + terminated +
+                ", complete=" + completionState.isComplete() +
                 '}';
     }
 }

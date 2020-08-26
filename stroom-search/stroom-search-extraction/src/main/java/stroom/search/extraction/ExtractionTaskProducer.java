@@ -19,7 +19,7 @@ package stroom.search.extraction;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import stroom.query.api.v2.DocRef;
-import stroom.search.coprocessor.CompletionState;
+import stroom.query.common.v2.CompletionState;
 import stroom.search.coprocessor.Error;
 import stroom.search.coprocessor.Receiver;
 import stroom.search.coprocessor.ReceiverImpl;

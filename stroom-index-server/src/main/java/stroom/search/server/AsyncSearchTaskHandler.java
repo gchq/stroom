@@ -30,7 +30,6 @@ import stroom.index.shared.IndexShard;
 import stroom.index.shared.IndexShard.IndexShardStatus;
 import stroom.node.shared.Node;
 import stroom.query.api.v2.Query;
-import stroom.query.common.v2.ResultHandler;
 import stroom.security.SecurityContext;
 import stroom.security.SecurityHelper;
 import stroom.task.cluster.ClusterDispatchAsync;
@@ -58,7 +57,6 @@ import java.util.List;
 import java.util.Map;
 import java.util.Map.Entry;
 import java.util.Set;
-import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicInteger;
 
@@ -99,8 +97,6 @@ class AsyncSearchTaskHandler extends AbstractTaskHandler<AsyncSearchTask, VoidRe
     public VoidResult exec(final AsyncSearchTask task) {
         try (final SecurityHelper securityHelper = SecurityHelper.elevate(securityContext)) {
             final ClusterSearchResultCollector resultCollector = task.getResultCollector();
-            final ResultHandler resultHandler = resultCollector.getResultHandler();
-
             if (!task.isTerminated()) {
                 final Node sourceNode = targetNodeSetFactory.getSourceNode();
 
@@ -140,14 +136,12 @@ class AsyncSearchTaskHandler extends AbstractTaskHandler<AsyncSearchTask, VoidRe
                                     "Attempt to search an index shard marked as corrupt: id=" + indexShard.getId() + ".");
                         } else {
                             final Node node = indexShard.getNode();
-                            List<Long> shards = shardMap.get(node);
-                            if (shards == null) {
-                                shards = new ArrayList<>();
-                                shardMap.put(node, shards);
-                            }
-                            shards.add(indexShard.getId());
+                            shardMap.computeIfAbsent(node, k -> new ArrayList<>()).add(indexShard.getId());
                         }
                     }
+
+                    // Tell the result collector which nodes we expect to get results from.
+                    resultCollector.setExpectedNodes(shardMap.keySet());
 
                     // Start remote cluster search execution.
                     AtomicInteger expectedNodeResultCount = new AtomicInteger(0);
@@ -170,52 +164,15 @@ class AsyncSearchTaskHandler extends AbstractTaskHandler<AsyncSearchTask, VoidRe
                     }
                     taskMonitor.info(task.getSearchName() + " - searching...");
 
-                    final CountDownLatch completionCountDownLatch = new CountDownLatch(1);
-
-                    final Runnable collectorChangeListener = () -> {
-                        // something has changed so recheck all the states to see if we can release
-                        // the latch to release any waiters
-                        if (task.isTerminated() ||
-                                resultHandler.shouldTerminateSearch() ||
-                                resultHandler.isComplete()) {
-                            LOGGER.trace("Change listener counting down completion latch");
-                            completionCountDownLatch.countDown();
-                        } else if (resultCollector.getCompletedNodes().size() >= expectedNodeResultCount.get()) {
-                            LOGGER.trace("Change listener setting SearchResultHandler to complete");
-                            // all the expected nodes have provided results
-                            resultHandler.setComplete(true);
-                        } else {
-                            LAMBDA_LOGGER.trace(() -> LambdaLogger.buildMessage("Change listener condition not met, " +
-                                            "isTerminated={}, shouldTerminatSearch={}, isComplete={}, " +
-                                            "completed node count: {}, expected node count: {}",
-                                    task.isTerminated(),
-                                    resultHandler.shouldTerminateSearch(),
-                                    resultHandler.isComplete(),
-                                    resultCollector.getCompletedNodes().size(),
-                                    expectedNodeResultCount.get()));
-                        }
-                    };
-
-                    //if it has completed or something has changed on the resultCollector then
-                    //test the conditions, else sleep
-
-                    LOGGER.trace("Registering listeners");
-
-                    resultHandler.registerCompletionListener(() -> {
-                        LOGGER.trace("Counting down completionCountDownLatch");
-                        completionCountDownLatch.countDown();
-                    });
-                    resultCollector.registerChangeListner(collectorChangeListener);
-
+                    // Await completion.
                     while (!task.isTerminated() &&
-                            !resultHandler.shouldTerminateSearch() &&
-                            !resultHandler.isComplete()) {
+                            !resultCollector.isComplete()) {
 
                         boolean awaitResult = LAMBDA_LOGGER.logDurationIfTraceEnabled(
                                 () -> {
                                     try {
                                         // block and wait for up to 10s for our search to be completed/terminated
-                                        return completionCountDownLatch.await(10, TimeUnit.SECONDS);
+                                        return resultCollector.awaitCompletion(10, TimeUnit.SECONDS);
                                     } catch (InterruptedException e) {
                                         //Don't reset the interrupt status as we are at the top level of
                                         //the task execution
@@ -234,17 +191,16 @@ class AsyncSearchTaskHandler extends AbstractTaskHandler<AsyncSearchTask, VoidRe
                     }
                     taskMonitor.info(task.getSearchName() + " - complete");
 
-                    // Make sure we try and terminate any child tasks on worker
-                    // nodes if we need to.
-                    if (task.isTerminated() || resultHandler.shouldTerminateSearch()) {
-                        terminateTasks(task);
-                    }
                 } catch (final Exception e) {
                     resultCollector.getErrorSet(sourceNode).add(e.getMessage());
                 }
 
-                // Let the result handler know search has finished.
-                resultHandler.setComplete(true);
+                // Make sure we try and terminate any child tasks on worker
+                // nodes if we need to.
+                terminateTasks(task);
+
+                // Ensure search is complete even if we had errors.
+                resultCollector.complete();
 
                 // We need to wait here for the client to keep getting results if
                 // this is an interactive search.

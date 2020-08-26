@@ -21,7 +21,6 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.context.annotation.Scope;
 import stroom.query.api.v2.Query;
-import stroom.query.common.v2.ResultHandler;
 import stroom.search.solr.CachedSolrIndex;
 import stroom.search.solr.SolrIndexCache;
 import stroom.search.solr.shared.SolrIndexField;
@@ -36,7 +35,6 @@ import stroom.util.spring.StroomScope;
 import stroom.util.task.TaskMonitor;
 
 import javax.inject.Inject;
-import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.TimeUnit;
 
 @TaskHandlerBean(task = SolrAsyncSearchTask.class)
@@ -66,7 +64,6 @@ public class SolrAsyncSearchTaskHandler extends AbstractTaskHandler<SolrAsyncSea
     public VoidResult exec(final SolrAsyncSearchTask task) {
         try (final SecurityHelper securityHelper = SecurityHelper.elevate(securityContext)) {
             final SolrSearchResultCollector resultCollector = task.getResultCollector();
-            final ResultHandler resultHandler = resultCollector.getResultHandler();
 
             if (!task.isTerminated()) {
                 try {
@@ -89,49 +86,13 @@ public class SolrAsyncSearchTaskHandler extends AbstractTaskHandler<SolrAsyncSea
 
                     taskMonitor.info(task.getSearchName() + " - searching...");
 
-                    final CountDownLatch completionCountDownLatch = new CountDownLatch(1);
-
-                    final Runnable collectorChangeListener = () -> {
-                        // something has changed so recheck all the states to see if we can release
-                        // the latch to release any waiters
-                        if (task.isTerminated() ||
-                                resultHandler.shouldTerminateSearch() ||
-                                resultHandler.isComplete()) {
-                            LOGGER.trace("Change listener counting down completion latch");
-                            completionCountDownLatch.countDown();
-                        } else if (resultCollector.isComplete()) {
-                            LOGGER.trace("Change listener setting SearchResultHandler to complete");
-                            // all the expected nodes have provided results
-                            resultHandler.setComplete(true);
-                        } else {
-                            LAMBDA_LOGGER.trace(() -> LambdaLogger.buildMessage("Change listener condition not met, " +
-                                            "isTerminated={}, shouldTerminatSearch={}, isComplete={}",
-                                    task.isTerminated(),
-                                    resultHandler.shouldTerminateSearch(),
-                                    resultHandler.isComplete()));
-                        }
-                    };
-
-                    //if it has completed or something has changed on the resultCollector then
-                    //test the conditions, else sleep
-
-                    LOGGER.trace("Registering listeners");
-
-                    resultHandler.registerCompletionListener(() -> {
-                        LOGGER.trace("Counting down completionCountDownLatch");
-                        completionCountDownLatch.countDown();
-                    });
-                    resultCollector.registerChangeListner(collectorChangeListener);
-
                     while (!task.isTerminated() &&
-                            !resultHandler.shouldTerminateSearch() &&
-                            !resultHandler.isComplete()) {
-
+                            !resultCollector.isComplete()) {
                         boolean awaitResult = LAMBDA_LOGGER.logDurationIfTraceEnabled(
                                 () -> {
                                     try {
                                         // block and wait for up to 10s for our search to be completed/terminated
-                                        return completionCountDownLatch.await(10, TimeUnit.SECONDS);
+                                        return resultCollector.awaitCompletion(10, TimeUnit.SECONDS);
                                     } catch (InterruptedException e) {
                                         //Don't reset the interrupt status as we are at the top level of
                                         //the task execution
@@ -144,17 +105,12 @@ public class SolrAsyncSearchTaskHandler extends AbstractTaskHandler<SolrAsyncSea
                     }
                     taskMonitor.info(task.getSearchName() + " - complete");
 
-                    // Make sure we try and terminate any child tasks on worker
-                    // nodes if we need to.
-                    if (task.isTerminated() || resultHandler.shouldTerminateSearch()) {
-                        terminateTasks(task);
-                    }
                 } catch (final Exception e) {
                     resultCollector.getErrorSet().add(e.getMessage());
                 }
 
-                // Let the result handler know search has finished.
-                resultHandler.setComplete(true);
+                // Ensure search is complete even if we had errors.
+                resultCollector.complete();
 
                 // We need to wait here for the client to keep getting results if
                 // this is an interactive search.
@@ -163,11 +119,6 @@ public class SolrAsyncSearchTaskHandler extends AbstractTaskHandler<SolrAsyncSea
 
             return VoidResult.INSTANCE;
         }
-    }
-
-    private void terminateTasks(final SolrAsyncSearchTask task) {
-        // Terminate this task.
-        task.terminate();
     }
 
     private String[] getStoredFields(final CachedSolrIndex index) {

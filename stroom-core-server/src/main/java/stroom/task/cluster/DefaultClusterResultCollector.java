@@ -114,17 +114,6 @@ public class DefaultClusterResultCollector<R extends SharedObject> implements Cl
         }
     }
 
-    @Override
-    public void terminate() {
-        terminated = true;
-        lock.lock();
-        try {
-            condition.signalAll();
-        } finally {
-            lock.unlock();
-        }
-    }
-
     public ClusterCallEntry<R> getSingleResponse() {
         final Iterator<ClusterCallEntry<R>> itr = responseMap.values().iterator();
         if (itr.hasNext()) {
