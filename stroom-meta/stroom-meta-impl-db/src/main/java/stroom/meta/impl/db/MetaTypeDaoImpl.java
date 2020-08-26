@@ -30,6 +30,7 @@ import org.jooq.Field;
 
 import javax.inject.Inject;
 import javax.inject.Singleton;
+import java.util.Arrays;
 import java.util.List;
 import java.util.Optional;
 
@@ -50,7 +51,14 @@ class MetaTypeDaoImpl implements MetaTypeDao, Clearable {
         cache = cacheManager.create(CACHE_NAME, metaServiceConfig::getMetaTypeCache, this::load);
 
         // Ensure some types are preloaded.
-        metaServiceConfig.getMetaTypeList().forEach(this::load);
+        final String metaTypes = metaServiceConfig.getMetaTypes();
+        if (metaTypes != null && !metaTypes.isEmpty()) {
+            Arrays
+                    .stream(metaTypes.split("\n"))
+                    .map(String::trim)
+                    .filter(s -> !s.isEmpty())
+                    .forEach(this::load);
+        }
     }
 
     private int load(final String name) {

@@ -43,6 +43,7 @@ import org.slf4j.LoggerFactory;
 import javax.inject.Inject;
 import javax.inject.Provider;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.Collections;
 import java.util.Comparator;
 import java.util.HashMap;
@@ -78,6 +79,9 @@ public class MetaServiceImpl implements MetaService, Searchable {
     private final TaskContextFactory taskContextFactory;
     private final UserQueryRegistry userQueryRegistry;
     private final TaskManager taskManager;
+
+    private volatile String metaTypes;
+    private volatile Set<String> metaTypeSet = Collections.emptySet();
 
     @Inject
     MetaServiceImpl(final MetaDao metaDao,
@@ -440,13 +444,29 @@ public class MetaServiceImpl implements MetaService, Searchable {
 //    }
 
     @Override
-    public List<String> getFeeds() {
-        return metaFeedDao.list();
+    public Set<String> getFeeds() {
+        return new HashSet<>(metaFeedDao.list());
     }
 
     @Override
-    public List<String> getTypes() {
-        return metaServiceConfig.getMetaTypeList();
+    public Set<String> getTypes() {
+        final String mt = metaServiceConfig.getMetaTypes();
+
+        if (!Objects.equals(metaTypes, mt)) {
+            if (mt != null) {
+                metaTypeSet = Arrays
+                        .stream(mt.split("\n"))
+                        .map(String::trim)
+                        .filter(s -> !s.isEmpty())
+                        .collect(Collectors.toSet());
+            } else {
+                metaTypeSet = Collections.emptySet();
+            }
+
+            metaTypes = mt;
+        }
+
+        return metaTypeSet;
     }
 
     @Override

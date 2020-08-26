@@ -27,6 +27,7 @@ import stroom.util.shared.ResultPage;
 import javax.inject.Inject;
 import javax.inject.Provider;
 import java.util.List;
+import java.util.stream.Collectors;
 
 // TODO : @66 Add event logging
 class MetaResourceImpl implements MetaResource {
@@ -62,6 +63,11 @@ class MetaResourceImpl implements MetaResource {
 
     @Override
     public List<String> getTypes() {
-        return metaServiceProvider.get().getTypes();
+        return metaServiceProvider
+                .get()
+                .getTypes()
+                .stream()
+                .sorted()
+                .collect(Collectors.toList());
     }
 }

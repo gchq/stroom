@@ -22,10 +22,10 @@ import javax.inject.Inject;
 import javax.inject.Singleton;
 import java.util.Arrays;
 import java.util.Collections;
-import java.util.Comparator;
 import java.util.List;
 import java.util.Map;
 import java.util.Objects;
+import java.util.Set;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.ExecutionException;
 import java.util.function.Function;
@@ -124,7 +124,7 @@ public class SuggestionsServiceImpl implements SuggestionsService {
         // To get a list of feed names we need to combine the names from the meta service
         // and the feed store. Meta service only has feeds which have data, but may contain
         // feeds that have been deleted as docs.
-        final CompletableFuture<List<String>> metaFeedsFuture = CompletableFuture.supplyAsync(
+        final CompletableFuture<Set<String>> metaFeedsFuture = CompletableFuture.supplyAsync(
                 taskContextFactory.contextResult(
                         "Get meta feed names",
                         taskContext -> metaService.getFeeds())
@@ -145,7 +145,7 @@ public class SuggestionsServiceImpl implements SuggestionsService {
                             Stream.concat(metaFeedNames.stream(), docFeedNames.stream())
                                     .parallel()
                                     .filter(StringPredicateFactory.createFuzzyMatchPredicate(userInput))
-                                    .sorted(Comparator.naturalOrder())
+                                    .sorted()
                                     .distinct()
                                     .limit(LIMIT)
                                     .collect(Collectors.toList()))
@@ -166,7 +166,7 @@ public class SuggestionsServiceImpl implements SuggestionsService {
         return metaService.getTypes()
                 .parallelStream()
                 .filter(StringPredicateFactory.createFuzzyMatchPredicate(userInput))
-                .sorted(Comparator.naturalOrder())
+                .sorted()
                 .limit(LIMIT)
                 .collect(Collectors.toList());
     }
