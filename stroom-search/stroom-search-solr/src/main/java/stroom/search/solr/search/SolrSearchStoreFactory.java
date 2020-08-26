@@ -17,15 +17,17 @@
 
 package stroom.search.solr.search;
 
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 import stroom.dictionary.api.WordListProvider;
 import stroom.query.api.v2.ExpressionOperator;
 import stroom.query.api.v2.ExpressionParamUtil;
 import stroom.query.api.v2.ExpressionUtil;
 import stroom.query.api.v2.Query;
 import stroom.query.api.v2.SearchRequest;
-import stroom.query.common.v2.*;
+import stroom.query.common.v2.CoprocessorSettingsMap;
+import stroom.query.common.v2.SearchResultHandler;
+import stroom.query.common.v2.Sizes;
+import stroom.query.common.v2.Store;
+import stroom.query.common.v2.StoreFactory;
 import stroom.search.solr.CachedSolrIndex;
 import stroom.search.solr.SolrIndexCache;
 import stroom.search.solr.search.SearchExpressionQueryBuilder.SearchExpressionQuery;
@@ -34,6 +36,9 @@ import stroom.search.solr.shared.SolrIndexField;
 import stroom.security.api.SecurityContext;
 import stroom.task.api.TaskContextFactory;
 import stroom.ui.config.shared.UiConfig;
+
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import javax.inject.Inject;
 import javax.inject.Provider;
@@ -117,9 +122,7 @@ class SolrSearchStoreFactory implements StoreFactory {
         // Create a handler for search results.
         final Sizes storeSize = getStoreSizes();
         final Sizes defaultMaxResultsSizes = getDefaultMaxResultsSizes();
-        final CompletionState completionState = new CompletionState();
         final SearchResultHandler resultHandler = new SearchResultHandler(
-                completionState,
                 coprocessorSettingsMap,
                 defaultMaxResultsSizes,
                 storeSize);
@@ -133,8 +136,7 @@ class SolrSearchStoreFactory implements StoreFactory {
                 highlights,
                 resultHandler,
                 defaultMaxResultsSizes,
-                storeSize,
-                completionState);
+                storeSize);
 
         // Tell the task where results will be collected.
         asyncSearchTask.setResultCollector(searchResultCollector);

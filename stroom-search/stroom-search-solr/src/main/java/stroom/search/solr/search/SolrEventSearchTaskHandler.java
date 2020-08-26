@@ -20,7 +20,6 @@ import stroom.query.api.v2.ExpressionOperator;
 import stroom.query.api.v2.ExpressionParamUtil;
 import stroom.query.api.v2.ExpressionUtil;
 import stroom.query.api.v2.Query;
-import stroom.query.common.v2.CompletionState;
 import stroom.query.common.v2.CoprocessorSettings;
 import stroom.query.common.v2.CoprocessorSettingsMap.CoprocessorKey;
 import stroom.query.common.v2.Sizes;
@@ -100,7 +99,6 @@ public class SolrEventSearchTaskHandler {
             // Create a collector to store search results.
             final Sizes storeSize = getStoreSizes();
             final Sizes defaultMaxResultsSizes = getDefaultMaxResultsSizes();
-            final CompletionState completionState = new CompletionState();
             final EventSearchResultHandler resultHandler = new EventSearchResultHandler();
             final SolrSearchResultCollector searchResultCollector = SolrSearchResultCollector.create(
                     executor,
@@ -110,8 +108,7 @@ public class SolrEventSearchTaskHandler {
                     null,
                     resultHandler,
                     defaultMaxResultsSizes,
-                    storeSize,
-                    completionState);
+                    storeSize);
 
             // Tell the task where results will be collected.
             asyncSearchTask.setResultCollector(searchResultCollector);
@@ -125,7 +122,7 @@ public class SolrEventSearchTaskHandler {
                 // Wait for completion or termination
                 searchResultCollector.awaitCompletion();
 
-                eventRefs = resultHandler.getStreamReferences();
+                eventRefs = resultHandler.getEventRefs();
                 if (eventRefs != null) {
                     eventRefs.trim();
                 }

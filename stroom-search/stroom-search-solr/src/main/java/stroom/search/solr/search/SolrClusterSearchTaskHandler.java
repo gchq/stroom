@@ -20,8 +20,13 @@ package stroom.search.solr.search;
 import stroom.annotation.api.AnnotationFields;
 import stroom.pipeline.errorhandler.MessageUtil;
 import stroom.query.api.v2.ExpressionOperator;
+import stroom.query.common.v2.CompletionState;
+import stroom.search.coprocessor.Coprocessors;
+import stroom.search.coprocessor.CoprocessorsFactory;
 import stroom.search.coprocessor.Error;
-import stroom.search.coprocessor.*;
+import stroom.search.coprocessor.NewCoprocessor;
+import stroom.search.coprocessor.Receiver;
+import stroom.search.coprocessor.ReceiverImpl;
 import stroom.search.extraction.ExpressionFilter;
 import stroom.search.extraction.ExtractionDecoratorFactory;
 import stroom.search.resultsender.NodeResult;
@@ -122,7 +127,7 @@ class SolrClusterSearchTaskHandler implements Consumer<Error> {
                 try {
                     taskContext.info(() -> "Sending final results");
                     while (!Thread.currentThread().isInterrupted() && !sendingDataCompletionState.isComplete()) {
-                        sendingDataCompletionState.await(1, TimeUnit.SECONDS);
+                        sendingDataCompletionState.awaitCompletion(1, TimeUnit.SECONDS);
                     }
                 } catch (InterruptedException e) {
                     //Don't want to reset interrupt status as this thread will go back into

@@ -175,7 +175,7 @@ class AsyncSearchTaskHandler {
                     // nodes if we need to.
                     terminateTasks(task, taskContext.getTaskId());
 
-                    // Let the result handler know search has finished.
+                    // Ensure search is complete even if we had errors.
                     resultCollector.complete();
 
                     // We need to wait here for the client to keep getting results if
