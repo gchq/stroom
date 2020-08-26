@@ -7,6 +7,9 @@ and this project adheres to [Semantic Versioning](http://semver.org/).
 
 ## [Unreleased]
 
+
+## [v6.1.11] - 2020-08-26
+
 * Issue **#1797** : Altered how search completion is recorded to try and prevent hanging. 
 
 
@@ -2155,7 +2158,8 @@ and this project adheres to [Semantic Versioning](http://semver.org/).
 
 * Issue **#202** : Initial release of the new data retention policy functionality.
 
-[Unreleased]: https://github.com/gchq/stroom/compare/v6.1.10...6.1
+[Unreleased]: https://github.com/gchq/stroom/compare/v6.1.11...6.1
+[v6.1.11]: https://github.com/gchq/stroom/compare/v6.1.10...v6.1.11
 [v6.1.10]: https://github.com/gchq/stroom/compare/v6.1.9...v6.1.10
 [v6.1.9]: https://github.com/gchq/stroom/compare/v6.1.8...v6.1.9
 [v6.1.8]: https://github.com/gchq/stroom/compare/v6.1.7...v6.1.8
