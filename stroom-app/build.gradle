@@ -472,13 +472,15 @@ task copySupportingFiles(type: Copy) {
 }
 
 task downloadSend(type: Download) {
+    dependsOn copySupportingFiles
     src "http://raw.githubusercontent.com/gchq/stroom-clients/${sendToStroomScriptVersion}/bash/send_to_stroom.sh"
-    dest "${releaseBuildDir}/bin"
+    dest "${releaseBuildDir}/bin/"
 }
 
 task downloadSendArgs(type: Download) {
+    dependsOn copySupportingFiles
     src "https://raw.githubusercontent.com/gchq/stroom-clients/${sendToStroomScriptVersion}/bash/send_to_stroom_args.sh"
-    dest "${releaseBuildDir}/bin"
+    dest "${releaseBuildDir}/bin/"
 }
 
 task makeSendExecutable {
