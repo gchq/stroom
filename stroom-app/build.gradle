@@ -595,11 +595,6 @@ tasks.getByPath(':stroom-app-gwt:gwtClean').mustRunAfter processResources
 tasks.getByPath(':stroom-dashboard-gwt:gwtClean').mustRunAfter processResources
 tasks.getByPath(':stroom-ui:removeYarnBuild').mustRunAfter processResources
 
-//// Make sure GWT compilation doesn't run before test.
-//tasks.getByPath(':stroom-app-gwt:gwtClean').mustRunAfter test
-//tasks.getByPath(':stroom-dashboard-gwt:gwtClean').mustRunAfter test
-//tasks.getByPath(':stroom-ui:removeYarnBuild').mustRunAfter test
-
 // We often run out of memory when running the UI builds in parallel so create tasks that will build them one after another.
 tasks.getByPath(':stroom-ui:yarnBuild').mustRunAfter test
 tasks.getByPath(':stroom-ui:yarnBuild').mustRunAfter analyzeClassesDependencies
