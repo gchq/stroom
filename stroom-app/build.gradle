@@ -254,6 +254,8 @@ tasks.getByPath(':stroom-dashboard-gwt:gwtClean').mustRunAfter test
 tasks.getByPath(':stroom-ui:removeYarnBuild').mustRunAfter test
 
 // We often run out of memory when running the UI builds in parallel so create tasks that will build them one after another.
+tasks.getByPath(':stroom-ui:yarnBuild').mustRunAfter generateConfigDefaultsYamlFile
+tasks.getByPath(':stroom-ui:yarnBuild').mustRunAfter makeSendExecutable
 tasks.getByPath(':stroom-app-gwt:gwtCompile').mustRunAfter ':stroom-ui:yarnBuild'
 tasks.getByPath(':stroom-dashboard-gwt:gwtCompile').mustRunAfter ':stroom-app-gwt:gwtCompile'
 
