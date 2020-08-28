@@ -1,6 +1,6 @@
 package stroom.search.resultsender;
 
-import stroom.search.coprocessor.CompletionState;
+import stroom.query.common.v2.CompletionState;
 import stroom.search.coprocessor.Coprocessors;
 
 import java.util.concurrent.LinkedBlockingQueue;

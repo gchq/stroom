@@ -1,11 +1,13 @@
-package stroom.meta.impl.db;
+package stroom.meta.impl;
 
-import com.fasterxml.jackson.annotation.JsonProperty;
 import stroom.config.common.DbConfig;
 import stroom.config.common.HasDbConfig;
 import stroom.util.cache.CacheConfig;
 import stroom.util.shared.AbstractConfig;
 import stroom.util.time.StroomDuration;
+
+import com.fasterxml.jackson.annotation.JsonProperty;
+import com.fasterxml.jackson.annotation.JsonPropertyDescription;
 
 import javax.inject.Singleton;
 
@@ -25,6 +27,7 @@ public class MetaServiceConfig extends AbstractConfig implements HasDbConfig {
             .maximumSize(1000L)
             .expireAfterAccess(StroomDuration.ofMinutes(10))
             .build();
+    private volatile String metaTypes = "Raw Events\nRaw Reference\nEvents\nReference\nRecords\nError";
 
     @JsonProperty("db")
     public DbConfig getDbConfig() {
@@ -66,5 +69,14 @@ public class MetaServiceConfig extends AbstractConfig implements HasDbConfig {
 
     public void setMetaTypeCache(final CacheConfig metaTypeCache) {
         this.metaTypeCache = metaTypeCache;
+    }
+
+    @JsonPropertyDescription("List of accepted meta type names.")
+    public String getMetaTypes() {
+        return metaTypes;
+    }
+
+    public void setMetaTypes(final String metaTypes) {
+        this.metaTypes = metaTypes;
     }
 }

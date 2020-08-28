@@ -20,6 +20,7 @@ import org.mockito.junit.jupiter.MockitoExtension;
 
 import java.util.Collections;
 import java.util.List;
+import java.util.Set;
 import java.util.stream.Collectors;
 
 @ExtendWith(MockitoExtension.class)
@@ -39,7 +40,7 @@ class TestSuggestionsServiceImpl {
 
     @Test
     void testFeedNameSuggestions1() {
-        final List<String> metaFeedNames = List.of(
+        final Set<String> metaFeedNames = Set.of(
                 "meta feed 1",
                 "meta feed 2",
                 "meta feed 3",
@@ -47,7 +48,7 @@ class TestSuggestionsServiceImpl {
                 "common feed 1",
                 "common feed 2");
 
-        final List<String> storeFeedNames = List.of(
+        final Set<String> storeFeedNames = Set.of(
                 "store feed 1",
                 "store feed 2",
                 "store feed 3",
@@ -71,9 +72,9 @@ class TestSuggestionsServiceImpl {
 
     @Test
     void testFeedNameSuggestions2() {
-        final List<String> metaFeedNames = Collections.emptyList();
+        final Set<String> metaFeedNames = Collections.emptySet();
 
-        final List<String> storeFeedNames = List.of(
+        final Set<String> storeFeedNames = Set.of(
                 "store feed 1",
                 "store feed 2",
                 "store feed 3",
@@ -93,14 +94,14 @@ class TestSuggestionsServiceImpl {
 
     @Test
     void testFeedNameSuggestions3() {
-        final List<String> metaFeedNames = List.of(
+        final Set<String> metaFeedNames = Set.of(
                 "meta feed 1",
                 "meta feed 2",
                 "meta feed 3",
                 "common feed 1",
                 "common feed 2");
 
-        final List<String> storeFeedNames = Collections.emptyList();
+        final Set<String> storeFeedNames = Collections.emptySet();
 
         final List<String> matches = doFeedNameTest(metaFeedNames, storeFeedNames);
 
@@ -115,9 +116,9 @@ class TestSuggestionsServiceImpl {
 
     @Test
     void testFeedNameSuggestions4() {
-        final List<String> metaFeedNames = Collections.emptyList();
+        final Set<String> metaFeedNames = Collections.emptySet();
 
-        final List<String> storeFeedNames = Collections.emptyList();
+        final Set<String> storeFeedNames = Collections.emptySet();
 
         final List<String> matches = doFeedNameTest(metaFeedNames, storeFeedNames);
 
@@ -125,7 +126,7 @@ class TestSuggestionsServiceImpl {
                 .isEmpty();
     }
 
-    private List<String> doFeedNameTest(final List<String> metaFeedNames, final List<String> storeFeedNames) {
+    private List<String> doFeedNameTest(final Set<String> metaFeedNames, final Set<String> storeFeedNames) {
         final SuggestionsService suggestionsService = new SuggestionsServiceImpl(
                 metaService, pipelineStore, securityContext, feedStore, taskContextFactory);
 

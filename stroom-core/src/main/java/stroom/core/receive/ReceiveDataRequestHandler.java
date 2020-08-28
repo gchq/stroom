@@ -23,6 +23,7 @@ import stroom.data.store.api.Store;
 import stroom.feed.api.FeedProperties;
 import stroom.meta.api.AttributeMapUtil;
 import stroom.meta.api.AttributeMap;
+import stroom.meta.api.MetaService;
 import stroom.meta.api.StandardHeaderArguments;
 import stroom.meta.statistics.api.MetaStatistics;
 import stroom.proxy.StroomStatusCode;
@@ -40,6 +41,7 @@ import javax.servlet.http.HttpServletResponse;
 import java.io.IOException;
 import java.io.InputStream;
 import java.util.List;
+import java.util.Optional;
 import java.util.stream.Collectors;
 
 /**
@@ -56,6 +58,7 @@ class ReceiveDataRequestHandler implements RequestHandler {
     private final MetaStatistics metaDataStatistics;
     private final AttributeMapFilterFactory attributeMapFilterFactory;
     private final BufferFactory bufferFactory;
+    private final MetaService metaService;
 
     @Inject
     public ReceiveDataRequestHandler(final SecurityContext securityContext,
@@ -63,13 +66,15 @@ class ReceiveDataRequestHandler implements RequestHandler {
                                      final FeedProperties feedProperties,
                                      final MetaStatistics metaDataStatistics,
                                      final AttributeMapFilterFactory attributeMapFilterFactory,
-                                     final BufferFactory bufferFactory) {
+                                     final BufferFactory bufferFactory,
+                                     final MetaService metaService) {
         this.securityContext = securityContext;
         this.streamStore = streamStore;
         this.feedProperties = feedProperties;
         this.metaDataStatistics = metaDataStatistics;
         this.attributeMapFilterFactory = attributeMapFilterFactory;
         this.bufferFactory = bufferFactory;
+        this.metaService = metaService;
     }
 
     @Override
@@ -81,24 +86,29 @@ class ReceiveDataRequestHandler implements RequestHandler {
             if (attributeMapFilter.filter(attributeMap)) {
                 debug("Receiving data", attributeMap);
 
-                final String feedName = attributeMap.get(StandardHeaderArguments.FEED);
-                if (feedName == null || feedName.trim().isEmpty()) {
+                final String feedName = Optional.ofNullable(attributeMap.get(StandardHeaderArguments.FEED))
+                        .map(String::trim)
+                        .orElse("");
+                if (feedName.isEmpty()) {
                     throw new StroomStreamException(StroomStatusCode.FEED_MUST_BE_SPECIFIED);
                 }
 
-                final String streamTypeName = feedProperties.getStreamTypeName(feedName);
+                // Get the type name from the header arguments if supplied.
+                String typeName = Optional.ofNullable(attributeMap.get(StandardHeaderArguments.TYPE))
+                        .map(String::trim)
+                        .orElse("");
+                if (typeName.isEmpty()) {
+                    // If no type name is supplied then get the default for the feed.
+                    typeName = feedProperties.getStreamTypeName(feedName);
+                }
 
-//                final String feedName = attributeMap.get(StroomHeaderArguments.FEED);
-//                if (feedName == null) {
-//                    throw new StroomStreamException(StroomStatusCode.FEED_IS_NOT_DEFINED);
-//                }
-//
-//                if (!feed.isReceive()) {
-//                    throw new StroomStreamException(StroomStatusCode.FEED_IS_NOT_SET_TO_RECEIVED_DATA);
-//                }
+                // Validate the data type name.
+                if (!metaService.getTypes().contains(typeName)) {
+                    throw new StroomStreamException(StroomStatusCode.UNEXPECTED_DATA_TYPE);
+                }
 
                 List<StreamTargetStroomStreamHandler> handlers = StreamTargetStroomStreamHandler.buildSingleHandlerList(streamStore,
-                        feedProperties, metaDataStatistics, feedName, streamTypeName);
+                        feedProperties, metaDataStatistics, feedName, typeName);
 
                 final byte[] buffer = bufferFactory.create();
                 final StroomStreamProcessor stroomStreamProcessor = new StroomStreamProcessor(attributeMap, handlers, buffer, "DataFeedRequestHandler-" + attributeMap.get(StandardHeaderArguments.GUID));

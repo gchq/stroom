@@ -143,7 +143,11 @@ class DataServiceImpl implements DataService {
             final String files = additionalAttributes.remove("Files");
             attributeMap.putAll(additionalAttributes);
 
-            final List<String> sortedKeys = attributeMap.keySet().stream().sorted(Comparator.naturalOrder()).collect(Collectors.toList());
+            final List<String> sortedKeys = attributeMap
+                    .keySet()
+                    .stream()
+                    .sorted()
+                    .collect(Collectors.toList());
             sortedKeys.forEach(key -> {
                 final String value = attributeMap.get(key);
                 if (value != null) {
