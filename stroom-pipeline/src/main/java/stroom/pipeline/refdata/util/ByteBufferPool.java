@@ -187,7 +187,7 @@ public class ByteBufferPool implements Clearable, HasSystemInfo {
     @Override
     public SystemInfoResult getSystemInfo() {
         try {
-            SystemInfoResult.Builder builder = SystemInfoResult.builder(getSystemInfoName())
+            final SystemInfoResult.Builder builder = SystemInfoResult.builder(getSystemInfoName())
                     .withDetail("Size", getCurrentPoolSize());
 
             SortedMap<Integer, Long> capacityCountsMap = null;
