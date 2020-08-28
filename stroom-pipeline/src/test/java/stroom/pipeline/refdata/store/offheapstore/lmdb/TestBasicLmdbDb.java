@@ -89,7 +89,7 @@ class TestBasicLmdbDb extends AbstractLmdbDbTest {
 
     /**
      * This test is an example of how to abuse LMDB. If run it will crash the JVM
-     * as a direct bytebuffer returned from a put() was mutated outside the transaction.
+     * as a direct bytebuffer returned from a get() was mutated outside the transaction.
      */
     @Disabled // see javadoc above
     @Test

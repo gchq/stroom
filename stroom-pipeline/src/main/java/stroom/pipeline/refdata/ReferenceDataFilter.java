@@ -564,7 +564,7 @@ public class ReferenceDataFilter extends AbstractXMLFilter {
             refDataValue = FastInfosetValue.wrap(fastInfosetBuffer);
         } else {
             LOGGER.trace("Getting string data");
-            //serialize the event list using fastInfoset
+            // serialize the event list using fastInfoset
             // simple string value so use content buffer
             refDataValue = StringValue.of(contentBuffer.toString());
         }

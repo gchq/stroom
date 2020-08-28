@@ -693,24 +693,30 @@ class TestRefDataOffHeapStore extends AbstractLmdbDbTest {
             e.printStackTrace();
         }
 
-        int threads = 5;
+        int entryCount = 5;
+        int threads = 6;
 
-        IntStream.rangeClosed(1, threads)
+        final ExecutorService executorService = Executors.newFixedThreadPool(threads);
+
+        final List<CompletableFuture<Void>> futures = IntStream.rangeClosed(1, threads)
                 .boxed()
                 .map(i -> {
                     LOGGER.info("Creating future {}", i);
                     return CompletableFuture.runAsync(() -> {
                         LOGGER.info("Running load {} on thread {}", i, Thread.currentThread().getName());
-                        doBigLoadGetAndPurgeForPerfTesting(5, true, true, false, false);
-                    });
+                        doBigLoadGetAndPurgeForPerfTesting(
+                                entryCount, true, true, false, false);
+                    }, executorService);
                 })
-                .forEach(cf -> {
-                    try {
-                        cf.get();
-                    } catch (InterruptedException | ExecutionException e) {
-                        throw new RuntimeException(e);
-                    }
-                });
+                .collect(Collectors.toList());
+
+        futures.forEach(cf -> {
+            try {
+                cf.get();
+            } catch (InterruptedException | ExecutionException e) {
+                throw new RuntimeException(e);
+            }
+        });
 
         final SystemInfoResult systemInfo = byteBufferPool.getSystemInfo();
 
@@ -726,7 +732,7 @@ class TestRefDataOffHeapStore extends AbstractLmdbDbTest {
             e.printStackTrace();
         }
 
-        int entryCount = 50;
+        int entryCount = 5;
         int threads = 6;
 
         // Load the data
@@ -741,7 +747,8 @@ class TestRefDataOffHeapStore extends AbstractLmdbDbTest {
                     return CompletableFuture.runAsync(() -> {
                         LOGGER.info("Running load {} on thread {}", i, Thread.currentThread().getName());
                         // Now query the data
-                        doBigLoadGetAndPurgeForPerfTesting(entryCount, false, true, false, true);
+                        doBigLoadGetAndPurgeForPerfTesting(
+                                entryCount, false, true, false, true);
                     }, executorService);
                 })
                 .collect(Collectors.toList());
@@ -790,6 +797,8 @@ class TestRefDataOffHeapStore extends AbstractLmdbDbTest {
                                                     final boolean doGets,
                                                     final boolean doPurges,
                                                     final boolean doAsserts) {
+
+        Instant fullTestStartTime = Instant.now();
 
         MapNamFunc mapNamFunc = this::buildMapNameWithoutRefStreamDef;
 
@@ -930,6 +939,8 @@ class TestRefDataOffHeapStore extends AbstractLmdbDbTest {
         final SystemInfoResult systemInfo = byteBufferPool.getSystemInfo();
 
         LOGGER.info(systemInfo.toString());
+
+        LOGGER.info("Full test time {}", Duration.between(fullTestStartTime, Instant.now()));
     }
 
     private void assertDbCounts(final int refStreamDefCount,
@@ -1034,7 +1045,7 @@ class TestRefDataOffHeapStore extends AbstractLmdbDbTest {
                             System.currentTimeMillis(),
                             loader -> {
                                 loader.initialise(false);
-                                loader.setCommitInterval(1000);
+                                loader.setCommitInterval(32_000);
 
                                 loadKeyValueData(keyValueMapCount, entryCount, refStreamDefinition, loader, mapNamFunc);
                                 loadRangeValueData(keyValueMapCount, entryCount, refStreamDefinition, loader, mapNamFunc);
