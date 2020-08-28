@@ -482,7 +482,7 @@ task downloadSendArgs(type: Download) {
 }
 
 task makeSendExecutable {
-    dependsOn copySupportingFiles
+    dependsOn downloadSend
     doLast{
         // The args script is sourced so doesn't need execute perms
         exec {
@@ -492,6 +492,8 @@ task makeSendExecutable {
 }
 
 task copyContentPackToDistribution(type: Copy) {
+    dependsOn parent.downloadStroomContent
+
     from contentPackDownloadDir
     into "${releaseBuildDir}/contentPacks"
 }
