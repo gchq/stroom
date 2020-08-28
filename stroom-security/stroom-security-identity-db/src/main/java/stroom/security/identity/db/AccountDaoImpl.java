@@ -33,9 +33,9 @@ import stroom.util.collections.ResultPageCollector;
 import stroom.util.filter.FilterFieldMapper;
 import stroom.util.filter.FilterFieldMappers;
 import stroom.util.filter.QuickFilterPredicateFactory;
-import stroom.util.logging.LambdaLogUtil;
 import stroom.util.logging.LambdaLogger;
 import stroom.util.logging.LambdaLoggerFactory;
+import stroom.util.logging.LogUtil;
 import stroom.util.shared.ResultPage;
 
 import com.google.common.base.Strings;
@@ -236,7 +236,8 @@ class AccountDaoImpl implements AccountDao {
     public Account create(final Account account, final String password) {
         final String passwordHash = hashPassword(password);
         return JooqUtil.contextResult(authDbConnProvider, context -> {
-            LOGGER.debug(LambdaLogUtil.message("Creating a {}", stroom.security.identity.db.jooq.tables.Account.ACCOUNT.getName()));
+            LOGGER.debug(() -> LogUtil.message("Creating a {}",
+                    stroom.security.identity.db.jooq.tables.Account.ACCOUNT.getName()));
             final AccountRecord record = ACCOUNT_TO_RECORD_MAPPER.apply(account, context.newRecord(stroom.security.identity.db.jooq.tables.Account.ACCOUNT));
             record.setPasswordHash(passwordHash);
             record.store();

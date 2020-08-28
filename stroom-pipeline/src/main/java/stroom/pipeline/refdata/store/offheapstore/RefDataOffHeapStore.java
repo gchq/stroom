@@ -47,7 +47,6 @@ import stroom.pipeline.writer.PathCreator;
 import stroom.util.HasHealthCheck;
 import stroom.util.io.ByteSize;
 import stroom.util.io.TempDirProvider;
-import stroom.util.logging.LambdaLogUtil;
 import stroom.util.logging.LambdaLogger;
 import stroom.util.logging.LambdaLoggerFactory;
 import stroom.util.logging.LogUtil;
@@ -663,7 +662,7 @@ public class RefDataOffHeapStore extends AbstractRefDataStore implements RefData
             //dereference this value, deleting it if required
             deReferenceOrDeleteValue(writeTxn, valueStoreKeyBuffer, valueEntryDeleteCount, valueEntryDeReferenceCount);
         });
-        LAMBDA_LOGGER.debug(LambdaLogUtil.message("Deleted {} value entries, de-referenced {} value entries",
+        LAMBDA_LOGGER.debug(() -> LogUtil.message("Deleted {} value entries, de-referenced {} value entries",
                 valueEntryDeleteCount.get(), valueEntryDeReferenceCount.get()));
 
         LOGGER.debug("Deleting range/value entries and de-referencing/deleting their values");

@@ -20,7 +20,6 @@ import stroom.query.common.v2.TablePayload;
 import stroom.statistics.impl.sql.shared.StatisticStoreDoc;
 import stroom.task.api.TaskContext;
 import stroom.task.api.TaskContextFactory;
-import stroom.util.logging.LambdaLogUtil;
 import stroom.util.logging.LambdaLogger;
 import stroom.util.logging.LambdaLoggerFactory;
 import stroom.util.logging.LogUtil;
@@ -230,7 +229,7 @@ public class SqlStatisticsStore implements Store {
                                     if (now >= nextProcessPayloadsTime.get() ||
                                             countSinceLastSend.get() >= resultHandlerBatchSize) {
 
-                                        LAMBDA_LOGGER.debug(LambdaLogUtil.message("{} vs {}, {} vs {}",
+                                        LAMBDA_LOGGER.debug(() -> LogUtil.message("{} vs {}, {} vs {}",
                                                 now, nextProcessPayloadsTime,
                                                 countSinceLastSend.get(), resultHandlerBatchSize));
 

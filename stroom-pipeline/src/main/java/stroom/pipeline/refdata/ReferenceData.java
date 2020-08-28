@@ -35,7 +35,6 @@ import stroom.pipeline.state.FeedHolder;
 import stroom.pipeline.state.MetaHolder;
 import stroom.security.api.SecurityContext;
 import stroom.security.shared.DocumentPermissionNames;
-import stroom.util.logging.LambdaLogUtil;
 import stroom.util.logging.LambdaLogger;
 import stroom.util.logging.LambdaLoggerFactory;
 import stroom.util.logging.LogUtil;
@@ -144,8 +143,9 @@ public class ReferenceData {
 
                     ensureReferenceDataAvailability(pipelineReferences, nestedIdentifier, result);
                 } catch (ClassCastException e) {
-                    result.log(Severity.ERROR, LambdaLogUtil.message("Value is the wrong type, expected: {}, found: {}",
-                            StringValue.class.getName(), refDataValue.getClass().getName()));
+                    result.log(Severity.ERROR,
+                            () -> LogUtil.message("Value is the wrong type, expected: {}, found: {}",
+                                    StringValue.class.getName(), refDataValue.getClass().getName()));
                 }
             }
         } else {
@@ -195,7 +195,7 @@ public class ReferenceData {
         // We are dealing with multiple ref pipelines so replace the current value proxy with a
         // multi one that will perform a lookup on each one in turn
         if (!refDataValueProxies.isEmpty()) {
-            LAMBDA_LOGGER.trace(LambdaLogUtil.message(
+            LAMBDA_LOGGER.trace(() -> LogUtil.message(
                     "Replacing value proxy with multi proxy ({})", refDataValueProxies.size()));
             if (refDataValueProxies.size() > 1) {
                 referenceDataResult.setRefDataValueProxy(new MultiRefDataValueProxy(refDataValueProxies));
@@ -216,7 +216,7 @@ public class ReferenceData {
                                           final String keyName,
                                           final ReferenceDataResult result) {
 
-        LAMBDA_LOGGER.trace(LambdaLogUtil.message(
+        LAMBDA_LOGGER.trace(() -> LogUtil.message(
                 "getNestedStreamEventList called, pipe: {}, map {}, key {}",
                 pipelineReference.getName(),
                 mapName,
@@ -225,7 +225,7 @@ public class ReferenceData {
         // Get nested stream.
         final long streamNo = metaHolder.getStreamNo();
 
-        LAMBDA_LOGGER.trace(LambdaLogUtil.message("StreamId {}, parentStreamId {}",
+        LAMBDA_LOGGER.trace(() -> LogUtil.message("StreamId {}, parentStreamId {}",
                 metaHolder.getMeta().getId(),
                 metaHolder.getMeta().getParentMetaId()));
 
@@ -417,7 +417,7 @@ public class ReferenceData {
                             securityContext.asProcessingUser(() ->
                                     referenceDataLoader.load(refStreamDefinition));
 
-                            LAMBDA_LOGGER.debug(LambdaLogUtil.message(
+                            LAMBDA_LOGGER.debug(() -> LogUtil.message(
                                     "Loaded {} refStreamDefinition", refStreamDefinition));
 
                             // mark these ref stream defs as available for future lookups within this pipeline process

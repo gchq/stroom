@@ -22,7 +22,6 @@ import stroom.query.common.v2.TablePayload;
 import stroom.searchable.api.Searchable;
 import stroom.task.api.TaskContext;
 import stroom.task.api.TaskContextFactory;
-import stroom.util.logging.LambdaLogUtil;
 import stroom.util.logging.LambdaLogger;
 import stroom.util.logging.LambdaLoggerFactory;
 import stroom.util.logging.LogUtil;
@@ -76,7 +75,7 @@ class SearchableStore implements Store {
         this.storeSize = storeSize;
 
         searchKey = searchRequest.getKey().toString();
-        LOGGER.debug(LambdaLogUtil.message("Starting search with key {}", searchKey));
+        LOGGER.debug(() -> LogUtil.message("Starting search with key {}", searchKey));
         taskContext.info(() -> "DB search " + searchKey + " - running query");
 
         final CoprocessorSettingsMap coprocessorSettingsMap = CoprocessorSettingsMap.create(searchRequest);
@@ -159,7 +158,7 @@ class SearchableStore implements Store {
                 if (now >= nextProcessPayloadsTime.get() ||
                         countSinceLastSend.get() >= resultHandlerBatchSize) {
 
-                    LOGGER.debug(LambdaLogUtil.message("{} vs {}, {} vs {}",
+                    LOGGER.debug(() -> LogUtil.message("{} vs {}, {} vs {}",
                             now, nextProcessPayloadsTime,
                             countSinceLastSend.get(), resultHandlerBatchSize));
 
@@ -316,7 +315,7 @@ class SearchableStore implements Store {
 
     @Override
     public Data getData(String componentId) {
-        LOGGER.debug(LambdaLogUtil.message("getMeta called for componentId {}", componentId));
+        LOGGER.debug(() -> LogUtil.message("getMeta called for componentId {}", componentId));
         return resultHandler.getResultStore(componentId);
     }
 

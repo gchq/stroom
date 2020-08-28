@@ -8,9 +8,9 @@ import stroom.data.store.impl.fs.shared.FsVolume;
 import stroom.data.store.impl.fs.shared.FsVolume.VolumeUseStatus;
 import stroom.data.store.impl.fs.shared.FsVolumeState;
 import stroom.db.util.JooqUtil;
-import stroom.util.logging.LambdaLogUtil;
 import stroom.util.logging.LambdaLogger;
 import stroom.util.logging.LambdaLoggerFactory;
+import stroom.util.logging.LogUtil;
 import stroom.util.shared.ResultPage;
 import stroom.util.shared.Selection;
 
@@ -56,7 +56,8 @@ public class FsVolumeDaoImpl implements FsVolumeDao {
             volumeToRecord(fileVolume, record);
             // This depends on there being a field named 'id' that is what we expect it to be.
             // I'd rather this was implicit/opinionated than forced into place with an interface.
-            LOGGER.debug(LambdaLogUtil.message("Updating a {} with id {}", FS_VOLUME.getName(), record.getValue("id")));
+            LOGGER.debug(() -> LogUtil.message("Updating a {} with id {}",
+                    FS_VOLUME.getName(), record.getValue("id")));
             record.update();
             return recordToVolume(record, fileVolume.getVolumeState());
         });

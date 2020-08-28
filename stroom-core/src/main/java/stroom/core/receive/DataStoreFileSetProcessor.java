@@ -30,10 +30,10 @@ import stroom.proxy.repo.ProxyFileHandler;
 import stroom.receive.common.StreamTargetStroomStreamHandler;
 import stroom.task.api.TaskContextFactory;
 import stroom.util.io.BufferFactory;
-import stroom.util.logging.LambdaLogUtil;
 import stroom.util.logging.LambdaLogger;
 import stroom.util.logging.LambdaLoggerFactory;
 import stroom.util.logging.LogExecutionTime;
+import stroom.util.logging.LogUtil;
 
 import javax.inject.Inject;
 import java.io.IOException;
@@ -86,11 +86,12 @@ public final class DataStoreFileSetProcessor implements FileSetProcessor {
 
             final FileSetKey key = fileSet.getKey();
             taskContextFactory.context("Processing set - " + key, taskContext -> {
-                LOGGER.info(LambdaLogUtil.message("processFeedFiles() - Started {} ({} Files)", key, fileSet.getFiles().size()));
+                LOGGER.info(() -> LogUtil.message("processFeedFiles() - Started {} ({} Files)",
+                        key, fileSet.getFiles().size()));
 
                 // Sort the files in the file set so there is some consistency to processing.
                 fileSet.getFiles().sort(Comparator.comparing(p -> p.getFileName().toString()));
-                LOGGER.debug(LambdaLogUtil.message("process() - {} {}", key, fileSet.getFiles()));
+                LOGGER.debug(() -> LogUtil.message("process() - {} {}", key, fileSet.getFiles()));
 
                 final String feedName = key.getFeedName();
 
@@ -111,7 +112,8 @@ public final class DataStoreFileSetProcessor implements FileSetProcessor {
                 long sequence = 1;
                 long count = 0;
 
-                final StreamProgressMonitor streamProgressMonitor = new StreamProgressMonitor("ProxyAggregationTask");
+                final StreamProgressMonitor streamProgressMonitor = new StreamProgressMonitor(
+                        "ProxyAggregationTask");
 
                 for (final Path file : fileSet.getFiles()) {
                     count++;
@@ -145,7 +147,8 @@ public final class DataStoreFileSetProcessor implements FileSetProcessor {
                 }
                 closeStreamHandlers(handlers);
                 cleanup(deleteFileList);
-                LOGGER.info(LambdaLogUtil.message("processFeedFiles() - Completed {} in {}", feedName, logExecutionTime));
+                LOGGER.info(() -> LogUtil.message("processFeedFiles() - Completed {} in {}",
+                        feedName, logExecutionTime));
             }).run();
         }
     }

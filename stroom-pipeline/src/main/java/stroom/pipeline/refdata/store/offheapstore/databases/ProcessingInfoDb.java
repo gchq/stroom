@@ -10,9 +10,9 @@ import stroom.pipeline.refdata.store.offheapstore.serdes.RefStreamDefinitionSerd
 import stroom.pipeline.refdata.util.ByteBufferPool;
 import stroom.pipeline.refdata.util.ByteBufferUtils;
 import stroom.pipeline.refdata.util.PooledByteBufferPair;
-import stroom.util.logging.LambdaLogUtil;
 import stroom.util.logging.LambdaLogger;
 import stroom.util.logging.LambdaLoggerFactory;
+import stroom.util.logging.LogUtil;
 
 import com.google.inject.assistedinject.Assisted;
 import io.vavr.Tuple;
@@ -111,7 +111,7 @@ public class ProcessingInfoDb extends AbstractLmdbDb<RefStreamDefinition, RefDat
             LOGGER.debug("Scanning from start of DB");
             keyRange = KeyRange.all();
         } else {
-            LAMBDA_LOGGER.debug(LambdaLogUtil.message(
+            LAMBDA_LOGGER.debug(() -> LogUtil.message(
                     "Scanning from {}", ByteBufferUtils.byteBufferInfo(startKeyBuffer)));
             keyRange = KeyRange.atLeast(startKeyBuffer);
         }

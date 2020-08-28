@@ -1,7 +1,5 @@
 package stroom.pipeline.refdata.store.onheapstore;
 
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 import stroom.pipeline.refdata.store.MapDefinition;
 import stroom.pipeline.refdata.store.ProcessingState;
 import stroom.pipeline.refdata.store.RefDataLoader;
@@ -9,11 +7,13 @@ import stroom.pipeline.refdata.store.RefDataProcessingInfo;
 import stroom.pipeline.refdata.store.RefDataStore;
 import stroom.pipeline.refdata.store.RefDataValue;
 import stroom.pipeline.refdata.store.RefStreamDefinition;
-import stroom.util.logging.LambdaLogUtil;
 import stroom.util.logging.LambdaLogger;
 import stroom.util.logging.LambdaLoggerFactory;
 import stroom.util.logging.LogUtil;
 import stroom.util.shared.Range;
+
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import java.time.Duration;
 import java.time.Instant;
@@ -148,7 +148,7 @@ class OnHeapRefDataLoader implements RefDataLoader {
             wasValuePut = prevValue == null;
         }
         recordPut(mapDefinition, wasValuePut);
-        LAMBDA_LOGGER.trace(LambdaLogUtil.message("put completed for {} {} {}, size now {}",
+        LAMBDA_LOGGER.trace(() -> LogUtil.message("put completed for {} {} {}, size now {}",
                 mapDefinition, key, refDataValue, keyValueMap.size()));
         return wasValuePut;
     }
@@ -173,7 +173,7 @@ class OnHeapRefDataLoader implements RefDataLoader {
             wasValuePut = prevValue == null;
         }
         recordPut(mapDefinition, wasValuePut);
-        LAMBDA_LOGGER.trace(LambdaLogUtil.message("put completed for {} {} {}, size now {}",
+        LAMBDA_LOGGER.trace(() -> LogUtil.message("put completed for {} {} {}, size now {}",
                 mapDefinition, keyRange, refDataValue,
                 Optional.ofNullable(rangeValueNestedMap.get(mapDefinition))
                         .map(NavigableMap::size)

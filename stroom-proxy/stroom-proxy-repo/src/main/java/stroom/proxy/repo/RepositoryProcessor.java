@@ -24,8 +24,8 @@ import stroom.task.shared.ThreadPool;
 import stroom.util.date.DateUtil;
 import stroom.util.io.AbstractFileVisitor;
 import stroom.util.io.FileUtil;
-import stroom.util.logging.LambdaLogUtil;
 import stroom.util.logging.LogExecutionTime;
+import stroom.util.logging.LogUtil;
 import stroom.util.shared.ModelStringUtil;
 
 import org.slf4j.Logger;
@@ -101,7 +101,9 @@ public final class RepositoryProcessor {
             final LogExecutionTime logExecutionTime = new LogExecutionTime();
             LOGGER.info("Started");
 
-            taskContext.info(LambdaLogUtil.message("Process started {}, maxFileScan {}, maxConcurrentMappedFiles {}, maxFilesPerAggregate {}, maxUncompressedFileSize {}",
+            taskContext.info(() -> LogUtil.message(
+                    "Process started {}, maxFileScan {}, maxConcurrentMappedFiles {}, " +
+                            "maxFilesPerAggregate {}, maxUncompressedFileSize {}",
                     DateUtil.createNormalDateTimeString(System.currentTimeMillis()),
                     ModelStringUtil.formatCsv(maxFileScan),
                     ModelStringUtil.formatCsv(maxConcurrentMappedFiles),

@@ -10,9 +10,9 @@ import stroom.util.AuditUtil;
 import stroom.util.NextNameGenerator;
 import stroom.util.io.FileUtil;
 import stroom.util.io.TempDirProvider;
-import stroom.util.logging.LambdaLogUtil;
 import stroom.util.logging.LambdaLogger;
 import stroom.util.logging.LambdaLoggerFactory;
+import stroom.util.logging.LogUtil;
 
 import javax.inject.Inject;
 import java.io.File;
@@ -245,7 +245,7 @@ public class IndexVolumeGroupServiceImpl implements IndexVolumeGroupService {
             // this.updateVolumeState()
             return OptionalLong.of((long) (totalBytes * volumeConfig.getDefaultIndexVolumeFilesystemUtilisation()));
         } catch (IOException e) {
-            LOGGER.warn(LambdaLogUtil.message("Unable to determine the total space on the filesystem for path: {}." +
+            LOGGER.warn(() -> LogUtil.message("Unable to determine the total space on the filesystem for path: {}." +
                     " Please manually set limit for index volume.", FileUtil.getCanonicalPath(Path.of(path))));
             return OptionalLong.empty();
         }
@@ -260,7 +260,7 @@ public class IndexVolumeGroupServiceImpl implements IndexVolumeGroupService {
                 return Optional.empty();
             }
         } catch (final RuntimeException e) {
-            LOGGER.warn(LambdaLogUtil.message("Unable to determine application jar directory due to: {}", e.getMessage()));
+            LOGGER.warn(() -> LogUtil.message("Unable to determine application jar directory due to: {}", e.getMessage()));
             return Optional.empty();
         }
     }

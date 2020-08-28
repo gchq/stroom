@@ -1,16 +1,16 @@
 package stroom.security.identity.db;
 
-import org.jose4j.jwk.PublicJsonWebKey;
-
-import stroom.security.openid.api.JsonWebKeyFactory;
+import stroom.db.util.JooqUtil;
 import stroom.security.identity.db.jooq.tables.records.JsonWebKeyRecord;
 import stroom.security.identity.token.JwkDao;
 import stroom.security.identity.token.TokenType;
 import stroom.security.identity.token.TokenTypeDao;
-import stroom.db.util.JooqUtil;
-import stroom.util.logging.LambdaLogUtil;
+import stroom.security.openid.api.JsonWebKeyFactory;
 import stroom.util.logging.LambdaLogger;
 import stroom.util.logging.LambdaLoggerFactory;
+import stroom.util.logging.LogUtil;
+
+import org.jose4j.jwk.PublicJsonWebKey;
 
 import javax.inject.Inject;
 import javax.inject.Singleton;
@@ -131,7 +131,7 @@ class JwkDaoImpl implements JwkDao {
         final int tokenTypeId = tokenTypeDao.getTokenTypeId(TokenType.API.getText().toLowerCase());
 
         JooqUtil.context(authDbConnProvider, context -> {
-            LOGGER.debug(LambdaLogUtil.message("Creating a {}", JSON_WEB_KEY.getName()));
+            LOGGER.debug(() -> LogUtil.message("Creating a {}", JSON_WEB_KEY.getName()));
             final JsonWebKeyRecord record = context.newRecord(JSON_WEB_KEY);
             record.setKeyId(uuid);
             record.setJson(jsonWebKeyFactory.asJson(publicJsonWebKey));

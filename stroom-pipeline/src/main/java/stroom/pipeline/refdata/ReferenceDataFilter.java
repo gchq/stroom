@@ -32,7 +32,6 @@ import stroom.pipeline.shared.ElementIcons;
 import stroom.pipeline.shared.data.PipelineElementType;
 import stroom.pipeline.shared.data.PipelineElementType.Category;
 import stroom.util.CharBuffer;
-import stroom.util.logging.LambdaLogUtil;
 import stroom.util.logging.LambdaLogger;
 import stroom.util.logging.LambdaLoggerFactory;
 import stroom.util.logging.LogUtil;
@@ -40,8 +39,6 @@ import stroom.util.shared.Range;
 import stroom.util.shared.Severity;
 
 import com.sun.xml.fastinfoset.sax.SAXDocumentSerializer;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 import org.xml.sax.Attributes;
 import org.xml.sax.SAXException;
 
@@ -71,8 +68,7 @@ import java.util.regex.Pattern;
         icon = ElementIcons.REFERENCE_DATA)
 public class ReferenceDataFilter extends AbstractXMLFilter {
 
-    private static final Logger LOGGER = LoggerFactory.getLogger(ReferenceDataFilter.class);
-    private static final LambdaLogger LAMBDA_LOGGER = LambdaLoggerFactory.getLogger(ReferenceDataFilter.class);
+    private static final LambdaLogger LOGGER = LambdaLoggerFactory.getLogger(ReferenceDataFilter.class);
 
     private static final Pattern PREFIX_DELIMITER_PATTERN = Pattern.compile(":");
 
@@ -592,7 +588,7 @@ public class ReferenceDataFilter extends AbstractXMLFilter {
     public void characters(final char[] ch, final int start, final int length) throws SAXException {
         if (insideValueElement && haveSeenXmlInValueElement) {
 
-            LAMBDA_LOGGER.trace(LambdaLogUtil.message(
+            LOGGER.trace(() -> LogUtil.message(
                     "characters(\"{}\")", new String(ch, start, length).trim()));
             if (insideElement || !isAllWhitespace(ch, start, length)) {
                 fastInfosetCharacters(ch, start, length);
@@ -635,7 +631,10 @@ public class ReferenceDataFilter extends AbstractXMLFilter {
                 break;
             }
         }
-        LOGGER.trace("isOnlyWhitespace(\"{}\") - returning {}", new String(ch, start, length), isOnlyWhitespace);
+        // Done like this because isOnlyWhitespace is not final so can't use a lambda
+        if (LOGGER.isTraceEnabled()) {
+            LOGGER.trace("isOnlyWhitespace(\"{}\") - returning {}", new String(ch, start, length), isOnlyWhitespace);
+        }
         return isOnlyWhitespace;
     }
 
@@ -674,7 +673,7 @@ public class ReferenceDataFilter extends AbstractXMLFilter {
     }
 
     private void fastInfosetCharacters(final char[] ch, final int start, final int length) throws SAXException {
-        LAMBDA_LOGGER.trace(LambdaLogUtil.message(
+        LOGGER.trace(() -> LogUtil.message(
                 "saxDocumentSerializer - characters(\"{}\")", new String(ch, start, length).trim()));
         saxDocumentSerializer.characters(ch, start, length);
     }
