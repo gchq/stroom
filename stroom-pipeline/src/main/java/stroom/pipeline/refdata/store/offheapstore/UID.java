@@ -17,8 +17,9 @@
 
 package stroom.pipeline.refdata.store.offheapstore;
 
-import com.google.common.base.Preconditions;
 import stroom.pipeline.refdata.util.ByteBufferUtils;
+
+import com.google.common.base.Preconditions;
 
 import java.nio.ByteBuffer;
 import java.util.Objects;
@@ -52,7 +53,7 @@ public class UID {
      * and wraps the new UID around that {@link ByteBuffer}
      */
     public static UID copyOfDirect(final ByteBuffer byteBuffer) {
-        ByteBuffer newBuffer = ByteBuffer.allocateDirect(UID_ARRAY_LENGTH);
+        final ByteBuffer newBuffer = ByteBuffer.allocateDirect(UID_ARRAY_LENGTH);
         newBuffer.put(byteBuffer);
         newBuffer.flip();
         return new UID(newBuffer);
@@ -63,7 +64,7 @@ public class UID {
      */
     public static UID of(final int... byteValues) {
         Preconditions.checkArgument(byteValues.length == UID_ARRAY_LENGTH);
-        ByteBuffer byteBuffer = ByteBuffer.allocateDirect(UID_ARRAY_LENGTH);
+        final ByteBuffer byteBuffer = ByteBuffer.allocateDirect(UID_ARRAY_LENGTH);
         for (int i = 0; i < UID_ARRAY_LENGTH; i++) {
             byte b = (byte) byteValues[i];
             byteBuffer.put(b);
@@ -76,8 +77,12 @@ public class UID {
         return new UID(createUidBuffer(value));
     }
 
+    /**
+     * @return A newly allocated byte buffer containing the same UID bytes as this. Useful when this UID
+     * wraps an LMDB managed bytebuffer that you want to de-associate from.
+     */
     public UID clone() {
-        ByteBuffer newBuffer = ByteBuffer.allocateDirect(UID_ARRAY_LENGTH);
+        final ByteBuffer newBuffer = ByteBuffer.allocateDirect(UID_ARRAY_LENGTH);
         newBuffer.put(byteBuffer);
         byteBuffer.rewind();
         newBuffer.flip();
@@ -85,12 +90,12 @@ public class UID {
     }
 
     public long getValue() {
-        long val = UnsignedBytes.get(byteBuffer);
+        final long val = UnsignedBytes.get(byteBuffer);
         return val;
     }
 
     public UID nextUid() {
-        long currVal = getValue();
+        final long currVal = getValue();
         return UID.of(currVal + 1);
     }
 

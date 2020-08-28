@@ -427,7 +427,7 @@ public class MetaServiceImpl implements MetaService, Searchable {
                 .build();
 
         final ExpressionOperator secureExpression = addPermissionConstraints(expression, DocumentPermissionNames.READ, FEED_FIELDS);
-        return metaDao.getMaxId(new FindMetaCriteria(secureExpression));
+        return metaDao.getLatestIdByEffectiveDate(new FindMetaCriteria(secureExpression));
     }
 
 //    @Override
