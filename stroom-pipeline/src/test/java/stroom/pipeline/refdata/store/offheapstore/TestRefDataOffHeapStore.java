@@ -676,7 +676,7 @@ class TestRefDataOffHeapStore extends AbstractLmdbDbTest {
 
         // Wait for visualvm to spin up
         try {
-            Thread.sleep(0);
+            Thread.sleep(0_000);
         } catch (InterruptedException e) {
             e.printStackTrace();
         }

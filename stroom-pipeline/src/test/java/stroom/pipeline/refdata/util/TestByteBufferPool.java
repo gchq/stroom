@@ -278,7 +278,7 @@ class TestByteBufferPool {
     void testSinglePoolPerformance() throws ExecutionException, InterruptedException {
         final int threads = 6;
         // Set to true for profiling in visualvm
-        final boolean inProfilingMode = true;
+        final boolean inProfilingMode = false;
 
         final int iterations = inProfilingMode
                 ? 5_000_000
@@ -301,7 +301,7 @@ class TestByteBufferPool {
 
         final int threads = 10;
         // Set to true for profiling in visualvm
-        final boolean inProfilingMode = true;
+        final boolean inProfilingMode = false;
 
         final int iterations = inProfilingMode
                 ? 5_000_000
