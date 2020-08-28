@@ -259,7 +259,6 @@ else
     ./gradlew \
       --scan \
       --stacktrace \
-      --foreground \
       -Dorg.gradle.parallel=true \
       -Dorg.gradle.jvmargs="-Xmx6500m -XX:+HeapDumpOnOutOfMemoryError -Dfile.encoding=UTF-8" \
       -PdumpFailedTestXml=true \
