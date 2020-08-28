@@ -97,6 +97,4 @@ public class JerseyModule extends AbstractModule {
             return webTargetProxy;
         };
     }
-
-
 }

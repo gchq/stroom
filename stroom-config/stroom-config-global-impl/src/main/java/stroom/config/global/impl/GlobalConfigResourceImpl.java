@@ -1,6 +1,6 @@
 package stroom.config.global.impl;
 
-import stroom.authentication.authenticate.api.AuthenticationService;
+import stroom.security.identity.authenticate.api.AuthenticationService;
 import stroom.config.common.UriFactory;
 import stroom.config.global.shared.ConfigProperty;
 import stroom.config.global.shared.ConfigPropertyValidationException;

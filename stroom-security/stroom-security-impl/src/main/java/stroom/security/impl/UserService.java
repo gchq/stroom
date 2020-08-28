@@ -19,12 +19,11 @@ package stroom.security.impl;
 
 import stroom.security.shared.FindUserCriteria;
 import stroom.security.shared.User;
-import stroom.util.shared.ProvidesNamePattern;
 
 import java.util.List;
 import java.util.Set;
 
-public interface UserService extends ProvidesNamePattern {
+public interface UserService {
     User createUser(String name);
 
     User createUserGroup(String name);

@@ -5,10 +5,10 @@ dependencies {
     compile project(':stroom-core-shared')
     compile project(':stroom-elastic:stroom-elastic-api')
     compile project(':stroom-pipeline')
-    compile project(':stroom-util')
-    compile project(':stroom-util-shared')
     compile project(':stroom-security:stroom-security-api')
     compile project(':stroom-security:stroom-security-impl')
+    compile project(':stroom-util')
+    compile project(':stroom-util-shared')
 
     compile libs.guava
     compile libs.guice4

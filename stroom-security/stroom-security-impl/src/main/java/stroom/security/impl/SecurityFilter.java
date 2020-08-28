@@ -16,7 +16,7 @@
 
 package stroom.security.impl;
 
-import stroom.authentication.api.OIDC;
+import stroom.security.openid.api.OpenId;
 import stroom.config.common.UriFactory;
 import stroom.security.api.ProcessingUserIdentityProvider;
 import stroom.security.api.SecurityContext;
@@ -192,8 +192,8 @@ class SecurityFilter implements Filter {
                             String redirectUri = null;
 
                             // If we have completed the front channel flow then we will have a state id.
-                            final String code = UrlUtils.getLastParam(request, OIDC.CODE);
-                            final String stateId = UrlUtils.getLastParam(request, OIDC.STATE);
+                            final String code = UrlUtils.getLastParam(request, OpenId.CODE);
+                            final String stateId = UrlUtils.getLastParam(request, OpenId.STATE);
                             if (code != null && stateId != null) {
                                 redirectUri = openIdManager.backChannelOIDC(request, code, stateId, postAuthRedirectUri);
                             }
@@ -239,7 +239,7 @@ class SecurityFilter implements Filter {
         // the same to the redirect URL before adding its additional
         // parameters.
         LOGGER.debug("postAuthRedirectUri before param removal: {}", postAuthRedirectUri);
-        return OIDC.removeOIDCParams(postAuthRedirectUri);
+        return OpenId.removeReservedParams(postAuthRedirectUri);
     }
 
     private boolean isStaticResource(final HttpServletRequest request) {

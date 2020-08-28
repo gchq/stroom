@@ -7,7 +7,9 @@ and this project adheres to [Semantic Versioning](http://semver.org/).
 
 ## [Unreleased]
 
-* Issue **#1797** : Altered how search completion is recorded to try and prevent hanging. 
+* Made stroom compatible with AWS authentication.
+
+* Issue **#1797** : Altered how search completion is recorded to try and prevent hanging.
 
 * Issue **#1762** : Fix for search jobs that do not terminate correctly.
 

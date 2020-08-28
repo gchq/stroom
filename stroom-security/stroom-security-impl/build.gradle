@@ -2,7 +2,6 @@ ext.moduleName = 'stroom.security.impl'
 
 dependencies {
     compile project(':stroom-cache:stroom-cache-api')
-    compile project(':stroom-authentication:stroom-authentication-api')
     compile project(':stroom-cluster:stroom-cluster-task-api')
     compile project(':stroom-config:stroom-config-common')
     compile project(':stroom-core-shared')
@@ -11,6 +10,7 @@ dependencies {
     compile project(':stroom-lifecycle:stroom-lifecycle-api')
     compile project(':stroom-node:stroom-node-api')
     compile project(':stroom-security:stroom-security-api')
+    compile project(':stroom-security:stroom-security-openid-api')
     compile project(':stroom-task:stroom-task-api')
     compile project(':stroom-util')
     compile project(':stroom-util-shared')
