@@ -472,17 +472,19 @@ task copySupportingFiles(type: Copy) {
 }
 
 task downloadSend(type: Download) {
+    dependsOn copySupportingFiles
     src "http://raw.githubusercontent.com/gchq/stroom-clients/${sendToStroomScriptVersion}/bash/send_to_stroom.sh"
-    dest "${releaseBuildDir}/bin"
+    dest "${releaseBuildDir}/bin/"
 }
 
 task downloadSendArgs(type: Download) {
+    dependsOn copySupportingFiles
     src "https://raw.githubusercontent.com/gchq/stroom-clients/${sendToStroomScriptVersion}/bash/send_to_stroom_args.sh"
-    dest "${releaseBuildDir}/bin"
+    dest "${releaseBuildDir}/bin/"
 }
 
 task makeSendExecutable {
-    dependsOn copySupportingFiles
+    dependsOn downloadSend
     doLast{
         // The args script is sourced so doesn't need execute perms
         exec {
@@ -595,12 +597,10 @@ tasks.getByPath(':stroom-app-gwt:gwtClean').mustRunAfter processResources
 tasks.getByPath(':stroom-dashboard-gwt:gwtClean').mustRunAfter processResources
 tasks.getByPath(':stroom-ui:removeYarnBuild').mustRunAfter processResources
 
-// Make sure GWT compilation doesn't run before test.
-tasks.getByPath(':stroom-app-gwt:gwtClean').mustRunAfter test
-tasks.getByPath(':stroom-dashboard-gwt:gwtClean').mustRunAfter test
-tasks.getByPath(':stroom-ui:removeYarnBuild').mustRunAfter test
-
 // We often run out of memory when running the UI builds in parallel so create tasks that will build them one after another.
+tasks.getByPath(':stroom-ui:yarnBuild').mustRunAfter test
+tasks.getByPath(':stroom-ui:yarnBuild').mustRunAfter analyzeClassesDependencies
+tasks.getByPath(':stroom-ui:yarnBuild').mustRunAfter analyzeTestClassesDependencies
 tasks.getByPath(':stroom-ui:yarnBuild').mustRunAfter generateConfigDefaultsYamlFile
 tasks.getByPath(':stroom-ui:yarnBuild').mustRunAfter makeSendExecutable
 tasks.getByPath(':stroom-app-gwt:gwtCompile').mustRunAfter ':stroom-ui:yarnBuild'
