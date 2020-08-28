@@ -72,5 +72,4 @@ public class FsDataStoreDbModule extends AbstractFlyWayDbModule<DataStoreService
             super(dataSource);
         }
     }
-
 }

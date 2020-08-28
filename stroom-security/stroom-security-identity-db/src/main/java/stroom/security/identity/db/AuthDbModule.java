@@ -13,7 +13,7 @@ import javax.sql.DataSource;
 
 public class AuthDbModule extends AbstractFlyWayDbModule<IdentityConfig, AuthDbConnProvider> {
     private static final String MODULE = "stroom-authentication";
-    private static final String FLYWAY_LOCATIONS = "stroom/authentication/db/migration";
+    private static final String FLYWAY_LOCATIONS = "stroom/security/identity/db/migration";
     private static final String FLYWAY_TABLE = "authentication_schema_history";
 
     @Override
