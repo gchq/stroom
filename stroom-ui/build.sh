@@ -9,7 +9,7 @@
     NC='\033[0m' # No Colour
 }
 
-top -n 1 -b -o RES | head -n 40
+#top -n 1 -b -o RES | head -n 40
 
 echo -e "${GREEN}Running Yarn install${NC}"
 yarn install
