@@ -1,5 +1,7 @@
 package stroom.app.guice;
 
+import stroom.security.identity.AuthModule;
+import stroom.security.identity.db.AuthDbModule;
 import stroom.util.io.TempDirProvider;
 import stroom.util.io.TempDirProviderImpl;
 
@@ -11,8 +13,8 @@ public class CoreModule extends AbstractModule {
         install(new stroom.activity.impl.db.ActivityDbModule());
         install(new stroom.annotation.impl.db.AnnotationDbModule());
         install(new stroom.annotation.pipeline.AnnotationPipelineModule());
-        install(new stroom.authentication.AuthModule());
-        install(new stroom.authentication.impl.db.AuthDbModule());
+        install(new AuthModule());
+        install(new AuthDbModule());
         install(new stroom.cache.impl.CacheModule());
         install(new stroom.cache.impl.CacheResourceModule());
         install(new stroom.cluster.lock.impl.db.ClusterLockDbModule());

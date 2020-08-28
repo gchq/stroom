@@ -86,11 +86,12 @@ public final class DataStoreFileSetProcessor implements FileSetProcessor {
 
             final FileSetKey key = fileSet.getKey();
             taskContextFactory.context("Processing set - " + key, taskContext -> {
-                LOGGER.info(LogUtil.message("processFeedFiles() - Started {} ({} Files)", key, fileSet.getFiles().size()));
+                LOGGER.info(() -> LogUtil.message("processFeedFiles() - Started {} ({} Files)",
+                        key, fileSet.getFiles().size()));
 
                 // Sort the files in the file set so there is some consistency to processing.
                 fileSet.getFiles().sort(Comparator.comparing(p -> p.getFileName().toString()));
-                LOGGER.debug(LogUtil.message("process() - {} {}", key, fileSet.getFiles()));
+                LOGGER.debug(() -> LogUtil.message("process() - {} {}", key, fileSet.getFiles()));
 
                 final String feedName = key.getFeedName();
 
@@ -111,7 +112,8 @@ public final class DataStoreFileSetProcessor implements FileSetProcessor {
                 long sequence = 1;
                 long count = 0;
 
-                final StreamProgressMonitor streamProgressMonitor = new StreamProgressMonitor("ProxyAggregationTask");
+                final StreamProgressMonitor streamProgressMonitor = new StreamProgressMonitor(
+                        "ProxyAggregationTask");
 
                 for (final Path file : fileSet.getFiles()) {
                     count++;

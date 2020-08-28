@@ -225,8 +225,8 @@ public class App extends Application<Config> {
     }
 
     private void warnAboutDefaultOpenIdCreds(Config configuration) {
-        if (configuration.getAppConfig().getAuthenticationConfig().isUseDefaultOpenIdCredentials()) {
-            String propPath = configuration.getAppConfig().getAuthenticationConfig().getFullPath("useDefaultOpenIdCredentials");
+        if (configuration.getAppConfig().getSecurityConfig().getIdentityConfig().isUseDefaultOpenIdCredentials()) {
+            String propPath = configuration.getAppConfig().getSecurityConfig().getIdentityConfig().getFullPath("useDefaultOpenIdCredentials");
             LOGGER.warn("\n" +
                     "\n  -----------------------------------------------------------------------------" +
                     "\n  " +

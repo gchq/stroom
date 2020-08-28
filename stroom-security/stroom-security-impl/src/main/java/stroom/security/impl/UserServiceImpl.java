@@ -141,11 +141,6 @@ class UserServiceImpl implements UserService {
     }
 
     @Override
-    public String getNamePattern() {
-        return securityConfig.getUserNamePattern();
-    }
-
-    @Override
     public List<String> getAssociates(final String filter) {
         Set<String> associates;
 

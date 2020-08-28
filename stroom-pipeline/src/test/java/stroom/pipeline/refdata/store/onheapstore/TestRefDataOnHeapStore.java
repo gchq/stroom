@@ -121,7 +121,7 @@ class TestRefDataOnHeapStore {
         treeMap.put(7L, "seven");
 
         treeMap.forEach((key, value) ->
-                LOGGER.info(LogUtil.message("{} => {}", key, value)));
+                LOGGER.info("{} => {}", key, value));
 
         assertThat(treeMap.ceilingEntry(3L).getValue()).isEqualTo("three");
         assertThat(treeMap.ceilingEntry(4L).getValue()).isEqualTo("three");
@@ -133,7 +133,7 @@ class TestRefDataOnHeapStore {
 
         SortedMap<Long, String> partMap = treeMap.tailMap(4L);
         partMap.forEach((key, value) ->
-                LOGGER.info(LogUtil.message("{} => {}", key, value)));
+                LOGGER.info("{} => {}", key, value));
 
 
         assertThat(treeMap.floorEntry(-1L).getValue()).isEqualTo("one");

@@ -490,7 +490,7 @@ public class StoreImpl<D extends Doc> implements Store<D> {
                 }
             });
         } catch (final IOException e) {
-            LOGGER.error(LogUtil.message("Error serialising {}", document.getType()), e);
+            LOGGER.error("Error serialising {}", document.getType(), e);
             throw new UncheckedIOException(e);
         }
 
