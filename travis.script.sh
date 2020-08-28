@@ -254,6 +254,11 @@ else
     # Each work will chew up the maxHeap value and we have to allow for
     # our docker services as well.
     ./gradlew \
+      --scan \
+      --stacktrace \
+      --foreground \
+      -Dorg.gradle.parallel=true \
+      -Dorg.gradle.jvmargs="-Xmx6500m -XX:+HeapDumpOnOutOfMemoryError -Dfile.encoding=UTF-8" \
       -PdumpFailedTestXml=true \
       -Pversion="${TRAVIS_TAG}" \
       -PgwtCompilerWorkers=2 \
@@ -266,9 +271,7 @@ else
       copyFilesForStroomDockerBuild \
       copyFilesForProxyDockerBuild \
       buildDistribution \
-      "${extraBuildArgs[@]}" \
-      -Dorg.gradle.parallel=true \
-      --scan -s
+      "${extraBuildArgs[@]}"
 
 # Disable parallel build execution in travis. Note this is seprate to prallel test execution.
 # -Dorg.gradle.parallel=false \
