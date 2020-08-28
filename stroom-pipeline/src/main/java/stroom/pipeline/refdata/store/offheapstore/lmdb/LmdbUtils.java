@@ -71,9 +71,10 @@ public class LmdbUtils {
      */
     public static <T> T getWithReadTxn(final Env<ByteBuffer> env,
                                        final ByteBufferPool byteBufferPool,
+                                       final int requiredBufferCapacity,
                                        final BiFunction<Txn<ByteBuffer>, ByteBuffer, T> work) {
         try (final Txn<ByteBuffer> txn = env.txnRead()) {
-            return byteBufferPool.getWithBuffer(env.getMaxKeySize(), keyBuffer ->
+            return byteBufferPool.getWithBuffer(requiredBufferCapacity, keyBuffer ->
                     work.apply(txn, keyBuffer));
         } catch (RuntimeException e) {
             throw new RuntimeException(LogUtil.message("Error performing work in read transaction: {}",

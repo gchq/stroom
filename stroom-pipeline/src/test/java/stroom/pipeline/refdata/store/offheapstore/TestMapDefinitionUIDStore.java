@@ -17,13 +17,7 @@
 
 package stroom.pipeline.refdata.store.offheapstore;
 
-import org.junit.jupiter.api.BeforeEach;
-import org.junit.jupiter.api.Test;
-import org.lmdbjava.Dbi;
-import org.lmdbjava.DbiFlags;
-import org.lmdbjava.Txn;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
+import stroom.pipeline.refdata.store.ByteBufferPoolFactory;
 import stroom.pipeline.refdata.store.MapDefinition;
 import stroom.pipeline.refdata.store.RefStreamDefinition;
 import stroom.pipeline.refdata.store.offheapstore.databases.AbstractLmdbDbTest;
@@ -35,7 +29,14 @@ import stroom.pipeline.refdata.store.offheapstore.serdes.UIDSerde;
 import stroom.pipeline.refdata.util.ByteBufferPool;
 import stroom.pipeline.refdata.util.ByteBufferUtils;
 
-import java.io.IOException;
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Test;
+import org.lmdbjava.Dbi;
+import org.lmdbjava.DbiFlags;
+import org.lmdbjava.Txn;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+
 import java.nio.ByteBuffer;
 import java.nio.charset.StandardCharsets;
 import java.util.ArrayList;
@@ -64,7 +65,7 @@ class TestMapDefinitionUIDStore extends AbstractLmdbDbTest {
     void setup() {
         final MapDefinitionSerde mapDefinitionSerde = new MapDefinitionSerde();
         final UIDSerde uidSerde = new UIDSerde();
-        final ByteBufferPool byteBufferPool = new ByteBufferPool();
+        final ByteBufferPool byteBufferPool = new ByteBufferPoolFactory().getByteBufferPool();
         mapUidForwardDb = new MapUidForwardDb(lmdbEnv, byteBufferPool, mapDefinitionSerde, uidSerde);
         mapUidReverseDb = new MapUidReverseDb(lmdbEnv, byteBufferPool, uidSerde, mapDefinitionSerde);
 
@@ -73,6 +74,7 @@ class TestMapDefinitionUIDStore extends AbstractLmdbDbTest {
                 mapUidForwardDb,
                 mapUidReverseDb);
     }
+
 
 
     /**

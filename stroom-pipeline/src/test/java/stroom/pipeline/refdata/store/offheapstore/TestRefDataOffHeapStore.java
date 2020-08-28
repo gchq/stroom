@@ -36,6 +36,7 @@ import stroom.pipeline.refdata.store.offheapstore.databases.MapUidReverseDb;
 import stroom.pipeline.refdata.store.offheapstore.databases.ProcessingInfoDb;
 import stroom.pipeline.refdata.store.offheapstore.databases.RangeStoreDb;
 import stroom.pipeline.refdata.store.offheapstore.databases.ValueStoreDb;
+import stroom.pipeline.refdata.util.ByteBufferPool;
 import stroom.util.io.ByteSize;
 import stroom.util.io.TempDirProvider;
 import stroom.util.logging.LambdaLogger;
@@ -43,6 +44,7 @@ import stroom.util.logging.LambdaLoggerFactory;
 import stroom.util.logging.LogUtil;
 import stroom.util.pipeline.scope.PipelineScopeModule;
 import stroom.util.shared.Range;
+import stroom.util.sysinfo.SystemInfoResult;
 import stroom.util.time.StroomDuration;
 
 import com.google.inject.AbstractModule;
@@ -93,6 +95,8 @@ class TestRefDataOffHeapStore extends AbstractLmdbDbTest {
 
     @Inject
     private RefDataStoreFactory refDataStoreFactory;
+    @Inject
+    private ByteBufferPool byteBufferPool;
 
     private ReferenceDataConfig referenceDataConfig = new ReferenceDataConfig();
     private Injector injector;
@@ -672,49 +676,120 @@ class TestRefDataOffHeapStore extends AbstractLmdbDbTest {
 
         // Wait for visualvm to spin up
         try {
-            Thread.sleep(0_000);
+            Thread.sleep(0);
         } catch (InterruptedException e) {
             e.printStackTrace();
         }
 
-        MapNamFunc mapNamFunc = this::buildMapNameWithoutRefStreamDef;
-
-        setPurgeAgeProperty(StroomDuration.ofDays(1));
-        int refStreamDefCount = 5;
-        int keyValueMapCount = 2;
-        int rangeValueMapCount = 2;
-        int entryCount = 50_000;
-        int totalMapEntries = (refStreamDefCount * keyValueMapCount) + (refStreamDefCount * rangeValueMapCount);
-
-        int totalKeyValueEntryCount = refStreamDefCount * keyValueMapCount * entryCount;
-        int totalRangeValueEntryCount = refStreamDefCount * rangeValueMapCount * entryCount;
-        int totalValueEntryCount = (totalKeyValueEntryCount + totalRangeValueEntryCount) / refStreamDefCount;
-
-        LOGGER.info("-------------------------load starts here--------------------------------------");
-        LAMBDA_LOGGER.logDurationIfInfoEnabled(() -> {
-            List<RefStreamDefinition> refStreamDefs1 = loadBulkData(
-                    refStreamDefCount, keyValueMapCount, rangeValueMapCount, entryCount, 0, mapNamFunc);
-        }, "Load");
-
-        assertDbCounts(
-                refStreamDefCount,
-                totalMapEntries,
-                totalKeyValueEntryCount,
-                totalRangeValueEntryCount,
-                totalValueEntryCount);
-
-        // here to aid debugging problems at low volumes
-        if (entryCount < 10) {
-            refDataStore.logAllContents(LOGGER::info);
-        }
+        doBigLoadGetAndPurgeForPerfTesting(5, true, false, false, true);
     }
 
+    @Test
+    void testConcurrentBigLoadAndGet() {
+        // Wait for visualvm to spin up
+        try {
+            Thread.sleep(0);
+        } catch (InterruptedException e) {
+            e.printStackTrace();
+        }
 
+        int threads = 5;
+
+        IntStream.rangeClosed(1, threads)
+                .boxed()
+                .map(i -> {
+                    LOGGER.info("Creating future {}", i);
+                    return CompletableFuture.runAsync(() -> {
+                        LOGGER.info("Running load {} on thread {}", i, Thread.currentThread().getName());
+                        doBigLoadGetAndPurgeForPerfTesting(5, true, true, false, false);
+                    });
+                })
+                .forEach(cf -> {
+                    try {
+                        cf.get();
+                    } catch (InterruptedException | ExecutionException e) {
+                        throw new RuntimeException(e);
+                    }
+                });
+
+        final SystemInfoResult systemInfo = byteBufferPool.getSystemInfo();
+
+        LOGGER.info(systemInfo.toString());
+    }
+
+    @Test
+    void testLoadAndConcurrentGets() {
+        // Wait for visualvm to spin up
+        try {
+            Thread.sleep(0);
+        } catch (InterruptedException e) {
+            e.printStackTrace();
+        }
+
+        int entryCount = 50;
+        int threads = 6;
+
+        // Load the data
+        doBigLoadGetAndPurgeForPerfTesting(entryCount, true, false, false, true);
+
+        final ExecutorService executorService = Executors.newFixedThreadPool(threads);
+
+        final List<CompletableFuture<Void>> futures = IntStream.rangeClosed(1, threads)
+                .boxed()
+                .map(i -> {
+                    LOGGER.info("Creating future {}", i);
+                    return CompletableFuture.runAsync(() -> {
+                        LOGGER.info("Running load {} on thread {}", i, Thread.currentThread().getName());
+                        // Now query the data
+                        doBigLoadGetAndPurgeForPerfTesting(entryCount, false, true, false, true);
+                    }, executorService);
+                })
+                .collect(Collectors.toList());
+
+        futures
+                .forEach(cf -> {
+                    try {
+                        cf.get();
+                    } catch (InterruptedException | ExecutionException e) {
+                        throw new RuntimeException(e);
+                    }
+                });
+
+        final SystemInfoResult systemInfo = byteBufferPool.getSystemInfo();
+
+        LOGGER.info(systemInfo.toString());
+    }
     /**
      * Make entryCount very big for manual performance testing or profiling
      */
     @Test
     void testBigLoadAndGetForPerfTesting() {
+        // Wait for visualvm to spin up
+        try {
+            Thread.sleep(00_000);
+        } catch (InterruptedException e) {
+            e.printStackTrace();
+        }
+
+        doBigLoadGetAndPurgeForPerfTesting(5, true, true, false, true);
+
+    }
+    /**
+     * Make entryCount very big for manual performance testing or profiling
+     */
+    @Test
+    void testBigLoadGetAndPurgeForPerfTesting() {
+        doBigLoadGetAndPurgeForPerfTesting(5, true, true, true, true);
+    }
+
+    /**
+     * Make entryCount very big for manual performance testing or profiling
+     */
+    private void doBigLoadGetAndPurgeForPerfTesting(final int entryCount,
+                                                    final boolean doLoad,
+                                                    final boolean doGets,
+                                                    final boolean doPurges,
+                                                    final boolean doAsserts) {
 
         MapNamFunc mapNamFunc = this::buildMapNameWithoutRefStreamDef;
 
@@ -722,110 +797,139 @@ class TestRefDataOffHeapStore extends AbstractLmdbDbTest {
         int refStreamDefCount = 5;
         int keyValueMapCount = 2;
         int rangeValueMapCount = 2;
-        int entryCount = 50;
         int totalMapEntries = (refStreamDefCount * keyValueMapCount) + (refStreamDefCount * rangeValueMapCount);
 
         int totalKeyValueEntryCount = refStreamDefCount * keyValueMapCount * entryCount;
         int totalRangeValueEntryCount = refStreamDefCount * rangeValueMapCount * entryCount;
         int totalValueEntryCount = (totalKeyValueEntryCount + totalRangeValueEntryCount) / refStreamDefCount;
 
-        LOGGER.info("-------------------------load starts here--------------------------------------");
-        List<RefStreamDefinition> refStreamDefs1 = loadBulkData(
-                refStreamDefCount, keyValueMapCount, rangeValueMapCount, entryCount, 0, mapNamFunc);
+        List<RefStreamDefinition> refStreamDefs1 = null;
+        List<RefStreamDefinition> refStreamDefs2 = null;
 
-        assertDbCounts(
-                refStreamDefCount,
-                totalMapEntries,
-                totalKeyValueEntryCount,
-                totalRangeValueEntryCount,
-                totalValueEntryCount);
+        if (doLoad) {
+            LOGGER.info("-------------------------load starts here--------------------------------------");
+            refStreamDefs1 = loadBulkData(
+                    refStreamDefCount, keyValueMapCount, rangeValueMapCount, entryCount, 0, mapNamFunc);
 
-        // here to aid debugging problems at low volumes
-        if (entryCount < 10) {
-            refDataStore.logAllContents(LOGGER::info);
+            if (doAsserts) {
+                assertDbCounts(
+                        refStreamDefCount,
+                        totalMapEntries,
+                        totalKeyValueEntryCount,
+                        totalRangeValueEntryCount,
+                        totalValueEntryCount);
+            }
+
+            // here to aid debugging problems at low volumes
+            if (entryCount < 10) {
+                refDataStore.logAllContents(LOGGER::info);
+            }
+
+
+            LOGGER.info("-----------------------second-load starts here----------------------------------");
+
+            refStreamDefs2 = loadBulkData(
+                    refStreamDefCount, keyValueMapCount, rangeValueMapCount, entryCount, refStreamDefCount, mapNamFunc);
         }
 
+        if (doAsserts) {
+            assertDbCounts(
+                    refStreamDefCount * 2,
+                    totalMapEntries * 2,
+                    totalKeyValueEntryCount * 2,
+                    totalRangeValueEntryCount * 2,
+                    totalValueEntryCount);
+        }
 
-        LOGGER.info("-----------------------second-load starts here----------------------------------");
+        if (doGets) {
+            LOGGER.info("-------------------------gets start here---------------------------------------");
 
-        List<RefStreamDefinition> refStreamDefs2 = loadBulkData(
-                refStreamDefCount, keyValueMapCount, rangeValueMapCount, entryCount, refStreamDefCount, mapNamFunc);
+            // In case the load was done elsewhere
+            if (refStreamDefs1 == null) {
+                refStreamDefs1 = buildRefStreamDefs(refStreamDefCount, 0);
+            }
+            if (refStreamDefs2 == null) {
+                refStreamDefs2 = buildRefStreamDefs(refStreamDefCount, refStreamDefCount);
+            }
 
-        assertDbCounts(
-                refStreamDefCount * 2,
-                totalMapEntries * 2,
-                totalKeyValueEntryCount * 2,
-                totalRangeValueEntryCount * 2,
-                totalValueEntryCount);
+            Random random = new Random();
+            // for each ref stream def & map def, have N goes at picking a random key and getting the value for it
+            Stream.concat(refStreamDefs1.stream(), refStreamDefs2.stream()).forEach(refStreamDef -> {
+                Instant startTime = Instant.now();
+                Stream.of(KV_TYPE, RANGE_TYPE).forEach(valueType -> {
+                    for (int i = 0; i < entryCount; i++) {
 
-        LOGGER.info("-------------------------gets start here---------------------------------------");
+                        String mapName = mapNamFunc.buildMapName(refStreamDef, valueType, random.nextInt(keyValueMapCount));
+                        MapDefinition mapDefinition = new MapDefinition(refStreamDef, mapName);
+                        int entryIdx = random.nextInt(entryCount);
 
-        Random random = new Random();
-        // for each ref stream def & map def, have N goes at picking a random key and getting the value for it
-        Stream.concat(refStreamDefs1.stream(), refStreamDefs2.stream()).forEach(refStreamDef -> {
-            Instant startTime = Instant.now();
-            Stream.of(KV_TYPE, RANGE_TYPE).forEach(valueType -> {
-                for (int i = 0; i < entryCount; i++) {
+                        String queryKey;
+                        String expectedValue;
+                        if (valueType.equals(KV_TYPE)) {
+                            queryKey = buildKey(entryIdx);
+                            expectedValue = buildKeyStoreValue(mapName, entryIdx, queryKey);
+                        } else {
+                            Range<Long> range = buildRangeKey(entryIdx);
+                            // in the DB teh keys are ranges so we need to pick a value in that range
+                            queryKey = Long.toString(random.nextInt(range.size().intValue()) + range.getFrom());
+                            expectedValue = buildRangeStoreValue(mapName, entryIdx, range);
+                        }
 
-                    String mapName = mapNamFunc.buildMapName(refStreamDef, valueType, random.nextInt(keyValueMapCount));
-                    MapDefinition mapDefinition = new MapDefinition(refStreamDef, mapName);
-                    int entryIdx = random.nextInt(entryCount);
+                        // get the proxy then get the value
+                        RefDataValueProxy valueProxy = refDataStore.getValueProxy(mapDefinition, queryKey);
+                        Optional<RefDataValue> optRefDataValue = valueProxy.supplyValue();
 
-                    String queryKey;
-                    String expectedValue;
-                    if (valueType.equals(KV_TYPE)) {
-                        queryKey = buildKey(entryIdx);
-                        expectedValue = buildKeyStoreValue(mapName, entryIdx, queryKey);
-                    } else {
-                        Range<Long> range = buildRangeKey(entryIdx);
-                        // in the DB teh keys are ranges so we need to pick a value in that range
-                        queryKey = Long.toString(random.nextInt(range.size().intValue()) + range.getFrom());
-                        expectedValue = buildRangeStoreValue(mapName, entryIdx, range);
+                        assertThat(optRefDataValue).isNotEmpty();
+                        String value = ((StringValue) (optRefDataValue.get())).getValue();
+                        assertThat(value).isEqualTo(expectedValue);
+
+                        //now do it in one hit
+                        optRefDataValue = refDataStore.getValue(mapDefinition, queryKey);
+                        assertThat(optRefDataValue).isNotEmpty();
+                        value = ((StringValue) (optRefDataValue.get())).getValue();
+                        assertThat(value).isEqualTo(expectedValue);
                     }
-
-                    // get the proxy then get the value
-                    RefDataValueProxy valueProxy = refDataStore.getValueProxy(mapDefinition, queryKey);
-                    Optional<RefDataValue> optRefDataValue = valueProxy.supplyValue();
-
-                    assertThat(optRefDataValue).isNotEmpty();
-                    String value = ((StringValue) (optRefDataValue.get())).getValue();
-                    assertThat(value).isEqualTo(expectedValue);
-
-                    //now do it in one hit
-                    optRefDataValue = refDataStore.getValue(mapDefinition, queryKey);
-                    assertThat(optRefDataValue).isNotEmpty();
-                    value = ((StringValue) (optRefDataValue.get())).getValue();
-                    assertThat(value).isEqualTo(expectedValue);
-                }
+                });
+                LOGGER.info("Done {} queries in {} for {}",
+                        entryCount * 2, Duration.between(startTime, Instant.now()).toString(), refStreamDef);
             });
-            LOGGER.info("Done {} queries in {} for {}",
-                    entryCount * 2, Duration.between(startTime, Instant.now()).toString(), refStreamDef);
-        });
+        }
 
-        LOGGER.info("------------------------purge-starts-here--------------------------------------");
+        if (doPurges) {
 
-        long twoDaysAgoMs = Instant.now().minus(2, ChronoUnit.DAYS).toEpochMilli();
+            LOGGER.info("------------------------purge-starts-here--------------------------------------");
 
-        refStreamDefs1.forEach(refStreamDefinition -> setLastAccessedTime(refStreamDefinition, twoDaysAgoMs));
+            long twoDaysAgoMs = Instant.now().minus(2, ChronoUnit.DAYS).toEpochMilli();
 
-        // do the purge
-        refDataStore.purgeOldData();
+            refStreamDefs1.forEach(refStreamDefinition -> setLastAccessedTime(refStreamDefinition, twoDaysAgoMs));
 
-        assertDbCounts(
-                refStreamDefCount,
-                totalMapEntries,
-                totalKeyValueEntryCount,
-                totalRangeValueEntryCount,
-                totalValueEntryCount);
+            // do the purge
+            refDataStore.purgeOldData();
 
-        LOGGER.info("--------------------second-purge-starts-here------------------------------------");
+            if (doAsserts) {
+                assertDbCounts(
+                        refStreamDefCount,
+                        totalMapEntries,
+                        totalKeyValueEntryCount,
+                        totalRangeValueEntryCount,
+                        totalValueEntryCount);
+            }
 
-        refStreamDefs2.forEach(refStreamDefinition -> setLastAccessedTime(refStreamDefinition, twoDaysAgoMs));
+            LOGGER.info("--------------------second-purge-starts-here------------------------------------");
 
-        // do the purge
-        refDataStore.purgeOldData();
+            refStreamDefs2.forEach(refStreamDefinition -> setLastAccessedTime(refStreamDefinition, twoDaysAgoMs));
 
-        assertDbCounts(0, 0, 0, 0, 0);
+            // do the purge
+            refDataStore.purgeOldData();
+
+            if (doAsserts) {
+                assertDbCounts(0, 0, 0, 0, 0);
+            }
+        }
+
+        final SystemInfoResult systemInfo = byteBufferPool.getSystemInfo();
+
+        LOGGER.info(systemInfo.toString());
     }
 
     private void assertDbCounts(final int refStreamDefCount,
@@ -890,6 +994,14 @@ class TestRefDataOffHeapStore extends AbstractLmdbDbTest {
                 this::buildMapNameWithRefStreamDef);
     }
 
+    private List<RefStreamDefinition> buildRefStreamDefs(final int count, final int offset) {
+
+        return IntStream.rangeClosed(1, count)
+                .boxed()
+                .map(i -> buildRefStreamDefintion(i + offset))
+                .collect(Collectors.toList());
+    }
+
     /**
      * @param refStreamDefinitionCount  Number of {@link RefStreamDefinition}s to create.
      * @param keyValueMapCount          Number of KeyValue type maps to create per {@link RefStreamDefinition}
@@ -913,25 +1025,24 @@ class TestRefDataOffHeapStore extends AbstractLmdbDbTest {
 
         List<RefStreamDefinition> refStreamDefinitions = new ArrayList<>();
 
-        for (int i = 0; i < refStreamDefinitionCount; i++) {
+        buildRefStreamDefs(refStreamDefinitionCount, refStreamDefinitionOffset)
+                .forEach(refStreamDefinition -> {
+                    refStreamDefinitions.add(refStreamDefinition);
 
-            RefStreamDefinition refStreamDefinition = buildRefStreamDefintion(i + refStreamDefinitionOffset);
+                    refDataStore.doWithLoaderUnlessComplete(
+                            refStreamDefinition,
+                            System.currentTimeMillis(),
+                            loader -> {
+                                loader.initialise(false);
+                                loader.setCommitInterval(1000);
 
-            refStreamDefinitions.add(refStreamDefinition);
+                                loadKeyValueData(keyValueMapCount, entryCount, refStreamDefinition, loader, mapNamFunc);
+                                loadRangeValueData(keyValueMapCount, entryCount, refStreamDefinition, loader, mapNamFunc);
 
-            refDataStore.doWithLoaderUnlessComplete(
-                    refStreamDefinition,
-                    System.currentTimeMillis(),
-                    loader -> {
-                        loader.initialise(false);
-                        loader.setCommitInterval(1000);
+                                loader.completeProcessing();
+                            });
+                });
 
-                        loadKeyValueData(keyValueMapCount, entryCount, refStreamDefinition, loader, mapNamFunc);
-                        loadRangeValueData(keyValueMapCount, entryCount, refStreamDefinition, loader, mapNamFunc);
-
-                        loader.completeProcessing();
-                    });
-        }
         return refStreamDefinitions;
     }
 
