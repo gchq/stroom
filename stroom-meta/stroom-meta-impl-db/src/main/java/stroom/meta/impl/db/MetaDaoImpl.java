@@ -40,7 +40,6 @@ import stroom.query.api.v2.ExpressionTerm;
 import stroom.query.api.v2.ExpressionUtil;
 import stroom.query.common.v2.DateExpressionParser;
 import stroom.util.collections.BatchingIterator;
-import stroom.util.date.DateUtil;
 import stroom.util.logging.LambdaLogger;
 import stroom.util.logging.LambdaLoggerFactory;
 import stroom.util.logging.LogUtil;
@@ -1239,13 +1238,15 @@ class MetaDaoImpl implements MetaDao, Clearable {
     }
 
     @Override
-    public Optional<Long> getMaxId(final FindMetaCriteria criteria) {
+    public Optional<Long> getLatestIdByEffectiveDate(final FindMetaCriteria criteria) {
         final Condition condition = expressionMapper.apply(criteria.getExpression());
 
         return JooqUtil.contextResult(metaDbConnProvider, context -> context
-                .select(DSL.max(meta.ID))
+                .select(meta.ID)
                 .from(meta)
                 .where(condition)
+                .orderBy(meta.EFFECTIVE_TIME.desc())
+                .limit(1)
                 .fetchOptional()
                 .map(Record1::value1));
     }

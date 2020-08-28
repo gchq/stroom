@@ -7,6 +7,8 @@ and this project adheres to [Semantic Versioning](http://semver.org/).
 
 ## [Unreleased]
 
+* Issue **#1707** : Fix reference data lookups picking the wrong effective stream.
+
 * Issue **#1797** : Altered how search completion is recorded to try and prevent hanging. 
 
 * Issue **#1762** : Fix for search jobs that do not terminate correctly.
