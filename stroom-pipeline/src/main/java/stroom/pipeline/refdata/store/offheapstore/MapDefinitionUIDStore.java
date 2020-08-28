@@ -73,7 +73,7 @@ public class MapDefinitionUIDStore {
 
     /**
      * Returns the UID corresponding to the passed mapDefinition if it exists in the two mapping DBs. If it doesn't
-     * exist, a forward and reverse mapping will be created and the new UID returned. The returned UID warps a
+     * exist, a forward and reverse mapping will be created and the new UID returned. The returned UID wraps a
      * direct allocation {@link ByteBuffer} owned by LMDB so it may ONLY be used whilst still inside the passed
      * {@link Txn}.
      */
@@ -160,17 +160,13 @@ public class MapDefinitionUIDStore {
                         UID.of(0).getBackingBuffer()
                 );
 
-        // put the reverse entry
         mapUidReverseDb.putReverseEntry(writeTxn, nextUidKeyBuffer, mapDefinitionBuffer);
 
         // We are not changing the buffers so can just reuse them
 
-
-        // put the forward entry
         mapUidForwardDb.putForwardEntry(writeTxn, mapDefinitionBuffer, nextUidKeyBuffer);
 
         // this buffer is 'owned' by LMDB now but we are still in a txn so can pass it back
-
 
         // ensure it is ready for reading again as we are returning it
         UID mapUid = UID.wrap(nextUidKeyBuffer);
@@ -183,9 +179,6 @@ public class MapDefinitionUIDStore {
             LOGGER.trace("nextUidValueBuffer {}", ByteBufferUtils.byteBufferInfo(nextUidKeyBuffer));
             LOGGER.trace("Creating UID mapping for {}", mapUid);
         }
-        LOGGER.trace("Creating UID mapping for {}", mapUid);
         return mapUid;
     }
-
-
 }

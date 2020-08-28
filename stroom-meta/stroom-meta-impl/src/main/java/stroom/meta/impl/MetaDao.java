@@ -60,7 +60,7 @@ public interface MetaDao {
      */
     SelectionSummary getReprocessSelectionSummary(FindMetaCriteria criteria);
 
-    Optional<Long> getMaxId(FindMetaCriteria criteria);
+    Optional<Long> getLatestIdByEffectiveDate(FindMetaCriteria criteria);
 
     int updateStatus(FindMetaCriteria criteria, Status currentStatus, Status newStatus, long statusTime);
 

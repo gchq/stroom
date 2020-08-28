@@ -17,10 +17,11 @@
 
 package stroom.pipeline.refdata;
 
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 import stroom.util.date.DateUtil;
 import stroom.util.logging.LogUtil;
+
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import java.util.Objects;
 
@@ -105,6 +106,10 @@ public class LookupIdentifier {
 
     public String getPrimaryMapName() {
         return primaryMapName;
+    }
+
+    public String getSecondaryName() {
+        return secondaryMapName;
     }
 
     public LookupIdentifier getNestedLookupIdentifier(final String newKey) {
