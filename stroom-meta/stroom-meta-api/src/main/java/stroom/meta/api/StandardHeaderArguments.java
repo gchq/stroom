@@ -48,6 +48,7 @@ public interface StandardHeaderArguments {
     String STROOM_STATUS = "Stroom-Status";
 
     String FEED = "Feed";
+    String TYPE = "Type";
 
     Set<String> HEADER_CLONE_EXCLUDE_SET = Collections.unmodifiableSet(new HashSet<>(
             Arrays.asList("accept", "connection", "content-length", "transfer-encoding", "expect", COMPRESSION)));

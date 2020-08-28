@@ -43,6 +43,7 @@ import org.slf4j.LoggerFactory;
 import javax.inject.Inject;
 import javax.inject.Provider;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.Collections;
 import java.util.Comparator;
 import java.util.HashMap;
@@ -70,6 +71,7 @@ public class MetaServiceImpl implements MetaService, Searchable {
     private final MetaTypeDao metaTypeDao;
     private final MetaValueDao metaValueDao;
     private final MetaRetentionTrackerDao metaRetentionTrackerDao;
+    private final MetaServiceConfig metaServiceConfig;
     private final DocRefInfoService docRefInfoService;
     private final Provider<StreamAttributeMapRetentionRuleDecorator> decoratorProvider;
     private final Optional<MetaSecurityFilter> metaSecurityFilter;
@@ -78,12 +80,16 @@ public class MetaServiceImpl implements MetaService, Searchable {
     private final UserQueryRegistry userQueryRegistry;
     private final TaskManager taskManager;
 
+    private volatile String metaTypes;
+    private volatile Set<String> metaTypeSet = Collections.emptySet();
+
     @Inject
     MetaServiceImpl(final MetaDao metaDao,
                     final MetaFeedDao metaFeedDao,
                     final MetaTypeDao metaTypeDao,
                     final MetaValueDao metaValueDao,
                     final MetaRetentionTrackerDao metaRetentionTrackerDao,
+                    final MetaServiceConfig metaServiceConfig,
                     final DocRefInfoService docRefInfoService,
                     final Provider<StreamAttributeMapRetentionRuleDecorator> decoratorProvider,
                     final Optional<MetaSecurityFilter> metaSecurityFilter,
@@ -96,6 +102,7 @@ public class MetaServiceImpl implements MetaService, Searchable {
         this.metaTypeDao = metaTypeDao;
         this.metaValueDao = metaValueDao;
         this.metaRetentionTrackerDao = metaRetentionTrackerDao;
+        this.metaServiceConfig = metaServiceConfig;
         this.docRefInfoService = docRefInfoService;
         this.decoratorProvider = decoratorProvider;
         this.metaSecurityFilter = metaSecurityFilter;
@@ -437,13 +444,29 @@ public class MetaServiceImpl implements MetaService, Searchable {
 //    }
 
     @Override
-    public List<String> getFeeds() {
-        return metaFeedDao.list();
+    public Set<String> getFeeds() {
+        return new HashSet<>(metaFeedDao.list());
     }
 
     @Override
-    public List<String> getTypes() {
-        return metaTypeDao.list();
+    public Set<String> getTypes() {
+        final String mt = metaServiceConfig.getMetaTypes();
+
+        if (!Objects.equals(metaTypes, mt)) {
+            if (mt != null) {
+                metaTypeSet = Arrays
+                        .stream(mt.split("\n"))
+                        .map(String::trim)
+                        .filter(s -> !s.isEmpty())
+                        .collect(Collectors.toSet());
+            } else {
+                metaTypeSet = Collections.emptySet();
+            }
+
+            metaTypes = mt;
+        }
+
+        return metaTypeSet;
     }
 
     @Override

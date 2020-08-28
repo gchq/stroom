@@ -90,8 +90,7 @@ class SearchableStore implements Store {
         final ExpressionOperator expression = searchRequest.getQuery().getExpression();
         final ExpressionCriteria criteria = new ExpressionCriteria(expression);
 
-        resultHandler = new SearchResultHandler(
-                completionState, coprocessorSettingsMap, defaultMaxResultsSizes, storeSize);
+        resultHandler = new SearchResultHandler(coprocessorSettingsMap, defaultMaxResultsSizes, storeSize);
 
         final Map<String, AbstractField> fieldMap = searchable.getDataSource().getFields()
                 .stream()
@@ -182,12 +181,18 @@ class SearchableStore implements Store {
         // data we have gathered so far
         processPayloads(resultHandler, coprocessorMap);
         taskContext.info(() -> searchKey + " - complete");
+
+        try {
+            resultHandler.waitForPendingWork();
+        } catch (final InterruptedException e) {
+            LOGGER.trace(e.getMessage(), e);
+        }
+
         LOGGER.debug(() -> "completeSearch called");
-        completionState.complete();
+        complete();
 
         LOGGER.debug(() -> "Query finished in " + Duration.between(queryStart, Instant.now()));
     }
-
 
     private Map<String, String> getParamMap(final SearchRequest searchRequest) {
         final Map<String, String> paramMap;
@@ -284,7 +289,12 @@ class SearchableStore implements Store {
             if (thread != null) {
                 thread.interrupt();
             }
+            complete();
         }
+    }
+
+    public void complete() {
+        completionState.complete();
     }
 
     @Override

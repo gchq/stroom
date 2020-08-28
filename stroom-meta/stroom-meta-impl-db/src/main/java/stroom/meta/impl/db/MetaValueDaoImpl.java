@@ -20,6 +20,7 @@ import stroom.cluster.lock.api.ClusterLockService;
 import stroom.db.util.JooqUtil;
 import stroom.meta.api.AttributeMap;
 import stroom.meta.impl.MetaKeyDao;
+import stroom.meta.impl.MetaValueConfig;
 import stroom.meta.impl.MetaValueDao;
 import stroom.meta.shared.Meta;
 import stroom.util.logging.LambdaLogger;

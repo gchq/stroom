@@ -16,18 +16,8 @@
 
 package stroom.query.client;
 
-import com.google.gwt.canvas.dom.client.Context2d;
-import com.google.gwt.dom.client.Element;
-import com.google.gwt.dom.client.Style;
-import com.google.gwt.dom.client.Style.Position;
-import com.google.gwt.dom.client.Style.Unit;
-import com.google.gwt.user.client.Event;
-import com.google.gwt.user.client.ui.FlowPanel;
-import com.google.gwt.view.client.SelectionModel;
-import com.google.inject.Provider;
 import stroom.data.grid.client.MouseHelper;
 import stroom.datasource.api.v2.AbstractField;
-import stroom.dictionary.shared.DictionaryDoc;
 import stroom.dispatch.client.RestFactory;
 import stroom.docref.DocRef;
 import stroom.explorer.client.presenter.EntityDropDownPresenter;
@@ -46,6 +36,16 @@ import stroom.widget.htree.client.treelayout.NodeExtentProvider;
 import stroom.widget.htree.client.treelayout.TreeLayout;
 import stroom.widget.htree.client.treelayout.util.DefaultConfiguration;
 import stroom.widget.htree.client.treelayout.util.DefaultTreeForTreeLayout;
+
+import com.google.gwt.canvas.dom.client.Context2d;
+import com.google.gwt.dom.client.Element;
+import com.google.gwt.dom.client.Style;
+import com.google.gwt.dom.client.Style.Position;
+import com.google.gwt.dom.client.Style.Unit;
+import com.google.gwt.user.client.Event;
+import com.google.gwt.user.client.ui.FlowPanel;
+import com.google.gwt.view.client.SelectionModel;
+import com.google.inject.Provider;
 
 import java.util.List;
 
@@ -67,13 +67,8 @@ public class ExpressionTreePanel extends TreePanel<Item> {
         docRefPresenter.setRequiredPermissions(DocumentPermissionNames.USE);
         docRefPresenter.getWidget().getElement().getStyle().setMargin(0, Unit.PX);
 
-        final EntityDropDownPresenter dictionaryPresenter = docRefProvider.get();
-        dictionaryPresenter.setIncludedTypes(DictionaryDoc.DOCUMENT_TYPE);
-        dictionaryPresenter.setRequiredPermissions(DocumentPermissionNames.USE);
-        dictionaryPresenter.getWidget().getElement().getStyle().setMargin(0, Unit.PX);
-
         operatorEditor = new OperatorEditor();
-        termEditor = new TermEditor(docRefPresenter, dictionaryPresenter);
+        termEditor = new TermEditor(docRefPresenter);
 
         panel = new FlowPanel();
         setAbsoluteLeftTop(panel.getElement());

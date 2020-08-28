@@ -59,7 +59,7 @@ public class SqlStatisticsStore implements Store {
     private final int resultHandlerBatchSize;
     private final Sizes defaultMaxResultsSizes;
     private final Sizes storeSize;
-    private final CompletionState completionState;
+    private final CompletionState completionState = new CompletionState();
     private final List<String> errors = Collections.synchronizedList(new ArrayList<>());
     private final String searchKey;
     private final TaskContextFactory taskContextFactory;
@@ -79,7 +79,6 @@ public class SqlStatisticsStore implements Store {
         this.searchKey = searchRequest.getKey().toString();
         this.taskContextFactory = taskContextFactory;
         this.resultHandlerBatchSize = resultHandlerBatchSize;
-        this.completionState = new CompletionState();
 
         final CoprocessorSettingsMap coprocessorSettingsMap = CoprocessorSettingsMap.create(searchRequest);
         Preconditions.checkNotNull(coprocessorSettingsMap);
@@ -93,8 +92,7 @@ public class SqlStatisticsStore implements Store {
         // convert the search into something stats understands
         final FindEventCriteria criteria = StatStoreCriteriaBuilder.buildCriteria(searchRequest, statisticStoreDoc);
 
-        resultHandler = new SearchResultHandler(
-                completionState, coprocessorSettingsMap, defaultMaxResultsSizes, storeSize);
+        resultHandler = new SearchResultHandler(coprocessorSettingsMap, defaultMaxResultsSizes, storeSize);
 
         taskContextFactory.context(TASK_NAME, parentTaskContext -> {
 
@@ -109,13 +107,20 @@ public class SqlStatisticsStore implements Store {
         }).run();
     }
 
-
     @Override
     public void destroy() {
         LOGGER.debug("destroy called");
+
+        completionState.complete();
+
         //terminate the search
         // TODO this may need to change in 6.1
         compositeDisposable.clear();
+    }
+
+    public void complete() {
+        LOGGER.debug("complete called");
+        completionState.complete();
     }
 
     @Override
@@ -249,7 +254,7 @@ public class SqlStatisticsStore implements Store {
                             // data we have gathered so far
                             processPayloads(resultHandler, coprocessorMap);
                             parentContext.info(() -> searchKey + " - complete");
-                            completeSearch();
+                            completionState.complete();
 
                             LAMBDA_LOGGER.debug(() ->
                                     LogUtil.message("Query finished in {}", Duration.between(queryStart, Instant.now())));
@@ -275,11 +280,6 @@ public class SqlStatisticsStore implements Store {
                         createCoprocessor(entry.getValue(), fieldIndexMap, paramMap)))
                 .filter(entry -> entry.getKey() != null)
                 .collect(Collectors.toUnmodifiableMap(Map.Entry::getKey, Map.Entry::getValue));
-    }
-
-    private void completeSearch() {
-        LOGGER.debug("completeSearch called");
-        completionState.complete();
     }
 
     /**

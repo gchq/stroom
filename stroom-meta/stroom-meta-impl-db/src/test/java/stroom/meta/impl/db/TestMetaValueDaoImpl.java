@@ -26,6 +26,7 @@ import stroom.meta.api.AttributeMap;
 import stroom.meta.api.MetaProperties;
 import stroom.meta.impl.MetaModule;
 import stroom.meta.impl.MetaServiceImpl;
+import stroom.meta.impl.MetaValueConfig;
 import stroom.meta.shared.FindMetaCriteria;
 import stroom.meta.shared.Meta;
 import stroom.meta.shared.MetaFields;

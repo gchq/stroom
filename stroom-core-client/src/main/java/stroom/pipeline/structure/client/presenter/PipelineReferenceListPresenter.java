@@ -178,7 +178,7 @@ public class PipelineReferenceListPresenter extends MyPresenterWidget<DataGridVi
                 }
                 return getSafeHtmlWithState(pipelineReference, pipelineReference.getStreamType());
             }
-        }, "Stream Type", 200);
+        }, "Type", 200);
     }
 
     private void addInheritedFromColumn() {

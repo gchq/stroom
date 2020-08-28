@@ -5,13 +5,13 @@ import java.util.ArrayList;
 import java.util.List;
 
 public class FileSet {
-    private final String feed;
+    private final FileSetKey key;
     private long totalUncompressedFileSize;
     private long totalZipEntryCount;
     private final List<Path> files;
 
-    FileSet(final String feed) {
-        this.feed = feed;
+    FileSet(final FileSetKey key) {
+        this.key = key;
         this.files = new ArrayList<>();
     }
 
@@ -21,8 +21,8 @@ public class FileSet {
         totalZipEntryCount += zipInfo.getZipEntryCount();
     }
 
-    public String getFeed() {
-        return feed;
+    public FileSetKey getKey() {
+        return key;
     }
 
     public long getTotalUncompressedFileSize() {
@@ -40,8 +40,8 @@ public class FileSet {
     @Override
     public String toString() {
         if (files.size() == 1) {
-            return feed + " (1 file)";
+            return key + " (1 file)";
         }
-        return feed + " (" + files.size() + " files)";
+        return key + " (" + files.size() + " files)";
     }
 }

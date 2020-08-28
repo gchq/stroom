@@ -22,10 +22,10 @@ import javax.inject.Inject;
 import javax.inject.Singleton;
 import java.util.Arrays;
 import java.util.Collections;
-import java.util.Comparator;
 import java.util.List;
 import java.util.Map;
 import java.util.Objects;
+import java.util.Set;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.ExecutionException;
 import java.util.function.Function;
@@ -35,7 +35,6 @@ import java.util.stream.Stream;
 @Singleton
 @SuppressWarnings("unused")
 public class SuggestionsServiceImpl implements SuggestionsService {
-
     private static final Logger LOGGER = LoggerFactory.getLogger(SuggestionsServiceImpl.class);
     private static final int LIMIT = 20;
 
@@ -117,16 +116,15 @@ public class SuggestionsServiceImpl implements SuggestionsService {
         // TODO this seems pretty inefficient as each call hits the db to get ALL feeds
         //   then limits/filters in java.  Needs to work off a cached feed name list
 
-        return taskContextFactory.contextResult("Get all feed names", parentTaskContext -> {
-            return createFeedList(parentTaskContext, userInput);
-        }).get();
+        return taskContextFactory.contextResult("Get all feed names", parentTaskContext ->
+                createFeedList(parentTaskContext, userInput)).get();
     }
 
     private List<String> createFeedList(final TaskContext parentTaskContext, final String userInput) {
         // To get a list of feed names we need to combine the names from the meta service
         // and the feed store. Meta service only has feeds which have data, but may contain
         // feeds that have been deleted as docs.
-        final CompletableFuture<List<String>> metaFeedsFuture = CompletableFuture.supplyAsync(
+        final CompletableFuture<Set<String>> metaFeedsFuture = CompletableFuture.supplyAsync(
                 taskContextFactory.contextResult(
                         "Get meta feed names",
                         taskContext -> metaService.getFeeds())
@@ -147,7 +145,7 @@ public class SuggestionsServiceImpl implements SuggestionsService {
                             Stream.concat(metaFeedNames.stream(), docFeedNames.stream())
                                     .parallel()
                                     .filter(StringPredicateFactory.createFuzzyMatchPredicate(userInput))
-                                    .sorted(Comparator.naturalOrder())
+                                    .sorted()
                                     .distinct()
                                     .limit(LIMIT)
                                     .collect(Collectors.toList()))
@@ -168,7 +166,7 @@ public class SuggestionsServiceImpl implements SuggestionsService {
         return metaService.getTypes()
                 .parallelStream()
                 .filter(StringPredicateFactory.createFuzzyMatchPredicate(userInput))
-                .sorted(Comparator.naturalOrder())
+                .sorted()
                 .limit(LIMIT)
                 .collect(Collectors.toList());
     }
