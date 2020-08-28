@@ -9,6 +9,7 @@ import stroom.meta.impl.MetaFeedDao;
 import stroom.meta.impl.MetaKeyDao;
 import stroom.meta.impl.MetaProcessorDao;
 import stroom.meta.impl.MetaRetentionTrackerDao;
+import stroom.meta.impl.MetaServiceConfig;
 import stroom.meta.impl.MetaTypeDao;
 import stroom.meta.impl.MetaValueDao;
 import stroom.util.RunnableWrapper;

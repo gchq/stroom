@@ -9,7 +9,15 @@ and this project adheres to [Semantic Versioning](http://semver.org/).
 
 * Issue **#1707** : Fix reference data lookups picking the wrong effective stream.
 
+* Issue **#1797** : Altered how search completion is recorded to try and prevent hanging. 
+
+* Issue **#1762** : Fix for search jobs that do not terminate correctly.
+
 * The build should now ensure GWT compilation only occurs after test has completed.
+
+* Issue **#1790** : You can now provide `TYPE` as an optional HTTP header when sending data to Stroom. If provided this attribute is used to determine what data type to assign to the data being received. Data forwarding and aggregation also maintains this attribute and behaviour. 
+
+* Issue **#1665** : Recognised meta types can now be specified in config and drop downs now allow selection in the pipeline editor.
 
 
 ## [v7.0-beta.46] - 2020-08-23

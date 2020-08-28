@@ -1,4 +1,4 @@
-package stroom.meta.impl.db;
+package stroom.meta.impl;
 
 import stroom.util.shared.AbstractConfig;
 import stroom.util.time.StroomDuration;

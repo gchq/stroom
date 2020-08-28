@@ -16,8 +16,6 @@
 
 package stroom.search.impl;
 
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 import stroom.query.common.v2.CoprocessorSettingsMap.CoprocessorKey;
 import stroom.query.common.v2.Data;
 import stroom.query.common.v2.Payload;
@@ -26,26 +24,20 @@ import stroom.search.api.EventRefs;
 import stroom.search.coprocessor.EventRefsPayload;
 import stroom.util.logging.LambdaLogger;
 import stroom.util.logging.LambdaLoggerFactory;
-import stroom.util.logging.LogUtil;
 
 import java.util.Map;
 import java.util.Map.Entry;
 import java.util.concurrent.LinkedBlockingQueue;
-import java.util.concurrent.atomic.AtomicBoolean;
-import java.util.concurrent.locks.Condition;
 import java.util.concurrent.locks.Lock;
 import java.util.concurrent.locks.ReentrantLock;
 
 class EventSearchResultHandler implements ResultHandler {
-    private static final Logger LOGGER = LoggerFactory.getLogger(EventSearchResultHandler.class);
-    private static final LambdaLogger LAMBDA_LOGGER = LambdaLoggerFactory.getLogger(EventSearchResultHandler.class);
+    private static final LambdaLogger LOGGER = LambdaLoggerFactory.getLogger(EventSearchResultHandler.class);
 
     private final LinkedBlockingQueue<EventRefs> pendingMerges = new LinkedBlockingQueue<>();
-    private final AtomicBoolean merging = new AtomicBoolean();
-    private volatile EventRefs streamReferences;
-
     private final Lock lock = new ReentrantLock();
-    private final Condition condition = lock.newCondition();
+
+    private volatile EventRefs eventRefs;
 
     @Override
     public void handle(final Map<CoprocessorKey, Payload> payloadMap) {
@@ -71,6 +63,7 @@ class EventSearchResultHandler implements ResultHandler {
     public void add(final EventRefs eventRefs) throws InterruptedException {
         if (eventRefs != null) {
             if (Thread.currentThread().isInterrupted()) {
+                pendingMerges.clear();
                 throw new InterruptedException();
 
             } else {
@@ -89,81 +82,56 @@ class EventSearchResultHandler implements ResultHandler {
                 }
 
                 // Try and merge all of the items on the pending merge queue.
-                mergePending();
+                tryMergePending();
             }
         }
     }
 
-    private void mergePending() throws InterruptedException {
+    private void tryMergePending() throws InterruptedException {
         // Only 1 thread will get to do a merge.
-        if (merging.compareAndSet(false, true)) {
+        if (lock.tryLock()) {
             try {
-                if (Thread.currentThread().isInterrupted()) {
-                    throw new InterruptedException();
-
-                } else {
-                    EventRefs eventRefs = pendingMerges.poll();
-
-                    boolean didMergeItems = false;
-                    if (eventRefs != null) {
-                        didMergeItems = true;
-                    }
-
-                    while (eventRefs != null) {
-                        try {
-                            mergeRefs(eventRefs);
-                        } catch (final RuntimeException e) {
-                            LOGGER.error(e.getMessage(), e);
-                            throw e;
-                        }
-
-                        if (Thread.currentThread().isInterrupted()) {
-                            throw new InterruptedException();
-                        }
-
-                        eventRefs = pendingMerges.poll();
-                    }
-
-                    if (didMergeItems) {
-                        lock.lock();
-                        try {
-                            // signal any thread waiting on the condition to check the busy state
-                            LOGGER.trace("Signal all threads to check busy state");
-                            condition.signalAll();
-                        } finally {
-                            lock.unlock();
-                        }
-                    }
-                }
-            } finally {
-                merging.set(false);
-            }
-
-            if (Thread.currentThread().isInterrupted()) {
-                throw new InterruptedException();
-            }
-
-            // Make sure we don't fail to merge items from the queue that have
-            // just been added by another thread that didn't get to do the
-            // merge.
-            if (pendingMerges.peek() != null) {
                 mergePending();
+            } finally {
+                lock.unlock();
             }
         } else {
             LOGGER.trace("Another thread is busy merging, so will let it merge my items");
         }
     }
 
-    private void mergeRefs(final EventRefs newEventRefs) {
-        if (streamReferences == null) {
-            streamReferences = newEventRefs;
-        } else {
-            streamReferences.add(newEventRefs);
+    private void mergePending() throws InterruptedException {
+        EventRefs eventRefs = pendingMerges.poll();
+        while (eventRefs != null) {
+            if (Thread.currentThread().isInterrupted()) {
+                // Clear the queue if we are done.
+                pendingMerges.clear();
+                throw new InterruptedException();
+
+            } else {
+                try {
+                    mergeRefs(eventRefs);
+                } catch (final RuntimeException e) {
+                    LOGGER.error(e.getMessage(), e);
+                    throw e;
+                }
+            }
+
+            // Poll the next item.
+            eventRefs = pendingMerges.poll();
         }
     }
 
-    public EventRefs getStreamReferences() {
-        return streamReferences;
+    private void mergeRefs(final EventRefs newEventRefs) {
+        if (eventRefs == null) {
+            eventRefs = newEventRefs;
+        } else {
+            eventRefs.add(newEventRefs);
+        }
+    }
+
+    public EventRefs getEventRefs() {
+        return eventRefs;
     }
 
     @Override
@@ -171,36 +139,14 @@ class EventSearchResultHandler implements ResultHandler {
         return null;
     }
 
-    public boolean busy() {
-        boolean isBusy = pendingMerges.size() > 0 || merging.get();
-        LAMBDA_LOGGER.trace(() ->
-                LogUtil.message("busy() called, pendingMerges: {}, merging: {}, returning {}",
-                        pendingMerges.size(), merging.get(), isBusy));
-        return isBusy;
-    }
-
-    /**
-     * Will block until all pending work that the {@link ResultHandler} has is complete.
-     */
     @Override
     public void waitForPendingWork() throws InterruptedException {
-        // this assumes that when this method has been called, all calls to addQueue
-        // have been made, thus we will wait for the queue to empty and an marge activity
-        // to finish.
-
+        // This assumes that when this method has been called, all calls to addQueue
+        // have been made, thus we will lock and perform a final merge.
         lock.lock();
         try {
-
-            while (busy()) {
-                try {
-                    // we have been signalled to wake up and check the busy state
-                    condition.await();
-                } catch (InterruptedException e) {
-                    Thread.currentThread().interrupt();
-                    LOGGER.debug("Thread interrupted");
-                    throw e;
-                }
-            }
+            // Perform final merge.
+            mergePending();
         } finally {
             lock.unlock();
         }

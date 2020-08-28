@@ -109,18 +109,18 @@ public interface MetaService {
     int getLockCount();
 
     /**
-     * Get a list of all unique feed names used by meta data records.
+     * Get a set of all unique feed names used by meta data records.
      *
      * @return A list of all unique feed names used by meta data records.
      */
-    List<String> getFeeds();
+    Set<String> getFeeds();
 
     /**
-     * Get a list of all unique type names used by meta data records.
+     * Get a set of all unique type names used by meta data records.
      *
      * @return A list of all unique type names used by meta data records.
      */
-    List<String> getTypes();
+    Set<String> getTypes();
 
     /**
      * Find meta data records that match the specified criteria.

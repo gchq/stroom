@@ -1,8 +1,8 @@
 package stroom.search.resultsender;
 
+import stroom.query.common.v2.CompletionState;
 import stroom.query.common.v2.CoprocessorSettingsMap.CoprocessorKey;
 import stroom.query.common.v2.Payload;
-import stroom.search.coprocessor.CompletionState;
 import stroom.search.coprocessor.Coprocessors;
 import stroom.task.api.TaskContext;
 import stroom.task.api.TaskContextFactory;
@@ -108,19 +108,19 @@ class ResultSenderImpl implements ResultSender {
                         while (!isTerminated() &&
                                 !searchComplete.isComplete() &&
                                 System.currentTimeMillis() < latestSendTimeMs) {
-                            //wait until the next send frequency time or drop out as soon
-                            //as the search completes and the latch is counted down.
-                            //Compute the wait time as we may have used up some of the frequency getting to here
+                            // Wait until the next send frequency time or drop out as soon
+                            // as the search completes and the latch is counted down.
+                            // Compute the wait time as we may have used up some of the frequency getting to here
                             long waitTime = latestSendTimeMs - System.currentTimeMillis() + 1;
                             LOGGER.trace(() -> "frequency [" + frequency + "], waitTime [" + waitTime + "]");
 
                             boolean awaitResult = LOGGER.logDurationIfTraceEnabled(
                                     () -> {
                                         try {
-                                            return searchComplete.await(waitTime, TimeUnit.MILLISECONDS);
+                                            return searchComplete.awaitCompletion(waitTime, TimeUnit.MILLISECONDS);
                                         } catch (InterruptedException e) {
-                                            //Don't want to reset interrupt status as this thread will go back into
-                                            //the executor's pool. Throwing an exception will terminate the task
+                                            // Don't want to reset interrupt status as this thread will go back into
+                                            // the executor's pool. Throwing an exception will terminate the task
                                             throw new RuntimeException("Thread interrupted");
                                         }
                                     },

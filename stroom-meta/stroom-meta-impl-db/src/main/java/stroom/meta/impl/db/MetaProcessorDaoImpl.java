@@ -21,6 +21,7 @@ import stroom.cache.api.CacheManager;
 import stroom.cache.api.ICache;
 import stroom.db.util.JooqUtil;
 import stroom.meta.impl.MetaProcessorDao;
+import stroom.meta.impl.MetaServiceConfig;
 import stroom.meta.impl.db.jooq.tables.records.MetaProcessorRecord;
 import stroom.util.shared.Clearable;
 

@@ -158,6 +158,7 @@ appConfig:
         maximumSize: 1000
         expireAfterAccess: "PT10M"
         expireAfterWrite: null
+      metaTypes: "Raw Events\nRaw Reference\nEvents\nReference\nRecords\nError"
       db:
         connection:
           jdbcDriverClassName: null
