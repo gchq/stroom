@@ -1,5 +1,8 @@
 package stroom.db.migration;
 
+import stroom.util.ColouredStringBuilder;
+import stroom.util.ConsoleColour;
+
 import com.google.common.base.Strings;
 import io.vavr.Tuple;
 import io.vavr.Tuple2;
@@ -7,8 +10,6 @@ import org.jetbrains.annotations.NotNull;
 import org.junit.jupiter.api.Test;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import stroom.util.ColouredStringBuilder;
-import stroom.util.ConsoleColour;
 
 import java.io.IOException;
 import java.nio.file.Files;
@@ -33,8 +34,8 @@ public class TestListDbMigrations {
 
     // Have to cope with stroom mig files, e.g. 07_00_00_017__IDX_SHRD.sql
     // and auth mig files, e.g. V2_1__Create_tables.sql
-    private static Pattern MIGRATION_FILE_REGEX_PATTERN = Pattern.compile("^(?>V0?7_|V[0-9]+(?>_[0-9]+)?__).*\\.(sql|java)$");
-    private static Pattern MIGRATION_PATH_REGEX_PATTERN = Pattern.compile("^.*/src/main/.*$");
+    private static final Pattern MIGRATION_FILE_REGEX_PATTERN = Pattern.compile("^(?>V0?7_|V[0-9]+(?>_[0-9]+)?__).*\\.(sql|java)$");
+    private static final Pattern MIGRATION_PATH_REGEX_PATTERN = Pattern.compile("^.*/src/main/.*$");
 
     Map<String, List<Tuple2<String, Path>>> migrations = new HashMap<>();
 
@@ -49,16 +50,16 @@ public class TestListDbMigrations {
 
         try (Stream<Path> stream = Files.list(projectRoot)) {
             stream
-                .filter(path -> Files.isDirectory(path))
-                .filter(path -> path.getFileName().toString().startsWith("stroom-"))
-                .sorted()
-                .forEach(this::inspectModule);
+                    .filter(Files::isDirectory)
+                    .filter(path -> path.getFileName().toString().startsWith("stroom-"))
+                    .sorted()
+                    .forEach(this::inspectModule);
         }
 
         final ColouredStringBuilder stringBuilder = new ColouredStringBuilder();
         int maxFileNameLength = migrations.values().stream()
                 .flatMap(value -> value.stream()
-                .map(Tuple2::_1))
+                        .map(Tuple2::_1))
                 .mapToInt(String::length)
                 .max()
                 .orElse(60);
@@ -82,27 +83,27 @@ public class TestListDbMigrations {
                 .sorted(Map.Entry.comparingByKey(moduleComparator))
                 .forEach(entry -> {
                     stringBuilder
-                        .appendMagenta(entry.getKey())
-                        .append("\n");
+                            .appendMagenta(entry.getKey())
+                            .append("\n");
                     entry.getValue()
                             .forEach(tuple -> {
-                        String filename = tuple._1();
-                        stringBuilder.append("  ");
+                                String filename = tuple._1();
+                                stringBuilder.append("  ");
 
-                        final ConsoleColour colour;
-                        if (filename.endsWith(".sql")) {
-                            colour = YELLOW;
-                        } else if (filename.endsWith(".java")) {
-                            colour = BLUE;
-                        } else {
-                            colour = RED;
-                        }
-                        stringBuilder
-                                .append(Strings.padEnd(filename, maxFileNameLength, ' '), colour)
-                                .append(" - ")
-                                .append(tuple._2().toString(), colour)
-                                .append("\n");
-                    });
+                                final ConsoleColour colour;
+                                if (filename.endsWith(".sql")) {
+                                    colour = YELLOW;
+                                } else if (filename.endsWith(".java")) {
+                                    colour = BLUE;
+                                } else {
+                                    colour = RED;
+                                }
+                                stringBuilder
+                                        .append(Strings.padEnd(filename, maxFileNameLength, ' '), colour)
+                                        .append(" - ")
+                                        .append(tuple._2().toString(), colour)
+                                        .append("\n");
+                            });
                     stringBuilder.append("\n");
                 });
         LOGGER.info("\n{}", stringBuilder.toString());
@@ -115,14 +116,13 @@ public class TestListDbMigrations {
 
         try (Stream<Path> stream = Files.walk(moduleDir)) {
             stream
+                    .filter(Files::isRegularFile)
                     .filter(path ->
-                        Files.isRegularFile(path))
-                    .filter(path ->
-                        MIGRATION_PATH_REGEX_PATTERN.asMatchPredicate().test(path.toString()))
+                            MIGRATION_PATH_REGEX_PATTERN.asMatchPredicate().test(path.toString()))
                     .map(path ->
-                        Tuple.of(path.getFileName().toString(), moduleDir.relativize(path)))
+                            Tuple.of(path.getFileName().toString(), moduleDir.relativize(path)))
                     .filter(tuple ->
-                        MIGRATION_FILE_REGEX_PATTERN.asMatchPredicate().test(tuple._1()))
+                            MIGRATION_FILE_REGEX_PATTERN.asMatchPredicate().test(tuple._1()))
                     .sorted(Comparator.comparing(Tuple2::_1, fileNameComparator))
                     .forEach(tuple -> {
                         final String moduleName = moduleDir.getFileName().toString();
@@ -138,33 +138,23 @@ public class TestListDbMigrations {
     private Comparator<String> buildFileNameComparator() {
         return (name1, name2) -> {
 
-                final Pattern authMigrationPattern = Pattern.compile("^V[0-9]+(_[0-9]+)?__.*");
+            final Pattern authMigrationPattern = Pattern.compile("^V[0-9]_.*");
 
-                String name1Modified = name1;
-                String name2Modified = name2;
+            String name1Modified = name1;
+            String name2Modified = name2;
 
-                LOGGER.trace("[{}] [{}]", name1Modified, name2Modified);
+            LOGGER.trace("[{}] [{}]", name1Modified, name2Modified);
 
-                // Special case for auth as the filenames have a different format
-                // so we need to strip the non numeric parts off then sort numerically
-                if (authMigrationPattern.matcher(name1).matches()) {
-                    final String authRegex = "(^V|__.*)";
-                    name1Modified = name1Modified
-                        .replaceAll(authRegex, "")
-                        .replace("_", ".");
-                    name2Modified = name2Modified
-                        .replaceAll(authRegex, "")
-                        .replace("_", ".");
+            // Special case for auth as the filenames have a different format
+            // so we need to strip the non numeric parts off then sort numerically
+            if (authMigrationPattern.matcher(name1Modified).matches()) {
+                name1Modified = name1Modified.replaceFirst("^V", "V0");
+            }
+            if (authMigrationPattern.matcher(name2Modified).matches()) {
+                name2Modified = name2Modified.replaceFirst("^V", "V0");
+            }
 
-                    LOGGER.trace("[{}] [{}]", name1Modified, name2Modified);
-
-                    double ver1 = Double.parseDouble(name1Modified);
-                    double ver2 = Double.parseDouble(name2Modified);
-
-                    return Comparator.<Double>naturalOrder().compare(ver1, ver2);
-                } else {
-                    return Comparator.<String>naturalOrder().compare(name1, name2);
-                }
-            };
+            return Comparator.<String>naturalOrder().compare(name1Modified, name2Modified);
+        };
     }
 }

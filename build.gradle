@@ -202,7 +202,7 @@ ext.libs = [
         hessian                        : "com.caucho:hessian:4.0.51",
         hikari                         : "com.zaxxer:HikariCP:$versions.hikari",
         hsqldb                         : "org.hsqldb:hsqldb", // version controlled by DW BOM
-        http_client                    : "org.apache.httpcomponents:httpclient:4.5.6",
+        http_client                    : "org.apache.httpcomponents:httpclient:4.5.12",
         jBCrypt                        : "de.svenkubiak:jBCrypt:0.4.1",
         jackson_annotations            : "com.fasterxml.jackson.core:jackson-annotations", // version controlled by DW BOM
         jackson_core                   : "com.fasterxml.jackson.core:jackson-core", // version controlled by DW BOM
@@ -260,8 +260,8 @@ ext.libs = [
         mockito_junit_jupiter          : "org.mockito:mockito-junit-jupiter:$versions.mockito",
         mysql_connector_java           : "mysql:mysql-connector-java:8.0.21",
         objenesis                      : "org.objenesis:objenesis", // version controlled by DW BOM
-        okhttp                         : "com.squareup.okhttp3:okhttp:4.3.0",
-        okhttp_logging_interceptor     : 'com.squareup.okhttp:logging-interceptor:2.7.5',
+        okhttp                         : "com.squareup.okhttp3:okhttp:4.8.1",
+        okhttp_logging_interceptor     : 'com.squareup.okhttp3:logging-interceptor:4.8.1',
         poi                            : "org.apache.poi:poi:3.17",
         poi_ooxml                      : "org.apache.poi:poi-ooxml:3.17",
         reactivestreams                : "org.reactivestreams:reactive-streams:1.0.2", //used by rxjava

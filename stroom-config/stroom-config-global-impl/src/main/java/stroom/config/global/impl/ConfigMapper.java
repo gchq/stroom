@@ -30,6 +30,8 @@ import stroom.util.config.annotations.Password;
 import stroom.util.config.annotations.ReadOnly;
 import stroom.util.config.annotations.RequiresRestart;
 import stroom.util.io.ByteSize;
+import stroom.util.logging.LambdaLogger;
+import stroom.util.logging.LambdaLoggerFactory;
 import stroom.util.logging.LogUtil;
 import stroom.util.shared.AbstractConfig;
 import stroom.util.shared.PropertyPath;
@@ -42,8 +44,6 @@ import com.google.common.base.Preconditions;
 import com.google.common.base.Splitter;
 import com.google.common.base.Strings;
 import io.dropwizard.client.JerseyClientConfiguration;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 
 import javax.inject.Inject;
 import javax.inject.Singleton;
@@ -80,7 +80,7 @@ import java.util.stream.StreamSupport;
  */
 @Singleton
 public class ConfigMapper {
-    private static final Logger LOGGER = LoggerFactory.getLogger(ConfigMapper.class);
+    private static final LambdaLogger LOGGER = LambdaLoggerFactory.getLogger(ConfigMapper.class);
 
     // In order of preference
     private static final List<String> VALID_DELIMITERS_LIST = List.of(
@@ -647,7 +647,7 @@ public class ConfigMapper {
         } catch (Exception e) {
             // Don't include the original exception else gwt uses the msg of the
             // original which is not very user friendly. Enable debug to see the stack
-            LOGGER.debug(LogUtil.message(
+            LOGGER.debug(() -> LogUtil.message(
                 "Unable to convert value [{}] to type {} due to: {}",
                     value, genericType, e.getMessage()), e);
             throw new ConfigPropertyValidationException(LogUtil.message(

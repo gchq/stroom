@@ -39,46 +39,6 @@ appConfig:
     - "Closed"
     standardComments: []
     createText: "Create Annotation"
-  authentication:
-    certificateCnCaptureGroupIndex: 1
-    certificateCnPattern: ".*\\((.*)\\)"
-    email:
-      fromAddress: "noreply@stroom"
-      fromName: "Stroom User Accounts"
-      passwordResetSubject: "Password reset for Stroom"
-      passwordResetText: "A password reset has been requested for this email address.\
-        \ Please visit the following URL to reset your password: %s."
-      passwordResetUrl: "/s/resetPassword/?user=%s&token=%s"
-      allowPasswordResets: false
-      smtp:
-        host: "localhost"
-        port: 2525
-        transport: "plain"
-        username: "username"
-        password: "password"
-        transportStrategy: "SMTP_PLAIN"
-    failedLoginLockThreshold: 3
-    oauth2:
-      accessCodeCache:
-        maximumSize: 1000
-        expireAfterAccess: "PT10M"
-        expireAfterWrite: null
-    passwordPolicy:
-      allowPasswordResets: true
-      forcePasswordChangeOnFirstLogin: true
-      mandatoryPasswordChangeDuration: "P90D"
-      minimumPasswordLength: 8
-      minimumPasswordStrength: 3
-      neverUsedAccountDeactivationThreshold: "P30D"
-      passwordComplexityRegex: ".*"
-      unusedAccountDeactivationThreshold: "P90D"
-    token:
-      algorithm: "RS256"
-      defaultApiKeyExpiryInMinutes: 525600
-      jwsIssuer: "stroom"
-      timeUntilExpirationForEmailResetToken: "PT5M"
-      timeUntilExpirationForUserToken: "P30D"
-    useDefaultOpenIdCredentials: true
   cluster:
     clusterCallUseLocal: true
     clusterCallReadTimeout: "PT30S"
@@ -519,25 +479,11 @@ appConfig:
       expireAfterAccess: "PT10M"
       expireAfterWrite: null
   security:
-    db:
-      connection:
-        jdbcDriverClassName: null
-        jdbcDriverUrl: null
-        jdbcDriverUsername: null
-        jdbcDriverPassword: null
-      connectionPool:
-        cachePrepStmts: false
-        prepStmtCacheSize: 25
-        prepStmtCacheSqlLimit: 256
-        connectionTimeout: "PT30S"
-        idleTimeout: "PT10M"
-        maxLifetime: "PT30M"
-        minimumIdle: 10
-        maxPoolSize: 10
     authentication:
       authenticationRequired: true
       openId:
         useInternal: true
+        openIdConfigurationEndpoint: "https://accounts.google.com/.well-known/openid-configuration"
         issuer: "accounts.google.com"
         authEndpoint: "https://accounts.google.com/o/oauth2/v2/auth"
         tokenEndpoint: "https://accounts.google.com/o/oauth2/token"
@@ -545,7 +491,6 @@ appConfig:
         clientId: null
         clientSecret: null
       preventLogin: false
-      userNamePattern: "^[a-zA-Z0-9_-]{3,}$"
     authorisation:
       userGroupsCache:
         maximumSize: 1000
@@ -563,6 +508,21 @@ appConfig:
         maximumSize: 1000
         expireAfterAccess: "PT10M"
         expireAfterWrite: null
+      db:
+        connection:
+          jdbcDriverClassName: null
+          jdbcDriverUrl: null
+          jdbcDriverUsername: null
+          jdbcDriverPassword: null
+        connectionPool:
+          cachePrepStmts: false
+          prepStmtCacheSize: 25
+          prepStmtCacheSqlLimit: 256
+          connectionTimeout: "PT30S"
+          idleTimeout: "PT10M"
+          maxLifetime: "PT30M"
+          minimumIdle: 10
+          maxPoolSize: 10
     webContent:
       contentTypeOptions: "nosniff"
       frameOptions: "sameorigin"
@@ -570,6 +530,61 @@ appConfig:
       contentSecurityPolicy: "default-src 'self'; script-src 'self' 'unsafe-eval'\
         \ 'unsafe-inline'; img-src 'self' data:; style-src 'self' 'unsafe-inline';\
         \ frame-ancestors 'self';"
+    identity:
+      certificateCnCaptureGroupIndex: 1
+      certificateCnPattern: ".*\\((.*)\\)"
+      db:
+        connection:
+          jdbcDriverClassName: null
+          jdbcDriverUrl: null
+          jdbcDriverUsername: null
+          jdbcDriverPassword: null
+        connectionPool:
+          cachePrepStmts: false
+          prepStmtCacheSize: 25
+          prepStmtCacheSqlLimit: 256
+          connectionTimeout: "PT30S"
+          idleTimeout: "PT10M"
+          maxLifetime: "PT30M"
+          minimumIdle: 10
+          maxPoolSize: 10
+      email:
+        fromAddress: "noreply@stroom"
+        fromName: "Stroom User Accounts"
+        passwordResetSubject: "Password reset for Stroom"
+        passwordResetText: "A password reset has been requested for this email address.\
+          \ Please visit the following URL to reset your password: %s."
+        passwordResetUrl: "/s/resetPassword/?user=%s&token=%s"
+        allowPasswordResets: false
+        smtp:
+          host: "localhost"
+          port: 2525
+          transport: "plain"
+          username: "username"
+          password: "password"
+          transportStrategy: "SMTP_PLAIN"
+      failedLoginLockThreshold: 3
+      openid:
+        accessCodeCache:
+          maximumSize: 1000
+          expireAfterAccess: "PT10M"
+          expireAfterWrite: null
+      passwordPolicy:
+        allowPasswordResets: true
+        forcePasswordChangeOnFirstLogin: true
+        mandatoryPasswordChangeDuration: "P90D"
+        minimumPasswordLength: 8
+        minimumPasswordStrength: 3
+        neverUsedAccountDeactivationThreshold: "P30D"
+        passwordComplexityRegex: ".*"
+        unusedAccountDeactivationThreshold: "P90D"
+      token:
+        algorithm: "RS256"
+        defaultApiKeyExpiryInMinutes: 525600
+        jwsIssuer: "stroom"
+        timeUntilExpirationForEmailResetToken: "PT5M"
+        timeUntilExpirationForUserToken: "P30D"
+      useDefaultOpenIdCredentials: true
   serviceDiscovery:
     enabled: false
     zookeeperUrl: "localhost:2181"

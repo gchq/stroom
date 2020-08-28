@@ -2,7 +2,7 @@ package stroom.security.impl;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import stroom.authentication.api.OIDC;
+import stroom.security.openid.api.OpenId;
 import stroom.security.api.UserIdentity;
 import stroom.security.impl.session.SessionListResponse;
 import stroom.security.impl.session.SessionListService;
@@ -45,9 +45,9 @@ public class SessionResourceImpl implements SessionResource {
 
                 // If the session doesn't have a user ref then attempt login.
                 final Map<String, String> paramMap = UrlUtils.createParamMap(referrer);
-                final String code = paramMap.get(OIDC.CODE);
-                final String stateId = paramMap.get(OIDC.STATE);
-                final String postAuthRedirectUri = OIDC.removeOIDCParams(referrer);
+                final String code = paramMap.get(OpenId.CODE);
+                final String stateId = paramMap.get(OpenId.STATE);
+                final String postAuthRedirectUri = OpenId.removeReservedParams(referrer);
                 if (code != null && stateId != null) {
                     redirectUri = openIdManager.backChannelOIDC(request, code, stateId, postAuthRedirectUri);
                 } else {
@@ -56,7 +56,7 @@ public class SessionResourceImpl implements SessionResource {
             }
 
             if (redirectUri == null) {
-                redirectUri = OIDC.removeOIDCParams(referrer);
+                redirectUri = OpenId.removeReservedParams(referrer);
             }
 
             return new LoginResponse(userIdentity != null, redirectUri);

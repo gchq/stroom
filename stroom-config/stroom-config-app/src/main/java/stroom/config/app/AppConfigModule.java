@@ -1,9 +1,5 @@
 package stroom.config.app;
 
-import com.google.inject.AbstractModule;
-import stroom.authentication.config.OAuth2Config;
-import stroom.authentication.config.PasswordPolicyConfig;
-import stroom.authentication.config.TokenConfig;
 import stroom.cluster.api.ClusterConfig;
 import stroom.cluster.lock.impl.db.ClusterLockConfig;
 import stroom.cluster.task.impl.ClusterTaskConfig;
@@ -48,11 +44,14 @@ import stroom.search.impl.shard.IndexShardSearchConfig;
 import stroom.search.solr.SolrConfig;
 import stroom.search.solr.search.SolrSearchConfig;
 import stroom.searchable.impl.SearchableConfig;
+import stroom.security.identity.config.EmailConfig;
+import stroom.security.identity.config.IdentityConfig;
+import stroom.security.identity.config.OpenIdConfig;
+import stroom.security.identity.config.PasswordPolicyConfig;
+import stroom.security.identity.config.TokenConfig;
 import stroom.security.impl.AuthenticationConfig;
 import stroom.security.impl.AuthorisationConfig;
 import stroom.security.impl.ContentSecurityConfig;
-import stroom.security.impl.OpenIdConfig;
-import stroom.security.impl.SecurityConfig;
 import stroom.servicediscovery.impl.ServiceDiscoveryConfig;
 import stroom.statistics.impl.InternalStatisticsConfig;
 import stroom.statistics.impl.hbase.internal.HBaseStatisticsConfig;
@@ -71,6 +70,8 @@ import stroom.util.io.PathConfig;
 import stroom.util.logging.LogUtil;
 import stroom.util.shared.AbstractConfig;
 import stroom.util.xml.ParserConfig;
+
+import com.google.inject.AbstractModule;
 
 import java.nio.file.Path;
 import java.util.function.Consumer;
@@ -108,11 +109,6 @@ public class AppConfigModule extends AbstractModule {
 
         bindConfig(AppConfig::getActivityConfig, stroom.activity.impl.db.ActivityConfig.class);
         bindConfig(AppConfig::getAnnotationConfig, stroom.annotation.impl.AnnotationConfig.class);
-        bindConfig(AppConfig::getAuthenticationConfig, stroom.authentication.config.AuthenticationConfig.class, authenticationConfig -> {
-            bindConfig(authenticationConfig, stroom.authentication.config.AuthenticationConfig::getOAuth2Config, OAuth2Config.class);
-            bindConfig(authenticationConfig, stroom.authentication.config.AuthenticationConfig::getPasswordPolicyConfig, PasswordPolicyConfig.class);
-            bindConfig(authenticationConfig, stroom.authentication.config.AuthenticationConfig::getTokenConfig, TokenConfig.class);
-        });
         bindConfig(AppConfig::getClusterConfig, ClusterConfig.class);
         bindConfig(AppConfig::getClusterLockConfig, ClusterLockConfig.class);
         bindConfig(AppConfig::getClusterTaskConfig, ClusterTaskConfig.class);
@@ -162,9 +158,15 @@ public class AppConfigModule extends AbstractModule {
         bindConfig(AppConfig::getSearchableConfig, SearchableConfig.class);
         bindConfig(AppConfig::getSecurityConfig, SecurityConfig.class, securityConfig -> {
             bindConfig(securityConfig, SecurityConfig::getAuthenticationConfig, AuthenticationConfig.class, c2 ->
-                    bindConfig(c2, AuthenticationConfig::getOpenIdConfig, OpenIdConfig.class));
+                    bindConfig(c2, AuthenticationConfig::getOpenIdConfig, stroom.security.impl.OpenIdConfig.class));
             bindConfig(securityConfig, SecurityConfig::getContentSecurityConfig, ContentSecurityConfig.class);
             bindConfig(securityConfig, SecurityConfig::getAuthorisationConfig, AuthorisationConfig.class);
+            bindConfig(securityConfig, SecurityConfig::getIdentityConfig, IdentityConfig.class, identityConfig -> {
+                bindConfig(identityConfig, IdentityConfig::getEmailConfig, EmailConfig.class);
+                bindConfig(identityConfig, IdentityConfig::getTokenConfig, TokenConfig.class);
+                bindConfig(identityConfig, IdentityConfig::getOpenIdConfig, OpenIdConfig.class);
+                bindConfig(identityConfig, IdentityConfig::getPasswordPolicyConfig, PasswordPolicyConfig.class);
+            });
         });
         bindConfig(AppConfig::getServiceDiscoveryConfig, ServiceDiscoveryConfig.class);
         bindConfig(AppConfig::getSessionCookieConfig, SessionCookieConfig.class);

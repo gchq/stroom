@@ -36,13 +36,6 @@ include 'stroom-annotation:stroom-annotation-pipeline'
 include 'stroom-app'
 include 'stroom-app-gwt'
 
-// Authentication
-include 'stroom-authentication:stroom-authentication-api'
-include 'stroom-authentication:stroom-authentication-common'
-include 'stroom-authentication:stroom-authentication-impl'
-include 'stroom-authentication:stroom-authentication-impl-db'
-include 'stroom-authentication:stroom-authentication-impl-db-jooq'
-
 // Cache
 include 'stroom-cache:stroom-cache-api'
 include 'stroom-cache:stroom-cache-impl'
@@ -216,6 +209,9 @@ include 'stroom-search:stroom-searchable-api'
 include 'stroom-search:stroom-searchable-impl'
 
 // Security
+include 'stroom-security:stroom-security-identity'
+include 'stroom-security:stroom-security-identity-db'
+include 'stroom-security:stroom-security-identity-db-jooq'
 include 'stroom-security:stroom-security-api'
 include 'stroom-security:stroom-security-impl'
 include 'stroom-security:stroom-security-mock'
@@ -224,6 +220,7 @@ include 'stroom-security:stroom-security-client'
 include 'stroom-security:stroom-security-impl'
 include 'stroom-security:stroom-security-impl-db'
 include 'stroom-security:stroom-security-impl-db-jooq'
+include 'stroom-security:stroom-security-openid-api'
 
 // Service discovery
 include 'stroom-servicediscovery:stroom-servicediscovery-api'
