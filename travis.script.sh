@@ -248,6 +248,9 @@ else
     # Ensure we have a local.yml file as the integration tests will need it
     ./local.yml.sh
 
+    # See what the mem use is before the build starts
+    top -n 1
+
     # Do the gradle build
     # Use custom gwt compile jvm settings to avoid blowing the ram limit in
     # travis. At time of writing a sudo VM in travis has 7.5gb ram.
