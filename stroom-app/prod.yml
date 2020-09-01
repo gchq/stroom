@@ -118,6 +118,9 @@ appConfig:
     hostname: ${STROOM_HOST:-localhost}
   path:
     temp: "/tmp/stroom"
+  pipeline:
+    referenceData:
+      localDir: ${STROOM_REF_DATA_STORE_DIR:-/tmp/stroom/refDataOffHeapStore}
   proxyAggregation:
     proxyDir: ${STROOM_PROXY_DIR:-/tmp/stroom/proxy}
   publicUri:
