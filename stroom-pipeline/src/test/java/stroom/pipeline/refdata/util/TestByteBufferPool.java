@@ -276,7 +276,7 @@ class TestByteBufferPool {
 
     @Test
     void testSinglePoolPerformance() throws ExecutionException, InterruptedException {
-        final int threads = 6;
+        final int threads = 10;
         // Set to true for profiling in visualvm
         final boolean inProfilingMode = false;
 
@@ -286,7 +286,7 @@ class TestByteBufferPool {
 
         if (inProfilingMode) {
 //         wait for visualvm to spin up
-            sleep(20_000);
+            sleep(10_000);
         }
 
         final ExecutorService executorService = Executors.newFixedThreadPool(threads);

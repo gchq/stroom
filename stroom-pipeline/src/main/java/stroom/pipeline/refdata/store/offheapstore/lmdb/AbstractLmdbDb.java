@@ -30,7 +30,7 @@ import com.google.common.base.Preconditions;
 import io.vavr.Tuple;
 import io.vavr.Tuple2;
 import org.lmdbjava.Cursor;
-import org.lmdbjava.CursorIterator;
+import org.lmdbjava.CursorIterable;
 import org.lmdbjava.Dbi;
 import org.lmdbjava.DbiFlags;
 import org.lmdbjava.Env;
@@ -302,11 +302,11 @@ public abstract class AbstractLmdbDb<K, V> implements LmdbDb {
 
     public <T> T streamEntriesAsBytes(final Txn<ByteBuffer> txn,
                                       final KeyRange<ByteBuffer> keyRange,
-                                      final Function<Stream<CursorIterator.KeyVal<ByteBuffer>>, T> streamFunction) {
+                                      final Function<Stream<CursorIterable.KeyVal<ByteBuffer>>, T> streamFunction) {
 
-        try (CursorIterator<ByteBuffer> cursorIterator = getLmdbDbi().iterate(txn, keyRange)) {
-            final Stream<CursorIterator.KeyVal<ByteBuffer>> stream =
-                    StreamSupport.stream(cursorIterator.iterable().spliterator(), false);
+        try (CursorIterable<ByteBuffer> cursorIterable = getLmdbDbi().iterate(txn, keyRange)) {
+            final Stream<CursorIterable.KeyVal<ByteBuffer>> stream =
+                    StreamSupport.stream(cursorIterable.spliterator(), false);
 
             return streamFunction.apply(stream);
         }
@@ -332,10 +332,10 @@ public abstract class AbstractLmdbDb<K, V> implements LmdbDb {
 
     public void forEachEntryAsBytes(final Txn<ByteBuffer> txn,
                                     final KeyRange<ByteBuffer> keyRange,
-                                    final Consumer<CursorIterator.KeyVal<ByteBuffer>> entryConsumer) {
+                                    final Consumer<CursorIterable.KeyVal<ByteBuffer>> entryConsumer) {
 
-        try (CursorIterator<ByteBuffer> cursorIterator = getLmdbDbi().iterate(txn, keyRange)) {
-            for (CursorIterator.KeyVal<ByteBuffer> keyVal : cursorIterator.iterable()) {
+        try (CursorIterable<ByteBuffer> cursorIterable = getLmdbDbi().iterate(txn, keyRange)) {
+            for (CursorIterable.KeyVal<ByteBuffer> keyVal : cursorIterable) {
                 entryConsumer.accept(keyVal);
             }
         }
@@ -693,7 +693,7 @@ public abstract class AbstractLmdbDb<K, V> implements LmdbDb {
         return valueSerde.deserialize(valueBuffer);
     }
 
-    public Tuple2<K, V> deserializeKeyVal(final CursorIterator.KeyVal<ByteBuffer> keyVal) {
+    public Tuple2<K, V> deserializeKeyVal(final CursorIterable.KeyVal<ByteBuffer> keyVal) {
         return Tuple.of(deserializeKey(keyVal.key()), deserializeValue(keyVal.val()));
     }
 

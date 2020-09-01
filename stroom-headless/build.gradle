@@ -133,3 +133,7 @@ task buildDistribution(type: Zip) {
 
     from releaseBuildDir
 }
+
+// Make the build command create the full distribution
+tasks.build.dependsOn shadowJar
+tasks.build.dependsOn buildDistribution

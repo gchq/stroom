@@ -96,7 +96,13 @@ public class ByteBufferPoolImpl5 implements ByteBufferPool {
         ByteBuffer buffer;
 
         if (havePermit) {
+            // Queue could be empty at this point, i.e. fresh pool or all are in use.
             buffer = byteBufferQueue.poll();
+            if (buffer == null) {
+                // This should not really  happen but if there was nothing in the queue then we
+                // need to give back our permit.
+                semaphore.release();
+            }
         } else {
             // No buffers in the pool to use so we need to create one if the pool is not full
             buffer = createNewBufferIfAllowed(offset);
@@ -104,9 +110,9 @@ public class ByteBufferPoolImpl5 implements ByteBufferPool {
 
         if (buffer == null) {
             try {
-                // At max pooled buffers so we have to wait for another thread to release
+                // Must be at max pooled buffers so we have to wait for another thread to release a permit
                 semaphore.acquire();
-                // Now we have a permit we can get a buffer from the queue
+                // Now we have a permit we can safely get a buffer from the queue
                 buffer = byteBufferQueue.poll();
             } catch (InterruptedException e) {
                 LOGGER.error("Thread interrupted", e);
@@ -121,11 +127,14 @@ public class ByteBufferPoolImpl5 implements ByteBufferPool {
     }
 
     void release(final ByteBuffer buffer) {
+        // Work out which queue to put the buffer back on
         final int offset = getOffset(buffer.capacity());
         final Queue<ByteBuffer> byteBufferQueue = getByteBufferQueue(offset);
         final Semaphore semaphore = getSemaphore(offset);
-        semaphore.release();
         byteBufferQueue.offer(buffer);
+        // Now release a permit so any thread waiting on this semaphore can now grab the buffer
+        // from the queue
+        semaphore.release();
     }
 
     @Override
