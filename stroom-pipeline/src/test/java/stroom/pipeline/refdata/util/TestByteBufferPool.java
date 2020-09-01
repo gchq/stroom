@@ -17,6 +17,7 @@
 
 package stroom.pipeline.refdata.util;
 
+import stroom.pipeline.refdata.ReferenceDataConfig;
 import stroom.pipeline.refdata.store.ByteBufferPoolFactory;
 import stroom.util.sysinfo.SystemInfoResult;
 
@@ -55,7 +56,7 @@ class TestByteBufferPool {
     private static final long RANDOM_SEED = 345649236493L;
 
     private ByteBufferPool getByteBufferPool() {
-        return new ByteBufferPoolFactory().getByteBufferPool();
+        return new ByteBufferPoolFactory(new ReferenceDataConfig()).getByteBufferPool();
     }
 
     @Test
@@ -317,7 +318,7 @@ class TestByteBufferPool {
         final ByteBufferPool byteBufferPool = new ByteBufferPoolImpl();
         final ByteBufferPool byteBufferPool2 = new ByteBufferPoolImpl2();
         final ByteBufferPool byteBufferPool3 = new ByteBufferPoolImpl3();
-        final ByteBufferPool byteBufferPool4 = new ByteBufferPoolImpl4();
+        final ByteBufferPool byteBufferPool4 = new ByteBufferPoolImpl4(new ReferenceDataConfig());
         final ByteBufferPool byteBufferPool5 = new ByteBufferPoolImpl5();
 
         // Do them all twice so on the second run the jvm is all warmed up and the pools
