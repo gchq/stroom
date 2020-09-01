@@ -1,5 +1,6 @@
 package stroom.pipeline.refdata.store;
 
+import stroom.pipeline.refdata.ReferenceDataConfig;
 import stroom.pipeline.refdata.util.ByteBufferPool;
 import stroom.pipeline.refdata.util.ByteBufferPoolImpl4;
 
@@ -12,7 +13,10 @@ public class ByteBufferPoolFactory {
     private final ByteBufferPool byteBufferPool;
 
     public ByteBufferPoolFactory() {
-        this.byteBufferPool = new ByteBufferPoolImpl4();
+        this.byteBufferPool = new ByteBufferPoolImpl4(new ReferenceDataConfig());
+    }
+    public ByteBufferPoolFactory(final ReferenceDataConfig referenceDataConfig) {
+        this.byteBufferPool = new ByteBufferPoolImpl4(referenceDataConfig);
     }
 
     public ByteBufferPool getByteBufferPool() {
