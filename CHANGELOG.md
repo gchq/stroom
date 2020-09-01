@@ -7,6 +7,8 @@ and this project adheres to [Semantic Versioning](http://semver.org/).
 
 ## [Unreleased]
 
+* Fix instances of trace logging that are not using lambdas for complex args. This is particularly a problem in the ref data store code.
+
 * Made stroom compatible with AWS authentication.
 
 * Issue **#1707** : Fix reference data lookups picking the wrong effective stream.

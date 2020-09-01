@@ -17,11 +17,6 @@
 
 package stroom.pipeline.refdata.store.onheapstore;
 
-import com.google.inject.assistedinject.Assisted;
-import net.sf.saxon.event.PipelineConfiguration;
-import net.sf.saxon.event.Receiver;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 import stroom.pipeline.refdata.RefDataValueByteBufferConsumer;
 import stroom.pipeline.refdata.store.AbstractConsumer;
 import stroom.pipeline.refdata.store.FastInfosetValue;
@@ -31,9 +26,13 @@ import stroom.pipeline.refdata.store.ValueConsumerId;
 import stroom.pipeline.refdata.store.offheapstore.FastInfosetByteBufferConsumer;
 import stroom.pipeline.refdata.store.offheapstore.RefDataValueProxyConsumer;
 import stroom.pipeline.refdata.util.ByteBufferUtils;
-import stroom.util.logging.LambdaLogUtil;
 import stroom.util.logging.LambdaLogger;
 import stroom.util.logging.LambdaLoggerFactory;
+import stroom.util.logging.LogUtil;
+
+import com.google.inject.assistedinject.Assisted;
+import net.sf.saxon.event.PipelineConfiguration;
+import net.sf.saxon.event.Receiver;
 
 import javax.inject.Inject;
 import java.nio.ByteBuffer;
@@ -44,8 +43,7 @@ public class OnHeapRefDataValueProxyConsumer
         extends AbstractConsumer
         implements RefDataValueProxyConsumer {
 
-    private static final Logger LOGGER = LoggerFactory.getLogger(OnHeapRefDataValueProxyConsumer.class);
-    private static final LambdaLogger LAMBDA_LOGGER = LambdaLoggerFactory.getLogger(OnHeapRefDataValueProxyConsumer.class);
+    private static final LambdaLogger LOGGER = LambdaLoggerFactory.getLogger(OnHeapRefDataValueProxyConsumer.class);
 
     private final RefDataValueByteBufferConsumer fastInfosetByteBufferConsumer;
     private final Map<ValueConsumerId, RefDataValueConsumer.Factory> typeToRefDataValueConsumerFactoryMap;
@@ -75,7 +73,7 @@ public class OnHeapRefDataValueProxyConsumer
                     // work out which byteBufferConsumer to use based on the typeId in the value byteBuffer
                     final RefDataValueConsumer.Factory consumerFactory = typeToRefDataValueConsumerFactoryMap.get(new ValueConsumerId(typeId));
 
-                    Objects.requireNonNull(consumerFactory, LambdaLogUtil.message("No factory found for typeId {}", typeId));
+                    Objects.requireNonNull(consumerFactory, () -> LogUtil.message("No factory found for typeId {}", typeId));
                     final RefDataValueConsumer consumer = consumerFactory.create(receiver, pipelineConfiguration);
 
                     consumer.consume(refDataValue);
@@ -85,7 +83,7 @@ public class OnHeapRefDataValueProxyConsumer
                     } else if (refDataValue.getTypeId() == FastInfosetValue.TYPE_ID) {
 
                         ByteBuffer valueByteBuffer = ((FastInfosetValue) refDataValue).getByteBuffer();
-                        LAMBDA_LOGGER.trace(LambdaLogUtil.message(
+                        LOGGER.trace(() -> LogUtil.message(
                                 "Consuming {}", ByteBufferUtils.byteBufferInfo(valueByteBuffer)));
 
                         fastInfosetByteBufferConsumer.consumeBytes(receiver, valueByteBuffer);

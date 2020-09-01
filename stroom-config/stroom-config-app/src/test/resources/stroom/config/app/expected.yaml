@@ -360,7 +360,7 @@ appConfig:
         expireAfterWrite: null
     referenceData:
       localDir: "${stroom.temp}/refDataOffHeapStore"
-      maxPutsBeforeCommit: 1000
+      maxPutsBeforeCommit: 32000
       maxReaders: 100
       maxStoreSize: "50G"
       purgeAge: "P30D"

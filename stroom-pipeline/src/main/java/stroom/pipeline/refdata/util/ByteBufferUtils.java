@@ -17,13 +17,11 @@
 
 package stroom.pipeline.refdata.util;
 
-import org.apache.hadoop.hbase.util.Bytes;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
-import stroom.util.logging.LambdaLogUtil;
 import stroom.util.logging.LambdaLogger;
 import stroom.util.logging.LambdaLoggerFactory;
 import stroom.util.logging.LogUtil;
+
+import org.apache.hadoop.hbase.util.Bytes;
 
 import javax.xml.bind.DatatypeConverter;
 import java.nio.ByteBuffer;
@@ -31,8 +29,7 @@ import java.nio.charset.StandardCharsets;
 
 public class ByteBufferUtils {
 
-    private static final Logger LOGGER = LoggerFactory.getLogger(ByteBufferUtils.class);
-    private static final LambdaLogger LAMBDA_LOGGER = LambdaLoggerFactory.getLogger(ByteBufferUtils.class);
+    private static final LambdaLogger LOGGER = LambdaLoggerFactory.getLogger(ByteBufferUtils.class);
 
     private ByteBufferUtils() {
         // static util methods only
@@ -93,7 +90,7 @@ public class ByteBufferUtils {
                 left, left.position(), left.remaining(),
                 right, right.position(), right.remaining());
 
-        LAMBDA_LOGGER.trace(LambdaLogUtil.message("compare({}, {}) returned {}",
+        LOGGER.trace(() -> LogUtil.message("compare({}, {}) returned {}",
                 ByteBufferUtils.byteBufferInfo(left),
                 ByteBufferUtils.byteBufferInfo(right),
                 cmpResult));
@@ -162,7 +159,7 @@ public class ByteBufferUtils {
             }
         }
         boolean result2 = result;
-        LAMBDA_LOGGER.trace(LambdaLogUtil.message("containsPrefix({} {}) returns {}",
+        LOGGER.trace(() -> LogUtil.message("containsPrefix({} {}) returns {}",
                 ByteBufferUtils.byteBufferInfo(buffer), ByteBufferUtils.byteBufferInfo(prefixBuffer), result2));
         return result;
     }
@@ -204,7 +201,7 @@ public class ByteBufferUtils {
                     : right.get(iRight) - left.get(iLeft);
         }
 //        final int cmp2 = cmp;
-//        LAMBDA_LOGGER.info(LambdaLogUtil.message("Comparing {}, {}, {}, {} - {}",
+//        LAMBDA_LOGGER.info(() -> LogUtil.message("Comparing {}, {}, {}, {} - {}",
 //                byteBufferInfo(left), leftPos,
 //                byteBufferInfo(right), rightPos,
 //                cmp2));

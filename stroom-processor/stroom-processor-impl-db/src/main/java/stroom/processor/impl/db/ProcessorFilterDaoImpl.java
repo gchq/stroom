@@ -13,9 +13,9 @@ import stroom.processor.shared.ProcessorFields;
 import stroom.processor.shared.ProcessorFilter;
 import stroom.processor.shared.ProcessorFilterFields;
 import stroom.processor.shared.ProcessorFilterTracker;
-import stroom.util.logging.LambdaLogUtil;
 import stroom.util.logging.LambdaLogger;
 import stroom.util.logging.LambdaLoggerFactory;
+import stroom.util.logging.LogUtil;
 import stroom.util.shared.ResultPage;
 
 import org.jooq.Condition;
@@ -85,7 +85,7 @@ class ProcessorFilterDaoImpl implements ProcessorFilterDao {
     public ProcessorFilter create(final ProcessorFilter processorFilter,
                                   final Long minMetaCreateMs,
                                   final Long maxMetaCreateMs) {
-        LAMBDA_LOGGER.debug(LambdaLogUtil.message("Creating a {}", PROCESSOR_FILTER.getName()));
+        LAMBDA_LOGGER.debug(() -> LogUtil.message("Creating a {}", PROCESSOR_FILTER.getName()));
 
         final ProcessorFilter marshalled = marshaller.marshal(processorFilter);
         final ProcessorFilter stored = JooqUtil.transactionResult(processorDbConnProvider, context -> {

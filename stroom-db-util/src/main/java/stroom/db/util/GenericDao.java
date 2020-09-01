@@ -1,14 +1,15 @@
 package stroom.db.util;
 
+import stroom.util.logging.LambdaLogger;
+import stroom.util.logging.LambdaLoggerFactory;
+import stroom.util.logging.LogUtil;
+import stroom.util.shared.HasCrud;
+
 import org.jooq.DSLContext;
 import org.jooq.Record;
 import org.jooq.Table;
 import org.jooq.TableField;
 import org.jooq.UpdatableRecord;
-import stroom.util.logging.LambdaLogUtil;
-import stroom.util.logging.LambdaLogger;
-import stroom.util.logging.LambdaLoggerFactory;
-import stroom.util.shared.HasCrud;
 
 import javax.sql.DataSource;
 import java.util.Optional;
@@ -65,14 +66,14 @@ public class GenericDao<RecordType extends UpdatableRecord<RecordType>, ObjectTy
     }
 
     public ObjectType create(final DSLContext context, final ObjectType object) {
-        LAMBDA_LOGGER.debug(LambdaLogUtil.message("Creating a {}", table.getName()));
+        LAMBDA_LOGGER.debug(() -> LogUtil.message("Creating a {}", table.getName()));
         final RecordType record = objectToRecordMapper.apply(object, context.newRecord(table));
         record.store();
         return recordToObjectMapper.apply(record);
     }
 
     public Optional<ObjectType> fetch(final DSLContext context, final IdType id) {
-        LAMBDA_LOGGER.debug(LambdaLogUtil.message(
+        LAMBDA_LOGGER.debug(() -> LogUtil.message(
                 "Fetching {} with id {}", table.getName(), id));
         return context
                 .selectFrom(table)
@@ -83,14 +84,14 @@ public class GenericDao<RecordType extends UpdatableRecord<RecordType>, ObjectTy
 
     public ObjectType update(final DSLContext context, final ObjectType object) {
         final RecordType record = objectToRecordMapper.apply(object, context.newRecord(table));
-        LAMBDA_LOGGER.debug(LambdaLogUtil.message(
+        LAMBDA_LOGGER.debug(() -> LogUtil.message(
                 "Updating a {} with id {}", table.getName(), record.get(idField)));
         record.update();
         return recordToObjectMapper.apply(record);
     }
 
     public boolean delete(final DSLContext context, final IdType id) {
-        LAMBDA_LOGGER.debug(LambdaLogUtil.message(
+        LAMBDA_LOGGER.debug(() -> LogUtil.message(
                 "Deleting a {} with id {}", table.getName(), id));
         return context
                 .deleteFrom(table)

@@ -10,7 +10,6 @@ import stroom.pipeline.refdata.store.RefDataValue;
 import stroom.pipeline.refdata.store.RefStoreEntry;
 import stroom.pipeline.refdata.store.RefStreamDefinition;
 import stroom.pipeline.refdata.store.offheapstore.TypedByteBuffer;
-import stroom.util.logging.LambdaLogUtil;
 import stroom.util.logging.LambdaLogger;
 import stroom.util.logging.LambdaLoggerFactory;
 import stroom.util.logging.LogUtil;
@@ -127,8 +126,7 @@ public class RefDataOnHeapStore extends AbstractRefDataStore {
             }
         }
         final Optional<RefDataValue> result2 = result;
-        LAMBDA_LOGGER.trace(LambdaLogUtil.message("getValue({}, {}) returning {}",
-                mapDefinition, key, result2));
+        LAMBDA_LOGGER.trace(() -> LogUtil.message("getValue({}, {}) returning {}", mapDefinition, key, result2));
         return result;
     }
 

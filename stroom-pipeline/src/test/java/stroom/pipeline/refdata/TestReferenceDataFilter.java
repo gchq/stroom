@@ -23,6 +23,7 @@ import stroom.pipeline.errorhandler.FatalErrorReceiver;
 import stroom.pipeline.filter.TestFilter;
 import stroom.pipeline.filter.TestSAXEventFilter;
 import stroom.pipeline.refdata.store.ByteBufferConsumerId;
+import stroom.pipeline.refdata.store.ByteBufferPoolFactory;
 import stroom.pipeline.refdata.store.FastInfosetValue;
 import stroom.pipeline.refdata.store.GenericRefDataValueProxyConsumer;
 import stroom.pipeline.refdata.store.RefDataLoader;
@@ -103,6 +104,10 @@ class TestReferenceDataFilter extends StroomUnitTest {
 
     @Mock
     private RefDataLoader refDataLoader;
+
+    private ByteBufferPool getByteBufferPool() {
+        return new ByteBufferPoolFactory().getByteBufferPool();
+    }
 
     @Test
     void testStringKeyValues() {
@@ -412,7 +417,7 @@ class TestReferenceDataFilter extends StroomUnitTest {
                 errorReceiverProxy,
                 refDataLoaderHolder,
                 capacity ->
-                        new PooledByteBufferOutputStream(new ByteBufferPool(), capacity));
+                        new PooledByteBufferOutputStream(getByteBufferPool(), capacity));
 
         final TestFilter testFilter = new TestFilter(null, null);
         final TestSAXEventFilter testSAXEventFilter = new TestSAXEventFilter();

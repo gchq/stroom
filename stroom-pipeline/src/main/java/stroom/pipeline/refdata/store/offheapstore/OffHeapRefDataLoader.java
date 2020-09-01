@@ -28,7 +28,6 @@ import stroom.pipeline.refdata.store.offheapstore.databases.KeyValueStoreDb;
 import stroom.pipeline.refdata.store.offheapstore.databases.ProcessingInfoDb;
 import stroom.pipeline.refdata.store.offheapstore.databases.RangeStoreDb;
 import stroom.pipeline.refdata.util.PooledByteBuffer;
-import stroom.util.logging.LambdaLogUtil;
 import stroom.util.logging.LambdaLogger;
 import stroom.util.logging.LambdaLoggerFactory;
 import stroom.util.logging.LogUtil;
@@ -146,7 +145,7 @@ public class OffHeapRefDataLoader implements RefDataLoader {
                                 refStreamDefinition));
                     }
                 },
-                LambdaLogUtil.message("Acquiring lock for {}", refStreamDefinition));
+                () -> LogUtil.message("Acquiring lock for {}", refStreamDefinition));
     }
 
     @Override
@@ -377,8 +376,8 @@ public class OffHeapRefDataLoader implements RefDataLoader {
         LOGGER.trace("Close called for {}", refStreamDefinition);
 
         if (currentLoaderState.equals(LoaderState.INITIALISED)) {
-            LOGGER.warn(LogUtil.message("Reference data loader for {} was initialised but then closed before being completed",
-                    refStreamDefinition));
+            LOGGER.warn("Reference data loader for {} was initialised but then closed before being completed",
+                    refStreamDefinition);
         }
         if (writeTxn != null) {
             LOGGER.trace("Committing transaction (put count {})", putsCounter);

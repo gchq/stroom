@@ -17,8 +17,6 @@
 
 package stroom.search.extraction;
 
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 import stroom.data.store.api.InputStreamProvider;
 import stroom.data.store.api.SegmentInputStream;
 import stroom.data.store.api.Source;
@@ -47,10 +45,13 @@ import stroom.security.api.SecurityContext;
 import stroom.task.api.TaskContext;
 import stroom.util.io.IgnoreCloseInputStream;
 import stroom.util.io.StreamUtil;
-import stroom.util.logging.LambdaLogUtil;
 import stroom.util.logging.LambdaLogger;
 import stroom.util.logging.LambdaLoggerFactory;
+import stroom.util.logging.LogUtil;
 import stroom.util.shared.StoredError;
+
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import javax.inject.Inject;
 import java.io.IOException;
@@ -265,7 +266,7 @@ class ExtractionTaskHandler {
                 // Process the boundary.
                 LAMBDA_LOGGER.logDurationIfDebugEnabled(
                         () -> pipeline.process(inputStream, encoding),
-                        LambdaLogUtil.message("Processing pipeline {}, stream {}",
+                        () -> LogUtil.message("Processing pipeline {}, stream {}",
                                 pipelineRef.getUuid(), source.getMeta().getId()));
 
             } catch (final TerminatedException e) {

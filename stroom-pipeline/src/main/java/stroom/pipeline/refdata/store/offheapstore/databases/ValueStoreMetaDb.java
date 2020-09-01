@@ -17,14 +17,6 @@
 
 package stroom.pipeline.refdata.store.offheapstore.databases;
 
-import com.google.inject.assistedinject.Assisted;
-import org.lmdbjava.Cursor;
-import org.lmdbjava.Env;
-import org.lmdbjava.GetOp;
-import org.lmdbjava.PutFlags;
-import org.lmdbjava.Txn;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 import stroom.pipeline.refdata.store.RefDataValue;
 import stroom.pipeline.refdata.store.offheapstore.ValueStoreKey;
 import stroom.pipeline.refdata.store.offheapstore.ValueStoreMeta;
@@ -35,10 +27,18 @@ import stroom.pipeline.refdata.store.offheapstore.serdes.ValueStoreMetaSerde;
 import stroom.pipeline.refdata.util.ByteBufferPool;
 import stroom.pipeline.refdata.util.ByteBufferUtils;
 import stroom.pipeline.refdata.util.PooledByteBuffer;
-import stroom.util.logging.LambdaLogUtil;
 import stroom.util.logging.LambdaLogger;
 import stroom.util.logging.LambdaLoggerFactory;
 import stroom.util.logging.LogUtil;
+
+import com.google.inject.assistedinject.Assisted;
+import org.lmdbjava.Cursor;
+import org.lmdbjava.Env;
+import org.lmdbjava.GetOp;
+import org.lmdbjava.PutFlags;
+import org.lmdbjava.Txn;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import javax.inject.Inject;
 import java.nio.ByteBuffer;
@@ -159,7 +159,7 @@ public class ValueStoreMetaDb extends AbstractLmdbDb<ValueStoreKey, ValueStoreMe
     public boolean deReferenceOrDeleteValue(final Txn<ByteBuffer> writeTxn,
                                             final ByteBuffer keyBuffer,
                                             final EntryConsumer onDeleteAction) {
-        LAMBDA_LOGGER.trace(LambdaLogUtil.message("deReferenceValue({}, {})",
+        LAMBDA_LOGGER.trace(() -> LogUtil.message("deReferenceValue({}, {})",
                 writeTxn, ByteBufferUtils.byteBufferInfo(keyBuffer)));
 
         try (Cursor<ByteBuffer> cursor = getLmdbDbi().openCursor(writeTxn)) {
@@ -180,7 +180,7 @@ public class ValueStoreMetaDb extends AbstractLmdbDb<ValueStoreKey, ValueStoreMe
 
             if (currRefCount <= 1) {
                 // we had the last ref to this value so we can delete it
-                LAMBDA_LOGGER.trace(LambdaLogUtil.message(
+                LAMBDA_LOGGER.trace(() -> LogUtil.message(
                         "Ref count is zero, deleting entry for key {}",
                         ByteBufferUtils.byteBufferInfo(keyBuffer)));
                 cursor.delete();
@@ -197,7 +197,7 @@ public class ValueStoreMetaDb extends AbstractLmdbDb<ValueStoreKey, ValueStoreMe
                             valueBuffer,
                             newValueBuf,
                             -1);
-                    LAMBDA_LOGGER.trace(LambdaLogUtil.message(
+                    LAMBDA_LOGGER.trace(() -> LogUtil.message(
                             "Updating entry with new ref count {} for key {}",
                             newRefCount,
                             ByteBufferUtils.byteBufferInfo(keyBuffer)));

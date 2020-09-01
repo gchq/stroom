@@ -168,17 +168,17 @@ public class MapDefinitionUIDStore {
 
         // this buffer is 'owned' by LMDB now but we are still in a txn so can pass it back
 
+        // ensure it is ready for reading again as we are returning it
+        UID mapUid = UID.wrap(nextUidKeyBuffer);
+
         if (LOGGER.isTraceEnabled()) {
             LOGGER.trace("nextUidKeyBuffer {}", ByteBufferUtils.byteBufferInfo(nextUidKeyBuffer));
             LOGGER.trace("mapDefinitionBuffer {}", ByteBufferUtils.byteBufferInfo(mapDefinitionBuffer));
             LOGGER.trace("mapDefinitionKeyBuffer {}", ByteBufferUtils.byteBufferInfo(mapDefinitionBuffer));
             LOGGER.trace("nextUidValueBuffer {}", ByteBufferUtils.byteBufferInfo(nextUidKeyBuffer));
             LOGGER.trace("nextUidValueBuffer {}", ByteBufferUtils.byteBufferInfo(nextUidKeyBuffer));
+            LOGGER.trace("Creating UID mapping for {}", mapUid);
         }
-
-        // ensure it is ready for reading again as we are returning it
-        UID mapUid = UID.wrap(nextUidKeyBuffer);
-        LOGGER.trace("Creating UID mapping for {}", mapUid);
         return mapUid;
     }
 }

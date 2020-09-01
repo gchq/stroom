@@ -1,6 +1,7 @@
 package stroom.pipeline.refdata.store.offheapstore.databases;
 
 
+import stroom.pipeline.refdata.store.ByteBufferPoolFactory;
 import stroom.pipeline.refdata.store.RefDataValue;
 import stroom.pipeline.refdata.store.StringValue;
 import stroom.pipeline.refdata.store.offheapstore.ValueStoreKey;
@@ -9,7 +10,6 @@ import stroom.pipeline.refdata.store.offheapstore.lmdb.LmdbUtils;
 import stroom.pipeline.refdata.store.offheapstore.serdes.GenericRefDataValueSerde;
 import stroom.pipeline.refdata.store.offheapstore.serdes.RefDataValueSerdeFactory;
 import stroom.pipeline.refdata.store.offheapstore.serdes.ValueStoreKeySerde;
-import stroom.pipeline.refdata.util.ByteBufferPool;
 import stroom.pipeline.refdata.util.PooledByteBuffer;
 
 import org.junit.jupiter.api.BeforeEach;
@@ -41,7 +41,7 @@ class TestValueStoreDb extends AbstractLmdbDbTest {
     void setup() {
         valueStoreDb = new ValueStoreDb(
                 lmdbEnv,
-                new ByteBufferPool(),
+                new ByteBufferPoolFactory().getByteBufferPool(),
                 new ValueStoreKeySerde(),
                 new GenericRefDataValueSerde(refDataValueSerdeFactory));
     }

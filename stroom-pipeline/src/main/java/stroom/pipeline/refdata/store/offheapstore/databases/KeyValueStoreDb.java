@@ -17,13 +17,6 @@
 
 package stroom.pipeline.refdata.store.offheapstore.databases;
 
-import com.google.inject.assistedinject.Assisted;
-import org.lmdbjava.CursorIterator;
-import org.lmdbjava.Env;
-import org.lmdbjava.KeyRange;
-import org.lmdbjava.Txn;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 import stroom.pipeline.refdata.store.offheapstore.KeyValueStoreKey;
 import stroom.pipeline.refdata.store.offheapstore.UID;
 import stroom.pipeline.refdata.store.offheapstore.ValueStoreKey;
@@ -33,9 +26,17 @@ import stroom.pipeline.refdata.store.offheapstore.serdes.ValueStoreKeySerde;
 import stroom.pipeline.refdata.util.ByteBufferPool;
 import stroom.pipeline.refdata.util.ByteBufferUtils;
 import stroom.pipeline.refdata.util.PooledByteBuffer;
-import stroom.util.logging.LambdaLogUtil;
 import stroom.util.logging.LambdaLogger;
 import stroom.util.logging.LambdaLoggerFactory;
+import stroom.util.logging.LogUtil;
+
+import com.google.inject.assistedinject.Assisted;
+import org.lmdbjava.CursorIterator;
+import org.lmdbjava.Env;
+import org.lmdbjava.KeyRange;
+import org.lmdbjava.Txn;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import javax.inject.Inject;
 import java.nio.ByteBuffer;
@@ -83,7 +84,7 @@ public class KeyValueStoreDb extends AbstractLmdbDb<KeyValueStoreKey, ValueStore
             final ByteBuffer startKeyIncBuffer = startKeyIncPooledBuffer.getByteBuffer();
             keySerde.serializeWithoutKeyPart(startKeyIncBuffer, startKeyInc);
 
-            LAMBDA_LOGGER.trace(LambdaLogUtil.message(
+            LAMBDA_LOGGER.trace(() -> LogUtil.message(
                     "startKeyIncBuffer {}", ByteBufferUtils.byteBufferInfo(startKeyIncBuffer)));
 
             final KeyRange<ByteBuffer> keyRange = KeyRange.atLeast(startKeyIncBuffer);
@@ -91,7 +92,7 @@ public class KeyValueStoreDb extends AbstractLmdbDb<KeyValueStoreKey, ValueStore
             try (CursorIterator<ByteBuffer> cursorIterator = getLmdbDbi().iterate(writeTxn, keyRange)) {
                 int cnt = 0;
                 for (final CursorIterator.KeyVal<ByteBuffer> keyVal : cursorIterator.iterable()) {
-                    LAMBDA_LOGGER.trace(LambdaLogUtil.message("Found entry {} {}",
+                    LAMBDA_LOGGER.trace(() -> LogUtil.message("Found entry {} {}",
                             ByteBufferUtils.byteBufferInfo(keyVal.key()),
                             ByteBufferUtils.byteBufferInfo(keyVal.val())));
                     if (ByteBufferUtils.containsPrefix(keyVal.key(), startKeyIncBuffer)) {
@@ -125,7 +126,7 @@ public class KeyValueStoreDb extends AbstractLmdbDb<KeyValueStoreKey, ValueStore
         UID nextMapUid = mapUid.nextUid();
         final KeyValueStoreKey endKeyExc = new KeyValueStoreKey(nextMapUid, "");
 
-        LAMBDA_LOGGER.trace(LambdaLogUtil.message("Using range {} (inc) {} (exc)",
+        LAMBDA_LOGGER.trace(() -> LogUtil.message("Using range {} (inc) {} (exc)",
                 ByteBufferUtils.byteBufferInfo(startKeyIncBuffer),
                 ByteBufferUtils.byteBufferInfo(endKeyExcBuffer)));
 
