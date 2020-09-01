@@ -258,7 +258,6 @@ else
       -Pversion="${TRAVIS_TAG}" \
       clean \
       build \
-      -x test \
       -x shadowJar \
       -x generateSwaggerDocumentation \
       -x copyFilesForStroomDockerBuild \
