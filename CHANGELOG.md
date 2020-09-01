@@ -9,6 +9,8 @@ and this project adheres to [Semantic Versioning](http://semver.org/).
 
 * Add `pooledByteBufferCounts` to ref data config.
 
+* Issue **#1700** : Stopped stepping happening on open.
+
 * Uplift LMDB to v0.8.1.
 
 * Changed implementaion of the byte buffer pool used in the ref data store to improve performance.
