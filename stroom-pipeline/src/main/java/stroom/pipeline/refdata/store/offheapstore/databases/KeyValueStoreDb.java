@@ -31,7 +31,8 @@ import stroom.util.logging.LambdaLoggerFactory;
 import stroom.util.logging.LogUtil;
 
 import com.google.inject.assistedinject.Assisted;
-import org.lmdbjava.CursorIterator;
+import org.lmdbjava.CursorIterable;
+import org.lmdbjava.CursorIterable.KeyVal;
 import org.lmdbjava.Env;
 import org.lmdbjava.KeyRange;
 import org.lmdbjava.Txn;
@@ -40,6 +41,7 @@ import org.slf4j.LoggerFactory;
 
 import javax.inject.Inject;
 import java.nio.ByteBuffer;
+import java.util.Iterator;
 import java.util.function.BiConsumer;
 
 public class KeyValueStoreDb extends AbstractLmdbDb<KeyValueStoreKey, ValueStoreKey> {
@@ -89,9 +91,11 @@ public class KeyValueStoreDb extends AbstractLmdbDb<KeyValueStoreKey, ValueStore
 
             final KeyRange<ByteBuffer> keyRange = KeyRange.atLeast(startKeyIncBuffer);
 
-            try (CursorIterator<ByteBuffer> cursorIterator = getLmdbDbi().iterate(writeTxn, keyRange)) {
+            try (CursorIterable<ByteBuffer> cursorIterable = getLmdbDbi().iterate(writeTxn, keyRange)) {
                 int cnt = 0;
-                for (final CursorIterator.KeyVal<ByteBuffer> keyVal : cursorIterator.iterable()) {
+                final Iterator<KeyVal<ByteBuffer>> iterator = cursorIterable.iterator();
+                while (iterator.hasNext()) {
+                    final KeyVal<ByteBuffer> keyVal = iterator.next();
                     LAMBDA_LOGGER.trace(() -> LogUtil.message("Found entry {} {}",
                             ByteBufferUtils.byteBufferInfo(keyVal.key()),
                             ByteBufferUtils.byteBufferInfo(keyVal.val())));
@@ -103,7 +107,7 @@ public class KeyValueStoreDb extends AbstractLmdbDb<KeyValueStoreKey, ValueStore
                         // consumer MUST not hold on to the key/value references as they can change
                         // once the cursor is closed or moves position
                         entryConsumer.accept(keyVal.key(), keyVal.val());
-                        cursorIterator.remove();
+                        iterator.remove();
                         cnt++;
                     } else {
                         // passed out UID so break out

@@ -247,7 +247,7 @@ ext.libs = [
         junit_jupiter_params           : "org.junit.jupiter:junit-jupiter-params:$versions.junit_jupiter",
         kafka_clients                  : "org.apache.kafka:kafka-clients:$versions.kafka",
         kryo                           : "com.esotericsoftware:kryo-shaded:4.0.0",
-        lmdbjava                       : "org.lmdbjava:lmdbjava:0.6.3",
+        lmdbjava                       : "org.lmdbjava:lmdbjava:0.8.1",
         log4j_over_slf4j               : "org.slf4j:log4j-over-slf4j", // version controlled by DW BOM
         logback_classic                : "ch.qos.logback:logback-classic", // version controlled by DW BOM
         logback_core                   : "ch.qos.logback:logback-core", // version controlled by DW BOM

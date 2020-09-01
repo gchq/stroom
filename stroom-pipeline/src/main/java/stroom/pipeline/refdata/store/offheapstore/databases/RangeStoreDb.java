@@ -34,13 +34,15 @@ import stroom.util.logging.LogUtil;
 import stroom.util.shared.Range;
 
 import com.google.inject.assistedinject.Assisted;
-import org.lmdbjava.CursorIterator;
+import org.lmdbjava.CursorIterable;
+import org.lmdbjava.CursorIterable.KeyVal;
 import org.lmdbjava.Env;
 import org.lmdbjava.KeyRange;
 import org.lmdbjava.Txn;
 
 import javax.inject.Inject;
 import java.nio.ByteBuffer;
+import java.util.Iterator;
 import java.util.Optional;
 import java.util.concurrent.atomic.AtomicInteger;
 
@@ -98,9 +100,9 @@ public class RangeStoreDb extends AbstractLmdbDb<RangeStoreKey, ValueStoreKey> {
 //                buf -> valueSerde.deserialize(buf).toString());
 
             final AtomicInteger cnt = new AtomicInteger();
-            try (CursorIterator<ByteBuffer> cursorIterator = getLmdbDbi().iterate(txn, keyRange)) {
+            try (CursorIterable<ByteBuffer> cursorIterable = getLmdbDbi().iterate(txn, keyRange)) {
                 // loop backwards over all rows with the same mapDefinitionUid, starting at key
-                for (final CursorIterator.KeyVal<ByteBuffer> keyVal : cursorIterator.iterable()) {
+                for (final CursorIterable.KeyVal<ByteBuffer> keyVal : cursorIterable) {
                     cnt.incrementAndGet();
                     final ByteBuffer keyBuffer = keyVal.key();
 
@@ -148,8 +150,8 @@ public class RangeStoreDb extends AbstractLmdbDb<RangeStoreKey, ValueStoreKey> {
 
             final KeyRange<ByteBuffer> keyRange = KeyRange.atLeast(startKeyBuf);
 
-            try (CursorIterator<ByteBuffer> cursorIterator = getLmdbDbi().iterate(txn, keyRange)) {
-                return cursorIterator.hasNext();
+            try (CursorIterable<ByteBuffer> cursorIterable = getLmdbDbi().iterate(txn, keyRange)) {
+                return cursorIterable.iterator().hasNext();
             }
 
         }
@@ -213,10 +215,11 @@ public class RangeStoreDb extends AbstractLmdbDb<RangeStoreKey, ValueStoreKey> {
             keySerde.serializeWithoutRangePart(startKeyIncBuffer, startKeyInc);
             final KeyRange<ByteBuffer> atLeastKeyRange = KeyRange.atLeast(startKeyIncBuffer);
 
-            try (CursorIterator<ByteBuffer> cursorIterator = getLmdbDbi().iterate(writeTxn, atLeastKeyRange)) {
+            try (CursorIterable<ByteBuffer> cursorIterable = getLmdbDbi().iterate(writeTxn, atLeastKeyRange)) {
                 final AtomicInteger cnt = new AtomicInteger();
-                for (final CursorIterator.KeyVal<ByteBuffer> keyVal : cursorIterator.iterable()) {
-
+                final Iterator<KeyVal<ByteBuffer>> iterator = cursorIterable.iterator();
+                while (iterator.hasNext()) {
+                    final KeyVal<ByteBuffer> keyVal = iterator.next();
                     if (ByteBufferUtils.containsPrefix(keyVal.key(), startKeyIncBuffer)) {
                         // prefixed with our UID
 
@@ -226,7 +229,7 @@ public class RangeStoreDb extends AbstractLmdbDb<RangeStoreKey, ValueStoreKey> {
 
                         // pass the found kv pair from this entry to the consumer
                         entryConsumer.accept(writeTxn, keyVal.key(), keyVal.val());
-                        cursorIterator.remove();
+                        iterator.remove();
                         cnt.incrementAndGet();
                     } else {
                         // passed out UID so break out
