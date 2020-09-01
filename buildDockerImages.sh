@@ -45,6 +45,11 @@ do_gradle_build() {
   local gradle_args=(
     "clean"
     "build"
+    "shadowJar"
+    "generateSwaggerDocumentation"
+    "copyFilesForStroomDockerBuild"
+    "copyFilesForProxyDockerBuild"
+    "buildDistribution"
     "-x" "test"
   )
 

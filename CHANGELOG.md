@@ -7,6 +7,8 @@ and this project adheres to [Semantic Versioning](http://semver.org/).
 
 ## [Unreleased]
 
+* Issue **#1699** : Add a docker managed volume for the ref data store.
+
 * Changed implementaion of the byte buffer pool used in the ref data store to improve performance.
 
 * Increase default value for ref data `maxPutsBeforeCommit` to improve load times.
