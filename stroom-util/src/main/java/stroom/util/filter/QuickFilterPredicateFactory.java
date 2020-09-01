@@ -31,7 +31,11 @@ public class QuickFilterPredicateFactory {
     /**
      * Creates a match predicate based on userInput. userInput may be a single match string
      * e.g. 'event', or a set of optionally qualified match strings, e.g. 'event type:pipe'.
-     * See the test for valid examples
+     * See the test for valid examples.
+     *
+     * Where multiple fields are used in the filter they are combined using OR.
+     *
+     * This class delegates the matching of each field to {@link StringPredicateFactory}.
      */
     public static <T> Predicate<T> createFuzzyMatchPredicate(final String userInput,
                                                              final FilterFieldMappers<T> fieldMappers) {
@@ -125,8 +129,7 @@ public class QuickFilterPredicateFactory {
         return defaultFieldMappers;
     }
 
-
-    public static List<MatchToken> extractMatchTokens(final String userInput) {
+    static List<MatchToken> extractMatchTokens(final String userInput) {
         final List<String> tokens = splitInput(userInput);
 
         return tokens.stream()

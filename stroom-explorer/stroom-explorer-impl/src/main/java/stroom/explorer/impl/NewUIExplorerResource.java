@@ -109,7 +109,8 @@ public class NewUIExplorerResource implements RestResource {
                 null,
                 true);
 
-        final Predicate<DocRef> filterPredicate = DocRefPredicateFactory.createFuzzyMatchPredicate(filter.getNameFilter());
+        final Predicate<DocRef> filterPredicate = DocRefPredicateFactory.createFuzzyNameMatchPredicate(
+                filter.getNameFilter());
 
         filterDescendants(null, treeModel, filteredModel, 0, filter, filterPredicate);
         final SimpleDocRefTreeDTO result = getRoot(filteredModel);

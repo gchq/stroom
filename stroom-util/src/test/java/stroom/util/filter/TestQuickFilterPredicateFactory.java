@@ -26,16 +26,17 @@ class TestQuickFilterPredicateFactory {
             FilterFieldMapper.of(FilterFieldDefinition.qualifiedField("Status"), Pojo::getStatus),
             FilterFieldMapper.of(FilterFieldDefinition.defaultField("SimpleStr1"), Pojo::getSimpleStr1),
             FilterFieldMapper.of(FilterFieldDefinition.defaultField("SimpleStr2"), Pojo::getSimpleStr2),
-            FilterFieldMapper.of(FilterFieldDefinition.qualifiedField("type"), Pojo::getDocRef, DocRef::getType),
-            FilterFieldMapper.of(FilterFieldDefinition.qualifiedField("name"), Pojo::getDocRef, DocRef::getName)
-    );
+            FilterFieldMapper.of(FilterFieldDefinition.qualifiedField("Type"), Pojo::getDocRef, DocRef::getType),
+            FilterFieldMapper.of(FilterFieldDefinition.qualifiedField("Name"), Pojo::getDocRef, DocRef::getName),
+            FilterFieldMapper.of(FilterFieldDefinition.qualifiedField("Uuid"), Pojo::getDocRef, DocRef::getUuid));
+
     private static final Pojo POJO_1 = new Pojo(
             "OK",
             "MY NAME",
             "OTHER NAME",
             "DocRefName",
             "MyType",
-            "123");
+            "70dd91a8-2ffd-496c-abf7-8105d39297ac");
 
     private static final Pojo POJO_1_MISSING = new Pojo(
             "MISSING",
@@ -43,7 +44,7 @@ class TestQuickFilterPredicateFactory {
             "OTHER NAME",
             "DocRefName",
             "MyType",
-            "123");
+            "d07e18ce-3aed-4bee-95ec-17d2116dc11e");
 
     private static final Pojo POJO_1_BAD_NAME = new Pojo(
             "OK",
@@ -51,7 +52,7 @@ class TestQuickFilterPredicateFactory {
             "OTHER BAD NAME",
             "DocRefName",
             "MyType",
-            "123");
+            "4568bae0-4cde-41ae-8e61-c7e3595637ac");
 
     private static final Pojo POJO_1_NOT_MY_TYPE = new Pojo(
             "OK",
@@ -59,7 +60,35 @@ class TestQuickFilterPredicateFactory {
             "OTHER NAME",
             "DocRefName",
             "NotMyType",
-            "123");
+            "1f91063b-b653-4501-9479-70de65827877");
+
+
+    @Test
+    void test_uuidExactMatch() {
+        doTest("uuid:70dd91a8-2ffd-496c-abf7-8105d39297ac",
+                List.of(POJO_1),
+                List.of(POJO_1_MISSING,
+                        POJO_1_BAD_NAME,
+                        POJO_1_NOT_MY_TYPE));
+    }
+
+    @Test
+    void test_uuidPartialMatch() {
+        doTest("uuid:70d",
+                List.of(POJO_1,
+                        POJO_1_NOT_MY_TYPE),
+                List.of(POJO_1_MISSING,
+                        POJO_1_BAD_NAME));
+    }
+
+    @Test
+    void test_uuidPrefixMatch() {
+        doTest("uuid:^70d",
+                List.of(POJO_1),
+                List.of(POJO_1_MISSING,
+                        POJO_1_BAD_NAME,
+                        POJO_1_NOT_MY_TYPE));
+    }
 
     @Test
     void test_threeFields() {
