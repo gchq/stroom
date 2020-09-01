@@ -277,7 +277,7 @@ else
     ./gradlew \
       -PgwtCompilerWorkers=2 \
       -PgwtCompilerMinHeap=50M \
-      -PgwtCompilerMaxHeap=4G \
+      -PgwtCompilerMaxHeap=2G \
       stroom-app-gwt:gwtCompile \
       --scan -s
 
@@ -285,7 +285,7 @@ else
     ./gradlew \
       -PgwtCompilerWorkers=2 \
       -PgwtCompilerMinHeap=50M \
-      -PgwtCompilerMaxHeap=4G \
+      -PgwtCompilerMaxHeap=2G \
       stroom-dashboard-gwt:gwtCompile \
       --scan -s
 
@@ -293,16 +293,14 @@ else
     ./gradlew \
       -PdumpFailedTestXml=true \
       -Pversion="${TRAVIS_TAG}" \
-      clean \
-      build \
-      -x test \
-      -x stroom-ui:copyYarnBuild \
-      -x stroom-app-gwt:gwtCompile \
-      -x stroom-dashboard-gwt:gwtCompile \
       shadowJar \
       buildDistribution \
       copyFilesForStroomDockerBuild \
       copyFilesForProxyDockerBuild \
+      -x test \
+      -x stroom-ui:copyYarnBuild \
+      -x stroom-app-gwt:gwtCompile \
+      -x stroom-dashboard-gwt:gwtCompile \
       "${extraBuildArgs[@]}" \
       --scan -s
 
