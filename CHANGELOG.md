@@ -7,6 +7,10 @@ and this project adheres to [Semantic Versioning](http://semver.org/).
 
 ## [Unreleased]
 
+* Changed implementaion of the byte buffer pool used in the ref data store to improve performance.
+
+* Increase default value for ref data `maxPutsBeforeCommit` to improve load times.
+
 * Fix instances of trace logging that are not using lambdas for complex args. This is particularly a problem in the ref data store code.
 
 * Made stroom compatible with AWS authentication.
