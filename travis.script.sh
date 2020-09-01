@@ -260,7 +260,6 @@ else
       --scan \
       --stacktrace \
       -Dorg.gradle.parallel=true \
-      -Dorg.gradle.jvmargs="-Xmx6500m -XX:+HeapDumpOnOutOfMemoryError -Dfile.encoding=UTF-8" \
       -PdumpFailedTestXml=true \
       -Pversion="${TRAVIS_TAG}" \
       -PgwtCompilerWorkers=2 \
