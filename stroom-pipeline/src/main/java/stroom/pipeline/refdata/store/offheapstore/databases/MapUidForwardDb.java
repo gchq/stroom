@@ -29,7 +29,7 @@ import stroom.pipeline.refdata.util.PooledByteBuffer;
 import stroom.util.logging.LogUtil;
 
 import com.google.inject.assistedinject.Assisted;
-import org.lmdbjava.CursorIterator;
+import org.lmdbjava.CursorIterable;
 import org.lmdbjava.Env;
 import org.lmdbjava.KeyRange;
 import org.lmdbjava.Txn;
@@ -81,8 +81,8 @@ public class MapUidForwardDb extends AbstractLmdbDb<MapDefinition, UID> {
 
             final KeyRange<ByteBuffer> keyRange = KeyRange.atLeast(startKeyIncBuffer);
 
-            try (CursorIterator<ByteBuffer> cursorIterator = getLmdbDbi().iterate(writeTxn, keyRange)) {
-                for (final CursorIterator.KeyVal<ByteBuffer> keyVal : cursorIterator.iterable()) {
+            try (CursorIterable<ByteBuffer> cursorIterable = getLmdbDbi().iterate(writeTxn, keyRange)) {
+                for (final CursorIterable.KeyVal<ByteBuffer> keyVal : cursorIterable) {
 
                     // our startKeyIncBuffer contains only the refStreamDefinition part
                     // so ensure the key we get back from the cursor is prefixed with that
