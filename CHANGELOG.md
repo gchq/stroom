@@ -7,6 +7,8 @@ and this project adheres to [Semantic Versioning](http://semver.org/).
 
 ## [Unreleased]
 
+* Issue **#1699** : Add a docker managed volume for the ref data store.
+
 * Add `pooledByteBufferCounts` to ref data config.
 
 * Issue **#1700** : Stopped stepping happening on open.

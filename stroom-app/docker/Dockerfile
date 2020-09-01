@@ -76,6 +76,9 @@ VOLUME /stroom/output/
 VOLUME /stroom/proxy-repo/
 
 # Create Docker volume for Stroom's volumes dir
+VOLUME /stroom/ref-data/
+
+# Create Docker volume for Stroom's volumes dir
 VOLUME /stroom/volumes/
 
 # run entrypoint script inside tini for better unix process handling, 
@@ -105,6 +108,7 @@ RUN \
     mkdir -p /stroom/logs/user && \
     mkdir -p /stroom/output && \
     mkdir -p /stroom/proxy-repo && \
+    mkdir -p /stroom/ref-data && \
     mkdir -p /stroom/volumes && \
     chown -R stroom:stroom /stroom
 
