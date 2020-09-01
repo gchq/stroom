@@ -17,13 +17,6 @@
 
 package stroom.pipeline.refdata.store.offheapstore.databases;
 
-import com.google.inject.assistedinject.Assisted;
-import org.lmdbjava.CursorIterator;
-import org.lmdbjava.Env;
-import org.lmdbjava.KeyRange;
-import org.lmdbjava.Txn;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 import stroom.pipeline.refdata.store.MapDefinition;
 import stroom.pipeline.refdata.store.offheapstore.UID;
 import stroom.pipeline.refdata.store.offheapstore.lmdb.AbstractLmdbDb;
@@ -35,8 +28,18 @@ import stroom.util.logging.LambdaLogger;
 import stroom.util.logging.LambdaLoggerFactory;
 import stroom.util.logging.LogUtil;
 
+import com.google.inject.assistedinject.Assisted;
+import org.lmdbjava.CursorIterable;
+import org.lmdbjava.CursorIterable.KeyVal;
+import org.lmdbjava.Env;
+import org.lmdbjava.KeyRange;
+import org.lmdbjava.Txn;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+
 import javax.inject.Inject;
 import java.nio.ByteBuffer;
+import java.util.Iterator;
 import java.util.Optional;
 
 public class MapUidReverseDb extends AbstractLmdbDb<UID, MapDefinition> {
@@ -57,9 +60,10 @@ public class MapUidReverseDb extends AbstractLmdbDb<UID, MapDefinition> {
     public Optional<ByteBuffer> getHighestUid(final Txn<ByteBuffer> txn) {
         // scan backwards over all entries to find the first (i.e. highest) key
         Optional<ByteBuffer> optHighestUid = Optional.empty();
-        try (CursorIterator<ByteBuffer> cursorIterator = getLmdbDbi().iterate(txn, KeyRange.allBackward())) {
-            if (cursorIterator.hasNext()) {
-                final CursorIterator.KeyVal<ByteBuffer> highestKeyVal = cursorIterator.next();
+        try (CursorIterable<ByteBuffer> cursorIterable = getLmdbDbi().iterate(txn, KeyRange.allBackward())) {
+            final Iterator<KeyVal<ByteBuffer>> iterator = cursorIterable.iterator();
+            if (iterator.hasNext()) {
+                final CursorIterable.KeyVal<ByteBuffer> highestKeyVal = iterator.next();
                 optHighestUid = Optional.of(highestKeyVal.key());
                 LAMBDA_LOGGER.trace(() ->
                         LogUtil.message("highestKey: {}", ByteBufferUtils.byteBufferInfo(highestKeyVal.key())));

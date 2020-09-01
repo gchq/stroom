@@ -17,7 +17,7 @@ import stroom.util.logging.LogUtil;
 import com.google.inject.assistedinject.Assisted;
 import io.vavr.Tuple;
 import io.vavr.Tuple2;
-import org.lmdbjava.CursorIterator;
+import org.lmdbjava.CursorIterable;
 import org.lmdbjava.Env;
 import org.lmdbjava.KeyRange;
 import org.lmdbjava.Txn;
@@ -118,8 +118,8 @@ public class ProcessingInfoDb extends AbstractLmdbDb<RefStreamDefinition, RefDat
         }
         int i = 0;
 
-        try (CursorIterator<ByteBuffer> cursorIterator = getLmdbDbi().iterate(txn, keyRange)) {
-            for (final CursorIterator.KeyVal<ByteBuffer> keyVal : cursorIterator.iterable()) {
+        try (CursorIterable<ByteBuffer> cursorIterable = getLmdbDbi().iterate(txn, keyRange)) {
+            for (final CursorIterable.KeyVal<ByteBuffer> keyVal : cursorIterable) {
                 i++;
 
                 if (valueBufferPredicate.test(keyVal.val())) {

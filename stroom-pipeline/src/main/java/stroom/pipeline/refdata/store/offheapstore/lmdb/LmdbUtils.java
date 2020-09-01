@@ -25,7 +25,8 @@ import stroom.util.logging.LambdaLoggerFactory;
 import stroom.util.logging.LogUtil;
 
 import com.google.common.collect.ImmutableMap;
-import org.lmdbjava.CursorIterator;
+import org.lmdbjava.CursorIterable;
+import org.lmdbjava.CursorIterable.KeyVal;
 import org.lmdbjava.Dbi;
 import org.lmdbjava.Env;
 import org.lmdbjava.EnvInfo;
@@ -37,6 +38,7 @@ import javax.xml.bind.DatatypeConverter;
 import java.nio.BufferOverflowException;
 import java.nio.ByteBuffer;
 import java.nio.charset.StandardCharsets;
+import java.util.Iterator;
 import java.util.Map;
 import java.util.function.BiFunction;
 import java.util.function.Consumer;
@@ -274,9 +276,10 @@ public class LmdbUtils {
                 getEntryCount(env, txn, dbi), new String(dbi.getName())));
 
         // loop over all DB entries
-        try (CursorIterator<ByteBuffer> cursorIterator = dbi.iterate(txn, KeyRange.all())) {
-            while (cursorIterator.hasNext()) {
-                final CursorIterator.KeyVal<ByteBuffer> keyVal = cursorIterator.next();
+        try (CursorIterable<ByteBuffer> cursorIterable = dbi.iterate(txn, KeyRange.all())) {
+            Iterator<KeyVal<ByteBuffer>> iterator = cursorIterable.iterator();
+            while (iterator.hasNext()) {
+                final CursorIterable.KeyVal<ByteBuffer> keyVal = iterator.next();
                 stringBuilder.append(LogUtil.message("\n  key: [{}] - value [{}]",
                         keyToStringFunc.apply(keyVal.key()),
                         valueToStringFunc.apply(keyVal.val())));
@@ -341,8 +344,8 @@ public class LmdbUtils {
                 ByteBufferUtils.byteBufferToHex(keyRange.getStop()),
                 new String(dbi.getName())));
 
-        try (CursorIterator<ByteBuffer> cursorIterator = dbi.iterate(txn, keyRange)) {
-            for (final CursorIterator.KeyVal<ByteBuffer> keyVal : cursorIterator.iterable()) {
+        try (CursorIterable<ByteBuffer> cursorIterable = dbi.iterate(txn, keyRange)) {
+            for (final CursorIterable.KeyVal<ByteBuffer> keyVal : cursorIterable) {
                 stringBuilder.append(LogUtil.message("\n  key: [{}] - value [{}]",
                         keyToStringFunc.apply(keyVal.key()),
                         valueToStringFunc.apply(keyVal.val())));
