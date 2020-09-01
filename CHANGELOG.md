@@ -9,6 +9,8 @@ and this project adheres to [Semantic Versioning](http://semver.org/).
 
 * Issue **#1694** : Fix UUID filtering in quick filters, now using `uuid:` field qualifier. Removed support for `#` prefix in Quick Filter and suggesters.
 
+* Add `pooledByteBufferCounts` to ref data config.
+
 * Issue **#1700** : Stopped stepping happening on open.
 
 * Uplift LMDB to v0.8.1.

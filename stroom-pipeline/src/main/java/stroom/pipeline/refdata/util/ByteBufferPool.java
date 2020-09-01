@@ -18,6 +18,9 @@ public interface ByteBufferPool extends Clearable, HasSystemInfo {
 
     void doWithBuffer(int minCapacity, Consumer<ByteBuffer> work);
 
+    /**
+     * @return The number of buffers currently available in the pool and not on loan.
+     */
     int getCurrentPoolSize();
 
     @Override
