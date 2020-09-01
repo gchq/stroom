@@ -17,13 +17,13 @@
 
 package stroom.pipeline.refdata.store.offheapstore.databases;
 
+import stroom.pipeline.refdata.store.ByteBufferPoolFactory;
 import stroom.pipeline.refdata.store.offheapstore.RangeStoreKey;
 import stroom.pipeline.refdata.store.offheapstore.UID;
 import stroom.pipeline.refdata.store.offheapstore.ValueStoreKey;
 import stroom.pipeline.refdata.store.offheapstore.lmdb.LmdbUtils;
 import stroom.pipeline.refdata.store.offheapstore.serdes.RangeStoreKeySerde;
 import stroom.pipeline.refdata.store.offheapstore.serdes.ValueStoreKeySerde;
-import stroom.pipeline.refdata.util.ByteBufferPool;
 import stroom.pipeline.refdata.util.ByteBufferUtils;
 import stroom.util.shared.Range;
 
@@ -65,7 +65,7 @@ class TestRangeStoreDb extends AbstractLmdbDbTest {
     void setup() {
         rangeStoreDb = new RangeStoreDb(
                 lmdbEnv,
-                new ByteBufferPool(),
+                new ByteBufferPoolFactory().getByteBufferPool(),
                 new RangeStoreKeySerde(),
                 new ValueStoreKeySerde());
     }

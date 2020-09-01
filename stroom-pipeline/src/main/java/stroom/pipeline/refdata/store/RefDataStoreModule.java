@@ -33,6 +33,7 @@ import stroom.pipeline.refdata.store.onheapstore.FastInfosetValueConsumer;
 import stroom.pipeline.refdata.store.onheapstore.OnHeapRefDataValueProxyConsumer;
 import stroom.pipeline.refdata.store.onheapstore.StringValueConsumer;
 import stroom.pipeline.refdata.util.ByteBufferPool;
+import stroom.pipeline.refdata.util.ByteBufferPoolImpl4;
 import stroom.pipeline.refdata.util.PooledByteBufferOutputStream;
 import stroom.util.RunnableWrapper;
 import stroom.util.guice.HasSystemInfoBinder;
@@ -71,8 +72,11 @@ public class RefDataStoreModule extends AbstractModule {
         install(new FactoryModuleBuilder().build(PooledByteBufferOutputStream.Factory.class));
         install(new FactoryModuleBuilder().build(RefDataValueProxyConsumerFactory.Factory.class));
 
+        // If you switch impl here make sure also to do it in the SystemInfo binder below
+        bind(ByteBufferPool.class).to(ByteBufferPoolImpl4.class);
+
         HasSystemInfoBinder.create(binder())
-                .bind(ByteBufferPool.class)
+                .bind(ByteBufferPoolImpl4.class)
                 .bind(RefDataOffHeapStore.class);
 
         ScheduledJobsBinder.create(binder())

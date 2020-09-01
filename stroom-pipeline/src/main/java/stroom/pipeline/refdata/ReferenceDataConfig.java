@@ -1,11 +1,12 @@
 package stroom.pipeline.refdata;
 
-import com.fasterxml.jackson.annotation.JsonPropertyDescription;
 import stroom.util.cache.CacheConfig;
 import stroom.util.config.annotations.RequiresRestart;
 import stroom.util.io.ByteSize;
 import stroom.util.shared.AbstractConfig;
 import stroom.util.time.StroomDuration;
+
+import com.fasterxml.jackson.annotation.JsonPropertyDescription;
 
 import javax.inject.Singleton;
 import javax.validation.constraints.Min;
@@ -13,7 +14,7 @@ import javax.validation.constraints.Min;
 @Singleton
 public class ReferenceDataConfig extends AbstractConfig {
     private static final int MAX_READERS_DEFAULT = 100;
-    private static final int MAX_PUTS_BEFORE_COMMIT_DEFAULT = 1000;
+    private static final int MAX_PUTS_BEFORE_COMMIT_DEFAULT = 32_000;
 
     private String localDir = "${stroom.temp}/refDataOffHeapStore";
     private int maxPutsBeforeCommit = MAX_PUTS_BEFORE_COMMIT_DEFAULT;
@@ -40,7 +41,9 @@ public class ReferenceDataConfig extends AbstractConfig {
 
     @Min(1)
     @JsonPropertyDescription("The maximum number of puts into the store before the transaction is committed. " +
-            "There is only one write transaction available and long running transactions are not desirable.")
+            "There is only one write transaction available at a time so reducing this value allows multiple " +
+            "loads to potentially each load a chunk at a time. However, load times increase rapidly with values " +
+            "below around 2,000.")
     public int getMaxPutsBeforeCommit() {
         return maxPutsBeforeCommit;
     }
