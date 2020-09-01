@@ -256,18 +256,54 @@ else
     ./gradlew \
       -PdumpFailedTestXml=true \
       -Pversion="${TRAVIS_TAG}" \
-      -PgwtCompilerWorkers=2 \
-      -PgwtCompilerMinHeap=50M \
-      -PgwtCompilerMaxHeap=1G \
       clean \
       build \
+      -x test \
+      -x shadowJar \
+      -x generateSwaggerDocumentation \
+      -x copyFilesForStroomDockerBuild \
+      -x copyFilesForProxyDockerBuild \
+      -x buildDistribution \
+      "${extraBuildArgs[@]}" \
+      --scan -s
+
+#      -Dorg.gradle.parallel=true \
+
+    ./gradlew \
+      stroom-ui:copyYarnBuild \
+      --scan -s
+
+    # Compile the application GWT UI
+    ./gradlew \
+      -PgwtCompilerWorkers=2 \
+      -PgwtCompilerMinHeap=50M \
+      -PgwtCompilerMaxHeap=4G \
+      stroom-app-gwt:gwtCompile \
+      --scan -s
+
+    # Compile the dashboard GWT UI
+    ./gradlew \
+      -PgwtCompilerWorkers=2 \
+      -PgwtCompilerMinHeap=50M \
+      -PgwtCompilerMaxHeap=4G \
+      stroom-dashboard-gwt:gwtCompile \
+      --scan -s
+
+    # Make the distribution.
+    ./gradlew \
+      -PdumpFailedTestXml=true \
+      -Pversion="${TRAVIS_TAG}" \
+      clean \
+      build \
+      -x test \
+      -x stroom-ui:copyYarnBuild \
+      -x stroom-app-gwt:gwtCompile \
+      -x stroom-dashboard-gwt:gwtCompile \
       shadowJar \
-      generateSwaggerDocumentation \
+      buildDistribution \
       copyFilesForStroomDockerBuild \
       copyFilesForProxyDockerBuild \
-      buildDistribution \
       "${extraBuildArgs[@]}" \
-      -Dorg.gradle.parallel=true \
       --scan -s
 
 # Disable parallel build execution in travis. Note this is seprate to prallel test execution.
