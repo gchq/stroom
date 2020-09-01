@@ -41,9 +41,9 @@ public class PooledByteBuffer implements AutoCloseable {
     private Consumer<ByteBuffer> releaseFunc;
 
     PooledByteBuffer(final Supplier<ByteBuffer> byteBufferSupplier,
-                     final ByteBufferPool byteBufferPool) {
+                     final Consumer<ByteBuffer> byteBufferReleaseFunc) {
         this.byteBufferSupplier = byteBufferSupplier;
-        this.releaseFunc = byteBufferPool::release;
+        this.releaseFunc = byteBufferReleaseFunc;
     }
 
     /**

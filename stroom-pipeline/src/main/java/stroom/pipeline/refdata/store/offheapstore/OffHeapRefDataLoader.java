@@ -376,8 +376,8 @@ public class OffHeapRefDataLoader implements RefDataLoader {
         LOGGER.trace("Close called for {}", refStreamDefinition);
 
         if (currentLoaderState.equals(LoaderState.INITIALISED)) {
-            LOGGER.warn(LogUtil.message("Reference data loader for {} was initialised but then closed before being completed",
-                    refStreamDefinition));
+            LOGGER.warn("Reference data loader for {} was initialised but then closed before being completed",
+                    refStreamDefinition);
         }
         if (writeTxn != null) {
             LOGGER.trace("Committing transaction (put count {})", putsCounter);

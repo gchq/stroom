@@ -91,11 +91,12 @@ public class ProcessingInfoDb extends AbstractLmdbDb<RefStreamDefinition, RefDat
     }
 
     public ProcessingState getProcessingState(final RefStreamDefinition refStreamDefinition) {
-        return LmdbUtils.getWithReadTxn(getLmdbEnvironment(), getByteBufferPool(), (readTxn, keyBuffer) -> {
-            keySerde.serialize(keyBuffer, refStreamDefinition);
-            ByteBuffer valueBuffer = getLmdbDbi().get(readTxn, keyBuffer);
-            return RefDataProcessingInfoSerde.extractProcessingState(valueBuffer);
-        });
+        return LmdbUtils.getWithReadTxn(getLmdbEnvironment(), readTxn ->
+                getByteBufferPool().getWithBuffer(keySerde.getBufferCapacity(), keyBuffer -> {
+                    keySerde.serialize(keyBuffer, refStreamDefinition);
+                    ByteBuffer valueBuffer = getLmdbDbi().get(readTxn, keyBuffer);
+                    return RefDataProcessingInfoSerde.extractProcessingState(valueBuffer);
+                }));
     }
 
     public Optional<PooledByteBufferPair> getNextEntryAsBytes(final Txn<ByteBuffer> txn,

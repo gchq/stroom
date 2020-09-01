@@ -147,8 +147,7 @@ public final class DataStoreFileSetProcessor implements FileSetProcessor {
                 }
                 closeStreamHandlers(handlers);
                 cleanup(deleteFileList);
-                LOGGER.info(() -> LogUtil.message("processFeedFiles() - Completed {} in {}",
-                        feedName, logExecutionTime));
+                LOGGER.info(LogUtil.message("processFeedFiles() - Completed {} in {}", feedName, logExecutionTime));
             }).run();
         }
     }
