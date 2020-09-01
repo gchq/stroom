@@ -326,7 +326,7 @@ public class SteppingPresenter extends MyPresenterWidget<SteppingPresenter.Stepp
                         AlertEvent.fireError(SteppingPresenter.this, e.getMessage(), null);
                     }
 
-                    if (stepLocation != null) {
+                    if (stepLocation != null && stepLocation.getRecordNo() > 0) {
                         step(StepType.REFRESH, new StepLocation(meta.getId(), stepLocation.getPartNo(), stepLocation.getRecordNo()));
                     }
                 })
