@@ -290,8 +290,7 @@ class TestByteBufferPool {
         }
 
         final ExecutorService executorService = Executors.newFixedThreadPool(threads);
-//        final ByteBufferPool byteBufferPool = getByteBufferPool();
-        final ByteBufferPool byteBufferPool = new ByteBufferPoolImpl5();
+        final ByteBufferPool byteBufferPool = getByteBufferPool();
 
         doPerfTest(iterations, byteBufferPool, executorService);
     }
