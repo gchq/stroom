@@ -104,29 +104,35 @@ class StatisticsSearchServiceImpl implements StatisticsSearchService {
                                           final FieldIndexMap fieldIndexMap) {
         //assemble a map of how fields map to 1-* select cols
 
-        //get all the static field mappings
-        final Map<String, List<String>> fieldToColumnsMap = new HashMap<>(COMMON_STATIC_FIELDS_TO_COLUMNS_MAP);
+        if (fieldIndexMap == null || fieldIndexMap.size() == 0) {
+            // This is a slight fudge to allow a dash query with a table that only has custom cols
+            // tha involve no fields, e.g. one col of 'add(1,2)'. So we just return a col of nulls.
+            return Collections.singletonList("null");
+        } else {
+            //get all the static field mappings
+            final Map<String, List<String>> fieldToColumnsMap = new HashMap<>(COMMON_STATIC_FIELDS_TO_COLUMNS_MAP);
 
-        if (StatisticType.VALUE.equals(statisticStoreEntity.getStatisticType())) {
-            fieldToColumnsMap.putAll(VALUE_STAT_STATIC_FIELDS_TO_COLUMNS_MAP);
+            if (StatisticType.VALUE.equals(statisticStoreEntity.getStatisticType())) {
+                fieldToColumnsMap.putAll(VALUE_STAT_STATIC_FIELDS_TO_COLUMNS_MAP);
+            }
+
+            //now add in all the dynamic tag field mappings
+            statisticStoreEntity.getFieldNames().forEach(tagField ->
+                    fieldToColumnsMap.computeIfAbsent(tagField, k -> new ArrayList<>())
+                            .add(KEY_TABLE_ALIAS + "." + SQLStatisticNames.NAME));
+
+            //now map the fields in use to a distinct list of columns
+            return fieldToColumnsMap.entrySet().stream()
+                    .flatMap(entry ->
+                            entry.getValue().stream()
+                                    .map(colName ->
+                                            getOptFieldIndexPosition(fieldIndexMap, entry.getKey())
+                                                    .map(val -> colName))
+                                    .filter(Optional::isPresent)
+                                    .map(Optional::get))
+                    .distinct()
+                    .collect(Collectors.toList());
         }
-
-        //now add in all the dynamic tag field mappings
-        statisticStoreEntity.getFieldNames().forEach(tagField ->
-                fieldToColumnsMap.computeIfAbsent(tagField, k -> new ArrayList<>())
-                        .add(KEY_TABLE_ALIAS + "." + SQLStatisticNames.NAME));
-
-        //now map the fields in use to a distinct list of columns
-        return fieldToColumnsMap.entrySet().stream()
-                .flatMap(entry ->
-                        entry.getValue().stream()
-                                .map(colName ->
-                                        getOptFieldIndexPosition(fieldIndexMap, entry.getKey())
-                                                .map(val -> colName))
-                                .filter(Optional::isPresent)
-                                .map(Optional::get))
-                .distinct()
-                .collect(Collectors.toList());
     }
 
     /**
