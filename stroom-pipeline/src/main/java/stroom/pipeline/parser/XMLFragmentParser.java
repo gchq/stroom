@@ -83,7 +83,7 @@ public class XMLFragmentParser extends AbstractParser implements SupportsCodeInj
         this.feedHolder = feedHolder;
         this.pipelineHolder = pipelineHolder;
 
-        this.docHelper = new DocFinder<>(textConverterStore.getType(), pathCreator, textConverterStore);
+        this.docHelper = new DocFinder<>(TextConverterDoc.DOCUMENT_TYPE, pathCreator, textConverterStore);
     }
 
     @Override

@@ -126,7 +126,7 @@ public class XsltFilter extends AbstractXMLFilter implements SupportsCodeInjecti
         this.feedHolder = feedHolder;
         this.pipelineHolder = pipelineHolder;
 
-        this.docHelper = new DocFinder<>(xsltStore.getType(), pathCreator, xsltStore);
+        this.docHelper = new DocFinder<>(XsltDoc.DOCUMENT_TYPE, pathCreator, xsltStore);
     }
 
     @Override

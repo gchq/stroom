@@ -12,9 +12,13 @@ import java.util.List;
 
 @JsonInclude(Include.NON_NULL)
 public class FindElementDocRequest {
+    @JsonProperty
     private final PipelineElement pipelineElement;
+    @JsonProperty
     private final List<PipelineProperty> properties;
+    @JsonProperty
     private final String feedName;
+    @JsonProperty
     private final String pipelineName;
 
     @JsonCreator
