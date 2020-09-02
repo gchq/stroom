@@ -7,9 +7,15 @@ and this project adheres to [Semantic Versioning](http://semver.org/).
 
 ## [Unreleased]
 
+* Issue **#1737** : Fix quick filter in users/groups popup.
+
+* Issue **#1832** : Fix inability to add users/groups in the Document Permissions screen.
+
+
 ## [v7.0-beta.49] - 2020-09-02
 
 * Fix accidental commit of broken code.
+
 
 ## [v7.0-beta.48] - 2020-09-02
 

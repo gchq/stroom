@@ -3,18 +3,12 @@ package stroom.security.impl;
 import stroom.security.shared.FindUserCriteria;
 import stroom.security.shared.User;
 import stroom.security.shared.UserResource;
-import stroom.util.filter.FilterFieldMapper;
-import stroom.util.filter.FilterFieldMappers;
 import stroom.util.shared.ResultPage;
-import stroom.util.shared.StringCriteria;
 
 import javax.inject.Inject;
 import java.util.List;
-import java.util.stream.Collectors;
 
 public class UserResourceImpl implements UserResource {
-    private static final FilterFieldMappers<User> FILTER_FIELD_MAPPERS = FilterFieldMappers.of(
-            FilterFieldMapper.of(FindUserCriteria.FIELD_DEF_NAME, User::getName));
 
     private final UserService userService;
 
@@ -25,28 +19,28 @@ public class UserResourceImpl implements UserResource {
 
     @Override
     public ResultPage<User> find(final FindUserCriteria criteria) {
-        criteria.setSort(FindUserCriteria.FIELD_NAME);
+        // Apply default sort
+        if (criteria.getSortList() == null || criteria.getSortList().isEmpty()) {
+            criteria.setSort(FindUserCriteria.FIELD_NAME);
+        }
+
         if (criteria.getRelatedUser() != null) {
-            User userRef = criteria.getRelatedUser();
+            final User userRef = criteria.getRelatedUser();
             List<User> list;
             if (userRef.isGroup()) {
-                list = userService.findUsersInGroup(userRef.getUuid());
+                list = userService.findUsersInGroup(userRef.getUuid(), criteria.getQuickFilterInput());
             } else {
-                list = userService.findGroupsForUser(userRef.getUuid());
+                list = userService.findGroupsForUser(userRef.getUuid(), criteria.getQuickFilterInput());
             }
 
-            if (criteria.getName() != null) {
-
-//                Predicate<User> predicate = QuickFilterPredicateFactory.createFuzzyMatchPredicate(
-//                        criteria.getName().getString(),
-//                        FILTER_FIELD_MAPPERS);
-
-                list = list.stream()
-                        .filter(user ->
-                                criteria.getName().isMatch(user.getName()))
+//            if (criteria.getQuickFilterInput() != null) {
+//
+//                list = list.stream()
+////                        .filter(user ->
+////                                criteria.getName().isMatch(user.getName()))
 //                        .filter(predicate)
-                        .collect(Collectors.toList());
-            }
+//                        .collect(Collectors.toList());
+//            }
 
             // Create a result list limited by the page request.
             return ResultPage.createPageLimitedList(list, criteria.getPageRequest());
@@ -60,14 +54,22 @@ public class UserResourceImpl implements UserResource {
                           final Boolean isGroup,
                           final String uuid) {
 
+        // TODO @AT Doesn't appear to be used by java code, may be used by new react screens
+        //   that are currently unused.
+        // TODO @AT Not clear what this method is trying to do. uuid is not used, is name a filter
+        //   input or an exact match.
+
         final FindUserCriteria criteria = new FindUserCriteria();
-        criteria.setName(new StringCriteria(name));
+        criteria.setQuickFilterInput(name);
         criteria.setGroup(isGroup);
         return userService.find(criteria);
     }
 
     @Override
     public User get(String userUuid) {
+        // TODO @AT Doesn't appear to be used by java code, may be used by new react screens
+        //   that are currently unused.
+
         return userService.loadByUuid(userUuid);
     }
 

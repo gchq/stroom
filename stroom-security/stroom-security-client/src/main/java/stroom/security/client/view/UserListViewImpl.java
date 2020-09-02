@@ -18,7 +18,9 @@ package stroom.security.client.view;
 
 import stroom.security.client.presenter.UserListUiHandlers;
 import stroom.security.client.presenter.UserListView;
+import stroom.security.shared.FindUserCriteria;
 import stroom.widget.dropdowntree.client.view.QuickFilter;
+import stroom.widget.dropdowntree.client.view.QuickFilterTooltipUtil;
 import stroom.widget.layout.client.view.ResizeSimplePanel;
 
 import com.google.gwt.event.logical.shared.ValueChangeEvent;
@@ -42,9 +44,11 @@ public class UserListViewImpl extends ViewWithUiHandlers<UserListUiHandlers> imp
     public UserListViewImpl(final EventBus eventBus, final Binder binder) {
         widget = binder.createAndBindUi(this);
 
-//        nameFilter.registerPopupTextProvider(() -> QuickFilterTooltipUtil.createTooltip(
-//                "Users Quick Filter",
-//                FindUserCriteria.FILTER_FIELD_DEFINITIONS));
+        // Not easy to determine if we are dealing in users or groups at this point so just
+        // call it Quick Filter
+        nameFilter.registerPopupTextProvider(() -> QuickFilterTooltipUtil.createTooltip(
+                "Quick Filter",
+                FindUserCriteria.FILTER_FIELD_DEFINITIONS));
     }
 
     @Override

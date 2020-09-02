@@ -1,11 +1,12 @@
 package stroom.security.shared;
 
+import stroom.util.shared.ResourcePaths;
+import stroom.util.shared.RestResource;
+
 import io.swagger.annotations.Api;
 import io.swagger.annotations.ApiOperation;
 import io.swagger.annotations.ApiParam;
 import org.fusesource.restygwt.client.DirectRestService;
-import stroom.util.shared.ResourcePaths;
-import stroom.util.shared.RestResource;
 
 import javax.ws.rs.Consumes;
 import javax.ws.rs.GET;
@@ -57,4 +58,12 @@ public interface DocPermissionResource extends RestResource, DirectRestService {
             value = "Get all permissions for a given document type",
             response = List.class)
     List<String> getPermissionForDocType(@PathParam("docType") String docType);
+
+    @POST
+    @Path("/filterUsers")
+    @ApiOperation(
+            value = "Get all permissions for a given document type",
+            response = List.class)
+    List<User> filterUsers(final FilterUsersRequest filterUsersRequest);
+
 }

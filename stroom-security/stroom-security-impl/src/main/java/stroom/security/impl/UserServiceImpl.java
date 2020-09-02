@@ -103,17 +103,18 @@ class UserServiceImpl implements UserService {
 
     @Override
     public List<User> find(final FindUserCriteria criteria) {
-        return userDao.find(criteria.getName().getString(), criteria.getGroup());
+        return userDao.find(criteria.getQuickFilterInput(), criteria.getGroup());
     }
 
     @Override
-    public List<User> findUsersInGroup(final String groupUuid) {
-        return userDao.findUsersInGroup(groupUuid);
+    public List<User> findUsersInGroup(final String groupUuid, final String quickFilterInput) {
+        return userDao.findUsersInGroup(groupUuid, quickFilterInput);
     }
 
+
     @Override
-    public List<User> findGroupsForUser(final String userUuid) {
-        return userDao.findGroupsForUser(userUuid);
+    public List<User> findGroupsForUser(final String userUuid, final String quickFilterInput) {
+        return userDao.findGroupsForUser(userUuid, quickFilterInput);
     }
 
     @Override
