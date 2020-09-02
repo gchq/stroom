@@ -6,7 +6,6 @@ import stroom.security.impl.UserDao;
 import stroom.security.impl.db.jooq.tables.StroomUser;
 import stroom.security.impl.db.jooq.tables.records.StroomUserRecord;
 import stroom.security.shared.User;
-import stroom.util.filter.QuickFilterPredicateFactory;
 
 import org.jooq.Condition;
 import org.jooq.Record;
@@ -19,7 +18,6 @@ import java.util.Optional;
 import java.util.Set;
 import java.util.function.BiFunction;
 import java.util.function.Function;
-import java.util.function.Predicate;
 import java.util.stream.Collectors;
 
 import static stroom.security.impl.db.jooq.Tables.STROOM_USER;
@@ -116,10 +114,6 @@ public class UserDaoImpl implements UserDao {
         final Collection<Condition> conditions = JooqUtil.conditions(
                 Optional.ofNullable(group).map(STROOM_USER.IS_GROUP::eq),
                 Optional.ofNullable(name).map(STROOM_USER.NAME::eq));
-
-        Predicate<User> predicate = QuickFilterPredicateFactory.createFuzzyMatchPredicate(
-                criteria.getName().getString(),
-                FILTER_FIELD_MAPPERS);
 
         return JooqUtil.contextResult(securityDbConnProvider, context ->
                 context.select().from(STROOM_USER)

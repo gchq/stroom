@@ -5,13 +5,11 @@ import stroom.security.shared.User;
 import stroom.security.shared.UserResource;
 import stroom.util.filter.FilterFieldMapper;
 import stroom.util.filter.FilterFieldMappers;
-import stroom.util.filter.QuickFilterPredicateFactory;
 import stroom.util.shared.ResultPage;
 import stroom.util.shared.StringCriteria;
 
 import javax.inject.Inject;
 import java.util.List;
-import java.util.function.Predicate;
 import java.util.stream.Collectors;
 
 public class UserResourceImpl implements UserResource {
@@ -39,14 +37,14 @@ public class UserResourceImpl implements UserResource {
 
             if (criteria.getName() != null) {
 
-                Predicate<User> predicate = QuickFilterPredicateFactory.createFuzzyMatchPredicate(
-                        criteria.getName().getString(),
-                        FILTER_FIELD_MAPPERS);
+//                Predicate<User> predicate = QuickFilterPredicateFactory.createFuzzyMatchPredicate(
+//                        criteria.getName().getString(),
+//                        FILTER_FIELD_MAPPERS);
 
                 list = list.stream()
-//                        .filter(user ->
-//                                criteria.getName().isMatch(user.getName()))
-                        .filter(predicate)
+                        .filter(user ->
+                                criteria.getName().isMatch(user.getName()))
+//                        .filter(predicate)
                         .collect(Collectors.toList());
             }
 
