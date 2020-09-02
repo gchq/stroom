@@ -263,7 +263,6 @@ else
       -x copyFilesForStroomDockerBuild \
       -x copyFilesForProxyDockerBuild \
       -x buildDistribution \
-      "${extraBuildArgs[@]}" \
       --scan -s
 
 #      -Dorg.gradle.parallel=true \

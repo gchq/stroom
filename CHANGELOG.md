@@ -7,6 +7,8 @@ and this project adheres to [Semantic Versioning](http://semver.org/).
 
 ## [Unreleased]
 
+* Fix duplicate call to bintry upload in travis script.
+
 
 ## [v7.0-beta.47] - 2020-09-02
 
@@ -2525,7 +2527,8 @@ Issue **gchq/stroom-expression#22** : Add `typeOf(...)` function to dashboard.
 
 * Issue **#202** : Initial release of the new data retention policy functionality.
 
-[Unreleased]: https://github.com/gchq/stroom/compare/v7.0-beta.47...HEAD
+[Unreleased]: https://github.com/gchq/stroom/compare/v7.0-beta.48...HEAD
+[v8.0-beta.47]: https://github.com/gchq/stroom/compare/v7.0-beta.47...v7.0-beta.48
 [v7.0-beta.47]: https://github.com/gchq/stroom/compare/v7.0-beta.46...v7.0-beta.47
 [v7.0-beta.46]: https://github.com/gchq/stroom/compare/v7.0-beta.45...v7.0-beta.46
 [v7.0-beta.45]: https://github.com/gchq/stroom/compare/v7.0-beta.44...v7.0-beta.45

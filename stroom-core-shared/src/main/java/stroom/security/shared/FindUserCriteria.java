@@ -16,15 +16,18 @@
 
 package stroom.security.shared;
 
-import com.fasterxml.jackson.annotation.JsonCreator;
-import com.fasterxml.jackson.annotation.JsonInclude;
-import com.fasterxml.jackson.annotation.JsonInclude.Include;
-import com.fasterxml.jackson.annotation.JsonProperty;
 import stroom.util.shared.FindDocumentEntityCriteria;
 import stroom.util.shared.PageRequest;
 import stroom.util.shared.Sort;
 import stroom.util.shared.StringCriteria;
+import stroom.util.shared.filter.FilterFieldDefinition;
 
+import com.fasterxml.jackson.annotation.JsonCreator;
+import com.fasterxml.jackson.annotation.JsonInclude;
+import com.fasterxml.jackson.annotation.JsonInclude.Include;
+import com.fasterxml.jackson.annotation.JsonProperty;
+
+import java.util.Collections;
 import java.util.List;
 
 /**
@@ -32,8 +35,13 @@ import java.util.List;
  */
 @JsonInclude(Include.NON_NULL)
 public class FindUserCriteria extends FindDocumentEntityCriteria {
+    public static final String FIELD_NAME = "Name";
     public static final String FIELD_STATUS = "Status";
     public static final String FIELD_LAST_LOGIN = "Last Login";
+
+    public static final FilterFieldDefinition FIELD_DEF_NAME = FilterFieldDefinition.defaultField(FIELD_NAME);
+
+    public static final List<FilterFieldDefinition> FILTER_FIELD_DEFINITIONS = Collections.singletonList(FIELD_DEF_NAME);
 
     /**
      * Find user groups

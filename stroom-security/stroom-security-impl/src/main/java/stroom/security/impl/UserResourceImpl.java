@@ -3,14 +3,21 @@ package stroom.security.impl;
 import stroom.security.shared.FindUserCriteria;
 import stroom.security.shared.User;
 import stroom.security.shared.UserResource;
+import stroom.util.filter.FilterFieldMapper;
+import stroom.util.filter.FilterFieldMappers;
+import stroom.util.filter.QuickFilterPredicateFactory;
 import stroom.util.shared.ResultPage;
 import stroom.util.shared.StringCriteria;
 
 import javax.inject.Inject;
 import java.util.List;
+import java.util.function.Predicate;
 import java.util.stream.Collectors;
 
 public class UserResourceImpl implements UserResource {
+    private static final FilterFieldMappers<User> FILTER_FIELD_MAPPERS = FilterFieldMappers.of(
+            FilterFieldMapper.of(FindUserCriteria.FIELD_DEF_NAME, User::getName));
+
     private final UserService userService;
 
     @Inject
@@ -31,7 +38,16 @@ public class UserResourceImpl implements UserResource {
             }
 
             if (criteria.getName() != null) {
-                list = list.stream().filter(user -> criteria.getName().isMatch(user.getName())).collect(Collectors.toList());
+
+                Predicate<User> predicate = QuickFilterPredicateFactory.createFuzzyMatchPredicate(
+                        criteria.getName().getString(),
+                        FILTER_FIELD_MAPPERS);
+
+                list = list.stream()
+//                        .filter(user ->
+//                                criteria.getName().isMatch(user.getName()))
+                        .filter(predicate)
+                        .collect(Collectors.toList());
             }
 
             // Create a result list limited by the page request.
