@@ -24,7 +24,5 @@ import stroom.kafka.shared.KafkaConfigDoc;
 import java.util.List;
 
 public interface KafkaConfigStore extends DocumentStore<KafkaConfigDoc> {
-
     List<DocRef> list();
-
 }

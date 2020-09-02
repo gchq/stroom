@@ -17,10 +17,6 @@
 
 package stroom.pipeline.client;
 
-import com.google.gwt.core.client.GWT;
-import com.google.inject.Inject;
-import com.google.inject.Provider;
-import com.google.web.bindery.event.shared.EventBus;
 import stroom.core.client.ContentManager;
 import stroom.dispatch.client.Rest;
 import stroom.dispatch.client.RestFactory;
@@ -32,6 +28,11 @@ import stroom.entity.client.presenter.DocumentEditPresenter;
 import stroom.pipeline.client.presenter.XsltPresenter;
 import stroom.pipeline.shared.XsltDoc;
 import stroom.pipeline.shared.XsltResource;
+
+import com.google.gwt.core.client.GWT;
+import com.google.inject.Inject;
+import com.google.inject.Provider;
+import com.google.web.bindery.event.shared.EventBus;
 
 import java.util.function.Consumer;
 
@@ -59,7 +60,7 @@ public class XsltPlugin extends DocumentPlugin<XsltDoc> {
 
     @Override
     public void load(final DocRef docRef, final Consumer<XsltDoc> resultConsumer, final Consumer<Throwable> errorConsumer) {
-                final Rest<XsltDoc> rest = restFactory.create();
+        final Rest<XsltDoc> rest = restFactory.create();
         rest
                 .onSuccess(resultConsumer)
                 .onFailure(errorConsumer)

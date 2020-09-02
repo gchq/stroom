@@ -7,6 +7,10 @@ and this project adheres to [Semantic Versioning](http://semver.org/).
 
 ## [Unreleased]
 
+* Issue **#1666** : Stepping now loads element documents that use name patterns.
+
+* Issue **#1666** : Parsers now support name patterns for loading config documents. 
+
 * Issue **#1700** : Stopped stepping happening on open.
 
 * Uplift LMDB to v0.8.1.
