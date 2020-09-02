@@ -7,6 +7,8 @@ and this project adheres to [Semantic Versioning](http://semver.org/).
 
 ## [Unreleased]
 
+## [v7.0-beta.48] - 2020-09-02
+
 * Fix duplicate call to bintry upload in travis script.
 
 
