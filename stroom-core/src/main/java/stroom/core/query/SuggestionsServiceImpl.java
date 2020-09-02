@@ -11,7 +11,6 @@ import stroom.query.shared.FetchSuggestionsRequest;
 import stroom.security.api.SecurityContext;
 import stroom.task.api.TaskContext;
 import stroom.task.api.TaskContextFactory;
-import stroom.util.docref.DocRefPredicateFactory;
 import stroom.util.string.StringPredicateFactory;
 
 import org.jetbrains.annotations.NotNull;
@@ -92,8 +91,8 @@ public class SuggestionsServiceImpl implements SuggestionsService {
     private List<String> createPipelineList(final String userInput) {
         final List<String> result;
         result = pipelineStore.list().stream()
-                .filter(DocRefPredicateFactory.createFuzzyMatchPredicate(userInput))
                 .map(DocRef::getName)
+                .filter(StringPredicateFactory.createFuzzyMatchPredicate(userInput))
                 .sorted()
                 .limit(LIMIT)
                 .collect(Collectors.toList());

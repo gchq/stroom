@@ -7,6 +7,8 @@ and this project adheres to [Semantic Versioning](http://semver.org/).
 
 ## [Unreleased]
 
+* Issue **#1694** : Fix UUID filtering in quick filters, now using `uuid:` field qualifier. Removed support for `#` prefix in Quick Filter and suggesters.
+
 * Issue **#1699** : Add a docker managed volume for the ref data store.
 
 * Add `pooledByteBufferCounts` to ref data config.

@@ -40,59 +40,6 @@ class TestDocRefPredicateFactory {
     }
 
     @Test
-    void testValidFullUuid() {
-        final String myUuid = UUID.randomUUID().toString();
-        final String notMyUuid = UUID.randomUUID().toString();
-        Assertions.assertThat(myUuid).isNotEqualTo(notMyUuid);
-
-        doFuzzyMatchTest(myUuid,
-                List.of(
-                        Tuple.of("MY_FEED", myUuid)),
-                List.of(
-                        Tuple.of("NOT_MY_FEED", notMyUuid)));
-    }
-
-    @Test
-    void testUuidPartialMatch() {
-        final String myUuid = "38b027d7-3dd9-43e7-9ec7-99a128fffc75";
-        final String notMyUuid = "b26eff96-9ea7-4476-93df-d435eb6c9931";
-
-        doFuzzyMatchTest("#" + myUuid,
-                List.of(
-                        Tuple.of("MY_FEED", myUuid)),
-                List.of(
-                        Tuple.of("NOT_MY_FEED", notMyUuid)));
-    }
-
-    @Test
-    void testUuidPartialMatch2() {
-        final String myUuid = "38b027d7-3dd9-43e7-9ec7-99a128fffc75";
-        final String notMyUuid = "b26eff96-9ea7-4476-93df-d435eb6c9931";
-
-        doFuzzyMatchTest("#43e7",
-                List.of(
-                        Tuple.of("MY_FEED", myUuid)),
-                List.of(
-                        Tuple.of("NOT_MY_FEED", notMyUuid)));
-    }
-
-    @Test
-    void testPartialUuid() {
-        final String myUuid = UUID.randomUUID().toString();
-        final String notMyUuid = UUID.randomUUID().toString();
-        Assertions.assertThat(myUuid).isNotEqualTo(notMyUuid);
-
-        // We don't support partial matching of uuids else it will be very confusing for the user
-        // if they enter some chars and it matches on some random entities when they have
-        // no visibility of the UUIDs of those matches.
-        doFuzzyMatchTest(myUuid.substring(0, 5),
-                List.of(),
-                List.of(
-                        Tuple.of("MY_FEED", myUuid),
-                        Tuple.of("NOT_MY_FEED", notMyUuid)));
-    }
-
-    @Test
     void testNameFuzzyMatching() {
         String myUuid = UUID.randomUUID().toString();
         String notMyUuid = UUID.randomUUID().toString();
@@ -127,7 +74,7 @@ class TestDocRefPredicateFactory {
 
         final List<DocRef> actualMatchesNodes = Stream.concat(expectedMatchesNodes.stream(),
                 expectedNonMatchesNodes.stream())
-                .filter(DocRefPredicateFactory.createFuzzyMatchPredicate(userInput))
+                .filter(DocRefPredicateFactory.createFuzzyNameMatchPredicate(userInput))
                 .collect(Collectors.toList());
 
         logNodes("Actual matches:", actualMatchesNodes);
