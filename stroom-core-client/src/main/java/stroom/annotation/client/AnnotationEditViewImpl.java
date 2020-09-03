@@ -16,6 +16,11 @@
 
 package stroom.annotation.client;
 
+import stroom.annotation.client.AnnotationEditPresenter.AnnotationEditView;
+import stroom.svg.client.SvgPreset;
+import stroom.widget.button.client.SvgButton;
+import stroom.widget.layout.client.view.ResizeSimplePanel;
+
 import com.google.gwt.core.client.Scheduler;
 import com.google.gwt.event.dom.client.BlurEvent;
 import com.google.gwt.event.dom.client.ClickEvent;
@@ -25,16 +30,13 @@ import com.google.gwt.uibinder.client.UiBinder;
 import com.google.gwt.uibinder.client.UiField;
 import com.google.gwt.uibinder.client.UiHandler;
 import com.google.gwt.user.client.ui.Button;
+import com.google.gwt.user.client.ui.FlowPanel;
 import com.google.gwt.user.client.ui.Label;
 import com.google.gwt.user.client.ui.TextArea;
 import com.google.gwt.user.client.ui.TextBox;
 import com.google.gwt.user.client.ui.Widget;
 import com.google.inject.Inject;
 import com.gwtplatform.mvp.client.ViewWithUiHandlers;
-import stroom.annotation.client.AnnotationEditPresenter.AnnotationEditView;
-import stroom.svg.client.SvgPreset;
-import stroom.widget.button.client.SvgButton;
-import stroom.widget.layout.client.view.ResizeSimplePanel;
 
 public class AnnotationEditViewImpl extends ViewWithUiHandlers<AnnotationEditUiHandlers> implements AnnotationEditView {
     public interface Binder extends UiBinder<Widget, AnnotationEditViewImpl> {
@@ -62,6 +64,8 @@ public class AnnotationEditViewImpl extends ViewWithUiHandlers<AnnotationEditUiH
     Label assignedTo;
     @UiField
     Label assignYourself;
+    @UiField
+    FlowPanel commentFlowPanel;
     @UiField
     Label commentLabel;
     @UiField(provided = true)
@@ -288,14 +292,14 @@ public class AnnotationEditViewImpl extends ViewWithUiHandlers<AnnotationEditUiH
 
     @UiHandler("commentLabel")
     public void onCommentLabel(final ClickEvent e) {
-        if (getUiHandlers() != null) {
+        if (getUiHandlers() != null && commentIcon.isEnabled()) {
             getUiHandlers().showCommentChooser(commentLabel.getElement());
         }
     }
 
     @UiHandler("commentIcon")
     public void onCommentIcon(final ClickEvent e) {
-        if (getUiHandlers() != null) {
+        if (getUiHandlers() != null && commentIcon.isEnabled()) {
             getUiHandlers().showCommentChooser(commentLabel.getElement());
         }
     }
@@ -304,6 +308,20 @@ public class AnnotationEditViewImpl extends ViewWithUiHandlers<AnnotationEditUiH
     public void onShowLinkedEvents(final ClickEvent e) {
         if (getUiHandlers() != null) {
             getUiHandlers().showLinkedEvents();
+        }
+    }
+
+    @Override
+    public void setHasCommentValues(final boolean hasCommentValues) {
+        // There may not be any preconfigured standard comments so enable/disable the QF dropdown
+        // accordingly
+        commentIcon.setEnabled(hasCommentValues);
+        if (hasCommentValues) {
+            commentLabel.addStyleName("clickable");
+            commentFlowPanel.addStyleName("clickable");
+        } else {
+            commentLabel.removeStyleName("clickable");
+            commentFlowPanel.removeStyleName("clickable");
         }
     }
 }

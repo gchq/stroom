@@ -141,6 +141,15 @@ public class AnnotationEditPresenter
             final String selected = commentPresenter.getSelected();
             changeComment(selected);
         }));
+
+        final AnnotationResource annotationResource = GWT.create(AnnotationResource.class);
+        final Rest<List<String>> rest = restFactory.create();
+        rest
+                .onSuccess(values -> {
+                    getView().setHasCommentValues(!values.isEmpty());
+                })
+                .call(annotationResource)
+                .getComment(null);
     }
 
     private void changeTitle(final String selected, final boolean addEntry) {
@@ -220,7 +229,10 @@ public class AnnotationEditPresenter
     private void addEntry(final CreateEntryRequest request) {
         final AnnotationResource annotationResource = GWT.create(AnnotationResource.class);
         final Rest<AnnotationDetail> rest = restFactory.create();
-        rest.onSuccess(this::read).call(annotationResource).createEntry(request);
+        rest
+                .onSuccess(this::read)
+                .call(annotationResource)
+                .createEntry(request);
     }
 
     public void show(final Annotation annotation, final List<EventId> linkedEvents) {
@@ -246,7 +258,10 @@ public class AnnotationEditPresenter
 
             final AnnotationResource annotationResource = GWT.create(AnnotationResource.class);
             final Rest<AnnotationDetail> rest = restFactory.create();
-            rest.onSuccess(this::edit).call(annotationResource).get(annotation.getId());
+            rest
+                    .onSuccess(this::edit)
+                    .call(annotationResource)
+                    .get(annotation.getId());
         }
     }
 
@@ -320,11 +335,14 @@ public class AnnotationEditPresenter
         if (currentStatus == null) {
             final AnnotationResource annotationResource = GWT.create(AnnotationResource.class);
             final Rest<List<String>> rest = restFactory.create();
-            rest.onSuccess(values -> {
-                if (currentStatus == null && values != null && values.size() > 0) {
-                    changeStatus(values.get(0), false);
-                }
-            }).call(annotationResource).getStatus(null);
+            rest
+                    .onSuccess(values -> {
+                        if (currentStatus == null && values != null && values.size() > 0) {
+                            changeStatus(values.get(0), false);
+                        }
+                    })
+                    .call(annotationResource)
+                    .getStatus(null);
         }
 
         if (currentTitle == null || currentTitle.trim().length() == 0) {
@@ -858,6 +876,8 @@ public class AnnotationEditPresenter
         String getComment();
 
         void setComment(String comment);
+
+        void setHasCommentValues(final boolean hasCommentValues);
 
         void setHistoryView(Widget view);
 

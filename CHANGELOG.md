@@ -7,6 +7,8 @@ and this project adheres to [Semantic Versioning](http://semver.org/).
 
 ## [Unreleased]
 
+* Issue **#1830** : Change quick filters on Annotations screen to use fuzzy filtering consistent with the rest of stroom. Disable the comment quick filter drop down if there are no standard comments configured. Remove the qualified fields from the quick filter tooltips.
+
 * Issue **#1829** : Fix Annotations screen recording change history when clicking an empty title/subject.
 
 * Issue **#1737** : Fix quick filter in users/groups popup.
