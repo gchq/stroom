@@ -369,7 +369,7 @@ class TestSQLStatisticEventStore2 extends StroomUnitTest {
             dataSource.setName("MyDataSource");
 
             StatStoreCriteriaBuilder.buildCriteria(searchRequest, dataSource);
-        }).isInstanceOf(IllegalArgumentException.class);
+        }).isInstanceOf(BadRequestException.class);
     }
 
     @Test
