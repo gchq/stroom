@@ -16,10 +16,9 @@
 
 package stroom.security.shared;
 
-import stroom.util.shared.FindDocumentEntityCriteria;
+import stroom.util.shared.BaseCriteria;
 import stroom.util.shared.PageRequest;
 import stroom.util.shared.Sort;
-import stroom.util.shared.StringCriteria;
 import stroom.util.shared.filter.FilterFieldDefinition;
 
 import com.fasterxml.jackson.annotation.JsonCreator;
@@ -34,7 +33,7 @@ import java.util.List;
  * Criteria class.
  */
 @JsonInclude(Include.NON_NULL)
-public class FindUserCriteria extends FindDocumentEntityCriteria {
+public class FindUserCriteria extends BaseCriteria {
     public static final String FIELD_NAME = "Name";
     public static final String FIELD_STATUS = "Status";
     public static final String FIELD_LAST_LOGIN = "Last Login";
@@ -50,25 +49,28 @@ public class FindUserCriteria extends FindDocumentEntityCriteria {
     private Boolean group;
     @JsonProperty
     private User relatedUser;
+    @JsonProperty
+    private String quickFilterInput;
 
     public FindUserCriteria() {
     }
 
-    public FindUserCriteria(final String name, final Boolean group) {
-        super(name);
+    public FindUserCriteria(final String quickFilterInput, final Boolean group) {
+        this.quickFilterInput = quickFilterInput;
         this.group = group;
     }
 
     @JsonCreator
     public FindUserCriteria(@JsonProperty("pageRequest") final PageRequest pageRequest,
                             @JsonProperty("sortList") final List<Sort> sortList,
-                            @JsonProperty("name") final StringCriteria name,
-                            @JsonProperty("requiredPermission") final String requiredPermission,
+                            @JsonProperty("quickFilterInput") final String quickFilterInput,
+//                            @JsonProperty("requiredPermission") final String requiredPermission,
                             @JsonProperty("group") final Boolean group,
                             @JsonProperty("relatedUser") final User relatedUser) {
-        super(pageRequest, sortList, name, requiredPermission);
+        super(pageRequest, sortList);
         this.group = group;
         this.relatedUser = relatedUser;
+        this.quickFilterInput = quickFilterInput;
     }
 
     public FindUserCriteria(final Boolean group) {
@@ -93,5 +95,13 @@ public class FindUserCriteria extends FindDocumentEntityCriteria {
 
     public void setRelatedUser(User relatedUser) {
         this.relatedUser = relatedUser;
+    }
+
+    public String getQuickFilterInput() {
+        return quickFilterInput;
+    }
+
+    public void setQuickFilterInput(final String quickFilterInput) {
+        this.quickFilterInput = quickFilterInput;
     }
 }

@@ -150,6 +150,9 @@ class AccountDaoImpl implements AccountDao {
                     AccountResource.FIELD_DEF_EMAIL,
                     Account::getEmail),
             FilterFieldMapper.of(
+                    AccountResource.FIELD_DEF_STATUS,
+                    account -> account.isEnabled() ? "Enabled" : "Disabled"),
+            FilterFieldMapper.of(
                     AccountResource.FIELD_DEF_FIRST_NAME,
                     Account::getFirstName),
             FilterFieldMapper.of(

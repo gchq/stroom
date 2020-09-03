@@ -1,13 +1,14 @@
 package stroom.security.impl.db;
 
-import com.google.inject.Guice;
-import com.google.inject.Injector;
-import org.junit.jupiter.api.BeforeAll;
-import org.junit.jupiter.api.Test;
 import stroom.security.impl.TestModule;
 import stroom.security.impl.UserDao;
 import stroom.security.shared.User;
 import stroom.util.AuditUtil;
+
+import com.google.inject.Guice;
+import com.google.inject.Injector;
+import org.junit.jupiter.api.BeforeAll;
+import org.junit.jupiter.api.Test;
 
 import java.util.List;
 import java.util.UUID;
@@ -105,7 +106,7 @@ class UserDaoImplTest {
                 .map(name -> createUser(name, false))
                 .peek(u -> userDao.addUserToGroup(u.getUuid(), group.getUuid()))
                 .collect(Collectors.toList());
-        final List<User> usersInGroup = userDao.findUsersInGroup(group.getUuid());
+        final List<User> usersInGroup = userDao.findUsersInGroup(group.getUuid(), null);
 
         // Then
         userNames.forEach(userName -> {
@@ -140,7 +141,7 @@ class UserDaoImplTest {
                 .peek(g -> users.forEach(
                         u -> userDao.addUserToGroup(u.getUuid(), g.getUuid())))
                 .collect(Collectors.toList());
-        final List<User> groupsForUserToTest = userDao.findGroupsForUser(userToTest.getUuid());
+        final List<User> groupsForUserToTest = userDao.findGroupsForUser(userToTest.getUuid(), null);
 
         // Then
         groupNames.forEach(groupName -> assertThat(groupsForUserToTest.stream()

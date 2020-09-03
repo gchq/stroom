@@ -38,9 +38,17 @@ public interface UserService {
 
     List<User> find(FindUserCriteria criteria);
 
-    List<User> findUsersInGroup(String groupUuid);
+    default List<User> findUsersInGroup(String groupUuid) {
+        return findUsersInGroup(groupUuid, null);
+    }
 
-    List<User> findGroupsForUser(String userUuid);
+    List<User> findUsersInGroup(String groupUuid, String quickFilter);
+
+    default List<User> findGroupsForUser(String userUuid) {
+        return findGroupsForUser(userUuid, null);
+    }
+
+    List<User> findGroupsForUser(String userUuid, String quickFilter);
 
     Set<String> findGroupUuidsForUser(String userUuid);
 
