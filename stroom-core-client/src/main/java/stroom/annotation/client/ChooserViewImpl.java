@@ -51,7 +51,6 @@ class ChooserViewImpl extends ViewWithUiHandlers<ChooserUiHandlers> implements C
     ChooserViewImpl(final Binder binder) {
         widget = binder.createAndBindUi(this);
 
-        // Same field defs as the Explorer Tree
         nameFilter.registerPopupTextProvider(() -> QuickFilterTooltipUtil.createTooltip(
                 "Choose Item Quick Filter",
                 ExplorerTreeFilter.FIELD_DEFINITIONS));
