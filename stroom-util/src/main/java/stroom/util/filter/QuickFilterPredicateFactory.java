@@ -71,6 +71,7 @@ public class QuickFilterPredicateFactory {
         return predicate;
     }
 
+
     private static <T> Predicate<T> createDefaultPredicate(final String input,
                                                            final FilterFieldMappers<T> fieldMappers) {
         // Matching on the default field

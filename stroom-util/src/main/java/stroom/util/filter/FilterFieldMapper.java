@@ -25,7 +25,6 @@ public class FilterFieldMapper<T_ROW> {
         this.valueExtractor = Objects.requireNonNull(valueExtractor);
     }
 
-
     public static <T_ROW> FilterFieldMapper<T_ROW> of(
             final FilterFieldDefinition fieldDefinition,
             final Function<T_ROW, String> valueExtractor) {
