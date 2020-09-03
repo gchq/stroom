@@ -16,6 +16,30 @@
 
 package stroom.annotation.client;
 
+import stroom.alert.client.event.AlertEvent;
+import stroom.annotation.client.AnnotationEditPresenter.AnnotationEditView;
+import stroom.annotation.shared.Annotation;
+import stroom.annotation.shared.AnnotationDetail;
+import stroom.annotation.shared.AnnotationEntry;
+import stroom.annotation.shared.AnnotationResource;
+import stroom.annotation.shared.CreateEntryRequest;
+import stroom.annotation.shared.EventId;
+import stroom.dispatch.client.Rest;
+import stroom.dispatch.client.RestFactory;
+import stroom.hyperlink.client.Hyperlink;
+import stroom.hyperlink.client.HyperlinkEvent;
+import stroom.hyperlink.client.HyperlinkType;
+import stroom.security.client.api.ClientSecurityContext;
+import stroom.security.shared.UserResource;
+import stroom.widget.customdatebox.client.ClientDateUtil;
+import stroom.widget.popup.client.event.HidePopupEvent;
+import stroom.widget.popup.client.event.RenamePopupEvent;
+import stroom.widget.popup.client.event.ShowPopupEvent;
+import stroom.widget.popup.client.presenter.PopupPosition;
+import stroom.widget.popup.client.presenter.PopupSize;
+import stroom.widget.popup.client.presenter.PopupUiHandlers;
+import stroom.widget.popup.client.presenter.PopupView.PopupType;
+
 import com.google.gwt.core.client.GWT;
 import com.google.gwt.core.client.Scheduler;
 import com.google.gwt.dom.client.Element;
@@ -32,29 +56,6 @@ import com.google.web.bindery.event.shared.EventBus;
 import com.gwtplatform.mvp.client.HasUiHandlers;
 import com.gwtplatform.mvp.client.MyPresenterWidget;
 import com.gwtplatform.mvp.client.View;
-import stroom.alert.client.event.AlertEvent;
-import stroom.annotation.client.AnnotationEditPresenter.AnnotationEditView;
-import stroom.annotation.shared.Annotation;
-import stroom.annotation.shared.AnnotationDetail;
-import stroom.annotation.shared.AnnotationEntry;
-import stroom.annotation.shared.AnnotationResource;
-import stroom.annotation.shared.CreateEntryRequest;
-import stroom.annotation.shared.EventId;
-import stroom.dispatch.client.Rest;
-import stroom.dispatch.client.RestFactory;
-import stroom.security.client.api.ClientSecurityContext;
-import stroom.hyperlink.client.Hyperlink;
-import stroom.hyperlink.client.HyperlinkEvent;
-import stroom.hyperlink.client.HyperlinkType;
-import stroom.security.shared.UserResource;
-import stroom.widget.customdatebox.client.ClientDateUtil;
-import stroom.widget.popup.client.event.HidePopupEvent;
-import stroom.widget.popup.client.event.RenamePopupEvent;
-import stroom.widget.popup.client.event.ShowPopupEvent;
-import stroom.widget.popup.client.presenter.PopupPosition;
-import stroom.widget.popup.client.presenter.PopupSize;
-import stroom.widget.popup.client.presenter.PopupUiHandlers;
-import stroom.widget.popup.client.presenter.PopupView.PopupType;
 
 import java.util.Date;
 import java.util.HashMap;
@@ -140,7 +141,7 @@ public class AnnotationEditPresenter extends MyPresenterWidget<AnnotationEditVie
     }
 
     private void changeTitle(final String selected, final boolean addEntry) {
-        if (!Objects.equals(currentTitle, selected)) {
+        if (hasChanged(currentTitle, selected)) {
             currentTitle = selected;
             getView().setTitle(selected);
 
@@ -152,7 +153,7 @@ public class AnnotationEditPresenter extends MyPresenterWidget<AnnotationEditVie
     }
 
     private void changeSubject(final String selected, final boolean addEntry) {
-        if (!Objects.equals(currentSubject, selected)) {
+        if (hasChanged(currentSubject, selected)) {
             currentSubject = selected;
             getView().setSubject(selected);
 
@@ -163,8 +164,15 @@ public class AnnotationEditPresenter extends MyPresenterWidget<AnnotationEditVie
         }
     }
 
+    private boolean hasChanged(final String oldValue, final String newValue) {
+        // Treat empty strings as null so null and "" are treated as equal
+        return !Objects.equals(
+                (oldValue != null && oldValue.isEmpty() ? null : oldValue),
+                (newValue != null && newValue.isEmpty() ? null : newValue));
+    }
+
     private void changeStatus(final String selected, final boolean addEntry) {
-        if (!Objects.equals(currentStatus, selected)) {
+        if (hasChanged(currentStatus, selected)) {
             currentStatus = selected;
             getView().setStatus(selected);
             HidePopupEvent.fire(this, statusPresenter, true, true);
@@ -177,7 +185,7 @@ public class AnnotationEditPresenter extends MyPresenterWidget<AnnotationEditVie
     }
 
     private void changeAssignedTo(final String selected, final boolean addEntry) {
-        if (!Objects.equals(currentAssignedTo, selected)) {
+        if (hasChanged(currentAssignedTo, selected)) {
             currentAssignedTo = selected;
             getView().setAssignedTo(selected);
             HidePopupEvent.fire(this, assignedToPresenter, true, true);
@@ -190,7 +198,7 @@ public class AnnotationEditPresenter extends MyPresenterWidget<AnnotationEditVie
     }
 
     private void changeComment(final String selected) {
-        if (selected != null && !Objects.equals(getView().getComment(), selected)) {
+        if (selected != null && hasChanged(getView().getComment(), selected)) {
             getView().setComment(getView().getComment() + selected);
             HidePopupEvent.fire(this, commentPresenter, true, true);
         }
@@ -607,7 +615,7 @@ public class AnnotationEditPresenter extends MyPresenterWidget<AnnotationEditVie
         getView().setSubject(currentSubject);
         getView().setStatus(currentStatus);
         getView().setAssignedTo(currentAssignedTo);
-        getView().setAssignYourselfVisible(!Objects.equals(currentAssignedTo, clientSecurityContext.getUserId()));
+        getView().setAssignYourselfVisible(hasChanged(currentAssignedTo, clientSecurityContext.getUserId()));
     }
 
     private SafeHtml getDurationLabel(final long time, final Date now) {

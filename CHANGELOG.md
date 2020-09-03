@@ -7,6 +7,8 @@ and this project adheres to [Semantic Versioning](http://semver.org/).
 
 ## [Unreleased]
 
+* Issue **#1829** : Fix Annotations screen recording change history when clicking an empty title/subject.
+
 * Issue **#1737** : Fix quick filter in users/groups popup.
 
 * Issue **#1832** : Fix inability to add users/groups in the Document Permissions screen.
