@@ -16,8 +16,6 @@
 
 package stroom.dashboard.impl.datasource;
 
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 import stroom.datasource.api.v2.DataSource;
 import stroom.docref.DocRef;
 import stroom.query.api.v2.QueryKey;
@@ -25,11 +23,16 @@ import stroom.query.api.v2.SearchRequest;
 import stroom.query.api.v2.SearchResponse;
 import stroom.security.api.ClientSecurityUtil;
 import stroom.security.api.SecurityContext;
+import stroom.util.logging.LambdaLogger;
+import stroom.util.logging.LambdaLoggerFactory;
 import stroom.util.logging.LogUtil;
 import stroom.util.shared.PermissionException;
 
+import io.dropwizard.jersey.errors.ErrorMessage;
+
 import javax.inject.Provider;
 import javax.servlet.http.HttpServletResponse;
+import javax.ws.rs.WebApplicationException;
 import javax.ws.rs.client.Client;
 import javax.ws.rs.client.Entity;
 import javax.ws.rs.client.Invocation;
@@ -38,7 +41,7 @@ import javax.ws.rs.core.MediaType;
 import javax.ws.rs.core.Response;
 
 public class RemoteDataSourceProvider implements DataSourceProvider {
-    private static final Logger LOGGER = LoggerFactory.getLogger(RemoteDataSourceProvider.class);
+    private static final LambdaLogger LOGGER = LambdaLoggerFactory.getLogger(RemoteDataSourceProvider.class);
 
     private static final String DATA_SOURCE_ENDPOINT = "/dataSource";
     private static final String SEARCH_ENDPOINT = "/search";
@@ -107,17 +110,36 @@ public class RemoteDataSourceProvider implements DataSourceProvider {
                     }
                     throw new PermissionException(securityContext.getUserId(), msg.toString());
                 default:
-                    throw new RuntimeException(LogUtil.message("Error {} sending request {} to {}: {}",
-                            response.getStatus(),
-                            request,
-                            webTarget.getUri(),
-                            response.getStatusInfo().getReasonPhrase()));
+                    ErrorMessage errorMsg;
+                    try {
+                        errorMsg = response.readEntity(ErrorMessage.class);
+                    } catch (Exception e) {
+                        errorMsg = null;
+                        LOGGER.debug("Error reading entity", e);
+                    }
+                    if (LOGGER.isDebugEnabled()) {
+                        LOGGER.debug("Error {} sending request {} to {}: {}, {}",
+                                response.getStatus(),
+                                request,
+                                webTarget.getUri(),
+                                response.getStatusInfo().getReasonPhrase(),
+                                errorMsg);
+                    }
+
+                    if (errorMsg != null) {
+                        throw new WebApplicationException(errorMsg.getMessage(), errorMsg.getCode());
+                    } else {
+                        throw new RuntimeException(LogUtil.message("Error {} sending request {} to {}: {}",
+                                response.getStatus(),
+                                request,
+                                webTarget.getUri(),
+                                response.getStatusInfo().getReasonPhrase()));
+                    }
             }
 
         } catch (final RuntimeException e) {
-            LOGGER.debug(e.getMessage(), e);
-            throw new RuntimeException(LogUtil.message("Error sending request {} to {}{}",
-                    request, url, path), e);
+            LOGGER.debug("Error sending request {} to {}{}", request, url, path, e);
+            throw e;
         }
     }
 

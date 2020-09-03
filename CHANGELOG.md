@@ -7,6 +7,8 @@ and this project adheres to [Semantic Versioning](http://semver.org/).
 
 ## [Unreleased]
 
+* Issue **#1782** : Fix handling of empty NOT/AND/OR in stats queries and immprove the errore handling for the remote data sources.
+
 * Issue **#1781** : Fix SQL stats handling of NOT() with more than one term in the NOT.
 
 * Issue **#1830** : Change quick filters on Annotations screen to use fuzzy filtering consistent with the rest of stroom. Disable the comment quick filter drop down if there are no standard comments configured. Remove the qualified fields from the quick filter tooltips.
