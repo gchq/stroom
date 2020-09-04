@@ -512,7 +512,8 @@ public class StoreImpl<D extends Doc> implements Store<D> {
     private D read(final String uuid) {
         // Check that the user has permission to read this item.
         if (!securityContext.hasDocumentPermission(uuid, DocumentPermissionNames.READ)) {
-            throw new PermissionException(securityContext.getUserId(), "You are not authorised to read this document");
+            throw new PermissionException(securityContext.getUserId(),
+                    LogUtil.message("You are not authorised to read document with UUID {}", uuid));
         }
 
         final Map<String, byte[]> data = persistence.getLockFactory().lockResult(uuid, () -> {
