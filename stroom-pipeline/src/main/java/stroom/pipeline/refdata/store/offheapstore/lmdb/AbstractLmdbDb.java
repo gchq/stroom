@@ -197,6 +197,7 @@ public abstract class AbstractLmdbDb<K, V> implements LmdbDb {
      */
     public Optional<V> get(Txn<ByteBuffer> txn, final K key) {
         try (PooledByteBuffer pooledKeyBuffer = getPooledKeyBuffer()) {
+            // TODO @AT wrap this with a try catch to report the serde error
             keySerde.serialize(pooledKeyBuffer.getByteBuffer(), key);
             ByteBuffer valueBuffer = lmdbDbi.get(txn, pooledKeyBuffer.getByteBuffer());
             if (LOGGER.isTraceEnabled()) {

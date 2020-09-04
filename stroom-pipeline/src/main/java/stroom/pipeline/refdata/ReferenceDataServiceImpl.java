@@ -30,11 +30,14 @@ import stroom.query.api.v2.ExpressionTerm.Condition;
 import stroom.query.common.v2.DateExpressionParser;
 import stroom.security.api.SecurityContext;
 import stroom.security.shared.PermissionNames;
+import stroom.task.api.TaskContextFactory;
 import stroom.util.logging.LambdaLogger;
 import stroom.util.logging.LambdaLoggerFactory;
+import stroom.util.pipeline.scope.PipelineScopeRunnable;
 import stroom.util.shared.PermissionException;
 
 import javax.inject.Inject;
+import javax.inject.Provider;
 import javax.ws.rs.BadRequestException;
 import java.time.Instant;
 import java.time.ZoneOffset;
@@ -152,20 +155,26 @@ public class ReferenceDataServiceImpl implements ReferenceDataService {
     private final RefDataStore refDataStore;
     private final SecurityContext securityContext;
     private final FeedStore feedStore;
-    private final ReferenceData referenceData;
+    private final Provider<ReferenceData> referenceDataProvider;
     private final RefDataValueConverter refDataValueConverter;
+    private final PipelineScopeRunnable pipelineScopeRunnable;
+    private final TaskContextFactory taskContextFactory;
 
     @Inject
     public ReferenceDataServiceImpl(final RefDataStoreFactory refDataStoreFactory,
                                     final SecurityContext securityContext,
                                     final FeedStore feedStore,
-                                    final ReferenceData referenceData,
-                                    final RefDataValueConverter refDataValueConverter) {
+                                    final Provider<ReferenceData> referenceDataProvider,
+                                    final RefDataValueConverter refDataValueConverter,
+                                    final PipelineScopeRunnable pipelineScopeRunnable,
+                                    final TaskContextFactory taskContextFactory) {
         this.refDataStore = refDataStoreFactory.getOffHeapStore();
         this.securityContext = securityContext;
         this.feedStore = feedStore;
-        this.referenceData = referenceData;
+        this.referenceDataProvider = referenceDataProvider;
         this.refDataValueConverter = refDataValueConverter;
+        this.pipelineScopeRunnable = pipelineScopeRunnable;
+        this.taskContextFactory = taskContextFactory;
     }
 
     @Override
@@ -192,30 +201,43 @@ public class ReferenceDataServiceImpl implements ReferenceDataService {
         //    use/read each feed
         //    use each pipe
 
+        // TODO @AT This is a lot of cross over between ReferenceData and ReferenceDataServiceImpl
+
+
         return securityContext.secureResult(PermissionNames.VIEW_DATA_PERMISSION, () -> {
 
-            final LookupIdentifier lookupIdentifier = LookupIdentifier.of(
-                    refDataLookupRequest.getMapName(),
-                    refDataLookupRequest.getKey(),
-                    refDataLookupRequest.getEffectiveTimeEpochMs());
+            return taskContextFactory.contextResult("Reference Data Lookup (API)",
+                    taskContext -> {
+                        try {
+                            final LookupIdentifier lookupIdentifier = LookupIdentifier.of(
+                                    refDataLookupRequest.getMapName(),
+                                    refDataLookupRequest.getKey(),
+                                    refDataLookupRequest.getEffectiveTimeEpochMs());
 
 
-            final List<PipelineReference> pipelineReferences = convertReferenceLoaders(
-                    refDataLookupRequest.getReferenceLoaders());
+                            final List<PipelineReference> pipelineReferences = convertReferenceLoaders(
+                                    refDataLookupRequest.getReferenceLoaders());
 
-            final ReferenceDataResult referenceDataResult = new ReferenceDataResult();
+                            final ReferenceDataResult referenceDataResult = new ReferenceDataResult();
 
-            referenceData.ensureReferenceDataAvailability(
-                    pipelineReferences,
-                    lookupIdentifier,
-                    referenceDataResult);
+                            pipelineScopeRunnable.scopeRunnable(() -> {
+                                referenceDataProvider.get().ensureReferenceDataAvailability(
+                                        pipelineReferences,
+                                        lookupIdentifier,
+                                        referenceDataResult);
+                            });
 
-            // TODO @AT Probably could use the consume method on the proxy to be more efficient
-            //   but this will do for now.
-            return referenceDataResult.getRefDataValueProxy().supplyValue()
-                    .map(refDataValueConverter::refDataValueToString)
-                    .orElse(null);
-        });
+                            // TODO @AT Probably could use the consume method on the proxy to be more efficient
+                            //   but this will do for now.
+                            return referenceDataResult.getRefDataValueProxy().supplyValue()
+                                    .map(refDataValueConverter::refDataValueToString)
+                                    .orElse(null);
+                        } catch (Exception e) {
+                            LOGGER.error("Error looking up {}", refDataLookupRequest, e);
+                            throw e;
+                        }
+                    });
+        }).get();
     }
 
     private List<PipelineReference> convertReferenceLoaders(final List<ReferenceLoader> referenceLoaders) {
