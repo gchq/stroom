@@ -1,5 +1,9 @@
 package stroom.dispatch.client;
 
+import stroom.alert.client.event.AlertEvent;
+import stroom.task.client.TaskEndEvent;
+import stroom.task.client.TaskStartEvent;
+
 import com.google.gwt.core.client.GWT;
 import com.google.gwt.event.shared.GwtEvent;
 import com.google.gwt.event.shared.HasHandlers;
@@ -14,9 +18,6 @@ import org.fusesource.restygwt.client.Dispatcher;
 import org.fusesource.restygwt.client.Method;
 import org.fusesource.restygwt.client.MethodCallback;
 import org.fusesource.restygwt.client.REST;
-import stroom.alert.client.event.AlertEvent;
-import stroom.task.client.TaskEndEvent;
-import stroom.task.client.TaskStartEvent;
 
 import java.util.function.Consumer;
 
@@ -70,9 +71,13 @@ class RestFactoryImpl implements RestFactory, HasHandlers {
                         try {
                             // Assuming we get a response like { "code": "", "message": "" }
                             final String responseText = method.getResponse().getText();
-                            final JSONObject responseJson = (JSONObject) JSONParser.parseStrict(responseText);
-                            msg = ((JSONString) responseJson.get("message")).stringValue();
-                            wrappedExcepton = new RuntimeException(msg, exception);
+                            if (responseText != null && !responseText.isEmpty()) {
+                                final JSONObject responseJson = (JSONObject) JSONParser.parseStrict(responseText);
+                                msg = ((JSONString) responseJson.get("message")).stringValue();
+                                wrappedExcepton = new RuntimeException(msg, exception);
+                            } else {
+                                msg = exception.getMessage();
+                            }
                         } catch (Exception e) {
                             // Not the format we were expecting so just use the msg from the exception
                             msg = exception.getMessage();
