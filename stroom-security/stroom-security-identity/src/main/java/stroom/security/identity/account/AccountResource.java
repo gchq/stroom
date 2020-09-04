@@ -18,13 +18,14 @@
 
 package stroom.security.identity.account;
 
+import stroom.util.shared.RestResource;
+import stroom.util.shared.ResultPage;
+import stroom.util.shared.filter.FilterFieldDefinition;
+
 import com.codahale.metrics.annotation.Timed;
 import io.swagger.annotations.Api;
 import io.swagger.annotations.ApiOperation;
 import io.swagger.annotations.ApiParam;
-import stroom.util.shared.RestResource;
-import stroom.util.shared.ResultPage;
-import stroom.util.shared.filter.FilterFieldDefinition;
 
 import javax.servlet.http.HttpServletRequest;
 import javax.validation.constraints.NotNull;
@@ -46,16 +47,17 @@ import java.util.List;
 @Consumes(MediaType.APPLICATION_JSON)
 @Api(description = "Stroom Account API", tags = {"Account"})
 public interface AccountResource extends RestResource {
+
     FilterFieldDefinition FIELD_DEF_USER_ID = FilterFieldDefinition.defaultField("UserId");
-    FilterFieldDefinition FIELD_DEF_EMAIL = FilterFieldDefinition.qualifiedField(
-            "Email", "email");
-    FilterFieldDefinition FIELD_DEF_FIRST_NAME = FilterFieldDefinition.qualifiedField(
-            "FirstName", "firstName");
-    FilterFieldDefinition FIELD_DEF_LAST_NAME = FilterFieldDefinition.qualifiedField("LastName", "lastName");
+    FilterFieldDefinition FIELD_DEF_EMAIL = FilterFieldDefinition.qualifiedField("Email");
+    FilterFieldDefinition FIELD_DEF_STATUS = FilterFieldDefinition.qualifiedField("Status");
+    FilterFieldDefinition FIELD_DEF_FIRST_NAME = FilterFieldDefinition.qualifiedField("FirstName");
+    FilterFieldDefinition FIELD_DEF_LAST_NAME = FilterFieldDefinition.qualifiedField("LastName");
 
     List<FilterFieldDefinition> FIELD_DEFINITIONS = Arrays.asList(
             FIELD_DEF_USER_ID,
             FIELD_DEF_EMAIL,
+            FIELD_DEF_STATUS,
             FIELD_DEF_FIRST_NAME,
             FIELD_DEF_LAST_NAME);
 

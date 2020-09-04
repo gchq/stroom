@@ -1,7 +1,5 @@
 package stroom.security.impl;
 
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 import stroom.docref.DocRef;
 import stroom.explorer.api.ExplorerNodeService;
 import stroom.explorer.shared.DocumentTypes;
@@ -15,7 +13,13 @@ import stroom.security.shared.DocPermissionResource;
 import stroom.security.shared.DocumentPermissionNames;
 import stroom.security.shared.DocumentPermissions;
 import stroom.security.shared.FetchAllDocumentPermissionsRequest;
+import stroom.security.shared.FilterUsersRequest;
+import stroom.security.shared.User;
+import stroom.util.filter.QuickFilterPredicateFactory;
 import stroom.util.shared.EntityServiceException;
+
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import javax.inject.Inject;
 import java.util.HashMap;
@@ -25,6 +29,8 @@ import java.util.Map;
 import java.util.Map.Entry;
 import java.util.Optional;
 import java.util.Set;
+import java.util.function.Predicate;
+import java.util.stream.Collectors;
 
 class DocPermissionResourceImpl implements DocPermissionResource {
     private static final Logger LOGGER = LoggerFactory.getLogger(DocPermissionResourceImpl.class);
@@ -109,6 +115,21 @@ class DocPermissionResourceImpl implements DocPermissionResource {
     @Override
     public List<String> getPermissionForDocType(final String docType) {
         return documentTypePermissions.getPermissions(docType);
+    }
+
+    @Override
+    public List<User> filterUsers(final FilterUsersRequest filterUsersRequest) {
+        // Not ideal calling the back end to filter some users but this is the only way to do the filtering
+        // consistently across the app.
+        final Predicate<User> quickFilterPredicate = QuickFilterPredicateFactory.createFuzzyMatchPredicate(
+                filterUsersRequest.getQuickFilterInput(), UserDao.FILTER_FIELD_MAPPERS);
+        if (filterUsersRequest.getUsers() == null) {
+            return null;
+        } else {
+            return filterUsersRequest.getUsers().stream()
+                    .filter(quickFilterPredicate)
+                    .collect(Collectors.toList());
+        }
     }
 
     private void changeDocPermissions(final DocRef docRef,

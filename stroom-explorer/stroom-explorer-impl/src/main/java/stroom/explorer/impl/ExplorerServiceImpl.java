@@ -64,16 +64,10 @@ import java.util.stream.Collectors;
 class ExplorerServiceImpl implements ExplorerService, CollectionService, Clearable {
     private static final Logger LOGGER = LoggerFactory.getLogger(ExplorerServiceImpl.class);
 
-    // Bit of a fudge to allow folder searching but you can't use it with name/type as folder is a parent of the other
-// items
-//            FilterFieldMapper.of(FilterFieldDefinition.qualifiedField("Folder"), docRef ->
-//                    ExplorerConstants.FOLDER.equals(docRef.getType())
-//                            ? docRef.getName()
-//                            : null),
     private static final FilterFieldMappers<DocRef> FIELD_MAPPERS = FilterFieldMappers.of(
             FilterFieldMapper.of(ExplorerTreeFilter.FIELD_DEF_NAME, DocRef::getName),
-            FilterFieldMapper.of(ExplorerTreeFilter.FIELD_DEF_TYPE, DocRef::getType)
-    );
+            FilterFieldMapper.of(ExplorerTreeFilter.FIELD_DEF_TYPE, DocRef::getType),
+            FilterFieldMapper.of(ExplorerTreeFilter.FIELD_DEF_UUID, DocRef::getUuid));
 
     private final ExplorerNodeService explorerNodeService;
     private final ExplorerTreeModel explorerTreeModel;

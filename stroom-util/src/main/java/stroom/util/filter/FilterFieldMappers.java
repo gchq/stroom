@@ -1,5 +1,7 @@
 package stroom.util.filter;
 
+import stroom.util.shared.filter.FilterFieldDefinition;
+
 import java.util.Arrays;
 import java.util.Collection;
 import java.util.Collections;
@@ -41,9 +43,18 @@ public class FilterFieldMappers<T_ROW> {
                 .orElseGet(Collections::emptyMap));
     }
 
-    public static <T_ROW> FilterFieldMappers<T_ROW> none() {
-        return new FilterFieldMappers<>(Collections.emptyMap());
+    /**
+     * @return A {@link FilterFieldMappers} object for a row/record that is just a single {@link String} field, i.e.
+     * a {@link List<String>}.
+     */
+    public static FilterFieldMappers<String> singleStringField() {
+        return FilterFieldMappers.of(
+                FilterFieldMapper.of(
+                        FilterFieldDefinition.defaultField("Value"),
+                        Function.identity()));
     }
+
+
 
     public int size() {
         return map.size();

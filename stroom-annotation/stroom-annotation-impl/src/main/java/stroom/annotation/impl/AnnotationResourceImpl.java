@@ -24,15 +24,20 @@ import stroom.annotation.shared.EventLink;
 import stroom.annotation.shared.SetAssignedToRequest;
 import stroom.annotation.shared.SetStatusRequest;
 import stroom.event.logging.api.DocumentEventLog;
+import stroom.util.filter.FilterFieldMappers;
+import stroom.util.filter.QuickFilterPredicateFactory;
 import stroom.util.logging.LambdaLogger;
 import stroom.util.logging.LambdaLoggerFactory;
 
 import javax.inject.Inject;
 import java.util.List;
+import java.util.function.Predicate;
 import java.util.stream.Collectors;
 
 class AnnotationResourceImpl implements AnnotationResource {
     private static final LambdaLogger LOGGER = LambdaLoggerFactory.getLogger(AnnotationResourceImpl.class);
+
+    private static final FilterFieldMappers<String> FILTER_FIELD_MAPPERS = FilterFieldMappers.singleStringField();
 
     private final AnnotationService annotationService;
     private final DocumentEventLog documentEventLog;
@@ -93,28 +98,12 @@ class AnnotationResourceImpl implements AnnotationResource {
 
     @Override
     public List<String> getStatus(final String filter) {
-        final List<String> values = annotationConfig.getStatusValues();
-        if (filter == null || filter.isEmpty()) {
-            return values;
-        }
-
-        return values
-                .stream()
-                .filter(value -> value.toLowerCase().contains(filter.toLowerCase()))
-                .collect(Collectors.toList());
+        return filterValues(annotationConfig.getStatusValues(), filter);
     }
 
     @Override
     public List<String> getComment(final String filter) {
-        final List<String> values = annotationConfig.getStandardComments();
-        if (filter == null || filter.isEmpty()) {
-            return values;
-        }
-
-        return values
-                .stream()
-                .filter(value -> value.toLowerCase().contains(filter.toLowerCase()))
-                .collect(Collectors.toList());
+        return filterValues(annotationConfig.getStandardComments(), filter);
     }
 
     @Override
@@ -140,5 +129,18 @@ class AnnotationResourceImpl implements AnnotationResource {
     @Override
     public Integer setAssignedTo(final SetAssignedToRequest request) {
         return annotationService.setAssignedTo(request);
+    }
+
+    private List<String> filterValues(final List<String> allValues, final String quickFilterInput) {
+        if (allValues == null || allValues.isEmpty()) {
+            return allValues;
+        } else {
+            final Predicate<String> quickFilterPredicate = QuickFilterPredicateFactory.createFuzzyMatchPredicate(
+                    quickFilterInput, FILTER_FIELD_MAPPERS);
+
+            return allValues.stream()
+                    .filter(quickFilterPredicate)
+                    .collect(Collectors.toList());
+        }
     }
 }

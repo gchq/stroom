@@ -11,6 +11,41 @@ and this project adheres to [Semantic Versioning](http://semver.org/).
 
 * Issue **#1666** : Parsers now support name patterns for loading config documents. 
 
+* Issue **#1657** : Remove INTERNAL_PROCESSING_USER from Users list in App Permissions screen.
+
+* Issue **#1782** : Fix handling of empty NOT/AND/OR in stats queries and immprove the error handling for the remote data sources.
+
+* Issue **#1781** : Fix SQL stats handling of NOT() with more than one term in the NOT.
+
+* Issue **#1830** : Change quick filters on Annotations screen to use fuzzy filtering consistent with the rest of stroom. Disable the comment quick filter drop down if there are no standard comments configured. Remove the qualified fields from the quick filter tooltips.
+
+* Issue **#1829** : Fix Annotations screen recording change history when clicking an empty title/subject.
+
+* Issue **#1737** : Fix quick filter in users/groups popup.
+
+* Issue **#1832** : Fix inability to add users/groups in the Document Permissions screen.
+
+
+## [v7.0-beta.49] - 2020-09-02
+
+* Fix accidental commit of broken code.
+
+
+## [v7.0-beta.48] - 2020-09-02
+
+* Fix duplicate call to bintry upload in travis script.
+
+
+## [v7.0-beta.47] - 2020-09-02
+
+* Issue **#1821** : Fix SQL Stat queries whose table doesn't use any datasource fields.
+
+* Issue **#1694** : Fix UUID filtering in quick filters, now using `uuid:` field qualifier. Removed support for `#` prefix in Quick Filter and suggesters.
+
+* Issue **#1699** : Add a docker managed volume for the ref data store.
+
+* Add `pooledByteBufferCounts` to ref data config.
+
 * Issue **#1700** : Stopped stepping happening on open.
 
 * Uplift LMDB to v0.8.1.
@@ -2518,7 +2553,10 @@ Issue **gchq/stroom-expression#22** : Add `typeOf(...)` function to dashboard.
 
 * Issue **#202** : Initial release of the new data retention policy functionality.
 
-[Unreleased]: https://github.com/gchq/stroom/compare/v7.0-beta.46...HEAD
+[Unreleased]: https://github.com/gchq/stroom/compare/v7.0-beta.49...HEAD
+[v7.0-beta.49]: https://github.com/gchq/stroom/compare/v7.0-beta.48...v7.0-beta.49
+[v7.0-beta.48]: https://github.com/gchq/stroom/compare/v7.0-beta.47...v7.0-beta.48
+[v7.0-beta.47]: https://github.com/gchq/stroom/compare/v7.0-beta.46...v7.0-beta.47
 [v7.0-beta.46]: https://github.com/gchq/stroom/compare/v7.0-beta.45...v7.0-beta.46
 [v7.0-beta.45]: https://github.com/gchq/stroom/compare/v7.0-beta.44...v7.0-beta.45
 [v7.0-beta.44]: https://github.com/gchq/stroom/compare/v7.0-beta.43...v7.0-beta.44

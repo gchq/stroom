@@ -130,6 +130,9 @@ class TokenDaoImpl implements TokenDao {
                     TokenResource.FIELD_DEF_USER_EMAIL,
                     Token::getUserEmail),
             FilterFieldMapper.of(
+                    TokenResource.FIELD_DEF_STATUS,
+                    token -> token.isEnabled() ? "Enabled" : "Disabled"),
+            FilterFieldMapper.of(
                     TokenResource.FIELD_DEF_COMMENTS,
                     Token::getComments));
 

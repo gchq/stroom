@@ -254,6 +254,8 @@ else
     # Each work will chew up the maxHeap value and we have to allow for
     # our docker services as well.
     ./gradlew \
+      --scan \
+      --stacktrace \
       -PdumpFailedTestXml=true \
       -Pversion="${TRAVIS_TAG}" \
       clean \
@@ -262,34 +264,37 @@ else
       -x generateSwaggerDocumentation \
       -x copyFilesForStroomDockerBuild \
       -x copyFilesForProxyDockerBuild \
-      -x buildDistribution \
-      "${extraBuildArgs[@]}" \
-      --scan -s
+      -x buildDistribution
 
 #      -Dorg.gradle.parallel=true \
 
     ./gradlew \
-      stroom-ui:copyYarnBuild \
-      --scan -s
+      --scan \
+      --stacktrace \
+      stroom-ui:copyYarnBuild
 
     # Compile the application GWT UI
     ./gradlew \
+      --scan \
+      --stacktrace \
       -PgwtCompilerWorkers=2 \
       -PgwtCompilerMinHeap=50M \
       -PgwtCompilerMaxHeap=2G \
-      stroom-app-gwt:gwtCompile \
-      --scan -s
+      stroom-app-gwt:gwtCompile
 
     # Compile the dashboard GWT UI
     ./gradlew \
+      --scan \
+      --stacktrace \
       -PgwtCompilerWorkers=2 \
       -PgwtCompilerMinHeap=50M \
       -PgwtCompilerMaxHeap=2G \
-      stroom-dashboard-gwt:gwtCompile \
-      --scan -s
+      stroom-dashboard-gwt:gwtCompile
 
     # Make the distribution.
     ./gradlew \
+      --scan \
+      --stacktrace \
       -PdumpFailedTestXml=true \
       -Pversion="${TRAVIS_TAG}" \
       shadowJar \
@@ -300,8 +305,7 @@ else
       -x stroom-ui:copyYarnBuild \
       -x stroom-app-gwt:gwtCompile \
       -x stroom-dashboard-gwt:gwtCompile \
-      "${extraBuildArgs[@]}" \
-      --scan -s
+      "${extraBuildArgs[@]}"
 
 # Disable parallel build execution in travis. Note this is seprate to prallel test execution.
 # -Dorg.gradle.parallel=false \

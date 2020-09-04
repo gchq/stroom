@@ -69,8 +69,8 @@ do_docker_builds() {
 
   docker build \
     --tag gchq/stroom:${DOCKER_IMAGE_TAG} \
-    --build-arg GIT_COMMIT=${CURRENT_GIT_COMMIT} \
-    --build-arg GIT_TAG=${DOCKER_IMAGE_TAG} \
+    --build-arg GIT_COMMIT="${CURRENT_GIT_COMMIT}" \
+    --build-arg GIT_TAG="${DOCKER_IMAGE_TAG}" \
     ./stroom-app/docker
 
   echo -e "${GREEN}Building stroom-proxy docker image" \
@@ -79,8 +79,8 @@ do_docker_builds() {
 
   docker build \
     --tag gchq/stroom-proxy:${DOCKER_IMAGE_TAG} \
-    --build-arg GIT_COMMIT=${CURRENT_GIT_COMMIT} \
-    --build-arg GIT_TAG=${DOCKER_IMAGE_TAG} \
+    --build-arg GIT_COMMIT="${CURRENT_GIT_COMMIT}" \
+    --build-arg GIT_TAG="${DOCKER_IMAGE_TAG}" \
     ./stroom-proxy/stroom-proxy-app/docker
 }
 

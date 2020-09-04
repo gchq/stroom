@@ -1,11 +1,17 @@
 package stroom.security.impl;
 
+import stroom.security.shared.FindUserCriteria;
 import stroom.security.shared.User;
+import stroom.util.filter.FilterFieldMapper;
+import stroom.util.filter.FilterFieldMappers;
 
 import java.util.List;
 import java.util.Set;
 
 public interface UserDao {
+    FilterFieldMappers<User> FILTER_FIELD_MAPPERS = FilterFieldMappers.of(
+            FilterFieldMapper.of(FindUserCriteria.FIELD_DEF_NAME, User::getName));
+
     User create(User user);
 
 //    User createUser(String name);
@@ -22,11 +28,11 @@ public interface UserDao {
 
     void delete(String uuid);
 
-    List<User> find(String name, Boolean userGroup);
+    List<User> find(String quickFilter, Boolean userGroup);
 
-    List<User> findUsersInGroup(String groupUuid);
+    List<User> findUsersInGroup(String groupUuid, String quickFilterInput);
 
-    List<User> findGroupsForUser(String userUuid);
+    List<User> findGroupsForUser(String userUuid, String quickFilterInput);
 
     Set<String> findGroupUuidsForUser(String userUuid);
 

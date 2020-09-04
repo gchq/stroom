@@ -360,7 +360,9 @@ class DashboardResourceImpl implements DashboardResource {
         });
     }
 
-    private SearchResponse processRequest(final ActiveQueries activeQueries, final DashboardQueryKey queryKey, final SearchRequest searchRequest) {
+    private SearchResponse processRequest(final ActiveQueries activeQueries,
+                                          final DashboardQueryKey queryKey,
+                                          final SearchRequest searchRequest) {
         SearchResponse result;
 
         boolean newSearch = false;
@@ -397,7 +399,8 @@ class DashboardResourceImpl implements DashboardResource {
             final DataSourceProvider dataSourceProvider = searchDataSourceProviderRegistry
                     .getDataSourceProvider(dataSourceRef)
                     .orElseThrow(() ->
-                            new RuntimeException("No search provider found for '" + dataSourceRef.getType() + "' data source"));
+                            new RuntimeException(
+                                    "No search provider found for '" + dataSourceRef.getType() + "' data source"));
 
             // Add a param for `currentUser()`
             if (searchRequest.getSearch() != null) {
@@ -421,18 +424,15 @@ class DashboardResourceImpl implements DashboardResource {
             }
 
         } catch (final RuntimeException e) {
-            LOGGER.debug(e.getMessage(), e);
+            LOGGER.debug("Error processing search {}", search, e);
 
             if (newSearch) {
                 searchEventLog.search(search.getDataSourceRef(), search.getExpression(), search.getQueryInfo(), e);
             }
 
-            String errors = null;
-            if (e.getMessage() == null) {
-                errors = e.getClass().getName();
-            } else {
-                errors = e.getClass().getName() + ": " + e.getMessage();
-            }
+            final String errors = e.getMessage() != null
+                    ? e.getMessage()
+                    : e.getClass().getName();
 
             result = new SearchResponse(queryKey, null, errors, true, null);
         }
