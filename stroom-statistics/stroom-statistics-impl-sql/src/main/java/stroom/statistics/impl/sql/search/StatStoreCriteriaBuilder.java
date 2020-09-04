@@ -9,11 +9,13 @@ import stroom.statistics.impl.sql.rollup.RollUpBitMask;
 import stroom.statistics.impl.sql.shared.StatisticRollUpType;
 import stroom.statistics.impl.sql.shared.StatisticStoreDoc;
 import stroom.util.Period;
+import stroom.util.logging.LogUtil;
 import stroom.util.shared.Range;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import javax.ws.rs.BadRequestException;
 import java.time.ZonedDateTime;
 import java.util.ArrayList;
 import java.util.Collections;
@@ -40,7 +42,7 @@ public class StatStoreCriteriaBuilder {
         final ExpressionOperator topLevelExpressionOperator = search.getQuery().getExpression();
 
         if (topLevelExpressionOperator == null || topLevelExpressionOperator.op() == null) {
-            throw new IllegalArgumentException(
+            throw new BadRequestException(
                     "The top level operator for the query must be one of [" + ExpressionOperator.Op.values() + "]");
         }
 
@@ -64,7 +66,7 @@ public class StatStoreCriteriaBuilder {
                         final ExpressionTerm expressionTerm = (ExpressionTerm) expressionItem;
 
                         if (expressionTerm.getField() == null) {
-                            throw new IllegalArgumentException("Expression term does not have a field specified");
+                            throw new BadRequestException("Expression term does not have a field specified");
                         }
 
                         if (expressionTerm.getField().equals(StatisticStoreDoc.FIELD_NAME_DATE_TIME)) {
@@ -77,7 +79,7 @@ public class StatStoreCriteriaBuilder {
                         }
                     } else if (expressionItem instanceof ExpressionOperator) {
                         if (((ExpressionOperator) expressionItem).op() == null) {
-                            throw new IllegalArgumentException(
+                            throw new BadRequestException(
                                 "An operator in the query is missing a type, it should be one of " + ExpressionOperator.Op.values());
                         }
                     }
@@ -87,7 +89,7 @@ public class StatStoreCriteriaBuilder {
 
         // ensure we have a date term
         if (dateTermsFound != 1 || validDateTermsFound != 1) {
-            throw new UnsupportedOperationException(
+            throw new BadRequestException(
                     "Search queries on the statistic store must contain one term using the '"
                             + StatisticStoreDoc.FIELD_NAME_DATE_TIME
                             + "' field with one of the following condtitions [" + SUPPORTED_DATE_CONDITIONS.toString()
@@ -96,7 +98,7 @@ public class StatStoreCriteriaBuilder {
 
         // ensure the value field is not used in the query terms
         if (contains(topLevelExpressionOperator, StatisticStoreDoc.FIELD_NAME_VALUE)) {
-            throw new UnsupportedOperationException("Search queries containing the field '"
+            throw new BadRequestException("Search queries containing the field '"
                     + StatisticStoreDoc.FIELD_NAME_VALUE + "' are not supported.  Please remove it from the query");
         }
 
@@ -123,11 +125,11 @@ public class StatStoreCriteriaBuilder {
 
         if (!rolledUpFieldNames.isEmpty()) {
             if (dataSource.getRollUpType().equals(StatisticRollUpType.NONE)) {
-                throw new UnsupportedOperationException(
+                throw new BadRequestException(
                         "Query contains rolled up terms but the Statistic Data Source does not support any roll-ups");
             } else if (dataSource.getRollUpType().equals(StatisticRollUpType.CUSTOM)) {
                 if (!dataSource.isRollUpCombinationSupported(rolledUpFieldNames)) {
-                    throw new UnsupportedOperationException(String.format(
+                    throw new BadRequestException(String.format(
                             "The query contains a combination of rolled up fields %s that is not in the list of custom roll-ups for the statistic data source",
                             rolledUpFieldNames));
                 }
@@ -166,7 +168,12 @@ public class StatStoreCriteriaBuilder {
                 termsFound.add(termNode);
 
             } else if (node instanceof ExpressionOperator) {
-                for (final ExpressionItem childNode : ((ExpressionOperator) node).getChildren()) {
+                ExpressionOperator expressionOperator = (ExpressionOperator) node;
+                if (expressionOperator.getChildren() == null) {
+                    throw new BadRequestException(LogUtil.message("{} operator contains no terms or operators",
+                            expressionOperator.op().getDisplayValue()));
+                }
+                for (final ExpressionItem childNode : expressionOperator.getChildren()) {
                     findAllTermNodes(childNode, termsFound);
                 }
             }
@@ -201,7 +208,7 @@ public class StatStoreCriteriaBuilder {
         final String[] dateArr = dateTerm.getValue().split(",");
 
         if (dateArr.length != 2) {
-            throw new RuntimeException("DateTime term is not a valid format, term: " + dateTerm.toString());
+            throw new BadRequestException("DateTime term is not a valid format, term: " + dateTerm.toString());
         }
 
         rangeFrom = parseDateTime("from", dateArr[0], timeZoneId, nowEpochMilli);
@@ -217,10 +224,10 @@ public class StatStoreCriteriaBuilder {
         final ZonedDateTime dateTime;
         try {
             dateTime = DateExpressionParser.parse(value, timeZoneId, nowEpochMilli)
-                    .orElseThrow(() -> new RuntimeException(
+                    .orElseThrow(() -> new BadRequestException(
                             "DateTime term has an invalid '" + type + "' value of '" + value + "'"));
         } catch (final Exception e) {
-            throw new RuntimeException("DateTime term has an invalid '" + type + "' value of '" + value + "'");
+            throw new BadRequestException("DateTime term has an invalid '" + type + "' value of '" + value + "'");
         }
 
         return dateTime.toInstant().toEpochMilli();
