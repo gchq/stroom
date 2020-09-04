@@ -53,7 +53,7 @@ public class XPathListPresenter extends MyPresenterWidget<DataGridView<XPathFilt
         final Column<XPathFilter, String> xPathColumn = new Column<XPathFilter, String>(new TextCell()) {
             @Override
             public String getValue(final XPathFilter filter) {
-                return filter.getXPath();
+                return filter.getPath();
             }
         };
         getView().addResizableColumn(xPathColumn, "XPath", 200);

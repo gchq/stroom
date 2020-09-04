@@ -7,6 +7,8 @@ and this project adheres to [Semantic Versioning](http://semver.org/).
 
 ## [Unreleased]
 
+* Issue **#1798** : Fixed REST serialisation issue that was preventing stepping XPath filters from being passed to the server.
+
 * Issue **#1666** : Stepping now loads element documents that use name patterns.
 
 * Issue **#1666** : Parsers now support name patterns for loading config documents. 
