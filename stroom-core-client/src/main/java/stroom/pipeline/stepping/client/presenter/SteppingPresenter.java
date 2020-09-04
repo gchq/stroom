@@ -17,18 +17,6 @@
 
 package stroom.pipeline.stepping.client.presenter;
 
-import com.google.gwt.core.client.GWT;
-import com.google.gwt.core.client.Scheduler;
-import com.google.gwt.user.client.ui.Widget;
-import com.google.inject.Inject;
-import com.google.inject.Provider;
-import com.google.web.bindery.event.shared.EventBus;
-import com.google.web.bindery.event.shared.HandlerRegistration;
-import com.gwtplatform.mvp.client.Layer;
-import com.gwtplatform.mvp.client.LayerContainer;
-import com.gwtplatform.mvp.client.MyPresenterWidget;
-import com.gwtplatform.mvp.client.PresenterWidget;
-import com.gwtplatform.mvp.client.View;
 import stroom.alert.client.event.AlertEvent;
 import stroom.data.client.presenter.ClassificationUiHandlers;
 import stroom.data.client.presenter.DataPresenter;
@@ -41,12 +29,9 @@ import stroom.document.client.event.HasDirtyHandlers;
 import stroom.editor.client.view.IndicatorLines;
 import stroom.meta.shared.FindMetaCriteria;
 import stroom.meta.shared.Meta;
-import stroom.meta.shared.MetaExpressionUtil;
 import stroom.pipeline.shared.PipelineModelException;
 import stroom.pipeline.shared.PipelineResource;
 import stroom.pipeline.shared.SharedElementData;
-import stroom.pipeline.shared.TextConverterDoc;
-import stroom.pipeline.shared.XsltDoc;
 import stroom.pipeline.shared.data.PipelineData;
 import stroom.pipeline.shared.data.PipelineElement;
 import stroom.pipeline.shared.data.PipelineProperty;
@@ -57,7 +42,6 @@ import stroom.pipeline.shared.stepping.SteppingResource;
 import stroom.pipeline.shared.stepping.SteppingResult;
 import stroom.pipeline.structure.client.presenter.PipelineModel;
 import stroom.pipeline.structure.client.presenter.PipelineTreePresenter;
-import stroom.query.api.v2.ExpressionOperator;
 import stroom.svg.client.SvgPreset;
 import stroom.svg.client.SvgPresets;
 import stroom.task.client.TaskEndEvent;
@@ -65,6 +49,19 @@ import stroom.task.client.TaskStartEvent;
 import stroom.util.shared.Indicators;
 import stroom.widget.button.client.ButtonPanel;
 import stroom.widget.button.client.ButtonView;
+
+import com.google.gwt.core.client.GWT;
+import com.google.gwt.core.client.Scheduler;
+import com.google.gwt.user.client.ui.Widget;
+import com.google.inject.Inject;
+import com.google.inject.Provider;
+import com.google.web.bindery.event.shared.EventBus;
+import com.google.web.bindery.event.shared.HandlerRegistration;
+import com.gwtplatform.mvp.client.Layer;
+import com.gwtplatform.mvp.client.LayerContainer;
+import com.gwtplatform.mvp.client.MyPresenterWidget;
+import com.gwtplatform.mvp.client.PresenterWidget;
+import com.gwtplatform.mvp.client.View;
 
 import java.util.ArrayList;
 import java.util.HashMap;
@@ -131,19 +128,6 @@ public class SteppingPresenter extends MyPresenterWidget<SteppingPresenter.Stepp
         saveButton = addButtonLeft(SvgPresets.SAVE);
     }
 
-    private static String replace(final String path, final String type, final String replacement) {
-        String newPath = path;
-        final String param = "${" + type + "}";
-        int start = newPath.indexOf(param);
-        while (start != -1) {
-            final int end = start + param.length();
-            newPath = newPath.substring(0, start) + replacement + newPath.substring(end);
-            start = newPath.indexOf(param, end);
-        }
-
-        return newPath;
-    }
-
     @Override
     protected void onBind() {
         registerHandler(
@@ -171,45 +155,21 @@ public class SteppingPresenter extends MyPresenterWidget<SteppingPresenter.Stepp
             return sourcePresenter;
 
         } else {
-            DocRef docRef = null;
-            DocRef fuzzyDocRef = null;
-
-            final List<PipelineProperty> properties = pipelineModel.getProperties(element);
-            if (properties != null && properties.size() > 0) {
-                for (final PipelineProperty property : properties) {
-                    if (property.getValue() != null) {
-                        if (property.getValue().getEntity() != null) {
-                            docRef = property.getValue().getEntity();
-                        } else if (property.getName().toLowerCase().contains("pattern") && meta != null) {
-                            String value = property.getValue().getString();
-                            value = replace(value, "feed", meta.getFeedName());
-                            value = replace(value, "pipeline", request.getPipeline().getName());
-
-                            if (element.getElementType().getType().equalsIgnoreCase("XSLTFilter")) {
-                                fuzzyDocRef = new DocRef(XsltDoc.DOCUMENT_TYPE, null, value);
-                            } else {
-                                fuzzyDocRef = new DocRef(TextConverterDoc.DOCUMENT_TYPE, null, value);
-                            }
-                        }
-                    }
-                }
-            }
-
             final String elementId = element.getId();
             ElementPresenter editorPresenter = editorMap.get(elementId);
-
             if (editorPresenter == null) {
                 final DirtyHandler dirtyEditorHandler = event -> {
                     DirtyEvent.fire(SteppingPresenter.this, true);
                     saveButton.setEnabled(true);
                 };
 
-                final ElementPresenter presenter = editorProvider.get();
+                final List<PipelineProperty> properties = pipelineModel.getProperties(element);
 
-                presenter.setElementId(element.getId());
-                presenter.setElementType(element.getElementType());
-                presenter.setEntityRef(docRef);
-                presenter.setFuzzyEntityRef(fuzzyDocRef);
+                final ElementPresenter presenter = editorProvider.get();
+                presenter.setElement(element);
+                presenter.setProperties(properties);
+                presenter.setFeedName(meta.getFeedName());
+                presenter.setPipelineName(request.getPipeline().getName());
                 presenter.setPipelineStepRequest(request);
                 editorMap.put(elementId, presenter);
                 presenter.addDirtyHandler(dirtyEditorHandler);
@@ -362,7 +322,7 @@ public class SteppingPresenter extends MyPresenterWidget<SteppingPresenter.Stepp
             final Map<String, String> codeMap = new HashMap<>();
             for (final ElementPresenter editorPresenter : editorMap.values()) {
                 if (editorPresenter.isDirtyCode()) {
-                    final String elementId = editorPresenter.getElementId();
+                    final String elementId = editorPresenter.getElement().getId();
                     final String code = editorPresenter.getCode();
                     codeMap.put(elementId, code);
                 }

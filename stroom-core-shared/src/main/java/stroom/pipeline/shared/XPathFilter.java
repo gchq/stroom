@@ -28,7 +28,7 @@ import java.util.Map;
 @JsonInclude(Include.NON_NULL)
 public class XPathFilter {
     @JsonProperty
-    private String xPath;
+    private String path;
     @JsonProperty
     private MatchType matchType;
     @JsonProperty
@@ -42,24 +42,24 @@ public class XPathFilter {
     }
 
     @JsonCreator
-    public XPathFilter(@JsonProperty("xPath") final String xPath,
+    public XPathFilter(@JsonProperty("path") final String path,
                        @JsonProperty("matchType") final MatchType matchType,
                        @JsonProperty("value") final String value,
                        @JsonProperty("ignoreCase") final Boolean ignoreCase,
                        @JsonProperty("uniqueValues") final Map<String, Record> uniqueValues) {
-        this.xPath = xPath;
+        this.path = path;
         this.matchType = matchType;
         this.value = value;
         this.ignoreCase = ignoreCase;
         this.uniqueValues = uniqueValues;
     }
 
-    public String getXPath() {
-        return xPath;
+    public String getPath() {
+        return path;
     }
 
-    public void setXPath(String xPath) {
-        this.xPath = xPath;
+    public void setPath(String path) {
+        this.path = path;
     }
 
     public MatchType getMatchType() {

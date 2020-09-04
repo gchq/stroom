@@ -28,7 +28,7 @@ import javax.inject.Inject;
 class XsltResourceImpl implements XsltResource {
     private final XsltStore xsltStore;
     private final DocumentResourceHelper documentResourceHelper;
-    private SecurityContext securityContext;
+    private final SecurityContext securityContext;
 
     @Inject
     XsltResourceImpl(final XsltStore xsltStore,
@@ -50,14 +50,8 @@ class XsltResourceImpl implements XsltResource {
     }
 
     public XsltDoc fetch(final String xsltId) {
-        return securityContext.secureResult(() -> {
-            final XsltDoc xsltDoc = xsltStore.readDocument(getDocRef(xsltId));
-            if (null != xsltDoc) {
-                return xsltDoc;
-            } else {
-                return null;
-            }
-        });
+        return securityContext.secureResult(() ->
+                xsltStore.readDocument(getDocRef(xsltId)));
     }
 
     public void save(final String xsltId,

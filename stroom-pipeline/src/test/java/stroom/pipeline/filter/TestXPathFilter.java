@@ -77,14 +77,14 @@ class TestXPathFilter extends StroomUnitTest {
 
     private void testPathExists(final String xPath, final SAXEventRecorder steppingFilter) throws XPathExpressionException {
         final XPathFilter xPathFilter = new XPathFilter();
-        xPathFilter.setXPath(xPath);
+        xPathFilter.setPath(xPath);
         xPathFilter.setMatchType(MatchType.EXISTS);
         assertThat(match(xPathFilter, steppingFilter)).isTrue();
     }
 
     private void testPathEquals(final String xPath, final String value, final SAXEventRecorder steppingFilter) throws XPathExpressionException {
         final XPathFilter xPathFilter = new XPathFilter();
-        xPathFilter.setXPath(xPath);
+        xPathFilter.setPath(xPath);
         xPathFilter.setMatchType(MatchType.EQUALS);
         xPathFilter.setValue(value);
         assertThat(match(xPathFilter, steppingFilter)).isTrue();

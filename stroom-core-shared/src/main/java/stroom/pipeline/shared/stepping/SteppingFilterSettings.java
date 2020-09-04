@@ -25,6 +25,7 @@ import stroom.pipeline.shared.XPathFilter;
 import stroom.util.shared.OutputState;
 import stroom.util.shared.Severity;
 
+import java.util.List;
 import java.util.Set;
 
 @JsonInclude(Include.NON_NULL)
@@ -34,7 +35,7 @@ public class SteppingFilterSettings {
     @JsonProperty
     private OutputState skipToOutput;
     @JsonProperty
-    private Set<XPathFilter> xPathFilters;
+    private List<XPathFilter> filters;
 
     public SteppingFilterSettings() {
     }
@@ -42,10 +43,10 @@ public class SteppingFilterSettings {
     @JsonCreator
     public SteppingFilterSettings(@JsonProperty("skipToSeverity") final Severity skipToSeverity,
                                   @JsonProperty("skipToOutput") final OutputState skipToOutput,
-                                  @JsonProperty("xPathFilters") final Set<XPathFilter> xPathFilters) {
+                                  @JsonProperty("filters") final List<XPathFilter> filters) {
         this.skipToSeverity = skipToSeverity;
         this.skipToOutput = skipToOutput;
-        this.xPathFilters = xPathFilters;
+        this.filters = filters;
     }
 
     public Severity getSkipToSeverity() {
@@ -64,17 +65,17 @@ public class SteppingFilterSettings {
         this.skipToOutput = skipToOutput;
     }
 
-    public Set<XPathFilter> getXPathFilters() {
-        return xPathFilters;
+    public List<XPathFilter> getFilters() {
+        return filters;
     }
 
-    public void setXPathFilters(Set<XPathFilter> xPathFilters) {
-        this.xPathFilters = xPathFilters;
+    public void setFilters(List<XPathFilter> filters) {
+        this.filters = filters;
     }
 
     public void clearUniqueValues() {
-        if (xPathFilters != null) {
-            for (final XPathFilter xPathFilter : xPathFilters) {
+        if (filters != null) {
+            for (final XPathFilter xPathFilter : filters) {
                 xPathFilter.clearUniqueValues();
             }
         }
@@ -90,6 +91,6 @@ public class SteppingFilterSettings {
             return true;
         }
 
-        return xPathFilters != null && xPathFilters.size() > 0;
+        return filters != null && filters.size() > 0;
     }
 }

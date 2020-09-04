@@ -198,7 +198,7 @@ public class PipelineFactory {
     /**
      * Code for properties.
      */
-    private void setProperty(final ElementRegistry pipelineElementRegistry,
+    public static void setProperty(final ElementRegistry pipelineElementRegistry,
                              final String id,
                              final String elementType,
                              final Object elementInstance,
