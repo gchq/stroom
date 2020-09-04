@@ -2,6 +2,7 @@ package stroom.security.impl.db;
 
 import stroom.db.util.GenericDao;
 import stroom.db.util.JooqUtil;
+import stroom.security.api.ProcessingUserIdentityProvider;
 import stroom.security.impl.UserDao;
 import stroom.security.impl.db.jooq.tables.StroomUser;
 import stroom.security.impl.db.jooq.tables.records.StroomUserRecord;
@@ -57,12 +58,17 @@ public class UserDaoImpl implements UserDao {
         return record;
     };
 
+
+    private final ProcessingUserIdentityProvider processingUserIdentityProvider;
     private final SecurityDbConnProvider securityDbConnProvider;
     private final GenericDao<StroomUserRecord, User, Integer> genericDao;
 
     @Inject
-    public UserDaoImpl(final SecurityDbConnProvider securityDbConnProvider) {
+    public UserDaoImpl(final ProcessingUserIdentityProvider processingUserIdentityProvider,
+                       final SecurityDbConnProvider securityDbConnProvider) {
+        this.processingUserIdentityProvider = processingUserIdentityProvider;
         this.securityDbConnProvider = securityDbConnProvider;
+
         genericDao = new GenericDao<>(STROOM_USER, STROOM_USER.ID, User.class, securityDbConnProvider);
         genericDao.setObjectToRecordMapper(USER_TO_RECORD_MAPPER);
         genericDao.setRecordToObjectMapper(RECORD_TO_USER_MAPPER);
@@ -122,6 +128,7 @@ public class UserDaoImpl implements UserDao {
         return JooqUtil.contextResult(securityDbConnProvider, context ->
                 context.select().from(STROOM_USER)
                         .where(conditions)
+                        .and(getExcludedUsersCondition())
                         .fetch()
                         .stream()
                         .map(RECORD_TO_USER_MAPPER)
@@ -139,6 +146,7 @@ public class UserDaoImpl implements UserDao {
                         .join(STROOM_USER_GROUP)
                         .on(STROOM_USER.UUID.eq(STROOM_USER_GROUP.USER_UUID))
                         .where(STROOM_USER_GROUP.GROUP_UUID.eq(groupUuid))
+                        .and(getExcludedUsersCondition())
                         .orderBy(STROOM_USER.NAME)
                         .fetch()
                         .stream()
@@ -222,5 +230,10 @@ public class UserDaoImpl implements UserDao {
 
     private Predicate<User> buildQuickFilterPredicate(final String quickFilterInput) {
         return QuickFilterPredicateFactory.createFuzzyMatchPredicate(quickFilterInput, FILTER_FIELD_MAPPERS);
+    }
+
+    private Condition getExcludedUsersCondition() {
+        final String procUserId = processingUserIdentityProvider.get().getId();
+        return STROOM_USER.NAME.notEqual(procUserId);
     }
 }
