@@ -25,4 +25,10 @@ public class ReferenceDataResourceImpl implements ReferenceDataResource {
         return referenceDataServiceProvider.get()
                 .entries(limit != null ? limit : 100);
     }
+
+    @Override
+    public String lookup(final RefDataLookupRequest refDataLookupRequest) {
+        return referenceDataServiceProvider.get()
+                .lookup(refDataLookupRequest);
+    }
 }

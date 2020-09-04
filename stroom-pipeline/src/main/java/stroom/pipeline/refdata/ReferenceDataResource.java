@@ -8,6 +8,7 @@ import io.swagger.annotations.Api;
 
 import javax.ws.rs.Consumes;
 import javax.ws.rs.GET;
+import javax.ws.rs.POST;
 import javax.ws.rs.Path;
 import javax.ws.rs.Produces;
 import javax.ws.rs.QueryParam;
@@ -24,9 +25,13 @@ public interface ReferenceDataResource extends RestResource {
 
 
     String ENTRIES_SUB_PATH = "/entries";
+    String LOOKUP_SUB_PATH = "/lookup";
 
     @GET
     @Path(ENTRIES_SUB_PATH)
     List<RefStoreEntry> entries(@QueryParam("limit") final Integer limit);
 
+    @POST
+    @Path(LOOKUP_SUB_PATH)
+    String lookup(final RefDataLookupRequest refDataLookupRequest);
 }

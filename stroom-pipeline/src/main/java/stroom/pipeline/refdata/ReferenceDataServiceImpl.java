@@ -3,6 +3,7 @@ package stroom.pipeline.refdata;
 import stroom.dashboard.expression.v1.Val;
 import stroom.dashboard.expression.v1.ValLong;
 import stroom.dashboard.expression.v1.ValString;
+import stroom.data.shared.StreamTypeNames;
 import stroom.datasource.api.v2.AbstractField;
 import stroom.datasource.api.v2.DataSource;
 import stroom.datasource.api.v2.DateField;
@@ -13,10 +14,14 @@ import stroom.datasource.api.v2.LongField;
 import stroom.datasource.api.v2.TextField;
 import stroom.docref.DocRef;
 import stroom.entity.shared.ExpressionCriteria;
+import stroom.feed.api.FeedStore;
+import stroom.pipeline.refdata.RefDataLookupRequest.ReferenceLoader;
 import stroom.pipeline.refdata.store.RefDataStore;
 import stroom.pipeline.refdata.store.RefDataStoreFactory;
+import stroom.pipeline.refdata.store.RefDataValueConverter;
 import stroom.pipeline.refdata.store.RefStoreEntry;
 import stroom.pipeline.shared.PipelineDoc;
+import stroom.pipeline.shared.data.PipelineReference;
 import stroom.query.api.v2.ExpressionItem;
 import stroom.query.api.v2.ExpressionOperator;
 import stroom.query.api.v2.ExpressionOperator.Op;
@@ -24,13 +29,16 @@ import stroom.query.api.v2.ExpressionTerm;
 import stroom.query.api.v2.ExpressionTerm.Condition;
 import stroom.query.common.v2.DateExpressionParser;
 import stroom.security.api.SecurityContext;
+import stroom.security.shared.PermissionNames;
 import stroom.util.logging.LambdaLogger;
 import stroom.util.logging.LambdaLoggerFactory;
 import stroom.util.shared.PermissionException;
 
 import javax.inject.Inject;
+import javax.ws.rs.BadRequestException;
 import java.time.Instant;
 import java.time.ZoneOffset;
+import java.util.Collections;
 import java.util.List;
 import java.util.Map;
 import java.util.Objects;
@@ -139,16 +147,25 @@ public class ReferenceDataServiceImpl implements ReferenceDataService {
             Map.entry(STREAM_NO_FIELD.getName(), refStoreEntry ->
                     refStoreEntry.getMapDefinition().getRefStreamDefinition().getStreamNo()),
             Map.entry(PIPELINE_VERSION_FIELD.getName(), refStoreEntry ->
-                   refStoreEntry.getMapDefinition().getRefStreamDefinition().getPipelineVersion()));
+                    refStoreEntry.getMapDefinition().getRefStreamDefinition().getPipelineVersion()));
 
     private final RefDataStore refDataStore;
     private final SecurityContext securityContext;
+    private final FeedStore feedStore;
+    private final ReferenceData referenceData;
+    private final RefDataValueConverter refDataValueConverter;
 
     @Inject
     public ReferenceDataServiceImpl(final RefDataStoreFactory refDataStoreFactory,
-                                    final SecurityContext securityContext) {
+                                    final SecurityContext securityContext,
+                                    final FeedStore feedStore,
+                                    final ReferenceData referenceData,
+                                    final RefDataValueConverter refDataValueConverter) {
         this.refDataStore = refDataStoreFactory.getOffHeapStore();
         this.securityContext = securityContext;
+        this.feedStore = feedStore;
+        this.referenceData = referenceData;
+        this.refDataValueConverter = refDataValueConverter;
     }
 
     @Override
@@ -164,6 +181,64 @@ public class ReferenceDataServiceImpl implements ReferenceDataService {
             return entries;
         });
     }
+
+    @Override
+    public String lookup(final RefDataLookupRequest refDataLookupRequest) {
+        if (refDataLookupRequest == null) {
+            throw new BadRequestException("Missing request object");
+        }
+
+        // TODO @AT ensure user has rights to
+        //    use/read each feed
+        //    use each pipe
+
+        return securityContext.secureResult(PermissionNames.VIEW_DATA_PERMISSION, () -> {
+
+            final LookupIdentifier lookupIdentifier = LookupIdentifier.of(
+                    refDataLookupRequest.getMapName(),
+                    refDataLookupRequest.getKey(),
+                    refDataLookupRequest.getEffectiveTimeEpochMs());
+
+
+            final List<PipelineReference> pipelineReferences = convertReferenceLoaders(
+                    refDataLookupRequest.getReferenceLoaders());
+
+            final ReferenceDataResult referenceDataResult = new ReferenceDataResult();
+
+            referenceData.ensureReferenceDataAvailability(
+                    pipelineReferences,
+                    lookupIdentifier,
+                    referenceDataResult);
+
+            // TODO @AT Probably could use the consume method on the proxy to be more efficient
+            //   but this will do for now.
+            return referenceDataResult.getRefDataValueProxy().supplyValue()
+                    .map(refDataValueConverter::refDataValueToString)
+                    .orElse(null);
+        });
+    }
+
+    private List<PipelineReference> convertReferenceLoaders(final List<ReferenceLoader> referenceLoaders) {
+        if (referenceLoaders == null) {
+            return Collections.emptyList();
+        } else {
+            return referenceLoaders.stream()
+                    .map(referenceLoader -> {
+                        final DocRef feedDocRef = feedStore.findByName(referenceLoader.getFeedName())
+                                .stream()
+                                .findFirst()
+                                .orElseThrow(() ->
+                                        new BadRequestException("Unknown feed " + referenceLoader.getFeedName()));
+
+                        return new PipelineReference(
+                                referenceLoader.getLoaderPipeline(),
+                                feedDocRef,
+                                StreamTypeNames.REFERENCE);
+                    })
+                    .collect(Collectors.toList());
+        }
+    }
+
 
     private <T> T withPermissionCheck(final Supplier<T> supplier) {
         // TODO @AT Need some kind of fine grained doc permission check on the pipe associated with each entry
@@ -346,7 +421,7 @@ public class ReferenceDataServiceImpl implements ReferenceDataService {
     }
 
     private Predicate<RefStoreEntry> buildTextFieldPredicate(final ExpressionTerm expressionTerm,
-                                                                             final Function<RefStoreEntry, String> valueExtractor) {
+                                                             final Function<RefStoreEntry, String> valueExtractor) {
         // TODO @AT Handle wildcarding in term
         if (expressionTerm.getCondition().equals(Condition.EQUALS)) {
             return rec -> Objects.equals(expressionTerm.getValue(), valueExtractor.apply(rec));
