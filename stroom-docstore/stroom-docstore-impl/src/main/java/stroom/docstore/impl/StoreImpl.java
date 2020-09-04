@@ -394,9 +394,15 @@ public class StoreImpl<D extends Doc> implements Store<D> {
 
     private D getExistingDocument(final DocRef docRef) {
         try {
-            return readDocument(docRef);
+            if(!exists(docRef)) {
+                return null;
+            } else {
+                return readDocument(docRef);
+            }
         } catch (final PermissionException e) {
-            throw new PermissionException(securityContext.getUserId(), "The document being imported exists but you are authorised to read this document " + docRef);
+            throw new PermissionException(
+                    securityContext.getUserId(),
+                    "The document being imported exists but you are not authorised to read this document " + docRef);
         } catch (final RuntimeException e) {
             // Ignore.
             LOGGER.debug(e.getMessage(), e);
@@ -415,7 +421,8 @@ public class StoreImpl<D extends Doc> implements Store<D> {
         try {
             // Check that the user has permission to read this item.
             if (!canRead(docRef)) {
-                throw new PermissionException(securityContext.getUserId(), "You are not authorised to read this document " + docRef);
+                throw new PermissionException(
+                        securityContext.getUserId(), "You are not authorised to read this document " + docRef);
             } else {
                 D document = read(uuid);
                 if (document == null) {
