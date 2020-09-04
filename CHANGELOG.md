@@ -7,6 +7,8 @@ and this project adheres to [Semantic Versioning](http://semver.org/).
 
 ## [Unreleased]
 
+* Issue **#1755** : Stepping now runs in a separate thread to prevent interruption of DW threads when trying to terminate stepping early.
+
 * Issue **#1798** : Fixed REST serialisation issue that was preventing stepping XPath filters from being passed to the server.
 
 * Issue **#1666** : Stepping now loads element documents that use name patterns.
