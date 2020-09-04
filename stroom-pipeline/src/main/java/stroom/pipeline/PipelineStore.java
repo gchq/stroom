@@ -19,14 +19,11 @@ package stroom.pipeline;
 
 import stroom.docref.DocRef;
 import stroom.docstore.api.DocumentStore;
+import stroom.docstore.api.HasFindByName;
 import stroom.pipeline.shared.PipelineDoc;
 
 import java.util.List;
 
-public interface PipelineStore extends DocumentStore<PipelineDoc> {
-    List<DocRef> findByName(String name);
-
-    PipelineDoc find (DocRef docRef);
-
+public interface PipelineStore extends DocumentStore<PipelineDoc>, HasFindByName {
     List<DocRef> list();
 }

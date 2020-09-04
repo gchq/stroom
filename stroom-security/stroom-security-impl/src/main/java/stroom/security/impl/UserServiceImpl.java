@@ -34,15 +34,12 @@ import java.util.stream.Collectors;
 @Singleton
 class UserServiceImpl implements UserService {
     private final SecurityContext securityContext;
-    private final AuthenticationConfig securityConfig;
     private final UserDao userDao;
 
     @Inject
     UserServiceImpl(final SecurityContext securityContext,
-                    final AuthenticationConfig securityConfig,
                     final UserDao userDao) {
         this.securityContext = securityContext;
-        this.securityConfig = securityConfig;
         this.userDao = userDao;
     }
 

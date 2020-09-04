@@ -200,6 +200,9 @@ class SteppingRequestHandler {
 
                 taskContext.info(() -> "Finished stepping");
 
+                if (Thread.currentThread().isInterrupted()) {
+                    generalErrors.add("Stepping was terminated");
+                }
                 return new SteppingResult(request.getStepFilterMap(), currentLocation, stepData.convertToShared(),
                         curentStreamOffset, controller.isFound(), generalErrors);
             });
