@@ -15,6 +15,10 @@ and this project adheres to [Semantic Versioning](http://semver.org/).
 
 * Issue **#1666** : Parsers now support name patterns for loading config documents. 
 
+* Issue **#1835** : Fix error when viewing data as lowly user.
+
+* Issue **#1836** : Fix Forbidden error when importing data.
+
 * Issue **#1809** : Fix handling of import with no permissions except Import Configuration.
 
 * Issue **#1657** : Remove INTERNAL_PROCESSING_USER from Users list in App Permissions screen.

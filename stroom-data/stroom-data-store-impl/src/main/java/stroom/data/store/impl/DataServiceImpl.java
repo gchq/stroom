@@ -22,6 +22,7 @@ import stroom.data.shared.UploadDataRequest;
 import stroom.docref.DocRef;
 import stroom.docrefinfo.api.DocRefInfoService;
 import stroom.docstore.shared.DocRefUtil;
+import stroom.feed.api.FeedStore;
 import stroom.meta.api.MetaService;
 import stroom.meta.shared.DataRetentionFields;
 import stroom.meta.shared.FindMetaCriteria;
@@ -32,9 +33,11 @@ import stroom.meta.shared.MetaRow;
 import stroom.pipeline.shared.PipelineDoc;
 import stroom.resource.api.ResourceStore;
 import stroom.security.api.SecurityContext;
+import stroom.security.shared.DocumentPermissionNames;
 import stroom.security.shared.PermissionNames;
 import stroom.util.date.DateUtil;
 import stroom.util.shared.ModelStringUtil;
+import stroom.util.shared.PermissionException;
 import stroom.util.shared.ResourceGeneration;
 import stroom.util.shared.ResourceKey;
 import stroom.util.shared.ResultPage;
@@ -43,7 +46,6 @@ import javax.inject.Inject;
 import java.nio.file.Path;
 import java.util.ArrayList;
 import java.util.Collections;
-import java.util.Comparator;
 import java.util.List;
 import java.util.Map;
 import java.util.stream.Collectors;
@@ -56,6 +58,7 @@ class DataServiceImpl implements DataService {
     private final MetaService metaService;
     private final AttributeMapFactory attributeMapFactory;
     private final SecurityContext securityContext;
+    private final FeedStore feedStore;
 
     @Inject
     DataServiceImpl(final ResourceStore resourceStore,
@@ -64,7 +67,8 @@ class DataServiceImpl implements DataService {
                     final DocRefInfoService docRefInfoService,
                     final MetaService metaService,
                     final AttributeMapFactory attributeMapFactory,
-                    final SecurityContext securityContext) {
+                    final SecurityContext securityContext,
+                    final FeedStore feedStore) {
         this.resourceStore = resourceStore;
         this.dataUploadTaskHandlerProvider = dataUploadTaskHandlerProvider;
         this.dataDownloadTaskHandlerProvider = dataDownloadTaskHandlerProvider;
@@ -72,6 +76,7 @@ class DataServiceImpl implements DataService {
         this.metaService = metaService;
         this.attributeMapFactory = attributeMapFactory;
         this.securityContext = securityContext;
+        this.feedStore = feedStore;
     }
 
     @Override
@@ -98,6 +103,19 @@ class DataServiceImpl implements DataService {
 
     @Override
     public ResourceKey upload(final UploadDataRequest request) {
+
+        // Feed names are unique so just get the first
+        final DocRef feedDocRef = feedStore.findByName(request.getFeedName())
+                .stream()
+                .findFirst()
+                .orElseThrow(() ->
+                        new RuntimeException("Unable to find feed document with name " + request.getFeedName()));
+
+        if (!securityContext.hasDocumentPermission(feedDocRef.getUuid(), DocumentPermissionNames.UPDATE)) {
+            throw new PermissionException(securityContext.getUserId(),
+                    "You do not have permission to update feed " + request.getFeedName());
+        }
+
         return securityContext.secureResult(PermissionNames.IMPORT_DATA_PERMISSION, () -> {
             try {
                 // Import file.
