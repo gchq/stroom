@@ -7,6 +7,8 @@ and this project adheres to [Semantic Versioning](http://semver.org/).
 
 ## [Unreleased]
 
+* Issue **#1657** : Remove INTERNAL_PROCESSING_USER from Users list in App Permissions screen.
+
 * Issue **#1782** : Fix handling of empty NOT/AND/OR in stats queries and immprove the error handling for the remote data sources.
 
 * Issue **#1781** : Fix SQL stats handling of NOT() with more than one term in the NOT.
