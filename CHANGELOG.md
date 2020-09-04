@@ -11,6 +11,8 @@ and this project adheres to [Semantic Versioning](http://semver.org/).
 
 * Issue **#1836** : Fix Forbidden error when importing data.
 
+* Issue **#1809** : Fix handling of import with no permissions except Import Configuration.
+
 * Issue **#1657** : Remove INTERNAL_PROCESSING_USER from Users list in App Permissions screen.
 
 * Issue **#1782** : Fix handling of empty NOT/AND/OR in stats queries and immprove the error handling for the remote data sources.
