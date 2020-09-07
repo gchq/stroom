@@ -237,12 +237,13 @@ public class ReferenceDataServiceImpl implements ReferenceDataService {
 
             final ReferenceDataResult referenceDataResult = new ReferenceDataResult();
 
-            pipelineScopeRunnable.scopeRunnable(() -> {
-                referenceDataProvider.get().ensureReferenceDataAvailability(
-                        pipelineReferences,
-                        lookupIdentifier,
-                        referenceDataResult);
-            });
+            LOGGER.logDurationIfDebugEnabled(() ->
+                            pipelineScopeRunnable.scopeRunnable(() ->
+                                    referenceDataProvider.get().ensureReferenceDataAvailability(
+                                            pipelineReferences,
+                                            lookupIdentifier,
+                                            referenceDataResult)),
+                    "Ensuring data availability");
 
             final Configuration configuration = Configuration.newConfiguration();
             final PipelineConfiguration pipelineConfiguration = configuration.makePipelineConfiguration();
