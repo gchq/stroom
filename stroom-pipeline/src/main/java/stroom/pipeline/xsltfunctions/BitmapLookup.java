@@ -16,18 +16,18 @@
 
 package stroom.pipeline.xsltfunctions;
 
-import net.sf.saxon.expr.XPathContext;
-import net.sf.saxon.om.EmptyAtomicSequence;
-import net.sf.saxon.om.Sequence;
-import net.sf.saxon.trans.XPathException;
 import stroom.pipeline.refdata.LookupIdentifier;
 import stroom.pipeline.refdata.ReferenceData;
 import stroom.pipeline.refdata.ReferenceDataResult;
-import stroom.pipeline.refdata.store.RefDataValueProxy;
 import stroom.pipeline.refdata.store.RefDataValueProxyConsumerFactory;
 import stroom.pipeline.state.MetaHolder;
 import stroom.util.date.DateUtil;
 import stroom.util.shared.Severity;
+
+import net.sf.saxon.expr.XPathContext;
+import net.sf.saxon.om.EmptyAtomicSequence;
+import net.sf.saxon.om.Sequence;
+import net.sf.saxon.trans.XPathException;
 
 import javax.inject.Inject;
 
@@ -66,17 +66,16 @@ class BitmapLookup extends AbstractLookup {
                 final String k = String.valueOf(bit);
                 final LookupIdentifier bitIdentifier = lookupIdentifier.cloneWithNewKey(k);
                 final ReferenceDataResult result = getReferenceData(bitIdentifier);
-                final RefDataValueProxy refDataValueProxy = result.getRefDataValueProxy();
 
                 boolean wasFound = false;
 
                 try {
-                    if (refDataValueProxy != null) {
+                    if (result.getRefDataValueProxy().isPresent()) {
                         if (sequenceMaker == null) {
                             sequenceMaker = new SequenceMaker(context, getRefDataValueProxyConsumerFactoryFactory());
                             sequenceMaker.open();
                         }
-                        wasFound = sequenceMaker.consume(refDataValueProxy);
+                        wasFound = sequenceMaker.consume(result.getRefDataValueProxy().get());
                     }
 
                     if (trace && wasFound) {

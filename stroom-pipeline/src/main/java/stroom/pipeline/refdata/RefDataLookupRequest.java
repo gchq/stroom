@@ -13,6 +13,7 @@ import io.dropwizard.validation.ValidationMethod;
 import org.hibernate.validator.constraints.NotEmpty;
 
 import javax.validation.Valid;
+import javax.validation.constraints.Min;
 import javax.validation.constraints.NotNull;
 import java.time.Instant;
 import java.util.List;
@@ -30,6 +31,7 @@ public class RefDataLookupRequest {
     @JsonProperty
     private final String key;
 
+    @Min(0)
     @JsonProperty
     private final long effectiveTimeEpochMs;
 

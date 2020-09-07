@@ -46,6 +46,7 @@ import net.sf.saxon.event.Receiver;
 import javax.inject.Inject;
 import javax.inject.Provider;
 import javax.ws.rs.BadRequestException;
+import javax.ws.rs.NotFoundException;
 import java.io.StringWriter;
 import java.time.Instant;
 import java.time.ZoneOffset;
@@ -253,7 +254,16 @@ public class ReferenceDataServiceImpl implements ReferenceDataService {
                     refDataValueProxyConsumerFactoryFactory.create(stringReceiver, pipelineConfiguration);
 
             // Do the lookup and consume the value into the StringWriter
-            referenceDataResult.getRefDataValueProxy().consumeValue(refDataValueProxyConsumerFactory);
+            referenceDataResult.getRefDataValueProxy()
+                    .ifPresent(refDataValueProxy ->
+                            refDataValueProxy.consumeValue(refDataValueProxyConsumerFactory));
+
+            if (stringWriter.getBuffer().length() == 0) {
+                throw new NotFoundException(LogUtil.message("No value for map: {}, key: {}, time {}",
+                        refDataLookupRequest.getMapName(),
+                        refDataLookupRequest.getKey(),
+                        Instant.ofEpochMilli(refDataLookupRequest.getEffectiveTimeEpochMs()).toString()));
+            }
 
             return stringWriter.toString();
         } catch (Exception e) {
