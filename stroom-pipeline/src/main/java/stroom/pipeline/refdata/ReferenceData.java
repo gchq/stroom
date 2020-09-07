@@ -124,12 +124,12 @@ public class ReferenceData {
             // Look up the KV then use that to recurse
             doGetValue(pipelineReferences, lookupIdentifier, result);
 
-            final RefDataValueProxy refDataValueProxy = result.getRefDataValueProxy();
-            Optional<RefDataValue> optValue = refDataValueProxy.supplyValue();
+            final Optional<RefDataValue> optValue = result.getRefDataValueProxy()
+                    .flatMap(RefDataValueProxy::supplyValue);
             // This is a nested map so we are expecting the value of the first map to be a simple
             // string so we can use it as the key for the next map. The next map could also be nested.
 
-            if (!optValue.isPresent()) {
+            if (optValue.isEmpty()) {
                 LOGGER.trace("sub-map not found for {}", lookupIdentifier);
                 // map broken ... no link found
                 result.log(Severity.WARNING, () -> "No map found for '" + lookupIdentifier + "'");
@@ -187,9 +187,11 @@ public class ReferenceData {
             }
 
             // We are dealing with multiple ref pipelines so collect all the value proxies
-            if (pipelineReferences.size() > 1 && referenceDataResult.getRefDataValueProxy() != null) {
-                refDataValueProxies.add(referenceDataResult.getRefDataValueProxy());
-                referenceDataResult.setRefDataValueProxy(null);
+            if (pipelineReferences.size() > 1) {
+                referenceDataResult.getRefDataValueProxy().ifPresent(refDataValueProxy -> {
+                    refDataValueProxies.add(refDataValueProxy);
+                    referenceDataResult.setRefDataValueProxy(null);
+                });
             }
         }
         // We are dealing with multiple ref pipelines so replace the current value proxy with a
@@ -343,13 +345,12 @@ public class ReferenceData {
                     LogUtil.message("pipelineReference is not fully formed, {}", pipelineReference));
         }
 
-        // Check that the current user has permission to read the stream.
+        // Check that the current user has permission to read the ref stream.
         final boolean hasPermission = localDocumentPermissionCache.computeIfAbsent(pipelineReference, k ->
                 documentPermissionCache == null ||
                         documentPermissionCache.hasDocumentPermission(
                                 pipelineReference.getFeed().getUuid(),
                                 DocumentPermissionNames.USE));
-
 
         if (hasPermission) {
             // Create a key to find a set of effective times in the pool.

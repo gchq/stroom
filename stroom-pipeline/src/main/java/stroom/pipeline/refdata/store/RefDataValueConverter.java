@@ -4,6 +4,7 @@ import stroom.pipeline.refdata.store.onheapstore.FastInfosetValueConsumer;
 
 import net.sf.saxon.Configuration;
 import net.sf.saxon.event.PipelineConfiguration;
+import net.sf.saxon.event.Receiver;
 import net.sf.saxon.serialize.XMLEmitter;
 import net.sf.saxon.trans.XPathException;
 
@@ -23,18 +24,25 @@ public class RefDataValueConverter {
         }
     }
 
-    private String convertToString(final FastInfosetValue fastInfosetValue) {
-
-        final Configuration configuration = Configuration.newConfiguration();
-        final PipelineConfiguration pipelineConfiguration = configuration.makePipelineConfiguration();
+    public Receiver buildStringReceiver(final StringWriter stringWriter,
+                                        final PipelineConfiguration pipelineConfiguration) {
         final XMLEmitter xmlEmitterReceiver = new FragmentXmlEmitter();
-        final StringWriter stringWriter = new StringWriter();
         try {
             xmlEmitterReceiver.setWriter(stringWriter);
             xmlEmitterReceiver.setPipelineConfiguration(pipelineConfiguration);
         } catch (XPathException e) {
             throw new RuntimeException(e);
         }
+
+        return xmlEmitterReceiver;
+    }
+
+    private String convertToString(final FastInfosetValue fastInfosetValue) {
+
+        final Configuration configuration = Configuration.newConfiguration();
+        final PipelineConfiguration pipelineConfiguration = configuration.makePipelineConfiguration();
+        final StringWriter stringWriter = new StringWriter();
+        final Receiver xmlEmitterReceiver = buildStringReceiver(stringWriter, pipelineConfiguration);
 
         final FastInfosetValueConsumer fastInfosetValueConsumer = new FastInfosetValueConsumer(
                 xmlEmitterReceiver, pipelineConfiguration);

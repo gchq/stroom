@@ -3,6 +3,7 @@ package stroom.pipeline.refdata;
 import stroom.dashboard.expression.v1.Val;
 import stroom.dashboard.expression.v1.ValLong;
 import stroom.dashboard.expression.v1.ValString;
+import stroom.data.shared.StreamTypeNames;
 import stroom.datasource.api.v2.AbstractField;
 import stroom.datasource.api.v2.DataSource;
 import stroom.datasource.api.v2.DateField;
@@ -13,10 +14,16 @@ import stroom.datasource.api.v2.LongField;
 import stroom.datasource.api.v2.TextField;
 import stroom.docref.DocRef;
 import stroom.entity.shared.ExpressionCriteria;
+import stroom.feed.api.FeedStore;
+import stroom.pipeline.refdata.RefDataLookupRequest.ReferenceLoader;
 import stroom.pipeline.refdata.store.RefDataStore;
 import stroom.pipeline.refdata.store.RefDataStoreFactory;
+import stroom.pipeline.refdata.store.RefDataValueConverter;
+import stroom.pipeline.refdata.store.RefDataValueProxyConsumerFactory;
+import stroom.pipeline.refdata.store.RefDataValueProxyConsumerFactory.Factory;
 import stroom.pipeline.refdata.store.RefStoreEntry;
 import stroom.pipeline.shared.PipelineDoc;
+import stroom.pipeline.shared.data.PipelineReference;
 import stroom.query.api.v2.ExpressionItem;
 import stroom.query.api.v2.ExpressionOperator;
 import stroom.query.api.v2.ExpressionOperator.Op;
@@ -24,13 +31,26 @@ import stroom.query.api.v2.ExpressionTerm;
 import stroom.query.api.v2.ExpressionTerm.Condition;
 import stroom.query.common.v2.DateExpressionParser;
 import stroom.security.api.SecurityContext;
+import stroom.security.shared.PermissionNames;
+import stroom.task.api.TaskContextFactory;
 import stroom.util.logging.LambdaLogger;
 import stroom.util.logging.LambdaLoggerFactory;
+import stroom.util.logging.LogUtil;
+import stroom.util.pipeline.scope.PipelineScopeRunnable;
 import stroom.util.shared.PermissionException;
 
+import net.sf.saxon.Configuration;
+import net.sf.saxon.event.PipelineConfiguration;
+import net.sf.saxon.event.Receiver;
+
 import javax.inject.Inject;
+import javax.inject.Provider;
+import javax.ws.rs.BadRequestException;
+import javax.ws.rs.NotFoundException;
+import java.io.StringWriter;
 import java.time.Instant;
 import java.time.ZoneOffset;
+import java.util.Collections;
 import java.util.List;
 import java.util.Map;
 import java.util.Objects;
@@ -42,7 +62,7 @@ import java.util.stream.Collectors;
 
 public class ReferenceDataServiceImpl implements ReferenceDataService {
 
-    private static final LambdaLogger LOGGER = LambdaLoggerFactory.getLogger(ReferenceDataResourceImpl.class);
+    private static final LambdaLogger LOGGER = LambdaLoggerFactory.getLogger(ReferenceDataServiceImpl.class);
 
     private static final DocRef REF_STORE_PSEUDO_DOC_REF = new DocRef(
             "Searchable",
@@ -139,16 +159,34 @@ public class ReferenceDataServiceImpl implements ReferenceDataService {
             Map.entry(STREAM_NO_FIELD.getName(), refStoreEntry ->
                     refStoreEntry.getMapDefinition().getRefStreamDefinition().getStreamNo()),
             Map.entry(PIPELINE_VERSION_FIELD.getName(), refStoreEntry ->
-                   refStoreEntry.getMapDefinition().getRefStreamDefinition().getPipelineVersion()));
+                    refStoreEntry.getMapDefinition().getRefStreamDefinition().getPipelineVersion()));
 
     private final RefDataStore refDataStore;
     private final SecurityContext securityContext;
+    private final FeedStore feedStore;
+    private final Provider<ReferenceData> referenceDataProvider;
+    private final RefDataValueConverter refDataValueConverter;
+    private final PipelineScopeRunnable pipelineScopeRunnable;
+    private final TaskContextFactory taskContextFactory;
+    private final RefDataValueProxyConsumerFactory.Factory refDataValueProxyConsumerFactoryFactory;
 
     @Inject
     public ReferenceDataServiceImpl(final RefDataStoreFactory refDataStoreFactory,
-                                    final SecurityContext securityContext) {
+                                    final SecurityContext securityContext,
+                                    final FeedStore feedStore,
+                                    final Provider<ReferenceData> referenceDataProvider,
+                                    final RefDataValueConverter refDataValueConverter,
+                                    final PipelineScopeRunnable pipelineScopeRunnable,
+                                    final TaskContextFactory taskContextFactory,
+                                    final Factory refDataValueProxyConsumerFactoryFactory) {
         this.refDataStore = refDataStoreFactory.getOffHeapStore();
         this.securityContext = securityContext;
+        this.feedStore = feedStore;
+        this.referenceDataProvider = referenceDataProvider;
+        this.refDataValueConverter = refDataValueConverter;
+        this.pipelineScopeRunnable = pipelineScopeRunnable;
+        this.taskContextFactory = taskContextFactory;
+        this.refDataValueProxyConsumerFactoryFactory = refDataValueProxyConsumerFactoryFactory;
     }
 
     @Override
@@ -164,6 +202,115 @@ public class ReferenceDataServiceImpl implements ReferenceDataService {
             return entries;
         });
     }
+
+    @Override
+    public String lookup(final RefDataLookupRequest refDataLookupRequest) {
+        if (refDataLookupRequest == null) {
+            throw new BadRequestException("Missing request object");
+        }
+
+        // TODO @AT ensure user has rights to
+        //    use/read each feed
+        //    use each pipe
+
+        // TODO @AT This is a lot of cross over between ReferenceData and ReferenceDataServiceImpl
+
+        return securityContext.secureResult(PermissionNames.VIEW_DATA_PERMISSION, () ->
+                taskContextFactory.contextResult("Reference Data Lookup (API)",
+                        taskContext ->
+                                LOGGER.logDurationIfDebugEnabled(
+                                        () ->
+                                                performLookup(refDataLookupRequest),
+                                        LogUtil.message("Performing lookup for {}", refDataLookupRequest))))
+                .get();
+    }
+
+    private String performLookup(final RefDataLookupRequest refDataLookupRequest) {
+        try {
+            final LookupIdentifier lookupIdentifier = LookupIdentifier.of(
+                    refDataLookupRequest.getMapName(),
+                    refDataLookupRequest.getKey(),
+                    refDataLookupRequest.getEffectiveTimeEpochMs());
+
+            final List<PipelineReference> pipelineReferences = convertReferenceLoaders(
+                    refDataLookupRequest.getReferenceLoaders());
+
+            final ReferenceDataResult referenceDataResult = new ReferenceDataResult();
+
+            LOGGER.logDurationIfDebugEnabled(() ->
+                            pipelineScopeRunnable.scopeRunnable(() ->
+                                    referenceDataProvider.get().ensureReferenceDataAvailability(
+                                            pipelineReferences,
+                                            lookupIdentifier,
+                                            referenceDataResult)),
+                    "Ensuring data availability");
+
+            final Configuration configuration = Configuration.newConfiguration();
+            final PipelineConfiguration pipelineConfiguration = configuration.makePipelineConfiguration();
+            final StringWriter stringWriter = new StringWriter();
+            final Receiver stringReceiver = refDataValueConverter.buildStringReceiver(
+                    stringWriter, pipelineConfiguration);
+
+            final RefDataValueProxyConsumerFactory refDataValueProxyConsumerFactory =
+                    refDataValueProxyConsumerFactoryFactory.create(stringReceiver, pipelineConfiguration);
+
+            // Do the lookup and consume the value into the StringWriter
+            referenceDataResult.getRefDataValueProxy()
+                    .ifPresent(refDataValueProxy ->
+                            refDataValueProxy.consumeValue(refDataValueProxyConsumerFactory));
+
+            if (stringWriter.getBuffer().length() == 0) {
+                throw new NotFoundException(LogUtil.message("No value for map: {}, key: {}, time {}",
+                        refDataLookupRequest.getMapName(),
+                        refDataLookupRequest.getKey(),
+                        Instant.ofEpochMilli(refDataLookupRequest.getEffectiveTimeEpochMs()).toString()));
+            }
+
+            return stringWriter.toString();
+        } catch (Exception e) {
+            LOGGER.error("Error looking up {}", refDataLookupRequest, e);
+            throw e;
+        }
+    }
+
+    private List<PipelineReference> convertReferenceLoaders(final List<ReferenceLoader> referenceLoaders) {
+        if (referenceLoaders == null) {
+            return Collections.emptyList();
+        } else {
+            return referenceLoaders.stream()
+                    .map(referenceLoader -> {
+                        final DocRef feedDocRef = getFeedDocRef(referenceLoader);
+
+                        return new PipelineReference(
+                                referenceLoader.getLoaderPipeline(),
+                                feedDocRef,
+                                StreamTypeNames.REFERENCE);
+                    })
+                    .collect(Collectors.toList());
+        }
+    }
+
+    private DocRef getFeedDocRef(final ReferenceLoader referenceLoader) {
+        if (referenceLoader == null) {
+            throw new BadRequestException("Null referenceLoader");
+        } else {
+            if (referenceLoader.getReferenceFeed().getUuid() != null
+                    && referenceLoader.getReferenceFeed().getName() != null) {
+
+                return referenceLoader.getReferenceFeed();
+            } else if (referenceLoader.getReferenceFeed().getName() != null) {
+                // Feed names are unique
+                return feedStore.findByName(referenceLoader.getReferenceFeed().getName())
+                        .stream()
+                        .findFirst()
+                        .orElseThrow(() ->
+                                new BadRequestException("Unknown feed " + referenceLoader.getReferenceFeed()));
+            } else {
+                throw new BadRequestException("Need to provide a name or a UUID and name for each referenceLoader referenceFeed");
+            }
+        }
+    }
+
 
     private <T> T withPermissionCheck(final Supplier<T> supplier) {
         // TODO @AT Need some kind of fine grained doc permission check on the pipe associated with each entry
@@ -346,7 +493,7 @@ public class ReferenceDataServiceImpl implements ReferenceDataService {
     }
 
     private Predicate<RefStoreEntry> buildTextFieldPredicate(final ExpressionTerm expressionTerm,
-                                                                             final Function<RefStoreEntry, String> valueExtractor) {
+                                                             final Function<RefStoreEntry, String> valueExtractor) {
         // TODO @AT Handle wildcarding in term
         if (expressionTerm.getCondition().equals(Condition.EQUALS)) {
             return rec -> Objects.equals(expressionTerm.getValue(), valueExtractor.apply(rec));

@@ -1,5 +1,7 @@
 package stroom.pipeline.refdata.store.offheapstore;
 
+import stroom.pipeline.refdata.RefDataValueByteBufferConsumer;
+
 import com.esotericsoftware.kryo.io.ByteBufferInputStream;
 import com.sun.xml.fastinfoset.sax.SAXDocumentParser;
 import net.sf.saxon.event.PipelineConfiguration;
@@ -8,7 +10,6 @@ import org.jvnet.fastinfoset.FastInfosetException;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.xml.sax.SAXException;
-import stroom.pipeline.refdata.RefDataValueByteBufferConsumer;
 
 import java.io.IOException;
 import java.nio.ByteBuffer;
@@ -24,7 +25,6 @@ public class FastInfosetByteBufferConsumer implements RefDataValueByteBufferCons
         fastInfosetContentHandler.setPipelineConfiguration(pipelineConfiguration);
         fastInfosetContentHandler.setReceiver(receiver);
 
-        //TODO should we re-use this saxparser object in some way? Ctor looks fairly cheap so prob not worth the bother
         saxDocumentParser = new SAXDocumentParser();
         saxDocumentParser.setContentHandler(fastInfosetContentHandler);
     }
@@ -40,7 +40,6 @@ public class FastInfosetByteBufferConsumer implements RefDataValueByteBufferCons
             throw new RuntimeException("Error parsing fastinfoset bytes, " + e.getMessage(), e);
         }
 
-        //TODO do we need to reset this here
         saxDocumentParser.reset();
     }
 

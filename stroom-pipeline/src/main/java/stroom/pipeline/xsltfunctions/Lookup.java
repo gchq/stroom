@@ -19,7 +19,6 @@ package stroom.pipeline.xsltfunctions;
 import stroom.pipeline.refdata.LookupIdentifier;
 import stroom.pipeline.refdata.ReferenceData;
 import stroom.pipeline.refdata.ReferenceDataResult;
-import stroom.pipeline.refdata.store.RefDataValueProxy;
 import stroom.pipeline.refdata.store.RefDataValueProxyConsumerFactory;
 import stroom.pipeline.state.MetaHolder;
 import stroom.util.logging.LambdaLogger;
@@ -59,17 +58,14 @@ class Lookup extends AbstractLookup {
         // into it.
         final ReferenceDataResult result = getReferenceData(lookupIdentifier);
 
-        final RefDataValueProxy refDataValueProxy = result.getRefDataValueProxy();
-
-//        final SequenceMaker sequenceMaker = new SequenceMaker(context, getRefDataStore(), getConsumerFactory());
         final SequenceMaker sequenceMaker = new SequenceMaker(context, getRefDataValueProxyConsumerFactoryFactory());
 
         boolean wasFound = false;
         try {
-            if (refDataValueProxy != null) {
+            if (result.getRefDataValueProxy().isPresent()) {
                 sequenceMaker.open();
 
-                wasFound = sequenceMaker.consume(refDataValueProxy);
+                wasFound = sequenceMaker.consume(result.getRefDataValueProxy().get());
 
                 sequenceMaker.close();
 

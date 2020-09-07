@@ -17,10 +17,6 @@
 
 package stroom.pipeline.refdata;
 
-import org.junit.jupiter.api.BeforeEach;
-import org.junit.jupiter.api.Test;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 import stroom.cache.api.CacheManager;
 import stroom.cache.impl.CacheManagerImpl;
 import stroom.data.shared.StreamTypeNames;
@@ -31,6 +27,7 @@ import stroom.pipeline.refdata.store.MapDefinition;
 import stroom.pipeline.refdata.store.RefDataStore;
 import stroom.pipeline.refdata.store.RefDataStoreFactory;
 import stroom.pipeline.refdata.store.RefDataValue;
+import stroom.pipeline.refdata.store.RefDataValueProxy;
 import stroom.pipeline.refdata.store.RefStreamDefinition;
 import stroom.pipeline.refdata.store.StringValue;
 import stroom.pipeline.shared.PipelineDoc;
@@ -38,6 +35,11 @@ import stroom.pipeline.shared.data.PipelineReference;
 import stroom.test.AbstractCoreIntegrationTest;
 import stroom.util.date.DateUtil;
 import stroom.util.pipeline.scope.PipelineScopeRunnable;
+
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Test;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import javax.inject.Inject;
 import javax.inject.Provider;
@@ -303,7 +305,9 @@ class TestReferenceDataWithCache extends AbstractCoreIntegrationTest {
         if (result.getRefDataValueProxy() == null) {
             return null;
         }
-        RefDataValue refDataValue = result.getRefDataValueProxy().supplyValue().orElse(null);
+        RefDataValue refDataValue = result.getRefDataValueProxy()
+                .flatMap(RefDataValueProxy::supplyValue)
+                .orElse(null);
         if (refDataValue == null) {
             return null;
         } else {

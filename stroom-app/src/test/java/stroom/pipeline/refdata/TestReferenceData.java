@@ -17,6 +17,31 @@
 
 package stroom.pipeline.refdata;
 
+import stroom.cache.api.CacheManager;
+import stroom.cache.impl.CacheManagerImpl;
+import stroom.data.shared.StreamTypeNames;
+import stroom.docref.DocRef;
+import stroom.feed.api.FeedStore;
+import stroom.feed.shared.FeedDoc;
+import stroom.pipeline.PipelineSerialiser;
+import stroom.pipeline.PipelineStore;
+import stroom.pipeline.cache.DocumentPermissionCache;
+import stroom.pipeline.refdata.store.MapDefinition;
+import stroom.pipeline.refdata.store.RefDataStore;
+import stroom.pipeline.refdata.store.RefDataStoreFactory;
+import stroom.pipeline.refdata.store.RefDataValueProxy;
+import stroom.pipeline.refdata.store.RefStreamDefinition;
+import stroom.pipeline.refdata.store.StringValue;
+import stroom.pipeline.shared.data.PipelineReference;
+import stroom.pipeline.state.FeedHolder;
+import stroom.security.mock.MockSecurityContext;
+import stroom.test.AbstractCoreIntegrationTest;
+import stroom.util.date.DateUtil;
+import stroom.util.io.ByteSize;
+import stroom.util.io.FileUtil;
+import stroom.util.pipeline.scope.PipelineScopeRunnable;
+import stroom.util.shared.Range;
+
 import io.vavr.Tuple;
 import io.vavr.Tuple3;
 import org.junit.jupiter.api.AfterEach;
@@ -29,29 +54,6 @@ import org.mockito.Mockito;
 import org.mockito.junit.jupiter.MockitoExtension;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import stroom.cache.api.CacheManager;
-import stroom.cache.impl.CacheManagerImpl;
-import stroom.data.shared.StreamTypeNames;
-import stroom.docref.DocRef;
-import stroom.feed.api.FeedStore;
-import stroom.feed.shared.FeedDoc;
-import stroom.pipeline.PipelineSerialiser;
-import stroom.pipeline.PipelineStore;
-import stroom.pipeline.refdata.store.MapDefinition;
-import stroom.pipeline.refdata.store.RefDataStore;
-import stroom.pipeline.refdata.store.RefDataStoreFactory;
-import stroom.pipeline.refdata.store.RefStreamDefinition;
-import stroom.pipeline.refdata.store.StringValue;
-import stroom.pipeline.shared.data.PipelineReference;
-import stroom.pipeline.state.FeedHolder;
-import stroom.pipeline.cache.DocumentPermissionCache;
-import stroom.security.mock.MockSecurityContext;
-import stroom.test.AbstractCoreIntegrationTest;
-import stroom.util.date.DateUtil;
-import stroom.util.io.ByteSize;
-import stroom.util.io.FileUtil;
-import stroom.util.pipeline.scope.PipelineScopeRunnable;
-import stroom.util.shared.Range;
 
 import javax.inject.Inject;
 import javax.inject.Provider;
@@ -550,7 +552,7 @@ class TestReferenceData extends AbstractCoreIntegrationTest {
 
         if (result.getRefDataValueProxy() != null) {
             return result.getRefDataValueProxy()
-                    .supplyValue()
+                    .flatMap(RefDataValueProxy::supplyValue)
                     .flatMap(val -> Optional.of(((StringValue) val).getValue()));
         } else {
             return Optional.empty();

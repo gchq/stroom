@@ -8,4 +8,6 @@ import java.util.List;
 public interface ReferenceDataService extends Searchable {
 
     List<RefStoreEntry> entries(final int limit);
+
+    String lookup(final RefDataLookupRequest refDataLookupRequest);
 }
