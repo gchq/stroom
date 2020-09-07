@@ -1,13 +1,18 @@
 package stroom.pipeline.refdata;
 
 import stroom.docref.DocRef;
+import stroom.feed.shared.FeedDoc;
+import stroom.pipeline.shared.PipelineDoc;
 
 import com.fasterxml.jackson.annotation.JsonCreator;
+import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.fasterxml.jackson.annotation.JsonInclude;
 import com.fasterxml.jackson.annotation.JsonInclude.Include;
 import com.fasterxml.jackson.annotation.JsonProperty;
+import io.dropwizard.validation.ValidationMethod;
 import org.hibernate.validator.constraints.NotEmpty;
 
+import javax.validation.Valid;
 import javax.validation.constraints.NotNull;
 import java.time.Instant;
 import java.util.List;
@@ -28,6 +33,7 @@ public class RefDataLookupRequest {
     @JsonProperty
     private final long effectiveTimeEpochMs;
 
+    @Valid
     @NotNull
     @NotEmpty
     @JsonProperty
@@ -72,41 +78,70 @@ public class RefDataLookupRequest {
                 '}';
     }
 
+
     @JsonInclude(Include.NON_NULL)
     public static class ReferenceLoader {
 
+        @Valid
         @NotNull
         @JsonProperty
         private final DocRef loaderPipeline;
 
+        @Valid
         @NotNull
-        @NotEmpty
         @JsonProperty
-        private final String feedName;
+        private final DocRef referenceFeed;
 
         // TODO @AT Should we have strm type in here, defaulting to REFERENCE?
 
         @JsonCreator
         public ReferenceLoader(@JsonProperty("loaderPipeline") final DocRef loaderPipeline,
-                               @JsonProperty("feedName") final String feedName) {
+                               @JsonProperty("referenceFeed") final DocRef referenceFeed) {
             this.loaderPipeline = loaderPipeline;
-            this.feedName = feedName;
+            this.referenceFeed = referenceFeed;
         }
 
         public DocRef getLoaderPipeline() {
             return loaderPipeline;
         }
 
-        public String getFeedName() {
-            return feedName;
+        public DocRef getReferenceFeed() {
+            return referenceFeed;
         }
 
         @Override
         public String toString() {
             return "ReferenceLoader{" +
                     "loaderPipeline=" + loaderPipeline +
-                    ", feedName='" + feedName + '\'' +
+                    ", referenceFeed='" + referenceFeed + '\'' +
                     '}';
+        }
+
+        @ValidationMethod(message = "loaderPipeline docRef type must be '" + PipelineDoc.DOCUMENT_TYPE + "'")
+        @JsonIgnore
+        public boolean isCorrectLoaderType() {
+            return loaderPipeline != null && PipelineDoc.DOCUMENT_TYPE.equals(loaderPipeline.getType());
+        }
+
+        @ValidationMethod(message = "loaderPipeline docRef must have a UUID")
+        @JsonIgnore
+        public boolean isValidLoaderDocRef() {
+            return loaderPipeline != null && loaderPipeline.getUuid() != null && !loaderPipeline.getUuid().isEmpty();
+        }
+
+        @ValidationMethod(message = "referenceFeed docRef type must be '" + FeedDoc.DOCUMENT_TYPE + "'")
+        @JsonIgnore
+        public boolean isCorrectRefFeedType() {
+            return referenceFeed != null && FeedDoc.DOCUMENT_TYPE.equals(referenceFeed.getType());
+        }
+
+        @ValidationMethod(message = "referenceFeed docRef must have a UUID or a name. The lookup will " +
+                "be faster if both are supplied")
+        @JsonIgnore
+        public boolean isValidFeedDocRef() {
+            return referenceFeed != null && (
+                    (referenceFeed.getUuid() != null && !referenceFeed.getUuid().isEmpty()) ||
+                            (referenceFeed.getName() != null && !referenceFeed.getName().isEmpty()));
         }
     }
 }

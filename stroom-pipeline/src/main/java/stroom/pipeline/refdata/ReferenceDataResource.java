@@ -6,6 +6,8 @@ import stroom.util.shared.RestResource;
 
 import io.swagger.annotations.Api;
 
+import javax.validation.Valid;
+import javax.validation.constraints.NotNull;
 import javax.ws.rs.Consumes;
 import javax.ws.rs.GET;
 import javax.ws.rs.POST;
@@ -33,5 +35,5 @@ public interface ReferenceDataResource extends RestResource {
 
     @POST
     @Path(LOOKUP_SUB_PATH)
-    String lookup(final RefDataLookupRequest refDataLookupRequest);
+    String lookup(@Valid @NotNull final RefDataLookupRequest refDataLookupRequest);
 }

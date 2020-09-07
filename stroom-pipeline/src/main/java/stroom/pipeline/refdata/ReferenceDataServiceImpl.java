@@ -268,11 +268,7 @@ public class ReferenceDataServiceImpl implements ReferenceDataService {
         } else {
             return referenceLoaders.stream()
                     .map(referenceLoader -> {
-                        final DocRef feedDocRef = feedStore.findByName(referenceLoader.getFeedName())
-                                .stream()
-                                .findFirst()
-                                .orElseThrow(() ->
-                                        new BadRequestException("Unknown feed " + referenceLoader.getFeedName()));
+                        final DocRef feedDocRef = getFeedDocRef(referenceLoader);
 
                         return new PipelineReference(
                                 referenceLoader.getLoaderPipeline(),
@@ -280,6 +276,27 @@ public class ReferenceDataServiceImpl implements ReferenceDataService {
                                 StreamTypeNames.REFERENCE);
                     })
                     .collect(Collectors.toList());
+        }
+    }
+
+    private DocRef getFeedDocRef(final ReferenceLoader referenceLoader) {
+        if (referenceLoader == null) {
+            throw new BadRequestException("Null referenceLoader");
+        } else {
+            if (referenceLoader.getReferenceFeed().getUuid() != null
+                    && referenceLoader.getReferenceFeed().getName() != null) {
+
+                return referenceLoader.getReferenceFeed();
+            } else if (referenceLoader.getReferenceFeed().getName() != null) {
+                // Feed names are unique
+                return feedStore.findByName(referenceLoader.getReferenceFeed().getName())
+                        .stream()
+                        .findFirst()
+                        .orElseThrow(() ->
+                                new BadRequestException("Unknown feed " + referenceLoader.getReferenceFeed()));
+            } else {
+                throw new BadRequestException("Need to provide a name or a UUID and name for each referenceLoader referenceFeed");
+            }
         }
     }
 
