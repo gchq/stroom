@@ -19,6 +19,8 @@ import stroom.pipeline.refdata.RefDataLookupRequest.ReferenceLoader;
 import stroom.pipeline.refdata.store.RefDataStore;
 import stroom.pipeline.refdata.store.RefDataStoreFactory;
 import stroom.pipeline.refdata.store.RefDataValueConverter;
+import stroom.pipeline.refdata.store.RefDataValueProxyConsumerFactory;
+import stroom.pipeline.refdata.store.RefDataValueProxyConsumerFactory.Factory;
 import stroom.pipeline.refdata.store.RefStoreEntry;
 import stroom.pipeline.shared.PipelineDoc;
 import stroom.pipeline.shared.data.PipelineReference;
@@ -33,12 +35,18 @@ import stroom.security.shared.PermissionNames;
 import stroom.task.api.TaskContextFactory;
 import stroom.util.logging.LambdaLogger;
 import stroom.util.logging.LambdaLoggerFactory;
+import stroom.util.logging.LogUtil;
 import stroom.util.pipeline.scope.PipelineScopeRunnable;
 import stroom.util.shared.PermissionException;
+
+import net.sf.saxon.Configuration;
+import net.sf.saxon.event.PipelineConfiguration;
+import net.sf.saxon.event.Receiver;
 
 import javax.inject.Inject;
 import javax.inject.Provider;
 import javax.ws.rs.BadRequestException;
+import java.io.StringWriter;
 import java.time.Instant;
 import java.time.ZoneOffset;
 import java.util.Collections;
@@ -53,7 +61,7 @@ import java.util.stream.Collectors;
 
 public class ReferenceDataServiceImpl implements ReferenceDataService {
 
-    private static final LambdaLogger LOGGER = LambdaLoggerFactory.getLogger(ReferenceDataResourceImpl.class);
+    private static final LambdaLogger LOGGER = LambdaLoggerFactory.getLogger(ReferenceDataServiceImpl.class);
 
     private static final DocRef REF_STORE_PSEUDO_DOC_REF = new DocRef(
             "Searchable",
@@ -159,6 +167,7 @@ public class ReferenceDataServiceImpl implements ReferenceDataService {
     private final RefDataValueConverter refDataValueConverter;
     private final PipelineScopeRunnable pipelineScopeRunnable;
     private final TaskContextFactory taskContextFactory;
+    private final RefDataValueProxyConsumerFactory.Factory refDataValueProxyConsumerFactoryFactory;
 
     @Inject
     public ReferenceDataServiceImpl(final RefDataStoreFactory refDataStoreFactory,
@@ -167,7 +176,8 @@ public class ReferenceDataServiceImpl implements ReferenceDataService {
                                     final Provider<ReferenceData> referenceDataProvider,
                                     final RefDataValueConverter refDataValueConverter,
                                     final PipelineScopeRunnable pipelineScopeRunnable,
-                                    final TaskContextFactory taskContextFactory) {
+                                    final TaskContextFactory taskContextFactory,
+                                    final Factory refDataValueProxyConsumerFactoryFactory) {
         this.refDataStore = refDataStoreFactory.getOffHeapStore();
         this.securityContext = securityContext;
         this.feedStore = feedStore;
@@ -175,6 +185,7 @@ public class ReferenceDataServiceImpl implements ReferenceDataService {
         this.refDataValueConverter = refDataValueConverter;
         this.pipelineScopeRunnable = pipelineScopeRunnable;
         this.taskContextFactory = taskContextFactory;
+        this.refDataValueProxyConsumerFactoryFactory = refDataValueProxyConsumerFactoryFactory;
     }
 
     @Override
@@ -203,41 +214,52 @@ public class ReferenceDataServiceImpl implements ReferenceDataService {
 
         // TODO @AT This is a lot of cross over between ReferenceData and ReferenceDataServiceImpl
 
+        return securityContext.secureResult(PermissionNames.VIEW_DATA_PERMISSION, () ->
+                taskContextFactory.contextResult("Reference Data Lookup (API)",
+                        taskContext ->
+                                LOGGER.logDurationIfDebugEnabled(
+                                        () ->
+                                                performLookup(refDataLookupRequest),
+                                        LogUtil.message("Performing lookup for {}", refDataLookupRequest))))
+                .get();
+    }
 
-        return securityContext.secureResult(PermissionNames.VIEW_DATA_PERMISSION, () -> {
+    private String performLookup(final RefDataLookupRequest refDataLookupRequest) {
+        try {
+            final LookupIdentifier lookupIdentifier = LookupIdentifier.of(
+                    refDataLookupRequest.getMapName(),
+                    refDataLookupRequest.getKey(),
+                    refDataLookupRequest.getEffectiveTimeEpochMs());
 
-            return taskContextFactory.contextResult("Reference Data Lookup (API)",
-                    taskContext -> {
-                        try {
-                            final LookupIdentifier lookupIdentifier = LookupIdentifier.of(
-                                    refDataLookupRequest.getMapName(),
-                                    refDataLookupRequest.getKey(),
-                                    refDataLookupRequest.getEffectiveTimeEpochMs());
+            final List<PipelineReference> pipelineReferences = convertReferenceLoaders(
+                    refDataLookupRequest.getReferenceLoaders());
 
+            final ReferenceDataResult referenceDataResult = new ReferenceDataResult();
 
-                            final List<PipelineReference> pipelineReferences = convertReferenceLoaders(
-                                    refDataLookupRequest.getReferenceLoaders());
+            pipelineScopeRunnable.scopeRunnable(() -> {
+                referenceDataProvider.get().ensureReferenceDataAvailability(
+                        pipelineReferences,
+                        lookupIdentifier,
+                        referenceDataResult);
+            });
 
-                            final ReferenceDataResult referenceDataResult = new ReferenceDataResult();
+            final Configuration configuration = Configuration.newConfiguration();
+            final PipelineConfiguration pipelineConfiguration = configuration.makePipelineConfiguration();
+            final StringWriter stringWriter = new StringWriter();
+            final Receiver stringReceiver = refDataValueConverter.buildStringReceiver(
+                    stringWriter, pipelineConfiguration);
 
-                            pipelineScopeRunnable.scopeRunnable(() -> {
-                                referenceDataProvider.get().ensureReferenceDataAvailability(
-                                        pipelineReferences,
-                                        lookupIdentifier,
-                                        referenceDataResult);
-                            });
+            final RefDataValueProxyConsumerFactory refDataValueProxyConsumerFactory =
+                    refDataValueProxyConsumerFactoryFactory.create(stringReceiver, pipelineConfiguration);
 
-                            // TODO @AT Probably could use the consume method on the proxy to be more efficient
-                            //   but this will do for now.
-                            return referenceDataResult.getRefDataValueProxy().supplyValue()
-                                    .map(refDataValueConverter::refDataValueToString)
-                                    .orElse(null);
-                        } catch (Exception e) {
-                            LOGGER.error("Error looking up {}", refDataLookupRequest, e);
-                            throw e;
-                        }
-                    });
-        }).get();
+            // Do the lookup and consume the value into the StringWriter
+            referenceDataResult.getRefDataValueProxy().consumeValue(refDataValueProxyConsumerFactory);
+
+            return stringWriter.toString();
+        } catch (Exception e) {
+            LOGGER.error("Error looking up {}", refDataLookupRequest, e);
+            throw e;
+        }
     }
 
     private List<PipelineReference> convertReferenceLoaders(final List<ReferenceLoader> referenceLoaders) {
