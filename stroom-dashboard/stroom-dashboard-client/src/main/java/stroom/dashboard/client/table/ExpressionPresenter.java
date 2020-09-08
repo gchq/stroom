@@ -161,6 +161,7 @@ public class ExpressionPresenter extends MyPresenterWidget<ExpressionPresenter.E
         children.add(createMathematicsFunctions(item++, "Mathematics"));
         children.add(createParamFunctions(item++, "Param"));
         children.add(createRoundingFunctions(item++, "Rounding"));
+        children.add(createSelectionFunctions(item++, "Selection"));
         children.add(createStringFunctions(item++, "String"));
         children.add(createTypeCheckingFunctions(item++, "Type Checking"));
         children.add(createUriFunctions(item++, "Uri"));
@@ -175,6 +176,7 @@ public class ExpressionPresenter extends MyPresenterWidget<ExpressionPresenter.E
         children.add(createFunction(item++, "count()", "count()"));
         children.add(createFunction(item++, "countGroups()", "countGroups()"));
         children.add(createFunction(item++, "countUnique($)", "countUnique("));
+        children.add(createFunction(item++, "joining($,delimiter,limit)", "joining("));
         children.add(createFunction(item++, "max($)", "max("));
         children.add(createFunction(item++, "min($)", "min("));
         children.add(createFunction(item++, "stDev($)", "stDev("));
@@ -273,6 +275,18 @@ public class ExpressionPresenter extends MyPresenterWidget<ExpressionPresenter.E
         children.add(createFunction(item++, func + "Hour($)", func + "Hour("));
         children.add(createFunction(item++, func + "Minute($)", func + "Minute("));
         children.add(createFunction(item++, func + "Second($)", func + "Second("));
+        return new SimpleParentMenuItem(pos, null, null, func, null, true, children);
+    }
+
+    private Item createSelectionFunctions(final int pos, final String func) {
+        final List<Item> children = new ArrayList<>();
+        int item = 0;
+        children.add(createFunction(item++, "any($)", "any("));
+        children.add(createFunction(item++, "first($)", "first("));
+        children.add(createFunction(item++, "last($)", "last("));
+        children.add(createFunction(item++, "nth($,num)", "nth("));
+        children.add(createFunction(item++, "top($,delimiter,rows)", "top("));
+        children.add(createFunction(item++, "bottom($,delimiter,rows)", "bottom("));
         return new SimpleParentMenuItem(pos, null, null, func, null, true, children);
     }
 
