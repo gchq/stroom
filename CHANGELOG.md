@@ -7,6 +7,9 @@ and this project adheres to [Semantic Versioning](http://semver.org/).
 
 ## [Unreleased]
 
+
+## [v6.1.12] - 2020-09-08
+
 * Issue **#1824** : Fix for search hang when extraction is requested but no search pipeline is provided.
 
 * Issue **#1083** : Added `any()`, `first()`, `last()`, `nth()`, `top()` and `bottom()` selection functions to select child values of grouped items.
@@ -14,6 +17,7 @@ and this project adheres to [Semantic Versioning](http://semver.org/).
 * Issue **#1837** : Added `joining()` function to concatenate supplied fields in child rows.
 
 * Issue **#1784** : Several functions were previously prevented from working on results from aggregate functions but are now applied regardless.
+
 
 ## [v6.1.11] - 2020-08-26
 
@@ -2165,7 +2169,8 @@ and this project adheres to [Semantic Versioning](http://semver.org/).
 
 * Issue **#202** : Initial release of the new data retention policy functionality.
 
-[Unreleased]: https://github.com/gchq/stroom/compare/v6.1.11...6.1
+[Unreleased]: https://github.com/gchq/stroom/compare/v6.1.12...6.1
+[v6.1.12]: https://github.com/gchq/stroom/compare/v6.1.11...v6.1.12
 [v6.1.11]: https://github.com/gchq/stroom/compare/v6.1.10...v6.1.11
 [v6.1.10]: https://github.com/gchq/stroom/compare/v6.1.9...v6.1.10
 [v6.1.9]: https://github.com/gchq/stroom/compare/v6.1.8...v6.1.9
