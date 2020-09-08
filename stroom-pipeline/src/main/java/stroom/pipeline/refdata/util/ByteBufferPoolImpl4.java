@@ -112,7 +112,7 @@ public class ByteBufferPoolImpl4 implements ByteBufferPool {
             msgs.add(bufferCapacity + "=" + configuredCount);
         }
 
-        LOGGER.info("Initialising pool with configured max counts: [{}], derived max counts:[{}]",
+        LOGGER.info("Initialising ByteBufferPool with configured max counts: [{}], derived max counts:[{}]",
                 (pooledByteBufferCounts == null
                         ? "null"
                         : pooledByteBufferCounts.entrySet()
