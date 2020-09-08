@@ -104,6 +104,10 @@ public class RefDataOffHeapStore extends AbstractRefDataStore implements RefData
 
     private static final long PROCESSING_INFO_UPDATE_DELAY_MS = Duration.of(1, ChronoUnit.HOURS).toMillis();
 
+    // These are dups of org.lmdbjava.Library.LMDB_* but that class is pkg private for some reason.
+    private static final String LMDB_EXTRACT_DIR_PROP = "lmdbjava.extract.dir";
+    private static final String LMDB_NATIVE_LIB_PROP = "lmdbjava.native.lib";
+
     private final TempDirProvider tempDirProvider;
     private final PathCreator pathCreator;
     private final Path dbDir;
@@ -212,6 +216,18 @@ public class RefDataOffHeapStore extends AbstractRefDataStore implements RefData
             envFlags = new EnvFlags[0];
         } else {
             envFlags = new EnvFlags[]{EnvFlags.MDB_NORDAHEAD};
+        }
+
+        final String lmdbSystemLibraryPath = referenceDataConfig.getLmdbSystemLibraryPath();
+
+        if (lmdbSystemLibraryPath != null) {
+            // javax.validation should ensure the path is valid if set
+            System.setProperty(LMDB_NATIVE_LIB_PROP, lmdbSystemLibraryPath);
+            LOGGER.info("Using provided LMDB system library file " + lmdbSystemLibraryPath);
+        } else {
+            // Set the location to extract the bundled LMDB binary to
+            System.setProperty(LMDB_EXTRACT_DIR_PROP, dbDir.toAbsolutePath().toString());
+            LOGGER.info("Extracting bundled LMDB binary to " + dbDir);
         }
 
         final Env<ByteBuffer> env = Env.create()

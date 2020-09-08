@@ -215,7 +215,7 @@ public class AppConfigMonitor implements Managed, HasHealthCheck {
                     "Fix the errors and save the file.", configFile.toAbsolutePath().normalize().toString());
             } else {
                 try {
-                    // Don't have to worry about the DBV config merging that goes on in DataSourceFactoryImpl
+                    // Don't have to worry about the DB config merging that goes on in DataSourceFactoryImpl
                     // as that doesn't mutate the config objects
 
                     final AtomicInteger updateCount = new AtomicInteger(0);
@@ -250,13 +250,13 @@ public class AppConfigMonitor implements Managed, HasHealthCheck {
     }
 
     private ConfigValidator.Result validateNewConfig(final AppConfig newAppConfig) {
-        // Initialise a ConfigMapper on the new config tree so it will decorate all the paths,
+        // Decorate the new config tree so it has all the paths,
         // i.e. call setBasePath on each branch in the newAppConfig tree so if we get any violations we
         // can log their locations with full paths.
-        new ConfigMapper(newAppConfig);
+        ConfigMapper.decorateWithPropertyPaths(newAppConfig);
 
         LOGGER.info("Validating modified config file");
-        final ConfigValidator.Result result = configValidator.validate(newAppConfig);
+        final ConfigValidator.Result result = configValidator.validateRecursively(newAppConfig);
         result.handleViolations(ConfigValidator::logConstraintViolation);
 
         LOGGER.info("Completed validation of application configuration, errors: {}, warnings: {}",
