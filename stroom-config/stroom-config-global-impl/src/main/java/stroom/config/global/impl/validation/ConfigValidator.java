@@ -46,7 +46,8 @@ public class ConfigValidator {
     }
 
     /**
-     * Default validation that logs errors/warnings to the logger as well as returning the results
+     * Default validation that logs errors/warnings to the logger as well as returning the results.
+     * Will only validate child objects marked with @Valid.
      */
     public Result validate(final AbstractConfig config) {
         final Set<ConstraintViolation<AbstractConfig>> constraintViolations = validator.validate(config);
@@ -54,7 +55,8 @@ public class ConfigValidator {
     }
 
     /**
-     * Walks the config object tree validating each branch
+     * Walks the config object tree validating each branch regardless of whether they have @Valid
+     * annotations.
      */
     public Result validateRecursively(final AbstractConfig config) {
         final List<Result> resultList = new ArrayList<>();

@@ -72,12 +72,16 @@ import stroom.util.shared.AbstractConfig;
 import stroom.util.xml.ParserConfig;
 
 import com.google.inject.AbstractModule;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
-import java.nio.file.Path;
 import java.util.function.Consumer;
 import java.util.function.Function;
 
 public class AppConfigModule extends AbstractModule {
+
+    private static final Logger LOGGER = LoggerFactory.getLogger(AppConfigModule.class);
+
     private final ConfigHolder configHolder;
 
     public AppConfigModule(final ConfigHolder configHolder) {
@@ -230,6 +234,16 @@ public class AppConfigModule extends AbstractModule {
             // Get the config instance
             T configInstance = configGetter.apply(parentObject);
 
+            if (configInstance == null) {
+                // branch with no children in the yaml so just create a default one
+                try {
+                    configInstance = clazz.getConstructor().newInstance();
+                } catch (Exception e) {
+                    throw new RuntimeException(LogUtil.message(
+                            "Class {} does not have a no args constructor", clazz.getName()));
+                }
+            }
+
             bind(clazz).toInstance(configInstance);
             if (childConfigConsumer != null) {
                 childConfigConsumer.accept(configInstance);
@@ -244,11 +258,5 @@ public class AppConfigModule extends AbstractModule {
 
     protected ConfigHolder getConfigHolder() {
         return configHolder;
-    }
-
-    public interface ConfigHolder {
-        AppConfig getAppConfig();
-
-        Path getConfigFile();
     }
 }

@@ -22,6 +22,7 @@ import stroom.config.app.AppConfig;
 import stroom.config.app.Config;
 import stroom.config.global.impl.ConfigMapper;
 import stroom.config.global.impl.validation.ConfigValidator;
+import stroom.config.global.impl.validation.ValidationModule;
 import stroom.dropwizard.common.DelegatingExceptionMapper;
 import stroom.dropwizard.common.Filters;
 import stroom.dropwizard.common.HealthChecks;
@@ -57,6 +58,7 @@ import javax.inject.Inject;
 import javax.servlet.DispatcherType;
 import javax.servlet.FilterRegistration;
 import javax.servlet.SessionCookieConfig;
+import javax.validation.ValidatorFactory;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
@@ -93,14 +95,22 @@ public class App extends Application<Config> {
 
     private final Path configFile;
 
+    // This is an additional injector for use only with javax.validation. It means we can do validation
+    // of the yaml file before our main injector has been created and also so we can use our custom
+    // validation annotations with REST services (see initialize() method)
+    private final Injector validationOnlyInjector;
+
     // Needed for DropwizardExtensionsSupport
     public App() {
         configFile = Paths.get("PATH_NOT_SUPPLIED");
+        validationOnlyInjector = createValidationInjector();
     }
+
 
     App(final Path configFile) {
         super();
         this.configFile = configFile;
+        validationOnlyInjector = createValidationInjector();
     }
 
     public static void main(final String[] args) throws Exception {
@@ -141,13 +151,16 @@ public class App extends Application<Config> {
         bootstrap.addCommand(new DbMigrationCommand(configFile));
 
         // If we want to use javax.validation on our rest resources with our own custom validation annotations
-        // then we will need to do something with bootstrap.setValidatorFactory()
-        // and our CustomConstraintValidatorFactory
+        // then we need to set the ValidatorFactory. As our main Guice Injector is not available yet we need to
+        // create one just for the REST validation
+        bootstrap.setValidatorFactory(validationOnlyInjector.getInstance(ValidatorFactory.class));
     }
 
     @Override
     public void run(final Config configuration, final Environment environment) {
         LOGGER.info("Using application configuration file {}", configFile.toAbsolutePath().normalize());
+
+        validateAppConfig(configuration, configFile);
 
         // Turn on Jersey logging of request/response payloads
         // I can't seem to get this to work unless Level is SEVERE
@@ -178,16 +191,12 @@ public class App extends Application<Config> {
         // Configure Cross-Origin Resource Sharing.
         configureCors(environment);
 
+
         LOGGER.info("Starting Stroom Application ({})", getNodeName(configuration.getAppConfig()));
 
         final AppModule appModule = new AppModule(configuration, environment, configFile);
         final Injector injector = Guice.createInjector(appModule);
 
-        // Ideally we would do the validation before all the guice binding but the validation
-        // relies on ConfigMapper and the various custom validator impls being injected by guice.
-        // As long as we do this as the first thing after the injector is created then it is
-        // only eager singletons that will have been spun up.
-        validateAppConfig(injector, configuration.getAppConfig());
 
         injector.injectMembers(this);
 
@@ -249,15 +258,20 @@ public class App extends Application<Config> {
                 : null;
     }
 
-    private void validateAppConfig(final Injector injector, final AppConfig appConfig) {
+    private void validateAppConfig(final Config config, final Path configFile) {
 
         // Inject this way rather than using injectMembers so we can avoid instantiating
         // too many classes before running our validation
 
-        // We need to get an unused instance of ConfigMapper so it decorates the AppConfig tree.
-        injector.getInstance(ConfigMapper.class);
+        // create a minimalist throw away injector to just perform the validation
+//        Injector injector = Guice.createInjector(new BootConfigValidationModule(config, configFile));
 
-        final ConfigValidator configValidator = injector.getInstance(ConfigValidator.class);
+//        injector.getInstance(ConfigMapper.class);
+        final AppConfig appConfig = config.getAppConfig();
+
+        ConfigMapper.decorateWithPropertyPaths(appConfig);
+
+        final ConfigValidator configValidator = validationOnlyInjector.getInstance(ConfigValidator.class);
 
         LOGGER.info("Validating application configuration file {}",
                 configFile.toAbsolutePath().normalize().toString());
@@ -405,5 +419,9 @@ public class App extends Application<Config> {
 
         LOGGER.warn(msg);
         contentSecurityConfig.setContentSecurityPolicy(SUPER_DEV_CONTENT_SECURITY_POLICY_VALUE);
+    }
+
+    private Injector createValidationInjector() {
+        return Guice.createInjector(new ValidationModule());
     }
 }
