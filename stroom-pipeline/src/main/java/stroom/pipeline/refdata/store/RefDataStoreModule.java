@@ -58,6 +58,8 @@ public class RefDataStoreModule extends AbstractModule {
                 .bind(FastInfosetValue.TYPE_ID, FastInfosetValueConsumer.Factory.class)
                 .bind(StringValue.TYPE_ID, StringValueConsumer.Factory.class);
 
+        bind(RefDataStoreFactory.class).asEagerSingleton();
+
         // bind all the reference data off heap tables
         install(new FactoryModuleBuilder().build(KeyValueStoreDb.Factory.class));
         install(new FactoryModuleBuilder().build(RangeStoreDb.Factory.class));

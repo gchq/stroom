@@ -81,7 +81,7 @@ public class OffHeapRefDataLoader implements RefDataLoader {
     private final Env<ByteBuffer> lmdbEnvironment;
     private final RefStreamDefinition refStreamDefinition;
     private final long effectiveTimeMs;
-    private int maxPutsBeforeCommit = Integer.MAX_VALUE;
+    private Runnable commitIfRequireFunc = () -> {}; // default position is to not commit mid-load
     private int putsCounter = 0;
     private int successfulPutsCounter = 0;
     private boolean overwriteExisting = false;
@@ -198,8 +198,20 @@ public class OffHeapRefDataLoader implements RefDataLoader {
 
     @Override
     public void setCommitInterval(final int maxPutsBeforeCommit) {
-        Preconditions.checkArgument(maxPutsBeforeCommit >= 1);
-        this.maxPutsBeforeCommit = maxPutsBeforeCommit;
+        Preconditions.checkArgument(maxPutsBeforeCommit >= 0);
+        if (maxPutsBeforeCommit == 0) {
+            commitIfRequireFunc = () -> {
+                // No mid-load commits required
+            };
+        } else {
+            commitIfRequireFunc = () -> {
+                if (putsCounter % maxPutsBeforeCommit == 0) {
+                    LOGGER.trace("Committing with putsCounter {}, maxPutsBeforeCommit {}",
+                            putsCounter, maxPutsBeforeCommit);
+                    commit();
+                }
+            };
+        }
     }
 
     @Override
@@ -449,10 +461,7 @@ public class OffHeapRefDataLoader implements RefDataLoader {
      */
     private void commitIfRequired() {
         putsCounter++;
-        if (putsCounter % maxPutsBeforeCommit == 0) {
-            LOGGER.trace("Committing with putsCounter {}, maxPutsBeforeCommit {}", putsCounter, maxPutsBeforeCommit);
-            commit();
-        }
+        commitIfRequireFunc.run();
     }
 
     private void beginTxnIfRequired() {
