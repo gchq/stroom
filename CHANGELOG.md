@@ -7,6 +7,11 @@ and this project adheres to [Semantic Versioning](http://semver.org/).
 
 ## [Unreleased]
 
+* Issue **#1083** : Added `any()`, `first()`, `last()`, `nth()`, `top()` and `bottom()` selection functions to select child values of grouped items.
+
+* Issue **#1837** : Added `joining()` function to concatenate supplied fields in child rows.
+
+* Issue **#1784** : Several functions were previously prevented from working on results from aggregate functions but are now applied regardless.
 
 ## [v6.1.11] - 2020-08-26
 

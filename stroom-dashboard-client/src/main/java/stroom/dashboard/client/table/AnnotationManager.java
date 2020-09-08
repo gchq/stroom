@@ -41,11 +41,16 @@ import stroom.widget.popup.client.presenter.PopupView.PopupType;
 import javax.inject.Inject;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Objects;
+import java.util.stream.Collectors;
 
 public class AnnotationManager {
     private final MenuListPresenter menuListPresenter;
     private final ChangeStatusPresenter changeStatusPresenter;
     private final ChangeAssignedToPresenter changeAssignedToPresenter;
+
+    private List<Field> currentFields;
+    private List<Row> selectedItems;
 
     @Inject
     public AnnotationManager(final MenuListPresenter menuListPresenter,
@@ -57,6 +62,9 @@ public class AnnotationManager {
     }
 
     public void showAnnotationMenu(final NativeEvent event, final List<Field> currentFields, final List<Row> selectedItems) {
+        this.currentFields = currentFields;
+        this.selectedItems = selectedItems;
+
         final Element target = event.getEventTarget().cast();
         final PopupPosition popupPosition = new PopupPosition(target.getAbsoluteLeft(),
                 target.getAbsoluteRight(), target.getAbsoluteTop(), target.getAbsoluteBottom(), null,
@@ -99,66 +107,102 @@ public class AnnotationManager {
 
     public List<EventId> getEventIdList(final List<Field> currentFields, final List<Row> selectedItems) {
         final List<EventId> idList = new ArrayList<>();
-        if (selectedItems != null && selectedItems.size() > 0) {
-            int streamIdIndex = -1;
-            int eventIdIndex = -1;
-            int i = 0;
-            for (final Field field : currentFields) {
-                if (streamIdIndex == -1 && field.getName().equals(IndexConstants.STREAM_ID)) {
-                    streamIdIndex = i;
-                } else if (eventIdIndex == -1 && field.getName().equals(IndexConstants.EVENT_ID)) {
-                    eventIdIndex = i;
-                }
-                i++;
-            }
 
-            if (streamIdIndex != -1 && eventIdIndex != -1) {
-                for (final Row row : selectedItems) {
-                    final Long streamId = getLong(row.getValues(), streamIdIndex);
-                    final Long eventId = getLong(row.getValues(), eventIdIndex);
-                    if (streamId != null && eventId != null) {
-                        idList.add(new EventId(streamId, eventId));
+        final List<String> streamIds = getValues(currentFields, selectedItems, IndexConstants.STREAM_ID);
+        final List<String> eventIds = getValues(currentFields, selectedItems, IndexConstants.EVENT_ID);
+        final List<String> eventIdLists = getValues(currentFields, selectedItems, "EventIdList");
+
+        for (int i = 0; i < streamIds.size() && i < eventIds.size(); i++) {
+            final Long streamId = toLong(streamIds.get(i));
+            final Long eventId = toLong(eventIds.get(i));
+            if (streamId != null && eventId != null) {
+                idList.add(new EventId(streamId, eventId));
+            }
+        }
+
+        for (final String eventIdList : eventIdLists) {
+            if (eventIdList != null) {
+                final String[] events = eventIdList.split(" ");
+                for (final String event : events) {
+                    try {
+                        final String[] parts = event.split(":");
+                        if (parts.length == 2) {
+                            final long streamId = Long.parseLong(parts[0]);
+                            final long eventId = Long.parseLong(parts[1]);
+                            idList.add(new EventId(streamId, eventId));
+                        }
+                    } catch (final NumberFormatException e) {
+                        // Ignore.
                     }
                 }
             }
         }
+
         return idList;
     }
 
     public List<Long> getAnnotationIdList(final List<Field> currentFields, final List<Row> selectedItems) {
-        final List<Long> idList = new ArrayList<>();
+        final List<String> values = getValues(currentFields, selectedItems, "annotation:Id");
+        return values
+                .stream()
+                .map(this::toLong)
+                .filter(Objects::nonNull)
+                .collect(Collectors.toList());
+    }
+
+    public List<String> getValues(final List<Field> currentFields, final List<Row> selectedItems, final String fieldName) {
+        final List<String> values = new ArrayList<>();
         if (selectedItems != null && selectedItems.size() > 0) {
-            int annotationIdIndex = -1;
-            int i = 0;
-            for (final Field field : currentFields) {
-                if (annotationIdIndex == -1 && field.getName().equals("annotation:Id")) {
-                    annotationIdIndex = i;
+            int fieldIndex = -1;
+            for (int i = 0; i < currentFields.size() && fieldIndex == -1; i++) {
+                final Field field = currentFields.get(i);
+                if (field.getName().equals(fieldName)) {
+                    fieldIndex = i;
                 }
-                i++;
             }
 
-            if (annotationIdIndex != -1) {
+            if (fieldIndex != -1) {
                 for (final Row row : selectedItems) {
-                    final Long annotationId = getLong(row.getValues(), annotationIdIndex);
-                    if (annotationId != null) {
-                        idList.add(annotationId);
+                    final String value = getString(row.getValues(), fieldIndex);
+                    values.add(value);
+                }
+            }
+        }
+        return values;
+    }
+
+    public String getValue(final List<Field> currentFields, final List<Row> selectedItems, final String fieldName) {
+        if (selectedItems != null && selectedItems.size() > 0) {
+            int fieldIndex = -1;
+            for (int i = 0; i < currentFields.size() && fieldIndex == -1; i++) {
+                final Field field = currentFields.get(i);
+                if (field.getName().equalsIgnoreCase(fieldName)) {
+                    fieldIndex = i;
+                }
+            }
+
+            if (fieldIndex != -1) {
+                for (final Row row : selectedItems) {
+                    final String value = getString(row.getValues(), fieldIndex);
+                    if (value != null) {
+                        return value;
                     }
                 }
             }
         }
-        return idList;
+        return null;
     }
 
-    private Long getLong(List<String> values, int index) {
+    private String getString(List<String> values, int index) {
         if (values != null && values.size() > index) {
             final String value = values.get(index);
             if (value != null) {
                 try {
                     if (value.startsWith("[")) {
                         final Hyperlink hyperlink = Hyperlink.create(value);
-                        return Long.parseLong(hyperlink.getText());
+                        return hyperlink.getText();
                     }
-                    return Long.parseLong(value);
+                    return value;
                 } catch (final NumberFormatException e) {
                     // Ignore.
                 }
@@ -167,6 +211,16 @@ public class AnnotationManager {
         return null;
     }
 
+    private Long toLong(final String string) {
+        if (string != null) {
+            try {
+                return Long.parseLong(string);
+            } catch (final NumberFormatException e) {
+                // Ignore.
+            }
+        }
+        return null;
+    }
 
     private Item createCreateMenu(final List<EventId> eventIdList) {
         return new IconMenuItem(0, SvgPresets.EDIT, SvgPresets.EDIT, "Create Annotation", null, true, () -> createAnnotation(eventIdList));
@@ -181,37 +235,27 @@ public class AnnotationManager {
     }
 
     private void createAnnotation(final List<EventId> eventIdList) {
-//        if (idList.size() > 0) {
-        final Annotation annotation = new Annotation();
-        ShowAnnotationEvent.fire(menuListPresenter, annotation, eventIdList);
+        final String title = getValue(currentFields, selectedItems, "title");
+        final String subject = getValue(currentFields, selectedItems, "subject");
+        final String status = getValue(currentFields, selectedItems, "status");
+        final String assignedTo = getValue(currentFields, selectedItems, "assignedTo");
+        final String comment = getValue(currentFields, selectedItems, "comment");
 
-//        } else {
-//            AlertEvent.fireWarn(this, "You need to select some rows to annotate", null);
-//        }
+        final Annotation annotation = new Annotation();
+        annotation.setTitle(title);
+        annotation.setSubject(subject);
+        annotation.setStatus(status);
+        annotation.setAssignedTo(assignedTo);
+        annotation.setComment(comment);
+
+        ShowAnnotationEvent.fire(menuListPresenter, annotation, eventIdList);
     }
 
     private void changeStatus(final List<Long> annotationIdList) {
         changeStatusPresenter.show(annotationIdList);
-
-//        final List<EventId> idList = getEventIdList(currentFields, selectedItems);
-//        if (idList.size() > 0) {
-//            final Annotation annotation = new Annotation();
-//            ShowAnnotationEvent.fire(this, annotation, idList);
-//
-//        } else {
-//            AlertEvent.fireWarn(this, "You need to select some rows to annotate", null);
-//        }
     }
 
     private void changeAssignedTo(final List<Long> annotationIdList) {
         changeAssignedToPresenter.show(annotationIdList);
-//        final List<EventId> idList = getEventIdList(currentFields, selectedItems);
-//        if (idList.size() > 0) {
-//            final Annotation annotation = new Annotation();
-//            ShowAnnotationEvent.fire(this, annotation, idList);
-//
-//        } else {
-//            AlertEvent.fireWarn(this, "You need to select some rows to annotate", null);
-//        }
     }
 }
