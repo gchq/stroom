@@ -7,6 +7,8 @@ and this project adheres to [Semantic Versioning](http://semver.org/).
 
 ## [Unreleased]
 
+* Issue **#1824** : Fix for search hang when extraction is requested but no search pipeline is provided.
+
 * Issue **#1083** : Added `any()`, `first()`, `last()`, `nth()`, `top()` and `bottom()` selection functions to select child values of grouped items.
 
 * Issue **#1837** : Added `joining()` function to concatenate supplied fields in child rows.

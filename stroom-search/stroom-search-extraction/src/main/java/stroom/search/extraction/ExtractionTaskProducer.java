@@ -49,7 +49,7 @@ class ExtractionTaskProducer extends TaskProducer {
     private final Receiver parentReceiver;
     private final Map<DocRef, Receiver> receivers;
     private final Provider<ExtractionTaskHandler> handlerProvider;
-    private final Queue<ExtractionRunnable> taskQueue = new ConcurrentLinkedQueue<>();
+    private final Queue<Runnable> taskQueue = new ConcurrentLinkedQueue<>();
 
     private final CompletionState streamMapCreatorCompletionState = new CompletionState();
     private final Map<Long, List<Event>> streamEventMap = new ConcurrentHashMap<>();
@@ -161,7 +161,7 @@ class ExtractionTaskProducer extends TaskProducer {
 
     @Override
     protected Runnable getNext() {
-        ExtractionRunnable task = null;
+        Runnable task = null;
 
         if (!tracker.isComplete()) {
             task = taskQueue.poll();
@@ -194,19 +194,35 @@ class ExtractionTaskProducer extends TaskProducer {
 
         final long[] eventIds = createEventIdArray(events, receivers);
         receivers.forEach((docRef, receiver) -> {
+            tracker.incrementTasksTotal();
+
+            Runnable runnable;
             if (docRef != null) {
-                tracker.incrementTasksTotal();
-                final ExtractionTask task = new ExtractionTask(streamId, eventIds, docRef, receiver);
-                taskQueue.offer(new ExtractionRunnable(task, handlerProvider, tracker));
-                tasksCreated.incrementAndGet();
+                runnable = () -> {
+                    try {
+                        final ExtractionTaskHandler handler = handlerProvider.get();
+                        handler.exec(new ExtractionTask(streamId, eventIds, docRef, receiver));
+                    } finally {
+                        tracker.incrementTasksCompleted();
+                    }
+                };
 
             } else {
-                // Pass raw values to coprocessors that are not requesting values to be extracted.
-                for (final Event event : events) {
-                    receiver.getValuesConsumer().accept(event.getValues());
-                }
-                receiver.getCompletionCountConsumer().accept((long) events.size());
+                runnable = () -> {
+                    try {
+                        // Pass raw values to coprocessors that are not requesting values to be extracted.
+                        for (final Event event : events) {
+                            receiver.getValuesConsumer().accept(event.getValues());
+                        }
+                        receiver.getCompletionCountConsumer().accept((long) events.size());
+                    } finally {
+                        tracker.incrementTasksCompleted();
+                    }
+                };
             }
+
+            taskQueue.offer(runnable);
+            tasksCreated.incrementAndGet();
         });
 
         return tasksCreated.get();
@@ -235,33 +251,5 @@ class ExtractionTaskProducer extends TaskProducer {
         return "ExtractionTaskProducer{" +
                 "tracker=" + tracker +
                 '}';
-    }
-
-    private static class ExtractionRunnable implements Runnable {
-        private final ExtractionTask task;
-        private final Provider<ExtractionTaskHandler> handlerProvider;
-        private final ExtractionProgressTracker tracker;
-
-        ExtractionRunnable(final ExtractionTask task,
-                           final Provider<ExtractionTaskHandler> handlerProvider,
-                           final ExtractionProgressTracker tracker) {
-            this.task = task;
-            this.handlerProvider = handlerProvider;
-            this.tracker = tracker;
-        }
-
-        @Override
-        public void run() {
-            try {
-                final ExtractionTaskHandler handler = handlerProvider.get();
-                handler.exec(task);
-            } finally {
-                tracker.incrementTasksCompleted();
-            }
-        }
-
-        public ExtractionTask getTask() {
-            return task;
-        }
     }
 }
