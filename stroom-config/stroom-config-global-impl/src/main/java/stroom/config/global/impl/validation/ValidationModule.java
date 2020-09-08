@@ -4,6 +4,8 @@ import stroom.util.logging.LambdaLogger;
 import stroom.util.logging.LambdaLoggerFactory;
 import stroom.util.logging.LogUtil;
 import stroom.util.shared.validation.IsSubsetOfValidator;
+import stroom.util.shared.validation.ValidDirectoryPathValidator;
+import stroom.util.shared.validation.ValidFilePathValidator;
 import stroom.util.shared.validation.ValidRegexValidator;
 import stroom.util.shared.validation.ValidSimpleCronValidator;
 
@@ -28,6 +30,8 @@ public class ValidationModule extends AbstractModule {
         bind(ValidRegexValidator.class).to(ValidRegexValidatorImpl.class);
         bind(ValidSimpleCronValidator.class).to(ValidSimpleSimpleCronValidatorImpl.class);
         bind(IsSubsetOfValidator.class).to(IsSubsetOfValidatorImpl.class);
+        bind(ValidFilePathValidator.class).to(ValidFilePathValidatorImpl.class);
+        bind(ValidDirectoryPathValidator.class).to(ValidDirectoryPathValidatorImpl.class);
     }
 
     @SuppressWarnings("unused")
