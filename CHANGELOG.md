@@ -7,6 +7,18 @@ and this project adheres to [Semantic Versioning](http://semver.org/).
 
 ## [Unreleased]
 
+* Fix config file validation not working when hot loading config file changes.
+
+* Change config file validation to be the first thing that happens on boot.
+
+* Fix error when empty branches are in the config file.
+
+* Add `pipeline.referenceData.getLmdbSystemLibraryPath` prop to support provided LMDB binary.
+
+* Change extraction location of bundled LMDB binary to be the same as the store files.
+
+* Change default value for `pipeline.referenceData.maxPutsBeforeCommit` to 0 (i.e. don't commit mid-load).
+
 
 ## [v7.0-beta.50] - 2020-09-07
 

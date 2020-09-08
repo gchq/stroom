@@ -75,6 +75,7 @@ import com.google.inject.AbstractModule;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import java.util.function.BiConsumer;
 import java.util.function.Consumer;
 import java.util.function.Function;
 
@@ -111,116 +112,120 @@ public class AppConfigModule extends AbstractModule {
         // you will get a vanilla instance that is not linked to the config yml or db props!
         // It is safer to bind everything to be on the safe side
 
-        bindConfig(AppConfig::getActivityConfig, stroom.activity.impl.db.ActivityConfig.class);
-        bindConfig(AppConfig::getAnnotationConfig, stroom.annotation.impl.AnnotationConfig.class);
-        bindConfig(AppConfig::getClusterConfig, ClusterConfig.class);
-        bindConfig(AppConfig::getClusterLockConfig, ClusterLockConfig.class);
-        bindConfig(AppConfig::getClusterTaskConfig, ClusterTaskConfig.class);
-        bindConfig(AppConfig::getCommonDbConfig, CommonDbConfig.class);
-        bindConfig(AppConfig::getContentPackImportConfig, ContentPackImportConfig.class);
-        bindConfig(AppConfig::getLegacyDbConfig, LegacyDbConfig.class);
-        bindConfig(AppConfig::getDashboardConfig, DashboardConfig.class);
-        bindConfig(AppConfig::getDataConfig, DataConfig.class, dataConfig -> {
-            bindConfig(dataConfig, DataConfig::getDataRetentionConfig, DataRetentionConfig.class);
-            bindConfig(dataConfig, DataConfig::getDataStoreServiceConfig, DataStoreServiceConfig.class);
-            bindConfig(dataConfig, DataConfig::getFsVolumeConfig, FsVolumeConfig.class);
-            bindConfig(dataConfig, DataConfig::getMetaServiceConfig, MetaServiceConfig.class, metaServiceConfig ->
-                    bindConfig(metaServiceConfig, MetaServiceConfig::getMetaValueConfig, MetaValueConfig.class));
+        bindConfig(AppConfig::getActivityConfig, AppConfig::setActivityConfig, stroom.activity.impl.db.ActivityConfig.class);
+        bindConfig(AppConfig::getAnnotationConfig, AppConfig::setAnnotationConfig, stroom.annotation.impl.AnnotationConfig.class);
+        bindConfig(AppConfig::getClusterConfig, AppConfig::setClusterConfig, ClusterConfig.class);
+        bindConfig(AppConfig::getClusterLockConfig, AppConfig::setClusterLockConfig, ClusterLockConfig.class);
+        bindConfig(AppConfig::getClusterTaskConfig, AppConfig::setClusterTaskConfig, ClusterTaskConfig.class);
+        bindConfig(AppConfig::getCommonDbConfig, AppConfig::setCommonDbConfig, CommonDbConfig.class);
+        bindConfig(AppConfig::getContentPackImportConfig, AppConfig::setContentPackImportConfig, ContentPackImportConfig.class);
+        bindConfig(AppConfig::getLegacyDbConfig, AppConfig::setLegacyDbConfig, LegacyDbConfig.class);
+        bindConfig(AppConfig::getDashboardConfig, AppConfig::setDashboardConfig, DashboardConfig.class);
+        bindConfig(AppConfig::getDataConfig, AppConfig::setDataConfig, DataConfig.class, dataConfig -> {
+            bindConfig(dataConfig, DataConfig::getDataRetentionConfig, DataConfig::setDataRetentionConfig, DataRetentionConfig.class);
+            bindConfig(dataConfig, DataConfig::getDataStoreServiceConfig, DataConfig::setDataStoreServiceConfig, DataStoreServiceConfig.class);
+            bindConfig(dataConfig, DataConfig::getFsVolumeConfig, DataConfig::setFsVolumeConfig, FsVolumeConfig.class);
+            bindConfig(dataConfig, DataConfig::getMetaServiceConfig, DataConfig::setMetaServiceConfig, MetaServiceConfig.class, metaServiceConfig ->
+                    bindConfig(metaServiceConfig, MetaServiceConfig::getMetaValueConfig, MetaServiceConfig::setMetaValueConfig, MetaValueConfig.class));
         });
-        bindConfig(AppConfig::getDataSourceUrlConfig, DataSourceUrlConfig.class);
-        bindConfig(AppConfig::getDocStoreConfig, DocStoreConfig.class);
-        bindConfig(AppConfig::getExplorerConfig, ExplorerConfig.class);
-        bindConfig(AppConfig::getExportConfig, ExportConfig.class);
-        bindConfig(AppConfig::getFeedConfig, FeedConfig.class);
-        bindConfig(AppConfig::getIndexConfig, IndexConfig.class, indexConfig ->
-                bindConfig(indexConfig, IndexConfig::getIndexWriterConfig, IndexWriterConfig.class, indexWriterConfig ->
-                        bindConfig(indexWriterConfig, IndexWriterConfig::getIndexCacheConfig, IndexCacheConfig.class)));
-        bindConfig(AppConfig::getJobSystemConfig, JobSystemConfig.class);
-        bindConfig(AppConfig::getKafkaConfig, KafkaConfig.class);
-        bindConfig(AppConfig::getLifecycleConfig, LifecycleConfig.class);
-        bindConfig(AppConfig::getNodeConfig, NodeConfig.class, nodeConfig ->
-                bindConfig(nodeConfig, NodeConfig::getStatusConfig, StatusConfig.class, statusConfig ->
-                        bindConfig(statusConfig, StatusConfig::getHeapHistogramConfig, HeapHistogramConfig.class)));
-        bindConfig(AppConfig::getNodeUri, NodeUriConfig.class);
-        bindConfig(AppConfig::getPathConfig, PathConfig.class);
-        bindConfig(AppConfig::getPipelineConfig, PipelineConfig.class, pipelineConfig -> {
-            bindConfig(pipelineConfig, PipelineConfig::getAppenderConfig, AppenderConfig.class);
-            bindConfig(pipelineConfig, PipelineConfig::getParserConfig, ParserConfig.class);
-            bindConfig(pipelineConfig, PipelineConfig::getReferenceDataConfig, ReferenceDataConfig.class);
-            bindConfig(pipelineConfig, PipelineConfig::getXmlSchemaConfig, XmlSchemaConfig.class);
-            bindConfig(pipelineConfig, PipelineConfig::getXsltConfig, XsltConfig.class);
+        bindConfig(AppConfig::getDataSourceUrlConfig, AppConfig::setDataSourceUrlConfig, DataSourceUrlConfig.class);
+        bindConfig(AppConfig::getDocStoreConfig, AppConfig::setDocStoreConfig, DocStoreConfig.class);
+        bindConfig(AppConfig::getExplorerConfig, AppConfig::setExplorerConfig, ExplorerConfig.class);
+        bindConfig(AppConfig::getExportConfig, AppConfig::setExportConfig, ExportConfig.class);
+        bindConfig(AppConfig::getFeedConfig, AppConfig::setFeedConfig, FeedConfig.class);
+        bindConfig(AppConfig::getIndexConfig, AppConfig::setIndexConfig, IndexConfig.class, indexConfig ->
+                bindConfig(indexConfig, IndexConfig::getIndexWriterConfig, IndexConfig::setIndexWriterConfig, IndexWriterConfig.class, indexWriterConfig ->
+                        bindConfig(indexWriterConfig, IndexWriterConfig::getIndexCacheConfig, IndexWriterConfig::setIndexCacheConfig, IndexCacheConfig.class)));
+        bindConfig(AppConfig::getJobSystemConfig, AppConfig::setJobSystemConfig, JobSystemConfig.class);
+        bindConfig(AppConfig::getKafkaConfig, AppConfig::setKafkaConfig, KafkaConfig.class);
+        bindConfig(AppConfig::getLifecycleConfig, AppConfig::setLifecycleConfig, LifecycleConfig.class);
+        bindConfig(AppConfig::getNodeConfig, AppConfig::setNodeConfig, NodeConfig.class, nodeConfig ->
+                bindConfig(nodeConfig, NodeConfig::getStatusConfig, NodeConfig::setStatusConfig, StatusConfig.class, statusConfig ->
+                        bindConfig(statusConfig, StatusConfig::getHeapHistogramConfig, StatusConfig::setHeapHistogramConfig, HeapHistogramConfig.class)));
+        bindConfig(AppConfig::getNodeUri, AppConfig::setNodeUri, NodeUriConfig.class);
+        bindConfig(AppConfig::getPathConfig, AppConfig::setPathConfig, PathConfig.class);
+        bindConfig(AppConfig::getPipelineConfig, AppConfig::setPipelineConfig, PipelineConfig.class, pipelineConfig -> {
+            bindConfig(pipelineConfig, PipelineConfig::getAppenderConfig, PipelineConfig::setAppenderConfig, AppenderConfig.class);
+            bindConfig(pipelineConfig, PipelineConfig::getParserConfig, PipelineConfig::setParserConfig, ParserConfig.class);
+            bindConfig(pipelineConfig, PipelineConfig::getReferenceDataConfig, PipelineConfig::setReferenceDataConfig, ReferenceDataConfig.class);
+            bindConfig(pipelineConfig, PipelineConfig::getXmlSchemaConfig, PipelineConfig::setXmlSchemaConfig, XmlSchemaConfig.class);
+            bindConfig(pipelineConfig, PipelineConfig::getXsltConfig, PipelineConfig::setXsltConfig, XsltConfig.class);
         });
-        bindConfig(AppConfig::getProcessorConfig, ProcessorConfig.class);
-        bindConfig(AppConfig::getPropertyServiceConfig, PropertyServiceConfig.class);
-        bindConfig(AppConfig::getProxyAggregationConfig, ProxyAggregationConfig.class);
-        bindConfig(AppConfig::getPublicUri, PublicUriConfig.class);
-        bindConfig(AppConfig::getReceiveDataConfig, ReceiveDataConfig.class);
-        bindConfig(AppConfig::getSearchConfig, SearchConfig.class, searchConfig -> {
-            bindConfig(searchConfig, SearchConfig::getExtractionConfig, ExtractionConfig.class);
-            bindConfig(searchConfig, SearchConfig::getShardConfig, IndexShardSearchConfig.class);
+        bindConfig(AppConfig::getProcessorConfig, AppConfig::setProcessorConfig, ProcessorConfig.class);
+        bindConfig(AppConfig::getPropertyServiceConfig, AppConfig::setPropertyServiceConfig, PropertyServiceConfig.class);
+        bindConfig(AppConfig::getProxyAggregationConfig, AppConfig::setProxyAggregationConfig, ProxyAggregationConfig.class);
+        bindConfig(AppConfig::getPublicUri, AppConfig::setPublicUri, PublicUriConfig.class);
+        bindConfig(AppConfig::getReceiveDataConfig, AppConfig::setReceiveDataConfig, ReceiveDataConfig.class);
+        bindConfig(AppConfig::getSearchConfig, AppConfig::setSearchConfig, SearchConfig.class, searchConfig -> {
+            bindConfig(searchConfig, SearchConfig::getExtractionConfig, SearchConfig::setExtractionConfig, ExtractionConfig.class);
+            bindConfig(searchConfig, SearchConfig::getShardConfig, SearchConfig::setShardConfig, IndexShardSearchConfig.class);
         });
-        bindConfig(AppConfig::getSearchableConfig, SearchableConfig.class);
-        bindConfig(AppConfig::getSecurityConfig, SecurityConfig.class, securityConfig -> {
-            bindConfig(securityConfig, SecurityConfig::getAuthenticationConfig, AuthenticationConfig.class, c2 ->
-                    bindConfig(c2, AuthenticationConfig::getOpenIdConfig, stroom.security.impl.OpenIdConfig.class));
-            bindConfig(securityConfig, SecurityConfig::getContentSecurityConfig, ContentSecurityConfig.class);
-            bindConfig(securityConfig, SecurityConfig::getAuthorisationConfig, AuthorisationConfig.class);
-            bindConfig(securityConfig, SecurityConfig::getIdentityConfig, IdentityConfig.class, identityConfig -> {
-                bindConfig(identityConfig, IdentityConfig::getEmailConfig, EmailConfig.class);
-                bindConfig(identityConfig, IdentityConfig::getTokenConfig, TokenConfig.class);
-                bindConfig(identityConfig, IdentityConfig::getOpenIdConfig, OpenIdConfig.class);
-                bindConfig(identityConfig, IdentityConfig::getPasswordPolicyConfig, PasswordPolicyConfig.class);
+        bindConfig(AppConfig::getSearchableConfig, AppConfig::setSearchableConfig, SearchableConfig.class);
+        bindConfig(AppConfig::getSecurityConfig, AppConfig::setSecurityConfig, SecurityConfig.class, securityConfig -> {
+            bindConfig(securityConfig, SecurityConfig::getAuthenticationConfig, SecurityConfig::setAuthenticationConfig, AuthenticationConfig.class, c2 ->
+                    bindConfig(c2, AuthenticationConfig::getOpenIdConfig, AuthenticationConfig::setOpenIdConfig, stroom.security.impl.OpenIdConfig.class));
+            bindConfig(securityConfig, SecurityConfig::getContentSecurityConfig, SecurityConfig::setContentSecurityConfig, ContentSecurityConfig.class);
+            bindConfig(securityConfig, SecurityConfig::getAuthorisationConfig, SecurityConfig::setAuthorisationConfig, AuthorisationConfig.class);
+            bindConfig(securityConfig, SecurityConfig::getIdentityConfig, SecurityConfig::setIdentityConfig, IdentityConfig.class, identityConfig -> {
+                bindConfig(identityConfig, IdentityConfig::getEmailConfig, IdentityConfig::setEmailConfig, EmailConfig.class);
+                bindConfig(identityConfig, IdentityConfig::getTokenConfig, IdentityConfig::setTokenConfig, TokenConfig.class);
+                bindConfig(identityConfig, IdentityConfig::getOpenIdConfig, IdentityConfig::setOpenIdConfig, OpenIdConfig.class);
+                bindConfig(identityConfig, IdentityConfig::getPasswordPolicyConfig, IdentityConfig::setPasswordPolicyConfig, PasswordPolicyConfig.class);
             });
         });
-        bindConfig(AppConfig::getServiceDiscoveryConfig, ServiceDiscoveryConfig.class);
-        bindConfig(AppConfig::getSessionCookieConfig, SessionCookieConfig.class);
-        bindConfig(AppConfig::getSolrConfig, SolrConfig.class, solrConfig ->
-                bindConfig(solrConfig, SolrConfig::getSolrSearchConfig, SolrSearchConfig.class));
-        bindConfig(AppConfig::getStatisticsConfig, StatisticsConfig.class, statisticsConfig -> {
-            bindConfig(statisticsConfig, StatisticsConfig::getHbaseStatisticsConfig, HBaseStatisticsConfig.class, hBaseStatisticsConfig ->
-                    bindConfig(hBaseStatisticsConfig, HBaseStatisticsConfig::getKafkaTopicsConfig, KafkaTopicsConfig.class));
-            bindConfig(statisticsConfig, StatisticsConfig::getInternalStatisticsConfig, InternalStatisticsConfig.class);
-            bindConfig(statisticsConfig, StatisticsConfig::getSqlStatisticsConfig, SQLStatisticsConfig.class, sqlStatisticsConfig ->
-                    bindConfig(sqlStatisticsConfig, SQLStatisticsConfig::getSearchConfig, stroom.statistics.impl.sql.search.SearchConfig.class));
+        bindConfig(AppConfig::getServiceDiscoveryConfig, AppConfig::setServiceDiscoveryConfig, ServiceDiscoveryConfig.class);
+        bindConfig(AppConfig::getSessionCookieConfig, AppConfig::setSessionCookieConfig, SessionCookieConfig.class);
+        bindConfig(AppConfig::getSolrConfig, AppConfig::setSolrConfig, SolrConfig.class, solrConfig ->
+                bindConfig(solrConfig, SolrConfig::getSolrSearchConfig, SolrConfig::setSolrSearchConfig, SolrSearchConfig.class));
+        bindConfig(AppConfig::getStatisticsConfig, AppConfig::setStatisticsConfig, StatisticsConfig.class, statisticsConfig -> {
+            bindConfig(statisticsConfig, StatisticsConfig::getHbaseStatisticsConfig, StatisticsConfig::setHbaseStatisticsConfig, HBaseStatisticsConfig.class, hBaseStatisticsConfig ->
+                    bindConfig(hBaseStatisticsConfig, HBaseStatisticsConfig::getKafkaTopicsConfig, HBaseStatisticsConfig::setKafkaTopicsConfig, KafkaTopicsConfig.class));
+            bindConfig(statisticsConfig, StatisticsConfig::getInternalStatisticsConfig, StatisticsConfig::setInternalStatisticsConfig, InternalStatisticsConfig.class);
+            bindConfig(statisticsConfig, StatisticsConfig::getSqlStatisticsConfig, StatisticsConfig::setSqlStatisticsConfig, SQLStatisticsConfig.class, sqlStatisticsConfig ->
+                    bindConfig(sqlStatisticsConfig, SQLStatisticsConfig::getSearchConfig, SQLStatisticsConfig::setSearchConfig, stroom.statistics.impl.sql.search.SearchConfig.class));
         });
-        bindConfig(AppConfig::getStoredQueryConfig, StoredQueryConfig.class);
-        bindConfig(AppConfig::getUiConfig, UiConfig.class, uiConfig -> {
-            bindConfig(uiConfig, UiConfig::getActivity, ActivityConfig.class);
-            bindConfig(uiConfig, UiConfig::getProcess, stroom.ui.config.shared.ProcessConfig.class);
-            bindConfig(uiConfig, UiConfig::getQuery, QueryConfig.class, queryConfig ->
-                    bindConfig(queryConfig, QueryConfig::getInfoPopup, InfoPopupConfig.class));
-            bindConfig(uiConfig, UiConfig::getSplash, SplashConfig.class);
-            bindConfig(uiConfig, UiConfig::getTheme, ThemeConfig.class);
-            bindConfig(uiConfig, UiConfig::getUrl, UrlConfig.class);
-            bindConfig(uiConfig, UiConfig::getUiPreferences, UiPreferences.class);
+        bindConfig(AppConfig::getStoredQueryConfig, AppConfig::setStoredQueryConfig, StoredQueryConfig.class);
+        bindConfig(AppConfig::getUiConfig, AppConfig::setUiConfig, UiConfig.class, uiConfig -> {
+            bindConfig(uiConfig, UiConfig::getActivity, UiConfig::setActivity, ActivityConfig.class);
+            bindConfig(uiConfig, UiConfig::getProcess, UiConfig::setProcess, stroom.ui.config.shared.ProcessConfig.class);
+            bindConfig(uiConfig, UiConfig::getQuery, UiConfig::setQuery, QueryConfig.class, queryConfig ->
+                    bindConfig(queryConfig, QueryConfig::getInfoPopup, QueryConfig::setInfoPopup, InfoPopupConfig.class));
+            bindConfig(uiConfig, UiConfig::getSplash, UiConfig::setSplash, SplashConfig.class);
+            bindConfig(uiConfig, UiConfig::getTheme, UiConfig::setTheme, ThemeConfig.class);
+            bindConfig(uiConfig, UiConfig::getUrl, UiConfig::setUrl, UrlConfig.class);
+            bindConfig(uiConfig, UiConfig::getUiPreferences, UiConfig::setUiPreferences, UiPreferences.class);
         });
-        bindConfig(AppConfig::getUiUri, UiUriConfig.class);
-        bindConfig(AppConfig::getVolumeConfig, VolumeConfig.class);
+        bindConfig(AppConfig::getUiUri, AppConfig::setUiUri, UiUriConfig.class);
+        bindConfig(AppConfig::getVolumeConfig, AppConfig::setVolumeConfig, VolumeConfig.class);
     }
 
     private <T extends AbstractConfig> void bindConfig(
             final Function<AppConfig, T> configGetter,
+            final BiConsumer<AppConfig, T> configSetter,
             final Class<T> clazz) {
-        bindConfig(configHolder.getAppConfig(), configGetter, clazz, null);
+        bindConfig(configHolder.getAppConfig(), configGetter, configSetter, clazz, null);
     }
 
     private <T extends AbstractConfig> void bindConfig(
             final Function<AppConfig, T> configGetter,
+            final BiConsumer<AppConfig, T> configSetter,
             final Class<T> clazz,
             final Consumer<T> childConfigConsumer) {
-        bindConfig(configHolder.getAppConfig(), configGetter, clazz, childConfigConsumer);
+        bindConfig(configHolder.getAppConfig(), configGetter, configSetter, clazz, childConfigConsumer);
     }
 
     private <X extends AbstractConfig, T extends AbstractConfig> void bindConfig(
             final X parentObject,
             final Function<X, T> configGetter,
+            final BiConsumer<X, T> configSetter,
             final Class<T> clazz) {
-        bindConfig(parentObject, configGetter, clazz, null);
+        bindConfig(parentObject, configGetter, configSetter, clazz, null);
     }
 
     private <X extends AbstractConfig, T extends AbstractConfig> void bindConfig(
             final X parentObject,
             final Function<X, T> configGetter,
+            final BiConsumer<X, T> configSetter,
             final Class<T> clazz,
             final Consumer<T> childConfigConsumer) {
 
@@ -238,6 +243,8 @@ public class AppConfigModule extends AbstractModule {
                 // branch with no children in the yaml so just create a default one
                 try {
                     configInstance = clazz.getConstructor().newInstance();
+                    // Now set the new instance on the parent
+                    configSetter.accept(parentObject, configInstance);
                 } catch (Exception e) {
                     throw new RuntimeException(LogUtil.message(
                             "Class {} does not have a no args constructor", clazz.getName()));
