@@ -97,7 +97,8 @@ public class App extends Application<Config> {
 
     // This is an additional injector for use only with javax.validation. It means we can do validation
     // of the yaml file before our main injector has been created and also so we can use our custom
-    // validation annotations with REST services (see initialize() method)
+    // validation annotations with REST services (see initialize() method). It feels a bit wrong having two
+    // injectors running but not sure how else we could do this unless Guice is not used for the validators.
     private final Injector validationOnlyInjector;
 
     // Needed for DropwizardExtensionsSupport
