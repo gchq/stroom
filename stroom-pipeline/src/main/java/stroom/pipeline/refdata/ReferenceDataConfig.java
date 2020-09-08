@@ -4,6 +4,7 @@ import stroom.util.cache.CacheConfig;
 import stroom.util.config.annotations.RequiresRestart;
 import stroom.util.io.ByteSize;
 import stroom.util.shared.AbstractConfig;
+import stroom.util.shared.validation.ValidFilePath;
 import stroom.util.time.StroomDuration;
 
 import com.fasterxml.jackson.annotation.JsonPropertyDescription;
@@ -15,12 +16,11 @@ import java.util.TreeMap;
 
 @Singleton
 public class ReferenceDataConfig extends AbstractConfig {
-    private static final int MAX_READERS_DEFAULT = 100;
-    private static final int MAX_PUTS_BEFORE_COMMIT_DEFAULT = 32_000;
 
     private String localDir = "${stroom.temp}/refDataOffHeapStore";
-    private int maxPutsBeforeCommit = MAX_PUTS_BEFORE_COMMIT_DEFAULT;
-    private int maxReaders = MAX_READERS_DEFAULT;
+    private String lmdbSystemLibraryPath = null;
+    private int maxPutsBeforeCommit = 0;
+    private int maxReaders = 100;
     private ByteSize maxStoreSize = ByteSize.ofGibibytes(50);
     private StroomDuration purgeAge = StroomDuration.ofDays(30);
     private boolean isReadAheadEnabled = true;
@@ -34,13 +34,14 @@ public class ReferenceDataConfig extends AbstractConfig {
             100_000, 10,
             1_000_000, 3));
 
+
     private CacheConfig effectiveStreamCache = new CacheConfig.Builder()
             .maximumSize(1000L)
             .expireAfterAccess(StroomDuration.ofMinutes(10))
             .build();
 
     @RequiresRestart(RequiresRestart.RestartScope.SYSTEM)
-    @JsonPropertyDescription("The full directory path to use for storing the reference data store. It MUST be on " +
+    @JsonPropertyDescription("The absolute directory path to use for storing the reference data store. It MUST be on " +
             "local disk, NOT network storage, due to use of memory mapped files. The directory will be created " +
             "if it doesn't exist.")
     public String getLocalDir() {
@@ -51,11 +52,27 @@ public class ReferenceDataConfig extends AbstractConfig {
         this.localDir = localDir;
     }
 
-    @Min(1)
-    @JsonPropertyDescription("The maximum number of puts into the store before the transaction is committed. " +
-            "There is only one write transaction available at a time so reducing this value allows multiple " +
-            "loads to potentially each load a chunk at a time. However, load times increase rapidly with values " +
-            "below around 2,000.")
+    @ValidFilePath
+    @RequiresRestart(RequiresRestart.RestartScope.SYSTEM)
+    @JsonPropertyDescription("The absolute path to a provided LMDB system library file. If unset the LMDB binary " +
+            "bundled with Stroom will be extracted to 'localDir'. This property can be used if you already have LMDB " +
+            "installed or want to make use of a package manager provided instance. If you set this property care needs " +
+            " to be taken over version compatibility between the version of LMDBJava (that Stroom uses to interact with " +
+            "LMDB) and the version of the LMDB binary.")
+    public String getLmdbSystemLibraryPath() {
+        return lmdbSystemLibraryPath;
+    }
+
+    public void setLmdbSystemLibraryPath(final String lmdbSystemLibraryPath) {
+        this.lmdbSystemLibraryPath = lmdbSystemLibraryPath;
+    }
+
+    @Min(0)
+    @JsonPropertyDescription("The maximum number of puts into the store (in a single load) before the " +
+            "transaction is committed. There is only one write transaction available at a time so reducing " +
+            "this value allows multiple loads to potentially each load a chunk at a time. However, load times " +
+            "increase rapidly with values below around 2,000. For maximum performance of a single load set this " +
+            "value to 0 to only commit at the very end of the load.")
     public int getMaxPutsBeforeCommit() {
         return maxPutsBeforeCommit;
     }

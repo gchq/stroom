@@ -122,7 +122,8 @@ public class ConfigMapper {
 
     @Inject
     public ConfigMapper(final AppConfig appConfig) {
-        LOGGER.info("Initialising ConfigMapper with class {}", appConfig.getClass().getName());
+        LOGGER.debug(() -> LogUtil.message("Initialising ConfigMapper with class {}",
+                appConfig.getClass().getName()));
 
         this.appConfig = appConfig;
 
@@ -154,6 +155,11 @@ public class ConfigMapper {
             onlyInPropertyMap.removeAll(globalPropertiesMap.keySet());
             onlyInPropertyMap.forEach(propertyPath -> LOGGER.info("Only in propertyMap -         [{}]", propertyPath));
         }
+    }
+
+    public static void decorateWithPropertyPaths(final AppConfig appConfig) {
+        // This will add all the property paths to the passed AppConfig instance
+        new ConfigMapper(appConfig);
     }
 
     private AppConfig getVanillaAppConfig() {
