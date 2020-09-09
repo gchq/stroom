@@ -41,7 +41,7 @@ class UserCache implements Clearable {
     }
 
     private Optional<User> getUser(final String name) {
-        return Optional.ofNullable(authenticationService.getUser(name));
+        return Optional.ofNullable(authenticationService.getOrCreateUser(name));
     }
 
     Optional<User> get(final String name) {

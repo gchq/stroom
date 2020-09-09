@@ -16,17 +16,19 @@
 
 package stroom.security.impl;
 
+import stroom.security.shared.User;
+import stroom.test.common.util.test.FileSystemTestUtil;
+
 import name.falgout.jeffrey.testing.junit.guice.GuiceExtension;
 import name.falgout.jeffrey.testing.junit.guice.IncludeModule;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import stroom.security.shared.User;
-import stroom.test.common.util.test.FileSystemTestUtil;
 
 import javax.inject.Inject;
 import java.util.HashSet;
+import java.util.Optional;
 import java.util.Set;
 import java.util.UUID;
 
@@ -152,16 +154,16 @@ class TestAppPermissionServiceImpl {
     private User createUser(final String name) {
         final User userRef = userService.createUser(name);
         assertThat(userRef).isNotNull();
-        final User user = userService.loadByUuid(userRef.getUuid());
-        assertThat(user).isNotNull();
-        return user;
+        final Optional<User> user = userService.loadByUuid(userRef.getUuid());
+        assertThat(user).isPresent();
+        return user.get();
     }
 
     private User createUserGroup(final String name) {
         final User userRef = userService.createUserGroup(name);
         assertThat(userRef).isNotNull();
-        final User user = userService.loadByUuid(userRef.getUuid());
-        assertThat(user).isNotNull();
-        return user;
+        final Optional<User> user = userService.loadByUuid(userRef.getUuid());
+        assertThat(user).isPresent();
+        return user.get();
     }
 }

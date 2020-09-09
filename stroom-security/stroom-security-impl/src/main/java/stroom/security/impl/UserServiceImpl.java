@@ -26,6 +26,7 @@ import javax.inject.Inject;
 import javax.inject.Singleton;
 import java.util.HashSet;
 import java.util.List;
+import java.util.Optional;
 import java.util.Set;
 import java.util.UUID;
 import java.util.function.Predicate;
@@ -65,23 +66,22 @@ class UserServiceImpl implements UserService {
     }
 
     @Override
-    public User getUserByName(final String name) {
+    public Optional<User> getUserByName(final String name) {
         if (name != null && name.trim().length() > 0) {
-            final User user = userDao.getByName(name);
-            if (user != null) {
-                // Make sure this is the user that was requested.
-                if (!user.getName().equals(name)) {
-                    throw new RuntimeException("Unexpected: returned user name does not match requested user name");
-                }
-                return user;
-            }
+            return userDao.getByName(name)
+                    .filter(user -> {
+                        if (!user.getName().equals(name)) {
+                            throw new RuntimeException("Unexpected: returned user name does not match requested user name");
+                        }
+                        return true;
+                    });
+        } else {
+            return Optional.empty();
         }
-
-        return null;
     }
 
     @Override
-    public User loadByUuid(final String uuid) {
+    public Optional<User> loadByUuid(final String uuid) {
         return userDao.getByUuid(uuid);
     }
 
@@ -156,17 +156,19 @@ class UserServiceImpl implements UserService {
             userSet = new HashSet<>(users);
 
         } else {
-            final User user = getUserByName(securityContext.getUserId());
             userSet = new HashSet<>();
-            userSet.add(user);
+            getUserByName(securityContext.getUserId())
+                    .ifPresent(user -> {
+                        userSet.add(user);
 
-            final List<User> groups = findGroupsForUser(user.getUuid());
-            groups.forEach(userGroup -> {
-                final List<User> usersInGroup = findUsersInGroup(userGroup.getUuid(), filter);
-                if (usersInGroup != null) {
-                    userSet.addAll(usersInGroup);
-                }
-            });
+                        final List<User> groups = findGroupsForUser(user.getUuid());
+                        groups.forEach(userGroup -> {
+                            final List<User> usersInGroup = findUsersInGroup(userGroup.getUuid(), filter);
+                            if (usersInGroup != null) {
+                                userSet.addAll(usersInGroup);
+                            }
+                        });
+                    });
         }
 
         return userSet

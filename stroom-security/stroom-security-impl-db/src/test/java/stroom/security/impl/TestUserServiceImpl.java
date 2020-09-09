@@ -17,14 +17,16 @@
 package stroom.security.impl;
 
 
+import stroom.security.shared.FindUserCriteria;
+import stroom.security.shared.User;
+
 import com.google.inject.Guice;
 import com.google.inject.Injector;
 import org.junit.jupiter.api.BeforeAll;
 import org.junit.jupiter.api.Test;
-import stroom.security.shared.FindUserCriteria;
-import stroom.security.shared.User;
 
 import java.util.List;
+import java.util.Optional;
 import java.util.Set;
 import java.util.UUID;
 import java.util.stream.Collectors;
@@ -139,16 +141,16 @@ class TestUserServiceImpl {
     private User createUser(final String baseName) {
         User userRef = userService.createUser(String.format("%s_%s", baseName, UUID.randomUUID()));
         assertThat(userRef).isNotNull();
-        final User user = userService.loadByUuid(userRef.getUuid());
-        assertThat(user).isNotNull();
-        return user;
+        final Optional<User> user = userService.loadByUuid(userRef.getUuid());
+        assertThat(user).isPresent();
+        return user.get();
     }
 
     private User createUserGroup(final String baseName) {
         User userRef = userService.createUserGroup(String.format("%s_%s", baseName, UUID.randomUUID()));
         assertThat(userRef).isNotNull();
-        final User user = userService.loadByUuid(userRef.getUuid());
-        assertThat(user).isNotNull();
-        return user;
+        final Optional<User> user = userService.loadByUuid(userRef.getUuid());
+        assertThat(user).isPresent();
+        return user.get();
     }
 }

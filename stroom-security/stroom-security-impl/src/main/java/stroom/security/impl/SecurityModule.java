@@ -42,6 +42,7 @@ public class SecurityModule extends AbstractModule {
         install(new PermissionChangeEventModule());
         install(new PermissionChangeEventLifecycleModule());
 
+        bind(UserAppPermissionService.class).to(UserAppPermissionServiceImpl.class);
         bind(DocumentPermissionService.class).to(DocumentPermissionServiceImpl.class);
         bind(UserService.class).to(UserServiceImpl.class);
         bind(TokenVerifier.class).to(JWTService.class);

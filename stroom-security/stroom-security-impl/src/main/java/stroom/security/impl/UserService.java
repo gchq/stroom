@@ -21,6 +21,7 @@ import stroom.security.shared.FindUserCriteria;
 import stroom.security.shared.User;
 
 import java.util.List;
+import java.util.Optional;
 import java.util.Set;
 
 public interface UserService {
@@ -28,9 +29,9 @@ public interface UserService {
 
     User createUserGroup(String name);
 
-    User getUserByName(String name);
+    Optional<User> getUserByName(String name);
 
-    User loadByUuid(String uuid);
+    Optional<User> loadByUuid(String uuid);
 
     User update(User user);
 

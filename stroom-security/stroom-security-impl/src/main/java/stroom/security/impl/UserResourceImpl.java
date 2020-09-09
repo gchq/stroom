@@ -6,6 +6,7 @@ import stroom.security.shared.UserResource;
 import stroom.util.shared.ResultPage;
 
 import javax.inject.Inject;
+import javax.ws.rs.NotFoundException;
 import java.util.List;
 
 public class UserResourceImpl implements UserResource {
@@ -70,7 +71,8 @@ public class UserResourceImpl implements UserResource {
         // TODO @AT Doesn't appear to be used by java code, may be used by new react screens
         //   that are currently unused.
 
-        return userService.loadByUuid(userUuid);
+        return userService.loadByUuid(userUuid)
+                .orElseThrow(() -> new NotFoundException("User " + userUuid + " does not exist"));
     }
 
 //    @Override
@@ -109,15 +111,16 @@ public class UserResourceImpl implements UserResource {
 
     @Override
     public Boolean setStatus(String userName, boolean status) {
-        final User existingUser = userService.getUserByName(userName);
-        if (existingUser != null) {
-            final User user = userService.loadByUuid(existingUser.getUuid());
-            user.setEnabled(status);
-            userService.update(user);
-            return true;
-        } else {
-            throw new RuntimeException("User not found");
-        }
+        userService.getUserByName(userName)
+                .ifPresentOrElse(
+                        user -> {
+                            user.setEnabled(status);
+                            userService.update(user);
+                        },
+                        () -> {
+                            throw new RuntimeException("User not found");
+                        });
+        return true;
     }
 
     @Override
