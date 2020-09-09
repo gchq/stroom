@@ -18,6 +18,7 @@ package stroom.app;
 
 import stroom.app.commands.CreateAccountCommand;
 import stroom.app.commands.DbMigrationCommand;
+import stroom.app.commands.ManageUsersCommand;
 import stroom.app.commands.ResetPasswordCommand;
 import stroom.app.guice.AppModule;
 import stroom.config.app.AppConfig;
@@ -163,6 +164,7 @@ public class App extends Application<Config> {
         bootstrap.addCommand(new DbMigrationCommand(configFile));
         bootstrap.addCommand(new CreateAccountCommand(configFile));
         bootstrap.addCommand(new ResetPasswordCommand(configFile));
+        bootstrap.addCommand(new ManageUsersCommand(configFile));
     }
 
     @Override

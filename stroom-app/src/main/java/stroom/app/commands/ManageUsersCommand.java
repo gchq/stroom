@@ -17,12 +17,15 @@ import org.slf4j.LoggerFactory;
 
 import javax.inject.Inject;
 import java.nio.file.Path;
-import java.util.Arrays;
+import java.util.Collections;
 import java.util.List;
+import java.util.function.Function;
 import java.util.stream.Collectors;
 
 /**
  * Creates an account in the internal identity provider
+ *
+ * e.g manage_users ../local.yml --createUser admin --createGroup Administrators --addToGroup admin Administrators --grantPermission Administrators Administrator
  */
 public class ManageUsersCommand extends AbstractStroomAccountConfiguredCommand {
 
@@ -154,7 +157,11 @@ public class ManageUsersCommand extends AbstractStroomAccountConfiguredCommand {
                     .stream()
                     .sorted()
                     .collect(Collectors.joining("\n"));
-            LOGGER.info("Valid application permission names:{}", perms);
+            LOGGER.info("Valid application permission names:\n" +
+                    "--------------------\n" +
+                    "{}\n" +
+                    "--------------------",
+                    perms);
         }
     }
 
@@ -173,14 +180,21 @@ public class ManageUsersCommand extends AbstractStroomAccountConfiguredCommand {
 
     private void createUserOrGroup(final String name, final boolean isGroup) {
         final String msg = LogUtil.message("Creating {} {}", (isGroup ? "group" : "user"), name);
-        try {
-            LOGGER.info(msg);
+        LOGGER.info(msg);
 
-            if (isGroup) {
-                userService.createUserGroup(name);
-            } else {
-                userService.createUser(name);
-            }
+        try {
+            userService.getUserByName(name)
+                    .ifPresentOrElse(
+                            user -> {
+                                LOGGER.warn("{} {} already exists", (isGroup ? "Group" : "User"), name);
+                            },
+                            () -> {
+                                if (isGroup) {
+                                    userService.createUserGroup(name);
+                                } else {
+                                    userService.createUser(name);
+                                }
+                            });
         } catch (Exception e) {
             LOGGER.debug("Error", e);
             throw new RuntimeException("Error " + msg + ":" + e.getMessage());
@@ -253,7 +267,14 @@ public class ManageUsersCommand extends AbstractStroomAccountConfiguredCommand {
                         .orElseThrow(() -> new RuntimeException(LogUtil.message("User/group {} does not exist",
                                 permissionArgs.userOrGroupId)));
 
-                userAppPermissionService.addPermission(userOrGroup.getUuid(), permissionArgs.permissionName);
+                if (hasPermission(permissionArgs)) {
+                    LOGGER.warn("User/Group {} already has permission {}",
+                            permissionArgs.userOrGroupId, permissionArgs.permissionName);
+                } else {
+                    userAppPermissionService.addPermission(
+                            userOrGroup.getUuid(),
+                            permissionArgs.permissionName);
+                }
             });
         } catch (Exception e) {
             LOGGER.debug("Error", e);
@@ -262,7 +283,10 @@ public class ManageUsersCommand extends AbstractStroomAccountConfiguredCommand {
     }
 
     private void revokePermissions(final Namespace namespace) {
-        final List<PermissionArgs> permissionArgsList = extractPermissionArgs(namespace, REVOKE_PERMISSION_ARG_NAME);
+        final List<PermissionArgs> permissionArgsList = extractPermissionArgs(
+                namespace,
+                REVOKE_PERMISSION_ARG_NAME);
+
         permissionArgsList.forEach(permissionArgs-> {
             LOGGER.info("Revoking application permission from '{}' to {}",
                     permissionArgs.permissionName, permissionArgs.userOrGroupId);
@@ -271,30 +295,50 @@ public class ManageUsersCommand extends AbstractStroomAccountConfiguredCommand {
                     .orElseThrow(() -> new RuntimeException(LogUtil.message("User/group {} does not exist",
                             permissionArgs.userOrGroupId)));
 
-            userAppPermissionService.removePermission(userOrGroup.getUuid(), permissionArgs.permissionName);
-
+            if (hasPermission(permissionArgs)) {
+                userAppPermissionService.removePermission(
+                        userOrGroup.getUuid(),
+                        permissionArgs.permissionName);
+            } else {
+                LOGGER.warn("User/Group {} does not have permission {}",
+                        permissionArgs.userOrGroupId, permissionArgs.permissionName);
+            }
         });
     }
 
+    private boolean hasPermission(final PermissionArgs permissionArgs) {
+        String userOrGroupUuid = userService.getUserByName(permissionArgs.userOrGroupId)
+                .map(User::getUuid)
+                .orElseThrow(() -> new RuntimeException(LogUtil.message(
+                        "User/Group {} not found", permissionArgs.userOrGroupId)));
+        return userAppPermissionService.getPermissionNamesForUser(userOrGroupUuid)
+                .stream()
+                .anyMatch(perm -> perm.equals(permissionArgs.permissionName));
+    }
+
+    private <T> List<T> extractArgs(final Namespace namespace,
+                                    final String dest,
+                                    final Function<List<String>, T> argsMapper) {
+        final List<List<String>> values = namespace.get(dest);
+        if (values != null) {
+            return values.stream()
+                    .map(argsMapper)
+                    .collect(Collectors.toList());
+        } else {
+            return Collections.emptyList();
+        }
+    }
+
     private List<String> extractStrings(final Namespace namespace, final String dest) {
-        final String[][] values = namespace.get(dest);
-        return Arrays.stream(values)
-                .map(arr -> arr[0])
-                .collect(Collectors.toList());
+        return extractArgs(namespace, dest, list -> list.get(0));
     }
 
     private List<GroupArgs> extractGroupArgs(final Namespace namespace, final String dest) {
-        final String[][] values = namespace.get(dest);
-        return Arrays.stream(values)
-                .map(arr -> new GroupArgs(arr[0], arr[1]))
-                .collect(Collectors.toList());
+        return extractArgs(namespace, dest, list -> new GroupArgs(list.get(0), list.get(1)));
     }
 
     private List<PermissionArgs> extractPermissionArgs(final Namespace namespace, final String dest) {
-        final String[][] values = namespace.get(dest);
-        return Arrays.stream(values)
-                .map(arr -> new PermissionArgs(arr[0], arr[1]))
-                .collect(Collectors.toList());
+        return extractArgs(namespace, dest, list -> new PermissionArgs(list.get(0), list.get(1)));
     }
 
     private String asArg(final String name) {
