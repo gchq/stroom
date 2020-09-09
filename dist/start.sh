@@ -130,7 +130,7 @@ start_stroom() {
   tail -F "${path_to_start_log}" "${PATH_TO_APP_LOG}" 2>/dev/null &
   local tailing_pid="$!"
 
-  wait_for_200_response "http://localhost:${STROOM_ADMIN_PORT}/admin/healthcheck"
+  wait_for_200_response "http://localhost:${STROOM_ADMIN_PORT}/stroomAdmin/healthcheck"
 
   kill_log_tailing "${tailing_pid}"
 

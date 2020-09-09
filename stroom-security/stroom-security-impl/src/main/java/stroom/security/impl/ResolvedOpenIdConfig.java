@@ -124,4 +124,11 @@ public class ResolvedOpenIdConfig {
         }
         return openIdConfig.getClientSecret();
     }
+
+    public boolean isFormTokenRequest() {
+        if (openIdConfig.isUseInternal()) {
+            return false;
+        }
+        return openIdConfig.isFormTokenRequest();
+    }
 }

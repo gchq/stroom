@@ -26,6 +26,7 @@ public class OpenIdConfig extends AbstractConfig {
     private String authEndpoint = AUTH_ENDPOINT;
     private String tokenEndpoint = TOKEN_ENDPOINT;
     private String jwksUri = JWKS_URI;
+    private boolean formTokenRequest;
 
     private String clientId;
     private String clientSecret;
@@ -129,6 +130,16 @@ public class OpenIdConfig extends AbstractConfig {
         this.clientSecret = clientSecret;
     }
 
+    @JsonProperty
+    @JsonPropertyDescription("Some OpenId providers, e.g. AWS Cognito, require a form to be used for token requests.")
+    public boolean isFormTokenRequest() {
+        return formTokenRequest;
+    }
+
+    public void setFormTokenRequest(final boolean formTokenRequest) {
+        this.formTokenRequest = formTokenRequest;
+    }
+
     @Override
     public String toString() {
         return "OpenIdConfig{" +
@@ -138,6 +149,7 @@ public class OpenIdConfig extends AbstractConfig {
                 ", jwksUri='" + jwksUri + '\'' +
                 ", clientId='" + clientId + '\'' +
                 ", clientSecret='" + clientSecret + '\'' +
+                ", formTokenRequest='" + formTokenRequest + '\'' +
                 '}';
     }
 }

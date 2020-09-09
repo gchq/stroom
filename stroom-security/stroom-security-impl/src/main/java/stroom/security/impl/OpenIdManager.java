@@ -132,7 +132,7 @@ class OpenIdManager {
             final HttpPost httpPost = new HttpPost(tokenEndpoint);
 
             // AWS requires form content and not a JSON object.
-            if (tokenEndpoint.contains("amazon")) {
+            if (openIdConfig.isFormTokenRequest()) {
                 try {
                     final List<NameValuePair> nvps = new ArrayList<>();
                     nvps.add(new BasicNameValuePair(OpenId.CODE, code));

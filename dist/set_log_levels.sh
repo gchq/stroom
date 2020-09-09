@@ -7,8 +7,7 @@
 set -e
 
 
-#readonly URL="http://127.0.0.1:8081/stroomAdmin/tasks/log-level"
-readonly URL="http://127.0.0.1:8081/admin/tasks/log-level"
+readonly URL="http://127.0.0.1:8081/stroomAdmin/tasks/log-level"
 readonly CURL="curl"
 readonly HTTPIE="http"
 setup_colours() {
