@@ -16,7 +16,9 @@
 
 package stroom.app;
 
+import stroom.app.commands.CreateAccountCommand;
 import stroom.app.commands.DbMigrationCommand;
+import stroom.app.commands.ResetPasswordCommand;
 import stroom.app.guice.AppModule;
 import stroom.config.app.AppConfig;
 import stroom.config.app.Config;
@@ -147,14 +149,20 @@ public class App extends Application<Config> {
                 "new-ui",
                 ResourcePaths.SINGLE_PAGE_PREFIX));
 
-        // Add a DW Command so we can run the full migration without running the
-        // http server
-        bootstrap.addCommand(new DbMigrationCommand(configFile));
+        addCommands(bootstrap);
 
         // If we want to use javax.validation on our rest resources with our own custom validation annotations
         // then we need to set the ValidatorFactory. As our main Guice Injector is not available yet we need to
         // create one just for the REST validation
         bootstrap.setValidatorFactory(validationOnlyInjector.getInstance(ValidatorFactory.class));
+    }
+
+    private void addCommands(final Bootstrap<Config> bootstrap) {
+        // Add a DW Command so we can run the full migration without running the
+        // http server
+        bootstrap.addCommand(new DbMigrationCommand(configFile));
+        bootstrap.addCommand(new CreateAccountCommand(configFile));
+        bootstrap.addCommand(new ResetPasswordCommand(configFile));
     }
 
     @Override
