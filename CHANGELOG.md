@@ -7,6 +7,9 @@ and this project adheres to [Semantic Versioning](http://semver.org/).
 
 ## [Unreleased]
 
+
+## [v7.0-beta.51] - 2020-09-09
+
 * Added `formTokenRequest` property to OpenId config for use with AWS authentication. This forces the use of a form request when fetching tokens.
 
 * Issue **#1824** : Fix for search hang when extraction is requested but no search pipeline is provided.
@@ -2590,7 +2593,8 @@ Issue **gchq/stroom-expression#22** : Add `typeOf(...)` function to dashboard.
 
 * Issue **#202** : Initial release of the new data retention policy functionality.
 
-[Unreleased]: https://github.com/gchq/stroom/compare/v7.0-beta.50...HEAD
+[Unreleased]: https://github.com/gchq/stroom/compare/v7.0-beta.51...HEAD
+[v7.0-beta.51]: https://github.com/gchq/stroom/compare/v7.0-beta.50...v7.0-beta.51
 [v7.0-beta.50]: https://github.com/gchq/stroom/compare/v7.0-beta.49...v7.0-beta.50
 [v7.0-beta.49]: https://github.com/gchq/stroom/compare/v7.0-beta.48...v7.0-beta.49
 [v7.0-beta.48]: https://github.com/gchq/stroom/compare/v7.0-beta.47...v7.0-beta.48
