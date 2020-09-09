@@ -7,6 +7,8 @@ and this project adheres to [Semantic Versioning](http://semver.org/).
 
 ## [Unreleased]
 
+* Change `admin` to `stroomAdmin` in distribution shell scripts.
+
 
 ## [v7.0-beta.51] - 2020-09-09
 
