@@ -107,12 +107,12 @@ class AuthenticationService {
                     && openIdConfig.isUseInternal()
                     && User.ADMIN_USER_NAME.equals(username)) {
 
-                // TODO @AT Probably should be an explicit command to create this
+                // TODO @AT Probably should be an explicit command to create this to avoid the accidental
+                //   running of stroom in UseInternal mode which then leaves admin/admin open
                 // Using our internal identity provider so ensure the admin user is present
                 // Can't do this for 3rd party IDPs as we don't know what the user name is
                 optUser = Optional.of(createOrRefreshUser(User.ADMIN_USER_NAME));
             }
-
         } catch (final RuntimeException e) {
             LOGGER.error(e.getMessage(), e);
             throw e;

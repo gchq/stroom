@@ -147,7 +147,7 @@ public class ManageUsersCommand extends AbstractStroomAccountConfiguredCommand {
             System.exit(1);
         }
 
-        LOGGER.info("Completed successfully");
+        LOGGER.info("Manage Users completed successfully");
         System.exit(0);
     }
 
