@@ -7,6 +7,8 @@ and this project adheres to [Semantic Versioning](http://semver.org/).
 
 ## [Unreleased]
 
+* Added `formTokenRequest` property to OpenId config for use with AWS authentication. This forces the use of a form request when fetching tokens.
+
 * Issue **#1824** : Fix for search hang when extraction is requested but no search pipeline is provided.
 
 * Issue **#1083** : Added `any()`, `first()`, `last()`, `nth()`, `top()` and `bottom()` selection functions to select child values of grouped items.
@@ -68,7 +70,7 @@ and this project adheres to [Semantic Versioning](http://semver.org/).
 
 ## [v7.0-beta.48] - 2020-09-02
 
-* Fix duplicate call to bintry upload in travis script.
+* Fix duplicate call to bintray upload in travis script.
 
 
 ## [v7.0-beta.47] - 2020-09-02
