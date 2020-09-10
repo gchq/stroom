@@ -7,6 +7,8 @@ and this project adheres to [Semantic Versioning](http://semver.org/).
 
 ## [Unreleased]
 
+* Change `reset_password` CLI command to also reset various locked/inactive type flags.
+
 
 ## [v7.0-beta.52] - 2020-09-10
 

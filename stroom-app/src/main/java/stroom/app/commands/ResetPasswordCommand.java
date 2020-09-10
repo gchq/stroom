@@ -87,6 +87,12 @@ public class ResetPasswordCommand extends AbstractStroomAccountConfiguredCommand
             accountService.read(username)
                     .ifPresentOrElse(
                             account -> {
+                                // Clear various flags to ensure it can be logged into.
+                                account.setLocked(false);
+                                account.setInactive(false);
+                                account.setEnabled(true);
+                                account.setLoginFailures(0);
+
                                 final UpdateAccountRequest updateAccountRequest = new UpdateAccountRequest(
                                         account,
                                         newPassword,
