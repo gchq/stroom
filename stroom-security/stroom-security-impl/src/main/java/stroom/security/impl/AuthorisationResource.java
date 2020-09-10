@@ -1,14 +1,15 @@
 package stroom.security.impl;
 
+import stroom.security.api.SecurityContext;
+import stroom.security.shared.User;
+import stroom.util.shared.ResourcePaths;
+import stroom.util.shared.RestResource;
+
 import io.swagger.annotations.Api;
 import io.swagger.annotations.ApiOperation;
 import io.swagger.annotations.ApiParam;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import stroom.security.api.SecurityContext;
-import stroom.security.shared.User;
-import stroom.util.shared.ResourcePaths;
-import stroom.util.shared.RestResource;
 
 import javax.inject.Inject;
 import javax.ws.rs.Consumes;
@@ -74,10 +75,10 @@ public class AuthorisationResource implements RestResource {
     @Path("createUser")
     public Response createUser(@QueryParam("id") String userId) {
         try{
-            User existingUser = userService.getUserByName(userId);
-            if(existingUser == null){
-                userService.createUser(userId);
-            }
+            // Why are we not returning the user?
+            User existingUser = userService.getUserByName(userId)
+                    .orElseGet(() ->
+                            userService.createUser(userId));
             return Response.ok().build();
         }
         catch(Exception e){
@@ -94,16 +95,14 @@ public class AuthorisationResource implements RestResource {
     public Response setUserStatus(@QueryParam("userId") String userId, @QueryParam("status") String status) {
         try{
             boolean isEnabled = status.equals("active") || status.equals("enabled");
-            User existingUser = userService.getUserByName(userId);
-            if(existingUser != null){
-                User user = userService.loadByUuid(existingUser.getUuid());
-                user.setEnabled(isEnabled);
-                userService.update(user);
-                return Response.ok().build();
-            }
-            else {
-                return Response.status(Response.Status.NOT_FOUND).build();
-            }
+            return userService.getUserByName(userId)
+                    .map(user -> {
+                        user.setEnabled(isEnabled);
+                        userService.update(user);
+                        return Response.ok().build();
+                    })
+                    .orElseGet(() ->
+                            Response.status(Response.Status.NOT_FOUND).build());
         }
         catch(Exception e){
             LOGGER.error("Unable to change user's status: {}", e.getMessage());

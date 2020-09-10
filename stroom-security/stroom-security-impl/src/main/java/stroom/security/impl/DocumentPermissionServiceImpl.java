@@ -72,18 +72,16 @@ public class DocumentPermissionServiceImpl implements DocumentPermissionService 
             final Map<String, Set<String>> documentPermission = documentPermissionDao.getPermissionsForDocument(docUuid);
 
             documentPermission.forEach((userUuid, permissions) -> {
-                final User user = userDao.getByUuid(userUuid);
-                if (user != null) {
-                    if (user.isGroup()) {
-                        groups.add(user);
-                    } else {
-                        users.add(user);
-                    }
-                    userPermissions.put(user.getUuid(), permissions);
-                }
-            });
-
-
+                userDao.getByUuid(userUuid)
+                        .ifPresent(user -> {
+                            if (user.isGroup()) {
+                                groups.add(user);
+                            } else {
+                                users.add(user);
+                            }
+                            userPermissions.put(user.getUuid(), permissions);
+                        });
+                });
         } catch (final RuntimeException e) {
             LOGGER.error("getPermissionsForDocument()", e);
             throw e;

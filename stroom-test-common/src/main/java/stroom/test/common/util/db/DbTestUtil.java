@@ -124,8 +124,8 @@ public class DbTestUtil {
 
                 rootConnectionConfig = new ConnectionConfig.Builder(connectionConfig)
                         .url(url)
-//                        .user("root")
-//                        .password("my-secret-pw")
+                        .user("root")
+                        .password("my-secret-pw")
                         .build();
             }
 

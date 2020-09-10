@@ -6,6 +6,7 @@ import stroom.util.filter.FilterFieldMapper;
 import stroom.util.filter.FilterFieldMappers;
 
 import java.util.List;
+import java.util.Optional;
 import java.util.Set;
 
 public interface UserDao {
@@ -18,11 +19,11 @@ public interface UserDao {
 //
 //    User createUserGroup(String name);
 
-    User getById(int id);
+    Optional<User> getById(int id);
 
-    User getByUuid(String uuid);
+    Optional<User> getByUuid(String uuid);
 
-    User getByName(String name);
+    Optional<User> getByName(String name);
 
     User update(User user);
 

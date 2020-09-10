@@ -80,28 +80,26 @@ public class UserDaoImpl implements UserDao {
     }
 
     @Override
-    public User getById(final int id) {
-        return genericDao.fetch(id).orElse(null);
+    public Optional<User> getById(final int id) {
+        return genericDao.fetch(id);
     }
 
     @Override
-    public User getByUuid(final String uuid) {
+    public Optional<User> getByUuid(final String uuid) {
         return JooqUtil.contextResult(securityDbConnProvider, context ->
                 context.select().from(STROOM_USER)
                         .where(STROOM_USER.UUID.eq(uuid))
                         .fetchOptional()
-                        .map(RECORD_TO_USER_MAPPER)
-                        .orElse(null));
+                        .map(RECORD_TO_USER_MAPPER));
     }
 
     @Override
-    public User getByName(final String name) {
+    public Optional<User> getByName(final String name) {
         return JooqUtil.contextResult(securityDbConnProvider, context ->
                 context.select().from(STROOM_USER)
                         .where(STROOM_USER.NAME.eq(name))
                         .fetchOptional()
-                        .map(RECORD_TO_USER_MAPPER)
-                        .orElse(null));
+                        .map(RECORD_TO_USER_MAPPER));
     }
 
     @Override
