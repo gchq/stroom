@@ -2,28 +2,29 @@ package stroom.dashboard.client.table;
 
 import com.google.gwt.safehtml.shared.SafeHtml;
 import stroom.hyperlink.client.Hyperlink;
+import stroom.util.shared.Expander;
 
 import java.util.Map;
 
 public class TableRow {
-    private String groupKey;
-    private Integer depth;
-    private Map<String, SafeHtml> values;
+    private final Expander expander;
+    private final String groupKey;
+    private final Map<String, SafeHtml> values;
 
-    public TableRow(final String groupKey,
-                    final Integer depth,
+    public TableRow(final Expander expander,
+                    final String groupKey,
                     final Map<String, SafeHtml> values) {
+        this.expander = expander;
         this.groupKey = groupKey;
-        this.depth = depth;
         this.values = values;
+    }
+
+    public Expander getExpander() {
+        return expander;
     }
 
     public String getGroupKey() {
         return groupKey;
-    }
-
-    public Integer getDepth() {
-        return depth;
     }
 
     public SafeHtml getValue(final String fieldId) {

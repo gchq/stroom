@@ -58,7 +58,6 @@ import java.util.Map;
 import java.util.Map.Entry;
 import java.util.Set;
 import java.util.concurrent.TimeUnit;
-import java.util.concurrent.atomic.AtomicInteger;
 
 @TaskHandlerBean(task = AsyncSearchTask.class)
 @Scope(value = StroomScope.TASK)
@@ -144,13 +143,11 @@ class AsyncSearchTaskHandler extends AbstractTaskHandler<AsyncSearchTask, VoidRe
                     resultCollector.setExpectedNodes(shardMap.keySet());
 
                     // Start remote cluster search execution.
-                    AtomicInteger expectedNodeResultCount = new AtomicInteger(0);
                     for (final Entry<Node, List<Long>> entry : shardMap.entrySet()) {
                         final Node node = entry.getKey();
                         final List<Long> shards = entry.getValue();
 
                         if (targetNodes.contains(node)) {
-                            expectedNodeResultCount.incrementAndGet();
                             final ClusterSearchTask clusterSearchTask = new ClusterSearchTask(task.getUserIdentity(), "Cluster Search", query, shards, sourceNode, storedFields,
                                     task.getResultSendFrequency(), task.getCoprocessorMap(), task.getDateTimeLocale(), task.getNow());
                             LOGGER.debug("Dispatching clusterSearchTask to node {}", node);
@@ -158,8 +155,8 @@ class AsyncSearchTaskHandler extends AbstractTaskHandler<AsyncSearchTask, VoidRe
                                     Collections.singleton(node));
 
                         } else {
-                            resultCollector.getErrorSet(node)
-                                    .add("Node is not enabled or active. Some search results may be missing.");
+                            resultCollector.onFailure(node,
+                                    new SearchException("Node is not enabled or active. Some search results may be missing."));
                         }
                     }
                     taskMonitor.info(task.getSearchName() + " - searching...");

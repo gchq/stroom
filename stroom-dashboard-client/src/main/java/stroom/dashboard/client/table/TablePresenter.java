@@ -124,9 +124,9 @@ public class TablePresenter extends AbstractComponentPresenter<TableView>
     private final TimeZones timeZones;
     private final FieldsManager fieldsManager;
     private final DataGridView<TableRow> dataGrid;
+    private final Column<TableRow, Expander> expanderColumn;
 
-    private int lastExpanderColumnWidth;
-    private int currentExpanderColumnWidth;
+    private int expanderColumnWidth;
     private SearchModel currentSearchModel;
     private FieldAddPresenter fieldAddPresenter;
 
@@ -195,6 +195,22 @@ public class TablePresenter extends AbstractComponentPresenter<TableView>
                     }
                 })
                 .onFailure(caught -> AlertEvent.fireError(TablePresenter.this, caught.getMessage(), null));
+
+
+        // Expander column.
+        expanderColumn = new Column<TableRow, Expander>(new ExpanderCell()) {
+            @Override
+            public Expander getValue(final TableRow row) {
+                if (row == null) {
+                    return null;
+                }
+                return row.getExpander();
+            }
+        };
+        expanderColumn.setFieldUpdater((index, result, value) -> {
+            tableResultRequest.setGroupOpen(result.getGroupKey(), !value.isExpanded());
+            refresh();
+        });
     }
 
     @Override
@@ -444,10 +460,6 @@ public class TablePresenter extends AbstractComponentPresenter<TableView>
         ignoreRangeChange = true;
 
         try {
-//        if (!paused) {
-            lastExpanderColumnWidth = MIN_EXPANDER_COL_WIDTH;
-            currentExpanderColumnWidth = MIN_EXPANDER_COL_WIDTH;
-
             if (componentResult != null) {
                 // Don't refresh the table unless the results have changed.
                 final TableResult tableResult = (TableResult) componentResult;
@@ -458,8 +470,8 @@ public class TablePresenter extends AbstractComponentPresenter<TableView>
                 // Only set data in the table if we have got some results and
                 // they have changed.
                 if (valuesRange.getOffset() == 0 || values.size() > 0) {
-                    dataGrid.setRowCount(tableResult.getTotalResults(), true);
                     dataGrid.setRowData(valuesRange.getOffset(), values);
+                    dataGrid.setRowCount(tableResult.getTotalResults(), true);
                 }
 
                 // Enable download of current results.
@@ -468,12 +480,11 @@ public class TablePresenter extends AbstractComponentPresenter<TableView>
                 // Disable download of current results.
                 downloadButton.setEnabled(false);
 
-                dataGrid.setRowCount(0, true);
                 dataGrid.setRowData(0, new ArrayList<>());
+                dataGrid.setRowCount(0, true);
 
                 dataGrid.getSelectionModel().clear();
             }
-//        }
         } catch (final Exception e) {
             GWT.log(e.getMessage());
         }
@@ -482,6 +493,23 @@ public class TablePresenter extends AbstractComponentPresenter<TableView>
     }
 
     private List<TableRow> processData(final List<Field> fields, final List<Row> values) {
+        // See if any fields have more than 1 level. If they do then we will add
+        // an expander column.
+        int maxGroup = -1;
+        final boolean showDetail = tableSettings.showDetail();
+        for (final Field field : fields) {
+            if (field.getGroup() != null) {
+                final int group = field.getGroup();
+                if (group > maxGroup) {
+                    maxGroup = group;
+                }
+            }
+        }
+        int maxDepth = maxGroup;
+        if (showDetail) {
+            maxDepth++;
+        }
+
         final List<ConditionalFormattingRule> rules = tableSettings.getConditionalFormattingRules();
         final Map<String, DataSourceField> fieldMap = tableSettings.getFields()
                 .stream()
@@ -499,6 +527,7 @@ public class TablePresenter extends AbstractComponentPresenter<TableView>
         final ExpressionMatcher expressionMatcher = new ExpressionMatcher(fieldMap);
 
         final List<TableRow> processed = new ArrayList<>(values.size());
+        int hiddenRowCount = 0;
         for (final Row row : values) {
             boolean hide = false;
             SafeStylesBuilder rowStyle = new SafeStylesBuilder();
@@ -577,9 +606,37 @@ public class TablePresenter extends AbstractComponentPresenter<TableView>
 
                     safeHtmlMap.put(field.getId(), builder.toSafeHtml());
                 }
-                processed.add(new TableRow(row.getGroupKey(), row.getDepth(), safeHtmlMap));
+
+                // Create an expander for the row.
+                Expander expander = null;
+                if (row.getDepth() < maxDepth) {
+                    final boolean open = tableResultRequest.isGroupOpen(row.getGroupKey());
+                    expander = new Expander(row.getDepth(), open, false);
+                } else if (row.getDepth() > 0) {
+                    expander = new Expander(row.getDepth(), false, true);
+                }
+
+                processed.add(new TableRow(expander, row.getGroupKey(), safeHtmlMap));
+
+            } else {
+                hiddenRowCount++;
             }
         }
+
+        // Add some empty rows to the end if we have some hidden ones.
+        // This is rubbish but currently necessary to deal with the way tables work in GWT.
+        for (int i = 0; i < hiddenRowCount; i++) {
+            processed.add(null);
+        }
+
+        // Set the expander column width.
+        if (maxDepth > 0) {
+            expanderColumnWidth = 16 + (maxDepth * 10);
+        } else {
+            expanderColumnWidth = MIN_EXPANDER_COL_WIDTH;
+        }
+        dataGrid.setColumnWidth(expanderColumn, expanderColumnWidth, Unit.PX);
+
         return processed;
     }
 
@@ -643,47 +700,20 @@ public class TablePresenter extends AbstractComponentPresenter<TableView>
         return parts;
     }
 
-    private void addExpanderColumn(final int maxDepth) {
-        // Expander column.
-        final Column<TableRow, Expander> column = new Column<TableRow, Expander>(new ExpanderCell()) {
-            @Override
-            public Expander getValue(final TableRow row) {
-                if (row == null) {
-                    return null;
-                }
-
-                if (row.getDepth() < maxDepth) {
-                    // Set the width of the expander column if it needs to be
-                    // made wider.
-                    final int width = 16 + (row.getDepth() * 10);
-                    if (width > currentExpanderColumnWidth) {
-                        currentExpanderColumnWidth = width;
-                        lastExpanderColumnWidth = width;
-                        dataGrid.setColumnWidth(this, width, Unit.PX);
-                    }
-
-                    final boolean open = tableResultRequest.isGroupOpen(row.getGroupKey());
-                    return new Expander(row.getDepth(), open, false);
-                } else if (row.getDepth() > 0) {
-                    return new Expander(row.getDepth(), false, true);
-                }
-
-                return null;
-            }
-        };
-        column.setFieldUpdater((index, result, value) -> {
-            tableResultRequest.setGroupOpen(result.getGroupKey(), !value.isExpanded());
-            refresh();
-        });
-        dataGrid.addColumn(column, "<br/>", lastExpanderColumnWidth);
-        existingColumns.add(column);
+    private void addExpanderColumn() {
+        dataGrid.addColumn(expanderColumn, "<br/>", expanderColumnWidth);
+        existingColumns.add(expanderColumn);
     }
 
     private void addColumn(final Field field) {
         final Column<TableRow, SafeHtml> column = new Column<TableRow, SafeHtml>(new SafeHtmlCell()) {
             @Override
-            public SafeHtml getValue(final TableRow object) {
-                return object.getValue(field.getId());
+            public SafeHtml getValue(final TableRow row) {
+                if (row == null) {
+                    return null;
+                }
+
+                return row.getValue(field.getId());
             }
         };
 
@@ -697,22 +727,6 @@ public class TablePresenter extends AbstractComponentPresenter<TableView>
     void redrawHeaders() {
         dataGrid.redrawHeaders();
     }
-
-//    private void performRowAction(final Row result) {
-//        selectedStreamId = null;
-//        selectedEventId = null;
-//        if (result != null && streamIdIndex >= 0 && eventIdIndex >= 0) {
-//            final String[] values = result.values;
-//            if (values.length > streamIdIndex && values[streamIdIndex] != null) {
-//                selectedStreamId = values[streamIdIndex];
-//            }
-//            if (values.length > eventIdIndex && values[eventIdIndex] != null) {
-//                selectedEventId = values[eventIdIndex];
-//            }
-//        }
-//
-//        getComponents().fireComponentChangeEvent(this);
-//    }
 
     private void setQueryId(final String queryId) {
         cleanupSearchModelAssociation();
@@ -829,31 +843,9 @@ public class TablePresenter extends AbstractComponentPresenter<TableView>
         }
         existingColumns.clear();
 
-        // See if any fields have more than 1 level. If they do then we will add
-        // an expander column.
-        int maxGroup = -1;
-        final boolean showDetail = tableSettings.showDetail();
         final List<Field> fields = tableSettings.getFields();
-        for (final Field field : fields) {
-            if (field.getGroup() != null) {
-                final int group = field.getGroup();
-                if (group > maxGroup) {
-                    maxGroup = group;
-                }
-            }
-        }
-
-        int maxDepth = maxGroup;
-        if (showDetail) {
-            maxDepth++;
-        }
-
-        if (maxDepth > 0) {
-            addExpanderColumn(maxDepth);
-            fieldsManager.setFieldsStartIndex(1);
-        } else {
-            fieldsManager.setFieldsStartIndex(0);
-        }
+        addExpanderColumn();
+        fieldsManager.setFieldsStartIndex(1);
 
         // Add fields as columns.
         for (final Field field : fields) {
@@ -948,14 +940,6 @@ public class TablePresenter extends AbstractComponentPresenter<TableView>
 
     private void clear() {
         setData(null);
-    }
-
-    public List<Field> getCurrentFields() {
-        return currentFields;
-    }
-
-    List<String> getCurrentFieldIds() {
-        return currentFieldIds;
     }
 
     public List<TableRow> getSelectedRows() {

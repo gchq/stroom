@@ -110,7 +110,7 @@ public class SearchResponseMapper {
                         null,
                         null,
                         null,
-                        null,
+                        field.getGroup(),
                         -1,
                         true);
                 copy.add(item);
