@@ -34,7 +34,7 @@ import stroom.dispatch.shared.DispatchServiceAsync;
 import stroom.entity.shared.Action;
 import stroom.task.client.TaskEndEvent;
 import stroom.task.client.TaskStartEvent;
-import stroom.util.client.RandomId;
+import stroom.util.shared.RandomId;
 import stroom.util.shared.SharedObject;
 import stroom.widget.util.client.Future;
 import stroom.widget.util.client.FutureImpl;

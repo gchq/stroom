@@ -58,7 +58,7 @@ import stroom.svg.client.SvgIcon;
 import stroom.svg.client.SvgPreset;
 import stroom.svg.client.SvgPresets;
 import stroom.util.client.ImageUtil;
-import stroom.util.client.RandomId;
+import stroom.util.shared.RandomId;
 import stroom.util.shared.EqualsUtil;
 import stroom.widget.button.client.ButtonPanel;
 import stroom.widget.button.client.ButtonView;

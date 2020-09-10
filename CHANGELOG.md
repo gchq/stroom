@@ -8,6 +8,8 @@ and this project adheres to [Semantic Versioning](http://semver.org/).
 ## [Unreleased]
 
 
+* Issue **#580** : Added conditional formatting options to dashboard tables.
+
 ## [v6.1.12] - 2020-09-08
 
 * Issue **#1824** : Fix for search hang when extraction is requested but no search pipeline is provided.

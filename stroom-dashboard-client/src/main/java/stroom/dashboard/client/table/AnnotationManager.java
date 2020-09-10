@@ -25,8 +25,7 @@ import stroom.annotation.shared.Annotation;
 import stroom.annotation.shared.EventId;
 import stroom.dashboard.shared.Field;
 import stroom.dashboard.shared.IndexConstants;
-import stroom.dashboard.shared.Row;
-import stroom.hyperlink.client.Hyperlink;
+import stroom.dashboard.shared.TableComponentSettings;
 import stroom.svg.client.SvgPresets;
 import stroom.widget.menu.client.presenter.IconMenuItem;
 import stroom.widget.menu.client.presenter.Item;
@@ -49,8 +48,8 @@ public class AnnotationManager {
     private final ChangeStatusPresenter changeStatusPresenter;
     private final ChangeAssignedToPresenter changeAssignedToPresenter;
 
-    private List<Field> currentFields;
-    private List<Row> selectedItems;
+    private TableComponentSettings tableComponentSettings;
+    private List<TableRow> selectedItems;
 
     @Inject
     public AnnotationManager(final MenuListPresenter menuListPresenter,
@@ -61,8 +60,8 @@ public class AnnotationManager {
         this.changeAssignedToPresenter = changeAssignedToPresenter;
     }
 
-    public void showAnnotationMenu(final NativeEvent event, final List<Field> currentFields, final List<Row> selectedItems) {
-        this.currentFields = currentFields;
+    public void showAnnotationMenu(final NativeEvent event, final TableComponentSettings tableComponentSettings, final List<TableRow> selectedItems) {
+        this.tableComponentSettings = tableComponentSettings;
         this.selectedItems = selectedItems;
 
         final Element target = event.getEventTarget().cast();
@@ -80,17 +79,17 @@ public class AnnotationManager {
             }
         };
 
-        updateMenuItems(currentFields, selectedItems);
+        updateMenuItems(tableComponentSettings, selectedItems);
 
         ShowPopupEvent.fire(menuListPresenter, menuListPresenter, PopupType.POPUP, popupPosition,
                 popupUiHandlers, target);
     }
 
-    private void updateMenuItems(final List<Field> currentFields, final List<Row> selectedItems) {
+    private void updateMenuItems(final TableComponentSettings tableComponentSettings, final List<TableRow> selectedItems) {
         final List<Item> menuItems = new ArrayList<>();
 
-        final List<EventId> eventIdList = getEventIdList(currentFields, selectedItems);
-        final List<Long> annotationIdList = getAnnotationIdList(currentFields, selectedItems);
+        final List<EventId> eventIdList = getEventIdList(tableComponentSettings, selectedItems);
+        final List<Long> annotationIdList = getAnnotationIdList(tableComponentSettings, selectedItems);
 
         // Create menu item.
         menuItems.add(createCreateMenu(eventIdList));
@@ -105,12 +104,12 @@ public class AnnotationManager {
         menuListPresenter.setData(menuItems);
     }
 
-    public List<EventId> getEventIdList(final List<Field> currentFields, final List<Row> selectedItems) {
+    public List<EventId> getEventIdList(final TableComponentSettings tableComponentSettings, final List<TableRow> selectedItems) {
         final List<EventId> idList = new ArrayList<>();
 
-        final List<String> streamIds = getValues(currentFields, selectedItems, IndexConstants.STREAM_ID);
-        final List<String> eventIds = getValues(currentFields, selectedItems, IndexConstants.EVENT_ID);
-        final List<String> eventIdLists = getValues(currentFields, selectedItems, "EventIdList");
+        final List<String> streamIds = getValues(tableComponentSettings, selectedItems, IndexConstants.STREAM_ID);
+        final List<String> eventIds = getValues(tableComponentSettings, selectedItems, IndexConstants.EVENT_ID);
+        final List<String> eventIdLists = getValues(tableComponentSettings, selectedItems, "EventIdList");
 
         for (int i = 0; i < streamIds.size() && i < eventIds.size(); i++) {
             final Long streamId = toLong(streamIds.get(i));
@@ -141,8 +140,17 @@ public class AnnotationManager {
         return idList;
     }
 
-    public List<Long> getAnnotationIdList(final List<Field> currentFields, final List<Row> selectedItems) {
-        final List<String> values = getValues(currentFields, selectedItems, "annotation:Id");
+    private String getFieldId(final TableComponentSettings tableComponentSettings, final String fieldName) {
+        for (final Field field : tableComponentSettings.getFields()) {
+            if (field.getName().equalsIgnoreCase(fieldName)) {
+                return field.getId();
+            }
+        }
+        return null;
+    }
+
+    public List<Long> getAnnotationIdList(final TableComponentSettings tableComponentSettings, final List<TableRow> selectedItems) {
+        final List<String> values = getValues(tableComponentSettings, selectedItems, "annotation:Id");
         return values
                 .stream()
                 .map(this::toLong)
@@ -150,20 +158,13 @@ public class AnnotationManager {
                 .collect(Collectors.toList());
     }
 
-    public List<String> getValues(final List<Field> currentFields, final List<Row> selectedItems, final String fieldName) {
+    public List<String> getValues(final TableComponentSettings tableComponentSettings, final List<TableRow> selectedItems, final String fieldName) {
         final List<String> values = new ArrayList<>();
         if (selectedItems != null && selectedItems.size() > 0) {
-            int fieldIndex = -1;
-            for (int i = 0; i < currentFields.size() && fieldIndex == -1; i++) {
-                final Field field = currentFields.get(i);
-                if (field.getName().equals(fieldName)) {
-                    fieldIndex = i;
-                }
-            }
-
-            if (fieldIndex != -1) {
-                for (final Row row : selectedItems) {
-                    final String value = getString(row.getValues(), fieldIndex);
+            final String fieldId = getFieldId(tableComponentSettings, fieldName);
+            if (fieldId != null) {
+                for (final TableRow row : selectedItems) {
+                    final String value = row.getText(fieldId);
                     values.add(value);
                 }
             }
@@ -171,40 +172,15 @@ public class AnnotationManager {
         return values;
     }
 
-    public String getValue(final List<Field> currentFields, final List<Row> selectedItems, final String fieldName) {
+    public String getValue(final TableComponentSettings tableComponentSettings, final List<TableRow> selectedItems, final String fieldName) {
         if (selectedItems != null && selectedItems.size() > 0) {
-            int fieldIndex = -1;
-            for (int i = 0; i < currentFields.size() && fieldIndex == -1; i++) {
-                final Field field = currentFields.get(i);
-                if (field.getName().equalsIgnoreCase(fieldName)) {
-                    fieldIndex = i;
-                }
-            }
-
-            if (fieldIndex != -1) {
-                for (final Row row : selectedItems) {
-                    final String value = getString(row.getValues(), fieldIndex);
+            final String fieldId = getFieldId(tableComponentSettings, fieldName);
+            if (fieldId != null) {
+                for (final TableRow row : selectedItems) {
+                    final String value = row.getText(fieldId);
                     if (value != null) {
                         return value;
                     }
-                }
-            }
-        }
-        return null;
-    }
-
-    private String getString(List<String> values, int index) {
-        if (values != null && values.size() > index) {
-            final String value = values.get(index);
-            if (value != null) {
-                try {
-                    if (value.startsWith("[")) {
-                        final Hyperlink hyperlink = Hyperlink.create(value);
-                        return hyperlink.getText();
-                    }
-                    return value;
-                } catch (final NumberFormatException e) {
-                    // Ignore.
                 }
             }
         }
@@ -235,11 +211,11 @@ public class AnnotationManager {
     }
 
     private void createAnnotation(final List<EventId> eventIdList) {
-        final String title = getValue(currentFields, selectedItems, "title");
-        final String subject = getValue(currentFields, selectedItems, "subject");
-        final String status = getValue(currentFields, selectedItems, "status");
-        final String assignedTo = getValue(currentFields, selectedItems, "assignedTo");
-        final String comment = getValue(currentFields, selectedItems, "comment");
+        final String title = getValue(tableComponentSettings, selectedItems, "title");
+        final String subject = getValue(tableComponentSettings, selectedItems, "subject");
+        final String status = getValue(tableComponentSettings, selectedItems, "status");
+        final String assignedTo = getValue(tableComponentSettings, selectedItems, "assignedTo");
+        final String comment = getValue(tableComponentSettings, selectedItems, "comment");
 
         final Annotation annotation = new Annotation();
         annotation.setTitle(title);
