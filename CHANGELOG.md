@@ -7,6 +7,11 @@ and this project adheres to [Semantic Versioning](http://semver.org/).
 
 ## [Unreleased]
 
+
+## [v7.0-beta.52] - 2020-09-10
+
+* Issue **#1850** : Add new command line commands `create_account`, `reset_password` and `manage_users` to enable the creation of accounts to bootstrap the application.
+
 * Change `admin` to `stroomAdmin` in distribution shell scripts.
 
 
@@ -2595,7 +2600,8 @@ Issue **gchq/stroom-expression#22** : Add `typeOf(...)` function to dashboard.
 
 * Issue **#202** : Initial release of the new data retention policy functionality.
 
-[Unreleased]: https://github.com/gchq/stroom/compare/v7.0-beta.51...HEAD
+[Unreleased]: https://github.com/gchq/stroom/compare/v7.0-beta.52...HEAD
+[v7.0-beta.52]: https://github.com/gchq/stroom/compare/v7.0-beta.51...v7.0-beta.52
 [v7.0-beta.51]: https://github.com/gchq/stroom/compare/v7.0-beta.50...v7.0-beta.51
 [v7.0-beta.50]: https://github.com/gchq/stroom/compare/v7.0-beta.49...v7.0-beta.50
 [v7.0-beta.49]: https://github.com/gchq/stroom/compare/v7.0-beta.48...v7.0-beta.49
