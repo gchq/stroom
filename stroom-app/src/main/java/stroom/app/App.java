@@ -150,7 +150,7 @@ public class App extends Application<Config> {
                 "new-ui",
                 ResourcePaths.SINGLE_PAGE_PREFIX));
 
-        addCommands(bootstrap);
+        addCliCommands(bootstrap);
 
         // If we want to use javax.validation on our rest resources with our own custom validation annotations
         // then we need to set the ValidatorFactory. As our main Guice Injector is not available yet we need to
@@ -158,7 +158,7 @@ public class App extends Application<Config> {
         bootstrap.setValidatorFactory(validationOnlyInjector.getInstance(ValidatorFactory.class));
     }
 
-    private void addCommands(final Bootstrap<Config> bootstrap) {
+    private void addCliCommands(final Bootstrap<Config> bootstrap) {
         // Add a DW Command so we can run the full migration without running the
         // http server
         bootstrap.addCommand(new DbMigrationCommand(configFile));
@@ -205,14 +205,11 @@ public class App extends Application<Config> {
         // Configure Cross-Origin Resource Sharing.
         configureCors(environment);
 
-
         LOGGER.info("Starting Stroom Application ({})", getNodeName(configuration.getAppConfig()));
 
         final AppModule appModule = new AppModule(configuration, environment, configFile);
-        final Injector injector = Guice.createInjector(appModule);
 
-
-        injector.injectMembers(this);
+        Guice.createInjector(appModule).injectMembers(this);
 
         // Add health checks
         healthChecks.register();
@@ -238,7 +235,6 @@ public class App extends Application<Config> {
         warnAboutDefaultOpenIdCreds(configuration);
 
         showBuildInfo();
-
     }
 
     private void showBuildInfo() {
@@ -274,13 +270,6 @@ public class App extends Application<Config> {
 
     private void validateAppConfig(final Config config, final Path configFile) {
 
-        // Inject this way rather than using injectMembers so we can avoid instantiating
-        // too many classes before running our validation
-
-        // create a minimalist throw away injector to just perform the validation
-//        Injector injector = Guice.createInjector(new BootConfigValidationModule(config, configFile));
-
-//        injector.getInstance(ConfigMapper.class);
         final AppConfig appConfig = config.getAppConfig();
 
         ConfigMapper.decorateWithPropertyPaths(appConfig);
