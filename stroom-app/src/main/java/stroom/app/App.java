@@ -169,6 +169,9 @@ public class App extends Application<Config> {
 
     @Override
     public void run(final Config configuration, final Environment environment) {
+        Objects.requireNonNull(configFile, () ->
+                LogUtil.message("No config YAML file supplied in arguments"));
+
         LOGGER.info("Using application configuration file {}", configFile.toAbsolutePath().normalize());
 
         validateAppConfig(configuration, configFile);
@@ -315,15 +318,15 @@ public class App extends Application<Config> {
                 } else {
                     // NOTE if you are getting here while running in IJ then you have probable not run
                     // local.yaml.sh
-                    throw new IllegalArgumentException(LogUtil.message(
-                            "YAML config file [{}] from arguments [{}] is not a valid file.\n" +
+                    LOGGER.warn("YAML config file [{}] from arguments [{}] is not a valid file.\n" +
                                     "You need to supply a valid stroom configuration YAML file.",
-                            yamlFile, Arrays.asList(args)));
+                            yamlFile, Arrays.asList(args));
                 }
             }
         }
-        throw new IllegalArgumentException(LogUtil.message("Could not extract YAML config file from arguments [{}]",
-                Arrays.asList(args)));
+        LOGGER.warn("Could not extract YAML config file from arguments [{}]",
+                Arrays.asList(args));
+        return null;
     }
 
     private static void configureSessionHandling(final Environment environment) {

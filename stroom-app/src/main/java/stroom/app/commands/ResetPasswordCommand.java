@@ -1,10 +1,20 @@
 package stroom.app.commands;
 
 import stroom.config.app.Config;
-import stroom.security.identity.account.AccountDao;
-import stroom.security.identity.exceptions.NoSuchUserException;
+import stroom.event.logging.api.StroomEventLoggingService;
+import stroom.security.api.SecurityContext;
+import stroom.security.identity.account.AccountService;
+import stroom.security.identity.account.UpdateAccountRequest;
+import stroom.util.logging.LogUtil;
 
 import com.google.inject.Injector;
+import event.logging.AuthenticateAction;
+import event.logging.AuthenticateOutcome;
+import event.logging.Event;
+import event.logging.Event.EventDetail.Authenticate;
+import event.logging.ObjectFactory;
+import event.logging.User;
+import event.logging.UserDetails;
 import io.dropwizard.setup.Bootstrap;
 import net.sourceforge.argparse4j.inf.Namespace;
 import net.sourceforge.argparse4j.inf.Subparser;
@@ -15,14 +25,15 @@ import javax.inject.Inject;
 import java.nio.file.Path;
 
 /**
- * Creates an account in the internal identity provider
+ * Resets the password of an account in the internal identity provider
  */
 public class ResetPasswordCommand extends AbstractStroomAccountConfiguredCommand {
 
     private static final Logger LOGGER = LoggerFactory.getLogger(ResetPasswordCommand.class);
 
     private static final String COMMAND_NAME = "reset_password";
-    private static final String COMMAND_DESCRIPTION = "Reset the password of the user account in the internal identity provider";
+    private static final String COMMAND_DESCRIPTION = "Reset the password of the user account " +
+            "in the internal identity provider";
 
     private static final String USERNAME_ARG_NAME = "user";
     private static final String PASSWORD_ARG_NAME = "password";
@@ -30,7 +41,11 @@ public class ResetPasswordCommand extends AbstractStroomAccountConfiguredCommand
     private final Path configFile;
 
     @Inject
-    private AccountDao accountDao;
+    private AccountService accountService;
+    @Inject
+    private SecurityContext securityContext;
+    @Inject
+    private StroomEventLoggingService stroomEventLoggingService;
 
     public ResetPasswordCommand(final Path configFile) {
         super(configFile, COMMAND_NAME, COMMAND_DESCRIPTION);
@@ -45,7 +60,7 @@ public class ResetPasswordCommand extends AbstractStroomAccountConfiguredCommand
                 .dest(USERNAME_ARG_NAME)
                 .type(String.class)
                 .required(true)
-                .help("The user id of the account");
+                .help("The user id of the account, e.g. 'admin'");
 
         subparser.addArgument("-p", "--" + PASSWORD_ARG_NAME)
                 .dest(PASSWORD_ARG_NAME)
@@ -61,20 +76,67 @@ public class ResetPasswordCommand extends AbstractStroomAccountConfiguredCommand
                               final Injector injector) {
 
         final String username = namespace.getString(USERNAME_ARG_NAME);
-        final String password = namespace.getString(PASSWORD_ARG_NAME);
+        final String newPassword = namespace.getString(PASSWORD_ARG_NAME);
 
-        LOGGER.debug("Resetting password for account {} with password {}", username, password);
+        LOGGER.debug("Resetting password for account {}", username);
 
         injector.injectMembers(this);
 
-        try {
-            accountDao.changePassword(username, password);
-        } catch (NoSuchUserException e) {
-            LOGGER.error("User {} does not have an account", username);
-            System.exit(1);
-        }
 
-        LOGGER.info("Password reset complete for user {}", username);
-        System.exit(0);
+        securityContext.asProcessingUser(() -> {
+            accountService.read(username)
+                    .ifPresentOrElse(
+                            account -> {
+                                final UpdateAccountRequest updateAccountRequest = new UpdateAccountRequest(
+                                        account,
+                                        newPassword,
+                                        newPassword);
+
+                                accountService.update(updateAccountRequest, account.getId());
+
+                                String msg = LogUtil.message("Password reset complete for user {}", username);
+                                LOGGER.info(msg);
+                                logEvent(username, true, msg);
+                                System.exit(0);
+                            },
+                            () -> {
+                                String msg = LogUtil.message("User {} does not have an account", username);
+                                LOGGER.error(msg);
+                                logEvent(username, false, msg);
+                                System.exit(1);
+                            });
+        });
+    }
+
+    private void logEvent(final String username,
+                          final boolean wasSuccessful,
+                          final String description) {
+        final Event event = stroomEventLoggingService.createAction(
+                "CliChangePassword",
+                LogUtil.message("The password for user {} was changed from the command line", username));
+
+        final ObjectFactory objectFactory = new ObjectFactory();
+        final Authenticate authenticate = objectFactory.createEventEventDetailAuthenticate();
+        event.getEventDetail().setAuthenticate(authenticate);
+
+        authenticate.setAction(AuthenticateAction.CHANGE_PASSWORD);
+
+        final AuthenticateOutcome authenticateOutcome = objectFactory.createAuthenticateOutcome();
+        authenticate.setOutcome(authenticateOutcome);
+        authenticateOutcome.setSuccess(wasSuccessful);
+        authenticateOutcome.setDescription(description);
+
+        final User user = objectFactory.createUser();
+        authenticate.setUser(user);
+        user.setName(username);
+
+        // TODO @AT UserDetails appears to be empty for some reason so can't set the user's name on it
+        final UserDetails userDetails = objectFactory.createUserDetails();
+        user.setUserDetails(userDetails);
+
+        // We are running as proc user so try and get the OS user, though that may just be a shared account
+        event.getEventSource().getUser().setId(System.getProperty("user.name"));
+
+        stroomEventLoggingService.log(event);
     }
 }
