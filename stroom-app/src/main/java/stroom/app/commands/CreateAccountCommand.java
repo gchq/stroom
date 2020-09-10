@@ -97,7 +97,7 @@ public class CreateAccountCommand extends AbstractStroomAccountConfiguredCommand
                 .action(Arguments.storeTrue())
                 .setDefault(false)
                 .required(false)
-                .help("Force a password change on first login");
+                .help("If set do not require a password change on first login");
 
         subparser.addArgument("--" + NEVER_EXPIRES_CHANGE_ARG_NAME)
                 .dest(NEVER_EXPIRES_CHANGE_ARG_NAME)
