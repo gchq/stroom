@@ -97,7 +97,6 @@ import stroom.widget.popup.client.presenter.PopupUiHandlers;
 import stroom.widget.popup.client.presenter.PopupView.PopupType;
 
 import java.util.ArrayList;
-import java.util.Collections;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
@@ -134,8 +133,6 @@ public class TablePresenter extends AbstractComponentPresenter<TableView>
     private boolean ignoreRangeChange;
     private int[] maxResults = TableComponentSettings.DEFAULT_MAX_RESULTS;
     private final Set<String> usedFieldIds = new HashSet<>();
-    private List<Field> currentFields = Collections.emptyList();
-    private List<String> currentFieldIds = Collections.emptyList();
 
     @Inject
     public TablePresenter(final EventBus eventBus,
@@ -437,8 +434,6 @@ public class TablePresenter extends AbstractComponentPresenter<TableView>
     @Override
     public void startSearch() {
         tableResultRequest.setTableSettings(tableSettings.copy());
-        currentFields = tableResultRequest.getTableSettings().getFields();
-        currentFieldIds = currentFields.stream().map(Field::getId).collect(Collectors.toList());
     }
 
     @Override
