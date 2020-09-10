@@ -265,7 +265,8 @@ class OpenIdManager {
         }
 
         if (userIdentity == null) {
-            LOGGER.error("Cannot get a valid JWS for API request to " + request.getRequestURI());
+            LOGGER.error("Cannot get a valid JWS for API request to " + request.getRequestURI() + ". " +
+                    "This may be due to Stroom being left open in a browser after Stroom was restarted.");
         }
 
         return userIdentity;
