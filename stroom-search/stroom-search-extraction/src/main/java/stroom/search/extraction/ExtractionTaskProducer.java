@@ -179,8 +179,9 @@ class ExtractionTaskProducer extends TaskProducer {
     private boolean addTasks() {
         final boolean completedEventMapping = this.streamMapCreatorCompletionState.isComplete();
         for (final Entry<Long, List<Event>> entry : streamEventMap.entrySet()) {
-            if (streamEventMap.remove(entry.getKey(), entry.getValue())) {
-                final int tasksCreated = createTasks(entry.getKey(), entry.getValue());
+            final List<Event> events = streamEventMap.remove(entry.getKey());
+            if (events != null) {
+                final int tasksCreated = createTasks(entry.getKey(), events);
                 if (tasksCreated > 0) {
                     return false;
                 }

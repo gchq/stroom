@@ -236,6 +236,9 @@ class AsyncSearchTaskHandler extends AbstractTaskHandler<AsyncSearchTask, VoidRe
                             terminateTasks(task);
                         }
                     }
+
+                    // Perform a final wait for the result collector to do final merges.
+                    resultCollector.waitForPendingWork();
                     taskMonitor.info(task.getSearchName() + " - complete");
 
                 } catch (final Exception e) {

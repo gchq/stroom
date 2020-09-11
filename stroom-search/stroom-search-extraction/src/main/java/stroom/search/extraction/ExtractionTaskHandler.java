@@ -174,6 +174,11 @@ public class ExtractionTaskHandler {
             // Process the stream segments.
             processData(task.getStreamId(), task.getEventIds(), pipelineEntity, pipeline);
 
+            // Ensure count is the same.
+            if (task.getEventIds().length != searchResultOutputFilter.getCount()) {
+                LOGGER.debug("Extraction count mismatch");
+            }
+
         } catch (final RuntimeException e) {
             task.getReceiver().getErrorConsumer().accept(new Error(e.getMessage(), e));
 
