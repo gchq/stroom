@@ -16,15 +16,16 @@
 
 package stroom.dashboard.shared;
 
+import stroom.docref.DocRef;
+import stroom.util.shared.EqualsBuilder;
+import stroom.util.shared.HashCodeBuilder;
+import stroom.util.shared.ToStringBuilder;
+
 import com.fasterxml.jackson.annotation.JsonCreator;
 import com.fasterxml.jackson.annotation.JsonInclude;
 import com.fasterxml.jackson.annotation.JsonInclude.Include;
 import com.fasterxml.jackson.annotation.JsonProperty;
 import com.fasterxml.jackson.annotation.JsonPropertyOrder;
-import stroom.docref.DocRef;
-import stroom.util.shared.EqualsBuilder;
-import stroom.util.shared.HashCodeBuilder;
-import stroom.util.shared.ToStringBuilder;
 
 import javax.xml.bind.annotation.XmlAccessType;
 import javax.xml.bind.annotation.XmlAccessorType;
@@ -38,11 +39,25 @@ import java.util.Arrays;
 import java.util.List;
 import java.util.Objects;
 
-@XmlAccessorType(XmlAccessType.FIELD)
-@JsonPropertyOrder({"queryId", "fields", "extractValues", "extractionPipeline", "maxResults", "showDetail"})
+@JsonPropertyOrder({
+        "queryId",
+        "fields",
+        "extractValues",
+        "extractionPipeline",
+        "maxResults",
+        "showDetail",
+        "conditionalFormattingRules"})
 @JsonInclude(Include.NON_NULL)
+@XmlAccessorType(XmlAccessType.FIELD)
 @XmlRootElement(name = "table")
-@XmlType(name = "TableComponentSettings", propOrder = {"queryId", "fields", "extractValues", "extractionPipeline", "maxResults", "showDetail"})
+@XmlType(name = "TableComponentSettings", propOrder = {
+        "queryId",
+        "fields",
+        "extractValues",
+        "extractionPipeline",
+        "maxResults",
+        "showDetail",
+        "conditionalFormattingRules"})
 public class TableComponentSettings extends ComponentSettings {
     public static final int[] DEFAULT_MAX_RESULTS = {1000000};
     @XmlElement(name = "queryId")
@@ -65,8 +80,13 @@ public class TableComponentSettings extends ComponentSettings {
     @XmlElement(name = "showDetail")
     @JsonProperty("showDetail")
     private Boolean showDetail;
+    @XmlElementWrapper(name = "conditionalFormattingRules")
+    @XmlElements({@XmlElement(name = "conditionalFormattingRule", type = ConditionalFormattingRule.class)})
+    @JsonProperty("conditionalFormattingRules")
+    private List<ConditionalFormattingRule> conditionalFormattingRules;
 
     public TableComponentSettings() {
+        // Default constructor necessary for GWT serialisation.
     }
 
     public TableComponentSettings(final List<Field> fields) {
@@ -79,13 +99,15 @@ public class TableComponentSettings extends ComponentSettings {
                                   @JsonProperty("extractValues") final Boolean extractValues,
                                   @JsonProperty("extractionPipeline") final DocRef extractionPipeline,
                                   @JsonProperty("maxResults") final int[] maxResults,
-                                  @JsonProperty("showDetail") final Boolean showDetail) {
+                                  @JsonProperty("showDetail") final Boolean showDetail,
+                                  @JsonProperty("conditionalFormattingRules") final List<ConditionalFormattingRule> conditionalFormattingRules) {
         this.queryId = queryId;
         this.fields = fields;
         this.extractValues = extractValues;
         this.extractionPipeline = extractionPipeline;
         this.maxResults = maxResults;
         this.showDetail = showDetail;
+        this.conditionalFormattingRules = conditionalFormattingRules;
     }
 
     public String getQueryId() {
@@ -182,6 +204,14 @@ public class TableComponentSettings extends ComponentSettings {
         return showDetail;
     }
 
+    public List<ConditionalFormattingRule> getConditionalFormattingRules() {
+        return conditionalFormattingRules;
+    }
+
+    public void setConditionalFormattingRules(final List<ConditionalFormattingRule> conditionalFormattingRules) {
+        this.conditionalFormattingRules = conditionalFormattingRules;
+    }
+
     @Override
     public boolean equals(final Object o) {
         if (o == this) {
@@ -198,6 +228,7 @@ public class TableComponentSettings extends ComponentSettings {
         builder.append(extractionPipeline, tableSettings.extractionPipeline);
         builder.append(maxResults, tableSettings.maxResults);
         builder.append(showDetail, tableSettings.showDetail);
+        builder.append(conditionalFormattingRules, tableSettings.conditionalFormattingRules);
         return builder.isEquals();
     }
 
@@ -210,6 +241,7 @@ public class TableComponentSettings extends ComponentSettings {
         builder.append(extractionPipeline);
         builder.append(maxResults);
         builder.append(showDetail);
+        builder.append(conditionalFormattingRules);
         return builder.toHashCode();
     }
 
@@ -222,6 +254,7 @@ public class TableComponentSettings extends ComponentSettings {
         builder.append("extractionPipeline", extractionPipeline);
         builder.append("maxResults", Arrays.toString(maxResults));
         builder.append("showDetail", showDetail);
+        builder.append("conditionalFormattingRules", conditionalFormattingRules);
         return builder.toString();
     }
 
@@ -242,6 +275,13 @@ public class TableComponentSettings extends ComponentSettings {
             }
         }
 
-        return new TableComponentSettings(queryId, fieldsCopy, extractValues, extractionPipeline, maxResultCopy, showDetail);
+        return new TableComponentSettings(
+                queryId,
+                fieldsCopy,
+                extractValues,
+                extractionPipeline,
+                maxResultCopy,
+                showDetail,
+                conditionalFormattingRules);
     }
 }

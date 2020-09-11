@@ -30,7 +30,6 @@ import stroom.pipeline.client.event.ChangeDataEvent;
 import stroom.pipeline.client.event.ChangeDataEvent.ChangeDataHandler;
 import stroom.pipeline.client.event.HasChangeDataHandlers;
 
-import javax.sql.XADataSource;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
@@ -44,7 +43,6 @@ public class IndexLoader implements HasChangeDataHandlers<IndexLoader> {
     private DocRef loadedDataSourceRef;
     private List<String> indexFieldNames;
     private DataSourceFieldsMap dataSourceFieldsMap;
-    private int loadCount;
 
     public IndexLoader(final EventBus eventBus, final RestFactory restFactory) {
         this.eventBus = eventBus;
@@ -77,14 +75,13 @@ public class IndexLoader implements HasChangeDataHandlers<IndexLoader> {
                             indexFieldNames = new ArrayList<>();
                         }
 
-                        loadCount++;
                         ChangeDataEvent.fire(IndexLoader.this, IndexLoader.this);
                     })
                     .onFailure(caught -> {
                         loadedDataSourceRef = null;
                         indexFieldNames = null;
                         dataSourceFieldsMap = null;
-                        loadCount++;
+
                         AlertEvent.fireError(IndexLoader.this, "Unable to locate datasource " + dataSourceRef.getUuid(), null);
                         ChangeDataEvent.fire(IndexLoader.this, IndexLoader.this);
 
@@ -95,7 +92,6 @@ public class IndexLoader implements HasChangeDataHandlers<IndexLoader> {
             loadedDataSourceRef = null;
             indexFieldNames = null;
             dataSourceFieldsMap = null;
-            loadCount++;
             ChangeDataEvent.fire(IndexLoader.this, IndexLoader.this);
         }
     }
@@ -110,9 +106,5 @@ public class IndexLoader implements HasChangeDataHandlers<IndexLoader> {
 
     public DataSourceFieldsMap getDataSourceFieldsMap() {
         return dataSourceFieldsMap;
-    }
-
-    public int getLoadCount() {
-        return loadCount;
     }
 }

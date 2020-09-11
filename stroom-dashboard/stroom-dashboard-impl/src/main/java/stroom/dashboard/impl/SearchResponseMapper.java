@@ -100,17 +100,15 @@ public class SearchResponseMapper {
         final List<Field> copy = new ArrayList<>();
         if (fields != null) {
             for (final stroom.query.api.v2.Field field : fields) {
-                final Field item = new Field(
-                        field.getId(),
-                        field.getName(),
-                        field.getExpression(),
-                        null,
-                        null,
-                        null,
-                        null,
-                        -1,
-                        true,
-                        false);
+                final Field item = new Field.Builder()
+                        .id(field.getId())
+                        .name(field.getName())
+                        .expression(field.getExpression())
+                        .group(field.getGroup())
+                        .width(-1)
+                        .visible(true)
+                        .special(false)
+                        .build();
                 copy.add(item);
             }
         }
