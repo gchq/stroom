@@ -141,7 +141,7 @@ main() {
 
   local total_unhealthy_count=0
 
-  check_health "stroom" "localhost" "${STROOM_ADMIN_PORT}" "admin"
+  check_health "stroom" "localhost" "${STROOM_ADMIN_PORT}" "stroomAdmin"
 
   return ${total_unhealthy_count}
 }

@@ -7,6 +7,14 @@ and this project adheres to [Semantic Versioning](http://semver.org/).
 
 ## [Unreleased]
 
+* Change stroom admin path from `admin` to `stroomAdmin` in the distribution.
+
+* Fix `command not found` bug in distribution `start.sh`.
+
+* Change `start.sh` to log pre-logback output to start.sh.log.
+
+* Change logFormat to include time in `prod.yml` and `config.yml`.
+
 
 ## [v6.1.12] - 2020-09-08
 
