@@ -116,6 +116,7 @@ public class LuceneSearchStoreFactory implements StoreFactory {
         final AsyncSearchTask asyncSearchTask = new AsyncSearchTask(
                 null,
                 securityContext.getUserIdentity(),
+                searchRequest.getKey(),
                 searchName,
                 query,
                 node,

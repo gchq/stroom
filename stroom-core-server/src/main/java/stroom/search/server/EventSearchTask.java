@@ -17,9 +17,11 @@
 package stroom.search.server;
 
 import stroom.query.api.v2.Query;
+import stroom.query.api.v2.QueryKey;
 import stroom.security.shared.UserIdentity;
 
 public class EventSearchTask extends AbstractSearchTask<EventRefs> {
+    private final QueryKey key;
     private final EventRef minEvent;
     private final EventRef maxEvent;
     private final long maxStreams;
@@ -29,15 +31,21 @@ public class EventSearchTask extends AbstractSearchTask<EventRefs> {
     private final int resultSendFrequency;
 
     public EventSearchTask(final UserIdentity userIdentity,
+                           final QueryKey key,
                            final Query query, final EventRef minEvent, final EventRef maxEvent, final long maxStreams,
                            final long maxEvents, final long maxEventsPerStream, final int resultSendFrequency) {
         super(null, userIdentity, query);
+        this.key = key;
         this.minEvent = minEvent;
         this.maxEvent = maxEvent;
         this.maxStreams = maxStreams;
         this.maxEvents = maxEvents;
         this.maxEventsPerStream = maxEventsPerStream;
         this.resultSendFrequency = resultSendFrequency;
+    }
+
+    public QueryKey getKey() {
+        return key;
     }
 
     public EventRef getMinEvent() {

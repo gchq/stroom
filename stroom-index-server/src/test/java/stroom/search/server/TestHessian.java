@@ -21,6 +21,7 @@ import stroom.query.api.v2.Field;
 import stroom.query.api.v2.Filter;
 import stroom.query.api.v2.Format;
 import stroom.query.api.v2.Query;
+import stroom.query.api.v2.QueryKey;
 import stroom.query.api.v2.Sort;
 import stroom.query.api.v2.Sort.SortDirection;
 import stroom.query.api.v2.TableSettings;
@@ -44,6 +45,7 @@ import java.util.Arrays;
 import java.util.Collections;
 import java.util.HashMap;
 import java.util.Map;
+import java.util.UUID;
 
 public class TestHessian {
     @Test
@@ -56,6 +58,7 @@ public class TestHessian {
                 .addTerm("test", Condition.EQUALS, "test")
                 .build();
 
+        final QueryKey key = new QueryKey(UUID.randomUUID().toString());
         final Query query = new Query.Builder()
                 .dataSource("test", "test", "test")
                 .addParam("test", "test")
@@ -89,13 +92,13 @@ public class TestHessian {
         final Map<CoprocessorKey, CoprocessorSettings> coprocessorMap = new HashMap<>();
         coprocessorMap.put(coprocessorKey, coprocessorSettings);
 
-        final ClusterSearchTask clusterSearchTask = new ClusterSearchTask(ProcessingUserIdentity.INSTANCE,
+        final ClusterSearchTask clusterSearchTask = new ClusterSearchTask(
+                ProcessingUserIdentity.INSTANCE,
                 "test",
+                key,
                 query,
                 Arrays.asList(1L, 2L, 3L),
-                node,
                 fields,
-                1000,
                 coprocessorMap,
                 "locale",
                 1000);

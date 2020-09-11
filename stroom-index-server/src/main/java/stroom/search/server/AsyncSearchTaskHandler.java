@@ -20,6 +20,7 @@ package stroom.search.server;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.context.annotation.Scope;
+import stroom.cluster.server.ClusterCallService;
 import stroom.entity.shared.Sort.Direction;
 import stroom.index.server.IndexService;
 import stroom.index.server.IndexShardService;
@@ -30,9 +31,11 @@ import stroom.index.shared.IndexShard;
 import stroom.index.shared.IndexShard.IndexShardStatus;
 import stroom.node.shared.Node;
 import stroom.query.api.v2.Query;
+import stroom.query.api.v2.QueryKey;
+import stroom.search.resultsender.NodeResult;
 import stroom.security.SecurityContext;
 import stroom.security.SecurityHelper;
-import stroom.task.cluster.ClusterDispatchAsync;
+import stroom.security.shared.UserIdentity;
 import stroom.task.cluster.ClusterDispatchAsyncHelper;
 import stroom.task.cluster.ClusterResultCollectorCache;
 import stroom.task.cluster.TargetNodeSetFactory;
@@ -43,13 +46,14 @@ import stroom.task.server.GenericServerTask;
 import stroom.task.server.TaskHandlerBean;
 import stroom.task.server.TaskManager;
 import stroom.task.shared.FindTaskCriteria;
-import stroom.util.logging.LambdaLogger;
-import stroom.util.logging.LambdaLoggerFactory;
+import stroom.util.shared.TaskId;
 import stroom.util.shared.VoidResult;
 import stroom.util.spring.StroomScope;
 import stroom.util.task.TaskMonitor;
+import stroom.util.thread.ThreadUtil;
 
 import javax.inject.Inject;
+import javax.inject.Named;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.HashMap;
@@ -57,19 +61,17 @@ import java.util.List;
 import java.util.Map;
 import java.util.Map.Entry;
 import java.util.Set;
-import java.util.concurrent.TimeUnit;
+import java.util.concurrent.ConcurrentHashMap;
 
 @TaskHandlerBean(task = AsyncSearchTask.class)
 @Scope(value = StroomScope.TASK)
 class AsyncSearchTaskHandler extends AbstractTaskHandler<AsyncSearchTask, VoidResult> {
     private static final Logger LOGGER = LoggerFactory.getLogger(AsyncSearchTaskHandler.class);
-    private static final LambdaLogger LAMBDA_LOGGER = LambdaLoggerFactory.getLogger(AsyncSearchTaskHandler.class);
-
 
     private final TaskMonitor taskMonitor;
     private final TargetNodeSetFactory targetNodeSetFactory;
-    private final ClusterDispatchAsync dispatcher;
     private final ClusterDispatchAsyncHelper dispatchHelper;
+    private final ClusterCallService clusterCallService;
     private final ClusterResultCollectorCache clusterResultCollectorCache;
     private final IndexService indexService;
     private final IndexShardService indexShardService;
@@ -78,13 +80,14 @@ class AsyncSearchTaskHandler extends AbstractTaskHandler<AsyncSearchTask, VoidRe
 
     @Inject
     AsyncSearchTaskHandler(final TaskMonitor taskMonitor, final TargetNodeSetFactory targetNodeSetFactory,
-                           final ClusterDispatchAsync dispatcher, final ClusterDispatchAsyncHelper dispatchHelper,
+                           final ClusterDispatchAsyncHelper dispatchHelper,
+                           @Named("clusterCallServiceRemote") final ClusterCallService clusterCallService,
                            final ClusterResultCollectorCache clusterResultCollectorCache, final IndexService indexService,
                            final IndexShardService indexShardService, final TaskManager taskManager, final SecurityContext securityContext) {
         this.taskMonitor = taskMonitor;
         this.targetNodeSetFactory = targetNodeSetFactory;
-        this.dispatcher = dispatcher;
         this.dispatchHelper = dispatchHelper;
+        this.clusterCallService = clusterCallService;
         this.clusterResultCollectorCache = clusterResultCollectorCache;
         this.indexService = indexService;
         this.indexShardService = indexShardService;
@@ -98,8 +101,11 @@ class AsyncSearchTaskHandler extends AbstractTaskHandler<AsyncSearchTask, VoidRe
             final ClusterSearchResultCollector resultCollector = task.getResultCollector();
             if (!task.isTerminated()) {
                 final Node sourceNode = targetNodeSetFactory.getSourceNode();
+                final Map<Node, List<Long>> shardMap = new HashMap<>();
 
                 try {
+                    final Set<Node> remainingNodes = Collections.newSetFromMap(new ConcurrentHashMap<>());
+
                     // Get the nodes that we are going to send the search request
                     // to.
                     final Set<Node> targetNodes = targetNodeSetFactory.getEnabledActiveTargetNodeSet();
@@ -128,7 +134,6 @@ class AsyncSearchTaskHandler extends AbstractTaskHandler<AsyncSearchTask, VoidRe
                     final List<IndexShard> indexShards = indexShardService.find(findIndexShardCriteria);
 
                     // Build a map of nodes that will deal with each set of shards.
-                    final Map<Node, List<Long>> shardMap = new HashMap<>();
                     for (final IndexShard indexShard : indexShards) {
                         if (IndexShardStatus.CORRUPT.equals(indexShard.getStatus())) {
                             resultCollector.getErrorSet(indexShard.getNode()).add(
@@ -148,11 +153,38 @@ class AsyncSearchTaskHandler extends AbstractTaskHandler<AsyncSearchTask, VoidRe
                         final List<Long> shards = entry.getValue();
 
                         if (targetNodes.contains(node)) {
-                            final ClusterSearchTask clusterSearchTask = new ClusterSearchTask(task.getUserIdentity(), "Cluster Search", query, shards, sourceNode, storedFields,
-                                    task.getResultSendFrequency(), task.getCoprocessorMap(), task.getDateTimeLocale(), task.getNow());
+                            final ClusterSearchTask clusterSearchTask = new ClusterSearchTask(
+                                    securityContext.getUserIdentity(),
+                                    "Cluster Search",
+                                    task.getKey(),
+                                    query,
+                                    shards,
+                                    storedFields,
+                                    task.getCoprocessorMap(),
+                                    task.getDateTimeLocale(),
+                                    task.getNow());
                             LOGGER.debug("Dispatching clusterSearchTask to node {}", node);
-                            dispatcher.execAsync(clusterSearchTask, resultCollector, sourceNode,
-                                    Collections.singleton(node));
+//                            dispatcher.execAsync(clusterSearchTask, resultCollector, sourceNode,
+//                                    Collections.singleton(node));
+
+
+                            try {
+                                final boolean success = (Boolean) clusterCallService.call(sourceNode, node, RemoteSearchManager.BEAN_NAME,
+                                        RemoteSearchManager.START_SEARCH,
+                                        new Class[]{UserIdentity.class, TaskId.class, ClusterSearchTask.class},
+                                        new Object[]{securityContext.getUserIdentity(), task.getId(), clusterSearchTask});
+                                if (!success) {
+                                    resultCollector.onFailure(node, new SearchException("Failed to start remote search"));
+                                } else {
+                                    remainingNodes.add(node);
+                                }
+
+                            } catch (final Throwable e) {
+//                                throw EntityServiceExceptionUtil.create(e);
+
+                                resultCollector.onFailure(node, new SearchException(e.getMessage(), e));
+                            }
+
 
                         } else {
                             resultCollector.onFailure(node,
@@ -163,23 +195,41 @@ class AsyncSearchTaskHandler extends AbstractTaskHandler<AsyncSearchTask, VoidRe
 
                     // Await completion.
                     while (!task.isTerminated() &&
-                            !resultCollector.isComplete()) {
+                            remainingNodes.size() > 0) {
 
-                        boolean awaitResult = LAMBDA_LOGGER.logDurationIfTraceEnabled(
-                                () -> {
-                                    try {
-                                        // block and wait for up to 10s for our search to be completed/terminated
-                                        return resultCollector.awaitCompletion(10, TimeUnit.SECONDS);
-                                    } catch (InterruptedException e) {
-                                        //Don't reset the interrupt status as we are at the top level of
-                                        //the task execution
-                                        throw new RuntimeException("Thread interrupted");
-                                    }
-                                },
-                                "waiting for completion condition");
+                        final long start = System.currentTimeMillis();
 
-                        LOGGER.trace("await finished with result {}", awaitResult);
+                        for (Node node : remainingNodes) {
+                            final NodeResult nodeResult = (NodeResult) clusterCallService.call(sourceNode, node, RemoteSearchManager.BEAN_NAME,
+                                    RemoteSearchManager.POLL, new Class[]{UserIdentity.class, QueryKey.class}, new Object[]{securityContext.getUserIdentity(), task.getKey()});
+                            if (nodeResult != null) {
+                                resultCollector.onSuccess(node, nodeResult);
+                                if (nodeResult.isComplete()) {
+                                    remainingNodes.remove(node);
+                                }
+                            }
+                        }
 
+                        final long elapsed = System.currentTimeMillis() - start;
+                        if (elapsed < 1000) {
+                            ThreadUtil.sleep(1000 - elapsed);
+                        }
+
+//                        boolean awaitResult = LAMBDA_LOGGER.logDurationIfTraceEnabled(
+//                                () -> {
+//                                    try {
+//                                        // block and wait for up to 10s for our search to be completed/terminated
+//                                        return resultCollector.awaitCompletion(10, TimeUnit.SECONDS);
+//                                    } catch (InterruptedException e) {
+//                                        //Don't reset the interrupt status as we are at the top level of
+//                                        //the task execution
+//                                        throw new RuntimeException("Thread interrupted");
+//                                    }
+//                                },
+//                                "waiting for completion condition");
+//
+//                        LOGGER.trace("await finished with result {}", awaitResult);
+//
                         // If the collector is no longer in the cache then terminate
                         // this search task.
                         if (clusterResultCollectorCache.get(resultCollector.getId()) == null) {
@@ -190,18 +240,29 @@ class AsyncSearchTaskHandler extends AbstractTaskHandler<AsyncSearchTask, VoidRe
 
                 } catch (final Exception e) {
                     resultCollector.getErrorSet(sourceNode).add(e.getMessage());
+                } finally {
+                    // Destroy remote search results.
+                    for (final Node node : shardMap.keySet()) {
+                        try {
+                            final boolean success = (Boolean) clusterCallService.call(sourceNode, node, RemoteSearchManager.BEAN_NAME,
+                                    RemoteSearchManager.DESTROY, new Class[]{UserIdentity.class, QueryKey.class}, new Object[]{securityContext.getUserIdentity(), task.getKey()});
+
+                        } catch (final Throwable e) {
+                            resultCollector.onFailure(node, new SearchException(e.getMessage(), e));
+                        }
+                    }
+
+                    // Make sure we try and terminate any child tasks on worker
+                    // nodes if we need to.
+                    terminateTasks(task);
+
+                    // Ensure search is complete even if we had errors.
+                    resultCollector.complete();
+
+                    // We need to wait here for the client to keep getting results if
+                    // this is an interactive search.
+                    taskMonitor.info(task.getSearchName() + " - staying alive for UI requests");
                 }
-
-                // Make sure we try and terminate any child tasks on worker
-                // nodes if we need to.
-                terminateTasks(task);
-
-                // Ensure search is complete even if we had errors.
-                resultCollector.complete();
-
-                // We need to wait here for the client to keep getting results if
-                // this is an interactive search.
-                taskMonitor.info(task.getSearchName() + " - staying alive for UI requests");
             }
 
             return VoidResult.INSTANCE;

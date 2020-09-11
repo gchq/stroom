@@ -28,6 +28,7 @@ import stroom.node.shared.Node;
 import stroom.pipeline.server.PipelineService;
 import stroom.pipeline.shared.PipelineEntity;
 import stroom.query.api.v2.Query;
+import stroom.query.api.v2.QueryKey;
 import stroom.search.server.EventRef;
 import stroom.search.server.EventRefs;
 import stroom.search.server.EventSearchTask;
@@ -71,6 +72,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.Map.Entry;
 import java.util.Set;
+import java.util.UUID;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.concurrent.atomic.AtomicLong;
@@ -783,13 +785,14 @@ public class StreamTaskCreatorImpl implements StreamTaskCreator {
             }
         }
 
+        final QueryKey key = new QueryKey(UUID.randomUUID().toString());
         final Query query = new Query(queryData.getDataSource(), queryData.getExpression());
 
         // Update the tracker status message.
         tracker.setStatus("Searching...");
         final StreamProcessorFilterTracker updatedTracker = streamTaskTransactionHelper.saveTracker(tracker);
 
-        final EventSearchTask eventSearchTask = new EventSearchTask(securityContext.createIdentity(filter.getUpdateUser()), query,
+        final EventSearchTask eventSearchTask = new EventSearchTask(securityContext.createIdentity(filter.getUpdateUser()), key, query,
                 minEvent, maxEvent, maxStreams, maxEvents, maxEventsPerStream, POLL_INTERVAL_MS);
         taskManager.execAsync(eventSearchTask, new TaskCallbackAdaptor<EventRefs>() {
             @Override
