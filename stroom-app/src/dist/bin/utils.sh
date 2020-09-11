@@ -47,6 +47,7 @@ ask_about_logs() {
 ensure_file_exists() {
   local log_file="$1"
   if [ ! -f "${log_file}" ]; then
+    info "Creating empty file ${BLUE}${log_file}${NC}"
     # File doesn't exists so ensure the dir and file both exist
     local dir
     # get dir part by removing everything before last slash
