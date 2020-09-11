@@ -7,7 +7,17 @@ and this project adheres to [Semantic Versioning](http://semver.org/).
 
 ## [Unreleased]
 
+* Add comments to `prod.yml`/`config.yml`.
+
 * Change `reset_password` CLI command to also reset various locked/inactive type flags.
+
+* Change stroom admin path from `admin` to `stroomAdmin` in the distribution.
+
+* Fix `command not found` bug in distribution `start.sh`.
+
+* Change `start.sh` to log pre-logback output to start.sh.log.
+
+* Change logFormat to include time in `prod.yml` and `config.yml`.
 
 
 ## [v7.0-beta.52] - 2020-09-10
@@ -1740,9 +1750,6 @@ Issue **gchq/stroom-expression#22** : Add `typeOf(...)` function to dashboard.
 * Issue **#753** : Fixed script editing in UI.
 
 * Issue **#751** : Fix inability to query on a dashboard with only use+read rights.
-
-
-## [v6.0-alpha.22]
 
 * Issue **#719** : Fix creation of headless Jar to ensure logback is now included.
 

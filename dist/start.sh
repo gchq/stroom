@@ -53,7 +53,6 @@ wait_for_200_response() {
     fi
 
     local -r url=$1
-    local -r maxWaitSecs=240
     echo
 
     n=0
@@ -111,22 +110,27 @@ start_stroom() {
   fi
 
   # We need word splitting on JAVA_OPTS so we need to disable SC2086
+  # We redirect stdout to path_to_start_log so that anything that is written
+  # to stdout before logback is initialised can be seen, e.g. if the log
+  # file path is bad.
   # shellcheck disable=SC2086
   nohup \
     java ${JAVA_OPTS} \
     -jar "${absoulte_path_to_jar}" \
     server \
     "${absolute_path_to_config}" \
-    &> "${PATH_TO_APP_LOG}" &
+    &> "${path_to_start_log}" &
 
   local stroom_pid="$!"
   info "Started ${GREEN}Stroom${NC} with PID ${BLUE}${stroom_pid}${NC}"
   # Write the PID to a file to prevent stroom being started multiple times
   echo "${stroom_pid}" > "${STROOM_PID_FILE}"
 
-  # tail the log in the background
+  # tail the logs in the background
   info "Tailing log files ${BLUE}${path_to_start_log}${NC} and" \
     "${BLUE}${PATH_TO_APP_LOG}${NC}"
+  info "Tailing will terminate when a 200 response is received from Stroom's" \
+    "health check page, or a ${maxWaitSecs}s timeout is reached."
   tail -F "${path_to_start_log}" "${PATH_TO_APP_LOG}" 2>/dev/null &
   local tailing_pid="$!"
 
@@ -169,7 +173,7 @@ check_or_create_pid_file() {
         echo -e ''
         if [ "${start_new_instance}" = 'y' ]; then
           rm "${STROOM_PID_FILE}"
-          start
+          start_stroom
         else 
           info "Ok. I won't start anything."
         fi
@@ -178,10 +182,11 @@ check_or_create_pid_file() {
   fi
 }
 
-main(){
+main() {
 
   local script_args=( $@ )
   local -r path_to_start_log="./logs/start.sh.log"
+  local -r maxWaitSecs=240
 
   # shellcheck disable=SC1091
   source bin/utils.sh
