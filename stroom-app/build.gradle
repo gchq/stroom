@@ -189,6 +189,7 @@ dependencies {
     testCompile libs.guice4
     testCompile libs.guice_extension
     testCompile libs.hikari
+    testCompile libs.jinjava
     testCompile libs.junit_jupiter_api
     testCompile libs.lmdbjava
     testCompile libs.lucene_core

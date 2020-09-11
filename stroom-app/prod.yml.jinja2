@@ -1,0 +1,202 @@
+{#
+  ============================== NOTE ==============================
+
+  This file is templated with jinja2 syntax and is intended for use by
+  stroom.dist.GenerateDistributionConfig.
+  Any instances of ${...} are not jinja2 and are intended to remain as is in the
+  generated file and are for use by DropWizard with its variable substitution.
+
+  Stuff like
+  "{{ 'my_value' | envVar('ENV_VAR') }}"
+  will either render as
+    ${ENV_VAR:-my_value}
+  or
+    my_value
+
+  ============================== NOTE ==============================
+
+#}
+{# Define all the jinja2 variable values #}
+{% if distribution == "docker" %}
+  {% set rootPath = '/stroom/' %}
+  {% set includeEnvVarSubstitution = true %}
+{% elif distribution == "zip" %}
+  {% set rootPath = '' %}
+  {% set includeEnvVarSubstitution = false %}
+{% endif %}
+# Stroom configuration file
+# =========================
+
+# For information on the structure of this configuration file see:
+# https://www.dropwizard.io/en/latest/manual/configuration.html#logging
+# For information on the logback logFormat strings see:
+# http://logback.qos.ch/manual/layouts.html
+
+# This configuration file was made for the {{ distribution }} distribution.
+
+# This section is the DropWizard configuration for Stroom
+
+server:
+  applicationContextPath: "{{ '/' | envVar('APPLICATION_CONTEXT_PATH') }}"
+  adminContextPath: "{{ '/stroomAdmin' | envVar('ADMIN_CONTEXT_PATH') }}"
+  applicationConnectors:
+    - type: http
+      port: {{ 8080 | envVar('STROOM_APP_PORT') }}
+  adminConnectors:
+    - type: http
+      port: ${STROOM_ADMIN_PORT:-8081}
+
+  requestLog:
+    appenders:
+      # Log appender for the web server request logging
+    - type: file
+      currentLogFilename: {{ rootPath }}logs/access/access.log
+      threshold: ALL
+      queueSize: 256
+      discardingThreshold: 0
+      archive: true
+      # Rolled and gzipped every minute
+      archivedLogFilenamePattern: {{ rootPath }}logs/access/access-%d{yyyy-MM-dd'T'HH:mm}.log.gz
+      archivedFileCount: 100
+      timeZone: UTC
+
+logging:
+  level: "{{ 'WARN' | envVar('STROOM_LOGGING_LEVEL') }}"
+  loggers:
+    stroom: INFO
+    io.dropwizard: INFO
+    org.eclipse.jetty: INFO
+    org.glassfish: INFO
+    org.glassfish.jersey: INFO
+    # Comment this out if you want logging of the REST request/responses
+    # NOT recommended for production environments as it is very verbose
+    org.glassfish.jersey.logging.LoggingFeature: "OFF"
+    #    org.glassfish.jersey.server.ServerRuntime.Responder: INFO
+    #    org.glassfish.jersey.server.validation.internal.ValidationExceptionMapper: FINER
+    org.flywaydb: INFO
+    # Logger and appender for audit logs
+    "event-logger":
+      level: INFO
+      additive: false
+      appenders:
+        - type: file
+          currentLogFilename: logs/events/event.log
+          threshold: ALL
+          queueSize: 256
+          discardingThreshold: 0
+          archive: true
+          # Rolled every minute
+          archivedLogFilenamePattern: logs/events/event-%d{yyyy-MM-dd'T'HH:mm}.log
+          archivedFileCount: 100
+          timeZone: UTC
+          logFormat: "%msg%n"
+    # Logger and appender for the flyway DB migration SQL output
+    org.flywaydb.core.internal.sqlscript:
+      level: DEBUG
+      additive: false
+      appenders:
+        - type: file
+          currentLogFilename: logs/migration.log
+          threshold: ALL
+          queueSize: 256
+          discardingThreshold: 0
+          archive: true
+          # Rolled every day
+          archivedLogFilenamePattern: logs/migration-%d{yyyy-MM-dd}.log
+          archivedFileCount: 10
+          timeZone: UTC
+          logFormat: "%-6level [%d{\"yyyy-MM-dd'T'HH:mm:ss.SSS'Z'\",UTC}] [%t] %logger - %X{code} %msg %n"
+
+  appenders:
+{% if distribution == "docker" %}
+
+  # stdout for docker
+  - type: console
+    # Multi-coloured log format for console output
+    logFormat: "%highlight(%-6level) [%d{\"yyyy-MM-dd'T'HH:mm:ss.SSS'Z'\",UTC}] [%green(%t)] %cyan(%logger) - %X{code} %msg %n"
+    timeZone: UTC
+{% endif %}
+
+    # Minute rolled files for stroom/datafeed, will be curl'd/deleted by stroom-log-sender
+  - type: file
+    currentLogFilename: logs/app/app.log
+    threshold: ALL
+    queueSize: 256
+    discardingThreshold: 0
+    archive: true
+    # Rolled and gzipped every minute
+    archivedLogFilenamePattern: logs/app/app-%d{yyyy-MM-dd'T'HH:mm}.log.gz
+    # One week using minute files
+    archivedFileCount: 10080
+    timeZone: UTC
+    logFormat: "%-6level [%d{\"yyyy-MM-dd'T'HH:mm:ss.SSS'Z'\",UTC}] [%t] %logger - %X{code} %msg %n"
+
+  # Size rolled logs for admins (10x100M), not curl'd to stroom
+  - type: file
+    currentLogFilename: logs/app.log
+    threshold: ALL
+    queueSize: 256
+    discardingThreshold: 0
+    archive: true
+    archivedLogFilenamePattern: logs/app-%i.log
+    archivedFileCount: 10
+    maxFileSize: "100MB"
+    timeZone: UTC
+    logFormat: "%-6level [%d{\"yyyy-MM-dd'T'HH:mm:ss.SSS'Z'\",UTC}] [%t] %logger - %X{code} %msg %n"
+
+
+# This section contains the Stroom configuration properties
+# For mor information see:
+# https://gchq.github.io/stroom-docs/user-guide/properties.html
+
+appConfig:
+  commonDbDetails:
+    connection:
+      jdbcDriverClassName: "{{ 'com.mysql.cj.jdbc.Driver' | envVar('STROOM_JDBC_DRIVER_CLASS_NAME') }}"
+      jdbcDriverUrl: "{{ 'jdbc:mysql://localhost:3307/stroom?useUnicode=yes&characterEncoding=UTF-8' | envVar('STROOM_JDBC_DRIVER_URL') }}"
+      jdbcDriverUsername: "{{ 'stroomuser' | envVar('STROOM_JDBC_DRIVER_USERNAME') }}"
+      jdbcDriverPassword: "{{ 'stroompassword1' | envVar('STROOM_JDBC_DRIVER_PASSWORD') }}"
+  contentPackImport:
+    enabled: {{ false | envVar('STROOM_CONTENT_PACK_IMPORT_ENABLED') }}
+  job:
+    enabled: true
+    enableDistributedJobsOnBootstrap: {{ true | envVar('STROOM_DISTRIBUTED_JOBS_ENABLED_ON_BOOTSTRAP') }}
+    executionInterval: "10s"
+  node:
+    # The name for the node, should be unique to each node in the cluster
+    name: "{{ 'node1a' | envVar('STROOM_NODE') }}"
+  # The address of the this node for inter-node communication
+  nodeUri:
+    hostname: "{{ 'localhost' | envVar('STROOM_HOST') }}"
+  path:
+    temp: "/tmp/stroom"
+  pipeline:
+    referenceData:
+      localDir: "{{ (rootPath + 'ref-data/offHeapStore') | envVar('STROOM_REF_DATA_STORE_DIR') }}"
+  proxyAggregation:
+    proxyDir: "{{ (rootPath + 'proxy-repo') | envVar('STROOM_PROXY_DIR') }}"
+  # The public address for stroom, typically the public address of nginx
+  publicUri:
+    hostname: "{{ 'localhost' | envVar('API_GATEWAY_HOST') }}"
+    port: "{{ 443 | envVar('API_GATEWAY_PORT') }}"
+  security:
+    authentication:
+      preventLogin: false
+    identity:
+      useDefaultOpenIdCredentials: "{{ 'true' | envVar('USE_DEFAULT_OPEN_ID_CREDENTIALS') }}"
+  serviceDiscovery:
+    enabled: "{{ 'false' | envVar('STROOM_SERVICE_DISCOVERY_ENABLED') }}"
+    zookeeperUrl: "{{ 'localhost:2181' | envVar('STROOM_SERVICE_DISCOVERY_ZOOKEEPER_URL') }}"
+  statistics:
+    hbase:
+      kafkaConfigUuid:
+    internal:
+      enabledStoreTypes: {{ '[ \"StatisticStore\" ]' | envVar('STROOM_ENABLED_STAT_STORE_TYPES') }}
+  volumes:
+    createDefaultIndexVolumesOnStart: "{{ 'false' | envVar('STROOM_CREATE_DEFAULT_INDEX_VOLUMES') }}"
+    defaultIndexVolumeGroupPaths: "{{ (rootPath + 'volumes/defaultIndexVolume') | envVar('STROOM_DEFAULT_INDEX_VOLUME_PATHS') }}"
+    defaultIndexVolumeGroupNodes: "{{ 'node1a' | envVar('STROOM_DEFAULT_INDEX_VOLUME_NODES') }}"
+  data:
+    filesystemVolume:
+      createDefaultStreamVolumesOnStart: "{{ 'false' | envVar('STROOM_CREATE_DEFAULT_STREAM_VOLUMES') }}"
+      defaultStreamVolumePaths: "{{ (rootPath + 'volumes/defaultStreamVolume') | envVar('STROOM_DEFAULT_STREAM_VOLUME_PATHS') }}"
