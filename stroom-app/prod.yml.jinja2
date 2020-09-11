@@ -80,13 +80,13 @@ logging:
       additive: false
       appenders:
         - type: file
-          currentLogFilename: logs/events/event.log
+          currentLogFilename: {{ rootPath }}logs/events/event.log
           threshold: ALL
           queueSize: 256
           discardingThreshold: 0
           archive: true
           # Rolled every minute
-          archivedLogFilenamePattern: logs/events/event-%d{yyyy-MM-dd'T'HH:mm}.log
+          archivedLogFilenamePattern: {{ rootPath }}logs/events/event-%d{yyyy-MM-dd'T'HH:mm}.log
           archivedFileCount: 100
           timeZone: UTC
           logFormat: "%msg%n"
@@ -96,13 +96,13 @@ logging:
       additive: false
       appenders:
         - type: file
-          currentLogFilename: logs/migration.log
+          currentLogFilename: {{ rootPath }}logs/migration/migration.log
           threshold: ALL
           queueSize: 256
           discardingThreshold: 0
           archive: true
           # Rolled every day
-          archivedLogFilenamePattern: logs/migration-%d{yyyy-MM-dd}.log
+          archivedLogFilenamePattern: {{ rootPath }}logs/migration/migration-%d{yyyy-MM-dd}.log
           archivedFileCount: 10
           timeZone: UTC
           logFormat: "%-6level [%d{\"yyyy-MM-dd'T'HH:mm:ss.SSS'Z'\",UTC}] [%t] %logger - %X{code} %msg %n"
@@ -119,13 +119,13 @@ logging:
 
     # Minute rolled files for stroom/datafeed, will be curl'd/deleted by stroom-log-sender
   - type: file
-    currentLogFilename: logs/app/app.log
+    currentLogFilename: {{ rootPath }}logs/app/app.log
     threshold: ALL
     queueSize: 256
     discardingThreshold: 0
     archive: true
     # Rolled and gzipped every minute
-    archivedLogFilenamePattern: logs/app/app-%d{yyyy-MM-dd'T'HH:mm}.log.gz
+    archivedLogFilenamePattern: {{ rootPath }}logs/app/app-%d{yyyy-MM-dd'T'HH:mm}.log.gz
     # One week using minute files
     archivedFileCount: 10080
     timeZone: UTC
@@ -133,12 +133,12 @@ logging:
 
   # Size rolled logs for admins (10x100M), not curl'd to stroom
   - type: file
-    currentLogFilename: logs/app.log
+    currentLogFilename: {{ rootPath }}logs/app.log
     threshold: ALL
     queueSize: 256
     discardingThreshold: 0
     archive: true
-    archivedLogFilenamePattern: logs/app-%i.log
+    archivedLogFilenamePattern: {{ rootPath }}logs/app-%i.log
     archivedFileCount: 10
     maxFileSize: "100MB"
     timeZone: UTC

@@ -105,6 +105,7 @@ RUN \
     mkdir -p /stroom/contentPackImport && \
     mkdir -p /stroom/logs/access && \
     mkdir -p /stroom/logs/app && \
+    mkdir -p /stroom/logs/migration && \
     mkdir -p /stroom/logs/user && \
     mkdir -p /stroom/output && \
     mkdir -p /stroom/proxy-repo && \

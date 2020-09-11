@@ -103,7 +103,7 @@ check_or_create_pid_file() {
 
 main(){
 
-  local -r path_to_migration_log="./logs/migrate.sh.log"
+  local -r path_to_migration_log="./logs/migration/migration.sh.log"
 
   # shellcheck disable=SC1091
   source bin/utils.sh

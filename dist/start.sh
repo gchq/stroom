@@ -82,7 +82,9 @@ start_stroom() {
 
   info "Starting ${GREEN}Stroom${NC}"
   ensure_file_exists "${path_to_start_log}" 
+  ensure_file_exists "${path_to_migration_log}" 
   ensure_file_exists "${PATH_TO_APP_LOG}" 
+  mkdir -p 
 
   # stroom and proxy both use this script and the same jar so use absolute
   # paths to distinguish the two processes when using the 'ps' command.
@@ -186,6 +188,7 @@ main() {
 
   local script_args=( $@ )
   local -r path_to_start_log="./logs/start.sh.log"
+  local -r path_to_migration_log="./logs/migration/migration.log"
   local -r maxWaitSecs=240
 
   # shellcheck disable=SC1091
