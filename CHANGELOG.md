@@ -7,6 +7,8 @@ and this project adheres to [Semantic Versioning](http://semver.org/).
 
 ## [Unreleased]
 
+* Issue **#580** : Added conditional formatting options to dashboard tables.
+
 * Change stroom admin path from `admin` to `stroomAdmin` in the distribution.
 
 * Fix `command not found` bug in distribution `start.sh`.

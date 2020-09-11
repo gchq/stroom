@@ -38,7 +38,6 @@ public class IndexLoader implements HasChangeDataHandlers<IndexLoader> {
     private DocRef loadedDataSourceRef;
     private List<String> indexFieldNames;
     private DataSourceFieldsMap dataSourceFieldsMap;
-    private int loadCount;
 
     public IndexLoader(final EventBus eventBus, final ClientDispatchAsync dispatcher) {
         this.eventBus = eventBus;
@@ -69,14 +68,12 @@ public class IndexLoader implements HasChangeDataHandlers<IndexLoader> {
                     indexFieldNames = new ArrayList<>();
                 }
 
-                loadCount++;
                 ChangeDataEvent.fire(IndexLoader.this, IndexLoader.this);
             });
         } else {
             loadedDataSourceRef = null;
             indexFieldNames = null;
             dataSourceFieldsMap = null;
-            loadCount++;
             ChangeDataEvent.fire(IndexLoader.this, IndexLoader.this);
         }
     }
@@ -91,9 +88,5 @@ public class IndexLoader implements HasChangeDataHandlers<IndexLoader> {
 
     public DataSourceFieldsMap getDataSourceFieldsMap() {
         return dataSourceFieldsMap;
-    }
-
-    public int getLoadCount() {
-        return loadCount;
     }
 }
