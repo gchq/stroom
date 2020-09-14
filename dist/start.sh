@@ -84,7 +84,6 @@ start_stroom() {
   ensure_file_exists "${path_to_start_log}" 
   ensure_file_exists "${path_to_migration_log}" 
   ensure_file_exists "${PATH_TO_APP_LOG}" 
-  mkdir -p 
 
   # stroom and proxy both use this script and the same jar so use absolute
   # paths to distinguish the two processes when using the 'ps' command.

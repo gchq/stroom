@@ -373,8 +373,9 @@ else
           "${ghPagesDir}/index.html"
     fi
 
-    # If it is a tagged build copy the config files with new names so we
+    # If it is a tagged build copy the docker config files with new names so we
     # can add them as release artefacts.
+    # This is so the stack build can download them
     if [ -n "$TRAVIS_TAG" ]; then
       cp \
         "${TRAVIS_BUILD_DIR}/stroom-app/docker/build/config.yml" \
