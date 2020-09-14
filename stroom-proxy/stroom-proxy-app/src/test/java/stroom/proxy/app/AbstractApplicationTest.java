@@ -1,5 +1,7 @@
 package stroom.proxy.app;
 
+import stroom.util.logging.LogUtil;
+
 import io.dropwizard.configuration.ConfigurationException;
 import io.dropwizard.configuration.ConfigurationFactory;
 import io.dropwizard.configuration.ConfigurationFactoryFactory;
@@ -13,7 +15,6 @@ import io.dropwizard.testing.junit5.DropwizardExtensionsSupport;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import stroom.util.logging.LogUtil;
 
 import java.io.IOException;
 import java.nio.file.Path;
@@ -27,7 +28,7 @@ public abstract class AbstractApplicationTest {
     private static final Config config;
 
     static {
-        config = loadYamlFile("proxy.yml");
+        config = loadYamlFile("proxy-dev.yml");
 
         // The key/trust store paths will not be available in travis so null them out
         config.getProxyConfig()

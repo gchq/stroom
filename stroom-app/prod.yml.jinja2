@@ -28,7 +28,7 @@
 # =========================
 
 # For information on the structure of this configuration file see:
-# https://www.dropwizard.io/en/latest/manual/configuration.html#logging
+# https://www.dropwizard.io/en/latest/manual/configuration.html
 # For information on the logback logFormat strings see:
 # http://logback.qos.ch/manual/layouts.html
 
@@ -130,6 +130,7 @@ logging:
     archivedFileCount: 10080
     timeZone: UTC
     logFormat: "%-6level [%d{\"yyyy-MM-dd'T'HH:mm:ss.SSS'Z'\",UTC}] [%t] %logger - %X{code} %msg %n"
+{% if distribution == "zip" %}
 
   # Size rolled logs for admins (10x100M), not curl'd to stroom
   - type: file
@@ -143,6 +144,7 @@ logging:
     maxFileSize: "100MB"
     timeZone: UTC
     logFormat: "%-6level [%d{\"yyyy-MM-dd'T'HH:mm:ss.SSS'Z'\",UTC}] [%t] %logger - %X{code} %msg %n"
+{% endif %}
 
 
 # This section contains the Stroom configuration properties

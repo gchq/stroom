@@ -123,7 +123,7 @@ COPY --chown=stroom:stroom *.sh /stroom/
 
 # This config file is a fallback for use in development 
 # (or when a stack with the config bind mount is not available)
-COPY --chown=stroom:stroom build/prod.yml /stroom/config-fallback/config.yml
+COPY --chown=stroom:stroom build/config.yml /stroom/config-fallback/config.yml
 
 COPY --chown=stroom:stroom --from=fat-jar-stage /stroom-app-all.jar /stroom/
 

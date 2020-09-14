@@ -292,6 +292,11 @@ clean {
     delete stroomDockerBuildDir
 }
 
+// Generate the confi.yml files for the zip and docker distributions
+task generateConfigFiles(type: JavaExec) {
+    classpath = sourceSets.test.runtimeClasspath
+    main = "stroom.dist.GenerateDistributionConfig"
+}
 
 // Copy all the files needed by the stroom docker build into stroom-app/docker/build
 task copyFilesForStroomDockerBuild() {
@@ -310,11 +315,7 @@ task copyFilesForStroomDockerBuild() {
             into stroomDockerBuildDir
         }
 
-        // Copy the dropwizard yml configuration
-        copy {
-            from "${projectDir}/prod.yml"
-            into stroomDockerBuildDir
-        }
+        // The config.yml will be put in place by generateConfigFiles
 
         //Copy the downloaded content packs
         copy {

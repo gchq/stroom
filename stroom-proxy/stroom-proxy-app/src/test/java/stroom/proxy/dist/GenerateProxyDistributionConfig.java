@@ -1,4 +1,4 @@
-package stroom.dist;
+package stroom.proxy.dist;
 
 import com.hubspot.jinjava.Jinjava;
 import com.hubspot.jinjava.interpret.JinjavaInterpreter;
@@ -14,9 +14,9 @@ import java.nio.file.Paths;
 import java.util.List;
 import java.util.Map;
 
-public class GenerateDistributionConfig {
+public class GenerateProxyDistributionConfig {
 
-    private static final Logger LOGGER = LoggerFactory.getLogger(GenerateDistributionConfig.class);
+    private static final Logger LOGGER = LoggerFactory.getLogger(GenerateProxyDistributionConfig.class);
 
     private static final String DIST_KEY = "distribution";
     private static final String USE_VARIABLE_SUBSTITUTION_KEY = "includeEnvVarSubstitution";
@@ -41,9 +41,10 @@ public class GenerateDistributionConfig {
 
         final Path pwd = Paths.get(".").normalize().toAbsolutePath();
         final Path stroomAppDir = Paths.get(".")
-                .resolve("stroom-app");
+                .resolve("stroom-proxy")
+                .resolve("stroom-proxy-app");
         final Path configTemplateFile = stroomAppDir
-                .resolve("prod.yml.jinja2").normalize().toAbsolutePath();
+                .resolve("proxy-prod.yml.jinja2").normalize().toAbsolutePath();
 
         LOGGER.info("PWD: {}", pwd);
         LOGGER.info("configTemplateFile: {}", pwd);
