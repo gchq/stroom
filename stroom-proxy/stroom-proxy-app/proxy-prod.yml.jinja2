@@ -36,7 +36,7 @@
 
 # This section is the DropWizard configuration for Stroom Proxy
 
-    server:
+server:
   applicationContextPath: /
   adminContextPath: /proxyAdmin
   applicationConnectors:
@@ -204,5 +204,5 @@ proxyConfig:
       keyStoreType: "{{ 'JKS' | envVar('STROOM_PROXY_CLIENT_KEYSTORE_TYPE') }}"
       trustStorePath: "{{ rootPath + 'certs/ca.jks' | envVar('STROOM_PROXY_CLIENT_TRUSTSTORE_PATH') }}"
       trustStorePassword: "{{ 'password' | envVar('STROOM_PROXY_CLIENT_TRUSTSTORE_PASSWORD') }}"
-      trustStoreType: "{{ 'JKS'}} | envVar('STROOM_PROXY_CLIENT_TRUSTSTORE_TYPE') }}"
-      trustSelfSignedCertificates: {{ false }} | envVar('JERSEY_TRUST_SELF_SIGNED') }}
+      trustStoreType: "{{ 'JKS' | envVar('STROOM_PROXY_CLIENT_TRUSTSTORE_TYPE') }}"
+      trustSelfSignedCertificates: {{ false | envVar('JERSEY_TRUST_SELF_SIGNED') }}

@@ -115,6 +115,8 @@ task generateConfigFiles(type: JavaExec) {
 // Copy all the files needed by the stroom-proxy docker build into stroom-app/proxy-docker/build
 task copyFilesForProxyDockerBuild() {
     dependsOn shadowJar
+    dependsOn generateConfigFiles
+
     doFirst {
         // Copy the stroom app fat jar
         copy {
@@ -194,9 +196,9 @@ task copySupportingFiles(type: Copy) {
     doLast {
         // This is a sym-link so it seems to go into the zip with +x perms
         // which we don't want
-        exec {
-            commandLine 'chmod', '644', "${releaseBuildDir}/config/config.yml"
-        }
+        //exec {
+            //commandLine 'chmod', '644', "${releaseBuildDir}/config/config.yml"
+        //}
     }
 }
 
@@ -206,6 +208,7 @@ task buildDistribution(type: Zip) {
     // run all the tasks that produce content for the zip
     dependsOn copyJar
     dependsOn copySupportingFiles
+    dependsOn generateConfigFiles
 
     from releaseBuildDir
 }

@@ -40,13 +40,21 @@ public class GenerateDistributionConfig {
         jinjava.registerFilter(new EnvVarSubstitutionFilter());
 
         final Path pwd = Paths.get(".").normalize().toAbsolutePath();
-        final Path stroomAppDir = Paths.get(".")
-                .resolve("stroom-app");
+        final Path stroomAppDir;
+        // pwd is different when running in IJ vs in gradle build
+        if (pwd.endsWith("stroom-app")) {
+            stroomAppDir = pwd;
+        } else {
+            stroomAppDir = pwd
+                    .resolve("stroom-app");
+        }
         final Path configTemplateFile = stroomAppDir
-                .resolve("prod.yml.jinja2").normalize().toAbsolutePath();
+                .resolve("prod.yml.jinja2")
+                .normalize()
+                .toAbsolutePath();
 
         LOGGER.info("PWD: {}", pwd);
-        LOGGER.info("configTemplateFile: {}", pwd);
+        LOGGER.info("configTemplateFile: {}", configTemplateFile);
 
         Assertions.assertThat(configTemplateFile)
                 .isRegularFile();
@@ -59,7 +67,7 @@ public class GenerateDistributionConfig {
 
             final String renderedTemplate = jinjava.render(configTemplate, context);
 
-            LOGGER.info("rendered\n{}", renderedTemplate);
+//            LOGGER.debug("rendered\n{}", renderedTemplate);
 
             final Path outputFileNameFile = stroomAppDir.resolve((String) context.get(OUTPUT_FILE_NAME_KEY));
             final Path dir = outputFileNameFile.getParent();

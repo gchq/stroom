@@ -302,6 +302,7 @@ task generateConfigFiles(type: JavaExec) {
 task copyFilesForStroomDockerBuild() {
     dependsOn shadowJar
     dependsOn parent.downloadStroomContent
+    dependsOn generateConfigFiles
 
     doFirst {
         new File(stroomPluginsDir).mkdirs()
@@ -467,9 +468,9 @@ task copySupportingFiles(type: Copy) {
     doLast {
         // This is a sym-link so it seems to go into the zip with +x perms
         // which we don't want
-        exec {
-            commandLine 'chmod', '644', "${releaseBuildDir}/config/config.yml"
-        }
+        //exec {
+            //commandLine 'chmod', '644', "${releaseBuildDir}/config/config.yml"
+        //}
     }
 }
 
@@ -521,6 +522,7 @@ task buildDistribution(type: Zip) {
     dependsOn makeSendExecutable
     dependsOn parent.downloadStroomContent
     dependsOn copyContentPackToDistribution
+    dependsOn generateConfigFiles
     dependsOn generateConfigDefaultsYamlFile
 
     from releaseBuildDir

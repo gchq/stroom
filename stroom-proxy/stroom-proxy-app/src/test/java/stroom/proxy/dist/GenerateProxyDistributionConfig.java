@@ -39,15 +39,27 @@ public class GenerateProxyDistributionConfig {
 
         jinjava.registerFilter(new EnvVarSubstitutionFilter());
 
-        final Path pwd = Paths.get(".").normalize().toAbsolutePath();
-        final Path stroomAppDir = Paths.get(".")
-                .resolve("stroom-proxy")
-                .resolve("stroom-proxy-app");
-        final Path configTemplateFile = stroomAppDir
-                .resolve("proxy-prod.yml.jinja2").normalize().toAbsolutePath();
+        final Path pwd = Paths.get(".")
+                .normalize()
+                .toAbsolutePath();
+        final Path proxyAppDir;
+
+        // pwd is different when running in IJ vs in gradle build
+        if (pwd.endsWith("stroom-proxy-app")) {
+            proxyAppDir = pwd;
+        } else {
+            proxyAppDir = pwd
+                    .resolve("stroom-proxy")
+                    .resolve("stroom-proxy-app");
+        }
+
+        final Path configTemplateFile = proxyAppDir
+                .resolve("proxy-prod.yml.jinja2")
+                .normalize()
+                .toAbsolutePath();
 
         LOGGER.info("PWD: {}", pwd);
-        LOGGER.info("configTemplateFile: {}", pwd);
+        LOGGER.info("configTemplateFile: {}", configTemplateFile);
 
         Assertions.assertThat(configTemplateFile)
                 .isRegularFile();
@@ -60,9 +72,9 @@ public class GenerateProxyDistributionConfig {
 
             final String renderedTemplate = jinjava.render(configTemplate, context);
 
-            LOGGER.info("rendered\n{}", renderedTemplate);
+//            LOGGER.debug("rendered\n{}", renderedTemplate);
 
-            final Path outputFileNameFile = stroomAppDir.resolve((String) context.get(OUTPUT_FILE_NAME_KEY));
+            final Path outputFileNameFile = proxyAppDir.resolve((String) context.get(OUTPUT_FILE_NAME_KEY));
             final Path dir = outputFileNameFile.getParent();
             LOGGER.info("dir: {}", dir.normalize().toAbsolutePath());
 
