@@ -372,6 +372,18 @@ else
           's#url: ".*"#url: "https://gchq.github.io/stroom/swagger.json"#g' \
           "${ghPagesDir}/index.html"
     fi
+
+    # If it is a tagged build copy the config files with new names so we
+    # can add them as release artefacts.
+    if [ -n "$TRAVIS_TAG" ]; then
+      cp \
+        "${TRAVIS_BUILD_DIR}/stroom-app/docker/build/config.yml" \
+        "${TRAVIS_BUILD_DIR}/stroom-app-config-${TRAVIS_TAG}.yml"
+
+      cp \
+        "${TRAVIS_BUILD_DIR}/stroom-proxy/stroom-proxy-app/docker/build/config.yml" \
+        "${TRAVIS_BUILD_DIR}/stroom-proxy-config-${TRAVIS_TAG}.yml"
+    fi
 fi
 
 exit 0
