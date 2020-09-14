@@ -1,5 +1,9 @@
 package stroom.dist;
 
+import stroom.config.app.AppConfig;
+import stroom.config.app.YamlUtil;
+import stroom.util.logging.LogUtil;
+
 import com.hubspot.jinjava.Jinjava;
 import com.hubspot.jinjava.interpret.JinjavaInterpreter;
 import com.hubspot.jinjava.lib.filter.Filter;
@@ -79,10 +83,24 @@ public class GenerateDistributionConfig {
                 LOGGER.info("Writing file {}", outputFileNameFile.normalize().toAbsolutePath());
 
                 Files.writeString(outputFileNameFile, renderedTemplate);
+
+                verifyOutputFile(outputFileNameFile);
             } catch (IOException e) {
                 throw new RuntimeException(e);
             }
         });
+    }
+
+    private static void verifyOutputFile(final Path configFile) throws IOException {
+        // Ensures the output file can be read into the appConfig tree
+        final AppConfig appConfig;
+        try {
+            appConfig = YamlUtil.readAppConfig(configFile);
+            Assertions.assertThat(appConfig)
+                    .isNotNull();
+        } catch (IOException e) {
+            throw new RuntimeException(LogUtil.message("Can't read file {} into Config object"), e);
+        }
     }
 
     /**

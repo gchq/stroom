@@ -1,5 +1,8 @@
 package stroom.proxy.dist;
 
+import stroom.proxy.app.ProxyConfig;
+import stroom.util.logging.LogUtil;
+
 import com.hubspot.jinjava.Jinjava;
 import com.hubspot.jinjava.interpret.JinjavaInterpreter;
 import com.hubspot.jinjava.lib.filter.Filter;
@@ -84,10 +87,24 @@ public class GenerateProxyDistributionConfig {
                 LOGGER.info("Writing file {}", outputFileNameFile.normalize().toAbsolutePath());
 
                 Files.writeString(outputFileNameFile, renderedTemplate);
+
+                verifyOutputFile(outputFileNameFile);
             } catch (IOException e) {
                 throw new RuntimeException(e);
             }
         });
+    }
+
+    private static void verifyOutputFile(final Path configFile) throws IOException {
+        // Ensures the output file can be read into the appConfig tree
+        final ProxyConfig proxyConfig;
+        try {
+            proxyConfig = ProxyYamlUtil.readAppConfig(configFile);
+            Assertions.assertThat(proxyConfig)
+                    .isNotNull();
+        } catch (IOException e) {
+            throw new RuntimeException(LogUtil.message("Can't read file {} into Config object"), e);
+        }
     }
 
     /**
