@@ -11,6 +11,8 @@ and this project adheres to [Semantic Versioning](http://semver.org/).
 
 * Add the docker config files to the release artefacts.
 
+* Issue **#580** : Added conditional formatting options to dashboard tables.
+
 * Add comments to `prod.yml`/`config.yml`.
 
 * Change `reset_password` CLI command to also reset various locked/inactive type flags.

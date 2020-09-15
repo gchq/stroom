@@ -28,8 +28,14 @@ import java.util.List;
 import java.util.Objects;
 
 @XmlAccessorType(XmlAccessType.FIELD)
-@XmlType(name = "table", propOrder = {"queryId", "fields", "extractValues", "extractionPipeline", "maxResults",
-        "showDetail"})
+@XmlType(name = "table", propOrder = {
+        "queryId",
+        "fields",
+        "extractValues",
+        "extractionPipeline",
+        "maxResults",
+        "showDetail",
+        "conditionalFormattingRules"})
 @Deprecated
 public class TableComponentSettings extends ComponentSettings {
     public static final int[] DEFAULT_MAX_RESULTS = {1000000};
@@ -48,6 +54,9 @@ public class TableComponentSettings extends ComponentSettings {
     private int[] maxResults = DEFAULT_MAX_RESULTS;
     @XmlElement(name = "showDetail")
     private Boolean showDetail;
+    @XmlElementWrapper(name = "conditionalFormattingRules")
+    @XmlElements({@XmlElement(name = "conditionalFormattingRule", type = ConditionalFormattingRule.class)})
+    private List<ConditionalFormattingRule> conditionalFormattingRules;
 
     public TableComponentSettings() {
         // Default constructor necessary for GWT serialisation.
@@ -57,7 +66,12 @@ public class TableComponentSettings extends ComponentSettings {
         this.fields = fields;
     }
 
-    public TableComponentSettings(final String queryId, final List<Field> fields, final Boolean extractValues, final DocRef extractionPipeline, final int[] maxResults, final Boolean showDetail) {
+    public TableComponentSettings(final String queryId,
+                                  final List<Field> fields,
+                                  final Boolean extractValues,
+                                  final DocRef extractionPipeline,
+                                  final int[] maxResults,
+                                  final Boolean showDetail) {
         this.queryId = queryId;
         this.fields = fields;
         this.extractValues = extractValues;
@@ -160,6 +174,14 @@ public class TableComponentSettings extends ComponentSettings {
         return showDetail;
     }
 
+    public List<ConditionalFormattingRule> getConditionalFormattingRules() {
+        return conditionalFormattingRules;
+    }
+
+    public void setConditionalFormattingRules(final List<ConditionalFormattingRule> conditionalFormattingRules) {
+        this.conditionalFormattingRules = conditionalFormattingRules;
+    }
+
     @Override
     public boolean equals(final Object o) {
         if (o == this) {
@@ -176,6 +198,7 @@ public class TableComponentSettings extends ComponentSettings {
         builder.append(extractionPipeline, tableSettings.extractionPipeline);
         builder.append(maxResults, tableSettings.maxResults);
         builder.append(showDetail, tableSettings.showDetail);
+        builder.append(conditionalFormattingRules, tableSettings.conditionalFormattingRules);
         return builder.isEquals();
     }
 
@@ -188,6 +211,7 @@ public class TableComponentSettings extends ComponentSettings {
         builder.append(extractionPipeline);
         builder.append(maxResults);
         builder.append(showDetail);
+        builder.append(conditionalFormattingRules);
         return builder.toHashCode();
     }
 
@@ -200,6 +224,7 @@ public class TableComponentSettings extends ComponentSettings {
         builder.append("extractionPipeline", extractionPipeline);
         builder.append("maxResults", Arrays.toString(maxResults));
         builder.append("showDetail", showDetail);
+        builder.append("conditionalFormattingRules", conditionalFormattingRules);
         return builder.toString();
     }
 

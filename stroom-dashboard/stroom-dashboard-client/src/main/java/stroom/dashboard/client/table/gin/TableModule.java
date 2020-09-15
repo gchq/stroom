@@ -40,6 +40,12 @@ import stroom.dashboard.client.table.TablePresenter;
 import stroom.dashboard.client.table.TablePresenter.TableView;
 import stroom.dashboard.client.table.TableViewImpl;
 import stroom.dashboard.client.table.TimeZones;
+import stroom.dashboard.client.table.cf.EditExpressionPresenter;
+import stroom.dashboard.client.table.cf.EditExpressionViewImpl;
+import stroom.dashboard.client.table.cf.RulePresenter;
+import stroom.dashboard.client.table.cf.RuleViewImpl;
+import stroom.dashboard.client.table.cf.RulesPresenter;
+import stroom.dashboard.client.table.cf.RulesViewImpl;
 
 public class TableModule extends AbstractPresenterModule {
     @Override
@@ -54,5 +60,9 @@ public class TableModule extends AbstractPresenterModule {
         bindPresenterWidget(FilterPresenter.class, FilterView.class, FilterViewImpl.class);
         bindPresenterWidget(DownloadPresenter.class, DownloadView.class, DownloadViewImpl.class);
         bindPresenterWidget(RenameFieldPresenter.class, RenameFieldView.class, RenameFieldViewImpl.class);
+
+        bindPresenterWidget(EditExpressionPresenter.class, EditExpressionPresenter.EditExpressionView.class, EditExpressionViewImpl.class);
+        bindPresenterWidget(RulesPresenter.class, RulesPresenter.RulesView.class, RulesViewImpl.class);
+        bindPresenterWidget(RulePresenter.class, RulePresenter.RuleView.class, RuleViewImpl.class);
     }
 }

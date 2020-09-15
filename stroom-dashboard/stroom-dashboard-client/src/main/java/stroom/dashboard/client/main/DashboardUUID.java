@@ -16,7 +16,7 @@
 
 package stroom.dashboard.client.main;
 
-import stroom.util.client.RandomId;
+import stroom.util.shared.RandomId;
 
 public class DashboardUUID {
     private String dashboardUuid;

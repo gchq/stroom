@@ -131,8 +131,8 @@ class AsyncSearchTaskHandler {
                                 if (targetNodes.contains(nodeName)) {
                                     return true;
                                 } else {
-                                    resultCollector.getErrorSet(nodeName)
-                                            .add("Node is not enabled or active. Some search results may be missing.");
+                                    resultCollector.onFailure(nodeName,
+                                            new SearchException("Node is not enabled or active. Some search results may be missing."));
                                     return false;
                                 }
                             })
