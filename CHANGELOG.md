@@ -7,6 +7,9 @@ and this project adheres to [Semantic Versioning](http://semver.org/).
 
 ## [Unreleased]
 
+
+## [v7.0-beta.53] - 2020-09-15
+
 * Change `prod.yml` and `proxy-prod.yml` to be templated so as to generate custom config for the zip and docker distributions.
 
 * Add the docker config files to the release artefacts.
@@ -2615,7 +2618,8 @@ Issue **gchq/stroom-expression#22** : Add `typeOf(...)` function to dashboard.
 
 * Issue **#202** : Initial release of the new data retention policy functionality.
 
-[Unreleased]: https://github.com/gchq/stroom/compare/v7.0-beta.52...HEAD
+[Unreleased]: https://github.com/gchq/stroom/compare/v7.0-beta.53...HEAD
+[v7.0-beta.53]: https://github.com/gchq/stroom/compare/v7.0-beta.52...v7.0-beta.53
 [v7.0-beta.52]: https://github.com/gchq/stroom/compare/v7.0-beta.51...v7.0-beta.52
 [v7.0-beta.51]: https://github.com/gchq/stroom/compare/v7.0-beta.50...v7.0-beta.51
 [v7.0-beta.50]: https://github.com/gchq/stroom/compare/v7.0-beta.49...v7.0-beta.50
