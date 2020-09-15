@@ -50,18 +50,23 @@ class BitmapLookup extends AbstractLookup {
         int val;
         try {
             if (key.startsWith("0x")) {
+                // Hex input
                 val = Integer.valueOf(key.substring(2), 16);
             } else {
-                val = Integer.valueOf(key);
+                // Decimal input
+                val = Integer.parseInt(key);
             }
         } catch (final NumberFormatException e) {
             throw new NumberFormatException("unable to parse number '" + key + "'");
         }
 
+        // Convert the (decimal/hex) input value into a bitmap then into an array of the bit positions
+        // that are set to 1.
         final int[] bits = Bitmap.getBits(val);
         StringBuilder failedBits = null;
 
         if (bits.length > 0) {
+            // Now treat each bit position as a key and perform a lookup for each.
             for (final int bit : bits) {
                 final String k = String.valueOf(bit);
                 final LookupIdentifier bitIdentifier = lookupIdentifier.cloneWithNewKey(k);
@@ -70,6 +75,12 @@ class BitmapLookup extends AbstractLookup {
                 boolean wasFound = false;
 
                 try {
+                    // Rather than doing individual lookups for each key (bit position) we could pass all the keys
+                    // (bit positions) to the store and get it to open a cursor on the first key then scan over the
+                    // keys concatenating the values of the matched keys.  Debatable if this is much quicker given
+                    // the bitmap could be quite large so there would be a lot of keys to skip over.
+                    // In fact this would only work if the data was stored in a store that was keyed by integer rather
+                    // than string as the ordering would be wrong for a string keyed store.
                     if (result.getRefDataValueProxy().isPresent()) {
                         if (sequenceMaker == null) {
                             sequenceMaker = new SequenceMaker(context, getRefDataValueProxyConsumerFactoryFactory());

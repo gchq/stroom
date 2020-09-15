@@ -17,24 +17,94 @@
 package stroom.pipeline.xsltfunctions;
 
 
-import org.junit.jupiter.api.Test;
 import stroom.test.common.util.test.StroomUnitTest;
 
-import java.util.Arrays;
+import org.junit.jupiter.api.Test;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+
+import java.util.ArrayList;
+import java.util.List;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
 class TestBitmap extends StroomUnitTest {
+
+    private static final Logger LOGGER = LoggerFactory.getLogger(TestBitmap.class);
+
     @Test
     void testBitmap() {
-        int value = 0x1001;
+        final int input = 0x1001;
+
+        dumpBits(input);
+
+        assertThat(Bitmap.getBits(input))
+                .containsExactly(0,12);
+    }
+
+    @Test
+    void testBitmap2() {
+        final int input = 0x66;
+
+        dumpBits(input);
+
+        assertThat(Bitmap.getBits(input))
+                .containsExactly(1, 2, 5, 6);
+    }
+
+    @Test
+    void testBitmap3() {
+        final int input = 0x0;
+
+        dumpBits(input);
+
+        assertThat(Bitmap.getBits(input))
+                .isEmpty();
+    }
+
+    @Test
+    void testBitmap4() {
+        final int input = 0xF;
+
+        dumpBits(input);
+
+        assertThat(Bitmap.getBits(input))
+                .containsExactly(0, 1, 2, 3);
+    }
+
+    private void dumpBits(final int value) {
+        int workingValue = value;
+
+        final List<Integer> bitValues = new ArrayList<>();
+
         int bit = 0;
-        while (value > 0) {
-            System.out.println("bit " + bit + " = " + (value & 1));
-            value = value >> 1;
+        while (workingValue > 0) {
+            LOGGER.trace("Bits: {}", Integer.toBinaryString(workingValue));
+            int bitValue = workingValue & 1;
+            LOGGER.trace("Pos: {}, value: {}", bit, bitValue);
+            bitValues.add(bitValue);
+            workingValue = workingValue >> 1;
             bit++;
         }
 
-        assertThat(Arrays.equals(Bitmap.getBits(0x1001), new int[]{0, 12})).isTrue();
+        final StringBuilder bitStrBuilder = new StringBuilder();
+        final StringBuilder posStrBuilder = new StringBuilder();
+
+        for (int i = bitValues.size() - 1; i >= 0 ; i--) {
+            bitStrBuilder.append(bitValues.get(i));
+            posStrBuilder.append(i % 10);
+
+            if (i > 0) {
+                bitStrBuilder.append(" ");
+                posStrBuilder.append(" ");
+            }
+        }
+
+        LOGGER.info("Input value: {} (decimal), {} (hex), {} (binary), bit positions::\n{}\n{}",
+                value,
+                Integer.toHexString(value),
+                Integer.toBinaryString(value),
+                bitStrBuilder.toString(),
+                posStrBuilder.toString());
     }
 }
