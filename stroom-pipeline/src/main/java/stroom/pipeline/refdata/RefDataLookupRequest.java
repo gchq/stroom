@@ -1,7 +1,6 @@
 package stroom.pipeline.refdata;
 
 import stroom.docref.DocRef;
-import stroom.feed.shared.FeedDoc;
 import stroom.pipeline.shared.PipelineDoc;
 
 import com.fasterxml.jackson.annotation.JsonCreator;
@@ -129,12 +128,6 @@ public class RefDataLookupRequest {
         @JsonIgnore
         public boolean isValidLoaderDocRef() {
             return loaderPipeline != null && loaderPipeline.getUuid() != null && !loaderPipeline.getUuid().isEmpty();
-        }
-
-        @ValidationMethod(message = "referenceFeed docRef type must be '" + FeedDoc.DOCUMENT_TYPE + "'")
-        @JsonIgnore
-        public boolean isCorrectRefFeedType() {
-            return referenceFeed != null && FeedDoc.DOCUMENT_TYPE.equals(referenceFeed.getType());
         }
 
         @ValidationMethod(message = "referenceFeed docRef must have a UUID or a name. The lookup will " +

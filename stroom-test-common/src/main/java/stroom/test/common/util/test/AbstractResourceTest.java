@@ -4,6 +4,7 @@ import stroom.util.jersey.WebTargetFactory;
 import stroom.util.logging.LogUtil;
 import stroom.util.shared.RestResource;
 
+import io.dropwizard.jersey.validation.ValidationErrorMessage;
 import io.dropwizard.testing.junit5.DropwizardExtensionsSupport;
 import io.dropwizard.testing.junit5.ResourceExtension;
 import org.assertj.core.api.Assertions;
@@ -85,6 +86,52 @@ public abstract class AbstractResourceTest<R extends RestResource> {
             builderMethods);
     }
 
+    public  <T_REQ, T_RESP> T_RESP doPostTest(final String subPath,
+                                              final T_REQ request,
+                                              final Class<T_RESP> responseType,
+                                              final T_RESP expectedResponse,
+                                              final Function<WebTarget, WebTarget>... builderMethods) {
+        LOGGER.info("Calling GET on {}{}, expecting {}",
+                getResourceBasePath(), subPath, expectedResponse);
+
+        WebTarget webTarget = resources
+                .target(getResourceBasePath())
+                .path(subPath);
+
+        for (Function<WebTarget, WebTarget> method : builderMethods) {
+            webTarget = method.apply(webTarget);
+        }
+
+        Invocation.Builder builder = webTarget
+                .request();
+
+        final Entity<T_REQ> entity = Entity.json(request);
+
+        final Response response = builder.post(entity);
+
+        if (! isSuccessful(response.getStatus())) {
+//            String json = response.readEntity(String.class);
+//            LOGGER.info("json:\n{}", json);
+//            System.out.println(json);
+
+            final ValidationErrorMessage validationErrorMessage = response.readEntity(ValidationErrorMessage.class);
+
+//            ErrorMessage errorMessage = response.readEntity(ErrorMessage.class);
+
+            throw new RuntimeException(LogUtil.message("Error: {} {}",
+                    response.getStatus(), validationErrorMessage.getErrors()));
+        }
+
+        T_RESP responseEntity = response.readEntity(responseType);
+
+        if (expectedResponse != null) {
+            Assertions.assertThat(responseEntity)
+                    .isEqualTo(expectedResponse);
+        }
+
+        return responseEntity;
+    }
+
     public  <T_REQ, T_RESP> T_RESP doPutTest(final String subPath,
                                              final T_REQ requestEntity,
                                              final Class<T_RESP> responseType,
@@ -133,7 +180,7 @@ public abstract class AbstractResourceTest<R extends RestResource> {
         LOGGER.info("Calling DELETE on {}{}, expecting {}",
             getResourceBasePath(), subPath, expectedResponse);
 
-        return doTest(Invocation.Builder::get,
+        return doTest(Invocation.Builder::delete,
             subPath,
             responseType,
             expectedResponse,

@@ -7,6 +7,9 @@ and this project adheres to [Semantic Versioning](http://semver.org/).
 
 ## [Unreleased]
 
+* Remove requirement for Reference stream type in ref data API lookup requests.
+
+
 ## [v7.0-beta.55] - 2020-09-15
 
 * Fix names in travis release plugin.
