@@ -117,6 +117,11 @@ public class ReferenceData {
 
         LOGGER.trace("ensureReferenceDataAvailability({}, {}", pipelineReferences, lookupIdentifier);
 
+        // TODO @AT It would be better if the nested map logic was pushed down into the store so that the store
+        //   can accept nested map names. This would allow the store to do the lookup chain in a more efficient
+        //   way with the bytebuffer of the lookup value being used as the key for the next lookup.
+        //   You would still need to have code here to ensure that the data for all maps in the chain was loaded.
+
         // Do we have a nested token?
         if (lookupIdentifier.isMapNested()) {
             LOGGER.trace("lookupIdentifier is nested {}", lookupIdentifier);
