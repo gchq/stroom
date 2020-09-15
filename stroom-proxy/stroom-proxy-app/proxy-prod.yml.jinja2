@@ -147,12 +147,12 @@ logging:
 
 proxyConfig:
   useDefaultOpenIdCredentials: {{ true | envVar('USE_DEFAULT_OPEN_ID_CREDENTIALS') }}
-  proxyContentDir: "{{ rootPath + 'content' | envVar('CONTENT_DIR') }}"
+  proxyContentDir: "{{ (rootPath + 'content') | envVar('CONTENT_DIR') }}"
 
 # If you want to use a receipt policy then the RuleSet must exist
 # in Stroom and have the UUID as specified below in receiptPolicyUuid
 #  proxyRequestConfig:
-#    receiptPolicyUuid: "{{ rootPath + 'content' | envVar('RECEIPT_POLICY_UUID') }}"
+#    receiptPolicyUuid: "{{ (rootPath + 'content') | envVar('RECEIPT_POLICY_UUID') }}"
   feedStatus:
     url: "{{ 'http://stroom:8080/api/feedStatus/v1' | envVar('FEED_STATUS_URL') }}"
     apiKey: "{{ 'http://stroom:8080/api/feedStatus/v1' | envVar('FEED_STATUS_API_KEY') }}"
@@ -163,16 +163,16 @@ proxyConfig:
       # instead of using env var substitution
       - forwardUrl: "{{ 'https://nginx/stroom/datafeed' | envVar('FORWARD_URL') }}"
         sslConfig:
-          keyStorePath: "{{ rootPath + 'certs/client.jks' | envVar('FORWARDING_KEYSTORE_PATH') }}"
+          keyStorePath: "{{ (rootPath + 'certs/client.jks') | envVar('FORWARDING_KEYSTORE_PATH') }}"
           keyStorePassword: "{{ 'password' | envVar('FORWARDING_KEYSTORE_PASSWORD') }}"
           keyStoreType: "{{ 'JKS' | envVar('FORWARDING_KEYSTORE_TYPE') }}"
-          trustStorePath: "{{ rootPath + 'certs/ca.jks' | envVar('FORWARDING_TRUSTSTORE_PATH') }}"
+          trustStorePath: "{{ (rootPath + 'certs/ca.jks') | envVar('FORWARDING_TRUSTSTORE_PATH') }}"
           trustStorePassword: "{{ 'password' | envVar('FORWARDING_TRUSTSTORE_PASSWORD') }}"
           trustStoreType: "{{ 'JKS' | envVar('FORWARDING_TRUSTSTORE_TYPE') }}"
           hostnameVerificationEnabled: {{ true | envVar('FORWARDING_HOST_VERIFICATION_ENABLED') }}
   proxyRepositoryConfig:
     storingEnabled: {{ true | envVar('STORING_ENABLED') }}
-    repoDir: "{{ rootPath + 'repo' | envVar('REPO_DIR') }}"
+    repoDir: "{{ (rootPath + 'repo') | envVar('REPO_DIR') }}"
     format: "${executionUuid}/${year}-${month}-${day}/${feed}/${pathId}/${id}"
     # Uncomment this for rolled repositories
     # rollCron: "* * *"
@@ -199,10 +199,10 @@ proxyConfig:
     retries: {{ 0 | envVar('JERSEY_RETRIES') }}
     tls:
       verifyHostname: {{ true | envVar('JERSEY_VERIFY_HOSTNAME') }}
-      keyStorePath: "{{ rootPath + 'certs/client.jks' | envVar('STROOM_PROXY_CLIENT_KEYSTORE_PATH') }}"
+      keyStorePath: "{{ (rootPath + 'certs/client.jks') | envVar('STROOM_PROXY_CLIENT_KEYSTORE_PATH') }}"
       keyStorePassword: "{{ 'password' | envVar('STROOM_PROXY_CLIENT_KEYSTORE_PASSWORD') }}"
       keyStoreType: "{{ 'JKS' | envVar('STROOM_PROXY_CLIENT_KEYSTORE_TYPE') }}"
-      trustStorePath: "{{ rootPath + 'certs/ca.jks' | envVar('STROOM_PROXY_CLIENT_TRUSTSTORE_PATH') }}"
+      trustStorePath: "{{ (rootPath + 'certs/ca.jks') | envVar('STROOM_PROXY_CLIENT_TRUSTSTORE_PATH') }}"
       trustStorePassword: "{{ 'password' | envVar('STROOM_PROXY_CLIENT_TRUSTSTORE_PASSWORD') }}"
       trustStoreType: "{{ 'JKS' | envVar('STROOM_PROXY_CLIENT_TRUSTSTORE_TYPE') }}"
       trustSelfSignedCertificates: {{ false | envVar('JERSEY_TRUST_SELF_SIGNED') }}
