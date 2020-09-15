@@ -7,6 +7,9 @@ and this project adheres to [Semantic Versioning](http://semver.org/).
 
 ## [Unreleased]
 
+
+## [v6.1.13] - 2020-09-15
+
 * Issue **#1854** : Changed search mechanism to poll for remote results to reduce the chances of hung searches.
 
 * Issue **#580** : Added conditional formatting options to dashboard tables.
@@ -2181,7 +2184,8 @@ and this project adheres to [Semantic Versioning](http://semver.org/).
 
 * Issue **#202** : Initial release of the new data retention policy functionality.
 
-[Unreleased]: https://github.com/gchq/stroom/compare/v6.1.12...6.1
+[Unreleased]: https://github.com/gchq/stroom/compare/v6.1.13...6.1
+[v6.1.13]: https://github.com/gchq/stroom/compare/v6.1.12...v6.1.13
 [v6.1.12]: https://github.com/gchq/stroom/compare/v6.1.11...v6.1.12
 [v6.1.11]: https://github.com/gchq/stroom/compare/v6.1.10...v6.1.11
 [v6.1.10]: https://github.com/gchq/stroom/compare/v6.1.9...v6.1.10
