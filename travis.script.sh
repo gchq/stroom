@@ -383,7 +383,7 @@ else
 
       cp \
         "${TRAVIS_BUILD_DIR}/stroom-proxy/stroom-proxy-app/docker/build/config.yml" \
-        "${TRAVIS_BUILD_DIR}/stroom-proxy-config-${TRAVIS_TAG}.yml"
+        "${TRAVIS_BUILD_DIR}/stroom-proxy-app-config-${TRAVIS_TAG}.yml"
     fi
 fi
 
