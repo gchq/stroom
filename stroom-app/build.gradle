@@ -189,6 +189,7 @@ dependencies {
     testCompile libs.guice4
     testCompile libs.guice_extension
     testCompile libs.hikari
+    testCompile libs.jinjava
     testCompile libs.junit_jupiter_api
     testCompile libs.lmdbjava
     testCompile libs.lucene_core
@@ -291,11 +292,17 @@ clean {
     delete stroomDockerBuildDir
 }
 
+// Generate the confi.yml files for the zip and docker distributions
+task generateConfigFiles(type: JavaExec) {
+    classpath = sourceSets.test.runtimeClasspath
+    main = "stroom.dist.GenerateDistributionConfig"
+}
 
 // Copy all the files needed by the stroom docker build into stroom-app/docker/build
 task copyFilesForStroomDockerBuild() {
     dependsOn shadowJar
     dependsOn parent.downloadStroomContent
+    dependsOn generateConfigFiles
 
     doFirst {
         new File(stroomPluginsDir).mkdirs()
@@ -309,11 +316,7 @@ task copyFilesForStroomDockerBuild() {
             into stroomDockerBuildDir
         }
 
-        // Copy the dropwizard yml configuration
-        copy {
-            from "${projectDir}/prod.yml"
-            into stroomDockerBuildDir
-        }
+        // The config.yml will be put in place by generateConfigFiles
 
         //Copy the downloaded content packs
         copy {
@@ -465,9 +468,9 @@ task copySupportingFiles(type: Copy) {
     doLast {
         // This is a sym-link so it seems to go into the zip with +x perms
         // which we don't want
-        exec {
-            commandLine 'chmod', '644', "${releaseBuildDir}/config/config.yml"
-        }
+        //exec {
+            //commandLine 'chmod', '644', "${releaseBuildDir}/config/config.yml"
+        //}
     }
 }
 
@@ -519,6 +522,7 @@ task buildDistribution(type: Zip) {
     dependsOn makeSendExecutable
     dependsOn parent.downloadStroomContent
     dependsOn copyContentPackToDistribution
+    dependsOn generateConfigFiles
     dependsOn generateConfigDefaultsYamlFile
 
     from releaseBuildDir

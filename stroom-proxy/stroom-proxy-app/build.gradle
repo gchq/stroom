@@ -60,9 +60,10 @@ dependencies {
     testCompile project(':stroom-test-common')
 
     testCompile libs.assertj_core
-    testCompile libs.mockito_junit_jupiter
     testCompile libs.classgraph
     testCompile libs.guice_grapher
+    testCompile libs.jinjava
+    testCompile libs.mockito_junit_jupiter
 
     testCompile libs.junit_jupiter_api
 
@@ -105,9 +106,17 @@ clean {
     delete proxyDockerBuildDir
 }
 
+// Generate the confi.yml files for the zip and docker distributions
+task generateConfigFiles(type: JavaExec) {
+    classpath = sourceSets.test.runtimeClasspath
+    main = "stroom.proxy.dist.GenerateProxyDistributionConfig"
+}
+
 // Copy all the files needed by the stroom-proxy docker build into stroom-app/proxy-docker/build
 task copyFilesForProxyDockerBuild() {
     dependsOn shadowJar
+    dependsOn generateConfigFiles
+
     doFirst {
         // Copy the stroom app fat jar
         copy {
@@ -115,11 +124,7 @@ task copyFilesForProxyDockerBuild() {
             into proxyDockerBuildDir
         }
 
-        // Copy the dropwizard yml configuration
-        copy {
-            from "${projectDir}/proxy-prod.yml"
-            into proxyDockerBuildDir
-        }
+        // The config.yml will be put in place by generateConfigFiles
     }
 }
 
@@ -191,9 +196,9 @@ task copySupportingFiles(type: Copy) {
     doLast {
         // This is a sym-link so it seems to go into the zip with +x perms
         // which we don't want
-        exec {
-            commandLine 'chmod', '644', "${releaseBuildDir}/config/config.yml"
-        }
+        //exec {
+            //commandLine 'chmod', '644', "${releaseBuildDir}/config/config.yml"
+        //}
     }
 }
 
@@ -203,6 +208,7 @@ task buildDistribution(type: Zip) {
     // run all the tasks that produce content for the zip
     dependsOn copyJar
     dependsOn copySupportingFiles
+    dependsOn generateConfigFiles
 
     from releaseBuildDir
 }
