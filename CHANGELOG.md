@@ -7,6 +7,10 @@ and this project adheres to [Semantic Versioning](http://semver.org/).
 
 ## [Unreleased]
 
+* Change `prod.yml` and `proxy-prod.yml` to be templated so as to generate custom config for the zip and docker distributions.
+
+* Add the docker config files to the release artefacts.
+
 * Add comments to `prod.yml`/`config.yml`.
 
 * Change `reset_password` CLI command to also reset various locked/inactive type flags.
