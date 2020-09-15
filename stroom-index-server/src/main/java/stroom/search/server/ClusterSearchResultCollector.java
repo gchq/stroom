@@ -189,7 +189,7 @@ public class ClusterSearchResultCollector implements Store, ClusterResultCollect
         }
     }
 
-    private void waitForPendingWork() {
+    public void waitForPendingWork() {
         LAMBDA_LOGGER.logDurationIfTraceEnabled(() -> {
             LOGGER.trace("No remaining nodes so wait for the result handler to clear any pending work");
             resultHandler.waitForPendingWork(task);

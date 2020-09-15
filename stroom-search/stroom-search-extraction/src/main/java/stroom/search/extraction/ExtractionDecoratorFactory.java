@@ -14,6 +14,7 @@ import stroom.search.coprocessor.ReceiverImpl;
 import stroom.search.coprocessor.Values;
 import stroom.security.SecurityContext;
 import stroom.streamstore.server.StreamStore;
+import stroom.task.server.TaskContext;
 import stroom.util.concurrent.ExecutorProvider;
 import stroom.util.config.PropertyUtil;
 import stroom.util.shared.HasTerminate;
@@ -47,6 +48,7 @@ public class ExtractionDecoratorFactory {
     private final Provider<ExtractionTaskHandler> extractionTaskHandlerProvider;
     private final AnnotationsDecoratorFactory receiverDecoratorFactory;
     private final SecurityContext securityContext;
+    private final TaskContext taskContext;
     private final int maxStoredDataQueueSize;
 
     @Inject
@@ -58,6 +60,7 @@ public class ExtractionDecoratorFactory {
                                final Provider<ExtractionTaskHandler> extractionTaskHandlerProvider,
                                final AnnotationsDecoratorFactory receiverDecoratorFactory,
                                final SecurityContext securityContext,
+                               final TaskContext taskContext,
                                @Value("#{propertyConfigurer.getProperty('stroom.search.maxStoredDataQueueSize')}") final String maxStoredDataQueueSize) {
         this.extractionTaskExecutor = extractionTaskExecutor;
         this.extractionTaskProperties = extractionTaskProperties;
@@ -67,6 +70,7 @@ public class ExtractionDecoratorFactory {
         this.extractionTaskHandlerProvider = extractionTaskHandlerProvider;
         this.receiverDecoratorFactory = receiverDecoratorFactory;
         this.securityContext = securityContext;
+        this.taskContext = taskContext;
         this.maxStoredDataQueueSize = PropertyUtil.toInt(maxStoredDataQueueSize, DEFAULT_MAX_STORED_DATA_QUEUE_SIZE);
     }
 
@@ -134,7 +138,8 @@ public class ExtractionDecoratorFactory {
                 taskWrapperProvider,
                 extractionTaskHandlerProvider,
                 securityContext,
-                tracker);
+                tracker,
+                taskContext);
 
         // Begin processing.
         return extractionTaskProducer.process();

@@ -26,6 +26,7 @@ import stroom.search.coprocessor.ReceiverImpl;
 import stroom.search.coprocessor.Values;
 import stroom.security.SecurityContext;
 import stroom.security.SecurityHelper;
+import stroom.task.server.TaskContext;
 import stroom.util.concurrent.ExecutorProvider;
 import stroom.util.task.TaskWrapper;
 import stroom.util.task.taskqueue.TaskExecutor;
@@ -66,7 +67,8 @@ class ExtractionTaskProducer extends TaskProducer {
                            final Provider<TaskWrapper> taskWrapperProvider,
                            final Provider<ExtractionTaskHandler> handlerProvider,
                            final SecurityContext securityContext,
-                           final ExtractionProgressTracker tracker) {
+                           final ExtractionProgressTracker tracker,
+                           final TaskContext taskContext) {
         super(taskExecutor, maxThreadsPerTask, taskWrapperProvider);
         this.parentReceiver = parentReceiver;
         this.receivers = receivers;
@@ -99,6 +101,8 @@ class ExtractionTaskProducer extends TaskProducer {
         final Executor executor = executorProvider.getExecutor(ExtractionTaskExecutor.THREAD_POOL);
         final Runnable runnable = taskWrapperProvider.get().wrap(() -> {
             LOGGER.debug("Starting extraction task producer");
+            taskContext.setName("Extraction Task Producer");
+            taskContext.info("Adding extraction tasks");
 
             // Elevate permissions so users with only `Use` feed permission can `Read` streams.
             try (final SecurityHelper securityHelper = SecurityHelper.elevate(securityContext)) {
@@ -136,6 +140,7 @@ class ExtractionTaskProducer extends TaskProducer {
                 LOGGER.error(e.getMessage(), e);
             } finally {
                 streamMapCreatorCompletionState.complete();
+                taskContext.info("Finished adding extraction tasks");
 
                 // Tell the supplied executor that we are ready to deliver final tasks.
                 signalAvailable();
@@ -179,8 +184,9 @@ class ExtractionTaskProducer extends TaskProducer {
     private boolean addTasks() {
         final boolean completedEventMapping = this.streamMapCreatorCompletionState.isComplete();
         for (final Entry<Long, List<Event>> entry : streamEventMap.entrySet()) {
-            if (streamEventMap.remove(entry.getKey(), entry.getValue())) {
-                final int tasksCreated = createTasks(entry.getKey(), entry.getValue());
+            final List<Event> events = streamEventMap.remove(entry.getKey());
+            if (events != null) {
+                final int tasksCreated = createTasks(entry.getKey(), events);
                 if (tasksCreated > 0) {
                     return false;
                 }

@@ -18,6 +18,7 @@ package stroom.search.server;
 
 import stroom.node.shared.Node;
 import stroom.query.api.v2.Query;
+import stroom.query.api.v2.QueryKey;
 import stroom.query.common.v2.CoprocessorSettings;
 import stroom.query.common.v2.CoprocessorSettingsMap.CoprocessorKey;
 import stroom.security.shared.UserIdentity;
@@ -31,6 +32,7 @@ import java.util.Map;
 public class AsyncSearchTask extends ServerTask<VoidResult> implements Serializable {
     private static final long serialVersionUID = -1305243739417365803L;
 
+    private final QueryKey key;
     private final String searchName;
     private final Query query;
     private final Node targetNode;
@@ -43,6 +45,7 @@ public class AsyncSearchTask extends ServerTask<VoidResult> implements Serializa
 
     public AsyncSearchTask(final Task<?> parentTask,
                            final UserIdentity userIdentity,
+                           final QueryKey key,
                            final String searchName,
                            final Query query,
                            final Node targetNode,
@@ -51,6 +54,7 @@ public class AsyncSearchTask extends ServerTask<VoidResult> implements Serializa
                            final String dateTimeLocale,
                            final long now) {
         super(parentTask, userIdentity);
+        this.key = key;
         this.searchName = searchName;
         this.query = query;
         this.targetNode = targetNode;
@@ -58,6 +62,10 @@ public class AsyncSearchTask extends ServerTask<VoidResult> implements Serializa
         this.coprocessorMap = coprocessorMap;
         this.dateTimeLocale = dateTimeLocale;
         this.now = now;
+    }
+
+    public QueryKey getKey() {
+        return key;
     }
 
     public String getSearchName() {

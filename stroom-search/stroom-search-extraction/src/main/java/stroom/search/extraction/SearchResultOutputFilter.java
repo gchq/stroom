@@ -46,6 +46,7 @@ public class SearchResultOutputFilter extends AbstractXMLFilter {
     private FieldIndexMap fieldIndexes;
     private Consumer<Values> consumer;
     private Val[] values;
+    private int count;
 
     @Override
     public void startElement(final String uri, final String localName, final String qName, final Attributes atts)
@@ -75,6 +76,7 @@ public class SearchResultOutputFilter extends AbstractXMLFilter {
     public void endElement(final String uri, final String localName, final String qName) throws SAXException {
         if (RECORD.equals(localName)) {
             consumer.accept(new Values(values));
+            count++;
             values = null;
         }
 
@@ -84,5 +86,9 @@ public class SearchResultOutputFilter extends AbstractXMLFilter {
     public void setup(final FieldIndexMap fieldIndexes, final Consumer<Values> consumer) {
         this.fieldIndexes = fieldIndexes;
         this.consumer = consumer;
+    }
+
+    public int getCount() {
+        return count;
     }
 }
