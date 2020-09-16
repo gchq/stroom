@@ -37,11 +37,16 @@ public class ReferenceDataLoaderImpl implements ReferenceDataLoader {
 
     @Override
     public void load(final RefStreamDefinition refStreamDefinition) {
-        final Consumer<TaskContext> consumer = tc ->
+        final Consumer<TaskContext> consumer = taskContext ->
                 taskHandlerProvider
                         .get()
-                        .exec(tc, refStreamDefinition);
-        final Runnable runnable = taskContextFactory.context(taskContextFactory.currentContext(), "Load Reference Data", consumer);
+                        .exec(taskContext, refStreamDefinition);
+
+        final Runnable runnable = taskContextFactory.context(
+                taskContextFactory.currentContext(),
+                "Load Reference Data",
+                consumer);
+
         runnable.run();
     }
 }

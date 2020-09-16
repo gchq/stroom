@@ -42,9 +42,9 @@ public class RefDataLoaderHolder {
 
     // Set to keep track of which ref streams have been loaded, re-loaded or confirmed
     // to be already loaded within this pipeline processing instance
-    private Set<RefStreamDefinition> availableRefStreamDefinitions = new HashSet<>();
+    private final Set<RefStreamDefinition> availableRefStreamDefinitions = new HashSet<>();
 
-    private Map<MapDefinition, Boolean> availableMapDefinitions = new HashMap<>();
+    private final Map<MapDefinition, Boolean> availableMapDefinitions = new HashMap<>();
 
     // Used to cache the pipeline versions for the life of the pipeline to prevent
     // repeated DB hits during lookups
@@ -66,10 +66,14 @@ public class RefDataLoaderHolder {
         return availableRefStreamDefinitions.contains(refStreamDefinition);
     }
 
-    public void markMapDefinitionAvailablility(final MapDefinition mapDefinition, final boolean isAvailable) {
+    public void markMapDefinitionAvailability(final MapDefinition mapDefinition, final boolean isAvailable) {
         availableMapDefinitions.put(mapDefinition, isAvailable);
     }
 
+    /**
+     * @param mapDefinition
+     * @return Whether the M
+     */
     public Boolean isMapDefinitionAvailable(final MapDefinition mapDefinition) {
         return availableMapDefinitions.get(mapDefinition);
     }

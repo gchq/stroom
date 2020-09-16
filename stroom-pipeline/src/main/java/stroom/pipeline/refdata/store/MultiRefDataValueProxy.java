@@ -17,9 +17,10 @@
 
 package stroom.pipeline.refdata.store;
 
+import stroom.pipeline.refdata.store.offheapstore.TypedByteBuffer;
+
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import stroom.pipeline.refdata.store.offheapstore.TypedByteBuffer;
 
 import java.util.List;
 import java.util.Objects;
@@ -34,9 +35,9 @@ public class MultiRefDataValueProxy implements RefDataValueProxy {
 
     private static final Logger LOGGER = LoggerFactory.getLogger(MultiRefDataValueProxy.class);
 
-    private final List<RefDataValueProxy> refDataValueProxies;
+    private final List<SingleRefDataValueProxy> refDataValueProxies;
 
-    public MultiRefDataValueProxy(List<RefDataValueProxy> refDataValueProxies) {
+    public MultiRefDataValueProxy(final List<SingleRefDataValueProxy> refDataValueProxies) {
         this.refDataValueProxies = Objects.requireNonNull(refDataValueProxies);
     }
 
@@ -57,11 +58,6 @@ public class MultiRefDataValueProxy implements RefDataValueProxy {
     }
 
     @Override
-    public RefDataStore.StorageType getStorageType() {
-        throw new UnsupportedOperationException("Not valid for this implementation");
-    }
-
-    @Override
     public boolean consumeBytes(final Consumer<TypedByteBuffer> typedByteBufferConsumer) {
         // try each of our proxies in turn and as soon as one finds a result break out
         boolean result = false;
@@ -71,7 +67,7 @@ public class MultiRefDataValueProxy implements RefDataValueProxy {
         // the rest.  For pipelines with a lot of ref loaders this should speed things up.
         // The downside of this is that it would change the behavior in the event that two
         // ref streams can supply a value for the same map/key
-        for (RefDataValueProxy refDataValueProxy : refDataValueProxies) {
+        for (SingleRefDataValueProxy refDataValueProxy : refDataValueProxies) {
             LOGGER.trace("Attempting to consumeBytes with sub-proxy {}", refDataValueProxy);
             result = refDataValueProxy.consumeBytes(typedByteBufferConsumer);
             if (result) {
