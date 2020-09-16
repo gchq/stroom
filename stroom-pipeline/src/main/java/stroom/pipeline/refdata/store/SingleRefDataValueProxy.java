@@ -48,7 +48,6 @@ public class SingleRefDataValueProxy implements RefDataValueProxy {
         this.key = Objects.requireNonNull(key);
     }
 
-
     /**
      * Materialise the value that this is proxying. The consumeValue() method should be preferred
      * as this method will involve the added cost of copying the contents of the value.
@@ -60,11 +59,6 @@ public class SingleRefDataValueProxy implements RefDataValueProxy {
     public Optional<RefDataValue> supplyValue() {
         LOGGER.trace("supplyValue()");
         return refDataStore.getValue(mapDefinition, key);
-    }
-
-    @Override
-    public RefDataStore.StorageType getStorageType() {
-        return refDataStore.getStorageType();
     }
 
     /**

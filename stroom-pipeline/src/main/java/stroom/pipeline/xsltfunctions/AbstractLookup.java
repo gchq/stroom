@@ -175,7 +175,7 @@ abstract class AbstractLookup extends StroomExtensionFunctionCall {
                 lookupIdentifier.getMap(),
                 Instant.ofEpochMilli(lookupIdentifier.getEventTime()),
                 lookupIdentifier.getPrimaryMapName(),
-                lookupIdentifier.getSecondaryName()));
+                lookupIdentifier.getSecondaryMapName()));
 
         final List<PipelineReference> pipelineReferences = getPipelineReferences();
         if (pipelineReferences == null || pipelineReferences.size() == 0) {

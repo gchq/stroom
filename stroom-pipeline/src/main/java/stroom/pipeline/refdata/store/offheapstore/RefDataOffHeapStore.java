@@ -95,6 +95,15 @@ import java.util.function.Predicate;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
+/**
+ * An Off Heap implementation of {@link RefDataStore} using LMDB.
+ *
+ * Essentially each ref stream (a {@link RefStreamDefinition}) contains 1-* map names.
+ * Multiple ref streams can contain the same map name.
+ * Within a ref stream + map combo (a {@link MapDefinition}) there are 1-* entries.
+ * A lookup is done by creating a key that is the lookup key combined with a {@link MapDefinition}
+ * so only an entry matching the lookup key, the map name and the ref stream will be returned.
+ */
 @Singleton
 public class RefDataOffHeapStore extends AbstractRefDataStore implements RefDataStore, HasSystemInfo {
     private static final Logger LOGGER = LoggerFactory.getLogger(RefDataOffHeapStore.class);

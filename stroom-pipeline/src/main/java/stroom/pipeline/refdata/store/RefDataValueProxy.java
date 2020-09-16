@@ -23,11 +23,12 @@ import java.util.Optional;
 import java.util.function.Consumer;
 
 public interface RefDataValueProxy {
+
     /**
      * Materialise the value that this is proxying. The consumeValue() method should be preferred
      * as this method will involve the added cost of copying the contents of the value.
      *
-     * @return An optional value, as the value may may not exist or has been purged.
+     * @return An optional value, as the value may not exist or has been purged.
      */
     Optional<RefDataValue> supplyValue();
 
@@ -38,8 +39,6 @@ public interface RefDataValueProxy {
      * @return True if the entry is found and the consumer is called.
      */
     boolean consumeBytes(Consumer<TypedByteBuffer> typedByteBufferConsumer);
-
-    RefDataStore.StorageType getStorageType();
 
     boolean consumeValue(final RefDataValueProxyConsumerFactory refDataValueProxyConsumerFactory);
 }
