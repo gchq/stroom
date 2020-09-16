@@ -16,21 +16,21 @@
 
 package stroom.task.api;
 
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 import stroom.task.shared.ThreadPool;
 import stroom.util.thread.CustomThreadFactory;
 import stroom.util.thread.StroomThreadGroup;
 
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+
+import java.util.Optional;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.CompletionException;
-import java.util.concurrent.ConcurrentSkipListSet;
 import java.util.concurrent.Executor;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicInteger;
-import java.util.concurrent.atomic.AtomicReference;
 import java.util.concurrent.locks.Condition;
 import java.util.concurrent.locks.ReentrantLock;
 
@@ -43,8 +43,7 @@ public abstract class TaskExecutor {
 
     private final AtomicInteger totalThreads = new AtomicInteger();
 
-    private final ConcurrentSkipListSet<TaskProducer> producers = new ConcurrentSkipListSet<>();
-    private final AtomicReference<TaskProducer> lastProducer = new AtomicReference<>();
+    private final RoundRobinCollection<TaskProducer> producers = new RoundRobinCollection<>();
 
     private final ReentrantLock taskLock = new ReentrantLock();
     private final Condition condition = taskLock.newCondition();
@@ -87,7 +86,6 @@ public abstract class TaskExecutor {
                                     LOGGER.trace(e.getMessage(), e);
                                 }
                             }
-
                         }
                     } catch (final InterruptedException e) {
                         // Clear the interrupt state.
@@ -107,7 +105,7 @@ public abstract class TaskExecutor {
     private String getDebugMessage() {
         final StringBuilder sb = new StringBuilder("Timeout waiting for:");
 
-        for (final TaskProducer producer : producers) {
+        for (final TaskProducer producer : producers.list()) {
             if (producer != null) {
                 sb.append("\n\t");
                 sb.append(producer);
@@ -160,13 +158,8 @@ public abstract class TaskExecutor {
         try {
             if (total < maxThreads) {
                 // Try and get a task from usable producers.
-                final int tries = producers.size();
-                for (int i = 0; i < tries && task == null; i++) {
-                    final TaskProducer producer = nextProducer();
-                    if (producer != null) {
-                        task = producer.next();
-                    }
-                }
+                final Optional<TaskProducer> optionalTaskProducer = producers.next();
+                task = optionalTaskProducer.map(TaskProducer::next).orElse(null);
 
                 final Runnable currentTask = task;
                 if (currentTask != null) {
@@ -196,30 +189,6 @@ public abstract class TaskExecutor {
         }
 
         return task;
-    }
-
-    private TaskProducer nextProducer() {
-        TaskProducer current;
-        TaskProducer producer;
-
-        do {
-            current = lastProducer.get();
-            producer = current;
-            try {
-                if (producer == null) {
-                    producer = producers.first();
-                } else {
-                    producer = producers.higher(producer);
-                    if (producer == null) {
-                        producer = producers.first();
-                    }
-                }
-            } catch (final RuntimeException e) {
-                // Ignore.
-            }
-        } while (!lastProducer.compareAndSet(current, producer));
-
-        return producer;
     }
 
     public void setMaxThreads(final int maxThreads) {

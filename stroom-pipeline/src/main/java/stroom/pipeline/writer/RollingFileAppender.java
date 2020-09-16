@@ -68,11 +68,11 @@ public class RollingFileAppender extends AbstractRollingAppender {
         String dir = this.dir;
         String fileName = this.fileName;
 
-        dir = PathCreator.replaceTimeVars(dir);
-        dir = PathCreator.replaceUUIDVars(dir);
+        dir = pathCreator.replaceTimeVars(dir);
+        dir = pathCreator.replaceUUIDVars(dir);
 
-        fileName = PathCreator.replaceTimeVars(fileName);
-        fileName = PathCreator.replaceUUIDVars(fileName);
+        fileName = pathCreator.replaceTimeVars(fileName);
+        fileName = pathCreator.replaceUUIDVars(fileName);
 
         // Create a new destination.
         final Path file = Paths.get(dir).resolve(fileName);
@@ -87,7 +87,8 @@ public class RollingFileAppender extends AbstractRollingAppender {
             }
         }
 
-        return new RollingFileDestination(key,
+        return new RollingFileDestination(pathCreator,
+                key,
                 getFrequency(),
                 getSchedule(),
                 getRollSize(),
@@ -119,8 +120,6 @@ public class RollingFileAppender extends AbstractRollingAppender {
             }
 
             return key;
-        } catch (final IOException e) {
-            throw e;
         } catch (final RuntimeException e) {
             throw new IOException(e.getMessage(), e);
         }

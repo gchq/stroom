@@ -17,14 +17,14 @@
          <Device>
             <IPAddress>1.1.1.1</IPAddress>
             <MACAddress>00-00-00-00-00-00</MACAddress>
-            <Location>
-               <Country>UK</Country>
-               <Site>Site 1</Site>
-               <Building>Main</Building>
-               <Floor>1</Floor>
-               <Room>A</Room>
-               <Desk>100</Desk>
-            </Location>
+            <evt:Location xmlns:evt="event-logging:3">
+               <evt:Country>UK</evt:Country>
+               <evt:Site>Site 1</evt:Site>
+               <evt:Building>Main</evt:Building>
+               <evt:Floor>1</evt:Floor>
+               <evt:Room>A</evt:Room>
+               <evt:Desk>100</evt:Desk>
+            </evt:Location>
          </Device>
          <User>
             <Id>user1</Id>
@@ -57,14 +57,14 @@
          <Device>
             <IPAddress>1.1.1.1</IPAddress>
             <MACAddress>00-00-00-00-00-00</MACAddress>
-            <Location>
-               <Country>UK</Country>
-               <Site>Site 1</Site>
-               <Building>Main</Building>
-               <Floor>1</Floor>
-               <Room>A</Room>
-               <Desk>100</Desk>
-            </Location>
+            <evt:Location xmlns:evt="event-logging:3">
+               <evt:Country>UK</evt:Country>
+               <evt:Site>Site 1</evt:Site>
+               <evt:Building>Main</evt:Building>
+               <evt:Floor>1</evt:Floor>
+               <evt:Room>A</evt:Room>
+               <evt:Desk>100</evt:Desk>
+            </evt:Location>
          </Device>
          <User>
             <Id>user2</Id>
@@ -97,14 +97,14 @@
          <Device>
             <IPAddress>1.1.1.1</IPAddress>
             <MACAddress>00-00-00-00-00-00</MACAddress>
-            <Location>
-               <Country>UK</Country>
-               <Site>Site 1</Site>
-               <Building>Main</Building>
-               <Floor>1</Floor>
-               <Room>A</Room>
-               <Desk>100</Desk>
-            </Location>
+            <evt:Location xmlns:evt="event-logging:3">
+               <evt:Country>UK</evt:Country>
+               <evt:Site>Site 1</evt:Site>
+               <evt:Building>Main</evt:Building>
+               <evt:Floor>1</evt:Floor>
+               <evt:Room>A</evt:Room>
+               <evt:Desk>100</evt:Desk>
+            </evt:Location>
          </Device>
          <User>
             <Id>user3</Id>
@@ -137,14 +137,14 @@
          <Device>
             <IPAddress>1.1.1.1</IPAddress>
             <MACAddress>00-00-00-00-00-00</MACAddress>
-            <Location>
-               <Country>UK</Country>
-               <Site>Site 1</Site>
-               <Building>Main</Building>
-               <Floor>1</Floor>
-               <Room>A</Room>
-               <Desk>100</Desk>
-            </Location>
+            <evt:Location xmlns:evt="event-logging:3">
+               <evt:Country>UK</evt:Country>
+               <evt:Site>Site 1</evt:Site>
+               <evt:Building>Main</evt:Building>
+               <evt:Floor>1</evt:Floor>
+               <evt:Room>A</evt:Room>
+               <evt:Desk>100</evt:Desk>
+            </evt:Location>
          </Device>
          <User>
             <Id>user4</Id>
@@ -177,14 +177,14 @@
          <Device>
             <IPAddress>1.1.1.1</IPAddress>
             <MACAddress>00-00-00-00-00-00</MACAddress>
-            <Location>
-               <Country>UK</Country>
-               <Site>Site 1</Site>
-               <Building>Main</Building>
-               <Floor>1</Floor>
-               <Room>A</Room>
-               <Desk>100</Desk>
-            </Location>
+            <evt:Location xmlns:evt="event-logging:3">
+               <evt:Country>UK</evt:Country>
+               <evt:Site>Site 1</evt:Site>
+               <evt:Building>Main</evt:Building>
+               <evt:Floor>1</evt:Floor>
+               <evt:Room>A</evt:Room>
+               <evt:Desk>100</evt:Desk>
+            </evt:Location>
          </Device>
          <User>
             <Id>user5</Id>
@@ -217,14 +217,14 @@
          <Device>
             <IPAddress>1.1.1.1</IPAddress>
             <MACAddress>00-00-00-00-00-00</MACAddress>
-            <Location>
-               <Country>UK</Country>
-               <Site>Site 1</Site>
-               <Building>Main</Building>
-               <Floor>1</Floor>
-               <Room>A</Room>
-               <Desk>100</Desk>
-            </Location>
+            <evt:Location xmlns:evt="event-logging:3">
+               <evt:Country>UK</evt:Country>
+               <evt:Site>Site 1</evt:Site>
+               <evt:Building>Main</evt:Building>
+               <evt:Floor>1</evt:Floor>
+               <evt:Room>A</evt:Room>
+               <evt:Desk>100</evt:Desk>
+            </evt:Location>
          </Device>
          <User>
             <Id>user6</Id>
@@ -257,14 +257,14 @@
          <Device>
             <IPAddress>1.1.1.1</IPAddress>
             <MACAddress>00-00-00-00-00-00</MACAddress>
-            <Location>
-               <Country>UK</Country>
-               <Site>Site 1</Site>
-               <Building>Main</Building>
-               <Floor>1</Floor>
-               <Room>A</Room>
-               <Desk>100</Desk>
-            </Location>
+            <evt:Location xmlns:evt="event-logging:3">
+               <evt:Country>UK</evt:Country>
+               <evt:Site>Site 1</evt:Site>
+               <evt:Building>Main</evt:Building>
+               <evt:Floor>1</evt:Floor>
+               <evt:Room>A</evt:Room>
+               <evt:Desk>100</evt:Desk>
+            </evt:Location>
          </Device>
          <User>
             <Id>user7</Id>
@@ -297,14 +297,14 @@
          <Device>
             <IPAddress>1.1.1.1</IPAddress>
             <MACAddress>00-00-00-00-00-00</MACAddress>
-            <Location>
-               <Country>UK</Country>
-               <Site>Site 1</Site>
-               <Building>Main</Building>
-               <Floor>1</Floor>
-               <Room>A</Room>
-               <Desk>100</Desk>
-            </Location>
+            <evt:Location xmlns:evt="event-logging:3">
+               <evt:Country>UK</evt:Country>
+               <evt:Site>Site 1</evt:Site>
+               <evt:Building>Main</evt:Building>
+               <evt:Floor>1</evt:Floor>
+               <evt:Room>A</evt:Room>
+               <evt:Desk>100</evt:Desk>
+            </evt:Location>
          </Device>
          <User>
             <Id>user8</Id>
@@ -337,14 +337,14 @@
          <Device>
             <IPAddress>1.1.1.1</IPAddress>
             <MACAddress>00-00-00-00-00-00</MACAddress>
-            <Location>
-               <Country>UK</Country>
-               <Site>Site 1</Site>
-               <Building>Main</Building>
-               <Floor>1</Floor>
-               <Room>A</Room>
-               <Desk>100</Desk>
-            </Location>
+            <evt:Location xmlns:evt="event-logging:3">
+               <evt:Country>UK</evt:Country>
+               <evt:Site>Site 1</evt:Site>
+               <evt:Building>Main</evt:Building>
+               <evt:Floor>1</evt:Floor>
+               <evt:Room>A</evt:Room>
+               <evt:Desk>100</evt:Desk>
+            </evt:Location>
          </Device>
          <User>
             <Id>user9</Id>
@@ -377,14 +377,14 @@
          <Device>
             <IPAddress>1.1.1.1</IPAddress>
             <MACAddress>00-00-00-00-00-00</MACAddress>
-            <Location>
-               <Country>UK</Country>
-               <Site>Site 1</Site>
-               <Building>Main</Building>
-               <Floor>1</Floor>
-               <Room>A</Room>
-               <Desk>100</Desk>
-            </Location>
+            <evt:Location xmlns:evt="event-logging:3">
+               <evt:Country>UK</evt:Country>
+               <evt:Site>Site 1</evt:Site>
+               <evt:Building>Main</evt:Building>
+               <evt:Floor>1</evt:Floor>
+               <evt:Room>A</evt:Room>
+               <evt:Desk>100</evt:Desk>
+            </evt:Location>
          </Device>
          <User>
             <Id>user10</Id>
@@ -417,14 +417,14 @@
          <Device>
             <IPAddress>2.2.2.2</IPAddress>
             <MACAddress>00-00-00-00-00-00</MACAddress>
-            <Location>
-               <Country>UK</Country>
-               <Site>Site 2</Site>
-               <Building>Main</Building>
-               <Floor>2</Floor>
-               <Room>A</Room>
-               <Desk>A2a.A2.2</Desk>
-            </Location>
+            <evt:Location xmlns:evt="event-logging:3">
+               <evt:Country>UK</evt:Country>
+               <evt:Site>Site 2</evt:Site>
+               <evt:Building>Main</evt:Building>
+               <evt:Floor>2</evt:Floor>
+               <evt:Room>A</evt:Room>
+               <evt:Desk>A2a.A2.2</evt:Desk>
+            </evt:Location>
          </Device>
          <User>
             <Id>user1</Id>
@@ -457,14 +457,14 @@
          <Device>
             <IPAddress>2.2.2.2</IPAddress>
             <MACAddress>00-00-00-00-00-00</MACAddress>
-            <Location>
-               <Country>UK</Country>
-               <Site>Site 2</Site>
-               <Building>Main</Building>
-               <Floor>2</Floor>
-               <Room>A</Room>
-               <Desk>A2a.A2.2</Desk>
-            </Location>
+            <evt:Location xmlns:evt="event-logging:3">
+               <evt:Country>UK</evt:Country>
+               <evt:Site>Site 2</evt:Site>
+               <evt:Building>Main</evt:Building>
+               <evt:Floor>2</evt:Floor>
+               <evt:Room>A</evt:Room>
+               <evt:Desk>A2a.A2.2</evt:Desk>
+            </evt:Location>
          </Device>
          <User>
             <Id>user2</Id>
@@ -497,14 +497,14 @@
          <Device>
             <IPAddress>2.2.2.2</IPAddress>
             <MACAddress>00-00-00-00-00-00</MACAddress>
-            <Location>
-               <Country>UK</Country>
-               <Site>Site 2</Site>
-               <Building>Main</Building>
-               <Floor>2</Floor>
-               <Room>A</Room>
-               <Desk>A2a.A2.2</Desk>
-            </Location>
+            <evt:Location xmlns:evt="event-logging:3">
+               <evt:Country>UK</evt:Country>
+               <evt:Site>Site 2</evt:Site>
+               <evt:Building>Main</evt:Building>
+               <evt:Floor>2</evt:Floor>
+               <evt:Room>A</evt:Room>
+               <evt:Desk>A2a.A2.2</evt:Desk>
+            </evt:Location>
          </Device>
          <User>
             <Id>user3</Id>
@@ -537,14 +537,14 @@
          <Device>
             <IPAddress>2.2.2.2</IPAddress>
             <MACAddress>00-00-00-00-00-00</MACAddress>
-            <Location>
-               <Country>UK</Country>
-               <Site>Site 2</Site>
-               <Building>Main</Building>
-               <Floor>2</Floor>
-               <Room>A</Room>
-               <Desk>A2a.A2.2</Desk>
-            </Location>
+            <evt:Location xmlns:evt="event-logging:3">
+               <evt:Country>UK</evt:Country>
+               <evt:Site>Site 2</evt:Site>
+               <evt:Building>Main</evt:Building>
+               <evt:Floor>2</evt:Floor>
+               <evt:Room>A</evt:Room>
+               <evt:Desk>A2a.A2.2</evt:Desk>
+            </evt:Location>
          </Device>
          <User>
             <Id>user4</Id>
@@ -577,14 +577,14 @@
          <Device>
             <IPAddress>2.2.2.2</IPAddress>
             <MACAddress>00-00-00-00-00-00</MACAddress>
-            <Location>
-               <Country>UK</Country>
-               <Site>Site 2</Site>
-               <Building>Main</Building>
-               <Floor>2</Floor>
-               <Room>A</Room>
-               <Desk>A2a.A2.2</Desk>
-            </Location>
+            <evt:Location xmlns:evt="event-logging:3">
+               <evt:Country>UK</evt:Country>
+               <evt:Site>Site 2</evt:Site>
+               <evt:Building>Main</evt:Building>
+               <evt:Floor>2</evt:Floor>
+               <evt:Room>A</evt:Room>
+               <evt:Desk>A2a.A2.2</evt:Desk>
+            </evt:Location>
          </Device>
          <User>
             <Id>user5</Id>
@@ -617,14 +617,14 @@
          <Device>
             <IPAddress>2.2.2.2</IPAddress>
             <MACAddress>00-00-00-00-00-00</MACAddress>
-            <Location>
-               <Country>UK</Country>
-               <Site>Site 2</Site>
-               <Building>Main</Building>
-               <Floor>2</Floor>
-               <Room>A</Room>
-               <Desk>A2a.A2.2</Desk>
-            </Location>
+            <evt:Location xmlns:evt="event-logging:3">
+               <evt:Country>UK</evt:Country>
+               <evt:Site>Site 2</evt:Site>
+               <evt:Building>Main</evt:Building>
+               <evt:Floor>2</evt:Floor>
+               <evt:Room>A</evt:Room>
+               <evt:Desk>A2a.A2.2</evt:Desk>
+            </evt:Location>
          </Device>
          <User>
             <Id>user6</Id>
@@ -657,14 +657,14 @@
          <Device>
             <IPAddress>2.2.2.2</IPAddress>
             <MACAddress>00-00-00-00-00-00</MACAddress>
-            <Location>
-               <Country>UK</Country>
-               <Site>Site 2</Site>
-               <Building>Main</Building>
-               <Floor>2</Floor>
-               <Room>A</Room>
-               <Desk>A2a.A2.2</Desk>
-            </Location>
+            <evt:Location xmlns:evt="event-logging:3">
+               <evt:Country>UK</evt:Country>
+               <evt:Site>Site 2</evt:Site>
+               <evt:Building>Main</evt:Building>
+               <evt:Floor>2</evt:Floor>
+               <evt:Room>A</evt:Room>
+               <evt:Desk>A2a.A2.2</evt:Desk>
+            </evt:Location>
          </Device>
          <User>
             <Id>user7</Id>
@@ -697,14 +697,14 @@
          <Device>
             <IPAddress>2.2.2.2</IPAddress>
             <MACAddress>00-00-00-00-00-00</MACAddress>
-            <Location>
-               <Country>UK</Country>
-               <Site>Site 2</Site>
-               <Building>Main</Building>
-               <Floor>2</Floor>
-               <Room>A</Room>
-               <Desk>A2a.A2.2</Desk>
-            </Location>
+            <evt:Location xmlns:evt="event-logging:3">
+               <evt:Country>UK</evt:Country>
+               <evt:Site>Site 2</evt:Site>
+               <evt:Building>Main</evt:Building>
+               <evt:Floor>2</evt:Floor>
+               <evt:Room>A</evt:Room>
+               <evt:Desk>A2a.A2.2</evt:Desk>
+            </evt:Location>
          </Device>
          <User>
             <Id>user8</Id>
@@ -737,14 +737,14 @@
          <Device>
             <IPAddress>2.2.2.2</IPAddress>
             <MACAddress>00-00-00-00-00-00</MACAddress>
-            <Location>
-               <Country>UK</Country>
-               <Site>Site 2</Site>
-               <Building>Main</Building>
-               <Floor>2</Floor>
-               <Room>A</Room>
-               <Desk>A2a.A2.2</Desk>
-            </Location>
+            <evt:Location xmlns:evt="event-logging:3">
+               <evt:Country>UK</evt:Country>
+               <evt:Site>Site 2</evt:Site>
+               <evt:Building>Main</evt:Building>
+               <evt:Floor>2</evt:Floor>
+               <evt:Room>A</evt:Room>
+               <evt:Desk>A2a.A2.2</evt:Desk>
+            </evt:Location>
          </Device>
          <User>
             <Id>user9</Id>
@@ -777,14 +777,14 @@
          <Device>
             <IPAddress>2.2.2.2</IPAddress>
             <MACAddress>00-00-00-00-00-00</MACAddress>
-            <Location>
-               <Country>UK</Country>
-               <Site>Site 2</Site>
-               <Building>Main</Building>
-               <Floor>2</Floor>
-               <Room>A</Room>
-               <Desk>A2a.A2.2</Desk>
-            </Location>
+            <evt:Location xmlns:evt="event-logging:3">
+               <evt:Country>UK</evt:Country>
+               <evt:Site>Site 2</evt:Site>
+               <evt:Building>Main</evt:Building>
+               <evt:Floor>2</evt:Floor>
+               <evt:Room>A</evt:Room>
+               <evt:Desk>A2a.A2.2</evt:Desk>
+            </evt:Location>
          </Device>
          <User>
             <Id>user10</Id>
@@ -817,14 +817,14 @@
          <Device>
             <IPAddress>3.3.3.3</IPAddress>
             <MACAddress>00-00-00-00-00-00</MACAddress>
-            <Location>
-               <Country>UK</Country>
-               <Site>Site 3</Site>
-               <Building>Main</Building>
-               <Floor>3</Floor>
-               <Room>A</Room>
-               <Desk>A3a.A3.3</Desk>
-            </Location>
+            <evt:Location xmlns:evt="event-logging:3">
+               <evt:Country>UK</evt:Country>
+               <evt:Site>Site 3</evt:Site>
+               <evt:Building>Main</evt:Building>
+               <evt:Floor>3</evt:Floor>
+               <evt:Room>A</evt:Room>
+               <evt:Desk>A3a.A3.3</evt:Desk>
+            </evt:Location>
          </Device>
          <User>
             <Id>user1</Id>
@@ -857,14 +857,14 @@
          <Device>
             <IPAddress>3.3.3.3</IPAddress>
             <MACAddress>00-00-00-00-00-00</MACAddress>
-            <Location>
-               <Country>UK</Country>
-               <Site>Site 3</Site>
-               <Building>Main</Building>
-               <Floor>3</Floor>
-               <Room>A</Room>
-               <Desk>A3a.A3.3</Desk>
-            </Location>
+            <evt:Location xmlns:evt="event-logging:3">
+               <evt:Country>UK</evt:Country>
+               <evt:Site>Site 3</evt:Site>
+               <evt:Building>Main</evt:Building>
+               <evt:Floor>3</evt:Floor>
+               <evt:Room>A</evt:Room>
+               <evt:Desk>A3a.A3.3</evt:Desk>
+            </evt:Location>
          </Device>
          <User>
             <Id>user2</Id>
@@ -897,14 +897,14 @@
          <Device>
             <IPAddress>3.3.3.3</IPAddress>
             <MACAddress>00-00-00-00-00-00</MACAddress>
-            <Location>
-               <Country>UK</Country>
-               <Site>Site 3</Site>
-               <Building>Main</Building>
-               <Floor>3</Floor>
-               <Room>A</Room>
-               <Desk>A3a.A3.3</Desk>
-            </Location>
+            <evt:Location xmlns:evt="event-logging:3">
+               <evt:Country>UK</evt:Country>
+               <evt:Site>Site 3</evt:Site>
+               <evt:Building>Main</evt:Building>
+               <evt:Floor>3</evt:Floor>
+               <evt:Room>A</evt:Room>
+               <evt:Desk>A3a.A3.3</evt:Desk>
+            </evt:Location>
          </Device>
          <User>
             <Id>user3</Id>
@@ -937,14 +937,14 @@
          <Device>
             <IPAddress>3.3.3.3</IPAddress>
             <MACAddress>00-00-00-00-00-00</MACAddress>
-            <Location>
-               <Country>UK</Country>
-               <Site>Site 3</Site>
-               <Building>Main</Building>
-               <Floor>3</Floor>
-               <Room>A</Room>
-               <Desk>A3a.A3.3</Desk>
-            </Location>
+            <evt:Location xmlns:evt="event-logging:3">
+               <evt:Country>UK</evt:Country>
+               <evt:Site>Site 3</evt:Site>
+               <evt:Building>Main</evt:Building>
+               <evt:Floor>3</evt:Floor>
+               <evt:Room>A</evt:Room>
+               <evt:Desk>A3a.A3.3</evt:Desk>
+            </evt:Location>
          </Device>
          <User>
             <Id>user4</Id>
@@ -977,14 +977,14 @@
          <Device>
             <IPAddress>3.3.3.3</IPAddress>
             <MACAddress>00-00-00-00-00-00</MACAddress>
-            <Location>
-               <Country>UK</Country>
-               <Site>Site 3</Site>
-               <Building>Main</Building>
-               <Floor>3</Floor>
-               <Room>A</Room>
-               <Desk>A3a.A3.3</Desk>
-            </Location>
+            <evt:Location xmlns:evt="event-logging:3">
+               <evt:Country>UK</evt:Country>
+               <evt:Site>Site 3</evt:Site>
+               <evt:Building>Main</evt:Building>
+               <evt:Floor>3</evt:Floor>
+               <evt:Room>A</evt:Room>
+               <evt:Desk>A3a.A3.3</evt:Desk>
+            </evt:Location>
          </Device>
          <User>
             <Id>user5</Id>
@@ -1017,14 +1017,14 @@
          <Device>
             <IPAddress>3.3.3.3</IPAddress>
             <MACAddress>00-00-00-00-00-00</MACAddress>
-            <Location>
-               <Country>UK</Country>
-               <Site>Site 3</Site>
-               <Building>Main</Building>
-               <Floor>3</Floor>
-               <Room>A</Room>
-               <Desk>A3a.A3.3</Desk>
-            </Location>
+            <evt:Location xmlns:evt="event-logging:3">
+               <evt:Country>UK</evt:Country>
+               <evt:Site>Site 3</evt:Site>
+               <evt:Building>Main</evt:Building>
+               <evt:Floor>3</evt:Floor>
+               <evt:Room>A</evt:Room>
+               <evt:Desk>A3a.A3.3</evt:Desk>
+            </evt:Location>
          </Device>
          <User>
             <Id>user6</Id>
@@ -1057,14 +1057,14 @@
          <Device>
             <IPAddress>3.3.3.3</IPAddress>
             <MACAddress>00-00-00-00-00-00</MACAddress>
-            <Location>
-               <Country>UK</Country>
-               <Site>Site 3</Site>
-               <Building>Main</Building>
-               <Floor>3</Floor>
-               <Room>A</Room>
-               <Desk>A3a.A3.3</Desk>
-            </Location>
+            <evt:Location xmlns:evt="event-logging:3">
+               <evt:Country>UK</evt:Country>
+               <evt:Site>Site 3</evt:Site>
+               <evt:Building>Main</evt:Building>
+               <evt:Floor>3</evt:Floor>
+               <evt:Room>A</evt:Room>
+               <evt:Desk>A3a.A3.3</evt:Desk>
+            </evt:Location>
          </Device>
          <User>
             <Id>user7</Id>
@@ -1097,14 +1097,14 @@
          <Device>
             <IPAddress>3.3.3.3</IPAddress>
             <MACAddress>00-00-00-00-00-00</MACAddress>
-            <Location>
-               <Country>UK</Country>
-               <Site>Site 3</Site>
-               <Building>Main</Building>
-               <Floor>3</Floor>
-               <Room>A</Room>
-               <Desk>A3a.A3.3</Desk>
-            </Location>
+            <evt:Location xmlns:evt="event-logging:3">
+               <evt:Country>UK</evt:Country>
+               <evt:Site>Site 3</evt:Site>
+               <evt:Building>Main</evt:Building>
+               <evt:Floor>3</evt:Floor>
+               <evt:Room>A</evt:Room>
+               <evt:Desk>A3a.A3.3</evt:Desk>
+            </evt:Location>
          </Device>
          <User>
             <Id>user8</Id>
@@ -1137,14 +1137,14 @@
          <Device>
             <IPAddress>3.3.3.3</IPAddress>
             <MACAddress>00-00-00-00-00-00</MACAddress>
-            <Location>
-               <Country>UK</Country>
-               <Site>Site 3</Site>
-               <Building>Main</Building>
-               <Floor>3</Floor>
-               <Room>A</Room>
-               <Desk>A3a.A3.3</Desk>
-            </Location>
+            <evt:Location xmlns:evt="event-logging:3">
+               <evt:Country>UK</evt:Country>
+               <evt:Site>Site 3</evt:Site>
+               <evt:Building>Main</evt:Building>
+               <evt:Floor>3</evt:Floor>
+               <evt:Room>A</evt:Room>
+               <evt:Desk>A3a.A3.3</evt:Desk>
+            </evt:Location>
          </Device>
          <User>
             <Id>user9</Id>
@@ -1177,14 +1177,14 @@
          <Device>
             <IPAddress>3.3.3.3</IPAddress>
             <MACAddress>00-00-00-00-00-00</MACAddress>
-            <Location>
-               <Country>UK</Country>
-               <Site>Site 3</Site>
-               <Building>Main</Building>
-               <Floor>3</Floor>
-               <Room>A</Room>
-               <Desk>A3a.A3.3</Desk>
-            </Location>
+            <evt:Location xmlns:evt="event-logging:3">
+               <evt:Country>UK</evt:Country>
+               <evt:Site>Site 3</evt:Site>
+               <evt:Building>Main</evt:Building>
+               <evt:Floor>3</evt:Floor>
+               <evt:Room>A</evt:Room>
+               <evt:Desk>A3a.A3.3</evt:Desk>
+            </evt:Location>
          </Device>
          <User>
             <Id>user10</Id>
@@ -1217,14 +1217,14 @@
          <Device>
             <IPAddress>4.4.4.4</IPAddress>
             <MACAddress>00-00-00-00-00-00</MACAddress>
-            <Location>
-               <Country>UK</Country>
-               <Site>Site 4</Site>
-               <Building>Main</Building>
-               <Floor>4</Floor>
-               <Room>A</Room>
-               <Desk>A4a.A4.4</Desk>
-            </Location>
+            <evt:Location xmlns:evt="event-logging:3">
+               <evt:Country>UK</evt:Country>
+               <evt:Site>Site 4</evt:Site>
+               <evt:Building>Main</evt:Building>
+               <evt:Floor>4</evt:Floor>
+               <evt:Room>A</evt:Room>
+               <evt:Desk>A4a.A4.4</evt:Desk>
+            </evt:Location>
          </Device>
          <User>
             <Id>user1</Id>
@@ -1257,14 +1257,14 @@
          <Device>
             <IPAddress>4.4.4.4</IPAddress>
             <MACAddress>00-00-00-00-00-00</MACAddress>
-            <Location>
-               <Country>UK</Country>
-               <Site>Site 4</Site>
-               <Building>Main</Building>
-               <Floor>4</Floor>
-               <Room>A</Room>
-               <Desk>A4a.A4.4</Desk>
-            </Location>
+            <evt:Location xmlns:evt="event-logging:3">
+               <evt:Country>UK</evt:Country>
+               <evt:Site>Site 4</evt:Site>
+               <evt:Building>Main</evt:Building>
+               <evt:Floor>4</evt:Floor>
+               <evt:Room>A</evt:Room>
+               <evt:Desk>A4a.A4.4</evt:Desk>
+            </evt:Location>
          </Device>
          <User>
             <Id>user2</Id>
@@ -1297,14 +1297,14 @@
          <Device>
             <IPAddress>4.4.4.4</IPAddress>
             <MACAddress>00-00-00-00-00-00</MACAddress>
-            <Location>
-               <Country>UK</Country>
-               <Site>Site 4</Site>
-               <Building>Main</Building>
-               <Floor>4</Floor>
-               <Room>A</Room>
-               <Desk>A4a.A4.4</Desk>
-            </Location>
+            <evt:Location xmlns:evt="event-logging:3">
+               <evt:Country>UK</evt:Country>
+               <evt:Site>Site 4</evt:Site>
+               <evt:Building>Main</evt:Building>
+               <evt:Floor>4</evt:Floor>
+               <evt:Room>A</evt:Room>
+               <evt:Desk>A4a.A4.4</evt:Desk>
+            </evt:Location>
          </Device>
          <User>
             <Id>user3</Id>
@@ -1337,14 +1337,14 @@
          <Device>
             <IPAddress>4.4.4.4</IPAddress>
             <MACAddress>00-00-00-00-00-00</MACAddress>
-            <Location>
-               <Country>UK</Country>
-               <Site>Site 4</Site>
-               <Building>Main</Building>
-               <Floor>4</Floor>
-               <Room>A</Room>
-               <Desk>A4a.A4.4</Desk>
-            </Location>
+            <evt:Location xmlns:evt="event-logging:3">
+               <evt:Country>UK</evt:Country>
+               <evt:Site>Site 4</evt:Site>
+               <evt:Building>Main</evt:Building>
+               <evt:Floor>4</evt:Floor>
+               <evt:Room>A</evt:Room>
+               <evt:Desk>A4a.A4.4</evt:Desk>
+            </evt:Location>
          </Device>
          <User>
             <Id>user4</Id>
@@ -1377,14 +1377,14 @@
          <Device>
             <IPAddress>4.4.4.4</IPAddress>
             <MACAddress>00-00-00-00-00-00</MACAddress>
-            <Location>
-               <Country>UK</Country>
-               <Site>Site 4</Site>
-               <Building>Main</Building>
-               <Floor>4</Floor>
-               <Room>A</Room>
-               <Desk>A4a.A4.4</Desk>
-            </Location>
+            <evt:Location xmlns:evt="event-logging:3">
+               <evt:Country>UK</evt:Country>
+               <evt:Site>Site 4</evt:Site>
+               <evt:Building>Main</evt:Building>
+               <evt:Floor>4</evt:Floor>
+               <evt:Room>A</evt:Room>
+               <evt:Desk>A4a.A4.4</evt:Desk>
+            </evt:Location>
          </Device>
          <User>
             <Id>user5</Id>
@@ -1417,14 +1417,14 @@
          <Device>
             <IPAddress>4.4.4.4</IPAddress>
             <MACAddress>00-00-00-00-00-00</MACAddress>
-            <Location>
-               <Country>UK</Country>
-               <Site>Site 4</Site>
-               <Building>Main</Building>
-               <Floor>4</Floor>
-               <Room>A</Room>
-               <Desk>A4a.A4.4</Desk>
-            </Location>
+            <evt:Location xmlns:evt="event-logging:3">
+               <evt:Country>UK</evt:Country>
+               <evt:Site>Site 4</evt:Site>
+               <evt:Building>Main</evt:Building>
+               <evt:Floor>4</evt:Floor>
+               <evt:Room>A</evt:Room>
+               <evt:Desk>A4a.A4.4</evt:Desk>
+            </evt:Location>
          </Device>
          <User>
             <Id>user6</Id>
@@ -1457,14 +1457,14 @@
          <Device>
             <IPAddress>4.4.4.4</IPAddress>
             <MACAddress>00-00-00-00-00-00</MACAddress>
-            <Location>
-               <Country>UK</Country>
-               <Site>Site 4</Site>
-               <Building>Main</Building>
-               <Floor>4</Floor>
-               <Room>A</Room>
-               <Desk>A4a.A4.4</Desk>
-            </Location>
+            <evt:Location xmlns:evt="event-logging:3">
+               <evt:Country>UK</evt:Country>
+               <evt:Site>Site 4</evt:Site>
+               <evt:Building>Main</evt:Building>
+               <evt:Floor>4</evt:Floor>
+               <evt:Room>A</evt:Room>
+               <evt:Desk>A4a.A4.4</evt:Desk>
+            </evt:Location>
          </Device>
          <User>
             <Id>user7</Id>
@@ -1497,14 +1497,14 @@
          <Device>
             <IPAddress>4.4.4.4</IPAddress>
             <MACAddress>00-00-00-00-00-00</MACAddress>
-            <Location>
-               <Country>UK</Country>
-               <Site>Site 4</Site>
-               <Building>Main</Building>
-               <Floor>4</Floor>
-               <Room>A</Room>
-               <Desk>A4a.A4.4</Desk>
-            </Location>
+            <evt:Location xmlns:evt="event-logging:3">
+               <evt:Country>UK</evt:Country>
+               <evt:Site>Site 4</evt:Site>
+               <evt:Building>Main</evt:Building>
+               <evt:Floor>4</evt:Floor>
+               <evt:Room>A</evt:Room>
+               <evt:Desk>A4a.A4.4</evt:Desk>
+            </evt:Location>
          </Device>
          <User>
             <Id>user8</Id>
@@ -1537,14 +1537,14 @@
          <Device>
             <IPAddress>4.4.4.4</IPAddress>
             <MACAddress>00-00-00-00-00-00</MACAddress>
-            <Location>
-               <Country>UK</Country>
-               <Site>Site 4</Site>
-               <Building>Main</Building>
-               <Floor>4</Floor>
-               <Room>A</Room>
-               <Desk>A4a.A4.4</Desk>
-            </Location>
+            <evt:Location xmlns:evt="event-logging:3">
+               <evt:Country>UK</evt:Country>
+               <evt:Site>Site 4</evt:Site>
+               <evt:Building>Main</evt:Building>
+               <evt:Floor>4</evt:Floor>
+               <evt:Room>A</evt:Room>
+               <evt:Desk>A4a.A4.4</evt:Desk>
+            </evt:Location>
          </Device>
          <User>
             <Id>user9</Id>
@@ -1577,14 +1577,14 @@
          <Device>
             <IPAddress>4.4.4.4</IPAddress>
             <MACAddress>00-00-00-00-00-00</MACAddress>
-            <Location>
-               <Country>UK</Country>
-               <Site>Site 4</Site>
-               <Building>Main</Building>
-               <Floor>4</Floor>
-               <Room>A</Room>
-               <Desk>A4a.A4.4</Desk>
-            </Location>
+            <evt:Location xmlns:evt="event-logging:3">
+               <evt:Country>UK</evt:Country>
+               <evt:Site>Site 4</evt:Site>
+               <evt:Building>Main</evt:Building>
+               <evt:Floor>4</evt:Floor>
+               <evt:Room>A</evt:Room>
+               <evt:Desk>A4a.A4.4</evt:Desk>
+            </evt:Location>
          </Device>
          <User>
             <Id>user10</Id>

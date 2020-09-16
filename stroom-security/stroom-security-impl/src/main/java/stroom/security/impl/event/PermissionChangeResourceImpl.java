@@ -54,7 +54,7 @@ class PermissionChangeResourceImpl implements PermissionChangeResource {
             result = true;
 
         } else {
-            String url = NodeCallUtil.getBaseEndpointUrl(nodeService, nodeName)
+            String url = NodeCallUtil.getBaseEndpointUrl(nodeInfo, nodeService, nodeName)
                     + ResourcePaths.buildAuthenticatedApiPath(
                     PermissionChangeResource.BASE_PATH,
                     PermissionChangeResource.FIRE_CHANGE_PATH_PART,

@@ -17,17 +17,14 @@
 
 package stroom.pipeline.writer;
 
-import com.google.common.base.Strings;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 import stroom.data.store.api.Store;
 import stroom.data.store.api.Target;
 import stroom.data.store.api.WrappedSegmentOutputStream;
 import stroom.docref.DocRef;
 import stroom.feed.shared.FeedDoc;
+import stroom.meta.api.MetaProperties;
 import stroom.meta.shared.Meta;
 import stroom.meta.shared.MetaFields;
-import stroom.meta.api.MetaProperties;
 import stroom.pipeline.destination.Destination;
 import stroom.pipeline.errorhandler.ErrorReceiverProxy;
 import stroom.pipeline.errorhandler.ProcessException;
@@ -46,6 +43,10 @@ import stroom.pipeline.task.ProcessStatisticsFactory.ProcessStatistics;
 import stroom.pipeline.task.SupersededOutputHelper;
 import stroom.processor.shared.Processor;
 import stroom.util.shared.Severity;
+
+import com.google.common.base.Strings;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import javax.inject.Inject;
 import java.io.IOException;
@@ -187,31 +188,56 @@ public class StreamAppender extends AbstractAppender {
     private void close() {
         // Only do something if an output stream was used.
         if (streamTarget != null) {
-            // Write process meta data.
-            streamTarget.getAttributes().putAll(metaData.getAttributes());
-
-            // Get current process statistics
-            final ProcessStatistics processStatistics = ProcessStatisticsFactory.create(recordCount, errorReceiverProxy);
-            // Diff the current statistics with the last captured statistics.
-            final ProcessStatistics currentStatistics = processStatistics.subtract(lastProcessStatistics);
-            // Set the last statistics.
-            lastProcessStatistics = processStatistics;
-
-            // Write statistics meta data.
-            currentStatistics.write(streamTarget.getAttributes());
-
-            // Overwrite the actual output record count.
-            streamTarget.getAttributes().put(MetaFields.REC_WRITE.getName(), String.valueOf(count));
-
-            // Close the stream target.
-            try {
-                if (supersededOutputHelper.isSuperseded()) {
+            // Clear interrupted flag if set.
+            final boolean interrupted = Thread.interrupted();
+            if (interrupted) {
+                try {
+                    // Delete the target.
                     streamStore.deleteTarget(streamTarget);
-                } else {
-                    streamTarget.close();
+
+                    // Log the error.
+                    fatal("Terminated");
+
+                } finally {
+                    // Keep interrupting.
+                    Thread.currentThread().interrupt();
                 }
-            } catch (final IOException | RuntimeException e) {
-                LOGGER.error(e.getMessage(), e);
+
+            } else {
+
+                // Write process meta data.
+                streamTarget.getAttributes().putAll(metaData.getAttributes());
+
+                // Get current process statistics
+                final ProcessStatistics processStatistics = ProcessStatisticsFactory.create(recordCount, errorReceiverProxy);
+                // Diff the current statistics with the last captured statistics.
+                final ProcessStatistics currentStatistics = processStatistics.subtract(lastProcessStatistics);
+                // Set the last statistics.
+                lastProcessStatistics = processStatistics;
+
+                // Write statistics meta data.
+                currentStatistics.write(streamTarget.getAttributes());
+
+                // Overwrite the actual output record count.
+                streamTarget.getAttributes().put(MetaFields.REC_WRITE.getName(), String.valueOf(count));
+
+                // Close the stream target.
+                try {
+                    if (supersededOutputHelper.isSuperseded()) {
+                        streamStore.deleteTarget(streamTarget);
+                    } else {
+                        streamTarget.close();
+                    }
+                } catch (final IOException | RuntimeException e) {
+                    try {
+                        LOGGER.debug(e.getMessage(), e);
+                        // Log the error.
+                        fatal(e.getMessage());
+                    } finally {
+                        // Delete the output.
+                        streamStore.deleteTarget(streamTarget);
+                    }
+                }
             }
         }
     }
@@ -263,7 +289,7 @@ public class StreamAppender extends AbstractAppender {
 
     @PipelineProperty(description = "Choose if you want to split individual records into separate output streams.",
             defaultValue = "false",
-    displayPriority = 6)
+            displayPriority = 6)
     public void setSplitRecords(final boolean splitRecords) {
         super.setSplitRecords(splitRecords);
     }

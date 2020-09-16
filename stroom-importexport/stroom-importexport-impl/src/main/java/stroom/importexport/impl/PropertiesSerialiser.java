@@ -31,7 +31,12 @@ public final class PropertiesSerialiser {
     public static void write(final Properties properties, final OutputStream out)
             throws IOException {
         try (final BufferedWriter bw = new BufferedWriter(new OutputStreamWriter(out, "8859_1"))) {
-            final List<String> keys = properties.keySet().stream().map(Object::toString).sorted(Comparator.naturalOrder()).collect(Collectors.toList());
+            final List<String> keys = properties
+                    .keySet()
+                    .stream()
+                    .map(Object::toString)
+                    .sorted()
+                    .collect(Collectors.toList());
 
             for (String key : keys) {
                 String val = properties.getProperty(key);

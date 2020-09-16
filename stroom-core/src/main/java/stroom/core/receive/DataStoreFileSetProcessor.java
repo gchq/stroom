@@ -24,15 +24,16 @@ import stroom.meta.api.StandardHeaderArguments;
 import stroom.meta.statistics.api.MetaStatistics;
 import stroom.proxy.repo.ErrorFileUtil;
 import stroom.proxy.repo.FileSet;
+import stroom.proxy.repo.FileSetKey;
 import stroom.proxy.repo.FileSetProcessor;
 import stroom.proxy.repo.ProxyFileHandler;
 import stroom.receive.common.StreamTargetStroomStreamHandler;
 import stroom.task.api.TaskContextFactory;
 import stroom.util.io.BufferFactory;
-import stroom.util.logging.LambdaLogUtil;
 import stroom.util.logging.LambdaLogger;
 import stroom.util.logging.LambdaLoggerFactory;
 import stroom.util.logging.LogExecutionTime;
+import stroom.util.logging.LogUtil;
 
 import javax.inject.Inject;
 import java.io.IOException;
@@ -41,6 +42,7 @@ import java.nio.file.Path;
 import java.util.ArrayList;
 import java.util.Comparator;
 import java.util.List;
+import java.util.Optional;
 import java.util.Set;
 import java.util.stream.Collectors;
 
@@ -82,24 +84,36 @@ public final class DataStoreFileSetProcessor implements FileSetProcessor {
         if (fileSet.getFiles().size() > 0) {
             final LogExecutionTime logExecutionTime = new LogExecutionTime();
 
-            final String feedName = fileSet.getFeed();
-            taskContextFactory.context("Processing set - " + feedName, taskContext -> {
-                LOGGER.info(LambdaLogUtil.message("processFeedFiles() - Started {} ({} Files)", feedName, fileSet.getFiles().size()));
+            final FileSetKey key = fileSet.getKey();
+            taskContextFactory.context("Processing set - " + key, taskContext -> {
+                LOGGER.info(() -> LogUtil.message("processFeedFiles() - Started {} ({} Files)",
+                        key, fileSet.getFiles().size()));
 
                 // Sort the files in the file set so there is some consistency to processing.
                 fileSet.getFiles().sort(Comparator.comparing(p -> p.getFileName().toString()));
-                LOGGER.debug(LambdaLogUtil.message("process() - {} {}", feedName, fileSet.getFiles()));
+                LOGGER.debug(() -> LogUtil.message("process() - {} {}", key, fileSet.getFiles()));
+
+                final String feedName = key.getFeedName();
+
+                String typeName = Optional.ofNullable(key.getTypeName())
+                        .map(String::trim)
+                        .orElse("");
+                if (typeName.isEmpty()) {
+                    // Get the default type name for this feed if none has been provided.
+                    typeName = feedProperties.getStreamTypeName(feedName);
+                }
 
                 // We don't want to aggregate reference feeds.
                 final boolean oneByOne = feedProperties.isReference(feedName) || !aggregate;
 
-                List<StreamTargetStroomStreamHandler> handlers = openStreamHandlers(feedName);
+                List<StreamTargetStroomStreamHandler> handlers = openStreamHandlers(feedName, typeName, oneByOne);
                 List<Path> deleteFileList = new ArrayList<>();
 
                 long sequence = 1;
                 long count = 0;
 
-                final StreamProgressMonitor streamProgressMonitor = new StreamProgressMonitor("ProxyAggregationTask");
+                final StreamProgressMonitor streamProgressMonitor = new StreamProgressMonitor(
+                        "ProxyAggregationTask");
 
                 for (final Path file : fileSet.getFiles()) {
                     count++;
@@ -119,7 +133,7 @@ public final class DataStoreFileSetProcessor implements FileSetProcessor {
 
                             // Start new batch
                             deleteFileList = new ArrayList<>();
-                            handlers = openStreamHandlers(feedName);
+                            handlers = openStreamHandlers(feedName, typeName, oneByOne);
                             sequence = 1;
                         }
 
@@ -133,22 +147,18 @@ public final class DataStoreFileSetProcessor implements FileSetProcessor {
                 }
                 closeStreamHandlers(handlers);
                 cleanup(deleteFileList);
-                LOGGER.info(LambdaLogUtil.message("processFeedFiles() - Completed {} in {}", feedName, logExecutionTime));
+                LOGGER.info(LogUtil.message("processFeedFiles() - Completed {} in {}", feedName, logExecutionTime));
             }).run();
         }
     }
 
-    private List<StreamTargetStroomStreamHandler> openStreamHandlers(final String feedName) {
-        // We don't want to aggregate reference feeds.
-        final boolean oneByOne = feedProperties.isReference(feedName) || !aggregate;
-
+    private List<StreamTargetStroomStreamHandler> openStreamHandlers(final String feedName, final String typeName, final boolean oneByOne) {
         final StreamTargetStroomStreamHandler streamTargetStroomStreamHandler = new StreamTargetStroomStreamHandler(store,
-                feedProperties, metaStatistics, feedName, feedProperties.getStreamTypeName(feedName));
-
-        streamTargetStroomStreamHandler.setOneByOne(oneByOne);
+                feedProperties, metaStatistics, feedName, typeName, oneByOne);
 
         final AttributeMap globalMetaMap = new AttributeMap();
         globalMetaMap.put(StandardHeaderArguments.FEED, feedName);
+        globalMetaMap.put(StandardHeaderArguments.TYPE, typeName);
 
         streamTargetStroomStreamHandler.handleHeader(globalMetaMap);
 

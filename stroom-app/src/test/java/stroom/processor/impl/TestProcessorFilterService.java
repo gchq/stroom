@@ -25,7 +25,6 @@ import stroom.meta.shared.MetaFields;
 import stroom.pipeline.shared.PipelineDoc;
 import stroom.processor.api.ProcessorFilterService;
 import stroom.processor.api.ProcessorService;
-import stroom.processor.shared.Processor;
 import stroom.processor.shared.ProcessorFilter;
 import stroom.processor.shared.ProcessorFilterFields;
 import stroom.processor.shared.QueryData;
@@ -39,7 +38,6 @@ import stroom.util.shared.ResultPage;
 import org.junit.jupiter.api.Test;
 
 import javax.inject.Inject;
-import java.util.List;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
@@ -49,30 +47,30 @@ class TestProcessorFilterService extends AbstractCoreIntegrationTest {
     @Inject
     private ProcessorFilterService processorFilterService;
 
-    @Override
-    protected void onBefore() {
-        super.onBefore();
-        deleteAll();
-    }
-
-    @Override
-    protected void onAfter() {
-        super.onAfter();
-        deleteAll();
-    }
-
-    private void deleteAll() {
-        final List<ProcessorFilter> filters = processorFilterService
-                .find(new ExpressionCriteria()).getValues();
-        for (final ProcessorFilter filter : filters) {
-            processorFilterService.delete(filter.getId());
-        }
-
-        final List<Processor> streamProcessors = processorService.find(new ExpressionCriteria()).getValues();
-        for (final Processor processor : streamProcessors) {
-            processorService.delete(processor.getId());
-        }
-    }
+//    @Override
+//    protected void onBefore() {
+//        super.onBefore();
+//        deleteAll();
+//    }
+//
+//    @Override
+//    protected void onAfter() {
+//        super.onAfter();
+//        deleteAll();
+//    }
+//
+//    private void deleteAll() {
+//        final List<ProcessorFilter> filters = processorFilterService
+//                .find(new ExpressionCriteria()).getValues();
+//        for (final ProcessorFilter filter : filters) {
+//            processorFilterService.delete(filter.getId());
+//        }
+//
+//        final List<Processor> streamProcessors = processorService.find(new ExpressionCriteria()).getValues();
+//        for (final Processor processor : streamProcessors) {
+//            processorService.delete(processor.getId());
+//        }
+//    }
 
     @Test
     void testBasic() {

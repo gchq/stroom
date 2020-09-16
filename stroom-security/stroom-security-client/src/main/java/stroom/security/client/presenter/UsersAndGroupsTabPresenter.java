@@ -16,12 +16,6 @@
 
 package stroom.security.client.presenter;
 
-import com.google.gwt.core.client.GWT;
-import com.google.gwt.dom.client.NativeEvent;
-import com.google.gwt.event.shared.HasHandlers;
-import com.google.inject.Provider;
-import com.google.web.bindery.event.shared.EventBus;
-import com.gwtplatform.mvp.client.MyPresenterWidget;
 import stroom.alert.client.event.ConfirmEvent;
 import stroom.dispatch.client.Rest;
 import stroom.dispatch.client.RestFactory;
@@ -34,6 +28,13 @@ import stroom.svg.client.SvgPresets;
 import stroom.widget.button.client.ButtonView;
 import stroom.widget.popup.client.presenter.DefaultPopupUiHandlers;
 import stroom.widget.popup.client.presenter.PopupUiHandlers;
+
+import com.google.gwt.core.client.GWT;
+import com.google.gwt.dom.client.NativeEvent;
+import com.google.gwt.event.shared.HasHandlers;
+import com.google.inject.Provider;
+import com.google.web.bindery.event.shared.EventBus;
+import com.gwtplatform.mvp.client.MyPresenterWidget;
 
 import javax.inject.Inject;
 
@@ -54,9 +55,12 @@ public class UsersAndGroupsTabPresenter extends
 
     @Inject
     public UsersAndGroupsTabPresenter(final EventBus eventBus,
-                                      final AdvancedUserListPresenter listPresenter, final Provider<UserEditPresenter> userEditPresenterProvider, final Provider<GroupEditPresenter> groupEditPresenterProvider,
+                                      final AdvancedUserListPresenter listPresenter,
+                                      final Provider<UserEditPresenter> userEditPresenterProvider,
+                                      final Provider<GroupEditPresenter> groupEditPresenterProvider,
                                       final ManageNewEntityPresenter newPresenter,
-                                      final RestFactory restFactory, final ClientSecurityContext securityContext) {
+                                      final RestFactory restFactory,
+                                      final ClientSecurityContext securityContext) {
         super(eventBus, listPresenter.getView());
         this.listPresenter = listPresenter;
         this.userEditPresenterProvider = userEditPresenterProvider;

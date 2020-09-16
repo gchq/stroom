@@ -2,8 +2,6 @@ package stroom.data.zip;
 
 import org.apache.commons.compress.archivers.zip.ZipArchiveEntry;
 import org.apache.commons.compress.archivers.zip.ZipFile;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 
 import java.io.Closeable;
 import java.io.IOException;
@@ -19,17 +17,12 @@ public class StroomZipFile implements Closeable {
     public final static StroomZipEntry SINGLE_META_ENTRY = new StroomZipEntry(null, SINGLE_ENTRY_ZIP_BASE_NAME,
             StroomZipFileType.Meta);
 
-    private static Logger LOGGER = LoggerFactory.getLogger(StroomZipFile.class);
-
     private final Path file;
     private ZipFile zipFile;
-    private RuntimeException openStack;
     private StroomZipNameSet stroomZipNameSet;
-//    private long totalSize = 0;
 
     public StroomZipFile(Path path) {
         this.file = path;
-        openStack = new RuntimeException();
     }
 
     private ZipFile getZipFile() throws IOException {
@@ -56,25 +49,10 @@ public class StroomZipFile implements Closeable {
                     String fileName = entry.getName();
                     stroomZipNameSet.add(fileName);
                 }
-
-//                long entrySize = entry.getSize();
-//                if (entrySize > 0) {
-//                    totalSize += entrySize;
-//                }
-
             }
         }
         return stroomZipNameSet;
     }
-
-//    public Long getTotalSize() throws IOException {
-//        getStroomZipNameSet();
-//        if (totalSize == -1) {
-//            return null;
-//        } else {
-//            return totalSize;
-//        }
-//    }
 
     @Override
     public void close() throws IOException {

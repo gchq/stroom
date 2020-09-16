@@ -16,12 +16,16 @@
 
 package stroom.app;
 
+import stroom.app.commands.CreateAccountCommand;
 import stroom.app.commands.DbMigrationCommand;
+import stroom.app.commands.ManageUsersCommand;
+import stroom.app.commands.ResetPasswordCommand;
 import stroom.app.guice.AppModule;
 import stroom.config.app.AppConfig;
 import stroom.config.app.Config;
 import stroom.config.global.impl.ConfigMapper;
 import stroom.config.global.impl.validation.ConfigValidator;
+import stroom.config.global.impl.validation.ValidationModule;
 import stroom.dropwizard.common.DelegatingExceptionMapper;
 import stroom.dropwizard.common.Filters;
 import stroom.dropwizard.common.HealthChecks;
@@ -57,6 +61,7 @@ import javax.inject.Inject;
 import javax.servlet.DispatcherType;
 import javax.servlet.FilterRegistration;
 import javax.servlet.SessionCookieConfig;
+import javax.validation.ValidatorFactory;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
@@ -93,14 +98,23 @@ public class App extends Application<Config> {
 
     private final Path configFile;
 
+    // This is an additional injector for use only with javax.validation. It means we can do validation
+    // of the yaml file before our main injector has been created and also so we can use our custom
+    // validation annotations with REST services (see initialize() method). It feels a bit wrong having two
+    // injectors running but not sure how else we could do this unless Guice is not used for the validators.
+    private final Injector validationOnlyInjector;
+
     // Needed for DropwizardExtensionsSupport
     public App() {
         configFile = Paths.get("PATH_NOT_SUPPLIED");
+        validationOnlyInjector = createValidationInjector();
     }
+
 
     App(final Path configFile) {
         super();
         this.configFile = configFile;
+        validationOnlyInjector = createValidationInjector();
     }
 
     public static void main(final String[] args) throws Exception {
@@ -136,18 +150,31 @@ public class App extends Application<Config> {
                 "new-ui",
                 ResourcePaths.SINGLE_PAGE_PREFIX));
 
+        addCliCommands(bootstrap);
+
+        // If we want to use javax.validation on our rest resources with our own custom validation annotations
+        // then we need to set the ValidatorFactory. As our main Guice Injector is not available yet we need to
+        // create one just for the REST validation
+        bootstrap.setValidatorFactory(validationOnlyInjector.getInstance(ValidatorFactory.class));
+    }
+
+    private void addCliCommands(final Bootstrap<Config> bootstrap) {
         // Add a DW Command so we can run the full migration without running the
         // http server
         bootstrap.addCommand(new DbMigrationCommand(configFile));
-
-        // If we want to use javax.validation on our rest resources with our own custom validation annotations
-        // then we will need to do something with bootstrap.setValidatorFactory()
-        // and our CustomConstraintValidatorFactory
+        bootstrap.addCommand(new CreateAccountCommand(configFile));
+        bootstrap.addCommand(new ResetPasswordCommand(configFile));
+        bootstrap.addCommand(new ManageUsersCommand(configFile));
     }
 
     @Override
     public void run(final Config configuration, final Environment environment) {
+        Objects.requireNonNull(configFile, () ->
+                LogUtil.message("No config YAML file supplied in arguments"));
+
         LOGGER.info("Using application configuration file {}", configFile.toAbsolutePath().normalize());
+
+        validateAppConfig(configuration, configFile);
 
         // Turn on Jersey logging of request/response payloads
         // I can't seem to get this to work unless Level is SEVERE
@@ -181,15 +208,8 @@ public class App extends Application<Config> {
         LOGGER.info("Starting Stroom Application ({})", getNodeName(configuration.getAppConfig()));
 
         final AppModule appModule = new AppModule(configuration, environment, configFile);
-        final Injector injector = Guice.createInjector(appModule);
 
-        // Ideally we would do the validation before all the guice binding but the validation
-        // relies on ConfigMapper and the various custom validator impls being injected by guice.
-        // As long as we do this as the first thing after the injector is created then it is
-        // only eager singletons that will have been spun up.
-        validateAppConfig(injector, configuration.getAppConfig());
-
-        injector.injectMembers(this);
+        Guice.createInjector(appModule).injectMembers(this);
 
         // Add health checks
         healthChecks.register();
@@ -215,7 +235,6 @@ public class App extends Application<Config> {
         warnAboutDefaultOpenIdCreds(configuration);
 
         showBuildInfo();
-
     }
 
     private void showBuildInfo() {
@@ -225,8 +244,8 @@ public class App extends Application<Config> {
     }
 
     private void warnAboutDefaultOpenIdCreds(Config configuration) {
-        if (configuration.getAppConfig().getAuthenticationConfig().isUseDefaultOpenIdCredentials()) {
-            String propPath = configuration.getAppConfig().getAuthenticationConfig().getFullPath("useDefaultOpenIdCredentials");
+        if (configuration.getAppConfig().getSecurityConfig().getIdentityConfig().isUseDefaultOpenIdCredentials()) {
+            String propPath = configuration.getAppConfig().getSecurityConfig().getIdentityConfig().getFullPath("useDefaultOpenIdCredentials");
             LOGGER.warn("\n" +
                     "\n  -----------------------------------------------------------------------------" +
                     "\n  " +
@@ -249,15 +268,13 @@ public class App extends Application<Config> {
                 : null;
     }
 
-    private void validateAppConfig(final Injector injector, final AppConfig appConfig) {
+    private void validateAppConfig(final Config config, final Path configFile) {
 
-        // Inject this way rather than using injectMembers so we can avoid instantiating
-        // too many classes before running our validation
+        final AppConfig appConfig = config.getAppConfig();
 
-        // We need to get an unused instance of ConfigMapper so it decorates the AppConfig tree.
-        injector.getInstance(ConfigMapper.class);
+        ConfigMapper.decorateWithPropertyPaths(appConfig);
 
-        final ConfigValidator configValidator = injector.getInstance(ConfigValidator.class);
+        final ConfigValidator configValidator = validationOnlyInjector.getInstance(ConfigValidator.class);
 
         LOGGER.info("Validating application configuration file {}",
                 configFile.toAbsolutePath().normalize().toString());
@@ -290,15 +307,15 @@ public class App extends Application<Config> {
                 } else {
                     // NOTE if you are getting here while running in IJ then you have probable not run
                     // local.yaml.sh
-                    throw new IllegalArgumentException(LogUtil.message(
-                            "YAML config file [{}] from arguments [{}] is not a valid file.\n" +
+                    LOGGER.warn("YAML config file [{}] from arguments [{}] is not a valid file.\n" +
                                     "You need to supply a valid stroom configuration YAML file.",
-                            yamlFile, Arrays.asList(args)));
+                            yamlFile, Arrays.asList(args));
                 }
             }
         }
-        throw new IllegalArgumentException(LogUtil.message("Could not extract YAML config file from arguments [{}]",
-                Arrays.asList(args)));
+        LOGGER.warn("Could not extract YAML config file from arguments [{}]",
+                Arrays.asList(args));
+        return null;
     }
 
     private static void configureSessionHandling(final Environment environment) {
@@ -405,5 +422,9 @@ public class App extends Application<Config> {
 
         LOGGER.warn(msg);
         contentSecurityConfig.setContentSecurityPolicy(SUPER_DEV_CONTENT_SECURITY_POLICY_VALUE);
+    }
+
+    private Injector createValidationInjector() {
+        return Guice.createInjector(new ValidationModule());
     }
 }

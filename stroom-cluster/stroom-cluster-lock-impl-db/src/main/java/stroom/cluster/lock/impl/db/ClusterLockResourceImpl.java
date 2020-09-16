@@ -73,7 +73,7 @@ class ClusterLockResourceImpl implements ClusterLockResource {
     }
 
     private Boolean executeRemotely(final String subPath, final String nodeName, final ClusterLockKey key) {
-        final String url = NodeCallUtil.getBaseEndpointUrl(nodeService, nodeName)
+        final String url = NodeCallUtil.getBaseEndpointUrl(nodeInfo, nodeService, nodeName)
                 + ResourcePaths.buildAuthenticatedApiPath(
                 ClusterLockResource.BASE_PATH,
                 subPath,

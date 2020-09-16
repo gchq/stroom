@@ -27,7 +27,8 @@ BEGIN
     IF EXISTS (
             SELECT NULL
             FROM INFORMATION_SCHEMA.TABLES
-            WHERE TABLE_NAME = 'USR') THEN
+            WHERE TABLE_SCHEMA = database()
+            AND TABLE_NAME = 'USR') THEN
 
         RENAME TABLE USR TO OLD_USR;
     END IF;
@@ -35,7 +36,8 @@ BEGIN
     IF EXISTS (
             SELECT NULL
             FROM INFORMATION_SCHEMA.TABLES
-            WHERE TABLE_NAME = 'OLD_USR') THEN
+            WHERE TABLE_SCHEMA = database()
+            AND TABLE_NAME = 'OLD_USR') THEN
 
         INSERT INTO stroom_user (
             id,

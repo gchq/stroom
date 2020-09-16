@@ -17,11 +17,20 @@
 
 package stroom.pipeline.refdata.store.offheapstore.lmdb;
 
+import stroom.pipeline.refdata.store.offheapstore.lmdb.serde.Serde;
+import stroom.pipeline.refdata.util.ByteBufferPool;
+import stroom.pipeline.refdata.util.ByteBufferUtils;
+import stroom.pipeline.refdata.util.PooledByteBuffer;
+import stroom.pipeline.refdata.util.PooledByteBufferPair;
+import stroom.util.logging.LambdaLogger;
+import stroom.util.logging.LambdaLoggerFactory;
+import stroom.util.logging.LogUtil;
+
 import com.google.common.base.Preconditions;
 import io.vavr.Tuple;
 import io.vavr.Tuple2;
 import org.lmdbjava.Cursor;
-import org.lmdbjava.CursorIterator;
+import org.lmdbjava.CursorIterable;
 import org.lmdbjava.Dbi;
 import org.lmdbjava.DbiFlags;
 import org.lmdbjava.Env;
@@ -31,15 +40,6 @@ import org.lmdbjava.PutFlags;
 import org.lmdbjava.Txn;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import stroom.pipeline.refdata.store.offheapstore.lmdb.serde.Serde;
-import stroom.pipeline.refdata.util.ByteBufferPool;
-import stroom.pipeline.refdata.util.ByteBufferUtils;
-import stroom.pipeline.refdata.util.PooledByteBuffer;
-import stroom.pipeline.refdata.util.PooledByteBufferPair;
-import stroom.util.logging.LambdaLogUtil;
-import stroom.util.logging.LambdaLogger;
-import stroom.util.logging.LambdaLoggerFactory;
-import stroom.util.logging.LogUtil;
 
 import java.nio.ByteBuffer;
 import java.util.Collection;
@@ -111,9 +111,10 @@ public abstract class AbstractLmdbDb<K, V> implements LmdbDb {
         int keySerdeCapacity = keySerde.getBufferCapacity();
         int envMaxKeySize = lmdbEnvironment.getMaxKeySize();
         if (keySerdeCapacity > envMaxKeySize) {
-            LOGGER.debug("Key serde {} capacity {} is greater than the maximum key size for the environment {}. " +
+            LAMBDA_LOGGER.debug(() -> LogUtil.message("Key serde {} capacity {} is greater than the maximum " +
+                            "key size for the environment {}. " +
                             "The max environment key size {} will be used instead.",
-                    keySerde.getClass().getName(), keySerdeCapacity, envMaxKeySize, envMaxKeySize);
+                    keySerde.getClass().getName(), keySerdeCapacity, envMaxKeySize, envMaxKeySize));
         }
         this.keyBufferCapacity = Math.min(envMaxKeySize, keySerdeCapacity);
         this.valueBufferCapacity = Math.min(Serde.DEFAULT_CAPACITY, valueSerde.getBufferCapacity());
@@ -196,11 +197,14 @@ public abstract class AbstractLmdbDb<K, V> implements LmdbDb {
      */
     public Optional<V> get(Txn<ByteBuffer> txn, final K key) {
         try (PooledByteBuffer pooledKeyBuffer = getPooledKeyBuffer()) {
+            // TODO @AT wrap this with a try catch to report the serde error
             keySerde.serialize(pooledKeyBuffer.getByteBuffer(), key);
             ByteBuffer valueBuffer = lmdbDbi.get(txn, pooledKeyBuffer.getByteBuffer());
-            LAMBDA_LOGGER.trace(LambdaLogUtil.message("Get returned value [{}] for key [{}]",
-                    ByteBufferUtils.byteBufferInfo(valueBuffer),
-                    ByteBufferUtils.byteBufferInfo(pooledKeyBuffer.getByteBuffer())));
+            if (LOGGER.isTraceEnabled()) {
+                LOGGER.trace("Get returned value [{}] for key [{}]",
+                        ByteBufferUtils.byteBufferInfo(valueBuffer),
+                        ByteBufferUtils.byteBufferInfo(pooledKeyBuffer.getByteBuffer()));
+            }
 
             return Optional.ofNullable(valueBuffer)
                     .map(valueSerde::deserialize);
@@ -233,9 +237,11 @@ public abstract class AbstractLmdbDb<K, V> implements LmdbDb {
     public Optional<ByteBuffer> getAsBytes(Txn<ByteBuffer> txn, final ByteBuffer keyBuffer) {
         try {
             final ByteBuffer valueBuffer = lmdbDbi.get(txn, keyBuffer);
-            LAMBDA_LOGGER.trace(LambdaLogUtil.message("Get returned value [{}] for key [{}]",
-                    ByteBufferUtils.byteBufferInfo(valueBuffer),
-                    ByteBufferUtils.byteBufferInfo(keyBuffer)));
+            if (LOGGER.isTraceEnabled()) {
+                LOGGER.trace("Get returned value [{}] for key [{}]",
+                        ByteBufferUtils.byteBufferInfo(valueBuffer),
+                        ByteBufferUtils.byteBufferInfo(keyBuffer));
+            }
 
             return Optional.ofNullable(valueBuffer);
         } catch (RuntimeException e) {
@@ -297,11 +303,11 @@ public abstract class AbstractLmdbDb<K, V> implements LmdbDb {
 
     public <T> T streamEntriesAsBytes(final Txn<ByteBuffer> txn,
                                       final KeyRange<ByteBuffer> keyRange,
-                                      final Function<Stream<CursorIterator.KeyVal<ByteBuffer>>, T> streamFunction) {
+                                      final Function<Stream<CursorIterable.KeyVal<ByteBuffer>>, T> streamFunction) {
 
-        try (CursorIterator<ByteBuffer> cursorIterator = getLmdbDbi().iterate(txn, keyRange)) {
-            final Stream<CursorIterator.KeyVal<ByteBuffer>> stream =
-                    StreamSupport.stream(cursorIterator.iterable().spliterator(), false);
+        try (CursorIterable<ByteBuffer> cursorIterable = getLmdbDbi().iterate(txn, keyRange)) {
+            final Stream<CursorIterable.KeyVal<ByteBuffer>> stream =
+                    StreamSupport.stream(cursorIterable.spliterator(), false);
 
             return streamFunction.apply(stream);
         }
@@ -327,10 +333,10 @@ public abstract class AbstractLmdbDb<K, V> implements LmdbDb {
 
     public void forEachEntryAsBytes(final Txn<ByteBuffer> txn,
                                     final KeyRange<ByteBuffer> keyRange,
-                                    final Consumer<CursorIterator.KeyVal<ByteBuffer>> entryConsumer) {
+                                    final Consumer<CursorIterable.KeyVal<ByteBuffer>> entryConsumer) {
 
-        try (CursorIterator<ByteBuffer> cursorIterator = getLmdbDbi().iterate(txn, keyRange)) {
-            for (CursorIterator.KeyVal<ByteBuffer> keyVal : cursorIterator.iterable()) {
+        try (CursorIterable<ByteBuffer> cursorIterable = getLmdbDbi().iterate(txn, keyRange)) {
+            for (CursorIterable.KeyVal<ByteBuffer> keyVal : cursorIterable) {
                 entryConsumer.accept(keyVal);
             }
         }
@@ -414,10 +420,12 @@ public abstract class AbstractLmdbDb<K, V> implements LmdbDb {
             } else {
                 didPutSucceed = lmdbDbi.put(writeTxn, keyBuffer, valueBuffer, PutFlags.MDB_NOOVERWRITE);
             }
-            LAMBDA_LOGGER.trace(LambdaLogUtil.message("Put returned {} for key [{}], value [{}]",
-                    didPutSucceed,
-                    ByteBufferUtils.byteBufferInfo(keyBuffer),
-                    ByteBufferUtils.byteBufferInfo(valueBuffer)));
+            if (LOGGER.isTraceEnabled()) {
+                LOGGER.trace("Put returned {} for key [{}], value [{}]",
+                        didPutSucceed,
+                        ByteBufferUtils.byteBufferInfo(keyBuffer),
+                        ByteBufferUtils.byteBufferInfo(valueBuffer));
+            }
 
             return didPutSucceed;
         } catch (RuntimeException e) {
@@ -513,7 +521,7 @@ public abstract class AbstractLmdbDb<K, V> implements LmdbDb {
 
             keySerde.serialize(pooledKeyBuffer.getByteBuffer(), key);
             boolean result = lmdbDbi.delete(writeTxn, pooledKeyBuffer.getByteBuffer());
-            LAMBDA_LOGGER.trace(LambdaLogUtil.message("delete({}) returned {}", key, result));
+            LOGGER.trace("delete({}) returned {}", key, result);
             writeTxn.commit();
             return result;
         } catch (RuntimeException e) {
@@ -525,7 +533,7 @@ public abstract class AbstractLmdbDb<K, V> implements LmdbDb {
         try (final PooledByteBuffer pooledKeyBuffer = getPooledKeyBuffer()) {
             keySerde.serialize(pooledKeyBuffer.getByteBuffer(), key);
             boolean result = lmdbDbi.delete(writeTxn, pooledKeyBuffer.getByteBuffer());
-            LAMBDA_LOGGER.trace(LambdaLogUtil.message("delete({}) returned {}", key, result));
+            LOGGER.trace("delete({}) returned {}", key, result);
             return result;
         } catch (RuntimeException e) {
             throw new RuntimeException(LogUtil.message("Error deleting key {}", key), e);
@@ -535,8 +543,9 @@ public abstract class AbstractLmdbDb<K, V> implements LmdbDb {
     public boolean delete(final ByteBuffer keyBuffer) {
         try (final Txn<ByteBuffer> writeTxn = lmdbEnvironment.txnWrite()) {
             boolean result = lmdbDbi.delete(writeTxn, keyBuffer);
-            LAMBDA_LOGGER.trace(LambdaLogUtil.message("delete({}) returned {}",
-                    ByteBufferUtils.byteBufferInfo(keyBuffer), result));
+            if (LOGGER.isTraceEnabled()) {
+                LOGGER.trace("delete({}) returned {}", ByteBufferUtils.byteBufferInfo(keyBuffer), result);
+            }
             writeTxn.commit();
             return result;
         } catch (RuntimeException e) {
@@ -553,8 +562,9 @@ public abstract class AbstractLmdbDb<K, V> implements LmdbDb {
     public boolean delete(final Txn<ByteBuffer> writeTxn, final ByteBuffer keyBuffer) {
         try {
             boolean result = lmdbDbi.delete(writeTxn, keyBuffer);
-            LAMBDA_LOGGER.trace(LambdaLogUtil.message("delete(txn, {}) returned {}",
-                    ByteBufferUtils.byteBufferInfo(keyBuffer), result));
+            if (LOGGER.isTraceEnabled()) {
+                LOGGER.trace("delete(txn, {}) returned {}", ByteBufferUtils.byteBufferInfo(keyBuffer), result);
+            }
             return result;
         } catch (RuntimeException e) {
             throw new RuntimeException(LogUtil.message("Error deleting key {}",
@@ -684,7 +694,7 @@ public abstract class AbstractLmdbDb<K, V> implements LmdbDb {
         return valueSerde.deserialize(valueBuffer);
     }
 
-    public Tuple2<K, V> deserializeKeyVal(final CursorIterator.KeyVal<ByteBuffer> keyVal) {
+    public Tuple2<K, V> deserializeKeyVal(final CursorIterable.KeyVal<ByteBuffer> keyVal) {
         return Tuple.of(deserializeKey(keyVal.key()), deserializeValue(keyVal.val()));
     }
 

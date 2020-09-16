@@ -23,10 +23,10 @@ import stroom.dashboard.client.main.ComponentRegistry.ComponentType;
 import stroom.dashboard.client.main.Components;
 import stroom.dashboard.client.main.IndexConstants;
 import stroom.dashboard.client.table.TablePresenter;
+import stroom.dashboard.client.table.TableRow;
 import stroom.dashboard.shared.ComponentConfig;
 import stroom.dashboard.shared.ComponentSettings;
 import stroom.dashboard.shared.Field;
-import stroom.dashboard.shared.Row;
 import stroom.dashboard.shared.TextComponentSettings;
 import stroom.data.shared.DataRange;
 import stroom.dispatch.client.Rest;
@@ -267,18 +267,17 @@ public class TextPresenter extends AbstractComponentPresenter<TextPresenter.Text
             currentHighlightStrings = null;
 
             if (tablePresenter != null) {
-                final List<Field> fields = tablePresenter.getCurrentFields();
-                final List<Row> selection = tablePresenter.getSelectedRows();
+                final List<TableRow> selection = tablePresenter.getSelectedRows();
                 if (selection != null && selection.size() == 1) {
                     // Just use the first row.
-                    final Row selected = selection.get(0);
-                    currentStreamId = getLong(textSettings.getStreamIdField(), fields, selected);
-                    currentPartNo = getLong(textSettings.getPartNoField(), fields, selected);
-                    currentRecordNo = getLong(textSettings.getRecordNoField(), fields, selected);
-                    final Long currentLineFrom = getLong(textSettings.getLineFromField(), fields, selected);
-                    final Long currentColFrom = getLong(textSettings.getColFromField(), fields, selected);
-                    final Long currentLineTo = getLong(textSettings.getLineToField(), fields, selected);
-                    final Long currentColTo = getLong(textSettings.getColToField(), fields, selected);
+                    final TableRow selected = selection.get(0);
+                    currentStreamId = getLong(textSettings.getStreamIdField(), selected);
+                    currentPartNo = getLong(textSettings.getPartNoField(), selected);
+                    currentRecordNo = getLong(textSettings.getRecordNoField(), selected);
+                    final Long currentLineFrom = getLong(textSettings.getLineFromField(), selected);
+                    final Long currentColFrom = getLong(textSettings.getColFromField(), selected);
+                    final Long currentLineTo = getLong(textSettings.getLineToField(), selected);
+                    final Long currentColTo = getLong(textSettings.getColToField(), selected);
 
                     if (currentStreamId != null) {
                         DataRange dataRange = null;
@@ -376,35 +375,42 @@ public class TextPresenter extends AbstractComponentPresenter<TextPresenter.Text
         }
     }
 
-    private Long getLong(final Field field, List<Field> fields, final Row row) {
-        if (field != null && fields != null && row != null) {
-            int index = -1;
+//    private Long getLong(final Field field, List<Field> fields, final Row row) {
+//        if (field != null && fields != null && row != null) {
+//            int index = -1;
+//
+//            if (index == -1 && field.getId() != null) {
+//                // Try matching on id alone.
+//                for (int i = 0; i < fields.size(); i++) {
+//                    if (field.getId().equals(fields.get(i).getId())) {
+//                        index = i;
+//                        break;
+//                    }
+//                }
+//            }
+//
+//            if (index == -1 && field.getName() != null) {
+//                // Try matching on name alone.
+//                for (int i = 0; i < fields.size(); i++) {
+//                    if (field.getName().equals(fields.get(i).getName())) {
+//                        index = i;
+//                        break;
+//                    }
+//                }
+//            }
+//
+//            if (index != -1) {
+//                if (row.getValues().size() > index) {
+//                    return getLong(row.getValues().get(index));
+//                }
+//            }
+//        }
+//        return null;
+//    }
 
-            if (index == -1 && field.getId() != null) {
-                // Try matching on id alone.
-                for (int i = 0; i < fields.size(); i++) {
-                    if (field.getId().equals(fields.get(i).getId())) {
-                        index = i;
-                        break;
-                    }
-                }
-            }
-
-            if (index == -1 && field.getName() != null) {
-                // Try matching on name alone.
-                for (int i = 0; i < fields.size(); i++) {
-                    if (field.getName().equals(fields.get(i).getName())) {
-                        index = i;
-                        break;
-                    }
-                }
-            }
-
-            if (index != -1) {
-                if (row.getValues().size() > index) {
-                    return getLong(row.getValues().get(index));
-                }
-            }
+    private Long getLong(final Field field, final TableRow row) {
+        if (field != null && row != null) {
+            return getLong(row.getText(field.getId()));
         }
         return null;
     }

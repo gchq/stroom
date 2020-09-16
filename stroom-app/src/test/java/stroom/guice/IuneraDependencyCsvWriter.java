@@ -2,7 +2,6 @@ package stroom.guice;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import stroom.util.io.FileUtil;
 
 import java.io.BufferedWriter;
 import java.io.Closeable;
@@ -19,7 +18,6 @@ import static org.assertj.core.api.Assertions.fail;
  * https://github.com/iunera/codeanalysis
  */
 class IuneraDependencyCsvWriter implements Closeable {
-
     private static final Logger LOGGER = LoggerFactory.getLogger(IuneraDependencyCsvWriter.class);
 
     private final Class<?> testClass;
@@ -30,8 +28,7 @@ class IuneraDependencyCsvWriter implements Closeable {
         this.testClass = testClass;
 
         try {
-            path = FileUtil.getTempDir().resolve(String.format("DependencyTest_%s.csv", testClass.getSimpleName()));
-
+            path = Files.createTempFile(String.format("DependencyTest_%s", testClass.getSimpleName()), ".csv");
             writer = new BufferedWriter(new OutputStreamWriter(Files.newOutputStream(path)));
             writer.write("creditor,debtor,amount,risk\n");
 

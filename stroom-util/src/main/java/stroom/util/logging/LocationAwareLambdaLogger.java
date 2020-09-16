@@ -109,7 +109,7 @@ public final class LocationAwareLambdaLogger implements LambdaLogger {
             final Instant startTime = Instant.now();
             T result = timedWork.get();
             log(LocationAwareLogger.TRACE_INT,
-                    LambdaLogUtil.message(
+                    () -> LogUtil.message(
                             "Completed [{}] in {}",
                             workDescriptionSupplier.get(),
                             Duration.between(startTime, Instant.now())),
@@ -126,7 +126,7 @@ public final class LocationAwareLambdaLogger implements LambdaLogger {
             final Instant startTime = Instant.now();
             T result = timedWork.get();
             log(LocationAwareLogger.TRACE_INT,
-                    LambdaLogUtil.message(
+                    () -> LogUtil.message(
                             "Completed [{}] in {}",
                             workDescriptionFunction.apply(result),
                             Duration.between(startTime, Instant.now())),
@@ -143,7 +143,7 @@ public final class LocationAwareLambdaLogger implements LambdaLogger {
             final Instant startTime = Instant.now();
             T result = timedWork.get();
             log(LocationAwareLogger.DEBUG_INT,
-                    LambdaLogUtil.message(
+                    () -> LogUtil.message(
                             "Completed [{}] in {}",
                             workDescriptionSupplier.get(),
                             Duration.between(startTime, Instant.now())),
@@ -160,7 +160,7 @@ public final class LocationAwareLambdaLogger implements LambdaLogger {
             final Instant startTime = Instant.now();
             T result = timedWork.get();
             log(LocationAwareLogger.DEBUG_INT,
-                    LambdaLogUtil.message(
+                    () -> LogUtil.message(
                             "Completed [{}] in {}",
                             workDescriptionFunction.apply(result),
                             Duration.between(startTime, Instant.now())),
@@ -177,7 +177,7 @@ public final class LocationAwareLambdaLogger implements LambdaLogger {
             final Instant startTime = Instant.now();
             T result = timedWork.get();
             log(LocationAwareLogger.INFO_INT,
-                    LambdaLogUtil.message(
+                    () -> LogUtil.message(
                             "Completed [{}] in {}",
                             workDescriptionSupplier.get(),
                             Duration.between(startTime, Instant.now())),
@@ -194,7 +194,7 @@ public final class LocationAwareLambdaLogger implements LambdaLogger {
             final Instant startTime = Instant.now();
             T result = timedWork.get();
             log(LocationAwareLogger.INFO_INT,
-                    LambdaLogUtil.message(
+                    () -> LogUtil.message(
                             "Completed [{}] in {}",
                             workDescriptionFunction.apply(result),
                             Duration.between(startTime, Instant.now())),
@@ -211,7 +211,7 @@ public final class LocationAwareLambdaLogger implements LambdaLogger {
             final Instant startTime = Instant.now();
             timedWork.run();
             log(LocationAwareLogger.TRACE_INT,
-                    LambdaLogUtil.message(
+                    () -> LogUtil.message(
                             "Completed [{}] in {}",
                             workDescriptionSupplier.get(),
                             Duration.between(startTime, Instant.now())),
@@ -227,7 +227,7 @@ public final class LocationAwareLambdaLogger implements LambdaLogger {
             final Instant startTime = Instant.now();
             timedWork.run();
             log(LocationAwareLogger.DEBUG_INT,
-                    LambdaLogUtil.message(
+                    () -> LogUtil.message(
                             "Completed [{}] in {}",
                             workDescriptionSupplier.get(),
                             Duration.between(startTime, Instant.now())),
@@ -243,7 +243,7 @@ public final class LocationAwareLambdaLogger implements LambdaLogger {
             final Instant startTime = Instant.now();
             timedWork.run();
             log(LocationAwareLogger.INFO_INT,
-                    LambdaLogUtil.message(
+                    () -> LogUtil.message(
                             "Completed [{}] in {}",
                             workDescriptionSupplier.get(),
                             Duration.between(startTime, Instant.now())),

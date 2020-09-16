@@ -16,6 +16,7 @@
 
     <logger name="stroom.pipeline.refdata" level="info" />
 
+<!--    <logger name="stroom.pipeline.refdata.ReferenceDataFilter" level="trace" />-->
 
     <root level="error">
         <appender-ref ref="STDOUT" />

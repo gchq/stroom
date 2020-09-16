@@ -149,6 +149,10 @@ public final class ComparisonHelper {
                 });
                 System.out.println(LogUtil.message("\nvimdiff {} {}",
                         FileUtil.getCanonicalPath(expectedFile), FileUtil.getCanonicalPath(actualFile)));
+
+
+                System.out.println(LogUtil.message("If you are satisfied the differences are valid then you can do\ncp {} {}",
+                        FileUtil.getCanonicalPath(actualFile), FileUtil.getCanonicalPath(expectedFile)));
             }
 
         } catch (Exception e) {
@@ -258,11 +262,18 @@ public final class ComparisonHelper {
             reader2 = new BufferedReader(new InputStreamReader(Files.newInputStream(actualFile), StreamUtil.DEFAULT_CHARSET));
 
             if (!doCompareReaders(reader1, reader2, ignoreWhitespace, xml)) {
-                throw new RuntimeException(LogUtil.message("Files are not the same: \n{}\n{}\n\nvimdiff {} {}",
+                throw new RuntimeException(LogUtil.message(
+                        "Files are not the same: \n" +
+                                "{}\n" +
+                                "{}\n\n" +
+                                "vimdiff {} {}\n" +
+                                "If you are satisfied the differences are valid then you can do\n" + "cp {} {}",
                         FileUtil.getCanonicalPath(expectedFile),
                         FileUtil.getCanonicalPath(actualFile),
                         FileUtil.getCanonicalPath(expectedFile),
-                        FileUtil.getCanonicalPath(actualFile)
+                        FileUtil.getCanonicalPath(actualFile),
+                        FileUtil.getCanonicalPath(actualFile),
+                        FileUtil.getCanonicalPath(expectedFile)
                 ));
             }
 

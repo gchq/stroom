@@ -23,12 +23,18 @@ import stroom.util.io.FileUtil;
 
 import com.google.inject.Inject;
 
+import java.io.File;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.OutputStream;
+import java.nio.file.FileSystems;
+import java.nio.file.FileVisitResult;
 import java.nio.file.Files;
 import java.nio.file.Path;
+import java.nio.file.PathMatcher;
 import java.nio.file.Paths;
+import java.nio.file.SimpleFileVisitor;
+import java.nio.file.attribute.BasicFileAttributes;
 import java.util.ArrayList;
 import java.util.List;
 
@@ -268,6 +274,37 @@ class FsPathHelper {
         builder.append(".");
         builder.append(getFileStoreType(streamTypeName));
         return Paths.get(builder.toString());
+    }
+
+    /**
+     * Gets all files associated with a parent.
+     */
+    List<Path> getFiles(final Path parent) throws IOException {
+        String glob = parent.getFileName().toString();
+        int index = glob.lastIndexOf(".");
+        if (index != -1) {
+            glob = glob.substring(0, index);
+        }
+        glob = "glob:**" + File.separator + glob + ".*";
+
+        final List<Path> result = new ArrayList<>();
+        final PathMatcher matcher = FileSystems.getDefault().getPathMatcher(glob);
+        Files.walkFileTree(parent.getParent(), new SimpleFileVisitor<>() {
+            @Override
+            public FileVisitResult visitFile(final Path file, final BasicFileAttributes attrs) {
+                if (matcher.matches(file)) {
+                    result.add(file);
+                }
+                return FileVisitResult.CONTINUE;
+            }
+
+            @Override
+            public FileVisitResult visitFileFailed(final Path file, final IOException exc) {
+                return FileVisitResult.CONTINUE;
+            }
+        });
+
+        return result;
     }
 
     private FileStoreType getFileStoreType(final String streamTypeName) {

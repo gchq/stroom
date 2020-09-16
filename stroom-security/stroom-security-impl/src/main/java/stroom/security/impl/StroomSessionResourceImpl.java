@@ -1,6 +1,6 @@
 package stroom.security.impl;
 
-import stroom.authentication.api.OIDC;
+import stroom.security.openid.api.OpenId;
 import stroom.security.api.SecurityContext;
 import stroom.security.api.UserIdentity;
 import stroom.security.impl.session.UserIdentitySessionUtil;
@@ -56,10 +56,10 @@ class StroomSessionResourceImpl implements StroomSessionResource {
                 String redirectUri = null;
 
                 // If we have completed the front channel flow then we will have a state id.
-                final String code = getParam(postAuthRedirectUri, OIDC.CODE);
-                final String stateId = getParam(postAuthRedirectUri, OIDC.STATE);
+                final String code = getParam(postAuthRedirectUri, OpenId.CODE);
+                final String stateId = getParam(postAuthRedirectUri, OpenId.STATE);
                 if (code != null && stateId != null) {
-                    final String cleanUri = OIDC.removeOIDCParams(postAuthRedirectUri);
+                    final String cleanUri = OpenId.removeReservedParams(postAuthRedirectUri);
                     redirectUri = openIdManager.backChannelOIDC(request, code, stateId, cleanUri);
                 }
 

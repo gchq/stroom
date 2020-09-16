@@ -43,7 +43,6 @@ public class QuickFilterTooltipUtil {
                 .addTable(tableBuilder -> {
                     tableBuilder
                             .addHeaderRow("Example input", "Match type")
-                            .addRow(TooltipUtil.fixedWidthText("#87af"), "UUID partial matching.")
                             .addRow(TooltipUtil.fixedWidthText("/xxx"), "Regular expression matching.")
                             .addRow(TooltipUtil.fixedWidthText("?ABC"), "Word boundary matching.")
                             .addRow(TooltipUtil.fixedWidthText("^abc$"), "Exact match.")

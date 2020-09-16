@@ -16,10 +16,12 @@
 
 package stroom.pipeline.writer;
 
-
-import org.junit.jupiter.api.Test;
 import stroom.test.common.util.test.StroomUnitTest;
 
+import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.io.TempDir;
+
+import java.nio.file.Path;
 import java.time.ZoneOffset;
 import java.time.ZonedDateTime;
 
@@ -27,23 +29,25 @@ import static org.assertj.core.api.Assertions.assertThat;
 
 class TestPathCreator extends StroomUnitTest {
     @Test
-    void testReplaceFileName() {
-        assertThat(PathCreator.replaceFileName("${fileStem}.txt", "test.tmp")).isEqualTo("test.txt");
+    void testReplaceFileName(@TempDir Path tempDir) {
+        final PathCreator pathCreator = new PathCreator(() -> tempDir);
+        assertThat(pathCreator.replaceFileName("${fileStem}.txt", "test.tmp")).isEqualTo("test.txt");
 
-        assertThat(PathCreator.replaceFileName("${fileStem}", "test.tmp")).isEqualTo("test");
+        assertThat(pathCreator.replaceFileName("${fileStem}", "test.tmp")).isEqualTo("test");
 
-        assertThat(PathCreator.replaceFileName("${fileStem}", "test")).isEqualTo("test");
+        assertThat(pathCreator.replaceFileName("${fileStem}", "test")).isEqualTo("test");
 
-        assertThat(PathCreator.replaceFileName("${fileExtension}", "test.tmp")).isEqualTo("tmp");
+        assertThat(pathCreator.replaceFileName("${fileExtension}", "test.tmp")).isEqualTo("tmp");
 
-        assertThat(PathCreator.replaceFileName("${fileExtension}", "test")).isEqualTo("");
+        assertThat(pathCreator.replaceFileName("${fileExtension}", "test")).isEqualTo("");
 
-        assertThat(PathCreator.replaceFileName("${fileName}.txt", "test.tmp")).isEqualTo("test.tmp.txt");
+        assertThat(pathCreator.replaceFileName("${fileName}.txt", "test.tmp")).isEqualTo("test.tmp.txt");
     }
 
     @Test
-    void testFindVars() {
-        final String[] vars = PathCreator.findVars("/temp/${feed}-FLAT/${pipe}_less-${uuid}/${searchId}");
+    void testFindVars(@TempDir Path tempDir) {
+        final PathCreator pathCreator = new PathCreator(() -> tempDir);
+        final String[] vars = pathCreator.findVars("/temp/${feed}-FLAT/${pipe}_less-${uuid}/${searchId}");
         assertThat(vars.length).isEqualTo(4);
         assertThat(vars[0]).isEqualTo("feed");
         assertThat(vars[1]).isEqualTo("pipe");
@@ -52,19 +56,20 @@ class TestPathCreator extends StroomUnitTest {
     }
 
     @Test
-    void testReplaceTime() {
+    void testReplaceTime(@TempDir Path tempDir) {
+        final PathCreator pathCreator = new PathCreator(() -> tempDir);
         final ZonedDateTime zonedDateTime = ZonedDateTime.of(2018, 8, 20, 13, 17, 22, 2111444, ZoneOffset.UTC);
 
         String path = "${feed}/${year}/${year}-${month}/${year}-${month}-${day}/${pathId}/${id}";
 
         // Replace pathId variable with path id.
-        path = PathCreator.replace(path, "pathId", () -> "1234");
+        path = pathCreator.replace(path, "pathId", () -> "1234");
         // Replace id variable with file id.
-        path = PathCreator.replace(path, "id", () -> "5678");
+        path = pathCreator.replace(path, "id", () -> "5678");
 
         assertThat(path).isEqualTo("${feed}/${year}/${year}-${month}/${year}-${month}-${day}/1234/5678");
 
-        path = PathCreator.replaceTimeVars(path, zonedDateTime);
+        path = pathCreator.replaceTimeVars(path, zonedDateTime);
 
         assertThat(path).isEqualTo("${feed}/2018/2018-08/2018-08-20/1234/5678");
     }

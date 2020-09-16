@@ -17,7 +17,6 @@
 package stroom.statistics.impl.sql;
 
 
-import org.junit.jupiter.api.Test;
 import stroom.datasource.api.v2.TextField;
 import stroom.query.api.v2.ExpressionOperator;
 import stroom.query.api.v2.ExpressionOperator.Op;
@@ -37,6 +36,9 @@ import stroom.statistics.impl.sql.shared.StatisticsDataSourceData;
 import stroom.test.common.util.test.StroomUnitTest;
 import stroom.util.date.DateUtil;
 
+import org.junit.jupiter.api.Test;
+
+import javax.ws.rs.BadRequestException;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
@@ -270,7 +272,7 @@ class TestSQLStatisticEventStore2 extends StroomUnitTest {
             dataSource.setName("MyDataSource");
 
             StatStoreCriteriaBuilder.buildCriteria(searchRequest, dataSource);
-        }).isInstanceOf(UnsupportedOperationException.class);
+        }).isInstanceOf(BadRequestException.class);
     }
 
     @Test
@@ -290,7 +292,7 @@ class TestSQLStatisticEventStore2 extends StroomUnitTest {
             dataSource.setName("MyDataSource");
 
             StatStoreCriteriaBuilder.buildCriteria(searchRequest, dataSource);
-        }).isInstanceOf(UnsupportedOperationException.class);
+        }).isInstanceOf(BadRequestException.class);
     }
 
     @Test
@@ -367,7 +369,7 @@ class TestSQLStatisticEventStore2 extends StroomUnitTest {
             dataSource.setName("MyDataSource");
 
             StatStoreCriteriaBuilder.buildCriteria(searchRequest, dataSource);
-        }).isInstanceOf(IllegalArgumentException.class);
+        }).isInstanceOf(BadRequestException.class);
     }
 
     @Test

@@ -21,7 +21,9 @@ import stroom.cache.api.CacheManager;
 import stroom.cache.api.ICache;
 import stroom.db.util.JooqUtil;
 import stroom.meta.impl.MetaProcessorDao;
+import stroom.meta.impl.MetaServiceConfig;
 import stroom.meta.impl.db.jooq.tables.records.MetaProcessorRecord;
+import stroom.util.shared.Clearable;
 
 import javax.inject.Inject;
 import javax.inject.Singleton;
@@ -31,7 +33,7 @@ import java.util.Optional;
 import static stroom.meta.impl.db.jooq.tables.MetaProcessor.META_PROCESSOR;
 
 @Singleton
-class MetaProcessorDaoImpl implements MetaProcessorDao {
+class MetaProcessorDaoImpl implements MetaProcessorDao, Clearable {
     private static final String CACHE_NAME = "Meta Processor Cache";
 
     private final ICache<Key, Integer> cache;
@@ -92,15 +94,7 @@ class MetaProcessorDaoImpl implements MetaProcessorDao {
 
     @Override
     public void clear() {
-        deleteAll();
         cache.clear();
-    }
-
-    private void deleteAll() {
-        JooqUtil.truncateTable(metaDbConnProvider, META_PROCESSOR);
-//        return JooqUtil.contextResult(metaDbConnProvider, context -> context
-//                .truncate(META_PROCESSOR)
-//                .execute());
     }
 
     private static class Key {

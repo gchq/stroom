@@ -16,13 +16,6 @@
 
 package stroom.search.impl.shard;
 
-import org.apache.lucene.document.Document;
-import org.apache.lucene.index.IndexWriter;
-import org.apache.lucene.index.IndexableField;
-import org.apache.lucene.search.IndexSearcher;
-import org.apache.lucene.search.Query;
-import org.apache.lucene.search.SearcherManager;
-import org.apache.lucene.util.Version;
 import stroom.dashboard.expression.v1.Val;
 import stroom.dashboard.expression.v1.ValString;
 import stroom.index.impl.IndexShardService;
@@ -36,9 +29,17 @@ import stroom.search.impl.SearchException;
 import stroom.task.api.ExecutorProvider;
 import stroom.task.api.TaskContext;
 import stroom.task.api.TaskContextFactory;
-import stroom.util.logging.LambdaLogUtil;
 import stroom.util.logging.LambdaLogger;
 import stroom.util.logging.LambdaLoggerFactory;
+import stroom.util.logging.LogUtil;
+
+import org.apache.lucene.document.Document;
+import org.apache.lucene.index.IndexWriter;
+import org.apache.lucene.index.IndexableField;
+import org.apache.lucene.search.IndexSearcher;
+import org.apache.lucene.search.Query;
+import org.apache.lucene.search.SearcherManager;
+import org.apache.lucene.util.Version;
 
 import javax.inject.Inject;
 import java.io.IOException;
@@ -104,7 +105,7 @@ public class IndexShardSearchTaskHandler {
                         }
                     }
                 },
-                LambdaLogUtil.message("exec() for shard {}", task.getShardNumber()));
+                () -> LogUtil.message("exec() for shard {}", task.getShardNumber()));
     }
 
     private IndexWriter getWriter(final Long indexShardId) {

@@ -236,12 +236,6 @@ public class PipelineStoreImpl implements PipelineStore {
     }
 
     @Override
-    public PipelineDoc find(DocRef docRef) {
-
-        return store.readDocument(docRef);
-    }
-
-    @Override
     public List<DocRef> list() {
         return store.list();
     }

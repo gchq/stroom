@@ -9,8 +9,6 @@ GITHUB_REPO="gchq/stroom"
 GITHUB_API_URL="https://api.github.com/repos/gchq/stroom/releases"
 STROOM_DOCKER_CONTEXT_ROOT="stroom-app/docker/."
 STROOM_PROXY_DOCKER_CONTEXT_ROOT="stroom-proxy/stroom-proxy-app/docker/."
-DISTRIBUTIONS_DIR="stroom-app/build/distributions"
-JARS_DIR="stroom-app/build/libs"
 VERSION_FIXED_TAG=""
 SNAPSHOT_FLOATING_TAG=""
 MAJOR_VER_FLOATING_TAG=""
@@ -56,10 +54,13 @@ create_file_hash() {
 }
 
 generate_file_hashes() {
-   for file in "${TRAVIS_BUILD_DIR}/${DISTRIBUTIONS_DIR}"/*.zip; do
+   for file in "${TRAVIS_BUILD_DIR}/stroom-app/build/distributions"/*.zip; do
        create_file_hash "${file}"
    done
-   for file in "${TRAVIS_BUILD_DIR}/${JARS_DIR}"/*.jar; do
+   for file in "${TRAVIS_BUILD_DIR}/stroom-proxy/stroom-proxy-app/build/distributions"/*.zip; do
+       create_file_hash "${file}"
+   done
+   for file in "${TRAVIS_BUILD_DIR}/stroom-headless/build/distributions"/*.zip; do
        create_file_hash "${file}"
    done
 }
@@ -253,15 +254,61 @@ else
     # Each work will chew up the maxHeap value and we have to allow for
     # our docker services as well.
     ./gradlew \
+      --scan \
+      --stacktrace \
       -PdumpFailedTestXml=true \
       -Pversion="${TRAVIS_TAG}" \
-      -PgwtCompilerWorkers=2 \
-      -PgwtCompilerMinHeap=50M \
-      -PgwtCompilerMaxHeap=1G \
       clean \
       build \
+      -x shadowJar \
+      -x generateSwaggerDocumentation \
+      -x copyFilesForStroomDockerBuild \
+      -x copyFilesForProxyDockerBuild \
+      -x buildDistribution
+
+#      -Dorg.gradle.parallel=true \
+
+    ./gradlew \
+      --scan \
+      --stacktrace \
+      stroom-ui:copyYarnBuild
+
+    # Compile the application GWT UI
+    ./gradlew \
+      --scan \
+      --stacktrace \
+      -PgwtCompilerWorkers=2 \
+      -PgwtCompilerMinHeap=50M \
+      -PgwtCompilerMaxHeap=2G \
+      stroom-app-gwt:gwtCompile
+
+    # Compile the dashboard GWT UI
+    ./gradlew \
+      --scan \
+      --stacktrace \
+      -PgwtCompilerWorkers=2 \
+      -PgwtCompilerMinHeap=50M \
+      -PgwtCompilerMaxHeap=2G \
+      stroom-dashboard-gwt:gwtCompile
+
+    # Make the distribution.
+    ./gradlew \
+      --scan \
+      --stacktrace \
+      -PdumpFailedTestXml=true \
+      -Pversion="${TRAVIS_TAG}" \
+      shadowJar \
       buildDistribution \
+      copyFilesForStroomDockerBuild \
+      copyFilesForProxyDockerBuild \
+      -x test \
+      -x stroom-ui:copyYarnBuild \
+      -x stroom-app-gwt:gwtCompile \
+      -x stroom-dashboard-gwt:gwtCompile \
       "${extraBuildArgs[@]}"
+
+# Disable parallel build execution in travis. Note this is seprate to prallel test execution.
+# -Dorg.gradle.parallel=false \
 
 # IF WE WANT TO SKIP SOME PARTS OF THE BUILD INCLUDE THESE LINES
 #      -x gwtCompile \
@@ -324,6 +371,19 @@ else
           -i \
           's#url: ".*"#url: "https://gchq.github.io/stroom/swagger.json"#g' \
           "${ghPagesDir}/index.html"
+    fi
+
+    # If it is a tagged build copy the docker config files with new names so we
+    # can add them as release artefacts.
+    # This is so the stack build can download them
+    if [ -n "$TRAVIS_TAG" ]; then
+      cp \
+        "${TRAVIS_BUILD_DIR}/stroom-app/docker/build/config.yml" \
+        "${TRAVIS_BUILD_DIR}/stroom-app-config-${TRAVIS_TAG}.yml"
+
+      cp \
+        "${TRAVIS_BUILD_DIR}/stroom-proxy/stroom-proxy-app/docker/build/config.yml" \
+        "${TRAVIS_BUILD_DIR}/stroom-proxy-app-config-${TRAVIS_TAG}.yml"
     fi
 fi
 

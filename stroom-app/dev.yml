@@ -63,11 +63,6 @@ logging:
     logFormat: "%-6level [%d{\"yyyy-MM-dd'T'HH:mm:ss.SSS'Z'\",UTC}] [%t] %logger - %X{code} %msg %n"
 
 appConfig:
-  authentication:
-    useDefaultOpenIdCredentials: ${USE_DEFAULT_OPEN_ID_CREDENTIALS:-true}
-    passwordPolicy:
-      minimumPasswordStrength: 1
-      minimumPasswordLength: 1
   commonDbDetails:
     connection:
       jdbcDriverClassName: ${STROOM_JDBC_DRIVER_CLASS_NAME:-com.mysql.cj.jdbc.Driver}
@@ -100,6 +95,12 @@ appConfig:
   publicUri:
     hostname: ${API_GATEWAY_HOST:-localhost}
     port: ${API_GATEWAY_PORT:-443}
+  security:
+    identity:
+      useDefaultOpenIdCredentials: ${USE_DEFAULT_OPEN_ID_CREDENTIALS:-true}
+      passwordPolicy:
+        minimumPasswordStrength: 1
+        minimumPasswordLength: 1
   serviceDiscovery:
     zookeeperUrl: ${STROOM_SERVICE_DISCOVERY_ZOOKEEPER_URL:-localhost:2181}
     servicesHostNameOrIpAddress: ${STROOM_ADVERTISED_URL:-localhost}

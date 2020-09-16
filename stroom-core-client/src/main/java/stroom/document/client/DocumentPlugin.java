@@ -17,8 +17,6 @@
 
 package stroom.document.client;
 
-import com.google.web.bindery.event.shared.EventBus;
-import com.gwtplatform.mvp.client.MyPresenterWidget;
 import stroom.alert.client.event.AlertEvent;
 import stroom.alert.client.event.ConfirmEvent;
 import stroom.content.client.event.SelectContentTabEvent;
@@ -28,7 +26,6 @@ import stroom.core.client.ContentManager.CloseHandler;
 import stroom.core.client.HasSave;
 import stroom.core.client.presenter.Plugin;
 import stroom.docref.DocRef;
-
 import stroom.document.client.event.ShowCreateDocumentDialogEvent;
 import stroom.entity.client.presenter.DocumentEditPresenter;
 import stroom.entity.client.presenter.HasDocumentRead;
@@ -36,6 +33,9 @@ import stroom.explorer.client.event.HighlightExplorerNodeEvent;
 import stroom.explorer.shared.ExplorerNode;
 import stroom.task.client.TaskEndEvent;
 import stroom.task.client.TaskStartEvent;
+
+import com.google.web.bindery.event.shared.EventBus;
+import com.gwtplatform.mvp.client.MyPresenterWidget;
 
 import java.util.HashMap;
 import java.util.Map;
@@ -175,6 +175,10 @@ public abstract class DocumentPlugin<D> extends Plugin implements HasSave {
                 save(getDocRef(document), document,
                         doc -> presenter.read(getDocRef(doc), doc),
                         throwable -> {
+                            AlertEvent.fireError(
+                                    this,
+                                    "Unable to save document " + document,
+                                    throwable.getMessage(), null);
                         });
             }
         }

@@ -131,8 +131,8 @@ class AsyncSearchTaskHandler {
                                 if (targetNodes.contains(nodeName)) {
                                     return true;
                                 } else {
-                                    resultCollector.getErrorSet(nodeName)
-                                            .add("Node is not enabled or active. Some search results may be missing.");
+                                    resultCollector.onFailure(nodeName,
+                                            new SearchException("Node is not enabled or active. Some search results may be missing."));
                                     return false;
                                 }
                             })
@@ -175,7 +175,7 @@ class AsyncSearchTaskHandler {
                     // nodes if we need to.
                     terminateTasks(task, taskContext.getTaskId());
 
-                    // Let the result handler know search has finished.
+                    // Ensure search is complete even if we had errors.
                     resultCollector.complete();
 
                     // We need to wait here for the client to keep getting results if

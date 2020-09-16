@@ -1,0 +1,57 @@
+/*
+ * Copyright 2017 Crown Copyright
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ *    http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
+
+ext.moduleName = 'stroom.security.identity'
+
+dependencies {
+    compile project(':stroom-cache:stroom-cache-api')
+    compile project(':stroom-db-util')
+    compile project(':stroom-event-logging:stroom-event-logging-api')
+    compile project(':stroom-job:stroom-job-api')
+    compile project(':stroom-security:stroom-security-api')
+    compile project(':stroom-security:stroom-security-openid-api')
+    compile project(':stroom-util')
+    compile project(':stroom-util-shared')
+
+    compile libs.bcrypt
+    compile libs.caffeine
+    compile libs.dropwizard_auth_jwt
+    compile libs.dropwizard_core
+    compile libs.dropwizard_flyway
+    compile libs.dropwizard_jersey
+    compile libs.eventLogging
+    compile libs.flyway_core
+    compile libs.guice4
+    compile libs.javax_activation
+    compile libs.jaxb_api
+    compile libs.jaxb_impl
+    compile libs.jose4j
+    compile libs.simple_java_mail
+    compile libs.slf4j_api
+    compile libs.swagger_annotations
+
+    runtime libs.mysql_connector_java
+
+    testCompile project(':stroom-security:stroom-security-identity')
+    testCompile project(':stroom-test-common')
+    testCompile libs.junit_jupiter_api
+    testCompile libs.junit_jupiter_engine
+    testCompile libs.assertj_core
+    testCompile libs.wiremock
+    testCompile libs.mockito_core
+    testCompile libs.dropwizard_testing
+    testCompile libs.unirest
+}

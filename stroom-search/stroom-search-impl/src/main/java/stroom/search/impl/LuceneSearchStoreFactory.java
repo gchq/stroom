@@ -114,9 +114,7 @@ public class LuceneSearchStoreFactory implements StoreFactory {
         // Create a handler for search results.
         final Sizes storeSize = getStoreSizes();
         final Sizes defaultMaxResultsSizes = getDefaultMaxResultsSizes();
-        final CompletionState completionState = new CompletionState();
         final SearchResultHandler resultHandler = new SearchResultHandler(
-                completionState,
                 coprocessorSettingsMap,
                 defaultMaxResultsSizes,
                 storeSize);
@@ -128,8 +126,7 @@ public class LuceneSearchStoreFactory implements StoreFactory {
                 highlights,
                 resultHandler,
                 defaultMaxResultsSizes,
-                storeSize,
-                completionState);
+                storeSize);
 
         // Tell the task where results will be collected.
         asyncSearchTask.setResultCollector(searchResultCollector);

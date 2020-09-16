@@ -21,7 +21,9 @@ import stroom.cache.api.CacheManager;
 import stroom.cache.api.ICache;
 import stroom.db.util.JooqUtil;
 import stroom.meta.impl.MetaFeedDao;
+import stroom.meta.impl.MetaServiceConfig;
 import stroom.meta.impl.db.jooq.tables.records.MetaFeedRecord;
+import stroom.util.shared.Clearable;
 
 import org.jooq.Condition;
 import org.jooq.Field;
@@ -34,7 +36,7 @@ import java.util.Optional;
 import static stroom.meta.impl.db.jooq.tables.MetaFeed.META_FEED;
 
 @Singleton
-class MetaFeedDaoImpl implements MetaFeedDao {
+class MetaFeedDaoImpl implements MetaFeedDao, Clearable {
     private static final String CACHE_NAME = "Meta Feed Cache";
 
     private final ICache<String, Integer> cache;
@@ -117,14 +119,6 @@ class MetaFeedDaoImpl implements MetaFeedDao {
 
     @Override
     public void clear() {
-        deleteAll();
         cache.clear();
-    }
-
-    private void deleteAll() {
-        JooqUtil.truncateTable(metaDbConnProvider, META_FEED);
-//        return JooqUtil.contextResult(metaDbConnProvider, context -> context
-//                .truncate(META_FEED)
-//                .execute());
     }
 }

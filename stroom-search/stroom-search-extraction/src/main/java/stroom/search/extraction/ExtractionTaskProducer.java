@@ -16,10 +16,8 @@
 
 package stroom.search.extraction;
 
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 import stroom.docref.DocRef;
-import stroom.search.coprocessor.CompletionState;
+import stroom.query.common.v2.CompletionState;
 import stroom.search.coprocessor.Error;
 import stroom.search.coprocessor.Receiver;
 import stroom.search.coprocessor.ReceiverImpl;
@@ -30,6 +28,9 @@ import stroom.task.api.TaskContext;
 import stroom.task.api.TaskContextFactory;
 import stroom.task.api.TaskExecutor;
 import stroom.task.api.TaskProducer;
+
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import javax.inject.Provider;
 import java.util.Arrays;
@@ -51,7 +52,7 @@ class ExtractionTaskProducer extends TaskProducer {
     private final Receiver parentReceiver;
     private final Map<DocRef, Receiver> receivers;
     private final Provider<ExtractionTaskHandler> handlerProvider;
-    private final Queue<ExtractionRunnable> taskQueue = new ConcurrentLinkedQueue<>();
+    private final Queue<Consumer<TaskContext>> taskQueue = new ConcurrentLinkedQueue<>();
 
     private final CompletionState streamMapCreatorCompletionState = new CompletionState();
     private final Map<Long, List<Event>> streamEventMap = new ConcurrentHashMap<>();
@@ -165,7 +166,7 @@ class ExtractionTaskProducer extends TaskProducer {
 
     @Override
     protected Consumer<TaskContext> getNext() {
-        ExtractionRunnable task = null;
+        Consumer<TaskContext> task = null;
 
         if (!isComplete()) {
             task = taskQueue.poll();
@@ -198,19 +199,36 @@ class ExtractionTaskProducer extends TaskProducer {
 
         final long[] eventIds = createEventIdArray(events, receivers);
         receivers.forEach((docRef, receiver) -> {
+            tracker.incrementTasksTotal();
+
+            Consumer<TaskContext> consumer;
             if (docRef != null) {
-                tracker.incrementTasksTotal();
-                final ExtractionTask task = new ExtractionTask(streamId, eventIds, docRef, receiver);
-                taskQueue.offer(new ExtractionRunnable(task, handlerProvider, tracker));
-                tasksCreated.incrementAndGet();
+                consumer = (taskContext) -> {
+                    try {
+                        final ExtractionTaskHandler handler = handlerProvider.get();
+                        handler.exec(taskContext, new ExtractionTask(streamId, eventIds, docRef, receiver));
+                    } finally {
+                        tracker.incrementTasksCompleted();
+                    }
+                };
 
             } else {
-                // Pass raw values to coprocessors that are not requesting values to be extracted.
-                for (final Event event : events) {
-                    receiver.getValuesConsumer().accept(event.getValues());
-                }
-                receiver.getCompletionCountConsumer().accept((long) events.size());
+                consumer = (taskContext) -> {
+                    try {
+                        taskContext.info(() -> "Transferring " + events.size() + " records from stream " + streamId);
+                        // Pass raw values to coprocessors that are not requesting values to be extracted.
+                        for (final Event event : events) {
+                            receiver.getValuesConsumer().accept(event.getValues());
+                        }
+                        receiver.getCompletionCountConsumer().accept((long) events.size());
+                    } finally {
+                        tracker.incrementTasksCompleted();
+                    }
+                };
             }
+
+            taskQueue.offer(consumer);
+            tasksCreated.incrementAndGet();
         });
 
         return tasksCreated.get();
@@ -239,33 +257,5 @@ class ExtractionTaskProducer extends TaskProducer {
         return "ExtractionTaskProducer{" +
                 "tracker=" + tracker +
                 '}';
-    }
-
-    private static class ExtractionRunnable implements Consumer<TaskContext> {
-        private final ExtractionTask task;
-        private final Provider<ExtractionTaskHandler> handlerProvider;
-        private final ExtractionProgressTracker tracker;
-
-        ExtractionRunnable(final ExtractionTask task,
-                           final Provider<ExtractionTaskHandler> handlerProvider,
-                           final ExtractionProgressTracker tracker) {
-            this.task = task;
-            this.handlerProvider = handlerProvider;
-            this.tracker = tracker;
-        }
-
-        @Override
-        public void accept(final TaskContext taskContext) {
-            try {
-                final ExtractionTaskHandler handler = handlerProvider.get();
-                handler.exec(taskContext, task);
-            } finally {
-                tracker.incrementTasksCompleted();
-            }
-        }
-
-        public ExtractionTask getTask() {
-            return task;
-        }
     }
 }

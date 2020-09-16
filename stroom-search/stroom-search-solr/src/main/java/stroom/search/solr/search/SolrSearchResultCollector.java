@@ -16,20 +16,33 @@
 
 package stroom.search.solr.search;
 
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
-import stroom.query.common.v2.*;
+import stroom.query.common.v2.CompletionState;
 import stroom.query.common.v2.CoprocessorSettingsMap.CoprocessorKey;
+import stroom.query.common.v2.Data;
+import stroom.query.common.v2.Payload;
+import stroom.query.common.v2.ResultHandler;
+import stroom.query.common.v2.Sizes;
+import stroom.query.common.v2.Store;
 import stroom.search.resultsender.NodeResult;
 import stroom.task.api.TaskContextFactory;
 import stroom.task.api.TaskTerminatedException;
+import stroom.util.logging.LambdaLogger;
+import stroom.util.logging.LambdaLoggerFactory;
 
 import javax.inject.Provider;
-import java.util.*;
-import java.util.concurrent.*;
+import java.util.ArrayList;
+import java.util.Collections;
+import java.util.List;
+import java.util.Map;
+import java.util.Set;
+import java.util.concurrent.CompletableFuture;
+import java.util.concurrent.CompletionException;
+import java.util.concurrent.ConcurrentHashMap;
+import java.util.concurrent.Executor;
+import java.util.concurrent.TimeUnit;
 
 public class SolrSearchResultCollector implements Store {
-    private static final Logger LOGGER = LoggerFactory.getLogger(SolrSearchResultCollector.class);
+    private static final LambdaLogger LOGGER = LambdaLoggerFactory.getLogger(SolrSearchResultCollector.class);
     private static final String TASK_NAME = "SolrSearchTask";
 
     private final Set<String> errors = Collections.newSetFromMap(new ConcurrentHashMap<>());
@@ -41,7 +54,7 @@ public class SolrSearchResultCollector implements Store {
     private final ResultHandler resultHandler;
     private final Sizes defaultMaxResultsSizes;
     private final Sizes storeSize;
-    private final CompletionState completionState;
+    private final CompletionState completionState = new CompletionState();
 
     private SolrSearchResultCollector(final Executor executor,
                                       final TaskContextFactory taskContextFactory,
@@ -50,8 +63,7 @@ public class SolrSearchResultCollector implements Store {
                                       final Set<String> highlights,
                                       final ResultHandler resultHandler,
                                       final Sizes defaultMaxResultsSizes,
-                                      final Sizes storeSize,
-                                      final CompletionState completionState) {
+                                      final Sizes storeSize) {
         this.executor = executor;
         this.taskContextFactory = taskContextFactory;
         this.solrAsyncSearchTaskHandlerProvider = solrAsyncSearchTaskHandlerProvider;
@@ -60,7 +72,6 @@ public class SolrSearchResultCollector implements Store {
         this.resultHandler = resultHandler;
         this.defaultMaxResultsSizes = defaultMaxResultsSizes;
         this.storeSize = storeSize;
-        this.completionState = completionState;
     }
 
     public static SolrSearchResultCollector create(final Executor executor,
@@ -70,8 +81,7 @@ public class SolrSearchResultCollector implements Store {
                                                    final Set<String> highlights,
                                                    final ResultHandler resultHandler,
                                                    final Sizes defaultMaxResultsSizes,
-                                                   final Sizes storeSize,
-                                                   final CompletionState completionState) {
+                                                   final Sizes storeSize) {
         return new SolrSearchResultCollector(executor,
                 taskContextFactory,
                 solrAsyncSearchTaskHandlerProvider,
@@ -79,8 +89,7 @@ public class SolrSearchResultCollector implements Store {
                 highlights,
                 resultHandler,
                 defaultMaxResultsSizes,
-                storeSize,
-                completionState);
+                storeSize);
     }
 
     public void start() {
@@ -116,7 +125,7 @@ public class SolrSearchResultCollector implements Store {
 
     @Override
     public void destroy() {
-        complete();
+        completionState.complete();
     }
 
     public void complete() {
@@ -149,25 +158,33 @@ public class SolrSearchResultCollector implements Store {
             if (errors != null) {
                 getErrorSet().addAll(errors);
             }
-
             if (result.isComplete()) {
-                complete();
+                // All the results are in but we may still have work pending, so wait
+                waitForPendingWork();
+                completionState.complete();
             }
-
         } catch (final RuntimeException e) {
             getErrorSet().add(e.getMessage());
-            complete();
-
+            completionState.complete();
         }
     }
 
-    public void onFailure(final Throwable throwable) {
-        complete();
-        errors.add(throwable.getMessage());
+    private void waitForPendingWork() {
+        LOGGER.logDurationIfTraceEnabled(() -> {
+            LOGGER.trace("No remaining nodes so wait for the result handler to clear any pending work");
+            try {
+                resultHandler.waitForPendingWork();
+            } catch (InterruptedException e) {
+                Thread.currentThread().interrupt();
+                LOGGER.debug("Thread interrupted waiting for resultHandler to finish pending work");
+                // we will just let it complete as we have been interrupted
+            }
+        }, "Waiting for resultHandler to finish pending work");
     }
 
-    public void terminate() {
-        complete();
+    public void onFailure(final Throwable throwable) {
+        completionState.complete();
+        errors.add(throwable.getMessage());
     }
 
     public Set<String> getErrorSet() {
@@ -215,6 +232,7 @@ public class SolrSearchResultCollector implements Store {
     public String toString() {
         return "ClusterSearchResultCollector{" +
                 "task=" + task +
+                ", complete=" + completionState.isComplete() +
                 '}';
     }
 }

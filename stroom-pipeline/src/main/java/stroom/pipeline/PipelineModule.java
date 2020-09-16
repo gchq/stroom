@@ -16,6 +16,7 @@
 
 package stroom.pipeline;
 
+import stroom.docref.DocRef;
 import stroom.docstore.api.DocumentActionHandlerBinder;
 import stroom.docstore.shared.Doc;
 import stroom.event.logging.api.ObjectInfoProviderBinder;
@@ -64,6 +65,7 @@ public class PipelineModule extends AbstractModule {
         // Provide object info to the logging service.
         ObjectInfoProviderBinder.create(binder())
                 .bind(Doc.class, DocObjectInfoProvider.class)
+                .bind(DocRef.class, DocRefObjectInfoProvider.class)
                 .bind(PipelineDoc.class, PipelineDocObjectInfoProvider.class);
 
         ScheduledJobsBinder.create(binder())

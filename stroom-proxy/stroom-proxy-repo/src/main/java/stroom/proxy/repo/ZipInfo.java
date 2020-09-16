@@ -24,15 +24,20 @@ import java.nio.file.Path;
 
 public class ZipInfo {
     private final Path path;
-    private final String feedName;
+    private final FileSetKey key;
     private final Long uncompressedSize;
     private final Long compressedSize;
     private final Long lastModified;
     private final Integer zipEntryCount;
 
-    ZipInfo(final Path path, final String feedName, final Long uncompressedSize, final Long compressedSize, final Long lastModified, final Integer zipEntryCount) {
+    ZipInfo(final Path path,
+            final FileSetKey key,
+            final Long uncompressedSize,
+            final Long compressedSize,
+            final Long lastModified,
+            final Integer zipEntryCount) {
         this.path = path;
-        this.feedName = feedName;
+        this.key = key;
         this.uncompressedSize = uncompressedSize;
         this.compressedSize = compressedSize;
         this.lastModified = lastModified;
@@ -43,8 +48,8 @@ public class ZipInfo {
         return path;
     }
 
-    public String getFeedName() {
-        return feedName;
+    public FileSetKey getKey() {
+        return key;
     }
 
     public Long getUncompressedSize() {
@@ -67,9 +72,13 @@ public class ZipInfo {
     public String toString() {
         final StringBuilder sb = new StringBuilder();
         sb.append(FileUtil.getCanonicalPath(path));
-        if (feedName != null) {
+        if (key != null && key.getFeedName() != null) {
             sb.append("\n\tfeedName=");
-            sb.append(feedName);
+            sb.append(key.getFeedName());
+        }
+        if (key != null && key.getTypeName() != null) {
+            sb.append("\n\ttypeName=");
+            sb.append(key.getTypeName());
         }
         if (uncompressedSize != null) {
             sb.append("\n\tuncompressedSize=");

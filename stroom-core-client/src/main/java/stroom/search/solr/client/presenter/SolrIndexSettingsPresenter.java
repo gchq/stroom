@@ -22,6 +22,7 @@ import com.google.inject.Inject;
 import com.google.web.bindery.event.shared.EventBus;
 import com.gwtplatform.mvp.client.HasUiHandlers;
 import com.gwtplatform.mvp.client.View;
+
 import stroom.alert.client.event.AlertEvent;
 import stroom.dispatch.client.Rest;
 import stroom.dispatch.client.RestFactory;
@@ -34,6 +35,7 @@ import stroom.data.client.presenter.EditExpressionPresenter;
 import stroom.search.solr.client.presenter.SolrIndexSettingsPresenter.SolrIndexSettingsView;
 import stroom.search.solr.shared.SolrConnectionConfig;
 import stroom.search.solr.shared.SolrConnectionConfig.InstanceType;
+import stroom.search.solr.shared.SolrConnectionTestResponse;
 import stroom.search.solr.shared.SolrIndexDataSourceFieldUtil;
 import stroom.search.solr.shared.SolrIndexDoc;
 import stroom.search.solr.shared.SolrIndexResource;
@@ -74,9 +76,15 @@ public class SolrIndexSettingsPresenter extends DocumentSettingsPresenter<SolrIn
         final SolrIndexDoc index = new SolrIndexDoc();
         onWrite(index);
 
-        final Rest<String> rest = restFactory.create();
+        final Rest<SolrConnectionTestResponse> rest = restFactory.create();
         rest
-                .onSuccess(result -> AlertEvent.fireInfo(this, "Success", result.toString(), null))
+                .onSuccess(result -> {
+                    if (result.isOk()) {
+                        AlertEvent.fireInfo(this, "Connection Success", result.getMessage(), null);
+                    } else {
+                        AlertEvent.fireError(this, "Connection Failure", result.getMessage(), null);
+                    }
+                })
                 .call(SOLR_INDEX_RESOURCE)
                 .solrConnectionTest(index);
     }

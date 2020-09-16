@@ -1,12 +1,13 @@
 package stroom.config.app;
 
+import stroom.util.ConsoleColour;
+import stroom.util.logging.LogUtil;
+
 import org.assertj.core.util.diff.DiffUtils;
 import org.assertj.core.util.diff.Patch;
 import org.junit.jupiter.api.Test;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import stroom.util.ConsoleColour;
-import stroom.util.logging.LogUtil;
 
 import java.io.ByteArrayOutputStream;
 import java.io.FileNotFoundException;
@@ -130,14 +131,8 @@ class TestYamlUtil {
     @Test
     void testDevYaml() throws FileNotFoundException {
         loadYamlFile("dev.yml");
-    }
 
-    /**
-     * Verify prod.yml can be de-serialised into the config object model
-     */
-    @Test
-    void testProdYaml() throws FileNotFoundException {
-        loadYamlFile("prod.yml");
+        // prod.yml is tested as part of GenerateDistributionConfig
     }
 
 

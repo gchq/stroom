@@ -30,6 +30,7 @@ public class DataSourceFactoryImpl implements DataSourceFactory {
         JooqUtil.disableJooqLogoInLogs();
     }
 
+    @Override
     public DataSource create(final HasDbConfig config) {
         final DbConfig dbConfig = config.getDbConfig();
 

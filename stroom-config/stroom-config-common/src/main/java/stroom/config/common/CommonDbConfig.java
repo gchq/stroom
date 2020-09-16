@@ -16,10 +16,10 @@ public class CommonDbConfig extends DbConfig {
     public CommonDbConfig() {
         // Set some default values.
         final ConnectionConfig connectionConfig = getConnectionConfig();
-        connectionConfig.setJdbcDriverClassName(DEFAULT_JDBC_DRIVER_CLASS_NAME);
-        connectionConfig.setJdbcDriverUrl(DEFAULT_JDBC_DRIVER_URL);
-        connectionConfig.setJdbcDriverUsername(DEFAULT_JDBC_DRIVER_USERNAME);
-        connectionConfig.setJdbcDriverPassword(DEFAULT_JDBC_DRIVER_PASSWORD);
+        connectionConfig.setClassName(DEFAULT_JDBC_DRIVER_CLASS_NAME);
+        connectionConfig.setUrl(DEFAULT_JDBC_DRIVER_URL);
+        connectionConfig.setUser(DEFAULT_JDBC_DRIVER_USERNAME);
+        connectionConfig.setPassword(DEFAULT_JDBC_DRIVER_PASSWORD);
     }
 
     /**

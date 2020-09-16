@@ -2,7 +2,6 @@ package stroom.config.app;
 
 import stroom.activity.impl.db.ActivityConfig;
 import stroom.annotation.impl.AnnotationConfig;
-import stroom.authentication.config.AuthenticationConfig;
 import stroom.cluster.api.ClusterConfig;
 import stroom.cluster.lock.impl.db.ClusterLockConfig;
 import stroom.cluster.task.impl.ClusterTaskConfig;
@@ -10,7 +9,6 @@ import stroom.config.common.CommonDbConfig;
 import stroom.config.common.NodeUriConfig;
 import stroom.config.common.PublicUriConfig;
 import stroom.config.common.UiUriConfig;
-import stroom.core.benchmark.BenchmarkClusterConfig;
 import stroom.core.receive.ProxyAggregationConfig;
 import stroom.core.receive.ReceiveDataConfig;
 import stroom.dashboard.impl.DashboardConfig;
@@ -32,7 +30,6 @@ import stroom.processor.impl.ProcessorConfig;
 import stroom.search.impl.SearchConfig;
 import stroom.search.solr.SolrConfig;
 import stroom.searchable.impl.SearchableConfig;
-import stroom.security.impl.SecurityConfig;
 import stroom.servicediscovery.impl.ServiceDiscoveryConfig;
 import stroom.storedquery.impl.StoredQueryConfig;
 import stroom.ui.config.shared.UiConfig;
@@ -54,8 +51,6 @@ public class AppConfig extends AbstractConfig {
 
     public static final String PROP_NAME_ACTIVITY = "activity";
     public static final String PROP_NAME_ANNOTATION = "annotation";
-    public static final String PROP_NAME_AUTHENTICATION = "authentication";
-    public static final String PROP_NAME_BENCHMARK = "benchmark";
     public static final String PROP_NAME_CLUSTER = "cluster";
     public static final String PROP_NAME_CLUSTER_LOCK = "clusterLock";
     public static final String PROP_NAME_CLUSTER_TASK = "clusterTask";
@@ -99,8 +94,6 @@ public class AppConfig extends AbstractConfig {
 
     private ActivityConfig activityConfig = new ActivityConfig();
     private AnnotationConfig annotationConfig = new AnnotationConfig();
-    private AuthenticationConfig authenticationConfig = new AuthenticationConfig();
-    private BenchmarkClusterConfig benchmarkClusterConfig = new BenchmarkClusterConfig();
     private ClusterConfig clusterConfig = new ClusterConfig();
     private ClusterLockConfig clusterLockConfig = new ClusterLockConfig();
     private ClusterTaskConfig clusterTaskConfig = new ClusterTaskConfig();
@@ -174,26 +167,6 @@ public class AppConfig extends AbstractConfig {
     @SuppressWarnings("unused")
     public void setAnnotationConfig(final AnnotationConfig annotationConfig) {
         this.annotationConfig = annotationConfig;
-    }
-
-    @JsonProperty(PROP_NAME_AUTHENTICATION)
-    public AuthenticationConfig getAuthenticationConfig() {
-        return authenticationConfig;
-    }
-
-    @SuppressWarnings("unused")
-    public void setAuthenticationConfig(final AuthenticationConfig authenticationConfig) {
-        this.authenticationConfig = authenticationConfig;
-    }
-
-    @JsonProperty(PROP_NAME_BENCHMARK)
-    public BenchmarkClusterConfig getBenchmarkClusterConfig() {
-        return benchmarkClusterConfig;
-    }
-
-    @SuppressWarnings("unused")
-    public void setBenchmarkClusterConfig(final BenchmarkClusterConfig benchmarkClusterConfig) {
-        this.benchmarkClusterConfig = benchmarkClusterConfig;
     }
 
     @JsonProperty(PROP_NAME_CLUSTER)

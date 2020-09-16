@@ -88,11 +88,13 @@ public class BasicTextSettingsPresenter
             final TablePresenter tablePresenter = (TablePresenter) component;
             final List<Field> fields = tablePresenter.getSettings().getFields();
             if (fields != null && fields.size() > 0) {
-                for (final Field field : fields) {
-                    if (!field.isSpecial()) {
-                        allFields.add(field);
-                    }
-                }
+                allFields.addAll(fields);
+
+//                for (final Field field : fields) {
+//                    if (!field.isSpecial()) {
+//                        allFields.add(field);
+//                    }
+//                }
             }
         }
     }

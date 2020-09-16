@@ -17,11 +17,9 @@
 
 package stroom.meta.impl;
 
-import stroom.util.shared.Clearable;
-
 import java.util.List;
 
-public interface MetaTypeDao extends Clearable {
+public interface MetaTypeDao {
     Integer getOrCreate(String name);
 
     List<String> list();

@@ -18,6 +18,7 @@
 package stroom.search;
 
 
+import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import stroom.datasource.api.v2.AbstractField;
 import stroom.datasource.api.v2.TextField;
@@ -50,10 +51,14 @@ class TestBasicSearch_EndToEnd extends AbstractCoreIntegrationTest {
     @Inject
     private CommonIndexingTestHelper commonIndexingTestHelper;
 
-    @Override
-    protected boolean onAfterSetup() {
-        commonIndexingTestHelper.setup();
-        return true;
+    private boolean doneSetup;
+
+    @BeforeEach
+    void setup() {
+        if (!doneSetup) {
+            commonIndexingTestHelper.setup();
+            doneSetup = true;
+        }
     }
 
     @Test

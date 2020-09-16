@@ -31,7 +31,6 @@ import javax.ws.rs.GET;
 import javax.ws.rs.POST;
 import javax.ws.rs.PUT;
 import javax.ws.rs.Path;
-import javax.ws.rs.PathParam;
 import javax.ws.rs.Produces;
 import javax.ws.rs.core.MediaType;
 import java.util.List;
@@ -70,10 +69,9 @@ public interface MetaResource extends RestResource, DirectRestService {
     SelectionSummary getReprocessSelectionSummary(@ApiParam("criteria") FindMetaCriteria criteria);
 
     @GET
-    @Path("info/{id}")
+    @Path("getTypes")
     @ApiOperation(
-            value = "Find full info about some meta item",
-            response = MetaInfoSection.class)
-    List<MetaInfoSection> fetchFullMetaInfo(@PathParam("id") long id);
-
+            value = "Get a list of possible stream types",
+            response = List.class)
+    List<String> getTypes();
 }

@@ -187,7 +187,11 @@ class DashboardStoreImpl implements DashboardStore {
     }
 
     private void remapTableComponentSettings(final TableComponentSettings tableComponentSettings, final DependencyRemapper dependencyRemapper) {
-        tableComponentSettings.setExtractionPipeline(dependencyRemapper.remap(tableComponentSettings.getExtractionPipeline()));
+        if (tableComponentSettings.getExtractionPipeline() != null &&
+                tableComponentSettings.getExtractionPipeline().getUuid() != null &&
+                tableComponentSettings.getExtractionPipeline().getUuid().length() > 0) {
+            tableComponentSettings.setExtractionPipeline(dependencyRemapper.remap(tableComponentSettings.getExtractionPipeline()));
+        }
     }
 
     private void remapVisComponentSettings(final VisComponentSettings visComponentSettings, final DependencyRemapper dependencyRemapper) {

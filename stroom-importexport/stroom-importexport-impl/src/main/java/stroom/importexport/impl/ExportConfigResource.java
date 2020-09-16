@@ -1,6 +1,5 @@
 package stroom.importexport.impl;
 
-import io.swagger.annotations.Api;
 import stroom.explorer.shared.ExplorerConstants;
 import stroom.resource.api.ResourceStore;
 import stroom.security.api.SecurityContext;
@@ -9,6 +8,8 @@ import stroom.util.shared.EntityServiceException;
 import stroom.util.shared.ResourceKey;
 import stroom.util.shared.ResourcePaths;
 import stroom.util.shared.RestResource;
+
+import io.swagger.annotations.Api;
 
 import javax.inject.Inject;
 import javax.ws.rs.ClientErrorException;
@@ -59,6 +60,8 @@ public class ExportConfigResource implements RestResource {
                 final StreamingOutput streamingOutput = output -> {
                     try (final InputStream is = Files.newInputStream(tempFile)) {
                         StreamUtil.streamToStream(is, output);
+                    } finally {
+                        resourceStore.deleteTempFile(tempResourceKey);
                     }
                 };
 
@@ -71,8 +74,6 @@ public class ExportConfigResource implements RestResource {
                 return Response
                         .status(Status.NO_CONTENT.getStatusCode(), "Export is not enabled")
                         .build();
-            } finally {
-                resourceStore.deleteTempFile(tempResourceKey);
             }
         } else {
             throw new ClientErrorException("Export is not enabled", Status.FORBIDDEN);

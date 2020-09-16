@@ -14,9 +14,9 @@ import stroom.statistics.api.InternalStatisticsReceiver;
 import stroom.util.AuditUtil;
 import stroom.util.NextNameGenerator;
 import stroom.util.io.FileUtil;
-import stroom.util.logging.LambdaLogUtil;
 import stroom.util.logging.LambdaLogger;
 import stroom.util.logging.LambdaLoggerFactory;
+import stroom.util.logging.LogUtil;
 import stroom.util.shared.Clearable;
 import stroom.util.shared.ResultPage;
 
@@ -63,7 +63,7 @@ public class IndexVolumeServiceImpl implements IndexVolumeService, Clearable {
     public IndexVolume create(IndexVolume indexVolume) {
         AuditUtil.stamp(securityContext.getUserId(), indexVolume);
 
-        var names = indexVolumeDao.getAll().stream().map(i -> isNullOrEmpty(i.getNodeName()) ? "" : i.getNodeName())
+        final List<String> names = indexVolumeDao.getAll().stream().map(i -> isNullOrEmpty(i.getNodeName()) ? "" : i.getNodeName())
                 .collect(Collectors.toList());
         indexVolume.setNodeName(isNullOrEmpty(indexVolume.getNodeName())
                 ? NextNameGenerator.getNextName(names, "New index volume")
@@ -121,19 +121,19 @@ public class IndexVolumeServiceImpl implements IndexVolumeService, Clearable {
 
         // Ensure the path exists
         if (Files.isDirectory(path)) {
-            LOGGER.debug(LambdaLogUtil.message("updateVolumeState() path exists: {}", path));
+            LOGGER.debug(() -> LogUtil.message("updateVolumeState() path exists: {}", path));
             setSizes(path, volume);
         } else {
             try {
                 Files.createDirectories(path);
-                LOGGER.debug(LambdaLogUtil.message("updateVolumeState() path created: {}", path));
+                LOGGER.debug(() -> LogUtil.message("updateVolumeState() path created: {}", path));
                 setSizes(path, volume);
             } catch (final IOException e) {
-                LOGGER.error(LambdaLogUtil.message("updateVolumeState() path not created: {}", path));
+                LOGGER.error(() -> LogUtil.message("updateVolumeState() path not created: {}", path));
             }
         }
 
-        LOGGER.debug(LambdaLogUtil.message("updateVolumeState() exit {}", volume));
+        LOGGER.debug(() -> LogUtil.message("updateVolumeState() exit {}", volume));
         return volume;
     }
 

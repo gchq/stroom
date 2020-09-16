@@ -17,16 +17,6 @@
 
 package stroom.pipeline.refdata.store.offheapstore.lmdb;
 
-import com.google.common.collect.ImmutableMap;
-import org.lmdbjava.CursorIterator;
-import org.lmdbjava.Dbi;
-import org.lmdbjava.Env;
-import org.lmdbjava.EnvInfo;
-import org.lmdbjava.KeyRange;
-import org.lmdbjava.Stat;
-import org.lmdbjava.Txn;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 import stroom.pipeline.refdata.store.offheapstore.lmdb.serde.Serde;
 import stroom.pipeline.refdata.util.ByteBufferPool;
 import stroom.pipeline.refdata.util.ByteBufferUtils;
@@ -34,10 +24,21 @@ import stroom.util.logging.LambdaLogger;
 import stroom.util.logging.LambdaLoggerFactory;
 import stroom.util.logging.LogUtil;
 
+import com.google.common.collect.ImmutableMap;
+import org.lmdbjava.CursorIterable;
+import org.lmdbjava.CursorIterable.KeyVal;
+import org.lmdbjava.Dbi;
+import org.lmdbjava.Env;
+import org.lmdbjava.EnvInfo;
+import org.lmdbjava.KeyRange;
+import org.lmdbjava.Stat;
+import org.lmdbjava.Txn;
+
 import javax.xml.bind.DatatypeConverter;
 import java.nio.BufferOverflowException;
 import java.nio.ByteBuffer;
 import java.nio.charset.StandardCharsets;
+import java.util.Iterator;
 import java.util.Map;
 import java.util.function.BiFunction;
 import java.util.function.Consumer;
@@ -48,8 +49,7 @@ import java.util.stream.Collectors;
  * Class of static utility methods for working with lmdbjava
  */
 public class LmdbUtils {
-    private static final Logger LOGGER = LoggerFactory.getLogger(LmdbUtils.class);
-    private static final LambdaLogger LAMBDA_LOGGER = LambdaLoggerFactory.getLogger(LmdbUtils.class);
+    private static final LambdaLogger LOGGER = LambdaLoggerFactory.getLogger(LmdbUtils.class);
 
     private LmdbUtils() {
         // only static util methods
@@ -73,9 +73,10 @@ public class LmdbUtils {
      */
     public static <T> T getWithReadTxn(final Env<ByteBuffer> env,
                                        final ByteBufferPool byteBufferPool,
+                                       final int requiredBufferCapacity,
                                        final BiFunction<Txn<ByteBuffer>, ByteBuffer, T> work) {
         try (final Txn<ByteBuffer> txn = env.txnRead()) {
-            return byteBufferPool.getWithBuffer(env.getMaxKeySize(), keyBuffer ->
+            return byteBufferPool.getWithBuffer(requiredBufferCapacity, keyBuffer ->
                     work.apply(txn, keyBuffer));
         } catch (RuntimeException e) {
             throw new RuntimeException(LogUtil.message("Error performing work in read transaction: {}",
@@ -189,7 +190,7 @@ public class LmdbUtils {
             stringBuilder.append(byteToHex(b));
             stringBuilder.append(" ");
         }
-        LOGGER.info("{} byteBuffer: {}", description, stringBuilder.toString());
+        LOGGER.info(() -> LogUtil.message("{} byteBuffer: {}", description, stringBuilder.toString()));
     }
 
     public static String byteBufferToHex(final ByteBuffer byteBuffer) {
@@ -275,9 +276,10 @@ public class LmdbUtils {
                 getEntryCount(env, txn, dbi), new String(dbi.getName())));
 
         // loop over all DB entries
-        try (CursorIterator<ByteBuffer> cursorIterator = dbi.iterate(txn, KeyRange.all())) {
-            while (cursorIterator.hasNext()) {
-                final CursorIterator.KeyVal<ByteBuffer> keyVal = cursorIterator.next();
+        try (CursorIterable<ByteBuffer> cursorIterable = dbi.iterate(txn, KeyRange.all())) {
+            Iterator<KeyVal<ByteBuffer>> iterator = cursorIterable.iterator();
+            while (iterator.hasNext()) {
+                final CursorIterable.KeyVal<ByteBuffer> keyVal = iterator.next();
                 stringBuilder.append(LogUtil.message("\n  key: [{}] - value [{}]",
                         keyToStringFunc.apply(keyVal.key()),
                         valueToStringFunc.apply(keyVal.val())));
@@ -342,8 +344,8 @@ public class LmdbUtils {
                 ByteBufferUtils.byteBufferToHex(keyRange.getStop()),
                 new String(dbi.getName())));
 
-        try (CursorIterator<ByteBuffer> cursorIterator = dbi.iterate(txn, keyRange)) {
-            for (final CursorIterator.KeyVal<ByteBuffer> keyVal : cursorIterator.iterable()) {
+        try (CursorIterable<ByteBuffer> cursorIterable = dbi.iterate(txn, keyRange)) {
+            for (final CursorIterable.KeyVal<ByteBuffer> keyVal : cursorIterable) {
                 stringBuilder.append(LogUtil.message("\n  key: [{}] - value [{}]",
                         keyToStringFunc.apply(keyVal.key()),
                         valueToStringFunc.apply(keyVal.val())));

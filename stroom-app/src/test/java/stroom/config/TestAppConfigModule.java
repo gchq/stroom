@@ -2,7 +2,7 @@ package stroom.config;
 
 import stroom.config.app.AppConfig;
 import stroom.config.app.AppConfigModule;
-import stroom.config.app.AppConfigModule.ConfigHolder;
+import stroom.config.app.ConfigHolder;
 import stroom.config.app.Config;
 import stroom.config.app.YamlUtil;
 import stroom.config.common.CommonDbConfig;

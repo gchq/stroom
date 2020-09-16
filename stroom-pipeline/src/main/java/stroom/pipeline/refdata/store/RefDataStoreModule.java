@@ -17,7 +17,6 @@
 
 package stroom.pipeline.refdata.store;
 
-import stroom.util.RunnableWrapper;
 import stroom.job.api.ScheduledJobsBinder;
 import stroom.pipeline.refdata.store.offheapstore.FastInfosetByteBufferConsumer;
 import stroom.pipeline.refdata.store.offheapstore.OffHeapRefDataValueProxyConsumer;
@@ -34,7 +33,9 @@ import stroom.pipeline.refdata.store.onheapstore.FastInfosetValueConsumer;
 import stroom.pipeline.refdata.store.onheapstore.OnHeapRefDataValueProxyConsumer;
 import stroom.pipeline.refdata.store.onheapstore.StringValueConsumer;
 import stroom.pipeline.refdata.util.ByteBufferPool;
+import stroom.pipeline.refdata.util.ByteBufferPoolImpl4;
 import stroom.pipeline.refdata.util.PooledByteBufferOutputStream;
+import stroom.util.RunnableWrapper;
 import stroom.util.guice.HasSystemInfoBinder;
 
 import com.google.inject.AbstractModule;
@@ -57,6 +58,8 @@ public class RefDataStoreModule extends AbstractModule {
                 .bind(FastInfosetValue.TYPE_ID, FastInfosetValueConsumer.Factory.class)
                 .bind(StringValue.TYPE_ID, StringValueConsumer.Factory.class);
 
+        bind(RefDataStoreFactory.class).asEagerSingleton();
+
         // bind all the reference data off heap tables
         install(new FactoryModuleBuilder().build(KeyValueStoreDb.Factory.class));
         install(new FactoryModuleBuilder().build(RangeStoreDb.Factory.class));
@@ -71,8 +74,11 @@ public class RefDataStoreModule extends AbstractModule {
         install(new FactoryModuleBuilder().build(PooledByteBufferOutputStream.Factory.class));
         install(new FactoryModuleBuilder().build(RefDataValueProxyConsumerFactory.Factory.class));
 
+        // If you switch impl here make sure also to do it in the SystemInfo binder below
+        bind(ByteBufferPool.class).to(ByteBufferPoolImpl4.class);
+
         HasSystemInfoBinder.create(binder())
-                .bind(ByteBufferPool.class)
+                .bind(ByteBufferPoolImpl4.class)
                 .bind(RefDataOffHeapStore.class);
 
         ScheduledJobsBinder.create(binder())
@@ -80,6 +86,7 @@ public class RefDataStoreModule extends AbstractModule {
                         .withName("Ref Data Off-heap Store Purge")
                         .withDescription("Purge old reference data from the off heap store as configured")
                         .withSchedule(CRON, "0 2 *"));
+
     }
 
     private static class RefDataPurge extends RunnableWrapper {

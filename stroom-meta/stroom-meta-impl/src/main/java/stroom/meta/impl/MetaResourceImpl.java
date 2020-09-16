@@ -18,7 +18,6 @@ package stroom.meta.impl;
 
 import stroom.meta.api.MetaService;
 import stroom.meta.shared.FindMetaCriteria;
-import stroom.meta.shared.MetaInfoSection;
 import stroom.meta.shared.MetaResource;
 import stroom.meta.shared.MetaRow;
 import stroom.meta.shared.SelectionSummary;
@@ -28,6 +27,7 @@ import stroom.util.shared.ResultPage;
 import javax.inject.Inject;
 import javax.inject.Provider;
 import java.util.List;
+import java.util.stream.Collectors;
 
 // TODO : @66 Add event logging
 class MetaResourceImpl implements MetaResource {
@@ -62,8 +62,12 @@ class MetaResourceImpl implements MetaResource {
     }
 
     @Override
-    public List<MetaInfoSection> fetchFullMetaInfo(final long id) {
-        return metaServiceProvider.get().fetchFullMetaInfo(id);
+    public List<String> getTypes() {
+        return metaServiceProvider
+                .get()
+                .getTypes()
+                .stream()
+                .sorted()
+                .collect(Collectors.toList());
     }
-
 }

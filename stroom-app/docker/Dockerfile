@@ -76,6 +76,9 @@ VOLUME /stroom/output/
 VOLUME /stroom/proxy-repo/
 
 # Create Docker volume for Stroom's volumes dir
+VOLUME /stroom/ref-data/
+
+# Create Docker volume for Stroom's volumes dir
 VOLUME /stroom/volumes/
 
 # run entrypoint script inside tini for better unix process handling, 
@@ -102,9 +105,11 @@ RUN \
     mkdir -p /stroom/contentPackImport && \
     mkdir -p /stroom/logs/access && \
     mkdir -p /stroom/logs/app && \
+    mkdir -p /stroom/logs/migration && \
     mkdir -p /stroom/logs/user && \
     mkdir -p /stroom/output && \
     mkdir -p /stroom/proxy-repo && \
+    mkdir -p /stroom/ref-data && \
     mkdir -p /stroom/volumes && \
     chown -R stroom:stroom /stroom
 
@@ -118,7 +123,7 @@ COPY --chown=stroom:stroom *.sh /stroom/
 
 # This config file is a fallback for use in development 
 # (or when a stack with the config bind mount is not available)
-COPY --chown=stroom:stroom build/prod.yml /stroom/config-fallback/config.yml
+COPY --chown=stroom:stroom build/config.yml /stroom/config-fallback/config.yml
 
 COPY --chown=stroom:stroom --from=fat-jar-stage /stroom-app-all.jar /stroom/
 

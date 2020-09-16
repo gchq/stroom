@@ -18,6 +18,8 @@ package stroom.pipeline;
 
 
 import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.io.TempDir;
+
 import stroom.docref.DocRef;
 import stroom.pipeline.errorhandler.ErrorReceiverProxy;
 import stroom.pipeline.errorhandler.LoggingErrorReceiver;
@@ -161,10 +163,8 @@ class TestRecordOutputFilter extends AbstractProcessIntegrationTest {
             try {
                 // We have to use /tmp here as the pipeline is hard coded to output
                 // to ${stroom.temp}/TestRecordOutputFilter.xml
-                final Path tempDir = FileUtil.getTempDir();
-
-                final Path outputFile = tempDir.resolve("TestRecordOutputFilter.xml");
-                final Path outputLockFile = tempDir.resolve("TestRecordOutputFilter.xml.lock");
+                final Path outputFile = getCurrentTestDir().resolve("TestRecordOutputFilter.xml");
+                final Path outputLockFile = getCurrentTestDir().resolve("TestRecordOutputFilter.xml.lock");
 
                 // Delete any output file.
                 FileUtil.deleteFile(outputFile);

@@ -17,15 +17,6 @@
 
 package stroom.pipeline.filter;
 
-import net.sf.saxon.Configuration;
-import net.sf.saxon.jaxp.TemplatesImpl;
-import net.sf.saxon.jaxp.TransformerImpl;
-import net.sf.saxon.s9api.XsltExecutable;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
-import org.xml.sax.Attributes;
-import org.xml.sax.Locator;
-import org.xml.sax.SAXException;
 import stroom.docref.DocRef;
 import stroom.pipeline.LocationFactoryProxy;
 import stroom.pipeline.SupportsCodeInjection;
@@ -47,14 +38,25 @@ import stroom.pipeline.shared.XsltDoc;
 import stroom.pipeline.shared.data.PipelineElementType;
 import stroom.pipeline.shared.data.PipelineElementType.Category;
 import stroom.pipeline.shared.data.PipelineReference;
+import stroom.pipeline.state.FeedHolder;
 import stroom.pipeline.state.PipelineContext;
+import stroom.pipeline.state.PipelineHolder;
 import stroom.pipeline.writer.PathCreator;
 import stroom.pipeline.xslt.XsltStore;
 import stroom.util.CharBuffer;
 import stroom.util.shared.Location;
 import stroom.util.shared.Severity;
 
+import net.sf.saxon.Configuration;
+import net.sf.saxon.jaxp.TemplatesImpl;
+import net.sf.saxon.jaxp.TransformerImpl;
+import net.sf.saxon.s9api.XsltExecutable;
+import org.xml.sax.Attributes;
+import org.xml.sax.Locator;
+import org.xml.sax.SAXException;
+
 import javax.inject.Inject;
+import javax.inject.Provider;
 import javax.xml.transform.ErrorListener;
 import javax.xml.transform.TransformerConfigurationException;
 import javax.xml.transform.TransformerException;
@@ -62,6 +64,7 @@ import javax.xml.transform.sax.SAXResult;
 import javax.xml.transform.sax.TransformerHandler;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.function.Consumer;
 
 /**
  * An XML filter for performing inline XSLT transformation of XML.
@@ -71,21 +74,21 @@ import java.util.List;
         PipelineElementType.VISABILITY_STEPPING, PipelineElementType.ROLE_MUTATOR,
         PipelineElementType.ROLE_HAS_CODE}, icon = ElementIcons.XSLT)
 public class XsltFilter extends AbstractXMLFilter implements SupportsCodeInjection {
-    private static final Logger LOGGER = LoggerFactory.getLogger(XsltFilter.class);
-
     private final XsltPool xsltPool;
     private final ErrorReceiverProxy errorReceiverProxy;
     private final XsltStore xsltStore;
     private final XsltConfig xsltConfig;
     private final LocationFactoryProxy locationFactory;
     private final PipelineContext pipelineContext;
-    private final PathCreator pathCreator;
+    private final Provider<FeedHolder> feedHolder;
+    private final Provider<PipelineHolder> pipelineHolder;
+    private final DocFinder<XsltDoc> docHelper;
 
     private ErrorListener errorListener;
 
-    private boolean suppressXSLTNotFoundWarnings;
     private DocRef xsltRef;
     private String xsltNamePattern;
+    private boolean suppressXSLTNotFoundWarnings;
 
     /**
      * We only need a single transformer factory here as it actually doesn't do
@@ -111,14 +114,19 @@ public class XsltFilter extends AbstractXMLFilter implements SupportsCodeInjecti
                       final XsltConfig xsltConfig,
                       final LocationFactoryProxy locationFactory,
                       final PipelineContext pipelineContext,
-                      final PathCreator pathCreator) {
+                      final PathCreator pathCreator,
+                      final Provider<FeedHolder> feedHolder,
+                      final Provider<PipelineHolder> pipelineHolder) {
         this.xsltPool = xsltPool;
         this.errorReceiverProxy = errorReceiverProxy;
         this.xsltStore = xsltStore;
         this.xsltConfig = xsltConfig;
         this.locationFactory = locationFactory;
         this.pipelineContext = pipelineContext;
-        this.pathCreator = pathCreator;
+        this.feedHolder = feedHolder;
+        this.pipelineHolder = pipelineHolder;
+
+        this.docHelper = new DocFinder<>(XsltDoc.DOCUMENT_TYPE, pathCreator, xsltStore);
     }
 
     @Override
@@ -126,76 +134,8 @@ public class XsltFilter extends AbstractXMLFilter implements SupportsCodeInjecti
         try {
             errorListener = new ErrorListenerAdaptor(getElementId(), locationFactory, errorReceiverProxy);
             maxElementCount = xsltConfig.getMaxElements();
-            XsltDoc xslt = null;
 
-            // Load XSLT from a name pattern if one has been specified.
-            if (xsltNamePattern != null && xsltNamePattern.trim().length() > 0) {
-                // Resolve replacement variables.
-                final String resolvedName = pathCreator.replaceContextVars(xsltNamePattern.trim());
-                // Make sure there are no replacement vars left.
-                final String[] vars = PathCreator.findVars(resolvedName);
-                if (vars.length > 0) {
-                    final StringBuilder sb = new StringBuilder();
-                    sb.append("XSLT name pattern \"");
-                    sb.append(xsltNamePattern);
-                    sb.append("\" contains invalid replacement variables (");
-                    for (final String var : vars) {
-                        sb.append(var);
-                        sb.append(", ");
-                    }
-                    sb.setLength(sb.length() - 2);
-                    sb.append(")");
-                    throw new ProcessException(sb.toString());
-                }
-
-                LOGGER.debug("Finding XSLT with resolved name '{}' from pattern '{}'", resolvedName, xsltNamePattern);
-                final List<DocRef> docs = xsltStore.findByName(resolvedName);
-                if (docs == null || docs.size() == 0) {
-                    if (!suppressXSLTNotFoundWarnings) {
-                        final StringBuilder sb = new StringBuilder();
-                        sb.append("No XSLT found with name '");
-                        sb.append(resolvedName);
-                        sb.append("' from pattern '");
-                        sb.append(xsltNamePattern);
-
-                        if (xsltRef != null) {
-                            sb.append("' - using default '");
-                            sb.append(xsltRef.getName());
-                            sb.append("'");
-                        } else {
-                            sb.append("' - no default specified");
-                        }
-
-                        errorReceiverProxy.log(Severity.WARNING, null, getElementId(), sb.toString(), null);
-                    }
-                } else {
-                    xslt = xsltStore.readDocument(docs.get(0));
-
-                    if (docs.size() > 1) {
-                        final String message = "" +
-                                "Multiple XSLT found with name '" +
-                                resolvedName +
-                                "' from pattern '" +
-                                xsltNamePattern +
-                                "' - using XSLT with uuid (" +
-                                xslt.getUuid() +
-                                ")";
-                        errorReceiverProxy.log(Severity.WARNING, null, getElementId(), message, null);
-                    }
-                }
-            }
-
-            // Load the XSLT from a reference if we haven't found it by name.
-            if (xslt == null && xsltRef != null) {
-                xslt = xsltStore.readDocument(xsltRef);
-                if (xslt == null) {
-                    final String message = "" +
-                            "XSLT \"" +
-                            xsltRef.getName() +
-                            "\" appears to have been deleted";
-                    throw new ProcessException(message);
-                }
-            }
+            final XsltDoc xslt = loadXsltDoc();
 
             // If we have found XSLT then get a template.
             if (xslt != null) {
@@ -612,5 +552,59 @@ public class XsltFilter extends AbstractXMLFilter implements SupportsCodeInjecti
     @Override
     public void setInjectedCode(final String injectedCode) {
         this.injectedCode = injectedCode;
+    }
+
+    public XsltDoc loadXsltDoc() {
+        final DocRef docRef = findDoc(
+                getFeedName(),
+                getPipelineName(),
+                message -> errorReceiverProxy.log(Severity.WARNING, null, getElementId(), message, null));
+        if (docRef != null) {
+            final XsltDoc xsltDoc = xsltStore.readDocument(docRef);
+            if (xsltDoc == null) {
+                final String message = "XSLT \"" +
+                        docRef.getName() +
+                        "\" appears to have been deleted";
+                throw new ProcessException(message);
+            }
+
+            return xsltDoc;
+        }
+
+        return null;
+    }
+
+    private String getFeedName() {
+        if (feedHolder != null) {
+            final FeedHolder fh = feedHolder.get();
+            if (fh != null) {
+                return fh.getFeedName();
+            }
+        }
+        return null;
+    }
+
+    private String getPipelineName() {
+        if (pipelineHolder != null) {
+            final PipelineHolder ph = pipelineHolder.get();
+            if (ph != null) {
+                final DocRef pipeline = ph.getPipeline();
+                if (pipeline != null) {
+                    return pipeline.getName();
+                }
+            }
+        }
+        return null;
+    }
+
+    @Override
+    public DocRef findDoc(final String feedName, final String pipelineName, final Consumer<String> errorConsumer) {
+        return docHelper.findDoc(
+                xsltRef,
+                xsltNamePattern,
+                feedName,
+                pipelineName,
+                errorConsumer,
+                suppressXSLTNotFoundWarnings);
     }
 }

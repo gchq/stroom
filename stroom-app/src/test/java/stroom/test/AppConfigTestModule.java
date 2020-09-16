@@ -6,6 +6,7 @@ import org.slf4j.LoggerFactory;
 import stroom.config.app.AppConfig;
 import stroom.config.app.AppConfigModule;
 import stroom.config.app.Config;
+import stroom.config.app.ConfigHolder;
 import stroom.config.app.YamlUtil;
 import stroom.util.io.FileUtil;
 
@@ -26,7 +27,7 @@ public class AppConfigTestModule extends AppConfigModule {
         return ((ConfigHolderImpl) getConfigHolder()).getConfig();
     }
 
-    private static class ConfigHolderImpl implements AppConfigModule.ConfigHolder {
+    private static class ConfigHolderImpl implements ConfigHolder {
         private final Config config;
         private final AppConfig appConfig;
         private final Path path;

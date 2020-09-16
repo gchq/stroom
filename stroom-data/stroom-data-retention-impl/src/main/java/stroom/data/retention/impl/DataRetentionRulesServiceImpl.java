@@ -201,31 +201,35 @@ class DataRetentionRulesServiceImpl implements DataRetentionRulesService {
 
     @Override
     public DataRetentionRules getOrCreate() {
-        final Set<DocRef> docRefs = listDocuments();
-        final Set<DocRef> filtered = docRefs
-                .stream()
-                .filter(docRef -> POLICY_NAME.equals(docRef.getName()) || POLICY_NAME.equals(docRef.getUuid()))
-                .collect(Collectors.toSet());
+        // The user will never have any doc perms on the DRR as it is not an explorer doc, thus
+        // access it via the proc user.
+        return securityContext.asProcessingUserResult(() -> {
+            final Set<DocRef> docRefs = listDocuments();
+            final Set<DocRef> filtered = docRefs
+                    .stream()
+                    .filter(docRef -> POLICY_NAME.equals(docRef.getName()) || POLICY_NAME.equals(docRef.getUuid()))
+                    .collect(Collectors.toSet());
 
-        if (filtered.size() > 0) {
-            if (filtered.size() > 1) {
-                LOGGER.warn("Found more than one matching set of data retention rules.");
+            if (filtered.size() > 0) {
+                if (filtered.size() > 1) {
+                    LOGGER.warn("Found more than one matching set of data retention rules.");
+                }
+
+                final DocRef docRef = filtered.iterator().next();
+                return readDocument(docRef);
             }
 
-            final DocRef docRef = filtered.iterator().next();
-            return readDocument(docRef);
-        }
+            if (docRefs.size() > 0) {
+                if (docRefs.size() > 1) {
+                    LOGGER.warn("Found more than one matching set of data retention rules.");
+                }
 
-        if (docRefs.size() > 0) {
-            if (docRefs.size() > 1) {
-                LOGGER.warn("Found more than one matching set of data retention rules.");
+                final DocRef docRef = docRefs.iterator().next();
+                return readDocument(docRef);
             }
 
-            final DocRef docRef = docRefs.iterator().next();
+            final DocRef docRef = createDocument(POLICY_NAME);
             return readDocument(docRef);
-        }
-
-        final DocRef docRef = createDocument(POLICY_NAME);
-        return readDocument(docRef);
+        });
     }
 }

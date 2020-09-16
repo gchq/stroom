@@ -53,8 +53,44 @@ public class DocumentPermissions {
         return permissions;
     }
 
+    public boolean containsUserOrGroup(final String uuid, final boolean isGroup) {
+        return isGroup
+                ? containsGroup(uuid)
+                : containsUser(uuid);
+    }
+
+    public boolean containsUser(final String userUuid) {
+        return users.stream()
+                .map(User::getUuid)
+                .anyMatch(uuid -> Objects.equals(uuid, userUuid));
+    }
+
+    public boolean containsGroup(final String groupUuid) {
+        return groups.stream()
+                .map(User::getUuid)
+                .anyMatch(uuid -> Objects.equals(uuid, groupUuid));
+    }
+
     public Set<String> getPermissionsForUser(final String userUuid) {
         return permissions.getOrDefault(userUuid, Collections.emptySet());
+    }
+
+    public void addUser(final User user) {
+        users.add(user);
+        permissions.putIfAbsent(user.getUuid(), new HashSet<>());
+    }
+
+    public void addGroup(final User group) {
+        groups.add(group);
+        permissions.putIfAbsent(group.getUuid(), new HashSet<>());
+    }
+
+    public void addUser(final User user, final boolean isGroup) {
+        if (isGroup) {
+            addGroup(user);
+        } else {
+            addUser(user);
+        }
     }
 
     @Override

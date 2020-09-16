@@ -40,7 +40,7 @@ public abstract class AbstractLmdbDbTest extends StroomUnitTest {
     private Path dbDir = null;
 
     @BeforeEach
-    protected void setup() throws IOException {
+    final void createEnv() throws IOException {
         dbDir = Files.createTempDirectory("stroom");
         LOGGER.info("Creating LMDB environment with maxSize: {}, dbDir {}",
                 getMaxSizeBytes(), dbDir.toAbsolutePath().toString());
@@ -52,7 +52,7 @@ public abstract class AbstractLmdbDbTest extends StroomUnitTest {
     }
 
     @AfterEach
-    public void teardown() throws IOException {
+    final void teardown() throws IOException {
         if (lmdbEnv != null) {
             lmdbEnv.close();
         }

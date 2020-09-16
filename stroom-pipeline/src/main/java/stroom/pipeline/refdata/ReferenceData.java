@@ -16,14 +16,13 @@
 
 package stroom.pipeline.refdata;
 
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 import stroom.data.shared.StreamTypeNames;
 import stroom.data.store.api.InputStreamProvider;
 import stroom.data.store.api.SizeAwareInputStream;
 import stroom.docref.DocRef;
 import stroom.meta.shared.Meta;
 import stroom.pipeline.PipelineStore;
+import stroom.pipeline.cache.DocumentPermissionCache;
 import stroom.pipeline.refdata.store.MapDefinition;
 import stroom.pipeline.refdata.store.MultiRefDataValueProxy;
 import stroom.pipeline.refdata.store.RefDataStore;
@@ -34,22 +33,25 @@ import stroom.pipeline.refdata.store.StringValue;
 import stroom.pipeline.shared.data.PipelineReference;
 import stroom.pipeline.state.FeedHolder;
 import stroom.pipeline.state.MetaHolder;
-import stroom.pipeline.cache.DocumentPermissionCache;
 import stroom.security.api.SecurityContext;
 import stroom.security.shared.DocumentPermissionNames;
-import stroom.util.logging.LambdaLogUtil;
 import stroom.util.logging.LambdaLogger;
 import stroom.util.logging.LambdaLoggerFactory;
 import stroom.util.logging.LogUtil;
 import stroom.util.shared.Severity;
 
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+
 import javax.inject.Inject;
+import java.time.Instant;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.NavigableSet;
 import java.util.Optional;
+import java.util.stream.Collectors;
 
 public class ReferenceData {
     private static final Logger LOGGER = LoggerFactory.getLogger(ReferenceData.class);
@@ -115,6 +117,11 @@ public class ReferenceData {
 
         LOGGER.trace("ensureReferenceDataAvailability({}, {}", pipelineReferences, lookupIdentifier);
 
+        // TODO @AT It would be better if the nested map logic was pushed down into the store so that the store
+        //   can accept nested map names. This would allow the store to do the lookup chain in a more efficient
+        //   way with the bytebuffer of the lookup value being used as the key for the next lookup.
+        //   You would still need to have code here to ensure that the data for all maps in the chain was loaded.
+
         // Do we have a nested token?
         if (lookupIdentifier.isMapNested()) {
             LOGGER.trace("lookupIdentifier is nested {}", lookupIdentifier);
@@ -122,12 +129,12 @@ public class ReferenceData {
             // Look up the KV then use that to recurse
             doGetValue(pipelineReferences, lookupIdentifier, result);
 
-            final RefDataValueProxy refDataValueProxy = result.getRefDataValueProxy();
-            Optional<RefDataValue> optValue = refDataValueProxy.supplyValue();
+            final Optional<RefDataValue> optValue = result.getRefDataValueProxy()
+                    .flatMap(RefDataValueProxy::supplyValue);
             // This is a nested map so we are expecting the value of the first map to be a simple
             // string so we can use it as the key for the next map. The next map could also be nested.
 
-            if (!optValue.isPresent()) {
+            if (optValue.isEmpty()) {
                 LOGGER.trace("sub-map not found for {}", lookupIdentifier);
                 // map broken ... no link found
                 result.log(Severity.WARNING, () -> "No map found for '" + lookupIdentifier + "'");
@@ -141,8 +148,9 @@ public class ReferenceData {
 
                     ensureReferenceDataAvailability(pipelineReferences, nestedIdentifier, result);
                 } catch (ClassCastException e) {
-                    result.log(Severity.ERROR, LambdaLogUtil.message("Value is the wrong type, expected: {}, found: {}",
-                            StringValue.class.getName(), refDataValue.getClass().getName()));
+                    result.log(Severity.ERROR,
+                            () -> LogUtil.message("Value is the wrong type, expected: {}, found: {}",
+                                    StringValue.class.getName(), refDataValue.getClass().getName()));
                 }
             }
         } else {
@@ -184,15 +192,17 @@ public class ReferenceData {
             }
 
             // We are dealing with multiple ref pipelines so collect all the value proxies
-            if (pipelineReferences.size() > 1 && referenceDataResult.getRefDataValueProxy() != null) {
-                refDataValueProxies.add(referenceDataResult.getRefDataValueProxy());
-                referenceDataResult.setRefDataValueProxy(null);
+            if (pipelineReferences.size() > 1) {
+                referenceDataResult.getRefDataValueProxy().ifPresent(refDataValueProxy -> {
+                    refDataValueProxies.add(refDataValueProxy);
+                    referenceDataResult.setRefDataValueProxy(null);
+                });
             }
         }
         // We are dealing with multiple ref pipelines so replace the current value proxy with a
         // multi one that will perform a lookup on each one in turn
         if (!refDataValueProxies.isEmpty()) {
-            LAMBDA_LOGGER.trace(LambdaLogUtil.message(
+            LAMBDA_LOGGER.trace(() -> LogUtil.message(
                     "Replacing value proxy with multi proxy ({})", refDataValueProxies.size()));
             if (refDataValueProxies.size() > 1) {
                 referenceDataResult.setRefDataValueProxy(new MultiRefDataValueProxy(refDataValueProxies));
@@ -213,7 +223,7 @@ public class ReferenceData {
                                           final String keyName,
                                           final ReferenceDataResult result) {
 
-        LAMBDA_LOGGER.trace(LambdaLogUtil.message(
+        LAMBDA_LOGGER.trace(() -> LogUtil.message(
                 "getNestedStreamEventList called, pipe: {}, map {}, key {}",
                 pipelineReference.getName(),
                 mapName,
@@ -222,7 +232,7 @@ public class ReferenceData {
         // Get nested stream.
         final long streamNo = metaHolder.getStreamNo();
 
-        LAMBDA_LOGGER.trace(LambdaLogUtil.message("StreamId {}, parentStreamId {}",
+        LAMBDA_LOGGER.trace(() -> LogUtil.message("StreamId {}, parentStreamId {}",
                 metaHolder.getMeta().getId(),
                 metaHolder.getMeta().getParentMetaId()));
 
@@ -335,17 +345,17 @@ public class ReferenceData {
                 pipelineReference.getFeed().getUuid().isEmpty() ||
                 pipelineReference.getStreamType() == null ||
                 pipelineReference.getStreamType().isEmpty()) {
+
             result.log(Severity.ERROR, () ->
                     LogUtil.message("pipelineReference is not fully formed, {}", pipelineReference));
         }
 
-        // Check that the current user has permission to read the stream.
+        // Check that the current user has permission to read the ref stream.
         final boolean hasPermission = localDocumentPermissionCache.computeIfAbsent(pipelineReference, k ->
                 documentPermissionCache == null ||
                         documentPermissionCache.hasDocumentPermission(
                                 pipelineReference.getFeed().getUuid(),
                                 DocumentPermissionNames.USE));
-
 
         if (hasPermission) {
             // Create a key to find a set of effective times in the pool.
@@ -359,13 +369,33 @@ public class ReferenceData {
             final NavigableSet<EffectiveStream> streamSet = effectiveStreamCache.get(effectiveStreamKey);
 
             if (streamSet != null && streamSet.size() > 0) {
-                result.log(Severity.INFO, () -> "Got " + streamSet.size() + " effective streams (" + effectiveStreamKey + ")");
+                result.log(Severity.INFO, () -> {
+                    final String maxEffectiveDate = Instant.ofEpochMilli(streamSet.last().getEffectiveMs()).toString();
+                    final String minEffectiveDate = Instant.ofEpochMilli(streamSet.first().getEffectiveMs()).toString();
+
+                    return "Got " + streamSet.size() +
+                            " effective streams (from " + minEffectiveDate + " to " + maxEffectiveDate +
+                            ") for effective stream key: " + effectiveStreamKey;
+                });
+
+                if (LOGGER.isDebugEnabled()) {
+                    String streams = streamSet.stream()
+                            .map(effectiveStream -> effectiveStream.getStreamId() + " - "
+                                    + Instant.ofEpochMilli(effectiveStream.getEffectiveMs()))
+                            .collect(Collectors.joining("\n"));
+                    LOGGER.debug("Comparing {} to Effective streams:\n{}", Instant.ofEpochMilli(time), streams);
+                }
 
                 // Try and find the stream before the requested time that is less
                 // than or equal to it.
                 final EffectiveStream effectiveStream = streamSet.floor(new EffectiveStream(0, time));
                 // If we have an effective time then use it.
                 if (effectiveStream != null) {
+
+                    result.log(Severity.INFO, () ->
+                            "Using stream: " + effectiveStream.getStreamId() +
+                            " (effective date: " + Instant.ofEpochMilli(effectiveStream.getEffectiveMs()).toString() +
+                            ") for feed: " + effectiveStreamKey.getFeed());
 
                     final RefStreamDefinition refStreamDefinition = new RefStreamDefinition(
                             pipelineReference.getPipeline(),
@@ -393,7 +423,7 @@ public class ReferenceData {
                             securityContext.asProcessingUser(() ->
                                     referenceDataLoader.load(refStreamDefinition));
 
-                            LAMBDA_LOGGER.debug(LambdaLogUtil.message(
+                            LAMBDA_LOGGER.debug(() -> LogUtil.message(
                                     "Loaded {} refStreamDefinition", refStreamDefinition));
 
                             // mark these ref stream defs as available for future lookups within this pipeline process

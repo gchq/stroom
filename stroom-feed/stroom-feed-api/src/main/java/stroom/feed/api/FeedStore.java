@@ -19,12 +19,11 @@ package stroom.feed.api;
 
 import stroom.docref.DocRef;
 import stroom.docstore.api.DocumentStore;
+import stroom.docstore.api.HasFindByName;
 import stroom.feed.shared.FeedDoc;
 
 import java.util.List;
 
-public interface FeedStore extends DocumentStore<FeedDoc> {
-    List<DocRef> findByName(String name);
-
+public interface FeedStore extends DocumentStore<FeedDoc>, HasFindByName {
     List<DocRef> list();
 }

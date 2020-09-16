@@ -1,8 +1,9 @@
 package stroom.security.impl;
 
+import stroom.util.shared.AbstractConfig;
+
 import com.fasterxml.jackson.annotation.JsonProperty;
 import com.fasterxml.jackson.annotation.JsonPropertyDescription;
-import stroom.util.shared.AbstractConfig;
 
 import javax.inject.Singleton;
 import javax.validation.constraints.NotNull;
@@ -12,6 +13,7 @@ public class OpenIdConfig extends AbstractConfig {
     public static final String PROP_NAME_CLIENT_ID = "clientId";
     public static final String PROP_NAME_CLIENT_SECRET = "clientSecret";
 
+    private static final String OPEN_ID_CONFIGURATION__ENDPOINT = "https://accounts.google.com/.well-known/openid-configuration";
     private static final String ISSUER = "accounts.google.com";
     private static final String AUTH_ENDPOINT = "https://accounts.google.com/o/oauth2/v2/auth";
     private static final String TOKEN_ENDPOINT = "https://accounts.google.com/o/oauth2/token";
@@ -19,10 +21,12 @@ public class OpenIdConfig extends AbstractConfig {
 
     private boolean useInternal = true;
 
+    private String openIdConfigurationEndpoint = OPEN_ID_CONFIGURATION__ENDPOINT;
     private String issuer = ISSUER;
     private String authEndpoint = AUTH_ENDPOINT;
     private String tokenEndpoint = TOKEN_ENDPOINT;
     private String jwksUri = JWKS_URI;
+    private boolean formTokenRequest;
 
     private String clientId;
     private String clientSecret;
@@ -40,6 +44,16 @@ public class OpenIdConfig extends AbstractConfig {
 
     public void setUseInternal(final boolean useInternal) {
         this.useInternal = useInternal;
+    }
+
+    @JsonPropertyDescription("You can set an openid-configuration URL to automatically configure much of the openid settings. Without this the other endpoints etc must be set manually.")
+    @JsonProperty
+    public String getOpenIdConfigurationEndpoint() {
+        return openIdConfigurationEndpoint;
+    }
+
+    public void setOpenIdConfigurationEndpoint(final String openIdConfigurationEndpoint) {
+        this.openIdConfigurationEndpoint = openIdConfigurationEndpoint;
     }
 
     @NotNull
@@ -116,6 +130,16 @@ public class OpenIdConfig extends AbstractConfig {
         this.clientSecret = clientSecret;
     }
 
+    @JsonProperty
+    @JsonPropertyDescription("Some OpenId providers, e.g. AWS Cognito, require a form to be used for token requests.")
+    public boolean isFormTokenRequest() {
+        return formTokenRequest;
+    }
+
+    public void setFormTokenRequest(final boolean formTokenRequest) {
+        this.formTokenRequest = formTokenRequest;
+    }
+
     @Override
     public String toString() {
         return "OpenIdConfig{" +
@@ -125,6 +149,7 @@ public class OpenIdConfig extends AbstractConfig {
                 ", jwksUri='" + jwksUri + '\'' +
                 ", clientId='" + clientId + '\'' +
                 ", clientSecret='" + clientSecret + '\'' +
+                ", formTokenRequest='" + formTokenRequest + '\'' +
                 '}';
     }
 }

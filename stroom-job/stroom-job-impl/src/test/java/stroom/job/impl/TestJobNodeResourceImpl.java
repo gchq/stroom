@@ -30,7 +30,6 @@ import static org.mockito.Mockito.when;
 
 @MockitoSettings(strictness = Strictness.LENIENT)
 class TestJobNodeResourceImpl extends AbstractMultiNodeResourceTest<JobNodeResource> {
-
     private static final JobNode JOB_NODE_1 = buildJobNode(1, 1, "node1");
     private static final JobNode JOB_NODE_2 = buildJobNode(2, 1, "node2");
 
@@ -47,6 +46,12 @@ class TestJobNodeResourceImpl extends AbstractMultiNodeResourceTest<JobNodeResou
         jobNode.setVersion(version);
         jobNode.setNodeName(node);
         return jobNode;
+    }
+
+    private static final int BASE_PORT = 7020;
+
+    public TestJobNodeResourceImpl() {
+        super(createNodeList(BASE_PORT));
     }
 
     @BeforeEach
@@ -135,7 +140,7 @@ class TestJobNodeResourceImpl extends AbstractMultiNodeResourceTest<JobNodeResou
 
         final String subPath = JobNodeResource.INFO_PATH_PART;
 
-        final JobNodeInfo expectedResponse = new JobNodeInfo(8080, 2L, 3L);
+        final JobNodeInfo expectedResponse = new JobNodeInfo(BASE_PORT, 2L, 3L);
 
         final JobNodeInfo response = doGetTest(
             subPath,
@@ -159,7 +164,7 @@ class TestJobNodeResourceImpl extends AbstractMultiNodeResourceTest<JobNodeResou
 
         final String subPath = JobNodeResource.INFO_PATH_PART;
 
-        final JobNodeInfo expectedResponse = new JobNodeInfo(8081, 2L, 3L);
+        final JobNodeInfo expectedResponse = new JobNodeInfo(BASE_PORT + 1, 2L, 3L);
 
         final JobNodeInfo response = doGetTest(
             subPath,

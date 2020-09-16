@@ -24,6 +24,4 @@ public interface ClusterResultCollector<R> {
     void onSuccess(String nodeName, R r);
 
     void onFailure(String nodeName, Throwable throwable);
-
-    void terminate();
 }

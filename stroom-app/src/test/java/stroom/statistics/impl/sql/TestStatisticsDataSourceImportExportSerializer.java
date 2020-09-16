@@ -34,6 +34,7 @@ import stroom.statistics.impl.sql.shared.StatisticStoreDoc;
 import stroom.statistics.impl.sql.shared.StatisticType;
 import stroom.statistics.impl.sql.shared.StatisticsDataSourceData;
 import stroom.test.AbstractCoreIntegrationTest;
+import stroom.test.CommonTestControl;
 import stroom.util.io.FileUtil;
 
 import javax.inject.Inject;
@@ -53,6 +54,8 @@ class TestStatisticsDataSourceImportExportSerializer extends AbstractCoreIntegra
     private StatisticsDataSourceProvider statisticsDataSourceProvider;
     @Inject
     private ExplorerService explorerService;
+    @Inject
+    private CommonTestControl commonTestControl;
 
     private Set<DocRef> buildFindFolderCriteria() {
         final Set<DocRef> docRefs = new HashSet<>();
@@ -88,7 +91,7 @@ class TestStatisticsDataSourceImportExportSerializer extends AbstractCoreIntegra
         assertThat(FileUtil.count(testDataDir)).isEqualTo(2);
 
         // now clear out the java entities and import from file
-        clean(true);
+        commonTestControl.clear();
 
         assertThat(statisticStoreStore.list().size()).isEqualTo(0);
 

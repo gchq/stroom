@@ -17,8 +17,6 @@
 package stroom.receive;
 
 
-import org.junit.jupiter.api.Disabled;
-import org.junit.jupiter.api.Test;
 import stroom.core.receive.ProxyAggregationExecutor;
 import stroom.data.shared.StreamTypeNames;
 import stroom.data.store.api.InputStreamProvider;
@@ -47,15 +45,24 @@ import stroom.test.common.util.test.FileSystemTestUtil;
 import stroom.util.io.BufferFactory;
 import stroom.util.io.FileUtil;
 import stroom.util.io.StreamUtil;
-import stroom.util.logging.LambdaLogUtil;
 import stroom.util.logging.LambdaLogger;
 import stroom.util.logging.LambdaLoggerFactory;
+import stroom.util.logging.LogUtil;
 import stroom.util.shared.ModelStringUtil;
 import stroom.util.shared.ResultPage;
 
+import org.junit.jupiter.api.Disabled;
+import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.io.TempDir;
+
 import javax.inject.Inject;
 import javax.inject.Provider;
-import java.io.*;
+import java.io.BufferedOutputStream;
+import java.io.IOException;
+import java.io.InputStream;
+import java.io.OutputStream;
+import java.io.OutputStreamWriter;
+import java.io.PrintWriter;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
@@ -236,19 +243,19 @@ class TestProxyAggregationTask extends AbstractCoreIntegrationTest {
     }
 
     @Test
-    void testBulkLoad_singleFeed() {
-        doBulkTest(1, 10, 40, 10);
+    void testBulkLoad_singleFeed(@TempDir final Path tempDir) {
+        doBulkTest(1, 10, 40, 10, tempDir);
     }
 
     @Disabled // manual only as takes too long
     @Test
-    void testBulkLoad_multipleFeeds() {
-        doBulkTest(4, 2000, 4, 10);
+    void testBulkLoad_multipleFeeds(@TempDir final Path tempDir) {
+        doBulkTest(4, 2000, 4, 10, tempDir);
     }
 
     @Test
-    void testBulkLoad_smallScale() {
-        doBulkTest(2, 6, 4, 2);
+    void testBulkLoad_smallScale(@TempDir final Path tempDir) {
+        doBulkTest(2, 6, 4, 2, tempDir);
     }
 
     @Test
@@ -265,11 +272,12 @@ class TestProxyAggregationTask extends AbstractCoreIntegrationTest {
             final int feedCount,
             final int zipFilesPerFeed,
             final int entriesPerZip,
-            final int maxEntriesPerOutputFile) {
+            final int maxEntriesPerOutputFile,
+            final Path tempDir) {
         final Path proxyDir = createProxyDirectory();
 
         // Generate the source zip files
-        createData(proxyDir, feedCount, zipFilesPerFeed, entriesPerZip);
+        createData(proxyDir, feedCount, zipFilesPerFeed, entriesPerZip, tempDir);
         // Do the aggregation
         aggregate(FileUtil.getCanonicalPath(proxyDir), maxEntriesPerOutputFile);
         checkStore(feedCount, entriesPerZip, zipFilesPerFeed, maxEntriesPerOutputFile);
@@ -278,13 +286,14 @@ class TestProxyAggregationTask extends AbstractCoreIntegrationTest {
     private void createData(final Path proxyDir,
                             final int feedCount,
                             final int zipFilesPerFeed,
-                            final int entriesPerZip) {
-        // Cleanup if we have not run teardown before.
-        if (!teardownEnabled()) {
-            FileUtil.deleteContents(proxyDir);
-            commonTestControl.teardown();
-            commonTestControl.setup();
-        }
+                            final int entriesPerZip,
+                            final Path tempDir) {
+//        // Cleanup if we have not run teardown before.
+//        if (!teardownEnabled()) {
+//            FileUtil.deleteContents(proxyDir);
+//            commonTestControl.teardown();
+//            commonTestControl.setup(tempDir);
+//        }
 
         // Generate the feeds to use in the test
         final List<String> eventFeeds = generateFeeds(feedCount);
@@ -362,8 +371,8 @@ class TestProxyAggregationTask extends AbstractCoreIntegrationTest {
                     feedDoc.setDescription(name);
                     feedDoc.setStatus(FeedStatus.RECEIVE);
                     feedDoc.setStreamType(StreamTypeNames.RAW_EVENTS);
-                    feedDoc = feedStore.writeDocument(feedDoc);
-                    LOGGER.debug(LambdaLogUtil.message("Created feed {}", feedDoc.getName()));
+                    feedStore.writeDocument(feedDoc);
+                    LOGGER.debug(() -> LogUtil.message("Created feed {}", feedDoc.getName()));
                     return name;
                 })
                 .collect(Collectors.toList());
@@ -602,10 +611,10 @@ class TestProxyAggregationTask extends AbstractCoreIntegrationTest {
         final ZipOutputStream zipOutputStream = new ZipOutputStream(
                 new BufferedOutputStream(Files.newOutputStream(testFile)));
 
-        LOGGER.debug(LambdaLogUtil.message("Creating file {}", testFile.toAbsolutePath().toString()));
+        LOGGER.debug(() -> LogUtil.message("Creating file {}", testFile.toAbsolutePath().toString()));
 
         for (int i = 1; i <= count; i++) {
-            LOGGER.debug(LambdaLogUtil.message("Using feed {}", eventFeed));
+            LOGGER.debug(() -> LogUtil.message("Using feed {}", eventFeed));
 
             final String name = String.valueOf(i);
             zipOutputStream.putNextEntry(new ZipEntry(name + ".hdr"));

@@ -31,10 +31,12 @@ import stroom.dashboard.client.main.ResultComponent;
 import stroom.dashboard.client.main.SearchModel;
 import stroom.dashboard.client.query.QueryPresenter;
 import stroom.dashboard.client.table.TablePresenter.TableView;
+import stroom.dashboard.client.table.cf.ExpressionMatcher;
 import stroom.dashboard.shared.ComponentConfig;
 import stroom.dashboard.shared.ComponentResult;
 import stroom.dashboard.shared.ComponentResultRequest;
 import stroom.dashboard.shared.ComponentSettings;
+import stroom.dashboard.shared.ConditionalFormattingRule;
 import stroom.dashboard.shared.DashboardQueryKey;
 import stroom.dashboard.shared.DashboardResource;
 import stroom.dashboard.shared.DownloadSearchResultsRequest;
@@ -52,6 +54,7 @@ import stroom.data.grid.client.DataGridView;
 import stroom.data.grid.client.DataGridViewImpl;
 import stroom.datasource.api.v2.AbstractField;
 import stroom.datasource.api.v2.FieldTypes;
+import stroom.datasource.api.v2.IntegerField;
 import stroom.dispatch.client.ApplicationInstanceIdProvider;
 import stroom.dispatch.client.ExportFileCompleteUtil;
 import stroom.dispatch.client.Rest;
@@ -59,15 +62,19 @@ import stroom.dispatch.client.RestFactory;
 import stroom.document.client.event.DirtyEvent;
 import stroom.document.client.event.DirtyEvent.DirtyHandler;
 import stroom.document.client.event.HasDirtyHandlers;
+import stroom.hyperlink.client.Hyperlink;
+import stroom.query.api.v2.ExpressionOperator;
+import stroom.query.api.v2.ExpressionTerm;
+import stroom.query.api.v2.ExpressionTerm.Condition;
 import stroom.query.api.v2.ResultRequest.Fetch;
 import stroom.query.shared.v2.ParamUtil;
 import stroom.security.client.api.ClientSecurityContext;
 import stroom.security.shared.PermissionNames;
 import stroom.svg.client.SvgPresets;
 import stroom.ui.config.client.UiConfigCache;
-import stroom.util.client.RandomId;
 import stroom.util.shared.Expander;
 import stroom.util.shared.OffsetRange;
+import stroom.util.shared.RandomId;
 import stroom.util.shared.ResourceGeneration;
 import stroom.widget.button.client.ButtonView;
 import stroom.widget.menu.client.presenter.MenuListPresenter;
@@ -78,11 +85,15 @@ import stroom.widget.popup.client.presenter.PopupSize;
 import stroom.widget.popup.client.presenter.PopupUiHandlers;
 import stroom.widget.popup.client.presenter.PopupView.PopupType;
 
-import com.google.gwt.cell.client.Cell;
+import com.google.gwt.cell.client.SafeHtmlCell;
 import com.google.gwt.core.client.GWT;
 import com.google.gwt.dom.client.NativeEvent;
+import com.google.gwt.dom.client.Style;
 import com.google.gwt.dom.client.Style.Unit;
 import com.google.gwt.event.dom.client.ClickEvent;
+import com.google.gwt.safecss.shared.SafeStylesBuilder;
+import com.google.gwt.safehtml.shared.SafeHtml;
+import com.google.gwt.safehtml.shared.SafeHtmlBuilder;
 import com.google.gwt.user.cellview.client.Column;
 import com.google.gwt.view.client.SelectionChangeEvent;
 import com.google.inject.Inject;
@@ -92,7 +103,6 @@ import com.google.web.bindery.event.shared.HandlerRegistration;
 import com.gwtplatform.mvp.client.View;
 
 import java.util.ArrayList;
-import java.util.Collections;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
@@ -108,7 +118,7 @@ public class TablePresenter extends AbstractComponentPresenter<TableView>
 
     private final LocationManager locationManager;
     private final TableResultRequest tableResultRequest = new TableResultRequest(0, 100);
-    private final List<Column<Row, ?>> existingColumns = new ArrayList<>();
+    private final List<Column<TableRow, ?>> existingColumns = new ArrayList<>();
     private final List<HandlerRegistration> searchModelHandlerRegistrations = new ArrayList<>();
     private final ButtonView addFieldButton;
     private final ButtonView downloadButton;
@@ -120,19 +130,17 @@ public class TablePresenter extends AbstractComponentPresenter<TableView>
     private final ApplicationInstanceIdProvider applicationInstanceIdProvider;
     private final TimeZones timeZones;
     private final FieldsManager fieldsManager;
-    private final DataGridView<Row> dataGrid;
+    private final DataGridView<TableRow> dataGrid;
+    private final Column<TableRow, Expander> expanderColumn;
 
-    private int lastExpanderColumnWidth;
-    private int currentExpanderColumnWidth;
+    private int expanderColumnWidth;
     private SearchModel currentSearchModel;
     private FieldAddPresenter fieldAddPresenter;
 
     private TableComponentSettings tableSettings;
     private boolean ignoreRangeChange;
     private int[] maxResults = TableComponentSettings.DEFAULT_MAX_RESULTS;
-    private Set<String> usedFieldIds = new HashSet<>();
-    private List<Field> currentFields = Collections.emptyList();
-    private List<String> currentFieldIds = Collections.emptyList();
+    private final Set<String> usedFieldIds = new HashSet<>();
 
     @Inject
     public TablePresenter(final EventBus eventBus,
@@ -199,6 +207,22 @@ public class TablePresenter extends AbstractComponentPresenter<TableView>
                     }
                 })
                 .onFailure(caught -> AlertEvent.fireError(TablePresenter.this, caught.getMessage(), null));
+
+
+        // Expander column.
+        expanderColumn = new Column<TableRow, Expander>(new ExpanderCell()) {
+            @Override
+            public Expander getValue(final TableRow row) {
+                if (row == null) {
+                    return null;
+                }
+                return row.getExpander();
+            }
+        };
+        expanderColumn.setFieldUpdater((index, result, value) -> {
+            tableResultRequest.setGroupOpen(result.getGroupKey(), !value.isExpanded());
+            refresh();
+        });
     }
 
     @Override
@@ -240,7 +264,7 @@ public class TablePresenter extends AbstractComponentPresenter<TableView>
 
         registerHandler(annotateButton.addClickHandler(event -> {
             if ((event.getNativeButton() & NativeEvent.BUTTON_LEFT) != 0) {
-                annotationManager.showAnnotationMenu(event.getNativeEvent(), currentFields, dataGrid.getSelectionModel().getSelectedItems());
+                annotationManager.showAnnotationMenu(event.getNativeEvent(), getSettings(), dataGrid.getSelectionModel().getSelectedItems());
             }
         }));
     }
@@ -414,7 +438,7 @@ public class TablePresenter extends AbstractComponentPresenter<TableView>
     }
 
     private void enableAnnotate() {
-        final List<EventId> idList = annotationManager.getEventIdList(currentFields, dataGrid.getSelectionModel().getSelectedItems());
+        final List<EventId> idList = annotationManager.getEventIdList(getSettings(), dataGrid.getSelectionModel().getSelectedItems());
         final boolean enabled = idList.size() > 0;
         annotateButton.setEnabled(enabled);
     }
@@ -423,8 +447,6 @@ public class TablePresenter extends AbstractComponentPresenter<TableView>
     @Override
     public void startSearch() {
         tableResultRequest.setTableSettings(tableSettings.copy());
-        currentFields = tableResultRequest.getTableSettings().getFields();
-        currentFieldIds = currentFields.stream().map(Field::getId).collect(Collectors.toList());
     }
 
     @Override
@@ -446,21 +468,16 @@ public class TablePresenter extends AbstractComponentPresenter<TableView>
         ignoreRangeChange = true;
 
         try {
-//        if (!paused) {
-            lastExpanderColumnWidth = MIN_EXPANDER_COL_WIDTH;
-            currentExpanderColumnWidth = MIN_EXPANDER_COL_WIDTH;
-
             if (componentResult != null) {
                 // Don't refresh the table unless the results have changed.
                 final TableResult tableResult = (TableResult) componentResult;
 
-                final List<Row> values = tableResult.getRows();
+                final List<TableRow> values = processData(tableResult.getFields(), tableResult.getRows());
                 final OffsetRange<Integer> valuesRange = tableResult.getResultRange();
 
                 // Only set data in the table if we have got some results and
                 // they have changed.
                 if (valuesRange.getOffset() == 0 || values.size() > 0) {
-//                    updateColumns();
                     dataGrid.setRowData(valuesRange.getOffset(), values);
                     dataGrid.setRowCount(tableResult.getTotalResults(), true);
                 }
@@ -476,7 +493,6 @@ public class TablePresenter extends AbstractComponentPresenter<TableView>
 
                 dataGrid.getSelectionModel().clear();
             }
-//        }
         } catch (final RuntimeException e) {
             GWT.log(e.getMessage());
         }
@@ -484,57 +500,224 @@ public class TablePresenter extends AbstractComponentPresenter<TableView>
         ignoreRangeChange = false;
     }
 
-    private void addExpanderColumn(final int maxDepth) {
-        // Expander column.
-        final Column<Row, Expander> column = new Column<Row, Expander>(new ExpanderCell()) {
+    private List<TableRow> processData(final List<Field> fields, final List<Row> values) {
+        // See if any fields have more than 1 level. If they do then we will add
+        // an expander column.
+        int maxGroup = -1;
+        final boolean showDetail = tableSettings.showDetail();
+        for (final Field field : fields) {
+            if (field.getGroup() != null) {
+                final int group = field.getGroup();
+                if (group > maxGroup) {
+                    maxGroup = group;
+                }
+            }
+        }
+        int maxDepth = maxGroup;
+        if (showDetail) {
+            maxDepth++;
+        }
+
+        final List<ConditionalFormattingRule> rules = tableSettings.getConditionalFormattingRules();
+        final List<Condition> conditions = new ArrayList<>();
+        conditions.add(ExpressionTerm.Condition.EQUALS);
+        conditions.add(ExpressionTerm.Condition.GREATER_THAN);
+        conditions.add(ExpressionTerm.Condition.GREATER_THAN_OR_EQUAL_TO);
+        conditions.add(ExpressionTerm.Condition.LESS_THAN);
+        conditions.add(ExpressionTerm.Condition.LESS_THAN_OR_EQUAL_TO);
+        final Map<String, AbstractField> fieldMap = tableSettings.getFields()
+                .stream()
+                .collect(Collectors.toMap(Field::getName, field -> new IntegerField(field.getName(), true, conditions)));
+        final ExpressionMatcher expressionMatcher = new ExpressionMatcher(fieldMap);
+
+        final List<TableRow> processed = new ArrayList<>(values.size());
+        int hiddenRowCount = 0;
+        for (final Row row : values) {
+            boolean hide = false;
+            SafeStylesBuilder rowStyle = new SafeStylesBuilder();
+
+            // Conditional formatting
+            if (rules != null && rules.size() > 0) {
+                try {
+                    ConditionalFormattingRule matchingRule = null;
+                    for (final ConditionalFormattingRule rule : rules) {
+                        try {
+                            if (rule.isEnabled()) {
+                                final Map<String, Object> attributeMap = new HashMap<>();
+                                for (int i = 0; i < fields.size() && i < row.getValues().size(); i++) {
+                                    final Field field = fields.get(i);
+                                    final String value = row.getValues().get(i);
+                                    attributeMap.put(field.getName(), value);
+                                }
+
+                                final ExpressionOperator operator = rule.getExpression();
+                                final boolean match = expressionMatcher.match(attributeMap, operator);
+                                if (match) {
+                                    matchingRule = rule;
+                                    break;
+                                }
+                            }
+                        } catch (final RuntimeException e) {
+                            GWT.log(e.getMessage());
+                        }
+                    }
+                    if (matchingRule != null) {
+                        if (matchingRule.isHide()) {
+                            hide = true;
+                        } else {
+                            if (matchingRule.getBackgroundColor() != null && !matchingRule.getBackgroundColor().isEmpty()) {
+                                rowStyle.trustedBackgroundColor(matchingRule.getBackgroundColor());
+                            }
+                            if (matchingRule.getTextColor() != null && !matchingRule.getTextColor().isEmpty()) {
+                                rowStyle.trustedColor(matchingRule.getTextColor());
+                            }
+                        }
+                    }
+                } catch (final RuntimeException e) {
+                    GWT.log(e.getMessage());
+                }
+            }
+
+            if (!hide) {
+                final Map<String, SafeHtml> safeHtmlMap = new HashMap<>();
+                for (int i = 0; i < fields.size() && i < row.getValues().size(); i++) {
+                    final Field field = fields.get(i);
+                    String value = row.getValues().get(i);
+                    if (value == null) {
+                        value = "";
+                    }
+
+                    final SafeHtmlBuilder builder = new SafeHtmlBuilder();
+                    SafeStylesBuilder stylesBuilder = new SafeStylesBuilder();
+                    stylesBuilder.append(rowStyle.toSafeStyles());
+
+                    // Wrap
+                    if (field.getFormat() != null && field.getFormat().getWrap() != null && field.getFormat().getWrap()) {
+                        stylesBuilder.whiteSpace(Style.WhiteSpace.NORMAL);
+                    }
+                    // Grouped
+                    if (field.getGroup() != null && field.getGroup() >= row.getDepth()) {
+                        stylesBuilder.fontWeight(Style.FontWeight.BOLD);
+                    }
+
+                    String style = stylesBuilder.toSafeStyles().asString();
+                    if (style.length() > 0) {
+                        style = " style=" + style;
+                    }
+                    builder.appendHtmlConstant("<div class=\"cell\"" + style + ">");
+                    append(value, builder);
+                    builder.appendHtmlConstant("</div>");
+
+                    safeHtmlMap.put(field.getId(), builder.toSafeHtml());
+                }
+
+                // Create an expander for the row.
+                Expander expander = null;
+                if (row.getDepth() < maxDepth) {
+                    final boolean open = tableResultRequest.isGroupOpen(row.getGroupKey());
+                    expander = new Expander(row.getDepth(), open, false);
+                } else if (row.getDepth() > 0) {
+                    expander = new Expander(row.getDepth(), false, true);
+                }
+
+                processed.add(new TableRow(expander, row.getGroupKey(), safeHtmlMap));
+
+            } else {
+                hiddenRowCount++;
+            }
+        }
+
+        // Add some empty rows to the end if we have some hidden ones.
+        // This is rubbish but currently necessary to deal with the way tables work in GWT.
+        for (int i = 0; i < hiddenRowCount; i++) {
+            processed.add(null);
+        }
+
+        // Set the expander column width.
+        if (maxDepth > 0) {
+            expanderColumnWidth = 16 + (maxDepth * 10);
+        } else {
+            expanderColumnWidth = MIN_EXPANDER_COL_WIDTH;
+        }
+        dataGrid.setColumnWidth(expanderColumn, expanderColumnWidth, Unit.PX);
+
+        return processed;
+    }
+
+    private void append(final String value, final SafeHtmlBuilder sb) {
+        final List<Object> parts = getParts(value);
+        parts.forEach(p -> {
+            if (p instanceof Hyperlink) {
+                final Hyperlink hyperlink = (Hyperlink) p;
+                if (!hyperlink.getText().trim().isEmpty()) {
+                    sb.appendHtmlConstant("<u link=\"" + hyperlink.toString() + "\">");
+
+//                    if (field != null && field.getFormat() != null && field.getFormat().getType() == Type.DATE_TIME) {
+//                        try {
+//                            long l = Long.parseLong(hyperlink.getText());
+//                            sb.appendEscaped(ClientDateUtil.toISOString(l));
+//                        } catch (final RuntimeException e) {
+//                            sb.appendEscaped(hyperlink.getText());
+//                        }
+//                    } else {
+                    sb.appendEscaped(hyperlink.getText());
+//                    }
+
+                    sb.appendHtmlConstant("</u>");
+                }
+            } else {
+                sb.appendEscaped(p.toString());
+            }
+        });
+    }
+
+    private List<Object> getParts(final String value) {
+        final List<Object> parts = new ArrayList<>();
+
+        final StringBuilder sb = new StringBuilder();
+
+        for (int i = 0; i < value.length(); i++) {
+            final char c = value.charAt(i);
+
+            if (c == '[') {
+                final Hyperlink hyperlink = Hyperlink.create(value, i);
+                if (hyperlink != null) {
+                    if (sb.length() > 0) {
+                        parts.add(sb.toString());
+                        sb.setLength(0);
+                    }
+                    parts.add(hyperlink);
+                    i += hyperlink.toString().length() - 1;
+                } else {
+                    sb.append(c);
+                }
+
+            } else {
+                sb.append(c);
+            }
+        }
+
+        if (sb.length() > 0) {
+            parts.add(sb.toString());
+        }
+
+        return parts;
+    }
+
+    private void addExpanderColumn() {
+        dataGrid.addColumn(expanderColumn, "<br/>", expanderColumnWidth);
+        existingColumns.add(expanderColumn);
+    }
+
+    private void addColumn(final Field field) {
+        final Column<TableRow, SafeHtml> column = new Column<TableRow, SafeHtml>(new SafeHtmlCell()) {
             @Override
-            public Expander getValue(final Row row) {
+            public SafeHtml getValue(final TableRow row) {
                 if (row == null) {
                     return null;
                 }
 
-                if (row.getDepth() < maxDepth) {
-                    // Set the width of the expander column if it needs to be
-                    // made wider.
-                    final int width = 16 + (row.getDepth() * 10);
-                    if (width > currentExpanderColumnWidth) {
-                        currentExpanderColumnWidth = width;
-                        lastExpanderColumnWidth = width;
-                        dataGrid.setColumnWidth(this, width, Unit.PX);
-                    }
-
-                    final boolean open = tableResultRequest.isGroupOpen(row.getGroupKey());
-                    return new Expander(row.getDepth(), open, false);
-                } else if (row.getDepth() > 0) {
-                    return new Expander(row.getDepth(), false, true);
-                }
-
-                return null;
-            }
-        };
-        column.setFieldUpdater((index, result, value) -> {
-            tableResultRequest.setGroupOpen(result.getGroupKey(), !value.isExpanded());
-            refresh();
-        });
-        dataGrid.addColumn(column, "<br/>", lastExpanderColumnWidth);
-        existingColumns.add(column);
-    }
-
-    private void addColumn(final Field field) {
-        final TableCell cell = new TableCell(this, field);
-        final Column<Row, Row> column = new Column<Row, Row>(cell) {
-            @Override
-            public Row getValue(final Row row) {
-                return row;
-            }
-
-            @Override
-            public String getCellStyleNames(Cell.Context context, Row object) {
-                if (field.getFormat() != null && field.getFormat().getWrap() != null && field.getFormat().getWrap()) {
-                    return super.getCellStyleNames(context, object) + " " + dataGrid.getResources().dataGridStyle().dataGridCellWrapText();
-                }
-
-                return super.getCellStyleNames(context, object);
+                return row.getValue(field.getId());
             }
         };
 
@@ -548,22 +731,6 @@ public class TablePresenter extends AbstractComponentPresenter<TableView>
     void redrawHeaders() {
         dataGrid.redrawHeaders();
     }
-
-//    private void performRowAction(final Row result) {
-//        selectedStreamId = null;
-//        selectedEventId = null;
-//        if (result != null && streamIdIndex >= 0 && eventIdIndex >= 0) {
-//            final String[] values = result.values;
-//            if (values.length > streamIdIndex && values[streamIdIndex] != null) {
-//                selectedStreamId = values[streamIdIndex];
-//            }
-//            if (values.length > eventIdIndex && values[eventIdIndex] != null) {
-//                selectedEventId = values[eventIdIndex];
-//            }
-//        }
-//
-//        getComponents().fireComponentChangeEvent(this);
-//    }
 
     private void setQueryId(final String queryId) {
         cleanupSearchModelAssociation();
@@ -678,36 +845,14 @@ public class TablePresenter extends AbstractComponentPresenter<TableView>
         ensureSpecialFields(IndexConstants.STREAM_ID, IndexConstants.EVENT_ID, "Id");
 
         // Remove existing columns.
-        for (final Column<Row, ?> column : existingColumns) {
+        for (final Column<TableRow, ?> column : existingColumns) {
             dataGrid.removeColumn(column);
         }
         existingColumns.clear();
 
-        // See if any fields have more than 1 level. If they do then we will add
-        // an expander column.
-        int maxGroup = -1;
-        final boolean showDetail = tableSettings.showDetail();
         final List<Field> fields = tableSettings.getFields();
-        for (final Field field : fields) {
-            if (field.getGroup() != null) {
-                final int group = field.getGroup();
-                if (group > maxGroup) {
-                    maxGroup = group;
-                }
-            }
-        }
-
-        int maxDepth = maxGroup;
-        if (showDetail) {
-            maxDepth++;
-        }
-
-        if (maxDepth > 0) {
-            addExpanderColumn(maxDepth);
-            fieldsManager.setFieldsStartIndex(1);
-        } else {
-            fieldsManager.setFieldsStartIndex(0);
-        }
+        addExpanderColumn();
+        fieldsManager.setFieldsStartIndex(1);
 
         // Add fields as columns.
         for (final Field field : fields) {
@@ -804,15 +949,7 @@ public class TablePresenter extends AbstractComponentPresenter<TableView>
         setData(null);
     }
 
-    public List<Field> getCurrentFields() {
-        return currentFields;
-    }
-
-    List<String> getCurrentFieldIds() {
-        return currentFieldIds;
-    }
-
-    public List<Row> getSelectedRows() {
+    public List<TableRow> getSelectedRows() {
         return dataGrid.getSelectionModel().getSelectedItems();
     }
 

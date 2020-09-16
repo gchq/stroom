@@ -25,35 +25,97 @@ import stroom.meta.shared.MetaExpressionUtil;
 import stroom.meta.shared.Status;
 import stroom.pipeline.PipelineEventLog;
 import stroom.pipeline.PipelineStore;
+import stroom.pipeline.SupportsCodeInjection;
+import stroom.pipeline.factory.Element;
+import stroom.pipeline.factory.ElementFactory;
+import stroom.pipeline.factory.ElementRegistry;
+import stroom.pipeline.factory.ElementRegistryFactory;
+import stroom.pipeline.factory.PipelineFactory;
+import stroom.pipeline.factory.PipelineFactoryException;
 import stroom.pipeline.shared.PipelineDoc;
+import stroom.pipeline.shared.data.PipelineElement;
+import stroom.pipeline.shared.data.PipelineProperty;
+import stroom.pipeline.shared.stepping.FindElementDocRequest;
 import stroom.pipeline.shared.stepping.GetPipelineForMetaRequest;
 import stroom.pipeline.shared.stepping.PipelineStepRequest;
 import stroom.pipeline.shared.stepping.StepLocation;
 import stroom.pipeline.shared.stepping.SteppingResource;
 import stroom.pipeline.shared.stepping.SteppingResult;
 import stroom.security.api.SecurityContext;
+import stroom.util.pipeline.scope.PipelineScopeRunnable;
+
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import javax.inject.Inject;
 import java.util.List;
 
 class SteppingResourceImpl implements SteppingResource {
+    private static final Logger LOGGER = LoggerFactory.getLogger(SteppingResourceImpl.class);
+
     private final MetaService metaService;
     private final PipelineStore pipelineStore;
     private final SteppingService steppingService;
     private final PipelineEventLog pipelineEventLog;
     private final SecurityContext securityContext;
+    private final PipelineScopeRunnable pipelineScopeRunnable;
+
+    private final ElementRegistryFactory pipelineElementRegistryFactory;
+    private final ElementFactory elementFactory;
 
     @Inject
     SteppingResourceImpl(final MetaService metaService,
                          final PipelineStore pipelineStore,
                          final SteppingService steppingService,
                          final PipelineEventLog pipelineEventLog,
-                         final SecurityContext securityContext) {
+                         final ElementRegistryFactory pipelineElementRegistryFactory,
+                         final ElementFactory elementFactory,
+                         final SecurityContext securityContext,
+                         final PipelineScopeRunnable pipelineScopeRunnable) {
         this.metaService = metaService;
         this.pipelineStore = pipelineStore;
         this.steppingService = steppingService;
         this.pipelineEventLog = pipelineEventLog;
+        this.pipelineElementRegistryFactory = pipelineElementRegistryFactory;
+        this.elementFactory = elementFactory;
         this.securityContext = securityContext;
+        this.pipelineScopeRunnable = pipelineScopeRunnable;
+    }
+
+    @Override
+    public DocRef findElementDoc(final FindElementDocRequest request) {
+        return pipelineScopeRunnable.scopeResult(() -> {
+            final PipelineElement pipelineElement = request.getPipelineElement();
+            final List<PipelineProperty> properties = request.getProperties();
+            final String elementType = pipelineElement.getType();
+
+            final ElementRegistry pipelineElementRegistry = pipelineElementRegistryFactory.get();
+            LOGGER.debug("create() - loading element {}", pipelineElement);
+
+            final Class<Element> elementClass = pipelineElementRegistry.getElementClass(elementType);
+
+            if (elementClass == null) {
+                throw new PipelineFactoryException("Unable to load elementClass for type " + elementType);
+            }
+
+            final Element elementInstance = elementFactory.getElementInstance(elementClass);
+            if (elementInstance == null) {
+                throw new PipelineFactoryException("Unable to load elementInstance for class " + elementClass);
+            }
+
+            // Set the properties on this instance.
+            for (final PipelineProperty property : properties) {
+                PipelineFactory.setProperty(pipelineElementRegistry, pipelineElement.getId(), elementType, elementInstance, property.getName(),
+                        property.getValue(), null);
+            }
+
+            if (elementInstance instanceof SupportsCodeInjection) {
+                final SupportsCodeInjection supportsCodeInjection = (SupportsCodeInjection) elementInstance;
+                return supportsCodeInjection.findDoc(request.getFeedName(), request.getPipelineName(), LOGGER::debug);
+            }
+
+            throw new PipelineFactoryException("Element does not support code injection " + elementClass);
+        });
     }
 
     @Override
@@ -75,30 +137,6 @@ class SteppingResourceImpl implements SteppingResource {
                     docRef = getPipeline(childMeta);
                 }
             }
-
-//        if (docRef == null) {
-//            // If we still don't have a pipeline docRef then just try and find the
-//            // first pipeline we can in the folder that the stream belongs
-//            // to.
-//            final Stream stream = getMeta(action.getMetaId());
-//            if (stream != null) {
-//                final Feed feed = feedService.load(stream.getFeed());
-//                if (feed != null) {
-//
-//
-//                    final Folder folder = feed.getFolder();
-//                    if (folder != null) {
-//                        final FindPipelineEntityCriteria findPipelineCriteria = new FindPipelineEntityCriteria();
-//                        findPipelineCriteria.getFolderIdSet().add(folder);
-//                        final List<PipelineEntity> pipelines = pipelineStore.find(findPipelineCriteria);
-//                        if (pipelines != null && pipelines.size() > 0) {
-//                            final PipelineEntity pipelineDoc = pipelines.get(0);
-//                            docRef = DocRefUtil.create(pipelineDoc);
-//                        }
-//                    }
-//                }
-//            }
-//        }
 
             return docRef;
         });

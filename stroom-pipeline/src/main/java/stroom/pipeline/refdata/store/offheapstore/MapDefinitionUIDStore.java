@@ -1,10 +1,5 @@
 package stroom.pipeline.refdata.store.offheapstore;
 
-import com.google.common.base.Preconditions;
-import org.lmdbjava.Env;
-import org.lmdbjava.Txn;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 import stroom.pipeline.refdata.store.MapDefinition;
 import stroom.pipeline.refdata.store.RefStreamDefinition;
 import stroom.pipeline.refdata.store.offheapstore.databases.MapUidForwardDb;
@@ -12,13 +7,21 @@ import stroom.pipeline.refdata.store.offheapstore.databases.MapUidReverseDb;
 import stroom.pipeline.refdata.store.offheapstore.lmdb.LmdbUtils;
 import stroom.pipeline.refdata.util.ByteBufferUtils;
 import stroom.pipeline.refdata.util.PooledByteBuffer;
-import stroom.util.logging.LambdaLogUtil;
 import stroom.util.logging.LambdaLogger;
 import stroom.util.logging.LambdaLoggerFactory;
 import stroom.util.logging.LogUtil;
 
+import com.google.common.base.Preconditions;
+import io.vavr.Tuple2;
+import org.lmdbjava.Env;
+import org.lmdbjava.KeyRange;
+import org.lmdbjava.Txn;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+
 import java.nio.ByteBuffer;
 import java.util.Optional;
+import java.util.function.Consumer;
 import java.util.function.Supplier;
 
 /**
@@ -70,7 +73,7 @@ public class MapDefinitionUIDStore {
 
     /**
      * Returns the UID corresponding to the passed mapDefinition if it exists in the two mapping DBs. If it doesn't
-     * exist, a forward and reverse mapping will be created and the new UID returned. The returned UID warps a
+     * exist, a forward and reverse mapping will be created and the new UID returned. The returned UID wraps a
      * direct allocation {@link ByteBuffer} owned by LMDB so it may ONLY be used whilst still inside the passed
      * {@link Txn}.
      */
@@ -97,6 +100,10 @@ public class MapDefinitionUIDStore {
 
     Optional<UID> get(final Txn<ByteBuffer> txn, final MapDefinition mapDefinition) {
         return mapUidForwardDb.get(txn, mapDefinition);
+    }
+
+    Optional<MapDefinition> get(final Txn<ByteBuffer> txn, final UID mapUid) {
+        return mapUidReverseDb.get(txn, mapUid);
     }
 
     public long getEntryCount() {
@@ -130,6 +137,12 @@ public class MapDefinitionUIDStore {
         mapUidReverseDb.delete(writeTxn, mapUid.getBackingBuffer());
     }
 
+    void forEach(final Txn<ByteBuffer> txn,
+                 final Consumer<Tuple2<MapDefinition, UID>> entryConsumer) {
+
+        mapUidForwardDb.forEachEntry( txn, KeyRange.all(), entryConsumer);
+    }
+
     private UID createForwardReversePair(final Txn<ByteBuffer> writeTxn, final ByteBuffer mapDefinitionBuffer) {
         // this is all done in a write txn so we can be sure of consistency between the forward and reverse DBs
 
@@ -147,31 +160,25 @@ public class MapDefinitionUIDStore {
                         UID.of(0).getBackingBuffer()
                 );
 
-        // put the reverse entry
-        LAMBDA_LOGGER.trace(LambdaLogUtil.message(
-                "nextUidKeyBuffer {}", ByteBufferUtils.byteBufferInfo(nextUidKeyBuffer)));
-        LAMBDA_LOGGER.trace(LambdaLogUtil.message(
-                "mapDefinitionBuffer {}", ByteBufferUtils.byteBufferInfo(mapDefinitionBuffer)));
         mapUidReverseDb.putReverseEntry(writeTxn, nextUidKeyBuffer, mapDefinitionBuffer);
 
         // We are not changing the buffers so can just reuse them
 
-        LAMBDA_LOGGER.trace(LambdaLogUtil.message(
-                "mapDefinitionKeyBuffer {}", ByteBufferUtils.byteBufferInfo(mapDefinitionBuffer)));
-        LAMBDA_LOGGER.trace(LambdaLogUtil.message(
-                "nextUidValueBuffer {}", ByteBufferUtils.byteBufferInfo(nextUidKeyBuffer)));
-
-        // put the forward entry
         mapUidForwardDb.putForwardEntry(writeTxn, mapDefinitionBuffer, nextUidKeyBuffer);
 
         // this buffer is 'owned' by LMDB now but we are still in a txn so can pass it back
-        LAMBDA_LOGGER.trace(LambdaLogUtil.message(
-                "nextUidValueBuffer {}", ByteBufferUtils.byteBufferInfo(nextUidKeyBuffer)));
 
         // ensure it is ready for reading again as we are returning it
         UID mapUid = UID.wrap(nextUidKeyBuffer);
-        LOGGER.trace("Creating UID mapping for {}", mapUid);
+
+        if (LOGGER.isTraceEnabled()) {
+            LOGGER.trace("nextUidKeyBuffer {}", ByteBufferUtils.byteBufferInfo(nextUidKeyBuffer));
+            LOGGER.trace("mapDefinitionBuffer {}", ByteBufferUtils.byteBufferInfo(mapDefinitionBuffer));
+            LOGGER.trace("mapDefinitionKeyBuffer {}", ByteBufferUtils.byteBufferInfo(mapDefinitionBuffer));
+            LOGGER.trace("nextUidValueBuffer {}", ByteBufferUtils.byteBufferInfo(nextUidKeyBuffer));
+            LOGGER.trace("nextUidValueBuffer {}", ByteBufferUtils.byteBufferInfo(nextUidKeyBuffer));
+            LOGGER.trace("Creating UID mapping for {}", mapUid);
+        }
         return mapUid;
     }
-
 }

@@ -20,11 +20,12 @@ package stroom.pipeline.refdata.store;
 public enum ProcessingState {
 
     // byte values must be unique obviously
-    LOAD_IN_PROGRESS((byte)0),
-    PURGE_IN_PROGRESS((byte)1),
-    COMPLETE((byte)2);
+    LOAD_IN_PROGRESS((byte)0, "Load In Progress"),
+    PURGE_IN_PROGRESS((byte)1, "Purge In Progress"),
+    COMPLETE((byte)2, "Complete");
 
     private final byte id;
+    private final String displayName;
 
     private static ProcessingState[] states = new ProcessingState[ProcessingState.values().length];
 
@@ -34,12 +35,17 @@ public enum ProcessingState {
         }
     }
 
-    ProcessingState(final byte id) {
+    ProcessingState(final byte id, final String displayName) {
         this.id = id;
+        this.displayName = displayName;
     }
 
     public byte getId() {
         return id;
+    }
+
+    public String getDisplayName() {
+        return displayName;
     }
 
     public static ProcessingState fromByte(final byte id) {
