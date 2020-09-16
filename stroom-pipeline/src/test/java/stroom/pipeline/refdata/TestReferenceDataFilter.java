@@ -500,11 +500,6 @@ class TestReferenceDataFilter extends StroomUnitTest {
             }
 
             @Override
-            public StorageType getStorageType() {
-                return StorageType.OFF_HEAP;
-            }
-
-            @Override
             public boolean consumeValue(final RefDataValueProxyConsumerFactory refDataValueProxyConsumerFactory) {
                 final RefDataValueProxyConsumer refDataValueProxyConsumer = refDataValueProxyConsumerFactory
                         .getConsumer(StorageType.OFF_HEAP);

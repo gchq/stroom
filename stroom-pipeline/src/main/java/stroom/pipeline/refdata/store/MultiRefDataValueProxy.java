@@ -17,9 +17,10 @@
 
 package stroom.pipeline.refdata.store;
 
+import stroom.pipeline.refdata.store.offheapstore.TypedByteBuffer;
+
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import stroom.pipeline.refdata.store.offheapstore.TypedByteBuffer;
 
 import java.util.List;
 import java.util.Objects;
@@ -54,11 +55,6 @@ public class MultiRefDataValueProxy implements RefDataValueProxy {
             }
         }
         return optResult;
-    }
-
-    @Override
-    public RefDataStore.StorageType getStorageType() {
-        throw new UnsupportedOperationException("Not valid for this implementation");
     }
 
     @Override
