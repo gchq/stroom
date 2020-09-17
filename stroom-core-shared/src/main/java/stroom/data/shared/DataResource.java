@@ -41,6 +41,7 @@ import java.util.List;
 @Produces(MediaType.APPLICATION_JSON)
 @Consumes(MediaType.APPLICATION_JSON)
 public interface DataResource extends RestResource, DirectRestService {
+
     @POST
     @Path("download")
     @ApiOperation(

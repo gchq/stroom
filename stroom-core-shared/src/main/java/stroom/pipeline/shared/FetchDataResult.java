@@ -24,7 +24,7 @@ import com.fasterxml.jackson.annotation.JsonCreator;
 import com.fasterxml.jackson.annotation.JsonInclude;
 import com.fasterxml.jackson.annotation.JsonProperty;
 
-import java.util.List;
+import java.util.Set;
 
 @JsonInclude(JsonInclude.Include.NON_NULL)
 public class FetchDataResult extends AbstractFetchDataResult {
@@ -47,7 +47,7 @@ public class FetchDataResult extends AbstractFetchDataResult {
                            @JsonProperty("itemRange") final OffsetRange<Long> itemRange,
                            @JsonProperty("totalItemCount") final RowCount<Long> totalItemCount,
                            @JsonProperty("totalCharacterCount") final RowCount<Long> totalCharacterCount,
-                           @JsonProperty("availableChildStreamTypes") final List<String> availableChildStreamTypes,
+                           @JsonProperty("availableChildStreamTypes") final Set<String> availableChildStreamTypes,
                            @JsonProperty("data") final String data,
                            @JsonProperty("html") final boolean html,
                            @JsonProperty("dataType") final DataType dataType) {

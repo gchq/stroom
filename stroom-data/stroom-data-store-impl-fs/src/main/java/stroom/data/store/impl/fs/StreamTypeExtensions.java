@@ -7,10 +7,13 @@ import org.slf4j.LoggerFactory;
 
 import java.util.HashMap;
 import java.util.Map;
+import java.util.Map.Entry;
+import java.util.stream.Collectors;
 
 class StreamTypeExtensions {
     private static final Logger LOGGER = LoggerFactory.getLogger(StreamTypeExtensions.class);
     private static final Map<String, String> EXTENSION_MAP = new HashMap<>();
+    private static final Map<String, String> EXTENSION_REVERSE_MAP;
 
     static {
         EXTENSION_MAP.put(InternalStreamTypeNames.MANIFEST, "mf");
@@ -27,6 +30,10 @@ class StreamTypeExtensions {
         EXTENSION_MAP.put(StreamTypeNames.CONTEXT, "ctx");
         EXTENSION_MAP.put(StreamTypeNames.DETECTIONS, "dtxn");
         EXTENSION_MAP.put(StreamTypeNames.RECORDS, "rec");
+
+        EXTENSION_REVERSE_MAP = EXTENSION_MAP.entrySet()
+                .stream()
+                .collect(Collectors.toMap(Entry::getValue, Entry::getKey));
     }
 
     static String getExtension(final String streamType) {
@@ -36,5 +43,9 @@ class StreamTypeExtensions {
             extension = "dat";
         }
         return extension;
+    }
+
+    static String getType(final String extension) {
+        return EXTENSION_REVERSE_MAP.get(extension);
     }
 }

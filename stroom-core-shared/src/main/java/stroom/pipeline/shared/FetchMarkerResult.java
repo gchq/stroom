@@ -25,6 +25,7 @@ import com.fasterxml.jackson.annotation.JsonInclude;
 import com.fasterxml.jackson.annotation.JsonProperty;
 
 import java.util.List;
+import java.util.Set;
 
 @JsonInclude(JsonInclude.Include.NON_NULL)
 public class FetchMarkerResult extends AbstractFetchDataResult {
@@ -45,7 +46,7 @@ public class FetchMarkerResult extends AbstractFetchDataResult {
                              @JsonProperty("itemRange") final OffsetRange<Long> itemRange,
                              @JsonProperty("totalItemCount") final RowCount<Long> totalItemCount,
                              @JsonProperty("totalCharacterCount") final RowCount<Long> totalCharacterCount,
-                             @JsonProperty("availableChildStreamTypes") final List<String> availableChildStreamTypes,
+                             @JsonProperty("availableChildStreamTypes") final Set<String> availableChildStreamTypes,
                              @JsonProperty("markers") final List<Marker> markers) {
 //        super(streamTypeName, classification, streamRange, streamRowCount, pageRange, pageRowCount, availableChildStreamTypes);
         super(streamTypeName,

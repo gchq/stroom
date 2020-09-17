@@ -7,6 +7,7 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.util.HashMap;
 import java.util.Map;
+import java.util.Set;
 
 class BasicInputStreamProvider implements InputStreamProvider {
     private final Map<String, SegmentInputStream> inputStreamMap = new HashMap<>();
@@ -19,6 +20,11 @@ class BasicInputStreamProvider implements InputStreamProvider {
     @Override
     public SegmentInputStream get(final String streamType) {
         return inputStreamMap.get(streamType);
+    }
+
+    @Override
+    public Set<String> getChildTypes() {
+        return inputStreamMap.keySet();
     }
 
     public void put(final String streamType, final InputStream inputStream, final int size) {

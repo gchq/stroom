@@ -23,6 +23,8 @@ import stroom.meta.shared.Meta;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import java.util.Set;
+
 public class InputStreamProviderImpl implements InputStreamProvider {
     private static final Logger LOGGER = LoggerFactory.getLogger(InputStreamProviderImpl.class);
 
@@ -75,5 +77,10 @@ public class InputStreamProviderImpl implements InputStreamProvider {
 //        for (SegmentInputStreamProvider segmentInputStreamProvider : providerMap.values()) {
 //            segmentInputStreamProvider.close();
 //        }
+    }
+
+    @Override
+    public Set<String> getChildTypes() {
+        return factory.getChildTypes();
     }
 }

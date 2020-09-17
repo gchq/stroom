@@ -17,9 +17,13 @@
 package stroom.data.store.api;
 
 import java.io.Closeable;
+import java.util.Set;
 
 public interface InputStreamProvider extends Closeable {
+
     SegmentInputStream get();
 
     SegmentInputStream get(String streamType);
+
+    Set<String> getChildTypes();
 }

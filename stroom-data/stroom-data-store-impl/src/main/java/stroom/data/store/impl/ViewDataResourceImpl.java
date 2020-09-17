@@ -95,6 +95,23 @@ class ViewDataResourceImpl implements ViewDataResource {
         }
     }
 
+//    public Set<String> getChildStreamTypes(final long id, final long partNo) {
+//        try {
+//            final String permissionName = PermissionNames.VIEW_DATA_PERMISSION;
+//
+//            return securityContext.secureResult(permissionName, () -> {
+//
+//                Set<String> childTypes = dataFetcher.getAvailableChildStreamTypes(id, partNo);
+//                LOGGER.info("childTypes {}", childTypes.stream().sorted().collect(Collectors.joining(",")));
+//                return childTypes;
+//            });
+//        } catch (Exception e) {
+//            LOGGER.error(LogUtil.message("Error fetching child stream types for id {}, part number {}",
+//                    id, partNo), e);
+//            throw e;
+//        }
+//    }
+
 //    @Override
 //    public AbstractFetchDataResult fetchData( final long streamId,
 //                                              final Long streamsOffset,

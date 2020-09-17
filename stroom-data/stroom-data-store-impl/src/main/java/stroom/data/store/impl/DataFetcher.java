@@ -57,6 +57,7 @@ import stroom.pipeline.writer.TextWriter;
 import stroom.pipeline.writer.XMLWriter;
 import stroom.security.api.SecurityContext;
 import stroom.util.io.StreamUtil;
+import stroom.util.logging.LogUtil;
 import stroom.util.pipeline.scope.PipelineScopeRunnable;
 import stroom.util.shared.DefaultLocation;
 import stroom.util.shared.EntityServiceException;
@@ -81,6 +82,7 @@ import java.io.Reader;
 import java.nio.charset.Charset;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Set;
 
 public class DataFetcher {
     private static final Logger LOGGER = LoggerFactory.getLogger(DataFetcher.class);
@@ -166,6 +168,24 @@ public class DataFetcher {
 //        pageTotal = 0L;
 //        pageTotalIsExact = false;
 //    }
+
+    public Set<String> getAvailableChildStreamTypes(final long id, final long partNo) {
+
+        return securityContext.useAsReadResult(() -> {
+            final Source source = streamStore.openSource(id, true);
+            try {
+                final InputStreamProvider inputStreamProvider = source.get(partNo);
+
+                final Set<String> childTypes = inputStreamProvider.getChildTypes();
+
+                return childTypes;
+
+            } catch (IOException e) {
+                throw new RuntimeException(LogUtil.message("Error opening stream {}, part {}", id, partNo), e);
+            }
+        });
+    };
+
     public AbstractFetchDataResult getData(final FetchDataRequest fetchDataRequest) {
 //
 //    }
@@ -180,7 +200,7 @@ public class DataFetcher {
 //                                           final Severity... expandedSeverities) {
         // Allow users with 'Use' permission to read data, pipelines and XSLT.
         return securityContext.useAsReadResult(() -> {
-            List<String> availableChildStreamTypes;
+            Set<String> availableChildStreamTypes;
             String feedName = null;
             String streamTypeName = null;
             String eventId = String.valueOf(fetchDataRequest.getSourceLocation().getId());
@@ -327,7 +347,7 @@ public class DataFetcher {
                                                  final String streamTypeName,
                                                  final SegmentInputStream segmentInputStream,
                                                  final SourceLocation sourceLocation,
-                                                 final List<String> availableChildStreamTypes,
+                                                 final Set<String> availableChildStreamTypes,
                                                  final Severity... expandedSeverities) throws IOException {
         List<Marker> markersList;
 
@@ -386,7 +406,7 @@ public class DataFetcher {
                                              final String streamTypeName,
                                              final SegmentInputStream segmentInputStream,
 //                                             final OffsetRange<Long> pageRange,
-                                             final List<String> availableChildStreamTypes,
+                                             final Set<String> availableChildStreamTypes,
 //                                             final DocRef pipeline,
 //                                             final boolean showAsHtml,
                                              final Source streamSource,
@@ -985,21 +1005,23 @@ public class DataFetcher {
         });
     }
 
-    private List<String> getAvailableChildStreamTypes(
+    private Set<String> getAvailableChildStreamTypes(
             final InputStreamProvider inputStreamProvider) throws IOException {
 
-        final List<String> availableChildStreamTypes = new ArrayList<>();
-        try (final InputStream inputStream = inputStreamProvider.get(StreamTypeNames.META)) {
-            if (inputStream != null) {
-                availableChildStreamTypes.add(StreamTypeNames.META);
-            }
-        }
-        try (final InputStream inputStream = inputStreamProvider.get(StreamTypeNames.CONTEXT)) {
-            if (inputStream != null) {
-                availableChildStreamTypes.add(StreamTypeNames.CONTEXT);
-            }
-        }
-        return availableChildStreamTypes;
+//        final List<String> availableChildStreamTypes = new ArrayList<>();
+//        try (final InputStream inputStream = inputStreamProvider.get(StreamTypeNames.META)) {
+//            if (inputStream != null) {
+//                availableChildStreamTypes.add(StreamTypeNames.META);
+//            }
+//        }
+//        try (final InputStream inputStream = inputStreamProvider.get(StreamTypeNames.CONTEXT)) {
+//            if (inputStream != null) {
+//                availableChildStreamTypes.add(StreamTypeNames.CONTEXT);
+//            }
+//        }
+//        return availableChildStreamTypes;
+
+        return inputStreamProvider.getChildTypes();
     }
 
     private interface NonSegmentedIncludeCharPredicate {

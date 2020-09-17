@@ -62,6 +62,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.Objects;
 import java.util.Optional;
+import java.util.Set;
 
 public class DataPresenter extends MyPresenterWidget<DataPresenter.DataView> implements TextUiHandlers {
     private static final ViewDataResource VIEW_DATA_RESOURCE = GWT.create(ViewDataResource.class);
@@ -715,7 +716,7 @@ public class DataPresenter extends MyPresenterWidget<DataPresenter.DataView> imp
         ignoreActions = false;
     }
 
-    private void updateTabs(final String streamType, final List<String> availableChildStreamTypes) {
+    private void updateTabs(final String streamType, final Set<String> availableChildStreamTypes) {
         if (streamType == null) {
             // Hide all links.
             hideTab(errorTab, true);

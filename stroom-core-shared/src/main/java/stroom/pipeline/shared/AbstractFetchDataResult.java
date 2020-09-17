@@ -27,7 +27,7 @@ import com.fasterxml.jackson.annotation.JsonProperty;
 import com.fasterxml.jackson.annotation.JsonSubTypes;
 import com.fasterxml.jackson.annotation.JsonTypeInfo;
 
-import java.util.List;
+import java.util.Set;
 
 @JsonTypeInfo(
         use = JsonTypeInfo.Id.NAME,
@@ -60,7 +60,7 @@ public abstract class AbstractFetchDataResult {
     @JsonProperty
     private final RowCount<Long> totalCharacterCount; // Total chars in part/segment
     @JsonProperty
-    private final List<String> availableChildStreamTypes;
+    private final Set<String> availableChildStreamTypes;
 
     @JsonCreator
     public AbstractFetchDataResult(@JsonProperty("streamTypeName") final String streamTypeName,
@@ -73,7 +73,7 @@ public abstract class AbstractFetchDataResult {
                                    @JsonProperty("itemRange") final OffsetRange<Long> itemRange,
                                    @JsonProperty("totalItemCount") final RowCount<Long> totalItemCount,
                                    @JsonProperty("totalCharacterCount") final RowCount<Long> totalCharacterCount,
-                                   @JsonProperty("availableChildStreamTypes") final List<String> availableChildStreamTypes) {
+                                   @JsonProperty("availableChildStreamTypes") final Set<String> availableChildStreamTypes) {
         this.streamTypeName = streamTypeName;
         this.classification = classification;
         this.sourceLocation = sourceLocation;
@@ -135,7 +135,7 @@ public abstract class AbstractFetchDataResult {
 //        return pageRowCount;
 //    }
 
-    public List<String> getAvailableChildStreamTypes() {
+    public Set<String> getAvailableChildStreamTypes() {
         return availableChildStreamTypes;
     }
 }
