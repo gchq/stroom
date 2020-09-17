@@ -61,6 +61,7 @@ class ViewDataResourceImpl implements ViewDataResource {
                          final StreamEventLog streamEventLog,
                          final SecurityContext securityContext,
                          final PipelineScopeRunnable pipelineScopeRunnable) {
+
         dataFetcher = new DataFetcher(streamStore,
                 feedProperties,
                 feedHolderProvider,
@@ -74,6 +75,7 @@ class ViewDataResourceImpl implements ViewDataResource {
                 streamEventLog,
                 securityContext,
                 pipelineScopeRunnable);
+
         this.securityContext = securityContext;
     }
 
@@ -92,4 +94,35 @@ class ViewDataResourceImpl implements ViewDataResource {
             throw e;
         }
     }
+
+//    @Override
+//    public AbstractFetchDataResult fetchData( final long streamId,
+//                                              final Long streamsOffset,
+//                                              final Long streamsLength,
+//                                              final Long pageOffset,
+//                                              final Long pageSize) {
+//
+//        final OffsetRange<Long> pageRange = new OffsetRange<>(pageOffset, pageSize);
+//        final OffsetRange<Long> streamRange = new OffsetRange<>(streamsOffset, streamsLength);
+//
+//        final boolean isMarkerMode = true; // Used for organising errors but only relevant when the data is in fact errors
+//        final boolean showAsHtml = false; // Used for dashboards so false here.
+//        final Severity[] expandedSeverities = new Severity[]{Severity.INFO, Severity.WARNING, Severity.ERROR, Severity.FATAL_ERROR};
+//
+//        //TODO Used for child streams. Needs implementing.
+//        String childStreamTypeName = null;
+//
+//        return securityContext.secureResult(PermissionNames.VIEW_DATA_PERMISSION, () -> {
+//            dataFetcher.reset();
+//            return dataFetcher.getData(
+//                    streamId,
+//                    childStreamTypeName,
+//                    streamRange,
+//                    pageRange,
+//                    isMarkerMode,
+//                    null,
+//                    showAsHtml,
+//                    expandedSeverities);
+//        });
+//    }
 }
