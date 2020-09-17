@@ -45,7 +45,8 @@ public class SecurityModule extends AbstractModule {
         bind(UserAppPermissionService.class).to(UserAppPermissionServiceImpl.class);
         bind(DocumentPermissionService.class).to(DocumentPermissionServiceImpl.class);
         bind(UserService.class).to(UserServiceImpl.class);
-        bind(TokenVerifier.class).to(JWTService.class);
+        bind(TokenVerifier.class).to(StandardJwtContextFactory.class);
+        bind(JwtContextFactory.class).to(JwtContextFactoryImpl.class);
         bind(CloseableHttpClient.class).toProvider(HttpClientProvider.class);
 
         FilterBinder.create(binder())
@@ -72,7 +73,7 @@ public class SecurityModule extends AbstractModule {
                 .addBinding(UserDocumentPermissionsCache.class);
 
         HasHealthCheckBinder.create(binder())
-                .bind(JWTService.class);
+                .bind(StandardJwtContextFactory.class);
 
         RestResourcesBinder.create(binder())
                 .bind(AppPermissionResourceImpl.class)

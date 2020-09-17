@@ -27,6 +27,7 @@ public class OpenIdConfig extends AbstractConfig {
     private String tokenEndpoint = TOKEN_ENDPOINT;
     private String jwksUri = JWKS_URI;
     private boolean formTokenRequest;
+    private String jwtClaimsResolver;
 
     private String clientId;
     private String clientSecret;
@@ -102,6 +103,16 @@ public class OpenIdConfig extends AbstractConfig {
 
     public void setJwksUri(final String jwksUri) {
         this.jwksUri = jwksUri;
+    }
+
+    @JsonProperty
+    @JsonPropertyDescription("Optionally choose a class to resolve JWT claims")
+    public String getJwtClaimsResolver() {
+        return jwtClaimsResolver;
+    }
+
+    public void setJwtClaimsResolver(final String jwtClaimsResolver) {
+        this.jwtClaimsResolver = jwtClaimsResolver;
     }
 
     // TODO Not sure we can add NotNull to this as it has no default and if useInternal is true

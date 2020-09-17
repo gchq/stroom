@@ -7,6 +7,8 @@ and this project adheres to [Semantic Versioning](http://semver.org/).
 
 ## [Unreleased]
 
+* Added code to authenticate against AWS ALB.
+
 * Remove requirement for Reference stream type in ref data API lookup requests.
 
 

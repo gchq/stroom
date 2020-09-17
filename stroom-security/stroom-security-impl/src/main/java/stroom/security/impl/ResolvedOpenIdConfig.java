@@ -111,6 +111,10 @@ public class ResolvedOpenIdConfig {
         return openIdConfiguration.getJwksUri();
     }
 
+    public String getJwtClaimsResolver() {
+        return openIdConfig.getJwtClaimsResolver();
+    }
+
     public String getClientId() {
         if (openIdConfig.isUseInternal()) {
             return openIdClientDetailsFactory.getClient().getClientId();

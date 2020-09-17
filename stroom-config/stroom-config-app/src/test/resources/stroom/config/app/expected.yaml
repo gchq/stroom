@@ -498,6 +498,7 @@ appConfig:
         tokenEndpoint: "https://accounts.google.com/o/oauth2/token"
         jwksUri: "https://www.googleapis.com/oauth2/v3/certs"
         formTokenRequest: false
+        jwtClaimsResolver: null
         clientId: null
         clientSecret: null
       preventLogin: false
