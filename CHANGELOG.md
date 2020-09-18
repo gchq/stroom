@@ -8,6 +8,11 @@ and this project adheres to [Semantic Versioning](http://semver.org/).
 ## [Unreleased]
 
 
+## [v7.0-beta.57] - 2020-09-18
+
+* Failed build.
+
+
 ## [v7.0-beta.56] - 2020-09-18
 
 * Added code to authenticate against AWS ALB.
@@ -2635,7 +2640,8 @@ Issue **gchq/stroom-expression#22** : Add `typeOf(...)` function to dashboard.
 
 * Issue **#202** : Initial release of the new data retention policy functionality.
 
-[Unreleased]: https://github.com/gchq/stroom/compare/v7.0-beta.56...HEAD
+[Unreleased]: https://github.com/gchq/stroom/compare/v7.0-beta.57...HEAD
+[v7.0-beta.57]: https://github.com/gchq/stroom/compare/v7.0-beta.56...v7.0-beta.57
 [v7.0-beta.56]: https://github.com/gchq/stroom/compare/v7.0-beta.55...v7.0-beta.56
 [v7.0-beta.55]: https://github.com/gchq/stroom/compare/v7.0-beta.54...v7.0-beta.55
 [v7.0-beta.54]: https://github.com/gchq/stroom/compare/v7.0-beta.53...v7.0-beta.54
