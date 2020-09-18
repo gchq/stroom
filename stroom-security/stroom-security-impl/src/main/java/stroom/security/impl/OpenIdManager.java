@@ -8,6 +8,8 @@ import stroom.security.openid.api.TokenRequest;
 import stroom.security.shared.User;
 import stroom.util.authentication.DefaultOpenIdCredentials;
 import stroom.util.io.StreamUtil;
+import stroom.util.logging.LambdaLogger;
+import stroom.util.logging.LambdaLoggerFactory;
 import stroom.util.servlet.UserAgentSessionUtil;
 
 import com.fasterxml.jackson.core.JsonProcessingException;
@@ -25,9 +27,7 @@ import org.apache.http.impl.client.CloseableHttpClient;
 import org.apache.http.message.BasicNameValuePair;
 import org.jose4j.jwt.JwtClaims;
 import org.jose4j.jwt.MalformedClaimException;
-import org.jose4j.jwt.consumer.InvalidJwtException;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
+import org.jose4j.jwt.consumer.JwtContext;
 
 import javax.inject.Inject;
 import javax.inject.Provider;
@@ -49,23 +49,23 @@ import java.util.Optional;
 import java.util.UUID;
 
 class OpenIdManager {
-    private static final Logger LOGGER = LoggerFactory.getLogger(OpenIdManager.class);
+    private static final LambdaLogger LOGGER = LambdaLoggerFactory.getLogger(OpenIdManager.class);
 
     private final ResolvedOpenIdConfig openIdConfig;
     private final DefaultOpenIdCredentials defaultOpenIdCredentials;
-    private final JWTService jwtService;
+    private final JwtContextFactory jwtClaimsResolver;
     private final UserCache userCache;
     private final Provider<CloseableHttpClient> httpClientProvider;
 
     @Inject
     public OpenIdManager(final ResolvedOpenIdConfig openIdConfig,
                          final DefaultOpenIdCredentials defaultOpenIdCredentials,
-                         final JWTService jwtService,
+                         final JwtContextFactory jwtClaimsResolver,
                          final UserCache userCache,
                          final Provider<CloseableHttpClient> httpClientProvider) {
         this.openIdConfig = openIdConfig;
         this.defaultOpenIdCredentials = defaultOpenIdCredentials;
-        this.jwtService = jwtService;
+        this.jwtClaimsResolver = jwtClaimsResolver;
         this.userCache = userCache;
         this.httpClientProvider = httpClientProvider;
     }
@@ -94,12 +94,15 @@ class OpenIdManager {
         }
 
         final String authenticationRequestUrl = authenticationRequest.build().toString();
-        LOGGER.info("Redirecting with an AuthenticationRequest to: {}", authenticationRequestUrl);
+        LOGGER.info(() -> "Redirecting with an AuthenticationRequest to: " + authenticationRequestUrl);
         // We want to make sure that the client has the cookie.
         return authenticationRequestUrl;
     }
 
-    public String backChannelOIDC(final HttpServletRequest request, final String code, final String stateId, final String postAuthRedirectUri) {
+    public String backChannelOIDC(final HttpServletRequest request,
+                                  final String code,
+                                  final String stateId,
+                                  final String postAuthRedirectUri) {
         Objects.requireNonNull(code, "Null code");
         Objects.requireNonNull(stateId, "Null state Id");
 
@@ -107,12 +110,12 @@ class OpenIdManager {
         String redirectUri = null;
 
         // If we have a state id then this should be a return from the auth service.
-        LOGGER.debug("We have the following state: {{}}", stateId);
+        LOGGER.debug(() -> "We have the following state: " + stateId);
 
         // Check the state is one we requested.
         final AuthenticationState state = AuthenticationStateSessionUtil.pop(request, stateId);
         if (state == null) {
-            LOGGER.warn("Unexpected state: " + stateId);
+            LOGGER.warn(() -> "Unexpected state: " + stateId);
 
         } else {
             // Invalidate the current session.
@@ -177,15 +180,20 @@ class OpenIdManager {
                         final TokenResponse tokenResponse = mapper.readValue(msg, TokenResponse.class);
                         idToken = tokenResponse.getIdToken();
                     } else {
-                        throw new AuthenticationException("Received status " + response.getStatusLine() + " from " + tokenEndpoint);
+                        throw new AuthenticationException("Received status " +
+                                response.getStatusLine() +
+                                " from " +
+                                tokenEndpoint);
                     }
                 }
             } catch (final IOException e) {
-                LOGGER.debug(e.getMessage(), e);
+                LOGGER.debug(e::getMessage, e);
             }
 
             if (idToken == null) {
-                throw new AuthenticationException("'" + OpenId.ID_TOKEN + "' not provided in response");
+                throw new AuthenticationException("'" +
+                        OpenId.ID_TOKEN +
+                        "' not provided in response");
             }
 
             final UserIdentityImpl token = createUIToken(session, state, idToken);
@@ -197,7 +205,7 @@ class OpenIdManager {
 
             // If we manage to login then redirect to the original URL held in the state.
             if (loggedIn) {
-                LOGGER.info("Redirecting to initiating URL: {}", state.getUrl());
+                LOGGER.info(() -> "Redirecting to initiating URL: " + state.getUrl());
                 redirectUri = state.getUrl();
             }
         }
@@ -215,12 +223,16 @@ class OpenIdManager {
         UserIdentityImpl token = null;
 
         try {
-            String sessionId = session.getId();
-            final JwtClaims jwtClaims = jwtService.extractTokenClaims(idToken);
+            final String sessionId = session.getId();
+            final Optional<JwtContext> optionalJwtContext = jwtClaimsResolver.getJwtContext(idToken);
+            final JwtClaims jwtClaims = optionalJwtContext
+                    .map(JwtContext::getJwtClaims)
+                    .orElseThrow(() -> new RuntimeException("Unable to extract JWT claims"));
+
             final String nonce = (String) jwtClaims.getClaimsMap().get(OpenId.NONCE);
-            final boolean match = nonce.equals(state.getNonce());
+            final boolean match = nonce != null && nonce.equals(state.getNonce());
             if (match) {
-                LOGGER.info("User is authenticated for sessionId " + sessionId);
+                LOGGER.info(() -> "User is authenticated for sessionId " + sessionId);
                 final String userId = getUserId(jwtClaims);
                 final Optional<User> optionalUser = userCache.get(userId);
                 final User user = optionalUser.orElseThrow(() ->
@@ -230,10 +242,10 @@ class OpenIdManager {
             } else {
                 // If the nonces don't match we need to redirect to log in again.
                 // Maybe the request uses an out-of-date stroomSessionId?
-                LOGGER.info("Received a bad nonce!");
+                LOGGER.info(() -> "Received a bad nonce!");
             }
-        } catch (final MalformedClaimException | InvalidJwtException e) {
-            LOGGER.warn(e.getMessage());
+        } catch (final MalformedClaimException e) {
+            LOGGER.warn(e::getMessage);
             throw new RuntimeException(e.getMessage(), e);
         }
 
@@ -249,30 +261,33 @@ class OpenIdManager {
     }
 
     /**
-     * This method creates a token for the API auth flow.
+     * This method attempts to get a token from the request headers and, if present, use that to login.
      */
-    public UserIdentity createAPIToken(final HttpServletRequest request) {
-
-        final Optional<String> optionalJws = jwtService.getJws(request);
+    public UserIdentity loginWithRequestToken(final HttpServletRequest request) {
         UserIdentityImpl userIdentity = null;
-
-        if (optionalJws.isPresent()) {
-            String jws = optionalJws.get();
-            userIdentity = optionalJws
-                    .flatMap(jwtService::getJwtClaims)
-                    .flatMap(jwtClaims -> getUserIdentity(request, jws, jwtClaims))
-                    .orElse(null);
+        try {
+            final Optional<JwtContext> optionalJwtContext = jwtClaimsResolver.getJwtContext(request);
+            if (optionalJwtContext.isPresent()) {
+                userIdentity = optionalJwtContext
+                        .flatMap(jwtContext -> getUserIdentity(request, jwtContext))
+                        .orElse(null);
+            } else {
+                LOGGER.debug(() -> "No JWS found in headers in request to " + request.getRequestURI());
+            }
+        } catch (final RuntimeException e) {
+            LOGGER.debug(e::getMessage, e);
         }
 
         if (userIdentity == null) {
-            LOGGER.error("Cannot get a valid JWS for API request to " + request.getRequestURI() + ". " +
+            LOGGER.debug(() -> "Cannot get a valid JWS for API request to " + request.getRequestURI() + ". " +
                     "This may be due to Stroom being left open in a browser after Stroom was restarted.");
         }
 
         return userIdentity;
     }
 
-    private Optional<UserIdentityImpl> getUserIdentity(HttpServletRequest request, String jws, JwtClaims jwtClaims) {
+    private Optional<UserIdentityImpl> getUserIdentity(final HttpServletRequest request,
+                                                       final JwtContext jwtContext) {
         String sessionId = null;
         final HttpSession session = request.getSession(false);
         if (session != null) {
@@ -280,12 +295,12 @@ class OpenIdManager {
         }
 
         try {
-            final String userId = jwtClaims.getSubject();
-
+            final String userId = getUserId(jwtContext.getJwtClaims());
             final User user;
-            if (jwtClaims.getAudience().contains(defaultOpenIdCredentials.getOauth2ClientId())
+            if (jwtContext.getJwtClaims().getAudience().contains(defaultOpenIdCredentials.getOauth2ClientId())
                     && userId.equals(defaultOpenIdCredentials.getApiKeyUserEmail())) {
-                LOGGER.warn("Authenticating using default API key. For production use, set up an API key in Stroom!");
+                LOGGER.warn(() ->
+                        "Authenticating using default API key. For production use, set up an API key in Stroom!");
                 // Using default creds so just fake a user
                 // TODO Not sure if this is enough info in the user
                 user = new User();
@@ -296,10 +311,10 @@ class OpenIdManager {
                         new AuthenticationException("Unable to find user: " + userId));
             }
 
-            return Optional.of(new UserIdentityImpl(user.getUuid(), userId, jws, sessionId));
+            return Optional.of(new UserIdentityImpl(user.getUuid(), userId, jwtContext.getJwt(), sessionId));
 
         } catch (MalformedClaimException e) {
-            LOGGER.error("Error extracting claims from token in request " + request.getRequestURI());
+            LOGGER.error(() -> "Error extracting claims from token in request " + request.getRequestURI());
             return Optional.empty();
         }
     }

@@ -8,7 +8,6 @@ import stroom.util.logging.LambdaLogger;
 import stroom.util.logging.LambdaLoggerFactory;
 
 import com.codahale.metrics.health.HealthCheck;
-import com.google.common.base.Strings;
 import org.jose4j.jwa.AlgorithmConstraints;
 import org.jose4j.jwk.JsonWebKeySet;
 import org.jose4j.jws.AlgorithmIdentifiers;
@@ -18,12 +17,12 @@ import org.jose4j.jwt.NumericDate;
 import org.jose4j.jwt.consumer.InvalidJwtException;
 import org.jose4j.jwt.consumer.JwtConsumer;
 import org.jose4j.jwt.consumer.JwtConsumerBuilder;
+import org.jose4j.jwt.consumer.JwtContext;
 import org.jose4j.keys.resolvers.JwksVerificationKeyResolver;
 import org.jose4j.keys.resolvers.VerificationKeyResolver;
 
 import javax.inject.Inject;
 import javax.inject.Singleton;
-import javax.servlet.ServletRequest;
 import javax.servlet.http.HttpServletRequest;
 import java.time.Instant;
 import java.util.List;
@@ -31,33 +30,46 @@ import java.util.Objects;
 import java.util.Optional;
 
 @Singleton
-public class JWTService implements HasHealthCheck, TokenVerifier {
-    private static final LambdaLogger LOGGER = LambdaLoggerFactory.getLogger(JWTService.class);
+public class StandardJwtContextFactory implements HasHealthCheck, TokenVerifier, JwtContextFactory {
+    private static final LambdaLogger LOGGER = LambdaLoggerFactory.getLogger(StandardJwtContextFactory.class);
 
-    private static final String BEARER = "Bearer ";
     private static final String AUTHORIZATION_HEADER = "Authorization";
 
     private final ResolvedOpenIdConfig openIdConfig;
     private final OpenIdPublicKeysSupplier openIdPublicKeysSupplier;
 
     @Inject
-    JWTService(final ResolvedOpenIdConfig openIdConfig,
-               final OpenIdPublicKeysSupplier openIdPublicKeysSupplier) {
+    StandardJwtContextFactory(final ResolvedOpenIdConfig openIdConfig,
+                              final OpenIdPublicKeysSupplier openIdPublicKeysSupplier) {
         this.openIdConfig = openIdConfig;
         this.openIdPublicKeysSupplier = openIdPublicKeysSupplier;
+    }
+
+    @Override
+    public Optional<JwtContext> getJwtContext(final HttpServletRequest request) {
+        LOGGER.debug(() -> AUTHORIZATION_HEADER + "=" + request.getHeader(AUTHORIZATION_HEADER));
+
+        final Optional<String> optionalJws = JwtUtil.getJwsFromHeader(request, AUTHORIZATION_HEADER);
+        return optionalJws
+                .flatMap(this::getJwtContext)
+                .or(() -> {
+                    LOGGER.debug(() -> "No JWS found in headers in request to " + request.getRequestURI());
+                    return Optional.empty();
+                });
     }
 
     /**
      * Verify the JSON Web Signature and then extract the user identity from it
      */
-    public Optional<JwtClaims> getJwtClaims(final String jws) {
+    @Override
+    public Optional<JwtContext> getJwtContext(final String jws) {
         Objects.requireNonNull(jws, "Null JWS");
         LOGGER.debug(() -> "Found auth header in request. It looks like this: " + jws);
 
         try {
             LOGGER.debug(() -> "Verifying token...");
-            final JwtClaims jwtClaims = extractTokenClaims(jws);
-            boolean isVerified = jwtClaims != null;
+            final JwtContext jwtContext = extractTokenContext(jws);
+            boolean isVerified = jwtContext != null;
             boolean isRevoked = false;
 
             // TODO : @66 Check against blacklist to see if token has been revoked. Blacklist
@@ -71,7 +83,7 @@ public class JWTService implements HasHealthCheck, TokenVerifier {
 //            }
 
             if (isVerified && !isRevoked) {
-                return Optional.ofNullable(jwtClaims);
+                return Optional.ofNullable(jwtContext);
             }
 
         } catch (Exception e) {
@@ -83,27 +95,10 @@ public class JWTService implements HasHealthCheck, TokenVerifier {
         return Optional.empty();
     }
 
-    /**
-     * Get the JSON Web Signature from the request headers
-     */
-    public Optional<String> getJws(final ServletRequest request) {
-        final Optional<String> authHeader = getAuthHeader(request);
-        return authHeader.map(bearerString -> {
-            String jws;
-            if (bearerString.startsWith(BEARER)) {
-                // This chops out 'Bearer' so we get just the token.
-                jws = bearerString.substring(BEARER.length());
-            } else {
-                jws = bearerString;
-            }
-            LOGGER.debug(() -> "Found auth header in request. It looks like this: " + jws);
-            return jws;
-        });
-    }
 
-    public JwtClaims extractTokenClaims(final String token) throws InvalidJwtException {
+    private JwtContext extractTokenContext(final String token) throws InvalidJwtException {
         try {
-            return toClaims(token);
+            return toContext(token);
         } catch (InvalidJwtException e) {
             LOGGER.warn(() -> "Unable to verify token!");
             throw e;
@@ -113,10 +108,10 @@ public class JWTService implements HasHealthCheck, TokenVerifier {
     @Override
     public void verifyToken(final String token, final String clientId) throws TokenException {
         // Will throw if invalid, e.g. if it doesn't match our public key
-        final JwtClaims jwtClaims;
+        final JwtContext jwtContext;
 
         try {
-            jwtClaims = toClaims(token);
+            jwtContext = toContext(token);
         } catch (InvalidJwtException e) {
             throw new TokenException("Invalid token: " + e.getMessage(), e);
         }
@@ -125,17 +120,18 @@ public class JWTService implements HasHealthCheck, TokenVerifier {
         //  is a list of JWI (JWT IDs) on auth service. Only tokens with `jwi` claims are API
         //  keys so only those tokens need checking against the blacklist cache.
 
-        if (jwtClaims == null) {
+        if (jwtContext == null) {
             throw new TokenException("Could not extract claims from token");
         } else {
             try {
+                final JwtClaims jwtClaims = jwtContext.getJwtClaims();
                 if (jwtClaims.getExpirationTime() != null
-                        && jwtClaims.getExpirationTime().isBefore(NumericDate.now())){
+                        && jwtClaims.getExpirationTime().isBefore(NumericDate.now())) {
                     throw new TokenException("Token expired on: " +
                             Instant.ofEpochSecond(jwtClaims.getExpirationTime().getValueInMillis()).toString());
                 }
 
-                List<String> audience = jwtClaims.getAudience();
+                final List<String> audience = jwtClaims.getAudience();
                 if (!audience.contains(clientId)) {
                     throw new TokenException("Token audience does not contain clientId: " + clientId);
                 }
@@ -145,19 +141,9 @@ public class JWTService implements HasHealthCheck, TokenVerifier {
         }
     }
 
-    private static Optional<String> getAuthHeader(final ServletRequest request) {
-        HttpServletRequest httpServletRequest = (HttpServletRequest) request;
-        return (getAuthHeader(httpServletRequest));
-    }
-
-    private static Optional<String> getAuthHeader(final HttpServletRequest httpServletRequest) {
-        String authHeader = httpServletRequest.getHeader(AUTHORIZATION_HEADER);
-        return Strings.isNullOrEmpty(authHeader) ? Optional.empty() : Optional.of(authHeader);
-    }
-
-    private JwtClaims toClaims(String token) throws InvalidJwtException {
+    private JwtContext toContext(final String token) throws InvalidJwtException {
         final JwtConsumer jwtConsumer = newJwsConsumer();
-        return jwtConsumer.processToClaims(token);
+        return jwtConsumer.process(token);
     }
 
     private JwtConsumer newJwsConsumer() {
