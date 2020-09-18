@@ -14,7 +14,7 @@ public class RequestLog {
     public static void log(final HttpServletRequest request) {
         if (REQUEST_LOGGER.isDebugEnabled()) {
             final StringBuilder sb = new StringBuilder();
-            sb.append("====================== REQUEST ======================\n");
+            sb.append("\n====================== REQUEST ======================\n");
             sb
                     .append("Request{")
                     .append("requestURI=")
