@@ -32,7 +32,9 @@ public class TextPresenter extends MyPresenterWidget<TextPresenter.TextView> {
     private final EditorPresenter textPresenter;
 
     @Inject
-    public TextPresenter(final EventBus eventBus, final TextView view, final EditorPresenter textPresenter) {
+    public TextPresenter(final EventBus eventBus,
+                         final TextView view,
+                         final EditorPresenter textPresenter) {
         super(eventBus, view);
         this.textPresenter = textPresenter;
 

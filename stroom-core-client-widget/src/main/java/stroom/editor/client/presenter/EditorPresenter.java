@@ -38,8 +38,11 @@ import edu.ycp.cs.dh.acegwt.client.ace.AceEditorTheme;
 
 import java.util.List;
 
-public class EditorPresenter extends MyPresenterWidget<EditorView>
-        implements HasFormatHandlers, HasChangeFilterHandlers, HasText, EditorUiHandlers, HasValueChangeHandlers<String> {
+public class EditorPresenter
+        extends MyPresenterWidget<EditorView>
+        implements HasFormatHandlers, HasChangeFilterHandlers, HasText, EditorUiHandlers,
+        HasValueChangeHandlers<String> {
+
     private final EditorMenuPresenter contextMenu;
 
     private boolean showFilterSettings;

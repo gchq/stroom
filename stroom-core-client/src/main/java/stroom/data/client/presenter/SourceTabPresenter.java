@@ -24,11 +24,11 @@ public class SourceTabPresenter extends ContentTabPresenter<SourceTabView> {
                               final SourceTabView view) {
         super(eventBus, view);
         this.sourcePresenter = sourcePresenter;
+        getView().setSourceView(sourcePresenter.getView());
     }
 
     @Override
     protected void onBind() {
-        getView().setSourceView(sourcePresenter.getView());
     }
 
     @Override
@@ -48,10 +48,12 @@ public class SourceTabPresenter extends ContentTabPresenter<SourceTabView> {
 
     public void setSourceLocation(final SourceLocation sourceLocation) {
         this.sourceLocation = sourceLocation;
+        sourcePresenter.setSourceLocation(sourceLocation);
     }
 
     public void setSourceKey(final SourceKey sourceKey) {
         this.sourceKey = sourceKey;
+        sourcePresenter.setSourceKey(sourceKey);
     }
 
     public interface SourceTabView extends View {

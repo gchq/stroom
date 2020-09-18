@@ -1,8 +1,12 @@
 package stroom.data.client.presenter;
 
+import stroom.data.client.SourceKey;
 import stroom.data.client.presenter.SourcePresenter.SourceView;
-import stroom.data.client.presenter.TextPresenter.TextView;
+import stroom.editor.client.presenter.EditorPresenter;
+import stroom.editor.client.presenter.EditorView;
 import stroom.pipeline.shared.SourceLocation;
+import stroom.svg.client.SvgPreset;
+import stroom.widget.button.client.ButtonView;
 
 import com.google.inject.Inject;
 import com.google.web.bindery.event.shared.EventBus;
@@ -11,26 +15,42 @@ import com.gwtplatform.mvp.client.View;
 
 public class SourcePresenter extends MyPresenterWidget<SourceView> {
 
-    private final TextPresenter textPresenter;
+    private final EditorPresenter editorPresenter;
+    private SourceLocation sourceLocation = null;
+    private SourceKey sourceKey;
 
     @Inject
     public SourcePresenter(final EventBus eventBus,
                            final SourceView view,
-                           final TextPresenter textPresenter) {
+                           final EditorPresenter editorPresenter) {
         super(eventBus, view);
-        this.textPresenter = textPresenter;
+        this.editorPresenter = editorPresenter;
+
+        editorPresenter.setText("hello");
+
+        getView().setEditorView(editorPresenter.getView());
+    }
+
+    public void setSourceLocation(final SourceLocation sourceLocation) {
+        this.sourceLocation = sourceLocation;
+        getView().setSourceLocation(sourceLocation);
+    }
+
+    public void setSourceKey(final SourceKey sourceKey) {
+        this.sourceKey = sourceKey;
     }
 
     @Override
     protected void onBind() {
-        getView().setTextView(textPresenter.getView());
+
     }
 
     public interface SourceView extends View {
 
         void setSourceLocation(final SourceLocation sourceLocation);
 
-        void setTextView(final TextView textView);
-    }
+        void setEditorView(final EditorView editorView);
 
+        ButtonView addButton(final SvgPreset preset);
+    }
 }

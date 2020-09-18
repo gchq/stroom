@@ -1,13 +1,16 @@
 package stroom.data.client.view;
 
 import stroom.data.client.presenter.SourcePresenter.SourceView;
-import stroom.data.client.presenter.TextPresenter.TextView;
 import stroom.data.pager.client.DataNavigator;
+import stroom.editor.client.presenter.EditorView;
 import stroom.pipeline.shared.SourceLocation;
+import stroom.svg.client.SvgPreset;
 import stroom.widget.button.client.ButtonPanel;
+import stroom.widget.button.client.ButtonView;
 import stroom.widget.layout.client.view.ResizeSimplePanel;
 
 import com.google.gwt.uibinder.client.UiBinder;
+import com.google.gwt.uibinder.client.UiField;
 import com.google.gwt.user.client.ui.Widget;
 import com.google.inject.Inject;
 import com.google.web.bindery.event.shared.EventBus;
@@ -18,19 +21,22 @@ public class SourceViewImpl extends ViewImpl implements SourceView {
     private SourceLocation sourceLocation;
     private Widget widget;
 
-    @Inject
+    @UiField
     ResizeSimplePanel container;
-    @Inject
+    @UiField
     DataNavigator dataNavigator;
-    @Inject
+    @UiField
     ButtonPanel buttonPanel;
 
     @Inject
-    public SourceViewImpl(final EventBus eventBus, final Binder binder) {
+    public SourceViewImpl(final EventBus eventBus,
+                          final Binder binder) {
         widget = binder.createAndBindUi(this);
+
+        dataNavigator.setVisible(false);
     }
 
-    @Override
+   @Override
     public void addToSlot(final Object slot, final Widget content) {
 
     }
@@ -56,8 +62,13 @@ public class SourceViewImpl extends ViewImpl implements SourceView {
     }
 
     @Override
-    public void setTextView(final TextView textView) {
-        this.container.setWidget(textView.asWidget());
+    public void setEditorView(final EditorView editorView) {
+        this.container.setWidget(editorView.asWidget());
+    }
+
+    @Override
+    public ButtonView addButton(final SvgPreset preset) {
+        return buttonPanel.addButton(preset);
     }
 
     public interface Binder extends UiBinder<Widget, SourceViewImpl> {
