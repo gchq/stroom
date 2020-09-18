@@ -17,6 +17,7 @@
 package stroom.data.client.gin;
 
 import stroom.core.client.gin.PluginModule;
+import stroom.data.client.SourceTabPlugin;
 import stroom.data.client.presenter.ClassificationWrapperPresenter;
 import stroom.data.client.presenter.ClassificationWrapperPresenter.ClassificationWrapperView;
 import stroom.data.client.presenter.DataPopupSupport;
@@ -35,6 +36,10 @@ import stroom.data.client.presenter.ProcessorTaskPresenter;
 import stroom.data.client.presenter.ProcessorTaskPresenter.StreamTaskView;
 import stroom.data.client.presenter.SourceLocationPresenter;
 import stroom.data.client.presenter.SourceLocationPresenter.SourceLocationView;
+import stroom.data.client.presenter.SourcePresenter;
+import stroom.data.client.presenter.SourcePresenter.SourceView;
+import stroom.data.client.presenter.SourceTabPresenter;
+import stroom.data.client.presenter.SourceTabPresenter.SourceTabView;
 import stroom.data.client.presenter.TextPresenter;
 import stroom.data.client.presenter.TextPresenter.TextView;
 import stroom.data.client.view.ClassificationWrapperViewImpl;
@@ -42,6 +47,8 @@ import stroom.data.client.view.DataViewImpl;
 import stroom.data.client.view.ExpressionViewImpl;
 import stroom.data.client.view.ProcessChoiceViewImpl;
 import stroom.data.client.view.SourceLocationViewImpl;
+import stroom.data.client.view.SourceTabViewImpl;
+import stroom.data.client.view.SourceViewImpl;
 import stroom.data.client.view.StreamTaskViewImpl;
 import stroom.data.client.view.StreamViewImpl;
 import stroom.data.client.view.TextViewImpl;
@@ -59,16 +66,52 @@ public class StreamStoreModule extends PluginModule {
         bind(DataTypeUiManager.class).asEagerSingleton();
         bind(DataPopupSupport.class).asEagerSingleton();
 
-        bindPresenterWidget(ClassificationWrapperPresenter.class, ClassificationWrapperView.class,
+        bindPlugin(SourceTabPlugin.class);
+
+        bindPresenterWidget(
+                ClassificationWrapperPresenter.class,
+                ClassificationWrapperView.class,
                 ClassificationWrapperViewImpl.class);
-        bindPresenterWidget(MetaPresenter.class, StreamView.class, StreamViewImpl.class);
-        bindPresenterWidget(EditorPresenter.class, EditorView.class, EditorViewImpl.class);
-        bindPresenterWidget(DataPresenter.class, DataView.class, DataViewImpl.class);
-        bindPresenterWidget(TextPresenter.class, TextView.class, TextViewImpl.class);
-        bindPresenterWidget(ProcessorTaskPresenter.class, StreamTaskView.class, StreamTaskViewImpl.class);
-        bindPresenterWidget(ExpressionPresenter.class, ExpressionView.class, ExpressionViewImpl.class);
-        bindPresenterWidget(ProcessChoicePresenter.class, ProcessChoiceView.class, ProcessChoiceViewImpl.class);
-        bindPresenterWidget(SourceLocationPresenter.class, SourceLocationView.class, SourceLocationViewImpl.class);
+        bindPresenterWidget(
+                MetaPresenter.class,
+                StreamView.class,
+                StreamViewImpl.class);
+        bindPresenterWidget(
+                EditorPresenter.class,
+                EditorView.class,
+                EditorViewImpl.class);
+        bindPresenterWidget(
+                DataPresenter.class,
+                DataView.class,
+                DataViewImpl.class);
+        bindPresenterWidget(
+                TextPresenter.class,
+                TextView.class,
+                TextViewImpl.class);
+        bindPresenterWidget(
+                ProcessorTaskPresenter.class,
+                StreamTaskView.class,
+                StreamTaskViewImpl.class);
+        bindPresenterWidget(
+                ExpressionPresenter.class,
+                ExpressionView.class,
+                ExpressionViewImpl.class);
+        bindPresenterWidget(
+                ProcessChoicePresenter.class,
+                ProcessChoiceView.class,
+                ProcessChoiceViewImpl.class);
+        bindPresenterWidget(
+                SourceLocationPresenter.class,
+                SourceLocationView.class,
+                SourceLocationViewImpl.class);
+        bindPresenterWidget(
+                SourceTabPresenter.class,
+                SourceTabView.class,
+                SourceTabViewImpl.class);
+        bindPresenterWidget(
+                SourcePresenter.class,
+                SourceView.class,
+                SourceViewImpl.class);
         bind(MetaListPresenter.class);
 
         bind(ProcessorTaskListPresenter.class);

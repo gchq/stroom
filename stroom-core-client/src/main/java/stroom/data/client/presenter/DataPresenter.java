@@ -16,6 +16,9 @@
 
 package stroom.data.client.presenter;
 
+import stroom.core.client.ContentManager;
+import stroom.core.client.ContentManager.CloseHandler;
+import stroom.data.client.SourceTabPlugin;
 import stroom.data.shared.DataRange;
 import stroom.data.shared.DataType;
 import stroom.dispatch.client.Rest;
@@ -87,6 +90,8 @@ public class DataPresenter extends MyPresenterWidget<DataPresenter.DataView> imp
     private final TextPresenter textPresenter;
     private final SourceLocationPresenter sourceLocationPresenter;
     private final MarkerListPresenter markerListPresenter;
+    private final ContentManager contentManager;
+    private final SourceTabPlugin sourceTabPlugin;
 
     private final RestFactory restFactory;
 //    private final PagerRows dataPagerRows;
@@ -138,6 +143,7 @@ public class DataPresenter extends MyPresenterWidget<DataPresenter.DataView> imp
     private boolean formatOnLoad;
     private boolean ignoreActions;
     private ToggleButtonView formatToggleBtn;
+    private ButtonView viewSourceBtn;
 
     @Inject
     public DataPresenter(final EventBus eventBus,
@@ -145,6 +151,8 @@ public class DataPresenter extends MyPresenterWidget<DataPresenter.DataView> imp
                          final TextPresenter textPresenter,
                          final MarkerListPresenter markerListPresenter,
                          final SourceLocationPresenter sourceLocationPresenter,
+                         final ContentManager contentManager,
+                         final SourceTabPlugin sourceTabPlugin,
                          final ClientSecurityContext securityContext,
                          final RestFactory restFactory) {
         super(eventBus, view);
@@ -152,7 +160,10 @@ public class DataPresenter extends MyPresenterWidget<DataPresenter.DataView> imp
         // Use properties mode for meta
         this.markerListPresenter = markerListPresenter;
         this.sourceLocationPresenter = sourceLocationPresenter;
+        this.contentManager = contentManager;
+        this.sourceTabPlugin = sourceTabPlugin;
         this.restFactory = restFactory;
+        this.currentErrorNo = currentErrorNo;
 
         markerListPresenter.getWidget().getElement().getStyle().setWidth(100, Unit.PCT);
         markerListPresenter.getWidget().getElement().getStyle().setHeight(100, Unit.PCT);
@@ -177,6 +188,13 @@ public class DataPresenter extends MyPresenterWidget<DataPresenter.DataView> imp
         formatToggleBtn.setEnabled(true);
         formatToggleBtn.setVisible(false);
 
+        viewSourceBtn = view.addButton(SvgPresets.RAW.title("View source data"));
+        viewSourceBtn.setEnabled(true);
+        viewSourceBtn.setVisible(true);
+        viewSourceBtn.addClickHandler(event -> {
+            openSourcePresenter();
+        });
+
 //        dataPagerRows = new PageRows();
 //        segmentPagerRows = new SegmentRows();
 //        segmentPagerRows = new SimplePagerRows(1);
@@ -199,6 +217,36 @@ public class DataPresenter extends MyPresenterWidget<DataPresenter.DataView> imp
         userHasPipelineSteppingPermission = securityContext.hasAppPermission(PermissionNames.STEPPING_PERMISSION);
 
         view.setNavigatorClickHandler(this::showSourceLocationPopup);
+    }
+
+    private void openSourcePresenter() {
+//        final SourceTabPresenter sourceTabPresenter = sourceTabPresenterProvider.get();
+
+        // TODO @AT Need to pass in the source key stuff and the data range once
+        //   this class has been tidied up.
+        final SourceLocation sourceLocation = SourceLocation.builder(currentMetaId)
+                .withPartNo(currentPartNo)
+                .withChildStreamType(currentChildDataType)
+                .withDataRange(currentDataRange)
+                .build();
+
+//        if (currentSourceLocation != null) {
+//            sourceLocation = SourceLocation.builder(currentSourceLocation.getId())
+//                    .withPartNo(currentSourceLocation.getPartNo())
+//                    .withChildStreamType(currentSourceLocation.getChildType())
+//                    .build();
+//
+//            sourceTabPresenter.setSourceLocation(sourceLocation);
+//        }
+
+        final CloseHandler closeHandler = closeCallback -> {
+            closeCallback.closeTab(true);
+        };
+
+//        final TabData tabData = (TabData) sourceTabPresenter;
+//        contentManager.open(closeHandler, sourceTabPresenter, sourceTabPresenter);
+
+        sourceTabPlugin.open(sourceLocation, true);
     }
 
     private void addTab(final TabData tab) {
@@ -655,6 +703,10 @@ public class DataPresenter extends MyPresenterWidget<DataPresenter.DataView> imp
         }
 
         if (result != null) {
+            currentChildDataType = Optional.ofNullable(result.getSourceLocation())
+                    .map(SourceLocation::getChildType)
+                    .orElse(null);
+
             if (result instanceof FetchMarkerResult) {
                 final FetchMarkerResult fetchMarkerResult = (FetchMarkerResult) result;
                 markers = fetchMarkerResult.getMarkers();
