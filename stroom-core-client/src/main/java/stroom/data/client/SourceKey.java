@@ -4,19 +4,19 @@ import java.util.Objects;
 
 public class SourceKey {
     private final long metaId;
-    private final String streamType;
+    private final String childStreamType;
 
-    public SourceKey(final long metaId, final String streamType) {
+    public SourceKey(final long metaId, final String childStreamType) {
         this.metaId = metaId;
-        this.streamType = streamType;
+        this.childStreamType = childStreamType;
     }
 
     public long getMetaId() {
         return metaId;
     }
 
-    public String getStreamType() {
-        return streamType;
+    public String getChildStreamType() {
+        return childStreamType;
     }
 
     @Override
@@ -25,17 +25,17 @@ public class SourceKey {
         if (o == null || getClass() != o.getClass()) return false;
         final SourceKey sourceKey = (SourceKey) o;
         return metaId == sourceKey.metaId &&
-                Objects.equals(streamType, sourceKey.streamType);
+                Objects.equals(childStreamType, sourceKey.childStreamType);
     }
 
     @Override
     public int hashCode() {
-        return Objects.hash(metaId, streamType);
+        return Objects.hash(metaId, childStreamType);
     }
 
     @Override
     public String toString() {
-        return metaId + " - " + streamType;
+        return metaId + " - " + childStreamType;
     }
 }
 

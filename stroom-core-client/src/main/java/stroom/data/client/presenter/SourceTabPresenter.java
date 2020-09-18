@@ -24,6 +24,7 @@ public class SourceTabPresenter extends ContentTabPresenter<SourceTabView> {
                               final SourceTabView view) {
         super(eventBus, view);
         this.sourcePresenter = sourcePresenter;
+
         getView().setSourceView(sourcePresenter.getView());
     }
 
@@ -38,8 +39,8 @@ public class SourceTabPresenter extends ContentTabPresenter<SourceTabView> {
 
     @Override
     public String getLabel() {
-        String type = sourceKey.getStreamType() != null
-                ? sourceKey.getStreamType()
+        String type = sourceKey.getChildStreamType() != null
+                ? sourceKey.getChildStreamType()
                 : "Data";
         return sourceKey != null
         ? ("ID: " + sourceKey.getMetaId() + " (" + type + ")")
@@ -53,10 +54,19 @@ public class SourceTabPresenter extends ContentTabPresenter<SourceTabView> {
 
     public void setSourceKey(final SourceKey sourceKey) {
         this.sourceKey = sourceKey;
-        sourcePresenter.setSourceKey(sourceKey);
+//        sourcePresenter.setSourceKey(sourceKey);
+
+        sourcePresenter.setSourceLocation(SourceLocation.builder(sourceKey.getMetaId())
+                .withChildStreamType(sourceKey.getChildStreamType())
+                .build());
     }
 
     public interface SourceTabView extends View {
         void setSourceView(final SourceView sourceView);
     }
+
+
+
+
+
 }

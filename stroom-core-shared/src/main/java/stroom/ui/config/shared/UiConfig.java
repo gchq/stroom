@@ -94,6 +94,9 @@ public class UiConfig extends AbstractConfig {
     @JsonProperty
     private UiPreferences uiPreferences;
 
+    @JsonProperty
+    private SourceConfig source;
+
     public UiConfig() {
         setDefaults();
     }
@@ -113,7 +116,8 @@ public class UiConfig extends AbstractConfig {
                     @JsonProperty("splash") final SplashConfig splash,
                     @JsonProperty("activity") final ActivityConfig activity,
                     @JsonProperty("url") final UrlConfig url,
-                    @JsonProperty("uiPreferences") final UiPreferences uiPreferences) {
+                    @JsonProperty("uiPreferences") final UiPreferences uiPreferences,
+                    @JsonProperty("source") final SourceConfig source) {
         this.welcomeHtml = welcomeHtml;
         this.aboutHtml = aboutHtml;
         this.maintenanceMessage = maintenanceMessage;
@@ -129,6 +133,7 @@ public class UiConfig extends AbstractConfig {
         this.activity = activity;
         this.url = url;
         this.uiPreferences = uiPreferences;
+        this.source = source;
 
         setDefaults();
     }
@@ -175,6 +180,9 @@ public class UiConfig extends AbstractConfig {
         }
         if (uiPreferences == null) {
             uiPreferences = new UiPreferences();
+        }
+        if (source == null) {
+            source = new SourceConfig();
         }
     }
 
@@ -296,6 +304,14 @@ public class UiConfig extends AbstractConfig {
 
     public void setUiPreferences(final UiPreferences uiPreferences) {
         this.uiPreferences = uiPreferences;
+    }
+
+    public SourceConfig getSource() {
+        return source;
+    }
+
+    public void setSource(final SourceConfig source) {
+        this.source = source;
     }
 
     @Override

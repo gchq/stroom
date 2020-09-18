@@ -61,6 +61,7 @@ import stroom.storedquery.impl.StoredQueryConfig;
 import stroom.ui.config.shared.ActivityConfig;
 import stroom.ui.config.shared.InfoPopupConfig;
 import stroom.ui.config.shared.QueryConfig;
+import stroom.ui.config.shared.SourceConfig;
 import stroom.ui.config.shared.SplashConfig;
 import stroom.ui.config.shared.ThemeConfig;
 import stroom.ui.config.shared.UiConfig;
@@ -194,6 +195,7 @@ public class AppConfigModule extends AbstractModule {
             bindConfig(uiConfig, UiConfig::getTheme, UiConfig::setTheme, ThemeConfig.class);
             bindConfig(uiConfig, UiConfig::getUrl, UiConfig::setUrl, UrlConfig.class);
             bindConfig(uiConfig, UiConfig::getUiPreferences, UiConfig::setUiPreferences, UiPreferences.class);
+            bindConfig(uiConfig, UiConfig::getSource, UiConfig::setSource, SourceConfig.class);
         });
         bindConfig(AppConfig::getUiUri, AppConfig::setUiUri, UiUriConfig.class);
         bindConfig(AppConfig::getVolumeConfig, AppConfig::setVolumeConfig, VolumeConfig.class);

@@ -56,6 +56,7 @@ import stroom.pipeline.writer.OutputStreamAppender;
 import stroom.pipeline.writer.TextWriter;
 import stroom.pipeline.writer.XMLWriter;
 import stroom.security.api.SecurityContext;
+import stroom.ui.config.shared.SourceConfig;
 import stroom.util.io.StreamUtil;
 import stroom.util.logging.LogUtil;
 import stroom.util.pipeline.scope.PipelineScopeRunnable;
@@ -100,9 +101,7 @@ public class DataFetcher {
     private static final int STREAM_BUFFER_SIZE = 1024 * 100;
 
     // Max chars we can return
-    private static final int MAX_CHARS = 10_000; // TODO get from config
     private static final int MAX_ERRORS_ON_PAGE = 500; // TODO get from config
-    private static final int MAX_EXTRA_CHARS_TO_COMPLETE_LINE = 5000; // TODO get from config
 
     private final Long partsToReturn = 1L;
     private final Long segmentsToReturn = 1L;
@@ -120,6 +119,7 @@ public class DataFetcher {
     private final StreamEventLog streamEventLog;
     private final SecurityContext securityContext;
     private final PipelineScopeRunnable pipelineScopeRunnable;
+    private final SourceConfig sourceConfig;
 
     //    private Long index = 0L;
     private Long partCount = 0L;
@@ -144,7 +144,8 @@ public class DataFetcher {
                 final PipelineDataCache pipelineDataCache,
                 final StreamEventLog streamEventLog,
                 final SecurityContext securityContext,
-                final PipelineScopeRunnable pipelineScopeRunnable) {
+                final PipelineScopeRunnable pipelineScopeRunnable,
+                final SourceConfig sourceConfig) {
         this.streamStore = streamStore;
         this.feedProperties = feedProperties;
         this.feedHolderProvider = feedHolderProvider;
@@ -158,6 +159,7 @@ public class DataFetcher {
         this.streamEventLog = streamEventLog;
         this.securityContext = securityContext;
         this.pipelineScopeRunnable = pipelineScopeRunnable;
+        this.sourceConfig = sourceConfig;
     }
 
     //    public void reset() {
@@ -186,8 +188,7 @@ public class DataFetcher {
         });
     };
 
-    public AbstractFetchDataResult getData(final FetchDataRequest fetchDataRequest) {
-//
+    //
 //    }
 //
 //    public AbstractFetchDataResult getData(final long streamId,
@@ -198,6 +199,7 @@ public class DataFetcher {
 //                                           final DocRef pipeline,
 //                                           final boolean showAsHtml,
 //                                           final Severity... expandedSeverities) {
+    public AbstractFetchDataResult getData(final FetchDataRequest fetchDataRequest) {
         // Allow users with 'Use' permission to read data, pipelines and XSLT.
         return securityContext.useAsReadResult(() -> {
             Set<String> availableChildStreamTypes;
@@ -206,7 +208,6 @@ public class DataFetcher {
             String eventId = String.valueOf(fetchDataRequest.getSourceLocation().getId());
             Meta meta = null;
             final SourceLocation sourceLocation = fetchDataRequest.getSourceLocation();
-            final DataRange dataRange = sourceLocation.getDataRange();
 
             // Get the stream source.
             try (final Source source = streamStore.openSource(fetchDataRequest.getSourceLocation().getId(), true)) {
@@ -642,13 +643,17 @@ public class DataFetcher {
         boolean reachedEndOfRange = false;
         boolean isMultiLine = false;
 
+        // If no range supplied then use a default one
+        final DataRange dataRange = sourceLocation.getOptDataRange()
+                .orElse(DataRange.from(0, sourceConfig.getMaxCharactersInFirstFetch()));
+
         try (final Reader reader = new InputStreamReader(inputStream, encoding)) {
             final char[] buffer = new char[STREAM_BUFFER_SIZE];
 
             final NonSegmentedIncludeCharPredicate inclusiveFromPredicate = buildInclusiveFromPredicate(
-                    sourceLocation.getDataRange());
+                    dataRange);
             final NonSegmentedIncludeCharPredicate exclusiveToPredicate = buildExclusiveToPredicate(
-                    sourceLocation.getDataRange());
+                    dataRange);
 
             // Ideally we would jump to the requested offset, but if we do, we can't
             // track the line/col info for the requested range, i.e.
@@ -675,7 +680,8 @@ public class DataFetcher {
                         // to make it look better in the UI.
                         if (isCharAfterRequestedRange
                                 && (!isMultiLine
-                                    || (extraCharCount > MAX_EXTRA_CHARS_TO_COMPLETE_LINE || currChar == '\n'))) {
+                                || (extraCharCount > sourceConfig.getMaxCharactersToCompleteLine()
+                                || currChar == '\n'))) {
                             // This is the char after our requested range
                             // or requested range continued to the end of the line
                             // or we have blown the max chars limit
@@ -867,22 +873,24 @@ public class DataFetcher {
     private NonSegmentedIncludeCharPredicate buildExclusiveToPredicate(final DataRange dataRange) {
         // TO (exclusive)
 
+        long maxChars = sourceConfig.getMaxCharactersPerFetch();
+
         final NonSegmentedIncludeCharPredicate exclusiveToPredicate;
         if (dataRange == null || !dataRange.hasBoundedEnd()) {
             // No end bound
             LOGGER.debug("Unbounded to predicate");
             exclusiveToPredicate = (currLineNo, currColNo, currCharOffset, charCount) ->
-                    charCount >= MAX_CHARS;
+                    charCount >= maxChars;
         } else if (dataRange.getOptLength().isPresent()) {
             final long dataLength = dataRange.getOptLength().get();
             LOGGER.debug("Length (inc.) to predicate [{}]", dataLength);
             exclusiveToPredicate = (currLineNo, currColNo, currCharOffset, charCount) ->
-                    charCount > dataLength || charCount >= MAX_CHARS;
+                    charCount > dataLength || charCount >= maxChars;
         } else if (dataRange.getOptCharOffsetTo().isPresent()) {
             final long charOffsetTo = dataRange.getOptCharOffsetTo().get();
             LOGGER.debug("Char offset (inc.) to predicate [{}]", charOffsetTo);
             exclusiveToPredicate = (currLineNo, currColNo, currCharOffset, charCount) ->
-                    currCharOffset > charOffsetTo || charCount >= MAX_CHARS;
+                    currCharOffset > charOffsetTo || charCount >= maxChars;
         } else if (dataRange.getOptLocationTo().isPresent()) {
             final int lineNoTo = dataRange.getOptLocationTo().get().getLineNo();
             final int colNoTo = dataRange.getOptLocationTo().get().getColNo();
@@ -890,7 +898,7 @@ public class DataFetcher {
             exclusiveToPredicate = (currLineNo, currColNo, currCharOffset, charCount) ->
                     currLineNo > lineNoTo
                             || (currLineNo == lineNoTo && currColNo > colNoTo)
-                            || charCount >= MAX_CHARS;
+                            || charCount >= maxChars;
         } else {
             throw new RuntimeException("No start point specified");
         }

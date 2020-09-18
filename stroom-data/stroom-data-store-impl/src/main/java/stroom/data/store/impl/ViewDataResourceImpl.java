@@ -31,6 +31,7 @@ import stroom.pipeline.state.MetaHolder;
 import stroom.pipeline.state.PipelineHolder;
 import stroom.security.api.SecurityContext;
 import stroom.security.shared.PermissionNames;
+import stroom.ui.config.shared.SourceConfig;
 import stroom.util.logging.LogUtil;
 import stroom.util.pipeline.scope.PipelineScopeRunnable;
 
@@ -60,7 +61,8 @@ class ViewDataResourceImpl implements ViewDataResource {
                          final PipelineDataCache pipelineDataCache,
                          final StreamEventLog streamEventLog,
                          final SecurityContext securityContext,
-                         final PipelineScopeRunnable pipelineScopeRunnable) {
+                         final PipelineScopeRunnable pipelineScopeRunnable,
+                         final SourceConfig sourceConfig) {
 
         dataFetcher = new DataFetcher(streamStore,
                 feedProperties,
@@ -74,7 +76,8 @@ class ViewDataResourceImpl implements ViewDataResource {
                 pipelineDataCache,
                 streamEventLog,
                 securityContext,
-                pipelineScopeRunnable);
+                pipelineScopeRunnable,
+                sourceConfig);
 
         this.securityContext = securityContext;
     }
