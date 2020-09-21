@@ -88,6 +88,10 @@ public class SourceLocation {
         return new Builder(id);
     }
 
+    public Builder clone() {
+        return new Builder(this);
+    }
+
     public long getId() {
         return id;
     }
@@ -210,7 +214,7 @@ public class SourceLocation {
         private final long id;
         private long partNo = 0; // Non multipart data has segment no of zero by default
         private String childType;
-        private long segmentNo = -1; // Non-segmented date has no segment no.
+        private long segmentNo = 0; // Non-segmented data has no segment no.
 //        private OffsetRange<Long> segmentNoRange = null;
         private DataRange dataRange;
         private TextRange highlight;
@@ -218,6 +222,16 @@ public class SourceLocation {
 
         private Builder(final long id) {
             this.id = id;
+        }
+
+        private Builder(final SourceLocation currentSourceLocation) {
+            this.id = currentSourceLocation.id;
+            this.partNo = currentSourceLocation.partNo;
+            this.childType = currentSourceLocation.childType;
+            this.segmentNo = currentSourceLocation.segmentNo;
+            this.dataRange = currentSourceLocation.dataRange;
+            this.highlight = currentSourceLocation.highlight;
+            this.truncateToWholeLines = currentSourceLocation.truncateToWholeLines;
         }
 
         public Builder withPartNo(final Long partNo) {
@@ -258,7 +272,7 @@ public class SourceLocation {
             return this;
         }
 
-        public Builder withDataRange(final Consumer<DataRange.Builder> dataRangeBuilder) {
+        public Builder withDataRangeBuilder(final Consumer<DataRange.Builder> dataRangeBuilder) {
             final DataRange.Builder builder = DataRange.builder();
             dataRangeBuilder.accept(builder);
             this.dataRange = builder.build();

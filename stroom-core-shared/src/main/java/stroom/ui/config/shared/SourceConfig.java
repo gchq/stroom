@@ -48,9 +48,12 @@ public class SourceConfig extends AbstractConfig {
     }
 
     private void setDefaults() {
-        maxCharactersInFirstFetch = setDefaultIfUnset(maxCharactersInFirstFetch, 5_000L);
-        maxCharactersPerFetch = setDefaultIfUnset(maxCharactersPerFetch, 20_000L);
+        maxCharactersInFirstFetch = setDefaultIfUnset(maxCharactersInFirstFetch, 500L);
+        maxCharactersPerFetch = setDefaultIfUnset(maxCharactersPerFetch, 2000L);
         maxCharactersToCompleteLine = setDefaultIfUnset(maxCharactersToCompleteLine, 5_000L);
+//        maxCharactersInFirstFetch = setDefaultIfUnset(maxCharactersInFirstFetch, 5_000L);
+//        maxCharactersPerFetch = setDefaultIfUnset(maxCharactersPerFetch, 20_000L);
+//        maxCharactersToCompleteLine = setDefaultIfUnset(maxCharactersToCompleteLine, 5_000L);
     }
 
     private long setDefaultIfUnset(final long value, final long defaultValue) {

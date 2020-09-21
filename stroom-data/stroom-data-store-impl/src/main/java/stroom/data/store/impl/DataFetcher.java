@@ -645,7 +645,7 @@ public class DataFetcher {
 
         // If no range supplied then use a default one
         final DataRange dataRange = sourceLocation.getOptDataRange()
-                .orElse(DataRange.from(0, sourceConfig.getMaxCharactersInFirstFetch()));
+                .orElse(DataRange.from(0, sourceConfig.getMaxCharactersPerFetch()));
 
         try (final Reader reader = new InputStreamReader(inputStream, encoding)) {
             final char[] buffer = new char[STREAM_BUFFER_SIZE];

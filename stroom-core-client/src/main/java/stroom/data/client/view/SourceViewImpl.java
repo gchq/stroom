@@ -5,6 +5,7 @@ import stroom.data.pager.client.DataNavigator;
 import stroom.editor.client.presenter.EditorView;
 import stroom.pipeline.shared.SourceLocation;
 import stroom.svg.client.SvgPreset;
+import stroom.util.shared.HasCharacterData;
 import stroom.widget.button.client.ButtonPanel;
 import stroom.widget.button.client.ButtonView;
 import stroom.widget.layout.client.view.ResizeSimplePanel;
@@ -38,7 +39,7 @@ public class SourceViewImpl extends ViewImpl implements SourceView {
                           final Binder binder) {
         widget = binder.createAndBindUi(this);
 
-        dataNavigator.setVisible(false);
+        dataNavigator.setVisible(true);
     }
 
    @Override
@@ -71,6 +72,21 @@ public class SourceViewImpl extends ViewImpl implements SourceView {
     public void setTitle(final String id, final String type) {
         lblId.setText(id);
         lblType.setText(type);
+    }
+
+    @Override
+    public void setNavigatorClickHandler(final Runnable clickHandler) {
+        dataNavigator.setClickHandler(clickHandler);
+    }
+
+    @Override
+    public void setNavigatorData(final HasCharacterData dataNavigatorData) {
+        dataNavigator.setDisplay(dataNavigatorData);
+    }
+
+    @Override
+    public void refreshNavigator() {
+        dataNavigator.refresh();
     }
 
     @Override

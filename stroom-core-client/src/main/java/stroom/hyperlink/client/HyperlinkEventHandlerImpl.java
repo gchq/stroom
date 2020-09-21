@@ -167,7 +167,7 @@ public class HyperlinkEventHandlerImpl extends HandlerContainerImpl implements H
                     final SourceLocation sourceLocation = SourceLocation.builder(id)
                             .withPartNo(partNo)
                             .withSegmentNumber(recordNo)
-                            .withDataRange(dataRangeBuilder -> {
+                            .withDataRangeBuilder(dataRangeBuilder -> {
                                 if (lineFrom != -1 && colFrom != -1) {
                                     dataRangeBuilder.fromLocation(new DefaultLocation(lineFrom, colFrom));
                                 }
