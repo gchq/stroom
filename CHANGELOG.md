@@ -8,6 +8,11 @@ and this project adheres to [Semantic Versioning](http://semver.org/).
 ## [Unreleased]
 
 
+## [v6.1.15] - 2020-09-21
+
+* Failed build.
+
+
 ## [v6.1.14] - 2020-09-21
 
 * Issue **#1864** : Added `*` wildcard to conditional formatting matches. 
@@ -2191,7 +2196,8 @@ and this project adheres to [Semantic Versioning](http://semver.org/).
 
 * Issue **#202** : Initial release of the new data retention policy functionality.
 
-[Unreleased]: https://github.com/gchq/stroom/compare/v6.1.14...6.1
+[Unreleased]: https://github.com/gchq/stroom/compare/v6.1.15...6.1
+[v6.1.15]: https://github.com/gchq/stroom/compare/v6.1.14...v6.1.15
 [v6.1.14]: https://github.com/gchq/stroom/compare/v6.1.13...v6.1.14
 [v6.1.13]: https://github.com/gchq/stroom/compare/v6.1.12...v6.1.13
 [v6.1.12]: https://github.com/gchq/stroom/compare/v6.1.11...v6.1.12
