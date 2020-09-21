@@ -7,6 +7,8 @@ and this project adheres to [Semantic Versioning](http://semver.org/).
 
 ## [Unreleased]
 
+* Issue **#1864** : Added `*` wildcard to conditional formatting matches. 
+
 * Issue **#1865** : Fixed NoSuchMethodError.
 
 

@@ -17,6 +17,8 @@
 
 package stroom.dashboard.client.table.cf;
 
+import com.google.gwt.regexp.shared.MatchResult;
+import com.google.gwt.regexp.shared.RegExp;
 import stroom.datasource.api.v2.DataSourceField;
 import stroom.query.api.v2.ExpressionItem;
 import stroom.query.api.v2.ExpressionOperator;
@@ -205,6 +207,11 @@ public class ExpressionMatcher {
     }
 
     private boolean isStringMatch(final String termValue, final Object attribute) {
+        if (termValue.contains("*")) {
+            final String pattern = termValue.replaceAll("\\*", ".*");
+            final RegExp regExp = RegExp.compile(pattern);
+            return regExp.test(attribute.toString());
+        }
         return termValue.equals(attribute.toString());
     }
 
