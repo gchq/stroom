@@ -11,6 +11,7 @@ import stroom.widget.layout.client.view.ResizeSimplePanel;
 
 import com.google.gwt.uibinder.client.UiBinder;
 import com.google.gwt.uibinder.client.UiField;
+import com.google.gwt.user.client.ui.Label;
 import com.google.gwt.user.client.ui.Widget;
 import com.google.inject.Inject;
 import com.google.web.bindery.event.shared.EventBus;
@@ -21,6 +22,10 @@ public class SourceViewImpl extends ViewImpl implements SourceView {
     private SourceLocation sourceLocation;
     private Widget widget;
 
+    @UiField
+    Label lblId;
+    @UiField
+    Label lblType;
     @UiField
     ResizeSimplePanel container;
     @UiField
@@ -56,9 +61,16 @@ public class SourceViewImpl extends ViewImpl implements SourceView {
 
     }
 
+//    @Override
+//    public void setSourceLocation(final SourceLocation sourceLocation) {
+//        this.sourceLocation = sourceLocation;
+//    }
+
+
     @Override
-    public void setSourceLocation(final SourceLocation sourceLocation) {
-        this.sourceLocation = sourceLocation;
+    public void setTitle(final String id, final String type) {
+        lblId.setText(id);
+        lblType.setText(type);
     }
 
     @Override

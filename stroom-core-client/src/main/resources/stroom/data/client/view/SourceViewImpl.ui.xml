@@ -34,6 +34,18 @@
         float: right;
         text-align: right;
         }
+        .titleText {
+        display: inline-block;
+        padding-top: 3px;
+        padding-left: 0.5em;
+        padding-right: 0.5em;
+        }
+        .titleHeading {
+        display: inline-block;
+        padding-top: 3px;
+        padding-left: 0.5em;
+        font-weight: 500;
+        }
     </ui:style>
 
     <g:DockLayoutPanel unit="PX" styleName="{style.layout}">
@@ -43,13 +55,26 @@
                                  height="100%" />
         </g:center>
         <g:north size="20">
-            <v:ResizeFlowPanel width="100%" height="100%">
-                <pager:DataNavigator ui:field="dataNavigator"
-                                     styleName="{style.dataNavigator}"
-                                     visible="false"/>
-                <btn:ButtonPanel ui:field="buttonPanel"
-                                 styleName="{style.buttonPanel}"/>
-            </v:ResizeFlowPanel>
+            <g:DockLayoutPanel unit="PX" styleName="{style.layout}">
+                <g:center>
+                    <v:ResizeFlowPanel width="100%" height="100%">
+                        <g:Label styleName="{style.titleHeading}">ID:</g:Label>
+                        <g:Label ui:field="lblId" styleName="{style.titleText}"/>
+
+                        <g:Label styleName="{style.titleHeading}">Stream Type:</g:Label>
+                        <g:Label ui:field="lblType" styleName="{style.titleText}"/>
+                    </v:ResizeFlowPanel>
+                </g:center>
+                <g:east size="200">
+                    <v:ResizeFlowPanel width="100%" height="100%">
+                        <pager:DataNavigator ui:field="dataNavigator"
+                                             styleName="{style.dataNavigator}"
+                                             visible="false"/>
+                        <btn:ButtonPanel ui:field="buttonPanel"
+                                         styleName="{style.buttonPanel}"/>
+                    </v:ResizeFlowPanel>
+                </g:east>
+            </g:DockLayoutPanel>
         </g:north>
     </g:DockLayoutPanel>
 </ui:UiBinder>

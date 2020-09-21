@@ -2,6 +2,7 @@ package stroom.data.client.presenter;
 
 import stroom.alert.client.event.AlertEvent;
 import stroom.data.client.presenter.SourcePresenter.SourceView;
+import stroom.data.shared.StreamTypeNames;
 import stroom.dispatch.client.Rest;
 import stroom.dispatch.client.RestFactory;
 import stroom.editor.client.presenter.EditorPresenter;
@@ -21,6 +22,7 @@ import com.google.inject.Inject;
 import com.google.web.bindery.event.shared.EventBus;
 import com.gwtplatform.mvp.client.MyPresenterWidget;
 import com.gwtplatform.mvp.client.View;
+import edu.ycp.cs.dh.acegwt.client.ace.AceEditorMode;
 
 import java.util.Objects;
 
@@ -46,9 +48,20 @@ public class SourcePresenter extends MyPresenterWidget<SourceView> {
         this.uiConfigCache = uiConfigCache;
         this.restFactory = restFactory;
 
-        editorPresenter.setText("hello");
+        setEditorOptions(editorPresenter);
 
         getView().setEditorView(editorPresenter.getView());
+    }
+
+    private void setEditorOptions(final EditorPresenter editorPresenter) {
+        editorPresenter.setReadOnly(true);
+
+        // Default to wrapped lines
+        editorPresenter.getLineWrapOption().setOn(true);
+        editorPresenter.getLineNumbersOption().setOn(true);
+        editorPresenter.getStylesOption().setOn(true);
+
+        editorPresenter.getCodeCompletionOption().setAvailable(false);
     }
 
     public void setSourceLocation(final SourceLocation sourceLocation) {
@@ -64,7 +77,7 @@ public class SourcePresenter extends MyPresenterWidget<SourceView> {
                             null));
 
             this.requestedSourceLocation = sourceLocation;
-            getView().setSourceLocation(sourceLocation);
+//            getView().setSourceLocation(sourceLocation);
         }
     }
 
@@ -98,10 +111,29 @@ public class SourcePresenter extends MyPresenterWidget<SourceView> {
             // TODO @AT
             editorPresenter.setText(fetchDataResult.getData());
 
+            setEditorMode(fetchDataResult);
+
+            setTitle(fetchDataResult);
+
         } else {
 
            // TODO @AT Fire alert, should never get this
         }
+    }
+
+    private void setTitle(final FetchDataResult fetchDataResult) {
+        final String streamType = StreamTypeNames.asUiName(fetchDataResult.getStreamTypeName());
+        getView().setTitle(String.valueOf(fetchDataResult.getSourceLocation().getId()), streamType);
+    }
+    private void setEditorMode(final FetchDataResult fetchDataResult) {
+        final AceEditorMode mode;
+
+        if (StreamTypeNames.META.equals(fetchDataResult.getStreamTypeName())) {
+            mode = AceEditorMode.PROPERTIES;
+        } else {// We have no way of knowing what type the data is (could be csv, json, xml) so assume XML
+            mode = AceEditorMode.XML;
+        }
+        editorPresenter.setMode(mode);
     }
 
 //    public void setSourceKey(final SourceKey sourceKey) {
@@ -298,10 +330,12 @@ public class SourcePresenter extends MyPresenterWidget<SourceView> {
 
     public interface SourceView extends View {
 
-        void setSourceLocation(final SourceLocation sourceLocation);
+//        void setSourceLocation(final SourceLocation sourceLocation);
 
         void setEditorView(final EditorView editorView);
 
         ButtonView addButton(final SvgPreset preset);
+
+        void setTitle(final String id, final String type);
     }
 }
