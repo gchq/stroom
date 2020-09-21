@@ -143,4 +143,7 @@ public class TablePayloadHandler implements PayloadHandler {
     public Data getData() {
         return data;
     }
+
+    public void waitForPendingWork(final HasTerminate hasTerminate) {
+    }
 }

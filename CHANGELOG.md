@@ -7,6 +7,8 @@ and this project adheres to [Semantic Versioning](http://semver.org/).
 
 ## [Unreleased]
 
+* Issue **#1865** : Fixed NoSuchMethodError.
+
 
 ## [v6.1.13] - 2020-09-15
 
