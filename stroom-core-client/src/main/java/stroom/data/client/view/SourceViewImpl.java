@@ -1,8 +1,8 @@
 package stroom.data.client.view;
 
 import stroom.data.client.presenter.SourcePresenter.SourceView;
+import stroom.data.client.presenter.TextPresenter.TextView;
 import stroom.data.pager.client.DataNavigator;
-import stroom.editor.client.presenter.EditorView;
 import stroom.pipeline.shared.SourceLocation;
 import stroom.svg.client.SvgPreset;
 import stroom.util.shared.HasCharacterData;
@@ -90,8 +90,8 @@ public class SourceViewImpl extends ViewImpl implements SourceView {
     }
 
     @Override
-    public void setEditorView(final EditorView editorView) {
-        this.container.setWidget(editorView.asWidget());
+    public void setTextView(final TextView textView) {
+        container.setWidget(textView.asWidget());
     }
 
     @Override

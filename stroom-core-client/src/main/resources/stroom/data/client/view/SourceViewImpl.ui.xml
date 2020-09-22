@@ -15,7 +15,7 @@
 
         .buttonPanel {
         float: right;
-        padding-right: 2em;
+        padding-right: 0.25em;
         }
 
         <!--		.segmentPager {-->
@@ -30,7 +30,6 @@
         <!--		}-->
 
         .dataNavigator {
-        min-width: 250px;
         float: right;
         text-align: right;
         }
@@ -50,9 +49,16 @@
 
     <g:DockLayoutPanel unit="PX" styleName="{style.layout}">
         <g:center>
-            <v:ResizeSimplePanel ui:field="container"
-                                 width="100%"
-                                 height="100%" />
+            <v:ResizeFlowPanel width="100%" height="100%">
+                <v:ResizeSimplePanel ui:field="container"
+                                     width="100%"
+                                     height="100%" />
+                <btn:FabButton ui:field="playButton"
+                               addStyleNames="stroom-pipeline-stepping-button"
+                               icon="images/step.svg"
+                               title="Enter Stepping Mode"
+                               visible="false" />
+            </v:ResizeFlowPanel>
         </g:center>
         <g:north size="20">
             <g:DockLayoutPanel unit="PX" styleName="{style.layout}">
