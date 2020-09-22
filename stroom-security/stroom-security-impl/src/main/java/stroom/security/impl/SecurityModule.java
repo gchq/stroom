@@ -25,7 +25,6 @@ import stroom.util.entityevent.EntityEvent;
 import stroom.util.guice.FilterBinder;
 import stroom.util.guice.FilterInfo;
 import stroom.util.guice.GuiceUtil;
-import stroom.util.guice.HasHealthCheckBinder;
 import stroom.util.guice.RestResourcesBinder;
 import stroom.util.shared.Clearable;
 
@@ -72,8 +71,8 @@ public class SecurityModule extends AbstractModule {
         GuiceUtil.buildMultiBinder(binder(), PermissionChangeEvent.Handler.class)
                 .addBinding(UserDocumentPermissionsCache.class);
 
-        HasHealthCheckBinder.create(binder())
-                .bind(StandardJwtContextFactory.class);
+//        HasHealthCheckBinder.create(binder())
+//                .bind(StandardJwtContextFactory.class);
 
         RestResourcesBinder.create(binder())
                 .bind(AppPermissionResourceImpl.class)

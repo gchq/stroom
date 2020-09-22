@@ -3,11 +3,9 @@ package stroom.security.impl;
 import stroom.security.api.TokenException;
 import stroom.security.api.TokenVerifier;
 import stroom.security.impl.exception.AuthenticationException;
-import stroom.util.HasHealthCheck;
 import stroom.util.logging.LambdaLogger;
 import stroom.util.logging.LambdaLoggerFactory;
 
-import com.codahale.metrics.health.HealthCheck;
 import org.jose4j.jwa.AlgorithmConstraints;
 import org.jose4j.jwk.JsonWebKeySet;
 import org.jose4j.jws.AlgorithmIdentifiers;
@@ -30,7 +28,7 @@ import java.util.Objects;
 import java.util.Optional;
 
 @Singleton
-public class StandardJwtContextFactory implements HasHealthCheck, TokenVerifier, JwtContextFactory {
+public class StandardJwtContextFactory implements TokenVerifier, JwtContextFactory {
     private static final LambdaLogger LOGGER = LambdaLoggerFactory.getLogger(StandardJwtContextFactory.class);
 
     private static final String AUTHORIZATION_HEADER = "Authorization";
@@ -169,31 +167,31 @@ public class StandardJwtContextFactory implements HasHealthCheck, TokenVerifier,
         return builder.build();
     }
 
-    @Override
-    public HealthCheck.Result getHealth() {
-        // Defaults to healthy
-        HealthCheck.ResultBuilder resultBuilder = HealthCheck.Result.builder();
-        final String KEY = "public_key_retrieval";
-        boolean isUnhealthy = false;
-        try {
-            final JsonWebKeySet publicJsonWebKey = openIdPublicKeysSupplier.get();
-            if (publicJsonWebKey == null) {
-                resultBuilder.withDetail(KEY, "Missing public key\n");
-            }
-        } catch (RuntimeException e) {
-            resultBuilder.withDetail(KEY, "Error fetching our identity provider's public key! " +
-                    "This means we cannot verify clients' authentication tokens ourselves. " +
-                    "This might mean the authentication service is down or unavailable. " +
-                    "The error was: [" + e.getMessage() + "]");
-        }
-        if (isUnhealthy) {
-            resultBuilder
-                    .withDetail("publicKeysUri", openIdConfig.getJwksUri())
-                    .unhealthy();
-        } else {
-            resultBuilder.healthy()
-                    .withMessage("Open ID public keys found");
-        }
-        return resultBuilder.build();
-    }
+//    @Override
+//    public HealthCheck.Result getHealth() {
+//        // Defaults to healthy
+//        HealthCheck.ResultBuilder resultBuilder = HealthCheck.Result.builder();
+//        final String KEY = "public_key_retrieval";
+//        boolean isUnhealthy = false;
+//        try {
+//            final JsonWebKeySet publicJsonWebKey = openIdPublicKeysSupplier.get();
+//            if (publicJsonWebKey == null) {
+//                resultBuilder.withDetail(KEY, "Missing public key\n");
+//            }
+//        } catch (RuntimeException e) {
+//            resultBuilder.withDetail(KEY, "Error fetching our identity provider's public key! " +
+//                    "This means we cannot verify clients' authentication tokens ourselves. " +
+//                    "This might mean the authentication service is down or unavailable. " +
+//                    "The error was: [" + e.getMessage() + "]");
+//        }
+//        if (isUnhealthy) {
+//            resultBuilder
+//                    .withDetail("publicKeysUri", openIdConfig.getJwksUri())
+//                    .unhealthy();
+//        } else {
+//            resultBuilder.healthy()
+//                    .withMessage("Open ID public keys found");
+//        }
+//        return resultBuilder.build();
+//    }
 }

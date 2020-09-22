@@ -71,7 +71,10 @@ class OpenIdManager {
     }
 
     public String frontChannelOIDC(final HttpServletRequest request, final String postAuthRedirectUri) {
-        Objects.requireNonNull(openIdConfig.getClientId(), "To make an authentication request the OpenId config client id must not be null");
+        Objects.requireNonNull(openIdConfig.getAuthEndpoint(),
+                "To make an authentication request the OpenId config 'authEndpoint' must not be null");
+        Objects.requireNonNull(openIdConfig.getClientId(),
+                "To make an authentication request the OpenId config 'clientId' must not be null");
 
         // Create a state for this authentication request.
         final AuthenticationState state = AuthenticationStateSessionUtil.create(request, postAuthRedirectUri);
