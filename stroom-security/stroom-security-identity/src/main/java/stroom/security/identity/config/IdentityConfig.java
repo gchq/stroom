@@ -44,7 +44,7 @@ public final class IdentityConfig extends AbstractConfig implements HasDbConfig 
     public static final String PROP_NAME_OPENID = "openid";
     public static final String PROP_NAME_PASSWORD_POLICY = "passwordPolicy";
 
-    private boolean useDefaultOpenIdCredentials = true;
+    private boolean useDefaultOpenIdCredentials;
     private String certificateCnPattern = ".*\\((.*)\\)";
     private int certificateCnCaptureGroupIndex = 1;
     private Integer failedLoginLockThreshold = 3;

@@ -7,6 +7,8 @@ and this project adheres to [Semantic Versioning](http://semver.org/).
 
 ## [Unreleased]
 
+* Added code to authenticate against AWS ALB.
+
 
 ## [v7.0-beta.57] - 2020-09-18
 

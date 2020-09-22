@@ -5,15 +5,14 @@ import stroom.util.logging.LambdaLogger;
 import stroom.util.logging.LambdaLoggerFactory;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
+import org.eclipse.jetty.http.HttpStatus;
 import org.jose4j.jwa.AlgorithmConstraints;
-import org.jose4j.jwk.JsonWebKey;
 import org.jose4j.jws.AlgorithmIdentifiers;
 import org.jose4j.jwt.consumer.InvalidJwtException;
 import org.jose4j.jwt.consumer.JwtConsumer;
 import org.jose4j.jwt.consumer.JwtConsumerBuilder;
 import org.jose4j.jwt.consumer.JwtContext;
-import org.jose4j.keys.resolvers.JwksVerificationKeyResolver;
-import org.jose4j.keys.resolvers.VerificationKeyResolver;
+import org.jose4j.keys.RsaKeyUtil;
 import org.jose4j.lang.JoseException;
 
 import javax.inject.Inject;
@@ -21,8 +20,9 @@ import javax.servlet.http.HttpServletRequest;
 import javax.ws.rs.core.Response;
 import java.io.IOException;
 import java.nio.charset.StandardCharsets;
+import java.security.PublicKey;
+import java.security.spec.InvalidKeySpecException;
 import java.util.Base64;
-import java.util.Collections;
 import java.util.Map;
 import java.util.Optional;
 import java.util.concurrent.ConcurrentHashMap;
@@ -89,18 +89,13 @@ class AmznJwtContextFactory implements JwtContextFactory {
             final String pubKey = getPublicKey(uri);
             LOGGER.debug(() -> "pubKey=" + pubKey);
 
-            // If we don't have a JWK we can't create a consumer to verify anything.
-            // Why might we not have one? If the remote authentication service was down when Stroom started
-            // then we wouldn't. It might not be up now but we're going to try and fetch it.
-            final JsonWebKey jsonWebKey = JsonWebKey.Factory.newJwk(pubKey);
-
-            final VerificationKeyResolver verificationKeyResolver = new JwksVerificationKeyResolver(
-                    Collections.singletonList(jsonWebKey));
+            // The public key is PEM format.
+            final PublicKey publicKey = new RsaKeyUtil().fromPemEncoded(pubKey);
 
             final JwtConsumerBuilder builder = new JwtConsumerBuilder()
                     .setAllowedClockSkewInSeconds(30) // allow some leeway in validating time based claims to account for clock skew
                     .setRequireSubject() // the JWT must have a subject claim
-                    .setVerificationKeyResolver(verificationKeyResolver)
+                    .setVerificationKey(publicKey)
                     .setExpectedAudience(openIdConfig.getClientId())
                     .setRelaxVerificationKeyValidation() // relaxes key length requirement
                     .setJwsAlgorithmConstraints( // only allow the expected signature algorithm(s) in the given context
@@ -110,7 +105,7 @@ class AmznJwtContextFactory implements JwtContextFactory {
                     .setExpectedIssuer(openIdConfig.getIssuer());
             final JwtConsumer jwtConsumer = builder.build();
             return Optional.ofNullable(jwtConsumer.process(jws));
-        } catch (final InvalidJwtException | JoseException | IOException e) {
+        } catch (final RuntimeException | InvalidJwtException | JoseException | IOException | InvalidKeySpecException e) {
             LOGGER.error(e::getMessage, e);
             throw new RuntimeException(e.getMessage(), e);
         }
@@ -128,14 +123,24 @@ class AmznJwtContextFactory implements JwtContextFactory {
                 .create(uri)
                 .request()
                 .get();
-        final String pubKey = res.readEntity(String.class);
-        LOGGER.debug(() -> "Received public key \"" + pubKey + "\"");
+        if (res.getStatus() == HttpStatus.OK_200) {
+            final String pubKey = res.readEntity(String.class);
+            LOGGER.debug(() -> "Received public key \"" + pubKey + "\"");
 
-        // Cache for next time.
-        if (pubKey != null) {
-            publicKeyMap.put(uri, pubKey);
+            // Cache for next time.
+            if (pubKey != null) {
+                publicKeyMap.put(uri, pubKey);
+            }
+
+            return pubKey;
+
+        } else {
+            throw new RuntimeException("Unable to retrieve public key from \"" +
+                    uri +
+                    "\"" +
+                    res.getStatus() +
+                    ": " +
+                    res.readEntity(String.class));
         }
-
-        return pubKey;
     }
 }

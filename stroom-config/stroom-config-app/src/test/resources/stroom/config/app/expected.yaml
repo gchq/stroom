@@ -492,11 +492,11 @@ appConfig:
       authenticationRequired: true
       openId:
         useInternal: true
-        openIdConfigurationEndpoint: "https://accounts.google.com/.well-known/openid-configuration"
-        issuer: "accounts.google.com"
-        authEndpoint: "https://accounts.google.com/o/oauth2/v2/auth"
-        tokenEndpoint: "https://accounts.google.com/o/oauth2/token"
-        jwksUri: "https://www.googleapis.com/oauth2/v3/certs"
+        openIdConfigurationEndpoint: null
+        issuer: null
+        authEndpoint: null
+        tokenEndpoint: null
+        jwksUri: null
         formTokenRequest: false
         jwtClaimsResolver: null
         clientId: null
@@ -595,7 +595,7 @@ appConfig:
         jwsIssuer: "stroom"
         timeUntilExpirationForEmailResetToken: "PT5M"
         timeUntilExpirationForUserToken: "P30D"
-      useDefaultOpenIdCredentials: true
+      useDefaultOpenIdCredentials: false
   serviceDiscovery:
     enabled: false
     zookeeperUrl: "localhost:2181"
