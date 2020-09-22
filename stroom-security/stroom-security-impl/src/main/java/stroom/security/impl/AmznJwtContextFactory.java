@@ -7,8 +7,6 @@ import stroom.util.logging.LambdaLoggerFactory;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import org.eclipse.jetty.http.HttpStatus;
 import org.jose4j.base64url.SimplePEMEncoder;
-import org.jose4j.jwa.AlgorithmConstraints;
-import org.jose4j.jws.AlgorithmIdentifiers;
 import org.jose4j.jwt.consumer.InvalidJwtException;
 import org.jose4j.jwt.consumer.JwtConsumer;
 import org.jose4j.jwt.consumer.JwtConsumerBuilder;
@@ -93,45 +91,45 @@ class AmznJwtContextFactory implements JwtContextFactory {
 
 
             // The public key is PEM format.
-            PublicKey publicKey = testDecode3(pubKey);
+//            PublicKey publicKey = testDecode3(pubKey);
+//            if (publicKey == null) {
+            PublicKey publicKey = testDecode2(pubKey, "EC");
             if (publicKey == null) {
-                publicKey = testDecode2(pubKey, "EC");
+                publicKey = testDecode2(pubKey, "RSA");
                 if (publicKey == null) {
-                    publicKey = testDecode2(pubKey, "RSA");
-                    if (publicKey == null) {
-                        publicKey = testDecode2(pubKey, "EC256");
-                    }
+                    publicKey = testDecode2(pubKey, "EC256");
                 }
             }
+//            }
 
             Objects.requireNonNull(publicKey, "Couldn't decode public key");
 
 
-            try {
-                LOGGER.debug("Trying 1");
-                final JwtConsumerBuilder builder = new JwtConsumerBuilder()
-                        .setAllowedClockSkewInSeconds(30) // allow some leeway in validating time based claims to account for clock skew
-                        .setRequireSubject() // the JWT must have a subject claim
-                        .setVerificationKey(publicKey)
-                        .setExpectedAudience(openIdConfig.getClientId())
-                        .setRelaxVerificationKeyValidation() // relaxes key length requirement
-                    .setJwsAlgorithmConstraints( // only allow the expected signature algorithm(s) in the given context
-                            new AlgorithmConstraints(
-                                    AlgorithmConstraints.ConstraintType.WHITELIST, // which is only EC256 here
-                                    "EC256"))
-                        .setExpectedIssuer(openIdConfig.getIssuer());
-                final JwtConsumer jwtConsumer = builder.build();
-                return Optional.ofNullable(jwtConsumer.process(jws));
-            } catch (final Exception e) {
-                LOGGER.error(e.getMessage(), e);
-            }
-
-            LOGGER.debug("Trying 2");
+//            try {
+//                LOGGER.debug("Trying 1");
+//                final JwtConsumerBuilder builder = new JwtConsumerBuilder()
+//                        .setAllowedClockSkewInSeconds(30) // allow some leeway in validating time based claims to account for clock skew
+//                        .setRequireSubject() // the JWT must have a subject claim
+//                        .setVerificationKey(publicKey)
+////                        .setExpectedAudience(openIdConfig.getClientId())
+//                        .setRelaxVerificationKeyValidation() // relaxes key length requirement
+//                    .setJwsAlgorithmConstraints( // only allow the expected signature algorithm(s) in the given context
+//                            new AlgorithmConstraints(
+//                                    AlgorithmConstraints.ConstraintType.WHITELIST, // which is only EC256 here
+//                                    "EC256"))
+//                        .setExpectedIssuer(openIdConfig.getIssuer());
+//                final JwtConsumer jwtConsumer = builder.build();
+//                return Optional.ofNullable(jwtConsumer.process(jws));
+//            } catch (final Exception e) {
+//                LOGGER.error(e.getMessage(), e);
+//            }
+//
+//            LOGGER.debug("Trying 2");
             final JwtConsumerBuilder builder = new JwtConsumerBuilder()
                     .setAllowedClockSkewInSeconds(30) // allow some leeway in validating time based claims to account for clock skew
                     .setRequireSubject() // the JWT must have a subject claim
                     .setVerificationKey(publicKey)
-                    .setExpectedAudience(openIdConfig.getClientId())
+//                    .setExpectedAudience(openIdConfig.getClientId())
                     .setRelaxVerificationKeyValidation() // relaxes key length requirement
 //                    .setJwsAlgorithmConstraints( // only allow the expected signature algorithm(s) in the given context
 //                            new AlgorithmConstraints(
@@ -173,17 +171,17 @@ class AmznJwtContextFactory implements JwtContextFactory {
         return publicKey;
     }
 
-    private PublicKey testDecode3(final String pem) {
-        PublicKey publicKey = null;
-
-        try {
-            publicKey = new RsaKeyUtil().fromPemEncoded(pem);
-        } catch (final Exception e) {
-            LOGGER.error(e.getMessage(), e);
-        }
-
-        return publicKey;
-    }
+//    private PublicKey testDecode3(final String pem) {
+//        PublicKey publicKey = null;
+//
+//        try {
+//            publicKey = new RsaKeyUtil().fromPemEncoded(pem);
+//        } catch (final Exception e) {
+//            LOGGER.error(e.getMessage(), e);
+//        }
+//
+//        return publicKey;
+//    }
 
     private String getPublicKey(final String uri) {
         // See if we can get the public key from the cache.
