@@ -1,7 +1,7 @@
 package stroom.data.client.view;
 
+import stroom.data.client.presenter.ClassificationWrapperPresenter.ClassificationWrapperView;
 import stroom.data.client.presenter.SourcePresenter;
-import stroom.data.client.presenter.SourcePresenter.SourceView;
 import stroom.data.client.presenter.SourceTabPresenter.SourceTabView;
 import stroom.widget.layout.client.view.ResizeSimplePanel;
 
@@ -50,7 +50,7 @@ public class SourceTabViewImpl extends ViewImpl implements SourceTabView {
     }
 
     @Override
-    public void setSourceView(final SourceView sourceView) {
+    public void setSourceView(final ClassificationWrapperView sourceView) {
         container.setWidget(sourceView.asWidget());
     }
 

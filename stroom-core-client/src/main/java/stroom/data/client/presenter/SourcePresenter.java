@@ -54,6 +54,7 @@ public class SourcePresenter extends MyPresenterWidget<SourceView> implements Te
     private SourceLocation requestedSourceLocation = null;
     private SourceLocation receivedSourceLocation = null;
     private FetchDataResult lastResult = null;
+    private ClassificationUiHandlers classificationUiHandlers;
     private boolean isSteppingSource = false;
 
 //    private SourceKey sourceKey;
@@ -161,6 +162,7 @@ public class SourcePresenter extends MyPresenterWidget<SourceView> implements Te
             lastResult = (FetchDataResult) result;
             receivedSourceLocation = lastResult.getSourceLocation();
 
+            classificationUiHandlers.setClassification(result.getClassification());
             textPresenter.setText(lastResult.getData());
             textPresenter.setFirstLineNumber(receivedSourceLocation.getDataRange().getLocationFrom().getLineNo());
 
@@ -301,6 +303,10 @@ public class SourcePresenter extends MyPresenterWidget<SourceView> implements Te
                         receivedSourceLocation.getPartNo(),
                         receivedSourceLocation.getSegmentNo()),
                 null);
+    }
+
+    public void setClassificationUiHandlers(final ClassificationUiHandlers classificationUiHandlers) {
+        this.classificationUiHandlers = classificationUiHandlers;
     }
 
 
