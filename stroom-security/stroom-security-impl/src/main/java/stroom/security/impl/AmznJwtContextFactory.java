@@ -6,6 +6,7 @@ import stroom.util.logging.LambdaLoggerFactory;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
 import org.eclipse.jetty.http.HttpStatus;
+import org.jose4j.base64url.SimplePEMEncoder;
 import org.jose4j.jwa.AlgorithmConstraints;
 import org.jose4j.jws.AlgorithmIdentifiers;
 import org.jose4j.jwt.consumer.InvalidJwtException;
@@ -13,15 +14,15 @@ import org.jose4j.jwt.consumer.JwtConsumer;
 import org.jose4j.jwt.consumer.JwtConsumerBuilder;
 import org.jose4j.jwt.consumer.JwtContext;
 import org.jose4j.keys.RsaKeyUtil;
-import org.jose4j.lang.JoseException;
 
 import javax.inject.Inject;
 import javax.servlet.http.HttpServletRequest;
 import javax.ws.rs.core.Response;
 import java.io.IOException;
 import java.nio.charset.StandardCharsets;
+import java.security.KeyFactory;
 import java.security.PublicKey;
-import java.security.spec.InvalidKeySpecException;
+import java.security.spec.X509EncodedKeySpec;
 import java.util.Base64;
 import java.util.Map;
 import java.util.Optional;
@@ -89,8 +90,18 @@ class AmznJwtContextFactory implements JwtContextFactory {
             final String pubKey = getPublicKey(uri);
             LOGGER.debug(() -> "pubKey=" + pubKey);
 
+
             // The public key is PEM format.
-            final PublicKey publicKey = new RsaKeyUtil().fromPemEncoded(pubKey);
+            PublicKey publicKey = testDecode3(pubKey);
+            if (publicKey == null) {
+                publicKey = testDecode2(pubKey, "EC");
+                if (publicKey == null) {
+                    publicKey = testDecode2(pubKey, "RSA");
+                    if (publicKey == null) {
+                        publicKey = testDecode2(pubKey, "EC256");
+                    }
+                }
+            }
 
             final JwtConsumerBuilder builder = new JwtConsumerBuilder()
                     .setAllowedClockSkewInSeconds(30) // allow some leeway in validating time based claims to account for clock skew
@@ -105,10 +116,49 @@ class AmznJwtContextFactory implements JwtContextFactory {
                     .setExpectedIssuer(openIdConfig.getIssuer());
             final JwtConsumer jwtConsumer = builder.build();
             return Optional.ofNullable(jwtConsumer.process(jws));
-        } catch (final RuntimeException | InvalidJwtException | JoseException | IOException | InvalidKeySpecException e) {
+        } catch (final RuntimeException | InvalidJwtException | IOException e) {
             LOGGER.error(e::getMessage, e);
             throw new RuntimeException(e.getMessage(), e);
         }
+    }
+
+    private PublicKey testDecode2(final String pem, final String alg) {
+        PublicKey publicKey = null;
+
+        try {
+            // decode to its constituent bytes
+            String publicKeyPEM = pem;
+            publicKeyPEM = publicKeyPEM.replace("-----BEGIN PUBLIC KEY-----\n", "");
+            publicKeyPEM = publicKeyPEM.replace("-----END PUBLIC KEY-----", "");
+
+            byte[] publicKeyBytes = SimplePEMEncoder.decode(publicKeyPEM);
+
+
+//            BASE64Decoder base64Decoder = new BASE64Decoder();
+//            byte[] publicKeyBytes = base64Decoder.decodeBuffer(publicKeyPEM);
+
+            // create a key object from the bytes
+            X509EncodedKeySpec keySpec = new X509EncodedKeySpec(publicKeyBytes);
+            KeyFactory keyFactory = KeyFactory.getInstance(alg);
+            publicKey = keyFactory.generatePublic(keySpec);
+
+        } catch (final Exception e) {
+            LOGGER.error(alg + " " + e.getMessage(), e);
+        }
+
+        return publicKey;
+    }
+
+    private PublicKey testDecode3(final String pem) {
+        PublicKey publicKey = null;
+
+        try {
+            publicKey = new RsaKeyUtil().fromPemEncoded(pem);
+        } catch (final Exception e) {
+            LOGGER.error(e.getMessage(), e);
+        }
+
+        return publicKey;
     }
 
     private String getPublicKey(final String uri) {
