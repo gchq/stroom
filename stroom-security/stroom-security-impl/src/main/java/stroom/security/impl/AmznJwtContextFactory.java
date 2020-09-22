@@ -25,6 +25,7 @@ import java.security.PublicKey;
 import java.security.spec.X509EncodedKeySpec;
 import java.util.Base64;
 import java.util.Map;
+import java.util.Objects;
 import java.util.Optional;
 import java.util.concurrent.ConcurrentHashMap;
 
@@ -103,16 +104,39 @@ class AmznJwtContextFactory implements JwtContextFactory {
                 }
             }
 
+            Objects.requireNonNull(publicKey, "Couldn't decode public key");
+
+
+            try {
+                LOGGER.debug("Trying 1");
+                final JwtConsumerBuilder builder = new JwtConsumerBuilder()
+                        .setAllowedClockSkewInSeconds(30) // allow some leeway in validating time based claims to account for clock skew
+                        .setRequireSubject() // the JWT must have a subject claim
+                        .setVerificationKey(publicKey)
+                        .setExpectedAudience(openIdConfig.getClientId())
+                        .setRelaxVerificationKeyValidation() // relaxes key length requirement
+                    .setJwsAlgorithmConstraints( // only allow the expected signature algorithm(s) in the given context
+                            new AlgorithmConstraints(
+                                    AlgorithmConstraints.ConstraintType.WHITELIST, // which is only EC256 here
+                                    "EC256"))
+                        .setExpectedIssuer(openIdConfig.getIssuer());
+                final JwtConsumer jwtConsumer = builder.build();
+                return Optional.ofNullable(jwtConsumer.process(jws));
+            } catch (final Exception e) {
+                LOGGER.error(e.getMessage(), e);
+            }
+
+            LOGGER.debug("Trying 2");
             final JwtConsumerBuilder builder = new JwtConsumerBuilder()
                     .setAllowedClockSkewInSeconds(30) // allow some leeway in validating time based claims to account for clock skew
                     .setRequireSubject() // the JWT must have a subject claim
                     .setVerificationKey(publicKey)
                     .setExpectedAudience(openIdConfig.getClientId())
                     .setRelaxVerificationKeyValidation() // relaxes key length requirement
-                    .setJwsAlgorithmConstraints( // only allow the expected signature algorithm(s) in the given context
-                            new AlgorithmConstraints(
-                                    AlgorithmConstraints.ConstraintType.WHITELIST, // which is only RS256 here
-                                    AlgorithmIdentifiers.RSA_USING_SHA256))
+//                    .setJwsAlgorithmConstraints( // only allow the expected signature algorithm(s) in the given context
+//                            new AlgorithmConstraints(
+//                                    AlgorithmConstraints.ConstraintType.WHITELIST, // which is only EC256 here
+//                                    AlgorithmIdentifiers.RSA_USING_SHA256))
                     .setExpectedIssuer(openIdConfig.getIssuer());
             final JwtConsumer jwtConsumer = builder.build();
             return Optional.ofNullable(jwtConsumer.process(jws));
