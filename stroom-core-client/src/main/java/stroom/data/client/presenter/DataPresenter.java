@@ -1276,9 +1276,15 @@ public class DataPresenter extends MyPresenterWidget<DataPresenter.DataView> imp
         }
 
         @Override
-        public void setSegmentNoFrom(final long segmentNo) {
-            currentSegmentNo = segmentNo;
+        public void setSegmentNoFrom(final long segmentNoFrom) {
+            currentSegmentNo = segmentNoFrom;
             update(false);
+        }
+
+        @Override
+        public boolean canNavigateCharacterData() {
+            // We are only previewing formatted data so don't want to page around the data
+            return false;
         }
 
         @Override

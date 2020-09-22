@@ -273,6 +273,11 @@ public class SourcePresenter extends MyPresenterWidget<SourceView> implements Ha
     }
 
     @Override
+    public boolean canNavigateCharacterData() {
+        return true;
+    }
+
+    @Override
     public Optional<Long> getTotalLines() {
         return Optional.ofNullable(lastResult)
                 .map(AbstractFetchDataResult::getSourceLocation)

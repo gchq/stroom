@@ -246,6 +246,7 @@ public class DataNavigator extends Composite {
 
     private void refreshCharacterControls() {
         if (display != null
+                && display.canNavigateCharacterData()
                 && display.getCharFrom().isPresent()
                 && display.getCharTo().isPresent()) {
 

@@ -14,20 +14,12 @@
         margin: 0px;
         margin-top: 2px;
         cursor: pointer;
+        padding-left: 0.5em;
+        padding-right: 0.5em;
         }
 
         .label:hover {
         text-decoration: underline;
-        }
-
-        .space {
-        display: inline;
-        padding-right: 8px;
-        }
-
-        .spaceBig {
-        display: inline;
-        padding-right: 16px;
         }
 
         .button {
@@ -39,31 +31,22 @@
     <g:FlowPanel styleName="{style.dataNavigator}">
 
         <g:Label ui:field="lblParts" styleName="{style.label}"/>
-        <g:HTMLPanel styleName="{style.space}">&nbsp;</g:HTMLPanel>
         <btn:SvgButton ui:field="firstPart"/>
         <btn:SvgButton ui:field="prevPart"/>
         <btn:SvgButton ui:field="nextPart"/>
         <btn:SvgButton ui:field="lastPart"/>
 
-        <g:HTMLPanel styleName="{style.spaceBig}">&nbsp;</g:HTMLPanel>
-
         <g:Label ui:field="lblSegments" styleName="{style.label}"/>
-        <g:HTMLPanel styleName="{style.space}">&nbsp;</g:HTMLPanel>
         <btn:SvgButton ui:field="firstSegment"/>
         <btn:SvgButton ui:field="prevSegment"/>
         <btn:SvgButton ui:field="nextSegment"/>
         <btn:SvgButton ui:field="lastSegment"/>
 
-        <g:HTMLPanel styleName="{style.spaceBig}">&nbsp;</g:HTMLPanel>
-
         <g:Label ui:field="lblCharacters" styleName="{style.label}"/>
-        <g:HTMLPanel styleName="{style.space}">&nbsp;</g:HTMLPanel>
         <btn:SvgButton ui:field="showHeadCharactersBtn"/>
         <btn:SvgButton ui:field="advanceCharactersBackwardBtn"/>
         <btn:SvgButton ui:field="advanceCharactersForwardBtn"/>
 
-        <g:HTMLPanel styleName="{style.space}">&nbsp;</g:HTMLPanel>
-
-        <btn:SvgButton ui:field="refresh"/>
+        <btn:SvgButton ui:field="refresh" />
     </g:FlowPanel>
 </ui:UiBinder>
