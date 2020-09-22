@@ -390,7 +390,7 @@ class SecurityFilter implements Filter {
     private UserIdentity tokenLogin(final HttpServletRequest request) {
         // Authenticate requests from an API client
         final UserIdentity userIdentity = openIdManager.loginWithRequestToken(request);
-        if (userIdentity != null) {
+        if (userIdentity != null && request != null && request.getCookies() != null) {
             // Find out if we have a session cookie
             final long count = Arrays
                     .stream(request.getCookies())
