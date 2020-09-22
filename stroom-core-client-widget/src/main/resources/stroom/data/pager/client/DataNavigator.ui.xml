@@ -5,7 +5,6 @@
     <ui:style>
         .dataNavigator {
         position: relative;
-        width: 250px;
         text-align: right;
         }
 
@@ -14,8 +13,8 @@
         margin: 0px;
         margin-top: 2px;
         cursor: pointer;
-        padding-left: 0.5em;
-        padding-right: 0.5em;
+        padding-left: 0.75em;
+        padding-right: 0.75em;
         }
 
         .label:hover {

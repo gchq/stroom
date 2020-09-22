@@ -42,8 +42,10 @@ public class TextPresenter extends MyPresenterWidget<TextPresenter.TextView> {
         textPresenter.getIndicatorsOption().setAvailable(false);
         textPresenter.getIndicatorsOption().setOn(false);
 
-        textPresenter.getLineNumbersOption().setAvailable(true);
-        textPresenter.getLineNumbersOption().setOn(true);
+        // Previewing data in formatted form so line numbers are meaningless
+        textPresenter.getLineNumbersOption().setAvailable(false);
+        textPresenter.getLineNumbersOption().setOn(false);
+
         textPresenter.getLineWrapOption().setAvailable(true);
         textPresenter.getShowInvisiblesOption().setAvailable(true);
         textPresenter.getUseVimBindingsOption().setAvailable(true);

@@ -33,7 +33,6 @@ import com.google.gwt.user.client.ui.Label;
 import com.google.gwt.user.client.ui.Widget;
 
 import java.util.HashSet;
-import java.util.Objects;
 import java.util.Optional;
 import java.util.Set;
 
@@ -164,9 +163,16 @@ public class DataNavigator extends Composite {
 
     private void refreshPartControls() {
         if (display != null) {
-            if (display.isMultiPart() && display.getPartNo().isPresent()) {
+
+            // if parts count is empty then we can't be sure how many there are
+            // so assume there are many
+            final boolean hasMultipleParts = display.getTotalParts()
+                    .filter(i -> i > 1L)
+                    .isPresent() || !display.getTotalParts().isPresent();
+
+            if (display.isMultiPart() && display.getPartNo().isPresent() && hasMultipleParts) {
                 long partNo = display.getPartNo().get();
-                GWT.log("parts: " + display.getTotalParts().map(Objects::toString).orElse("?"));
+//                GWT.log("parts: " + display.getTotalParts().map(Objects::toString).orElse("?"));
 
                 setPartControlVisibility(true);
                 final String lbl = PARTS_TITLE

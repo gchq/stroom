@@ -81,6 +81,8 @@ public class SourcePresenter extends MyPresenterWidget<SourceView> implements Ha
         editorPresenter.getStylesOption().setOn(true);
 
         editorPresenter.getCodeCompletionOption().setAvailable(false);
+        editorPresenter.getUseVimBindingsOption().setAvailable(true);
+        editorPresenter.getFormatAction().setAvailable(false);
     }
     public void setSourceLocation(final SourceLocation sourceLocation, final boolean force) {
         if (force || !Objects.equals(sourceLocation, requestedSourceLocation)) {

@@ -23,12 +23,16 @@ import stroom.pipeline.stepping.client.event.BeginPipelineSteppingEvent;
 import com.google.inject.Inject;
 import com.google.web.bindery.event.shared.EventBus;
 
-public class ClassificationWrappedDataPresenter extends ClassificationWrapperPresenter implements BeginSteppingHandler {
+public class ClassificationWrappedDataPresenter
+        extends ClassificationWrapperPresenter
+        implements BeginSteppingHandler {
+
     private final DataPresenter dataPresenter;
     private SourceLocation sourceLocation;
 
     @Inject
-    public ClassificationWrappedDataPresenter(final EventBus eventBus, final ClassificationWrapperView view,
+    public ClassificationWrappedDataPresenter(final EventBus eventBus,
+                                              final ClassificationWrapperView view,
                                               final DataPresenter dataPresenter) {
         super(eventBus, view);
         this.dataPresenter = dataPresenter;

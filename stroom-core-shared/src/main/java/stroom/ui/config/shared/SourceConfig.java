@@ -12,13 +12,13 @@ import javax.inject.Singleton;
 import java.util.Objects;
 
 @Singleton
-@JsonPropertyOrder({"maxCharactersInFirstFetch"})
+@JsonPropertyOrder({"maxCharactersInPreviewFetch"})
 @JsonInclude(JsonInclude.Include.NON_NULL)
 public class SourceConfig extends AbstractConfig {
 
     @JsonProperty
     @JsonPropertyDescription("The maximum number of characters of source data to initially display")
-    private long maxCharactersInFirstFetch;
+    private long maxCharactersInPreviewFetch;
 
     @JsonProperty
     @JsonPropertyDescription("The maximum number of characters of source data to display when " +
@@ -35,12 +35,12 @@ public class SourceConfig extends AbstractConfig {
     }
 
     @JsonCreator
-    public SourceConfig(@JsonProperty("maxCharactersInFirstFetch") final long maxCharactersInFirstFetch,
+    public SourceConfig(@JsonProperty("maxCharactersInPreviewFetch") final long maxCharactersInPreviewFetch,
                         @JsonProperty("maxCharactersPerFetch") final long maxCharactersPerFetch,
                         @JsonProperty("maxCharactersToCompleteLine") final long maxCharactersToCompleteLine) {
 
         // TODO @AT Default values may need increasing
-        this.maxCharactersInFirstFetch = maxCharactersInFirstFetch;
+        this.maxCharactersInPreviewFetch = maxCharactersInPreviewFetch;
         this.maxCharactersPerFetch = maxCharactersPerFetch;
         this.maxCharactersToCompleteLine = maxCharactersToCompleteLine;
 
@@ -48,10 +48,10 @@ public class SourceConfig extends AbstractConfig {
     }
 
     private void setDefaults() {
-        maxCharactersInFirstFetch = setDefaultIfUnset(maxCharactersInFirstFetch, 500L);
+        maxCharactersInPreviewFetch = setDefaultIfUnset(maxCharactersInPreviewFetch, 500L);
         maxCharactersPerFetch = setDefaultIfUnset(maxCharactersPerFetch, 2000L);
         maxCharactersToCompleteLine = setDefaultIfUnset(maxCharactersToCompleteLine, 5_000L);
-//        maxCharactersInFirstFetch = setDefaultIfUnset(maxCharactersInFirstFetch, 5_000L);
+//        maxCharactersInPreviewFetch = setDefaultIfUnset(maxCharactersInPreviewFetch, 5_000L);
 //        maxCharactersPerFetch = setDefaultIfUnset(maxCharactersPerFetch, 20_000L);
 //        maxCharactersToCompleteLine = setDefaultIfUnset(maxCharactersToCompleteLine, 5_000L);
     }
@@ -62,12 +62,12 @@ public class SourceConfig extends AbstractConfig {
                 : defaultValue;
     }
 
-    public long getMaxCharactersInFirstFetch() {
-        return maxCharactersInFirstFetch;
+    public long getMaxCharactersInPreviewFetch() {
+        return maxCharactersInPreviewFetch;
     }
 
-    public void setMaxCharactersInFirstFetch(final long maxCharactersInFirstFetch) {
-        this.maxCharactersInFirstFetch = maxCharactersInFirstFetch;
+    public void setMaxCharactersInPreviewFetch(final long maxCharactersInPreviewFetch) {
+        this.maxCharactersInPreviewFetch = maxCharactersInPreviewFetch;
     }
 
     public long getMaxCharactersPerFetch() {
@@ -91,19 +91,19 @@ public class SourceConfig extends AbstractConfig {
         if (this == o) return true;
         if (o == null || getClass() != o.getClass()) return false;
         final SourceConfig that = (SourceConfig) o;
-        return maxCharactersInFirstFetch == that.maxCharactersInFirstFetch &&
+        return maxCharactersInPreviewFetch == that.maxCharactersInPreviewFetch &&
                 maxCharactersPerFetch == that.maxCharactersPerFetch;
     }
 
     @Override
     public int hashCode() {
-        return Objects.hash(maxCharactersInFirstFetch, maxCharactersPerFetch);
+        return Objects.hash(maxCharactersInPreviewFetch, maxCharactersPerFetch);
     }
 
     @Override
     public String toString() {
         return "SourceConfig{" +
-                "maxCharactersInFirstFetch=" + maxCharactersInFirstFetch +
+                "maxCharactersInPreviewFetch=" + maxCharactersInPreviewFetch +
                 ", maxCharactersPerFetch=" + maxCharactersPerFetch +
                 '}';
     }

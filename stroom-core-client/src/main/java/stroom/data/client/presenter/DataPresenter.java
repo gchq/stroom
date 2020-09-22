@@ -16,6 +16,7 @@
 
 package stroom.data.client.presenter;
 
+import stroom.alert.client.event.AlertEvent;
 import stroom.core.client.ContentManager;
 import stroom.core.client.ContentManager.CloseHandler;
 import stroom.data.client.SourceTabPlugin;
@@ -34,6 +35,8 @@ import stroom.security.client.api.ClientSecurityContext;
 import stroom.security.shared.PermissionNames;
 import stroom.svg.client.SvgPreset;
 import stroom.svg.client.SvgPresets;
+import stroom.ui.config.client.UiConfigCache;
+import stroom.ui.config.shared.SourceConfig;
 import stroom.util.shared.EqualsUtil;
 import stroom.util.shared.HasCharacterData;
 import stroom.util.shared.Location;
@@ -60,12 +63,11 @@ import com.gwtplatform.mvp.client.View;
 import edu.ycp.cs.dh.acegwt.client.ace.AceEditorMode;
 
 import java.util.ArrayList;
-import java.util.HashMap;
 import java.util.List;
-import java.util.Map;
 import java.util.Objects;
 import java.util.Optional;
 import java.util.Set;
+import java.util.function.Consumer;
 
 public class DataPresenter extends MyPresenterWidget<DataPresenter.DataView> implements TextUiHandlers {
     private static final ViewDataResource VIEW_DATA_RESOURCE = GWT.create(ViewDataResource.class);
@@ -92,6 +94,7 @@ public class DataPresenter extends MyPresenterWidget<DataPresenter.DataView> imp
     private final MarkerListPresenter markerListPresenter;
     private final ContentManager contentManager;
     private final SourceTabPlugin sourceTabPlugin;
+    private final UiConfigCache uiConfigCache;
 
     private final RestFactory restFactory;
 //    private final PagerRows dataPagerRows;
@@ -99,7 +102,7 @@ public class DataPresenter extends MyPresenterWidget<DataPresenter.DataView> imp
 //    private final PagerRows segmentPagerRows;
     //    private final Map<String, OffsetRange<Long>> dataTypeOffsetRangeMap = new HashMap<>();
 
-    private final Map<String, DataRange> dataTypeRangeMap = new HashMap<>();
+//    private final Map<String, DataRange> dataTypeRangeMap = new HashMap<>();
     private final boolean userHasPipelineSteppingPermission;
 
     DataNavigatorData dataNavigatorData = new DataNavigatorData();
@@ -121,7 +124,7 @@ public class DataPresenter extends MyPresenterWidget<DataPresenter.DataView> imp
 //    private OffsetRange<Long> currentPageRange = new OffsetRange<>(0L, 100L);
 
     // The range to display on the current page
-    private DataRange currentDataRange = DEFAULT_DATA_RANGE;
+//    private DataRange currentDataRange = DEFAULT_DATA_RANGE;
 
     private AbstractFetchDataResult lastResult;
     private List<FetchDataRequest> actionQueue;
@@ -142,7 +145,6 @@ public class DataPresenter extends MyPresenterWidget<DataPresenter.DataView> imp
     private boolean steppingSource;
     private boolean formatOnLoad;
     private boolean ignoreActions;
-    private ToggleButtonView formatToggleBtn;
     private ButtonView viewSourceBtn;
 
     @Inject
@@ -153,6 +155,7 @@ public class DataPresenter extends MyPresenterWidget<DataPresenter.DataView> imp
                          final SourceLocationPresenter sourceLocationPresenter,
                          final ContentManager contentManager,
                          final SourceTabPlugin sourceTabPlugin,
+                         final UiConfigCache uiConfigCache,
                          final ClientSecurityContext securityContext,
                          final RestFactory restFactory) {
         super(eventBus, view);
@@ -162,6 +165,7 @@ public class DataPresenter extends MyPresenterWidget<DataPresenter.DataView> imp
         this.sourceLocationPresenter = sourceLocationPresenter;
         this.contentManager = contentManager;
         this.sourceTabPlugin = sourceTabPlugin;
+        this.uiConfigCache = uiConfigCache;
         this.restFactory = restFactory;
         this.currentErrorNo = currentErrorNo;
 
@@ -170,23 +174,6 @@ public class DataPresenter extends MyPresenterWidget<DataPresenter.DataView> imp
         markerListPresenter.setDataPresenter(this);
 
         textPresenter.setUiHandlers(this);
-
-        formatToggleBtn = view.addToggleButton(
-                SvgPresets.RAW.title("Show original un-formatted data"),
-                SvgPresets.FORMAT.title("Show formatted data (as XML)"));
-
-        formatToggleBtn.setState(true); // formatted by default
-        formatToggleBtn.addClickHandler(
-                event -> {
-                    formatOnLoad = false;
-                    refresh(lastResult);
-                },
-                event -> {
-                    formatOnLoad = true;
-                    refresh(lastResult);
-                });
-        formatToggleBtn.setEnabled(true);
-        formatToggleBtn.setVisible(false);
 
         viewSourceBtn = view.addButton(SvgPresets.RAW.title("View source data"));
         viewSourceBtn.setEnabled(true);
@@ -222,12 +209,11 @@ public class DataPresenter extends MyPresenterWidget<DataPresenter.DataView> imp
     private void openSourcePresenter() {
 //        final SourceTabPresenter sourceTabPresenter = sourceTabPresenterProvider.get();
 
-        // TODO @AT Need to pass in the source key stuff and the data range once
-        //   this class has been tidied up.
+        // No need to supply a data range as it will just open it with the default range
+        // that is bigger than our preview range
         final SourceLocation sourceLocation = SourceLocation.builder(currentMetaId)
                 .withPartNo(currentPartNo)
                 .withChildStreamType(currentChildDataType)
-                .withDataRange(currentDataRange)
                 .build();
 
 //        if (currentSourceLocation != null) {
@@ -247,6 +233,16 @@ public class DataPresenter extends MyPresenterWidget<DataPresenter.DataView> imp
 //        contentManager.open(closeHandler, sourceTabPresenter, sourceTabPresenter);
 
         sourceTabPlugin.open(sourceLocation, true);
+    }
+
+    private void doWithConfig(final Consumer<SourceConfig> action) {
+        uiConfigCache.get()
+                .onSuccess(uiConfig ->
+                        action.accept(uiConfig.getSource()))
+                .onFailure(caught -> AlertEvent.fireError(
+                        DataPresenter.this,
+                        caught.getMessage(),
+                        null));
     }
 
     private void addTab(final TabData tab) {
@@ -333,7 +329,7 @@ public class DataPresenter extends MyPresenterWidget<DataPresenter.DataView> imp
                     final SourceLocation newSourceLocation = sourceLocationPresenter.getSourceLocation();
                     currentPartNo = newSourceLocation.getPartNo();
                     currentSegmentNo = newSourceLocation.getSegmentNo();
-                    currentDataRange = newSourceLocation.getOptDataRange().orElse(DEFAULT_DATA_RANGE);
+//                    currentDataRange = newSourceLocation.getOptDataRange().orElse(DEFAULT_DATA_RANGE);
 
                     update(false);
 
@@ -373,13 +369,13 @@ public class DataPresenter extends MyPresenterWidget<DataPresenter.DataView> imp
     private void fetchDataForCurrentStreamNo(final String childDataType) {
 //        currentDataRange = new OffsetRange<>(currentDataRange.getOffset(), 1L);
 
-        dataTypeRangeMap.put(currentChildDataType, currentDataRange);
-        currentDataRange = dataTypeRangeMap.get(childDataType);
-
-        if (currentDataRange == null) {
-//            currentPageRange = new OffsetRange<>(0L, 100L);
-            currentDataRange = DEFAULT_DATA_RANGE;
-        }
+//        dataTypeRangeMap.put(currentChildDataType, currentDataRange);
+//        currentDataRange = dataTypeRangeMap.get(childDataType);
+//
+//        if (currentDataRange == null) {
+////            currentPageRange = new OffsetRange<>(0L, 100L);
+//            currentDataRange = DEFAULT_DATA_RANGE;
+//        }
 
         this.currentChildDataType = childDataType;
         update(true);
@@ -412,9 +408,9 @@ public class DataPresenter extends MyPresenterWidget<DataPresenter.DataView> imp
 //            final Highlight highlight = highlights.get(0);
 //            lineNo = highlight.getFrom().getLineNo();
 //        }
-        if (sourceLocation.getOptDataRange().isPresent()) {
-            currentDataRange = sourceLocation.getDataRange();
-        }
+//        if (sourceLocation.getOptDataRange().isPresent()) {
+//            currentDataRange = sourceLocation.getDataRange();
+//        }
 
 //        long newRecordOffset;
 //        if (sourceLocation.getSegmentNo() != -1) {
@@ -447,12 +443,12 @@ public class DataPresenter extends MyPresenterWidget<DataPresenter.DataView> imp
             currentPartNo = sourceLocation.getPartNo();
             currentSegmentNo = sourceLocation.getOptSegmentNo()
                     .orElse(-1);
-            currentDataRange = sourceLocation.getDataRange();
+//            currentDataRange = sourceLocation.getDataRange();
 
             currentSourceLocation = sourceLocation;
             currentMetaId = sourceLocation.getId();
             currentChildDataType = sourceLocation.getChildType();
-            dataTypeRangeMap.clear();
+//            dataTypeRangeMap.clear();
             markerListPresenter.resetExpandedSeverities();
 
             update(false);
@@ -467,8 +463,8 @@ public class DataPresenter extends MyPresenterWidget<DataPresenter.DataView> imp
         currentChildDataType = childDataType;
         currentPartNo = 0;
         currentSegmentNo = 0;
-        currentDataRange = DEFAULT_DATA_RANGE;
-        dataTypeRangeMap.clear();
+//        currentDataRange = DEFAULT_DATA_RANGE;
+//        dataTypeRangeMap.clear();
         markerListPresenter.resetExpandedSeverities();
         update(fireEvents);
     }
@@ -479,8 +475,8 @@ public class DataPresenter extends MyPresenterWidget<DataPresenter.DataView> imp
         currentPartNo = 0;
         currentSegmentNo = 0;
 //        currentDataRange = new OffsetRange<>(0L, 1L);
-        currentDataRange = DEFAULT_DATA_RANGE;
-        dataTypeRangeMap.clear();
+//        currentDataRange = DEFAULT_DATA_RANGE;
+//        dataTypeRangeMap.clear();
         markerListPresenter.resetExpandedSeverities();
         update(true);
     }
@@ -489,29 +485,30 @@ public class DataPresenter extends MyPresenterWidget<DataPresenter.DataView> imp
         if (!ignoreActions) {
             final Severity[] expandedSeverities = markerListPresenter.getExpandedSeverities();
 
-            long charOffset = currentDataRange != null && currentDataRange.getOptCharOffsetFrom().isPresent()
-                    ? currentDataRange.getCharOffsetFrom()
-                    : 0;
+//            long charOffset = currentDataRange != null && currentDataRange.getOptCharOffsetFrom().isPresent()
+//                    ? currentDataRange.getCharOffsetFrom()
+//                    : 0;
 
-            // TODO @AT Do we need to pass the highlight?
-            final FetchDataRequest request = new FetchDataRequest(currentMetaId, builder -> builder
-                    .withPartNo(currentPartNo)
-                    .withSegmentNumber(currentSegmentNo)
-//                    .withDataRange(DataRange.from(charOffset))
-                    .withDataRange(currentDataRange != null
-                            ? currentDataRange
-                            : DEFAULT_DATA_RANGE)
+            doWithConfig(sourceConfig -> {
+                final DataRange dataRange = DataRange.from(0,
+                        sourceConfig.getMaxCharactersInPreviewFetch());
+                // TODO @AT Do we need to pass the highlight?
+                final FetchDataRequest request = new FetchDataRequest(currentMetaId, builder -> builder
+                        .withPartNo(currentPartNo)
+                        .withSegmentNumber(currentSegmentNo)
+                        .withDataRange(dataRange)
 //                    .withHighlight(highlights.get(0))
-                    .withChildStreamType(currentChildDataType));
+                        .withChildStreamType(currentChildDataType));
 
 //            request.setStreamId(currentMetaId);
 //            request.setStreamRange(currentDataRange);
 //            request.setPageRange(currentPageRange);
 //            request.setChildStreamType(currentChildDataType);
-            request.setMarkerMode(errorMarkerMode);
-            request.setExpandedSeverities(expandedSeverities);
-            request.setFireEvents(fireEvents);
-            doFetch(request, fireEvents);
+                request.setMarkerMode(errorMarkerMode);
+                request.setExpandedSeverities(expandedSeverities);
+                request.setFireEvents(fireEvents);
+                doFetch(request, fireEvents);
+            });
         }
     }
 
@@ -695,12 +692,13 @@ public class DataPresenter extends MyPresenterWidget<DataPresenter.DataView> imp
         startLineNo = 1;
 
         // The range returned may differ from that requested so update it.
-        if (result != null
-                && result.getSourceLocation() != null
-                && result.getSourceLocation().getOptDataRange().isPresent()) {
-                currentDataRange = result.getSourceLocation()
-                        .getDataRange();
-        }
+//        if (result != null
+//                && result.getSourceLocation() != null
+//                && result.getSourceLocation().getOptDataRange().isPresent()) {
+//
+//                currentDataRange = result.getSourceLocation()
+//                        .getDataRange();
+//        }
 
         if (result != null) {
             currentChildDataType = Optional.ofNullable(result.getSourceLocation())
@@ -832,8 +830,6 @@ public class DataPresenter extends MyPresenterWidget<DataPresenter.DataView> imp
 
         setPagers(result);
 
-        refreshFormatButtons(result);
-
         refreshTextPresenterContent();
 
         getView().refreshNavigator();
@@ -849,17 +845,7 @@ public class DataPresenter extends MyPresenterWidget<DataPresenter.DataView> imp
         boolean isFormatted = formatOnLoad && AceEditorMode.XML.equals(editorMode);
 
         textPresenter.setText(data, isFormatted);
-        textPresenter.setFirstLineNumber(startLineNo);
         textPresenter.setControlsVisible(playButtonVisible);
-
-
-    }
-
-    private void refreshFormatButtons(final AbstractFetchDataResult result) {
-        formatToggleBtn.setVisible(
-                data != null && !data.isEmpty() &&
-                        AceEditorMode.XML.equals(editorMode) &&
-                        (DataType.NON_SEGMENTED.equals(curDataType) || DataType.SEGMENTED.equals(curDataType)));
     }
 
     private void refreshHighlights(final AbstractFetchDataResult result) {
@@ -879,8 +865,7 @@ public class DataPresenter extends MyPresenterWidget<DataPresenter.DataView> imp
                 && currentMetaId != null
                 && currentMetaId.equals(highlightId)
                 && partNo == highlightPartNo
-                && EqualsUtil.isEquals(currentChildDataType, highlightChildDataType)
-                && formatToggleBtn.isOff()) {
+                && EqualsUtil.isEquals(currentChildDataType, highlightChildDataType)) {
             // Set the content to be displayed in the source view with a
             // highlight.
             textPresenter.setHighlights(highlights);
@@ -975,10 +960,6 @@ public class DataPresenter extends MyPresenterWidget<DataPresenter.DataView> imp
     public void setSteppingSource(final boolean steppingSource) {
         this.steppingSource = steppingSource;
         errorMarkerMode = !steppingSource;
-        if (steppingSource) {
-            // Default to un-formatted for stepping so highlighting works
-            formatToggleBtn.setState(false);
-        }
     }
 
     public void setFormatOnLoad(final boolean formatOnLoad) {
@@ -1006,9 +987,9 @@ public class DataPresenter extends MyPresenterWidget<DataPresenter.DataView> imp
         return DataType.NON_SEGMENTED.equals(getCurDataType());
     }
 
-    private DataRange getCurrentDataRange() {
-        return currentDataRange;
-    }
+//    private DataRange getCurrentDataRange() {
+//        return currentDataRange;
+//    }
 
     private AbstractFetchDataResult getLastResult() {
         return lastResult;
@@ -1289,69 +1270,37 @@ public class DataPresenter extends MyPresenterWidget<DataPresenter.DataView> imp
 
         @Override
         public Optional<Long> getCharFrom() {
-            return Optional.ofNullable(getLastResult())
-                    .map(AbstractFetchDataResult::getSourceLocation)
-                    .flatMap(SourceLocation::getOptDataRange)
-                    .flatMap(DataRange::getOptCharOffsetFrom);
+            throw new UnsupportedOperationException("Character navigation unsupported");
         }
 
         @Override
         public Optional<Long> getCharTo() {
-            return Optional.ofNullable(getLastResult())
-                    .map(AbstractFetchDataResult::getSourceLocation)
-                    .flatMap(SourceLocation::getOptDataRange)
-                    .flatMap(DataRange::getOptCharOffsetTo);
+            throw new UnsupportedOperationException("Character navigation unsupported");
         }
 
         @Override
         public Optional<Long> getTotalChars() {
-            return Optional.ofNullable(getLastResult())
-                    .flatMap(result -> Optional.ofNullable(result.getTotalCharacterCount()))
-                    .filter(RowCount::isExact)
-                    .map(RowCount::getCount);
+            throw new UnsupportedOperationException("Character navigation unsupported");
         }
 
         @Override
         public Optional<Long> getTotalLines() {
-            return Optional.ofNullable(getLastResult())
-                    .map(AbstractFetchDataResult::getSourceLocation)
-                    .flatMap(SourceLocation::getOptDataRange)
-                    .filter(dataRange -> dataRange.getOptLocationFrom().isPresent()
-                            && dataRange.getOptLocationTo().isPresent())
-                    .map(dataRange -> dataRange.getLocationTo().getLineNo()
-                            - dataRange.getLocationFrom().getLineNo()
-                            + 1L); // line nos are inclusive, so add 1
+            throw new UnsupportedOperationException("Character navigation unsupported");
         }
 
         @Override
         public void showHeadCharacters() {
-            currentDataRange = DataRange.from(0, MAX_INITIAL_CHARS);
-            update(false);
+            throw new UnsupportedOperationException("Character navigation unsupported");
         }
 
         @Override
         public void advanceCharactersForward() {
-            currentDataRange = DataRange.from(
-                    getCurrentDataRange().getCharOffsetTo() + 1,
-                    MAX_CHARS_PER_FETCH);
-//            if (Long.valueOf(0).equals(getCurrentDataRange().getCharOffsetFrom())) {
-//                currentDataRange = DataRange.from(
-//                        getCurrentDataRange().getCharOffsetFrom() + MAX_INITIAL_CHARS,
-//                        MAX_CHARS_PER_FETCH);
-//            } else {
-//                currentDataRange = DataRange.from(
-//                        getCurrentDataRange().getCharOffsetFrom() + MAX_CHARS_PER_FETCH,
-//                        MAX_CHARS_PER_FETCH);
-//            }
-            update(false);
+            throw new UnsupportedOperationException("Character navigation unsupported");
         }
 
         @Override
         public void advanceCharactersBackwards() {
-            currentDataRange = DataRange.from(
-                    getCurrentDataRange().getCharOffsetFrom() - MAX_CHARS_PER_FETCH,
-                    MAX_CHARS_PER_FETCH);
-            update(false);
+            throw new UnsupportedOperationException("Character navigation unsupported");
         }
 
         @Override

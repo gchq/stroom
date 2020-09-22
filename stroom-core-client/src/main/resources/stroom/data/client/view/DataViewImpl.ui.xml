@@ -32,22 +32,11 @@
 
 		.buttonPanel {
 		float: right;
-		padding-right: 2em;
+		padding-right: 0.25em;
+		padding-top: 1px;
 		}
 
-<!--		.segmentPager {-->
-<!--		float:-->
-<!--		right;-->
-<!--		}-->
-
-<!--		.dataPager {-->
-<!--		min-width: 250px;-->
-<!--		float: right;-->
-<!--		text-align: right;-->
-<!--		}-->
-
 		.dataNavigator {
-		min-width: 250px;
 		float: right;
 		text-align: right;
 		}
@@ -60,14 +49,6 @@
 		</g:center>
 		<g:north size="20">
 			<g:DockLayoutPanel unit="PX" width="100%" height="100%">
-<!--				<g:east size="500">-->
-<!--					<v:ResizeFlowPanel width="100%" height="100%">-->
-
-<!--						<pager:Pager ui:field="dataPager" styleName="{style.dataPager}" />-->
-<!--						<pager:Pager ui:field="segmentPager" styleName="{style.segmentPager}"-->
-<!--							visible="false" />-->
-<!--					</v:ResizeFlowPanel>-->
-<!--				</g:east>-->
 				<g:east size="650">
 					<v:ResizeFlowPanel width="100%" height="100%">
 						<pager:DataNavigator ui:field="dataNavigator" styleName="{style.dataNavigator}" visible="false"/>
