@@ -7,6 +7,8 @@ and this project adheres to [Semantic Versioning](http://semver.org/).
 
 ## [Unreleased]
 
+* Changed default behaviour of `useDefaultOpenIdCredentials`.
+
 
 ## [v7.0-beta.58] - 2020-09-22
 
