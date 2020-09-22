@@ -174,7 +174,7 @@ public class DataNavigator extends Composite {
                 long partNo = display.getPartNo().get();
 //                GWT.log("parts: " + display.getTotalParts().map(Objects::toString).orElse("?"));
 
-                setPartControlVisibility(true);
+                setPartControlVisibility(display.areNavigationControlsVisible());
                 final String lbl = PARTS_TITLE
                         + " "
                         + getValueForLabel(display.getPartNo(), ZERO_TO_ONE_BASE_INCREMENT)
@@ -209,7 +209,7 @@ public class DataNavigator extends Composite {
 
 //                GWT.log("segments: " + display.getTotalParts().map(Objects::toString).orElse("?"));
 
-                setSegmentControlVisibility(true);
+                setSegmentControlVisibility(display.areNavigationControlsVisible());
                 boolean isOneSegmentPerPage = segmentNoFrom == segmentNoTo;
 
                 final String segmentNoFromStr = getValueForLabel(
@@ -256,7 +256,7 @@ public class DataNavigator extends Composite {
                 && display.getCharFrom().isPresent()
                 && display.getCharTo().isPresent()) {
 
-            setCharactersControlVisibility(true);
+            setCharactersControlVisibility(display.areNavigationControlsVisible());
 
             final String lbl = CHARACTERS_TITLE
                     + " "

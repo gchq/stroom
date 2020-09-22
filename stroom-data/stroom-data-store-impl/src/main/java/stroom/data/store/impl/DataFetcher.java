@@ -797,6 +797,7 @@ public class DataFetcher {
                 .withPartNo(sourceLocation.getPartNo())
                 .withChildStreamType(sourceLocation.getOptChildType()
                         .orElse(null))
+                .withHighlight(sourceLocation.getHighlight()) // pass the requested highlight back
                 .withDataRange(actualDataRange);
 
         if (segmentNumber != null) {

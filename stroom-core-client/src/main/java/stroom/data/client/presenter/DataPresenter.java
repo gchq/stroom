@@ -738,7 +738,6 @@ public class DataPresenter extends MyPresenterWidget<DataPresenter.DataView> imp
                 }
             }
 
-
 //            startLineNo = result.getPageRange().getOffset().intValue() + 1;
             startLineNo = result.getSourceLocation().getOptDataRange()
                     .flatMap(DataRange::getOptLocationFrom)
@@ -1170,6 +1169,11 @@ public class DataPresenter extends MyPresenterWidget<DataPresenter.DataView> imp
 
         public void updateSegmentsCount(final RowCount<Long> segmentsCount) {
             this.segmentsCount = segmentsCount;
+        }
+
+        @Override
+        public boolean areNavigationControlsVisible() {
+            return true;
         }
 
         @Override

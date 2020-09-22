@@ -19,7 +19,7 @@ package stroom.pipeline.stepping.client.presenter;
 
 import stroom.alert.client.event.AlertEvent;
 import stroom.data.client.presenter.ClassificationUiHandlers;
-import stroom.data.client.presenter.DataPresenter;
+import stroom.data.client.presenter.SourcePresenter;
 import stroom.dispatch.client.Rest;
 import stroom.dispatch.client.RestFactory;
 import stroom.docref.DocRef;
@@ -32,6 +32,7 @@ import stroom.meta.shared.Meta;
 import stroom.pipeline.shared.PipelineModelException;
 import stroom.pipeline.shared.PipelineResource;
 import stroom.pipeline.shared.SharedElementData;
+import stroom.pipeline.shared.SourceLocation;
 import stroom.pipeline.shared.data.PipelineData;
 import stroom.pipeline.shared.data.PipelineElement;
 import stroom.pipeline.shared.data.PipelineProperty;
@@ -75,7 +76,7 @@ public class SteppingPresenter extends MyPresenterWidget<SteppingPresenter.Stepp
 
     private final PipelineStepRequest request;
     private final PipelineTreePresenter pipelineTreePresenter;
-    private final DataPresenter sourcePresenter;
+    private final SourcePresenter sourcePresenter;
     private final Provider<ElementPresenter> editorProvider;
     private final StepLocationPresenter stepLocationPresenter;
     private final StepControlPresenter stepControlPresenter;
@@ -96,7 +97,7 @@ public class SteppingPresenter extends MyPresenterWidget<SteppingPresenter.Stepp
     public SteppingPresenter(final EventBus eventBus, final SteppingView view,
                              final PipelineTreePresenter pipelineTreePresenter,
                              final RestFactory restFactory,
-                             final DataPresenter sourcePresenter,
+                             final SourcePresenter sourcePresenter,
                              final Provider<ElementPresenter> editorProvider,
                              final StepLocationPresenter stepLocationPresenter,
                              final StepControlPresenter stepControlPresenter) {
@@ -225,10 +226,18 @@ public class SteppingPresenter extends MyPresenterWidget<SteppingPresenter.Stepp
                 editorPresenter.setInput(input, 1, elementData.isFormatInput(), null);
 
                 if (output.length() == 0 && outputIndicators != null && outputIndicators.getMaxSeverity() != null) {
-                    editorPresenter.setOutput(outputIndicators.toString(), 1, false, null);
+                    editorPresenter.setOutput(
+                            outputIndicators.toString(),
+                            1,
+                            false,
+                            null);
                 } else {
                     // Don't try and format text output.
-                    editorPresenter.setOutput(output, 1, elementData.isFormatOutput(), new IndicatorLines(outputIndicators));
+                    editorPresenter.setOutput(
+                            output,
+                            1,
+                            elementData.isFormatOutput(),
+                            new IndicatorLines(outputIndicators));
                 }
             } else {
                 // // if we didn't find a record then it could be the input that
@@ -252,7 +261,11 @@ public class SteppingPresenter extends MyPresenterWidget<SteppingPresenter.Stepp
         this.meta = meta;
 
         // Load the stream.
-        sourcePresenter.fetchData(true, meta.getId(), childStreamType);
+//        sourcePresenter.fetchData(true, meta.getId(), childStreamType);
+        SourceLocation sourceLocation = SourceLocation.builder(meta.getId())
+                .withChildStreamType(childStreamType)
+                .build();
+        sourcePresenter.setSourceLocation(sourceLocation);
 
         // Set the pipeline on the stepping action.
         request.setPipeline(pipeline);
@@ -379,7 +392,7 @@ public class SteppingPresenter extends MyPresenterWidget<SteppingPresenter.Stepp
 //                // Set the source selection and highlight.
 //                sourcePresenter.showStepSource(result.getCurrentStreamOffset(), result.getStepLocation(),
 //                        childStreamType, result.getStepData().getSourceHighlights());
-                sourcePresenter.fetchData(result.getStepData().getSourceLocation());
+                sourcePresenter.setSourceLocation(result.getStepData().getSourceLocation());
 
                 // We found a record so update the display to indicate the
                 // record that was found and update the request with the new

@@ -21,6 +21,7 @@ import stroom.svg.client.SvgPreset;
 import stroom.ui.config.client.UiConfigCache;
 import stroom.ui.config.shared.SourceConfig;
 import stroom.util.shared.HasCharacterData;
+import stroom.util.shared.Location;
 import stroom.util.shared.OffsetRange;
 import stroom.util.shared.RowCount;
 import stroom.widget.button.client.ButtonView;
@@ -35,6 +36,7 @@ import com.gwtplatform.mvp.client.MyPresenterWidget;
 import com.gwtplatform.mvp.client.View;
 import edu.ycp.cs.dh.acegwt.client.ace.AceEditorMode;
 
+import java.util.Collections;
 import java.util.Objects;
 import java.util.Optional;
 import java.util.function.Consumer;
@@ -142,6 +144,7 @@ public class SourcePresenter extends MyPresenterWidget<SourceView> implements Te
                 .withPartNo(sourceLocation.getPartNo())
                 .withSegmentNumber(sourceLocation.getSegmentNo())
                 .withDataRange(sourceLocation.getDataRange())
+                .withHighlight(sourceLocation.getHighlight())
                 .withChildStreamType(sourceLocation.getChildType()));
 
         final Rest<AbstractFetchDataResult> rest = restFactory.create();
@@ -162,25 +165,44 @@ public class SourcePresenter extends MyPresenterWidget<SourceView> implements Te
             lastResult = (FetchDataResult) result;
             receivedSourceLocation = lastResult.getSourceLocation();
 
-            classificationUiHandlers.setClassification(result.getClassification());
-            textPresenter.setText(lastResult.getData());
-            textPresenter.setFirstLineNumber(receivedSourceLocation.getDataRange().getLocationFrom().getLineNo());
-
-            setEditorMode(lastResult);
-
             setTitle(lastResult);
+            classificationUiHandlers.setClassification(result.getClassification());
 
-            if (DataType.SEGMENTED.equals(lastResult.getDataType())) {
-                dataNavigatorData.segmentsCount = result.getTotalItemCount();
-            } else {
-                dataNavigatorData.partsCount = result.getTotalItemCount();
-            }
+            updateEditor();
 
-            getView().refreshNavigator();
+            updateNavigator(result);
         } else {
 
             // TODO @AT Fire alert, should never get this
         }
+    }
+
+    private void updateEditor() {
+        textPresenter.setText(lastResult.getData());
+        int firstLineNo = receivedSourceLocation.getOptDataRange()
+                .flatMap(DataRange::getOptLocationFrom)
+                .map(Location::getLineNo)
+                .orElse(1);
+
+        textPresenter.setFirstLineNumber(firstLineNo);
+
+        setEditorMode(lastResult);
+
+        if (receivedSourceLocation.getHighlight() != null) {
+            textPresenter.setHighlights(Collections.singletonList(receivedSourceLocation.getHighlight()));
+        } else {
+            textPresenter.setHighlights(null);
+        }
+    }
+
+    private void updateNavigator(final AbstractFetchDataResult result) {
+        if (DataType.SEGMENTED.equals(lastResult.getDataType())) {
+            dataNavigatorData.segmentsCount = result.getTotalItemCount();
+        } else {
+            dataNavigatorData.partsCount = result.getTotalItemCount();
+        }
+
+        getView().refreshNavigator();
     }
 
     private void setTitle(final FetchDataResult fetchDataResult) {
@@ -316,6 +338,11 @@ public class SourcePresenter extends MyPresenterWidget<SourceView> implements Te
     private class DataNavigatorData implements HasCharacterData {
         private RowCount<Long> partsCount = RowCount.of(0L, false);
         private RowCount<Long> segmentsCount = RowCount.of(0L, false);
+
+        @Override
+        public boolean areNavigationControlsVisible() {
+            return !isSteppingSource;
+        }
 
         @Override
         public boolean isMultiPart() {

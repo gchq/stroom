@@ -4,6 +4,8 @@ import java.util.Optional;
 
 public interface HasCharacterData {
 
+    boolean areNavigationControlsVisible();
+
     // Methods for parts
 
     boolean isMultiPart();
