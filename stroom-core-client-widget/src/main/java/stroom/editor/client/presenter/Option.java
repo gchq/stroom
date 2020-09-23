@@ -22,7 +22,10 @@ public class Option {
     private boolean on;
     private boolean available;
 
-    public Option(final String text, final boolean on, final boolean available, final ChangeHandler changeHandler) {
+    public Option(final String text,
+                  final boolean on,
+                  final boolean available,
+                  final ChangeHandler changeHandler) {
         this.text = text;
         this.on = on;
         this.available = available;

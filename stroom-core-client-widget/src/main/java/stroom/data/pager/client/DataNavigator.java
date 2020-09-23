@@ -170,11 +170,13 @@ public class DataNavigator extends Composite {
                     .filter(i -> i > 1L)
                     .isPresent() || !display.getTotalParts().isPresent();
 
-            if (display.isMultiPart() && display.getPartNo().isPresent() && hasMultipleParts) {
+            if (display.areNavigationControlsVisible()
+                    && display.isMultiPart()
+                    && display.getPartNo().isPresent()
+                    && hasMultipleParts) {
+
                 long partNo = display.getPartNo().get();
 //                GWT.log("parts: " + display.getTotalParts().map(Objects::toString).orElse("?"));
-
-                setPartControlVisibility(display.areNavigationControlsVisible());
                 final String lbl = PARTS_TITLE
                         + " "
                         + getValueForLabel(display.getPartNo(), ZERO_TO_ONE_BASE_INCREMENT)
@@ -192,6 +194,8 @@ public class DataNavigator extends Composite {
                 prevPart.setEnabled(partNo > 0);
                 nextPart.setEnabled(hasNext);
                 lastPart.setEnabled(hasNext);
+
+                setPartControlVisibility(true);
             } else {
                 setPartControlVisibility(false);
             }
@@ -200,7 +204,8 @@ public class DataNavigator extends Composite {
 
     private void refreshSegmentControls() {
         if (display != null) {
-            if (display.isSegmented()
+            if (display.areNavigationControlsVisible()
+                    && display.isSegmented()
                     && display.getSegmentNoFrom().isPresent()
                     && display.getSegmentNoTo().isPresent()) {
 
@@ -209,7 +214,6 @@ public class DataNavigator extends Composite {
 
 //                GWT.log("segments: " + display.getTotalParts().map(Objects::toString).orElse("?"));
 
-                setSegmentControlVisibility(display.areNavigationControlsVisible());
                 boolean isOneSegmentPerPage = segmentNoFrom == segmentNoTo;
 
                 final String segmentNoFromStr = getValueForLabel(
@@ -244,6 +248,8 @@ public class DataNavigator extends Composite {
                 prevSegment.setEnabled(segmentNoFrom > 0);
                 nextSegment.setEnabled(hasNext);
                 lastSegment.setEnabled(hasNext);
+
+                setSegmentControlVisibility(true);
             } else {
                 setSegmentControlVisibility(false);
             }
@@ -252,11 +258,10 @@ public class DataNavigator extends Composite {
 
     private void refreshCharacterControls() {
         if (display != null
+                && display.areNavigationControlsVisible()
                 && display.canNavigateCharacterData()
                 && display.getCharFrom().isPresent()
                 && display.getCharTo().isPresent()) {
-
-            setCharactersControlVisibility(display.areNavigationControlsVisible());
 
             final String lbl = CHARACTERS_TITLE
                     + " "
@@ -276,6 +281,8 @@ public class DataNavigator extends Composite {
 
             advanceCharactersForwardBtn.setEnabled(
                     charTo < display.getTotalChars().map(total -> total - 1).orElse(Long.MAX_VALUE));
+
+            setCharactersControlVisibility(true);
         } else {
             setCharactersControlVisibility(false);
         }

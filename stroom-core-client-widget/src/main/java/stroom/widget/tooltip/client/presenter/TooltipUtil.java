@@ -234,7 +234,9 @@ public final class TooltipUtil {
             final SafeHtml safeKey = objectToSafeHtml(key);
 
             if (value != null) {
-                final SafeHtml safeValue = objectToSafeHtml(value);
+                final SafeHtml safeValue = value instanceof SafeHtml
+                        ? (SafeHtml) value
+                        : objectToSafeHtml(value);
 
                 if (safeValue.asString().length() > 0 || showBlank) {
                     buffer

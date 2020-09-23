@@ -20,10 +20,13 @@ import stroom.alert.client.event.AlertEvent;
 import stroom.core.client.ContentManager;
 import stroom.core.client.ContentManager.CloseHandler;
 import stroom.data.client.SourceTabPlugin;
+import stroom.data.shared.DataInfoSection;
 import stroom.data.shared.DataRange;
+import stroom.data.shared.DataResource;
 import stroom.data.shared.DataType;
 import stroom.dispatch.client.Rest;
 import stroom.dispatch.client.RestFactory;
+import stroom.editor.client.presenter.HtmlPresenter;
 import stroom.meta.shared.Meta;
 import stroom.pipeline.shared.AbstractFetchDataResult;
 import stroom.pipeline.shared.FetchDataRequest;
@@ -51,9 +54,13 @@ import stroom.widget.popup.client.presenter.PopupUiHandlers;
 import stroom.widget.tab.client.presenter.TabBar;
 import stroom.widget.tab.client.presenter.TabData;
 import stroom.widget.tab.client.presenter.TabDataImpl;
+import stroom.widget.tooltip.client.presenter.TooltipUtil;
 
 import com.google.gwt.core.client.GWT;
 import com.google.gwt.dom.client.Style.Unit;
+import com.google.gwt.safehtml.shared.SafeHtml;
+import com.google.gwt.safehtml.shared.SafeHtmlBuilder;
+import com.google.gwt.safehtml.shared.SafeHtmlUtils;
 import com.google.gwt.user.client.Timer;
 import com.google.inject.Inject;
 import com.google.web.bindery.event.shared.EventBus;
@@ -71,6 +78,7 @@ import java.util.function.Consumer;
 
 public class DataPresenter extends MyPresenterWidget<DataPresenter.DataView> implements TextUiHandlers {
     private static final ViewDataResource VIEW_DATA_RESOURCE = GWT.create(ViewDataResource.class);
+    private static final DataResource DATA_RESOURCE = com.google.gwt.core.shared.GWT.create(DataResource.class);
 
     // TODO @AT These need to come from config
     private static final long MAX_INITIAL_CHARS = 5_000L;
@@ -82,13 +90,16 @@ public class DataPresenter extends MyPresenterWidget<DataPresenter.DataView> imp
     private static final String META_DATA = "Meta Data";
     private static final String CONTEXT = "Context";
     private static final String ERROR = "Error";
+    private static final String INFO = "Info";
     private static final String CHARACTERS_PAGER_TITLE = "Characters";
 
     private final TabData errorTab = new TabDataImpl("Error");
     private final TabData dataTab = new TabDataImpl("Data");
     private final TabData metaTab = new TabDataImpl("Meta");
+    private final TabData infoTab = new TabDataImpl("Info");
     private final TabData contextTab = new TabDataImpl("Context");
 
+    private final HtmlPresenter htmlPresenter;
     private final TextPresenter textPresenter;
     private final SourceLocationPresenter sourceLocationPresenter;
     private final MarkerListPresenter markerListPresenter;
@@ -149,6 +160,7 @@ public class DataPresenter extends MyPresenterWidget<DataPresenter.DataView> imp
 
     @Inject
     public DataPresenter(final EventBus eventBus,
+                         final HtmlPresenter htmlPresenter,
                          final DataView view,
                          final TextPresenter textPresenter,
                          final MarkerListPresenter markerListPresenter,
@@ -159,6 +171,7 @@ public class DataPresenter extends MyPresenterWidget<DataPresenter.DataView> imp
                          final ClientSecurityContext securityContext,
                          final RestFactory restFactory) {
         super(eventBus, view);
+        this.htmlPresenter = htmlPresenter;
         this.textPresenter = textPresenter;
         // Use properties mode for meta
         this.markerListPresenter = markerListPresenter;
@@ -169,8 +182,14 @@ public class DataPresenter extends MyPresenterWidget<DataPresenter.DataView> imp
         this.restFactory = restFactory;
         this.currentErrorNo = currentErrorNo;
 
-        markerListPresenter.getWidget().getElement().getStyle().setWidth(100, Unit.PCT);
-        markerListPresenter.getWidget().getElement().getStyle().setHeight(100, Unit.PCT);
+        markerListPresenter.getWidget()
+                .getElement()
+                .getStyle()
+                .setWidth(100, Unit.PCT);
+        markerListPresenter.getWidget()
+                .getElement()
+                .getStyle()
+                .setHeight(100, Unit.PCT);
         markerListPresenter.setDataPresenter(this);
 
         textPresenter.setUiHandlers(this);
@@ -181,6 +200,8 @@ public class DataPresenter extends MyPresenterWidget<DataPresenter.DataView> imp
         viewSourceBtn.addClickHandler(event -> {
             openSourcePresenter();
         });
+
+        textPresenter.setWrapLines(true);
 
 //        dataPagerRows = new PageRows();
 //        segmentPagerRows = new SegmentRows();
@@ -196,6 +217,7 @@ public class DataPresenter extends MyPresenterWidget<DataPresenter.DataView> imp
 
         view.setNavigatorData(dataNavigatorData);
 
+        addTab(infoTab);
         addTab(errorTab);
         addTab(dataTab);
         addTab(metaTab);
@@ -267,29 +289,38 @@ public class DataPresenter extends MyPresenterWidget<DataPresenter.DataView> imp
         // Make sure tabs don't do anything in stepping mode.
         if (!steppingSource) {
             if (tab != null) {
-                if (META.equals(tab.getLabel())) {
-                    editorMode = AceEditorMode.PROPERTIES;
-                    fetchDataForCurrentStreamNo(META_DATA);
-                } else if (CONTEXT.equals(tab.getLabel())) {
-                    editorMode = AceEditorMode.XML;
-                    fetchDataForCurrentStreamNo(CONTEXT);
-                } else if (ERROR.equals(tab.getLabel())) {
-                    errorMarkerMode = true;
-                    editorMode = AceEditorMode.TEXT;
-                    fetchDataForCurrentStreamNo(null);
+                if (INFO.equals(tab.getLabel())) {
+                    getView().getTabBar().selectTab(infoTab);
+                    showHtmlPresenter();
+                    fetchMetaInfoData();
+                    viewSourceBtn.setVisible(false);
+                    getView().refreshNavigator();
                 } else {
-                    // Turn off error marker mode if we are currently looking at
-                    // an error and switching to the data tab.
-                    if (ERROR.equals(currentStreamType) && errorMarkerMode) {
-                        errorMarkerMode = false;
-                        // Error textual data so display as text
-                        editorMode = AceEditorMode.TEXT;
-                    } else {
-                        // Any old data so treat as XML
+                    viewSourceBtn.setVisible(true);
+                    if (META.equals(tab.getLabel())) {
+                        editorMode = AceEditorMode.PROPERTIES;
+                        fetchDataForCurrentStreamNo(META_DATA);
+                    } else if (CONTEXT.equals(tab.getLabel())) {
                         editorMode = AceEditorMode.XML;
-                    }
+                        fetchDataForCurrentStreamNo(CONTEXT);
+                    } else if (ERROR.equals(tab.getLabel())) {
+                        errorMarkerMode = true;
+                        editorMode = AceEditorMode.TEXT;
+                        fetchDataForCurrentStreamNo(null);
+                    } else {
+                        // Turn off error marker mode if we are currently looking at
+                        // an error and switching to the data tab.
+                        if (ERROR.equals(currentStreamType) && errorMarkerMode) {
+                            errorMarkerMode = false;
+                            // Error textual data so display as text
+                            editorMode = AceEditorMode.TEXT;
+                        } else {
+                            // Any old data so treat as XML
+                            editorMode = AceEditorMode.XML;
+                        }
 
-                    fetchDataForCurrentStreamNo(null);
+                        fetchDataForCurrentStreamNo(null);
+                    }
                 }
             }
         }
@@ -765,24 +796,28 @@ public class DataPresenter extends MyPresenterWidget<DataPresenter.DataView> imp
         ignoreActions = false;
     }
 
-    private void updateTabs(final String streamType, final Set<String> availableChildStreamTypes) {
+    private void updateTabs(final String streamType,
+                            final Set<String> availableChildStreamTypes) {
+
         if (streamType == null) {
-            // Hide all links.
+            // Hide all links
+            hideTab(infoTab, true);
             hideTab(errorTab, true);
             hideTab(dataTab, true);
             hideTab(metaTab, true);
             hideTab(contextTab, true);
 
-            hideBothPresenters();
+            showHtmlPresenter();
 
-        } else if (steppingSource) {
-            // Hide all links except data.
-            hideTab(errorTab, true);
-            hideTab(dataTab, false);
-            hideTab(metaTab, true);
-            hideTab(contextTab, true);
-            showTextPresenter();
-            getView().getTabBar().selectTab(dataTab);
+//        } else if (steppingSource) {
+//            // Hide all links except data.
+//            hideTab(infoTab, true);
+//            hideTab(errorTab, true);
+//            hideTab(dataTab, false);
+//            hideTab(metaTab, true);
+//            hideTab(contextTab, true);
+//            showTextPresenter();
+//            getView().getTabBar().selectTab(dataTab);
 
         } else {
             // Highlight the appropriate link.
@@ -800,6 +835,9 @@ public class DataPresenter extends MyPresenterWidget<DataPresenter.DataView> imp
                 showTextPresenter();
             }
 
+            // Always have an info tab for a stream
+            hideTab(infoTab, false);
+
             // Show only applicable links.
             hideTab(errorTab, !ERROR.equals(currentStreamType));
             hideTab(dataTab, false);
@@ -810,7 +848,13 @@ public class DataPresenter extends MyPresenterWidget<DataPresenter.DataView> imp
                 hideTab(metaTab, true);
                 hideTab(contextTab, true);
             }
+            // Now we have changed tabs, ensure the nav visibility is right
+            getView().refreshNavigator();
         }
+    }
+
+    private void showHtmlPresenter() {
+        getView().getLayerContainer().show(htmlPresenter);
     }
 
     private void showTextPresenter() {
@@ -821,7 +865,7 @@ public class DataPresenter extends MyPresenterWidget<DataPresenter.DataView> imp
         getView().getLayerContainer().show(markerListPresenter);
     }
 
-    private void hideBothPresenters() {
+    private void hidePresenters() {
         getView().getLayerContainer().clear();
     }
 
@@ -830,6 +874,8 @@ public class DataPresenter extends MyPresenterWidget<DataPresenter.DataView> imp
         setPagers(result);
 
         refreshTextPresenterContent();
+
+        refreshHtmlPresenterContent();
 
         getView().refreshNavigator();
 
@@ -845,6 +891,10 @@ public class DataPresenter extends MyPresenterWidget<DataPresenter.DataView> imp
 
         textPresenter.setText(data, isFormatted);
         textPresenter.setControlsVisible(playButtonVisible);
+    }
+
+    private void refreshHtmlPresenterContent() {
+        fetchMetaInfoData();
     }
 
     private void refreshHighlights(final AbstractFetchDataResult result) {
@@ -992,6 +1042,62 @@ public class DataPresenter extends MyPresenterWidget<DataPresenter.DataView> imp
 
     private AbstractFetchDataResult getLastResult() {
         return lastResult;
+    }
+
+    private void fetchMetaInfoData() {
+        final Rest<List<DataInfoSection>> rest = restFactory.create();
+        rest
+                .onSuccess(this::handleMetaInfoResult)
+                .call(DATA_RESOURCE)
+                .info(currentMetaId);
+    }
+
+    private void handleMetaInfoResult(final List<DataInfoSection> dataInfoSections) {
+        final TooltipUtil.Builder builder = TooltipUtil.builder();
+
+        builder.addTable(tableBuilder -> {
+            for (int i = 0; i < dataInfoSections.size(); i++) {
+                final DataInfoSection section = dataInfoSections.get(i);
+                // Add the section header
+                tableBuilder.addRow(
+                        new SafeHtmlBuilder()
+                                .appendHtmlConstant("<span style=\"font-size: medium; font-weight: 500\">")
+                                .appendEscaped(section.getTitle())
+                                .appendHtmlConstant("</span>")
+                                .toSafeHtml(),
+                        null,
+                        true);
+
+                section.getEntries()
+                        .forEach(entry ->
+                                tableBuilder.addRow(
+                                        TooltipUtil.boldText(entry.getKey()),
+                                        replaceJavaLineBreaks(entry.getValue()),
+                                        true));
+                if (i < dataInfoSections.size() - 1) {
+                    tableBuilder.addBlankRow();
+                }
+            }
+            return tableBuilder.build();
+        });
+
+        htmlPresenter.setHtml(builder.build().asString());
+    }
+
+    private SafeHtml replaceJavaLineBreaks(final String str) {
+        if (str != null) {
+            String[] parts = str.split("\\n");
+            SafeHtmlBuilder safeHtmlBuilder = new SafeHtmlBuilder();
+            for (int i = 0; i < parts.length; i++) {
+                safeHtmlBuilder.append(SafeHtmlUtils.fromString(parts[i]));
+                if (i != parts.length - 1) {
+                    safeHtmlBuilder.appendHtmlConstant("</br>");
+                }
+            }
+            return safeHtmlBuilder.toSafeHtml();
+        } else {
+            return null;
+        }
     }
 
     public interface DataView extends View {
@@ -1173,7 +1279,11 @@ public class DataPresenter extends MyPresenterWidget<DataPresenter.DataView> imp
 
         @Override
         public boolean areNavigationControlsVisible() {
-            return true;
+            if (getView().getTabBar() != null && getView().getTabBar().getSelectedTab() != null) {
+                return !INFO.equals(getView().getTabBar().getSelectedTab().getLabel());
+            } else {
+                return false;
+            }
         }
 
         @Override
@@ -1199,7 +1309,7 @@ public class DataPresenter extends MyPresenterWidget<DataPresenter.DataView> imp
         @Override
         public void setPartNo(final long partNo) {
             currentPartNo = partNo;
-            showHeadCharacters();
+            update(false);
         }
 
         @Override
@@ -1274,22 +1384,22 @@ public class DataPresenter extends MyPresenterWidget<DataPresenter.DataView> imp
 
         @Override
         public Optional<Long> getCharFrom() {
-            throw new UnsupportedOperationException("Character navigation unsupported");
+            return Optional.empty();
         }
 
         @Override
         public Optional<Long> getCharTo() {
-            throw new UnsupportedOperationException("Character navigation unsupported");
+            return Optional.empty();
         }
 
         @Override
         public Optional<Long> getTotalChars() {
-            throw new UnsupportedOperationException("Character navigation unsupported");
+            return Optional.empty();
         }
 
         @Override
         public Optional<Long> getTotalLines() {
-            throw new UnsupportedOperationException("Character navigation unsupported");
+            return Optional.empty();
         }
 
         @Override
