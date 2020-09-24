@@ -59,8 +59,6 @@ class StandardJwtContextFactory implements JwtContextFactory {
             LOGGER.debug(() -> "Verifying token...");
             final JwtConsumer jwtConsumer = newJwtConsumer();
             final JwtContext jwtContext = jwtConsumer.process(jws);
-            boolean isVerified = jwtContext != null;
-            boolean isRevoked = false;
 
             // TODO : @66 Check against blacklist to see if token has been revoked. Blacklist
             //  is a list of JWI (JWT IDs) on auth service. Only tokens with `jwi` claims are API
@@ -72,17 +70,12 @@ class StandardJwtContextFactory implements JwtContextFactory {
 //                isRevoked = userId == null;
 //            }
 
-            if (isVerified && !isRevoked) {
-                return Optional.ofNullable(jwtContext);
-            }
+            return Optional.ofNullable(jwtContext);
 
         } catch (final RuntimeException | InvalidJwtException e) {
-            LOGGER.error(() -> "Unable to verify token: " + e.getMessage(), e);
-            LOGGER.warn(e::getMessage);
+            LOGGER.debug(() -> "Unable to verify token: " + e.getMessage(), e);
             throw new AuthenticationException(e.getMessage(), e);
         }
-
-        return Optional.empty();
     }
 
     private JwtConsumer newJwtConsumer() {

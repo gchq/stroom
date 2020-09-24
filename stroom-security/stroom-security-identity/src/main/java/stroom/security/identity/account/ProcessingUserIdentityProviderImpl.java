@@ -25,6 +25,7 @@ class ProcessingUserIdentityProviderImpl implements ProcessingUserIdentityProvid
     private static final LambdaLogger LOGGER = LambdaLoggerFactory.getLogger(ProcessingUserIdentityProvider.class);
     private static final String INTERNAL_PROCESSING_USER = "INTERNAL_PROCESSING_USER";
     private static final long ONE_DAY = TimeUnit.DAYS.toMillis(1);
+    private static final long THIRTY_DAYS = ONE_DAY * 30;
 
     private final AccountDao accountDao;
     private final TokenDao tokenDao;
@@ -32,6 +33,7 @@ class ProcessingUserIdentityProviderImpl implements ProcessingUserIdentityProvid
     private final OpenIdClientFactory openIdClientDetailsFactory;
 
     private volatile long lastFetch;
+    private volatile long lastTokenCreation;
     private volatile UserIdentity userIdentity;
 
     @Inject
@@ -50,8 +52,8 @@ class ProcessingUserIdentityProviderImpl implements ProcessingUserIdentityProvid
         final long now = System.currentTimeMillis();
         // Don't cache the user identity for more than a day in case its token expires.
         if (userIdentity == null || lastFetch < now - ONE_DAY) {
-            final Account account = getAccount();
-            final Token token = getToken(account);
+            final Account account = getAccount(now);
+            final Token token = getToken(now, account);
             userIdentity = new ProcessingUserIdentity(INTERNAL_PROCESSING_USER, token.getData());
             lastFetch = now;
         }
@@ -59,15 +61,13 @@ class ProcessingUserIdentityProviderImpl implements ProcessingUserIdentityProvid
         return userIdentity;
     }
 
-    private Account getAccount() {
+    private Account getAccount(final long now) {
         final Optional<Account> existingAccount = accountDao.get(INTERNAL_PROCESSING_USER);
         if (existingAccount.isPresent()) {
             return existingAccount.get();
         }
 
         try {
-            final long now = System.currentTimeMillis();
-
             final Account account = new Account();
             account.setCreateTimeMs(now);
             account.setCreateUser(INTERNAL_PROCESSING_USER);
@@ -86,52 +86,57 @@ class ProcessingUserIdentityProviderImpl implements ProcessingUserIdentityProvid
             LOGGER.debug(e::getMessage, e);
         }
 
-        return accountDao.get(INTERNAL_PROCESSING_USER).orElseThrow(() -> new RuntimeException("Unable to retrieve internal processing user"));
+        return accountDao.get(INTERNAL_PROCESSING_USER).orElseThrow(() ->
+                new RuntimeException("Unable to retrieve internal processing user"));
     }
 
-    private Token getToken(final Account account) {
-        List<Token> tokens = tokenDao.getTokensForAccount(account.getId());
-        if (tokens.size() > 0) {
-            return tokens.get(0);
+    private Token getToken(final long now, final Account account) {
+        final List<Token> tokens = tokenDao.getTokensForAccount(account.getId());
+        if (tokens.size() == 0 || lastTokenCreation < now - THIRTY_DAYS) {
+            lastTokenCreation = now;
+            return createToken(now, account);
+
+        } else {
+            final Token token = tokens.get(tokens.size() - 1);
+
+            // Delete old tokens.
+            for (int i = 0; i < tokens.size() - 1; i++) {
+                try {
+                    tokenDao.deleteTokenById(tokens.get(i).getId());
+                } catch (final RuntimeException e) {
+                    LOGGER.debug(e.getMessage(), e);
+                }
+            }
+
+            return token;
         }
+    }
 
-        try {
-            final long now = System.currentTimeMillis();
-            final Instant timeToExpiryInSeconds = LocalDateTime.now().plusYears(1).toInstant(ZoneOffset.UTC);
-            final TokenType tokenType = TokenType.API;
+    private Token createToken(final long now, final Account account) {
+        final Instant timeToExpiryInSeconds = LocalDateTime.now().plusYears(1).toInstant(ZoneOffset.UTC);
+        final TokenType tokenType = TokenType.API;
 
-            final TokenBuilder tokenBuilder = tokenBuilderFactory
-                    .expiryDateForApiKeys(timeToExpiryInSeconds)
-                    .newBuilder(tokenType)
-                    .clientId(openIdClientDetailsFactory.getClient().getClientId())
-                    .subject(INTERNAL_PROCESSING_USER);
+        final TokenBuilder tokenBuilder = tokenBuilderFactory
+                .expiryDateForApiKeys(timeToExpiryInSeconds)
+                .newBuilder(tokenType)
+                .clientId(openIdClientDetailsFactory.getClient().getClientId())
+                .subject(INTERNAL_PROCESSING_USER);
 
-            final Instant actualExpiryDate = tokenBuilder.getExpiryDate();
-            final String data = tokenBuilder.build();
+        final Instant actualExpiryDate = tokenBuilder.getExpiryDate();
+        final String data = tokenBuilder.build();
 
-            final Token token = new Token();
-            token.setCreateTimeMs(now);
-            token.setCreateUser(INTERNAL_PROCESSING_USER);
-            token.setUpdateTimeMs(now);
-            token.setUpdateUser(INTERNAL_PROCESSING_USER);
-            token.setUserEmail(INTERNAL_PROCESSING_USER);
-            token.setTokenType(tokenType.getText());
-            token.setData(data);
-            token.setExpiresOnMs(actualExpiryDate.toEpochMilli());
-            token.setComments(INTERNAL_PROCESSING_USER);
-            token.setEnabled(true);
+        final Token token = new Token();
+        token.setCreateTimeMs(now);
+        token.setCreateUser(INTERNAL_PROCESSING_USER);
+        token.setUpdateTimeMs(now);
+        token.setUpdateUser(INTERNAL_PROCESSING_USER);
+        token.setUserEmail(INTERNAL_PROCESSING_USER);
+        token.setTokenType(tokenType.getText());
+        token.setData(data);
+        token.setExpiresOnMs(actualExpiryDate.toEpochMilli());
+        token.setComments(INTERNAL_PROCESSING_USER);
+        token.setEnabled(true);
 
-            tokenDao.create(account.getId(), token);
-
-        } catch (final RuntimeException e) {
-            LOGGER.error(e::getMessage, e);
-        }
-
-        tokens = tokenDao.getTokensForAccount(account.getId());
-        if (tokens.size() > 0) {
-            return tokens.get(0);
-        }
-
-        throw new RuntimeException("Unable to retrieve token for internal processing user");
+        return tokenDao.create(account.getId(), token);
     }
 }

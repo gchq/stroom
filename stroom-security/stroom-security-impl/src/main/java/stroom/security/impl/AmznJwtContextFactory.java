@@ -101,7 +101,7 @@ class AmznJwtContextFactory implements JwtContextFactory {
             final JwtConsumer jwtConsumer = builder.build();
             return Optional.ofNullable(jwtConsumer.process(jws));
         } catch (final RuntimeException | InvalidJwtException | IOException e) {
-            LOGGER.error(e::getMessage, e);
+            LOGGER.debug(e::getMessage, e);
             throw new RuntimeException(e.getMessage(), e);
         }
     }
