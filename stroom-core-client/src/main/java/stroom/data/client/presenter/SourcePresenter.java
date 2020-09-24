@@ -206,8 +206,14 @@ public class SourcePresenter extends MyPresenterWidget<SourceView> implements Te
     }
 
     private void setTitle(final FetchDataResult fetchDataResult) {
-        final String streamType = StreamTypeNames.asUiName(fetchDataResult.getStreamTypeName());
-        getView().setTitle(String.valueOf(fetchDataResult.getSourceLocation().getId()), streamType);
+        final String streamType = fetchDataResult.getStreamTypeName();
+        final SourceLocation sourceLocation = fetchDataResult.getSourceLocation();
+        getView().setTitle(
+                fetchDataResult.getFeedName(),
+                sourceLocation.getId(),
+                sourceLocation.getPartNo(),
+                sourceLocation.getSegmentNo(),
+                streamType);
     }
 
     private void setEditorMode(final FetchDataResult fetchDataResult) {
@@ -535,7 +541,11 @@ public class SourcePresenter extends MyPresenterWidget<SourceView> implements Te
 
         ButtonView addButton(final SvgPreset preset);
 
-        void setTitle(final String id, final String type);
+        void setTitle(final String feedName,
+                      final long id,
+                      final long partNo,
+                      final long segmentNo,
+                      final String type);
 
         void setNavigatorClickHandler(final Runnable clickHandler);
 

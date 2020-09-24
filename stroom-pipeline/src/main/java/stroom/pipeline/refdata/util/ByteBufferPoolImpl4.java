@@ -135,6 +135,7 @@ public class ByteBufferPoolImpl4 implements ByteBufferPool {
     private ByteBuffer getBuffer(final int minCapacity) {
         final int offset = getOffset(minCapacity);
         if (isUnpooled(offset)) {
+            LOGGER.warn("Using un-pooled buffer, size: {}", minCapacity);
             // Too big a buffer to pool so just create one
             return getUnPooledBuffer(minCapacity);
         } else {
@@ -294,16 +295,15 @@ public class ByteBufferPoolImpl4 implements ByteBufferPool {
     }
 
     private static boolean isPowerOf10(int n) {
-        return
-                n == 1L
-                        || n == 10L
-                        || n == 100L
-                        || n == 1_000L
-                        || n == 10_000L
-                        || n == 100_000L
-                        || n == 1_000_000L
-                        || n == 10_000_000L
-                        || n == 100_000_000L
-                        || n == 1_000_000_000L;
+        return n == 1L
+                || n == 10L
+                || n == 100L
+                || n == 1_000L
+                || n == 10_000L
+                || n == 100_000L
+                || n == 1_000_000L
+                || n == 10_000_000L
+                || n == 100_000_000L
+                || n == 1_000_000_000L;
     }
 }

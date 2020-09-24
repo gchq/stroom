@@ -94,7 +94,7 @@ public class DataPresenter extends MyPresenterWidget<DataPresenter.DataView> imp
     private static final String CHARACTERS_PAGER_TITLE = "Characters";
 
     private final TabData errorTab = new TabDataImpl("Error");
-    private final TabData dataTab = new TabDataImpl("Data");
+    private final TabData dataTab = new TabDataImpl("Data Preview");
     private final TabData metaTab = new TabDataImpl("Meta");
     private final TabData infoTab = new TabDataImpl("Info");
     private final TabData contextTab = new TabDataImpl("Context");

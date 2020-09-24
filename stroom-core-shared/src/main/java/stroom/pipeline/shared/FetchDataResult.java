@@ -37,7 +37,8 @@ public class FetchDataResult extends AbstractFetchDataResult {
     private final DataType dataType;
 
     @JsonCreator
-    public FetchDataResult(@JsonProperty("streamTypeName") final String streamTypeName,
+    public FetchDataResult(@JsonProperty("feedName") final String feedName,
+                           @JsonProperty("streamTypeName") final String streamTypeName,
                            @JsonProperty("classification") final String classification,
                            @JsonProperty("sourceLocation") final SourceLocation sourceLocation,
 //                           @JsonProperty("streamRange") final OffsetRange<Long> streamRange,
@@ -52,7 +53,8 @@ public class FetchDataResult extends AbstractFetchDataResult {
                            @JsonProperty("html") final boolean html,
                            @JsonProperty("dataType") final DataType dataType) {
 //        super(streamTypeName, classification, streamRange, streamRowCount, pageRange, pageRowCount, availableChildStreamTypes);
-        super(streamTypeName,
+        super(feedName,
+                streamTypeName,
                 classification,
                 sourceLocation,
                 itemRange,

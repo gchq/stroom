@@ -89,10 +89,7 @@ public class SourceTabPlugin extends Plugin {
     public SourceTabPresenter open(final SourceLocation sourceLocation,
                                    final boolean forceOpen) {
         SourceTabPresenter presenter = null;
-        final SourceKey sourceKey = new SourceKey(
-                sourceLocation.getId(),
-                sourceLocation.getOptChildType()
-                        .orElse(null));
+        final SourceKey sourceKey = new SourceKey(sourceLocation);
 
         final SourceTabPresenter existing = keyToPresenterMap.get(sourceKey);
         // If we already have a tab item for this document then make sure it is

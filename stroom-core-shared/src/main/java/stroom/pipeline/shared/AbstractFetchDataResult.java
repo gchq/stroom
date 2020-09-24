@@ -39,6 +39,9 @@ import java.util.Set;
 })
 @JsonInclude(Include.NON_NULL)
 public abstract class AbstractFetchDataResult {
+
+    @JsonProperty
+    private final String feedName;
     @JsonProperty
     private final String streamTypeName;
     @JsonProperty
@@ -63,7 +66,8 @@ public abstract class AbstractFetchDataResult {
     private final Set<String> availableChildStreamTypes;
 
     @JsonCreator
-    public AbstractFetchDataResult(@JsonProperty("streamTypeName") final String streamTypeName,
+    public AbstractFetchDataResult(@JsonProperty("feedName") final String feedName,
+                                   @JsonProperty("streamTypeName") final String streamTypeName,
                                    @JsonProperty("classification") final String classification,
                                    @JsonProperty("sourceLocation") final SourceLocation sourceLocation,
 //                                   @JsonProperty("streamRange") final OffsetRange<Long> streamRange,
@@ -74,6 +78,7 @@ public abstract class AbstractFetchDataResult {
                                    @JsonProperty("totalItemCount") final RowCount<Long> totalItemCount,
                                    @JsonProperty("totalCharacterCount") final RowCount<Long> totalCharacterCount,
                                    @JsonProperty("availableChildStreamTypes") final Set<String> availableChildStreamTypes) {
+        this.feedName = feedName;
         this.streamTypeName = streamTypeName;
         this.classification = classification;
         this.sourceLocation = sourceLocation;
@@ -85,6 +90,10 @@ public abstract class AbstractFetchDataResult {
         this.totalItemCount = totalItemCount;
         this.totalCharacterCount = totalCharacterCount;
         this.availableChildStreamTypes = availableChildStreamTypes;
+    }
+
+    public String getFeedName() {
+        return feedName;
     }
 
     public String getStreamTypeName() {

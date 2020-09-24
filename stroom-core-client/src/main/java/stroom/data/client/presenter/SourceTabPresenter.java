@@ -4,7 +4,6 @@ import stroom.content.client.presenter.ContentTabPresenter;
 import stroom.data.client.SourceKey;
 import stroom.data.client.presenter.ClassificationWrapperPresenter.ClassificationWrapperView;
 import stroom.data.client.presenter.SourceTabPresenter.SourceTabView;
-import stroom.data.shared.StreamTypeNames;
 import stroom.pipeline.shared.SourceLocation;
 import stroom.svg.client.Icon;
 import stroom.svg.client.SvgPresets;
@@ -40,11 +39,14 @@ public class SourceTabPresenter extends ContentTabPresenter<SourceTabView> {
 
     @Override
     public String getLabel() {
-        final String type = sourceKey.getChildStreamType() != null
-                ? ("(" + StreamTypeNames.asUiName(sourceKey.getChildStreamType()) + ")")
-                : "";
+        final String type = sourceKey.getOptChildStreamType()
+                .map(val -> " (" + val + ")")
+                .orElse("");
         return sourceKey != null
-                ? ("ID: " + sourceKey.getMetaId() + " " + type)
+                ? ("Stream " + sourceKey.getMetaId()
+                    + ":" + (sourceKey.getPartNo() + 1) // to one based
+                    + ":" + (sourceKey.getSegmentNo().orElse(0L) + 1) // to one based
+                    + type)
                 : "Source Data";
     }
 
@@ -58,7 +60,7 @@ public class SourceTabPresenter extends ContentTabPresenter<SourceTabView> {
 //        sourcePresenter.setSourceKey(sourceKey);
 
         sourcePresenter.setSourceLocation(SourceLocation.builder(sourceKey.getMetaId())
-                .withChildStreamType(sourceKey.getChildStreamType())
+                .withChildStreamType(sourceKey.getOptChildStreamType().orElse(null))
                 .build());
     }
 

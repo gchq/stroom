@@ -36,7 +36,8 @@ public class FetchMarkerResult extends AbstractFetchDataResult {
     private final List<Marker> markers;
 
     @JsonCreator
-    public FetchMarkerResult(@JsonProperty("streamTypeName") final String streamTypeName,
+    public FetchMarkerResult(@JsonProperty("feedName") final String feedName,
+                             @JsonProperty("streamTypeName") final String streamTypeName,
                              @JsonProperty("classification") final String classification,
                              @JsonProperty("sourceLocation") final SourceLocation sourceLocation,
 //                             @JsonProperty("streamRange") final OffsetRange<Long> streamRange,
@@ -49,7 +50,8 @@ public class FetchMarkerResult extends AbstractFetchDataResult {
                              @JsonProperty("availableChildStreamTypes") final Set<String> availableChildStreamTypes,
                              @JsonProperty("markers") final List<Marker> markers) {
 //        super(streamTypeName, classification, streamRange, streamRowCount, pageRange, pageRowCount, availableChildStreamTypes);
-        super(streamTypeName,
+        super(feedName,
+                streamTypeName,
                 classification,
                 sourceLocation,
                 itemRange,

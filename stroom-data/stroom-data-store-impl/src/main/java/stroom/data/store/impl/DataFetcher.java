@@ -232,6 +232,7 @@ public class DataFetcher {
 //                            streamsRowCount, resultPageRange, pageRowCount, null,
 //                            "Stream has been deleted", fetchDataRequest.isShowAsHtml());
                     return new FetchDataResult(
+                            feedName,
                             null,
                             null,
                             sourceLocation,
@@ -393,6 +394,7 @@ public class DataFetcher {
 //                streamsRowCount, resultPageRange, pageRowCount, availableChildStreamTypes,
 //                new ArrayList<>(resultList));
         return new FetchMarkerResult(
+                feedName,
                 streamTypeName,
                 classification,
                 sourceLocation,
@@ -499,6 +501,7 @@ public class DataFetcher {
 //        }
 
         return new FetchDataResult(
+                feedName,
                 streamTypeName,
                 classification,
                 rawResult.getSourceLocation(),
@@ -522,6 +525,7 @@ public class DataFetcher {
 //        return new FetchDataResult(StreamTypeNames.RAW_EVENTS, null, resultStreamsRange,
 //                streamsRowCount, resultPageRange, pageRowCount, null, error, false);
         return new FetchDataResult(
+                null,
                 StreamTypeNames.RAW_EVENTS,
                 null,
                 sourceLocation,

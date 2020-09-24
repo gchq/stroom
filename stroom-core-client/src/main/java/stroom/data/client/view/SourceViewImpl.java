@@ -24,7 +24,13 @@ public class SourceViewImpl extends ViewImpl implements SourceView {
     private Widget widget;
 
     @UiField
+    Label lblFeed;
+    @UiField
     Label lblId;
+    @UiField
+    Label lblPartNo;
+    @UiField
+    Label lblSegmentNo;
     @UiField
     Label lblType;
     @UiField
@@ -69,8 +75,15 @@ public class SourceViewImpl extends ViewImpl implements SourceView {
 
 
     @Override
-    public void setTitle(final String id, final String type) {
-        lblId.setText(id);
+    public void setTitle(final String feedName,
+                         final long id,
+                         final long partNo,
+                         final long segmentNo,
+                         final String type) {
+        lblFeed.setText(feedName);
+        lblId.setText(Long.toString(id));
+        lblPartNo.setText(Long.toString(partNo + 1));
+        lblSegmentNo.setText(Long.toString(segmentNo + 1));
         lblType.setText(type);
     }
 

@@ -64,8 +64,17 @@
             <g:DockLayoutPanel unit="PX" styleName="{style.layout}">
                 <g:center>
                     <v:ResizeFlowPanel width="100%" height="100%">
+                        <g:Label styleName="{style.titleHeading}">Feed:</g:Label>
+                        <g:Label ui:field="lblFeed" styleName="{style.titleText}"/>
+
                         <g:Label styleName="{style.titleHeading}">ID:</g:Label>
                         <g:Label ui:field="lblId" styleName="{style.titleText}"/>
+
+                        <g:Label styleName="{style.titleHeading}">Part:</g:Label>
+                        <g:Label ui:field="lblPartNo" styleName="{style.titleText}"/>
+
+                        <g:Label styleName="{style.titleHeading}">Record:</g:Label>
+                        <g:Label ui:field="lblSegmentNo" styleName="{style.titleText}"/>
 
                         <g:Label styleName="{style.titleHeading}">Stream Type:</g:Label>
                         <g:Label ui:field="lblType" styleName="{style.titleText}"/>
