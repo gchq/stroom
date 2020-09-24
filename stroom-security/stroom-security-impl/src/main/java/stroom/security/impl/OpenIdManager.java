@@ -286,33 +286,33 @@ class OpenIdManager {
     /**
      * This method attempts to get a token from the request headers and, if present, use that to login.
      */
-    public UserIdentity loginWithRequestToken(final HttpServletRequest request) {
-        // See if we already have an authenticated session.
-        UserIdentity userIdentity = UserIdentitySessionUtil.get(request.getSession(false));
+    public Optional<UserIdentity> loginWithRequestToken(final HttpServletRequest request) {
+        Optional<UserIdentity> userIdentity = Optional.empty();
 
-        // If we don't then see if we can login with a supplied token.
-        if (userIdentity == null) {
-            try {
-                final Optional<JwtContext> optionalJwtContext = jwtContextFactory.getJwtContext(request);
-                if (optionalJwtContext.isPresent()) {
-                    userIdentity = optionalJwtContext
-                            .flatMap(jwtContext -> getUserIdentity(request, jwtContext))
-                            .orElse(null);
-                } else {
-                    LOGGER.debug(() -> "No JWS found in headers in request to " + request.getRequestURI());
-                }
-            } catch (final RuntimeException e) {
-                LOGGER.debug(e::getMessage, e);
+        // See if we can login with a token if one is supplied.
+        try {
+            final Optional<JwtContext> optionalJwtContext = jwtContextFactory.getJwtContext(request);
+            if (optionalJwtContext.isPresent()) {
+                userIdentity = optionalJwtContext.flatMap(jwtContext -> getUserIdentity(request, jwtContext));
+            } else {
+                LOGGER.debug(() -> "No JWS found in headers in request to " + request.getRequestURI());
+            }
+        } catch (final RuntimeException e) {
+            LOGGER.debug(e::getMessage, e);
+        }
+
+        if (userIdentity.isEmpty()) {
+            LOGGER.debug(() -> "Cannot get a valid JWS for API request to " + request.getRequestURI() + ". " +
+                    "This may be due to Stroom being left open in a browser after Stroom was restarted.");
+
+            // Provide identity from the session if we are allowing this to happen.
+            if (!jwtContextFactory.isTokenExpectedInRequest()) {
+                userIdentity = UserIdentitySessionUtil.get(request.getSession(false));
             }
 
-            if (userIdentity == null) {
-                LOGGER.debug(() -> "Cannot get a valid JWS for API request to " + request.getRequestURI() + ". " +
-                        "This may be due to Stroom being left open in a browser after Stroom was restarted.");
-
-            } else if (UserIdentitySessionUtil.requestHasSessionCookie(request)) {
-                // Set the user ref in the session.
-                UserIdentitySessionUtil.set(request.getSession(true), userIdentity);
-            }
+        } else if (UserIdentitySessionUtil.requestHasSessionCookie(request)) {
+            // Set the user ref in the session.
+            UserIdentitySessionUtil.set(request.getSession(true), userIdentity.get());
         }
 
         return userIdentity;
@@ -345,7 +345,7 @@ class OpenIdManager {
 
             return Optional.of(new UserIdentityImpl(user.getUuid(), userId, jwtContext.getJwt(), sessionId));
 
-        } catch (MalformedClaimException e) {
+        } catch (final MalformedClaimException e) {
             LOGGER.error(() -> "Error extracting claims from token in request " + request.getRequestURI());
             return Optional.empty();
         }

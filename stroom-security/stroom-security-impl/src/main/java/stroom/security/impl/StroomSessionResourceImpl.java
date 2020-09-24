@@ -1,9 +1,9 @@
 package stroom.security.impl;
 
-import stroom.security.openid.api.OpenId;
 import stroom.security.api.SecurityContext;
 import stroom.security.api.UserIdentity;
 import stroom.security.impl.session.UserIdentitySessionUtil;
+import stroom.security.openid.api.OpenId;
 import stroom.security.shared.ValidateSessionResponse;
 
 import org.slf4j.Logger;
@@ -15,6 +15,7 @@ import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpSession;
 import java.net.URLDecoder;
 import java.nio.charset.StandardCharsets;
+import java.util.Optional;
 
 class StroomSessionResourceImpl implements StroomSessionResource {
     private static final Logger LOGGER = LoggerFactory.getLogger(StroomSessionResourceImpl.class);
@@ -41,9 +42,9 @@ class StroomSessionResourceImpl implements StroomSessionResource {
     @Override
     public ValidateSessionResponse validateSession(final HttpServletRequest request,
                                                    final String postAuthRedirectUri) {
-        final UserIdentity userIdentity = openIdManager.loginWithRequestToken(request);
-        if (userIdentity != null) {
-            return new ValidateSessionResponse(true, userIdentity.getId(), null);
+        final Optional<UserIdentity> userIdentity = openIdManager.loginWithRequestToken(request);
+        if (userIdentity.isPresent()) {
+            return new ValidateSessionResponse(true, userIdentity.get().getId(), null);
         }
 
         if (!authenticationConfig.isAuthenticationRequired()) {
@@ -88,15 +89,15 @@ class StroomSessionResourceImpl implements StroomSessionResource {
     public Boolean invalidate() {
         return securityContext.insecureResult(() -> {
             final HttpSession session = httpServletRequestProvider.get().getSession(false);
-            final UserIdentity userIdentity = UserIdentitySessionUtil.get(session);
+            final Optional<UserIdentity> userIdentity = UserIdentitySessionUtil.get(session);
             if (session != null) {
                 // Invalidate the current user session
                 session.invalidate();
             }
-            if (userIdentity != null) {
+            userIdentity.ifPresent(ui -> {
                 // Create an event for logout
-                eventLog.logoff(userIdentity.getId());
-            }
+                eventLog.logoff(ui.getId());
+            });
 
             return true;
         });

@@ -16,8 +16,6 @@
 
 package stroom.security.impl.session;
 
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 import stroom.node.api.FindNodeCriteria;
 import stroom.node.api.NodeCallUtil;
 import stroom.node.api.NodeInfo;
@@ -30,6 +28,9 @@ import stroom.util.logging.LogUtil;
 import stroom.util.servlet.UserAgentSessionUtil;
 import stroom.util.shared.ResourcePaths;
 
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+
 import javax.inject.Inject;
 import javax.inject.Singleton;
 import javax.servlet.http.HttpSession;
@@ -39,6 +40,7 @@ import javax.ws.rs.WebApplicationException;
 import javax.ws.rs.core.MediaType;
 import javax.ws.rs.core.Response;
 import java.util.Objects;
+import java.util.Optional;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.function.Supplier;
@@ -139,10 +141,9 @@ class SessionListListener implements HttpSessionListener, SessionListService {
     private SessionListResponse listSessionsOnThisNode() {
         return sessionMap.values().stream()
                 .map(httpSession -> {
-                    final UserIdentity userIdentity = UserIdentitySessionUtil.get(httpSession);
-
+                    final Optional<UserIdentity> userIdentity = UserIdentitySessionUtil.get(httpSession);
                     return new SessionDetails(
-                            userIdentity != null ? userIdentity.getId() : null,
+                            userIdentity.map(UserIdentity::getId).orElse(null),
                             httpSession.getCreationTime(),
                             httpSession.getLastAccessedTime(),
                             UserAgentSessionUtil.get(httpSession),

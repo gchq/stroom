@@ -5,6 +5,7 @@ import stroom.security.api.UserIdentity;
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpSession;
 import java.util.Arrays;
+import java.util.Optional;
 
 public final class UserIdentitySessionUtil {
     private static final String SESSION_USER_IDENTITY = "SESSION_USER_IDENTITY";
@@ -18,11 +19,11 @@ public final class UserIdentitySessionUtil {
         session.setAttribute(SESSION_USER_IDENTITY, userIdentity);
     }
 
-    public static UserIdentity get(final HttpSession session) {
+    public static Optional<UserIdentity> get(final HttpSession session) {
         if (session == null) {
-            return null;
+            return Optional.empty();
         }
-        return (UserIdentity) session.getAttribute(SESSION_USER_IDENTITY);
+        return Optional.ofNullable((UserIdentity) session.getAttribute(SESSION_USER_IDENTITY));
     }
 
     public static boolean requestHasSessionCookie(final HttpServletRequest request) {

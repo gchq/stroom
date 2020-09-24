@@ -1,18 +1,20 @@
 package stroom.security.impl;
 
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
-import stroom.security.openid.api.OpenId;
 import stroom.security.api.UserIdentity;
 import stroom.security.impl.session.SessionListResponse;
 import stroom.security.impl.session.SessionListService;
 import stroom.security.impl.session.UserIdentitySessionUtil;
+import stroom.security.openid.api.OpenId;
+
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import javax.inject.Inject;
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpSession;
 import javax.ws.rs.core.Response;
 import java.util.Map;
+import java.util.Optional;
 
 @SuppressWarnings("unused")
 public class SessionResourceImpl implements SessionResource {
@@ -20,17 +22,14 @@ public class SessionResourceImpl implements SessionResource {
 
     private final AuthenticationEventLog eventLog;
     private final SessionListService sessionListService;
-    private final AuthenticationConfig authenticationConfig;
     private final OpenIdManager openIdManager;
 
     @Inject
     public SessionResourceImpl(final AuthenticationEventLog eventLog,
                                final SessionListService sessionListService,
-                               final AuthenticationConfig authenticationConfig,
                                final OpenIdManager openIdManager) {
         this.eventLog = eventLog;
         this.sessionListService = sessionListService;
-        this.authenticationConfig = authenticationConfig;
         this.openIdManager = openIdManager;
     }
 
@@ -40,9 +39,8 @@ public class SessionResourceImpl implements SessionResource {
         try {
             LOGGER.info("Logging in session for '{}'", referrer);
 
-            final UserIdentity userIdentity = openIdManager.loginWithRequestToken(request);
-            if (userIdentity == null) {
-
+            final Optional<UserIdentity> userIdentity = openIdManager.loginWithRequestToken(request);
+            if (userIdentity.isEmpty()) {
                 // If the session doesn't have a user ref then attempt login.
                 final Map<String, String> paramMap = UrlUtils.createParamMap(referrer);
                 final String code = paramMap.get(OpenId.CODE);
@@ -55,7 +53,7 @@ public class SessionResourceImpl implements SessionResource {
                 redirectUri = OpenId.removeReservedParams(referrer);
             }
 
-            return new LoginResponse(userIdentity != null, redirectUri);
+            return new LoginResponse(userIdentity.isPresent(), redirectUri);
 
         } catch (final RuntimeException e) {
             LOGGER.error(e.getMessage(), e);
@@ -70,15 +68,15 @@ public class SessionResourceImpl implements SessionResource {
         // TODO : We need to lookup the auth session in our user sessions
 
         final HttpSession session = SessionMap.getSession(authSessionId);
-        final UserIdentity userIdentity = UserIdentitySessionUtil.get(session);
+        final Optional<UserIdentity> userIdentity = UserIdentitySessionUtil.get(session);
         if (session != null) {
             // Invalidate the current user session
             session.invalidate();
         }
-        if (userIdentity != null) {
+        userIdentity.ifPresent(ui -> {
             // Create an event for logout
-            eventLog.logoff(userIdentity.getId());
-        }
+            eventLog.logoff(ui.getId());
+        });
 
         return Response.status(Response.Status.OK).entity("Logout successful").build();
     }
