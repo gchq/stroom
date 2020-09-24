@@ -1,13 +1,13 @@
 package stroom.security.identity.account;
 
-import stroom.security.openid.api.OpenIdClientFactory;
+import stroom.security.api.ProcessingUserIdentityProvider;
+import stroom.security.api.UserIdentity;
 import stroom.security.identity.token.Token;
 import stroom.security.identity.token.TokenBuilder;
 import stroom.security.identity.token.TokenBuilderFactory;
 import stroom.security.identity.token.TokenDao;
 import stroom.security.identity.token.TokenType;
-import stroom.security.api.ProcessingUserIdentityProvider;
-import stroom.security.api.UserIdentity;
+import stroom.security.openid.api.OpenIdClientFactory;
 import stroom.util.logging.LambdaLogger;
 import stroom.util.logging.LambdaLoggerFactory;
 
@@ -18,17 +18,20 @@ import java.time.LocalDateTime;
 import java.time.ZoneOffset;
 import java.util.List;
 import java.util.Optional;
+import java.util.concurrent.TimeUnit;
 
 @Singleton
 class ProcessingUserIdentityProviderImpl implements ProcessingUserIdentityProvider {
     private static final LambdaLogger LOGGER = LambdaLoggerFactory.getLogger(ProcessingUserIdentityProvider.class);
     private static final String INTERNAL_PROCESSING_USER = "INTERNAL_PROCESSING_USER";
+    private static final long ONE_DAY = TimeUnit.DAYS.toMillis(1);
 
     private final AccountDao accountDao;
     private final TokenDao tokenDao;
     private final TokenBuilderFactory tokenBuilderFactory;
     private final OpenIdClientFactory openIdClientDetailsFactory;
 
+    private volatile long lastFetch;
     private volatile UserIdentity userIdentity;
 
     @Inject
@@ -44,10 +47,13 @@ class ProcessingUserIdentityProviderImpl implements ProcessingUserIdentityProvid
 
     @Override
     public UserIdentity get() {
-        if (userIdentity == null) {
+        final long now = System.currentTimeMillis();
+        // Don't cache the user identity for more than a day in case its token expires.
+        if (userIdentity == null || lastFetch < now - ONE_DAY) {
             final Account account = getAccount();
             final Token token = getToken(account);
             userIdentity = new ProcessingUserIdentity(INTERNAL_PROCESSING_USER, token.getData());
+            lastFetch = now;
         }
 
         return userIdentity;

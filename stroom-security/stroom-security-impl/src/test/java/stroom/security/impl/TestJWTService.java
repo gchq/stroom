@@ -199,7 +199,6 @@ class TestJWTService {
     }
 
     private JsonWebKeySet getPublicKeys() throws JoseException {
-
         final PublicJsonWebKey publicJsonWebKey = RsaJsonWebKey.Factory
                 .newPublicJwk(defaultOpenIdCredentials.getPublicKeyJson());
 

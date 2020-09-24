@@ -40,7 +40,7 @@ public class SessionResourceImpl implements SessionResource {
         try {
             LOGGER.info("Logging in session for '{}'", referrer);
 
-            final UserIdentity userIdentity = UserIdentitySessionUtil.get(request.getSession(false));
+            final UserIdentity userIdentity = openIdManager.loginWithRequestToken(request);
             if (userIdentity == null) {
 
                 // If the session doesn't have a user ref then attempt login.
@@ -48,11 +48,7 @@ public class SessionResourceImpl implements SessionResource {
                 final String code = paramMap.get(OpenId.CODE);
                 final String stateId = paramMap.get(OpenId.STATE);
                 final String postAuthRedirectUri = OpenId.removeReservedParams(referrer);
-                if (code != null && stateId != null) {
-                    redirectUri = openIdManager.backChannelOIDC(request, code, stateId, postAuthRedirectUri);
-                } else {
-                    redirectUri = openIdManager.frontChannelOIDC(request, postAuthRedirectUri);
-                }
+                redirectUri = openIdManager.redirect(request, code, stateId, postAuthRedirectUri);
             }
 
             if (redirectUri == null) {

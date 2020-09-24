@@ -41,32 +41,27 @@ class StroomSessionResourceImpl implements StroomSessionResource {
     @Override
     public ValidateSessionResponse validateSession(final HttpServletRequest request,
                                                    final String postAuthRedirectUri) {
-        final UserIdentity userIdentity = UserIdentitySessionUtil.get(request.getSession(false));
+        final UserIdentity userIdentity = openIdManager.loginWithRequestToken(request);
         if (userIdentity != null) {
             return new ValidateSessionResponse(true, userIdentity.getId(), null);
         }
 
         if (!authenticationConfig.isAuthenticationRequired()) {
             return new ValidateSessionResponse(true, "admin", null);
+
+        } else if (openIdManager.isTokenExpectedInRequest()) {
+            LOGGER.error("We are expecting requests that contain authenticated tokens");
+            return new ValidateSessionResponse(false, null, null);
+
         } else {
             // If the session doesn't have a user ref then attempt login.
             try {
                 LOGGER.debug("Using postAuthRedirectUri: {}", postAuthRedirectUri);
 
-                String redirectUri = null;
-
                 // If we have completed the front channel flow then we will have a state id.
                 final String code = getParam(postAuthRedirectUri, OpenId.CODE);
                 final String stateId = getParam(postAuthRedirectUri, OpenId.STATE);
-                if (code != null && stateId != null) {
-                    final String cleanUri = OpenId.removeReservedParams(postAuthRedirectUri);
-                    redirectUri = openIdManager.backChannelOIDC(request, code, stateId, cleanUri);
-                }
-
-                if (redirectUri == null) {
-                    redirectUri = openIdManager.frontChannelOIDC(request, postAuthRedirectUri);
-                }
-
+                final String redirectUri = openIdManager.redirect(request, code, stateId, postAuthRedirectUri);
                 return new ValidateSessionResponse(false, null, redirectUri);
 
             } catch (final RuntimeException e) {

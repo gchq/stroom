@@ -53,24 +53,42 @@ class OpenIdManager {
 
     private final ResolvedOpenIdConfig openIdConfig;
     private final DefaultOpenIdCredentials defaultOpenIdCredentials;
-    private final JwtContextFactory jwtClaimsResolver;
+    private final JwtContextFactory jwtContextFactory;
     private final UserCache userCache;
     private final Provider<CloseableHttpClient> httpClientProvider;
 
     @Inject
     public OpenIdManager(final ResolvedOpenIdConfig openIdConfig,
                          final DefaultOpenIdCredentials defaultOpenIdCredentials,
-                         final JwtContextFactory jwtClaimsResolver,
+                         final JwtContextFactory jwtContextFactory,
                          final UserCache userCache,
                          final Provider<CloseableHttpClient> httpClientProvider) {
         this.openIdConfig = openIdConfig;
         this.defaultOpenIdCredentials = defaultOpenIdCredentials;
-        this.jwtClaimsResolver = jwtClaimsResolver;
+        this.jwtContextFactory = jwtContextFactory;
         this.userCache = userCache;
         this.httpClientProvider = httpClientProvider;
     }
 
-    public String frontChannelOIDC(final HttpServletRequest request, final String postAuthRedirectUri) {
+    public String redirect(final HttpServletRequest request,
+                           final String code,
+                           final String stateId,
+                           final String postAuthRedirectUri) {
+        String redirectUri = null;
+
+        // If we have completed the front channel flow then we will have a state id.
+        if (code != null && stateId != null) {
+            redirectUri = backChannelOIDC(request, code, stateId, postAuthRedirectUri);
+        }
+
+        if (redirectUri == null) {
+            redirectUri = frontChannelOIDC(request, postAuthRedirectUri);
+        }
+
+        return redirectUri;
+    }
+
+    private String frontChannelOIDC(final HttpServletRequest request, final String postAuthRedirectUri) {
         Objects.requireNonNull(openIdConfig.getAuthEndpoint(),
                 "To make an authentication request the OpenId config 'authEndpoint' must not be null");
         Objects.requireNonNull(openIdConfig.getClientId(),
@@ -104,10 +122,10 @@ class OpenIdManager {
         return authenticationRequestUrl;
     }
 
-    public String backChannelOIDC(final HttpServletRequest request,
-                                  final String code,
-                                  final String stateId,
-                                  final String postAuthRedirectUri) {
+    private String backChannelOIDC(final HttpServletRequest request,
+                                   final String code,
+                                   final String stateId,
+                                   final String postAuthRedirectUri) {
         Objects.requireNonNull(code, "Null code");
         Objects.requireNonNull(stateId, "Null state Id");
 
@@ -229,7 +247,7 @@ class OpenIdManager {
 
         try {
             final String sessionId = session.getId();
-            final Optional<JwtContext> optionalJwtContext = jwtClaimsResolver.getJwtContext(idToken);
+            final Optional<JwtContext> optionalJwtContext = jwtContextFactory.getJwtContext(idToken);
             final JwtClaims jwtClaims = optionalJwtContext
                     .map(JwtContext::getJwtClaims)
                     .orElseThrow(() -> new RuntimeException("Unable to extract JWT claims"));
@@ -269,23 +287,32 @@ class OpenIdManager {
      * This method attempts to get a token from the request headers and, if present, use that to login.
      */
     public UserIdentity loginWithRequestToken(final HttpServletRequest request) {
-        UserIdentityImpl userIdentity = null;
-        try {
-            final Optional<JwtContext> optionalJwtContext = jwtClaimsResolver.getJwtContext(request);
-            if (optionalJwtContext.isPresent()) {
-                userIdentity = optionalJwtContext
-                        .flatMap(jwtContext -> getUserIdentity(request, jwtContext))
-                        .orElse(null);
-            } else {
-                LOGGER.debug(() -> "No JWS found in headers in request to " + request.getRequestURI());
-            }
-        } catch (final RuntimeException e) {
-            LOGGER.debug(e::getMessage, e);
-        }
+        // See if we already have an authenticated session.
+        UserIdentity userIdentity = UserIdentitySessionUtil.get(request.getSession(false));
 
+        // If we don't then see if we can login with a supplied token.
         if (userIdentity == null) {
-            LOGGER.debug(() -> "Cannot get a valid JWS for API request to " + request.getRequestURI() + ". " +
-                    "This may be due to Stroom being left open in a browser after Stroom was restarted.");
+            try {
+                final Optional<JwtContext> optionalJwtContext = jwtContextFactory.getJwtContext(request);
+                if (optionalJwtContext.isPresent()) {
+                    userIdentity = optionalJwtContext
+                            .flatMap(jwtContext -> getUserIdentity(request, jwtContext))
+                            .orElse(null);
+                } else {
+                    LOGGER.debug(() -> "No JWS found in headers in request to " + request.getRequestURI());
+                }
+            } catch (final RuntimeException e) {
+                LOGGER.debug(e::getMessage, e);
+            }
+
+            if (userIdentity == null) {
+                LOGGER.debug(() -> "Cannot get a valid JWS for API request to " + request.getRequestURI() + ". " +
+                        "This may be due to Stroom being left open in a browser after Stroom was restarted.");
+
+            } else if (UserIdentitySessionUtil.requestHasSessionCookie(request)) {
+                // Set the user ref in the session.
+                UserIdentitySessionUtil.set(request.getSession(true), userIdentity);
+            }
         }
 
         return userIdentity;
@@ -322,5 +349,16 @@ class OpenIdManager {
             LOGGER.error(() -> "Error extracting claims from token in request " + request.getRequestURI());
             return Optional.empty();
         }
+    }
+
+    /**
+     * We expect some configurations to always pass a token in the request so this flag tells us if the configuration is
+     * expected to do so.
+     *
+     * @return True if the context factory always expects a token in the request, i.e. it expects all requests to be pre
+     * authenticated.
+     */
+    public boolean isTokenExpectedInRequest() {
+        return jwtContextFactory.isTokenExpectedInRequest();
     }
 }

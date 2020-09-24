@@ -44,7 +44,7 @@ public class SecurityModule extends AbstractModule {
         bind(UserAppPermissionService.class).to(UserAppPermissionServiceImpl.class);
         bind(DocumentPermissionService.class).to(DocumentPermissionServiceImpl.class);
         bind(UserService.class).to(UserServiceImpl.class);
-        bind(TokenVerifier.class).to(StandardJwtContextFactory.class);
+        bind(TokenVerifier.class).to(TokenVerifierImpl.class);
         bind(JwtContextFactory.class).to(JwtContextFactoryImpl.class);
         bind(CloseableHttpClient.class).toProvider(HttpClientProvider.class);
 

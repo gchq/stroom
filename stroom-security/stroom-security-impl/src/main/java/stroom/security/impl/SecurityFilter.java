@@ -46,7 +46,6 @@ import javax.servlet.http.HttpSession;
 import javax.ws.rs.HttpMethod;
 import javax.ws.rs.core.Response;
 import java.io.IOException;
-import java.util.Arrays;
 import java.util.Optional;
 import java.util.Set;
 import java.util.regex.Pattern;
@@ -142,8 +141,8 @@ class SecurityFilter implements Filter {
             // We need to allow CORS preflight requests
             LOGGER.debug("Passing on to next filter");
             chain.doFilter(request, response);
-        } else {
 
+        } else {
             LAMBDA_LOGGER.debug(() -> LogUtil.message("Session ID {}, request URI {}",
                     Optional.ofNullable(request.getSession(false))
                             .map(HttpSession::getId)
@@ -160,73 +159,42 @@ class SecurityFilter implements Filter {
             } else {
                 // Some paths don't need authentication (they contain `/noauth/`.
                 // If that is the case then proceed as proc user.
-                if (isNoAuthRequest(fullPath)) {
-                    authenticateAsProcUser(request, response, chain, false);
+                if (shouldBypassAuthentication(servletPath, fullPath)) {
+                    authenticateAsProcUser(request, response, chain);
 
-                } else if (isApiRequest(servletPath)) {
-                    LOGGER.debug("API request");
-                    if (!authenticationConfig.isAuthenticationRequired()) {
-                        String propPath = authenticationConfig.getFullPath(AuthenticationConfig.PROP_NAME_AUTHENTICATION_REQUIRED);
-                        LOGGER.warn("{} is false, authenticating as admin for {}", propPath, fullPath);
-                        authenticateAsAdmin(request, response, chain, false);
-                    } else {
-                        // Authenticate requests to the API.
-                        userIdentity = tokenLogin(request);
-
-                        // If we couldn't login with a token or couldn't get a token then error as this is an API call and no login flow is possible.
-                        if (userIdentity == null) {
-                            LOGGER.debug("API request is unauthorised.");
-                            response.setStatus(Response.Status.UNAUTHORIZED.getStatusCode());
-                        }
-
-                        continueAsUser(request, response, chain, userIdentity);
-                    }
-                } else if (shouldBypassAuthentication(servletPath, fullPath)) {
-                    // Some servlet requests need to bypass authentication -- this happens if the servlet class
-                    // is annotated with @Unauthenticated. E.g. the status servlet doesn't require authentication.
-                    authenticateAsProcUser(request, response, chain, false);
+                } else if (!authenticationConfig.isAuthenticationRequired()) {
+                    // If authentication is turned off then proceed as admin.
+                    final String propPath = authenticationConfig.getFullPath(AuthenticationConfig.PROP_NAME_AUTHENTICATION_REQUIRED);
+                    LOGGER.warn("{} is false, authenticating as admin for {}", propPath, fullPath);
+                    authenticateAsAdmin(request, response, chain);
 
                 } else {
-                    // We assume all other requests are from the UI, and instigate an OpenID authentication flow
-                    // like the good relying party we are.
+                    // Try to get a token from the request for login.
+                    userIdentity = openIdManager.loginWithRequestToken(request);
+                    if (userIdentity != null) {
+                        continueAsUser(request, response, chain, userIdentity);
 
-                    if (!authenticationConfig.isAuthenticationRequired()) {
-                        String propPath = authenticationConfig.getFullPath(AuthenticationConfig.PROP_NAME_AUTHENTICATION_REQUIRED);
-                        LOGGER.warn("{} is false, authenticating as admin for {}", propPath, fullPath);
-                        authenticateAsAdmin(request, response, chain, true);
+                    } else if (isApiRequest(servletPath)) {
+                        // If we couldn't login with a token or couldn't get a token then error as this is an API call and no login flow is possible.
+                        LOGGER.debug("API request is unauthorised.");
+                        response.setStatus(Response.Status.UNAUTHORIZED.getStatusCode());
 
                     } else {
-                        // Try to get a token from the request for login.
-                        userIdentity = tokenLogin(request);
-                        if (userIdentity != null) {
-                            continueAsUser(request, response, chain, userIdentity);
+                        // We assume all other requests are from the UI, so instigate an OpenID authentication flow
+                        // like the good relying party we are.
+                        try {
+                            final String postAuthRedirectUri = getPostAuthRedirectUri(request);
 
-                        } else {
-                            // If the session doesn't have a user ref then attempt login.
-                            try {
-                                final String postAuthRedirectUri = getPostAuthRedirectUri(request);
+                            LOGGER.debug("Using postAuthRedirectUri: {}", postAuthRedirectUri);
 
-                                LOGGER.debug("Using postAuthRedirectUri: {}", postAuthRedirectUri);
+                            final String code = UrlUtils.getLastParam(request, OpenId.CODE);
+                            final String stateId = UrlUtils.getLastParam(request, OpenId.STATE);
+                            final String redirectUri = openIdManager.redirect(request, code, stateId, postAuthRedirectUri);
+                            response.sendRedirect(redirectUri);
 
-                                String redirectUri = null;
-
-                                // If we have completed the front channel flow then we will have a state id.
-                                final String code = UrlUtils.getLastParam(request, OpenId.CODE);
-                                final String stateId = UrlUtils.getLastParam(request, OpenId.STATE);
-                                if (code != null && stateId != null) {
-                                    redirectUri = openIdManager.backChannelOIDC(request, code, stateId, postAuthRedirectUri);
-                                }
-
-                                if (redirectUri == null) {
-                                    redirectUri = openIdManager.frontChannelOIDC(request, postAuthRedirectUri);
-                                }
-
-                                response.sendRedirect(redirectUri);
-
-                            } catch (final RuntimeException e) {
-                                LOGGER.error(e.getMessage(), e);
-                                throw e;
-                            }
+                        } catch (final RuntimeException e) {
+                            LOGGER.error(e.getMessage(), e);
+                            throw e;
                         }
                     }
                 }
@@ -280,32 +248,30 @@ class SecurityFilter implements Filter {
         return false;
     }
 
-    private boolean isNoAuthRequest(final String servletPath) {
-        return publicApiPathPattern != null && publicApiPathPattern.matcher(servletPath).matches();
-    }
-
     private boolean isApiRequest(String servletPath) {
         return servletPath.startsWith(ResourcePaths.API_ROOT_PATH);
     }
 
     private boolean shouldBypassAuthentication(final String servletPath, final String fullPath) {
-        return servletPath.startsWith(NO_AUTH_PATH) || fullPath.startsWith(NO_AUTH_PATH);
-//        return servletPath.startsWith(NO_AUTH_PATH);
+        return
+//                publicApiPathPattern.matcher(servletPath).matches() ||
+//                servletPath.startsWith(NO_AUTH_PATH) ||
+//                fullPath.startsWith(NO_AUTH_PATH) ||
+                        fullPath.contains(ResourcePaths.NO_AUTH + "/");
     }
 
     private void authenticateAsAdmin(final HttpServletRequest request,
                                      final HttpServletResponse response,
-                                     final FilterChain chain,
-                                     final boolean useSession) throws IOException, ServletException {
+                                     final FilterChain chain) throws IOException, ServletException {
 
-        bypassAuthentication(request, response, chain, useSession, securityContext.createIdentity(User.ADMIN_USER_NAME));
+        bypassAuthentication(request, response, chain, UserIdentitySessionUtil.requestHasSessionCookie(request),
+                securityContext.createIdentity(User.ADMIN_USER_NAME));
     }
 
     private void authenticateAsProcUser(final HttpServletRequest request,
                                         final HttpServletResponse response,
-                                        final FilterChain chain,
-                                        final boolean useSession) throws IOException, ServletException {
-        bypassAuthentication(request, response, chain, useSession, processingUserIdentityProvider.get());
+                                        final FilterChain chain) throws IOException, ServletException {
+        bypassAuthentication(request, response, chain, false, processingUserIdentityProvider.get());
     }
 
     private void bypassAuthentication(final HttpServletRequest request,
@@ -337,74 +303,6 @@ class SecurityFilter implements Filter {
                 CurrentUserState.pop();
             }
         }
-    }
-
-//    private boolean loginUI(final HttpServletRequest request, final HttpServletResponse response) throws IOException {
-//        final String stateId = UrlUtils.getLastParam(request, OIDC.STATE);
-//        if (stateId != null) {
-//            String redirectUri = openIdManager.backChannelOIDC(request, stateId, openIdConfig.getRedirectUri());
-//            response.sendRedirect(redirectUri);
-//            return true;
-//        }
-//        return false;
-//    }
-
-//    private String redirectToAuthService(final HttpServletRequest request, final HttpServletResponse response) throws IOException {
-//        // We have a a new request so we're going to redirect with an AuthenticationRequest.
-//        // Get the redirect URL for the auth service from the current request.
-//        String oidcRedirectUri = UrlUtils.getFullUrl(request);
-//
-//        // When the auth service has performed authentication it will redirect
-//        // back to the current URL with some additional parameters (e.g.
-//        // `state` and `accessCode`). It is important that these parameters are
-//        // not provided by our redirect URL else the redirect URL that the
-//        // authentication service redirects back to may end up with multiple
-//        // copies of these parameters which will confuse Stroom as it will not
-//        // know which one of the param values to use (i.e. which were on the
-//        // original redirect request and which have been added by the
-//        // authentication service). For this reason we will cleanse the URL of
-//        // any reserved parameters here. The authentication service should do
-//        // the same to the redirect URL before adding its additional
-//        // parameters.
-//        oidcRedirectUri = OIDC.removeOIDCParams(oidcRedirectUri);
-//
-////        if (uiConfig.getUrl() != null && uiConfig.getUrl().getUi() != null && uiConfig.getUrl().getUi().trim().length() > 0) {
-////            LOGGER.debug("Using the advertised URL as the OpenID redirect URL");
-////            final URI uri = UriBuilder.fromUri(postLoginUrl).build();
-////            final UriBuilder builder = UriBuilder.fromUri(uiConfig.getUrl().getUi());
-////            if (uri.getPath() != null) {
-////                builder.path(uri.getPath());
-////            }
-////            if (uri.getFragment() != null) {
-////                builder.fragment(uri.getFragment());
-////            }
-////            if (uri.getQuery() != null) {
-////                builder.replaceQuery(uri.getQuery());
-////            }
-////            postLoginUrl = builder.build().toString();
-////        }
-//
-//        return openIdManager.frontChannelOIDC(request, oidcRedirectUri);//openIdConfig.getRedirectUri());
-//    }
-
-    private UserIdentity tokenLogin(final HttpServletRequest request) {
-        // Authenticate requests from an API client
-        final UserIdentity userIdentity = openIdManager.loginWithRequestToken(request);
-        if (userIdentity != null && request != null && request.getCookies() != null) {
-            // Find out if we have a session cookie
-            final long count = Arrays
-                    .stream(request.getCookies())
-                    .filter(cookie ->
-                            cookie.getName().equalsIgnoreCase("STROOM_SESSION_ID") ||
-                                    cookie.getName().equalsIgnoreCase("JSESSIONID"))
-                    .count();
-            if (count > 0) {
-                // Set the user ref in the session.
-                UserIdentitySessionUtil.set(request.getSession(true), userIdentity);
-            }
-        }
-
-        return userIdentity;
     }
 
     @Override

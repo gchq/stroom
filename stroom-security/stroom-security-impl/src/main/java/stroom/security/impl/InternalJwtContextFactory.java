@@ -1,6 +1,8 @@
 package stroom.security.impl;
 
+import stroom.config.common.UriFactory;
 import stroom.security.impl.exception.AuthenticationException;
+import stroom.security.openid.api.OpenIdClientFactory;
 import stroom.util.logging.LambdaLogger;
 import stroom.util.logging.LambdaLoggerFactory;
 
@@ -19,19 +21,22 @@ import javax.servlet.http.HttpServletRequest;
 import java.util.Objects;
 import java.util.Optional;
 
-class StandardJwtContextFactory implements JwtContextFactory {
-    private static final LambdaLogger LOGGER = LambdaLoggerFactory.getLogger(StandardJwtContextFactory.class);
+class InternalJwtContextFactory implements JwtContextFactory {
+    private static final LambdaLogger LOGGER = LambdaLoggerFactory.getLogger(InternalJwtContextFactory.class);
 
     private static final String AUTHORIZATION_HEADER = "Authorization";
 
-    private final ResolvedOpenIdConfig openIdConfig;
     private final OpenIdPublicKeysSupplier openIdPublicKeysSupplier;
+    private final UriFactory uriFactory;
+    private final OpenIdClientFactory openIdClientDetailsFactory;
 
     @Inject
-    StandardJwtContextFactory(final ResolvedOpenIdConfig openIdConfig,
-                              final OpenIdPublicKeysSupplier openIdPublicKeysSupplier) {
-        this.openIdConfig = openIdConfig;
+    InternalJwtContextFactory(final OpenIdPublicKeysSupplier openIdPublicKeysSupplier,
+                              final UriFactory uriFactory,
+                              final OpenIdClientFactory openIdClientDetailsFactory) {
         this.openIdPublicKeysSupplier = openIdPublicKeysSupplier;
+        this.uriFactory = uriFactory;
+        this.openIdClientDetailsFactory = openIdClientDetailsFactory;
     }
 
     @Override
@@ -89,7 +94,8 @@ class StandardJwtContextFactory implements JwtContextFactory {
         // If we don't have a JWK we can't create a consumer to verify anything.
         // Why might we not have one? If the remote authentication service was down when Stroom started
         // then we wouldn't. It might not be up now but we're going to try and fetch it.
-        final JsonWebKeySet publicJsonWebKey = openIdPublicKeysSupplier.get();
+        final String jwksUri = uriFactory.nodeUri(ResolvedOpenIdConfig.INTERNAL_JWKS_URI).toString();
+        final JsonWebKeySet publicJsonWebKey = openIdPublicKeysSupplier.get(jwksUri);
 
         final VerificationKeyResolver verificationKeyResolver = new JwksVerificationKeyResolver(
                 publicJsonWebKey.getJsonWebKeys());
@@ -98,13 +104,13 @@ class StandardJwtContextFactory implements JwtContextFactory {
                 .setAllowedClockSkewInSeconds(30) // allow some leeway in validating time based claims to account for clock skew
                 .setRequireSubject() // the JWT must have a subject claim
                 .setVerificationKeyResolver(verificationKeyResolver)
-                .setExpectedAudience(openIdConfig.getClientId())
+                .setExpectedAudience(openIdClientDetailsFactory.getClient().getClientId())
                 .setRelaxVerificationKeyValidation() // relaxes key length requirement
                 .setJwsAlgorithmConstraints( // only allow the expected signature algorithm(s) in the given context
                         new AlgorithmConstraints(
                                 AlgorithmConstraints.ConstraintType.WHITELIST, // which is only RS256 here
                                 AlgorithmIdentifiers.RSA_USING_SHA256))
-                .setExpectedIssuer(openIdConfig.getIssuer());
+                .setExpectedIssuer(ResolvedOpenIdConfig.INTERNAL_ISSUER);
         return builder.build();
     }
 
