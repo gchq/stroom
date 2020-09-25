@@ -501,7 +501,8 @@ public class DataPresenter extends MyPresenterWidget<DataPresenter.DataView> imp
     public void update(final boolean fireEvents) {
         if (!ignoreActions) {
             if (isSameStreamAndPartAsLastTime()) {
-                // Same stream/part so we know this type is available
+                // Same stream/part so we know this type is available and
+                // therefore no need to update tabs as
                 updateFromResource(fireEvents);
             } else {
                 // Different stream/part so we need to check which child stream types are available
@@ -510,10 +511,11 @@ public class DataPresenter extends MyPresenterWidget<DataPresenter.DataView> imp
                 final Rest<Set<String>> rest = restFactory.create();
                 rest
                         .onSuccess(availableChildStreamTypes -> {
-                            updateTabs(currentStreamType, availableChildStreamTypes);
                             if (INFO.equals(lastTabName)) {
                                 refreshMetaInfoPresenterContent(currentMetaId);
+                                updateTabs(currentStreamType, availableChildStreamTypes);
                             } else {
+                                // Tabs will be updated by updateFromResource
                                 setEffectiveChildStreamType(availableChildStreamTypes);
                                 updateFromResource(fireEvents);
                             }
@@ -559,7 +561,7 @@ public class DataPresenter extends MyPresenterWidget<DataPresenter.DataView> imp
     }
 
     private void setEffectiveChildStreamType(final Set<String> availableChildStreamTypes) {
-        GWT.log(currentStreamType + " - " + currentChildDataType + " - " + availableChildStreamTypes);
+//        GWT.log(currentStreamType + " - " + currentChildDataType + " - " + availableChildStreamTypes);
 
         if (currentChildDataType != null
                 && !availableChildStreamTypes.contains(currentChildDataType)) {

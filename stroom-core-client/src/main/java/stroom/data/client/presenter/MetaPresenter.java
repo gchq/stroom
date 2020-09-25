@@ -166,11 +166,14 @@ public class MetaPresenter extends MyPresenterWidget<MetaPresenter.StreamView>
         registerHandler(metaListPresenter.getSelectionModel().addSelectionHandler(event -> {
             metaRelationListPresenter.setSelectedStream(metaListPresenter.getSelected(), true,
                     !Status.UNLOCKED.equals(getSingleStatus(getCriteria())));
-            showData();
+            // showData() gets called by the metaRelationListPresenter selection handler
         }));
-        registerHandler(metaListPresenter.addDataSelectionHandler(event -> setStreamListSelectableEnabled(event.getSelectedItem())));
-        registerHandler(metaRelationListPresenter.getSelectionModel().addSelectionHandler(event -> showData()));
-        registerHandler(metaRelationListPresenter.addDataSelectionHandler(event -> setStreamRelationListSelectableEnabled(event.getSelectedItem())));
+        registerHandler(metaListPresenter.addDataSelectionHandler(event ->
+                setStreamListSelectableEnabled(event.getSelectedItem())));
+        registerHandler(metaRelationListPresenter.getSelectionModel().addSelectionHandler(event ->
+                showData()));
+        registerHandler(metaRelationListPresenter.addDataSelectionHandler(event ->
+                setStreamRelationListSelectableEnabled(event.getSelectedItem())));
 
         registerHandler(streamListFilter.addClickHandler(event -> {
             final ExpressionPresenter presenter = streamListFilterPresenter.get();
@@ -186,7 +189,8 @@ public class MetaPresenter extends MyPresenterWidget<MetaPresenter.StreamView>
                         if (!expression.equals(getCriteria().getExpression())) {
                             if (hasAdvancedCriteria(expression)) {
                                 ConfirmEvent.fire(MetaPresenter.this,
-                                        "You are setting advanced filters!  It is recommended you constrain your filter (e.g. by 'Created') to avoid an expensive query.  "
+                                        "You are setting advanced filters!  It is recommended you constrain " +
+                                                "your filter (e.g. by 'Created') to avoid an expensive query.  "
                                                 + "Are you sure you want to apply this advanced filter?",
                                         confirm -> {
                                             if (confirm) {
@@ -227,9 +231,15 @@ public class MetaPresenter extends MyPresenterWidget<MetaPresenter.StreamView>
                 }
             };
 
-            final PopupSize popupSize = new PopupSize(800, 600, 400, 400, true);
-            ShowPopupEvent.fire(MetaPresenter.this, presenter, PopupType.OK_CANCEL_DIALOG, popupSize,
-                    "Filter Streams", streamFilterPUH);
+            final PopupSize popupSize = new PopupSize(
+                    800, 600, 400, 400, true);
+            ShowPopupEvent.fire(
+                    MetaPresenter.this,
+                    presenter,
+                    PopupType.OK_CANCEL_DIALOG,
+                    popupSize,
+                    "Filter Streams",
+                    streamFilterPUH);
         }));
 
         // Some button's may not exist due to permissions
@@ -349,7 +359,9 @@ public class MetaPresenter extends MyPresenterWidget<MetaPresenter.StreamView>
         return terms;
     }
 
-    private static void getTerms(final ExpressionOperator expressionOperator, final AbstractField field, final Set<String> terms) {
+    private static void getTerms(final ExpressionOperator expressionOperator,
+                                 final AbstractField field,
+                                 final Set<String> terms) {
         if (expressionOperator.enabled()) {
             for (final ExpressionItem item : expressionOperator.getChildren()) {
                 if (item.enabled()) {
@@ -520,7 +532,8 @@ public class MetaPresenter extends MyPresenterWidget<MetaPresenter.StreamView>
         }
     }
 
-    private boolean shouldEnableDelete(final AbstractMetaListPresenter metaListPresenter, final Selection<Long> streamIdSet) {
+    private boolean shouldEnableDelete(final AbstractMetaListPresenter metaListPresenter,
+                                       final Selection<Long> streamIdSet) {
         final boolean someSelected = isSomeSelected(metaListPresenter, streamIdSet);
         if (someSelected) {
             final Set<Status> statusSet = getStatusSet(getCriteria().getExpression());
@@ -546,7 +559,8 @@ public class MetaPresenter extends MyPresenterWidget<MetaPresenter.StreamView>
         return false;
     }
 
-    private boolean shouldEnableRestore(final AbstractMetaListPresenter metaListPresenter, final Selection<Long> streamIdSet) {
+    private boolean shouldEnableRestore(final AbstractMetaListPresenter metaListPresenter,
+                                        final Selection<Long> streamIdSet) {
         final boolean someSelected = isSomeSelected(metaListPresenter, streamIdSet);
         if (someSelected) {
             final Set<Status> statusSet = getStatusSet(getCriteria().getExpression());
@@ -593,7 +607,13 @@ public class MetaPresenter extends MyPresenterWidget<MetaPresenter.StreamView>
             }
         }
 
-        BeginPipelineSteppingEvent.fire(this, streamId, childStreamId, childStreamType, new StepLocation(streamId, 1, 0), pipelineRef);
+        BeginPipelineSteppingEvent.fire(
+                this,
+                streamId,
+                childStreamId,
+                childStreamType,
+                new StepLocation(streamId, 1, 0),
+                pipelineRef);
     }
 
     public void setClassificationUiHandlers(final ClassificationUiHandlers classificationUiHandlers) {
