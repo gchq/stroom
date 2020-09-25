@@ -21,7 +21,6 @@ import stroom.core.client.ContentManager;
 import stroom.core.client.ContentManager.CloseHandler;
 import stroom.data.client.SourceTabPlugin;
 import stroom.data.shared.DataInfoSection;
-import stroom.data.shared.DataRange;
 import stroom.data.shared.DataResource;
 import stroom.data.shared.DataType;
 import stroom.dispatch.client.Rest;
@@ -40,8 +39,9 @@ import stroom.svg.client.SvgPreset;
 import stroom.svg.client.SvgPresets;
 import stroom.ui.config.client.UiConfigCache;
 import stroom.ui.config.shared.SourceConfig;
+import stroom.util.shared.DataRange;
 import stroom.util.shared.EqualsUtil;
-import stroom.util.shared.HasCharacterData;
+import stroom.util.shared.HasSubStreams;
 import stroom.util.shared.Location;
 import stroom.util.shared.Marker;
 import stroom.util.shared.OffsetRange;
@@ -1128,7 +1128,7 @@ public class DataPresenter extends MyPresenterWidget<DataPresenter.DataView> imp
 
         LayerContainer getLayerContainer();
 
-        void setNavigatorData(final HasCharacterData dataNavigatorData);
+        void setNavigatorData(final HasSubStreams dataNavigatorData);
 
         void refreshNavigator();
 
@@ -1264,7 +1264,7 @@ public class DataPresenter extends MyPresenterWidget<DataPresenter.DataView> imp
 //        }
 //    }
 
-    private class DataNavigatorData implements HasCharacterData {
+    private class DataNavigatorData implements HasSubStreams {
 
         private RowCount<Long> partsCount = RowCount.of(0L, false);
         private RowCount<Long> segmentsCount = RowCount.of(0L, false);
@@ -1376,50 +1376,51 @@ public class DataPresenter extends MyPresenterWidget<DataPresenter.DataView> imp
             update(false);
         }
 
-        @Override
-        public boolean canNavigateCharacterData() {
-            // We are only previewing formatted data so don't want to page around the data
-            return false;
-        }
-
-        @Override
-        public Optional<Long> getCharFrom() {
-            return Optional.empty();
-        }
-
-        @Override
-        public Optional<Long> getCharTo() {
-            return Optional.empty();
-        }
-
-        @Override
-        public Optional<Long> getTotalChars() {
-            return Optional.empty();
-        }
-
-        @Override
-        public Optional<Long> getTotalLines() {
-            return Optional.empty();
-        }
-
-        @Override
-        public void showHeadCharacters() {
-            throw new UnsupportedOperationException("Character navigation unsupported");
-        }
-
-        @Override
-        public void advanceCharactersForward() {
-            throw new UnsupportedOperationException("Character navigation unsupported");
-        }
-
-        @Override
-        public void advanceCharactersBackwards() {
-            throw new UnsupportedOperationException("Character navigation unsupported");
-        }
+//        @Override
+//        public boolean canNavigateCharacterData() {
+//            // We are only previewing formatted data so don't want to page around the data
+//            return false;
+//        }
+//
+//        @Override
+//        public Optional<Long> getCharFrom() {
+//            return Optional.empty();
+//        }
+//
+//        @Override
+//        public Optional<Long> getCharTo() {
+//            return Optional.empty();
+//        }
+//
+//        @Override
+//        public Optional<Long> getTotalChars() {
+//            return Optional.empty();
+//        }
+//
+//        @Override
+//        public Optional<Long> getTotalLines() {
+//            return Optional.empty();
+//        }
+//
+//        @Override
+//        public void showHeadCharacters() {
+//            throw new UnsupportedOperationException("Character navigation unsupported");
+//        }
+//
+//        @Override
+//        public void advanceCharactersForward() {
+//            throw new UnsupportedOperationException("Character navigation unsupported");
+//        }
+//
+//        @Override
+//        public void advanceCharactersBackwards() {
+//            throw new UnsupportedOperationException("Character navigation unsupported");
+//        }
 
         @Override
         public void refresh() {
             update(false);
         }
+
     }
 }

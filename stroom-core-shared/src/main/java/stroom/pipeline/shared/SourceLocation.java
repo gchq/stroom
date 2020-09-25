@@ -16,7 +16,7 @@
 
 package stroom.pipeline.shared;
 
-import stroom.data.shared.DataRange;
+import stroom.util.shared.DataRange;
 import stroom.util.shared.TextRange;
 
 import com.fasterxml.jackson.annotation.JsonCreator;
@@ -34,7 +34,6 @@ import java.util.function.Consumer;
  * Defines the location of some (typically character) data
  */
 @JsonInclude(Include.NON_NULL)
-//public class SourceLocation implements Comparable<SourceLocation> {
 public class SourceLocation {
 
     @JsonProperty
@@ -59,7 +58,6 @@ public class SourceLocation {
                           @JsonProperty("childType") final String childType,
                           @JsonProperty("partNo") final long partNo,
                           @JsonProperty("segmentNo") final long segmentNo,
-//                          @JsonProperty("segmentNoRage") final OffsetRange<Long> segmentNoRange,
                           @JsonProperty("dataRange") final DataRange dataRange,
                           @JsonProperty("highlight") final TextRange highlight,
                           @JsonProperty("truncateToWholeLines") final boolean truncateToWholeLines) {
@@ -67,7 +65,6 @@ public class SourceLocation {
         this.childType = childType;
         this.partNo = partNo;
         this.segmentNo = segmentNo;
-//        this.segmentNoRange = segmentNoRange;
         this.dataRange = dataRange;
         this.highlight = highlight;
         this.truncateToWholeLines = truncateToWholeLines;
@@ -78,7 +75,6 @@ public class SourceLocation {
         partNo = builder.partNo;
         childType = builder.childType;
         segmentNo = builder.segmentNo;
-//        segmentNoRange = builder.segmentNoRange;
         dataRange = builder.dataRange;
         highlight = builder.highlight;
         truncateToWholeLines = builder.truncateToWholeLines;
@@ -128,18 +124,6 @@ public class SourceLocation {
         return OptionalLong.of(segmentNo);
     }
 
-//    /**
-//     * @return The segment number (AKA record number), zero based
-//     */
-//    public OffsetRange<Long> getSegmentNoRange() {
-//        return segmentNoRange;
-//    }
-//
-//    @JsonIgnore
-//    public Optional<OffsetRange<Long>> getOptSegmentNoRange() {
-//        return Optional.of(segmentNoRange);
-//    }
-
     /**
      * @return The range of data specified, may be null
      */
@@ -186,18 +170,6 @@ public class SourceLocation {
         return Objects.hash(id, childType, partNo, segmentNo, dataRange, highlight);
     }
 
-    //    @Override
-//    public int compareTo(final SourceLocation o) {
-//        final CompareBuilder builder = new CompareBuilder();
-//        builder.append(id, o.id);
-//        builder.append(childType, o.childType);
-//        builder.append(partNo, o.partNo);
-//        builder.append(segmentNo, o.segmentNo);
-//        builder.append(highlight, o.highlight);
-//        return builder.toComparison();
-//    }
-
-
     @Override
     public String toString() {
         return "SourceLocation{" +
@@ -215,7 +187,6 @@ public class SourceLocation {
         private long partNo = 0; // Non multipart data has segment no of zero by default
         private String childType;
         private long segmentNo = 0; // Non-segmented data has no segment no.
-//        private OffsetRange<Long> segmentNoRange = null;
         private DataRange dataRange;
         private TextRange highlight;
         private boolean truncateToWholeLines = false;
@@ -252,20 +223,6 @@ public class SourceLocation {
             }
             return this;
         }
-
-//        public Builder withSegmentNumber(final Long segmentNo) {
-//            if (segmentNo != null) {
-//                this.segmentNoRange = OffsetRange.of(segmentNo, 1L);
-//            }
-//            return this;
-//        }
-//
-//        public Builder withSegmentNumberRange(final OffsetRange<Long> segmentNoRange) {
-//            if (segmentNoRange != null) {
-//                this.segmentNoRange = segmentNoRange;
-//            }
-//            return this;
-//        }
 
         public Builder withDataRange(final DataRange dataRange) {
             this.dataRange = dataRange;

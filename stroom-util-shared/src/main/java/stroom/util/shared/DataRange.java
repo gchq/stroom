@@ -1,6 +1,4 @@
-package stroom.data.shared;
-
-import stroom.util.shared.Location;
+package stroom.util.shared;
 
 import com.fasterxml.jackson.annotation.JsonCreator;
 import com.fasterxml.jackson.annotation.JsonIgnore;

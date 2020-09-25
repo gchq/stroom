@@ -36,7 +36,7 @@
 		padding-top: 1px;
 		}
 
-		.dataNavigator {
+		.subStreamNavigator {
 		float: right;
 		text-align: right;
 		}
@@ -51,7 +51,10 @@
 			<g:DockLayoutPanel unit="PX" width="100%" height="100%">
 				<g:east size="650">
 					<v:ResizeFlowPanel width="100%" height="100%">
-						<pager:DataNavigator ui:field="dataNavigator" styleName="{style.dataNavigator}" visible="false"/>
+						<pager:SubStreamNavigator
+                                ui:field="subStreamNavigator"
+								styleName="{style.subStreamNavigator}"
+								visible="false"/>
 						<btn:ButtonPanel ui:field="buttonPanel" styleName="{style.buttonPanel}"/>
 					</v:ResizeFlowPanel>
 				</g:east>

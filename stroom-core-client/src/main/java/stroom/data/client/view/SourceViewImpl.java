@@ -2,10 +2,9 @@ package stroom.data.client.view;
 
 import stroom.data.client.presenter.SourcePresenter.SourceView;
 import stroom.data.client.presenter.TextPresenter.TextView;
-import stroom.data.pager.client.DataNavigator;
+import stroom.data.client.presenter.CharacterNavigatorPresenter.CharacterNavigatorView;
 import stroom.pipeline.shared.SourceLocation;
 import stroom.svg.client.SvgPreset;
-import stroom.util.shared.HasCharacterData;
 import stroom.widget.button.client.ButtonPanel;
 import stroom.widget.button.client.ButtonView;
 import stroom.widget.layout.client.view.ResizeSimplePanel;
@@ -36,7 +35,9 @@ public class SourceViewImpl extends ViewImpl implements SourceView {
     @UiField
     ResizeSimplePanel container;
     @UiField
-    DataNavigator dataNavigator;
+    ResizeSimplePanel navigatorContainer;
+//    @UiField
+//    CharacterNavigatorViewImpl characterNavigator;
     @UiField
     ButtonPanel buttonPanel;
 
@@ -45,7 +46,7 @@ public class SourceViewImpl extends ViewImpl implements SourceView {
                           final Binder binder) {
         widget = binder.createAndBindUi(this);
 
-        dataNavigator.setVisible(true);
+//        characterNavigator.setVisible(true);
     }
 
    @Override
@@ -87,24 +88,29 @@ public class SourceViewImpl extends ViewImpl implements SourceView {
         lblType.setText(type);
     }
 
-    @Override
-    public void setNavigatorClickHandler(final Runnable clickHandler) {
-        dataNavigator.setClickHandler(clickHandler);
-    }
+//    @Override
+//    public void setNavigatorClickHandler(final Runnable clickHandler) {
+//        characterNavigator.setClickHandler(clickHandler);
+//    }
 
-    @Override
-    public void setNavigatorData(final HasCharacterData dataNavigatorData) {
-        dataNavigator.setDisplay(dataNavigatorData);
-    }
+//    @Override
+//    public void setNavigatorData(final HasCharacterData dataNavigatorData) {
+//        characterNavigator.setDisplay(dataNavigatorData);
+//    }
 
-    @Override
-    public void refreshNavigator() {
-        dataNavigator.refresh();
-    }
+//    @Override
+//    public void refreshNavigator() {
+//        characterNavigator.refresh();
+//    }
 
     @Override
     public void setTextView(final TextView textView) {
         container.setWidget(textView.asWidget());
+    }
+
+    @Override
+    public void setNavigatorView(final CharacterNavigatorView characterNavigatorView) {
+        navigatorContainer.setWidget(characterNavigatorView.asWidget());
     }
 
     @Override

@@ -3,7 +3,7 @@ package stroom.data.client.presenter;
 import stroom.alert.client.event.AlertEvent;
 import stroom.data.client.presenter.SourcePresenter.SourceView;
 import stroom.data.client.presenter.TextPresenter.TextView;
-import stroom.data.shared.DataRange;
+import stroom.data.client.presenter.CharacterNavigatorPresenter.CharacterNavigatorView;
 import stroom.data.shared.DataType;
 import stroom.data.shared.StreamTypeNames;
 import stroom.dispatch.client.Rest;
@@ -20,17 +20,15 @@ import stroom.security.shared.PermissionNames;
 import stroom.svg.client.SvgPreset;
 import stroom.ui.config.client.UiConfigCache;
 import stroom.ui.config.shared.SourceConfig;
+import stroom.util.shared.DataRange;
 import stroom.util.shared.HasCharacterData;
 import stroom.util.shared.Location;
-import stroom.util.shared.OffsetRange;
 import stroom.util.shared.RowCount;
 import stroom.widget.button.client.ButtonView;
-import stroom.widget.popup.client.presenter.PopupUiHandlers;
 
 import com.google.gwt.core.client.GWT;
 import com.google.gwt.event.dom.client.ClickEvent;
 import com.google.inject.Inject;
-import com.google.inject.Provider;
 import com.google.web.bindery.event.shared.EventBus;
 import com.gwtplatform.mvp.client.MyPresenterWidget;
 import com.gwtplatform.mvp.client.View;
@@ -46,32 +44,31 @@ public class SourcePresenter extends MyPresenterWidget<SourceView> implements Te
     private static final ViewDataResource VIEW_DATA_RESOURCE = GWT.create(ViewDataResource.class);
 
     private final TextPresenter textPresenter;
-    private final Provider<SourceLocationPresenter> sourceLocationPresenterProvider;
+    private final CharacterNavigatorPresenter characterNavigatorPresenter;
+//    private final Provider<SourceLocationPresenter> sourceLocationPresenterProvider;
     private final UiConfigCache uiConfigCache;
     private final RestFactory restFactory;
     private final ClientSecurityContext clientSecurityContext;
     private final DataNavigatorData dataNavigatorData;
 
-    private SourceLocationPresenter sourceLocationPresenter = null;
     private SourceLocation requestedSourceLocation = null;
     private SourceLocation receivedSourceLocation = null;
     private FetchDataResult lastResult = null;
     private ClassificationUiHandlers classificationUiHandlers;
     private boolean isSteppingSource = false;
 
-//    private SourceKey sourceKey;
 
     @Inject
     public SourcePresenter(final EventBus eventBus,
                            final SourceView view,
                            final TextPresenter textPresenter,
-                           final Provider<SourceLocationPresenter> sourceLocationPresenterProvider,
+                           final CharacterNavigatorPresenter characterNavigatorPresenter,
                            final UiConfigCache uiConfigCache,
                            final RestFactory restFactory,
                            final ClientSecurityContext clientSecurityContext) {
         super(eventBus, view);
         this.textPresenter = textPresenter;
-        this.sourceLocationPresenterProvider = sourceLocationPresenterProvider;
+        this.characterNavigatorPresenter = characterNavigatorPresenter;
         this.uiConfigCache = uiConfigCache;
         this.restFactory = restFactory;
         this.clientSecurityContext = clientSecurityContext;
@@ -80,9 +77,11 @@ public class SourcePresenter extends MyPresenterWidget<SourceView> implements Te
         setEditorOptions(textPresenter);
 
         view.setTextView(textPresenter.getView());
-        view.setNavigatorData(dataNavigatorData);
-        view.setNavigatorClickHandler(this::showSourceLocationPopup);
+        view.setNavigatorView(characterNavigatorPresenter.getView());
+
         textPresenter.setUiHandlers(this);
+
+        characterNavigatorPresenter.setDisplay(dataNavigatorData);
     }
 
     private void setEditorOptions(final TextPresenter textPresenter) {
@@ -202,7 +201,17 @@ public class SourcePresenter extends MyPresenterWidget<SourceView> implements Te
             dataNavigatorData.partsCount = result.getTotalItemCount();
         }
 
-        getView().refreshNavigator();
+        DataRange dataRange = Optional.ofNullable(result.getSourceLocation())
+                .map(SourceLocation::getDataRange)
+                .orElse(null);
+
+//        if (dataRange != null) {
+//            dataNavigatorData.setDataRange(dataRange);
+//        }
+
+        characterNavigatorPresenter.refreshNavigator();
+
+//        characterNavigatorPresenter.setDisplay(dataNavigatorData);
     }
 
     private void setTitle(final FetchDataResult fetchDataResult) {
@@ -258,56 +267,56 @@ public class SourcePresenter extends MyPresenterWidget<SourceView> implements Te
                 : null;
     }
 
-    private void showSourceLocationPopup() {
-        if (lastResult != null && lastResult.getSourceLocation() != null) {
-            final SourceLocationPresenter sourceLocationPresenter = getSourceLocationPresenter();
-            sourceLocationPresenter.setSourceLocation(lastResult.getSourceLocation());
+//    private void showSourceLocationPopup() {
+//        if (lastResult != null && lastResult.getSourceLocation() != null) {
+//            final SourceLocationPresenter sourceLocationPresenter = getSourceLocationPresenter();
+//            sourceLocationPresenter.setSourceLocation(lastResult.getSourceLocation());
+//
+//            sourceLocationPresenter.setPartNoVisible(isCurrentDataMultiPart());
+//            sourceLocationPresenter.setSegmentNoVisible(isCurrentDataSegmented());
+//
+//            if (isCurrentDataMultiPart()) {
+//                sourceLocationPresenter.setPartsCount(lastResult.getTotalItemCount());
+//            } else {
+//                sourceLocationPresenter.setPartsCount(RowCount.of(0L, false));
+//            }
+//
+//            if (isCurrentDataSegmented()) {
+//                sourceLocationPresenter.setSegmentsCount(lastResult.getTotalItemCount());
+//            } else {
+//                sourceLocationPresenter.setSegmentsCount(RowCount.of(0L, false));
+//            }
+//            sourceLocationPresenter.setTotalCharsCount(lastResult.getTotalCharacterCount());
+//            sourceLocationPresenter.setCharacterControlsVisible(true);
+//        }
+//
+//        final PopupUiHandlers popupUiHandlers = new PopupUiHandlers() {
+//            @Override
+//            public void onHideRequest(final boolean autoClose, final boolean ok) {
+//                sourceLocationPresenter.hide(autoClose, ok);
+//            }
+//
+//            @Override
+//            public void onHide(final boolean autoClose, final boolean ok) {
+//                if (ok) {
+//                    final SourceLocation newSourceLocation = sourceLocationPresenter.getSourceLocation();
+////                    currentPartNo = newSourceLocation.getPartNo();
+////                    currentSegmentNo = newSourceLocation.getSegmentNo();
+////                    currentDataRange = newSourceLocation.getOptDataRange().orElse(DEFAULT_DATA_RANGE);
+//
+//                    setSourceLocation(newSourceLocation);
+//                }
+//            }
+//        };
+//        sourceLocationPresenter.show(popupUiHandlers);
+//    }
 
-            sourceLocationPresenter.setPartNoVisible(isCurrentDataMultiPart());
-            sourceLocationPresenter.setSegmentNoVisible(isCurrentDataSegmented());
-
-            if (isCurrentDataMultiPart()) {
-                sourceLocationPresenter.setPartsCount(lastResult.getTotalItemCount());
-            } else {
-                sourceLocationPresenter.setPartsCount(RowCount.of(0L, false));
-            }
-
-            if (isCurrentDataSegmented()) {
-                sourceLocationPresenter.setSegmentsCount(lastResult.getTotalItemCount());
-            } else {
-                sourceLocationPresenter.setSegmentsCount(RowCount.of(0L, false));
-            }
-            sourceLocationPresenter.setTotalCharsCount(lastResult.getTotalCharacterCount());
-            sourceLocationPresenter.setCharacterControlsVisible(true);
-        }
-
-        final PopupUiHandlers popupUiHandlers = new PopupUiHandlers() {
-            @Override
-            public void onHideRequest(final boolean autoClose, final boolean ok) {
-                sourceLocationPresenter.hide(autoClose, ok);
-            }
-
-            @Override
-            public void onHide(final boolean autoClose, final boolean ok) {
-                if (ok) {
-                    final SourceLocation newSourceLocation = sourceLocationPresenter.getSourceLocation();
-//                    currentPartNo = newSourceLocation.getPartNo();
-//                    currentSegmentNo = newSourceLocation.getSegmentNo();
-//                    currentDataRange = newSourceLocation.getOptDataRange().orElse(DEFAULT_DATA_RANGE);
-
-                    setSourceLocation(newSourceLocation);
-                }
-            }
-        };
-        sourceLocationPresenter.show(popupUiHandlers);
-    }
-
-    private SourceLocationPresenter getSourceLocationPresenter() {
-        if (sourceLocationPresenter == null) {
-            sourceLocationPresenter = sourceLocationPresenterProvider.get();
-        }
-        return sourceLocationPresenter;
-    }
+//    private SourceLocationPresenter getSourceLocationPresenter() {
+//        if (sourceLocationPresenter == null) {
+//            sourceLocationPresenter = sourceLocationPresenterProvider.get();
+//        }
+//        return sourceLocationPresenter;
+//    }
 
     private void beginStepping(ClickEvent clickEvent) {
         beginStepping();
@@ -350,101 +359,121 @@ public class SourcePresenter extends MyPresenterWidget<SourceView> implements Te
             return !isSteppingSource;
         }
 
+//        @Override
+//        public boolean isMultiPart() {
+//            return isCurrentDataMultiPart();
+//        }
+//
+//        @Override
+//        public Optional<Long> getPartNo() {
+//            return Optional.ofNullable(receivedSourceLocation)
+//                    .map(SourceLocation::getPartNo);
+//        }
+//
+//        @Override
+//        public Optional<Long> getTotalParts() {
+//            return Optional.ofNullable(partsCount)
+//                    .filter(RowCount::isExact)
+//                    .map(RowCount::getCount);
+//        }
+//
+//        @Override
+//        public void setPartNo(final long partNo) {
+//            final SourceLocation newSourceLocation = receivedSourceLocation.clone()
+//                    .withPartNo(partNo)
+//                    .withDataRange(null) // different part so clear previous location range
+//                    .build();
+//
+//            setSourceLocation(newSourceLocation);
+//        }
+//
+//        @Override
+//        public boolean isSegmented() {
+//            return isCurrentDataSegmented();
+//        }
+//
+//        @Override
+//        public boolean canDisplayMultipleSegments() {
+//            return isCurrentDataSegmented()
+//                    && lastResult != null
+//                    && DataType.MARKER.equals(lastResult.getDataType());
+//        }
+//
+//        @Override
+//        public Optional<Long> getSegmentNoFrom() {
+//            if (lastResult != null && isSegmented()) {
+//                return Optional.ofNullable(lastResult)
+//                        .map(AbstractFetchDataResult::getItemRange)
+//                        .map(OffsetRange::getOffset);
+//            } else {
+//                return Optional.empty();
+//            }
+//        }
+//
+//        @Override
+//        public Optional<Long> getSegmentNoTo() {
+//            if (lastResult != null && isSegmented()) {
+//                return Optional.ofNullable(lastResult)
+//                        .map(AbstractFetchDataResult::getItemRange)
+//                        .map(range -> range.getOffset() + range.getLength() - 1);
+//            } else {
+//                return Optional.empty();
+//            }
+//        }
+//
+//        @Override
+//        public Optional<Long> getTotalSegments() {
+//            return Optional.ofNullable(segmentsCount)
+//                    .filter(RowCount::isExact)
+//                    .map(RowCount::getCount);
+//        }
+//
+//        @Override
+//        public Optional<String> getSegmentName() {
+//            if (lastResult == null) {
+//                return Optional.empty();
+//            } else if (DataType.MARKER.equals(getCurDataType())) {
+//                return Optional.of("Error");
+//            } else if (DataType.SEGMENTED.equals(getCurDataType())) {
+//                return Optional.of("Record");
+//            } else {
+//                return Optional.empty();
+//            }
+//        }
+//
+//        @Override
+//        public void setSegmentNoFrom(final long segmentNoFrom) {
+//            final SourceLocation newSourceLocation = receivedSourceLocation.clone()
+//                    .withSegmentNumber(segmentNoFrom)
+//                    .withDataRange(null) // different segment so clear previous location range
+//                    .build();
+//
+//            setSourceLocation(newSourceLocation);
+//        }
+//
+//        @Override
+//        public boolean canNavigateCharacterData() {
+//            return true;
+//        }
+
+
         @Override
-        public boolean isMultiPart() {
-            return isCurrentDataMultiPart();
+        public DataRange getDataRange() {
+            return Optional.ofNullable(lastResult)
+                    .map(AbstractFetchDataResult::getSourceLocation)
+                    .flatMap(SourceLocation::getOptDataRange)
+                    .orElse(DataRange.from(0));
         }
 
         @Override
-        public Optional<Long> getPartNo() {
-            return Optional.ofNullable(receivedSourceLocation)
-                    .map(SourceLocation::getPartNo);
-        }
+        public void setDataRange(final DataRange dataRange) {
+            doWithConfig(sourceConfig -> {
+                final SourceLocation newSourceLocation = requestedSourceLocation.clone()
+                        .withDataRange(dataRange)
+                        .build();
 
-        @Override
-        public Optional<Long> getTotalParts() {
-            return Optional.ofNullable(partsCount)
-                    .filter(RowCount::isExact)
-                    .map(RowCount::getCount);
-        }
-
-        @Override
-        public void setPartNo(final long partNo) {
-            final SourceLocation newSourceLocation = receivedSourceLocation.clone()
-                    .withPartNo(partNo)
-                    .withDataRange(null) // different part so clear previous location range
-                    .build();
-
-            setSourceLocation(newSourceLocation);
-        }
-
-        @Override
-        public boolean isSegmented() {
-            return isCurrentDataSegmented();
-        }
-
-        @Override
-        public boolean canDisplayMultipleSegments() {
-            return isCurrentDataSegmented()
-                    && lastResult != null
-                    && DataType.MARKER.equals(lastResult.getDataType());
-        }
-
-        @Override
-        public Optional<Long> getSegmentNoFrom() {
-            if (lastResult != null && isSegmented()) {
-                return Optional.ofNullable(lastResult)
-                        .map(AbstractFetchDataResult::getItemRange)
-                        .map(OffsetRange::getOffset);
-            } else {
-                return Optional.empty();
-            }
-        }
-
-        @Override
-        public Optional<Long> getSegmentNoTo() {
-            if (lastResult != null && isSegmented()) {
-                return Optional.ofNullable(lastResult)
-                        .map(AbstractFetchDataResult::getItemRange)
-                        .map(range -> range.getOffset() + range.getLength() - 1);
-            } else {
-                return Optional.empty();
-            }
-        }
-
-        @Override
-        public Optional<Long> getTotalSegments() {
-            return Optional.ofNullable(segmentsCount)
-                    .filter(RowCount::isExact)
-                    .map(RowCount::getCount);
-        }
-
-        @Override
-        public Optional<String> getSegmentName() {
-            if (lastResult == null) {
-                return Optional.empty();
-            } else if (DataType.MARKER.equals(getCurDataType())) {
-                return Optional.of("Error");
-            } else if (DataType.SEGMENTED.equals(getCurDataType())) {
-                return Optional.of("Record");
-            } else {
-                return Optional.empty();
-            }
-        }
-
-        @Override
-        public void setSegmentNoFrom(final long segmentNoFrom) {
-            final SourceLocation newSourceLocation = receivedSourceLocation.clone()
-                    .withSegmentNumber(segmentNoFrom)
-                    .withDataRange(null) // different segment so clear previous location range
-                    .build();
-
-            setSourceLocation(newSourceLocation);
-        }
-
-        @Override
-        public boolean canNavigateCharacterData() {
-            return true;
+                setSourceLocation(newSourceLocation);
+            });
         }
 
         @Override
@@ -473,6 +502,24 @@ public class SourcePresenter extends MyPresenterWidget<SourceView> implements Te
                     .map(AbstractFetchDataResult::getSourceLocation)
                     .flatMap(SourceLocation::getOptDataRange)
                     .flatMap(DataRange::getOptCharOffsetTo);
+        }
+
+        @Override
+        public Optional<Integer> getLineFrom() {
+            return Optional.ofNullable(lastResult)
+                    .map(AbstractFetchDataResult::getSourceLocation)
+                    .flatMap(SourceLocation::getOptDataRange)
+                    .flatMap(DataRange::getOptLocationFrom)
+                    .map(Location::getLineNo);
+        }
+
+        @Override
+        public Optional<Integer> getLineTo() {
+            return Optional.ofNullable(lastResult)
+                    .map(AbstractFetchDataResult::getSourceLocation)
+                    .flatMap(SourceLocation::getOptDataRange)
+                    .flatMap(DataRange::getOptLocationTo)
+                    .map(Location::getLineNo);
         }
 
         @Override
@@ -539,6 +586,8 @@ public class SourcePresenter extends MyPresenterWidget<SourceView> implements Te
 
         void setTextView(final TextView textView);
 
+        void setNavigatorView(final CharacterNavigatorView characterNavigatorView);
+
         ButtonView addButton(final SvgPreset preset);
 
         void setTitle(final String feedName,
@@ -547,10 +596,10 @@ public class SourcePresenter extends MyPresenterWidget<SourceView> implements Te
                       final long segmentNo,
                       final String type);
 
-        void setNavigatorClickHandler(final Runnable clickHandler);
+//        void setNavigatorClickHandler(final Runnable clickHandler);
 
-        void setNavigatorData(final HasCharacterData dataNavigatorData);
+//        void setNavigatorData(final HasCharacterData dataNavigatorData);
 
-        void refreshNavigator();
+//        void refreshNavigator();
     }
 }

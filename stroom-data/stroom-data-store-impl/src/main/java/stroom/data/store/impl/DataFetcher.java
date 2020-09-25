@@ -18,7 +18,7 @@
 
 package stroom.data.store.impl;
 
-import stroom.data.shared.DataRange;
+import stroom.util.shared.DataRange;
 import stroom.data.shared.DataType;
 import stroom.data.shared.StreamTypeNames;
 import stroom.data.store.api.InputStreamProvider;

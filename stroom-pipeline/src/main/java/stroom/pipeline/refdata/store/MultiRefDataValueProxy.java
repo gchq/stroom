@@ -30,6 +30,10 @@ import java.util.function.Consumer;
 /**
  * A wrapper for multiple {@link RefDataValueProxy} objects. A lookup (consumeBytes or supplyValue)
  * will perform a lookup against each sub-proxy in turn until a value is found.
+ *
+ * This is used when we have multiple ref loaders attached to an XSLT. Any one of them may be
+ * able to provide the value. This means the order of ref loaders is important for performance.
+ * The one most likely to yield results should be at the top.
  */
 public class MultiRefDataValueProxy implements RefDataValueProxy {
 
@@ -60,7 +64,7 @@ public class MultiRefDataValueProxy implements RefDataValueProxy {
     @Override
     public boolean consumeBytes(final Consumer<TypedByteBuffer> typedByteBufferConsumer) {
         // try each of our proxies in turn and as soon as one finds a result break out
-        boolean result = false;
+        boolean foundValue = false;
         // We could construct this object with a pipeline scoped object to hold a
         // map of mapName to refDataValueProxy which we could populate when we find a
         // result. Thus for any future lookups we could try that one first before looping over
@@ -69,24 +73,24 @@ public class MultiRefDataValueProxy implements RefDataValueProxy {
         // ref streams can supply a value for the same map/key
         for (SingleRefDataValueProxy refDataValueProxy : refDataValueProxies) {
             LOGGER.trace("Attempting to consumeBytes with sub-proxy {}", refDataValueProxy);
-            result = refDataValueProxy.consumeBytes(typedByteBufferConsumer);
-            if (result) {
+            foundValue = refDataValueProxy.consumeBytes(typedByteBufferConsumer);
+            if (foundValue) {
                 LOGGER.trace("Found result with sub-proxy {}", refDataValueProxy);
                 break;
             }
         }
-        if (result) {
+        if (foundValue) {
             LOGGER.trace("Result found for proxy {}", this);
         } else {
             LOGGER.trace("No result found for proxy {}", this);
         }
-        return result;
+        return foundValue;
     }
 
     @Override
     public boolean consumeValue(final RefDataValueProxyConsumerFactory refDataValueProxyConsumerFactory) {
         // try each of our proxies in turn and as soon as one finds a result break out
-        boolean result = false;
+        boolean foundValue = false;
         // We could construct this object with a pipeline scoped object to hold a
         // map of mapName to refDataValueProxy which we could populate when we find a
         // result. Thus for any future lookups we could try that one first before looping over
@@ -95,18 +99,18 @@ public class MultiRefDataValueProxy implements RefDataValueProxy {
         // ref streams can supply a value for the same map/key
         for (RefDataValueProxy refDataValueProxy : refDataValueProxies) {
             LOGGER.trace("Attempting to consumeBytes with sub-proxy {}", refDataValueProxy);
-            result = refDataValueProxy.consumeValue(refDataValueProxyConsumerFactory);
-            if (result) {
+            foundValue = refDataValueProxy.consumeValue(refDataValueProxyConsumerFactory);
+            if (foundValue) {
                 LOGGER.trace("Found result with sub-proxy {}", refDataValueProxy);
                 break;
             }
         }
-        if (result) {
+        if (foundValue) {
             LOGGER.trace("Result found for proxy {}", this);
         } else {
             LOGGER.trace("No result found for proxy {}", this);
         }
-        return result;
+        return foundValue;
     }
 
     @Override

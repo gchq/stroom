@@ -1,0 +1,39 @@
+<!DOCTYPE ui:UiBinder SYSTEM "http://dl.google.com/gwt/DTD/xhtml.ent">
+<ui:UiBinder xmlns:ui="urn:ui:com.google.gwt.uibinder"
+             xmlns:g="urn:import:com.google.gwt.user.client.ui"
+             xmlns:btn="urn:import:stroom.widget.button.client">
+    <ui:style>
+        .characterNavigator {
+        position: relative;
+        text-align: right;
+        }
+
+        .label {
+        display: inline-block;
+        margin: 0px;
+        margin-top: 2px;
+        cursor: pointer;
+        padding-left: 0.75em;
+        padding-right: 0.75em;
+        }
+
+        .label:hover {
+        text-decoration: underline;
+        }
+
+        .button {
+        padding: 1px;
+        text-align: center;
+        }
+    </ui:style>
+
+    <g:FlowPanel styleName="{style.characterNavigator}">
+
+        <g:Label ui:field="lblCharacters" styleName="{style.label}"/>
+        <btn:SvgButton ui:field="showHeadCharactersBtn"/>
+        <btn:SvgButton ui:field="advanceCharactersBackwardBtn"/>
+        <btn:SvgButton ui:field="advanceCharactersForwardBtn"/>
+
+        <btn:SvgButton ui:field="refreshBtn" />
+    </g:FlowPanel>
+</ui:UiBinder>

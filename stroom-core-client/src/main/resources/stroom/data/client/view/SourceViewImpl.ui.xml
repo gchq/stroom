@@ -29,7 +29,7 @@
         <!--		text-align: right;-->
         <!--		}-->
 
-        .dataNavigator {
+        .characterNavigator {
         float: right;
         text-align: right;
         }
@@ -82,9 +82,13 @@
                 </g:center>
                 <g:east size="600">
                     <v:ResizeFlowPanel width="100%" height="100%">
-                        <pager:DataNavigator ui:field="dataNavigator"
-                                             styleName="{style.dataNavigator}"
-                                             visible="false"/>
+                        <v:ResizeSimplePanel ui:field="navigatorContainer"
+                                             styleName="{style.characterNavigator}"
+                                             width="100%"
+                                             height="100%" />
+<!--                        <pager:CharacterNavigator ui:field="characterNavigator"-->
+<!--                                             styleName="{style.characterNavigator}"-->
+<!--                                             visible="false"/>-->
                         <btn:ButtonPanel ui:field="buttonPanel"
                                          styleName="{style.buttonPanel}"/>
                     </v:ResizeFlowPanel>

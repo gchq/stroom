@@ -16,7 +16,7 @@
 
 package stroom.pipeline.state;
 
-import stroom.data.shared.DataRange;
+import stroom.util.shared.DataRange;
 import stroom.pipeline.shared.SourceLocation;
 import stroom.pipeline.xml.converter.ds3.DSLocator;
 import stroom.util.pipeline.scope.PipelineScoped;

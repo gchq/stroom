@@ -28,7 +28,7 @@ import stroom.dashboard.shared.ComponentConfig;
 import stroom.dashboard.shared.ComponentSettings;
 import stroom.dashboard.shared.Field;
 import stroom.dashboard.shared.TextComponentSettings;
-import stroom.data.shared.DataRange;
+import stroom.util.shared.DataRange;
 import stroom.dispatch.client.Rest;
 import stroom.dispatch.client.RestFactory;
 import stroom.editor.client.presenter.EditorPresenter;

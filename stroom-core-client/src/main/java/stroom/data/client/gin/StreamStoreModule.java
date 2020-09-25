@@ -52,6 +52,12 @@ import stroom.data.client.view.SourceViewImpl;
 import stroom.data.client.view.StreamTaskViewImpl;
 import stroom.data.client.view.StreamViewImpl;
 import stroom.data.client.view.TextViewImpl;
+import stroom.data.client.view.CharacterNavigatorViewImpl;
+import stroom.data.client.view.CharacterRangeSelectionViewImpl;
+import stroom.data.client.presenter.CharacterNavigatorPresenter;
+import stroom.data.client.presenter.CharacterNavigatorPresenter.CharacterNavigatorView;
+import stroom.data.client.presenter.CharacterRangeSelectionPresenter;
+import stroom.data.client.presenter.CharacterRangeSelectionPresenter.CharacterRangeSelectionView;
 import stroom.editor.client.presenter.EditorPresenter;
 import stroom.editor.client.presenter.EditorView;
 import stroom.editor.client.view.EditorViewImpl;
@@ -112,6 +118,15 @@ public class StreamStoreModule extends PluginModule {
                 SourcePresenter.class,
                 SourceView.class,
                 SourceViewImpl.class);
+        bindPresenterWidget(
+                CharacterRangeSelectionPresenter.class,
+                CharacterRangeSelectionView.class,
+                CharacterRangeSelectionViewImpl.class);
+        // TODO @AT Should this be bound elsewhere?
+        bindPresenterWidget(
+                CharacterNavigatorPresenter.class,
+                CharacterNavigatorView.class,
+                CharacterNavigatorViewImpl.class);
         bind(MetaListPresenter.class);
 
         bind(ProcessorTaskListPresenter.class);

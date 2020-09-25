@@ -16,7 +16,7 @@
 
 package stroom.pipeline.stepping;
 
-import stroom.data.shared.DataRange;
+import stroom.util.shared.DataRange;
 import stroom.pipeline.errorhandler.ErrorReceiver;
 import stroom.pipeline.errorhandler.ErrorReceiverProxy;
 import stroom.pipeline.errorhandler.LoggingErrorReceiver;

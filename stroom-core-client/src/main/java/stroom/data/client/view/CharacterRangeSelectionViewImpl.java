@@ -1,16 +1,13 @@
 package stroom.data.client.view;
 
-import stroom.data.client.presenter.SourceLocationPresenter.SourceLocationView;
+import stroom.data.client.presenter.CharacterRangeSelectionPresenter.CharacterRangeSelectionView;
 import stroom.util.shared.DataRange;
-import stroom.pipeline.shared.SourceLocation;
 import stroom.util.shared.RowCount;
 import stroom.widget.linecolinput.client.LineColInput;
 import stroom.widget.valuespinner.client.ValueSpinner;
 
-import com.google.gwt.dom.client.Style.Display;
 import com.google.gwt.uibinder.client.UiBinder;
 import com.google.gwt.uibinder.client.UiField;
-import com.google.gwt.user.client.ui.Grid;
 import com.google.gwt.user.client.ui.Label;
 import com.google.gwt.user.client.ui.RadioButton;
 import com.google.gwt.user.client.ui.Widget;
@@ -18,32 +15,23 @@ import com.google.inject.Inject;
 import com.google.web.bindery.event.shared.EventBus;
 import com.gwtplatform.mvp.client.ViewImpl;
 
-public class SourceLocationViewImpl extends ViewImpl implements SourceLocationView {
+public class CharacterRangeSelectionViewImpl
+        extends ViewImpl
+        implements CharacterRangeSelectionView {
 
     private static final String RADIO_BUTTON_GROUP = "RadioBtnGrp";
+    private static final long ZERO_TO_ONE_BASED_INCREMENT = 1L;
+    private static final long ONE_TO_ZERO_BASED_DECREMENT = 1L;
 
     private final Widget widget;
 
-    // TODO @AT Do we want the meta id in here?
-    @UiField
-    ValueSpinner idField;
-    @UiField
-    Label partTitleLbl;
-    @UiField
-    ValueSpinner partNoField;
-    @UiField
-    Label partCountLbl;
-    @UiField
-    Label segmentTitleLbl;
-    @UiField
-    ValueSpinner segmentNoField;
-    @UiField
-    Label segmentCountLbl;
     @UiField
     Label lblTotalCharCount;
 
-    @UiField
-    Grid grid;
+//    @UiField
+//    Grid sourceGrid;
+//    @UiField
+//    Grid grid;
 
     @UiField(provided = true)
     RadioButton radioLocationToLocation;
@@ -89,13 +77,11 @@ public class SourceLocationViewImpl extends ViewImpl implements SourceLocationVi
     @UiField
     ValueSpinner charCountSpinner2;
 
-    private RowCount<Long> partCount = RowCount.of(0L, false);
-    private RowCount<Long> segmentCount = RowCount.of(0L, false);
     private RowCount<Long> totalCharCount = RowCount.of(0L, false);
 
     @Inject
-    public SourceLocationViewImpl(final EventBus eventBus,
-                                  final Binder binder) {
+    public CharacterRangeSelectionViewImpl(final EventBus eventBus,
+                                           final Binder binder) {
 
         radioLocationToLocation = new RadioButton(RADIO_BUTTON_GROUP);
         radioLocationWithCount = new RadioButton(RADIO_BUTTON_GROUP);
@@ -106,19 +92,6 @@ public class SourceLocationViewImpl extends ViewImpl implements SourceLocationVi
 
         setInitialMinMax();
 
-        idField.setEnabled(false);
-        partNoField.setEnabled(false);
-        segmentNoField.setEnabled(false);
-
-        idField.setValue(1);
-        partNoField.setValue(1);
-        segmentNoField.setValue(1);
-
-        partTitleLbl.setText("Part Number:");
-        segmentTitleLbl.setText("Record Number:");
-        partCountLbl.setText("");
-        segmentCountLbl.setText("");
-
         radioLocationToLocation.addValueChangeHandler(event -> updateRadioGroup());
         radioLocationWithCount.addValueChangeHandler(event -> updateRadioGroup());
         radioOffsetToOffset.addValueChangeHandler(event -> updateRadioGroup());
@@ -128,43 +101,46 @@ public class SourceLocationViewImpl extends ViewImpl implements SourceLocationVi
 
     private void updateRadioGroup() {
         lineColFrom1.setEnabled(radioLocationToLocation.getValue());
-        lblLineColFrom1.setStyleDependentName("disabled", !radioLocationToLocation.getValue());
+        lblLineColFrom1.setStyleDependentName(
+                "disabled", !radioLocationToLocation.getValue());
         lineColTo.setEnabled(radioLocationToLocation.getValue());
-        lblLineColTo.setStyleDependentName("disabled", !radioLocationToLocation.getValue());
+        lblLineColTo.setStyleDependentName(
+                "disabled", !radioLocationToLocation.getValue());
 
         lineColFrom2.setEnabled(radioLocationWithCount.getValue());
-        lblLineColFrom2.setStyleDependentName("disabled", !radioLocationWithCount.getValue());
+        lblLineColFrom2.setStyleDependentName(
+                "disabled", !radioLocationWithCount.getValue());
         charCountSpinner1.setEnabled(radioLocationWithCount.getValue());
-        lblCharCountSpinner1.setStyleDependentName("disabled", !radioLocationWithCount.getValue());
+        lblCharCountSpinner1.setStyleDependentName(
+                "disabled", !radioLocationWithCount.getValue());
 
         charOffsetFromSpinner1.setEnabled(radioOffsetToOffset.getValue());
-        lblCharOffsetFromSpinner1.setStyleDependentName("disabled", !radioOffsetToOffset.getValue());
+        lblCharOffsetFromSpinner1.setStyleDependentName(
+                "disabled", !radioOffsetToOffset.getValue());
         charOffsetToSpinner1.setEnabled(radioOffsetToOffset.getValue());
-        lblCharOffsetToSpinner1.setStyleDependentName("disabled", !radioOffsetToOffset.getValue());
+        lblCharOffsetToSpinner1.setStyleDependentName(
+                "disabled", !radioOffsetToOffset.getValue());
 
         charOffsetFromSpinner2.setEnabled(radioOffsetWithCount.getValue());
-        lblCharOffsetFromSpinner2.setStyleDependentName("disabled", !radioOffsetWithCount.getValue());
+        lblCharOffsetFromSpinner2.setStyleDependentName(
+                "disabled", !radioOffsetWithCount.getValue());
         charCountSpinner2.setEnabled(radioOffsetWithCount.getValue());
-        lblCharCountSpinner2.setStyleDependentName("disabled", !radioOffsetWithCount.getValue());
-   }
+        lblCharCountSpinner2.setStyleDependentName(
+                "disabled", !radioOffsetWithCount.getValue()); }
 
     private void setInitialMinMax() {
-        idField.setMin(1);
-        partNoField.setMin(1);
-        segmentNoField.setMin(1);
-
-        idField.setMax(Long.MAX_VALUE);
-        partNoField.setMax(Long.MAX_VALUE);
-        segmentNoField.setMax(Long.MAX_VALUE);
-
         charCountSpinner1.setMin(1);
         charCountSpinner1.setMax(Long.MAX_VALUE);
+
         charCountSpinner2.setMin(1);
         charCountSpinner2.setMax(Long.MAX_VALUE);
+
         charOffsetFromSpinner1.setMin(1);
         charOffsetFromSpinner1.setMax(Long.MAX_VALUE);
+
         charOffsetFromSpinner2.setMin(1);
         charOffsetFromSpinner2.setMax(Long.MAX_VALUE);
+
         charOffsetToSpinner1.setMin(1);
         charOffsetToSpinner1.setMax(Long.MAX_VALUE);
     }
@@ -175,16 +151,8 @@ public class SourceLocationViewImpl extends ViewImpl implements SourceLocationVi
     }
 
     @Override
-    public SourceLocation getSourceLocation() {
-        final SourceLocation.Builder sourceLocationBuilder = SourceLocation.builder(idField.getValue());
+    public DataRange getDataRange() {
         final DataRange.Builder dataRangeBuilder = DataRange.builder();
-
-        if (partNoField.isEnabled()) {
-            sourceLocationBuilder.withPartNo(toZeroBased(partNoField.getValue()));
-        }
-        if (segmentNoField.isEnabled()) {
-            sourceLocationBuilder.withSegmentNumber(toZeroBased(segmentNoField.getValue()));
-        }
 
         if (radioLocationToLocation.getValue()) {
             lineColFrom1.getLocation().ifPresent(dataRangeBuilder::fromLocation);
@@ -194,55 +162,46 @@ public class SourceLocationViewImpl extends ViewImpl implements SourceLocationVi
             dataRangeBuilder.withLength((long) charCountSpinner1.getValue());
         } else if (radioOffsetToOffset.getValue()) {
             dataRangeBuilder
-                    .fromCharOffset((long) charOffsetFromSpinner1.getValue())
-                    .toCharOffset((long) charOffsetToSpinner1.getValue());
+                    .fromCharOffset(toZeroBased(charOffsetFromSpinner1.getValue()))
+                    .toCharOffset((long) charOffsetToSpinner1.getValue() - ONE_TO_ZERO_BASED_DECREMENT);
         } else if (radioOffsetWithCount.getValue()) {
             dataRangeBuilder
-                    .fromCharOffset((long) charOffsetFromSpinner2.getValue())
+                    .fromCharOffset(toZeroBased(charOffsetFromSpinner2.getValue()))
                     .withLength((long) charCountSpinner2.getValue());
         }
 
-        return sourceLocationBuilder
-                .withDataRange(dataRangeBuilder.build())
-                .build();
+        return dataRangeBuilder.build();
     }
 
     @Override
-    public void setSourceLocation(final SourceLocation sourceLocation) {
-        setEnabledAndCheckedStates(sourceLocation);
+    public void setDataRange(final DataRange dataRange) {
+        setEnabledAndCheckedStates(dataRange);
         updateRadioGroup();
 
-        idField.setValue(sourceLocation.getId());
-        partNoField.setValue(toOneBased(sourceLocation.getPartNo()));
-        segmentNoField.setValue(toOneBased(sourceLocation.getSegmentNo()));
+        dataRange.getOptLocationFrom().ifPresent(location -> {
+            lineColFrom1.setValue(location);
+            lineColFrom2.setValue(location);
+        });
+        dataRange.getOptCharOffsetFrom().ifPresent(offset -> {
+            charOffsetFromSpinner1.setValue(toOneBased(offset));
+            charOffsetFromSpinner2.setValue(toOneBased(offset));
+        });
+        dataRange.getOptLocationTo().ifPresent(location -> {
+            lineColTo.setValue(location);
+        });
+        dataRange.getOptCharOffsetTo().ifPresent(offset -> {
+            charOffsetToSpinner1.setValue(toOneBased(offset));
+        });
 
-        sourceLocation.getOptDataRange().ifPresent(dataRange -> {
-            dataRange.getOptLocationFrom().ifPresent(location -> {
-                lineColFrom1.setValue(location);
-                lineColFrom2.setValue(location);
-            });
-            dataRange.getOptCharOffsetFrom().ifPresent(offset -> {
-                charOffsetFromSpinner1.setValue(toOneBased(offset));
-                charOffsetFromSpinner2.setValue(toOneBased(offset));
-            });
-            dataRange.getOptLocationTo().ifPresent(location -> {
-                lineColTo.setValue(location);
-            });
-            dataRange.getOptCharOffsetTo().ifPresent(offset -> {
-                charOffsetToSpinner1.setValue(toOneBased(offset));
-            });
-
-            dataRange.getOptLength().ifPresent(count -> {
-                charCountSpinner1.setValue(count);
-                charCountSpinner2.setValue(count);
-            });
+        dataRange.getOptLength().ifPresent(count -> {
+            charCountSpinner1.setValue(count);
+            charCountSpinner2.setValue(count);
         });
     }
 
-    private void setEnabledAndCheckedStates(final SourceLocation sourceLocation) {
-        if (sourceLocation.getOptDataRange()
-                .flatMap(DataRange::getOptLocationFrom)
-                .isPresent()) {
+
+    private void setEnabledAndCheckedStates(final DataRange dataRange) {
+        if (dataRange.getOptLocationFrom().isPresent()) {
             radioLocationToLocation.setValue(true, true);
             radioLocationWithCount.setValue(false, true);
             radioOffsetToOffset.setValue(false, true);
@@ -262,66 +221,9 @@ public class SourceLocationViewImpl extends ViewImpl implements SourceLocationVi
     }
 
     private void updateCountLabels() {
-        partCountLbl.setText(getCountText(partCount));
-        segmentCountLbl.setText(getCountText(segmentCount));
         lblTotalCharCount.setText(totalCharCount.isExact()
                 ? totalCharCount.getCount().toString()
                 : "?");
-    }
-
-    @Override
-    public void setIdEnabled(final boolean isEnabled) {
-        idField.setEnabled(isEnabled);
-    }
-
-    @Override
-    public void setPartNoVisible(final boolean isVisible) {
-        partNoField.setEnabled(isVisible);
-        partNoField.setVisible(isVisible);
-        partTitleLbl.setVisible(isVisible);
-        partCountLbl.setVisible(isVisible);
-    }
-
-    @Override
-    public void setSegmentNoVisible(final boolean isVisible) {
-        segmentNoField.setEnabled(isVisible);
-        segmentNoField.setVisible(isVisible);
-        segmentTitleLbl.setVisible(isVisible);
-        segmentCountLbl.setVisible(isVisible);
-    }
-
-    @Override
-    public void setCharacterControlsVisible(final boolean isVisible) {
-        final Display display = isVisible
-                ? Display.TABLE
-                : Display.NONE;
-        // TODO @AT Don't think we need this as it was only used for marker data which should not use
-        // this screen
-//        characterGrid.getElement().getStyle().setDisplay(display);
-    }
-
-    @Override
-    public void setPartCount(final RowCount<Long> partCount) {
-        this.partCount = partCount;
-        if (partCount.isExact() && partCount.getCount() != null) {
-            partNoField.setMax(partCount.getCount());
-            partNoField.setEnabled(partCount.getCount() != 1);
-        } else {
-            partNoField.setMax(Long.MAX_VALUE);
-        }
-        updateCountLabels();
-    }
-
-    @Override
-    public void setSegmentsCount(final RowCount<Long> segmentCount) {
-        this.segmentCount = segmentCount;
-        if (segmentCount.isExact() && segmentCount.getCount() != null) {
-            segmentNoField.setMax(segmentCount.getCount());
-            segmentNoField.setEnabled(segmentCount.getCount() != 1);
-        } else {
-            segmentNoField.setMax(Long.MAX_VALUE);
-        }
-        updateCountLabels();
     }
 
     @Override
@@ -355,6 +257,6 @@ public class SourceLocationViewImpl extends ViewImpl implements SourceLocationVi
         return oneBasedValue - 1;
     }
 
-    public interface Binder extends UiBinder<Widget, SourceLocationViewImpl> {
+    public interface Binder extends UiBinder<Widget, CharacterRangeSelectionViewImpl> {
     }
 }

@@ -161,105 +161,104 @@ public class DataNavigator extends Composite {
         button.getElement().getStyle().setPaddingRight(1, Style.Unit.PX);
     }
 
-    private void refreshPartControls() {
-        if (display != null) {
-
-            // if parts count is empty then we can't be sure how many there are
-            // so assume there are many
-            final boolean hasMultipleParts = display.getTotalParts()
-                    .filter(i -> i > 1L)
-                    .isPresent() || !display.getTotalParts().isPresent();
-
-            if (display.areNavigationControlsVisible()
-                    && display.isMultiPart()
-                    && display.getPartNo().isPresent()
-                    && hasMultipleParts) {
-
-                long partNo = display.getPartNo().get();
-//                GWT.log("parts: " + display.getTotalParts().map(Objects::toString).orElse("?"));
-                final String lbl = PARTS_TITLE
-                        + " "
-                        + getValueForLabel(display.getPartNo(), ZERO_TO_ONE_BASE_INCREMENT)
-                        + " of "
-                        + getValueForLabel(display.getTotalParts());
-
-                lblParts.setText(lbl);
-
-                boolean hasNext = partNo < display.getTotalParts()
-                        .map(count -> count - 1) // part is zero based
-                        .orElse(Long.MAX_VALUE);
-
-                // PartNo zero based
-                firstPart.setEnabled(partNo > 0);
-                prevPart.setEnabled(partNo > 0);
-                nextPart.setEnabled(hasNext);
-                lastPart.setEnabled(hasNext);
-
-                setPartControlVisibility(true);
-            } else {
-                setPartControlVisibility(false);
-            }
-        }
-    }
-
-    private void refreshSegmentControls() {
-        if (display != null) {
-            if (display.areNavigationControlsVisible()
-                    && display.isSegmented()
-                    && display.getSegmentNoFrom().isPresent()
-                    && display.getSegmentNoTo().isPresent()) {
-
-                long segmentNoFrom = display.getSegmentNoFrom().get();
-                long segmentNoTo = display.getSegmentNoTo().get();
-
-//                GWT.log("segments: " + display.getTotalParts().map(Objects::toString).orElse("?"));
-
-                boolean isOneSegmentPerPage = segmentNoFrom == segmentNoTo;
-
-                final String segmentNoFromStr = getValueForLabel(
-                        display.getSegmentNoFrom(), ZERO_TO_ONE_BASE_INCREMENT);
-                final String totalSegmentsStr = getValueForLabel(display.getTotalSegments());
-                final String lbl;
-                final String name = display.getSegmentName().orElse("");
-
-                if (isOneSegmentPerPage) {
-                    lbl = name + " " + segmentNoFromStr + " of " + totalSegmentsStr;
-                } else {
-                    final String segmentNoToStr = getValueForLabel(
-                            display.getSegmentNoTo(), ZERO_TO_ONE_BASE_INCREMENT);
-                    lbl = name
-                            + "s "
-                            + segmentNoFromStr
-                            + " to "
-                            + segmentNoToStr
-                            + " of "
-                            + getValueForLabel(display.getTotalSegments());
-                }
-
-                lblSegments.setText(lbl);
-
-                // segmentNO zero based
-                boolean hasNext = segmentNoTo < display.getTotalSegments()
-                        .map(count -> count - 1) // part is zero based
-                        .orElse(Long.MAX_VALUE);
-
-                // segmentNo zero based
-                firstSegment.setEnabled(segmentNoFrom > 0);
-                prevSegment.setEnabled(segmentNoFrom > 0);
-                nextSegment.setEnabled(hasNext);
-                lastSegment.setEnabled(hasNext);
-
-                setSegmentControlVisibility(true);
-            } else {
-                setSegmentControlVisibility(false);
-            }
-        }
-    }
+//    private void refreshPartControls() {
+//        if (display != null) {
+//
+//            // if parts count is empty then we can't be sure how many there are
+//            // so assume there are many
+//            final boolean hasMultipleParts = display.getTotalParts()
+//                    .filter(i -> i > 1L)
+//                    .isPresent() || !display.getTotalParts().isPresent();
+//
+//            if (display.areNavigationControlsVisible()
+//                    && display.isMultiPart()
+//                    && display.getPartNo().isPresent()
+//                    && hasMultipleParts) {
+//
+//                long partNo = display.getPartNo().get();
+////                GWT.log("parts: " + display.getTotalParts().map(Objects::toString).orElse("?"));
+//                final String lbl = PARTS_TITLE
+//                        + " "
+//                        + getValueForLabel(display.getPartNo(), ZERO_TO_ONE_BASE_INCREMENT)
+//                        + " of "
+//                        + getValueForLabel(display.getTotalParts());
+//
+//                lblParts.setText(lbl);
+//
+//                boolean hasNext = partNo < display.getTotalParts()
+//                        .map(count -> count - 1) // part is zero based
+//                        .orElse(Long.MAX_VALUE);
+//
+//                // PartNo zero based
+//                firstPart.setEnabled(partNo > 0);
+//                prevPart.setEnabled(partNo > 0);
+//                nextPart.setEnabled(hasNext);
+//                lastPart.setEnabled(hasNext);
+//
+//                setPartControlVisibility(true);
+//            } else {
+//                setPartControlVisibility(false);
+//            }
+//        }
+//    }
+//
+//    private void refreshSegmentControls() {
+//        if (display != null) {
+//            if (display.areNavigationControlsVisible()
+//                    && display.isSegmented()
+//                    && display.getSegmentNoFrom().isPresent()
+//                    && display.getSegmentNoTo().isPresent()) {
+//
+//                long segmentNoFrom = display.getSegmentNoFrom().get();
+//                long segmentNoTo = display.getSegmentNoTo().get();
+//
+////                GWT.log("segments: " + display.getTotalParts().map(Objects::toString).orElse("?"));
+//
+//                boolean isOneSegmentPerPage = segmentNoFrom == segmentNoTo;
+//
+//                final String segmentNoFromStr = getValueForLabel(
+//                        display.getSegmentNoFrom(), ZERO_TO_ONE_BASE_INCREMENT);
+//                final String totalSegmentsStr = getValueForLabel(display.getTotalSegments());
+//                final String lbl;
+//                final String name = display.getSegmentName().orElse("");
+//
+//                if (isOneSegmentPerPage) {
+//                    lbl = name + " " + segmentNoFromStr + " of " + totalSegmentsStr;
+//                } else {
+//                    final String segmentNoToStr = getValueForLabel(
+//                            display.getSegmentNoTo(), ZERO_TO_ONE_BASE_INCREMENT);
+//                    lbl = name
+//                            + "s "
+//                            + segmentNoFromStr
+//                            + " to "
+//                            + segmentNoToStr
+//                            + " of "
+//                            + getValueForLabel(display.getTotalSegments());
+//                }
+//
+//                lblSegments.setText(lbl);
+//
+//                // segmentNO zero based
+//                boolean hasNext = segmentNoTo < display.getTotalSegments()
+//                        .map(count -> count - 1) // part is zero based
+//                        .orElse(Long.MAX_VALUE);
+//
+//                // segmentNo zero based
+//                firstSegment.setEnabled(segmentNoFrom > 0);
+//                prevSegment.setEnabled(segmentNoFrom > 0);
+//                nextSegment.setEnabled(hasNext);
+//                lastSegment.setEnabled(hasNext);
+//
+//                setSegmentControlVisibility(true);
+//            } else {
+//                setSegmentControlVisibility(false);
+//            }
+//        }
+//    }
 
     private void refreshCharacterControls() {
         if (display != null
                 && display.areNavigationControlsVisible()
-                && display.canNavigateCharacterData()
                 && display.getCharFrom().isPresent()
                 && display.getCharTo().isPresent()) {
 
@@ -276,11 +275,14 @@ public class DataNavigator extends Composite {
             final long charFrom = display.getCharFrom().get();
             final long charTo = display.getCharTo().get();
 
+            // Zero based
             showHeadCharactersBtn.setEnabled(charFrom > 0);
             advanceCharactersBackwardBtn.setEnabled(charFrom > 0);
 
             advanceCharactersForwardBtn.setEnabled(
-                    charTo < display.getTotalChars().map(total -> total - 1).orElse(Long.MAX_VALUE));
+                    charTo < display.getTotalChars()
+                            .map(total -> total - 1)
+                            .orElse(Long.MAX_VALUE));
 
             setCharactersControlVisibility(true);
         } else {
@@ -346,77 +348,77 @@ public class DataNavigator extends Composite {
         clickHandler.run();
     }
 
-    @UiHandler("firstPart")
-    void onClickFirstPart(final ClickEvent event) {
-        if (display != null) {
-            display.getPartNo()
-                    .ifPresent(partNo -> display.setPartNo(0)); // zero based
-        }
-    }
-
-    @UiHandler("prevPart")
-    void onClickPrevPart(final ClickEvent event) {
-        if (display != null) {
-            display.getPartNo()
-                    .ifPresent(partNo -> display.setPartNo(partNo - 1)); // zero based
-        }
-    }
-
-    @UiHandler("nextPart")
-    void onClickNextPart(final ClickEvent event) {
-        if (display != null) {
-            display.getPartNo()
-                    .ifPresent(partNo -> display.setPartNo(partNo + 1)); // zero based
-        }
-    }
-
-    @UiHandler("lastPart")
-    void onClickLastPart(final ClickEvent event) {
-        if (display != null) {
-            display.getTotalParts()
-                    .ifPresent(parts -> display.setPartNo(parts - 1)); // zero based
-        }
-    }
-
-
-    // Segments UI handlers
-    // ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-
-    @UiHandler("lblSegments")
-    public void onClickSegmentsLabel(final ClickEvent event) {
-        clickHandler.run();
-    }
-
-    @UiHandler("firstSegment")
-    void onClickFirstSegment(final ClickEvent event) {
-        if (display != null) {
-            display.setSegmentNoFrom(0);
-        }
-    }
-
-    @UiHandler("prevSegment")
-    void onClickPrevSegment(final ClickEvent event) {
-        if (display != null) {
-            display.getSegmentNoFrom()
-                    .ifPresent(segmentNo -> display.setSegmentNoFrom(segmentNo - 1));
-        }
-    }
-
-    @UiHandler("nextSegment")
-    void onClickNextSegment(final ClickEvent event) {
-        if (display != null) {
-            display.getSegmentNoFrom()
-                    .ifPresent(segmentNo -> display.setSegmentNoFrom(segmentNo + 1));
-        }
-    }
-
-    @UiHandler("lastSegment")
-    void onClickLastSegment(final ClickEvent event) {
-        if (display != null) {
-            display.getTotalSegments()
-                    .ifPresent(total -> display.setSegmentNoFrom(total - 1));
-        }
-    }
+//    @UiHandler("firstPart")
+//    void onClickFirstPart(final ClickEvent event) {
+//        if (display != null) {
+//            display.getPartNo()
+//                    .ifPresent(partNo -> display.setPartNo(0)); // zero based
+//        }
+//    }
+//
+//    @UiHandler("prevPart")
+//    void onClickPrevPart(final ClickEvent event) {
+//        if (display != null) {
+//            display.getPartNo()
+//                    .ifPresent(partNo -> display.setPartNo(partNo - 1)); // zero based
+//        }
+//    }
+//
+//    @UiHandler("nextPart")
+//    void onClickNextPart(final ClickEvent event) {
+//        if (display != null) {
+//            display.getPartNo()
+//                    .ifPresent(partNo -> display.setPartNo(partNo + 1)); // zero based
+//        }
+//    }
+//
+//    @UiHandler("lastPart")
+//    void onClickLastPart(final ClickEvent event) {
+//        if (display != null) {
+//            display.getTotalParts()
+//                    .ifPresent(parts -> display.setPartNo(parts - 1)); // zero based
+//        }
+//    }
+//
+//
+//    // Segments UI handlers
+//    // ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+//
+//    @UiHandler("lblSegments")
+//    public void onClickSegmentsLabel(final ClickEvent event) {
+//        clickHandler.run();
+//    }
+//
+//    @UiHandler("firstSegment")
+//    void onClickFirstSegment(final ClickEvent event) {
+//        if (display != null) {
+//            display.setSegmentNoFrom(0);
+//        }
+//    }
+//
+//    @UiHandler("prevSegment")
+//    void onClickPrevSegment(final ClickEvent event) {
+//        if (display != null) {
+//            display.getSegmentNoFrom()
+//                    .ifPresent(segmentNo -> display.setSegmentNoFrom(segmentNo - 1));
+//        }
+//    }
+//
+//    @UiHandler("nextSegment")
+//    void onClickNextSegment(final ClickEvent event) {
+//        if (display != null) {
+//            display.getSegmentNoFrom()
+//                    .ifPresent(segmentNo -> display.setSegmentNoFrom(segmentNo + 1));
+//        }
+//    }
+//
+//    @UiHandler("lastSegment")
+//    void onClickLastSegment(final ClickEvent event) {
+//        if (display != null) {
+//            display.getTotalSegments()
+//                    .ifPresent(total -> display.setSegmentNoFrom(total - 1));
+//        }
+//    }
 
 
     // Characters UI handlers
@@ -469,8 +471,8 @@ public class DataNavigator extends Composite {
 //        lblOf.setText("?");
 //    }
     public void refresh() {
-        refreshPartControls();
-        refreshSegmentControls();
+//        refreshPartControls();
+//        refreshSegmentControls();
         refreshCharacterControls();
     }
 
