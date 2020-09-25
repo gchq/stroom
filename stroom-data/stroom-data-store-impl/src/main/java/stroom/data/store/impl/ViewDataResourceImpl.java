@@ -32,18 +32,19 @@ import stroom.pipeline.state.PipelineHolder;
 import stroom.security.api.SecurityContext;
 import stroom.security.shared.PermissionNames;
 import stroom.ui.config.shared.SourceConfig;
+import stroom.util.logging.LambdaLogger;
+import stroom.util.logging.LambdaLoggerFactory;
 import stroom.util.logging.LogUtil;
 import stroom.util.pipeline.scope.PipelineScopeRunnable;
 
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
-
 import javax.inject.Inject;
 import javax.inject.Provider;
+import java.util.Set;
+import java.util.stream.Collectors;
 
 class ViewDataResourceImpl implements ViewDataResource {
 
-    private static final Logger LOGGER = LoggerFactory.getLogger(ViewDataResourceImpl.class);
+    private static final LambdaLogger LOGGER = LambdaLoggerFactory.getLogger(ViewDataResourceImpl.class);
 
     private final SecurityContext securityContext;
     private final DataFetcher dataFetcher;
@@ -98,22 +99,25 @@ class ViewDataResourceImpl implements ViewDataResource {
         }
     }
 
-//    public Set<String> getChildStreamTypes(final long id, final long partNo) {
-//        try {
-//            final String permissionName = PermissionNames.VIEW_DATA_PERMISSION;
-//
-//            return securityContext.secureResult(permissionName, () -> {
-//
-//                Set<String> childTypes = dataFetcher.getAvailableChildStreamTypes(id, partNo);
-//                LOGGER.info("childTypes {}", childTypes.stream().sorted().collect(Collectors.joining(",")));
-//                return childTypes;
-//            });
-//        } catch (Exception e) {
-//            LOGGER.error(LogUtil.message("Error fetching child stream types for id {}, part number {}",
-//                    id, partNo), e);
-//            throw e;
-//        }
-//    }
+    public Set<String> getChildStreamTypes(final long id, final long partNo) {
+        try {
+            final String permissionName = PermissionNames.VIEW_DATA_PERMISSION;
+
+            return securityContext.secureResult(permissionName, () -> {
+
+                final Set<String> childTypes = dataFetcher.getAvailableChildStreamTypes(id, partNo);
+                LOGGER.info(() ->
+                        LogUtil.message("childTypes {}",
+                                childTypes.stream()
+                                        .sorted().collect(Collectors.joining(","))));
+                return childTypes;
+            });
+        } catch (Exception e) {
+            LOGGER.error(LogUtil.message("Error fetching child stream types for id {}, part number {}",
+                    id, partNo), e);
+            throw e;
+        }
+    }
 
 //    @Override
 //    public AbstractFetchDataResult fetchData( final long streamId,

@@ -16,18 +16,22 @@
 
 package stroom.pipeline.shared;
 
+import stroom.util.shared.ResourcePaths;
+import stroom.util.shared.RestResource;
+
 import io.swagger.annotations.Api;
 import io.swagger.annotations.ApiOperation;
 import io.swagger.annotations.ApiParam;
 import org.fusesource.restygwt.client.DirectRestService;
-import stroom.util.shared.ResourcePaths;
-import stroom.util.shared.RestResource;
 
 import javax.ws.rs.Consumes;
+import javax.ws.rs.GET;
 import javax.ws.rs.POST;
 import javax.ws.rs.Path;
 import javax.ws.rs.Produces;
+import javax.ws.rs.QueryParam;
 import javax.ws.rs.core.MediaType;
+import java.util.Set;
 
 @Api(value = "viewData - /v1")
 @Path("/viewData" + ResourcePaths.V1)
@@ -41,4 +45,12 @@ public interface ViewDataResource extends RestResource, DirectRestService {
             value = "Fetch matching data",
             response = AbstractFetchDataResult.class)
     AbstractFetchDataResult fetch(@ApiParam("request") FetchDataRequest request);
+
+    @GET
+    @Path("listChildTypes")
+    @ApiOperation(
+            value = "List child types for a stream",
+            response = AbstractFetchDataResult.class)
+    Set<String> getChildStreamTypes(@QueryParam("id") final long id,
+                                    @QueryParam("partNo") final long partNo);
 }

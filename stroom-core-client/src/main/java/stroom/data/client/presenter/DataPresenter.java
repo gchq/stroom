@@ -18,11 +18,11 @@ package stroom.data.client.presenter;
 
 import stroom.alert.client.event.AlertEvent;
 import stroom.core.client.ContentManager;
-import stroom.core.client.ContentManager.CloseHandler;
 import stroom.data.client.SourceTabPlugin;
 import stroom.data.shared.DataInfoSection;
 import stroom.data.shared.DataResource;
 import stroom.data.shared.DataType;
+import stroom.data.shared.StreamTypeNames;
 import stroom.dispatch.client.Rest;
 import stroom.dispatch.client.RestFactory;
 import stroom.editor.client.presenter.HtmlPresenter;
@@ -157,6 +157,9 @@ public class DataPresenter extends MyPresenterWidget<DataPresenter.DataView> imp
     private boolean formatOnLoad;
     private boolean ignoreActions;
     private ButtonView viewSourceBtn;
+    // Track the tab last used so if we switch streams we can select the same tab again if it has it
+    private String lastStreamType;
+    private String lastTabName;
 
     @Inject
     public DataPresenter(final EventBus eventBus,
@@ -229,30 +232,12 @@ public class DataPresenter extends MyPresenterWidget<DataPresenter.DataView> imp
     }
 
     private void openSourcePresenter() {
-//        final SourceTabPresenter sourceTabPresenter = sourceTabPresenterProvider.get();
-
         // No need to supply a data range as it will just open it with the default range
         // that is bigger than our preview range
         final SourceLocation sourceLocation = SourceLocation.builder(currentMetaId)
                 .withPartNo(currentPartNo)
                 .withChildStreamType(currentChildDataType)
                 .build();
-
-//        if (currentSourceLocation != null) {
-//            sourceLocation = SourceLocation.builder(currentSourceLocation.getId())
-//                    .withPartNo(currentSourceLocation.getPartNo())
-//                    .withChildStreamType(currentSourceLocation.getChildType())
-//                    .build();
-//
-//            sourceTabPresenter.setSourceLocation(sourceLocation);
-//        }
-
-        final CloseHandler closeHandler = closeCallback -> {
-            closeCallback.closeTab(true);
-        };
-
-//        final TabData tabData = (TabData) sourceTabPresenter;
-//        contentManager.open(closeHandler, sourceTabPresenter, sourceTabPresenter);
 
         sourceTabPlugin.open(sourceLocation, true);
     }
@@ -292,7 +277,7 @@ public class DataPresenter extends MyPresenterWidget<DataPresenter.DataView> imp
                 if (INFO.equals(tab.getLabel())) {
                     getView().getTabBar().selectTab(infoTab);
                     showHtmlPresenter();
-                    fetchMetaInfoData();
+                    fetchMetaInfoData(currentMetaId);
                     viewSourceBtn.setVisible(false);
                     getView().refreshNavigator();
                 } else {
@@ -322,6 +307,7 @@ public class DataPresenter extends MyPresenterWidget<DataPresenter.DataView> imp
                         fetchDataForCurrentStreamNo(null);
                     }
                 }
+                lastTabName = tab.getLabel();
             }
         }
     }
@@ -514,34 +500,118 @@ public class DataPresenter extends MyPresenterWidget<DataPresenter.DataView> imp
 
     public void update(final boolean fireEvents) {
         if (!ignoreActions) {
-            final Severity[] expandedSeverities = markerListPresenter.getExpandedSeverities();
+            if (isSameStreamAndPartAsLastTime()) {
+                // Same stream/part so we know this type is available
+                updateFromResource(fireEvents);
+            } else {
+                // Different stream/part so we need to check which child stream types are available
+                // and pick an appropriate one.
+
+                final Rest<Set<String>> rest = restFactory.create();
+                rest
+                        .onSuccess(availableChildStreamTypes -> {
+                            updateTabs(currentStreamType, availableChildStreamTypes);
+                            if (INFO.equals(lastTabName)) {
+                                refreshMetaInfoPresenterContent(currentMetaId);
+                            } else {
+                                setEffectiveChildStreamType(availableChildStreamTypes);
+                                updateFromResource(fireEvents);
+                            }
+                        })
+                        .onFailure(caught ->
+                                getView().setRefreshing(false))
+                        .call(VIEW_DATA_RESOURCE)
+                        .getChildStreamTypes(currentMetaId, currentPartNo);
+            }
+
+
+//            if (INFO.equals(lastTabName)) {
+//                // Were on Info tab last time and that will always be available so just update the
+//                // meta info
+//                if (!isSameStreamAndPartAsLastTime()) {
+//
+//                } else {
+//
+//                }
+//                refreshMetaInfoPresenterContent(currentMetaId);
+//            } else {
+//                if (isSameStreamAndPartAsLastTime()) {
+//                    // Same stream/part so we know this type is available
+//                    updateFromResource(fireEvents);
+//                } else {
+//                    // Different stream/part so we need to check which child stream types are available
+//                    // and pick an appropriate one.
+//
+//                    final Rest<Set<String>> rest = restFactory.create();
+//                    rest
+//                            .onSuccess(availableChildStreamTypes -> {
+//                                setEffectiveChildStreamType(availableChildStreamTypes);
+//                                updateFromResource(fireEvents);
+//                                updateTabs(currentStreamType, availableChildStreamTypes);
+//                            })
+//                            .onFailure(caught ->
+//                                    getView().setRefreshing(false))
+//                            .call(VIEW_DATA_RESOURCE)
+//                            .getChildStreamTypes(currentMetaId, currentPartNo);
+//                }
+//            }
+        }
+    }
+
+    private void setEffectiveChildStreamType(final Set<String> availableChildStreamTypes) {
+        GWT.log(currentStreamType + " - " + currentChildDataType + " - " + availableChildStreamTypes);
+
+        if (currentChildDataType != null
+                && !availableChildStreamTypes.contains(currentChildDataType)) {
+            if (StreamTypeNames.ERROR.equals(currentStreamType)) {
+                // See error markers by default
+                errorMarkerMode = true;
+            }
+            // null child data type indicates to show the data
+            currentChildDataType = null;
+        }
+    }
+
+    private void updateFromResource(final boolean fireEvents) {
+        final Severity[] expandedSeverities = markerListPresenter.getExpandedSeverities();
 
 //            long charOffset = currentDataRange != null && currentDataRange.getOptCharOffsetFrom().isPresent()
 //                    ? currentDataRange.getCharOffsetFrom()
 //                    : 0;
 
-            doWithConfig(sourceConfig -> {
-                final DataRange dataRange = DataRange.from(0,
-                        sourceConfig.getMaxCharactersInPreviewFetch());
-                // TODO @AT Do we need to pass the highlight?
-                final FetchDataRequest request = new FetchDataRequest(currentMetaId, builder -> builder
-                        .withPartNo(currentPartNo)
-                        .withSegmentNumber(currentSegmentNo)
-                        .withDataRange(dataRange)
+        doWithConfig(sourceConfig -> {
+            final DataRange dataRange = DataRange.from(0,
+                    sourceConfig.getMaxCharactersInPreviewFetch());
+
+            // TODO @AT Do we need to pass the highlight?
+            final FetchDataRequest request = new FetchDataRequest(currentMetaId, builder -> builder
+                    .withPartNo(currentPartNo)
+                    .withSegmentNumber(currentSegmentNo)
+                    .withDataRange(dataRange)
 //                    .withHighlight(highlights.get(0))
-                        .withChildStreamType(currentChildDataType));
+                    .withChildStreamType(currentChildDataType));
 
 //            request.setStreamId(currentMetaId);
 //            request.setStreamRange(currentDataRange);
 //            request.setPageRange(currentPageRange);
 //            request.setChildStreamType(currentChildDataType);
-                request.setMarkerMode(errorMarkerMode);
-                request.setExpandedSeverities(expandedSeverities);
-                request.setFireEvents(fireEvents);
-                doFetch(request, fireEvents);
-            });
+            request.setMarkerMode(errorMarkerMode);
+            request.setExpandedSeverities(expandedSeverities);
+            request.setFireEvents(fireEvents);
+            doFetch(request, fireEvents);
+        });
+    }
+
+
+    private boolean isSameStreamAndPartAsLastTime() {
+        if (lastResult != null) {
+            return Objects.equals(currentMetaId, lastResult.getSourceLocation().getId())
+                    && Objects.equals(currentPartNo, lastResult.getSourceLocation().getId());
+        } else {
+            return false;
         }
     }
+
 
     private void doFetch(final FetchDataRequest request, final boolean fireEvents) {
         if (currentMetaId != null) {
@@ -821,7 +891,10 @@ public class DataPresenter extends MyPresenterWidget<DataPresenter.DataView> imp
 
         } else {
             // Highlight the appropriate link.
-            if (errorMarkerMode && ERROR.equals(streamType)) {
+            if (INFO.equals(lastTabName)) {
+                getView().getTabBar().selectTab(infoTab);
+                showHtmlPresenter();
+            } else if (errorMarkerMode && ERROR.equals(streamType)) {
                 getView().getTabBar().selectTab(errorTab);
                 showMarkerPresenter();
             } else if (META_DATA.equals(streamType)) {
@@ -851,6 +924,8 @@ public class DataPresenter extends MyPresenterWidget<DataPresenter.DataView> imp
             // Now we have changed tabs, ensure the nav visibility is right
             getView().refreshNavigator();
         }
+//        lastStreamType = streamType;
+        lastTabName = getView().getTabBar().getSelectedTab().getLabel();
     }
 
     private void showHtmlPresenter() {
@@ -875,7 +950,7 @@ public class DataPresenter extends MyPresenterWidget<DataPresenter.DataView> imp
 
         refreshTextPresenterContent();
 
-        refreshHtmlPresenterContent();
+        refreshMetaInfoPresenterContent(result.getSourceLocation().getId());
 
         getView().refreshNavigator();
 
@@ -893,8 +968,8 @@ public class DataPresenter extends MyPresenterWidget<DataPresenter.DataView> imp
         textPresenter.setControlsVisible(playButtonVisible);
     }
 
-    private void refreshHtmlPresenterContent() {
-        fetchMetaInfoData();
+    private void refreshMetaInfoPresenterContent(final long metaId) {
+        fetchMetaInfoData(metaId);
     }
 
     private void refreshHighlights(final AbstractFetchDataResult result) {
@@ -1044,12 +1119,12 @@ public class DataPresenter extends MyPresenterWidget<DataPresenter.DataView> imp
         return lastResult;
     }
 
-    private void fetchMetaInfoData() {
+    private void fetchMetaInfoData(long metaId) {
         final Rest<List<DataInfoSection>> rest = restFactory.create();
         rest
                 .onSuccess(this::handleMetaInfoResult)
                 .call(DATA_RESOURCE)
-                .info(currentMetaId);
+                .info(metaId);
     }
 
     private void handleMetaInfoResult(final List<DataInfoSection> dataInfoSections) {
