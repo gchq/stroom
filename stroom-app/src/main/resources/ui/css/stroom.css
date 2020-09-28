@@ -416,6 +416,11 @@ td {
 	background: #bbdefb !important;
 }
 
+.statusIcon {
+	padding-top: 1px !important;
+	cursor: default !important;
+}
+
 .dataTable td {
 	cursor: pointer;
 	overflow: hidden !important;

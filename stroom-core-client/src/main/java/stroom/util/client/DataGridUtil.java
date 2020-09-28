@@ -8,7 +8,6 @@ import stroom.data.grid.client.OrderByColumn;
 import stroom.svg.client.SvgPreset;
 import stroom.util.shared.BaseCriteria;
 import stroom.util.shared.Expander;
-import stroom.util.shared.Sort;
 import stroom.util.shared.TreeAction;
 
 import com.google.gwt.cell.client.Cell;
@@ -107,9 +106,12 @@ public class DataGridUtil {
         };
     }
 
-    public static <T_ROW> Column<T_ROW, SvgPreset> svgPresetColumn(
+    /**
+     * Non-clickable SVG icon column
+     */
+    public static <T_ROW> Column<T_ROW, SvgPreset> svgStatusColumn(
             final Function<T_ROW, SvgPreset> cellValueExtractor) {
-        return column(cellValueExtractor, SvgCell::new);
+        return column(cellValueExtractor, () -> new SvgCell(false));
     }
 
     public static <T_ROW> Column<T_ROW, SafeHtml> safeHtmlColumn(

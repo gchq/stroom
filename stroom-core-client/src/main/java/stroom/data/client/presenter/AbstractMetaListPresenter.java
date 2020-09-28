@@ -18,7 +18,6 @@ package stroom.data.client.presenter;
 
 import stroom.alert.client.event.AlertEvent;
 import stroom.alert.client.event.ConfirmEvent;
-import stroom.cell.info.client.InfoColumn;
 import stroom.cell.tickbox.client.TickBoxCell;
 import stroom.cell.tickbox.shared.TickBoxState;
 import stroom.core.client.LocationManager;
@@ -40,7 +39,6 @@ import stroom.meta.shared.FindMetaCriteria;
 import stroom.meta.shared.Meta;
 import stroom.meta.shared.MetaExpressionUtil;
 import stroom.meta.shared.MetaFields;
-import stroom.data.shared.DataInfoSection;
 import stroom.meta.shared.MetaResource;
 import stroom.meta.shared.MetaRow;
 import stroom.meta.shared.Status;
@@ -60,6 +58,7 @@ import stroom.query.api.v2.ExpressionUtil;
 import stroom.security.shared.DocumentPermissionNames;
 import stroom.svg.client.SvgPreset;
 import stroom.svg.client.SvgPresets;
+import stroom.util.client.DataGridUtil;
 import stroom.util.shared.PageRequest;
 import stroom.util.shared.ResourceGeneration;
 import stroom.util.shared.ResultPage;
@@ -67,11 +66,7 @@ import stroom.util.shared.Selection;
 import stroom.util.shared.Severity;
 import stroom.widget.button.client.ButtonView;
 import stroom.widget.customdatebox.client.ClientDateUtil;
-import stroom.widget.popup.client.event.ShowPopupEvent;
-import stroom.widget.popup.client.presenter.PopupPosition;
-import stroom.widget.popup.client.presenter.PopupView.PopupType;
 import stroom.widget.tooltip.client.presenter.TooltipPresenter;
-import stroom.widget.tooltip.client.presenter.TooltipUtil;
 import stroom.widget.util.client.MultiSelectionModel;
 
 import com.google.gwt.cell.client.TextCell;
@@ -301,62 +296,25 @@ public abstract class AbstractMetaListPresenter extends MyPresenterWidget<DataGr
         });
     }
 
-    private SvgPreset getInfoCellState(final MetaRow object) {
+    private SvgPreset getInfoCellState(final MetaRow metaRow) {
         // Should only show unlocked ones by default
-        final Status status = object.getMeta().getStatus();
+        final Status status = metaRow.getMeta().getStatus();
         if (Status.UNLOCKED.equals(status)) {
-            return SvgPresets.INFO.title("Info (Unlocked)");
+            return SvgPresets.UNLOCKED_GREEN.title("Unlocked Stream");
         } else if (Status.DELETED.equals(status)) {
-            return SvgPresets.INFO_DELETED.title("Info (Deleted)");
+            return SvgPresets.DELETED.title("Deleted Stream");
         } else if (Status.LOCKED.equals(status)) {
-            return SvgPresets.INFO_WARNING.title("Info (Locked)");
+            return SvgPresets.LOCKED_AMBER.title("Locked Stream");
         } else {
             throw new RuntimeException("Unknown status " + status);
         }
     }
 
     void addInfoColumn() {
-        // Info column.
-        final InfoColumn<MetaRow> infoColumn = new InfoColumn<MetaRow>() {
-            @Override
-            public SvgPreset getValue(final MetaRow object) {
-                return getInfoCellState(object);
-            }
+        final Column<MetaRow, SvgPreset> infoColumn = DataGridUtil.svgStatusColumn(this::getInfoCellState);
 
-            @Override
-            protected void showInfo(final MetaRow row, final int x, final int y) {
-                final Rest<List<DataInfoSection>> rest = restFactory.create();
-                rest
-                        .onSuccess(result -> {
-                            final TooltipUtil.Builder builder = TooltipUtil.builder();
+        infoColumn.setCellStyleNames("statusIcon");
 
-                            builder.addTable(tableBuilder -> {
-                                for (int i = 0; i < result.size(); i++) {
-                                    final DataInfoSection section = result.get(i);
-                                    tableBuilder.addHeaderRow(section.getTitle());
-                                    section.getEntries()
-                                            .forEach(entry ->
-                                                    tableBuilder.addRow(entry.getKey(), entry.getValue()));
-                                    if (i < result.size() - 1) {
-                                        tableBuilder.addBlankRow();
-                                    }
-                                }
-                                return tableBuilder.build();
-                            });
-
-                            tooltipPresenter.setHTML(builder.build());
-                            final PopupPosition popupPosition = new PopupPosition(x, y);
-                            ShowPopupEvent.fire(
-                                    AbstractMetaListPresenter.this,
-                                    tooltipPresenter,
-                                    PopupType.POPUP,
-                                    popupPosition,
-                                    null);
-                        })
-                        .call(DATA_RESOURCE)
-                        .info(row.getMeta().getId());
-            }
-        };
         getView().addColumn(infoColumn, "<br/>", ColumnSizeConstants.ICON_COL);
     }
 

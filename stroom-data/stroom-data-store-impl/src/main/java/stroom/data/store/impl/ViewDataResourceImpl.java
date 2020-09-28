@@ -106,7 +106,7 @@ class ViewDataResourceImpl implements ViewDataResource {
             return securityContext.secureResult(permissionName, () -> {
 
                 final Set<String> childTypes = dataFetcher.getAvailableChildStreamTypes(id, partNo);
-                LOGGER.info(() ->
+                LOGGER.debug(() ->
                         LogUtil.message("childTypes {}",
                                 childTypes.stream()
                                         .sorted().collect(Collectors.joining(","))));

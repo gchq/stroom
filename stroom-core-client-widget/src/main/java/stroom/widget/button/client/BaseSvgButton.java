@@ -41,7 +41,7 @@ abstract class BaseSvgButton extends ButtonBase implements ButtonView {
      * Used to decide whether to allow clicks to propagate up to the superclass
      * or container elements.
      */
-    private boolean allowClick;
+    private boolean allowClickPropagation;
 
     BaseSvgButton(final SvgPreset preset) {
         super(Document.get().createDivElement());
@@ -113,7 +113,7 @@ abstract class BaseSvgButton extends ButtonBase implements ButtonView {
             case Event.ONCLICK:
                 // If clicks are currently disallowed, keep it from bubbling or
                 // being passed to the superclass.
-                if (!allowClick) {
+                if (!allowClickPropagation) {
                     event.stopPropagation();
                     return;
                 }
@@ -216,7 +216,7 @@ abstract class BaseSvgButton extends ButtonBase implements ButtonView {
         // Allow the click we're about to synthesize to pass through to the
         // superclass and containing elements. Element.dispatchEvent() is
         // synchronous, so we simply set and clear the flag within this method.
-        allowClick = true;
+        allowClickPropagation = true;
 
         // Mouse coordinates are not always available (e.g., when the click is
         // caused by a keyboard event).
@@ -232,7 +232,7 @@ abstract class BaseSvgButton extends ButtonBase implements ButtonView {
                 false);
         getElement().dispatchEvent(evt);
 
-        allowClick = false;
+        allowClickPropagation = false;
     }
 
     private void setHovering(final boolean hovering) {
