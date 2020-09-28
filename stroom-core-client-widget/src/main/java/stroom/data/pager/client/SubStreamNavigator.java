@@ -124,7 +124,7 @@ public class SubStreamNavigator extends Composite {
 
         refresh = SvgButton.create(SvgPresets.REFRESH_BLUE);
 
-        setupButton(refresh, true, true);
+        setupButton(refresh, true, false);
 
     }
 
@@ -366,6 +366,12 @@ public class SubStreamNavigator extends Composite {
 //        lblOf.setText("?");
 //    }
     public void refresh() {
+        if (display != null) {
+            refresh.setVisible(display.areNavigationControlsVisible());
+        } else {
+            refresh.setVisible(false);
+        }
+
         refreshPartControls();
         refreshSegmentControls();
     }

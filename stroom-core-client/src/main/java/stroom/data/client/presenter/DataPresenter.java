@@ -199,7 +199,7 @@ public class DataPresenter extends MyPresenterWidget<DataPresenter.DataView> imp
 
         viewSourceBtn = view.addButton(SvgPresets.RAW.title("View source data"));
         viewSourceBtn.setEnabled(true);
-        viewSourceBtn.setVisible(true);
+        viewSourceBtn.setVisible(false);
         viewSourceBtn.addClickHandler(event -> {
             openSourcePresenter();
         });
@@ -236,6 +236,7 @@ public class DataPresenter extends MyPresenterWidget<DataPresenter.DataView> imp
         // that is bigger than our preview range
         final SourceLocation sourceLocation = SourceLocation.builder(currentMetaId)
                 .withPartNo(currentPartNo)
+                .withSegmentNumber(currentSegmentNo)
                 .withChildStreamType(currentChildDataType)
                 .build();
 

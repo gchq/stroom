@@ -53,6 +53,7 @@ public class DataViewImpl extends ViewImpl implements DataView {
 //    Pager dataPager;
     @UiField
     LayerContainer layerContainer;
+
     @Inject
     public DataViewImpl(final Binder binder) {
         widget = binder.createAndBindUi(this);
@@ -62,7 +63,7 @@ public class DataViewImpl extends ViewImpl implements DataView {
 //        rawBtn = SvgButton.create(SvgPresets.RAW.title("View Raw"));
 //        formattedBtn = SvgButton.create(SvgPresets.FORMAT.title("View Formatted"));
 
-        subStreamNavigator.setVisible(true);
+        subStreamNavigator.setVisible(false);
 //        dataNavigator.setDisplay(new HasCharacterData() {
 //            @Override
 //            public boolean isMultiPart() {
