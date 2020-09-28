@@ -112,6 +112,25 @@ public final class ModelStringUtil {
     }
 
     /**
+     * Experimental idea to show a size indicator next to the IEC size.
+     * Leaving it here in case it gets used.
+     */
+    public static String formatIECByteSizeStringWithSizeIndicator(final Long streamSize) {
+        final String val = formatIECByteSizeString(streamSize, false);
+        if (val.isEmpty()) {
+            return "";
+        } else if (val.endsWith("B")) {
+            return val + " ▎";
+        } else if (val.endsWith("K")) {
+            return val + " ▌";
+        } else if (val.endsWith("M")) {
+            return val + " ▊";
+        } else {
+            return val + " █";
+        }
+    }
+
+    /**
      * Return nice string like "25 B", "4 K", "45 M", etc.
      */
     public static String formatIECByteSizeString(final Long streamSize, final boolean stripTrailingZeros) {

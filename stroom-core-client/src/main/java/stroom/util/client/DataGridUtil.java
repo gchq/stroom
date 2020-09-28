@@ -2,9 +2,11 @@ package stroom.util.client;
 
 import stroom.cell.expander.client.ExpanderCell;
 import stroom.cell.info.client.SvgCell;
+import stroom.data.client.presenter.ColumnSizeConstants;
 import stroom.data.grid.client.DataGridView;
 import stroom.data.grid.client.EndColumn;
 import stroom.data.grid.client.OrderByColumn;
+import stroom.docref.HasDisplayValue;
 import stroom.svg.client.SvgPreset;
 import stroom.util.shared.BaseCriteria;
 import stroom.util.shared.Expander;
@@ -86,6 +88,17 @@ public class DataGridUtil {
                         isHighlightedPredicate.test(row));
     }
 
+    public static <T_ROW> Function<T_ROW, SafeHtml> colouredCellExtractor(
+            final Function<T_ROW, String> extractor,
+            final Function<String, String> valueToColourFunc) {
+
+        return row -> {
+            final String value = extractor.apply(row);
+            final String colourCode = valueToColourFunc.apply(value);
+            return SafeHtmlUtil.getColouredText(extractor.apply(row), colourCode);
+        };
+    }
+
 
     public static <T_ROW, T_CELL> Column<T_ROW, T_CELL> column(
             final Function<T_ROW, T_CELL> cellValueExtractor,
@@ -111,7 +124,9 @@ public class DataGridUtil {
      */
     public static <T_ROW> Column<T_ROW, SvgPreset> svgStatusColumn(
             final Function<T_ROW, SvgPreset> cellValueExtractor) {
-        return column(cellValueExtractor, () -> new SvgCell(false));
+        final Column<T_ROW, SvgPreset> column = column(cellValueExtractor, () -> new SvgCell(false));
+        column.setCellStyleNames("statusIcon");
+        return column;
     }
 
     public static <T_ROW> Column<T_ROW, SafeHtml> safeHtmlColumn(
@@ -144,6 +159,25 @@ public class DataGridUtil {
                 expanderChangeAction.run();
             }
         });
+        return expanderColumn;
+    }
+
+    public static <T_ROW> Column<T_ROW, Expander> expanderColumn(
+            final Function<T_ROW, Expander> expanderExtractor) {
+
+        Objects.requireNonNull(expanderExtractor);
+
+        // Explicit generics typing for GWT
+        final Column<T_ROW, Expander> expanderColumn = new Column<T_ROW, Expander>(new ExpanderCell()) {
+            @Override
+            public Expander getValue(final T_ROW row) {
+                if (row == null) {
+                    return null;
+                }
+                return expanderExtractor.apply(row);
+            }
+        };
+
         return expanderColumn;
     }
 
@@ -186,6 +220,26 @@ public class DataGridUtil {
                 expanderColumn(expanderExtractor, treeAction, onExpanderChange),
                 "",
                 width);
+    }
+
+    public static <T_VIEW extends DataGridView<T_ROW>, T_ROW> void addExpanderColumn(
+            final T_VIEW view,
+            final Function<T_ROW, Expander> expanderExtractor,
+            final int width) {
+        view.addColumn(
+                expanderColumn(expanderExtractor),
+                "",
+                width);
+    }
+
+    public static <T_VIEW extends DataGridView<T_ROW>, T_ROW> void addStatusIconColumn(
+            final T_VIEW view,
+            final Function<T_ROW, SvgPreset> statusIconExtractor) {
+
+        view.addColumn(
+                svgStatusColumn(statusIconExtractor),
+                "",
+                ColumnSizeConstants.ICON_COL);
     }
 
 //    public static <T_VIEW extends DataGridView<T_ROW>, T_ROW> void addResizableColumn(
@@ -350,6 +404,13 @@ public class DataGridUtil {
             this.isSorted = true;
             this.isSortableSupplier = () -> true;
             this.fieldName = Objects.requireNonNull(fieldName);
+            return this;
+        }
+
+        public ColumnBuilder<T_ROW, T_RAW_VAL, T_CELL_VAL, T_CELL> withSorting(final HasDisplayValue field) {
+            this.isSorted = true;
+            this.isSortableSupplier = () -> true;
+            this.fieldName = Objects.requireNonNull(field).getDisplayValue();
             return this;
         }
 
