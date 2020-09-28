@@ -88,14 +88,16 @@ class StreamMapCreator {
 
     private Values getData(final long longStreamId, final long longEventId, final Val[] storedData) {
         if (longStreamId != -1 && longEventId != -1) {
-            // Create a map to cache stream lookups. If we have cached more than a million streams then discard the map and start again to avoid using too much memory.
+            // Create a map to cache stream lookups. If we have cached more than a million streams then
+            // discard the map and start again to avoid using too much memory.
             if (fiteredStreamCache == null || fiteredStreamCache.size() > 1000000) {
                 fiteredStreamCache = new HashMap<>();
             }
 
             final Optional<Object> optional = fiteredStreamCache.computeIfAbsent(longStreamId, k -> {
                 try {
-                    // See if we can load the stream. We might get a StreamPermissionException if we aren't allowed to read from this stream.
+                    // See if we can load the stream. We might get a StreamPermissionException if we aren't
+                    // allowed to read from this stream.
                     return Optional.ofNullable(streamStore.loadStreamById(longStreamId));
                 } catch (final StreamPermissionException e) {
                     LOGGER.debug(e::getMessage, e);
@@ -107,7 +109,8 @@ class StreamMapCreator {
             });
 
             if (!optional.isPresent()) {
-                throw new ExtractionException("Stream not found with id=" + longStreamId);
+                // Likely stream has been deleted due to data retention rules so we can quietly ignore it
+                LOGGER.debug(() -> "Stream not found with id " + longStreamId);
             }
 
             final Object cached = optional.get();

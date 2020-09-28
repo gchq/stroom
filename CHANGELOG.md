@@ -7,6 +7,8 @@ and this project adheres to [Semantic Versioning](http://semver.org/).
 
 ## [Unreleased]
 
+* Issue **#1868** : Stop `Stream not found with id=nnn` errors during searching.
+
 
 ## [v6.1.15] - 2020-09-21
 
