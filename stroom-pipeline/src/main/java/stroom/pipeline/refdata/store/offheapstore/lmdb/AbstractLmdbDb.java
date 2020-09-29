@@ -57,6 +57,7 @@ import java.util.stream.StreamSupport;
  * <p>
  * See https://github.com/lmdbjava/lmdbjava/issues/81 for more information on the use/re-use
  * of the ByteBuffers passed to or returned from LMDBJava.
+ * See https://github.com/lmdbjava/lmdbjava/issues/119 for tips on improving performance.
  * <p>
  * Dos/Don'ts
  * ~~~~~~~~~~
