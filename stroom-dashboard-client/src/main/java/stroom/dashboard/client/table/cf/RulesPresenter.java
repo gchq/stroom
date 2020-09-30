@@ -27,12 +27,12 @@ import stroom.alert.client.event.ConfirmEvent;
 import stroom.dashboard.client.main.AbstractSettingsTabPresenter;
 import stroom.dashboard.shared.ComponentConfig;
 import stroom.dashboard.shared.ConditionalFormattingRule;
+import stroom.dashboard.shared.Field;
 import stroom.dashboard.shared.TableComponentSettings;
 import stroom.datasource.api.v2.DataSourceField;
 import stroom.document.client.event.DirtyEvent;
 import stroom.document.client.event.DirtyEvent.DirtyHandler;
 import stroom.document.client.event.HasDirtyHandlers;
-import stroom.query.client.ExpressionTreePresenter;
 import stroom.svg.client.SvgPresets;
 import stroom.widget.button.client.ButtonView;
 import stroom.widget.popup.client.event.HidePopupEvent;
@@ -43,6 +43,7 @@ import stroom.widget.popup.client.presenter.PopupView.PopupType;
 
 import java.util.ArrayList;
 import java.util.List;
+import java.util.function.Predicate;
 import java.util.stream.Collectors;
 
 public class RulesPresenter
@@ -53,6 +54,8 @@ public class RulesPresenter
     private final Provider<RulePresenter> editRulePresenterProvider;
 
     private List<DataSourceField> fields;
+//    private Map<String, String> fieldNameToIdMap; // column name => column id
+//    private Map<String, String> fieldIdToNameMap; // column id => column name
     private List<ConditionalFormattingRule> rules = new ArrayList<>();
 
     private final ButtonView addButton;
@@ -219,8 +222,23 @@ public class RulesPresenter
         final RulePresenter editRulePresenter = editRulePresenterProvider.get();
         editRulePresenter.read(existingRule, fields);
 
-        final PopupSize popupSize = new PopupSize(800, 400, 300, 300, 2000, 2000, true);
-        ShowPopupEvent.fire(RulesPresenter.this, editRulePresenter, PopupType.OK_CANCEL_DIALOG, popupSize, "Edit Rule", new PopupUiHandlers() {
+        final PopupSize popupSize = new PopupSize(
+                800,
+                400,
+                300,
+                300,
+                2000,
+                2000,
+                true);
+
+        ShowPopupEvent.fire(
+                RulesPresenter.this,
+                editRulePresenter,
+                PopupType.OK_CANCEL_DIALOG,
+                popupSize,
+                "Edit Rule",
+                new PopupUiHandlers() {
+
             @Override
             public void onHideRequest(final boolean autoClose, final boolean ok) {
                 if (ok) {
@@ -253,14 +271,21 @@ public class RulesPresenter
     public void read(final ComponentConfig componentConfig) {
         final TableComponentSettings settings = (TableComponentSettings) componentConfig.getSettings();
 
+        final Predicate<Field> nonSpecialFieldsPredicate = field -> !field.isSpecial();
+
+        // We have to deal in field names (aka column names) here as all the
+        // exp tree code only has a single field/term name so can't cope with working with
+        // ids and mapping to col name for the ui.
         this.fields = settings
                 .getFields()
                 .stream()
+                .filter(nonSpecialFieldsPredicate) // ignore the special EventId/StreamId
                 .map(field -> new DataSourceField.Builder()
                         .type(DataSourceField.DataSourceFieldType.INTEGER_FIELD)
                         .name(field.getName())
                         .build())
                 .collect(Collectors.toList());
+
         if (settings.getConditionalFormattingRules() != null) {
             this.rules = settings.getConditionalFormattingRules();
         } else {

@@ -17,7 +17,6 @@
 
 package stroom.dashboard.client.table.cf;
 
-import com.google.gwt.regexp.shared.MatchResult;
 import com.google.gwt.regexp.shared.RegExp;
 import stroom.datasource.api.v2.DataSourceField;
 import stroom.query.api.v2.ExpressionItem;
@@ -30,10 +29,10 @@ import java.util.Map;
 public class ExpressionMatcher {
     private static final String DELIMITER = ",";
 
-    private final Map<String, DataSourceField> fieldMap;
+    private final Map<String, DataSourceField> fieldNameToDsFieldMap;
 
-    public ExpressionMatcher(final Map<String, DataSourceField> fieldMap) {
-        this.fieldMap = fieldMap;
+    public ExpressionMatcher(final Map<String, DataSourceField> fieldNameToDsFieldMap) {
+        this.fieldNameToDsFieldMap = fieldNameToDsFieldMap;
     }
 
     public boolean match(final Map<String, Object> attributeMap, final ExpressionItem item) {
@@ -46,7 +45,8 @@ public class ExpressionMatcher {
 
     private boolean matchItem(final Map<String, Object> attributeMap, final ExpressionItem item) {
         if (!item.enabled()) {
-            // If the child item is not enabled then return and keep trying to match with other parts of the expression.
+            // If the child item is not enabled then return and keep trying to match with other parts
+            // of the expression.
             return true;
         }
 
@@ -59,7 +59,8 @@ public class ExpressionMatcher {
         }
     }
 
-    private boolean matchOperator(final Map<String, Object> attributeMap, final ExpressionOperator operator) {
+    private boolean matchOperator(final Map<String, Object> attributeMap,
+                                  final ExpressionOperator operator) {
         if (operator.getChildren() == null || operator.getChildren().size() == 0) {
             return true;
         }
@@ -80,13 +81,15 @@ public class ExpressionMatcher {
                 }
                 return false;
             case NOT:
-                return operator.getChildren().size() == 1 && !matchItem(attributeMap, operator.getChildren().get(0));
+                return operator.getChildren().size() == 1
+                        && !matchItem(attributeMap, operator.getChildren().get(0));
             default:
                 throw new MatchException("Unexpected operator type");
         }
     }
 
     private boolean matchTerm(final Map<String, Object> attributeMap, final ExpressionTerm term) {
+        // The term field is the column name, NOT the index field name
         String termField = term.getField();
         final Condition condition = term.getCondition();
         String termValue = term.getValue();
@@ -104,7 +107,7 @@ public class ExpressionMatcher {
         if (termField == null || termField.length() == 0) {
             throw new MatchException("Field not set");
         }
-        final DataSourceField field = fieldMap.get(termField);
+        final DataSourceField field = fieldNameToDsFieldMap.get(termField);
         if (field == null) {
             throw new MatchException("Field not found in index: " + termField);
         }

@@ -88,4 +88,48 @@ public final class ExpressionUtil {
             }
         }
     }
+
+    public interface ExpressionOperatorVisitor {
+        void accept(final ExpressionOperator parent,
+                    final int childOffset,
+                    final ExpressionOperator operator);
+    }
+
+    public interface ExpressionTermVisitor {
+        void accept(final ExpressionOperator parent,
+                    final int childOffset,
+                    final ExpressionTerm operator);
+    }
+
+    public static void walkExpressionTree(final ExpressionItem expressionItem,
+                                          final ExpressionOperatorVisitor operatorVisitor,
+                                          final ExpressionTermVisitor termVisitor) {
+        walkExpressionTree(null, -1, expressionItem, operatorVisitor, termVisitor);
+    }
+
+    public static void walkExpressionTree(final ExpressionOperator parentOperator,
+                                          final int childOffset,
+                                          final ExpressionItem expressionItem,
+                                          final ExpressionOperatorVisitor operatorVisitor,
+                                          final ExpressionTermVisitor termVisitor) {
+        if (expressionItem != null) {
+            if (expressionItem instanceof ExpressionOperator) {
+                final ExpressionOperator operator = (ExpressionOperator) expressionItem;
+                if (operatorVisitor != null) {
+                    operatorVisitor.accept(parentOperator, childOffset, operator);
+                }
+                if (operator.getChildren() != null) {
+                    for (int i = 0; i < operator.getChildren().size(); i++) {
+                        final ExpressionItem childItem = operator.getChildren().get(i);
+                        walkExpressionTree(operator, i, childItem, operatorVisitor, termVisitor);
+                    }
+                }
+            } else if (expressionItem instanceof ExpressionTerm) {
+                final ExpressionTerm term = (ExpressionTerm) expressionItem;
+                if (termVisitor != null) {
+                    termVisitor.accept(parentOperator, childOffset, term);
+                }
+            }
+        }
+    }
 }
