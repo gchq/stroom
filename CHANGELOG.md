@@ -7,6 +7,7 @@ and this project adheres to [Semantic Versioning](http://semver.org/).
 
 ## [Unreleased]
 
+* Make dashboard table settings popup bigger to accomodate the conditional formatting.
 * Issue **#1868** : Stop `Stream not found with id=nnn` errors during searching.
 
 
