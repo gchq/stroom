@@ -292,7 +292,12 @@ public class TextPresenter extends AbstractComponentPresenter<TextPresenter.Text
 
                         // If we have a source highlight then use it.
                         if (highlight != null) {
-                            currentPageRange = new OffsetRange<>(highlight.getFrom().getLineNo() - 1L, (long) highlight.getTo().getLineNo() - highlight.getFrom().getLineNo());
+                            // lines 2=>3 means lines 2 & 3, lines 4=>4 means line 4
+                            // -1 to offset to make zero based
+                            // +1 to length to make inclusive
+                            currentPageRange = new OffsetRange<>(
+                                    highlight.getFrom().getLineNo() - 1L,
+                                    (long) highlight.getTo().getLineNo() - highlight.getFrom().getLineNo() + 1);
                         } else {
                             currentPageRange = new OffsetRange<>(sourceLocation.getRecordNo() - 1L, 1L);
                         }
