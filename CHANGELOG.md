@@ -7,6 +7,9 @@ and this project adheres to [Semantic Versioning](http://semver.org/).
 
 ## [Unreleased]
 
+
+## [v6.1.16] - 2020-09-30
+
 * Change names of hidden special table columns on dashboards to avoid name clashes.
 
 * Make dashboard table settings popup bigger to accomodate the conditional formatting.
@@ -2210,7 +2213,8 @@ and this project adheres to [Semantic Versioning](http://semver.org/).
 
 * Issue **#202** : Initial release of the new data retention policy functionality.
 
-[Unreleased]: https://github.com/gchq/stroom/compare/v6.1.15...6.1
+[Unreleased]: https://github.com/gchq/stroom/compare/v6.1.16...6.1
+[v6.1.16]: https://github.com/gchq/stroom/compare/v6.1.15...v6.1.16
 [v6.1.15]: https://github.com/gchq/stroom/compare/v6.1.14...v6.1.15
 [v6.1.14]: https://github.com/gchq/stroom/compare/v6.1.13...v6.1.14
 [v6.1.13]: https://github.com/gchq/stroom/compare/v6.1.12...v6.1.13
