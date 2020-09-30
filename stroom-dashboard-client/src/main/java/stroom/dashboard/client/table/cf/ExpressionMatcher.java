@@ -17,14 +17,18 @@
 
 package stroom.dashboard.client.table.cf;
 
+import com.google.gwt.core.client.GWT;
 import com.google.gwt.regexp.shared.RegExp;
 import stroom.datasource.api.v2.DataSourceField;
 import stroom.query.api.v2.ExpressionItem;
 import stroom.query.api.v2.ExpressionOperator;
 import stroom.query.api.v2.ExpressionTerm;
 import stroom.query.api.v2.ExpressionTerm.Condition;
+import stroom.util.shared.CompareUtil;
 
+import java.math.BigDecimal;
 import java.util.Map;
+import java.util.Objects;
 
 public class ExpressionMatcher {
     private static final String DELIMITER = ",";
@@ -123,55 +127,9 @@ public class ExpressionMatcher {
 
         // Create a query based on the field type and condition.
         if (field.getType().isNumeric()) {
-            switch (condition) {
-                case EQUALS: {
-                    return isStringMatch(termValue, attribute);
-//                    final long num1 = getNumber(fieldName, attribute);
-//                    final long num2 = getNumber(fieldName, termValue);
-//                    return num1 == num2;
-                }
-                case CONTAINS: {
-                    final long num1 = getNumber(fieldName, attribute);
-                    final long num2 = getNumber(fieldName, termValue);
-                    return num1 == num2;
-                }
-                case GREATER_THAN: {
-                    final long num1 = getNumber(fieldName, attribute);
-                    final long num2 = getNumber(fieldName, termValue);
-                    return num1 > num2;
-                }
-                case GREATER_THAN_OR_EQUAL_TO: {
-                    final long num1 = getNumber(fieldName, attribute);
-                    final long num2 = getNumber(fieldName, termValue);
-                    return num1 >= num2;
-                }
-                case LESS_THAN: {
-                    final long num1 = getNumber(fieldName, attribute);
-                    final long num2 = getNumber(fieldName, termValue);
-                    return num1 < num2;
-                }
-                case LESS_THAN_OR_EQUAL_TO: {
-                    final long num1 = getNumber(fieldName, attribute);
-                    final long num2 = getNumber(fieldName, termValue);
-                    return num1 <= num2;
-                }
-                case BETWEEN: {
-                    final long[] between = getNumbers(fieldName, termValue);
-                    if (between.length != 2) {
-                        throw new MatchException("2 numbers needed for between query");
-                    }
-                    if (between[0] >= between[1]) {
-                        throw new MatchException("From number must lower than to number");
-                    }
-                    final long num = getNumber(fieldName, attribute);
-                    return num >= between[0] && num <= between[1];
-                }
-                case IN:
-                    return isNumericIn(fieldName, termValue, attribute);
-                default:
-                    throw new MatchException("Unexpected condition '" + condition.getDisplayValue() + "' for "
-                            + field.getType().getDisplayValue() + " field type");
-            }
+            return matchNumericField(condition, termValue, field, fieldName, attribute);
+        } else if (DataSourceField.DataSourceFieldType.DATE_FIELD.equals(field.getType())) {
+            return matchDateField(condition, termValue, field, fieldName, attribute);
         } else {
             switch (condition) {
                 case EQUALS:
@@ -187,11 +145,117 @@ public class ExpressionMatcher {
         }
     }
 
+    private boolean matchDateField(final Condition condition, final String termValue, final DataSourceField field, final String fieldName, final Object attribute) {
+        switch (condition) {
+            case EQUALS: {
+                final BigDecimal num1 = getNumber(fieldName, attribute);
+                final BigDecimal num2 = getNumber(fieldName, termValue);
+                return Objects.equals(num1, num2);
+            }
+            case CONTAINS: {
+                final BigDecimal num1 = getNumber(fieldName, attribute);
+                final BigDecimal num2 = getNumber(fieldName, termValue);
+                return Objects.equals(num1, num2);
+            }
+            case GREATER_THAN: {
+                final BigDecimal num1 = getNumber(fieldName, attribute);
+                final BigDecimal num2 = getNumber(fieldName, termValue);
+                return CompareUtil.compareBigDecimal(num1, num2) > 0;
+            }
+            case GREATER_THAN_OR_EQUAL_TO: {
+                final BigDecimal num1 = getNumber(fieldName, attribute);
+                final BigDecimal num2 = getNumber(fieldName, termValue);
+                return CompareUtil.compareBigDecimal(num1, num2) >= 0;
+            }
+            case LESS_THAN: {
+                final BigDecimal num1 = getNumber(fieldName, attribute);
+                final BigDecimal num2 = getNumber(fieldName, termValue);
+                return CompareUtil.compareBigDecimal(num1, num2) < 0;
+            }
+            case LESS_THAN_OR_EQUAL_TO: {
+                final BigDecimal num1 = getNumber(fieldName, attribute);
+                final BigDecimal num2 = getNumber(fieldName, termValue);
+                return CompareUtil.compareBigDecimal(num1, num2) <= 0;
+            }
+            case BETWEEN: {
+                final BigDecimal[] between = getNumbers(fieldName, termValue);
+                if (between.length != 2) {
+                    throw new MatchException("2 numbers needed for between query");
+                }
+                if (CompareUtil.compareBigDecimal(between[0], between[1]) >= 0) {
+                    throw new MatchException("From number must be lower than to number");
+                }
+                final BigDecimal num = getNumber(fieldName, attribute);
+                return CompareUtil.compareBigDecimal(num, between[0]) >= 0
+                        && CompareUtil.compareBigDecimal(num, between[1]) <= 0;
+            }
+            default:
+                throw new MatchException("Unexpected condition '" + condition.getDisplayValue() + "' for "
+                        + field.getType().getDisplayValue() + " field type");
+        }
+    }
+
+    private boolean matchNumericField(final Condition condition, final String termValue, final DataSourceField field, final String fieldName, final Object attribute) {
+        switch (condition) {
+            case EQUALS: {
+                final BigDecimal num1 = getNumber(fieldName, attribute);
+                final BigDecimal num2 = getNumber(fieldName, termValue);
+                return Objects.equals(num1, num2);
+            }
+            case CONTAINS: {
+                final BigDecimal num1 = getNumber(fieldName, attribute);
+                final BigDecimal num2 = getNumber(fieldName, termValue);
+                return Objects.equals(num1, num2);
+            }
+            case GREATER_THAN: {
+                final BigDecimal num1 = getNumber(fieldName, attribute);
+                final BigDecimal num2 = getNumber(fieldName, termValue);
+                int compVal = CompareUtil.compareBigDecimal(num1, num2);
+
+                GWT.log(num1 + " " + num2 + " " + compVal);
+
+                return compVal > 0;
+            }
+            case GREATER_THAN_OR_EQUAL_TO: {
+                final BigDecimal num1 = getNumber(fieldName, attribute);
+                final BigDecimal num2 = getNumber(fieldName, termValue);
+                return CompareUtil.compareBigDecimal(num1, num2) >= 0;
+            }
+            case LESS_THAN: {
+                final BigDecimal num1 = getNumber(fieldName, attribute);
+                final BigDecimal num2 = getNumber(fieldName, termValue);
+                return CompareUtil.compareBigDecimal(num1, num2) < 0;
+            }
+            case LESS_THAN_OR_EQUAL_TO: {
+                final BigDecimal num1 = getNumber(fieldName, attribute);
+                final BigDecimal num2 = getNumber(fieldName, termValue);
+                return CompareUtil.compareBigDecimal(num1, num2) <= 0;
+            }
+            case BETWEEN: {
+                final BigDecimal[] between = getNumbers(fieldName, termValue);
+                if (between.length != 2) {
+                    throw new MatchException("2 numbers needed for between query");
+                }
+                if (CompareUtil.compareBigDecimal(between[0], between[1]) >= 0) {
+                    throw new MatchException("From number must be lower than to number");
+                }
+                final BigDecimal num = getNumber(fieldName, attribute);
+                return CompareUtil.compareBigDecimal(num, between[0]) >= 0
+                        && CompareUtil.compareBigDecimal(num, between[1]) <= 0;
+            }
+            case IN:
+                return isNumericIn(fieldName, termValue, attribute);
+            default:
+                throw new MatchException("Unexpected condition '" + condition.getDisplayValue() + "' for "
+                        + field.getType().getDisplayValue() + " field type");
+        }
+    }
+
     private boolean isNumericIn(final String fieldName, final Object termValue, final Object attribute) {
-        final long num = getNumber(fieldName, attribute);
-        final long[] in = getNumbers(fieldName, termValue);
-        for (final long n : in) {
-            if (n == num) {
+        final BigDecimal num = getNumber(fieldName, attribute);
+        final BigDecimal[] in = getNumbers(fieldName, termValue);
+        for (final BigDecimal n : in) {
+            if (Objects.equals(n, num)) {
                 return true;
             }
         }
@@ -218,21 +282,23 @@ public class ExpressionMatcher {
         return termValue.equals(attribute.toString());
     }
 
-    private long getNumber(final String fieldName, final Object value) {
+    private BigDecimal getNumber(final String fieldName, final Object value) {
         try {
             if (value instanceof Long) {
-                return (Long) value;
+                return BigDecimal.valueOf((long) value);
+            } else if (value instanceof Double) {
+                return BigDecimal.valueOf((Double) value);
             }
-            return Long.parseLong(value.toString());
+            return new BigDecimal(value.toString());
         } catch (final NumberFormatException e) {
             throw new MatchException(
                     "Expected a numeric value for field \"" + fieldName + "\" but was given string \"" + value + "\"");
         }
     }
 
-    private long[] getNumbers(final String fieldName, final Object value) {
+    private BigDecimal[] getNumbers(final String fieldName, final Object value) {
         final String[] values = value.toString().split(DELIMITER);
-        final long[] numbers = new long[values.length];
+        final BigDecimal[] numbers = new BigDecimal[values.length];
         for (int i = 0; i < values.length; i++) {
             numbers[i] = getNumber(fieldName, values[i].trim());
         }

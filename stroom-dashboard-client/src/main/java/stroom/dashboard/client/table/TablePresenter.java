@@ -102,6 +102,7 @@ import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Objects;
+import java.util.Optional;
 import java.util.Set;
 import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.stream.Collectors;
@@ -490,6 +491,66 @@ public class TablePresenter extends AbstractComponentPresenter<TableView>
         ignoreRangeChange = false;
     }
 
+    public static DataSourceField buildDsField(final Field field) {
+        Type colType = Optional.ofNullable(field.getFormat())
+                .map(Format::getType)
+                .orElse(Type.GENERAL);
+
+        try {
+            final DataSourceFieldType type;
+            switch (colType) {
+                case NUMBER:
+                    type = DataSourceFieldType.DOUBLE_FIELD;
+                    break;
+                case DATE_TIME:
+                    type = DataSourceFieldType.DATE_FIELD;
+                    break;
+                default:
+                    type = DataSourceFieldType.TEXT_FIELD;
+                    break;
+            }
+
+            final ExpressionTerm.Condition[] conditions;
+            switch (colType) {
+                case NUMBER:
+                    conditions = new ExpressionTerm.Condition[]{
+                            ExpressionTerm.Condition.IN,
+                            ExpressionTerm.Condition.CONTAINS,
+                            ExpressionTerm.Condition.EQUALS,
+                            ExpressionTerm.Condition.GREATER_THAN,
+                            ExpressionTerm.Condition.GREATER_THAN_OR_EQUAL_TO,
+                            ExpressionTerm.Condition.LESS_THAN,
+                            ExpressionTerm.Condition.LESS_THAN_OR_EQUAL_TO };
+                    break;
+                case DATE_TIME:
+                    conditions = new ExpressionTerm.Condition[]{
+                            ExpressionTerm.Condition.BETWEEN,
+                            ExpressionTerm.Condition.EQUALS,
+                            ExpressionTerm.Condition.GREATER_THAN,
+                            ExpressionTerm.Condition.GREATER_THAN_OR_EQUAL_TO,
+                            ExpressionTerm.Condition.LESS_THAN,
+                            ExpressionTerm.Condition.LESS_THAN_OR_EQUAL_TO };
+                    break;
+                default:
+                    conditions = new ExpressionTerm.Condition[]{
+                            ExpressionTerm.Condition.IN,
+                            ExpressionTerm.Condition.CONTAINS,
+                            ExpressionTerm.Condition.EQUALS};
+                    break;
+            }
+
+            return new DataSourceField
+                    .Builder()
+                    .name(field.getName())
+                    .type(type)
+                    .addConditions(conditions)
+                    .build();
+        } catch (Exception e) {
+            GWT.log(e.getMessage());
+            throw new RuntimeException(e);
+        }
+    }
+
     private List<TableRow> processData(final List<Field> fields, final List<Row> values) {
         // See if any fields have more than 1 level. If they do then we will add
         // an expander column.
@@ -512,17 +573,18 @@ public class TablePresenter extends AbstractComponentPresenter<TableView>
         final Map<String, DataSourceField> nonSpecialNameToFieldMap = tableSettings.getFields()
                 .stream()
                 .filter(field -> !field.isSpecial())
-                .collect(Collectors.toMap(Field::getName, field -> new DataSourceField
-                        .Builder()
-                        .name(field.getName())
-                        .type(DataSourceFieldType.INTEGER_FIELD)
-                        .addConditions(
-                                ExpressionTerm.Condition.EQUALS,
-                                ExpressionTerm.Condition.GREATER_THAN,
-                                ExpressionTerm.Condition.GREATER_THAN_OR_EQUAL_TO,
-                                ExpressionTerm.Condition.LESS_THAN,
-                                ExpressionTerm.Condition.LESS_THAN_OR_EQUAL_TO)
-                        .build()));
+                .collect(Collectors.toMap(Field::getName, TablePresenter::buildDsField));
+//                .collect(Collectors.toMap(Field::getName, field -> new DataSourceField
+//                        .Builder()
+//                        .name(field.getName())
+//                        .type(DataSourceFieldType.DOUBLE_FIELD)
+//                        .addConditions(
+//                                ExpressionTerm.Condition.EQUALS,
+//                                ExpressionTerm.Condition.GREATER_THAN,
+//                                ExpressionTerm.Condition.GREATER_THAN_OR_EQUAL_TO,
+//                                ExpressionTerm.Condition.LESS_THAN,
+//                                ExpressionTerm.Condition.LESS_THAN_OR_EQUAL_TO)
+//                        .build()));
         final ExpressionMatcher expressionMatcher = new ExpressionMatcher(nonSpecialNameToFieldMap);
 
         final List<TableRow> processed = new ArrayList<>(values.size());
@@ -782,17 +844,11 @@ public class TablePresenter extends AbstractComponentPresenter<TableView>
                 final DataSourceField indexField = dataSourceFieldsMap.get(indexFieldName);
                 if (indexField != null) {
                     requiredSpecialDsFields.add(indexField);
-
-                    // Obfuscate the name to avoid name classes with user's names
-                    final String obfuscatedColumnName = IndexConstants.generateObfuscatedColumnName(indexFieldName);
                     final Field specialField = buildSpecialField(indexFieldName);
                     requiredSpecialFields.add(specialField);
                 }
             }
         }
-        GWT.log("foundSpecialFields" + requiredSpecialDsFields.stream()
-                .map(DataSourceField::getName)
-                .collect(Collectors.joining(",")));
 
         // If the fields we want to make special do exist in the current data source then
         // add them.
@@ -812,15 +868,15 @@ public class TablePresenter extends AbstractComponentPresenter<TableView>
                     tableSettings.getFields().add(field));
         }
 
-        GWT.log(tableSettings.getFields().stream()
-                .map(field ->
-                        String.join(
-                                ", ",
-                                field.getId(),
-                                field.getName(),
-                                Boolean.toString(field.isVisible()),
-                                Boolean.toString(field.isSpecial())))
-                .collect(Collectors.joining("\n")));
+//        GWT.log(tableSettings.getFields().stream()
+//                .map(field ->
+//                        String.join(
+//                                ", ",
+//                                field.getId(),
+//                                field.getName(),
+//                                Boolean.toString(field.isVisible()),
+//                                Boolean.toString(field.isSpecial())))
+//                .collect(Collectors.joining("\n")));
     }
 
     public static Field buildSpecialField(final String indexFieldName) {

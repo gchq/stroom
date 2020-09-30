@@ -16,6 +16,8 @@
 
 package stroom.util.shared;
 
+import java.math.BigDecimal;
+
 public final class CompareUtil {
     private CompareUtil() {
     }
@@ -70,5 +72,18 @@ public final class CompareUtil {
             return +1;
         }
         return l1.compareToIgnoreCase(l2);
+    }
+
+    public static int compareBigDecimal(final BigDecimal val1, final BigDecimal val2) {
+        if (val1 == null && val2 == null) {
+            return 0;
+        }
+        if (val1 == null) {
+            return -1;
+        }
+        if (val2 == null) {
+            return +1;
+        }
+        return val1.compareTo(val2);
     }
 }
