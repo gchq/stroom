@@ -25,6 +25,7 @@ import stroom.query.api.v2.ExpressionOperator;
 import stroom.query.api.v2.ExpressionTerm;
 import stroom.query.api.v2.ExpressionTerm.Condition;
 import stroom.util.shared.CompareUtil;
+import stroom.widget.customdatebox.client.ClientDateUtil;
 
 import java.math.BigDecimal;
 import java.util.Map;
@@ -134,8 +135,9 @@ public class ExpressionMatcher {
             switch (condition) {
                 case EQUALS:
                     return isStringMatch(termValue, attribute);
+                // CONTAINS only supported for legacy content, not for use in UI
                 case CONTAINS:
-                    return isStringMatch(termValue, attribute);
+                    return isStringContainsMatch(termValue, attribute);
                 case IN:
                     return isIn(termValue, attribute);
                 default:
@@ -145,49 +147,48 @@ public class ExpressionMatcher {
         }
     }
 
-    private boolean matchDateField(final Condition condition, final String termValue, final DataSourceField field, final String fieldName, final Object attribute) {
+    private boolean matchDateField(final Condition condition,
+                                   final String termValue,
+                                   final DataSourceField field,
+                                   final String fieldName,
+                                   final Object attribute) {
         switch (condition) {
             case EQUALS: {
-                final BigDecimal num1 = getNumber(fieldName, attribute);
-                final BigDecimal num2 = getNumber(fieldName, termValue);
-                return Objects.equals(num1, num2);
-            }
-            case CONTAINS: {
-                final BigDecimal num1 = getNumber(fieldName, attribute);
-                final BigDecimal num2 = getNumber(fieldName, termValue);
+                final Long num1 = getDate(fieldName, attribute);
+                final Long num2 = getDate(fieldName, termValue);
                 return Objects.equals(num1, num2);
             }
             case GREATER_THAN: {
-                final BigDecimal num1 = getNumber(fieldName, attribute);
-                final BigDecimal num2 = getNumber(fieldName, termValue);
-                return CompareUtil.compareBigDecimal(num1, num2) > 0;
+                final Long num1 = getDate(fieldName, attribute);
+                final Long num2 = getDate(fieldName, termValue);
+                return CompareUtil.compareLong(num1, num2) > 0;
             }
             case GREATER_THAN_OR_EQUAL_TO: {
-                final BigDecimal num1 = getNumber(fieldName, attribute);
-                final BigDecimal num2 = getNumber(fieldName, termValue);
-                return CompareUtil.compareBigDecimal(num1, num2) >= 0;
+                final Long num1 = getDate(fieldName, attribute);
+                final Long num2 = getDate(fieldName, termValue);
+                return CompareUtil.compareLong(num1, num2) >= 0;
             }
             case LESS_THAN: {
-                final BigDecimal num1 = getNumber(fieldName, attribute);
-                final BigDecimal num2 = getNumber(fieldName, termValue);
-                return CompareUtil.compareBigDecimal(num1, num2) < 0;
+                final Long num1 = getDate(fieldName, attribute);
+                final Long num2 = getDate(fieldName, termValue);
+                return CompareUtil.compareLong(num1, num2) < 0;
             }
             case LESS_THAN_OR_EQUAL_TO: {
-                final BigDecimal num1 = getNumber(fieldName, attribute);
-                final BigDecimal num2 = getNumber(fieldName, termValue);
-                return CompareUtil.compareBigDecimal(num1, num2) <= 0;
+                final Long num1 = getDate(fieldName, attribute);
+                final Long num2 = getDate(fieldName, termValue);
+                return CompareUtil.compareLong(num1, num2) <= 0;
             }
             case BETWEEN: {
-                final BigDecimal[] between = getNumbers(fieldName, termValue);
+                final Long[] between = getDates(fieldName, termValue);
                 if (between.length != 2) {
                     throw new MatchException("2 numbers needed for between query");
                 }
-                if (CompareUtil.compareBigDecimal(between[0], between[1]) >= 0) {
+                if (CompareUtil.compareLong(between[0], between[1]) >= 0) {
                     throw new MatchException("From number must be lower than to number");
                 }
-                final BigDecimal num = getNumber(fieldName, attribute);
-                return CompareUtil.compareBigDecimal(num, between[0]) >= 0
-                        && CompareUtil.compareBigDecimal(num, between[1]) <= 0;
+                final Long num = getDate(fieldName, attribute);
+                return CompareUtil.compareLong(num, between[0]) >= 0
+                        && CompareUtil.compareLong(num, between[1]) <= 0;
             }
             default:
                 throw new MatchException("Unexpected condition '" + condition.getDisplayValue() + "' for "
@@ -195,14 +196,13 @@ public class ExpressionMatcher {
         }
     }
 
-    private boolean matchNumericField(final Condition condition, final String termValue, final DataSourceField field, final String fieldName, final Object attribute) {
+    private boolean matchNumericField(final Condition condition,
+                                      final String termValue,
+                                      final DataSourceField field,
+                                      final String fieldName,
+                                      final Object attribute) {
         switch (condition) {
             case EQUALS: {
-                final BigDecimal num1 = getNumber(fieldName, attribute);
-                final BigDecimal num2 = getNumber(fieldName, termValue);
-                return Objects.equals(num1, num2);
-            }
-            case CONTAINS: {
                 final BigDecimal num1 = getNumber(fieldName, attribute);
                 final BigDecimal num2 = getNumber(fieldName, termValue);
                 return Objects.equals(num1, num2);
@@ -282,28 +282,91 @@ public class ExpressionMatcher {
         return termValue.equals(attribute.toString());
     }
 
-    private BigDecimal getNumber(final String fieldName, final Object value) {
-        try {
-            if (value instanceof Long) {
-                return BigDecimal.valueOf((long) value);
-            } else if (value instanceof Double) {
-                return BigDecimal.valueOf((Double) value);
+    private boolean isStringContainsMatch(final String termValue, final Object attribute) {
+        if (attribute == null && termValue == null) {
+            return true;
+        } else if (attribute == null) {
+            return false;
+        } else if (termValue == null || termValue.isEmpty()) {
+            return true;
+        } else {
+            String attributeStr = attribute.toString();
+            if (termValue.contains("*")) {
+                final String pattern = termValue.replaceAll("\\*", ".*");
+                final RegExp regExp = RegExp.compile(pattern);
+                return regExp.test(attributeStr);
             }
-            return new BigDecimal(value.toString());
-        } catch (final NumberFormatException e) {
-            throw new MatchException(
-                    "Expected a numeric value for field \"" + fieldName + "\" but was given string \"" + value + "\"");
+            return attributeStr.contains(termValue);
+        }
+    }
+
+    private BigDecimal getNumber(final String fieldName, final Object value) {
+        if (value == null) {
+            return null;
+        } else {
+            try {
+                if (value instanceof Long) {
+                    return BigDecimal.valueOf((long) value);
+                } else if (value instanceof Double) {
+                    return BigDecimal.valueOf((Double) value);
+                }
+                return new BigDecimal(value.toString());
+            } catch (final NumberFormatException e) {
+                throw new MatchException(
+                        "Expected a numeric value for field \"" + fieldName + "\" but was given string \"" + value + "\"");
+            }
+        }
+    }
+
+    private Long getDate(final String fieldName, final Object value) {
+        if (value == null) {
+            return null;
+        } else {
+            if (value instanceof String) {
+                String valueStr = (String) value;
+                // remove spaces, e.g. between time and offset to ensure iso compliance
+                valueStr =valueStr.replace(" ", "");
+                try {
+                    return ClientDateUtil.fromISOString(valueStr);
+                } catch (final NumberFormatException e) {
+                    GWT.log("Unable to parse a date/time from value \"" + valueStr + "\"");
+                    throw new MatchException(
+                            "Unable to parse a date/time from value \"" + valueStr + "\"");
+                }
+            } else {
+                throw new MatchException(
+                        "Expected a string value for field \"" + fieldName + "\" but was given \"" + value
+                                + "\" of type " + value.getClass().getName());
+            }
         }
     }
 
     private BigDecimal[] getNumbers(final String fieldName, final Object value) {
-        final String[] values = value.toString().split(DELIMITER);
-        final BigDecimal[] numbers = new BigDecimal[values.length];
-        for (int i = 0; i < values.length; i++) {
-            numbers[i] = getNumber(fieldName, values[i].trim());
-        }
+        if (value == null) {
+            return new BigDecimal[0];
+        } else {
+            final String[] values = value.toString().split(DELIMITER);
+            final BigDecimal[] numbers = new BigDecimal[values.length];
+            for (int i = 0; i < values.length; i++) {
+                numbers[i] = getNumber(fieldName, values[i].trim());
+            }
 
-        return numbers;
+            return numbers;
+        }
+    }
+
+    private Long[] getDates(final String fieldName, final Object value) {
+        if (value == null) {
+           return new Long[0];
+        } else {
+            final String[] values = value.toString().split(DELIMITER);
+            final Long[] dates = new Long[values.length];
+            for (int i = 0; i < values.length; i++) {
+                dates[i] = getDate(fieldName, values[i].trim());
+            }
+
+            return dates;
+        }
     }
 
     private static class MatchException extends RuntimeException {

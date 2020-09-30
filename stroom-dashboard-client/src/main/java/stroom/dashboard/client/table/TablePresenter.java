@@ -515,7 +515,6 @@ public class TablePresenter extends AbstractComponentPresenter<TableView>
                 case NUMBER:
                     conditions = new ExpressionTerm.Condition[]{
                             ExpressionTerm.Condition.IN,
-                            ExpressionTerm.Condition.CONTAINS,
                             ExpressionTerm.Condition.EQUALS,
                             ExpressionTerm.Condition.GREATER_THAN,
                             ExpressionTerm.Condition.GREATER_THAN_OR_EQUAL_TO,
@@ -532,9 +531,9 @@ public class TablePresenter extends AbstractComponentPresenter<TableView>
                             ExpressionTerm.Condition.LESS_THAN_OR_EQUAL_TO };
                     break;
                 default:
+                    // CONTAINS only supported for legacy content, not for use in UI
                     conditions = new ExpressionTerm.Condition[]{
                             ExpressionTerm.Condition.IN,
-                            ExpressionTerm.Condition.CONTAINS,
                             ExpressionTerm.Condition.EQUALS};
                     break;
             }
