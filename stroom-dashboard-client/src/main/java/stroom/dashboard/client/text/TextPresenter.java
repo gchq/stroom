@@ -412,11 +412,17 @@ public class TextPresenter extends AbstractComponentPresenter<TextPresenter.Text
         super.read(componentConfig);
         textSettings = getSettings();
 
-        if (textSettings.getStreamIdField() == null) {
-            textSettings.setStreamIdField(new Field(IndexConstants.STREAM_ID));
+        // special field names have changed from EventId to __event_id__ so we need to deal
+        // with those and replace them, also rebuild existing special fields just in case
+        if (textSettings.getStreamIdField() == null
+                || IndexConstants.STREAM_ID.equals(textSettings.getStreamIdField().getName())
+                || textSettings.getStreamIdField().isSpecial()) {
+            textSettings.setStreamIdField(TablePresenter.buildSpecialField(IndexConstants.STREAM_ID));
         }
-        if (textSettings.getRecordNoField() == null) {
-            textSettings.setRecordNoField(new Field(IndexConstants.EVENT_ID));
+        if (textSettings.getRecordNoField() == null
+                || IndexConstants.EVENT_ID.equals(textSettings.getStreamIdField().getName())
+                || textSettings.getRecordNoField().isSpecial()) {
+            textSettings.setRecordNoField(TablePresenter.buildSpecialField(IndexConstants.EVENT_ID));
         }
     }
 
