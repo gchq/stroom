@@ -7,6 +7,8 @@ and this project adheres to [Semantic Versioning](http://semver.org/).
 
 ## [Unreleased]
 
+* Issue **#1885** : Fix annotions icon not bein enabled on dashboard tables.
+
 
 ## [v6.1.16] - 2020-09-30
 
