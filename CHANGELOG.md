@@ -13,6 +13,10 @@ and this project adheres to [Semantic Versioning](http://semver.org/).
 
 * Change conditional formatting to support date terms and date comparisons.
 
+* Issue **#1883** : Code now deals with missing streams when performing search extraction.
+
+* Issue **#1882** : Added capacity restriction to the stream event map used in search result extraction. The previous version was causing out of memory exceptions.
+
 
 ## [v6.1.16] - 2020-09-30
 
