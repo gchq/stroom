@@ -7,6 +7,9 @@ and this project adheres to [Semantic Versioning](http://semver.org/).
 
 ## [Unreleased]
 
+
+## [v6.1.17] - 2020-10-01
+
 * Issue **#1877** : Change conditional formatting to support decimals.
 
 * Change conditional formatting to set the available rule operators according to the format type of the column.
@@ -2225,7 +2228,8 @@ and this project adheres to [Semantic Versioning](http://semver.org/).
 
 * Issue **#202** : Initial release of the new data retention policy functionality.
 
-[Unreleased]: https://github.com/gchq/stroom/compare/v6.1.16...6.1
+[Unreleased]: https://github.com/gchq/stroom/compare/v6.1.17...6.1
+[v6.1.17]: https://github.com/gchq/stroom/compare/v6.1.16...v6.1.17
 [v6.1.16]: https://github.com/gchq/stroom/compare/v6.1.15...v6.1.16
 [v6.1.15]: https://github.com/gchq/stroom/compare/v6.1.14...v6.1.15
 [v6.1.14]: https://github.com/gchq/stroom/compare/v6.1.13...v6.1.14
