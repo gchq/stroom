@@ -9,4 +9,7 @@ dependencies {
         exclude(module: 'gwtp-crawler-service')
     }
     compile libs.javax_inject
+
+    testCompile libs.assertj_core
+    testCompile libs.junit
 }

@@ -7,6 +7,12 @@ and this project adheres to [Semantic Versioning](http://semver.org/).
 
 ## [Unreleased]
 
+* Issue **#1877** : Change conditional formatting to support decimals.
+
+* Change conditional formatting to set the available rule operators according to the format type of the column.
+
+* Change conditional formatting to support date terms and date comparisons.
+
 * Issue **#1885** : Fix annotations icon not being enabled on dashboard tables.
 
 * Issue **#1883** : Code now deals with missing streams when performing search extraction.
@@ -18,7 +24,7 @@ and this project adheres to [Semantic Versioning](http://semver.org/).
 
 * Change names of hidden special table columns on dashboards to avoid name clashes.
 
-* Make dashboard table settings popup bigger to accomodate the conditional formatting.
+* Make dashboard table settings popup bigger to accommodate the conditional formatting.
 
 * Added logic to rename conditional formatting term fields on a column rename.
 

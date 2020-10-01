@@ -17,22 +17,52 @@
 
 package stroom.dashboard.client.table.cf;
 
+import com.google.gwt.core.client.GWT;
 import com.google.gwt.regexp.shared.RegExp;
-import stroom.datasource.api.v2.DataSourceField;
+import stroom.dashboard.shared.DateTimeFormatSettings;
+import stroom.dashboard.shared.Field;
+import stroom.dashboard.shared.Format;
 import stroom.query.api.v2.ExpressionItem;
 import stroom.query.api.v2.ExpressionOperator;
 import stroom.query.api.v2.ExpressionTerm;
 import stroom.query.api.v2.ExpressionTerm.Condition;
+import stroom.util.shared.CompareUtil;
+import stroom.widget.customdatebox.client.ClientDateUtil;
 
+import java.math.BigDecimal;
+import java.util.HashMap;
+import java.util.List;
 import java.util.Map;
+import java.util.Objects;
+import java.util.function.Function;
+import java.util.stream.Collectors;
 
 public class ExpressionMatcher {
     private static final String DELIMITER = ",";
 
-    private final Map<String, DataSourceField> fieldNameToDsFieldMap;
+    private final Map<String, Field> fieldNameToFieldMap;
+    private final Map<String, String> fieldNameToJsDateFormat;
 
-    public ExpressionMatcher(final Map<String, DataSourceField> fieldNameToDsFieldMap) {
-        this.fieldNameToDsFieldMap = fieldNameToDsFieldMap;
+    public ExpressionMatcher(final List<Field> fields) {
+        this.fieldNameToFieldMap = fields.stream()
+                .collect(Collectors.toMap(Field::getName, Function.identity()));
+
+        // For any date cols with a format str, convert the string to js moment syntax
+        this.fieldNameToJsDateFormat = new HashMap<>();
+
+        fields.stream()
+                .filter(field ->
+                        field.getFormat() != null
+                                && field.getFormat().getType() != null
+                                && field.getFormat().getType().equals(Format.Type.DATE_TIME)
+                                && field.getFormat().getSettings() != null
+                                && field.getFormat().getSettings() instanceof DateTimeFormatSettings
+                                && ((DateTimeFormatSettings) field.getFormat().getSettings()).getPattern() != null)
+                .forEach(field -> ClientDateUtil.convertJavaFormatToJs(((DateTimeFormatSettings) field.getFormat()
+                        .getSettings())
+                        .getPattern())
+                        .ifPresent(format ->
+                                fieldNameToJsDateFormat.put(field.getName(), format)));
     }
 
     public boolean match(final Map<String, Object> attributeMap, final ExpressionItem item) {
@@ -107,7 +137,7 @@ public class ExpressionMatcher {
         if (termField == null || termField.length() == 0) {
             throw new MatchException("Field not set");
         }
-        final DataSourceField field = fieldNameToDsFieldMap.get(termField);
+        final Field field = fieldNameToFieldMap.get(termField);
         if (field == null) {
             throw new MatchException("Field not found in index: " + termField);
         }
@@ -122,76 +152,135 @@ public class ExpressionMatcher {
         }
 
         // Create a query based on the field type and condition.
-        if (field.getType().isNumeric()) {
-            switch (condition) {
-                case EQUALS: {
-                    return isStringMatch(termValue, attribute);
-//                    final long num1 = getNumber(fieldName, attribute);
-//                    final long num2 = getNumber(fieldName, termValue);
-//                    return num1 == num2;
-                }
-                case CONTAINS: {
-                    final long num1 = getNumber(fieldName, attribute);
-                    final long num2 = getNumber(fieldName, termValue);
-                    return num1 == num2;
-                }
-                case GREATER_THAN: {
-                    final long num1 = getNumber(fieldName, attribute);
-                    final long num2 = getNumber(fieldName, termValue);
-                    return num1 > num2;
-                }
-                case GREATER_THAN_OR_EQUAL_TO: {
-                    final long num1 = getNumber(fieldName, attribute);
-                    final long num2 = getNumber(fieldName, termValue);
-                    return num1 >= num2;
-                }
-                case LESS_THAN: {
-                    final long num1 = getNumber(fieldName, attribute);
-                    final long num2 = getNumber(fieldName, termValue);
-                    return num1 < num2;
-                }
-                case LESS_THAN_OR_EQUAL_TO: {
-                    final long num1 = getNumber(fieldName, attribute);
-                    final long num2 = getNumber(fieldName, termValue);
-                    return num1 <= num2;
-                }
-                case BETWEEN: {
-                    final long[] between = getNumbers(fieldName, termValue);
-                    if (between.length != 2) {
-                        throw new MatchException("2 numbers needed for between query");
-                    }
-                    if (between[0] >= between[1]) {
-                        throw new MatchException("From number must lower than to number");
-                    }
-                    final long num = getNumber(fieldName, attribute);
-                    return num >= between[0] && num <= between[1];
-                }
-                case IN:
-                    return isNumericIn(fieldName, termValue, attribute);
-                default:
-                    throw new MatchException("Unexpected condition '" + condition.getDisplayValue() + "' for "
-                            + field.getType().getDisplayValue() + " field type");
-            }
+        if (Format.Type.NUMBER.equals(field.getFormat().getType())) {
+            return matchNumericField(condition, termValue, field, fieldName, attribute);
+        } else if (Format.Type.DATE_TIME.equals(field.getFormat().getType())) {
+            return matchDateField(condition, termValue, field, fieldName, attribute);
         } else {
             switch (condition) {
                 case EQUALS:
                     return isStringMatch(termValue, attribute);
+                // CONTAINS only supported for legacy content, not for use in UI
                 case CONTAINS:
-                    return isStringMatch(termValue, attribute);
+                    return isStringContainsMatch(termValue, attribute);
                 case IN:
                     return isIn(termValue, attribute);
                 default:
                     throw new MatchException("Unexpected condition '" + condition.getDisplayValue() + "' for "
-                            + field.getType().getDisplayValue() + " field type");
+                            + field.getFormat().getType().getDisplayValue() + " field type");
             }
         }
     }
 
+    private boolean matchDateField(final Condition condition,
+                                   final String termValue,
+                                   final Field field,
+                                   final String fieldName,
+                                   final Object attribute) {
+        switch (condition) {
+            case EQUALS: {
+                final Long num1 = getDate(fieldName, attribute);
+                final Long num2 = getDate(termValue);
+                return Objects.equals(num1, num2);
+            }
+            case GREATER_THAN: {
+                final Long num1 = getDate(fieldName, attribute);
+                final Long num2 = getDate(termValue);
+                return CompareUtil.compareLong(num1, num2) > 0;
+            }
+            case GREATER_THAN_OR_EQUAL_TO: {
+                final Long num1 = getDate(fieldName, attribute);
+                final Long num2 = getDate(termValue);
+                return CompareUtil.compareLong(num1, num2) >= 0;
+            }
+            case LESS_THAN: {
+                final Long num1 = getDate(fieldName, attribute);
+                final Long num2 = getDate(termValue);
+                return CompareUtil.compareLong(num1, num2) < 0;
+            }
+            case LESS_THAN_OR_EQUAL_TO: {
+                final Long num1 = getDate(fieldName, attribute);
+                final Long num2 = getDate(termValue);
+                return CompareUtil.compareLong(num1, num2) <= 0;
+            }
+            case BETWEEN: {
+                final Long[] between = getDates(termValue);
+                if (between.length != 2) {
+                    throw new MatchException("2 numbers needed for between query");
+                }
+                if (CompareUtil.compareLong(between[0], between[1]) >= 0) {
+                    throw new MatchException("From number must be lower than to number");
+                }
+                final Long num = getDate(fieldName, attribute);
+                return CompareUtil.compareLong(num, between[0]) >= 0
+                        && CompareUtil.compareLong(num, between[1]) <= 0;
+            }
+            default:
+                throw new MatchException("Unexpected condition '" + condition.getDisplayValue() + "' for "
+                        + field.getFormat().getType().getDisplayValue() + " field type");
+        }
+    }
+
+    private boolean matchNumericField(final Condition condition,
+                                      final String termValue,
+                                      final Field field,
+                                      final String fieldName,
+                                      final Object attribute) {
+        switch (condition) {
+            case EQUALS: {
+                final BigDecimal num1 = getNumber(fieldName, attribute);
+                final BigDecimal num2 = getNumber(fieldName, termValue);
+                return Objects.equals(num1, num2);
+            }
+            case GREATER_THAN: {
+                final BigDecimal num1 = getNumber(fieldName, attribute);
+                final BigDecimal num2 = getNumber(fieldName, termValue);
+                int compVal = CompareUtil.compareBigDecimal(num1, num2);
+
+                GWT.log(num1 + " " + num2 + " " + compVal);
+
+                return compVal > 0;
+            }
+            case GREATER_THAN_OR_EQUAL_TO: {
+                final BigDecimal num1 = getNumber(fieldName, attribute);
+                final BigDecimal num2 = getNumber(fieldName, termValue);
+                return CompareUtil.compareBigDecimal(num1, num2) >= 0;
+            }
+            case LESS_THAN: {
+                final BigDecimal num1 = getNumber(fieldName, attribute);
+                final BigDecimal num2 = getNumber(fieldName, termValue);
+                return CompareUtil.compareBigDecimal(num1, num2) < 0;
+            }
+            case LESS_THAN_OR_EQUAL_TO: {
+                final BigDecimal num1 = getNumber(fieldName, attribute);
+                final BigDecimal num2 = getNumber(fieldName, termValue);
+                return CompareUtil.compareBigDecimal(num1, num2) <= 0;
+            }
+            case BETWEEN: {
+                final BigDecimal[] between = getNumbers(fieldName, termValue);
+                if (between.length != 2) {
+                    throw new MatchException("2 numbers needed for between query");
+                }
+                if (CompareUtil.compareBigDecimal(between[0], between[1]) >= 0) {
+                    throw new MatchException("From number must be lower than to number");
+                }
+                final BigDecimal num = getNumber(fieldName, attribute);
+                return CompareUtil.compareBigDecimal(num, between[0]) >= 0
+                        && CompareUtil.compareBigDecimal(num, between[1]) <= 0;
+            }
+            case IN:
+                return isNumericIn(fieldName, termValue, attribute);
+            default:
+                throw new MatchException("Unexpected condition '" + condition.getDisplayValue() + "' for "
+                        + field.getFormat().getType().getDisplayValue() + " field type");
+        }
+    }
+
     private boolean isNumericIn(final String fieldName, final Object termValue, final Object attribute) {
-        final long num = getNumber(fieldName, attribute);
-        final long[] in = getNumbers(fieldName, termValue);
-        for (final long n : in) {
-            if (n == num) {
+        final BigDecimal num = getNumber(fieldName, attribute);
+        final BigDecimal[] in = getNumbers(fieldName, termValue);
+        for (final BigDecimal n : in) {
+            if (Objects.equals(n, num)) {
                 return true;
             }
         }
@@ -218,26 +307,117 @@ public class ExpressionMatcher {
         return termValue.equals(attribute.toString());
     }
 
-    private long getNumber(final String fieldName, final Object value) {
-        try {
-            if (value instanceof Long) {
-                return (Long) value;
+    private boolean isStringContainsMatch(final String termValue, final Object attribute) {
+        if (attribute == null && termValue == null) {
+            return true;
+        } else if (attribute == null) {
+            return false;
+        } else if (termValue == null || termValue.isEmpty()) {
+            return true;
+        } else {
+            String attributeStr = attribute.toString();
+            if (termValue.contains("*")) {
+                final String pattern = termValue.replaceAll("\\*", ".*");
+                final RegExp regExp = RegExp.compile(pattern);
+                return regExp.test(attributeStr);
             }
-            return Long.parseLong(value.toString());
-        } catch (final NumberFormatException e) {
-            throw new MatchException(
-                    "Expected a numeric value for field \"" + fieldName + "\" but was given string \"" + value + "\"");
+            return attributeStr.contains(termValue);
         }
     }
 
-    private long[] getNumbers(final String fieldName, final Object value) {
-        final String[] values = value.toString().split(DELIMITER);
-        final long[] numbers = new long[values.length];
-        for (int i = 0; i < values.length; i++) {
-            numbers[i] = getNumber(fieldName, values[i].trim());
+    private BigDecimal getNumber(final String fieldName, final Object value) {
+        if (value == null) {
+            return null;
+        } else {
+            try {
+                if (value instanceof Long) {
+                    return BigDecimal.valueOf((long) value);
+                } else if (value instanceof Double) {
+                    return BigDecimal.valueOf((Double) value);
+                }
+                return new BigDecimal(value.toString());
+            } catch (final NumberFormatException e) {
+                throw new MatchException(
+                        "Expected a numeric value for field \"" + fieldName + "\" but was given string \"" + value + "\"");
+            }
         }
+    }
 
-        return numbers;
+    private Long getDate(final String fieldName, final Object value) {
+        if (value == null) {
+            return null;
+        } else {
+            if (value instanceof String) {
+                String valueStr = (String) value;
+                final String jsFormat = fieldNameToJsDateFormat.get(fieldName);
+                try {
+                    if (jsFormat != null) {
+                        return ClientDateUtil.parseWithJsFormat(valueStr, jsFormat);
+                    } else {
+                        // Just have a stab treating it as an ISO format
+                        return ClientDateUtil.fromISOString(valueStr);
+                    }
+                } catch (final NumberFormatException e) {
+                    GWT.log("Unable to parse a date/time from value \"" + valueStr + "\"");
+                    throw new MatchException(
+                            "Unable to parse a date/time from value \"" + valueStr + "\"");
+                }
+            } else {
+                throw new MatchException(
+                        "Expected a string value for field \"" + fieldName + "\" but was given \"" + value
+                                + "\" of type " + value.getClass().getName());
+            }
+        }
+    }
+
+    private Long getDate(final Object value) {
+        if (value == null) {
+            return null;
+        } else {
+            if (value instanceof String) {
+                String valueStr = (String) value;
+                try {
+                        // This is a term value so will be IDO format
+                        return ClientDateUtil.fromISOString(valueStr);
+                } catch (final NumberFormatException e) {
+                    GWT.log("Unable to parse a date/time from value \"" + valueStr + "\"");
+                    throw new MatchException(
+                            "Unable to parse a date/time from value \"" + valueStr + "\"");
+                }
+            } else {
+                throw new MatchException(
+                        "Expected a string value but was given \"" + value
+                                + "\" of type " + value.getClass().getName());
+            }
+        }
+    }
+
+    private BigDecimal[] getNumbers(final String fieldName, final Object value) {
+        if (value == null) {
+            return new BigDecimal[0];
+        } else {
+            final String[] values = value.toString().split(DELIMITER);
+            final BigDecimal[] numbers = new BigDecimal[values.length];
+            for (int i = 0; i < values.length; i++) {
+                numbers[i] = getNumber(fieldName, values[i].trim());
+            }
+
+            return numbers;
+        }
+    }
+
+    private Long[] getDates(final Object value) {
+        if (value == null) {
+           return new Long[0];
+        } else {
+            final String[] values = value.toString().split(DELIMITER);
+            final Long[] dates = new Long[values.length];
+            for (int i = 0; i < values.length; i++) {
+                dates[i] = getDate(values[i].trim());
+            }
+
+            return dates;
+        }
     }
 
     private static class MatchException extends RuntimeException {

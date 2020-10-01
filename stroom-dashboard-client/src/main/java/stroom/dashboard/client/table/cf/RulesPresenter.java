@@ -25,6 +25,7 @@ import com.google.web.bindery.event.shared.HandlerRegistration;
 import com.gwtplatform.mvp.client.View;
 import stroom.alert.client.event.ConfirmEvent;
 import stroom.dashboard.client.main.AbstractSettingsTabPresenter;
+import stroom.dashboard.client.table.TablePresenter;
 import stroom.dashboard.shared.ComponentConfig;
 import stroom.dashboard.shared.ConditionalFormattingRule;
 import stroom.dashboard.shared.Field;
@@ -273,6 +274,17 @@ public class RulesPresenter
 
         final Predicate<Field> nonSpecialFieldsPredicate = field -> !field.isSpecial();
 
+//        final Function<Field, DataSourceField.DataSourceFieldType> typeMapper = field -> {
+//            switch (field.getFormat().getType()) {
+//                case NUMBER:
+//                    return DataSourceField.DataSourceFieldType.DOUBLE_FIELD;
+//                case DATE_TIME:
+//                    return DataSourceField.DataSourceFieldType.DATE_FIELD;
+//                default:
+//                    return DataSourceField.DataSourceFieldType.TEXT_FIELD;
+//            }
+//        };
+
         // We have to deal in field names (aka column names) here as all the
         // exp tree code only has a single field/term name so can't cope with working with
         // ids and mapping to col name for the ui.
@@ -280,10 +292,11 @@ public class RulesPresenter
                 .getFields()
                 .stream()
                 .filter(nonSpecialFieldsPredicate) // ignore the special EventId/StreamId
-                .map(field -> new DataSourceField.Builder()
-                        .type(DataSourceField.DataSourceFieldType.INTEGER_FIELD)
-                        .name(field.getName())
-                        .build())
+//                .map(field -> new DataSourceField.Builder()
+//                        .type(typeMapper.apply(field))
+//                        .name(field.getName())
+//                        .build())
+                .map(TablePresenter::buildDsField)
                 .collect(Collectors.toList());
 
         if (settings.getConditionalFormattingRules() != null) {
