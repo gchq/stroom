@@ -7,12 +7,18 @@ and this project adheres to [Semantic Versioning](http://semver.org/).
 
 ## [Unreleased]
 
+* Issue **#1877** : Change conditional formatting to support decimals.
+
+* Change conditional formatting to set the available rule operators according to the format type of the column.
+
+* Change conditional formatting to support date terms and date comparisons.
+
 
 ## [v6.1.16] - 2020-09-30
 
 * Change names of hidden special table columns on dashboards to avoid name clashes.
 
-* Make dashboard table settings popup bigger to accomodate the conditional formatting.
+* Make dashboard table settings popup bigger to accommodate the conditional formatting.
 
 * Added logic to rename conditional formatting term fields on a column rename.
 
