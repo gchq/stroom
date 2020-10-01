@@ -569,10 +569,14 @@ public class TablePresenter extends AbstractComponentPresenter<TableView>
         }
 
         final List<ConditionalFormattingRule> rules = tableSettings.getConditionalFormattingRules();
-        final Map<String, DataSourceField> nonSpecialNameToFieldMap = tableSettings.getFields()
+//        final Map<String, DataSourceField> nonSpecialNameToFieldMap = tableSettings.getFields()
+//                .stream()
+//                .filter(field -> !field.isSpecial())
+//                .collect(Collectors.toMap(Field::getName, TablePresenter::buildDsField));
+        final List<Field> nonSpecialNameToFieldMap = tableSettings.getFields()
                 .stream()
                 .filter(field -> !field.isSpecial())
-                .collect(Collectors.toMap(Field::getName, TablePresenter::buildDsField));
+                .collect(Collectors.toList());
         final ExpressionMatcher expressionMatcher = new ExpressionMatcher(nonSpecialNameToFieldMap);
 
         final List<TableRow> processed = new ArrayList<>(values.size());

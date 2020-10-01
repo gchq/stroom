@@ -19,7 +19,9 @@ package stroom.dashboard.client.table.cf;
 
 import com.google.gwt.core.client.GWT;
 import com.google.gwt.regexp.shared.RegExp;
-import stroom.datasource.api.v2.DataSourceField;
+import stroom.dashboard.shared.DateTimeFormatSettings;
+import stroom.dashboard.shared.Field;
+import stroom.dashboard.shared.Format;
 import stroom.query.api.v2.ExpressionItem;
 import stroom.query.api.v2.ExpressionOperator;
 import stroom.query.api.v2.ExpressionTerm;
@@ -28,16 +30,39 @@ import stroom.util.shared.CompareUtil;
 import stroom.widget.customdatebox.client.ClientDateUtil;
 
 import java.math.BigDecimal;
+import java.util.List;
 import java.util.Map;
 import java.util.Objects;
+import java.util.function.Function;
+import java.util.stream.Collectors;
 
 public class ExpressionMatcher {
     private static final String DELIMITER = ",";
 
-    private final Map<String, DataSourceField> fieldNameToDsFieldMap;
+//    private final Map<String, DataSourceField> fieldNameToDsFieldMap;
+    private final Map<String, Field> fieldNameToFieldMap;
+    private final Map<String, String> fieldNameToJsDateFormat;
 
-    public ExpressionMatcher(final Map<String, DataSourceField> fieldNameToDsFieldMap) {
-        this.fieldNameToDsFieldMap = fieldNameToDsFieldMap;
+//    public ExpressionMatcher(final Map<String, DataSourceField> fieldNameToDsFieldMap) {
+//        this.fieldNameToDsFieldMap = fieldNameToDsFieldMap;
+//    }
+    public ExpressionMatcher(final List<Field> fields) {
+        this.fieldNameToFieldMap = fields.stream()
+                .collect(Collectors.toMap(Field::getName, Function.identity()));
+
+        // For any date cols with a format str, convert the string to js moment syntax
+        this.fieldNameToJsDateFormat = fields.stream()
+                .filter(field ->
+                        field.getFormat() != null
+                                && field.getFormat().getType() != null
+                                && field.getFormat().getType().equals(Format.Type.DATE_TIME)
+                                && field.getFormat().getSettings() != null
+                                && field.getFormat().getSettings() instanceof DateTimeFormatSettings
+                                && ((DateTimeFormatSettings) field.getFormat().getSettings()).getPattern() != null)
+                .collect(Collectors.toMap(
+                        Field::getName,
+                        field ->
+                                ClientDateUtil.convertJavaFormatToJs(((DateTimeFormatSettings) field.getFormat().getSettings()).getPattern())));
     }
 
     public boolean match(final Map<String, Object> attributeMap, final ExpressionItem item) {
@@ -112,7 +137,7 @@ public class ExpressionMatcher {
         if (termField == null || termField.length() == 0) {
             throw new MatchException("Field not set");
         }
-        final DataSourceField field = fieldNameToDsFieldMap.get(termField);
+        final Field field = fieldNameToFieldMap.get(termField);
         if (field == null) {
             throw new MatchException("Field not found in index: " + termField);
         }
@@ -127,9 +152,9 @@ public class ExpressionMatcher {
         }
 
         // Create a query based on the field type and condition.
-        if (field.getType().isNumeric()) {
+        if (Format.Type.NUMBER.equals(field.getFormat().getType())) {
             return matchNumericField(condition, termValue, field, fieldName, attribute);
-        } else if (DataSourceField.DataSourceFieldType.DATE_FIELD.equals(field.getType())) {
+        } else if (Format.Type.DATE_TIME.equals(field.getFormat().getType())) {
             return matchDateField(condition, termValue, field, fieldName, attribute);
         } else {
             switch (condition) {
@@ -142,44 +167,44 @@ public class ExpressionMatcher {
                     return isIn(termValue, attribute);
                 default:
                     throw new MatchException("Unexpected condition '" + condition.getDisplayValue() + "' for "
-                            + field.getType().getDisplayValue() + " field type");
+                            + field.getFormat().getType().getDisplayValue() + " field type");
             }
         }
     }
 
     private boolean matchDateField(final Condition condition,
                                    final String termValue,
-                                   final DataSourceField field,
+                                   final Field field,
                                    final String fieldName,
                                    final Object attribute) {
         switch (condition) {
             case EQUALS: {
                 final Long num1 = getDate(fieldName, attribute);
-                final Long num2 = getDate(fieldName, termValue);
+                final Long num2 = getDate(termValue);
                 return Objects.equals(num1, num2);
             }
             case GREATER_THAN: {
                 final Long num1 = getDate(fieldName, attribute);
-                final Long num2 = getDate(fieldName, termValue);
+                final Long num2 = getDate(termValue);
                 return CompareUtil.compareLong(num1, num2) > 0;
             }
             case GREATER_THAN_OR_EQUAL_TO: {
                 final Long num1 = getDate(fieldName, attribute);
-                final Long num2 = getDate(fieldName, termValue);
+                final Long num2 = getDate(termValue);
                 return CompareUtil.compareLong(num1, num2) >= 0;
             }
             case LESS_THAN: {
                 final Long num1 = getDate(fieldName, attribute);
-                final Long num2 = getDate(fieldName, termValue);
+                final Long num2 = getDate(termValue);
                 return CompareUtil.compareLong(num1, num2) < 0;
             }
             case LESS_THAN_OR_EQUAL_TO: {
                 final Long num1 = getDate(fieldName, attribute);
-                final Long num2 = getDate(fieldName, termValue);
+                final Long num2 = getDate(termValue);
                 return CompareUtil.compareLong(num1, num2) <= 0;
             }
             case BETWEEN: {
-                final Long[] between = getDates(fieldName, termValue);
+                final Long[] between = getDates(termValue);
                 if (between.length != 2) {
                     throw new MatchException("2 numbers needed for between query");
                 }
@@ -192,13 +217,13 @@ public class ExpressionMatcher {
             }
             default:
                 throw new MatchException("Unexpected condition '" + condition.getDisplayValue() + "' for "
-                        + field.getType().getDisplayValue() + " field type");
+                        + field.getFormat().getType().getDisplayValue() + " field type");
         }
     }
 
     private boolean matchNumericField(final Condition condition,
                                       final String termValue,
-                                      final DataSourceField field,
+                                      final Field field,
                                       final String fieldName,
                                       final Object attribute) {
         switch (condition) {
@@ -247,7 +272,7 @@ public class ExpressionMatcher {
                 return isNumericIn(fieldName, termValue, attribute);
             default:
                 throw new MatchException("Unexpected condition '" + condition.getDisplayValue() + "' for "
-                        + field.getType().getDisplayValue() + " field type");
+                        + field.getFormat().getType().getDisplayValue() + " field type");
         }
     }
 
@@ -324,10 +349,14 @@ public class ExpressionMatcher {
         } else {
             if (value instanceof String) {
                 String valueStr = (String) value;
-                // remove spaces, e.g. between time and offset to ensure iso compliance
-                valueStr =valueStr.replace(" ", "");
+                final String jsFormat = fieldNameToJsDateFormat.get(fieldName);
                 try {
-                    return ClientDateUtil.fromISOString(valueStr);
+                    if (jsFormat != null) {
+                        return ClientDateUtil.parseWithJsFormat(valueStr, jsFormat);
+                    } else {
+                        // Just have a stab treating it as an ISO format
+                        return ClientDateUtil.fromISOString(valueStr);
+                    }
                 } catch (final NumberFormatException e) {
                     GWT.log("Unable to parse a date/time from value \"" + valueStr + "\"");
                     throw new MatchException(
@@ -336,6 +365,28 @@ public class ExpressionMatcher {
             } else {
                 throw new MatchException(
                         "Expected a string value for field \"" + fieldName + "\" but was given \"" + value
+                                + "\" of type " + value.getClass().getName());
+            }
+        }
+    }
+
+    private Long getDate(final Object value) {
+        if (value == null) {
+            return null;
+        } else {
+            if (value instanceof String) {
+                String valueStr = (String) value;
+                try {
+                        // This is a term value so will be IDO format
+                        return ClientDateUtil.fromISOString(valueStr);
+                } catch (final NumberFormatException e) {
+                    GWT.log("Unable to parse a date/time from value \"" + valueStr + "\"");
+                    throw new MatchException(
+                            "Unable to parse a date/time from value \"" + valueStr + "\"");
+                }
+            } else {
+                throw new MatchException(
+                        "Expected a string value but was given \"" + value
                                 + "\" of type " + value.getClass().getName());
             }
         }
@@ -355,14 +406,14 @@ public class ExpressionMatcher {
         }
     }
 
-    private Long[] getDates(final String fieldName, final Object value) {
+    private Long[] getDates(final Object value) {
         if (value == null) {
            return new Long[0];
         } else {
             final String[] values = value.toString().split(DELIMITER);
             final Long[] dates = new Long[values.length];
             for (int i = 0; i < values.length; i++) {
-                dates[i] = getDate(fieldName, values[i].trim());
+                dates[i] = getDate(values[i].trim());
             }
 
             return dates;
