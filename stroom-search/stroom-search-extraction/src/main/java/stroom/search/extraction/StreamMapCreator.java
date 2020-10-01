@@ -72,20 +72,22 @@ class StreamMapCreator {
         } else {
             final long longStreamId = getLong(storedData, streamIdIndex);
             final long longEventId = getLong(storedData, eventIdIndex);
-            final Values data = getData(longStreamId, longEventId, storedData);
-            final Event event = new Event(longStreamId, longEventId, data);
-            storedDataMap.add(event);
+            // Stream may have been deleted but still be in the index
+            getData(longStreamId, longEventId, storedData)
+                    .ifPresent(data -> {
+                        final Event event = new Event(longStreamId, longEventId, data);
+                        storedDataMap.add(event);
+                    });
         }
     }
 
-    private Values getData(final long longStreamId, final long longEventId, final Val[] storedData) {
+    private Optional<Values> getData(final long longStreamId, final long longEventId, final Val[] storedData) {
         if (longStreamId != -1 && longEventId != -1) {
             // Create a map to cache stream lookups. If we have cached more than a million streams then
             // discard the map and start again to avoid using too much memory.
             if (fiteredStreamCache == null || fiteredStreamCache.size() > 1000000) {
                 fiteredStreamCache = new HashMap<>();
             }
-
             final Optional<Object> optional = fiteredStreamCache.computeIfAbsent(longStreamId, k -> {
                 try {
                     // See if we can load the stream. We might get a StreamPermissionException if we aren't
@@ -99,22 +101,21 @@ class StreamMapCreator {
                     return Optional.of(e);
                 }
             });
-
             if (!optional.isPresent()) {
                 // Likely stream has been deleted due to data retention rules so we can quietly ignore it
                 LOGGER.debug(() -> "Stream not found with id " + longStreamId);
             }
-
-            final Object cached = optional.get();
-            if (cached instanceof Throwable) {
-                final Throwable t = (Throwable) cached;
-                throw new ExtractionException(t.getMessage(), t);
-            } else if (cached instanceof Stream) {
-                return new Values(storedData);
-            }
-            throw new ExtractionException("Unexpected cached type " + cached.getClass().getSimpleName());
+            return optional.map(cached -> {
+                if (cached instanceof Throwable) {
+                    final Throwable t = (Throwable) cached;
+                    throw new ExtractionException(t.getMessage(), t);
+                } else if (cached instanceof Stream) {
+                    return new Values(storedData);
+                } else {
+                    throw new ExtractionException("Unexpected cached type " + cached.getClass().getSimpleName());
+                }
+            });
         }
-
         throw new ExtractionException("No event id supplied");
     }
 
