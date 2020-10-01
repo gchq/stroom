@@ -53,7 +53,7 @@ class ExtractionTaskProducer extends TaskProducer {
     private final Queue<Runnable> taskQueue = new ConcurrentLinkedQueue<>();
 
     private final CompletionState streamMapCreatorCompletionState = new CompletionState();
-    private final Map<Long, List<Event>> streamEventMap = new ConcurrentHashMap<>();
+    private final StreamEventMap streamEventMap;
     private final Topic<Values> topic;
     private final ExtractionProgressTracker tracker;
 
@@ -76,7 +76,9 @@ class ExtractionTaskProducer extends TaskProducer {
         this.tracker = tracker;
 
         // Create a queue to receive values and store them for asynchronous processing.
+        streamEventMap = new StreamEventMap(tracker, 1000000);
         topic = new LinkedBlockingQueueTopic<>(maxStoredDataQueueSize, tracker);
+
 
 //        // Group coprocessors by extraction pipeline.
 //        final Map<DocRef, Set<NewCoprocessor>> map = new HashMap<>();
@@ -130,12 +132,6 @@ class ExtractionTaskProducer extends TaskProducer {
                         signalAvailable();
                     }
                 }
-
-                // Clear the event map if we have terminated so that other processing does not occur.
-                if (tracker.isTerminated() || Thread.currentThread().isInterrupted()) {
-                    streamEventMap.clear();
-                }
-
             } catch (final RuntimeException e) {
                 LOGGER.error(e.getMessage(), e);
             } finally {
@@ -183,13 +179,11 @@ class ExtractionTaskProducer extends TaskProducer {
 
     private boolean addTasks() {
         final boolean completedEventMapping = this.streamMapCreatorCompletionState.isComplete();
-        for (final Entry<Long, List<Event>> entry : streamEventMap.entrySet()) {
-            final List<Event> events = streamEventMap.remove(entry.getKey());
-            if (events != null) {
-                final int tasksCreated = createTasks(entry.getKey(), events);
-                if (tasksCreated > 0) {
-                    return false;
-                }
+        final Map<Long, List<Event>> map = streamEventMap.get();
+        for (final Entry<Long, List<Event>> entry : map.entrySet()) {
+            final int tasksCreated = createTasks(entry.getKey(), entry.getValue());
+            if (tasksCreated > 0) {
+                return false;
             }
         }
         return completedEventMapping;
