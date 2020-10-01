@@ -30,6 +30,7 @@ import stroom.util.shared.CompareUtil;
 import stroom.widget.customdatebox.client.ClientDateUtil;
 
 import java.math.BigDecimal;
+import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Objects;
@@ -39,19 +40,17 @@ import java.util.stream.Collectors;
 public class ExpressionMatcher {
     private static final String DELIMITER = ",";
 
-//    private final Map<String, DataSourceField> fieldNameToDsFieldMap;
     private final Map<String, Field> fieldNameToFieldMap;
     private final Map<String, String> fieldNameToJsDateFormat;
 
-//    public ExpressionMatcher(final Map<String, DataSourceField> fieldNameToDsFieldMap) {
-//        this.fieldNameToDsFieldMap = fieldNameToDsFieldMap;
-//    }
     public ExpressionMatcher(final List<Field> fields) {
         this.fieldNameToFieldMap = fields.stream()
                 .collect(Collectors.toMap(Field::getName, Function.identity()));
 
         // For any date cols with a format str, convert the string to js moment syntax
-        this.fieldNameToJsDateFormat = fields.stream()
+        this.fieldNameToJsDateFormat = new HashMap<>();
+
+        fields.stream()
                 .filter(field ->
                         field.getFormat() != null
                                 && field.getFormat().getType() != null
@@ -59,10 +58,11 @@ public class ExpressionMatcher {
                                 && field.getFormat().getSettings() != null
                                 && field.getFormat().getSettings() instanceof DateTimeFormatSettings
                                 && ((DateTimeFormatSettings) field.getFormat().getSettings()).getPattern() != null)
-                .collect(Collectors.toMap(
-                        Field::getName,
-                        field ->
-                                ClientDateUtil.convertJavaFormatToJs(((DateTimeFormatSettings) field.getFormat().getSettings()).getPattern())));
+                .forEach(field -> ClientDateUtil.convertJavaFormatToJs(((DateTimeFormatSettings) field.getFormat()
+                        .getSettings())
+                        .getPattern())
+                        .ifPresent(format ->
+                                fieldNameToJsDateFormat.put(field.getName(), format)));
     }
 
     public boolean match(final Map<String, Object> attributeMap, final ExpressionItem item) {

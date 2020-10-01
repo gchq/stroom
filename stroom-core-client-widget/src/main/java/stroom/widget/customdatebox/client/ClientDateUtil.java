@@ -20,6 +20,7 @@ import com.google.gwt.core.client.GWT;
 
 import java.util.HashMap;
 import java.util.Map;
+import java.util.Optional;
 
 public final class ClientDateUtil {
 
@@ -132,21 +133,33 @@ public final class ClientDateUtil {
         return millis;
     }
 
-    public static String convertJavaFormatToJs(final String javaFormatStr) {
+    /**
+     * Converts a java syntax date format string into a moment.js syntax date format
+     * string. May not handle all cases so it is possible the output will not be valid
+     * syntax.
+     */
+    public static Optional<String> convertJavaFormatToJs(final String javaFormatStr) {
         if (javaFormatStr != null) {
-            final StringBuilder outputBuilder = new StringBuilder();
-            final StringBuilder scratchBuilder = new StringBuilder();
-            char lastChar = Character.MIN_VALUE;
-            for (int i = 0; i < javaFormatStr.length(); i++) {
-                char currChar = javaFormatStr.charAt(i);
-                parseChar(outputBuilder, scratchBuilder, lastChar, currChar);
-                lastChar = currChar;
+            try {
+                final StringBuilder outputBuilder = new StringBuilder();
+                final StringBuilder scratchBuilder = new StringBuilder();
+                char lastChar = Character.MIN_VALUE;
+                for (int i = 0; i < javaFormatStr.length(); i++) {
+                    char currChar = javaFormatStr.charAt(i);
+                    parseChar(outputBuilder, scratchBuilder, lastChar, currChar);
+                    lastChar = currChar;
+                }
+                // Force it to consider the last char seen
+                parseChar(outputBuilder, scratchBuilder, lastChar, Character.MIN_VALUE);
+                final String jsDateFormatStr = outputBuilder.toString();
+
+                return Optional.of(jsDateFormatStr);
+            } catch (Exception e) {
+                GWT.log("Unable to convert '" + javaFormatStr + "' due to: " + e.getMessage());
+                return Optional.empty();
             }
-            // Force it to consider the last char seen
-            parseChar(outputBuilder, scratchBuilder, lastChar, Character.MIN_VALUE);
-            return outputBuilder.toString();
         } else {
-            return null;
+            return Optional.empty();
         }
     }
 
@@ -171,11 +184,21 @@ public final class ClientDateUtil {
         scratchBuilder.append(currChar);
     }
 
-    public static Long parseWithJavaFormat(final String string, final String format) {
-        final String jsFormat = convertJavaFormatToJs(format);
-        return parseWithJsFormat(string, jsFormat);
+    /**
+     * Returns the date/time in local time. If the date string has no
+     * timezone information it is assumed to be local time.
+     * See https://momentjs.com/docs/#/parsing/utc/
+     */
+    public static Optional<Long> parseWithJavaFormat(final String string, final String format) {
+        return convertJavaFormatToJs(format)
+                .map(jsFormat -> parseWithJsFormat(string, jsFormat));
     }
 
+    /**
+     * Returns the date/time in local time. If the date string has no
+     * timezone information it is assumed to be local time.
+     * See https://momentjs.com/docs/#/parsing/utc/
+     */
     public static Long parseWithJsFormat(final String string, final String format) {
         Long millis = null;
         if (string != null
@@ -195,7 +218,11 @@ public final class ClientDateUtil {
         return millis;
     }
 
-
+    /**
+     * Checks if a date is a valid date after parsing it from a string.
+     * If the date string has no time zone in it then it will be treated as
+     * local time.
+     */
     public static boolean isValid(final String string) {
         if (string == null || string.trim().length() == 0) {
             return false;
@@ -213,6 +240,11 @@ public final class ClientDateUtil {
        return moment.toISOString();
     }-*/;
 
+    /**
+     * moment(str) returns the date/time in local time. If the date string has no
+     * timezone information it is assumed to be local time.
+     * See https://momentjs.com/docs/#/parsing/utc/
+     */
     private static native double nativeFromISOString(final String date)/*-{
         if ($wnd.moment(date).isValid()) {
            var moment = $wnd.moment(date);
@@ -222,6 +254,11 @@ public final class ClientDateUtil {
         return -1;
     }-*/;
 
+    /**
+     * moment(date, format) returns the date/time in local time. If the date string has no*
+     * timezone information it is assumed to be local time.
+     * See https://momentjs.com/docs/#/parsing/utc/
+     */
     private static native double nativeFromCustomFormatString(final String date,
                                                               final String format)/*-{
         if ($wnd.moment(date, format).isValid()) {

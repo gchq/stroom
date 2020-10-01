@@ -36,7 +36,7 @@ public class TestClientDateUtil {
 
         DateTimeFormatter.ofPattern(javaFormatStr);
 
-        final String actual = ClientDateUtil.convertJavaFormatToJs(javaFormatStr);
+        final String actual = ClientDateUtil.convertJavaFormatToJs(javaFormatStr).get();
 
         System.out.println("Actual " + actual);
 
