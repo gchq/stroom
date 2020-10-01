@@ -25,9 +25,7 @@ import stroom.streamstore.shared.StreamPermissionException;
 import stroom.util.logging.LambdaLogger;
 import stroom.util.logging.LambdaLoggerFactory;
 
-import java.util.ArrayList;
 import java.util.HashMap;
-import java.util.List;
 import java.util.Map;
 import java.util.Optional;
 
@@ -68,7 +66,7 @@ class StreamMapCreator {
         return index;
     }
 
-    void addEvent(final Map<Long, List<Event>> storedDataMap, final Val[] storedData) {
+    void addEvent(final StreamEventMap storedDataMap, final Val[] storedData) {
         if (error != null) {
             throw error;
         } else {
@@ -76,13 +74,7 @@ class StreamMapCreator {
             final long longEventId = getLong(storedData, eventIdIndex);
             final Values data = getData(longStreamId, longEventId, storedData);
             final Event event = new Event(longStreamId, longEventId, data);
-            storedDataMap.compute(longStreamId, (k, v) -> {
-                if (v == null) {
-                    v = new ArrayList<>();
-                }
-                v.add(event);
-                return v;
-            });
+            storedDataMap.add(event);
         }
     }
 
