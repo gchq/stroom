@@ -573,17 +573,6 @@ public class TablePresenter extends AbstractComponentPresenter<TableView>
                 .stream()
                 .filter(field -> !field.isSpecial())
                 .collect(Collectors.toMap(Field::getName, TablePresenter::buildDsField));
-//                .collect(Collectors.toMap(Field::getName, field -> new DataSourceField
-//                        .Builder()
-//                        .name(field.getName())
-//                        .type(DataSourceFieldType.DOUBLE_FIELD)
-//                        .addConditions(
-//                                ExpressionTerm.Condition.EQUALS,
-//                                ExpressionTerm.Condition.GREATER_THAN,
-//                                ExpressionTerm.Condition.GREATER_THAN_OR_EQUAL_TO,
-//                                ExpressionTerm.Condition.LESS_THAN,
-//                                ExpressionTerm.Condition.LESS_THAN_OR_EQUAL_TO)
-//                        .build()));
         final ExpressionMatcher expressionMatcher = new ExpressionMatcher(nonSpecialNameToFieldMap);
 
         final List<TableRow> processed = new ArrayList<>(values.size());
@@ -826,10 +815,6 @@ public class TablePresenter extends AbstractComponentPresenter<TableView>
     }
 
     private void ensureSpecialFields(final String... indexFieldNames) {
-//        final Set<String> specialColumnNames = Arrays.stream(indexFieldNames)
-//                .map(IndexConstants::generateObfuscatedColumnName)
-//                .collect(Collectors.toSet());
-
         // Remove all special fields as we will re-add them with the right names
         tableSettings.getFields().removeIf(Field::isSpecial);
 
