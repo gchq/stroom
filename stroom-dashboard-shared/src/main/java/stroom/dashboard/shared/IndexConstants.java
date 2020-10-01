@@ -17,7 +17,8 @@
 package stroom.dashboard.shared;
 
 public interface IndexConstants {
-    // Field names in the index, not table column names
+    // Field names in the index, NOT table column names
+    // For the table names use generateObfuscatedColumnName() below
     String STREAM_ID = "StreamId";
     String EVENT_ID = "EventId";
     String FEED_ID = "FeedId";
