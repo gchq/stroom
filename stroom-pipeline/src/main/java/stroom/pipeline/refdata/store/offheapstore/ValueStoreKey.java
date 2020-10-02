@@ -17,8 +17,9 @@
 
 package stroom.pipeline.refdata.store.offheapstore;
 
-import com.google.common.base.Preconditions;
 import stroom.util.logging.LogUtil;
+
+import com.google.common.base.Preconditions;
 
 import java.util.Objects;
 
@@ -34,14 +35,14 @@ public class ValueStoreKey {
     private static final short MAX_UNIQUE_ID = Short.MAX_VALUE;
 
     // The hashcode of the value that this key points to
-    private final int valueHashCode;
+    private final long valueHashCode;
     // An ID to provide uniqueness in the event of a hash-clash
     private final short uniqueId;
 
     /**
      * @return A key with the lowest possible uniqueId for valueHashCode
      */
-    public static ValueStoreKey lowestKey(final int valueHashCode) {
+    public static ValueStoreKey lowestKey(final long valueHashCode) {
         return new ValueStoreKey(valueHashCode, MIN_UNIQUE_ID);
     }
 
@@ -53,7 +54,7 @@ public class ValueStoreKey {
     }
 
 
-    public ValueStoreKey(final int valueHashCode, final short uniqueId) {
+    public ValueStoreKey(final long valueHashCode, final short uniqueId) {
         // Due to the way keys are sorted, negative unique ids are not supported
         Preconditions.checkArgument(uniqueId >= 0);
         this.valueHashCode = valueHashCode;
@@ -72,7 +73,7 @@ public class ValueStoreKey {
         return new ValueStoreKey(valueHashCode, (short) (uniqueId + 1));
     }
 
-    public int getValueHashCode() {
+    public long getValueHashCode() {
         return valueHashCode;
     }
 

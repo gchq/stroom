@@ -18,6 +18,7 @@
 package stroom.pipeline.refdata.store.offheapstore.databases;
 
 import stroom.pipeline.refdata.store.RefDataValue;
+import stroom.pipeline.refdata.store.ValueStoreHashAlgorithm;
 import stroom.pipeline.refdata.store.offheapstore.ValueStoreKey;
 import stroom.pipeline.refdata.store.offheapstore.lmdb.AbstractLmdbDb;
 import stroom.pipeline.refdata.store.offheapstore.lmdb.EntryConsumer;
@@ -82,16 +83,23 @@ public class ValueStoreDb extends AbstractLmdbDb<ValueStoreKey, RefDataValue> {
     // in their raw form and the caller can do the deserialisation. On insertion if we are given a typed object
     // we can serialise them appropriately.
     private final GenericRefDataValueSerde valueSerde;
+    private final ValueStoreHashAlgorithm valueStoreHashAlgorithm;
 
     @Inject
     public ValueStoreDb(@Assisted final Env<ByteBuffer> lmdbEnvironment,
                         final ByteBufferPool byteBufferPool,
                         final ValueStoreKeySerde keySerde,
-                        final GenericRefDataValueSerde valueSerde) {
+                        final GenericRefDataValueSerde valueSerde,
+                        final ValueStoreHashAlgorithm valueStoreHashAlgorithm) {
 
         super(lmdbEnvironment, byteBufferPool, keySerde, valueSerde, DB_NAME);
         this.keySerde = keySerde;
         this.valueSerde = valueSerde;
+        this.valueStoreHashAlgorithm = valueStoreHashAlgorithm;
+    }
+
+    public ValueStoreHashAlgorithm getValueStoreHashAlgorithm() {
+        return valueStoreHashAlgorithm;
     }
 
     /**
@@ -103,8 +111,8 @@ public class ValueStoreDb extends AbstractLmdbDb<ValueStoreKey, RefDataValue> {
                                   final ByteBuffer valueStoreKeyBuffer,
                                   final RefDataValue newRefDataValue) {
 
-        int currentValueHashCode = keySerde.extractValueHashCode(valueStoreKeyBuffer);
-        int newValueHashCode = newRefDataValue.getValueHashCode();
+        long currentValueHashCode = keySerde.extractValueHashCode(valueStoreKeyBuffer);
+        long newValueHashCode = newRefDataValue.getValueHashCode(valueStoreHashAlgorithm);
         boolean areValuesEqual;
         if (currentValueHashCode != newValueHashCode) {
             // valueHashCodes differ so values differ
@@ -300,7 +308,7 @@ public class ValueStoreDb extends AbstractLmdbDb<ValueStoreKey, RefDataValue> {
     }
 
     private ByteBuffer buildStartKeyBuffer(final RefDataValue value) {
-        return keySerde.serialize(ValueStoreKey.lowestKey(value.getValueHashCode()));
+        return keySerde.serialize(ValueStoreKey.lowestKey(value.getValueHashCode(valueStoreHashAlgorithm)));
     }
 
     public interface Factory {

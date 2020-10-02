@@ -1,9 +1,12 @@
 package stroom.pipeline.refdata.store.offheapstore.databases;
 
 
+import stroom.pipeline.refdata.store.BasicValueStoreHashAlgorithmImpl;
 import stroom.pipeline.refdata.store.ByteBufferPoolFactory;
 import stroom.pipeline.refdata.store.RefDataValue;
 import stroom.pipeline.refdata.store.StringValue;
+import stroom.pipeline.refdata.store.ValueStoreHashAlgorithm;
+import stroom.pipeline.refdata.store.XxHashValueStoreHashAlgorithm;
 import stroom.pipeline.refdata.store.offheapstore.ValueStoreKey;
 import stroom.pipeline.refdata.store.offheapstore.lmdb.EntryConsumer;
 import stroom.pipeline.refdata.store.offheapstore.lmdb.LmdbUtils;
@@ -13,6 +16,7 @@ import stroom.pipeline.refdata.store.offheapstore.serdes.ValueStoreKeySerde;
 import stroom.pipeline.refdata.util.PooledByteBuffer;
 
 import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Disabled;
 import org.junit.jupiter.api.Test;
 import org.lmdbjava.Txn;
 import org.slf4j.Logger;
@@ -31,19 +35,40 @@ import static org.assertj.core.api.Assertions.assertThat;
 
 class TestValueStoreDb extends AbstractLmdbDbTest {
     private static final Logger LOGGER = LoggerFactory.getLogger(TestValueStoreDb.class);
+
     private final RefDataValueSerdeFactory refDataValueSerdeFactory = new RefDataValueSerdeFactory();
+    private final ValueStoreHashAlgorithm xxHashAlgorithm = new XxHashValueStoreHashAlgorithm();
+    private final ValueStoreHashAlgorithm basicHashAlgorithm = new BasicValueStoreHashAlgorithmImpl();
     private ValueStoreDb valueStoreDb = null;
 
-    //TODO should really spin up guice rather than use this factory class
-//    private final RefDataValueSerde refDataValueSerde = RefDataValueSerdeFactory.create();
+    private static final int NCHAR = 5;
+    private static final char[] chars = {
+            '0', '1', '2', '3', '4', '5', '6', '7', '8', '9',
+            'a', 'b', 'c', 'd', 'e', 'f', 'g', 'h', 'i', 'j', 'k', 'l', 'm', 'n',
+            'o', 'p', 'q', 'r', 's', 't', 'u', 'v', 'w', 'x', 'y', 'z',
+            'A', 'B', 'C', 'D', 'E', 'F', 'G', 'H', 'I', 'J', 'K', 'L', 'M', 'N',
+            'O', 'P', 'Q', 'R', 'S', 'T', 'U', 'V', 'W', 'X', 'Y', 'Z',
+    };
+    private static final int ALPHAS = chars.length;
 
     @BeforeEach
     void setup() {
+        // the default
         valueStoreDb = new ValueStoreDb(
                 lmdbEnv,
                 new ByteBufferPoolFactory().getByteBufferPool(),
                 new ValueStoreKeySerde(),
-                new GenericRefDataValueSerde(refDataValueSerdeFactory));
+                new GenericRefDataValueSerde(refDataValueSerdeFactory),
+                xxHashAlgorithm);
+    }
+
+    private void setupValueStoreDb(final ValueStoreHashAlgorithm valueStoreHashAlgorithm) {
+        valueStoreDb = new ValueStoreDb(
+                lmdbEnv,
+                new ByteBufferPoolFactory().getByteBufferPool(),
+                new ValueStoreKeySerde(),
+                new GenericRefDataValueSerde(refDataValueSerdeFactory),
+                valueStoreHashAlgorithm);
     }
 
 
@@ -63,7 +88,11 @@ class TestValueStoreDb extends AbstractLmdbDbTest {
 
     @Test
     void testGetOrCreateSparseIds() {
-        final List<String> stringsWithSameHash = generateHashClashes(10);
+        // We have to set up the DB with the basic hash func so we can be assured of hash clashes
+        setupValueStoreDb(basicHashAlgorithm);
+
+        final List<String> stringsWithSameHash = generateHashClashes(
+                10, valueStoreDb.getValueStoreHashAlgorithm());
 
         final List<RefDataValue> refDataValues = stringsWithSameHash.stream()
                 .map(StringValue::of)
@@ -121,7 +150,8 @@ class TestValueStoreDb extends AbstractLmdbDbTest {
      * Generate a list (of size desiredRecords) of strings that all share the same hashcode
      * Adapted from https://gist.github.com/vaskoz/5703423
      */
-    public List<String> generateHashClashes(final int desiredRecords) {
+    public List<String> generateHashClashes(final int desiredRecords,
+                                            final ValueStoreHashAlgorithm valueStoreHashAlgorithm) {
 
         List<String> strings = new ArrayList<>(Arrays.asList("Aa", "BB"));
         List<String> temp = new ArrayList<>();
@@ -146,7 +176,10 @@ class TestValueStoreDb extends AbstractLmdbDbTest {
 
         //dbl check all have same hash
         assertThat(strings.stream()
-                .map(String::hashCode)
+                .peek(str -> {
+                    LOGGER.info("{} {} {}", str, str.hashCode(), valueStoreHashAlgorithm.hash(str));
+                })
+                .map(valueStoreHashAlgorithm::hash)
                 .distinct()
                 .count()).isEqualTo(1);
 
@@ -196,6 +229,9 @@ class TestValueStoreDb extends AbstractLmdbDbTest {
 
     @Test
     void testGet_sameHashCodes() {
+        // We have to set up the DB with the basic hash func so we can be assured of hash clashes
+        setupValueStoreDb(basicHashAlgorithm);
+
         assertThat(valueStoreDb.getEntryCount()).isEqualTo(0);
 
         String val1str = "AaAa";
@@ -273,5 +309,41 @@ class TestValueStoreDb extends AbstractLmdbDbTest {
             boolean areValuesEqual = valueStoreDb.areValuesEqual(writeTxn, valueStoreKeyBuffer, value2);
             assertThat(areValuesEqual).isEqualTo(expectedResult);
         });
+    }
+
+    @Disabled
+    @Test
+    void findHashClashes() {
+        Map<Long, String> map = new HashMap<>();
+        int[] index = new int[NCHAR];
+        char[] buf = new char[NCHAR];
+        while (true) {
+            for (int i = 0; i < NCHAR; ++i) {
+                buf[i] = chars[index[i]];
+            }
+            String str = new String(buf);
+            long hash = basicHashAlgorithm.hash(str);
+            String dupStr = map.putIfAbsent(hash, str);
+            if (dupStr != null) {
+                System.out.println("clash " + str + " " + dupStr);
+            }
+            int carry = 1;
+            for (int i = 0; i < NCHAR; ++i) {
+                index[i] = index[i] + carry;
+                carry = index[i] / ALPHAS;
+                index[i] %= ALPHAS;
+            }
+            if (carry > 0) break;
+        }
+
+//        for (Map.Entry<Long,Collection<String>> group : map.entrySet()) {
+//            Collection<String> strings = group.getValue();
+//            if (strings.size() >= 2) {
+//                System.out.println("" + group.getKey() + ":");
+//                for (String str: strings) {
+//                    System.out.println("\t" + str);
+//                }
+//            }
+//        }
     }
 }

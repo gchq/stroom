@@ -220,7 +220,6 @@ public class ByteBufferUtils {
      * Generate a fast non-crypto 64bit hash of the passed buffer
      */
     public static long xxHash(final ByteBuffer byteBuffer) {
-        // Use xxHash for
         return LongHashFunction.xx().hashBytes(byteBuffer);
     }
 

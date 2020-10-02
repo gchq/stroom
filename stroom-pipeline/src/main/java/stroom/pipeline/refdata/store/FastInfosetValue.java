@@ -44,9 +44,8 @@ public class FastInfosetValue extends RefDataValue {
 
 
     @Override
-    public int getValueHashCode() {
-//        return Arrays.hashCode(fastInfosetBytes);
-        return ByteBufferUtils.basicHashCode(fastInfosetByteBuffer);
+    public long getValueHashCode(final ValueStoreHashAlgorithm valueStoreHashAlgorithm) {
+        return valueStoreHashAlgorithm.hash(fastInfosetByteBuffer);
     }
 
     @Override

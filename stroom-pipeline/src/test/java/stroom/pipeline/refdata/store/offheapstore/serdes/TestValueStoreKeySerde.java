@@ -1,8 +1,9 @@
 package stroom.pipeline.refdata.store.offheapstore.serdes;
 
 
-import org.junit.jupiter.api.Test;
 import stroom.pipeline.refdata.store.offheapstore.ValueStoreKey;
+
+import org.junit.jupiter.api.Test;
 
 import java.nio.ByteBuffer;
 
@@ -13,7 +14,7 @@ class TestValueStoreKeySerde extends AbstractSerdeTest<ValueStoreKey, ValueStore
     @Test
     void testSerializeDeserialize() {
         final ValueStoreKey valueStoreKey = new ValueStoreKey(
-                123456789,
+                123456789L,
                 (short) 1);
 
         doSerialisationDeserialisationTest(valueStoreKey);
@@ -22,7 +23,7 @@ class TestValueStoreKeySerde extends AbstractSerdeTest<ValueStoreKey, ValueStore
     @Test
     void testNextId() {
 
-        ValueStoreKey originalValueStoreKey = new ValueStoreKey(1234567, (short) 123);
+        ValueStoreKey originalValueStoreKey = new ValueStoreKey(1234567L, (short) 123);
 
         ByteBuffer originalBuffer = serialize(originalValueStoreKey);
 
@@ -36,7 +37,7 @@ class TestValueStoreKeySerde extends AbstractSerdeTest<ValueStoreKey, ValueStore
 
     @Test
     void testIncrementId() {
-        ValueStoreKey originalValueStoreKey = new ValueStoreKey(1234567, (short) 123);
+        ValueStoreKey originalValueStoreKey = new ValueStoreKey(1234567L, (short) 123);
 
         ByteBuffer byteBuffer = serialize(originalValueStoreKey);
 
@@ -50,7 +51,7 @@ class TestValueStoreKeySerde extends AbstractSerdeTest<ValueStoreKey, ValueStore
 
     @Test
     void testUpdateId() {
-        ValueStoreKey originalValueStoreKey = new ValueStoreKey(1234567, (short) 123);
+        ValueStoreKey originalValueStoreKey = new ValueStoreKey(1234567L, (short) 123);
 
         ValueStoreKeySerde serde = new ValueStoreKeySerde();
 
@@ -67,7 +68,7 @@ class TestValueStoreKeySerde extends AbstractSerdeTest<ValueStoreKey, ValueStore
     @Test
     void testExtractId() {
         short id = 123;
-        ValueStoreKey originalValueStoreKey = new ValueStoreKey(1234567, id);
+        ValueStoreKey originalValueStoreKey = new ValueStoreKey(1234567L, id);
 
         ValueStoreKeySerde serde = new ValueStoreKeySerde();
 
