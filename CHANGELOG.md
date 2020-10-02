@@ -7,6 +7,8 @@ and this project adheres to [Semantic Versioning](http://semver.org/).
 
 ## [Unreleased]
 
+## [v6.1.18] - 2020-10-02
+
 * Issue **#1887** : Fix searches hanging generally and specifically when streams have been deleted.
 
 
@@ -2230,7 +2232,8 @@ and this project adheres to [Semantic Versioning](http://semver.org/).
 
 * Issue **#202** : Initial release of the new data retention policy functionality.
 
-[Unreleased]: https://github.com/gchq/stroom/compare/v6.1.17...6.1
+[Unreleased]: https://github.com/gchq/stroom/compare/v6.1.18...6.1
+[v6.1.18]: https://github.com/gchq/stroom/compare/v6.1.17...v6.1.18
 [v6.1.17]: https://github.com/gchq/stroom/compare/v6.1.16...v6.1.17
 [v6.1.16]: https://github.com/gchq/stroom/compare/v6.1.15...v6.1.16
 [v6.1.15]: https://github.com/gchq/stroom/compare/v6.1.14...v6.1.15
