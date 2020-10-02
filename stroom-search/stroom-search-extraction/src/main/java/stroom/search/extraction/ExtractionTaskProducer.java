@@ -39,7 +39,6 @@ import java.util.Map;
 import java.util.Map.Entry;
 import java.util.Queue;
 import java.util.concurrent.CompletableFuture;
-import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ConcurrentLinkedQueue;
 import java.util.concurrent.Executor;
 import java.util.concurrent.atomic.AtomicInteger;
@@ -115,7 +114,12 @@ class ExtractionTaskProducer extends TaskProducer {
                         if (values != null) {
                             try {
                                 // If we have some values then map them.
-                                streamMapCreator.addEvent(streamEventMap, values.getValues());
+                                boolean foundData = streamMapCreator.addEvent(streamEventMap, values.getValues());
+                                if (!foundData) {
+                                    // stream may have been deleted so treat it as complete to avoid a hanging search
+                                    receivers.values().forEach(receiver ->
+                                            receiver.getCompletionCountConsumer().accept(1L));
+                                }
                             } catch (final RuntimeException e) {
                                 LOGGER.debug(e.getMessage(), e);
                                 receivers.values().forEach(receiver -> {
@@ -180,13 +184,15 @@ class ExtractionTaskProducer extends TaskProducer {
     private boolean addTasks() {
         final boolean completedEventMapping = this.streamMapCreatorCompletionState.isComplete();
         final Map<Long, List<Event>> map = streamEventMap.get();
+        int tasksCreated = 0;
         for (final Entry<Long, List<Event>> entry : map.entrySet()) {
-            final int tasksCreated = createTasks(entry.getKey(), entry.getValue());
-            if (tasksCreated > 0) {
-                return false;
-            }
+            tasksCreated += createTasks(entry.getKey(), entry.getValue());
         }
-        return completedEventMapping;
+        if (tasksCreated > 0) {
+            return false;
+        } else {
+            return completedEventMapping;
+        }
     }
 
     private int createTasks(final long streamId, final List<Event> events) {
