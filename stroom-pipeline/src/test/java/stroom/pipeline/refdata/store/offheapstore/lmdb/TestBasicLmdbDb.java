@@ -21,6 +21,7 @@ package stroom.pipeline.refdata.store.offheapstore.lmdb;
 import stroom.pipeline.refdata.store.ByteBufferPoolFactory;
 import stroom.pipeline.refdata.store.offheapstore.databases.AbstractLmdbDbTest;
 import stroom.pipeline.refdata.store.offheapstore.serdes.StringSerde;
+import stroom.pipeline.refdata.util.ByteBufferPool;
 import stroom.pipeline.refdata.util.ByteBufferUtils;
 import stroom.pipeline.refdata.util.PooledByteBuffer;
 
@@ -45,6 +46,7 @@ class TestBasicLmdbDb extends AbstractLmdbDbTest {
 
     private BasicLmdbDb<String, String> basicLmdbDb;
     private BasicLmdbDb<String, String> basicLmdbDb2;
+    private final ByteBufferPool byteBufferPool = new ByteBufferPoolFactory().getByteBufferPool();
 
     @BeforeEach
     void setup() {
@@ -66,25 +68,24 @@ class TestBasicLmdbDb extends AbstractLmdbDbTest {
     @Test
     void testBufferMutationAfterPut() {
 
-        ByteBuffer keyBuffer = ByteBuffer.allocateDirect(50);
-        ByteBuffer valueBuffer = ByteBuffer.allocateDirect(50);
+        byteBufferPool.doWithBufferPair(50, 50, (keyBuffer, valueBuffer) -> {
+            basicLmdbDb.getKeySerde().serialize(keyBuffer, "MyKey");
+            basicLmdbDb.getValueSerde().serialize(valueBuffer, "MyValue");
 
-        basicLmdbDb.getKeySerde().serialize(keyBuffer, "MyKey");
-        basicLmdbDb.getValueSerde().serialize(valueBuffer, "MyValue");
+            LmdbUtils.doWithWriteTxn(lmdbEnv, writeTxn -> {
+                basicLmdbDb.put(writeTxn, keyBuffer, valueBuffer, false);
+            });
+            assertThat(basicLmdbDb.getEntryCount()).isEqualTo(1);
 
-        LmdbUtils.doWithWriteTxn(lmdbEnv, writeTxn -> {
-            basicLmdbDb.put(writeTxn, keyBuffer, valueBuffer, false);
+            // it is ok to mutate the buffers used in the put outside of the txn
+            basicLmdbDb.getKeySerde().serialize(keyBuffer, "XX");
+            basicLmdbDb.getValueSerde().serialize(valueBuffer, "YY");
+
+            // now get the value again and it should be correct
+            String val = basicLmdbDb.get("MyKey").get();
+
+            assertThat(val).isEqualTo("MyValue");
         });
-        assertThat(basicLmdbDb.getEntryCount()).isEqualTo(1);
-
-        // it is ok to mutate the buffers used in the put outside of the txn
-        basicLmdbDb.getKeySerde().serialize(keyBuffer, "XX");
-        basicLmdbDb.getValueSerde().serialize(valueBuffer, "YY");
-
-        // now get the value again and it should be correct
-        String val = basicLmdbDb.get("MyKey").get();
-
-        assertThat(val).isEqualTo("MyValue");
     }
 
     /**

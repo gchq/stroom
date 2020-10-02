@@ -17,14 +17,15 @@
 
 package stroom.pipeline.refdata.store.offheapstore.serdes;
 
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 import stroom.pipeline.refdata.store.offheapstore.RangeStoreKey;
 import stroom.pipeline.refdata.store.offheapstore.UID;
 import stroom.pipeline.refdata.store.offheapstore.lmdb.serde.Serde;
 import stroom.util.logging.LambdaLogger;
 import stroom.util.logging.LambdaLoggerFactory;
 import stroom.util.shared.Range;
+
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import java.nio.ByteBuffer;
 
@@ -42,7 +43,9 @@ public class RangeStoreKeySerde implements Serde<RangeStoreKey> {
     public RangeStoreKey deserialize(final ByteBuffer byteBuffer) {
 
         // clone it to de-couple us from a LMDB managed buffer
-        final UID mapUid = UIDSerde.getUid(byteBuffer).clone();
+        // TODO @AT It is not ideal allocating a new buffer here but using a pooled buffer here
+        //   would not be easy.
+        final UID mapUid = UIDSerde.getUid(byteBuffer).cloneToNewBuffer();
         long rangeFromInc = byteBuffer.getLong();
         long rangeToExc = byteBuffer.getLong();
         byteBuffer.flip();

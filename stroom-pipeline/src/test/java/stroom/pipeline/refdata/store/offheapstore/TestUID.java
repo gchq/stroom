@@ -14,7 +14,7 @@ class TestUID {
     @Test
     void nextUid() {
         final UID uid1 = UID.of(0, 0, 0, 1);
-        final UID uid2 = uid1.nextUid();
+        final UID uid2 = uid1.nextUid(getNewUidBuffer());
 
         Assertions.assertThat(uid2.getBackingBuffer())
                 .isEqualByComparingTo(UID.of(0,0,0,2).getBackingBuffer());
@@ -25,7 +25,7 @@ class TestUID {
         final UID uid1 = UID.of(0, 0, 0, 5);
 
         // Compare two buffers of different capacities
-        final ByteBuffer byteBuffer = ByteBuffer.allocateDirect(10);
+        final ByteBuffer byteBuffer = getNewUidBuffer();
         UID uid2 = UID.of(5, byteBuffer);
 
         LOGGER.info("uid1: {}", uid1);
@@ -41,8 +41,8 @@ class TestUID {
     @Test
     void minimumUid() {
         final UID uid1 = UID.of(0, 0, 0, 0);
-        final UID uid2 = UID.of(0, ByteBuffer.allocateDirect(UID.UID_ARRAY_LENGTH));
-        final UID uid3 = UID.minimumValue(ByteBuffer.allocateDirect(UID.UID_ARRAY_LENGTH));
+        final UID uid2 = UID.of(0, getNewUidBuffer());
+        final UID uid3 = UID.minimumValue(getNewUidBuffer());
 
         Assertions.assertThat(uid2.getBackingBuffer())
                 .isEqualByComparingTo(uid1.getBackingBuffer());
@@ -54,10 +54,16 @@ class TestUID {
     @Test
     void testClone() {
         final UID uid1 = UID.of(1, 2, 3, 4);
-        final UID uid2 = uid1.clone(ByteBuffer.allocateDirect(UID.UID_ARRAY_LENGTH));
+        final UID uid2 = uid1.cloneToBuffer(getNewUidBuffer());
 
         Assertions.assertThat(uid2.getBackingBuffer())
                 .isEqualByComparingTo(uid1.getBackingBuffer());
+    }
+
+    ByteBuffer getNewUidBuffer() {
+        // Don't use UID capacity for more realistic testing as we are normally using
+        // pooled buffers of random sizes
+        return ByteBuffer.allocateDirect(10);
     }
 
 }

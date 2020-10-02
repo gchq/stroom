@@ -466,7 +466,7 @@ public class OffHeapRefDataLoader implements RefDataLoader {
                 final UID newUid = mapDefinitionUIDStore.getOrCreateUid(writeTxn, mapDef, temporaryUidPooledBuffer);
 
                 // Now clone it into a different buffer and wrap in a new UID instance
-                final UID newUidClone = newUid.clone(cachedUidPooledBuffer.getByteBuffer());
+                final UID newUidClone = newUid.cloneToBuffer(cachedUidPooledBuffer.getByteBuffer());
 
                 return newUidClone;
             }

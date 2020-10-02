@@ -316,11 +316,14 @@ public class RefDataOffHeapStore extends AbstractRefDataStore implements RefData
         try (PooledByteBuffer valueStoreKeyPooledBufferClone = valueStore.getPooledKeyBuffer()) {
             Optional<RefDataValue> optionalRefDataValue =
                     LmdbUtils.getWithReadTxn(lmdbEnvironment, readTxn ->
+                            // Perform the lookup with the map+key. The returned value (if found)
+                            // is the key of the ValueStore, which we can use to find the actual
+                            // value.
                             getValueStoreKey(readTxn, mapDefinition, key)
                                     .flatMap(valueStoreKeyBuffer -> {
                                         // we are going to use the valueStoreKeyBuffer as a key in multiple
                                         // get() calls so need to clone it first.
-                                        ByteBuffer valueStoreKeyBufferClone = valueStoreKeyPooledBufferClone.getByteBuffer();
+                                        final ByteBuffer valueStoreKeyBufferClone = valueStoreKeyPooledBufferClone.getByteBuffer();
                                         ByteBufferUtils.copy(valueStoreKeyBuffer, valueStoreKeyBufferClone);
                                         return Optional.of(valueStoreKeyBufferClone);
                                     })
@@ -384,7 +387,8 @@ public class RefDataOffHeapStore extends AbstractRefDataStore implements RefData
                 }
             }
         } else {
-            LOGGER.debug("Couldn't find map UID which means the data for this map has not been loaded or the map name is wrong {}",
+            LOGGER.debug("Couldn't find map UID which means the data for this map has " +
+                            "not been loaded or the map name is wrong {}",
                     mapDefinition);
             // no map UID so can't look in key/range stores without one
             optValueStoreKeyBuffer = Optional.empty();

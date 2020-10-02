@@ -53,11 +53,12 @@ public class MapDefinitionUIDStore {
         this.mapUidReverseDb = mapUidReverseDb;
     }
 
-    Optional<UID> getUid(final MapDefinition mapDefinition) {
+    Optional<UID> getUid(final MapDefinition mapDefinition, final ByteBuffer uidByteBuffer) {
         // The returned UID is outside the txn so must be a clone of the found one
         return LmdbUtils.getWithReadTxn(lmdbEnv, txn ->
                 getUid(txn, mapDefinition)
-                        .flatMap(uid -> Optional.of(uid.clone())));
+                        .flatMap(uid ->
+                                Optional.of(uid.cloneToBuffer(uidByteBuffer))));
     }
 
     Optional<UID> getUid(final Txn<ByteBuffer> txn, final MapDefinition mapDefinition) {

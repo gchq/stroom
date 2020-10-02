@@ -17,6 +17,13 @@
 
 package stroom.pipeline.refdata.store;
 
+/**
+ * Represents a reference data value in the store. The value could be one of
+ * various types, e.g. simple string or fastinfoset serialised XML. The type
+ * of the value is not know until it is read and its typeId is determined.
+ * Each impl will have its own serde that can be used once the type is determined
+ * by inspecting the serialised typeId.
+ */
 public abstract class RefDataValue {
 
     /**

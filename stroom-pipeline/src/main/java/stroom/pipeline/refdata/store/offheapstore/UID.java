@@ -59,20 +59,8 @@ public class UID {
     }
 
     /**
-     * Copies the content of the {@link ByteBuffer} into a new directly allocated {@link ByteBuffer}
-     * and wraps the new UID around that {@link ByteBuffer}
-     */
-    @Deprecated // allocates a new direct buffer should be using a pooled buffer.
-    public static UID copyOfDirect(final ByteBuffer byteBuffer) {
-        final ByteBuffer newBuffer = ByteBuffer.allocateDirect(UID_ARRAY_LENGTH);
-        newBuffer.put(byteBuffer);
-        newBuffer.flip();
-        return new UID(newBuffer);
-    }
-
-    /**
      * For use in testing only, e.g. <pre>UID uid = UID.of(0, 0, 1, 0);</pre>
-     * Allocates a new direct buffer
+     * Allocates a new direct buffer of capacity UID.UID_ARRAY_LENGTH.
      */
     public static UID of(final int... byteValues) {
         Preconditions.checkArgument(byteValues.length == UID_ARRAY_LENGTH);
@@ -125,7 +113,7 @@ public class UID {
      * @return A newly allocated byte buffer containing the same UID bytes as this. Useful when this UID
      * wraps an LMDB managed bytebuffer that you want to de-associate from.
      */
-    public UID clone() {
+    public UID cloneToNewBuffer() {
         final ByteBuffer newBuffer = ByteBuffer.allocateDirect(UID_ARRAY_LENGTH);
         newBuffer.put(byteBuffer);
         byteBuffer.rewind();
@@ -133,7 +121,10 @@ public class UID {
         return new UID(newBuffer);
     }
 
-    public UID clone(final ByteBuffer destByteBuffer) {
+    /**
+     * Clone the contents of this into the passed buffer. destByteBuffer will be left ready for reading
+     */
+    public UID cloneToBuffer(final ByteBuffer destByteBuffer) {
         destByteBuffer.put(byteBuffer);
         byteBuffer.rewind();
         destByteBuffer.flip();
@@ -143,13 +134,6 @@ public class UID {
     public long getValue() {
         final long val = UnsignedBytes.get(byteBuffer);
         return val;
-    }
-
-    @Deprecated // allocates a new direct buffer should be using a pooled buffer.
-    public UID nextUid() {
-        // TODO @AT Maybe ought to be doing this by manipulating the bits into a new bu
-        final long currVal = getValue();
-        return UID.of(currVal + 1);
     }
 
     /**
