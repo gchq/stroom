@@ -66,18 +66,19 @@ class StreamMapCreator {
         return index;
     }
 
-    void addEvent(final StreamEventMap storedDataMap, final Val[] storedData) {
+    boolean addEvent(final StreamEventMap storedDataMap, final Val[] storedData) {
         if (error != null) {
             throw error;
         } else {
             final long longStreamId = getLong(storedData, streamIdIndex);
             final long longEventId = getLong(storedData, eventIdIndex);
             // Stream may have been deleted but still be in the index
-            getData(longStreamId, longEventId, storedData)
-                    .ifPresent(data -> {
+            final Optional<Values> optValues = getData(longStreamId, longEventId, storedData);
+            optValues.ifPresent(data -> {
                         final Event event = new Event(longStreamId, longEventId, data);
                         storedDataMap.add(event);
                     });
+            return optValues.isPresent();
         }
     }
 
