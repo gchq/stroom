@@ -283,6 +283,7 @@ ext.libs = [
         wix_embedded_mysql             : "com.wix:wix-embedded-mysql:4.6.1",
         ws_rs_api                      : "javax.ws.rs:javax.ws.rs-api:2.1",
         xml_apis                       : "xml-apis:xml-apis:1.0.b2",
+        zero_allocation_hashing        : "net.openhft:zero-allocation-hashing:0.11",
         zookeeper                      : "org.apache.zookeeper:zookeeper:$versions.zookeeper",
         zzDUMMYzz                      : "makes sorting this array easier"
 ]

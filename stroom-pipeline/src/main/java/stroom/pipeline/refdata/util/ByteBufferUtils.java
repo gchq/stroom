@@ -21,6 +21,7 @@ import stroom.util.logging.LambdaLogger;
 import stroom.util.logging.LambdaLoggerFactory;
 import stroom.util.logging.LogUtil;
 
+import net.openhft.hashing.LongHashFunction;
 import org.apache.hadoop.hbase.util.Bytes;
 
 import javax.xml.bind.DatatypeConverter;
@@ -215,7 +216,15 @@ public class ByteBufferUtils {
         return cmp;
     }
 
-    public static int hashCode(final ByteBuffer byteBuffer) {
+    /**
+     * Generate a fast non-crypto 64bit hash of the passed buffer
+     */
+    public static long xxHash(final ByteBuffer byteBuffer) {
+        // Use xxHash for
+        return LongHashFunction.xx().hashBytes(byteBuffer);
+    }
+
+    public static int basicHashCode(final ByteBuffer byteBuffer) {
         int hash = 1;
 
         int pos = byteBuffer.position();

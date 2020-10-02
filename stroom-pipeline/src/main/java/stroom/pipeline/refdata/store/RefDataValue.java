@@ -34,8 +34,8 @@ public abstract class RefDataValue {
 
     /**
      * @return A code to represent the class of the implementation,
-     * unique within all sub-classes of {@link RefDataValue}
+     * unique within all sub-classes of {@link RefDataValue}. Stored in the DB as a single
+     * byte so values must be in the range -128 to 127.
      */
     public abstract int getTypeId();
-
 }

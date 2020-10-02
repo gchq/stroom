@@ -46,7 +46,7 @@ public class FastInfosetValue extends RefDataValue {
     @Override
     public int getValueHashCode() {
 //        return Arrays.hashCode(fastInfosetBytes);
-        return ByteBufferUtils.hashCode(fastInfosetByteBuffer);
+        return ByteBufferUtils.basicHashCode(fastInfosetByteBuffer);
     }
 
     @Override
@@ -59,7 +59,7 @@ public class FastInfosetValue extends RefDataValue {
 
     @Override
     public int hashCode() {
-        return ByteBufferUtils.hashCode(fastInfosetByteBuffer);
+        return ByteBufferUtils.basicHashCode(fastInfosetByteBuffer);
     }
 
     public ByteBuffer getByteBuffer() {
