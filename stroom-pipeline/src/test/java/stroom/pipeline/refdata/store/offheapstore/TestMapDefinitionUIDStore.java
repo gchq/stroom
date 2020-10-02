@@ -129,7 +129,10 @@ class TestMapDefinitionUIDStore extends AbstractLmdbDbTest {
                 "MyMapName");
 
         final UID uid1 = LmdbUtils.getWithWriteTxn(lmdbEnv, writeTxn -> {
-            UID uid = mapDefinitionUIDStore.getOrCreateUid(writeTxn, mapDefinition);
+            UID uid = mapDefinitionUIDStore.getOrCreateUid(
+                    writeTxn,
+                    mapDefinition,
+                    mapDefinitionUIDStore.getUidPooledByteBuffer());
 
             assertThat(uid).isNotNull();
 
@@ -147,7 +150,10 @@ class TestMapDefinitionUIDStore extends AbstractLmdbDbTest {
 
         // now try again with the same mapDefinition, which should give the same UID
         final UID uid2 = LmdbUtils.getWithWriteTxn(lmdbEnv, writeTxn -> {
-            UID uid = mapDefinitionUIDStore.getOrCreateUid(writeTxn, mapDefinition);
+            UID uid = mapDefinitionUIDStore.getOrCreateUid(
+                    writeTxn,
+                    mapDefinition,
+                    mapDefinitionUIDStore.getUidPooledByteBuffer());
 
             assertThat(uid).isNotNull();
 
@@ -158,7 +164,8 @@ class TestMapDefinitionUIDStore extends AbstractLmdbDbTest {
             return uid;
         });
 
-        assertThat(uid1).isEqualTo(uid2);
+        assertThat(uid1.getBackingBuffer())
+                .isEqualByComparingTo(uid2.getBackingBuffer());
     }
 
     @Test
@@ -374,7 +381,10 @@ class TestMapDefinitionUIDStore extends AbstractLmdbDbTest {
         LmdbUtils.doWithWriteTxn(lmdbEnv, writeTxn -> {
             mapDefinitions.stream()
                     .forEach(mapDefinition -> {
-                        final UID uid = mapDefinitionUIDStore.getOrCreateUid(writeTxn, mapDefinition);
+                        final UID uid = mapDefinitionUIDStore.getOrCreateUid(
+                                writeTxn,
+                                mapDefinition,
+                                mapDefinitionUIDStore.getUidPooledByteBuffer());
                         assertThat(uid).isNotNull();
 
                         // we are going to leave the txn so need to clone the UIDs

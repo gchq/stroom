@@ -54,7 +54,7 @@ public class UIDSerde implements Serde<UID>, Serializer<UID>, Deserializer<UID> 
         final UID uid = UID.wrap(dupBuffer);
         // no need to flip as we are just wrapping the original buffer
 
-        //advance the position of the passed buffer now that we have read the UID from it
+        // advance the position of the passed buffer now that we have read the UID from it
         byteBuffer.position(byteBuffer.position() + UID.UID_ARRAY_LENGTH);
         return uid;
     }

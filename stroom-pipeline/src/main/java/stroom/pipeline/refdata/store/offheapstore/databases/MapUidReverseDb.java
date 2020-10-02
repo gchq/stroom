@@ -24,6 +24,7 @@ import stroom.pipeline.refdata.store.offheapstore.serdes.MapDefinitionSerde;
 import stroom.pipeline.refdata.store.offheapstore.serdes.UIDSerde;
 import stroom.pipeline.refdata.util.ByteBufferPool;
 import stroom.pipeline.refdata.util.ByteBufferUtils;
+import stroom.pipeline.refdata.util.PooledByteBuffer;
 import stroom.util.logging.LambdaLogger;
 import stroom.util.logging.LambdaLoggerFactory;
 import stroom.util.logging.LogUtil;
@@ -40,7 +41,6 @@ import org.slf4j.LoggerFactory;
 import javax.inject.Inject;
 import java.nio.ByteBuffer;
 import java.util.Iterator;
-import java.util.Optional;
 
 public class MapUidReverseDb extends AbstractLmdbDb<UID, MapDefinition> {
 
@@ -57,19 +57,36 @@ public class MapUidReverseDb extends AbstractLmdbDb<UID, MapDefinition> {
         super(lmdbEnvironment, byteBufferPool, keySerde, valueSerde, DB_NAME);
     }
 
-    public Optional<ByteBuffer> getHighestUid(final Txn<ByteBuffer> txn) {
+    /**
+     * @return A bytebuffer of the next UID, NOT owned by LMDB
+     */
+    public ByteBuffer getNextUid(final Txn<ByteBuffer> txn,
+                                 final PooledByteBuffer newUidPooledBuffer) {
+        final ByteBuffer nextUidBuffer = newUidPooledBuffer.getByteBuffer();
         // scan backwards over all entries to find the first (i.e. highest) key
-        Optional<ByteBuffer> optHighestUid = Optional.empty();
         try (CursorIterable<ByteBuffer> cursorIterable = getLmdbDbi().iterate(txn, KeyRange.allBackward())) {
             final Iterator<KeyVal<ByteBuffer>> iterator = cursorIterable.iterator();
             if (iterator.hasNext()) {
                 final CursorIterable.KeyVal<ByteBuffer> highestKeyVal = iterator.next();
-                optHighestUid = Optional.of(highestKeyVal.key());
+
+                final ByteBuffer highestUidBuffer = highestKeyVal.key();
+
                 LAMBDA_LOGGER.trace(() ->
-                        LogUtil.message("highestKey: {}", ByteBufferUtils.byteBufferInfo(highestKeyVal.key())));
+                        LogUtil.message("highestKey: {}", ByteBufferUtils.byteBufferInfo(highestUidBuffer)));
+
+                // DB has a UID in it so create a new one that is one higher
+                // in the pooled buffer
+                // Need to use the key buffer before the txn uses a cursor elsewhere so
+                // we write into our own buffer.
+                UID.wrap(highestUidBuffer)
+                        .writeNextUid(nextUidBuffer);
+            } else {
+                // Empty DB so create the lowest UID into the pooled buffer
+                UID.writeMinimumValue(nextUidBuffer);
             }
         }
-        return optHighestUid;
+        // Not owned by LMDB
+        return nextUidBuffer;
     }
 
     public void putReverseEntry(final Txn<ByteBuffer> writeTxn,

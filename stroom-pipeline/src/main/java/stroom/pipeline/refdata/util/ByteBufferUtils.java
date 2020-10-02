@@ -57,13 +57,20 @@ public class ByteBufferUtils {
                 }
                 oneByteArr[0] = byteBuffer.get(i);
                 sb.append(DatatypeConverter.printHexBinary(oneByteArr));
-                if (i == byteBuffer.limit()) {
+                if (i == byteBuffer.limit() - 1) {
                     sb.append("<");
+                    if (i < byteBuffer.capacity() -1) {
+                        sb.append(" ....");
+                    }
                 }
                 sb.append(" ");
             }
+//            sb
+//                    .append(" pos: ").append(byteBuffer.position())
+//                    .append(" lim: ").append(byteBuffer.limit())
+//                    .append(" cap: ").append(byteBuffer.capacity());
         }
-        return sb.toString().replaceAll(" $", "");
+        return sb.toString();
     }
 
     public static String byteBufferInfo(final ByteBuffer byteBuffer) {
