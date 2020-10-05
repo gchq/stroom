@@ -1,5 +1,7 @@
 package stroom.pipeline.refdata.store.offheapstore;
 
+import stroom.pipeline.refdata.util.ByteBufferUtils;
+
 import org.assertj.core.api.Assertions;
 import org.junit.jupiter.api.Test;
 import org.slf4j.Logger;
@@ -13,16 +15,17 @@ class TestUID {
 
     @Test
     void nextUid() {
-        final UID uid1 = UID.of(0, 0, 0, 1);
+        final UID uid1 = UID.of(getNewUidBuffer(), 0, 0, 0, 1);
+        LOGGER.info("uid1 {}", ByteBufferUtils.byteBufferInfo(uid1.getBackingBuffer()));
         final UID uid2 = uid1.nextUid(getNewUidBuffer());
 
         Assertions.assertThat(uid2.getBackingBuffer())
-                .isEqualByComparingTo(UID.of(0,0,0,2).getBackingBuffer());
+                .isEqualByComparingTo(UID.of(getNewUidBuffer(), 0,0,0,2).getBackingBuffer());
     }
 
     @Test
     void testEquals() {
-        final UID uid1 = UID.of(0, 0, 0, 5);
+        final UID uid1 = UID.of(getNewUidBuffer(), 0, 0, 0, 5);
 
         // Compare two buffers of different capacities
         final ByteBuffer byteBuffer = getNewUidBuffer();
@@ -40,7 +43,7 @@ class TestUID {
 
     @Test
     void minimumUid() {
-        final UID uid1 = UID.of(0, 0, 0, 0);
+        final UID uid1 = UID.of(getNewUidBuffer(), 0, 0, 0, 0);
         final UID uid2 = UID.of(0, getNewUidBuffer());
         final UID uid3 = UID.minimumValue(getNewUidBuffer());
 
@@ -53,7 +56,7 @@ class TestUID {
 
     @Test
     void testClone() {
-        final UID uid1 = UID.of(1, 2, 3, 4);
+        final UID uid1 = UID.of(getNewUidBuffer(), 1, 2, 3, 4);
         final UID uid2 = uid1.cloneToBuffer(getNewUidBuffer());
 
         Assertions.assertThat(uid2.getBackingBuffer())
@@ -65,5 +68,4 @@ class TestUID {
         // pooled buffers of random sizes
         return ByteBuffer.allocateDirect(10);
     }
-
 }

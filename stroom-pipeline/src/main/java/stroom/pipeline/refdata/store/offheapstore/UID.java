@@ -60,11 +60,9 @@ public class UID {
 
     /**
      * For use in testing only, e.g. <pre>UID uid = UID.of(0, 0, 1, 0);</pre>
-     * Allocates a new direct buffer of capacity UID.UID_ARRAY_LENGTH.
      */
-    public static UID of(final int... byteValues) {
+    public static UID of(final ByteBuffer byteBuffer, final int... byteValues) {
         Preconditions.checkArgument(byteValues.length == UID_ARRAY_LENGTH);
-        final ByteBuffer byteBuffer = ByteBuffer.allocateDirect(UID_ARRAY_LENGTH);
         for (int i = 0; i < UID_ARRAY_LENGTH; i++) {
             byte b = (byte) byteValues[i];
             byteBuffer.put(b);
@@ -144,11 +142,8 @@ public class UID {
      * a new UID instance.
      */
     public void writeNextUid(final ByteBuffer byteBuffer) {
-        // TODO @AT Maybe ought to be doing this by manipulating the bits into the passed buffer
-        //   as this might be faster, e.g. what is done with the increment method in here
-        //   https://github.com/apache/hbase/blob/master/hbase-common/src/main/java/org/apache/hadoop/hbase/util/Bytes.java
-        final long currVal = getValue();
-        UID.writeUid(currVal + 1, byteBuffer);
+        ByteBufferUtils.copy(this.byteBuffer, byteBuffer);
+        UnsignedBytes.increment(byteBuffer, UID_ARRAY_LENGTH);
     }
 
     /**

@@ -17,12 +17,21 @@
 
 package stroom.pipeline.refdata.store.offheapstore;
 
+import stroom.pipeline.refdata.util.ByteBufferUtils;
 import stroom.util.logging.LogUtil;
 
 import java.nio.ByteBuffer;
 
 public class UnsignedBytes {
     private static final byte[] ZERO_BYTES = new byte[0];
+    private static final long[] MAX_VALUES = new long[9];
+
+    static {
+        // Pre-compute the max values to speed up validation
+        for (int i = 1; i <= 8; i++) {
+            MAX_VALUES[i] = computeMaxVal(i);
+        }
+    }
 
     public static byte[] toBytes(final int len, final long val) {
         if (len == 0 && val == 0) {
@@ -36,15 +45,21 @@ public class UnsignedBytes {
         return bytes;
     }
 
-    public static void put(final byte[] bytes, final int off, final int len, final long val) {
+    /**
+     * Puts val as unsigned bytes into arr using a length of len bytes
+     */
+    public static void put(final byte[] arr, final int off, final int len, final long val) {
         validateValue(len, val);
 
         for (int i = 0; i < len; i++) {
             final int shift = (len - i - 1) * 8;
-            bytes[off + i] = (byte) (val >> shift);
+            arr[off + i] = (byte) (val >> shift);
         }
     }
 
+    /**
+     * Puts val as unsigned bytes into destByteBuffer using a length of len bytes
+     */
     public static void put(final ByteBuffer destByteBuffer, final int len, final long val) {
         validateValue(len, val);
 
@@ -65,12 +80,11 @@ public class UnsignedBytes {
         if (len < 1) {
             throw new IllegalArgumentException("You cannot use less than 1 byte to store a value.");
         }
-        final long max = maxValue(len);
-        if (val > max) {
+        if (val > MAX_VALUES[len]) {
             throw new IllegalArgumentException(
                     LogUtil.message(
                             "Value {} exceeds max value of {} that can be stored in {} bytes(s)",
-                            val, max, len));
+                            val, MAX_VALUES[len], len));
         }
     }
 
@@ -95,12 +109,20 @@ public class UnsignedBytes {
         return val;
     }
 
-    public static long maxValue(final int len) {
+    private static long computeMaxVal(final int len) {
         if (len >= 8) {
             return Long.MAX_VALUE;
         }
 
         return (1L << (8 * len)) - 1;
+    }
+
+    public static long getMaxVal(final int len) {
+        if (len >= 1 && len <= 8) {
+            return MAX_VALUES[len];
+        } else {
+            throw new IllegalArgumentException("len must be >= 1 and <= 8");
+        }
     }
 
     public static int requiredLength(final long val) {
@@ -115,5 +137,41 @@ public class UnsignedBytes {
         final int len = (int) Math.ceil(l);
 
         return len;
+    }
+
+    /**
+     * Treating the passed byteBuffer as an unsigned long in <= 8 bytes, increments the
+     * value by one.  The byteBuffer's position, limit, marks are unchanged.
+     * @param len The number of bytes in the unsigned value
+     */
+    public static void increment(final ByteBuffer byteBuffer, final int len) {
+        final int pos = byteBuffer.position();
+        final int cap = byteBuffer.capacity();
+
+        if (cap >= len) {
+            // Work from right to left
+            for (int i = pos + len - 1; i >= pos; i--) {
+                byte b = byteBuffer.get(i);
+                if (b == (byte) 0xFF) {
+                    if (i == pos) {
+                        // Every byte is FF so we can't increment anymore
+                        throw new IllegalArgumentException("Can't increment without overflowing");
+                    }
+                    // Byte rolls around to zero and we need to increment the next one
+                    byteBuffer.put(i, (byte) 0x00);
+                } else {
+                    // Not going to overflow this byte so just increment it then break out
+                    // as the rest are unchanged
+                    byteBuffer.put(i, (byte) (b + 1));
+                    break;
+                }
+            }
+        } else {
+            throw new IllegalArgumentException(LogUtil.message(
+                    "Capacity {} should be >= {}, buffer: {}",
+                    cap,
+                    len,
+                    ByteBufferUtils.byteBufferInfo(byteBuffer)));
+        }
     }
 }
