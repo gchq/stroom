@@ -55,25 +55,6 @@ public class ValueStoreKeySerde implements Serde<ValueStoreKey> {
     }
 
     /**
-     * Creates a new directly allocated {@link ByteBuffer} from the contents of
-     * source, but with an ID value one greater than the ID value in source.
-     * This method allows for the mutation of the ID part of the {@link ByteBuffer}
-     * without having to fully de-serialise/serialise it.
-     */
-    public static ByteBuffer nextId(final ByteBuffer source) {
-        short currId = source.getShort(ID_OFFSET);
-
-        ByteBuffer output = ByteBuffer.allocateDirect(BUFFER_CAPACITY);
-
-        ByteBuffer sourceDuplicate = source.duplicate();
-        sourceDuplicate.limit(VALUE_HASH_CODE_BYTES);
-        output.put(sourceDuplicate);
-        output.putShort((short) (currId + 1));
-        output.flip();
-        return output;
-    }
-
-    /**
      * Increments the ID part of the {@link ByteBuffer} by one. Does not
      * alter the offset/limit
      */

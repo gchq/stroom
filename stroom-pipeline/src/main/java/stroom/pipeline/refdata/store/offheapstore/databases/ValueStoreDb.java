@@ -159,6 +159,7 @@ public class ValueStoreDb extends AbstractLmdbDb<ValueStoreKey, RefDataValue> {
      * <p>
      * onExistingValueAction Action to perform when the value is found to already exist
      *
+     * @param valueStoreKeyPooledBuffer A pooled buffer to use for the return value
      * @return A clone of the {@link ByteBuffer} containing the database key.
      */
     public ByteBuffer getOrCreateKey(final Txn<ByteBuffer> writeTxn,
@@ -190,7 +191,7 @@ public class ValueStoreDb extends AbstractLmdbDb<ValueStoreKey, RefDataValue> {
             // get the key buffer from the txn and return that.
 
             // We have to allocate a new ByteBuffer here as we may/may not return it
-            final ByteBuffer startKey = buildStartKeyBuffer(refDataValue);
+            final ByteBuffer startKey = buildStartKeyBuffer(refDataValue, valueStoreKeyPooledBuffer);
             ByteBuffer lastKeyBufferClone = null;
 
             try (Cursor<ByteBuffer> cursor = getLmdbDbi().openCursor(writeTxn)) {
@@ -231,11 +232,10 @@ public class ValueStoreDb extends AbstractLmdbDb<ValueStoreKey, RefDataValue> {
                     if (lastKeyBufferClone == null) {
                         // make a new buffer from the cursor key content
                         lastKeyBufferClone = valueStoreKeyPooledBuffer.getByteBuffer();
-                    } else {
-                        lastKeyBufferClone.clear();
                     }
+                    lastKeyBufferClone.clear();
 
-                    // copy the cursor key content into our mutable buffer
+                    // copy the cursor key content out of the LMDB managed vuffer and into our passed in one
                     ByteBufferUtils.copy(keyFromDbBuf, lastKeyBufferClone);
 
                     // see if the found value is identical to the value passed in
@@ -307,8 +307,10 @@ public class ValueStoreDb extends AbstractLmdbDb<ValueStoreKey, RefDataValue> {
                         valueSerde.deserialize(valueBuffer, typeId));
     }
 
-    private ByteBuffer buildStartKeyBuffer(final RefDataValue value) {
-        return keySerde.serialize(ValueStoreKey.lowestKey(value.getValueHashCode(valueStoreHashAlgorithm)));
+    private ByteBuffer buildStartKeyBuffer(final RefDataValue value, final PooledByteBuffer pooledKeyBuffer) {
+        return keySerde.serialize(
+                pooledKeyBuffer::getByteBuffer,
+                ValueStoreKey.lowestKey(value.getValueHashCode(valueStoreHashAlgorithm)));
     }
 
     public interface Factory {

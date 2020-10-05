@@ -74,14 +74,6 @@ public class UID {
     }
 
     /**
-     * Allocates a new direct buffer and writes the value to it
-     */
-    @Deprecated // allocates a new direct buffer should be using a pooled buffer.
-    public static UID of(final long value) {
-        return new UID(createUidBuffer(value));
-    }
-
-    /**
      * Writes the value to the passed buffer and wraps it with a UID.
      */
     public static UID of(final long value, final ByteBuffer byteBuffer) {
@@ -201,17 +193,4 @@ public class UID {
         byteBuffer.flip();
         return byteBuffer;
     }
-
-    private static ByteBuffer createUidBuffer(final long id) {
-        // UIDs are fixed width so we can create a buffer with the exact capacity
-        final ByteBuffer byteBuffer = createEmptyUidBuffer();
-        return writeUid(id, byteBuffer);
-    }
-
-    private static ByteBuffer createEmptyUidBuffer() {
-        return ByteBuffer.allocateDirect(UID.UID_ARRAY_LENGTH);
-    }
-
-
-
 }

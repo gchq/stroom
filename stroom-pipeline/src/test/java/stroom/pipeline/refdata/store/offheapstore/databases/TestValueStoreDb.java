@@ -205,19 +205,25 @@ class TestValueStoreDb extends AbstractLmdbDbTest {
         LmdbUtils.doWithReadTxn(lmdbEnv, txn -> {
             // lookup our three entries
             valueToKeyMap.forEach((valueStr, valueStoreKey) -> {
-                ByteBuffer valueBuffer = valueStoreDb.getAsBytes(txn, keySerde.serialize(valueStoreKey)).get();
-                RefDataValue val = refDataValueSerdeFactory.deserialize(valueBuffer, StringValue.TYPE_ID);
-                assertThat(val).isInstanceOf(StringValue.class);
-                assertThat(((StringValue) val).getValue()).isEqualTo(valueStr);
+                valueStoreDb.getPooledKeyBuffer().doWithByteBuffer(keyBuffer -> {
+                    keySerde.serialize(keyBuffer, valueStoreKey);
+                    ByteBuffer valueBuffer = valueStoreDb.getAsBytes(txn, keyBuffer).get();
+                    RefDataValue val = refDataValueSerdeFactory.deserialize(valueBuffer, StringValue.TYPE_ID);
+                    assertThat(val).isInstanceOf(StringValue.class);
+                    assertThat(((StringValue) val).getValue()).isEqualTo(valueStr);
+                });
             });
 
             // now try and get a value that doesn't exist
-            Optional<RefDataValue> optRefDataValue = valueStoreDb.get(
-                    txn,
-                    keySerde.serialize(new ValueStoreKey(123456, (short) 99)),
-                    StringValue.TYPE_ID);
+            valueStoreDb.getPooledKeyBuffer().doWithByteBuffer(keyBuffer -> {
+                keySerde.serialize(keyBuffer, new ValueStoreKey(123456, (short) 99));
+                Optional<RefDataValue> optRefDataValue = valueStoreDb.get(
+                        txn,
+                        keyBuffer,
+                        StringValue.TYPE_ID);
+                assertThat(optRefDataValue).isEmpty();
+            });
 
-            assertThat(optRefDataValue).isEmpty();
         });
     }
 
@@ -261,11 +267,14 @@ class TestValueStoreDb extends AbstractLmdbDbTest {
         LmdbUtils.doWithReadTxn(lmdbEnv, txn -> {
             // lookup our entries
             List<Integer> ids = new ArrayList<>();
-            valueToKeyMap.forEach((valueStr, valueStoreKey) -> {
-                ByteBuffer valueBuffer = valueStoreDb.getAsBytes(txn, keySerde.serialize(valueStoreKey)).get();
-                RefDataValue val = refDataValueSerdeFactory.deserialize(valueBuffer, StringValue.TYPE_ID);
-                assertThat(val).isInstanceOf(StringValue.class);
-                assertThat(((StringValue) val).getValue()).isEqualTo(valueStr);
+            valueStoreDb.getPooledKeyBuffer().doWithByteBuffer(keyBuffer -> {
+                valueToKeyMap.forEach((valueStr, valueStoreKey) -> {
+                    keySerde.serialize(keyBuffer, valueStoreKey);
+                    ByteBuffer valueBuffer = valueStoreDb.getAsBytes(txn, keyBuffer).get();
+                    RefDataValue val = refDataValueSerdeFactory.deserialize(valueBuffer, StringValue.TYPE_ID);
+                    assertThat(val).isInstanceOf(StringValue.class);
+                    assertThat(((StringValue) val).getValue()).isEqualTo(valueStr);
+                });
             });
         });
     }

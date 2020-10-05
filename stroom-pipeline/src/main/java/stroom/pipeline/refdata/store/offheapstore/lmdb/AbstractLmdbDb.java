@@ -514,9 +514,12 @@ public abstract class AbstractLmdbDb<K, V> implements LmdbDb {
     public void updateValue(final Txn<ByteBuffer> writeTxn,
                             final K key,
                             final Consumer<ByteBuffer> valueBufferConsumer) {
-        final ByteBuffer keyBuf = LmdbUtils.buildDbKeyBuffer(lmdbEnvironment, key, keySerde);
-        updateValue(writeTxn, keyBuf, valueBufferConsumer);
 
+        try (final PooledByteBuffer pooledKeyBuffer = getPooledKeyBuffer()) {
+            final ByteBuffer keyBuffer = pooledKeyBuffer.getByteBuffer();
+            serializeKey(keyBuffer, key);
+            updateValue(writeTxn, keyBuffer, valueBufferConsumer);
+        }
     }
 
     /**

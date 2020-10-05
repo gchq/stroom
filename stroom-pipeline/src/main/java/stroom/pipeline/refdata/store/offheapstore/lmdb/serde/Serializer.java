@@ -24,15 +24,15 @@ public interface Serializer<T> {
 
     int DEFAULT_CAPACITY = 1_000;
 
-    /**
-     * Serialize the passed objects to bytes returning a new {@link ByteBuffer} containing
-     * those bytes.
-     */
-    default ByteBuffer serialize(final T object) {
-        ByteBuffer byteBuffer = ByteBuffer.allocateDirect(getBufferCapacity());
-        serialize(byteBuffer, object);
-        return byteBuffer;
-    }
+//    /**
+//     * Serialize the passed objects to bytes returning a new {@link ByteBuffer} containing
+//     * those bytes.
+//     */
+//    default ByteBuffer serialize(final T object) {
+//        ByteBuffer byteBuffer = ByteBuffer.allocateDirect(getBufferCapacity());
+//        serialize(byteBuffer, object);
+//        return byteBuffer;
+//    }
 
     /**
      * @param byteBufferSupplier A supplier of a {@link ByteBuffer} in a ready state for writing. The

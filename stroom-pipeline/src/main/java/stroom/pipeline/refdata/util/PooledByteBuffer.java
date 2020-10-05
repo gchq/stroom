@@ -66,6 +66,19 @@ public class PooledByteBuffer implements AutoCloseable {
     }
 
     /**
+     * A buffer will be obtained from the pool and passed to the byteBufferConsumer to use.
+     * On completion of byteBufferConsumer the buffer will be released and will not be available
+     * for any further use.
+     */
+    public void doWithByteBuffer(final Consumer<ByteBuffer> byteBufferConsumer) {
+        try {
+            byteBufferConsumer.accept(getByteBuffer());
+        } finally {
+            this.release();
+        }
+    }
+
+    /**
      * Release the underlying {@link ByteBuffer} back to the pool. Once released,
      * the {@link ByteBuffer} cannot be used any more and you should not retain any
      * references to it. Identical behaviour to calling {@link PooledByteBuffer#close()}.

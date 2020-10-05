@@ -20,6 +20,7 @@ package stroom.pipeline.refdata.util;
 import stroom.util.logging.LogUtil;
 
 import java.nio.ByteBuffer;
+import java.util.function.BiConsumer;
 import java.util.function.Consumer;
 
 /**
@@ -52,6 +53,19 @@ public class PooledByteBufferPair implements AutoCloseable {
             throw new RuntimeException(LogUtil.message("The valueBuffer has been returned to the pool"));
         }
         return valueBuffer;
+    }
+
+    /**
+     * The buffers will be obtained from the pool and passed to the byteBufferConsumer to use.
+     * On completion of byteBufferPairConsumer the buffers will both be released and will not be available
+     * for any further use.
+     */
+    public void doWithByteBuffers(final BiConsumer<ByteBuffer, ByteBuffer> byteBufferPairConsumer) {
+        try {
+            byteBufferPairConsumer.accept(getKeyBuffer(), getValueBuffer());
+        } finally {
+            this.release();
+        }
     }
 
     public void release() {
