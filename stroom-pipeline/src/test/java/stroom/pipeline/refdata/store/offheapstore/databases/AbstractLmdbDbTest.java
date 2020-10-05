@@ -34,14 +34,14 @@ import java.nio.file.Path;
 
 public abstract class AbstractLmdbDbTest extends StroomUnitTest {
     private static final Logger LOGGER = LoggerFactory.getLogger(AbstractLmdbDbTest.class);
-    private static final ByteSize DB_MAX_SIZE = ByteSize.ofMebibytes(1);
+    private static final ByteSize DB_MAX_SIZE = ByteSize.ofMebibytes(2_000);
     protected Env<ByteBuffer> lmdbEnv = null;
     private Path dbDir = null;
 
     @BeforeEach
     final void createEnv() throws IOException {
         dbDir = Files.createTempDirectory("stroom");
-        LOGGER.debug("Creating LMDB environment with maxSize: {}, dbDir {}",
+        LOGGER.info("Creating LMDB environment with maxSize: {}, dbDir {}",
                 getMaxSizeBytes(), dbDir.toAbsolutePath().toString());
 
         lmdbEnv = Env.create()

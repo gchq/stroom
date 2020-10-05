@@ -49,7 +49,7 @@ public class ValueStoreKey {
     /**
      * @return A key with the highest possible uniqueId for valueHashCode
      */
-    public static ValueStoreKey highestKey(final int valueHashCode) {
+    public static ValueStoreKey highestKey(final long valueHashCode) {
         return new ValueStoreKey(valueHashCode, MAX_UNIQUE_ID);
     }
 

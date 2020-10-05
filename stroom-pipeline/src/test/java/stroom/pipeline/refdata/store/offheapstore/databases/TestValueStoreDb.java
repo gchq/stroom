@@ -15,9 +15,12 @@ import stroom.pipeline.refdata.store.offheapstore.serdes.RefDataValueSerdeFactor
 import stroom.pipeline.refdata.store.offheapstore.serdes.ValueStoreKeySerde;
 import stroom.pipeline.refdata.util.PooledByteBuffer;
 
+import io.vavr.Tuple;
+import io.vavr.Tuple2;
+import org.assertj.core.api.Assertions;
 import org.junit.jupiter.api.BeforeEach;
-import org.junit.jupiter.api.Disabled;
 import org.junit.jupiter.api.Test;
+import org.lmdbjava.KeyRange;
 import org.lmdbjava.Txn;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -41,15 +44,6 @@ class TestValueStoreDb extends AbstractLmdbDbTest {
     private final ValueStoreHashAlgorithm basicHashAlgorithm = new BasicValueStoreHashAlgorithmImpl();
     private ValueStoreDb valueStoreDb = null;
 
-    private static final int NCHAR = 5;
-    private static final char[] chars = {
-            '0', '1', '2', '3', '4', '5', '6', '7', '8', '9',
-            'a', 'b', 'c', 'd', 'e', 'f', 'g', 'h', 'i', 'j', 'k', 'l', 'm', 'n',
-            'o', 'p', 'q', 'r', 's', 't', 'u', 'v', 'w', 'x', 'y', 'z',
-            'A', 'B', 'C', 'D', 'E', 'F', 'G', 'H', 'I', 'J', 'K', 'L', 'M', 'N',
-            'O', 'P', 'Q', 'R', 'S', 'T', 'U', 'V', 'W', 'X', 'Y', 'Z',
-    };
-    private static final int ALPHAS = chars.length;
 
     @BeforeEach
     void setup() {
@@ -299,6 +293,37 @@ class TestValueStoreDb extends AbstractLmdbDbTest {
         });
     }
 
+    @Test
+    void testKeyOrder() {
+
+        // Ensure entries come back in the right order
+        long hash = 123456789;
+        final List<Tuple2<ValueStoreKey, RefDataValue>> data = List.of(
+                Tuple.of(new ValueStoreKey(hash, (short) 0), new StringValue("val1")),
+                Tuple.of(new ValueStoreKey(hash, (short) 1), new StringValue("val2")),
+                Tuple.of(new ValueStoreKey(hash, (short) 2), new StringValue("val3")),
+                Tuple.of(new ValueStoreKey(hash, (short) 3), new StringValue("val4")));
+
+        LmdbUtils.doWithWriteTxn(lmdbEnv, writeTxn -> {
+            data.forEach(tuple -> {
+                valueStoreDb.put(writeTxn, tuple._1(), tuple._2(), false);
+            });
+        });
+
+        final KeyRange<ValueStoreKey> keyRangeAll = KeyRange.all();
+
+        final List<ValueStoreKey> output = LmdbUtils.getWithReadTxn(lmdbEnv, readTxn ->
+                valueStoreDb.streamEntries(readTxn, keyRangeAll, stream ->
+                        stream
+                                .map(Tuple2::_1)
+                                .collect(Collectors.toList())));
+
+        Assertions.assertThat(output)
+                .containsExactlyElementsOf(data.stream()
+                        .map(Tuple2::_1)
+                        .collect(Collectors.toList()));
+    }
+
     private void doAreValuesEqualAssert(final StringValue value1, final StringValue value2, final boolean expectedResult) {
         LmdbUtils.doWithWriteTxn(lmdbEnv, writeTxn -> {
             ValueStoreKey valueStoreKey1 = getOrCreate(writeTxn, value1);
@@ -309,41 +334,5 @@ class TestValueStoreDb extends AbstractLmdbDbTest {
             boolean areValuesEqual = valueStoreDb.areValuesEqual(writeTxn, valueStoreKeyBuffer, value2);
             assertThat(areValuesEqual).isEqualTo(expectedResult);
         });
-    }
-
-    @Disabled
-    @Test
-    void findHashClashes() {
-        Map<Long, String> map = new HashMap<>();
-        int[] index = new int[NCHAR];
-        char[] buf = new char[NCHAR];
-        while (true) {
-            for (int i = 0; i < NCHAR; ++i) {
-                buf[i] = chars[index[i]];
-            }
-            String str = new String(buf);
-            long hash = basicHashAlgorithm.hash(str);
-            String dupStr = map.putIfAbsent(hash, str);
-            if (dupStr != null) {
-                System.out.println("clash " + str + " " + dupStr);
-            }
-            int carry = 1;
-            for (int i = 0; i < NCHAR; ++i) {
-                index[i] = index[i] + carry;
-                carry = index[i] / ALPHAS;
-                index[i] %= ALPHAS;
-            }
-            if (carry > 0) break;
-        }
-
-//        for (Map.Entry<Long,Collection<String>> group : map.entrySet()) {
-//            Collection<String> strings = group.getValue();
-//            if (strings.size() >= 2) {
-//                System.out.println("" + group.getKey() + ":");
-//                for (String str: strings) {
-//                    System.out.println("\t" + str);
-//                }
-//            }
-//        }
     }
 }

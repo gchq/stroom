@@ -96,17 +96,20 @@ public abstract class AbstractLmdbDb<K, V> implements LmdbDb {
      * @param keySerde        The {@link Serde} to use for the keys.
      * @param valueSerde      The {@link Serde} to use for the values.
      * @param dbName          The name of the database.
+     * @param dbiFlags        The dbi flags to use when initialising the DB. If not provided, only MDB_CREATE will
+     *                        be used.
      */
     public AbstractLmdbDb(final Env<ByteBuffer> lmdbEnvironment,
                           final ByteBufferPool byteBufferPool,
                           final Serde<K> keySerde,
                           final Serde<V> valueSerde,
-                          final String dbName) {
+                          final String dbName,
+                          final DbiFlags... dbiFlags) {
         this.keySerde = keySerde;
         this.valueSerde = valueSerde;
         this.dbName = dbName;
         this.lmdbEnvironment = lmdbEnvironment;
-        this.lmdbDbi = openDbi(lmdbEnvironment, dbName);
+        this.lmdbDbi = openDbi(lmdbEnvironment, dbName, dbiFlags);
         this.byteBufferPool = byteBufferPool;
 
         int keySerdeCapacity = keySerde.getBufferCapacity();
@@ -119,6 +122,20 @@ public abstract class AbstractLmdbDb<K, V> implements LmdbDb {
         }
         this.keyBufferCapacity = Math.min(envMaxKeySize, keySerdeCapacity);
         this.valueBufferCapacity = Math.min(Serde.DEFAULT_CAPACITY, valueSerde.getBufferCapacity());
+    }
+
+    private static Dbi<ByteBuffer> openDbi(final Env<ByteBuffer> env,
+                                           final String name,
+                                           final DbiFlags... dbiFlags) {
+        LOGGER.debug("Opening LMDB database with name: {}", name);
+        final DbiFlags[] flags = dbiFlags.length > 0
+                ? dbiFlags
+                : (new DbiFlags[] {DbiFlags.MDB_CREATE});
+        try {
+            return env.openDbi(name, flags);
+        } catch (Exception e) {
+            throw new RuntimeException(LogUtil.message("Error opening LMDB database {}", name), e);
+        }
     }
 
     @Override
@@ -198,9 +215,9 @@ public abstract class AbstractLmdbDb<K, V> implements LmdbDb {
      */
     public Optional<V> get(Txn<ByteBuffer> txn, final K key) {
         try (PooledByteBuffer pooledKeyBuffer = getPooledKeyBuffer()) {
-            // TODO @AT wrap this with a try catch to report the serde error
-            keySerde.serialize(pooledKeyBuffer.getByteBuffer(), key);
-            ByteBuffer valueBuffer = lmdbDbi.get(txn, pooledKeyBuffer.getByteBuffer());
+            final ByteBuffer keyBuffer = pooledKeyBuffer.getByteBuffer();
+            serializeKey(keyBuffer, key);
+            final ByteBuffer valueBuffer = lmdbDbi.get(txn, keyBuffer);
             if (LOGGER.isTraceEnabled()) {
                 LOGGER.trace("Get returned value [{}] for key [{}]",
                         ByteBufferUtils.byteBufferInfo(valueBuffer),
@@ -208,7 +225,7 @@ public abstract class AbstractLmdbDb<K, V> implements LmdbDb {
             }
 
             return Optional.ofNullable(valueBuffer)
-                    .map(valueSerde::deserialize);
+                    .map(this::deserializeValue);
         } catch (RuntimeException e) {
             throw new RuntimeException(LogUtil.message("Error getting key {}", key), e);
         }
@@ -272,13 +289,14 @@ public abstract class AbstractLmdbDb<K, V> implements LmdbDb {
             stopKeyBuffer = null;
         }
 
-        final KeyRange<ByteBuffer> serialisedKeyRange = new KeyRange<>(
-                keyRange.getType(),
-                startKeyBuffer,
-                stopKeyBuffer);
-        return serialisedKeyRange;
+        return new KeyRange<>(keyRange.getType(), startKeyBuffer, stopKeyBuffer);
     }
 
+    /**
+     * Stream all entries found in keyRange in the order they are found in the DB.
+     * @param streamFunction A function to map a {@link Stream} to a return value T
+     * @return The result of the stream mapping function.
+     */
     public <T> T streamEntries(final Txn<ByteBuffer> txn,
                                final KeyRange<K> keyRange,
                                final Function<Stream<Tuple2<K, V>>, T> streamFunction) {
@@ -291,7 +309,7 @@ public abstract class AbstractLmdbDb<K, V> implements LmdbDb {
                     keyRange);
 
             return streamEntriesAsBytes(txn, serialisedKeyRange, entryStream -> {
-                Stream<Tuple2<K, V>> deSerialisedStream = entryStream.map(keyVal -> {
+                final Stream<Tuple2<K, V>> deSerialisedStream = entryStream.map(keyVal -> {
                     K key = deserializeKey(keyVal.key());
                     V value = deserializeValue(keyVal.val());
                     return Tuple.of(key, value);
@@ -314,6 +332,9 @@ public abstract class AbstractLmdbDb<K, V> implements LmdbDb {
         }
     }
 
+    /**
+     * Apply the passes entryConsumer for each entry found in the keyRange.
+     */
     public void forEachEntry(final Txn<ByteBuffer> txn,
                              final KeyRange<K> keyRange,
                              final Consumer<Tuple2<K, V>> keyValueTupleConsumer) {
@@ -325,13 +346,17 @@ public abstract class AbstractLmdbDb<K, V> implements LmdbDb {
                     stopKeyPooledBuffer,
                     keyRange);
             forEachEntryAsBytes(txn, serialisedKeyRange, keyVal -> {
-                final Tuple2<K, V> deserialisedKeyValue = deserializeKeyVal(keyVal);
-                keyValueTupleConsumer.accept(deserialisedKeyValue);
+                final Tuple2<K, V> deSerialisedKeyValue = deserializeKeyVal(keyVal);
+                keyValueTupleConsumer.accept(deSerialisedKeyValue);
             });
         }
 
     }
 
+    /**
+     * Apply the passes entryConsumer for each entry found in the keyRange. The consumer works on
+     * the raw bytes of the entry.
+     */
     public void forEachEntryAsBytes(final Txn<ByteBuffer> txn,
                                     final KeyRange<ByteBuffer> keyRange,
                                     final Consumer<CursorIterable.KeyVal<ByteBuffer>> entryConsumer) {
@@ -343,11 +368,17 @@ public abstract class AbstractLmdbDb<K, V> implements LmdbDb {
         }
     }
 
+    /**
+     * @return True if any entry exists with a key matching the passed key
+     */
     public boolean exists(final K key) {
         return LmdbUtils.getWithReadTxn(lmdbEnvironment, txn ->
                 exists(txn, key));
     }
 
+    /**
+     * @return True if any entry exists with a key matching the passed key
+     */
     public boolean exists(final Txn<ByteBuffer> txn, final K key) {
         try (final PooledByteBuffer pooledKeyBuffer = getPooledKeyBuffer()) {
             final ByteBuffer keyBuffer = pooledKeyBuffer.getByteBuffer();
@@ -356,6 +387,9 @@ public abstract class AbstractLmdbDb<K, V> implements LmdbDb {
         }
     }
 
+    /**
+     * @return True if any entry exists with a key matching the passed keyBuffer
+     */
     public boolean exists(final Txn<ByteBuffer> txn, final ByteBuffer keyBuffer) {
         // It is debatable whether it is cheaper to use a cursor to see if
         // the key exists or a get like this.
@@ -366,9 +400,10 @@ public abstract class AbstractLmdbDb<K, V> implements LmdbDb {
         try (final Txn<ByteBuffer> txn = lmdbEnvironment.txnRead();
              final PooledByteBuffer pooledKeyBuffer = getPooledKeyBuffer()) {
 
-            keySerde.serialize(pooledKeyBuffer.getByteBuffer(), key);
-            ByteBuffer valueBuffer = lmdbDbi.get(txn, pooledKeyBuffer.getByteBuffer());
-            V value = valueSerde.deserialize(valueBuffer);
+            final ByteBuffer keyBuffer = pooledKeyBuffer.getByteBuffer();
+            serializeKey(keyBuffer, key);
+            final ByteBuffer valueBuffer = lmdbDbi.get(txn, pooledKeyBuffer.getByteBuffer());
+            V value = deserializeValue(valueBuffer);
             return valueMapper.apply(value);
         } catch (RuntimeException e) {
             throw new RuntimeException(LogUtil.message("Error getting key {}", key), e);
@@ -379,22 +414,34 @@ public abstract class AbstractLmdbDb<K, V> implements LmdbDb {
         try (final Txn<ByteBuffer> txn = lmdbEnvironment.txnRead();
              final PooledByteBuffer pooledKeyBuffer = getPooledKeyBuffer()) {
 
-            keySerde.serialize(pooledKeyBuffer.getByteBuffer(), key);
-            ByteBuffer valueBuffer = lmdbDbi.get(txn, pooledKeyBuffer.getByteBuffer());
-            V value = valueSerde.deserialize(valueBuffer);
+            final ByteBuffer keyBuffer = pooledKeyBuffer.getByteBuffer();
+            serializeKey(keyBuffer, key);
+            final ByteBuffer valueBuffer = lmdbDbi.get(txn, keyBuffer);
+            V value = deserializeValue(valueBuffer);
             valueConsumer.accept(value);
         } catch (RuntimeException e) {
             throw new RuntimeException(LogUtil.message("Error getting key {}", key), e);
         }
     }
 
-    public boolean put(final Txn<ByteBuffer> writeTxn, final K key, final V value, final boolean overwriteExisting) {
+    public boolean put(final Txn<ByteBuffer> writeTxn,
+                       final K key,
+                       final V value,
+                       final boolean overwriteExisting) {
         try (final PooledByteBuffer pooledKeyBuffer = getPooledKeyBuffer();
              final PooledByteBuffer pooledValueBuffer = getPooledValueBuffer()) {
 
-            keySerde.serialize(pooledKeyBuffer.getByteBuffer(), key);
-            valueSerde.serialize(pooledValueBuffer.getByteBuffer(), value);
-            return put(writeTxn, pooledKeyBuffer.getByteBuffer(), pooledValueBuffer.getByteBuffer(), overwriteExisting);
+            final ByteBuffer keyBuffer = pooledKeyBuffer.getByteBuffer();
+            final ByteBuffer valueBuffer = pooledValueBuffer.getByteBuffer();
+
+            serializeKey(keyBuffer, key);
+            serializeValue(valueBuffer, value);
+
+            return put(
+                    writeTxn,
+                    keyBuffer,
+                    valueBuffer,
+                    overwriteExisting);
         } catch (RuntimeException e) {
             throw new RuntimeException(LogUtil.message("Error putting key {}, value {}", key, value), e);
         }
@@ -441,9 +488,12 @@ public abstract class AbstractLmdbDb<K, V> implements LmdbDb {
                 try (final PooledByteBuffer pooledKeyBuffer = getPooledKeyBuffer();
                      final PooledByteBuffer pooledValueBuffer = getPooledValueBuffer()) {
 
-                    keySerde.serialize(pooledKeyBuffer.getByteBuffer(), key);
-                    valueSerde.serialize(pooledValueBuffer.getByteBuffer(), value);
-                    lmdbDbi.put(txn, pooledKeyBuffer.getByteBuffer(), pooledValueBuffer.getByteBuffer());
+                    final ByteBuffer keyBuffer = pooledKeyBuffer.getByteBuffer();
+                    final ByteBuffer valueBuffer = pooledValueBuffer.getByteBuffer();
+                    serializeKey(keyBuffer, key);
+                    serializeValue(valueBuffer, value);
+
+                    lmdbDbi.put(txn, keyBuffer, valueBuffer);
                 } catch (Exception e) {
                     throw new RuntimeException(LogUtil.message("Error putting key {}, value {}", key, value), e);
                 }
@@ -471,7 +521,7 @@ public abstract class AbstractLmdbDb<K, V> implements LmdbDb {
 
     /**
      * Updates the value associated with the passed key using the valueBufferConsumer. A new {@link ByteBuffer}
-     * will be created from the current value and passed to valueBufferConsumer to mutate. This mutated buffer
+     * will be populated from the current value and passed to valueBufferConsumer to mutate. This mutated buffer
      * should be left in a state ready to be read, i.e. flipped.
      * This method is intended for cases where you want to modify the value based on its current value, or
      * you only want to modify part of it without (de)serialising the whole.
@@ -495,15 +545,20 @@ public abstract class AbstractLmdbDb<K, V> implements LmdbDb {
             // We could run LMDB in MDB_WRITEMAP mode which allows mutation of the buffers (and
             // thus avoids the buffer copy cost) but adds more risk of DB corruption. As we are not
             // doing a high volume of value mutations read-only mode is a safer bet.
-            final ByteBuffer newValueBuf = ByteBufferUtils.copyToDirectBuffer(valueBuf);
+            try (final PooledByteBuffer pooledValueBuffer = getPooledValueBuffer()) {
+                final ByteBuffer newValueBuf = pooledValueBuffer.getByteBuffer();
+                // First copy the current value as is
+                ByteBufferUtils.copy(valueBuf, newValueBuf);
 
-            // update the buffer
-            valueBufferConsumer.accept(newValueBuf);
+                // Now use the consumer to update the contents of the buffer
+                valueBufferConsumer.accept(newValueBuf);
 
-            if (ByteBufferUtils.compare(valueBuf, newValueBuf) != 0) {
-                cursor.put(cursor.key(), newValueBuf, PutFlags.MDB_CURRENT);
-            } else {
-                LOGGER.trace("put call skipped as buffers are the same");
+                // Only put if the buffer is different
+                if (ByteBufferUtils.compare(valueBuf, newValueBuf) != 0) {
+                    cursor.put(cursor.key(), newValueBuf, PutFlags.MDB_CURRENT);
+                } else {
+                    LOGGER.trace("put call skipped as buffers are the same");
+                }
             }
         }
     }
@@ -517,12 +572,8 @@ public abstract class AbstractLmdbDb<K, V> implements LmdbDb {
     }
 
     public boolean delete(final K key) {
-        try (final Txn<ByteBuffer> writeTxn = lmdbEnvironment.txnWrite();
-             final PooledByteBuffer pooledKeyBuffer = getPooledKeyBuffer()) {
-
-            keySerde.serialize(pooledKeyBuffer.getByteBuffer(), key);
-            boolean result = lmdbDbi.delete(writeTxn, pooledKeyBuffer.getByteBuffer());
-            LOGGER.trace("delete({}) returned {}", key, result);
+        try (final Txn<ByteBuffer> writeTxn = lmdbEnvironment.txnWrite()) {
+            boolean result = delete(writeTxn, key);
             writeTxn.commit();
             return result;
         } catch (RuntimeException e) {
@@ -532,8 +583,9 @@ public abstract class AbstractLmdbDb<K, V> implements LmdbDb {
 
     public boolean delete(final Txn<ByteBuffer> writeTxn, final K key) {
         try (final PooledByteBuffer pooledKeyBuffer = getPooledKeyBuffer()) {
-            keySerde.serialize(pooledKeyBuffer.getByteBuffer(), key);
-            boolean result = lmdbDbi.delete(writeTxn, pooledKeyBuffer.getByteBuffer());
+            final ByteBuffer keyBuffer = pooledKeyBuffer.getByteBuffer();
+            serializeKey(keyBuffer, key);
+            boolean result = lmdbDbi.delete(writeTxn, keyBuffer);
             LOGGER.trace("delete({}) returned {}", key, result);
             return result;
         } catch (RuntimeException e) {
@@ -578,8 +630,9 @@ public abstract class AbstractLmdbDb<K, V> implements LmdbDb {
              final PooledByteBuffer pooledKeyBuffer = getPooledKeyBuffer()) {
             keys.forEach(key -> {
                 try {
-                    keySerde.serialize(pooledKeyBuffer.getByteBuffer(), key);
-                    lmdbDbi.delete(txn, pooledKeyBuffer.getByteBuffer());
+                    final ByteBuffer keyBuffer = pooledKeyBuffer.getByteBuffer();
+                    serializeKey(keyBuffer, key);
+                    lmdbDbi.delete(txn, keyBuffer);
                 } catch (Exception e) {
                     throw new RuntimeException(LogUtil.message("Error deleting key {}", key), e);
                 }
@@ -587,15 +640,6 @@ public abstract class AbstractLmdbDb<K, V> implements LmdbDb {
             txn.commit();
         } catch (RuntimeException e) {
             throw new RuntimeException(LogUtil.message("Error deleting {} keys ", keys.size()), e);
-        }
-    }
-
-    private static Dbi<ByteBuffer> openDbi(final Env<ByteBuffer> env, final String name) {
-        LOGGER.debug("Opening LMDB database with name: {}", name);
-        try {
-            return env.openDbi(name, DbiFlags.MDB_CREATE);
-        } catch (Exception e) {
-            throw new RuntimeException(LogUtil.message("Error opening LMDB daatabase {}", name), e);
         }
     }
 
@@ -624,8 +668,8 @@ public abstract class AbstractLmdbDb<K, V> implements LmdbDb {
                 lmdbEnvironment,
                 lmdbDbi,
                 txn,
-                byteBuffer -> keySerde.deserialize(byteBuffer).toString(),
-                byteBuffer -> valueSerde.deserialize(byteBuffer).toString(),
+                keyBuffer -> deserializeKey(keyBuffer).toString(),
+                valueBuffer -> deserializeValue(valueBuffer).toString(),
                 logEntryConsumer);
     }
 
@@ -688,11 +732,21 @@ public abstract class AbstractLmdbDb<K, V> implements LmdbDb {
     }
 
     public K deserializeKey(final ByteBuffer keyBuffer) {
-        return keySerde.deserialize(keyBuffer);
+        try {
+            return keySerde.deserialize(keyBuffer);
+        } catch (Exception e) {
+            throw new RuntimeException(LogUtil.message("Error de-serialising key buffer [{}]: {}",
+                    ByteBufferUtils.byteBufferToHex(keyBuffer), e.getMessage()));
+        }
     }
 
     public V deserializeValue(final ByteBuffer valueBuffer) {
-        return valueSerde.deserialize(valueBuffer);
+        try {
+            return valueSerde.deserialize(valueBuffer);
+        } catch (Exception e) {
+            throw new RuntimeException(LogUtil.message("Error de-serialising value buffer [{}]: {}",
+                    ByteBufferUtils.byteBufferToHex(valueBuffer), e.getMessage()));
+        }
     }
 
     public Tuple2<K, V> deserializeKeyVal(final CursorIterable.KeyVal<ByteBuffer> keyVal) {
@@ -700,10 +754,20 @@ public abstract class AbstractLmdbDb<K, V> implements LmdbDb {
     }
 
     public void serializeKey(final ByteBuffer keyBuffer, K key) {
-        keySerde.serialize(keyBuffer, key);
+        try {
+            keySerde.serialize(keyBuffer, key);
+        } catch (Exception e) {
+            throw new RuntimeException(LogUtil.message("Error serialising key [{}]: {}",
+                    key, e.getMessage()));
+        }
     }
 
     public void serializeValue(final ByteBuffer valueBuffer, V value) {
-        valueSerde.serialize(valueBuffer, value);
+        try {
+            valueSerde.serialize(valueBuffer, value);
+        } catch (Exception e) {
+            throw new RuntimeException(LogUtil.message("Error serialising value [{}]: {}",
+                    value, e.getMessage()));
+        }
     }
 }
