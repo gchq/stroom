@@ -43,17 +43,7 @@ public class ByteBufferPoolImpl4 implements ByteBufferPool {
 
     private static final Logger LOGGER = LoggerFactory.getLogger(ByteBufferPoolImpl4.class);
 
-//    private static final int[] SIZES = {
-//            1,
-//            10,
-//            100,
-//            1_000,
-//            10_000,
-//            100_000,
-//            1_000_000};
     private static final int DEFAULT_MAX_BUFFERS_PER_QUEUE = 50;
-//
-
 
     // In each of these collections, the index/offset is the log10 of the buffer size,
     // i.e. 1 => 0, 10 => 1, etc.

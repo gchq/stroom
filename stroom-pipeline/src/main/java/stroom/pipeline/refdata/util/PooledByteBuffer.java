@@ -19,6 +19,7 @@ package stroom.pipeline.refdata.util;
 
 import stroom.util.logging.LogUtil;
 
+import javax.annotation.concurrent.NotThreadSafe;
 import java.nio.ByteBuffer;
 import java.util.Objects;
 import java.util.function.Consumer;
@@ -32,8 +33,9 @@ import java.util.function.Supplier;
  * is no longer needed.
  *
  * The wrapper is empty on creation and when getByteBuffer is called, it will be populated
- * with a {@link ByteBuffer} from the pool.
+ * with a {@link ByteBuffer} from the pool. Depending on the implementation of the pool this may block.
  */
+@NotThreadSafe
 public class PooledByteBuffer implements AutoCloseable {
 
     private ByteBuffer byteBuffer;
@@ -48,6 +50,7 @@ public class PooledByteBuffer implements AutoCloseable {
 
     /**
      * @return The underlying {@link ByteBuffer} that was obtained from the pool.
+     * Depending on the implementation of the pool this method may block if the pool has no buffers when called.
      * The returned {@link ByteBuffer} must not be used once release/close are called.
      */
     public ByteBuffer getByteBuffer() {
@@ -85,6 +88,9 @@ public class PooledByteBuffer implements AutoCloseable {
         }
     }
 
+    /**
+     * Same as calling {@link PooledByteBuffer#release()}
+     */
     @Override
     public void close() {
         release();
