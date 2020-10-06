@@ -34,6 +34,9 @@ import java.util.Objects;
  */
 public class UID {
     private static final LambdaLogger LOGGER = LambdaLoggerFactory.getLogger(UID.class);
+
+    public static final UnsignedBytes UNSIGNED_BYTES = UnsignedBytesInstances.FOUR;
+
     // Changing this value would require any data stored using UIDs to be
     // migrated to the new byte array length
     public static final int UID_ARRAY_LENGTH = 4;
@@ -122,7 +125,7 @@ public class UID {
     }
 
     public long getValue() {
-        final long val = UnsignedBytes.get(byteBuffer);
+        final long val = UNSIGNED_BYTES.get(byteBuffer);
         byteBuffer.flip();
         return val;
     }
@@ -144,7 +147,7 @@ public class UID {
      */
     public void writeNextUid(final ByteBuffer byteBuffer) {
         ByteBufferUtils.copy(this.byteBuffer, byteBuffer);
-        UnsignedBytes.increment(byteBuffer, UID_ARRAY_LENGTH);
+        UNSIGNED_BYTES.increment(byteBuffer);
     }
 
     /**
@@ -185,7 +188,7 @@ public class UID {
      * Write a UID for id into the passed buffer
      */
     private static ByteBuffer writeUid(final long id, final ByteBuffer byteBuffer) {
-        UnsignedBytes.put(byteBuffer, UID.UID_ARRAY_LENGTH, id);
+        UNSIGNED_BYTES.put(byteBuffer, id);
         byteBuffer.flip();
         return byteBuffer;
     }

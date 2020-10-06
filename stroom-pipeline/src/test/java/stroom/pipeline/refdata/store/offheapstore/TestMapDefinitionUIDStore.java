@@ -138,7 +138,7 @@ class TestMapDefinitionUIDStore extends AbstractLmdbDbTest {
 
             assertThat(uid).isNotNull();
 
-            long id = UnsignedBytes.get(uid.getBackingBuffer());
+            long id = UID.UNSIGNED_BYTES.get(uid.getBackingBuffer());
 
             // empty store so should get back the first id value of 0
             assertThat(id).isEqualTo(0);
@@ -159,7 +159,7 @@ class TestMapDefinitionUIDStore extends AbstractLmdbDbTest {
 
             assertThat(uid).isNotNull();
 
-            long id = UnsignedBytes.get(uid.getBackingBuffer());
+            long id = UID.UNSIGNED_BYTES.get(uid.getBackingBuffer());
 
             // empty store so should get back the first id value of 0
             assertThat(id).isEqualTo(0);

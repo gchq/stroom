@@ -1,6 +1,7 @@
 package stroom.pipeline.refdata.store.offheapstore.serdes;
 
 import stroom.pipeline.refdata.store.offheapstore.UnsignedBytes;
+import stroom.pipeline.refdata.store.offheapstore.UnsignedBytesInstances;
 import stroom.pipeline.refdata.store.offheapstore.ValueStoreMeta;
 import stroom.pipeline.refdata.store.offheapstore.lmdb.serde.Serde;
 import stroom.pipeline.refdata.util.ByteBufferUtils;
@@ -19,13 +20,15 @@ import java.nio.ByteBuffer;
  */
 public class ValueStoreMetaSerde implements Serde<ValueStoreMeta> {
 
-    Logger LOGGER = LoggerFactory.getLogger(ValueStoreMetaSerde.class);
+    private static final Logger LOGGER = LoggerFactory.getLogger(ValueStoreMetaSerde.class);
+
+    private static final UnsignedBytes REF_COUNT_UNSIGNED_BYTES = UnsignedBytesInstances.THREE;
 
     private static final int TYPE_ID_OFFSET = 0;
     private static final int TYPE_ID_BYTES = 1;
     private static final int REFERENCE_COUNT_OFFSET = TYPE_ID_OFFSET + TYPE_ID_BYTES;
 
-    private static final int REFERENCE_COUNT_BYTES = 3;
+    private static final int REFERENCE_COUNT_BYTES = REF_COUNT_UNSIGNED_BYTES.length();
     private static final int BUFFER_CAPACITY = TYPE_ID_BYTES + REFERENCE_COUNT_BYTES;
 
     @Override
@@ -38,7 +41,7 @@ public class ValueStoreMetaSerde implements Serde<ValueStoreMeta> {
 
         ValueStoreMeta valueStoreMeta = new ValueStoreMeta(
                 byteBuffer.get(),
-                (int) UnsignedBytes.get(byteBuffer, REFERENCE_COUNT_BYTES));
+                (int) REF_COUNT_UNSIGNED_BYTES.get(byteBuffer));
         byteBuffer.flip();
 
         return valueStoreMeta;
@@ -48,7 +51,7 @@ public class ValueStoreMetaSerde implements Serde<ValueStoreMeta> {
     public void serialize(ByteBuffer byteBuffer, ValueStoreMeta valueStoreMeta) {
 
         byteBuffer.put((byte) valueStoreMeta.getTypeId());
-        UnsignedBytes.put(byteBuffer, REFERENCE_COUNT_BYTES, valueStoreMeta.getReferenceCount());
+        REF_COUNT_UNSIGNED_BYTES.put(byteBuffer, valueStoreMeta.getReferenceCount());
         byteBuffer.flip();
     }
 
@@ -63,17 +66,17 @@ public class ValueStoreMetaSerde implements Serde<ValueStoreMeta> {
      * Leaves byteBuffer unchanged
      */
     public int extractReferenceCount(final ByteBuffer byteBuffer) {
-        return (int) UnsignedBytes.get(byteBuffer, REFERENCE_COUNT_OFFSET, REFERENCE_COUNT_BYTES);
+        return (int) REF_COUNT_UNSIGNED_BYTES.get(byteBuffer, REFERENCE_COUNT_OFFSET);
     }
 
     public void cloneAndDecrementRefCount(final ByteBuffer sourceBuffer, final ByteBuffer destBuffer) {
         ByteBufferUtils.copy(sourceBuffer, destBuffer);
-        UnsignedBytes.decrement(destBuffer, REFERENCE_COUNT_OFFSET, REFERENCE_COUNT_BYTES);
+        REF_COUNT_UNSIGNED_BYTES.decrement(destBuffer, REFERENCE_COUNT_OFFSET);
     }
 
     public void cloneAndIncrementRefCount(final ByteBuffer sourceBuffer, final ByteBuffer destBuffer) {
         ByteBufferUtils.copy(sourceBuffer, destBuffer);
-        UnsignedBytes.increment(destBuffer, REFERENCE_COUNT_OFFSET, REFERENCE_COUNT_BYTES);
+        REF_COUNT_UNSIGNED_BYTES.increment(destBuffer, REFERENCE_COUNT_OFFSET);
     }
 
 }
