@@ -123,6 +123,7 @@ public class UID {
 
     public long getValue() {
         final long val = UnsignedBytes.get(byteBuffer);
+        byteBuffer.flip();
         return val;
     }
 

@@ -29,6 +29,10 @@ import org.slf4j.LoggerFactory;
 
 import java.nio.ByteBuffer;
 
+/**
+ * < mapUid >< rangeStartInc >< rangeEndExc >
+ * < 4 bytes >< 8 bytes >< 8 bytes >
+ */
 public class RangeStoreKeySerde implements Serde<RangeStoreKey> {
 
     private static final Logger LOGGER = LoggerFactory.getLogger(RangeStoreKeySerde.class);
@@ -42,10 +46,18 @@ public class RangeStoreKeySerde implements Serde<RangeStoreKey> {
     @Override
     public RangeStoreKey deserialize(final ByteBuffer byteBuffer) {
 
-        // clone it to de-couple us from a LMDB managed buffer
-        // TODO @AT It is not ideal allocating a new buffer here but using a pooled buffer here
-        //   would not be easy.
-        final UID mapUid = UIDSerde.getUid(byteBuffer).cloneToNewBuffer();
+        // Create a bytebuffer that is a view onto the existing buffer
+        // NOTE: if the passed bytebuffer is owned by LMDB then this deserialize method
+        // needs to be used with care
+        final ByteBuffer dupBuffer = byteBuffer.duplicate();
+
+        // Set the limit at the end of the UID part
+        dupBuffer.limit(byteBuffer.position() + UID.UID_ARRAY_LENGTH);
+        final UID mapUid = UID.wrap(dupBuffer);
+
+        // advance the position now we have a dup of the UID portion
+        byteBuffer.position(byteBuffer.position() + UID.UID_ARRAY_LENGTH);
+
         long rangeFromInc = byteBuffer.getLong();
         long rangeToExc = byteBuffer.getLong();
         byteBuffer.flip();

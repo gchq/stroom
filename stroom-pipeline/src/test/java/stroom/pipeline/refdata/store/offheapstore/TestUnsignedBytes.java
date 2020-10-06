@@ -43,8 +43,40 @@ class TestUnsignedBytes {
 
         final long val2 = UnsignedBytes.get(byteBuffer);
 
+        LOGGER.info("Buffer {}", ByteBufferUtils.byteBufferInfo(byteBuffer));
+
         Assertions.assertThat(val2)
                 .isEqualTo(val);
+        Assertions.assertThat(byteBuffer.position())
+                .isEqualTo(4);
+        Assertions.assertThat(byteBuffer.remaining())
+                .isEqualTo(0);
+
+        byteBuffer.flip();
+
+        final long val3 = UnsignedBytes.get(byteBuffer, 4);
+
+        Assertions.assertThat(val3)
+                .isEqualTo(val);
+
+        Assertions.assertThat(byteBuffer.position())
+                .isEqualTo(4);
+        Assertions.assertThat(byteBuffer.remaining())
+                .isEqualTo(0);
+
+        byteBuffer.flip();
+
+        byteBuffer.position(2);
+        LOGGER.info("Buffer {}", ByteBufferUtils.byteBufferInfo(byteBuffer));
+        final long val4 = UnsignedBytes.get(byteBuffer, 0, 4);
+
+        Assertions.assertThat(val4)
+                .isEqualTo(val);
+
+        Assertions.assertThat(byteBuffer.position())
+                .isEqualTo(2);
+        Assertions.assertThat(byteBuffer.remaining())
+                .isEqualTo(2);
     }
 
     @Test
@@ -60,7 +92,8 @@ class TestUnsignedBytes {
 
     @Test
     void testIncrement() {
-        final ByteBuffer byteBuffer = ByteBuffer.allocateDirect(4);
+        final int len = 4;
+        final ByteBuffer byteBuffer = ByteBuffer.allocateDirect(len);
 
         // the following will test all values but takes a few minutes
 //        long max = UnsignedBytes.getMaxVal(4);
@@ -69,25 +102,26 @@ class TestUnsignedBytes {
 //            doAdditionTest(i, byteBuffer);
 //        }
 
-        doAdditionTest(0, byteBuffer);
-        doAdditionTest(UnsignedBytes.getMaxVal(1), byteBuffer);
-        doAdditionTest(UnsignedBytes.getMaxVal(2), byteBuffer);
-        doAdditionTest(UnsignedBytes.getMaxVal(3), byteBuffer);
-        doAdditionTest(UnsignedBytes.getMaxVal(4) - 1, byteBuffer);
+        doIncrementTest(0, byteBuffer, len);
+        doIncrementTest(UnsignedBytes.getMaxVal(1), byteBuffer, len);
+        doIncrementTest(UnsignedBytes.getMaxVal(2), byteBuffer, len);
+        doIncrementTest(UnsignedBytes.getMaxVal(3), byteBuffer, len);
+        doIncrementTest(UnsignedBytes.getMaxVal(4) - 1, byteBuffer, len);
     }
 
     @Test
     void testIncrement_bad() {
-        final ByteBuffer byteBuffer = ByteBuffer.allocateDirect(4);
+        final int len = 4;
+        final ByteBuffer byteBuffer = ByteBuffer.allocateDirect(len);
 
         Assertions.assertThatExceptionOfType(IllegalArgumentException.class)
                 .isThrownBy(() -> {
-                    doAdditionTest(UnsignedBytes.getMaxVal(4), byteBuffer);
+                    doIncrementTest(UnsignedBytes.getMaxVal(len), byteBuffer, len);
                 })
                 .withMessageContaining("Can't increment without overflowing");
     }
 
-    private void doAdditionTest(final long val, final ByteBuffer byteBuffer) {
+    private void doIncrementTest(final long val, final ByteBuffer byteBuffer, final int len) {
 
         byteBuffer.clear();
 
@@ -103,11 +137,11 @@ class TestUnsignedBytes {
         final int cap = byteBuffer.capacity();
         final int limit = byteBuffer.limit();
 
-        UnsignedBytes.increment(byteBuffer, 4);
+        UnsignedBytes.increment(byteBuffer, len);
 
 //        LOGGER.info("Buffer {}", ByteBufferUtils.byteBufferToHexAll(byteBuffer));
 
-        long val2 = UnsignedBytes.get(byteBuffer);
+        long val2 = UnsignedBytes.get(byteBuffer, 0, len);
 
         Assertions.assertThat(byteBuffer.capacity()).isEqualTo(cap);
         Assertions.assertThat(byteBuffer.position()).isEqualTo(pos);
@@ -115,4 +149,66 @@ class TestUnsignedBytes {
 
         Assertions.assertThat(val2).isEqualTo(val + 1);
     }
+
+    @Test
+    void testDecrement() {
+        int len = 4;
+        final ByteBuffer byteBuffer = ByteBuffer.allocateDirect(4);
+
+        // the following will test all values but takes a good few minutes
+//        long max = UnsignedBytes.getMaxVal(4);
+//        int cnt = 0;
+//        for (long i = max; i > 0; i--) {
+//            doDecrementTest(i, byteBuffer);
+//            cnt++;
+//        }
+//        LOGGER.info("Tested {} values", cnt);
+
+        doDecrementTest(1, byteBuffer, len);
+        doDecrementTest(UnsignedBytes.getMaxVal(1) + 1, byteBuffer, len);
+        doDecrementTest(UnsignedBytes.getMaxVal(2) + 1, byteBuffer, len);
+        doDecrementTest(UnsignedBytes.getMaxVal(3) + 1, byteBuffer, len);
+        doDecrementTest(UnsignedBytes.getMaxVal(4), byteBuffer, len);
+    }
+
+    @Test
+    void testDecrement_bad() {
+        final ByteBuffer byteBuffer = ByteBuffer.allocateDirect(4);
+
+        Assertions.assertThatExceptionOfType(IllegalArgumentException.class)
+                .isThrownBy(() -> {
+                    doDecrementTest(0, byteBuffer, 4);
+                })
+                .withMessageContaining("Can't decrement without overflowing");
+    }
+
+    private void doDecrementTest(final long val, final ByteBuffer byteBuffer, final int len) {
+
+        byteBuffer.clear();
+
+        UnsignedBytes.put(byteBuffer, byteBuffer.capacity(), val);
+        byteBuffer.flip();
+
+//        LOGGER.info("val {}, Buffer {}",
+//                Strings.padStart(Long.toString(val), 10, '0'),
+//                ByteBufferUtils.byteBufferToHexAll(byteBuffer));
+
+
+        final int pos = byteBuffer.position();
+        final int cap = byteBuffer.capacity();
+        final int limit = byteBuffer.limit();
+
+        UnsignedBytes.decrement(byteBuffer, len);
+
+//        LOGGER.info("Buffer {}", ByteBufferUtils.byteBufferToHexAll(byteBuffer));
+
+        long val2 = UnsignedBytes.get(byteBuffer, 0, len);
+
+        Assertions.assertThat(byteBuffer.capacity()).isEqualTo(cap);
+        Assertions.assertThat(byteBuffer.position()).isEqualTo(pos);
+        Assertions.assertThat(byteBuffer.limit()).isEqualTo(limit);
+
+        Assertions.assertThat(val2).isEqualTo(val - 1);
+    }
+
 }

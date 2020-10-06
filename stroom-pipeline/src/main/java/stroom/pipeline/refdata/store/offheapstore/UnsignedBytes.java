@@ -97,14 +97,45 @@ public class UnsignedBytes {
         return val;
     }
 
-    public static long get(final ByteBuffer byteBuffer) {
+    /**
+     * Reads the unsigned bytes from the supplied index and for len bytes.
+     * The position of the byteBuffer is unchanged.
+     */
+    public static long get(final ByteBuffer byteBuffer, final int index, final int len) {
         long val = 0;
-        int pos = byteBuffer.position();
-        int len = byteBuffer.remaining();
 
         for (int i = 0; i < len; i++) {
             final int shift = (len - i - 1) * 8;
-            val = val | ((long) byteBuffer.get(pos + i) & 0xff) << shift;
+            val = val | ((long) byteBuffer.get(index + i) & 0xff) << shift;
+        }
+        return val;
+    }
+
+    /**
+     * Reads the unsigned bytes for len bytes.
+     * The position of the byteBuffer is advanced
+     */
+    public static long get(final ByteBuffer byteBuffer, final int len) {
+        long val = 0;
+
+        for (int i = 0; i < len; i++) {
+            final int shift = (len - i - 1) * 8;
+            val = val | ((long) byteBuffer.get() & 0xff) << shift;
+        }
+        return val;
+    }
+
+    /**
+     * Reads the unsigned bytes from the remaining bytes.
+     * The position of the byteBuffer is advanced
+     */
+    public static long get(final ByteBuffer byteBuffer) {
+        final int len = byteBuffer.remaining();
+        long val = 0;
+
+        for (int i = 0; i < len; i++) {
+            final int shift = (len - i - 1) * 8;
+            val = val | ((long) byteBuffer.get() & 0xff) << shift;
         }
         return val;
     }
@@ -138,31 +169,72 @@ public class UnsignedBytes {
 
         return len;
     }
+    public static void increment(final ByteBuffer byteBuffer, final int len) {
+        increment(byteBuffer, byteBuffer.position(), len);
+    }
 
     /**
      * Treating the passed byteBuffer as an unsigned long in <= 8 bytes, increments the
      * value by one.  The byteBuffer's position, limit, marks are unchanged.
      * @param len The number of bytes in the unsigned value
      */
-    public static void increment(final ByteBuffer byteBuffer, final int len) {
-        final int pos = byteBuffer.position();
+    public static void increment(final ByteBuffer byteBuffer, final int index, final int len) {
         final int cap = byteBuffer.capacity();
 
         if (cap >= len) {
             // Work from right to left
-            for (int i = pos + len - 1; i >= pos; i--) {
+            for (int i = index + len - 1; i >= index; i--) {
                 byte b = byteBuffer.get(i);
                 if (b == (byte) 0xFF) {
-                    if (i == pos) {
+                    if (i == index) {
                         // Every byte is FF so we can't increment anymore
                         throw new IllegalArgumentException("Can't increment without overflowing");
                     }
-                    // Byte rolls around to zero and we need to increment the next one
+                    // Byte rolls around to zero and we need to carry over to the next one
                     byteBuffer.put(i, (byte) 0x00);
                 } else {
                     // Not going to overflow this byte so just increment it then break out
                     // as the rest are unchanged
                     byteBuffer.put(i, (byte) (b + 1));
+                    break;
+                }
+            }
+        } else {
+            throw new IllegalArgumentException(LogUtil.message(
+                    "Capacity {} should be >= {}, buffer: {}",
+                    cap,
+                    len,
+                    ByteBufferUtils.byteBufferInfo(byteBuffer)));
+        }
+    }
+
+    public static void decrement(final ByteBuffer byteBuffer, final int len) {
+        decrement(byteBuffer, byteBuffer.position(), len);
+    }
+
+    /**
+     * Treating the passed byteBuffer as an unsigned long in <= 8 bytes, increments the
+     * value by one.  The byteBuffer's position, limit, marks are unchanged.
+     * @param len The number of bytes in the unsigned value
+     */
+    public static void decrement(final ByteBuffer byteBuffer, final int index, final int len) {
+        final int cap = byteBuffer.capacity();
+
+        if (cap >= len) {
+            // Work from right to left
+            for (int i = index + len - 1; i >= index; i--) {
+                byte b = byteBuffer.get(i);
+                if (b == (byte) 0x00) {
+                    if (i == index) {
+                        // Every byte is 00 so we can't decrement anymore
+                        throw new IllegalArgumentException("Can't decrement without overflowing");
+                    }
+                    // Byte rolls drops back to FF and we need to carry over to the next one
+                    byteBuffer.put(i, (byte) 0xFF);
+                } else {
+                    // Not going to overflow this byte so just decrement it then break out
+                    // as the rest are unchanged
+                    byteBuffer.put(i, (byte) (b - 1));
                     break;
                 }
             }

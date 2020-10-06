@@ -139,7 +139,7 @@ abstract class AbstractSerdeTest<T, S extends Serde<T>> {
 
         T object2 = serde2.deserialize(byteBuffer);
 
-        LOGGER.debug("Object 1 [{}]", object);
+        LOGGER.debug("Object   [{}]", object);
         LOGGER.debug("Object 2 [{}]", object2);
 
         assertThat(object2).isEqualTo(object);

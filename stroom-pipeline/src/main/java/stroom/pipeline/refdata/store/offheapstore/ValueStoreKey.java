@@ -31,8 +31,8 @@ import java.util.Objects;
 public class ValueStoreKey {
 
     private static final short DEFAULT_UNIQUE_ID = 0;
-    private static final short MIN_UNIQUE_ID = DEFAULT_UNIQUE_ID;
-    private static final short MAX_UNIQUE_ID = Short.MAX_VALUE;
+    public static final short MIN_UNIQUE_ID = DEFAULT_UNIQUE_ID;
+    public static final short MAX_UNIQUE_ID = Short.MAX_VALUE;
 
     // The hashcode of the value that this key points to
     private final long valueHashCode;

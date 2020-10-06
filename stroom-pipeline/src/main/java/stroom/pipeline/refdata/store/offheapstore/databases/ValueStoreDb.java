@@ -58,11 +58,14 @@ import java.util.concurrent.atomic.AtomicInteger;
  * databases. The key structure is also identical to the key structure in the {@link ValueStoreMetaDb}
  * database. Each entry in this DB has a corresponding entry in the {@link ValueStoreMetaDb} which holds
  * the type information and reference counts.
+ * For this to perform we need to use a hash with minimal clashes else we have to scan over multiple
+ * values with the same hash each time.
  * <p>
  * The purpose of this table is to de-duplicate the storage of identical reference data values. E.g. if
  * multiple reference data keys are associated with the same reference data value then we only need
  * to store the value one in this table and each key then stores a pointer to it (the {@link ValueStoreKey}.)
  * <p>
+ * <pre>
  * key        | value
  * (hash|id)  | (valueBytes)
  * ---------------------------------------------
@@ -70,6 +73,10 @@ import java.util.concurrent.atomic.AtomicInteger;
  * (1234|01)  | (857489)
  * (4567|00)  | (263673)
  * (7890|00)  | (689390)
+ * </pre>
+ * <p>
+ * As values are deleted it means there can be gaps in the ids for that hash code. These gaps will
+ * be reused to ensure the ids are not exhausted.
  */
 public class ValueStoreDb extends AbstractLmdbDb<ValueStoreKey, RefDataValue> {
 
@@ -137,6 +144,9 @@ public class ValueStoreDb extends AbstractLmdbDb<ValueStoreKey, RefDataValue> {
         return areValuesEqual;
     }
 
+    /**
+     * For testing use
+     */
     ByteBuffer getOrCreateKey(final Txn<ByteBuffer> writeTxn,
                               final RefDataValue refDataValue,
                               final PooledByteBuffer valueStoreKeyPooledBuffer,
@@ -154,8 +164,10 @@ public class ValueStoreDb extends AbstractLmdbDb<ValueStoreKey, RefDataValue> {
 
     /**
      * Either gets the {@link ValueStoreKey} corresponding to the passed refDataValue
-     * from the database or creates the entry in the database and returns the generated
-     * key.
+     * from the database if we already hold it or creates the entry in the database
+     * and returns the generated key. To determine if we already hold it, the value
+     * will be hashed and that hash will be looked up and any matches tested for equality
+     * using the serialised bytes.
      * <p>
      * onExistingValueAction Action to perform when the value is found to already exist
      *
@@ -174,8 +186,6 @@ public class ValueStoreDb extends AbstractLmdbDb<ValueStoreKey, RefDataValue> {
         LOGGER.trace("getOrCreate called for refDataValue: {}, isOverwrite: {}", refDataValue, isOverwrite);
 
         try (final PooledByteBuffer pooledValueBuffer = getPooledValueBuffer()) {
-//            final ByteBuffer valueBuffer = pooledValueBuffer.getByteBuffer();
-//            valueSerde.serialize(valueBuffer, refDataValue);
 
             final ByteBuffer valueBuffer = valueSerde.serialize(pooledValueBuffer::getByteBuffer, refDataValue);
 
@@ -186,22 +196,20 @@ public class ValueStoreDb extends AbstractLmdbDb<ValueStoreKey, RefDataValue> {
             final AtomicBoolean isValueInDb = new AtomicBoolean(false);
             final AtomicInteger valuesCount = new AtomicInteger(0);
             short firstUnusedKeyId = -1;
-
-            // TODO we may instead be able to use one from the pool then if we do the put()
-            // get the key buffer from the txn and return that.
+            short firstUsedKeyId = -1;
 
             // We have to allocate a new ByteBuffer here as we may/may not return it
             final ByteBuffer startKey = buildStartKeyBuffer(refDataValue, valueStoreKeyPooledBuffer);
             ByteBuffer lastKeyBufferClone = null;
 
             try (Cursor<ByteBuffer> cursor = getLmdbDbi().openCursor(writeTxn)) {
-                //get this key or one greater than it
+                // get this key or one greater than it
                 boolean isFound = cursor.get(startKey, GetOp.MDB_SET_RANGE);
 
                 short lastKeyId = -1;
                 while (isFound) {
                     if (ValueStoreKeySerde.compareValueHashCode(startKey, cursor.key()) != 0) {
-                        // cursor key has a different hashcode so we can stop looping
+                        // cursor key has a different hashcode to ours so we can stop looping
                         break;
                     }
                     valuesCount.incrementAndGet();
@@ -211,14 +219,24 @@ public class ValueStoreDb extends AbstractLmdbDb<ValueStoreKey, RefDataValue> {
                     short thisKeyId = ValueStoreKeySerde.extractId(keyFromDbBuf);
 
                     // Because we have removal of entries we can end up with sparse id sequences
-                    // therefore capture the first unused ID so we can use it if we need to put a
+                    // therefore capture the first used and unused IDs so we can use it if we need to put a
                     // new key/value.
-                    if (firstUnusedKeyId == -1 && lastKeyId != -1) {
+                    if (firstUsedKeyId == -1) {
+                        // Capture the first id we find for this hash
+                        firstUsedKeyId = thisKeyId;
+                    }
+                    if (firstUnusedKeyId == -1 && firstUsedKeyId > ValueStoreKey.MIN_UNIQUE_ID) {
+                        // There is a gap before the first used key so use the lowest id
+                        // e.g. 2,3,7, so use 0
+                        firstUnusedKeyId = ValueStoreKey.MIN_UNIQUE_ID;
+                    } else if (firstUnusedKeyId == -1 && lastKeyId != -1) {
                         if (thisKeyId <= lastKeyId) {
                             throw new RuntimeException(LogUtil.message(
                                     "thisKeyId [{}] should be greater than lastId [{}]", thisKeyId, lastKeyId));
                         }
                         if ((thisKeyId - lastKeyId) > 1) {
+                            // There is a gap between this id and the last so use one after the last
+                            // e.g. 0,1,2,3,7, so use 4
                             firstUnusedKeyId = (short) (lastKeyId + 1);
                         }
                     }
@@ -235,16 +253,17 @@ public class ValueStoreDb extends AbstractLmdbDb<ValueStoreKey, RefDataValue> {
                     }
                     lastKeyBufferClone.clear();
 
-                    // copy the cursor key content out of the LMDB managed vuffer and into our passed in one
+                    // copy the cursor key content out of the LMDB managed buffer and into our passed in one
                     ByteBufferUtils.copy(keyFromDbBuf, lastKeyBufferClone);
 
                     // see if the found value is identical to the value passed in
                     if (valueBuffer.equals(valueFromDbBuf)) {
                         isValueInDb.set(true);
-                        LAMBDA_LOGGER.trace(() -> "Found our value so incrementing its ref count and breaking out");
+                        LAMBDA_LOGGER.trace(() ->
+                                "Found our value so incrementing its ref count and breaking out");
 
-                            // perform any entry found actions
-                            onExistingEntryAction.accept(writeTxn, keyFromDbBuf, valueFromDbBuf);
+                        // perform any entry found actions
+                        onExistingEntryAction.accept(writeTxn, keyFromDbBuf, valueFromDbBuf);
 
                         break;
                     } else {
@@ -278,6 +297,7 @@ public class ValueStoreDb extends AbstractLmdbDb<ValueStoreKey, RefDataValue> {
                     if (firstUnusedKeyId != -1) {
                         ValueStoreKeySerde.updateId(lastKeyBufferClone, firstUnusedKeyId);
                     } else {
+                        // No gaps in the ids so just use one more than last one
                         ValueStoreKeySerde.incrementId(lastKeyBufferClone);
                     }
                     keyBuffer = lastKeyBufferClone;

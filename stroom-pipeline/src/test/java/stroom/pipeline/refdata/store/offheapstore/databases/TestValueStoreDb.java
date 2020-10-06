@@ -140,6 +140,68 @@ class TestValueStoreDb extends AbstractLmdbDbTest {
         assertThat(valueStoreKeysMap.get(9).getUniqueId()).isEqualTo((short) 6);
     }
 
+    @Test
+    void testGetOrCreateSparseIds2() {
+        // We have to set up the DB with the basic hash func so we can be assured of hash clashes
+        setupValueStoreDb(basicHashAlgorithm);
+
+        final List<String> stringsWithSameHash = generateHashClashes(
+                10, valueStoreDb.getValueStoreHashAlgorithm());
+
+        final List<RefDataValue> refDataValues = stringsWithSameHash.stream()
+                .map(StringValue::of)
+                .collect(Collectors.toList());
+
+        final Map<Integer, ValueStoreKey> valueStoreKeysMap = new HashMap<>();
+
+        LmdbUtils.doWithWriteTxn(lmdbEnv, writeTxn -> {
+            ValueStoreKey valueStoreKey;
+
+            // insert the first five values, all have same hash so should get increasing
+            // id values.
+            for (int i = 0; i < 5; i++) {
+                valueStoreKey = getOrCreate(writeTxn, refDataValues.get(i));
+                valueStoreKeysMap.put(i, valueStoreKey);
+                LOGGER.info("Assigned id: {}", valueStoreKey.getUniqueId());
+                assertThat(valueStoreKey.getUniqueId()).isEqualTo((short) i);
+            }
+        });
+        assertThat(valueStoreDb.getEntryCount()).isEqualTo(5);
+        valueStoreDb.logDatabaseContents();
+
+        // delete values 0,1,2 leaving ids 3,4
+        for (int i = 0; i < 3; i++) {
+            valueStoreDb.delete(valueStoreKeysMap.get(i));
+        }
+        assertThat(valueStoreDb.getEntryCount()).isEqualTo(2);
+        valueStoreDb.logDatabaseContents();
+
+        // now put the remaining 5 values
+        // they should fill up the gaps in the ID sequence
+        LmdbUtils.doWithWriteTxn(lmdbEnv, writeTxn -> {
+            ValueStoreKey valueStoreKey;
+            for (int i = 5; i < 10; i++) {
+                valueStoreKey = getOrCreate(writeTxn, refDataValues.get(i));
+                valueStoreKeysMap.put(i, valueStoreKey);
+                LOGGER.info("Assigned id: {}", valueStoreKey.getUniqueId());
+            }
+        });
+        assertThat(valueStoreDb.getEntryCount()).isEqualTo(5 - 3 + 5);
+        valueStoreDb.logDatabaseContents();
+
+        // check the ID value for each of our original values in insertion order
+        assertThat(valueStoreKeysMap.get(0).getUniqueId()).isEqualTo((short) 0); //since deleted
+        assertThat(valueStoreKeysMap.get(1).getUniqueId()).isEqualTo((short) 1); //since deleted
+        assertThat(valueStoreKeysMap.get(2).getUniqueId()).isEqualTo((short) 2); //since deleted
+        assertThat(valueStoreKeysMap.get(3).getUniqueId()).isEqualTo((short) 3);
+        assertThat(valueStoreKeysMap.get(4).getUniqueId()).isEqualTo((short) 4);
+        assertThat(valueStoreKeysMap.get(5).getUniqueId()).isEqualTo((short) 0); //used empty space after delete
+        assertThat(valueStoreKeysMap.get(6).getUniqueId()).isEqualTo((short) 1); //used empty space after delete
+        assertThat(valueStoreKeysMap.get(7).getUniqueId()).isEqualTo((short) 2); //used empty space after delete
+        assertThat(valueStoreKeysMap.get(8).getUniqueId()).isEqualTo((short) 5);
+        assertThat(valueStoreKeysMap.get(9).getUniqueId()).isEqualTo((short) 6);
+    }
+
     /**
      * Generate a list (of size desiredRecords) of strings that all share the same hashcode
      * Adapted from https://gist.github.com/vaskoz/5703423

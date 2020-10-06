@@ -22,9 +22,14 @@ import stroom.pipeline.refdata.store.offheapstore.lmdb.serde.Deserializer;
 import stroom.pipeline.refdata.store.offheapstore.lmdb.serde.Serde;
 import stroom.pipeline.refdata.store.offheapstore.lmdb.serde.Serializer;
 
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+
 import java.nio.ByteBuffer;
 
 public class UIDSerde implements Serde<UID>, Serializer<UID>, Deserializer<UID> {
+
+    private static final Logger LOGGER = LoggerFactory.getLogger(UIDSerde.class);
 
     @Override
     public UID deserialize(final ByteBuffer byteBuffer) {
@@ -82,6 +87,7 @@ public class UIDSerde implements Serde<UID>, Serializer<UID>, Deserializer<UID> 
      * not flipping it.
      */
     public static void writeUid(final ByteBuffer byteBuffer, final UID uid) {
+        // Backing buffer is a duplicate view so the passed uid is un-affected.
         byteBuffer.put(uid.getBackingBuffer());
     }
 

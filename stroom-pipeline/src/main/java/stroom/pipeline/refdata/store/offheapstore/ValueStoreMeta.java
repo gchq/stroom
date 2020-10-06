@@ -2,6 +2,14 @@ package stroom.pipeline.refdata.store.offheapstore;
 
 import java.util.Objects;
 
+
+/**
+ * < typeId >< referenceCount >
+ * < 1 byte >< 3 bytes >
+ *
+ *  referenceCount stored as a 3 byte unsigned integer so a max
+ *  of ~1.6 million.
+ */
 public class ValueStoreMeta {
 
     private final int typeId;

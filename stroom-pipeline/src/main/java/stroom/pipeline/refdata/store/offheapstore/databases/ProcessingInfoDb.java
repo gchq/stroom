@@ -54,7 +54,8 @@ public class ProcessingInfoDb extends AbstractLmdbDb<RefStreamDefinition, RefDat
         updateLastAccessedTime(refStreamDefinition, System.currentTimeMillis());
     }
 
-    public void updateLastAccessedTime(final RefStreamDefinition refStreamDefinition, final long newLastAccessedTimeMs) {
+    public void updateLastAccessedTime(final RefStreamDefinition refStreamDefinition,
+                                       final long newLastAccessedTimeMs) {
         LmdbUtils.doWithWriteTxn(getLmdbEnvironment(), writeTxn ->
                 updateValue(writeTxn,
                         refStreamDefinition,

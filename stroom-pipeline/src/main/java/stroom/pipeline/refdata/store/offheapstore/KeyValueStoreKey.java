@@ -19,6 +19,10 @@ package stroom.pipeline.refdata.store.offheapstore;
 
 import java.util.Objects;
 
+/**
+ * < mapUid >< key >
+ * < 4 bytes >< ? bytes >
+ */
 public class KeyValueStoreKey {
 
     private final UID mapUid;

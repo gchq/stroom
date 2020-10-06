@@ -61,6 +61,7 @@ import io.vavr.Tuple2;
 import io.vavr.Tuple3;
 import io.vavr.Tuple4;
 import org.apache.hadoop.hbase.util.Bytes;
+import org.jetbrains.annotations.NotNull;
 import org.lmdbjava.Env;
 import org.lmdbjava.EnvFlags;
 import org.lmdbjava.KeyRange;
@@ -360,8 +361,8 @@ public class RefDataOffHeapStore extends AbstractRefDataStore implements RefData
 
             optValueStoreKeyBuffer = keyValueStoreDb.getAsBytes(readTxn, keyValueStoreKey);
 
-            if (!optValueStoreKeyBuffer.isPresent()) {
-                //not found in the kv store so look in the keyrange store instead
+            if (optValueStoreKeyBuffer.isEmpty()) {
+                //not found in the kv store so look in the key range store instead
 
                 try {
                     // speculative lookup in the range store. At this point we don't know if we have
@@ -413,7 +414,7 @@ public class RefDataOffHeapStore extends AbstractRefDataStore implements RefData
                             .flatMap(valueStoreKeyBuffer -> {
                                 // we are going to use the valueStoreKeyBuffer as a key in multiple
                                 // get() calls so need to clone it first.
-                                ByteBuffer valueStoreKeyBufferClone = valueStoreKeyPooledBufferClone.getByteBuffer();
+                                final ByteBuffer valueStoreKeyBufferClone = valueStoreKeyPooledBufferClone.getByteBuffer();
                                 ByteBufferUtils.copy(valueStoreKeyBuffer, valueStoreKeyBufferClone);
                                 return Optional.of(valueStoreKeyBufferClone);
                             })
@@ -498,21 +499,11 @@ public class RefDataOffHeapStore extends AbstractRefDataStore implements RefData
                 // with a read txn find the next proc info entry that is ready for purge
                 Optional<RefStreamDefinition> optRefStreamDef = LmdbUtils.getWithReadTxn(lmdbEnvironment, readTxn -> {
                     // ensure the buffers are cleared as we are using them in a loop
-                    procInfoPooledBufferPair.clear();
-                    Optional<PooledByteBufferPair> optProcInfoBufferPair = processingInfoDb.getNextEntryAsBytes(
-                            readTxn,
-                            currRefStreamDefBufRef.get(),
+                    return findNextRefStreamDef(
+                            procInfoPooledBufferPair,
+                            currRefStreamDefBufRef,
                             accessTimePredicate,
-                            procInfoPooledBufferPair);
-
-                    return optProcInfoBufferPair.map(procInfoBufferPair -> {
-                        RefStreamDefinition refStreamDefinition = processingInfoDb.deserializeKey(
-                                procInfoBufferPair.getKeyBuffer());
-
-                        // update the current key buffer so we can search from here next time
-                        currRefStreamDefBufRef.set(procInfoBufferPair.getKeyBuffer());
-                        return refStreamDefinition;
-                    });
+                            readTxn);
                 });
 
                 if (optRefStreamDef.isPresent()) {
@@ -533,7 +524,7 @@ public class RefDataOffHeapStore extends AbstractRefDataStore implements RefData
                                             accessTimePredicate,
                                             procInfoPooledBufferPair);
 
-                            if (!optProcInfoBufferPair.isPresent()) {
+                            if (optProcInfoBufferPair.isEmpty()) {
                                 // no matching ref streams found so break out
                                 LOGGER.debug("No match found");
                                 return false;
@@ -642,6 +633,28 @@ public class RefDataOffHeapStore extends AbstractRefDataStore implements RefData
         // - delete key(Range)/Value entry
 
         // change to ref counter MUST be done in same txn as the thing that is making it change, e.g the KV entry removal
+    }
+
+    @NotNull
+    private Optional<RefStreamDefinition> findNextRefStreamDef(final PooledByteBufferPair procInfoPooledBufferPair,
+                                                               final AtomicReference<ByteBuffer> currRefStreamDefBufRef,
+                                                               final Predicate<ByteBuffer> accessTimePredicate,
+                                                               final Txn<ByteBuffer> readTxn) {
+        procInfoPooledBufferPair.clear();
+        Optional<PooledByteBufferPair> optProcInfoBufferPair = processingInfoDb.getNextEntryAsBytes(
+                readTxn,
+                currRefStreamDefBufRef.get(),
+                accessTimePredicate,
+                procInfoPooledBufferPair);
+
+        return optProcInfoBufferPair.map(procInfoBufferPair -> {
+            RefStreamDefinition refStreamDefinition = processingInfoDb.deserializeKey(
+                    procInfoBufferPair.getKeyBuffer());
+
+            // update the current key buffer so we can search from here next time
+            currRefStreamDefBufRef.set(procInfoBufferPair.getKeyBuffer());
+            return refStreamDefinition;
+        });
     }
 
     private Tuple3<Integer, Integer, Integer> purgeRefStreamData(final Txn<ByteBuffer> writeTxn,

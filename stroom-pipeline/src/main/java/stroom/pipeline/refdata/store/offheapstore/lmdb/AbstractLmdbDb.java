@@ -65,12 +65,13 @@ import java.util.stream.StreamSupport;
  * DO NOT mutate a key/value buffer inside a txn unless the DB is in MDB_WRITEMAP mode.
  * DO NOT use/mutate a value buffer outside of a txn as its content is indeterminate outside the txn
  * and belongs to LMDB.
+ * DO NOT open a new txn while inside a txn, e.g. calling get("key") while inside a txn.
  * DO ensure any {@link PooledByteBuffer}s are released/closed after use.
  * DO be aware that a get() call is using a cursor underneath, so each call to get() will move the txn's
- * cursor to the position of the new key. Therefore:
- * v1 = get(k1), v1 == X, v2 = get(k2), v2 == y, v1 == y
- * Thus if you are making multiple get() calls you may need to copy/deserialise/use the returned value before
- * doing the next get().
+ *   cursor to the position of the new key. Therefore:
+ *   v1 = get(k1), v1 == X, v2 = get(k2), v2 == y, v1 == y
+ *   Thus if you are making multiple get() calls you may need to copy/deserialise/use the returned value before
+ *   doing the next get().
  *
  * @param <K> The class of the database keys
  * @param <V> The class of the database values
@@ -232,7 +233,8 @@ public abstract class AbstractLmdbDb<K, V> implements LmdbDb {
     }
 
     /**
-     * Gets the de-serialised value (if found) for the passed key using  a read txn
+     * Gets the de-serialised value (if found) for the passed key using a read txn.
+     * This will fail if you are already inside a txn.
      */
     public Optional<V> get(final K key) {
         return LmdbUtils.getWithReadTxn(lmdbEnvironment, txn ->
@@ -447,6 +449,9 @@ public abstract class AbstractLmdbDb<K, V> implements LmdbDb {
         }
     }
 
+    /**
+     * This will fail if you are already inside a txn.
+     */
     public boolean put(final K key, final V value, final boolean overwriteExisting) {
         try (final Txn<ByteBuffer> writeTxn = lmdbEnvironment.txnWrite()) {
             boolean didPutSucceed = put(writeTxn, key, value, overwriteExisting);
@@ -482,6 +487,9 @@ public abstract class AbstractLmdbDb<K, V> implements LmdbDb {
         }
     }
 
+    /**
+     * This will fail if you are already inside a txn.
+     */
     public void putAll(final Map<K, V> entries) {
         try (final Txn<ByteBuffer> txn = lmdbEnvironment.txnWrite()) {
             entries.forEach((key, value) -> {
@@ -567,6 +575,7 @@ public abstract class AbstractLmdbDb<K, V> implements LmdbDb {
     }
 
     /**
+     * This will fail if you are already inside a txn.
      * @see AbstractLmdbDb#updateValue(Txn, Object, Consumer)
      */
     public void updateValue(final K key, final Consumer<ByteBuffer> valueBufferConsumer) {
@@ -574,6 +583,9 @@ public abstract class AbstractLmdbDb<K, V> implements LmdbDb {
                 updateValue(writeTxn, key, valueBufferConsumer));
     }
 
+    /**
+     * This will fail if you are already inside a txn.
+     */
     public boolean delete(final K key) {
         try (final Txn<ByteBuffer> writeTxn = lmdbEnvironment.txnWrite()) {
             boolean result = delete(writeTxn, key);
@@ -596,6 +608,9 @@ public abstract class AbstractLmdbDb<K, V> implements LmdbDb {
         }
     }
 
+    /**
+     * This will fail if you are already inside a txn.
+     */
     public boolean delete(final ByteBuffer keyBuffer) {
         try (final Txn<ByteBuffer> writeTxn = lmdbEnvironment.txnWrite()) {
             boolean result = lmdbDbi.delete(writeTxn, keyBuffer);
@@ -628,6 +643,9 @@ public abstract class AbstractLmdbDb<K, V> implements LmdbDb {
         }
     }
 
+    /**
+     * This will fail if you are already inside a txn.
+     */
     public void deleteAll(final Collection<K> keys) {
         try (final Txn<ByteBuffer> txn = lmdbEnvironment.txnWrite();
              final PooledByteBuffer pooledKeyBuffer = getPooledKeyBuffer()) {
