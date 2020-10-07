@@ -7,6 +7,10 @@ and this project adheres to [Semantic Versioning](http://semver.org/).
 
 ## [Unreleased]
 
+* Change the off-heap ref store to use xxHash for hashing its values.
+
+* Change key widths used in ref data store. Existing stores will need to be deleted and re-generated.
+
 
 ## [v7.0-beta.66] - 2020-09-24
 

@@ -17,12 +17,30 @@
 
 package stroom.pipeline.refdata.util;
 
+import org.junit.jupiter.api.Disabled;
 import org.junit.jupiter.api.Test;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import java.io.IOException;
+import java.io.RandomAccessFile;
 import java.nio.ByteBuffer;
+import java.nio.CharBuffer;
+import java.nio.MappedByteBuffer;
+import java.nio.channels.FileChannel;
+import java.nio.charset.StandardCharsets;
+import java.nio.file.Files;
+import java.nio.file.Path;
+import java.nio.file.Paths;
+import java.time.Duration;
+import java.time.Instant;
+import java.util.ArrayList;
+import java.util.Comparator;
+import java.util.List;
 import java.util.Random;
+import java.util.concurrent.atomic.AtomicInteger;
+import java.util.function.Function;
+import java.util.stream.Stream;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.fail;
@@ -177,7 +195,7 @@ class TestByteBufferUtils {
     }
 
     @Test
-    void testHashCode() {
+    void testBasicHashCode() {
 
         ByteBuffer byteBuffer1 = ByteBuffer.wrap(new byte[]{0, 0, 1, 2, 3, 4, 5, 0, 0});
         byteBuffer1.position(2);
@@ -189,9 +207,111 @@ class TestByteBufferUtils {
         byteBuffer2.limit(6);
         LOGGER.info(ByteBufferUtils.byteBufferInfo(byteBuffer2));
 
-        int hash1 = ByteBufferUtils.hashCode(byteBuffer1);
-        int hash2 = ByteBufferUtils.hashCode(byteBuffer2);
+        int hash1 = ByteBufferUtils.basicHashCode(byteBuffer1);
+        int hash2 = ByteBufferUtils.basicHashCode(byteBuffer2);
 
         assertThat(hash1).isEqualTo(hash2);
+    }
+
+    @Test
+    void testXxHash() {
+
+        ByteBuffer byteBuffer1 = ByteBuffer.wrap(new byte[]{0, 0, 1, 2, 3, 4, 5, 0, 0});
+        byteBuffer1.position(2);
+        byteBuffer1.limit(7);
+        LOGGER.info(ByteBufferUtils.byteBufferInfo(byteBuffer1));
+
+        ByteBuffer byteBuffer2 = ByteBuffer.wrap(new byte[]{0, 1, 2, 3, 4, 5, 0, 0});
+        byteBuffer2.position(1);
+        byteBuffer2.limit(6);
+        LOGGER.info(ByteBufferUtils.byteBufferInfo(byteBuffer2));
+
+        long hash1 = ByteBufferUtils.xxHash(byteBuffer1);
+        long hash2 = ByteBufferUtils.xxHash(byteBuffer2);
+
+        assertThat(hash1).isEqualTo(hash2);
+    }
+
+
+    @Disabled // manual perf testing only
+    @Test
+    void testHashPerformance() throws IOException {
+
+        // Warm up the jvm and get all files in the page cache
+        for (int i = 0; i < 5; i++) {
+            doHashTest("basic", ByteBufferUtils::basicHashCode);
+
+            doHashTest("xxHash", ByteBufferUtils::xxHash);
+            
+            LOGGER.info("==========================================");
+        }
+    }
+
+    private void doHashTest(final String name,
+                            final Function<ByteBuffer, Number> hashFunc) throws IOException {
+        int iterations = 1_000;
+
+        Path start = Paths.get(".")
+                .resolve("src")
+                .toAbsolutePath()
+                .normalize();
+        System.out.println(start);
+
+        AtomicInteger fileCount = new AtomicInteger(0);
+        List<Path> paths = new ArrayList<>();
+
+        try (Stream<Path> stream = Files.walk(start, Integer.MAX_VALUE)) {
+            stream
+                    .filter(path -> path.toString().endsWith(".java"))
+                    .sorted(Comparator.comparing(Path::toString))
+                    .forEach(paths::add);
+        }
+
+        Instant startTime = Instant.now();
+
+        for (int i = 0; i < iterations; i++) {
+            paths.forEach(path -> {
+                try {
+                    try (RandomAccessFile file = new RandomAccessFile(path.toFile(), "r")) {
+
+                        //Get file channel in read-only mode
+                        final FileChannel fileChannel = file.getChannel();
+
+                        //Get direct byte buffer access using channel.map() operation
+                        final MappedByteBuffer buffer = fileChannel.map(
+                                FileChannel.MapMode.READ_ONLY,
+                                0,
+                                fileChannel.size());
+
+                        final Number hash = hashFunc.apply(buffer);
+//                                LOGGER.info("  {} {}", path.toString(), hash);
+                        fileCount.incrementAndGet();
+                    }
+                } catch (IOException e) {
+                    throw new RuntimeException(e);
+                }
+            });
+        }
+
+        LOGGER.info("{} File contents test - count: {}, in {}",
+                name, fileCount.get(), Duration.between(startTime, Instant.now()));
+
+
+        ByteBuffer byteBuffer = ByteBuffer.allocate(300);
+
+        startTime = Instant.now();
+
+        for (int i = 0; i < iterations; i++) {
+            paths.forEach(path -> {
+                byteBuffer.clear();
+                StandardCharsets.UTF_8.newEncoder()
+                        .encode(CharBuffer.wrap(path.toString()), byteBuffer, true);
+
+                final Number hash = hashFunc.apply(byteBuffer);
+            });
+        }
+
+        LOGGER.info("{} File name test - count: {}, in {}",
+                name, fileCount.get(), Duration.between(startTime, Instant.now()));
     }
 }

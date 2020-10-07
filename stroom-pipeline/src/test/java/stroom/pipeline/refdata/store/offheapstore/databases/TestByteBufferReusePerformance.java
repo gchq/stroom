@@ -23,6 +23,8 @@ import stroom.pipeline.refdata.store.offheapstore.lmdb.BasicLmdbDb;
 import stroom.pipeline.refdata.store.offheapstore.lmdb.LmdbUtils;
 import stroom.pipeline.refdata.store.offheapstore.lmdb.serde.Serde;
 import stroom.pipeline.refdata.store.offheapstore.serdes.StringSerde;
+import stroom.pipeline.refdata.util.ByteBufferPool;
+import stroom.pipeline.refdata.util.PooledByteBufferPair;
 import stroom.util.io.ByteSize;
 import stroom.util.logging.LambdaLogger;
 import stroom.util.logging.LambdaLoggerFactory;
@@ -77,26 +79,36 @@ class TestByteBufferReusePerformance extends AbstractLmdbDbTest {
 
         LAMBDA_LOGGER.logDurationIfDebugEnabled(() -> {
 
-            LmdbUtils.doWithWriteTxn(lmdbEnv, writeTxn -> {
-                for (int i = 0; i < recCount; i++) {
-                    final ByteBuffer keyBuffer = stringSerde.serialize("key" + i);
-                    final ByteBuffer valueBuffer = stringSerde.serialize("value" + i);
+            try (final PooledByteBufferPair pooledByteBufferPair = basicLmdbDb.getPooledBufferPair()) {
+                LmdbUtils.doWithWriteTxn(lmdbEnv, writeTxn -> {
+                    for (int i = 0; i < recCount; i++) {
+                        stringSerde.serialize(pooledByteBufferPair.getKeyBuffer(), "key" + i);
+                        stringSerde.serialize(pooledByteBufferPair.getValueBuffer(), "value" + i);
 
-                    basicLmdbDb.put(writeTxn, keyBuffer, valueBuffer, false);
-                }
-            });
+                        basicLmdbDb.put(
+                                writeTxn,
+                                pooledByteBufferPair.getKeyBuffer(),
+                                pooledByteBufferPair.getValueBuffer(),
+                                false);
+                    }
+                });
+            }
 
         }, "testNoReuse-put");
 
         LAMBDA_LOGGER.logDurationIfDebugEnabled(() -> {
 
-            for (int i = 0; i < recCount; i++) {
-                final ByteBuffer keyBuffer = stringSerde.serialize("key" + i);
+            try (final PooledByteBufferPair pooledByteBufferPair = basicLmdbDb.getPooledBufferPair()) {
+                for (int i = 0; i < recCount; i++) {
+                    stringSerde.serialize(pooledByteBufferPair.getKeyBuffer(), "key" + i);
 
-                LmdbUtils.doWithReadTxn(lmdbEnv, txn -> {
-                    Optional<ByteBuffer> optValue = basicLmdbDb.getAsBytes(txn, keyBuffer);
+                    LmdbUtils.doWithReadTxn(lmdbEnv, txn -> {
+                        Optional<ByteBuffer> optValue = basicLmdbDb.getAsBytes(
+                                txn,
+                                pooledByteBufferPair.getKeyBuffer());
 //                        assertThat(optValue).isPresent();
-                });
+                    });
+                }
             }
 
         }, "testNoReuse-get");

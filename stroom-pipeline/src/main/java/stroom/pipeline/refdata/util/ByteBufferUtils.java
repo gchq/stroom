@@ -21,6 +21,7 @@ import stroom.util.logging.LambdaLogger;
 import stroom.util.logging.LambdaLoggerFactory;
 import stroom.util.logging.LogUtil;
 
+import net.openhft.hashing.LongHashFunction;
 import org.apache.hadoop.hbase.util.Bytes;
 
 import javax.xml.bind.DatatypeConverter;
@@ -57,13 +58,20 @@ public class ByteBufferUtils {
                 }
                 oneByteArr[0] = byteBuffer.get(i);
                 sb.append(DatatypeConverter.printHexBinary(oneByteArr));
-                if (i == byteBuffer.limit()) {
+                if (i == byteBuffer.limit() - 1) {
                     sb.append("<");
+                    if (i < byteBuffer.capacity() -1) {
+                        sb.append(" ....");
+                    }
                 }
                 sb.append(" ");
             }
+//            sb
+//                    .append(" pos: ").append(byteBuffer.position())
+//                    .append(" lim: ").append(byteBuffer.limit())
+//                    .append(" cap: ").append(byteBuffer.capacity());
         }
-        return sb.toString().replaceAll(" $", "");
+        return sb.toString();
     }
 
     public static String byteBufferInfo(final ByteBuffer byteBuffer) {
@@ -208,7 +216,14 @@ public class ByteBufferUtils {
         return cmp;
     }
 
-    public static int hashCode(final ByteBuffer byteBuffer) {
+    /**
+     * Generate a fast non-crypto 64bit hash of the passed buffer
+     */
+    public static long xxHash(final ByteBuffer byteBuffer) {
+        return LongHashFunction.xx().hashBytes(byteBuffer);
+    }
+
+    public static int basicHashCode(final ByteBuffer byteBuffer) {
         int hash = 1;
 
         int pos = byteBuffer.position();

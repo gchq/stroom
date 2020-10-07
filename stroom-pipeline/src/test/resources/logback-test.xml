@@ -12,7 +12,7 @@
 
     <logger name="stroom.pipeline" level="debug" />
 
-    <logger name="stroom.pipeline.refdata" level="info" />
+    <logger name="stroom.pipeline.refdata" level="debug" />
 
 <!--    <logger name="stroom.pipeline.refdata.ReferenceDataFilter" level="trace" />-->
 

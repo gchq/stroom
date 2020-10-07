@@ -18,6 +18,9 @@
 package stroom.pipeline.refdata.store.offheapstore;
 
 import stroom.pipeline.refdata.util.ByteBufferUtils;
+import stroom.util.logging.LambdaLogger;
+import stroom.util.logging.LambdaLoggerFactory;
+import stroom.util.logging.LogUtil;
 
 import com.google.common.base.Preconditions;
 
@@ -30,6 +33,10 @@ import java.util.Objects;
  * {@link ByteBuffer} MUST not be mutated.
  */
 public class UID {
+    private static final LambdaLogger LOGGER = LambdaLoggerFactory.getLogger(UID.class);
+
+    public static final UnsignedBytes UNSIGNED_BYTES = UnsignedBytesInstances.FOUR;
+
     // Changing this value would require any data stored using UIDs to be
     // migrated to the new byte array length
     public static final int UID_ARRAY_LENGTH = 4;
@@ -41,30 +48,24 @@ public class UID {
 
     /**
      * Wraps a new UID around the passed {@link ByteBuffer} without copying.
+     * The buffer should be ready
      */
     public static UID wrap(final ByteBuffer byteBuffer) {
-        Preconditions.checkArgument(byteBuffer.remaining() == UID_ARRAY_LENGTH,
-                "Bytebuffer should have %s bytes remaining", UID_ARRAY_LENGTH);
+        LOGGER.trace(() -> "buffer: " + ByteBufferUtils.byteBufferInfo(byteBuffer));
+
+        if (byteBuffer.remaining() != UID_ARRAY_LENGTH) {
+            throw new RuntimeException(LogUtil.message(
+                    "Bytebuffer should have {} bytes remaining, buffer: {}",
+                    UID_ARRAY_LENGTH, ByteBufferUtils.byteBufferInfo(byteBuffer)));
+        }
         return new UID(byteBuffer);
     }
 
     /**
-     * Copies the content of the {@link ByteBuffer} into a new directly allocated {@link ByteBuffer}
-     * and wraps the new UID around that {@link ByteBuffer}
+     * For use in testing only, e.g. <pre>UID uid = UID.of(0, 0, 1, 0);</pre>
      */
-    public static UID copyOfDirect(final ByteBuffer byteBuffer) {
-        final ByteBuffer newBuffer = ByteBuffer.allocateDirect(UID_ARRAY_LENGTH);
-        newBuffer.put(byteBuffer);
-        newBuffer.flip();
-        return new UID(newBuffer);
-    }
-
-    /**
-     * Mostly for use in testing, e.g. <pre>UID uid = UID.of(0, 0, 1, 0);</pre>
-     */
-    public static UID of(final int... byteValues) {
+    public static UID of(final ByteBuffer byteBuffer, final int... byteValues) {
         Preconditions.checkArgument(byteValues.length == UID_ARRAY_LENGTH);
-        final ByteBuffer byteBuffer = ByteBuffer.allocateDirect(UID_ARRAY_LENGTH);
         for (int i = 0; i < UID_ARRAY_LENGTH; i++) {
             byte b = (byte) byteValues[i];
             byteBuffer.put(b);
@@ -73,15 +74,39 @@ public class UID {
         return new UID(byteBuffer);
     }
 
-    public static UID of(final long value) {
-        return new UID(createUidBuffer(value));
+    /**
+     * Writes the value to the passed buffer and wraps it with a UID.
+     */
+    public static UID of(final long value, final ByteBuffer byteBuffer) {
+        UID.writeUid(value, byteBuffer);
+        return UID.wrap(byteBuffer);
+    }
+
+    /**
+     * Write the lowest UID value (i.e. 0) into the passed buffer.
+     */
+    public static UID minimumValue(final ByteBuffer byteBuffer) {
+        writeMinimumValue(byteBuffer);
+        return UID.wrap(byteBuffer);
+    }
+
+    /**
+     * Write the lowest uid value into the buffer and leave it ready for reading
+     * @param byteBuffer
+     */
+    public static void writeMinimumValue(final ByteBuffer byteBuffer) {
+        for (int i = 0; i < UID_ARRAY_LENGTH; i++) {
+            byteBuffer.put((byte) 0);
+        }
+        // Get ready for reading
+        byteBuffer.flip();
     }
 
     /**
      * @return A newly allocated byte buffer containing the same UID bytes as this. Useful when this UID
      * wraps an LMDB managed bytebuffer that you want to de-associate from.
      */
-    public UID clone() {
+    public UID cloneToNewBuffer() {
         final ByteBuffer newBuffer = ByteBuffer.allocateDirect(UID_ARRAY_LENGTH);
         newBuffer.put(byteBuffer);
         byteBuffer.rewind();
@@ -89,18 +114,45 @@ public class UID {
         return new UID(newBuffer);
     }
 
+    /**
+     * Clone the contents of this into the passed buffer. destByteBuffer will be left ready for reading
+     */
+    public UID cloneToBuffer(final ByteBuffer destByteBuffer) {
+        destByteBuffer.put(byteBuffer);
+        byteBuffer.rewind();
+        destByteBuffer.flip();
+        return new UID(destByteBuffer);
+    }
+
     public long getValue() {
-        final long val = UnsignedBytes.get(byteBuffer);
+        final long val = UNSIGNED_BYTES.get(byteBuffer);
+        byteBuffer.flip();
         return val;
     }
 
-    public UID nextUid() {
-        final long currVal = getValue();
-        return UID.of(currVal + 1);
+    /**
+     * Writes the next uid value after this to the passed bytebuffer and wraps it with
+     * a new UID instance.
+     */
+    public UID nextUid(final ByteBuffer byteBuffer) {
+        // TODO @AT Maybe ought to be doing this by manipulating the bits into the passed buffer
+        //   as this might be faster
+        writeNextUid(byteBuffer);
+        return UID.wrap(byteBuffer);
     }
 
     /**
-     * @return A duplicate of the backing buffer for the unique ID. The returned buffer should not be mutated.
+     * Writes the next uid value after this to the passed bytebuffer and wraps it with
+     * a new UID instance.
+     */
+    public void writeNextUid(final ByteBuffer byteBuffer) {
+        ByteBufferUtils.copy(this.byteBuffer, byteBuffer);
+        UNSIGNED_BYTES.increment(byteBuffer);
+    }
+
+    /**
+     * @return A duplicate view of the backing buffer for the unique ID.
+     * The returned buffer should not be mutated.
      */
     public ByteBuffer getBackingBuffer() {
         return byteBuffer.duplicate();
@@ -116,7 +168,7 @@ public class UID {
 
     @Override
     public String toString() {
-        return ByteBufferUtils.byteBufferToHex(byteBuffer);
+        return ByteBufferUtils.byteBufferInfo(byteBuffer);
     }
 
     @Override
@@ -129,20 +181,15 @@ public class UID {
 
     @Override
     public int hashCode() {
-
         return Objects.hash(byteBuffer);
     }
 
-    private static ByteBuffer createUidBuffer(final long id) {
-        // UIDs are fixed width so we can create a buffer with the exact capacity
-        final ByteBuffer byteBuffer = createEmptyUidBuffer();
-        UnsignedBytes.put(byteBuffer, UID.UID_ARRAY_LENGTH, id);
+    /**
+     * Write a UID for id into the passed buffer
+     */
+    private static ByteBuffer writeUid(final long id, final ByteBuffer byteBuffer) {
+        UNSIGNED_BYTES.put(byteBuffer, id);
         byteBuffer.flip();
         return byteBuffer;
     }
-
-    private static ByteBuffer createEmptyUidBuffer() {
-        return ByteBuffer.allocateDirect(UID.UID_ARRAY_LENGTH);
-    }
-
 }

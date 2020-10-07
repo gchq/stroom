@@ -7,6 +7,7 @@ import org.junit.jupiter.api.Test;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import java.nio.ByteBuffer;
 import java.util.HashMap;
 import java.util.Map;
 
@@ -59,12 +60,46 @@ class TestByteBufferPoolImpl4 {
                 10, 10,
                 100, 0));
 
-        doTest(referenceDataConfig, 50, 0);
+        final ByteBufferPool byteBufferPool = doTest(referenceDataConfig, 50, 0);
+
+        // No make sure we get the same instance back when using the pool twice
+        PooledByteBuffer pooledByteBuffer = byteBufferPool.getPooledByteBuffer(10);
+
+        int identityHashCode1 = System.identityHashCode(pooledByteBuffer.getByteBuffer());
+
+        pooledByteBuffer.release();
+
+        pooledByteBuffer = byteBufferPool.getPooledByteBuffer(10);
+
+        int identityHashCode2 = System.identityHashCode(pooledByteBuffer.getByteBuffer());
+
+        pooledByteBuffer.release();
+
+        // Same byteBuffer instance from the pool
+        Assertions.assertThat(identityHashCode2)
+                .isEqualTo(identityHashCode1);
+
+        // No make sure we get a different instance back when using the pool twice for an unpooled size
+        pooledByteBuffer = byteBufferPool.getPooledByteBuffer(100);
+
+        identityHashCode1 = System.identityHashCode(pooledByteBuffer.getByteBuffer());
+
+        pooledByteBuffer.release();
+
+        pooledByteBuffer = byteBufferPool.getPooledByteBuffer(10);
+
+        identityHashCode2 = System.identityHashCode(pooledByteBuffer.getByteBuffer());
+
+        pooledByteBuffer.release();
+
+        // Different buffer instance as unpooled
+        Assertions.assertThat(identityHashCode2)
+                .isNotEqualTo(identityHashCode1);
     }
 
-    private void doTest(final ReferenceDataConfig referenceDataConfig,
-                        final int expectedBufferCapacity,
-                        final int expectedPoolSize) {
+    private ByteBufferPool doTest(final ReferenceDataConfig referenceDataConfig,
+                                  final int expectedBufferCapacity,
+                                  final int expectedPoolSize) {
         final ByteBufferPool byteBufferPool = new ByteBufferPoolImpl4(referenceDataConfig);
 
         PooledByteBuffer pooledByteBuffer = byteBufferPool.getPooledByteBuffer(50);
@@ -79,5 +114,37 @@ class TestByteBufferPoolImpl4 {
 
         LOGGER.info("System info: {}", byteBufferPool.getSystemInfo().getDetails());
 
+        // Get each of the configured sizes
+        if (referenceDataConfig.getPooledByteBufferCounts() != null
+                && !referenceDataConfig.getPooledByteBufferCounts().isEmpty()) {
+
+            int largestNonZeroOffset = referenceDataConfig.getPooledByteBufferCounts().entrySet()
+                    .stream()
+                    .filter(entry -> entry.getValue() > 0)
+                    .mapToInt(entry -> (int) Math.log10(entry.getKey()))
+                    .max()
+                    .orElse(-1);
+
+            // get a pooled buffer for each of the entries in the config unless thay have
+            // a val of zero (i.e. unPooled)
+            for (int i = 0; i <= largestNonZeroOffset; i++) {
+                int requiredSize = (int) Math.pow(10, i);
+                PooledByteBuffer pooledByteBuffer2 = byteBufferPool.getPooledByteBuffer(requiredSize);
+                final ByteBuffer byteBuffer = pooledByteBuffer2.getByteBuffer();
+                Assertions.assertThat(byteBuffer)
+                        .isNotNull();
+                pooledByteBuffer2.release();
+            }
+
+            LOGGER.info("System info: {}", byteBufferPool.getSystemInfo().getDetails());
+
+            // Should have at least one buffer due to the getPooledByteBuffer call above
+            // +1 to convert from offset to count
+            int expectedPooledBufferCount = Math.max(1, largestNonZeroOffset + 1);
+
+            Assertions.assertThat(byteBufferPool.getCurrentPoolSize())
+                    .isEqualTo(expectedPooledBufferCount);
+        }
+        return byteBufferPool;
     }
 }

@@ -17,8 +17,6 @@
 
 package stroom.pipeline.refdata.store.offheapstore.serdes;
 
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 import stroom.pipeline.refdata.store.offheapstore.RangeStoreKey;
 import stroom.pipeline.refdata.store.offheapstore.UID;
 import stroom.pipeline.refdata.store.offheapstore.lmdb.serde.Serde;
@@ -26,8 +24,15 @@ import stroom.util.logging.LambdaLogger;
 import stroom.util.logging.LambdaLoggerFactory;
 import stroom.util.shared.Range;
 
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+
 import java.nio.ByteBuffer;
 
+/**
+ * < mapUid >< rangeStartInc >< rangeEndExc >
+ * < 4 bytes >< 8 bytes >< 8 bytes >
+ */
 public class RangeStoreKeySerde implements Serde<RangeStoreKey> {
 
     private static final Logger LOGGER = LoggerFactory.getLogger(RangeStoreKeySerde.class);
@@ -41,8 +46,18 @@ public class RangeStoreKeySerde implements Serde<RangeStoreKey> {
     @Override
     public RangeStoreKey deserialize(final ByteBuffer byteBuffer) {
 
-        // clone it to de-couple us from a LMDB managed buffer
-        final UID mapUid = UIDSerde.getUid(byteBuffer).clone();
+        // Create a bytebuffer that is a view onto the existing buffer
+        // NOTE: if the passed bytebuffer is owned by LMDB then this deserialize method
+        // needs to be used with care
+        final ByteBuffer dupBuffer = byteBuffer.duplicate();
+
+        // Set the limit at the end of the UID part
+        dupBuffer.limit(byteBuffer.position() + UID.UID_ARRAY_LENGTH);
+        final UID mapUid = UID.wrap(dupBuffer);
+
+        // advance the position now we have a dup of the UID portion
+        byteBuffer.position(byteBuffer.position() + UID.UID_ARRAY_LENGTH);
+
         long rangeFromInc = byteBuffer.getLong();
         long rangeToExc = byteBuffer.getLong();
         byteBuffer.flip();

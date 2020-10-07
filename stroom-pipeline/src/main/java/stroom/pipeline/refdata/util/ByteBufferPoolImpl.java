@@ -31,6 +31,7 @@ import java.util.SortedMap;
 import java.util.concurrent.ConcurrentNavigableMap;
 import java.util.concurrent.ConcurrentSkipListMap;
 import java.util.concurrent.atomic.AtomicInteger;
+import java.util.function.BiConsumer;
 import java.util.function.Consumer;
 import java.util.function.Function;
 import java.util.stream.Collectors;
@@ -227,6 +228,27 @@ public class ByteBufferPoolImpl implements ByteBufferPool {
                 release(buffer);
             }
         }
+    }
+
+    @Override
+    public void doWithBufferPair(final int minKeyCapacity,
+                                 final int minValueCapacity,
+                                 final BiConsumer<ByteBuffer, ByteBuffer> work) {
+        ByteBuffer keyBuffer = null;
+        ByteBuffer valueBuffer = null;
+        try {
+            keyBuffer = getBuffer(minKeyCapacity);
+            valueBuffer = getBuffer(minValueCapacity);
+            work.accept(keyBuffer, valueBuffer);
+        } finally {
+            if (keyBuffer != null) {
+                release(keyBuffer);
+            }
+            if (valueBuffer != null) {
+                release(valueBuffer);
+            }
+        }
+
     }
 
     @Override
