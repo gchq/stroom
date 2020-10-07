@@ -6,6 +6,8 @@ and this project adheres to [Semantic Versioning](http://semver.org/).
 
 ## [Unreleased]
 
+## [v5.5.14] - 2020-10-07
+
 * Fixed SQL statistics upsert statements for MySQL 5.7.
 
 ## [v5.5.13] - 2020-02-14
@@ -1010,7 +1012,8 @@ and this project adheres to [Semantic Versioning](http://semver.org/).
 
 * Issue **#202** : Initial release of the new data retention policy functionality.
 
-[Unreleased]: https://github.com/gchq/stroom/compare/v5.5.13...HEAD
+[Unreleased]: https://github.com/gchq/stroom/compare/v5.5.14...HEAD
+[v5.5.14]: https://github.com/gchq/stroom/compare/v5.5.13...v5.5.14
 [v5.5.13]: https://github.com/gchq/stroom/compare/v5.5.12...v5.5.13
 [v5.5.12]: https://github.com/gchq/stroom/compare/v5.5.11...v5.5.12
 [v5.5.11]: https://github.com/gchq/stroom/compare/v5.5.10...v5.5.11
