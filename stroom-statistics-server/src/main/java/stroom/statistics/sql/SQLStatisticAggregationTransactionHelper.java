@@ -239,8 +239,8 @@ public class SQLStatisticAggregationTransactionHelper {
             .append(") AGG ")
             .append("WHERE AGG.CT > 0 ")
             .append("ON DUPLICATE KEY UPDATE ")
-            .append("   VAL = AGG.VAL, ")
-            .append("   CT = AGG.CT ")
+            .append("   VAL = VALUES(VAL), ")
+            .append("   CT = VALUES(CT) ")
             .toString();
 
     //TODO The last line of the above sql "CT = AGG.CT" causes the upsert to never update wehn run against mysql 5.7
@@ -309,8 +309,8 @@ public class SQLStatisticAggregationTransactionHelper {
             .append("   GROUP BY FK_SQL_STAT_KEY_ID, TIME_MS ")
             .append(") AGG ")
             .append("ON DUPLICATE KEY UPDATE ")
-            .append("   VAL = AGG.VAL, ")
-            .append("   CT = AGG.CT ")
+            .append("   VAL = VALUES(VAL), ")
+            .append("   CT = VALUES(CT) ")
             .toString();
 
     // Delete records from STAT_VAL older than a certain threshold for a given

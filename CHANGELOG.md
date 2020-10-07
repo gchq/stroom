@@ -6,6 +6,8 @@ and this project adheres to [Semantic Versioning](http://semver.org/).
 
 ## [Unreleased]
 
+* Fixed SQL statistics upsert statements for MySQL 5.7.
+
 ## [v5.5.13] - 2020-02-14
 
 * Issue **#1382** : Added `decode-url` and `encode-url` XSLT functions.
