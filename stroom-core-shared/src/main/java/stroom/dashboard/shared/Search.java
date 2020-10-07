@@ -9,12 +9,13 @@
 
 package stroom.dashboard.shared;
 
+import stroom.docref.DocRef;
+import stroom.query.api.v2.ExpressionOperator;
+
 import com.fasterxml.jackson.annotation.JsonCreator;
 import com.fasterxml.jackson.annotation.JsonInclude;
 import com.fasterxml.jackson.annotation.JsonInclude.Include;
 import com.fasterxml.jackson.annotation.JsonProperty;
-import stroom.docref.DocRef;
-import stroom.query.api.v2.ExpressionOperator;
 
 import javax.xml.bind.annotation.XmlAccessType;
 import javax.xml.bind.annotation.XmlAccessorType;
@@ -131,6 +132,19 @@ public class Search implements Serializable {
         result = 31 * result + (incremental ? 1 : 0);
         result = 31 * result + (storeHistory ? 1 : 0);
         return result;
+    }
+
+    @Override
+    public String toString() {
+        return "Search{" +
+                "dataSourceRef=" + dataSourceRef +
+                ", expression=" + expression +
+                ", componentSettingsMap=" + componentSettingsMap +
+                ", paramMap=" + paramMap +
+                ", incremental=" + incremental +
+                ", storeHistory=" + storeHistory +
+                ", queryInfo='" + queryInfo + '\'' +
+                '}';
     }
 
     public static class Builder {

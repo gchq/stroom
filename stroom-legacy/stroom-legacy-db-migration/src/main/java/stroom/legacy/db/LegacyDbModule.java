@@ -42,7 +42,11 @@ import java.sql.Connection;
 import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.sql.Statement;
+import java.util.Collections;
+import java.util.Map;
 import java.util.Optional;
+import java.util.Set;
+import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.function.Function;
 import java.util.stream.Stream;
@@ -57,14 +61,13 @@ import java.util.stream.Stream;
  */
 @Deprecated
 public class LegacyDbModule extends AbstractModule {
-
     private static final LambdaLogger LOGGER = LambdaLoggerFactory.getLogger(LegacyDbModule.class);
 
     private static final String MODULE = "stroom-legacy-db-migration";
     private static final String FLYWAY_LOCATIONS = "stroom/legacy/db/migration";
     private static final String FLYWAY_TABLE = "schema_version";
 
-    private static final AtomicBoolean HAS_COMPLETED_MIGRATION = new AtomicBoolean(false);
+    private static final Map<DataSource, Set<String>> COMPLETED_MIGRATIONS = new ConcurrentHashMap<>();
 
     @Override
     protected void configure() {
@@ -94,9 +97,12 @@ public class LegacyDbModule extends AbstractModule {
         final DataSource dataSource = dataSourceFactory.create(configProvider.get());
 
         // Prevent migrations from being re-run for each test
-        if (!HAS_COMPLETED_MIGRATION.get()) {
+        final boolean required = COMPLETED_MIGRATIONS
+                .computeIfAbsent(dataSource, k -> Collections.newSetFromMap(new ConcurrentHashMap<>()))
+                .add(getModuleName());
+
+        if (required) {
             performMigration(dataSource);
-            HAS_COMPLETED_MIGRATION.set(true);
         }
 
         return createConnectionProvider(dataSource);

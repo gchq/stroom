@@ -37,7 +37,7 @@ public class XPathFilterPresenter extends MyPresenterWidget<XPathFilterPresenter
     }
 
     public void write() {
-        xPathFilter.setXPath(getView().getXPath());
+        xPathFilter.setPath(getView().getXPath());
         xPathFilter.setMatchType(getView().getMatchType());
 
         if (getView().getMatchType().isNeedsValue()) {
@@ -50,7 +50,7 @@ public class XPathFilterPresenter extends MyPresenterWidget<XPathFilterPresenter
     }
 
     public void read(final XPathFilter xPathFilter) {
-        getView().setXPath(xPathFilter.getXPath());
+        getView().setXPath(xPathFilter.getPath());
         getView().setMatchType(xPathFilter.getMatchType());
         if (xPathFilter.getValue() == null) {
             getView().setValue("");

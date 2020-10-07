@@ -26,22 +26,21 @@ import javax.inject.Inject;
 import javax.inject.Singleton;
 import java.util.HashSet;
 import java.util.List;
+import java.util.Optional;
 import java.util.Set;
 import java.util.UUID;
+import java.util.function.Predicate;
 import java.util.stream.Collectors;
 
 @Singleton
 class UserServiceImpl implements UserService {
     private final SecurityContext securityContext;
-    private final AuthenticationConfig securityConfig;
     private final UserDao userDao;
 
     @Inject
     UserServiceImpl(final SecurityContext securityContext,
-                    final AuthenticationConfig securityConfig,
                     final UserDao userDao) {
         this.securityContext = securityContext;
-        this.securityConfig = securityConfig;
         this.userDao = userDao;
     }
 
@@ -67,23 +66,22 @@ class UserServiceImpl implements UserService {
     }
 
     @Override
-    public User getUserByName(final String name) {
+    public Optional<User> getUserByName(final String name) {
         if (name != null && name.trim().length() > 0) {
-            final User user = userDao.getByName(name);
-            if (user != null) {
-                // Make sure this is the user that was requested.
-                if (!user.getName().equals(name)) {
-                    throw new RuntimeException("Unexpected: returned user name does not match requested user name");
-                }
-                return user;
-            }
+            return userDao.getByName(name)
+                    .filter(user -> {
+                        if (!user.getName().equals(name)) {
+                            throw new RuntimeException("Unexpected: returned user name does not match requested user name");
+                        }
+                        return true;
+                    });
+        } else {
+            return Optional.empty();
         }
-
-        return null;
     }
 
     @Override
-    public User loadByUuid(final String uuid) {
+    public Optional<User> loadByUuid(final String uuid) {
         return userDao.getByUuid(uuid);
     }
 
@@ -103,17 +101,18 @@ class UserServiceImpl implements UserService {
 
     @Override
     public List<User> find(final FindUserCriteria criteria) {
-        return userDao.find(criteria.getName().getString(), criteria.getGroup());
+        return userDao.find(criteria.getQuickFilterInput(), criteria.getGroup());
     }
 
     @Override
-    public List<User> findUsersInGroup(final String groupUuid) {
-        return userDao.findUsersInGroup(groupUuid);
+    public List<User> findUsersInGroup(final String groupUuid, final String quickFilterInput) {
+        return userDao.findUsersInGroup(groupUuid, quickFilterInput);
     }
 
+
     @Override
-    public List<User> findGroupsForUser(final String userUuid) {
-        return userDao.findGroupsForUser(userUuid);
+    public List<User> findGroupsForUser(final String userUuid, final String quickFilterInput) {
+        return userDao.findGroupsForUser(userUuid, quickFilterInput);
     }
 
     @Override
@@ -141,53 +140,41 @@ class UserServiceImpl implements UserService {
     }
 
     @Override
-    public String getNamePattern() {
-        return securityConfig.getUserNamePattern();
-    }
-
-    @Override
     public List<String> getAssociates(final String filter) {
-        Set<String> associates;
+        final Set<User> userSet;
+
+        final Predicate<User> userPredicate = user ->
+                user.isEnabled()
+                        && user.getUuid().length() > 5
+                        && !user.isGroup();
 
         // Admin users will see all.
         if (securityContext.isAdmin()) {
-            final FindUserCriteria findUserCriteria = new FindUserCriteria();
-            findUserCriteria.setGroup(false);
+            final FindUserCriteria findUserCriteria = new FindUserCriteria(filter, false);
             final List<User> users = find(findUserCriteria);
 
-            associates = users
-                    .stream()
-                    .filter(User::isEnabled)
-                    .filter(user -> user.getUuid().length() > 5)
-                    .filter(user -> !user.isGroup())
-                    .map(User::getName)
-                    .collect(Collectors.toSet());
+            userSet = new HashSet<>(users);
 
         } else {
-            final User user = getUserByName(securityContext.getUserId());
-            final Set<User> userSet = new HashSet<>();
-            userSet.add(user);
+            userSet = new HashSet<>();
+            getUserByName(securityContext.getUserId())
+                    .ifPresent(user -> {
+                        userSet.add(user);
 
-            final List<User> groups = findGroupsForUser(user.getUuid());
-            groups.forEach(userGroup -> {
-                final List<User> usersInGroup = findUsersInGroup(userGroup.getUuid());
-                if (usersInGroup != null) {
-                    userSet.addAll(usersInGroup);
-                }
-            });
-
-            associates = userSet
-                    .stream()
-                    .filter(User::isEnabled)
-                    .filter(u -> u.getUuid().length() > 5)
-                    .filter(u -> !user.isGroup())
-                    .map(User::getName)
-                    .collect(Collectors.toSet());
+                        final List<User> groups = findGroupsForUser(user.getUuid());
+                        groups.forEach(userGroup -> {
+                            final List<User> usersInGroup = findUsersInGroup(userGroup.getUuid(), filter);
+                            if (usersInGroup != null) {
+                                userSet.addAll(usersInGroup);
+                            }
+                        });
+                    });
         }
 
-        return associates
+        return userSet
                 .stream()
-                .filter(value -> filter == null || value.toLowerCase().contains(filter.toLowerCase()))
+                .filter(userPredicate)
+                .map(User::getName)
                 .sorted()
                 .collect(Collectors.toList());
     }

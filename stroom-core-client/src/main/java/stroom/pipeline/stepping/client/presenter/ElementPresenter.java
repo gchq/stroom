@@ -18,6 +18,8 @@
 package stroom.pipeline.stepping.client.presenter;
 
 import stroom.alert.client.event.AlertEvent;
+import stroom.dispatch.client.Rest;
+import stroom.dispatch.client.RestFactory;
 import stroom.docref.DocRef;
 import stroom.document.client.DocumentPlugin;
 import stroom.document.client.DocumentPluginRegistry;
@@ -26,9 +28,13 @@ import stroom.document.client.event.DirtyEvent.DirtyHandler;
 import stroom.document.client.event.HasDirtyHandlers;
 import stroom.editor.client.presenter.EditorPresenter;
 import stroom.editor.client.view.IndicatorLines;
+import stroom.pipeline.shared.data.PipelineElement;
 import stroom.pipeline.shared.data.PipelineElementType;
+import stroom.pipeline.shared.data.PipelineProperty;
+import stroom.pipeline.shared.stepping.FindElementDocRequest;
 import stroom.pipeline.shared.stepping.PipelineStepRequest;
 import stroom.pipeline.shared.stepping.SteppingFilterSettings;
+import stroom.pipeline.shared.stepping.SteppingResource;
 import stroom.pipeline.stepping.client.event.ShowSteppingFilterSettingsEvent;
 import stroom.pipeline.stepping.client.presenter.ElementPresenter.ElementView;
 import stroom.util.shared.HasData;
@@ -43,13 +49,28 @@ import com.google.web.bindery.event.shared.HandlerRegistration;
 import com.gwtplatform.mvp.client.MyPresenterWidget;
 import com.gwtplatform.mvp.client.View;
 
+import com.google.gwt.core.client.GWT;
+import com.google.gwt.core.client.Scheduler;
+import com.google.inject.Inject;
+import com.google.inject.Provider;
+import com.google.web.bindery.event.shared.EventBus;
+import com.google.web.bindery.event.shared.HandlerRegistration;
+import com.gwtplatform.mvp.client.MyPresenterWidget;
+import com.gwtplatform.mvp.client.View;
+
+import java.util.List;
+
 public class ElementPresenter extends MyPresenterWidget<ElementView> implements HasDirtyHandlers {
+    private static final SteppingResource STEPPING_RESOURCE = GWT.create(SteppingResource.class);
+
     private final Provider<EditorPresenter> editorProvider;
     private final DocumentPluginRegistry documentPluginRegistry;
-    private String elementId;
-    private PipelineElementType elementType;
-    private DocRef entityRef;
-    private DocRef fuzzyEntityRef;
+    private final RestFactory restFactory;
+
+    private PipelineElement element;
+    private List<PipelineProperty> properties;
+    private String feedName;
+    private String pipelineName;
     private PipelineStepRequest pipelineStepRequest;
     private boolean refreshRequired = true;
     private boolean loaded;
@@ -64,10 +85,12 @@ public class ElementPresenter extends MyPresenterWidget<ElementView> implements 
     @Inject
     public ElementPresenter(final EventBus eventBus, final ElementView view,
                             final Provider<EditorPresenter> editorProvider,
-                            final DocumentPluginRegistry documentPluginRegistry) {
+                            final DocumentPluginRegistry documentPluginRegistry,
+                            final RestFactory restFactory) {
         super(eventBus, view);
         this.editorProvider = editorProvider;
         this.documentPluginRegistry = documentPluginRegistry;
+        this.restFactory = restFactory;
     }
 
     public Future<Boolean> load() {
@@ -77,17 +100,29 @@ public class ElementPresenter extends MyPresenterWidget<ElementView> implements 
             loaded = true;
             boolean loading = false;
 
-            if (elementType != null && elementType.hasRole(PipelineElementType.ROLE_HAS_CODE)) {
+            if (element.getElementType().hasRole(PipelineElementType.ROLE_HAS_CODE)) {
                 getView().setCodeView(getCodePresenter().getView());
 
                 try {
-                    if (fuzzyEntityRef != null && fuzzyEntityRef.getName() != null && fuzzyEntityRef.getName().length() > 0) {
-                        loadFuzzyEntityRef(future);
-                        loading = true;
-                    } else {
-                        loadEntityRef(future);
-                        loading = true;
-                    }
+                    final FindElementDocRequest findElementDocRequest = new FindElementDocRequest.Builder()
+                            .pipelineElement(element)
+                            .properties(properties)
+                            .feedName(feedName)
+                            .pipelineName(pipelineName)
+                            .build();
+
+                    final Rest<DocRef> rest = restFactory.create();
+                    rest
+                            .onSuccess(result -> loadEntityRef(result, future))
+                            .onFailure(caught -> {
+                                dirtyCode = false;
+                                setCode(caught.getMessage(), null);
+                                future.setResult(false);
+                            })
+                            .call(STEPPING_RESOURCE)
+                            .findElementDoc(findElementDocRequest);
+
+                    loading = true;
                 } catch (final RuntimeException e) {
                     AlertEvent.fireErrorFromException(this, e, null);
                 }
@@ -95,7 +130,7 @@ public class ElementPresenter extends MyPresenterWidget<ElementView> implements 
 
             // We only care about seeing input if the element mutates the input
             // some how.
-            if (elementType != null && elementType.hasRole(PipelineElementType.ROLE_MUTATOR)) {
+            if (element.getElementType().hasRole(PipelineElementType.ROLE_MUTATOR)) {
                 getView().setInputView(getInputPresenter().getView());
             }
 
@@ -112,52 +147,7 @@ public class ElementPresenter extends MyPresenterWidget<ElementView> implements 
         return future;
     }
 
-    private void loadFuzzyEntityRef(final FutureImpl<Boolean> future) {
-//        if (TextConverterDoc.DOCUMENT_TYPE.equals(fuzzyEntityRef.getType())) {
-        final DocumentPlugin<?> documentPlugin = documentPluginRegistry.get(fuzzyEntityRef.getType());
-        documentPlugin.load(fuzzyEntityRef,
-                result -> {
-                    if (result != null) {
-                        loadedDoc = fuzzyEntityRef;
-                        hasData = (HasData) result;
-                        dirtyCode = false;
-                        read();
-                        future.setResult(true);
-                    } else {
-                        // Try and load by entity ref if there is one.
-                        loadEntityRef(future);
-                    }
-                },
-                caught -> {
-                    dirtyCode = false;
-                    setCode(caught.getMessage(), null);
-                    future.setResult(false);
-                });
-//        } else if (XsltDoc.DOCUMENT_TYPE.equals(fuzzyEntityRef.getType())) {
-//            final FindXSLTCriteria criteria = new FindXSLTCriteria();
-//            criteria.setName(new StringCriteria(fuzzyEntityRef.getName()));
-//            criteria.setSort(FindXSLTCriteria.FIELD_ID);
-//            final EntityServiceFindAction<FindXSLTCriteria, XsltDoc> findAction = new EntityServiceFindAction<>(criteria);
-//            dispatcher.exec(findAction)
-//                    .onSuccess(result -> {
-//                        if (result != null && result.size() > 0) {
-//                            loadedDoc = fuzzyEntityRef;
-//                            hasData = result.get(0);
-//                            dirtyCode = false;
-//                            read();
-//                            future.setResult(true);
-//                        } else {
-//                            // Try and load by entity ref if there is one.
-//                            loadEntityRef(future);
-//                        }
-//                    })
-//                    .onFailure(caught -> future.setResult(false));
-//        } else {
-//            Scheduler.get().scheduleDeferred(() -> future.setResult(true));
-//        }
-    }
-
-    private void loadEntityRef(final FutureImpl<Boolean> future) {
+    private void loadEntityRef(final DocRef entityRef, final FutureImpl<Boolean> future) {
         if (entityRef != null) {
             final DocumentPlugin<?> documentPlugin = documentPluginRegistry.get(entityRef.getType());
             documentPlugin.load(entityRef,
@@ -189,6 +179,10 @@ public class ElementPresenter extends MyPresenterWidget<ElementView> implements 
                         dirtyCode = false;
                     },
                     throwable -> {
+                        AlertEvent.fireError(
+                                this,
+                                "Unable to save document " + loadedDoc,
+                                ((Throwable) throwable).getMessage(), null);
                     });
         }
     }
@@ -279,28 +273,24 @@ public class ElementPresenter extends MyPresenterWidget<ElementView> implements 
         return addHandlerToSource(DirtyEvent.getType(), handler);
     }
 
-    public String getElementId() {
-        return elementId;
+    public PipelineElement getElement() {
+        return element;
     }
 
-    public void setElementId(final String elementId) {
-        this.elementId = elementId;
+    public void setElement(final PipelineElement element) {
+        this.element = element;
     }
 
-    public PipelineElementType getElementType() {
-        return elementType;
+    public void setProperties(final List<PipelineProperty> properties) {
+        this.properties = properties;
     }
 
-    public void setElementType(final PipelineElementType elementType) {
-        this.elementType = elementType;
+    public void setFeedName(final String feedName) {
+        this.feedName = feedName;
     }
 
-    public void setEntityRef(final DocRef entityRef) {
-        this.entityRef = entityRef;
-    }
-
-    public void setFuzzyEntityRef(final DocRef fuzzyEntityRef) {
-        this.fuzzyEntityRef = fuzzyEntityRef;
+    public void setPipelineName(final String pipelineName) {
+        this.pipelineName = pipelineName;
     }
 
     public void setPipelineStepRequest(final PipelineStepRequest pipelineStepRequest) {
@@ -356,12 +346,18 @@ public class ElementPresenter extends MyPresenterWidget<ElementView> implements 
             setCommonEditorOptions(outputPresenter);
             setReadOnlyEditorOptions(outputPresenter);
 
+            // Turn on line numbers for the output presenter if this is a validation step as the output needs to show
+            // validation errors in the gutter.
+//            if (element.getElementType().hasRole(PipelineElementType.ROLE_VALIDATOR)) {
+//                outputPresenter.getLineNumbersOption().setOn(true);
+//            }
+
             outputPresenter.setShowFilterSettings(true);
             outputPresenter.setInput(false);
 
             registerHandler(outputPresenter.addChangeFilterHandler(event -> {
-                final SteppingFilterSettings settings = pipelineStepRequest.getStepFilter(elementId);
-                ShowSteppingFilterSettingsEvent.fire(ElementPresenter.this, outputPresenter, false, elementId,
+                final SteppingFilterSettings settings = pipelineStepRequest.getStepFilter(element.getId());
+                ShowSteppingFilterSettingsEvent.fire(ElementPresenter.this, outputPresenter, false, element.getId(),
                         settings);
             }));
         }

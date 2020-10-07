@@ -16,17 +16,20 @@
 
 package stroom.security.impl;
 
+import stroom.security.shared.PermissionNames;
+import stroom.security.shared.User;
+import stroom.test.common.util.test.FileSystemTestUtil;
+
 import name.falgout.jeffrey.testing.junit.guice.GuiceExtension;
 import name.falgout.jeffrey.testing.junit.guice.IncludeModule;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import stroom.security.shared.User;
-import stroom.test.common.util.test.FileSystemTestUtil;
 
 import javax.inject.Inject;
 import java.util.HashSet;
+import java.util.Optional;
 import java.util.Set;
 import java.util.UUID;
 
@@ -52,9 +55,10 @@ class TestAppPermissionServiceImpl {
         final User userGroup2 = createUserGroup(String.format("Group_2_%s", UUID.randomUUID()));
         final User userGroup3 = createUserGroup(String.format("Group_3_%s", UUID.randomUUID()));
 
-        final String c1 = "C1";
-        final String p1 = "P1";
-        final String p2 = "P2";
+        // No idea what the distinction is between c and p
+        final String c1 = PermissionNames.IMPORT_DATA_PERMISSION;
+        final String p1 = PermissionNames.MANAGE_DB_PERMISSION;
+        final String p2 = PermissionNames.MANAGE_PROCESSORS_PERMISSION;
 
         addPermissions(userGroup1, c1, p1);
         addPermissions(userGroup2, c1, p2);
@@ -152,16 +156,16 @@ class TestAppPermissionServiceImpl {
     private User createUser(final String name) {
         final User userRef = userService.createUser(name);
         assertThat(userRef).isNotNull();
-        final User user = userService.loadByUuid(userRef.getUuid());
-        assertThat(user).isNotNull();
-        return user;
+        final Optional<User> user = userService.loadByUuid(userRef.getUuid());
+        assertThat(user).isPresent();
+        return user.get();
     }
 
     private User createUserGroup(final String name) {
         final User userRef = userService.createUserGroup(name);
         assertThat(userRef).isNotNull();
-        final User user = userService.loadByUuid(userRef.getUuid());
-        assertThat(user).isNotNull();
-        return user;
+        final Optional<User> user = userService.loadByUuid(userRef.getUuid());
+        assertThat(user).isPresent();
+        return user.get();
     }
 }

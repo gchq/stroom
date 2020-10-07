@@ -1,14 +1,5 @@
 package stroom.security.impl.session;
 
-import org.assertj.core.api.Assertions;
-import org.junit.jupiter.api.BeforeEach;
-import org.junit.jupiter.api.Test;
-import org.mockito.Mock;
-import org.mockito.Mockito;
-import org.mockito.junit.jupiter.MockitoSettings;
-import org.mockito.quality.Strictness;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 import stroom.node.api.FindNodeCriteria;
 import stroom.node.api.NodeInfo;
 import stroom.node.api.NodeService;
@@ -18,6 +9,16 @@ import stroom.security.impl.SessionResourceImpl;
 import stroom.task.api.SimpleTaskContextFactory;
 import stroom.test.common.util.test.AbstractMultiNodeResourceTest;
 
+import org.assertj.core.api.Assertions;
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Test;
+import org.mockito.Mock;
+import org.mockito.Mockito;
+import org.mockito.junit.jupiter.MockitoSettings;
+import org.mockito.quality.Strictness;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -26,13 +27,18 @@ import static org.mockito.Mockito.when;
 
 @MockitoSettings(strictness = Strictness.LENIENT)
 class TestSessionListListener extends AbstractMultiNodeResourceTest<SessionResource> {
-
     private static final Logger LOGGER = LoggerFactory.getLogger(TestSessionListListener.class);
 
     @Mock
     private AuthenticationEventLog authenticationEventLog;
 
-    private Map<String, SessionListService> sessionListServiceMap = new HashMap<>();
+    private final Map<String, SessionListService> sessionListServiceMap = new HashMap<>();
+
+    private static final int BASE_PORT = 7030;
+
+    public TestSessionListListener() {
+        super(createNodeList(BASE_PORT));
+    }
 
     @BeforeEach
     void beforeEach() {
@@ -123,6 +129,6 @@ class TestSessionListListener extends AbstractMultiNodeResourceTest<SessionResou
 
         sessionListServiceMap.put(node.getNodeName(), sessionListService);
 
-        return new SessionResourceImpl(authenticationEventLog, sessionListService, null, null);
+        return new SessionResourceImpl(authenticationEventLog, sessionListService, null);
     }
 }

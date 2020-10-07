@@ -18,6 +18,8 @@ package stroom.pipeline;
 
 
 import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.io.TempDir;
+
 import stroom.docref.DocRef;
 import stroom.pipeline.errorhandler.ErrorReceiverProxy;
 import stroom.pipeline.errorhandler.LoggingErrorReceiver;
@@ -179,11 +181,10 @@ class TestXMLTransformer extends AbstractProcessIntegrationTest {
             try (final InputStream inputStream = StroomPipelineTestFileUtil.getInputStream(inputResource)) {
                 // We have to use /tmp here as the pipeline is hard coded to output
                 // to ${stroom.temp}/TestXMLTransformer.xml
-                final Path tempDir = FileUtil.getTempDir();
 
                 // Delete any output file.
-                final Path outputFile = tempDir.resolve("TestXMLTransformer.xml");
-                final Path outputLockFile = tempDir.resolve("TestXMLTransformer.xml.lock");
+                final Path outputFile = getCurrentTestDir().resolve("TestXMLTransformer.xml");
+                final Path outputLockFile = getCurrentTestDir().resolve("TestXMLTransformer.xml.lock");
                 FileUtil.deleteFile(outputFile);
                 FileUtil.deleteFile(outputLockFile);
 

@@ -17,12 +17,13 @@
 
 package stroom.pipeline.refdata.store;
 
-import net.sf.saxon.trans.XPathException;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 import stroom.pipeline.refdata.store.offheapstore.RefDataValueProxyConsumer;
 import stroom.pipeline.refdata.store.offheapstore.TypedByteBuffer;
 import stroom.util.logging.LogUtil;
+
+import net.sf.saxon.trans.XPathException;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import java.util.Objects;
 import java.util.Optional;
@@ -47,7 +48,6 @@ public class SingleRefDataValueProxy implements RefDataValueProxy {
         this.key = Objects.requireNonNull(key);
     }
 
-
     /**
      * Materialise the value that this is proxying. The consumeValue() method should be preferred
      * as this method will involve the added cost of copying the contents of the value.
@@ -59,11 +59,6 @@ public class SingleRefDataValueProxy implements RefDataValueProxy {
     public Optional<RefDataValue> supplyValue() {
         LOGGER.trace("supplyValue()");
         return refDataStore.getValue(mapDefinition, key);
-    }
-
-    @Override
-    public RefDataStore.StorageType getStorageType() {
-        return refDataStore.getStorageType();
     }
 
     /**
@@ -91,7 +86,7 @@ public class SingleRefDataValueProxy implements RefDataValueProxy {
             return refDataValueProxyConsumer.consume(this);
         } catch (XPathException e) {
             throw new RuntimeException(LogUtil.message(
-                    "Error handing rerence data value: {}", e.getMessage()), e);
+                    "Error handling reference data value: {}", e.getMessage()), e);
         }
     }
 

@@ -28,12 +28,14 @@ BEGIN
     IF NOT EXISTS (
             SELECT NULL
             FROM INFORMATION_SCHEMA.TABLES
-            WHERE TABLE_NAME = 'OLD_ACTIVITY') THEN
+            WHERE TABLE_SCHEMA = database()
+            AND TABLE_NAME = 'OLD_ACTIVITY') THEN
 
         IF EXISTS (
                 SELECT NULL
                 FROM INFORMATION_SCHEMA.TABLES
-                WHERE TABLE_NAME = 'ACTIVITY') THEN
+                WHERE TABLE_SCHEMA = database()
+                AND TABLE_NAME = 'ACTIVITY') THEN
 
             RENAME TABLE ACTIVITY TO OLD_ACTIVITY;
         END IF;
@@ -70,7 +72,8 @@ BEGIN
     IF EXISTS (
             SELECT NULL
             FROM INFORMATION_SCHEMA.TABLES
-            WHERE TABLE_NAME = 'OLD_ACTIVITY') THEN
+            WHERE TABLE_SCHEMA = database()
+            AND TABLE_NAME = 'OLD_ACTIVITY') THEN
 
         INSERT INTO activity (
             id,

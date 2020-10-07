@@ -16,9 +16,15 @@
 
 package stroom.security.client.presenter;
 
+import stroom.dispatch.client.Rest;
+import stroom.dispatch.client.RestFactory;
+import stroom.security.shared.DocPermissionResource;
+import stroom.security.shared.FilterUsersRequest;
+import stroom.security.shared.User;
+
+import com.google.gwt.core.client.GWT;
 import com.google.inject.Inject;
 import com.google.web.bindery.event.shared.EventBus;
-import stroom.security.shared.User;
 
 import java.util.ArrayList;
 import java.util.Comparator;
@@ -26,13 +32,20 @@ import java.util.List;
 import java.util.Objects;
 
 public class DocumentUserListPresenter extends AbstractUserListPresenter {
+    private static final DocPermissionResource DOC_PERMISSION_RESOURCE = GWT.create(DocPermissionResource.class);
+
     private List<User> userList;
+    private List<User> filteredUserList;
 
     private String filter;
+    private final RestFactory restFactory;
 
     @Inject
-    public DocumentUserListPresenter(final EventBus eventBus, final UserListView userListView) {
+    public DocumentUserListPresenter(final EventBus eventBus,
+                                     final UserListView userListView,
+                                     final RestFactory restFactory) {
         super(eventBus, userListView);
+        this.restFactory = restFactory;
     }
 
 //    @Override
@@ -69,25 +82,36 @@ public class DocumentUserListPresenter extends AbstractUserListPresenter {
     }
 
     public void refresh() {
+        if (filter != null && !filter.isEmpty()) {
+            filterUsers(userList);
+            // async update of the grid
+        } else {
+            final List<User> users = new ArrayList<>(userList);
+            updateGrid(users);
+        }
+    }
+
+    private void updateGrid(final List<User> users) {
         final User selected = getDataGridView().getSelectionModel().getSelected();
         getDataGridView().getSelectionModel().clear();
-
-        final List<User> users = new ArrayList<>();
-        for (final User user : userList) {
-            if (filter == null) {
-                users.add(user);
-            } else if (user.getName().startsWith(filter)) {
-                users.add(user);
-            }
-        }
 
         users.sort(Comparator.comparing(User::getName));
 
         getDataGridView().setRowData(0, users);
         getDataGridView().setRowCount(users.size());
 
-        if (selected != null) {
+        if (selected != null && users.contains(selected)) {
             getDataGridView().getSelectionModel().setSelected(selected);
         }
     }
+
+    private void filterUsers(final List<User> users) {
+        final Rest<List<User>> rest = restFactory.create();
+
+        rest
+                .onSuccess(this::updateGrid)
+                .call(DOC_PERMISSION_RESOURCE)
+                .filterUsers(new FilterUsersRequest(users, filter));
+    }
+
 }

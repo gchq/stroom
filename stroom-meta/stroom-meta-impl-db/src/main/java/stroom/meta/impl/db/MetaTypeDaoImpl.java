@@ -19,23 +19,25 @@ package stroom.meta.impl.db;
 
 import stroom.cache.api.CacheManager;
 import stroom.cache.api.ICache;
-import stroom.data.shared.StreamTypeNames;
 import stroom.db.util.JooqUtil;
+import stroom.meta.impl.MetaServiceConfig;
 import stroom.meta.impl.MetaTypeDao;
 import stroom.meta.impl.db.jooq.tables.records.MetaTypeRecord;
+import stroom.util.shared.Clearable;
 
 import org.jooq.Condition;
 import org.jooq.Field;
 
 import javax.inject.Inject;
 import javax.inject.Singleton;
+import java.util.Arrays;
 import java.util.List;
 import java.util.Optional;
 
 import static stroom.meta.impl.db.jooq.tables.MetaType.META_TYPE;
 
 @Singleton
-class MetaTypeDaoImpl implements MetaTypeDao {
+class MetaTypeDaoImpl implements MetaTypeDao, Clearable {
     private static final String CACHE_NAME = "Meta Type Cache";
 
     private final ICache<String, Integer> cache;
@@ -49,12 +51,14 @@ class MetaTypeDaoImpl implements MetaTypeDao {
         cache = cacheManager.create(CACHE_NAME, metaServiceConfig::getMetaTypeCache, this::load);
 
         // Ensure some types are preloaded.
-        load(StreamTypeNames.RAW_EVENTS);
-        load(StreamTypeNames.RAW_REFERENCE);
-        load(StreamTypeNames.EVENTS);
-        load(StreamTypeNames.REFERENCE);
-        load(StreamTypeNames.RECORDS);
-        load(StreamTypeNames.ERROR);
+        final String metaTypes = metaServiceConfig.getMetaTypes();
+        if (metaTypes != null && !metaTypes.isEmpty()) {
+            Arrays
+                    .stream(metaTypes.split("\n"))
+                    .map(String::trim)
+                    .filter(s -> !s.isEmpty())
+                    .forEach(this::load);
+        }
     }
 
     private int load(final String name) {
@@ -126,14 +130,6 @@ class MetaTypeDaoImpl implements MetaTypeDao {
 
     @Override
     public void clear() {
-        deleteAll();
         cache.clear();
-    }
-
-    private void deleteAll() {
-        JooqUtil.truncateTable(metaDbConnProvider, META_TYPE);
-//        return JooqUtil.contextResult(metaDbConnProvider, context -> context
-//                .truncate(META_TYPE)
-//                .execute());
     }
 }

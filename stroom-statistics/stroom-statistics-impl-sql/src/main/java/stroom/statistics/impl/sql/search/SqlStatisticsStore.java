@@ -1,5 +1,29 @@
 package stroom.statistics.impl.sql.search;
 
+import stroom.dashboard.expression.v1.FieldIndexMap;
+import stroom.dashboard.expression.v1.Val;
+import stroom.query.api.v2.Param;
+import stroom.query.api.v2.SearchRequest;
+import stroom.query.common.v2.CompletionState;
+import stroom.query.common.v2.Coprocessor;
+import stroom.query.common.v2.CoprocessorSettings;
+import stroom.query.common.v2.CoprocessorSettingsMap;
+import stroom.query.common.v2.Data;
+import stroom.query.common.v2.Payload;
+import stroom.query.common.v2.ResultHandler;
+import stroom.query.common.v2.SearchResultHandler;
+import stroom.query.common.v2.Sizes;
+import stroom.query.common.v2.Store;
+import stroom.query.common.v2.TableCoprocessor;
+import stroom.query.common.v2.TableCoprocessorSettings;
+import stroom.query.common.v2.TablePayload;
+import stroom.statistics.impl.sql.shared.StatisticStoreDoc;
+import stroom.task.api.TaskContext;
+import stroom.task.api.TaskContextFactory;
+import stroom.util.logging.LambdaLogger;
+import stroom.util.logging.LambdaLoggerFactory;
+import stroom.util.logging.LogUtil;
+
 import com.google.common.base.Preconditions;
 import com.google.common.collect.Maps;
 import io.reactivex.Flowable;
@@ -9,22 +33,14 @@ import io.reactivex.disposables.Disposable;
 import io.reactivex.schedulers.Schedulers;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import stroom.dashboard.expression.v1.FieldIndexMap;
-import stroom.dashboard.expression.v1.Val;
-import stroom.query.api.v2.Param;
-import stroom.query.api.v2.SearchRequest;
-import stroom.query.common.v2.*;
-import stroom.statistics.impl.sql.shared.StatisticStoreDoc;
-import stroom.task.api.TaskContext;
-import stroom.task.api.TaskContextFactory;
-import stroom.util.logging.LambdaLogUtil;
-import stroom.util.logging.LambdaLogger;
-import stroom.util.logging.LambdaLoggerFactory;
-import stroom.util.logging.LogUtil;
 
 import java.time.Duration;
 import java.time.Instant;
-import java.util.*;
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.Collections;
+import java.util.List;
+import java.util.Map;
 import java.util.concurrent.Executor;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicLong;
@@ -43,7 +59,7 @@ public class SqlStatisticsStore implements Store {
     private final int resultHandlerBatchSize;
     private final Sizes defaultMaxResultsSizes;
     private final Sizes storeSize;
-    private final CompletionState completionState;
+    private final CompletionState completionState = new CompletionState();
     private final List<String> errors = Collections.synchronizedList(new ArrayList<>());
     private final String searchKey;
     private final TaskContextFactory taskContextFactory;
@@ -63,7 +79,6 @@ public class SqlStatisticsStore implements Store {
         this.searchKey = searchRequest.getKey().toString();
         this.taskContextFactory = taskContextFactory;
         this.resultHandlerBatchSize = resultHandlerBatchSize;
-        this.completionState = new CompletionState();
 
         final CoprocessorSettingsMap coprocessorSettingsMap = CoprocessorSettingsMap.create(searchRequest);
         Preconditions.checkNotNull(coprocessorSettingsMap);
@@ -77,8 +92,7 @@ public class SqlStatisticsStore implements Store {
         // convert the search into something stats understands
         final FindEventCriteria criteria = StatStoreCriteriaBuilder.buildCriteria(searchRequest, statisticStoreDoc);
 
-        resultHandler = new SearchResultHandler(
-                completionState, coprocessorSettingsMap, defaultMaxResultsSizes, storeSize);
+        resultHandler = new SearchResultHandler(coprocessorSettingsMap, defaultMaxResultsSizes, storeSize);
 
         taskContextFactory.context(TASK_NAME, parentTaskContext -> {
 
@@ -93,13 +107,20 @@ public class SqlStatisticsStore implements Store {
         }).run();
     }
 
-
     @Override
     public void destroy() {
         LOGGER.debug("destroy called");
+
+        completionState.complete();
+
         //terminate the search
         // TODO this may need to change in 6.1
         compositeDisposable.clear();
+    }
+
+    public void complete() {
+        LOGGER.debug("complete called");
+        completionState.complete();
     }
 
     @Override
@@ -208,7 +229,7 @@ public class SqlStatisticsStore implements Store {
                                     if (now >= nextProcessPayloadsTime.get() ||
                                             countSinceLastSend.get() >= resultHandlerBatchSize) {
 
-                                        LAMBDA_LOGGER.debug(LambdaLogUtil.message("{} vs {}, {} vs {}",
+                                        LAMBDA_LOGGER.debug(() -> LogUtil.message("{} vs {}, {} vs {}",
                                                 now, nextProcessPayloadsTime,
                                                 countSinceLastSend.get(), resultHandlerBatchSize));
 
@@ -233,7 +254,7 @@ public class SqlStatisticsStore implements Store {
                             // data we have gathered so far
                             processPayloads(resultHandler, coprocessorMap);
                             parentContext.info(() -> searchKey + " - complete");
-                            completeSearch();
+                            completionState.complete();
 
                             LAMBDA_LOGGER.debug(() ->
                                     LogUtil.message("Query finished in {}", Duration.between(queryStart, Instant.now())));
@@ -259,11 +280,6 @@ public class SqlStatisticsStore implements Store {
                         createCoprocessor(entry.getValue(), fieldIndexMap, paramMap)))
                 .filter(entry -> entry.getKey() != null)
                 .collect(Collectors.toUnmodifiableMap(Map.Entry::getKey, Map.Entry::getValue));
-    }
-
-    private void completeSearch() {
-        LOGGER.debug("completeSearch called");
-        completionState.complete();
     }
 
     /**

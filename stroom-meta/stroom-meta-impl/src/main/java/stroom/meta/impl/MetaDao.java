@@ -12,7 +12,6 @@ import stroom.meta.shared.FindMetaCriteria;
 import stroom.meta.shared.Meta;
 import stroom.meta.shared.SelectionSummary;
 import stroom.meta.shared.Status;
-import stroom.util.shared.Clearable;
 import stroom.util.shared.ResultPage;
 import stroom.util.time.TimePeriod;
 
@@ -20,7 +19,7 @@ import java.util.List;
 import java.util.Optional;
 import java.util.function.Consumer;
 
-public interface MetaDao extends Clearable {
+public interface MetaDao {
     Long getMaxId();
 
     Meta create(MetaProperties metaProperties);
@@ -61,7 +60,7 @@ public interface MetaDao extends Clearable {
      */
     SelectionSummary getReprocessSelectionSummary(FindMetaCriteria criteria);
 
-    Optional<Long> getMaxId(FindMetaCriteria criteria);
+    Optional<Long> getLatestIdByEffectiveDate(FindMetaCriteria criteria);
 
     int updateStatus(FindMetaCriteria criteria, Status currentStatus, Status newStatus, long statusTime);
 

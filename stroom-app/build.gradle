@@ -14,7 +14,6 @@ plugins {
     //id "io.swagger.core.v3.swagger-gradle-plugin" version "2.1.1"
 }
 
-
 import org.reflections.Reflections
 import org.reflections.scanners.SubTypesScanner
 import org.reflections.scanners.TypeAnnotationsScanner
@@ -28,7 +27,7 @@ ext.moduleName = 'stroom.app'
 def uiDir = project.file('src/main/resources/ui')
 def swaggerDir = "${uiDir}/noauth/swagger"
 def restResourceClassNames = []
-def jarName = 'stroom-app.jar'
+//def jarName = 'stroom-app.jar'
 def fatJarName = 'stroom-app-all.jar'
 def sendToStroomScriptVersion = 'send-to-stroom-v2.0'
 def releaseBuildDir = 'build/release'
@@ -43,8 +42,6 @@ dependencies {
     compile project(':stroom-activity:stroom-activity-impl-db')
     compile project(':stroom-annotation:stroom-annotation-impl-db')
     compile project(':stroom-annotation:stroom-annotation-pipeline')
-    compile project(':stroom-authentication:stroom-authentication-impl')
-    compile project(':stroom-authentication:stroom-authentication-impl-db')
     compile project(':stroom-cache:stroom-cache-impl')
     compile project(':stroom-cluster:stroom-cluster-impl')
     compile project(':stroom-cluster:stroom-cluster-lock-impl-db')
@@ -93,6 +90,8 @@ dependencies {
     compile project(':stroom-search:stroom-search-extraction')
     compile project(':stroom-search:stroom-search-solr')
     compile project(':stroom-search:stroom-searchable-impl')
+    compile project(':stroom-security:stroom-security-identity')
+    compile project(':stroom-security:stroom-security-identity-db')
     compile project(':stroom-security:stroom-security-impl-db')
     compile project(':stroom-servicediscovery:stroom-servicediscovery-impl')
     compile project(':stroom-statistics:stroom-statistics-impl')
@@ -143,7 +142,6 @@ dependencies {
 
     testCompile project(':stroom-activity:stroom-activity-api')
     testCompile project(':stroom-activity:stroom-activity-mock')
-    testCompile project(':stroom-authentication:stroom-authentication-impl')
     testCompile project(':stroom-config:stroom-config-app')
     testCompile project(':stroom-config:stroom-config-global-impl')
     testCompile project(':stroom-core')
@@ -172,6 +170,7 @@ dependencies {
     testCompile project(':stroom-pipeline')
     testCompile project(':stroom-processor:stroom-processor-mock')
     testCompile project(':stroom-receive:stroom-receive-rules-impl')
+    testCompile project(':stroom-security:stroom-security-identity')
     testCompile project(':stroom-security:stroom-security-api')
     testCompile project(':stroom-security:stroom-security-impl')
     testCompile project(':stroom-security:stroom-security-mock')
@@ -190,6 +189,7 @@ dependencies {
     testCompile libs.guice4
     testCompile libs.guice_extension
     testCompile libs.hikari
+    testCompile libs.jinjava
     testCompile libs.junit_jupiter_api
     testCompile libs.lmdbjava
     testCompile libs.lucene_core
@@ -225,25 +225,39 @@ jar {
                 "Main-Class": "stroom.app.App"
         )
     }
-    archiveName jarName
+//    archiveName jarName
     exclude '**/gwt-unitCache'
 }
+
+//// We often run out of memory when running the UI builds in parallel so create tasks that will build them one after another.
+//task buildUiPart1(dependsOn: ":stroom-ui:copyYarnBuild") {}
+//task buildUiPart2(dependsOn: ":stroom-app-gwt:gwtCompile") {}
+//task buildUiPart3(dependsOn: ":stroom-dashboard-gwt:gwtCompile") {}
+//buildUiPart1.mustRunAfter  ":stroom-ui:jar"
+//buildUiPart2.mustRunAfter  ":stroom-app-gwt:jar"
+//buildUiPart3.mustRunAfter  ":stroom-dashboard-gwt:jar"
+//buildUiPart2.mustRunAfter buildUiPart1
+//buildUiPart3.mustRunAfter buildUiPart2
+//
+// Make sure GWT compilation doesn't run before tests.
+//tasks.getByPath(':stroom-app-gwt:gwtClean').mustRunAfter test
+//tasks.getByPath(':stroom-dashboard-gwt:gwtClean').mustRunAfter test
+//tasks.getByPath(':stroom-ui:removeYarnBuild').mustRunAfter test
 
 shadowJar {
     // We want to run the tests before we build the fat jar.
     dependsOn test
-    // We want to compile all GWT content before we build the fat jar.
-    dependsOn ':stroom-app-gwt:gwtCompile'
-    dependsOn ':stroom-dashboard-gwt:gwtCompile'
-    // We need the React UI artifacts
-    dependsOn ':stroom-ui:copyYarnBuild'
+    // We want to compile all GWT and React content before we build the fat jar.
+    dependsOn ":stroom-ui:copyYarnBuild"
+    dependsOn ":stroom-app-gwt:gwtCompile"
+    dependsOn ":stroom-dashboard-gwt:gwtCompile"
     // The jar needs to include the swagger.(json|yaml) files that swagger gen produces
     dependsOn generateSwaggerDocumentation
 
     // Allows us to build fat jars with lots of files
     zip64 true
 
-    // Ensure we include the GWT generated resources.
+    // Ensure we include the GWT and Rest generated resources.
     from './src/main/resources'
 
     // A transformer to merges files in META-INF/services
@@ -252,10 +266,6 @@ shadowJar {
     archiveName fatJarName
     exclude '**/gwt-unitCache'
 }
-// Make sure GWT compilation doesn't run before tests.
-tasks.getByPath(':stroom-app-gwt:gwtCompile').mustRunAfter test
-tasks.getByPath(':stroom-dashboard-gwt:gwtCompile').mustRunAfter test
-tasks.getByPath(':stroom-ui:copyYarnBuild').mustRunAfter test
 
 run {
     //Ensure we have the latest kafka plugin jar available for runtime
@@ -282,11 +292,17 @@ clean {
     delete stroomDockerBuildDir
 }
 
+// Generate the confi.yml files for the zip and docker distributions
+task generateConfigFiles(type: JavaExec) {
+    classpath = sourceSets.test.runtimeClasspath
+    main = "stroom.dist.GenerateDistributionConfig"
+}
 
 // Copy all the files needed by the stroom docker build into stroom-app/docker/build
 task copyFilesForStroomDockerBuild() {
     dependsOn shadowJar
     dependsOn parent.downloadStroomContent
+    dependsOn generateConfigFiles
 
     doFirst {
         new File(stroomPluginsDir).mkdirs()
@@ -300,11 +316,7 @@ task copyFilesForStroomDockerBuild() {
             into stroomDockerBuildDir
         }
 
-        // Copy the dropwizard yml configuration
-        copy {
-            from "${projectDir}/prod.yml"
-            into stroomDockerBuildDir
-        }
+        // The config.yml will be put in place by generateConfigFiles
 
         //Copy the downloaded content packs
         copy {
@@ -436,37 +448,46 @@ task prepareSwaggerClasses {
 }
 generateSwaggerDocumentation.dependsOn prepareSwaggerClasses
 
-
 task copyJar(type: Copy) {
+    dependsOn shadowJar
     from shadowJar.outputs.files
     into "${releaseBuildDir}/bin"
 }
 
+task copyCommonSupportingFiles(type: Copy) {
+    from '../dist'
+    into releaseBuildDir
+}
+
 task copySupportingFiles(type: Copy) {
+    dependsOn copyCommonSupportingFiles
+
     from 'src/dist'
-    into releaseBuildDir 
+    into releaseBuildDir
 
     doLast {
         // This is a sym-link so it seems to go into the zip with +x perms
         // which we don't want
-        exec {
-            commandLine 'chmod', '644', "${releaseBuildDir}/config/config.yml"
-        }
+        //exec {
+            //commandLine 'chmod', '644', "${releaseBuildDir}/config/config.yml"
+        //}
     }
 }
 
 task downloadSend(type: Download) {
+    dependsOn copySupportingFiles
     src "http://raw.githubusercontent.com/gchq/stroom-clients/${sendToStroomScriptVersion}/bash/send_to_stroom.sh"
-    dest "${releaseBuildDir}/bin"
+    dest "${releaseBuildDir}/bin/"
 }
 
 task downloadSendArgs(type: Download) {
+    dependsOn copySupportingFiles
     src "https://raw.githubusercontent.com/gchq/stroom-clients/${sendToStroomScriptVersion}/bash/send_to_stroom_args.sh"
-    dest "${releaseBuildDir}/bin"
+    dest "${releaseBuildDir}/bin/"
 }
 
 task makeSendExecutable {
-    dependsOn copySupportingFiles
+    dependsOn downloadSend
     doLast{
         // The args script is sourced so doesn't need execute perms
         exec {
@@ -501,6 +522,7 @@ task buildDistribution(type: Zip) {
     dependsOn makeSendExecutable
     dependsOn parent.downloadStroomContent
     dependsOn copyContentPackToDistribution
+    dependsOn generateConfigFiles
     dependsOn generateConfigDefaultsYamlFile
 
     from releaseBuildDir
@@ -524,10 +546,9 @@ rootProject.subprojects { subProj ->
 // Ensure all projects have built their jars so swagger can see them
 tasks.prepareSwaggerClasses.dependsOn rootProject.getTasksByName('jar', true)
 
-tasks.build.dependsOn generateSwaggerDocumentation
-tasks.build.dependsOn copyFilesForStroomDockerBuild
-tasks.build.dependsOn shadowJar
-tasks.build.dependsOn buildDistribution
+//tasks.build.dependsOn generateSwaggerDocumentation
+//tasks.build.dependsOn copyFilesForStroomDockerBuild
+//tasks.build.dependsOn buildDistribution
 
 // The gradle application plugin enables the distribution plugin
 // which creates .zip/tar archives by default, as does the shadow plugin
@@ -573,3 +594,24 @@ task setupSampleDataApplication(type: JavaExec) {
 //tasks.test.dependsOn ':stroom-kafka:stroom-kafka-client-impl_0_10_0_1:copyPluginJar'
 
 // vim: set tabstop=4 shiftwidth=4 expandtab:
+
+
+// Make sure GWT compilation doesn't run before processResources.
+tasks.getByPath(':stroom-app-gwt:gwtClean').mustRunAfter processResources
+tasks.getByPath(':stroom-dashboard-gwt:gwtClean').mustRunAfter processResources
+tasks.getByPath(':stroom-ui:removeYarnBuild').mustRunAfter processResources
+
+// We often run out of memory when running the UI builds in parallel so create tasks that will build them one after another.
+tasks.getByPath(':stroom-ui:yarnBuild').mustRunAfter test
+//tasks.getByPath(':stroom-ui:yarnBuild').mustRunAfter analyzeClassesDependencies
+//tasks.getByPath(':stroom-ui:yarnBuild').mustRunAfter analyzeTestClassesDependencies
+//tasks.getByPath(':stroom-ui:yarnBuild').mustRunAfter generateConfigDefaultsYamlFile
+//tasks.getByPath(':stroom-ui:yarnBuild').mustRunAfter makeSendExecutable
+tasks.getByPath(':stroom-app-gwt:gwtCompile').mustRunAfter ':stroom-ui:yarnBuild'
+tasks.getByPath(':stroom-dashboard-gwt:gwtCompile').mustRunAfter ':stroom-app-gwt:gwtCompile'
+
+// Make the build command create the full distribution
+tasks.build.dependsOn generateSwaggerDocumentation
+tasks.build.dependsOn copyFilesForStroomDockerBuild
+tasks.build.dependsOn shadowJar
+tasks.build.dependsOn buildDistribution

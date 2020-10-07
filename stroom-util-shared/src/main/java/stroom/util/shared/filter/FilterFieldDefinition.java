@@ -30,8 +30,9 @@ public class FilterFieldDefinition {
 
     /**
      * @param displayName The display name or column heading for the field in the table.
-     * @param filterQualifier The
-     * @param defaultField
+     * @param filterQualifier The custom field qualifier used in the quick filter. Only use this if you want a
+     *                        qualifier that is different from the display name. Should match ^[a-zA-Z0-9]+$
+     * @param defaultField True if this field does not need to be qualified in the filter
      */
     @JsonCreator
     public FilterFieldDefinition(@JsonProperty("displayName") final String displayName,
@@ -42,6 +43,11 @@ public class FilterFieldDefinition {
         this.defaultField = defaultField;
     }
 
+    /**
+     * @param displayName The display name or column heading for the field in the table. The lowercase
+     *                    form of the display name (without punctuation) will be used for the field
+     *                    qualifier, e.g. First Name => firstname
+     */
     public static FilterFieldDefinition qualifiedField(final String displayName) {
         return new FilterFieldDefinition(displayName, toQualifiedName(displayName), false);
     }
@@ -49,13 +55,19 @@ public class FilterFieldDefinition {
     /**
      * Creates a field that has to be qualified, e.g. 'type:error'
      * @param displayName The display name or column heading for the field in the table.
-     * @param filterQualifier The qualifier to use in the filter input, should match ^[a-zA-Z0-9]+$
+     * @param filterQualifier The custom field qualifier used in the quick filter. Only use this if you want a
+     *                        qualifier that is different from the display name. Should match ^[a-zA-Z0-9]+$
      */
     public static FilterFieldDefinition qualifiedField(final String displayName,
                                                        final String filterQualifier) {
         return new FilterFieldDefinition(displayName, filterQualifier, false);
     }
 
+    /**
+     * @param displayName The display name or column heading for the field in the table. The lowercase
+     *                    form of the display name (without punctuation) will be used for the field
+     *                    qualifier, e.g. First Name => firstname
+     */
     public static FilterFieldDefinition defaultField(final String displayName) {
         return new FilterFieldDefinition(displayName, toQualifiedName(displayName), true);
     }
@@ -64,7 +76,8 @@ public class FilterFieldDefinition {
      * Creates a field that is a default field which does not havee to be qualified. You can have multiple
      * default fields. If there are multiple then the predicate for each default field are OR'd together.
      * @param displayName The display name or column heading for the field in the table.
-     * @param filterQualifier The qualifier to use in the filter input, should match ^[a-zA-Z0-9]+$
+     * @param filterQualifier The custom field qualifier used in the quick filter. Only use this if you want a
+     *                        qualifier that is different from the display name. Should match ^[a-zA-Z0-9]+$
      */
     public static FilterFieldDefinition defaultField(final String displayName,
                                                      final String filterQualifier) {

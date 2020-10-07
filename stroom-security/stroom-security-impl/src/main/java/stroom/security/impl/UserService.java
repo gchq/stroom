@@ -19,19 +19,19 @@ package stroom.security.impl;
 
 import stroom.security.shared.FindUserCriteria;
 import stroom.security.shared.User;
-import stroom.util.shared.ProvidesNamePattern;
 
 import java.util.List;
+import java.util.Optional;
 import java.util.Set;
 
-public interface UserService extends ProvidesNamePattern {
+public interface UserService {
     User createUser(String name);
 
     User createUserGroup(String name);
 
-    User getUserByName(String name);
+    Optional<User> getUserByName(String name);
 
-    User loadByUuid(String uuid);
+    Optional<User> loadByUuid(String uuid);
 
     User update(User user);
 
@@ -39,9 +39,17 @@ public interface UserService extends ProvidesNamePattern {
 
     List<User> find(FindUserCriteria criteria);
 
-    List<User> findUsersInGroup(String groupUuid);
+    default List<User> findUsersInGroup(String groupUuid) {
+        return findUsersInGroup(groupUuid, null);
+    }
 
-    List<User> findGroupsForUser(String userUuid);
+    List<User> findUsersInGroup(String groupUuid, String quickFilter);
+
+    default List<User> findGroupsForUser(String userUuid) {
+        return findGroupsForUser(userUuid, null);
+    }
+
+    List<User> findGroupsForUser(String userUuid, String quickFilter);
 
     Set<String> findGroupUuidsForUser(String userUuid);
 

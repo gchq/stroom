@@ -40,7 +40,7 @@ public abstract class AbstractLmdbDbTest extends StroomUnitTest {
     private Path dbDir = null;
 
     @BeforeEach
-    protected void setup() throws IOException {
+    final void createEnv() throws IOException {
         dbDir = Files.createTempDirectory("stroom");
         LOGGER.info("Creating LMDB environment with maxSize: {}, dbDir {}",
                 getMaxSizeBytes(), dbDir.toAbsolutePath().toString());
@@ -52,23 +52,27 @@ public abstract class AbstractLmdbDbTest extends StroomUnitTest {
     }
 
     @AfterEach
-    public void teardown() throws IOException {
+    final void teardown() {
         if (lmdbEnv != null) {
             lmdbEnv.close();
         }
         lmdbEnv = null;
         if (Files.isDirectory(dbDir)) {
-            Files.list(dbDir)
-                    .filter(path -> path.endsWith("data.mdb"))
-                    .forEach(path -> {
-                        try {
-                            long fileSizeBytes = Files.size(path);
-                            LOGGER.info("LMDB file size: {}",
-                                    ModelStringUtil.formatIECByteSizeString(fileSizeBytes));
-                        } catch (IOException e) {
-                            throw new RuntimeException(e);
-                        }
-                    });
+            try {
+                Files.list(dbDir)
+                        .filter(path -> path.endsWith("data.mdb"))
+                        .forEach(path -> {
+                            try {
+                                long fileSizeBytes = Files.size(path);
+                                LOGGER.info("LMDB file size: {}",
+                                        ModelStringUtil.formatIECByteSizeString(fileSizeBytes));
+                            } catch (IOException e) {
+                                throw new RuntimeException(e);
+                            }
+                        });
+            } catch (IOException e) {
+                throw new RuntimeException(e);
+            }
             LOGGER.info("Deleting dir {}", dbDir.toAbsolutePath().normalize().toString());
             FileUtil.deleteDir(dbDir);
         }

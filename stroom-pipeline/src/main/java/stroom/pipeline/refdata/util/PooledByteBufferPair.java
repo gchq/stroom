@@ -20,6 +20,7 @@ package stroom.pipeline.refdata.util;
 import stroom.util.logging.LogUtil;
 
 import java.nio.ByteBuffer;
+import java.util.function.Consumer;
 
 /**
  * Wrapper for a pair of {@link ByteBuffer}s obtained from a {@link ByteBufferPool} that can be used
@@ -27,14 +28,14 @@ import java.nio.ByteBuffer;
  */
 public class PooledByteBufferPair implements AutoCloseable {
 
-    private final ByteBufferPool byteBufferPool;
+    private final Consumer<ByteBuffer> byteBufferReleaseFunc;
     private ByteBuffer keyBuffer;
     private ByteBuffer valueBuffer;
 
-    PooledByteBufferPair(final ByteBufferPool byteBufferPool,
+    PooledByteBufferPair(final Consumer<ByteBuffer> byteBufferReleaseFunc,
                          final ByteBuffer keyBuffer,
                          final ByteBuffer valueBuffer) {
-        this.byteBufferPool = byteBufferPool;
+        this.byteBufferReleaseFunc = byteBufferReleaseFunc;
         this.keyBuffer = keyBuffer;
         this.valueBuffer = valueBuffer;
     }
@@ -54,9 +55,9 @@ public class PooledByteBufferPair implements AutoCloseable {
     }
 
     public void release() {
-        byteBufferPool.release(keyBuffer);
+        byteBufferReleaseFunc.accept(keyBuffer);
         keyBuffer = null;
-        byteBufferPool.release(valueBuffer);
+        byteBufferReleaseFunc.accept(valueBuffer);
         valueBuffer = null;
     }
 

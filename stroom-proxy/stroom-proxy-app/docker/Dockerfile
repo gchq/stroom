@@ -101,7 +101,7 @@ COPY --chown=proxy:proxy *.sh /stroom-proxy/
 
 # This config file is a fallback for use in development
 # (or when a stack with the config bind mount is not available)
-COPY --chown=proxy:proxy build/proxy-prod.yml /stroom-proxy/config-fallback/config.yml
+COPY --chown=proxy:proxy build/config.yml /stroom-proxy/config-fallback/config.yml
 
 COPY --chown=proxy:proxy --from=fat-jar-stage /stroom-proxy-app-all.jar /stroom-proxy/
 

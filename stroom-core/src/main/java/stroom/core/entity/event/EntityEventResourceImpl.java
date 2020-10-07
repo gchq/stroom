@@ -55,7 +55,7 @@ class EntityEventResourceImpl implements EntityEventResource {
             entityEventHandlerProvider.get().fireLocally(entityEvent);
             return true;
         } else {
-            final String url = NodeCallUtil.getBaseEndpointUrl(nodeServiceProvider.get(), nodeName)
+            final String url = NodeCallUtil.getBaseEndpointUrl(nodeInfoProvider.get(), nodeServiceProvider.get(), nodeName)
                     + ResourcePaths.buildAuthenticatedApiPath(
                     EntityEventResource.BASE_PATH,
                     nodeName);

@@ -147,7 +147,7 @@ class TestImportExportSerializer extends AbstractCoreIntegrationTest {
         assertThat(map.get(docRef).getUpdatedFieldList().contains("description")).isTrue();
 
         // Remove all entities from the database.
-        clean(true);
+        commonTestControl.clear();
 
         list = new ArrayList<>();
         importExportSerializer.read(testDataDir, list, ImportMode.CREATE_CONFIRMATION);
@@ -231,7 +231,7 @@ class TestImportExportSerializer extends AbstractCoreIntegrationTest {
         assertThat(childJson.contains("\"name\" : \"Parent\"")).as("Parent reference not serialised\n" + childJson).isTrue();
 
         // Remove all entities from the database.
-        clean(true);
+        commonTestControl.clear();
 
         assertThat(pipelineStore.list().size()).isEqualTo(0);
 

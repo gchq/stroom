@@ -57,7 +57,7 @@ class TestMetaRetentionTrackerDaoImpl {
                 .injectMembers(this);
 
         // Delete everything
-        cleanup.clear();
+        cleanup.cleanup();
     }
 
     @Test
@@ -66,23 +66,6 @@ class TestMetaRetentionTrackerDaoImpl {
         final Optional<DataRetentionTracker> optTracker = metaRetentionTrackerDao.getTracker();
 
         assertThat(optTracker).isEmpty();
-    }
-
-    @Test
-    void testClear() {
-
-        final DataRetentionTracker tracker1 = new DataRetentionTracker(Instant.now(), "1234");
-        metaRetentionTrackerDao.createOrUpdate(tracker1);
-
-        final Optional<DataRetentionTracker> optTracker = metaRetentionTrackerDao.getTracker();
-
-        assertThat(optTracker).isPresent();
-
-        metaRetentionTrackerDao.clear();
-
-        final Optional<DataRetentionTracker> optTracker2 = metaRetentionTrackerDao.getTracker();
-
-        assertThat(optTracker2).isEmpty();
     }
 
     @Test

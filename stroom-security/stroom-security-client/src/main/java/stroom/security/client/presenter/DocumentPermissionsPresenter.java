@@ -17,11 +17,6 @@
 
 package stroom.security.client.presenter;
 
-import com.google.gwt.core.client.GWT;
-import com.google.gwt.user.client.ui.Button;
-import com.google.web.bindery.event.shared.EventBus;
-import com.gwtplatform.mvp.client.MyPresenterWidget;
-import com.gwtplatform.mvp.client.View;
 import stroom.dispatch.client.Rest;
 import stroom.dispatch.client.RestFactory;
 import stroom.docref.DocRef;
@@ -42,6 +37,12 @@ import stroom.widget.popup.client.presenter.PopupUiHandlers;
 import stroom.widget.popup.client.presenter.PopupView;
 import stroom.widget.tab.client.presenter.LinkTabsPresenter;
 import stroom.widget.tab.client.presenter.TabData;
+
+import com.google.gwt.core.client.GWT;
+import com.google.gwt.user.client.ui.Button;
+import com.google.web.bindery.event.shared.EventBus;
+import com.gwtplatform.mvp.client.MyPresenterWidget;
+import com.gwtplatform.mvp.client.View;
 
 import javax.inject.Inject;
 import javax.inject.Provider;
@@ -65,8 +66,12 @@ public class DocumentPermissionsPresenter
     private Changes changes = new Changes(new HashMap<>(), new HashMap<>());
 
     @Inject
-    public DocumentPermissionsPresenter(final EventBus eventBus, final DocumentPermissionsView view, final LinkTabsPresenter tabPresenter,
-                                        final RestFactory restFactory, final Provider<DocumentPermissionsTabPresenter> documentPermissionsListPresenterProvider, final Provider<FolderPermissionsTabPresenter> folderPermissionsListPresenterProvider) {
+    public DocumentPermissionsPresenter(final EventBus eventBus,
+                                        final DocumentPermissionsView view,
+                                        final LinkTabsPresenter tabPresenter,
+                                        final RestFactory restFactory,
+                                        final Provider<DocumentPermissionsTabPresenter> documentPermissionsListPresenterProvider,
+                                        final Provider<FolderPermissionsTabPresenter> folderPermissionsListPresenterProvider) {
         super(eventBus, view);
         this.tabPresenter = tabPresenter;
         this.restFactory = restFactory;
@@ -142,7 +147,10 @@ public class DocumentPermissionsPresenter
                                     rest
                                             .onSuccess(result -> hide(autoClose, ok))
                                             .call(DOC_PERMISSION_RESOURCE)
-                                            .changeDocumentPermissions(new ChangeDocumentPermissionsRequest(docRef, changes, getView().getCascade().getSelectedItem()));
+                                            .changeDocumentPermissions(new ChangeDocumentPermissionsRequest(
+                                                    docRef,
+                                                    changes,
+                                                    getView().getCascade().getSelectedItem()));
                                 } else {
                                     hide(autoClose, ok);
                                 }
@@ -160,7 +168,13 @@ public class DocumentPermissionsPresenter
                             popupSize = new PopupSize(384, 500, 384, 500, true);
                         }
 
-                        ShowPopupEvent.fire(DocumentPermissionsPresenter.this, DocumentPermissionsPresenter.this, PopupView.PopupType.OK_CANCEL_DIALOG, popupSize, "Set " + explorerNode.getType() + " Permissions", popupUiHandlers);
+                        ShowPopupEvent.fire(
+                                DocumentPermissionsPresenter.this,
+                                DocumentPermissionsPresenter.this,
+                                PopupView.PopupType.OK_CANCEL_DIALOG,
+                                popupSize,
+                                "Set " + explorerNode.getType() + " Permissions",
+                                popupUiHandlers);
                     })
                     .call(DOC_PERMISSION_RESOURCE)
                     .fetchAllDocumentPermissions(new FetchAllDocumentPermissionsRequest(explorerNode.getDocRef()));

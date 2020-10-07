@@ -66,7 +66,7 @@ class TestStreamTargetStroomStreamHandler extends AbstractProcessIntegrationTest
         attributeMap.put(StandardHeaderArguments.FEED, feedName);
 
         final StreamTargetStroomStreamHandler streamTargetStroomStreamHandler = new StreamTargetStroomStreamHandler(streamStore,
-                feedProperties, null, feedName, StreamTypeNames.RAW_REFERENCE);
+                feedProperties, null, feedName, StreamTypeNames.RAW_REFERENCE, true);
         streamTargetStroomStreamHandler.handleHeader(attributeMap);
         streamTargetStroomStreamHandler.handleEntryStart(new StroomZipEntry(null, "1", StroomZipFileType.Meta));
         streamTargetStroomStreamHandler.handleEntryEnd();
@@ -104,7 +104,7 @@ class TestStreamTargetStroomStreamHandler extends AbstractProcessIntegrationTest
         attributeMap2.put(StandardHeaderArguments.FEED, feedName2);
 
         final StreamTargetStroomStreamHandler streamTargetStroomStreamHandler = new StreamTargetStroomStreamHandler(streamStore,
-                feedProperties, null, feedName1, StreamTypeNames.RAW_EVENTS);
+                feedProperties, null, feedName1, StreamTypeNames.RAW_EVENTS, false);
         streamTargetStroomStreamHandler.handleHeader(attributeMap1);
         streamTargetStroomStreamHandler.handleEntryStart(new StroomZipEntry(null, "1", StroomZipFileType.Meta));
         streamTargetStroomStreamHandler.handleEntryEnd();
@@ -139,7 +139,7 @@ class TestStreamTargetStroomStreamHandler extends AbstractProcessIntegrationTest
         attributeMap.put(StandardHeaderArguments.FEED, feedName);
 
         final StreamTargetStroomStreamHandler streamTargetStroomStreamHandler = new StreamTargetStroomStreamHandler(streamStore,
-                feedProperties, null, feedName, StreamTypeNames.RAW_EVENTS);
+                feedProperties, null, feedName, StreamTypeNames.RAW_EVENTS, false);
         streamTargetStroomStreamHandler.handleHeader(attributeMap);
         streamTargetStroomStreamHandler.handleEntryStart(new StroomZipEntry(null, "1", StroomZipFileType.Meta));
         streamTargetStroomStreamHandler.handleEntryEnd();

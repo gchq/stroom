@@ -17,22 +17,23 @@
 package stroom.pipeline;
 
 
-import org.junit.jupiter.api.Test;
 import stroom.data.store.api.InputStreamProvider;
 import stroom.data.store.api.Source;
 import stroom.data.store.api.Store;
+import stroom.meta.api.MetaService;
 import stroom.meta.shared.FindMetaCriteria;
 import stroom.meta.shared.Meta;
-import stroom.meta.api.MetaService;
 import stroom.util.io.ByteCountInputStream;
 import stroom.util.io.StreamUtil;
+
+import org.junit.jupiter.api.Test;
 
 import javax.inject.Inject;
 import java.util.List;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
-class TestStreamAppender extends AbstractStreamAppenderTest {
+class TestStreamAppender extends AbstractAppenderTest {
     @Inject
     private MetaService dataMetaService;
     @Inject
@@ -41,7 +42,7 @@ class TestStreamAppender extends AbstractStreamAppenderTest {
     @Test
     void testXML() throws Exception {
         test("TestStreamAppender", "XML");
-        validateOuptut("TestStreamAppender/TestStreamAppender_XML.out", "XML");
+        validateOutput("TestStreamAppender/TestStreamAppender_XML.out", "XML");
     }
 
     @Test
@@ -62,6 +63,6 @@ class TestStreamAppender extends AbstractStreamAppenderTest {
     @Test
     void testText() throws Exception {
         test("TestStreamAppender", "Text");
-        validateOuptut("TestStreamAppender/TestStreamAppender_Text.out", "Text");
+        validateOutput("TestStreamAppender/TestStreamAppender_Text.out", "Text");
     }
 }

@@ -72,6 +72,7 @@ public class SolrAsyncSearchTaskHandler {
                     clusterSearchTaskHandler.exec(taskContext, clusterSearchTask, resultCollector);
 
                     // Await completion.
+                    taskContext.info(() -> task.getSearchName() + " - searching");
                     resultCollector.awaitCompletion();
 
                 } catch (final RuntimeException e) {
@@ -88,7 +89,7 @@ public class SolrAsyncSearchTaskHandler {
                     // nodes if we need to.
                     terminateTasks(task, taskContext.getTaskId());
 
-                    // Let the result handler know search has finished.
+                    // Ensure search is complete even if we had errors.
                     resultCollector.complete();
 
                     // We need to wait here for the client to keep getting results if

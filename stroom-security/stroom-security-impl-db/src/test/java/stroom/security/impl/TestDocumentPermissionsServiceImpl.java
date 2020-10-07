@@ -18,20 +18,22 @@
 package stroom.security.impl;
 
 
-import com.google.inject.Guice;
-import com.google.inject.Injector;
-import org.junit.jupiter.api.BeforeAll;
-import org.junit.jupiter.api.Test;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 import stroom.docref.DocRef;
 import stroom.security.shared.DocumentPermissionNames;
 import stroom.security.shared.DocumentPermissions;
 import stroom.security.shared.User;
 import stroom.test.common.util.test.FileSystemTestUtil;
 
+import com.google.inject.Guice;
+import com.google.inject.Injector;
+import org.junit.jupiter.api.BeforeAll;
+import org.junit.jupiter.api.Test;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+
 import java.util.Arrays;
 import java.util.HashSet;
+import java.util.Optional;
 import java.util.Set;
 import java.util.UUID;
 
@@ -172,17 +174,17 @@ class TestDocumentPermissionsServiceImpl {
     private User createUser(final String name) {
         User userRef = userService.createUser(name);
         assertThat(userRef).isNotNull();
-        final User user = userService.loadByUuid(userRef.getUuid());
-        assertThat(user).isNotNull();
-        return user;
+        final Optional<User> user = userService.loadByUuid(userRef.getUuid());
+        assertThat(user).isPresent();
+        return user.get();
     }
 
     private User createUserGroup(final String name) {
         User userRef = userService.createUserGroup(name);
         assertThat(userRef).isNotNull();
-        final User user = userService.loadByUuid(userRef.getUuid());
-        assertThat(user).isNotNull();
-        return user;
+        final Optional<User> user = userService.loadByUuid(userRef.getUuid());
+        assertThat(user).isPresent();
+        return user.get();
     }
 
     private DocRef createTestDocRef() {

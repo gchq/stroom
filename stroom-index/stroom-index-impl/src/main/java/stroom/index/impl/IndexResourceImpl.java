@@ -77,7 +77,7 @@ class IndexResourceImpl implements IndexResource {
         if (NodeCallUtil.shouldExecuteLocally(nodeInfo, nodeName)) {
             return indexShardManager.performAction(criteria, action);
         } else {
-            final String url = NodeCallUtil.getBaseEndpointUrl(nodeService, nodeName)
+            final String url = NodeCallUtil.getBaseEndpointUrl(nodeInfo, nodeService, nodeName)
                     + ResourcePaths.buildAuthenticatedApiPath(
                     IndexResource.BASE_PATH,
                     subPath);

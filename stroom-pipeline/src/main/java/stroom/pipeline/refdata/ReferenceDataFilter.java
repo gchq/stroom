@@ -16,11 +16,7 @@
 
 package stroom.pipeline.refdata;
 
-import com.sun.xml.fastinfoset.sax.SAXDocumentSerializer;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
-import org.xml.sax.Attributes;
-import org.xml.sax.SAXException;
+import stroom.hadoopcommonshaded.org.apache.commons.collections.map.HashedMap;
 import stroom.pipeline.errorhandler.ErrorReceiverProxy;
 import stroom.pipeline.factory.ConfigurableElement;
 import stroom.pipeline.factory.PipelineProperty;
@@ -36,20 +32,25 @@ import stroom.pipeline.shared.ElementIcons;
 import stroom.pipeline.shared.data.PipelineElementType;
 import stroom.pipeline.shared.data.PipelineElementType.Category;
 import stroom.util.CharBuffer;
-import stroom.util.logging.LambdaLogUtil;
 import stroom.util.logging.LambdaLogger;
 import stroom.util.logging.LambdaLoggerFactory;
 import stroom.util.logging.LogUtil;
 import stroom.util.shared.Range;
 import stroom.util.shared.Severity;
 
+import com.sun.xml.fastinfoset.sax.SAXDocumentSerializer;
+import org.xml.sax.Attributes;
+import org.xml.sax.SAXException;
+
 import javax.inject.Inject;
 import java.nio.ByteBuffer;
+import java.util.ArrayList;
+import java.util.Collections;
 import java.util.HashMap;
-import java.util.HashSet;
+import java.util.List;
 import java.util.Map;
 import java.util.Objects;
-import java.util.Set;
+import java.util.regex.Pattern;
 
 /**
  * This XML filter captures XML content that defines key, value maps to be
@@ -67,8 +68,9 @@ import java.util.Set;
         icon = ElementIcons.REFERENCE_DATA)
 public class ReferenceDataFilter extends AbstractXMLFilter {
 
-    private static final Logger LOGGER = LoggerFactory.getLogger(ReferenceDataFilter.class);
-    private static final LambdaLogger LAMBDA_LOGGER = LambdaLoggerFactory.getLogger(ReferenceDataFilter.class);
+    private static final LambdaLogger LOGGER = LambdaLoggerFactory.getLogger(ReferenceDataFilter.class);
+
+    private static final Pattern PREFIX_DELIMITER_PATTERN = Pattern.compile(":");
 
     /*
         Example xml data
@@ -106,6 +108,26 @@ public class ReferenceDataFilter extends AbstractXMLFilter {
         or
             <value>UK</value>
      */
+
+
+    /*
+    A word about namespaces
+    =======================
+    The following are all examples of an element inside <value> and how the namespacing is
+    treated in the resulting fragment that is stored in the ref store:
+
+        <Location>  =>  <Location xmlns="reference-data:2">  // default ns inherited from above so it is added in
+        <evt:Location>  =>  <Location xmlns:evt="event-logging:3"> // ns prefix defined above so it is added in
+        <evt:Location xmlns:evt="event-logging:3">  =>  <Location xmlns:evt="event-logging:3">
+        <Location xmlns="event-logging:3">  =>  <Location xmlns="event-logging:3">
+
+    The following is valid XML so we don't need to worry about prefix clashes between the ref fragment
+    and the XML it is being injected into.
+
+        <root xmlns:evt="event-logging:3">
+            <RefFragment xmlns:evt="event-logging:4"></RefFragment>
+        </root>
+     */
     private static final int BUFFER_OUTPUT_STREAM_INITIAL_CAPACITY = 1_000;
 
     private static final String REFERENCE_ELEMENT = "reference";
@@ -132,8 +154,15 @@ public class ReferenceDataFilter extends AbstractXMLFilter {
     private boolean warnOnDuplicateKeys = false;
     private boolean overrideExistingValues = true;
 
-    private Map<String, String> prefixMap = new HashMap<>();
-    private Set<String> appliedUris = new HashSet<>();
+    // Track all prefix=>uri mappings that are in scope in the wrapper xml
+    private Map<String, String> prefixToUriMap = new HashMap<>();
+    // Track all prefix=>uri mappings that have been applied to the current scope of the fastInfoset fragment
+    private Map<String, String> appliedPrefixToUriMap = new HashMap<>();
+
+    private Map<Integer, List<String>> manuallyAddedLevelToPrefixMap = new HashedMap();
+
+    private int level = 0;
+
     private boolean insideElement = false;
     private boolean isFastInfosetDocStarted = false;
     private String valueXmlDefaultNamespaceUri = null;
@@ -171,12 +200,19 @@ public class ReferenceDataFilter extends AbstractXMLFilter {
         // build the definition of the stream that is being processed
 
         if (refDataLoaderHolder.getRefDataLoader() == null) {
-            errorReceiverProxy.log(Severity.FATAL_ERROR, null, getElementId(), "RefDataLoader is missing", null);
+            errorReceiverProxy.log(
+                    Severity.FATAL_ERROR,
+                    null,
+                    getElementId(),
+                    "RefDataLoader is missing",
+                    null);
         }
         boolean didInitSucceed = refDataLoaderHolder.getRefDataLoader().initialise(overrideExistingValues);
 
         if (!didInitSucceed) {
-            RefStreamDefinition refStreamDefinition = refDataLoaderHolder.getRefDataLoader().getRefStreamDefinition();
+            RefStreamDefinition refStreamDefinition = refDataLoaderHolder.getRefDataLoader()
+                    .getRefStreamDefinition();
+
             errorReceiverProxy.log(Severity.ERROR, null, getElementId(),
                     LogUtil.message(
                             "A processing info entry already exists for this reference pipeline {}, " +
@@ -192,7 +228,12 @@ public class ReferenceDataFilter extends AbstractXMLFilter {
         super.endStream();
 
         if (refDataLoaderHolder.getRefDataLoader() == null) {
-            errorReceiverProxy.log(Severity.FATAL_ERROR, null, getElementId(), "RefDataLoader is missing", null);
+            errorReceiverProxy.log(
+                    Severity.FATAL_ERROR,
+                    null,
+                    getElementId(),
+                    "RefDataLoader is missing",
+                    null);
         }
         refDataLoaderHolder.getRefDataLoader().completeProcessing();
     }
@@ -203,17 +244,43 @@ public class ReferenceDataFilter extends AbstractXMLFilter {
         LOGGER.trace("startPrefixMapping({}, {})", prefix, uri);
 
         if (insideValueElement) {
-            startFastInfosetDocIfNeeded();
-            LOGGER.trace("saxDocumentSerializer - startPrefixMapping({}, {})", prefix, uri);
-            saxDocumentSerializer.startPrefixMapping(prefix, uri);
-            appliedUris.add(uri);
-            LOGGER.trace("appliedUris {}", appliedUris);
+            recordHavingSeenXmlContent();
+            fastInfosetStartPrefixMapping(prefix, uri);
         } else {
             // capture all the prefixmappings we encounter before we are in the value and hold them for use later
-            prefixMap.putIfAbsent(uri, prefix);
-            LOGGER.trace("appliedUris {}", appliedUris);
-            LOGGER.trace("prefixMap {}", prefixMap);
+            addWrapperPrefixMapping(prefix, uri);
         }
+    }
+
+
+    @Override
+    public void endPrefixMapping(final String prefix) throws SAXException {
+        super.endPrefixMapping(prefix);
+        LOGGER.trace("endPrefixMapping({})", prefix);
+
+        if (insideValueElement) {
+            fastInfoSetStartDocumentIfNeeded();
+
+            fastInfosetEndPrefixMapping(prefix);
+        } else {
+            // TODO @AT do we need to remove the prefix from the map?
+            removeWrapperPrefixMapping(prefix);
+        }
+    }
+
+    private void addWrapperPrefixMapping(final String prefix, final String uri) {
+        LOGGER.trace("Storing prefix mapping {}:{}, map contains {}", prefix, uri, prefixToUriMap);
+        prefixToUriMap.putIfAbsent(prefix, uri);
+    }
+
+    private void removeWrapperPrefixMapping(final String prefix) {
+        LOGGER.trace("Removing prefix mapping {}, map contains {}", prefix, prefixToUriMap);
+
+        prefixToUriMap.remove(prefix);
+//        prefixToUriMap.values()
+//                .removeIf(value ->
+//                        ((value == null && prefix == null)
+//                                || (value != null && value.equals(prefix))));
     }
 
     /**
@@ -231,68 +298,96 @@ public class ReferenceDataFilter extends AbstractXMLFilter {
      * java.lang.String, java.lang.String, org.xml.sax.Attributes)
      */
     @Override
-    public void startElement(final String uri, final String localName, final String qName, final Attributes atts)
+    public void startElement(final String uri,
+                             final String localName,
+                             final String qName,
+                             final Attributes atts)
             throws SAXException {
+        level++;
         insideElement = true;
         contentBuffer.clear();
 
-        LOGGER.trace("startElement {} {} {}", uri, localName, qName);
+        LOGGER.trace("startElement {} {} {}, level:{}", uri, localName, qName, level);
 
-        String newUri = uri;
         String newQName = qName;
-        Attributes newAtts = atts;
         if (VALUE_ELEMENT.equalsIgnoreCase(localName)) {
             insideValueElement = true;
         } else if (insideValueElement) {
-            // This is an xml element inside the <value></value> element so we need to treat it as XML content
-            // and use the fastinfoset to serialise it.
-            if (!haveSeenXmlInValueElement) {
-                LOGGER.trace("first XML element inside {} element", VALUE_ELEMENT);
-                // This is the first startElement inside the value element so we are dealing with XML refdata
-                haveSeenXmlInValueElement = true;
-                // As this is the first element in our value we need to make its namespace the default and
-                // assume whatever doc it is later injected into will have the same default namespace. Thus
-                // we need to strip the prefix.
-                valueXmlDefaultNamespaceUri = uri;
+            recordHavingSeenXmlContent();
 
-                LOGGER.trace("saxDocumentSerializer - reset()");
-                startFastInfosetDocIfNeeded();
-
-//                newAtts = new AttributesImpl(atts);
-//                ((AttributesImpl)newAtts).addAttribute(
-//                        "http://www.w3.org/2000/xmlns/",
-//                        "xmlns",
-//                        "xmlns",
-//                        "CDATA",
-//                        uri);
+            final String prefix = getPrefix(qName);
+            if (!hasUriBeenApplied(prefix, uri)) {
+                // elm has a uri that we have not done a fastInfoSet startPrefixMapping to
+                // so do it now
+                fastInfosetManuallyAddPrefixMapping(prefix, uri);
             }
 
-            LOGGER.trace("appliedUris {}", appliedUris);
-//            if (!appliedUris.contains(uri) && !uri.equals(valueXmlDefaultNamespaceUri)) {
-            if (!appliedUris.contains(uri)) {
-                // we haven't seen this uri before so find its prefix and call startPrefixMapping on the
-                // serializer so it understands them
-                String prefix = prefixMap.get(uri);
-                if (prefix != null) {
-                    LOGGER.trace("saxDocumentSerializer - startPrefixMapping({}, {})", prefix, uri);
-//                    saxDocumentSerializer.startPrefixMapping(prefix, uri);
+            for (int i = 0; i < atts.getLength(); i++) {
+                final String attrPrefix = getPrefix(atts.getQName(i));
+                if (!hasUriBeenApplied(attrPrefix)) {
+                    // attr has a uri that we have not done a fastInfoSet startPrefixMapping
+                    // so do it now
+                    final String attrUri = prefixToUriMap.get(attrPrefix);
+                    if (attrUri != null) {
+                        fastInfosetManuallyAddPrefixMapping(attrPrefix, attrUri);
+                    }
                 }
-                appliedUris.add(uri);
             }
 
-            if (uri.equals(valueXmlDefaultNamespaceUri)) {
-                // This is the default namespace so remove it from the element
-//                newUri = "";
-                newQName = localName;
-                LOGGER.trace("saxDocumentSerializer - startPrefixMapping({}, {})", "", uri);
-                saxDocumentSerializer.startPrefixMapping("", uri);
-            }
+//            LOGGER.trace("appliedUris {}", appliedUris);
+////            if (!appliedUris.contains(uri) && !uri.equals(valueXmlDefaultNamespaceUri)) {
+//            uriToPrefixMap.c
+//            if (!appliedUris.contains(uri)) {
+//                // we haven't seen this uri before so find its prefix and call startPrefixMapping on the
+//                // serializer so it understands them
+//                String prefix = uriToPrefixMap.get(uri);
+//                if (prefix != null) {
+////                    fastInfosetStartPrefixMapping(prefix, uri);
+//                }
+//                appliedUris.add(uri);
+//            }
 
-            LOGGER.trace("saxDocumentSerializer - startElement({}, {}, {}, {})", newUri, localName, newQName, newAtts);
-            saxDocumentSerializer.startElement(newUri, localName, newQName, newAtts);
+//            if (uri.equals(valueXmlDefaultNamespaceUri)) {
+//                // This is the default namespace so remove it from the element
+////                newUri = "";
+//                newQName = localName;
+////                fastInfosetStartPrefixMapping("", uri);
+//            }
+
+            fastInfosetStartElement(localName, uri, newQName, atts);
         }
 
-        super.startElement(newUri, localName, newQName, newAtts);
+        super.startElement(uri, localName, newQName, atts);
+    }
+
+
+    private void recordHavingSeenXmlContent() throws SAXException {
+        // This is an xml element inside the <value></value> element so we need to treat it as XML content
+        // and use the fastinfoset to serialise it.
+        if (insideValueElement && !haveSeenXmlInValueElement) {
+            LOGGER.trace("================================================");
+            LOGGER.trace("Start of value XML fragment");
+            // This is the first startElement inside the value element so we are dealing with XML refdata
+            haveSeenXmlInValueElement = true;
+            // As this is the first element in our value we need to make its namespace the default and
+            // assume whatever doc it is later injected into will have the same default namespace. Thus
+            // we need to strip the prefix.
+//            valueXmlDefaultNamespaceUri = uri;
+
+            LOGGER.trace("saxDocumentSerializer - reset()");
+            fastInfoSetStartDocumentIfNeeded();
+        }
+    }
+
+    private String getPrefix(final String qName) {
+        if (qName == null) {
+            return null;
+        } else if (qName.isEmpty() || !qName.contains(":")) {
+            return "";
+        } else {
+            final String[] parts = PREFIX_DELIMITER_PATTERN.split(qName);
+            return parts[0];
+        }
     }
 
     /**
@@ -310,10 +405,12 @@ public class ReferenceDataFilter extends AbstractXMLFilter {
      */
     @Override
     public void endElement(final String uri, final String localName, final String qName) throws SAXException {
-        LOGGER.trace("endElement {} {} {}", uri, localName, qName);
+        LOGGER.trace("endElement {} {} {} level:{}", uri, localName, qName, level);
+
         insideElement = false;
         if (VALUE_ELEMENT.equalsIgnoreCase(localName)) {
-            LOGGER.trace("Leaving {} element", VALUE_ELEMENT);
+            LOGGER.trace("End of value XML fragment");
+            LOGGER.trace("================================================");
             insideValueElement = false;
             refDataValue = getRefDataValueFromBuffers();
         }
@@ -326,8 +423,7 @@ public class ReferenceDataFilter extends AbstractXMLFilter {
                 newQName = localName;
                 newUri = "";
             }
-            LOGGER.trace("saxDocumentSerializer - endElement({}, {}, {})", newUri, localName, newQName);
-            saxDocumentSerializer.endElement(newUri, localName, newQName);
+            fastInfosetEndElement(localName, newUri, newQName);
         } else {
             if (MAP_ELEMENT.equalsIgnoreCase(localName)) {
                 // capture the name of the map that the subsequent values will belong to. A ref
@@ -365,8 +461,17 @@ public class ReferenceDataFilter extends AbstractXMLFilter {
 
         contentBuffer.clear();
 
+        // Manually call endPrefixMapping for those prefixes we added
+        final List<String> manuallyAddedPrefixes = manuallyAddedLevelToPrefixMap.getOrDefault(level, Collections.emptyList());
+        for (final String manuallyAddedPrefix : manuallyAddedPrefixes) {
+            fastInfosetEndPrefixMapping(manuallyAddedPrefix);
+        }
+
         super.endElement(uri, localName, qName);
+
+        level--;
     }
+
 
     private void handleReferenceEndElement() {
         // end of the ref data item so ensure it is persisted in the store
@@ -448,9 +553,7 @@ public class ReferenceDataFilter extends AbstractXMLFilter {
         final RefDataValue refDataValue;
         if (haveSeenXmlInValueElement) {
             //serialize the event list using fastInfoset
-            LOGGER.trace("saxDocumentSerializer - endDocument()");
-            saxDocumentSerializer.endDocument();
-            isFastInfosetDocStarted = false;
+            fastInfosetEndDocument();
 //            appliedUris.clear();
             LOGGER.trace("Serializing fast infoset events");
             ByteBuffer fastInfosetBuffer = pooledByteBufferOutputStream.getPooledByteBuffer().getByteBuffer();
@@ -461,12 +564,13 @@ public class ReferenceDataFilter extends AbstractXMLFilter {
             refDataValue = FastInfosetValue.wrap(fastInfosetBuffer);
         } else {
             LOGGER.trace("Getting string data");
-            //serialize the event list using fastInfoset
+            // serialize the event list using fastInfoset
             // simple string value so use content buffer
             refDataValue = StringValue.of(contentBuffer.toString());
         }
         return refDataValue;
     }
+
 
     /**
      * If we are within a function element then this method should buffer the
@@ -484,12 +588,10 @@ public class ReferenceDataFilter extends AbstractXMLFilter {
     public void characters(final char[] ch, final int start, final int length) throws SAXException {
         if (insideValueElement && haveSeenXmlInValueElement) {
 
-            LAMBDA_LOGGER.trace(LambdaLogUtil.message(
+            LOGGER.trace(() -> LogUtil.message(
                     "characters(\"{}\")", new String(ch, start, length).trim()));
             if (insideElement || !isAllWhitespace(ch, start, length)) {
-                LAMBDA_LOGGER.trace(LambdaLogUtil.message(
-                        "saxDocumentSerializer - characters(\"{}\")", new String(ch, start, length).trim()));
-                saxDocumentSerializer.characters(ch, start, length);
+                fastInfosetCharacters(ch, start, length);
             }
         } else {
             // outside the value element so capture the chars so we can get keys, map names, etc.
@@ -498,6 +600,7 @@ public class ReferenceDataFilter extends AbstractXMLFilter {
 
         super.characters(ch, start, length);
     }
+
 
     @Override
     public void endProcessing() {
@@ -528,18 +631,82 @@ public class ReferenceDataFilter extends AbstractXMLFilter {
                 break;
             }
         }
-        LOGGER.trace("isOnlyWhitespace(\"{}\") - returning {}", new String(ch, start, length), isOnlyWhitespace);
+        // Done like this because isOnlyWhitespace is not final so can't use a lambda
+        if (LOGGER.isTraceEnabled()) {
+            LOGGER.trace("isOnlyWhitespace(\"{}\") - returning {}", new String(ch, start, length), isOnlyWhitespace);
+        }
         return isOnlyWhitespace;
     }
 
-    private void startFastInfosetDocIfNeeded() throws SAXException {
+    private void fastInfoSetStartDocumentIfNeeded() throws SAXException {
         if (!isFastInfosetDocStarted) {
             LOGGER.trace("saxDocumentSerializer - startDocument()");
             saxDocumentSerializer.reset();
             pooledByteBufferOutputStream.clear();
-            appliedUris.clear();
+            appliedPrefixToUriMap.clear();
             saxDocumentSerializer.startDocument();
             isFastInfosetDocStarted = true;
         }
+    }
+
+    private void fastInfosetManuallyAddPrefixMapping(final String prefix, final String uri) throws SAXException {
+        LOGGER.trace("Manually starting prefix mapping {}:{}", prefix, uri);
+        manuallyAddedLevelToPrefixMap.computeIfAbsent(level, key -> new ArrayList<>())
+                .add(prefix);
+        fastInfosetStartPrefixMapping(prefix, uri);
+    }
+
+    private void fastInfosetStartPrefixMapping(final String prefix, final String uri) throws SAXException {
+        LOGGER.trace("saxDocumentSerializer - startPrefixMapping({}, {})", prefix, uri);
+        saxDocumentSerializer.startPrefixMapping(prefix, uri);
+        appliedPrefixToUriMap.putIfAbsent(prefix, uri);
+    }
+
+    private void fastInfosetEndPrefixMapping(final String prefix) throws SAXException {
+        LOGGER.trace("saxDocumentSerializer - endPrefixMapping({}})", prefix);
+        saxDocumentSerializer.endPrefixMapping(prefix);
+        appliedPrefixToUriMap.remove(prefix);
+//        appliedPrefixToUriMap.values()
+//                .removeIf(value ->
+//                        ((value == null && prefix == null)
+//                                || (value != null && value.equals(prefix))));
+    }
+
+    private void fastInfosetCharacters(final char[] ch, final int start, final int length) throws SAXException {
+        LOGGER.trace(() -> LogUtil.message(
+                "saxDocumentSerializer - characters(\"{}\")", new String(ch, start, length).trim()));
+        saxDocumentSerializer.characters(ch, start, length);
+    }
+
+    private void fastInfosetEndDocument() throws SAXException {
+        LOGGER.trace("saxDocumentSerializer - endDocument()");
+        saxDocumentSerializer.endDocument();
+        isFastInfosetDocStarted = false;
+    }
+
+    private void fastInfosetEndElement(final String localName,
+                                       final String newUri,
+                                       final String newQName) throws SAXException {
+        LOGGER.trace("saxDocumentSerializer - endElement({}, {}, {})", newUri, localName, newQName);
+        saxDocumentSerializer.endElement(newUri, localName, newQName);
+    }
+
+    private void fastInfosetStartElement(final String localName,
+                                         final String newUri,
+                                         final String newQName,
+                                         final Attributes atts) throws SAXException {
+        LOGGER.trace("saxDocumentSerializer - startElement({}, {}, {})", newUri, localName, newQName);
+        saxDocumentSerializer.startElement(newUri, localName, newQName, atts);
+    }
+
+    private boolean hasUriBeenApplied(final String prefix, final String uri) {
+        return appliedPrefixToUriMap.entrySet().stream()
+                .anyMatch(prefixToUriEntry ->
+                        Objects.equals(prefixToUriEntry.getKey(), prefix)
+                                && Objects.equals(prefixToUriEntry.getValue(), uri));
+    }
+
+    private boolean hasUriBeenApplied(final String prefix) {
+        return appliedPrefixToUriMap.containsKey(prefix);
     }
 }

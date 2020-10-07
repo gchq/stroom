@@ -17,11 +17,6 @@
 
 package stroom.pipeline.refdata.store.offheapstore.databases;
 
-import com.google.inject.assistedinject.Assisted;
-import org.lmdbjava.CursorIterator;
-import org.lmdbjava.Env;
-import org.lmdbjava.KeyRange;
-import org.lmdbjava.Txn;
 import stroom.pipeline.refdata.store.offheapstore.RangeStoreKey;
 import stroom.pipeline.refdata.store.offheapstore.UID;
 import stroom.pipeline.refdata.store.offheapstore.ValueStoreKey;
@@ -33,14 +28,21 @@ import stroom.pipeline.refdata.store.offheapstore.serdes.ValueStoreKeySerde;
 import stroom.pipeline.refdata.util.ByteBufferPool;
 import stroom.pipeline.refdata.util.ByteBufferUtils;
 import stroom.pipeline.refdata.util.PooledByteBuffer;
-import stroom.util.logging.LambdaLogUtil;
 import stroom.util.logging.LambdaLogger;
 import stroom.util.logging.LambdaLoggerFactory;
 import stroom.util.logging.LogUtil;
 import stroom.util.shared.Range;
 
+import com.google.inject.assistedinject.Assisted;
+import org.lmdbjava.CursorIterable;
+import org.lmdbjava.CursorIterable.KeyVal;
+import org.lmdbjava.Env;
+import org.lmdbjava.KeyRange;
+import org.lmdbjava.Txn;
+
 import javax.inject.Inject;
 import java.nio.ByteBuffer;
+import java.util.Iterator;
 import java.util.Optional;
 import java.util.concurrent.atomic.AtomicInteger;
 
@@ -98,17 +100,17 @@ public class RangeStoreDb extends AbstractLmdbDb<RangeStoreKey, ValueStoreKey> {
 //                buf -> valueSerde.deserialize(buf).toString());
 
             final AtomicInteger cnt = new AtomicInteger();
-            try (CursorIterator<ByteBuffer> cursorIterator = getLmdbDbi().iterate(txn, keyRange)) {
+            try (CursorIterable<ByteBuffer> cursorIterable = getLmdbDbi().iterate(txn, keyRange)) {
                 // loop backwards over all rows with the same mapDefinitionUid, starting at key
-                for (final CursorIterator.KeyVal<ByteBuffer> keyVal : cursorIterator.iterable()) {
+                for (final CursorIterable.KeyVal<ByteBuffer> keyVal : cursorIterable) {
                     cnt.incrementAndGet();
                     final ByteBuffer keyBuffer = keyVal.key();
 
                     if (LOGGER.isTraceEnabled()) {
-                        RangeStoreKey rangeStoreKey = keySerde.deserialize(keyBuffer);
-                        LOGGER.trace(LambdaLogUtil.message("rangeStoreKey {}, keyBuffer {}",
+                        final RangeStoreKey rangeStoreKey = keySerde.deserialize(keyBuffer);
+                        LOGGER.trace("rangeStoreKey {}, keyBuffer {}",
                                 rangeStoreKey,
-                                ByteBufferUtils.byteBufferInfo(keyBuffer)));
+                                ByteBufferUtils.byteBufferInfo(keyBuffer));
                     }
 
                     if (RangeStoreKeySerde.isKeyInRange(keyBuffer, key)) {
@@ -119,7 +121,8 @@ public class RangeStoreDb extends AbstractLmdbDb<RangeStoreKey, ValueStoreKey> {
                                     "Found a key with a different mapDefinitionUid, found: {}, expected {}",
                                     uidOfFoundKey, mapDefinitionUid));
                         }
-                        LOGGER.trace(() -> "key " + key + " is in the range, found the required value after " + cnt.get() + " iterations");
+                        LOGGER.trace(() -> "key " + key + " is in the range, " +
+                                "found the required value after " + cnt.get() + " iterations");
 
                         // TODO we are returning the cursor buffer out of the cursor scope so we must first copy it.
                         // Better still we could accept an arg of a Function<ByteBuffer, ByteBuffer> to map the valueStoreKey
@@ -130,9 +133,7 @@ public class RangeStoreDb extends AbstractLmdbDb<RangeStoreKey, ValueStoreKey> {
             }
             LOGGER.trace(() -> "Value not found for " + mapDefinitionUid + ", key " + key + ", iterations " + cnt.get());
             return Optional.empty();
-
         }
-
     }
 
     /**
@@ -149,8 +150,8 @@ public class RangeStoreDb extends AbstractLmdbDb<RangeStoreKey, ValueStoreKey> {
 
             final KeyRange<ByteBuffer> keyRange = KeyRange.atLeast(startKeyBuf);
 
-            try (CursorIterator<ByteBuffer> cursorIterator = getLmdbDbi().iterate(txn, keyRange)) {
-                return cursorIterator.hasNext();
+            try (CursorIterable<ByteBuffer> cursorIterable = getLmdbDbi().iterate(txn, keyRange)) {
+                return cursorIterable.iterator().hasNext();
             }
 
         }
@@ -214,20 +215,21 @@ public class RangeStoreDb extends AbstractLmdbDb<RangeStoreKey, ValueStoreKey> {
             keySerde.serializeWithoutRangePart(startKeyIncBuffer, startKeyInc);
             final KeyRange<ByteBuffer> atLeastKeyRange = KeyRange.atLeast(startKeyIncBuffer);
 
-            try (CursorIterator<ByteBuffer> cursorIterator = getLmdbDbi().iterate(writeTxn, atLeastKeyRange)) {
+            try (CursorIterable<ByteBuffer> cursorIterable = getLmdbDbi().iterate(writeTxn, atLeastKeyRange)) {
                 final AtomicInteger cnt = new AtomicInteger();
-                for (final CursorIterator.KeyVal<ByteBuffer> keyVal : cursorIterator.iterable()) {
-
+                final Iterator<KeyVal<ByteBuffer>> iterator = cursorIterable.iterator();
+                while (iterator.hasNext()) {
+                    final KeyVal<ByteBuffer> keyVal = iterator.next();
                     if (ByteBufferUtils.containsPrefix(keyVal.key(), startKeyIncBuffer)) {
                         // prefixed with our UID
 
-                        LOGGER.trace(LambdaLogUtil.message("Found entry {} {}",
+                        LOGGER.trace(() -> LogUtil.message("Found entry {} {}",
                                 ByteBufferUtils.byteBufferInfo(keyVal.key()),
                                 ByteBufferUtils.byteBufferInfo(keyVal.val())));
 
                         // pass the found kv pair from this entry to the consumer
                         entryConsumer.accept(writeTxn, keyVal.key(), keyVal.val());
-                        cursorIterator.remove();
+                        iterator.remove();
                         cnt.incrementAndGet();
                     } else {
                         // passed out UID so break out
@@ -250,7 +252,7 @@ public class RangeStoreDb extends AbstractLmdbDb<RangeStoreKey, ValueStoreKey> {
         UID nextMapUid = mapUid.nextUid();
         final RangeStoreKey endKeyExc = new RangeStoreKey(nextMapUid, dummyRange);
 
-        LOGGER.trace(LambdaLogUtil.message("Using range {} (inc) {} (exc)",
+        LOGGER.trace(() -> LogUtil.message("Using range {} (inc) {} (exc)",
                 ByteBufferUtils.byteBufferInfo(startKeyIncBuffer),
                 ByteBufferUtils.byteBufferInfo(endKeyExcBuffer)));
 

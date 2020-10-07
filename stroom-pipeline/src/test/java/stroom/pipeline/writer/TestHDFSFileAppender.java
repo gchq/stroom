@@ -16,20 +16,20 @@
 
 package stroom.pipeline.writer;
 
+import stroom.test.common.util.test.StroomUnitTest;
+
 import org.apache.hadoop.conf.Configuration;
 import org.apache.hadoop.fs.ContentSummary;
 import org.apache.hadoop.fs.FileSystem;
 import org.apache.hadoop.fs.Path;
 import org.apache.hadoop.hdfs.DistributedFileSystem;
 import org.apache.hadoop.security.UserGroupInformation;
-import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Disabled;
 import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.io.TempDir;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import stroom.test.common.util.test.StroomUnitTest;
-import org.junit.jupiter.api.io.TempDir;
 
 import java.io.IOException;
 import java.io.UncheckedIOException;
@@ -39,7 +39,7 @@ import static org.assertj.core.api.Assertions.assertThat;
 
 class TestHDFSFileAppender extends StroomUnitTest {
     private static final Logger LOGGER = LoggerFactory.getLogger(TestHDFSFileAppender.class);
-//    private static final String ROOT_TEST_PATH = FileUtil.getTempDir() + "/junitTests/TestHDFSFileAppender";
+    //    private static final String ROOT_TEST_PATH = FileUtil.getTempDir() + "/junitTests/TestHDFSFileAppender";
     private static final String FS_DEFAULT_FS = "file:///";
     private static final String RUN_AS_USER = "hdfs";
 
@@ -78,10 +78,6 @@ class TestHDFSFileAppender extends StroomUnitTest {
         });
     }
 
-    @AfterEach
-    public void teardown() throws IOException {
-    }
-
     @Disabled
     @Test
     void basicTest() throws IOException {
@@ -102,7 +98,7 @@ class TestHDFSFileAppender extends StroomUnitTest {
 
     @Test
     void testCycleDirs() throws IOException {
-        final HDFSFileAppender provider = buildTestObject(rootTestDir.toAbsolutePath().toString());
+        final HDFSFileAppender provider = buildTestObject(rootTestDir);
 
         boolean found1 = false;
         boolean found2 = false;
@@ -144,15 +140,16 @@ class TestHDFSFileAppender extends StroomUnitTest {
         assertThat(found1 && found2 && found3).isTrue();
     }
 
-    private HDFSFileAppender buildTestObject(final String dir) {
+    private HDFSFileAppender buildTestObject(final java.nio.file.Path tempDir) {
         final String name = "/${year}-${month}-${day}T${hour}:${minute}:${second}.${millis}Z-${uuid}.xml";
-        final PathCreator pathCreator = new PathCreator(null, null, null, null, null);
+        final PathCreator pathCreator = new PathCreator(() -> tempDir);
         final HDFSFileAppender provider = new HDFSFileAppender(null, pathCreator);
 
+        String dir = tempDir.toAbsolutePath().toString();
         provider.setOutputPaths(
                 dir + "/t1" + name + "," +
-                dir + "/t2" + name + "," +
-                dir + "/t3" + name);
+                        dir + "/t2" + name + "," +
+                        dir + "/t3" + name);
         provider.setFileSystemUri(FS_DEFAULT_FS);
         provider.setRunAsUser(RUN_AS_USER);
         provider.setConf(conf);

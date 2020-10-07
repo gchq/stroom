@@ -16,16 +16,8 @@
 
 package stroom.pipeline.stepping.client.presenter;
 
-import com.google.inject.Inject;
-import com.google.web.bindery.event.shared.EventBus;
-import com.gwtplatform.mvp.client.HasUiHandlers;
-import com.gwtplatform.mvp.client.MyPresenter;
-import com.gwtplatform.mvp.client.View;
-import com.gwtplatform.mvp.client.annotations.ProxyCodeSplit;
-import com.gwtplatform.mvp.client.annotations.ProxyEvent;
-import com.gwtplatform.mvp.client.proxy.Proxy;
-import stroom.pipeline.shared.stepping.SteppingFilterSettings;
 import stroom.pipeline.shared.XPathFilter;
+import stroom.pipeline.shared.stepping.SteppingFilterSettings;
 import stroom.pipeline.stepping.client.event.ShowSteppingFilterSettingsEvent;
 import stroom.pipeline.stepping.client.event.ShowSteppingFilterSettingsEvent.ShowSteppingFilterSettingsHandler;
 import stroom.util.shared.OutputState;
@@ -36,7 +28,16 @@ import stroom.widget.popup.client.presenter.PopupSize;
 import stroom.widget.popup.client.presenter.PopupUiHandlers;
 import stroom.widget.popup.client.presenter.PopupView.PopupType;
 
-import java.util.HashSet;
+import com.google.inject.Inject;
+import com.google.web.bindery.event.shared.EventBus;
+import com.gwtplatform.mvp.client.HasUiHandlers;
+import com.gwtplatform.mvp.client.MyPresenter;
+import com.gwtplatform.mvp.client.View;
+import com.gwtplatform.mvp.client.annotations.ProxyCodeSplit;
+import com.gwtplatform.mvp.client.annotations.ProxyEvent;
+import com.gwtplatform.mvp.client.proxy.Proxy;
+
+import java.util.ArrayList;
 import java.util.List;
 
 public class SteppingFilterPresenter extends
@@ -48,6 +49,7 @@ public class SteppingFilterPresenter extends
     private ShowSteppingFilterSettingsEvent event;
     private SteppingFilterSettings settings;
     private List<XPathFilter> xPathFilters;
+
     @Inject
     public SteppingFilterPresenter(final EventBus eventBus, final SteppingFilterSettingsView view,
                                    final SteppingFilterSettingsProxy proxy, final XPathListPresenter xPathListPresenter,
@@ -177,16 +179,15 @@ public class SteppingFilterPresenter extends
 
         xPathFilters = xPathListPresenter.getDataProvider().getList();
         xPathFilters.clear();
-        if (settings.getXPathFilters() != null && settings.getXPathFilters().size() > 0) {
-            xPathFilters.addAll(settings.getXPathFilters());
+        if (settings.getFilters() != null && settings.getFilters().size() > 0) {
+            xPathFilters.addAll(settings.getFilters());
         }
     }
 
     private void write() {
         settings.setSkipToSeverity(getView().getSkipToErrors());
         settings.setSkipToOutput(getView().getSkipToOutput());
-        settings.setXPathFilters(null);
-        settings.setXPathFilters(new HashSet<>(xPathFilters));
+        settings.setFilters(new ArrayList<>(xPathFilters));
 
         event.getEditor().setFilterActive(settings.isActive());
     }

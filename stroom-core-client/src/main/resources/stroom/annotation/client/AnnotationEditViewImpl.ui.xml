@@ -17,15 +17,15 @@
         <g:FlowPanel styleName="annotationBottom">
             <g:FlowPanel styleName="annotationLeft">
                 <g:FlowPanel addStyleNames="annotationSetting">
-                    <g:FlowPanel addStyleNames="annotationSettingHeading">
-                        <g:Label ui:field="statusLabel" styleName="annotationClickLabel" text="Status:"/>
+                    <g:FlowPanel addStyleNames="annotationSettingHeading clickable">
+                        <g:Label ui:field="statusLabel" styleName="annotationClickLabel clickable" text="Status:"/>
                         <g:Label ui:field="status" styleName="annotationLabel"/>
                         <button:SvgButton ui:field="statusIcon" addStyleNames="annotationDropDownIcon"/>
                     </g:FlowPanel>
                 </g:FlowPanel>
                 <g:FlowPanel addStyleNames="annotationSetting">
-                    <g:FlowPanel addStyleNames="annotationSettingHeading">
-                        <g:Label ui:field="assignedToLabel" styleName="annotationClickLabel" text="Assigned To:"/>
+                    <g:FlowPanel addStyleNames="annotationSettingHeading clickable">
+                        <g:Label ui:field="assignedToLabel" styleName="annotationClickLabel clickable" text="Assigned To:"/>
                         <g:Label ui:field="assignedTo" styleName="annotationLabel"/>
                         <g:Label ui:field="assignYourself" styleName="annotationAssignYourself">Assign Yourself
                         </g:Label>
@@ -33,8 +33,8 @@
                     </g:FlowPanel>
                 </g:FlowPanel>
                 <g:FlowPanel addStyleNames="annotationSetting">
-                    <g:FlowPanel addStyleNames="annotationSettingHeading">
-                        <g:Label ui:field="commentLabel" styleName="annotationClickLabel" text="Comment:" width="100%"/>
+                    <g:FlowPanel ui:field="commentFlowPanel" addStyleNames="annotationSettingHeading clickable">
+                        <g:Label ui:field="commentLabel" styleName="annotationClickLabel clickable" text="Comment:" width="100%"/>
                         <button:SvgButton ui:field="commentIcon" addStyleNames="annotationDropDownIcon"/>
                     </g:FlowPanel>
                 </g:FlowPanel>

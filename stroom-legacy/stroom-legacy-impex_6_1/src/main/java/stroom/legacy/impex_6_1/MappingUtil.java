@@ -170,7 +170,22 @@ public final class MappingUtil {
                 value.getExtractValues(),
                 map(value.getExtractionPipeline()),
                 value.getMaxResults(),
-                value.getShowDetail());
+                value.getShowDetail(),
+                mapList(value.getConditionalFormattingRules(), MappingUtil::map));
+    }
+
+    public static stroom.dashboard.shared.ConditionalFormattingRule map(stroom.legacy.model_6_1.ConditionalFormattingRule value) {
+        if (value == null) {
+            return null;
+        }
+
+        return new stroom.dashboard.shared.ConditionalFormattingRule(
+                value.getId(),
+                map(value.getExpression()),
+                value.isHide(),
+                value.getBackgroundColor(),
+                value.getTextColor(),
+                value.isEnabled());
     }
 
     public static stroom.dashboard.shared.VisComponentSettings map(stroom.legacy.model_6_1.VisComponentSettings value) {

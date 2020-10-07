@@ -10,20 +10,25 @@ public class ClientSecurityUtil {
     private static final Logger LOGGER = LoggerFactory.getLogger(ClientSecurityUtil.class);
 
     public static void addAuthorisationHeader(final Invocation.Builder builder, final SecurityContext securityContext) {
-        String jws = null;
         final UserIdentity userIdentity = securityContext.getUserIdentity();
         if (userIdentity == null) {
             LOGGER.debug("No user is currently logged in");
         } else {
-            jws = userIdentity.getJws();
+            final String jws = userIdentity.getJws();
             if (jws == null) {
                 LOGGER.debug("The JWS is null for user '{}'", userIdentity.getId());
+            } else {
+                LOGGER.debug("The JWS is '{}' for user '{}'", jws, userIdentity.getId());
+                addAuthorisationHeader(builder, jws);
             }
         }
-        addAuthorisationHeader(builder, jws);
     }
 
     public static void addAuthorisationHeader(final Invocation.Builder builder, final String jws) {
-        builder.header(HttpHeaders.AUTHORIZATION, "Bearer " + jws);
+        if (jws == null) {
+            LOGGER.debug("The JWS is null");
+        } else {
+            builder.header(HttpHeaders.AUTHORIZATION, "Bearer " + jws);
+        }
     }
 }

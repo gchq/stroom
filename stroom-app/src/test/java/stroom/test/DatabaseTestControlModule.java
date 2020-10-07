@@ -16,15 +16,15 @@
 
 package stroom.test;
 
-import com.google.inject.AbstractModule;
 import stroom.util.guice.GuiceUtil;
 import stroom.util.shared.Clearable;
+
+import com.google.inject.AbstractModule;
 
 public class DatabaseTestControlModule extends AbstractModule {
     @Override
     protected void configure() {
         bind(CommonTestControl.class).to(DatabaseCommonTestControl.class);
-
         GuiceUtil.buildMultiBinder(binder(), Clearable.class);
     }
 }

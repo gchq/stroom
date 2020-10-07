@@ -110,9 +110,9 @@ public class SAXEventRecorder extends TinyTreeBufferFilter implements Recorder, 
             if (settings.getSkipToSeverity() != null || settings.getSkipToOutput() != null) {
                 return true;
             }
-            if (settings.getXPathFilters() != null) {
-                for (final XPathFilter xPathFilter : settings.getXPathFilters()) {
-                    if (xPathFilter.getMatchType() != null && xPathFilter.getXPath() != null) {
+            if (settings.getFilters() != null) {
+                for (final XPathFilter xPathFilter : settings.getFilters()) {
+                    if (xPathFilter.getMatchType() != null && xPathFilter.getPath() != null) {
                         if (xPathFilter.getMatchType().isNeedsValue()) {
                             if (xPathFilter.getValue() != null && xPathFilter.getValue().length() > 0) {
                                 return true;
@@ -171,10 +171,10 @@ public class SAXEventRecorder extends TinyTreeBufferFilter implements Recorder, 
             }
         }
 
-        if (xPathFilters == null && settings.getXPathFilters() != null && settings.getXPathFilters().size() > 0) {
+        if (xPathFilters == null && settings.getFilters() != null && settings.getFilters().size() > 0) {
             // Compile the XPath filters.
             xPathFilters = new HashSet<>();
-            for (final XPathFilter xPathFilter : settings.getXPathFilters()) {
+            for (final XPathFilter xPathFilter : settings.getFilters()) {
                 try {
                     // Only add filters that check for uniqueness or that have
                     // had a valid value specified.
@@ -342,7 +342,7 @@ public class SAXEventRecorder extends TinyTreeBufferFilter implements Recorder, 
                                    final NamespaceContext namespaceContext) throws XPathExpressionException {
             this.xPathFilter = xPathFilter;
 
-            final String path = xPathFilter.getXPath();
+            final String path = xPathFilter.getPath();
             final XPathEvaluator xPathEvaluator = new XPathEvaluator(configuration);
 
             final String defaultNamespaceURI = namespaceContext.getNamespaceURI("");

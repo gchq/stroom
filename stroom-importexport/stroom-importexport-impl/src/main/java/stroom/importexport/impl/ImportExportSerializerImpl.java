@@ -17,8 +17,6 @@
 
 package stroom.importexport.impl;
 
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 import stroom.docref.DocRef;
 import stroom.explorer.api.ExplorerNodeService;
 import stroom.explorer.api.ExplorerService;
@@ -38,6 +36,9 @@ import stroom.util.shared.EntityServiceException;
 import stroom.util.shared.Message;
 import stroom.util.shared.PermissionException;
 import stroom.util.shared.Severity;
+
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import javax.inject.Inject;
 import java.io.IOException;
@@ -157,8 +158,9 @@ class ImportExportSerializerImpl implements ImportExportSerializer {
         return result;
     }
 
-    private DocRef performImport(final Path nodeFile, final Map<DocRef, ImportState> confirmMap,
-                               final ImportMode importMode) {
+    private DocRef performImport(final Path nodeFile,
+                                 final Map<DocRef, ImportState> confirmMap,
+                                 final ImportMode importMode) {
         DocRef nonExplorerDocRef = null;
         try {
             // Read the node file.
@@ -179,7 +181,9 @@ class ImportExportSerializerImpl implements ImportExportSerializer {
             // Create a doc ref.
             final DocRef docRef = new DocRef(type, uuid, name);
             // Create or get the import state.
-            final ImportState importState = confirmMap.computeIfAbsent(docRef, k -> new ImportState(docRef, createPath(path, docRef.getName())));
+            final ImportState importState = confirmMap.computeIfAbsent(
+                    docRef,
+                    k -> new ImportState(docRef, createPath(path, docRef.getName())));
 
             try {
                 // Get other associated data.
@@ -223,8 +227,12 @@ class ImportExportSerializerImpl implements ImportExportSerializer {
                         importState.setDestPath(existingAltNode.get().getName() + "(Existing "+ explorerDocRef.getType() + ")");
                 }
                 // This is a pre existing item so make sure we are allowed to update it.
-                if (explorerDocRef != null && !securityContext.hasDocumentPermission(explorerDocRef.getUuid(), DocumentPermissionNames.UPDATE)) {
-                    throw new PermissionException(securityContext.getUserId(), "You do not have permission to update '" + docRef + "'");
+                if (docExists
+                        && explorerDocRef != null
+                        && !securityContext.hasDocumentPermission(explorerDocRef.getUuid(), DocumentPermissionNames.UPDATE)) {
+                    throw new PermissionException(
+                            securityContext.getUserId(),
+                            "You do not have permission to update '" + docRef + "'");
                 }
                 if (!docExists) {
                     importState.setState(State.NEW);
@@ -302,12 +310,13 @@ class ImportExportSerializerImpl implements ImportExportSerializer {
                         confirmMap.remove(docRef);
                     }
                 } catch (final RuntimeException e) {
+                    importState.addMessage(Severity.ERROR, e.getMessage());
                     LOGGER.error("Error importing file {}", nodeFile.toAbsolutePath().toString(), e);
                     importExportDocumentEventLog.importDocument(docRef.getType(), docRef.getUuid(), docRef.getName(), e);
                     throw e;
                 }
 
-            } catch (final IOException e) {
+            } catch (final IOException | PermissionException e) {
                 LOGGER.error("Error importing file {}", nodeFile.toAbsolutePath().toString(), e);
                 importState.addMessage(Severity.ERROR, e.getMessage());
             }

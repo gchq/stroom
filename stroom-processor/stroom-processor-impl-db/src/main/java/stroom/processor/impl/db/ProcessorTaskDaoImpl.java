@@ -37,9 +37,9 @@ import stroom.query.api.v2.ExpressionOperator;
 import stroom.query.api.v2.ExpressionTerm;
 import stroom.query.api.v2.ExpressionUtil;
 import stroom.query.common.v2.DateExpressionParser;
-import stroom.util.logging.LambdaLogUtil;
 import stroom.util.logging.LambdaLogger;
 import stroom.util.logging.LambdaLoggerFactory;
+import stroom.util.logging.LogUtil;
 import stroom.util.shared.PageRequest;
 import stroom.util.shared.ResultPage;
 import stroom.util.shared.Selection;
@@ -55,8 +55,6 @@ import org.jooq.Result;
 import org.jooq.impl.DSL;
 
 import javax.inject.Inject;
-import java.time.Duration;
-import java.time.Instant;
 import java.time.ZoneOffset;
 import java.time.ZonedDateTime;
 import java.util.ArrayList;
@@ -481,7 +479,11 @@ class ProcessorTaskDaoImpl implements ProcessorTaskDao {
 
                 // Anything created?
                 if (totalTasksCreated > 0) {
-                    LOGGER.debug(LambdaLogUtil.message("processProcessorFilter() - Created {} tasks ({} available) in the range {}", totalTasksCreated, availableTasksCreated, streamIdRange));
+                    // Done with if because args are not final so can't use lambda
+                    if (LOGGER.isDebugEnabled()) {
+                        LOGGER.debug("processProcessorFilter() - Created {} tasks ({} available) in the range {}",
+                                totalTasksCreated, availableTasksCreated, streamIdRange);
+                    }
 
                     // If we have never created tasks before or the last poll gave
                     // us no tasks then start to report a new creation range.
@@ -543,7 +545,9 @@ class ProcessorTaskDaoImpl implements ProcessorTaskDao {
                 // any possibility of getting more tasks in future?
                 if (tracker.getMaxMetaCreateMs() != null && tracker.getMetaCreateMs() != null
                         && tracker.getMetaCreateMs() > tracker.getMaxMetaCreateMs()) {
-                    LOGGER.info(LambdaLogUtil.message("processProcessorFilter() - Finished task creation for bounded filter {}", filter));
+                    LOGGER.info(() ->
+                            LogUtil.message("processProcessorFilter() - Finished task creation for bounded filter {}",
+                                    filter));
                     tracker.setStatus(ProcessorFilterTracker.COMPLETE);
                 }
 
@@ -560,14 +564,9 @@ class ProcessorTaskDaoImpl implements ProcessorTaskDao {
 
     private void executeInsert(final BatchBindStep batchBindStep, final int rowCount) {
         try {
-            if (LOGGER.isDebugEnabled()) {
-                final Instant startTime = Instant.now();
-                batchBindStep.execute();
-                LOGGER.debug(LambdaLogUtil.message("execute completed in %s for %s rows",
-                        Duration.between(startTime, Instant.now()), rowCount));
-            } else {
-                batchBindStep.execute();
-            }
+            LOGGER.logDurationIfDebugEnabled(
+                    batchBindStep::execute,
+                    () -> LogUtil.message("Execute for {} rows", rowCount));
         } catch (final RuntimeException e) {
             LOGGER.error(e::getMessage, e);
             throw new RuntimeException(e.getMessage(), e);
@@ -1019,7 +1018,9 @@ class ProcessorTaskDaoImpl implements ProcessorTaskDao {
                                           final Long endTime) {
         // Do everything within a single transaction.
         return JooqUtil.transactionResult(processorDbConnProvider, context -> {
-            LOGGER.debug(LambdaLogUtil.message("changeTaskStatus() - Changing task status of {} to node={}, status={}", processorTask, nodeName, status));
+            LOGGER.debug(() -> LogUtil.message(
+                    "changeTaskStatus() - Changing task status of {} to node={}, status={}",
+                    processorTask, nodeName, status));
             final long now = System.currentTimeMillis();
 
             ProcessorTask result = null;
@@ -1040,18 +1041,24 @@ class ProcessorTaskDaoImpl implements ProcessorTaskDao {
 
                         try {
                             if (LOGGER.isDebugEnabled()) {
-                                LOGGER.warn(LambdaLogUtil.message("changeTaskStatus() - {} - Task has changed, attempting reload {}", e.getMessage(), processorTask), e);
+                                LOGGER.warn(() -> LogUtil.message(
+                                        "changeTaskStatus() - {} - Task has changed, attempting reload {}",
+                                        e.getMessage(), processorTask), e);
                             } else {
-                                LOGGER.warn(LambdaLogUtil.message("changeTaskStatus() - Task has changed, attempting reload {}", processorTask));
+                                LOGGER.warn(() -> LogUtil.message(
+                                        "changeTaskStatus() - Task has changed, attempting reload {}", processorTask));
                             }
 
                             final ProcessorTask loaded = fetch(context, processorTask).orElse(null);
                             if (loaded == null) {
-                                LOGGER.warn(LambdaLogUtil.message("changeTaskStatus() - Failed to reload task {}", processorTask));
+                                LOGGER.warn(() -> LogUtil.message(
+                                        "changeTaskStatus() - Failed to reload task {}", processorTask));
                             } else if (TaskStatus.DELETED.equals(loaded.getStatus())) {
-                                LOGGER.warn(LambdaLogUtil.message("changeTaskStatus() - Task has been deleted {}", processorTask));
+                                LOGGER.warn(() -> LogUtil.message(
+                                        "changeTaskStatus() - Task has been deleted {}", processorTask));
                             } else {
-                                LOGGER.warn(LambdaLogUtil.message("changeTaskStatus() - Loaded stream task {}", loaded));
+                                LOGGER.warn(() -> LogUtil.message(
+                                        "changeTaskStatus() - Loaded stream task {}", loaded));
                                 modify(loaded, nodeName, status, now, startTime, endTime);
                                 result = update(context, loaded);
                             }
@@ -1064,7 +1071,8 @@ class ProcessorTaskDaoImpl implements ProcessorTaskDao {
                     }
 
                     if (!success) {
-                        LOGGER.error(LambdaLogUtil.message("Error changing task status for task '{}': {}", processorTask, lastError.getMessage()), lastError);
+                        LOGGER.error("Error changing task status for task '{}': {}",
+                                processorTask, lastError.getMessage(), lastError);
                     }
                 }
             } catch (final InterruptedException e) {

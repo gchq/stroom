@@ -38,6 +38,7 @@ import stroom.security.shared.DocumentPermissionNames;
 import stroom.util.filter.FilterFieldMapper;
 import stroom.util.filter.FilterFieldMappers;
 import stroom.util.filter.QuickFilterPredicateFactory;
+import stroom.util.shared.Clearable;
 import stroom.util.shared.PermissionException;
 
 import org.slf4j.Logger;
@@ -60,20 +61,13 @@ import java.util.function.Predicate;
 import java.util.stream.Collectors;
 
 @Singleton
-class ExplorerServiceImpl implements ExplorerService, CollectionService {
-
+class ExplorerServiceImpl implements ExplorerService, CollectionService, Clearable {
     private static final Logger LOGGER = LoggerFactory.getLogger(ExplorerServiceImpl.class);
 
-    // Bit of a fudge to allow folder searching but you can't use it with name/type as folder is a parent of the other
-// items
-//            FilterFieldMapper.of(FilterFieldDefinition.qualifiedField("Folder"), docRef ->
-//                    ExplorerConstants.FOLDER.equals(docRef.getType())
-//                            ? docRef.getName()
-//                            : null),
     private static final FilterFieldMappers<DocRef> FIELD_MAPPERS = FilterFieldMappers.of(
             FilterFieldMapper.of(ExplorerTreeFilter.FIELD_DEF_NAME, DocRef::getName),
-            FilterFieldMapper.of(ExplorerTreeFilter.FIELD_DEF_TYPE, DocRef::getType)
-    );
+            FilterFieldMapper.of(ExplorerTreeFilter.FIELD_DEF_TYPE, DocRef::getType),
+            FilterFieldMapper.of(ExplorerTreeFilter.FIELD_DEF_UUID, DocRef::getUuid));
 
     private final ExplorerNodeService explorerNodeService;
     private final ExplorerTreeModel explorerTreeModel;

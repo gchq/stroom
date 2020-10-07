@@ -19,7 +19,9 @@ package stroom.meta.impl.db;
 import stroom.db.util.JooqUtil;
 import stroom.meta.impl.MetaKeyDao;
 import stroom.meta.shared.MetaFields;
+import stroom.util.shared.Clearable;
 
+import org.jooq.Record1;
 import org.jooq.impl.DSL;
 
 import javax.inject.Inject;
@@ -31,7 +33,7 @@ import java.util.Optional;
 import static stroom.meta.impl.db.jooq.tables.MetaKey.META_KEY;
 
 @Singleton
-class MetaKeyDaoImpl implements MetaKeyDao {
+class MetaKeyDaoImpl implements MetaKeyDao, Clearable {
 //    private static final Map<String, MetaFieldUse> SYSTEM_ATTRIBUTE_FIELD_TYPE_MAP;
 
     private static final String REC_READ = MetaFields.REC_READ.getName();
@@ -90,14 +92,14 @@ class MetaKeyDaoImpl implements MetaKeyDao {
     public Integer getMinId() {
         return JooqUtil.contextResult(metaDbConnProvider, context ->
                 context.select(DSL.min(META_KEY.ID)).from(META_KEY).
-                        fetchOptional().map(r -> r.value1())).orElse(1);
+                        fetchOptional().map(Record1::value1)).orElse(1);
     }
 
     @Override
     public Integer getMaxId() {
         return JooqUtil.contextResult(metaDbConnProvider, context ->
                 context.select(DSL.max(META_KEY.ID)).from(META_KEY).
-                        fetchOptional().map(r -> r.value1())).orElse(MetaFields.getExtendedFields().size());
+                        fetchOptional().map(Record1::value1)).orElse(MetaFields.getExtendedFields().size());
     }
 
     private void setup() {
@@ -141,14 +143,6 @@ class MetaKeyDaoImpl implements MetaKeyDao {
     public void clear() {
         idToNameCache.clear();
         nameToIdCache.clear();
-        deleteAll();
         setup();
-    }
-
-    private void deleteAll() {
-        JooqUtil.truncateTable(metaDbConnProvider, META_KEY);
-//        return JooqUtil.contextResult(metaDbConnProvider, context -> context
-//                .truncate(META_KEY)
-//                .execute());
     }
 }

@@ -32,8 +32,6 @@ import stroom.meta.shared.Meta;
 import stroom.pipeline.shared.PipelineModelException;
 import stroom.pipeline.shared.PipelineResource;
 import stroom.pipeline.shared.SharedElementData;
-import stroom.pipeline.shared.TextConverterDoc;
-import stroom.pipeline.shared.XsltDoc;
 import stroom.pipeline.shared.data.PipelineData;
 import stroom.pipeline.shared.data.PipelineElement;
 import stroom.pipeline.shared.data.PipelineProperty;
@@ -130,19 +128,6 @@ public class SteppingPresenter extends MyPresenterWidget<SteppingPresenter.Stepp
         saveButton = addButtonLeft(SvgPresets.SAVE);
     }
 
-    private static String replace(final String path, final String type, final String replacement) {
-        String newPath = path;
-        final String param = "${" + type + "}";
-        int start = newPath.indexOf(param);
-        while (start != -1) {
-            final int end = start + param.length();
-            newPath = newPath.substring(0, start) + replacement + newPath.substring(end);
-            start = newPath.indexOf(param, end);
-        }
-
-        return newPath;
-    }
-
     @Override
     protected void onBind() {
         registerHandler(
@@ -170,45 +155,21 @@ public class SteppingPresenter extends MyPresenterWidget<SteppingPresenter.Stepp
             return sourcePresenter;
 
         } else {
-            DocRef docRef = null;
-            DocRef fuzzyDocRef = null;
-
-            final List<PipelineProperty> properties = pipelineModel.getProperties(element);
-            if (properties != null && properties.size() > 0) {
-                for (final PipelineProperty property : properties) {
-                    if (property.getValue() != null) {
-                        if (property.getValue().getEntity() != null) {
-                            docRef = property.getValue().getEntity();
-                        } else if (property.getName().toLowerCase().contains("pattern") && meta != null) {
-                            String value = property.getValue().getString();
-                            value = replace(value, "feed", meta.getFeedName());
-                            value = replace(value, "pipeline", request.getPipeline().getName());
-
-                            if (element.getElementType().getType().equalsIgnoreCase("XSLTFilter")) {
-                                fuzzyDocRef = new DocRef(XsltDoc.DOCUMENT_TYPE, null, value);
-                            } else {
-                                fuzzyDocRef = new DocRef(TextConverterDoc.DOCUMENT_TYPE, null, value);
-                            }
-                        }
-                    }
-                }
-            }
-
             final String elementId = element.getId();
             ElementPresenter editorPresenter = editorMap.get(elementId);
-
             if (editorPresenter == null) {
                 final DirtyHandler dirtyEditorHandler = event -> {
                     DirtyEvent.fire(SteppingPresenter.this, true);
                     saveButton.setEnabled(true);
                 };
 
-                final ElementPresenter presenter = editorProvider.get();
+                final List<PipelineProperty> properties = pipelineModel.getProperties(element);
 
-                presenter.setElementId(element.getId());
-                presenter.setElementType(element.getElementType());
-                presenter.setEntityRef(docRef);
-                presenter.setFuzzyEntityRef(fuzzyDocRef);
+                final ElementPresenter presenter = editorProvider.get();
+                presenter.setElement(element);
+                presenter.setProperties(properties);
+                presenter.setFeedName(meta.getFeedName());
+                presenter.setPipelineName(request.getPipeline().getName());
                 presenter.setPipelineStepRequest(request);
                 editorMap.put(elementId, presenter);
                 presenter.addDirtyHandler(dirtyEditorHandler);
@@ -327,7 +288,7 @@ public class SteppingPresenter extends MyPresenterWidget<SteppingPresenter.Stepp
                         AlertEvent.fireError(SteppingPresenter.this, e.getMessage(), null);
                     }
 
-                    if (stepLocation != null) {
+                    if (stepLocation != null && stepLocation.getRecordNo() > 0) {
                         step(StepType.REFRESH, new StepLocation(
                                         meta.getId(),
                                         stepLocation.getPartNo(),
@@ -366,7 +327,7 @@ public class SteppingPresenter extends MyPresenterWidget<SteppingPresenter.Stepp
             final Map<String, String> codeMap = new HashMap<>();
             for (final ElementPresenter editorPresenter : editorMap.values()) {
                 if (editorPresenter.isDirtyCode()) {
-                    final String elementId = editorPresenter.getElementId();
+                    final String elementId = editorPresenter.getElement().getId();
                     final String code = editorPresenter.getCode();
                     codeMap.put(elementId, code);
                 }

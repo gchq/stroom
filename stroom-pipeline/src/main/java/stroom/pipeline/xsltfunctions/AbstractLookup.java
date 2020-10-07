@@ -16,6 +16,18 @@
 
 package stroom.pipeline.xsltfunctions;
 
+import stroom.pipeline.refdata.LookupIdentifier;
+import stroom.pipeline.refdata.ReferenceData;
+import stroom.pipeline.refdata.ReferenceDataResult;
+import stroom.pipeline.refdata.store.GenericRefDataValueProxyConsumer;
+import stroom.pipeline.refdata.store.RefDataValueProxy;
+import stroom.pipeline.refdata.store.RefDataValueProxyConsumerFactory;
+import stroom.pipeline.shared.data.PipelineReference;
+import stroom.pipeline.state.MetaHolder;
+import stroom.util.date.DateUtil;
+import stroom.util.logging.LogUtil;
+import stroom.util.shared.Severity;
+
 import net.sf.saxon.Configuration;
 import net.sf.saxon.event.Builder;
 import net.sf.saxon.event.PipelineConfiguration;
@@ -26,17 +38,8 @@ import net.sf.saxon.trans.XPathException;
 import net.sf.saxon.tree.tiny.TinyBuilder;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import stroom.pipeline.refdata.LookupIdentifier;
-import stroom.pipeline.refdata.ReferenceData;
-import stroom.pipeline.refdata.ReferenceDataResult;
-import stroom.pipeline.refdata.store.GenericRefDataValueProxyConsumer;
-import stroom.pipeline.refdata.store.RefDataValueProxy;
-import stroom.pipeline.refdata.store.RefDataValueProxyConsumerFactory;
-import stroom.pipeline.shared.data.PipelineReference;
-import stroom.pipeline.state.MetaHolder;
-import stroom.util.date.DateUtil;
-import stroom.util.shared.Severity;
 
+import java.time.Instant;
 import java.util.List;
 
 
@@ -166,7 +169,14 @@ abstract class AbstractLookup extends StroomExtensionFunctionCall {
         LOGGER.trace("getReferenceData({})", lookupIdentifier);
         final ReferenceDataResult result = new ReferenceDataResult();
 
-        result.log(Severity.INFO, () -> "Doing lookup " + lookupIdentifier);
+        result.log(Severity.INFO, () -> LogUtil.message("Doing lookup - " +
+                        "key: {}, map: {}, eventTime: {} (primaryMapName: {}, secondaryMapName: {})",
+                lookupIdentifier.getKey(),
+                lookupIdentifier.getMap(),
+                Instant.ofEpochMilli(lookupIdentifier.getEventTime()),
+                lookupIdentifier.getPrimaryMapName(),
+                lookupIdentifier.getSecondaryMapName()));
+
         final List<PipelineReference> pipelineReferences = getPipelineReferences();
         if (pipelineReferences == null || pipelineReferences.size() == 0) {
             result.log(Severity.ERROR, () -> "No pipeline references have been added to this XSLT step to perform a lookup");

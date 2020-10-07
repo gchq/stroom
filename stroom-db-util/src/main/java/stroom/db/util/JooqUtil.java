@@ -76,7 +76,6 @@ public final class JooqUtil {
 
     public static <R extends Record> void truncateTable(final DataSource dataSource,
                                                         final Table<R> table) {
-
         try (final Connection connection = dataSource.getConnection()) {
             final DSLContext context = createContext(connection);
             context

@@ -1,6 +1,5 @@
 package stroom.search.solr.search;
 
-import org.apache.solr.client.solrj.SolrQuery;
 import stroom.dictionary.api.WordListProvider;
 import stroom.query.api.v2.ExpressionOperator;
 import stroom.search.coprocessor.Receiver;
@@ -10,6 +9,8 @@ import stroom.search.solr.shared.SolrIndexField;
 import stroom.task.api.TaskContext;
 import stroom.util.logging.LambdaLogger;
 import stroom.util.logging.LambdaLoggerFactory;
+
+import org.apache.solr.client.solrj.SolrQuery;
 
 import javax.inject.Inject;
 import java.util.Map;
@@ -42,8 +43,8 @@ public class SolrSearchFactory {
 
             // Create a map of index fields keyed by name.
             final Map<String, SolrIndexField> indexFieldsMap = index.getFieldsMap();
-            final SearchExpressionQuery query = getQuery(expression, indexFieldsMap, task.getDateTimeLocale(), task.getNow());
-            final String queryString = query.toString();
+            final SearchExpressionQuery searchExpressionQuery = getQuery(expression, indexFieldsMap, task.getDateTimeLocale(), task.getNow());
+            final String queryString = searchExpressionQuery.getQuery().toString();
             final SolrQuery solrQuery = new SolrQuery(queryString);
             solrQuery.setRows(Integer.MAX_VALUE);
 

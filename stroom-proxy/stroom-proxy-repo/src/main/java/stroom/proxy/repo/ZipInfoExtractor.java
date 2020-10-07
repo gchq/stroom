@@ -105,8 +105,14 @@ class ZipInfoExtractor {
             }
         }
 
+        String typeName = null;
+        if (attributeMap != null) {
+            typeName = attributeMap.get(StandardHeaderArguments.TYPE);
+        }
+
+        final FileSetKey key = new FileSetKey(feedName, typeName);
         final ZipInfo zipInfo = new ZipInfo(path,
-                feedName,
+                key,
                 totalUncompressedSize,
                 totalCompressedSize,
                 attrs.lastModifiedTime().toMillis(),

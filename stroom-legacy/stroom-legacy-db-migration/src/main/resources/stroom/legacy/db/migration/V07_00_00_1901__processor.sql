@@ -43,7 +43,8 @@ BEGIN
     IF EXISTS (
             SELECT NULL
             FROM INFORMATION_SCHEMA.TABLES
-            WHERE TABLE_NAME = 'STRM_PROC') THEN
+            WHERE TABLE_SCHEMA = database()
+            AND TABLE_NAME = 'STRM_PROC') THEN
 
         RENAME TABLE STRM_PROC TO OLD_STRM_PROC;
     END IF;
@@ -52,7 +53,8 @@ BEGIN
     IF EXISTS (
             SELECT NULL
             FROM INFORMATION_SCHEMA.TABLES
-            WHERE TABLE_NAME = 'PIPE') THEN
+            WHERE TABLE_SCHEMA = database()
+            AND TABLE_NAME = 'PIPE') THEN
 
         RENAME TABLE PIPE TO OLD_PIPE;
     END IF;
@@ -61,7 +63,8 @@ BEGIN
     IF EXISTS (
             SELECT NULL
             FROM INFORMATION_SCHEMA.TABLES
-            WHERE TABLE_NAME = 'OLD_STRM_PROC') THEN
+            WHERE TABLE_SCHEMA = database()
+            AND TABLE_NAME = 'OLD_STRM_PROC') THEN
         --
         -- Copy data into the table, use ID predicate to make it re-runnable
         --

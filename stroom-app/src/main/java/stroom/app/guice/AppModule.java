@@ -4,10 +4,12 @@ import stroom.app.uri.UriFactoryModule;
 import stroom.cluster.impl.ClusterModule;
 import stroom.config.app.AppConfig;
 import stroom.config.app.AppConfigModule;
-import stroom.config.app.AppConfigModule.ConfigHolder;
+import stroom.config.app.ConfigHolder;
 import stroom.config.app.Config;
 import stroom.db.util.DbModule;
 import stroom.dropwizard.common.LogLevelInspector;
+import stroom.index.impl.IndexShardWriterExecutorProvider;
+import stroom.index.impl.IndexShardWriterExecutorProviderImpl;
 import stroom.lifecycle.impl.LifecycleServiceModule;
 import stroom.meta.statistics.impl.MetaStatisticsModule;
 import stroom.resource.impl.SessionResourceModule;
@@ -30,7 +32,18 @@ public class AppModule extends AbstractModule {
                      final Path configFile) {
         this.configuration = configuration;
         this.environment = environment;
-        configHolder = new ConfigHolderImpl(configuration.getAppConfig(), configFile);
+
+        configHolder = new ConfigHolder() {
+            @Override
+            public AppConfig getAppConfig() {
+                return configuration.getAppConfig();
+            }
+
+            @Override
+            public Path getConfigFile() {
+                return configFile;
+            }
+        };
     }
 
     /**
@@ -64,28 +77,10 @@ public class AppModule extends AbstractModule {
         install(new SQLStatisticSearchModule());
         install(new SessionResourceModule());
         install(new JerseyModule());
+        bind(IndexShardWriterExecutorProvider.class).to(IndexShardWriterExecutorProviderImpl.class);
 
         HasSystemInfoBinder.create(binder())
                 .bind(LogLevelInspector.class);
     }
 
-    private static class ConfigHolderImpl implements AppConfigModule.ConfigHolder {
-        private final AppConfig appConfig;
-        private final Path path;
-
-        ConfigHolderImpl(final AppConfig appConfig, final Path path) {
-            this.appConfig = appConfig;
-            this.path = path;
-        }
-
-        @Override
-        public AppConfig getAppConfig() {
-            return appConfig;
-        }
-
-        @Override
-        public Path getConfigFile() {
-            return path;
-        }
-    }
 }

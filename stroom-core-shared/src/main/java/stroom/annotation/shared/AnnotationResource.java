@@ -16,12 +16,14 @@
 
 package stroom.annotation.shared;
 
+import stroom.util.shared.ResourcePaths;
+import stroom.util.shared.RestResource;
+import stroom.util.shared.filter.FilterFieldDefinition;
+
 import io.swagger.annotations.Api;
 import io.swagger.annotations.ApiOperation;
 import io.swagger.annotations.ApiParam;
 import org.fusesource.restygwt.client.DirectRestService;
-import stroom.util.shared.ResourcePaths;
-import stroom.util.shared.RestResource;
 
 import javax.ws.rs.Consumes;
 import javax.ws.rs.GET;
@@ -31,6 +33,7 @@ import javax.ws.rs.Produces;
 import javax.ws.rs.QueryParam;
 import javax.ws.rs.core.MediaType;
 import javax.ws.rs.core.Response;
+import java.util.Collections;
 import java.util.List;
 
 @Api(value = "annotations - /v1")
@@ -38,6 +41,10 @@ import java.util.List;
 @Produces(MediaType.APPLICATION_JSON)
 @Consumes(MediaType.APPLICATION_JSON)
 public interface AnnotationResource extends RestResource, DirectRestService {
+
+    // Only one field so no need to qualify
+    List<FilterFieldDefinition> NO_FIELD_DEFINITIONS = Collections.emptyList();
+
     @GET
     @ApiOperation(
             value = "Gets an annotation",

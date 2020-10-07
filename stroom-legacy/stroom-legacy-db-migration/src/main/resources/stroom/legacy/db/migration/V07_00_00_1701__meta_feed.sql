@@ -37,7 +37,8 @@ BEGIN
     IF EXISTS (
             SELECT NULL
             FROM INFORMATION_SCHEMA.TABLES
-            WHERE TABLE_NAME = 'FD') THEN
+            WHERE TABLE_SCHEMA = database()
+            AND TABLE_NAME = 'FD') THEN
 
         RENAME TABLE FD TO OLD_FD;
     END IF;
@@ -45,7 +46,8 @@ BEGIN
     IF EXISTS (
             SELECT NULL
             FROM INFORMATION_SCHEMA.TABLES 
-            WHERE TABLE_NAME = 'OLD_FD') THEN
+            WHERE TABLE_SCHEMA = database()
+            AND TABLE_NAME = 'OLD_FD') THEN
 
         INSERT INTO meta_feed (
             id, 

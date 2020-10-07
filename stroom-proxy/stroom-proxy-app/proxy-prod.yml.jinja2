@@ -1,0 +1,208 @@
+{#
+  ============================== NOTE ==============================
+
+  This file is templated with jinja2 syntax and is intended for use by
+  stroom.dist.GenerateDistributionConfig.
+  Any instances of ${...} are not jinja2 and are intended to remain as is in the
+  generated file and are for use by DropWizard with its variable substitution.
+
+  Stuff like
+  "{{ 'my_value' | envVar('ENV_VAR') }}"
+  will either render as
+  ${ENV_VAR:-my_value}
+  or
+  my_value
+
+  ============================== NOTE ==============================
+
+#}
+{# Define all the jinja2 variable values #}
+{% if distribution == "docker" %}
+  {% set rootPath = '/stroom-proxy/' %}
+  {% set includeEnvVarSubstitution = true %}
+{% elif distribution == "zip" %}
+  {% set rootPath = '' %}
+  {% set includeEnvVarSubstitution = false %}
+{% endif %}
+# Stroom Proxy configuration file
+# ===============================
+
+# For information on the structure of this configuration file see:
+# https://www.dropwizard.io/en/latest/manual/configuration.html
+# For information on the logback logFormat strings see:
+# http://logback.qos.ch/manual/layouts.html
+
+# This configuration file was made for the {{ distribution }} distribution.
+
+# This section is the DropWizard configuration for Stroom Proxy
+
+server:
+  applicationContextPath: /
+  adminContextPath: /proxyAdmin
+  applicationConnectors:
+    - type: http
+      port: "{{ '8090' | envVar('STROOM_PROXY_APP_PORT') }}"
+  adminConnectors:
+    - type: http
+      port: "{{ '8091' | envVar('STROOM_PROXY_ADMIN_PORT') }}"
+
+  requestLog:
+    appenders:
+      # Log appender for the web server request logging
+    - type: file
+      currentLogFilename: {{ rootPath }}logs/access/access.log
+      threshold: ALL
+      queueSize: 256
+      discardingThreshold: 0
+      archive: true
+      # Rolled and gzipped every minute
+      archivedLogFilenamePattern: {{ rootPath }}logs/access/access-%d{yyyy-MM-dd'T'HH:mm}.log.gz
+      archivedFileCount: 100
+      timeZone: UTC
+
+logging:
+  level: "{{ ' WARN' | envVar('STROOM_PROXY_LOGGING_LEVEL') }}"
+  loggers:
+    stroom: INFO
+    io.dropwizard: INFO
+    org.eclipse.jetty: INFO
+    org.flywaydb: INFO
+    # Logger and appender for proxy receipt audit logs
+    "receive":
+      level: INFO
+      additive: false
+      appenders:
+      - type: file
+        currentLogFilename: {{ rootPath }}logs/receive/receive.log
+        threshold: ALL
+        queueSize: 256
+        discardingThreshold: 0
+        archive: true
+        # Rolled and gzipped every minute
+        archivedLogFilenamePattern: {{ rootPath }}logs/receive/receive-%d{yyyy-MM-dd'T'HH:mm}.log.gz
+        archivedFileCount: 100
+        timeZone: UTC
+        logFormat: "%msg%n"
+    # Logger and appender for proxy send audit logs
+    "send":
+      level: INFO
+      additive: false
+      appenders:
+      - type: file
+        currentLogFilename: {{ rootPath }}logs/send/send.log
+        threshold: ALL
+        queueSize: 256
+        discardingThreshold: 0
+        archive: true
+        # Rolled and gzipped every minute
+        archivedLogFilenamePattern: {{ rootPath }}logs/send/send-%d{yyyy-MM-dd'T'HH:mm}.log.gz
+        archivedFileCount: 100
+        timeZone: UTC
+        logFormat: "%msg%n"
+
+  appenders:
+{% if distribution == "docker" %}
+
+    # stdout for docker
+  - type: console
+    # Multi-coloured log format for console output
+    logFormat: "%highlight(%-6level) [%d{\"yyyy-MM-dd'T'HH:mm:ss.SSS'Z'\",UTC}] [%green(%t)] %cyan(%logger) - %X{code} %msg %n"
+    timeZone: UTC
+{% endif %}
+
+    # Minute rolled files for stroom/datafeed, will be curl'd/deleted by stroom-log-sender
+  - type: file
+    currentLogFilename: {{ rootPath }}logs/app/app.log
+    threshold: ALL
+    queueSize: 256
+    discardingThreshold: 0
+    archive: true
+    archivedLogFilenamePattern: {{ rootPath }}logs/app/app-%d{yyyy-MM-dd'T'HH:mm}.log.gz
+    # One week using minute files
+    archivedFileCount: 10080
+    timeZone: UTC
+    logFormat: "%-6level [%d{\"yyyy-MM-dd'T'HH:mm:ss.SSS'Z'\",UTC}] [%t] %logger - %X{code} %msg %n"
+{% if distribution == "zip" %}
+
+    # Size rolled logs for admins (10x100M), not curl'd to stroom
+    # Un-comment for non-dockered environments
+  - type: file
+    currentLogFilename: {{ rootPath }}logs/app.log
+    threshold: ALL
+    queueSize: 256
+    discardingThreshold: 0
+    archive: true
+    archivedLogFilenamePattern: {{ rootPath }}logs/app-%i.log
+    archivedFileCount: 10
+    maxFileSize: "100MB"
+    timeZone: UTC
+    logFormat: "%-6level [%d{\"yyyy-MM-dd\",UTC}] [%t] %logger - %X{code} %msg %n"
+{% endif %}
+
+
+
+# This section contains the Stroom Proxy configuration properties
+# For mor information see:
+# https://gchq.github.io/stroom-docs/user-guide/properties.html
+
+proxyConfig:
+  useDefaultOpenIdCredentials: {{ false | envVar('USE_DEFAULT_OPEN_ID_CREDENTIALS') }}
+  proxyContentDir: "{{ (rootPath + 'content') | envVar('CONTENT_DIR') }}"
+
+# If you want to use a receipt policy then the RuleSet must exist
+# in Stroom and have the UUID as specified below in receiptPolicyUuid
+#  proxyRequestConfig:
+#    receiptPolicyUuid: "{{ (rootPath + 'content') | envVar('RECEIPT_POLICY_UUID') }}"
+  feedStatus:
+    url: "{{ 'http://stroom:8080/api/feedStatus/v1' | envVar('FEED_STATUS_URL') }}"
+    apiKey: "{{ 'http://stroom:8080/api/feedStatus/v1' | envVar('FEED_STATUS_API_KEY') }}"
+  forwardStreamConfig:
+    forwardingEnabled: {{ true | envVar('FORWARDING_ENABLED') }}
+    forwardDestinations:
+      # If you want multiple forward destinations then you will need to edit this file directly
+      # instead of using env var substitution
+      - forwardUrl: "{{ 'https://nginx/stroom/datafeed' | envVar('FORWARD_URL') }}"
+        sslConfig:
+          keyStorePath: "{{ (rootPath + 'certs/client.jks') | envVar('FORWARDING_KEYSTORE_PATH') }}"
+          keyStorePassword: "{{ 'password' | envVar('FORWARDING_KEYSTORE_PASSWORD') }}"
+          keyStoreType: "{{ 'JKS' | envVar('FORWARDING_KEYSTORE_TYPE') }}"
+          trustStorePath: "{{ (rootPath + 'certs/ca.jks') | envVar('FORWARDING_TRUSTSTORE_PATH') }}"
+          trustStorePassword: "{{ 'password' | envVar('FORWARDING_TRUSTSTORE_PASSWORD') }}"
+          trustStoreType: "{{ 'JKS' | envVar('FORWARDING_TRUSTSTORE_TYPE') }}"
+          hostnameVerificationEnabled: {{ true | envVar('FORWARDING_HOST_VERIFICATION_ENABLED') }}
+  proxyRepositoryConfig:
+    storingEnabled: {{ true | envVar('STORING_ENABLED') }}
+    repoDir: "{{ (rootPath + 'repo') | envVar('REPO_DIR') }}"
+    format: "${executionUuid}/${year}-${month}-${day}/${feed}/${pathId}/${id}"
+    # Uncomment this for rolled repositories
+    # rollCron: "* * *"
+  proxyRepositoryReaderConfig:
+    readCron: "* * *"
+  logStreamConfig:
+    metaKeys: "guid,feed,system,environment,remotehost,remoteaddress,remotedn,remotecertexpiry"
+#  contentSyncConfig:
+#    contentSyncEnabled: {{ false | envVar('CONTENT_SYNC_ENABLED') }}
+#    upstreamUrl:
+#      ReceiveDataRuleSet: "{{ 'http://stroom:8080/api/ruleset/v1' | envVar('UPSTREAM_RULE_URL') }}"
+#      Dictionary: "{{ 'http://stroom:8080/api/dictionary/v1' | envVar('UPSTREAM_DICTIONARY_URL') }}"
+#    syncFrequency: 30000
+#    apiKey: "{{ '' | envVar('SYNC_API_KEY') }}"
+  # jerseyClient is used for making feed status REST calls
+  jerseyClient:
+    timeout: "{{ '10s' | envVar('JERSEY_TIMEOUT') }}"
+    connectionTimeout: "{{ '10s' | envVar('JERSEY_CONN_TIMEOUT') }}"
+    timeToLive: "{{ '1h' | envVar('JERSEY_TIME_TO_LIVE') }}"
+    cookiesEnabled: false
+    maxConnections: {{ 1024 | envVar('JERSEY_MAX_CONNECTIONS') }}
+    maxConnectionsPerRoute: "{{ '1024' | envVar('JERSEY_MAX_CONNECTIONS_PER_ROUTE') }}"
+    keepAlive: "{{ '0ms' | envVar('JERSEY_KEEP_ALIVE') }}"
+    retries: {{ 0 | envVar('JERSEY_RETRIES') }}
+    tls:
+      verifyHostname: {{ true | envVar('JERSEY_VERIFY_HOSTNAME') }}
+      keyStorePath: "{{ (rootPath + 'certs/client.jks') | envVar('STROOM_PROXY_CLIENT_KEYSTORE_PATH') }}"
+      keyStorePassword: "{{ 'password' | envVar('STROOM_PROXY_CLIENT_KEYSTORE_PASSWORD') }}"
+      keyStoreType: "{{ 'JKS' | envVar('STROOM_PROXY_CLIENT_KEYSTORE_TYPE') }}"
+      trustStorePath: "{{ (rootPath + 'certs/ca.jks') | envVar('STROOM_PROXY_CLIENT_TRUSTSTORE_PATH') }}"
+      trustStorePassword: "{{ 'password' | envVar('STROOM_PROXY_CLIENT_TRUSTSTORE_PASSWORD') }}"
+      trustStoreType: "{{ 'JKS' | envVar('STROOM_PROXY_CLIENT_TRUSTSTORE_TYPE') }}"
+      trustSelfSignedCertificates: {{ false | envVar('JERSEY_TRUST_SELF_SIGNED') }}

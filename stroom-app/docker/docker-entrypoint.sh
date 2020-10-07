@@ -15,6 +15,7 @@ if [ "$(id -u)" = '0' ]; then
     chown stroom:stroom /stroom/logs/extra_headers.txt
     chown stroom:stroom /stroom/output
     chown stroom:stroom /stroom/proxy-repo
+    chown stroom:stroom /stroom/ref-data
     chown stroom:stroom /stroom/volumes
     
     # This is a bit of a cludge to get round "Text file in use" errors

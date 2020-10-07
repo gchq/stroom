@@ -53,6 +53,8 @@ import stroom.util.guice.HasHealthCheckBinder;
 import stroom.util.guice.RestResourcesBinder;
 import stroom.util.guice.ServletBinder;
 import stroom.util.io.BufferFactory;
+import stroom.util.io.TempDirProvider;
+import stroom.util.io.TempDirProviderImpl;
 import stroom.util.shared.BuildInfo;
 
 import com.google.inject.AbstractModule;
@@ -115,6 +117,7 @@ public class ProxyModule extends AbstractModule {
         bind(Serialiser2Factory.class).to(Serialiser2FactoryImpl.class);
         bind(StoreFactory.class).to(StoreFactoryImpl.class);
         bind(StreamHandlerFactory.class).to(ForwardStreamHandlerFactory.class);
+        bind(TempDirProvider.class).to(TempDirProviderImpl.class);
 
         HasHealthCheckBinder.create(binder())
                 .bind(ContentSyncService.class)

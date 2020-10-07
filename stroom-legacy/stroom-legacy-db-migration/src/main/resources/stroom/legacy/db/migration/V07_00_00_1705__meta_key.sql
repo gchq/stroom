@@ -39,7 +39,8 @@ BEGIN
     IF EXISTS (
             SELECT NULL
             FROM INFORMATION_SCHEMA.TABLES
-            WHERE TABLE_NAME = 'STRM_ATR_KEY') THEN
+            WHERE TABLE_SCHEMA = database()
+            AND TABLE_NAME = 'STRM_ATR_KEY') THEN
 
         RENAME TABLE STRM_ATR_KEY TO OLD_STRM_ATR_KEY;
     END IF;
@@ -47,7 +48,8 @@ BEGIN
     IF EXISTS (
             SELECT NULL 
             FROM INFORMATION_SCHEMA.TABLES 
-            WHERE TABLE_NAME = 'OLD_STRM_ATR_KEY') THEN
+            WHERE TABLE_SCHEMA = database()
+            AND TABLE_NAME = 'OLD_STRM_ATR_KEY') THEN
 
         INSERT INTO meta_key (
             id, 

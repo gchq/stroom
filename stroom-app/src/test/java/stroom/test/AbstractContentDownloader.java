@@ -1,10 +1,11 @@
 package stroom.test;
 
 import stroom.util.io.FileUtil;
+import stroom.util.io.StreamUtil;
 import stroom.util.shared.Version;
 
+import java.io.BufferedOutputStream;
 import java.io.IOException;
-import java.io.InputStream;
 import java.io.OutputStream;
 import java.io.UncheckedIOException;
 import java.net.HttpURLConnection;
@@ -62,15 +63,15 @@ public abstract class AbstractContentDownloader {
                 http = (HttpURLConnection) effectiveUrl.openConnection();
                 header = http.getHeaderFields();
             }
-            InputStream input = http.getInputStream();
-            byte[] buffer = new byte[4096];
-            int n = -1;
 
-            try (OutputStream output = Files.newOutputStream(destFilename)) {
-                while ((n = input.read(buffer)) != -1) {
-                    output.write(buffer, 0, n);
-                }
+            // Create a temp file as the download destination to avoid overwriting an existing file.
+            final Path tempFile = Files.createTempFile("stroom", "download");
+            try (final OutputStream fos = new BufferedOutputStream(Files.newOutputStream(tempFile))) {
+                StreamUtil.streamToStream(http.getInputStream(), fos);
             }
+
+            // Atomically move the downloaded file to the destination so that concurrent tests don't overwrite the file.
+            Files.move(tempFile, destFilename);
         } catch (final IOException e) {
             throw new UncheckedIOException(String.format("Error downloading url %s to %s",
                     fileUrl.toString(), FileUtil.getCanonicalPath(destFilename)), e);

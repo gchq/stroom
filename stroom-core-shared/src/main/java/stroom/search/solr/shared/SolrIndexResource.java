@@ -37,7 +37,6 @@ import java.util.List;
 @Produces(MediaType.APPLICATION_JSON)
 @Consumes(MediaType.APPLICATION_JSON)
 public interface SolrIndexResource extends RestResource, DirectRestService {
-
     @POST
     @Path("/read")
     @ApiOperation(
@@ -64,5 +63,5 @@ public interface SolrIndexResource extends RestResource, DirectRestService {
     @ApiOperation(
             value = "Test connection to Solr",
             response = String.class)
-    String solrConnectionTest(@ApiParam("solrIndexDoc") SolrIndexDoc solrIndexDoc);
+    SolrConnectionTestResponse solrConnectionTest(@ApiParam("solrIndexDoc") SolrIndexDoc solrIndexDoc);
 }

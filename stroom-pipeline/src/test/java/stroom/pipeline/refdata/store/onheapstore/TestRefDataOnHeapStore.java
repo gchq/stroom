@@ -17,6 +17,24 @@
 
 package stroom.pipeline.refdata.store.onheapstore;
 
+import stroom.pipeline.refdata.ReferenceDataConfig;
+import stroom.pipeline.refdata.store.MapDefinition;
+import stroom.pipeline.refdata.store.ProcessingState;
+import stroom.pipeline.refdata.store.RefDataLoader;
+import stroom.pipeline.refdata.store.RefDataProcessingInfo;
+import stroom.pipeline.refdata.store.RefDataStore;
+import stroom.pipeline.refdata.store.RefDataStoreFactory;
+import stroom.pipeline.refdata.store.RefDataStoreModule;
+import stroom.pipeline.refdata.store.RefDataValue;
+import stroom.pipeline.refdata.store.RefDataValueProxy;
+import stroom.pipeline.refdata.store.RefStreamDefinition;
+import stroom.pipeline.refdata.store.StringValue;
+import stroom.util.io.TempDirProvider;
+import stroom.util.logging.LambdaLogger;
+import stroom.util.logging.LambdaLoggerFactory;
+import stroom.util.logging.LogUtil;
+import stroom.util.shared.Range;
+
 import com.google.inject.AbstractModule;
 import com.google.inject.Guice;
 import com.google.inject.Injector;
@@ -26,27 +44,12 @@ import io.vavr.Tuple3;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Disabled;
 import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.io.TempDir;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import stroom.pipeline.refdata.store.MapDefinition;
-import stroom.pipeline.refdata.store.ProcessingState;
-import stroom.pipeline.refdata.store.RefDataLoader;
-import stroom.pipeline.refdata.store.RefDataProcessingInfo;
-import stroom.pipeline.refdata.store.RefDataStore;
-import stroom.pipeline.refdata.ReferenceDataConfig;
-import stroom.pipeline.refdata.store.RefDataStoreFactory;
-import stroom.pipeline.refdata.store.RefDataStoreModule;
-import stroom.pipeline.refdata.store.RefDataValue;
-import stroom.pipeline.refdata.store.RefDataValueProxy;
-import stroom.pipeline.refdata.store.RefStreamDefinition;
-import stroom.pipeline.refdata.store.StringValue;
-import stroom.util.logging.LambdaLogUtil;
-import stroom.util.logging.LambdaLogger;
-import stroom.util.logging.LambdaLoggerFactory;
-import stroom.util.logging.LogUtil;
-import stroom.util.shared.Range;
 
 import javax.inject.Inject;
+import java.nio.file.Path;
 import java.time.Duration;
 import java.time.Instant;
 import java.util.ArrayList;
@@ -93,12 +96,13 @@ class TestRefDataOnHeapStore {
     private RefDataStore refDataStore;
 
     @BeforeEach
-    void setUp() {
+    void setUp(@TempDir Path tempDir) {
         final Injector injector = Guice.createInjector(
                 new AbstractModule() {
                     @Override
                     protected void configure() {
                         bind(ReferenceDataConfig.class).toInstance(referenceDataConfig);
+                        bind(TempDirProvider.class).toInstance(() -> tempDir);
                         install(new RefDataStoreModule());
                     }
                 });
@@ -117,7 +121,7 @@ class TestRefDataOnHeapStore {
         treeMap.put(7L, "seven");
 
         treeMap.forEach((key, value) ->
-                LOGGER.info(LogUtil.message("{} => {}", key, value)));
+                LOGGER.info("{} => {}", key, value));
 
         assertThat(treeMap.ceilingEntry(3L).getValue()).isEqualTo("three");
         assertThat(treeMap.ceilingEntry(4L).getValue()).isEqualTo("three");
@@ -129,7 +133,7 @@ class TestRefDataOnHeapStore {
 
         SortedMap<Long, String> partMap = treeMap.tailMap(4L);
         partMap.forEach((key, value) ->
-                LOGGER.info(LogUtil.message("{} => {}", key, value)));
+                LOGGER.info("{} => {}", key, value));
 
 
         assertThat(treeMap.floorEntry(-1L).getValue()).isEqualTo("one");
@@ -354,7 +358,7 @@ class TestRefDataOnHeapStore {
                                 optValue = refDataStore.getValue(mapDefinitionKey, Integer.toString((i * 10) + 5));
                                 assertThat(optValue.isPresent());
                             });
-                }, LambdaLogUtil.message("Getting {} entries, twice", recCount));
+                }, () -> LogUtil.message("Getting {} entries, twice", recCount));
 
             } catch (Exception e) {
                 throw new RuntimeException(e);
@@ -432,7 +436,7 @@ class TestRefDataOnHeapStore {
                                 optValue = refDataStore.getValue(mapDefinitionKey, Integer.toString((i * 10) + 5));
                                 assertThat(optValue.isPresent());
                             });
-                }, LambdaLogUtil.message("Getting {} entries, twice", recCount));
+                }, () -> LogUtil.message("Getting {} entries, twice", recCount));
 
             } catch (Exception e) {
                 throw new RuntimeException(e);

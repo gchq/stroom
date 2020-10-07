@@ -16,15 +16,17 @@
 
 package stroom.pipeline.refdata;
 
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 import stroom.pipeline.errorhandler.ErrorReceiver;
 import stroom.pipeline.refdata.store.RefDataValueProxy;
 import stroom.util.shared.Location;
 import stroom.util.shared.Severity;
 
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Optional;
 import java.util.function.Supplier;
 
 public class ReferenceDataResult implements ErrorReceiver {
@@ -34,8 +36,8 @@ public class ReferenceDataResult implements ErrorReceiver {
 
     private List<LazyMessage> messages = new ArrayList<>();
 
-    public RefDataValueProxy getRefDataValueProxy() {
-        return refDataValueProxy;
+    public Optional<RefDataValueProxy> getRefDataValueProxy() {
+        return Optional.ofNullable(refDataValueProxy);
     }
 
     void setRefDataValueProxy(final RefDataValueProxy refDataValueProxy) {

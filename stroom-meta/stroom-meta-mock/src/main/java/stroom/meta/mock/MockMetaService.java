@@ -13,7 +13,6 @@ import stroom.meta.api.MetaService;
 import stroom.meta.shared.FindMetaCriteria;
 import stroom.meta.shared.Meta;
 import stroom.meta.shared.MetaFields;
-import stroom.meta.shared.MetaInfoSection;
 import stroom.meta.shared.MetaRow;
 import stroom.meta.shared.SelectionSummary;
 import stroom.meta.shared.Status;
@@ -24,7 +23,6 @@ import stroom.util.time.TimePeriod;
 import javax.inject.Singleton;
 import java.util.ArrayList;
 import java.util.Collections;
-import java.util.Comparator;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
@@ -33,12 +31,13 @@ import java.util.Map.Entry;
 import java.util.Objects;
 import java.util.Optional;
 import java.util.Set;
-import java.util.stream.Collectors;
 
 @Singleton
 public class MockMetaService implements MetaService, Clearable {
+    private static final Set<String> STANDARD_TYPES = Set.of("Raw Events", "Raw Reference", "Events", "Reference", "Records", "Error");
+
     private final Set<String> feeds = new HashSet<>();
-    private final Set<String> types = new HashSet<>();
+    private final Set<String> types = new HashSet<>(STANDARD_TYPES);
     private final Map<Long, Meta> metaMap = new HashMap<>();
 
     /**
@@ -151,17 +150,13 @@ public class MockMetaService implements MetaService, Clearable {
     }
 
     @Override
-    public List<String> getFeeds() {
-        return feeds.stream()
-                .sorted(Comparator.naturalOrder())
-                .collect(Collectors.toList());
+    public Set<String> getFeeds() {
+        return feeds;
     }
 
     @Override
-    public List<String> getTypes() {
-        return types.stream()
-                .sorted(Comparator.naturalOrder())
-                .collect(Collectors.toList());
+    public Set<String> getTypes() {
+        return types;
     }
 
     @Override
@@ -311,13 +306,9 @@ public class MockMetaService implements MetaService, Clearable {
     public void clear() {
         feeds.clear();
         types.clear();
+        types.addAll(STANDARD_TYPES);
         metaMap.clear();
         currentId = 0;
-    }
-
-    @Override
-    public List<MetaInfoSection> fetchFullMetaInfo(final long id) {
-        return null;
     }
 
     @Override

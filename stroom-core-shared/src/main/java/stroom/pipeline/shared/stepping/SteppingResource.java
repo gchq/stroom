@@ -16,13 +16,15 @@
 
 package stroom.pipeline.shared.stepping;
 
+import stroom.docref.DocRef;
+import stroom.docstore.shared.Doc;
+import stroom.util.shared.ResourcePaths;
+import stroom.util.shared.RestResource;
+
 import io.swagger.annotations.Api;
 import io.swagger.annotations.ApiOperation;
 import io.swagger.annotations.ApiParam;
 import org.fusesource.restygwt.client.DirectRestService;
-import stroom.docref.DocRef;
-import stroom.util.shared.ResourcePaths;
-import stroom.util.shared.RestResource;
 
 import javax.ws.rs.Consumes;
 import javax.ws.rs.POST;
@@ -35,13 +37,19 @@ import javax.ws.rs.core.MediaType;
 @Produces(MediaType.APPLICATION_JSON)
 @Consumes(MediaType.APPLICATION_JSON)
 public interface SteppingResource extends RestResource, DirectRestService {
-
     @POST
     @Path("/getPipelineForStepping")
     @ApiOperation(
             value = "Get a pipeline for stepping",
             response = DocRef.class)
     DocRef getPipelineForStepping(@ApiParam("request") GetPipelineForMetaRequest request);
+
+    @POST
+    @Path("/findElementDoc")
+    @ApiOperation(
+            value = "Load the document for an element",
+            response = Doc.class)
+    DocRef findElementDoc(FindElementDocRequest request);
 
     @POST
     @Path("/step")

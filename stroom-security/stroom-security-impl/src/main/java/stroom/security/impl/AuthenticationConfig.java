@@ -21,7 +21,6 @@ public class AuthenticationConfig extends AbstractConfig {
     private boolean authenticationRequired = true;
     private OpenIdConfig openIdConfig = new OpenIdConfig();
     private boolean preventLogin;
-    private String userNamePattern = "^[a-zA-Z0-9_-]{3,}$";
 
     @ReadOnly
     @JsonProperty(PROP_NAME_AUTHENTICATION_REQUIRED)
@@ -60,67 +59,11 @@ public class AuthenticationConfig extends AbstractConfig {
         this.preventLogin = preventLogin;
     }
 
-    @JsonPropertyDescription("The regex pattern for user names")
-    @JsonProperty(PROP_NAME_USER_NAME_PATTERN)
-    @ValidRegex
-    public String getUserNamePattern() {
-        return userNamePattern;
-    }
-
-    @SuppressWarnings("unused")
-    public void setUserNamePattern(final String userNamePattern) {
-        this.userNamePattern = userNamePattern;
-    }
-
     @Override
     public String toString() {
         return "AuthenticationConfig{" +
                 ", authenticationRequired=" + authenticationRequired +
                 ", preventLogin=" + preventLogin +
-                ", userNamePattern='" + userNamePattern + '\'' +
                 '}';
     }
-
-//    public static class JwtConfig extends AbstractConfig {
-//
-//        public static final String PROP_NAME_JWT_ISSUER = "jwtIssuer";
-//        public static final String PROP_NAME_ENABLE_TOKEN_REVOCATION_CHECK = "enableTokenRevocationCheck";
-//
-//        private String jwtIssuer = "stroom";
-//        private boolean enableTokenRevocationCheck = true;
-//
-//        @RequiresRestart(RequiresRestart.RestartScope.UI)
-//        @JsonPropertyDescription("The issuer to expect when verifying JWTs.")
-//        @JsonProperty(PROP_NAME_JWT_ISSUER)
-//        @NotNull
-//        public String getJwtIssuer() {
-//            return jwtIssuer;
-//        }
-//
-//        @SuppressWarnings("unused")
-//        public void setJwtIssuer(final String jwtIssuer) {
-//            this.jwtIssuer = jwtIssuer;
-//        }
-//
-//        @RequiresRestart(RequiresRestart.RestartScope.UI)
-//        @JsonPropertyDescription("Whether or not to enable remote calls to the auth service to check if " +
-//                "a token we have has been revoked.")
-//        @JsonProperty(PROP_NAME_ENABLE_TOKEN_REVOCATION_CHECK)
-//        public boolean isEnableTokenRevocationCheck() {
-//            return enableTokenRevocationCheck;
-//        }
-//
-//        @SuppressWarnings("unused")
-//        public void setEnableTokenRevocationCheck(final boolean enableTokenRevocationCheck) {
-//            this.enableTokenRevocationCheck = enableTokenRevocationCheck;
-//        }
-//
-//        @Override
-//        public String toString() {
-//            return "JwtConfig{" +
-//                    "jwtIssuer='" + jwtIssuer + '\'' +
-//                    ", enableTokenRevocationCheck=" + enableTokenRevocationCheck +
-//                    '}';
-//        }
-//    }
 }

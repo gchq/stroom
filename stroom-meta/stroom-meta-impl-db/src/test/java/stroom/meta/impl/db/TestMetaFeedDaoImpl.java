@@ -53,7 +53,7 @@ class TestMetaFeedDaoImpl {
                 new DbTestModule())
                 .injectMembers(this);
         // Delete everything
-        cleanup.clear();
+        cleanup.cleanup();
     }
 
     @Test

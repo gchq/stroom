@@ -1,6 +1,9 @@
 package stroom.app.guice;
 
-import stroom.core.db.DbStatusModule;
+import stroom.security.identity.AuthModule;
+import stroom.security.identity.db.AuthDbModule;
+import stroom.util.io.TempDirProvider;
+import stroom.util.io.TempDirProviderImpl;
 
 import com.google.inject.AbstractModule;
 
@@ -10,17 +13,15 @@ public class CoreModule extends AbstractModule {
         install(new stroom.activity.impl.db.ActivityDbModule());
         install(new stroom.annotation.impl.db.AnnotationDbModule());
         install(new stroom.annotation.pipeline.AnnotationPipelineModule());
-        install(new stroom.authentication.AuthModule());
-        install(new stroom.authentication.impl.db.AuthDbModule());
+        install(new AuthModule());
+        install(new AuthDbModule());
         install(new stroom.cache.impl.CacheModule());
         install(new stroom.cache.impl.CacheResourceModule());
         install(new stroom.cluster.lock.impl.db.ClusterLockDbModule());
         install(new stroom.cluster.task.impl.ClusterTaskModule());
         install(new stroom.config.global.impl.db.GlobalConfigDbModule());
         install(new stroom.core.dataprocess.PipelineStreamTaskModule());
-        install(new DbStatusModule());
-        install(new stroom.core.entity.cluster.EntityClusterModule());
-        install(new stroom.core.entity.event.EntityEventModule());
+        install(new stroom.core.db.DbStatusModule());
         install(new stroom.core.entity.event.EntityEventModule());
         install(new stroom.core.query.QueryModule());
         install(new stroom.core.receive.ReceiveDataModule());
@@ -34,7 +35,7 @@ public class CoreModule extends AbstractModule {
         install(new stroom.dashboard.impl.script.ScriptModule());
         install(new stroom.dashboard.impl.visualisation.VisualisationModule());
         install(new stroom.data.retention.impl.DataRetentionModule());
-        install(new stroom.data.store.impl.DataStoreHandlerModule());
+        install(new stroom.data.store.impl.DataStoreModule());
         install(new stroom.data.store.impl.fs.FsDataStoreModule());
         install(new stroom.data.store.impl.fs.FsDataStoreTaskHandlerModule());
         install(new stroom.data.store.impl.fs.db.FsDataStoreDbModule());
@@ -101,5 +102,8 @@ public class CoreModule extends AbstractModule {
         install(new stroom.storedquery.impl.db.StoredQueryDbModule());
         install(new stroom.task.impl.TaskModule());
         install(new stroom.util.pipeline.scope.PipelineScopeModule());
+
+        // Bind the temporary directory provider.
+        bind(TempDirProvider.class).to(TempDirProviderImpl.class);
     }
 }

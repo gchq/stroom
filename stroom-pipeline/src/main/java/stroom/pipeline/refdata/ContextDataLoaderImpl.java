@@ -46,11 +46,22 @@ public class ContextDataLoaderImpl implements ContextDataLoader {
                      final DocRef contextPipeline,
                      final RefStreamDefinition refStreamDefinition,
                      final RefDataStore refDataStore) {
-        final Consumer<TaskContext> consumer = tc ->
+
+        final Consumer<TaskContext> consumer = taskContext ->
                 taskHandlerProvider
                         .get()
-                        .exec(inputStream, meta, feedName, contextPipeline, refStreamDefinition, refDataStore);
-        final Runnable runnable = taskContextFactory.context(taskContextFactory.currentContext(),"Load Context Data", consumer);
+                        .exec(inputStream,
+                                meta,
+                                feedName,
+                                contextPipeline,
+                                refStreamDefinition,
+                                refDataStore);
+
+        final Runnable runnable = taskContextFactory.context(
+                taskContextFactory.currentContext(),
+                "Load Context Data",
+                consumer);
+
         runnable.run();
     }
 }

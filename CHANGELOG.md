@@ -7,6 +7,262 @@ and this project adheres to [Semantic Versioning](http://semver.org/).
 
 ## [Unreleased]
 
+
+## [v7.0-beta.66] - 2020-09-24
+
+* Added code to authenticate against AWS ALB.
+
+
+## [v7.0-beta.65] - 2020-09-24
+
+* Added code to authenticate against AWS ALB.
+
+
+## [v7.0-beta.64] - 2020-09-24
+
+* Added code to authenticate against AWS ALB.
+
+
+## [v7.0-beta.63] - 2020-09-22
+
+* Added code to authenticate against AWS ALB.
+
+
+## [v7.0-beta.62] - 2020-09-22
+
+* Added code to authenticate against AWS ALB.
+
+
+## [v7.0-beta.61] - 2020-09-22
+
+* Added code to authenticate against AWS ALB.
+
+
+## [v7.0-beta.60] - 2020-09-22
+
+* Added code to authenticate against AWS ALB.
+
+
+## [v7.0-beta.59] - 2020-09-22
+
+* Added code to authenticate against AWS ALB.
+
+* Changed default behaviour of `useDefaultOpenIdCredentials`.
+
+
+## [v7.0-beta.58] - 2020-09-22
+
+* Added code to authenticate against AWS ALB.
+
+
+## [v7.0-beta.57] - 2020-09-18
+
+* Failed build.
+
+
+## [v7.0-beta.56] - 2020-09-18
+
+* Added code to authenticate against AWS ALB.
+
+* Remove requirement for Reference stream type in ref data API lookup requests.
+
+
+## [v7.0-beta.55] - 2020-09-15
+
+* Fix names in travis release plugin.
+
+
+## [v7.0-beta.54] - 2020-09-15
+
+* Rename release artefact `stroom-proxy-config.X.yml` to `stroom-proxy-app-config.X.yml`.
+
+
+## [v7.0-beta.53] - 2020-09-15
+
+* Change `prod.yml` and `proxy-prod.yml` to be templated so as to generate custom config for the zip and docker distributions.
+
+* Add the docker config files to the release artefacts.
+
+* Issue **#580** : Added conditional formatting options to dashboard tables.
+
+* Add comments to `prod.yml`/`config.yml`.
+
+* Change `reset_password` CLI command to also reset various locked/inactive type flags.
+
+* Change stroom admin path from `admin` to `stroomAdmin` in the distribution.
+
+* Fix `command not found` bug in distribution `start.sh`.
+
+* Change `start.sh` to log pre-logback output to start.sh.log.
+
+* Change logFormat to include time in `prod.yml` and `config.yml`.
+
+
+## [v7.0-beta.52] - 2020-09-10
+
+* Issue **#1850** : Add new command line commands `create_account`, `reset_password` and `manage_users` to enable the creation of accounts to bootstrap the application.
+
+* Change `admin` to `stroomAdmin` in distribution shell scripts.
+
+
+## [v7.0-beta.51] - 2020-09-09
+
+* Added `formTokenRequest` property to OpenId config for use with AWS authentication. This forces the use of a form request when fetching tokens.
+
+* Issue **#1824** : Fix for search hang when extraction is requested but no search pipeline is provided.
+
+* Issue **#1083** : Added `any()`, `first()`, `last()`, `nth()`, `top()` and `bottom()` selection functions to select child values of grouped items.
+
+* Issue **#1837** : Added `joining()` function to concatenate supplied fields in child rows.
+
+* Issue **#1784** : Several functions were previously prevented from working on results from aggregate functions but are now applied regardless.
+
+* Fix config file validation not working when hot loading config file changes.
+
+* Change config file validation to be the first thing that happens on boot.
+
+* Fix error when empty branches are in the config file.
+
+* Add `pipeline.referenceData.getLmdbSystemLibraryPath` prop to support provided LMDB binary.
+
+* Change extraction location of bundled LMDB binary to be the same as the store files.
+
+* Change default value for `pipeline.referenceData.maxPutsBeforeCommit` to 0 (i.e. don't commit mid-load).
+
+
+## [v7.0-beta.50] - 2020-09-07
+
+* Add /api/refData/v1/lookup REST endpoint for doing ref data lookups.
+
+* Issue **#1755** : Stepping now runs in a separate thread to prevent interruption of DW threads when trying to terminate stepping early.
+
+* Issue **#1798** : Fixed REST serialisation issue that was preventing stepping XPath filters from being passed to the server.
+
+* Issue **#1666** : Stepping now loads element documents that use name patterns.
+
+* Issue **#1666** : Parsers now support name patterns for loading config documents. 
+
+* Issue **#1835** : Fix error when viewing data as lowly user.
+
+* Issue **#1836** : Fix Forbidden error when importing data.
+
+* Issue **#1809** : Fix handling of import with no permissions except Import Configuration.
+
+* Issue **#1657** : Remove INTERNAL_PROCESSING_USER from Users list in App Permissions screen.
+
+* Issue **#1782** : Fix handling of empty NOT/AND/OR in stats queries and immprove the error handling for the remote data sources.
+
+* Issue **#1781** : Fix SQL stats handling of NOT() with more than one term in the NOT.
+
+* Issue **#1830** : Change quick filters on Annotations screen to use fuzzy filtering consistent with the rest of stroom. Disable the comment quick filter drop down if there are no standard comments configured. Remove the qualified fields from the quick filter tooltips.
+
+* Issue **#1829** : Fix Annotations screen recording change history when clicking an empty title/subject.
+
+* Issue **#1737** : Fix quick filter in users/groups popup.
+
+* Issue **#1832** : Fix inability to add users/groups in the Document Permissions screen.
+
+
+## [v7.0-beta.49] - 2020-09-02
+
+* Fix accidental commit of broken code.
+
+
+## [v7.0-beta.48] - 2020-09-02
+
+* Fix duplicate call to bintray upload in travis script.
+
+
+## [v7.0-beta.47] - 2020-09-02
+
+* Issue **#1821** : Fix SQL Stat queries whose table doesn't use any datasource fields.
+
+* Issue **#1694** : Fix UUID filtering in quick filters, now using `uuid:` field qualifier. Removed support for `#` prefix in Quick Filter and suggesters.
+
+* Issue **#1699** : Add a docker managed volume for the ref data store.
+
+* Add `pooledByteBufferCounts` to ref data config.
+
+* Issue **#1700** : Stopped stepping happening on open.
+
+* Uplift LMDB to v0.8.1.
+
+* Changed implementaion of the byte buffer pool used in the ref data store to improve performance.
+
+* Increase default value for ref data `maxPutsBeforeCommit` to improve load times.
+
+* Fix instances of trace logging that are not using lambdas for complex args. This is particularly a problem in the ref data store code.
+
+* Made stroom compatible with AWS authentication.
+
+* Issue **#1707** : Fix reference data lookups picking the wrong effective stream.
+
+* Issue **#1797** : Altered how search completion is recorded to try and prevent hanging. 
+
+* Issue **#1762** : Fix for search jobs that do not terminate correctly.
+
+* The build should now ensure GWT compilation only occurs after test has completed.
+
+* Issue **#1790** : You can now provide `TYPE` as an optional HTTP header when sending data to Stroom. If provided this attribute is used to determine what data type to assign to the data being received. Data forwarding and aggregation also maintains this attribute and behaviour. 
+
+* Issue **#1665** : Recognised meta types can now be specified in config and drop downs now allow selection in the pipeline editor.
+
+
+## [v7.0-beta.46] - 2020-08-23
+
+* Issue **#1702** : Fix namespace handling in XML reference data values.
+
+* Issue **#1789** : Prevent dashboards without an extraction pipeline showing as "Missing" on dependency screen.
+
+* Issue **#1803** : Fix `/api/export/v1` failing with NoSuchFileException.
+
+* Issue **#1719** : Create rest endpoint to get rererence data store entries. Experimental feature at the moment.
+
+* Issue **#1649** : Make the local reference data store searchable from the dashboard. Experimental feature at the moment.
+
+* Issue **#1805** : Fix missing alert popup when document is saved but has been updated by another user/tab.
+
+* Fix _No appender for stroom.docref.DocRef_ ERRORs in the log.
+
+
+## [v7.0-beta.45] - 2020-08-14
+
+* Issue **#1793** : Fixed Solr search query creation.
+
+* Issue **#1791** : Fixed Solr connection test response.
+
+* Update Gradle to v6.6
+
+* Revert back to full build.
+
+
+## [v7.0-beta.44] - 2020-08-14
+
+* Reverted deploy changes until travis dpl v2 is stable.
+
+
+## [v7.0-beta.43] - 2020-08-14
+
+* Fixing release artefacts.
+
+
+## [v7.0-beta.42] - 2020-08-13
+
+* Issue **#1783** : Made change to prevent nodes called by the cluster from using localhost, 127.0.0.1 or the same URL as other nodes.
+
+* Issue **#1706** : Terminating processing jobs early now writes appropriate termination errors to the processing info (error) stream and deletes other outputs.
+
+* Issue **#1749** : Removed old benchmark job.
+
+
+## [v7.0-beta.41] - 2020-08-12
+
+* Issue **#1785** : Fix proxy not forwarding any data.
+
+* Issue **#1675** : All dashboard table fields are now present in text pane settings even if they are hidden or special, e.g. internally added mandatory fields like StreamId and EventId. This change prevents the field settings from being altered incorrectly when these fields were not found.
+
+* Issue **#1758** : Added file locations to meta details and improved tooltip layout.
+
 * Issue **#1778** : Remove error streams following reprocessing when no new streams are created.
 
 * Added support for time based expressions when searching for streams from UI. 
@@ -1587,9 +1843,6 @@ Issue **gchq/stroom-expression#22** : Add `typeOf(...)` function to dashboard.
 
 * Issue **#751** : Fix inability to query on a dashboard with only use+read rights.
 
-
-## [v6.0-alpha.22]
-
 * Issue **#719** : Fix creation of headless Jar to ensure logback is now included.
 
 * Issue **#735** : Change the format-date xslt function to parse dates in a case insensitive way.
@@ -2448,7 +2701,33 @@ Issue **gchq/stroom-expression#22** : Add `typeOf(...)` function to dashboard.
 
 * Issue **#202** : Initial release of the new data retention policy functionality.
 
-[Unreleased]: https://github.com/gchq/stroom/compare/v7.0-beta.40...HEAD
+[Unreleased]: https://github.com/gchq/stroom/compare/v7.0-beta.66...HEAD
+[v7.0-beta.66]: https://github.com/gchq/stroom/compare/v7.0-beta.65...v7.0-beta.66
+[v7.0-beta.65]: https://github.com/gchq/stroom/compare/v7.0-beta.64...v7.0-beta.65
+[v7.0-beta.64]: https://github.com/gchq/stroom/compare/v7.0-beta.63...v7.0-beta.64
+[v7.0-beta.63]: https://github.com/gchq/stroom/compare/v7.0-beta.62...v7.0-beta.63
+[v7.0-beta.62]: https://github.com/gchq/stroom/compare/v7.0-beta.61...v7.0-beta.62
+[v7.0-beta.61]: https://github.com/gchq/stroom/compare/v7.0-beta.60...v7.0-beta.61
+[v7.0-beta.60]: https://github.com/gchq/stroom/compare/v7.0-beta.59...v7.0-beta.60
+[v7.0-beta.59]: https://github.com/gchq/stroom/compare/v7.0-beta.58...v7.0-beta.59
+[v7.0-beta.58]: https://github.com/gchq/stroom/compare/v7.0-beta.57...v7.0-beta.58
+[v7.0-beta.57]: https://github.com/gchq/stroom/compare/v7.0-beta.56...v7.0-beta.57
+[v7.0-beta.56]: https://github.com/gchq/stroom/compare/v7.0-beta.55...v7.0-beta.56
+[v7.0-beta.55]: https://github.com/gchq/stroom/compare/v7.0-beta.54...v7.0-beta.55
+[v7.0-beta.54]: https://github.com/gchq/stroom/compare/v7.0-beta.53...v7.0-beta.54
+[v7.0-beta.53]: https://github.com/gchq/stroom/compare/v7.0-beta.52...v7.0-beta.53
+[v7.0-beta.52]: https://github.com/gchq/stroom/compare/v7.0-beta.51...v7.0-beta.52
+[v7.0-beta.51]: https://github.com/gchq/stroom/compare/v7.0-beta.50...v7.0-beta.51
+[v7.0-beta.50]: https://github.com/gchq/stroom/compare/v7.0-beta.49...v7.0-beta.50
+[v7.0-beta.49]: https://github.com/gchq/stroom/compare/v7.0-beta.48...v7.0-beta.49
+[v7.0-beta.48]: https://github.com/gchq/stroom/compare/v7.0-beta.47...v7.0-beta.48
+[v7.0-beta.47]: https://github.com/gchq/stroom/compare/v7.0-beta.46...v7.0-beta.47
+[v7.0-beta.46]: https://github.com/gchq/stroom/compare/v7.0-beta.45...v7.0-beta.46
+[v7.0-beta.45]: https://github.com/gchq/stroom/compare/v7.0-beta.44...v7.0-beta.45
+[v7.0-beta.44]: https://github.com/gchq/stroom/compare/v7.0-beta.43...v7.0-beta.44
+[v7.0-beta.43]: https://github.com/gchq/stroom/compare/v7.0-beta.42...v7.0-beta.43
+[v7.0-beta.42]: https://github.com/gchq/stroom/compare/v7.0-beta.41...v7.0-beta.42
+[v7.0-beta.41]: https://github.com/gchq/stroom/compare/v7.0-beta.40...v7.0-beta.41
 [v7.0-beta.40]: https://github.com/gchq/stroom/compare/v7.0-beta.39...v7.0-beta.40
 [v7.0-beta.39]: https://github.com/gchq/stroom/compare/v7.0-beta.38...v7.0-beta.39
 [v7.0-beta.38]: https://github.com/gchq/stroom/compare/v7.0-beta.37...v7.0-beta.38
