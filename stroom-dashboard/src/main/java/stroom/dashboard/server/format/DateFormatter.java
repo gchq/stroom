@@ -35,7 +35,7 @@ public class DateFormatter implements Formatter {
     }
 
     public static DateFormatter create(final FormatSettings settings, final String dateTimeLocale) {
-        Use use = Use.LOCAL;
+        Use use = Use.UTC;
         String pattern = "yyyy-MM-dd'T'HH:mm:ss.SSS";
         int offsetHours = 0;
         int offsetMinutes = 0;

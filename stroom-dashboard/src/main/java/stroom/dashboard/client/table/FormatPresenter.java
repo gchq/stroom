@@ -149,7 +149,7 @@ public class FormatPresenter extends MyPresenterWidget<FormatPresenter.FormatVie
     }
 
     private void setDateTimeSettings(final FormatSettings settings) {
-        TimeZone timeZone = TimeZone.local();
+        TimeZone timeZone = TimeZone.utc();
 
         if (settings == null || !(settings instanceof DateTimeFormatSettings)) {
             getView().setPattern(null);
