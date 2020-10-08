@@ -73,6 +73,7 @@ public class DatabaseCommonTestControl implements CommonTestControl {
 
     @Override
     public void setup(final Path tempDir) {
+        LOGGER.debug("Using temp dir: {}", tempDir.toAbsolutePath().toString());
         Instant startTime = Instant.now();
         volumeConfig.setDefaultStreamVolumePaths(tempDir.resolve("volumes/defaultStreamVolume").toAbsolutePath().toString());
         volumeCreator.setup(tempDir);
@@ -85,7 +86,6 @@ public class DatabaseCommonTestControl implements CommonTestControl {
 
         needsCleanup = true;
     }
-
 
     @Override
     public void cleanup() {

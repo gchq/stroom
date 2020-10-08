@@ -19,11 +19,10 @@ package stroom.test;
 import stroom.db.util.DbModule;
 import stroom.importexport.impl.ContentPackImport;
 import stroom.task.api.TaskManager;
+import stroom.util.io.TempDirProvider;
 
 import com.google.inject.Guice;
 import com.google.inject.Injector;
-
-import java.nio.file.Paths;
 
 /**
  * A main() method for pre-loading the stroom database with content and data for manual testing
@@ -49,14 +48,14 @@ public final class SetupSampleData {
 
         // Start task manager
         injector.getInstance(TaskManager.class).startup();
+        final TempDirProvider tempDirProvider = injector.getInstance(TempDirProvider.class);
 
         final CommonTestControl commonTestControl = injector.getInstance(CommonTestControl.class);
 
         // Clear the DB and remove all content and data.
         commonTestControl.clear();
         // Setup the DB ready to load content and data.
-        final String tempDir = System.getProperty("java.io.tmpdir");
-        commonTestControl.setup(Paths.get(tempDir));
+        commonTestControl.setup(tempDirProvider.get());
 
         // Load the sample data and content from the 'samples' dirs
         final SetupSampleDataBean setupSampleDataBean = injector.getInstance(SetupSampleDataBean.class);
