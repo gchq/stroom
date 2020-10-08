@@ -6,6 +6,8 @@ and this project adheres to [Semantic Versioning](http://semver.org/).
 
 ## [Unreleased]
 
+## [v5.5.15] - 2020-10-08
+
 * Changed default dashboard time zone to use UTC.
 
 ## [v5.5.14] - 2020-10-07
@@ -1014,7 +1016,8 @@ and this project adheres to [Semantic Versioning](http://semver.org/).
 
 * Issue **#202** : Initial release of the new data retention policy functionality.
 
-[Unreleased]: https://github.com/gchq/stroom/compare/v5.5.14...HEAD
+[Unreleased]: https://github.com/gchq/stroom/compare/v5.5.15...HEAD
+[v5.5.15]: https://github.com/gchq/stroom/compare/v5.5.14...v5.5.15
 [v5.5.14]: https://github.com/gchq/stroom/compare/v5.5.13...v5.5.14
 [v5.5.13]: https://github.com/gchq/stroom/compare/v5.5.12...v5.5.13
 [v5.5.12]: https://github.com/gchq/stroom/compare/v5.5.11...v5.5.12
