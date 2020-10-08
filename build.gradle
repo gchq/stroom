@@ -737,6 +737,7 @@ task downloadStroomContent() {
         if (downloadFile.exists()) {
             println "${url} has already been downloaded"
         } else {
+            println "Downloading ${url} into ${contentPackDownloadDir}"
             download {
                 src url
                 dest new File(contentPackDownloadDir)
